@@ -153,13 +153,17 @@ Xm12_DIR = $(MOTIF_LIB)
 endif
 
 USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
-USR_LIBS_Darwin = Xm Xt Xp Xmu X11 Xext langinfo
+
+USR_LIBS_cygwin32 = Xm Xt Xmu X11 Xext SM ICE
 
 WIN32_RUNTIME=MD
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 USR_LIBS_WIN32 += $(EXCEED_XLIBS)
 USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
+
+USR_LIBS_Darwin = Xm Xt Xp Xmu X11 Xext
+USR_LDFLAGS_Darwin += -force_flat_namespace
 
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
