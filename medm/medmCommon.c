@@ -126,7 +126,7 @@ DlFile *createDlFile(DisplayInfo *displayInfo)
     if(!dlFile) return 0;
     strcpy(dlFile->name,"newDisplay.adl");
     dlFile->versionNumber =
-      MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
+      MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_MODIFICATION;
     return(dlFile);
 }
 
@@ -171,7 +171,8 @@ void writeDlFile(FILE *stream, DlFile *dlFile, int level)
 {
     int i;
     char indent[16];
-    int versionNumber = MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
+    int versionNumber = MEDM_VERSION * 10000 + MEDM_REVISION * 100 +
+      MEDM_MODIFICATION;
 
     for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';

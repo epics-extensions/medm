@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_FD_REGISTRATION 0
 #define DEBUG_CHANNEL_CB 0
 #define DEBUG_ADD 0
+#define DEBUG_INPUT_ID 0
 
 #define DO_RTYP 1
 
@@ -322,6 +323,10 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
 	      (XtPointer)inputReadMask,
 	      medmProcessCA,(XtPointer)NULL);
+#if DEBUG_INPUT_ID
+	    print("medmCAFdRegistrationCb: Add fd=%d inpid=%lx\n",
+	      inp[numInps].fd,inp[numInps].inputId);
+#endif	
 	    numInps++;
 	} else {
 	    medmPostMsg(0,"dmRegisterCA: info: realloc-ing input fd's array");
@@ -337,6 +342,10 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
 	      (XtPointer)inputReadMask,
 	      medmProcessCA,(XtPointer)NULL);
+#if DEBUG_INPUT_ID
+	    print("medmCAFdRegistrationCb (Realloc): Add fd=%d inpid=%lx\n",
+	      inp[numInps].fd,inp[numInps].inputId);
+#endif	
 	    numInps++;
 	}
     } else {
@@ -345,7 +354,14 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
       /* Remove old fd */
 	for (i = 0; i < numInps; i++) {
 	    if(inp[i].fd == fd) {
+#if DEBUG_INPUT_ID
+		print("medmCAFdRegistrationCb: Remove fd=%d inpid=%lx\n",
+		  inp[i].fd,inp[i].inputId);
+#endif
 		XtRemoveInput(inp[i].inputId);
+#if DEBUG_INPUT_ID
+		print("                        XtRemoveInput finished\n");
+#endif
 		inp[i].inputId = (XtInputId)NULL;
 		inp[i].fd = (int)NULL;
 		currentNumInps--;

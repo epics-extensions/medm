@@ -4016,7 +4016,7 @@ Pixel alarmColor(int type)
 
 /* General purpose output routine
  * Works with both UNIX and WIN32
- * Uses sprintf to avoid problem with lprint not handling %f, etc.
+ * Uses sprintf to avoid problem with lprintf not handling %f, etc.
  *   (Exceed 5 only)
  * Use for debugging */
 
