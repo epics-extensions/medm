@@ -54,6 +54,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_SCHEDULER 0
+#define DEBUG_UPDATE 0
+
 #include "medm.h"
 
 /* Include this after medm.h to avaoid problems with Exceed 6 */
@@ -63,6 +66,20 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #else
 #include <sys/time.h>
 #endif
+
+#if DEBUG_UPDATE
+#define DEFAULT_TIME 1
+#define ANIMATE_TIME(gif) \
+  ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
+  ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
+
+typedef struct _Image {
+    DisplayInfo   *displayInfo;
+    DlElement     *dlElement;
+    Record        *record;
+    UpdateTask    *updateTask;
+} MedmImage;
+#endif		    
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05
@@ -88,36 +105,16 @@ typedef struct {
     double      tenthSecond;
 } PeriodicTask;
 
-static UpdateTaskStatus updateTaskStatus;
-static PeriodicTask periodicTask;
-static Boolean moduleInitialized = False;
-
+/* Function prototypes */
+Boolean medmInitSharedDotC();
 static void medmScheduler(XtPointer, XtIntervalId *);
 static Boolean updateTaskWorkProc(XtPointer);
 
-Boolean medmInitSharedDotC()
-{
-    if (moduleInitialized) return True;
-  /* initialize static global variable updateTaskStatus */
-    updateTaskStatus.workProcId          = 0;
-    updateTaskStatus.nextToServe         = NULL;
-    updateTaskStatus.taskCount           = 0;
-    updateTaskStatus.periodicTaskCount   = 0;
-    updateTaskStatus.updateRequestCount  = 0;
-    updateTaskStatus.updateDiscardCount  = 0;
-    updateTaskStatus.periodicUpdateRequestCount = 0;
-    updateTaskStatus.periodicUpdateDiscardCount = 0;
-    updateTaskStatus.updateRequestQueued = 0;
-    updateTaskStatus.updateExecuted      = 0;
-    updateTaskStatus.since = medmTime();
-
-  /* initialize the periodic task */
-    periodicTask.systemTime = medmTime();
-    periodicTask.tenthSecond = 0.0; 
-    medmScheduler((XtPointer) &periodicTask, NULL);
-    moduleInitialized = True;
-    return True;
-}
+/* Global variables */
+static UpdateTaskStatus updateTaskStatus;
+static PeriodicTask periodicTask;
+static Boolean moduleInitialized = False;
+static double medmStartTime=0;
 
 void updateTaskStatusGetInfo(int *taskCount,
   int *periodicTaskCount,
@@ -229,16 +226,23 @@ void optionMenuSet(Widget menu, int buttonId)
     }
 }
 
-/* timer proc for updateTask, is called every .1 sec */
+/* Timer proc for update tasks.  Is called every TIMERINTERVAL sec.
+   Calls updateTaskMarkTimeout, which sets executeRequestsPendingCount
+   > 0 for timed out tasks.  Also polls CA.  */
 #ifdef __cplusplus
 static void medmScheduler(XtPointer cd, XtIntervalId *)
 #else
 static void medmScheduler(XtPointer cd, XtIntervalId *id)
 #endif
 {
-    PeriodicTask *t = (PeriodicTask *) cd;
+  /* KE: the cd is set to the static global periodicTask.  Could just
+     as well directly use the global here. */
+    PeriodicTask *t = (PeriodicTask *)cd;
     double currentTime = medmTime();
 
+#if DEBUG_UPDATE
+    print("medmScheduler: time=%.3f\n",medmElapsedTime());
+#endif    
 #ifdef MEDM_SOFT_CLOCK
     t->tenthSecond += 0.1;
     if (currentTime != t->systemTime) {
@@ -247,7 +251,7 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     }
 #endif
 
-  /* poll channel access  */
+  /* Poll channel access  */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -263,50 +267,80 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     ca_pend_event(0.00000001);
 #endif
 
-  /* wake up any periodic task which is timed out */
+  /* Look for displays that have a periodic task which is timed out */
     if (updateTaskStatus.periodicTaskCount > 0) { 
-	DisplayInfo *d = displayInfoListHead->next;
-	while (d) {
-	    if (d->periodicTaskCount > 0) {
-		UpdateTask *pt = d->updateTaskListHead.next;
+	DisplayInfo *di = displayInfoListHead->next;
+	while (di) {
+#if DEBUG_UPDATE
+	    print("  di=%x head->nextExecuteTime=%.3f head->timeInterval=%.3f\n",
+	      di,di->updateTaskListHead.nextExecuteTime-medmStartTime,
+	      di->updateTaskListHead.timeInterval);
+	    {
+		UpdateTask *tmp = di->updateTaskListHead.next;
+		int i=0;
 		
-	      /* DEBUG */
+		while (tmp) {
+		    print("    %d nextExecuteTime=%.3f timeInterval=%.3f\n",
+		      i++,tmp->nextExecuteTime-medmStartTime,
+		      tmp->timeInterval);
+		    tmp = tmp->next;
+		}
+		
+	    }
+#endif		    
+	    if (di->periodicTaskCount > 0) {
 #if 0
-		if(strstr(d->dlFile->name,"sMain.adl")) {
+	      /* KE: Doesn't make sense */
+		UpdateTask *pt = di->updateTaskListHead.next;
+#else		
+	      /* Check the head, which should have the soonest
+                 nextExecuteTime of any of the update tasks for this
+                 display */
+		UpdateTask *pt = &di->updateTaskListHead;
+#endif
+		
+#if DEBUG_SCHEDULER
+		if(strstr(di->dlFile->name,"sMain.adl")) {
 		    fprintf(stderr,"medmScheduler:\n");
-		    fprintf(stderr,"  d->updateTaskListHead.next is %d\n",
-		      d->updateTaskListHead.next);
-		    fprintf(stderr,"  d->periodicTaskCount: %d\n",
-		      d->periodicTaskCount);
-		    fprintf(stderr,"  d->dlFile->name: |%s|\n",
-		      d->dlFile->name);
+		    fprintf(stderr,"  di->updateTaskListHead.next is %d\n",
+		      di->updateTaskListHead.next);
+		    fprintf(stderr,"  di->periodicTaskCount: %d\n",
+		      di->periodicTaskCount);
+		    fprintf(stderr,"  di->dlFile->name: |%s|\n",
+		      di->dlFile->name);
 		}
 		if(!pt) {
 		    fprintf(stderr,"medmScheduler:\n");
-		    fprintf(stderr,"  d->updateTaskListHead.next is NULL\n");
-		    fprintf(stderr,"  d->periodicTaskCount: %d\n",
-		      d->periodicTaskCount);
-		    fprintf(stderr,"  d->dlFile->name: |%s|\n",
-		      d->dlFile->name);
+		    fprintf(stderr,"  di->updateTaskListHead.next is NULL\n");
+		    fprintf(stderr,"  di->periodicTaskCount: %d\n",
+		      di->periodicTaskCount);
+		    fprintf(stderr,"  di->dlFile->name: |%s|\n",
+		      di->dlFile->name);
 		    fprintf(stderr,"Aborting\n");
 		    abort();
-		} else
-#endif		  
-	      /* End DEBUG */
+		}
+#endif
 		if (pt->nextExecuteTime < currentTime) {
 		    updateTaskMarkTimeout(pt,currentTime);
+#if DEBUG_UPDATE
+		    print("  nextExecuteTime=%.3f timeInterval=%.3f\n",
+		      pt->nextExecuteTime-medmStartTime,
+		     pt->timeInterval);
+#endif		    
 		}
 	    }
-	    d = d->next;
+	    di = di->next;
 	}
     }
-  /* if needed, install the work proc */
+
+  /* If needed, install the work proc */
     if ((updateTaskStatus.updateRequestQueued > 0) && 
       (!updateTaskStatus.workProcId)) {
 	updateTaskStatus.workProcId =
 	  XtAppAddWorkProc(appContext,updateTaskWorkProc,&updateTaskStatus);
     }
-  /* reinstall the timer proc to be called in TIMERINTERVAL ms */
+    
+  /* Reinstall the timer proc to be called again in TIMERINTERVAL ms */
     t->id = XtAppAddTimeOut(appContext,TIMERINTERVAL,medmScheduler,cd);
 }
 
@@ -334,6 +368,31 @@ double medmTime()
 }
 #endif
 
+void startMedmScheduler(void)
+{
+    if (!moduleInitialized) medmInitSharedDotC();
+    medmScheduler((XtPointer)&periodicTask, NULL);
+}
+
+void stopMedmScheduler(void)
+{
+    if (!moduleInitialized) medmInitSharedDotC();
+    if(periodicTask.id) {
+	XtRemoveTimeOut(periodicTask.id);
+	periodicTask.id = (XtIntervalId)0;
+    }
+}
+
+double medmElapsedTime()
+{
+    return (medmTime()-medmStartTime);
+}
+
+double medmResetElapsedTime()
+{
+    return(medmStartTime=medmTime());
+}
+
 /* 
  *  ---------------------------
  *  routines for update tasks
@@ -343,6 +402,7 @@ double medmTime()
 void updateTaskInit(DisplayInfo *displayInfo)
 {
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
+    
     pt->executeTask = NULL;
     pt->destroyTask = NULL;
     pt->clientData = NULL;
@@ -355,6 +415,34 @@ void updateTaskInit(DisplayInfo *displayInfo)
     displayInfo->periodicTaskCount = 0;
 
     if (!moduleInitialized) medmInitSharedDotC();
+}
+
+Boolean medmInitSharedDotC()
+{
+#if 0
+    if (moduleInitialized) return True;
+#endif    
+    
+  /* Initialize static global variable updateTaskStatus */
+    updateTaskStatus.workProcId          = 0;
+    updateTaskStatus.nextToServe         = NULL;
+    updateTaskStatus.taskCount           = 0;
+    updateTaskStatus.periodicTaskCount   = 0;
+    updateTaskStatus.updateRequestCount  = 0;
+    updateTaskStatus.updateDiscardCount  = 0;
+    updateTaskStatus.periodicUpdateRequestCount = 0;
+    updateTaskStatus.periodicUpdateDiscardCount = 0;
+    updateTaskStatus.updateRequestQueued = 0;
+    updateTaskStatus.updateExecuted      = 0;
+    updateTaskStatus.since = medmTime();
+
+  /* Initialize the periodic task */
+    periodicTask.systemTime = medmStartTime = medmTime();
+    periodicTask.tenthSecond = 0.0; 
+    periodicTask.id = (XtIntervalId)0; 
+    moduleInitialized = True;
+
+    return True;
 }
 
 UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
@@ -390,7 +478,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
 	displayInfo->updateTaskListTail->next = pt;
 	displayInfo->updateTaskListTail = pt;
 
-      /* ??? Should never execute this branch since pt->timeInterval=0.0 */
+      /* KE: Should never execute this branch since pt->timeInterval=0.0 */
 	if (pt->timeInterval > 0.0) {
 	    displayInfo->periodicTaskCount++;
 	    updateTaskStatus.periodicTaskCount++;
@@ -493,15 +581,18 @@ int updateTaskMarkTimeout(UpdateTask *pt, double currentTime)
     UpdateTask *tmp = head->next;
     int count = 0;
     
-  /* reset the nextExecuteTime for the display */
+#if 0
+  /* Reset the nextExecuteTime for the display */
     head->nextExecuteTime = currentTime + head->timeInterval;
-    while (tmp) {
-      /* if periodic task */
-	if (tmp->timeInterval > 0.0) {
-	  /* mark if the task is time out already */
+#endif
+  /* Loop over the update task list and check for timeouts */
+    while(tmp) {
+      /* Check if periodic task */
+	if(tmp->timeInterval > 0.0) {
+	  /* Mark if the task is timed out already */
 	    if (currentTime > tmp->nextExecuteTime) {
 		count++;
-		if (tmp->executeRequestsPendingCount > 0) {
+		if(tmp->executeRequestsPendingCount > 0) {
 		    updateTaskStatus.periodicUpdateDiscardCount++;
 		} else {
 		    updateTaskStatus.periodicUpdateRequestCount++;
@@ -509,11 +600,11 @@ int updateTaskMarkTimeout(UpdateTask *pt, double currentTime)
 		}
 		tmp->executeRequestsPendingCount++;
 		tmp->nextExecuteTime += tmp->timeInterval;
-	      /* retrieve the closest next execute time */
-		if (tmp->nextExecuteTime < head->nextExecuteTime) {
-		    head->nextExecuteTime = tmp->nextExecuteTime;
-		}
 	    }
+	}
+      /* Set the next execute time for head */
+	if(tmp->nextExecuteTime < head->nextExecuteTime) {
+	    head->nextExecuteTime = tmp->nextExecuteTime;
 	}
 	tmp = tmp->next;
     }
@@ -536,10 +627,10 @@ void updateTaskSetScanRate(UpdateTask *pt, double timeInterval)
     UpdateTask *head = &(pt->displayInfo->updateTaskListHead);
     double currentTime = medmTime();
 
-  /*
-   * whether to increase or decrease the periodic task count depends
-   * on how timeInterval changes
-   */
+  /* timeInterval is in seconds */
+    
+  /* Whether to increase or decrease the periodic task count depends
+   * on how timeInterval changes */
     if ((pt->timeInterval == 0.0) && (timeInterval != 0.0)) {
       /* was zero, now non-zero */
 	pt->displayInfo->periodicTaskCount++;
@@ -550,11 +641,8 @@ void updateTaskSetScanRate(UpdateTask *pt, double timeInterval)
 	updateTaskStatus.periodicTaskCount--;
     }
 
-  /*
-   * set up the next scan time for this task, if
-   * this is the sooner one, set it to the display
-   * scan time too.
-   */
+  /* Set up the next scan time for this task, if this is the sooner
+   * one, set it to the display scan time too */
     pt->timeInterval = timeInterval;
     pt->nextExecuteTime = currentTime + pt->timeInterval;
     if (pt->nextExecuteTime < head->nextExecuteTime) {
@@ -572,37 +660,41 @@ void updateTaskAddDestroyCb(UpdateTask *pt, void (*destroyTaskCb)(XtPointer))
     pt->destroyTask = destroyTaskCb;
 }
 
-/* work proc for updateTask, is called when medm is not busy */
+/* Work proc for updateTask.  Is called when medm is not busy.  Checks
+   for update tasks with executeRequestspendingCount > 0 and executes
+   them. */
 Boolean updateTaskWorkProc(XtPointer cd)
 {
-    UpdateTaskStatus *ts = (UpdateTaskStatus *) cd;
+    UpdateTaskStatus *ts = (UpdateTaskStatus *)cd;
     UpdateTask *t = ts->nextToServe;
     double endTime;
    
+#if DEBUG_UPDATE
+    print("updateTaskWorkProc: time=%.3f\n",medmElapsedTime());
+#endif    
     endTime = medmTime() + WORKINTERVAL; 
  
   /* Do for WORKINTERVAL sec */
     do {
-      /* if no requests queued, remove work proc */
+      /* If no requests queued, remove work proc */
 	if (ts->updateRequestQueued <= 0) {
 	    ts->workProcId = 0; 
 	    return True;
 	} 
-      /* if no valid update task, find one */
+      /* If no valid update task, find one */
 	if (t == NULL) {
-	    DisplayInfo *d = displayInfoListHead->next;
-
-	  /* if no display, remove work proc */
-	    if (d == NULL) {
+	    DisplayInfo *di = displayInfoListHead->next;
+	  /* If no display, remove work proc */
+	    if (di == NULL) {
 		ts->workProcId = 0;
 		return True;
 	    }
-	  /* find the next update task */
-	    while (d) {
-		if (t = d->updateTaskListHead.next) break;
-		d = d->next;
+	  /* Loop over displays to find an update task */
+	    while (di) {
+		if (t = di->updateTaskListHead.next) break;
+		di = di->next;
 	    }
-	  /* if no update task found, remove work proc */
+	  /* If no update task found, remove work proc */
 	    if (t == NULL) {
 		ts->workProcId = 0;
 		return True;
@@ -610,31 +702,33 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	    ts->nextToServe = t;
 	}
 
-      /* at least one update task has been found
-	 find one which has executeRequestsPendingCount > 0 */ 
+      /* At least one update task has been found.  Find one which has
+	 executeRequestsPendingCount > 0 */
 	while (t->executeRequestsPendingCount <= 0 ) {
-	    DisplayInfo *d = t->displayInfo;
+	    DisplayInfo *di = t->displayInfo;
 	    t = t->next;
 	    while (t == NULL) {
-	      /* end of the update tasks for this display,
-		 check the next display */
-		d = d->next;
-	      /* if at the end of the displays, go to the beginning */
-		if (d == NULL) {
-		    d = displayInfoListHead->next;
+	      /* End of the update tasks for this display, check the
+		 next display */
+		di = di->next;
+	      /* If at the end of the displays, go to the beginning */
+		if (di == NULL) {
+		    di = displayInfoListHead->next;
 		}
-		t = d->updateTaskListHead.next;
+		t = di->updateTaskListHead.next;
 	    }      
-	  /* found same t again, have now checked all displays,
-	     there is nothing to do, remove work proc */
+	  /* If found same t again, have now checked all displays and
+	     there is nothing to do.  Remove work proc */
 	    if (t == ts->nextToServe) {
 		ts->workProcId = 0;
 		return True;
 	    }
 	}
+      /* An update task with executeRequestsPendingCount > 0 has been
+         found.  Set it to be the next to serve.  */
 	ts->nextToServe = t;
 
-      /* repaint the selected region */
+      /* Execute it */
 	if (t->overlapped) {
 	    DisplayInfo *pDI = t->displayInfo;
 	    Display *display = XtDisplay(pDI->drawingArea);
@@ -680,7 +774,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 		}
 		t = t->next;
 	    }
-	  /* release the clipping region */
+	  /* Release the clipping region */
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
 	    if (region) XDestroyRegion(region);
@@ -698,31 +792,34 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	}     
 	ts->updateExecuted++;
 	ts->updateRequestQueued--;
-  
-      /* find next to serve */
+      /* Reset the executeRequestsPendingCount */
 	t = ts->nextToServe;
 	t->executeRequestsPendingCount = 0;
-	while (t->executeRequestsPendingCount <=0 ) {
-	    DisplayInfo *d = t->displayInfo;
+	
+      /* Find the next one */
+	while (t->executeRequestsPendingCount <= 0 ) {
+	    DisplayInfo *di = t->displayInfo;
 	    t = t->next;
 	    while (t == NULL) {
-	      /* end of the update task for this display */
-	      /* check the next display.                 */
-		d = d->next;
-		if (d == NULL) {
-		    d = displayInfoListHead->next;
+	      /* End of the update tasks for this display, check the
+		 next display */
+		di = di->next;
+		if (di == NULL) {
+		    di = displayInfoListHead->next;
 		}
-		t = d->updateTaskListHead.next;
+		t = di->updateTaskListHead.next;
 	    }
+	  /* If found same t again, have now checked all displays and
+	     there is nothing to do.  Remove work proc */
 	    if (t == ts->nextToServe) {
-	      /* check all display, no update is needed */
 		ts->workProcId = 0;
 		return True;
 	    }
 	}
 	ts->nextToServe = t;
-    } while (endTime > medmTime());
-  /* keep the work proc active */
+    } while(endTime > medmTime());
+
+  /* Keep the work proc active */
     return False;
 }
 

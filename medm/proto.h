@@ -391,6 +391,8 @@ XtCallbackProc wmTakeFocusCallback(Widget w, ShellType shellType,
 void updateStatusFields(void);
 void optionMenuSet(Widget menu, int buttonId);
 double medmTime();
+double medmElapsedTime();
+double medmResetElapsedTime();
 void updateTaskInit(DisplayInfo *displayInfo);
 UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer), XtPointer);
 void updateTaskDeleteTask(UpdateTask *);
@@ -412,6 +414,8 @@ void updateTaskStatusGetInfo(int *taskCount,
   int *updateExecuted,
   double *timeInterval); 
 void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
+void startMedmScheduler(void);
+void stopMedmScheduler(void);
 
 /* updateMonitors.c */
 void localCvtDoubleToString( double, char *, unsigned short);

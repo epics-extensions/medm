@@ -2568,6 +2568,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
+	stopMedmScheduler();
         if (medmWorkProcId) {
 	    XtRemoveWorkProc(medmWorkProcId);
 	    medmWorkProcId = 0;
@@ -2575,6 +2576,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case DL_EXECUTE:
+	startMedmScheduler();
 	updateAllDisplayPositions();
 	if (relatedDisplayS) {
 	    XtSetSensitive(relatedDisplayS,False);
