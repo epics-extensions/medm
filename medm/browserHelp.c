@@ -187,7 +187,7 @@ static int execute(char *s)
     int status,pid,w;
     register void (*istat)(),(*qstat)();
     
-    if((pid=vfork()) == 0) {
+    if((pid=fork()) == 0) {
 	signal(SIGINT,SIG_DFL);
 	signal(SIGQUIT,SIG_DFL);
 	signal(SIGHUP,SIG_DFL);
