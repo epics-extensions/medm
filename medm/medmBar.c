@@ -156,8 +156,6 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /*
 	   * note that this is  "direction of increase" for Bar
 	   */
-	case LEFT:
-	    medmPrintf("\nexecuteDlBar: LEFT direction BARS not supported\n");
 	case RIGHT:
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	    XtSetArg(args[n],XcNscaleSegments,
@@ -166,9 +164,6 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 		  XtSetArg(args[n],XcNscaleSegments, 0); n++;
 	      }
 	      break;
-
-	case DOWN:
-	    medmPrintf("\nexecuteDlBar: DOWN direction BARS not supported\n");
 	case UP:
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
 	    XtSetArg(args[n],XcNscaleSegments,
@@ -402,12 +397,13 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"up"))
 		  dlBar->direction = UP;
-		else if (!strcmp(token,"down"))
-		  dlBar->direction = DOWN;
 		else if (!strcmp(token,"right"))
 		  dlBar->direction = RIGHT;
+	      /* Backward compatibility */
+		else if (!strcmp(token,"down"))
+		  dlBar->direction = UP;
 		else if (!strcmp(token,"left"))
-		  dlBar->direction = LEFT;
+		  dlBar->direction = RIGHT;
 	    } else if (!strcmp(token,"fillmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);

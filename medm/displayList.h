@@ -131,9 +131,7 @@ extern const VisibilityMode FIRST_VISIBILITY_MODE;
 #define NUM_DIRECTIONS          2
 typedef enum {
     UP    = 12,
-    RIGHT = 13,
-    DOWN  = 14,
-    LEFT  = 15
+    RIGHT = 13
 } Direction;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Direction FIRST_DIRECTION = UP;
@@ -144,8 +142,8 @@ extern const Direction FIRST_DIRECTION;
 
 #define NUM_EDGE_STYLES         2
 typedef enum {
-    SOLID = 16,
-    DASH  = 17
+    SOLID = 14,
+    DASH  = 15
 } EdgeStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EdgeStyle FIRST_EDGE_STYLE = SOLID;
@@ -155,8 +153,8 @@ extern const EdgeStyle FIRST_EDGE_STYLE;
 
 #define NUM_FILL_STYLES         2
 typedef enum {
-    F_SOLID   = 18,
-    F_OUTLINE = 19
+    F_SOLID   = 16,
+    F_OUTLINE = 17
 } FillStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillStyle FIRST_FILL_STYLE = F_SOLID;
@@ -167,14 +165,14 @@ extern const FillStyle FIRST_FILL_STYLE;
 
 #define NUM_TEXT_FORMATS        8
 typedef enum {
-    DECIMAL       = 20,
-    EXPONENTIAL   = 21,
-    ENGR_NOTATION = 22,
-    COMPACT       = 23,
-    TRUNCATED     = 24,
-    HEXADECIMAL   = 25,
-    OCTAL         = 26,
-    STRING        = 27
+    DECIMAL       = 18,
+    EXPONENTIAL   = 19,
+    ENGR_NOTATION = 20,
+    COMPACT       = 21,
+    TRUNCATED     = 22,
+    HEXADECIMAL   = 23,
+    OCTAL         = 24,
+    STRING        = 25
 } TextFormat;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextFormat FIRST_TEXT_FORMAT = DECIMAL;
@@ -184,9 +182,9 @@ extern const TextFormat FIRST_TEXT_FORMAT;
 
 #define NUM_TEXT_ALIGNS         3
 typedef enum {
-    HORIZ_LEFT   = 28,
-    HORIZ_CENTER = 29,
-    HORIZ_RIGHT  = 30
+    HORIZ_LEFT   = 26,
+    HORIZ_CENTER = 27,
+    HORIZ_RIGHT  = 28
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -196,9 +194,9 @@ extern const TextAlign FIRST_TEXT_ALIGN;
 
 #define NUM_STACKINGS           3
 typedef enum {
-    COLUMN      = 31,
-    ROW         = 32,
-    ROW_COLUMN  = 33
+    COLUMN      = 29,
+    ROW         = 30,
+    ROW_COLUMN  = 31
 } Stacking;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Stacking FIRST_STACKING = COLUMN;
@@ -208,8 +206,8 @@ extern const Stacking FIRST_STACKING;
 
 #define NUM_FILL_MODES          2
 typedef enum {
-    FROM_EDGE   = 34,
-    FROM_CENTER = 35 
+    FROM_EDGE   = 32,
+    FROM_CENTER = 33 
 } FillMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
@@ -219,9 +217,9 @@ extern const FillMode FIRST_FILL_MODE;
 
 #define NUM_TIME_UNITS          3
 typedef enum {
-    MILLISECONDS = 36,
-    SECONDS      = 37,
-    MINUTES      = 38
+    MILLISECONDS = 34,
+    SECONDS      = 35,
+    MINUTES      = 36
 } TimeUnits;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TimeUnits FIRST_TIME_UNIT = MILLISECONDS;
@@ -231,9 +229,9 @@ extern const TimeUnits FIRST_TIME_UNIT;
 
 #define NUM_CARTESIAN_PLOT_STYLES       3
 typedef enum {
-    POINT_PLOT      = 39,
-    LINE_PLOT       = 40,
-    FILL_UNDER_PLOT = 41
+    POINT_PLOT      = 37,
+    LINE_PLOT       = 38,
+    FILL_UNDER_PLOT = 39
 } CartesianPlotStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE = POINT_PLOT;
@@ -243,8 +241,8 @@ extern const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE;
 
 #define NUM_ERASE_OLDESTS       2
 typedef enum {
-    ERASE_OLDEST_OFF = 42,
-    ERASE_OLDEST_ON  = 43
+    ERASE_OLDEST_OFF = 40,
+    ERASE_OLDEST_ON  = 41
 } EraseOldest;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
@@ -254,9 +252,9 @@ extern const EraseOldest FIRST_ERASE_OLDEST;
 
 #define NUM_IMAGE_TYPES 3
 typedef enum {
-    NO_IMAGE   = 44,
-    GIF_IMAGE  = 45,
-    TIFF_IMAGE = 46
+    NO_IMAGE   = 42,
+    GIF_IMAGE  = 43,
+    TIFF_IMAGE = 44
 } ImageType;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
@@ -266,9 +264,9 @@ extern const ImageType FIRST_IMAGE_TYPE;
 
 #define NUM_CARTESIAN_PLOT_AXIS_STYLES 3
 typedef enum {
-    LINEAR_AXIS = 47,
-    LOG10_AXIS  = 48,
-    TIME_AXIS   = 49
+    LINEAR_AXIS = 45,
+    LOG10_AXIS  = 46,
+    TIME_AXIS   = 47
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -278,9 +276,9 @@ extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
 
 #define NUM_CARTESIAN_PLOT_RANGE_STYLES 3
 typedef enum {
-    CHANNEL_RANGE        = 50,
-    USER_SPECIFIED_RANGE = 51,
-    AUTO_SCALE_RANGE     = 52
+    CHANNEL_RANGE        = 48,
+    USER_SPECIFIED_RANGE = 49,
+    AUTO_SCALE_RANGE     = 50
 } CartesianPlotRangeStyle;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -291,8 +289,8 @@ extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 
 #define NUM_ERASE_MODES 2
 typedef enum {
-    ERASE_IF_NOT_ZERO = 53,
-    ERASE_IF_ZERO     = 54
+    ERASE_IF_NOT_ZERO = 51,
+    ERASE_IF_ZERO     = 52
 } eraseMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
@@ -302,8 +300,8 @@ extern const eraseMode_t FIRST_ERASE_MODE;
 
 #define NUM_RD_MODES 2
 typedef enum {
-    ADD_NEW_DISPLAY = 55,
-    REPLACE_DISPLAY = 56
+    ADD_NEW_DISPLAY = 53,
+    REPLACE_DISPLAY = 54
 } relatedDisplayMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayMode_t FIRST_RD_MODE = ADD_NEW_DISPLAY;
@@ -313,10 +311,10 @@ extern const relatedDisplayMode_t FIRST_RD_MODE;
 
 #define NUM_RD_VISUAL 4
 typedef enum {
-    RD_MENU       = 57,
-    RD_ROW_OF_BTN = 58,
-    RD_COL_OF_BTN = 59,
-    RD_HIDDEN_BTN = 60
+    RD_MENU       = 55,
+    RD_ROW_OF_BTN = 56,
+    RD_COL_OF_BTN = 57,
+    RD_HIDDEN_BTN = 58
 } relatedDisplayVisual_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayVisual_t FIRST_RD_VISUAL = RD_MENU;
@@ -326,13 +324,13 @@ extern const relatedDisplayVisual_t FIRST_RD_VISUAL;
 
 #define NUM_CP_TIME_FORMAT 7
 typedef enum {
-    HHMMSS    = 61,
-    HHMM      = 62,
-    HH00      = 63,
-    MMMDDYYYY = 64,
-    MMMDD     = 65,
-    MMDDHH00  = 66,
-    WDHH00    = 67
+    HHMMSS    = 59,
+    HHMM      = 60,
+    HH00      = 61,
+    MMMDDYYYY = 62,
+    MMMDD     = 63,
+    MMDDHH00  = 64,
+    WDHH00    = 65
 } CartesianPlotTimeFormat_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;
@@ -342,8 +340,8 @@ extern const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT;
 
 #define NUM_BOOLEAN 2
 typedef enum {
-    BOOLEAN_FALSE = 68,
-    BOOLEAN_TRUE  = 69
+    BOOLEAN_FALSE = 66,
+    BOOLEAN_TRUE  = 67
 } Boolean_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
@@ -354,10 +352,10 @@ extern const Boolean_t FIRST_BOOLEAN;
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-    COLOR_RULE_1 = 70,
-    COLOR_RULE_2 = 71,
-    COLOR_RULE_3 = 72,
-    COLOR_RULE_4 = 73
+    COLOR_RULE_1 = 68,
+    COLOR_RULE_2 = 69,
+    COLOR_RULE_3 = 70,
+    COLOR_RULE_4 = 71
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -369,9 +367,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS             8       /* NUM_TEXT_FORMATS */
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (73+1)  /* COLOR_RULE_4 + 1 */
+#define NUMBER_STRING_VALUES    (711)  /* COLOR_RULE_4 + 1 */
 #else
-#define NUMBER_STRING_VALUES    (69+1)  /* BOOLEAN_TRUE + 1 */
+#define NUMBER_STRING_VALUES    (67+1)  /* BOOLEAN_TRUE + 1 */
 #endif
 
 /*********************************************************************
@@ -388,7 +386,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "none", "outline", "limits", "channel",
     "static", "alarm", "discrete",
     "static", "if not zero", "if zero",
-    "up", "right", "down", "left",
+    "up", "right",
     "solid", "dash",
     "solid", "outline",
     "decimal", "exponential", "engr. notation", "compact", "truncated",

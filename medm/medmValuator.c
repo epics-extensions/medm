@@ -108,7 +108,6 @@ int valuatorFontListIndex(DlValuator *dlValuator)
     for (i = MAX_FONTS-1; i >=  0; i--) {
 	switch (dlValuator->direction) {
 	case UP:
-	case DOWN:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
 		if ( (int)(.30*dlValuator->object.width) >= 
@@ -128,7 +127,6 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 		break;
 	    }
 	    break;
-	case LEFT:
 	case RIGHT:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
@@ -212,16 +210,16 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     }
   /* need to handle Direction */
     switch (dlValuator->direction) {
-    case UP: case DOWN:
+    case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	  - scalePopupBorder); n++;
-	  break;
-    case LEFT: case RIGHT:
+	break;
+    case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
 	  - scalePopupBorder); n++;
-	  break;
+	break;
     }
   /* add in Valuator as userData for valuator keyboard entry handling */
     XtSetArg(args[n],XmNuserData,(XtPointer)pv); n++;
@@ -307,12 +305,12 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     }
   /* need to handle Direction */
     switch (dlValuator->direction) {
-    case UP: case DOWN:
+    case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	  - scalePopupBorder); n++;
 	break;
-    case LEFT: case RIGHT:
+    case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
 	  - scalePopupBorder); n++;
@@ -491,7 +489,6 @@ void handleValuatorExpose(
 
 	switch (dlValuator->direction) {
 	case UP:
-	case DOWN:       /* but we know it's really only UP */
 	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
 	    useableWidth = dlValuator->object.width - scaleWidth;
 	    if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS
@@ -546,8 +543,7 @@ void handleValuatorExpose(
 	    }
 	    break;
 	    
-	case LEFT:
-	case RIGHT:    /* but we know it's really only RIGHT */
+	case RIGHT:
 	    XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	    useableHeight = dlValuator->object.height - scaleHeight;
 	    
@@ -691,7 +687,6 @@ void valuatorRedrawValue(Valuator *pv,
 
     switch (dlValuator->direction) {
     case UP:
-    case DOWN:
 	XtVaGetValues(w, XmNscaleWidth,&scaleWidth, NULL);
 	useableWidth = dlValuator->object.width - scaleWidth;
 	textWidth = XTextWidth(font,stringValue,nChars);
@@ -703,8 +698,7 @@ void valuatorRedrawValue(Valuator *pv,
 	width = useableWidth;
 	height = font->ascent+font->descent;
 	break;
-    case LEFT:
-    case RIGHT:    /* but we know it's really only RIGHT */
+    case RIGHT:
 	XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	useableHeight = dlValuator->object.height - scaleHeight;
 	textWidth = XTextWidth(font,stringValue,nChars);
@@ -1318,12 +1312,13 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"up")) 
 		  dlValuator->direction = UP;
-		else if (!strcmp(token,"down"))
-		  dlValuator->direction = DOWN;
 		else if (!strcmp(token,"right"))
 		  dlValuator->direction = RIGHT;
+	      /* Backward compatibility */
+		else if (!strcmp(token,"down"))
+		  dlValuator->direction = UP;
 		else if (!strcmp(token,"left"))
-		  dlValuator->direction = LEFT;
+		  dlValuator->direction = RIGHT;
 	    } else if (!strcmp(token,"dPrecision")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);

@@ -148,8 +148,6 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /*
 	   * note that this is  "direction of increase"
 	   */
-	case DOWN:
-	    medmPrintf("\nexecuteDlIndicator: DOWN direction not supported\n");
 	case UP:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.width >INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -158,10 +156,6 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
 	      break;
-
-	case LEFT:
-	    medmPrintf(
-	      "\nexecuteDlIndicator: LEFT direction not supported\n");
 	case RIGHT:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -386,12 +380,13 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"up")) 
 		  dlIndicator->direction = UP;
-		else if (!strcmp(token,"down"))
-		  dlIndicator->direction = DOWN;
 		else if (!strcmp(token,"right"))
 		  dlIndicator->direction = RIGHT;
+	      /* Backward compatibility */
+		else if (!strcmp(token,"down"))
+		  dlIndicator->direction = UP;
 		else if (!strcmp(token,"left"))
-		  dlIndicator->direction = LEFT;
+		  dlIndicator->direction = RIGHT;
 	    }
 	    break;
 	case T_EQUAL:
