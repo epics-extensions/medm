@@ -585,7 +585,8 @@ NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
   char *name);
 void freeNameValueTable(NameValueTable *nameValueTable, int numEntries);
-DisplayInfo *findDisplay(char * filename, char *argsString);
+DisplayInfo *findDisplay(char *filename, char *argsString,
+  char *relatedDisplayFilename);
 void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString);
 void optionMenuSet(Widget menu, int buttonId);

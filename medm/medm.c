@@ -3759,7 +3759,7 @@ main(int argc, char *argv[])
 		  /* Check if a display with these parameters exists */
 		    if(popupExistingDisplay) {
 			existingDisplayInfo = findDisplay(fullPathName,
-			  name);
+			  name, NULL);
 		    }
 		    if(existingDisplayInfo) {
 			DisplayInfo *cdi;

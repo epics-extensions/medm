@@ -3305,7 +3305,8 @@ void freeNameValueTable(NameValueTable *nameValueTable, int numEntries)
 
 }
 
-DisplayInfo *findDisplay(char * filename, char *argsString)
+DisplayInfo *findDisplay(char *filename, char *argsString,
+  char *relatedDisplayFilename)
 {
     DisplayInfo *retVal = NULL;
     DisplayInfo *di;
@@ -3313,6 +3314,7 @@ DisplayInfo *findDisplay(char * filename, char *argsString)
     int numNameValues;
     int i, matched;
     char pathName[MAX_TOKEN_LENGTH];
+    FILE *filePtr;
 
   /* Generate the name-value table for these args */
     if(argsString) {
@@ -3322,9 +3324,17 @@ DisplayInfo *findDisplay(char * filename, char *argsString)
 	numNameValues = 0;
     }
 
-  /* Convert to a full path name */
-    convertNameToFullPath(filename, pathName, MAX_TOKEN_LENGTH);
-
+  /* Open the file so we can get the name that would be used */
+    strncpy(pathName, filename, MAX_TOKEN_LENGTH);
+    filePtr = dmOpenUsableFile(pathName, relatedDisplayFilename);
+    if(!filePtr) {
+      /* It can't be opened anyway */
+	return NULL;
+    } else {
+      /* We just wanted the pathName */
+	fclose(filePtr);
+    }
+    
   /* Loop over displays */
     di = displayInfoListHead->next;
     while(di) {

@@ -895,7 +895,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
       /* Check for an existing display */
 	existingDisplayInfo = NULL;
 	if(popupExistingDisplay) {
-	    existingDisplayInfo = findDisplay(filename,processedArgs);
+	    existingDisplayInfo = findDisplay(filename, processedArgs,
+	      displayInfo->dlFile->name);
 	    if(existingDisplayInfo) {
 		DisplayInfo *cdi;
 		
