@@ -508,6 +508,7 @@ DlElement *handleTextCreate(int x0, int y0)
         case LeaveNotify:
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabKeyboard(display,CurrentTime);
+	    XFlush(display);
 	    dlText->object.width = XTextWidth(fontTable[fontIndex],
 	      dlText->textix,strlen(dlText->textix));
 	    XtRemoveTimeOut(intervalId);

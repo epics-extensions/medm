@@ -61,6 +61,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
+#ifdef XRTGRAPH3
+#include <XrtGraphProp.h>
+#endif
+
 /* DEBUG */
 #if DEBUG_CARTESIAN_PLOT
 #include "medmCartesianPlot.h"
@@ -135,26 +139,37 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 		    if (widget = element->widget) {
 			popupValuatorKeyboardEntry(widget,displayInfo,event);
 			XUngrabPointer(display,CurrentTime);
+			XFlush(display);
 		    }
 		    break;
 
 		case DL_CartesianPlot:
 		    if (widget = element->widget) {
-		      /* update globalResourceBundle with this element's info */
-			executeTimeCartesianPlotWidget = widget;
-			updateGlobalResourceBundleFromElement(element);
-			if (!cartesianPlotAxisS) {
-			    cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
+			if (xEvent->state & ControlMask) {
+			  /* Bring up XRT Property Editor */
+#ifdef XRTGRAPH3
+			    XrtUpdatePropertyEditor(widget);
+			    XrtPopupPropertyEditor(widget,
+			      "XRT Property Editor",True);
+#endif			    
 			} else {
-			    XtSetSensitive(cartesianPlotAxisS,True);
-			}
-
-		      /* update cartesian plot axis data from globalResourceBundle */
+			  /* Bring up plot axis data dialog */
+			  /* update globalResourceBundle with this element's info */
+			    executeTimeCartesianPlotWidget = widget;
+			    updateGlobalResourceBundleFromElement(element);
+			    if (!cartesianPlotAxisS) {
+				cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
+			    } else {
+				XtSetSensitive(cartesianPlotAxisS,True);
+			    }
+			    
+			  /* update cartesian plot axis data from globalResourceBundle */
 		      /* KE:  Actually from XtGetValues */
-			updateCartesianPlotAxisDialogFromWidget(widget);
-
-			XtManageChild(cpAxisForm);
-			XtPopup(cartesianPlotAxisS,XtGrabNone);
+			    updateCartesianPlotAxisDialogFromWidget(widget);
+			    
+			    XtManageChild(cpAxisForm);
+			    XtPopup(cartesianPlotAxisS,XtGrabNone);
+			}
 
 #if DEBUG_CARTESIAN_PLOT
 		      /* Also requires #include "medmCartesianPlot.h" */
@@ -230,6 +245,7 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 		      /* End DEBUG */
 			
 			XUngrabPointer(display,CurrentTime);
+			XFlush(display);
 		    }
 		    break;
 		default:

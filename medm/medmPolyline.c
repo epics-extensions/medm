@@ -554,6 +554,7 @@ int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0)
 	    }
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
+	    XFlush(display);
             calculateTheBoundingBox(dlPolyline);
 	  /* Update global resource bundle  - then do create out of it */
 	    globalResourceBundle.x = dlPolyline->object.x;
@@ -702,6 +703,7 @@ DlElement *handlePolylineCreate(
 		}
 		XUngrabPointer(display,CurrentTime);
 		XUngrabServer(display);
+		XFlush(display);
 		calculateTheBoundingBox(dlPolyline);
 		XBell(display,50); XBell(display,50);
 		return (element);

@@ -573,6 +573,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
+	    XFlush(display);
             calculateTheBoundingBox(dlPolygon);
 	  /* Update global resource bundle  - then do create out of it */
 	    globalResourceBundle.x = dlPolygon->object.x;
@@ -720,6 +721,7 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		}
 		XUngrabPointer(display,CurrentTime);
 		XUngrabServer(display);
+		XFlush(display);
 	      /* To ensure closure, make sure last point = first point */
 		if(!(dlPolygon->points[0].x ==
 		  dlPolygon->points[dlPolygon->nPoints-1].x &&

@@ -1064,6 +1064,7 @@ void doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
+	    XFlush(display);
 	    *initialX =  MIN(x0,event.xbutton.x);
 	    *initialY =  MIN(y0,event.xbutton.y);
 	    *finalX   =  MAX(x0,event.xbutton.x);
@@ -1168,6 +1169,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    }
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
+	    XFlush(display);
 	    *finalX = initialX + xOffset;
 	    *finalY = initialY + yOffset;
 	  /* (Always return true - for clipped dragging...) */
@@ -1310,7 +1312,7 @@ DisplayInfo *doPasting(Position *displayX, Position *displayY,
 	    }
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
-	    XSync(display,False);
+	    XFlush(display);
 	    while (XtAppPending(appContext)) {
 		XtAppNextEvent(appContext,&event);
 		XtDispatchEvent(&event);
@@ -1473,6 +1475,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
+	    XFlush(display);
 	    *finalX =  initialX + xOffset;
 	    *finalY =  initialY + yOffset;
 	    return (inWindow);	/* Return from while(TRUE) */
