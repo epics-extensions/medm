@@ -323,6 +323,7 @@ void dmDisplayListParse(
   int numPairs;
   DlComposite *dlComposite = NULL;
 
+  initializeGlobalResourceBundle();
 /* 
  * allocate a DisplayInfo structure and shell for this display file/list
  */
