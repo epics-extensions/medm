@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_STATISTICS 0
+
 #define MAX_ERRORS 25
 
 #define TIME_STRING_MAX 81
@@ -66,6 +68,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define ERR_MSG_SEND_BTN 4
 #define ERR_MSG_HELP_BTN 5
 
+#define CASTUDY_INITIAL_UPDATE (XtPointer)1
+#define CASTUDY_REDRAW_ONLY    (XtPointer)2
+
+#define CASTUDYINTERVAL 5000
+#define MIN_SIGNIFICANT_TIME_INTERVAL .01
 
 #include "medm.h"
 #include <time.h>
@@ -97,13 +104,13 @@ static int earlyMessagesDone = 0;
 
 /* popen, pclose  may not be defined for strict ANSI */
 extern FILE *popen(const char *, const char *);
-extern int	pclose(FILE *);
+extern int pclose(FILE *);
 
 static Widget errMsgText = NULL;
 static Widget errMsgSendSubjectText = NULL;
 static Widget errMsgSendToText = NULL;
 static Widget errMsgSendText = NULL;
-static XtIntervalId errMsgDlgTimeOutId = 0;
+static XtIntervalId caStudyDlgTimeOutId = 0;
 
 void errMsgSendDlgCreateDlg();
 void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callData);
@@ -845,14 +852,16 @@ void caStudyDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callData)
     UNREFERENCED(callData);
 
     if(caStudyS != NULL) {
+	medmStopUpdateCAStudyDlg();
 	XtUnmanageChild(caStudyS);
-	caUpdateStudyDlg = False;
     }
     return;
 }
 
-void caStudyDlgResetButtonCb(Widget w, XtPointer clientData, XtPointer callData)
+void medmResetUpdateCAStudyDlg(Widget w, XtPointer clientData,
+  XtPointer callData)
 {
+    UNREFERENCED(w);
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
@@ -862,11 +871,11 @@ void caStudyDlgResetButtonCb(Widget w, XtPointer clientData, XtPointer callData)
     aveUpdateRequested = 0.0;
     aveUpdateRequestDiscarded = 0.0;
 
-  /* Remove the timeout and update */
-    if(errMsgDlgTimeOutId) XtRemoveTimeOut(errMsgDlgTimeOutId);
-    else errMsgDlgTimeOutId = 0;
-    medmUpdateCAStudyDlg(NULL,&errMsgDlgTimeOutId);
-    return;
+  /* Reset the statistics */
+    updateTaskStatusGetInfo(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+
+  /* Restart the timeout */
+    medmStartUpdateCAStudyDlg();    
 }
 
 void caStudyDlgModeButtonCb(Widget w, XtPointer clientData, XtPointer callData)
@@ -874,8 +883,11 @@ void caStudyDlgModeButtonCb(Widget w, XtPointer clientData, XtPointer callData)
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
+  /* Toggle the mode */
     caStudyAverageMode = !(caStudyAverageMode);
-    return;
+
+  /* Redraw the dialog */
+    medmUpdateCAStudyDlg(CASTUDY_REDRAW_ONLY,&caStudyDlgTimeOutId);
 }
 
 void medmCreateCAStudyDlg() {
@@ -887,9 +899,8 @@ void medmCreateCAStudyDlg() {
     XmString str;
 
     if(!caStudyS) {
-
 	if(mainShell == NULL) return;
-
+	
 	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Statistics Window",
@@ -948,137 +959,180 @@ void medmCreateCAStudyDlg() {
 	XtAddCallback(closeButton, XmNactivateCallback,
 	  caStudyDlgCloseButtonCb, NULL);
 	XtAddCallback(resetButton,XmNactivateCallback,
-	  caStudyDlgResetButtonCb, NULL);
+	  medmResetUpdateCAStudyDlg, NULL);
 	XtAddCallback(modeButton,XmNactivateCallback,
 	  caStudyDlgModeButtonCb, NULL);
 	XtManageChild(actionArea);
 	XtManageChild(pane);
     }
-
     XtManageChild(caStudyS);
-    caUpdateStudyDlg = True;
+
+  /* Start it if in EXECUTE mode */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	if(errMsgDlgTimeOutId == 0)
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
-	    medmUpdateCAStudyDlg,NULL);
-    } else {
-	errMsgDlgTimeOutId = 0;
+	medmStartUpdateCAStudyDlg();    
     }
 }
 
-static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
+static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
 {
-    UNREFERENCED(clientData);
-    UNREFERENCED(callData);
+    XmString str;
+    int taskCount;
+    int periodicTaskCount;
+    int updateRequestCount;
+    int updateDiscardCount;
+    int periodicUpdateRequestCount;
+    int periodicUpdateDiscardCount;
+    int updateRequestQueued;
+    int updateExecuted;
+    int totalUpdateRequested;
+    int totalUpdateDiscarded;
+    double timeInterval; 
+    int channelCount;
+    int channelConnected;
+    int caEventCount;
 
-    if(!caStudyS) return;
-    if(caUpdateStudyDlg) {
-	XmString str;
-	int taskCount;
-	int periodicTaskCount;
-	int updateRequestCount;
-	int updateDiscardCount;
-	int periodicUpdateRequestCount;
-	int periodicUpdateDiscardCount;
-	int updateRequestQueued;
-	int updateExecuted;
-	int totalUpdateRequested;
-	int totalUpdateDiscarded;
-	double timeInterval; 
-	int channelCount;
-	int channelConnected;
-	int caEventCount;
+    UNREFERENCED(id);
 
-	updateTaskStatusGetInfo(&taskCount,
-	  &periodicTaskCount,
-	  &updateRequestCount,
-	  &updateDiscardCount,
-	  &periodicUpdateRequestCount,
-	  &periodicUpdateDiscardCount,
-	  &updateRequestQueued,
-	  &updateExecuted,
-	  &timeInterval); 
-#ifdef MEDM_CDEV
-      /* No channels connected or CA events for CDEV */
-	channelConnected = caEventCount = 0;
-#else
-	caTaskGetInfo(&channelCount, &channelConnected, &caEventCount);
+#if DEBUG_STATISTICS
+    print("medmUpdateCAStudyDlg[1]: id=%x elapsed=%f\n",caStudyDlgTimeOutId,
+      totalTimeElapsed);
 #endif
-	totalUpdateDiscarded = updateDiscardCount + periodicUpdateDiscardCount;
-	totalUpdateRequested = updateRequestCount + periodicUpdateRequestCount +
-	  totalUpdateDiscarded;
-	if(caStudyAverageMode) {
-	    double elapseTime = totalTimeElapsed;
-	    totalTimeElapsed += timeInterval;
-	    aveCAEventCount = (aveCAEventCount * elapseTime + caEventCount) /
+
+  /* Check if we should do something */
+  /* clientData is NULL except when starting up */
+    if(!caStudyS ||
+      (clientData != CASTUDY_INITIAL_UPDATE && !caStudyDlgTimeOutId) || 
+      globalDisplayListTraversalMode == DL_EDIT) {
+	caStudyDlgTimeOutId=0;
+	return;
+    }
+
+  /* Update the dialog */
+    updateTaskStatusGetInfo(&taskCount,
+      &periodicTaskCount,
+      &updateRequestCount,
+      &updateDiscardCount,
+      &periodicUpdateRequestCount,
+      &periodicUpdateDiscardCount,
+      &updateRequestQueued,
+      &updateExecuted,
+      &timeInterval); 
+#ifdef MEDM_CDEV
+  /* No channels connected or CA events for CDEV */
+    channelConnected = caEventCount = 0;
+#else
+    caTaskGetInfo(&channelCount, &channelConnected, &caEventCount);
+#endif
+    totalUpdateDiscarded = updateDiscardCount + periodicUpdateDiscardCount;
+    totalUpdateRequested = updateRequestCount + periodicUpdateRequestCount +
+      totalUpdateDiscarded;
+    if(caStudyAverageMode) {
+	double elapsedTime = totalTimeElapsed;
+	totalTimeElapsed += timeInterval;
+	if(totalTimeElapsed > MIN_SIGNIFICANT_TIME_INTERVAL) {
+	    aveCAEventCount = (aveCAEventCount * elapsedTime + caEventCount) /
 	      totalTimeElapsed;
 	    aveUpdateExecuted =
-	      (aveUpdateExecuted * elapseTime + updateExecuted) /
+	      (aveUpdateExecuted * elapsedTime + updateExecuted) /
 	      totalTimeElapsed;
 	    aveUpdateRequested =
-	      (aveUpdateRequested * elapseTime + totalUpdateRequested) /
+	      (aveUpdateRequested * elapsedTime + totalUpdateRequested) /
 	      totalTimeElapsed;
 	    aveUpdateRequestDiscarded =
-	      (aveUpdateRequestDiscarded * elapseTime + totalUpdateDiscarded) /
+	      (aveUpdateRequestDiscarded * elapsedTime + totalUpdateDiscarded) /
 	      totalTimeElapsed;
-	    sprintf(caStudyMsg,
-	      "AVERAGES\n\n"
-	      "CA Incoming Events        = %8.1f\n"
-	      "MEDM Objects Updated      = %8.1f\n"
-	      "Update Requests           = %8.1f\n"
-	      "Update Requests Discarded = %8.1f\n\n"
-	      "Total Time Elapsed        = %8.1f\n",
-	      aveCAEventCount,
-	      aveUpdateExecuted,
-	      aveUpdateRequested,
-	      aveUpdateRequestDiscarded,
-	      totalTimeElapsed);
-	} else { 
-	    sprintf(caStudyMsg,  
-	      "Time Interval (sec)       = %8.2f\n"
-	      "CA Channels               = %8d\n"
-	      "CA Channels Connected     = %8d\n"
-	      "CA Incoming Events        = %8d\n"
-	      "MEDM Objects Updating     = %8d\n"
-	      "MEDM Objects Updated      = %8d\n"
-	      "Update Requests           = %8d\n"
-	      "Update Requests Discarded = %8d\n"
-	      "Update Requests Queued    = %8d\n",
-	      timeInterval,
-	      channelCount,
-	      channelConnected,
-	      caEventCount,
-	      taskCount,
-	      updateExecuted,
-	      totalUpdateRequested,
-	      totalUpdateDiscarded,
-	      updateRequestQueued);
-	}                   
-	str = XmStringLtoRCreate(caStudyMsg,XmFONTLIST_DEFAULT_TAG);
-	XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
-	XmStringFree(str);
-	XFlush(XtDisplay(caStudyS));
-	XmUpdateDisplay(caStudyS);
-	if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	    if(errMsgDlgTimeOutId == *id)
-	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
-		medmUpdateCAStudyDlg, NULL);
 	} else {
-	    errMsgDlgTimeOutId = 0;
+	    aveCAEventCount =  aveUpdateExecuted = aveUpdateRequested =
+	      aveUpdateRequestDiscarded = 0.0;
 	}
-    } else {
-	errMsgDlgTimeOutId = 0;
+	sprintf(caStudyMsg,
+	  "AVERAGES\n\n"
+	  "CA Incoming Events        = %8.1f\n"
+	  "MEDM Objects Updated      = %8.1f\n"
+	  "Update Requests           = %8.1f\n"
+	  "Update Requests Discarded = %8.1f\n\n"
+	  "Total Time Elapsed        = %8.1f\n",
+	  aveCAEventCount,
+	  aveUpdateExecuted,
+	  aveUpdateRequested,
+	  aveUpdateRequestDiscarded,
+	  totalTimeElapsed);
+    } else { 
+	totalTimeElapsed += timeInterval;
+	sprintf(caStudyMsg,  
+	  "Time Interval (sec)       = %8.2f\n"
+	  "CA Channels               = %8d\n"
+	  "CA Channels Connected     = %8d\n"
+	  "CA Incoming Events        = %8d\n"
+	  "MEDM Objects Updating     = %8d\n"
+	  "MEDM Objects Updated      = %8d\n"
+	  "Update Requests           = %8d\n"
+	  "Update Requests Discarded = %8d\n"
+	  "Update Requests Queued    = %8d\n",
+	  timeInterval,
+	  channelCount,
+	  channelConnected,
+	  caEventCount,
+	  taskCount,
+	  updateExecuted,
+	  totalUpdateRequested,
+	  totalUpdateDiscarded,
+	  updateRequestQueued);
+    }                   
+    str = XmStringLtoRCreate(caStudyMsg,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
+    XmStringFree(str);
+    XFlush(XtDisplay(caStudyS));
+    XmUpdateDisplay(caStudyS);
+
+  /* Call it again */
+    if(clientData != CASTUDY_REDRAW_ONLY) {
+	caStudyDlgTimeOutId = XtAppAddTimeOut(appContext, CASTUDYINTERVAL,
+	  medmUpdateCAStudyDlg, NULL);
     }
+#if DEBUG_STATISTICS
+    print("medmUpdateCAStudyDlg[2]: id=%x elapsed=%f\n",caStudyDlgTimeOutId,
+      totalTimeElapsed);
+#endif
 }
 
-void medmStartUpdateCAStudyDlg() {
-    if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	if(errMsgDlgTimeOutId == 0) 
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 3000,
-	    medmUpdateCAStudyDlg, NULL);
-    } else {
-	errMsgDlgTimeOutId = 0;
+void medmStartUpdateCAStudyDlg()
+{
+#if DEBUG_STATISTICS
+    print("medmStartUpdateCAStudyDlg[1]: id=%x\n",caStudyDlgTimeOutId);
+#endif
+    if(caStudyDlgTimeOutId) medmStopUpdateCAStudyDlg();
+#if 0
+  /* Start the timer.  First update will be at the end of the
+     interval. */
+    caStudyDlgTimeOutId = XtAppAddTimeOut(appContext, CASTUDYINTERVAL,
+      medmUpdateCAStudyDlg, NULL);
+#else
+  /* Call the update procedure with a client data of
+     CASTUDY_INITIAL_UPDATE to indicate we are starting up.  It will
+     update and then set caStudyDlgTimeOutId. */
+#if DEBUG_STATISTICS
+    print("medmStartUpdateCAStudyDlg[2]: id=%x\n",caStudyDlgTimeOutId);
+#endif
+    medmUpdateCAStudyDlg(CASTUDY_INITIAL_UPDATE,&caStudyDlgTimeOutId);
+#if DEBUG_STATISTICS
+    print("medmStartUpdateCAStudyDlg[3]: id=%x\n",caStudyDlgTimeOutId);
+#endif
+#endif    
+}
+
+void medmStopUpdateCAStudyDlg()
+{
+#if DEBUG_STATISTICS
+    print("medmStopUpdateCAStudyDlg[1]: id=%x\n",caStudyDlgTimeOutId);
+#endif
+    if(caStudyDlgTimeOutId) {
+	XtRemoveTimeOut(caStudyDlgTimeOutId);
+	caStudyDlgTimeOutId = 0;
     }
+#if DEBUG_STATISTICS
+    print("medmStopUpdateCAStudyDlg[2]: id=%x\n",caStudyDlgTimeOutId);
+#endif
 }
 
 int xErrorHandler(Display *dpy, XErrorEvent *event)

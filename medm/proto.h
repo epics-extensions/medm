@@ -278,6 +278,9 @@ void medmPrintf(int priority, char *format, ...);
 int checkEarlyMessages(void);
 void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
+void medmStopUpdateCAStudyDlg();
+void medmResetUpdateCAStudyDlg(Widget w, XtPointer clientData,
+  XtPointer callData);
 int xErrorHandler(Display *dpy, XErrorEvent *event);
 void xtErrorHandler(char *message);
 int xInfoMsg(Widget parent, const char *fmt, ...);

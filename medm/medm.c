@@ -2396,8 +2396,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtRemoveWorkProc(medmWorkProcId);
 	    medmWorkProcId = 0;
         }
-	break;
+      /* Stop the PV statistics */
+	medmStopUpdateCAStudyDlg();
 
+	break;
     case DL_EXECUTE:
       /* Start the scheduler */
 	startMedmScheduler();
@@ -2433,9 +2435,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_AS_BTN].widget,False);
 	
       /* Start the PV statistics */
+	medmResetUpdateCAStudyDlg(NULL,NULL,NULL);
 	medmStartUpdateCAStudyDlg();
-	break;
 
+	break;
     default:
 	break;
     }

@@ -141,17 +141,22 @@ void updateTaskStatusGetInfo(int *taskCount,
 {
     double time = medmTime();
     
-    *taskCount = updateTaskStatus.taskCount;
-    *periodicTaskCount = updateTaskStatus.periodicTaskCount;
-    *updateRequestCount = updateTaskStatus.updateRequestCount;
-    *updateDiscardCount = updateTaskStatus.updateDiscardCount;
-    *periodicUpdateRequestCount = updateTaskStatus.periodicUpdateRequestCount;
-    *periodicUpdateDiscardCount = updateTaskStatus.periodicUpdateDiscardCount;
-    *updateRequestQueued = updateTaskStatus.updateRequestQueued;
-    *updateExecuted = updateTaskStatus.updateExecuted;
-    *timeInterval = time - updateTaskStatus.since;
+  /* If some of these are not set, just do a reset */
+    if(periodicTaskCount && updateRequestCount && updateDiscardCount &&
+      periodicUpdateRequestCount &&  periodicUpdateDiscardCount &&
+      updateRequestQueued && updateExecuted && timeInterval) {
+	*taskCount = updateTaskStatus.taskCount;
+	*periodicTaskCount = updateTaskStatus.periodicTaskCount;
+	*updateRequestCount = updateTaskStatus.updateRequestCount;
+	*updateDiscardCount = updateTaskStatus.updateDiscardCount;
+	*periodicUpdateRequestCount = updateTaskStatus.periodicUpdateRequestCount;
+	*periodicUpdateDiscardCount = updateTaskStatus.periodicUpdateDiscardCount;
+	*updateRequestQueued = updateTaskStatus.updateRequestQueued;
+	*updateExecuted = updateTaskStatus.updateExecuted;
+	*timeInterval = time - updateTaskStatus.since;
+    }
 
-  /* reset the periodic data */
+  /* Reset the periodic data */
     updateTaskStatus.updateRequestCount = 0;
     updateTaskStatus.updateDiscardCount = 0;
     updateTaskStatus.periodicUpdateRequestCount = 0;
@@ -163,19 +168,19 @@ void updateTaskStatusGetInfo(int *taskCount,
 /* Timer proc for update tasks.  Is called every TIMERINTERVAL sec.
    Calls updateTaskMarkTimeout, which sets executeRequestsPendingCount
    > 0 for timed out tasks.  Also polls CA.  */
-static void medmScheduler(XtPointer cd, XtIntervalId *id)
+static void medmScheduler(XtPointer clientData, XtIntervalId *id)
 {
-  /* KE: the cd is set to the static global periodicTask.  Could just
-     as well directly use the global here. */
-    PeriodicTask *t = (PeriodicTask *)cd;
+  /* KE: the clientData is set to the static global periodicTask.
+     Could just as well directly use the global here. */
+    PeriodicTask *t = (PeriodicTask *)clientData;
     double currentTime = medmTime();
 
     UNREFERENCED(id);
+
 #if DEBUG_SCHEDULER
     print("medmScheduler: workProcId=%x updateRequestQueued=%d\n",
       updateTaskStatus.workProcId,updateTaskStatus.updateRequestQueued);
 #endif
-    
 
   /* Poll channel access  */
 #ifdef __MONITOR_CA_PEND_EVENT__
@@ -219,7 +224,7 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     }
     
   /* Reinstall the timer proc to be called again in TIMERINTERVAL ms */
-    t->id = XtAppAddTimeOut(appContext,TIMERINTERVAL,medmScheduler,cd);
+    t->id = XtAppAddTimeOut(appContext,TIMERINTERVAL,medmScheduler,clientData);
 }
 
 double medmTime()
@@ -906,7 +911,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	
 #if DEBUG_COMPOSITE
 	print("Update Done updateRequestQueued=%d updateExecuted=%d\n",
-	  ts->updateRequestQueued,ts->updateRequestQueued);
+	  ts->updateRequestQueued,ts->updateExecuted);
 #if 1
     {
 	UpdateTask *pT;
@@ -980,7 +985,8 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		    }
 		}
 #endif
-		print("Return 8\n");
+		print("Return 8: time=%.3f requestsQueued=%d\n",
+		  medmElapsedTime(),ts->updateRequestQueued);
 #endif	    
 		return True;
 	    }
