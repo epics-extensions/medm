@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - add the status dialog.
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -70,6 +71,7 @@ static Widget errMsgSendDlg = NULL;
 static Widget errMsgSendSubjectText = NULL;
 static Widget errMsgSendToText = NULL;
 static Widget errMsgSendText = NULL;
+static XtIntervalId errMsgDlgTimeOutId = 0;
 
 void errMsgSendDlgCreateDlg();
 void errMsgSendDlgSendButtonCb(Widget,XtPointer,XtPointer);
@@ -79,12 +81,15 @@ void errMsgDlgCreateDlg();
 void errMsgDlgSendButtonCb(Widget,XtPointer,XtPointer);
 void errMsgDlgClearButtonCb(Widget,XtPointer,XtPointer);
 void errMsgDlgCloseButtonCb(Widget,XtPointer,XtPointer);
+static void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id);
 
-XtCallbackProc globalHelpCallback(
-  Widget w,
-  int helpIndex,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+void globalHelpCallback(Widget, XtPointer cd, XtPointer)
+#else
+void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  int helpIndex = (int) cd;
   XmString string;
 
   switch (helpIndex) {
@@ -99,21 +104,33 @@ XtCallbackProc globalHelpCallback(
   }
 }
 
+#ifdef __cplusplus
+void errMsgDlgCloseButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void errMsgDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   if (errMsgDlg != NULL) {
     XtUnmanageChild(errMsgDlg);
   }
   return;
 }
 
+#ifdef __cplusplus
+void errMsgDlgClearButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void errMsgDlgClearButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   if (errMsgText == NULL) return;
   /* clear the buffer */
   XmTextSetString(errMsgText,"");
   return;
 }
 
+#ifdef __cplusplus
+void errMsgDlgSendButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   char *tmp;
   if (errMsgDlg == NULL) return;
   if (errMsgSendDlg == NULL) {
@@ -132,7 +149,6 @@ void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
 
 void errMsgDlgCreateDlg() {
   Widget pane;
-  Widget form;
   Widget actionArea;
   Widget closeButton, sendButton, clearButton;
   Arg args[10];
@@ -209,8 +225,12 @@ void errMsgDlgCreateDlg() {
   XtManageChild(pane);
   XtManageChild(errMsgDlg);
 }
-  
+
+#ifdef __cplusplus  
+void errMsgSendDlgSendButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   char *text, *subject, *to, cmd[1024], *p;
   FILE *pp;
   int status;
@@ -247,7 +267,11 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
   return;
 }
 
+#ifdef __cplusplus
+void errMsgSendDlgCloseButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void errMsgSendDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   if (errMsgSendDlg != NULL)
     XtUnmanageChild(errMsgSendDlg);
 }
@@ -428,8 +452,11 @@ static double aveUpdateRequested = 0;
 static double aveUpdateRequestDiscarded = 0;
 static Boolean caStudyAverageMode = False;
 
-
+#ifdef __cplusplus
+void caStudyDlgCloseButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   if (caStudyDlg != NULL) {
     XtUnmanageChild(caStudyDlg);
     caUpdateStudyDlg = False;
@@ -437,7 +464,11 @@ void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
   return;
 }
 
+#ifdef __cplusplus
+void caStudyDlgResetButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void caStudyDlgResetButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+#endif
   totalTimeElapsed = 0.0;
   aveCAEventCount = 0.0;
   aveUpdateExecuted = 0.0;
@@ -446,8 +477,11 @@ void caStudyDlgResetButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
   return;
 }
 
+#ifdef __cplusplus
+void caStudyDlgModeButtonCb(Widget, XtPointer, XtPointer) {
+#else
 void caStudyDlgModeButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
-  XmString str;
+#endif
   caStudyAverageMode = !(caStudyAverageMode);
   return;
 }
@@ -529,14 +563,20 @@ void medmCreateCAStudyDlg() {
   XtManageChild(caStudyDlg);
   caUpdateStudyDlg = True;
   if (globalDisplayListTraversalMode == DL_EXECUTE) {
-    XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+    if (errMsgDlgTimeOutId == 0)
+      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+  } else {
+    errMsgDlgTimeOutId = 0;
   }
 }
 
-void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id) {
+#ifdef __cplusplus
+static void medmUpdateCAStudtylDlg(XtPointer, XtIntervalId *id) {
+#else
+static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id) {
+#endif
   if (caUpdateStudyDlg) {
     XmString str;
-    XEvent event;
     int taskCount;
     int periodicTaskCount;
     int updateRequestCount;
@@ -613,7 +653,19 @@ void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id) {
     XFlush(XtDisplay(caStudyDlg));
     XmUpdateDisplay(caStudyDlg);
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
-      XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+      if (errMsgDlgTimeOutId == *id)
+        errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+    } else {
+      errMsgDlgTimeOutId = 0;
     }
+  }
+}
+
+void medmStartUpdateCAStudyDlg() {
+  if (globalDisplayListTraversalMode == DL_EXECUTE) {
+    if (errMsgDlgTimeOutId == 0) 
+      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,3000,medmUpdateCAStudtylDlg,NULL);
+  } else {
+    errMsgDlgTimeOutId = 0;
   }
 }
