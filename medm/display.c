@@ -57,11 +57,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_RELATED_DISPLAY 0
 #define DEBUG_POSITION 0
 #define DEBUG_REPOSITION 0
+#define DEBUG_OPEN 0
 
 #include "medm.h"
 
 #include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
+
+#ifdef DEBUG_OPEN
+#include <errno.h>
+#endif
 
 extern Widget mainShell;
 
@@ -769,6 +774,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
       != T_EOF) {
 	tokenType=getToken(cdi,token);
     }
+    fclose(cdi->filePtr);
 
   /* NULL the file pointer.  We are done with it */
     cdi->filePtr = NULL;
@@ -950,6 +956,14 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     convertDirDelimiterToWIN32(filename);
 #endif
     
+#if DEBUG_OPEN
+    print("\ndmOpenUsableFile\n"
+      "  filename=%s\n"
+      "  relatedDisplayFilename=%s\n",
+      filename?filename:"NULL",
+      relatedDisplayFilename?relatedDisplayFilename:"NULL");
+#endif	
+    
   /* Try to open with the given name first
    *   (Will be in cwd if not an absolute pathname) */
     strncpy(name, filename, MAX_TOKEN_LENGTH);
@@ -957,11 +971,19 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     filePtr = fopen(name,"r");
     if(filePtr) {
 	convertNameToFullPath(name, filename, MAX_TOKEN_LENGTH);
-	return (filePtr);
+#if DEBUG_OPEN
+	print("  [Direct] %s\n",filename?filename:"NULL");	
+#endif	
+	return(filePtr);
     }
 
   /* If the name is a path, then we can do no more */
-    if(isPath(name)) return (NULL);
+    if(isPath(name)) {
+#if DEBUG_OPEN
+	print("  [Fail:IsPath] %s\n",filename?filename:"NULL");
+#endif	
+	return(NULL);
+    }
 
   /* If the name comes from a related display, then try the directory
    * of the related display */
@@ -976,11 +998,21 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	    if(ptr) {
 		*(++ptr) = '\0';
 		strcat(fullPathName, name);
+#if DEBUG_OPEN
+		print("  [RD:Try] %s\n",fullPathName);
+		errno=0;
+#endif	
 		filePtr = fopen(fullPathName, "r");
 		if(filePtr) {
 		    strcpy(filename, fullPathName);
+#if DEBUG_OPEN
+		    print("  [RD] %s\n",filename?filename:"NULL");
+#endif	
 		    return (filePtr);
 		}
+#if DEBUG_OPEN
+		perror("  Error");
+#endif	
 	    }
 	}
     }
@@ -998,15 +1030,24 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 #endif
 	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
 	    strcat(fullPathName, name);
+#if DEBUG_OPEN
+	    print("  [EPD:Try] %s\n",fullPathName);
+#endif	
 	    filePtr = fopen(fullPathName, "r");
 	    if(filePtr) {
 		strcpy(filename, fullPathName);
+#if DEBUG_OPEN
+		print("  [EPD] %s\n",filename?filename:"NULL");
+#endif	
 		return (filePtr);
 	    }
 	}
     }
 
   /* Not found */
+#if DEBUG_OPEN
+    print("  [Fail:NotFound] %s",filename?filename:"NULL");
+#endif	
     return (NULL);
 }
 

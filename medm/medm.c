@@ -3009,9 +3009,9 @@ DisplayInfo* parseDisplayFile(char *filename) {
 	  token,tokenType) != T_EOF) {
 	    tokenType=getToken(displayInfo,token);
 	}
-
-	fclose(filePtr);
+	if(displayInfo->filePtr) fclose(displayInfo->filePtr);
     }
+
     return displayInfo;
 }
 

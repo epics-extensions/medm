@@ -692,6 +692,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 	medmPostMsg(1,"compositeFileParse: Invalid .adl file "
 	  "(First block is not file block)\n"
 	  "  file: %s\n",filename);
+	fclose(file);
 	goto RETURN;
     }
   /* Plug the current version number into the displayInfo */
@@ -718,6 +719,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
       token, tokenType) != T_EOF) {
 	tokenType=getToken(displayInfo,token);
     }
+    fclose(file);
 
   /* Rearrange the composite to fit its contents */
     minX = INT_MAX; minY = INT_MAX;

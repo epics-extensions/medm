@@ -369,9 +369,14 @@ static void textUpdateDraw(XtPointer cd)
 		    localCvtLongToHexString((long)value, textField);
 		    break;
 		case SEXAGESIMAL:
-		    medmLocalCvtDoubleToSexaStr(value,textField,
-		      precision,pR->hopr,pR->lopr,&status);
+  		    medmLocalCvtDoubleToSexaStr(value,textField, precision,0.0, 0.0, &status);   
 		    break;
+                case SEXAGESIMAL_HMS:
+                    medmLocalCvtDoubleToSexaStr(value*12.0/M_PI,textField,precision,0.0,0.0,&status);
+                    break;
+                case SEXAGESIMAL_DMS:
+                    medmLocalCvtDoubleToSexaStr(value*180.0/M_PI,textField,precision,0.0,0.0,&status);
+                    break;
 		case OCTAL:
 		    cvtLongToOctalString((long)value, textField);
 		    break;
@@ -626,9 +631,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
                          {hexidecimal vs. hexadecimal} */
 		    } else if(!strcmp(token,"hexidecimal")) {
 			dlTextUpdate->format = HEXADECIMAL;
-		    } else if(!strcmp(token,"sexigesimal")) {
-			dlTextUpdate->format = SEXAGESIMAL;
-		    }
+		    } 
 		}
 	    } else if(!strcmp(token,"align")) {
 		int found=0;
