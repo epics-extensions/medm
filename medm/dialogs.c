@@ -227,10 +227,10 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     print("\ngetPvInfoFromDisplay: pE = %x\n",pE);
 #endif    
     if(!pE) {
-	medmPostMsg(1,"getPvInfoFromDisplay: Not on an object\n");
+	medmPostMsg(1,"getPvInfoFromDisplay: Not on an object with a PV\n");
 	dmSetAndPopupWarningDialog(displayInfo,
 	  "getPvInfoFromDisplay: "
-	  "Not on an object","OK",NULL,NULL);
+	  "Not on an object with a PV", "OK", NULL, NULL);
 	return NULL;
     }
 		
