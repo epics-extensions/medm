@@ -3088,7 +3088,8 @@ main(int argc, char *argv[])
 	    if(!status) {
 	      /* Window doesn't exist */
 		printf("\nCannot connect to existing MEDM because it is invalid\n"
-		  "  Continuing with this one as if -cleanup were specified\n");
+		  "  (This is the cause of the Bad Window error that may have been printed)\n"
+		  "  Continuing with this MEDM as if -cleanup were specified\n");
 		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 	    } else {
