@@ -89,6 +89,9 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_CLOSE_ID:
 	closeDisplay(w);
 	break;
+    case EXECUTE_POPUP_MENU_PVINFO_ID:
+	popupPvInfo(displayInfo);
+	break;
 #if 0	
     case EXECUTE_POPUP_MENU_EXECUTE_ID:
 	break;
@@ -102,12 +105,13 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
     char *cmd, *name, *title;
     char command[1024];     /* Danger: Fixed length */
+    Record **records;
     int nargs;
-    Arg args[2];
+    Arg args[1];
     XtPointer data;
     DisplayInfo *displayInfo;
     char *pamp;
-    int i, j, ic, len, clen;
+    int i, j, ic, len, clen, count;
 
   /* Button's parent (menuPane) has the displayInfo pointer */
     nargs=0;
@@ -127,81 +131,14 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	    *(command+ic) = *(cmd+i); ic++;
 	} else {
 	    switch(cmd[i+1]) {
-	    case 'P': {
-#define MAX_COL 4
-		Widget widget;
-		XEvent event;
-		char *pvNames[MAX_PENS*MAX_COL];
-		short severity[MAX_PENS*MAX_COL];
-		int count;
-		UpdateTask *pT;
-		DlElement *pE;
-		int x, y;
-
-	      /* Get object with the process variable */
-		widget = XmTrackingEvent(displayInfo->drawingArea,
-		  crosshairCursor, True, &event);
-		XFlush(display);    /* For debugger */
-		if(!widget) {
-		    medmPostMsg("executeMenuCallback: Did not find object\n");
-		    dmSetAndPopupWarningDialog(displayInfo,
-		      "executeMenuCallback: "
-		      "Did not find object","OK",NULL,NULL);
-		    return;
-		}
-	      /* Get the position relative to the drawing area */
-	      /*   (event.xbutton.[xy] are relative to the widget) */
-		if(widget == displayInfo->drawingArea) {
-		    x = event.xbutton.x;
-		    y = event.xbutton.y;
-		} else {
-		    Position x0, y0;
-		    
-		    nargs=0;
-		    XtSetArg(args[nargs],XmNx,&x0); nargs++;
-		    XtSetArg(args[nargs],XmNy,&y0); nargs++;
-		    XtGetValues(widget,args,nargs);
-
-		    x = x0 + event.xbutton.x;
-		    y = y0 + event.xbutton.y;
-		}
-		
-	      /* Find the element */
-		pE = findSmallestTouchedElement(displayInfo->dlElementList,
-		  x, y);
-		if(!pE) {
-		    medmPostMsg("executeMenuCallback: Not on an object\n");
-		    dmSetAndPopupWarningDialog(displayInfo,
-		      "executeMenuCallback: "
-		      "Not on an object","OK",NULL,NULL);
-		    return;
-		}
-#if DEBUG_EXEC_MENU		
-		printf("x=%d y=%d Element=%s\n",x,y,elementType(pE->type));
-#endif		
-		
-	      /* Get the update task */
-		if(pE->widget) {
-		    pT = getUpdateTaskFromWidget(pE->widget);
-		} else {
-		    pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
-		}
-		if(!pT || !pT->name) {
-		    medmPostMsg("executeMenuCallback: "
-		      "No process variable associated with object\n");
-		    dmSetAndPopupWarningDialog(displayInfo,
-		      "executeMenuCallback: "
-		      "No process variable associated with object","OK",NULL,NULL);
-		    return;
-		}
-		
-	      /* Run the element's name procedure */
-		pT->name(pT->clientData, pvNames, severity, &count);
-		count%=100;
+	    case 'P':
+	      /* Get the names */
+		records = getPvInfoFromDisplay(displayInfo, &count);
+		if(!records) return;   /* (Error messages have been sent) */
 		
 	      /* Insert the names */
 		for(j=0; j < count; j++) {
-		    name = pvNames[j];
+		    name = records[j]->name;
 		    if(name) {
 #if DEBUG_EXEC_MENU		
 			printf("%2d |%s|\n",j,name);
@@ -209,6 +146,7 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 			len = strlen(name);
 			if(ic + len >= 1024) {
 			    medmPostMsg("executeMenuCallback: Command is too long\n");
+			    free(records);
 			    return;
 			}
 			strcpy(command+ic,name);
@@ -217,16 +155,17 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 			if(j < count-1) {
 			    if(ic + 1 >= 1024) {
 				medmPostMsg("executeMenuCallback: Command is too long\n");
-			    return;
+				free(records);
+				return;
 			    }
 			    strcpy(command+ic," ");
 			    ic++;
 			}
 		    }
 		}
+		free(records);
 		i++;
 		break;
-	    }
 	    case 'A':
 		name = displayInfo->dlFile->name;
 		len = strlen(name);

@@ -81,7 +81,7 @@ static double okRadiansTable[24] = { 0.,
 static void polylineUpdateValueCb(XtPointer cd);
 static void polylineDraw(XtPointer cd);
 static void polylineDestroyCb(XtPointer cd);
-static void polylineName(XtPointer, char **, short *, int *);
+static void polylineGetRecord(XtPointer, Record **, int *);
 static void polylineGetValues(ResourceBundle *pRCB, DlElement *p);
 static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void polylineSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -175,7 +175,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\npolylineCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
-	    updateTaskAddNameCb(pp->updateTask,polylineName);
+	    updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
 	    pp->updateTask->opaque = False;
 	}
 	pp->record = medmAllocateRecord(
@@ -308,11 +308,10 @@ static void polylineDestroyCb(XtPointer cd) {
     return;
 }
 
-static void polylineName(XtPointer cd, char **name, short *severity, int *count) {
+static void polylineGetRecord(XtPointer cd, Record **record, int *count) {
     Polyline *pp = (Polyline *) cd;
     *count = 1;
-    name[0] = pp->record->name;
-    severity[0] = pp->record->severity;
+    record[0] = pp->record;
 }
 
 DlElement *createDlPolyline(DlElement *p)

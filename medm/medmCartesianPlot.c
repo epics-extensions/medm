@@ -76,7 +76,7 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd);
 static void cartesianPlotDraw(XtPointer cd);
 static void cartesianPlotUpdateValueCb(XtPointer cd);
 static void cartesianPlotDestroyCb(XtPointer cd);
-static void cartesianPlotName(XtPointer, char **, short *, int *);
+static void cartesianPlotGetRecord(XtPointer, Record **, int *);
 static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -223,7 +223,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pcp->updateTask,cartesianPlotDestroyCb);
-	updateTaskAddNameCb(pcp->updateTask,cartesianPlotName);
+	updateTaskAddNameCb(pcp->updateTask,cartesianPlotGetRecord);
     }
 
   /* Allocate (or set to NULL) the Records in the xyTrace's XYTraces */
@@ -2013,46 +2013,28 @@ void cartesianPlotDraw(XtPointer cd) {
     }
 }
 
-static void cartesianPlotName(XtPointer cd, char **name, short *severity, int *count) {
+static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)
+{
     CartesianPlot *pcp = (CartesianPlot *) cd;
     int i, j;
 
     j = 0;
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *pt = &(pcp->xyTrace[i]);
-	if (pt->recordX) {
-	    name[j] = pt->recordX->name;
-	    severity[j] = pt->recordX->severity;
-	} else {
-	    name[j] = NULL;
-	    severity[j] = NO_ALARM;
-	}
-	j++;
-	if (pt->recordY) {
-	    name[j] = pt->recordY->name;
-	    severity[j] = pt->recordY->severity;
-	} else {
-	    name[j] = NULL;
-	    severity[j] = NO_ALARM;
-	}
-	j++;
+	record[j++] = pt->recordX;
+	record[j++] = pt->recordY;
     }
     if (pcp->triggerCh.recordX) {
-	name[j] = pcp->triggerCh.recordX->name;
-	severity[j] = pcp->triggerCh.recordX->severity;
-    } else {
-	name[j] = NULL;
-	severity[j] = NO_ALARM;
+	record[j++] = pcp->triggerCh.recordX;
+    } else {     /* Count these even if NULL */
+	record[j++] = NULL;
     }
-    j++;
     if (pcp->eraseCh.recordX) {
-	name[j] = pcp->eraseCh.recordX->name;
-	severity[j] = pcp->eraseCh.recordX->severity;
-    } else {
-	name[j] = NULL;
-	severity[j] = NO_ALARM;
+	record[j++] = pcp->eraseCh.recordX;
+    } else {     /* Count these even if NULL */
+	record[j++] = NULL;
     }
-    j++;
+
   /* 200 means two columns */
     *count = j + 200;
 }

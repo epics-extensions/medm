@@ -75,7 +75,7 @@ static void barDraw(XtPointer cd);
 static void barUpdateValueCb(XtPointer cd);
 static void barUpdateGraphicalInfoCb(XtPointer cd);
 static void barDestroyCb(XtPointer cd);
-static void barName(XtPointer, char **, short *, int *);
+static void barGetRecord(XtPointer, Record **, int *);
 static void barInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void barSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void barSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -118,7 +118,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 		medmPrintf("\nbarCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
-		updateTaskAddNameCb(pb->updateTask,barName);
+		updateTaskAddNameCb(pb->updateTask,barGetRecord);
 	    }
 	    pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
 	      barUpdateValueCb,
@@ -333,11 +333,10 @@ static void barDestroyCb(XtPointer cd) {
     return;
 }
 
-static void barName(XtPointer cd, char **name, short *severity, int *count) {
+static void barGetRecord(XtPointer cd, Record **record, int *count) {
     Bar *pb = (Bar *) cd;
     *count = 1;
-    name[0] = pb->record->name;
-    severity[0] = pb->record->severity;
+    record[0] = pb->record;
 }
 
 DlElement *createDlBar(DlElement *p)

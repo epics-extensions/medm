@@ -334,11 +334,11 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
     UpdateTask *pt;
     
     if (displayInfo) {
-	pt = (UpdateTask *) malloc(sizeof(UpdateTask));
+	pt = (UpdateTask *)malloc(sizeof(UpdateTask));
 	if (pt == NULL) return pt;
 	pt->executeTask = executeTask;
 	pt->destroyTask = NULL;
-	pt->name = NULL;
+	pt->getRecord = NULL;
 	pt->clientData = clientData;
 	pt->timeInterval = 0.0;
 	pt->nextExecuteTime = medmTime() + pt->timeInterval;
@@ -705,7 +705,7 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
     }
 }
 
-void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer, char **, short *, int *))
+void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer, Record **, int *))
 {
-    pt->name = nameCb;
+    pt->getRecord = nameCb;
 }

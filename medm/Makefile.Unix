@@ -31,7 +31,6 @@ USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 
 XRTGRAPH3 = /opt/local/xrtgraph3.0.0
 XRTGRAPH = $(XRTGRAPH3)
-
 ifdef XRTGRAPH
 # USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
@@ -201,6 +200,9 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.27  1997/08/11 18:15:36  evans
+# Changed logic for getting PV names to getting PV records.
+#
 # Revision 1.26  1997/08/07 17:37:38  evans
 # Added Execute Menu.
 #

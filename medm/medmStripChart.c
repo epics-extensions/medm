@@ -138,7 +138,7 @@ static void redisplayStrip(Widget, XtPointer, XtPointer);
 static void stripChartUpdateGraph(XtPointer);
 static StripChart *stripChartAlloc(DisplayInfo *,DlElement *);
 static void freeStripChart(XtPointer);
-static void stripChartName(XtPointer, char **, short *, int *);
+static void stripChartGetRecord(XtPointer, Record **, int *);
 static void configStripChart(XtPointer, XtIntervalId *);
 static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void stripChartSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -454,7 +454,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	medmPrintf("\nexecuteDlStripChart: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(psc->updateTask,freeStripChart);
-	updateTaskAddNameCb(psc->updateTask,stripChartName);
+	updateTaskAddNameCb(psc->updateTask,stripChartGetRecord);
     }
     return psc;
 }
@@ -1449,14 +1449,13 @@ static void stripChartDraw(XtPointer cd) {
     }
 }
 
-static void stripChartName(XtPointer cd, char **name, short *severity, int *count) {
+static void stripChartGetRecord(XtPointer cd, Record **record, int *count) {
     StripChart *psc = (StripChart *) cd;
     int i;
 
     *count = psc->nChannels;
     for (i = 0; i < psc->nChannels; i++) {
-	name[i] = psc->record[i]->name;
-	severity[i] = psc->record[i]->severity;
+	record[i] = psc->record[i];
     }
 }
 

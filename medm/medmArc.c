@@ -65,7 +65,7 @@ typedef struct _Arc {
 static void arcDraw(XtPointer cd);
 static void arcUpdateValueCb(XtPointer cd);
 static void arcDestroyCb(XtPointer cd);
-static void arcName(XtPointer, char **, short *, int *);
+static void arcGetRecord(XtPointer, Record **, int *);
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void arcSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p);
@@ -123,7 +123,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\narcCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
-	    updateTaskAddNameCb(pa->updateTask,arcName);
+	    updateTaskAddNameCb(pa->updateTask,arcGetRecord);
 	    pa->updateTask->opaque = False;
 	}
 	pa->record = medmAllocateRecord(dlArc->dynAttr.chan,arcUpdateValueCb,
@@ -277,11 +277,10 @@ static void arcDestroyCb(XtPointer cd) {
     return;
 }
 
-static void arcName(XtPointer cd, char **name, short *severity, int *count) {
+static void arcGetRecord(XtPointer cd, Record **record, int *count) {
     Arc *pa = (Arc *) cd;
     *count = 1;
-    name[0] = pa->record->name;
-    severity[0] = pa->record->severity;
+    record[0] = pa->record;
 }
 
 DlElement *createDlArc(DlElement *p)

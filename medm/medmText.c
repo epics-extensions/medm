@@ -68,7 +68,7 @@ typedef struct _Text {
 static void textUpdateValueCb(XtPointer cd);
 static void textDraw(XtPointer cd);
 static void textDestroyCb(XtPointer cd);
-static void textName(XtPointer, char **, short *, int *);
+static void textGetRecord(XtPointer, Record **, int *);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -160,7 +160,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\ntextCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
-	    updateTaskAddNameCb(pt->updateTask,textName);
+	    updateTaskAddNameCb(pt->updateTask,textGetRecord);
 	    pt->updateTask->opaque = False;
 	}
 	pt->record = medmAllocateRecord(dlText->dynAttr.chan,textUpdateValueCb,
@@ -286,11 +286,10 @@ static void textDestroyCb(XtPointer cd) {
     return;
 }
 
-static void textName(XtPointer cd, char **name, short *severity, int *count) {
+static void textGetRecord(XtPointer cd, Record **record, int *count) {
     Text *pt = (Text *) cd;
     *count = 1;
-    name[0] = pt->record->name;
-    severity[0] = pt->record->severity;
+    record[0] = pt->record;
 }
 
 DlElement *createDlText(DlElement *p)

@@ -79,7 +79,7 @@ static void valuatorDestroyCb(XtPointer);
 static void valuatorSetValue(Valuator *, double, Boolean force);
 static void valuatorRedrawValue(Valuator *, DisplayInfo *, Widget, DlValuator *, double);
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
-static void valuatorName(XtPointer, char **, short *, int *);
+static void valuatorGetRecord(XtPointer, Record **, int *);
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void valuatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void valuatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -176,7 +176,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	return;
     } else {
 	updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
-	updateTaskAddNameCb(pv->updateTask,valuatorName);
+	updateTaskAddNameCb(pv->updateTask,valuatorGetRecord);
     }
     pv->record = medmAllocateRecord(dlValuator->control.ctrl,
       valuatorUpdateValueCb,
@@ -1245,11 +1245,10 @@ void valuatorValueChanged(
     }
 }
 
-static void valuatorName(XtPointer cd, char **name, short *severity, int *count) {
+static void valuatorGetRecord(XtPointer cd, Record **record, int *count) {
     Valuator *pv = (Valuator *) cd;
     *count = 1;
-    name[0] = pv->record->name;
-    severity[0] = pv->record->severity;
+    record[0] = pv->record;
 }
 
 DlElement *createDlValuator(DlElement *p)

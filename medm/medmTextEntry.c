@@ -80,7 +80,7 @@ static void textEntryDestroyCb(XtPointer cd);
 static void textEntryValueChanged(Widget, XtPointer, XtPointer);
 static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
 static char *valueToString(TextEntry *, TextFormat format);
-static void textEntryName(XtPointer, char **, short *, int *);
+static void textEntryGetRecord(XtPointer, Record **, int *);
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textEntrySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textEntrySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -231,7 +231,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	medmPrintf("\nmenuCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
-	updateTaskAddNameCb(pte->updateTask,textEntryName);
+	updateTaskAddNameCb(pte->updateTask,textEntryGetRecord);
     }
     pte->record = medmAllocateRecord(dlTextEntry->control.ctrl,
       textEntryUpdateValueCb,
@@ -498,11 +498,10 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     }
 }
 
-static void textEntryName(XtPointer cd, char **name, short *severity, int *count) {
+static void textEntryGetRecord(XtPointer cd, Record **record, int *count) {
     TextEntry *pte = (TextEntry *) cd;
     *count = 1;
-    name[0] = pte->record->name;
-    severity[0] = pte->record->severity;
+    record[0] = pte->record;
 }
 
 DlElement *createDlTextEntry(DlElement *p)

@@ -200,12 +200,17 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
        * and if in EDIT mode...
        */
 	if (displayInfo->traversalMode == DL_EDIT) {
-	  /* handle input (arrow keys) */
+	  /* Handle input (arrow keys) */
 	    XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
 	      (XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
-	  /* and handle button presses and enter windows */
+
+	  /* Handle button presses */
+	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
+	      popupMenu,(XtPointer)displayInfo);
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
 	      handleButtonPress,(XtPointer)displayInfo);
+
+	  /* Handle enter windows */
 	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
 	      (XtEventHandler)handleEnterWindow,(XtPointer)displayInfo);
  
@@ -219,10 +224,10 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	   */
 	    XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
 	    XmDropSiteRegister(displayInfo->drawingArea,args,1);
-	  /* Handle button presses and enter windows */
+
+	  /* Handle button presses */
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
 	      popupMenu,(XtPointer)displayInfo);
-	    
 	    
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);

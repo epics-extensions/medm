@@ -66,7 +66,7 @@ static void indicatorUpdateValueCb(XtPointer cd);
 static void indicatorDraw(XtPointer cd);
 static void indicatorUpdateGraphicalInfoCb(XtPointer cd);
 static void indicatorDestroyCb(XtPointer cd);
-static void indicatorName(XtPointer, char **, short *, int *);
+static void indicatorGetRecord(XtPointer, Record **, int *);
 static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void indicatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void indicatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -109,7 +109,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		medmPrintf("\nindicatorCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
-		updateTaskAddNameCb(pi->updateTask,indicatorName);
+		updateTaskAddNameCb(pi->updateTask,indicatorGetRecord);
 	    }
 	    pi->record = medmAllocateRecord(dlIndicator->monitor.rdbk,
 	      indicatorUpdateValueCb,
@@ -321,11 +321,10 @@ static void indicatorDestroyCb(XtPointer cd) {
     return;
 }
 
-static void indicatorName(XtPointer cd, char **name, short *severity, int *count) {
+static void indicatorGetRecord(XtPointer cd, Record **record, int *count) {
     Indicator *pi = (Indicator *) cd;
     *count = 1;
-    name[0] = pi->record->name;
-    severity[0] = pi->record->severity;
+    record[0] = pi->record;
 }
 
 DlElement *createDlIndicator(DlElement *p) 

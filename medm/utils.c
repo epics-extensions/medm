@@ -64,6 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <string.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
+#include <Xm/MwmUtil.h>
 #include "medm.h"
 
 #ifdef  __TED__
@@ -74,6 +75,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* #define GRAB_WINDOW window */
 #define GRAB_WINDOW None
+
+/* Function prototypes */
+static void pvInfoDialogCallback(Widget, XtPointer, XtPointer cbs);
 
 Boolean modalGrab = FALSE;     /* KE: Not used ?? */
 static DlList *tmpDlElementList = NULL;
@@ -3645,4 +3649,197 @@ void setTimeValues(void)
 	ltime.tm_isdst = -1; /* mktime figures out TZ effect */
 	time900101 = mktime(&ltime);
 	timeOffset = time900101 - time700101;
+}
+
+void popupPvInfo(DisplayInfo *displayInfo)
+{
+    XmString xmString, xmString1, xmString2;
+    Arg args[1];
+    int nargs;
+    Record **records;
+    int i, count;
+    char string[1024];
+
+  /* Create the box if it has not been created */
+    if(!pvInfoS) createPvInfoDlg();
+
+  /* Get the records */
+    records = getPvInfoFromDisplay(displayInfo, &count);
+    if(!records) return;   /* (Error messages have been sent) */
+
+  /* Heading */
+    xmString = XmStringCreateLocalized(
+      "             PV Info\n"
+      "\n"
+      "This is a test\n"
+      "=========================================\n"
+      "\n"
+      );
+    
+  /* Loop over the records */
+    for(i=0; i < count; i++) {
+	char *name;
+	
+	if(records[i]) {
+	    name = records[i]->name;
+	} else {
+	    continue;
+	}
+	if(!*name) continue;
+	sprintf(string,"%s\n\n",name);
+	xmString1 = xmString;
+	xmString2 = XmStringCreateLocalized(string);
+	xmString = XmStringConcat(xmString1, xmString2);
+	XmStringFree(xmString1);
+	XmStringFree(xmString2);
+    }
+
+  /* Set the string */
+    nargs=0;
+    XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
+    XtSetValues(pvInfoMessageBox,args,nargs);
+    XmStringFree(xmString);
+    XtPopup(pvInfoS,XtGrabNone);
+
+  /* Free space */
+    free(records);
+    XmStringFree(xmString);
+}
+
+void createPvInfoDlg(void)
+{
+    int nargs;
+    Arg args[10];
+    
+    nargs = 0;
+    XtSetArg(args[nargs],XtNiconName,"PVInfo"); nargs++;
+    XtSetArg(args[nargs],XtNtitle,"PV Info"); nargs++;
+    XtSetArg(args[nargs],XtNallowShellResize,TRUE); nargs++;
+    XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmEXPLICIT); nargs++;
+  /* map window manager menu Close function to application close... */
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
+
+    pvInfoS = XtCreatePopupShell("pvInfoS",topLevelShellWidgetClass,
+      mainShell,args,nargs);
+    XmAddWMProtocolCallback(pvInfoS,WM_DELETE_WINDOW,
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNdialogType,XmDIALOG_INFORMATION); nargs++;
+    pvInfoMessageBox = XmCreateMessageBox(pvInfoS,"pvInfoMessageBox",
+      args,nargs);
+    XtUnmanageChild(XmMessageBoxGetChild(pvInfoMessageBox,XmDIALOG_CANCEL_BUTTON));
+    XtUnmanageChild(XmMessageBoxGetChild(pvInfoMessageBox,XmDIALOG_HELP_BUTTON));
+    XtAddCallback(pvInfoMessageBox,XmNokCallback,
+      pvInfoDialogCallback,(XtPointer)NULL);
+
+    XtManageChild(pvInfoMessageBox);
+}
+
+static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
+{
+    switch(((XmAnyCallbackStruct *) cbs)->reason){
+    case XmCR_OK:
+    case XmCR_CANCEL:
+	XtPopdown(pvInfoS);
+	break;
+    }
+}
+
+/* Prompts the user with a crosshair cursor for an object in the
+ *   display and returns an array of Records associated
+ *   with the object and the number of them in count
+ * The returned array must be freed by the calling routine
+ */
+Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
+{
+#if ((2*MAX_TRACES)+2) > MAX_PENS
+#define MAX_COUNT 2*MAX_TRACES+2
+#else
+#define MAX_COUNT MAX_PENS
+#endif
+    Widget widget;
+    XEvent event;
+    int nargs;
+    Arg args[2];
+    Record *records[MAX_COUNT];
+    Record **retRecords;
+    UpdateTask *pT;
+    DlElement *pE;
+    int i, x, y;
+
+  /* Choose the object with the process variable */
+    widget = XmTrackingEvent(displayInfo->drawingArea,
+      crosshairCursor, True, &event);
+    XFlush(display);    /* For debugger */
+    if(!widget) {
+	medmPostMsg("executeMenuCallback: Did not find object\n");
+	dmSetAndPopupWarningDialog(displayInfo,
+	  "executeMenuCallback: "
+	  "Did not find object","OK",NULL,NULL);
+	return NULL;
+    }
+  /* Get the position relative to the drawing area */
+  /*   (event.xbutton.[xy] are relative to the widget) */
+    if(widget == displayInfo->drawingArea) {
+	x = event.xbutton.x;
+	y = event.xbutton.y;
+    } else {
+	Position x0, y0;
+		    
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&x0); nargs++;
+	XtSetArg(args[nargs],XmNy,&y0); nargs++;
+	XtGetValues(widget,args,nargs);
+
+	x = x0 + event.xbutton.x;
+	y = y0 + event.xbutton.y;
+    }
+		
+  /* Find the element */
+    pE = findSmallestTouchedElement(displayInfo->dlElementList,
+      x, y);
+    if(!pE) {
+	medmPostMsg("executeMenuCallback: Not on an object\n");
+	dmSetAndPopupWarningDialog(displayInfo,
+	  "executeMenuCallback: "
+	  "Not on an object","OK",NULL,NULL);
+	return NULL;
+    }
+		
+  /* Get the update task */
+    if(pE->widget) {
+	pT = getUpdateTaskFromWidget(pE->widget);
+    } else {
+	pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
+    }
+    if(!pT || !pT->getRecord) {
+	medmPostMsg("executeMenuCallback: "
+	  "No process variable associated with object\n");
+	dmSetAndPopupWarningDialog(displayInfo,
+	  "executeMenuCallback: "
+	  "No process variable associated with object","OK",NULL,NULL);
+	return NULL;
+    }
+		
+  /* Run the element's getRecord procedure */
+    pT->getRecord(pT->clientData, records, count);
+    (*count)%=100;
+    if (*count > MAX_COUNT) {
+	medmPostMsg("getPvInfoFromDisplay: Maximum count exceeded\n"
+	  "  Programming Error: Please notify person in charge of MEDM\n");
+	return NULL;
+    }
+
+  /* Allocate the return array */
+    if(count) {
+	retRecords = (Record **)calloc(*count,sizeof(Record *));
+	for(i=0; i < *count; i++) {
+	    retRecords[i] = records[i];
+	}
+    } else {
+	retRecords = NULL;
+    }
+    return retRecords;
+#undef MAX_COUNT
 }

@@ -3440,6 +3440,11 @@ static void createMain()
     XtManageChild(editHelpMessageBox);
 
   /*
+   * Initialize the PV Info shell
+   */
+    pvInfoS = (Widget)0;
+
+  /*
    * and realize the toplevel shell widget
    */
     XtRealizeWidget(mainShell);

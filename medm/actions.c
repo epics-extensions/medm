@@ -217,27 +217,43 @@ void StartDrag(Widget w, XEvent *event)
 #endif
     
     if (pt) {
-#define MAX_COL 4
-	char *name[MAX_PENS*MAX_COL];
-	short severity[MAX_PENS*MAX_COL];
+#if ((2*MAX_TRACES)+2) > MAX_PENS
+#define MAX_COUNT 2*MAX_TRACES+2
+#define MAX_COL 2
+#else
+#define MAX_COUNT MAX_PENS
+#define MAX_COL 1
+#endif
+	Record *record[MAX_COUNT];
 	int count;
 	int column;
 	int row;
 
-	if (pt->name == NULL) return;
-	pt->name(pt->clientData, name, severity, &count);
+      /* Call the getRecord procedure, if there is one */
+	if (pt->getRecord == NULL) return;
+	pt->getRecord(pt->clientData, record, &count);
 
 	column = count / 100;
 	if (column == 0) column = 1;
-	if (column > MAX_COL) column = MAX_COL;
-	count = count % 100;
+	if (column > MAX_COL) {
+	    column = MAX_COL;
+	    medmPostMsg("StartDrag: Maximum number of columns exceeded\n"
+	      "  Programming Error: Please notify person in charge of MEDM\n");
+	    return;
+	}
 	row = 0;
-
+	count = count % 100;
+	if (count > MAX_COUNT) {
+	    medmPostMsg("StartDrag: Maximum count exceeded\n"
+	      "  Programming Error: Please notify person in charge of MEDM\n");
+	    return;
+	}
+	
 	bg = BlackPixel(display,screenNum);
 	fg = WhitePixel(display,screenNum);
 	ascent = fontTable[FONT_TABLE_INDEX]->ascent;
 	fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
-
+	
 	if (count == 0) {
 	    channelName = NULL;
 	    return;
@@ -248,8 +264,10 @@ void StartDrag(Widget w, XEvent *event)
 	    i = 0; j = 0;
 	    textWidth = 0;
 	    while (i < count) {
-		if (name[i]) {
-		    textWidth = MAX(textWidth,XTextWidth(fontTable[FONT_TABLE_INDEX],name[i],strlen(name[i])));
+		if (record[i] && record[i]->name) {
+		    textWidth = MAX(textWidth,XTextWidth(
+		      fontTable[FONT_TABLE_INDEX],record[i]->name,
+		      strlen(record[i]->name)));
 		}
 		j++;
 		if (j >= column) {
@@ -260,7 +278,8 @@ void StartDrag(Widget w, XEvent *event)
 	    }
 	    maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
 	    maxHeight = row*fontHeight + 2*MARGIN;
-	    sourcePixmap = XCreatePixmap(display,RootWindow(display, screenNum),maxWidth,maxHeight,
+	    sourcePixmap = XCreatePixmap(display,
+	      RootWindow(display, screenNum),maxWidth,maxHeight,
 	      DefaultDepth(display,screenNum));
 	    if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
 	    gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
@@ -274,10 +293,12 @@ void StartDrag(Widget w, XEvent *event)
 	    x = X_SHIFT;
 	    y = ascent + MARGIN;
 	    while (i < count) {
-		if (name[i]) {
-		    XSetForeground(display,gc,alarmColorPixel[severity[i]]);
-		    XDrawString(display,sourcePixmap,gc,x,y,name[i],strlen(name[i]));
-		    channelName = name[i];
+		if (record[i] && record[i]->name) {
+		    XSetForeground(display,gc,
+		      alarmColorPixel[record[i]->severity]);
+		    XDrawString(display,sourcePixmap,gc,x,y,record[i]->name,
+		      strlen(record[i]->name));
+		    channelName = record[i]->name;
 		}
 		j++;
 		if (j < column) {
@@ -294,8 +315,7 @@ void StartDrag(Widget w, XEvent *event)
 
 
     if (sourcePixmap != (Pixmap)NULL) {
-
-      /* use source widget as parent - can inherit visual attributes that way */
+      /* Use source widget as parent - can inherit visual attributes that way */
 	n = 0;
 	XtSetArg(args[n],XmNpixmap,sourcePixmap); n++;
 	XtSetArg(args[n],XmNwidth,maxWidth); n++;
@@ -303,7 +323,7 @@ void StartDrag(Widget w, XEvent *event)
 	XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
 	sourceIcon = XmCreateDragIcon(XtParent(searchWidget),"sourceIcon",args,n);
 
-      /* establish list of valid target types */
+      /* Establish list of valid target types */
 	exportList[0] = COMPOUND_TEXT;
 
 	n = 0;
@@ -317,4 +337,6 @@ void StartDrag(Widget w, XEvent *event)
 	XtSetArg(args[n],XmNdragDropFinishCallback,dragDropFinishCB); n++;
 	XmDragStart(searchWidget,event,args,n);
     }
+#undef MAX_COUNT
+#undef MAX_COL
 }

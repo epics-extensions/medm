@@ -72,7 +72,7 @@ static void menuUpdateValueCb(XtPointer);
 static void menuUpdateGraphicalInfoCb(XtPointer);
 static void menuDestroyCb(XtPointer cd);
 static void menuValueChangedCb(Widget, XtPointer, XtPointer);
-static void menuName(XtPointer, char **, short *, int *);
+static void menuGetRecord(XtPointer, Record **, int *);
 static void menuInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void menuSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -122,7 +122,7 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
 	medmPrintf("\nmenuCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
-	updateTaskAddNameCb(pm->updateTask,menuName);
+	updateTaskAddNameCb(pm->updateTask,menuGetRecord);
     }
     pm->record = medmAllocateRecord(dlMenu->control.ctrl,
       menuUpdateValueCb,
@@ -429,11 +429,10 @@ static void menuValueChangedCb(
     }
 }
 
-static void menuName(XtPointer cd, char **name, short *severity, int *count) {
+static void menuGetRecord(XtPointer cd, Record **record, int *count) {
     Menu *pm = (Menu *) cd;
     *count = 1;
-    name[0] = pm->record->name;
-    severity[0] = pm->record->severity;
+    record[0] = pm->record;
 }
 
 DlElement *createDlMenu(DlElement *p)

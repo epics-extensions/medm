@@ -111,14 +111,16 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
-#define NUM_EXECUTE_POPUP_ENTRIES	3	  /* items in exec. popup menu  */
+#define NUM_EXECUTE_POPUP_ENTRIES       4	  /* items in exec. popup menu  */
 #define EXECUTE_POPUP_MENU_PRINT	"Print"   /* if this changes, change    */
 #define EXECUTE_POPUP_MENU_CLOSE	"Close"   /* executePopupMenuCallback() */
-#define EXECUTE_POPUP_MENU_EXECUTE	"Execute" /* executePopupMenuCallback() */
+#define EXECUTE_POPUP_MENU_PVINFO	"PV Info"
+#define EXECUTE_POPUP_MENU_EXECUTE	"Execute"
 #define EXECUTE_POPUP_MENU_PRINT_ID	0
 #define EXECUTE_POPUP_MENU_CLOSE_ID	1
+#define EXECUTE_POPUP_MENU_PVINFO_ID	2
 /* The following must be the last item */
-#define EXECUTE_POPUP_MENU_EXECUTE_ID	2
+#define EXECUTE_POPUP_MENU_EXECUTE_ID	3
 
 #define COLOR_SCALE		(65535.0/255.0)
 #define MAX_CHILDREN		1000	/* max # of child widgets...       */
@@ -224,8 +226,8 @@ typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 typedef struct _UpdateTask {
     void       (*executeTask)(XtPointer);    /* update rountine */
     void       (*destroyTask)(XtPointer);
+    void       (*getRecord)(XtPointer, Record **, int *);
     Widget     (*widget)(XtPointer);
-    void       (*name)(XtPointer, char **, short *, int *);
     XtPointer  clientData;                           
     double     timeInterval;                 /* if not 0.0, periodic task */
     double     nextExecuteTime;               

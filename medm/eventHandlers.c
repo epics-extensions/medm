@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_EVENTS 0
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_HIGHLIGHTS 0
+#define DEBUG_POPUP 1
 
 #include "medm.h"
 #include <X11/IntrinsicP.h>
@@ -105,6 +106,10 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
     Widget widget;
     DlElement *element;
 
+#if DEBUG_POPUP
+    printf("\npopupMenu: Entered\n");
+#endif    
+
     if (displayInfo != currentDisplayInfo) {
 	currentDisplayInfo = displayInfo;
 	currentColormap = currentDisplayInfo->colormap;
@@ -124,8 +129,11 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 	    XmMenuPosition(currentDisplayInfo->editPopupMenu,
 	      (XButtonPressedEvent *)event);
 	    XtManageChild(currentDisplayInfo->editPopupMenu);
+#if 0	    
+	  /* KE: Are these necessary ? */
 	    XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
 	    XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
+#endif	    
 	    
 	} else {
 	  /*
@@ -295,6 +303,10 @@ void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
     XButtonEvent *xEvent = (XButtonEvent *)event;
 
+#if DEBUG_POPUP
+    printf("\npopdownMenu: Entered\n");
+#endif    
+
   /* Button 3 */
     if (xEvent->button == Button3) {
 	if (globalDisplayListTraversalMode == DL_EDIT) {
@@ -338,6 +350,9 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
     DisplayInfo *di, *cdi;
     DlElement *dlElement;
 
+#if DEBUG_POPUP
+    printf("\nhandleButtonPress: Entered\n");
+#endif    
 #if DEBUG_EVENTS
     fprintf(stderr,"\n>>> handleButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
       currentActionType == SELECT_ACTION?"SELECT":"CREATE",xEvent->button,

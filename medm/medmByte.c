@@ -68,7 +68,7 @@ void XcBYUpdateValue(Widget w, XcVType *value);
 static void byteUpdateValueCb(XtPointer cd);
 static void byteDraw(XtPointer cd);
 static void byteDestroyCb(XtPointer cd);
-static void byteName(XtPointer, char **, short *, int *);
+static void byteGetRecord(XtPointer, Record **, int *);
 static void byteGetValues(ResourceBundle *pRCB, DlElement *p);
 static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -120,7 +120,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 		medmPrintf("\nbyteCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
-		updateTaskAddNameCb(pb->updateTask,byteName);
+		updateTaskAddNameCb(pb->updateTask,byteGetRecord);
 	    }
 	    pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
 	      byteUpdateValueCb,
@@ -237,11 +237,10 @@ static void byteDestroyCb(XtPointer cd) {
     }
 }
 
-static void byteName(XtPointer cd, char **name, short *severity, int *count) {
+static void byteGetRecord(XtPointer cd, Record **record, int *count) {
     Bits *pb = (Bits *) cd;
     *count = 1;
-    name[0] = pb->record->name;
-    severity[0] = pb->record->severity;
+    record[0] = pb->record;
 }
 
 DlElement *createDlByte(DlElement *p) {

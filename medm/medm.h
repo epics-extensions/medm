@@ -103,8 +103,8 @@ extern "C" {
   /*
    * MEDM includes
    */
-#include "medmWidget.h"
 #include "medmCA.h"
+#include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
 
@@ -197,7 +197,7 @@ extern "C" {
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;
     EXTERN Widget editHelpS, editHelpMessageBox;
-
+    EXTERN Widget pvInfoS, pvInfoMessageBox;
 
   /* In main shell: labels on bulletin board for current display information */
     EXTERN Widget statusBB, displayL, nElementsL, nColorsL;

@@ -455,7 +455,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	pr->precision = pCh->info.f.precision;
 	break;
     default :
-	medmPostMsg("medmUpdateGraphicalInfoCb : unknown data type\n");
+	medmPostMsg("medmUpdateGraphicalInfoCb: Unknown data type\n");
 	return;
     }
     if (pr->precision < 0) {

@@ -79,7 +79,7 @@ typedef struct _Polygon {
 static void polygonDraw(XtPointer cd);
 static void polygonUpdateValueCb(XtPointer cd);
 static void polygonDestroyCb(XtPointer cd);
-static void polygonName(XtPointer, char **, short *, int *);
+static void polygonGetRecord(XtPointer, Record **, int *);
 static void polygonGetValues(ResourceBundle *pRCB, DlElement *p);
 static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void polygonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -165,7 +165,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\npolygonCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pp->updateTask,polygonDestroyCb);
-	    updateTaskAddNameCb(pp->updateTask,polygonName);
+	    updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
 	    pp->updateTask->opaque = False;
 	}
 	pp->record = medmAllocateRecord(
@@ -304,11 +304,10 @@ static void polygonDestroyCb(XtPointer cd) {
     return;
 }
 
-static void polygonName(XtPointer cd, char **name, short *severity, int *count) {
+static void polygonGetRecord(XtPointer cd, Record **record, int *count) {
     Polygon *pp = (Polygon *) cd;
     *count = 1;
-    name[0] = pp->record->name;
-    severity[0] = pp->record->severity;
+    record[0] = pp->record;
 }
 
 

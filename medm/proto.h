@@ -373,7 +373,7 @@ void updateTaskStatusGetInfo(int *taskCount,
   int *updateRequestQueued,
   int *updateExecuted,
   double *timeInterval); 
-void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, char **, short *, int *));
+void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
 
 
 
@@ -517,6 +517,9 @@ void saveUndoInfo(DisplayInfo *displayInfo);
 void restoreUndoInfo(DisplayInfo *displayInfo);
 void updateAllDisplayPositions();
 void setTimeValues(void);
+void popupPvInfo(DisplayInfo *displayInfo);
+void createPvInfoDlg(void);
+Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);

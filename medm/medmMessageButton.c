@@ -72,7 +72,7 @@ static void messageButtonUpdateValueCb(XtPointer cd);
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd);
 static void messageButtonDestroyCb(XtPointer);
 static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
-static void messageButtonName(XtPointer, char **, short *, int *);
+static void messageButtonGetRecord(XtPointer, Record **, int *);
 static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void messageButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void messageButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -192,7 +192,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	medmPrintf("\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
-	updateTaskAddNameCb(pmb->updateTask,messageButtonName);
+	updateTaskAddNameCb(pmb->updateTask,messageButtonGetRecord);
     }
     pmb->record = medmAllocateRecord(dlMessageButton->control.ctrl,
       messageButtonUpdateValueCb,
@@ -393,11 +393,10 @@ static void messageButtonValueChangedCb(Widget w,
     }
 }
 
-static void messageButtonName(XtPointer cd, char **name, short *severity, int *count) {
+static void messageButtonGetRecord(XtPointer cd, Record **record, int *count) {
     MessageButton *pmb = (MessageButton *) cd;
     *count = 1;
-    name[0] = pmb->record->name;
-    severity[0] = pmb->record->severity;
+    record[0] = pmb->record;
 }
  
 /***

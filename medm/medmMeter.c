@@ -66,7 +66,7 @@ static void meterUpdateValueCb(XtPointer cd);
 static void meterDraw(XtPointer cd);
 static void meterUpdateGraphicalInfoCb(XtPointer cd);
 static void meterDestroyCb(XtPointer cd);
-static void meterName(XtPointer, char **, short *, int *);
+static void meterGetRecord(XtPointer, Record **, int *);
 static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void meterSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void meterSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -110,7 +110,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 		medmPrintf("\nmeterCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
-		updateTaskAddNameCb(pm->updateTask,meterName);
+		updateTaskAddNameCb(pm->updateTask,meterGetRecord);
 	    }
 	    pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
 	      meterUpdateValueCb,
@@ -294,11 +294,10 @@ static void meterDestroyCb(XtPointer cd) {
     return;
 }
 
-static void meterName(XtPointer cd, char **name, short *severity, int *count) {
+static void meterGetRecord(XtPointer cd, Record **record, int *count) {
     Meter *pm = (Meter *) cd;
     *count = 1;
-    name[0] = pm->record->name;
-    severity[0] = pm->record->severity;
+    record[0] = pm->record;
 }
 
 DlElement *createDlMeter(DlElement *p)

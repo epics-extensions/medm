@@ -69,7 +69,7 @@ static void choiceButtonDraw(XtPointer);
 static void choiceButtonUpdateValueCb(XtPointer);
 static void choiceButtonUpdateGraphicalInfoCb(XtPointer);
 static void choiceButtonDestroyCb(XtPointer cd);
-static void choiceButtonName(XtPointer, char **, short *, int *);
+static void choiceButtonGetRecord(XtPointer, Record **, int *);
 static void choiceButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void choiceButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void choiceButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -391,7 +391,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	medmPrintf("\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
-	updateTaskAddNameCb(pcb->updateTask,choiceButtonName);
+	updateTaskAddNameCb(pcb->updateTask,choiceButtonGetRecord);
     }
 
     pcb->record = medmAllocateRecord(dlChoiceButton->control.ctrl,
@@ -464,11 +464,10 @@ static void choiceButtonDestroyCb(XtPointer cd) {
     }
 }
 
-static void choiceButtonName(XtPointer cd, char **name, short *severity, int *count) {
+static void choiceButtonGetRecord(XtPointer cd, Record **record, int *count) {
     ChoiceButtons *pcb = (ChoiceButtons *) cd;
     *count = 1;
-    name[0] = pcb->record->name;
-    severity[0] = pcb->record->severity;
+    record[0] = pcb->record;
 }
 
 DlElement *createDlChoiceButton(DlElement *p)

@@ -65,7 +65,7 @@ typedef struct _Oval {
 static void ovalDraw(XtPointer cd);
 static void ovalUpdateValueCb(XtPointer cd);
 static void ovalDestroyCb(XtPointer cd);
-static void ovalName(XtPointer, char **, short *, int *);
+static void ovalGetRecord(XtPointer, Record **, int *);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -125,7 +125,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\novalCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
-	    updateTaskAddNameCb(po->updateTask,ovalName);
+	    updateTaskAddNameCb(po->updateTask,ovalGetRecord);
 	    po->updateTask->opaque = False;
 	}
 	po->record = medmAllocateRecord(dlOval->dynAttr.chan,ovalUpdateValueCb,
@@ -271,11 +271,10 @@ static void ovalDestroyCb(XtPointer cd) {
     return;
 }
 
-static void ovalName(XtPointer cd, char **name, short *severity, int *count) {
+static void ovalGetRecord(XtPointer cd, Record **record, int *count) {
     Oval *po = (Oval *) cd;
     *count = 1;
-    name[0] = po->record->name;
-    severity[0] = po->record->severity;
+    record[0] = po->record;
 }
 
 DlElement *createDlOval(DlElement *p)

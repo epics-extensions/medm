@@ -280,10 +280,10 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
       "executePopupMenu", args, n);
 
-  /* Create the execute menu */
+  /* Create the execute-mode popup menu */
     w = createExecuteMenu(displayInfo);
     if(!w) {
-      /* Recreate menu without exec */
+      /* Recreate menu without Execute item */
 	XtDestroyWidget(displayInfo->executePopupMenu);
 	n = 0;
 	XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES - 1); n++;
@@ -296,7 +296,7 @@ DisplayInfo *allocateDisplayInfo()
 	  "executePopupMenu", args, n);
     }
 
-  /* Create the shell's EDIT popup menu */
+  /* Create the edit-mode popup menu */
     displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
     XtVaSetValues(displayInfo->editPopupMenu,
       XmNtearOffModel, XmTEAR_OFF_DISABLED,

@@ -65,7 +65,7 @@ typedef struct _Rectangle {
 static void rectangleDraw(XtPointer cd);
 static void rectangleUpdateValueCb(XtPointer cd);
 static void rectangleDestroyCb(XtPointer cd);
-static void rectangleName(XtPointer, char **, short *, int *);
+static void rectangleGetRecord(XtPointer, Record **, int *);
 static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void rectangleSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p);
@@ -123,7 +123,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    medmPrintf("\nrectangleCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
-	    updateTaskAddNameCb(pr->updateTask,rectangleName);
+	    updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
 	    pr->updateTask->opaque = False;
 	}
 	pr->record = medmAllocateRecord(dlRectangle->dynAttr.chan,
@@ -268,11 +268,10 @@ static void rectangleDestroyCb(XtPointer cd) {
     return;
 }
 
-static void rectangleName(XtPointer cd, char **name, short *severity, int *count) {
+static void rectangleGetRecord(XtPointer cd, Record **record, int *count) {
     Rectangle *pr = (Rectangle *) cd;
     *count = 1;
-    name[0] = pr->record->name;
-    severity[0] = pr->record->severity;
+    record[0] = pr->record;
 }
 
 
