@@ -416,8 +416,6 @@ void createColor()
     XtManageChildren(globalColorPalettePB,childCount);
     XtManageChild(paletteRC);
     XtManageChild(colorMW);
-
-
 }
 
 

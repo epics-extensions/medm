@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_SC 0
 #define DEBUG_DIALOG 0
 #define DEBUG_RECORDS 0
+#define DEBUG_COLOR 1
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -2105,6 +2106,10 @@ void stripChartUpdateMatrixColors(int clr, int row)
     tempPen[row].clr = clr;
     w = table[row][SC_COLOR_COLUMN];
     pixel = colormap[tempPen[row].clr];
+#if DEBUG_COLOR
+    print("stripChartUpdateMatrixColors: clr=%d row=%d pixel=%x w=%x\n",
+      clr,row,pixel,w);
+#endif    
     if(w) XtVaSetValues(w, XmNbackground, pixel, NULL);
 }
 
@@ -2610,13 +2615,18 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
     case SC_CLR_BTN:
 	if(globalDisplayListTraversalMode == DL_EDIT) {
 	    setCurrentDisplayColorsInColorPalette(SCDATA_RC,row);
-	    XtPopup(colorS,XtGrabNone);
+	    XtPopup(colorS, XtGrabNone);
 	} else {
 	    setCurrentDisplayColorsInColorPalette(SCDATA_RC,row);
-	    XtPopup(colorS,XtGrabNone);
-#if 0
-	    XBell(display, 50);
-#endif	    
+	  /* Make the color palette sensitive. It usually isn't in
+	     EXECUTE mode. */
+	    if(colorS) {
+		XtSetSensitive(colorS, True);
+		XtPopup(colorS, XtGrabNone);
+	    } else {
+		medmPostMsg(1, "stripChartDialogCb:\n"
+		  "  Cannot pop up color palette\n");
+	    }
 	}
 	break;
     case SC_LOPR_SRC_BTN:
@@ -2711,6 +2721,12 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
     case SC_CANCEL_BTN:
 	executeTimeStripChartElement = NULL;
 	XtPopdown(stripChartS);
+      /* Pop the color palette down and set it to insensitive in
+         EXECUTE mode */
+	if(globalDisplayListTraversalMode == DL_EXECUTE && colorS) {
+	    XtPopdown(colorS);
+	    XtSetSensitive(colorS, False);
+	}
 	return;
     case SC_HELP_BTN:
 	callBrowser(medmHelpPath,"#StripChartDialogBox");
