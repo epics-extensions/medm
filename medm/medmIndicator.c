@@ -255,12 +255,12 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 
     switch (pd->dataType) {
     case DBF_STRING :
-    case DBF_ENUM :
 	medmPostMsg(1,"indicatorUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach Indicator\n",
 	  dlIndicator->monitor.rdbk);
 	return;
+    case DBF_ENUM :
     case DBF_CHAR :
     case DBF_INT :
     case DBF_LONG :

@@ -235,12 +235,12 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 
     switch (pd->dataType) {
     case DBF_STRING :
-    case DBF_ENUM :
 	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach meter\n",
 	  dlMeter->monitor.rdbk);
 	return;
+    case DBF_ENUM :
     case DBF_CHAR :
     case DBF_INT :
     case DBF_LONG :

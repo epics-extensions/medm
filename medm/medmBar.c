@@ -274,12 +274,12 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     if (widget == NULL) return;
     switch (pd->dataType) {
     case DBF_STRING :
-    case DBF_ENUM :
 	medmPostMsg(1,"barUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach bar\n",
 	  dlBar->monitor.rdbk);
 	return;
+    case DBF_ENUM :
     case DBF_CHAR :
     case DBF_INT :
     case DBF_LONG :
