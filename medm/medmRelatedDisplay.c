@@ -541,10 +541,13 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XtWindow(displayInfo->drawingArea),displayInfo->gc,
 	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
 	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
+      /* KE: Why do twice */
 	XFillRectangle(XtDisplay(displayInfo->drawingArea),
 	  displayInfo->drawingAreaPixmap,displayInfo->gc,
 	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
 	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
+      /* Restore GC */
+	XSetFillStyle(display,displayInfo->gc,FillSolid);
     }
 }
 
