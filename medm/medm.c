@@ -1461,7 +1461,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    n = 0;
 	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
  
-	    buttons[0] = XmStringCreateSimple("2.2.x");
+	    buttons[0] = XmStringCreateSimple("Default");
 	    buttons[1] = XmStringCreateSimple("2.1.x");
 	    n = 0;
 	    XtSetArg(args[n],XmNbuttonCount,2); n++;
@@ -3450,7 +3450,7 @@ static void createMain()
 	    n = 0;
 	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
  
-	    buttons[0] = XmStringCreateSimple("2.2.x");
+	    buttons[0] = XmStringCreateSimple("Default");
 	    buttons[1] = XmStringCreateSimple("2.1.x");
 	    n = 0;
 	    XtSetArg(args[n],XmNbuttonCount,2); n++;
