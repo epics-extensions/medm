@@ -158,7 +158,6 @@ void localCvtDoubleToString(
 void drawWhiteRectangle(UpdateTask *pt)
 {
     GC gc = pt->displayInfo->pixmapGC;
-    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     XSetForeground(display, gc, WhitePixel(display,DefaultScreen(display)));
@@ -171,7 +170,6 @@ void drawWhiteRectangle(UpdateTask *pt)
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
 {
     GC gc = pt->displayInfo->pixmapGC;
-    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     XSetForeground(display, gc, pixel);
@@ -188,7 +186,6 @@ void draw3DPane(UpdateTask *pt, Pixel bgc)
     DisplayInfo *displayInfo = pt->displayInfo;
     Display *display = XtDisplay(displayInfo->drawingArea);
     GC gc = displayInfo->gc;
-    Pixmap pixmap = displayInfo->drawingAreaPixmap;
     Drawable drawable = displayInfo->updatePixmap;
 
     int x = pt->rectangle.x;
@@ -240,7 +237,6 @@ void draw3DQuestionMark(UpdateTask *pt)
     Pixel tsc, bsc, bgc, fgc, slc;
     Display *display = XtDisplay(pt->displayInfo->drawingArea);
     GC gc = pt->displayInfo->pixmapGC;
-    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     int x = pt->rectangle.x;
