@@ -86,7 +86,8 @@ static DlDispatchTable rectangleDlDispatchTable = {
     NULL,
     NULL};
 
-static void drawRectangle(MedmRectangle *pr) {
+static void drawRectangle(MedmRectangle *pr)
+{
     unsigned int lineWidth;
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     Widget widget = pr->updateTask->displayInfo->drawingArea;
@@ -98,14 +99,13 @@ static void drawRectangle(MedmRectangle *pr) {
 	XFillRectangle(display,XtWindow(widget),displayInfo->gc,
           dlRectangle->object.x,dlRectangle->object.y,
           dlRectangle->object.width,dlRectangle->object.height);
-    } else
-      if (dlRectangle->attr.fill == F_OUTLINE) {
-	  XDrawRectangle(display,XtWindow(widget),displayInfo->gc,
-	    dlRectangle->object.x + lineWidth,
-	    dlRectangle->object.y + lineWidth,
-	    dlRectangle->object.width - 2*lineWidth,
-	    dlRectangle->object.height - 2*lineWidth);
-      }
+    } else if (dlRectangle->attr.fill == F_OUTLINE) {
+	XDrawRectangle(display,XtWindow(widget),displayInfo->gc,
+	  dlRectangle->object.x + lineWidth,
+	  dlRectangle->object.y + lineWidth,
+	  dlRectangle->object.width - 2*lineWidth,
+	  dlRectangle->object.height - 2*lineWidth);
+    }
 }
 
 void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -166,31 +166,32 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	      displayInfo->gc,
 	      dlRectangle->object.x,dlRectangle->object.y,
 	      dlRectangle->object.width,dlRectangle->object.height);
-	} else
-	  if (dlRectangle->attr.fill == F_OUTLINE) {
-	      unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
-	      XDrawRectangle(display,XtWindow(displayInfo->drawingArea),
-		displayInfo->gc,
-		dlRectangle->object.x + lineWidth,
-		dlRectangle->object.y + lineWidth,
-		dlRectangle->object.width - 2*lineWidth,
-		dlRectangle->object.height - 2*lineWidth);
-	      XDrawRectangle(display,displayInfo->drawingAreaPixmap,
-		displayInfo->gc,
-		dlRectangle->object.x + lineWidth,
-		dlRectangle->object.y + lineWidth,
-		dlRectangle->object.width - 2*lineWidth,
-		dlRectangle->object.height - 2*lineWidth);
-	  }
+	} else if (dlRectangle->attr.fill == F_OUTLINE) {
+	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
+	    XDrawRectangle(display,XtWindow(displayInfo->drawingArea),
+	      displayInfo->gc,
+	      dlRectangle->object.x + lineWidth,
+	      dlRectangle->object.y + lineWidth,
+	      dlRectangle->object.width - 2*lineWidth,
+	      dlRectangle->object.height - 2*lineWidth);
+	    XDrawRectangle(display,displayInfo->drawingAreaPixmap,
+	      displayInfo->gc,
+	      dlRectangle->object.x + lineWidth,
+	      dlRectangle->object.y + lineWidth,
+	      dlRectangle->object.width - 2*lineWidth,
+	      dlRectangle->object.height - 2*lineWidth);
+	}
     }
 }
 
-static void rectangleUpdateValueCb(XtPointer cd) {
+static void rectangleUpdateValueCb(XtPointer cd)
+{
     MedmRectangle *pr = (MedmRectangle *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pr->updateTask);
 }
 
-static void rectangleDraw(XtPointer cd) {
+static void rectangleDraw(XtPointer cd)
+{
     MedmRectangle *pr = (MedmRectangle *)cd;
     Record *pd = pr->record;
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
@@ -260,7 +261,8 @@ static void rectangleDraw(XtPointer cd) {
     }
 }
 
-static void rectangleDestroyCb(XtPointer cd) {
+static void rectangleDestroyCb(XtPointer cd)
+{
     MedmRectangle *pr = (MedmRectangle *)cd;
     if (pr) {
 	medmDestroyRecord(pr->record);
@@ -269,12 +271,12 @@ static void rectangleDestroyCb(XtPointer cd) {
     return;
 }
 
-static void rectangleGetRecord(XtPointer cd, Record **record, int *count) {
+static void rectangleGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmRectangle *pr = (MedmRectangle *)cd;
     *count = 1;
     record[0] = pr->record;
 }
-
 
 DlElement *createDlRectangle(DlElement *p)
 {
@@ -315,23 +317,23 @@ DlElement *parseRectangle(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if (!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlRectangle->object));
-	    else
-	      if (!strcmp(token,"basic attribute"))
-		parseBasicAttribute(displayInfo,&(dlRectangle->attr));
-	      else
-		if (!strcmp(token,"dynamic attribute"))
-		  parseDynamicAttribute(displayInfo,&(dlRectangle->dynAttr));
+	    else if (!strcmp(token,"basic attribute"))
+	      parseBasicAttribute(displayInfo,&(dlRectangle->attr));
+	    else if (!strcmp(token,"dynamic attribute"))
+	      parseDynamicAttribute(displayInfo,&(dlRectangle->dynAttr));
 	    break;
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-
+    
     return dlElement;
 }
 
@@ -365,7 +367,6 @@ void writeDlRectangle(
 #endif
 }
 
-
 static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
     DlRectangle *dlRectangle = p->structure.rectangle;
     medmGetValues(pRCB,
@@ -381,7 +382,6 @@ static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
       CHAN_RC,       &(dlRectangle->dynAttr.chan),
       -1);
 }
-
 
 static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlRectangle *dlRectangle = p->structure.rectangle;
