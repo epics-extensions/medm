@@ -429,19 +429,26 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
   /* If there is no displayInfo->dlColormap yet, try to read it from a
      file */
     if(!displayInfo->dlColormap) {
+	char cmap[MAX_TOKEN_LENGTH];
+
 	if(*dlDisplay->cmap)  {
-	  /* cmap is not blank. There is an external colormap file
-	     specified.  Parse the file and get the color map block,
-	     then create the colormap */
+	  /* The cmap string is not blank. There is an external
+	     colormap file specified.  Parse the file and get the
+	     color map block, then create the colormap.  Note that
+	     parseAndExtractExternalColormap will replace cmap with a
+	     name that includes the path if the cmap is found in the
+	     EPICS_DISPLAY_LIST (the same as it does for related
+	     displays).  We want to keep the name the user entered, so
+	     we pass the local copy and let it modify that one. */
+	    strcpy(cmap, dlDisplay->cmap);
 	    displayInfo->dlColormap = parseAndExtractExternalColormap(displayInfo,
-	      dlDisplay->cmap);
+	      cmap);
 	    if(!displayInfo->dlColormap) {
 	      /* Error */
 		medmPostMsg(1,"executeDlDisplay: "
 		  "Cannnot parse and execute external colormap\n"
 		  "  File=%s\n"
-		  "  Using the default colormap\n",
-		  dlDisplay->cmap);
+		  "  Using the default colormap\n", dlDisplay->cmap);
 	    }
 	}
       /* If there is still no colormap defined, use the default */
