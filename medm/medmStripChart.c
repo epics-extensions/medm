@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_DIALOG 0
 #define DEBUG_RECORDS 0
 #define DEBUG_COLOR 0
+#define DEBUG_TIMEOUT 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -546,7 +547,7 @@ static void freeStripChart(XtPointer cd) {
     if(psc == NULL) return;
     if(psc->timerid) {
 	XtRemoveTimeOut(psc->timerid);
-	psc->timerid=0;
+	psc->timerid = (XtIntervalId)0;
     }
     for(i = 0; i < psc->nChannels; i++) {
 	medmDestroyRecord(psc->record[i]);
@@ -1535,7 +1536,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 
     while(psc->record[n] != pR) n++;
 
-  /* see whether is time to advance the graph */
+  /* See whether it is time to advance the graph */
     if(currentTime > psc->nextAdvanceTime) {
       /* update the graph */
 	Window window = XtWindow(psc->dlElement->widget);
@@ -1546,14 +1547,10 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	int totalPixel;    /* number of pixel needed to be drawn */
 
 
-      /* calculate how many pixel needed to draw */
-	if(psc->nextAdvanceTime > currentTime) {
-	    totalPixel = 0;
-	} else {
-	    totalPixel = 1 + (int)((currentTime - psc->nextAdvanceTime) /
-	      psc->timeInterval);
-	    psc->nextAdvanceTime += psc->timeInterval * totalPixel;
-	}
+      /* Calculate how many pixels need to be drawn */
+	totalPixel = 1 + (int)((currentTime - psc->nextAdvanceTime) /
+	  psc->timeInterval);
+	psc->nextAdvanceTime += psc->timeInterval * totalPixel;
 #if 0
 	while(psc->nextAdvanceTime <= currentTime) {
 	    psc->nextAdvanceTime += psc->timeInterval;
@@ -1638,8 +1635,12 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	    XSetClipOrigin(display, gc, 0, 0);
 	    XSetClipMask(display, gc, None);
 	    psc->nextSlot += totalPixel;
-	    if(psc->nextSlot >= (int)psc->dataWidth)
-	      psc->nextSlot -= psc->dataWidth;
+	    if(psc->dataWidth > 0) {
+		while(psc->nextSlot >= (int)psc->dataWidth)
+		  psc->nextSlot -= psc->dataWidth;
+	    } else {
+		psc->nextSlot = 0;
+	    }
 	}
     }
   /* remember the min and max and current pen position */
@@ -1668,13 +1669,24 @@ static void stripChartDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+        
   /* Make sure the plot is up to date */
     stripChartUpdateValueCb((XtPointer)psc->record[0]);
     startPos = psc->nextSlot;
     if(startPos > (int)psc->dataWidth) {
 	startPos = 0;
     }
+#if DEBUG_TIMEOUT
+    {
+	static double lastTime = 0;
+	double now=medmTime();
+	double delta = now-lastTime;
+	print("stripChartDraw: delta=%f\n"
+	  " nextSlot=%d dataWidth=%d startPos=%d\n",
+	  delta,psc->nextSlot,psc->dataWidth,startPos);
+	lastTime=now;
+    }
+#endif
     if(startPos) {
 	int x, w;
       /* copy the first half */
@@ -2858,14 +2870,47 @@ static void stripChartDialogUpdateElement(void)
 	highlightSelectedElements();
 	medmMarkDisplayBeingEdited(cdi);
     } else {
+	MedmStripChart *psc = (MedmStripChart *)pE->data;
 	DisplayInfo *cdi=currentDisplayInfo;
+
 	if(pE && pE->data) {
-	    MedmStripChart *psc = (MedmStripChart *)pE->data;
+	    psc = (MedmStripChart *)pE->data;
 	    stripChartConfig(psc);
 	}
 	if(pE && pE->run && pE->run->execute) {
 	    pE->run->execute(cdi, pE);
 	}
+      /* Make sure it starts over right */
+	psc->nextSlot = 0;
+#if DEBUG_TIMEOUT
+	{
+	    double currentTime=medmTime();
+	    
+	    print("stripChartDialogUpdateElement: \n"
+	      "  timeInterval=%f\n"
+	      "  nextAdvanceTime(delta)=%f\n"
+	      "  nextSlot\n",
+	      psc->timeInterval,
+	      psc->nextAdvanceTime-currentTime,
+	      psc->nextSlot);
+	    print("updateTask: \n"
+	      "  timeInterval=%f\n"
+	      "  nextExecuteTime(delta)=%f\n"
+	      "  executeRequestsPendingCount=%d\n"
+	      "  disabled=%s\n",
+	      psc->updateTask->timeInterval,
+	      psc->updateTask->nextExecuteTime-currentTime,
+	      psc->updateTask->executeRequestsPendingCount,
+	      psc->updateTask->disabled?"True":"False");
+	    print("displayInfo: \n"
+	      "  periodicTaskcount=%d\n"
+	      "  nextExecuteTime(delta)=%f\n"
+	      "  periodicTaskCount=%d\n",
+	      cdi->periodicTaskCount,
+	      cdi->updateTaskListHead.nextExecuteTime-currentTime,
+	      cdi->periodicTaskCount);
+	}
+#endif	
     }
 }
 
