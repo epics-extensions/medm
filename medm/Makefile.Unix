@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.8  1995/03/07 23:03:36  vong
+# Revision 1.9  1995/03/28 18:56:00  jba
+# Added DEPLIBS definition and made USR_LDLIBS portable.
+#
+# Revision 1.8  1995/03/07  23:03:36  vong
 # MEDM version 2.0.2
 # ------------------
 # Fixes the following bugs :
@@ -107,8 +110,14 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
 				-I$(MOTIF_INC) -I$(X11_INC)
 
 USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = ../../xc/O.sun4/libANLwidgets.a -lPrintUtils -lGraphX \
+USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 	     -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
+
+DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
+          $(EPICS_BASE_LIB)/libCom.a \
+          $(EPICS_EXTENSIONS_LIB)/libUnix.a \
+          $(EPICS_EXTENSIONS_LIB)/libPrintUtils.a \
+          $(EPICS_EXTENSIONS_LIB)/libGraphX.a
 
 SRCS.c = ../actions.c ../callbacks.c \
 	../channelPalette.c ../colorPalette.c \
