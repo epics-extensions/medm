@@ -7,13 +7,15 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 # Browser options
-ifeq ($(HOST_ARCH),solaris)
-  ifeq ($(HOST_OPT),NO)
-    USR_CFLAGS += -xsb
+ifeq ($(HOST_OPT),NO)
+  ifeq ($(ANSI),ACC)
+    ifeq ($(HOST_ARCH),solaris)
+      USR_CFLAGS += -xsb
+    endif
   endif
 endif
 
@@ -57,15 +59,13 @@ ifdef XRTGRAPH
       USR_CFLAGS += -DXRT_EXTENSIONS
 #      USR_LIBS += xrtmprop xrtfield xrttable xrtgear Xpm Xext
 # XRT 4.0
-      USR_LIBS += xrtmprop xrtfield xrttable xrtgear pdsutil Xpm Xext
+      USR_LIBS += xrtmprop xrtfield xrttable xrtgear pdsutil Xpm
       xrtmprop_DIR = $(XRTGRAPH)/lib
       xrtfield_DIR = $(XRTGRAPH)/lib 
       xrttable_DIR = $(XRTGRAPH)/lib 
       xrtgear_DIR = $(XRTGRAPH)/lib 
-# XRT 4.0
       pdsutil_DIR = $(XRTGRAPH)/lib 
       Xpm = $(X11)/lib 
-      Xext = $(X11)/lib 
     endif
   endif
 
@@ -125,8 +125,8 @@ else
   SRCS += medmCA.c 
 endif
 
-USR_LIBS_DEFAULT = Xm Xt Xmu X11
-USR_LIBS_Linux = Xm Xt Xp Xmu X11
+USR_LIBS_DEFAULT = Xm Xt Xmu X11 Xext
+USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
 
 WIN32_RUNTIME=MD
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
@@ -139,6 +139,7 @@ Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
 Xmu_DIR = $(X11_LIB)
 Xp_DIR = $(X11_LIB)
+Xext = $(X11)/lib 
 
 SRCS += actions.c
 SRCS += bubbleHelp.c 
