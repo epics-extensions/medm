@@ -561,6 +561,7 @@ int copyElementsIntoDisplay(void);
 void deleteElementsInDisplay(DisplayInfo * displayInfo);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);
+void selectDisplay(void);
 void lowerSelectedElements(void);
 void raiseSelectedElements(void);
 void alignSelectedElements(int alignment);

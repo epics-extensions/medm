@@ -142,10 +142,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define EDIT_UNSELECT_BTN         8
 #define EDIT_SELECT_ALL_BTN       9
-#define EDIT_REFRESH_BTN         10
-#define EDIT_HELP_BTN            11
-#define EDIT_UNDO_BTN            12
-#define EDIT_FIND_BTN            13
+#define EDIT_SELECT_DISPLAY_BTN  10
+#define EDIT_REFRESH_BTN         11
+#define EDIT_HELP_BTN            12
+#define EDIT_UNDO_BTN            13
+#define EDIT_FIND_BTN            14
 
 #define N_VIEW_MENU_ELES         3
 #define VIEW_BTN_POSN            2
@@ -420,6 +421,8 @@ static menuEntry_t editMenu[] = {
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
     { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
+    { "Select Display",&xmPushButtonGadgetClass, '\0', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_SELECT_DISPLAY_BTN,  NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Find Outliers", &xmPushButtonGadgetClass, 'F', NULL, NULL, NULL,
@@ -476,6 +479,8 @@ static menuEntry_t editModeMenu[] = {
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
     { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
+    { "Select Display",&xmPushButtonGadgetClass, '\0', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_SELECT_DISPLAY_BTN,  NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Find Outliers", &xmPushButtonGadgetClass, 'F', NULL, NULL, NULL,
@@ -1228,6 +1233,10 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_SELECT_ALL_BTN:
 	selectAllElementsInDisplay();
+	break;
+
+    case EDIT_SELECT_DISPLAY_BTN:
+	selectDisplay();
 	break;
 
     case EDIT_REFRESH_BTN:

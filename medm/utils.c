@@ -1662,6 +1662,9 @@ int copyElementsIntoDisplay()
     }
     highlightSelectedElements();
     if(cdi->selectedDlElementList->count == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
     return 1;
@@ -1754,6 +1757,38 @@ void selectAllElementsInDisplay()
     }
     highlightSelectedElements();
     if(cdi->selectedDlElementList->count == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
+	setResourcePaletteEntries();
+    }
+}
+
+/*
+ * Selects the display itself
+ */
+void selectDisplay()
+{
+    DisplayInfo *cdi = currentDisplayInfo;
+    DlElement *dlElement;
+    DlElement *pE;
+	
+    if(!cdi) return;
+
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
+
+  /* Loop over elements not including the display */
+    dlElement = FirstDlElement(cdi->dlElementList);
+    pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
+    if(pE) {
+	appendDlElement(cdi->selectedDlElementList,pE);
+    }
+    highlightSelectedElements();
+    if(cdi->selectedDlElementList->count == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
 }
@@ -1825,6 +1860,9 @@ void lowerSelectedElements()
     appendDlList(cdi->selectedDlElementList,tmpDlElementList);
     highlightSelectedElements();
     if(cdi->selectedDlElementList->count == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
   /* Cleanup temporary list */
@@ -1888,6 +1926,9 @@ void raiseSelectedElements()
     appendDlList(cdi->selectedDlElementList,tmpDlElementList);
     highlightSelectedElements();
     if(cdi->selectedDlElementList->count == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
   /* Cleanup temporary list */
@@ -2480,9 +2521,9 @@ void alignSelectedElementsToGrid(Boolean edges)
  */
 void findOutliers(void)
 {
-    Position displayH, displayW;
+    int displayH, displayW;
     DisplayInfo *cdi;
-    DlElement *dlElement, *pE;
+    DlElement *dlElement, *pE, *pD;
     DlObject *pO;
     int partial=0, total=0;
     char string[240];
@@ -2494,10 +2535,10 @@ void findOutliers(void)
     unselectElementsInDisplay();
 
   /* Get the (current) height and width for display */
-    XtVaGetValues(cdi->drawingArea,
-      XmNwidth, &displayW,
-      XmNheight, &displayH,
-      NULL);
+    pD = FirstDlElement(cdi->dlElementList);
+    if(!pD) return;
+    displayW = pD->structure.display->object.width;
+    displayH = pD->structure.display->object.height;
 
   /* Loop over elements */
     dlElement = FirstDlElement(cdi->dlElementList);
@@ -2506,9 +2547,9 @@ void findOutliers(void)
 
       /* Omit the display */
 	if(dlElement->type != DL_Display) {
-	    if((pO->x) > (int)displayW ||
+	    if((pO->x) > displayW ||
 	      (pO->x + (int)pO->width) < 0 ||
-	      (pO->y) > (int)displayH ||
+	      (pO->y) > displayH ||
 	      (pO->y + (int)pO->height) < 0) {
 		total++;
 		pE = createDlElement(DL_Element, (XtPointer)dlElement, NULL);

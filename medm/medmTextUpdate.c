@@ -270,10 +270,8 @@ static void textUpdateDraw(XtPointer cd)
     Display *display = XtDisplay(displayInfo->drawingArea);
     char textField[MAX_TOKEN_LENGTH];
     int i;
-    XGCValues gcValues;
     Pixmap pixmap;
     GC gc;
-    unsigned long gcValueMask;
     Boolean isNumber;
     double value = 0.0;
     short precision = 0;

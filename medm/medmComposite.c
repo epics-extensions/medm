@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_COMPOSITE 0
 #define DEBUG_DELETE 0
 #define DEBUG_REDRAW 0
+#define DEBUG_FILE 0
 
 #include "medm.h"
 
@@ -647,16 +648,18 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     DlFile *dlFile;
-    DlElement *pE;
+    DlElement *pE, *pD;
+    DlObject *pO;
     DlComposite *dlComposite;
     int minX, minY, maxX, maxY, oldX, oldY;
+    int displayH, displayW;
 
     if(!displayInfo || !dlElement) return;
     dlComposite = dlElement->structure.composite;
 
   /* Open the file */
     filename = dlComposite->compositeFile;
-    file = dmOpenUsableFile(filename, NULL);
+    file = dmOpenUsableFile(filename, displayInfo->dlFile->name);
     if(!file) {
 	medmPrintf(1,"\ncompositeFileParse: Cannot open file\n"
 	  "  filename: %s\n",filename);
@@ -707,12 +710,18 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     maxX = INT_MIN; maxY = INT_MIN;
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) { 
-	DlObject *po = &(pE->structure.composite->object);
+	pO = &(pE->structure.composite->object);
 	
-	minX = MIN(minX,po->x);
-	maxX = MAX(maxX,(int)(po->x+po->width));
-	minY = MIN(minY,po->y);
-	maxY = MAX(maxY,(int)(po->y+po->height));
+	minX = MIN(minX,pO->x);
+	maxX = MAX(maxX,(int)(pO->x+pO->width));
+	minY = MIN(minY,pO->y);
+	maxY = MAX(maxY,(int)(pO->y+pO->height));
+#if DEBUG_FILE
+	print("  %-20s %3d %3d %3d %3d %3d %3d\n",
+	  elementType(pE->type),
+	  pO->x,pO->y,pO->width,pO->height,
+	  (int)(pO->x+pO->width),(int)(pO->x+pO->height));
+#endif	
 	pE = pE->next;
     }
     oldX = dlComposite->object.x;
@@ -724,6 +733,35 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 
   /* Move the rearranged composite to its original x and y coordinates */
     compositeMove(dlElement, oldX - minX, oldY - minY);    
+
+  /* Check composite is in bounds */
+    displayW = displayH = 0;
+    pD = FirstDlElement(displayInfo->dlElementList);
+    pO = &(dlComposite->object);
+    if(pD && pO) {
+	displayW = pD->structure.display->object.width;
+	displayH = pD->structure.display->object.height;
+	if((pO->x) > displayW ||
+	  (pO->x + (int)pO->width) < 0 ||
+	  (pO->y) > displayH ||
+	  (pO->y + (int)pO->height) < 0) {
+	    medmPrintf(1,"\ncompositeFileParse:"
+	      " Composite from file extends beyond display:\n"
+	      "  File: %s\n", filename);
+	} else if((pO->x) < 0 ||
+	  (pO->x + (int)pO->width) > displayW ||
+	  (pO->y) < 0 ||
+	  (pO->y + (int)pO->height) > displayH) {
+	    medmPrintf(1,"\ncompositeFileParse:"
+	      " Composite from file extends beyond display:\n"
+	      "  File: %s\n", filename);
+	}
+    }
+#if DEBUG_FILE
+    print("  displayW=%d displayH=%d width=%d height=%d\n",
+      displayW,displayH,(int)dlComposite->object.width,
+      (int)dlComposite->object.height);
+#endif    
 
   RETURN:
     
