@@ -283,9 +283,13 @@ static void arcGetRecord(XtPointer cd, Record **record, int *count)
     MedmArc *pa = (MedmArc *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pa->records[i];
+    *count = 0;
+    if(pa && pa->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(pa->records[i]) {
+		record[(*count)++] = pa->records[i];
+	    }
+	}
     }
 }
 

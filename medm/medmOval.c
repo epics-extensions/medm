@@ -276,9 +276,13 @@ static void ovalGetRecord(XtPointer cd, Record **record, int *count) {
     MedmOval *po = (MedmOval *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = po->records[i];
+    *count = 0;
+    if(po && po->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(po->records[i]) {
+		record[(*count)++] = po->records[i];
+	    }
+	}
     }
 }
 

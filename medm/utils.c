@@ -2886,8 +2886,10 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /* In case the drawing area gc has a clip mask set, change it to the
      pixmapGC, which should not be clipped */
+#if 0     
     gcSave=displayInfo->gc;
     displayInfo->gc = displayInfo->pixmapGC;
+#endif    
 
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
@@ -2917,8 +2919,10 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 	pE = pE->next;
     }
     
+#if 0
   /* Restore the drawing area gc */
     displayInfo->gc = gcSave;
+#endif    
 
   /* Uppate the window from the pixmap */
     XCopyArea(display,displayInfo->drawingAreaPixmap,
@@ -5462,6 +5466,9 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	Record *pr = records[i];
 	
+      /* Skip over NULL records */
+	if(!pr) continue;
+	
 	if(i == 0) {
 	  /* The main record */
 	  /* Set all requirements to zero */
@@ -5471,6 +5478,12 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	  /* Set the minimum requirement for ColorMode */
 	    switch (attr->clr) {
 	    case STATIC:
+#if 1     /* Check */
+	      /* Even though it is static, we need to monitor the
+                 value change to be able to redraw it when hiding and
+                 unhiding */
+		pr->monitorValueChanged = True;
+#endif		
 		break;
 	    case ALARM:
 		pr->monitorSeverityChanged = True;
@@ -5484,6 +5497,12 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	  /* Set the minimum requirement for each VisibilityMode */
 	    switch(attr->vis) {
 	    case V_STATIC:
+#if 1     /* Check */
+	      /* Even though it is static, we need to monitor the
+                 value change to be able to redraw it when hiding and
+                 unhiding */
+		pr->monitorValueChanged = True;
+#endif		
 		break;
 	    case IF_NOT_ZERO:
 	    case IF_ZERO:

@@ -450,9 +450,13 @@ static void compositeGetRecord(XtPointer cd, Record **record, int *count)
     MedmComposite *pc = (MedmComposite *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pc->records[i];
+    *count = 0;
+    if(pc && pc->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(pc->records[i]) {
+		record[(*count)++] = pc->records[i];
+	    }
+	}
     }
 }
 

@@ -160,11 +160,12 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	MedmImage *pi;
-	char upstring[MAX_TOKEN_LENGTH];
+	char ucString[MAX_TOKEN_LENGTH];
 	int i;
 	
 	if(dlElement->data) {
 	    pi = (MedmImage *)dlElement->data;
+	    if(dlElement->staticGraphic) drawImage(pi);
 	} else {
 	    pi = (MedmImage *)malloc(sizeof(MedmImage));
 	    dlElement->data = (void *)pi;
@@ -203,9 +204,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	      /* Calculate the postfix for the image calc */
 	      /* First, check for ANIMATE in the string */
 		for(i=0; i < 4; i++) {
-		    upstring[i] = toupper(dlImage->calc[i]);
+		    ucString[i] = toupper(dlImage->calc[i]);
 		}
-		if(!strncmp(upstring,"ANIM",4)) {
+		if(!strncmp(ucString,"ANIM",4)) {
 		  /* Calc is set to animate */
 		    pi->animate = True;
 		    pi->validCalc = False;
@@ -225,7 +226,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		 there is a valid image calc */
 		if(pi->validCalc) {
 		    for(i=0; i < MAX_CALC_RECORDS; i++) {
-			pi->records[i]->monitorValueChanged = True;
+			if(pi->records[i]) {
+			    pi->records[i]->monitorValueChanged = True;
+			}
 		    }
 		}
 #if 0	    
@@ -235,6 +238,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif	    
 	    } else {
 	      /* No channel */
+		dlElement->staticGraphic = True;
 		if(gif) {
 		    if(gif->nFrames > 1) {
 			pi->animate = True;
@@ -434,13 +438,13 @@ static void imageGetRecord(XtPointer cd, Record **record, int *count)
     MedmImage *pi = (MedmImage *)cd;
     int i;
     
+    *count = 0;
     if(pi && pi->records) {
-	*count = MAX_CALC_RECORDS;
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
-	    record[i] = pi->records[i];
+	    if(pi->records[i]) {
+		record[(*count)++] = pi->records[i];
+	    }
 	}
-    } else {
-	*count = 0;
     }
 }
 

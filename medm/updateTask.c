@@ -1157,10 +1157,11 @@ void dumpUpdatetaskList(DisplayInfo *displayInfo)
 	DlComposite *pC = pE->structure.composite;
 	DlObject *pO = &(pC->object);
 	
-	print("  %2d pT=%x pE=%x pC=%x x=%3d y=%3d %s\n",
+	print("  %2d pT=%x pE=%x pC=%x x=%3d y=%3d %s%s\n",
 	  ++i,pT,pE,pC,
 	  pO->x, pO->y,
-	  elementType(pE->type));
+	  elementType(pE->type),
+	  pT->disabled?" D":"");
 	
 	pT = pT->next;
     }

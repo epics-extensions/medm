@@ -207,10 +207,6 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 #endif    
 	break;
     }
-#if 0	
-    case EXECUTE_POPUP_MENU_EXECUTE_ID:
-	break;
-#endif	
     }
 }
 

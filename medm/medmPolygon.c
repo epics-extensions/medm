@@ -307,9 +307,13 @@ static void polygonGetRecord(XtPointer cd, Record **record, int *count)
     MedmPolygon *pp = (MedmPolygon *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pp->records[i];
+    *count = 0;
+    if(pp && pp->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(pp->records[i]) {
+		record[(*count)++] = pp->records[i];
+	    }
+	}
     }
 }
 

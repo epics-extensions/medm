@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 0
+#define DEBUG_COMPOSITE 1
 
 #include "medm.h"
 
@@ -98,7 +98,9 @@ static void drawRectangle(MedmRectangle *pr)
     DlRectangle *dlRectangle = pr->dlElement->structure.rectangle;
 
 #if DEBUG_COMPOSITE
-    print("drawRectangle:\n");
+    DlObject *po = &(pr->dlElement->structure.composite->object);
+
+    print("drawRectangle: [%d,%d]\n",po->x,po->y);
 #endif
 
     lineWidth = (dlRectangle->attr.width+1)/2;
@@ -119,6 +121,12 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
 
+#if DEBUG_COMPOSITE
+    DlObject *po = &(dlElement->structure.composite->object);
+
+    print("executeDlRectangle: [%d,%d] data=%x staticGraphic=%s\n",
+      po->x,po->y,dlElement->data,dlElement->staticGraphic?"True":"False");
+#endif
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
     
@@ -133,9 +141,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    dlElement->data = (void *)pr;
 	    pr->dlElement = dlElement;
 	    pr->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlRectangle->object),
-	      rectangleDraw,
-	      (XtPointer)pr);
+	      &(dlRectangle->object),rectangleDraw,(XtPointer)pr);
 	    
 	    if(pr->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
@@ -152,6 +158,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	if(displayInfo->traversalMode == DL_EXECUTE)
 	  dlElement->staticGraphic = True;
+	
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
 
 	if(dlRectangle->attr.fill == F_SOLID) {
@@ -191,13 +198,19 @@ void hideDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 static void rectangleUpdateValueCb(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)((Record *)cd)->clientData;
+
+#if DEBUG_COMPOSITE
+    DlObject *po = &(pr->dlElement->structure.composite->object);
+
+    print("rectangleUpdateValueCb: [%d,%d]\n",po->x,po->y);
+#endif
     updateTaskMarkUpdate(pr->updateTask);
 }
 
 static void rectangleDraw(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)cd;
-    Record *pd = pr->records[0];
+    Record *pRec = pr->records[0];
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -205,10 +218,12 @@ static void rectangleDraw(XtPointer cd)
     DlRectangle *dlRectangle = pr->dlElement->structure.rectangle;
 
 #if DEBUG_COMPOSITE
-    print("rectangleDraw:\n");
+    DlObject *po = &(pr->dlElement->structure.composite->object);
+
+    print("rectangleDraw: [%d,%d] value=%g\n",po->x,po->y,pRec->value);
 #endif
     
-    if(pd->connected) {
+    if(pRec->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -217,7 +232,7 @@ static void rectangleDraw(XtPointer cd)
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pRec->value,
 	      dlRectangle->dynAttr.colorRule,
 	      dlRectangle->attr.clr);
 	    break;
@@ -227,7 +242,7 @@ static void rectangleDraw(XtPointer cd)
 	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
 	    break;
 	case ALARM:
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pRec->severity);
 	    break;
 #endif
 	}
@@ -238,7 +253,7 @@ static void rectangleDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
 	  drawRectangle(pr);
-	if(pd->readAccess) {
+	if(pRec->readAccess) {
 	    if(!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
 		pr->updateTask->opaque = True;
 	    }
@@ -284,9 +299,13 @@ static void rectangleGetRecord(XtPointer cd, Record **record, int *count)
     MedmRectangle *pr = (MedmRectangle *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pr->records[i];
+    *count = 0;
+    if(pr && pr->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(pr->records[i]) {
+		record[(*count)++] = pr->records[i];
+	    }
+	}
     }
 }
 

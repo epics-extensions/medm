@@ -919,6 +919,7 @@ Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)
 {
     Record *record;
+    
     record = (Record *)malloc(sizeof(Record));
     if(record) {
 	*record = nullRecord;
@@ -934,17 +935,22 @@ Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
   void (*updateValueCb)(XtPointer), void (*updateGraphicalInfoCb)(XtPointer),
   XtPointer clientData)
 {
-    int i;
     Record **records;
+    int i;
     
     records = (Record **)malloc(MAX_CALC_RECORDS*sizeof(Record *));
     if(!records) return records;
   /* KE: Could put an error message here and also in medmAllocateRecord */
 
     for(i=0; i < MAX_CALC_RECORDS; i++) {
-      /* Use graphicalInfoCb only for record[0] */
-	records[i] = medmAllocateRecord(attr->chan[i], updateValueCb,
-	  i?NULL:updateGraphicalInfoCb, clientData);
+      /* Only add non-blank records */
+	if(*attr->chan[i]) {
+	  /* Use graphicalInfoCb only for record[0] */
+	    records[i] = medmAllocateRecord(attr->chan[i], updateValueCb,
+	      i?NULL:updateGraphicalInfoCb, clientData);
+	} else {
+	    records[i] = NULL;
+	}
     }
     return records;
 }

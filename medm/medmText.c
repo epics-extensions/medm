@@ -401,9 +401,13 @@ static void textGetRecord(XtPointer cd, Record **record, int *count) {
     MedmText *pt = (MedmText *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pt->records[i];
+    *count = 0;
+    if(pt && pt->records) {
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    if(pt->records[i]) {
+		record[(*count)++] = pt->records[i];
+	    }
+	}
     }
 }
 
