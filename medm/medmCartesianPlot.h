@@ -136,12 +136,6 @@ void CpGetAxisInfo(Widget w,
   Boolean *xAxisIsAuto, Boolean *yAxisIsAuto, Boolean *y2AxisIsAuto,
   XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
   XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF);
-#if 0
-void CpGetAxisAll(Widget w,
-  XcVType &xMax, XcVType &xMin, XcVType &xTick, XcVType &xNum, int &xPrecision,
-  XcVType &yMax, XcVType &yMin, XcVType &yTick, XcVType &yNum, int &yPrecision,
-  XcVType &y2Max, XcVType &yMin, XcVType &y2Tick, XcVType &y2Num, int &y2Precision);
-#endif
 void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF);
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
   int fillType, XColor color, int pointSize);
@@ -164,50 +158,6 @@ void CpUpdateWidget(Widget w, int full);
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
   DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp);
 
-/****************************************************************************
- * CARTESIAN PLOT DATA
- *********************************************************************/
-static String cpColumnLabels[] = {"X Data","Y Data","Color",};
-static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
-static short cpColumnWidths[] = {36,36,6,};
-static unsigned char cpColumnLabelAlignments[] = {
-    XmALIGNMENT_CENTER,
-    XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
-/* and the cpCells array of strings (filled in from globalResourceBundle...)
-*/
-static String cpRows[MAX_TRACES][3];
-static String *cpCells[MAX_TRACES];
- 
-static Pixel cpColorRows[MAX_TRACES][3];
-static Pixel *cpColorCells[MAX_TRACES];
-
-/*********************************************************************
- * CARTESIAN PLOT AXIS DATA
- *********************************************************************/
- 
-/*
- * for the Cartesian Plot Axis Dialog, use the following static globals
- *   (N.B. This dialog has semantics for both EDIT and EXECUTE time
- *    operation)
- */
- 
-/* Widget cpAxisForm defined in medm.h since execute-time needs it too */
- 
-/* Define array of widgets (for X, Y1, Y2) */
-static Widget axisRangeMenu[3];                 /* X_AXIS_ELEMENT =0 */
-static Widget axisStyleMenu[3];                 /* Y1_AXIS_ELEMENT=1 */
-static Widget axisRangeMin[3], axisRangeMax[3]; /* Y2_AXIS_ELEMENT=2 */
-static Widget axisRangeMinRC[3], axisRangeMaxRC[3];
-static Widget axisTimeFormat;
-static char *timeFormatString[NUM_CP_TIME_FORMAT] = {
-    "%H:%M:%S",
-    "%H:%M",
-    "%H:00",
-    "%b %d, %Y",
-    "%b %d",
-    "%b %d %H:00",
-    "%a %H:00"};
-
 #define CP_X_AXIS_STYLE   0
 #define CP_Y_AXIS_STYLE   1
 #define CP_Y2_AXIS_STYLE  2
@@ -226,5 +176,7 @@ static char *timeFormatString[NUM_CP_TIME_FORMAT] = {
 /* The following should be the largest of NUM_CP_TIME_FORMAT,
  *   NUM_CARTESIAN_PLOT_RANGE_STYLES, NUM_CARTESIAN_PLOT_AXIS_STYLES */
 #define MAX_CP_AXIS_BUTTONS  NUM_CP_TIME_FORMAT
+
+EXTERN char *cpTimeFormatString[NUM_CP_TIME_FORMAT];
 
 #endif     /* #ifndef CARTESIAN_PLOT_H */

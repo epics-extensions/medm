@@ -8,6 +8,7 @@
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_USER_DATA 0
 #define DEBUG_FONTS 0
+#define DEBUG_MEMORY 0
 
 #define MAX(a,b)  ((a)>(b)?(a):(b))
 #define MIN_FONT_HEIGHT 8
@@ -66,6 +67,19 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
 	}
     }
 
+#if DEBUG_MEMORY
+    if(hData) {
+	print("CpDataCreate: hData=%x nsets=%d data=%x\n",hData,hData->nsets,hData->data);
+	for(i=0; i < hData->nsets; i++) {
+	    ds = hData->data+i;
+	    print("  Set %d: ds=%x npoints=%d lastPoint=%d listid=%d xp=%x yp=%x\n",
+	      i,ds,ds->npoints,ds->lastPoint,ds->listid,ds->xp,ds->yp);
+	}
+    } else {
+	print("CpDataCreate: hData=NULL\n");
+    }
+#endif    
+
     return hData;
 }
 
@@ -83,15 +97,28 @@ double CpDataGetYElement(CpDataHandle hData, int set, int point) {
 
 void CpDataDestroy(CpDataHandle hData)
 {
+    CpDataSet *ds;
     int i;
     
+#if DEBUG_MEMORY
     if(hData) {
-	int nsets = hData->nsets;
-	
+	print("CpDataCreate: hData=%x nsets=%d data=%x\n",hData,hData->nsets,hData->data);
+	for(i=0; i < hData->nsets; i++) {
+	    ds = hData->data+i;
+	    print("  Set %d: ds=%x npoints=%d lastPoint=%d listid=%d xp=%x yp=%x\n",
+	      i,ds,ds->npoints,ds->lastPoint,ds->listid,ds->xp,ds->yp);
+	}
+    } else {
+	print("CpDataCreate: hData=NULL\n");
+    }
+#endif    
+
+    if(hData) {
 	if(hData->data) {
-	    for(i=0; i < nsets; i++) {
-		if (hData->data->xp) free((char *)hData->data->xp);
-		if (hData->data->yp) free((char *)hData->data->yp);
+	    for(i=0; i < hData->nsets; i++) {
+		ds = hData->data+i;
+		if (ds->xp) free((char *)ds->xp);
+		if (ds->yp) free((char *)ds->yp);
 	    }
 	    free((char *)hData->data);
 	}
@@ -413,7 +440,7 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	      hData->data[i].xp, hData->data[i].yp, "");
 	}
       /* Update with lastPoint */
-	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint,
+	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint+1,
 	  hData->data[i].xp, hData->data[i].yp);
     }
   /* Don't do SciPlotUpdate here for efficiency */
@@ -637,7 +664,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     case USER_SPECIFIED_RANGE:
 	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
-	SciPlotSetXUserScale(w, minF.fval, maxF.fval);
+	SciPlotSetYUserScale(w, minF.fval, maxF.fval);
 	break;
     default:
 	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
@@ -655,7 +682,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     case USER_SPECIFIED_RANGE:
 	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
-	SciPlotSetXUserScale(w, minF.fval, max.fval);
+	SciPlotSetYUserScale(w, minF.fval, max.fval);
 	break;
     default:
 	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
@@ -703,7 +730,7 @@ void dumpCartesianPlot(Widget w)
     int axisFont;
     int labelFont;
 
-    print("\nSciPlot Widget (%x)\n");
+    print("\nSciPlot Widget (%x)\n",w);
 
     XtSetArg(args[n],XtNwidth,&width); n++;
     XtSetArg(args[n],XtNheight,&height); n++;
@@ -773,6 +800,11 @@ void dumpCartesianPlot(Widget w)
     print("  yAxisNumbers: %s\n",yAxisNumbers?"True":"False");
     print("  userData: %x\n",userData);
 
+#if 1
+    SciPlotPrintStatistics(w);
     SciPlotPrintMetrics(w);
+    SciPlotPrintAxisInfo(w);
+#else
+#endif    
 }
-#endif
+#endif /* dumpCartesianPlot */

@@ -609,7 +609,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNxrtTimeUnit,XRT_TMUNIT_SECONDS); nargs++;
 	XtSetArg(args[nargs],XtNxrtTimeFormatUseDefault,False); nargs++;
 	XtSetArg(args[nargs],XtNxrtTimeFormat,
-	  timeFormatString[dlCartesianPlot->axis[0].timeFormat
+	  cpTimeFormatString[dlCartesianPlot->axis[0].timeFormat
 	    -FIRST_CP_TIME_FORMAT]); nargs++;
 	if(pcp) pcp->timeScale = True;
     }

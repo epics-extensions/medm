@@ -128,7 +128,6 @@ static menuEntry_t helpMenu[] = {
     NULL,
 };
 
-EXTERN char *timeFormatString[NUM_CP_TIME_FORMAT];
 String dashes = "******";
 
 #ifdef EXTENDED_INTERFACE
@@ -2417,10 +2416,6 @@ void updateStripChartDataDialog()
 
     for (i = 0; i < MAX_PENS; i++) {
 	scRows[i][0] = globalResourceBundle.scData[i].chan;
-#if 0
-      /* KE: This appears to be a mistake */
-	cpRows[i][1] =  dashes;
-#endif	
     }
   /* handle clr in here */
     scUpdateMatrixColors();

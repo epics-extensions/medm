@@ -132,6 +132,34 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
     NULL,
     NULL};
 
+static String cpColumnLabels[] = {"X Data","Y Data","Color",};
+static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
+static short cpColumnWidths[] = {36,36,6,};
+static unsigned char cpColumnLabelAlignments[] = {
+    XmALIGNMENT_CENTER,
+    XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
+
+static String cpRows[MAX_TRACES][3];
+static String *cpCells[MAX_TRACES];
+ 
+static Pixel cpColorRows[MAX_TRACES][3];
+static Pixel *cpColorCells[MAX_TRACES];
+
+static Widget axisRangeMenu[3];                 /* X_AXIS_ELEMENT =0 */
+static Widget axisStyleMenu[3];                 /* Y1_AXIS_ELEMENT=1 */
+static Widget axisRangeMin[3], axisRangeMax[3]; /* Y2_AXIS_ELEMENT=2 */
+static Widget axisRangeMinRC[3], axisRangeMaxRC[3];
+static Widget axisTimeFormat;
+
+char *cpTimeFormatString[NUM_CP_TIME_FORMAT] = {
+    "%H:%M:%S",
+    "%H:%M",
+    "%H:00",
+    "%b %d, %Y",
+    "%b %d",
+    "%b %d %H:00",
+    "%a %H:00"};
+
 #ifdef CHECK_NAN
 float safeFloat(double x) {
     static int nerrs = 0;
@@ -1830,7 +1858,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 		break;
 	    case TIME_AXIS:
 		CpSetAxisTime(executeTimeCartesianPlotWidget, CP_X, time900101,
-		  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+		  cpTimeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
 		    FIRST_CP_TIME_FORMAT]);
 		XtSetSensitive(axisTimeFormat,True);
 		if(pcp) pcp->timeScale = True;
@@ -1969,7 +1997,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	  (CartesianPlotTimeFormat_t)(FIRST_CP_TIME_FORMAT + buttonId);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    CpSetTimeFormat(executeTimeCartesianPlotWidget,
-	      timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+	      cpTimeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
 		FIRST_CP_TIME_FORMAT]);
 	}
 	break;
@@ -2591,7 +2619,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       /* Time format */
 	buttonId = 0;     /* Use for  default */
 	for(i = 0; i < NUM_CP_TIME_FORMAT; i++) {
-	    if(timeFormat && !strcmp(timeFormatString[i],timeFormat)) {
+	    if(timeFormat && !strcmp(cpTimeFormatString[i],timeFormat)) {
 		buttonId = i;
 		break;
 	    }
