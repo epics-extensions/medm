@@ -204,8 +204,8 @@ DlElement* handleImageCreate()
 
     if (importFSD == NULL) {
 /* since GIF is the default, need dirMask to match */
-	gifDirMask = XmStringCreateSimple("*.gif");
-	tifDirMask = XmStringCreateSimple("*.tif");
+	gifDirMask = XmStringCreateLocalized("*.gif");
+	tifDirMask = XmStringCreateLocalized("*.tif");
 	globalResourceBundle.imageType = GIF_IMAGE;
 	n = 0;
 	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
@@ -227,8 +227,8 @@ DlElement* handleImageCreate()
 	frame = XmCreateFrame(form,"frame",args,n);
 	XtManageChild(frame);
 
-	buttons[0] = XmStringCreateSimple("GIF");
-	buttons[1] = XmStringCreateSimple("TIFF");
+	buttons[0] = XmStringCreateLocalized("GIF");
+	buttons[1] = XmStringCreateLocalized("TIFF");
 	n = 0;
 /* MDA this will be 2 when TIFF is implemented
    XtSetArg(args[n],XmNbuttonCount,2); n++;

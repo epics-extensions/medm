@@ -145,7 +145,7 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
     Dimension useableWidth;
     DlMenu *dlMenu = dlElement->structure.menu;
 
-    buttons[0] = XmStringCreateSimple("menu");
+    buttons[0] = XmStringCreateLocalized("menu");
     buttonType[0] = XmPUSHBUTTON;
   /* from the menu structure, we've got Menu's specifics */
   /*
@@ -285,7 +285,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	  XtSetArg(args[7],XmNalignment,XmALIGNMENT_CENTER);
 	  for (i=0; i<=pd->hopr; i++) {
 	      XmString xmStr;
-	      xmStr = XmStringCreateSimple(pd->stateStrings[i]);
+	      xmStr = XmStringCreateLocalized(pd->stateStrings[i]);
 	      XtSetArg(args[8], XmNlabelString, xmStr);
 	      buttons[i] = XmCreatePushButtonGadget(menu, "menuButtons", args, 9);
 	      XtAddCallback(buttons[i], XmNactivateCallback, menuValueChangedCb, (XtPointer) i);

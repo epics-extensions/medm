@@ -116,7 +116,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case FILE_OPEN_BTN:
 	if (openFSD == NULL) {
 	    n = 0;
-	    label = XmStringCreateSimple(CHANNEL_DIALOG_MASK);
+	    label = XmStringCreateLocalized(CHANNEL_DIALOG_MASK);
 	    XtSetArg(args[n],XmNdirMask,label); n++;
 	    XtSetArg(args[n],XmNdialogStyle,
 	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
@@ -198,8 +198,8 @@ void createChannel()
 /*
  * create the menu bar
  */
-    buttons[0] = XmStringCreateSimple("File");
-    buttons[1] = XmStringCreateSimple("Help");
+    buttons[0] = XmStringCreateLocalized("File");
+    buttons[1] = XmStringCreateLocalized("Help");
     keySyms[0] = 'F';
     keySyms[1] = 'H';
     n = 0;
@@ -218,11 +218,11 @@ void createChannel()
 /*
  * create the file pulldown menu pane
  */
-    buttons[0] = XmStringCreateSimple("Open...");
-    buttons[1] = XmStringCreateSimple("Save");
-    buttons[2] = XmStringCreateSimple("Save As...");
-    buttons[3] = XmStringCreateSimple("Separator");
-    buttons[4] = XmStringCreateSimple("Close");
+    buttons[0] = XmStringCreateLocalized("Open...");
+    buttons[1] = XmStringCreateLocalized("Save");
+    buttons[2] = XmStringCreateLocalized("Save As...");
+    buttons[3] = XmStringCreateLocalized("Separator");
+    buttons[4] = XmStringCreateLocalized("Close");
     keySyms[0] = 'O';
     keySyms[1] = 'S';
     keySyms[2] = 'A';
@@ -250,7 +250,7 @@ void createChannel()
 /*
  * create the help pulldown menu pane
  */
-    buttons[0] = XmStringCreateSimple("On Channel Palette...");
+    buttons[0] = XmStringCreateLocalized("On Channel Palette...");
     keySyms[0] = 'C';
     buttonType[0] = XmPUSHBUTTON;
     n = 0;

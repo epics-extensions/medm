@@ -142,7 +142,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case FILE_OPEN_BTN:
 	if (openFSD == NULL) {
 	    n = 0;
-	    label = XmStringCreateSimple(COLOR_DIALOG_MASK);
+	    label = XmStringCreateLocalized(COLOR_DIALOG_MASK);
 	    XtSetArg(args[n],XmNdirMask,label); n++;
 	    XtSetArg(args[n],XmNdialogStyle,
 	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
@@ -311,7 +311,7 @@ void createColor()
 /*
  * create the menu bar
  */
-    buttons[0] = XmStringCreateSimple("File");
+    buttons[0] = XmStringCreateLocalized("File");
 
     colorMB = XmVaCreateSimpleMenuBar(colorMW, "colorMB",
       XmVaCASCADEBUTTON, buttons[0], 'F',
@@ -328,11 +328,11 @@ void createColor()
  * create the file pulldown menu pane
  */
 #ifdef EXTENDED_INTERFACE
-    buttons[0] = XmStringCreateSimple("Open...");
-    buttons[1] = XmStringCreateSimple("Save");
-    buttons[2] = XmStringCreateSimple("Save As...");
-    buttons[3] = XmStringCreateSimple("Separator");
-    buttons[4] = XmStringCreateSimple("Close");
+    buttons[0] = XmStringCreateLocalized("Open...");
+    buttons[1] = XmStringCreateLocalized("Save");
+    buttons[2] = XmStringCreateLocalized("Save As...");
+    buttons[3] = XmStringCreateLocalized("Separator");
+    buttons[4] = XmStringCreateLocalized("Close");
     keySyms[0] = 'O';
     keySyms[1] = 'S';
     keySyms[2] = 'A';
@@ -344,7 +344,7 @@ void createColor()
     buttonType[3] = XmSEPARATOR;
     buttonType[4] = XmPUSHBUTTON;
 #else
-    buttons[0] = XmStringCreateSimple("Close");
+    buttons[0] = XmStringCreateLocalized("Close");
     keySyms[0] = 'C';
     buttonType[0] = XmPUSHBUTTON;
 #endif

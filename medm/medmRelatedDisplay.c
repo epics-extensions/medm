@@ -350,7 +350,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  xmCascadeButtonGadgetClass,
 	  dlElement->widget, args, n);
 	
-	str = XmStringCreateSimple(dlRelatedDisplay->label);
+	str = XmStringCreateLocalized(dlRelatedDisplay->label);
 	XtVaSetValues(widget,XmNlabelString,str,NULL);
 	XmStringFree(str);
 	
@@ -359,7 +359,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	
 	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
-		xmString = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
+		xmString = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
 		XtSetArg(args[3], XmNlabelString,xmString);
 		XtSetArg(args[4], XmNuserData, displayInfo);
 		relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
@@ -443,7 +443,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	for (i = 0; i < iNumberOfDisplays; i++) {
 	    XmString xmStr;
 	    Widget   toggleButton;
-	    xmStr = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
+	    xmStr = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
 	    XtSetArg(wargs[n],XmNlabelString,xmStr);
 	  /* use gadgets here so that changing foreground of
 	     radioBox changes buttons */

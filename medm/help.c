@@ -98,17 +98,11 @@ void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     int helpIndex = (int) cd;
-    XmString string;
 
     switch (helpIndex) {
     case HELP_MAIN:
-	string = XmStringCreateSimple("In Main Help...");
-	XtVaSetValues(helpMessageBox,XmNmessageString,string,
-	  NULL);
-	XtPopup(helpS,XtGrabNone);
-	XmStringFree(string);
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#InitialLocations");
 	break;
-
     }
 }
 

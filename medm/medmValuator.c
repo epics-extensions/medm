@@ -948,12 +948,12 @@ void popupValuatorKeyboardEntry(
 	      /* create selection box/prompt dialog */
 		strcpy(valueLabel,"VALUE: ");
 		strcat(valueLabel,channel);
-		xmValueLabel = XmStringCreateSimple(valueLabel);
-		xmTitle = XmStringCreateSimple(channel);
+		xmValueLabel = XmStringCreateLocalized(valueLabel);
+		xmTitle = XmStringCreateLocalized(channel);
 		dlValuator = pv->dlElement->structure.valuator;
 		cvtDoubleToString(pd->value,valueString,
 		  pd->precision);
-		valueXmString = XmStringCreateSimple(valueString);
+		valueXmString = XmStringCreateLocalized(valueString);
 		n = 0;
 		XtSetArg(args[n],XmNdialogStyle,
 		  XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
@@ -990,7 +990,7 @@ void popupValuatorKeyboardEntry(
 		  }
 		  n = 0;
 		  frame = XmCreateFrame(keyboardDialog,"frame",args,n);
-		  frameXmString = XmStringCreateSimple("VALUATOR PRECISION (10^X)");
+		  frameXmString = XmStringCreateLocalized("VALUATOR PRECISION (10^X)");
 		  XtSetArg(args[n],XmNlabelString,frameXmString); n++;
 		  XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
 		  frameLabel = XmCreateLabel(frame,"frameLabel",args,n);
@@ -1017,7 +1017,7 @@ void popupValuatorKeyboardEntry(
 		      if (toggleXmString != NULL) XmStringFree(toggleXmString);
 		      shortValue = (short)i;
 		      cvtShortToString(shortValue,toggleString);
-		      toggleXmString = XmStringCreateSimple(toggleString);
+		      toggleXmString = XmStringCreateLocalized(toggleString);
 		      XtSetArg(args[1],XmNlabelString,toggleXmString);
 		      XtSetArg(args[2],XmNuserData,(XtPointer) pv);
 		      if (log10(dlValuator->dPrecision) == (double)i) {
@@ -1032,7 +1032,7 @@ void popupValuatorKeyboardEntry(
 		/* the decimal point */
 		  if (toggleXmString != NULL) XmStringFree(toggleXmString);
 		  toggleString[0] = '.'; toggleString[1] = '\0';
-		  toggleXmString = XmStringCreateSimple(toggleString);
+		  toggleXmString = XmStringCreateLocalized(toggleString);
 		  XtSetArg(args[1],XmNlabelString,toggleXmString);
 		  XtSetArg(args[2],XmNshadowThickness,0);
 		  toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,3);
@@ -1043,7 +1043,7 @@ void popupValuatorKeyboardEntry(
 		      if (toggleXmString != NULL) XmStringFree(toggleXmString);
 		      shortValue = (short)-i;
 		      cvtShortToString(shortValue,toggleString);
-		      toggleXmString = XmStringCreateSimple(toggleString);
+		      toggleXmString = XmStringCreateLocalized(toggleString);
 		      XtSetArg(args[1],XmNlabelString,toggleXmString);
 		      XtSetArg(args[2],XmNuserData,(XtPointer) pv);
 		      if (log10(dlValuator->dPrecision) == (double)-i) {

@@ -101,7 +101,7 @@ static Boolean DragConvertProc(
 
     if (channelName != NULL) {
 	if (*target != COMPOUND_TEXT) return(False);
-	cString = XmStringCreateSimple(channelName);
+	cString = XmStringCreateLocalized(channelName);
 	cText = XmCvtXmStringToCT(cString);
 	passText = XtMalloc(strlen(cText)+1);
 	memcpy(passText,cText,strlen(cText)+1);

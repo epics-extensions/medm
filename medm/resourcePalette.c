@@ -673,7 +673,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case FILE_OPEN_BTN:
 	if (openFSD == NULL) {
 	    n = 0;
-	    label = XmStringCreateSimple(RESOURCE_DIALOG_MASK);
+	    label = XmStringCreateLocalized(RESOURCE_DIALOG_MASK);
 	    XtSetArg(args[n],XmNdirMask,label); n++;
 	    XtSetArg(args[n],XmNdialogStyle,
 	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
@@ -1558,12 +1558,12 @@ static void initializeXmStringValueTables() {
     if (!initialized) {
 	initialized = True;
 	for (i = 0; i <NUM_DL_ELEMENT_TYPES; i++) {
-	    elementXmStringTable[i] = XmStringCreateSimple(elementStringTable[i]);
+	    elementXmStringTable[i] = XmStringCreateLocalized(elementStringTable[i]);
 	}
 
       /****** Initialize XmString table for value types (format, alignment types) */
 	for (i = 0; i < NUMBER_STRING_VALUES; i++) {
-	    xmStringValueTable[i] = XmStringCreateSimple(stringValueTable[i]);
+	    xmStringValueTable[i] = XmStringCreateLocalized(stringValueTable[i]);
 	}
     }
 }
@@ -1592,7 +1592,7 @@ void createResource() {
 
   /****** Initialize XmString tables */
     initializeXmStringValueTables();
-    xmstringSelect = XmStringCreateSimple("Select...");
+    xmstringSelect = XmStringCreateLocalized("Select...");
 
 #ifdef EXTENDED_INTERFACE
     openFSD = NULL;
@@ -1618,10 +1618,10 @@ void createResource() {
     resourceMW = XmCreateMainWindow(resourceS,"resourceMW",NULL,0);
 
   /****** Create the menu bar */
-    buttons[0] = XmStringCreateSimple("File");
+    buttons[0] = XmStringCreateLocalized("File");
 
 #ifdef EXTENDED_INTERFACE
-    buttons[1] = XmStringCreateSimple("Bundle");
+    buttons[1] = XmStringCreateLocalized("Bundle");
     keySyms[1] = 'B';
 #endif
 
@@ -1648,11 +1648,11 @@ void createResource() {
 
   /****** create the file pulldown menu pane */
 #ifdef EXTENDED_INTERFACE
-    buttons[0] = XmStringCreateSimple("Open...");
-    buttons[1] = XmStringCreateSimple("Save");
-    buttons[2] = XmStringCreateSimple("Save As...");
-    buttons[3] = XmStringCreateSimple("Separator");
-    buttons[4] = XmStringCreateSimple("Close");
+    buttons[0] = XmStringCreateLocalized("Open...");
+    buttons[1] = XmStringCreateLocalized("Save");
+    buttons[2] = XmStringCreateLocalized("Save As...");
+    buttons[3] = XmStringCreateLocalized("Separator");
+    buttons[4] = XmStringCreateLocalized("Close");
     keySyms[0] = 'O';
     keySyms[1] = 'S';
     keySyms[2] = 'A';
@@ -1664,7 +1664,7 @@ void createResource() {
     buttonType[3] = XmSEPARATOR;
     buttonType[4] = XmPUSHBUTTON;
 #else
-    buttons[0] = XmStringCreateSimple("Close");
+    buttons[0] = XmStringCreateLocalized("Close");
     keySyms[0] = 'C';
     buttonType[0] = XmPUSHBUTTON;
 #endif
@@ -1687,9 +1687,9 @@ void createResource() {
 
   /** create the bundle pulldown menu pane */
 #ifdef EXTENDED_INTERFACE
-    buttons[0] = XmStringCreateSimple("Create...");
-    buttons[1] = XmStringCreateSimple("Delete");
-    buttons[2] = XmStringCreateSimple("Rename...");
+    buttons[0] = XmStringCreateLocalized("Create...");
+    buttons[1] = XmStringCreateLocalized("Delete");
+    buttons[2] = XmStringCreateLocalized("Rename...");
     keySyms[0] = 'C';
     keySyms[1] = 'D';
     keySyms[2] = 'R';
@@ -1717,7 +1717,7 @@ void createResource() {
 
 #if 0
   /****** create the help pulldown menu pane */
-    buttons[0] = XmStringCreateSimple("On Resource Palette...");
+    buttons[0] = XmStringCreateLocalized("On Resource Palette...");
     keySyms[0] = 'C';
     buttonType[0] = XmPUSHBUTTON;
     n = 0;
@@ -1873,7 +1873,7 @@ static void createEntryRC( Widget parent, int rcType) {
 
   /****** Create the label element */
     n = 0;
-    labelString = XmStringCreateSimple(resourceEntryStringTable[rcType]);
+    labelString = XmStringCreateLocalized(resourceEntryStringTable[rcType]);
     XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;
     XtSetArg(args[n],XmNlabelString,labelString); n++;
     XtSetArg(args[n],XmNrecomputeSize,False); n++;
@@ -2413,7 +2413,7 @@ static void createBundleTB(Widget bundlesRB, char *name) {
     XmString xmString;
 
     n = 0;
-    xmString = XmStringCreateSimple(name);
+    xmString = XmStringCreateLocalized(name);
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     if (resourceBundleCounter == SELECTION_BUNDLE) {
 	XtSetArg(args[n],XmNset,True); n++; 
@@ -2540,7 +2540,7 @@ Widget createShellCommandDataDialog(
       xbaeMatrixWidgetClass,cmdForm,args,n);
 
 
-    xmString = XmStringCreateSimple("Close");
+    xmString = XmStringCreateLocalized("Close");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(cmdForm,"closeButton",args,n);
@@ -2549,7 +2549,7 @@ Widget createShellCommandDataDialog(
     XtManageChild(closeButton);
     XmStringFree(xmString);
 
-    xmString = XmStringCreateSimple("Apply");
+    xmString = XmStringCreateLocalized("Apply");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     applyButton = XmCreatePushButton(cmdForm,"applyButton",args,n);
@@ -2801,7 +2801,7 @@ Widget createCartesianPlotDataDialog(Widget parent)
       cpEnterCellCallback,(XtPointer)NULL);
 
 
-    xmString = XmStringCreateSimple("Close");
+    xmString = XmStringCreateLocalized("Close");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(cpForm,"closeButton",args,n);
@@ -2810,7 +2810,7 @@ Widget createCartesianPlotDataDialog(Widget parent)
     XtManageChild(closeButton);
     XmStringFree(xmString);
 
-    xmString = XmStringCreateSimple("Apply");
+    xmString = XmStringCreateLocalized("Apply");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     applyButton = XmCreatePushButton(cpForm,"applyButton",args,n);
@@ -3052,7 +3052,7 @@ Widget createStripChartDataDialog(Widget parent)
     XtAddCallback(scMatrix,XmNenterCellCallback,
       scEnterCellCallback,(XtPointer)NULL);
 
-    xmString = XmStringCreateSimple("Close");
+    xmString = XmStringCreateLocalized("Close");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(scForm,"closeButton",args,n);
@@ -3061,7 +3061,7 @@ Widget createStripChartDataDialog(Widget parent)
     XtManageChild(closeButton);
     XmStringFree(xmString);
 
-    xmString = XmStringCreateSimple("Apply");
+    xmString = XmStringCreateLocalized("Apply");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     applyButton = XmCreatePushButton(scForm,"applyButton",args,n);
@@ -3280,11 +3280,11 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
     entriesRC = XmCreateRowColumn(cpAxisForm,"entriesRC",args,n);
 
-    axisStyleXmString = XmStringCreateSimple("Axis Style");
-    axisRangeXmString = XmStringCreateSimple("Axis Range");
-    axisMinXmString = XmStringCreateSimple("Minimum Value");
-    axisMaxXmString = XmStringCreateSimple("Maximum Value");
-    axisTimeFmtXmString = XmStringCreateSimple("Time format");
+    axisStyleXmString = XmStringCreateLocalized("Axis Style");
+    axisRangeXmString = XmStringCreateLocalized("Axis Range");
+    axisMinXmString = XmStringCreateLocalized("Minimum Value");
+    axisMaxXmString = XmStringCreateLocalized("Maximum Value");
+    axisTimeFmtXmString = XmStringCreateLocalized("Time format");
 
   /* Loop over major elements */
     counter = 0;
@@ -3297,7 +3297,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 
       /* Label */
 	n = 0;
-	frameLabelXmString = XmStringCreateSimple(frameLabelString[i]);
+	frameLabelXmString = XmStringCreateLocalized(frameLabelString[i]);
 	XtSetArg(args[n],XmNlabelString,frameLabelXmString); n++;
 	XtSetArg(args[n],XmNmarginWidth,0); n++;
 	XtSetArg(args[n],XmNmarginHeight,0); n++;
@@ -3434,7 +3434,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     
   /* Close button */
     n = 0;
-    xmString = XmStringCreateSimple("Close");
+    xmString = XmStringCreateLocalized("Close");
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
     XtSetArg(args[n],XmNtopWidget,entriesRC); n++;

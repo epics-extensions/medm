@@ -1002,6 +1002,7 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
     switch ((int)cd) {
     case PRINTER_SETUP_OK :
 	XtVaGetValues(w,XmNtextString,&xmString,NULL);
+      /* Use XmStringGetLtoR because it handles multiple lines */
 	XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&printerName);
 	variable = (char*) malloc(
 	  sizeof(char)*(strlen(printerName) + strlen(prefix) + 1));
@@ -1051,6 +1052,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	    XmString xmString;
 	    
 	    XtVaGetValues(w,XmNtextString,&xmString,NULL);
+	  /* Use XmStringGetLtoR because it handles multiple lines */
 	    XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&gridVal);
 	    cdi->grid->gridSpacing = atoi(gridVal);
 	    if(cdi->grid->gridSpacing < 2) cdi->grid->gridSpacing = 2;
@@ -1203,7 +1205,8 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_HELP_BTN:
     {
-	XmString xmString=XmStringCreateLocalized(
+      /* Use XmStringGetLtoR because it handles multiple lines */
+	XmString xmString=XmStringCreateLtoR(
 	  "             EDIT Operations Summary\n"
 	  "\n"
 	  "Pointer in Create Mode (Crosshair Cursor)\n"
@@ -1226,8 +1229,8 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "========\n"
 	  "Arrow Key    Move selected objects.\n"
 	  "Shift-Arrow  Move selected objects.\n"
-	  "Ctrl-Arrow   Resize selected objects.\n"
-	    );
+	  "Ctrl-Arrow   Resize selected objects.\n",
+	  XmFONTLIST_DEFAULT_TAG);
 	Arg args[20];
 	int nargs;
 	
@@ -1450,11 +1453,11 @@ static void mapCallback(Widget w, XtPointer cd, XtPointer cbs)
     XmString xmString;
 
     XtTranslateCoords(currentDisplayInfo->shell,0,0,&X,&Y);
-  /* try to force correct popup the first time */
+  /* Try to force correct popup the first time */
     XtMoveWidget(XtParent(w),X,Y);
 
-  /* be nice to the users - supply default text field as display name */
-    xmString = XmStringCreateSimple(currentDisplayInfo->dlFile->name);
+  /* Be nice to the users - supply default text field as display name */
+    xmString = XmStringCreateLocalized(currentDisplayInfo->dlFile->name);
     XtVaSetValues(w,XmNtextString,xmString,NULL);
     XmStringFree(xmString);
 }
@@ -1511,11 +1514,11 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (openFSD == NULL) {
 	    Arg args[4];
 	    int n = 0;
-	    XmString label = XmStringCreateSimple("*.adl");
+	    XmString label = XmStringCreateLocalized("*.adl");
 	  /* for some odd reason can't get PATH_MAX reliably defined between systems */
 #define LOCAL_PATH_MAX  1023
 	    char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
-	    XmString cwdXmString = XmStringCreateSimple(cwd);
+	    XmString cwdXmString = XmStringCreateLocalized(cwd);
 
 	    XtSetArg(args[n],XmNpattern,label); n++;
 	    XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
@@ -1550,11 +1553,11 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    Widget rowColumn, frame, typeLabel;
 	    int i, n;
 
-	    XmString label = XmStringCreateSimple("*.adl");
+	    XmString label = XmStringCreateLocalized("*.adl");
 	  /* for some odd reason can't get PATH_MAX reliably defined between systems */
 #define LOCAL_PATH_MAX  1023
 	    char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
-	    XmString cwdXmString = XmStringCreateSimple(cwd);
+	    XmString cwdXmString = XmStringCreateLocalized(cwd);
 
 	    n = 0;
 	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
@@ -1578,8 +1581,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    n = 0;
 	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
  
-	    buttons[0] = XmStringCreateSimple("Default");
-	    buttons[1] = XmStringCreateSimple("2.1.x");
+	    buttons[0] = XmStringCreateLocalized("Default");
+	    buttons[1] = XmStringCreateLocalized("2.1.x");
 	    n = 0;
 	    XtSetArg(args[n],XmNbuttonCount,2); n++;
 	    XtSetArg(args[n],XmNbuttons,buttons); n++;
@@ -1705,7 +1708,7 @@ static void medmExitMapCallback(
     XtMoveWidget(XtParent(w),X,Y);
 
   /*
-    xmString = XmStringCreateSimple(displayInfo->dlFile->name);
+    xmString = XmStringCreateLocalized(displayInfo->dlFile->name);
     XtVaSetValues(w,XmNtextString,xmString,NULL);
     XmStringFree(xmString);
     */
@@ -1939,7 +1942,7 @@ static void fileMenuDialogCallback(
           /* if no list element selected, simply return */
 	    if (call_data->value == NULL) return;
 
-          /* get the filename string from the selection box */
+          /* Get the filename string from the selection box */
 	    XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
 
 	    if (filename) {
@@ -1964,7 +1967,7 @@ static void fileMenuDialogCallback(
 	    XmStringGetLtoR(select->value,XmSTRING_DEFAULT_CHARSET,&filename);
 	    medmSaveDisplay(currentDisplayInfo,filename,False);
 	    sprintf(warningString,"%s","Name of file to save display in:");
-	    warningXmstring = XmStringCreateSimple(warningString);
+	    warningXmstring = XmStringCreateLocalized(warningString);
 	    XtVaSetValues(saveAsPD,XmNselectionLabelString,warningXmstring,NULL);
 	    XmStringFree(warningXmstring);
 	    XtFree(filename);
@@ -2565,7 +2568,7 @@ Widget buildMenu(Widget parent,
     XmString str;
     if (menuType == XmMENU_PULLDOWN) {
 	menu = XmCreatePulldownMenu(parent, "pulldownMenu",NULL,0);
-	str = XmStringCreateSimple(menuTitle);
+	str = XmStringCreateLocalized(menuTitle);
 	cascade = XtVaCreateManagedWidget(menuTitle,
 	  xmCascadeButtonGadgetClass, parent,
 	  XmNsubMenuId, menu,
@@ -2606,7 +2609,7 @@ Widget buildMenu(Widget parent,
        * we don't worry about that; we know better in our declarations.
        */
 	if (items[i].accelerator) {
-	    str = XmStringCreateSimple(items[i].accText);
+	    str = XmStringCreateLocalized(items[i].accText);
 	    XtVaSetValues(items[i].widget,
 	      XmNaccelerator, items[i].accelerator,
 	      XmNacceleratorText, str,
@@ -3567,7 +3570,7 @@ static void createMain()
     n = 0;
     XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
     frame = XmCreateFrame(mainBB,"frame",args,n);
-    label = XmStringCreateSimple("Mode");
+    label = XmStringCreateLocalized("Mode");
     n = 0;
     XtSetArg(args[n],XmNlabelString,label); n++;
     XtSetArg(args[n],XmNmarginWidth,0); n++;
@@ -3588,7 +3591,7 @@ static void createMain()
 	XtSetArg(args[n],XmNnumColumns,1); n++;
 	XtSetArg(args[n],XmNchildType,XmFRAME_WORKAREA_CHILD); n++;
 	modeRB = XmCreateRadioBox(frame,"modeRB",args,n);
-	label = XmStringCreateSimple("Edit");
+	label = XmStringCreateLocalized("Edit");
 
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,label); n++;
@@ -3597,7 +3600,7 @@ static void createMain()
 	XtAddCallback(modeEditTB,XmNvalueChangedCallback,
 	  modeCallback, (XtPointer)DL_EDIT);
 	XmStringFree(label);
-	label = XmStringCreateSimple("Execute");
+	label = XmStringCreateLocalized("Execute");
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,label); n++;
 	modeExecTB = XmCreateToggleButton(modeRB,"modeExecTB",args,n);
@@ -3613,7 +3616,7 @@ static void createMain()
        * the modeRB widget is really a frame with a label indicating
        * execute-only mode
        */
-	label = XmStringCreateSimple("Execute-Only");
+	label = XmStringCreateLocalized("Execute-Only");
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,label); n++;
 	XtSetArg(args[n],XmNmarginWidth,2); n++;
@@ -3666,8 +3669,8 @@ static void createMain()
 	    n = 0;
 	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
  
-	    buttons[0] = XmStringCreateSimple("Default");
-	    buttons[1] = XmStringCreateSimple("2.1.x");
+	    buttons[0] = XmStringCreateLocalized("Default");
+	    buttons[1] = XmStringCreateLocalized("2.1.x");
 	    n = 0;
 	    XtSetArg(args[n],XmNbuttonCount,2); n++;
 	    XtSetArg(args[n],XmNbuttons,buttons); n++;

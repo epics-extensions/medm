@@ -210,7 +210,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     
     for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	if (strlen(dlShellCommand->command[i].command) > (size_t)0) {
-	    xmString = XmStringCreateSimple(dlShellCommand->command[i].label);
+	    xmString = XmStringCreateLocalized(dlShellCommand->command[i].label);
 	    XtSetArg(args[3], XmNlabelString,xmString);
 	  /* set the displayInfo as the button's userData */
 	    XtSetArg(args[4], XmNuserData,(XtPointer)displayInfo);
@@ -469,7 +469,7 @@ Widget createShellCommandPromptD(Widget parent)
     XmString title;
     Widget prompt;
 
-    title = XmStringCreateSimple("Command");
+    title = XmStringCreateLocalized("Command");
     n = 0;
     XtSetArg(args[n],XmNdialogTitle,title); n++;
     XtSetArg(args[n],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); n++;
@@ -555,7 +555,7 @@ void dmExecuteShellCommand(
 	}
 	
       /* Set the command in the dialog */
-	xmString = XmStringCreateSimple(shellCommand);
+	xmString = XmStringCreateLocalized(shellCommand);
 	XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
 	  xmString,NULL);
 	XmStringFree(xmString);

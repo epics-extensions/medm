@@ -1985,7 +1985,7 @@ int copyElementsIntoDisplay()
     DlElement *dlElement;
 
   /* If no clipboard elements, simply return */
-    if(IsEmpty(clipboard)) return;
+    if(IsEmpty(clipboard)) return 0;
 
   /* If no current display, simply return */
     cdi = currentDisplayInfo;
@@ -3492,7 +3492,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 	XtAddCallback(displayInfo->questionDialog,XmNhelpCallback,questionDialogCb,displayInfo);
     }
     if(message == NULL) return;
-    xmString = XmStringCreateLocalized(message);
+    xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
     XtVaSetValues(displayInfo->questionDialog,XmNmessageString,xmString,NULL);
     XmStringFree(xmString);
     if(okBtnLabel) {
@@ -3586,7 +3586,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
 	XtAddCallback(displayInfo->warningDialog,XmNhelpCallback,warningDialogCb,displayInfo);
     }
     if(message == NULL) return;
-    xmString = XmStringCreateLocalized(message);
+    xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
     XtVaSetValues(displayInfo->warningDialog,XmNmessageString,xmString,NULL);
     XmStringFree(xmString);
     if(okBtnLabel) {
@@ -4693,7 +4693,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		{
 		    XmString xmString;
 
-		    xmString = XmStringCreateSimple(command);
+		    xmString = XmStringCreateLocalized(command);
 		    XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
 		      xmString,NULL);
 		    XmStringFree(xmString);
