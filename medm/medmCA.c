@@ -1461,7 +1461,9 @@ static void pvInfoWriteInfo(void)
       /* Items from chid */
 	sprintf(string, "%sTYPE: %s\n", string,
 	  dbf_type_to_text(ca_field_type(chId)));
-	sprintf(string, "%sCOUNT: %hu\n", string, ca_element_count(chId));
+      /* ca_element_count is defined differently in 3.14 vs. 3.13 */
+	sprintf(string, "%sCOUNT: %lu\n", string,
+	  (unsigned long)ca_element_count(chId));
 	sprintf(string, "%sACCESS: %s%s\n", string,
 	  ca_read_access(chId)?"R":"", ca_write_access(chId)?"W":"");
 	sprintf(string, "%sIOC: %s\n", string, ca_host_name(chId));

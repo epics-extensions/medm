@@ -842,6 +842,8 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t1 = t1->next;
 	    }
 	    break;
+	case UNDEFINED:
+	    break;
 	}
 	updateInProgress = False;
 	
