@@ -155,7 +155,12 @@ static void dragDropFinish(Widget w, XtPointer client, XtPointer call)
 	for(i=0; i < (int)numChildren; i++) {
 	    if(!strcmp(XtName(children[i]),"toggleButton")) {
 		getState=XmToggleButtonGetState(children[i]);
+#ifdef WIN32
+	      /* Boolean is size 1, Logical operations convert to size 4 */
+		XmToggleButtonSetState(children[i],(Boolean)(!getState),False);
+#else		
 		XmToggleButtonSetState(children[i],!getState,False);
+#endif		
 		XmToggleButtonSetState(children[i],getState,False);
 	    }
 	}

@@ -127,7 +127,7 @@ SRCS += xgif.c
 
 PROD = medm
 #PROD_LIBS = ca Com libmedm libgraphX libANLwidgets libUnix
-PROD_LIBS = libmedm libgraphX libANLwidgets libUnix
+PROD_LIBS = libgraphX libANLwidgets libUnix
 
 include $(TOP)/config/RULES.Host
 

@@ -202,7 +202,11 @@ void medmInit(char *displayFont)
     Boolean useDefaultFont;
     char *sizePosition;
     
+#if 0    
+  /* KE: This doesn't appear in the documentation.
+   *   Assume it is not needed any more. */
     XmRegisterConverters();
+#endif
     
 #if 0
   /* Register action table */

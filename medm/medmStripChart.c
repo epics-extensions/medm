@@ -938,8 +938,9 @@ static void stripChartConfig(StripChart *psc) {
 	GC bottomGC =
 	  ((struct _XmDrawingAreaRec *)widget)->manager.bottom_shadow_GC;
 	_XmDrawShadows(display,psc->pixmap,topGC,bottomGC,0,0,
-	  dlStripChart->object.width,dlStripChart->object.height,
-	  sccd.shadowThickness-1,XmSHADOW_OUT);
+	  (Dimension)dlStripChart->object.width,
+	  (Dimension)dlStripChart->object.height,
+	  (Dimension)(sccd.shadowThickness-1),XmSHADOW_OUT);
     }
     XCopyArea(display,psc->pixmap,XtWindow(widget), gc,
       0,0,psc->w,psc->h,0,0);
@@ -1007,7 +1008,8 @@ static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	bottomGC =
 	  ((struct _XmDrawingAreaRec *)widget)->manager.bottom_shadow_GC;
 	_XmDrawShadows(XtDisplay(widget),XtWindow(widget),topGC,bottomGC,0,0,
-	  dlStripChart->object.width,dlStripChart->object.height,
+	  (Dimension)dlStripChart->object.width,
+	  (Dimension)dlStripChart->object.height,
 	  shadowThickness,XmSHADOW_OUT);
     }
 }

@@ -61,18 +61,20 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 
 /* STANDARDS CONFORMANCE: AES, XPG2, XPG3, XPG4, POSIX.1, POSIX.2 */
-#ifndef WIN32
+#ifdef WIN32
+/* Hummingbird extra functions including lprintf */
+#include <X11/XlibXtra.h>
+#else
 /* WIN32 does not have unistd.h */
 #include <unistd.h>
 #endif
+
 #include <limits.h>
 #include <float.h>	/* XPG4 limits.h doesn't include float.h */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
-
 
 /* for dumb SUNOS and GNU... */
 #ifndef FLT_MAX		/* FLT_MAX is supposed to be in limits.h/float.h */

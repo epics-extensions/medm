@@ -122,6 +122,12 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
 
+#ifdef WIN32
+  /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
+   *  as _y0 for Bessel functions.  This screws up the following */
+#undef y1    
+#endif    
+
     segments[0].x1 = (short)(segmentData[0].x*height);
     segments[0].y1 = (short)(segmentData[0].y*height);
     segments[0].x2 = (short)(segmentData[1].x*height);

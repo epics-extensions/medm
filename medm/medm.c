@@ -75,8 +75,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 #ifdef WIN32
-/* Hummingbird specific */
-#include <X11/XlibXtra.h>
 /* WIN32 does not have unistd.h and does not define the following constants */
 #define F_OK 00
 #define W_OK 02
@@ -1900,7 +1898,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	  /* File not found */
 	    brandNewFile = True;
 	} else {
-	    sprintf(warningString,"Fail to create/write file:\n%s",f1);
+	    sprintf(warningString,"Failed to create/write file:\n%s",f1);
 	    dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	    return False;
 	}
@@ -3242,12 +3240,17 @@ main(int argc, char *argv[])
 
   /* Enable Editres */
 #ifdef EDITRES    
-    XtAddEventHandler(mainShell,(EventMask)NULL,TRUE,_XEditResCheckMessages,NULL);
+    XtAddEventHandler(mainShell,(EventMask)NULL,TRUE,
+      (XtEventHandler)_XEditResCheckMessages,NULL);
 #endif
     
   /* Add necessary Motif resource converters */
+#if 0    
+  /* KE: These don't appear in the documentation.
+   *   Assume they are not needed any more. */
     XmRegisterConverters();
     XmRepTypeInstallTearOffModelConverter();
+#endif    
 
   /* Set display and related quantities */
     display = XtDisplay(mainShell);

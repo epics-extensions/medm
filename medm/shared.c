@@ -55,8 +55,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #ifdef WIN32
-#include <winsock.h>
-int gettimeofday(struct timeval *tp, void * );
+/* In MSVC timeval is in winsock.h, winsock2.h, ws2spi.h, nowhere else */
+#include <X11/Xos.h>
 #else
 #include <sys/time.h>
 #endif
@@ -311,8 +311,16 @@ double medmTime()
 {
     struct timeval tp;
     
-    if (gettimeofday(&tp,NULL))
-      medmPostMsg(1,"medmTime:  Failed to get time\n");
+#ifdef WIN32
+  /* MSVC does not have gettimeofday.  It comes from Exceed and is
+   *   defined differently */
+    gettimeofday(&tp,0);
+#else
+    if (gettimeofday(&tp,NULL)) {
+	medmPostMsg(1,"medmTime:  Failed to get time\n");
+	return 0.;
+    }
+#endif
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
 }
 #endif
