@@ -126,7 +126,9 @@ EXTERN Cursor helpCursor, closeCursor, printCursor,
 EXTERN Colormap cmap;
 EXTERN Atom WM_DELETE_WINDOW;
 EXTERN Atom WM_TAKE_FOCUS;
-EXTERN Atom COMPOUND_TEXT;
+  /* These are the drag & drop exports we support */
+EXTERN Atom compoundTextAtom;
+EXTERN Atom textAtom;
 EXTERN GC highlightGC;
 EXTERN XtTranslations parsedTranslations;
 

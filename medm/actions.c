@@ -55,34 +55,59 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_DRAGDROP 0
+#define DEBUG_SELECTION 0
+
 #define USE_SOURCE_PIXMAP_MASK 0
+
+/* Number of export types supported */
+#define NTARGETS 3
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
+#include <Xm/CutPaste.h>
 
 #include "cvtFast.h"
 
+/* Function prototypes */
+
+static Boolean selectionConvertProc(Widget w, Atom *selection, Atom *target,
+  Atom *typeRtn, XtPointer *valueRtn, unsigned long *lengthRtn,
+  int *formatRtn);
+static Boolean dragConvertProc(Widget w, Atom *selection, Atom *target,
+  Atom *typeRtn, XtPointer *valueRtn, unsigned long *lengthRtn,
+  int *formatRtn, unsigned long *max_lengthRtn, XtPointer client_data,
+  XtRequestId *request_id);
+static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData);
 #if DEBUG_DRAGDROP
 /* From TMprint.c */
 String _XtPrintXlations(Widget w, XtTranslations xlations,
   Widget accelWidget, _XtBoolean includeRHS);
 #endif
 
+/* Global variables */
+
 extern char *stripChartWidgetName;
-
 /* Since passing client_data didn't seem to work... */
-static char *channelName;
-
+static char *channelNames;
 /* Used to cleanup damage to Choice Button */
 static Widget dragDropWidget = (Widget)0;
 
-static Boolean DragConvertProc(Widget w, Atom *selection, Atom *target,
+static Boolean selectionConvertProc(Widget w, Atom *selection, Atom *target,
+  Atom *typeRtn, XtPointer *valueRtn, unsigned long *lengthRtn,
+  int *formatRtn)
+{
+  /* Call the drag convert proc with dummy unused arguments */
+    return dragConvertProc(w,selection,target,typeRtn,valueRtn,lengthRtn,
+      formatRtn,0,NULL,0);
+}
+
+static Boolean dragConvertProc(Widget w, Atom *selection, Atom *target,
   Atom *typeRtn, XtPointer *valueRtn, unsigned long *lengthRtn,
   int *formatRtn, unsigned long *max_lengthRtn, XtPointer client_data,
   XtRequestId *request_id)
 {
     XmString cString;
-    char *cText, *passText;
+    char *passText;
 
     UNREFERENCED(w);
     UNREFERENCED(selection);
@@ -90,23 +115,49 @@ static Boolean DragConvertProc(Widget w, Atom *selection, Atom *target,
     UNREFERENCED(client_data);
     UNREFERENCED(request_id);
 
-    if (channelName != NULL) {
-	if (*target != COMPOUND_TEXT) return(False);
-	cString = XmStringCreateLocalized(channelName);
-	cText = XmCvtXmStringToCT(cString);
-	passText = XtMalloc(strlen(cText)+1);
-	memcpy(passText,cText,strlen(cText)+1);
-      /* Probably need this too */
-	XmStringFree(cString);
+    if(!channelNames) return(False);
 
-      /* Format the value for return */
-	*typeRtn = COMPOUND_TEXT;
+  /* Note that the requestor frees the data, not us */
+
+    if (*target == compoundTextAtom) {
+      /* COMPOUND_TEXT */
+	cString = XmStringCreateLocalized(channelNames);
+#if 0
+	char *cText;
+      /* KE: Seems unnecessary and cText is not freed */
+	cText = XmCvtXmStringToCT(cString);
+	XmStringFree(cString);
+	if(!cText) return(False);
+	passText = XtMalloc(strlen(cText)+1);
+	if(!passText) return(False);
+	memcpy(passText,cText,strlen(cText)+1);
+#else
+	passText = XmCvtXmStringToCT(cString);
+	XmStringFree(cString);
+	if(!passText) return(False);
+#endif
+	
+	*typeRtn = *target;
 	*valueRtn = (XtPointer)passText;
+      /* KE: See comment under STRING case */
 	*lengthRtn = strlen(passText);
-	*formatRtn = 8;	/* from example - related to #bits for data elements */
+	*formatRtn = 8;	/* Bits per element of the array */
+	return(True);
+    } else if(*target == XA_STRING || *target == textAtom) {
+      /* STRING */
+      /* TEXT */
+	passText=XtNewString(channelNames);
+	if(!passText) return(False);
+	
+	*typeRtn = *target;
+	*valueRtn = (XtPointer)passText;
+      /* KE: Using strlen(passText)+1 here results in a ^@ (NULL)
+         appearing in the selection.  The documentation is unclear
+         about what to use */
+	*lengthRtn = strlen(passText);
+	*formatRtn = 8; /* Bits per element of the array */
 	return(True);
     } else {
-      /* Monitordata not found */
 	return(False);
     }
 }
@@ -238,7 +289,7 @@ void StartDrag(Widget w, XEvent *event)
 {
     Arg args[8];
     Cardinal n;
-    Atom exportList[1];
+    Atom exportList[NTARGETS];
     Widget sourceIcon;
     UpdateTask *pT;
     int textWidth, maxWidth, maxHeight, fontHeight, ascent;
@@ -249,7 +300,9 @@ void StartDrag(Widget w, XEvent *event)
     unsigned long gcValueMask;
     DisplayInfo *displayInfo;
     DlElement *pE;
-    static char *channelNames[MAX(MAX_PENS,MAX_TRACES)][2];
+#if 0
+    static char *channelNamesArray[MAX(MAX_PENS,MAX_TRACES)][2];
+#endif
     Pixmap sourcePixmap = (Pixmap)NULL;
     static GC gc = NULL;
     Record *record[MAX_COUNT];
@@ -260,7 +313,7 @@ void StartDrag(Widget w, XEvent *event)
   /* KE: Use this if a mask is implemented.  See comments below. */
     int doMask = 0;
     Pixmap maskPixmap = (Pixmap)NULL;
-#endif    
+#endif
 
     if(!w) return;
     displayInfo = dmGetDisplayInfoFromWidget(w);
@@ -342,8 +395,12 @@ void StartDrag(Widget w, XEvent *event)
     fg = WhitePixel(display,screenNum);
     ascent = fontTable[FONT_TABLE_INDEX]->ascent;
     fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
+  /* If the channelNames exists, free it */
+    if(channelNames) {
+	XtFree(channelNames);
+	channelNames = NULL;
+    }
     if (count == 0) {
-	channelName = NULL;
 	return;
     } else {
 	int i, j;
@@ -355,7 +412,7 @@ void StartDrag(Widget w, XEvent *event)
 	while (i < count) {
 	    if (record[i] && record[i]->name) {
 #ifdef MEDM_CDEV
-	      /* Use fullname insead of name for CDEV */
+	      /* Use fullname instead of name for CDEV */
 		textWidth = MAX(textWidth,XTextWidth(
 		  fontTable[FONT_TABLE_INDEX],record[i]->fullname,
 		  strlen(record[i]->fullname)));
@@ -404,18 +461,31 @@ void StartDrag(Widget w, XEvent *event)
 	y = ascent + MARGIN;
 	while (i < count) {
 	    if (record[i] && record[i]->name) {
+		char *name=NULL;
 		XSetForeground(display,gc,
 		  alarmColor(record[i]->severity));
 #ifdef MEDM_CDEV
 	      /* Use fullname insead of name for CDEV */
-		XDrawString(display,sourcePixmap,gc,x,y,record[i]->fullname,
-		  strlen(record[i]->fullname));
-		channelName = record[i]->fullname;
+		name=record[i]->fullname;
 #else
-		XDrawString(display,sourcePixmap,gc,x,y,record[i]->name,
-		  strlen(record[i]->name));
-		channelName = record[i]->name;
+		name=record[i]->name;
 #endif
+		XDrawString(display,sourcePixmap,gc,x,y,name,strlen(name));
+	      /* Build the channelNames for the selection and drop */
+		if(!channelNames) {
+		    int len=strlen(name)+1;
+		    channelNames=XtMalloc(len);
+		    if(channelNames) {
+			strcpy(channelNames,name);
+		    }
+		} else {
+		    int len=strlen(channelNames)+strlen(name)+2;
+		    channelNames=XtRealloc(channelNames,len);
+		    if(channelNames) {
+			strcat(channelNames," ");
+			strcat(channelNames,name);
+		    }
+		}
 	    }
 	    j++;
 	    if (j < column) {
@@ -435,10 +505,85 @@ void StartDrag(Widget w, XEvent *event)
 	    XSetFunction(display,gc,GXset);
 	    XFillRectangle(display,maskPixmap,gc,0,0,maxWidth,maxHeight);
 	    XSetFunction(display,gc,GXclear);
-	    XFillRectangle(display,maskPixmap,gc,0,fontHeight+MARGIN+1,maxWidth,maxHeight);
+	    XFillRectangle(display,maskPixmap,gc,0,fontHeight+MARGIN+1,
+	      maxWidth,maxHeight);
 	}
 #endif	    
-    } 
+    }
+
+  /* Put the channelNames in the CLIPBOARD.  Based on O'Reilly
+     Vol. 6A.  This does not put it in the PRIMARY selection used by
+     most X clients. */
+    if(channelNames) {
+	Window window=XtWindow(mainShell);
+	long itemID=0;
+	XmString clipLabel;
+	int status;
+	int privateID=0;
+
+#if DEBUG_SELECTION
+	print("MAX_COUNT=%d\n",MAX_COUNT);
+	print("Copying|%s| to clipboard\n",channelNames);
+	print("  Success=%d Fail=%d Locked=%d\n",
+	  ClipboardSuccess,ClipboardFail,ClipboardLocked);
+#endif	
+	
+	  /* Start the copy, try until unlocked */
+	clipLabel=XmStringCreateLocalized("PV Name");
+	do {
+	  /* Don't use CurrentTime here.  Get the time from the event,
+	     which must be a button press event, according to the man
+	     page. */
+	    status=XmClipboardStartCopy(display,window,clipLabel,
+	      (event->type == ButtonPress)?((XButtonEvent *)event)->time:CurrentTime,
+	      NULL,NULL,&itemID);
+#if DEBUG_SELECTION
+	    print("XmClipboardStartCopy: status=%d \n",status);
+#endif	
+	} while(status == ClipboardLocked);
+	XmStringFree(clipLabel);
+
+      /* Copy the data, try until unlocked */
+	do {
+	  /* KE: Using strlen(channelNames)+1e results in ^@ appearing
+             in the clipboard. */
+	    status=XmClipboardCopy(display,window,itemID,"STRING",
+	      channelNames,strlen(channelNames),privateID,NULL);
+#if DEBUG_SELECTION
+	    print("XmClipboardCopy: status=%d \n",status);
+#endif	
+	} while(status == ClipboardLocked);
+
+      /* End the copy, try until unlocked */
+	do {
+	    status=XmClipboardEndCopy(display,window,itemID);
+#if DEBUG_SELECTION
+	    print("XmClipboardEndCopy: status=%d \n",status);
+#endif	
+	} while(status == ClipboardLocked);
+
+    }
+
+  /* Make the channelNames available in the PRIMARY selection so X
+     clients like XTerm can use it.  Based on O'Reilly Vol. 4.  Should
+     possibly use the more elaborate convert routine, but this seems
+     to work.  The CLIPBOARD could possibly be done this way also, but
+     note that XA_CLIPBOARD is not predefined. */
+    if(channelNames) {
+	Boolean status;
+      /* Don't use CurrentTime here.  Get the time from the event,
+         which must be a button press event, according to the man
+         page. */
+	status=XtOwnSelection(mainShell,XA_PRIMARY,
+	  (event->type == ButtonPress)?((XButtonEvent *)event)->time:CurrentTime,
+	  selectionConvertProc,NULL,NULL);
+#if DEBUG_SELECTION
+	print("XtOwnSelection: |%s| status=%s\n"
+	  "  event->type=%d [ButtonPress=%d]\n",
+	  channelNames,status?"True":"False",
+	  event->type,ButtonPress);
+#endif	
+    }
 
   /* Create the drag icon and start the drag */
     if (sourcePixmap != (Pixmap)NULL) {
@@ -457,8 +602,11 @@ void StartDrag(Widget w, XEvent *event)
 	sourceIcon = XmCreateDragIcon(searchWidget, "sourceIcon",
 	  args,n);
 
-      /* Establish list of valid target types */
-	exportList[0] = COMPOUND_TEXT;
+      /* Establish list of valid target types (Atoms must be interned, and this is done in medm.c) */
+	
+	exportList[0] = compoundTextAtom;
+	exportList[1] = XA_STRING;    /* Doesn't have to be interned */
+	exportList[2] = textAtom;
 	
       /* Start the drag */
 	dragDropWidget = searchWidget;     /* Save widget for cleanup */
@@ -466,7 +614,7 @@ void StartDrag(Widget w, XEvent *event)
 	XtSetArg(args[n],XmNexportTargets,exportList); n++;
 	XtSetArg(args[n],XmNnumExportTargets,1); n++;
 	XtSetArg(args[n],XmNdragOperations,XmDROP_COPY); n++;
-	XtSetArg(args[n],XmNconvertProc,DragConvertProc); n++;
+	XtSetArg(args[n],XmNconvertProc,dragConvertProc); n++;
 	XtSetArg(args[n],XmNsourcePixmapIcon,sourceIcon); n++;
 	XtSetArg(args[n],XmNcursorForeground,fg); n++;
 	XtSetArg(args[n],XmNcursorBackground,bg); n++;

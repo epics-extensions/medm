@@ -3452,8 +3452,14 @@ main(int argc, char *argv[])
   /* Intern some atoms if they aren't there already */
     WM_DELETE_WINDOW = XmInternAtom(display,"WM_DELETE_WINDOW",False);
     WM_TAKE_FOCUS = XmInternAtom(display,"WM_TAKE_FOCUS",False);
-    COMPOUND_TEXT = XmInternAtom(display,"COMPOUND_TEXT",False);
-
+#if USE_DRAGDROP
+  /* These are the drag & drop exports we support */
+  /* Note that XA_STRING is predefined (Xatom.h) and doesn't have to
+     be interned */
+    compoundTextAtom = XmInternAtom(display,"COMPOUND_TEXT",False);
+    textAtom = XmInternAtom(display,"TEXT",False);
+#endif
+    
   /* Register signal handlers so we can shut down ourselves
    *   (Unfortunately SIGKILL, SIGSTOP can't be caught...) */
 #if defined(__cplusplus) && !defined(__GNUG__)
