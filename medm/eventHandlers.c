@@ -61,8 +61,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
-#ifdef XRTGRAPH3
 #include <XrtGraph.h>
+#if XRT_VERSION > 2
 #include <XrtGraphProp.h>
 #endif
 
@@ -147,8 +147,12 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 		case DL_CartesianPlot:
 		    if (widget = element->widget) {
 			if (xEvent->state & ControlMask) {
+#if XRT_VERSION > 2
 			  /* Bring up XRT Property Editor */
-#ifdef XRTGRAPH3
+#if 0			    
+			  /* KE: Doesn't seem to help */
+			    XrtPopdownPropertyEditor(widget,True);
+#endif			    
 			    XrtUpdatePropertyEditor(widget);
 			    XrtPopupPropertyEditor(widget,
 			      "XRT Property Editor",True);

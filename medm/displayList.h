@@ -824,8 +824,6 @@ typedef struct {
     void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
   /* Inherit (some of the) values from the resource bundle method */
     void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
-/*     void (*setBackgroundColor)(struct _DlElement *, Pixel); */
-/*     void (*setForegroundColor)(struct _DlElement *, Pixel); */
     void (*setBackgroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*setForegroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*move)(struct _DlElement *, int, int);

@@ -220,7 +220,7 @@ static void createBundleButtons( Widget messageF) {
 #ifdef __cplusplus
 static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer)
 #else
-    static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
+static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     int rcType = (int) cd;
@@ -3379,6 +3379,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     XmStringFree(axisRangeXmString);
     XmStringFree(axisMinXmString);
     XmStringFree(axisMaxXmString);
+    XmStringFree(axisTimeFmtXmString);
     
   /* Set values for entriesRC (After resizing) */
     n = 0;

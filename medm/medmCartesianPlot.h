@@ -54,10 +54,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#include "XrtGraph.h"
-
 #ifndef CARTESIAN_PLOT_H
 #define CARTESIAN_PLOT_H
+
+#include "XrtGraph.h"
+
+#if XRT_VERSION > 2
+#include <XrtGraphProp.h>
+#else
+typedef XrtData * XrtDataHandle;
+#endif
 
 #define CP_XDATA_COLUMN         0
 #define CP_YDATA_COLUMN         1
@@ -83,7 +89,7 @@ typedef enum {
 
 typedef struct {
     struct _CartesianPlot *cartesianPlot;
-    XrtData               *xrtData;
+    XrtDataHandle         hxrt;
     int                   trace;
     Record                *recordX;
     Record                *recordY;
@@ -97,7 +103,7 @@ typedef struct _CartesianPlot {
     XYTrace         triggerCh;
     UpdateTask      *updateTask;
     int             nTraces;              /* number of traces (<=MAX_TRACES) */
-    XrtData         *xrtData1, *xrtData2; /* XrtData */
+    XrtDataHandle   hxrt1, hxrt2;         /* XrtData handles */
   /* Used for channel-based range determination (filled in at connect) */
     CartesianPlotAxisRange  axisRange[3]; /* X, Y, Y2 _AXIS_ELEMENT          */
     eraseMode_t     eraseMode;            /* erase mode */
