@@ -293,7 +293,7 @@ void SciPlotPrintMetrics(Widget wi);
 void SciPlotPrintAxisInfo(Widget wi);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif /* _SCIPLOT_H */
