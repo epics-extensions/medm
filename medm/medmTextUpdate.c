@@ -166,7 +166,6 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	XSetFont(display,displayInfo->gc,fontTable[localFontIndex]->fid);
 	switch(dlTextUpdate->align) {
 	case HORIZ_LEFT:
-	case VERT_TOP:
 	    XDrawString(display,displayInfo->drawingAreaPixmap,
 	      displayInfo->gc,
 	      dlTextUpdate->object.x,dlTextUpdate->object.y +
@@ -179,7 +178,6 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
 	    break;
 	case HORIZ_CENTER:
-	case VERT_CENTER:
 	    XDrawString(display,displayInfo->drawingAreaPixmap,
 	      displayInfo->gc,
 	      dlTextUpdate->object.x + (dlTextUpdate->object.width - usedWidth)/2,
@@ -192,7 +190,6 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
 	    break;
 	case HORIZ_RIGHT:
-	case VERT_BOTTOM:
 	    XDrawString(display,displayInfo->drawingAreaPixmap,
 	      displayInfo->gc,
 	      dlTextUpdate->object.x + dlTextUpdate->object.width - usedWidth,
@@ -368,16 +365,13 @@ static void textUpdateDraw(XtPointer cd) {
 	    strLen = strlen(textField);
 	    textWidth = XTextWidth(fontTable[i],textField,strLen);
 
-	  /* for compatibility reason, only the HORIZ_CENTER,
-	   * HORIZ_RIGHT, VERT_BOTTOM and VERT_CENTER
-	   * will recalculate the font size if the number does
+	  /* for compatibility reason, only the HORIZ_CENTER and
+	   * HORIZ_RIGHT will recalculate the font size if the number does
 	   * not fit. */
 	    if (dlTextUpdate->object.width  < textWidth) {
 		switch(dlTextUpdate->align) {
 		case HORIZ_CENTER:
 		case HORIZ_RIGHT:
-		case VERT_BOTTOM:
-		case VERT_CENTER:
 		    while (i > 0) {
 			i--;
 			textWidth = XTextWidth(fontTable[i],textField,strLen);
@@ -406,18 +400,6 @@ static void textUpdateDraw(XtPointer cd) {
 		case HORIZ_RIGHT:
 		    x = dlTextUpdate->object.x + dlTextUpdate->object.width - textWidth;
 		    y =dlTextUpdate->object.y + fontTable[i]->ascent;
-		    break;
-		case VERT_TOP:
-		    x = dlTextUpdate->object.x;
-		    y = dlTextUpdate->object.y + fontTable[i]->ascent;
-		    break;
-		case VERT_BOTTOM:
-		    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
-		    y = dlTextUpdate->object.y + fontTable[i]->ascent;
-		    break;
-		case VERT_CENTER:
-		    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
-		    y = dlTextUpdate->object.y + fontTable[i]->ascent;
 		    break;
 		}
 		XDrawString(display,XtWindow(displayInfo->drawingArea),
@@ -499,6 +481,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 		}
 	    } else if (!strcmp(token,"format")) {
 		int found = 0;
+		
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
@@ -508,35 +491,47 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 			break;
 		    }
 		}
-		if (found) {
-		    break;
-		} else
-		/* if not found, do the backward compatibility test */
-		  if (!strcmp(token,"decimal")) {
-		      dlTextUpdate->format = DECIMAL;
-		  } else if (!strcmp(token,
-		    "decimal- exponential notation")) {
-		      dlTextUpdate->format = EXPONENTIAL;
-		  } else if (!strcmp(token,"engr. notation")) {
-		      dlTextUpdate->format = ENGR_NOTATION;
-		  } else if (!strcmp(token,"decimal- compact")) {
-		      dlTextUpdate->format = COMPACT;
-		  } else if (!strcmp(token,"decimal- truncated")) {
-		      dlTextUpdate->format = TRUNCATED;
-/* (MDA) allow for LANL spelling errors {like above, but with trailing space} */
-		  } else if (!strcmp(token,"decimal- truncated ")) {
-		      dlTextUpdate->format = TRUNCATED;
-/* (MDA) allow for LANL spelling errors {hexidecimal vs. hexadecimal} */
-		  } else if (!strcmp(token,"hexidecimal")) {
-		      dlTextUpdate->format = HEXADECIMAL;
-		  }
-	    } else if (!strcmp(token,"align")) {
+	      /* Backward compatibilityt */
+		if (!found) {
+		    if (!strcmp(token,"decimal")) {
+			dlTextUpdate->format = DECIMAL;
+		    } else if (!strcmp(token,
+		      "decimal- exponential notation")) {
+			dlTextUpdate->format = EXPONENTIAL;
+		    } else if (!strcmp(token,"engr. notation")) {
+			dlTextUpdate->format = ENGR_NOTATION;
+		    } else if (!strcmp(token,"decimal- compact")) {
+			dlTextUpdate->format = COMPACT;
+		    } else if (!strcmp(token,"decimal- truncated")) {
+			dlTextUpdate->format = TRUNCATED;
+		      /* (MDA) allow for LANL spelling errors {like above, but with trailing space} */
+		    } else if (!strcmp(token,"decimal- truncated ")) {
+			dlTextUpdate->format = TRUNCATED;
+		      /* (MDA) allow for LANL spelling errors {hexidecimal vs. hexadecimal} */
+		    } else if (!strcmp(token,"hexidecimal")) {
+			dlTextUpdate->format = HEXADECIMAL;
+		    }
+		}
+	    } else if(!strcmp(token,"align")) {
+		int found=0;
+		
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
+		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
 		    if (!strcmp(token,stringValueTable[i])) {
 			dlTextUpdate->align = i;
+			found=1;
 			break;
+		    }
+		}
+	      /* Backward compatibility */
+		if(!found) {
+		    if (!strcmp(token,"vert. top")) {
+			dlTextUpdate->align = HORIZ_LEFT;
+		    } else if(!strcmp(token,"vert. centered")) {
+			dlTextUpdate->align = HORIZ_CENTER;
+		    } else if(!strcmp(token,"vert. bottom")) {
+			dlTextUpdate->align = HORIZ_RIGHT;
 		    }
 		}
 	    }

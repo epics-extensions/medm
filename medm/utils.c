@@ -44,7 +44,7 @@ OWNED RIGHTS.
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
 DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
-*/
+y*/
 /*****************************************************************************
  *
  *     Original Author : Mark Anderson
@@ -2101,33 +2101,33 @@ void alignSelectedElements(int alignment)
       /* Can't move the display */
 	if (ele->type != DL_Display) {
 	    switch(alignment) {
-	    case HORIZ_LEFT:
+	    case ALIGN_HORIZ_LEFT:
 		xOffset = minX - ele->structure.rectangle->object.x;
 		yOffset = 0;
 		break;
-	    case HORIZ_CENTER:
+	    case ALIGN_HORIZ_CENTER:
 	      /* Want   x + w/2 = dX  , therefore   x = dX - w/2   */
 		xOffset = (deltaX - ele->structure.rectangle->object.width/2)
 		  - ele->structure.rectangle->object.x;
 		yOffset = 0;
 		break;
-	    case HORIZ_RIGHT:
+	    case ALIGN_HORIZ_RIGHT:
 	      /* Want   x + w = maxX  , therefore   x = maxX - w  */
 		xOffset = (maxX - ele->structure.rectangle->object.width)
                   - ele->structure.rectangle->object.x;
 		yOffset = 0;
 		break;
-	    case VERT_TOP:
+	    case ALIGN_VERT_TOP:
 		xOffset = 0;
 		yOffset = minY - ele->structure.rectangle->object.y;
 		break;
-	    case VERT_CENTER:
+	    case ALIGN_VERT_CENTER:
 	      /* Want   y + h/2 = dY  , therefore   y = dY - h/2   */
 		xOffset = 0;
 		yOffset = (deltaY - ele->structure.rectangle->object.height/2)
                   - ele->structure.rectangle->object.y;
 		break;
-	    case VERT_BOTTOM:
+	    case ALIGN_VERT_BOTTOM:
 	      /* Want   y + h = maxY  , therefore   y = maxY - h  */
 		xOffset = 0;
 		yOffset = (maxY - ele->structure.rectangle->object.height)
@@ -2197,9 +2197,9 @@ void spaceSelectedElements(int plane)
 	DlObject *po =
 	  &(dlElement->structure.element->structure.rectangle->object);
 	earray[i]=dlElement;
-	if(plane == HORIZONTAL) {
+	if(plane == SPACE_HORIZ) {
 	    array[i]=po->x;
-	} else {
+	} else if(plane == SPACE_VERT) {
 	    array[i]=po->y;
 	}
 	dlElement = dlElement->next;
@@ -2230,18 +2230,18 @@ void spaceSelectedElements(int plane)
 	if (pE->type != DL_Display) {
 	  /* Get position of first element to start */
 	    if(z < 0) {
-		if(plane == HORIZONTAL) {
+		if(plane == SPACE_HORIZ) {
 		    z = pE->structure.rectangle->object.x;
-		} else {
+		} else if(plane == SPACE_VERT) {
 		    z = pE->structure.rectangle->object.y;
 		}
 	    } else {
-		if(plane == HORIZONTAL) {
+		if(plane == SPACE_HORIZ) {
 		    deltaz = z - pE->structure.rectangle->object.x;
 		    if (pE->run->move) {
 			pE->run->move(pE,deltaz,0);
 		    }
-		} else {
+		} else if(plane == SPACE_VERT) {
 		    deltaz = z - pE->structure.rectangle->object.y;
 		    if (pE->run->move) {
 			pE->run->move(pE,0,deltaz);
@@ -2254,9 +2254,9 @@ void spaceSelectedElements(int plane)
 		}
 	    }
 	  /* Get next position */
-	    if(plane == HORIZONTAL) {
+	    if(plane == SPACE_HORIZ) {
 		z += (pE->structure.rectangle->object.width + gridSpacing);
-	    } else {
+	    } else if(plane == SPACE_VERT) {
 		z += (pE->structure.rectangle->object.height + gridSpacing);
 	    }
 	}
@@ -2677,11 +2677,11 @@ void centerSelectedElements(int alignment)
 
   /* Find the offsets */
     switch(alignment) {
-    case HORIZ_CENTER:
+    case ALIGN_HORIZ_CENTER:
 	xOffset = displayW/2 - deltaX;
 	yOffset = 0;
 	break;
-    case VERT_CENTER:
+    case ALIGN_VERT_CENTER:
 	xOffset = 0;
 	yOffset = displayH/2 - deltaY;
 	break;
@@ -2748,15 +2748,12 @@ void sizeSelectedTextElements(void)
 	  /* Get new position (before changing width) */
 	    switch (dlText->align) {
 	    case HORIZ_LEFT:
-	    case VERT_TOP:
 		xOffset = 0;
 		break;
 	    case HORIZ_CENTER:
-	    case VERT_CENTER:
 		xOffset = (dlText->object.width - usedWidth)/2;
 		break;
 	    case HORIZ_RIGHT:
-	    case VERT_BOTTOM:
 		xOffset = dlText->object.width - usedWidth;
 		break;
 	    }

@@ -162,8 +162,16 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define DEFAULT_GRID_ON      False
 
 /* Space parameters */
-#define HORIZONTAL 0
-#define VERTICAL   1
+#define SPACE_HORIZ 0
+#define SPACE_VERT  1
+
+/* Align parameters */
+#define ALIGN_HORIZ_LEFT   0
+#define ALIGN_HORIZ_CENTER 1
+#define ALIGN_HORIZ_RIGHT  2
+#define ALIGN_VERT_TOP     3
+#define ALIGN_VERT_CENTER  4
+#define ALIGN_VERT_BOTTOM  5
 
 /* highlight line thickness */
 #define HIGHLIGHT_LINE_THICKNESS 2

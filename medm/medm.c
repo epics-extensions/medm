@@ -1221,32 +1221,32 @@ static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
   
     switch(buttonNumber) {
     case ALIGN_HORIZ_LEFT_BTN:
-	alignSelectedElements(HORIZ_LEFT);
+	alignSelectedElements(ALIGN_HORIZ_LEFT);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_CENTER_BTN:
-	alignSelectedElements(HORIZ_CENTER);
+	alignSelectedElements(ALIGN_HORIZ_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_RIGHT_BTN:
-	alignSelectedElements(HORIZ_RIGHT);
+	alignSelectedElements(ALIGN_HORIZ_RIGHT);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_TOP_BTN:
-	alignSelectedElements(VERT_TOP);
+	alignSelectedElements(ALIGN_VERT_TOP);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_CENTER_BTN:
-	alignSelectedElements(VERT_CENTER);
+	alignSelectedElements(ALIGN_VERT_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_BOTTOM_BTN:
-	alignSelectedElements(VERT_BOTTOM);
+	alignSelectedElements(ALIGN_VERT_BOTTOM);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -1298,18 +1298,18 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
   
     switch(buttonNumber) {
     case CENTER_HORIZ_BTN:
-	centerSelectedElements(HORIZ_CENTER);
+	centerSelectedElements(ALIGN_HORIZ_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case CENTER_VERT_BTN:
-	centerSelectedElements(VERT_CENTER);
+	centerSelectedElements(ALIGN_VERT_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case CENTER_BOTH_BTN:
-	centerSelectedElements(HORIZ_CENTER);
-	centerSelectedElements(VERT_CENTER);
+	centerSelectedElements(ALIGN_HORIZ_CENTER);
+	centerSelectedElements(ALIGN_VERT_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -1328,12 +1328,12 @@ static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
       /* reuse the TextAlign values here */
     case SPACE_HORIZ_BTN:
-	spaceSelectedElements(HORIZONTAL);
+	spaceSelectedElements(SPACE_HORIZ);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case SPACE_VERT_BTN:
-	spaceSelectedElements(VERTICAL);
+	spaceSelectedElements(SPACE_VERT);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;

@@ -129,15 +129,12 @@ static void drawText(Display *display,
     y = dlText->object.y + fontTable[i]->ascent;
     switch (dlText->align) {
     case HORIZ_LEFT:
-    case VERT_TOP:
 	x = dlText->object.x;
 	break;
     case HORIZ_CENTER:
-    case VERT_CENTER:
 	x = dlText->object.x + (dlText->object.width - usedWidth)/2;
 	break;
     case HORIZ_RIGHT:
-    case VERT_BOTTOM:
 	x = dlText->object.x + dlText->object.width - usedWidth;
 	break;
     }
@@ -327,37 +324,46 @@ DlElement *parseText(DisplayInfo *displayInfo)
     DlText *dlText;
     DlElement *dlElement = createDlText(NULL);
     int i = 0;
-
+    
     if (!dlElement) return 0;
     dlText = dlElement->structure.text;
-
+    
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlText->object));
-	    } else
-	      if (!strcmp(token,"basic attribute"))
-		parseBasicAttribute(displayInfo,&(dlText->attr));
-	      else
-		if (!strcmp(token,"dynamic attribute"))
-		  parseDynamicAttribute(displayInfo,&(dlText->dynAttr));
-		else
-		  if (!strcmp(token,"textix")) {
-		      getToken(displayInfo,token);
-		      getToken(displayInfo,token);
-		      strcpy(dlText->textix,token);
-		  } else
-		    if (!strcmp(token,"align")) {
-			getToken(displayInfo,token);
-			getToken(displayInfo,token);
-			for (i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
-			    if (!strcmp(token,stringValueTable[i])) {
-				dlText->align = i;
-				break;
-			    }
-			}
+	    } else if(!strcmp(token,"basic attribute"))
+	      parseBasicAttribute(displayInfo,&(dlText->attr));
+	    else if (!strcmp(token,"dynamic attribute"))
+	      parseDynamicAttribute(displayInfo,&(dlText->dynAttr));
+	    else if(!strcmp(token,"textix")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(dlText->textix,token);
+	    } else if(!strcmp(token,"align")) {
+		int found=0;
+		
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
+		    if (!strcmp(token,stringValueTable[i])) {
+			dlText->align = i;
+			found=1;
+			break;
 		    }
+		}
+	      /* Backward compatibility */
+		if(!found) {
+		    if (!strcmp(token,"vert. top")) {
+			dlText->align = HORIZ_LEFT;
+		    } else if(!strcmp(token,"vert. centered")) {
+			dlText->align = HORIZ_CENTER;
+		    } else if(!strcmp(token,"vert. bottom")) {
+			dlText->align = HORIZ_RIGHT;
+		    }
+		}
+	    }
 	    break;
 	case T_EQUAL:
 	    break;
@@ -370,7 +376,6 @@ DlElement *parseText(DisplayInfo *displayInfo)
       && (tokenType != T_EOF) );
  
     return dlElement;
- 
 }
 
 void writeDlText(
@@ -570,16 +575,13 @@ DlElement *handleTextCreate(int x0, int y0)
  
 	    switch (dlText->align) {
             case HORIZ_LEFT:
-            case VERT_TOP:
                 break;
             case HORIZ_CENTER:
-            case VERT_CENTER:
                 dlText->object.x = x0 - dlText->object.width/2;
                 globalResourceBundle.x = dlText->object.x;
                 globalResourceBundle.width = dlText->object.width;
                 break;
             case HORIZ_RIGHT:
-            case VERT_BOTTOM:
                 dlText->object.x = x0 - dlText->object.width;
                 globalResourceBundle.x = dlText->object.x;
                 globalResourceBundle.width = dlText->object.width;
