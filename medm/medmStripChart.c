@@ -333,8 +333,9 @@ static void stripChartUpdateGraphicalInfoCb(Channel *pCh) {
   monitorData->displayInfo->stripChartListTail = stripElement;
   /* get ranges for each channel; get proper lopr/hopr one way or another */
   for (i = 0; i < stripChartData->nChannels; i++) {
-    stripRange[i].minVal = MIN(pCh->lopr,pCh->hopr);
-    stripRange[i].maxVal = MAX(pCh->hopr,pCh->lopr);
+    Channel *tmpCh = (Channel *) stripChartData->monitors[i];
+    stripRange[i].minVal = MIN(tmpCh->lopr,tmpCh->hopr);
+    stripRange[i].maxVal = MAX(tmpCh->hopr,tmpCh->lopr);
 
     if (stripRange[i].minVal == stripRange[i].maxVal) {
       stripRange[i].maxVal = stripRange[i].minVal + 1.0;

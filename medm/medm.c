@@ -2274,7 +2274,7 @@ main(int argc, char *argv[])
                              msgClass = MACROSTR_MSG;
 			     ptr = name;
                            } else {
-                             msgClass == GEOMETRYSTR_MSG;
+                             msgClass = GEOMETRYSTR_MSG;
                              ptr = geometryString;
                            }
 			   index = 0;
