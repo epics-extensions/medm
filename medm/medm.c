@@ -2347,10 +2347,6 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Disable EDIT functions */
     disableEditFunctions();
 
-  /* Remove any extraneous clipping (Shouldn't be any)  */
-    XSetClipOrigin(display, displayInfo->gc, 0, 0);
-    XSetClipMask(display, displayInfo->gc, None);
-
   /* Mode is the mode to which we are going */
     switch(mode) {
     case DL_EDIT:
@@ -2476,8 +2472,17 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
     while(displayInfo) {
 	DisplayInfo *pDI = displayInfo;
 
+      /* Set the mode */
 	displayInfo->traversalMode = mode;
+
+      /* Remove any extraneous clipping (Shouldn't be any)  */
+	XSetClipOrigin(display, displayInfo->gc, 0, 0);
+	XSetClipMask(display, displayInfo->gc, None);
+
 	displayInfo = displayInfo->next;
+
+      /* Remove any displays that came from related displays and were
+         not open before */
 	if(pDI->fromRelatedDisplayExecution) {
 	    dmRemoveDisplayInfo(pDI);
 	} else {

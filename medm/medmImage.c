@@ -317,7 +317,6 @@ static void imageDraw(XtPointer cd)
     Record *pR = pi->records?pi->records[0]:NULL;
     DlImage *dlImage = pi->dlElement->structure.image;
     GIFData *gif = (GIFData *)dlImage->privateData;
-    int i;
 
   /* Branch on whether there is a channel or not */
     if(*dlImage->dynAttr.chan[0]) {
