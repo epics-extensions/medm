@@ -735,6 +735,9 @@ Name of file in which to save display:",
     "Medm*cartesianPlot.drawMajor:          False",
     "Medm*cartesianPlot.drawMinor:          False",
 #endif
+
+  /* Keep CDE from recoloring (Medm* doesn't work here) */
+    "*useColorObj: False",
     
     NULL,
 };
@@ -4043,11 +4046,12 @@ static void createMain()
   /* Create the menu bar */
     mainMB = XmCreateMenuBar(mainMW,"mainMB",NULL,0);
 
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(mainMB,defaultForeground,defaultBackground);
-
+#endif
+    
   /* Create the file pulldown menu pane */
-
     mainFilePDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
 

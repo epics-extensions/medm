@@ -420,8 +420,10 @@ void createObject()
   /* Create the menu bar  */
     objectMB = XmCreateMenuBar(objectMW, "objectMB",NULL,0);
     
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(objectMB,defaultForeground,defaultBackground);
+#endif
     
   /* Create the file pulldown menu pane  */
     objectFilePDM = buildMenu(objectMB,XmMENU_PULLDOWN,

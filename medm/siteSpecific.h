@@ -272,3 +272,11 @@ In the event you are getting X errors, you can alternatively modify
 the xErrorHandler routine in help.c to help debug the situation.  */
 
 #define POST_X_ERRORS_TO_MESSAGE_WINDOW 1
+
+/* Define this to be 1 to explicitly set the colors and shadows for
+menus and all of their children in order to override any CDE changes.
+It should not be necessary.  The problem has been fixed by specifying
+*useColorObj in the fallback resources, but this switch is being kept
+in case that fix doesn't work. */
+
+#define EXPLICITLY_OVERWRITE_CDE_COLORS 0

@@ -3438,6 +3438,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
     }
 }
 
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
 /*
  * colorMenuBar - get CDE and its "ColorSetId" straightened out...
  *   color the passed in widget (usually menu bar) and its children
@@ -3467,7 +3468,9 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
 	XtSetValues(children[i],args,2);
     }
 }
+#endif
 
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
 /*
  * colorPulldownMenu - get CDE and its "ColorSetId" straightened out...
  *   color the passed in widget (which is the menu) and its children
@@ -3509,6 +3512,7 @@ void colorPulldownMenu(Widget widget, Pixel fg, Pixel bg)
 	XtSetValues(children[i],args,2);
     }
 }
+#endif
 
 void questionDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
 {

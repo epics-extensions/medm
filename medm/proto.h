@@ -600,8 +600,10 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString);
 void optionMenuSet(Widget menu, int buttonId);
 void optionMenuRemoveLabel(Widget menu);
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void colorPulldownMenu(Widget widget, Pixel fg, Pixel bg);
+#endif
 void appendDlElement(DlList *tail, DlElement *p);
 DlList *createDlList();
 void emptyDlList(DlList *);

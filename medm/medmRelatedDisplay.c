@@ -393,10 +393,12 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
 	
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
       /* Color menu bar explicitly to avoid CDE interference */
 	colorMenuBar(localMenuBar,
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
+#endif
 	
 	relatedDisplayPulldownMenu = XmCreatePulldownMenu(
 	  localMenuBar,"relatedDisplayPulldownMenu",args,2);

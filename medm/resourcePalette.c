@@ -1205,9 +1205,11 @@ void createResource()
       XmVaCASCADEBUTTON, buttons[0], 'F',
       NULL);
 
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(resourceMB,defaultForeground,defaultBackground);
-
+#endif
+    
   /* Free strings */
     for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
 

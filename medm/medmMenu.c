@@ -433,8 +433,10 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
       dlMenu->object.width, dlMenu->object.height, 0);
 #endif
     
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color the menu explicitly to avoid CDE interference */
     colorPulldownMenu(w,foreground,background);
+#endif
     
 #if DEBUG_MENU
     {

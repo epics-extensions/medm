@@ -220,11 +220,13 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     addCommonHandlers(dlElement->widget, displayInfo);
     XtManageChild(dlElement->widget);
 
+#if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(localMenuBar,
       (Pixel)displayInfo->colormap[dlShellCommand->clr],
       (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
-
+#endif
+    
     shellCommandPulldownMenu = XmCreatePulldownMenu(
       localMenuBar,"shellCommandPulldownMenu",args,2);
 
