@@ -851,33 +851,43 @@ request_t * requestCreate(int argc, char *argv[]) {
 	}
     }
     
-  /* get the current directory */
+  /* Get the current directory */
     currentDirectoryName[0] = '\0';
     getcwd(currentDirectoryName,FULLPATHNAME_SIZE);
-  /* make fullPathName is a terminated with '\0' string */
+    
+  /* Make sure fullPathName is a terminated with '\0' string */
+  /* KE: Not necessary, is set to a null string below */
     fullPathName[FULLPATHNAME_SIZE] = '\0';
 
-  /* parse the display name */
-    for (i = argsUsed; i < argc; i++) {
+  /* Parse the display name */
+    for (i = argsUsed+1; i < argc; i++) {
 	Boolean canAccess;
 	char    *fileStr;
 
 	canAccess = False;
 
-      /* check the next argument, if doesn't match the suffix, continue */
+      /* Check the next argument, if doesn't match the suffix, continue */
+      /* KE: May not be a suffix (junk.adlebrained.txt fits) */
 	fileStr = argv[i];
-	if (strstr(fileStr,DISPLAY_FILE_ASCII_SUFFIX) == NULL) continue;
-	if (strlen(fileStr) > (size_t) FULLPATHNAME_SIZE) continue;
+	if (strstr(fileStr,DISPLAY_FILE_ASCII_SUFFIX) == NULL) {
+	    medmPrintf("\nFile has wrong suffix: %s\n",fileStr);
+	    continue;
+	}
+	if (strlen(fileStr) > (size_t) FULLPATHNAME_SIZE) {
+	    medmPrintf("\nFile name too long: %s\n",fileStr);
+	    continue;
+	}
 
-      /* mark the fullPathName as an empty string */
+      /* Mark the fullPathName as an empty string */
 	fullPathName[0] = '\0';
 
-      /* found string with right suffix - presume it's a valid display name */
-	if (canAccess = !access(fileStr,R_OK|F_OK)) { /* found the file */
+      /* Found string with right suffix - presume it's a valid display name */
+	if (canAccess = !access(fileStr,R_OK|F_OK)) { /* Found the file */
 	    if (fileStr[0] == '/') {
+	      /* Is a full path name */
 		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
 	    } else {
-	      /* insert the path before the file name */
+	      /* Insert the path before the file name */
 		if (strlen(currentDirectoryName)+strlen(fileStr)+1 < (size_t) FULLPATHNAME_SIZE) {
 		    strcpy(fullPathName,currentDirectoryName);
 		    strcat(fullPathName,"/");
@@ -886,7 +896,8 @@ request_t * requestCreate(int argc, char *argv[]) {
 		    canAccess = False;
 		}
 	    }
-	} else { /* try with directory specified in the environment */
+	} else {
+	  /* Not found, try with directory specified in the environment */
 	    char *dir = NULL;
 	    char name[FULLPATHNAME_SIZE];
 	    int startPos;
@@ -921,6 +932,8 @@ request_t * requestCreate(int argc, char *argv[]) {
 		request->fileList[request->fileCnt] = STRDUP(fullPathName);
 		request->fileCnt++;
 	    }
+	} else {
+	    medmPrintf("\nCannot access file: %s\n",fileStr);
 	}
     }
     return request;

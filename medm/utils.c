@@ -134,7 +134,7 @@ FILE *dmOpenUseableFile(char *filename)
     }
 #endif
 
-  /* if not in current directory, look in EPICS_DISPLAY_PATH directory */
+  /* If not in current directory, look in EPICS_DISPLAY_PATH directory */
     if (filePtr == NULL) {
 	dir = getenv(DISPLAY_LIST_ENV);
 	if (dir != NULL) {
@@ -155,6 +155,7 @@ FILE *dmOpenUseableFile(char *filename)
 	    }
 	}
     }
+
     return (filePtr);
 }
 
