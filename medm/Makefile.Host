@@ -5,7 +5,7 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Optimization
 ifdef WIN32
-HOST_OPT = NO
+#HOST_OPT = NO
 else
 HOST_OPT = NO
 endif
@@ -215,9 +215,16 @@ xrtAuth: medm
 	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
 	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
 	if [ $$? -ne 0 ]; then\
-		echo "*********************************";\
+		echo "************************************************";\
 		echo "ERROR in running XRT_AUTH on MEDM";\
-		echo "*********************************";\
+		echo "";\
+		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
+		echo "";\
+		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
+		echo "";\
+		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
+		echo "";\
+		echo "************************************************";\
 	else\
 		echo "**************************************************************";\
 		echo "License warnings for XRT field, table, and gear may be ignored";\
