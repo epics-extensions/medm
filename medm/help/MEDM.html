@@ -10,7 +10,7 @@
 <P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>October 2001</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>January 2002</P>
 </B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
@@ -61,9 +61,10 @@
 </B></FONT><FONT SIZE=2><P>&#9;MEDM stands for <U>M</U>otif <U>E</U>ditor and <U>D</U>isplay <U>M</U>anager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS Extension</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="NewFeatures"></A>New Features</P>
 </FONT><P>Version 3.0</P>
+</B><FONT SIZE=2><P>3.0.1</P>
 
 <UL>
-</B><FONT SIZE=2><LI>Version 3.0 is a new, major release.  It is the final version of the features, improvements, and bug fixes from 2.3 and other earlier versions.</LI></UL>
+<LI>Sexagesimal </FONT><A HREF="#TextFormat"><FONT SIZE=2>Text Formats</FONT></A><FONT SIZE=2> as used by astronomers have been added to the </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2> and </FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A><FONT SIZE=2>.</LI></UL>
 
 </FONT><B><P>Version 2.3</P>
 </B><FONT SIZE=2><P>2.3.6</P>
@@ -1531,6 +1532,27 @@
 <TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>This is the same as decimal except that for large numbers or precision, it can be in exponential format.  It is what is returned by the EPICS routine cvtDoubleToString().</FONT></TD>
 </TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>sexagesimal</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is in degrees or hours, minutes, and seconds with colons between the three fields.  <I>E.g.</I> 12:45:10.2.  The degrees or hours field is the integer part of the number, and the fractional part is expressed as an integer number of minutes and seconds plus fractions of a second.  The example, 12:45:10.2, is the number 12.752833 expressed as 12 degrees or hours, 45 minutes, and 10.2 seconds.  The precision determines the number of digits after the first colon.  For precisions of 0, 1, 2, 3, 4, 5, and 6 the number above would be expressed as 13, 12:5, 12:45, 12:45:1, 12:45:10, 12:45:10.2, and 12:45:10.20, respectively.  On input colons may be replaced by spaces or omitted, and a decimal point may be used.  The inputs 10.75, 10:45, 10.45.0, and 10 45 00 are all treated as a quarter to eleven.  The inputs -1, :-1, and ::-1 are interpreted as -1:00:00, -:01:00, and -0:00:01, respectively.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>sexagesimal-dms</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>This is the same as sexagesimal except that the number is assumed to be in radians and is expressed as degrees, minutes, and seconds with 2<FONT FACE="Symbol">&#112;</FONT>
+ radians representing 360 degrees.  On input the number is multiplied by 180/<FONT FACE="Symbol">&#112;</FONT>
+ and then converted to sexagesimal as above.  On output the number is converted as sexagesimal above and then multiplied by <FONT FACE="Symbol">&#112;</FONT>
+/180 to get radians.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>sexagesimal-hms</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>This is the same as sexagesimal except that the number is assumed to be in radians and is expressed as hours, minutes, and seconds with 2<FONT FACE="Symbol">&#112;</FONT>
+ radians representing 24 hours.  On input the number is multiplied by 12/<FONT FACE="Symbol">&#112;</FONT>
+ and then converted to sexagesimal as above.  On output the number is converted as sexagesimal above and then multiplied by <FONT FACE="Symbol">&#112;</FONT>
+/12 to get radians.</FONT></TD>
+</TR>
 </TABLE>
 
 <FONT SIZE=2><P>&nbsp;</P>
@@ -2256,6 +2278,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.*</P>
-<P><ADDRESS>Modified October 9, 2001<P>
+<P><ADDRESS>Modified January 17, 2002<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
