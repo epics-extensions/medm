@@ -3612,12 +3612,15 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 	   while (inputString[i] != ')'  && inputString[i] != '\0' ) {
 	      name[k++] = inputString[i++];
 	   }
+           name[k] = '\0';
 	  /* now lookup macro */
 	   value = lookupNameValue(displayInfo->nameValueTable,
 		displayInfo->numNameValues,name);
-	   n = 0;
-	   while (value[n] != '\0' && j < sizeOfOutputString-1)
+           if (value) {
+	     n = 0;
+	     while (value[n] != '\0' && j < sizeOfOutputString-1)
 		outputString[j++] = value[n++];
+           }
 	  /* to skip over ')' */
 	   i++;
 	} else {

@@ -482,6 +482,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 {
   Widget localMenuBar, tearOff;
   Arg args[20];
+  int n;
   int i, displayNumber=0;
   char *name, *argsString;
   char **nameArgs;
@@ -503,23 +504,25 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
  *** (MDA)  create a pulldown menu with the following related display menu
  ***   entries in it...  --  careful with the XtSetArgs here (special)
  ***/
-  XtSetArg(args[0],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlRelatedDisplay->bclr]);
-  XtSetArg(args[1],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlRelatedDisplay->clr]);
-  XtSetArg(args[2],XmNhighlightThickness,1);
-  XtSetArg(args[3],XmNwidth,dlRelatedDisplay->object.width);
-  XtSetArg(args[4],XmNheight,dlRelatedDisplay->object.height);
-  XtSetArg(args[5],XmNmarginHeight,0);
-  XtSetArg(args[6],XmNmarginWidth,0);
-  XtSetArg(args[7],XmNresizeHeight,(Boolean)FALSE);
-  XtSetArg(args[8],XmNresizeWidth,(Boolean)FALSE);
-  XtSetArg(args[9],XmNspacing,0);
-  XtSetArg(args[10],XmNx,(Position)dlRelatedDisplay->object.x);
-  XtSetArg(args[11],XmNy,(Position)dlRelatedDisplay->object.y);
-  XtSetArg(args[12],XmNhighlightOnEnter,TRUE);
+  n = 0;
+  XtSetArg(args[n],XmNbackground,(Pixel)
+	displayInfo->dlColormap[dlRelatedDisplay->bclr]); n++;
+  XtSetArg(args[n],XmNforeground,(Pixel)
+	displayInfo->dlColormap[dlRelatedDisplay->clr]); n++;
+  XtSetArg(args[n],XmNhighlightThickness,1); n++;
+  XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
+  XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
+  XtSetArg(args[n],XmNmarginHeight,0); n++;
+  XtSetArg(args[n],XmNmarginWidth,0); n++;
+  XtSetArg(args[n],XmNresizeHeight,(Boolean)FALSE); n++;
+  XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
+  XtSetArg(args[n],XmNspacing,0); n++;
+  XtSetArg(args[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
+  XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
+  XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+  XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
   localMenuBar = 
-     XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,13);
+     XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
   XtManageChild(localMenuBar);
   displayInfo->child[displayInfo->childCount++] = localMenuBar;
 
@@ -534,9 +537,15 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 	relatedDisplayPulldownMenu;
 
   tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
-  if (tearOff != NULL) {
-  /* sensitive to ordering of Args above - want background as args[0] */
-    XtSetValues(tearOff,args,1);
+  if (tearOff) {
+    XtVaSetValues(tearOff,
+        XmNforeground,(Pixel) displayInfo->dlColormap[dlRelatedDisplay->clr],
+        XmNbackground,(Pixel) displayInfo->dlColormap[dlRelatedDisplay->bclr],
+        XmNtearOffModel,XmTEAR_OFF_DISABLED,
+        NULL);
+#if 0
+    XtSetSensitive(tearOff,False);
+#endif
   }
 
   pixmapSize = MIN(dlRelatedDisplay->object.width,

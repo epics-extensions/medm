@@ -1,3 +1,16 @@
+Version 2.1.16
+==============
+Fixed the following problem.
+- Passing a macro substitution string from one related display to
+  another related display with unresolved variable(s) crashes medm.
+
+  e.g.
+
+    1. 33id.adl calls f1.adl with parameters P=id,In=inputCard0
+    2. f1.adl calls f1_calib.adl with parameters P=$(P),In=$(In),Out=$(Out)
+    3. medm quits with a core dump since $(Out) is not defined in f1.adl
+
+
 Version 2.1.15
 ==============
 Fixed the following problem.
