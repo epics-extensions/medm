@@ -3334,13 +3334,15 @@ main(int argc, char *argv[])
       (XtEventHandler)_XEditResCheckMessages,NULL);
 #endif
     
-  /* Add necessary Motif resource converters */
 #if 0    
-  /* KE: These don't appear in the documentation.
-   *   Assume they are not needed any more. */
+  /* KE: This doesn't appear in the documentation.
+   *   Assume it is not needed any more. */
+  /* Add necessary Motif resource converters */
     XmRegisterConverters();
+#endif
+
+  /* Needed to specify XmNtearOffModel in resources */
     XmRepTypeInstallTearOffModelConverter();
-#endif    
 
   /* Set display and related quantities */
     display = XtDisplay(mainShell);
