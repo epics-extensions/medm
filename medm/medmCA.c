@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+/* #define PVINFO_EXTENSIONS */
+
 #define DEBUG_FD_REGISTRATION 0
 
 #include "medm.h"
@@ -804,21 +806,27 @@ void popupPvInfo(DisplayInfo *displayInfo)
     char timeStampStr[TIME_STRING_MAX];
     char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
     Record **records;
-    chid *chids, chId;
-    struct dbr_time_string *timeVals, timeVal;
+    chid *chids, chId, *descChids;
+    struct dbr_time_string *timeVals = NULL, timeVal;
+    char **descVals = NULL, *descVal;
+#if defined(PVINFO_EXTENSIONS) && defined(DBR_CLASS_NAME)
+    char **typeVals = NULL, *typeVal;
+#endif    
     int i, j, count, status;
     char string[1024];     /* Danger: Fixed length */
     Record *pR;
     Channel *pCh;
     DlElement *pE;
     XmTextPosition curpos = 0;
+    char descName[MAX_TOKEN_LENGTH];
+    char *pDot;
 
   /* Create the dialog box if it has not been created */
     if(!pvInfoS) createPvInfoDlg();
 
   /* Get the records */
     records = getPvInfoFromDisplay(displayInfo, &count, &pE);
-    if(!records) return;   /* (Error messages have been sent) */
+    if(!records) goto RETURN;   /* (Error messages have been sent) */
 
   /* Get timestamp */
     time(&now);
@@ -837,13 +845,45 @@ void popupPvInfo(DisplayInfo *displayInfo)
       sizeof(struct dbr_time_string));
     if(!timeVals) {
 	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
-	return;
+	goto RETURN;
+    }
+#if defined(PVINFO_EXTENSIONS) && defined(DBR_CLASS_NAME)
+    typeVals = (char **)calloc(count, sizeof(char *));
+    if(!typeVals) {
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	goto RETURN;
+    }
+    for(i=0; i < count; i++) {
+	typeVals[i] = (char *)calloc(1, MAX_STRING_SIZE);
+	if(!typeVals[i]) {
+	    medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	    goto RETURN;
+	}
+    }
+#endif
+    descVals = (char **)calloc(count, sizeof(char *));
+    if(!descVals) {
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	goto RETURN;
+    }
+    for(i=0; i < count; i++) {
+      /* The DESC field is actually 29 characters including the '\0'
+       * MAX_STRING_SIZE is 40 */
+	descVals[i] = (char *)calloc(1, MAX_STRING_SIZE);
+	if(!descVals[i]) {
+	    medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	    goto RETURN;
+	}
+    }
+    descChids = (chid *)calloc(count,sizeof(chid));
+    if(!descChids) {
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	goto RETURN;
     }
     chids = (chid *)calloc(count,sizeof(chid));
     if(!chids) {
 	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
-	free(timeVals);
-	return;
+	goto RETURN;
     }
 
   /* Loop over the records to get information */
@@ -864,14 +904,56 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	    medmPostMsg(1,"popupPvInfo: ca_get: %s\n",
 	      ca_message(status));
 	}
-    }
 
+      /* Search for the DESC */
+	strcpy(descName,ca_name(chId));
+	pDot = strchr(descName,'.');
+	if(pDot) strcpy(pDot,".DESC");
+	else strcat(descName,".DESC");
+	status = ca_search(descName, &descChids[i]);
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(1,"popupPvInfo: ca_search: %s\n",
+	      ca_message(status));
+	}
+
+#if defined(PVINFO_EXTENSIONS) && defined(DBR_CLASS_NAME)
+      /* Get the type name */
+	status = ca_array_get(DBR_CLASS_NAME, 1, chId, typeVals[i]);
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(1,"popupPvInfo: ca_get: %s\n",
+	      ca_message(status));
+	}
+#endif
+    }
+    
   /* Wait for results */
     status=ca_pend_io(CA_PEND_IO_TIME);
     if(status != ECA_NORMAL) {
-	medmPostMsg(1,"popupPvInfo: Did not get all the PV information\n");
+	medmPostMsg(1,"popupPvInfo: Waited %g seconds.  "
+	  "Did not get all the PV information.\n", CA_PEND_IO_TIME);
     }
+
+  /* Get the DESC */
+    for(i=0; i < count; i++) {
+	if(!chids[i]) continue;
+	if(descChids[i] && ca_state(descChids[i]) == cs_conn) {
+	    status = ca_get(DBR_STRING, descChids[i], descVals[i]);
+	    if(status != ECA_NORMAL) {
+		medmPostMsg(1,"popupPvInfo: ca_get: %s\n",
+		  ca_message(status));
+	    }
+	} else {
+	    strcpy(descVals[i], "Not known");
+	}
+    }    
     
+  /* Wait for DESC results */
+    status=ca_pend_io(CA_PEND_IO_TIME);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"popupPvInfo: Waited %g seconds.  "
+	  "Did not get all the DESC information.\n", CA_PEND_IO_TIME);
+    }
+
   /* Loop over the records to print information */
     for(i=0; i < count; i++) {
 	
@@ -882,10 +964,28 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	timeVal = timeVals[i];
 	pR = records[i];
 
-      /* Items from chid */
+      /* Name */
 	sprintf(string,"%s\n"
 	  "======================================\n",
 	  ca_name(chId));
+      /* DESC */
+	descVal = descVals[i];
+	if(descVal) {
+	    sprintf(string,"%sDESC: %s\n",string,descVal);
+	} else {
+	    sprintf(string,"%sDESC: Not known\n");
+	}
+	if(descChids[i]) ca_clear_channel(descChids[i]);
+#if defined(PVINFO_EXTENSIONS) && defined(DBR_CLASS_NAME)
+      /* Type */
+	typeVal = typeVals[i];
+	if(typeVal && *typeVal) {
+	    sprintf(string,"%sRTYP: %s\n",string,typeVal);
+	} else {
+	    sprintf(string,"%sRTYP: Not known\n");
+	}
+#endif	
+      /* Items from chid */
 	sprintf(string,"%sTYPE: %s\n",string,
 	  dbf_type_to_text(ca_field_type(chId)));
 	sprintf(string,"%sCOUNT: %hu\n",string,ca_element_count(chId));
@@ -970,11 +1070,31 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	curpos+=strlen(string);
     }
 
-  /* Free space */
-    free(timeVals);
-    free(chids);
-    free(records);
-
     XtSetSensitive(pvInfoS,True);
     XtPopup(pvInfoS,XtGrabNone);
+
+RETURN:
+  /* Free space */
+    if(descVals) {
+	for(i=0; i < count; i++) {
+	    if(descVals[i]) free(descVals[i]);
+	}
+	free(descVals);
+    }
+    free(descChids);
+#if defined(PVINFO_EXTENSIONS) && defined(DBR_CLASS_NAME)
+    if(typeVals) {
+	for(i=0; i < count; i++) {
+	    if(typeVals[i]) free(typeVals[i]);
+	}
+	free(typeVals);
+    }
+#endif    
+    if(timeVals) free(timeVals);
+    if(chids) free(chids);
+    if(records) free(records);
 }
+
+
+
+

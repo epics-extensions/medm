@@ -679,6 +679,7 @@ void medmPostMsg(int priority, char *format, ...) {
 	curpos+=strlen(medmPrintfStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
 	XmTextShowPosition(errMsgText, curpos);
+	XmUpdateDisplay(mainShell);
 	XFlush(display);
     } else {
 	saveEarlyMessage(medmPrintfStr);
@@ -709,6 +710,7 @@ void medmPrintf(int priority, char *format, ...)
 	curpos+=strlen(medmPrintfStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
 	XmTextShowPosition(errMsgText, curpos);
+	XmUpdateDisplay(mainShell);
 	XFlush(display);
     } else {
 	saveEarlyMessage(medmPrintfStr);
