@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_CARTESIAN_PLOT 0
+#define DEBUG_DISPLAY_LIST 0
 #define DEBUG_EVENTS 0
 #define DEBUG_FILE 0
 #define DEBUG_STRING_LIST 0
@@ -66,6 +67,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
 
+#define DISPLAY_LIST_RAISE_BTN     0
+#define DISPLAY_LIST_CLOSE1_BTN    1
+#define DISPLAY_LIST_CLOSE_BTN     2
+#define DISPLAY_LIST_REFRESH_BTN   3
+#define DISPLAY_LIST_HELP_BTN      4
+
 #define UNDO
 
 #include <string.h>
@@ -73,6 +80,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
 #include <Xm/MwmUtil.h>
+#include <Xm/List.h>
 #include "medm.h"
 
 #ifdef  __TED__
@@ -88,16 +96,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 static void pvInfoDialogCallback(Widget, XtPointer, XtPointer cbs);
+static void displayListDlgCb(Widget w, XtPointer clientData,
+  XtPointer callData);
 static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
 
+/* Global variables */
+
 Boolean modalGrab = FALSE;     /* KE: Not used ?? */
 static DlList *tmpDlElementList = NULL;
+static Widget displayListBox1 = NULL, displayListBox2 = NULL;
 
 /*
- * function to open a specified file (as .adl if specified as .dl),
- *	looking in EPICS_DISPLAY_PATH directory if unavailable in the
- *	working directory
+ * Function to open a specified file (as .adl if specified as .dl),
+ *   looking in EPICS_DISPLAY_PATH directory if unavailable in the
+ *   working directory
  */
 
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
@@ -434,6 +447,8 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 	currentColormapSize = DL_MAX_COLORS;
 	currentDisplayInfo = NULL;
     }
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
 }
 
 /*
@@ -3661,7 +3676,7 @@ void closeDisplay(Widget w) {
 	    return;
 	}
     }
-  /* remove newDisplayInfo from displayInfoList and cleanup */
+  /* Remove newDisplayInfo from displayInfoList and cleanup */
     dmRemoveDisplayInfo(newDisplayInfo);
     if(displayInfoListHead->next == NULL) {
 	disableEditFunctions();
@@ -4176,8 +4191,9 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 #endif    
 }
 
-/* Updates the display object values from the current positions of the display
- *   shell windows since that isn't done when the user moves them */
+/*
+ *  Updates the display object values from the current positions of the display
+ *    shell windows since that isn't done when the user moves them */
 void updateAllDisplayPositions()
 {
     DisplayInfo *displayInfo;
@@ -4241,6 +4257,8 @@ void setTimeValues(void)
 	time900101 = mktime(&ltime);
 	timeOffset = time900101 - time700101;
 }
+
+/* PV Info routines */
 
 void popupPvInfo(DisplayInfo *displayInfo)
 {
@@ -4439,6 +4457,8 @@ void createPvInfoDlg(void)
       XmNtitle, "PV Info",
       XmNdeleteResponse, XmDO_NOTHING,
       NULL);
+    XmAddWMProtocolCallback(pvInfoS,WM_DELETE_WINDOW,
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
 
     pane = XtVaCreateWidget("panel",
       xmPanedWindowWidgetClass, pvInfoS,
@@ -4600,6 +4620,295 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     }
     return retRecords;
 #undef MAX_COUNT
+}
+
+/* Display list dialog routines */
+
+void createDisplayListDlg(void)
+{
+    Widget w, pane, actionArea;
+    XmString xmString;
+    Arg args[10];
+    int nargs;
+
+    if (displayListS) return;
+    if (mainShell == NULL) return;
+    
+    displayListS = XtVaCreatePopupShell("displayListS",
+      topLevelShellWidgetClass, mainShell,
+      XmNtitle, "Display List",
+      XmNdeleteResponse, XmDO_NOTHING,
+      NULL);
+    XmAddWMProtocolCallback(displayListS,WM_DELETE_WINDOW,
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
+
+  /* Create paned window */
+    pane = XtVaCreateManagedWidget("panel",
+      xmPanedWindowWidgetClass, displayListS,
+      XmNsashWidth, 1,
+      XmNsashHeight, 1,
+      NULL);
+
+  /* Create label 1 */
+    xmString = XmStringCreateLocalized("DISPLAYS");    
+    w = XtVaCreateManagedWidget("label",
+      xmLabelWidgetClass, pane,
+      XmNlabelString, xmString,
+      XmNskipAdjust, True,
+      NULL);
+    XmStringFree(xmString);
+
+  /* Create list box 1 */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNvisibleItemCount,  5); nargs++;
+    XtSetArg(args[nargs], XmNskipAdjust, False); nargs++;
+    XtSetArg(args[nargs], XmNlistSizePolicy, XmRESIZE_IF_POSSIBLE); nargs++;
+    XtSetArg(args[nargs], XmNselectionPolicy, XmMULTIPLE_SELECT); nargs++;
+    displayListBox1 = XmCreateScrolledList(pane, "displayListBox1",
+      args, nargs);
+    XtManageChild(displayListBox1);
+
+  /* Create action area 1 */
+    actionArea = XtVaCreateManagedWidget("actionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 5,
+      XmNskipAdjust, True,
+      NULL);
+
+    w = XtVaCreateManagedWidget("Raise Display",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     1,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    2,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, displayListDlgCb,
+      (XtPointer)DISPLAY_LIST_RAISE_BTN);
+
+    w = XtVaCreateManagedWidget("Close Display",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     3,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    4,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, displayListDlgCb,
+      (XtPointer)DISPLAY_LIST_CLOSE1_BTN);
+
+#if DEBUG_DISPLAY_LIST
+  /* Create label 2 */
+    xmString = XmStringCreateLocalized("SAVED DISPLAYS");    
+    w = XtVaCreateManagedWidget("label",
+      xmLabelWidgetClass, pane,
+      XmNlabelString, xmString,
+      XmNskipAdjust, True,
+      NULL);
+    XmStringFree(xmString);
+
+  /* Create list box 2 */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNvisibleItemCount,  5); nargs++;
+    XtSetArg(args[nargs], XmNskipAdjust, True); nargs++;
+    XtSetArg(args[nargs], XmNlistSizePolicy, XmRESIZE_IF_POSSIBLE); nargs++;
+    XtSetArg(args[nargs], XmNselectionPolicy, XmMULTIPLE_SELECT); nargs++;
+    displayListBox2 = XmCreateScrolledList(pane, "displayListBox2",
+      args, nargs);
+    XtManageChild(displayListBox2);
+
+  /* Create dummy action area */
+    actionArea = XtVaCreateManagedWidget("actionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 7,
+      XmNskipAdjust, True,
+      NULL);
+#endif
+
+#if 0
+  /* Create dummy action area */
+    actionArea = XtVaCreateManagedWidget("actionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 7,
+      XmNskipAdjust, True,
+      NULL);
+#endif    
+
+  /* Create action area */
+    actionArea = XtVaCreateManagedWidget("actionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 7,
+      XmNskipAdjust, True,
+      NULL);
+
+    w = XtVaCreateManagedWidget("Close",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     1,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    2,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, displayListDlgCb,
+      (XtPointer)DISPLAY_LIST_CLOSE_BTN);
+
+    w = XtVaCreateManagedWidget("Refresh",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     3,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    4,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, displayListDlgCb,
+      (XtPointer)DISPLAY_LIST_REFRESH_BTN);
+
+    w = XtVaCreateManagedWidget("Help",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     5,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    6,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, displayListDlgCb,
+      (XtPointer)DISPLAY_LIST_HELP_BTN);
+
+  /* Initialize */
+    refreshDisplayListDlg();
+}
+
+void refreshDisplayListDlg(void)
+{
+#define MAX_LENGTH 256
+    DisplayInfo *di;
+    XmString xmString;
+    int i, len;
+    char string[MAX_LENGTH];     /* Danger fixed length */
+
+    if(!displayListS) return;
+    
+  /* Display list */
+    XmListDeleteAllItems(displayListBox1);
+    di = displayInfoListHead->next;
+    while (di) {
+	strcpy(string,di->dlFile->name);
+	for(i=0; i < di->numNameValues; i++) {
+	    len = strlen(string) +
+	      strlen(di->nameValueTable[i].name) +
+	      strlen(di->nameValueTable[i].value) + 2;
+	    if(len >= MAX_LENGTH) break;
+	    sprintf(string,"%s %s=%s", string,
+	      di->nameValueTable[i].name,  di->nameValueTable[i].value);
+	}
+	xmString = XmStringCreateLocalized(string);
+	XmListAddItemUnselected(displayListBox1, xmString, 0);
+	XmStringFree(xmString);
+	di = di->next;
+    }	
+
+#if DEBUG_DISPLAY_LIST
+  /* Display save list */
+    XmListDeleteAllItems(displayListBox2);
+    di = displayInfoSaveListHead->next;
+    while (di) {
+	strcpy(string,di->dlFile->name);
+	for(i=0; i < di->numNameValues; i++) {
+	    len = strlen(string) +
+	      strlen(di->nameValueTable[i].name) +
+	      strlen(di->nameValueTable[i].value) + 2;
+	    if(len >= MAX_LENGTH) break;
+	    sprintf(string,"%s %s=%s", string,
+	      di->nameValueTable[i].name,  di->nameValueTable[i].value);
+	}
+	xmString = XmStringCreateLocalized(string);
+	XmListAddItemUnselected(displayListBox2, xmString, 0);
+	XmStringFree(xmString);
+	di = di->next;
+    }	
+#endif
+#undef MAX_LENGTH
+}
+
+void popupDisplayListDlg(void)
+{
+  /* Create the dialog box if it has not been created */
+    if(!displayListS) {
+	createDisplayListDlg();
+    }
+
+  /* Refresh and pop it up */
+    if(displayListS) {XtPopup(displayListS,XtGrabNone);
+	refreshDisplayListDlg();
+	XtPopup(displayListS,XtGrabNone);
+    }
+}
+
+static void displayListDlgCb(Widget w, XtPointer clientData,
+  XtPointer callData)
+{
+    int button = (int)clientData;
+    DisplayInfo *di, *diNext;
+    Boolean status;
+    int *positionList = NULL;
+    int i, j, positionCount;    
+
+    switch(button) {
+    case DISPLAY_LIST_RAISE_BTN:
+    case DISPLAY_LIST_CLOSE1_BTN:
+	status = XmListGetSelectedPos(displayListBox1, &positionList,
+	  &positionCount);
+	if(status) {
+	    di = displayInfoListHead->next;
+	    i = 1;
+	    while (di) {
+		diNext = di->next;
+		for(j=0; j < positionCount; j++) {
+		    if(i == positionList[j]) {
+		      /* Item is selected */
+			switch(button) {
+			case DISPLAY_LIST_RAISE_BTN:
+			  /* Make sure it changes workspaces, too */
+			    XtPopdown(di->shell);
+			    XtPopup(di->shell, XtGrabNone);
+			    break;
+			case DISPLAY_LIST_CLOSE1_BTN:
+			  /* KE: Use closeDisplay instead of
+			   *   dmRemoveDisplayInfo(di) same as for menu items */
+			    closeDisplay(di->shell);
+			    break;
+			}
+		    }
+		}
+		di = diNext; i++;
+	    }
+	    if(positionList) XFree(positionList);
+	    refreshDisplayListDlg();
+	} else {
+	    XBell(display,50); XBell(display,50); XBell(display,50);	    
+	}
+	break;
+    case DISPLAY_LIST_CLOSE_BTN:
+	if (displayListS != NULL) {
+	    XtPopdown(displayListS);
+	}
+	break;
+    case DISPLAY_LIST_REFRESH_BTN:
+	refreshDisplayListDlg();
+	break;
+    case DISPLAY_LIST_HELP_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#DisplayListDialogBox");
+	break;
+    }
 }
 
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)

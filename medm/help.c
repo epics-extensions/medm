@@ -89,9 +89,7 @@ static int earlyMessagesDone = 0;
 extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
 extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
 
-static Widget errMsgS = NULL;
 static Widget errMsgText = NULL;
-static Widget errMsgSendS = NULL;
 static Widget errMsgSendSubjectText = NULL;
 static Widget errMsgSendToText = NULL;
 static Widget errMsgSendText = NULL;
@@ -752,7 +750,6 @@ int checkEarlyMessages(void)
 }
 
 static char caStudyMsg[512];
-static Widget caStudyDlg = NULL;
 static Boolean caUpdateStudyDlg = False;
 static char *caStatusDummyString =
 "Time Interval (sec)       =         \n"
@@ -779,8 +776,8 @@ void caStudyDlgCloseButtonCb(Widget, XtPointer, XtPointer)
 void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
-    if (caStudyDlg != NULL) {
-	XtUnmanageChild(caStudyDlg);
+    if (caStudyS != NULL) {
+	XtUnmanageChild(caStudyS);
 	caUpdateStudyDlg = False;
     }
     return;
@@ -818,18 +815,18 @@ void medmCreateCAStudyDlg() {
     Widget modeButton;
     XmString str;
 
-    if (!caStudyDlg) {
+    if (!caStudyS) {
 
 	if (mainShell == NULL) return;
 
-	caStudyDlg = XtVaCreatePopupShell("status",
+	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Message Window",
 	  XmNdeleteResponse, XmDO_NOTHING,
 	  NULL);
 
 	pane = XtVaCreateWidget("panel",
-	  xmPanedWindowWidgetClass, caStudyDlg,
+	  xmPanedWindowWidgetClass, caStudyS,
 	  XmNsashWidth, 1,
 	  XmNsashHeight, 1,
 	  NULL);
@@ -884,7 +881,7 @@ void medmCreateCAStudyDlg() {
 	XtManageChild(pane);
     }
 
-    XtManageChild(caStudyDlg);
+    XtManageChild(caStudyS);
     caUpdateStudyDlg = True;
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (errMsgDlgTimeOutId == 0)
@@ -975,8 +972,8 @@ static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id)
 	str = XmStringLtoRCreate(caStudyMsg,XmSTRING_DEFAULT_CHARSET);
 	XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
 	XmStringFree(str);
-	XFlush(XtDisplay(caStudyDlg));
-	XmUpdateDisplay(caStudyDlg);
+	XFlush(XtDisplay(caStudyS));
+	XmUpdateDisplay(caStudyS);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    if (errMsgDlgTimeOutId == *id)
 	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);

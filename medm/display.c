@@ -82,7 +82,7 @@ static DlDispatchTable displayDlDispatchTable = {
     NULL};
 
 /*
- * create and fill in widgets for display
+ * Create and fill in widgets for display
  */
 
 DisplayInfo *createDisplay()
@@ -132,6 +132,8 @@ DisplayInfo *createDisplay()
     XtPopup(displayInfo->shell,XtGrabNone);
   /* Make it be the current displayInfo */
     currentDisplayInfo = displayInfo;
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
 
     return(displayInfo);
 }

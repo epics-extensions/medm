@@ -213,6 +213,7 @@ void errMsgDlgCreateDlg(Boolean raise);
 void globalHelpCallback(Widget, XtPointer, XtPointer);
 void medmPostMsg(int priority, char *format, ...);
 void medmPrintf(int priority, char *format, ...);
+int checkEarlyMessages(void);
 void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
 int xErrorHandler(Display *dpy, XErrorEvent *event);
@@ -494,6 +495,8 @@ void setTimeValues(void);
 void popupPvInfo(DisplayInfo *displayInfo);
 void createPvInfoDlg(void);
 Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
+void popupDisplayListDlg(void);
+void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 /* Debugging */
 void dumpCartesianPlot(void);

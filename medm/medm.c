@@ -2200,8 +2200,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
     if (call_data->set == False ||
       globalDisplayListTraversalMode == mode) return;
 
-  /* Set all the displayInfo->traversalMode(s) to the specified mode, and
-   *   then invoke the traversal */
+  /* Set the globalDisplayListTraversalMode to the specified mode */
     globalDisplayListTraversalMode = mode;
 
   /* Unselect any selected elements */
@@ -2237,7 +2236,18 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(cartesianPlotAxisS,True);
 	    XtPopdown(cartesianPlotAxisS);
 	}
-	if (stripChartS) XtSetSensitive(stripChartS,True);
+	if (stripChartS) {
+	    XtSetSensitive(stripChartS,False);
+	    XtPopdown(stripChartS);
+	}
+	if (pvInfoS) {
+	    XtSetSensitive(pvInfoS,False);
+	    XtPopdown(pvInfoS);
+	}
+	if (displayListS) {
+	    XtSetSensitive(displayListS,False);
+	    XtPopdown(displayListS);
+	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
@@ -2264,10 +2274,6 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (stripChartS) {
 	    XtSetSensitive(stripChartS,False);
 	    XtPopdown(stripChartS);
-	}
-	if (pvInfoS) {
-	    XtSetSensitive(pvInfoS,False);
-	    XtPopdown(pvInfoS);
 	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
@@ -3274,6 +3280,9 @@ main(int argc, char *argv[])
   /* Add the initialization work proc */
     XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
 
+  /* Check if there were early messages  and bring up Message Window */
+    checkEarlyMessages();    
+
 #ifdef __TED__
   /* Get CDE workspace list */
     GetWorkSpaceList(mainMW);
@@ -3506,27 +3515,23 @@ static void createMain()
     int n;
     Arg args[20];
 
-  /* create a main window child of the main shell */
+  /* Create a main window child of the main shell */
     n = 0;
     mainMW = XmCreateMainWindow(mainShell,"mainMW",args,n);
 
-  /* get default fg/bg colors from mainMW for later use */
+  /* Get default fg/bg colors from mainMW for later use */
     n = 0;
     XtSetArg(args[n],XmNbackground,&defaultBackground); n++;
     XtSetArg(args[n],XmNforeground,&defaultForeground); n++;
     XtGetValues(mainMW,args,n);
 
-  /*
-   * create the menu bar
-   */
+  /* Create the menu bar */
     mainMB = XmCreateMenuBar(mainMW,"mainMB",NULL,0);
 
   /* color mainMB properly (force so VUE doesn't interfere) */
     colorMenuBar(mainMB,defaultForeground,defaultBackground);
 
-  /*
-   * create the file pulldown menu pane
-   */
+  /* Create the file pulldown menu pane */
 
     mainFilePDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
@@ -3537,47 +3542,41 @@ static void createMain()
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
     }
 
-  /*
-   * create the edit pulldown menu pane
-   */
+  /* Create the edit pulldown menu pane */
     mainEditPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Edit", 'E', editMenu);
 
     if (globalDisplayListTraversalMode == DL_EXECUTE)
       XtSetSensitive(mainEditPDM,False);
 
-  /*
-   * create the view pulldown menu pane
-   */
+  /* Create the view pulldown menu pane */
     mainViewPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "View", 'V', viewMenu);
 
-  /*
-   * create the palettes pulldown menu pane
-   */
+  /* Create the palettes pulldown menu pane */
     mainPalettesPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Palettes", 'P', palettesMenu);
 
     if (globalDisplayListTraversalMode == DL_EXECUTE)
       XtSetSensitive(mainPalettesPDM,False);
 
-  /*
-   * create the help pulldown menu pane
-   */
+  /* Create the help pulldown menu pane */
     mainHelpPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Help", 'H', helpMenu);
 
     XtVaSetValues(mainMB, XmNmenuHelpWidget, mainHelpPDM, NULL);
 
-  /* don't enable other help functions yet */
-/*     XtSetSensitive(helpMenu[HELP_OVERVIEW_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_CONTENTS_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_OBJECTS_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_EDIT_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_NEW_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_TECH_SUPPORT_BTN].widget,False); */
-/*     XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False); */
-
+#if 0
+  /* Don't enable other help functions yet */
+    XtSetSensitive(helpMenu[HELP_OVERVIEW_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_CONTENTS_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_OBJECTS_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_EDIT_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_NEW_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_TECH_SUPPORT_BTN].widget,False);
+    XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False);
+#endif
+    
     n = 0;
     XtSetArg(args[n],XmNmarginHeight,9); n++;
     XtSetArg(args[n],XmNmarginWidth,18); n++;
@@ -3585,9 +3584,7 @@ static void createMain()
     XtAddCallback(mainBB,XmNhelpCallback,
       globalHelpCallback,(XtPointer)HELP_MAIN);
 
-  /*
-   * create mode frame
-   */
+  /* Create mode frame  */
     n = 0;
     XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
     frame = XmCreateFrame(mainBB,"frame",args,n);
@@ -3603,9 +3600,7 @@ static void createMain()
     XtManageChild(frame);
 
     if (globalDisplayListTraversalMode == DL_EDIT) {
-      /*
-       * create the mode radio box and buttons
-       */
+      /* Create the mode radio box and buttons */
 	n = 0;
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
@@ -3632,11 +3627,12 @@ static void createMain()
 	XtManageChild(modeEditTB);
 	XtManageChild(modeExecTB);
 
+      /* We want to to save replaced displays if we go back to EDIT mode */
+	saveReplacedDisplays = True;
     } else {
-      /* if started in execute mode, then no editing allowed, therefore
-       * the modeRB widget is really a frame with a label indicating
-       * execute-only mode
-       */
+      /* If started in execute mode, then no editing allowed, therefore
+       *   the modeRB widget is really a frame with a label indicating
+       *   execute-only mode */
 	label = XmStringCreateLocalized("Execute-Only");
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,label); n++;
@@ -3646,71 +3642,21 @@ static void createMain()
 	modeRB = XmCreateLabel(frame,"modeRB",args,n);
 	XmStringFree(label);
 	XtManageChild(modeRB);
+
+      /* There is no reason to save replaced displays */
+	saveReplacedDisplays = False;
     }
 
-  /*
-   * manage the composites
-   */
+  /* Manage the composites */
     XtManageChild(mainBB);
     XtManageChild(mainMB);
     XtManageChild(mainMW);
 
   /************************************************
-  ****** create main-window related dialogs ******
+  ****** Create main-window related dialogs ******
   ************************************************/
-#if 0
-  /*
-   * create the Save As... prompt dialog
-   */
-    {
-	n = 0;
-	XtSetArg(args[n],XmNdefaultPosition,False); n++;
-#if 0
-	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
-#endif
-	XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-	saveAsPD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),
-	  "saveAsPD",args,n);
-	XtUnmanageChild(XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_HELP_BUTTON));
-	XtAddCallback(saveAsPD,XmNcancelCallback,
-	  fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
-	XtAddCallback(saveAsPD,XmNokCallback,fileMenuDialogCallback,
-	  (XtPointer)FILE_SAVE_AS_BTN);
-	XtAddCallback(saveAsPD,XmNmapCallback,mapCallback,(XtPointer)NULL);
-	{
-	    XmString buttons[NUM_IMAGE_TYPES-1];
-	    XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-	    Widget radioBox, rowColumn, frame, typeLabel;
-	    int i, n;
-	    Arg args[10];
-
-	    n = 0;
-	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-	    rowColumn = XmCreateRowColumn(saveAsPD,"rowColumn",args,n);
-	    n = 0;
-	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
- 
-	    buttons[0] = XmStringCreateLocalized("Default");
-	    buttons[1] = XmStringCreateLocalized("2.1.x");
-	    n = 0;
-	    XtSetArg(args[n],XmNbuttonCount,2); n++;
-	    XtSetArg(args[n],XmNbuttons,buttons); n++;
-	    XtSetArg(args[n],XmNbuttonSet,0); n++;
-	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-	    XtSetArg(args[n],XmNsimpleCallback,fileTypeCallback); n++;
-	    radioBox = XmCreateSimpleRadioBox(rowColumn,"radioBox",args,n);
-	    XtManageChild(typeLabel);
-	    XtManageChild(radioBox);
-	    XtManageChild(rowColumn);
-	    for (i = 0; i < 2; i++) XmStringFree(buttons[i]);
-	}
-    }
-#endif
-    
 #ifdef PROMPT_TO_EXIT
-  /*
-   * create the Exit... warning dialog
-   */
+  /* Create the Exit... warning dialog  */
 
     exitQD = XmCreateQuestionDialog(XtParent(mainFilePDM),"exitQD",NULL,0);
     XtVaSetValues(XtParent(exitQD),XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH, NULL);
@@ -3721,9 +3667,7 @@ static void createMain()
       (XtPointer)FILE_EXIT_BTN);
 #endif
     
-  /*
-   * create the Help information shell
-   */
+  /* Create the Help information shell */
     n = 0;
     XtSetArg(args[n],XtNiconName,"Help"); n++;
     XtSetArg(args[n],XtNtitle,"Medm Help System"); n++;
@@ -3748,15 +3692,13 @@ static void createMain()
 
     XtManageChild(helpMessageBox);
 
-  /*
-   * create the EditHelp information shell
-   */
+  /* Create the EditHelp information shell */
     n = 0;
     XtSetArg(args[n],XtNiconName,"EditHelp"); n++;
     XtSetArg(args[n],XtNtitle,"Edit Help"); n++;
     XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
-  /* map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
 
@@ -3775,16 +3717,12 @@ static void createMain()
 
     XtManageChild(editHelpMessageBox);
 
-  /*
-   * Initialize the PV Info shell
-   */
+  /* Initialize other shells */
     pvInfoS = (Widget)0;
+    displayListS = (Widget)0;
 
-  /*
-   * and realize the toplevel shell widget
-   */
+  /* Realize the toplevel shell widget */
     XtRealizeWidget(mainShell);
-
 }
 
 #ifdef __cplusplus

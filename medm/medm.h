@@ -193,11 +193,14 @@ extern "C" {
     EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
 
     EXTERN Widget exitQD, saveAsPD;
+    EXTERN Boolean saveReplacedDisplays;
 
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;
     EXTERN Widget editHelpS, editHelpMessageBox;
     EXTERN Widget pvInfoS, pvInfoMessageBox;
+    EXTERN Widget displayListS;
+    EXTERN Widget errMsgS, errMsgSendS, caStudyS;
 
   /* In main shell: labels on bulletin board for current display information */
     EXTERN Widget statusBB, displayL, nElementsL, nColorsL;

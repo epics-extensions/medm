@@ -158,7 +158,6 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
     case DISPLAY_SHELL:
 	closeDisplay(w);
 	break;
-
     case OTHER_SHELL:
       /* it's one of the permanent shells */
 	if (w == mainShell) {
@@ -175,13 +174,20 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(helpS);
 	} else if (w == editHelpS) {
 	    XtPopdown(editHelpS);
+	} else if (w == pvInfoS) {
+	    XtPopdown(pvInfoS);
+	} else if (w == errMsgS) {
+	    XtPopdown(errMsgS);
+	} else if (w == errMsgSendS) {
+	    XtPopdown(errMsgSendS);
+	} else if (w == caStudyS) {
+	    XtPopdown(caStudyS);
+	} else if (w == displayListS) {
+	    XtPopdown(displayListS);
 	}
 	break;
     }
 }
-
-
-
 
 /*
  * optionMenuSet:  routine to set option menu to specified button index

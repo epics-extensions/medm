@@ -111,16 +111,18 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
-#define NUM_EXECUTE_POPUP_ENTRIES       4	  /* items in exec. popup menu  */
-#define EXECUTE_POPUP_MENU_PRINT	"Print"   /* if this changes, change    */
-#define EXECUTE_POPUP_MENU_CLOSE	"Close"   /* executePopupMenuCallback() */
-#define EXECUTE_POPUP_MENU_PVINFO	"PV Info"
-#define EXECUTE_POPUP_MENU_EXECUTE	"Execute"
-#define EXECUTE_POPUP_MENU_PRINT_ID	0
-#define EXECUTE_POPUP_MENU_CLOSE_ID	1
-#define EXECUTE_POPUP_MENU_PVINFO_ID	2
+#define NUM_EXECUTE_POPUP_ENTRIES       5         /* items in exec. popup menu  */
+#define EXECUTE_POPUP_MENU_PRINT        "Print"   /* if this changes, change    */
+#define EXECUTE_POPUP_MENU_CLOSE        "Close"   /* executePopupMenuCallback() */
+#define EXECUTE_POPUP_MENU_PVINFO       "PV Info"
+#define EXECUTE_POPUP_MENU_DISPLAY_LIST "Display List"
+#define EXECUTE_POPUP_MENU_EXECUTE      "Execute"
+#define EXECUTE_POPUP_MENU_PRINT_ID        0
+#define EXECUTE_POPUP_MENU_CLOSE_ID        1
+#define EXECUTE_POPUP_MENU_PVINFO_ID       2
+#define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 3
 /* The following must be the last item */
-#define EXECUTE_POPUP_MENU_EXECUTE_ID	3
+#define EXECUTE_POPUP_MENU_EXECUTE_ID      4
 
 #define COLOR_SCALE		(65535.0/255.0)
 #define MAX_CHILDREN		1000	/* max # of child widgets...       */
@@ -319,6 +321,7 @@ typedef struct _DisplayInfo {
     DlTraversalMode traversalMode;
     Boolean	    hasBeenEditedButNotSaved;
     Boolean	    fromRelatedDisplayExecution;
+    
   /* Display list pointers */
     DlList *dlElementList;
   /* For edit purposes */

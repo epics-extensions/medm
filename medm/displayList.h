@@ -714,10 +714,10 @@ typedef struct {
     ColorMode clrmod;
     Direction direction;
     double dPrecision;
-  /* private (run-time) data valuator needs for its operation */
+  /* Private (run-time) data valuator needs for its operation */
     Boolean enableUpdates;
     Boolean dragging;
-} DlValuator;
+} DlValuator;     /* Slider */
 
 typedef struct {
     DlObject object;

@@ -96,13 +96,14 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 /*
- * local function to render the related display icon into a pixmap
+ * Local function to render the related display icon into a pixmap
  */
 static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
-  Pixel fg, Pixel bg, Dimension width, Dimension height)
+  Pixel fg, Pixel bg, Dimension width, Dimension height,
+  XFontStruct *font, char *label)
 {
     typedef struct { float x; float y;} XY;
-/* icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
+/* Icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
     static float rectangleX = 4./25., rectangleY = 4./25.,
       rectangleWidth = 13./25., rectangleHeight = 14./25.;
     static XY segmentData[] = {
@@ -120,45 +121,56 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
 
-    segments[0].x1 = (short)(segmentData[0].x*width);
+    segments[0].x1 = (short)(segmentData[0].x*height);
     segments[0].y1 = (short)(segmentData[0].y*height);
-    segments[0].x2 = (short)(segmentData[1].x*width);
+    segments[0].x2 = (short)(segmentData[1].x*height);
     segments[0].y2 = (short)(segmentData[1].y*height);
 
-    segments[1].x1 = (short)(segmentData[1].x*width);
+    segments[1].x1 = (short)(segmentData[1].x*height);
     segments[1].y1 = (short)(segmentData[1].y*height);
-    segments[1].x2 = (short)(segmentData[2].x*width);
+    segments[1].x2 = (short)(segmentData[2].x*height);
     segments[1].y2 = (short)(segmentData[2].y*height);
 
-    segments[2].x1 = (short)(segmentData[2].x*width);
+    segments[2].x1 = (short)(segmentData[2].x*height);
     segments[2].y1 = (short)(segmentData[2].y*height);
-    segments[2].x2 = (short)(segmentData[3].x*width);
+    segments[2].x2 = (short)(segmentData[3].x*height);
     segments[2].y2 = (short)(segmentData[3].y*height);
 
-    segments[3].x1 = (short)(segmentData[3].x*width);
+    segments[3].x1 = (short)(segmentData[3].x*height);
     segments[3].y1 = (short)(segmentData[3].y*height);
-    segments[3].x2 = (short)(segmentData[4].x*width);
+    segments[3].x2 = (short)(segmentData[4].x*height);
     segments[3].y2 = (short)(segmentData[4].y*height);
 
     XDrawSegments(display,pixmap,gc,segments,4);
 
-/* erase any out-of-bounds edges due to roundoff error by blanking out
+/* Erase any out-of-bounds edges due to roundoff error by blanking out
  *  area of top rectangle */
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,
-      (int)(rectangleX*width),
+      (int)(rectangleX*height),
       (int)(rectangleY*height),
-      (unsigned int)(rectangleWidth*width),
+      (unsigned int)(rectangleWidth*height),
       (unsigned int)(rectangleHeight*height));
 
-/* and draw the top rectangle */
+/* Draw the top rectangle */
     XSetForeground(display,gc,fg);
     XDrawRectangle(display,pixmap,gc,
-      (int)(rectangleX*width),
+      (int)(rectangleX*height),
       (int)(rectangleY*height),
-      (unsigned int)(rectangleWidth*width),
+      (unsigned int)(rectangleWidth*height),
       (unsigned int)(rectangleHeight*height));
 
+  /* Draw the label */
+    if(label) {
+	int base;
+	
+	XSetFont(display,gc,font->fid);
+	base=(height+font->ascent-font->descent)/2;
+	XDrawString(display,pixmap,gc,
+	  height,base,label,strlen(label));
+    }
+
+  /* Free the GC */
     XFreeGC(display,gc);
 }
 
@@ -204,23 +216,21 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget localMenuBar, tearOff;
     Arg args[30];
     int n;
-    int i, displayNumber=0;
-    char *name, *argsString;
+    int i, displayNumber=0, index;
+    char *name, *argsString, *label;
     char **nameArgs;
     XmString xmString;
-    Pixmap relatedDisplayPixmap;
-    unsigned int pixmapSize;
+    Pixmap pixmap;
+    Dimension pixmapH, pixmapW;
     int iNumberOfDisplays = 0;
     DlRelatedDisplay *dlRelatedDisplay = dlElement->structure.relatedDisplay;
 
 /*
- * these are widget ids, but they are recorded in the otherChild widget list
+ * These are widget ids, but they are recorded in the otherChild widget list
  *   as well, for destruction when new displays are selected at the top level
  */
     Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
-#if 1
     Widget widget;
-#endif
 
     if (dlElement->widget) {
 	XtDestroyWidget(dlElement->widget);
@@ -234,25 +244,36 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     } 
   /* 1 display, not hidden */
     if (iNumberOfDisplays == 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
-	Pixmap pixmap = 0;
-	char *label = 0;
+      /* Get size for graphic part of pixmap */
+	pixmapH = MIN(dlRelatedDisplay->object.width,
+	  dlRelatedDisplay->object.height);
+      /* Allow for shadows, etc. */
+	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
+      /* Create the pixmap */
 	if (dlRelatedDisplay->label[0] != '\0') {
-	    label = dlRelatedDisplay->label;
-	} else {
-	    Dimension pixmapSize = MIN(dlRelatedDisplay->object.width,
-	      dlRelatedDisplay->object.height);
-	  /* allowing for shadows etc */
-	    pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
- 
-	  /* create relatedDisplay icon (render to appropriate size) */
+	    int usedWidth;
+	    
+	    label=dlRelatedDisplay->label;
+	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
 	    pixmap = XCreatePixmap(display,
-	      RootWindow(display,screenNum), pixmapSize, pixmapSize,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
-	    renderRelatedDisplayPixmap(display,pixmap,
-	      displayInfo->colormap[dlRelatedDisplay->clr],
-	      displayInfo->colormap[dlRelatedDisplay->bclr],
-	      pixmapSize, pixmapSize);
+	} else {
+	    index=0;
+	    label=NULL;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
 	}
+      /* Draw the pixmap */
+	renderRelatedDisplayPixmap(display,pixmap,
+	  displayInfo->colormap[dlRelatedDisplay->clr],
+	  displayInfo->colormap[dlRelatedDisplay->bclr],
+	  pixmapW, pixmapH, fontTable[index], label);
+      /* Create a push button */
 	n = 0;
 	dlElement->widget = createPushButton(
 	  displayInfo->drawingArea,
@@ -260,7 +281,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlRelatedDisplay->clr],
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
 	  pixmap,
-	  label,
+	  NULL,     /* There a pixmap, not a label on the button */
 	  (XtPointer) displayInfo);
       /* Add the callbacks for bringing up the menu */
 	if (globalDisplayListTraversalMode == DL_EXECUTE) { 
@@ -272,7 +293,6 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
     } else if (dlRelatedDisplay->visual == RD_MENU) {
-	XmString str;
 	n = 0;
 	XtSetArg(args[n],XmNbackground,(Pixel)
 	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
@@ -290,6 +310,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
 	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
 	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+      /* KE: Beware below if changing the number of args here */
 	localMenuBar =
 	  XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
 	dlElement->widget = localMenuBar;
@@ -312,29 +333,41 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      NULL);
 	}
 	
-	n = 7;
-	XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
-	if (dlRelatedDisplay->label[0] == '\0') {
-	    pixmapSize = MIN(dlRelatedDisplay->object.width,
-	      dlRelatedDisplay->object.height);
-	  /* allowing for shadows etc */
-	    pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
+      /* Get size for graphic part of pixmap */
+	pixmapH = MIN(dlRelatedDisplay->object.width,
+	  dlRelatedDisplay->object.height);
+      /* Allow for shadows, etc. */
+	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
+      /* Create the pixmap */
+	if (dlRelatedDisplay->label[0] != '\0') {
+	    int usedWidth;
 	    
-	  /* create relatedDisplay icon (render to appropriate size) */
-	    relatedDisplayPixmap = XCreatePixmap(display,
-	      RootWindow(display,screenNum), pixmapSize, pixmapSize,
+	    label=dlRelatedDisplay->label;
+	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
+	    
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
-	    renderRelatedDisplayPixmap(display,relatedDisplayPixmap,
-	      displayInfo->colormap[dlRelatedDisplay->clr],
-	      displayInfo->colormap[dlRelatedDisplay->bclr],
-	      pixmapSize, pixmapSize);
-	    XtSetArg(args[n],XmNlabelPixmap,relatedDisplayPixmap); n++;
-	    XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
 	} else {
-	    XtSetArg(args[n],XmNlabelType,XmSTRING); n++;
-	    XtSetArg(args[n],XmNfontList,fontListTable[
-	      messageButtonFontListIndex(dlRelatedDisplay->object.height)]); n++;
+	    index=0;
+	    label=NULL;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
 	}
+      /* Draw the pixmap */
+	renderRelatedDisplayPixmap(display,pixmap,
+	  displayInfo->colormap[dlRelatedDisplay->clr],
+	  displayInfo->colormap[dlRelatedDisplay->bclr],
+	  pixmapW, pixmapH, fontTable[index], label);
+      /* Create a cascade button */
+	n = 7;     /* (Using the args defined above) */
+	XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
+	XtSetArg(args[n],XmNlabelPixmap,pixmap); n++;
+	XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
 	XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
 	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
 	XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
@@ -350,12 +383,12 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  xmCascadeButtonGadgetClass,
 	  dlElement->widget, args, n);
 	
-	str = XmStringCreateLocalized(dlRelatedDisplay->label);
-	XtVaSetValues(widget,XmNlabelString,str,NULL);
-	XmStringFree(str);
-	
+#if 0
+      /* KE: Can't do this, it points to the stack
+       *   and shouldn't be necessary */
 	XtAddCallback(widget, XmNdestroyCallback,freePixmapCallback,
 	  (XtPointer)relatedDisplayPixmap);
+#endif	
 	
 	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
@@ -420,7 +453,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",wargs,n);
 	dlElement->widget = widget;
 	
-      /* now make push-in type radio buttons of the correct size */
+      /* Make push-in type radio buttons of the correct size */
 	fontList = fontListTable[relatedDisplayFontListIndex(
 	  dlRelatedDisplay,iNumberOfDisplays,maxChars)];
 	n = 0;
@@ -445,17 +478,18 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    Widget   toggleButton;
 	    xmStr = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
 	    XtSetArg(wargs[n],XmNlabelString,xmStr);
-	  /* use gadgets here so that changing foreground of
-	     radioBox changes buttons */
+	  /* Use gadgets here so that changing foreground of
+	   *   radioBox changes buttons */
 	    toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
 	      wargs,n+1);
 	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
-		XtAddCallback(toggleButton,XmNarmCallback,relatedDisplayButtonPressedCb,
+		XtAddCallback(toggleButton,XmNarmCallback,
+		  relatedDisplayButtonPressedCb,
 		  (XtPointer) &(dlRelatedDisplay->display[i]));
 	    }  else {
 		XtSetSensitive(toggleButton,False);
 	    }
-	  /* MDA - for some reason, need to do this after the fact for gadgets... */
+	  /* MDA: For some reason, need to do this after the fact for gadgets */
 	    XtVaSetValues(toggleButton,XmNalignment,XmALIGNMENT_CENTER,NULL);
 	    XtManageChild(toggleButton);
 	}
@@ -765,7 +799,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	performMacroSubstitutions(displayInfo, argsString, processedArgs,
           2*MAX_TOKEN_LENGTH);
-      /* Will also try to find file with parent's path */
+      /* Try to find file with parent's path */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
 	if (filePtr == NULL) {
 	    sprintf(token,
@@ -783,6 +817,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		  filename,NULL,(Boolean)True);
 		fclose(filePtr);
 	    }
+	  /* Refresh the display list dialog box */
+	    refreshDisplayListDlg();
 	}
     }
 }

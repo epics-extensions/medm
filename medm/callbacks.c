@@ -92,6 +92,9 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_PVINFO_ID:
 	popupPvInfo(displayInfo);
 	break;
+    case EXECUTE_POPUP_MENU_DISPLAY_LIST_ID:
+	popupDisplayListDlg();
+	break;
 #if 0	
     case EXECUTE_POPUP_MENU_EXECUTE_ID:
 	break;

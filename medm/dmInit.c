@@ -179,7 +179,7 @@ DisplayInfo *allocateDisplayInfo()
     Arg args[8];
 
 /* Allocate a DisplayInfo structure and shell for this display file/list */
-    displayInfo = (DisplayInfo *) malloc(sizeof(DisplayInfo));
+    displayInfo = (DisplayInfo *)malloc(sizeof(DisplayInfo));
     if (!displayInfo) return NULL;
 
     displayInfo->dlElementList = createDlList();
@@ -244,7 +244,7 @@ DisplayInfo *allocateDisplayInfo()
     XtSetArg(args[n],XmNallowShellResize,TRUE); n++;
   /* For highlightOnEnter on pointer motion, this must be set for shells */
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmPOINTER); n++;
-  /* Map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to nothing for now */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     if (privateCmap) {
 	XtSetArg(args[n],XmNcolormap,cmap); n++;
@@ -263,7 +263,7 @@ DisplayInfo *allocateDisplayInfo()
     XmAddWMProtocols(displayInfo->shell,atoms,2);
     }
 
-  /* Register the callbacks for these protocols */
+  /* Register the window manager close callbacks */
     XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
       (XtCallbackProc)wmCloseCallback,
       (XtPointer)DISPLAY_SHELL);
@@ -376,6 +376,7 @@ void dmDisplayListParse(
   char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
+    DisplayInfo *cdi;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     Arg args[7];
@@ -387,9 +388,9 @@ void dmDisplayListParse(
     if (!displayInfo) {
       /* Did not come from a display that is to be replaced
        *   Allocate a DisplayInfo structure */
-	currentDisplayInfo = allocateDisplayInfo();
-	currentDisplayInfo->filePtr = filePtr;
-	currentDisplayInfo->newDisplay = False;
+	cdi = currentDisplayInfo = allocateDisplayInfo();
+	cdi->filePtr = filePtr;
+	cdi->newDisplay = False;
     } else {
       /* Came from a display that is to be replaced */
 	if(displayInfo->fromRelatedDisplayExecution == True) {
@@ -401,8 +402,8 @@ void dmDisplayListParse(
 	    dmCleanupDisplayInfo(displayInfo,False);
 	    clearDlDisplayList(displayInfo->dlElementList);
 	    displayInfo->filePtr = filePtr;
-	    currentDisplayInfo = displayInfo;
-	    currentDisplayInfo->newDisplay = False;
+	    cdi = currentDisplayInfo = displayInfo;
+	    cdi->newDisplay = False;
 	} else {
 	  /* This is an original, pop it down */
 #if 0	    
@@ -420,114 +421,115 @@ void dmDisplayListParse(
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [2]: displayInfoSaveList");
 #endif	    
-	    currentDisplayInfo = allocateDisplayInfo();
-	    currentDisplayInfo->filePtr = filePtr;
-	    currentDisplayInfo->newDisplay = False;
+	    cdi = currentDisplayInfo = allocateDisplayInfo();
+	    cdi->filePtr = filePtr;
+	    cdi->newDisplay = False;
 	}
     }
   
-  if (fromRelatedDisplayExecution)
-	currentDisplayInfo->fromRelatedDisplayExecution = True;
-  else
-	currentDisplayInfo->fromRelatedDisplayExecution = False;
-
+    if (fromRelatedDisplayExecution)
+      cdi->fromRelatedDisplayExecution = True;
+    else
+      cdi->fromRelatedDisplayExecution = False;
+    
 #if 0
-/* KE: Doesn't make sense.  This just sets an argument which is not a pointer */
-  fromRelatedDisplayExecution = currentDisplayInfo->fromRelatedDisplayExecution;
+  /* KE: Doesn't make sense.  This just sets an argument which is not a pointer */
+    fromRelatedDisplayExecution = cdi->fromRelatedDisplayExecution;
 #endif  
-
-  /*
-   * generate the name-value table for macro substitutions (related display)
-   */
+    
+  /* Generate the name-value table for macro substitutions (related display) */
     if (argsString) {
-	currentDisplayInfo->nameValueTable = generateNameValueTable(argsString,&numPairs);
-	currentDisplayInfo->numNameValues = numPairs;
+	cdi->nameValueTable = generateNameValueTable(argsString,&numPairs);
+	cdi->numNameValues = numPairs;
     } else {
-	currentDisplayInfo->nameValueTable = NULL;
-	currentDisplayInfo->numNameValues = 0;
+	cdi->nameValueTable = NULL;
+	cdi->numNameValues = 0;
     }
 
 
-  /* if first token isn't "file" then bail out! */
-    tokenType=getToken(currentDisplayInfo,token);
+  /* If first token isn't "file" then bail out */
+    tokenType=getToken(cdi,token);
     if (tokenType == T_WORD && !strcmp(token,"file")) {
-	currentDisplayInfo->dlFile = parseFile(currentDisplayInfo);
-	if (currentDisplayInfo->dlFile) {
-	    currentDisplayInfo->versionNumber = currentDisplayInfo->dlFile->versionNumber;
-	    strcpy(currentDisplayInfo->dlFile->name,filename);
+	cdi->dlFile = parseFile(cdi);
+	if (cdi->dlFile) {
+	    cdi->versionNumber = cdi->dlFile->versionNumber;
+	    strcpy(cdi->dlFile->name,filename);
 	} else {
 	    medmPostMsg(1,"dmDisplayListParse: Out of memory\n"
 	      "  file: %s\n",filename);
-	    currentDisplayInfo->filePtr = NULL;
-	    dmRemoveDisplayInfo(currentDisplayInfo);
-	    currentDisplayInfo = NULL;
+	    cdi->filePtr = NULL;
+	    dmRemoveDisplayInfo(cdi);
+	    cdi = NULL;
 	    return;
 	}
     } else {
 	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file (Bad first token)\n"
 	  "  file: %s\n",filename);
-	currentDisplayInfo->filePtr = NULL;
-	dmRemoveDisplayInfo(currentDisplayInfo);
-	currentDisplayInfo = NULL;
+	cdi->filePtr = NULL;
+	dmRemoveDisplayInfo(cdi);
+	cdi = NULL;
 	return;
     }
 
-  /* DEBUG */
 #if 0    
-    printf("File: %s\n",currentDisplayInfo->dlFile->name);
-    if(strstr(currentDisplayInfo->dlFile->name,"sMain.adl")) {
+  /* DEBUG */
+    printf("File: %s\n",cdi->dlFile->name);
+    if(strstr(cdi->dlFile->name,"sMain.adl")) {
 	debugDisplayInfo=displayInfo;
 	printf("Set debugDisplayInfo for sMain.adl\n");
     }
-#endif
   /* End DEBUG */
+#endif
 
-    tokenType=getToken(currentDisplayInfo,token);
+    tokenType=getToken(cdi,token);
     if (tokenType ==T_WORD && !strcmp(token,"display")) {
-	parseDisplay(currentDisplayInfo);
+	parseDisplay(cdi);
     }
 
-    tokenType=getToken(currentDisplayInfo,token);
+    tokenType=getToken(cdi,token);
     if (tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
-	currentDisplayInfo->dlColormap=parseColormap(currentDisplayInfo,currentDisplayInfo->filePtr);
-	if (!currentDisplayInfo->dlColormap) {
+	cdi->dlColormap=parseColormap(cdi,cdi->filePtr);
+	if (!cdi->dlColormap) {
 	  /* error - do total bail out */
-	    fclose(currentDisplayInfo->filePtr);
-	    dmRemoveDisplayInfo(currentDisplayInfo);
+	    fclose(cdi->filePtr);
+	    dmRemoveDisplayInfo(cdi);
 	    return;
 	}
     }
 
-  /*
-   * proceed with parsing
-   */
-    while (parseAndAppendDisplayList(currentDisplayInfo,
-      currentDisplayInfo->dlElementList) != T_EOF );
+  /* Proceed with parsing */
+    while (parseAndAppendDisplayList(cdi,
+      cdi->dlElementList) != T_EOF );
 
-    currentDisplayInfo->filePtr = NULL;
+    cdi->filePtr = NULL;
 
-/*
- * traverse (execute) this displayInfo and associated display list
- */
+  /* Do what is needed to bring it up */
     {
 	int x, y;
 	unsigned int w, h;
 	int mask;
 
+      /* Parse the geometry string */
 	mask = XParseGeometry(geometryString,&x,&y,&w,&h);
 
+      /* Resize it and its contents if specified in geometry */
 	if ((mask & WidthValue) && (mask & HeightValue)) {
-	    dmResizeDisplayList(currentDisplayInfo,w,h);
+	    dmResizeDisplayList(cdi,w,h);
 	}
-	dmTraverseDisplayList(currentDisplayInfo);
+	dmTraverseDisplayList(cdi);
 
-	XtPopup(currentDisplayInfo->shell,XtGrabNone);
+      /* Pop it up */
+	XtPopup(cdi->shell,XtGrabNone);
 
+      /* Refresh the display list dialog box */
+	refreshDisplayListDlg();
+
+      /* Move it if specified in geometry */
 	if ((mask & XValue) && (mask & YValue)) {
-	    XMoveWindow(XtDisplay(currentDisplayInfo->shell),
-	      XtWindow(currentDisplayInfo->shell),x,y);
+	    XMoveWindow(XtDisplay(cdi->shell),
+	      XtWindow(cdi->shell),x,y);
 	}
     }
 }
