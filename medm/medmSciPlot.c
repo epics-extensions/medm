@@ -433,7 +433,9 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
     for(i=0; i < nsets; i++) {
 	listid = hData->data[i].listid;
 	npoints = hData->data[i].npoints;
+#if 0	
 	if(npoints <= 0) continue;
+#endif	
 	if(listid == INVALID_LISTID) {
 	  /* Not set yet, set with npoints */
 	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
@@ -441,6 +443,34 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	}
       /* Update with lastPoint */
 	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint+1,
+	  hData->data[i].xp, hData->data[i].yp);
+    }
+  /* Don't do SciPlotUpdate here for efficiency */
+}
+
+void CpEraseData(Widget w, int axis, CpDataHandle hData)
+  /* Axis (CP_X, CP_Y, CP_Y2) doesn't matter */
+{
+    int i, listid, npoints, nsets;
+
+  /* Return if handle is NULL */
+    if(!hData) return;
+
+  /* Loop over sets */
+    nsets = hData->nsets;
+    for(i=0; i < nsets; i++) {
+	listid = hData->data[i].listid;
+	npoints = hData->data[i].npoints;
+#if 0	
+	if(npoints <= 0) continue;
+#endif	
+	if(listid == INVALID_LISTID) {
+	  /* Not set yet, set with npoints */
+	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
+	      hData->data[i].xp, hData->data[i].yp, "");
+	}
+      /* Update with zero */
+	SciPlotListUpdateFloat(w, listid, 0,
 	  hData->data[i].xp, hData->data[i].yp);
     }
   /* Don't do SciPlotUpdate here for efficiency */
@@ -457,7 +487,7 @@ void CpUpdateWidget(Widget w, int full)
 	SciPlotUpdate(w);
     } else {
       /* Try data only, do full if data out of bounds */
-	if (SciPlotQuickUpdate(w))
+	if(SciPlotQuickUpdate(w))
 	  SciPlotUpdate(w);
     }
 }
@@ -472,6 +502,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 {
     Arg args[75];     /* Count later */
     int nargs;
+
     int fgcolorid, bgcolorid;
     int preferredHeight;
     XcVType minF, maxF;

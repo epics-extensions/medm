@@ -134,6 +134,7 @@ int CpDataSetLastPoint(CpDataHandle hData, int set, int npoints);
 int CpDataSetXElement(CpDataHandle hData, int set, int point, double x);
 int CpDataSetYElement(CpDataHandle hData, int set, int point, double y);
 
+void CpEraseData(Widget w, int axis, CpDataHandle hData);
 void CpGetAxisInfo(Widget w,
   XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
   Boolean *xAxisIsLog, Boolean *yAxisIsLog, Boolean *y2AxisIsLog,

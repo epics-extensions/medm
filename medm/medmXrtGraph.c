@@ -15,6 +15,8 @@
 #include "medmXrtGraph.h"
 #include "medmCartesianPlot.h"
 
+static CpDataHandle hcpNullData = (CpDataHandle)0;
+
 /* Function prototypes */
 static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs);
 
@@ -469,6 +471,30 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	XtSetArg(args[nargs],XtNxrtData,hData); nargs++;
     } else {
 	XtSetArg(args[nargs],XtNxrtData2,hData); nargs++;
+    }
+    XtSetValues(w,args,nargs);
+}
+
+void CpEraseData(Widget w, int axis, CpDataHandle hData)
+{
+    static first = 1;
+    Arg args[1];
+    int nargs;
+
+  /* Initialize hcpNullData if not done */
+    if(!hcpNullData) {
+	hcpNullData = CpDataCreate((Widget)0,CP_GENERAL,1,1);
+	CpDataSetHole(hcpNullData,0.0);
+	CpDataSetLastPoint(hcpNullData,0,0);
+	CpDataSetXElement(hcpNullData,0,0,0.0);
+	CpDataSetYElement(hcpNullData,0,0,0.0);
+    }
+
+    nargs=0;
+    if(axis == CP_Y) {
+	XtSetArg(args[nargs],XtNxrtData,hcpNullData); nargs++;
+    } else {
+	XtSetArg(args[nargs],XtNxrtData2,hcpNullData); nargs++;
     }
     XtSetValues(w,args,nargs);
 }

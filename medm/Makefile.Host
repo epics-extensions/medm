@@ -40,7 +40,6 @@ PURIFY_FLAGS = -first-only -chain-length=26
 # Use to test SciPlot, Otherwise should come from CONFIG
 #XRTGRAPH =
 #SCIPLOT = YES
-
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES
 

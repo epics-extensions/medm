@@ -115,7 +115,6 @@ static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 
-static CpDataHandle hcpNullData = (CpDataHandle)0;
 Widget cpMatrix = NULL, cpForm = NULL;
 
 static DlDispatchTable cartesianPlotDlDispatchTable = {
@@ -194,15 +193,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     int i, validTraces;
     Widget localWidget;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
-
-  /* Initialize hcpNullData if not done */
-    if(!hcpNullData) {
-	hcpNullData = CpDataCreate((Widget)0,CP_GENERAL,1,1);
-	CpDataSetHole(hcpNullData,0.0);
-	CpDataSetLastPoint(hcpNullData,0,0);
-	CpDataSetXElement(hcpNullData,0,0,0.0);
-	CpDataSetYElement(hcpNullData,0,0,0.0);
-    }
 
   /* Allocate a MedmCartesianPlot and fill part of it in */
     if(dlElement->data) {
@@ -448,7 +438,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 
-      /* Set as uninitialized (Used for incrementing last point) */
+      /* Set as uninitialized (Used for incrementing last point to
+         distinguish between no points and one point) */
 	 t->init=0;
 
       /* Determine data type (based on type (scalar or vector) of data) */
@@ -1361,12 +1352,13 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 		    int n = CpDataGetLastPoint(t->hcp,t->trace);
 		    if(n > 0) {
 			if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-			    CpSetData(widget, CP_Y, hcpNullData);
+			    CpEraseData(widget, CP_Y, t->hcp);
 			    clearDataSet1 = False;
 			} else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-			    CpSetData(widget, CP_Y2, hcpNullData);
+			    CpEraseData(widget, CP_Y2, t->hcp);
 			    clearDataSet2 = False;
 			}
+			t->init = 0;
 			CpDataSetLastPoint(t->hcp,t->trace,0);
 		    }
 		} 
@@ -1427,14 +1419,15 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 		int n = CpDataGetLastPoint(t->hcp,t->trace);
 		if(n > 0) {
 		    if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-			CpSetData(widget, CP_Y, hcpNullData);
+			CpEraseData(widget, CP_Y, t->hcp);
 			clearDataSet1 = False;
 			pcp->dirty1 = False;
 		    } else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-			CpSetData(widget, CP_Y2, hcpNullData);
+			CpEraseData(widget, CP_Y2, t->hcp);
 			clearDataSet2 = False;
 			pcp->dirty2 = False;
 		    }
+		    t->init = 0;
 		    CpDataSetLastPoint(t->hcp,t->trace,0);
 		}
 	    }
