@@ -180,7 +180,7 @@ static void Initialize(Widget request, Widget new,
     static char dash_list[2] = { 1, 1 };
 
     
-#ifdef NICE_SHADES
+#if defined(NICE_SHADES)
   /* These macros are used for calculating the 3D shade colors. */
 #define COLOR_ADD(member) \
   if (((int)bg.member + (int)SHADE_INTENSITY) <= MAX_RGB) \
@@ -231,6 +231,13 @@ static void Initialize(Widget request, Widget new,
 	    XtWarning("Control: unable to alloc shade 2 color\n");
 	    wnew->control.shade2.pixel = BlackPixel(display, DefaultScreen(display));
 	}
+#elif defined(EASY_SHADES)
+#else
+  /* Use Motif colors */
+    Pixel fg, select;
+    
+    XmGetColors(DefaultScreenOfDisplay(display), wnew->core.colormap, wnew->core.background_pixel,
+      &fg, &wnew->control.shade1, &wnew->control.shade2, &select);
 #endif	/* NICE_SHADES */
     
     
@@ -391,11 +398,8 @@ void Rect3d(Widget w, Display *display, Drawable drawable,
     shade2 = BlackPixel(display, DefaultScreen(display));
     XSetLineAttributes(display, gc, 0, LineOnOffDash, CapButt, JoinRound);
 #else
-  /* Use Motif colors */
-    Pixel fg, select;
-    
-    XmGetColors(DefaultScreenOfDisplay(display), wc->core.colormap, wc->core.background_pixel,
-      &fg, &shade1, &shade2, &select);
+    shade1 = wc->control.shade1;
+    shade2 = wc->control.shade2;
 #endif
     
   /* Reduce the height and width by 1 to use in drawing lines */
@@ -518,11 +522,8 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
     shade2 = BlackPixel(display, DefaultScreen(display));
     XSetLineAttributes(display, gc, 0, LineOnOffDash, CapButt, JoinRound);
 #else
-  /* Use Motif colors */
-    Pixel fg, select;
-    
-    XmGetColors(DefaultScreenOfDisplay(display), wc->core.colormap,
-      wc->core.background_pixel, &fg, &shade1, &shade2, &select);
+    shade1 = wc->control.shade1;
+    shade2 = wc->control.shade2;
 #endif
     
   /* This macro is used to determine the shading color to use. */
