@@ -1105,6 +1105,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNtextString,valueXmString); n++;
     keyboardDialog = XmCreatePromptDialog(w,channel,args,n);
     
+#if OMIT_RESIZE_HANDLES
   /* Remove resize handles from shell */
     XtVaSetValues(XtParent(keyboardDialog),
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
@@ -1112,7 +1113,8 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
        resize function with the handles.  It should not be necessary */
       XmNmwmFunctions, MWM_FUNC_ALL,
       NULL);
-    
+#endif
+
     XtAddCallback(keyboardDialog,XmNokCallback,keyboardDialogCallback,pv);
     XtAddCallback(keyboardDialog,XmNhelpCallback,keyboardDialogCallback,NULL);
     XtAddCallback(keyboardDialog,XmNcancelCallback,keyboardDialogCallback,NULL);

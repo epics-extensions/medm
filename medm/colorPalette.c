@@ -290,10 +290,12 @@ void createColor()
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
   /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+#if OMIT_RESIZE_HANDLES
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
     XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
+#endif
     colorS = XtCreatePopupShell("colorS",topLevelShellWidgetClass,
       mainShell,args,n);
     XmAddWMProtocolCallback(colorS,WM_DELETE_WINDOW,

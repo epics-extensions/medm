@@ -2213,10 +2213,12 @@ static void stripChartDialogCreateDialog(void)
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "Strip Chart Data",
       XmNdeleteResponse, XmDO_NOTHING,
+#if OMIT_RESIZE_HANDLES
       XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
     /* KE: The following is necessary for Exceed, which turns off the
        resize function with the handles.  It should not be necessary */
       XmNmwmFunctions, MWM_FUNC_ALL,
+#endif
     /* This appears to be necessary since apparently the scMatrix does
        some resizing on its own and the shell doesn't adjust on some
        platforms */

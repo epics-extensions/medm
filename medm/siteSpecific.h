@@ -241,3 +241,10 @@ Solaris 8 caused it to not work and in addition when Btn2 was clicked
 on a slider, to move the slider instead. */
 
 #define USE_DRAGDROP 1
+
+/* Define this if you do not want resize handles on many of the
+toplevel shells.  It may break window placement if the MEDM main
+window has different sized borders with and without resize handles.
+(This may to happen with Mwm.) */
+
+#define OMIT_RESIZE_HANDLES 0

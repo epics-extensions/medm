@@ -405,10 +405,12 @@ void createObject()
       XtNallowShellResize,TRUE,
       XmNkeyboardFocusPolicy,XmEXPLICIT,
       XmNdeleteResponse,XmDO_NOTHING,
+#if OMIT_RESIZE_HANDLES
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
       XmNmwmFunctions, MWM_FUNC_ALL,
+#endif
       NULL);
 
     XmAddWMProtocolCallback(objectS,WM_DELETE_WINDOW,

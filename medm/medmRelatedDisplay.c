@@ -1034,10 +1034,12 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     shell = XtParent(rdForm);
     XtVaSetValues(shell,
       XmNtitle,"Related Display Data",
+#if OMIT_RESIZE_HANDLES
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
     /* KE: The following is necessary for Exceed, which turns off the
        resize function with the handles.  It should not be necessary */
       XmNmwmFunctions, MWM_FUNC_ALL,
+#endif
       NULL);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);

@@ -733,10 +733,12 @@ Widget createShellCommandDataDialog(
     shell = XtParent(cmdForm);
     n = 0;
     XtSetArg(args[n],XmNtitle,"Shell Command Data"); n++;
+#if OMIT_RESIZE_HANDLES
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
     XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
+#endif
     XtSetValues(shell,args,n);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);

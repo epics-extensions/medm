@@ -49,16 +49,20 @@ static void popdownProductDescriptionShell(XtPointer xtPointer)
     Arg args[3];
     Widget widget;
     Atom WM_DELETE_WINDOW;
+    Cardinal nargs;
 
     widget = (Widget) xtPointer;
     XtPopdown(widget);
 
-    XtSetArg(args[0],XmNdeleteResponse,XmDO_NOTHING);
-    XtSetArg(args[1],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
+    nargs=0;
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
+#if OMIT_RESIZE_HANDLES
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
-    XtSetArg(args[2],XmNmwmFunctions, MWM_FUNC_ALL);
-    XtSetValues(widget,args,3);
+    XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
+#endif
+    XtSetValues(widget,args,nargs);
 
     WM_DELETE_WINDOW = XmInternAtom(XtDisplay(widget),
       "WM_DELETE_WINDOW",False);
@@ -111,37 +115,37 @@ Widget createAndPopupProductDescriptionShell(
     Dimension shellHeight, shellWidth;
     Dimension screenHeight, screenWidth;
     Position newY, newX;
-    int n, offset, screen;
+    int nargs, offset, screen;
 
 
   /* Create the shell */
-    n = 0;
+    nargs = 0;
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++;
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++;
     }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++;
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++;
     }
-    XtSetArg(args[n],XmNmwmDecorations, MWM_DECOR_ALL|
+    XtSetArg(args[nargs],XmNmwmDecorations, MWM_DECOR_ALL|
       MWM_DECOR_BORDER|MWM_DECOR_RESIZEH|MWM_DECOR_TITLE|MWM_DECOR_MENU|
-      MWM_DECOR_MINIMIZE|MWM_DECOR_MAXIMIZE); n++;
-    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
-    XtSetArg(args[n],XmNtitle,"Version"); n++;
+      MWM_DECOR_MINIMIZE|MWM_DECOR_MAXIMIZE); nargs++;
+    XtSetArg(args[nargs],XmNmwmFunctions, MWM_FUNC_ALL); nargs++;
+    XtSetArg(args[nargs],XmNtitle,"Version"); nargs++;
     productDescriptionShell = XtCreatePopupShell("productDescriptionShell",
-      topLevelShellWidgetClass,topLevelShell,args, n);
+      topLevelShellWidgetClass,topLevelShell,args, nargs);
     display=XtDisplay(productDescriptionShell);
     screen=DefaultScreen(display);
       
-    n = 0;
+    nargs = 0;
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    XtSetArg(args[n],XmNnoResize,True); n++;
-    XtSetArg(args[n],XmNshadowThickness,2); n++;
-    XtSetArg(args[n],XmNshadowType,XmSHADOW_OUT); n++;
-    XtSetArg(args[n],XmNautoUnmanage,False); n++;
-    form = XmCreateForm(productDescriptionShell,"form",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    XtSetArg(args[nargs],XmNnoResize,True); nargs++;
+    XtSetArg(args[nargs],XmNshadowThickness,2); nargs++;
+    XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
+    XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
+    form = XmCreateForm(productDescriptionShell,"form",args,nargs);
     
   /* Generate XmStrings */
     if(name != NULL) nameXmString = XmStringCreateLtoR(name,
@@ -155,122 +159,122 @@ Widget createAndPopupProductDescriptionShell(
 
   /* Create the label children  */
   /* Name */
-    n = 0;
+    nargs = 0;
     if(namePixmap == (Pixmap) NULL) {
-	XtSetArg(args[n],XmNlabelString,nameXmString); n++;
+	XtSetArg(args[nargs],XmNlabelString,nameXmString); nargs++;
 	if(nameFontList != NULL) {
-	    XtSetArg(args[n],XmNfontList,nameFontList); n++;
+	    XtSetArg(args[nargs],XmNfontList,nameFontList); nargs++;
 	}
     } else {
-	XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-	XtSetArg(args[n],XmNlabelPixmap,namePixmap); n++;
+	XtSetArg(args[nargs],XmNlabelType,XmPIXMAP); nargs++;
+	XtSetArg(args[nargs],XmNlabelPixmap,namePixmap); nargs++;
     }
-    XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNleftPosition,1); n++;
-    XtSetArg(args[n],XmNresizable,False); n++;
+    XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNleftPosition,1); nargs++;
+    XtSetArg(args[nargs],XmNresizable,False); nargs++;
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    nameLabel = XmCreateLabel(form,"nameLabel",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    nameLabel = XmCreateLabel(form,"nameLabel",args,nargs);
     
     
   /* Separator */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNleftWidget,nameLabel); n++;
-    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-    XtSetArg(args[n],XmNshadowThickness,2); n++;
-    XtSetArg(args[n],XmNseparatorType,XmSHADOW_ETCHED_IN); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNleftWidget,nameLabel); nargs++;
+    XtSetArg(args[nargs],XmNorientation,XmVERTICAL); nargs++;
+    XtSetArg(args[nargs],XmNshadowThickness,2); nargs++;
+    XtSetArg(args[nargs],XmNseparatorType,XmSHADOW_ETCHED_IN); nargs++;
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    separator = XmCreateSeparator(form,"separator",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    separator = XmCreateSeparator(form,"separator",args,nargs);
     
   /* Description */
-    n = 0;
-    XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-    XtSetArg(args[n],XmNlabelString,descriptionXmString); n++;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNtopPosition,5); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNleftWidget,separator); n++;
-	XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-	XtSetArg(args[n],XmNrightPosition,90); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
+    XtSetArg(args[nargs],XmNlabelString,descriptionXmString); nargs++;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNtopPosition,5); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNleftWidget,separator); nargs++;
+	XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_POSITION); nargs++;
+	XtSetArg(args[nargs],XmNrightPosition,90); nargs++;
     if(descriptionFontList != NULL) {
-	XtSetArg(args[n],XmNfontList,descriptionFontList); n++;
+	XtSetArg(args[nargs],XmNfontList,descriptionFontList); nargs++;
     }
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    descriptionLabel = XmCreateLabel(form,"descriptionLabel",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    descriptionLabel = XmCreateLabel(form,"descriptionLabel",args,nargs);
     
   /* Version info */
-    n = 0;
-    XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-    XtSetArg(args[n],XmNlabelString,versionInfoXmString); n++;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,descriptionLabel); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-    XtSetArg(args[n],XmNleftWidget,descriptionLabel); n++;
-	XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-	XtSetArg(args[n],XmNrightPosition,90); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
+    XtSetArg(args[nargs],XmNlabelString,versionInfoXmString); nargs++;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,descriptionLabel); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_OPPOSITE_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNleftWidget,descriptionLabel); nargs++;
+	XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_POSITION); nargs++;
+	XtSetArg(args[nargs],XmNrightPosition,90); nargs++;
     if(otherFontList != NULL) {
-	XtSetArg(args[n],XmNfontList,otherFontList); n++;
+	XtSetArg(args[nargs],XmNfontList,otherFontList); nargs++;
     }
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    versionInfoLabel = XmCreateLabel(form,"versionInfoLabel",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    versionInfoLabel = XmCreateLabel(form,"versionInfoLabel",args,nargs);
     
   /* Developed at/by... */
-    n = 0;
-    XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-    XtSetArg(args[n],XmNlabelString,developedAtXmString); n++;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,versionInfoLabel); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-    XtSetArg(args[n],XmNleftWidget,versionInfoLabel); n++;
-	XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-	XtSetArg(args[n],XmNrightPosition,90); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNbottomPosition,90); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
+    XtSetArg(args[nargs],XmNlabelString,developedAtXmString); nargs++;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,versionInfoLabel); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_OPPOSITE_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNleftWidget,versionInfoLabel); nargs++;
+	XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_POSITION); nargs++;
+	XtSetArg(args[nargs],XmNrightPosition,90); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNbottomPosition,90); nargs++;
     
     if(otherFontList != NULL) {
-	XtSetArg(args[n],XmNfontList,otherFontList); n++;
+	XtSetArg(args[nargs],XmNfontList,otherFontList); nargs++;
     }
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    developedAtLabel = XmCreateLabel(form,"developedAtLabel",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    developedAtLabel = XmCreateLabel(form,"developedAtLabel",args,nargs);
     
     
   /* OK button */
     okXmString = XmStringCreateLocalized("OK");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,okXmString); n++;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNtopOffset,8); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNrightOffset,8); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNlabelString,okXmString); nargs++;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNtopOffset,8); nargs++;
+    XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNrightOffset,8); nargs++;
     if(otherFontList != NULL) {
-	XtSetArg(args[n],XmNfontList,otherFontList); n++;
+	XtSetArg(args[nargs],XmNfontList,otherFontList); nargs++;
     }
     if(background >= 0) {
-	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
-    okButton = XmCreatePushButton(form,"okButton",args,n);
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+    okButton = XmCreatePushButton(form,"okButton",args,nargs);
     XtAddCallback(okButton,XmNactivateCallback,
       (XtCallbackProc)closeProductDescriptionCallback,
-      (XtPointer)productDescriptionShell); n++;
+      (XtPointer)productDescriptionShell); nargs++;
     XmStringFree(okXmString);
       
     children[0] = nameLabel; children[1] = descriptionLabel;
@@ -295,18 +299,18 @@ Widget createAndPopupProductDescriptionShell(
     screenHeight=DisplayHeight(display,screen);
     screenWidth=DisplayWidth(display,screen);
 
-    n=0;
-    XtSetArg(args[n],XmNheight,&shellHeight); n++;
-    XtSetArg(args[n],XmNwidth,&shellWidth); n++;
-    XtGetValues(productDescriptionShell,args,n);
+    nargs=0;
+    XtSetArg(args[nargs],XmNheight,&shellHeight); nargs++;
+    XtSetArg(args[nargs],XmNwidth,&shellWidth); nargs++;
+    XtGetValues(productDescriptionShell,args,nargs);
     
     newY=(screenHeight-shellHeight)/2;
     newX=(screenWidth-shellWidth)/2;
     
-    n=0;
-    XtSetArg(args[n],XmNy,newY); n++;
-    XtSetArg(args[n],XmNx,newX); n++;
-    XtSetValues(productDescriptionShell,args,n);
+    nargs=0;
+    XtSetArg(args[nargs],XmNy,newY); nargs++;
+    XtSetArg(args[nargs],XmNx,newX); nargs++;
+    XtSetValues(productDescriptionShell,args,nargs);
     
 #if DEBUG_POSITION
     {
@@ -323,38 +327,38 @@ Widget createAndPopupProductDescriptionShell(
 
 	printf("(1) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
 
-	n=0;
-	XtSetArg(args[n],XmNy,&newy); n++;
-	XtSetArg(args[n],XmNx,&newx); n++;
-	XtGetValues(productDescriptionShell,args,n);
+	nargs=0;
+	XtSetArg(args[nargs],XmNy,&newy); nargs++;
+	XtSetArg(args[nargs],XmNx,&newx); nargs++;
+	XtGetValues(productDescriptionShell,args,nargs);
 	
 	printf("(1) newy=%d  newx=%d\n",newy,newx);
 
-	n=0;
-	XtSetArg(args[n],XmNy,474); n++;
-	XtSetArg(args[n],XmNx,440); n++;
-	XtSetValues(productDescriptionShell,args,n);
+	nargs=0;
+	XtSetArg(args[nargs],XmNy,474); nargs++;
+	XtSetArg(args[nargs],XmNx,440); nargs++;
+	XtSetValues(productDescriptionShell,args,nargs);
 	
 	printf("(2) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
 
-	n=0;
-	XtSetArg(args[n],XmNy,&newy); n++;
-	XtSetArg(args[n],XmNx,&newx); n++;
-	XtGetValues(productDescriptionShell,args,n);
+	nargs=0;
+	XtSetArg(args[nargs],XmNy,&newy); nargs++;
+	XtSetArg(args[nargs],XmNx,&newx); nargs++;
+	XtGetValues(productDescriptionShell,args,nargs);
 	
 	printf("(2) newy=%d  newx=%d\n",newy,newx);
 
-	n=0;
-	XtSetArg(args[n],XmNy,newY); n++;
-	XtSetArg(args[n],XmNx,newX); n++;
-	XtSetValues(productDescriptionShell,args,n);
+	nargs=0;
+	XtSetArg(args[nargs],XmNy,newY); nargs++;
+	XtSetArg(args[nargs],XmNx,newX); nargs++;
+	XtSetValues(productDescriptionShell,args,nargs);
 	
 	printf("(3) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
 
-	n=0;
-	XtSetArg(args[n],XmNy,&newy); n++;
-	XtSetArg(args[n],XmNx,&newx); n++;
-	XtGetValues(productDescriptionShell,args,n);
+	nargs=0;
+	XtSetArg(args[nargs],XmNy,&newy); nargs++;
+	XtSetArg(args[nargs],XmNx,&newx); nargs++;
+	XtGetValues(productDescriptionShell,args,nargs);
 	
 	printf("(3) newy=%d  newx=%d\n",newy,newx);
 	

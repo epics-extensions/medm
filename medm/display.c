@@ -206,7 +206,7 @@ DisplayInfo *allocateDisplayInfo()
     XtSetArg(args[nargs],XmNiconName,"Display"); nargs++;
     XtSetArg(args[nargs],XmNtitle,"Display"); nargs++;
     XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
-#if 0    
+#if OMIT_RESIZE_HANDLES
   /* Turn resize handles off
    * KE: Is is really good to do this? */
     XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
