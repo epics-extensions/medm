@@ -127,14 +127,14 @@ without express or implied warranty.
 #include "xwd2ps.h"
 
 /* Function prototypes */
-static void get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
+static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
   unsigned char *buffer);
 static void skipLines(XWDFileHeader *winP, unsigned char *line,
   unsigned char *buffer, int line_skip);
 static void parseArgs(int argc, char **argv, Options *option, Image *image,
     Page *page);
 static int get_page_info(Page *the_page);
-static void get_raster_header(XWDFileHeader *win, char *w_name);
+static int get_raster_header(XWDFileHeader *win, char *w_name);
 static int getDumpType(XWDFileHeader *header);
 static int getOrientation(Page pg, Image im);
 
@@ -155,7 +155,7 @@ Flag flag = { FALSE, FALSE, FALSE, FALSE, FALSE,
 	      FALSE, FALSE, FALSE, FALSE, FALSE, 
 	      FALSE, FALSE, FALSE, FALSE, FALSE };
 
-void xwd2ps(int argc, char **argv, FILE *fo)
+int xwd2ps(int argc, char **argv, FILE *fo)
 {
 #ifndef WIN32
     struct passwd *pswd;     /* variables for userid, date and time */
@@ -195,19 +195,20 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 
     unsigned char *buffer=NULL;   /* temporary work buffer */
     unsigned char rr, gg, bb;
-    char *w_name;                 /* window name from X11-Window xwd header */
+    char *w_name = NULL;          /* window name from X11-Window xwd header */
     char s_translate[80];         /* PostScript code to position image */
     char s_scale[80];             /* PostScript code to scale image */
     char s_matrix[80];            /* PostScript code for image matrix */
 
+    int retCode = 1;
+
   /* initializations */
+    colors = NULL;
     strcpy(progname, argv[0]);     /* copy the program name to a global */
     strcpy(page.type, "letter");   /* default page type */
     options.title.height    = 0.0; /* no title */
-  /* KE: The following is not used and gives a memory leak */
-  /* options.title.string    = (char *)malloc(256); */
-    options.title.string    = NULL; /* no title */
-    options.title.font_size = 16;  /* 16 point font */
+    options.title.string    = (char *)malloc(256);
+    options.title.font_size = 10;  /* 16 point font */
     options.ncopies         = 1;   /* 1 copy of output */
     options.input_file.name = "standard input";
     page.yoffset            = 0.0; /* position adjustment  (for logo, time & title)*/
@@ -223,8 +224,8 @@ void xwd2ps(int argc, char **argv, FILE *fo)
   /* determine the orientation of the image if it is specified,
      otherwise orientation is determined by the image shape later on */
 
-    if (flag.portrait == TRUE && flag.landscape == TRUE) {
-	fprintf (stderr, "%s: cannot use L and P options together.\n",progname);
+    if(flag.portrait == TRUE && flag.landscape == TRUE) {
+	fprintf(stderr, "%s: cannot use L and P options together.\n",progname);
 	flag.error++;
     }
     else if(flag.portrait == TRUE)
@@ -239,15 +240,16 @@ void xwd2ps(int argc, char **argv, FILE *fo)
   
   /* Get page size information */
 
-    if (get_page_info(&page)) {
-	fprintf (stderr, "%s: p option error -- page type: %s undefined\n", 
+    if(get_page_info(&page)) {
+	fprintf(stderr, "%s: p option error -- page type: %s undefined\n", 
 	  progname, page.type);
 	flag.error++;
     }
 
-    if (flag.error) {
+    if(flag.error) {
 	usage();
-	exit(2);
+	retCode = 0;
+	goto CLEAN;
     }
 
   /*
@@ -255,13 +257,13 @@ void xwd2ps(int argc, char **argv, FILE *fo)
    *
    *                     default fontsize = 10; .12 added for vertical spacing
    */
-    if ((flag.date == TRUE) || (flag.time == TRUE))
+    if((flag.date == TRUE) || (flag.time == TRUE))
       page.time_date_height = (float)(10./72. + .12);
 
   /*
    *                    .1 added for vertical spacing
    */
-    if (flag.title == TRUE)
+    if(flag.title == TRUE)
       options.title.height = (float)(options.title.font_size/72. + .1);
 
     page.height_adjust += fmax(page.time_date_height, options.title.height); 
@@ -274,10 +276,11 @@ void xwd2ps(int argc, char **argv, FILE *fo)
     if(argc > optind) {
 	options.input_file.name = argv[optind];
 	options.input_file.pointer = freopen(options.input_file.name, "r",stdin);
-	if (options.input_file.pointer == NULL) {
-	    fprintf (stderr,"%s: could not open input file %s\n", 
+	if(options.input_file.pointer == NULL) {
+	    fprintf(stderr,"%s: could not open input file %s\n", 
 	      progname, options.input_file.name);
-	    exit(1);
+	    retCode = 0;
+	    goto CLEAN;
 	}
     }
 
@@ -293,14 +296,15 @@ void xwd2ps(int argc, char **argv, FILE *fo)
     properly. */
 
     w_name=NULL;
-    get_raster_header(&win, w_name);
+    retCode = get_raster_header(&win, w_name);
+    if(!retCode) goto CLEAN;
 
     dump_type = getDumpType(&win); /* TEMP result not used yet */
 
   /*
    * check raster depth
    */
-    if (win.pixmap_depth == 1)
+    if(win.pixmap_depth == 1)
       flag.mono = TRUE;
   
   /*
@@ -308,16 +312,17 @@ void xwd2ps(int argc, char **argv, FILE *fo)
    */
     intensity0 = INTENSITY(colors[0]);
     intensity1 = INTENSITY(colors[1]);
-    if (win.ncolors == 2 && (intensity0 > intensity1)) flag.invert = TRUE;
+    if(win.ncolors == 2 && (intensity0 > intensity1)) flag.invert = TRUE;
 
   /*
    * process width factor
    */
-    if (my_image.width_frac == 0 || my_image.width_frac > 1.0) {
-	fprintf (stderr,
+    if(my_image.width_frac == 0 || my_image.width_frac > 1.0) {
+	fprintf(stderr,
 	  "%s: W option argument error -- %f is not between 0 and 1.\n",
 	  progname, my_image.width_frac);
-	exit(1);
+	retCode = 0;
+	goto CLEAN;
     }
 
     intwidth = win.pixmap_width;
@@ -327,7 +332,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
       intwidth--;
 
     my_image.ps_width = abs( (int) (intwidth * my_image.width_frac));
-    if (my_image.width_frac < 0.0 )
+    if(my_image.width_frac < 0.0 )
       col_skip = intwidth -my_image.ps_width;
     else 
       col_skip = 0;
@@ -336,14 +341,15 @@ void xwd2ps(int argc, char **argv, FILE *fo)
     col_end   = col_skip +my_image.ps_width;
   
   /* process height factor */
-    if (my_image.height_frac == 0 || my_image.height_frac > 1.0) {
-	fprintf (stderr,
+    if(my_image.height_frac == 0 || my_image.height_frac > 1.0) {
+	fprintf(stderr,
 	  "%s: H option argument error -- %f is not between 0 and 1.\n",
 	  progname, my_image.height_frac);
-	exit(1);
+	retCode = 0;
+	goto CLEAN;
     }
     my_image.ps_height = abs ( (int) (win.pixmap_height * my_image.height_frac) );
-    if (my_image.height_frac < 0.0 ) 
+    if(my_image.height_frac < 0.0 ) 
       line_skip =  win.pixmap_height -my_image.ps_height;
     else 
       line_skip = 0;
@@ -352,10 +358,10 @@ void xwd2ps(int argc, char **argv, FILE *fo)
   
     my_image.pixels_width =my_image.ps_width;   /* TEMP - this might have to be fixed later */
 
-    if (flag.w == FALSE && flag.h == TRUE)
+    if(flag.w == FALSE && flag.h == TRUE)
       my_image.width = (my_image.height*my_image.pixels_width)/my_image.ps_height;
 
-    if (flag.w == TRUE && flag.h == FALSE)
+    if(flag.w == TRUE && flag.h == FALSE)
       my_image.height = (my_image.width*my_image.ps_height)/my_image.pixels_width;
 
 
@@ -367,9 +373,9 @@ void xwd2ps(int argc, char **argv, FILE *fo)
   /*
    * choose defaults to make image as large as possible on page
    */
-    if (flag.w == FALSE && flag.h == FALSE) {
+    if(flag.w == FALSE && flag.h == FALSE) {
       /* setup page sizes for orientation requested */
-	if (my_image.orientation == PORTRAIT) {
+	if(my_image.orientation == PORTRAIT) {
 	    wa = page.default_width;
 	    ha = page.default_height - page.height_adjust;
 	}
@@ -395,7 +401,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	maxhcheck = page.maxhsize;
 	page.ximagepos = page.xcenter - (my_image.width/2);
 	page.yimagepos = page.ycenter - (my_image.height/2) + page.yoffset;
-	sprintf (s_matrix,"  [%d 0 0 -%d 0 %d]",
+	sprintf(s_matrix,"  [%d 0 0 -%d 0 %d]",
 	  my_image.pixels_width,my_image.ps_height,my_image.ps_height);
     }
     else {
@@ -403,23 +409,25 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	maxhcheck = page.maxwsize;
 	page.ximagepos = page.xcenter - (my_image.height/2);
 	page.yimagepos = page.ycenter - (my_image.width/2) + page.yoffset;
-	sprintf (s_matrix,"  [0 %d %d 0 0 0]", my_image.pixels_width,my_image.ps_height);
+	sprintf(s_matrix,"  [0 %d %d 0 0 0]", my_image.pixels_width,my_image.ps_height);
     }
-    sprintf (s_translate, "%f inch %f inch translate", page.ximagepos, page.yimagepos);
-    sprintf (s_scale, "%f inch %f inch scale", my_image.width, my_image.height);
+    sprintf(s_translate, "%f inch %f inch translate", page.ximagepos, page.yimagepos);
+    sprintf(s_scale, "%f inch %f inch scale", my_image.width, my_image.height);
 
-    if (my_image.width <= 0.0 || my_image.width > maxwcheck) {
-	fprintf (stderr,
+    if(my_image.width <= 0.0 || my_image.width > maxwcheck) {
+	fprintf(stderr,
 	  "%s: w option error -- width (%f) is outside range for standard 8.5 x 11 in. page.\n", 
 	  progname, my_image.width);
-	exit(1);
+	retCode = 0;
+	goto CLEAN;
     }
   
-    if (my_image.height <= 0.0 || my_image.height > maxhcheck) {
-	fprintf (stderr,
+    if(my_image.height <= 0.0 || my_image.height > maxhcheck) {
+	fprintf(stderr,
 	  "%s: h option error -- height (%f) is outside range for standard 8.5 x 11 in. page.\n", 
 	  progname, my_image.height);
-	exit(1);
+	retCode = 0;
+	goto CLEAN;
     }
 
   /*
@@ -468,7 +476,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
     switch (win.pixmap_depth) {   /* what type of image do we have ? */
 
     case 24:   /* 24 bit image */
-	if (flag.mono == FALSE) {   /* print as color image */
+	if(flag.mono == FALSE) {   /* print as color image */
 	    fprintf(fo,"/buffer 4 string def\n");
 	    fprintf(fo,"/rgb 3 string def\n");
 	    outputColorImage(fo);
@@ -516,13 +524,14 @@ void xwd2ps(int argc, char **argv, FILE *fo)
       /* start outputting the image */
 	outputcount = 0;
 	for (i = 0; i <my_image.ps_height; i++)  {
-	    get_next_raster_line(&win, line, buffer);
+	    retCode = get_next_raster_line(&win, line, buffer);
+	    if(!retCode) goto CLEAN;
 	    rr = line[3*col_skip];
 	    gg = line[3*col_skip];
 	    bb = line[3*col_skip];
 	    runlen = 0;
 	    for(j = 3*col_start; j < 3*col_end; j += 3) {
-		if (flag.black2white == TRUE &&
+		if(flag.black2white == TRUE &&
 		  line[j] == 0 && line[j+1] == 0 && line[j+2] == 0 ) {
 		    line[j]   = 255;
 		    line[j+1] = 255;
@@ -533,9 +542,9 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	       * the run length will fit in a byte (256 max, i.e. 0 means length 1,
 	       * 1 means length 2, etc.)
 	       */
-		if (line[j] == rr && line[j+1] == gg && line[j+2] == bb) {
-		    if (runlen == 0xff) {
-			if (flag.mono == FALSE) {
+		if(line[j] == rr && line[j+1] == gg && line[j+2] == bb) {
+		    if(runlen == 0xff) {
+			if(flag.mono == FALSE) {
 			    fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 			    outputcount += 4;
 			}
@@ -550,7 +559,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 		}
 	      /* if the color changed, then output the last run and reset counter */
 		else {
-		    if (flag.mono == FALSE) {
+		    if(flag.mono == FALSE) {
 			fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 			outputcount += 4;
 		    }
@@ -572,12 +581,12 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 #endif		    
 		}
 	      /* check to make sure the output lines are not too long */
-		if (outputcount >= MAXPERLINE) {
+		if(outputcount >= MAXPERLINE) {
 		    outputcount = 0;
 		    fprintf(fo,"\n");
 		}
 	    }
-	    if (flag.mono == FALSE) {
+	    if(flag.mono == FALSE) {
 		fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 		outputcount += 4;
 	    }
@@ -617,13 +626,13 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"\n%% get rgb color table\n");
 	fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
 	for(im = 0; im < (int)win.ncolors; im++) {
-	    if (flag.black2white == TRUE) {
-		if (colors[im].red == 255 && colors[im].green == 255 && colors[im].blue == 255) {
+	    if(flag.black2white == TRUE) {
+		if(colors[im].red == 255 && colors[im].green == 255 && colors[im].blue == 255) {
 		    colors[im].red = 0;
 		    colors[im].green = 0;
 		    colors[im].blue = 0;
 		}
-		else if (colors[im].red == 0 && colors[im].green == 0 && colors[im].blue == 0) {
+		else if(colors[im].red == 0 && colors[im].green == 0 && colors[im].blue == 0) {
 		    colors[im].red = 255;
 		    colors[im].green = 255;
 		    colors[im].blue = 255;
@@ -649,8 +658,8 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 		the run length will fit in a byte (256 max, i.e. 0 means length 1,
 		1 means length 2, etc.)
 		*/
-		if (line[j] == color) {
-		    if (runlen == 0xff) {
+		if(line[j] == color) {
+		    if(runlen == 0xff) {
 			fprintf(fo,"%02x%02x", runlen, color);
 			outputcount++;
 			runlen = -1;
@@ -670,7 +679,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	      /*
 	       * check to make sure the output lines are not too long
 	       */
-		if (outputcount > MAXPERLINE) {
+		if(outputcount > MAXPERLINE) {
 		    outputcount = 0;
 		    fprintf(fo,"\n");
 		}
@@ -723,7 +732,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	for (i = 0; i <my_image.ps_height; i++)  {
 	    get_next_raster_line(&win, line, buffer);
 	  /* unpack the 4 bit images into a byte */
-	    if (*(char *) &swaptest)
+	    if(*(char *) &swaptest)
 	      for (j = 0; j < (int)win.bytes_per_line; j++) {
 		  line4bits[2*j]   = line[j] & 0x0f;
 		  line4bits[2*j+1] = line[j] >> 4;
@@ -745,8 +754,8 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 		the run length will fit in a byte (256 max, i.e. 0 means length 1,
 		1 means length 2, etc.)
 		*/
-		if (line4bits[j] == color) {
-		    if (runlen == 0xff) {
+		if(line4bits[j] == color) {
+		    if(runlen == 0xff) {
 			fprintf(fo,"%02x%02x", runlen, color);
 			outputcount++;
 			runlen = -1;
@@ -767,7 +776,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	       * check to make sure the output lines are not too long
 	       */
 #ifdef NOTDEF
-		if (outputcount > MAXPERLINE) {
+		if(outputcount > MAXPERLINE) {
 		    outputcount = 0;
 		    fprintf(fo,"\n");
 		}
@@ -804,7 +813,7 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 		fprintf(fo,"%02x", 255 - line[j]);       /* invert data for PostScript */
 		outputcount++;
 	      /* check to make sure the output lines are not too long	 */
-		if (outputcount > MAXPERLINE) {
+		if(outputcount > MAXPERLINE) {
 		    outputcount = 0;
 		    fprintf(fo,"\n");
 		}
@@ -815,15 +824,12 @@ void xwd2ps(int argc, char **argv, FILE *fo)
 	break;
 
     default:
-	fprintf (stderr,"%s: sorry! cannot handle input file of this format.\n", progname);
-	fprintf (stderr,"    (See program author.) \n");
-	exit(3);
+	fprintf(stderr,"%s: Sorry! cannot handle input file of this format.\n", progname);
+	fprintf(stderr,"    (See program author.) \n");
+	retCode = 0;
+	goto CLEAN;
     }
 
-  /* KE: free stuff that was allocated */
-    if(buffer) free(buffer);
-    if(options.title.string) free(options.title.string);
-  
   /* KE: Changed the following because it wasn't working right for 24-bit */
 /*     switch (win.bits_per_pixel) { */  /* TEMP I don't know why this needs to be done - CAM */
     switch (win.pixmap_depth) {     /* Necessary to get back to original CTM scaling */
@@ -850,10 +856,10 @@ void xwd2ps(int argc, char **argv, FILE *fo)
     if(flag.inc_file == TRUE) {
       /* Silicon Graphics did not recognize EOF so cludge this way */
 #ifdef mips 
-	while ((c = fgetc(incfile)) != ((char) -1))
+	while((c = fgetc(incfile)) != ((char) -1))
 	  putchar(c);
 #else
-	while ((c = fgetc(incfile)) != EOF)
+	while((c = fgetc(incfile)) != EOF)
 	  putchar(c);
 #endif
 	fclose(incfile);
@@ -874,6 +880,27 @@ void xwd2ps(int argc, char **argv, FILE *fo)
   /* finish up PostScript code */
     fprintf(fo,"\n/#copies %d def\n",options.ncopies);
     fprintf(fo,"showpage grestore\n%%%%Trailer\n");
+
+  CLEAN:
+  /* Clean up everything that may have been allocated */
+    if(buffer) {
+	free(buffer);
+	buffer = NULL;
+    }
+    if(options.title.string) {
+	free(options.title.string);
+	options.title.string = NULL;
+    }
+    if(colors) {
+	free(colors);
+	colors = NULL;
+    }
+    if(w_name) {
+	free(w_name);
+	w_name = NULL;
+    }
+
+    return retCode;
 } 
 /* End of Main Program */
 
@@ -895,9 +922,8 @@ static int getDumpType(XWDFileHeader *header)
     case 2:
     case 1:
     default:
-	fprintf (stderr, "can't handle %u bits_per_pixel\n", header->bits_per_pixel);
-	exit(1);
-	break;
+	fprintf(stderr, "can't handle %u bits_per_pixel\n", header->bits_per_pixel);
+	return UNKNOWN; /* TEMP */
     }
 }
 
@@ -916,7 +942,7 @@ static int getDumpType(XWDFileHeader *header)
 static int get_page_info(Page *the_page)
 {
   /* letter paper size 8.5 x 11 */
-    if ( (strcmp(the_page->type, "A") == 0) || (strcmp(the_page->type, "letter") == 0) ) {
+    if( (strcmp(the_page->type, "A") == 0) || (strcmp(the_page->type, "letter") == 0) ) {
 	the_page->xcenter = (float)(8.5/2);
 	the_page->ycenter = (float)(11.0/2. + .21);
 	the_page->maxwsize = (float)8.11;
@@ -925,7 +951,7 @@ static int get_page_info(Page *the_page)
 	the_page->default_height = (float)8.5;
 	return(0);
     }
-    else if (strcmp(the_page->type, "B") == 0) {         /* 11 x 17 inch paper size */
+    else if(strcmp(the_page->type, "B") == 0) {         /* 11 x 17 inch paper size */
 	the_page->xcenter = (float)(11.0/2.);
 	the_page->ycenter = (float)(17.0/2. + .21);
 	the_page->maxwsize = (float)10.60;
@@ -934,7 +960,7 @@ static int get_page_info(Page *the_page)
 	the_page->default_height = (float)14.5;
 	return(0);
     }
-    else if (strcmp(the_page->type, "A4") == 0 ) {       /* A4 paper size 8.3 x 11.7 */
+    else if(strcmp(the_page->type, "A4") == 0 ) {       /* A4 paper size 8.3 x 11.7 */
 	the_page->xcenter = (float)(8.3/2.);
 	the_page->ycenter = (float)(11.7/2. + .21);
 	the_page->maxwsize = (float)8.26;
@@ -943,7 +969,7 @@ static int get_page_info(Page *the_page)
 	the_page->default_height = (float)9.0;
 	return(0);
     }
-    else if (strcmp(the_page->type, "A3") == 0 ) {       /* A3 paper size 11.7 x 16.6 */
+    else if(strcmp(the_page->type, "A3") == 0 ) {       /* A3 paper size 11.7 x 16.6 */
 	the_page->xcenter = (float)(11.7/2.);
 	the_page->ycenter = (float)(16.6/2. + .21);
 	the_page->maxwsize = (float)11.69;
@@ -959,7 +985,7 @@ static int get_page_info(Page *the_page)
  ** get_raster_header() - read in the xwd header, including the colormap 
  **                       and the window title
  */
-static void get_raster_header(XWDFileHeader *win, char *w_name)
+static int get_raster_header(XWDFileHeader *win, char *w_name)
 {
     unsigned long swaptest = 1;
     int i, zflg, idifsize;
@@ -967,22 +993,22 @@ static void get_raster_header(XWDFileHeader *win, char *w_name)
   /* read in window header */
     fullread(0, (char *)win, sizeof( *win ));
 
-    if (*(char *) &swaptest)  /* am I running on a byte swapped machine? */
+    if(*(char *) &swaptest)  /* am I running on a byte swapped machine? */
       xwd2ps_swaplong((char *)win, (long)sizeof(*win)); /* swap all the bytes
 							   in the header */
-    if (win->file_version != XWD_FILE_VERSION) {
-	fprintf (stderr,"%s: file format version missmatch.\n", progname);
-	exit(1);
+    if(win->file_version != XWD_FILE_VERSION) {
+	fprintf(stderr,"%s: file format version missmatch.\n", progname);
+	return 0;
     }
 
-    if (win->header_size < sizeof(*win)) {
-	fprintf (stderr,"%s: header size is too small.\n", progname);
-	exit(1);
+    if(win->header_size < sizeof(*win)) {
+	fprintf(stderr,"%s: header size is too small.\n", progname);
+	return 0;
     }
 
-    if (win->pixmap_depth != 1 && win->pixmap_format != ZPixmap) {
-	fprintf (stderr,"%s: image is not in Z format\n", progname);
-	exit(1);
+    if(win->pixmap_depth != 1 && win->pixmap_format != ZPixmap) {
+	fprintf(stderr,"%s: image is not in Z format\n", progname);
+	return 0;
     }
 
   /* set z pixmap flag if required for operations */
@@ -992,9 +1018,9 @@ static void get_raster_header(XWDFileHeader *win, char *w_name)
     else
       zflg=0; /* TEMP - as far as I can tell, zflg is never used ! */
   
-    if (win->byte_order != win->bitmap_bit_order) {
-	fprintf (stderr, "%s: image will be incorrect,", progname);
-	fprintf (stderr, " byte swapping required but not performed.\n");
+    if(win->byte_order != win->bitmap_bit_order) {
+	fprintf(stderr, "%s: image will be incorrect,", progname);
+	fprintf(stderr, " byte swapping required but not performed.\n");
     }
 
   /* TEMP - put in large image warning here! */
@@ -1002,32 +1028,37 @@ static void get_raster_header(XWDFileHeader *win, char *w_name)
 	w_name = (char *)malloc(idifsize);
 	fullread(0, w_name, idifsize);
       /* KE: Freed w_name to avoid MLK (Doesn't appear to be used anyway) */
-	if(w_name) free(w_name);
+	if(w_name) {
+	    free(w_name);
+	    w_name = NULL;
+	}
     }
     if(win->ncolors) {
 	if( (colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)))) == NULL) {
-	    fprintf (stderr, "%s: can't get memory for color map\n", progname);
-	    exit(1);
+	    fprintf(stderr, "%s: can't get memory for color map\n", progname);
+	    return 0;
 	}
 	fullread(0, (char *)colors, win->ncolors * sizeof(XColor));
       /*
        * Scale the values received from the colormap to 8 bits
        */
 
-	if ((!*(char *) &swaptest) || (win->byte_order))
+	if((!*(char *) &swaptest) || (win->byte_order))
 	  for(i = 0; i < (int)win->ncolors; i++) {
 	      colors[i].red   = colors[i].red   >> 8;
 	      colors[i].green = colors[i].green >> 8;
 	      colors[i].blue  = colors[i].blue  >> 8;
 	  }
     }
+    
+    return 1;
 }
 
 /* 
  ** get_next_raster_line() -  returns the next raster line in the image.
  * written 2-12-89 by R.C.Tatar
  */
-static void get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
+static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
   unsigned char *buffer)
 {
     unsigned char *bufptr, *bufptr1;
@@ -1047,22 +1078,22 @@ static void get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
 	    *bufptr1++ = *bufptr++;
 	    *bufptr1++ = *bufptr++;
 	}
-	return;
+	return 1;
 
     case 8:
 	fullread(0, (char *)linec, iwbytes);
-	return;
+	return 1;
 
     case 4:
 	fullread(0, (char *)linec, iwbytes);
-	return;
+	return 1;
 
     default:
       /* error message if no case selected  */
-	fprintf (stderr, 
+	fprintf(stderr, 
 	  "%s: Do not know how to handle %u bits per pixel.\n", 
 	  progname, iwbits);
-	exit(1);
+	return 0;
     }
 }
 
@@ -1087,8 +1118,15 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
 {
     char c;
     extern char *optarg;
+    extern int optind;
 
-    while ((c = getopt(argc, argv, "tdlLPc:s:f:h:w:H:W:mS:p:bg:I")) != EOF)
+  /* KE: getopt wasn't intended for subroutine usage.  It internally
+     sets optind to 1 before the first call.  If we want to use it
+     again on the next call, we must set optind ourselves.  This
+     wasn't being done so defualt arguments were being used after the
+     first time. */
+    optind = 1;
+    while((c = getopt(argc, argv, "tdlLPc:s:f:h:w:H:W:mS:p:bg:I")) != EOF)
       switch (c) {
       case 't':
 	  flag.time = TRUE;
@@ -1115,19 +1153,19 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
 	  flag.portrait = TRUE;
 	  break;
       case 'c':
-	  sprintf (optarg, "%d", option->ncopies);
+	  sprintf(optarg, "%d", option->ncopies);
 	  break;
       case 's':
 	  flag.title = TRUE;
-	  option->title.string = optarg;
+	  strcpy(option->title.string, optarg);
 	  break;
       case 'p':
 	  strcpy(page->type, optarg);
 	  break;
       case 'f':
-	  option->inc_file.pointer = fopen (optarg, "r");
-	  if (option->inc_file.pointer == NULL) {
-	      fprintf (stderr, 
+	  option->inc_file.pointer = fopen(optarg, "r");
+	  if(option->inc_file.pointer == NULL) {
+	      fprintf(stderr, 
 		"%s: f option error -- cannot open %s for include file.\n",
 		progname, optarg);
 	      flag.error++;
@@ -1137,43 +1175,43 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
       case 'g':
 	  flag.gamma = TRUE;
 	  if( sscanf(optarg, "%f", &(image->gamma)) == 0 ) {
-	      fprintf (stderr, "%s: g option argument error\n", progname);
+	      fprintf(stderr, "%s: g option argument error\n", progname);
 	      flag.error++;
 	  }
-	  if ( image->gamma < 0.0 || image->gamma > 1.0 ) {
-	      fprintf (stderr, "%s: gamma value out of range: %d\n", progname, image->gamma);
+	  if( image->gamma < 0.0 || image->gamma > 1.0 ) {
+	      fprintf(stderr, "%s: gamma value out of range: %d\n", progname, image->gamma);
 	      flag.error++;
 	  }
 	  break;
       case 'h':
 	  flag.h = TRUE;
 	  if( sscanf(optarg, "%f", &(image->height)) == 0 ) {
-	      fprintf (stderr, "%s: h option argument error\n", progname);
+	      fprintf(stderr, "%s: h option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'w':
 	  flag.w = TRUE;
 	  if( sscanf(optarg, "%f", &(image->width)) == 0 ) {
-	      fprintf (stderr, "%s: w option argument error\n", progname);
+	      fprintf(stderr, "%s: w option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'H':
 	  if( sscanf(optarg, "%f", &(image->height_frac)) == 0) {
-	      fprintf (stderr, "%s: H option argument error\n", progname);
+	      fprintf(stderr, "%s: H option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'W':
 	  if( sscanf(optarg, "%f", &(image->width_frac)) == 0 ) {
-	      fprintf (stderr, "%s: W option argument error\n", progname);
+	      fprintf(stderr, "%s: W option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'S':
 	  if( sscanf(optarg, "%d", &(option->title.font_size)) == 0 ) {
-	      fprintf (stderr, "%s: S option argument error\n", progname);
+	      fprintf(stderr, "%s: S option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
@@ -1204,7 +1242,7 @@ static int getOrientation(Page pg, Image im)
     k  = pg.default_height/im.pixels_width;
     k2 = fmax(k2, k);
 
-    if (k1 >= k2)
+    if(k1 >= k2)
       return(PORTRAIT);
     else
       return(LANDSCAPE);

@@ -113,7 +113,7 @@ void outputTitle(FILE *fo, Image the_image, Options the_options)
     fprintf(fo,"%d scalefont\n",the_options.title.font_size);
     fprintf(fo,"setfont \n");
     fprintf(fo,"(%s) stringwidth\n",the_options.title.string);
-    fprintf(fo,"pop -2 div .1 inch rmoveto\n");
+    fprintf(fo,"pop -2 div .12 inch rmoveto\n");
     fprintf(fo,"(%s) show\n",the_options.title.string);
     fprintf(fo,"stroke\n");
     fprintf(fo,"setmatrix\n\n");

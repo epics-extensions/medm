@@ -114,7 +114,7 @@ typedef struct _Options {
 
 /* xwd2ps.h */
 
-void xwd2ps(int argc, char **argv, FILE *fo);
+int xwd2ps(int argc, char **argv, FILE *fo);
 
 /* xwd.c */
 void usage();
