@@ -270,7 +270,7 @@ static void textUpdateDraw(XtPointer cd)
 #if DEBUG_UPDATE
     print("textUpdateDraw:\n");
 #endif
-    if(pR->connected) {
+    if(pR && pR->connected) {
       /* KE: Can be connected without graphical info or value yet */
 	if(pR->readAccess) {
 	    textField[0] = '\0';
