@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_HIGHLIGHTS 0
 #define DEBUG_POPUP 1
-
+#define DEBUG_PVINFO 0
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
@@ -143,6 +143,11 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 	    element = findSmallestTouchedElement(displayInfo->dlElementList,
 	      (Position)xEvent->x, (Position)xEvent->y);
 	    if (element) {
+#if DEBUG_PVINFO
+		printf("popupMenu: Element: %s\n",elementType(element->type));
+		printf("  xEvent->x: %4d\n",xEvent->x);
+		printf("  xEvent->y: %4d\n",xEvent->y);
+#endif    
 		switch(element->type) {
 		case DL_Valuator:
 		    if (widget = element->widget) {

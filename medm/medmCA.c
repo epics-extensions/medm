@@ -83,7 +83,7 @@ typedef struct _CATask {
     int caEventCount;
 } CATask;
 
-static CATask caTask;
+CATask caTask;
 
 void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) {
     *channelCount = caTask.channelCount;
@@ -151,6 +151,16 @@ void caTaskDelete() {
 	caTask.pages = NULL;
 	caTask.pageCount = 0;
     } 
+}
+
+Channel *getChannelFromRecord(Record *pRecord)
+{
+    Channel *pCh;
+
+    if(!pRecord) return (Channel *)0;
+    pCh = &((caTask.pages[pRecord->caId/CA_PAGE_SIZE])
+      [pRecord->caId % CA_PAGE_SIZE]);
+    return pCh;
 }
   
 int medmCAInitialize()

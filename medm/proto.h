@@ -244,6 +244,7 @@ void medmSendDouble(Record *, double);
 void medmSendString(Record *, char *);
 void medmSendCharacterArray(Record *, char *, unsigned long);
 void CATaskGetInfo(int *, int *, int *);
+Channel *getChannelFromRecord(Record *pRecord);
 
 /* medmPixmap.c */
 void medmInitializeImageCache(void);

@@ -260,7 +260,11 @@ void errMsgDlgCreateDlg() {
     if (mainShell == NULL) return;
 
     errMsgDlg = XtVaCreatePopupShell("ErrorMessage",
+#if 0
+    /* KE: Gets iconized this way */
       xmDialogShellWidgetClass, mainShell,
+#endif      
+      topLevelShellWidgetClass, mainShell,
       XmNtitle, "MEDM Message Window",
       XmNdeleteResponse, XmDO_NOTHING,
       NULL);

@@ -59,9 +59,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_STRING_LIST 0
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
+#define DEBUG_PVINFO 0
+
+#define PV_INFO_CLOSE_BTN 0
+#define PV_INFO_HELP_BTN  1
+
 #define UNDO
 
 #include <string.h>
+#include <time.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
 #include <Xm/MwmUtil.h>
@@ -71,7 +77,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Dt/Wsm.h>
 #endif
 
-#define MAX_DIR_LENGTH 512		/* max. length of directory name */
+#define MAX_DIR_LENGTH 512     /* Maximum length of directory name */
+#define TIME_STRING_MAX 81     /* Maximum length of timestamp string */
+#define CA_PEND_IO_TIME 30.0
 
 /* #define GRAB_WINDOW window */
 #define GRAB_WINDOW None
@@ -716,13 +724,22 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
     DlElement *pE, *pSmallest, *pDisplay;
     double area, minArea;
 
+#if DEBUG_PVINFO
+    printf("findSmallestTouchedElement: x0: %d   y0: %d\n", x0, y0);
+#endif
+    
   /* Traverse the display list */
     pSmallest = pDisplay = NULL;
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
     pE = pList->tail;
     while (pE->prev) {
 	DlObject *po = &(pE->structure.rectangle->object);
-
+	
+#if DEBUG_PVINFO > 1
+	printf("  Element: %s\n",elementType(pE->type));
+	printf("    x1: %3d  x2: %3d   y1: %3d  y2%3d\n",
+	  po->x, po->x + po->width, po->y, po->y + po->height);
+#endif
       /* Don't use the display but save it as a fallback */
 	if (pE->type == DL_Display) {
 	    pDisplay = pE;
@@ -736,6 +753,10 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 		    pSmallest = pE;
 		    minArea = area;
 		}
+#if DEBUG_PVINFO
+		printf("  minArea: %g Smallest element: %s\n", minArea,
+		  pSmallest?elementType(pSmallest->type):NULL);
+#endif
 	    }
 	}
 	pE = pE->prev;
@@ -3653,95 +3674,275 @@ void setTimeValues(void)
 
 void popupPvInfo(DisplayInfo *displayInfo)
 {
-    XmString xmString, xmString1, xmString2;
+    long now; 
+    struct tm *tblock;
+    char timeStampStr[TIME_STRING_MAX];
+    char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
     Arg args[1];
     int nargs;
     Record **records;
-    int i, count;
-    char string[1024];
+    chid *chids, chId;
+    struct dbr_time_string *timeVals, timeVal;
+    int i, j, count, status;
+    char string[1024];     /* Danger: Fixed length */
+    Record *pR;
+    Channel *pCh;
+    XmTextPosition curpos = 0;
 
-  /* Create the box if it has not been created */
+  /* Create the dialog box if it has not been created */
     if(!pvInfoS) createPvInfoDlg();
 
   /* Get the records */
     records = getPvInfoFromDisplay(displayInfo, &count);
     if(!records) return;   /* (Error messages have been sent) */
 
+  /* Get timestamp */
+    time(&now);
+    tblock = localtime(&now);
+    strftime(timeStampStr,TIME_STRING_MAX,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    timeStampStr[TIME_STRING_MAX-1]='0';
+
   /* Heading */
-    xmString = XmStringCreateLocalized(
-      "             PV Info\n"
-      "\n"
-      "This is a test\n"
-      "=========================================\n"
-      "\n"
-      );
+    sprintf(string,"           PV Information\n\n%s\n",timeStampStr);
+    XmTextSetInsertionPosition(pvInfoMessageBox, 0);
+    XmTextSetString(pvInfoMessageBox,string);
+    curpos+=strlen(string);
     
-  /* Loop over the records */
-    for(i=0; i < count; i++) {
-	char *name;
-	
-	if(records[i]) {
-	    name = records[i]->name;
-	} else {
-	    continue;
-	}
-	if(!*name) continue;
-	sprintf(string,"%s\n\n",name);
-	xmString1 = xmString;
-	xmString2 = XmStringCreateLocalized(string);
-	xmString = XmStringConcat(xmString1, xmString2);
-	XmStringFree(xmString1);
-	XmStringFree(xmString2);
+  /* Allocate space */
+    timeVals = (struct dbr_time_string *)calloc(count,
+      sizeof(struct dbr_time_string));
+    if(!timeVals) {
+	medmPostMsg("popupPvInfo: Memory allocation error\n");
+	return;
+    }
+    chids = (chid *)calloc(count,sizeof(chid));
+    if(!chids) {
+	medmPostMsg("popupPvInfo: Memory allocation error\n");
+	free(timeVals);
+	return;
     }
 
-  /* Set the string */
-    nargs=0;
-    XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
-    XtSetValues(pvInfoMessageBox,args,nargs);
-    XmStringFree(xmString);
-    XtPopup(pvInfoS,XtGrabNone);
+  /* Loop over the records to get information */
+    for(i=0; i < count; i++) {
+      /* Check for a valid record */
+	chids[i] = NULL;
+	if(records[i]) {
+	    pR = records[i];
+	    pCh = getChannelFromRecord(pR);
+	    if(!pCh) continue;
+	    if(!pCh->chid) continue;
+	    chId = chids[i] = pCh->chid;
+	} else continue;
+	
+      /* Get the time value as a string */
+	status = ca_array_get(DBR_TIME_STRING, 1, chId, &timeVals[i]);
+	if (status != ECA_NORMAL) {
+	    medmPostMsg("popupPvInfo: ca_get: %s\n",
+	      ca_message(status));
+	}
+    }
+
+  /* Wait for results */
+    status=ca_pend_io(CA_PEND_IO_TIME);
+    if (status != ECA_NORMAL) {
+	medmPostMsg("popupPvInfo: Did not get all the PV information\n");
+    }
+    
+  /* Loop over the records to print information */
+    for(i=0; i < count; i++) {
+	
+      /* Check for a valid record */
+	if(!chids[i]) continue;
+
+	chId = chids[i];
+	timeVal = timeVals[i];
+	pR = records[i];
+
+      /* Items from chid */
+	sprintf(string,"%s\n"
+	  "======================================\n",
+	  ca_name(chId));
+	sprintf(string,"%sTYPE: %s\n",string,
+	  dbf_type_to_text(ca_field_type(chId)));
+	sprintf(string,"%sCOUNT: %d\n",string,ca_element_count(chId));
+	sprintf(string,"%sACCESS: %s%s\n",string,
+	  ca_read_access(chId)?"R":"",ca_write_access(chId)?"W":"");
+	sprintf(string,"%sIOC: %s\n",string,ca_host_name(chId));
+	if(timeVal.value) {
+	    if(ca_element_count(chId) == 1) {
+		sprintf(string,"%sVALUE: %s\n",string,
+		  timeVal.value);
+	    } else {
+		sprintf(string,"%sFIRST VALUE: %s\n",string,
+		  timeVal.value);
+	    }
+	    sprintf(string,"%sSTAMP: %s\n",string,
+	      tsStampToText(&timeVal.stamp,TS_TEXT_MONDDYYYY,tsTxt));
+	} else {
+		sprintf(string,"%sVALUE: Not known\n");
+		sprintf(string,"%sSTAMP: Not known\n");
+	}
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+
+      /* Alarms */
+	switch(pR->severity) {
+	case NO_ALARM:
+	    sprintf(string,"ALARM: NO\n");
+	    break;
+	case MINOR_ALARM:
+	    sprintf(string,"ALARM: MINOR\n");
+	    break;
+	case MAJOR_ALARM:
+	    sprintf(string,"ALARM: MAJOR\n");
+	    break;
+	case INVALID_ALARM:
+	    sprintf(string,"ALARM: INVALID\n");
+	    break;
+	default:
+	    sprintf(string,"ALARM: Unknown\n");
+	    break;
+	}
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+
+      /* Items from record */
+	sprintf(string,"\n");
+	switch(ca_field_type(chId)) {
+        case DBF_STRING: 
+	    break;
+        case DBF_ENUM: 
+	    sprintf(string,"%sSTATES: %d\n",
+	      string, (int)(pR->hopr+1.1));
+	  /* KE: Bad way to use a double */
+	    for (j=0; j <= pR->hopr; j++) {
+		sprintf(string,"%sSTATE %2d: %s\n",
+		  string, j, pR->stateStrings[j]);
+	    }
+	    break;
+        case DBF_CHAR:  
+        case DBF_INT:           
+        case DBF_LONG: 
+	    sprintf(string,"%sHOPR: %g  LOPR: %g\n",
+	      string, pR->hopr ,pR->lopr);
+	    break;
+        case DBF_FLOAT:  
+        case DBF_DOUBLE: 
+	    sprintf(string,"%sPRECISION: %d\n",
+	      string, pR->precision);
+	    sprintf(string,"%sHOPR: %g  LOPR: %g\n",
+	      string, pR->hopr ,pR->lopr);
+	    break;
+        default         : 
+	    break;
+	}
+	sprintf(string,"%s\n",string);
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+    }
 
   /* Free space */
+    free(timeVals);
+    free(chids);
     free(records);
-    XmStringFree(xmString);
+
+    XtSetSensitive(pvInfoS,True);
+    XtPopup(pvInfoS,XtGrabNone);
 }
 
 void createPvInfoDlg(void)
 {
-    int nargs;
+    Widget pane;
+    Widget actionArea;
+    Widget closeButton, sendButton, clearButton, printButton, helpButton;
     Arg args[10];
-    
-    nargs = 0;
-    XtSetArg(args[nargs],XtNiconName,"PVInfo"); nargs++;
-    XtSetArg(args[nargs],XtNtitle,"PV Info"); nargs++;
-    XtSetArg(args[nargs],XtNallowShellResize,TRUE); nargs++;
-    XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmEXPLICIT); nargs++;
-  /* map window manager menu Close function to application close... */
-    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
-    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
+    int n;
 
-    pvInfoS = XtCreatePopupShell("pvInfoS",topLevelShellWidgetClass,
-      mainShell,args,nargs);
-    XmAddWMProtocolCallback(pvInfoS,WM_DELETE_WINDOW,
-      wmCloseCallback,(XtPointer)OTHER_SHELL);
-    nargs = 0;
-    XtSetArg(args[nargs],XmNdialogType,XmDIALOG_INFORMATION); nargs++;
-    pvInfoMessageBox = XmCreateMessageBox(pvInfoS,"pvInfoMessageBox",
-      args,nargs);
-    XtUnmanageChild(XmMessageBoxGetChild(pvInfoMessageBox,XmDIALOG_CANCEL_BUTTON));
-    XtUnmanageChild(XmMessageBoxGetChild(pvInfoMessageBox,XmDIALOG_HELP_BUTTON));
-    XtAddCallback(pvInfoMessageBox,XmNokCallback,
-      pvInfoDialogCallback,(XtPointer)NULL);
+    if (pvInfoS != NULL) {
+	return;
+    }
 
+    if (mainShell == NULL) return;
+
+    pvInfoS = XtVaCreatePopupShell("PvInfo",
+      topLevelShellWidgetClass, mainShell,
+      XmNtitle, "PV Info",
+      XmNdeleteResponse, XmDO_NOTHING,
+      NULL);
+
+    pane = XtVaCreateWidget("panel",
+      xmPanedWindowWidgetClass, pvInfoS,
+      XmNsashWidth, 1,
+      XmNsashHeight, 1,
+      NULL);
+    n = 0;
+    XtSetArg(args[n], XmNrows,  25); n++;
+    XtSetArg(args[n], XmNcolumns, 38); n++;
+    XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+    XtSetArg(args[n], XmNeditable, False); n++;
+    pvInfoMessageBox = XmCreateScrolledText(pane,"text",args,n);
     XtManageChild(pvInfoMessageBox);
+    actionArea = XtVaCreateWidget("ActionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 5,
+      XmNskipAdjust, True,
+      NULL);
+
+    closeButton = XtVaCreateManagedWidget("Close",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     1,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    2,
+#if 0      
+      XmNshowAsDefault,    True,
+      XmNdefaultButtonShadowThickness, 1,
+#endif      
+      NULL);
+    XtAddCallback(closeButton,XmNactivateCallback,pvInfoDialogCallback,
+      (XtPointer) PV_INFO_CLOSE_BTN);
+    
+#if 0
+    printButton = XtVaCreateManagedWidget("Print",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     3,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    4,
+      NULL);
+    XtAddCallback(printButton,XmNactivateCallback,pvInfoDialogCallback,
+      (XtPointer) PV_INFO_PRINT_BTN);
+#endif    
+
+    helpButton = XtVaCreateManagedWidget("Help",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     3,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    4,
+      NULL);
+    XtAddCallback(helpButton,XmNactivateCallback,pvInfoDialogCallback,
+      (XtPointer) PV_INFO_HELP_BTN);
+    XtManageChild(actionArea);
+    XtManageChild(pane);
 }
 
 static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
-    switch(((XmAnyCallbackStruct *) cbs)->reason){
-    case XmCR_OK:
-    case XmCR_CANCEL:
+    int i = (int)cd;
+    switch(i) {
+    case  PV_INFO_CLOSE_BTN:
 	XtPopdown(pvInfoS);
+	break;
+    case  PV_INFO_HELP_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#PvInfoDialogBox");
 	break;
     }
 }
@@ -3758,14 +3959,14 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
 #else
 #define MAX_COUNT MAX_PENS
 #endif
-    Widget widget;
+    Widget widget, child;
     XEvent event;
     int nargs;
     Arg args[2];
     Record *records[MAX_COUNT];
     Record **retRecords;
     UpdateTask *pT;
-    DlElement *pE;
+    DlElement *pE, *pE1;
     int i, x, y;
 
   /* Choose the object with the process variable */
@@ -3773,32 +3974,62 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
       crosshairCursor, True, &event);
     XFlush(display);    /* For debugger */
     if(!widget) {
-	medmPostMsg("executeMenuCallback: Did not find object\n");
+	medmPostMsg("executeMenuCallback: Choosing object failed\n");
 	dmSetAndPopupWarningDialog(displayInfo,
 	  "executeMenuCallback: "
 	  "Did not find object","OK",NULL,NULL);
 	return NULL;
     }
   /* Get the position relative to the drawing area */
-  /*   (event.xbutton.[xy] are relative to the widget) */
-    if(widget == displayInfo->drawingArea) {
-	x = event.xbutton.x;
-	y = event.xbutton.y;
-    } else {
+  /*   (event.xbutton.[xy] are relative to the widget)
+   *   Follow parents upward to the display */
+    x = event.xbutton.x;
+    y = event.xbutton.y;
+    child = NULL;
+    while(widget != displayInfo->drawingArea) {
 	Position x0, y0;
-		    
+	
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&x0); nargs++;
 	XtSetArg(args[nargs],XmNy,&y0); nargs++;
 	XtGetValues(widget,args,nargs);
-
-	x = x0 + event.xbutton.x;
-	y = y0 + event.xbutton.y;
+	x += x0;
+	y += y0;
+	
+	child = widget;
+	widget = XtParent(widget);
+	if(widget == mainShell) {
+	    medmPostMsg("executeMenuCallback: Did not find object\n");
+	    dmSetAndPopupWarningDialog(displayInfo,
+	      "executeMenuCallback: "
+	      "Did not find object","OK",NULL,NULL);
+	    return NULL;
+	}
     }
 		
-  /* Find the element */
-    pE = findSmallestTouchedElement(displayInfo->dlElementList,
-      x, y);
+  /* Try to find element from child since execute sizes are different
+   *   from edit sizes */
+    pE = NULL;
+    if(child) {
+	pE1 = displayInfo->dlElementList->tail;
+	while (pE1->prev) {
+	    if(child == pE1-> widget) {
+		pE = pE1;
+		break;
+	    }
+	    pE1 = pE1->prev;
+	}
+    }
+  /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
+    if(!pE) {
+	pE = findSmallestTouchedElement(displayInfo->dlElementList,
+	  x, y);
+    }
+#if DEBUG_PVINFO
+    printf("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
+    printf("  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
+    printf("  y: %4d  event.xbutton.y: %4d\n",y,event.xbutton.y);
+#endif    
     if(!pE) {
 	medmPostMsg("executeMenuCallback: Not on an object\n");
 	dmSetAndPopupWarningDialog(displayInfo,

@@ -376,7 +376,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo)
 		types[i] = XmPUSHBUTTON;
 		pitem = psemi+1;
 		len = strlen(pitem);
-		execMenuCommandList[i]=(char *)calloc(len,sizeof(char));
+		execMenuCommandList[i]=(char *)calloc(len + 1,sizeof(char));
 		strcpy(execMenuCommandList[i],pitem);
 	    }
 	    pitem = pcolon+1;

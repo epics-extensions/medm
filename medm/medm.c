@@ -2119,6 +2119,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(stripChartS,False);
 	    XtPopdown(stripChartS);
 	}
+	if (pvInfoS) {
+	    XtSetSensitive(pvInfoS,False);
+	    XtPopdown(pvInfoS);
+	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
