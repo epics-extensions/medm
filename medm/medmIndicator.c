@@ -173,6 +173,11 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /*
 	   * note that this is  "direction of increase"
 	   */
+	case DOWN:
+	  /* Override */
+	    medmPrintf(1,"\nexecuteDlIndicator: "
+	      "Direction=\"down\" is not supported for Scale Monitor\n");
+	  /* Fallthrough */
 	case UP:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.width >INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -182,6 +187,11 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
 	      break;
+	case LEFT:
+	  /* Override */
+	    medmPrintf(1,"\nexecuteDlIndicator: "
+	      "Direction=\"left\" is not supported for Scale Monitor\n");
+	  /* Fallthrough */
 	case RIGHT:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -456,15 +466,10 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"up")) 
-		  dlIndicator->direction = UP;
-		else if(!strcmp(token,"right"))
-		  dlIndicator->direction = RIGHT;
-	      /* Backward compatibility */
-		else if(!strcmp(token,"down"))
-		  dlIndicator->direction = UP;
-		else if(!strcmp(token,"left"))
-		  dlIndicator->direction = RIGHT;
+		if(!strcmp(token,"up")) dlIndicator->direction = UP;
+		else if(!strcmp(token,"right")) dlIndicator->direction = RIGHT;
+		else if(!strcmp(token,"down")) dlIndicator->direction = DOWN;
+		else if(!strcmp(token,"left")) dlIndicator->direction = LEFT;
 	    } else if(!strcmp(token,"limits")) {
 	      parseLimits(displayInfo,&(dlIndicator->limits));
 	    }

@@ -116,7 +116,9 @@
 /****** Type for a widget's orientation, and fill mode */
 typedef enum {
     XcVert = 1,
-    XcHoriz
+    XcHoriz,
+    XcVertDown,
+    XcHorizLeft
 } XcOrient;
 
 typedef enum {

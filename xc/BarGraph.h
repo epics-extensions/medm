@@ -17,13 +17,14 @@
 
 /****** Define widget resource names, classes, and representation types.
         Use these resource strings in your resource files */
-#define XcNbarBackground	"barBackground"
-#define XcNbarForeground	"barForeground"
-#define XcNscaleColor		"scaleColor"
-#define XcNscaleSegments	"scaleSegments"
-#define XcCScaleSegments	"ScaleSegments"
-#define XcNvalueVisible		"valueVisible"
-#define XcNdecorations		"decorations"
+#define XcNbarBackground "barBackground"
+#define XcNbarForeground "barForeground"
+#define XcNscaleColor    "scaleColor"
+#define XcNscaleSegments "scaleSegments"
+#define XcCScaleSegments "ScaleSegments"
+#define XcNvalueVisible  "valueVisible"
+#define XcNdecorations   "decorations"
+#define XcNdoubleBuffer  "doubleBuffer"
 
 /****** Class record declarations */
 extern WidgetClass xcBarGraphWidgetClass;

@@ -150,9 +150,18 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
       /****** note that this is orientation for the Byte */
 	if(dlByte->direction == RIGHT) {
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	}
-	else {
-	    if(dlByte->direction == UP) XtSetArg(args[n],XcNorient,XcVert); n++;
+	} else if(dlByte->direction == UP) {
+	    XtSetArg(args[n],XcNorient,XcVert); n++;
+	} else if(dlByte->direction == LEFT) {
+	  /* Override */
+	    medmPrintf(1,"\nexecuteDlByte: "
+	      "Direction=\"left\" is not supported for Byte\n");
+	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
+	} else if(dlByte->direction == DOWN) {
+	  /* Override */
+	    medmPrintf(1,"\nexecuteDlByte: "
+	      "Direction=\"down\" is not supported for Byte\n");
+	    XtSetArg(args[n],XcNorient,XcVert); n++;
 	}
 	XtSetArg(args[n],XcNsBit,dlByte->sbit); n++;
 	XtSetArg(args[n],XcNeBit,dlByte->ebit); n++;
@@ -319,8 +328,10 @@ DlElement *parseByte( DisplayInfo *displayInfo) {
 	    } else if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"up"))        dlByte->direction = UP;
-		else if(!strcmp(token,"right"))dlByte->direction = RIGHT;
+		if(!strcmp(token,"up")) dlByte->direction = UP;
+		else if(!strcmp(token,"right")) dlByte->direction = RIGHT;
+		else if(!strcmp(token,"down")) dlByte->direction = DOWN;
+		else if(!strcmp(token,"left")) dlByte->direction = LEFT;
 	    } else if(!strcmp(token,"sbit")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);

@@ -114,6 +114,7 @@ int valuatorFontListIndex(DlValuator *dlValuator)
     for(i = MAX_FONTS-1; i >=  0; i--) {
 	switch (dlValuator->direction) {
 	case UP:
+	case DOWN:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
 	    case NO_DECORATIONS:
@@ -135,6 +136,7 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	    }
 	    break;
 	case RIGHT:
+	case LEFT:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
 	    case NO_DECORATIONS:
@@ -229,11 +231,21 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     }
   /* Need to handle Direction */
     switch (dlValuator->direction) {
+    case DOWN:
+      /* Override */
+	medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
+	  "Direction=\"down\" is not supported for Slider\n");
+      /* Fallthrough */
     case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	  - scalePopupBorder); n++;
 	break;
+    case LEFT:
+      /* Override */
+	medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
+	  "Direction=\"left\" is not supported for Slider\n");
+      /* Fallthrough */
     case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
@@ -335,11 +347,21 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     }
   /* Need to handle Direction */
     switch (dlValuator->direction) {
+    case DOWN:
+      /* Override */
+	medmPrintf(1,"\ncreateValuatorEditInstance: "
+	  "Direction=\"down\" is not supported\n");
+      /* Fallthrough */
     case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	  - scalePopupBorder); n++;
 	break;
+    case LEFT:
+      /* Override */
+	medmPrintf(1,"\ncreateValuatorEditInstance: "
+	  "Direction=\"left\" is not supported\n");
+      /* Fallthrough */
     case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
@@ -616,6 +638,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
       /* Convert bad values of precision to high precision */
 	if(precision > 17) precision = 17;
 	switch (dlValuator->direction) {
+	case DOWN:
 	case UP:
 	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
 	    useableWidth = dlValuator->object.width - scaleWidth;
@@ -671,6 +694,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	    }
 	    break;
 	    
+	case LEFT:
 	case RIGHT:
 	    XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	    useableHeight = dlValuator->object.height - scaleHeight;
@@ -811,6 +835,7 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     nChars = strlen(stringValue);
 
     switch (dlValuator->direction) {
+    case DOWN:
     case UP:
 	XtVaGetValues(w, XmNscaleWidth,&scaleWidth, NULL);
 	useableWidth = dlValuator->object.width - scaleWidth;
@@ -823,6 +848,7 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
 	width = useableWidth;
 	height = font->ascent+font->descent;
 	break;
+    case LEFT:
     case RIGHT:
 	XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	useableHeight = dlValuator->object.height - scaleHeight;
@@ -1394,15 +1420,10 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 	    } else  if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"up")) 
-		  dlValuator->direction = UP;
-		else if(!strcmp(token,"right"))
-		  dlValuator->direction = RIGHT;
-	      /* Backward compatibility */
-		else if(!strcmp(token,"down"))
-		  dlValuator->direction = UP;
-		else if(!strcmp(token,"left"))
-		  dlValuator->direction = RIGHT;
+		if(!strcmp(token,"up")) dlValuator->direction = UP;
+		else if(!strcmp(token,"right")) dlValuator->direction = RIGHT;
+		else if(!strcmp(token,"down")) dlValuator->direction = DOWN;
+		else if(!strcmp(token,"left")) dlValuator->direction = LEFT;
 	    } else if(!strcmp(token,"dPrecision")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);

@@ -559,7 +559,7 @@ float Correlate(float from_val, float from_range, float to_range)
     percent = MAX(0.,percent);
     percent = MIN(100.,percent);
     
-    result = (float)(to_range * (percent / 100));
+    result = (float)(to_range * (percent / 100.0));
     
     return result;
 }

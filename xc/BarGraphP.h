@@ -44,7 +44,7 @@ extern BarGraphClassRec barGraphClassRec;
 /****** Instance part */
 typedef struct {
     XcOrient orient;			/* BarGraph's orientation */
-    XcFillmod fillmod;                   /* BarGraph's fill mode */
+    XcFillmod fillmod;                  /* BarGraph's fill mode */
     int interval;			/* Time interval for updateCallback */
     XtCallbackList update_callback;	/* The updateCallback function */
     Pixel bar_background;		/* Background color of the bar */
@@ -53,12 +53,14 @@ typedef struct {
     int num_segments;			/* Number of segments in the Scale */
     Boolean value_visible;		/* Enable/Disable display of the 
 					 * value in the Value Box */
+    Boolean double_buffer;		/* Enable/Disable double buffering
+					 * to avoid flashing */
     Boolean decorations;		/* Enable/Disable decorations */
   /******* Private instance variables */
     XRectangle face;			/* Geometry of the BarGraph face */
     XPoint lbl;				/* Location of the Label string */
     XRectangle bar;			/* Rectangle for the Bar indicator */
-    XSegment scale_line;			/* Scale line along Bar indicator */
+    XSegment scale_line; 		/* Scale line along Bar indicator */
     XPoint segs[MAX_SCALE_SEGS+1];	/* Line segments for the Scale */
     int seg_length;			/* Length of Scale line segments */
     XPoint max_val;			/* Point at which to draw the max

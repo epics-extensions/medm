@@ -102,7 +102,7 @@ static DlDispatchTable barDlDispatchTable = {
 void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     MedmBar *pb;
-    Arg args[33];
+    Arg args[34];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
@@ -141,7 +141,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlBar->limits);
 	
-      /* from the bar structure, we've got Bar's specifics */
+      /* From the bar structure, we've got Bar's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlBar->object.x); n++;
 	XtSetArg(args[n],XtNy,(Position)dlBar->object.y); n++;
@@ -160,31 +160,29 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNupperBound,longFval(dlBar->limits.hopr)); n++;
 	switch (dlBar->label) {
 	case LABEL_NONE:
-	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNvalueVisible,False); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
 	case NO_DECORATIONS:
-	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNvalueVisible,False); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
-	    XtSetArg(args[n],XcNdecorations,FALSE); n++;
+	    XtSetArg(args[n],XcNdecorations,False); n++;
 	    break;
 	case OUTLINE:
-	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNvalueVisible,False); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
 	case LIMITS:
-	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNvalueVisible,True); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
 	case CHANNEL:
-	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNvalueVisible,True); n++;
 	    XtSetArg(args[n],XcNlabel,dlBar->monitor.rdbk); n++;
 	    break;
 	}
-	switch (dlBar->direction) {
-	  /*
-	   * note that this is  "direction of increase" for Bar
-	   */
+	switch(dlBar->direction) {
+	  /* Note that this is the direction of increase */
 	case RIGHT:
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	    if(dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
@@ -203,6 +201,24 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 		  (dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
 	    }
 	    break;
+	case LEFT:
+	    XtSetArg(args[n],XcNorient,XcHorizLeft); n++;
+	    if(dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	    } else {
+		XtSetArg(args[n],XcNscaleSegments,
+		  (dlBar->object.width>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	    }
+	    break;
+	case DOWN:
+	    XtSetArg(args[n],XcNorient,XcVertDown); n++;
+	    if(dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	    } else {
+		XtSetArg(args[n],XcNscaleSegments,
+		  (dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	    }
+	    break;
 	}
 
 	if(dlBar->fillmod == FROM_CENTER) {
@@ -213,8 +229,8 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 
 
 	preferredHeight = dlBar->object.height/INDICATOR_FONT_DIVISOR;
-	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
-	  preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
+	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS, NULL,
+	  preferredHeight, 0, &usedHeight, &usedCharWidth, False);
 	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
 
 	XtSetArg(args[n],XcNbarForeground,(Pixel)
@@ -225,10 +241,13 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlBar->monitor.bclr]); n++;
 	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
 	  displayInfo->colormap[dlBar->monitor.bclr]); n++;
-      /*
-       * add the pointer to the Channel structure as userData 
-       *  to widget
-       */
+
+#ifdef BAR_DOUBLE_BUFFER
+      /* Set double buffering */
+	XtSetArg(args[n], XcNdoubleBuffer, True); n++;
+#endif
+
+      /* Add the pointer to the Channel structure as userData */
 	XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
 	localWidget = XtCreateWidget("bar", 
 	  xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
@@ -480,11 +499,10 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 		  dlBar->direction = UP;
 		else if(!strcmp(token,"right"))
 		  dlBar->direction = RIGHT;
-	      /* Backward compatibility */
 		else if(!strcmp(token,"down"))
-		  dlBar->direction = UP;
+		  dlBar->direction = DOWN;
 		else if(!strcmp(token,"left"))
-		  dlBar->direction = RIGHT;
+		  dlBar->direction = LEFT;
 	    } else if(!strcmp(token,"fillmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);

@@ -51,6 +51,12 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 				22,24,30,36,40,48,60,};
 #endif
 
+/*** Bar flashing  ***/
+/* Pick double buffering only if you get flashing with the Bar */
+#if 0
+#define BAR_DOUBLE_BUFFER
+#endif
+
 /*** Colormap specifications ***/
 
 /* The RGB values in the default display colormap should be
