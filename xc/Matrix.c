@@ -45,12 +45,7 @@
  *	 as equivalent memmove()
  */
 #undef BCOPY
-#ifdef sun
-/* SUN doesn't provide XPG4 memmove()!! */
-# define BCOPY(a,b,n) bcopy((a),(b),(n))
-#else
 # define BCOPY(a,b,n) memmove( (void *)(b), (void *)(a), (size_t)(n))
-#endif
 
 
 

@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.10  1995/09/06 21:42:21  vong
+# Revision 1.11  1995/09/07 14:02:13  jba
+# Portability changes.
+#
+# Revision 1.10  1995/09/06  21:42:21  vong
 # release 2.1.0
 #
 # Revision 1.9  1995/03/28  18:56:00  jba
@@ -109,12 +112,17 @@ EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
-				-I$(MOTIF_INC) -I$(X11_INC)
+USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
-USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF_LIB) -L$(X11_LIB)
+USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
-	     -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
+	     -lca -lCom -lUnix -lXm -lXt -lX11 -lm
+
+ifdef XRTGRAPH
+  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm 
+  USR_LDFLAGS += -L$(XRTGRAPH)/lib
+  USR_LDLIBS += -lxrtm
+endif
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_BASE_LIB)/libCom.a \
@@ -149,7 +157,7 @@ OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
 	medmTextEntry.o medmValuator.o \
 	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
-	medmStripChart.o medmByte.o medmCartesianPlot.oot.o \
+	medmStripChart.o medmByte.o medmCartesianPlot.o \
         medmArc.o medmOval.o medmRectangle.o medmText.o \
         medmPolyline.o medmPolygon.o \
 	objectPalette.o parseControllers.o \
@@ -165,7 +173,7 @@ OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 #	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
 #	medmTextEntry.o medmValuator.o \
 #	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
-#	medmStripChart.o medmByte.o medmCartesianPlot.o medmSurfacePlot.o \
+#	medmStripChart.o medmByte.o medmCartesianPlot.o \
 #       medmArc.o medmOval.o medmRectangle.o medmText.o \
 #       medmPolyline.o medmPolygon.o \
 #	libMedmInit.o objectPalette.o parseControllers.o \
@@ -173,7 +181,7 @@ OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 #	shared.o updateMonitors.o utils.o medmWidget.o writeControllers.o \
 #	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
 
-LIBNAME = libMedm.a
+#LIBNAME = libMedm.a
 PROD = medm
 
 include $(EPICS)/config/RULES.Unix
@@ -182,6 +190,7 @@ include $(EPICS)/config/RULES.Unix
 
 medm: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
+ifdef XRTGRAPH
 	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
 	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
 	if [ $$? -ne 0 ]; then\
@@ -189,6 +198,7 @@ medm: $(OBJS) $(DEPLIBS)
 		echo "ERROR in running XRT_AUTH on MEDM";\
 		echo "*********************************";\
 	fi
+endif
 
 xrtAuth: medm
 	# --- RUN XRT_AUTH on resulting MEDM for proper authorization

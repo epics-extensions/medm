@@ -74,9 +74,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
-#if 0
-#include <strings.h>
-#endif
+#include <string.h>
 
 #define MAX_TOKEN_LENGTH	256	/* max size of strings in adl  */
 #define MAX_RELATED_DISPLAYS	8	/* max # of related displays   */

@@ -34,6 +34,9 @@
 /* Angle definitions */
 #define MIN_ANGLE 0.0
 #define MAX_ANGLE 180.0
+#if !defined( M_PI )
+#define M_PI 3.14159265358979323846
+#endif
 #define RADIANS(x) (M_PI * 2.0 * (x) /360.)
 /*
  * Class part.
