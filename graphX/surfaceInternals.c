@@ -10,8 +10,7 @@
  *
  */	
 
-
-#include	<values.h>
+#include	<float.h>
 #include	"3D.h"
 
 
@@ -75,9 +74,9 @@ void meshToFacets3d(s3d,xSize,ySize,mesh,xArray,yArray)
     int i, j, k;
 
   /* according to XPG2's values.h */
-    s3d->xMin = MAXFLOAT; s3d->xMax = MINFLOAT;
-    s3d->yMin = MAXFLOAT; s3d->yMax = MINFLOAT;
-    s3d->zMin = MAXFLOAT; s3d->zMax = MINFLOAT;
+    s3d->xMin = FLT_MAX; s3d->xMax = FLT_MIN;
+    s3d->yMin = FLT_MAX; s3d->yMax = FLT_MIN;
+    s3d->zMin = FLT_MAX; s3d->zMax = FLT_MIN;
 
   /*
    * # vertices, # facets         (simple since quadrilateral mesh..)
@@ -186,7 +185,7 @@ void setPixmap3d(s3d,pixmap)
    *  fetch the window attributes
    */
     if( XGetWindowAttributes(s3d->display, s3d->window, &(s3d->wind_struct)) == 0)
-      printf("Can't get attributes for drawing window\n");
+      fprintf(stderr,"Can't get attributes for drawing window\n");
   
   /*
    *  Initialise our 3D graphics transforms
@@ -1220,9 +1219,9 @@ print_mat(rows,cols,mat)
     ptr = mat;
     for(i=0;i<rows;i++){
 	for(j=0;j<cols;j++){
-	    printf("%6.4f ",*ptr++);
+	    fprintf(stderr,"%6.4f ",*ptr++);
 	}
-	printf("\n");
+	fprintf(stderr,"\n");
     }
 }
 

@@ -24,6 +24,7 @@ void utilPrint(display,window,fileName)
     char *commandBuffer, *newFileName, *psFileName;
     time_t seconds;
     FILE *fo;
+    int status;
 
     if (getenv("PSPRINTER") == (char *)NULL) {
 	fprintf(stderr,
@@ -76,9 +77,14 @@ void utilPrint(display,window,fileName)
 #endif   
 
 #if DEBUG_PRINT == 0
-    strcpy(commandBuffer,"lp -d$PSPRINTER ");
+    strcpy(commandBuffer,"lp -c -d$PSPRINTER ");
     strcat(commandBuffer, psFileName);
-    system(commandBuffer);
+    status=system(commandBuffer);
+    if(status) {
+	fprintf(stderr,"\nutilPrint:  print command [%s] failed",
+	  commandBuffer);
+	return;
+    }
   /* Delete files */
     strcpy(commandBuffer,"rm ");
     strcat(commandBuffer,newFileName);

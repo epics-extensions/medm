@@ -114,7 +114,7 @@ char *graphXGetBestFont(display,family,face,type,size)
    * first see if the specified font exists
    */
     sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,size);
-    printf("graphXGetBestFont: pattern = %s\n",pattern);
+    fprintf(stderr,"graphXGetBestFont: pattern = %s\n",pattern);
     fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
 
     if (numFonts >= 1) {
@@ -124,7 +124,7 @@ char *graphXGetBestFont(display,family,face,type,size)
 	fontString = ((char *) malloc(strlen(fontList[0])+1));
 	strcpy(fontString,fontList[0]);
 	XFreeFontNames(fontList);
-	printf("graphXGetBestFont: found string: %s\n",fontString);
+	fprintf(stderr,"graphXGetBestFont: found string: %s\n",fontString);
 	return fontString;
     } else {
       /*
@@ -135,19 +135,19 @@ char *graphXGetBestFont(display,family,face,type,size)
 	    l++;
 	    localSize = ((l%2 == 1) ? (size - (l -l/2)) : (size + (l - l/2)));
 	    sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,localSize);
-	    printf("graphXGetBestFont: pattern = %s\n",pattern);
+	    fprintf(stderr,"graphXGetBestFont: pattern = %s\n",pattern);
 	    fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
 	}
 
 	if (l >= MAX_QUERIES) {
-	    printf("graphXGetBestFont: exceeded MAX_QUERIES; returning default string: %s\n"
+	    fprintf(stderr,"graphXGetBestFont: exceeded MAX_QUERIES; returning default string: %s\n"
 	      ,DEFAULT_FONT);
 	    return (DEFAULT_FONT);
 	} else {
 	    fontString = ((char *) malloc(strlen(fontList[0])+1));
 	    strcpy(fontString,fontList[0]);
 	    XFreeFontNames(fontList);
-	    printf("graphXGetBestFont: found string: %s\n",fontString);
+	    fprintf(stderr,"graphXGetBestFont: found string: %s\n",fontString);
 	    return fontString;
 	}
 
