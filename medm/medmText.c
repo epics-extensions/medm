@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_FONTS 0
+
 #include "medm.h"
 
 typedef struct _Text {
@@ -101,6 +103,25 @@ static void drawText(Display *display,
       &usedHeight,&usedWidth,FALSE);
     usedWidth = XTextWidth(fontTable[i],dlText->textix,nChars);
 
+#if DEBUG_FONTS
+    {
+	static int ifirst=1;
+	int j;
+
+	if(ifirst) {
+	    ifirst=0;
+	    printf("\nFonts\n");
+	    for(j=0; j < MAX_FONTS; j++) {
+		printf("%2d widgetDM_%d ascent=%d descent=%d\n",
+		  j,fontSizeTable[j],fontTable[j]->ascent,fontTable[j]->descent);
+	    }
+	    printf("\n");
+	}
+	printf("drawText: h=%d %s%d %s\n",dlText->object.height,
+	  ALIAS_FONT_PREFIX,fontSizeTable[i],dlText->textix);
+    }
+#endif    
+
     XSetFont(display,gc,fontTable[i]->fid);
 
     y = dlText->object.y + fontTable[i]->ascent;
@@ -124,8 +145,8 @@ static void drawText(Display *display,
 void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlText *dlText = dlElement->structure.text;
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
+    if (displayInfo->traversalMode == DL_EXECUTE && *dlText->dynAttr.chan) {
+	
 	Text *pt;
 	pt = (Text *) malloc(sizeof(Text));
 	pt->dlElement = dlElement;

@@ -552,6 +552,9 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
  *   if textWidthFlag = FALSE: ignore text,w fields and
  *	make judgment based on height info only & return
  *	width of largest character as *usedW
+ * KE: This algorithm is flakey
+ *   Can never return 0 or MAX_FONTS-1
+ *   Doesn't pick scaled fonts uniformly
  */
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
   int h, int w, int *usedH, int *usedW, Boolean textWidthFlag)
@@ -588,7 +591,6 @@ int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
 
 	*usedW = temp;
 
-      /* DEBUG */
 #if 0
 	if ( *usedH > h || *usedW > w)
 	  if (errorOnI != i) {
@@ -598,7 +600,6 @@ int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
 		h);
 	  }
 #endif
-      /* End DEBUG */
     }
 
     return (i);

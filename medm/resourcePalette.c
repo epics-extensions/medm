@@ -487,10 +487,10 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 	    }
 	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
 	    break;
-	    CHANNEL_X_RANGE : 
-	      CHANNEL_Y_RANGE : 
-	      CHANNEL_Y2_RANGE : 
-	      XtSetSensitive(axisRangeMinRC[rcType%3],False);
+	  CHANNEL_X_RANGE: 
+	  CHANNEL_Y_RANGE: 
+	  CHANNEL_Y2_RANGE: 
+	    XtSetSensitive(axisRangeMinRC[rcType%3],False);
 	    XtSetSensitive(axisRangeMaxRC[rcType%3],False);
 	    if (pcp) {
 	      /* get channel-based range specifiers - NB: these are
@@ -3882,11 +3882,7 @@ void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     globalResourceBundle.colorRule = dynAttr->colorRule;
 #endif
-    if (dynAttr->chan) {
-	strcpy(globalResourceBundle.chan,dynAttr->chan);
-    } else {
-	globalResourceBundle.chan[0] = '\0';
-    }
+    strcpy(globalResourceBundle.chan,dynAttr->chan);
 }
 
 void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {

@@ -155,8 +155,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	dlPolyline->isFallingOrRisingLine = False;
     }
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlPolyline->dynAttr.chan)){
+    if (displayInfo->traversalMode == DL_EXECUTE && *dlPolyline->dynAttr.chan) {
 
 	Polyline *pp;
 	DlObject object;

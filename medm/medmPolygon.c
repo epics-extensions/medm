@@ -144,8 +144,7 @@ static void calculateTheBoundingBox(DlPolygon *dlPolygon) {
 void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlPolygon *dlPolygon = dlElement->structure.polygon;
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlPolygon->dynAttr.chan)) {
+    if (displayInfo->traversalMode == DL_EXECUTE  && *dlPolygon->dynAttr.chan) {
 
 	Polygon *pp;
 	DlObject object;

@@ -110,7 +110,7 @@ static void drawRectangle(Rectangle *pr) {
 void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if (displayInfo->traversalMode == DL_EXECUTE && *dlRectangle->dynAttr.chan) {
 	Rectangle *pr;
 	pr = (Rectangle *) malloc(sizeof(Rectangle));
 	pr->dlElement = dlElement;

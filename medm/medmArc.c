@@ -110,7 +110,7 @@ static void drawArc(Arc *pa) {
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if (displayInfo->traversalMode == DL_EXECUTE && *dlArc->dynAttr.chan) {
 	Arc *pa;
 	pa = (Arc *) malloc(sizeof(Arc));
 	pa->dlElement = dlElement;

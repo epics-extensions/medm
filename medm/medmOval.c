@@ -112,7 +112,7 @@ static void drawOval(Oval *po) {
 void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlOval *dlOval = dlElement->structure.oval;
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if (displayInfo->traversalMode == DL_EXECUTE && *dlOval->dynAttr.chan) {
 	Oval *po;
 	po = (Oval *) malloc(sizeof(Oval));
 	po->dlElement = dlElement;

@@ -326,11 +326,8 @@ void updateTaskInit(DisplayInfo *displayInfo)
     if (!moduleInitialized) medmInitSharedDotC();
 }
 
-UpdateTask *updateTaskAddTask(
-  DisplayInfo *displayInfo, 
-  DlObject *rectangle,
-  void (*executeTask)(XtPointer),
-  XtPointer clientData)
+UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
+  void (*executeTask)(XtPointer),XtPointer clientData)
 {
     UpdateTask *pt;
     
