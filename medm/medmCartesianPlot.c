@@ -186,14 +186,19 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
 
 #ifdef CHECK_NAN
 float safeFloat(double x) {
-    static int nerrs=0;
+    static int nerrs = 0;
+    static int print = 1;
     
     if (isnan(x)) {
-	if(nerrs < 50) {
-	    nerrs++;
-	    medmPrintf("\nCartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
-	} else {
-	    medmPrintf("\nCartesianPlot: Suppressing further NaN error messages\n");
+	if(print) {
+	    if( nerrs < 25) {
+		nerrs++;
+		medmPostMsg("CartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
+		if(nerrs >= 25) {
+		    medmPrintf("\nCartesianPlot: Suppressing further NaN error messages\n");
+		    print = 0;
+		}
+	    }
 	}
 	return NAN_SUBSTITUTE;
     } else {
