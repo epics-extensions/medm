@@ -480,10 +480,10 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	  ca_name(pCh->chid), pr->precision);
 	pr->precision = 0;
     } else
-      if (pr->precision > 16) {
+      if (pr->precision > 17) {
 	  medmPostMsg(1,"medmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	    ca_name(pCh->chid), pr->precision);
-	  pr->precision = 16;
+	  pr->precision = 17;
       }
     if (pr->updateGraphicalInfoCb) {
 	pr->updateGraphicalInfoCb((XtPointer)pr);
