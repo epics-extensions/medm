@@ -234,7 +234,8 @@ void hideDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
     hideDrawnElement(displayInfo, dlElement);
 }
 
-static void textUpdateDestroyCb(XtPointer cd) {
+static void textUpdateDestroyCb(XtPointer cd)
+{
     MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
     if(ptu) {
 	medmDestroyRecord(ptu->record);
@@ -244,7 +245,8 @@ static void textUpdateDestroyCb(XtPointer cd) {
     return;
 }
 
-static void textUpdateUpdateValueCb(XtPointer cd) {
+static void textUpdateUpdateValueCb(XtPointer cd)
+{
     Record *pr = (Record *) cd;
     MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
     
@@ -261,6 +263,8 @@ static void textUpdateDraw(XtPointer cd)
     char textField[MAX_TOKEN_LENGTH];
     int i;
     XGCValues gcValues;
+    Pixmap pixmap;
+    GC gc;
     unsigned long gcValueMask;
     Boolean isNumber;
     double value = 0.0;
@@ -381,35 +385,44 @@ static void textUpdateDraw(XtPointer cd)
 	      "  pr->value=%g  textField=|%s|\n",
 	      pr->name,pr->dataType,dbf_type_to_text(pr->dataType),
 	      pr->value,textField);
-	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),sizeof(long));
-#endif		
-
-	    XSetForeground(display,displayInfo->gc, displayInfo->colormap[dlTextUpdate->monitor.bclr]);
-	    XFillRectangle(display, XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlTextUpdate->object.x,dlTextUpdate->object.y,
+	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),
+	      sizeof(long));
+#endif
+	    
+	  /* Create a GC and pixmap to take care of clipping to the
+             size of the text update */
+	    gc = XCreateGC(display, rootWindow, 0, NULL);
+	    pixmap = XCreatePixmap(display, RootWindow(display,screenNum),
+	      dlTextUpdate->object.width, dlTextUpdate->object.height,
+	      DefaultDepth(display,screenNum));
+	  /* Fill it with the background color */
+	    XSetForeground(display, gc,
+	      displayInfo->colormap[dlTextUpdate->monitor.bclr]);
+	    XFillRectangle(display, pixmap, gc,
+	      0,0,
 	      dlTextUpdate->object.width,
 	      dlTextUpdate->object.height);
 
-
-	  /* calculate the color */
+	  /* Calculate the foreground color */
 	    gcValueMask = GCForeground | GCBackground;
 	    switch (dlTextUpdate->clrmod) {
 	    case STATIC :
 	    case DISCRETE:
-		gcValues.foreground = displayInfo->colormap[dlTextUpdate->monitor.clr];
+		gcValues.foreground =
+		  displayInfo->colormap[dlTextUpdate->monitor.clr];
 		break;
 	    case ALARM :
 		gcValues.foreground =  alarmColor(pr->severity);
 		break;
 	    }
-	    gcValues.background = displayInfo->colormap[dlTextUpdate->monitor.bclr];
-	    XChangeGC(display,displayInfo->gc, gcValueMask,&gcValues);
+	    gcValues.background =
+	      displayInfo->colormap[dlTextUpdate->monitor.bclr];
+	    XChangeGC(display, gc, gcValueMask, &gcValues);
 
 	    i = ptu->fontIndex;
 	    strLen = strlen(textField);
 	    textWidth = XTextWidth(fontTable[i],textField,strLen);
-
+	    
 	  /* for compatibility reason, only the HORIZ_CENTER and
 	   * HORIZ_RIGHT will recalculate the font size if the number does
 	   * not fit. */
@@ -428,39 +441,40 @@ static void textUpdateDraw(XtPointer cd)
 		}
 	    }
 
-	  /* Draw text */
+	  /* Draw the text */
 	    {
-	      /* KE: y is the same for all and there are only three distinct cases */
+	      /* KE: y is the same for all and there are only three
+                 distinct cases */
 		int x, y;
-		XRectangle clipRect[1];
 		
-		XSetFont(display,displayInfo->gc,fontTable[i]->fid);
+		XSetFont(display, gc, fontTable[i]->fid);
 		switch (dlTextUpdate->align) {
 		case HORIZ_LEFT:
-		    x = dlTextUpdate->object.x;
-		    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+		    x = 0;
+		    y = fontTable[i]->ascent;
 		    break;
 		case HORIZ_CENTER:
-		    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
-		    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+		    x = (dlTextUpdate->object.width - textWidth)/2;
+		    y = fontTable[i]->ascent;
 		    break;
 		case HORIZ_RIGHT:
-		    x = dlTextUpdate->object.x + dlTextUpdate->object.width - textWidth;
-		    y =dlTextUpdate->object.y + fontTable[i]->ascent;
+		    x = dlTextUpdate->object.width - textWidth;
+		    y = fontTable[i]->ascent;
 		    break;
 		}
-	      /* Set clipping region */
-		clipRect[0].x = dlTextUpdate->object.x;
-		clipRect[0].y = dlTextUpdate->object.y;
-		clipRect[0].width  = dlTextUpdate->object.width;
-		clipRect[0].height =  dlTextUpdate->object.height;
-		XSetClipRectangles(display,displayInfo->gc,0,0,clipRect,1,YXBanded);
 	      /* Draw the string */
-		XDrawString(display,XtWindow(displayInfo->drawingArea),
-                  displayInfo->gc, x, y,
-		  textField,strLen);
-	      /* Remove clipping region */
-		XSetClipMask(display,displayInfo->gc,None);
+		XDrawString(display, pixmap, gc, x, y,
+		  textField, strLen);
+	      /* Copy the pixmap to the drawing area, utilizing any
+                 clipping set into the drawingArea->gc. */
+		XCopyArea(display, pixmap,
+		  XtWindow(displayInfo->drawingArea),
+		  displayInfo->gc, 0, 0,
+		  dlTextUpdate->object.width, dlTextUpdate->object.height,
+		  dlTextUpdate->object.x, dlTextUpdate->object.y);
+		XFreePixmap(display, pixmap);
+		XFreeGC(display, gc);
+
 	    }
 	} else {
 	  /* No read access */
@@ -474,7 +488,8 @@ static void textUpdateDraw(XtPointer cd)
     }
 }
 
-static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
+static void textUpdateUpdateGraphicalInfoCb(XtPointer cd)
+{
     Record *pr = (Record *) cd;
     MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
@@ -510,8 +525,9 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
     }
 }
 
-static void textUpdateGetRecord(XtPointer cd, Record **record, int *count) {
-    MedmTextUpdate *pa = (MedmTextUpdate *) cd;
+static void textUpdateGetRecord(XtPointer cd, Record **record, int *count)
+{
+      MedmTextUpdate *pa = (MedmTextUpdate *) cd;
     *count = 1;
     record[0] = pa->record;
 }
@@ -649,7 +665,8 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 
 }
 
-void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
+void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level)
+{
     char indent[16];
     DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
@@ -691,7 +708,8 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 #endif
 }
 
-static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
     medmGetValues(pRCB,
       CTRL_RC,       &(dlTextUpdate->monitor.rdbk),
@@ -712,7 +730,8 @@ static void textUpdateGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
     *(pN) = dlTextUpdate->monitor.rdbk;
 }
 
-static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
     medmGetValues(pRCB,
       X_RC,          &(dlTextUpdate->object.x),

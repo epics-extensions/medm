@@ -360,7 +360,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
 	    pDisplay = pE;
 	} else if(!pE->hidden) {
 	  /* See if the point falls inside the element */
-	    if(((x0 >= po->x) && (x0 <= po->x + (int)po->width))	&&
+	    if(((x0 >= po->x) && (x0 <= po->x + (int)po->width)) &&
 	      ((y0 >= po->y) && (y0 <= po->y + (int)po->height))) {
 	      /* See if it is smallest element */
 		area=(double)(po->width)*(double)(po->height);
@@ -5689,7 +5689,7 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
       width, height, DefaultDepth(display,screenNum));
     XCopyArea(display, pixmap, savePixmap,
       gc, 0, 0, width, height, 0, 0);
-    XFreeGC(display,gc);
+    XFreeGC(display, gc);
     
   /* Make a toplevel shell */
     shell = XtVaCreatePopupShell("pixmapShell",

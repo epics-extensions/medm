@@ -540,7 +540,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			while (pE) {
 			    if (pE->structure.element == pT->structure.element) {
 				removeDlElement(cdi->selectedDlElementList,pE);
-				genericDestroy(cdi, pE);
+				destroyDlElement(cdi,pE);
 				found = True;
 				break;
 			    }

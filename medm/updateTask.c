@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_COMPOSITE 0
 #define DEBUG_DELETE 0
 #define DEBUG_HIDE 0
+#define DEBUG_EXPOSE 0
 
 #include "medm.h"
 
@@ -1093,7 +1094,48 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
 		    t->executeTask(t->clientData);
 		}
 #else
+#if DEBUG_EXPOSE
+		 {
+		     MedmElement *pElement=(MedmElement *)t->clientData;
+		     DlElement *pET = pElement->dlElement;
+		     
+		     print("updateTaskRepaintRegion: "
+		       "pE->type=%s[%d,%d,%d,%d]\n",
+		       elementType(pET->type),
+		       t->rectangle.x,t->rectangle.y,
+		       t->rectangle.width,t->rectangle.height);		       
+		 }
+#endif			
 		 t->executeTask(t->clientData);
+#if DEBUG_EXPOSE > 1
+		 {
+		     MedmElement *pElement=(MedmElement *)t->clientData;
+		     DlElement *pET = pElement->dlElement;
+		     char title[80];
+		     Pixmap debugPixmap;
+		     DlElement *pE=FirstDlElement(displayInfo->dlElementList);
+		     DlDisplay *pD = pE->structure.display;
+		     DlObject *pO = &(pD->object);
+		     GC gc = XCreateGC(display,rootWindow,0,NULL);
+
+		     debugPixmap=XCreatePixmap(display,
+		       RootWindow(display,screenNum),
+		       pO->width,pO->height,XDefaultDepth(display,screenNum));
+		     XCopyArea(display,XtWindow(displayInfo->drawingArea),
+		       debugPixmap,gc,0,0,pO->width,pO->height,0,0);
+		     XSetForeground(display,displayInfo->gc,
+		       WhitePixel(display,screenNum));
+		     XFillRectangle(display,debugPixmap,displayInfo->gc,0,0,
+		       pO->width,pO->height);
+		     sprintf(title,"pE->type=%s[%d,%d,%d,%d]",
+		       elementType(pET->type),
+		       t->rectangle.x,t->rectangle.y,
+		       t->rectangle.width,t->rectangle.height);		       
+		     dumpPixmap(debugPixmap,pO->width,pO->height,title);
+		     XFreePixmap(display,debugPixmap);
+		     XFreeGC(display,gc);
+		 }
+#endif
 #endif		 
 	    }
 	}

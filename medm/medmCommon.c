@@ -1634,6 +1634,9 @@ void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
 	dlElement->structure.rectangle->object.y);
 }
 
+/* Destroy an element and free its structure.  displayInfo is not
+   used, but is there for the correct prototype for the dispatch
+   table.  */
 void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
 {
   /* KE: Could possibly put freeing of MedmXxx and MedmXxx.updateTask here */
@@ -1673,6 +1676,10 @@ void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
+/* Destroy an element but don't free its structure.  Use to remove it
+   from a list but not necessarily to remove its
+   structure. displayInfo is not used, but is there for the correct
+   prototype for the dispatch table.  */
 void destroyDlElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     dlElement->type = DL_Element;

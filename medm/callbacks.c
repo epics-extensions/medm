@@ -358,6 +358,9 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		if (region) XDestroyRegion(region);
 	    }
 	}
+#if DEBUG_EXPOSE
+	print("drawingAreaCallback(XmCR_EXPOSE): END\n\n");
+#endif
 	return;
     } else if (cbs->reason == XmCR_RESIZE) {
       /* RESIZE */
