@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release 
+ * .03  09-07-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -75,10 +76,18 @@ extern char *stripChartWidgetName;
  * callbacks
  */
 
+#ifdef __cplusplus
+static void shellCommandCallback(
+  Widget,
+  XtPointer client_data,
+  XtPointer cbs)
+#else
 static void shellCommandCallback(
   Widget w,
   XtPointer client_data,
   XtPointer cbs)
+#endif
+
 {
   char *command;
   DisplayInfo *displayInfo;
@@ -147,17 +156,17 @@ static Widget createShellCommandPromptD(
  *** callbacks
  ***/
 
-
-void dmDisplayListOk(
-  Widget  w,
-  XtPointer client_data,
-  XmSelectionBoxCallbackStruct *call_data)
+#ifdef __cplusplus
+void dmDisplayListOk(Widget, XtPointer cd, XtPointer cbs)
+#else
+void dmDisplayListOk(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
   FILE *filePtr;
   char *filename;
-  DisplayInfo *displayInfo, *nextDisplay;
 
-  Widget dialog = (Widget)client_data;
+  Widget dialog = (Widget)cd;
+  XmSelectionBoxCallbackStruct *call_data = (XmSelectionBoxCallbackStruct *) cbs;
 
 
 /* if no list element selected, simply return */
@@ -176,27 +185,14 @@ void dmDisplayListOk(
     XtFree(filename);
   }
 }
-	
 
-
-XtCallbackProc popdownDialog(
-  Widget  w,
-  XtPointer client_data,
-  XmSelectionBoxCallbackStruct *call_data)
+void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
-  XtUnmanageChild(w);
-}
-
-
-
-XtCallbackProc executePopupMenuCallback(
-  Widget  w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
-{
+  int buttonNumber = (int) cd;
+  XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
   Arg args[3];
   XtPointer data;
-  DisplayInfo *displayInfo, *displayPtr, *nextDisplay;
+  DisplayInfo *displayInfo;
 
 /* button's parent (menuPane) has the displayInfo pointer */
   XtSetArg(args[0],XmNuserData,&data);
@@ -215,7 +211,7 @@ XtCallbackProc executePopupMenuCallback(
 }
 
 
-
+#if 0  /* not used */
 
 /* user doesn't want to continue... */
 XtCallbackProc popdownDisplayFileDialog(
@@ -228,10 +224,15 @@ XtCallbackProc popdownDisplayFileDialog(
   exit(-1);
 }
 
+#endif
 
 
 
+#ifdef __cplusplus
+void dmCreateRelatedDisplay(Widget  w, XtPointer cd, XtPointer)
+#else
 void dmCreateRelatedDisplay(Widget  w, XtPointer cd, XtPointer cbs)
+#endif
 {
   DisplayInfo *displayInfo = (DisplayInfo *) cd;
   char *filename, *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
@@ -240,8 +241,7 @@ void dmCreateRelatedDisplay(Widget  w, XtPointer cd, XtPointer cbs)
   FILE *filePtr;
   int suffixLength, prefixLength;
   char *adlPtr;
-  char processedArgs[2*MAX_TOKEN_LENGTH], name[2*MAX_TOKEN_LENGTH], *value;
-  int i, j, k, n;
+  char processedArgs[2*MAX_TOKEN_LENGTH], name[2*MAX_TOKEN_LENGTH];
 
   XtSetArg(args[0],XmNuserData,&nameArgs);
   XtGetValues(w,args,1);
@@ -288,11 +288,17 @@ void dmCreateRelatedDisplay(Widget  w, XtPointer cd, XtPointer cbs)
 
 
 
-
+#ifdef __cplusplus
+void dmExecuteShellCommand(
+  Widget  w,
+  DlShellCommandEntry *commandEntry,
+  XmPushButtonCallbackStruct *)
+#else
 void dmExecuteShellCommand(
   Widget  w,
   DlShellCommandEntry *commandEntry,
   XmPushButtonCallbackStruct *call_data)
+#endif
 {
   char *promptPosition;
   int cmdLength, argsLength;
@@ -300,11 +306,12 @@ void dmExecuteShellCommand(
   char shellCommand[2*MAX_TOKEN_LENGTH],
 		processedShellCommand[2*MAX_TOKEN_LENGTH];
   XmString xmString;
+#if 0
   extern char *strchr();
+#endif
   DisplayInfo *displayInfo;
   XtPointer userData;
   Arg args[4];
-  int n;
 
 
 /* the displayInfo has been registered as userData on each shell command
@@ -393,8 +400,14 @@ void dmExecuteShellCommand(
 
 }
 
-
-
+#ifdef __cplusplus
+void traverseDisplayLater(XtPointer cd, XtIntervalId *) {
+#else
+void traverseDisplayLater(XtPointer cd, XtIntervalId *id) {
+#endif
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
+  dmTraverseDisplayList(displayInfo);
+}
 
 void drawingAreaCallback(
   Widget  w,
@@ -406,7 +419,6 @@ void drawingAreaCallback(
   Dimension width, height, goodWidth, goodHeight, oldWidth, oldHeight;
   Boolean resized;
   XKeyEvent *key;
-  XEvent event;
   Modifiers modifiers;
   KeySym keysym;
   int numSelected;
@@ -522,7 +534,7 @@ void drawingAreaCallback(
 	newAspectRatio = (float)width/(float)height;
 	if (newAspectRatio > aspectRatio) {
   /* w too big; derive w=f(h) */
-	  goodWidth = aspectRatio*height;
+	  goodWidth = (unsigned short) aspectRatio*height;
 	  goodHeight = height;
 	} else {
   /* h too big; derive h=f(w) */
@@ -547,7 +559,11 @@ void drawingAreaCallback(
    if (resized) {
      clearResourcePaletteEntries();	/* clear any selected entries */
      dmCleanupDisplayInfo(displayInfo,FALSE);
+#if 1
+     XtAppAddTimeOut(appContext,1000,traverseDisplayLater,displayInfo); 
+#else
      dmTraverseDisplayList(displayInfo);
+#endif
    }
 
 
@@ -614,11 +630,13 @@ void drawingAreaCallback(
 
 
 
-XtCallbackProc relatedDisplayMenuButtonDestroy(
-  Widget w,
-  char *data,
-  XmPushButtonCallbackStruct *call_data)
+#ifdef __cplusplus
+void relatedDisplayMenuButtonDestroy(Widget, XtPointer cd, XtPointer) 
+#else
+void relatedDisplayMenuButtonDestroy(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  char *data = (char *) cd;
   char **freeData;
   /* free up the memory associated with the menu button  */
      if (data != NULL) {
@@ -631,69 +649,15 @@ XtCallbackProc relatedDisplayMenuButtonDestroy(
     }
 }
 
-#if 0
-void monitorDestroy(
-  Widget  w,
-  XtPointer data,
-  XmAnyCallbackStruct *call_data)
-{
-  Arg args[2];
-  XtPointer userData;
-  CartesianPlotData *cpData;
-  StripChartData *scData;
-  Channel *mData;
-  int i;
 
-
-  XtSetArg(args[0],XmNuserData,&userData);
-  XtGetValues(w,args,1);
-
-  if (XtClass(w) == xtXrtGraphWidgetClass && userData != NULL) {
-    if (data != NULL) {
-	cpData = (CartesianPlotData *) data;
-	if (cpData->xrtData1 != NULL) XrtDestroyData(cpData->xrtData1,TRUE);
-	if (cpData->xrtData2 != NULL) XrtDestroyData(cpData->xrtData2,TRUE);
-	free( (char *)data);
-    }
-    return;
-  }
-
-
-  if (!strcmp(XtName(w),stripChartWidgetName)) {
-    if (data != NULL) {
-	free( (char *)data);
-    }
-    return;
-  }
-  
-
-  /* free any userData attached to the widget (okay as long as default=NULL) */
-  if (userData != NULL) {
-    if (data != NULL) {
-     mData = (Channel *) data;
-     if (mData->numberStateStrings > 0) {
-	   for (i = 0 ; i < mData->numberStateStrings; i++) {
-		free( (char *) mData->stateStrings[i]);
-		XmStringFree(mData->xmStateStrings[i]);
-	   }
-	   free ( (char *) mData->stateStrings);
-	   free ( (char *) mData->xmStateStrings);
-     }
-    }
-    free( (char *) userData);
-  }
-
-}
-
+#ifdef __cplusplus
+void warnCallback(Widget, XtPointer cd, XtPointer)
+#else
+void warnCallback(Widget  w, XtPointer cd, XtPointer cbs)
 #endif
-
-
-
-XtCallbackProc warnCallback(
-  Widget  w,
-  DisplayInfo *displayInfo,
-  XmAnyCallbackStruct *call_data)
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
+
   if (displayInfo->warningDialog != NULL) {
 /* remove any grab for this (modal) dialog */
     modalGrab = FALSE;
@@ -704,12 +668,13 @@ XtCallbackProc warnCallback(
 
 
 
-
-XtCallbackProc exitCallback(
-  Widget  w,
-  DisplayInfo *displayInfo,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+void exitCallback(Widget, XtPointer cd, XtPointer)
+#else
+void exitCallback(Widget  w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
 
   if (displayInfo->warningDialog != NULL) {
 /* remove any grabs for (modal) dialog */

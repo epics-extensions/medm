@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - new update screen dispatch mechanism
+ * .03  09-13-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -92,7 +93,7 @@ static Boolean updateTaskWorkProc(XtPointer);
 Boolean medmInitSharedDotC() {
   if (moduleInitialized) return True;
   /* initialize the update task */
-  updateTaskStatus.workProcId          = NULL;
+  updateTaskStatus.workProcId          = 0;
   updateTaskStatus.nextToServe         = NULL;
   updateTaskStatus.taskCount           = 0;
   updateTaskStatus.periodicTaskCount   = 0;
@@ -140,8 +141,12 @@ void updateTaskStatusGetInfo(int *taskCount,
   updateTaskStatus.updateExecuted = 0;
   updateTaskStatus.since = time;
 }
- 
+
+#ifdef __cplusplus 
+void wmCloseCallback(Widget w, XtPointer cd, XtPointer) {
+#else
 void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
   ShellType shellType = (ShellType) cd;
 /*
  * handle WM Close functions like all the separate dialog close functions,
@@ -205,10 +210,14 @@ void optionMenuSet(Widget menu, int buttonId)
   }
 }
 
+#ifdef __cplusplus
+static void medmScheduler(XtPointer cd, XtIntervalId *)
+#else
 static void medmScheduler(XtPointer cd, XtIntervalId *id)
+#endif
 {
   PeriodicTask *t = (PeriodicTask *) cd;
-  double currentTime = medmTime(NULL);
+  double currentTime = medmTime();
 
 #ifdef MEDM_SOFT_CLOCK
   t->tenthSecond += 0.1;
@@ -337,7 +346,7 @@ void updateTaskDeleteTask(UpdateTask *pt) {
         updateTaskStatus.periodicTaskCount--;
       }
       updateTaskStatus.taskCount--;
-      free(pt);
+      free((char *)pt);
       break;
     }
   }
@@ -368,11 +377,11 @@ void updateTaskDeleteAllTask(UpdateTask *pt) {
       updateTaskStatus.nextToServe = NULL;
     }
     tmp1->executeTask = NULL;
-    free(tmp1);
+    free((char *)tmp1);
   }
   if ((updateTaskStatus.taskCount <=0) && (updateTaskStatus.workProcId)) {
     XtRemoveWorkProc(updateTaskStatus.workProcId);
-    updateTaskStatus.workProcId = NULL;
+    updateTaskStatus.workProcId = 0;
   }
   displayInfo->updateTaskListHead.next = NULL;
   displayInfo->updateTaskListTail = &(displayInfo->updateTaskListHead);
@@ -466,7 +475,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
  
   do { 
   if (ts->updateRequestQueued <=0) {
-    ts->workProcId = NULL; 
+    ts->workProcId = 0; 
     return True;
   } 
   /* if no valid update task, find one */
@@ -474,7 +483,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
     DisplayInfo *d = displayInfoListHead->next;
     if (d == NULL) {
       /* no display, tell Xt LIB that this routine is finished */
-      ts->workProcId = NULL;
+      ts->workProcId = 0;
       return True;
     }
     /* find the next update task */
@@ -485,7 +494,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
     }
     if (t == NULL) {
       /* no update task, tell Xt LIB that this routine is finished */
-      ts->workProcId = NULL;
+      ts->workProcId = 0;
       return True;
     }
     ts->nextToServe = t;
@@ -507,7 +516,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
     }      
     if (t == ts->nextToServe) {
       /* check all display, no update is needed */
-      ts->workProcId = NULL;
+      ts->workProcId = 0;
       return True;
     }
   }
@@ -533,7 +542,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
 
     if (region == NULL) {
       medmPrintf("medmRepaintRegion : XPolygonRegion() return NULL\n");
-      ts->workProcId = NULL;
+      ts->workProcId = 0;
       return True;
     }
 
@@ -593,7 +602,7 @@ Boolean updateTaskWorkProc(XtPointer cd) {
     }
     if (t == ts->nextToServe) {
       /* check all display, no update is needed */
-      ts->workProcId = NULL;
+      ts->workProcId = 0;
       return True;
     }
   }

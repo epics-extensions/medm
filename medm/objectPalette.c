@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -63,6 +64,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <Xm/ToggleBG.h>
 #include <Xm/MwmUtil.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <cvtFast.h>
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef EXTENDED_INTERFACE
 # define N_MAIN_MENU_ELES 3
@@ -165,18 +173,25 @@ Widget objectPaletteSelectToggleButton;
 /*
  * object palette's state transition callback - updates resource palette
  */
+#ifdef __cplusplus
+ void objectMenuCallback(
+  Widget,
+  XtPointer clientData,
+  XtPointer)
+#else
  void objectMenuCallback(
   Widget w,
   XtPointer clientData,
   XtPointer callbackStruct)
+#endif
 {
   DlElementType elementType = (DlElementType) clientData;
   DisplayInfo *di;
 
   /* move the pointer back the original location */
   di = currentDisplayInfo;
-  XWarpPointer(display,None,XtWindow(di->drawingArea),None,None,
-    None,None,lastEvent.x, lastEvent.y);
+  XWarpPointer(display,None,XtWindow(di->drawingArea),0,0,
+    0,0,lastEvent.x, lastEvent.y);
 
 /* unhighlight and unselect any selected elements */
   unhighlightSelectedElements();
@@ -292,10 +307,17 @@ static void objectToggleCallback(
 }
 
 
+#ifdef __cplusplus
+static void fileMenuSimpleCallback(
+  Widget,
+  XtPointer clientData,
+  XtPointer)
+#else
 static void fileMenuSimpleCallback(
   Widget w,
   XtPointer clientData,
   XtPointer callbackStruct)
+#endif
 {
   int buttonNumber = (int) clientData;
   switch(buttonNumber) {
@@ -406,29 +428,10 @@ static menuEntry_t helpMenu[] = {
 
 void createObject()
 {
-  Widget objectRC, paletteRC;
+  Widget objectRC;
   Widget graphicsRC, monitorRC, controllerRC, miscRC;
   Widget objectMB;
-  Widget objectEditPDM, objectOptionsPDM, objectHelpPDM;
-  Widget menuHelpWidget;
-
-  Widget graphicsLabel, monitorLabel, controllerLabel, miscLabel;
-  Pixel fg, bg;
-  Dimension w, h;
-
-/* static (drawing) object pixmaps */
- Pixmap rectanglePixmap, ovalPixmap, arcPixmap, textPixmap, linePixmap,
-	polylinePixmap, polygonPixmap, bezierCurvePixmap, imagePixmap;
-/* monitor pixmaps */
- Pixmap meterPixmap, barPixmap, indicatorPixmap, textUpdatePixmap,
-	stripChartPixmap, cartesianPlotPixmap, surfacePlotPixmap;
-/* controller pixmaps */
- Pixmap choiceButtonPixmap, messageButtonPixmap, menuPixmap, textEntryPixmap,
-	valuatorPixmap, relatedDisplayPixmap, shellCommandPixmap;
-/* miscellaneous pixmaps */
- Pixmap selectPixmap;
-
- int i, n, pass, childCount, col;
+  Widget objectHelpPDM;
 
  char name[20];
  Arg args[10];
@@ -569,8 +572,6 @@ void setResourcePaletteEntries()
 /* must normalize back to 0 as index into array for element type */
   XmString buttons[NUM_IMAGE_TYPES-1];
   XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-  Widget radioBox, textField, form, frame, typeLabel;
-  int i, n;
   Arg args[10];
   Boolean objectDataOnly;
   DlElementType displayType;
@@ -649,7 +650,7 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 {
   DlElement *dyn, *basic;
   char string[MAX_TOKEN_LENGTH];
-  int i, tail;
+  int i;
 
 
 
@@ -955,8 +956,6 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 
       case DL_Rectangle:
       case DL_Oval:
-      case DL_FallingLine:
-      case DL_RisingLine:
 	/* handled in prelude (since only DlObject description) */
 	break;
 
@@ -1587,8 +1586,6 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
       case DL_Rectangle:
       case DL_Oval:
-      case DL_FallingLine:
-      case DL_RisingLine:
 	/* handled in prelude (since only DlObject description) */
 	break;
 
@@ -1714,12 +1711,7 @@ void updateElementFromGlobalResourceBundle(
   DlElement *elementPtr)
 {
   Widget widget;
-  Cardinal numChildren;
-  WidgetList children;
-  Position x, y;
-  Dimension width, height;
   DlElement *basic, *newBasic, *dyn;
-  Pixmap pixmap;
   int i, j;
   int xOffset = 0, yOffset = 0, deltaWidth = 0, deltaHeight = 0;
   float sX, sY;
@@ -1784,16 +1776,16 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polyline->object.x) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polyline->object.width <= 0 ? 1 :
-		   ((float)globalResourceBundle.width/
-		   (float)elementPtr->structure.polyline->object.width) );
+		   (short)(((float)globalResourceBundle.width/
+		   (float)elementPtr->structure.polyline->object.width)));
 	elementPtr->structure.polyline->points[j].y =
 		elementPtr->structure.polyline->object.y +
 		(elementPtr->structure.polyline->points[j].y -
 		elementPtr->structure.polyline->object.y) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polyline->object.height <= 0 ? 1 :
-		   ((float)globalResourceBundle.height/
-		   (float)elementPtr->structure.polyline->object.height) );
+		   (short)(((float)globalResourceBundle.height/
+		   (float)elementPtr->structure.polyline->object.height)));
       }
     } else if (elementPtr->type == DL_Polygon) {
       xOffset = globalResourceBundle.x 
@@ -1810,16 +1802,16 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polygon->object.x) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polygon->object.width == 0 ? 1 :
-		   ((float)globalResourceBundle.width/
-		   (float)elementPtr->structure.polygon->object.width) );
+		   (short)(((float)globalResourceBundle.width/
+		   (float)elementPtr->structure.polygon->object.width)));
 	elementPtr->structure.polygon->points[j].y =
 		elementPtr->structure.polygon->object.y +
 		(elementPtr->structure.polygon->points[j].y -
 		elementPtr->structure.polygon->object.y) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polygon->object.height == 0 ? 1 :
-		   ((float)globalResourceBundle.height/
-		   (float)elementPtr->structure.polygon->object.height) );
+		   (short)(((float)globalResourceBundle.height/
+		   (float)elementPtr->structure.polygon->object.height)));
       }
     }
 
@@ -2167,8 +2159,6 @@ void updateElementFromGlobalResourceBundle(
 
       case DL_Rectangle:
       case DL_Oval:
-      case DL_FallingLine:
-      case DL_RisingLine:
 	/* handled in prelude (since only DlObject description) */
 	break;
 
@@ -2310,7 +2300,6 @@ void updateElementFromGlobalResourceBundle(
 void resetGlobalResourceBundleAndResourcePalette()
 {
   char string[MAX_TOKEN_LENGTH];
-  int i;
 
 
   if (ELEMENT_IS_RENDERABLE(currentElementType) ) {

@@ -53,38 +53,27 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-/****************************************************************
- *****    nested objects (not to be put in display list )   *****
-/****************************************************************
-
-
-/***
- *** control element in each controller object
- ***/
-
+#ifdef __cplusplus
+static void createDlControl(
+  DisplayInfo *,
+  DlControl *control)
+#else
 static void createDlControl(
   DisplayInfo *displayInfo,
   DlControl *control)
+#endif
 {
   strcpy(control->ctrl,globalResourceBundle.ctrl);
   control->clr = globalResourceBundle.clr;
   control->bclr = globalResourceBundle.bclr;
 }
-
-
-
-
-
-
-/***
- *** Choice Button
- ***/
 
 DlElement *createDlChoiceButton(
   DisplayInfo *displayInfo)
@@ -106,8 +95,8 @@ DlElement *createDlChoiceButton(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlChoiceButton;
-  dlElement->dmWrite = (void(*)())writeDlChoiceButton;
+  dlElement->dmExecute = (medmExecProc)executeDlChoiceButton;
+  dlElement->dmWrite = (medmWriteProc)writeDlChoiceButton;
 
   return(dlElement);
 }
@@ -141,8 +130,8 @@ DlElement *createDlMessageButton(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlMessageButton;
-  dlElement->dmWrite = (void(*)())writeDlMessageButton;
+  dlElement->dmExecute = (medmExecProc)executeDlMessageButton;
+  dlElement->dmWrite = (medmWriteProc)writeDlMessageButton;
 
   return(dlElement);
 }
@@ -180,8 +169,8 @@ DlElement *createDlValuator(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlValuator;
-  dlElement->dmWrite = (void(*)())writeDlValuator;
+  dlElement->dmExecute = (medmExecProc)executeDlValuator;
+  dlElement->dmWrite = (medmWriteProc)writeDlValuator;
 
   return(dlElement);
 }
@@ -216,8 +205,8 @@ DlElement *createDlTextEntry(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlTextEntry;
-  dlElement->dmWrite = (void(*)())writeDlTextEntry;
+  dlElement->dmExecute = (medmExecProc)executeDlTextEntry;
+  dlElement->dmWrite = (medmWriteProc)writeDlTextEntry;
 
   return(dlElement);
 }
@@ -246,8 +235,8 @@ DlElement *createDlMenu(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlMenu;
-  dlElement->dmWrite = (void(*)())writeDlMenu;
+  dlElement->dmExecute = (medmExecProc)executeDlMenu;
+  dlElement->dmWrite = (medmWriteProc)writeDlMenu;
 
   return(dlElement);
 }

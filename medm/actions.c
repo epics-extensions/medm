@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              remove the object type knowledge from
  *                              the get name routine of drag and drop.
+ * .03  09-07-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -75,19 +76,31 @@ extern char *stripChartWidgetName;
 /* since passing client_data didn't seem to work... */
 static char *channelName;
 
-
-static Boolean DragConvertProc(w,selection,target,typeRtn,valueRtn,
-				lengthRtn,formatRtn,max_lengthRtn,
-				client_data,
-				request_id)
-  Widget w;
-  Atom *selection, *target, *typeRtn;
-  XtPointer *valueRtn;
-  unsigned long *lengthRtn;
-  int *formatRtn;
-  unsigned long *max_lengthRtn;
-  XtPointer client_data;
-  XtRequestId *request_id;
+#ifdef __cplusplus
+static Boolean DragConvertProc(
+  Widget,
+  Atom *,
+  Atom *target,
+  Atom *typeRtn,
+  XtPointer *valueRtn,
+  unsigned long *lengthRtn,
+  int *formatRtn,
+  unsigned long *,
+  XtPointer,
+  XtRequestId *)
+#else
+static Boolean DragConvertProc(
+  Widget w,
+  Atom *selection,
+  Atom *target,
+  Atom *typeRtn,
+  XtPointer *valueRtn,
+  unsigned long *lengthRtn,
+  int *formatRtn,
+  unsigned long *max_lengthRtn,
+  XtPointer client_data,
+  XtRequestId *request_id)
+#endif
 {
   XmString cString;
   char *cText, *passText;
@@ -118,10 +131,17 @@ static Boolean DragConvertProc(w,selection,target,typeRtn,valueRtn,
 /*
  * cleanup after drag/drop
  */
+#ifdef __cplusplus
+static void dragDropFinish(
+  Widget w,
+  XtPointer,
+  XtPointer)
+#else
 static void dragDropFinish(
   Widget w,
   XtPointer client,
   XtPointer call)
+#endif
 {
   Widget sourceIcon;
   Pixmap pixmap;
@@ -158,7 +178,6 @@ void StartDrag(
   unsigned long fg, bg;
   Widget searchWidget;
   XButtonEvent *xbutton;
-  XtPointer userData;
   XGCValues gcValues;
   unsigned long gcValueMask;
   DisplayInfo *displayInfo;
@@ -303,4 +322,3 @@ void StartDrag(
 
   }
 }
-

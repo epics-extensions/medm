@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-07-95        vong    remove all the falling line and rising line stuff
+ * .04  09-13-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -65,7 +67,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 
 #include <string.h>
-
+#include <ctype.h>
+#include <IntrinsicP.h>
 #include "medm.h"
 
 #define MAX_DIR_LENGTH 512		/* max. length of directory name */
@@ -73,10 +76,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 Boolean modalGrab = FALSE;
 
-
-static void attributeSet(
-  DisplayInfo *displayInfo,
-  DlElement *elementPtr)
+#ifdef __cplusplus
+static void attributeSet(DisplayInfo *, DlElement *elementPtr)
+#else
+static void attributeSet(DisplayInfo *displayInfo, DlElement *elementPtr)
+#endif
 {
   DlElement *dyn, *basic;
 
@@ -109,8 +113,11 @@ static void attributeSet(
 }
 
 
-static void attributeClear(
-  DisplayInfo *displayInfo)
+#ifdef __cplusplus
+static void attributeClear(DisplayInfo *)
+#else
+static void attributeClear(DisplayInfo *displayInfo)
+#endif
 {
 
 /*
@@ -136,7 +143,7 @@ FILE *dmOpenUseableFile(char *filename)
   char name[MAX_TOKEN_LENGTH], fullPathName[MAX_DIR_LENGTH],
 	dirName[MAX_DIR_LENGTH];
   char *dir, *adlPtr;
-  int n, suffixLength, usedLength, startPos;
+  int suffixLength, usedLength, startPos;
 
 /*
  * try to open the file as a ".adl"  rather than ".dl" which the
@@ -210,7 +217,7 @@ Boolean extractStringBetweenColons(
 
 void dmFreeCompositeAndChildrenFromDisplayList(DlElement *ele)
 {
-  DlElement *child, *freeElement, *element;
+  DlElement *child, *freeElement;
 
   if (ele == NULL) return;
   if (ele->structure.composite == NULL) return;
@@ -277,7 +284,6 @@ void dmCleanupDisplayInfo(
   Boolean cleanupDisplayList)
 {
   int i;
-  Channel *data, *saveData;
   Boolean alreadyFreedUnphysical;
   Widget DA;
   UpdateTask *ut = &(displayInfo->updateTaskListHead);
@@ -747,7 +753,6 @@ void dmSetDisplayFileName(
   char *filename)
 {
   DlElement *element;
-  DlFile *dlFile;
 
 /* look for the DlFile element in the display list */
   element = ((DlElement *)displayInfo->dlElementListHead)->next;
@@ -769,7 +774,6 @@ char *dmGetDisplayFileName(
   DisplayInfo *displayInfo)
 {
   DlElement *element;
-  DlFile *dlFile;
 
 /* look for the DlFile element in the display list */
   element = ((DlElement *)displayInfo->dlElementListHead)->next;
@@ -786,7 +790,6 @@ char *dmGetDisplayFileName(
 void medmSetDisplayTitle(DisplayInfo *displayInfo)
 {
   DlElement *element;
-  DlFile *dlFile;
   char str[MAX_FILE_CHARS+10];
 
   /* look for the DlFile element in the display list */
@@ -813,8 +816,6 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
 
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
 {
-  DlElement *element;
-  DlFile *dlFile;
   char str[MAX_FILE_CHARS+10];
 
   if (globalDisplayListTraversalMode == DL_EXECUTE) return;
@@ -1090,8 +1091,13 @@ DlElement **selectedElementsLookup(
 	        (*numSelected)++;
 	      } else {
 	      /* overflow allocated array - reallocate */
+#if defined(__cplusplus) && !defined(__GNUG__)
+		array = (DlElement **) realloc((malloc_t) array,
+			((*arraySize)*10)*sizeof(DlElement *));
+#else
 		array = (DlElement **) realloc((DlElement **) array,
 			((*arraySize)*10)*sizeof(DlElement *));
+#endif
 		if (array != NULL) {
 		   *arraySize = (*arraySize)*10;
 		} else {
@@ -1383,8 +1389,10 @@ Boolean dmResizeSelectedElements(
 /* Polyline */
        } else if (elementPtr->type == DL_Polyline) {
 	  for (j = 0; j < elementPtr->structure.polyline->nPoints; j++) {
-		elementPtr->structure.polyline->points[j].x *= sX;
-		elementPtr->structure.polyline->points[j].y *= sY;
+                elementPtr->structure.polygon->points[j].x =
+                  (short) (elementPtr->structure.polygon->points[j].x * sX);
+                elementPtr->structure.polygon->points[j].y =
+                  (short) (elementPtr->structure.polygon->points[j].y * sY);
 	  }
 	  elementPtr->structure.polyline->object.x = 
 	   (Position) (sX*elementPtr->structure.polyline->object.x+0.5);
@@ -1398,8 +1406,10 @@ Boolean dmResizeSelectedElements(
 /* Polygon */
        } else if (elementPtr->type == DL_Polygon) {
 	  for (j = 0; j < elementPtr->structure.polygon->nPoints; j++) {
-		elementPtr->structure.polygon->points[j].x *= sX;
-		elementPtr->structure.polygon->points[j].y *= sY;
+		elementPtr->structure.polygon->points[j].x =
+                  (short) (elementPtr->structure.polygon->points[j].x * sX);
+		elementPtr->structure.polygon->points[j].y =
+                  (short) (elementPtr->structure.polygon->points[j].y * sY);
 	  }
 	  elementPtr->structure.polygon->object.x = 
 	   (Position) (sX*elementPtr->structure.polygon->object.x+0.5);
@@ -1493,7 +1503,7 @@ void doRubberbanding(
 
 /* have all interesting events go to window */
   XGrabPointer(display,window,FALSE,
-	ButtonMotionMask|ButtonReleaseMask,
+	(unsigned int) (ButtonMotionMask|ButtonReleaseMask),
         GrabModeAsync,GrabModeAsync,None,rubberbandCursor,CurrentTime);
 
 /* grab the server to ensure that XORing will be okay */
@@ -1518,7 +1528,6 @@ void doRubberbanding(
 			*finalX   =  MAX(x0,event.xbutton.x);
 			*finalY   =  MAX(y0,event.xbutton.y);
 			return;		/* return from while(TRUE) */
-			break;
 		case MotionNotify:
 		/* undraw old one */
 			XDrawRectangle(display,window, xorGC,
@@ -1579,7 +1588,7 @@ Boolean doDragging(
 
 /* have all interesting events go to window */
   XGrabPointer(display,window,FALSE,
-	ButtonMotionMask|ButtonReleaseMask,
+	(unsigned int)(ButtonMotionMask|ButtonReleaseMask),
         GrabModeAsync,GrabModeAsync,None,dragCursor,CurrentTime);
 /* grab the server to ensure that XORing will be okay */
   XGrabServer(display);
@@ -1634,7 +1643,6 @@ Boolean doDragging(
 			 *finalY = initialY + yOffset;
 /* (always return true - for clipped dragging...) */
 			return (True);	/* return from while(TRUE) */
-			break;
 		case MotionNotify:
 		/* undraw old ones */
 			for (i = 0; i < cdi->numSelectedElements; i++) {
@@ -1694,9 +1702,7 @@ DisplayInfo *doPasting(
   int dx, dy, xul, yul, xlr, ylr;
   Window window, childWindow, root, child;
   int rootX, rootY, winX, winY;
-  int x, y;
   unsigned int mask;
-  Boolean status;
   int i;
 
 /* if no clipboard elements, simply return */
@@ -1737,7 +1743,7 @@ DisplayInfo *doPasting(
 
 /* have all interesting events go to window  - including some for WM's sake */
   XGrabPointer(display,window,False,
-	PointerMotionMask|ButtonReleaseMask|ButtonPressMask|EnterWindowMask,
+	(unsigned int)(PointerMotionMask|ButtonReleaseMask|ButtonPressMask|EnterWindowMask),
         GrabModeAsync,GrabModeAsync,None,dragCursor,CurrentTime);
 /* grab the server to ensure that XORing will be okay */
   XGrabServer(display);
@@ -1791,7 +1797,6 @@ DisplayInfo *doPasting(
 			*displayX =  winX;
 			*displayY =  winY;
 			return (displayInfo);
-			break;
 
 		case MotionNotify:
 		/* undraw old ones */
@@ -1888,7 +1893,7 @@ Boolean doResizing(
 
 /* have all interesting events go to window */
   XGrabPointer(display,window,FALSE,
-	ButtonMotionMask|ButtonReleaseMask,
+	(unsigned int) (ButtonMotionMask|ButtonReleaseMask),
         GrabModeAsync,GrabModeAsync,None,resizeCursor,CurrentTime);
 /* grab the server to ensure that XORing will be okay */
   XGrabServer(display);
@@ -1934,7 +1939,6 @@ Boolean doResizing(
 			*finalX =  initialX + xOffset;
 			*finalY =  initialY + yOffset;
 			return (inWindow);	/* return from while(TRUE) */
-			break;
 		case MotionNotify:
 		/* undraw old ones */
 			for (i = 0; i < cdi->numSelectedElements; i++) {
@@ -2219,7 +2223,7 @@ void deleteElementsInComposite(DisplayInfo *displayInfo, DlElement *ele)
  */
 void deleteWidgetsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 {
-  DlElement *child, *dyn;
+  DlElement *child;
 
   if (ele->type == DL_Composite) {
 
@@ -2386,7 +2390,7 @@ DlStructurePtr createCopyOfElementType(
   DlElementType type,
   DlStructurePtr ptr)
 {
-  DlStructurePtr new, structurePtr;
+  DlStructurePtr pnew, structurePtr;
   DlElement *child, *elementPtr;
   int i;
 
@@ -2395,128 +2399,119 @@ DlStructurePtr createCopyOfElementType(
   switch(type) {
 
       case DL_BasicAttribute:
-	new.basicAttribute = (DlBasicAttribute *)
+	pnew.basicAttribute = (DlBasicAttribute *)
 			malloc(sizeof(DlBasicAttribute));
-	*new.basicAttribute = *ptr.basicAttribute;
+	*pnew.basicAttribute = *ptr.basicAttribute;
 	break;
 
       case DL_DynamicAttribute:
-	new.dynamicAttribute = (DlDynamicAttribute*)
+	pnew.dynamicAttribute = (DlDynamicAttribute*)
 			malloc(sizeof(DlDynamicAttribute));
-	*new.dynamicAttribute = *ptr.dynamicAttribute;
+	*pnew.dynamicAttribute = *ptr.dynamicAttribute;
 	break;
 
       case DL_Rectangle:
-	new.rectangle = (DlRectangle *)malloc(sizeof(DlRectangle));
-	*new.rectangle = *ptr.rectangle;
+	pnew.rectangle = (DlRectangle *)malloc(sizeof(DlRectangle));
+	*pnew.rectangle = *ptr.rectangle;
 	break;
 
       case DL_Oval:
-	new.oval = (DlOval *)malloc(sizeof(DlOval));
-	*new.oval = *ptr.oval;
+	pnew.oval = (DlOval *)malloc(sizeof(DlOval));
+	*pnew.oval = *ptr.oval;
 	break;
 
       case DL_Arc:
-	new.arc = (DlArc *)malloc(sizeof(DlArc));
-	*new.arc = *ptr.arc;
-	break;
-
-      case DL_FallingLine:
-	new.fallingLine = (DlFallingLine *)malloc(sizeof(DlFallingLine));
-	*new.fallingLine = *ptr.fallingLine;
-	break;
-
-      case DL_RisingLine:
-	new.risingLine = (DlRisingLine *)malloc(sizeof(DlRisingLine));
-	*new.risingLine = *ptr.risingLine;
+	pnew.arc = (DlArc *)malloc(sizeof(DlArc));
+	*pnew.arc = *ptr.arc;
 	break;
 
       case DL_Text:
-	new.text = (DlText *)malloc(sizeof(DlText));
-	*new.text = *ptr.text;
+	pnew.text = (DlText *)malloc(sizeof(DlText));
+	*pnew.text = *ptr.text;
 	break;
 
       case DL_RelatedDisplay:
-	new.relatedDisplay = (DlRelatedDisplay *)malloc(
+	pnew.relatedDisplay = (DlRelatedDisplay *)malloc(
 				sizeof(DlRelatedDisplay));
-	*new.relatedDisplay = *ptr.relatedDisplay;
+	*pnew.relatedDisplay = *ptr.relatedDisplay;
 	break;
 
       case DL_ShellCommand:
-	new.shellCommand = (DlShellCommand *)malloc(
+	pnew.shellCommand = (DlShellCommand *)malloc(
 				sizeof(DlShellCommand));
-	*new.shellCommand = *ptr.shellCommand;
+	*pnew.shellCommand = *ptr.shellCommand;
 	break;
 
       case DL_TextUpdate:
-	new.textUpdate = (DlTextUpdate *)malloc(sizeof(DlTextUpdate));
-	*new.textUpdate = *ptr.textUpdate;
+	pnew.textUpdate = (DlTextUpdate *)malloc(sizeof(DlTextUpdate));
+	*pnew.textUpdate = *ptr.textUpdate;
 	break;
 
       case DL_Indicator:
-	new.indicator = (DlIndicator *)malloc(sizeof(DlIndicator));
-	*new.indicator = *ptr.indicator;
+	pnew.indicator = (DlIndicator *)malloc(sizeof(DlIndicator));
+	*pnew.indicator = *ptr.indicator;
 	break;
 	
       case DL_Meter:
-	new.meter = (DlMeter *)malloc(sizeof(DlMeter));
-	*new.meter = *ptr.meter;
+	pnew.meter = (DlMeter *)malloc(sizeof(DlMeter));
+	*pnew.meter = *ptr.meter;
 	break;
 
       case DL_Byte:
-        new.byte = (DlByte *)malloc(sizeof(DlByte));
-        *new.byte = *ptr.byte;
+        pnew.byte = (DlByte *)malloc(sizeof(DlByte));
+        *pnew.byte = *ptr.byte;
         break;
       
       case DL_Bar:
-	new.bar = (DlBar *)malloc(sizeof(DlBar));
-	*new.bar = *ptr.bar;
+	pnew.bar = (DlBar *)malloc(sizeof(DlBar));
+	*pnew.bar = *ptr.bar;
 	break;
       
-	
+#if 0	
       case DL_SurfacePlot:
-	new.surfacePlot = (DlSurfacePlot *)malloc(sizeof(DlSurfacePlot));
-	*new.surfacePlot = *ptr.surfacePlot;
+	pnew.surfacePlot = (DlSurfacePlot *)malloc(sizeof(DlSurfacePlot));
+	*pnew.surfacePlot = *ptr.surfacePlot;
 	break;
+#endif
 	
       case DL_StripChart:
-	new.stripChart = (DlStripChart *)malloc(sizeof(DlStripChart));
-	*new.stripChart = *ptr.stripChart;
+	pnew.stripChart = (DlStripChart *)malloc(sizeof(DlStripChart));
+	*pnew.stripChart = *ptr.stripChart;
 	break;
 	
       case DL_CartesianPlot:
-	new.cartesianPlot = (DlCartesianPlot *)malloc(sizeof(DlCartesianPlot));
-	*new.cartesianPlot = *ptr.cartesianPlot;
+	pnew.cartesianPlot = (DlCartesianPlot *)malloc(sizeof(DlCartesianPlot));
+	*pnew.cartesianPlot = *ptr.cartesianPlot;
 	break;
 	
       case DL_Valuator:
-	new.valuator = (DlValuator *)malloc(sizeof(DlValuator));
-	*new.valuator = *ptr.valuator;
+	pnew.valuator = (DlValuator *)malloc(sizeof(DlValuator));
+	*pnew.valuator = *ptr.valuator;
 	break;
 	
       case DL_ChoiceButton:
-	new.choiceButton = (DlChoiceButton *)malloc(sizeof(DlChoiceButton));
-	*new.choiceButton = *ptr.choiceButton;
+	pnew.choiceButton = (DlChoiceButton *)malloc(sizeof(DlChoiceButton));
+	*pnew.choiceButton = *ptr.choiceButton;
 	break;
 	
       case DL_MessageButton:
-	new.messageButton = (DlMessageButton *)malloc(sizeof(DlMessageButton));
-	*new.messageButton = *ptr.messageButton;
+	pnew.messageButton = (DlMessageButton *)malloc(sizeof(DlMessageButton));
+	*pnew.messageButton = *ptr.messageButton;
 	break;
 	
       case DL_Menu:
-	new.menu = (DlMenu *)malloc(sizeof(DlMenu));
-	*new.menu = *ptr.menu;
+	pnew.menu = (DlMenu *)malloc(sizeof(DlMenu));
+	*pnew.menu = *ptr.menu;
 	break;
 	
       case DL_TextEntry:
-	new.textEntry = (DlTextEntry *)malloc(sizeof(DlTextEntry));
-	*new.textEntry = *ptr.textEntry;
+	pnew.textEntry = (DlTextEntry *)malloc(sizeof(DlTextEntry));
+	*pnew.textEntry = *ptr.textEntry;
 	break;
 	
       case DL_Image:
-	new.image = (DlImage *)malloc(sizeof(DlImage));
-	*new.image = *ptr.image;
+	pnew.image = (DlImage *)malloc(sizeof(DlImage));
+	*pnew.image = *ptr.image;
 	break;
 	
       case DL_Composite:
@@ -2524,12 +2519,12 @@ DlStructurePtr createCopyOfElementType(
  * this one does a lot of work - including (recursive) copying/creation of
  *  composite children display list
  */
-	new.composite= (DlComposite *)malloc(sizeof(DlComposite));
-	*new.composite= *ptr.composite;
-	 new.composite->dlElementListHead  = (XtPointer)calloc((size_t)1,
+	pnew.composite= (DlComposite *)malloc(sizeof(DlComposite));
+	*pnew.composite= *ptr.composite;
+	 pnew.composite->dlElementListHead  = (XtPointer)calloc((size_t)1,
 		sizeof(DlElement));
-	((DlElement *)(new.composite->dlElementListHead))->next = NULL;
-	new.composite->dlElementListTail = new.composite->dlElementListHead;
+	((DlElement *)(pnew.composite->dlElementListHead))->next = NULL;
+	pnew.composite->dlElementListTail = pnew.composite->dlElementListHead;
 	child = ((DlElement *)ptr.composite->dlElementListHead)->next;
 	while (child != NULL) {
 	  structurePtr = createCopyOfElementType(child->type,child->structure);
@@ -2541,15 +2536,15 @@ DlStructurePtr createCopyOfElementType(
 	    elementPtr->structure = structurePtr;
 	    elementPtr->dmExecute = child->dmExecute;
 	    elementPtr->dmWrite = child->dmWrite;
-	    if (((DlElement *)(new.composite->dlElementListHead))->next
+	    if (((DlElement *)(pnew.composite->dlElementListHead))->next
 			== NULL) {
-		((DlElement *)(new.composite->dlElementListHead))->next =
+		((DlElement *)(pnew.composite->dlElementListHead))->next =
 			elementPtr;
 	    }
-	    elementPtr->prev = (DlElement *)new.composite->dlElementListTail;
-	    ((DlElement *)new.composite->dlElementListTail)->next = elementPtr;
+	    elementPtr->prev = (DlElement *)pnew.composite->dlElementListTail;
+	    ((DlElement *)pnew.composite->dlElementListTail)->next = elementPtr;
 	    elementPtr->next = NULL;
-	    new.composite->dlElementListTail = (XtPointer)elementPtr;
+	    pnew.composite->dlElementListTail = (XtPointer)elementPtr;
 	  }
 	  child = child->next;
 	}
@@ -2557,31 +2552,31 @@ DlStructurePtr createCopyOfElementType(
 
 
       case DL_Polyline:
-	new.polyline = (DlPolyline *)malloc(sizeof(DlPolyline));
-	*new.polyline= *ptr.polyline;
-	new.polyline->points = (XPoint *)malloc(ptr.polyline->nPoints
+	pnew.polyline = (DlPolyline *)malloc(sizeof(DlPolyline));
+	*pnew.polyline= *ptr.polyline;
+	pnew.polyline->points = (XPoint *)malloc(ptr.polyline->nPoints
 							*sizeof(XPoint));
 	for (i = 0; i < ptr.polyline->nPoints; i++) {
-	    new.polyline->points[i] = ptr.polyline->points[i];
+	    pnew.polyline->points[i] = ptr.polyline->points[i];
 	}
 	break;
 
       case DL_Polygon:
-	new.polygon = (DlPolygon *)malloc(sizeof(DlPolygon));
-	*new.polygon= *ptr.polygon;
-	new.polygon->points = (XPoint *)malloc(ptr.polygon->nPoints
+	pnew.polygon = (DlPolygon *)malloc(sizeof(DlPolygon));
+	*pnew.polygon= *ptr.polygon;
+	pnew.polygon->points = (XPoint *)malloc(ptr.polygon->nPoints
 							*sizeof(XPoint));
 	for (i = 0; i < ptr.polygon->nPoints; i++) {
-	    new.polygon->points[i] = ptr.polygon->points[i];
+	    pnew.polygon->points[i] = ptr.polygon->points[i];
 	}
 	break;
 
 	
       default:
 	fprintf(stderr,"\ncreateCopyOfElementType(type=%d) missed type!",type);
-	new.file = (DlFile *)NULL;
+	pnew.file = (DlFile *)NULL;
   }
-  return(new);
+  return(pnew);
 }
 
 
@@ -2592,10 +2587,8 @@ void copyElementsIntoDisplay()
   DisplayInfo *cdi;
   Position displayX, displayY;
   int offsetX, offsetY;
-  DlElement *elementPtr, *moveTo, *newElementsListHead;
-  DlElement *ele, *child;
+  DlElement *elementPtr, *newElementsListHead;
   DlStructurePtr structurePtr;
-  Dimension w, h;
   int deltaX, deltaY;
   Boolean moveWidgets;
 
@@ -2812,7 +2805,6 @@ void deleteElementsInDisplay()
 
 void unselectElementsInDisplay()
 {
-  int i;
   DisplayInfo *cdi;
 
   if (currentDisplayInfo == NULL) return;
@@ -2833,7 +2825,6 @@ void unselectElementsInDisplay()
 
 void selectAllElementsInDisplay()
 {
-  int i;
   DisplayInfo *cdi;
   Position x, y;
   Dimension width, height;
@@ -2933,8 +2924,8 @@ void raiseSelectedElements()
 void ungroupSelectedElements()
 {
   DisplayInfo *cdi;
-  DlElement *ele, *child, *nextChild, *dyn, *composite;
-  int i, id;
+  DlElement *ele, *child;
+  int i;
 
 
   /* unhighlight */
@@ -3212,8 +3203,8 @@ void moveElementAfter(
      structure = createCopyOfElementType(src->type,src->structure);
      element->structure = structure;
      element->type = DL_BasicAttribute;
-     element->dmExecute = (void(*)())executeDlBasicAttribute;
-     element->dmWrite = (void(*)())writeDlBasicAttribute;
+     element->dmExecute = (medmExecProc)executeDlBasicAttribute;
+     element->dmWrite = (medmWriteProc)writeDlBasicAttribute;
 
  /* now add to the display list (insert in list, update tail if necessary */
      element->prev = dst;
@@ -3357,7 +3348,6 @@ UpdateTask *getUpdateTaskFromWidget(
   Widget widget)
 {
   DisplayInfo *displayInfo;
-  DlElement *ele, *targetEle;
   UpdateTask *pt;
 
   if (!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
@@ -3384,7 +3374,6 @@ UpdateTask *getUpdateTaskFromPosition(
   int y)
 {
   UpdateTask *ptu, *ptuSaved = NULL;
-  DlRectangle *dlRectangle;
   int minWidth, minHeight;
   
   if (displayInfo == (DisplayInfo *)NULL) return NULL;
@@ -3427,7 +3416,7 @@ NameValueTable *generateNameValueTable(
  char *copyOfArgsString,  *name, *value;
  char *s1;
  char nameEntry[80], valueEntry[80];
- int i, j, k, tableIndex, numPairs, numEntries;
+ int i, j, tableIndex, numPairs, numEntries;
  NameValueTable *nameTable;
  Boolean first;
 
@@ -3628,10 +3617,15 @@ void colorMenuBar(
   }
 }
 
-
+#ifdef __cplusplus
+void questionDialogCb(Widget, 
+  XtPointer clientData,
+  XtPointer callbackStruct)
+#else
 void questionDialogCb(Widget widget, 
   XtPointer clientData,
   XtPointer callbackStruct)
+#endif
 {
   DisplayInfo *displayInfo = (DisplayInfo *) clientData;
   XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
@@ -3660,7 +3654,6 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
                                char           *cancelBtnLabel,
                                char           *helpBtnLabel)
 {
-  XtCallbackProc cancel, ok, help;
   XmString xmString;
   XEvent event;
 
@@ -3716,9 +3709,15 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
   XtUnmanageChild(displayInfo->questionDialog);
 }
 
+#ifdef __cplusplus
+void warningDialogCb(Widget,
+                     XtPointer clientData,
+                     XtPointer callbackStruct)
+#else
 void warningDialogCb(Widget widget,
                      XtPointer clientData,
                      XtPointer callbackStruct)
+#endif
 {
   DisplayInfo *displayInfo = (DisplayInfo *) clientData;
   XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
@@ -3747,7 +3746,6 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
                                char           *cancelBtnLabel,
                                char           *helpBtnLabel)
 {
-  XtCallbackProc cancel, ok, help;
   XmString xmString;
   XEvent event;
 
@@ -3813,7 +3811,6 @@ void closeDisplay(Widget w) {
     currentDisplayInfo = NULL;
   }
   if (newDisplayInfo->hasBeenEditedButNotSaved) {
-    XmString warningXmstring;
     char warningString[2*MAX_FILE_CHARS];
     char *tmp, *tmp1;
 

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -97,8 +98,13 @@ static void drawRectangle(Rectangle *pr) {
   }
 }
 
+#ifdef __cplusplus
+void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
+                                Boolean)
+#else
 void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
@@ -228,7 +234,7 @@ static void rectangleDestroyCb(XtPointer cd) {
   Rectangle *pr = (Rectangle *) cd;
   if (pr) {
     medmDestroyRecord(pr->record);
-    free(pr);
+    free((char *)pr);
   }
   return;
 }

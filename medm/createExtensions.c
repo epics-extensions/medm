@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              correct the falling line and rising line to
  *                              polyline geometry calculation
+ * .03  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -86,7 +87,6 @@ static void imageTypeCallback(
 {
   Widget fsb;
   Arg args[4];
-  int n;
 
 /* since both on & off will invoke this callback, only care about the
     transition of one to ON */
@@ -108,14 +108,15 @@ static void imageTypeCallback(
 }
 
 
-
-static XtCallbackProc importCallback(
-  Widget w,
-  XtPointer client_data,
-  XmFileSelectionBoxCallbackStruct *call_data)
+#ifdef __cplusplus
+static void importCallback(Widget w, XtPointer, XtPointer cbs)
+#else
+static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  XmFileSelectionBoxCallbackStruct *call_data =
+                                (XmFileSelectionBoxCallbackStruct *) cbs;
   char *fullPathName, *dirName;
-  Dimension width, height;
   DlElement *element, **array;
   int dirLength;
 
@@ -198,8 +199,8 @@ DlElement *createDlImage(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlImage;
-  dlElement->dmWrite = (void(*)())writeDlImage;
+  dlElement->dmExecute = (medmExecProc) executeDlImage;
+  dlElement->dmWrite = (medmWriteProc)writeDlImage;
 
   return(dlElement);
 }
@@ -228,10 +229,8 @@ void handleImageCreate()
     XtSetArg(args[n],XmNdialogStyle,
     XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
     importFSD = XmCreateFileSelectionDialog(resourceMW,"importFSD",args,n);
-    XtAddCallback(importFSD,XmNokCallback,
-		(XtCallbackProc)importCallback,NULL);
-    XtAddCallback(importFSD,XmNcancelCallback,
-		(XtCallbackProc)importCallback,NULL);
+    XtAddCallback(importFSD,XmNokCallback,importCallback,NULL);
+    XtAddCallback(importFSD,XmNcancelCallback,importCallback,NULL);
     form = XmCreateForm(importFSD,"form",NULL,0);
     XtManageChild(form);
     n = 0;
@@ -255,7 +254,7 @@ void handleImageCreate()
     XtSetArg(args[n],XmNbuttonCount,1); n++;
     XtSetArg(args[n],XmNbuttons,buttons); n++;
     XtSetArg(args[n],XmNbuttonSet,GIF_BTN); n++;
-    XtSetArg(args[n],XmNsimpleCallback,(XtCallbackProc)imageTypeCallback); n++;
+    XtSetArg(args[n],XmNsimpleCallback,imageTypeCallback); n++;
     radioBox = XmCreateSimpleRadioBox(frame,"radioBox",args,n);
     XtManageChild(radioBox);
     for (i = 0; i < 2; i++) XmStringFree(buttons[i]);
@@ -310,8 +309,8 @@ DlElement *createDlComposite(DisplayInfo *displayInfo)
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlComposite;
-  dlElement->dmWrite = (void(*)())writeDlComposite;
+  dlElement->dmExecute = (medmExecProc)executeDlComposite;
+  dlElement->dmWrite = (medmWriteProc)writeDlComposite;
 
 /*
  * Save the position of first element in "visibility space" (but not 
@@ -437,8 +436,8 @@ DlElement *createDlPolyline(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlPolyline;
-  dlElement->dmWrite = (void(*)())writeDlPolyline;
+  dlElement->dmExecute = (medmExecProc)executeDlPolyline;
+  dlElement->dmWrite = (medmWriteProc)writeDlPolyline;
 
   return(dlElement);
 }
@@ -515,7 +514,7 @@ DlElement *handlePolylineCreate(
   x01 = x0; y01 = y0;
 
   XGrabPointer(display,window,FALSE,
-	PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask,
+	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
 	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
   XGrabServer(display);
 
@@ -618,8 +617,13 @@ DlElement *handlePolylineCreate(
 	    if (dlPolyline.nPoints >= pointsArraySize) {
 	    /* reallocate the points array: enlarge by 4X, etc */
 		pointsArraySize *= 4;
+#if defined(__cplusplus) && !defined(__GNUG__)
+		dlPolyline.points = (XPoint *)realloc((malloc_t)dlPolyline.points,
+					(pointsArraySize+1)*sizeof(XPoint));
+#else
 		dlPolyline.points = (XPoint *)realloc(dlPolyline.points,
 					(pointsArraySize+1)*sizeof(XPoint));
+#endif
 	    }
 
 	    if (event.xbutton.state & ShiftMask) {
@@ -722,8 +726,8 @@ DlElement *createDlPolygon(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlPolygon;
-  dlElement->dmWrite = (void(*)())writeDlPolygon;
+  dlElement->dmExecute = (medmExecProc)executeDlPolygon;
+  dlElement->dmWrite = (medmWriteProc)writeDlPolygon;
 
   return(dlElement);
 }
@@ -781,7 +785,7 @@ DlElement *handlePolygonCreate(
   x01 = x0; y01 = y0;
 
   XGrabPointer(display,window,FALSE,
-	PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask,
+	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
 	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
   XGrabServer(display);
 
@@ -898,8 +902,13 @@ DlElement *handlePolygonCreate(
 	    if (dlPolygon.nPoints >= pointsArraySize) {
 	    /* reallocate the points array: enlarge by 4X, etc */
 		pointsArraySize *= 4;
-		dlPolygon.points = (XPoint *)realloc(dlPolygon.points,
+#if defined(__cplusplus) && !defined(__GNUG__)
+		dlPolygon.points = (XPoint *)realloc((malloc_t)dlPolygon.points,
 					(pointsArraySize+3)*sizeof(XPoint));
+#else
+                dlPolygon.points = (XPoint *)realloc(dlPolygon.points,
+                                        (pointsArraySize+3)*sizeof(XPoint));
+#endif
 	    }
 
 	    if (event.xbutton.state & ShiftMask) {
@@ -999,8 +1008,7 @@ void handlePolylineVertexManipulation(
   DlPolyline *dlPolyline,
   int pointIndex)
 {
-  XEvent event, newEvent;
-  int newEventType;
+  XEvent event;
   Window window;
   int i, minX, maxX, minY, maxY;
   int x01, y01;
@@ -1015,7 +1023,7 @@ void handlePolylineVertexManipulation(
   y01 = dlPolyline->points[pointIndex].y;
 
   XGrabPointer(display,window,FALSE,
-	PointerMotionMask|ButtonMotionMask|ButtonReleaseMask,
+	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
 	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
   XGrabServer(display);
 
@@ -1076,10 +1084,7 @@ void handlePolylineVertexManipulation(
 	    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 /* since dmTraverseNonWidgets... clears the window, redraw highlights */
 	    highlightSelectedElements();
-
 	    return;
-	  break;
-
 
 	case MotionNotify:
 	/* undraw old line segments */
@@ -1144,8 +1149,7 @@ void handlePolygonVertexManipulation(
   DlPolygon *dlPolygon,
   int pointIndex)
 {
-  XEvent event, newEvent;
-  int newEventType;
+  XEvent event;
   Window window;
   int i, minX, maxX, minY, maxY;
   int x01, y01;
@@ -1160,7 +1164,7 @@ void handlePolygonVertexManipulation(
   y01 = dlPolygon->points[pointIndex].y;
 
   XGrabPointer(display,window,FALSE,
-	PointerMotionMask|ButtonMotionMask|ButtonReleaseMask,
+	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
 	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
   XGrabServer(display);
 
@@ -1229,10 +1233,7 @@ void handlePolygonVertexManipulation(
 	    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 /* since dmTraverseNonWidgets... clears the window, redraw highlights */
 	    highlightSelectedElements();
-
 	    return;
-	  break;
-
 
 	case MotionNotify:
 	/* undraw old line segments */

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -75,7 +76,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 			DlCartesianPlot *dlCartesianPlot)
 {
   CartesianPlot *pcp;
-  int i, j, k, n, validTraces, iPrec;
+  int i, k, n, validTraces, iPrec;
   Arg args[42];
   Widget localWidget;
   XColor xColors[2];
@@ -83,7 +84,6 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
   char rgb[2][16], string[24];
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   XcVType minF, maxF, tickF;
-  int precision, log10Precision;
 
   if (!nullData) {
     nullData = XrtMakeData(XRT_GENERAL,1,1,TRUE);
@@ -251,7 +251,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown X axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown X axis style");
 		break;
   }
   switch (dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle) {
@@ -279,7 +279,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown X range style"); break;
+		"\nexecuteDlCartesianPlot: unknown X range style");
 		break;
   }
 /* Y1 Axis definition */
@@ -291,7 +291,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y1 axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y1 axis style");
 		break;
   }
   switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
@@ -319,7 +319,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y1 range style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y1 range style");
 		break;
   }
 /* Y2 Axis definition */
@@ -331,7 +331,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y2 axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y2 axis style");
 		break;
   }
   switch (dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle) {
@@ -359,7 +359,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y2 range style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y2 range style");
 		break;
   }
   
@@ -389,19 +389,16 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 			DlCartesianPlot *dlCartesianPlot)
 {
-  Channel *pCh, *monitorData,
-	*triggerCh;
+  Channel *triggerCh;
   CartesianPlot *pcp;
-  int i, j, k, n, validTraces, iPrec;
+  int k, n, validTraces, iPrec;
   Arg args[42];
   Widget localWidget;
   XColor xColors[2];
   char *headerStrings[2];
   char rgb[2][16], string[24];
-  Boolean validTrace;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   XcVType minF, maxF, tickF;
-  int precision, log10Precision;
 
 
   displayInfo->useDynamicAttribute = FALSE;
@@ -487,7 +484,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown X axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown X axis style"); 
 		break;
   }
   switch (dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle) {
@@ -515,7 +512,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown X range style"); break;
+		"\nexecuteDlCartesianPlot: unknown X range style");
 		break;
   }
 /* Y1 Axis definition */
@@ -527,7 +524,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y1 axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y1 axis style");
 		break;
   }
   switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
@@ -555,7 +552,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y1 range style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y1 range style");
 		break;
   }
 /* Y2 Axis definition */
@@ -567,7 +564,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y2 axis style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y2 axis style");
 		break;
   }
   switch (dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle) {
@@ -595,7 +592,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 		break;
 	default:
 		medmPrintf(
-		"\nexecuteDlCartesianPlot: unknown Y2 range style"); break;
+		"\nexecuteDlCartesianPlot: unknown Y2 range style");
 		break;
   }
   
@@ -619,8 +616,13 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 
 }
 
+#ifdef __cplusplus
 void executeDlCartesianPlot(DisplayInfo *displayInfo,
-			DlCartesianPlot *dlCartesianPlot, Boolean dummy) {
+			DlCartesianPlot *dlCartesianPlot, Boolean) {
+#else
+void executeDlCartesianPlot(DisplayInfo *displayInfo,
+                        DlCartesianPlot *dlCartesianPlot, Boolean dummy) {
+#endif
   displayInfo->useDynamicAttribute = FALSE;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
@@ -637,7 +639,6 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
   CartesianPlot *pcp = pt->cartesianPlot;
   DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
   DlCartesianPlot *dlCartesianPlot = pcp->dlCartesianPlot;
-  chid xChid, yChid;
   XColor xColors[MAX_TRACES];
   char rgb[MAX_TRACES][16];
   /* xrtData1 for 1st trace, xrtData2 for 2nd -> nTraces */
@@ -838,10 +839,10 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     myds1[i].res1 = 0;
 
     myds2[i].lpat = XRT_LPAT_SOLID;
-    myds2[i].fpat = XRT_FPAT_SOLID + i;
+    myds2[i].fpat = (XrtFillPattern) (XRT_FPAT_SOLID + i);
     myds2[i].color = rgb[i];
     myds2[i].width = 1;
-    myds2[i].point = XRT_POINT_BOX+i;
+    myds2[i].point = (XrtPoint) (XRT_POINT_BOX+i);
     myds2[i].pcolor = rgb[i];
     myds2[i].psize = MAX(2,dlCartesianPlot->object.height/70);
     myds2[i].res1 = 0;
@@ -1042,7 +1043,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
   XYTrace *pt = (XYTrace *) pd->clientData;
   CartesianPlot *pcp = pt->cartesianPlot;
   DlCartesianPlot *dlCartesianPlot = pcp->dlCartesianPlot;
-  int count, i, j;
+  int count, j;
   Arg args[20];
 
   switch(pt->type) {
@@ -1535,8 +1536,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
   Record *pd = (Record *) cd;
   XYTrace *pt = (XYTrace *) pd->clientData;
   CartesianPlot *pcp = pt->cartesianPlot;
-  int count, i;
-  unsigned short j;
+  int i;
   Arg args[20];
   Boolean clearDataSet1 = True;
   Boolean clearDataSet2 = True;
@@ -1625,8 +1625,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
   Record *pd = (Record *) cd;
   XYTrace *pt = (XYTrace *) pd->clientData;
   CartesianPlot *pcp = pt->cartesianPlot;
-  int count, i;
-  unsigned short j;
+  int i;
   Arg args[20];
 
   /* if this is in trigger mode, and this update request is not from
@@ -1637,7 +1636,6 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
   if (pd == pcp->eraseCh.recordX) {
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
-    XrtDataStyle style;
 
     /* not the right value, return */
     if (((pd->value == 0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))
@@ -1734,14 +1732,14 @@ void cartesianPlotDestroyCb(XtPointer cd) {
       medmDestroyRecord(pcp->triggerCh.recordX);
     if (pcp->eraseCh.recordX)
       medmDestroyRecord(pcp->eraseCh.recordX);
-    free(pcp);
+    free((char *)pcp);
   }
   return;
 }
 
 void cartesianPlotDraw(XtPointer cd) {
   CartesianPlot *pcp = (CartesianPlot *) cd;
-  int count, i;
+  int i;
   Boolean connected = True;
   Boolean readAccess = True;
 
@@ -1854,4 +1852,40 @@ static void cartesianPlotName(XtPointer cd, char **name, short *severity, int *c
   j++;
   /* 200 means two columns */
   *count = j + 200;
+}
+
+void writeDlCartesianPlot(
+  FILE *stream,
+  DlCartesianPlot *dlCartesianPlot,
+  int level)
+{
+  int i;
+  char indent[16];
+
+  for (i = 0;  i < level; i++) indent[i] = '\t';
+  indent[i] = '\0';
+
+  fprintf(stream,"\n%s\"cartesian plot\" {",indent);
+  writeDlObject(stream,&(dlCartesianPlot->object),level+1);
+  writeDlPlotcom(stream,&(dlCartesianPlot->plotcom),level+1);
+  fprintf(stream,"\n%s\tstyle=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->style]);
+  fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->erase_oldest]);
+  fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
+  for (i = 0; i < MAX_TRACES; i++) {
+    writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
+  }
+  writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[X_AXIS_ELEMENT]),
+        X_AXIS_ELEMENT,level+1);
+  writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),
+        Y1_AXIS_ELEMENT,level+1);
+  writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),
+        Y2_AXIS_ELEMENT,level+1);
+  fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
+  fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
+  fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->eraseMode]);
+  fprintf(stream,"\n%s}",indent);
+
 }

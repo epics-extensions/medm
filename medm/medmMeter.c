@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -74,7 +75,11 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd);
 static void meterDestroyCb(XtPointer cd);
 static void meterName(XtPointer, char **, short *, int *);
 
+#ifdef __cplusplus
+void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean)
+#else
 void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
+#endif
 {
   Meter *pm;
   Arg args[24];
@@ -259,7 +264,7 @@ static void meterDestroyCb(XtPointer cd) {
   Meter *pm = (Meter *) cd;
   if (pm) {
     medmDestroyRecord(pm->record);
-    free(pm);
+    free((char *)pm);
   }
   return;
 }
@@ -269,5 +274,26 @@ static void meterName(XtPointer cd, char **name, short *severity, int *count) {
   *count = 1;
   name[0] = pm->record->name;
   severity[0] = pm->record->severity;
+}
+
+void writeDlMeter(
+  FILE *stream,
+  DlMeter *dlMeter,
+  int level)
+{
+  int i;
+  char indent[16];
+
+  for (i = 0;  i < level; i++) indent[i] = '\t';
+  indent[i] = '\0';
+
+  fprintf(stream,"\n%smeter {",indent);
+  writeDlObject(stream,&(dlMeter->object),level+1);
+  writeDlMonitor(stream,&(dlMeter->monitor),level+1);
+  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+        stringValueTable[dlMeter->label]);
+  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+        stringValueTable[dlMeter->clrmod]);
+  fprintf(stream,"\n%s}",indent);
 }
 

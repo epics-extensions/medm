@@ -53,26 +53,22 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-
-/****************************************************************
- *****    nested objects (not to be put in display list )   *****
-/****************************************************************
-
-
-/***
- *** monitor element in each monitor object
- ***/
-
-
+#ifdef __cplusplus
+static void createDlMonitor(
+  DisplayInfo *,
+  DlMonitor *monitor)
+#else
 static void createDlMonitor(
   DisplayInfo *displayInfo,
   DlMonitor *monitor)
+#endif
 {
   strcpy(monitor->rdbk,globalResourceBundle.rdbk);
   monitor->clr = globalResourceBundle.clr;
@@ -85,10 +81,15 @@ static void createDlMonitor(
  *** plotcom element in each plot type object
  ***/
 
-
+#ifdef __cplusplus
+static void createDlPlotcom(
+  DisplayInfo *,
+  DlPlotcom *plotcom)
+#else
 static void createDlPlotcom(
   DisplayInfo *displayInfo,
   DlPlotcom *plotcom)
+#endif
 {
   strcpy(plotcom->title,globalResourceBundle.title);
   strcpy(plotcom->xlabel,globalResourceBundle.xlabel);
@@ -102,11 +103,17 @@ static void createDlPlotcom(
  *** axis definition element in each plot type object
  ***/
 
-
+#ifdef __cplusplus
+static void createDlPlotAxisDefinition(
+  DisplayInfo *,
+  DlPlotAxisDefinition *axisDefinition,
+  int axis)
+#else
 static void createDlPlotAxisDefinition(
   DisplayInfo *displayInfo,
   DlPlotAxisDefinition *axisDefinition,
   int axis)
+#endif
 {
   axisDefinition->axisStyle = globalResourceBundle.axis[axis].axisStyle;
   axisDefinition->rangeStyle = globalResourceBundle.axis[axis].rangeStyle;
@@ -119,11 +126,17 @@ static void createDlPlotAxisDefinition(
  *** pen element in each strip chart
  ***/
 
-
+#ifdef __cplusplus
+static void createDlPen(
+  DisplayInfo *,
+  DlPen *pen,
+  int penNumber)
+#else
 static void createDlPen(
   DisplayInfo *displayInfo,
   DlPen *pen,
   int penNumber)
+#endif
 {
 /* structure copy */
   *pen = globalResourceBundle.scData[penNumber];
@@ -134,11 +147,17 @@ static void createDlPen(
  *** trace element in each cartesian plot
  ***/
 
-
+#ifdef __cplusplus
+static void createDlTrace(
+  DisplayInfo *,
+  DlTrace *trace,
+  int traceNum)
+#else
 static void createDlTrace(
   DisplayInfo *displayInfo,
   DlTrace *trace,
   int traceNum)
+#endif
 {
 /* structure copy */
   *trace  = globalResourceBundle.cpData[traceNum];
@@ -172,8 +191,8 @@ DlElement *createDlMeter(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlMeter;
-  dlElement->dmWrite = (void(*)())writeDlMeter;
+  dlElement->dmExecute = (medmExecProc)executeDlMeter;
+  dlElement->dmWrite = (medmWriteProc)writeDlMeter;
 
   return(dlElement);
 }
@@ -206,8 +225,8 @@ DlElement *createDlBar(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlBar;
-  dlElement->dmWrite = (void(*)())writeDlBar;
+  dlElement->dmExecute = (medmExecProc)executeDlBar;
+  dlElement->dmWrite = (medmWriteProc)writeDlBar;
 
   return(dlElement);
 }
@@ -234,8 +253,8 @@ DlElement *createDlByte( DisplayInfo *displayInfo) {
     dlElement->prev = displayInfo->dlElementListTail;
     displayInfo->dlElementListTail->next = dlElement;
     displayInfo->dlElementListTail = dlElement;
-    dlElement->dmExecute = (void(*)())executeDlByte;
-    dlElement->dmWrite = (void(*)())writeDlByte;
+    dlElement->dmExecute = (medmExecProc)executeDlByte;
+    dlElement->dmWrite = (medmWriteProc)writeDlByte;
 
     return(dlElement);
 }
@@ -265,8 +284,8 @@ DlElement *createDlIndicator(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlIndicator;
-  dlElement->dmWrite = (void(*)())writeDlIndicator;
+  dlElement->dmExecute = (medmExecProc)executeDlIndicator;
+  dlElement->dmWrite = (medmWriteProc)writeDlIndicator;
 
   return(dlElement);
 }
@@ -300,8 +319,8 @@ DlElement *createDlTextUpdate(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlTextUpdate;
-  dlElement->dmWrite = (void(*)())writeDlTextUpdate;
+  dlElement->dmExecute = (medmExecProc)executeDlTextUpdate;
+  dlElement->dmWrite = (medmWriteProc)writeDlTextUpdate;
 
   return(dlElement);
 }
@@ -344,8 +363,8 @@ DlElement *createDlStripChart(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlStripChart;
-  dlElement->dmWrite = (void(*)())writeDlStripChart;
+  dlElement->dmExecute = (medmExecProc)executeDlStripChart;
+  dlElement->dmWrite = (medmWriteProc)writeDlStripChart;
 
   return(dlElement);
 }
@@ -390,8 +409,8 @@ DlElement *createDlCartesianPlot(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlCartesianPlot;
-  dlElement->dmWrite = (void(*)())writeDlCartesianPlot;
+  dlElement->dmExecute = (medmExecProc)executeDlCartesianPlot;
+  dlElement->dmWrite = (medmWriteProc)writeDlCartesianPlot;
 
   return(dlElement);
 }
@@ -402,7 +421,7 @@ DlElement *createDlCartesianPlot(
  ***  Surface Plot
  ***/
 
-
+#if 0
 DlElement *createDlSurfacePlot(
   DisplayInfo *displayInfo)
 {
@@ -431,4 +450,4 @@ DlElement *createDlSurfacePlot(
 #endif
   return(dlElement);
 }
-
+#endif

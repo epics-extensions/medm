@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -116,8 +117,13 @@ static void drawText(Text *pt) {
   }
 }
 
+#ifdef __cplusplus
+void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
+                                Boolean)
+#else
 void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
@@ -270,7 +276,7 @@ static void textDestroyCb(XtPointer cd) {
   Text *pt = (Text *) cd;
   if (pt) {
     medmDestroyRecord(pt->record);
-    free(pt);
+    free((char *)pt);
   }
   return;
 }

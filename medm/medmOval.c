@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -96,8 +97,13 @@ static void drawOval(Oval *po) {
   }
 }
 
+#ifdef __cplusplus
+void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
+                                Boolean)
+#else
 void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
@@ -233,7 +239,7 @@ static void ovalDestroyCb(XtPointer cd) {
   Oval *po = (Oval *) cd;
   if (po) {
     medmDestroyRecord(po->record);
-    free(po);
+    free((char *)po);
   }
   return;
 }

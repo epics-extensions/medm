@@ -52,7 +52,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *
  * Modification Log:
  * -----------------
- * .02  09-05-95        vong    2.1.0 release
+ * .01  09-05-95        vong    2.1.0 release
+ * .02  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -91,22 +92,19 @@ static Widget globalColorPalettePB[DL_MAX_COLORS];
 static int elementTypeWhoseColorIsBeingEditted = -1;
 static int elementTypeWhoseColorIsBeingEdittedIndex = 0;
 
-static Widget openFSD;
-static Widget colorFilePDM;
+#ifdef EXTENDED_INTERFACE
+static Widget openFSD = NULL;
+static Widget colorFilePDM = NULL;
+#endif
 
 
-
-/********************************************
- **************** Callbacks *****************
- ********************************************/
-
-
-
-static XtCallbackProc fileOpenCallback(
-  Widget w,
-  int btn,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
+#else
+static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
   switch(call_data->reason){
 	case XmCR_CANCEL:
 		XtUnmanageChild(w);
@@ -117,16 +115,19 @@ static XtCallbackProc fileOpenCallback(
   }
 }
 
-
-static XtCallbackProc fileMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  XmString label;
+  int buttonNumber = (int) cd;
+#ifdef EXTENDED_INTERFACE
   int n;
   Arg args[10];
   Widget textField;
+#endif
+
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
@@ -144,7 +145,7 @@ static XtCallbackProc fileMenuSimpleCallback(
 				XmDIALOG_FILTER_TEXT);
 		    XtSetSensitive(textField,FALSE);
 		    XtAddCallback(openFSD,XmNokCallback,
-				(XtCallbackProc)fileOpenCallback,
+				fileOpenCallback,
 				FILE_OPEN_BTN);
 		    XtAddCallback(openFSD,XmNcancelCallback,
 				(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
@@ -166,17 +167,17 @@ static XtCallbackProc fileMenuSimpleCallback(
 }
 
 
-
-static void colorPaletteActivateCallback(
-  Widget w,
-  int colorIndex,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void colorPaletteActivateCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  int colorIndex = (int) cd;
   DisplayInfo *cdi;
   Widget widget;
   int i;
   Arg args[4];
-  Position x,y;
   Dimension width,height;
 
 /* (MDA) requests to leave color palette up
@@ -301,24 +302,23 @@ static void colorPaletteActivateCallback(
  ***********************************************************/
 void createColor()
 {
- Widget paletteRC, paletteSW;
+ Widget paletteRC;
 
  XmString buttons[N_MAX_MENU_ELES];
  KeySym keySyms[N_MAX_MENU_ELES];
- XmString label, string;
  XmButtonType buttonType[N_MAX_MENU_ELES];
  Widget colorMB;
  Widget colorHelpPDM;
  Widget menuHelpWidget;
 
  Pixel fg, bg;
- Widget subjectWidget;
  int i, n, childCount;
  Arg args[10];
 
 
-
+#ifdef EXTENDED_INTERFACE
  openFSD = NULL;
+#endif
 
 /*
  * create a main window in a dialog, and then the palette radio box
@@ -403,9 +403,13 @@ void createColor()
   XtSetArg(args[n],XmNbuttonType,buttonType); n++;
   XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
   XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,(XtCallbackProc)fileMenuSimpleCallback);
+  XtSetArg(args[n],XmNsimpleCallback,fileMenuSimpleCallback);
 	n++;
+#if 0
   colorFilePDM = XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
+	args,n);
+#endif
+  XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
 	args,n);
   for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
 
@@ -458,7 +462,7 @@ void createColor()
     globalColorPalettePB[childCount] = XmCreatePushButton(paletteRC,"colorPB",
 							  args,n);
     XtAddCallback(globalColorPalettePB[childCount],XmNactivateCallback,
-		(XtCallbackProc)colorPaletteActivateCallback,
+		colorPaletteActivateCallback,
 		(XtPointer)childCount);
   }
 
@@ -493,7 +497,7 @@ void setCurrentDisplayColorsInColorPalette(
   int index)	/* for types with color vectors, also specify element */
 {
   Arg args[2];
-  int i, n, counter;
+  int i, n = 0;
 
 /* create the color palette if it doesn't yet exist */
   if (colorMW == NULL) createColor();
@@ -509,7 +513,7 @@ void setCurrentDisplayColorsInColorPalette(
     currentColormap = currentDisplayInfo->dlColormap;
     for (i = 0; i < MIN(currentDisplayInfo->dlColormapCounter,
 		DL_MAX_COLORS); i++) {
-	XtSetArg(args[0],XmNbackground,currentColormap[i]); n++;
+       XtSetArg(args[0],XmNbackground,currentColormap[i]); n++;
        XtSetValues(globalColorPalettePB[i],args,1);
     }
   }

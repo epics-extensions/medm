@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -130,8 +131,8 @@ void parseImage(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlImage;
-  dlElement->dmWrite =  (void(*)())writeDlImage;
+  dlElement->dmExecute =  (medmExecProc)executeDlImage;
+  dlElement->dmWrite =  (medmWriteProc)writeDlImage;
 
 }
 
@@ -168,8 +169,8 @@ void parseComposite(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlComposite;
-  dlElement->dmWrite =  (void(*)())writeDlComposite;
+  dlElement->dmExecute =  (medmExecProc)executeDlComposite;
+  dlElement->dmWrite =  (medmWriteProc)writeDlComposite;
 
   newDlComposite->dlElementListHead  = (XtPointer)calloc(1,sizeof(DlElement));
   ((DlElement *)(newDlComposite->dlElementListHead))->next = NULL;
@@ -240,9 +241,15 @@ void parsePolylinePoints(
 			if (dlPolyline->nPoints >= pointsArraySize) {
 			/* reallocate the points array: enlarge by 4X, etc */
 			    pointsArraySize *= 4;
+#if defined(__cplusplus) && !defined(__GNUG__)
+			    dlPolyline->points = (XPoint *)realloc(
+					(malloc_t)dlPolyline->points,
+					(pointsArraySize+1)*sizeof(XPoint));
+#else
 			    dlPolyline->points = (XPoint *)realloc(
 					dlPolyline->points,
 					(pointsArraySize+1)*sizeof(XPoint));
+#endif
 			}
 			getToken(displayInfo,token);
 			dlPolyline->points[dlPolyline->nPoints].x = atoi(token);
@@ -310,8 +317,8 @@ void parsePolyline(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlPolyline;
-  dlElement->dmWrite =  (void(*)())writeDlPolyline;
+  dlElement->dmExecute =  (medmExecProc)executeDlPolyline;
+  dlElement->dmWrite =  (medmWriteProc)writeDlPolyline;
 }
 
 
@@ -338,9 +345,15 @@ void parsePolygonPoints(
 			if (dlPolygon->nPoints >= pointsArraySize) {
 			/* reallocate the points array: enlarge by 4X, etc */
 			    pointsArraySize *= 4;
+#if defined(__cplusplus) && !defined(__GNUG__)
+			    dlPolygon->points = (XPoint *)realloc(
+					(malloc_t)dlPolygon->points,
+					(pointsArraySize+1)*sizeof(XPoint));
+#else
 			    dlPolygon->points = (XPoint *)realloc(
 					dlPolygon->points,
 					(pointsArraySize+1)*sizeof(XPoint));
+#endif
 			}
 			getToken(displayInfo,token);
 			dlPolygon->points[dlPolygon->nPoints].x = atoi(token);
@@ -365,8 +378,13 @@ void parsePolygonPoints(
   if (dlPolygon->points[0].x != dlPolygon->points[dlPolygon->nPoints-1].x &&
       dlPolygon->points[0].y != dlPolygon->points[dlPolygon->nPoints-1].y) {
     if (dlPolygon->nPoints >= pointsArraySize) {
+#if defined(__cplusplus) && !defined(__GNUG__)
+	dlPolygon->points = (XPoint *)realloc((malloc_t)dlPolygon->points,
+				(dlPolygon->nPoints+2)*sizeof(XPoint));
+#else
 	dlPolygon->points = (XPoint *)realloc(dlPolygon->points,
 				(dlPolygon->nPoints+2)*sizeof(XPoint));
+#endif
     }
     dlPolygon->points[dlPolygon->nPoints].x = dlPolygon->points[0].x;
     dlPolygon->points[dlPolygon->nPoints].y = dlPolygon->points[0].y;
@@ -419,7 +437,7 @@ void parsePolygon(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlPolygon;
-  dlElement->dmWrite =  (void(*)())writeDlPolygon;
+  dlElement->dmExecute =  (medmExecProc)executeDlPolygon;
+  dlElement->dmWrite =  (medmWriteProc)writeDlPolygon;
 }
 

@@ -55,11 +55,20 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <cvtFast.h>
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct _TextUpdate {
   Widget        widget;
@@ -74,10 +83,14 @@ static void textUpdateDraw(XtPointer cd);
 static void textUpdateDestroyCb(XtPointer cd);
 static void textUpdateName(XtPointer, char **, short *, int *);
 
+#ifdef __cplusplus
 void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
-				Boolean dummy)
+				Boolean)
+#else
+void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
+                                Boolean dummy)
+#endif
 {
-  Channel *pCh;
   XRectangle clipRect[1];
   int usedHeight, usedWidth;
   int localFontIndex;
@@ -197,7 +210,7 @@ static void textUpdateDestroyCb(XtPointer cd) {
   TextUpdate *ptu = (TextUpdate *) cd;
   if (ptu) {
     medmDestroyRecord(ptu->record);
-    free(ptu);
+    free((char *)ptu);
   }
   return;
 }
@@ -404,3 +417,22 @@ static void textUpdateName(XtPointer cd, char **name, short *severity, int *coun
   severity[0] = pa->record->severity;
 }
 
+void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level) {
+  int i;
+  char indent[16];
+
+  for (i = 0;  i < level; i++) indent[i] = '\t';
+  indent[i] = '\0';
+
+  fprintf(stream,"\n%s\"text update\" {",indent);
+  writeDlObject(stream,&(dlTextUpdate->object),level+1);
+  writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
+  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+        stringValueTable[dlTextUpdate->clrmod]);
+  fprintf(stream,"\n%s\talign=\"%s\"",indent,
+        stringValueTable[dlTextUpdate->align]);
+  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
+        stringValueTable[dlTextUpdate->format]);
+  fprintf(stream,"\n%s}",indent);
+
+}

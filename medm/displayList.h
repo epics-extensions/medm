@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *                              - strip chart has two more fields
  *                                "period" and "oldUnits".
  *                              - polyLine has a new field "isFallingOrRisingLine".
+ * .03  09-07-95        vong    - remove all the falling line and rising line stuff
  *
  *****************************************************************************
 */
@@ -106,7 +107,7 @@ typedef enum {
   LIMITS	= 4,
   CHANNEL	= 5
 } LabelType;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const LabelType FIRST_LABEL_TYPE = LABEL_NONE;
 #else
 extern const LabelType FIRST_LABEL_TYPE;
@@ -118,7 +119,7 @@ typedef enum {
   ALARM		= 7,
   DISCRETE	= 8
 } ColorMode;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ColorMode FIRST_COLOR_MODE = STATIC;
 #else
 extern const ColorMode FIRST_COLOR_MODE;
@@ -130,7 +131,7 @@ typedef enum {
   IF_NOT_ZERO	= 10,
   IF_ZERO	= 11
 } VisibilityMode;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const VisibilityMode FIRST_VISIBILITY_MODE = V_STATIC;
 #else
 extern const VisibilityMode FIRST_VISIBILITY_MODE;
@@ -143,7 +144,7 @@ typedef enum {
   DOWN		= 14,
   LEFT		= 15
 } Direction;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Direction FIRST_DIRECTION = UP;
 #else
 extern const Direction FIRST_DIRECTION;
@@ -155,7 +156,7 @@ typedef enum {
   SOLID		= 16,
   DASH		= 17
 } EdgeStyle;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EdgeStyle FIRST_EDGE_STYLE = SOLID;
 #else
 extern const EdgeStyle FIRST_EDGE_STYLE;
@@ -166,7 +167,7 @@ typedef enum {
   F_SOLID	= 18,
   F_OUTLINE	= 19
 } FillStyle;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillStyle FIRST_FILL_STYLE = F_SOLID;
 #else
 extern const FillStyle FIRST_FILL_STYLE;
@@ -183,7 +184,7 @@ typedef enum {
   HEXADECIMAL	= 25,
   OCTAL 	= 26
 } TextFormat;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextFormat FIRST_TEXT_FORMAT = DECIMAL;
 #else
 extern const TextFormat FIRST_TEXT_FORMAT;
@@ -198,7 +199,7 @@ typedef enum {
   VERT_BOTTOM	= 31,
   VERT_CENTER	= 32
 } TextAlign;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
 #else
 extern const TextAlign FIRST_TEXT_ALIGN;
@@ -210,7 +211,7 @@ typedef enum {
   ROW		= 34,
   ROW_COLUMN 	= 35
 } Stacking;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Stacking FIRST_STACKING = COLUMN;
 #else
 extern const Stacking FIRST_STACKING;
@@ -221,7 +222,7 @@ typedef enum {
   FROM_EDGE	= 36,
   FROM_CENTER   = 37 
 } FillMode;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
 #else
 extern const FillMode FIRST_FILL_MODE;
@@ -233,7 +234,7 @@ typedef enum {
   SECONDS	= 39,
   MINUTES	= 40
 } TimeUnits;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TimeUnits FIRST_TIME_UNIT = MILLISECONDS;
 #else
 extern const TimeUnits FIRST_TIME_UNIT;
@@ -245,7 +246,7 @@ typedef enum {
   LINE_PLOT       = 42,
   FILL_UNDER_PLOT = 43
 } CartesianPlotStyle;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE = POINT_PLOT;
 #else
 extern const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE;
@@ -256,7 +257,7 @@ typedef enum {
   ERASE_OLDEST_OFF = 44,
   ERASE_OLDEST_ON  = 45
 } EraseOldest;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
 #else
 extern const EraseOldest FIRST_ERASE_OLDEST;
@@ -268,7 +269,7 @@ typedef enum {
   GIF_IMAGE  = 47,
   TIFF_IMAGE = 48
 } ImageType;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
 #else
 extern const ImageType FIRST_IMAGE_TYPE;
@@ -279,7 +280,7 @@ typedef enum {
   LINEAR_AXIS		= 49,
   LOG10_AXIS		= 50
 } CartesianPlotAxisStyle;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
 #else
 extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
@@ -292,7 +293,7 @@ typedef enum {
   AUTO_SCALE_RANGE	= 53
 } CartesianPlotRangeStyle;
 
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE = CHANNEL_RANGE;
 #else
 extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
@@ -303,7 +304,7 @@ typedef enum {
   ERASE_IF_NOT_ZERO   = 54,
   ERASE_IF_ZERO       = 55
 } eraseMode_t;
-#ifdef ALLOCATE_STORAGE
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
 #else
 extern const eraseMode_t FIRST_ERASE_MODE;
@@ -358,7 +359,7 @@ extern const eraseMode_t FIRST_ERASE_MODE;
  *    DL_StripChart DL_CartesianPlot DL_SurfacePlot                  *
  *  statics acting as monitors (dynamics):                           *
  *    DL_Rectangle    DL_Oval       DL_Arc   DL_Text                 *
- *    DL_FallingLine  DL_RisingLine                                  *
+ *    DL_Polyline     DL_Polygon                                     *
  *********************************************************************/
 
 typedef int DlElementType;
@@ -370,7 +371,6 @@ typedef int DlElementType;
 	DL_StripChart, DL_CartesianPlot, DL_SurfacePlot,
    statics acting as monitors (dynamics):
 	DL_Rectangle, DL_Oval, DL_Arc, DL_Text,
-	DL_FallingLine, DL_RisingLine,
    and all the other element types:
 	DL_File, DL_Display, DL_Colormap, DL_BasicAttribute,DL_DynamicAttribute,
    and the new (extensions) object types:
@@ -410,8 +410,8 @@ typedef int DlMonitorType;
 #define DL_Oval			116
 #define DL_Arc			117
 #define DL_Text			118
-#define DL_FallingLine		119
-#define DL_RisingLine		120
+#define DL_Reserve1   		119
+#define DL_Reserve2  		120
 
 #define DL_Image		121
 #define DL_Line			122
@@ -568,14 +568,6 @@ typedef struct {
 	int begin;
 	int path;
 } DlArc;
-
-typedef struct {
-	DlObject object;
-} DlFallingLine;
-
-typedef struct {
-	DlObject object;
-} DlRisingLine;
 
 typedef struct {
 	DlObject object;
@@ -765,8 +757,6 @@ typedef union {
 	DlRectangle *rectangle;
 	DlOval *oval;
 	DlArc *arc;
-	DlFallingLine *fallingLine;
-	DlRisingLine *risingLine;
 	DlText *text;
 	DlRelatedDisplay *relatedDisplay;
 	DlShellCommand *shellCommand;
@@ -792,8 +782,10 @@ typedef union {
 typedef struct _DlElement {
 	DlElementType type;
 	DlStructurePtr structure;
-	void (*dmExecute)();		   /* execute thyself method         */
-	void (*dmWrite)();		   /* write thyself (to file) method */
+	void (*dmExecute)(XtPointer, XtPointer, Boolean);
+               	                           /* execute thyself method         */
+	void (*dmWrite)(XtPointer, XtPointer, int);
+                                           /* write thyself (to file) method */
 	struct _DlElement *next;	   /* next element in display list   */
 	struct _DlElement *prev;	   /* previous element ...           */
 } DlElement;

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -78,12 +79,19 @@ static void choiceButtonDestroyCb(XtPointer cd);
 static void choiceButtonName(XtPointer, char **, short *, int *);
 
 
+#ifdef __cplusplus
+int choiceButtonFontListIndex(
+  DlChoiceButton *dlChoiceButton,
+  int numButtons,
+  int)
+#else
 int choiceButtonFontListIndex(
   DlChoiceButton *dlChoiceButton,
   int numButtons,
   int maxChars)
+#endif
 {
-  int i, index, useNumButtons;
+  int i, useNumButtons;
   short sqrtNumButtons;
 
 #define SHADOWS_SIZE 4		/* each Toggle Button has 2 shadows...*/
@@ -125,7 +133,7 @@ void choiceButtonValueChangedCb(
   XtPointer callbackStruct)
 {
   ChoiceButtons *pcb;
-  short btnNumber = (short) clientData;
+  int btnNumber = (int) clientData;
   XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
   Record *pd;
 
@@ -204,11 +212,11 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
   case ROW:
     XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
     usedWidth = pCB->object.width;
-    usedHeight = pCB->object.height/MAX(1,pd->hopr+1);
+    usedHeight = (int) (pCB->object.height/MAX(1,pd->hopr+1));
     break;
   case COLUMN:
     XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
-    usedWidth = pCB->object.width/MAX(1,pd->hopr+1);
+    usedWidth = (int) (pCB->object.width/MAX(1,pd->hopr+1));
     usedHeight = pCB->object.height;
     break;
   case ROW_COLUMN:
@@ -231,7 +239,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
 
   /* now make push-in type radio buttons of the correct size */
   fontList = fontListTable[choiceButtonFontListIndex(
-			pCB,pd->hopr+1,maxChars)];
+			pCB,(int)pd->hopr+1,maxChars)];
   n = 0;
   XtSetArg(wargs[n],XmNindicatorOn,False); n++;
   XtSetArg(wargs[n],XmNshadowThickness,2); n++;
@@ -378,7 +386,6 @@ void choiceButtonCreateEditInstance(DisplayInfo *displayInfo,
   Cardinal numChildren;
   int usedWidth, usedHeight;
   XmFontList fontList;
-  short sqrtNumButtons;
 
   buttons[0] = XmStringCreateSimple("0...");
   buttons[1] = XmStringCreateSimple("1...");
@@ -461,8 +468,13 @@ void choiceButtonCreateEditInstance(DisplayInfo *displayInfo,
   return;
 }
 
+#ifdef __cplusplus
 void executeDlChoiceButton(DisplayInfo *displayInfo,
-		DlChoiceButton *dlChoiceButton, Boolean dummy)
+		DlChoiceButton *dlChoiceButton, Boolean)
+#else
+void executeDlChoiceButton(DisplayInfo *displayInfo,
+                DlChoiceButton *dlChoiceButton, Boolean dummy)
+#endif
 {
 
  displayInfo->useDynamicAttribute = FALSE;
@@ -478,7 +490,7 @@ static void choiceButtonDestroyCb(XtPointer cd) {
   ChoiceButtons *pcb = (ChoiceButtons *) cd;
   if (pcb) {
     medmDestroyRecord(pcb->record);
-    free(pcb);
+    free((char *)pcb);
   }
 }
 

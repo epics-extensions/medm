@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.11  1995/09/07 14:02:13  jba
+# Revision 1.12  1995/09/28 21:09:12  vong
+# conform to c++ syntax
+#
+# Revision 1.11  1995/09/07  14:02:13  jba
 # Portability changes.
 #
 # Revision 1.10  1995/09/06  21:42:21  vong
@@ -186,7 +189,9 @@ PROD = medm
 
 include $(EPICS)/config/RULES.Unix
 
-#CC = acc -g
+CC = acc -Xc -g
+#CC = CC -O2
+#CC = g++
 
 medm: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)

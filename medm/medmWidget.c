@@ -53,11 +53,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+
+/* "green", "yellow", "red", "white", */
+static  char *alarmColorString[] = {"#00C000",
+        "#FFFF00","#FF0000","#FFFFFF",};
 
 extern Atom MEDM_EDIT_FIXED, MEDM_EXEC_FIXED, MEDM_EDIT_SCALABLE,
 		MEDM_EXEC_SCALABLE;
@@ -83,8 +88,7 @@ extern Atom MEDM_EDIT_FIXED, MEDM_EXEC_FIXED, MEDM_EDIT_SCALABLE,
  * XLFD style font name with a pixel size, point size, and average
  * width (fields 7,8, and 12) of "0".
  */ 
-Boolean isScalableFont(name) 
-char *name; 
+Boolean isScalableFont(char *name) 
 {
     int i, field;
     
@@ -116,11 +120,11 @@ char *name;
  * resolution fields.  Size is specified in pixels.
  * Returns NULL if the name is malformed or no such font exists.
  */
-XFontStruct *loadQueryScalableFont(dpy, screen, name, size)
-Display *dpy;
-int screen;
-char *name;
-int size;
+XFontStruct *loadQueryScalableFont(
+Display *dpy,
+int screen,
+char *name,
+int size)
 {
     int i,j, field;
     char newname[500];        /* big enough for a long font name */
@@ -130,8 +134,8 @@ int size;
     if ((name == NULL) || (name[0] != '-')) return NULL;
     
     /* calculate our screen resolution in dots per inch. 25.4mm = 1 inch */
-    res_x = DisplayWidth(dpy, screen)/(DisplayWidthMM(dpy, screen)/25.4);
-    res_y = DisplayHeight(dpy, screen)/(DisplayHeightMM(dpy, screen)/25.4);
+    res_x = (int) (DisplayWidth(dpy, screen)/(DisplayWidthMM(dpy, screen)/25.4));
+    res_y = (int) (DisplayHeight(dpy, screen)/(DisplayHeightMM(dpy, screen)/25.4));
     
     /* copy the font name, changing the scalable fields as we do so */
     for(i = j = field = 0; name[i] != '\0' && field <= 14; i++) {
@@ -201,7 +205,7 @@ unsigned long getPixelFromColormapByString(
 void medmInit(char *displayFont)
 {
   Arg args[10];
-  int i, n, status;
+  int i;
   char dashList[2];
   Boolean useDefaultFont;
   char warningString[2*MAX_FILE_CHARS];
@@ -213,7 +217,9 @@ void medmInit(char *displayFont)
 /*
  * register action table
  */
+#if 0
   XtAppAddActions(appContext,actions,XtNumber(actions));
+#endif
 
 /*
  * register a warning handler (catch extraneous warning msgs.)

@@ -243,4 +243,8 @@ typedef struct _Channel {
   Record    *pr;
   Boolean   previouslyConnected;
 } Channel;
+
+void medmDestroyRecord(Record *pr);
+void medmRecordAddUpdateValueCb(Record *pr, void (*updateValueCb)(XtPointer));
+void medmRecordAddGraphicalInfoCb(Record *pr, void (*updateGraphicalInfoCb)(XtPointer));
 #endif  /* __MEDMCA_H__ */

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -116,8 +117,8 @@ void parseFile(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute =  (void(*)())executeDlFile;
-  dlElement->dmWrite =  (void(*)())writeDlFile;
+  dlElement->dmExecute =  (medmExecProc)executeDlFile;
+  dlElement->dmWrite =  (medmWriteProc)writeDlFile;
 
 }
 
@@ -191,8 +192,8 @@ void parseDisplay(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute =  (void(*)())executeDlDisplay;
-  dlElement->dmWrite =  (void(*)())writeDlDisplay;
+  dlElement->dmExecute =  (medmExecProc)executeDlDisplay;
+  dlElement->dmWrite =  (medmWriteProc)writeDlDisplay;
 
 }
 
@@ -202,9 +203,9 @@ void parseDisplay(
  *   be parsing and external colormap file, hence need to pass in the 
  *   explicit file ptr for the current colormap file
  */
-DlColormap *parseColormap(displayInfo,filePtr)
-  DisplayInfo *displayInfo;
-  FILE *filePtr;
+DlColormap *parseColormap(
+  DisplayInfo *displayInfo,
+  FILE *filePtr)
 {
   char token[MAX_TOKEN_LENGTH];
   char msg[2*MAX_TOKEN_LENGTH];
@@ -281,8 +282,8 @@ DlColormap *parseColormap(displayInfo,filePtr)
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute =  (void(*)())executeDlColormap;
-  dlElement->dmWrite =  (void(*)())writeDlColormap;
+  dlElement->dmExecute =  (medmExecProc)executeDlColormap;
+  dlElement->dmWrite =  (medmWriteProc)writeDlColormap;
 
   displayInfo->dlColormapElement = dlElement;
 /*
@@ -348,8 +349,8 @@ void parseBasicAttribute(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlBasicAttribute;
-  dlElement->dmWrite =  (void(*)())writeDlBasicAttribute;
+  dlElement->dmExecute =  (medmExecProc)executeDlBasicAttribute;
+  dlElement->dmWrite =  (medmWriteProc)writeDlBasicAttribute;
 
 }
 
@@ -394,8 +395,8 @@ DlDynamicAttribute *parseDynamicAttribute(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlDynamicAttribute;
-  dlElement->dmWrite =  (void(*)())writeDlDynamicAttribute;
+  dlElement->dmExecute =  (medmExecProc)executeDlDynamicAttribute;
+  dlElement->dmWrite =  (medmWriteProc)writeDlDynamicAttribute;
 
   return (dlDynamicAttribute);
 }
@@ -443,8 +444,8 @@ void parseRectangle(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlRectangle;
-  dlElement->dmWrite =  (void(*)())writeDlRectangle;
+  dlElement->dmExecute =  (medmExecProc)executeDlRectangle;
+  dlElement->dmWrite =  (medmWriteProc)writeDlRectangle;
 
 }
 
@@ -487,8 +488,8 @@ void parseOval(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlOval;
-  dlElement->dmWrite =  (void(*)())writeDlOval;
+  dlElement->dmExecute =  (medmExecProc)executeDlOval;
+  dlElement->dmWrite =  (medmWriteProc)writeDlOval;
 
 }
 
@@ -543,8 +544,8 @@ void parseArc(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlArc;
-  dlElement->dmWrite =  (void(*)())writeDlArc;
+  dlElement->dmExecute =  (medmExecProc)executeDlArc;
+  dlElement->dmWrite =  (medmWriteProc)writeDlArc;
 
 }
 
@@ -611,8 +612,8 @@ void parseText(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlText;
-  dlElement->dmWrite =  (void(*)())writeDlText;
+  dlElement->dmExecute =  (medmExecProc)executeDlText;
+  dlElement->dmWrite =  (medmWriteProc)writeDlText;
 
 }
 
@@ -667,8 +668,8 @@ void parseFallingLine(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlPolyline;
-  dlElement->dmWrite =  (void(*)())writeDlPolyline;
+  dlElement->dmExecute =  (medmExecProc)executeDlPolyline;
+  dlElement->dmWrite =  (medmWriteProc)writeDlPolyline;
 }
 
 void parseRisingLine(
@@ -720,8 +721,8 @@ void parseRisingLine(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlPolyline;
-  dlElement->dmWrite =  (void(*)())writeDlPolyline;
+  dlElement->dmExecute =  (medmExecProc)executeDlPolyline;
+  dlElement->dmWrite =  (medmWriteProc)writeDlPolyline;
 }
 
 
@@ -789,8 +790,8 @@ void parseRelatedDisplay(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlRelatedDisplay;
-  dlElement->dmWrite =  (void(*)())writeDlRelatedDisplay;
+  dlElement->dmExecute =  (medmExecProc)executeDlRelatedDisplay;
+  dlElement->dmWrite =  (medmWriteProc)writeDlRelatedDisplay;
 
 }
 
@@ -856,8 +857,8 @@ void parseShellCommand(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlShellCommand;
-  dlElement->dmWrite =  (void(*)())writeDlShellCommand;
+  dlElement->dmExecute =  (medmExecProc)executeDlShellCommand;
+  dlElement->dmWrite =  (medmWriteProc)writeDlShellCommand;
 
 }
 
@@ -876,10 +877,10 @@ void parseShellCommand(
 
 
 
-void parseDlColor(displayInfo,filePtr,dlColor)
-  DisplayInfo *displayInfo;
-  FILE *filePtr;
-  DlColormapEntry *dlColor;
+void parseDlColor(
+  DisplayInfo *displayInfo,
+  FILE *filePtr,
+  DlColormapEntry *dlColor)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -928,9 +929,7 @@ void parseDlColor(displayInfo,filePtr,dlColor)
 
 
 
-void parseObject(displayInfo,object)
-  DisplayInfo *displayInfo;
-  DlObject *object;
+void parseObject(DisplayInfo *displayInfo, DlObject *object)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -969,9 +968,7 @@ void parseObject(displayInfo,object)
 
 
 
-void parseAttr(displayInfo,attr)
-  DisplayInfo *displayInfo;
-  DlAttribute *attr;
+void parseAttr(DisplayInfo *displayInfo, DlAttribute *attr)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1019,9 +1016,7 @@ void parseAttr(displayInfo,attr)
 
 
 
-void parseDynamicAttr(displayInfo,dynAttr)
-  DisplayInfo *displayInfo;
-  DlDynamicAttributeData *dynAttr;
+void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttributeData *dynAttr)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1047,9 +1042,7 @@ void parseDynamicAttr(displayInfo,dynAttr)
 
 
 
-void parseDynAttrMod(displayInfo,dynAttr)
-  DisplayInfo *displayInfo;
-  DlDynamicAttrMod *dynAttr;
+void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttrMod *dynAttr)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1089,9 +1082,7 @@ void parseDynAttrMod(displayInfo,dynAttr)
 
 
 
-void parseDynAttrParam(displayInfo,dynAttr)
-  DisplayInfo *displayInfo;
-  DlDynamicAttrParam *dynAttr;
+void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttrParam *dynAttr)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1120,9 +1111,7 @@ void parseDynAttrParam(displayInfo,dynAttr)
 
 
 
-void parseRelatedDisplayEntry(displayInfo,relatedDisplay)
-  DisplayInfo *displayInfo;
-  DlRelatedDisplayEntry *relatedDisplay;
+void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *relatedDisplay)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1157,9 +1146,7 @@ void parseRelatedDisplayEntry(displayInfo,relatedDisplay)
 
 
 
-void parseShellCommandEntry(displayInfo,shellCommand)
-  DisplayInfo *displayInfo;
-  DlShellCommandEntry *shellCommand;
+void parseShellCommandEntry(DisplayInfo *displayInfo, DlShellCommandEntry *shellCommand)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1194,19 +1181,7 @@ void parseShellCommandEntry(displayInfo,shellCommand)
 
 
 
-/*********************************************************************
- *********     miscellaneous functions in support of parsing    ******
-/*********************************************************************
-
-
-
-/*
- * function to open and scan the specified display list file and
- *    extract the colormap information
- */
-DlColormap *parseAndExtractExternalColormap(displayInfo,filename)
-  DisplayInfo *displayInfo;
-  char *filename;
+DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *filename)
 {
   DlColormap *dlColormap;
   FILE *externalFilePtr, *savedFilePtr;
@@ -1214,8 +1189,6 @@ DlColormap *parseAndExtractExternalColormap(displayInfo,filename)
   char msg[512];		/* since common longest filename is 255... */
   TOKEN tokenType;
   int nestingLevel = 0;
-  DlObject objectData;
-  int n;
 
 
   dlColormap = NULL;
@@ -1285,9 +1258,9 @@ DlColormap *parseAndExtractExternalColormap(displayInfo,filename)
  * understands macros of the form $(xyz), and substitutes the value in
  *	displayInfo's nameValueTable..name with nameValueTable..value
  */
-TOKEN getToken(displayInfo,word)	/* get and classify token */
-  DisplayInfo *displayInfo;
-  char *word;
+TOKEN getToken(	/* get and classify token */
+  DisplayInfo *displayInfo,
+  char *word)
 {
   FILE *filePtr;
   enum {NEUTRAL,INQUOTE,INWORD,INMACRO} state = NEUTRAL, savedState = NEUTRAL;

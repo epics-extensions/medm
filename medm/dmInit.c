@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *                                from the displayInfo structure.
  *                              - a updateTaskList is added to the 
  *                                displayInfo structure.
+ * .03  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -71,10 +72,11 @@ extern Widget mainShell;
 static Position x = 0, y = 0;
 static Widget lastShell;
 
-static XtCallbackProc displayShellPopdownCallback(
-  Widget shell,
-  XtPointer client_data,
-  XtPointer call_data)
+#ifdef __cplusplus
+static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
 {
   Arg args[2];
   XtSetArg(args[0],XmNx,&x);
@@ -83,10 +85,11 @@ static XtCallbackProc displayShellPopdownCallback(
   lastShell = shell;
 }
 
-static XtCallbackProc displayShellPopupCallback(
-  Widget shell,
-  XtPointer client_data,
-  XtPointer call_data)
+#ifdef __cplusplus
+static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
 {
   Arg args[2];
 
@@ -114,7 +117,7 @@ static XtCallbackProc displayShellPopupCallback(
 DisplayInfo *allocateDisplayInfo()
 {
   DisplayInfo *displayInfo;
-  int n, width, height;
+  int n;
   Arg args[8];
 
 
@@ -194,9 +197,9 @@ DisplayInfo *allocateDisplayInfo()
   displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
 			mainShell,args,n);
   XtAddCallback(displayInfo->shell,XmNpopupCallback,
-			(XtCallbackProc)displayShellPopupCallback,NULL);
+			displayShellPopupCallback,NULL);
   XtAddCallback(displayInfo->shell,XmNpopdownCallback,
-			(XtCallbackProc)displayShellPopdownCallback,NULL);
+			displayShellPopdownCallback,NULL);
 
 /* register interest in these protocols */
 { Atom atoms[2];
@@ -235,9 +238,9 @@ DisplayInfo *allocateDisplayInfo()
  * attach event handlers for menu activation
  */
   XtAddEventHandler(displayInfo->shell,ButtonPressMask,False,
-	(XtEventHandler)popupMenu,displayInfo);
+	popupMenu,displayInfo);
   XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
-	(XtEventHandler)popdownMenu,displayInfo);
+	popdownMenu,displayInfo);
 
   return(displayInfo);
 }
@@ -266,14 +269,12 @@ void dmDisplayListParse(
 {
   DisplayInfo *displayInfo;
   DlColormap *dlCmap;
-  long fileSize, i;
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
-  int n, width, height;
   Arg args[7];
   DlDynamicAttribute *dlDynamicAttribute, *localDynamicAttribute;
-  DlElement *dlElement, *ele;
-  int numPairs, parent;
+  DlElement *dlElement;
+  int numPairs;
   DlComposite *dlComposite = NULL;
 
 /* append dynamic attribute if appropriate */
@@ -288,8 +289,8 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
   dlElement->structure.dynamicAttribute = localDynamicAttribute;\
   dlElement->next = (DlElement *)NULL;				\
   POSITION_ELEMENT_ON_LIST();					\
-  dlElement->dmExecute =  (void(*)())executeDlDynamicAttribute;	\
-  dlElement->dmWrite =  (void(*)())writeDlDynamicAttribute;	\
+  dlElement->dmExecute =  (medmExecProc)executeDlDynamicAttribute;\
+  dlElement->dmWrite =  (medmWriteProc)writeDlDynamicAttribute;	\
 }								\
 
 
@@ -370,12 +371,6 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 		} else if (!strcmp(token,"text")) {
 			APPEND_DYNAMIC_ATTRIBUTE();
 			parseText(displayInfo,dlComposite);
-		} else if (!strcmp(token,"falling line")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseFallingLine(displayInfo,dlComposite);
-		} else if (!strcmp(token,"rising line")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseRisingLine(displayInfo,dlComposite);
 
 /* not really static/graphic objects, but not really monitors or controllers? */
 		} else if (!strcmp(token,"related display")) {
@@ -405,9 +400,11 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 		} else if (!strcmp(token,"cartesian plot")) {
 			dlDynamicAttribute = NULL;
 			parseCartesianPlot(displayInfo,dlComposite);
+#if 0
 		} else if (!strcmp(token,"surface plot")) {
 			dlDynamicAttribute = NULL;
 			parseSurfacePlot(displayInfo,dlComposite);
+#endif
 		} else if (!strcmp(token,"text update")) {
 			dlDynamicAttribute = NULL;
 			parseTextUpdate(displayInfo,dlComposite);
@@ -521,7 +518,7 @@ void parseCompositeChildren(
   int nestingLevel;
 
   DlDynamicAttribute *dlDynamicAttribute, *localDynamicAttribute;
-  DlElement *dlElement, *ele;
+  DlElement *dlElement;
 
 
   nestingLevel = 0;
@@ -562,12 +559,6 @@ void parseCompositeChildren(
 		} else if (!strcmp(token,"text")) {
 			APPEND_DYNAMIC_ATTRIBUTE();
 			parseText(displayInfo,dlComposite);
-		} else if (!strcmp(token,"falling line")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseFallingLine(displayInfo,dlComposite);
-		} else if (!strcmp(token,"rising line")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseRisingLine(displayInfo,dlComposite);
 
 /* not really static/graphic objects, but not really monitors or controllers? */
 		} else if (!strcmp(token,"related display")) {
@@ -597,9 +588,11 @@ void parseCompositeChildren(
 		} else if (!strcmp(token,"cartesian plot")) {
 			dlDynamicAttribute = NULL;
 			parseCartesianPlot(displayInfo,dlComposite);
+#if 0
 		} else if (!strcmp(token,"surface plot")) {
 			dlDynamicAttribute = NULL;
 			parseSurfacePlot(displayInfo,dlComposite);
+#endif
 		} else if (!strcmp(token,"text update")) {
 			dlDynamicAttribute = NULL;
 			parseTextUpdate(displayInfo,dlComposite);

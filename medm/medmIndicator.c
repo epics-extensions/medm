@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -74,8 +75,13 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd);
 static void indicatorDestroyCb(XtPointer cd);
 static void indicatorName(XtPointer, char **, short *, int *);
 
+#ifdef __cplusplus
 void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
-				Boolean dummy)
+				Boolean)
+#else
+void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
+                                Boolean dummy)
+#endif
 {
   
   Arg args[30];
@@ -290,7 +296,7 @@ static void indicatorDestroyCb(XtPointer cd) {
   Indicator *pi = (Indicator *) cd;
   if (pi) {
     medmDestroyRecord(pi->record);
-    free(pi);
+    free((char *)pi);
   }
   return;
 }
@@ -302,3 +308,24 @@ static void indicatorName(XtPointer cd, char **name, short *severity, int *count
   severity[0] = pi->record->severity;
 }
 
+void writeDlIndicator( FILE *stream, DlIndicator *dlIndicator, int level) {
+/****************************************************************************
+ * Write DL Indicator                                                       *
+ ****************************************************************************/
+  int i;
+  char indent[16];
+
+    for (i = 0;  i < level; i++) indent[i] = '\t';
+    indent[i] = '\0';
+
+    fprintf(stream,"\n%sindicator {",indent);
+    writeDlObject(stream,&(dlIndicator->object),level+1);
+    writeDlMonitor(stream,&(dlIndicator->monitor),level+1);
+    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+      stringValueTable[dlIndicator->label]);
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+      stringValueTable[dlIndicator->clrmod]);
+    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+      stringValueTable[dlIndicator->direction]);
+    fprintf(stream,"\n%s}",indent);
+}

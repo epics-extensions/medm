@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using the new screen update mechanism
+ * .03  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -97,8 +98,12 @@ static void drawArc(Arc *pa) {
   }
 }
 
+#ifdef __cplusplus
+void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc, Boolean)
+#else
 void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
@@ -236,7 +241,7 @@ static void arcDestroyCb(XtPointer cd) {
   Arc *pa = (Arc *) cd;
   if (pa) {
     medmDestroyRecord(pa->record);
-    free(pa);
+    free((char *)pa);
   }
   return;
 }

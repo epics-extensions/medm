@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -130,8 +131,8 @@ void parseChoiceButton(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlChoiceButton;
-  dlElement->dmWrite =  (void(*)())writeDlChoiceButton;
+  dlElement->dmExecute =  (medmExecProc)executeDlChoiceButton;
+  dlElement->dmWrite =  (medmWriteProc)writeDlChoiceButton;
 
 }
 
@@ -209,8 +210,8 @@ void parseMessageButton(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlMessageButton;
-  dlElement->dmWrite =  (void(*)())writeDlMessageButton;
+  dlElement->dmExecute =  (medmExecProc)executeDlMessageButton;
+  dlElement->dmWrite =  (medmWriteProc)writeDlMessageButton;
 
 }
 
@@ -305,8 +306,8 @@ void parseValuator(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlValuator;
-  dlElement->dmWrite =  (void(*)())writeDlValuator;
+  dlElement->dmExecute =  (medmExecProc)executeDlValuator;
+  dlElement->dmWrite =  (medmWriteProc)writeDlValuator;
 
 }
 
@@ -398,8 +399,8 @@ void parseTextEntry(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlTextEntry;
-  dlElement->dmWrite =  (void(*)())writeDlTextEntry;
+  dlElement->dmExecute =  (medmExecProc)executeDlTextEntry;
+  dlElement->dmWrite =  (medmWriteProc)writeDlTextEntry;
 
 }
 
@@ -461,23 +462,10 @@ void parseMenu(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlMenu;
-  dlElement->dmWrite =  (void(*)())writeDlMenu;
+  dlElement->dmExecute =  (medmExecProc)executeDlMenu;
+  dlElement->dmWrite =  (medmWriteProc)writeDlMenu;
 
 }
-
-
-
-
-
-/****************************************************************
- *****    nested objects (not to be put in display list )   *****
-/****************************************************************
-
-
-/***
- *** control element in each controller object
- ***/
 
 void parseControl(
   DisplayInfo *displayInfo,

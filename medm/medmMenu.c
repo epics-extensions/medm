@@ -55,11 +55,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+#include <IntrinsicP.h>
 
 typedef struct _Menu {
   Widget      widget;
@@ -81,7 +83,7 @@ static void menuName(XtPointer, char **, short *, int *);
 
 int menuFontListIndex(int height)
 {
-  int i, index;
+  int i;
 /* don't allow height of font to exceed 90% - 4 pixels of messageButton widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
@@ -198,7 +200,11 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
       handleButtonPress,(XtPointer)displayInfo);
 }
 
+#ifdef __cplusplus
+void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean)
+#else
 void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy)
+#endif
 {
 
   displayInfo->useDynamicAttribute = FALSE;
@@ -222,7 +228,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   XmFontList fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
   int i,n;
   Arg args[20];
-  Widget widget, buttons[db_state_dim], menu;
+  Widget buttons[db_state_dim], menu;
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temperory work around !!!!! */
@@ -370,7 +376,7 @@ static void menuDestroyCb(XtPointer cd) {
   Menu *pm = (Menu *) cd;
   if (pm) {
     medmDestroyRecord(pm->record); 
-    free(pm);
+    free((char *)pm);
   }
 }
 
@@ -382,7 +388,7 @@ static void menuValueChangedCb(
   Arg args[3];
   Menu *pm;
   Record *pd;
-  short btnNumber = (short) clientData;
+  int btnNumber = (int) clientData;
   XmPushButtonCallbackStruct *call_data = (XmPushButtonCallbackStruct *) callbackStruct;
 
 /*

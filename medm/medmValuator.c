@@ -54,12 +54,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  06-01-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <cvtFast.h>
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct _Valuator {
   Widget      widget;
@@ -83,7 +92,7 @@ static void handleValuatorRelease(Widget, XtPointer, XEvent *, Boolean *);
 
 int valuatorFontListIndex(DlValuator *dlValuator)
 {
-  int i, index;
+  int i;
 /* more complicated calculation based on orientation, etc */
   for (i = MAX_FONTS-1; i >=  0; i--) {
     switch (dlValuator->direction) {
@@ -151,7 +160,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 
   if (pv->updateTask == NULL) {
     medmPrintf("valuatorCreateRunTimeInstance : memory allocation error\n");
-    free(pv);
+    free((char *)pv);
     return;
   } else {
     updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
@@ -335,8 +344,13 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
   XtManageChild(widget);
 }
 
+#ifdef __cplusplus
+void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
+			Boolean)
+#else
 void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
 			Boolean dummy)
+#endif
 {
   displayInfo->useDynamicAttribute = FALSE;
   
@@ -396,16 +410,24 @@ static void valuatorDestroyCb(XtPointer cd) {
   Valuator *pv = (Valuator *) cd;
   if (pv) {
     medmDestroyRecord(pv->record);
-    free(pv);
+    free((char *)pv);
   }
   return;
 }
 
+#ifdef __cplusplus
+void handleValuatorExpose(
+  Widget w,
+  XtPointer clientData,
+  XEvent *pEvent,
+  Boolean *)
+#else
 void handleValuatorExpose(
   Widget w,
   XtPointer clientData,
   XEvent *pEvent,
   Boolean *continueToDispatch)
+#endif
 {
   XExposeEvent *event = (XExposeEvent *) pEvent;
   Valuator *pv;
@@ -413,7 +435,7 @@ void handleValuatorExpose(
   unsigned long foreground, background;
   Dimension scaleWidth, scaleHeight;
   int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
-  int n, nChars;
+  int nChars;
   Arg args[4];
   XFontStruct *font;
   char stringValue[40];
@@ -495,8 +517,8 @@ void handleValuatorExpose(
                startX = MAX(1,useableWidth - textWidth);
                if (dlValuator->label == CHANNEL) {
                 /* need room for label above */
-                startY = 1.3*(font->ascent + font->descent)
-                                + font->ascent;
+                startY = (int) (1.3*(font->ascent + font->descent)
+                                + font->ascent);
                } else {
                 startY = font->ascent + 3;
                }
@@ -610,9 +632,9 @@ void valuatorSetValue(Valuator *pv, double forcedValue,
 #endif
 
 /* update scale widget */
-    iValue = VALUATOR_MIN + ((dValue - pd->lopr)
+    iValue = (int) (VALUATOR_MIN + ((dValue - pd->lopr)
                 /(pd->hopr - pd->lopr))
-                *((double)(VALUATOR_MAX - VALUATOR_MIN));
+                *((double)(VALUATOR_MAX - VALUATOR_MIN)));
     pv->oldIntegerValue = iValue;
     XtVaSetValues(pv->widget,XmNvalue,iValue,NULL);
     valuatorRedrawValue(pv,pv->updateTask->displayInfo,
@@ -632,7 +654,7 @@ void valuatorRedrawValue(Valuator *pv,
   unsigned long foreground, background;
   Dimension scaleWidth, scaleHeight;
   int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
-  int n, nChars;
+  int nChars;
   Arg args[4];
   XFontStruct *font;
   char stringValue[40];
@@ -719,11 +741,19 @@ void valuatorRedrawValue(Valuator *pv,
  * thanks to complicated valuator interactions, need to rely on
  *  Key/ButtonRelease events to re-enable updates for dlValuator display
  */
+#ifdef __cplusplus
+void handleValuatorRelease(
+  Widget,
+  XtPointer passedData,
+  XEvent *event,
+  Boolean *)
+#else
 void handleValuatorRelease(
   Widget w,
   XtPointer passedData,
   XEvent *event,
   Boolean *continueToDispatch)
+#endif
 {
   Valuator *pv = (Valuator *) passedData;
   DlValuator *dlValuator = pv->dlValuator;
@@ -738,7 +768,11 @@ void handleValuatorRelease(
   }
 }
 
+#ifdef __cplusplus
+static void destroyDialog(Widget  w, XtPointer, XtPointer)
+#else
 static void destroyDialog(Widget  w, XtPointer cd, XtPointer cbs)
+#endif
 {
   XtDestroyWidget(XtParent(w));
 }
@@ -781,14 +815,20 @@ static void precisionToggleChangedCallback(
 /*
  * text field processing callback
  */
+#ifdef __cplusplus
+static void precTextFieldActivateCallback(
+  Widget w,
+  XtPointer cd,
+  XtPointer)
+#else
 static void precTextFieldActivateCallback(
   Widget w,
   XtPointer cd,
   XtPointer cbs)
+#endif
 {
   DlValuator *dlValuator = (DlValuator *) cd;
   char *stringValue;
-  int i;
   Widget widget;
 
   stringValue = XmTextFieldGetString(w);
@@ -808,10 +848,17 @@ static void precTextFieldActivateCallback(
 /*
  * text field losing focus callback
  */
+#ifdef __cplusplus
+static void precTextFieldLosingFocusCallback(
+  Widget w,
+  XtPointer cd,
+  XtPointer)
+#else
 static void precTextFieldLosingFocusCallback(
   Widget w,
   XtPointer cd,
   XtPointer cbs)
+#endif
 {
   DlValuator *dlValuator = (DlValuator *) cd;
   char string[MAX_TOKEN_LENGTH];
@@ -857,10 +904,17 @@ static void sendKeyboardValue(
 
 }
 
+#ifdef __cplusplus
+void popupValuatorKeyboardEntry(
+  Widget w,
+  DisplayInfo *,
+  XEvent *event)
+#else
 void popupValuatorKeyboardEntry(
   Widget w,
   DisplayInfo *displayInfo,
   XEvent *event)
+#endif
 {
 #define MAX_TOGGLES 20
   Widget keyboardDialog;
@@ -1054,10 +1108,17 @@ void popupValuatorKeyboardEntry(
  * valuatorValueChanged - drag and value changed callback for valuator
  */
 
+#ifdef __cplusplus
+void valuatorValueChanged(
+  Widget,
+  XtPointer clientData,
+  XtPointer callbackStruct)
+#else
 void valuatorValueChanged(
   Widget  w,
   XtPointer clientData,
   XtPointer callbackStruct)
+#endif
 {
   Valuator *pv = (Valuator *) clientData;
   Record *pd = pv->record;

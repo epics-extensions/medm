@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-13-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -155,7 +156,6 @@ void writeDlPolylinePoints(
 {
   int i;
   char indent[16];
-  DlElement *element;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
@@ -199,7 +199,6 @@ void writeDlPolygonPoints(
 {
   int i;
   char indent[16];
-  DlElement *element;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-13-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -142,14 +143,12 @@ void localCvtDoubleToExpNotationString(
 }
 
 
-int localCvtDoubleToString(
+void localCvtDoubleToString(
 	double flt_value,
 	char  *pstr_value,
 	unsigned short precision)
 {
-  char formatStr[20];
-  sprintf(formatStr,"%%.%df",precision);
-  sprintf(pstr_value,formatStr,flt_value);
+  sprintf(pstr_value,"%.*f",precision,flt_value);
 }
 
 void drawWhiteRectangle(UpdateTask *pt) {

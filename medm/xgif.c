@@ -8,6 +8,7 @@
  *	MDA - editorial comment:
  *		MAJOR MODIFICATIONS to make this sensible.
  *		be careful about running on non-32-bit machines
+ *   09-13-95   vong  conform to c++ syntax
  */
 
 
@@ -21,7 +22,7 @@
 
 #define MAXEXPAND 16
 
-
+void AddToPixel(GIFData *gif, Byte Index);
 
 
 /*
@@ -137,9 +138,11 @@ void drawGIF(
 
 
 /***********************************/
-void resizeGIF(
-DisplayInfo *displayInfo,
-DlImage *dlImage)
+#ifdef __cplusplus
+void resizeGIF(DisplayInfo *,DlImage *dlImage)
+#else
+void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
+#endif
 {
   GIFData *gif;
   unsigned int w,h;
@@ -276,9 +279,11 @@ char *id = "GIF87a";
 
 
 /*****************************/
-Boolean loadGIF(
-  DisplayInfo *displayInfo,
-  DlImage *dlImage)
+#ifdef __cplusplus
+Boolean loadGIF(DisplayInfo *, DlImage *dlImage)
+#else
+Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
+#endif
 /*****************************/
 {
     GIFData *gif;
@@ -333,7 +338,7 @@ Boolean loadGIF(
 
     /* find the size of the file */
     fseek(fp, 0L, 2);
-    filesize = ftell(fp);
+    filesize = (int) ftell(fp);
     fseek(fp, 0L, 0);
     success = True;
 
@@ -347,7 +352,7 @@ Boolean loadGIF(
 	success = False;
     }
 
-    if (fread(ptr, filesize, 1, fp) != 1) {
+    if (fread((char *)ptr, filesize, 1, fp) != 1) {
 	fprintf(stderr,"loadGIF: GIF data read failed");
 	success = False;
     }
@@ -436,9 +441,9 @@ Boolean loadGIF(
 			g =  Green[i];
                         b =  Blue[i];
                         for (j=0; j<gif->numcols; j++) {
-                            d = abs(r - (ctab[j].red>>8)) +
-                                abs(g - (ctab[j].green>>8)) +
-                                abs(b - (ctab[j].blue>>8));
+                            d = abs((int)(r - (ctab[j].red>>8))) +
+                                abs((int)(g - (ctab[j].green>>8))) +
+                                abs((int)(b - (ctab[j].blue>>8)));
                             if (d<mdist) { mdist=d; close=j; }
                             }
                         if (close<0) {
@@ -557,7 +562,7 @@ Boolean loadGIF(
 	}
     } while(ch1);
 
-    free(RawGIF);		/* We're done with the raw data now... */
+    free((char *)RawGIF);	/* We're done with the raw data now... */
 
     if (verbose)
 	fprintf(stderr, "loadGIF: done.\n Decompressing...");
@@ -665,7 +670,7 @@ Boolean loadGIF(
 	Code = ReadCode();
     }
 
-    free(Raster);
+    free((char *)Raster);
 
     if (verbose)
 	fprintf(stderr, "loadGIF: done.\n");
@@ -698,9 +703,9 @@ int RawCode, ByteOffset;
 }
 
 
-AddToPixel(GIFData *gif, Byte Index)
+void AddToPixel(GIFData *gif, Byte Index)
 {
-    *(Image + YC * BytesPerScanline + XC) = gif->cols[Index&(gif->numcols-1)];
+    *(Image + YC * BytesPerScanline + XC) = (unsigned char)gif->cols[Index&(gif->numcols-1)];
 
 /* Update the X-coordinate, and if it overflows, update the Y-coordinate */
 
@@ -753,9 +758,11 @@ AddToPixel(GIFData *gif, Byte Index)
  * free the X images and color cells in the default colormap (in anticipation
  *   of a new image)
  */
-void freeGIF(
-  DisplayInfo *displayInfo,
-  DlImage *dlImage)
+#ifdef __cplusplus
+void freeGIF(DisplayInfo *, DlImage *dlImage)
+#else
+void freeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
+#endif
 {
   GIFData *gif;
 

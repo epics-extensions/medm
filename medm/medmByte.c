@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-11-95        vong    - conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -73,7 +74,11 @@ static void byteDraw(XtPointer cd);
 static void byteDestroyCb(XtPointer cd);
 static void byteName(XtPointer, char **, short *, int *);
 
+#ifdef __cplusplus
+void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean) {
+#else
 void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
+#endif
 /****************************************************************************
  * Execute DL Byte                                                          *
  ****************************************************************************/
@@ -198,7 +203,7 @@ static void byteDestroyCb(XtPointer cd) {
   Bits *pb = (Bits *) cd;
   if (pb) {
     medmDestroyRecord(pb->record);
-    free(pb);
+    free((char *)pb);
   }
 }
 
@@ -207,4 +212,23 @@ static void byteName(XtPointer cd, char **name, short *severity, int *count) {
   *count = 1;
   name[0] = pb->record->name;
   severity[0] = pb->record->severity;
+}
+
+void writeDlByte(FILE *stream, DlByte *dlByte, int level) {
+  int i;
+  char indent[16];
+
+    for (i = 0;  i < level; i++) indent[i] = '\t';
+    indent[i] = '\0';
+
+    fprintf(stream,"\n%sbyte {",indent);
+    writeDlObject(stream,&(dlByte->object),level+1);
+    writeDlMonitor(stream,&(dlByte->monitor),level+1);
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+      stringValueTable[dlByte->clrmod]);
+    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+      stringValueTable[dlByte->direction]);
+    fprintf(stream,"\n%s\tsbit=%d",indent,dlByte->sbit);
+    fprintf(stream,"\n%s\tebit=%d",indent,dlByte->ebit);
+    fprintf(stream,"\n%s}",indent);
 }

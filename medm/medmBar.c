@@ -53,8 +53,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
- * .02  05-09-95        vong    2.1.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -74,7 +75,11 @@ static void barUpdateGraphicalInfoCb(XtPointer cd);
 static void barDestroyCb(XtPointer cd);
 static void barName(XtPointer, char **, short *, int *);
 
+#ifdef __cplusplus
+void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean)
+#else
 void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
+#endif
 {
   Bar *pb;
   Arg args[30];
@@ -294,7 +299,7 @@ static void barDestroyCb(XtPointer cd) {
   Bar *pb = (Bar *) cd;
   if (pb) {
     medmDestroyRecord(pb->record);
-    free(pb);
+    free((char *)pb);
   }
   return;
 }
@@ -304,4 +309,25 @@ static void barName(XtPointer cd, char **name, short *severity, int *count) {
   *count = 1;
   name[0] = pb->record->name;
   severity[0] = pb->record->severity;
+}
+
+void writeDlBar( FILE *stream, DlBar *dlBar, int level) {
+  int i;
+  char indent[16];
+
+    for (i = 0;  i < level; i++) indent[i] = '\t';
+    indent[i] = '\0';
+
+    fprintf(stream,"\n%sbar {",indent);
+    writeDlObject(stream,&(dlBar->object),level+1);
+    writeDlMonitor(stream,&(dlBar->monitor),level+1);
+    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+      stringValueTable[dlBar->label]);
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+      stringValueTable[dlBar->clrmod]);
+    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+      stringValueTable[dlBar->direction]);
+    fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
+      stringValueTable[dlBar->fillmod]);
+    fprintf(stream,"\n%s}",indent);
 }

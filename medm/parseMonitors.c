@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -141,8 +142,8 @@ void parseMeter(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlMeter;
-  dlElement->dmWrite =  (void(*)())writeDlMeter;
+  dlElement->dmExecute =  (medmExecProc)executeDlMeter;
+  dlElement->dmWrite =  (medmWriteProc)writeDlMeter;
 
 }
 
@@ -237,8 +238,8 @@ void parseBar(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlBar;
-  dlElement->dmWrite =  (void(*)())writeDlBar;
+  dlElement->dmExecute =  (medmExecProc)executeDlBar;
+  dlElement->dmWrite =  (medmWriteProc)writeDlBar;
 
 }
 
@@ -307,8 +308,8 @@ void parseByte( DisplayInfo *displayInfo, DlComposite *dlComposite) {
 
     POSITION_ELEMENT_ON_LIST();
 
-    dlElement->dmExecute = (void(*)())executeDlByte;
-    dlElement->dmWrite = (void(*)())writeDlByte;
+    dlElement->dmExecute = (medmExecProc)executeDlByte;
+    dlElement->dmWrite = (medmWriteProc)writeDlByte;
 }
 
 /***
@@ -392,8 +393,8 @@ void parseIndicator(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlIndicator;
-  dlElement->dmWrite =  (void(*)())writeDlIndicator;
+  dlElement->dmExecute =  (medmExecProc)executeDlIndicator;
+  dlElement->dmWrite =  (medmWriteProc)writeDlIndicator;
 
 }
 
@@ -508,8 +509,8 @@ void parseTextUpdate(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlTextUpdate;
-  dlElement->dmWrite =  (void(*)())writeDlTextUpdate;
+  dlElement->dmExecute =  (medmExecProc)executeDlTextUpdate;
+  dlElement->dmWrite =  (medmWriteProc)writeDlTextUpdate;
 
 }
 
@@ -520,7 +521,12 @@ void parseTextUpdate(
 /***
  ***  Strip Chart
  ***/
-
+#ifdef __cplusplus
+extern "C" {
+  void linear_scale(double xmin, double xmax, int n,
+       double *xminp, double *xmaxp, double *dist);
+}
+#endif
 
 void parseStripChart(
   DisplayInfo *displayInfo,
@@ -624,8 +630,8 @@ void parseStripChart(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlStripChart;
-  dlElement->dmWrite =  (void(*)())writeDlStripChart;
+  dlElement->dmExecute =  (medmExecProc)executeDlStripChart;
+  dlElement->dmWrite =  (medmWriteProc)writeDlStripChart;
 
 }
 
@@ -745,13 +751,14 @@ void parseCartesianPlot(
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlCartesianPlot;
-  dlElement->dmWrite =  (void(*)())writeDlCartesianPlot;
+  dlElement->dmExecute =  (medmExecProc)executeDlCartesianPlot;
+  dlElement->dmWrite =  (medmWriteProc)writeDlCartesianPlot;
 
 }
 
 
 
+#if 0
 /***
  ***  Surface Plot
  ***/
@@ -766,9 +773,7 @@ void parseSurfacePlot(
   int nestingLevel = 0;
   DlSurfacePlot *dlSurfacePlot;
   DlElement *dlElement;
-  int penNumber;
 
-#if 0
   dlSurfacePlot = (DlSurfacePlot *) malloc(sizeof(DlSurfacePlot));
 
 /* initialize some data in structure */
@@ -828,19 +833,8 @@ void parseSurfacePlot(
 
   dlElement->dmExecute =  (void(*)())executeDlSurfacePlot;
   dlElement->dmWrite =  (void(*)())writeDlSurfacePlot;
-#endif
 }
-
-
-
-/****************************************************************
- *****    nested objects (not to be put in display list )   *****
-/****************************************************************
-
-
-/***
- *** monitor element in each monitor object
- ***/
+#endif
 
 
 void parseMonitor(

@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -62,16 +63,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
 
-static XtCallbackProc freePixmapCallback(
-  Widget widget,
-  Pixmap pixmap,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void freePixmapCallback(Widget w, XtPointer cd, XtPointer) 
+#else
+static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  if (pixmap != (Pixmap)NULL) XmDestroyPixmap(XtScreen(widget),pixmap);
+  Pixmap pixmap = (Pixmap) cd;
+  if (pixmap != (Pixmap)NULL) XmDestroyPixmap(XtScreen(w),pixmap);
 }
 
-
+#ifdef __cplusplus
+void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean)
+#else
 void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean dummy)
+#endif
 {
   displayInfo->displayFileName = dlFile->name;
 }
@@ -85,12 +91,16 @@ void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean dummy)
  *	is no direct record of the widget attached to the object/element)
  *	{this can be fixed to save on widget create/destroy cycles later}
  */
+#ifdef __cplusplus
+void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay, Boolean)
+#else
 void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay,
-		Boolean dummy)
+                Boolean dummy)
+#endif
 {
   DlColormap *dlColormap;
   Arg args[12];
-  int i, k, n, startPos;
+  int n;
 
 
 /* set the displayInfo useDynamicAttribute flag FALSE initially */
@@ -212,8 +222,13 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
  *  anyway and there is no additional cost incurred for the straight
  *  execute time running --
  */
+#ifdef __cplusplus
 void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
-			Boolean dummy)
+			Boolean)
+#else
+void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
+                        Boolean dummy)
+#endif
 {
   Arg args[10];
   int i, n;
@@ -322,9 +337,13 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
 }
 
 
-
+#ifdef __cplusplus
 void executeDlBasicAttribute(DisplayInfo *displayInfo,
-			DlBasicAttribute *dlBasicAttribute, Boolean dummy)
+			DlBasicAttribute *dlBasicAttribute, Boolean)
+#else
+void executeDlBasicAttribute(DisplayInfo *displayInfo,
+                        DlBasicAttribute *dlBasicAttribute, Boolean dummy)
+#endif
 {
   int lineStyle;
   unsigned long gcValueMask;
@@ -370,8 +389,13 @@ void executeDlBasicAttribute(DisplayInfo *displayInfo,
 
 }
 
+#ifdef __cplusplus
+void executeDlDynamicAttribute(DisplayInfo *displayInfo,
+                        DlDynamicAttribute *dlDynamicAttribute, Boolean)
+#else
 void executeDlDynamicAttribute(DisplayInfo *displayInfo,
                         DlDynamicAttribute *dlDynamicAttribute, Boolean dummy)
+#endif
 {
 /* structure copy */
   displayInfo->dynamicAttribute = *dlDynamicAttribute;
@@ -448,13 +472,17 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
 
 
 
-
+#ifdef __cplusplus
 void executeDlRelatedDisplay(DisplayInfo *displayInfo,
-			DlRelatedDisplay *dlRelatedDisplay, Boolean dummy)
+			DlRelatedDisplay *dlRelatedDisplay, Boolean)
+#else
+void executeDlRelatedDisplay(DisplayInfo *displayInfo,
+                        DlRelatedDisplay *dlRelatedDisplay, Boolean dummy)
+#endif
 {
   Widget localMenuBar, tearOff;
   Arg args[20];
-  int i, n, displayNumber=0;
+  int i, displayNumber=0;
   char *name, *argsString;
   char **nameArgs;
   XmString xmString;
@@ -545,7 +573,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 
 /* add destroy callback to free pixmap from pixmap cache */
   XtAddCallback(displayInfo->otherChild[displayInfo->otherChildCount-1],
-	XmNdestroyCallback,(XtCallbackProc)freePixmapCallback,
+	XmNdestroyCallback,freePixmapCallback,
 	(XtPointer)relatedDisplayPixmap);
 
   for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
@@ -622,14 +650,17 @@ static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
 }
 
 
-
+#ifdef __cplusplus
 void executeDlShellCommand(DisplayInfo *displayInfo,
-			DlShellCommand *dlShellCommand, Boolean dummy)
+			DlShellCommand *dlShellCommand, Boolean)
+#else
+void executeDlShellCommand(DisplayInfo *displayInfo,
+                        DlShellCommand *dlShellCommand, Boolean dummy)
+#endif
 {
   Widget localMenuBar;
   Arg args[16];
-  int i, n, shellNumber=0;
-  char *command;
+  int i, shellNumber=0;
   XmString xmString;
   Pixmap shellCommandPixmap;
   unsigned int pixmapSize;
@@ -701,7 +732,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
 
 /* add destroy callback to free pixmap from pixmap cache */
   XtAddCallback(displayInfo->otherChild[displayInfo->otherChildCount-1],
-	XmNdestroyCallback,(XtCallbackProc)freePixmapCallback,
+	XmNdestroyCallback,freePixmapCallback,
 	(XtPointer)shellCommandPixmap);
 
   for (i = 0; i < MAX_SHELL_COMMANDS; i++) {

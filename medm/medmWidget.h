@@ -81,8 +81,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 
 /* this is ugly, but we need it for the action table */
-extern void popupValuatorKeyboardEntry();
-
+#if 0
+extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
+#endif
 
 #ifndef MAX
 #define MAX(a,b)  ((a)>(b)?(a):(b))
@@ -190,9 +191,11 @@ extern void popupValuatorKeyboardEntry();
 /*
  * add in action table for complicated actions
  */
+#if 0
 static XtActionsRec actions[] = {
 	{"popupValuatorKeyboardEntry",popupValuatorKeyboardEntry},
 };
+#endif
 
 
 
@@ -683,9 +686,6 @@ EXTERN Pixel defaultForeground, defaultBackground;
 
 /* should be dimensioned to ALARM_NSEV (alarm.h), with corresponding values */
 EXTERN Pixel alarmColorPixel[4];
-/* "green", "yellow", "red", "white", */
-static  char *alarmColorString[] = {"#00C000",
-	"#FFFF00","#FF0000","#FFFFFF",};
 
 /* initial (default - not related to any displays) colormap */
 EXTERN Pixel defaultColormap[DL_MAX_COLORS];

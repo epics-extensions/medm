@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-07-95        vong    remove all fallingLine and risingLine stuff
+ * .04  09-13-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -247,45 +249,6 @@ void writeDlText(
   fprintf(stream,"\n%s\talign=\"%s\"",indent,stringValueTable[dlText->align]);
   fprintf(stream,"\n%s}",indent);
 }
-
-
-
-void writeDlFallingLine(
-  FILE *stream,
-  DlFallingLine *dlFallingLine,
-  int level)
-{
-  int i;
-  char indent[16];
-
-  for (i = 0; i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
-
-  fprintf(stream,"\n%s\"falling line\" {",indent);
-  writeDlObject(stream,&(dlFallingLine->object),level+1);
-  fprintf(stream,"\n%s}",indent);
-}
-
-
-
-void writeDlRisingLine(
-  FILE *stream,
-  DlRisingLine *dlRisingLine,
-  int level)
-{
-  int i;
-  char indent[16];
-
-  for (i = 0; i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
-
-  fprintf(stream,"\n%s\"rising line\" {",indent);
-  writeDlObject(stream,&(dlRisingLine->object),level+1);
-  fprintf(stream,"\n%s}",indent);
-}
-
-
-
 
 
 void writeDlRelatedDisplay(

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -77,7 +78,6 @@ static void polylineName(XtPointer, char **, short *, int *);
 
 
 static void drawPolyline(Polyline *pp) {
-  unsigned int lineWidth;
   DisplayInfo *displayInfo = pp->updateTask->displayInfo;
   Display *display = XtDisplay(pp->widget);
   DlPolyline *dlPolyline = pp->dlPolyline;
@@ -86,8 +86,13 @@ static void drawPolyline(Polyline *pp) {
           dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
 }
 
+#ifdef __cplusplus
+void executeDlPolyline(DisplayInfo *displayInfo, DlPolyline *dlPolyline,
+                                Boolean)
+#else
 void executeDlPolyline(DisplayInfo *displayInfo, DlPolyline *dlPolyline,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if (dlPolyline->isFallingOrRisingLine) {
     /* convert the falling line and rising line into polyline format */
@@ -236,7 +241,7 @@ static void polylineDestroyCb(XtPointer cd) {
   Polyline *pp = (Polyline *) cd;
   if (pp) {
     medmDestroyRecord(pp->record);
-    free(pp);
+    free((char *)pp);
   }
   return;
 }

@@ -53,11 +53,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+#include <IntrinsicP.h>
 
 
 extern Widget resourceMW, resourceS;
@@ -69,12 +71,21 @@ extern XButtonPressedEvent lastEvent;
  * event handlers
  */
 
-
-XtEventHandler popupMenu(
+#ifdef __cplusplus
+void popupMenu(
+  Widget,
+  XtPointer cd,
+  XEvent *event,
+  Boolean *)
+#else
+void popupMenu(
   Widget w,
-  DisplayInfo *displayInfo,
-  XEvent *event)
+  XtPointer cd,
+  XEvent *event,
+  Boolean *ctd)
+#endif
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
   XButtonEvent *xEvent = (XButtonEvent *)event;
   Widget widget;
   DlElement *element;
@@ -155,12 +166,21 @@ XtEventHandler popupMenu(
   }
 }
 
-
-XtEventHandler popdownMenu(
+#ifdef __cplusplus
+void popdownMenu(
+  Widget,
+  XtPointer cd,
+  XEvent *event,
+  Boolean *)
+#else
+void popdownMenu(
   Widget w,
-  DisplayInfo *displayInfo,
-  XEvent *event)
+  XtPointer cd,
+  XEvent *event,
+  Boolean *ctd)
+#endif
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
   XButtonEvent *xEvent = (XButtonEvent *)event;
 
 /* MB3 = Menu */
@@ -177,33 +197,48 @@ XtEventHandler popdownMenu(
 
 
 
-XtEventHandler handleEnterWindow(
+#ifdef __cplusplus
+void handleEnterWindow(
+  Widget,
+  XtPointer cd,
+  XEvent *,
+  Boolean *)
+#else
+void handleEnterWindow(
   Widget w,
-  DisplayInfo *displayInfo,
-  XEvent *event)
+  XtPointer cd,
+  XEvent *event,
+  Boolean *ctd)
+#endif
 {
-  pointerInDisplayInfo = displayInfo;
+  pointerInDisplayInfo = (DisplayInfo *) cd;
 }
 
 
-
+#ifdef __cplusplus
+void handleButtonPress(
+  Widget w,
+  XtPointer clientData,
+  XEvent *event,
+  Boolean *)
+#else
 void handleButtonPress(
   Widget w,
   XtPointer clientData,
   XEvent *event,
   Boolean *continueToDispatch)
+#endif
 {
   DisplayInfo *displayInfo = (DisplayInfo *) clientData;
   XButtonEvent *xEvent = (XButtonEvent *)event;
   int j, k;
   Position x0, y0, x1, y1, initialX0, initialY0;
   Dimension dx0, dy0, daWidth, daHeight;
-  DlElement *element;
   Boolean unselectedOne, validDrag, validResize;
   int numSelected, minSize;
   DlElement **array;
   int numElements, arraySize;
-  XEvent localEvent, newEvent;
+  XEvent newEvent;
   Boolean objectDataOnly, foundVertex = False, foundPoly;
   int newEventType;
   Arg args[2];
@@ -867,10 +902,17 @@ int highlightAndSetSelectedElements(
  *	draw the new element highlights (and update selected element array)
  *	RETURNS: the current TOTAL number of elements selected
  */
+#ifdef __cplusplus
+int highlightAndAugmentSelectedElements(
+  DlElement **array,
+  int ,
+  int numElements)
+#else
 int highlightAndAugmentSelectedElements(
   DlElement **array,
   int arraySize,
   int numElements)
+#endif
 {
   int i;
   DisplayInfo *cdi;
@@ -932,9 +974,15 @@ int highlightAndAugmentSelectedElements(
      (but apparently not SUNOS 4.1.2) */
      if (cdi->selectedElementsArray != NULL) {
 	/* this implies cdi->numSelectedElements == 0 */
+#if defined(__cplusplus) && !defined(__GNUG__)
+        cdi->selectedElementsArray = (DlElement **) realloc(
+		(malloc_t) cdi->selectedElementsArray,
+		(cdi->numSelectedElements + numElements)*sizeof(DlElement *));
+#else
         cdi->selectedElementsArray = (DlElement **) realloc(
 		cdi->selectedElementsArray,
 		(cdi->numSelectedElements + numElements)*sizeof(DlElement *));
+#endif
         cdi->selectedElementsArraySize = cdi->numSelectedElements + numElements;
      } else {
         cdi->selectedElementsArray = (DlElement **) malloc(
@@ -1115,7 +1163,6 @@ void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
   int xOffset, yOffset;
   DisplayInfo *cdi;
   Widget widget;
-  DlElement *ele;
   Boolean moveWidgets;
 
 /* if no current display or selected elements array, simply return */
@@ -1194,7 +1241,7 @@ void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
 void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
 	DlElement *composite, float scaleX, float scaleY)
 {
-  DlElement *ele, *child;
+  DlElement *ele;
   Widget widget = (Widget)NULL, childWidget = (Widget)NULL;
   int deltaX, deltaY, dX, dY;
   int j, minX, maxX, minY, maxY;
@@ -1218,17 +1265,17 @@ void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
      if (ele->type == DL_Composite) {
 	resizeCompositeChildren(cdi, outerComposite, ele, scaleX, scaleY);
      } else {
-       deltaX = (scaleX*(ele->structure.rectangle->object.x
+       deltaX = (int) (scaleX*(ele->structure.rectangle->object.x
 		- outerComposite->structure.composite->object.x));
-       deltaY = (scaleY*(ele->structure.rectangle->object.y
+       deltaY = (int) (scaleY*(ele->structure.rectangle->object.y
 		- outerComposite->structure.composite->object.y));
 
 /* extra work for polyline/polygon - resize/rescale constituent points */
        if (ele->type == DL_Polyline ) {
 	    for (j = 0; j < ele->structure.polyline->nPoints; j++) {
-		dX = (scaleX*(ele->structure.polyline->points[j].x
+		dX = (int) (scaleX*(ele->structure.polyline->points[j].x
 			- outerComposite->structure.composite->object.x));
-		dY = (scaleY*(ele->structure.polyline->points[j].y
+		dY = (int) (scaleY*(ele->structure.polyline->points[j].y
 			- outerComposite->structure.composite->object.y));
 	        ele->structure.polyline->points[j].x = dX
 			+ outerComposite->structure.composite->object.x;
@@ -1237,9 +1284,9 @@ void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
 	    }
        } else if (ele->type == DL_Polygon ) {
 	    for (j = 0; j < ele->structure.polygon->nPoints; j++) {
-		dX = (scaleX*(ele->structure.polygon->points[j].x
+		dX = (int) (scaleX*(ele->structure.polygon->points[j].x
 			- outerComposite->structure.composite->object.x));
-		dY = (scaleY*(ele->structure.polygon->points[j].y
+		dY = (int) (scaleY*(ele->structure.polygon->points[j].y
 			- outerComposite->structure.composite->object.y));
 	        ele->structure.polygon->points[j].x = dX
 			+ outerComposite->structure.composite->object.x;
@@ -1365,14 +1412,14 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 	    sY = (float)((float)(ele->structure.polyline->object.height
 		+ yOffset) / (float)(ele->structure.polyline->object.height));
 	    for (j = 0; j < ele->structure.polyline->nPoints; j++) {
-	        ele->structure.polyline->points[j].x = 
+	        ele->structure.polyline->points[j].x = (short) (
 		   ele->structure.polyline->object.x +
 		   	sX*(ele->structure.polyline->points[j].x
-			- ele->structure.polyline->object.x);
-	        ele->structure.polyline->points[j].y = 
+			- ele->structure.polyline->object.x));
+	        ele->structure.polyline->points[j].y = (short) (
 		   ele->structure.polyline->object.y +
 		   	sY*(ele->structure.polyline->points[j].y
-			- ele->structure.polyline->object.y);
+			- ele->structure.polyline->object.y));
 	    }
 	  } else if (cdi->selectedElementsArray[i]->type == DL_Polygon ) {
 	    sX = (float)((float)(ele->structure.polygon->object.width
@@ -1380,14 +1427,14 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 	    sY = (float)((float)(ele->structure.polygon->object.height
 		+ yOffset) / (float)(ele->structure.polygon->object.height));
 	    for (j = 0; j < ele->structure.polygon->nPoints; j++) {
-	        ele->structure.polygon->points[j].x = 
+	        ele->structure.polygon->points[j].x = (short) (
 		   ele->structure.polyline->object.x +
 			sX*(ele->structure.polygon->points[j].x
-			- ele->structure.polygon->object.x);
-	        ele->structure.polygon->points[j].y = 
+			- ele->structure.polygon->object.x));
+	        ele->structure.polygon->points[j].y = (short) (
 		   ele->structure.polyline->object.y +
 			sY*(ele->structure.polygon->points[j].y
-			- ele->structure.polygon->object.y);
+			- ele->structure.polygon->object.y));
 	    }
 	  }
 /* simple element resize */
@@ -1461,7 +1508,6 @@ void handleRectangularCreates(
   DlElementType elementType)
 {
   DlElement *element, **array;
-  Widget widget;
 
 
     element = (DlElement *) NULL;
@@ -1551,11 +1597,13 @@ void handleRectangularCreates(
 	    (*element->dmExecute)(currentDisplayInfo,
 			element->structure.cartesianPlot,FALSE);
 	    break;
+#if 0
 	  case DL_SurfacePlot:
 	    element = createDlSurfacePlot(currentDisplayInfo);
 	    (*element->dmExecute)(currentDisplayInfo,
 			element->structure.surfacePlot,FALSE);
 	    break;
+#endif
 	  case DL_Rectangle:
 	    element = createDlRectangle(currentDisplayInfo);
 	    (*element->dmExecute)(currentDisplayInfo,

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -63,10 +64,19 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Mods: MDA - Creation                                                     *
  *       DMW - Tells resource palette which global resources Byte needs     *
  ****************************************************************************/
+#include <ctype.h>
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 #include "dbDefs.h"
 #include "medmCartesianPlot.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <cvtFast.h>
+#ifdef __cplusplus
+}
+#endif
 
 #define N_MAX_MENU_ELES 5
 #ifdef EXTENDED_INTERFACE
@@ -118,9 +128,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #define SC_APPLY_BTN	0
 #define SC_CLOSE_BTN	1
 
-
-static Widget resourceFilePDM;
 #ifdef EXTENDED_INTERFACE
+static Widget resourceFilePDM;
 static Widget resourceBundlePDM, openFSD;
 #endif
 static Widget bundlesRB;
@@ -264,16 +273,12 @@ static void createBundleButtons( Widget messageF) {
     XtManageChild(separator);
 }
 
-static XtCallbackProc pushButtonActivateCallback(
-/****************************************************************************
- * Pushbutton Activate Call-back: Must popup the appropriately configured   *
- *   dialog box in which user supplies/views various multi-entry type data  *
- *              RELATED DISPLAYS            STRIP CHARTS                    *
- *              CARTESIAN PLOTS             SHELL COMMANDS                  *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmPushButtonCallbackStruct *call_data) {
+#ifdef __cplusplus
+static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer) {
+#else
+static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+  int rcType = (int) cd;
 
     switch (rcType) {
       case RDDATA_RC:
@@ -329,64 +334,62 @@ static XtCallbackProc pushButtonActivateCallback(
   }
 }
 
-static XtCallbackProc optionMenuSimpleCallback(
-/****************************************************************************
- * Option Menu Simple Call-back                                             *
- ****************************************************************************/
-  Widget w,
-  int buttonId,
-  XmPushButtonCallbackStruct *call_data) {
+#ifdef __cplusplus
+static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer) {
+#else
+static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int buttonId = (int) cd;
     int i, rcType;
     DlElement *elementPtr;
-    Widget widget;
 
 /****** rcType (which option menu) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
     switch (rcType) {
       case ALIGN_RC: 
-        globalResourceBundle.align = FIRST_TEXT_ALIGN + buttonId;
+        globalResourceBundle.align = (TextAlign) (FIRST_TEXT_ALIGN + buttonId);
         break;
     case FORMAT_RC: 
-       globalResourceBundle.format = FIRST_TEXT_FORMAT + buttonId;
+       globalResourceBundle.format = (TextFormat) (FIRST_TEXT_FORMAT + buttonId);
        break;
     case LABEL_RC: 
-       globalResourceBundle.label = FIRST_LABEL_TYPE + buttonId;
+       globalResourceBundle.label = (LabelType) (FIRST_LABEL_TYPE + buttonId);
        break;
     case DIRECTION_RC: 
-       globalResourceBundle.direction = FIRST_DIRECTION + buttonId;
+       globalResourceBundle.direction = (Direction) (FIRST_DIRECTION + buttonId);
        break;
     case CLRMOD_RC: 
-       globalResourceBundle.clrmod = FIRST_COLOR_MODE + buttonId;
+       globalResourceBundle.clrmod = (ColorMode) (FIRST_COLOR_MODE + buttonId);
        break;
     case FILLMOD_RC: 
-       globalResourceBundle.fillmod = FIRST_FILL_MODE + buttonId;
+       globalResourceBundle.fillmod = (FillMode) (FIRST_FILL_MODE + buttonId);
        break;
     case STYLE_RC: 
-       globalResourceBundle.style = FIRST_EDGE_STYLE + buttonId;
+       globalResourceBundle.style = (EdgeStyle) (FIRST_EDGE_STYLE + buttonId);
        break;
     case FILL_RC: 
-       globalResourceBundle.fill = FIRST_FILL_STYLE + buttonId;
+       globalResourceBundle.fill = (FillStyle) (FIRST_FILL_STYLE + buttonId);
        break;
     case VIS_RC: 
-       globalResourceBundle.vis = FIRST_VISIBILITY_MODE + buttonId;
+       globalResourceBundle.vis = (VisibilityMode) (FIRST_VISIBILITY_MODE + buttonId);
        break;
     case UNITS_RC: 
-       globalResourceBundle.units = FIRST_TIME_UNIT + buttonId;
+       globalResourceBundle.units = (TimeUnits) (FIRST_TIME_UNIT + buttonId);
        break;
     case CSTYLE_RC: 
-       globalResourceBundle.cStyle = FIRST_CARTESIAN_PLOT_STYLE + buttonId;
+       globalResourceBundle.cStyle = (CartesianPlotStyle) (FIRST_CARTESIAN_PLOT_STYLE + buttonId);
        break;
     case ERASE_OLDEST_RC:
-       globalResourceBundle.erase_oldest = FIRST_ERASE_OLDEST + buttonId;
+       globalResourceBundle.erase_oldest = (EraseOldest) (FIRST_ERASE_OLDEST + buttonId);
        break;
     case STACKING_RC: 
-       globalResourceBundle.stacking = FIRST_STACKING + buttonId;
+       globalResourceBundle.stacking = (Stacking) (FIRST_STACKING + buttonId);
        break;
     case IMAGETYPE_RC: 
-       globalResourceBundle.imageType = FIRST_IMAGE_TYPE + buttonId;
+       globalResourceBundle.imageType = (ImageType) (FIRST_IMAGE_TYPE + buttonId);
        break;
     case ERASE_MODE_RC:
-       globalResourceBundle.eraseMode = FIRST_ERASE_MODE + buttonId;
+       globalResourceBundle.eraseMode = (eraseMode_t) (FIRST_ERASE_MODE + buttonId);
        break;
 
     default:
@@ -416,17 +419,18 @@ static XtCallbackProc optionMenuSimpleCallback(
 }
 
 
-static void cpAxisOptionMenuSimpleCallback(
 /** set Cartesian Plot Axis attributes
  * (complex - has to handle both EDIT and EXECUTE time interactions)
  */
-  Widget w,
-  int buttonId,
-  XmPushButtonCallbackStruct *call_data) {
+#ifdef __cplusplus
+static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer) {
+#else
+static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int buttonId = (int) cd;
     int i, k, n, rcType, iPrec;
     char string[24];
     DlElement *elementPtr;
-    Widget widget, cartesianPlot;
     Arg args[10];
     String resourceName;
     XcVType minF, maxF, tickF;
@@ -451,7 +455,7 @@ static void cpAxisOptionMenuSimpleCallback(
   switch (rcType/3) {
     case CP_AXIS_STYLE/3: 
        globalResourceBundle.axis[rcType%3].axisStyle
-		= FIRST_CARTESIAN_PLOT_AXIS_STYLE + buttonId;
+		= (CartesianPlotAxisStyle) (FIRST_CARTESIAN_PLOT_AXIS_STYLE + buttonId);
        if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	 switch(globalResourceBundle.axis[rcType%3].axisStyle) {
 	    case LINEAR_AXIS:
@@ -478,7 +482,7 @@ static void cpAxisOptionMenuSimpleCallback(
 
     case CP_RANGE_STYLE/3: 
        globalResourceBundle.axis[rcType%3].rangeStyle
-		= FIRST_CARTESIAN_PLOT_RANGE_STYLE + buttonId;
+		= (CartesianPlotRangeStyle) (FIRST_CARTESIAN_PLOT_RANGE_STYLE + buttonId);
 
        if (globalResourceBundle.axis[rcType%3].rangeStyle
 					== USER_SPECIFIED_RANGE) {
@@ -681,14 +685,12 @@ static void cpAxisOptionMenuSimpleCallback(
   }
 }
 
-static XtCallbackProc colorSelectCallback(
-/****************************************************************************
- * Color Select Call-back                                                   *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmDrawnButtonCallbackStruct *call_data) {
-    int i;
+#ifdef __cplusplus
+static void colorSelectCallback(Widget, XtPointer cd, XtPointer) {
+#else
+static void colorSelectCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int rcType = (int) cd;
 
     if (colorMW != NULL) {
       setCurrentDisplayColorsInColorPalette(rcType,0);
@@ -701,7 +703,7 @@ static XtCallbackProc colorSelectCallback(
 }
 
 #ifdef EXTENDED_INTERFACE
-static XtCallbackProc fileOpenCallback(
+static void fileOpenCallback(
   Widget w,
   int btn,
   XmAnyCallbackStruct *call_data) {
@@ -716,14 +718,13 @@ static XtCallbackProc fileOpenCallback(
 }
 #endif
 
-static XtCallbackProc fileMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data) {
-    XmString label;
-    int n;
+#ifdef __cplusplus
+static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer) {
+#else
+static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int buttonNumber = (int) cd;
     Arg args[10];
-    Widget textField;
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
@@ -741,10 +742,10 @@ static XtCallbackProc fileMenuSimpleCallback(
 				XmDIALOG_FILTER_TEXT);
 		    XtSetSensitive(textField,FALSE);
 		    XtAddCallback(openFSD,XmNokCallback,
-				(XtCallbackProc)fileOpenCallback,
+				fileOpenCallback,
 				(XtPointer)FILE_OPEN_BTN);
 		    XtAddCallback(openFSD,XmNcancelCallback,
-				(XtCallbackProc)fileOpenCallback,
+				fileOpenCallback,
 				(XtPointer)FILE_OPEN_BTN);
 		    XmStringFree(label);
 		    XtManageChild(openFSD);
@@ -764,7 +765,7 @@ static XtCallbackProc fileMenuSimpleCallback(
 }
 
 #ifdef EXTENDED_INTERFACE
-static XtCallbackProc bundleMenuSimpleCallback(
+static void bundleMenuSimpleCallback(
   Widget w,
   int buttonNumber,
   XmAnyCallbackStruct *call_data) {
@@ -778,14 +779,13 @@ static XtCallbackProc bundleMenuSimpleCallback(
 }
 #endif
 
-static XtCallbackProc helpMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data) {
-    XmString label;
-    int n;
+#ifdef __cplusplus
+static void helpMenuSimpleCallback(Widget, XtPointer cd, XtPointer) {
+#else
+static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int buttonNumber = (int) cd;
     Arg args[10];
-    Widget textField;
 
     switch(buttonNumber) {
     }
@@ -804,7 +804,7 @@ void textFieldNumericVerifyCallback(
    len = 0;
    if (cbs->startPos < cbs->currInsert) return;
 
-   len = XmTextFieldGetLastPosition(w);
+   len = (int) XmTextFieldGetLastPosition(w);
 
 /****** If no (new) data {e.g., setting to NULL string}, simply return */
    if (cbs->text->ptr == NULL) return;
@@ -839,8 +839,12 @@ void textFieldNumericVerifyCallback(
     cbs->doit = False;
 }
 
-void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer callbackStruct) {
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *) callbackStruct;
+#ifdef __cplusplus
+void textFieldFloatVerifyCallback(Widget w, XtPointer, XtPointer pcbs) {
+#else
+void textFieldFloatVerifyCallback(Widget w, XtPointer cd, XtPointer pcbs) {
+#endif
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *) pcbs;
     
   int len;
   Boolean haveDecimalPoint;
@@ -849,7 +853,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
   len = 0;
   if (cbs->startPos < cbs->currInsert) return;
 
-  len = XmTextFieldGetLastPosition(w);
+  len = (int) XmTextFieldGetLastPosition(w);
 
 /* see if there is already a decimal point in the string */
   textString = XmTextFieldGetString(w);
@@ -907,14 +911,14 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
     cbs->doit = False;
 }
 
-XtCallbackProc scaleCallback(
-/****************************************************************************
- * Scale Call-back: Scale/slider processing callback                        *
- ****************************************************************************/
-  Widget w,
-  int rcType,				/* the resource element type */
-  XmScaleCallbackStruct *cbs) {
-    int i;
+#ifdef __cplusplus
+void scaleCallback(Widget, XtPointer cd, XtPointer pcbs) {
+#else
+void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs) {
+#endif
+  int rcType = (int) cd;  /* the resource element type */
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *) pcbs;
+  int i;
 
 /****** Show users degrees, but internally use degrees*64 as Xlib requires */
     switch(rcType) {
@@ -946,13 +950,12 @@ XtCallbackProc scaleCallback(
     }
 }
 
-XtCallbackProc textFieldActivateCallback(
-/****************************************************************************
- * Text Field Activate Call-back: Text field processing callback            *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmTextVerifyCallbackStruct *cbs) {
+#ifdef __cplusplus
+void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer) {
+#else
+void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+  int rcType = (int) cd;
   char *stringValue;
   DlElement *dyn;
   int i;
@@ -1108,16 +1111,13 @@ XtCallbackProc textFieldActivateCallback(
   }
 }
 
-
-XtCallbackProc cpAxisTextFieldActivateCallback(
-/****************************************************************************
- * Cartesian Plot Axis Text Field Activate Call-back                        *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmTextVerifyCallbackStruct *cbs) {
+#ifdef __cplusplus
+void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer) {
+#else
+void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int rcType = (int) cd;
     char *stringValue, string[24];
-    DlElement *dyn;
     int i, k, n, iPrec;
     Arg args[6];
     XcVType valF, minF, maxF, tickF;
@@ -1221,13 +1221,12 @@ XtCallbackProc cpAxisTextFieldActivateCallback(
   }
 }
 
-XtCallbackProc textFieldLosingFocusCallback(
-/****************************************************************************
- * Text Field Losing Focus Callback                                         *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmTextVerifyCallbackStruct *cbs) {
+#ifdef __cplusplus
+void textFieldLosingFocusCallback(Widget, XtPointer cd, XtPointer) {
+#else
+void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
 
@@ -1439,13 +1438,12 @@ XtCallbackProc textFieldLosingFocusCallback(
   }
 }
 
-void cpAxisTextFieldLosingFocusCallback(
-/****************************************************************************
- * Cartesian Plot Text Field Losing Focus Call-back                         *
- ****************************************************************************/
-  Widget w,
-  int rcType,
-  XmTextVerifyCallbackStruct *cbs) {
+#ifdef __cplusplus
+void cpAxisTextFieldLosingFocusCallback(Widget, XtPointer cd, XtPointer) {
+#else
+void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+    int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
     XcVType minF[3], maxF[3];
@@ -1500,7 +1498,7 @@ void cpAxisTextFieldLosingFocusCallback(
 }
 
 #ifdef EXTENDED_INTERFACE
-static XtCallbackProc bundleCallback(
+static void bundleCallback(
 /****************************************************************************
  * Bundle Call-back                                                         *
  ****************************************************************************/
@@ -1645,7 +1643,7 @@ void createResource() {
  ****************************************************************************/
     Widget entriesSW, bundlesSW, resourceMB, messageF, resourceHelpPDM,
            menuHelpWidget;
-    XmString buttons[N_MAX_MENU_ELES], string;
+    XmString buttons[N_MAX_MENU_ELES];
     KeySym keySyms[N_MAX_MENU_ELES];
     XmButtonType buttonType[N_MAX_MENU_ELES];
     int i, n;
@@ -1682,7 +1680,7 @@ void createResource() {
       mainShell,args,n);
 
     XmAddWMProtocolCallback(resourceS,WM_DELETE_WINDOW,
-      (XtCallbackProc)wmCloseCallback,(XtPointer)OTHER_SHELL);
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
 
     resourceMW = XmCreateMainWindow(resourceS,"resourceMW",NULL,0);
 
@@ -1759,9 +1757,13 @@ void createResource() {
     XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
     XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
     XtSetArg(args[n],XmNsimpleCallback,
-      (XtCallbackProc)fileMenuSimpleCallback); n++;
+      fileMenuSimpleCallback); n++;
+#ifdef EXTENDED_INTERFACE
     resourceFilePDM = XmCreateSimplePulldownMenu(resourceMB,"resourceFilePDM",
       args,n);
+#else
+    XmCreateSimplePulldownMenu(resourceMB,"resourceFilePDM", args,n);
+#endif
     for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
 
 /** create the bundle pulldown menu pane */
@@ -1782,7 +1784,7 @@ void createResource() {
   XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
   XtSetArg(args[n],XmNpostFromButton,BUNDLE_BTN_POSN); n++;
   XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)bundleMenuSimpleCallback); n++;
+		bundleMenuSimpleCallback); n++;
   resourceBundlePDM = XmCreateSimplePulldownMenu(resourceMB,"resourceBundlePDM",
 	args,n);
   for (i = 0; i < N_BUNDLE_MENU_ELES; i++) XmStringFree(buttons[i]);
@@ -1853,8 +1855,7 @@ static void createResourceEntries(Widget entriesSW) {
  ****************************************************************************/
   Widget entriesRC;
   Arg args[12];
-  int i, j, n;
-  XmString xmString;
+  int i, n;
 
     n = 0;
     XtSetArg(args[n],XmNnumColumns,1); n++;
@@ -1972,13 +1973,13 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
 	localElement = XmCreateTextField(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
-			(XtCallbackProc)textFieldActivateCallback,
+			textFieldActivateCallback,
 			(XtPointer)rcType);
 	XtAddCallback(localElement,XmNlosingFocusCallback,
-			(XtCallbackProc)textFieldLosingFocusCallback,
+			textFieldLosingFocusCallback,
 			(XtPointer)rcType);
 	XtAddCallback(localElement,XmNmodifyVerifyCallback,
-			(XtCallbackProc)textFieldNumericVerifyCallback,
+			textFieldNumericVerifyCallback,
 			(XtPointer)rcType);
 	break;
 
@@ -1987,11 +1988,11 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
 	localElement = XmCreateTextField(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)textFieldActivateCallback,(XtPointer)rcType);
+		textFieldActivateCallback,(XtPointer)rcType);
 	XtAddCallback(localElement,XmNlosingFocusCallback,
-		(XtCallbackProc)textFieldLosingFocusCallback,(XtPointer)rcType);
+		textFieldLosingFocusCallback,(XtPointer)rcType);
 	XtAddCallback(localElement,XmNmodifyVerifyCallback,
-		(XtCallbackProc)textFieldFloatVerifyCallback,(XtPointer)NULL);
+		textFieldFloatVerifyCallback,(XtPointer)NULL);
 	break;
 
 /* alpha-numeric text field types */
@@ -2015,9 +2016,9 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
 	localElement = XmCreateTextField(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)textFieldActivateCallback,(XtPointer)rcType);
+		textFieldActivateCallback,(XtPointer)rcType);
 	XtAddCallback(localElement,XmNlosingFocusCallback,
-		(XtCallbackProc)textFieldLosingFocusCallback,(XtPointer)rcType);
+		textFieldLosingFocusCallback,(XtPointer)rcType);
 	break;
 
 
@@ -2033,9 +2034,9 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNscaleMultiple,15); n++;
 	localElement = XmCreateScale(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNvalueChangedCallback,
-			(XtCallbackProc)scaleCallback,(XtPointer)rcType);
+			scaleCallback,(XtPointer)rcType);
 	XtAddCallback(localElement,XmNdragCallback,
-			(XtCallbackProc)scaleCallback,(XtPointer)rcType);
+			scaleCallback,(XtPointer)rcType);
 	break;
 
 
@@ -2047,7 +2048,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_TEXT_ALIGN])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_TEXT_ALIGNS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2059,7 +2060,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_TEXT_FORMAT])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_TEXT_FORMATS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2071,7 +2072,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_LABEL_TYPE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_LABEL_TYPES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2083,7 +2084,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_DIRECTION])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_DIRECTIONS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2095,7 +2096,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_COLOR_MODE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_COLOR_MODES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2107,7 +2108,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_FILL_MODE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_FILL_MODES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2119,7 +2120,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_EDGE_STYLE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_EDGE_STYLES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2131,7 +2132,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_FILL_STYLE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_FILL_STYLES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2143,7 +2144,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_VISIBILITY_MODE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_VISIBILITY_MODES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2155,7 +2156,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_TIME_UNIT])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_TIME_UNITS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2167,7 +2168,7 @@ static void createEntryRC( Widget parent, int rcType) {
 			&(xmStringValueTable[FIRST_CARTESIAN_PLOT_STYLE])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_CARTESIAN_PLOT_STYLES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2179,7 +2180,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_ERASE_OLDESTS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2191,7 +2192,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_ERASE_MODES); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2202,7 +2203,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNbuttons,&(xmStringValueTable[FIRST_STACKING])); n++;
 	XtSetArg(args[n],XmNbuttonCount,NUM_STACKINGS); n++;
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2218,7 +2219,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNbuttonCount,2); n++;
 
 	XtSetArg(args[n],XmNsimpleCallback,
-			(XtCallbackProc)optionMenuSimpleCallback); n++;
+			optionMenuSimpleCallback); n++;
 	XtSetArg(args[n],XmNuserData,rcType); n++;
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
@@ -2242,7 +2243,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	}
 	localElement = XmCreateDrawnButton(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)colorSelectCallback,(XtPointer)rcType);
+		colorSelectCallback,(XtPointer)rcType);
 	break;
 
 
@@ -2257,7 +2258,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	XtSetArg(args[n],XmNrecomputeSize,False); n++;
 	localElement = XmCreatePushButton(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)pushButtonActivateCallback,(XtPointer)rcType);
+		pushButtonActivateCallback,(XtPointer)rcType);
 	break;
 
      default:
@@ -2578,36 +2579,6 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
 
- /* DL_FallingLine */
- index = DL_FallingLine - MIN_DL_ELEMENT_TYPE;
- i = 0;
- resourcePaletteElements[index].childIndexRC[i] = X_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = Y_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = WIDTH_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = HEIGHT_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CLR_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = STYLE_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
- resourcePaletteElements[index].numChildren = i;
-
- /* DL_RisingLine */
- index = DL_RisingLine - MIN_DL_ELEMENT_TYPE;
- i = 0;
- resourcePaletteElements[index].childIndexRC[i] = X_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = Y_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = WIDTH_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = HEIGHT_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CLR_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = STYLE_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
- resourcePaletteElements[index].numChildren = i;
-
  /* DL_File */
  /* DL_Colormap */
  /* DL_BasicAttribute */
@@ -2740,10 +2711,8 @@ static void createResourceBundles(Widget bundlesSW) {
 /****************************************************************************
  * Create Resource Bundles : Create resource bundles in scrolled window.    *
  ****************************************************************************/
-    Widget bundlesSB;
     Arg args[10];
-    int i, j, n;
-    XmString xmString;
+    int n;
 
     n = 0;
     bundlesRB = XmCreateRadioBox(bundlesSW,"bundlesRB",args,n);
@@ -2759,7 +2728,7 @@ static void createBundleTB(Widget bundlesRB, char *name) {
  ****************************************************************************/
   Widget bundlesTB;
   Arg args[10];
-  int i, j, n;
+  int n;
   XmString xmString;
 
     n = 0;
@@ -2772,7 +2741,7 @@ static void createBundleTB(Widget bundlesRB, char *name) {
 
 #ifdef EXTENDED_INTERFACE
   XtAddCallback(bundlesTB,XmNvalueChangedCallback, 
-    (XtCallbackProc)bundleCallback,(XtPointer)resourceBundleCounter);
+    bundleCallback,(XtPointer)resourceBundleCounter);
 #endif
 
     resourceBundleCounter++;
@@ -2781,10 +2750,12 @@ static void createBundleTB(Widget bundlesRB, char *name) {
     XtManageChild(bundlesTB);
 }
 
-static XtCallbackProc relatedDisplayActivate(
-  Widget w,
-  int buttonType,
-  XmPushButtonCallbackStruct *call_data) {
+#ifdef __cplusplus
+static void relatedDisplayActivate(Widget, XtPointer cd, XtPointer) {
+#else
+static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs) {
+#endif
+  int buttonType = (int) cd;
   String **newCells;
   int i;
 
@@ -2867,7 +2838,7 @@ Widget createRelatedDisplayDataDialog (Widget parent) {
   XtSetValues(shell,args,n);
 
   XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-		(XtCallbackProc)relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
+		relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
   n = 0;
   XtSetArg(args[n],XmNrows,MAX_RELATED_DISPLAYS); n++;
   XtSetArg(args[n],XmNcolumns,3); n++;
@@ -2887,7 +2858,7 @@ Widget createRelatedDisplayDataDialog (Widget parent) {
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   closeButton = XmCreatePushButton(rdForm,"closeButton",args,n);
   XtAddCallback(closeButton,XmNactivateCallback,
-		(XtCallbackProc)relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
+		relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
   XtManageChild(closeButton);
   XmStringFree(xmString);
 
@@ -2896,7 +2867,7 @@ Widget createRelatedDisplayDataDialog (Widget parent) {
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   applyButton = XmCreatePushButton(rdForm,"applyButton",args,n);
   XtAddCallback(applyButton,XmNactivateCallback,
-		(XtCallbackProc)relatedDisplayActivate,(XtPointer)RD_APPLY_BTN);
+		relatedDisplayActivate,(XtPointer)RD_APPLY_BTN);
   XtManageChild(applyButton);
   XmStringFree(xmString);
 
@@ -2964,12 +2935,13 @@ void updateRelatedDisplayDataDialog()
 }
 
 
-
-static XtCallbackProc shellCommandActivate(
-  Widget w,
-  int buttonType,
-  XmPushButtonCallbackStruct *call_data)
+#ifdef __cplusplus
+static void shellCommandActivate(Widget, XtPointer cd, XtPointer)
+#else
+static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  int buttonType = (int) cd;
   String **newCells;
   int i;
 
@@ -3055,7 +3027,7 @@ Widget createShellCommandDataDialog(
   XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
   XtSetValues(shell,args,n);
   XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-		(XtCallbackProc)shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
+		shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
   n = 0;
   XtSetArg(args[n],XmNrows,MAX_RELATED_DISPLAYS); n++;
   XtSetArg(args[n],XmNcolumns,3); n++;
@@ -3075,7 +3047,7 @@ Widget createShellCommandDataDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   closeButton = XmCreatePushButton(cmdForm,"closeButton",args,n);
   XtAddCallback(closeButton,XmNactivateCallback,
-		(XtCallbackProc)shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
+		shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
   XtManageChild(closeButton);
   XmStringFree(xmString);
 
@@ -3084,7 +3056,7 @@ Widget createShellCommandDataDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   applyButton = XmCreatePushButton(cmdForm,"applyButton",args,n);
   XtAddCallback(applyButton,XmNactivateCallback,
-		(XtCallbackProc)shellCommandActivate,(XtPointer)CMD_APPLY_BTN);
+		shellCommandActivate,(XtPointer)CMD_APPLY_BTN);
   XtManageChild(applyButton);
   XmStringFree(xmString);
 
@@ -3150,11 +3122,13 @@ void updateShellCommandDataDialog() {
   
 }
 
-static XtCallbackProc cartesianPlotActivate(
-  Widget w,
-  int buttonType,
-  XmPushButtonCallbackStruct *call_data)
+#ifdef __cplusplus
+static void cartesianPlotActivate(Widget, XtPointer cd, XtPointer)
+#else
+static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  int buttonType = (int) cd;
   String **newCells;
   int i;
 
@@ -3171,7 +3145,7 @@ static XtCallbackProc cartesianPlotActivate(
 	strcpy(globalResourceBundle.cpData[i].ydata,
 			newCells[i][CP_YDATA_COLUMN]);
 	globalResourceBundle.cpData[i].data_clr = 
-			cpColorRows[i][CP_COLOR_COLUMN];
+			(int) cpColorRows[i][CP_COLOR_COLUMN];
      }
   /* and update the elements (since this level of "Apply" is analogous
    *	to changing text in a text field in the resource palette
@@ -3197,12 +3171,13 @@ static XtCallbackProc cartesianPlotActivate(
 }
 
 
-static void cartesianPlotAxisActivate(
-  Widget w,
-  int buttonType,
-  XmPushButtonCallbackStruct *call_data)
+#ifdef __cplusplus
+static void cartesianPlotAxisActivate(Widget, XtPointer cd, XtPointer)
+#else
+static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int i;
+  int buttonType = (int) cd;
 
   switch (buttonType) {
 
@@ -3219,11 +3194,13 @@ static void cartesianPlotAxisActivate(
  *	mostly it passes through for the text field entry
  *	but pops up the color editor for the color field selection
  */
-XtCallbackProc cpEnterCellCallback(
-  Widget w,
-  XtPointer client_data,
-  XbaeMatrixEnterCellCallbackStruct *call_data)
+#ifdef __cplusplus
+void cpEnterCellCallback(Widget, XtPointer, XtPointer cbs)
+#else
+void cpEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
   int row;
   if (call_data->column == CP_COLOR_COLUMN) {
     /* set this cell non-editable */
@@ -3307,7 +3284,7 @@ Widget createCartesianPlotDataDialog(
   XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
   XtSetValues(shell,args,n);
   XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-		(XtCallbackProc)cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
+		cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
   n = 0;
   XtSetArg(args[n],XmNrows,MAX_TRACES); n++;
   XtSetArg(args[n],XmNcolumns,3); n++;
@@ -3322,7 +3299,7 @@ Widget createCartesianPlotDataDialog(
 			xbaeMatrixWidgetClass,cpForm,args,n);
   cpUpdateMatrixColors();
   XtAddCallback(cpMatrix,XmNenterCellCallback,
-			(XtCallbackProc)cpEnterCellCallback,(XtPointer)NULL);
+			cpEnterCellCallback,(XtPointer)NULL);
 
 
   xmString = XmStringCreateSimple("Close");
@@ -3330,7 +3307,7 @@ Widget createCartesianPlotDataDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   closeButton = XmCreatePushButton(cpForm,"closeButton",args,n);
   XtAddCallback(closeButton,XmNactivateCallback,
-		(XtCallbackProc)cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
+		cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
   XtManageChild(closeButton);
   XmStringFree(xmString);
 
@@ -3339,7 +3316,7 @@ Widget createCartesianPlotDataDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   applyButton = XmCreatePushButton(cpForm,"applyButton",args,n);
   XtAddCallback(applyButton,XmNactivateCallback,
-		(XtCallbackProc)cartesianPlotActivate,(XtPointer)CP_APPLY_BTN);
+		cartesianPlotActivate,(XtPointer)CP_APPLY_BTN);
   XtManageChild(applyButton);
   XmStringFree(xmString);
 
@@ -3408,11 +3385,13 @@ void updateCartesianPlotDataDialog()
   if (cpMatrix != NULL) XtVaSetValues(cpMatrix,XmNcells,cpCells,NULL);
 }
 
-static XtCallbackProc stripChartActivate(
-  Widget w,
-  int buttonType,
-  XmPushButtonCallbackStruct *call_data)
+#ifdef __cplusplus
+static void stripChartActivate(Widget, XtPointer cd, XtPointer) 
+#else
+static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs) 
+#endif
 {
+  int buttonType = (int) cd;
   String **newCells;
   int i;
 
@@ -3426,7 +3405,7 @@ static XtCallbackProc stripChartActivate(
      for (i = 0; i < MAX_PENS; i++) {
 	strcpy(globalResourceBundle.scData[i].chan,
 			newCells[i][SC_CHANNEL_COLUMN]);
-	globalResourceBundle.scData[i].clr = scColorRows[i][SC_COLOR_COLUMN];
+	globalResourceBundle.scData[i].clr = (int) scColorRows[i][SC_COLOR_COLUMN];
      }
   /* and update the elements (since this level of "Apply" is analogous
    *	to changing text in a text field in the resource palette
@@ -3456,11 +3435,13 @@ static XtCallbackProc stripChartActivate(
  *	mostly it passes through for the text field entry
  *	but pops up the color editor for the color field selection
  */
-XtCallbackProc scEnterCellCallback(
-  Widget w,
-  XtPointer client_data,
-  XbaeMatrixEnterCellCallbackStruct *call_data)
+#ifdef __cplusplus
+void scEnterCellCallback(Widget, XtPointer, XtPointer cbs)
+#else
+void scEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
   int row;
   if (call_data->column == SC_COLOR_COLUMN) {
     /* set this cell non-editable */
@@ -3506,7 +3487,7 @@ Widget createStripChartDataDialog(
   Dimension cWidth, cHeight, aWidth, aHeight;
   Arg args[14];
   XmString xmString;
-  int i, j, n;
+  int i, n;
   static Boolean first = True;
   Pixel foreground;
 
@@ -3547,7 +3528,7 @@ Widget createStripChartDataDialog(
   scForm = XmCreateFormDialog(parent,"stripChartDataF",args,n);
   shell = XtParent(scForm);
   XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-		(XtCallbackProc)stripChartActivate,(XtPointer)SC_CLOSE_BTN);
+		stripChartActivate,(XtPointer)SC_CLOSE_BTN);
   n = 0;
   XtSetArg(args[n],XmNtitle,"Strip Chart Data"); n++;
   XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
@@ -3567,14 +3548,14 @@ Widget createStripChartDataDialog(
   scUpdateMatrixColors();
 
   XtAddCallback(scMatrix,XmNenterCellCallback,
-		(XtCallbackProc)scEnterCellCallback,(XtPointer)NULL);
+		scEnterCellCallback,(XtPointer)NULL);
 
   xmString = XmStringCreateSimple("Close");
   n = 0;
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   closeButton = XmCreatePushButton(scForm,"closeButton",args,n);
   XtAddCallback(closeButton,XmNactivateCallback,
-		(XtCallbackProc)stripChartActivate,(XtPointer)SC_CLOSE_BTN);
+		stripChartActivate,(XtPointer)SC_CLOSE_BTN);
   XtManageChild(closeButton);
   XmStringFree(xmString);
 
@@ -3583,7 +3564,7 @@ Widget createStripChartDataDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   applyButton = XmCreatePushButton(scForm,"applyButton",args,n);
   XtAddCallback(applyButton,XmNactivateCallback,
-		(XtCallbackProc)stripChartActivate,(XtPointer)SC_APPLY_BTN);
+		stripChartActivate,(XtPointer)SC_APPLY_BTN);
   XtManageChild(applyButton);
   XmStringFree(xmString);
 
@@ -3663,16 +3644,18 @@ void updateStripChartDataDialog()
 /*
  * create axis dialog
  */
-Widget createCartesianPlotAxisDialog(
-  Widget parent)
+#ifdef __cplusplus
+Widget createCartesianPlotAxisDialog(Widget)
+#else
+Widget createCartesianPlotAxisDialog(Widget parent)
+#endif
 {
   Widget shell, closeButton;
-  Dimension cWidth, cHeight, aWidth, aHeight;
   Arg args[12];
   int counter;
   XmString xmString, axisStyleXmString, axisRangeXmString, axisMinXmString,
 		axisMaxXmString, frameLabelXmString;
-  int i, j, n;
+  int i, n;
   static Boolean first = True;
   XmButtonType buttonType[MAX_CP_AXIS_BUTTONS];
   Widget entriesRC, frame, localRC, localLabel, localElement, parentRC;
@@ -3704,7 +3687,7 @@ Widget createCartesianPlotAxisDialog(
   shell = XtCreatePopupShell("cartesianPlotAxisS",
 		topLevelShellWidgetClass,mainShell,args,n);
   XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-		(XtCallbackProc)cartesianPlotAxisActivate,
+		cartesianPlotAxisActivate,
 		(XtPointer)CP_CLOSE_BTN);
 
   n = 0;
@@ -3779,7 +3762,7 @@ Widget createCartesianPlotAxisDialog(
 		&(xmStringValueTable[FIRST_CARTESIAN_PLOT_AXIS_STYLE])); n++;
     XtSetArg(args[n],XmNbuttonCount,NUM_CARTESIAN_PLOT_AXIS_STYLES); n++;
     XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)cpAxisOptionMenuSimpleCallback); n++;
+		cpAxisOptionMenuSimpleCallback); n++;
     XtSetArg(args[n],XmNuserData,(XtPointer)(CP_AXIS_STYLE+i)); n++;
     localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
     XtUnmanageChild(XmOptionLabelGadget(localElement));
@@ -3810,7 +3793,7 @@ Widget createCartesianPlotAxisDialog(
 		&(xmStringValueTable[FIRST_CARTESIAN_PLOT_RANGE_STYLE])); n++;
     XtSetArg(args[n],XmNbuttonCount,NUM_CARTESIAN_PLOT_RANGE_STYLES); n++;
     XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)cpAxisOptionMenuSimpleCallback); n++;
+		cpAxisOptionMenuSimpleCallback); n++;
     XtSetArg(args[n],XmNuserData,CP_RANGE_STYLE+i); n++;
     localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
     XtUnmanageChild(XmOptionLabelGadget(localElement));
@@ -3842,13 +3825,13 @@ Widget createCartesianPlotAxisDialog(
     entryElement[counter] = localElement;
     axisRangeMin[i] = localElement;
     XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)cpAxisTextFieldActivateCallback,
+		cpAxisTextFieldActivateCallback,
 		(XtPointer)(CP_RANGE_MIN+i));
     XtAddCallback(localElement,XmNlosingFocusCallback,
-		(XtCallbackProc)cpAxisTextFieldLosingFocusCallback,
+		cpAxisTextFieldLosingFocusCallback,
 		(XtPointer)(CP_RANGE_MIN+i));
     XtAddCallback(localElement,XmNmodifyVerifyCallback,
-		(XtCallbackProc)textFieldFloatVerifyCallback,
+		textFieldFloatVerifyCallback,
 		(XtPointer)NULL);
     counter++;
 
@@ -3876,13 +3859,13 @@ Widget createCartesianPlotAxisDialog(
     entryElement[counter] = localElement;
     axisRangeMax[i] = localElement;
     XtAddCallback(localElement,XmNactivateCallback,
-		(XtCallbackProc)cpAxisTextFieldActivateCallback,
+		cpAxisTextFieldActivateCallback,
 		(XtPointer)(CP_RANGE_MAX+i));
     XtAddCallback(localElement,XmNlosingFocusCallback,
-		(XtCallbackProc)cpAxisTextFieldLosingFocusCallback,
+		cpAxisTextFieldLosingFocusCallback,
 		(XtPointer)(CP_RANGE_MAX+i));
     XtAddCallback(localElement,XmNmodifyVerifyCallback,
-		(XtCallbackProc)textFieldFloatVerifyCallback,
+		textFieldFloatVerifyCallback,
 		(XtPointer)NULL);
     counter++;
 
@@ -3944,8 +3927,7 @@ Widget createCartesianPlotAxisDialog(
   XtSetArg(args[n],XmNlabelString,xmString); n++;
   closeButton = XmCreatePushButton(cpAxisForm,"closeButton",args,n);
   XtAddCallback(closeButton,XmNactivateCallback,
-		(XtCallbackProc)cartesianPlotAxisActivate,
-		(XtPointer)CP_CLOSE_BTN);
+		cartesianPlotAxisActivate, (XtPointer)CP_CLOSE_BTN);
   XtManageChild(closeButton);
   XmStringFree(xmString);
 
@@ -4020,7 +4002,7 @@ void updateCartesianPlotAxisDialog()
  */
 void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 {
-  int i, tail, buttonId;
+  int tail, buttonId;
   char string[MAX_TOKEN_LENGTH];
   CartesianPlot *pcp;
   XtPointer userData;

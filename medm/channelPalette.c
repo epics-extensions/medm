@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-07-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -87,13 +88,13 @@ static Widget channelFilePDM, openFSD;
 /********************************************
  **************** Callbacks *****************
  ********************************************/
-
-static XtCallbackProc fileOpenCallback(
-  Widget w,
-  int btn,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
+#else
+static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  switch(call_data->reason){
+  switch(((XmAnyCallbackStruct *) cbs)->reason){
 	case XmCR_CANCEL:
 		XtUnmanageChild(w);
 		break;
@@ -103,12 +104,13 @@ static XtCallbackProc fileOpenCallback(
   }
 }
 
-
-static XtCallbackProc fileMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
+  int buttonNumber = (int) cd;
   XmString label;
   int n;
   Arg args[10];
@@ -164,7 +166,6 @@ void createChannel()
 
   XmString buttons[N_MAX_MENU_ELES];
   KeySym keySyms[N_MAX_MENU_ELES];
-  XmString label, string;
   XmButtonType buttonType[N_MAX_MENU_ELES];
   Widget channelMB;
   Widget channelHelpPDM;

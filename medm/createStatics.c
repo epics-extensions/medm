@@ -55,11 +55,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - add version number into the FILE object
+ * .03  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+#include <ctype.h>
 
 #define DEFAULT_DISPLAY_X	10
 #define DEFAULT_DISPLAY_Y	10
@@ -71,9 +73,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 XtIntervalId intervalId;
 int cursorX, cursorY;
 
+#ifdef __cplusplus
+void createDlObject(
+  DisplayInfo *,
+  DlObject *object)
+#else
 void createDlObject(
   DisplayInfo *displayInfo,
   DlObject *object)
+#endif
 {
   object->x = globalResourceBundle.x;
   object->y = globalResourceBundle.y;
@@ -81,24 +89,42 @@ void createDlObject(
   object->height = globalResourceBundle.height;
 }
 
+#ifdef __cplusplus
+static void createDlDynAttrMod(
+  DisplayInfo *,
+  DlDynamicAttrMod *dynAttr)
+#else
 static void createDlDynAttrMod(
   DisplayInfo *displayInfo,
   DlDynamicAttrMod *dynAttr)
+#endif
 {
   dynAttr->clr = globalResourceBundle.clrmod;
   dynAttr->vis = globalResourceBundle.vis;
 }
 
+#ifdef __cplusplus
+static void createDlDynAttrParam(
+  DisplayInfo *,
+  DlDynamicAttrParam *dynAttr)
+#else
 static void createDlDynAttrParam(
   DisplayInfo *displayInfo,
   DlDynamicAttrParam *dynAttr)
+#endif
 {
   strcpy(dynAttr->chan,globalResourceBundle.chan);
 }
 
+#ifdef __cplusplus
+static void createDlAttr(
+  DisplayInfo *,
+  DlAttribute *attr)
+#else
 static void createDlAttr(
   DisplayInfo *displayInfo,
   DlAttribute *attr)
+#endif
 {
   attr->clr = globalResourceBundle.clr;
   attr->style = globalResourceBundle.style;
@@ -114,32 +140,49 @@ static void createDlDynamicAttr(
   createDlDynAttrParam(displayInfo,&(dynAttr->param));
 }
 
-
+#ifdef __cplusplus
+static void createDlRelatedDisplayEntry(
+  DisplayInfo *,
+  DlRelatedDisplayEntry *relatedDisplay,
+  int displayNumber)
+#else
 static void createDlRelatedDisplayEntry(
   DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *relatedDisplay,
   int displayNumber)
+#endif
 {
 /* structure copy */
   *relatedDisplay = globalResourceBundle.rdData[displayNumber];
 }
 
 
-
+#ifdef __cplusplus
+static void createDlShellCommandEntry(
+  DisplayInfo *,
+  DlShellCommandEntry *shellCommand,
+  int cmdNumber)
+#else
 static void createDlShellCommandEntry(
   DisplayInfo *displayInfo,
   DlShellCommandEntry *shellCommand,
   int cmdNumber)
+#endif
 {
 /* structure copy */
   *shellCommand = globalResourceBundle.cmdData[cmdNumber];
 
 }
 
-
-static XtTimerCallbackProc blinkCursor(
+#ifdef __cplusplus
+static void blinkCursor(
+  XtPointer,
+  XtIntervalId *)
+#else
+static void blinkCursor(
   XtPointer client_data,
   XtIntervalId *id)
+#endif
 {
   static Boolean state = FALSE;
 
@@ -158,8 +201,7 @@ static XtTimerCallbackProc blinkCursor(
 		(int)cursorX, (int)cursorY);
 	state = TRUE;
   }
-  intervalId = XtAppAddTimeOut(appContext,BLINK_INTERVAL,
-		(XtTimerCallbackProc)blinkCursor,NULL);
+  intervalId = XtAppAddTimeOut(appContext,BLINK_INTERVAL,blinkCursor,NULL);
 }
 
 
@@ -178,7 +220,7 @@ DlElement *handleTextCreate(
 /* buffer size for X-keycode lookups */
 #define BUFFER_SIZE	16
   char buffer[BUFFER_SIZE];
-  int stringIndex, newX, newY;
+  int stringIndex;
   int usedWidth, usedHeight;
   size_t length;
   DlElement **array;
@@ -220,11 +262,10 @@ DlElement *handleTextCreate(
   cursorX = x0;
   cursorY = y0 + usedHeight;
 
-  intervalId = XtAppAddTimeOut(appContext,BLINK_INTERVAL,
-		(XtTimerCallbackProc)blinkCursor,NULL);
+  intervalId = XtAppAddTimeOut(appContext,BLINK_INTERVAL,blinkCursor,NULL);
 
   XGrabPointer(display,window,FALSE,
-	ButtonPressMask|LeaveWindowMask,
+	(unsigned int) (ButtonPressMask|LeaveWindowMask),
 	GrabModeAsync,GrabModeAsync,None,xtermCursor,CurrentTime);
   XGrabKeyboard(display,window,FALSE,
 	GrabModeAsync,GrabModeAsync,CurrentTime);
@@ -270,7 +311,6 @@ DlElement *handleTextCreate(
 	  setResourcePaletteEntries();
 
 	  return (element);
-	  break;
 
 	case KeyPress:
 	  key = (XKeyEvent *) &event;
@@ -392,8 +432,8 @@ DlElement *createDlFile(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlFile;
-  dlElement->dmWrite = (void(*)())writeDlFile;
+  dlElement->dmExecute = (medmExecProc)executeDlFile;
+  dlElement->dmWrite = (medmWriteProc)writeDlFile;
 
   return(dlElement);
 }
@@ -421,8 +461,8 @@ DlElement *createDlDisplay(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlDisplay;
-  dlElement->dmWrite = (void(*)())writeDlDisplay;
+  dlElement->dmExecute = (medmExecProc)executeDlDisplay;
+  dlElement->dmWrite = (medmWriteProc)writeDlDisplay;
 
   return(dlElement);
 }
@@ -434,8 +474,6 @@ DlElement *createDlColormap(
 {
   DlColormap *dlColormap;
   DlElement *dlElement;
-  DlColormapEntry *dlColor;
-  int counter;
 
 
   dlColormap = (DlColormap *) malloc(sizeof(DlColormap));
@@ -449,8 +487,8 @@ DlElement *createDlColormap(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlColormap;
-  dlElement->dmWrite = (void(*)())writeDlColormap;
+  dlElement->dmExecute = (medmExecProc)executeDlColormap;
+  dlElement->dmWrite = (medmWriteProc)writeDlColormap;
 
   displayInfo->dlColormapElement = dlElement;
 
@@ -475,8 +513,8 @@ DlElement *createDlBasicAttribute(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlBasicAttribute;
-  dlElement->dmWrite = (void(*)())writeDlBasicAttribute;
+  dlElement->dmExecute = (medmExecProc)executeDlBasicAttribute;
+  dlElement->dmWrite = (medmWriteProc)writeDlBasicAttribute;
 
   return(dlElement);
 }
@@ -500,8 +538,8 @@ DlElement *createDlDynamicAttribute(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlDynamicAttribute;
-  dlElement->dmWrite = (void(*)())writeDlDynamicAttribute;
+  dlElement->dmExecute = (medmExecProc)executeDlDynamicAttribute;
+  dlElement->dmWrite = (medmWriteProc)writeDlDynamicAttribute;
 
   return(dlElement);
 }
@@ -526,8 +564,8 @@ DlElement *createDlRectangle(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlRectangle;
-  dlElement->dmWrite = (void(*)())writeDlRectangle;
+  dlElement->dmExecute = (medmExecProc)executeDlRectangle;
+  dlElement->dmWrite = (medmWriteProc)writeDlRectangle;
 
   return(dlElement);
 }
@@ -549,8 +587,8 @@ DlElement *createDlOval(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlOval;
-  dlElement->dmWrite = (void(*)())writeDlOval;
+  dlElement->dmExecute = (medmExecProc)executeDlOval;
+  dlElement->dmWrite = (medmWriteProc)writeDlOval;
 
   return(dlElement);
 }
@@ -576,8 +614,8 @@ DlElement *createDlArc(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlArc;
-  dlElement->dmWrite = (void(*)())writeDlArc;
+  dlElement->dmExecute = (medmExecProc)executeDlArc;
+  dlElement->dmWrite = (medmWriteProc)writeDlArc;
 
   return(dlElement);
 }
@@ -602,8 +640,8 @@ DlElement *createDlText(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlText;
-  dlElement->dmWrite = (void(*)())writeDlText;
+  dlElement->dmExecute = (medmExecProc)executeDlText;
+  dlElement->dmWrite = (medmWriteProc)writeDlText;
 
   return(dlElement);
 }
@@ -634,8 +672,8 @@ DlElement *createDlRelatedDisplay(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlRelatedDisplay;
-  dlElement->dmWrite = (void(*)())writeDlRelatedDisplay;
+  dlElement->dmExecute = (medmExecProc)executeDlRelatedDisplay;
+  dlElement->dmWrite = (medmWriteProc)writeDlRelatedDisplay;
 
   return(dlElement);
 }
@@ -669,8 +707,8 @@ DlElement *createDlShellCommand(
   dlElement->prev = displayInfo->dlElementListTail;
   displayInfo->dlElementListTail->next = dlElement;
   displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlShellCommand;
-  dlElement->dmWrite = (void(*)())writeDlShellCommand;
+  dlElement->dmExecute = (medmExecProc)executeDlShellCommand;
+  dlElement->dmWrite = (medmWriteProc)writeDlShellCommand;
 
   return(dlElement);
 }

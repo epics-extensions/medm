@@ -64,34 +64,19 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 /* actions.c */
 void StartDrag(Widget w, XEvent *event);
-void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
-	XEvent *event);
 
 /* callbacks.c */
-void dmDisplayListOk(Widget w, XtPointer client_data,
-	XmSelectionBoxCallbackStruct *call_data);
-XtCallbackProc popdownDialog(Widget w, XtPointer client_data,
-	XmSelectionBoxCallbackStruct *call_data);
-XtCallbackProc executePopupMenuCallback(Widget w, int buttonNumber,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc popdownDisplayFileDialog(Widget w, XtPointer client_data,
-	XmSelectionBoxCallbackStruct *call_data);
+void dmDisplayListOk(Widget, XtPointer, XtPointer);
+void executePopupMenuCallback(Widget, XtPointer, XtPointer);
 void dmCreateRelatedDisplay(Widget, XtPointer, XtPointer);
 void dmExecuteShellCommand(Widget w,
 	DlShellCommandEntry *commandEntry,
 	XmPushButtonCallbackStruct *call_data);
 void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 	XmDrawingAreaCallbackStruct *call_data);
-XtCallbackProc relatedDisplayMenuButtonDestroy(Widget w, char *data,
-	XmPushButtonCallbackStruct *call_data);
-void monitorDestroy(Widget w, XtPointer data,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc warnCallback(Widget w, DisplayInfo *displayInfo,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc exitCallback(Widget w, DisplayInfo *displayInfo,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc simpleOptionMenuCallback(Widget w, int buttonNumber,
-	XmPushButtonCallbackStruct *call_data);
+void relatedDisplayMenuButtonDestroy(Widget, XtPointer, XtPointer);
+void warnCallback(Widget, XtPointer, XtPointer);
+void exitCallback(Widget, XtPointer, XtPointer);
 void simpleRadioBoxCallback(Widget w, int buttonNumber,
 	XmToggleButtonCallbackStruct *call_data);
 void valuatorValueChanged(Widget, XtPointer, XtPointer);
@@ -130,7 +115,9 @@ DlElement *createDlIndicator(DisplayInfo *displayInfo);
 DlElement *createDlTextUpdate(DisplayInfo *displayInfo);
 DlElement *createDlStripChart(DisplayInfo *displayInfo);
 DlElement *createDlCartesianPlot(DisplayInfo *displayInfo);
+/*
 DlElement *createDlSurfacePlot(DisplayInfo *displayInfo);
+*/
 
 /* createStatics.c */
 DlElement *createDlFile(DisplayInfo *displayInfo);
@@ -142,8 +129,6 @@ DlElement *createDlRectangle(DisplayInfo *displayInfo);
 DlElement *createDlOval(DisplayInfo *displayInfo);
 DlElement *createDlArc(DisplayInfo *displayInfo);
 DlElement *createDlText(DisplayInfo *displayInfo);
-DlElement *createDlFallingLine(DisplayInfo *displayInfo);
-DlElement *createDlRisingLine(DisplayInfo *displayInfo);
 DlElement *createDlRelatedDisplay(DisplayInfo *displayInfo);
 DlElement *createDlShellCommand(DisplayInfo *displayInfo);
 void createDlObject(DisplayInfo *displayInfo, DlObject *object);
@@ -158,10 +143,9 @@ void dmDisplayListParse(FILE *, char *, char *, char*, Boolean);
 void parseCompositeChildren(DisplayInfo *displayInfo, DlComposite *dlComposite);
 
 /* eventHandlers.c */
-XtEventHandler popupMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
-XtEventHandler popdownMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
-XtEventHandler handleEnterWindow(Widget w, DisplayInfo *displayInfo,
-	XEvent *event);
+void popupMenu(Widget, XtPointer, XEvent *, Boolean *);
+void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
+void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
 void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
 int highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
@@ -184,8 +168,6 @@ int textFieldFontListIndex(int height);
 int messageButtonFontListIndex(int height);
 int menuFontListIndex(int height);
 int valuatorFontListIndex(DlValuator *dlValuator);
-int choiceButtonFontListIndex(DlChoiceButton *dlChoiceButton, int numButtons,
-	int maxChars);
 void executeDlChoiceButton(DisplayInfo *displayInfo,
 	DlChoiceButton *dlChoiceButton, Boolean dummy);
 void executeDlMessageButton(DisplayInfo *displayInfo,
@@ -242,27 +224,25 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
 	Boolean forcedDisplayToWindow);
 void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
 	Boolean forcedDisplayToWindow);
-void executeDlFallingLine(DisplayInfo *displayInfo,
-	DlFallingLine *dlFallingLine, Boolean forcedDisplayToWindow);
-void executeDlRisingLine(DisplayInfo *displayInfo, DlRisingLine *dlRisingLine,
-	Boolean forcedDisplayToWindow);
 void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 	DlRelatedDisplay *dlRelatedDisplay, Boolean dummy);
 void executeDlShellCommand(DisplayInfo *displayInfo,
 	DlShellCommand *dlShellCommand, Boolean dummy);
 
 /* help.c */
+void errMsgDlgCreateDlg();
 void globalHelpCallback(Widget, XtPointer, XtPointer);
 void medmPostMsg(char *);
 void medmPostTime();
-void memdPrintf(char*,...);
+void medmPrintf(char*,...);
 void medmCreateCAStudyDlg();
+void medmStartUpdateCAStudyDlg();
 
 /* medm.c */
 int main(int argc, char *argv[]);
 Widget createDisplayMenu(Widget widget);
 Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
-Widget createMessageDialog(Widget,char *,char *);
+void medmExit();
 Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
 
 /* medmCA.c */
@@ -282,11 +262,15 @@ void CATaskGetInfo(int *, int *, int *);
 void medmInitializeImageCache(void);
 void medmClearImageCache(void);
 
+/* medmValuator.c */
+void popupValuatorKeyboardEntry(Widget, DisplayInfo *, XEvent *);
+
 /* objectPalette.c */
 void createObject(void);
 void clearResourcePaletteEntries(void);
 void objectMenuCallback(Widget,XtPointer,XtPointer);
 void objectPaletteSetSensitivity(Boolean);
+void setActionToSelect();
 void setResourcePaletteEntries(void);
 void updateGlobalResourceBundleFromElement(DlElement *element);
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
@@ -310,6 +294,7 @@ void parsePolygon(DisplayInfo *displayInfo, DlComposite *dlComposite);
 /* parseMonitors.c */
 void parseMeter(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseBar(DisplayInfo *displayInfo, DlComposite *dlComposite);
+void parseByte(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseIndicator(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseTextUpdate(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseStripChart(DisplayInfo *displayInfo, DlComposite *dlComposite);
@@ -333,8 +318,6 @@ void parseRectangle(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseOval(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseArc(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseText(DisplayInfo *displayInfo, DlComposite *dlComposite);
-void parseFallingLine(DisplayInfo *displayInfo, DlComposite *dlComposite);
-void parseRisingLine(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseRelatedDisplay(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseShellCommand(DisplayInfo *displayInfo, DlComposite *dlComposite);
 void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
@@ -358,24 +341,20 @@ void initializeGlobalResourceBundle(void);
 void createResource(void);
 void textFieldNumericVerifyCallback(Widget, XtPointer, XtPointer);
 void textFieldFloatVerifyCallback(Widget, XtPointer, XtPointer);
-XtCallbackProc textFieldActivateCallback(Widget w, int rcType,
-	XmTextVerifyCallbackStruct *cbs);
-XtCallbackProc textFieldLosingFocusCallback(Widget w, int rcType,
-	XmTextVerifyCallbackStruct *cbs);
+void textFieldActivateCallback(Widget w, XtPointer, XtPointer);
+void textFieldLosingFocusCallback(Widget w, XtPointer, XtPointer);
 Widget createRelatedDisplayDataDialog(Widget parent);
 void updateRelatedDisplayDataDialog(void);
 Widget createShellCommandDataDialog(Widget parent);
 void updateShellCommandDataDialog(void);
-XtCallbackProc cpEnterCellCallback(Widget w, XtPointer client_data,
-	XbaeMatrixEnterCellCallbackStruct *call_data);
+void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
 void cpUpdateMatrixColors(void);
 Widget createCartesianPlotDataDialog(Widget parent);
 void updateCartesianPlotDataDialog(void);
 Widget createCartesianPlotAxisDialog(Widget parent);
 void updateCartesianPlotAxisDialog(void);
 void updateCartesianPlotAxisDialogFromWidget(Widget cp);
-XtCallbackProc scEnterCellCallback(Widget w, XtPointer client_data,
-	XbaeMatrixEnterCellCallbackStruct *call_data);
+void scEnterCellCallback(Widget w, XtPointer, XtPointer);
 void scUpdateMatrixColors(void);
 Widget createStripChartDataDialog(Widget parent);
 void updateStripChartDataDialog(void);
@@ -395,6 +374,7 @@ int updateTaskMarkTimeout(UpdateTask *, double);
 void updateTaskSetScanRate(UpdateTask *, double);
 void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
 void updateTaskAddDestroyCb(UpdateTask *, void (*)(XtPointer));
+void updateTaskMarkUpdate(UpdateTask *pt);
 void updateTaskRepaintRegion(DisplayInfo *, Region *);
 Boolean medmInitSharedDotC();
 void updateTaskStatusGetInfo(int *taskCount,
@@ -411,12 +391,14 @@ void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, char **, short *, int
 
 
 /* updateMonitors.c */
-int localCvtDoubleToString( double, char *, unsigned short);
+void localCvtDoubleToString( double, char *, unsigned short);
+void localCvtDoubleToExpNotationString(double, char *, unsigned short);
 
 void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
 	int regionX, int regionY, unsigned int regionWidth,
 	unsigned int regionHeight);
 void updateTextUpdate(UpdateTask *);
+void draw3DQuestionMark(UpdateTask *);
 void draw3DPane(UpdateTask *, Pixel);
 void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
@@ -560,8 +542,6 @@ void writeDlRectangle(FILE *stream, DlRectangle *dlRectangle, int level);
 void writeDlOval(FILE *stream, DlOval *dlOval, int level);
 void writeDlArc(FILE *stream, DlArc *dlArc, int level);
 void writeDlText(FILE *stream, DlText *dlText, int level);
-void writeDlFallingLine(FILE *stream, DlFallingLine *dlFallingLine, int level);
-void writeDlRisingLine(FILE *stream, DlRisingLine *dlRisingLine, int level);
 void writeDlRelatedDisplay(FILE *stream, DlRelatedDisplay *dlRelatedDisplay,
 	int level);
 void writeDlShellCommand(FILE *stream, DlShellCommand *dlShellCommand,
@@ -584,7 +564,6 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void resizeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 int ReadCode(void);
-int AddToPixel(GIFData *gif, Byte Index);
 void freeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 
 #endif  /* __PROTO_H__ */

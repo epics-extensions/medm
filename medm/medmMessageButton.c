@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -83,7 +84,7 @@ static void messageButtonName(XtPointer, char **, short *, int *);
 
 int messageButtonFontListIndex(int height)
 {
-  int i, index;
+  int i;
 /* don't allow height of font to exceed 90% - 4 pixels of messageButton widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
@@ -196,8 +197,13 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	(XtPointer)pmb);
 }
 
+#ifdef __cplusplus
 void executeDlMessageButton(DisplayInfo *displayInfo,
-		DlMessageButton *dlMessageButton, Boolean dummy)
+		DlMessageButton *dlMessageButton, Boolean)
+#else
+void executeDlMessageButton(DisplayInfo *displayInfo,
+                DlMessageButton *dlMessageButton, Boolean dummy)
+#endif
 {
 
   displayInfo->useDynamicAttribute = FALSE;
@@ -214,7 +220,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd) {
   Record *pd = (Record *) cd;
   MessageButton *pmb = (MessageButton *) pd->clientData;
   DlMessageButton *dlMessageButton = pmb->dlMessageButton;
-  int i,j;
+  int i;
   Boolean match;
 
   switch (pd->dataType) {
@@ -306,13 +312,19 @@ static void messageButtonDestroyCb(XtPointer cd) {
   MessageButton *pmb = (MessageButton *) cd;
   if (pmb) {
     medmDestroyRecord(pmb->record);
-    free(pmb);
+    free((char *)pmb);
   }
 }
 
+#ifdef __cplusplus
+static void messageButtonValueChangedCb(Widget,
+                XtPointer clientData,
+                XtPointer callbackData) {
+#else
 static void messageButtonValueChangedCb(Widget w,
                 XtPointer clientData,
                 XtPointer callbackData) {
+#endif
   MessageButton *pmb = (MessageButton *) clientData;
   Record *pd = pmb->record;
   XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    - conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -77,7 +78,6 @@ static void polygonName(XtPointer, char **, short *, int *);
 
 
 static void drawPolygon(Polygon *pp) {
-  unsigned int lineWidth;
   DisplayInfo *displayInfo = pp->updateTask->displayInfo;
   Display *display = XtDisplay(pp->widget);
   DlPolygon *dlPolygon = pp->dlPolygon;
@@ -92,8 +92,13 @@ static void drawPolygon(Polygon *pp) {
   }
 }
 
+#ifdef __cplusplus
+void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
+                                Boolean)
+#else
 void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
                                 Boolean forcedDisplayToWindow)
+#endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
@@ -227,7 +232,7 @@ static void polygonDestroyCb(XtPointer cd) {
   Polygon *pp = (Polygon *) cd;
   if (pp) {
     medmDestroyRecord(pp->record);
-    free(pp);
+    free((char *)pp);
   }
   return;
 }

@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-11-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
@@ -70,11 +71,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <X11/keysym.h>
 
 
-
+#ifdef __cplusplus
+void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean)
+#else
 void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean dummy)
+#endif
 {
   Arg args[10];
-  int i, n;
   GIFData *gif;
 
 
