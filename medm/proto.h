@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #ifndef __PROTO_H__
 #define __PROTO_H__
 
+/* This file uses timeval, but it will be defined before this file is
+   included. */
 
 /* Create methods  */
 DisplayInfo *createDisplay(void);
@@ -281,6 +283,7 @@ void medmStartUpdateCAStudyDlg();
 void medmStopUpdateCAStudyDlg();
 void medmResetUpdateCAStudyDlg(Widget w, XtPointer clientData,
   XtPointer callData);
+int xDoNothingErrorHandler(Display *dpy, XErrorEvent *event);
 int xErrorHandler(Display *dpy, XErrorEvent *event);
 void xtErrorHandler(char *message);
 int xInfoMsg(Widget parent, const char *fmt, ...);
@@ -639,6 +642,9 @@ void calcPostfix(DlDynamicAttribute *attr);
 void setMonitorChanged(DlDynamicAttribute *attr, Record **records);
 char *shortName(char *filename);
 /* Debugging */
+void resetTimer(void);
+double getTimerDouble(void);
+struct timeval getTimerTimeval(void);
 void printEventMasks(Display *display, Window win, char *string);
 void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);

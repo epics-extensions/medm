@@ -82,6 +82,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <postfix.h>
 #include "medm.h"
 
+/* Include this after medm.h to avoid problems with Exceed 6 */
+#ifdef WIN32
+/* In MSVC timeval is in winsock.h, winsock2.h, ws2spi.h, nowhere else */
+#include <X11/Xos.h>
+#else
+#include <sys/time.h>
+#endif
+
 #ifdef WIN32
 #include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
 #endif
@@ -4521,6 +4529,32 @@ char *shortName(char *filename)
 }
 
 /*** Debugging routines ***/
+
+static struct timeval timerTime0={0,0};
+
+void resetTimer(void)
+{
+    gettimeofday(&timerTime0,NULL);
+}
+
+double getTimerDouble(void)
+{
+    double t;
+    struct timeval now;
+    gettimeofday(&now,NULL);
+    t=(double)now.tv_sec-(double)timerTime0.tv_sec+
+      1.e-6*((double)now.tv_usec-(double)timerTime0.tv_usec);
+    return t;
+}
+
+struct timeval getTimerTimeval(void)
+{
+    struct timeval now;
+    gettimeofday(&now,NULL);
+    now.tv_sec-=timerTime0.tv_sec;
+    now.tv_usec-=timerTime0.tv_usec;
+    return now;
+}
 
 void printEventMasks(Display *display, Window win, char *string)
 {

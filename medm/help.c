@@ -1138,6 +1138,12 @@ void medmStopUpdateCAStudyDlg()
 #endif
 }
 
+int xDoNothingErrorHandler(Display *dpy, XErrorEvent *event)
+{
+  /* Return value is ignored */
+    return 0;
+}
+
 int xErrorHandler(Display *dpy, XErrorEvent *event)
 {
     char buf[1024];     /* Warning: Fixed Size */

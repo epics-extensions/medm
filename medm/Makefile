@@ -12,3 +12,11 @@ else
   include $(EPICS)/config/RULES_ARCHS
 endif
 
+xxxx:
+#	@/usr/bin/pwd
+#	@set
+#	@/usr/bin/echo $(SHELL)
+#	@/usr/bin/echo $(PATH)
+#	@/usr/bin/which sh
+#	@/usr/bin/which echo
+	@/usr/bin/which make

@@ -153,6 +153,7 @@ Xm12_DIR = $(MOTIF_LIB)
 endif
 
 USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
+USR_LIBS_Darwin = Xm Xt Xp Xmu X11 Xext langinfo
 
 WIN32_RUNTIME=MD
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
@@ -245,6 +246,8 @@ xrtAuth: medm
 	fi
 
 xxxx:
+	@which echo
+	@echo PERL: $(PERL)
 	@echo PROD: $(PROD)
 	@echo ca_DIR: $(ca_DIR)
 	@echo RCS_WIN32: $(RCS_WIN32)

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_DRAGDROP 0
+#define DEBUG_DRAGDROPDELAY 0
 #define DEBUG_SELECTION 0
 
 #define USE_SOURCE_PIXMAP_MASK 0
@@ -175,6 +176,9 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f dragDropFinish: Start\n",getTimerDouble());
+#endif
   /* KE: The following is a kludge to repair Btn2 drag and drop leaving toggle
    *   buttons down in the Choice Menu.  The buttons only appear to be down.
    *   No callbacks are called and the values of XmNset are correct.
@@ -266,6 +270,9 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
     }
 #endif
 #endif
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f dragDropFinish: End\n",getTimerDouble());
+#endif
 }
 
 static XtCallbackRec dragDropFinishCB[] = {
@@ -313,6 +320,10 @@ void StartDrag(Widget w, XEvent *event)
   /* KE: Use this if a mask is implemented.  See comments below. */
     int doMask = 0;
     Pixmap maskPixmap = (Pixmap)NULL;
+#endif
+
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: Start\n",getTimerDouble());
 #endif
 
     if(!w) return;
@@ -511,6 +522,9 @@ void StartDrag(Widget w, XEvent *event)
 	      maxWidth,maxHeight);
 	}
 #endif	    
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: Start put names in CLIPBOARD\n",getTimerDouble());
+#endif
     }
 
   /* Put the channelNames in the CLIPBOARD.  Based on O'Reilly
@@ -522,7 +536,7 @@ void StartDrag(Widget w, XEvent *event)
 	XmString clipLabel;
 	int status;
 	int privateID=0;
-
+	
 #if DEBUG_SELECTION
 	print("MAX_COUNT=%d\n",MAX_COUNT);
 	print("Copying|%s| to clipboard\n",channelNames);
@@ -530,12 +544,15 @@ void StartDrag(Widget w, XEvent *event)
 	  ClipboardSuccess,ClipboardFail,ClipboardLocked);
 #endif	
 	
-	  /* Start the copy, try until unlocked */
+      /* Start the copy, try until unlocked */
 	clipLabel=XmStringCreateLocalized("PV Name");
 	do {
 	  /* Don't use CurrentTime here.  Get the time from the event,
 	     which must be a button press event, according to the man
 	     page. */
+#if DEBUG_DRAGDROPDELAY
+	    print("%8.3f StartDrag: Start XmClipboardStartCopy\n",getTimerDouble());
+#endif
 	    status=XmClipboardStartCopy(display,window,clipLabel,
 	      (event->type == ButtonPress)?((XButtonEvent *)event)->time:CurrentTime,
 	      NULL,NULL,&itemID);
@@ -544,11 +561,14 @@ void StartDrag(Widget w, XEvent *event)
 #endif	
 	} while(status == ClipboardLocked);
 	XmStringFree(clipLabel);
-
+	
       /* Copy the data, try until unlocked */
 	do {
 	  /* KE: Using strlen(channelNames)+1e results in ^@ appearing
              in the clipboard. */
+#if DEBUG_DRAGDROPDELAY
+	    print("%8.3f StartDrag: Start XmClipboardCopy\n",getTimerDouble());
+#endif
 	    status=XmClipboardCopy(display,window,itemID,"STRING",
 	      channelNames,strlen(channelNames),privateID,NULL);
 #if DEBUG_SELECTION
@@ -558,6 +578,9 @@ void StartDrag(Widget w, XEvent *event)
 
       /* End the copy, try until unlocked */
 	do {
+#if DEBUG_DRAGDROPDELAY
+	    print("%8.3f StartDrag: Start XmClipboardEndCopy\n",getTimerDouble());
+#endif
 	    status=XmClipboardEndCopy(display,window,itemID);
 #if DEBUG_SELECTION
 	    print("XmClipboardEndCopy: status=%d \n",status);
@@ -571,6 +594,9 @@ void StartDrag(Widget w, XEvent *event)
      possibly use the more elaborate convert routine, but this seems
      to work.  The CLIPBOARD could possibly be done this way also, but
      note that XA_CLIPBOARD is not predefined. */
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: Start put names in PRIMARY\n",getTimerDouble());
+#endif
     if(channelNames) {
 	Boolean status;
       /* Don't use CurrentTime here.  Get the time from the event,
@@ -588,6 +614,9 @@ void StartDrag(Widget w, XEvent *event)
     }
 
   /* Create the drag icon and start the drag */
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: Start create drag icon\n",getTimerDouble());
+#endif
     if (sourcePixmap != (Pixmap)NULL) {
       /* Use source widget as parent.  Can inherit visual attributes
          that way */
@@ -611,6 +640,9 @@ void StartDrag(Widget w, XEvent *event)
 	exportList[2] = textAtom;
 	
       /* Start the drag */
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: Start drag\n",getTimerDouble());
+#endif
 	dragDropWidget = searchWidget;     /* Save widget for cleanup */
 	n = 0;
 	XtSetArg(args[n],XmNexportTargets,exportList); n++;
@@ -623,4 +655,7 @@ void StartDrag(Widget w, XEvent *event)
 	XtSetArg(args[n],XmNdragDropFinishCallback,dragDropFinishCB); n++;
 	XmDragStart(searchWidget,event,args,n);
     }
+#if DEBUG_DRAGDROPDELAY
+    print("%8.3f StartDrag: End\n",getTimerDouble());
+#endif
 }

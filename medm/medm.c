@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_SYNC 0
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
+#define DEBUG_ALLEVENTS 0
 #define DEBUG_EVENTS 0
 #define DEBUG_STDC 0
 #define DEBUG_WIN32_LEAKS 0
@@ -3251,6 +3252,7 @@ int main(int argc, char *argv[])
 	  "  [-local | -attach | -cleanup]\n"
 	  "  [-cmap]\n"
 	  "  [-bigMousePointer]\n"
+	  "  [-noMsg]\n"
 	  "  [-displayFont font-spec]\n"
 	  "  [-macro \"xxx=aaa,yyy=bbb, ...\"]\n"
 	  "  [-dg [xpos[xypos]][+xoffset[+yoffset]]\n"
@@ -3760,6 +3762,51 @@ int main(int argc, char *argv[])
 	}
 #endif
 	XtAppNextEvent(appContext,&event);
+#if DEBUG_ALLEVENTS
+	{
+	    static int afterButtonPress=0;
+	    XAnyEvent aEvent=event.xany;
+	    time_t now; 
+	    struct tm *tblock;
+	    char timeStampStr[80];
+	    XWindowAttributes attr;
+	    Status status;
+
+	    time(&now);
+	    tblock = localtime(&now);
+	    strftime(timeStampStr,80,"%H:%M:%S",tblock);
+
+	  /* Reset the timer if it is a ButtonPress event */
+	    if(event.type == ButtonPress) {
+		resetTimer();
+		afterButtonPress=1;
+	    }
+
+	    if(afterButtonPress) {
+	      /* Reset the error handler so it won't bomb on BadWindow */
+		XSetErrorHandler(xDoNothingErrorHandler);
+		
+	      /* Get the window attributes */
+		status=XGetWindowAttributes(display,aEvent.window,&attr);
+		if(status == 0) {
+		    print("%8.3f %s %6d %s %08x Error               %-18s\n",
+		      getTimerDouble(),timeStampStr,aEvent.serial,
+		      aEvent.send_event?"Yes":"No ",aEvent.window,
+		      getEventName(aEvent.type));
+		} else {
+		    print("%8.3f %s %6d %s %08x %4d %4d %4d %4d %-18s\n",
+		      getTimerDouble(),timeStampStr,
+		      aEvent.serial,
+		      aEvent.send_event?"Yes":"No ",aEvent.window,
+		      attr.x, attr.y,attr.width,attr.height,
+		      getEventName(aEvent.type));
+		}
+
+	      /* Reset afterButtonPress if it is a DestroyNotify */
+		if(event.type == DestroyNotify) afterButtonPress=0;
+	    }
+	}
+#endif	    
 	switch (event.type) {
 	case ClientMessage:
 	    if(windowPropertyAtom && event.xclient.message_type == windowPropertyAtom) {
@@ -3920,7 +3967,7 @@ int main(int argc, char *argv[])
 	    print("  Send_event: %s  State: %x\n",
 	      xEvent.send_event?"True":"False",xEvent.state);
 
-#if 1
+#if 0
 	    if(xEvent.subwindow) win=xEvent.subwindow;
 	    else win=xEvent.window;
 	    w=XtWindowToWidget(display,win);
