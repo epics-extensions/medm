@@ -300,10 +300,10 @@ SciPlotClassRec sciplotClassRec =
 #ifdef MOTIF
   {
     /* primitive_class fields   */
-    /* border_highlight         */ (XtWidgetProc) _XtInherit,
-    /* border_unhighligh        */ (XtWidgetProc) _XtInherit,
+    /* border_highlight         */ (XtWidgetProc)_XtInherit,
+    /* border_unhighligh        */ (XtWidgetProc)_XtInherit,
     /* translations             */ XtInheritTranslations,
-    /* arm_and_activate         */ (XtActionProc) _XtInherit,
+    /* arm_and_activate         */ (XtActionProc)_XtInherit,
     /* syn_resources            */ NULL,
     /* num_syn_resources        */ 0,
     /* extension                */ NULL

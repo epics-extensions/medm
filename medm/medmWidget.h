@@ -124,7 +124,7 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define EXECUTE_POPUP_MENU_PVINFO       "PV Info"
 #define EXECUTE_POPUP_MENU_PVLIMITS     "PV Limits"
 #define EXECUTE_POPUP_MENU_DISPLAY_LIST "Display List"
-#define EXECUTE_POPUP_MENU_FLASH_HIDDEN "Flash Hidden Buttons"
+#define EXECUTE_POPUP_MENU_FLASH_HIDDEN "Toggle Hidden Button Markers"
 #define EXECUTE_POPUP_MENU_EXECUTE      "Execute"
 #define EXECUTE_POPUP_MENU_PRINT_ID        0
 #define EXECUTE_POPUP_MENU_CLOSE_ID        1
@@ -270,6 +270,7 @@ typedef struct _DisplayInfo {
     FILE *filePtr;
     Boolean newDisplay;       /* Comes from File|New and not yet saved */
     Boolean elementsExecuted; /* All elements have been executed in EXECUTE */
+    Boolean hiddenMarkersOn;  /* Hidden button markers are on */
     int versionNumber;
   /* Widgets and main pixmap */
     Widget shell;
@@ -319,6 +320,9 @@ typedef struct _DisplayInfo {
     int numNameValues;
     DlFile *dlFile;
     DlColormap  *dlColormap;
+  /* Mark hidden widgets */
+    Widget *markerWidgetList;
+    int nMarkerWidgets;
   /* Linked list of displayInfo's    */
     struct _DisplayInfo *next;
     struct _DisplayInfo *prev;

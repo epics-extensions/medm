@@ -70,11 +70,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif    
 
 #include "medm.h"
+#include "Marquee.h"
 #include <Xm/MwmUtil.h>
 
 #define RD_APPLY_BTN  0
 #define RD_CLOSE_BTN  1
  
+#define MARKER_ON_TIME 5000     /* msec */
+#define MARKER_OFF_TIME 1000     /* msec */
+#define MARKER_COUNT 1
+
 static Widget rdMatrix = NULL, rdForm = NULL;
 static Widget table[MAX_RELATED_DISPLAYS][4];
 static Pixmap stipple = (Pixmap)0;
@@ -87,6 +92,10 @@ static void relatedDisplayButtonPressedCb(Widget, XtPointer, XtPointer);
 static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
   Pixel fg, Pixel bg, Dimension width, Dimension height,
   XFontStruct *font, int icon, char *label);
+static int countHiddenButtons(DlElement *dlElement);
+static void createMarkerWidgets(DisplayInfo *displayInfo, DlElement *dlElement);
+static void createMarkerWidget(DisplayInfo *displayInfo, DlElement *dlElement);
+static void markerWidgetsDestroy(DisplayInfo *displayInfo);
 
 static DlDispatchTable relatedDisplayDlDispatchTable = {
     createDlRelatedDisplay,
@@ -223,21 +232,21 @@ int relatedDisplayFontListIndex(
  
 /* more complicated calculation based on orientation, etc */
     for(i = MAX_FONTS-1; i >=  0; i--) {
-	switch (dlRelatedDisplay->visual) {
+	switch(dlRelatedDisplay->visual) {
 	case RD_COL_OF_BTN:
-	    if( (int)(dlRelatedDisplay->object.height/MAX(1,numButtons)
+	    if((int)(dlRelatedDisplay->object.height/MAX(1,numButtons)
 	      - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
 	case RD_ROW_OF_BTN:
-	    if( (int)(dlRelatedDisplay->object.height - SHADOWS_SIZE) >=
+	    if((int)(dlRelatedDisplay->object.height - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
 	}
     }
-    return (0);
+    return(0);
 }
 
 void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -253,10 +262,9 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     int iNumberOfDisplays = 0;
     DlRelatedDisplay *dlRelatedDisplay = dlElement->structure.relatedDisplay;
 
-/*
- * These are widget ids, but they are recorded in the otherChild widget list
- *   as well, for destruction when new displays are selected at the top level
- */
+/* These are widget ids, but they are recorded in the otherChild
+   widget list as well, for destruction when new displays are selected
+   at the top level */
     Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
     Widget widget;
 
@@ -290,7 +298,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	pixmapH = MIN(dlRelatedDisplay->object.width,
 	  dlRelatedDisplay->object.height);
       /* Allow for shadows, etc. */
-	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
+	pixmapH = (unsigned int)MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
 	if(dlRelatedDisplay->label[0] == '\0') {
 	    label=NULL;
@@ -337,7 +345,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
 	  pixmap,
 	  NULL,     /* There a pixmap, not a label on the button */
-	  (XtPointer) displayInfo);
+	  (XtPointer)displayInfo);
       /* Add the callbacks for bringing up the menu */
 	if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	    int i;
@@ -361,8 +369,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	n = 0;
 	XtSetArg(args[n],XmNbackground,(Pixel)
 	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
-	XtSetArg(args[n],XmNforeground,(Pixel)
-	  displayInfo->colormap[dlRelatedDisplay->clr]); n++;
+	XtSetArg(args[n],XmNforeground,
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); n++;
 	XtSetArg(args[n],XmNhighlightThickness,1); n++;
 	XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
 	XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
@@ -392,8 +400,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
 	if(tearOff) {
 	    XtVaSetValues(tearOff,
-	      XmNforeground,(Pixel) displayInfo->colormap[dlRelatedDisplay->clr],
-	      XmNbackground,(Pixel) displayInfo->colormap[dlRelatedDisplay->bclr],
+	      XmNforeground,(Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
+	      XmNbackground,(Pixel)displayInfo->colormap[dlRelatedDisplay->bclr],
 	      XmNtearOffModel,XmTEAR_OFF_DISABLED,
 	      NULL);
 	}
@@ -402,7 +410,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	pixmapH = MIN(dlRelatedDisplay->object.width,
 	  dlRelatedDisplay->object.height);
       /* Allow for shadows, etc. */
-	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
+	pixmapH = (unsigned int)MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
 	if(dlRelatedDisplay->label[0] == '\0') {
 	    label=NULL;
@@ -511,16 +519,16 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(wargs[n],XmNspacing,0); n++;
 	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
 	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
-	switch (dlRelatedDisplay->visual) {
+	switch(dlRelatedDisplay->visual) {
 	case RD_COL_OF_BTN:
 	    XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
 	    usedWidth = dlRelatedDisplay->object.width;
-	    usedHeight = (int) (dlRelatedDisplay->object.height/
+	    usedHeight = (int)(dlRelatedDisplay->object.height/
 	      MAX(1,iNumberOfDisplays));
 	    break;
 	case RD_ROW_OF_BTN:
 	    XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
-	    usedWidth = (int) (dlRelatedDisplay->object.width/
+	    usedWidth = (int)(dlRelatedDisplay->object.width/
 	      MAX(1,iNumberOfDisplays));
 	    usedHeight = dlRelatedDisplay->object.height;
 	    break;
@@ -551,10 +559,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
 	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
 	for(i = 0; i < iNumberOfDisplays; i++) {
-	    XmString xmStr;
-	    Widget   toggleButton;
-	    xmStr = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
-	    XtSetArg(wargs[n],XmNlabelString,xmStr);
+	    Widget toggleButton;
+	    
+	    xmString = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
+	    XtSetArg(wargs[n],XmNlabelString,xmString);
 	  /* Use gadgets here so that changing foreground of
 	   *   radioBox changes buttons */
 	    toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
@@ -562,13 +570,14 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 		XtAddCallback(toggleButton,XmNarmCallback,
 		  relatedDisplayButtonPressedCb,
-		  (XtPointer) &(dlRelatedDisplay->display[i]));
+		  (XtPointer)&(dlRelatedDisplay->display[i]));
 	    }  else {
 		XtSetSensitive(toggleButton,False);
 	    }
 	  /* MDA: For some reason, need to do this after the fact for gadgets */
 	    XtVaSetValues(toggleButton,XmNalignment,XmALIGNMENT_CENTER,NULL);
 	    XtManageChild(toggleButton);
+	    XmStringFree(xmString);
 	}
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
@@ -655,7 +664,7 @@ DlElement *createDlRelatedDisplay(DlElement *p)
     }
 
     if(!(dlElement = createDlElement(DL_RelatedDisplay,
-      (XtPointer)      dlRelatedDisplay,
+      (XtPointer)dlRelatedDisplay,
       &relatedDisplayDlDispatchTable))) {
 	free(dlRelatedDisplay);
     }
@@ -670,7 +679,7 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *r
     int nestingLevel = 0;
 
     do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
+	switch(tokenType=getToken(displayInfo,token)) {
 	case T_WORD:
 	    if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
@@ -696,8 +705,8 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *r
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-      && (tokenType != T_EOF) );
+    } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF));
 }
 
 DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
@@ -713,7 +722,7 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
     dlRelatedDisplay = dlElement->structure.relatedDisplay;
 
     do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
+	switch(tokenType=getToken(displayInfo,token)) {
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlRelatedDisplay->object));
@@ -760,8 +769,8 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-      && (tokenType != T_EOF) );
+    } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF));
 
     return dlElement;
 
@@ -928,10 +937,10 @@ static void relatedDisplayActivate(Widget, XtPointer cd, XtPointer)
 static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-    int buttonType = (int) cd;
+    int buttonType = (int)cd;
     int i;
 
-    switch (buttonType) {
+    switch(buttonType) {
  
     case RD_APPLY_BTN:
       /* commit changes in matrix to global matrix array data */
@@ -981,7 +990,7 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 /*
  * create related display data dialog
  */
-Widget createRelatedDisplayDataDialog (Widget parent)
+Widget createRelatedDisplayDataDialog(Widget parent)
 {
     Widget shell, applyButton, closeButton;
     Dimension cWidth, cHeight, aWidth, aHeight;
@@ -1206,4 +1215,188 @@ static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
     medmGetValues(pRCB,
       CLR_RC,        &(dlRelatedDisplay->clr),
       -1);
+}
+
+/*** Hidden button marking routines ***/
+
+void markHiddenButtons(DisplayInfo *displayInfo)
+{
+    DlElement *pE;
+    
+  /* Don't do anything if the displayInfo is invalid */
+    if(!displayInfo) return;
+    
+  /* This is a toggle */
+    if(displayInfo->nMarkerWidgets) {
+      /* They are on.  Turn them off */
+	markerWidgetsDestroy(displayInfo);
+    } else {
+      /* They are off.  Turn them on */
+      /* Count the number of hidden buttons */
+	pE = FirstDlElement(displayInfo->dlElementList);
+	while(pE) {
+	    displayInfo->nMarkerWidgets += countHiddenButtons(pE);
+	    
+	    pE = pE->next;
+	}
+	
+      /* Popup a dialog and return if there are no hidden buttons */
+	if(!displayInfo->nMarkerWidgets) {
+	    char token[MAX_TOKEN_LENGTH];
+	    
+	    sprintf(token,
+	      "There are no hidden buttons in this display.");
+	    dmSetAndPopupWarningDialog(displayInfo, token, "OK", NULL, NULL);
+	    return;
+	}
+	
+      /* Allocate space for the list of widgets */
+	displayInfo->markerWidgetList =
+	  (Widget *)malloc(displayInfo->nMarkerWidgets*sizeof(Widget));
+	if(!displayInfo->markerWidgetList) {
+	    displayInfo->nMarkerWidgets = 0;
+	    medmPrintf(1,"\nmarkHiddenButtons: Cannot create widget list\n");
+	    return;
+	}
+	
+      /* Create the marker widgets */
+	displayInfo->nMarkerWidgets = 0;
+	pE = FirstDlElement(displayInfo->dlElementList);
+	while(pE) {
+	    createMarkerWidgets(displayInfo, pE);
+	    
+	    pE = pE->next;
+	}
+    }
+}
+
+static int countHiddenButtons(DlElement *dlElement)
+{
+    DlElement *pE;
+    int n = 0;
+    
+    if(dlElement->type == DL_Composite) {
+	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+	while(pE) {
+	    if(pE->type == DL_Composite) {
+		n+=countHiddenButtons(pE);
+	    } else if(pE->type == DL_RelatedDisplay &&
+	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		n++;
+	    }
+	    pE = pE->next;
+	}
+    } else if(dlElement->type == DL_RelatedDisplay &&
+      dlElement->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	n++;
+    }
+
+    return(n);
+}
+
+static void createMarkerWidgets(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    DlElement *pE;
+    
+    if(dlElement->type == DL_Composite) {
+	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+	while(pE) {
+	    if(pE->type == DL_Composite) {
+		createMarkerWidgets(displayInfo, pE);
+	    } else if(pE->type == DL_RelatedDisplay &&
+	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		createMarkerWidget(displayInfo, pE);
+	    }
+	    pE = pE->next;
+	}
+    } else if(dlElement->type == DL_RelatedDisplay &&
+      dlElement->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	createMarkerWidget(displayInfo, dlElement);
+    }
+}
+
+static void createMarkerWidget(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    DlObject *pO = &(dlElement->structure.composite->object);
+    int nargs;
+    Arg args[10];
+    Widget w;
+    int x, y, width, height;
+
+  /* Make the marquee surround the hidden button */
+    x = pO->x - 1;
+    y = pO->y - 1;
+    width = pO->width + 2;
+    height = pO->height + 2;
+
+    nargs = 0;
+    XtSetArg(args[nargs], XmNx, x); nargs++;
+    XtSetArg(args[nargs], XmNy, y); nargs++;
+    XtSetArg(args[nargs], XmNwidth, width); nargs++;
+    XtSetArg(args[nargs], XmNheight, height); nargs++;
+    XtSetArg(args[nargs], XmNforeground, WhitePixel(display,screenNum)); nargs++;
+    XtSetArg(args[nargs], XmNbackground, BlackPixel(display,screenNum)); nargs++;
+    XtSetArg(args[nargs], XtNblinkTime, 1000); nargs++;
+    XtSetArg(args[nargs], XtNborderWidth, 0); nargs++;
+#if 0
+	XtSetArg(args[nargs], XtNtransparent, False); nargs++;
+#endif	
+	w=XtCreateManagedWidget("marquee", marqueeWidgetClass,
+	  displayInfo->drawingArea, args, nargs);
+	displayInfo->markerWidgetList[displayInfo->nMarkerWidgets++] = w;
+	
+#if 0
+    Dimension bw, daX, daY;
+
+  /* Get the drawing area origin */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNx, &daX); nargs++;
+    XtSetArg(args[nargs], XtNy, &daY); nargs++;
+    XtGetValues(displayInfo->drawingArea, args, nargs);
+    
+  /* Create a shell */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNx, pO->x + daX); nargs++;
+    XtSetArg(args[nargs], XtNy, pO->y + daY); nargs++;
+    XtSetArg(args[nargs], XtNbackground, displayInfo->
+      colormap[displayInfo->drawingAreaForegroundColor]); nargs++;
+    w = XtCreatePopupShell("marker", overrideShellWidgetClass,
+      displayInfo->drawingArea, args, nargs);
+    markerWidgetList[nMarkerWidgets++] = w;
+
+  /* Find the borderwidth */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNborderWidth, &bw); nargs++;
+    XtGetValues(w, args, nargs);
+    bw*=2;
+
+  /* Set the width and height */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNwidth, pO->width - bw); nargs++;
+    XtSetArg(args[nargs], XtNheight, pO->height - bw); nargs++;
+    XtSetValues(w, args, nargs);
+#endif    
+}
+
+static void markerWidgetsDestroy(DisplayInfo *displayInfo)
+{
+    int i;
+    int nWidgets = displayInfo->nMarkerWidgets;
+    Widget *widgets = displayInfo->markerWidgetList;
+
+  /* Unmap them to be sure */
+    for(i=0; i < nWidgets; i++) {
+	XtUnmapWidget(widgets[i]);
+    }
+    XFlush(display);
+
+  /* Destroy them */
+    for(i=0; i < nWidgets; i++) {
+	XtDestroyWidget(widgets[i]);
+    }
+    if(widgets) {
+	free((char *)widgets);
+	displayInfo->markerWidgetList = NULL;
+    }
+    displayInfo->nMarkerWidgets = 0;
 }

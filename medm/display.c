@@ -180,6 +180,9 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->grid = NULL;
     displayInfo->undoInfo = NULL;
 
+    displayInfo->markerWidgetList = NULL;
+    displayInfo->nMarkerWidgets = 0;    
+
     updateTaskInitHead(displayInfo);
 
 #if 0
@@ -269,22 +272,24 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     Widget drawingArea;
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
 
-  /* save off current drawingArea */
+  /* Turn off any hidden button markers */
+    if(displayInfo->nMarkerWidgets) {
+      /* Toggle them off */
+	markHiddenButtons(displayInfo);
+    }
+
+  /* Save a pointer to the drawingArea */
     drawingArea = displayInfo->drawingArea;
-  /* now set to NULL in displayInfo to signify "in cleanup" */
+  /* Now set drawingArea to NULL in displayInfo to signify "in cleanup" */
     displayInfo->drawingArea = NULL;
     displayInfo->editPopupMenu = (Widget)0;
     displayInfo->executePopupMenu = (Widget)0;
 
-  /*
-   * remove all update tasks in this display 
-   */
+  /* Remove all update tasks in this display */
     updateTaskDeleteAllTask(pt);
  
-  /* 
-   * as a composite widget, drawingArea is responsible for destroying
-   *  it's children
-   */
+  /* As a composite widget, drawingArea is responsible for destroying
+   it's children */
     if(drawingArea != NULL) {
 	XtDestroyWidget(drawingArea);
 	drawingArea = NULL;
@@ -379,7 +384,8 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
       displayInfoListTail = displayInfoListTail->prev;
     if(displayInfoListTail == displayInfoListHead )
       displayInfoListHead->next = NULL;
-/* Cleanup resources and free display list */
+
+  /* Cleanup resources and free display list */
     dmCleanupDisplayInfo(displayInfo,True);
     freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
     if(displayInfo->dlElementList) {
@@ -408,6 +414,7 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 	currentColormapSize = DL_MAX_COLORS;
 	currentDisplayInfo = NULL;
     }
+
   /* Refresh the display list dialog box */
     refreshDisplayListDlg();
 }

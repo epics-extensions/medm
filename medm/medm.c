@@ -2536,6 +2536,16 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Mode is the mode to which we are going */
     switch(mode) {
     case DL_EDIT:
+      /* Turn off any hidden button markers */
+	displayInfo = displayInfoSaveListHead->next;
+	while(displayInfo) {
+	    if(displayInfo->nMarkerWidgets) {
+	      /* Toggle them off */
+		markHiddenButtons(displayInfo);
+	    }
+	    displayInfo =displayInfo->next;
+	}	
+
       /* Restore any related displays that were replaced */
 #if 0	
 	dumpDisplayInfoList(displayInfoListHead,"medm.c [1]: displayInfoList");

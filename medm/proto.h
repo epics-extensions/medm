@@ -341,6 +341,7 @@ void medmClearImageCache(void);
 void relatedDisplayDataDialogPopup(Widget w);
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay);
+void markHiddenButtons(DisplayInfo *displayInfo);
 
 /* medmShellCommand.c */
 Widget createShellCommandPromptD(Widget parent);
@@ -612,7 +613,6 @@ void popupDisplayListDlg(void);
 void popupPvLimits(DisplayInfo *displayInfo);
 void updatePvLimits(DlLimits *limits);
 void refreshDisplayListDlg(void);
-void flashHiddenButtons(DisplayInfo *displayInfo);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
