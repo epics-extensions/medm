@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _Arc {
     DlElement        *dlElement;
-    Record           *record;
+    Record           **records;
     UpdateTask       *updateTask;
 } MedmArc;
 
@@ -113,7 +113,8 @@ static void drawArc(MedmArc *pa) {
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
-    if (displayInfo->traversalMode == DL_EXECUTE && *dlArc->dynAttr.chan) {
+    if(displayInfo->traversalMode == DL_EXECUTE &&
+      *dlArc->dynAttr.chan[0]) {
 	MedmArc *pa;
 	pa = (MedmArc *) malloc(sizeof(MedmArc));
 	pa->dlElement = dlElement;
@@ -129,7 +130,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pa->updateTask,arcGetRecord);
 	    pa->updateTask->opaque = False;
 	}
-	pa->record = medmAllocateRecord(dlArc->dynAttr.chan,arcUpdateValueCb,
+	pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,arcUpdateValueCb,
 	  NULL,(XtPointer) pa);
 #if 0
 	drawWhiteRectangle(pa->updateTask);
@@ -142,21 +143,21 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pa->record->monitorSeverityChanged = False;
 	    break;
 	case ALARM:
-	    pa->record->monitorValueChanged = False;
+	    pa->records[0]->monitorValueChanged = False;
 	    break;
 	case DISCRETE:
-	    pa->record->monitorSeverityChanged = False;
+	    pa->records[0]->monitorSeverityChanged = False;
 	    break;
 	}
 #else
-	pa->record->monitorValueChanged = False;
+	pa->records[0]->monitorValueChanged = False;
 	if (dlArc->dynAttr.clr != ALARM ) {
-	    pa->record->monitorSeverityChanged = False;
+	    pa->records[0]->monitorSeverityChanged = False;
 	}
 #endif
 
 	if (dlArc->dynAttr.vis == V_STATIC ) {
-	    pa->record->monitorZeroAndNoneZeroTransition = False;
+	    pa->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
@@ -193,7 +194,7 @@ static void arcUpdateValueCb(XtPointer cd) {
 
 static void arcDraw(XtPointer cd) {
     MedmArc *pa = (MedmArc *)cd;
-    Record *pd = pa->record;
+    Record *pd = pa->records[0];
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -269,12 +270,24 @@ static void arcDraw(XtPointer cd) {
 	drawArc(pa);
 
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlArc);
 }
 
 static void arcDestroyCb(XtPointer cd) {
     MedmArc *pa = (MedmArc *)cd;
+
     if (pa) {
-	medmDestroyRecord(pa->record);
+	Record **records = pa->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pa);
     }
     return;
@@ -282,8 +295,12 @@ static void arcDestroyCb(XtPointer cd) {
 
 static void arcGetRecord(XtPointer cd, Record **record, int *count) {
     MedmArc *pa = (MedmArc *)cd;
-    *count = 1;
-    record[0] = pa->record;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pa->records[i];
+    }
 }
 
 DlElement *createDlArc(DlElement *p)

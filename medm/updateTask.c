@@ -59,7 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-/* Include this after medm.h to avaoid problems with Exceed 6 */
+/* Include this after medm.h to avoid problems with Exceed 6 */
 #ifdef WIN32
 /* In MSVC timeval is in winsock.h, winsock2.h, ws2spi.h, nowhere else */
 #include <X11/Xos.h>
@@ -824,4 +824,3 @@ UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
     }
     return ptuSaved;
 }
-

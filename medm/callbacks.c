@@ -318,3 +318,50 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	}
     }
 }
+
+#ifdef __cplusplus 
+void wmCloseCallback(Widget w, XtPointer cd, XtPointer)
+#else
+void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    ShellType shellType = (ShellType) cd;
+  /*
+   * handle WM Close functions like all the separate dialog close functions,
+   *   dispatch based upon widget value that the callback is called with
+   */
+    switch (shellType) {
+    case DISPLAY_SHELL:
+	closeDisplay(w);
+	break;
+    case OTHER_SHELL:
+      /* it's one of the permanent shells */
+	if (w == mainShell) {
+	    medmExit();
+	} else if (w == objectS) {
+	    XtPopdown(objectS);
+	} else if (w == resourceS) {
+	    XtPopdown(resourceS);
+	} else if (w == colorS) {
+	    XtPopdown(colorS);
+	} else if (w == channelS) {
+	    XtPopdown(channelS);
+	} else if (w == helpS) {
+	    XtPopdown(helpS);
+	} else if (w == editHelpS) {
+	    XtPopdown(editHelpS);
+	} else if (w == pvInfoS) {
+	    XtPopdown(pvInfoS);
+	} else if (w == errMsgS) {
+	    XtPopdown(errMsgS);
+	} else if (w == errMsgSendS) {
+	    XtPopdown(errMsgSendS);
+	} else if (w == caStudyS) {
+	    XtPopdown(caStudyS);
+	} else if (w == displayListS) {
+	    XtPopdown(displayListS);
+	}
+	break;
+    }
+}
+

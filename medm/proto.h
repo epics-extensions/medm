@@ -175,6 +175,7 @@ void handleBubbleHelp(Widget w, XtPointer clientData, XEvent *event,
 int callBrowser(char *url);
 
 /* callbacks.c */
+void wmCloseCallback(Widget, XtPointer, XtPointer);
 void dmDisplayListOk(Widget, XtPointer, XtPointer);
 void executePopupMenuCallback(Widget, XtPointer, XtPointer);
 void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs);
@@ -270,7 +271,11 @@ void medmDisconnectChannel(Channel *pCh);
 void CATaskGetInfo(int *, int *, int *);
 Channel *getChannelFromRecord(Record *pRecord);
 #endif
-Record *medmAllocateRecord(char*,void(*)(XtPointer),void(*)(XtPointer),XtPointer);
+Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
+  void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData);
+Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
+  void (*updateValueCb)(XtPointer), void (*updateGraphicalInfoCb)(XtPointer),
+  XtPointer clientData);
 void medmDestoryRecord(Record *);
 void medmSendDouble(Record *, double);
 void medmSendString(Record *, char *);
@@ -384,17 +389,16 @@ void updateShellCommandDataDialog(void);
 void updateStripChartDataDialog(void);
 void initializeXmStringValueTables();
 
-/* shared.c */
-void wmCloseCallback(Widget, XtPointer, XtPointer);
-XtCallbackProc wmTakeFocusCallback(Widget w, ShellType shellType,
-  XmAnyCallbackStruct *call_data);
+/* updateTask.c */
+UpdateTask *getUpdateTaskFromWidget(Widget sourceWidget);
+UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y);
 void updateStatusFields(void);
-void optionMenuSet(Widget menu, int buttonId);
 double medmTime();
 double medmElapsedTime();
 double medmResetElapsedTime();
 void updateTaskInit(DisplayInfo *displayInfo);
-UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer), XtPointer);
+UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer),
+  XtPointer);
 void updateTaskDeleteTask(UpdateTask *);
 void updateTaskDeleteAllTask(UpdateTask *);
 int updateTaskMarkTimeout(UpdateTask *, double);
@@ -463,6 +467,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
 void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
+void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
@@ -512,14 +517,13 @@ void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
 void spaceSelectedElements(int plane);
 void spaceSelectedElements2D(void);
 void deleteAndFreeElementAndStructure(DisplayInfo *displayInfo, DlElement *ele);
-UpdateTask *getUpdateTaskFromWidget(Widget sourceWidget);
-UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y);
 NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
   char *name);
 void freeNameValueTable(NameValueTable *nameValueTable, int numEntries);
 void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString);
+void optionMenuSet(Widget menu, int buttonId);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);

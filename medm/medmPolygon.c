@@ -72,8 +72,8 @@ static double okRadiansTable[24] = { 0.,
 
 typedef struct _Polygon {
     DlElement       *dlElement;
-    Record           *record;
-    UpdateTask       *updateTask;
+    Record          **records;
+    UpdateTask      *updateTask;
 } MedmPolygon;
 
 static void polygonDraw(XtPointer cd);
@@ -147,8 +147,8 @@ static void calculateTheBoundingBox(DlPolygon *dlPolygon) {
 void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlPolygon *dlPolygon = dlElement->structure.polygon;
-    if (displayInfo->traversalMode == DL_EXECUTE  && *dlPolygon->dynAttr.chan) {
-
+    if(displayInfo->traversalMode == DL_EXECUTE  &&
+      *dlPolygon->dynAttr.chan[0]) {
 	MedmPolygon *pp;
 	DlObject object;
 
@@ -171,11 +171,8 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
 	    pp->updateTask->opaque = False;
 	}
-	pp->record = medmAllocateRecord(
-	  dlPolygon->dynAttr.chan,
-	  polygonUpdateValueCb,
-	  NULL,
-	  (XtPointer) pp);
+	pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
+	  polygonUpdateValueCb, NULL, (XtPointer) pp);
 #if 0
 	drawWhiteRectangle(pp->updateTask);
 #endif
@@ -193,14 +190,14 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 #else
-	pp->record->monitorValueChanged = False;
+	pp->records[0]->monitorValueChanged = False;
 	if (dlPolygon->dynAttr.clr != ALARM ) {
-	    pp->record->monitorSeverityChanged = False;
+	    pp->records[0]->monitorSeverityChanged = False;
 	}
 #endif
 
 	if (dlPolygon->dynAttr.vis == V_STATIC ) {
-	    pp->record->monitorZeroAndNoneZeroTransition = False;
+	    pp->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
 
     } else {
@@ -227,7 +224,7 @@ static void polygonUpdateValueCb(XtPointer cd) {
 
 static void polygonDraw(XtPointer cd) {
     MedmPolygon *pp = (MedmPolygon *)cd;
-    Record *pd = pp->record;
+    Record *pd = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -296,12 +293,24 @@ static void polygonDraw(XtPointer cd) {
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolygon(pp);
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlPolygon);
 }
 
 static void polygonDestroyCb(XtPointer cd) {
     MedmPolygon *pp = (MedmPolygon *)cd;
+
     if (pp) {
-	medmDestroyRecord(pp->record);
+	Record **records = pp->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pp);
     }
     return;
@@ -309,8 +318,12 @@ static void polygonDestroyCb(XtPointer cd) {
 
 static void polygonGetRecord(XtPointer cd, Record **record, int *count) {
     MedmPolygon *pp = (MedmPolygon *)cd;
-    *count = 1;
-    record[0] = pp->record;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pp->records[i];
+    }
 }
 
 
@@ -401,7 +414,6 @@ void parsePolygonPoints(
 	dlPolygon->points[dlPolygon->nPoints].y = dlPolygon->points[0].y;
 	dlPolygon->nPoints++;
     }
-
 }
 
 DlElement *parsePolygon(DisplayInfo *displayInfo)

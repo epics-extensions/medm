@@ -1546,7 +1546,7 @@ void cartesianPlotDraw(XtPointer cd) {
 
 static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)
 {
-    CartesianPlot *pcp = (CartesianPlot *) cd;
+    CartesianPlot *pcp = (CartesianPlot *)cd;
     int i, j;
 
     j = 0;

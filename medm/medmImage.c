@@ -70,7 +70,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 typedef struct _Image {
     DisplayInfo *displayInfo;
     DlElement *dlElement;
-    Record *record;
+    Record **records;
     UpdateTask *updateTask;
     Boolean validCalc;
     char post[MAX_TOKEN_LENGTH];
@@ -141,7 +141,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     DlImage *dlImage = dlElement->structure.image;
 
   /* Get the image */
-    switch (dlImage->imageType) {
+    switch(dlImage->imageType) {
     case GIF_IMAGE:
 	if (dlImage->privateData == NULL) {
 	  /* Not initialized */
@@ -181,7 +181,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	pi = (MedmImage *)malloc(sizeof(MedmImage));
 	pi->displayInfo = displayInfo;
 	pi->dlElement = dlElement;
-	pi->record = NULL;
+	pi->records = NULL;
 	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
 	  imageDraw, (XtPointer)pi);
 	pi->validCalc = False;
@@ -193,13 +193,13 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 	    pi->updateTask->opaque = False;
 	}
-	pi->record = NULL;
-	if(*dlImage->dynAttr.chan) {
+	pi->records = NULL;
+	if(*dlImage->dynAttr.chan[0]) {
 	    long status;
 	    short errnum;
 	    
 	  /* A channel is defined */
-	    pi->record = medmAllocateRecord(dlImage->dynAttr.chan,
+	    pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
 	      imageUpdateValueCb,
 	      imageUpdateGraphicalInfoCb,
 	      (XtPointer)pi);
@@ -246,12 +246,13 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 static void imageDraw(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
-    Record *pr = pi->record;
+    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
+    Record *pr = pi->records?pi->records[0]:NULL;
     DlImage *dlImage = pi->dlElement->structure.image;
     GIFData *gif = (GIFData *)dlImage->privateData;
 
   /* Branch on whether there is a channel or not */
-    if(*dlImage->dynAttr.chan) {
+    if(*dlImage->dynAttr.chan[0]) {
       /* A channel is defined */
 	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(!pr) return;
@@ -293,6 +294,8 @@ static void imageDraw(XtPointer cd)
 	} else {
 	    drawWhiteRectangle(pi->updateTask);
 	}
+      /* Update the drawing objects above */
+	redrawElementsAbove(displayInfo, (DlElement *)dlImage);
     } else {
       /* No channel */
 #if DEBUG_ANIMATE
@@ -312,15 +315,25 @@ static void imageDraw(XtPointer cd)
 		drawGIF(pi->displayInfo, pi->dlElement->structure.image);
 	    }
 	}
+      /* Don't update the drawing objects above (Could get to be
+       * expensive) */
     }
 }
 
-static void imageDestroyCb(XtPointer cd)
-{
+static void imageDestroyCb(XtPointer cd) {
     MedmImage *pi = (MedmImage *)cd;
+
     if (pi) {
+	Record **records = pi->records;
+	
 	updateTaskSetScanRate(pi->updateTask, 0.0);
-	medmDestroyRecord(pi->record);
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pi);
     }
     return;
@@ -333,11 +346,14 @@ static void destroyDlImage(DlElement *dlElement)
     destroyDlElement(dlElement);
 }
 
-static void imageGetRecord(XtPointer cd, Record **record, int *count)
-{
+static void imageGetRecord(XtPointer cd, Record **record, int *count) {
     MedmImage *pi = (MedmImage *)cd;
-    *count = 1;
-    record[0] = pi->record;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pi->records[i];
+    }
 }
 
 static void imageUpdateValueCb(XtPointer cd)
@@ -557,8 +573,10 @@ void writeDlImage(
     writeDlObject(stream,&(dlImage->object),level+1);
     fprintf(stream,"\n%s\ttype=\"%s\"",indent,
       stringValueTable[dlImage->imageType]);
-    fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
-    fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dlImage->calc);
+    if(*dlImage->imageName)
+      fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
+    if(*dlImage->calc)
+      fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dlImage->calc);
     writeDlDynamicAttribute(stream,&(dlImage->dynAttr),level+1);
     fprintf(stream,"\n%s}",indent);
 }

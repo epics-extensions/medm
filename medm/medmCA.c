@@ -602,7 +602,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 }
 
 void medmUpdateChannelCb(struct event_handler_args args) {
-    Channel *pCh = (Channel *) ca_puser(args.chid);
+    Channel *pCh = (Channel *)ca_puser(args.chid);
     Boolean severityChanged = False;
     Boolean zeroAndNoneZeroTransition = False;
     Record *pr;
@@ -914,13 +914,11 @@ static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
                             NULL,NULL,NULL,
                             True,True,True};
 
-Record *medmAllocateRecord(char *name,
-  void (*updateValueCb)(XtPointer),
-  void (*updateGraphicalInfoCb)(XtPointer),
-  XtPointer clientData)
+Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
+  void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)
 {
     Record *record;
-    record = (Record *) malloc(sizeof(Record));
+    record = (Record *)malloc(sizeof(Record));
     if(record) {
 	*record = nullRecord;
 	record->caId = caAdd(name,record);
@@ -929,6 +927,25 @@ Record *medmAllocateRecord(char *name,
 	record->clientData = clientData;
     }
     return record;
+}
+
+Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
+  void (*updateValueCb)(XtPointer), void (*updateGraphicalInfoCb)(XtPointer),
+  XtPointer clientData)
+{
+    int i;
+    Record **records;
+    
+    records = (Record **)malloc(MAX_CALC_RECORDS*sizeof(Record *));
+    if(!records) return records;
+  /* KE: Could put an error message here and also in medmAllocateRecord */
+
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+      /* Use graphicalInfoCb only for record[0] */
+	records[i] = medmAllocateRecord(attr->chan[i], updateValueCb,
+	  i?NULL:updateGraphicalInfoCb, clientData);
+    }
+    return records;
 }
 
 void medmDestroyRecord(Record *pr) {

@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _Rectangle {
     DlElement        *dlElement;
-    Record           *record;
+    Record           **records;
     UpdateTask       *updateTask;
 } MedmRectangle;
 
@@ -111,7 +111,8 @@ static void drawRectangle(MedmRectangle *pr)
 void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
-    if (displayInfo->traversalMode == DL_EXECUTE && *dlRectangle->dynAttr.chan) {
+    if(displayInfo->traversalMode == DL_EXECUTE &&
+      *dlRectangle->dynAttr.chan[0]) {
 	MedmRectangle *pr;
 	pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
 	pr->dlElement = dlElement;
@@ -121,14 +122,14 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pr);
 
 	if (pr->updateTask == NULL) {
-	    medmPrintf(1,"\nrectangleCreateRunTimeInstance: Memory allocation error\n");
+	    medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
 	    updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
 	    pr->updateTask->opaque = False;
 	}
-	pr->record = medmAllocateRecord(dlRectangle->dynAttr.chan,
-	  rectangleUpdateValueCb,NULL,(XtPointer) pr);
+	pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
+	  rectangleUpdateValueCb,NULL,(XtPointer)pr);
 
 #ifdef __COLOR_RULE_H__
 	switch (dlRectangle->dynAttr.clr) {
@@ -144,14 +145,14 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 #else
-	pr->record->monitorValueChanged = False;
+	pr->records[0]->monitorValueChanged = False;
 	if (dlRectangle->dynAttr.clr != ALARM ) {
-	    pr->record->monitorSeverityChanged = False;
+	    pr->records[0]->monitorSeverityChanged = False;
 	}
 #endif
 
 	if (dlRectangle->dynAttr.vis == V_STATIC ) {
-	    pr->record->monitorZeroAndNoneZeroTransition = False;
+	    pr->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
@@ -186,14 +187,14 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void rectangleUpdateValueCb(XtPointer cd)
 {
-    MedmRectangle *pr = (MedmRectangle *)((Record *) cd)->clientData;
+    MedmRectangle *pr = (MedmRectangle *)((Record *)cd)->clientData;
     updateTaskMarkUpdate(pr->updateTask);
 }
 
 static void rectangleDraw(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)cd;
-    Record *pd = pr->record;
+    Record *pd = pr->records[0];
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -204,7 +205,7 @@ static void rectangleDraw(XtPointer cd)
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
-	case STATIC :
+	case STATIC:
 	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
 	    break;
 	case DISCRETE:
@@ -214,11 +215,11 @@ static void rectangleDraw(XtPointer cd)
 	      dlRectangle->attr.clr);
 	    break;
 #else
-	case STATIC :
+	case STATIC:
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
 	    break;
-	case ALARM :
+	case ALARM:
 	    gcValues.foreground = alarmColor(pd->severity);
 	    break;
 #endif
@@ -239,7 +240,7 @@ static void rectangleDraw(XtPointer cd)
 	    if (pd->value == 0.0)
 	      drawRectangle(pr);
 	    break;
-	default :
+	default:
 	    medmPrintf(1,"\nrectangleUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
@@ -259,23 +260,37 @@ static void rectangleDraw(XtPointer cd)
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawRectangle(pr);
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlRectangle);
 }
 
-static void rectangleDestroyCb(XtPointer cd)
-{
+static void rectangleDestroyCb(XtPointer cd) {
     MedmRectangle *pr = (MedmRectangle *)cd;
+
     if (pr) {
-	medmDestroyRecord(pr->record);
+	Record **records = pr->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pr);
     }
     return;
 }
 
-static void rectangleGetRecord(XtPointer cd, Record **record, int *count)
-{
+static void rectangleGetRecord(XtPointer cd, Record **record, int *count) {
     MedmRectangle *pr = (MedmRectangle *)cd;
-    *count = 1;
-    record[0] = pr->record;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pr->records[i];
+    }
 }
 
 DlElement *createDlRectangle(DlElement *p)

@@ -62,9 +62,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _Text {
     DlElement        *dlElement;
-    Record           *record;
+    Record           **records;
     UpdateTask       *updateTask;
-} Text;
+} MedmText;
 
 static void textUpdateValueCb(XtPointer cd);
 static void textDraw(XtPointer cd);
@@ -156,9 +156,10 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 #if DEBUG_FONTS > 1
 	dumpDlElementList(displayInfo->dlElementList);
 #endif	
-    if (displayInfo->traversalMode == DL_EXECUTE && *dlText->dynAttr.chan) {
-	Text *pt;
-	pt = (Text *) malloc(sizeof(Text));
+    if(displayInfo->traversalMode == DL_EXECUTE &&
+      *dlText->dynAttr.chan[0]) {
+	MedmText *pt;
+	pt = (MedmText *)malloc(sizeof(MedmText));
 	pt->dlElement = dlElement;
 	pt->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlText->object),
@@ -172,8 +173,8 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pt->updateTask,textGetRecord);
 	    pt->updateTask->opaque = False;
 	}
-	pt->record = medmAllocateRecord(dlText->dynAttr.chan,textUpdateValueCb,
-	  NULL,(XtPointer) pt);
+	pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
+	  textUpdateValueCb, NULL,(XtPointer) pt);
 	drawWhiteRectangle(pt->updateTask);
 
 #ifdef __COLOR_RULE_H__
@@ -190,14 +191,14 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 #else
-	pt->record->monitorValueChanged = False;
+	pt->records[0]->monitorValueChanged = False;
 	if (dlText->dynAttr.clr != ALARM ) {
-	    pt->record->monitorSeverityChanged = False;
+	    pt->records[0]->monitorSeverityChanged = False;
 	}
 #endif
 
 	if (dlText->dynAttr.vis == V_STATIC ) {
-	    pt->record->monitorZeroAndNoneZeroTransition = False;
+	    pt->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
 
     } else {
@@ -216,13 +217,13 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void textUpdateValueCb(XtPointer cd) {
-    Text *pt = (Text *) ((Record *) cd)->clientData;
+    MedmText *pt = (MedmText *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pt->updateTask);
 }
 
 static void textDraw(XtPointer cd) {
-    Text *pt = (Text *) cd;
-    Record *pd = pt->record;
+    MedmText *pt = (MedmText *)cd;
+    Record *pr = pt->records[0];
     DisplayInfo *displayInfo = pt->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -230,7 +231,7 @@ static void textDraw(XtPointer cd) {
     Display *display = XtDisplay(widget);
     DlText *dlText = pt->dlElement->structure.text;
 
-    if (pd->connected) {
+    if(pr->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -239,7 +240,7 @@ static void textDraw(XtPointer cd) {
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pr->value,
 	      dlText->dynAttr.colorRule,
 	      dlText->attr.clr);
 	    break;
@@ -250,7 +251,7 @@ static void textDraw(XtPointer cd) {
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pr->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
@@ -269,7 +270,7 @@ static void textDraw(XtPointer cd) {
 	      displayInfo->gc,dlText);
 	    break;
 	case IF_NOT_ZERO:
-	    if (pd->value != 0.0) {
+	    if (pr->value != 0.0) {
 #if DEBUG_FONTS
 		printf("textUpdateValueCb [IF_NOT_ZERO]: Calling drawText\n");
 #endif	
@@ -278,7 +279,7 @@ static void textDraw(XtPointer cd) {
 	    }
 	    break;
 	case IF_ZERO:
-	    if (pd->value == 0.0) {
+	    if (pr->value == 0.0) {
 #if DEBUG_FONTS
 		printf("textUpdateValueCb [IF_ZERO]: Calling drawText\n");
 #endif	
@@ -290,7 +291,7 @@ static void textDraw(XtPointer cd) {
 	    medmPrintf(1,"\ntextUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
-	if (pd->readAccess) {
+	if (pr->readAccess) {
 	    if (!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
 		pt->updateTask->opaque = True;
 	    }
@@ -301,21 +302,37 @@ static void textDraw(XtPointer cd) {
     } else {
 	drawWhiteRectangle(pt->updateTask);
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlText);
 }
 
 static void textDestroyCb(XtPointer cd) {
-    Text *pt = (Text *) cd;
+    MedmText *pt = (MedmText *)cd;
+
     if (pt) {
-	medmDestroyRecord(pt->record);
+	Record **records = pt->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pt);
     }
     return;
 }
 
 static void textGetRecord(XtPointer cd, Record **record, int *count) {
-    Text *pt = (Text *) cd;
-    *count = 1;
-    record[0] = pt->record;
+    MedmText *pt = (MedmText *)cd;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pt->records[i];
+    }
 }
 
 DlElement *createDlText(DlElement *p)

@@ -780,12 +780,17 @@ void basicAttributeInit(DlBasicAttribute *attr)
 
 void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
 {
+    int i;
+    
     dynAttr->clr = STATIC;
     dynAttr->vis = V_STATIC;
 #ifdef __COLOR_RULE_H__
     dynAttr->colorRule = 0;
 #endif
-    *(dynAttr->chan) = '\0';
+    *(dynAttr->calc) = '\0';
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	*(dynAttr->chan[i]) = '\0';
+    }
 }
 
 void writeDlElement(FILE *stream, DlElement *DlElement, int level)
@@ -895,11 +900,27 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 		else if(!strcmp(token,"set#4"))
 		  dynAttr->colorRule = 3;
 #endif
-	    } else if(!strcmp(token,"chan")) {
+	    } else if(!strcmp(token,"calc")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		if((strlen(token) > (size_t)0)) {
-		    strcpy(dynAttr->chan,token);
+		    strcpy(dynAttr->calc,token);
+		}
+	    } else {
+	      /* Channel names */
+		int i;
+		char chanName[6];
+		
+		for(i=0; i < MAX_CALC_RECORDS; i++) {
+		  /* Names are chan, chanB, chanC, etc. */
+		    sprintf(chanName,"chan%c",i?'A'+i:'\0');
+		    if(!strcmp(token,chanName)) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if((strlen(token) > (size_t)0)) {
+			    strcpy(dynAttr->chan[i],token);
+			}
+		    }
 		}
 	    }
 	    break;
@@ -1233,15 +1254,30 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
+    int i;
+    char chanName[6];
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if(!strcmp(token,"chan")) {
-		getToken(displayInfo,token);
-		getToken(displayInfo,token);
-		if(token[0]) {
-		    strcpy(dynAttr->chan,token);
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	      /* Names are chan, chanB, chanC, etc. */
+		sprintf(chanName,"chan%c",i?'A'+i:'\0');
+		if(!strcmp(token,chanName)) {
+		    getToken(displayInfo,token);
+		    getToken(displayInfo,token);
+		    if(token[0]) {
+			strcpy(dynAttr->chan[i],token);
+			break;
+		    }
+		}
+		if(!strcmp(token,"calc")) {
+		    getToken(displayInfo,token);
+		    getToken(displayInfo,token);
+		    if(token[0]) {
+			strcpy(dynAttr->calc,token);
+			break;
+		    }
 		}
 	    }
 	    break;
@@ -1439,7 +1475,17 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 {
     char indent[16];
 
-    if(!*(dynAttr->chan)) return;
+    int i;
+    int found=0;
+
+  /* Check for channels */
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	if(*(dynAttr->chan[i])) {
+	    found=1;
+	    break;
+	}
+    }
+    if(!found) return;
 
     memset(indent,'\t',level);
     indent[level] = '\0';
@@ -1456,10 +1502,19 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
   	if(dynAttr->colorRule != 0)
 	  fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
 #endif
-  	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->chan);
+  	if(*dynAttr->calc)
+	  fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dynAttr->calc);
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    char chanName[6];
+	    
+	    sprintf(chanName,"chan%c",i?'A'+i:'\0');
+	    if(*dynAttr->chan[i])
+	      fprintf(stream,"\n%s\t%s=\"%s\"",indent,chanName,dynAttr->chan[i]);
+	}
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
+      /* Old format */
   	fprintf(stream,"\n%s\"dynamic attribute\" {",indent);
   	fprintf(stream,"\n%s\tattr {",indent);
   	fprintf(stream,"\n%s\t\tmod {",indent);
@@ -1470,7 +1525,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 #endif
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t\tparam {",indent);
-  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->chan);
+  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->chan[0]);
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t}",indent);
   	fprintf(stream,"\n%s}",indent);

@@ -2877,21 +2877,31 @@ void updateResourcePaletteBasicAttribute() {
 }
 
 void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
+    int i;
+    
     globalResourceBundle.clrmod = dynAttr->clr;
     globalResourceBundle.vis = dynAttr->vis;
 #ifdef __COLOR_RULE_H__
     globalResourceBundle.colorRule = dynAttr->colorRule;
 #endif
-    strcpy(globalResourceBundle.chan,dynAttr->chan);
+    strcpy(globalResourceBundle.chan,dynAttr->chan[0]);
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	strcpy(globalResourceBundle.dynChan[i],dynAttr->chan[i]);
+    }
 }
 
 void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
+    int i;
+    
     dynAttr->clr = globalResourceBundle.clrmod;
     dynAttr->vis = globalResourceBundle.vis;
 #ifdef __COLOR_RULE_H__
     dynAttr->colorRule = globalResourceBundle.colorRule;
 #endif
-    strcpy(dynAttr->chan,globalResourceBundle.chan);
+    strcpy(dynAttr->chan[0],globalResourceBundle.chan);
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	strcpy(dynAttr->chan[i],globalResourceBundle.dynChan[i]);
+    }
 }
 
 void updateResourcePaletteDynamicAttribute() {

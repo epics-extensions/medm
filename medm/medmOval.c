@@ -58,9 +58,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _Oval {
     DlElement        *dlElement;
-    Record           *record;
+    Record           **records;
     UpdateTask       *updateTask;
-} Oval;
+} MedmOval;
 
 static void ovalDraw(XtPointer cd);
 static void ovalUpdateValueCb(XtPointer cd);
@@ -88,7 +88,7 @@ static DlDispatchTable ovalDlDispatchTable = {
     NULL,
     NULL};
 
-static void drawOval(Oval *po) {
+static void drawOval(MedmOval *po) {
     unsigned int lineWidth;
     DisplayInfo *displayInfo = po->updateTask->displayInfo;
     Widget widget = po->updateTask->displayInfo->drawingArea;
@@ -113,9 +113,10 @@ static void drawOval(Oval *po) {
 void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlOval *dlOval = dlElement->structure.oval;
-    if (displayInfo->traversalMode == DL_EXECUTE && *dlOval->dynAttr.chan) {
-	Oval *po;
-	po = (Oval *) malloc(sizeof(Oval));
+    if(displayInfo->traversalMode == DL_EXECUTE &&
+      *dlOval->dynAttr.chan[0]) {
+	MedmOval *po;
+	po = (MedmOval *) malloc(sizeof(MedmOval));
 	po->dlElement = dlElement;
 	po->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlOval->object),
@@ -129,8 +130,8 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(po->updateTask,ovalGetRecord);
 	    po->updateTask->opaque = False;
 	}
-	po->record = medmAllocateRecord(dlOval->dynAttr.chan,ovalUpdateValueCb,
-	  NULL,(XtPointer) po);
+	po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
+	  ovalUpdateValueCb, NULL, (XtPointer)po);
 #if 0
 	drawWhiteRectangle(po->updateTask);
 #endif
@@ -149,13 +150,13 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 #else
-	po->record->monitorValueChanged = False;
+	po->records[0]->monitorValueChanged = False;
 	if (dlOval->dynAttr.clr != ALARM ) {
-	    po->record->monitorSeverityChanged = False;
+	    po->records[0]->monitorSeverityChanged = False;
 	}
 
 	if (dlOval->dynAttr.vis == V_STATIC ) {
-	    po->record->monitorZeroAndNoneZeroTransition = False;
+	    po->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
 #endif
 
@@ -189,13 +190,13 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 
 
 static void ovalUpdateValueCb(XtPointer cd) {
-    Oval *po = (Oval *) ((Record *) cd)->clientData;
+    MedmOval *po = (MedmOval *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(po->updateTask);
 }
 
 static void ovalDraw(XtPointer cd) {
-    Oval *po = (Oval *) cd;
-    Record *pd = po->record;
+    MedmOval *po = (MedmOval *)cd;
+    Record *pd = po->records[0];
     DisplayInfo *displayInfo = po->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -261,21 +262,37 @@ static void ovalDraw(XtPointer cd) {
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawOval(po);
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlOval);
 }
 
 static void ovalDestroyCb(XtPointer cd) {
-    Oval *po = (Oval *) cd;
+    MedmOval *po = (MedmOval *)cd;
+
     if (po) {
-	medmDestroyRecord(po->record);
+	Record **records = po->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)po);
     }
     return;
 }
 
 static void ovalGetRecord(XtPointer cd, Record **record, int *count) {
-    Oval *po = (Oval *) cd;
-    *count = 1;
-    record[0] = po->record;
+    MedmOval *po = (MedmOval *)cd;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = po->records[i];
+    }
 }
 
 DlElement *createDlOval(DlElement *p)

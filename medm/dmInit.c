@@ -339,9 +339,9 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 			dynamicAttributeInit(&dynAttr);
 #else
 		      /* KE: This was what was done in MEDM 2.2.9 */
-			if (dynAttr.chan[0] != '\0') {
+			if (dynAttr.chan[0][0] != '\0') {
 			    pe->structure.rectangle->dynAttr = dynAttr;
-			    dynAttr.chan[0] = '\0';
+			    dynAttr.chan[0][0] = '\0';
 			}
 #endif			
 			break;

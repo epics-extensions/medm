@@ -60,7 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _Polyline {
     DlElement        *dlElement;
-    Record           *record;
+    Record           **records;
     UpdateTask       *updateTask;
 } MedmPolyline;
 
@@ -158,8 +158,8 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	dlPolyline->isFallingOrRisingLine = False;
     }
-    if (displayInfo->traversalMode == DL_EXECUTE && *dlPolyline->dynAttr.chan) {
-
+    if(displayInfo->traversalMode == DL_EXECUTE &&
+      *dlPolyline->dynAttr.chan[0]) {
 	MedmPolyline *pp;
 	DlObject object;
 	pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
@@ -181,11 +181,8 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
 	    pp->updateTask->opaque = False;
 	}
-	pp->record = medmAllocateRecord(
-	  dlPolyline->dynAttr.chan,
-	  polylineUpdateValueCb,
-	  NULL,
-	  (XtPointer) pp);
+	pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
+	  polylineUpdateValueCb, NULL, (XtPointer) pp);
 #if 0
 	drawWhiteRectangle(pp->updateTask);
 #endif
@@ -204,14 +201,14 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 #else
-	pp->record->monitorValueChanged = False;
+	pp->records[0]->monitorValueChanged = False;
 	if (dlPolyline->dynAttr.clr != ALARM ) {
-	    pp->record->monitorSeverityChanged = False;
+	    pp->records[0]->monitorSeverityChanged = False;
 	}
 #endif
 
 	if (dlPolyline->dynAttr.vis == V_STATIC ) {
-	    pp->record->monitorZeroAndNoneZeroTransition = False;
+	    pp->records[0]->monitorZeroAndNoneZeroTransition = False;
 	}
 
     } else {
@@ -230,7 +227,7 @@ static void polylineUpdateValueCb(XtPointer cd) {
 
 static void polylineDraw(XtPointer cd) {
     MedmPolyline *pp = (MedmPolyline *)cd;
-    Record *pd = pp->record;
+    Record *pd = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -300,12 +297,24 @@ static void polylineDraw(XtPointer cd) {
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolyline(pp);
     }
+
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlPolyline);
 }
 
 static void polylineDestroyCb(XtPointer cd) {
     MedmPolyline *pp = (MedmPolyline *)cd;
+
     if (pp) {
-	medmDestroyRecord(pp->record);
+	Record **records = pp->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
 	free((char *)pp);
     }
     return;
@@ -313,8 +322,12 @@ static void polylineDestroyCb(XtPointer cd) {
 
 static void polylineGetRecord(XtPointer cd, Record **record, int *count) {
     MedmPolyline *pp = (MedmPolyline *)cd;
-    *count = 1;
-    record[0] = pp->record;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pp->records[i];
+    }
 }
 
 DlElement *createDlPolyline(DlElement *p)
@@ -393,7 +406,6 @@ void parsePolylinePoints(
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-
 }
 
 

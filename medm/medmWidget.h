@@ -433,6 +433,7 @@ typedef struct _ResourceBundle {
     FillStyle fill;
     VisibilityMode vis;
     char chan[MAX_TOKEN_LENGTH];
+    char dynChan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
     int data_clr;
     int dis;
     int xyangle;

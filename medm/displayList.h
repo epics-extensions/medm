@@ -68,14 +68,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <math.h>
 #include <string.h>
 
-#define MAX_TOKEN_LENGTH        256     /* max size of strings in adl  */
-#define MAX_RELATED_DISPLAYS    8       /* max # of related displays   */
-#define MAX_SHELL_COMMANDS      8       /* max # of shell commands     */
-#define MAX_PENS                8       /* max # of pens on strip chart*/
-#define MAX_TRACES              8       /* max # of traces on cart.plot*/
-#define MAX_FILE_CHARS          256     /* max # of chars in filename  */
-#define DL_MAX_COLORS           65      /* max # of colors for display */
-#define DL_COLORS_COLUMN_SIZE   5       /* # of colors in each column  */
+#define MAX_TOKEN_LENGTH        256     /* max size of strings in adl    */
+#define MAX_RELATED_DISPLAYS    8       /* max # of related displays     */
+#define MAX_SHELL_COMMANDS      8       /* max # of shell commands       */
+#define MAX_PENS                8       /* max # of pens on strip chart  */
+#define MAX_TRACES              8       /* max # of traces on cart. plot */
+#define MAX_FILE_CHARS          256     /* max # of chars in filename    */
+#define MAX_CALC_RECORDS        4       /* max # of records for calc     */
+#define DL_MAX_COLORS           65      /* max # of colors for display   */
+#define DL_COLORS_COLUMN_SIZE   5       /* # of colors in each column    */
 
 /*********************************************************************
  * Resource Types                                                    *
@@ -516,7 +517,8 @@ typedef struct {
 #ifdef __COLOR_RULE_H__
     int colorRule;
 #endif
-    char chan[MAX_TOKEN_LENGTH];
+    char chan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
+    char calc[MAX_TOKEN_LENGTH];
 } DlDynamicAttribute;
         
 typedef struct {
