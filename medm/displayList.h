@@ -277,7 +277,7 @@ extern const ImageType FIRST_IMAGE_TYPE;
 typedef enum {
     LINEAR_AXIS = 49,
     LOG10_AXIS  = 50,
-    TIME_AXIS   = 52
+    TIME_AXIS   = 51
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -378,8 +378,8 @@ extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 typedef enum {
     COLOR_RULE_1 = 76,
     COLOR_RULE_2 = 77,
-    COLOR_RULE_3 = 76,
-    COLOR_RULE_4 = 78
+    COLOR_RULE_3 = 78,
+    COLOR_RULE_4 = 79
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
