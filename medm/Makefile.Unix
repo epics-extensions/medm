@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.9  1995/03/28 18:56:00  jba
+# Revision 1.10  1995/09/06 21:42:21  vong
+# release 2.1.0
+#
+# Revision 1.9  1995/03/28  18:56:00  jba
 # Added DEPLIBS definition and made USR_LDLIBS portable.
 #
 # Revision 1.8  1995/03/07  23:03:36  vong
@@ -129,7 +132,7 @@ SRCS.c = ../actions.c ../callbacks.c \
 	../medmChoiceButtons.c ../medmMenu.c ../medmMessageButton.c \
 	../medmTextEntry.c ../medmValuator.c \
 	../medmMeter.c ../medmIndicator.c ../medmTextUpdate.c ../medmBar.c \
-	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c ../medmSurfacePlot.c \
+	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c \
         ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
         ../medmPolyline.c ../medmPolygon.c \
 	../objectPalette.c ../parseControllers.c ../parseExtensions.c \
@@ -146,7 +149,7 @@ OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
 	medmTextEntry.o medmValuator.o \
 	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
-	medmStripChart.o medmByte.o medmCartesianPlot.o medmSurfacePlot.o \
+	medmStripChart.o medmByte.o medmCartesianPlot.oot.o \
         medmArc.o medmOval.o medmRectangle.o medmText.o \
         medmPolyline.o medmPolygon.o \
 	objectPalette.o parseControllers.o \
