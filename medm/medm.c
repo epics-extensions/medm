@@ -3253,7 +3253,7 @@ main(int argc, char *argv[])
 	rootWindow = RootWindow(display,screenNum);
 
       /* Intern the appropriate atom if it doesn't exist (i.e. use
-           False). */
+           False) */
 	if(request->fontStyle == FIXED_FONT) {
 	    if(request->opMode == EXECUTE) {
 		windowPropertyAtom = XInternAtom(display,
@@ -3591,23 +3591,25 @@ main(int argc, char *argv[])
     have been lost when we closed the display above if we are the only
     X connection (likely on WIN32).  (Nothing changes unless it was
     lost, since we use False.) */
-    if(request->fontStyle == FIXED_FONT) {
-	if(request->opMode == EXECUTE) {
-	    windowPropertyAtom = XInternAtom(display,
-	      MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
-	} else {
-	    windowPropertyAtom = XInternAtom(display,
-	      MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
+    if(request->medmMode != LOCAL) {
+	if(request->fontStyle == FIXED_FONT) {
+	    if(request->opMode == EXECUTE) {
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
+	    } else {
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
+	    }
+	} else if(request->fontStyle == SCALABLE_FONT) {
+	    if(request->opMode == EXECUTE) {
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
+	    } else {
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
+	    }
 	}
-    } else if(request->fontStyle == SCALABLE_FONT) {
-	if(request->opMode == EXECUTE) {
-	    windowPropertyAtom = XInternAtom(display,
-	      MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
-	} else {
-	    windowPropertyAtom = XInternAtom(display,
-	      MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
-	}
-    } 
+    }
     targetWindow = XtWindow(mainShell);
     if(windowPropertyAtom) {
 #if DEBUG_PROP
