@@ -71,9 +71,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
+#include <XrtGraph.h>
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
-#include <XrtGraph.h>
 #include <XrtGraphProp.h>
 #endif
 #endif
