@@ -540,11 +540,6 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
 
-#if DEBUG_CARTESIAN_PLOT_BORDER    
-    printf("dlCartesianPlot->object.width: %d\n",dlCartesianPlot->object.width);
-    printf("dlCartesianPlot->object.height: %d\n",dlCartesianPlot->object.height);
-#endif    
-
   /* JPT uses strings for color names */
     xColors[0].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.clr];
     xColors[1].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.bclr];
