@@ -116,22 +116,33 @@ extern "C" {
 #endif /* #ifdef WIN32 */
     
 #ifdef MEDM_CDEV
+#include "medmVersion.h"
 #include "medmCdev.h"
 #else
 #include "epicsVersion.h"
 #include "medmCA.h"
 #endif
 
-#include "medmWidget.h"
-#include "parse.h"
-#include "xgif.h"
-#include "medmCA.h"
+#ifdef VMS
+#include "medmVMS.h"      
+#endif				   
+
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
 
+#ifndef VMS /* ACM already include, see above */
+#include "medmCA.h"
+#endif
+
+#include "medmWidget.h"
+#include "parse.h"
+#include "xgif.h"
+
+#ifndef VMS /* ACM already include, see above */
 #include "epicsVersion.h"
 #include "medmVersion.h"
+#endif
 
 #define MAIN_NAME "Medm"
 #define OBJECT_PALETTE_NAME "Object "
@@ -215,7 +226,7 @@ extern "C" {
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;
     EXTERN Widget editHelpS, editHelpMessageBox;
-    EXTERN Widget pvInfoS, pvLimitsS, pvInfoMessageBox;
+    EXTERN Widget pvInfoS, pvInfoMessageBox;
     EXTERN Widget displayListS;
     EXTERN Widget errMsgS, errMsgSendS, caStudyS;
 

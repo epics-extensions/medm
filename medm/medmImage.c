@@ -174,7 +174,11 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XmStringGetLtoR(call_data->dir,XmSTRING_DEFAULT_CHARSET,&dirName);
 	    dirLength = strlen(dirName);
 	    XtUnmanageChild(w);
+#ifndef VMS
 	    strcpy(dlImage->imageName, &(fullPathName[dirLength]));
+#else
+	    strcpy(dlImage->imageName, &(fullPathName[0]));
+#endif
 	    dlImage->imageType = GIF_IMAGE;
 	    (dlElement->run->execute)(currentDisplayInfo, dlElement);
 	  /* Unselect any selected elements */

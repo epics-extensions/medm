@@ -1040,9 +1040,8 @@ void medmStartUpdateCAStudyDlg() {
 
 int xErrorHandler(Display *dpy, XErrorEvent *event)
 {
-    char buf[4096];     /* Warning: Fixed Size */
-    
-    XGetErrorText(dpy,event->error_code,buf,BUFSIZ);
+    char buf[1024];     /* Warning: Fixed Size */
+    XGetErrorText(dpy,event->error_code,buf,1024);
 #ifdef WIN32
     lprintf("\n%s\n",buf);
 #else

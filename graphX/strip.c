@@ -255,7 +255,7 @@ void stripSetAppContext(strip,appContext)
    * update the  application context  field
    */
     strip->appContext = appContext;
-    if (strip->timeoutId != NULL) XtRemoveTimeOut(strip->timeoutId);
+    if (strip->timeoutId != (XtIntervalId)0) XtRemoveTimeOut(strip->timeoutId);
     strip->timeoutId = XtAppAddTimeOut( strip->appContext,
       max(0,(int)(1000.0*(strip->samplingInterval - strip->adjustedInterval))),
       (XtTimerCallbackProc)updateStrip,strip);
@@ -281,8 +281,7 @@ void stripSetInterval(strip,newInterval)
   /*
  * register the timeout to reflect the current sampling interval
  */
-    if (strip->timeoutId != NULL) XtRemoveTimeOut(strip->timeoutId);
- 
+    if (strip->timeoutId != (XtIntervalId)0) XtRemoveTimeOut(strip->timeoutId);
     if (strip->appContext == NULL) {
 	strip->timeoutId = XtAddTimeOut( 
 	  max(0,(int)(1000.0*(strip->samplingInterval - strip->adjustedInterval))),
@@ -1207,7 +1206,7 @@ void stripSetRange(strip,curveNum,minVal,maxVal)
 void stripPause(strip)
     Strip *strip;
 {
-    if (strip->timeoutId != NULL) XtRemoveTimeOut(strip->timeoutId);
+    if (strip->timeoutId != (XtIntervalId)0) XtRemoveTimeOut(strip->timeoutId);
     strip->timeoutId = NULL;
     strip->paused = TRUE;
 
