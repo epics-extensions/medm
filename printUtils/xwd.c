@@ -222,7 +222,7 @@ Window_Dump(window, out)
       Fatal_Error("Can't get target window attributes."," ");
 
     /* handle any frame window */
-    if (!XTranslateCoordinates (dpy, window, RootWindow (dpy, screen), 0, 0,
+    if (!XTranslateCoordinates (dpy, window, DefaultRootWindow(dpy), 0, 0,
 				&absx, &absy, &dummywin)) {
 	fprintf (stderr, 
 		 "%s:  unable to translate window coordinates (%d,%d)\n",
