@@ -232,14 +232,26 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	if (pE) {
 	    if (pE->type == DL_RelatedDisplay &&
 	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
 		Boolean replace = False;
+		int i;
 		
-	      /* See if it was a ctrl-click indicating replace */
-		if(xEvent->state & ControlMask) replace = True;
+	      /* Check the display array to find the first non-empty one */
+		for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
+		    printf("\nhandleExecuteButtonPress: name[%d] = \"%s\"\n",
+		      i, pRD->display[i].name);
+		    if(*(pRD->display[i].name)) {
+		      /* See if it was a ctrl-click indicating replace */
+			if(xEvent->state & ControlMask) replace = True;
 
-	      /* Create the related display */
-		relatedDisplayCreateNewDisplay(displayInfo,
-		  &(pE->structure.relatedDisplay->display[0]), replace);
+		      /* Create the related display */
+			relatedDisplayCreateNewDisplay(displayInfo,
+			  &(pRD->display[i]),
+			  replace);
+
+			break;
+		    }
+		}
 	    }
 	}
     }

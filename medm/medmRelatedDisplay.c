@@ -285,10 +285,18 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  NULL,     /* There a pixmap, not a label on the button */
 	  (XtPointer) displayInfo);
       /* Add the callbacks for bringing up the menu */
-	if (globalDisplayListTraversalMode == DL_EXECUTE) { 
-	    XtAddCallback(dlElement->widget,XmNarmCallback,
-	      relatedDisplayButtonPressedCb,
-	      (XtPointer) &(dlRelatedDisplay->display[0]));
+	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    int i;
+	    
+	  /* Check the display array to find the first non-empty one */
+	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
+		if(*(dlRelatedDisplay->display[i].name)) {
+		    XtAddCallback(dlElement->widget,XmNarmCallback,
+		      relatedDisplayButtonPressedCb,
+		      (XtPointer)&(dlRelatedDisplay->display[i]));
+		    break;
+		}
+	    }
 	}
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
