@@ -61,10 +61,25 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
 #define DEBUG_PVINFO 0
+#define DEBUG_PVLIMITS 1
 #define DEBUG_COMMAND 0
 
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
+
+#define PV_LIMITS_ARROW_LEFT_BTN   3
+#define PV_LIMITS_NAME_BTN         4
+#define PV_LIMITS_ARROW_RIGHT_BTN  5
+#define PV_LIMITS_LOPR_SRC_BTN     6
+#define PV_LIMITS_LOPR_BTN         7
+#define PV_LIMITS_HOPR_SRC_BTN     8
+#define PV_LIMITS_HOPR_BTN         9
+#define PV_LIMITS_PREC_SRC_BTN     10
+#define PV_LIMITS_PREC_BTN         11
+#define PV_LIMITS_CLOSE_BTN        12
+#define PV_LIMITS_HELP_BTN         13
+
+#define PV_LIMITS_INDENT 25
 
 #define DISPLAY_LIST_RAISE_BTN     0
 #define DISPLAY_LIST_CLOSE1_BTN    1
@@ -81,6 +96,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/IntrinsicP.h>
 #include <Xm/MwmUtil.h>
 #include <Xm/List.h>
+#include <cvtFast.h>
 
 #ifdef  __TED__
 #include <Dt/Wsm.h>
@@ -93,16 +109,23 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 static void pvInfoDialogCallback(Widget, XtPointer, XtPointer cbs);
+static void pvLimitsDialogCallback(Widget, XtPointer, XtPointer cbs);
 static void displayListDlgCb(Widget w, XtPointer clientData,
   XtPointer callData);
 static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
+static void resetPvLimits();
 
 /* Global variables */
 
 Boolean modalGrab = FALSE;     /* KE: Not used ?? */
 static DlList *tmpDlElementList = NULL;
 static Widget displayListBox1 = NULL, displayListBox2 = NULL;
+static Widget pvLimitsLeftArrow, pvLimitsRightArrow, pvLimitsName;
+static Widget pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
+static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
+static int pvLimitsCount, pvLimitsN;
+static Record **pvLimitsRecords = NULL;
 
 /*
  * Function to open a specified file (as .adl if specified as .dl),
@@ -4467,7 +4490,8 @@ static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
  *   with the object and the number of them in count
  * The returned array must be freed by the calling routine
  */
-Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
+Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
+  DlElement *pE)
 {
 #if((2*MAX_TRACES)+2) > MAX_PENS
 #define MAX_COUNT 2*MAX_TRACES+2
@@ -4479,10 +4503,10 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     Record *records[MAX_COUNT];
     Record **retRecords;
     UpdateTask *pT;
-    DlElement *pE;
     Position x, y;
     int i;
 
+    pE = NULL;
   /* Choose the object with the process variable */
     widget = XmTrackingEvent(displayInfo->drawingArea,
       pvCursor, True, &event);
@@ -4525,7 +4549,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
 	return NULL;
     }
 		
-  /* Run the element's getRecord procedure */
+  /* Run the element's updateTask's getRecord procedure */
     pT->getRecord(pT->clientData, records, count);
     (*count)%=100;
     if(*count > MAX_COUNT) {
@@ -4545,6 +4569,513 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     }
     return retRecords;
 #undef MAX_COUNT
+}
+
+/* PV Limits routines */
+
+void popupPvLimits(DisplayInfo *displayInfo)
+{
+    long now; 
+    chid *chids = NULL;
+    int i, j, status, found;
+    chid chId;
+    Record *pR;
+    Channel *pCh;
+    DlElement *pE;
+
+  /* Create the dialog box if it has not been created */
+    if(!pvLimitsS) {
+	createPvLimitsDlg();
+	if(!pvLimitsS) {
+	    medmPostMsg(1,"popupPvLimits: Cannot create PV Limits dialog box\n");
+	    return;
+	}
+    }
+
+  /* Get the records */
+    if(pvLimitsRecords) free(pvLimitsRecords);
+    pvLimitsRecords = getPvInfoFromDisplay(displayInfo, &pvLimitsCount, pE);
+    if(!pvLimitsRecords) return;   /* (Error messages have been sent) */
+
+  /* Check that at least one record in not NULL */
+    found = 0;
+    for(i=0; i < pvLimitsCount; i++) {
+	if(pvLimitsRecords[i]) {
+	    found = 1;
+	    break;
+	}
+    }
+    if(!found) {
+	if(pvLimitsRecords) free(pvLimitsRecords);
+	pvLimitsRecords = NULL;
+	return;
+    }
+
+  /* Allocate space */
+    chids = (chid *)calloc(pvLimitsCount,sizeof(chid));
+    if(!chids) {
+	medmPostMsg(1,"popupPvLimits: Memory allocation error\n");
+	if(pvLimitsRecords) free(pvLimitsRecords);
+	pvLimitsRecords = NULL;
+	return;
+    }
+
+  /* Loop over the records to get information */
+    for(i=0; i < pvLimitsCount; i++) {
+      /* Check for a valid record */
+	chids[i] = NULL;
+	if(pvLimitsRecords[i]) {
+	    pR = pvLimitsRecords[i];
+	    pCh = getChannelFromRecord(pR);
+	    if(!pCh) continue;
+	    if(!pCh->chid) continue;
+	    chId = chids[i] = pCh->chid;
+	} else continue;
+    }
+
+  /* Reset limits to the first record */
+    pvLimitsN = 0;
+    XtSetSensitive(pvLimitsLeftArrow,pvLimitsCount > 1?True:False);
+    XtSetSensitive(pvLimitsRightArrow,pvLimitsCount > 1?True:False);
+    resetPvLimits();
+
+  /* Free space */
+    if(chids) free(chids);
+
+    XtSetSensitive(pvLimitsS, True);
+    XtPopup(pvLimitsS, XtGrabNone);
+}
+
+static void resetPvLimits()
+{
+    char string[1024];     /* Danger: Fixed length */
+    Record *pR;
+    
+#if DEBUG_PVLIMITS
+    print("\nresetPvLimits: pvLimitsCount=%d pvLimitsN=%d\n",
+      pvLimitsCount, pvLimitsN);
+#endif
+    if(pvLimitsN >= 0 && pvLimitsN < pvLimitsCount) {
+	pR = pvLimitsRecords[pvLimitsN];
+	if(pR) {
+	    XmTextFieldSetString(pvLimitsName, pR->name);	
+	    cvtDoubleToString(pR->lopr, string, pR->precision);
+	    XmTextFieldSetString(pvLimitsLopr, string);	
+	    cvtDoubleToString(pR->hopr, string, pR->precision);
+	    XmTextFieldSetString(pvLimitsHopr, string);	
+	    cvtLongToString((long)pR->precision, string);
+	    XmTextFieldSetString(pvLimitsPrec, string);
+	} else {
+	  /* Invalidd record */
+	    XmTextFieldSetString(pvLimitsName, "Not Defined");
+	    XmTextFieldSetString(pvLimitsLopr, "");	
+	    XmTextFieldSetString(pvLimitsHopr, "");	
+	    XmTextFieldSetString(pvLimitsPrec, "");
+	}
+    }
+}
+
+void createPvLimitsDlg(void)
+{
+    Widget pane, w, wparent, wsave;
+    XmString label, opt1, opt2, opt3;
+    Arg args[10];
+    int n;
+
+    if(pvLimitsS != NULL) {
+	return;
+    }
+
+    if(mainShell == NULL) return;
+
+    pvLimitsS = XtVaCreatePopupShell("pvLimitsS",
+      topLevelShellWidgetClass, mainShell,
+      XmNtitle, "PV Limits",
+      XmNdeleteResponse, XmDO_NOTHING,
+      NULL);
+    XmAddWMProtocolCallback(pvLimitsS,WM_DELETE_WINDOW,
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
+
+    pane = XtVaCreateWidget("panel",
+      xmPanedWindowWidgetClass, pvLimitsS,
+      XmNseparatorOn, True,
+      XmNsashWidth, 1,
+      XmNsashHeight, 1,
+      NULL);
+
+  /* PV name */
+    wparent = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, pane,
+      XmNorientation, XmHORIZONTAL,
+      NULL);
+
+    w = XtVaCreateManagedWidget("arrowButton",
+      xmArrowButtonWidgetClass, wparent,
+      XmNarrowDirection, XmARROW_LEFT,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_ARROW_LEFT_BTN);
+    pvLimitsLeftArrow = w;
+
+    w = XtVaCreateManagedWidget("textField",
+      xmTextFieldWidgetClass, wparent,
+      XmNcolumns, MAX_STRING_SIZE,
+      XmNeditable, False,
+      NULL);
+    pvLimitsName = w;
+
+    w = XtVaCreateManagedWidget("arrowButton",
+      xmArrowButtonWidgetClass, wparent,
+      XmNarrowDirection, XmARROW_RIGHT,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_ARROW_RIGHT_BTN);
+    pvLimitsRightArrow = w;
+
+  /* LOPR */
+    wparent = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, pane,
+      XmNorientation, XmVERTICAL,
+      NULL);
+
+    w = XtVaCreateManagedWidget("Low Limit (LOPR)",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    label = XmStringCreateLocalized("Source:");
+    opt1 = XmStringCreateLocalized("Channel");
+    opt2 = XmStringCreateLocalized("Default");
+    opt3 = XmStringCreateLocalized("User Specified");
+    w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
+      label, '\0', 0, pvLimitsDialogCallback,
+      XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      XmNuserData, PV_LIMITS_LOPR_SRC_BTN,
+      NULL);
+    XtManageChild(w);
+    XmStringFree(label);
+    XmStringFree(opt1);
+    XmStringFree(opt2);
+    XmStringFree(opt3);
+    pvLimitsLoprSrc = w;
+
+    wsave = wparent;
+    w = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, wparent,
+      XmNorientation, XmHORIZONTAL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      NULL);
+    wparent = w;
+
+    w = XtVaCreateManagedWidget("Value:",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    w = XtVaCreateManagedWidget("textField",
+      xmTextFieldWidgetClass, wparent,
+      XmNcolumns, 20,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_LOPR_BTN);
+    pvLimitsLopr = w;
+
+  /* HOPR */
+    wparent = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, pane,
+      XmNorientation, XmVERTICAL,
+      NULL);
+
+    w = XtVaCreateManagedWidget("High Limit (HOPR)",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    label = XmStringCreateLocalized("Source:");
+    opt1 = XmStringCreateLocalized("Channel");
+    opt2 = XmStringCreateLocalized("Default");
+    opt3 = XmStringCreateLocalized("User Specified");
+    w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
+      label, '\0', 0, pvLimitsDialogCallback,
+      XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      XmNuserData, PV_LIMITS_HOPR_SRC_BTN,
+      NULL);
+    XtManageChild(w);
+    XmStringFree(label);
+    XmStringFree(opt1);
+    XmStringFree(opt2);
+    XmStringFree(opt3);
+    pvLimitsHoprSrc = w;
+
+    wsave = wparent;
+    w = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, wparent,
+      XmNorientation, XmHORIZONTAL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      NULL);
+    wparent = w;
+
+    w = XtVaCreateManagedWidget("Value:",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    w = XtVaCreateManagedWidget("textField",
+      xmTextFieldWidgetClass, wparent,
+      XmNcolumns, 20,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_HOPR_BTN);
+    pvLimitsHopr = w;
+
+  /* PREC */
+    wparent = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, pane,
+      XmNorientation, XmVERTICAL,
+      NULL);
+
+    w = XtVaCreateManagedWidget("Precision (PREC)",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    label = XmStringCreateLocalized("Source:");
+    opt1 = XmStringCreateLocalized("Channel");
+    opt2 = XmStringCreateLocalized("Default");
+    opt3 = XmStringCreateLocalized("User Specified");
+    w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
+      label, '\0', 0, pvLimitsDialogCallback,
+      XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      XmNuserData, PV_LIMITS_PREC_SRC_BTN,
+      NULL);
+    XtManageChild(w);
+    XmStringFree(label);
+    XmStringFree(opt1);
+    XmStringFree(opt2);
+    XmStringFree(opt3);
+    pvLimitsPrecSrc = w;
+
+    wsave = wparent;
+    w = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, wparent,
+      XmNorientation, XmHORIZONTAL,
+      XmNmarginWidth, PV_LIMITS_INDENT,
+      NULL);
+    wparent = w;
+
+    w = XtVaCreateManagedWidget("Value:",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    w = XtVaCreateManagedWidget("textField",
+      xmTextFieldWidgetClass, wparent,
+      XmNcolumns, 20,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_PREC_BTN);
+    pvLimitsPrec = w;
+
+  /* Action area */
+    wparent = XtVaCreateManagedWidget("actionArea",
+      xmFormWidgetClass, pane,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 5,
+      XmNskipAdjust, True,
+      NULL);
+
+    w = XtVaCreateManagedWidget("Close",
+      xmPushButtonWidgetClass, wparent,
+      XmNtopAttachment, XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment, XmATTACH_POSITION,
+      XmNleftPosition, 1,
+      XmNrightAttachment, XmATTACH_POSITION,
+      XmNrightPosition, 2,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer) PV_LIMITS_CLOSE_BTN);
+    
+    w = XtVaCreateManagedWidget("Help",
+      xmPushButtonWidgetClass, wparent,
+      XmNtopAttachment, XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment, XmATTACH_POSITION,
+      XmNleftPosition, 3,
+      XmNrightAttachment, XmATTACH_POSITION,
+      XmNrightPosition, 4,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+      (XtPointer)PV_LIMITS_HELP_BTN);
+
+    XtManageChild(pane);
+}
+
+/* Update the dialog box from the globalResourceBundle */
+
+void updatePvLimitsDlg()
+{
+    DlLimits *pL = &globalResourceBundle.limits;
+#if 0
+    int tail;
+#endif    
+    char string[MAX_TOKEN_LENGTH];     /* Danger: Fixed length */
+    
+#if DEBUG_PVLIMITS
+    print("\nupdatePvLimitsDlg: \n");
+#endif
+  /* Set sources */
+    optionMenuSet(pvLimitsLoprSrc, pL->loprSrc-FIRST_PV_LIMITS_SRC);
+    optionMenuSet(pvLimitsHoprSrc, pL->hoprSrc-FIRST_PV_LIMITS_SRC);
+    optionMenuSet(pvLimitsPrecSrc, pL->precSrc-FIRST_PV_LIMITS_SRC);
+
+  /* Set name */
+    pvLimitsN = 1;
+    XmTextFieldSetString(pvLimitsName, "EDIT MODE");	
+    XtSetSensitive(pvLimitsLeftArrow,False);
+    XtSetSensitive(pvLimitsRightArrow,False);
+
+  /* Set default values stripping trailing zeros */
+    sprintf(string,"%g",pL->loprDefault);
+#if 0    
+    tail = strlen(string);
+    while (string[--tail] == '0') string[tail] = '\0';
+#endif    
+    XmTextFieldSetString(pvLimitsLopr, string);	
+
+    sprintf(string,"%g",pL->hoprDefault);
+#if 0    
+    tail = strlen(string);
+    while (string[--tail] == '0') string[tail] = '\0';
+#endif    
+    XmTextFieldSetString(pvLimitsHopr, string);	
+
+    sprintf(string,"%d",pL->precDefault);
+    XmTextFieldSetString(pvLimitsPrec, string);
+}
+
+static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
+{
+    int type = (int)cd;
+    int button;
+    int count;
+
+#if DEBUG_PVLIMITS
+    print("\npvLimitsDialogCallback: type=%d\n",type);
+#endif
+  /* If the type is less than 3, the callback comes from an option menu button
+   *   Find the real type from the userData of the RC parent of the button */
+    if(type < 3) {
+	button=type;
+	XtVaGetValues(XtParent(w),XmNuserData,&type,NULL);
+#if DEBUG_PVLIMITS
+	print("  Type is really %d, button is %d\n",type,button);
+#endif
+    }
+
+    switch(type) {
+    case PV_LIMITS_ARROW_LEFT_BTN:
+	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	  /* Find a non-NULL record below the current one, wrap */
+	    count = 0;
+	    do {
+		count++;
+		pvLimitsN--;
+		if(pvLimitsN < 0) pvLimitsN = pvLimitsCount-1;
+	    } while(pvLimitsRecords[pvLimitsN] == NULL && count <= pvLimitsCount);
+	    if(count < pvLimitsCount) resetPvLimits();
+	}
+	break;
+    case PV_LIMITS_NAME_BTN:
+      /* Shouldn't happen */
+	break;
+    case PV_LIMITS_ARROW_RIGHT_BTN:
+	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	  /* Find a non-NULL record above the current one, wrap */
+	    count = 0;
+	    do {
+		count++;
+		pvLimitsN++;
+		if(pvLimitsN >= pvLimitsCount) pvLimitsN = 0;
+	    } while(pvLimitsRecords[pvLimitsN] == NULL && count <= pvLimitsCount);
+	    if(count < pvLimitsCount) resetPvLimits();
+	}
+	break;
+    case PV_LIMITS_LOPR_SRC_BTN:
+	if(globalDisplayListTraversalMode == DL_EDIT && button == 2) {
+	  /* Don't allow setting user-specified, revert to default */
+	    optionMenuSet(pvLimitsLoprSrc, 1);
+	    globalResourceBundle.limits.loprSrc =
+	      (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 1);
+	    XBell(display,50);
+	    break;
+	}
+	globalResourceBundle.limits.loprSrc =
+	  (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + button);
+	break;
+    case PV_LIMITS_LOPR_BTN:
+	globalResourceBundle.limits.loprDefault =
+	  atof(XmTextFieldGetString(pvLimitsLopr));
+	break;
+    case PV_LIMITS_HOPR_SRC_BTN:
+	if(globalDisplayListTraversalMode == DL_EDIT && button == 2) {
+	  /* Don't allow setting user-specified, revert to default */
+	    optionMenuSet(pvLimitsHoprSrc, 1);
+	    globalResourceBundle.limits.hoprSrc =
+	      (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 1);
+	    XBell(display,50);
+	    break;
+	}
+	globalResourceBundle.limits.hoprSrc =
+	  (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + button);
+	break;
+    case PV_LIMITS_HOPR_BTN:
+	globalResourceBundle.limits.hoprDefault =
+	  atof(XmTextFieldGetString(pvLimitsHopr));
+	break;
+    case PV_LIMITS_PREC_SRC_BTN:
+	if(globalDisplayListTraversalMode == DL_EDIT && button == 2) {
+	  /* Don't allow setting user-specified, revert to default */
+	    optionMenuSet(pvLimitsPrecSrc, 1);
+	    globalResourceBundle.limits.precSrc =
+	      (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 1);
+	    XBell(display,50);
+	    break;
+	}
+	globalResourceBundle.limits.precSrc =
+	  (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + button);
+	break;
+    case PV_LIMITS_PREC_BTN:
+	globalResourceBundle.limits.precDefault =
+	  atoi(XmTextFieldGetString(pvLimitsPrec));
+	break;
+    case  PV_LIMITS_CLOSE_BTN:
+	XtPopdown(pvLimitsS);
+	break;
+    case  PV_LIMITS_HELP_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#PVLimitsDialogBox");
+	break;
+    }
+
+  /* Update for EDIT mode */
+    if(globalDisplayListTraversalMode == DL_EDIT) {
+	DisplayInfo *cdi=currentDisplayInfo;
+	
+	if (cdi) {
+	    DlElement *dlElement = FirstDlElement(
+	      cdi->selectedDlElementList);
+	    unhighlightSelectedElements();
+	    while (dlElement) {
+		updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		dlElement = dlElement->next;
+	    }
+	    dmTraverseNonWidgetsInDisplayList(cdi);
+	    highlightSelectedElements();
+	}
+    }
 }
 
 /* Display list dialog routines */
@@ -4842,6 +5373,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     char command[1024];     /* Danger: Fixed length */
     Record **records;
     int i, j, ic, len, clen, count;
+    DlElement *pE;
 
   /* Parse the command */
     clen = strlen(cmd);
@@ -4856,7 +5388,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 	    switch(cmd[i+1]) {
 	    case 'P':
 	      /* Get the names */
-		records = getPvInfoFromDisplay(displayInfo, &count);
+		records = getPvInfoFromDisplay(displayInfo, &count, pE);
 		if(!records) return;   /* (Error messages have been sent) */
 		
 	      /* Insert the names */

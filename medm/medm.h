@@ -215,7 +215,7 @@ extern "C" {
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;
     EXTERN Widget editHelpS, editHelpMessageBox;
-    EXTERN Widget pvInfoS, pvInfoMessageBox;
+    EXTERN Widget pvInfoS, pvLimitsS, pvInfoMessageBox;
     EXTERN Widget displayListS;
     EXTERN Widget errMsgS, errMsgSendS, caStudyS;
 

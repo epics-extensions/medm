@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.5  1998/09/11 16:53:21  evans
+# PV Limits are partially implemented.
+#
 # Revision 1.4  1998/07/15 18:05:35  evans
 # MEDM 2.3.4.
 #
@@ -34,3 +37,8 @@ LIBOBJS = algorithms.o graph.o graph3d.o graphInteraction.o seql.o seqlInteracti
 LIBNAME = libGraphX.a
 
 include $(EPICS)/config/RULES.Unix
+
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:

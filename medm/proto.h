@@ -162,6 +162,7 @@ void writeDlTextEntry(FILE *, DlElement *, int);
 void writeDlTextUpdate(FILE *, DlElement *, int);
 void writeDlTrace(FILE *, DlTrace *, int, int);
 void writeDlValuator(FILE *, DlElement *, int);
+void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level);
 
 /* actions.c */
 void StartDrag(Widget w, XEvent *event);
@@ -557,8 +558,12 @@ void restoreUndoInfo(DisplayInfo *displayInfo);
 void updateAllDisplayPositions();
 void setTimeValues(void);
 void createPvInfoDlg(void);
-Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
+Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
+  DlElement *pE);
 void popupDisplayListDlg(void);
+void popupPvLimits(DisplayInfo *displayInfo);
+void createPvLimitsDlg(void);
+void updatePvLimitsDlg();
 void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
@@ -580,6 +585,7 @@ void freeGIF(DlImage *dlImage);
 void objectAttributeInit(DlObject *object);
 void basicAttributeInit(DlBasicAttribute *attr);
 void dynamicAttributeInit(DlDynamicAttribute *dynAttr);
+void limitsAttributeInit(DlLimits *limits);
 int initMedmCommon();
 void destroyDlElement(DlElement *);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
@@ -591,6 +597,7 @@ void parseBasicAttribute(DisplayInfo *, DlBasicAttribute *);
 void parseDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
 void parseOldBasicAttribute(DisplayInfo *, DlBasicAttribute *);
 void parseOldDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
+void parseLimits(DisplayInfo *displayInfo, DlLimits *limits);
 DlElement *parseRectangle(DisplayInfo *);
 DlElement *parseOval(DisplayInfo *);
 DlElement *parseArc(DisplayInfo *);

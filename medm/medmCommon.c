@@ -622,6 +622,125 @@ void writeDlBasicAttribute(FILE *stream, DlBasicAttribute *attr, int level)
 #endif
 }
 
+void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level)
+{
+    char indent[16];
+    
+    memset(indent,'\t',level);
+    indent[level] = '\0';
+    
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+    if (MedmUseNewFileFormat) {
+#endif
+	fprintf(stream,"\n%slimits {",indent);
+	if (dlLimits->loprSrc != PV_LIMITS_CHANNEL)
+	  fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
+	    stringValueTable[dlLimits->loprSrc]);
+	if (dlLimits->loprDefault != 0.)
+	  fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
+	if (dlLimits->hoprSrc != PV_LIMITS_CHANNEL)
+	  fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
+	    stringValueTable[dlLimits->hoprSrc]);
+	if (dlLimits->hoprDefault != 1.)
+	  fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
+	if (dlLimits->precSrc != PV_LIMITS_CHANNEL)
+	  fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
+	    stringValueTable[dlLimits->precSrc]);
+	if (dlLimits->precDefault != 0)
+	  fprintf(stream,"\n%s\tprecDefault=%d",indent,dlLimits->precDefault);
+	fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+    } else {
+	fprintf(stream,"\n%slimits {",indent);
+	fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
+	  stringValueTable[dlLimits->loprSrc]);
+	fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
+	fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
+	  stringValueTable[dlLimits->hoprSrc]);
+	fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
+	fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
+	  stringValueTable[dlLimits->precSrc]);
+	fprintf(stream,"\n%s\tprecDefault=%d",indent,dlLimits->precDefault);
+	fprintf(stream,"\n%s}",indent);
+    }
+#endif
+}
+
+void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
+{
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int i, nestingLevel = 0;
+
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if(!strcmp(token,"loprSrc")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for (i=FIRST_PV_LIMITS_SRC;
+		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
+		    if (!strcmp(token,stringValueTable[i])) {
+			limits->loprSrc = i;
+			break;
+		    }
+		}
+	    } else if(!strcmp(token,"loprDefault")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		limits->loprDefault = atof(token);
+	    } else if(!strcmp(token,"hoprSrc")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for (i=FIRST_PV_LIMITS_SRC;
+		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
+		    if (!strcmp(token,stringValueTable[i])) {
+			limits->hoprSrc = i;
+			break;
+		    }
+		}
+	    } else if(!strcmp(token,"hoprDefault")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		limits->hoprDefault = atof(token);
+	    } else if(!strcmp(token,"precSrc")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for (i=FIRST_PV_LIMITS_SRC;
+		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
+		    if (!strcmp(token,stringValueTable[i])) {
+			limits->precSrc = i;
+			break;
+		    }
+		}
+	    } else if(!strcmp(token,"precDefault")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		limits->precDefault = atoi(token);
+	    }
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	}
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
+}
+
+void limitsAttributeInit(DlLimits *limits)
+{
+    limits->loprSrc = PV_LIMITS_CHANNEL;
+    limits->lopr = 0.;
+    limits->loprDefault = 0.;
+    limits->hoprSrc = PV_LIMITS_CHANNEL;
+    limits->hopr = 1.;
+    limits->hoprDefault = 1.;
+    limits->precSrc = PV_LIMITS_CHANNEL;
+    limits->prec = 0;
+    limits->precDefault = 0;
+}
+  
 #ifdef __cplusplus
 void createDlObject(DisplayInfo *, DlObject *object)
 #else

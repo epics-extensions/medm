@@ -810,13 +810,14 @@ void popupPvInfo(DisplayInfo *displayInfo)
     char string[1024];     /* Danger: Fixed length */
     Record *pR;
     Channel *pCh;
+    DlElement *pE;
     XmTextPosition curpos = 0;
 
   /* Create the dialog box if it has not been created */
     if(!pvInfoS) createPvInfoDlg();
 
   /* Get the records */
-    records = getPvInfoFromDisplay(displayInfo, &count);
+    records = getPvInfoFromDisplay(displayInfo, &count, pE);
     if(!records) return;   /* (Error messages have been sent) */
 
   /* Get timestamp */

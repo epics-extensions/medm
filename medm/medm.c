@@ -2466,6 +2466,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(pvInfoS,False);
 	    XtPopdown(pvInfoS);
 	}
+	if (pvLimitsS) {
+	    XtSetSensitive(pvLimitsS,False);
+	    XtPopdown(pvLimitsS);
+	}
 	if (displayListS) {
 	    XtSetSensitive(displayListS,False);
 	    XtPopdown(displayListS);
@@ -2496,6 +2500,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (stripChartS) {
 	    XtSetSensitive(stripChartS,False);
 	    XtPopdown(stripChartS);
+	}
+	if (pvLimitsS) {
+	    XtSetSensitive(pvLimitsS,False);
+	    XtPopdown(pvLimitsS);
 	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
@@ -4002,6 +4010,7 @@ static void createMain()
     errMsgSendS = (Widget)0;
     helpS = (Widget)0;
     pvInfoS = (Widget)0;
+    pvLimitsS = (Widget)0;
 
   /* Realize the toplevel shell widget */
     XtRealizeWidget(mainShell);

@@ -350,13 +350,25 @@ const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
 extern const Boolean_t FIRST_BOOLEAN;
 #endif
 
+#define NUM_PV_LIMITS_SRC 3
+typedef enum {
+    PV_LIMITS_CHANNEL = 69,
+    PV_LIMITS_DEFAULT = 70,
+    PV_LIMITS_USER    = 71
+} PvLimitsSrc_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
+#else
+extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
+#endif
+
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-    COLOR_RULE_1 = 69,
-    COLOR_RULE_2 = 70,
-    COLOR_RULE_3 = 71,
-    COLOR_RULE_4 = 72
+    COLOR_RULE_1 = 72,
+    COLOR_RULE_2 = 73,
+    COLOR_RULE_3 = 74,
+    COLOR_RULE_4 = 75
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -368,9 +380,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS             8       /* NUM_TEXT_FORMATS */
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (73)  /* COLOR_RULE_4 + 1 */
+#define NUMBER_STRING_VALUES    (76)  /* COLOR_RULE_4 + 1 */
 #else
-#define NUMBER_STRING_VALUES    (69)  /* BOOLEAN_TRUE + 1 */
+#define NUMBER_STRING_VALUES    (72)  /* PV_LIMITS_USER + 1 */
 #endif
 
 /*********************************************************************
@@ -407,6 +419,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "hh:mm:ss", "hh:mm", "hh:00", "MMM DD YYYY", "MMM DD", "MMM DD hh:00",
     "wd hh:00",
     "false", "true",
+    "channel", "default", "user",
 #ifdef __COLOR_RULE_H__
     "set #1", "set #2", "set #3", "set #4",
 #endif
@@ -519,6 +532,18 @@ typedef struct {
     char ctrl[MAX_TOKEN_LENGTH];
     int clr, bclr;
 } DlControl;
+
+typedef struct {
+    int loprSrc;
+    double loprDefault;
+    double lopr;
+    int hoprSrc;
+    double hoprDefault;
+    double hopr;
+    int precSrc;
+    short precDefault;
+    short prec;
+} DlLimits;
 
 typedef struct {
     char title[MAX_TOKEN_LENGTH];
@@ -656,6 +681,7 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlMonitor monitor;
+    DlLimits limits;
     LabelType label;
     ColorMode clrmod;
 } DlMeter;
@@ -696,7 +722,7 @@ typedef struct {
     EraseOldest erase_oldest;
     int count;
     DlTrace trace[MAX_TRACES];
-    DlPlotAxisDefinition axis[3]; /* x = 0, y = 1, y2 = 2 */
+    DlPlotAxisDefinition axis[3];     /* x = 0, y = 1, y2 = 2 */
     char trigger[MAX_TOKEN_LENGTH];
     char erase[MAX_TOKEN_LENGTH];
     eraseMode_t eraseMode;
@@ -836,7 +862,8 @@ typedef struct {
     void (*setValues)(struct _ResourceBundle *, struct _DlElement *);
   /* Get values from the resource bundle method */
     void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
-  /* Inherit (some of the) values from the resource bundle method */
+  /* Inherit (some of the) values from the resource bundle method
+   *   Used during rectangular creates */
     void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
     void (*setBackgroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*setForegroundColor)(struct _ResourceBundle *, struct _DlElement *);

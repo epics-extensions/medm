@@ -63,3 +63,8 @@ xxxx:
 	@echo LINK.c: $(LINK.c)
 	@echo USR_LIBS: $(USR_LIBS)
 	@echo Xt_DIR: $(Xt_DIR)
+
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:

@@ -267,6 +267,14 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtPopup(cartesianPlotAxisS,XtGrabNone);
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
+    case LIMITS_RC:
+	if (!pvLimitsS) createPvLimitsDlg();
+      /* Update limits data from globalResourceBundle */
+	updatePvLimitsDlg();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	XtPopup(pvLimitsS,XtGrabNone);
+	break;
     default:
 	medmPrintf(1,"\npushButtonActivate: Invalid type = %d\n",rcType);
 	break;
@@ -1091,6 +1099,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.trigger[0] = '\0';
     globalResourceBundle.erase[0] = '\0';
     globalResourceBundle.eraseMode = ERASE_IF_NOT_ZERO;
+    limitsAttributeInit(&globalResourceBundle.limits);
 }
 
 /****************************************************************************
@@ -1766,6 +1775,7 @@ static void createEntryRC( Widget parent, int rcType) {
     case SCDATA_RC:
     case SHELLDATA_RC:
     case CPAXIS_RC:
+    case LIMITS_RC:
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,dlXmStringMoreToComeSymbol); n++;
 	XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;
@@ -1798,6 +1808,8 @@ static void createEntryRC( Widget parent, int rcType) {
 
 }
 
+/* The following determines what items appear in the Resource Palette
+ *   Row-Column.  The order they appear depends on the values of the xxx_RC  */
 static int resourceTable[] = {
     DL_Display,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CMAP_RC,
@@ -1817,8 +1829,8 @@ static int resourceTable[] = {
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
     FORMAT_RC, -1,
     DL_Meter,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, LABEL_RC,
-    CLRMOD_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC,
+    BCLR_RC, LABEL_RC, CLRMOD_RC, -1,
     DL_TextUpdate,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
     ALIGN_RC, FORMAT_RC, -1,
@@ -1918,19 +1930,19 @@ static void initializeResourcePaletteElements() {
     index = -1;
     for (i=0; i<tableSize; i++) {
 	if (index < 0) {
-	  /* start a new element, get the new index */
+	  /* Start a new element, get the new index */
 	    index = resourceTable[i] - MIN_DL_ELEMENT_TYPE;
 	    j = 0;
 	} else {
 	    if (resourceTable[i] >= 0) {
-	      /* copy RC resource from resourceTable until it meet -1 */
+	      /* Copy RC resource from resourceTable until it reaches -1 */
 		resourcePaletteElements[index].childIndexRC[j] = resourceTable[i];
 		resourcePaletteElements[index].children[j] =
 		  resourceEntryRC[resourceTable[i]];
 		j++;
 	    } else {
 		int k;
-	      /* reset the index, fill the rest with zero */
+	      /* Reset the index, fill the rest with zeros */
 		for (k = j; k < MAX_RESOURCES_FOR_DL_ELEMENT; k++) {
 		    resourcePaletteElements[index].childIndexRC[k] = 0;
 		    resourcePaletteElements[index].children[k] = NULL;
@@ -2465,6 +2477,11 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    strcpy(pvalue,pRB->chan);
 	    break;
 	}
+	case LIMITS_RC: {
+	    DlLimits *plimits = va_arg(ap,DlLimits *);
+	    *plimits = pRB->limits;
+	    break;
+	}
 	case TITLE_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->title);
@@ -2674,22 +2691,22 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	}
 	case RD_LABEL_RC: {
 	    char* pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,globalResourceBundle.rdLabel);
+	    strcpy(pvalue,pRB->rdLabel);
 	    break;
 	}
 	case RD_VISUAL_RC: {
 	    relatedDisplayVisual_t *pvalue = va_arg(ap,relatedDisplayVisual_t *);
-	    *pvalue = globalResourceBundle.rdVisual;
+	    *pvalue = pRB->rdVisual;
 	    break;
 	}
 	case RDDATA_RC: {
 	    DlRelatedDisplayEntry *pDisplay = va_arg(ap,DlRelatedDisplayEntry *);
 	    int i;
 	    for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-		strcpy(pDisplay[i].label,globalResourceBundle.rdData[i].label);
-		strcpy(pDisplay[i].name,globalResourceBundle.rdData[i].name);
-		strcpy(pDisplay[i].args,globalResourceBundle.rdData[i].args);
-		pDisplay[i].mode = globalResourceBundle.rdData[i].mode;
+		strcpy(pDisplay[i].label,pRB->rdData[i].label);
+		strcpy(pDisplay[i].name,pRB->rdData[i].name);
+		strcpy(pDisplay[i].args,pRB->rdData[i].args);
+		pDisplay[i].mode = pRB->rdData[i].mode;
 	    }
 	    break;
 	}
@@ -2697,9 +2714,9 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    DlTrace* ptrace = va_arg(ap,DlTrace *);
 	    int i;
 	    for (i = 0; i < MAX_TRACES; i++){
-		strcpy(ptrace[i].xdata,globalResourceBundle.cpData[i].xdata);
-		strcpy(ptrace[i].ydata,globalResourceBundle.cpData[i].ydata);
-		ptrace[i].data_clr = globalResourceBundle.cpData[i].data_clr;
+		strcpy(ptrace[i].xdata,pRB->cpData[i].xdata);
+		strcpy(ptrace[i].ydata,pRB->cpData[i].ydata);
+		ptrace[i].data_clr = pRB->cpData[i].data_clr;
 	    }
 	    break;
 	}
@@ -2716,32 +2733,32 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    DlShellCommandEntry *pCommand = va_arg(ap, DlShellCommandEntry *);
 	    int i;
 	    for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-		strcpy(pCommand[i].label,globalResourceBundle.cmdData[i].label);
-		strcpy(pCommand[i].command,globalResourceBundle.cmdData[i].command);
-		strcpy(pCommand[i].args,globalResourceBundle.cmdData[i].args);
+		strcpy(pCommand[i].label,pRB->cmdData[i].label);
+		strcpy(pCommand[i].command,pRB->cmdData[i].command);
+		strcpy(pCommand[i].args,pRB->cmdData[i].args);
 	    }
 	    break;
 	}
 	case CPAXIS_RC: {
 	    DlPlotAxisDefinition *paxis = va_arg(ap,DlPlotAxisDefinition *);
-	    paxis[X_AXIS_ELEMENT] = globalResourceBundle.axis[X_AXIS_ELEMENT];
-	    paxis[Y1_AXIS_ELEMENT] = globalResourceBundle.axis[Y1_AXIS_ELEMENT];
-	    paxis[Y2_AXIS_ELEMENT] = globalResourceBundle.axis[Y2_AXIS_ELEMENT];
+	    paxis[X_AXIS_ELEMENT] = pRB->axis[X_AXIS_ELEMENT];
+	    paxis[Y1_AXIS_ELEMENT] = pRB->axis[Y1_AXIS_ELEMENT];
+	    paxis[Y2_AXIS_ELEMENT] = pRB->axis[Y2_AXIS_ELEMENT];
 	    break;
 	}
 	case TRIGGER_RC: {
 	    char* pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,globalResourceBundle.trigger);
+	    strcpy(pvalue,pRB->trigger);
 	    break;
 	}
 	case ERASE_RC: {
 	    char* pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,globalResourceBundle.erase);
+	    strcpy(pvalue,pRB->erase);
 	    break;
 	}
 	case ERASE_MODE_RC: {
 	    eraseMode_t *pvalue = va_arg(ap,eraseMode_t *);
-	    *pvalue = globalResourceBundle.eraseMode;
+	    *pvalue = pRB->eraseMode;
 	    break;
 	}
 	case GRID_SPACING_RC: {
@@ -2793,6 +2810,10 @@ void updateGlobalResourceBundleObjectAttribute(DlObject *object) {
     globalResourceBundle.y = object->y;
     globalResourceBundle.width = object->width;
     globalResourceBundle.height= object->height;
+}
+
+void updateGlobalResourceBundleLimitsAttribute(DlLimits *limits) {
+    globalResourceBundle.limits = *limits;
 }
 
 void updateElementObjectAttribute(DlObject *object) {
@@ -3067,7 +3088,7 @@ void updateElementFromGlobalResourceBundle(DlElement *element)
   /* Simply return if not valid to update */
     if (!element || !cdi) return;
     
-  /* Copy (all) vales from resource palette to element */
+  /* Copy (all) values from resource palette to element */
     if (element->run->getValues) {
 	element->run->getValues(&globalResourceBundle,element);
     }
@@ -3390,6 +3411,8 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
+
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 
 	globalResourceBundle.label = p->label;
 	optionMenuSet(resourceEntryElement[LABEL_RC],

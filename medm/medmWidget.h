@@ -111,18 +111,20 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
-#define NUM_EXECUTE_POPUP_ENTRIES       5         /* items in exec. popup menu  */
+#define NUM_EXECUTE_POPUP_ENTRIES       6         /* items in exec. popup menu  */
 #define EXECUTE_POPUP_MENU_PRINT        "Print"   /* if this changes, change    */
 #define EXECUTE_POPUP_MENU_CLOSE        "Close"   /* executePopupMenuCallback() */
 #define EXECUTE_POPUP_MENU_PVINFO       "PV Info"
+#define EXECUTE_POPUP_MENU_PVLIMITS     "PV Limits"
 #define EXECUTE_POPUP_MENU_DISPLAY_LIST "Display List"
 #define EXECUTE_POPUP_MENU_EXECUTE      "Execute"
 #define EXECUTE_POPUP_MENU_PRINT_ID        0
 #define EXECUTE_POPUP_MENU_CLOSE_ID        1
 #define EXECUTE_POPUP_MENU_PVINFO_ID       2
-#define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 3
+#define EXECUTE_POPUP_MENU_PVLIMITS_ID     3
+#define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 4
 /* The following must be the last item */
-#define EXECUTE_POPUP_MENU_EXECUTE_ID      4
+#define EXECUTE_POPUP_MENU_EXECUTE_ID      5
 
 #define COLOR_SCALE		(65535.0/255.0)
 #define MAX_CHILDREN		1000	/* max # of child widgets...       */
@@ -466,76 +468,127 @@ typedef struct _ResourceBundle {
     Boolean gridOn;
     Boolean snapToGrid;
 
+  /* Limits */
+    DlLimits limits;
+
     struct _ResourceBundle *next;	/* linked list of resourceBundle's   */
     struct _ResourceBundle *prev;
 } ResourceBundle, *ResourceBundlePtr;
 
 
-/*
- * and define IDs for the resource entries for displacements into
- *   resource RC widget array
- */
+/* Define IDs for the resource entries for displacements into the resource RC
+ *   widget array.  The order they appear in the resource palette is the order
+ *   in which they appear below.  The labels are in the resourceEntryStringTable
+ *   and need to be kept consistent with the index values below. */
 #define X_RC		0
 #define Y_RC		1
 #define WIDTH_RC	2
 #define HEIGHT_RC 	3
 #define RDBK_RC		4
 #define CTRL_RC		5
-#define TITLE_RC	6
-#define XLABEL_RC	7
-#define YLABEL_RC	8
+#define LIMITS_RC       6
+#define TITLE_RC	7
+#define XLABEL_RC	8
+#define YLABEL_RC	9
 
-#define CLR_RC		9
-#define BCLR_RC		10
-#define BEGIN_RC	11
-#define PATH_RC		12
-#define ALIGN_RC	13
-#define FORMAT_RC	14
-#define LABEL_RC	15
-#define DIRECTION_RC	16
-#define FILLMOD_RC	17
-#define STYLE_RC	18
-#define FILL_RC		19
-#define CLRMOD_RC	20
+#define CLR_RC		10
+#define BCLR_RC		11
+#define BEGIN_RC	12
+#define PATH_RC		13
+#define ALIGN_RC	14
+#define FORMAT_RC	15
+#define LABEL_RC	16
+#define DIRECTION_RC	17
+#define FILLMOD_RC	18
+#define STYLE_RC	19
+#define FILL_RC		20
+#define CLRMOD_RC	21
 #ifdef __COLOR_RULE_H__
-#define COLOR_RULE_RC   21              /* Color Rule Entry Table         */
-#define VIS_RC          22
-#define CHAN_RC         23
-#define DATA_CLR_RC     24
-#define DIS_RC          25
-#define XYANGLE_RC      26
-#define ZANGLE_RC       27
-#define PERIOD_RC       28
-#define UNITS_RC        29
-#define CSTYLE_RC       30
-#define ERASE_OLDEST_RC 31
-#define COUNT_RC        32
-#define STACKING_RC     33
-#define IMAGETYPE_RC    34
-#define TEXTIX_RC       35
-#define MSG_LABEL_RC    36
-#define PRESS_MSG_RC    37
-#define RELEASE_MSG_RC  38
-#define IMAGENAME_RC    39
-#define DATA_RC         40
-#define CMAP_RC         41
-#define NAME_RC         42
-#define LINEWIDTH_RC    43
-#define PRECISION_RC    44
+#define COLOR_RULE_RC   22              /* Color Rule Entry Table         */
+#define VIS_RC          23
+#define CHAN_RC         24
+#define DATA_CLR_RC     25
+#define DIS_RC          26
+#define XYANGLE_RC      27
+#define ZANGLE_RC       28
+#define PERIOD_RC       29
+#define UNITS_RC        30
+#define CSTYLE_RC       31
+#define ERASE_OLDEST_RC 32
+#define COUNT_RC        33
+#define STACKING_RC     34
+#define IMAGETYPE_RC    35
+#define TEXTIX_RC       36
+#define MSG_LABEL_RC    37
+#define PRESS_MSG_RC    38
+#define RELEASE_MSG_RC  39
+#define IMAGENAME_RC    40
+#define DATA_RC         41
+#define CMAP_RC         42
+#define NAME_RC         43
+#define LINEWIDTH_RC    44
+#define PRECISION_RC    45
+#define SBIT_RC         46
+#define EBIT_RC         47
+#define RD_LABEL_RC     48
+#define RD_VISUAL_RC    49
+
+/* vectors/matrices of data */
+#define RDDATA_RC       50              /* Related Display data           */
+#define CPDATA_RC       51              /* Cartesian Plot channel data    */
+#define SCDATA_RC       52              /* Strip Chart data               */
+#define SHELLDATA_RC    53              /* Shell Command data             */
+#define CPAXIS_RC       54              /* Cartesian Plot axis data       */
+
+/* other new entry types */
+#define TRIGGER_RC      55              /* Cartesian Plot trigger channel */
+#define ERASE_RC        56              /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   57              /* Cartesian Plot erase mode      */
+
+/* grid */
+#define GRID_SPACING_RC	58
+#define GRID_ON_RC      59
+#define GRID_SNAP_RC    60
+
+#else     /* #ifdef __COLOR_RULE_H__ */
+
+#define VIS_RC		22
+#define CHAN_RC		23
+#define DATA_CLR_RC	24
+#define DIS_RC		25
+#define XYANGLE_RC	26
+#define ZANGLE_RC	27
+#define PERIOD_RC	28
+#define UNITS_RC	29
+#define CSTYLE_RC	30
+#define ERASE_OLDEST_RC	31
+#define COUNT_RC	32
+#define STACKING_RC	33
+#define IMAGETYPE_RC	34
+#define TEXTIX_RC	35
+#define MSG_LABEL_RC	36
+#define PRESS_MSG_RC	37
+#define RELEASE_MSG_RC	38
+#define IMAGENAME_RC	39
+#define DATA_RC		40
+#define CMAP_RC		41
+#define NAME_RC		42
+#define LINEWIDTH_RC	43
+#define PRECISION_RC	44
 #define SBIT_RC         45
 #define EBIT_RC         46
 #define RD_LABEL_RC     47
 #define RD_VISUAL_RC    48
 
 /* vectors/matrices of data */
-#define RDDATA_RC       49              /* Related Display data           */
-#define CPDATA_RC       50              /* Cartesian Plot channel data    */
-#define SCDATA_RC       51              /* Strip Chart data               */
-#define SHELLDATA_RC    52              /* Shell Command data             */
-#define CPAXIS_RC       53              /* Cartesian Plot axis data       */
+#define RDDATA_RC	49		/* Related Display data		  */
+#define CPDATA_RC	50		/* Cartesian Plot channel data	  */
+#define SCDATA_RC	51		/* Strip Chart data		  */
+#define SHELLDATA_RC	52		/* Shell Command data		  */
+#define CPAXIS_RC	53		/* Cartesian Plot axis data	  */
 
 /* other new entry types */
-#define TRIGGER_RC      54              /* Cartesian Plot trigger channel */
+#define TRIGGER_RC	54		/* Cartesian Plot trigger channel */
 #define ERASE_RC        55              /* Cartesian Plot erase channel   */
 #define ERASE_MODE_RC   56              /* Cartesian Plot erase mode      */
 
@@ -543,53 +596,6 @@ typedef struct _ResourceBundle {
 #define GRID_SPACING_RC	57
 #define GRID_ON_RC      58
 #define GRID_SNAP_RC    59
-
-#else     /* #ifdef __COLOR_RULE_H__ */
-
-#define VIS_RC		21
-#define CHAN_RC		22
-#define DATA_CLR_RC	23
-#define DIS_RC		24
-#define XYANGLE_RC	25
-#define ZANGLE_RC	26
-#define PERIOD_RC	27
-#define UNITS_RC	28
-#define CSTYLE_RC	29
-#define ERASE_OLDEST_RC	30
-#define COUNT_RC	31
-#define STACKING_RC	32
-#define IMAGETYPE_RC	33
-#define TEXTIX_RC	34
-#define MSG_LABEL_RC	35
-#define PRESS_MSG_RC	36
-#define RELEASE_MSG_RC	37
-#define IMAGENAME_RC	38
-#define DATA_RC		39
-#define CMAP_RC		40
-#define NAME_RC		41
-#define LINEWIDTH_RC	42
-#define PRECISION_RC	43
-#define SBIT_RC         44
-#define EBIT_RC         45
-#define RD_LABEL_RC     46
-#define RD_VISUAL_RC    47
-
-/* vectors/matrices of data */
-#define RDDATA_RC	48		/* Related Display data		  */
-#define CPDATA_RC	49		/* Cartesian Plot channel data	  */
-#define SCDATA_RC	50		/* Strip Chart data		  */
-#define SHELLDATA_RC	51		/* Shell Command data		  */
-#define CPAXIS_RC	52		/* Cartesian Plot axis data	  */
-
-/* other new entry types */
-#define TRIGGER_RC	53		/* Cartesian Plot trigger channel */
-#define ERASE_RC        54              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   55              /* Cartesian Plot erase mode      */
-
-/* grid */
-#define GRID_SPACING_RC	56
-#define GRID_ON_RC      57
-#define GRID_SNAP_RC    58
 
 #endif     /* #ifdef __COLOR_RULE_H__ */
 
@@ -607,6 +613,7 @@ extern char *resourceEntryStringTable[MAX_RESOURCE_ENTRY];
 char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "X Position", "Y Position", "Width", "Height",
     "Readback Channel", "Control Channel",
+    "Channel Limits",
     "Title", "X Label", "Y Label",
     "Foreground", "Background",
     "Begin Angle", "Path Angle",

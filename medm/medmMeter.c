@@ -304,6 +304,7 @@ DlElement *createDlMeter(DlElement *p)
     } else {
 	objectAttributeInit(&(dlMeter->object));
 	monitorAttributeInit(&(dlMeter->monitor));
+	limitsAttributeInit(&(dlMeter->limits));
 	dlMeter->label = LABEL_NONE;
 	dlMeter->clrmod = STATIC;
     }
@@ -335,6 +336,8 @@ DlElement *parseMeter(DisplayInfo *displayInfo)
 	      parseObject(displayInfo,&(dlMeter->object));
 	    else if (!strcmp(token,"monitor"))
 	      parseMonitor(displayInfo,&(dlMeter->monitor));
+	    else if (!strcmp(token,"limits"))
+	      parseLimits(displayInfo,&(dlMeter->limits));
 	    else if (!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -383,6 +386,7 @@ void writeDlMeter(
     fprintf(stream,"\n%smeter {",indent);
     writeDlObject(stream,&(dlMeter->object),level+1);
     writeDlMonitor(stream,&(dlMeter->monitor),level+1);
+    writeDlLimits(stream,&(dlMeter->limits),level+1);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if (MedmUseNewFileFormat) {
 #endif
@@ -407,6 +411,7 @@ static void meterInheritValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlMeter->monitor.bclr),
       LABEL_RC,      &(dlMeter->label),
       CLRMOD_RC,     &(dlMeter->clrmod),
+      LIMITS_RC,     &(dlMeter->limits),
       -1);
 }
 
@@ -422,6 +427,7 @@ static void meterGetValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlMeter->monitor.bclr),
       LABEL_RC,      &(dlMeter->label),
       CLRMOD_RC,     &(dlMeter->clrmod),
+      LIMITS_RC,     &(dlMeter->limits),
       -1);
 }
 

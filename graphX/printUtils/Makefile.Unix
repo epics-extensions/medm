@@ -17,20 +17,7 @@ LIBNAME = libPrintUtils.a
 
 include $(EPICS)/config/RULES.Unix
 
-#
-# $Id$
-#
-#  $Log$
-#  Revision 1.4  1997/06/17 19:30:35  evans
-#  Changed RGB order in xwd2ps for 24-bit displays and freed allocated names
-#  in utilPrint.
-#
-#  Revision 1.3  1995/03/30 23:46:06  jba
-#  Added X11 includes
-#
-# Revision 1.2  1994/10/25  15:51:41  winans
-# Changed the SRCS macro to SRCS.c and SRCS.cc
-#
-# Revision 1.1  1994/10/05  18:56:46  jba
-# Initial versions
-#
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:
