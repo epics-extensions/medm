@@ -55,7 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #include "medm.h"
-#include <time.h>
+#include <sys/time.h>
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05
@@ -299,6 +299,7 @@ double medmTime()
 double medmTime()
 {
     struct timeval tp;
+    
     if (gettimeofday(&tp,NULL))
       medmPostMsg("medmTime:  Failed to get time\n");
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
