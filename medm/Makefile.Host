@@ -203,8 +203,8 @@ SRCS += medmWidget.c
 SRCS += objectPalette.c 
 SRCS += productDescriptionShell.c
 SRCS += resourcePalette.c 
-SRCS += shared.c 
 SRCS += updateMonitors.c 
+SRCS += updateTask.c 
 SRCS += utils.c 
 SRCS += xgif.c
 

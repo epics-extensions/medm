@@ -596,9 +596,8 @@ void dmTraverseAllDisplayLists()
 
 }
 
-/*
- * traverse (execute) specified displayInfo's display list non-widget elements
- */
+/* Traverse (execute) specified displayInfo's display list non-widget
+ * elements.  Should only be called in EDIT mode. */
 void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 {
     DlElement *element;
@@ -706,6 +705,39 @@ int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
     return (i);
 }
 
+
+/*
+ * optionMenuSet:  routine to set option menu to specified button index
+ *		(0 - (# buttons - 1))
+ *   Sets the XmNmenuHistory, which causes the button to be set
+ */
+void optionMenuSet(Widget menu, int buttonId)
+{
+    WidgetList buttons;
+    Cardinal numButtons;
+    Widget subMenu;
+
+  /* (MDA) - if option menus are ever created using non pushbutton or
+   *	pushbutton widgets in them (e.g., separators) then this routine must
+   *	loop over all children and make sure to only reference the push
+   *	button derived children
+   *
+   *	Note: for invalid buttons, don't do anything (this can occur
+   *	for example, when setting dynamic attributes when they don't
+   *	really apply (and this is usually okay because they are not
+   *	managed in invalid cases anyway))
+   */
+    XtVaGetValues(menu,XmNsubMenuId,&subMenu,NULL);
+    if (subMenu != NULL) {
+	XtVaGetValues(subMenu, XmNchildren,&buttons, XmNnumChildren,
+	  &numButtons, NULL);
+	if (buttonId < (int)numButtons && buttonId >= 0) {
+	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
+	}
+    } else {
+	medmPrintf(1,"\noptionMenuSet: No subMenu found for option menu\n");
+    }
+}
 
 XtErrorHandler trapExtraneousWarningsHandler(String message)
 {
@@ -3338,66 +3370,6 @@ void  moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
 	}
 	dlElement = dlElement->prev;
     }
-}
-
-/*
- * return Channel ptr given a widget id
- */
-UpdateTask *getUpdateTaskFromWidget(Widget widget)
-{
-    DisplayInfo *displayInfo;
-    UpdateTask *pt;
-
-    if(!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
-      return NULL; 
-
-    pt = displayInfo->updateTaskListHead.next; 
-    while (pt) {
-      /* Note : vong
-       * Below it is a very ugly way to dereference the widget pointer.
-       * It assumes that the first element in the clientData is a pointer
-       * to a DlElement structure.  However, if a SIGSEG or SIGBUS occurs,
-       * please recheck the structure which pt->clientData points
-       * at.
-       */
-	if((*(((DlElement **) pt->clientData)))->widget == widget) {
-	    return pt;
-	}
-	pt = pt->next;
-    }
-    return NULL;
-}
-
-/*
- * return UpdateTask ptr given a DisplayInfo* and x,y positions
- */
-UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
-{
-    UpdateTask *ptu, *ptuSaved = NULL;
-    int minWidth, minHeight;
-  
-    if(displayInfo == (DisplayInfo *)NULL) return NULL;
-
-    minWidth = INT_MAX;	 	/* according to XPG2's values.h */
-    minHeight = INT_MAX;
-
-    ptu = displayInfo->updateTaskListHead.next;
-    while (ptu) {
-	if(x >= (int)ptu->rectangle.x &&
-	  x <= (int)ptu->rectangle.x + (int)ptu->rectangle.width &&
-	  y >= (int)ptu->rectangle.y &&
-	  y <= (int)ptu->rectangle.y + (int)ptu->rectangle.height) {
-	  /* eligible element, see if smallest so far */
-	    if((int)ptu->rectangle.width < minWidth &&
-	      (int)ptu->rectangle.height < minHeight) {
-		minWidth = (int)ptu->rectangle.width;
-		minHeight = (int)ptu->rectangle.height;
-		ptuSaved = ptu;
-	    }
-	}
-	ptu = ptu->next;
-    }
-    return ptuSaved;
 }
 
 /*

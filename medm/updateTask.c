@@ -147,85 +147,6 @@ void updateTaskStatusGetInfo(int *taskCount,
     updateTaskStatus.since = time;
 }
 
-#ifdef __cplusplus 
-void wmCloseCallback(Widget w, XtPointer cd, XtPointer)
-#else
-void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
-{
-    ShellType shellType = (ShellType) cd;
-  /*
-   * handle WM Close functions like all the separate dialog close functions,
-   *   dispatch based upon widget value that the callback is called with
-   */
-    switch (shellType) {
-    case DISPLAY_SHELL:
-	closeDisplay(w);
-	break;
-    case OTHER_SHELL:
-      /* it's one of the permanent shells */
-	if (w == mainShell) {
-	    medmExit();
-	} else if (w == objectS) {
-	    XtPopdown(objectS);
-	} else if (w == resourceS) {
-	    XtPopdown(resourceS);
-	} else if (w == colorS) {
-	    XtPopdown(colorS);
-	} else if (w == channelS) {
-	    XtPopdown(channelS);
-	} else if (w == helpS) {
-	    XtPopdown(helpS);
-	} else if (w == editHelpS) {
-	    XtPopdown(editHelpS);
-	} else if (w == pvInfoS) {
-	    XtPopdown(pvInfoS);
-	} else if (w == errMsgS) {
-	    XtPopdown(errMsgS);
-	} else if (w == errMsgSendS) {
-	    XtPopdown(errMsgSendS);
-	} else if (w == caStudyS) {
-	    XtPopdown(caStudyS);
-	} else if (w == displayListS) {
-	    XtPopdown(displayListS);
-	}
-	break;
-    }
-}
-
-/*
- * optionMenuSet:  routine to set option menu to specified button index
- *		(0 - (# buttons - 1))
- *   Sets the XmNmenuHistory, which causes the button to be set
- */
-void optionMenuSet(Widget menu, int buttonId)
-{
-    WidgetList buttons;
-    Cardinal numButtons;
-    Widget subMenu;
-
-  /* (MDA) - if option menus are ever created using non pushbutton or
-   *	pushbutton widgets in them (e.g., separators) then this routine must
-   *	loop over all children and make sure to only reference the push
-   *	button derived children
-   *
-   *	Note: for invalid buttons, don't do anything (this can occur
-   *	for example, when setting dynamic attributes when they don't
-   *	really apply (and this is usually okay because they are not
-   *	managed in invalid cases anyway))
-   */
-    XtVaGetValues(menu,XmNsubMenuId,&subMenu,NULL);
-    if (subMenu != NULL) {
-	XtVaGetValues(subMenu, XmNchildren,&buttons, XmNnumChildren,
-	  &numButtons, NULL);
-	if (buttonId < (int)numButtons && buttonId >= 0) {
-	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
-	}
-    } else {
-	medmPrintf(1,"\noptionMenuSet: No subMenu found for option menu\n");
-    }
-}
-
 /* Timer proc for update tasks.  Is called every TIMERINTERVAL sec.
    Calls updateTaskMarkTimeout, which sets executeRequestsPendingCount
    > 0 for timed out tasks.  Also polls CA.  */
@@ -842,5 +763,65 @@ void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer,
   Record **, int *))
 {
     pt->getRecord = nameCb;
+}
+
+/*
+ * return Channel ptr given a widget id
+ */
+UpdateTask *getUpdateTaskFromWidget(Widget widget)
+{
+    DisplayInfo *displayInfo;
+    UpdateTask *pt;
+
+    if(!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
+      return NULL; 
+
+    pt = displayInfo->updateTaskListHead.next; 
+    while (pt) {
+      /* Note : vong
+       * Below it is a very ugly way to dereference the widget pointer.
+       * It assumes that the first element in the clientData is a pointer
+       * to a DlElement structure.  However, if a SIGSEG or SIGBUS occurs,
+       * please recheck the structure which pt->clientData points
+       * at.
+       */
+	if((*(((DlElement **) pt->clientData)))->widget == widget) {
+	    return pt;
+	}
+	pt = pt->next;
+    }
+    return NULL;
+}
+
+/*
+ * return UpdateTask ptr given a DisplayInfo* and x,y positions
+ */
+UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
+{
+    UpdateTask *ptu, *ptuSaved = NULL;
+    int minWidth, minHeight;
+  
+    if(displayInfo == (DisplayInfo *)NULL) return NULL;
+
+    minWidth = INT_MAX;	 	/* according to XPG2's values.h */
+    minHeight = INT_MAX;
+
+    ptu = displayInfo->updateTaskListHead.next;
+    while (ptu) {
+	if(x >= (int)ptu->rectangle.x &&
+	  x <= (int)ptu->rectangle.x + (int)ptu->rectangle.width &&
+	  y >= (int)ptu->rectangle.y &&
+	  y <= (int)ptu->rectangle.y + (int)ptu->rectangle.height) {
+	  /* eligible element, see if smallest so far */
+	    if((int)ptu->rectangle.width < minWidth &&
+	      (int)ptu->rectangle.height < minHeight) {
+		minWidth = (int)ptu->rectangle.width;
+		minHeight = (int)ptu->rectangle.height;
+		ptuSaved = ptu;
+	    }
+	}
+	ptu = ptu->next;
+    }
+    return ptuSaved;
 }
 

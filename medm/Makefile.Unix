@@ -181,8 +181,8 @@ SRCS.c += ../medmWidget.c
 SRCS.c += ../objectPalette.c
 SRCS.c += ../productDescriptionShell.c
 SRCS.c += ../resourcePalette.c
-SRCS.c += ../shared.c
 SRCS.c += ../updateMonitors.c
+SRCS.c += ../updateTask.c
 SRCS.c += ../utils.c
 SRCS.c += ../xgif.c
 
@@ -226,8 +226,8 @@ OBJS += medmWidget.o
 OBJS += objectPalette.o
 OBJS += productDescriptionShell.o
 OBJS += resourcePalette.o
-OBJS += shared.o
 OBJS += updateMonitors.o
+OBJS += updateTask.o
 OBJS += utils.o
 OBJS += xgif.o
 
