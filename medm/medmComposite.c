@@ -647,7 +647,7 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 static void compositeFileParse(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
-    FILE *file, *savedFile;
+    FILE *filePtr, *savedFilePtr;
     int savedVersionNumber;
     char filename[MAX_TOKEN_LENGTH];
     char token[MAX_TOKEN_LENGTH];
@@ -668,8 +668,8 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     filename[MAX_TOKEN_LENGTH-1]='\0';
 
   /* Open the file */
-    file = dmOpenUsableFile(filename, displayInfo->dlFile->name);
-    if(!file) {
+    filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
+    if(!filePtr) {
 	medmPrintf(1,"\ncompositeFileParse: Cannot open file\n"
 	  "  filename: %s\n",dlComposite->compositeFile);
 	return;
@@ -678,9 +678,9 @@ static void compositeFileParse(DisplayInfo *displayInfo,
   /* Since getToken() uses the displayInfo, we have to save the file
      pointer in the displayInfo and plug in the current one.  We also
      have to save the version number. (It is zero for a new display.)  */
-    savedFile = displayInfo->filePtr;
+    savedFilePtr = displayInfo->filePtr;
     savedVersionNumber = displayInfo->versionNumber;
-    displayInfo->filePtr = file;
+    displayInfo->filePtr = filePtr;
 
   /* Read the file block (Must be there) */
     dlFile = createDlFile(displayInfo);;
@@ -692,7 +692,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 	medmPostMsg(1,"compositeFileParse: Invalid .adl file "
 	  "(First block is not file block)\n"
 	  "  file: %s\n",filename);
-	fclose(file);
+	fclose(filePtr);
 	goto RETURN;
     }
   /* Plug the current version number into the displayInfo */
@@ -719,7 +719,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
       token, tokenType) != T_EOF) {
 	tokenType=getToken(displayInfo,token);
     }
-    fclose(file);
+    fclose(filePtr);
 
   /* Rearrange the composite to fit its contents */
     minX = INT_MAX; minY = INT_MAX;
@@ -782,7 +782,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
   RETURN:
     
   /* Restore displayInfo file parameters */
-    displayInfo->filePtr = savedFile;
+    displayInfo->filePtr = savedFilePtr;
     displayInfo->versionNumber = savedVersionNumber;
 }
 

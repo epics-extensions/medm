@@ -774,9 +774,10 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
       != T_EOF) {
 	tokenType=getToken(cdi,token);
     }
-    fclose(cdi->filePtr);
 
-  /* NULL the file pointer.  We are done with it */
+  /* NULL the file pointer.  We are done with it.  Do not close the
+     file.  Let the calling routine, that opened it, do that after
+     this routine returns. */
     cdi->filePtr = NULL;
 
   /* The display is the first element */

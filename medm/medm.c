@@ -2079,8 +2079,8 @@ static void fileMenuDialogCallback(
 		    XtUnmanageChild(w);
 		    dmDisplayListParse(NULL, filePtr, NULL, filename, NULL,
 		      (Boolean)False);
-		    enableEditFunctions();
 		    fclose(filePtr);
+		    enableEditFunctions();
 		}
 		XtFree(filename);
 	    }
@@ -2972,7 +2972,7 @@ void sendFullPathNameAndMacroAsClientMessages(
 /* KE: The error handling could be improved.  See dmDisplayListParse.  */
 char token[MAX_TOKEN_LENGTH];
 DisplayInfo* parseDisplayFile(char *filename) {
-    DisplayInfo *displayInfo = 0;
+    DisplayInfo *displayInfo = NULL;
     FILE *filePtr;
     TOKEN tokenType;
     if(filePtr = fopen(filename,"r")) {
@@ -2989,7 +2989,8 @@ DisplayInfo* parseDisplayFile(char *filename) {
 		strcpy(displayInfo->dlFile->name,filename);
 	    }
 	} else {
-	    return 0;
+	    fclose(filePtr);
+	    return NULL;
 	}
 	tokenType=getToken(displayInfo,token);
 	if(tokenType == T_WORD && !strcmp(token,"display")) {
@@ -3001,7 +3002,8 @@ DisplayInfo* parseDisplayFile(char *filename) {
 	    displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
 	    tokenType=getToken(displayInfo,token);
 	} else {
-	    return 0;
+	    fclose(filePtr);
+	    return NULL;
 	}
  
       /* Proceed with parsing */
@@ -3009,7 +3011,8 @@ DisplayInfo* parseDisplayFile(char *filename) {
 	  token,tokenType) != T_EOF) {
 	    tokenType=getToken(displayInfo,token);
 	}
-	if(displayInfo->filePtr) fclose(displayInfo->filePtr);
+	displayInfo->filePtr=NULL;
+	fclose(filePtr);
     }
 
     return displayInfo;
@@ -3812,10 +3815,10 @@ main(int argc, char *argv[])
 			if(filePtr) {
 			    dmDisplayListParse(NULL, filePtr, name, fullPathName,
 			      geometryString, (Boolean)False);
+			    fclose(filePtr);
 			    if(globalDisplayListTraversalMode == DL_EDIT) {
 				enableEditFunctions();
 			    }
-			    fclose(filePtr);
 			} else {
 			    medmPrintf(1,
 			      "  Could not open requested file\n");

@@ -79,7 +79,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "cvtFast.h"
 
 /* Function prototypes */
-
 static double strtosd(char *string, char delim, int *sign, char **rptr,
   int *status);
 
