@@ -649,7 +649,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 {
     FILE *file, *savedFile;
     int savedVersionNumber;
-    char *filename;
+    char filename[MAX_TOKEN_LENGTH];
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     DlFile *dlFile;
@@ -662,12 +662,16 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     if(!displayInfo || !dlElement) return;
     dlComposite = dlElement->structure.composite;
 
+  /* Work with a copy of the name so the original doesn't get paths
+     attached, delimiter characters changed, etc. */
+    strncpy(filename,dlComposite->compositeFile,MAX_TOKEN_LENGTH);
+    filename[MAX_TOKEN_LENGTH-1]='\0';
+
   /* Open the file */
-    filename = dlComposite->compositeFile;
     file = dmOpenUsableFile(filename, displayInfo->dlFile->name);
     if(!file) {
 	medmPrintf(1,"\ncompositeFileParse: Cannot open file\n"
-	  "  filename: %s\n",filename);
+	  "  filename: %s\n",dlComposite->compositeFile);
 	return;
     }
 

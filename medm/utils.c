@@ -203,7 +203,6 @@ int isPath(const char *fileString)
     int pathTest;
     
   /* Look for the appropriate leading character */
-    pathTest = (strchr(fileString, '[') != NULL);
 #if defined(VMS)
     pathTest = (strchr(fileString, '[') != NULL);
 #elif defined(WIN32)
@@ -214,18 +213,9 @@ int isPath(const char *fileString)
     pathTest = (fileString[0] == MEDM_DIR_DELIMITER_CHAR);
 #endif
 
-  /* If not successful, look for a leading . or .. */
-#if !defined(VMS)
-    if(!pathTest) {
-	if(fileString[0] == '.') {
-	    if(fileString[1] == '.') {
-		pathTest = (fileString[2] == MEDM_DIR_DELIMITER_CHAR);
-	    } else {
-		pathTest = (fileString[1] == MEDM_DIR_DELIMITER_CHAR);
-	    }
-	}
-    }
-#endif    
+  /* Note: Do not assume names starting with . or .. are full path
+     names.  Paths can be prepended to these as for the related
+     display, so we don't want to eliminate them. */
 
     return(pathTest);
 }  
