@@ -470,9 +470,9 @@ static void valuatorDraw(XtPointer cd) {
 		}
 	    }
 	    if(pr->writeAccess)
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
+	      XDefineCursor(display,XtWindow(widget),rubberbandCursor);
 	    else
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
+	      XDefineCursor(display,XtWindow(widget),noWriteAccessCursor);
 	} else {
 	    draw3DPane(pv->updateTask,
 	      pv->updateTask->displayInfo->colormap[dlValuator->control.bclr]);
@@ -813,6 +813,7 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     XGCValues gcValues;
     short precision;
     int x, y, height, width;
+    GC gc;
     
   /* Return if no window for widget yet, or if displayInfo == NULL, or ... */
     if(XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
@@ -873,22 +874,14 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     gcValues.function = GXcopy;
     gcValues.foreground = background;
     gcValues.font = font->fid;
-    XChangeGC(XtDisplay(w), displayInfo->pixmapGC, gcValueMask, &gcValues);
+    gc = XCreateGC(display, XtWindow(w), gcValueMask, &gcValues);
   /* Fill the background */
-    XFillRectangle(XtDisplay(w),
-      XtWindow(w),
-      displayInfo->pixmapGC,
-      x,y,
-      width,height);
+    XFillRectangle(display, XtWindow(w), gc, x, y, width, height);
   /* Draw the string */
-    XSetForeground(XtDisplay(w),
-      displayInfo->pixmapGC,
-      foreground);
-    XDrawString(XtDisplay(w),
-      XtWindow(w),
-      displayInfo->pixmapGC,
-      startX,startY,
-      stringValue,nChars);
+    XSetForeground(display, gc, foreground);
+    XDrawString(display, XtWindow(w), gc,
+      startX, startY, stringValue, nChars);
+    XFreeGC(display, gc);
 }
 
 /*
