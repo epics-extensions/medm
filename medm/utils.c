@@ -3942,7 +3942,7 @@ static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	XtPopdown(pvInfoS);
 	break;
     case  PV_INFO_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#PvInfoDialogBox");
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#PVInfoDialogBox");
 	break;
     }
 }
