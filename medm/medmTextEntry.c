@@ -569,7 +569,6 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
     TextEntry *pte = (TextEntry *) pr->clientData;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
-    Pixel pixel;
     Widget widget = pte->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;

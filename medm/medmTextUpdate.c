@@ -457,7 +457,6 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
     TextUpdate *ptu = (TextUpdate *) pr->clientData;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
-    Pixel pixel;
     Widget widget = ptu->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;

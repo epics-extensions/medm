@@ -1803,9 +1803,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		  saveThis?"True":"False");
 #endif	    
 		if (saveThis)
-		/* Overwrite unless it is new display */
+		/* Overwrite unless it is a new display */
 		  medmSaveDisplay(displayInfo, displayInfo->dlFile->name,
-		    displayInfo->newDisplay?False:True);
+		    (Boolean)(displayInfo->newDisplay?False:True));
 	    }
 	    displayInfo = displayInfo->next;
 	}

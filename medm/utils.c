@@ -1046,7 +1046,7 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
   Dimension newWidth, Dimension newHeight)
 {
     DlElement *elementPtr;
-    float sX, sY;
+    float sX = 1.0, sY = 1.0;
     Dimension oldWidth, oldHeight;
 
   /* The first element is the display */
@@ -1054,19 +1054,21 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
     oldWidth = (int)elementPtr->structure.display->object.width;
     oldHeight = (int)elementPtr->structure.display->object.height;
 
-  /* Simply return (value FALSE) if no real change */
-    if(oldWidth == newWidth && oldHeight == newHeight) return (FALSE);
+  /* Simply return False if no real change */
+    if(oldWidth == newWidth && oldHeight == newHeight) return(False);
 
   /* Resize the display, then do selected elements */
     elementPtr->structure.display->object.width = newWidth;
     elementPtr->structure.display->object.height = newHeight;
 
-  /* Proceed with scaling...*/
-    sX = (float) ((float)newWidth/(float)oldWidth);
-    sY = (float) ((float)newHeight/(float)oldHeight);
+  /* Proceed with scaling */
+    if(oldWidth)
+      sX = (float)newWidth/(float)oldWidth;
+    if(oldHeight)
+      sY = (float)newHeight/(float)oldHeight;
 
     resizeDlElementList(displayInfo->dlElementList,0,0,sX,sY);
-    return (TRUE);
+    return(True);
 }
 
 /*

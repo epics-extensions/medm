@@ -320,8 +320,10 @@ void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
       + xOffset));
     height = MAX(1,((int)dlElement->structure.composite->object.height
       + yOffset));
-    scaleX = (float)width/(float)dlElement->structure.composite->object.width;
-    scaleY = (float)height/(float)dlElement->structure.composite->object.height;
+    if(dlElement->structure.composite->object.width)
+      scaleX = (float)width/(float)dlElement->structure.composite->object.width;
+    if(dlElement->structure.composite->object.height)
+      scaleY = (float)height/(float)dlElement->structure.composite->object.height;
     resizeDlElementList(dlElement->structure.composite->dlElementList,
       dlElement->structure.composite->object.x,
       dlElement->structure.composite->object.y,

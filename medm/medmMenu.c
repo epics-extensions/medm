@@ -256,7 +256,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
     labels = NULL;
     nbuttons = 0;
     if(pr->hopr) {
-	nbuttons = pr->hopr + 1;
+	nbuttons = (int)(pr->hopr + 1.5);
 	labels = (XmStringTable)calloc(nbuttons, sizeof(XmString));
     }
     if(!labels) {
@@ -294,8 +294,6 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     Arg args[25];
     int i, nargs, nargs0;
     Widget optionButtonGadget;
-    WidgetList children;
-    Cardinal numChildren;
     XmFontList fontList;
     Dimension useableWidth, useableHeight;
     Pixel foreground, background;
