@@ -1224,6 +1224,9 @@ void createResource()
   /****** Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     resourceS = XtCreatePopupShell("resourceS",topLevelShellWidgetClass,
       mainShell,args,n);
 
@@ -2184,6 +2187,9 @@ Widget createShellCommandDataDialog(
     n = 0;
     XtSetArg(args[n],XmNtitle,"Shell Command Data"); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     XtSetValues(shell,args,n);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
@@ -2431,6 +2437,9 @@ Widget createStripChartDataDialog(Widget parent)
     n = 0;
     XtSetArg(args[n],XmNtitle,"Strip Chart Data"); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     XtSetValues(shell,args,n);
     n = 0;
     XtSetArg(args[n],XmNrows,MAX_PENS); n++;

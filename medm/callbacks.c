@@ -512,9 +512,9 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	} else if (w == editHelpS) {
 	    XtPopdown(editHelpS);
 	} else if (w == pvInfoS) {
-	    XtPopdown(printSetupS);
-	} else if (w == pvInfoS) {
 	    XtPopdown(pvInfoS);
+	} else if (w == printSetupS) {
+	    XtPopdown(printSetupS);
 	} else if (w == errMsgS) {
 	    XtPopdown(errMsgS);
 	} else if (w == errMsgSendS) {

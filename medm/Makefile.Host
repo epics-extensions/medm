@@ -148,8 +148,13 @@ USR_LIBS_Linux = Xm Xt Xp Xmu X11
 
 ifeq ($(EXCEED),Exceed5)
   USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
-else
+endif
+ifeq ($(EXCEED),Exceed6)
   USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
+endif
+ifeq ($(EXCEED),Exceed6.1)
+  USR_LIBS_WIN32 = XmStatic XmStatXt XlibGUI Xlib HCLXmu
+  USR_CFLAGS_WIN32 += /DXMSTATIC
 endif
 
 PrintUtils_DIR = $(INSTALL_LIB)
@@ -160,6 +165,7 @@ X11_DIR = $(X11_LIB)
 Xmu_DIR = $(X11_LIB)
 XlibGUI_DIR = $(X11_LIB)
 XmStatic_DIR = $(MOTIF_LIB)
+XmStatXt_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
 HCLXmu_DIR = $(X11_LIB)

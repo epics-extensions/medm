@@ -535,6 +535,10 @@ static void createPvLimitsDlg(void)
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "PV Limits",
       XmNdeleteResponse, XmDO_NOTHING,
+      XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
+    /* KE: The following is necessary for Exceed, which turns off the
+       resize function with the handles.  It should not be necessary */
+      XmNmwmFunctions, MWM_FUNC_ALL,
       NULL);
     XmAddWMProtocolCallback(pvLimitsS,WM_DELETE_WINDOW,
       wmCloseCallback,(XtPointer)OTHER_SHELL);
@@ -1307,6 +1311,10 @@ void createPrintSetupDlg(void)
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "Print Setup",
       XmNdeleteResponse, XmDO_NOTHING,
+      XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
+    /* KE: The following is necessary for Exceed, which turns off the
+       resize function with the handles.  It should not be necessary */
+      XmNmwmFunctions, MWM_FUNC_ALL,
       NULL);
     XmAddWMProtocolCallback(printSetupS,WM_DELETE_WINDOW,
       wmCloseCallback,(XtPointer)OTHER_SHELL);

@@ -3447,6 +3447,9 @@ main(int argc, char *argv[])
     n = 0;
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     mainShell = XtAppInitialize(&appContext, CLASS, NULL, 0, &argc, argv,
       fallbackResources, args, n);
 
@@ -4054,7 +4057,12 @@ static void createMain()
   /* Create the Exit... warning dialog  */
 
     exitQD = XmCreateQuestionDialog(XtParent(mainFilePDM),"exitQD",NULL,0);
-    XtVaSetValues(XtParent(exitQD),XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH, NULL);
+    XtVaSetValues(XtParent(exitQD),XmNmwmDecorations,
+      MWM_DECOR_ALL|MWM_DECOR_RESIZEH, NULL);
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtVaSetValues(XtParent(exitQD),XmNmwmFunctions,
+      MWM_FUNC_ALL, NULL);
     XtUnmanageChild(XmMessageBoxGetChild(exitQD,XmDIALOG_HELP_BUTTON));
     XtAddCallback(exitQD,XmNcancelCallback,
       fileMenuDialogCallback,(XtPointer)FILE_EXIT_BTN);
@@ -4068,10 +4076,13 @@ static void createMain()
     XtSetArg(args[n],XtNtitle,"Medm Help System"); n++;
     XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
-  /* map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+  /* Remove resize handles */
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
-
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     helpS = XtCreatePopupShell("helpS",topLevelShellWidgetClass,
       mainShell,args,n);
     XmAddWMProtocolCallback(helpS,WM_DELETE_WINDOW,
@@ -4096,7 +4107,9 @@ static void createMain()
   /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
-
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     editHelpS = XtCreatePopupShell("editHelpS",topLevelShellWidgetClass,
       mainShell,args,n);
     XmAddWMProtocolCallback(editHelpS,WM_DELETE_WINDOW,

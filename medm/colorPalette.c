@@ -286,9 +286,12 @@ void createColor()
     XtSetArg(args[n],XtNtitle,"Color Palette"); n++;
     XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
-/* map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     colorS = XtCreatePopupShell("colorS",topLevelShellWidgetClass,
       mainShell,args,n);
     XmAddWMProtocolCallback(colorS,WM_DELETE_WINDOW,
@@ -296,7 +299,6 @@ void createColor()
       (XtPointer)OTHER_SHELL);
 
     colorMW = XmCreateMainWindow(colorS,"colorMW",NULL,0);
-
 
 /*
  * create the menu bar

@@ -1074,6 +1074,9 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
   /* Remove resize handles from shell */
     XtVaSetValues(XtParent(keyboardDialog),
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
+    /* KE: The following is necessary for Exceed, which turns off the
+       resize function with the handles.  It should not be necessary */
+      XmNmwmFunctions, MWM_FUNC_ALL,
       NULL);
     
     XtAddCallback(keyboardDialog,XmNokCallback,keyboardDialogCallback,pv);

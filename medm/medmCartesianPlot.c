@@ -2404,6 +2404,9 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     n = 0;
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
     XtSetArg(args[n],XmNtitle,"Cartesian Plot Axis Data"); n++;
     shell = XtCreatePopupShell("cartesianPlotAxisS",
@@ -2943,6 +2946,9 @@ Widget createCartesianPlotDataDialog(Widget parent)
     n = 0;
     XtSetArg(args[n],XmNtitle,"Cartesian Plot Data"); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     XtSetValues(shell,args,n);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);

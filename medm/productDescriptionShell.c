@@ -53,9 +53,12 @@ static void popdownProductDescriptionShell(XtPointer xtPointer)
     widget = (Widget) xtPointer;
     XtPopdown(widget);
 
-    XtSetArg(args[0],XmNmwmDecorations,MWM_DECOR_ALL);
-    XtSetArg(args[1],XmNdeleteResponse,XmDO_NOTHING);
-    XtSetValues(widget,args,2);
+    XtSetArg(args[0],XmNdeleteResponse,XmDO_NOTHING);
+    XtSetArg(args[1],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[2],XmNmwmFunctions, MWM_FUNC_ALL);
+    XtSetValues(widget,args,3);
 
     WM_DELETE_WINDOW = XmInternAtom(XtDisplay(widget),
       "WM_DELETE_WINDOW",False);
@@ -98,7 +101,7 @@ Widget createAndPopupProductDescriptionShell(
 {
     Display *display;
     Widget productDescriptionShell, form;
-    Arg args[15];
+    Arg args[16];
     Widget children[6], nameLabel, descriptionLabel, versionInfoLabel,
       separator, developedAtLabel;
     XmString nameXmString = (XmString)NULL, descriptionXmString = (XmString)NULL,
@@ -113,15 +116,16 @@ Widget createAndPopupProductDescriptionShell(
 
   /* Create the shell */
     n = 0;
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++;
     }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++;
     }
     XtSetArg(args[n],XmNmwmDecorations, MWM_DECOR_ALL|
       MWM_DECOR_BORDER|MWM_DECOR_RESIZEH|MWM_DECOR_TITLE|MWM_DECOR_MENU|
       MWM_DECOR_MINIMIZE|MWM_DECOR_MAXIMIZE); n++;
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
     XtSetArg(args[n],XmNtitle,"Version"); n++;
     productDescriptionShell = XtCreatePopupShell("productDescriptionShell",
       topLevelShellWidgetClass,topLevelShell,args, n);
@@ -129,9 +133,9 @@ Widget createAndPopupProductDescriptionShell(
     screen=DefaultScreen(display);
       
     n = 0;
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     XtSetArg(args[n],XmNnoResize,True); n++;
     XtSetArg(args[n],XmNshadowThickness,2); n++;
@@ -140,21 +144,21 @@ Widget createAndPopupProductDescriptionShell(
     form = XmCreateForm(productDescriptionShell,"form",args,n);
     
   /* Generate XmStrings */
-    if (name != NULL) nameXmString = XmStringCreateLtoR(name,
+    if(name != NULL) nameXmString = XmStringCreateLtoR(name,
       XmFONTLIST_DEFAULT_TAG);
-    if (description != NULL) descriptionXmString =
+    if(description != NULL) descriptionXmString =
 			       XmStringCreateLtoR(description,XmFONTLIST_DEFAULT_TAG);
-    if (versionInfo != NULL) versionInfoXmString =
+    if(versionInfo != NULL) versionInfoXmString =
 			       XmStringCreateLtoR(versionInfo,XmFONTLIST_DEFAULT_TAG);
-    if (developedAt != NULL) developedAtXmString =
+    if(developedAt != NULL) developedAtXmString =
 			       XmStringCreateLtoR(developedAt,XmFONTLIST_DEFAULT_TAG);
 
   /* Create the label children  */
   /* Name */
     n = 0;
-    if (namePixmap == (Pixmap) NULL) {
+    if(namePixmap == (Pixmap) NULL) {
 	XtSetArg(args[n],XmNlabelString,nameXmString); n++;
-	if (nameFontList != NULL) {
+	if(nameFontList != NULL) {
 	    XtSetArg(args[n],XmNfontList,nameFontList); n++;
 	}
     } else {
@@ -165,9 +169,9 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
     XtSetArg(args[n],XmNleftPosition,1); n++;
     XtSetArg(args[n],XmNresizable,False); n++;
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     nameLabel = XmCreateLabel(form,"nameLabel",args,n);
     
@@ -181,9 +185,9 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
     XtSetArg(args[n],XmNshadowThickness,2); n++;
     XtSetArg(args[n],XmNseparatorType,XmSHADOW_ETCHED_IN); n++;
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     separator = XmCreateSeparator(form,"separator",args,n);
     
@@ -197,12 +201,12 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNleftWidget,separator); n++;
 	XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
 	XtSetArg(args[n],XmNrightPosition,90); n++;
-    if (descriptionFontList != NULL) {
+    if(descriptionFontList != NULL) {
 	XtSetArg(args[n],XmNfontList,descriptionFontList); n++;
     }
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     descriptionLabel = XmCreateLabel(form,"descriptionLabel",args,n);
     
@@ -216,12 +220,12 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNleftWidget,descriptionLabel); n++;
 	XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
 	XtSetArg(args[n],XmNrightPosition,90); n++;
-    if (otherFontList != NULL) {
+    if(otherFontList != NULL) {
 	XtSetArg(args[n],XmNfontList,otherFontList); n++;
     }
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     versionInfoLabel = XmCreateLabel(form,"versionInfoLabel",args,n);
     
@@ -238,12 +242,12 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNbottomAttachment,XmATTACH_POSITION); n++;
     XtSetArg(args[n],XmNbottomPosition,90); n++;
     
-    if (otherFontList != NULL) {
+    if(otherFontList != NULL) {
 	XtSetArg(args[n],XmNfontList,otherFontList); n++;
     }
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     developedAtLabel = XmCreateLabel(form,"developedAtLabel",args,n);
     
@@ -256,12 +260,12 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNtopOffset,8); n++;
     XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNrightOffset,8); n++;
-    if (otherFontList != NULL) {
+    if(otherFontList != NULL) {
 	XtSetArg(args[n],XmNfontList,otherFontList); n++;
     }
-    if (background >= 0) {
+    if(background >= 0) {
 	XtSetArg(args[n],XmNbackground,(unsigned long)background); n++; }
-    if (foreground >= 0) {
+    if(foreground >= 0) {
 	XtSetArg(args[n],XmNforeground,(unsigned long)foreground); n++; }
     okButton = XmCreatePushButton(form,"okButton",args,n);
     XtAddCallback(okButton,XmNactivateCallback,
@@ -303,14 +307,6 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[n],XmNy,newY); n++;
     XtSetArg(args[n],XmNx,newX); n++;
     XtSetValues(productDescriptionShell,args,n);
-    
-#ifdef WIN32
-  /* Seems to be an Exceed bug that it doesn't get set the first time */
-    n=0;
-    XtSetArg(args[n],XmNy,newY); n++;
-    XtSetArg(args[n],XmNx,newX); n++;
-    XtSetValues(productDescriptionShell,args,n);
-#endif    
     
 #if DEBUG_POSITION
     {
@@ -366,10 +362,10 @@ Widget createAndPopupProductDescriptionShell(
 #endif    
     
   /* Free strings */
-    if (nameXmString != (XmString)NULL) XmStringFree(nameXmString);
-    if (descriptionXmString != (XmString)NULL) XmStringFree(descriptionXmString);
-    if (versionInfoXmString != (XmString)NULL) XmStringFree(versionInfoXmString);
-    if (developedAtXmString != (XmString)NULL) XmStringFree(developedAtXmString);
+    if(nameXmString != (XmString)NULL) XmStringFree(nameXmString);
+    if(descriptionXmString != (XmString)NULL) XmStringFree(descriptionXmString);
+    if(versionInfoXmString != (XmString)NULL) XmStringFree(versionInfoXmString);
+    if(developedAtXmString != (XmString)NULL) XmStringFree(developedAtXmString);
     
   /* Register timeout procedure to make the dialog go away after N seconds */
     XtAppAddTimeOut(appContext,(unsigned long)(1000*seconds),

@@ -209,7 +209,6 @@ DisplayInfo *allocateDisplayInfo()
 
   /* Create the shell and add callbacks */
     nargs = 0;
-    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
     XtSetArg(args[nargs],XmNiconName,"display"); nargs++;
     XtSetArg(args[nargs],XmNtitle,"display"); nargs++;
     XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
@@ -217,15 +216,15 @@ DisplayInfo *allocateDisplayInfo()
    * KE: Is is really good to do this? */
     XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
     nargs++;
-  /* KE: The following is necessary for Exceed, which turns off the resize
-   *   function with the handles.  It should not be necessary */
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
     XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
 #if 1
-  /* For highlightOnEnter on pointer motion, this must be set for shells
-   * KE: It seems like the user should set this
-   *   highlightOnEnter is set for MessageButton, RelatedDisplay, Shell Command,
-   *     TextEntry, Valuator
-   *   Seems like it only does something for the Slider and Text Entry */
+  /* For highlightOnEnter on pointer motion, this must be set for shells */
+  /* KE: It seems like the user should set this.   highlightOnEnter is
+   * set for MessageButton, RelatedDisplay, Shell Command, TextEntry,
+   * Valuator. Seems like it only does something for the Slider and
+   * Text Entry */
     XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmPOINTER); nargs++;
 #endif    
   /* Map window manager menu Close function to nothing for now */
