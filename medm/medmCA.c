@@ -127,14 +127,14 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
       "  Source File: %s\n"
       "  Line number: %u\n",
       args.chid?ca_name(args.chid):"Unavailable",
-      args.chid?dbr_type_to_text(ca_field_type(args.chid)):"Unavailable",
+      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
       args.chid?ca_element_count(args.chid):0,
       args.chid?(ca_read_access(args.chid)?"R":""):"Unavailable",
       args.chid?(ca_write_access(args.chid)?"W":""):"",
       args.chid?ca_host_name(args.chid):"Unavailable",
       ca_message(args.stat)?ca_message(args.stat):"Unavailable",
       args.ctx?args.ctx:"Unavailable",
-      dbr_type_to_text(args.type),
+      dbf_type_to_text(args.type),
       args.count,
       args.pFile?args.pFile:"Unavailable",
       args.pFile?args.lineNo:0);
@@ -674,15 +674,15 @@ int caAdd(char *name, Record *pr) {
     pCh->size = 0;
     pCh->pr = pr;
     pCh->previouslyConnected = False;
+
     if (strlen(name) > (size_t)0) {
-	status = ca_build_and_connect(name,TYPENOTCONN,0,
-	  &(pCh->chid),NULL,medmConnectEventCb,pCh);
+	status = ca_search_and_connect(name,&(pCh->chid),medmConnectEventCb,pCh);
     } else {
-	status = ca_build_and_connect(" ",TYPENOTCONN,0,
-	  &(pCh->chid),NULL,medmConnectEventCb,pCh);
+	status = ca_search_and_connect(" ",&(pCh->chid),medmConnectEventCb,pCh);
     }
+
     if (status != ECA_NORMAL) {
-	SEVCHK(status,"caAdd : ca_build_and_connect failed\n");
+	SEVCHK(status,"caAdd : ca_search_and_connect failed\n");
     } else {
       /* Cast to avoid warning from READONLY */
 	pCh->pr->name = (char *)ca_name(pCh->chid);
@@ -887,7 +887,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	  "======================================\n",
 	  ca_name(chId));
 	sprintf(string,"%sTYPE: %s\n",string,
-	  dbr_type_to_text(ca_field_type(chId)));
+	  dbf_type_to_text(ca_field_type(chId)));
 	sprintf(string,"%sCOUNT: %hu\n",string,ca_element_count(chId));
 	sprintf(string,"%sACCESS: %s%s\n",string,
 	  ca_read_access(chId)?"R":"",ca_write_access(chId)?"W":"");
