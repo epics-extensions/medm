@@ -130,7 +130,7 @@ void CpGetAxisInfo(Widget w,
 
   /* Get available information from SciPlot */
     SciPlotGetXAxisInfo(w, &xMin, &xMax, xAxisIsLog, xAxisIsAuto);
-    SciPlotGetXAxisInfo(w, &yMin, &yMax, yAxisIsLog, yAxisIsAuto);
+    SciPlotGetYAxisInfo(w, &yMin, &yMax, yAxisIsLog, yAxisIsAuto);
 
   /* Convert */
     xMinF->fval = xMin;
@@ -402,17 +402,15 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	npoints = hData->data[i].npoints;
 	if(npoints <= 0) continue;
 	if(listid == INVALID_LISTID) {
-	  /* Not set yet */
+	  /* Not set yet, set with npoints */
 	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
 	      hData->data[i].xp, hData->data[i].yp, "");
-	} else {
-	  /* Has already been set */
-	    SciPlotListUpdateFloat(w, listid, hData->data[i].npoints,
-	      hData->data[i].xp, hData->data[i].yp);
 	}
+      /* Update with lastPoint */
+	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint,
+	  hData->data[i].xp, hData->data[i].yp);
     }
   /* Don't do SciPlotUpdate here for efficiency */
-
 }
 
 void CpSetTimeBase(Widget w, time_t base)

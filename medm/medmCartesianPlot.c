@@ -2594,8 +2594,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     }
   /* X Axis Range */
     buttonId = (xIsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (xAxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
-      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+      (xAxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE))
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE;
     optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
 	sprintf(string,"%f",xMinF.fval);
@@ -2622,8 +2622,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (y1IsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (y1AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
-      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+      (y1AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE))
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE;
     optionMenuSet(axisRangeMenu[Y1_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
 	sprintf(string,"%f",y1MinF.fval);
@@ -2651,8 +2651,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       (y2AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (y2IsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (y2AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
-      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+      (y2AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE))
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE;
     optionMenuSet(axisRangeMenu[Y2_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
 	sprintf(string,"%f",y2MinF.fval);
