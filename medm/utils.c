@@ -2864,7 +2864,6 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 {
 #if 1 /* CHECK */
     DlElement *pE;
-    DlObject *po;
     GC gcSave;
     Dimension width,height;
 

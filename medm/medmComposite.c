@@ -410,8 +410,6 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 /* The hide routine in the dispatch table */
 void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    DlComposite *dlComposite;
-
 #if DEBUG_COMPOSITE
     print("hideDlComposite:\n");
 #endif    

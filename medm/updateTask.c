@@ -749,7 +749,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     UpdateTask *t = ts->nextToServe;
     UpdateTask *t1;
     double endTime;
-    int found;
    
 #if DEBUG_UPDATE || DEBUG_DELETE
     print("\nupdateTaskWorkProc: time=%.3f\n",medmElapsedTime());

@@ -414,7 +414,6 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
     int nestingLevel = 0;
     DlColormap *dlColormap;
     DlColormapEntry dummyColormapEntry;
-    DlElement *dlTarget;
     int counter;
     FILE *savedFilePtr;
 
@@ -1645,8 +1644,10 @@ void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
 
 void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+#if 0
     Window drawable;
     DlObject *po;
+#endif    
 
     if(!displayInfo || !dlElement) return;
     
