@@ -23,6 +23,7 @@
 #define XcNscaleSegments	"scaleSegments"
 #define XcCScaleSegments	"ScaleSegments"
 #define XcNvalueVisible		"valueVisible"
+#define XcNdecorations		"decorations"
 
 /****** Class record declarations */
 extern WidgetClass xcBarGraphWidgetClass;

@@ -53,6 +53,7 @@ typedef struct {
     int num_segments;			/* Number of segments in the Scale */
     Boolean value_visible;		/* Enable/Disable display of the 
 					 * value in the Value Box */
+    Boolean decorations;		/* Enable/Disable decorations */
   /******* Private instance variables */
     XRectangle face;			/* Geometry of the BarGraph face */
     XPoint lbl;				/* Location of the Label string */

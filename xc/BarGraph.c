@@ -114,6 +114,15 @@ static XtResource resources[] = {
 	"True"
     },
     {
+	XcNdecorations,
+	XtCBoolean,
+	XtRBoolean,
+	sizeof(Boolean),
+	offset(barGraph.decorations),
+	XtRString,
+	"True"
+    },
+    {
 	XcNinterval,
 	XcCInterval,
 	XtRInt,
@@ -231,9 +240,18 @@ static void Initialize(Widget request, Widget new,
 	wnew->barGraph.value_visible = True;
     }
     
+  /****** Check the decorations resource setting. */
+    if ((wnew->barGraph.decorations != True) &&
+      (wnew->barGraph.decorations != False)) {
+	XtWarning("BarGraph: invalid decorations setting");
+	wnew->barGraph.decorations = True;
+    }
+    
   /* Initialize the BarGraph width and height. */
-    if (wnew->core.width < MIN_BG_WIDTH) wnew->core.width = MIN_BG_WIDTH; 
-    if (wnew->core.height < MIN_BG_HEIGHT) wnew->core.height = MIN_BG_HEIGHT; 
+    if (wnew->barGraph.decorations == True) {
+	if (wnew->core.width < MIN_BG_WIDTH) wnew->core.width = MIN_BG_WIDTH; 
+	if (wnew->core.height < MIN_BG_HEIGHT) wnew->core.height = MIN_BG_HEIGHT;
+    }
     
   /* Set the initial geometry of the BarGraph elements. */
     Resize(new);
@@ -271,21 +289,25 @@ static void Redisplay(Widget w, XEvent *event, Region region)
 #if 1
   /* KE: Why is this commented out? */
   /****** Draw the 3D rectangle background for the BarGraph */
-    XSetClipMask(XtDisplay(w), wb->control.gc, None);
-    Rect3d(w, XtDisplay(w), XtWindow(w), wb->control.gc,
-      0, 0, wb->core.width, wb->core.height, RAISED);
+    if(wb->barGraph.decorations == True) {
+	XSetClipMask(XtDisplay(w), wb->control.gc, None);
+	Rect3d(w, XtDisplay(w), XtWindow(w), wb->control.gc,
+	  0, 0, wb->core.width, wb->core.height, RAISED);
+    }
 #endif	
     
   /****** Draw the Label string */
-    XSetClipRectangles(XtDisplay(w), wb->control.gc, 0, 0, 
-      &(wb->barGraph.face), 1, Unsorted); 
-    XSetForeground(XtDisplay(w), wb->control.gc, wb->control.label_pixel);
-    XDrawString(XtDisplay(w), XtWindow(w), wb->control.gc,
-      wb->barGraph.lbl.x, wb->barGraph.lbl.y, 
-      wb->control.label, strlen(wb->control.label));
+    if(wb->barGraph.decorations == True) {
+	XSetClipRectangles(XtDisplay(w), wb->control.gc, 0, 0, 
+	  &(wb->barGraph.face), 1, Unsorted); 
+	XSetForeground(XtDisplay(w), wb->control.gc, wb->control.label_pixel);
+	XDrawString(XtDisplay(w), XtWindow(w), wb->control.gc,
+	  wb->barGraph.lbl.x, wb->barGraph.lbl.y, 
+	  wb->control.label, strlen(wb->control.label));
+    }
     
   /****** Draw the Scale */
-    if (wb->barGraph.num_segments > 0) {
+    if(wb->barGraph.decorations  == True && wb->barGraph.num_segments > 0) {
 	XSetForeground(XtDisplay(w), wb->control.gc, wb->barGraph.scale_pixel);
 	XDrawLine(XtDisplay(w), XtWindow(w), wb->control.gc,
 	  wb->barGraph.scale_line.x1, wb->barGraph.scale_line.y1,
@@ -326,14 +348,16 @@ static void Redisplay(Widget w, XEvent *event, Region region)
     
     
   /****** Draw the Bar indicator border */
-    Rect3d(w, XtDisplay(w), XtWindow(w), wb->control.gc,
-      wb->barGraph.bar.x - wb->control.shade_depth, 
-      wb->barGraph.bar.y - wb->control.shade_depth,
-      wb->barGraph.bar.width + (2 * wb->control.shade_depth),  
-      wb->barGraph.bar.height + (2 * wb->control.shade_depth), DEPRESSED);
+    if(wb->barGraph.decorations == True) {
+	Rect3d(w, XtDisplay(w), XtWindow(w), wb->control.gc,
+	  wb->barGraph.bar.x - wb->control.shade_depth, 
+	  wb->barGraph.bar.y - wb->control.shade_depth,
+	  wb->barGraph.bar.width + (2 * wb->control.shade_depth),  
+	  wb->barGraph.bar.height + (2 * wb->control.shade_depth), DEPRESSED);
+    }
     
   /****** Draw the Value Box */
-    if (wb->barGraph.value_visible == True)
+    if(wb->barGraph.decorations == True && wb->barGraph.value_visible == True)
       Rect3d(w, XtDisplay(w), XtWindow(w), wb->control.gc,
 	wb->value.value_box.x - wb->control.shade_depth, 
 	wb->value.value_box.y - wb->control.shade_depth,
@@ -410,6 +434,17 @@ static Boolean SetValues(Widget cur, Widget req,
 	}
     }
     
+  /* Check the decorations resource setting. */
+    if (wnew->barGraph.decorations != wcur->barGraph.decorations) {
+	do_redisplay = True;
+	if ((wnew->barGraph.decorations != True) &&
+	  (wnew->barGraph.decorations != False)) {
+	    XtWarning("BarGraph: invalid decorations setting");
+	    wnew->barGraph.decorations = True;
+	}
+	do_resize = True;
+    }
+    
   /* Check to see if the value has changed. */
     if ((((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval)) && 
       (wnew->value.val.lval != wcur->value.val.lval)) ||
@@ -430,6 +465,8 @@ static Boolean SetValues(Widget cur, Widget req,
 	(wnew->value.upper_bound.fval != wcur->value.upper_bound.fval) )) {
 	do_resize = True;
     }
+
+  /* Resize and set do_display if do_resize is true */
     if (do_resize) {
 	Resize(new);
 	do_redisplay = True;
@@ -458,9 +495,15 @@ static void Resize(Widget w)
     font_height = (wb->control.font)->ascent;
     
   /* Set the widgets new width and height. */
-    wb->barGraph.face.x = wb->barGraph.face.y = wb->control.shade_depth;
-    wb->barGraph.face.width = wb->core.width - (2*wb->control.shade_depth);
-    wb->barGraph.face.height = wb->core.height - (2*wb->control.shade_depth);
+    if(wb->barGraph.decorations == True) {
+	wb->barGraph.face.x = wb->barGraph.face.y = wb->control.shade_depth;
+	wb->barGraph.face.width = wb->core.width - (2*wb->control.shade_depth);
+	wb->barGraph.face.height = wb->core.height - (2*wb->control.shade_depth);
+    } else {
+	wb->barGraph.face.x = wb->barGraph.face.y = 0;
+	wb->barGraph.face.width = wb->core.width;
+	wb->barGraph.face.height = wb->core.height;
+    }
     
   /* Calculate min/max string attributes */
     Print_bounds(w, upper, lower);
@@ -513,33 +556,39 @@ static void Resize(Widget w)
     }   
 
   /* Resize the Bar indicator */
-    if (wb->barGraph.orient == XcVert) {
-	wb->barGraph.bar.x = (short)(wb->barGraph.face.x + 
-	  + (wb->barGraph.num_segments > 0 ? max_width + 
-	    (wb->barGraph.face.width/32) : 0) + 2*wb->control.shade_depth);
-	wb->barGraph.bar.y = (short)(wb->barGraph.lbl.y + wb->control.font->descent
-	  + 2*wb->control.shade_depth);
-	wb->barGraph.bar.width = (unsigned short) MAX(0,
-	  (int)(wb->barGraph.face.width - wb->barGraph.bar.x - 
-	    wb->control.shade_depth));
-	wb->barGraph.bar.height = (unsigned short)
-	  (wb->value.value_box.y - wb->barGraph.bar.y - (displayValue == True 
-	    ? font_height - wb->control.font->descent : 2*wb->control.shade_depth));
+    if(wb->barGraph.decorations == True) {
+	if (wb->barGraph.orient == XcVert) {
+	    wb->barGraph.bar.x = (short)(wb->barGraph.face.x + 
+	      + (wb->barGraph.num_segments > 0 ? max_width + 
+		(wb->barGraph.face.width/32) : 0) + 2*wb->control.shade_depth);
+	    wb->barGraph.bar.y = (short)(wb->barGraph.lbl.y + wb->control.font->descent
+	      + 2*wb->control.shade_depth);
+	    wb->barGraph.bar.width = (unsigned short) MAX(0,
+	      (int)(wb->barGraph.face.width - wb->barGraph.bar.x - 
+		wb->control.shade_depth));
+	    wb->barGraph.bar.height = (unsigned short)
+	      (wb->value.value_box.y - wb->barGraph.bar.y - (displayValue == True 
+		? font_height - wb->control.font->descent : 2*wb->control.shade_depth));
+	} else {
+	    wb->barGraph.bar.x = wb->barGraph.face.x +
+	      (short)(wb->barGraph.face.width/16) +
+	      wb->control.shade_depth;
+	    wb->barGraph.bar.y = wb->barGraph.lbl.y
+	      + (wb->barGraph.num_segments > 0 ?
+		font_height/2 +
+		wb->barGraph.face.height/(unsigned short)8 + 1 :
+		0)
+	      + 2*wb->control.shade_depth;
+	    wb->barGraph.bar.width = (short)((9*(int)wb->barGraph.face.width)/10) -
+	      2*wb->control.shade_depth;
+	    wb->barGraph.bar.height = MAX(1,wb->value.value_box.y - wb->barGraph.bar.y 
+	      - (displayValue == True ? font_height : 0)
+	      - wb->control.shade_depth);
+	}
     } else {
-	wb->barGraph.bar.x = wb->barGraph.face.x +
-	  (short)(wb->barGraph.face.width/16) +
-	  wb->control.shade_depth;
-	wb->barGraph.bar.y = wb->barGraph.lbl.y
-	  + (wb->barGraph.num_segments > 0 ?
-	    font_height/2 +
-	    wb->barGraph.face.height/(unsigned short)8 + 1 :
-	    0)
-	  + 2*wb->control.shade_depth;
-	wb->barGraph.bar.width = (short)((9*(int)wb->barGraph.face.width)/10) -
-	  2*wb->control.shade_depth;
-	wb->barGraph.bar.height = MAX(1,wb->value.value_box.y - wb->barGraph.bar.y 
-	  - (displayValue == True ? font_height : 0)
-	  - wb->control.shade_depth);
+	wb->barGraph.bar.x = wb->barGraph.bar.y = 0;
+	wb->barGraph.bar.width = wb->barGraph.face.width;
+	wb->barGraph.bar.height = wb->barGraph.face.height;
     }
     
   /* Resize the Scale line. */
@@ -810,7 +859,10 @@ static void Draw_display(Widget w, Display *display,
 	      wb->barGraph.bar.y, (int)dim, wb->barGraph.bar.height);
 	}
     }
-    
+
+  /* If no decorations, return */
+    if(wb->barGraph.decorations == False) return;
+
   /****** If the value string is supposed to be displayed, draw it */
     if (wb->barGraph.value_visible == True) {
       /****** Clear the Value Box by re-filling it with its background color. */
