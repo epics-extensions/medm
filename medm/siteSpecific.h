@@ -224,13 +224,13 @@ DlColormap defaultDlColormap = {
 #define MEDM_AUTO_RAISE 1
 #endif
 
+#if 0
 /* XR5 has a bug in that resource ID's are not reused, even if the
    resource is freed.  Eventually it runs out of ID's and MEDM doesn't
    work right.  Define the following to locally handle the resource
    allocation for pixmaps and graphics contexts.  These are the most
    created/freed resources */
 /* !!! Do not use this yet.  It doesn't work. */
-#if 0
 #define USE_XR5_RESOURCEID_PATCH
 #endif
 
@@ -242,9 +242,21 @@ on a slider, to move the slider instead. */
 
 #define USE_DRAGDROP 1
 
-/* Define this if you do not want resize handles on many of the
-toplevel shells.  It may break window placement if the MEDM main
-window has different sized borders with and without resize handles.
-(This may to happen with Mwm.) */
+/* Define this to be 1 if you do not want resize handles on many of
+the toplevel shells.  */
 
 #define OMIT_RESIZE_HANDLES 0
+
+  /* Define this to be 1 if you want to keep track of Image colors and
+be sure they are allocated and freed as needed or not needed.  This
+will allow other programs to use the colors when MEDM does not need
+them.  It will only be useful if Images are both created and destroyed
+in an MEDM session.  It will cause editing to be slow when there are
+many Images, since the color allocation routines (XAllocColor and
+XFreeColors) are slow and are called repeatedly for Undo.  It should
+be unnecessary for static visuals (StaticGray, StaticColor, and
+TrueColor) since the cells are Read-only and can be always used by
+other programs anyway.  It is not recommended.  The colors will be
+freed when MEDM exits in any event.  */
+
+#define MANAGE_IMAGE_COLOR_ALLOCATION 0

@@ -1755,6 +1755,7 @@ void freeGIF(DlImage *dlImage)
     if(gif) {
       /* Free the colors */
 	if(gif->numcols > 0) {
+#if MANAGE_IMAGE_COLOR_ALLOCATION
 #if 0	    
 	  /* We need to free these one by one to check for the
              blackPixel, which will give a BadAccess error */
@@ -1767,6 +1768,7 @@ void freeGIF(DlImage *dlImage)
 	  /* This is more efficient.  blackPixel should not be used any more. */
 	    XFreeColors(display,gif->theCmap,gif->cols,gif->numcols,0UL);
 #endif	    
+#endif
 	    gif->numcols=0;
 	}
       /* Free each image */
@@ -1842,8 +1844,9 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
     }
     *gif2=*gif1;
     
-  /* Reallocate the colors to make the ref count increase in case.
-     This takes a long time */
+#if MANAGE_IMAGE_COLOR_ALLOCATION
+  /* Reallocate the colors to make the ref count increase so MEDM will
+     retain ownership of the color cells.  This takes a long time. */
     for(i=0; i < gif2->numcols; i++) {
 	if(!XAllocColor(display,gif2->theCmap,&gif2->defs[i])) { 
 	    if(!XAllocColor(display,gif->theCmap,&black)) {
@@ -1853,6 +1856,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 	    }
 	}
     }
+#endif
     
   /* Allocate the new frames array */
     nFrames=gif2->nFrames;

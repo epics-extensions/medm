@@ -71,8 +71,9 @@ ifdef XRTGRAPH
       xrtfield_DIR = $(XRTGRAPH)/lib 
       xrttable_DIR = $(XRTGRAPH)/lib 
       xrtgear_DIR = $(XRTGRAPH)/lib 
-      pdsutil_DIR = $(XRTGRAPH)/lib 
-      Xpm = $(X11)/lib 
+      pdsutil_DIR = $(XRTGRAPH)/lib
+#     Xpm_DIR = $(X11_LIB)
+      Xpm_DIR = $(XRTGRAPH)/lib
     endif
   endif
 
@@ -164,7 +165,7 @@ Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
 Xmu_DIR = $(X11_LIB)
 Xp_DIR = $(X11_LIB)
-Xext = $(X11)/lib 
+Xext_DIR = $(X11_LIB)
 
 SRCS += actions.c
 SRCS += bubbleHelp.c 
