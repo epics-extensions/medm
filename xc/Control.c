@@ -170,96 +170,90 @@ static void Initialize(request, new)
     XGCValues values;
     XtGCMask mask; 
     static char dash_list[2] = { 1, 1 };
-
+    
 #ifdef NICE_SHADES
   /* These macros are used for calculating the 3D shade colors. */
-#define COLOR_ADD(member) \
-    if (((int)bg.member + (int)SHADE_INTENSITY) <= MAX_RGB) \
-							      new->control.shade1.member = bg.member + SHADE_INTENSITY; \
-															  else  new->control.shade1.member = MAX_RGB; \
-
-#define COLOR_SUBTRACT(member) \
-																					if (((int)bg.member - (int)SHADE_INTENSITY) >= 0) \
-																											    new->control.shade2.member = bg.member - SHADE_INTENSITY; \
-																																			else  new->control.shade2.member = 0; \
-
-
-																																							      /*
-																																							       * Determine whether or not a backgroud color resource has been set for
-																																							       * this widget, and if so, what its RGB values are. If no color has been
-																																							       * established, set gray as its background by default.
-																																							       */
-																																								if (new->control.background_pixel)
-																																								    {
-																																									bg.pixel = new->control.background_pixel;
-																																									XQueryColor(display, new->core.colormap, &bg);
-																																								    }
-																																								else
-																																								    {
-																																									if (XAllocNamedColor(display, new->core.colormap,
-																																									  "gray", &bg, &exact)) 
-																																									  new->control.background_pixel = bg.pixel;
-																																									else
-																																									  XtWarning("Control: unable to alloc default bg\n");
-																																								    }
-
-																																		      /*
-																																		       * Calculate the 3D rectangle shades based on the background color RGB
-																																		       * values, and allocate the corresponding colors. 
-																																		       */
-																																			COLOR_ADD(red);
-																																			COLOR_ADD(green);
-																																			COLOR_ADD(blue);
-																																			COLOR_SUBTRACT(red);
-																																			COLOR_SUBTRACT(green);
-																																			COLOR_SUBTRACT(blue);
-																																			if (XAllocColor(display, new->core.colormap, &(new->control.shade1)) == 0)
-																																			    {
-																																				XtWarning("Control: unable to alloc shade 1 color\n");
-																																				new->control.shade1.pixel = WhitePixel(display, DefaultScreen(display));
-																																			    }
-																																			if (XAllocColor(display, new->core.colormap, &(new->control.shade2)) == 0)
-																																			    {
-																																				XtWarning("Control: unable to alloc shade 2 color\n");
-																																				new->control.shade2.pixel = BlackPixel(display, DefaultScreen(display));
-																																			    }
+#define COLOR_ADD(member) if (((int)bg.member + (int)SHADE_INTENSITY) <= MAX_RGB) new->control.shade1.member = bg.member + SHADE_INTENSITY; else  new->control.shade1.member = MAX_RGB;
+    
+#define COLOR_SUBTRACT(member) if (((int)bg.member - (int)SHADE_INTENSITY) >= 0) new->control.shade2.member = bg.member - SHADE_INTENSITY; else  new->control.shade2.member = 0; 
+    
+    
+  /*
+   * Determine whether or not a backgroud color resource has been set for
+   * this widget, and if so, what its RGB values are. If no color has been
+   * established, set gray as its background by default.
+   */
+    if (new->control.background_pixel)
+	{
+	    bg.pixel = new->control.background_pixel;
+	    XQueryColor(display, new->core.colormap, &bg);
+	}
+    else
+	{
+	    if (XAllocNamedColor(display, new->core.colormap,
+	      "gray", &bg, &exact)) 
+	      new->control.background_pixel = bg.pixel;
+	    else
+	      XtWarning("Control: unable to alloc default bg\n");
+	}
+    
+  /*
+   * Calculate the 3D rectangle shades based on the background color RGB
+   * values, and allocate the corresponding colors. 
+   */
+    COLOR_ADD(red);
+    COLOR_ADD(green);
+    COLOR_ADD(blue);
+    COLOR_SUBTRACT(red);
+    COLOR_SUBTRACT(green);
+    COLOR_SUBTRACT(blue);
+    if (XAllocColor(display, new->core.colormap, &(new->control.shade1)) == 0)
+	{
+	    XtWarning("Control: unable to alloc shade 1 color\n");
+	    new->control.shade1.pixel = WhitePixel(display, DefaultScreen(display));
+	}
+    if (XAllocColor(display, new->core.colormap, &(new->control.shade2)) == 0)
+	{
+	    XtWarning("Control: unable to alloc shade 2 color\n");
+	    new->control.shade2.pixel = BlackPixel(display, DefaultScreen(display));
+	}
 #endif	/* NICE_SHADES */
-
-
-																																		      /*
-																																		       * Validate public instance variable settings.
-																																		       */
-																																			if (strlen(new->control.label) == 0)
-																																			    {
-																																				XtWarning("Control: invalid or missing label string.");
-																																				strcpy(new->control.label, " "); 
-																																			    }
-
-																																			if ((new->control.shade_depth < MIN_SHADE_DEPTH) || 
-																																			  (new->control.shade_depth > MAX_SHADE_DEPTH))
-																																			    {
-																																				XtWarning("Control: invalid shadeDepth specification.");
-																																				new->control.shade_depth = 3;
-																																			    }
-
-
-																																		      /* Create the GC used by all subclasses for drawing in this widget. */
-																																			values.graphics_exposures = False;
-																																			values.foreground = new->control.label_pixel;
-																																			values.background = new->control.background_pixel;
-																																			values.font = new->control.font->fid;
-																																			mask = GCForeground | GCBackground | GCFont | GCGraphicsExposures; 
-																																			if ((new->control.gc = XCreateGC(display, 
-																																			  RootWindowOfScreen(XtScreen(new)), 
-																																			  mask, &values)) == NULL)
-																																			  XtWarning("Control: couldn't create GC");
-
-																																		      /* Set basic line attributes used in drawing this widget. */
-																																			XSetLineAttributes(display, new->control.gc, 0, LineSolid, 
-																																			  CapButt, JoinRound);
-																																			XSetDashes(display, new->control.gc, 0, dash_list, 2);
-
-
+    
+    
+  /*
+   * Validate public instance variable settings.
+   */
+    if (strlen(new->control.label) == 0)
+	{
+	    XtWarning("Control: invalid or missing label string.");
+	    strcpy(new->control.label, " "); 
+	}
+    
+    if ((new->control.shade_depth < MIN_SHADE_DEPTH) || 
+      (new->control.shade_depth > MAX_SHADE_DEPTH))
+	{
+	    XtWarning("Control: invalid shadeDepth specification.");
+	    new->control.shade_depth = 3;
+}
+    
+    
+  /* Create the GC used by all subclasses for drawing in this widget. */
+    values.graphics_exposures = False;
+    values.foreground = new->control.label_pixel;
+    values.background = new->control.background_pixel;
+    values.font = new->control.font->fid;
+    mask = GCForeground | GCBackground | GCFont | GCGraphicsExposures; 
+    if ((new->control.gc = XCreateGC(display, 
+      RootWindowOfScreen(XtScreen(new)), 
+      mask, &values)) == NULL)
+      XtWarning("Control: couldn't create GC");
+    
+  /* Set basic line attributes used in drawing this widget. */
+    XSetLineAttributes(display, new->control.gc, 0, LineSolid, 
+      CapButt, JoinRound);
+    XSetDashes(display, new->control.gc, 0, dash_list, 2);
+    
+    
 }  /* end of Initialize */
 
 
@@ -268,10 +262,10 @@ static void Initialize(request, new)
 /*******************************************************************
  NAME:		SetValues.
  DESCRIPTION:
-   This is the set_values method for this widget. It validates resource
-settings set with XtSetValues. If a resource is changed that would
-require re-drawing the widget, return True.
-
+ This is the set_values method for this widget. It validates resource
+ settings set with XtSetValues. If a resource is changed that would
+ require re-drawing the widget, return True.
+ 
 *******************************************************************/
 
 static Boolean SetValues(cur, req, new)
@@ -279,7 +273,7 @@ static Boolean SetValues(cur, req, new)
 {
   /* Local variables */
     Boolean do_redisplay = False;
-
+    
 
   /* Validate new resource settings. */
   /* Check to see if the labelColor has changed. */
@@ -349,23 +343,24 @@ the rectangle.
 
 ***************************************************************************/
 
-Boolean Point_In_Rect(		/* RETURN: True or False; identifies whether
-				 * 	   or not the point is in the 
-				 * 	   rectangle.
-				 */
-
+Boolean Point_In_Rect(
+/* RETURN: True or False; identifies whether
+ * 	   or not the point is in the 
+ * 	   rectangle.
+ */
+  
   x,		/* INPUT: The x coordinate of the point */
-
+  
   y,		/* INPUT: The y coordinate of the point */
-
+  
   rect_x,		/* INPUT: The x coordinate of the rectangle */
-
+  
   rect_y,		/* INPUT: The y coordinate of the rectangle */
-
+  
   width,		/* INPUT: The rectangle's width */
-
+  
   height)		/* INPUT: The rectangle's height */
-
+    
     int 	x, 
   y, 
   rect_x, 
@@ -376,17 +371,14 @@ Boolean Point_In_Rect(		/* RETURN: True or False; identifies whether
   /* Check x coordinate first */
     if ((x < rect_x) || (x > (rect_x + width)))
       return False;
-
-/* Check y coordinate next. If its within the rectangle, return True. */
+    
+  /* Check y coordinate next. If its within the rectangle, return True. */
     if ((y < rect_y) || (y > (rect_y + height)))
       return False;
-
+    
     return True;
-
+    
 } /* end of Point_In_Rect */
-
-
-
 
 
 
@@ -411,7 +403,7 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
 {
     int j;
     unsigned long shade1, shade2;
-
+    
   /* Set basic GC attributes used in drawing the 3D rectangle. */
 #ifdef NICE_SHADES
     shade1 = w->control.shade1.pixel;
@@ -421,7 +413,7 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
     shade2 = BlackPixel(display, DefaultScreen(display));
     XSetLineAttributes(display, gc, 0, LineOnOffDash, CapButt, JoinRound);
 #endif
-
+    
   /* Draw the shadow lines */
     for (j = 0; j < w->control.shade_depth; j++)
 	{
@@ -431,7 +423,7 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
 	      XSetForeground(display, gc, shade2);
 	    XDrawLine(display, drawable, gc, x+j, y+j, x+j, y+height-j);
 	    XDrawLine(display, drawable, gc, x+j, y+j, x+width-j, y+j);
-
+	    
 	    if (type == RAISED)
 	      XSetForeground(display, gc, shade2);
 	    else
@@ -439,7 +431,7 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
 	    XDrawLine(display, drawable, gc, x+j, y+height-j, x+width-j, y+height-j);
 	    XDrawLine(display, drawable, gc, x+width-j, y+j, x+width-j, y+height-j);
 	}
-
+    
   /* Fill in the background. */
     XSetFillStyle(display, gc, FillSolid);
     XSetLineAttributes(display, gc, 0, LineSolid, CapButt, JoinRound);
@@ -449,8 +441,8 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
       XFillRectangle(display, drawable, gc, x+w->control.shade_depth, 
 	y+w->control.shade_depth, width-(2 * w->control.shade_depth), 
 	height-(2 * w->control.shade_depth));
-   
-
+    
+    
 }  /* end of Rect3d */
 
 
@@ -633,123 +625,120 @@ void Arrow3d(w, display, drawable, gc, bounds, orientation, type)
 #endif
 
   /* This macro is used to determine the shading color to use. */
-#define SET_SHADE( sh1, sh2 ) \
-    if (type == RAISED) XSetForeground(display, gc, sh1); \
-							    else XSetForeground(display, gc, sh2); \
-
-
-												   /*
-												    * Calculate the arrow vertices based on the bounding rectangle and
-												    * orientation.
-												    */
-												     if (orientation == UP)
-													 {
-													   /* left corner */
-													     points[0].x = bounds->x;
-													     points[0].y = bounds->y + bounds->height;
-													   /* arrow tip */
-													     points[1].x = points[0].x + (bounds->width / 2 + 0.5);
-													     points[1].y = bounds->y;
-													   /* right corner */
-													     points[2].x = points[0].x + bounds->width;
-													     points[2].y = points[0].y;
-													 }
-												     else if (orientation == DOWN)
-													 {
-													   /* left corner */
-													     points[0].x = bounds->x;  
-													     points[0].y = bounds->y;  
-													   /* arrow tip */
-													     points[1].x = points[0].x + (bounds->width / 2 + 0.5); 
-													     points[1].y = bounds->y + bounds->height; 
-													   /* right corner */
-													     points[2].x = points[0].x + bounds->width;
-													     points[2].y = points[0].y;
-													 }
-												     else if (orientation == LEFT)
-													 {
-													   /* left corner */
-													     points[0].x = bounds->x + bounds->width;  
-													     points[0].y = bounds->y + bounds->height;  
-													   /* arrow tip */
-													     points[1].x = bounds->x;
-													     points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
-													   /* right corner */
-													     points[2].x = points[0].x; 
-													     points[2].y = bounds->y;
-													 }
-												     else if (orientation == RIGHT)
-													 {
-													   /* left corner */
-													     points[0].x = bounds->x;
-													     points[0].y = bounds->y;
-													   /* arrow tip */
-													     points[1].x = bounds->x + bounds->width;
-													     points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
-													   /* right corner */
-													     points[2].x = points[0].x; 
-													     points[2].y = bounds->y + bounds->height;
-													 }
-
-							  /* left corner */
-							    points[3].x = points[0].x;
-							    points[3].y = points[0].y;
-
-
-							  /* Draw the shadow lines */
-							    for (j = 0; j < w->control.shade_depth; j++)
-								{
-								    if (orientation == UP)
-									{
-									    SET_SHADE(shade1, shade2);
-									    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y-j, 
-									      points[1].x, points[1].y+j);
-									    XDrawLine(display, drawable, gc, points[1].x, points[1].y+j, 
-									      points[2].x-j, points[2].y-j);
-									    SET_SHADE(shade2, shade1);
-									    XDrawLine(display, drawable, gc, points[2].x-j, points[2].y-j, 
-									      points[3].x+j, points[3].y-j);
-									}
-								    else if (orientation == DOWN)
-									{
-									    SET_SHADE(shade2, shade1);
-									    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y+j, 
-									      points[1].x, points[1].y-j);
-									    XDrawLine(display, drawable, gc, points[1].x, points[1].y-j, 
-									      points[2].x-j, points[2].y+j);
-									    SET_SHADE(shade1, shade2);
-									    XDrawLine(display, drawable, gc, points[2].x-j, points[3].y+j, 
-									      points[3].x+j, points[3].y+j);
-									}
-								    else if (orientation == LEFT)
-									{
-									    SET_SHADE(shade2, shade1);
-									    XDrawLine(display, drawable, gc, points[0].x-j, points[0].y-j, 
-									      points[1].x+j, points[1].y);
-									    SET_SHADE(shade1, shade2);
-									    XDrawLine(display, drawable, gc, points[1].x+j, points[1].y, 
-									      points[2].x-j, points[2].y+j);
-									    SET_SHADE(shade2, shade1);
-									    XDrawLine(display, drawable, gc, points[2].x-j, points[2].y+j, 
-									      points[3].x-j, points[3].y-j);
-									}
-								    else if (orientation == RIGHT)
-									{
-									    SET_SHADE(shade1, shade2);
-									    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y+j, 
-									      points[1].x-j, points[1].y);
-									    SET_SHADE(shade2, shade1);
-									    XDrawLine(display, drawable, gc, points[1].x-j, points[1].y, 
-									      points[2].x+j, points[2].y-j);
-									    SET_SHADE(shade1, shade2);
-									    XDrawLine(display, drawable, gc, points[2].x+j, points[2].y-j, 
-									      points[3].x+j, points[3].y+j);
-									}
-								}
-
-							    XSetLineAttributes(display, gc, 0, LineSolid, CapButt, JoinRound);
-							    XSetFillStyle(display, gc, FillSolid);
-
+#define SET_SHADE( sh1, sh2 ) if (type == RAISED) XSetForeground(display, gc, sh1); else XSetForeground(display, gc, sh2);
+    
+  /*
+   * Calculate the arrow vertices based on the bounding rectangle and
+   * orientation.
+   */
+    if (orientation == UP)
+	{
+	  /* left corner */
+	    points[0].x = bounds->x;
+	    points[0].y = bounds->y + bounds->height;
+	  /* arrow tip */
+	    points[1].x = points[0].x + (bounds->width / 2 + 0.5);
+	    points[1].y = bounds->y;
+	  /* right corner */
+	    points[2].x = points[0].x + bounds->width;
+	    points[2].y = points[0].y;
+	}
+    else if (orientation == DOWN)
+	{
+	  /* left corner */
+	    points[0].x = bounds->x;  
+	    points[0].y = bounds->y;  
+	  /* arrow tip */
+	    points[1].x = points[0].x + (bounds->width / 2 + 0.5); 
+	    points[1].y = bounds->y + bounds->height; 
+	  /* right corner */
+	    points[2].x = points[0].x + bounds->width;
+	    points[2].y = points[0].y;
+	}
+    else if (orientation == LEFT)
+	{
+	  /* left corner */
+	    points[0].x = bounds->x + bounds->width;  
+	    points[0].y = bounds->y + bounds->height;  
+	  /* arrow tip */
+	    points[1].x = bounds->x;
+	    points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
+	  /* right corner */
+	    points[2].x = points[0].x; 
+	    points[2].y = bounds->y;
+	}
+    else if (orientation == RIGHT)
+	{
+	  /* left corner */
+	    points[0].x = bounds->x;
+	    points[0].y = bounds->y;
+	  /* arrow tip */
+	    points[1].x = bounds->x + bounds->width;
+	    points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
+	  /* right corner */
+	    points[2].x = points[0].x; 
+	    points[2].y = bounds->y + bounds->height;
+	}
+    
+  /* left corner */
+    points[3].x = points[0].x;
+    points[3].y = points[0].y;
+    
+    
+  /* Draw the shadow lines */
+    for (j = 0; j < w->control.shade_depth; j++)
+	{
+	    if (orientation == UP)
+		{
+		    SET_SHADE(shade1, shade2);
+		    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y-j, 
+		      points[1].x, points[1].y+j);
+		    XDrawLine(display, drawable, gc, points[1].x, points[1].y+j, 
+		      points[2].x-j, points[2].y-j);
+		    SET_SHADE(shade2, shade1);
+		    XDrawLine(display, drawable, gc, points[2].x-j, points[2].y-j, 
+		      points[3].x+j, points[3].y-j);
+		}
+	    else if (orientation == DOWN)
+		{
+		    SET_SHADE(shade2, shade1);
+		    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y+j, 
+		      points[1].x, points[1].y-j);
+		    XDrawLine(display, drawable, gc, points[1].x, points[1].y-j, 
+		      points[2].x-j, points[2].y+j);
+		    SET_SHADE(shade1, shade2);
+		    XDrawLine(display, drawable, gc, points[2].x-j, points[3].y+j, 
+		      points[3].x+j, points[3].y+j);
+		}
+	    else if (orientation == LEFT)
+		{
+		    SET_SHADE(shade2, shade1);
+		    XDrawLine(display, drawable, gc, points[0].x-j, points[0].y-j, 
+		      points[1].x+j, points[1].y);
+		    SET_SHADE(shade1, shade2);
+		    XDrawLine(display, drawable, gc, points[1].x+j, points[1].y, 
+		      points[2].x-j, points[2].y+j);
+		    SET_SHADE(shade2, shade1);
+		    XDrawLine(display, drawable, gc, points[2].x-j, points[2].y+j, 
+		      points[3].x-j, points[3].y-j);
+		}
+	    else if (orientation == RIGHT)
+		{
+		    SET_SHADE(shade1, shade2);
+		    XDrawLine(display, drawable, gc, points[0].x+j, points[0].y+j, 
+		      points[1].x-j, points[1].y);
+		    SET_SHADE(shade2, shade1);
+		    XDrawLine(display, drawable, gc, points[1].x-j, points[1].y, 
+		      points[2].x+j, points[2].y-j);
+		    SET_SHADE(shade1, shade2);
+		    XDrawLine(display, drawable, gc, points[2].x+j, points[2].y-j, 
+		      points[3].x+j, points[3].y+j);
+		}
+	}
+    
+    XSetLineAttributes(display, gc, 0, LineSolid, CapButt, JoinRound);
+    XSetFillStyle(display, gc, FillSolid);
+    
 }  /* end of Arrow3d */
 
 
