@@ -509,6 +509,9 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(caStudyS);
 	} else if (w == displayListS) {
 	    XtPopdown(displayListS);
+	} else {
+	  /* KE: Cpould use this for all of them */
+	    XtPopdown(w);
 	}
 	break;
     }

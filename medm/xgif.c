@@ -68,6 +68,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_GIF 0
+#define DEBUG_DISPOSAL 0
+#define DEBUG_DISPOSAL_FILE 0
 #define DEBUG_CODES 0
 
 /* include files */
@@ -248,30 +250,6 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     
     resizeGIF(dlImage);
     
-  /* Don't automatically draw any more */
-#if 0
-    if(gif->frames) {
-	XImage *image=CUREXPIMAGE(gif);
-	
-	XSetForeground(display,gif->theGC,gif->bcol);
-	XFillRectangle(display,XtWindow(displayInfo->drawingArea),
-	  gif->theGC,x,y,w,h);
-
-#if 0
-      /* Determine the order of the pixels */
-	gif->expImage->byte_order=getClientByteOrder();
-#endif	
-
-	XPutImage(display,XtWindow(displayInfo->drawingArea),
-	  gif->theGC,image,
-	  0,0,x,y,w,h);
-	XPutImage(display,displayInfo->drawingAreaPixmap,
-	  gif->theGC,image,
-	  0,0,x,y,w,h);
-	XSetForeground(display,gif->theGC,gif->fcol);
-    }
-#endif
-    
     return(True);
 
 }
@@ -284,15 +262,129 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean pixmap)
 
     gif=(GIFData *)dlImage->privateData;
 
+#if DEBUG_DISPOSAL
+    print("drawGIF: curFrame=%d expImage=%x %s\n",
+      gif?gif->curFrame:0,
+      gif?gif->frames[gif->curFrame]->expImage:0,
+      gif?"":" (No gif)");
+#endif
+    
     if(gif->frames && gif->frames[CURFRAME(gif)] && CUREXPIMAGE(gif) != NULL) {
 	x=dlImage->object.x;
 	y=dlImage->object.y;
+      /* KE: Should be the same as gif->eWIDE, gif->eHIGH */
 	w=dlImage->object.width;
 	h=dlImage->object.height;
 	
-      /* Determine the order of the pixels */
+#if DEBUG_DISPOSAL
+	print("drawGIF: Before getClientByteOrder(): byte-Order=%d\n",
+	  CUREXPIMAGE(gif)->byte_order);
+#endif
+
+#if 0
+      /* KE: Don't do this here, some (from data) need it, some (from
+         XGetImage) don't */
+      /* Set the order of the pixels */
 	CUREXPIMAGE(gif)->byte_order=getClientByteOrder();
+#if DEBUG_DISPOSAL > 1
+	print("drawGIF: After getClientByteOrder(): byte-Order=%d\n",
+	  CUREXPIMAGE(gif)->byte_order);
+#endif
+#endif	
 	
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(gif->curFrame == 5 && CURIMAGE(gif)) {
+		print("drawGIF: G theImage=%x iWIDE=%d iHIGH=%d\n",
+		  CURIMAGE(gif),gif->iWIDE,gif->iHIGH);
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CURIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CURIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CURIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->iWIDE,gif->iHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CURIMAGE(gif),
+		  0,0,0,0,gif->iWIDE,gif->iHIGH);
+		sprintf(title,"%dg Frame",gif->curFrame);
+		dumpPixmap(debugPixmap,(Dimension)gif->iWIDE,
+		  (Dimension)gif->iHIGH,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(gif->curFrame == 5 && CUREXPIMAGE(gif)) {
+#if DEBUG_DISPOSAL_FILE		
+		int w=gif->eWIDE;
+		int h=gif->eHIGH;
+		int i,j;
+		Pixel pixel;
+		FILE *file;
+		
+		file=fopen("dump.h.dat","w");		
+		fprintf(file,"Dumping H: expImage=%x width=%d height=%d\n",
+		  CUREXPIMAGE(gif),w,h);
+
+		fprintf(file,"  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		fprintf(file,"  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		fprintf(file,"  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		fprintf(file,"  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		fprintf(file,"  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+
+		for(i=0; i < w; i++) {
+		    for(j=0; j < h; j++) {
+			pixel=XGetPixel(CUREXPIMAGE(gif),i,j);
+			fprintf(file,"%3d %3d %x\n",i,j,pixel);
+		    }
+		    fprintf(file,"\n");
+		}
+		fprintf(file,"\n");
+		fclose(file);
+		print("dump.h.dat finished\n");
+#endif
+		print("drawGIF: H expImage=%x eWIDE=%d eHIGH=%d\n",
+		  CUREXPIMAGE(gif),gif->eWIDE,gif->eHIGH);
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->eWIDE,gif->eHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CUREXPIMAGE(gif),
+		  0,0,0,0,gif->eWIDE,gif->eHIGH);
+		sprintf(title,"%dh EXP Frame",gif->curFrame);
+		dumpPixmap(debugPixmap,(Dimension)gif->eWIDE,
+		  (Dimension)gif->eHIGH,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
       /* Copy to the drawing area */
 	XPutImage(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,CUREXPIMAGE(gif),
@@ -302,7 +394,7 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean pixmap)
 	    XPutImage(display,displayInfo->drawingAreaPixmap,
 	      gif->theGC,CUREXPIMAGE(gif),
 	      0,0,x,y,w,h);
-	}
+	} 
     }
 }
 
@@ -311,11 +403,14 @@ void resizeGIF(DlImage *dlImage)
     GIFData *gif;
     unsigned int w,h;
     int i;
-
     static char *rstr="Resizing Image.  Please wait...";
 
   /* warning:  this code'll only run machines where int=32-bits */
 
+#if DEBUG_DISPOSAL
+    print("resizeGIF\n");
+#endif
+    
     gif=(GIFData *)dlImage->privateData;
     w=dlImage->object.width;
     h=dlImage->object.height;
@@ -329,16 +424,78 @@ void resizeGIF(DlImage *dlImage)
   /* Loop over frames */
     for(i=0; i < gif->nFrames; i++) {
 	gif->curFrame=i;
-	if((int)w==gif->iWIDE && (int)h==gif->iHIGH) {
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && CURIMAGE(gif)) {
+		print("resizeGIF: C theImage=%x\n",CURIMAGE(gif));
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CURIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CURIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CURIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->iWIDE,gif->iHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CURIMAGE(gif),
+		  0,0,0,0,gif->iWIDE,gif->iHIGH);
+		sprintf(title,"%dc Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)LogicalScreenWidth,
+		  (Dimension)LogicalScreenHeight,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && CUREXPIMAGE(gif)) {
+		print("resizeGIF: D expImage=%x\n",CUREXPIMAGE(gif));
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->eWIDE,gif->eHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CUREXPIMAGE(gif),
+		  0,0,0,0,gif->eWIDE,gif->eHIGH);
+		sprintf(title,"%dd EXP Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)LogicalScreenWidth,
+		  (Dimension)LogicalScreenHeight,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+	if((int)w == gif->iWIDE && (int)h == gif->iHIGH) {
 	  /* Very special case (size=actual GIF size) */
 	    if(CUREXPIMAGE(gif) != CURIMAGE(gif)) {
 		if(CUREXPIMAGE(gif) != NULL) {
+#if 0
+		      /* XDestroyImage destroys the data */
 		    free(CUREXPIMAGE(gif)->data);
 		    CUREXPIMAGE(gif)->data=NULL;
+#endif		    
 		    XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
 		}
 		CUREXPIMAGE(gif)=CURIMAGE(gif);
-		gif->eWIDE=gif->iWIDE;  gif->eHIGH=gif->iHIGH;
+		gif->eWIDE=gif->iWIDE;
+		gif->eHIGH=gif->iHIGH;
 	    }
 	} else {				/* have to do some work */
 	  /* if it's a big image, this'll take a while.  mention it */
@@ -348,8 +505,11 @@ void resizeGIF(DlImage *dlImage)
 	    
 	  /* first, kill the old CUREXPIMAGE(gif), if one exists */
 	    if(CUREXPIMAGE(gif) && CUREXPIMAGE(gif) != CURIMAGE(gif)) {
+#if 0
+	      /* XDestroyImage destroys the data */
 		free(CUREXPIMAGE(gif)->data);
 		CUREXPIMAGE(gif)->data=NULL;
+#endif		
 		XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
 	    }
 	    
@@ -371,6 +531,8 @@ void resizeGIF(DlImage *dlImage)
 		      w,h);
 		    return;
 		}
+	      /* Make the byte order be the same as that for theImage */
+		CUREXPIMAGE(gif)->byte_order=CURIMAGE(gif)->byte_order;
 		
 		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
 		
@@ -404,6 +566,8 @@ void resizeGIF(DlImage *dlImage)
 		      CUREXPIMAGE(gif));
 		    return;
 		}
+	      /* Make the byte order be the same as that for theImage */
+		CUREXPIMAGE(gif)->byte_order=CURIMAGE(gif)->byte_order;
 		
 #if 1
 		sw=CURIMAGE(gif)->width;
@@ -414,7 +578,8 @@ void resizeGIF(DlImage *dlImage)
 		for(dy=0;  dy<dh; dy++) {
 		    sy=(sh * dy) / dh;
 		    epptr=elptr;
-		    ilptr=(Byte *)CURIMAGE(gif)->data + (sy * CURIMAGE(gif)->bytes_per_line);
+		    ilptr=(Byte *)CURIMAGE(gif)->data +
+		      (sy * CURIMAGE(gif)->bytes_per_line);
 		    for(dx=0;  dx <dw;  dx++) {
 			sx=(sw * dx) / dw;
 			ipptr=ilptr + sx*bytesPerPixel;
@@ -432,6 +597,128 @@ void resizeGIF(DlImage *dlImage)
 	    }
 	    }
 	}
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && CURIMAGE(gif)) {
+		print("resizeGIF: E theImage=%x\n",CURIMAGE(gif));
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CURIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CURIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CURIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CURIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->iWIDE,gif->iHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CURIMAGE(gif),
+		  0,0,0,0,gif->iWIDE,gif->iHIGH);
+		sprintf(title,"%de Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)gif->iWIDE,
+		  (Dimension)gif->iHIGH,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+#if DEBUG_DISPOSAL
+	{
+char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && CUREXPIMAGE(gif)) {
+#if DEBUG_DISPOSAL_FILE		
+		int w=gif->eWIDE;
+		int h=gif->eHIGH;
+		int i,j;
+		Pixel pixel;
+		FILE *file;
+		
+		file=fopen("dump.f.dat","w");		
+		fprintf(file,"Dumping F: expImage=%x\n",CUREXPIMAGE(gif));
+
+		fprintf(file,"  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		fprintf(file,"  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		fprintf(file,"  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		fprintf(file,"  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		fprintf(file,"  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+		
+		for(i=0; i < w; i++) {
+		    for(j=0; j < h; j++) {
+			pixel=XGetPixel(CUREXPIMAGE(gif),i,j);
+			fprintf(file,"%3d %3d %x\n",i,j,pixel);
+		    }
+		    fprintf(file,"\n");
+		}
+		fprintf(file,"\n");
+		fclose(file);
+		print("dump.f.dat finished\n");
+#endif
+		print("resizeGIF: F expImage=%x eWIDE=%d eHIGH=%d\n",
+		  CUREXPIMAGE(gif),w,h);
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->eWIDE,gif->eHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CUREXPIMAGE(gif),
+		  0,0,0,0,gif->eWIDE,gif->eHIGH);
+		sprintf(title,"%df EXP Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)gif->eWIDE,
+		  (Dimension)gif->eHIGH,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+#if DEBUG_DISPOSAL > 10
+      /* KE: Repeats the block above */
+	{
+char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && CUREXPIMAGE(gif)) {
+		print("resizeGIF: F1 expImage=%x eWIDE=%d eHIGH=%d\n",
+		  CUREXPIMAGE(gif),w,h);
+		print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->bitmap_bit_order,LSBFirst,MSBFirst);
+		print("  bitmap_pad=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_pad);
+		print("  bitmap_unit=%d\n",
+		  CUREXPIMAGE(gif)->bitmap_unit);
+		print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+		  CUREXPIMAGE(gif)->byte_order,LSBFirst,MSBFirst);
+		print("  bits_per_pixel=%d\n",
+		  CUREXPIMAGE(gif)->bits_per_pixel);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  gif->eWIDE,gif->eHIGH,XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,CUREXPIMAGE(gif),
+		  0,0,0,0,gif->eWIDE,gif->eHIGH);
+		sprintf(title,"%df1 EXP Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)gif->eWIDE,
+		  (Dimension)gif->eHIGH,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
     }
 }
                 
@@ -452,6 +739,10 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     Pixmap tempPixmap=(Pixmap)0;
     int prevFrame;
 
+#if DEBUG_DISPOSAL
+    print("loadGIF\n");
+#endif
+    
     gif=dlImage->privateData;
     fname=dlImage->imageName;
     fp=NULL;
@@ -739,7 +1030,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
   /* Set the backgroundcolor index */
     gif->background=gif->cols[BackgroundColorIndex&(gif->numcols-1)];
 
-  /* Determine the number of images */
+  /* Set the number of images */
     pData=ptr;
     nFrames=countImages();
     if(nFrames <= 0) {
@@ -852,7 +1143,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
    *   manipulating bytes.  This way is platform independent though it
    *   may be slower */
     for(i=0; i < nFrames; i++) {
-#if DEBUG_GIF
+#if DEBUG_GIF || DEBUG_DISPOSAL > 1
 	print("Frame %d: Width=%d Height=%d\n",
 	  i,frames[i]->Width,frames[i]->Height);
 	print("  LogicalScreenWidth=%d LogicalScreenHeight=%d\n",
@@ -865,12 +1156,20 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  BackgroundColorIndex,frames[i]->DisposalMethod);
 	print("  theImage(1)=%x\n",frames[i]->theImage);
 #endif	
-      /* Don't do anything if the frame is full size */
+      /* Just set the byte_order if the frame is full size */
 	if(frames[i]->Height == LogicalScreenHeight &&
-	  frames[i]->Width == LogicalScreenWidth) continue;
+	  frames[i]->Width == LogicalScreenWidth) {
+	  /* Set the byte order since this came from our data */
+	    frames[i]->theImage->byte_order=getClientByteOrder();
+	    continue;
+	}
 
-      /* Create a pixmap if not already created */
+      /* Create a pixmap if not already created. Will happen for the
+         first reduced-size frame. */
 	if(!tempPixmap) {
+#if DEBUG_GIF || DEBUG_DISPOSAL > 1
+	    print("  Creating pixmap\n");
+#endif
 	    tempPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
 	      LogicalScreenWidth,LogicalScreenHeight,
 	      XDefaultDepth(display,screenNum));
@@ -897,26 +1196,28 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  /* Fill based on the disposal method for the previous frame */
 	    prevFrame=i-1;
 	    switch(frames[prevFrame]->DisposalMethod) {
-	    case 1:     /* Leave in place */
-	      /* Copy the previous image */
-		XPutImage(display,tempPixmap,
-		  gif->theGC,frames[prevFrame]->theImage,
-		  0,0,0,0,LogicalScreenWidth,LogicalScreenHeight);
-		break;
-	    case 0:     /* No action */
 	    case 2:     /* Restore to background */
 	    case 3:     /* Restore to previous */
-	    default:    /* To be defined */
 	      /* Fill with display background */
 		XSetForeground(display,gif->theGC,gif->bcol);
 		XFillRectangle(display,tempPixmap,gif->theGC,
 		  0,0,LogicalScreenWidth,LogicalScreenHeight);
+		break;
+	    case 0:     /* No action */
+	    case 1:     /* Leave in place */
+	    default:    /* To be defined */
+	      /* Copy the previous image */
+		XPutImage(display,tempPixmap,
+		  gif->theGC,frames[prevFrame]->theImage,
+		  0,0,0,0,LogicalScreenWidth,LogicalScreenHeight);
 		break;
 	    }
 	}
 
       /* Copy in the reduced image */
 	if(frames[i]->theImage) {
+	  /* Set the byte order since this came from our data */
+	    frames[i]->theImage->byte_order=getClientByteOrder();
 	    XPutImage(display,tempPixmap,
 	      gif->theGC,frames[i]->theImage,
 	      0,0,frames[i]->LeftOffset,frames[i]->TopOffset,
@@ -924,15 +1225,50 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  /* Destroy the current theImage */
 	    XDestroyImage(frames[i]->theImage);
 	}
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
 
-      /* Define theImage from the temporary pixmap */
+	    if(i == 5) {
+		print("loadGIF: A tempPixmap theImage=%x\n",frames[i]->theImage);
+		sprintf(title,"%da Frame",i);
+		dumpPixmap(tempPixmap,(Dimension)LogicalScreenWidth,
+		  (Dimension)LogicalScreenHeight,title);
+	    }
+	}
+#endif
+
+      /* Define theImage from the temporary pixmap.  Don't set the
+         byte_order. This image is not from our data. XGetImage will
+         get it right. */
 	frames[i]->theImage=XGetImage(display,tempPixmap,0,0,
 	  LogicalScreenWidth,LogicalScreenHeight,
 	  AllPlanes,ZPixmap);
-#if DEBUG_GIF
+
+#if DEBUG_DISPOSAL
+	{
+	    char title[80];
+	    Pixmap debugPixmap;
+	    
+	    if(i == 5 && frames[i]->theImage) {
+		print("loadGIF: B theImage=%x\n",frames[i]->theImage);
+		debugPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  LogicalScreenWidth,LogicalScreenHeight,
+		  XDefaultDepth(display,screenNum));
+		XPutImage(display,debugPixmap,
+		  gif->theGC,frames[i]->theImage,
+		  0,0,0,0,LogicalScreenWidth,LogicalScreenHeight);
+		sprintf(title,"%db Frame",i);
+		dumpPixmap(debugPixmap,(Dimension)LogicalScreenWidth,
+		  (Dimension)LogicalScreenHeight,title);
+		XFreePixmap(display,debugPixmap);
+	    }
+	}
+#endif	
+#if DEBUG_DISPOSAL > 1
 	print("  theImage(2)=%x\n",frames[i]->theImage);
 #endif	
-    }
+}
 
   /* Clean up */
   CLEANUP:
@@ -1179,8 +1515,8 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	    return(False);
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
-	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,8,0);
+	  ScreenDepth,ZPixmap,
+	  0,(char*)Image,Width,Height,8,0);
         break;
     case 24:
 	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
@@ -1200,8 +1536,8 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	    return(False);
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
-	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,8,0);
+	  ScreenDepth,ZPixmap,
+	  0,(char*)Image,Width,Height,8,0);
         break;
     }
     if(!CURIMAGE(gif)) {
@@ -1397,14 +1733,25 @@ void freeGIF(DlImage *dlImage)
 		if(frame) {
 		  /* Kill the old images */
 		    if(frame->expImage) {
+#if 0
+		      /* XDestroyImage destroys the data */
 			free(frame->expImage->data);
 			frame->expImage->data=NULL;
+#endif
 			XDestroyImage((XImage *)(frame->expImage));
+		      /* Check if theImage is the same as expImage 
+                         (Resize special case) */
+			if(frame->expImage == frame->theImage) {
+			    frame->theImage=NULL;
+			}
 			frame->expImage=NULL;
 		    }
 		    if(frame->theImage) {
+#if 0
+		      /* XDestroyImage destroys the data */
 			free(frame->theImage->data);
 			frame->theImage->data=NULL;
+#endif
 			XDestroyImage((XImage *)(frame->theImage));
 			frame->theImage=NULL;
 		    }
@@ -1432,6 +1779,10 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
     Byte *ximag;
     int bytesPerPixel,imageDataSize;
 
+#if DEBUG_DISPOSAL
+    print("copyGIF: \n");
+#endif
+    
     gif1=(GIFData *)dlImage1->privateData;
     if(!gif1) {
 	gif2=NULL;

@@ -622,6 +622,7 @@ void printEventMasks(Display *display, Window win, char *string);
 void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);
 void dumpDisplayInfoList(DisplayInfo *head, char *string);
+void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title);
 
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);

@@ -124,6 +124,7 @@ static void toggleHighlightRectangles(DisplayInfo *displayInfo,
   int xOffset, int yOffset);
 static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
   DlElement *dlElement);
+static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData);
 
 /* Global variables */
 
@@ -2918,6 +2919,7 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 /* Called by redrawStaticElements */
+#if 0     /* Check */   
 /* KE: Currently not called */
 static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
   DlElement *dlElement)
@@ -2954,6 +2956,7 @@ static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
 	pE = pE->next;
     }
 }
+#endif
 
 /* Refresh the display.  Redraw to get all widgets in proper stacking
    order (Uses dlElementList, not selectedDlElementList).  Use in EDIT
@@ -5669,5 +5672,74 @@ void dumpDisplayInfoList(DisplayInfo *head, char *string)
     while(displayInfo) {
 	print("%2d %s\n",++i,displayInfo->dlFile->name);
 	displayInfo = displayInfo->next;
+    }
+}
+
+/* Use this routine to display a pixmap in a toplevel shell.  It makes
+   a copy of the pixmap, so the original does not have to stay around */
+void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
+{
+    Widget shell, da;
+    Pixmap savePixmap;
+    GC gc;
+    
+  /* Save the pixmap for redraws */
+    gc = XCreateGC(display, rootWindow, 0, NULL);
+    savePixmap = XCreatePixmap(display, RootWindow(display,screenNum),
+      width, height, DefaultDepth(display,screenNum));
+    XCopyArea(display, pixmap, savePixmap,
+      gc, 0, 0, width, height, 0, 0);
+    XFreeGC(display,gc);
+    
+  /* Make a toplevel shell */
+    shell = XtVaCreatePopupShell("pixmapShell",
+      topLevelShellWidgetClass, mainShell,
+      XmNtitle, title,
+      XmNdeleteResponse, XmDO_NOTHING,
+      NULL);
+    XmAddWMProtocolCallback(shell, WM_DELETE_WINDOW,
+      dumpPixmapCb, (XtPointer)savePixmap);
+
+    da = XtVaCreateManagedWidget("pixmapDrawingArea",
+      xmDrawingAreaWidgetClass, shell,
+      XmNwidth, width,
+      XmNheight, height,
+      NULL);
+    XtAddCallback(da,XmNexposeCallback,dumpPixmapCb,(XtPointer)savePixmap);
+    XtAddCallback(da,XmNresizeCallback,dumpPixmapCb,(XtPointer)savePixmap);
+    
+    XtPopup(shell, XtGrabNone);
+}
+
+static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
+{
+    XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *)callData;    
+
+    if (cbs->reason == XmCR_EXPOSE) {
+      /* EXPOSE */
+	GC gc = XCreateGC(display,rootWindow,0,NULL);
+	Pixmap pixmap = (Pixmap)clientData;
+	Dimension width, height;
+
+	XtVaGetValues(w,
+	  XmNwidth, &width,
+	  XmNheight, &height,
+	  NULL);
+#if 0	
+        XSetForeground(display,gc,WhitePixel(display,screenNum));
+	XDrawRectangle(display, XtWindow(w), gc, 0, 0, 10, 10);
+#endif
+	if(width > 0 && height > 0) {
+	    XCopyArea(display, pixmap, XtWindow(w), gc, 0, 0, width, height, 0, 0);
+	}
+	XFreeGC(display,gc);
+    } else if (cbs->reason == XmCR_RESIZE) {
+      /* RESIZE */
+    } else if (cbs->reason == XmCR_PROTOCOLS) {
+      /* WM_CLOSE */
+	Pixmap pixmap = (Pixmap)clientData;
+	
+	if(pixmap) XFreePixmap(display, pixmap);
+	XtPopdown(w);
     }
 }

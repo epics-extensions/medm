@@ -87,9 +87,9 @@ static void drawImage(MedmImage *pi);
 static void imageDestroyCb(XtPointer cd);
 static void imageDraw(XtPointer cd);
 static void imageGetRecord(XtPointer cd, Record **record, int *count);
-static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
-static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
-static void imageInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void imageGetValues(ResourceBundle *pRCB, DlElement *pE);
+static void imageGetValues(ResourceBundle *pRCB, DlElement *pE);
+static void imageInheritValues(ResourceBundle *pRCB, DlElement *pE);
 static void imageUpdateGraphicalInfoCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
@@ -124,7 +124,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-  /* Get the image */
+  /* Get the gif */
     switch(dlImage->imageType) {
     case GIF_IMAGE:
 	if(dlImage->privateData == NULL) {
@@ -160,85 +160,98 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Allocate and fill in MedmImage struct */
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
-	MedmImage *pi;
-	int i;
-	
-	if(dlElement->data) {
-	    pi = (MedmImage *)dlElement->data;
-	    if(dlElement->staticGraphic) drawImage(pi);
+	if(gif && gif->nFrames <= 1 && !*dlImage->dynAttr.chan[0]) {
+	  /* Is an unanimated, non-dynamic image.  Don't update. Just
+             draw it.  */
+	    dlElement->staticGraphic = True;
+	    drawGIF(displayInfo, dlImage, True);
 	} else {
-	    pi = (MedmImage *)malloc(sizeof(MedmImage));
-	    dlElement->data = (void *)pi;
-	    pi->displayInfo = displayInfo;
-	    pi->dlElement = dlElement;
-	    pi->records = NULL;
-	    pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
-	      imageDraw, (XtPointer)pi);
-	    pi->validCalc = False;
-	    pi->animate = False;
-	    pi->post[0] = '\0';
-	    if(pi->updateTask == NULL) {
-		medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
+	    MedmImage *pi;
+	    int i;
+	    
+	    if(dlElement->data) {
+		pi = (MedmImage *)dlElement->data;
+#if 0
+		if(dlElement->staticGraphic) drawImage(pi);
+#endif	    
 	    } else {
-		updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
-		updateTaskAddNameCb(pi->updateTask,imageGetRecord);
-		pi->updateTask->opaque = False;
-	    }
-	    pi->records = NULL;
-	    if(*dlImage->dynAttr.chan[0]) {
-		long status;
-		short errnum;
-		
-	      /* A channel is defined */
-		if(pi->updateTask) {
-		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
-		}
-		pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
-		  imageUpdateValueCb,
-		  imageUpdateGraphicalInfoCb,
-		  (XtPointer)pi);
-		
-	      /* Calculate the postfix for visbilitiy calc */
-		calcPostfix(&dlImage->dynAttr);
-		setMonitorChanged(&dlImage->dynAttr, pi->records);
-	      /* Check if the image calc is blank */
-		if(!*dlImage->calc) {
-		  /* Animate */
-		    pi->animate = True;
-		    pi->validCalc = False;
+		pi = (MedmImage *)malloc(sizeof(MedmImage));
+		dlElement->data = (void *)pi;
+		pi->displayInfo = displayInfo;
+		pi->dlElement = dlElement;
+		pi->records = NULL;
+		pi->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlImage->object), imageDraw, (XtPointer)pi);
+		pi->validCalc = False;
+		pi->animate = False;
+		pi->post[0] = '\0';
+		if(pi->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
 		} else {
-		  /* Calculate the postfix for the image calc */
-		    pi->animate = False;
-		    status=postfix(dlImage->calc, pi->post, &errnum);
-		    if(status) {
-			medmPostMsg(1,"executeDlImage:\n"
-			  "  Invalid calc expression [error %d]: %s\n  for %s\n",
-			  errnum, dlImage->calc, dlImage->dynAttr.chan);
+		    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
+		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+		    pi->updateTask->opaque = False;
+		}
+		pi->records = NULL;
+		if(*dlImage->dynAttr.chan[0]) {
+		    long status;
+		    short errnum;
+		    
+		  /* A channel is defined */
+		    if(pi->updateTask) {
+			updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+		    }
+		    pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
+		      imageUpdateValueCb,
+		      imageUpdateGraphicalInfoCb,
+		      (XtPointer)pi);
+		    
+		  /* Calculate the postfix for visbilitiy calc */
+		    calcPostfix(&dlImage->dynAttr);
+		    setMonitorChanged(&dlImage->dynAttr, pi->records);
+		  /* Check if the image calc is blank */
+		    if(!*dlImage->calc) {
+		      /* Animate */
+			pi->animate = True;
 			pi->validCalc = False;
 		    } else {
-			pi->validCalc = True;
-		    }
-		}
-	      /* Override the visibility monitorChanged parameters if
-		 there is a valid image calc */
-		if(pi->validCalc) {
-		    for(i=0; i < MAX_CALC_RECORDS; i++) {
-			if(pi->records[i]) {
-			    pi->records[i]->monitorValueChanged = True;
+		      /* Calculate the postfix for the image calc */
+			pi->animate = False;
+			status=postfix(dlImage->calc, pi->post, &errnum);
+			if(status) {
+			    medmPostMsg(1,"executeDlImage:\n"
+			      "  Invalid calc expression [error %d]: "
+			      "%s\n  for %s\n",
+			      errnum, dlImage->calc, dlImage->dynAttr.chan);
+			    pi->validCalc = False;
+			} else {
+			    pi->validCalc = True;
 			}
 		    }
-		}
-	    } else {
-	      /* No channel */
-		dlElement->staticGraphic = True;
-		if(gif) {
-		    if(gif->nFrames > 1) {
-			pi->animate = True;
-			updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
-		    } else {
-			pi->animate = False;
-		      /* Draw the first frame */
-			drawGIF(displayInfo,dlImage,True);
+		  /* Override the visibility monitorChanged parameters
+		     if there is a valid image calc */
+		    if(pi->validCalc) {
+			for(i=0; i < MAX_CALC_RECORDS; i++) {
+			    if(pi->records[i]) {
+				pi->records[i]->monitorValueChanged = True;
+			    }
+			}
+		    }
+		} else {
+		  /* No channel */
+		    if(gif) {
+			if(gif->nFrames > 1) {
+			    pi->animate = True;
+			    updateTaskSetScanRate(pi->updateTask,
+			      ANIMATE_TIME(gif));
+#if 0     /* Check */
+			  /* KE: Shouldn't get here now */
+			} else {
+			    pi->animate = False;
+			  /* Draw the first frame */
+			    drawGIF(displayInfo, dlImage, True);
+#endif
+			}
 		    }
 		}
 	    }
@@ -249,10 +262,10 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    gif->curFrame=0;
 	    if(dlImage->object.width == gif->currentWidth &&
 	      dlImage->object.height == gif->currentHeight) {
-		drawGIF(displayInfo,dlImage,True);
+		drawGIF(displayInfo, dlImage, True);
 	    } else {
 		resizeGIF(dlImage);
-		drawGIF(displayInfo,dlImage,True);
+		drawGIF(displayInfo, dlImage, True);
 	    }
 	}
     }
@@ -578,15 +591,15 @@ static void imageScale(DlElement *dlElement, int xOffset, int yOffset)
     }
 }
 
-DlElement *createDlImage(DlElement *p)
+DlElement *createDlImage(DlElement *pE)
 {
     DlImage *dlImage;
     DlElement *dlElement;
 
     dlImage = (DlImage *)malloc(sizeof(DlImage));
     if(!dlImage) return 0;
-    if(p) {
-	*dlImage = *p->structure.image;
+    if(pE) {
+	*dlImage = *pE->structure.image;
       /* Make copies of the data pointed to by privateData */
 	copyGIF(dlImage,dlImage);
     } else {
@@ -684,9 +697,9 @@ void writeDlImage(
     fprintf(stream,"\n%s}",indent);
 }
 
-static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
+static void imageInheritValues(ResourceBundle *pRCB, DlElement *pE)
 {
-    DlImage *dlImage = p->structure.image;
+    DlImage *dlImage = pE->structure.image;
     medmGetValues(pRCB,
       IMAGE_CALC_RC, &(dlImage->calc),
       VIS_RC,        &(dlImage->dynAttr.vis),
@@ -701,9 +714,9 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
       -1);
 }
 
-static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
+static void imageGetValues(ResourceBundle *pRCB, DlElement *pE)
 {
-    DlImage *dlImage = p->structure.image;
+    DlImage *dlImage = pE->structure.image;
     medmGetValues(pRCB,
       X_RC,          &(dlImage->object.x),
       Y_RC,          &(dlImage->object.y),

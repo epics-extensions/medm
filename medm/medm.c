@@ -2581,6 +2581,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
+	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
 
       /* Stop the scheduler */
@@ -2621,6 +2622,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
+	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
 	
       /* Start the PV statistics */
@@ -3948,6 +3950,7 @@ static void createMain()
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
+	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
     }
 
