@@ -66,9 +66,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
 extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
 
-static Widget errMsgDlg = NULL;
+static Widget errMsgS = NULL;
 static Widget errMsgText = NULL;
-static Widget errMsgSendDlg = NULL;
+static Widget errMsgSendS = NULL;
 static Widget errMsgSendSubjectText = NULL;
 static Widget errMsgSendToText = NULL;
 static Widget errMsgSendText = NULL;
@@ -111,8 +111,8 @@ void errMsgDlgCloseButtonCb(Widget, XtPointer, XtPointer)
 void errMsgDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
-    if (errMsgDlg != NULL) {
-	XtUnmanageChild(errMsgDlg);
+    if (errMsgS != NULL) {
+	XtUnmanageChild(errMsgS);
     }
     return;
 }
@@ -222,7 +222,7 @@ void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     char *tmp;
 
     if (errMsgText == NULL) return;
-    if (errMsgSendDlg == NULL) {
+    if (errMsgSendS == NULL) {
 	errMsgSendDlgCreateDlg();
     }
     XmTextSetString(errMsgSendToText,"");
@@ -233,7 +233,7 @@ void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     }
     XmTextSetString(errMsgSendText,tmp);
     XtFree(tmp);
-    XtManageChild(errMsgSendDlg);
+    XtManageChild(errMsgSendS);
 }
 
 #ifdef __cplusplus
@@ -252,14 +252,14 @@ void errMsgDlgCreateDlg() {
     Arg args[10];
     int n;
 
-    if (errMsgDlg != NULL) {
-	XtManageChild(errMsgDlg);
+    if (errMsgS != NULL) {
+	XtManageChild(errMsgS);
 	return;
     }
 
     if (mainShell == NULL) return;
 
-    errMsgDlg = XtVaCreatePopupShell("errorMsgS",
+    errMsgS = XtVaCreatePopupShell("errorMsgS",
 #if 0
     /* KE: Gets iconized this way */
       xmDialogShellWidgetClass, mainShell,
@@ -270,7 +270,7 @@ void errMsgDlgCreateDlg() {
       NULL);
 
     pane = XtVaCreateWidget("panel",
-      xmPanedWindowWidgetClass, errMsgDlg,
+      xmPanedWindowWidgetClass, errMsgS,
       XmNsashWidth, 1,
       XmNsashHeight, 1,
       NULL);
@@ -350,10 +350,10 @@ void errMsgDlgCreateDlg() {
     XtAddCallback(helpButton,XmNactivateCallback,errMsgDlgHelpButtonCb, NULL);
     XtManageChild(actionArea);
     XtManageChild(pane);
-    XtManageChild(errMsgDlg);
+    XtManageChild(errMsgS);
 
   /* Initialize */
-    if(errMsgDlg) {
+    if(errMsgS) {
 	long now; 
 	struct tm *tblock;
 	char timeStampStr[TIME_STRING_MAX];
@@ -380,7 +380,7 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     FILE *pp;
     int status;
 
-    if (errMsgSendDlg == NULL) return;
+    if (errMsgSendS == NULL) return;
     subject = XmTextFieldGetString(errMsgSendSubjectText);
     to = XmTextFieldGetString(errMsgSendToText);
     text = XmTextGetString(errMsgSendText);
@@ -430,7 +430,7 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     if (subject) XtFree(subject);
     if (text) XtFree(text);
     XBell(display,50);
-    XtUnmanageChild(errMsgSendDlg);
+    XtUnmanageChild(errMsgSendS);
     return;
 }
 
@@ -440,8 +440,8 @@ void errMsgSendDlgCloseButtonCb(Widget, XtPointer, XtPointer)
 void errMsgSendDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
-    if (errMsgSendDlg != NULL)
-      XtUnmanageChild(errMsgSendDlg);
+    if (errMsgSendS != NULL)
+      XtUnmanageChild(errMsgSendS);
 }
 
 void errMsgSendDlgCreateDlg() {
@@ -457,15 +457,15 @@ void errMsgSendDlgCreateDlg() {
     Arg    args[10];
     int n;
 
-    if (errMsgDlg == NULL) return;
-    if (errMsgSendDlg == NULL) {
-	errMsgSendDlg = XtVaCreatePopupShell("errorMsgSendS",
+    if (errMsgS == NULL) return;
+    if (errMsgSendS == NULL) {
+	errMsgSendS = XtVaCreatePopupShell("errorMsgSendS",
 	  xmDialogShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Mail Message Window",
 	  XmNdeleteResponse, XmDO_NOTHING,
 	  NULL);
 	pane = XtVaCreateWidget("panel",
-	  xmPanedWindowWidgetClass, errMsgSendDlg,
+	  xmPanedWindowWidgetClass, errMsgSendS,
 	  XmNsashWidth, 1,
 	  XmNsashHeight, 1,
 	  NULL);
@@ -594,8 +594,8 @@ void medmPostMsg(char *format, ...) {
     va_end(args);
 
   /* Raise window */
-    if(errMsgDlg && XtIsRealized(errMsgDlg))
-      XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgS && XtIsRealized(errMsgS))
+      XRaiseWindow(display,XtWindow(errMsgS));
 }
 
 void medmPrintf(char *format, ...)
@@ -621,8 +621,8 @@ void medmPrintf(char *format, ...)
     va_end(args);
 
   /* Raise window */
-    if(errMsgDlg && XtIsRealized(errMsgDlg))
-      XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgS && XtIsRealized(errMsgS))
+      XRaiseWindow(display,XtWindow(errMsgS));
 }
 
 /* KE: No longer used */
@@ -651,8 +651,8 @@ void medmPostTime() {
     fprintf(stderr, timeStampStr);
 
   /* Raise window */
-    if(errMsgDlg && XtIsRealized(errMsgDlg))
-      XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgS && XtIsRealized(errMsgS))
+      XRaiseWindow(display,XtWindow(errMsgS));
 }
 
 static char caStudyMsg[512];
