@@ -1133,11 +1133,11 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
 	count = MIN(pt->recordX->elementCount, pt->recordY->elementCount);
 #ifndef DONE
-      // Use count from the PV
+      /* Use count from the PV */
 	if(pcp->countCh.recordX != 0) {
 	    int chCount = (int)(pcp->countCh.recordX->value +.5);
 
-	  // Must be greater than 0 and less than the native count
+	  /* Must be greater than 0 and less than the native count */
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
