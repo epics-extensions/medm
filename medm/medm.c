@@ -2304,12 +2304,12 @@ main(int argc, char *argv[])
      *  instance of MEDM is already running in proper startup mode (-e or -x) */
     if (request->fontStyle == FIXED) {
       if (request->opMode == EXECUTE) {
-        MEDM_EXEC_FIXED = XInternAtom(display,"MEDM020205_EXEC_FIXED",False);
+        MEDM_EXEC_FIXED = XInternAtom(display,"MEDM020208_EXEC_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
       } else {
-        MEDM_EDIT_FIXED = XInternAtom(display,"MEDM020205_EDIT_FIXED",False);
+        MEDM_EDIT_FIXED = XInternAtom(display,"MEDM020208_EDIT_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -2317,12 +2317,12 @@ main(int argc, char *argv[])
     } else
     if (request->fontStyle == SCALABLE) {
       if (request->opMode == EXECUTE) {
-        MEDM_EXEC_SCALABLE = XInternAtom(display,"MEDM020205_EXEC_SCALABLE",False);
+        MEDM_EXEC_SCALABLE = XInternAtom(display,"MEDM020208_EXEC_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
       } else {
-        MEDM_EDIT_SCALABLE = XInternAtom(display,"MEDM020205_EDIT_SCALABLE",False);
+        MEDM_EDIT_SCALABLE = XInternAtom(display,"MEDM020208_EDIT_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);

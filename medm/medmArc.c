@@ -156,18 +156,18 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
     }
 
     pa->widget = displayInfo->drawingArea;
-  } else
-  if (dlArc->attr.fill == F_SOLID) {
-    unsigned int lineWidth = (dlArc->attr.width+1)/2;
-    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  } else {
+    executeDlBasicAttribute(displayInfo,&(dlArc->attr));
+    if (dlArc->attr.fill == F_SOLID) {
+      unsigned int lineWidth = (dlArc->attr.width+1)/2;
+      XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
         dlArc->object.x,dlArc->object.y,
         dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-    XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+      XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
         dlArc->object.x,dlArc->object.y,
         dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
 
-  } else {
-    executeDlBasicAttribute(displayInfo,&(dlArc->attr));
+    } else
     if (dlArc->attr.fill == F_OUTLINE) {
       unsigned int lineWidth = (dlArc->attr.width+1)/2;
       XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
