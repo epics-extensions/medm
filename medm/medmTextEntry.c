@@ -269,8 +269,11 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     XtAddCallback(dlElement->widget,XmNactivateCallback,
       (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
 
-  /* Unregister it as a drop site (Btn2 drag and drop tends to trash it) */
-    XmDropSiteUnregister(dlElement->widget);
+  /* Unregister it as a drop site unless it is explicitly a string
+   *   (Btn2 drag and drop tends to trash it) */
+    if(dlTextEntry->format != STRING) {
+	XmDropSiteUnregister(dlElement->widget);
+    }
     
   /* special stuff: if user started entering new data into text field, but
    *  doesn't do the actual Activate <CR>, then restore old value on
