@@ -198,7 +198,6 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     UpdateTask *pT;
     Position x, y;
     DlElement *pE;
-    MedmElement *medmElement;
     int i;
 
     pE = NULL;

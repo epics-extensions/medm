@@ -400,7 +400,7 @@ static DlElement *findHiddenRelatedDisplayInComposite(DlElement *pEC,
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean dynamicOnly)
 {
-    DlElement *pE, *pE1, *pE2, *pSmallest, *pDisplay;
+    DlElement *pE, *pE1, *pSmallest, *pDisplay;
     DlObject *po, *po1;
     double area, minArea;
     
@@ -539,7 +539,7 @@ DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
 static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
   Position x0, Position y0, Boolean dynamicOnly)
 {
-    DlElement *pE, *pE1, *pE2, *pSmallest, *pDisplay;
+    DlElement *pE, *pE1, *pSmallest, *pDisplay;
     DlObject *po, *po1;
     double area, minArea;
     
