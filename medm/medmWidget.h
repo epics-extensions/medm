@@ -128,6 +128,7 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define EXECUTE_POPUP_MENU_CLOSE          "Close"
 #define EXECUTE_POPUP_MENU_PVINFO         "PV Info"
 #define EXECUTE_POPUP_MENU_PVLIMITS       "PV Limits"
+#define EXECUTE_POPUP_MENU_MAIN           "MEDM Main Window"
 #define EXECUTE_POPUP_MENU_DISPLAY_LIST   "Display List"
 #define EXECUTE_POPUP_MENU_FLASH_HIDDEN   "Toggle Hidden Button Markers"
 #define EXECUTE_POPUP_MENU_REFRESH        "Refresh"
@@ -136,12 +137,13 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define EXECUTE_POPUP_MENU_CLOSE_ID        1
 #define EXECUTE_POPUP_MENU_PVINFO_ID       2
 #define EXECUTE_POPUP_MENU_PVLIMITS_ID     3
-#define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 4
-#define EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID 5
-#define EXECUTE_POPUP_MENU_REFRESH_ID      6
+#define EXECUTE_POPUP_MENU_MAIN_ID         4
+#define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 5
+#define EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID 6
+#define EXECUTE_POPUP_MENU_REFRESH_ID      7
 /* The following must be the last item */
-#define EXECUTE_POPUP_MENU_EXECUTE_ID      7
-#define NUM_EXECUTE_POPUP_ENTRIES          8
+#define EXECUTE_POPUP_MENU_EXECUTE_ID      8
+#define NUM_EXECUTE_POPUP_ENTRIES          9
 
 #define COLOR_SCALE		(65535.0/255.0)
 #define MAX_CHILDREN		1000	/* max # of child widgets...       */

@@ -2120,9 +2120,8 @@ void medmExit()
     }
 #ifdef PROMPT_TO_EXIT
   /* Prompt to exit */
-    XtVaSetValues(mainShell,
-      XmNiconic, False,
-      NULL);
+  /* KE: This can only be set before realization */
+    XtVaSetValues(mainShell, XmNiconic, False, NULL);
     XtPopup(mainShell,XtGrabNone);
     XtManageChild(exitQD);
     XtPopup(XtParent(exitQD),XtGrabNone);
@@ -3486,7 +3485,7 @@ main(int argc, char *argv[])
     } else if(request->opMode == EXECUTE) {
 	globalDisplayListTraversalMode = DL_EXECUTE;
 	if(request->fileCnt > 0) {	/* assume .adl file names follow */
-	    XtVaSetValues(mainShell, XmNinitialState,IconicState,  NULL);
+	    XtVaSetValues(mainShell, XmNinitialState, IconicState, NULL);
 	}
       /* Start the scheduler */
 	startMedmScheduler();

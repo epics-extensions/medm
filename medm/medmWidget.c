@@ -280,19 +280,23 @@ void medmInit(char *displayFont)
 
     executePopupMenuButtonType[4] = XmPUSHBUTTON;
     executePopupMenuButtons[4] =
-      XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
-
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_MAIN);
+ 
     executePopupMenuButtonType[5] = XmPUSHBUTTON;
     executePopupMenuButtons[5] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
+
+   executePopupMenuButtonType[6] = XmPUSHBUTTON;
+    executePopupMenuButtons[6] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_FLASH_HIDDEN);
 
-    executePopupMenuButtonType[6] = XmPUSHBUTTON;
-    executePopupMenuButtons[6] =
+    executePopupMenuButtonType[7] = XmPUSHBUTTON;
+    executePopupMenuButtons[7] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_REFRESH);
 
   /* Note that the Execute Menu is a cascade button */
-    executePopupMenuButtonType[7] = XmCASCADEBUTTON;
-    executePopupMenuButtons[7] =
+    executePopupMenuButtonType[8] = XmCASCADEBUTTON;
+    executePopupMenuButtons[8] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
   /* Load font and fontList tables (but only once) */

@@ -148,6 +148,18 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_PVLIMITS_ID:
 	popupPvLimits(displayInfo);
 	break;
+    case EXECUTE_POPUP_MENU_MAIN_ID:
+#if 1
+	XMapRaised(display, XtWindow(mainShell));
+#else
+      /* May be more reliable.  Requires <X11/Xmu/WinUtil.h> */
+	if(XtIsRealized(mainShell)) {
+	    Window client = XmuClientWindow(display, XtWindow(mainShell));
+
+	      XMapRaised(display, client);
+	}
+#endif	
+	break;
     case EXECUTE_POPUP_MENU_DISPLAY_LIST_ID:
     {
 #if DEBUG_PIXMAP
