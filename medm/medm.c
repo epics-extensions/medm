@@ -1208,6 +1208,7 @@ void medmExit() {
     displayInfo = displayInfo->next;
   }
   XtManageChild(exitQD);
+  XtPopup(XtParent(exitQD),XtGrabNone);
 }
 
 

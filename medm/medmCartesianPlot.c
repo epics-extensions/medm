@@ -61,6 +61,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,DlCartesianPlot
 void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,DlCartesianPlot *dlCartesianPlot);
 static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh);
 static void cartesianPlotUpdateScreen(Channel *pCh);
+static void cartesianPlotUpdateScreenFirstTime(Channel *pCh);
 static void cartesianPlotUpdateValueCb(Channel *pCh);
 static void cartesianPlotDestroyCb(Channel *pCh);
 
@@ -106,7 +107,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
 
       pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-      pCh->updateDataCb = cartesianPlotUpdateScreen;
+      pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
       pCh->updateGraphicalInfoCb = cartesianPlotUpdateGraphicalInfoCb;
       pCh->destroyChannel = cartesianPlotDestroyCb;
       pCh->handleArray = True;
@@ -126,7 +127,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
 
       pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-      pCh->updateDataCb = cartesianPlotUpdateScreen;
+      pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
       pCh->updateGraphicalInfoCb = cartesianPlotUpdateGraphicalInfoCb;
       pCh->destroyChannel = cartesianPlotDestroyCb;
       pCh->handleArray = True;
@@ -149,7 +150,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
 
     pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-    pCh->updateDataCb = cartesianPlotUpdateScreen;
+    pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
     pCh->updateGraphicalInfoCb = NULL;
     pCh->destroyChannel = cartesianPlotDestroyCb;
 
@@ -168,7 +169,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
 
     pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-    pCh->updateDataCb = cartesianPlotUpdateScreen;
+    pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
     pCh->updateGraphicalInfoCb = NULL;
     pCh->destroyChannel = cartesianPlotDestroyCb;
 
@@ -1675,17 +1676,17 @@ void cartesianPlotUpdateTrace(Channel *pCh) {
   }
 }
 
-void cartesianPlotUpdateScreen(Channel *pCh) {
+void cartesianPlotUpdateScreenFirstTime(Channel *pCh) {
   CartesianPlotData *cartesianPlotData;
   DlCartesianPlot *dlCartesianPlot;
   int count, i;
   unsigned short j;
   Arg args[20];
+  Boolean clearDataSet1 = True;
+  Boolean clearDataSet2 = True;
+  Channel *tmpCh;
 
-  /*
-   * MDA - handle trigger channel here - only set modified on trigger if trigger
-   *    is used, but always update the data for the other channels
-   */
+
   XtVaGetValues((Widget)pCh->self,
                  XmNuserData,(XtPointer)&cartesianPlotData,
                  NULL);
@@ -1696,15 +1697,119 @@ void cartesianPlotUpdateScreen(Channel *pCh) {
 
   /* return until all channels get their graphical information */
   for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *tmpCh;
     tmpCh = (Channel *) cartesianPlotData->monitors[i][0];
     if (tmpCh != NULL) {
       if (tmpCh->xrtData == NULL) return;
+      if (tmpCh->data == NULL) return;
     }
     tmpCh = (Channel *) cartesianPlotData->monitors[i][1];
     if (tmpCh != NULL) {
       if (tmpCh->xrtData == NULL) return;
+      if (tmpCh->data == NULL) return;
     }
+  }
+  if (cartesianPlotData->eraseCh) {
+    tmpCh = (Channel *) cartesianPlotData->eraseCh;
+    if (tmpCh->data == NULL) return;
+  }
+  /* draw all plots once */
+  for (i = 0; i < cartesianPlotData->nTraces; i++) {
+    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
+    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
+    if ((pChX == NULL) && (pChY == NULL)) continue;
+    if ((pChX) && (pChX->xrtData))
+      cartesianPlotUpdateTrace(pChX);
+      if (pChX->xyChannelType == CP_XYVectorX)
+        cartesianPlotUpdateTrace(pChY);
+    else
+    if ((pChY) && (pChY->xrtData))
+      cartesianPlotUpdateTrace(pChY);
+    if (pChX) {
+      if (pChX->xrtDataSet == 1)
+        XtVaSetValues(pChX->self,XtNxrtData,pChX->xrtData,NULL);
+      else
+      if (pChX->xrtDataSet == 2)
+        XtVaSetValues(pChX->self,XtNxrtData2,pChX->xrtData,NULL);
+    } else {
+      if (pChY->xrtDataSet == 1)
+        XtVaSetValues(pChY->self,XtNxrtData,pChY->xrtData,NULL);
+      else
+      if (pChY->xrtDataSet == 2)
+        XtVaSetValues(pChY->self,XtNxrtData2,pChY->xrtData,NULL);
+    }
+  }
+  /* erase the plot */
+  tmpCh = (Channel *) cartesianPlotData->eraseCh;
+  if (tmpCh) {
+    if (((tmpCh->value == 0) && (cartesianPlotData->eraseMode == ERASE_IF_ZERO))
+      || ((tmpCh->value != 0) && (cartesianPlotData->eraseMode == ERASE_IF_NOT_ZERO))) {
+      for (i = 0; i < cartesianPlotData->nTraces; i++) {
+        Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
+        Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
+        if (pChX) {
+          int n = pChX->xrtData->g.data[pChX->trace].npoints;
+          if (n > 0) {
+            if ((pChX->xrtDataSet == 1) && (clearDataSet1)) {
+              XtVaSetValues(pChX->self,XtNxrtData,nullData,NULL);
+              clearDataSet1 = False;
+            } else
+            if ((pChX->xrtDataSet == 2) && (clearDataSet2)) {
+              XtVaSetValues(pChX->self,XtNxrtData2,nullData,NULL);
+              clearDataSet2 = False;
+            }
+            pChX->xrtData->g.data[pChX->trace].npoints = 0;
+          }
+        } else
+        if (pChY) {
+          int n = pChY->xrtData->g.data[pChY->trace].npoints;
+          if (n > 0) {
+            if ((pChY->xrtDataSet == 1) && (clearDataSet1)) {
+              XtVaSetValues(pChY->self,XtNxrtData,nullData,NULL);
+              clearDataSet1 = False;
+            } else
+            if ((pChY->xrtDataSet == 2) && (clearDataSet2)) {
+              XtVaSetValues(pChY->self,XtNxrtData2,nullData,NULL);
+              clearDataSet2 = False;
+            }
+            pChY->xrtData->g.data[pChY->trace].npoints = 0;
+          }
+        }
+      }
+    }
+  }
+  /* switch back to regular update routine */
+  for (i = 0; i < cartesianPlotData->nTraces; i++) {
+    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
+    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
+    if (pChX) {
+      pChX->updateDataCb = cartesianPlotUpdateScreen;
+    }
+    if (pChY) {
+      pChY->updateDataCb = cartesianPlotUpdateScreen;
+    }
+  }
+  if (cartesianPlotData->eraseCh) {
+    ((Channel *)cartesianPlotData->eraseCh)->updateDataCb = cartesianPlotUpdateScreen;
+  }
+  if (cartesianPlotData->triggerCh) {
+    ((Channel *)cartesianPlotData->triggerCh)->updateDataCb = cartesianPlotUpdateScreen;
+  }
+}
+
+
+void cartesianPlotUpdateScreen(Channel *pCh) {
+  CartesianPlotData *cartesianPlotData;
+  DlCartesianPlot *dlCartesianPlot;
+  int count, i;
+  unsigned short j;
+  Arg args[20];
+
+  XtVaGetValues((Widget)pCh->self,
+                 XmNuserData,(XtPointer)&cartesianPlotData,
+                 NULL);
+  if (cartesianPlotData == (CartesianPlotData *)NULL) {
+    medmPrintf("\ncartesianPlotUpdateScreen: cartesianPlotData == NULL");
+    return;
   }
 
   /* if this is in trigger mode, and this update request is not from
@@ -1772,6 +1877,8 @@ void cartesianPlotUpdateScreen(Channel *pCh) {
       if ((pChX == NULL) && (pChY == NULL)) continue;
       if ((pChX) && (pChX->xrtData))
         cartesianPlotUpdateTrace(pChX);
+        if (pChX->xyChannelType == CP_XYVectorX)
+          cartesianPlotUpdateTrace(pChY);
       else
       if ((pChY) && (pChY->xrtData))
         cartesianPlotUpdateTrace(pChY);
