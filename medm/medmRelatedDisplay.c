@@ -728,16 +728,26 @@ static void relatedDisplayButtonPressedCb(Widget w,
 {
     DlRelatedDisplayEntry *pEntry = (DlRelatedDisplayEntry *)clientData;
     DisplayInfo *displayInfo = 0;
+    XEvent *event = ((XmPushButtonCallbackStruct *)callbackData)->event;
+    Boolean replace = False;
+    
+  /* See if it was a ctrl-click indicating replace */
+    if(event->type = ButtonPress  &&
+      ((XButtonEvent *)event)->state & ControlMask) {
+	replace = True;
+    }
+    
+  /* Create the new display */
     XtVaGetValues(w, XmNuserData, &displayInfo, NULL);
-    relatedDisplayCreateNewDisplay(displayInfo, pEntry);
+    relatedDisplayCreateNewDisplay(displayInfo, pEntry, replace);
 }
 
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *pEntry)
+  DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay)
 { 
     FILE *filePtr;
     int suffixLength, prefixLength;
-    char *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
+    char *argsString, token[MAX_TOKEN_LENGTH];
     char filename[MAX_TOKEN_LENGTH];
     char *adlPtr;
     char processedArgs[2*MAX_TOKEN_LENGTH];
@@ -758,25 +768,13 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
       /* Will also try to find file with parent's path */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
 	if (filePtr == NULL) {
-	    newFilename = STRDUP(filename);
-	    adlPtr = strstr(filename,DISPLAY_FILE_ASCII_SUFFIX);
-	    if (adlPtr != NULL) {
-	      /* ascii name */
-		suffixLength = strlen(DISPLAY_FILE_ASCII_SUFFIX);
-	    } else {
-	      /* binary name */
-		suffixLength = strlen(DISPLAY_FILE_BINARY_SUFFIX);
-	    }
-	    prefixLength = strlen(newFilename) - suffixLength;
-	    newFilename[prefixLength] = '\0';
 	    sprintf(token,
-	      "Cannot open related display:\n  %s%s\nCheck %s\n",
-	      newFilename, DISPLAY_FILE_ASCII_SUFFIX, "EPICS_DISPLAY_PATH");
+	      "Cannot open related display:\n  %s\nCheck %s\n",
+	      filename, "EPICS_DISPLAY_PATH");
 	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);
 	    medmPostMsg(token);
-	    free(newFilename);
 	} else {
-	    if (pEntry->mode == REPLACE_DISPLAY) {
+	    if (replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
 		dmDisplayListParse(displayInfo,filePtr,processedArgs,
 		  filename,NULL,(Boolean)True);
 		fclose(filePtr);

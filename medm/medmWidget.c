@@ -226,6 +226,11 @@ void medmInit(char *displayFont)
     displayInfoListHead->next = NULL;
     displayInfoListTail = displayInfoListHead;
     
+  /* Initialize DisplayInfoSave structures list */
+    displayInfoSaveListHead = (DisplayInfo *)malloc(sizeof(DisplayInfo));
+    displayInfoSaveListHead->next = NULL;
+    displayInfoSaveListTail = displayInfoSaveListHead;
+    
   /* Initialize common XmStrings */
     dlXmStringMoreToComeSymbol = XmStringCreateLocalized(MORE_TO_COME_SYMBOL);
     
@@ -345,8 +350,13 @@ int initMedmWidget() {
     }
 }
 
+/* KE: This is only called when MEDM is exiting
+ *   It destroys the DisplayInfoListHead but not the DisplayInfo's
+ *   It would need to do dmRemoveDisplayInfo if it did
+ *   It probably is not necessary */
 int destroyMedmWidget() {
     if (displayInfoListHead) free((char *)displayInfoListHead);
+    if (displayInfoSaveListHead) free((char *)displayInfoSaveListHead);
     if (dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
     if (executePopupMenuButtons[0]) XmStringFree(executePopupMenuButtons[0]);
     if (executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
@@ -360,4 +370,52 @@ int destroyMedmWidget() {
 
 void addWidgetEvents(Widget w)
 {
+}
+
+void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
+{
+    DisplayInfo *di;
+    char *filename = displayInfo->dlFile->name;
+    
+  /* Check if it is already there */
+    di = displayInfoSaveListHead->next;
+    while (di) {
+	DisplayInfo *pDI = displayInfo->next;
+
+	if(!strcmp(filename, di->dlFile->name)) return;
+	di = di->next;
+    }	
+    
+  /* Remove it from the displayInfo list */
+    displayInfo->prev->next = displayInfo->next;
+    if(displayInfo->next != NULL)
+      displayInfo->next->prev = displayInfo->prev;
+    if(displayInfoListTail == displayInfo)
+      displayInfoListTail = displayInfoListTail->prev;
+    if(displayInfoListTail == displayInfoListHead)
+      displayInfoListHead->next = NULL;
+
+  /* Append it to the displayInfoSave List */
+    displayInfoSaveListTail->next = displayInfo;
+    displayInfo->prev = displayInfoSaveListTail;
+    displayInfo->next = NULL;
+    displayInfoSaveListTail = displayInfo;
+}
+
+void moveDisplayInfoSaveToDisplayInfo(DisplayInfo *displayInfo)
+{
+  /* Remove it from the displayInfoSave list */
+    displayInfo->prev->next = displayInfo->next;
+    if(displayInfo->next != NULL)
+      displayInfo->next->prev = displayInfo->prev;
+    if(displayInfoSaveListTail == displayInfo)
+      displayInfoSaveListTail = displayInfoSaveListTail->prev;
+    if(displayInfoSaveListTail == displayInfoSaveListHead)
+      displayInfoSaveListHead->next = NULL;
+
+  /* Append it to the displayInfo List */
+    displayInfoListTail->next = displayInfo;
+    displayInfo->prev = displayInfoListTail;
+    displayInfo->next = NULL;
+    displayInfoListTail = displayInfo;
 }

@@ -232,8 +232,14 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	if (pE) {
 	    if (pE->type == DL_RelatedDisplay &&
 	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		Boolean replace = False;
+		
+	      /* See if it was a ctrl-click indicating replace */
+		if(xEvent->state & ControlMask) replace = True;
+
+	      /* Create the related display */
 		relatedDisplayCreateNewDisplay(displayInfo,
-		  &(pE->structure.relatedDisplay->display[0]));
+		  &(pE->structure.relatedDisplay->display[0]), replace);
 	    }
 	}
     }

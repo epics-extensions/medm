@@ -499,6 +499,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 /* Debugging */
 void dumpCartesianPlot(void);
 void printEventMasks(Display *display, Window win, char *string);
+void dumpDisplayInfoList(DisplayInfo *head, char *string);
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);
@@ -508,7 +509,8 @@ unsigned long getPixelFromColormapByString(Display *display, int screen,
 int initMedmWidget();
 int destroyMedmWidget();
 void hsort(double array[], int indx[], int n);
-
+void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo);
+void moveDisplayInfoSaveToDisplayInfo(DisplayInfo *displayInfo);
 
 /* writeControllers.c */
 void writeDlChoiceButton(FILE *, DlElement *, int);
@@ -604,7 +606,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word);
 /* medmRelatedDisplay.c */
 void relatedDisplayDataDialogPopup(Widget w);
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *pEntry);
+  DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay);
 
 /* medmMonitor.c */
 void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);

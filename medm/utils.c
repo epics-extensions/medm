@@ -434,7 +434,6 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 	currentColormapSize = DL_MAX_COLORS;
 	currentDisplayInfo = NULL;
     }
-
 }
 
 /*
@@ -4849,5 +4848,17 @@ void printEventMasks(Display *display, Window win, char *string)
 	  (attr.all_event_masks&mask)?"X":" ",
 	  (attr.your_event_mask&mask)?"X":" ",
 	  (attr.do_not_propagate_mask&mask)?"X":" ");
+    }
+}
+
+void dumpDisplayInfoList(DisplayInfo *head, char *string)
+{
+    DisplayInfo *displayInfo = head->next;
+    int i=0;
+
+    printf("\nDisplayList: %s\n",string);
+    while(displayInfo) {
+	printf("%2d %s\n",++i,displayInfo->dlFile->name);
+	displayInfo = displayInfo->next;
     }
 }

@@ -797,6 +797,7 @@ EXTERN XFontStruct *fontTable[MAX_FONTS];
 EXTERN XmFontList fontListTable[MAX_FONTS];
 
 EXTERN DisplayInfo *displayInfoListHead, *displayInfoListTail;
+EXTERN DisplayInfo *displayInfoSaveListHead, *displayInfoSaveListTail;
 EXTERN DisplayInfo *currentDisplayInfo;
 
 /* (MDA) */

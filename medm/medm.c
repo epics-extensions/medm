@@ -1840,7 +1840,6 @@ void medmExit() {
     Boolean saveThis = False;
 
     DisplayInfo *displayInfo = displayInfoListHead->next;
-
     while (displayInfo) {
 	if (displayInfo->hasBeenEditedButNotSaved) {
 	    if (saveAll == False) {
@@ -2209,6 +2208,23 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Mode is the mode to which we are going */
     switch(mode) {
     case DL_EDIT:
+      /* Restore any related displays that were replaced */
+#if 0	
+	dumpDisplayInfoList(displayInfoListHead,"medm.c [1]: displayInfoList");
+	dumpDisplayInfoList(displayInfoSaveListHead,"medm.c [1]: displayInfoSaveList");
+#endif	
+	displayInfo = displayInfoSaveListHead->next;
+	while (displayInfo) {
+	    DisplayInfo *pDI = displayInfo->next;
+	
+	    moveDisplayInfoSaveToDisplayInfo(displayInfo);
+	    XtPopup(displayInfo->shell,XtGrabNone);
+	    displayInfo = pDI;
+	}	
+#if 0	
+	dumpDisplayInfoList(displayInfoListHead,"medm.c [2]: displayInfoList");
+	dumpDisplayInfoList(displayInfoSaveListHead,"medm.c [2]: displayInfoSaveList");
+#endif	
 	updateAllDisplayPositions();
 	if (relatedDisplayS) XtSetSensitive(relatedDisplayS,True);
 	if (cartesianPlotS) XtSetSensitive(cartesianPlotS,True);
