@@ -1,33 +1,29 @@
-#ifndef LINT
-static char rcsid[] = "$Header$";
-#endif
-/*
- *** ps_utils.c - dump various PostScript structures to stdout
-
-Copyright (c) 1990 General Electric Company
-
-Permission to use, copy, modify, distribute, and sell this software
-and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of General Electric
-Company not be used in advertising or publicity pertaining to
-distribution of the software without specific, written prior
-permission.  General Electric Company makes no representations about
-the suitability of this software for any purpose.  It is provided "as
-is" without express or implied warranty.
-
-General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
-SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
-RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
-CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
- */
+/* ps_utils.c - dump various PostScript structures to stdout
+   
+   Copyright (c) 1990 General Electric Company
+   
+   Permission to use, copy, modify, distribute, and sell this software
+   and its documentation for any purpose is hereby granted without fee,
+   provided that the above copyright notice appear in all copies and that
+   both that copyright notice and this permission notice appear in
+   supporting documentation, and that the name of General Electric
+   Company not be used in advertising or publicity pertaining to
+   distribution of the software without specific, written prior
+   permission.  General Electric Company makes no representations about
+   the suitability of this software for any purpose.  It is provided "as
+   is" without express or implied warranty.
+   
+   General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+   SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+   FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
+   SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+   RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+   CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
 
 #include <stdio.h>
+#include <time.h>
 
 #include "xwd2ps.h"
 #include "my_logo.h"
@@ -38,9 +34,7 @@ extern char progname[];
 /*
  ** outputBorder() - put a border around the image
  */
-outputBorder(fo, the_image)
-    FILE *fo;
-    Image the_image;
+void outputBorder(FILE *fo, Image the_image)
 {
     fprintf(fo,"\nnewpath\n");
     fprintf(fo,"0 0 moveto\n");
@@ -61,9 +55,7 @@ outputBorder(fo, the_image)
 /*
  ** outputDate() - output the date
  */
-outputDate(fo, the_image)
-    FILE *fo;
-    Image the_image;
+void outputDate(FILE *fo, Image the_image)
 {
     float xpos, ypos;
     char mytime[20];           /* character representation of current time */
@@ -98,10 +90,7 @@ outputDate(fo, the_image)
 /*
  ** outputSentence() - put a label in the diagram
  */
-outputTitle(fo, the_image, the_options)
-    FILE *fo;
-    Image the_image;
-    Options the_options;
+void outputTitle(FILE *fo, Image the_image, Options the_options)
 {
     float xpos, ypos;
 
@@ -135,9 +124,7 @@ outputTitle(fo, the_image, the_options)
  ** ouputTime() - put the time in the output
  */
 
-outputTime(fo, the_image)
-    FILE *fo;
-    Image the_image;
+void outputTime(FILE *fo, Image the_image)
 {
     char mytime[20];           /* character representation of current time */
     char mydate[40];           /* character representation of current date */
@@ -174,8 +161,7 @@ outputTime(fo, the_image)
  ** outputColorImage() - output the code to support color
  **                      image printing on monochrome devices
  */
-outputColorImage(fo)
-    FILE *fo;
+void outputColorImage(FILE *fo)
 {
     printPS(fo, ColorImage);
 }
@@ -184,13 +170,12 @@ outputColorImage(fo)
 /*
  ** outputLogo() - print out your logo
  */
-outputLogo(fo, the_image)
-    FILE *fo;
-    Image the_image;
+void outputLogo(FILE *fo, Image the_image)
 {
     float xpos, ypos;
 
-    printPS(my_logo);  /* print out the logo */
+  /* KE: Was missing first argument */
+    printPS(fo,my_logo);  /* print out the logo */
 
   /*
    * set up the scaling factors
@@ -205,7 +190,7 @@ outputLogo(fo, the_image)
 	fprintf(fo,"%f inch %f inch translate\n", xpos,ypos);
     }
     else {
-	xpos = the_image.height + LOGOHEIGHT;
+	xpos = the_image.height + (float)LOGOHEIGHT;
 	ypos = 0;
 	fprintf(fo,"%f inch %f inch translate\n", xpos,ypos);
 	fprintf(fo,"90 rotate\n");
@@ -250,9 +235,7 @@ outputLogo(fo, the_image)
  *
  * Written March 1990 by Craig A. McGowan
  */
-printPS(fo, p)
-    FILE *fo;
-    char **p;
+void printPS(FILE *fo, char **p)
 {
     while (*p)
       fprintf(fo,"%s\n",*p++);
@@ -263,11 +246,7 @@ printPS(fo, p)
  *** printEPSF() - print out the Encapsulated PS header
  *
  */
-printEPSF(fo, image, page, file_name)
-    FILE *fo;
-    Image image;
-    Page  page;
-    char  *file_name;
+void printEPSF(FILE *fo, Image image, Page  page, char  *file_name)
 {
     long clock;
 

@@ -10,16 +10,12 @@
  * Send bugs, etc. to chariot@athena.mit.edu.
  */
 
-    /* Global variables used by routines in just_display.c */
+/* This stuff is defined in the calling program by just_display.h */
+extern char *program_name;
+extern Display *dpy;
+extern int screen;
 
-char *program_name = "unknown_program";       /* Name of this program */
-Display *dpy;                                 /* The current display */
-int screen;                                   /* The current screen */
-
-#define INIT_NAME program_name=argv[0]        /* use this in main to setup
-                                                 program_name */
-
-    /* Declaritions for functions in just_display.c */
+/* Declarations for functions in just_display.c */
 
 #ifdef _NO_PROTO
 
@@ -32,7 +28,7 @@ char *Get_Display_Name();
 Display *Open_Display();
 void Setup_Display_And_Screen();
 XFontStruct *Open_Font();
-void Beep();
+void xwdBeep();
 Pixmap ReadBitmapFile();
 void WriteBitmapFile();
 Window Select_Window_Args();
@@ -46,7 +42,7 @@ char *Get_Display_Name(int *, char **);
 Display *Open_Display(char *);
 void Setup_Display_And_Screen(int *, char **);
 XFontStruct *Open_Font(char *);
-void Beep();
+void xwdBeep();
 Pixmap ReadBitmapFile(Drawable, char *, int *, int*, int*, int*);
 void WriteBitmapFile(char *, Pixmap, int, int, int, int);
 Window Select_Window_Args(int *, char **);
@@ -72,6 +68,7 @@ Window Select_Window();
 void out();
 void blip();
 Window Window_With_Name();
+void outl();
 #else
 unsigned long Resolve_Color(Window, char*);
 Pixmap Bitmap_To_Pixmap(Display *, Drawable, GC, Pixmap, int, int);
@@ -79,5 +76,6 @@ Window Select_Window(Display *);
 void out();
 void blip();
 Window Window_With_Name(Display *, Window, char *);
+int outl(const char *fmt, ...);
 #endif
 

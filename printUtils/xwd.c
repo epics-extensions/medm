@@ -58,9 +58,6 @@
  *	interest...
  */
 
-#ifndef lint
-static char *rcsid_xwd_c = "$XConsortium: xwd.c,v 1.51 89/12/10 16:49:07 rws Exp $";
-#endif
 
 /*%
  *%    This is the format for commenting out color-related code until
@@ -68,6 +65,8 @@ static char *rcsid_xwd_c = "$XConsortium: xwd.c,v 1.51 89/12/10 16:49:07 rws Exp
 %*/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
@@ -77,12 +76,26 @@ static char *rcsid_xwd_c = "$XConsortium: xwd.c,v 1.51 89/12/10 16:49:07 rws Exp
 /*  (MDA) use Xmd.h instead of Xmu...
 #include <X11/Xmu/WinUtil.h>
 */
+
 typedef unsigned long Pixel;
 
 #define FEEP_VOLUME 0
 
 /* Include routines to do parsing */
 #include "dsimple.h"
+
+/* KE: Added for function prototypes */
+#include "xwd2ps.h"
+
+/* Function prototypes */
+static long parse_long (char *s);
+void Error(char *string);
+void Window_Dump(Window window, FILE *out);
+int Image_Size(XImage *image);
+int Get_XColors(XWindowAttributes *win_info, XColor **colors);
+static void _swaplong (register char *bp, register unsigned n);
+static void _swapshort (register char *bp, register unsigned n);
+
 
 /* Setable Options */
 
@@ -99,8 +112,7 @@ long add_pixel_value = 0;
 extern int (*_XErrorFunction)();
 extern int _XDefaultError();
 
-static long parse_long (s)
-    char *s;
+static long parse_long (char *s)
 {
     char *fmt = "%lu";
     long retval = 0L;
@@ -121,13 +133,9 @@ static long parse_long (s)
  * the xwd() routine (used to be a main()...with extra stuff)
  */
 
-xwd(display,window,file)
-    Display *display;
-    Window window;
-    char *file;
+void xwd(Display *display, Window window, char *file)
 {
     Window target_win;
-    register i;
     FILE *out_file = stdout;
     Bool frame_only = False;
 
@@ -187,13 +195,14 @@ xwd(display,window,file)
  *              writting.
  */
 
+/* KE: Wrong prototype for calloc */
+#if 0
 char *calloc();
+#endif
 
 #include "X11/XWDFile.h"
 
-Window_Dump(window, out)
-    Window window;
-    FILE *out;
+void Window_Dump(Window window, FILE *out)
 {
     unsigned long swaptest = 1;
     XColor *colors;
@@ -216,7 +225,7 @@ Window_Dump(window, out)
   /*
    * Inform the user not to alter the screen.
    */
-    Beep();
+    xwdBeep();
 
   /*
    * Get the parameters of the window being dumped.
@@ -253,8 +262,8 @@ Window_Dump(window, out)
   /* clip to window */
     if (absx < 0) width += absx, absx = 0;
     if (absy < 0) height += absy, absy = 0;
-    if (absx + width > dwidth) width = dwidth - absx;
-    if (absy + height > dheight) height = dheight - absy;
+    if (absx + (int)width > dwidth) width = dwidth - absx;
+    if (absy + (int)height > dheight) height = dheight - absy;
 
     XFetchName(dpy, window, &win_name);
     if (!win_name || !win_name[0]) {
@@ -387,7 +396,7 @@ Window_Dump(window, out)
 /*
  * Report the syntax for calling xwd.
  */
-usage()
+void usage()
 {
     fprintf (stderr,
       "usage: %s [-display host:dpy] [-debug] [-help] %s [-nobdrs] [-out <file>]",
@@ -400,10 +409,12 @@ usage()
 /*
  * Error - Fatal xwd error.
  */
+#if 0
+/* KE: Replaced with #include <errno.h> */
 extern int errno;
+#endif
 
-Error(string)
-    char *string;	/* Error description string. */
+void Error(char *string)
 {
     outl("\nxwd: Error => %s\n", string);
     if (errno != 0) {
@@ -419,8 +430,7 @@ Error(string)
  * Determine the pixmap size.
  */
 
-int Image_Size(image)
-    XImage *image;
+int Image_Size(XImage *image)
 {
     if (format != ZPixmap)
       return(image->bytes_per_line * image->height * image->depth);
@@ -433,9 +443,7 @@ int Image_Size(image)
 /*
  * Get the XColors of all pixels in image - returns # of colors
  */
-int Get_XColors(win_info, colors)
-    XWindowAttributes *win_info;
-    XColor **colors;
+int Get_XColors(XWindowAttributes *win_info, XColor **colors)
 {
     int i, ncolors;
 
@@ -479,9 +487,7 @@ int Get_XColors(win_info, colors)
     return(ncolors);
 }
 
-_swapshort (bp, n)
-    register char *bp;
-    register unsigned n;
+static void _swapshort (register char *bp, register unsigned n)
 {
     register char c;
     register char *ep = bp + n;
@@ -494,9 +500,7 @@ _swapshort (bp, n)
     }
 }
 
-_swaplong (bp, n)
-    register char *bp;
-    register unsigned n;
+static void _swaplong (register char *bp, register unsigned n)
 {
     register char c;
     register char *ep = bp + n;

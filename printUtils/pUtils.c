@@ -1,55 +1,63 @@
-#ifndef LINT
-static char rcsid[] = "$Header$";
-#endif
-/*
- *** utils.c - general system utility functions
-
-Copyright (c) 1990 General Electric Company
-
-Permission to use, copy, modify, distribute, and sell this software
-and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of General Electric
-Company not be used in advertising or publicity pertaining to
-distribution of the software without specific, written prior
-permission.  General Electric Company makes no representations about
-the suitability of this software for any purpose.  It is provided "as
-is" without express or implied warranty.
-
-General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
-SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
-RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
-CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-Portions of this program are also Copyright (c) 1989 Massachusetts
-Institute of Technology
-
-Permission to use, copy, modify, distribute, and sell this software
-and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of M.I.T. not be
-used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  M.I.T. make no
-representations about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
-
-M.I.T. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
-SHALL M.I.T. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-
- */
+/* utils.c - general system utility functions
+   
+   Copyright (c) 1990 General Electric Company
+   
+   Permission to use, copy, modify, distribute, and sell this software
+   and its documentation for any purpose is hereby granted without fee,
+   provided that the above copyright notice appear in all copies and that
+   both that copyright notice and this permission notice appear in
+   supporting documentation, and that the name of General Electric
+   Company not be used in advertising or publicity pertaining to
+   distribution of the software without specific, written prior
+   permission.  General Electric Company makes no representations about
+   the suitability of this software for any purpose.  It is provided "as
+   is" without express or implied warranty.
+   
+   General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+   SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+   FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
+   SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+   RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+   CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   
+   Portions of this program are also Copyright (c) 1989 Massachusetts
+   Institute of Technology
+   
+   Permission to use, copy, modify, distribute, and sell this software
+   and its documentation for any purpose is hereby granted without fee,
+   provided that the above copyright notice appear in all copies and that
+   both that copyright notice and this permission notice appear in
+   supporting documentation, and that the name of M.I.T. not be
+   used in advertising or publicity pertaining to distribution of the
+   software without specific, written prior permission.  M.I.T. make no
+   representations about the suitability of this software for any
+   purpose.  It is provided "as is" without express or implied warranty.
+   
+   M.I.T. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+   ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+   SHALL M.I.T. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+   DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+   PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+   TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+   PERFORMANCE OF THIS SOFTWARE.
+*/
 
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef WIN32
+/* WIN32 does not have unistd.h */
+#include <io.h>         /* for read (usually in unistd.h) */
+#else
+/* Use unistd.h */
+#include <unistd.h>
+#endif
+
+/* Functin prototypes */
+static void _swapbits(register unsigned char *b, register long n);
 
 extern char progname[];
 
@@ -63,8 +71,7 @@ extern char progname[];
  *          mydate = "Jan 31, 1989"  (day mon dt, year)
  */
 
-get_time_and_date(mytime, mydate)
-    char mytime[], mydate[];
+void get_time_and_date(char mytime[], char mydate[])
 {
     time_t clock;
     char *ap;
@@ -73,22 +80,19 @@ get_time_and_date(mytime, mydate)
     strncpy(mydate, ap+4, 6);
     mydate[6] = ',';
     strncpy(mydate+7, ap+19, 5);
-    mydate[12] = NULL;
+    mydate[12] = '\0';
   
     strncpy(mytime, ap+11, 8);
-    mytime[8] = NULL;
+    mytime[8] = '\0';
 }
 
 /*
  ** fullread() - read nbytes from a file and deal with errors
  */
-fullread (file, data, nbytes)
-    int file;
-    char *data;
-    int nbytes;
+void fullread(int file, char *data, int nbytes)
 {
     int bytes_read;
-    int tmp_cnt=0; /* for patial read */
+    int tmp_cnt=0; /* for partial read */
     bytes_read = read(file, data, nbytes);
     if (bytes_read < 0) {
 	fprintf(stderr, "%s: Error while reading standard input.\n", progname);
@@ -118,9 +122,7 @@ fullread (file, data, nbytes)
 /*
  ** xwd2ps_swapshort() - swap the bytes in the next n shorts
  */
-xwd2ps_swapshort (bp, n)
-    register char *bp;
-    register long n;
+void xwd2ps_swapshort(register char *bp, register long n)
 {
     register char c;
     register char *ep = bp + n;
@@ -136,9 +138,7 @@ xwd2ps_swapshort (bp, n)
 /*
  ** xwd2ps_swaplong() - swap the bytes in the shorts, then swap the shorts
  */
-xwd2ps_swaplong (bp, n)
-    register char *bp;
-    register long n;
+void xwd2ps_swaplong(register char *bp, register long n)
 {
     register char c;
     register char *ep = bp + n;
@@ -161,7 +161,7 @@ xwd2ps_swaplong (bp, n)
  * This subroutine
  * Written January 1989 by Robert Tatar.
  */
-xwd2ps_usage ()
+void xwd2ps_usage(void)
 {
     fprintf(stderr,"\nusage: %s [options] XWD_raster_file_name\n", progname);
     fprintf(stderr,"    %s converts an XWD raster file to PostScript.  If\n", 
@@ -238,9 +238,7 @@ static unsigned char _reverse_byte[0x100] = {
 };
 
 
-_swapbits (b, n)
-    register unsigned char *b;
-    register long n;
+static void _swapbits(register unsigned char *b, register long n)
 {
     do {
 	*b = _reverse_byte[*b];
@@ -252,8 +250,9 @@ _swapbits (b, n)
 /*
  *** fmax() - return the larger of two floating point numbers
  */
-fmax(a, b)
-    float a, b;
+/* KE: This had no return type before and so was int by default.
+   Changed it to float. */
+float fmax(float a, float b)
 {
     if(a >= b)
       return(a);

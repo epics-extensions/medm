@@ -3,8 +3,19 @@
 TOP = ../../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-#UNIX_OPT = NO
-#CC += -g
+#USR_CFLAGS += -H
+
+ifdef WIN32
+  USR_CFLAGS += /DWIN32 /D_WINDOWS
+  USR_LDFLAGS += /SUBSYSTEM:WINDOWS
+endif
+
+ifdef WIN32
+# The proper import/export declarations are not included for DLLs
+SHARED_LIBRARIES = NO
+endif
+
+HOST_OPT = NO
 
 LIBSRCS = dsimple.c pUtils.c ps_utils.c utilPrint.c xwd.c xwd2ps.c
 

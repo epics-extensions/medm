@@ -1,5 +1,5 @@
 /*
- *** xwd2ps.c - convert X11 window dumps to PostScript
+ * xwd2ps.c - convert X11 window dumps to PostScript
  *
  *  This program converts color Xwd files to color PostScript for
  *  printing on a color device, such as the QMS ColorScript 100.
@@ -110,13 +110,38 @@ without express or implied warranty.
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/XWDFile.h>
+
+/* KE: Commented this out.  Not found on WIN32 and apparently not needed */
+#if 0
 #ifndef SCO
 #include <sys/uio.h>
-#endif 
+#endif
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
+#ifndef WIN32
 #include <pwd.h>
+#endif
 
 #include "xwd2ps.h"
+
+/* Function prototypes */
+static void get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
+  unsigned char *buffer);
+static void skipLines(XWDFileHeader *winP, unsigned char *line,
+  unsigned char *buffer, int line_skip);
+static void parseArgs(int argc, char **argv, Options *option, Image *image,
+    Page *page);
+static int get_page_info(Page *the_page);
+static void get_raster_header(XWDFileHeader *win, char *w_name);
+static int getDumpType(XWDFileHeader *header);
+static int getOrientation(Page pg, Image im);
+
+/* The following prototype is not included in stdlib.h for Solaris
+   (unless __STDC__ = 0).  It is apparently not ANSI nor POSIX
+   standard */
+extern int getopt(int, char *const *, const char *);
 
 int intensity_map[4096];    /* max size of color map is 4096 (I hope) */
 unsigned char line[1280*3]; /* raster line buffer, max size */
@@ -130,15 +155,15 @@ Flag flag = { FALSE, FALSE, FALSE, FALSE, FALSE,
 	      FALSE, FALSE, FALSE, FALSE, FALSE, 
 	      FALSE, FALSE, FALSE, FALSE, FALSE };
 
-xwd2ps(argc, argv,fo)
-    int argc;
-    char **argv;
-    FILE *fo;
+void xwd2ps(int argc, char **argv, FILE *fo)
 {
+#ifndef WIN32
     struct passwd *pswd;     /* variables for userid, date and time */
+    char hostname[256];           /* name of host machine */
+#endif    
 
     extern int optind;
-    FILE *incfile, *fp;
+    FILE *incfile;
   
     XWDFileHeader win;
 
@@ -150,8 +175,8 @@ xwd2ps(argc, argv,fo)
 
   /* variables for image data */
     unsigned char intens;
-    int color, runlen, gray_index, intensity;
-    int c, i, j, im, intwidth, ig;
+    int color, runlen;
+    int c, i, j, im, intwidth;
     int outputcount;
   /*, image.ps_width, image.ps_height, image.pixels_width; */
     int line_skip, line_end, col_skip, col_start, col_end;
@@ -168,19 +193,20 @@ xwd2ps(argc, argv,fo)
 
     int dump_type = UNKNOWN;
 
-    unsigned char *buffer;     /* temporary work buffer */
+    unsigned char *buffer=NULL;   /* temporary work buffer */
     unsigned char rr, gg, bb;
     char *w_name;                 /* window name from X11-Window xwd header */
     char s_translate[80];         /* PostScript code to position image */
     char s_scale[80];             /* PostScript code to scale image */
     char s_matrix[80];            /* PostScript code for image matrix */
-    char hostname[256];           /* name of host machine */
 
   /* initializations */
     strcpy(progname, argv[0]);     /* copy the program name to a global */
     strcpy(page.type, "letter");   /* default page type */
     options.title.height    = 0.0; /* no title */
-    options.title.string    = (char *)malloc(256); /* no title */
+  /* KE: The following is not used and gives a memory leak */
+  /* options.title.string    = (char *)malloc(256); */
+    options.title.string    = NULL; /* no title */
     options.title.font_size = 16;  /* 16 point font */
     options.ncopies         = 1;   /* 1 copy of output */
     options.input_file.name = "standard input";
@@ -194,8 +220,8 @@ xwd2ps(argc, argv,fo)
   /* get the command-line flags and options */
     parseArgs(argc, argv, &options, &my_image, &page);   
 
-  /* determine the orientation of the image if it specified, otherwise
-     orientation is determined by the image shape later on */
+  /* determine the orientation of the image if it is specified,
+     otherwise orientation is determined by the image shape later on */
 
     if (flag.portrait == TRUE && flag.landscape == TRUE) {
 	fprintf (stderr, "%s: cannot use L and P options together.\n",progname);
@@ -230,13 +256,13 @@ xwd2ps(argc, argv,fo)
    *                     default fontsize = 10; .12 added for vertical spacing
    */
     if ((flag.date == TRUE) || (flag.time == TRUE))
-      page.time_date_height = 10/72. + .12;
+      page.time_date_height = (float)(10./72. + .12);
 
   /*
    *                    .1 added for vertical spacing
    */
     if (flag.title == TRUE)
-      options.title.height = options.title.font_size/72. + .1;
+      options.title.height = (float)(options.title.font_size/72. + .1);
 
     page.height_adjust += fmax(page.time_date_height, options.title.height); 
     page.yoffset       -= fmax(page.time_date_height, options.title.height); 
@@ -258,6 +284,15 @@ xwd2ps(argc, argv,fo)
   /* 
    * Get rasterfile header info
    */
+  /* KE: w_name was not defined.  It does not appear to be used here.
+    This is not a valid way to return the name to the program in any
+    event.  Set it to NULL.  It will be changed locally in
+    get_raster_header, which mallocs some storage and now frees it.
+    (It was not freed and caused a MLK previously.  If this routine
+    really needs w_name, then the code will have to be written
+    properly. */
+
+    w_name=NULL;
     get_raster_header(&win, w_name);
 
     dump_type = getDumpType(&win); /* TEMP result not used yet */
@@ -399,9 +434,11 @@ xwd2ps(argc, argv,fo)
     for (i=0; i< argc; i++)
       fprintf(fo," %s", argv[i]);
     fprintf(fo,"\n");
+#ifndef WIN32    
     pswd = getpwuid (getuid ());
     gethostname (hostname, sizeof hostname);
     fprintf(fo,"%% by %s:%s (%s)\n",hostname, pswd->pw_name, pswd->pw_gecos);
+#endif    
     fprintf(fo,"%% Information from XWD rasterfile header:\n");
     fprintf(fo,"%%   width =  %d, height = %d, depth = %d\n",win.pixmap_width, 
       win.pixmap_height, win.pixmap_depth);
@@ -503,7 +540,7 @@ xwd2ps(argc, argv,fo)
 			    outputcount += 4;
 			}
 			else {
-			    intens = 0.299*rr + 0.587*gg + 0.114*bb;
+			    intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
 			    fprintf(fo,"%02x%02x", runlen, intens);
 			    outputcount += 2;
 			}
@@ -518,7 +555,7 @@ xwd2ps(argc, argv,fo)
 			outputcount += 4;
 		    }
 		    else {
-			intens = 0.299*rr + 0.587*gg + 0.114*bb;
+			intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
 			fprintf(fo,"%02x%02x", runlen, intens);
 			outputcount += 2;
 		    }
@@ -545,7 +582,7 @@ xwd2ps(argc, argv,fo)
 		outputcount += 4;
 	    }
 	    else {
-		intens = 0.299*rr + 0.587*gg + 0.114*bb;
+		intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
 		fprintf(fo,"%02x%02x", runlen, intens);
 		outputcount += 2;
 	    }
@@ -579,7 +616,7 @@ xwd2ps(argc, argv,fo)
       /* Write out color table for color image */
 	fprintf(fo,"\n%% get rgb color table\n");
 	fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
-	for(im = 0; im < win.ncolors; im++) {
+	for(im = 0; im < (int)win.ncolors; im++) {
 	    if (flag.black2white == TRUE) {
 		if (colors[im].red == 255 && colors[im].green == 255 && colors[im].blue == 255) {
 		    colors[im].red = 0;
@@ -670,7 +707,7 @@ xwd2ps(argc, argv,fo)
 	  /* Write out color table for color image */
 	    fprintf(fo,"\n%% get rgb color table\n");
 	    fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
-	    for(im = 0; im < win.ncolors; im++) {
+	    for(im = 0; im < (int)win.ncolors; im++) {
 		fprintf(fo,"%02x",   colors[im].red);
 		fprintf(fo,"%02x",   colors[im].green);
 		fprintf(fo,"%02x\n", colors[im].blue);
@@ -687,12 +724,12 @@ xwd2ps(argc, argv,fo)
 	    get_next_raster_line(&win, line, buffer);
 	  /* unpack the 4 bit images into a byte */
 	    if (*(char *) &swaptest)
-	      for (j = 0; j < win.bytes_per_line; j++) {
+	      for (j = 0; j < (int)win.bytes_per_line; j++) {
 		  line4bits[2*j]   = line[j] & 0x0f;
 		  line4bits[2*j+1] = line[j] >> 4;
 	      }
 	    else
-	      for (j = 0; j < win.bytes_per_line; j++) {
+	      for (j = 0; j < (int)win.bytes_per_line; j++) {
 		  line4bits[2*j+1]   = line[j] & 0x0f;
 		  line4bits[2*j] = line[j] >> 4;
 	      }
@@ -782,6 +819,10 @@ xwd2ps(argc, argv,fo)
 	fprintf (stderr,"    (See program author.) \n");
 	exit(3);
     }
+
+  /* KE: free stuff that was allocated */
+    if(buffer) free(buffer);
+    if(options.title.string) free(options.title.string);
   
   /* KE: Changed the following because it wasn't working right for 24-bit */
 /*     switch (win.bits_per_pixel) { */  /* TEMP I don't know why this needs to be done - CAM */
@@ -803,14 +844,18 @@ xwd2ps(argc, argv,fo)
   /*
    * Copy include file if required
    */
+  /* KE: incfile was not defined.  Define it. (This change should be
+     tested if it is really desired to use this feature.) */
+    incfile=options.inc_file.pointer;
     if(flag.inc_file == TRUE) {
       /* Silicon Graphics did not recognize EOF so cludge this way */
 #ifdef mips 
 	while ((c = fgetc(incfile)) != ((char) -1))
+	  putchar(c);
 #else
-	  while ((c = fgetc(incfile)) != EOF)
+	while ((c = fgetc(incfile)) != EOF)
+	  putchar(c);
 #endif
-	    putchar(c);
 	fclose(incfile);
     }
 
@@ -837,9 +882,7 @@ xwd2ps(argc, argv,fo)
  ** getDumpType() - returns an int describing the type of dump we have
  */
 
-int
-getDumpType(header)
-    XWDFileHeader *header;
+static int getDumpType(XWDFileHeader *header)
 {
     switch(header->bits_per_pixel) {
     case 32:
@@ -849,8 +892,6 @@ getDumpType(header)
     case 8:
     case 4:
 	return(1); /* TEMP */
-	break;
-
     case 2:
     case 1:
     default:
@@ -872,42 +913,41 @@ getDumpType(header)
  *  Last Modification 2-1-89 by RCT.
  */
 
-get_page_info(the_page)
-    Page *the_page;
+static int get_page_info(Page *the_page)
 {
   /* letter paper size 8.5 x 11 */
     if ( (strcmp(the_page->type, "A") == 0) || (strcmp(the_page->type, "letter") == 0) ) {
-	the_page->xcenter = 8.5/2;
-	the_page->ycenter = 11.0/2 + .21;
-	the_page->maxwsize = 8.11;
-	the_page->maxhsize = 8.91;
-	the_page->default_width = 7.0;
-	the_page->default_height = 8.5;
+	the_page->xcenter = (float)(8.5/2);
+	the_page->ycenter = (float)(11.0/2. + .21);
+	the_page->maxwsize = (float)8.11;
+	the_page->maxhsize = (float)8.91;
+	the_page->default_width = (float)7.0;
+	the_page->default_height = (float)8.5;
 	return(0);
     }
     else if (strcmp(the_page->type, "B") == 0) {         /* 11 x 17 inch paper size */
-	the_page->xcenter = 11.0/2;
-	the_page->ycenter = 17.0/2 + .21;
-	the_page->maxwsize = 10.60;
-	the_page->maxhsize = 14.91;
-	the_page->default_width = 9.0;
-	the_page->default_height = 14.5;
+	the_page->xcenter = (float)(11.0/2.);
+	the_page->ycenter = (float)(17.0/2. + .21);
+	the_page->maxwsize = (float)10.60;
+	the_page->maxhsize = (float)14.91;
+	the_page->default_width = (float)9.0;
+	the_page->default_height = (float)14.5;
 	return(0);
     }
     else if (strcmp(the_page->type, "A4") == 0 ) {       /* A4 paper size 8.3 x 11.7 */
-	the_page->xcenter = 8.3/2;
-	the_page->ycenter = 11.7/2 + .21;
-	the_page->maxwsize = 8.26;
-	the_page->maxhsize = 9.60;
-	the_page->default_width = 7.25;
-	the_page->default_height = 9.0;
+	the_page->xcenter = (float)(8.3/2.);
+	the_page->ycenter = (float)(11.7/2. + .21);
+	the_page->maxwsize = (float)8.26;
+	the_page->maxhsize = (float)9.60;
+	the_page->default_width = (float)7.25;
+	the_page->default_height = (float)9.0;
 	return(0);
     }
     else if (strcmp(the_page->type, "A3") == 0 ) {       /* A3 paper size 11.7 x 16.6 */
-	the_page->xcenter = 11.7/2;
-	the_page->ycenter = 16.6/2 + .21;
-	the_page->maxwsize = 11.69;
-	the_page->maxhsize = 16.53;
+	the_page->xcenter = (float)(11.7/2.);
+	the_page->ycenter = (float)(16.6/2. + .21);
+	the_page->maxwsize = (float)11.69;
+	the_page->maxhsize = (float)16.53;
 	the_page->default_width = 9.0;
 	the_page->default_height = 14.0;
 	return(0);
@@ -919,9 +959,7 @@ get_page_info(the_page)
  ** get_raster_header() - read in the xwd header, including the colormap 
  **                       and the window title
  */
-get_raster_header(win, w_name)
-    XWDFileHeader *win;
-    char *w_name;
+static void get_raster_header(XWDFileHeader *win, char *w_name)
 {
     unsigned long swaptest = 1;
     int i, zflg, idifsize;
@@ -963,19 +1001,21 @@ get_raster_header(win, w_name)
     if(idifsize = (unsigned)(win->header_size - sizeof *win)) {
 	w_name = (char *)malloc(idifsize);
 	fullread(0, w_name, idifsize);
+      /* KE: Freed w_name to avoid MLK (Doesn't appear to be used anyway) */
+	if(w_name) free(w_name);
     }
     if(win->ncolors) {
 	if( (colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)))) == NULL) {
 	    fprintf (stderr, "%s: can't get memory for color map\n", progname);
 	    exit(1);
 	}
-	fullread(0, colors, win->ncolors * sizeof(XColor));
+	fullread(0, (char *)colors, win->ncolors * sizeof(XColor));
       /*
        * Scale the values received from the colormap to 8 bits
        */
 
 	if ((!*(char *) &swaptest) || (win->byte_order))
-	  for(i = 0; i < win->ncolors; i++) {
+	  for(i = 0; i < (int)win->ncolors; i++) {
 	      colors[i].red   = colors[i].red   >> 8;
 	      colors[i].green = colors[i].green >> 8;
 	      colors[i].blue  = colors[i].blue  >> 8;
@@ -987,9 +1027,8 @@ get_raster_header(win, w_name)
  ** get_next_raster_line() -  returns the next raster line in the image.
  * written 2-12-89 by R.C.Tatar
  */
-get_next_raster_line(win, linec, buffer)
-    XWDFileHeader *win;
-    unsigned char *linec, *buffer;
+static void get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
+  unsigned char *buffer)
 {
     unsigned char *bufptr, *bufptr1;
     int iwbytes =  win->bytes_per_line;
@@ -998,7 +1037,7 @@ get_next_raster_line(win, linec, buffer)
 
     switch(iwbits) {
     case 32:
-	fullread(0, buffer, iwbytes);
+	fullread(0, (char *)buffer, iwbytes);
       /* For this case, copy byte triplets into line */
 	bufptr1 = linec;
 	bufptr = buffer;
@@ -1009,17 +1048,14 @@ get_next_raster_line(win, linec, buffer)
 	    *bufptr1++ = *bufptr++;
 	}
 	return;
-	break;
 
     case 8:
-	fullread(0, linec, iwbytes);
+	fullread(0, (char *)linec, iwbytes);
 	return;
-	break;
 
     case 4:
-	fullread(0, linec, iwbytes);
+	fullread(0, (char *)linec, iwbytes);
 	return;
-	break;
 
     default:
       /* error message if no case selected  */
@@ -1033,10 +1069,8 @@ get_next_raster_line(win, linec, buffer)
 /* 
  ** skipLines() - skip over unprinted parts of the image 
  */
-skipLines(winP, line, buffer, line_skip)
-    XWDFileHeader *winP;
-    char line[], buffer[];
-    int line_skip;
+static void skipLines(XWDFileHeader *winP, unsigned char *line,
+  unsigned char *buffer, int line_skip)
 {
     int i;
 
@@ -1047,12 +1081,9 @@ skipLines(winP, line, buffer, line_skip)
 /*
  *** parseArgs() - figure out which command line options were set
  */
-parseArgs(argc, argv, option, image, page)
-    int argc;
-    char **argv;
-    Options *option;
-    Image *image;
-    Page *page;
+#include <stdlib.h>
+static void parseArgs(int argc, char **argv, Options *option, Image *image,
+    Page *page)
 {
     char c;
     extern char *optarg;
@@ -1155,9 +1186,13 @@ parseArgs(argc, argv, option, image, page)
 /*
  *** getOrientation() - get the orientation of the image
  */
-getOrientation(pg, im)
-    Page pg;
-    Image im;
+/* KE: Not sure what this is doing but it isn't right.  k1 and k2 are
+almost always small positive numbers less than 1.  Previously fmax
+returned an int, so both were 0 and PORTRAIT was always chosen.  With
+fmax defined as an float, the result is the reverse of what you want.
+The problem has been fixed by passing the -P (portrait) option.  This
+routine will have to be fixed if something else is wanted.  */
+static int getOrientation(Page pg, Image im)
 {
     float k1, k2, k;
 

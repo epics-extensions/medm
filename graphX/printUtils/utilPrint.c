@@ -1,27 +1,27 @@
-/***
- *** Print Utilities (currently supporting only PostScript)
- ***
- *** MDA - 28 June 1990
- ***/
+/* Print Utilities (currently supporting only PostScript) */
 
 #define DEBUG_PRINT 0
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
+/* KE: Formerly #include <sys/time.h> */
+#include <time.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
 /*
  * routine through which all graphic print requests are channeled
  */
 
+/* KE: Added for function prototypes */
+#include "xwd2ps.h"
 
 void utilPrint(display,window,fileName)
     Display *display;
     Window window;
     char *fileName;
 {
-    char *commandBuffer, *newFileName, *psFileName, *printer;
+    char *commandBuffer=NULL, *newFileName=NULL, *psFileName=NULL, *printer=NULL;
     time_t seconds;
     FILE *fo;
     int status;
@@ -56,14 +56,17 @@ void utilPrint(display,window,fileName)
 #endif
 
     {
-	char *myArgv[4];
+	char *myArgv[5];
 	int myArgc;
 
+      /* KE:" Fixed to always be portrait since the result has always
+         previously been portrait.  See the notes for getOrientation.  */
 	myArgv[0] = "xwd2ps";
-	myArgv[1] = "-d";
-	myArgv[2] = "-t";
-	myArgv[3] = newFileName;
-	myArgc = 4;
+	myArgv[1] = "-d";     /* Date */
+	myArgv[2] = "-t";     /* Time */
+	myArgv[3] = "-P";     /* Portrait */
+	myArgv[4] = newFileName;
+	myArgc = 5;
 
 	fo = fopen(psFileName,"w+");
 	if (fo == NULL) {
@@ -105,7 +108,8 @@ void utilPrint(display,window,fileName)
 #endif     /* #ifndef VMS */
 #endif     /* #if DEBUG_PRINT == 0 */
 
-  /* KE: Need to free these */
-    free(newFileName);
-    free(psFileName);
+  /* KE: Need to free these.  Don't free print, which is an environment variable */
+    if(commandBuffer) free(commandBuffer);
+    if(newFileName) free(newFileName);
+    if(psFileName) free(psFileName);
 }

@@ -1,9 +1,11 @@
 /* $XConsortium: dsimple.c,v 1.10 89/12/13 11:46:48 rws Exp $ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include <stdio.h>
 /*
  * Other_stuff.h: Definitions of routines in other_stuff.
  *
@@ -11,6 +13,10 @@
  *
  * Send bugs, etc. to chariot@athena.mit.edu.
  */
+
+/* KE: Added for function prototypes */
+#include "dsimple.h"
+#include "xwd2ps.h"
 
 #ifdef _NO_PROTO
 
@@ -46,12 +52,9 @@ void Fatal_Error(char*, char*);
  * Send bugs, etc. to chariot@athena.mit.edu.
  */
 
-
-/* This stuff is defined in the calling program by just_display.h */
-extern char *program_name;
-extern Display *dpy;
-extern int screen;
-
+char *program_name = "unknown_program";       /* Name of this program */
+Display *dpy;
+int screen;
 
 /*
  * Malloc: like malloc but handles out of memory using Fatal_Error.
@@ -61,7 +64,9 @@ extern int screen;
 char *Malloc(size)
     unsigned size;
 {
-    char *data, *malloc();
+  /* KE: Wrong prototype for malloc */
+/*      char *data, *malloc(); */
+    char *data;
 
     if (!(data = malloc(size)))
       Fatal_Error("Out of memory!"," ");
@@ -77,7 +82,9 @@ char *Realloc(ptr, size)
     char *ptr;
     int size;
 {
-    char *new_ptr, *realloc();
+  /* KE: Wrong prototype for realloc */
+/*      char *new_ptr, *realloc(); */
+    char *new_ptr;
 
     if (!ptr)
       return(Malloc(size));
@@ -180,7 +187,8 @@ XFontStruct *Open_Font(name)
 /*
  * Beep: Routine to beep the display.
  */
-void Beep()
+/* KE: changed to xwdBeep to avoid conflict on WIN32 */
+void xwdBeep()
 {
     XBell(dpy, 50);
 }
@@ -471,9 +479,9 @@ Window Window_With_Name(dpy, top, name)
       return(top);
 
     if (!XQueryTree(dpy, top, &dummy, &dummy, &children, &nchildren))
-      return(0);
+      return((Window)0);
 
-    for (i=0; i<nchildren; i++) {
+    for (i=0; i < (int)nchildren; i++) {
 	w = Window_With_Name(dpy, children[i], name);
 	if (w)
 	  break;
@@ -482,22 +490,35 @@ Window Window_With_Name(dpy, top, name)
     return(w);
 }
 
+/* KE: Rewrote this as a variable args function */
+#if 0
 /*
  * outl: a debugging routine.  Flushes stdout then prints a message on stderr
  *       and flushes stderr.  Used to print messages when past certain points
  *       in code so we can tell where we are.  Outl may be invoked like
  *       printf with up to 7 arguments.
  */
-outl(msg, arg0,arg1,arg2,arg3,arg4,arg5,arg6)
-    char *msg;
-    char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
+void outl(char *msg, char *arg0, char *arg1, char *arg2, char*arg3, char *arg4,
+  char *arg5, char *arg6)
 {
     fflush(stdout);
     fprintf(stderr, msg, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
     fprintf(stderr, "\n");
     fflush(stderr);
 }
+#endif
+int outl(const char *fmt, ...)
+{
+    int n;
+    
+    va_list vargs;
+    
+    va_start(vargs,fmt);
+    n=vfprintf(stderr,fmt,vargs);
+    va_end(vargs);
 
+    return n;
+}
 
 /*
  * Standard fatal error routine - call like printf but maximum of 7 arguments.
