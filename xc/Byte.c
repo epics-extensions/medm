@@ -1,12 +1,11 @@
 /*************************************************************************
  * Program : Byte.c                                                      *
- * Author  : David M. Wetherholt - DMW Software 1994                     *
+ * Author  : David M. Wetherholt                                         *
  * Lab     : Continuous Electron Beam Accelerator Facility               *
- * Modified: 7 July 94                                                   *
+ * Modified: 10 Apr 98                                                   *
  * Mods    : 1.0 Original                                                *
  *************************************************************************/
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/StringDefs.h>
@@ -171,7 +170,7 @@ static void Initialize(request, new)
   /* printf("BY: executing Initialize1\n"); */
 
   /****** Validate public instance variable settings.
-    Check orientation resource setting. */
+	  Check orientation resource setting. */
     if ((new->byte.orient != XcVert) && (new->byte.orient != XcHoriz)){
 	XtWarning("Byte: invalid orientation setting");
 	new->byte.orient = XcHoriz;
@@ -220,11 +219,11 @@ static void Resize(w)
     w->byte.face.height = w->core.height;
 
   /****** Calculate min/max string attributes
-    Print_bounds(w, upper, lower);
-    max_val_width = XTextWidth(w->control.font, upper, strlen(upper));
-    min_val_width = XTextWidth(w->control.font, lower, strlen(lower));
-    max_width = MAX(min_val_width,max_val_width) + 2*w->control.shade_depth;
-    max_width = w->byte.face.width - 2*w->control.shade_depth; */
+	  Print_bounds(w, upper, lower);
+	  max_val_width = XTextWidth(w->control.font, upper, strlen(upper));
+	  min_val_width = XTextWidth(w->control.font, lower, strlen(lower));
+	  max_width = MAX(min_val_width,max_val_width) + 2*w->control.shade_depth;
+	  max_width = w->byte.face.width - 2*w->control.shade_depth; */
    
     DPRINTF(("Byte: done Resize\n"));
 }
@@ -241,12 +240,12 @@ static void Redisplay(w, event)
 {
     int j;
     char upper[30], lower[30];
-
+    
   /****** Check to see whether or not the widget's window is mapped */
     if (!XtIsRealized((Widget)w) || !w->core.visible) return;
     DPRINTF(("Byte: executing Redisplay\n"));
   /* printf("BY: executing Redisplay1\n"); */
-
+    
   /****** Draw the new values of Bar indicator and the value string */
     Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
     DPRINTF(("Byte: done Redisplay\n"));
@@ -261,14 +260,14 @@ static Boolean SetValues(cur, req, new)
     ByteWidget cur, req, new;
 {
     Boolean do_redisplay = False, do_resize = False;
-
+    
     DPRINTF(("Byte: executing SetValues\n"));
-
+    
   /****** Check widget color resource settings */
     if ((new->byte.byte_foreground != cur->byte.byte_foreground) ||
       (new->byte.byte_background != cur->byte.byte_background))
       do_redisplay = True;
-
+    
   /****** Check orientation resource setting */
     if (new->byte.orient != cur->byte.orient) {
 	do_redisplay = True;
@@ -277,7 +276,7 @@ static Boolean SetValues(cur, req, new)
 	    new->byte.orient = XcHoriz;
 	}
     }
-
+    
   /****** Check the interval resource setting */
     if (new->byte.interval != cur->byte.interval) {
 	if (cur->byte.interval > 0) XtRemoveTimeOut (cur->byte.interval_id);
@@ -286,17 +285,17 @@ static Boolean SetValues(cur, req, new)
 	    XtAppAddTimeOut( XtWidgetToApplicationContext((Widget)new), 
 	      new->byte.interval, Get_value, new);
     }
-
+    
   /****** Check the valueVisible resource setting
-    if (new->byte.value_visible != cur->byte.value_visible) {
-    do_redisplay = True;
-    if ((new->byte.value_visible != True) &&
-    (new->byte.value_visible != False)) {
-    XtWarning("Byte: invalid valueVisible setting");
-    new->byte.value_visible = True;
-    }
-    } */
-
+	  if (new->byte.value_visible != cur->byte.value_visible) {
+	  do_redisplay = True;
+	  if ((new->byte.value_visible != True) &&
+	  (new->byte.value_visible != False)) {
+	  XtWarning("Byte: invalid valueVisible setting");
+	  new->byte.value_visible = True;
+	  }
+	  } */
+    
   /****** Check to see if the value has changed. */
     if ((((new->value.datatype == XcLval) || (new->value.datatype == XcHval)) 
       && (new->value.val.lval != cur->value.val.lval)) ||
@@ -304,10 +303,10 @@ static Boolean SetValues(cur, req, new)
 	(new->value.val.fval != cur->value.val.fval))) {
 	do_redisplay = True;
     }
-
+    
   /* (MDA) want to force resizing if min/max changed  or decimals setting */
     if (new->value.decimals != cur->value.decimals) do_resize = True;
-
+    
     if (((new->value.datatype == XcLval) || (new->value.datatype == XcHval)) &&
       ((new->value.lower_bound.lval != cur->value.lower_bound.lval) ||
 	(new->value.upper_bound.lval != cur->value.upper_bound.lval) )) {
@@ -322,7 +321,7 @@ static Boolean SetValues(cur, req, new)
 	Resize(new);
 	do_redisplay = True;
     }
-
+    
     DPRINTF(("Byte: done SetValues\n"));
     return do_redisplay;
 }
@@ -340,14 +339,14 @@ static XtGeometryResult QueryGeometry(w, proposed, answer)
 {
   /****** Set the request mode mask for the returned answer */
     answer->request_mode = CWWidth | CWHeight;
-
+    
   /****** Set the recommended size */
     answer->width=(w->core.width > MAX_BY_WIDTH) ? MAX_BY_WIDTH : w->core.width;
     answer->height=(w->core.height > MAX_BY_HEIGHT) 
       ? MAX_BY_HEIGHT : w->core.height;
-
+    
   /****** Check the proposed dimensions. If the proposed size is larger than
-    appropriate, return the recommended size.  */
+	  appropriate, return the recommended size.  */
     if (((proposed->request_mode & (CWWidth | CWHeight)) == (CWWidth | CWHeight))
       && proposed->width == answer->width && proposed->height == answer->height)
       return XtGeometryYes;
@@ -364,31 +363,31 @@ static void Destroy(w)
  *************************************************************************/
     ByteWidget w;
 {
-
+    
     if (w->byte.interval > 0) XtRemoveTimeOut (w->byte.interval_id);
 }
 
 static void Get_value(client_data, id)
   /*************************************************************************
- * Get Value: This function is the time out procedure called at          *
- *   XcNinterval intervals.  It calls the application registered callback*
- *   function to get the latest value and updates the Byte display   *
- *   accordingly.                                                        *
- *************************************************************************/
+   * Get Value: This function is the time out procedure called at          *
+   *   XcNinterval intervals.  It calls the application registered callback*
+   *   function to get the latest value and updates the Byte display   *
+   *   accordingly.                                                        *
+   *************************************************************************/
     XtPointer client_data;
     XtIntervalId *id;
 {
     static XcCallData call_data;
     ByteWidget w = (ByteWidget)client_data;
-   
+    
   /****** Get the new value by calling the application's callback if it exists */
     if (w->byte.update_callback == NULL) return;
-
+    
   /****** Re-register this TimeOut procedure for the next interval */
     if (w->byte.interval > 0) w->byte.interval_id = 
 				XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)w),
 				  w->byte.interval, Get_value, client_data);
-
+    
   /****** Set the current value and datatype before calling the callback */
     call_data.dtype = w->value.datatype;
     call_data.decimals = w->value.decimals;
@@ -397,28 +396,28 @@ static void Get_value(client_data, id)
     else if (w->value.datatype == XcFval)
       call_data.value.fval = w->value.val.fval;
     XtCallCallbacks((Widget)w, XcNupdateCallback, &call_data);
-
+    
   /****** Update the new value, update the Byte display */
     if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
       w->value.val.lval = call_data.value.lval;
     else if (w->value.datatype == XcFval)
       w->value.val.fval = call_data.value.fval;
-
+    
     if (XtIsRealized((Widget)w))
       Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
 }
 
 void XcBYUpdateValue(w, value)
   /*************************************************************************
- * Xc Byte Update Value:  This convenience function is called by the     *
- *   application in order to update the value (a little quicker than     *
- *   using XtSetArg/XtSetValue).  The application passes the new value   *
- *   to be updated with.                                                 *
- *************************************************************************/
+   * Xc Byte Update Value:  This convenience function is called by the     *
+   *   application in order to update the value (a little quicker than     *
+   *   using XtSetArg/XtSetValue).  The application passes the new value   *
+   *   to be updated with.                                                 *
+   *************************************************************************/
     ByteWidget w;
     XcVType *value;
 {
-
+    
     if (!w->core.visible) return;
     
   /****** Update the new value, then update the Byte display. */
@@ -427,7 +426,7 @@ void XcBYUpdateValue(w, value)
 	  w->value.val.lval = value->lval;
 	else if (w->value.datatype == XcFval)
 	  w->value.val.fval = value->fval;
-
+	
 	if (XtIsRealized((Widget)w))
 	  Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
     }
@@ -435,15 +434,15 @@ void XcBYUpdateValue(w, value)
 
 void XcBYUpdateByteForeground(w, pixel)
   /*************************************************************************
- * Xc Byte Update Byte Foreground: This convenience function is called   *
- *   by the application in order to update the value (a little quicker   *
- *   than using XtSetArg/XtSetValue).  The application passes the new    *
- *   value to be updated with.                                           *
- *************************************************************************/
+   * Xc Byte Update Byte Foreground: This convenience function is called   *
+   *   by the application in order to update the value (a little quicker   *
+   *   than using XtSetArg/XtSetValue).  The application passes the new    *
+   *   value to be updated with.                                           *
+   *************************************************************************/
     ByteWidget w;
     unsigned long pixel;
 {
-
+    
   /* Local variables */
     if (!w->core.visible) return;
     
@@ -457,9 +456,9 @@ void XcBYUpdateByteForeground(w, pixel)
 
 static void Draw_display( w, display, drawable, gc)
   /*************************************************************************
- * Draw Display: This function redraws the Bar indicator and the value   *
- *   string in the Value Box.                                            *
- *************************************************************************/
+   * Draw Display: This function redraws the Bar indicator and the value   *
+   *   string in the Value Box.                                            *
+   *************************************************************************/
     ByteWidget w;
     Display *display;
     Drawable drawable;
@@ -467,9 +466,9 @@ static void Draw_display( w, display, drawable, gc)
 {
     int  back_fg=0, dec_val, i, j, segn;
     float seg;
-
+    
   /* printf("BY: Draw display2\n"); */
-
+    
   /****** Draw the Byte indicator, fill the Bar with its background color */
     XSetForeground(display, gc, w->byte.byte_background); 
     XFillRectangle(display, drawable, gc, w->byte.face.x, w->byte.face.y, 
@@ -479,7 +478,7 @@ static void Draw_display( w, display, drawable, gc)
     segn = abs(segn) + 1;
     dec_val = (int)w->value.val.fval;
     XSetForeground(display, gc, XBlackPixel(display, 0));
-
+    
   /****** Hi->Low Byte */
     if (back_fg) {
       /****** Vertical hi->low byte */
@@ -490,11 +489,12 @@ static void Draw_display( w, display, drawable, gc)
 		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
 		    XSetForeground(display, gc, w->byte.byte_foreground); 
 		    XFillRectangle(display, drawable, gc, w->byte.face.x, j,
-		      w->byte.face.x + w->byte.face.width, (int)(seg-1.0));
+		      w->byte.face.x + w->byte.face.width, ((int)seg));
 		    XSetForeground(display, gc, XBlackPixel(display, 0));
 		}
-		XDrawLine(display, drawable, gc, w->byte.face.x, j-1, 
-		  w->byte.face.x + w->byte.face.width, j-1);
+		if (i < w->byte.sbit) 
+		  XDrawLine(display, drawable, gc, w->byte.face.x, j, 
+		    w->byte.face.x + w->byte.face.width, j);
 	    }
 	} else {
 	  /****** Horizontal hi->low byte */
@@ -504,22 +504,22 @@ static void Draw_display( w, display, drawable, gc)
 		  - (int)(seg + 1.0);
 		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
 		    XSetForeground(display, gc, w->byte.byte_foreground); 
-		    XFillRectangle(display, drawable, gc, j, w->byte.face.y, 
-		      (int)seg-1, w->byte.face.height);
+		    XFillRectangle(display, drawable, gc, j+1, w->byte.face.y, 
+		      (int)seg, w->byte.face.height);
 		    XSetForeground(display, gc, XBlackPixel(display, 0));
 		}
-		XDrawLine(display, drawable, gc, j-1, w->byte.face.y, 
-		  j-1, w->byte.face.height);
+		XDrawLine(display, drawable, gc, j+1, w->byte.face.y, 
+		  j+1, w->byte.face.height);
 	    }
 	}
-
+	
       /****** Low->Hi Byte */
     } else {
       /****** Vertical low->hi byte */
 	if (w->byte.orient == XcVert) {
 	    seg = ((float)w->byte.face.height / segn);
 	    for (i=w->byte.sbit; i < w->byte.ebit+1; i++) {
-		j = (int)(seg * (float)i);
+		j = (int)(seg * (float)(i - w->byte.sbit));
 		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
 		    XSetForeground(display, gc, w->byte.byte_foreground);
 		    XFillRectangle(display, drawable, gc, w->byte.face.x, j,
@@ -550,14 +550,14 @@ static void Draw_display( w, display, drawable, gc)
 
 static void Print_bounds(w, upper, lower)
   /*************************************************************************
- * Print Bounds: This is a utility function used by the Redisplay and    *
- *   Resize methods to print the upper and lower bound values as strings *
- *   for displaying and resizing purposes.                               *
- *************************************************************************/
+   * Print Bounds: This is a utility function used by the Redisplay and    *
+   *   Resize methods to print the upper and lower bound values as strings *
+   *   for displaying and resizing purposes.                               *
+   *************************************************************************/
     ByteWidget w;
     char *upper, *lower;
 {
-
+    
     if (w->value.datatype == XcLval) {
 	cvtLongToString(w->value.upper_bound.lval, upper);
 	cvtLongToString(w->value.lower_bound.lval, lower);
