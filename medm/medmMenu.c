@@ -273,7 +273,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
     XtSetArg(args[1],XmNheight,dlMenu->object.height); n++;
     XtSetArg(args[2],XmNforeground,
       ((dlMenu->clrmod == ALARM)?
-	alarmColorPixel[pd->severity] :
+	alarmColor(pd->severity) :
 	pm->updateTask->displayInfo->colormap[dlMenu->control.clr])); n++;
 	XtSetArg(args[3],XmNbackground,
 	  pm->updateTask->displayInfo->colormap[dlMenu->control.bclr]); n++;
@@ -361,8 +361,8 @@ static void menuDraw(XtPointer cd) {
 		case DISCRETE :
 		    break;
 		case ALARM :
-		    XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
-		    XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
+		    XtVaSetValues(menuWidget,XmNforeground,alarmColor(pd->severity),NULL);
 		    break;
 		default :
 		    medmPostMsg(1,"menuUpdateValueCb:\n");

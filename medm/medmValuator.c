@@ -680,7 +680,7 @@ void valuatorRedrawValue(Valuator *pv,
 	precision = pd->precision;
 	font = fontTable[pv->fontIndex];
 	if (dlValuator->clrmod == ALARM)
-	  foreground = alarmColorPixel[pv->record->severity];
+	  foreground = alarmColor(pv->record->severity);
     } else {
 	precision = 0;
 	font = fontTable[valuatorFontListIndex(dlValuator)];

@@ -2604,7 +2604,7 @@ static void createCursors()
     XFreePixmap(display,maskPixmap);
 
   /* no write access cursor */
-    colors[0].pixel = alarmColorPixel[MAJOR_ALARM];
+    colors[0].pixel = alarmColor(MAJOR_ALARM);
     colors[1].pixel = WhitePixel(display,screenNum);
     XQueryColors(display,cmap,colors,2);
 

@@ -793,8 +793,9 @@ EXTERN XmString executePopupMenuButtons[NUM_EXECUTE_POPUP_ENTRIES];
 
 EXTERN Pixel defaultForeground, defaultBackground;
 
-/* should be dimensioned to ALARM_NSEV (alarm.h), with corresponding values */
-EXTERN Pixel alarmColorPixel[4];
+/* should be dimensioned to ALARM_NSEV+1 (alarm.h), with corresponding values */
+#define ALARM_MAX 5
+EXTERN Pixel alarmColorPixel[ALARM_MAX];
 
 /* initial (default - not related to any displays) colormap */
 EXTERN Pixel defaultColormap[DL_MAX_COLORS];

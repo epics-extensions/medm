@@ -5092,6 +5092,17 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 #endif    
 }
 
+Pixel alarmColor(int type)
+{
+
+    if(type >= 0 &&  type < ALARM_MAX) {
+	return alarmColorPixel[type];
+    } else {
+      /* In case it is not defined properly */
+	return alarmColorPixel[ALARM_MAX-1];
+    }
+}
+
 /* Debugging routines */
 
 #if DEBUG_CARTESIAN_PLOT

@@ -364,7 +364,7 @@ void StartDrag(Widget w, XEvent *event)
 	    while (i < count) {
 		if (record[i] && record[i]->name) {
 		    XSetForeground(display,gc,
-		      alarmColorPixel[record[i]->severity]);
+		      alarmColor(record[i]->severity));
 		    XDrawString(display,sourcePixmap,gc,x,y,record[i]->name,
 		      strlen(record[i]->name));
 		    channelName = record[i]->name;

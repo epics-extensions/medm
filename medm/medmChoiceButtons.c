@@ -313,7 +313,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
     for (i = 0; i <= pd->hopr; i++) {
 	labels[i] = pd->stateStrings[i];
     }
-    fg = (pCB->clrmod == ALARM ? alarmColorPixel[pd->severity] :
+    fg = (pCB->clrmod == ALARM ? alarmColor(pd->severity) :
       cb->updateTask->displayInfo->colormap[pCB->control.clr]);
     bg = cb->updateTask->displayInfo->colormap[pCB->control.bclr];
     dlElement->widget = createToggleButtons(
@@ -373,7 +373,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		    break;
 		case ALARM :
 		  /* set alarm color */
-		    XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
 		    break;
 		default :
 		    medmPostMsg(1,"choiceButtonUpdateValueCb:\n");

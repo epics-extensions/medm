@@ -225,7 +225,7 @@ static void indicatorDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcIndUpdateIndicatorForeground(widget,alarmColorPixel[pd->severity]);
+		XcIndUpdateIndicatorForeground(widget,alarmColor(pd->severity));
 		break;
 	    }
 	} else {
@@ -285,7 +285,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     if (widget != NULL) {
 	Pixel pixel;
 	pixel = (dlIndicator->clrmod == ALARM) ?
-	  alarmColorPixel[pd->severity] :
+	  alarmColor(pd->severity) :
 	  pi->updateTask->displayInfo->colormap[dlIndicator->monitor.clr];
 	XtVaSetValues(widget,
 	  XcNlowerBound,lopr.lval,

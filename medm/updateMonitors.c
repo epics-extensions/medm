@@ -239,7 +239,7 @@ void draw3DQuestionMark(UpdateTask *pt) {
     char dotted[2] = {1,1};
 
 
-    bgc = alarmColorPixel[2];
+    bgc = alarmColor(MAJOR_ALARM);
     XmGetColors(XtScreen(pt->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
 
     qmlw = (h > w) ? (w / 10) : (h / 10);  /* calculate the line width */

@@ -211,7 +211,7 @@ static void byteDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcBYUpdateByteForeground(widget,alarmColorPixel[pd->severity]);
+		XcBYUpdateByteForeground(widget,alarmColor(pd->severity));
 		break;
 	    }
 	} else {

@@ -363,6 +363,7 @@ void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
+Pixel alarmColor(int type);
 int localCvtLongToHexString(long source, char *pdest);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,

@@ -375,7 +375,7 @@ void textEntryDraw(XtPointer cd) {
 		case DISCRETE:
 		    break;
 		case ALARM:
-		    XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
 		    break;
 		}
 	    }

@@ -247,7 +247,7 @@ static void barDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcBGUpdateBarForeground(widget,alarmColorPixel[pd->severity]);
+		XcBGUpdateBarForeground(widget,alarmColor(pd->severity));
 		break;
 	    }
 	} else {
@@ -302,7 +302,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     }
 
     pixel = (dlBar->clrmod == ALARM) ?
-      alarmColorPixel[pd->severity] :
+      alarmColor(pd->severity) :
 	pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
     XtVaSetValues(widget,
       XcNlowerBound,lopr.lval,

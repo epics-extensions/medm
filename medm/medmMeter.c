@@ -210,7 +210,7 @@ static void meterDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcMeterUpdateMeterForeground(widget,alarmColorPixel[pd->severity]);
+		XcMeterUpdateMeterForeground(widget,alarmColor(pd->severity));
 		break;
 	    }
 	} else {
@@ -264,7 +264,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     if (widget != NULL) {
 	Pixel pixel;
 	pixel = (dlMeter->clrmod == ALARM) ?
-	  alarmColorPixel[pd->severity] :
+	  alarmColor(pd->severity) :
 	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
 	XtVaSetValues(widget,
 	  XcNlowerBound,lopr.lval,

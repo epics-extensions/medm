@@ -222,7 +222,7 @@ static void ovalDraw(XtPointer cd) {
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColorPixel[pd->severity];
+	    gcValues.foreground = alarmColor(pd->severity);
 	    break;
 	}
 	gcValues.line_width = dlOval->attr.width;

@@ -355,7 +355,7 @@ static void textUpdateDraw(XtPointer cd) {
 		gcValues.foreground = displayInfo->colormap[dlTextUpdate->monitor.clr];
 		break;
 	    case ALARM :
-		gcValues.foreground =  alarmColorPixel[pd->severity];
+		gcValues.foreground =  alarmColor(pd->severity);
 		break;
 	    }
 	    gcValues.background = displayInfo->colormap[dlTextUpdate->monitor.bclr];

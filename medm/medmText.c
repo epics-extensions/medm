@@ -235,7 +235,7 @@ static void textDraw(XtPointer cd) {
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColorPixel[pd->severity];
+	    gcValues.foreground = alarmColor(pd->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];

@@ -59,10 +59,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* "green", "yellow", "red", "white", */
 #ifdef WIN32
 /* Should not be necessary -- May be an Exceed problem */
-static  char *alarmColorString[] = {"Green3","Yellow","Red","White",};
+static  char *alarmColorString[ALARM_MAX] = {"Green3","Yellow","Red",
+					     "White","Gray80"};
 #else
-static  char *alarmColorString[] = {"#00C000",
-				    "#FFFF00","#FF0000","#FFFFFF",};
+static  char *alarmColorString[ALARM_MAX] = {"#00C000","#FFFF00","#FF0000",
+					     "#FFFFFF","#CCCCCC"};
 #endif
 
 /* From the O'Reilly books - this scalable font handling code:
@@ -222,6 +223,8 @@ void medmInit(char *displayFont)
       cmap,alarmColorString[MAJOR_ALARM]);
     alarmColorPixel[INVALID_ALARM]=getPixelFromColormapByString(display,screenNum,
       cmap,alarmColorString[INVALID_ALARM]);
+    alarmColorPixel[ALARM_MAX-1]=getPixelFromColormapByString(display,screenNum,
+      cmap,alarmColorString[ALARM_MAX-1]);
 
   /* Initialize Channel Access */
     medmCAInitialize();

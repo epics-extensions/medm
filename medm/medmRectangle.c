@@ -218,7 +218,7 @@ static void rectangleDraw(XtPointer cd) {
 	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
 	    break;
 	case ALARM :
-	    gcValues.foreground = alarmColorPixel[pd->severity];
+	    gcValues.foreground = alarmColor(pd->severity);
 	    break;
 #endif
 	}
