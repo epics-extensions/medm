@@ -233,7 +233,7 @@ void hideDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void meterUpdateValueCb(XtPointer cd) {
-    MedmMeter *pm = (MedmMeter *) ((Record *) cd)->clientData;
+    MedmMeter *pm = (MedmMeter *) ((Record *)cd)->clientData;
     updateTaskMarkUpdate(pm->updateTask);
 }
 

@@ -27,13 +27,18 @@
 /* These must start with 4, 0-3 are for orientation menu buttons */
 #define PRINT_SETUP_OK_BTN         4
 #define PRINT_SETUP_CANCEL_BTN     5
-#define PRINT_SETUP_HELP_BTN       6
-#define PRINT_SETUP_CMD_FIELD      7
-#define PRINT_SETUP_ORIENT_BTN     8
-#define PRINT_SETUP_WIDTH_FIELD    9
-#define PRINT_SETUP_HEIGHT_FIELD   10
-#define PRINT_SETUP_FILENAME_FIELD 11
-#define PRINT_SETUP_TOFILE_BTN     12
+#define PRINT_SETUP_PRINT_BTN      6
+#define PRINT_SETUP_HELP_BTN       7
+#define PRINT_SETUP_CMD_FIELD      8
+#define PRINT_SETUP_ORIENT_BTN     9
+#define PRINT_SETUP_SIZE_BTN       10
+#define PRINT_SETUP_WIDTH_FIELD    11
+#define PRINT_SETUP_HEIGHT_FIELD   12
+#define PRINT_SETUP_FILENAME_FIELD 13
+#define PRINT_SETUP_TOFILE_BTN     14
+#define PRINT_SETUP_TITLE_BTN      15
+#define PRINT_SETUP_DATE_BTN       16
+#define PRINT_SETUP_TIME_BTN       17
 
 #include <string.h>
 #include <time.h>
@@ -56,6 +61,8 @@ static void createPvLimitsDlg(void);
 static void displayListDlgCb(Widget w, XtPointer clientData,
   XtPointer callData);
 static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName);
+static void updatePrintSetupFromDialog();
+static void updatePrintSetupDlg();
 
 /* Global variables */
 static Widget displayListBox1 = NULL, displayListBox2 = NULL;
@@ -63,6 +70,11 @@ static Widget pvLimitsName, pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
 static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
 static Widget printSetupCommandTF, printSetupFileTF, printSetupTitleTF;
 static Widget printSetupWidthTF, printSetupHeightTF, printSetupPrintToFileTB;
+static Widget printSetupPrintToFileTB, printSetupPrintTitleTB;
+static Widget printSetupPrintDateTB, printSetupPrintTimeTB;
+static Widget printSetupOrientationMenu, printSetupSizeMenu;
+static int printSetupModified;
+
 /*** PV Info routines ***/
 
 void createPvInfoDlg(void)
@@ -196,7 +208,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     if(!widget) {
 	medmPostMsg(1,"getPvInfoFromDisplay: Choosing object failed\n");
 	dmSetAndPopupWarningDialog(displayInfo,
-	  "getPvInfoFromDispla: "
+	  "getPvInfoFromDisplay: "
 	  "Did not find object","OK",NULL,NULL);
 	return NULL;
     }
@@ -1287,6 +1299,8 @@ void popupPrintSetup(void)
 	    medmPostMsg(1,"popupPrintSetup: Cannot create PV Limits dialog box\n");
 	    return;
 	}
+    } else {
+	updatePrintSetupDlg();
     }
 
   /* Pop it up */
@@ -1296,11 +1310,11 @@ void popupPrintSetup(void)
 
 void createPrintSetupDlg(void)
 {
-    Widget w, wparent, wsave;
-    Widget pane, control, hw;
-    Widget actionArea;
-    Widget okButton, helpButton, cancelButton;
-    XmString label, opt1, opt2;
+    Widget w, wparent;
+    Widget pane, control;
+    Widget actionArea, containerRC0, containerRC1, containerRC2;
+    Widget okButton, helpButton, cancelButton, printButton;
+    XmString label, opt1, opt2, opt3, opt4;
     char string[80];
 
     if(printSetupS != NULL) return;
@@ -1319,6 +1333,7 @@ void createPrintSetupDlg(void)
     XmAddWMProtocolCallback(printSetupS,WM_DELETE_WINDOW,
       wmCloseCallback,(XtPointer)OTHER_SHELL);
 
+  /* Paned window for everything */
     pane = XtVaCreateWidget("panel",
       xmPanedWindowWidgetClass, printSetupS,
       XmNsashWidth, 1,
@@ -1348,9 +1363,10 @@ void createPrintSetupDlg(void)
     printSetupCommandTF = w;
 
   /* Orientation */
+    wparent = control;
     label = XmStringCreateLocalized("Orientation:");
-    opt1 = XmStringCreateLocalized(printerOrientationTable[0]);
-    opt2 = XmStringCreateLocalized(printerOrientationTable[1]);
+    opt1 = XmStringCreateLocalized(printerOrientationTable[PRINT_PORTRAIT]);
+    opt2 = XmStringCreateLocalized(printerOrientationTable[PRINT_LANDSCAPE]);
     w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
       label, '\0', printOrientation, printSetupDialogCallback,
       XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
@@ -1358,19 +1374,44 @@ void createPrintSetupDlg(void)
       XmNuserData, PRINT_SETUP_ORIENT_BTN,
       NULL);
     XtManageChild(w);
+    printSetupOrientationMenu = w;
     XmStringFree(label);
     XmStringFree(opt1);
     XmStringFree(opt2);
 
-  /* Height and width */
-    hw = XtVaCreateManagedWidget("rowCol",
+  /* Size */
+    wparent = control;
+    label = XmStringCreateLocalized("Paper Size:");
+    opt1 = XmStringCreateLocalized(printerSizeTable[PRINT_A]);
+    opt2 = XmStringCreateLocalized(printerSizeTable[PRINT_B]);
+    opt3 = XmStringCreateLocalized(printerSizeTable[PRINT_A3]);
+    opt4 = XmStringCreateLocalized(printerSizeTable[PRINT_A4]);
+    w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
+      label, '\0', printOrientation, printSetupDialogCallback,
+      XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt4, '\0', NULL, NULL,
+      XmNuserData, PRINT_SETUP_SIZE_BTN,
+      NULL);
+    XtManageChild(w);
+    printSetupSizeMenu = w;
+    XmStringFree(label);
+    XmStringFree(opt1);
+    XmStringFree(opt2);
+    XmStringFree(opt3);
+    XmStringFree(opt4);
+
+  /* Row column to hold height and width */
+    wparent = control
+;
+    containerRC0 = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
       NULL);
-    wparent = hw;
 
   /* Width */
-    wsave = wparent;
+    wparent = containerRC0;
     w = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -1395,7 +1436,7 @@ void createPrintSetupDlg(void)
     printSetupWidthTF = w;
 
   /* Height */
-    wparent = hw;
+    wparent = containerRC0;
     w = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -1419,6 +1460,55 @@ void createPrintSetupDlg(void)
       textFieldFloatVerifyCallback,(XtPointer)NULL);
     printSetupHeightTF = w;
 
+  /* Row column to hold toggle buttons */
+    wparent = control;
+    containerRC1 = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, wparent,
+      XmNorientation, XmHORIZONTAL,
+      NULL);
+
+  /* Print date */
+    wparent = containerRC1;
+    label = XmStringCreateLocalized(
+      "Print Date");
+    w = XtVaCreateManagedWidget("toggleButton",
+      xmToggleButtonWidgetClass, wparent,
+      XmNlabelString, label,
+      XmNset, (Boolean)printDate,
+      NULL);
+    XmStringFree(label);
+    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_DATE_BTN);
+    printSetupPrintDateTB = w;
+
+  /* Print title */
+    wparent = containerRC1;
+    label = XmStringCreateLocalized(
+      "Print Title");
+    w =  XtVaCreateManagedWidget("toggleButton",
+      xmToggleButtonWidgetClass, wparent,
+      XmNlabelString, label,
+      XmNset, (Boolean)printTitle,
+      NULL);
+    XmStringFree(label);
+    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_TITLE_BTN);
+    printSetupPrintTitleTB = w;
+
+  /* Print time */
+    wparent = containerRC1;
+    label = XmStringCreateLocalized(
+      "Print Time");
+    w =  XtVaCreateManagedWidget("toggleButton",
+      xmToggleButtonWidgetClass, wparent,
+      XmNlabelString, label,
+      XmNset, (Boolean)printTime,
+      NULL);
+    XmStringFree(label);
+    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_TIME_BTN);
+    printSetupPrintTimeTB = w;
+
   /* File name */
     wparent = control;
     w = XtVaCreateManagedWidget("File Name:",
@@ -1435,8 +1525,14 @@ void createPrintSetupDlg(void)
       (XtPointer)PRINT_SETUP_FILENAME_FIELD);
     printSetupFileTF = w;
 
+  /* Row column to hold toggle buttons */
+    containerRC2 = XtVaCreateManagedWidget("rowCol",
+      xmRowColumnWidgetClass, control,
+      XmNorientation, XmHORIZONTAL,
+      NULL);
+
   /* Print to file */
-    wparent = control;
+    wparent = containerRC2;
     label = XmStringCreateLocalized(
       "Print to File");
     w =  XtVaCreateManagedWidget("toggleButton",
@@ -1453,11 +1549,11 @@ void createPrintSetupDlg(void)
     actionArea = XtVaCreateWidget("actionArea",
       xmFormWidgetClass, pane,
       XmNshadowThickness, 0,
-      XmNfractionBase, 7,
+      XmNfractionBase, 9,
       XmNskipAdjust, True,
       NULL);
 
-    okButton = XtVaCreateManagedWidget("OK",
+    okButton = XtVaCreateManagedWidget("Apply",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
@@ -1485,7 +1581,7 @@ void createPrintSetupDlg(void)
     XtAddCallback(cancelButton,XmNactivateCallback,printSetupDialogCallback,
       (XtPointer)PRINT_SETUP_CANCEL_BTN);
 
-    helpButton = XtVaCreateManagedWidget("Help",
+    printButton = XtVaCreateManagedWidget("Print",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
@@ -1494,17 +1590,220 @@ void createPrintSetupDlg(void)
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    6,
       NULL);
+    XtAddCallback(printButton,XmNactivateCallback,printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_PRINT_BTN);
+
+    helpButton = XtVaCreateManagedWidget("Help",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     7,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    8,
+      NULL);
     XtAddCallback(helpButton,XmNactivateCallback,printSetupDialogCallback,
       (XtPointer)PRINT_SETUP_HELP_BTN);
+
     XtManageChild(actionArea);
     XtManageChild(pane);
+
+    printSetupModified=FALSE;
+}
+
+static void updatePrintSetupDlg()
+{
+    char string[80];
+    Widget menuWidget;
+    WidgetList children;
+    Cardinal numChildren;
+
+  /* Command */
+    XmTextFieldSetString(printSetupCommandTF,printCommand);
+    XmTextFieldSetCursorPosition(printSetupCommandTF, 0);
+
+  /* Orientation */
+    XtVaGetValues(printSetupOrientationMenu,
+      XmNsubMenuId,&menuWidget,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    switch(printOrientation) {
+    case PRINT_PORTRAIT:
+	XtVaSetValues(printSetupOrientationMenu,
+	  XmNmenuHistory, children[PRINT_PORTRAIT],
+	  NULL);
+	break;
+    case PRINT_LANDSCAPE:
+	XtVaSetValues(printSetupOrientationMenu,
+	  XmNmenuHistory, children[PRINT_LANDSCAPE],
+	  NULL);
+	break;
+    default:
+	XtVaSetValues(printSetupOrientationMenu,
+	  XmNmenuHistory, children[PRINT_PORTRAIT],
+	  NULL);
+	break;
+    }
+
+  /* Size */
+    XtVaGetValues(printSetupSizeMenu,
+      XmNsubMenuId,&menuWidget,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    switch(printSize) {
+    case PRINT_A:
+	XtVaSetValues(printSetupSizeMenu,
+	  XmNmenuHistory, children[PRINT_A],
+	  NULL);
+	break;
+    case PRINT_B:
+	XtVaSetValues(printSetupSizeMenu,
+	  XmNmenuHistory, children[PRINT_B],
+	  NULL);
+	break;
+    case PRINT_A3:
+	XtVaSetValues(printSetupSizeMenu,
+	  XmNmenuHistory, children[PRINT_A3],
+	  NULL);
+	break;
+    case PRINT_A4:
+	XtVaSetValues(printSetupSizeMenu,
+	  XmNmenuHistory, children[PRINT_A4],
+	  NULL);
+	break;
+    default:
+	XtVaSetValues(printSetupSizeMenu,
+	  XmNmenuHistory, children[PRINT_A],
+	  NULL);
+	break;
+    }
+
+  /* Width */
+    sprintf(string, "%.2f", printWidth);
+    XmTextFieldSetString(printSetupWidthTF,string);
+    XmTextFieldSetCursorPosition(printSetupWidthTF, 0);
+
+  /* Height */
+    sprintf(string, "%.2f", printHeight);
+    XmTextFieldSetString(printSetupHeightTF,string);
+    XmTextFieldSetCursorPosition(printSetupHeightTF, 0);
+
+  /* Filename */
+    XmTextFieldSetString(printSetupFileTF,printFile);
+    XmTextFieldSetCursorPosition(printSetupFileTF, 0);
+
+  /* To file */
+    XmToggleButtonSetState(printSetupPrintToFileTB,(Boolean)printToFile,False);
+
+  /* Title */
+    XmToggleButtonSetState(printSetupPrintTitleTB,(Boolean)printTitle,False);
+
+  /* Date */
+    XmToggleButtonSetState(printSetupPrintDateTB,(Boolean)printDate,False);
+
+  /* Time */
+    XmToggleButtonSetState(printSetupPrintTimeTB,(Boolean)printTime,False);
+
+    printSetupModified = FALSE;    
+}
+
+static void updatePrintSetupFromDialog()
+{
+    Widget menuWidget;
+    Widget menuHistory;
+    WidgetList children;
+    Cardinal numChildren;
+    double fval;
+
+  /* Command */
+    sprintf(printCommand, XmTextFieldGetString(printSetupCommandTF));
+    XmTextFieldSetCursorPosition(printSetupCommandTF, 0);
+
+  /* Orientation */
+    XtVaGetValues(printSetupOrientationMenu,
+      XmNsubMenuId,&menuWidget,
+      XmNmenuHistory,&menuHistory,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    if(menuHistory == children[PRINT_PORTRAIT]) {
+	printOrientation = PRINT_PORTRAIT;
+    } else if(menuHistory == children[PRINT_LANDSCAPE]) {
+	printOrientation = PRINT_LANDSCAPE;
+    } else {
+	printOrientation = PRINT_PORTRAIT;
+    }
+
+  /* Size */
+    XtVaGetValues(printSetupSizeMenu,
+      XmNsubMenuId,&menuWidget,
+      XmNmenuHistory,&menuHistory,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    if(menuHistory == children[PRINT_A]) {
+	printSize = PRINT_A;
+    } else if(menuHistory == children[PRINT_B]) {
+	printSize = PRINT_B;
+    } else if(menuHistory == children[PRINT_A3]) {
+	printSize = PRINT_A3;
+    } else if(menuHistory == children[PRINT_A4]) {
+	printSize = PRINT_A4;
+    } else {
+	printSize = PRINT_A;
+    }
+
+  /* Width */
+    fval = atof(XmTextFieldGetString(printSetupWidthTF));
+    if(fval < 0.0) {
+	fval = 0;
+	XmTextFieldSetString(printSetupWidthTF, "0.00");
+	XBell(display,50);
+    }
+    XmTextFieldSetCursorPosition(printSetupWidthTF, 0);
+    printWidth = fval;
+
+  /* Height */
+    fval = atof(XmTextFieldGetString(printSetupHeightTF));
+    if(fval < 0.0) {
+	fval = 0;
+	XmTextFieldSetString(printSetupHeightTF, "0.00");
+	XBell(display,50);
+    }
+    XmTextFieldSetCursorPosition(printSetupHeightTF, 0);
+    printHeight = fval;
+
+  /* Filename */
+    sprintf(printFile, XmTextFieldGetString(printSetupFileTF));
+    XmTextFieldSetCursorPosition(printSetupFileTF, 0);
+
+  /* To file */
+    printToFile = XmToggleButtonGetState(printSetupPrintToFileTB)?1:0;
+
+  /* Title */
+    printTitle = XmToggleButtonGetState(printSetupPrintTitleTB)?1:0;
+
+  /* Date */
+    printDate = XmToggleButtonGetState(printSetupPrintDateTB)?1:0;
+
+  /* Time */
+    printTime = XmToggleButtonGetState(printSetupPrintTimeTB)?1:0;
 }
 
 static void printSetupDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
     int type = (int)cd;
     int button;
-    double fval;
     
   /* If the type is less than 4, the callback comes from an option
    *   menu button.  Find the real type from the userData of the RC
@@ -1515,57 +1814,52 @@ static void printSetupDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
     }
 
     switch(type) {
-    case PRINT_SETUP_ORIENT_BTN:
-	switch(button) {
-	case 0:
-	  /* Option button for portrait */
-	    printOrientation = PRINT_PORTRAIT;
-	    break;
-	case 1:
-	  /* Option button for landscape */
-	    printOrientation = PRINT_LANDSCAPE;
-	    break;
-	}
-	break;
     case PRINT_SETUP_OK_BTN:
-	XtPopdown(printSetupS);
+	updatePrintSetupFromDialog();
+	updatePrintSetupDlg();
 	break;
     case PRINT_SETUP_CANCEL_BTN:
 	XtPopdown(printSetupS);
+	break;
+    case PRINT_SETUP_PRINT_BTN:
+      /* Check if it has been updated */
+	if(printSetupModified && currentDisplayInfo) {
+	    int cancel=0;
+
+	    dmSetAndPopupQuestionDialog(currentDisplayInfo,
+	      "Apply your changes first?", "Yes", "No", "Cancel");
+	    switch(currentDisplayInfo->questionDialogAnswer) {
+	    case 1:
+		updatePrintSetupFromDialog();
+		updatePrintSetupDlg();
+		break;
+	    case 3:
+		cancel=1;
+		break;
+	    }
+	  /* Pop the print dialog back on top */
+	    XtPopup(printSetupS, XtGrabNone);
+	    if(cancel) break;
+	}
+      /* Call the print routine from the mainFileMenuSimpleCallback */
+	mainFileMenuSimpleCallback(NULL, (XtPointer)MAIN_FILE_PRINT_BTN, NULL);
+      /* Pop the print dialog back on top */
+	XtPopup(printSetupS, XtGrabNone);
 	break;
     case PRINT_SETUP_HELP_BTN:
 	callBrowser(MEDM_HELP_PATH"#PrintSetupDialogBox");
 	break;
     case PRINT_SETUP_CMD_FIELD:
-	sprintf(printCommand, XmTextFieldGetString(printSetupCommandTF));
-	XmTextFieldSetCursorPosition(printSetupCommandTF, 0);
-	break;
+    case PRINT_SETUP_ORIENT_BTN:
+    case PRINT_SETUP_SIZE_BTN:
     case PRINT_SETUP_WIDTH_FIELD:
-	fval = atoi(XmTextFieldGetString(printSetupWidthTF));
-	if(fval < 0.0) {
-	    fval = 0;
-	    XmTextFieldSetString(printSetupWidthTF, "0.00");
-	    XBell(display,50);
-	}
-	XmTextFieldSetCursorPosition(printSetupWidthTF, 0);
-	printWidth = fval;
-	break;
     case PRINT_SETUP_HEIGHT_FIELD:
-	fval = atoi(XmTextFieldGetString(printSetupHeightTF));
-	if(fval < 0.0) {
-	    fval = 0;
-	    XmTextFieldSetString(printSetupHeightTF, "0.00");
-	    XBell(display,50);
-	}
-	XmTextFieldSetCursorPosition(printSetupHeightTF, 0);
-	printHeight = fval;
-	break;
     case PRINT_SETUP_FILENAME_FIELD:
-	sprintf(printFile, XmTextFieldGetString(printSetupFileTF));
-	XmTextFieldSetCursorPosition(printSetupFileTF, 0);
-	break;
     case PRINT_SETUP_TOFILE_BTN:
-	printToFile = XmToggleButtonGetState(printSetupPrintToFileTB)?1:0;
+    case PRINT_SETUP_TITLE_BTN:
+    case PRINT_SETUP_DATE_BTN:
+    case PRINT_SETUP_TIME_BTN:
+	printSetupModified=TRUE;
 	break;
     }
 }

@@ -116,8 +116,9 @@ USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 ifeq ($(HOST_ARCH),WIN32)
 # Use Obj for object libraries and no Obj for import libraries
- PROD_LIBS = ANLwidgetsObj
+ PROD_LIBS = ANLwidgetsObj PrintUtilsObj
  ANLwidgetsObj_DIR = $(INSTALL_LIB)
+ PrintUtilsObj_DIR = $(INSTALL_LIB)
 else
 PROD_LIBS = ANLwidgets PrintUtils
 endif

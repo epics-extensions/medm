@@ -109,16 +109,32 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define DISPLAY_FILE_BACKUP_SUFFIX	"_BAK"
 #define DISPLAY_FILE_ASCII_SUFFIX	".adl"
 #define DISPLAY_FILE_BINARY_SUFFIX	".dl"
-#ifndef VMS
-#define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
+
+/* Temp file used for screen dumps */
+#if defined(WIN32)
+# define DISPLAY_XWD_FILE		"\\medm.xwd"
+#elif defined(VMS)
+# define DISPLAY_XWD_FILE		"sys$scratch:medm.xwd"
 #else
-#define DISPLAY_XWD_FILE		"sys$scratch:medm.xwd"
+# define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
 #endif
+
 #define MORE_TO_COME_SYMBOL	"..."	/* string for dialog popups        */
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
-/* If the folloowing change, change executePopupMenuCallback() and
+/* Used for fileMenuSimpleCallback */
+#define MAIN_FILE_NEW_BTN         0
+#define MAIN_FILE_OPEN_BTN        1
+#define MAIN_FILE_SAVE_BTN        2
+#define MAIN_FILE_SAVE_ALL_BTN    3
+#define MAIN_FILE_SAVE_AS_BTN     4
+#define MAIN_FILE_CLOSE_BTN       5
+#define MAIN_FILE_PRINT_SETUP_BTN 6
+#define MAIN_FILE_PRINT_BTN       7
+#define MAIN_FILE_EXIT_BTN        8
+
+/* If the following change, change executePopupMenuCallback() and
  medmInit() */
 #define EXECUTE_POPUP_MENU_PRINT          "Print"
 #define EXECUTE_POPUP_MENU_CLOSE          "Close"

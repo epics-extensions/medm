@@ -285,12 +285,13 @@ void addDisplayHelpProtocol(DisplayInfo *displayInfo);
 
 /* medm.c */
 int main(int argc, char *argv[]);
-void createEditModeMenu(DisplayInfo *displayInfo);
 Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
+void createEditModeMenu(DisplayInfo *displayInfo);
+void disableEditFunctions();
+void enableEditFunctions();
+void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs);
 void medmExit();
 Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
-void enableEditFunctions();
-void disableEditFunctions();
 
 /* medmCA.c and medmCdev.cc */
 #ifdef MEDM_CDEV
@@ -336,6 +337,7 @@ void markCompositeChildrenNotExecuted(DlElement *dlElement);
 /* medmDisplay.c */
 DlElement *parseDisplay(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
+void refreshDisplay(DisplayInfo *displayInfo);
 
 /* medmMonitor.c */
 void monitorAttributeInit(DlMonitor *monitor);
@@ -566,7 +568,6 @@ void centerSelectedElements(int alignment);
 void orientSelectedElements(int alignment);
 void sizeSelectedTextElements(void);
 void equalSizeSelectedElements(void);
-void refreshDisplay(void);
 void alignSelectedElementsToGrid(Boolean edges);
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail);
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,

@@ -81,7 +81,11 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 /* Alternatives are PRINT_A, PRINT_B, PRINT_A3, and PRINT_A4 */
 #define DEFAULT_PRINT_SIZE     PRINT_A
 #define DEFAULT_PRINT_FILENAME "medmScreen.ps"
-#define DEFAULT_PRINT_CMD      "lpr -P$PSPRINTER"
+#ifdef WIN32
+#  define DEFAULT_PRINT_CMD      "gsview32.exe"
+#else
+#  define DEFAULT_PRINT_CMD      "lpr -P$PSPRINTER"
+#endif
 #if 0
 /* Command used internally before MEDM 2.3.6 */
 #define DEFAULT_PRINT_CMD     "lp -c -d$PSPRINTER"

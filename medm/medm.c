@@ -125,20 +125,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define N_FILE_MENU_ELES 8
 #define FILE_BTN_POSN 0
 
-#define FILE_NEW_BTN         0
-#define FILE_OPEN_BTN        1
-#define FILE_SAVE_BTN        2
-#define FILE_SAVE_ALL_BTN    3
-#define FILE_SAVE_AS_BTN     4
-#define FILE_CLOSE_BTN       5
-#define FILE_PRINT_SETUP_BTN 6
-#define FILE_PRINT_BTN       7
-#define FILE_EXIT_BTN        8
-
-#define PRINTER_SETUP_OK     0
-#define PRINTER_SETUP_CANCEL 1
-#define PRINTER_SETUP_MAP    2
-
 #define GRID_OK     0
 #define GRID_CANCEL 1
 #define GRID_HELP   2
@@ -230,7 +216,6 @@ extern int putenv(const char *);    /* May not be defined for strict ANSI */
 
 static void createCursors(void);
 static void createMain(void);
-static void fileMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void fileMenuDialogCallback(Widget,XtPointer,XtPointer);
 static void editMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void palettesMenuSimpleCallback(Widget,XtPointer,XtPointer);
@@ -504,27 +489,27 @@ static menuEntry_t editModeMenu[] = {
 
 static menuEntry_t fileMenu[] = {
     { "New",       &xmPushButtonGadgetClass, 'N', NULL,         NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_NEW_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_NEW_BTN, NULL},
     { "Open...",   &xmPushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O", NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_OPEN_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_OPEN_BTN, NULL},
     { "Save",      &xmPushButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S", NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_SAVE_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_BTN, NULL},
     { "Save All",  &xmPushButtonGadgetClass, 'l', "Ctrl<Key>L", NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_SAVE_ALL_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_ALL_BTN, NULL},
     { "Save As...",&xmPushButtonGadgetClass, 'A', NULL,         NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_SAVE_AS_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_AS_BTN, NULL},
     { "Close",     &xmPushButtonGadgetClass, 'C', NULL,         NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_CLOSE_BTN, NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,        NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Printer Setup...",  &xmPushButtonGadgetClass, 'u', NULL, NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_PRINT_SETUP_BTN, NULL},
+    { "Print Setup...",  &xmPushButtonGadgetClass, 'u', NULL, NULL, NULL,
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_PRINT_SETUP_BTN, NULL},
     { "Print",  &xmPushButtonGadgetClass, 'P', NULL,            NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_PRINT_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_PRINT_BTN, NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,        NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Exit",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>X", "Ctrl+X", NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_EXIT_BTN, NULL},
+      mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_EXIT_BTN, NULL},
     NULL,
 };
 
@@ -1108,53 +1093,6 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 /********************************************
  **************** Callbacks *****************
  ********************************************/
-static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
-{
-    Position X, Y;
-    XmString xmString;
-    char *printerName;
-    char *variable;
-    char *prefix = "PSPRINTER=";
-
-    UNREFERENCED(cbs);
-
-    switch ((int)cd) {
-    case PRINTER_SETUP_OK :
-	XtVaGetValues(w,XmNtextString,&xmString,NULL);
-      /* Use XmStringGetLtoR because it handles multiple lines */
-	XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&printerName);
-	variable = (char*)malloc(
-	  sizeof(char)*(strlen(printerName) + strlen(prefix) + 1));
-	if(variable) {
-	    strcpy(variable,prefix);
-	    strcat(variable,printerName);
-	    putenv(variable);
-	  /* Warning!!!! : Do not free the variable */
-	}
-      /* Need to use XtFree here to avoid FMM error */
-	XtFree(printerName);
-	XmStringFree(xmString);
-	XtUnmanageChild(w);
-	break;
-    case PRINTER_SETUP_CANCEL :
-	XtUnmanageChild(w);
-	break;
-    case PRINTER_SETUP_MAP :
-	if(getenv("PSPRINTER")) {
-	    xmString = XmStringCreateLocalized(getenv("PSPRINTER"));
-	} else {
-	    xmString = XmStringCreateLocalized("");
-	}
-	XtVaSetValues(w,XmNtextString,xmString,NULL);
-	XmStringFree(xmString);
-	XtTranslateCoords(mainShell,0,0,&X,&Y);
-      /* try to force correct popup the first time */
-	XtMoveWidget(XtParent(w),X,Y);
-
-	break;
-    }
-}
-
 static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
@@ -1308,7 +1246,7 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case EDIT_REFRESH_BTN:
-	refreshDisplay();
+	refreshDisplay(cdi);
 	break;	
 
     case EDIT_FIND_BTN:
@@ -1611,10 +1549,10 @@ static void fileTypeCallback(
     }
 }
 
-static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *displayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (int)cd;
     Widget widget;
     static Widget radioBox = 0;
     XEvent event;
@@ -1624,13 +1562,13 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
-    case FILE_NEW_BTN:
+    case MAIN_FILE_NEW_BTN:
 	currentDisplayInfo = createDisplay();
 	XtManageChild(currentDisplayInfo->drawingArea);
 	enableEditFunctions();
 	break;
 
-    case FILE_OPEN_BTN:
+    case MAIN_FILE_OPEN_BTN:
       /*
        * note - all FILE pdm entry dialogs are sharing a single callback
        *	  fileMenuDialogCallback, with client data
@@ -1657,9 +1595,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtUnmanageChild(XmFileSelectionBoxGetChild(openFSD,
 	      XmDIALOG_HELP_BUTTON));
 	    XtAddCallback(openFSD,XmNokCallback,
-	      fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
+	      fileMenuDialogCallback,(XtPointer)MAIN_FILE_OPEN_BTN);
 	    XtAddCallback(openFSD,XmNcancelCallback,
-	      fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
+	      fileMenuDialogCallback,(XtPointer)MAIN_FILE_OPEN_BTN);
 	    XmStringFree(label);
 	    XmStringFree(cwdXmString);
 	    free(cwd);
@@ -1671,8 +1609,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XUndefineCursor(display,XtWindow(mainShell));
 	break;
 
-    case FILE_SAVE_BTN:
-    case FILE_SAVE_AS_BTN:
+    case MAIN_FILE_SAVE_BTN:
+    case MAIN_FILE_SAVE_AS_BTN:
       /* No display, do nothing */
 	if(!displayInfoListHead->next) break;
       /* Create the Open... file selection dialog */
@@ -1697,9 +1635,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtUnmanageChild(XmFileSelectionBoxGetChild(saveAsPD,
 	      XmDIALOG_HELP_BUTTON));
 	    XtAddCallback(saveAsPD,XmNokCallback,
-	      fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
+	      fileMenuDialogCallback,(XtPointer)MAIN_FILE_SAVE_AS_BTN);
 	    XtAddCallback(saveAsPD,XmNcancelCallback,
-	      fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
+	      fileMenuDialogCallback,(XtPointer)MAIN_FILE_SAVE_AS_BTN);
 	    XtAddCallback(saveAsPD,XmNmapCallback,mapCallback,(XtPointer)NULL);
 	    XmStringFree(label);
 	    XmStringFree(cwdXmString);
@@ -1738,7 +1676,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if(!currentDisplayInfo) break;
       /* For some reason, currentDisplay is not valid, break */
 	if((currentDisplayInfo->newDisplay)
-	  || (buttonNumber == FILE_SAVE_AS_BTN)) {
+	  || (buttonNumber == MAIN_FILE_SAVE_AS_BTN)) {
 	  /* New display or user wants to save as a different name */
 	    WidgetList children;
 	    XmListDeselectAllItems(
@@ -1756,12 +1694,12 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	break;
 
-    case FILE_SAVE_ALL_BTN:
+    case MAIN_FILE_SAVE_ALL_BTN:
       /* Loop over displays */
 	displayInfo = displayInfoListHead->next;
 	while(displayInfo) {
 #if DEBUG_SAVE_ALL
-	    printf("fileMenuSimpleCallback: %s %s %s\n",
+	    printf("mainFileMenuSimpleCallback: %s %s %s\n",
 	      displayInfo->newDisplay?"New":"Old",
 	      displayInfo->hasBeenEditedButNotSaved?"Edited    ":"Not Edited",
 	      displayInfo->dlFile->name);
@@ -1805,7 +1743,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	break;
 	
-    case FILE_CLOSE_BTN:
+    case MAIN_FILE_CLOSE_BTN:
 	if(displayInfoListHead->next == displayInfoListTail) {
 	  /* only one display; no need to query user */
 	    widget = displayInfoListTail->drawingArea;
@@ -1821,15 +1759,16 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	closeDisplay(widget);
 	break;
 
-    case FILE_PRINT_SETUP_BTN:
+    case MAIN_FILE_PRINT_SETUP_BTN:
 	popupPrintSetup();
 	break;
 
-    case FILE_PRINT_BTN:
+    case MAIN_FILE_PRINT_BTN:
 	if(displayInfoListHead->next == displayInfoListTail) {
 	  /* only one display; no need to query user */
 	    currentDisplayInfo = displayInfoListHead->next;
 	    if(currentDisplayInfo != NULL) {
+#if 0		
 #ifdef WIN32
 		if(!printToFile) {
 		    dmSetAndPopupWarningDialog(currentDisplayInfo,
@@ -1840,42 +1779,54 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		}
 		break;
 #endif
+#endif
+	      /* Pop it up so it won't be covered by something else */
+		XtPopup(currentDisplayInfo->shell,XtGrabNone);
+		refreshDisplay(currentDisplayInfo);
+		XmUpdateDisplay(currentDisplayInfo->shell);
+	      /* Print it */
 		status = utilPrint(display, currentDisplayInfo->drawingArea,
 		  DISPLAY_XWD_FILE, currentDisplayInfo->dlFile->name);
 		if(!status) {
-		    medmPrintf(1,"\nfileMenuSimpleCallback: "
+		    medmPrintf(1,"\nmainFileMenuSimpleCallback: "
 		      "Print was not successful\n");
 		}
 	    }
-	} else
-	  if(displayInfoListHead->next) {
-	    /* more than one display; query user */
-	      widget = XmTrackingEvent(mainShell,printCursor,False,&event);
-	      if(widget != (Widget)NULL) {
-		  currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
-		  if(currentDisplayInfo != NULL) {
+	} else if(displayInfoListHead->next) {
+	  /* more than one display; query user */
+	    widget = XmTrackingEvent(mainShell,printCursor,False,&event);
+	    if(widget != (Widget)NULL) {
+		currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
+		if(currentDisplayInfo != NULL) {
+#if 0
 #ifdef WIN32
-		      if(!printToFile) {
-			  dmSetAndPopupWarningDialog(currentDisplayInfo,
-			    "Printing from MEDM is not available for WIN32\n"
-			    "You can use Alt+PrintScreen to copy the window "
-			    "to the clipboard",
-			    "OK", NULL, NULL);
-		      }
-		      break;
+		    if(!printToFile) {
+			dmSetAndPopupWarningDialog(currentDisplayInfo,
+			  "Printing from MEDM is not available for WIN32\n"
+			  "You can use Alt+PrintScreen to copy the window "
+			  "to the clipboard",
+			  "OK", NULL, NULL);
+		    }
+		    break;
 #endif
-		      status = utilPrint(display, currentDisplayInfo->drawingArea,
-			DISPLAY_XWD_FILE, currentDisplayInfo->dlFile->name);
-		      if(!status) {
-			  medmPrintf(1,"\nfileMenuSimpleCallback: "
-			    "Print was not successful\n");
-		      }
-		  }
-	      }
-	  }
+#endif
+		  /* Pop it up so it won't be covered by something else */
+		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
+		    refreshDisplay(currentDisplayInfo);
+		    XmUpdateDisplay(currentDisplayInfo->shell);
+		  /* Print it */
+		    status = utilPrint(display,
+		      currentDisplayInfo->drawingArea, DISPLAY_XWD_FILE,
+		      currentDisplayInfo->dlFile->name);
+		    if(!status) {
+			medmPrintf(1,"\nmainFileMenuSimpleCallback: "
+			  "Print was not successful\n");
+		    }
+		}
+	    }
+	}
 	break;
-	
-    case FILE_EXIT_BTN:
+    case MAIN_FILE_EXIT_BTN:
 	medmExit();
 	break;
     }
@@ -2222,7 +2173,7 @@ static void fileMenuDialogCallback(
 	break;
     case XmCR_OK:
 	switch(btn) {
-        case FILE_OPEN_BTN: {
+        case MAIN_FILE_OPEN_BTN: {
 	    FILE *filePtr;
 	    char *filename;
 
@@ -2248,11 +2199,11 @@ static void fileMenuDialogCallback(
 	    }
 	    break;
         }
-        case FILE_CLOSE_BTN:
+        case MAIN_FILE_CLOSE_BTN:
 	    dmRemoveDisplayInfo(currentDisplayInfo);
 	    currentDisplayInfo = NULL;
 	    break;
-        case FILE_SAVE_AS_BTN:
+        case MAIN_FILE_SAVE_AS_BTN:
 	    select = (XmSelectionBoxCallbackStruct *)call_data;
 	    XmStringGetLtoR(select->value,XmFONTLIST_DEFAULT_TAG,&filename);
 	    medmSaveDisplay(currentDisplayInfo,filename,False);
@@ -2263,7 +2214,7 @@ static void fileMenuDialogCallback(
 	    XtFree(filename);
 	    XtUnmanageChild(w);
 	    break;
-        case FILE_EXIT_BTN:
+        case MAIN_FILE_EXIT_BTN:
 	    medmClearImageCache();
 	    medmCATerminate();
 	    destroyMedmWidget();
@@ -2553,10 +2504,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(displayListS,False);
 	    XtPopdown(displayListS);
 	}
-	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
-	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
-	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,True);
-	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
+	XtSetSensitive(fileMenu[MAIN_FILE_NEW_BTN].widget,True);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_BTN].widget,True);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_ALL_BTN].widget,True);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_AS_BTN].widget,True);
 
       /* Stop the scheduler */
 	stopMedmScheduler();
@@ -2590,18 +2541,14 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(stripChartS,False);
 	    XtPopdown(stripChartS);
 	}
-	if(printSetupS) {
-	    XtSetSensitive(printSetupS,False);
-	    XtPopdown(printSetupS);
-	}
 	if(pvLimitsS) {
 	    XtSetSensitive(pvLimitsS,False);
 	    XtPopdown(pvLimitsS);
 	}
-	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_NEW_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_ALL_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_AS_BTN].widget,False);
 	
       /* Start the PV statistics */
 	medmStartUpdateCAStudyDlg();
@@ -3934,10 +3881,10 @@ static void createMain()
       "File", 'F', fileMenu);
 
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_ALL_BTN].widget,False);
-	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_NEW_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_ALL_BTN].widget,False);
+	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_AS_BTN].widget,False);
     }
 
   /* Create the edit pulldown menu pane */
@@ -4065,9 +4012,9 @@ static void createMain()
       MWM_FUNC_ALL, NULL);
     XtUnmanageChild(XmMessageBoxGetChild(exitQD,XmDIALOG_HELP_BUTTON));
     XtAddCallback(exitQD,XmNcancelCallback,
-      fileMenuDialogCallback,(XtPointer)FILE_EXIT_BTN);
+      fileMenuDialogCallback,(XtPointer)MAIN_FILE_EXIT_BTN);
     XtAddCallback(exitQD,XmNokCallback,fileMenuDialogCallback,
-      (XtPointer)FILE_EXIT_BTN);
+      (XtPointer)MAIN_FILE_EXIT_BTN);
 #endif
     
   /* Create the Help information shell (Help on Help) */

@@ -2925,42 +2925,6 @@ static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
 }
 #endif
 
-/* Refresh the display.  Redraw to get all widgets in proper stacking
-   order (Uses dlElementList, not selectedDlElementList).  Use in EDIT
-   mode only. */
-void refreshDisplay(void)
-{
-    DisplayInfo *cdi;
-    DlElement *pE;
-
-    if(!currentDisplayInfo) return;
-    cdi = currentDisplayInfo;
-    if(IsEmpty(cdi->dlElementList)) return;
-
-    unhighlightSelectedElements();
-
-/* Loop and recreate widgets */
-#if DEBUG_TRAVERSAL
-	print("\n[refreshDisplay: cdi->dlElementList:\n");
-	dumpDlElementList(cdi->dlElementList);
-#endif
-  /* Loop over elements not including the display */
-    pE = SecondDlElement(cdi->dlElementList);
-    while(pE) {
-	if(pE->widget) {
-	  /* Destroy the widget */
-	    destroyElementWidgets(pE);
-	  /* Recreate it */
-	    if(pE->run->execute) pE->run->execute(cdi,pE);
-	}
-	pE = pE->next;
-    }
-  /* Cleanup possible damage to non-widgets */
-    dmTraverseNonWidgetsInDisplayList(cdi);
-    
-    highlightSelectedElements();
-}
-
 /* Moves specified <src> element to position just after specified
  <dst> element.  */
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail)
@@ -3862,7 +3826,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 
   /* Insure that this is the currentDisplayInfo and refresh */
     currentDisplayInfo = displayInfo;     /* Shouldn't be necessary */
-    refreshDisplay();
+    refreshDisplay(displayInfo);
 #endif    
 }
 

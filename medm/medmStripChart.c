@@ -337,10 +337,9 @@ static void calcYAxisLabelWidth(MedmStripChart *psc) {
     for(i = 0; i<psc->nChannels; i++) {
 	range[i] = nullRange;
     }
+
   /* remove any duplicated settings */
-
     cnt = 0;
-
     for(i = 0; i < psc->nChannels; i++) {
 	int found = 0;
 	int j;
@@ -410,7 +409,7 @@ static void calcXAxisLabelWidth(MedmStripChart *psc) {
 }
 
 static void calcYAxisLabelHeight(MedmStripChart *psc) {
-    sccd.yAxisLabelHeight = sccd.axisLabelFontHeight * sccd.numYAxisLabel
+    sccd.yAxisLabelHeight = sccd.axisLabelFontHeight *sccd.numYAxisLabel
       + psc->dataHeight;
 }
 
@@ -1430,14 +1429,14 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		int nextSlot = psc->nextSlot + psc->dataX0;
 
 		if((nextSlot + totalPixel) > limit) {
-		  /* if wraped, two filled is needed */
+		  /* if wrapped, two fills are needed */
 		    XFillRectangle(display, psc->pixmap, gc,
 		      nextSlot, psc->dataY0, (limit-nextSlot), psc->dataHeight);
 		    XFillRectangle(display, psc->pixmap, gc,
 		      psc->dataX0, psc->dataY0, totalPixel-limit+nextSlot,
 		      psc->dataHeight);
 		} else {
-		  /* if not wraped, do one fill */
+		  /* if not wrapped, do one fill */
 		    XFillRectangle(display, psc->pixmap, gc,
 		      nextSlot, psc->dataY0, totalPixel, psc->dataHeight);
 		}
@@ -1449,14 +1448,14 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		double base;
 		int nextSlot = psc->nextSlot + psc->dataX0;
 		int limit = psc->dataWidth + psc->dataX0;
-		Record *p = psc->record[i];
+		Record *pR = psc->record[i];
 
 	      /* plot data */
-		base = p->hopr - p->lopr;
+		base = pR->hopr - pR->lopr;
 		y1 =  psc->dataY0 + (int)((psc->dataHeight - 1) *
-		  (1.0 - ((psc->minVal[i] - p->lopr) / base)));
+		  (1.0 - ((psc->minVal[i] - pR->lopr) / base)));
 		y2 =  psc->dataY0 + (int)((psc->dataHeight - 1) *
-		  (1.0 - ((psc->maxVal[i] - p->lopr) / base)));
+		  (1.0 - ((psc->maxVal[i] - pR->lopr) / base)));
   
 		XSetForeground(display, gc,
 		  displayInfo->colormap[dlStripChart->pen[i].clr]);
@@ -1465,7 +1464,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		if(totalPixel > 1) {
 		    int y;
 		    y =  psc->dataY0 + (int)((psc->dataHeight - 1) *
-		      (1.0 - ((psc->value[i] - p->lopr) / base)));
+		      (1.0 - ((psc->value[i] - pR->lopr) / base)));
 		  /* fill the gap in between */
 		    if((nextSlot + totalPixel) > limit) {
 		      /* if wraped, two lines are needed */
