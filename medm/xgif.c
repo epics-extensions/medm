@@ -67,7 +67,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_GIF 1
+#define DEBUG_GIF 0
 
 /* include files */
 #include "medm.h"
@@ -177,6 +177,11 @@ Boolean initializeGIF(
 	XFillRectangle(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,x,y,w,h);
 #if 1
+#ifdef WIN32
+      /* Exceed has the byte_order wrong for 24-bit */
+	gif->expImage->byte_order=LSBFirst;
+#endif	
+
 	XPutImage(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,gif->expImage,
 	  0,0,x,y,w,h);
@@ -184,6 +189,11 @@ Boolean initializeGIF(
 	  gif->theGC,gif->expImage,
 	  0,0,x,y,w,h);
 #else
+#ifdef WIN32
+      /* Exceed has the byte_order wrong for 24-bit */
+	gif->theImage->byte_order=LSBFirst;
+#endif	
+
 	XPutImage(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,gif->theImage,
 	  0,0,x,y,gif->theImage->width,gif->theImage->height);
@@ -212,12 +222,23 @@ void drawGIF(
 	y = dlImage->object.y;
 	w = dlImage->object.width;
 	h = dlImage->object.height;
+
       /* draw to pixmap, since traversal will copy pixmap to window..*/
 #if 1
+#ifdef WIN32
+      /* Exceed has the byte_order wrong for 24-bit */
+	gif->expImage->byte_order=LSBFirst;
+#endif	
+
 	XPutImage(display,displayInfo->drawingAreaPixmap,
 	  gif->theGC,gif->expImage,
 	  0,0,x,y,w,h);
 #else
+#ifdef WIN32
+      /* Exceed has the byte_order wrong for 24-bit */
+	gif->theImage->byte_order=LSBFirst;
+#endif	
+
 	XPutImage(display,displayInfo->drawingAreaPixmap,
 	  gif->theGC,gif->theImage,
 	  0,0,x,y,gif->theImage->width,gif->theImage->height);
@@ -327,6 +348,7 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
 		  gif->expImage);
 		exit(-1);
 	    }
+
 #if 1
 	    sw = gif->theImage->width;
 	    sh = gif->theImage->height;
