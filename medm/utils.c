@@ -1224,7 +1224,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 
 	case ButtonRelease:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fprintf(stderr,"  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	  /* Undraw old one */
@@ -1254,6 +1254,10 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    return (returnVal);		/* return from while(TRUE) */
 
 	case MotionNotify:
+#if DEBUG_EVENTS > 1
+	    fprintf(stderr,"  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
 	  /* Undraw old one */
 	    XDrawRectangle(display, window, xorGC, x, y, w, h);
 	  /* Update current coordinates */
@@ -1272,10 +1276,6 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 		if((int)h < gridSpacing) h = gridSpacing;
 	    }
 	  /* Draw new one */
-#if DEBUG_EVENTS > 1
-	    fprintf(stderr,"MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
-	    fflush(stdout);
-#endif	    
 	    XDrawRectangle(display, window, xorGC, x, y, w, h);
 	    break;
 	default:
@@ -1300,15 +1300,28 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     int snap, gridSpacing;
     int minX, maxX, minY, maxY, groupWidth, groupHeight,
       groupDeltaX0, groupDeltaY0, groupDeltaX1, groupDeltaY1;
+    int nelements;
 
   /* If no current display, simply return */
     cdi = currentDisplayInfo;
     if(!cdi) return(True);
+
+  /* If no selected elements, return */
+    if(IsEmpty(cdi->selectedDlElementList)) return False;
+#if DEBUG_EVENTS > 1
+    fprintf(stderr,"\n[doDragging] selectedDlElement list :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif    
+
     snap = cdi->grid->snapToGrid;
     gridSpacing = cdi->grid->gridSpacing;
 
     xOffset = 0;
     yOffset = 0;
+
+#if DEBUG_EVENTS > 1
+    fprintf(stderr,"In doDragging before XGrabPointer\n");
+#endif
 
   /* Have all interesting events go to window
    *  Note: ButtonPress and ButtonRelease do not need to be specified
@@ -1326,11 +1339,13 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
   /* As usual, type in union unimportant as long as object is 1st */
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
+    nelements=0;
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
 	DlElement *pE = dlElement->structure.element;
 	if(pE->type != DL_Display) {
 	    DlObject *po = &pE->structure.rectangle->object;
+	    nelements++;
 	    XDrawRectangle(display,window, xorGC,
 	      po->x + xOffset, po->y + yOffset, po->width , po->height);
 	  /* Calculate extents of the group */
@@ -1338,8 +1353,22 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    maxX = MAX(maxX, po->x + (int)po->width);
 	    minY = MIN(minY, po->y);
 	    maxY = MAX(maxY, po->y + (int)po->height);
+#if DEBUG_EVENTS > 1
+	    fprintf(stderr," minX=%d maxX=%d minY=%d maxY=%d\n\n",
+	      minX,maxX,minY,maxY);
+	    fprintf(stderr," po->x=%d po->width=%d po->y=%d po->height =%d\n",
+	      po->x,po->width,po->y,po->height);
+#endif	    
 	}
 	dlElement = dlElement->next;
+    }
+  /* Check if there was anything selected besides the display */
+    if(!nelements) {
+	XUngrabServer(display);
+	XUngrabPointer(display,CurrentTime);
+	XBell(display,50);
+	XFlush(display);
+	return False;
     }
     groupWidth = maxX - minX;
     groupHeight = maxY - minY;
@@ -1351,6 +1380,18 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     groupDeltaX1 = groupWidth - groupDeltaX0;
   /* How many pixels is the cursor position from the bottom edge of all objects */
     groupDeltaY1 = groupHeight - groupDeltaY0;
+#if DEBUG_EVENTS > 1
+    fprintf(stderr," groupWidth=%d groupHeight=%d groupDeltaX0=%d\n"
+      " groupDeltaY0=%d groupDeltaX1=%d groupDeltaY1=%d\n\n",
+      groupWidth,groupHeight,groupDeltaX0,
+      groupDeltaY0,groupDeltaX1,groupDeltaY1);
+#endif    
+#if DEBUG_EVENTS > 2
+    XUngrabServer(display);
+    XUngrabPointer(display,CurrentTime);
+    XFlush(display);
+    return(returnVal);
+#endif
 
 /* Loop until the button is released */
     while (TRUE) {
@@ -1376,6 +1417,10 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	  /* Fall through */
 	}
 	case ButtonRelease:
+#if DEBUG_EVENTS > 1
+	    fprintf(stderr,"  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
 	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while (dlElement) {
@@ -1394,6 +1439,10 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    *finalY = initialY + yOffset;
 	    return (returnVal);	/* return from while(TRUE) */
 	case MotionNotify:
+#if DEBUG_EVENTS > 1
+	    fprintf(stderr,"  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
 	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while (dlElement) {
@@ -1454,6 +1503,10 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    }
 	    break;
 	default:
+#if DEBUG_EVENTS > 1
+	    fprintf(stderr,"  Default: %s\n",getEventName(event.type));
+	    fflush(stdout);
+#endif	    
 	    XtDispatchEvent(&event);
 	}
     }
@@ -5212,6 +5265,59 @@ void printEventMasks(Display *display, Window win, char *string)
 	  (attr.all_event_masks&mask)?"X":" ",
 	  (attr.your_event_mask&mask)?"X":" ",
 	  (attr.do_not_propagate_mask&mask)?"X":" ");
+    }
+}
+
+char *getEventName(int type)
+{
+#if LASTEvent != 35
+#error getEventType only works for LASTEvent=35 (See X.h)
+#endif
+  /* These types are from X11/X.h */
+    static char *eventNames[LASTEvent+2]={
+	"Reserved (0)",
+	"Reserved (1)",
+	"KeyPress",
+	"KeyRelease",
+	"ButtonPress",
+	"ButtonRelease",
+	"MotionNotify",
+	"EnterNotify",
+	"LeaveNotify",
+	"FocusIn",
+	"FocusOut",
+	"KeymapNotify",
+	"Expose",
+	"GraphicsExpose",
+	"NoExpose",
+	"VisibilityNotify",
+	"CreateNotify",
+	"DestroyNotify",
+	"UnmapNotify",
+	"MapNotify",
+	"MapRequest",
+	"ReparentNotify",
+	"ConfigureNotify",
+	"ConfigureRequest",
+	"GravityNotify",
+	"ResizeRequest",
+	"CirculateNotify",
+	"CirculateRequest",
+	"PropertyNotify",
+	"SelectionClear",
+	"SelectionRequest",
+	"SelectionNotify",
+	"ColormapNotify",
+	"ClientMessage",
+	"MappingNotify",
+	"LASTEvent",
+	"Unknown"
+    };
+
+    if(type > 2 && type < LASTEvent) {
+	return eventNames[type];
+    } else {
+	return eventNames[LASTEvent+1];
     }
 }
 

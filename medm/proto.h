@@ -504,6 +504,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 /* Debugging */
 void dumpCartesianPlot(void);
 void printEventMasks(Display *display, Window win, char *string);
+char *getEventName(int type);
 void dumpDisplayInfoList(DisplayInfo *head, char *string);
 
 /* medmWidget.c */
