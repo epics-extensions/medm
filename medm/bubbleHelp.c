@@ -127,10 +127,8 @@ static void makeBubbleHelpWidget(Widget w, char *label)
     }
   /* Create dialog shell */
     nargs=0;
-#if OMIT_RESIZE_HANDLES
     XtSetArg(args[nargs],XmNmwmDecorations,0); nargs++;
     XtSetArg(args[nargs],XmNmwmFunctions,0); nargs++;
-#endif
     XtSetArg(args[nargs],XmNx,x+width/2+BUBBLE_DELTAX); nargs++;
     XtSetArg(args[nargs],XmNy,y+height+BUBBLE_DELTAY); nargs++;
     bubbleHelpWidget=XmCreateDialogShell(wparent,"bubbleHelpD",args,nargs);
