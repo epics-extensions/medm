@@ -1,0 +1,82 @@
+#
+# to use the libMedm.a library for "embedded MEDM", do equivalent to the
+# following template.
+#
+# then link against:
+#  -lMedm -lANLwidgets -lGraphX -lPrintUtils -lca -lCom -lxrtm \
+#  -lXm -lXt -lX11 -lm
+#
+# noting that -lxrtm above is XRT/Graph from KL Group (used for
+# the cartesian plots in MEDM)
+
+...
+
+#include ...
+
+#define CLASS_NAME SBC		/* or whatever obviously */
+
+
+static String fallbackResources[] = {
+  "SBC*foreground: black",
+  "SBC*background: #b0c3ca",
+};
+
+
+
+int main(int argc, char *argv[])
+{
+  XtAppContext appContext;
+  Arg args[8];
+  Widget mainShell, da;
+  int n;
+  ...
+
+ /*
+  * to get around ca repeater task not running problem (with resultant
+  *   orphaned windows), do ca_task_initialize() right away
+  */
+  SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
+
+
+ /*
+  * now initialize the Intrinsics..., create main shell, etc.
+  */   
+  mainShell = XtAppInitialize(&appContext, CLASS_NAME, NULL, 0, &argc, argv,
+			     fallbackResources, args, n);
+
+ ...
+
+ n = 0;
+ XtSetArg(...); n++;
+ ...
+ da = XmCreateDrawingArea(mainShell,"da",args,n)
+ XtManageChild(da);
+
+
+ /***
+  *** initialize MEDM under this appContext
+  ***/
+
+ /* 3rd argument = {"alias" or "scalable" or <xlfd>}
+  * (oen of widgetDM.h's FONT_ALIASES_STRING or DEFAULT_SCALABLE_DISPLAY_FONT */
+  libMedmInit(appContext,XtDisplay(mainShell),"alias");
+
+
+ /***
+  *** now realize the top level widget, then do the libMedmImportDisplay()s
+  ***/
+  XtRealizeWidget(mainShell);		/* this can be done earlier too */
+
+
+
+ /***
+  *** import an MEDM display
+  ***/
+ /* 1st argument = display file
+  * 2nd argument = macro string (like "a=b,c=d,e=f")
+  * 3rd argument = parent widget */
+  libMedmImportDisplay("/u/anderson/SBC/test1.adl",NULL,da);
+
+  XtAppMainLoop(appContext);
+
+}
