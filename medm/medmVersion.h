@@ -79,11 +79,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * MEDM Version information
  */
 #define MEDM_VERSION		2
-#define MEDM_REVISION		1
-#define MEDM_UPDATE_LEVEL	17
+#define MEDM_REVISION		2
+#define MEDM_UPDATE_LEVEL	0
 
 #ifdef __COLOR_RULE_H__
-#define MEDM_VERSION_STRING	"MEDM Version 2.1.17a"
+#define MEDM_VERSION_STRING	"MEDM Version 2.2.0a"
 #else
-#define MEDM_VERSION_STRING	"MEDM Version 2.1.17"
+#define MEDM_VERSION_STRING	"MEDM Version 2.2.0"
 #endif

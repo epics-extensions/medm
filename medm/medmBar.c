@@ -74,6 +74,7 @@ static void barUpdateValueCb(XtPointer cd);
 static void barUpdateGraphicalInfoCb(XtPointer cd);
 static void barDestroyCb(XtPointer cd);
 static void barName(XtPointer, char **, short *, int *);
+static void barInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 #ifdef __cplusplus
 void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean)
@@ -86,9 +87,6 @@ void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
-
-
-  displayInfo->useDynamicAttribute = FALSE;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
     pb = (Bar *) malloc(sizeof(Bar));
@@ -311,6 +309,108 @@ static void barName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pb->record->severity;
 }
 
+DlElement *createDlBar(
+  DisplayInfo *displayInfo)
+{
+  DlBar *dlBar;
+  DlElement *dlElement;
+
+  dlBar = (DlBar *) malloc(sizeof(DlBar));
+  if (!dlBar) return 0;
+  objectAttributeInit(&(dlBar->object));
+  monitorAttributeInit(&(dlBar->monitor));
+  dlBar->label = LABEL_NONE;
+  dlBar->clrmod = STATIC;
+  dlBar->direction = RIGHT;
+  dlBar->fillmod = FROM_EDGE;
+
+  if (!(dlElement = createDlElement(DL_Bar,
+                    (XtPointer)      dlBar,
+                    (medmExecProc)   executeDlBar,
+                    (medmWriteProc)  writeDlBar,
+										0,0,
+                    barInheritValues))) {
+    free(dlBar);
+  }
+  return(dlElement);
+}
+
+DlElement *parseBar(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlBar *dlBar;
+  DlElement *dlElement = createDlBar(displayInfo);
+ 
+  if (!dlElement) return 0;
+  dlBar = dlElement->structure.bar;
+ 
+  do {
+        switch( (tokenType=getToken(displayInfo,token)) ) {
+            case T_WORD:
+                if (!strcmp(token,"object")) {
+                        parseObject(displayInfo,&(dlBar->object));
+                } else if (!strcmp(token,"monitor")) {
+                        parseMonitor(displayInfo,&(dlBar->monitor));
+                } else if (!strcmp(token,"label")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (!strcmp(token,"none"))
+                            dlBar->label = LABEL_NONE;
+                        else if (!strcmp(token,"outline"))
+                            dlBar->label = OUTLINE;
+                        else if (!strcmp(token,"limits"))
+                            dlBar->label = LIMITS;
+                        else if (!strcmp(token,"channel"))
+                            dlBar->label = CHANNEL;
+                } else if (!strcmp(token,"clrmod")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (!strcmp(token,"static"))
+                            dlBar->clrmod = STATIC;
+                        else if (!strcmp(token,"alarm"))
+                            dlBar->clrmod = ALARM;
+                        else if (!strcmp(token,"discrete"))
+                            dlBar->clrmod = DISCRETE;
+                } else if (!strcmp(token,"direction")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (!strcmp(token,"up"))
+                            dlBar->direction = UP;
+                        else if (!strcmp(token,"down"))
+                            dlBar->direction = DOWN;
+                        else if (!strcmp(token,"right"))
+                            dlBar->direction = RIGHT;
+                        else if (!strcmp(token,"left"))
+                            dlBar->direction = LEFT;
+                } else if (!strcmp(token,"fillmod")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (!strcmp(token,"from edge"))
+                            dlBar->fillmod = FROM_EDGE;
+                        else if(!strcmp(token,"from center"))
+			    dlBar->fillmod = FROM_CENTER;
+                }
+                break;
+            case T_EQUAL:
+                break;
+            case T_LEFT_BRACE:
+                nestingLevel++; break;
+            case T_RIGHT_BRACE:
+                nestingLevel--; break;
+        }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+ 
+  POSITION_ELEMENT_ON_LIST();
+ 
+  return dlElement;
+ 
+}
+
 void writeDlBar( FILE *stream, DlBar *dlBar, int level) {
   int i;
   char indent[16];
@@ -321,13 +421,30 @@ void writeDlBar( FILE *stream, DlBar *dlBar, int level) {
     fprintf(stream,"\n%sbar {",indent);
     writeDlObject(stream,&(dlBar->object),level+1);
     writeDlMonitor(stream,&(dlBar->monitor),level+1);
-    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
-      stringValueTable[dlBar->label]);
-    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
-      stringValueTable[dlBar->clrmod]);
-    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
-      stringValueTable[dlBar->direction]);
-    fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
-      stringValueTable[dlBar->fillmod]);
+    if (dlBar->label != LABEL_NONE)
+      fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+        stringValueTable[dlBar->label]);
+    if (dlBar->clrmod != STATIC)
+      fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+        stringValueTable[dlBar->clrmod]);
+    if (dlBar->direction != RIGHT)
+      fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+        stringValueTable[dlBar->direction]);
+    if (dlBar->fillmod != FROM_EDGE) 
+      fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
+        stringValueTable[dlBar->fillmod]);
     fprintf(stream,"\n%s}",indent);
+}
+
+static void barInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlBar *dlBar = p->structure.bar;
+  medmGetValues(pRCB,
+    RDBK_RC,       &(dlBar->monitor.rdbk),
+    CLR_RC,        &(dlBar->monitor.clr),
+    BCLR_RC,       &(dlBar->monitor.bclr),
+    LABEL_RC,      &(dlBar->label),
+    DIRECTION_RC,  &(dlBar->direction),
+    CLRMOD_RC,     &(dlBar->clrmod),
+    FILLMOD_RC,    &(dlBar->fillmod),
+    -1);
 }

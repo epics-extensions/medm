@@ -53,75 +53,97 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-08-95        vong    conform to c++ syntax
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-void executeDlSurfacePlot(DisplayInfo *displayInfo,
-			DlSurfacePlot *dlSurfacePlot, Boolean dummy)
+#if 0
+#ifdef __cplusplus
+static void createDlControl(
+  DisplayInfo *,
+  DlControl *control)
+#else
+static void createDlControl(
+  DisplayInfo *displayInfo,
+  DlControl *control)
+#endif
 {
-  Channel *pCh;
-  int n;
-  Arg args[12];
-  Widget localWidget;
+  strcpy(control->ctrl,globalResourceBundle.ctrl);
+  control->clr = globalResourceBundle.clr;
+  control->bclr = globalResourceBundle.bclr;
+}
+#endif
 
-
-  displayInfo->useDynamicAttribute = FALSE;
-
-  if (displayInfo->traversalMode == DL_EXECUTE) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_SurfacePlot;
-    pCh->specifics = (XtPointer) dlSurfacePlot;
-  }
-
-/* put up white rectangle so that unconnected channels are obvious */
-  XSetForeground(display,displayInfo->pixmapGC,WhitePixel(display,screenNum));
-  XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
-	dlSurfacePlot->object.x,dlSurfacePlot->object.y,
-	dlSurfacePlot->object.width,dlSurfacePlot->object.height);
-  XSetForeground(display,displayInfo->gc,WhitePixel(display,screenNum));
-  XFillRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-	dlSurfacePlot->object.x,dlSurfacePlot->object.y,
-	dlSurfacePlot->object.width,dlSurfacePlot->object.height);
-
-
-/* from the surfacePlot structure, we've got SurfacePlot's specifics */
-  n = 0;
-  XtSetArg(args[n],XmNx,(Position)dlSurfacePlot->object.x); n++;
-  XtSetArg(args[n],XmNy,(Position)dlSurfacePlot->object.y); n++;
-  XtSetArg(args[n],XmNwidth,(Dimension)dlSurfacePlot->object.width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension)dlSurfacePlot->object.height); n++;
-  XtSetArg(args[n],XmNhighlightThickness,0); n++;
-  XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlSurfacePlot->plotcom.clr]); n++;
-  XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlSurfacePlot->plotcom.bclr]); n++;
-  XtSetArg(args[n],XmNtraversalOn,False); n++;
-/*
- * add the pointer to the Channel structure as userData 
- *  to widget
- */
-  XtSetArg(args[n],XmNuserData,(XtPointer)pCh); n++;
-  localWidget = XtCreateWidget("surfacePlot", xmDrawingAreaWidgetClass, 
-		displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] =  localWidget;
-
-  if (displayInfo->traversalMode == DL_EXECUTE) {
-
-/* record the widget that this structure belongs to */
-    pCh->self = localWidget;
-
-  } else if (displayInfo->traversalMode == DL_EDIT) {
-
-/* add button press handlers */
-  XtAddEventHandler(localWidget,
-	ButtonPressMask,False,(XtEventHandler)handleButtonPress,
-	(XtPointer)displayInfo);
-    XtManageChild(localWidget);
-  }
+void controlAttributeInit(DlControl *control) {
+  control->ctrl[0] = '\0';
+  control->clr = 14;
+  control->bclr = 0;
 }
 
+void parseControl(
+  DisplayInfo *displayInfo,
+  DlControl *control)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
 
+  do {
+        switch( (tokenType=getToken(displayInfo,token)) ) {
+            case T_WORD:
+                if (!strcmp(token,"ctrl") ||
+                    !strcmp(token,"chan")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        strcpy(control->ctrl,token);
+                } else if (!strcmp(token,"clr")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        control->clr = atoi(token) % DL_MAX_COLORS;
+                } else if (!strcmp(token,"bclr")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        control->bclr = atoi(token) % DL_MAX_COLORS;
+                }
+                break;
+            case T_LEFT_BRACE:
+                nestingLevel++; break;
+            case T_RIGHT_BRACE:
+                nestingLevel--; break;
+        }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+}
 
+void writeDlControl(
+  FILE *stream,
+  DlControl *dlControl,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0';
+
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+		fprintf(stream,"\n%scontrol {",indent);
+		if (dlControl->ctrl[0] != '\0')
+			fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlControl->ctrl);
+		fprintf(stream,"\n%s\tclr=%d",indent,dlControl->clr);
+		fprintf(stream,"\n%s\tbclr=%d",indent,dlControl->bclr);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  } else {
+		fprintf(stream,"\n%scontrol {",indent);
+		fprintf(stream,"\n%s\tctrl=\"%s\"",indent,dlControl->ctrl);
+		fprintf(stream,"\n%s\tclr=%d",indent,dlControl->clr);
+		fprintf(stream,"\n%s\tbclr=%d",indent,dlControl->bclr);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}

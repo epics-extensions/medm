@@ -1,3 +1,32 @@
+Version 2.2.0
+=============
+- Support a new .adl file format.
+  - reduce the file size up to 70%
+  - the new file format will compatible with a new Java tool developed by John
+    Winans.
+  - eliminate the problem of multiple defined of basic attribute and
+    dynamic attribute for individual object in .adl file.
+- Also support the 2.1.x file format.  By default, medm saves display in the
+  new file format.  However, user can save display in the 2.1.x file format.
+  To do that, bring up the "save as" file selection dialog from the file
+  menu and select the 2.1.x file format.
+- polygon and polyine now have a more consistence inheritence characteristic
+  with the rest of the graphic objects.
+- Add '0x' in front of the hexadecimal number. For hexadecimal format,
+  the number is always treated as a unsigned long.  For example, a -1
+  will be displayed as 0xffffffff and a 1 will be 0x1.
+- Add <string> option to textUpdate and textEntry object. if the pv is an
+  character waveform, MEDM will treat the character waveform as a '\0' ended
+  character string.  The maximum size of the string is either the size
+  of character waveform or 256 character minus the '\0' character, whichever
+  is less.
+- Select a printer ofter than the default one.  Pull down the file menu,
+  select the entry <Printer Setup> and enter the printer name into the
+  setup dialog box and press O.K.
+- Add a command line switch -bigMousePointer to ask medm to use a bigger mouse
+  pointer.
+
+
 Version 2.1.17
 ==============
 Fixed the following problem.

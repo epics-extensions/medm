@@ -76,6 +76,58 @@ extern Widget mainShell;
 static Position x = 0, y = 0;
 static Widget lastShell;
 
+
+typedef DlElement *(*medmParseFunc)(DisplayInfo *, DlComposite *);
+typedef struct {
+   char *name;
+   medmParseFunc func;
+} ParseFuncEntry;
+
+typedef struct _parseFuncEntryNode {
+   ParseFuncEntry *entry;
+   struct _parseFuncEntryNode *next;
+   struct _parseFuncEntryNode *prev;
+} ParseFuncEntryNode;
+
+ParseFuncEntry parseFuncTable[] = {
+         {"rectangle",            parseRectangle},
+	 {"oval",                 parseOval},
+         {"arc",                  parseArc},
+         {"text",                 parseText},
+         {"falling line",         parseFallingLine},
+         {"rising line",          parseRisingLine},
+         {"related display",      parseRelatedDisplay},
+         {"shell command",        parseShellCommand},
+         {"bar",                  parseBar},
+         {"indicator",            parseIndicator},
+         {"meter",                parseMeter},
+         {"byte",                 parseByte},
+         {"strip chart",          parseStripChart},
+         {"cartesian plot",       parseCartesianPlot},
+         {"text update",          parseTextUpdate},
+         {"choice button",        parseChoiceButton},
+         {"button",               parseChoiceButton},
+         {"message button",       parseMessageButton},
+         {"menu",                 parseMenu},
+         {"text entry",           parseTextEntry},
+         {"valuator",             parseValuator},
+         {"image",                parseImage},
+         {"composite",            parseComposite},
+         {"polyline",             parsePolyline},
+         {"polygon",              parsePolygon},
+};
+
+int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
+DlElement *getNextElement(DisplayInfo *pDI, DlComposite *pc, char *token) {
+  int i;
+  for (i=0; i<parseFuncTableSize; i++) {
+    if (!strcmp(token,parseFuncTable[i].name)) {
+      return parseFuncTable[i].func(pDI, pc);
+    }
+  }
+  return 0;
+}
+
 #ifdef __cplusplus
 static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
 #else
@@ -133,7 +185,6 @@ DisplayInfo *allocateDisplayInfo()
   displayInfo->newDisplay = True;
   displayInfo->filePtr = NULL;
   displayInfo->displayFileName = NULL;
-  displayInfo->useDynamicAttribute = FALSE;
   displayInfo->hasBeenEditedButNotSaved = False;
   displayInfo->selectedElementsArray = NULL;
   displayInfo->numSelectedElements = 0;
@@ -153,19 +204,6 @@ DisplayInfo *allocateDisplayInfo()
  */
   displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
   displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
-
-  displayInfo->attribute.clr = globalResourceBundle.clr;
-  displayInfo->attribute.style = globalResourceBundle.style;
-  displayInfo->attribute.fill = globalResourceBundle.fill;
-  displayInfo->attribute.width = globalResourceBundle.lineWidth;
-
-  displayInfo->dynamicAttribute.attr.mod.clr = globalResourceBundle.clrmod;
-  displayInfo->dynamicAttribute.attr.mod.vis = globalResourceBundle.vis;
-#ifdef __COLOR_RULE_H__
-  displayInfo->dynamicAttribute.attr.mod.colorRule = globalResourceBundle.colorRule;
-#endif
-  displayInfo->dynamicAttribute.attr.param.chan[0] = '\0';
-
 
 /*
  * startup with traversal mode as specified in globalDisplayListTraversalMode
@@ -279,27 +317,11 @@ void dmDisplayListParse(
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   Arg args[7];
-  DlDynamicAttribute *dlDynamicAttribute, *localDynamicAttribute;
+  DlBasicAttribute attr;
+  DlDynamicAttribute dynAttr;
   DlElement *dlElement;
   int numPairs;
   DlComposite *dlComposite = NULL;
-
-/* append dynamic attribute if appropriate */
-#define APPEND_DYNAMIC_ATTRIBUTE()				\
-if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
-  localDynamicAttribute = (DlDynamicAttribute *)malloc(		\
-			sizeof(DlDynamicAttribute));		\
-  *localDynamicAttribute = *dlDynamicAttribute;			\
-								\
-  dlElement = (DlElement *) malloc(sizeof(DlElement));		\
-  dlElement->type = DL_DynamicAttribute;			\
-  dlElement->structure.dynamicAttribute = localDynamicAttribute;\
-  dlElement->next = (DlElement *)NULL;				\
-  POSITION_ELEMENT_ON_LIST();					\
-  dlElement->dmExecute =  (medmExecProc)executeDlDynamicAttribute;\
-  dlElement->dmWrite =  (medmWriteProc)writeDlDynamicAttribute;	\
-}								\
-
 
 /* 
  * allocate a DisplayInfo structure and shell for this display file/list
@@ -330,11 +352,24 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 /* if first token isn't "file" then bail out! */
   tokenType=getToken(displayInfo,token);
   if (tokenType == T_WORD && !strcmp(token,"file")) {
-    dlDynamicAttribute = NULL;
-    parseFile(displayInfo);
+    DlElement *dlElement;
+    dlElement = parseFile(displayInfo);
+    if (dlElement) {
+      displayInfo->versionNumber = dlElement->structure.file->versionNumber;
+      if (displayInfo->versionNumber < 20200) {
+        basicAttributeInit(&attr);
+        dynamicAttributeInit(&dynAttr);
+      }
+    } else {
+      fprintf(stderr,"\ndmDisplayListParse: out of memory!");
+      displayInfo->filePtr = NULL;
+      dmRemoveDisplayInfo(displayInfo);
+      currentDisplayInfo = NULL;
+      return;
+    }
   } else {
-    displayInfo->filePtr = NULL;
     fprintf(stderr,"\ndmDisplayListParse: invalid .adl file (bad first token)");
+    displayInfo->filePtr = NULL;
     dmRemoveDisplayInfo(displayInfo);
     currentDisplayInfo = NULL;
     return;
@@ -348,144 +383,59 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
  */
 
   while ( (tokenType=getToken(displayInfo,token)) != T_EOF ) {
-	switch (tokenType) {
-  
-	    case T_WORD     : 
-/*
- * statics
- */
-		if (!strcmp(token,"basic attribute") ||
-		    !strcmp(token,"<<basic attribute>>")) {
-			dlDynamicAttribute = NULL;
-			parseBasicAttribute(displayInfo,dlComposite);
-		} else if (!strcmp(token,"dynamic attribute") ||
-			   !strcmp(token,"<<dynamic attribute>>")) {
-/* need to propogate dynamicAttribute until:
-	another dynamicAttribute
-	or a basicAttribute
-	or a non-static (non-graphic) object is found */
-			dlDynamicAttribute =
-				parseDynamicAttribute(displayInfo,dlComposite);
-		} else if (!strcmp(token,"rectangle")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseRectangle(displayInfo,dlComposite);
-		} else if (!strcmp(token,"oval")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseOval(displayInfo,dlComposite);
-		} else if (!strcmp(token,"arc")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseArc(displayInfo,dlComposite);
-		} else if (!strcmp(token,"text")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseText(displayInfo,dlComposite);
-                } else if (!strcmp(token,"falling line")) {
-                        APPEND_DYNAMIC_ATTRIBUTE();
-                        parseFallingLine(displayInfo,dlComposite);
-                } else if (!strcmp(token,"rising line")) {
-                        APPEND_DYNAMIC_ATTRIBUTE();
-                        parseRisingLine(displayInfo,dlComposite);
+    switch (tokenType) {
+      case T_WORD : {
+        DlElement *pe = 0;
 
-
-/* not really static/graphic objects, but not really monitors or controllers? */
-		} else if (!strcmp(token,"related display")) {
-			dlDynamicAttribute = NULL;
-			parseRelatedDisplay(displayInfo,dlComposite);
-		} else if (!strcmp(token,"shell command")) {
-			dlDynamicAttribute = NULL;
-			parseShellCommand(displayInfo,dlComposite);
-/* 
- * monitors
- */
-		} else if (!strcmp(token,"bar")) {
-			dlDynamicAttribute = NULL;
-			parseBar(displayInfo,dlComposite);
-		} else if (!strcmp(token,"indicator")) {
-			dlDynamicAttribute = NULL;
-			parseIndicator(displayInfo,dlComposite);
-		} else if (!strcmp(token,"meter")) {
-			dlDynamicAttribute = NULL;
-			parseMeter(displayInfo,dlComposite);
-		} else if (!strcmp(token,"byte")) {
-			dlDynamicAttribute = NULL;
-			parseByte(displayInfo,dlComposite);
-		} else if (!strcmp(token,"strip chart")) {
-			dlDynamicAttribute = NULL;
-			parseStripChart(displayInfo,dlComposite);
-		} else if (!strcmp(token,"cartesian plot")) {
-			dlDynamicAttribute = NULL;
-			parseCartesianPlot(displayInfo,dlComposite);
-#if 0
-		} else if (!strcmp(token,"surface plot")) {
-			dlDynamicAttribute = NULL;
-			parseSurfacePlot(displayInfo,dlComposite);
-#endif
-		} else if (!strcmp(token,"text update")) {
-			dlDynamicAttribute = NULL;
-			parseTextUpdate(displayInfo,dlComposite);
-/* 
- * controllers
- */
-		} else if (!strcmp(token,"choice button")) {
-			dlDynamicAttribute = NULL;
-			parseChoiceButton(displayInfo,dlComposite);
-/* button and choice button are the same thing */
-		} else if (!strcmp(token,"button")) {
-			dlDynamicAttribute = NULL;
-			parseChoiceButton(displayInfo,dlComposite);
-		} else if (!strcmp(token,"message button")) {
-			dlDynamicAttribute = NULL;
-			parseMessageButton(displayInfo,dlComposite);
-		} else if (!strcmp(token,"menu")) {
-			dlDynamicAttribute = NULL;
-			parseMenu(displayInfo,dlComposite);
-		} else if (!strcmp(token,"text entry")) {
-			dlDynamicAttribute = NULL;
-			parseTextEntry(displayInfo,dlComposite);
-		} else if (!strcmp(token,"valuator")) {
-			dlDynamicAttribute = NULL;
-			parseValuator(displayInfo,dlComposite);
-/* 
- * extensions
- */
-		} else if (!strcmp(token,"image")) {
-			dlDynamicAttribute = NULL;
-			parseImage(displayInfo,dlComposite);
-		} else if (!strcmp(token,"composite")) {
-			dlDynamicAttribute = NULL;
-			parseComposite(displayInfo,dlComposite);
-		} else if (!strcmp(token,"polyline")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parsePolyline(displayInfo,dlComposite);
-		} else if (!strcmp(token,"polygon")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parsePolygon(displayInfo,dlComposite);
-/*
- * less commonly used statics  (since walks through entire if/else-if put last)
- */
-/************************* done as first step to see if valid file 
-		} else if (!strcmp(token,"file")) {
-			dlDynamicAttribute = NULL;
-			parseFile(displayInfo);
-**************************/
-		} else if (!strcmp(token,"display")) {
-			dlDynamicAttribute = NULL;
-			parseDisplay(displayInfo);
-		} else if (!strcmp(token,"color map") ||
-			   !strcmp(token,"<<color map>>")) {
-			dlDynamicAttribute = NULL;
-			dlCmap=parseColormap(displayInfo,displayInfo->filePtr);
-			if (dlCmap == NULL) {
-			/* error - do total bail out */
-			    fclose(displayInfo->filePtr);
-			    dmRemoveDisplayInfo(displayInfo);
-			    return;
-			}
-/* attribute is spelled wrong here on purpose  - to agree with LANL */
-		} else if (!strcmp(token,"<<basic atribute>>")) {
-			dlDynamicAttribute = NULL;
-			parseBasicAttribute(displayInfo,dlComposite);
-		}
+        if (pe = getNextElement(displayInfo,dlComposite,token)) {
+          if (displayInfo->versionNumber < 20200) {
+            switch (pe->type) {
+              case DL_Rectangle :
+              case DL_Oval      :
+              case DL_Arc       :
+              case DL_Text      :
+              case DL_Polyline  :
+              case DL_Polygon   :
+                pe->structure.rectangle->attr = attr;
+                if (dynAttr.chan[0] != '\0') {
+                  pe->structure.rectangle->dynAttr = dynAttr;
+                  dynAttr.chan[0] = '\0';
+                }
+                break;
+            }
+          }
+	} else
+        if (!strcmp(token,"file")) {
+	  parseFile(displayInfo);
+	} else
+        if (!strcmp(token,"display")) {
+	  parseDisplay(displayInfo);
+	} else
+        if (!strcmp(token,"color map") ||
+	    !strcmp(token,"<<color map>>")) {
+	  dlCmap=parseColormap(displayInfo,displayInfo->filePtr);
+	  if (!dlCmap) {
+	    /* error - do total bail out */
+	    fclose(displayInfo->filePtr);
+	    dmRemoveDisplayInfo(displayInfo);
+	    return;
+	  }
+	} else
+        if (displayInfo->versionNumber < 20200) {
+          if (!strcmp(token,"<<basic atribute>>") ||
+	      !strcmp(token,"basic attribute") ||
+	      !strcmp(token,"<<basic attribute>>")) {
+	    parseOldBasicAttribute(displayInfo,&attr);
+	  } else
+          if (!strcmp(token,"dynamic attribute") ||
+	      !strcmp(token,"<<dynamic attribute>>")) {
+	    parseOldDynamicAttribute(displayInfo,&dynAttr);
+          }
 	}
+      }
+      default :
+        break;
+    }
   }
 
   displayInfo->filePtr = NULL;
@@ -552,144 +502,157 @@ void parseCompositeChildren(
   TOKEN tokenType;
   int nestingLevel;
 
-  DlDynamicAttribute *dlDynamicAttribute, *localDynamicAttribute;
+  DlBasicAttribute attr;
+  DlDynamicAttribute dynAttr;
   DlElement *dlElement;
 
 
   nestingLevel = 0;
+  if (displayInfo->versionNumber < 20200) {
+    basicAttributeInit(&attr);
+    dynamicAttributeInit(&dynAttr);
+  }
 
 /*
  * proceed with parsing
  */
 
   do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
-  
-	    case T_WORD     : 
-/*
- * statics
- */
-
-		if (!strcmp(token,"basic attribute") ||
-		    !strcmp(token,"<<basic attribute>>")) {
-			dlDynamicAttribute = NULL;
-			parseBasicAttribute(displayInfo,dlComposite);
-		} else if (!strcmp(token,"dynamic attribute") ||
-			   !strcmp(token,"<<dynamic attribute>>")) {
-/* need to propogate this dynamicAttribute until:
-	another dynamicAttribute
-	or a basicAttribute
-	or a non-static (non-graphic) object is found */
-			dlDynamicAttribute =
-				parseDynamicAttribute(displayInfo,dlComposite);
-		} else if (!strcmp(token,"rectangle")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseRectangle(displayInfo,dlComposite);
-		} else if (!strcmp(token,"oval")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseOval(displayInfo,dlComposite);
-		} else if (!strcmp(token,"arc")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseArc(displayInfo,dlComposite);
-		} else if (!strcmp(token,"text")) {
-			APPEND_DYNAMIC_ATTRIBUTE();
-			parseText(displayInfo,dlComposite);
-
-/* not really static/graphic objects, but not really monitors or controllers? */
-		} else if (!strcmp(token,"related display")) {
-			dlDynamicAttribute = NULL;
-			parseRelatedDisplay(displayInfo,dlComposite);
-		} else if (!strcmp(token,"shell command")) {
-			dlDynamicAttribute = NULL;
-			parseShellCommand(displayInfo,dlComposite);
-/* 
- * monitors
- */
-		} else if (!strcmp(token,"bar")) {
-			dlDynamicAttribute = NULL;
-			parseBar(displayInfo,dlComposite);
-		} else if (!strcmp(token,"indicator")) {
-			dlDynamicAttribute = NULL;
-			parseIndicator(displayInfo,dlComposite);
-		} else if (!strcmp(token,"meter")) {
-			dlDynamicAttribute = NULL;
-			parseMeter(displayInfo,dlComposite);
-		} else if (!strcmp(token,"byte")) {
-			dlDynamicAttribute = NULL;
-			parseByte(displayInfo,dlComposite);
-		} else if (!strcmp(token,"strip chart")) {
-			dlDynamicAttribute = NULL;
-			parseStripChart(displayInfo,dlComposite);
-		} else if (!strcmp(token,"cartesian plot")) {
-			dlDynamicAttribute = NULL;
-			parseCartesianPlot(displayInfo,dlComposite);
-#if 0
-		} else if (!strcmp(token,"surface plot")) {
-			dlDynamicAttribute = NULL;
-			parseSurfacePlot(displayInfo,dlComposite);
-#endif
-		} else if (!strcmp(token,"text update")) {
-			dlDynamicAttribute = NULL;
-			parseTextUpdate(displayInfo,dlComposite);
-/* 
- * controllers
- */
-		} else if (!strcmp(token,"choice button")) {
-			dlDynamicAttribute = NULL;
-			parseChoiceButton(displayInfo,dlComposite);
-/* button and choice button are the same thing */
-		} else if (!strcmp(token,"button")) {
-			dlDynamicAttribute = NULL;
-			parseChoiceButton(displayInfo,dlComposite);
-		} else if (!strcmp(token,"message button")) {
-			dlDynamicAttribute = NULL;
-			parseMessageButton(displayInfo,dlComposite);
-		} else if (!strcmp(token,"menu")) {
-			dlDynamicAttribute = NULL;
-			parseMenu(displayInfo,dlComposite);
-		} else if (!strcmp(token,"text entry")) {
-			dlDynamicAttribute = NULL;
-			parseTextEntry(displayInfo,dlComposite);
-		} else if (!strcmp(token,"valuator")) {
-			dlDynamicAttribute = NULL;
-			parseValuator(displayInfo,dlComposite);
-/* 
- * extensions
- */
-		} else if (!strcmp(token,"image")) {
-			dlDynamicAttribute = NULL;
-			parseImage(displayInfo,dlComposite);
-		} else if (!strcmp(token,"composite")) {
-			dlDynamicAttribute = NULL;
-			parseComposite(displayInfo,dlComposite);
-		} else if (!strcmp(token,"polyline")) {
-			dlDynamicAttribute = NULL;
-			parsePolyline(displayInfo,dlComposite);
-		} else if (!strcmp(token,"polygon")) {
-			dlDynamicAttribute = NULL;
-			parsePolygon(displayInfo,dlComposite);
-
-		} else if (!strcmp(token,"<<basic atribute>>")) {
-/* put less commonly used static down here (since walks through if/else-if) */
-
-/* attribute is spelled wrong here on purpose  - to agree with LANL */
-			dlDynamicAttribute = NULL;
-			parseBasicAttribute(displayInfo,dlComposite);
-		}
-		break;
-
-	    case T_EQUAL:
-		break;
-	    case T_LEFT_BRACE:
-		nestingLevel++; break;
-	    case T_RIGHT_BRACE:
-		nestingLevel--; break;
-	}
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD : {
+        DlElement *pe = 0;
+ 
+        if (pe = getNextElement(displayInfo,dlComposite,token)) {
+          if (displayInfo->versionNumber < 20200) {
+            switch (pe->type) {
+              case DL_Rectangle :
+              case DL_Oval      :
+              case DL_Arc       :
+              case DL_Text      :
+              case DL_Polyline  :
+              case DL_Polygon   :
+                pe->structure.rectangle->attr = attr;
+                if (dynAttr.chan[0] != '\0') {
+                  pe->structure.rectangle->dynAttr = dynAttr;
+                  dynAttr.chan[0] = '\0';
+                }
+                break;
+            }
+          }
+        } else
+        if (displayInfo->versionNumber < 20200) {
+          if (!strcmp(token,"<<basic atribute>>") ||
+              !strcmp(token,"basic attribute") ||
+              !strcmp(token,"<<basic attribute>>")) {
+            parseOldBasicAttribute(displayInfo,&attr);
+          } else
+          if (!strcmp(token,"dynamic attribute") ||
+              !strcmp(token,"<<dynamic attribute>>")) {
+            parseOldDynamicAttribute(displayInfo,&dynAttr);
+          }
+        }
+      }
+      case T_EQUAL:
+	break;
+      case T_LEFT_BRACE:
+	nestingLevel++; break;
+      case T_RIGHT_BRACE:
+	nestingLevel--; break;
+    }
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
 
 }
 
+#define DISPLAY_DEFAULT_X 10
+#define DISPLAY_DEFAULT_Y 10
 
-#undef APPEND_DYNAMIC_ATTRIBUTE
+DlElement *createDlDisplay(
+  DisplayInfo *displayInfo)
+{
+  DlDisplay *dlDisplay;
+  DlElement *dlElement;
+ 
+ 
+  dlDisplay = (DlDisplay *) malloc(sizeof(DlDisplay));
+  if (!dlDisplay) return 0;
+ 
+  objectAttributeInit(&(dlDisplay->object));
+  dlDisplay->object.x = DISPLAY_DEFAULT_X;
+  dlDisplay->object.y = DISPLAY_DEFAULT_Y;
+  dlDisplay->clr = 0;
+  dlDisplay->bclr = 1;
+  dlDisplay->cmap[0] = '\0';
+ 
+  dlElement = (DlElement *) malloc(sizeof(DlElement));
+  if (!dlElement) {
+    free(dlDisplay);
+    return 0;
+  }
+  if (!(dlElement = createDlElement(DL_Display,
+                    (XtPointer)      dlDisplay,
+                    (medmExecProc)   executeDlDisplay,
+                    (medmWriteProc)  writeDlDisplay,
+										0,0,0))) {
+    free(dlDisplay);
+  }
+ 
+  return(dlElement);
+}
+
+DlElement *parseDisplay(
+  DisplayInfo *displayInfo)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlDisplay *dlDisplay;
+  DlElement *dlElement = createDlDisplay(displayInfo);
+ 
+  if (!dlElement) return 0;
+  dlDisplay = dlElement->structure.display;
+ 
+  do {
+        switch( (tokenType=getToken(displayInfo,token)) ) {
+            case T_WORD:
+                if (!strcmp(token,"object")) {
+                        parseObject(displayInfo,&(dlDisplay->object));
+                } else if (!strcmp(token,"cmap")) {
+/* parse separate display list to get and use that colormap */
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (strlen(token) > (size_t) 0) {
+                            strcpy(dlDisplay->cmap,token);
+                        }
+                } else if (!strcmp(token,"bclr")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        dlDisplay->bclr = atoi(token) % DL_MAX_COLORS;
+                        displayInfo->drawingAreaBackgroundColor =
+                                dlDisplay->bclr;
+                } else if (!strcmp(token,"clr")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        dlDisplay->clr = atoi(token) % DL_MAX_COLORS;
+                        displayInfo->drawingAreaForegroundColor =
+                                dlDisplay->clr;
+                }
+                break;
+            case T_EQUAL:
+                break;
+            case T_LEFT_BRACE:
+                nestingLevel++; break;
+            case T_RIGHT_BRACE:
+                nestingLevel--; break;
+        }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  appendDlElement(&(displayInfo->dlElementListTail),dlElement); 
+  /* fix up x,y so that 0,0 (old defaults) are replaced */
+  if (dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
+  if (dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
+ 
+  return dlElement;
+}

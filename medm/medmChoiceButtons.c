@@ -77,6 +77,7 @@ static void choiceButtonUpdateValueCb(XtPointer);
 static void choiceButtonUpdateGraphicalInfoCb(XtPointer);
 static void choiceButtonDestroyCb(XtPointer cd);
 static void choiceButtonName(XtPointer, char **, short *, int *);
+static void choiceButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 
 #ifdef __cplusplus
@@ -477,8 +478,6 @@ void executeDlChoiceButton(DisplayInfo *displayInfo,
 #endif
 {
 
- displayInfo->useDynamicAttribute = FALSE;
-
  if (displayInfo->traversalMode == DL_EXECUTE) {
     choiceButtonCreateRunTimeInstance(displayInfo, dlChoiceButton);
   } else if (displayInfo->traversalMode == DL_EDIT) {
@@ -501,3 +500,137 @@ static void choiceButtonName(XtPointer cd, char **name, short *severity, int *co
   severity[0] = pcb->record->severity;
 }
 
+DlElement *createDlChoiceButton(
+  DisplayInfo *displayInfo)
+{
+  DlChoiceButton *dlChoiceButton;
+  DlElement *dlElement;
+ 
+  dlChoiceButton = (DlChoiceButton *) malloc(sizeof(DlChoiceButton));
+  if (!dlChoiceButton) return 0;
+  objectAttributeInit(&(dlChoiceButton->object));
+  controlAttributeInit(&(dlChoiceButton->control));
+  dlChoiceButton->clrmod = STATIC;
+  dlChoiceButton->stacking = ROW;
+ 
+  if (!(dlElement = createDlElement(DL_ChoiceButton,
+                    (XtPointer)      dlChoiceButton,
+                    (medmExecProc)   executeDlChoiceButton,
+                    (medmWriteProc)  writeDlChoiceButton,
+										0,0,
+                    choiceButtonInheritValues))) {
+    free(dlChoiceButton);
+  }
+ 
+  return(dlElement);
+}
+
+DlElement *parseChoiceButton(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlChoiceButton *dlChoiceButton;
+  DlElement *dlElement = createDlChoiceButton(displayInfo);
+ 
+  if (!dlElement) return 0;
+  dlChoiceButton = dlElement->structure.choiceButton;
+ 
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlChoiceButton->object));
+        else
+        if (!strcmp(token,"control"))
+          parseControl(displayInfo,&(dlChoiceButton->control));
+        else
+        if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"static"))
+            dlChoiceButton->clrmod = STATIC;
+          else
+          if (!strcmp(token,"alarm"))
+            dlChoiceButton->clrmod = ALARM;
+          else
+          if (!strcmp(token,"discrete"))
+            dlChoiceButton->clrmod = DISCRETE;
+        } else
+        if (!strcmp(token,"stacking")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"row"))
+            dlChoiceButton->stacking = ROW;
+          else
+          if (!strcmp(token,"column"))
+            dlChoiceButton->stacking = COLUMN;
+          else
+          if (!strcmp(token,"row column"))
+            dlChoiceButton->stacking = ROW_COLUMN;
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+ 
+  POSITION_ELEMENT_ON_LIST();
+ 
+  return dlElement;
+}
+
+void writeDlChoiceButton(
+  FILE *stream,
+  DlChoiceButton *dlChoiceButton,
+  int level)
+{
+  char indent[16];
+ 
+  memset(indent,'\t',level);
+  indent[level] = '\0';
+
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	if (MedmUseNewFileFormat) {
+#endif 
+		fprintf(stream,"\n%s\"choice button\" {",indent);
+		writeDlObject(stream,&(dlChoiceButton->object),level+1);
+		writeDlControl(stream,&(dlChoiceButton->control),level+1);
+		if (dlChoiceButton->clrmod != STATIC) 
+			fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlChoiceButton->clrmod]);
+		if (dlChoiceButton->stacking != ROW)
+			fprintf(stream,"\n%s\tstacking=\"%s\"",indent,
+				stringValueTable[dlChoiceButton->stacking]);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+		fprintf(stream,"\n%s\"choice button\" {",indent);
+		writeDlObject(stream,&(dlChoiceButton->object),level+1);
+		writeDlControl(stream,&(dlChoiceButton->control),level+1);
+		fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+			stringValueTable[dlChoiceButton->clrmod]);
+		fprintf(stream,"\n%s\tstacking=\"%s\"",indent,
+			stringValueTable[dlChoiceButton->stacking]);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}
+
+static void choiceButtonInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlChoiceButton *dlChoiceButton = p->structure.choiceButton;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlChoiceButton->control.ctrl),
+    CLR_RC,        &(dlChoiceButton->control.clr),
+    BCLR_RC,       &(dlChoiceButton->control.bclr),
+    CLRMOD_RC,     &(dlChoiceButton->clrmod),
+    STACKING_RC,   &(dlChoiceButton->stacking),
+    -1);
+}

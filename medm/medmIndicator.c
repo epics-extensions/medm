@@ -74,6 +74,7 @@ static void indicatorDraw(XtPointer cd);
 static void indicatorUpdateGraphicalInfoCb(XtPointer cd);
 static void indicatorDestroyCb(XtPointer cd);
 static void indicatorName(XtPointer, char **, short *, int *);
+static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 #ifdef __cplusplus
 void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
@@ -308,6 +309,101 @@ static void indicatorName(XtPointer cd, char **name, short *severity, int *count
   severity[0] = pi->record->severity;
 }
 
+DlElement *createDlIndicator(
+  DisplayInfo *displayInfo)
+{
+  DlIndicator *dlIndicator;
+  DlElement *dlElement;
+
+  dlIndicator = (DlIndicator *) malloc(sizeof(DlIndicator));
+  if (!dlIndicator) return 0;
+  objectAttributeInit(&(dlIndicator->object));
+  monitorAttributeInit(&(dlIndicator->monitor));
+  dlIndicator->label = LABEL_NONE;
+  dlIndicator->clrmod = STATIC;
+  dlIndicator->direction = RIGHT;
+
+
+  if (!(dlElement = createDlElement(DL_Indicator,
+                    (XtPointer)      dlIndicator,
+                    (medmExecProc)   executeDlIndicator,
+                    (medmWriteProc)  writeDlIndicator,
+										0,0,
+                    indicatorInheritValues))) {
+    free(dlIndicator);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseIndicator(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlIndicator *dlIndicator;
+  DlElement *dlElement = createDlIndicator(displayInfo);
+
+  if (!dlElement) return 0;
+  dlIndicator = dlElement->structure.indicator;
+
+  do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	    case T_WORD:
+		if (!strcmp(token,"object")) {
+			parseObject(displayInfo,&(dlIndicator->object));
+		} else if (!strcmp(token,"monitor")) {
+			parseMonitor(displayInfo,&(dlIndicator->monitor));
+		} else if (!strcmp(token,"label")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"none")) 
+			    dlIndicator->label = LABEL_NONE;
+			else if (!strcmp(token,"outline"))
+			    dlIndicator->label = OUTLINE;
+			else if (!strcmp(token,"limits"))
+			    dlIndicator->label = LIMITS;
+			else if (!strcmp(token,"channel"))
+			    dlIndicator->label = CHANNEL;
+		} else if (!strcmp(token,"clrmod")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"static")) 
+			    dlIndicator->clrmod = STATIC;
+			else if (!strcmp(token,"alarm"))
+			    dlIndicator->clrmod = ALARM;
+			else if (!strcmp(token,"discrete"))
+			    dlIndicator->clrmod = DISCRETE;
+		} else if (!strcmp(token,"direction")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"up")) 
+			    dlIndicator->direction = UP;
+			else if (!strcmp(token,"down"))
+			    dlIndicator->direction = DOWN;
+			else if (!strcmp(token,"right"))
+			    dlIndicator->direction = RIGHT;
+			else if (!strcmp(token,"left"))
+			    dlIndicator->direction = LEFT;
+		}
+		break;
+	    case T_EQUAL:
+		break;
+	    case T_LEFT_BRACE:
+		nestingLevel++; break;
+	    case T_RIGHT_BRACE:
+		nestingLevel--; break;
+	}
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+		&& (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+
+}
 void writeDlIndicator( FILE *stream, DlIndicator *dlIndicator, int level) {
 /****************************************************************************
  * Write DL Indicator                                                       *
@@ -321,11 +417,27 @@ void writeDlIndicator( FILE *stream, DlIndicator *dlIndicator, int level) {
     fprintf(stream,"\n%sindicator {",indent);
     writeDlObject(stream,&(dlIndicator->object),level+1);
     writeDlMonitor(stream,&(dlIndicator->monitor),level+1);
-    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
-      stringValueTable[dlIndicator->label]);
-    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
-      stringValueTable[dlIndicator->clrmod]);
-    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
-      stringValueTable[dlIndicator->direction]);
+    if (dlIndicator->label != LABEL_NONE)
+      fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+        stringValueTable[dlIndicator->label]);
+    if (dlIndicator->clrmod != STATIC)
+      fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+        stringValueTable[dlIndicator->clrmod]);
+    if (dlIndicator->direction != RIGHT) 
+      fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+        stringValueTable[dlIndicator->direction]);
     fprintf(stream,"\n%s}",indent);
 }
+
+static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlIndicator *dlIndicator = p->structure.indicator;
+  medmGetValues(pRCB,
+    RDBK_RC,       &(dlIndicator->monitor.rdbk),
+    CLR_RC,        &(dlIndicator->monitor.clr),
+    BCLR_RC,       &(dlIndicator->monitor.bclr),
+    LABEL_RC,      &(dlIndicator->label),
+    DIRECTION_RC,  &(dlIndicator->direction),
+    CLRMOD_RC,     &(dlIndicator->clrmod),
+    -1);
+}
+

@@ -81,11 +81,11 @@ typedef enum
    dlElement->prev = (DlElement *)(dlComposite->dlElementListTail);	\
    if ( ((DlElement *)dlComposite->dlElementListHead)->next == NULL) {	\
      ((DlElement *)dlComposite->dlElementListHead)->next = dlElement;	\
-     dlComposite->dlElementListTail = (XtPointer)dlElement;		\
+     dlComposite->dlElementListTail = dlElement;			\
    } else {								\
      ((DlElement *)dlComposite->dlElementListTail)->next = dlElement;	\
    }									\
-   dlComposite->dlElementListTail = (XtPointer)dlElement;		\
+   dlComposite->dlElementListTail = dlElement;				\
   } else {								\
    dlElement->prev = displayInfo->dlElementListTail;			\
    ((DlElement *)displayInfo->dlElementListTail)->next = dlElement;	\

@@ -764,9 +764,16 @@ void medmSendDouble(Record *pr, double data) {
   ca_flush_io();
 }  
 
+void medmSendCharacterArray(Record *pr, char *data, unsigned long size) {
+  Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
+  SEVCHK(ca_array_put(DBR_CHAR,size,pCh->chid,data),
+    "medmSendCharacterArray: error in ca_put");
+  ca_flush_io();
+}
+
 void medmSendString(Record *pr, char *data) {
   Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
-  SEVCHK(ca_put(DBR_STRING,pCh->chid,data),"medmSendDouble: error in ca_put");
+  SEVCHK(ca_put(DBR_STRING,pCh->chid,data),"medmSendString: error in ca_put");
   ca_flush_io();
 }
 

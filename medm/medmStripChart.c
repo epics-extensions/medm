@@ -143,6 +143,7 @@ static StripChart *stripChartAlloc(DisplayInfo *,DlStripChart *);
 static void freeStripChart(XtPointer);
 static void stripChartName(XtPointer, char **, short *, int *);
 static void configStripChart(XtPointer, XtIntervalId *);
+static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 static char* titleStr = "Strip Chart";
 static Range range[MAX_PENS];
@@ -1464,59 +1465,206 @@ extern "C" {
 }
 #endif
 
+DlElement *createDlStripChart(
+  DisplayInfo *displayInfo)
+{
+  DlStripChart *dlStripChart;
+  DlElement *dlElement;
+  int penNumber;
+
+
+  dlStripChart = (DlStripChart *) malloc(sizeof(DlStripChart));
+  if (!dlStripChart) return 0;
+  objectAttributeInit(&(dlStripChart->object));
+  plotcomAttributeInit(&(dlStripChart->plotcom));
+  dlStripChart->period = 60.0;
+  dlStripChart->units = SECONDS;
+#if 1
+  /* for backward compatible */
+  dlStripChart->delay = -1.0;
+  dlStripChart->oldUnits = SECONDS;
+#endif
+  for (penNumber = 0; penNumber < MAX_PENS; penNumber++)
+    penAttributeInit(&(dlStripChart->pen[penNumber]));
+
+  if (!(dlElement = createDlElement(DL_StripChart,
+                    (XtPointer)      dlStripChart,
+                    (medmExecProc)   executeDlStripChart,
+                    (medmWriteProc)  writeDlStripChart,
+										0,0,
+                    stripChartInheritValues))) {
+    free(dlStripChart);
+  }
+
+
+  return(dlElement);
+}
+
+DlElement *parseStripChart(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlStripChart *dlStripChart;
+  DlElement *dlElement = createDlStripChart(displayInfo);
+  int penNumber;
+  int isVersion2_1_x = False;
+
+  if (!dlElement) return 0;
+  dlStripChart = dlElement->structure.stripChart;
+
+  do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	    case T_WORD:
+		if (!strcmp(token,"object"))
+			parseObject(displayInfo,&(dlStripChart->object));
+		else if (!strcmp(token,"plotcom"))
+			parsePlotcom(displayInfo,&(dlStripChart->plotcom));
+		else if (!strcmp(token,"period")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			dlStripChart->period = atof(token);
+                        isVersion2_1_x = True;
+		} else if (!strcmp(token,"delay")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			dlStripChart->delay = atoi(token);
+		} else if (!strcmp(token,"units")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"minute")) 
+			    dlStripChart->units = MINUTES;
+			else if (!strcmp(token,"second")) 
+			    dlStripChart->units = SECONDS;
+			else if (!strcmp(token,"milli second")) 
+			    dlStripChart->units = MILLISECONDS;
+			else if (!strcmp(token,"milli-second")) 
+			    dlStripChart->units = MILLISECONDS;
+			else
+			    fprintf(stderr,
+			    "\nparseStripChart: illegal units %s,%s",token,
+			    "default of SECONDS taken");
+		} else if (!strncmp(token,"pen",3)) {
+			penNumber = MIN(token[4] - '0', MAX_PENS-1);
+			parsePen(displayInfo,&(dlStripChart->pen[penNumber]));
+		}
+		break;
+	    case T_EQUAL:
+		break;
+	    case T_LEFT_BRACE:
+		nestingLevel++; break;
+	    case T_RIGHT_BRACE:
+		nestingLevel--; break;
+	}
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+		&& (tokenType != T_EOF) );
+
+  if (isVersion2_1_x) {
+    dlStripChart->delay = -1.0;  /* -1.0 is used as a indicator to save
+                                    as new format */
+  } else
+  if (dlStripChart->delay > 0) {
+    double val, dummy1, dummy2;
+    switch (dlStripChart->units) {
+      case MILLISECONDS:
+        dummy1 = -0.060 * (double) dlStripChart->delay;
+        break;
+      case SECONDS:
+        dummy1 = -60 * (double) dlStripChart->delay;
+        break;
+      case MINUTES:
+        dummy1 = -3600.0 * (double) dlStripChart->delay;
+        break;
+      default:
+        dummy1 = -60 * (double) dlStripChart->delay;
+        break;
+    }
+
+    linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
+    dlStripChart->period = -val; 
+    dlStripChart->oldUnits = dlStripChart->units;
+    dlStripChart->units = SECONDS;
+  }
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+
+}
+
 void writeDlStripChart( FILE *stream, DlStripChart *dlStripChart, int level) {
   int i;
   char indent[16];
 
 #if 1
-    /* for the compatibility */
+	/* for the compatibility */
 
-    if (dlStripChart->delay > 0.0) {
-      double val, dummy1, dummy2;
-      switch (dlStripChart->oldUnits) {
-        case MILLISECONDS:
-          dummy1 = -0.060 * (double) dlStripChart->delay;
-          break;
-        case SECONDS:
-          dummy1 = -60 * (double) dlStripChart->delay;
-          break;
-        case MINUTES:
-          dummy1 = -3600.0 * (double) dlStripChart->delay;
-          break;
-        default:
-          dummy1 = -60 * (double) dlStripChart->delay;
-          break;
-      }
+  if (dlStripChart->delay > 0.0) {
+    double val, dummy1, dummy2;
+    switch (dlStripChart->oldUnits) {
+      case MILLISECONDS:
+        dummy1 = -0.060 * (double) dlStripChart->delay;
+        break;
+      case SECONDS:
+        dummy1 = -60 * (double) dlStripChart->delay;
+        break;
+      case MINUTES:
+        dummy1 = -3600.0 * (double) dlStripChart->delay;
+        break;
+      default:
+			  dummy1 = -60 * (double) dlStripChart->delay;
+			  break;
+	  }
 
-      linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
-      if (dlStripChart->period != -val  || dlStripChart->units != SECONDS) {
-        dlStripChart->delay = -1;
-      }
-    }
+	  linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
+	  if (dlStripChart->period != -val  || dlStripChart->units != SECONDS) {
+		  dlStripChart->delay = -1;
+	  }
+  }
 #endif
 
 
-    for (i = 0;  i < level; i++) indent[i] = '\t';
-    indent[i] = '\0';
+	memset(indent,'\t',level);
+	indent[level] = '\0';
 
-    fprintf(stream,"\n%s\"strip chart\" {",indent);
-    writeDlObject(stream,&(dlStripChart->object),level+1);
-    writeDlPlotcom(stream,&(dlStripChart->plotcom),level+1);
-    if (dlStripChart->delay < 0.0) {
-      fprintf(stream,"\n%s\tperiod=%f",indent,dlStripChart->period);
-      fprintf(stream,"\n%s\tunits=\"%s\"",indent,
-        stringValueTable[dlStripChart->units]);
-    } else {
-#if 1
-      /* for the compatibility */
-      fprintf(stream,"\n%s\tdelay=%f",indent,dlStripChart->delay);
-      fprintf(stream,"\n%s\tunits=\"%s\"",indent,
-        stringValueTable[dlStripChart->oldUnits]);
+	fprintf(stream,"\n%s\"strip chart\" {",indent);
+	writeDlObject(stream,&(dlStripChart->object),level+1);
+	writeDlPlotcom(stream,&(dlStripChart->plotcom),level+1);
+	if (dlStripChart->delay < 0.0) {
+		if (dlStripChart->period != 60.0) 
+		fprintf(stream,"\n%s\tperiod=%f",indent,dlStripChart->period);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  	if (MedmUseNewFileFormat) {
 #endif
-    }
-    for (i = 0; i < MAX_PENS; i++) {
-      writeDlPen(stream,&(dlStripChart->pen[i]),i,level+1);
-    }
-    fprintf(stream,"\n%s}",indent);
+			if (dlStripChart->units != SECONDS)
+				fprintf(stream,"\n%s\tunits=\"%s\"",indent,
+					stringValueTable[dlStripChart->units]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+		} else {
+			fprintf(stream,"\n%s\tunits=\"%s\"",indent,
+				stringValueTable[dlStripChart->units]);
+		}
+#endif
+	} else {
+		#if 1
+		/* for the compatibility */
+		fprintf(stream,"\n%s\tdelay=%f",indent,dlStripChart->delay);
+		fprintf(stream,"\n%s\tunits=\"%s\"",indent,
+		stringValueTable[dlStripChart->oldUnits]);
+		#endif
+	}
+	for (i = 0; i < MAX_PENS; i++) {
+		writeDlPen(stream,&(dlStripChart->pen[i]),i,level+1);
+	}
+	fprintf(stream,"\n%s}",indent);
+}
 
+static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlStripChart *dlStripChart = p->structure.stripChart;
+  medmGetValues(pRCB,
+    CLR_RC,        &(dlStripChart->plotcom.clr),
+    BCLR_RC,       &(dlStripChart->plotcom.bclr),
+    -1);
 }

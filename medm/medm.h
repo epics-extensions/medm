@@ -62,6 +62,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #define __MEDM_H__
 #undef __COLOR_RULE_H__
 #undef __MONITOR_CA_PEND_EVENT__
+#define SUPPORT_0201XX_FILE_FORMAT
 
 
 /* STANDARDS CONFORMANCE: AES, XPG2, XPG3, XPG4, POSIX.1, POSIX.2 */
@@ -167,6 +168,7 @@ EXTERN long medmUpdateRequestCount;
 EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
 EXTERN Widget caStudyLabel;
 EXTERN XtIntervalId medmStatusIntervalId;
+EXTERN Boolean MedmUseNewFileFormat;
 
 typedef struct menuEntry{
   char*           label;
@@ -180,8 +182,9 @@ typedef struct menuEntry{
   struct menuEntry *subItems;
 } menuEntry_t;
 
-typedef void(*medmExecProc)(XtPointer, XtPointer, Boolean);
-typedef void(*medmWriteProc)(XtPointer, XtPointer, int);
+typedef void(*medmExecProc)(DisplayInfo *, XtPointer, Boolean);
+typedef void(*medmWriteProc)(FILE *, XtPointer, int);
+typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
 
 #include "proto.h"
 #include "medmInitTask.h"

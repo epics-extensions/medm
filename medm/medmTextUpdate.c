@@ -83,6 +83,7 @@ static void textUpdateUpdateValueCb(XtPointer cd);
 static void textUpdateDraw(XtPointer cd);
 static void textUpdateDestroyCb(XtPointer cd);
 static void textUpdateName(XtPointer, char **, short *, int *);
+static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 #ifdef __cplusplus
 void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
@@ -228,7 +229,7 @@ static void textUpdateDraw(XtPointer cd) {
   DlTextUpdate *dlTextUpdate = ptu->dlTextUpdate;
   DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
   Display *display = XtDisplay(displayInfo->drawingArea);
-  char textField[MAX_TEXT_UPDATE_WIDTH];
+  char textField[MAX_TOKEN_LENGTH];
   int i;
   XRectangle clipRect[1];
   XGCValues gcValues;
@@ -241,13 +242,12 @@ static void textUpdateDraw(XtPointer cd) {
 
   if (pd->connected) {
     if (pd->readAccess) {
+      textField[0] = '\0';
       switch (pd->dataType) {
         case DBF_STRING :
           if (pd->array) {
             strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
             textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
-          } else {
-            textField[0] = '\0';
           }
           isNumber = False;
           break;
@@ -267,6 +267,15 @@ static void textUpdateDraw(XtPointer cd) {
           }
           break;
         case DBF_CHAR :
+          if (dlTextUpdate->format == STRING) {
+            if (pd->array) {
+              strncpy(textField,pd->array,
+              MIN(pd->elementCount,(MAX_TOKEN_LENGTH-1)));
+              textField[MAX_TOKEN_LENGTH-1] = '\0';
+            }
+            isNumber = False;
+            break;
+          }
         case DBF_INT :
         case DBF_LONG :
         case DBF_FLOAT :
@@ -287,6 +296,7 @@ static void textUpdateDraw(XtPointer cd) {
       if (isNumber) {
         switch (dlTextUpdate->format) {
           case DECIMAL:
+          case STRING:
             cvtDoubleToString(value,textField,precision);
             break;
           case EXPONENTIAL:
@@ -305,7 +315,7 @@ static void textUpdateDraw(XtPointer cd) {
             cvtLongToString((long)value,textField);
             break;
           case HEXADECIMAL:
-            cvtLongToHexString((long)value, textField);
+            localCvtLongToHexString((long)value, textField);
             break;
           case OCTAL:
             cvtLongToOctalString((long)value, textField);
@@ -418,22 +428,172 @@ static void textUpdateName(XtPointer cd, char **name, short *severity, int *coun
   severity[0] = pa->record->severity;
 }
 
+DlElement *createDlTextUpdate(
+  DisplayInfo *displayInfo)
+{
+  DlTextUpdate *dlTextUpdate;
+  DlElement *dlElement;
+
+  dlTextUpdate = (DlTextUpdate *) malloc(sizeof(DlTextUpdate));
+  if (!dlTextUpdate) return 0;
+  objectAttributeInit(&(dlTextUpdate->object));
+  monitorAttributeInit(&(dlTextUpdate->monitor));
+  dlTextUpdate->clrmod = STATIC;
+  dlTextUpdate->align = HORIZ_LEFT;
+  dlTextUpdate->format = DECIMAL;
+
+  if (!(dlElement = createDlElement(DL_TextUpdate,
+                    (XtPointer)      dlTextUpdate,
+                    (medmExecProc)   executeDlTextUpdate,
+                    (medmWriteProc)  writeDlTextUpdate,
+										0,0,
+                    textUpdateInheritValues))) {
+    free(dlTextUpdate);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseTextUpdate(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlTextUpdate *dlTextUpdate;
+  DlElement *dlElement = createDlTextUpdate(displayInfo);
+  int i= 0;
+
+  if (!dlElement) return 0;
+  dlTextUpdate = dlElement->structure.textUpdate;
+
+
+  do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	    case T_WORD:
+		if (!strcmp(token,"object")) {
+			parseObject(displayInfo,&(dlTextUpdate->object));
+		} else if (!strcmp(token,"monitor")) {
+			parseMonitor(displayInfo,&(dlTextUpdate->monitor));
+		} else if (!strcmp(token,"clrmod")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+      for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) {
+        if (!strcmp(token,stringValueTable[i])) {
+          dlTextUpdate->clrmod = i;
+          break;
+        }
+      }
+		} else if (!strcmp(token,"format")) {
+      int found = 0;
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+      for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
+        if (!strcmp(token,stringValueTable[i])) {
+          dlTextUpdate->format = i;
+          found = 1;
+          break;
+        }
+      }
+      if (found) {
+        break;
+      } else
+      /* if not found, do the backward compatibility test */
+			if (!strcmp(token,"decimal")) {
+				dlTextUpdate->format = DECIMAL;
+			} else if (!strcmp(token,
+					"decimal- exponential notation")) {
+				dlTextUpdate->format = EXPONENTIAL;
+			} else if (!strcmp(token,"engr. notation")) {
+				dlTextUpdate->format = ENGR_NOTATION;
+			} else if (!strcmp(token,"decimal- compact")) {
+				dlTextUpdate->format = COMPACT;
+			} else if (!strcmp(token,"decimal- truncated")) {
+				dlTextUpdate->format = TRUNCATED;
+/* (MDA) allow for LANL spelling errors {like above, but with trailing space} */
+			} else if (!strcmp(token,"decimal- truncated ")) {
+				dlTextUpdate->format = TRUNCATED;
+/* (MDA) allow for LANL spelling errors {hexidecimal vs. hexadecimal} */
+			} else if (!strcmp(token,"hexidecimal")) {
+				dlTextUpdate->format = HEXADECIMAL;
+			}
+		} else if (!strcmp(token,"align")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+      for (i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
+        if (!strcmp(token,stringValueTable[i])) {
+          dlTextUpdate->align = i;
+          break;
+        }
+      }
+		}
+		break;
+	    case T_EQUAL:
+		break;
+	    case T_LEFT_BRACE:
+		nestingLevel++; break;
+	    case T_RIGHT_BRACE:
+		nestingLevel--; break;
+	}
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+		&& (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+
+}
+
 void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level) {
   int i;
   char indent[16];
 
-  for (i = 0;  i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
+	memset(indent,'\t',level);
+	indent[level] = '\0';
 
-  fprintf(stream,"\n%s\"text update\" {",indent);
-  writeDlObject(stream,&(dlTextUpdate->object),level+1);
-  writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
-  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
-        stringValueTable[dlTextUpdate->clrmod]);
-  fprintf(stream,"\n%s\talign=\"%s\"",indent,
-        stringValueTable[dlTextUpdate->align]);
-  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
-        stringValueTable[dlTextUpdate->format]);
-  fprintf(stream,"\n%s}",indent);
 
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+		fprintf(stream,"\n%s\"text update\" {",indent);
+		writeDlObject(stream,&(dlTextUpdate->object),level+1);
+		writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
+		if (dlTextUpdate->clrmod != STATIC) 
+			fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->clrmod]);
+		if (dlTextUpdate->align != HORIZ_LEFT)
+			fprintf(stream,"\n%s\talign=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->align]);
+		if (dlTextUpdate->format != DECIMAL)
+			fprintf(stream,"\n%s\tformat=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->format]);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  } else {
+		fprintf(stream,"\n%s\"text update\" {",indent);
+		writeDlObject(stream,&(dlTextUpdate->object),level+1);
+		writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
+		fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->clrmod]);
+		fprintf(stream,"\n%s\talign=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->align]);
+		fprintf(stream,"\n%s\tformat=\"%s\"",indent,
+				stringValueTable[dlTextUpdate->format]);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
 }
+
+static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlTextUpdate->monitor.rdbk),
+    CLR_RC,        &(dlTextUpdate->monitor.clr),
+    BCLR_RC,       &(dlTextUpdate->monitor.bclr),
+    CLRMOD_RC,     &(dlTextUpdate->clrmod),
+    ALIGN_RC,      &(dlTextUpdate->align),
+    FORMAT_RC,     &(dlTextUpdate->format),
+    -1);
+}
+

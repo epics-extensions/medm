@@ -576,6 +576,7 @@ void handleButtonPress(
  **************************************************************************/
 
  } else if (currentActionType == CREATE_ACTION) {
+		DlElement *dlElement = 0;
 
 /************************************************
  * MB1       =  create (rubberband)		*
@@ -597,32 +598,42 @@ void handleButtonPress(
 	XPutBackEvent(display,&newEvent);
 
 	if (currentElementType == DL_Text && newEventType == ButtonRelease) {
-	  handleTextCreate(x0,y0);
+	  dlElement = handleTextCreate(x0,y0);
 	} else if (currentElementType == DL_Polyline) {
-	  handlePolylineCreate(x0,y0,(Boolean)False);
+	  dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
 	} else if (currentElementType == DL_Line) {
-	  handlePolylineCreate(x0,y0,(Boolean)True);
+	  dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
 	} else if (currentElementType == DL_Polygon) {
-	  handlePolygonCreate(x0,y0);
+	  dlElement = handlePolygonCreate(x0,y0);
 	} else {
   /* everybody else has "rectangular" creates */
 	  initialX0 = x0;
 	  initialY0 = y0;
 	  doRubberbanding(XtWindow(displayInfo->drawingArea),
 		&x0,&y0,&x1,&y1);
-	  globalResourceBundle.x = x0;
-	  globalResourceBundle.y = y0;
 	  /* pick some semi-sensible size for widget type elements */
 	  if (ELEMENT_HAS_WIDGET(currentElementType)) minSize = 12;
 	  else minSize = 2;
-	  globalResourceBundle.width = MAX(minSize,x1 - x0);
-	  globalResourceBundle.height = MAX(minSize,y1 - y0);
 	/* actually create elements */
-	  handleRectangularCreates(currentElementType);
+	  dlElement = handleRectangularCreates(currentElementType, x0, y0,
+			MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
 	}
-        if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-          medmMarkDisplayBeingEdited(currentDisplayInfo);
-        }
+  if (dlElement) {
+		if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+			medmMarkDisplayBeingEdited(currentDisplayInfo);
+		}
+    appendDlElement(&(currentDisplayInfo->dlElementListTail),dlElement);
+    (*dlElement->dmExecute)(currentDisplayInfo,
+              (XtPointer) dlElement->structure.rectangle,FALSE);
+ 
+    unhighlightSelectedElements();
+    unselectSelectedElements();
+    clearResourcePaletteEntries();
+    array = (DlElement **) malloc(1*sizeof(DlElement *));
+    array[0] = dlElement;
+    highlightAndSetSelectedElements(array,1,1);
+    setResourcePaletteEntries();
+  }
 	break;
 
       case Button2:
@@ -1322,7 +1333,7 @@ void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
 /* destroy old widget */
 	  destroyElementWidget(cdi,widget);
 /* create new widget */
-	  (*ele->dmExecute)((XtPointer)cdi,(XtPointer)ele->structure.file,FALSE);
+	  (*ele->dmExecute)(cdi,(XtPointer)ele->structure.file,FALSE);
      }
 
     }
@@ -1480,7 +1491,7 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 /* destroy old widget */
 	    destroyElementWidget(cdi,widget);
 /* create new widget */
-	    (*cdi->selectedElementsArray[i]->dmExecute)((XtPointer) cdi,
+	    (*cdi->selectedElementsArray[i]->dmExecute)(cdi,
 	      (XtPointer) cdi->selectedElementsArray[i]->structure.file,FALSE);
 	  }
 	}
@@ -1509,165 +1520,88 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
  *	currentElementType);
  *
  */
-void handleRectangularCreates(
-  DlElementType elementType)
+DlElement *handleRectangularCreates(
+	DlElementType elementType,
+	int x,
+	int y,
+	unsigned int width,
+	unsigned int height)
 {
-  DlElement *element, **array;
+  DlElement *element = 0, **array;
 
-
-    element = (DlElement *) NULL;
-
-/*
- *  if element could have basic or dynamic attributes, then create them if appr.
- */
-    if (!ELEMENT_HAS_WIDGET(elementType) && elementType != DL_TextUpdate) {
-/* create a basic attribute */
-      element = createDlBasicAttribute(currentDisplayInfo);
-      (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.basicAttribute,FALSE);
-/* create a dynamic attribute if appropriate */
-      if (strlen(globalResourceBundle.chan) > (size_t) 0 &&
-        globalResourceBundle.vis != V_STATIC) {
-        element = createDlDynamicAttribute(currentDisplayInfo);
-        (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.dynamicAttribute,FALSE);
-      }
-    }
+  element = (DlElement *) NULL;
 
 /* now create the actual element */
-    switch(elementType) {
-
-	  case DL_Image:
-	    handleImageCreate();
-	    break;
-
+  switch(elementType) {
+    case DL_Image:
+      element = handleImageCreate();
+      break;
 /* others are more straight-forward */
-	  case DL_Valuator:
-	    element = createDlValuator(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.valuator,FALSE);
-	    break;
-	  case DL_ChoiceButton:
-	    element = createDlChoiceButton(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.choiceButton,FALSE);
-	    break;
-	  case DL_MessageButton:
-	    element = createDlMessageButton(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.messageButton,FALSE);
-	    break;
-	  case DL_TextEntry:
-	    element = createDlTextEntry(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.textEntry,FALSE);
-	    break;
-	  case DL_Menu:
-	    element = createDlMenu(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.menu,FALSE);
-	    break;
-	  case DL_Meter:
-	    element = createDlMeter(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.meter,FALSE);
-	    break;
-	  case DL_TextUpdate:
-	    element = createDlTextUpdate(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.textUpdate,FALSE);
-	    break;
-	  case DL_Bar:
-	    element = createDlBar(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.bar,FALSE);
-	    break;
-	  case DL_Indicator:
-	    element = createDlIndicator(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.indicator,FALSE);
-	    break;
-          case DL_Byte:
-            element = createDlByte(currentDisplayInfo);
-            (*element->dmExecute)((XtPointer) currentDisplayInfo,
-              (XtPointer) element->structure.byte,FALSE);
-            break;
-	  case DL_StripChart:
-	    element = createDlStripChart(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.stripChart,FALSE);
-	    break;
-	  case DL_CartesianPlot:
-	    element = createDlCartesianPlot(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.cartesianPlot,FALSE);
-	    break;
-#if 0
-	  case DL_SurfacePlot:
-	    element = createDlSurfacePlot(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.surfacePlot,FALSE);
-	    break;
-#endif
-	  case DL_Rectangle:
-	    element = createDlRectangle(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.rectangle,FALSE);
-	    break;
-	  case DL_Oval:
-	    element = createDlOval(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.oval,FALSE);
-	    break;
-	  case DL_Arc:
-	    element = createDlArc(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.arc,FALSE);
-	    break;
-	  case DL_RelatedDisplay:
-	    element = createDlRelatedDisplay(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.relatedDisplay,FALSE);
-	    break;
-	  case DL_ShellCommand:
-	    element = createDlShellCommand(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.shellCommand,FALSE);
-	    break;
-	  case DL_Text:
-	  /* for rectangular create of text, clear the field *
-	   *  (like direct typing style entry)		     */
-	    globalResourceBundle.textix[0] = '\0';
-	    element = createDlText(currentDisplayInfo);
-	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
-			(XtPointer) element->structure.text,FALSE);
-	    break;
+    case DL_Valuator:
+      element = createDlValuator(currentDisplayInfo);
+      break;
+    case DL_ChoiceButton:
+      element = createDlChoiceButton(currentDisplayInfo);
+      break;
+    case DL_MessageButton:
+      element = createDlMessageButton(currentDisplayInfo);
+      break;
+    case DL_TextEntry:
+      element = createDlTextEntry(currentDisplayInfo);
+      break;
+    case DL_Menu:
+      element = createDlMenu(currentDisplayInfo);
+      break;
+    case DL_Meter:
+      element = createDlMeter(currentDisplayInfo);
+      break;
+    case DL_TextUpdate:
+      element = createDlTextUpdate(currentDisplayInfo);
+      break;
+    case DL_Bar:
+      element = createDlBar(currentDisplayInfo);
+      break;
+    case DL_Indicator:
+      element = createDlIndicator(currentDisplayInfo);
+      break;
+    case DL_Byte:
+      element = createDlByte(currentDisplayInfo);
+      break;
+    case DL_StripChart:
+      element = createDlStripChart(currentDisplayInfo);
+      break;
+    case DL_CartesianPlot:
+      element = createDlCartesianPlot(currentDisplayInfo);
+      break;
+    case DL_Rectangle:
+      element = createDlRectangle(currentDisplayInfo);
+      break;
+    case DL_Oval:
+      element = createDlOval(currentDisplayInfo);
+      break;
+    case DL_Arc:
+      element = createDlArc(currentDisplayInfo);
+      break;
+    case DL_RelatedDisplay:
+      element = createDlRelatedDisplay(currentDisplayInfo);
+      break;
+    case DL_ShellCommand:
+      element = createDlShellCommand(currentDisplayInfo);
+      break;
+    case DL_Text:
+      element = createDlText(currentDisplayInfo);
+      break;
+    default:
+      fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d",
+	elementType);
+      break;
+  }
 
-/*** (MDA) ***
-	  case DL_BezierCurve:
-	    element = createDlBezierCurve(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.bezierCurve,FALSE);
-	    break;
-
- ***/
-
-	  default:
-	    fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d",
-		elementType);
-	    break;
-
-
+  if (element) {
+    if (element->inheritValues) {
+      element->inheritValues(&globalResourceBundle,element);
     }
-
-
-    if (element != NULL) {
-       unhighlightSelectedElements();
-       unselectSelectedElements();
-       clearResourcePaletteEntries();
-       array = (DlElement **) malloc(1*sizeof(DlElement *));
-       array[0] = element;
-       highlightAndSetSelectedElements(array,1,1);
-       setResourcePaletteEntries();
-    }
+    objectAttributeSet(&(element->structure.rectangle->object),x,y,width,height);
+  }
+  return element;
 }

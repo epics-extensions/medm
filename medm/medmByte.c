@@ -73,6 +73,7 @@ static void byteUpdateValueCb(XtPointer cd);
 static void byteDraw(XtPointer cd);
 static void byteDestroyCb(XtPointer cd);
 static void byteName(XtPointer, char **, short *, int *);
+static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 #ifdef __cplusplus
 void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean) {
@@ -214,6 +215,84 @@ static void byteName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pb->record->severity;
 }
 
+DlElement *createDlByte( DisplayInfo *displayInfo) {
+  DlByte *dlByte;
+  DlElement *dlElement;
+
+  dlByte = (DlByte *) malloc(sizeof(DlByte));
+  if (!dlByte) return 0;
+  objectAttributeInit(&(dlByte->object));
+  monitorAttributeInit(&(dlByte->monitor));
+  dlByte->clrmod = STATIC;
+  dlByte->direction = RIGHT;
+  dlByte->sbit = 15;
+  dlByte->ebit = 0;
+
+  if (!(dlElement = createDlElement(DL_Byte,
+                    (XtPointer)      dlByte,
+                    (medmExecProc)   executeDlByte,
+                    (medmWriteProc)  writeDlByte,
+										0,0,
+                    byteInheritValues))) {
+    free(dlByte);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseByte( DisplayInfo *displayInfo, DlComposite *dlComposite) {
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlByte *dlByte;
+  DlElement *dlElement = createDlByte(displayInfo);
+ 
+  if (!dlElement) return 0;
+  dlByte = dlElement->structure.byte;
+ 
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object")) {
+          parseObject(displayInfo,&(dlByte->object));
+        } else if (!strcmp(token,"monitor")) {
+          parseMonitor(displayInfo,&(dlByte->monitor));
+        } else if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"static"))       dlByte->clrmod = STATIC;
+          else if (!strcmp(token,"alarm"))   dlByte->clrmod = ALARM;
+          else if (!strcmp(token,"discrete"))dlByte->clrmod = DISCRETE;
+        } else if (!strcmp(token,"direction")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"up"))        dlByte->direction = UP;
+          else if (!strcmp(token,"right"))dlByte->direction = RIGHT;
+        } else if (!strcmp(token,"sbit")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          dlByte->sbit = atoi(token);
+        } else if (!strcmp(token,"ebit")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          dlByte->ebit = atoi(token);
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+ 
+  POSITION_ELEMENT_ON_LIST();
+ 
+  return dlElement;
+}
+
 void writeDlByte(FILE *stream, DlByte *dlByte, int level) {
   int i;
   char indent[16];
@@ -224,11 +303,28 @@ void writeDlByte(FILE *stream, DlByte *dlByte, int level) {
     fprintf(stream,"\n%sbyte {",indent);
     writeDlObject(stream,&(dlByte->object),level+1);
     writeDlMonitor(stream,&(dlByte->monitor),level+1);
-    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
-      stringValueTable[dlByte->clrmod]);
-    fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
-      stringValueTable[dlByte->direction]);
-    fprintf(stream,"\n%s\tsbit=%d",indent,dlByte->sbit);
-    fprintf(stream,"\n%s\tebit=%d",indent,dlByte->ebit);
+    if (dlByte->clrmod != STATIC)
+      fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+        stringValueTable[dlByte->clrmod]);
+    if (dlByte->direction != RIGHT)
+      fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+        stringValueTable[dlByte->direction]);
+    if (dlByte->sbit != 15)
+      fprintf(stream,"\n%s\tsbit=%d",indent,dlByte->sbit);
+    if (dlByte->ebit != 0)
+      fprintf(stream,"\n%s\tebit=%d",indent,dlByte->ebit);
     fprintf(stream,"\n%s}",indent);
+}
+
+static void byteInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlByte *dlByte = p->structure.byte;
+  medmGetValues(pRCB,
+    RDBK_RC,       &(dlByte->monitor.rdbk),
+    CLR_RC,        &(dlByte->monitor.clr),
+    BCLR_RC,       &(dlByte->monitor.bclr),
+    DIRECTION_RC,  &(dlByte->direction),
+    CLRMOD_RC,     &(dlByte->clrmod),
+    SBIT_RC,       &(dlByte->sbit),
+    EBIT_RC,       &(dlByte->ebit),
+    -1);
 }

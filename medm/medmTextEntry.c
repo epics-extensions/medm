@@ -91,6 +91,7 @@ static void textEntryValueChanged(Widget, XtPointer, XtPointer);
 static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
 static char *valueToString(TextEntry *, TextFormat format);
 static void textEntryName(XtPointer, char **, short *, int *);
+static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 
 int textFieldFontListIndex(int height)
@@ -109,16 +110,15 @@ int textFieldFontListIndex(int height)
 
 char *valueToString(TextEntry *pte, TextFormat format) {
   Record *pd = pte->record;
-  static char textField[MAX_TEXT_UPDATE_WIDTH];
+  static char textField[MAX_TOKEN_LENGTH];
   double value;
   short precision = 0;
+  textField[0] = '\0';
   switch(pd->dataType) {
     case DBF_STRING :
       if (pd->array) {
         strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
         textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
-      } else {
-        textField[0] = '\0';
       }
       return textField;
     case DBF_ENUM :
@@ -137,6 +137,14 @@ char *valueToString(TextEntry *pte, TextFormat format) {
       }
       break;
     case DBF_CHAR :
+      if (format == STRING) {
+        if (pd->array) {
+          strncpy(textField,pd->array,
+          MIN(pd->elementCount,(MAX_TOKEN_LENGTH-1)));
+          textField[MAX_TOKEN_LENGTH-1] = '\0';
+        }
+        return textField;
+      }
     case DBF_INT :
     case DBF_LONG :
     case DBF_FLOAT :
@@ -155,6 +163,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
   }
   switch (format) {
     case DECIMAL:
+    case STRING:
       cvtDoubleToString(value,textField,precision);
       break;
     case EXPONENTIAL:
@@ -170,7 +179,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
       cvtLongToString((long)value,textField);
       break;
     case HEXADECIMAL:
-      cvtLongToHexString((long)value, textField);
+      localCvtLongToHexString((long)value, textField);
       break;
     case OCTAL:
       cvtLongToOctalString((long)value, textField);
@@ -432,19 +441,27 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 
 
   if ((pd->connected) && pd->writeAccess) {
-
-    textValue = XmTextFieldGetString(w);
+    if (!(textValue = XmTextFieldGetString(w))) return;
     switch (pd->dataType) {
       case DBF_STRING:
         if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
           textValue[MAX_STRING_SIZE-1] = '\0';
         medmSendString(pte->record,textValue);
         break;
+      case DBF_CHAR:
+        if (pte->dlTextEntry->format == STRING) {
+          unsigned long len =
+            MIN((unsigned long)pd->elementCount,
+                (unsigned long)(strlen(textValue)+1));
+          textValue[len-1] = '\0';
+          medmSendCharacterArray(pte->record,textValue,len);
+          break;
+        }
       default:
         if ((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
           && (textValue[1] == 'x' || textValue[1] == 'X')) {
-          long longValue;
-          longValue = strtol(textValue,NULL,16);
+          unsigned long longValue;
+          longValue = strtoul(textValue,NULL,16);
           value = (double) longValue;
         } else {
           value = (double) atof(textValue);
@@ -461,4 +478,134 @@ static void textEntryName(XtPointer cd, char **name, short *severity, int *count
   *count = 1;
   name[0] = pte->record->name;
   severity[0] = pte->record->severity;
+}
+
+DlElement *createDlTextEntry(
+  DisplayInfo *displayInfo)
+{
+  DlTextEntry *dlTextEntry;
+  DlElement *dlElement;
+
+  dlTextEntry = (DlTextEntry *) malloc(sizeof(DlTextEntry));
+  if (!dlTextEntry) return 0;
+  objectAttributeInit(&(dlTextEntry->object));
+  controlAttributeInit(&(dlTextEntry->control));
+  dlTextEntry->clrmod = STATIC;
+  dlTextEntry->format = DECIMAL;
+
+  if (!(dlElement = createDlElement(DL_TextEntry,
+                    (XtPointer)      dlTextEntry,
+                    (medmExecProc)   executeDlTextEntry,
+                    (medmWriteProc)  writeDlTextEntry,
+										0,0,
+                    textEntryInheritValues))) {
+    free(dlTextEntry);
+  }
+  return dlElement;
+}
+
+DlElement *parseTextEntry(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlTextEntry *dlTextEntry;
+  DlElement *dlElement = createDlTextEntry(displayInfo);
+  int i = 0;
+
+  if (!dlElement) return 0;
+  dlTextEntry = dlElement->structure.textEntry; 
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlTextEntry->object));
+        else
+        if (!strcmp(token,"control"))
+          parseControl(displayInfo,&(dlTextEntry->control));
+        else
+        if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
+            if (!strcmp(token,stringValueTable[i])) {
+							dlTextEntry->clrmod = i;
+              break;
+            }
+          }
+        } else
+        if (!strcmp(token,"format")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
+            if (!strcmp(token,stringValueTable[i])) {
+							dlTextEntry->format = i;
+              break;
+            }
+          }
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+  return dlElement;
+
+}
+
+void writeDlTextEntry(
+  FILE *stream,
+  DlTextEntry *dlTextEntry,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0';
+
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+		fprintf(stream,"\n%s\"text entry\" {",indent);
+		writeDlObject(stream,&(dlTextEntry->object),level+1);
+		writeDlControl(stream,&(dlTextEntry->control),level+1);
+		if (dlTextEntry->clrmod != STATIC)
+			fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlTextEntry->clrmod]);
+		if (dlTextEntry->format != DECIMAL)
+			fprintf(stream,"\n%s\tformat=\"%s\"",indent,
+				stringValueTable[dlTextEntry->format]);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+		fprintf(stream,"\n%s\"text entry\" {",indent);
+		writeDlObject(stream,&(dlTextEntry->object),level+1);
+		writeDlControl(stream,&(dlTextEntry->control),level+1);
+		fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+			stringValueTable[dlTextEntry->clrmod]);
+		fprintf(stream,"\n%s\tformat=\"%s\"",indent,
+			stringValueTable[dlTextEntry->format]);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}
+
+static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlTextEntry *dlTextEntry = p->structure.textEntry;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlTextEntry->control.ctrl),
+    CLR_RC,        &(dlTextEntry->control.clr),
+    BCLR_RC,       &(dlTextEntry->control.bclr),
+    CLRMOD_RC,     &(dlTextEntry->clrmod),
+    FORMAT_RC,     &(dlTextEntry->format),
+    -1);
 }

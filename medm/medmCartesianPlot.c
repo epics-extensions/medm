@@ -70,6 +70,7 @@ static void cartesianPlotDraw(XtPointer cd);
 static void cartesianPlotUpdateValueCb(XtPointer cd);
 static void cartesianPlotDestroyCb(XtPointer cd);
 static void cartesianPlotName(XtPointer, char **, short *, int *);
+static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 static XrtData *nullData = NULL;
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
@@ -400,9 +401,6 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   XcVType minF, maxF, tickF;
 
-
-  displayInfo->useDynamicAttribute = FALSE;
-
   pcp = NULL;
   triggerCh = (Channel *)NULL;
 
@@ -623,8 +621,6 @@ void executeDlCartesianPlot(DisplayInfo *displayInfo,
 void executeDlCartesianPlot(DisplayInfo *displayInfo,
                         DlCartesianPlot *dlCartesianPlot, Boolean dummy) {
 #endif
-  displayInfo->useDynamicAttribute = FALSE;
-
   if (displayInfo->traversalMode == DL_EXECUTE) {
     cartesianPlotCreateRunTimeInstance(displayInfo, dlCartesianPlot);
   } else if (displayInfo->traversalMode == DL_EDIT) {
@@ -1854,6 +1850,137 @@ static void cartesianPlotName(XtPointer cd, char **name, short *severity, int *c
   *count = j + 200;
 }
 
+DlElement *createDlCartesianPlot(
+  DisplayInfo *displayInfo)
+{
+  DlCartesianPlot *dlCartesianPlot;
+  DlElement *dlElement;
+  int traceNumber;
+
+  dlCartesianPlot = (DlCartesianPlot *) malloc(sizeof(DlCartesianPlot));
+  if (!dlCartesianPlot) return 0;
+  objectAttributeInit(&(dlCartesianPlot->object));
+  plotcomAttributeInit(&(dlCartesianPlot->plotcom));
+  dlCartesianPlot->count = 1;
+  dlCartesianPlot->style = POINT_PLOT;
+  dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
+  for (traceNumber = 0; traceNumber < MAX_TRACES; traceNumber++)
+        traceAttributeInit(&(dlCartesianPlot->trace[traceNumber]));
+  plotAxisDefinitionInit(&(dlCartesianPlot->axis[X_AXIS_ELEMENT]));
+  plotAxisDefinitionInit(&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]));
+  plotAxisDefinitionInit(&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]));
+  dlCartesianPlot->trigger[0] = '\0';
+  dlCartesianPlot->erase[0] = '\0';
+  dlCartesianPlot->eraseMode = ERASE_IF_NOT_ZERO;
+
+  if (!(dlElement = createDlElement(DL_CartesianPlot,
+                    (XtPointer)      dlCartesianPlot,
+                    (medmExecProc)   executeDlCartesianPlot,
+                    (medmWriteProc)  writeDlCartesianPlot,
+										0,0,
+                    cartesianPlotInheritValues))) {
+    free(dlCartesianPlot);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseCartesianPlot(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlCartesianPlot *dlCartesianPlot;
+  DlElement *dlElement = createDlCartesianPlot(displayInfo);
+  int traceNumber;
+
+  if (!dlElement) return 0;
+  dlCartesianPlot = dlElement->structure.cartesianPlot;
+  do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	    case T_WORD:
+		if (!strcmp(token,"object"))
+			parseObject(displayInfo,&(dlCartesianPlot->object));
+		else if (!strcmp(token,"plotcom"))
+			parsePlotcom(displayInfo,&(dlCartesianPlot->plotcom));
+		else if (!strcmp(token,"count")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			dlCartesianPlot->count= atoi(token);
+		} else if (!strcmp(token,"style")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"point plot")) 
+			    dlCartesianPlot->style = POINT_PLOT;
+			else if (!strcmp(token,"point")) 
+			    dlCartesianPlot->style = POINT_PLOT;
+			else if (!strcmp(token,"line plot")) 
+			    dlCartesianPlot->style = LINE_PLOT;
+			else if (!strcmp(token,"line")) 
+			    dlCartesianPlot->style = LINE_PLOT;
+			else if (!strcmp(token,"fill under")) 
+			    dlCartesianPlot->style = FILL_UNDER_PLOT;
+			else if (!strcmp(token,"fill-under")) 
+			    dlCartesianPlot->style = FILL_UNDER_PLOT;
+		} else if (!strcmp(token,"erase_oldest")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"on")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_ON;
+			else if (!strcmp(token,"off")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
+			else if (!strcmp(token,"plot last n pts")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_ON;
+			else if (!strcmp(token,"plot n pts & stop")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
+		} else if (!strncmp(token,"trace",5)) {
+			traceNumber = MIN(token[6] - '0', MAX_TRACES - 1);
+			parseTrace(displayInfo,
+				&(dlCartesianPlot->trace[traceNumber]));
+		} else if (!strcmp(token,"x_axis")) {
+			parsePlotAxisDefinition(displayInfo,
+				&(dlCartesianPlot->axis[X_AXIS_ELEMENT]));
+		} else if (!strcmp(token,"y1_axis")) {
+			parsePlotAxisDefinition(displayInfo,
+				&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]));
+		} else if (!strcmp(token,"y2_axis")) {
+			parsePlotAxisDefinition(displayInfo,
+				&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]));
+		} else if (!strcmp(token,"trigger")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			strcpy(dlCartesianPlot->trigger,token);
+		} else if (!strcmp(token,"erase")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			strcpy(dlCartesianPlot->erase,token);
+		} else if (!strcmp(token,"eraseMode")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"if not zero"))
+			   dlCartesianPlot->eraseMode = ERASE_IF_NOT_ZERO;
+			else if (!strcmp(token,"if zero"))
+			   dlCartesianPlot->eraseMode = ERASE_IF_ZERO;
+                }
+		break;
+	    case T_EQUAL:
+		break;
+	    case T_LEFT_BRACE:
+		nestingLevel++; break;
+	    case T_RIGHT_BRACE:
+		nestingLevel--; break;
+	}
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+		&& (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+
+}
+
 void writeDlCartesianPlot(
   FILE *stream,
   DlCartesianPlot *dlCartesianPlot,
@@ -1868,11 +1995,17 @@ void writeDlCartesianPlot(
   fprintf(stream,"\n%s\"cartesian plot\" {",indent);
   writeDlObject(stream,&(dlCartesianPlot->object),level+1);
   writeDlPlotcom(stream,&(dlCartesianPlot->plotcom),level+1);
-  fprintf(stream,"\n%s\tstyle=\"%s\"",indent,
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+  if (dlCartesianPlot->style != POINT_PLOT)
+    fprintf(stream,"\n%s\tstyle=\"%s\"",indent,
         stringValueTable[dlCartesianPlot->style]);
-  fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
+  if (dlCartesianPlot->erase_oldest != ERASE_OLDEST_OFF)
+    fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
         stringValueTable[dlCartesianPlot->erase_oldest]);
-  fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
+  if (dlCartesianPlot->count != 1)
+    fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
   for (i = 0; i < MAX_TRACES; i++) {
     writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
   }
@@ -1882,10 +2015,42 @@ void writeDlCartesianPlot(
         Y1_AXIS_ELEMENT,level+1);
   writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),
         Y2_AXIS_ELEMENT,level+1);
-  fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
-  fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
-  fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
+  if (dlCartesianPlot->trigger[0] != '\0')
+    fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
+  if (dlCartesianPlot->erase[0] != '\0')
+    fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
+  if (dlCartesianPlot->eraseMode != ERASE_IF_NOT_ZERO)
+    fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
         stringValueTable[dlCartesianPlot->eraseMode]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+    fprintf(stream,"\n%s\tstyle=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->style]);
+    fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->erase_oldest]);
+    fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
+    for (i = 0; i < MAX_TRACES; i++) {
+      writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
+    }
+    writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[X_AXIS_ELEMENT]),
+        X_AXIS_ELEMENT,level+1);
+    writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),
+        Y1_AXIS_ELEMENT,level+1);
+    writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),
+        Y2_AXIS_ELEMENT,level+1);
+    fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
+    fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
+    fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
+        stringValueTable[dlCartesianPlot->eraseMode]);
+	}
+#endif
   fprintf(stream,"\n%s}",indent);
+}
 
+static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlCartesianPlot *dlCartesianPlot = p->structure.cartesianPlot;
+  medmGetValues(pRCB,
+    CLR_RC,        &(dlCartesianPlot->plotcom.clr),
+    BCLR_RC,       &(dlCartesianPlot->plotcom.bclr),
+    -1);
 }

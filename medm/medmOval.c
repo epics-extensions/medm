@@ -68,14 +68,15 @@ typedef struct _Oval {
   DlOval           *dlOval;
   Record           *record;
   UpdateTask       *updateTask;
-  DlDynamicAttrMod dynAttr;
-  DlAttribute      attr;
 } Oval;
 
 static void ovalDraw(XtPointer cd);
 static void ovalUpdateValueCb(XtPointer cd);
 static void ovalDestroyCb(XtPointer cd);
 static void ovalName(XtPointer, char **, short *, int *);
+static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
+static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void ovalSetValues(ResourceBundle *pRCB, DlElement *p);
 
 static void drawOval(Oval *po) {
   unsigned int lineWidth;
@@ -83,13 +84,13 @@ static void drawOval(Oval *po) {
   Display *display = XtDisplay(po->widget);
   DlOval *dlOval = po->dlOval;
 
-  lineWidth = (po->attr.width+1)/2;
-  if (po->attr.fill == F_SOLID) {
+  lineWidth = (dlOval->attr.width+1)/2;
+  if (dlOval->attr.fill == F_SOLID) {
     XFillArc(display,XtWindow(po->widget),displayInfo->gc,
         dlOval->object.x,dlOval->object.y,
         dlOval->object.width,dlOval->object.height,0,360*64);
   } else
-  if (po->attr.fill == F_OUTLINE) {
+  if (dlOval->attr.fill == F_OUTLINE) {
     XDrawArc(display,XtWindow(po->widget),displayInfo->gc,
         dlOval->object.x + lineWidth,
         dlOval->object.y + lineWidth,
@@ -107,7 +108,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
 #endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (displayInfo->useDynamicAttribute != FALSE)){
+      && (dlOval->dynAttr.chan[0] != '\0')){
 
     Oval *po;
     po = (Oval *) malloc(sizeof(Oval));
@@ -125,7 +126,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
       po->updateTask->opaque = False;
     }
     po->record = medmAllocateRecord(
-                  displayInfo->dynamicAttribute.attr.param.chan,
+                  dlOval->dynAttr.chan,
                   ovalUpdateValueCb,
                   NULL,
                   (XtPointer) po);
@@ -148,41 +149,41 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
     }
 #else
     po->record->monitorValueChanged = False;
-    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+    if (dlOval->dynAttr.clr != ALARM ) {
       po->record->monitorSeverityChanged = False;
     }
 
-    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+    if (dlOval->dynAttr.vis == V_STATIC ) {
       po->record->monitorZeroAndNoneZeroTransition = False;
     }
 #endif
 
     po->widget = displayInfo->drawingArea;
-    po->attr = displayInfo->attribute;
-    po->dynAttr = displayInfo->dynamicAttribute.attr.mod;
-  } else
-  if (displayInfo->attribute.fill == F_SOLID) {
-    unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
-    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  } else {
+    executeDlBasicAttribute(displayInfo,&(dlOval->attr));
+    if (dlOval->attr.fill == F_SOLID) {
+      unsigned int lineWidth = (dlOval->attr.width+1)/2;
+      XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
         dlOval->object.x,dlOval->object.y,
         dlOval->object.width,dlOval->object.height,0,360*64);
-    XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+      XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
         dlOval->object.x,dlOval->object.y,
         dlOval->object.width,dlOval->object.height,0,360*64);
 
-  } else
-  if (displayInfo->attribute.fill == F_OUTLINE) {
-    unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
-    XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+    } else
+    if (dlOval->attr.fill == F_OUTLINE) {
+      unsigned int lineWidth = (dlOval->attr.width+1)/2;
+      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
         dlOval->object.x + lineWidth,
         dlOval->object.y + lineWidth,
         dlOval->object.width - 2*lineWidth,
         dlOval->object.height - 2*lineWidth,0,360*64);
-    XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+      XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
         dlOval->object.x + lineWidth,
         dlOval->object.y + lineWidth,
         dlOval->object.width - 2*lineWidth,
         dlOval->object.height - 2*lineWidth,0,360*64);
+    }
   }
 }
 
@@ -199,10 +200,11 @@ static void ovalDraw(XtPointer cd) {
   XGCValues gcValues;
   unsigned long gcValueMask;
   Display *display = XtDisplay(po->widget);
+  DlOval *dlOval = po->dlOval;
 
   if (pd->connected) {
-    gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (po->dynAttr.clr) {
+    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+    switch (dlOval->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
         gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
@@ -210,25 +212,24 @@ static void ovalDraw(XtPointer cd) {
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
                                   pd->value,
-                                  po->dynAttr.colorRule,
-                                  po->attr.clr);
+                                  dlOval->dynAttr.colorRule,
+                                  dlOval->attr.clr);
         break;
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
+        gcValues.foreground = displayInfo->dlColormap[dlOval->attr.clr];
         break;
 #endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
     }
-    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = po->attr.width;
-    gcValues.line_style = ((po->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    gcValues.line_width = dlOval->attr.width;
+    gcValues.line_style = ((dlOval->attr.style == SOLID) ? LineSolid : LineOnOffDash);
     XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (po->dynAttr.vis) {
+    switch (dlOval->dynAttr.vis) {
       case V_STATIC:
         drawOval(po);
         break;
@@ -245,7 +246,7 @@ static void ovalDraw(XtPointer cd) {
         break;
     }
     if (pd->readAccess) {
-      if (!po->updateTask->overlapped && po->dynAttr.vis == V_STATIC) {
+      if (!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
         po->updateTask->opaque = True;
       }
     } else {
@@ -253,11 +254,10 @@ static void ovalDraw(XtPointer cd) {
       draw3DQuestionMark(po->updateTask);
     }
   } else {
-    gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
+    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
     gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = po->attr.width;
-    gcValues.line_style = ((po->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    gcValues.line_width = dlOval->attr.width;
+    gcValues.line_style = ((dlOval->attr.style == SOLID) ? LineSolid : LineOnOffDash);
     XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
     drawOval(po);
   }
@@ -279,3 +279,138 @@ static void ovalName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = po->record->severity;
 }
 
+DlElement *createDlOval(
+  DisplayInfo *displayInfo)
+{
+  DlOval *dlOval;
+  DlElement *dlElement;
+ 
+  dlOval = (DlOval *) malloc(sizeof(DlOval));
+  if (!dlOval) return 0;
+ 
+  objectAttributeInit(&(dlOval->object));
+  basicAttributeInit(&(dlOval->attr));
+  dynamicAttributeInit(&(dlOval->dynAttr));
+ 
+  if (!(dlElement = createDlElement(DL_Oval,
+                    (XtPointer)      dlOval,
+                    (medmExecProc)   executeDlOval,
+                    (medmWriteProc)  writeDlOval,
+										ovalSetValues,
+										ovalGetValues,
+										ovalInheritValues))) {
+    free(dlOval);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseOval(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlOval *dlOval;
+  DlElement *dlElement = createDlOval(displayInfo);
+
+  if (!dlElement) return 0;
+  dlOval = dlElement->structure.oval;
+ 
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlOval->object));
+        else
+        if (!strcmp(token,"basic attribute"))
+          parseBasicAttribute(displayInfo,&(dlOval->attr));
+        else
+        if (!strcmp(token,"dynamic attribute"))
+          parseDynamicAttribute(displayInfo,&(dlOval->dynAttr));
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+ 
+}
+
+void writeDlOval(
+  FILE *stream,
+  DlOval *dlOval,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0'; 
+
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+  	fprintf(stream,"\n%soval {",indent);
+  	writeDlObject(stream,&(dlOval->object),level+1);
+  	writeDlBasicAttribute(stream,&(dlOval->attr),level+1);
+  	writeDlDynamicAttribute(stream,&(dlOval->dynAttr),level+1);
+  	fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  } else {
+  	writeDlBasicAttribute(stream,&(dlOval->attr),level);
+  	writeDlDynamicAttribute(stream,&(dlOval->dynAttr),level);
+  	fprintf(stream,"\n%soval {",indent);
+  	writeDlObject(stream,&(dlOval->object),level+1);
+  	fprintf(stream,"\n%s}",indent);
+  }
+#endif
+}
+
+static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlOval *dlOval = p->structure.oval;
+  medmGetValues(pRCB,
+    X_RC,          &(dlOval->object.x),
+    Y_RC,          &(dlOval->object.y),
+    WIDTH_RC,      &(dlOval->object.width),
+    HEIGHT_RC,     &(dlOval->object.height),
+    CLR_RC,        &(dlOval->attr.clr),
+    STYLE_RC,      &(dlOval->attr.style),
+    FILL_RC,       &(dlOval->attr.fill),
+    LINEWIDTH_RC,  &(dlOval->attr.width),
+    CLRMOD_RC,     &(dlOval->dynAttr.clr),
+    VIS_RC,        &(dlOval->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
+#endif
+    CHAN_RC,         dlOval->dynAttr.chan,
+    -1);
+}
+
+static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlOval *dlOval = p->structure.oval;
+  medmGetValues(pRCB,
+    CLR_RC,        &(dlOval->attr.clr),
+    STYLE_RC,      &(dlOval->attr.style),
+    FILL_RC,       &(dlOval->attr.fill),
+    LINEWIDTH_RC,  &(dlOval->attr.width),
+    CLRMOD_RC,     &(dlOval->dynAttr.clr),
+    VIS_RC,        &(dlOval->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
+#endif
+    CHAN_RC,         dlOval->dynAttr.chan,
+    -1);
+}
+
+static void ovalSetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlOval *dlOval = p->structure.oval;
+}

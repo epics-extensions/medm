@@ -259,6 +259,7 @@ typedef struct _DisplayInfo {
 	Boolean         newDisplay;
 /* widgets and main pixmap */
 	char		*displayFileName;
+        int             versionNumber;
 	Widget		shell;
 	Widget		drawingArea;
 	Pixmap		drawingAreaPixmap;
@@ -273,13 +274,7 @@ typedef struct _DisplayInfo {
 	Widget		shellCommandPromptD;
 /* widget instance data */
 	Widget		child[MAX_CHILDREN];	  /* children of drawing area */
-#if 0
-	Widget		otherChild[MAX_CHILDREN]; /* misc. other children     */
-#endif
 	int		childCount;
-#if 0
-	int		otherChildCount;
-#endif
 /* periodic tasks */
         UpdateTask      updateTaskListHead;
         UpdateTask      *updateTaskListTail;
@@ -290,10 +285,6 @@ typedef struct _DisplayInfo {
 	int		dlColormapSize;
 	int		drawingAreaBackgroundColor;
 	int		drawingAreaForegroundColor;
-/* only 1 attr. active at a time */
-	DlAttribute	attribute;		
-	Boolean		useDynamicAttribute;
-	DlDynamicAttribute dynamicAttribute;
 	GC		gc;
 	GC		pixmapGC;
 /* execute or edit mode traversal  */
@@ -382,8 +373,10 @@ typedef struct _ResourceBundle {
 	Position		y;
 	Dimension		width;
 	Dimension		height;
+#if 0
 	char			rdbk[MAX_TOKEN_LENGTH];
 	char			ctrl[MAX_TOKEN_LENGTH];
+#endif
 	char			title[MAX_TOKEN_LENGTH];
 	char			xlabel[MAX_TOKEN_LENGTH];
 	char			ylabel[MAX_TOKEN_LENGTH];

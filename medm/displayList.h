@@ -174,15 +174,16 @@ extern const FillStyle FIRST_FILL_STYLE;
 #endif
 
 
-#define NUM_TEXT_FORMATS	7
+#define NUM_TEXT_FORMATS	8
 typedef enum {
-  DECIMAL	= 20,
-  EXPONENTIAL	= 21,
+  DECIMAL       = 20,
+  EXPONENTIAL   = 21,
   ENGR_NOTATION = 22,
-  COMPACT	= 23,
-  TRUNCATED	= 24,
-  HEXADECIMAL	= 25,
-  OCTAL 	= 26
+  COMPACT       = 23,
+  TRUNCATED     = 24,
+  HEXADECIMAL   = 25,
+  OCTAL         = 26,
+  STRING        = 27
 } TextFormat;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextFormat FIRST_TEXT_FORMAT = DECIMAL;
@@ -192,12 +193,12 @@ extern const TextFormat FIRST_TEXT_FORMAT;
 
 #define NUM_TEXT_ALIGNS		6
 typedef enum {
-  HORIZ_LEFT	= 27,
-  HORIZ_CENTER	= 28,
-  HORIZ_RIGHT	= 29,
-  VERT_TOP	= 30,
-  VERT_BOTTOM	= 31,
-  VERT_CENTER	= 32
+  HORIZ_LEFT	= 28,
+  HORIZ_CENTER	= 29,
+  HORIZ_RIGHT	= 30,
+  VERT_TOP	= 31,
+  VERT_BOTTOM	= 32,
+  VERT_CENTER	= 33
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -207,9 +208,9 @@ extern const TextAlign FIRST_TEXT_ALIGN;
 
 #define NUM_STACKINGS		3
 typedef enum {
-  COLUMN	= 33,
-  ROW		= 34,
-  ROW_COLUMN 	= 35
+  COLUMN	= 34,
+  ROW		= 35,
+  ROW_COLUMN 	= 36
 } Stacking;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Stacking FIRST_STACKING = COLUMN;
@@ -219,8 +220,8 @@ extern const Stacking FIRST_STACKING;
 
 #define NUM_FILL_MODES		2
 typedef enum {
-  FROM_EDGE	= 36,
-  FROM_CENTER   = 37 
+  FROM_EDGE	= 37,
+  FROM_CENTER   = 38 
 } FillMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
@@ -230,9 +231,9 @@ extern const FillMode FIRST_FILL_MODE;
 
 #define NUM_TIME_UNITS		3
 typedef enum {
-  MILLISECONDS	= 38,
-  SECONDS	= 39,
-  MINUTES	= 40
+  MILLISECONDS	= 39,
+  SECONDS	= 40,
+  MINUTES	= 41
 } TimeUnits;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TimeUnits FIRST_TIME_UNIT = MILLISECONDS;
@@ -242,9 +243,9 @@ extern const TimeUnits FIRST_TIME_UNIT;
 
 #define NUM_CARTESIAN_PLOT_STYLES	3
 typedef enum {
-  POINT_PLOT      = 41,
-  LINE_PLOT       = 42,
-  FILL_UNDER_PLOT = 43
+  POINT_PLOT      = 42,
+  LINE_PLOT       = 43,
+  FILL_UNDER_PLOT = 44
 } CartesianPlotStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE = POINT_PLOT;
@@ -254,8 +255,8 @@ extern const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE;
 
 #define NUM_ERASE_OLDESTS	2
 typedef enum {
-  ERASE_OLDEST_OFF = 44,
-  ERASE_OLDEST_ON  = 45
+  ERASE_OLDEST_OFF = 45,
+  ERASE_OLDEST_ON  = 46
 } EraseOldest;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
@@ -265,9 +266,9 @@ extern const EraseOldest FIRST_ERASE_OLDEST;
 
 #define	NUM_IMAGE_TYPES		3
 typedef enum {
-  NO_IMAGE   = 46,
-  GIF_IMAGE  = 47,
-  TIFF_IMAGE = 48
+  NO_IMAGE   = 47,
+  GIF_IMAGE  = 48,
+  TIFF_IMAGE = 49
 } ImageType;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
@@ -277,8 +278,8 @@ extern const ImageType FIRST_IMAGE_TYPE;
 
 #define NUM_CARTESIAN_PLOT_AXIS_STYLES	2
 typedef enum {
-  LINEAR_AXIS		= 49,
-  LOG10_AXIS		= 50
+  LINEAR_AXIS		= 50,
+  LOG10_AXIS		= 51
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -288,9 +289,9 @@ extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
 
 #define NUM_CARTESIAN_PLOT_RANGE_STYLES	3
 typedef enum {
-  CHANNEL_RANGE		= 51,
-  USER_SPECIFIED_RANGE	= 52,
-  AUTO_SCALE_RANGE	= 53
+  CHANNEL_RANGE		= 52,
+  USER_SPECIFIED_RANGE	= 53,
+  AUTO_SCALE_RANGE	= 54
 } CartesianPlotRangeStyle;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -301,8 +302,8 @@ extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 
 #define NUM_ERASE_MODES    2
 typedef enum {
-  ERASE_IF_NOT_ZERO   = 54,
-  ERASE_IF_ZERO       = 55
+  ERASE_IF_NOT_ZERO   = 55,
+  ERASE_IF_ZERO       = 56
 } eraseMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
@@ -313,10 +314,10 @@ extern const eraseMode_t FIRST_ERASE_MODE;
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-  COLOR_RULE_1        = 56,
-  COLOR_RULE_2        = 57,
-  COLOR_RULE_3        = 58,
-  COLOR_RULE_4        = 59
+  COLOR_RULE_1        = 57,
+  COLOR_RULE_2        = 58,
+  COLOR_RULE_3        = 59,
+  COLOR_RULE_4        = 60
 } colorRuleMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const colorRuleMode_t FIRST_COLOR_RULE = COLOR_RULE_1;
@@ -327,9 +328,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS		7	/* NUM_TEXT_FORMATS	*/
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES	(59+1)	/* COLOR_RULE_4 + 1	*/
+#define NUMBER_STRING_VALUES	(60+1)	/* COLOR_RULE_4 + 1	*/
 #else
-#define NUMBER_STRING_VALUES    (55+1)  /* ERASE_IF_NOT_ZERO + 1 */
+#define NUMBER_STRING_VALUES    (56+1)  /* ERASE_IF_NOT_ZERO + 1 */
 #endif
 
 /*********************************************************************
@@ -350,7 +351,7 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
     "solid","dash",
     "solid","outline",
     "decimal", "exponential", "engr. notation", "compact", "truncated",
-      "hexadecimal", "octal",
+      "hexadecimal", "octal", "string",
     "horiz. left","horiz. centered","horiz. right",
       "vert. top","vert. bottom","vert. centered",
     "column","row","row column",
@@ -474,24 +475,16 @@ typedef struct {
         EdgeStyle style;
 	FillStyle fill;
 	unsigned int width;
-} DlAttribute;
+} DlBasicAttribute;
 
 typedef struct {
 	ColorMode clr;
 	VisibilityMode vis;
 #ifdef __COLOR_RULE_H__
-    int colorRule;
+        int colorRule;
 #endif
-} DlDynamicAttrMod;
-
-typedef struct {
 	char chan[MAX_TOKEN_LENGTH];
-} DlDynamicAttrParam;
-
-typedef struct {
-	DlDynamicAttrMod mod;		/*   in their proper scope (probably  */
-	DlDynamicAttrParam param;	/*   only apply to next object...)    */
-} DlDynamicAttributeData;
+} DlDynamicAttribute;
 	
 typedef struct {
 	int x, y;
@@ -570,32 +563,32 @@ typedef struct {
 	DlColormapEntry dl_color[DL_MAX_COLORS];
 } DlColormap;
 
-typedef struct {
-	DlAttribute attr;
-} DlBasicAttribute;
-
-typedef struct {
-	DlDynamicAttributeData attr;
-} DlDynamicAttribute;
-
 /****** Shapes */
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 } DlRectangle;
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 } DlOval;
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 	int begin;
 	int path;
 } DlArc;
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 	char textix[MAX_TOKEN_LENGTH];
 	TextAlign align;
 } DlText;
@@ -647,11 +640,11 @@ typedef struct {
 } DlBar;
 
 typedef struct {
-        DlObject object;
-	DlMonitor monitor;
-	ColorMode clrmod;
-	Direction direction;
-        int sbit, ebit;
+  DlObject object;
+  DlMonitor monitor;
+  ColorMode clrmod;
+  Direction direction;
+  int sbit, ebit;
 } DlByte;
 
 typedef struct {
@@ -743,15 +736,15 @@ typedef struct {
 	XtPointer privateData;
 } DlImage;
 
+struct  _DlElement;
 typedef struct _DlComposite {
 	DlObject object;
 	char compositeName[MAX_TOKEN_LENGTH];
 	VisibilityMode vis;
 	char chan[MAX_TOKEN_LENGTH];
-	XtPointer dlElementListHead;		/*  (DlElement *)      */
-	XtPointer dlElementListTail;		/*  (DlElement *)      */
-	Boolean visible;			/* run-time visibility */
-	Boolean monitorAlreadyAdded;		/* for monitor status  */
+	struct _DlElement *dlElementListHead;
+	struct _DlElement *dlElementListTail;
+	Boolean visible;	/* run-time visibility */
 } DlComposite;
 
 /* (if MEDM ever leaves the X environment, a DlPoint should be defined and
@@ -759,6 +752,8 @@ typedef struct _DlComposite {
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 	XPoint *points;
 	int nPoints;
     int isFallingOrRisingLine;
@@ -766,6 +761,8 @@ typedef struct {
 
 typedef struct {
 	DlObject object;
+	DlBasicAttribute attr;
+        DlDynamicAttribute dynAttr;
 	XPoint *points;
 	int nPoints;
 } DlPolygon;
@@ -777,8 +774,6 @@ typedef union {
 	DlFile *file;
 	DlDisplay *display;
 	DlColormap *colormap;
-	DlBasicAttribute *basicAttribute;
-	DlDynamicAttribute *dynamicAttribute;
 	DlRectangle *rectangle;
 	DlOval *oval;
 	DlArc *arc;
@@ -804,13 +799,19 @@ typedef union {
 	DlPolygon *polygon;
 } DlStructurePtr;
 
+struct _ResourceBundle;
+struct _DisplayInfo;
+
 typedef struct _DlElement {
 	DlElementType type;
 	DlStructurePtr structure;
-	void (*dmExecute)(XtPointer, XtPointer, Boolean);
+	void (*dmExecute)(struct _DisplayInfo *, XtPointer, Boolean);
                	                           /* execute thyself method         */
-	void (*dmWrite)(XtPointer, XtPointer, int);
+	void (*dmWrite)(FILE *, XtPointer, int);
                                            /* write thyself (to file) method */
+	void (*setValues)(struct _ResourceBundle *, struct _DlElement *); 
+	void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
+	void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
 	struct _DlElement *next;	   /* next element in display list   */
 	struct _DlElement *prev;	   /* previous element ...           */
 } DlElement;

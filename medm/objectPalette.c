@@ -165,6 +165,141 @@ extern XButtonPressedEvent lastEvent;
  */
 Widget objectPaletteSelectToggleButton;
 
+void updateGlobalResourceBundleObjectAttribute(DlObject *object) {
+  globalResourceBundle.x = object->x;
+  globalResourceBundle.y = object->y;
+  globalResourceBundle.width = object->width;
+  globalResourceBundle.height= object->height;
+}
+
+void updateElementObjectAttribute(DlObject *object) {
+  object->x = globalResourceBundle.x;
+  object->y = globalResourceBundle.y;
+  object->width = globalResourceBundle.width;
+  object->height = globalResourceBundle.height;
+}
+
+void updateResourcePaletteObjectAttribute() {
+  char string[MAX_TOKEN_LENGTH];
+  sprintf(string,"%d",globalResourceBundle.x);
+  XmTextFieldSetString(resourceEntryElement[X_RC],string);
+  sprintf(string,"%d",globalResourceBundle.y);
+  XmTextFieldSetString(resourceEntryElement[Y_RC],string);
+  sprintf(string,"%d",globalResourceBundle.width);
+  XmTextFieldSetString(resourceEntryElement[WIDTH_RC],string);
+  sprintf(string,"%d",globalResourceBundle.height);
+  XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
+}
+
+void updateGlobalResourceBundleBasicAttribute(DlBasicAttribute *attr) {
+  globalResourceBundle.clr = attr->clr;
+  globalResourceBundle.style = attr->style;
+  globalResourceBundle.fill = attr->fill;
+  globalResourceBundle.lineWidth = attr->width;
+}
+
+void updateElementBasicAttribute(DlBasicAttribute *attr) {
+  attr->clr = globalResourceBundle.clr;
+  attr->style = globalResourceBundle.style;
+  attr->fill = globalResourceBundle.fill;
+  attr->width = globalResourceBundle.lineWidth;
+}
+
+void updateResourcePaletteBasicAttribute() {
+  char string[MAX_TOKEN_LENGTH];
+  XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+    currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
+  optionMenuSet(resourceEntryElement[STYLE_RC],
+    globalResourceBundle.style - FIRST_EDGE_STYLE);
+  optionMenuSet(resourceEntryElement[FILL_RC],
+    globalResourceBundle.fill - FIRST_FILL_STYLE);
+  sprintf(string,"%d",globalResourceBundle.lineWidth);
+  XmTextFieldSetString(resourceEntryElement[LINEWIDTH_RC],string);
+}
+
+void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
+  globalResourceBundle.clrmod = dynAttr->clr;
+  globalResourceBundle.vis = dynAttr->vis;
+#ifdef __COLOR_RULE_H__
+  globalResourceBundle.colorRule = dynAttr->colorRule;
+#endif
+  strcpy(globalResourceBundle.chan,dynAttr->chan);
+}
+
+void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
+  dynAttr->clr = globalResourceBundle.clrmod;
+  dynAttr->vis = globalResourceBundle.vis;
+#ifdef __COLOR_RULE_H__
+  dynAttr->colorRule = globalResourceBundle.colorRule;
+#endif
+  strcpy(dynAttr->chan,globalResourceBundle.chan);
+}
+
+void updateResourcePaletteDynamicAttribute() {
+  optionMenuSet(resourceEntryElement[CLRMOD_RC],
+    globalResourceBundle.clrmod - FIRST_COLOR_MODE);
+  optionMenuSet(resourceEntryElement[VIS_RC],
+    globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
+#ifdef __COLOR_RULE_H__
+  optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
+    globalResourceBundle.colorRule);
+#endif
+  XmTextFieldSetString(resourceEntryElement[CHAN_RC],
+    globalResourceBundle.chan);
+  if (globalResourceBundle.chan[0] != '\0') {
+    XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
+    XtSetSensitive(resourceEntryRC[VIS_RC],True);
+#ifdef __COLOR_RULE_H__
+    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
+#endif
+  } else {
+    XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
+    XtSetSensitive(resourceEntryRC[VIS_RC],False);
+#ifdef __COLOR_RULE_H__
+    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+#endif
+  }
+}
+
+void updateGlobalResourceBundleControlAttribute(DlControl *control) {
+  strcpy(globalResourceBundle.chan, control->ctrl);
+  globalResourceBundle.clr = control->clr;
+  globalResourceBundle.bclr = control->bclr;
+}
+
+void updateElementControlAttribute(DlControl *control) {
+  strcpy(control->ctrl, globalResourceBundle.chan);
+  control->clr = globalResourceBundle.clr;
+  control->bclr = globalResourceBundle.bclr;
+}
+
+void updateResourcePaletteControlAttribute() {
+  XmTextFieldSetString(resourceEntryElement[CTRL_RC],globalResourceBundle.chan);
+  XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
+  XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
+}
+
+void updateGlobalResourceBundleMonitorAttribute(DlMonitor *monitor) {
+  strcpy(globalResourceBundle.chan, monitor->rdbk);
+  globalResourceBundle.clr = monitor->clr;
+  globalResourceBundle.bclr = monitor->bclr;
+}
+
+void updateElementMonitorAttribute(DlMonitor *monitor) {
+  strcpy(monitor->rdbk, globalResourceBundle.chan);
+  monitor->clr = globalResourceBundle.clr;
+  monitor->bclr = globalResourceBundle.bclr;
+}
+
+void updateResourcePaletteMonitorAttribute() {
+  XmTextFieldSetString(resourceEntryElement[RDBK_RC],globalResourceBundle.chan);
+  XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+	currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
+  XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+	currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
+}
 /********************************************
  **************** Callbacks *****************
  ********************************************/
@@ -578,7 +713,7 @@ void setResourcePaletteEntries()
 
 
 /* if no resource palette yet, create it */
-  if (resourceMW == NULL) createResource();
+  if (!resourceMW) createResource();
 
 /* make sure the resource palette shell is popped-up */
   XtPopup(resourceS,XtGrabNone);
@@ -644,431 +779,24 @@ void setResourcePaletteEntries()
     XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
 }
 
-
-
-
-/*
- * function to update the global resource bundle data structure
- * N.B. - must keep this in sync with
- *	updateGlobalResourceBundleAndResourcePalette()
- */
-
-void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
-{
-  DlElement *dyn, *basic;
-  char string[MAX_TOKEN_LENGTH];
+void updateGlobalResourceBundleFromElement(DlElement *element) {
+  DlCartesianPlot *p;
   int i;
+  if (!element || (element->type != DL_CartesianPlot)) return;
+  p = element->structure.cartesianPlot;
 
-
-
-/* simply return if not valid to update */
-  if (elementPtr == NULL) return;
-
-
-  if (ELEMENT_IS_RENDERABLE(elementPtr->type)) {
-
-/* get object data: must have object entry  - use rectangle type (arbitrary) */
-    globalResourceBundle.x = elementPtr->structure.rectangle->object.x;
-    globalResourceBundle.y = elementPtr->structure.rectangle->object.y;
-    globalResourceBundle.width = elementPtr->structure.rectangle->object.width;
-    globalResourceBundle.height= elementPtr->structure.rectangle->object.height;
-
-
-/***************************************************************************/
-
-/* only worry about basic and dynamic attributes for objects without widgets */
-
-   if (! ELEMENT_HAS_WIDGET(elementPtr->type) 
-			&& elementPtr->type != DL_TextUpdate
-			&& elementPtr->type != DL_Composite) {
-
-/* get basicAttribute data */
-    basic = lookupBasicAttributeElement(elementPtr);
-
-    if (basic != NULL) {
-      globalResourceBundle.clr = basic->structure.basicAttribute->attr.clr;
-      globalResourceBundle.style = basic->structure.basicAttribute->attr.style;
-      globalResourceBundle.fill = basic->structure.basicAttribute->attr.fill;
-      globalResourceBundle.lineWidth =
-		basic->structure.basicAttribute->attr.width;
-    }
-
-/* get dynamicAttribute data */
-    dyn = lookupDynamicAttributeElement(elementPtr);
-
-    if (dyn != NULL) {
-      globalResourceBundle.clrmod =
-		dyn->structure.dynamicAttribute->attr.mod.clr;
-      globalResourceBundle.vis = dyn->structure.dynamicAttribute->attr.mod.vis;
-#ifdef __COLOR_RULE_H__
-      globalResourceBundle.colorRule = dyn->structure.dynamicAttribute->attr.mod.colorRule;
-#endif
-      strcpy(globalResourceBundle.chan,
-		dyn->structure.dynamicAttribute->attr.param.chan);
-    } else { 	/* reset to defaults for dynamics */
-      globalResourceBundle.clrmod = STATIC;
-      globalResourceBundle.vis = V_STATIC;
-#ifdef __COLOR_RULE_H__
-      globalResourceBundle.colorRule = 0;
-#endif
-      globalResourceBundle.chan[0] = '\0';
-/* insensitize the other dyn fields since don't make sense if no channel
-   specified */
-      XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
-      XtSetSensitive(resourceEntryRC[VIS_RC],False);
-#ifdef __COLOR_RULE_H__
-      XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
-    }
-   }
+  for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
+    globalResourceBundle.axis[i].axisStyle = p->axis[i].axisStyle;
+    globalResourceBundle.axis[i].rangeStyle = p->axis[i].rangeStyle;
+    globalResourceBundle.axis[i].minRange = p->axis[i].minRange;
+    globalResourceBundle.axis[i].maxRange = p->axis[i].maxRange;
   }
-
-  switch (elementPtr->type) {
-      case DL_File:
-	strcpy(globalResourceBundle.name,elementPtr->structure.file->name);
-	break;
-
-      case DL_Display:
-	globalResourceBundle.clr = elementPtr->structure.display->clr;
-	globalResourceBundle.bclr = elementPtr->structure.display->bclr;
-	strcpy(globalResourceBundle.cmap,elementPtr->structure.display->cmap);
-	break;
-
-      case DL_Colormap:
-	medmPrintf(
-	"\nupdateGlobalResourceBundleFromElement:  in DL_Colormap type??");
-	break;
-
-      case DL_BasicAttribute:
-      case DL_DynamicAttribute:
-      /* (hopefully) taken care of in ELEMENT_IS_RENDERABLE part up there */
-	break;
-
-      case DL_Valuator:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.valuator->control.ctrl);
-	globalResourceBundle.clr = elementPtr->structure.valuator->control.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.valuator->control.bclr;
-	globalResourceBundle.label = elementPtr->structure.valuator->label;
-	globalResourceBundle.clrmod = elementPtr->structure.valuator->clrmod;
-	globalResourceBundle.direction =
-		elementPtr->structure.valuator->direction;
-	globalResourceBundle.dPrecision =
-		elementPtr->structure.valuator->dPrecision;
-	break;
-
-      case DL_ChoiceButton:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.choiceButton->control.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.choiceButton->control.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.choiceButton->control.bclr;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.choiceButton->clrmod;
-	globalResourceBundle.stacking =
-		elementPtr->structure.choiceButton->stacking;
-	break;
-
-      case DL_MessageButton:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.messageButton->control.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.messageButton->control.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.messageButton->control.bclr;
-	strcpy(globalResourceBundle.messageLabel,
-		elementPtr->structure.messageButton->label);
-	strcpy(globalResourceBundle.press_msg,
-		elementPtr->structure.messageButton->press_msg);
-	strcpy(globalResourceBundle.release_msg,
-		elementPtr->structure.messageButton->release_msg);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.messageButton->clrmod;
-	break;
-
-      case DL_TextEntry:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.textEntry->control.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.textEntry->control.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.textEntry->control.bclr;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.textEntry->clrmod;
-	globalResourceBundle.format =
-		elementPtr->structure.textEntry->format;
-	break;
-
-      case DL_Menu:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.menu->control.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.menu->control.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.menu->control.bclr;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.menu->clrmod;
-	break;
-
-      case DL_Meter:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.meter->monitor.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.meter->monitor.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.meter->monitor.bclr;
-	globalResourceBundle.label =
-		elementPtr->structure.meter->label;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.meter->clrmod;
-	break;
-
-      case DL_TextUpdate:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.textUpdate->monitor.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.textUpdate->monitor.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.textUpdate->monitor.bclr;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.textUpdate->clrmod;
-	globalResourceBundle.align =
-		elementPtr->structure.textUpdate->align;
-	globalResourceBundle.format =
-		elementPtr->structure.textUpdate->format;
-	break;
-
-      case DL_Bar:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.bar->monitor.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.bar->monitor.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.bar->monitor.bclr;
-	globalResourceBundle.label =
-		elementPtr->structure.bar->label;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.bar->clrmod;
-	globalResourceBundle.direction =
-		elementPtr->structure.bar->direction;
-	globalResourceBundle.fillmod =
-		elementPtr->structure.bar->fillmod;
-	break;
-      case DL_Byte:
-        strcpy(globalResourceBundle.rdbk,
-          elementPtr->structure.byte->monitor.rdbk);
-        globalResourceBundle.clr = elementPtr->structure.byte->monitor.clr;
-        globalResourceBundle.bclr = elementPtr->structure.byte->monitor.bclr;
-        globalResourceBundle.clrmod = elementPtr->structure.byte->clrmod;
-        globalResourceBundle.direction = elementPtr->structure.byte->direction;
-        globalResourceBundle.sbit = elementPtr->structure.byte->sbit;
-        globalResourceBundle.ebit = elementPtr->structure.byte->ebit;
-        break;
-      case DL_Indicator:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.indicator->monitor.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.indicator->monitor.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.indicator->monitor.bclr;
-	globalResourceBundle.label =
-		elementPtr->structure.indicator->label;
-	globalResourceBundle.clrmod =
-		elementPtr->structure.indicator->clrmod;
-	globalResourceBundle.direction =
-		elementPtr->structure.indicator->direction;
-	break;
-
-      case DL_StripChart:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.stripChart->plotcom.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.stripChart->plotcom.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.stripChart->plotcom.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.stripChart->plotcom.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.stripChart->plotcom.bclr;
-	globalResourceBundle.period = 
-		elementPtr->structure.stripChart->period;
-	globalResourceBundle.units =
-		elementPtr->structure.stripChart->units;
-	for (i = 0; i < MAX_PENS; i++){
-	  strcpy(globalResourceBundle.scData[i].chan,
-		elementPtr->structure.stripChart->pen[i].chan);  
-	  globalResourceBundle.scData[i].clr = 
-		elementPtr->structure.stripChart->pen[i].clr;
-	}
-	break;
-
-      case DL_CartesianPlot:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.cartesianPlot->plotcom.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.cartesianPlot->plotcom.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.cartesianPlot->plotcom.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.cartesianPlot->plotcom.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.cartesianPlot->plotcom.bclr;
-	globalResourceBundle.count = 
-		elementPtr->structure.cartesianPlot->count;
-	globalResourceBundle.cStyle =
-		elementPtr->structure.cartesianPlot->style;
-	globalResourceBundle.erase_oldest =
-		elementPtr->structure.cartesianPlot->erase_oldest;
-	for (i = 0; i < MAX_TRACES; i++){
-	  strcpy(globalResourceBundle.cpData[i].xdata,
-		elementPtr->structure.cartesianPlot->trace[i].xdata);  
-	  strcpy(globalResourceBundle.cpData[i].ydata,
-		elementPtr->structure.cartesianPlot->trace[i].ydata);  
-	  globalResourceBundle.cpData[i].data_clr = 
-		elementPtr->structure.cartesianPlot->trace[i].data_clr;
-	}
-	for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
-	  globalResourceBundle.axis[i].axisStyle =
-		elementPtr->structure.cartesianPlot->axis[i].axisStyle;
-	  globalResourceBundle.axis[i].rangeStyle =
-		elementPtr->structure.cartesianPlot->axis[i].rangeStyle;
-	  globalResourceBundle.axis[i].minRange = 
-		elementPtr->structure.cartesianPlot->axis[i].minRange;
-	  globalResourceBundle.axis[i].maxRange =
-		elementPtr->structure.cartesianPlot->axis[i].maxRange;
-	}
-	strcpy(globalResourceBundle.trigger,
-		elementPtr->structure.cartesianPlot->trigger);
-	strcpy(globalResourceBundle.erase,
-		elementPtr->structure.cartesianPlot->erase);
-	globalResourceBundle.eraseMode =
-		elementPtr->structure.cartesianPlot->eraseMode;
-	break;
-
-      case DL_SurfacePlot:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.surfacePlot->plotcom.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.surfacePlot->plotcom.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.surfacePlot->plotcom.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.surfacePlot->plotcom.clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.surfacePlot->plotcom.bclr;
-	strcpy(globalResourceBundle.data,
-		elementPtr->structure.surfacePlot->data);
-	globalResourceBundle.data_clr = 
-		elementPtr->structure.surfacePlot->data_clr;
-	globalResourceBundle.dis = 
-		elementPtr->structure.surfacePlot->dis;
-	globalResourceBundle.xyangle = 
-		elementPtr->structure.surfacePlot->xyangle;
-	globalResourceBundle.zangle = 
-		elementPtr->structure.surfacePlot->zangle;
-	break;
-
-      case DL_Rectangle:
-      case DL_Oval:
-	/* handled in prelude (since only DlObject description) */
-	break;
-
-      case DL_Arc:
-	globalResourceBundle.begin = 
-		elementPtr->structure.arc->begin;
-	globalResourceBundle.path = 
-		elementPtr->structure.arc ->path;
-	break;
-
-      case DL_Text:
-	strcpy(globalResourceBundle.textix,
-		elementPtr->structure.text->textix);
-	globalResourceBundle.align = elementPtr->structure.text->align;
-	break;
-
-      case DL_RelatedDisplay:
-	globalResourceBundle.clr =
-		elementPtr->structure.relatedDisplay->clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.relatedDisplay->bclr;
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-	  strcpy(globalResourceBundle.rdData[i].label,
-		elementPtr->structure.relatedDisplay->display[i].label);  
-	  strcpy(globalResourceBundle.rdData[i].name,
-		elementPtr->structure.relatedDisplay->display[i].name);  
-	  strcpy(globalResourceBundle.rdData[i].args,
-		elementPtr->structure.relatedDisplay->display[i].args);  
-	}
-	break;
-
-      case DL_ShellCommand:
-	globalResourceBundle.clr =
-		elementPtr->structure.shellCommand->clr;
-	globalResourceBundle.bclr =
-		elementPtr->structure.shellCommand->bclr;
-	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-	  strcpy(globalResourceBundle.cmdData[i].label,
-		elementPtr->structure.shellCommand->command[i].label);  
-	  strcpy(globalResourceBundle.cmdData[i].command,
-		elementPtr->structure.shellCommand->command[i].command);  
-	  strcpy(globalResourceBundle.cmdData[i].args,
-		elementPtr->structure.shellCommand->command[i].args);  
-	}
-	break;
-
-
-      case DL_Image:
-	globalResourceBundle.imageType =
-		elementPtr->structure.image->imageType;
-	strcpy(globalResourceBundle.imageName,
-		elementPtr->structure.image->imageName);
-	break;
-
-      case DL_Composite:
-/* need to finish this if we want named groups
-	strcpy(globalResourceBundle.compositeName,
-		elementPtr->structure.composite->compositeName);
- */
-        globalResourceBundle.vis = elementPtr->structure.composite->vis;
-        strcpy(globalResourceBundle.chan,elementPtr->structure.composite->chan);
-	break;
-      case DL_Line:
-	break;
-      case DL_Polyline:
-	break;
-      case DL_Polygon:
-	break;
-      case DL_BezierCurve:
-	break;
-
-      default:
-	medmPrintf(   
-	"\n updateGlobalResourceBundleFromElement: unknown element type %d",
-		elementPtr->type);
-	break;
-
-  }
-
-
 }
 
-
-
-/*
- * function to update the global resource bundle data structure
- *	and set those resource values in the resourcePalette widgets
- * N.B. - must keep this in sync with updateGlobalResourceBundleFromElement()
- */
-
-void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
-{
-  DlElement *elementPtr, *dyn, *basic;
+void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
+  DlElement *elementPtr;
   char string[MAX_TOKEN_LENGTH];
   int i, tail;
-
-
 
 /* simply return if not valid to update */
   if (currentDisplayInfo->numSelectedElements != 1 ||
@@ -1077,654 +805,523 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
   elementPtr = currentDisplayInfo->selectedElementsArray[0];
 
 /* if no resource palette yet, create it */
-  if (resourceMW == NULL) {
+  if (!resourceMW) {
      currentElementType = elementPtr->type;
      setResourcePaletteEntries();
      return;
   }
 
-    
+  switch (elementPtr->type) {
+    case DL_File:
+      strcpy(globalResourceBundle.name,elementPtr->structure.file->name);
+      XmTextFieldSetString(resourceEntryElement[NAME_RC],
+	globalResourceBundle.name);
+      break;
 
-  if (ELEMENT_IS_RENDERABLE(elementPtr->type) ) {
+    case DL_Colormap:
+      medmPrintf(
+      "\nupdateGlobalResourceBundleAndResourcePalette:  in DL_Colormap type??");
+      break;
 
-/* get object data: must have object entry  - use rectangle type (arbitrary) */
-    globalResourceBundle.x = elementPtr->structure.rectangle->object.x;
-    sprintf(string,"%d",globalResourceBundle.x);
-    XmTextFieldSetString(resourceEntryElement[X_RC],string);
-    globalResourceBundle.y = elementPtr->structure.rectangle->object.y;
-    sprintf(string,"%d",globalResourceBundle.y);
-    XmTextFieldSetString(resourceEntryElement[Y_RC],string);
-    globalResourceBundle.width = elementPtr->structure.rectangle->object.width;
-    sprintf(string,"%d",globalResourceBundle.width);
-    XmTextFieldSetString(resourceEntryElement[WIDTH_RC],string);
-    globalResourceBundle.height= elementPtr->structure.rectangle->object.height;
-    sprintf(string,"%d",globalResourceBundle.height);
-    XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
-
-
-
-/* if only updating OBJECT data (x,y,width,height) we're done */
-    if (objectDataOnly) return;
-
-
-/***************************************************************************/
-
-/* only worry about basic and dynamic attributes for objects without widgets */
-
-   if (! ELEMENT_HAS_WIDGET(elementPtr->type) 
-			&& elementPtr->type != DL_TextUpdate
-			&& elementPtr->type != DL_Composite) {
-
-/* get basicAttribute data */
-    basic = lookupBasicAttributeElement(elementPtr);
-
-    if (basic != NULL) {
-      globalResourceBundle.clr = basic->structure.basicAttribute->attr.clr;
+    case DL_Display:
+      updateGlobalResourceBundleObjectAttribute(
+                &(elementPtr->structure.display->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+      globalResourceBundle.clr = elementPtr->structure.display->clr;
       XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-      globalResourceBundle.style = basic->structure.basicAttribute->attr.style;
-      optionMenuSet(resourceEntryElement[STYLE_RC],
-		globalResourceBundle.style - FIRST_EDGE_STYLE);
-      globalResourceBundle.fill = basic->structure.basicAttribute->attr.fill;
-      optionMenuSet(resourceEntryElement[FILL_RC],
-		globalResourceBundle.fill - FIRST_FILL_STYLE);
-      globalResourceBundle.lineWidth =
-		basic->structure.basicAttribute->attr.width;
-      sprintf(string,"%d",globalResourceBundle.lineWidth);
-      XmTextFieldSetString(resourceEntryElement[LINEWIDTH_RC],string);
-    }
-
-/* get dynamicAttribute data */
-    dyn = lookupDynamicAttributeElement(elementPtr);
-
-    if (dyn != NULL) {
-      globalResourceBundle.clrmod =
-			dyn->structure.dynamicAttribute->attr.mod.clr;
-      optionMenuSet(resourceEntryElement[CLRMOD_RC],
-		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-      globalResourceBundle.vis = dyn->structure.dynamicAttribute->attr.mod.vis;
-      optionMenuSet(resourceEntryElement[VIS_RC],
-		globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-#ifdef __COLOR_RULE_H__
-      globalResourceBundle.colorRule = dyn->structure.dynamicAttribute->attr.mod.colorRule;
-      optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
-                globalResourceBundle.colorRule);
-#endif
-      strcpy(globalResourceBundle.chan,
-		dyn->structure.dynamicAttribute->attr.param.chan);
-      XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-		globalResourceBundle.chan);
-    } else { 	/* reset to defaults for dynamics */
-      globalResourceBundle.clrmod = STATIC;
-      optionMenuSet(resourceEntryElement[CLRMOD_RC],
-		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-      globalResourceBundle.vis = V_STATIC;
-      optionMenuSet(resourceEntryElement[VIS_RC],
-		globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-#ifdef __COLOR_RULE_H__
-      globalResourceBundle.colorRule = 0;
-      optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
-                globalResourceBundle.colorRule);
-#endif
-      globalResourceBundle.chan[0] = '\0';
-      XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-		globalResourceBundle.chan);
-/* insensitize the other dyn fields since don't make sense if no channel
- * specified */
-      XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
-      XtSetSensitive(resourceEntryRC[VIS_RC],False);
-#ifdef __COLOR_RULE_H__
-      XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
-    }
-   }
-  }
-
-  switch (elementPtr->type) {
-      case DL_File:
-	strcpy(globalResourceBundle.name,elementPtr->structure.file->name);
-	XmTextFieldSetString(resourceEntryElement[NAME_RC],
-		globalResourceBundle.name);
-	break;
-
-      case DL_Display:
-	globalResourceBundle.clr = elementPtr->structure.display->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = elementPtr->structure.display->bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+      globalResourceBundle.bclr = elementPtr->structure.display->bclr;
+      XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	strcpy(globalResourceBundle.cmap,elementPtr->structure.display->cmap);
-	XmTextFieldSetString(resourceEntryElement[CMAP_RC],
+      strcpy(globalResourceBundle.cmap,elementPtr->structure.display->cmap);
+      XmTextFieldSetString(resourceEntryElement[CMAP_RC],
 		globalResourceBundle.cmap);
-	break;
+      break;
 
-      case DL_Colormap:
-	medmPrintf(
-  "\nupdateGlobalResourceBundleAndResourcePalette:  in DL_Colormap type??");
-	break;
+    case DL_Valuator: {
+      DlValuator *p = elementPtr->structure.valuator;
 
-      case DL_BasicAttribute:
-      case DL_DynamicAttribute:
-      /* (hopefully) taken care of in ELEMENT_IS_RENDERABLE part up there */
-	break;
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
 
-      case DL_Valuator:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.valuator->control.ctrl);
-	XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		globalResourceBundle.ctrl);
-	globalResourceBundle.clr = elementPtr->structure.valuator->control.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.valuator->control.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.label = elementPtr->structure.valuator->label;
-        optionMenuSet(resourceEntryElement[LABEL_RC],
+      updateGlobalResourceBundleControlAttribute(&(p->control));
+      updateResourcePaletteControlAttribute();
+      globalResourceBundle.label = p->label;
+      optionMenuSet(resourceEntryElement[LABEL_RC],
 		globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod = elementPtr->structure.valuator->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction =
-		elementPtr->structure.valuator->direction;
-        optionMenuSet(resourceEntryElement[DIRECTION_RC],
+      globalResourceBundle.direction = p->direction;
+      optionMenuSet(resourceEntryElement[DIRECTION_RC],
 		globalResourceBundle.direction - FIRST_DIRECTION);
-	globalResourceBundle.dPrecision =
-		elementPtr->structure.valuator->dPrecision;
-	sprintf(string,"%f",globalResourceBundle.dPrecision);
-	/* strip trailing zeroes */
-        tail = strlen(string);
-        while (string[--tail] == '0') string[tail] = '\0';
-	XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
-	break;
+      globalResourceBundle.dPrecision = p->dPrecision;
+      sprintf(string,"%f",globalResourceBundle.dPrecision);
+      /* strip trailing zeroes */
+      tail = strlen(string);
+      while (string[--tail] == '0') string[tail] = '\0';
+      XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
+      break;
+    }
+    case DL_ChoiceButton: {
+      DlChoiceButton *p = elementPtr->structure.choiceButton;
 
-      case DL_ChoiceButton:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.choiceButton->control.ctrl);
-	XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		globalResourceBundle.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.choiceButton->control.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.choiceButton->control.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.choiceButton->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleControlAttribute(&(p->control));
+      updateResourcePaletteControlAttribute();
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.stacking =
-		elementPtr->structure.choiceButton->stacking;
-        optionMenuSet(resourceEntryElement[STACKING_RC],
+      globalResourceBundle.stacking = p->stacking;
+      optionMenuSet(resourceEntryElement[STACKING_RC],
 		globalResourceBundle.stacking - FIRST_STACKING);
-	break;
+      break;
+    }
+    case DL_MessageButton: {
+      DlMessageButton *p = elementPtr->structure.messageButton;
 
-      case DL_MessageButton:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.messageButton->control.ctrl);
-	XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		globalResourceBundle.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.messageButton->control.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.messageButton->control.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	strcpy(globalResourceBundle.messageLabel,
-		elementPtr->structure.messageButton->label);
-	XmTextFieldSetString(resourceEntryElement[MSG_LABEL_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleControlAttribute(&(p->control));
+      updateResourcePaletteControlAttribute();
+      strcpy(globalResourceBundle.messageLabel, p->label);
+      XmTextFieldSetString(resourceEntryElement[MSG_LABEL_RC],
 		globalResourceBundle.messageLabel);
-	strcpy(globalResourceBundle.press_msg,
-		elementPtr->structure.messageButton->press_msg);
-	XmTextFieldSetString(resourceEntryElement[PRESS_MSG_RC],
+      strcpy(globalResourceBundle.press_msg, p->press_msg);
+      XmTextFieldSetString(resourceEntryElement[PRESS_MSG_RC],
 		globalResourceBundle.press_msg);
-	strcpy(globalResourceBundle.release_msg,
-		elementPtr->structure.messageButton->release_msg);
-	XmTextFieldSetString(resourceEntryElement[RELEASE_MSG_RC],
+      strcpy(globalResourceBundle.release_msg, p->release_msg);
+      XmTextFieldSetString(resourceEntryElement[RELEASE_MSG_RC],
 		globalResourceBundle.release_msg);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.messageButton->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
+      break;
+    }
+    case DL_TextEntry: {
+      DlTextEntry *p = elementPtr->structure.textEntry;
 
-      case DL_TextEntry:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.textEntry->control.ctrl);
-	XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		globalResourceBundle.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.textEntry->control.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.textEntry->control.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.textEntry->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleControlAttribute(&(p->control));
+      updateResourcePaletteControlAttribute();
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.format =
-		elementPtr->structure.textEntry->format;
-        optionMenuSet(resourceEntryElement[FORMAT_RC],
+      globalResourceBundle.format = p->format;
+      optionMenuSet(resourceEntryElement[FORMAT_RC],
 		globalResourceBundle.format - FIRST_TEXT_FORMAT);
-	break;
+      break;
+    }
+    case DL_Menu: {
+      DlMenu *p = elementPtr->structure.menu;
 
-      case DL_Menu:
-	strcpy(globalResourceBundle.ctrl,
-		elementPtr->structure.menu->control.ctrl);
-	XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		globalResourceBundle.ctrl);
-	globalResourceBundle.clr =
-		elementPtr->structure.menu->control.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.menu->control.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.menu->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
-		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
 
-      case DL_Meter:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.meter->monitor.rdbk);
-	XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-		globalResourceBundle.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.meter->monitor.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.meter->monitor.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.label =
-		elementPtr->structure.meter->label;
-        optionMenuSet(resourceEntryElement[LABEL_RC],
-		globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.meter->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
-		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
+      updateGlobalResourceBundleControlAttribute(&(p->control));
+      updateResourcePaletteControlAttribute();
 
-      case DL_TextUpdate:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.textUpdate->monitor.rdbk);
-	XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-		globalResourceBundle.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.textUpdate->monitor.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.textUpdate->monitor.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.textUpdate->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.align =
-		elementPtr->structure.textUpdate->align;
-        optionMenuSet(resourceEntryElement[ALIGN_RC],
+      break;
+    }
+    case DL_Meter: {
+      DlMeter *p = elementPtr->structure.meter;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+      updateResourcePaletteMonitorAttribute();
+
+      globalResourceBundle.label = p->label;
+      optionMenuSet(resourceEntryElement[LABEL_RC],
+	globalResourceBundle.label - FIRST_LABEL_TYPE);
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
+	globalResourceBundle.clrmod - FIRST_COLOR_MODE);
+      break;
+    }
+    case DL_TextUpdate: {
+      DlTextUpdate *p = elementPtr->structure.textUpdate;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+      updateResourcePaletteMonitorAttribute();
+
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
+		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
+      globalResourceBundle.align = p->align;
+      optionMenuSet(resourceEntryElement[ALIGN_RC],
 		globalResourceBundle.align - FIRST_TEXT_ALIGN);
-	globalResourceBundle.format =
-		elementPtr->structure.textUpdate->format;
-        optionMenuSet(resourceEntryElement[FORMAT_RC],
+      globalResourceBundle.format = p->format;
+      optionMenuSet(resourceEntryElement[FORMAT_RC],
 		globalResourceBundle.format - FIRST_TEXT_FORMAT);
-	break;
+      break;
+    }
+    case DL_Bar: {
+      DlBar *p = elementPtr->structure.bar;
 
-      case DL_Bar:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.bar->monitor.rdbk);
-	XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-		globalResourceBundle.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.bar->monitor.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.bar->monitor.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.label =
-		elementPtr->structure.bar->label;
-        optionMenuSet(resourceEntryElement[LABEL_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+      updateResourcePaletteMonitorAttribute();
+
+      globalResourceBundle.label = p->label;
+      optionMenuSet(resourceEntryElement[LABEL_RC],
 		globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.bar->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction =
-		elementPtr->structure.bar->direction;
-        optionMenuSet(resourceEntryElement[DIRECTION_RC],
+      globalResourceBundle.direction = p->direction;
+      optionMenuSet(resourceEntryElement[DIRECTION_RC],
 		globalResourceBundle.direction - FIRST_DIRECTION);
-	globalResourceBundle.fillmod =
-		elementPtr->structure.bar->fillmod;
-        optionMenuSet(resourceEntryElement[FILLMOD_RC],
+      globalResourceBundle.fillmod = p->fillmod;
+      optionMenuSet(resourceEntryElement[FILLMOD_RC],
 		globalResourceBundle.fillmod - FIRST_FILL_MODE);
-	break;
-      case DL_Byte:
-        strcpy(globalResourceBundle.rdbk,
-          elementPtr->structure.byte->monitor.rdbk);
-        XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-          globalResourceBundle.rdbk);
-        globalResourceBundle.clr = elementPtr->structure.byte->monitor.clr;
-        XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-          currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-        globalResourceBundle.bclr = elementPtr->structure.byte->monitor.bclr;
-        XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-          currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-        globalResourceBundle.clrmod = elementPtr->structure.byte->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      break;
+    }
+    case DL_Byte: {
+      DlByte *p = elementPtr->structure.byte;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+      updateResourcePaletteMonitorAttribute();
+
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
           globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-        globalResourceBundle.direction = elementPtr->structure.byte->direction;
-        optionMenuSet(resourceEntryElement[DIRECTION_RC],
+      globalResourceBundle.direction = p->direction;
+      optionMenuSet(resourceEntryElement[DIRECTION_RC],
           globalResourceBundle.direction - FIRST_DIRECTION);
-        globalResourceBundle.sbit = elementPtr->structure.byte->sbit;
-        sprintf(string,"%d",globalResourceBundle.sbit);
-        XmTextFieldSetString(resourceEntryElement[SBIT_RC],string);
-        globalResourceBundle.ebit = elementPtr->structure.byte->ebit;
-        sprintf(string,"%d",globalResourceBundle.ebit);
-        XmTextFieldSetString(resourceEntryElement[EBIT_RC],string);
-        break;
-      case DL_Indicator:
-	strcpy(globalResourceBundle.rdbk,
-		elementPtr->structure.indicator->monitor.rdbk);
-	XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-		globalResourceBundle.rdbk);
-	globalResourceBundle.clr =
-		elementPtr->structure.indicator->monitor.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.indicator->monitor.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.label =
-		elementPtr->structure.indicator->label;
-        optionMenuSet(resourceEntryElement[LABEL_RC],
+      globalResourceBundle.sbit = p->sbit;
+      sprintf(string,"%d",globalResourceBundle.sbit);
+      XmTextFieldSetString(resourceEntryElement[SBIT_RC],string);
+      globalResourceBundle.ebit = p->ebit;
+      sprintf(string,"%d",globalResourceBundle.ebit);
+      XmTextFieldSetString(resourceEntryElement[EBIT_RC],string);
+      break;
+    }
+    case DL_Indicator: {
+      DlIndicator *p = elementPtr->structure.indicator;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+      updateResourcePaletteMonitorAttribute();
+
+      globalResourceBundle.label = p->label;
+      optionMenuSet(resourceEntryElement[LABEL_RC],
 		globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod =
-		elementPtr->structure.indicator->clrmod;
-        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+      globalResourceBundle.clrmod = p->clrmod;
+      optionMenuSet(resourceEntryElement[CLRMOD_RC],
 		globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction =
-		elementPtr->structure.indicator->direction;
-        optionMenuSet(resourceEntryElement[DIRECTION_RC],
+      globalResourceBundle.direction = p->direction;
+      optionMenuSet(resourceEntryElement[DIRECTION_RC],
 		globalResourceBundle.direction - FIRST_DIRECTION);
-	break;
+      break;
+    }
+    case DL_StripChart: {
+      DlStripChart *p = elementPtr->structure.stripChart;
 
-      case DL_StripChart:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.stripChart->plotcom.title);
-	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      strcpy(globalResourceBundle.title, p->plotcom.title);
+      XmTextFieldSetString(resourceEntryElement[TITLE_RC],
 		globalResourceBundle.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.stripChart->plotcom.xlabel);
-	XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
+      strcpy(globalResourceBundle.xlabel, p->plotcom.xlabel);
+      XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
 		globalResourceBundle.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.stripChart->plotcom.ylabel);
-	XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
+      strcpy(globalResourceBundle.ylabel, p->plotcom.ylabel);
+      XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
 		globalResourceBundle.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.stripChart->plotcom.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+      globalResourceBundle.clr = p->plotcom.clr;
+      XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.stripChart->plotcom.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+      globalResourceBundle.bclr = p->plotcom.bclr;
+      XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.period = 
-		elementPtr->structure.stripChart->period;
-        cvtDoubleToString(globalResourceBundle.period,string,0);
-	XmTextFieldSetString(resourceEntryElement[PERIOD_RC],string);
-	globalResourceBundle.units =
-		elementPtr->structure.stripChart->units;
-        optionMenuSet(resourceEntryElement[UNITS_RC],
+      globalResourceBundle.period = p->period;
+      cvtDoubleToString(globalResourceBundle.period,string,0);
+      XmTextFieldSetString(resourceEntryElement[PERIOD_RC],string);
+      globalResourceBundle.units = p->units;
+      optionMenuSet(resourceEntryElement[UNITS_RC],
 		globalResourceBundle.units - FIRST_TIME_UNIT);
-	for (i = 0; i < MAX_PENS; i++){
-	  strcpy(globalResourceBundle.scData[i].chan,
-		elementPtr->structure.stripChart->pen[i].chan);  
-	  globalResourceBundle.scData[i].clr = 
-		elementPtr->structure.stripChart->pen[i].clr;
-	}
-	break;
+      for (i = 0; i < MAX_PENS; i++){
+        strcpy(globalResourceBundle.scData[i].chan,p->pen[i].chan);  
+	globalResourceBundle.scData[i].clr = p->pen[i].clr;
+      }
+      break;
+    }
+    case DL_CartesianPlot: {
+      DlCartesianPlot *p = elementPtr->structure.cartesianPlot;
 
-      case DL_CartesianPlot:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.cartesianPlot->plotcom.title);
-	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      strcpy(globalResourceBundle.title, p->plotcom.title);
+      XmTextFieldSetString(resourceEntryElement[TITLE_RC],
 		globalResourceBundle.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.cartesianPlot->plotcom.xlabel);
-	XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
+      strcpy(globalResourceBundle.xlabel, p->plotcom.xlabel);
+      XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
 		globalResourceBundle.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.cartesianPlot->plotcom.ylabel);
-	XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
+      strcpy(globalResourceBundle.ylabel, p->plotcom.ylabel);
+      XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
 		globalResourceBundle.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.cartesianPlot->plotcom.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.cartesianPlot->plotcom.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.count = 
-		elementPtr->structure.cartesianPlot->count;
-	sprintf(string,"%d",globalResourceBundle.count);
-	XmTextFieldSetString(resourceEntryElement[COUNT_RC],string);
-	globalResourceBundle.cStyle =
-		elementPtr->structure.cartesianPlot->style;
-        optionMenuSet(resourceEntryElement[CSTYLE_RC],
+      globalResourceBundle.clr = p->plotcom.clr;
+      XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+	  currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
+      globalResourceBundle.bclr = p->plotcom.bclr;
+      XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+	  currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
+      globalResourceBundle.count = p->count;
+      sprintf(string,"%d",globalResourceBundle.count);
+      XmTextFieldSetString(resourceEntryElement[COUNT_RC],string);
+      globalResourceBundle.cStyle = p->style;
+      optionMenuSet(resourceEntryElement[CSTYLE_RC],
 		globalResourceBundle.cStyle - FIRST_CARTESIAN_PLOT_STYLE);
-	globalResourceBundle.erase_oldest =
-		elementPtr->structure.cartesianPlot->erase_oldest;
-        optionMenuSet(resourceEntryElement[ERASE_OLDEST_RC],
+      globalResourceBundle.erase_oldest = p->erase_oldest;
+      optionMenuSet(resourceEntryElement[ERASE_OLDEST_RC],
 		globalResourceBundle.erase_oldest - FIRST_ERASE_OLDEST);
-	for (i = 0; i < MAX_TRACES; i++){
-	  strcpy(globalResourceBundle.cpData[i].xdata,
-		elementPtr->structure.cartesianPlot->trace[i].xdata);  
-	  strcpy(globalResourceBundle.cpData[i].ydata,
-		elementPtr->structure.cartesianPlot->trace[i].ydata);  
-	  globalResourceBundle.cpData[i].data_clr = 
-		elementPtr->structure.cartesianPlot->trace[i].data_clr;
-	}
-	for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
-	  globalResourceBundle.axis[i].axisStyle =
-		elementPtr->structure.cartesianPlot->axis[i].axisStyle;
-	  globalResourceBundle.axis[i].rangeStyle =
-		elementPtr->structure.cartesianPlot->axis[i].rangeStyle;
-	  globalResourceBundle.axis[i].minRange = 
-		elementPtr->structure.cartesianPlot->axis[i].minRange;
-	  globalResourceBundle.axis[i].maxRange =
-		elementPtr->structure.cartesianPlot->axis[i].maxRange;
-	}
-	strcpy(globalResourceBundle.trigger,
-		elementPtr->structure.cartesianPlot->trigger);
-	XmTextFieldSetString(resourceEntryElement[TRIGGER_RC],
+      for (i = 0; i < MAX_TRACES; i++){
+        strcpy(globalResourceBundle.cpData[i].xdata, p->trace[i].xdata);  
+	strcpy(globalResourceBundle.cpData[i].ydata, p->trace[i].ydata);  
+	globalResourceBundle.cpData[i].data_clr = p->trace[i].data_clr;
+      }
+      for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
+        globalResourceBundle.axis[i].axisStyle = p->axis[i].axisStyle;
+	globalResourceBundle.axis[i].rangeStyle = p->axis[i].rangeStyle;
+	globalResourceBundle.axis[i].minRange = p->axis[i].minRange;
+	globalResourceBundle.axis[i].maxRange = p->axis[i].maxRange;
+      }
+      strcpy(globalResourceBundle.trigger, p->trigger);
+      XmTextFieldSetString(resourceEntryElement[TRIGGER_RC],
 		globalResourceBundle.trigger);
-	strcpy(globalResourceBundle.erase,
-		elementPtr->structure.cartesianPlot->erase);
-	XmTextFieldSetString(resourceEntryElement[ERASE_RC],
+      strcpy(globalResourceBundle.erase, p->erase);
+      XmTextFieldSetString(resourceEntryElement[ERASE_RC],
 		globalResourceBundle.erase);
-	globalResourceBundle.eraseMode = 
-		elementPtr->structure.cartesianPlot->eraseMode;
-	optionMenuSet(resourceEntryElement[ERASE_MODE_RC],
+      globalResourceBundle.eraseMode = p->eraseMode;
+      optionMenuSet(resourceEntryElement[ERASE_MODE_RC],
 		globalResourceBundle.eraseMode - FIRST_ERASE_MODE);
-	break;
+      break;
+    }
+    case DL_Rectangle: {
+      DlRectangle *p = elementPtr->structure.rectangle;
 
-      case DL_SurfacePlot:
-	strcpy(globalResourceBundle.title,
-		elementPtr->structure.surfacePlot->plotcom.title);
-	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
-		globalResourceBundle.title);
-	strcpy(globalResourceBundle.xlabel,
-		elementPtr->structure.surfacePlot->plotcom.xlabel);
-	XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
-		globalResourceBundle.xlabel);
-	strcpy(globalResourceBundle.ylabel,
-		elementPtr->structure.surfacePlot->plotcom.ylabel);
-	XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
-		globalResourceBundle.ylabel);
-	globalResourceBundle.clr =
-		elementPtr->structure.surfacePlot->plotcom.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.surfacePlot->plotcom.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	strcpy(globalResourceBundle.data,
-		elementPtr->structure.surfacePlot->data);
-	XmTextFieldSetString(resourceEntryElement[DATA_RC],
-		globalResourceBundle.data);
-	globalResourceBundle.data_clr = 
-		elementPtr->structure.surfacePlot->data_clr;
-	XtVaSetValues(resourceEntryElement[DATA_CLR_RC],XmNbackground,
-		currentDisplayInfo->dlColormap[globalResourceBundle.data_clr],
-		NULL);
-	globalResourceBundle.dis = 
-		elementPtr->structure.surfacePlot->dis;
-	sprintf(string,"%d",globalResourceBundle.dis);
-	XmTextFieldSetString(resourceEntryElement[DIS_RC],string);
-	globalResourceBundle.xyangle = 
-		elementPtr->structure.surfacePlot->xyangle;
-	sprintf(string,"%d",globalResourceBundle.xyangle);
-	XmTextFieldSetString(resourceEntryElement[XYANGLE_RC],string);
-	globalResourceBundle.zangle = 
-		elementPtr->structure.surfacePlot->zangle;
-	sprintf(string,"%d",globalResourceBundle.zangle);
-	XmTextFieldSetString(resourceEntryElement[ZANGLE_RC],string);
-	break;
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
 
-      case DL_Rectangle:
-      case DL_Oval:
-	/* handled in prelude (since only DlObject description) */
-	break;
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+      break;
+    }
+    case DL_Oval: {
+      DlOval *p = elementPtr->structure.oval;
 
-      case DL_Arc:
-/* want user to see degrees, but internally use degrees*64 as Xlib requires */
-	globalResourceBundle.begin = 
-		elementPtr->structure.arc->begin;
-	XmScaleSetValue(resourceEntryElement[BEGIN_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+      break;
+    }
+    case DL_Arc: {
+      DlArc *p = elementPtr->structure.arc;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+
+      /* want user to see degrees, but internally use
+       * degrees*64 as Xlib requires
+       */
+      globalResourceBundle.begin = p->begin;
+      XmScaleSetValue(resourceEntryElement[BEGIN_RC],
 			globalResourceBundle.begin/64);
-	globalResourceBundle.path = 
-		elementPtr->structure.arc ->path;
-	XmScaleSetValue(resourceEntryElement[PATH_RC],
+      globalResourceBundle.path = p->path;
+      XmScaleSetValue(resourceEntryElement[PATH_RC],
 			globalResourceBundle.path/64);
-	break;
+      break;
+    }
+    case DL_Text: {
+      DlText *p = elementPtr->structure.text;
 
-      case DL_Text:
-	strcpy(globalResourceBundle.textix,
-		elementPtr->structure.text->textix);
-	XmTextFieldSetString(resourceEntryElement[TEXTIX_RC],
+#if 0
+      if (objectDataOnly) {
+      	updateGlobalResourceBundleObjectAttribute(&(p->object));
+      	updateResourcePaletteObjectAttribute();
+			} else {
+        elementPtr->setValues(&globaleResourceBundle,elementPtr);
+				updateResourceBundle(&globalResourceBundle);
+			}
+#else
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+
+      strcpy(globalResourceBundle.textix, p->textix);
+      XmTextFieldSetString(resourceEntryElement[TEXTIX_RC],
 		globalResourceBundle.textix);
-	globalResourceBundle.align = elementPtr->structure.text->align;
-        optionMenuSet(resourceEntryElement[ALIGN_RC],
+      globalResourceBundle.align = p->align;
+      optionMenuSet(resourceEntryElement[ALIGN_RC],
 		globalResourceBundle.align - FIRST_TEXT_ALIGN);
-	break;
+#endif
+      break;
+    }
+    case DL_RelatedDisplay: {
+      DlRelatedDisplay *p = elementPtr->structure.relatedDisplay;
 
-      case DL_RelatedDisplay:
-	globalResourceBundle.clr =
-		elementPtr->structure.relatedDisplay->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      globalResourceBundle.clr = p->clr;
+      XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.relatedDisplay->bclr;
+      globalResourceBundle.bclr = p->bclr;
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-	  strcpy(globalResourceBundle.rdData[i].label,
-		elementPtr->structure.relatedDisplay->display[i].label);  
-	  strcpy(globalResourceBundle.rdData[i].name,
-		elementPtr->structure.relatedDisplay->display[i].name);  
-	  strcpy(globalResourceBundle.rdData[i].args,
-		elementPtr->structure.relatedDisplay->display[i].args);  
+      for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
+	strcpy(globalResourceBundle.rdData[i].label, p->display[i].label);  
+	strcpy(globalResourceBundle.rdData[i].name, p->display[i].name);  
+	strcpy(globalResourceBundle.rdData[i].args, p->display[i].args);  
 	/* update the related display dialog (matrix of values) if appr. */
-	  updateRelatedDisplayDataDialog();
-	}
-	break;
+	updateRelatedDisplayDataDialog();
+      }
+      break;
+    }
+    case DL_ShellCommand: {
+      DlShellCommand *p = elementPtr->structure.shellCommand;
 
-      case DL_ShellCommand:
-	globalResourceBundle.clr =
-		elementPtr->structure.shellCommand->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      globalResourceBundle.clr = p->clr;
+      XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr =
-		elementPtr->structure.shellCommand->bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+      globalResourceBundle.bclr = p->bclr;
+      XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-	  strcpy(globalResourceBundle.cmdData[i].label,
-		elementPtr->structure.shellCommand->command[i].label);  
-	  strcpy(globalResourceBundle.cmdData[i].command,
-		elementPtr->structure.shellCommand->command[i].command);  
-	  strcpy(globalResourceBundle.cmdData[i].args,
-		elementPtr->structure.shellCommand->command[i].args);  
+      for (i = 0; i < MAX_SHELL_COMMANDS; i++){
+        strcpy(globalResourceBundle.cmdData[i].label, p->command[i].label);  
+	strcpy(globalResourceBundle.cmdData[i].command, p->command[i].command);
+	strcpy(globalResourceBundle.cmdData[i].args, p->command[i].args);  
 	/* update the shell command dialog (matrix of values) if appr. */
-	  updateShellCommandDataDialog();
-	}
-	break;
+	updateShellCommandDataDialog();
+      }
+      break;
+    }
+    case DL_Image: {
+      DlImage *p = elementPtr->structure.image;
 
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
 
-      case DL_Image:
-	globalResourceBundle.imageType =
-		elementPtr->structure.image->imageType;
-        optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
+      globalResourceBundle.imageType = p->imageType;
+      optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
 		globalResourceBundle.imageType - FIRST_IMAGE_TYPE);
-	strcpy(globalResourceBundle.imageName,
-		elementPtr->structure.image->imageName);
-	XmTextFieldSetString(resourceEntryElement[IMAGENAME_RC],
+      strcpy(globalResourceBundle.imageName, p->imageName);
+      XmTextFieldSetString(resourceEntryElement[IMAGENAME_RC],
 		globalResourceBundle.imageName);
-	break;
+      break;
+    }
+    case DL_Composite: {
+      DlComposite *p = elementPtr->structure.composite;
 
-      case DL_Composite:
-        globalResourceBundle.vis = elementPtr->structure.composite->vis;
-        optionMenuSet(resourceEntryElement[VIS_RC],
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      globalResourceBundle.vis = p->vis;
+      optionMenuSet(resourceEntryElement[VIS_RC],
 		globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-        strcpy(globalResourceBundle.chan,elementPtr->structure.composite->chan);
-	XmTextFieldSetString(resourceEntryElement[CHAN_RC],
+      strcpy(globalResourceBundle.chan,p->chan);
+      XmTextFieldSetString(resourceEntryElement[CHAN_RC],
 		globalResourceBundle.chan);
 /* need to add this entry to widgetDM.h and finish this if we want named
  *  groups
-	strcpy(globalResourceBundle.compositeName,
-		 elementPtr->structure.composite->compositeName);
+      strcpy(globalResourceBundle.compositeName,p->compositeName);
  */
 	break;
-      case DL_Line:
-	break;
-      case DL_Polyline:
-	break;
-      case DL_Polygon:
-	break;
-      case DL_BezierCurve:
-	break;
+    }
+    case DL_Polyline: {
+      DlPolyline *p = elementPtr->structure.polyline;
 
-      default:
-	medmPrintf(    
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+      break;
+    }
+    case DL_Polygon: {
+      DlPolygon *p = elementPtr->structure.polygon;
+
+      updateGlobalResourceBundleObjectAttribute(&(p->object));
+      updateResourcePaletteObjectAttribute();
+      if (objectDataOnly) return;
+
+      updateGlobalResourceBundleBasicAttribute(&(p->attr));
+      updateResourcePaletteBasicAttribute();
+      updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+      updateResourcePaletteDynamicAttribute();
+      break;
+    }
+    default:
+      medmPrintf(    
 "\n updateGlobalResourceBundleAndResourcePalette: unknown element type %d",
 	    elementPtr->type);
-	break;
+      break;
 
   }
-
-
 }
 
 
@@ -1745,579 +1342,398 @@ void updateElementFromGlobalResourceBundle(
   int xOffset = 0, yOffset = 0, deltaWidth = 0, deltaHeight = 0;
   float sX, sY;
   Boolean moveWidgets;
-  DlPolyline *dlPolyline;
-  DlPolygon *dlPolygon;
   int minX, minY, maxX, maxY;
 
-/* simply return if not valid to update */
-  if (elementPtr == NULL || currentDisplayInfo == NULL) return;
-
-/* (MDA)
- * can update elements in display list and retraverse whole thing,
- *	or update WIDGETS separately and do partial traversal ?
- */
+  /* simply return if not valid to update */
+  if (!elementPtr || !currentDisplayInfo) return;
 
   widget = (Widget) NULL;
 
-/* this is common to all - therefore put here */
+  /* this is common to all - therefore put here */
   if (ELEMENT_IS_RENDERABLE(elementPtr->type) ) {
 
-  /* first lookup the widget based on current position/dimension */
+    /* first lookup the widget based on current position/dimension */
     if (ELEMENT_HAS_WIDGET(elementPtr->type))
 	widget = lookupElementWidget(currentDisplayInfo,
                         &(elementPtr->structure.rectangle->object));
-
-  /* special handling if Composite  - move or resize */
-    if (elementPtr->type == DL_Composite) {
-      xOffset = globalResourceBundle.x 
-			- elementPtr->structure.rectangle->object.x; 
-      yOffset = globalResourceBundle.y 
-			- elementPtr->structure.rectangle->object.y; 
-      deltaWidth = globalResourceBundle.width -
-		elementPtr->structure.rectangle->object.width;
-      deltaHeight = globalResourceBundle.height -
-		elementPtr->structure.rectangle->object.height;
-
-      moveWidgets = True;
-      if (xOffset != 0 || yOffset != 0)
-	 moveCompositeChildren(currentDisplayInfo,elementPtr,xOffset,yOffset,
-		moveWidgets);
-      if (deltaWidth != 0 || deltaHeight != 0) {
-         sX = (float) ((float)globalResourceBundle.width/
-			(float)((int)globalResourceBundle.width - deltaWidth));
-         sY = (float) ((float)globalResourceBundle.height/
-			(float)((int)globalResourceBundle.height- deltaHeight));
-	 resizeCompositeChildren(currentDisplayInfo,elementPtr,
-			elementPtr,sX,sY);
-      }
-    } else if (elementPtr->type == DL_Polyline) {
-      xOffset = globalResourceBundle.x 
-			- elementPtr->structure.polyline->object.x; 
-      yOffset = globalResourceBundle.y 
-			- elementPtr->structure.polyline->object.y; 
-      for (j = 0; j < elementPtr->structure.polyline->nPoints; j++) {
-/* this works because really only changing one of x/y/w/h at a time */
-	elementPtr->structure.polyline->points[j].x += xOffset;
-	elementPtr->structure.polyline->points[j].y += yOffset;
-	elementPtr->structure.polyline->points[j].x =
-		elementPtr->structure.polyline->object.x +
-		(elementPtr->structure.polyline->points[j].x -
-		elementPtr->structure.polyline->object.x) *
-/* avoid divide by 0 */
-		(elementPtr->structure.polyline->object.width <= 0 ? 1 :
-		   (((float)globalResourceBundle.width/
-		   (float)elementPtr->structure.polyline->object.width)));
-	elementPtr->structure.polyline->points[j].y =
-		elementPtr->structure.polyline->object.y +
-		(elementPtr->structure.polyline->points[j].y -
-		elementPtr->structure.polyline->object.y) *
-/* avoid divide by 0 */
-		(elementPtr->structure.polyline->object.height <= 0 ? 1 :
-		   (((float)globalResourceBundle.height/
-		   (float)elementPtr->structure.polyline->object.height)));
-      }
-    } else if (elementPtr->type == DL_Polygon) {
-      xOffset = globalResourceBundle.x 
-			- elementPtr->structure.polygon->object.x; 
-      yOffset = globalResourceBundle.y 
-			- elementPtr->structure.polygon->object.y; 
-      for (j = 0; j < elementPtr->structure.polygon->nPoints; j++) {
-/* this works because really only changing one of x/y/w/h at a time */
-	elementPtr->structure.polygon->points[j].x += xOffset;
-	elementPtr->structure.polygon->points[j].y += yOffset;
-	elementPtr->structure.polygon->points[j].x =
-		elementPtr->structure.polygon->object.x +
-		(elementPtr->structure.polygon->points[j].x -
-		elementPtr->structure.polygon->object.x) *
-/* avoid divide by 0 */
-		(elementPtr->structure.polygon->object.width == 0 ? 1 :
-		   (((float)globalResourceBundle.width/
-		   (float)elementPtr->structure.polygon->object.width)));
-	elementPtr->structure.polygon->points[j].y =
-		elementPtr->structure.polygon->object.y +
-		(elementPtr->structure.polygon->points[j].y -
-		elementPtr->structure.polygon->object.y) *
-/* avoid divide by 0 */
-		(elementPtr->structure.polygon->object.height == 0 ? 1 :
-		   (((float)globalResourceBundle.height/
-		   (float)elementPtr->structure.polygon->object.height)));
-      }
-    }
-
-
-  /* now update object entry in display list (if not DL_Display since
-   *   letting resize callback handle that - but let X/Y be updated here) */
-    if (elementPtr->type != DL_Display) {
-      elementPtr->structure.rectangle->object.x = globalResourceBundle.x;
-      elementPtr->structure.rectangle->object.y = globalResourceBundle.y;
-      elementPtr->structure.rectangle->object.width=globalResourceBundle.width;
-      elementPtr->structure.rectangle->object.height =
-				globalResourceBundle.height;
-    } else {
-  /* for DL_Display update x/y here and let resize CB handle w/h */
-      elementPtr->structure.rectangle->object.x = globalResourceBundle.x;
-      elementPtr->structure.rectangle->object.y = globalResourceBundle.y;
-    }
-
-/*
- * (MDA) careful here - ASSUMPTION: elements that have widgets associated with
- *	them don't rely on basic or dynamic attributes
- */
-   if ( ! ELEMENT_HAS_WIDGET(elementPtr->type) &&
-		elementPtr->type != DL_TextUpdate &&
-		elementPtr->type != DL_Composite) {
-/*** 
- *** Basic Attribute
- ***/
-     basic = lookupPrivateBasicAttributeElement(elementPtr);
-     if (basic != NULL) {
-   /* has a private basic attribute, just update it */
-       basic->structure.basicAttribute->attr.clr = globalResourceBundle.clr;
-       basic->structure.basicAttribute->attr.style = globalResourceBundle.style;
-       basic->structure.basicAttribute->attr.fill = globalResourceBundle.fill;
-       basic->structure.basicAttribute->attr.width =
-		globalResourceBundle.lineWidth;
-     } else {
-   /* doesn't have a private basic attribute, copy and allocate one */
-       basic = lookupBasicAttributeElement(elementPtr);
-       if (basic != NULL) {
-     /*
-      * fairly complicated, since multiple elements can share a basic attribute:
-      *  + structure copy to make clone of previous basic attribute
-      *  + move copy of basic attribute to just after this element
-      *  + now create new basic attr. for this element based on resourceBundle
-      */
-         newBasic =  createDlBasicAttribute(currentDisplayInfo);
-         newBasic->structure.basicAttribute = basic->structure.basicAttribute;
-         moveElementAfter(currentDisplayInfo,NULL,newBasic,elementPtr);
-         newBasic =  createDlBasicAttribute(currentDisplayInfo);
-         moveElementAfter(currentDisplayInfo,NULL,newBasic,elementPtr->prev);
-       } else {
-     /* didn't find a basic attribute, but need one */
-	  basic = createDlBasicAttribute(currentDisplayInfo);
-	  moveElementAfter(currentDisplayInfo,NULL,basic,elementPtr->prev);
-       }
-     }
-/***
- *** Dynamic Attribute (NB: dynamic attribute must immediately precede the
- ***	object)
- ***/
-     dyn = lookupDynamicAttributeElement(elementPtr);
-     if (dyn != NULL) {
-   /* found a dynamic attribute - update it */
-       dyn->structure.dynamicAttribute->attr.mod.clr=
-		globalResourceBundle.clrmod;
-#ifdef __COLOR_RULE_H__
-       dyn->structure.dynamicAttribute->attr.mod.colorRule = globalResourceBundle.colorRule;
-#endif
-       dyn->structure.dynamicAttribute->attr.mod.vis = globalResourceBundle.vis;
-       strcpy(dyn->structure.dynamicAttribute->attr.param.chan,
-		globalResourceBundle.chan);
-     } else {
-       if (strlen(globalResourceBundle.chan) > (size_t) 0) {
-     /* didn't find a dynamic attribute, but need one since a channel
-	has been specified for dynamics */
-	dyn = createDlDynamicAttribute(currentDisplayInfo);
-	moveElementAfter(currentDisplayInfo,NULL,dyn,elementPtr->prev);
-       }
-     }
-   }
   }
 
 
   switch (elementPtr->type) {
-      case DL_File:
-	strcpy(elementPtr->structure.file->name,globalResourceBundle.name);
-	break;
+    case DL_File:
+      strcpy(elementPtr->structure.file->name,globalResourceBundle.name);
+      break;
 
-      case DL_Display:
-	elementPtr->structure.display->clr = globalResourceBundle.clr;
-	elementPtr->structure.display->bclr = globalResourceBundle.bclr;
-	strcpy(elementPtr->structure.display->cmap,globalResourceBundle.cmap);
-	currentDisplayInfo->drawingAreaBackgroundColor =
-					globalResourceBundle.bclr;
-	currentDisplayInfo->drawingAreaForegroundColor =
-					globalResourceBundle.clr;
-/* and resize the shell */
-	XtVaSetValues(currentDisplayInfo->shell,
+    case DL_Display:
+      updateElementObjectAttribute(&(elementPtr->structure.display->object));
+      elementPtr->structure.display->clr = globalResourceBundle.clr;
+      elementPtr->structure.display->bclr = globalResourceBundle.bclr;
+      strcpy(elementPtr->structure.display->cmap,globalResourceBundle.cmap);
+      currentDisplayInfo->drawingAreaBackgroundColor =
+				globalResourceBundle.bclr;
+      currentDisplayInfo->drawingAreaForegroundColor =
+				globalResourceBundle.clr;
+      /* and resize the shell */
+      XtVaSetValues(currentDisplayInfo->shell,
 		XmNx,globalResourceBundle.x,
 		XmNy,globalResourceBundle.y,
 		XmNwidth,globalResourceBundle.width,
 		XmNheight,globalResourceBundle.height,NULL);
-	break;
-
-      case DL_Valuator:
-	strcpy(elementPtr->structure.valuator->control.ctrl,
-		globalResourceBundle.ctrl);
-	elementPtr->structure.valuator->control.clr = 
-		globalResourceBundle.clr;
-	elementPtr->structure.valuator->control.bclr = 
-		globalResourceBundle.bclr;
-	elementPtr->structure.valuator->label = globalResourceBundle.label;
-	elementPtr->structure.valuator->clrmod = globalResourceBundle.clrmod;
-	elementPtr->structure.valuator->direction = 
-		globalResourceBundle.direction;
-	elementPtr->structure.valuator->dPrecision = 
-		globalResourceBundle.dPrecision;
-	break;
-
-      case DL_ChoiceButton:
-	strcpy(elementPtr->structure.choiceButton->control.ctrl,
-		globalResourceBundle.ctrl);
-	elementPtr->structure.choiceButton->control.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.choiceButton->control.bclr = 
-		globalResourceBundle.bclr;
-	elementPtr->structure.choiceButton->clrmod = 
-		globalResourceBundle.clrmod;
-	elementPtr->structure.choiceButton->stacking =
-		globalResourceBundle.stacking;
-	break;
-
-      case DL_MessageButton:
-	strcpy(elementPtr->structure.messageButton->control.ctrl,
-		globalResourceBundle.ctrl);
-	elementPtr->structure.messageButton->control.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.messageButton->control.bclr =
-		globalResourceBundle.bclr;
-	strcpy(elementPtr->structure.messageButton->label,
-		globalResourceBundle.messageLabel);
-	strcpy(elementPtr->structure.messageButton->press_msg,
-		globalResourceBundle.press_msg);
-	strcpy(elementPtr->structure.messageButton->release_msg,
-		globalResourceBundle.release_msg);
-	elementPtr->structure.messageButton->clrmod = 
-		globalResourceBundle.clrmod;
-	break;
-
-      case DL_TextEntry:
-	strcpy(elementPtr->structure.textEntry->control.ctrl,
-		globalResourceBundle.ctrl);
-	elementPtr->structure.textEntry->control.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.textEntry->control.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.textEntry->clrmod =
-		globalResourceBundle.clrmod;
-	elementPtr->structure.textEntry->format =
-		globalResourceBundle.format;
-	break;
-
-      case DL_Menu:
-	strcpy(elementPtr->structure.menu->control.ctrl,
-		globalResourceBundle.ctrl);
-	elementPtr->structure.menu->control.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.menu->control.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.menu->clrmod =
-		globalResourceBundle.clrmod;
-	break;
-
-      case DL_Meter:
-	strcpy(elementPtr->structure.meter->monitor.rdbk,
-		globalResourceBundle.rdbk);
-	elementPtr->structure.meter->monitor.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.meter->monitor.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.meter->label =
-		globalResourceBundle.label;
-	elementPtr->structure.meter->clrmod =
-		globalResourceBundle.clrmod;
-	break;
-
-      case DL_TextUpdate:
-	strcpy(elementPtr->structure.textUpdate->monitor.rdbk,
-		globalResourceBundle.rdbk);
-	elementPtr->structure.textUpdate->monitor.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.textUpdate->monitor.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.textUpdate->clrmod =
-		globalResourceBundle.clrmod;
-	elementPtr->structure.textUpdate->align =
-		globalResourceBundle.align;
-	elementPtr->structure.textUpdate->format =
-		globalResourceBundle.format;
-	break;
-
-      case DL_Bar:
-	strcpy(elementPtr->structure.bar->monitor.rdbk,
-		globalResourceBundle.rdbk);
-	elementPtr->structure.bar->monitor.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.bar->monitor.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.bar->label =
-		globalResourceBundle.label;
-	elementPtr->structure.bar->clrmod =
-		globalResourceBundle.clrmod;
-	elementPtr->structure.bar->direction =
-		globalResourceBundle.direction;
-	elementPtr->structure.bar->fillmod =
-		globalResourceBundle.fillmod;
-	break;
-      case DL_Byte:
-        strcpy(elementPtr->structure.byte->monitor.rdbk,
-                globalResourceBundle.rdbk);
-        elementPtr->structure.byte->monitor.clr = globalResourceBundle.clr;
-        elementPtr->structure.byte->monitor.bclr = globalResourceBundle.bclr;
-        elementPtr->structure.byte->clrmod = globalResourceBundle.clrmod;
-        elementPtr->structure.byte->direction = globalResourceBundle.direction;
-        elementPtr->structure.byte->sbit = globalResourceBundle.sbit;
-        elementPtr->structure.byte->ebit = globalResourceBundle.ebit;
-        break;
-      case DL_Indicator:
-	strcpy(elementPtr->structure.indicator->monitor.rdbk,
-		globalResourceBundle.rdbk);
-	elementPtr->structure.indicator->monitor.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.indicator->monitor.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.indicator->label =
-		globalResourceBundle.label;
-	elementPtr->structure.indicator->clrmod =
-		globalResourceBundle.clrmod;
-	elementPtr->structure.indicator->direction =
-		globalResourceBundle.direction;
-	break;
-
-      case DL_StripChart:
-	strcpy(elementPtr->structure.stripChart->plotcom.title,
-		globalResourceBundle.title);
-	strcpy(elementPtr->structure.stripChart->plotcom.xlabel,
-		globalResourceBundle.xlabel);
-	strcpy(elementPtr->structure.stripChart->plotcom.ylabel,
-		globalResourceBundle.ylabel);
-	elementPtr->structure.stripChart->plotcom.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.stripChart->plotcom.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.stripChart->period =
-		globalResourceBundle.period;
-	elementPtr->structure.stripChart->units =
-		globalResourceBundle.units;
-	for (i = 0; i < MAX_PENS; i++){
-	  strcpy(elementPtr->structure.stripChart->pen[i].chan,
-		globalResourceBundle.scData[i].chan);
-	  elementPtr->structure.stripChart->pen[i].clr =
-		globalResourceBundle.scData[i].clr;
-	}
-	break;
-
-
-      case DL_CartesianPlot:
-	strcpy(elementPtr->structure.cartesianPlot->plotcom.title,
-		globalResourceBundle.title);
-	strcpy(elementPtr->structure.cartesianPlot->plotcom.xlabel,
-		globalResourceBundle.xlabel);
-	strcpy(elementPtr->structure.cartesianPlot->plotcom.ylabel,
-		globalResourceBundle.ylabel);
-	elementPtr->structure.cartesianPlot->plotcom.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.cartesianPlot->plotcom.bclr =
-		globalResourceBundle.bclr;
-	elementPtr->structure.cartesianPlot->count =
-		globalResourceBundle.count;
-	elementPtr->structure.cartesianPlot->style =
-		globalResourceBundle.cStyle;
-	elementPtr->structure.cartesianPlot->erase_oldest =
-		globalResourceBundle.erase_oldest;
-	for (i = 0; i < MAX_TRACES; i++){
-	  strcpy(elementPtr->structure.cartesianPlot->trace[i].xdata,
-		globalResourceBundle.cpData[i].xdata);
-	  strcpy(elementPtr->structure.cartesianPlot->trace[i].ydata,
-		globalResourceBundle.cpData[i].ydata);
-	  elementPtr->structure.cartesianPlot->trace[i].data_clr =
-		globalResourceBundle.cpData[i].data_clr;
-	}
-	elementPtr->structure.cartesianPlot->axis[X_AXIS_ELEMENT].axisStyle =
+      break;
+    case DL_Valuator: {
+      DlValuator *p = elementPtr->structure.valuator;
+      updateElementObjectAttribute(&(p->object));
+      updateElementControlAttribute(&(p->control));
+      p->label = globalResourceBundle.label;
+      p->clrmod = globalResourceBundle.clrmod;
+      p->direction = globalResourceBundle.direction;
+      p->dPrecision = globalResourceBundle.dPrecision;
+      break;
+    }
+    case DL_ChoiceButton: {
+      DlChoiceButton *p = elementPtr->structure.choiceButton;
+      updateElementObjectAttribute(&(p->object));
+      updateElementControlAttribute(&(p->control));
+      p->clrmod = globalResourceBundle.clrmod;
+      p->stacking = globalResourceBundle.stacking;
+      break;
+    }
+    case DL_MessageButton: {
+      DlMessageButton *p = elementPtr->structure.messageButton;
+      updateElementObjectAttribute(&(p->object));
+      updateElementControlAttribute(&(p->control));
+      strcpy(p->label,globalResourceBundle.messageLabel);
+      strcpy(p->press_msg,globalResourceBundle.press_msg);
+      strcpy(p->release_msg,globalResourceBundle.release_msg);
+      p->clrmod = globalResourceBundle.clrmod;
+      break;
+    }
+    case DL_TextEntry: {
+      DlTextEntry *p = elementPtr->structure.textEntry;
+      updateElementObjectAttribute(&(p->object));
+      updateElementControlAttribute(&(p->control));
+      p->clrmod = globalResourceBundle.clrmod;
+      p->format = globalResourceBundle.format;
+      break;
+    }
+    case DL_Menu: {
+      DlMenu *p = elementPtr->structure.menu;
+      updateElementObjectAttribute(&(p->object));
+      updateElementControlAttribute(&(p->control));
+      p->clrmod = globalResourceBundle.clrmod;
+      break;
+    }
+    case DL_Meter: {
+      DlMeter *p = elementPtr->structure.meter;
+      updateElementObjectAttribute(&(p->object));
+      updateElementMonitorAttribute(&(p->monitor));
+      p->label = globalResourceBundle.label;
+      p->clrmod = globalResourceBundle.clrmod;
+      break;
+    }
+    case DL_TextUpdate: {
+      DlTextUpdate *p = elementPtr->structure.textUpdate;
+      updateElementObjectAttribute(&(p->object));
+      updateElementMonitorAttribute(&(p->monitor));
+      p->clrmod = globalResourceBundle.clrmod;
+      p->align = globalResourceBundle.align;
+      p->format = globalResourceBundle.format;
+      break;
+    }
+    case DL_Bar: {
+      DlBar *p = elementPtr->structure.bar;
+      updateElementObjectAttribute(&(p->object));
+      updateElementMonitorAttribute(&(p->monitor));
+      p->label = globalResourceBundle.label;
+      p->clrmod = globalResourceBundle.clrmod;
+      p->direction = globalResourceBundle.direction;
+      p->fillmod = globalResourceBundle.fillmod;
+      break;
+    }
+    case DL_Byte: {
+      DlByte *p = elementPtr->structure.byte;
+      updateElementObjectAttribute(&(p->object));
+      updateElementMonitorAttribute(&(p->monitor));
+      p->clrmod = globalResourceBundle.clrmod;
+      p->direction = globalResourceBundle.direction;
+      p->sbit = globalResourceBundle.sbit;
+      p->ebit = globalResourceBundle.ebit;
+      break;
+    }
+    case DL_Indicator: {
+      DlIndicator *p = elementPtr->structure.indicator;
+      updateElementObjectAttribute(&(p->object));
+      updateElementMonitorAttribute(&(p->monitor));
+      p->label = globalResourceBundle.label;
+      p->clrmod = globalResourceBundle.clrmod;
+      p->direction = globalResourceBundle.direction;
+      break;
+    }
+    case DL_StripChart: {
+      DlStripChart *p = elementPtr->structure.stripChart;
+      updateElementObjectAttribute(&(p->object));
+      strcpy(p->plotcom.title,globalResourceBundle.title);
+      strcpy(p->plotcom.xlabel,globalResourceBundle.xlabel);
+      strcpy(p->plotcom.ylabel,globalResourceBundle.ylabel);
+      p->plotcom.clr = globalResourceBundle.clr;
+      p->plotcom.bclr = globalResourceBundle.bclr;
+      p->period = globalResourceBundle.period;
+      p->units = globalResourceBundle.units;
+      for (i = 0; i < MAX_PENS; i++){
+	strcpy(p->pen[i].chan,globalResourceBundle.scData[i].chan);
+	p->pen[i].clr = globalResourceBundle.scData[i].clr;
+      }
+      break;
+    }
+    case DL_CartesianPlot: {
+      DlCartesianPlot *p = elementPtr->structure.cartesianPlot;
+      updateElementObjectAttribute(&(p->object));
+      strcpy(p->plotcom.title,globalResourceBundle.title);
+      strcpy(p->plotcom.xlabel,globalResourceBundle.xlabel);
+      strcpy(p->plotcom.ylabel,globalResourceBundle.ylabel);
+      p->plotcom.clr = globalResourceBundle.clr;
+      p->plotcom.bclr = globalResourceBundle.bclr;
+      p->count = globalResourceBundle.count;
+      p->style = globalResourceBundle.cStyle;
+      p->erase_oldest = globalResourceBundle.erase_oldest;
+      for (i = 0; i < MAX_TRACES; i++){
+        strcpy(p->trace[i].xdata,globalResourceBundle.cpData[i].xdata);
+        strcpy(p->trace[i].ydata,globalResourceBundle.cpData[i].ydata);
+	p->trace[i].data_clr = globalResourceBundle.cpData[i].data_clr;
+      }
+      p->axis[X_AXIS_ELEMENT].axisStyle =
 		globalResourceBundle.axis[X_AXIS_ELEMENT].axisStyle;
-	elementPtr->structure.cartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle =
+      p->axis[X_AXIS_ELEMENT].rangeStyle =
 		globalResourceBundle.axis[X_AXIS_ELEMENT].rangeStyle;
-	elementPtr->structure.cartesianPlot->axis[X_AXIS_ELEMENT].minRange =
+      p->axis[X_AXIS_ELEMENT].minRange =
 		globalResourceBundle.axis[X_AXIS_ELEMENT].minRange;
-	elementPtr->structure.cartesianPlot->axis[X_AXIS_ELEMENT].maxRange =
+      p->axis[X_AXIS_ELEMENT].maxRange =
 		globalResourceBundle.axis[X_AXIS_ELEMENT].maxRange;
-	elementPtr->structure.cartesianPlot->axis[Y1_AXIS_ELEMENT].axisStyle =
+      p->axis[Y1_AXIS_ELEMENT].axisStyle =
 		globalResourceBundle.axis[Y1_AXIS_ELEMENT].axisStyle;
-	elementPtr->structure.cartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle =
+      p->axis[Y1_AXIS_ELEMENT].rangeStyle =
 		globalResourceBundle.axis[Y1_AXIS_ELEMENT].rangeStyle;
-	elementPtr->structure.cartesianPlot->axis[Y1_AXIS_ELEMENT].minRange =
+      p->axis[Y1_AXIS_ELEMENT].minRange =
 		globalResourceBundle.axis[Y1_AXIS_ELEMENT].minRange;
-	elementPtr->structure.cartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange =
+      p->axis[Y1_AXIS_ELEMENT].maxRange =
 		globalResourceBundle.axis[Y1_AXIS_ELEMENT].maxRange;
-	elementPtr->structure.cartesianPlot->axis[Y2_AXIS_ELEMENT].axisStyle =
+      p->axis[Y2_AXIS_ELEMENT].axisStyle =
 		globalResourceBundle.axis[Y2_AXIS_ELEMENT].axisStyle;
-	elementPtr->structure.cartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle =
+      p->axis[Y2_AXIS_ELEMENT].rangeStyle =
 		globalResourceBundle.axis[Y2_AXIS_ELEMENT].rangeStyle;
-	elementPtr->structure.cartesianPlot->axis[Y2_AXIS_ELEMENT].minRange =
+      p->axis[Y2_AXIS_ELEMENT].minRange =
 		globalResourceBundle.axis[Y2_AXIS_ELEMENT].minRange;
-	elementPtr->structure.cartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange =
+      p->axis[Y2_AXIS_ELEMENT].maxRange =
 		globalResourceBundle.axis[Y2_AXIS_ELEMENT].maxRange;
-	strcpy(elementPtr->structure.cartesianPlot->trigger,
-		globalResourceBundle.trigger);
-	strcpy(elementPtr->structure.cartesianPlot->erase,
-		globalResourceBundle.erase);
-	elementPtr->structure.cartesianPlot->eraseMode =
-		globalResourceBundle.eraseMode;
-	break;
+      strcpy(p->trigger,globalResourceBundle.trigger);
+      strcpy(p->erase,globalResourceBundle.erase);
+      p->eraseMode = globalResourceBundle.eraseMode;
+      break;
+    }
+    case DL_Rectangle: {
+      DlRectangle *p = elementPtr->structure.rectangle;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      break;
+    }
+    case DL_Oval: {
+      DlOval *p = elementPtr->structure.oval;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      break;
+    }
+    case DL_Arc: {
+      DlArc *p = elementPtr->structure.arc;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      p->begin = globalResourceBundle.begin;
+      p->path = globalResourceBundle.path;
+      break;
+    }
+    case DL_Text: {
+      DlText *p = elementPtr->structure.text;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      strcpy(p->textix,globalResourceBundle.textix);
+      p->align = globalResourceBundle.align;
+      break;
+    }
+    case DL_RelatedDisplay: {
+      DlRelatedDisplay *p = elementPtr->structure.relatedDisplay;
+      updateElementObjectAttribute(&(p->object));
+      p->clr = globalResourceBundle.clr;
+      p->bclr = globalResourceBundle.bclr;
+      for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
+        strcpy(p->display[i].label,globalResourceBundle.rdData[i].label);
+	strcpy(p->display[i].name,globalResourceBundle.rdData[i].name);
+	strcpy(p->display[i].args,globalResourceBundle.rdData[i].args);
+      }
+      break;
+    }
+    case DL_ShellCommand: {
+      DlShellCommand *p = elementPtr->structure.shellCommand;
+      updateElementObjectAttribute(&(p->object));
+      p->clr = globalResourceBundle.clr;
+      p->bclr = globalResourceBundle.bclr;
+      for (i = 0; i < MAX_SHELL_COMMANDS; i++){
+        strcpy(p->command[i].label,globalResourceBundle.cmdData[i].label);
+	strcpy(p->command[i].command,globalResourceBundle.cmdData[i].command);
+	strcpy(p->command[i].args,globalResourceBundle.cmdData[i].args);
+      }
+      break;
+    }
+    case DL_Image: {
+      DlImage *p = elementPtr->structure.image;
+      updateElementObjectAttribute(&(p->object));
+      p->imageType = globalResourceBundle.imageType;
+      strcpy(p->imageName,globalResourceBundle.imageName);
+      break;
+    }
+    case DL_Composite: {
+      DlComposite *p = elementPtr->structure.composite;
+      DlObject obj = p->object;
+      float xScale, yScale;
 
-      case DL_SurfacePlot:
-	strcpy(elementPtr->structure.surfacePlot->plotcom.title,
-		globalResourceBundle.title);
-	strcpy(elementPtr->structure.surfacePlot->plotcom.xlabel,
-		globalResourceBundle.xlabel);
-	strcpy(elementPtr->structure.surfacePlot->plotcom.ylabel,
-		globalResourceBundle.ylabel);
-	elementPtr->structure.surfacePlot->plotcom.clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.surfacePlot->plotcom.bclr =
-		globalResourceBundle.bclr;
-	strcpy(elementPtr->structure.surfacePlot->data,
-		globalResourceBundle.data);
-	elementPtr->structure.surfacePlot->data_clr =
-		globalResourceBundle.data_clr;
-	elementPtr->structure.surfacePlot->dis =
-		globalResourceBundle.dis;
-	elementPtr->structure.surfacePlot->xyangle =
-		globalResourceBundle.xyangle;
-	elementPtr->structure.surfacePlot->zangle =
-		globalResourceBundle.zangle;
-	break;
+      updateElementObjectAttribute(&(p->object));
+      if (memcmp(&(p->object),&obj,sizeof(DlObject))) {
+        xOffset = p->object.x - obj.x; 
+        yOffset = p->object.y - obj.y;
+        xScale = (obj.width > 0) ?
+               ((float)p->object.width / (float)obj.width) : 1;
+        yScale = (obj.height > 0) ?
+               ((float)p->object.height / (float)obj.height) : 1;
 
-
-      case DL_Rectangle:
-      case DL_Oval:
-	/* handled in prelude (since only DlObject description) */
-	break;
-
-      case DL_Arc:
-	elementPtr->structure.arc->begin =
-		globalResourceBundle.begin;
-	elementPtr->structure.arc ->path =
-		globalResourceBundle.path;
-	break;
-
-      case DL_Text:
-	strcpy(elementPtr->structure.text->textix,globalResourceBundle.textix);
-	elementPtr->structure.text->align = globalResourceBundle.align;
-	break;
-
-      case DL_RelatedDisplay:
-	elementPtr->structure.relatedDisplay->clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.relatedDisplay->bclr =
-		globalResourceBundle.bclr;
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-	  strcpy(elementPtr->structure.relatedDisplay->display[i].label,
-		globalResourceBundle.rdData[i].label);
-	  strcpy(elementPtr->structure.relatedDisplay->display[i].name,
-		globalResourceBundle.rdData[i].name);
-	  strcpy(elementPtr->structure.relatedDisplay->display[i].args,
-		globalResourceBundle.rdData[i].args);
-	}
-	break;
-
-      case DL_ShellCommand:
-	elementPtr->structure.shellCommand->clr =
-		globalResourceBundle.clr;
-	elementPtr->structure.shellCommand->bclr =
-		globalResourceBundle.bclr;
-	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-	  strcpy(elementPtr->structure.shellCommand->command[i].label,
-		globalResourceBundle.cmdData[i].label);
-	  strcpy(elementPtr->structure.shellCommand->command[i].command,
-		globalResourceBundle.cmdData[i].command);
-	  strcpy(elementPtr->structure.shellCommand->command[i].args,
-		globalResourceBundle.cmdData[i].args);
-	}
-	break;
-
-      case DL_Image:
-	elementPtr->structure.image->imageType =
-		globalResourceBundle.imageType;
-	strcpy(elementPtr->structure.image->imageName,
-		globalResourceBundle.imageName);
-	break;
-
-      case DL_Composite:
-	elementPtr->structure.composite->vis = globalResourceBundle.vis;
-	strcpy(elementPtr->structure.composite->chan,
-		globalResourceBundle.chan);
-	break;
-
-      case DL_Line: /* maps to Polyline (new) or Rising/Falling Line (old)*/
-	break;
-
+        moveWidgets = True;
+        if (xOffset != 0 || yOffset != 0) {
+	   moveCompositeChildren(currentDisplayInfo,elementPtr,
+              xOffset,yOffset,moveWidgets);
+        }
+        if (xScale != 1.0 || deltaHeight != 1.0) {
+	 resizeCompositeChildren(currentDisplayInfo,elementPtr,
+			elementPtr,sX,sY);
+        }
+      }
+      p->vis = globalResourceBundle.vis;
+      strcpy(p->chan,globalResourceBundle.chan);
+      break;
+    }
 /* handle change in lineWidth if Polyline, or Polygon w/fill==F_OUTLINE */
-      case DL_Polyline:
-	minX = INT_MAX; minY = INT_MAX; maxX = INT_MIN; maxY = INT_MIN;
-	dlPolyline = elementPtr->structure.polyline;
-	for (j = 0; j < elementPtr->structure.polyline->nPoints; j++) {
-	  minX = MIN(minX,dlPolyline->points[j].x);
-	  maxX = MAX(maxX,dlPolyline->points[j].x);
-	  minY = MIN(minY,dlPolyline->points[j].y);
-	  maxY = MAX(maxY,dlPolyline->points[j].y);
-	}
-	dlPolyline->object.x =  minX - globalResourceBundle.lineWidth/2;
-	dlPolyline->object.y =  minY - globalResourceBundle.lineWidth/2;
-	dlPolyline->object.width =  maxX - minX
-					+ globalResourceBundle.lineWidth;
-	dlPolyline->object.height =  maxY - minY
-					+ globalResourceBundle.lineWidth;
-	break;
-      case DL_Polygon:
-	minX = INT_MAX; minY = INT_MAX; maxX = INT_MIN; maxY = INT_MIN;
-	dlPolygon = elementPtr->structure.polygon;
-	for (j = 0; j < elementPtr->structure.polygon->nPoints; j++) {
-	  minX = MIN(minX,dlPolygon->points[j].x);
-	  maxX = MAX(maxX,dlPolygon->points[j].x);
-	  minY = MIN(minY,dlPolygon->points[j].y);
-	  maxY = MAX(maxY,dlPolygon->points[j].y);
-	}
+    case DL_Polyline: {
+      DlPolyline *p = elementPtr->structure.polyline;
+      DlObject obj = p->object;
+      float xScale, yScale;
+      int reCalDimension = 0;
+      unsigned int width = p->attr.width;
+
+      minX = INT_MAX; minY = INT_MAX; maxX = INT_MIN; maxY = INT_MIN;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      if (p->attr.width != obj.width) reCalDimension = 1;
+      if (memcmp(&(p->object),&obj,sizeof(DlObject))) {
+        xOffset = p->object.x - obj.x; 
+        yOffset = p->object.y - obj.y;
+        xScale = (obj.width > 0) ?
+               ((float)p->object.width / (float)obj.width) : 1;
+        yScale = (obj.height > 0) ?
+               ((float)p->object.height / (float)obj.height) : 1;
+        for (j = 0; j < p->nPoints; j++) {
+          /* this works because really only changing one of x/y/w/h at a time */
+	  p->points[j].x += xOffset;
+	  p->points[j].y += yOffset;
+	  p->points[j].x =
+                  p->object.x + (p->points[j].x - p->object.x) * xScale;
+	  p->points[j].y =
+                  p->object.y + (p->points[j].y - p->object.y) * yScale;
+        }
+        reCalDimension = 1;
+      }
+      if (reCalDimension) {
+        for (j = 0; j < p->nPoints; j++) {
+	  minX = MIN(minX,p->points[j].x);
+	  maxX = MAX(maxX,p->points[j].x);
+	  minY = MIN(minY,p->points[j].y);
+	  maxY = MAX(maxY,p->points[j].y);
+        }
+        p->object.x =  minX - p->attr.width/2;
+        p->object.y =  minY - p->attr.width/2;
+        p->object.width =  maxX - minX + p->attr.width;
+        p->object.height =  maxY - minY + p->attr.width;
+      }
+      break;
+    }
+    case DL_Polygon: {
+      DlPolygon *p = elementPtr->structure.polygon;
+      DlObject obj = p->object;
+      float xScale, yScale;
+      int reCalDimension = 0;
+      unsigned int width = p->attr.width;
+
+      minX = INT_MAX; minY = INT_MAX; maxX = INT_MIN; maxY = INT_MIN;
+      updateElementObjectAttribute(&(p->object));
+      updateElementBasicAttribute(&(p->attr));
+      updateElementDynamicAttribute(&(p->dynAttr));
+      if (p->attr.width != obj.width) reCalDimension = 1;
+      if (memcmp(&(p->object),&obj,sizeof(DlObject))) {
+        xOffset = p->object.x - obj.x;
+        yOffset = p->object.y - obj.y;
+        xScale = (obj.width > 0) ?
+               ((float)p->object.width / (float)obj.width) : 1;
+        yScale = (obj.height > 0) ?
+               ((float)p->object.height / (float)obj.height) : 1;
+        for (j = 0; j < p->nPoints; j++) {
+        /* this works because really only changing one of x/y/w/h at a time */
+          p->points[j].x += xOffset;
+          p->points[j].y += yOffset;
+          p->points[j].x =
+                  p->object.x + (p->points[j].x - p->object.x) * xScale;
+         p->points[j].y =
+                  p->object.y + (p->points[j].y - p->object.y) * yScale;
+       }
+        reCalDimension = 1;
+      }
+      if (reCalDimension) {
+        for (j = 0; j < p->nPoints; j++) {
+	  minX = MIN(minX,p->points[j].x);
+	  maxX = MAX(maxX,p->points[j].x);
+	  minY = MIN(minY,p->points[j].y);
+	  maxY = MAX(maxY,p->points[j].y);
+        }
 	if (globalResourceBundle.fill == F_SOLID) {
-	  dlPolygon->object.x =  minX;
-	  dlPolygon->object.y =  minY;
-	  dlPolygon->object.width =  maxX - minX;
-	  dlPolygon->object.height =  maxY - minY;
+	  p->object.x =  minX;
+	  p->object.y =  minY;
+	  p->object.width =  maxX - minX;
+	  p->object.height =  maxY - minY;
 	} else {	/* F_OUTLINE, therfore lineWidth is a factor */
-	  dlPolygon->object.x =  minX - globalResourceBundle.lineWidth/2;
-	  dlPolygon->object.y =  minY - globalResourceBundle.lineWidth/2;
-	  dlPolygon->object.width =  maxX - minX
-					+ globalResourceBundle.lineWidth;
-	  dlPolygon->object.height =  maxY - minY
-					+ globalResourceBundle.lineWidth;
+          p->object.x =  minX - p->attr.width/2;
+          p->object.y =  minY - p->attr.width/2;
+          p->object.width =  maxX - minX + p->attr.width;
+          p->object.height =  maxY - minY + p->attr.width;
 	}
-	break;
-
-
-      case DL_BezierCurve:
-	break;
-
-      default:
+      }
+      break;
+    }
+    default:
 	medmPrintf(
 	   "\n updateElementFromResourceBundle: unknown element type %d",
 	    elementPtr->type);
 	break;
 
   }
-
 /* now update the element's widget by recreating the widget... */
-    if (ELEMENT_HAS_WIDGET(elementPtr->type)) {
-        if (widget != NULL) {
-	   if (widget != currentDisplayInfo->drawingArea) {
-		destroyElementWidget(currentDisplayInfo,widget);
-		(*elementPtr->dmExecute)((XtPointer) currentDisplayInfo,
-				(XtPointer) elementPtr->structure.file,FALSE);
-	   }
-        }
+  if (ELEMENT_HAS_WIDGET(elementPtr->type)) {
+    if (widget) {
+      if (widget != currentDisplayInfo->drawingArea) {
+        destroyElementWidget(currentDisplayInfo,widget);
+					(*elementPtr->dmExecute)(currentDisplayInfo,
+					(XtPointer) elementPtr->structure.file,FALSE);
+      }
     }
-
-
-
+  }
 }
 
 

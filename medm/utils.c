@@ -83,60 +83,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 Boolean modalGrab = FALSE;
 
-#ifdef __cplusplus
-static void attributeSet(DisplayInfo *, DlElement *elementPtr)
-#else
-static void attributeSet(DisplayInfo *displayInfo, DlElement *elementPtr)
-#endif
-{
-  DlElement *dyn, *basic;
-
-  if (elementPtr->type != DL_Composite) {
-/*
- * update currentDisplayInfo's DlDynamicAttribute data,
- *  see if one precedes this entry
- */
-   dyn = lookupDynamicAttributeElement(elementPtr);
-
-   if (dyn != NULL) {
-  /* found a dynamic attribute!  - structure copy */
-    currentDisplayInfo->dynamicAttribute = *(dyn->structure.dynamicAttribute);
-   } else {
-  /* clear some bytes */
-    memset((void *)&(currentDisplayInfo->dynamicAttribute),(int)NULL,
-	sizeof(DlDynamicAttribute));
-   }
-
-/*
- * update currentDisplayInfo's DlAttribute data (loop back arbitrarily far)
- */
-   basic = lookupBasicAttributeElement(elementPtr);
-   if (basic != NULL) {
-  /* found a basic attribute!  - structure copy */
-      currentDisplayInfo->attribute = basic->structure.basicAttribute->attr;
-   }
-  }
-
-}
-
-
-#ifdef __cplusplus
-static void attributeClear(DisplayInfo *)
-#else
-static void attributeClear(DisplayInfo *displayInfo)
-#endif
-{
-
-/*
- * update currentDisplayInfo's DlDynamicAttribute data,
- * (clear some bytes)
- */
-    memset((void *)&(currentDisplayInfo->dynamicAttribute),(int)NULL,
-	sizeof(DlDynamicAttribute));
-}
-
-
-
 
 /*
  * function to open a specified file (as .adl if specified as .dl),
@@ -454,8 +400,7 @@ void dmTraverseDisplayList(
   while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-	(*element->dmExecute)((XtPointer) displayInfo,
-                              (XtPointer) element->structure.file,FALSE);
+	(*element->dmExecute)(displayInfo,(XtPointer) element->structure.file,FALSE);
 	element = element->next;
   }
 
@@ -504,8 +449,7 @@ void dmTraverseAllDisplayLists()
     while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-	(*element->dmExecute)((XtPointer) displayInfo,
-                              (XtPointer) element->structure.file,FALSE);
+	(*element->dmExecute)(displayInfo,(XtPointer) element->structure.file,FALSE);
 	element = element->next;
     }
 
@@ -547,20 +491,21 @@ void dmTraverseAllDisplayLists()
 void traverseCompositeNonWidgets(DisplayInfo *displayInfo,
 	DlElement* composite)
 {
-  DlElement *child;
+	DlElement *child;
 
-  child = ((DlElement*)composite->structure.composite->dlElementListHead)->next;
-  while (child != NULL) {
-     if (!ELEMENT_HAS_WIDGET(child->type))  {
-	   if (child->type == DL_Composite) {
-	/* special handling for composite - don't execute children wi/widgets */
-	     traverseCompositeNonWidgets(displayInfo,child);
-	   } else {
-	     (*child->dmExecute)((XtPointer) displayInfo,
-                                 (XtPointer) child->structure.file,FALSE);
-	   }
-     }
-     child = child->next;
+	child = ((DlElement*)composite->structure.composite->dlElementListHead)->next;
+	while (child != NULL) {
+		if (!ELEMENT_HAS_WIDGET(child->type))  {
+			if (child->type == DL_Composite) {
+				/* special handling for composite
+					 - don't execute children wi/widgets */
+				traverseCompositeNonWidgets(displayInfo,child);
+			} else {
+				(*child->dmExecute)(displayInfo,
+					(XtPointer) child->structure.file,FALSE);
+			}
+		}
+		child = child->next;
   }
 
 }
@@ -597,8 +542,8 @@ void dmTraverseNonWidgetsInDisplayList(
 	/* special handling for composite - don't execute children wi/widgets */
 	     traverseCompositeNonWidgets(displayInfo,element);
 	   } else {
-	     (*element->dmExecute)((XtPointer) displayInfo,
-                                   (XtPointer) element->structure.file,FALSE);
+	     (*element->dmExecute)(displayInfo,
+					(XtPointer) element->structure.file,FALSE);
 	   }
 	}
 	element = element->next;
@@ -771,8 +716,7 @@ void dmWriteDisplayList(
  *  internal
  */
      if (element->type == DL_Display) {
-        (*element->dmWrite)((XtPointer) stream,
-                            (XtPointer) element->structure.display,0);
+        (*element->dmWrite)(stream,(XtPointer) element->structure.display,0);
 /* go find colormap element, in case it's not immediately following */
 	 cmapElement = element->next;
 	 while (cmapElement != NULL && cmapElement->type != DL_Colormap) {
@@ -782,8 +726,7 @@ void dmWriteDisplayList(
 	    writeDlColormap(stream,&defaultDlColormap,0);
      } else {
        if (element->type != DL_Colormap)
-		(*element->dmWrite)((XtPointer) stream,
-                                    (XtPointer) element->structure.file,0);
+		(*element->dmWrite)(stream, (XtPointer) element->structure.file,0);
      }
 
      element = element->next;
@@ -1104,7 +1047,6 @@ DlElement **selectedElementsLookup(
      if (saveElement == NULL) saveElement = displayElement;
 
 
-     attributeSet(currentDisplayInfo,saveElement);
      array[0] = saveElement;
      *numSelected = 1;
      return (array);
@@ -1168,61 +1110,6 @@ DlElement **selectedElementsLookup(
 
      return (array);
   }
-
-}
-
-
-
-/*
- * function to return element's dynamic attribute element if one exists
- */
-DlElement *lookupDynamicAttributeElement(
-  DlElement *elementPtr)
-{
-  DlElement *returnPtr;
-
-  returnPtr = (DlElement *)NULL;
-
-  if (elementPtr == NULL)	 return(returnPtr);
-  if (elementPtr->prev == NULL)  return(returnPtr);
-
-/* see if one precedes this entry */
-  if (elementPtr->prev->type == DL_DynamicAttribute)
-    returnPtr = elementPtr->prev;
-
-  return(returnPtr);
-
-}
-
-
-
-
-/*
- * function to return element's basic attribute element
- */
-DlElement *lookupBasicAttributeElement(
-  DlElement *elementPtr)
-{
-  DlElement *ptr, *returnPtr;
-
-  returnPtr = (DlElement *) NULL;
-  if (elementPtr == NULL)	 return(returnPtr);
-  if (elementPtr->prev == NULL)  return(returnPtr);
-
-/*
- * find element's basic attribute (loop back arbitrarily far)
- */
-  ptr = elementPtr->prev;
-  while (ptr != NULL && ptr->type != DL_BasicAttribute && 
-	 ptr->type != DL_Display &&
-	 ptr != currentDisplayInfo->dlElementListHead) {
-       ptr = ptr->prev;
-  }
-
-  if (ptr->type == DL_BasicAttribute)
-       returnPtr = ptr;
-
-  return(returnPtr);
 
 }
 
@@ -2141,7 +2028,7 @@ int copyCompositeChildrenIntoClipboard(DisplayInfo *displayInfo,
 		DlElement clipboardArray[])
 {
 
-  DlElement *child, *basic, *dyn;
+  DlElement *child;
   int localCount, numCompositeChildren, currentIndex;
 
   localCount = 0;
@@ -2149,55 +2036,35 @@ int copyCompositeChildrenIntoClipboard(DisplayInfo *displayInfo,
   currentIndex = 0;
   if (ele->type == DL_Composite) {
 
-    child = ((DlElement *)ele->structure.composite->dlElementListHead)->next;
-    while (child != NULL) {
-
+    child = ele->structure.composite->dlElementListHead->next;
+    while (child) {
+      /* don't allow copy of DL_Display into clipboard! */
       if (child->type != DL_Display) {
-/* don't allow copy of DL_Display into clipboard! */
 
-       if (child->type != DL_Composite) {
-/* -- careful about order: dynamic attribute must immediately precede object */
- /* basic attribute data */
-	basic = lookupBasicAttributeElement(child);
-	if (basic != NULL) {
-	  clipboardArray[localCount] = *(basic);
-	  localCount++;
-	}
- /* dynamic attribute data (if any) */
-	dyn = lookupDynamicAttributeElement(child);
-	if (dyn != NULL) {
-	  clipboardArray[localCount] = *(dyn);
-	  localCount++;
-	}
-       }
+        /* copy actual (renderable) element */
+        clipboardArray[localCount] = *(child);
+        currentIndex = localCount;
+        localCount++;
 
- /* copy actual (renderable) element */
-       clipboardArray[localCount] = *(child);
-       currentIndex = localCount;
-       localCount++;
-
- /* special case for Composite & Image: */
-
-       switch (child->type) {
-
+        /* special case for Composite & Image: */
+        switch (child->type) {
 	  case DL_Image:
- /* since hauling that privateData pointer around
-  *	need to zero it, because traversal for an image is not quite as
-  *	easy as the other types
-  */
-            clipboardArray[currentIndex].structure.image->privateData = NULL;
-	    break;
-
- /* since composites have children - haul them (recursively) into array too */
-	  case DL_Composite:
-	    numCompositeChildren = copyCompositeChildrenIntoClipboard(
+            /* since hauling that privateData pointer around
+             * need to zero it, because traversal for an image is not quite as
+             *easy as the other types
+             */
+             clipboardArray[currentIndex].structure.image->privateData = NULL;
+	     break;
+	   case DL_Composite:
+             /* since composites have children - haul
+              * them (recursively) into array too */
+	     numCompositeChildren = copyCompositeChildrenIntoClipboard(
 		displayInfo,
 		&(clipboardArray[currentIndex]),
 		&clipboardArray[localCount]);
-	    localCount += numCompositeChildren;
-	    break;
-
-       }
+	     localCount += numCompositeChildren;
+	     break;
+        }
 
       } /* end if */
 
@@ -2215,44 +2082,33 @@ int copyCompositeChildrenIntoClipboard(DisplayInfo *displayInfo,
  */
 void deleteElementsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 {
-  DlElement *child, *dyn;
+  DlElement *child;
 
   if (ele->type == DL_Composite) {
 
     child = ((DlElement *)ele->structure.composite->dlElementListHead)->next;
-    while (child != NULL) {
+    while (child) {
       if ( ELEMENT_IS_RENDERABLE(child->type) && child->type != DL_Display) {
-    /* don't allow user to delete the display! */
+        /* don't allow user to delete the display! */
+        /* now delete the selected element */
+        if (child == displayInfo->dlElementListTail) {
+          child->prev->next = NULL;
+	  displayInfo->dlElementListTail = child->prev;
+        } else {
+          child->prev->next = child->next;
+          child->next->prev = child->prev;
+        }
 
-	if (child->type != DL_Composite) {
-      /* first look to see if a dynamic attribute exists for this element */
-         dyn = lookupDynamicAttributeElement(child);
-         if (dyn != NULL) {
-      /* found a dynamicAttribute - delete it, and then its operand element */
-          if (dyn->prev != NULL) (dyn->prev)->next = dyn->next;
-          if (dyn->next != NULL)
-	    (dyn->next)->prev = dyn->prev;
-	  else /* must be at tail - update tail */
-	    displayInfo->dlElementListTail = dyn->prev;
-         }
-	}
-      /* now delete the selected element */
-        if (child->prev != NULL) (child->prev)->next = child->next;
-        if (child->next != NULL)
-	   (child->next)->prev = child->prev;
-	 else /* must be at tail - update tail */
-	    displayInfo->dlElementListTail = child->prev;
-
-      /* if composite, delete any children */
+        /* if composite, delete any children */
         if (child->type == DL_Composite) {
 	  deleteElementsInComposite(displayInfo,child);
         }
 
-/*
- * set this flag to true - next clearClipboard call can actually 
- *	free the display list elements in memory (elements have actually
- *	been deleted)
- */
+        /*
+         * set this flag to true - next clearClipboard call can actually 
+         * free the display list elements in memory (elements have actually
+         * been deleted)
+         */
         clipboardDelete = True;
 
         if (ELEMENT_HAS_WIDGET(child->type)) {
@@ -2360,7 +2216,6 @@ void copyElementsIntoClipboard()
 {
   int i;
   DisplayInfo *cdi;
-  DlElement *dyn, *basic;
   int currentIndex;
 
   if (currentDisplayInfo == NULL) return;
@@ -2388,54 +2243,34 @@ void copyElementsIntoClipboard()
 
   for (i = cdi->numSelectedElements - 1; i >= 0; i--) {
 
-   if (cdi->selectedElementsArray[i]->type != DL_Display) {
-/* don't allow copy of DL_Display into clipboard! */
+    /* don't allow copy of DL_Display into clipboard! */
+    if (cdi->selectedElementsArray[i]->type != DL_Display) {
 
-    if (cdi->selectedElementsArray[i]->type != DL_Composite) {
-
-/* -- careful about order: dynamic attribute must immediately precede object */
- /* basic attribute data */
-      basic = lookupBasicAttributeElement(cdi->selectedElementsArray[i]);
-      if (basic != NULL) {
-        clipboardElementsArray[numClipboardElements] = *(basic);
-        numClipboardElements++;
-      }
-
- /* dynamic attribute data (if any) */
-      dyn = lookupDynamicAttributeElement(cdi->selectedElementsArray[i]);
-      if (dyn != NULL) {
-        clipboardElementsArray[numClipboardElements] = *(dyn);
-        numClipboardElements++;
-      }
-    }
-
- /* copy actual (renderable) element */
-    clipboardElementsArray[numClipboardElements] = 
+      /* copy actual (renderable) element */
+      clipboardElementsArray[numClipboardElements] = 
 			*(cdi->selectedElementsArray[i]);
-    currentIndex = numClipboardElements;
-    numClipboardElements++;
+      currentIndex = numClipboardElements;
+      numClipboardElements++;
 
- /* special case for Image: */
+      /* special case for Image: */
 
-    switch (clipboardElementsArray[currentIndex].type) {
+      switch (clipboardElementsArray[currentIndex].type) {
 
 	case DL_Image:
- /* since hauling that privateData pointer around
-  *	need to zero it, because traversal for an image is not quite as
-  *	easy as the other types
-  */
+          /* since hauling that privateData pointer around
+           * need to zero it, because traversal for an image is not quite as
+           * easy as the other types
+           */
           clipboardElementsArray[
 		currentIndex].structure.image->privateData = NULL;
 	  break;
-    }
+      }
 
-   } /* end if */
+    } /* end if */
 
   } /* end for */
 
 }
-
-
 
 
 DlStructurePtr createCopyOfElementType(
@@ -2449,18 +2284,6 @@ DlStructurePtr createCopyOfElementType(
 /* NOTE:  using structure copies instead of memcpy's */
 
   switch(type) {
-
-      case DL_BasicAttribute:
-	pnew.basicAttribute = (DlBasicAttribute *)
-			malloc(sizeof(DlBasicAttribute));
-	*pnew.basicAttribute = *ptr.basicAttribute;
-	break;
-
-      case DL_DynamicAttribute:
-	pnew.dynamicAttribute = (DlDynamicAttribute*)
-			malloc(sizeof(DlDynamicAttribute));
-	*pnew.dynamicAttribute = *ptr.dynamicAttribute;
-	break;
 
       case DL_Rectangle:
 	pnew.rectangle = (DlRectangle *)malloc(sizeof(DlRectangle));
@@ -2573,7 +2396,7 @@ DlStructurePtr createCopyOfElementType(
  */
 	pnew.composite= (DlComposite *)malloc(sizeof(DlComposite));
 	*pnew.composite= *ptr.composite;
-	 pnew.composite->dlElementListHead  = (XtPointer)calloc((size_t)1,
+	 pnew.composite->dlElementListHead  = (DlElement *)malloc(
 		sizeof(DlElement));
 	((DlElement *)(pnew.composite->dlElementListHead))->next = NULL;
 	pnew.composite->dlElementListTail = pnew.composite->dlElementListHead;
@@ -2596,7 +2419,7 @@ DlStructurePtr createCopyOfElementType(
 	    elementPtr->prev = (DlElement *)pnew.composite->dlElementListTail;
 	    ((DlElement *)pnew.composite->dlElementListTail)->next = elementPtr;
 	    elementPtr->next = NULL;
-	    pnew.composite->dlElementListTail = (XtPointer)elementPtr;
+	    pnew.composite->dlElementListTail = elementPtr;
 	  }
 	  child = child->next;
 	}
@@ -2735,8 +2558,7 @@ void copyElementsIntoDisplay()
       }
 
 /* execute the structure */
-      (elementPtr->dmExecute)((XtPointer) cdi,
-                              (XtPointer) structurePtr.rectangle,FALSE);
+      (elementPtr->dmExecute)(cdi,(XtPointer) structurePtr.rectangle,FALSE);
 
 
     }
@@ -2785,7 +2607,7 @@ void deleteElementsInDisplay()
   DisplayInfo *cdi;
   DlElement *elementPtr, *dyn;
 
-  if (currentDisplayInfo == NULL) return;
+  if (!currentDisplayInfo) return;
   if (currentDisplayInfo->numSelectedElements == 0) return;
   cdi = currentDisplayInfo;
 
@@ -2796,26 +2618,14 @@ void deleteElementsInDisplay()
 
     if ( ELEMENT_IS_RENDERABLE(elementPtr->type) &&
 			elementPtr->type != DL_Display) {
-    /* don't allow user to delete the display! */
-
-      if (elementPtr->type != DL_Composite) {
-      /* first look to see if a dynamic attribute exists for this element */
-       dyn = lookupDynamicAttributeElement(elementPtr);
-       if (dyn != NULL) {
-      /* found a dynamicAttribute - delete it, and then its operand element */
-         if (dyn->prev != NULL) (dyn->prev)->next = dyn->next;
-         if (dyn->next != NULL)
-	    (dyn->next)->prev = dyn->prev;
-	 else /* must be at tail - update tail */
-	    cdi->dlElementListTail = dyn->prev;
-       }
-      }
       /* now delete the selected element */
-      if (elementPtr->prev !=NULL) (elementPtr->prev)->next = elementPtr->next;
-      if (elementPtr->next != NULL)
-	   (elementPtr->next)->prev = elementPtr->prev;
-	 else /* must be at tail - update tail */
-	    cdi->dlElementListTail = elementPtr->prev;
+      if (elementPtr == cdi->dlElementListTail) {
+        elementPtr->prev->next = NULL;
+        cdi->dlElementListTail = elementPtr->prev;
+      } else {
+        elementPtr->prev->next = elementPtr->next;
+        elementPtr->next->prev = elementPtr->prev;
+      }  
 
       /* if composite, delete any widget children */
       if (elementPtr->type == DL_Composite) {
@@ -3233,81 +3043,28 @@ void alignSelectedElements(
  * moves specified <src> element to position just after specified <dst> element
  */
 void moveElementAfter(
-  DisplayInfo *cdi,
-  DlComposite *dlComposite, /* for updating tail ptr. if adding to composite */
+  DlElement *dst,
   DlElement *src,
-  DlElement *dst)
+  DlElement **tail)
 {
-  DlStructurePtr structure;
-  DlElement *element;
-
-  if (cdi == NULL || src == NULL || dst == NULL) return;
-
-
-  if (src->type == DL_BasicAttribute) {
-/*
- * copy Basic Attributes (since following elements may depend on it)
- *	N.B.: this is like createDlBasicAttribute, except this routine
- *	should not create based on the globalResourceBundle...
- */
-
- /* allocate a display element in memory and copy the pointed-to data into it */
-     element = (DlElement *) malloc(sizeof(DlElement));
-     structure = createCopyOfElementType(src->type,src->structure);
-     element->structure = structure;
-     element->type = DL_BasicAttribute;
-     element->dmExecute = (medmExecProc)executeDlBasicAttribute;
-     element->dmWrite = (medmWriteProc)writeDlBasicAttribute;
-
- /* now add to the display list (insert in list, update tail if necessary */
-     element->prev = dst;
-     if (dst->next != NULL) {
-       dst->next->prev = element;
-     } else {
-       if (dlComposite == NULL) {
-     /* must be adding to end or tail of display list */
-	cdi->dlElementListTail = element;
-       } else {
-     /* must be adding to end or tail of composite */
-	dlComposite->dlElementListTail = (XtPointer)element;
-       }
-     }
-     element->next = dst->next;
-     dst->next = element;
-
-
+  if (src == *tail) {
+    src->prev->next = NULL;
+    *tail = src->prev;
   } else {
-
-/*
- * simple move of element
- */
-
-     /* tie up hole where src is being moved from */
-     src->prev->next = src->next;
-     if (src->next != NULL) {
-       src->next->prev = src->prev;
-     } else {
-     /* must be at tail, modify tail ptr. (effectively removed one from end) */
-       cdi->dlElementListTail =  src->prev;
-     }
-     src->prev = dst;
-     src->next = dst->next;
-
-     /* now tidy up dst */
-     if (dst->next != NULL) {
-       dst->next->prev = src;
-     } else {
-       if (dlComposite == NULL) {
-     /* must be adding to end or tail of display list */
-	cdi->dlElementListTail = src;
-       } else {
-     /* must be adding to end or tail of composite */
-	dlComposite->dlElementListTail = (XtPointer)src;
-       }
-     }
-     dst->next = src;
+    src->prev->next = src->next;
+    src->next->prev = src->prev;
   }
-
+  if (dst == *tail) {
+    dst->next = src;
+    src->next = NULL;
+    src->prev = dst;
+    *tail = src;
+  } else {
+    dst->next->prev = src;
+    src->next = dst->next;
+    dst->next = src;
+    src->prev = dst;
+  }
 }
 
 
@@ -3323,7 +3080,7 @@ void  moveSelectedElementsAfterElement(
 {
   int i;
   DisplayInfo *cdi;
-  DlElement *dyn, *basic, *afterElement;
+  DlElement *afterElement;
 
   if (displayInfo == NULL) return;
   if (displayInfo->numSelectedElements == 0) return;
@@ -3332,31 +3089,11 @@ void  moveSelectedElementsAfterElement(
 
 
   for (i = cdi->numSelectedElements - 1; i >= 0; i--) {
-
-/* if display was selected, skip over it (can't raise/lower it) */
+    /* if display was selected, skip over it (can't raise/lower it) */
     if (cdi->selectedElementsArray[i]->type != DL_Display) {
-
-     if (cdi->selectedElementsArray[i]->type != DL_Composite) {
-
-/* -- careful about order: dynamic attribute must immediately precede object */
- /* basic attribute data */
-       basic = lookupBasicAttributeElement(cdi->selectedElementsArray[i]);
-       if (basic != NULL) {
-        moveElementAfter(cdi,NULL,basic,afterElement);
-        afterElement = afterElement->next;
-       }
-
- /* dynamic attribute data (if any) */
-       dyn = lookupDynamicAttributeElement(cdi->selectedElementsArray[i]);
-       if (dyn != NULL) {
-        moveElementAfter(cdi,NULL,dyn,afterElement);
-        afterElement = afterElement->next;
-       }
-     }
-
- /* actual elements */
-     moveElementAfter(cdi,NULL,cdi->selectedElementsArray[i],afterElement);
-     afterElement = afterElement->next;
+      moveElementAfter(afterElement,cdi->selectedElementsArray[i],
+                       &(cdi->dlElementListTail));
+      afterElement = afterElement->next;
 
     }
   }
@@ -3937,5 +3674,41 @@ void GetWorkSpaceList(Widget w) {
   }
 }
 #endif
-      
-                     
+
+
+/* Convert hex digits to ascii */
+static char hex_digit_to_ascii[16]={'0','1','2','3','4','5','6','7','8','9',
+    'a','b','c','d','e','f'};
+ 
+int localCvtLongToHexString(
+    long source,
+    char  *pdest)
+{
+  long  val,temp;
+  char  digit[10];
+  int   i,j;
+  char  *startAddr = pdest;
+ 
+  *pdest++ = '0';
+  *pdest++ = 'x';
+  if(source==0) {
+    *pdest++ = '0';
+  } else {
+    val = source;
+    temp = 0xf & val;
+    val = val >> 4;
+    digit[0] = hex_digit_to_ascii[temp];
+    if (val < 0) val = val & 0xfffffff;
+    for (i=1; val!=0; i++) {
+      temp = 0xf & val;
+      val = val >> 4;
+      digit[i] = hex_digit_to_ascii[temp];
+    }
+    for(j=i-1; j>=0; j--) {
+      *pdest++ = digit[j];
+    }
+
+  }
+  *pdest = 0;
+  return((int)(pdest-startAddr));
+}

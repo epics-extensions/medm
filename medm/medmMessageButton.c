@@ -80,6 +80,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd);
 static void messageButtonDestroyCb(XtPointer);
 static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
 static void messageButtonName(XtPointer, char **, short *, int *);
+static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 
 int messageButtonFontListIndex(int height)
@@ -206,8 +207,6 @@ void executeDlMessageButton(DisplayInfo *displayInfo,
 #endif
 {
 
-  displayInfo->useDynamicAttribute = FALSE;
-  
   if (displayInfo->traversalMode == DL_EXECUTE) {
 	 messageButtonCreateRunTimeInstance(displayInfo,dlMessageButton);
   } else
@@ -368,4 +367,154 @@ static void messageButtonName(XtPointer cd, char **name, short *severity, int *c
   *count = 1;
   name[0] = pmb->record->name;
   severity[0] = pmb->record->severity;
+}
+
+ 
+ 
+/***
+ *** Message Button
+ ***/
+ 
+DlElement *createDlMessageButton(
+  DisplayInfo *displayInfo)
+{
+  DlMessageButton *dlMessageButton;
+  DlElement *dlElement;
+ 
+  dlMessageButton = (DlMessageButton *) malloc(sizeof(DlMessageButton));
+  objectAttributeInit(&(dlMessageButton->object));
+  controlAttributeInit(&(dlMessageButton->control));
+  dlMessageButton->label[0] = '\0';
+  dlMessageButton->press_msg[0] = '\0';
+  dlMessageButton->release_msg[0] = '\0';
+  dlMessageButton->clrmod = STATIC;
+
+  if (!(dlElement = createDlElement(DL_MessageButton,
+                    (XtPointer)      dlMessageButton,
+                    (medmExecProc)   executeDlMessageButton,
+                    (medmWriteProc)  writeDlMessageButton,
+										0,0,
+                    messageButtonInheritValues))) {
+    free(dlMessageButton);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseMessageButton(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlMessageButton *dlMessageButton;
+  DlElement *dlElement = createDlMessageButton(displayInfo);
+
+  if (!dlElement) return 0;
+  dlMessageButton = dlElement->structure.messageButton;
+
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlMessageButton->object));
+        else
+        if (!strcmp(token,"control"))
+          parseControl(displayInfo,&(dlMessageButton->control));
+        else
+        if (!strcmp(token,"press_msg")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          strcpy(dlMessageButton->press_msg,token);
+        } else
+        if (!strcmp(token,"release_msg")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          strcpy(dlMessageButton->release_msg,token);
+        } else
+        if (!strcmp(token,"label")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          strcpy(dlMessageButton->label,token);
+        } else
+        if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"static"))
+            dlMessageButton->clrmod = STATIC;
+          else
+          if (!strcmp(token,"alarm"))
+            dlMessageButton->clrmod = ALARM;
+          else
+          if (!strcmp(token,"discrete"))
+            dlMessageButton->clrmod = DISCRETE;
+         }
+         break;
+       case T_EQUAL:
+         break;
+       case T_LEFT_BRACE:
+         nestingLevel++; break;
+       case T_RIGHT_BRACE:
+         nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+}
+
+void writeDlMessageButton(
+  FILE *stream,
+  DlMessageButton *dlMessageButton,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0';
+ 
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+		fprintf(stream,"\n%s\"message button\" {",indent);
+		writeDlObject(stream,&(dlMessageButton->object),level+1);
+		writeDlControl(stream,&(dlMessageButton->control),level+1);
+		if (dlMessageButton->label[0] != '\0')
+			fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlMessageButton->label);
+		if (dlMessageButton->press_msg[0] != '\0')
+			fprintf(stream,"\n%s\tpress_msg=\"%s\"",indent,dlMessageButton->press_msg);
+		if (indent,dlMessageButton->release_msg[0] != '\0')
+			fprintf(stream,"\n%s\trelease_msg=\"%s\"",
+				indent,dlMessageButton->release_msg);
+		if (dlMessageButton->clrmod != STATIC) 
+			fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlMessageButton->clrmod]);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+		fprintf(stream,"\n%s\"message button\" {",indent);
+		writeDlObject(stream,&(dlMessageButton->object),level+1);
+		writeDlControl(stream,&(dlMessageButton->control),level+1);
+		fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlMessageButton->label);
+		fprintf(stream,"\n%s\tpress_msg=\"%s\"",indent,dlMessageButton->press_msg);
+		fprintf(stream,"\n%s\trelease_msg=\"%s\"",
+			indent,dlMessageButton->release_msg);
+		fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+			stringValueTable[dlMessageButton->clrmod]);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}
+
+static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMessageButton *dlMessageButton = p->structure.messageButton;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlMessageButton->control.ctrl),
+    CLR_RC,        &(dlMessageButton->control.clr),
+    BCLR_RC,       &(dlMessageButton->control.bclr),
+    CLRMOD_RC,     &(dlMessageButton->clrmod),
+    -1);
 }

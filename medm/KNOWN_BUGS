@@ -1,2 +1,3 @@
 KNOWN BUGS or PROBLEMS in MEDM:
-
+- text, change color, selected box around the text disappear. (vong 4/26/96)
+- try to open a --w-r--r- file, nothing happens. (vong 4/30/96)

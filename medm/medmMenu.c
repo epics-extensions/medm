@@ -80,11 +80,12 @@ static void menuUpdateGraphicalInfoCb(XtPointer);
 static void menuDestroyCb(XtPointer cd);
 static void menuValueChangedCb(Widget, XtPointer, XtPointer);
 static void menuName(XtPointer, char **, short *, int *);
+static void menuInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 int menuFontListIndex(int height)
 {
   int i;
-/* don't allow height of font to exceed 90% - 4 pixels of messageButton widget
+/* don't allow height of font to exceed 90% - 4 pixels of menu widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
   for (i = MAX_FONTS-1; i >=  0; i--) {
@@ -206,9 +207,6 @@ void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean)
 void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy)
 #endif
 {
-
-  displayInfo->useDynamicAttribute = FALSE;
- 
   switch (displayInfo->traversalMode) {
   case DL_EXECUTE :
     menuCreateRunTimeInstance(displayInfo,dlMenu);
@@ -421,3 +419,115 @@ static void menuName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pm->record->severity;
 }
 
+DlElement *createDlMenu(
+  DisplayInfo *displayInfo)
+{
+  DlMenu *dlMenu;
+  DlElement *dlElement;
+ 
+  dlMenu = (DlMenu *) malloc(sizeof(DlMenu));
+  if (!dlMenu) return 0;
+  objectAttributeInit(&(dlMenu->object));
+  controlAttributeInit(&(dlMenu->control));
+  dlMenu->clrmod = STATIC;
+ 
+  if (!(dlElement = createDlElement(DL_Menu,
+                    (XtPointer)      dlMenu,
+                    (medmExecProc)   executeDlMenu,
+                    (medmWriteProc)  writeDlMenu,
+										0,0,
+                    menuInheritValues))) {
+    free(dlMenu);
+  }
+ 
+  return(dlElement);
+}
+
+DlElement *parseMenu(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlMenu *dlMenu;
+  DlElement *dlElement = createDlMenu(displayInfo);
+ 
+  if (!dlElement) return 0;
+  dlMenu = dlElement->structure.menu;
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlMenu->object));
+        else
+        if (!strcmp(token,"control"))
+          parseControl(displayInfo,&(dlMenu->control));
+        else
+        if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          if (!strcmp(token,"static"))
+            dlMenu->clrmod = STATIC;
+          else
+          if (!strcmp(token,"alarm"))
+            dlMenu->clrmod = ALARM;
+          else
+          if (!strcmp(token,"discrete"))
+            dlMenu->clrmod = DISCRETE;
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+ 
+  POSITION_ELEMENT_ON_LIST();
+ 
+  return dlElement;
+}
+
+void writeDlMenu(
+  FILE *stream,
+  DlMenu *dlMenu,
+  int level)
+{
+  int i;
+  char indent[16];
+ 
+  for (i = 0; i < level; i++) indent[i] = '\t';
+  indent[i] = '\0';
+ 
+  fprintf(stream,"\n%smenu {",indent);
+  writeDlObject(stream,&(dlMenu->object),level+1);
+  writeDlControl(stream,&(dlMenu->control),level+1);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+  if (dlMenu->clrmod != STATIC) 
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+                stringValueTable[dlMenu->clrmod]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+                stringValueTable[dlMenu->clrmod]);
+	}
+#endif
+  fprintf(stream,"\n%s}",indent);
+ 
+}
+
+static void menuInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMenu *dlMenu = p->structure.menu;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlMenu->control.ctrl),
+    CLR_RC,        &(dlMenu->control.clr),
+    BCLR_RC,       &(dlMenu->control.bclr),
+    CLRMOD_RC,     &(dlMenu->clrmod),
+    -1);
+}

@@ -2,6 +2,35 @@
 # $Id$
 #
 # $Log$
+# Revision 1.14  1996/05/14 21:00:18  vong
+# Version 2.2.0
+# =============
+# - Support a new .adl file format.
+#   - reduce the file size up to 70%
+#   - the new file format will compatible with a new Java tool developed by John
+#     Winans.
+#   - eliminate the problem of multiple defined of basic attribute and
+#     dynamic attribute for individual object in .adl file.
+# - Also support the 2.1.x file format.  By default, medm saves display in the
+#   new file format.  However, user can save display in the 2.1.x file format.
+#   To do that, bring up the "save as" file selection dialog from the file
+#   menu and select the 2.1.x file format.
+# - polygon and polyine now have a more consistence inheritence characteristic
+#   with the rest of the graphic objects.
+# - Add '0x' in front of the hexadecimal number. For hexadecimal format,
+#   the number is always treated as a unsigned long.  For example, a -1
+#   will be displayed as 0xffffffff and a 1 will be 0x1.
+# - Add <string> option to textUpdate and textEntry object. if the pv is an
+#   character waveform, MEDM will treat the character waveform as a '\0' ended
+#   character string.  The maximum size of the string is either the size
+#   of character waveform or 256 character minus the '\0' character, whichever
+#   is less.
+# - Select a printer ofter than the default one.  Pull down the file menu,
+#   select the entry <Printer Setup> and enter the printer name into the
+#   setup dialog box and press O.K.
+# - Add a command line switch -bigMousePointer to ask medm to use a bigger mouse
+#   pointer.
+#
 # Revision 1.13  1995/10/02 19:16:58  vong
 # switch it back to r1.11
 #
@@ -133,44 +162,40 @@ DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_EXTENSIONS_LIB)/libPrintUtils.a \
           $(EPICS_EXTENSIONS_LIB)/libGraphX.a
 
-SRCS.c = ../actions.c ../callbacks.c \
-	../channelPalette.c ../colorPalette.c \
-	../createControllers.c ../createExtensions.c ../createMonitors.c \
-	../createStatics.c ../display.c ../dmInit.c ../dummy.c \
-	../eventHandlers.c ../executeExtensions.c \
-	../executeStatics.c ../help.c ../medm.c ../medmCA.c \
+SRCS.c = ../actions.c ../callbacks.c ../channelPalette.c ../colorPalette.c \
+	../display.c ../dmInit.c ../eventHandlers.c \
+	../help.c ../medm.c ../medmCA.c \
 	../medmPixmap.c  ../libMedmInit.c \
 	../medmChoiceButtons.c ../medmMenu.c ../medmMessageButton.c \
 	../medmTextEntry.c ../medmValuator.c \
 	../medmMeter.c ../medmIndicator.c ../medmTextUpdate.c ../medmBar.c \
 	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c \
         ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
-        ../medmPolyline.c ../medmPolygon.c \
-	../objectPalette.c ../parseControllers.c ../parseExtensions.c \
-	../parseMonitors.c \
-	../parseStatics.c ../resourcePalette.c ../shared.c \
-	../updateMonitors.c ../utils.c ../medmWidget.c ../writeControllers.c \
-	../writeExtensions.c ../writeMonitors.c ../writeStatics.c ../xgif.c
+        ../medmPolyline.c ../medmPolygon.c ../medmComposite.c ../medmImage.c\
+	../medmRelatedDisplay.c ../medmShellCommand.c\
+	../medmCommon.c ../medmControl.c ../medmMonitor.c\
+	../objectPalette.c ../resourcePalette.c ../shared.c \
+	../updateMonitors.c ../utils.c ../medmWidget.c \
+	../xgif.c
 
 OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
-	createControllers.o createExtensions.o createMonitors.o \
-	createStatics.o display.o dmInit.o dummy.o \
-	eventHandlers.o executeExtensions.o \
-	executeStatics.o help.o medm.o medmPixmap.o medmCA.o \
+	display.o dmInit.o eventHandlers.o \
+	help.o medm.o medmPixmap.o medmCA.o \
 	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
 	medmTextEntry.o medmValuator.o \
 	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
 	medmStripChart.o medmByte.o medmCartesianPlot.o \
         medmArc.o medmOval.o medmRectangle.o medmText.o \
-        medmPolyline.o medmPolygon.o \
-	objectPalette.o parseControllers.o \
-	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
-	shared.o updateMonitors.o utils.o medmWidget.o writeControllers.o \
-	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
+        medmPolyline.o medmPolygon.o medmComposite.o medmImage.o\
+	medmRelatedDisplay.o medmShellCommand.o\
+	medmCommon.o medmControl.o medmMonitor.o\
+	objectPalette.o resourcePalette.o \
+	shared.o updateMonitors.o utils.o medmWidget.o \
+	xgif.o
 
 #LIBOBJS = actions.o callbacks.o channelPalette.o colorPalette.o \
 #	createControllers.o createExtensions.o createMonitors.o \
-#	createStatics.o display.o dmInit.o dummy.o \
+#	createStatics.o display.o dmInit.o \
 #	eventHandlers.o executeExtensions.o \
 #	executeStatics.o help.o medmPixmap.o medmCA.o \
 #	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
@@ -189,7 +214,8 @@ PROD = medm
 
 include $(EPICS)/config/RULES.Unix
 
-#CC = acc -g
+#CC = cc -g
+#CC = gcc
 
 medm: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)

@@ -74,6 +74,7 @@ static void meterDraw(XtPointer cd);
 static void meterUpdateGraphicalInfoCb(XtPointer cd);
 static void meterDestroyCb(XtPointer cd);
 static void meterName(XtPointer, char **, short *, int *);
+static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 #ifdef __cplusplus
 void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean)
@@ -276,6 +277,90 @@ static void meterName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pm->record->severity;
 }
 
+DlElement *createDlMeter(
+  DisplayInfo *displayInfo)
+{
+  DlMeter *dlMeter;
+  DlElement *dlElement;
+
+  dlMeter = (DlMeter *) malloc(sizeof(DlMeter));
+  if (!dlMeter) return 0;
+  objectAttributeInit(&(dlMeter->object));
+  monitorAttributeInit(&(dlMeter->monitor));
+  dlMeter->label = LABEL_NONE;
+  dlMeter->clrmod = STATIC;
+
+  if (!(dlElement = createDlElement(DL_Meter,
+                    (XtPointer)      dlMeter,
+                    (medmExecProc)   executeDlMeter,
+                    (medmWriteProc)  writeDlMeter,
+										0,0,
+                    meterInheritValues))) {
+    free(dlMeter);
+  }
+
+  return(dlElement);
+}
+
+
+DlElement *parseMeter(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlMeter *dlMeter;
+  DlElement *dlElement = createDlMeter(displayInfo);
+  int i = 0;
+
+  if (!dlElement) return 0;
+  dlMeter = dlElement->structure.meter;
+
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlMeter->object));
+        else if (!strcmp(token,"monitor"))
+          parseMonitor(displayInfo,&(dlMeter->monitor));
+        else if (!strcmp(token,"label")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          for (i=FIRST_LABEL_TYPE;i<FIRST_LABEL_TYPE+NUM_LABEL_TYPES;i++) {
+            if (!strcmp(token,stringValueTable[i])) {
+              dlMeter->clrmod = i;
+              break;
+            }
+          }
+        } else if (!strcmp(token,"clrmod")) {
+          getToken(displayInfo,token);
+          getToken(displayInfo,token);
+          for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) {
+            if (!strcmp(token,stringValueTable[i])) {
+              dlMeter->clrmod = i;
+              break;
+            }
+          }
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  dlElement->dmExecute =  (medmExecProc)executeDlMeter;
+  dlElement->dmWrite =  (medmWriteProc)writeDlMeter;
+  return dlElement;
+}
+
 void writeDlMeter(
   FILE *stream,
   DlMeter *dlMeter,
@@ -290,10 +375,29 @@ void writeDlMeter(
   fprintf(stream,"\n%smeter {",indent);
   writeDlObject(stream,&(dlMeter->object),level+1);
   writeDlMonitor(stream,&(dlMeter->monitor),level+1);
-  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
-        stringValueTable[dlMeter->label]);
-  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
-        stringValueTable[dlMeter->clrmod]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+  if (dlMeter->label != LABEL_NONE)
+    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,stringValueTable[dlMeter->label]);
+  if (dlMeter->clrmod != STATIC) 
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,stringValueTable[dlMeter->clrmod]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT	
+	} else {
+    fprintf(stream,"\n%s\tlabel=\"%s\"",indent,stringValueTable[dlMeter->label]);
+    fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,stringValueTable[dlMeter->clrmod]);
+	}
+#endif
   fprintf(stream,"\n%s}",indent);
 }
 
+static void meterInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMeter *dlMeter = p->structure.meter;
+  medmGetValues(pRCB,
+    RDBK_RC,       &(dlMeter->monitor.rdbk),
+    CLR_RC,        &(dlMeter->monitor.clr),
+    BCLR_RC,       &(dlMeter->monitor.bclr),
+    LABEL_RC,      &(dlMeter->label),
+    CLRMOD_RC,     &(dlMeter->clrmod),
+    -1);
+}

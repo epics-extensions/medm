@@ -87,6 +87,7 @@ static void valuatorSetValue(Valuator *, double, Boolean force);
 static void valuatorRedrawValue(Valuator *, DisplayInfo *, Widget, DlValuator *, double);
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 static void valuatorName(XtPointer, char **, short *, int *);
+static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 
 static void handleValuatorRelease(Widget, XtPointer, XEvent *, Boolean *);
@@ -353,8 +354,6 @@ void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
 			Boolean dummy)
 #endif
 {
-  displayInfo->useDynamicAttribute = FALSE;
-  
   if (displayInfo->traversalMode == DL_EXECUTE) {
 	 createValuatorRunTimeInstance(displayInfo, dlValuator);
   } else
@@ -1245,3 +1244,177 @@ static void valuatorName(XtPointer cd, char **name, short *severity, int *count)
   severity[0] = pv->record->severity;
 }
 
+DlElement *createDlValuator(
+  DisplayInfo *displayInfo)
+{
+  DlValuator *dlValuator;
+  DlElement *dlElement;
+ 
+  dlValuator = (DlValuator *) malloc(sizeof(DlValuator));
+  if (!dlValuator) return 0;
+  objectAttributeInit(&(dlValuator->object));
+  controlAttributeInit(&(dlValuator->control));
+ 
+  dlValuator->label = LABEL_NONE;
+  dlValuator->clrmod = STATIC;
+  dlValuator->direction = RIGHT;
+  dlValuator->dPrecision = 1.;
+ 
+/* private run-time valuator field */
+  dlValuator->enableUpdates = True;
+  dlValuator->dragging = False;
+
+  if (!(dlElement = createDlElement(DL_Valuator,
+                    (XtPointer)      dlValuator,
+                    (medmExecProc)   executeDlValuator,
+                    (medmWriteProc)  writeDlValuator,
+										0,0,
+                    valuatorInheritValues))) {
+    free(dlValuator);
+  }
+ 
+  return(dlElement);
+}
+
+DlElement *parseValuator(
+  DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlValuator *dlValuator;
+  DlElement *dlElement = createDlValuator(displayInfo);
+  if (!dlElement) return 0;
+  dlValuator = dlElement->structure.valuator;
+
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+	  parseObject(displayInfo,&(dlValuator->object));
+        else
+        if (!strcmp(token,"control"))
+	  parseControl(displayInfo,&(dlValuator->control));
+        else
+        if (!strcmp(token,"label")) {
+	  getToken(displayInfo,token);
+	  getToken(displayInfo,token);
+          if (!strcmp(token,"none"))
+            dlValuator->label = LABEL_NONE;
+          else
+          if (!strcmp(token,"outline"))
+            dlValuator->label = OUTLINE;
+          else
+          if (!strcmp(token,"limits"))
+            dlValuator->label = LIMITS;
+          else
+          if (!strcmp(token,"channel"))
+            dlValuator->label = CHANNEL;
+        } else
+        if (!strcmp(token,"clrmod")) {
+	  getToken(displayInfo,token);
+	  getToken(displayInfo,token);
+	  if (!strcmp(token,"static")) 
+	    dlValuator->clrmod = STATIC;
+	  else
+          if (!strcmp(token,"alarm"))
+	    dlValuator->clrmod = ALARM;
+	  else
+          if (!strcmp(token,"discrete"))
+	    dlValuator->clrmod = DISCRETE;
+        } else
+        if (!strcmp(token,"direction")) {
+          getToken(displayInfo,token);
+	  getToken(displayInfo,token);
+	  if (!strcmp(token,"up")) 
+	    dlValuator->direction = UP;
+	  else
+          if (!strcmp(token,"down"))
+	    dlValuator->direction = DOWN;
+	  else
+          if (!strcmp(token,"right"))
+	    dlValuator->direction = RIGHT;
+	  else
+          if (!strcmp(token,"left"))
+	    dlValuator->direction = LEFT;
+        } else
+        if (!strcmp(token,"dPrecision")) {
+	  getToken(displayInfo,token);
+	  getToken(displayInfo,token);
+	  dlValuator->dPrecision = atof(token);
+        }
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+		&& (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+
+}
+
+void writeDlValuator(
+  FILE *stream,
+  DlValuator *dlValuator,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0';
+
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif 
+		fprintf(stream,"\n%svaluator {",indent);
+		writeDlObject(stream,&(dlValuator->object),level+1);
+		writeDlControl(stream,&(dlValuator->control),level+1);
+		if (dlValuator->label != LABEL_NONE) 
+		fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+		stringValueTable[dlValuator->label]);
+		if (dlValuator->clrmod != STATIC) 
+			fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+				stringValueTable[dlValuator->clrmod]);
+		if (dlValuator->direction != RIGHT)
+			fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+				stringValueTable[dlValuator->direction]);
+		if (dlValuator->direction != 1.) 
+			fprintf(stream,"\n%s\tdPrecision=%f",indent,dlValuator->dPrecision);
+		fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+		fprintf(stream,"\n%svaluator {",indent);
+		writeDlObject(stream,&(dlValuator->object),level+1);
+		writeDlControl(stream,&(dlValuator->control),level+1);
+		fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
+			stringValueTable[dlValuator->label]);
+		fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
+			stringValueTable[dlValuator->clrmod]);
+		fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+			stringValueTable[dlValuator->direction]);
+		fprintf(stream,"\n%s\tdPrecision=%f",indent,dlValuator->dPrecision);
+		fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}
+
+static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlValuator *dlValuator = p->structure.valuator;
+  medmGetValues(pRCB,
+    CTRL_RC,       &(dlValuator->control.ctrl),
+    CLR_RC,        &(dlValuator->control.clr),
+    BCLR_RC,       &(dlValuator->control.bclr),
+    LABEL_RC,      &(dlValuator->label),
+    DIRECTION_RC,  &(dlValuator->direction),
+    CLRMOD_RC,     &(dlValuator->clrmod),
+    PRECISION_RC,  &(dlValuator->dPrecision),
+    -1);
+}

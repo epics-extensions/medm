@@ -993,10 +993,10 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
 	globalResourceBundle.height = atoi(stringValue);
 	break;
      case RDBK_RC:
-	strcpy(globalResourceBundle.rdbk,stringValue);
+	strcpy(globalResourceBundle.chan,stringValue);
 	break;
      case CTRL_RC:
-	strcpy(globalResourceBundle.ctrl,stringValue);
+	strcpy(globalResourceBundle.chan,stringValue);
 	break;
      case TITLE_RC:
 	strcpy(globalResourceBundle.title,stringValue);
@@ -1055,14 +1055,6 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
 #ifdef __COLOR_RULE_H__
           XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
 #endif
-          if (currentDisplayInfo != NULL) {
-            if (currentDisplayInfo->numSelectedElements == 1) {
-              dyn = lookupDynamicAttributeElement(
-	        currentDisplayInfo->selectedElementsArray[0]);
-	      if (dyn != NULL) 
-                deleteAndFreeElementAndStructure(currentDisplayInfo,dyn);
-            }
-          }
         }
         break;
 
@@ -1295,16 +1287,16 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs) {
 
      case RDBK_RC:
 	currentString = XmTextFieldGetString(resourceEntryElement[RDBK_RC]);
-	if (strcmp(globalResourceBundle.rdbk,currentString))
+	if (strcmp(globalResourceBundle.chan,currentString))
 	    XmTextFieldSetString(resourceEntryElement[RDBK_RC],
-			globalResourceBundle.rdbk);
+			globalResourceBundle.chan);
 	XtFree(currentString);
 	break;
      case CTRL_RC:
 	currentString = XmTextFieldGetString(resourceEntryElement[CTRL_RC]);
-	if (strcmp(globalResourceBundle.ctrl,currentString))
+	if (strcmp(globalResourceBundle.chan,currentString))
 	   XmTextFieldSetString(resourceEntryElement[CTRL_RC],
-		     globalResourceBundle.ctrl);
+		     globalResourceBundle.chan);
 	XtFree(currentString);
 	break;
      case TITLE_RC:
@@ -1552,8 +1544,10 @@ void initializeGlobalResourceBundle()
  globalResourceBundle.height = 10;
  globalResourceBundle.sbit = 15;
  globalResourceBundle.ebit = 0;
+#if 0
  globalResourceBundle.rdbk[0] = '\0';
  globalResourceBundle.ctrl[0] = '\0';
+#endif
  globalResourceBundle.title[0] = '\0';
  globalResourceBundle.xlabel[0] = '\0';
  globalResourceBundle.ylabel[0] = '\0';
@@ -1577,7 +1571,7 @@ void initializeGlobalResourceBundle()
  globalResourceBundle.align= HORIZ_LEFT;
  globalResourceBundle.format = DECIMAL;
  globalResourceBundle.label = LABEL_NONE;
- globalResourceBundle.direction = UP;
+ globalResourceBundle.direction = RIGHT;
  globalResourceBundle.clrmod = STATIC;
 #ifdef __COLOR_RULE_H__
  globalResourceBundle.colorRule = 0;
@@ -4196,5 +4190,283 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       XtSetSensitive(axisRangeMinRC[Y2_AXIS_ELEMENT],False);
       XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],False);
     }
+}
+
+void medmGetValues(ResourceBundle *pRB, ...) {
+  va_list ap;
+  int arg;
+  va_start(ap, pRB);
+  arg = va_arg(ap,int);
+  while (arg >= 0) {
+    switch (arg) {
+      case X_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->x;
+        break;
+      }
+      case Y_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->y;
+        break;
+      }
+      case WIDTH_RC : {
+        unsigned int *pvalue = va_arg(ap,unsigned int *);
+        *pvalue = pRB->width;
+        break;
+      }
+      case HEIGHT_RC : {
+        unsigned int *pvalue = va_arg(ap,unsigned int *);
+        *pvalue = pRB->height;
+        break;
+      }
+      case RDBK_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->chan);
+        break;
+      }
+      case CTRL_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->chan);
+        break;
+      }
+      case TITLE_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->title);
+        break;
+      }
+      case XLABEL_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->xlabel);
+        break;
+      }
+      case YLABEL_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->ylabel);
+        break;
+      }
+      case CLR_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->clr;
+        break;
+      }
+      case BCLR_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->bclr;
+        break;
+      }
+      case BEGIN_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->begin;
+        break;
+      }
+      case PATH_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->path;
+        break;
+      }
+      case ALIGN_RC : {
+        TextAlign *pvalue = va_arg(ap,TextAlign *);
+        *pvalue = pRB->align;
+        break;
+      }
+      case FORMAT_RC : {
+        TextFormat *pvalue = va_arg(ap,TextFormat *);
+        *pvalue = pRB->format;
+        break;
+      }
+      case LABEL_RC : {
+        LabelType *pvalue = va_arg(ap,LabelType *);
+        *pvalue = pRB->label;
+        break;
+      }
+      case DIRECTION_RC : {
+        Direction *pvalue = va_arg(ap,Direction *);
+        *pvalue = pRB->direction;
+        break;
+      }
+      case FILLMOD_RC : {
+        FillMode *pvalue = va_arg(ap,FillMode *);
+        *pvalue = pRB->fillmod;
+        break;
+      }
+      case STYLE_RC : {
+        EdgeStyle *pvalue = va_arg(ap,EdgeStyle *);
+        *pvalue = pRB->style;
+        break;
+      }
+      case FILL_RC : {
+        FillStyle *pvalue = va_arg(ap,FillStyle *);
+        *pvalue = pRB->fill;
+        break;
+      }
+      case CLRMOD_RC : {
+        ColorMode *pvalue = va_arg(ap,ColorMode *);
+        *pvalue = pRB->clrmod;
+        break;
+      }
+#ifdef __COLOR_RULE_H__
+      case COLOR_RULE_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->colorRule;
+        break;
+      }
+#endif
+      case VIS_RC : {
+        VisibilityMode *pvalue = va_arg(ap,VisibilityMode *);
+        *pvalue = pRB->vis;
+        break;
+      }
+      case CHAN_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->chan);
+        break;
+      }
+      case DATA_CLR_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->data_clr;
+        break;
+      }
+      case DIS_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->dis;
+        break;
+      }
+      case XYANGLE_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->xyangle;
+        break;
+      }
+      case ZANGLE_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->zangle;
+        break;
+      }
+      case PERIOD_RC : {
+        double *pvalue = va_arg(ap,double *);
+        *pvalue = pRB->period;
+        break;
+      }
+      case UNITS_RC : {
+        TimeUnits *pvalue = va_arg(ap,TimeUnits *);
+        *pvalue = pRB->units;
+        break;
+      }
+      case CSTYLE_RC : {
+        CartesianPlotStyle *pvalue = va_arg(ap,CartesianPlotStyle *);
+        *pvalue = pRB->cStyle;
+        break;
+      }
+      case ERASE_OLDEST_RC : {
+        EraseOldest *pvalue = va_arg(ap,EraseOldest *);
+        *pvalue = pRB->erase_oldest;
+        break;
+      }
+      case COUNT_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->count;
+        break;
+      }
+      case STACKING_RC : {
+        Stacking *pvalue = va_arg(ap,Stacking *);
+        *pvalue = pRB->stacking;
+        break;
+      }
+      case IMAGETYPE_RC : {
+        ImageType *pvalue = va_arg(ap,ImageType *);
+        *pvalue = pRB->imageType;
+        break;
+      }
+      case TEXTIX_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->textix);
+        break;
+      }
+      case MSG_LABEL_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->messageLabel);
+        break;
+      }
+      case PRESS_MSG_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->press_msg);
+        break;
+      }
+      case RELEASE_MSG_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->release_msg);
+        break;
+      }
+      case IMAGENAME_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->imageName);
+        break;
+      }
+      case DATA_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->data);
+        break;
+      }
+      case CMAP_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->cmap);
+        break;
+      }
+      case NAME_RC : {
+        char *pvalue = va_arg(ap,char *);
+        strcpy(pvalue,pRB->name);
+        break;
+      }
+      case LINEWIDTH_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->lineWidth;
+        break;
+      }
+      case PRECISION_RC : {
+        double *pvalue = va_arg(ap,double *);
+        *pvalue = pRB->dPrecision;
+        break;
+      }
+      case SBIT_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->sbit;
+        break;
+      }
+      case EBIT_RC : {
+        int *pvalue = va_arg(ap,int *);
+        *pvalue = pRB->ebit;
+        break;
+      }
+      case RDDATA_RC : {
+        break;
+        break;
+      }
+      case CPDATA_RC : {
+        break;
+      }
+      case SCDATA_RC : {
+        break;
+      }
+      case SHELLDATA_RC : {
+        break;
+      }
+      case CPAXIS_RC : {
+        break;
+      }
+      case TRIGGER_RC : {
+        break;
+      }
+      case ERASE_RC : {
+        break;
+      }
+      case ERASE_MODE_RC : {
+        break;
+      }
+      default :
+        break;
+    }
+    arg = va_arg(ap,int);
+  }
+  va_end(ap);
+  return;
 }
 

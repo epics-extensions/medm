@@ -67,6 +67,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 DisplayInfo *createDisplay()
 {
   DisplayInfo *displayInfo;
+  DlElement *dlElement;
   Arg args[10];
 
 /* clear currentDisplayInfo - not really one yet */
@@ -81,10 +82,26 @@ DisplayInfo *createDisplay()
   globalResourceBundle.width = DEFAULT_DISPLAY_WIDTH;
   globalResourceBundle.height = DEFAULT_DISPLAY_HEIGHT;
   strcpy(globalResourceBundle.name,DEFAULT_FILE_NAME);
-  createDlFile(displayInfo),
-  createDlDisplay(displayInfo);
-  createDlColormap(displayInfo);
-
+  dlElement = createDlFile(displayInfo);
+  if (dlElement) {
+    appendDlElement(&(displayInfo->dlElementListTail),dlElement);
+  }
+  dlElement = createDlDisplay(displayInfo);
+  if (dlElement) {
+    DlDisplay *dlDisplay = dlElement->structure.display;
+    dlDisplay->object.x = globalResourceBundle.x;
+    dlDisplay->object.y = globalResourceBundle.y;
+    dlDisplay->object.width = globalResourceBundle.width;
+    dlDisplay->object.height = globalResourceBundle.height;
+    dlDisplay->clr = globalResourceBundle.clr;
+    dlDisplay->bclr = globalResourceBundle.bclr;
+    appendDlElement(&(displayInfo->dlElementListTail),dlElement);
+  }
+  dlElement = createDlColormap(displayInfo);
+  if (dlElement) {
+    appendDlElement(&(displayInfo->dlElementListTail),dlElement);
+    displayInfo->dlColormapElement = dlElement;
+  }
   dmTraverseDisplayList(displayInfo);
   XtPopup(displayInfo->shell,XtGrabNone);
 
@@ -92,11 +109,3 @@ DisplayInfo *createDisplay()
 
   return(displayInfo);
 }
-
-
-
-
-/********************************************
- **************** Callbacks *****************
- ********************************************/
-

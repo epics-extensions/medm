@@ -68,14 +68,13 @@ typedef struct _Rectangle {
   DlRectangle      *dlRectangle;
   Record           *record;
   UpdateTask       *updateTask;
-  DlDynamicAttrMod dynAttr;
-  DlAttribute      attr;
 } Rectangle;
 
 static void rectangleDraw(XtPointer cd);
 static void rectangleUpdateValueCb(XtPointer cd);
 static void rectangleDestroyCb(XtPointer cd);
 static void rectangleName(XtPointer, char **, short *, int *);
+static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p);
 
 
 static void drawRectangle(Rectangle *pr) {
@@ -84,13 +83,13 @@ static void drawRectangle(Rectangle *pr) {
   Display *display = XtDisplay(pr->widget);
   DlRectangle *dlRectangle = pr->dlRectangle;
 
-  lineWidth = (pr->attr.width+1)/2;
-  if (pr->attr.fill == F_SOLID) {
+  lineWidth = (dlRectangle->attr.width+1)/2;
+  if (dlRectangle->attr.fill == F_SOLID) {
     XFillRectangle(display,XtWindow(pr->widget),displayInfo->gc,
           dlRectangle->object.x,dlRectangle->object.y,
           dlRectangle->object.width,dlRectangle->object.height);
   } else
-  if (pr->attr.fill == F_OUTLINE) {
+  if (dlRectangle->attr.fill == F_OUTLINE) {
     XDrawRectangle(display,XtWindow(pr->widget),displayInfo->gc,
           dlRectangle->object.x + lineWidth,
           dlRectangle->object.y + lineWidth,
@@ -108,7 +107,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
 #endif
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (displayInfo->useDynamicAttribute != FALSE)){
+      && (dlRectangle->dynAttr.chan[0] != '\0')){
     Rectangle *pr;
     pr = (Rectangle *) malloc(sizeof(Rectangle));
     pr->dlRectangle = dlRectangle;
@@ -125,13 +124,13 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
       pr->updateTask->opaque = False;
     }
     pr->record = medmAllocateRecord(
-                  displayInfo->dynamicAttribute.attr.param.chan,
+                   dlRectangle->dynAttr.chan,
                   rectangleUpdateValueCb,
                   NULL,
                   (XtPointer) pr);
 
 #ifdef __COLOR_RULE_H__
-    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+    switch (dlRectangle->dynAttr.clr) {
       STATIC :
         pr->record->monitorValueChanged = False;
         pr->record->monitorSeverityChanged = False;
@@ -145,39 +144,44 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
     }
 #else
     pr->record->monitorValueChanged = False;
-    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+    if (dlRectangle->dynAttr.clr != ALARM ) {
       pr->record->monitorSeverityChanged = False;
     }
 #endif
 
-    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+    if (dlRectangle->dynAttr.vis == V_STATIC ) {
       pr->record->monitorZeroAndNoneZeroTransition = False;
     }
     pr->widget = displayInfo->drawingArea;
-    pr->attr = displayInfo->attribute;
-    pr->dynAttr = displayInfo->dynamicAttribute.attr.mod;
-  } else
-  if (displayInfo->attribute.fill == F_SOLID) {
-    unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
-    XFillRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-          dlRectangle->object.x,dlRectangle->object.y,
-          dlRectangle->object.width,dlRectangle->object.height);
-    XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-          dlRectangle->object.x,dlRectangle->object.y,
-          dlRectangle->object.width,dlRectangle->object.height);
-  } else
-  if (displayInfo->attribute.fill == F_OUTLINE) {
-    unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
-    XDrawRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-          dlRectangle->object.x + lineWidth,
-          dlRectangle->object.y + lineWidth,
-          dlRectangle->object.width - 2*lineWidth,
-          dlRectangle->object.height - 2*lineWidth);
-    XDrawRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-          dlRectangle->object.x + lineWidth,
-          dlRectangle->object.y + lineWidth,
-          dlRectangle->object.width - 2*lineWidth,
-          dlRectangle->object.height - 2*lineWidth);
+  } else {
+    executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
+
+    if (dlRectangle->attr.fill == F_SOLID) {
+      unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
+      XFillRectangle(display,XtWindow(displayInfo->drawingArea),
+            displayInfo->gc,
+            dlRectangle->object.x,dlRectangle->object.y,
+            dlRectangle->object.width,dlRectangle->object.height);
+      XFillRectangle(display,displayInfo->drawingAreaPixmap,
+            displayInfo->gc,
+            dlRectangle->object.x,dlRectangle->object.y,
+            dlRectangle->object.width,dlRectangle->object.height);
+    } else
+    if (dlRectangle->attr.fill == F_OUTLINE) {
+      unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
+      XDrawRectangle(display,XtWindow(displayInfo->drawingArea),
+            displayInfo->gc,
+            dlRectangle->object.x + lineWidth,
+            dlRectangle->object.y + lineWidth,
+            dlRectangle->object.width - 2*lineWidth,
+            dlRectangle->object.height - 2*lineWidth);
+      XDrawRectangle(display,displayInfo->drawingAreaPixmap,
+            displayInfo->gc,
+            dlRectangle->object.x + lineWidth,
+            dlRectangle->object.y + lineWidth,
+            dlRectangle->object.width - 2*lineWidth,
+            dlRectangle->object.height - 2*lineWidth);
+    }
   }
 }
 
@@ -193,36 +197,36 @@ static void rectangleDraw(XtPointer cd) {
   XGCValues gcValues;
   unsigned long gcValueMask;
   Display *display = XtDisplay(pr->widget);
+  DlRectangle *dlRectangle = pr->dlRectangle;
 
   if (pd->connected) {
-    gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (pr->dynAttr.clr) {
+    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+    switch (dlRectangle->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
-        gcValues.foreground = displayInfo->dlColormap[pr->attr.clr];
+        gcValues.foreground = displayInfo->dlColormap[dlRectangle->attr.clr];
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
                                   pd->value,
-                                  pr->dynAttr.colorRule,
-                                  pr->attr.clr);
+                                  dlRectangle->dynAttr.colorRule,
+                                  dlRectangle->attr.clr);
         break;
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[pr->attr.clr];
+        gcValues.foreground = displayInfo->dlColormap[dlRectangle->attr.clr];
         break;
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
 #endif
     }
-    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pr->attr.width;
-    gcValues.line_style = ( (pr->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    gcValues.line_width = dlRectangle->attr.width;
+    gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ? LineSolid : LineOnOffDash);
     XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (pr->dynAttr.vis) {
+    switch (dlRectangle->dynAttr.vis) {
       case V_STATIC:
         drawRectangle(pr);
         break;
@@ -239,7 +243,7 @@ static void rectangleDraw(XtPointer cd) {
         break;
     }
     if (pd->readAccess) {
-      if (!pr->updateTask->overlapped && pr->dynAttr.vis == V_STATIC) {
+      if (!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
         pr->updateTask->opaque = True;
       }
     } else {
@@ -247,11 +251,10 @@ static void rectangleDraw(XtPointer cd) {
       draw3DQuestionMark(pr->updateTask);
     }
   } else {
-    gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
+    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
     gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pr->attr.width;
-    gcValues.line_style = ((pr->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    gcValues.line_width = dlRectangle->attr.width;
+    gcValues.line_style = ((dlRectangle->attr.style == SOLID) ? LineSolid : LineOnOffDash);
     XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
     drawRectangle(pr);
   }
@@ -272,3 +275,134 @@ static void rectangleName(XtPointer cd, char **name, short *severity, int *count
   name[0] = pr->record->name;
   severity[0] = pr->record->severity;
 }
+
+
+DlElement *createDlRectangle(
+  DisplayInfo *displayInfo)
+{
+  DlRectangle *dlRectangle;
+  DlElement *dlElement;
+
+  dlRectangle = (DlRectangle *) malloc(sizeof(DlRectangle));
+  if (!dlRectangle) return 0;
+
+  objectAttributeInit(&(dlRectangle->object)); 
+  basicAttributeInit(&(dlRectangle->attr));
+  dynamicAttributeInit(&(dlRectangle->dynAttr));
+ 
+  if (!(dlElement = createDlElement(DL_Rectangle,
+                    (XtPointer)      dlRectangle,
+                    (medmExecProc)   executeDlRectangle,
+                    (medmWriteProc)  writeDlRectangle,
+										0,
+										0,
+										rectangleInheritValues))) {
+    free(dlRectangle);
+  }
+
+  return(dlElement);
+}
+
+DlElement *parseRectangle(DisplayInfo *displayInfo,DlComposite *dlComposite)
+{
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlRectangle *dlRectangle;
+  DlElement *dlElement = createDlRectangle(displayInfo);
+
+  if (!dlElement) return 0;
+  dlRectangle = dlElement->structure.rectangle;
+  do {
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+      case T_WORD:
+        if (!strcmp(token,"object"))
+          parseObject(displayInfo,&(dlRectangle->object));
+        else
+        if (!strcmp(token,"basic attribute"))
+          parseBasicAttribute(displayInfo,&(dlRectangle->attr));
+        else
+        if (!strcmp(token,"dynamic attribute"))
+          parseDynamicAttribute(displayInfo,&(dlRectangle->dynAttr));
+        break;
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+          nestingLevel++; break;
+      case T_RIGHT_BRACE:
+          nestingLevel--; break;
+    }
+  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+  POSITION_ELEMENT_ON_LIST();
+
+  return dlElement;
+}
+
+void writeDlRectangle(
+  FILE *stream,
+  DlRectangle *dlRectangle,
+  int level)
+{
+  char indent[16];
+
+  memset(indent,'\t',level);
+  indent[level] = '\0'; 
+ 
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+  if (MedmUseNewFileFormat) {
+#endif
+  	fprintf(stream,"\n%srectangle {",indent);
+  	writeDlObject(stream,&(dlRectangle->object),level+1);
+  	writeDlBasicAttribute(stream,&(dlRectangle->attr),level+1);
+  	writeDlDynamicAttribute(stream,&(dlRectangle->dynAttr),level+1);
+  	fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+	} else {
+  	writeDlBasicAttribute(stream,&(dlRectangle->attr),level);
+  	writeDlDynamicAttribute(stream,&(dlRectangle->dynAttr),level);
+  	fprintf(stream,"\n%srectangle {",indent);
+  	writeDlObject(stream,&(dlRectangle->object),level+1);
+  	fprintf(stream,"\n%s}",indent);
+	}
+#endif
+}
+
+
+void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlRectangle *dlRectangle = p->structure.rectangle;
+  medmGetValues(pRCB,
+    X_RC,          &(dlRectangle->object.x),
+    Y_RC,          &(dlRectangle->object.y),
+    WIDTH_RC,      &(dlRectangle->object.width),
+    HEIGHT_RC,     &(dlRectangle->object.height),
+    CLR_RC,        &(dlRectangle->attr.clr),
+    STYLE_RC,      &(dlRectangle->attr.style),
+    FILL_RC,       &(dlRectangle->attr.fill),
+    LINEWIDTH_RC,  &(dlRectangle->attr.width),
+    CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
+    VIS_RC,        &(dlRectangle->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
+#endif
+    CHAN_RC,         dlRectangle->dynAttr.chan,
+    -1);
+}
+ 
+static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
+  DlRectangle *dlRectangle = p->structure.rectangle;
+  medmGetValues(pRCB,
+    CLR_RC,        &(dlRectangle->attr.clr),
+    STYLE_RC,      &(dlRectangle->attr.style),
+    FILL_RC,       &(dlRectangle->attr.fill),
+    LINEWIDTH_RC,  &(dlRectangle->attr.width),
+    CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
+    VIS_RC,        &(dlRectangle->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
+#endif
+    CHAN_RC,         dlRectangle->dynAttr.chan,
+    -1);
+}
+
