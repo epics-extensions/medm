@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.4  1994/10/25 15:51:46  winans
+# Revision 1.5  1994/11/02 18:40:15  vong
+# to add the the extension library path
+#
+# Revision 1.4  1994/10/25  15:51:46  winans
 # Changed the SRCS macro to SRCS.c and SRCS.cc
 #
 # Revision 1.3  1994/10/20  15:14:40  mda
@@ -24,7 +27,7 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
 				-I$(MOTIF)/include -I$(X11_INC)
 
-USR_LDFLAGS = -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF)/lib -L$(X11_LIB)
+USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF)/lib -L$(X11_LIB)
 USR_LDLIBS = -lANLwidgets -lPrintUtils -lGraphX -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
 
 SRCS.c = ../actions.c ../caDM.c ../callbacks.c \
