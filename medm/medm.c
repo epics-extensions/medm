@@ -101,7 +101,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifdef VMS
+void vmsTrimVersionNumber (char *fileName);
+#include "icon25.xpm"
+#else
 #include "icon25"
+#endif
 
 #include <Xm/MwmUtil.h>
 #include <X11/IntrinsicP.h>
@@ -1013,7 +1018,11 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 
       /* Found string with right suffix - presume it's a valid display name */
 	if (canAccess = !access(fileStr,R_OK|F_OK)) { /* Found the file */
+#ifdef VMS
+            if (strchr (fileStr, '[') != NULL) {
+#else
 	    if (fileStr[0] == '/') {
+#endif
 	      /* Is a full path name */
 		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
 	    } else {
@@ -1021,7 +1030,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		if (strlen(currentDirectoryName)+strlen(fileStr)+1 <
 		  (size_t) FULLPATHNAME_SIZE) {
 		    strcpy(fullPathName,currentDirectoryName);
+#ifndef VMS
 		    strcat(fullPathName,"/");
+#endif
 		    strcat(fullPathName,fileStr);
 		} else {
 		    canAccess = False;
@@ -1039,7 +1050,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		    if (strlen(name)+strlen(fileStr)+1 <
 		      (size_t) FULLPATHNAME_SIZE) {
 			strcpy(fullPathName,name);
+#ifndef VMS
 			strcat(fullPathName,"/");
+#endif
 			strcat(fullPathName,fileStr);
 			if (canAccess = !access(fullPathName,R_OK|F_OK)) break;
 		    }
@@ -1912,15 +1925,22 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     if (filename == NULL) return False;
 
     strLen1 = strlen(filename);
-    strLen2 = strlen(DISPLAY_FILE_BACKUP_SUFFIX);
-    strLen3 = strlen(DISPLAY_FILE_ASCII_SUFFIX);
-    strLen4 = strlen(templateSuffix);
-
  
     if (strLen1 >= MAX_FILE_CHARS) {
 	medmPrintf(1,"\nPath too Long: %s\n",filename);
 	return False;
     }
+
+#ifdef VMS
+    medmTrimVersionNumber(filename);
+    strcpy(f1,filename);
+    tolower(f1,filename);
+#endif
+
+    strLen1 = strlen(filename);
+    strLen2 = strlen(DISPLAY_FILE_BACKUP_SUFFIX);
+    strLen3 = strlen(DISPLAY_FILE_ASCII_SUFFIX);
+    strLen4 = strlen(templateSuffix);
 
   /* Search for the position of the .adl suffix */
     strcpy(f1,filename);
@@ -2049,6 +2069,21 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     }
     return True;
 }
+
+#ifdef VMS
+void vmsTrimVersionNumber (char *fileName)
+{
+    char *tmpPtr;
+    
+    
+    tmpPtr = fileName + strlen (fileName) - 1;
+    
+    while ((tmpPtr > fileName) && (*tmpPtr != ';'))
+      tmpPtr--;
+    if (*tmpPtr == ';')
+      *tmpPtr = '\0';
+}
+#endif
 
 void medmExit()
 {

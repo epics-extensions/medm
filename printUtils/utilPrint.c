@@ -21,16 +21,16 @@ void utilPrint(display,window,fileName)
     Window window;
     char *fileName;
 {
-    char *commandBuffer, *newFileName, *psFileName;
+    char *commandBuffer, *newFileName, *psFileName, *printer;
     time_t seconds;
     FILE *fo;
     int status;
-
-    if (getenv("PSPRINTER") == (char *)NULL) {
+    if ((printer=getenv("PSPRINTER")) == (char *)NULL) {
 	fprintf(stderr,
 	  "\nutilPrint: PSPRINTER environment variable not set, printing disallowed\n");
 	return;
     }
+
   /* return if not enough information around */
     if (display == (Display *)NULL || window == (Window)NULL
       || fileName == (char *)NULL) return;
@@ -49,7 +49,11 @@ void utilPrint(display,window,fileName)
     sprintf(newFileName,"%s%d",fileName,seconds);
 #endif    
     psFileName = (char *) calloc(1,256);
+#ifndef VMS
     sprintf(psFileName,"%s%s",newFileName,".ps");
+#else
+    sprintf(psFileName,"%s%s",newFileName,"_ps");
+#endif
 
     {
 	char *myArgv[4];
@@ -77,6 +81,7 @@ void utilPrint(display,window,fileName)
 #endif   
 
 #if DEBUG_PRINT == 0
+#ifndef VMS     /* UNIX code */
     strcpy(commandBuffer,"lp -c -d$PSPRINTER ");
     strcat(commandBuffer, psFileName);
     status=system(commandBuffer);
@@ -92,6 +97,17 @@ void utilPrint(display,window,fileName)
     strcpy(commandBuffer,"rm ");
     strcat(commandBuffer,psFileName);
     system(commandBuffer);
-#endif    
+#else     /* VMS code */
+    sprintf(commandBuffer,"print /queue=%s/delete \0",printer);
+    strcat(commandBuffer, psFileName);
+    printf("system command %s\n",commandBuffer);
+    system(commandBuffer);
+    strcpy(commandBuffer,"delete/noconfirm/nolog ");
+    strcat(commandBuffer,newFileName);
+    strcat(commandBuffer,";*");
+    printf("system command %s\n",commandBuffer);
+    system(commandBuffer);
+#endif     /* #ifndef VMS */
+#endif     /* #if DEBUG_PRINT == 0 */
 
 }

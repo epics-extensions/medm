@@ -240,7 +240,11 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
     int i;
     Boolean match;
     char *end;
-		
+
+#ifdef MEDM_CDEV
+    pd->useMsgWhenWrite[0] = False;
+    pd->useMsgWhenWrite[1] = False;
+#endif
 
     switch (pd->dataType) {
     case DBF_STRING:
@@ -303,6 +307,9 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		  "  Value: \"%s\"\n",
 		  pd->name?pd->name:"NULL",
 		  dlMessageButton->press_msg);
+#ifdef MEDM_CDEV
+		pd->useMsgWhenWrite[0] = True;
+#endif
 	    }
 	}
 	if (dlMessageButton->release_msg[0] != '\0') {
@@ -314,6 +321,9 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		  "  Value: \"%s\"\n",
 		  pd->name?pd->name:"NULL",
 		  dlMessageButton->release_msg);
+#ifdef MEDM_CDEV
+		pd->useMsgWhenWrite[1] = True;
+#endif
 	    }
 	}
 	break;
@@ -398,10 +408,23 @@ static void messageButtonValueChangedCb(Widget w,
 		if (dlMessageButton->press_msg[0] != '\0') {
 		    switch (pd->dataType) {
 		    case DBF_STRING:
-			medmSendString(pmb->record,dlMessageButton->press_msg);
+		        medmSendString(pmb->record,dlMessageButton->press_msg);
 			break;
+#ifdef MEDM_CDEV
+		    case DBF_ENUM:
+		        medmSendString(pmb->record,
+				       pd->stateStrings[(int)pmb->pressValue]);
+			break;
+#endif
 		    default:
+#ifdef MEDM_CDEV
+		        if (pd->useMsgWhenWrite[0])
+			  medmSendMsg (pmb->record, dlMessageButton->press_msg);
+			else
+			  medmSendDouble(pmb->record,pmb->pressValue);
+#else
 			medmSendDouble(pmb->record,pmb->pressValue);
+#endif
 			break;
 		    }
 		}
@@ -412,8 +435,21 @@ static void messageButtonValueChangedCb(Widget w,
 		      case DBF_STRING:
 			  medmSendString(pmb->record,dlMessageButton->release_msg);
 			  break;
+#ifdef MEDM_CDEV
+		      case DBF_ENUM:
+			  medmSendString(pmb->record,
+					 pd->stateStrings[(int)pmb->releaseValue]);
+			  break;
+#endif
 		      default:
+#ifdef MEDM_CDEV
+		        if (pd->useMsgWhenWrite[1])
+			  medmSendMsg (pmb->record, dlMessageButton->release_msg);
+			else
 			  medmSendDouble(pmb->record,pmb->releaseValue);
+#else
+			  medmSendDouble(pmb->record,pmb->releaseValue);
+#endif
 			  break;
 		      }
 		  }

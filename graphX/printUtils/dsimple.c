@@ -56,6 +56,8 @@ extern int screen;
 /*
  * Malloc: like malloc but handles out of memory using Fatal_Error.
  */
+
+#ifndef VMS
 char *Malloc(size)
     unsigned size;
 {
@@ -85,7 +87,7 @@ char *Realloc(ptr, size)
 
     return(new_ptr);
 }
-
+#endif
 
 /*
  * Get_Display_Name (argc, argv) Look for -display, -d, or host:dpy (obselete)

@@ -16,6 +16,12 @@
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.2  1998/09/11 22:31:36  evans
+ *   Merged changes from Jie Chen (CDEV) and Anton Mezger (VMS).
+ *
+ *   Revision 1.1.2.1  1998/09/11 20:59:39  evans
+ *   Incorporated Jie Chen's CDEV modifications into MEDM 2.3.5Beta1.
+ *
  *   Revision 1.1  1998/08/25 18:39:06  evans
  *   Incorporated changes from Jie Chen for CDEV.  Not tested with
  *   MEDM_CDEV defined.
@@ -40,6 +46,7 @@
 #include "xtParams.h"
 
 #include "medmCdev.h"
+#include "medmCdevP.h"
 #include "medmCdevUtils.h"
 
 #define BYTE medm_cdev_byte
@@ -254,8 +261,6 @@ medmUpdateChannelCb (int status, void* arg,
       pr->updateValueCb ((XtPointer)pr);
   }
   else if (status == CDEV_ACCESSCHANGED) {
-    pr->connected = True;
-
     // really find access flags
     int acflag = req.getAccess ();
 
@@ -859,6 +864,8 @@ static void medmInitRecord (Record *p)
   p->connected = False;
   p->readAccess = True;
   p->writeAccess = True;
+  p->useMsgWhenWrite[0] = False;
+  p->useMsgWhenWrite[1] = False;
   p->stateStrings = 0;
   p->name = 0;
   p->attr = 0;
@@ -1024,6 +1031,15 @@ medmSendString (Record* pr, char* data)
   }
 }  
 
+void
+medmSendMsg (Record* pr, char* msg)
+{
+  cdevDevice* device = (cdevDevice *)pr->dev;
+
+  if (device) 
+    device->send (msg, 0, 0);
+}  
+
 
 void medmRecordAddUpdateValueCb(Record *pr, 
 				void (*updateValueCb)(XtPointer)) 
@@ -1152,7 +1168,12 @@ medm_tsStampToText (cdev_TS_STAMP* ts, int type, char* buffer)
   return retbuf;
 }
 
-void popupPvInfo(DisplayInfo *displayInfo)
+#ifndef TIME_STRING_MAX
+#define TIME_STRING_MAX 81
+#endif
+
+void 
+popupPvInfo(DisplayInfo *displayInfo)
 {
   long now; 
   struct tm *tblock;

@@ -387,7 +387,7 @@ static Boolean SetValues(Widget cur, Widget req,
 {
     IndicatorWidget wnew = (IndicatorWidget)new;
     IndicatorWidget wcur = (IndicatorWidget)cur;
-    Boolean do_redisplay = False, do_resize = True;
+    Boolean do_redisplay = False, do_resize = False;
 
     DPRINTF(("Indicator: executing SetValues \n"));
 

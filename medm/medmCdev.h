@@ -18,6 +18,12 @@
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.2  1998/09/11 22:31:37  evans
+ *   Merged changes from Jie Chen (CDEV) and Anton Mezger (VMS).
+ *
+ *   Revision 1.1.2.1  1998/09/11 20:59:40  evans
+ *   Incorporated Jie Chen's CDEV modifications into MEDM 2.3.5Beta1.
+ *
  *   Revision 1.1  1998/08/25 18:39:06  evans
  *   Incorporated changes from Jie Chen for CDEV.  Not tested with
  *   MEDM_CDEV defined.
@@ -51,62 +57,6 @@
 
 #undef BYTE
 
-/* KE: The following lines were formerly in medm_cdev_impl.h */
-
-#include <stdio.h>
-#include <string.h>
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-#include <cdevTypes.h>
-
-class cdevSystem;
-class cdevRequestObject;
-
-class medmInputFd
-{
-public:
-  // constructor
-  medmInputFd        (int f, int i, medmInputFd* next = 0);
-  // destructor
-  ~medmInputFd       (void);
-
-  int                fd;
-  XtInputId          id;
-  medmInputFd*       next;
-};
-
-class medmXInput
-{
-public:
-  // constrcutor
-  medmXInput  (XtAppContext context, cdevSystem* system);
-  // destructor
-  ~medmXInput (void);
-
-  // operations
-  // add a single file descriptor 
-  void addInput    (int fd, XtPointer mask);
-  void removeInput (int fd);
-
-protected:
-  // internal file descriptors
-  medmInputFd* xfds_;
-  
-private:
-  static void inputCallback (XtPointer, int*, XtInputId*);
-  XtAppContext context_;
-
-  cdevSystem* system_;
-
-  // deny copy and assignment operations
-  medmXInput (const medmXInput& input);
-  medmXInput& operator = (const medmXInput& input);
-};
-
-extern medmXInput* medmGXinput;
-
-/* KE: End of lines formerly in medm_cdev_impl.h */
-
 #if defined (__cplusplus)
 extern "C" {
 #endif
@@ -127,6 +77,7 @@ typedef struct _Record {
   Boolean            connected;
   Boolean            readAccess;
   Boolean            writeAccess;
+  Boolean            useMsgWhenWrite[2];
   char               **stateStrings;
   char               *name;
   char               *attr; 
@@ -190,6 +141,8 @@ extern int   medmPvDataType             (Record* pr);
 extern int   medmPvCount                (Record* pr);
 
 extern int   medmPvGetValue             (Record* pr, struct dbr_time_string *value);
+
+extern void  medmSendMsg                (Record* pr, char* msg);
 
 enum tsTextType{
     TS_TEXT_MONDDYYYY,

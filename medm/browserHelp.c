@@ -80,6 +80,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define NETSCAPEPATH "netscape"
 #endif
 
+#ifdef VMS
+#include <ssdef.h>
+#include <lib$routines.h>
+#include <ctype.h>
+#include <descrip.h>
+#include <clidef.h>
+#endif
+
 /* Function prototypes */
 
 extern int kill(pid_t, int);     /* May not be defined for strict ANSI */
@@ -128,7 +136,11 @@ int callBrowser(char *url)
 	if(!netscapew) {
 	    envstring=getenv("NETSCAPEPATH");
 	    if(!envstring) {
+#ifndef VMS
 		sprintf(command,"%s -install '%s' &",NETSCAPEPATH,url);
+#else
+		sprintf(command,"%s -install \"%s\"",NETSCAPEPATH,url);
+#endif
 	    }
 	    else {
 		sprintf(command,"%s -install '%s' &",envstring);
@@ -147,12 +159,22 @@ int callBrowser(char *url)
   /*   (Use -id for speed) */
     envstring=getenv("NETSCAPEPATH");
     if(!envstring) {
+#ifndef VMS
 	sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
 	  NETSCAPEPATH,netscapew,url);
+#else
+        sprintf(command,"%s -id 0x%x -remote \"openURL(%s)\"",
+	  NETSCAPEPATH,netscapew,url);
+#endif
     }
     else {
+#ifndef VMS
 	sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
 	  envstring,netscapew,url);
+#else
+	sprintf(command,"%s -id 0x%x -remote \"openURL(%s)\" &",
+	  envstring,netscapew,url);
+#endif
     }
 #if DEBUG
     printf("execute(before): cmd=%s\n",command);
@@ -196,10 +218,11 @@ static Window checkNetscapeWindow(Window w)
 static int execute(char *s)
 /* From O'Reilly, Vol. 1, p. 438 */
 {
+#ifndef VMS
     int status,pid,w;
     register void (*istat)(),(*qstat)();
     
-    if((pid=fork()) == 0) {
+    if((pid=vfork()) == 0) {
 	signal(SIGINT,SIG_DFL);
 	signal(SIGQUIT,SIG_DFL);
 	signal(SIGHUP,SIG_DFL);
@@ -213,6 +236,18 @@ static int execute(char *s)
     signal(SIGINT,istat);
     signal(SIGQUIT,qstat);
     return(status);
+#else
+    int status,spawn_sts;
+    int spawnFlags=CLI$M_NOWAIT;
+    struct dsc$descriptor cmdDesc;
+    printf("command : %s\n",s);
+    cmdDesc.dsc$w_length  = strlen(s);
+    cmdDesc.dsc$b_dtype   = DSC$K_DTYPE_T;
+    cmdDesc.dsc$b_class   = DSC$K_CLASS_S;
+    cmdDesc.dsc$a_pointer = s;
+    spawn_sts = lib$spawn(&cmdDesc,0,0,&spawnFlags,0,0, &status,0,0,0,0,0);
+    printf("statuss %d %d\n",spawn_sts, status);
+#endif
 }
 /**************************** findNetscapeWindow *************************/
 static Window findNetscapeWindow(void)

@@ -58,8 +58,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
 #define DEBUG_TIME 0
 #define DEBUG_XRT 0
-
+#ifndef VMS
 #define CHECK_NAN
+#endif
 
 #ifdef CHECK_NAN
 /* Note that for Solaris isnand and isnanf are defined in ieeefp.h.

@@ -24,8 +24,10 @@ int screen;                                   /* The current screen */
 #ifdef _NO_PROTO
 
 void Fatal_Error();
+#ifndef VMS
 char *Malloc();
 char *Realloc();
+#endif
 char *Get_Display_Name();
 Display *Open_Display();
 void Setup_Display_And_Screen();

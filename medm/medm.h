@@ -122,15 +122,17 @@ extern "C" {
 #include "medmCA.h"
 #endif
 
+#ifdef VMS
+#include "medmVMS.h"      
+#endif				   
+
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
-#include "medmCA.h"
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
 
-#include "epicsVersion.h"
 #include "medmVersion.h"
 
 #define MAIN_NAME "Medm"
