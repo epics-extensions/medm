@@ -1,0 +1,45 @@
+# Makefile.Host for medm/xc (Widgets)
+
+TOP = ../../../..
+include $(TOP)/config/CONFIG_EXTENSIONS
+
+# Needs work to handle CMPLR=STRICT
+#CMPLR = STRICT
+#HOST_OPT = NO
+#CC += -g
+
+USR_LIBS_DEFAULT = Xm Xt X11
+USR_LIBS_WIN32 = XlibGUI XmStatic HCLXt Xlib
+
+ifdef WIN32
+USR_CFLAGS += /DWIN32 /D_WINDOWS
+endif
+
+USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
+
+ca_DIR = $(EPICS_BASE_LIB)
+Com_DIR = $(EPICS_BASE_LIB)
+Xm_DIR = $(MOTIF_LIB)
+Xt_DIR = $(X11_LIB)
+X11_DIR = $(X11_LIB)
+XlibGUI_DIR = $(X11_LIB)
+XmStatic_DIR = $(MOTIF_LIB)
+HCLXt_DIR = $(X11_LIB)
+Xlib_DIR = $(X11_LIB)
+
+
+LIBSRCS += BarGraph.c Caption.c Clip.c Control.c Indicator.c Matrix.c Byte.c
+LIBSRCS += Meter.c Value.c bae.c utils.c version.c
+
+LIBRARY = ANLwidgets
+
+include $(TOP)/config/RULES.Host
+
+meter1: $(OBJS) $(DEPLIBS) meter1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
+
+indicator1 : $(OBJS) $(DEPLIBS) indicator1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
+
+bar1: $(OBJS) $(DEPLIBS) bar1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
