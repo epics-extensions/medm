@@ -382,7 +382,11 @@ void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
     while (di) {
 	DisplayInfo *pDI = displayInfo->next;
 
-	if(!strcmp(filename, di->dlFile->name)) return;
+	if(!strcmp(filename, di->dlFile->name)) {
+	  /* Already there, remove it */
+	    dmRemoveDisplayInfo(displayInfo);
+	    return;
+	}
 	di = di->next;
     }	
     
