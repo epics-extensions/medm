@@ -899,7 +899,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    char *dir = NULL;
 	    char name[FULLPATHNAME_SIZE];
 	    int startPos;
-	    dir = getenv(DISPLAY_LIST_ENV);
+	    dir = getenv("EPICS_DISPLAY_PATH");
 	    if (dir != NULL) {
 		startPos = 0;
 		while (extractStringBetweenColons(dir,name,startPos,&startPos)) {

@@ -101,8 +101,6 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define COLOR_DIALOG_MASK	"*.clr"	/* colormap/color editor files */
 #define CHANNEL_DIALOG_MASK	"*.chn"	/* channel list files */
 
-#define DISPLAY_LIST_ENV "EPICS_DISPLAY_PATH"
-
 #define DISPLAY_DIALOG_TITLE	"EPICS Display Manager"
 #define DISPLAY_DIALOG_CANCEL_STRING	"Exit DM"
 #define DISPLAY_FILE_BACKUP_SUFFIX	"_BAK"

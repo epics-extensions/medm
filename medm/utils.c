@@ -136,7 +136,7 @@ FILE *dmOpenUseableFile(char *filename)
 
   /* If not in current directory, look in EPICS_DISPLAY_PATH directory */
     if (filePtr == NULL) {
-	dir = getenv(DISPLAY_LIST_ENV);
+	dir = getenv("EPICS_DISPLAY_PATH");
 	if (dir != NULL) {
 	    startPos = 0;
 	    while (filePtr == NULL &&
