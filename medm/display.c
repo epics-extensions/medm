@@ -438,10 +438,12 @@ void writeDlDisplay(
  
     fprintf(stream,"\n%sdisplay {",indent);
     writeDlObject(stream,&(dlDisplay->object),level+1);
-    writeDlGrid(stream,&(dlDisplay->grid),level+1);
     fprintf(stream,"\n%s\tclr=%d",indent,dlDisplay->clr);
     fprintf(stream,"\n%s\tbclr=%d",indent,dlDisplay->bclr);
     fprintf(stream,"\n%s\tcmap=\"%s\"",indent,dlDisplay->cmap);
+    fprintf(stream,"\n%s\tgridSpacing=%d",indent,dlDisplay->grid.gridSpacing);
+    fprintf(stream,"\n%s\tgridOn=%d",indent,dlDisplay->grid.gridOn);
+    fprintf(stream,"\n%s\tsnapToGrid=%d",indent,dlDisplay->grid.snapToGrid);
     fprintf(stream,"\n%s}",indent);
 }
 

@@ -188,8 +188,8 @@ typedef enum {
     HORIZ_CENTER = 29,
     HORIZ_RIGHT  = 30,
     VERT_TOP     = 31,
-    VERT_BOTTOM  = 32,
-    VERT_CENTER  = 33
+    VERT_CENTER  = 32,
+    VERT_BOTTOM  = 33
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -255,7 +255,7 @@ const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
 extern const EraseOldest FIRST_ERASE_OLDEST;
 #endif
 
-#define NUM_IMAGE_TYPES         3
+#define NUM_IMAGE_TYPES 3
 typedef enum {
     NO_IMAGE   = 47,
     GIF_IMAGE  = 48,
@@ -267,7 +267,7 @@ const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
 extern const ImageType FIRST_IMAGE_TYPE;
 #endif
 
-#define NUM_CARTESIAN_PLOT_AXIS_STYLES  3
+#define NUM_CARTESIAN_PLOT_AXIS_STYLES 3
 typedef enum {
     LINEAR_AXIS = 50,
     LOG10_AXIS  = 51,
@@ -292,7 +292,7 @@ const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE = CHANNEL_RANGE;
 extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 #endif
 
-#define NUM_ERASE_MODES    2
+#define NUM_ERASE_MODES 2
 typedef enum {
     ERASE_IF_NOT_ZERO = 56,
     ERASE_IF_ZERO     = 57
@@ -370,11 +370,11 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 #endif
 #endif
 
-#define MAX_OPTIONS             7       /* NUM_TEXT_FORMATS     */
+#define MAX_OPTIONS             8       /* NUM_TEXT_FORMATS */
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (76+1)  /* COLOR_RULE_4 + 1     */
+#define NUMBER_STRING_VALUES    (76+1)  /* COLOR_RULE_4 + 1 */
 #else
-#define NUMBER_STRING_VALUES    (72+1)  /* TIME_X_AXIS + 1 */
+#define NUMBER_STRING_VALUES    (72+1)  /* BOOLEAN_TRUE + 1 */
 #endif
 
 /*********************************************************************

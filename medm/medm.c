@@ -116,15 +116,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EDIT_GROUP_BTN            6
 #define EDIT_UNGROUP_BTN          7
 
-#define EDIT_ALIGN_BTN            8
-#define EDIT_UNSELECT_BTN         9
-#define EDIT_SELECT_ALL_BTN      10
-#define EDIT_REFRESH_BTN         11
-#define EDIT_SAME_SIZE_BTN       12
-#define EDIT_GRID_BTN            13
-#define EDIT_SPACE_BTN           14
-#define EDIT_HELP_BTN            15
-#define EDIT_UNDO_BTN            16
+#define EDIT_UNSELECT_BTN         8
+#define EDIT_SELECT_ALL_BTN       9
+#define EDIT_REFRESH_BTN         10
+#define EDIT_HELP_BTN            11
+#define EDIT_UNDO_BTN            12
+#define EDIT_FIND_BTN            13
 
 #define N_VIEW_MENU_ELES         3
 #define VIEW_BTN_POSN            2
@@ -135,13 +132,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define GRID_ON_BTN      1
 #define GRID_SNAP_BTN    2
 
-#define ALIGN_HORIZ_LEFT_BTN   0
-#define ALIGN_HORIZ_CENTER_BTN 1
-#define ALIGN_HORIZ_RIGHT_BTN  2
-#define ALIGN_VERT_TOP_BTN     3
-#define ALIGN_VERT_CENTER_BTN  4
-#define ALIGN_VERT_BOTTOM_BTN  5
-#define ALIGN_TO_GRID_BTN      6
+#define CENTER_HORIZ_BTN 0
+#define CENTER_VERT_BTN  1
+#define CENTER_BOTH_BTN  2
+
+#define SIZE_SAME_BTN 0
+#define SIZE_TEXT_BTN 1
+
+#define ALIGN_HORIZ_LEFT_BTN    0
+#define ALIGN_HORIZ_CENTER_BTN  1
+#define ALIGN_HORIZ_RIGHT_BTN   2
+#define ALIGN_VERT_TOP_BTN      3
+#define ALIGN_VERT_CENTER_BTN   4
+#define ALIGN_VERT_BOTTOM_BTN   5
+#define ALIGN_POS_TO_GRID_BTN   6
+#define ALIGN_EDGE_TO_GRID_BTN  7
 
 #define SPACE_HORIZ_BTN 0
 #define SPACE_VERT_BTN  1
@@ -185,6 +190,8 @@ static void editMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void palettesMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void helpMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void alignMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void centerMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void sizeMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
@@ -255,20 +262,40 @@ static menuEntry_t controllersObjectMenu[] = {
 };
 
 static menuEntry_t editAlignMenu[] = {
-    { "Left",   &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
+    { "Left",              &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_LEFT_BTN,  NULL},
     { "Horizontal Center", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_CENTER_BTN,  NULL},
-    { "Right",  &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
+    { "Right",             &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_RIGHT_BTN,  NULL},
-    { "Top",    &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL, 
+    { "Top",               &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL, 
       alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_TOP_BTN,  NULL},
-    { "Vertical Center", &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+    { "Vertical Center",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_CENTER_BTN,  NULL},
-    { "Bottom", &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+    { "Bottom",            &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_BOTTOM_BTN,  NULL},
-    { "To Grid",    &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
-      alignMenuSimpleCallback, (XtPointer) ALIGN_TO_GRID_BTN,  NULL},
+    { "Position to Grid",  &xmPushButtonGadgetClass, 'P', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_POS_TO_GRID_BTN,  NULL},
+    { "Edges to Grid",     &xmPushButtonGadgetClass, 'E', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_EDGE_TO_GRID_BTN,  NULL},
+    NULL,
+};
+  
+static menuEntry_t editSizeMenu[] = {
+    { "Same Size",        &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
+      sizeMenuSimpleCallback, (XtPointer) SIZE_SAME_BTN,  NULL},
+    { "Text to Contents", &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
+      sizeMenuSimpleCallback, (XtPointer) SIZE_TEXT_BTN,  NULL},
+    NULL,
+};
+  
+static menuEntry_t editCenterMenu[] = {
+    { "Horizontally in Display", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
+      centerMenuSimpleCallback, (XtPointer) CENTER_HORIZ_BTN,  NULL},
+    { "Vertically in Display",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+      centerMenuSimpleCallback, (XtPointer) CENTER_VERT_BTN,  NULL},
+    { "Both",                    &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+      centerMenuSimpleCallback, (XtPointer) CENTER_BOTH_BTN,  NULL},
     NULL,
 };
   
@@ -277,7 +304,7 @@ static menuEntry_t editSpaceMenu[] = {
       spaceMenuSimpleCallback, (XtPointer) SPACE_HORIZ_BTN,  NULL},
     { "Vertical",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_VERT_BTN,  NULL},
-    { "2-D",       &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+    { "2-D",        &xmPushButtonGadgetClass, 'D', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_2D_BTN,  NULL},
     NULL,
 };
@@ -287,7 +314,7 @@ static menuEntry_t editGridMenu[] = {
       gridMenuSimpleCallback, (XtPointer) GRID_ON_BTN,  NULL},
     { "Toggle Snap To Grid", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       gridMenuSimpleCallback, (XtPointer) GRID_SNAP_BTN,  NULL},
-    { "Change Grid Spacing...", &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+    { "Grid Spacing...", &xmPushButtonGadgetClass, 'c', NULL, NULL, NULL,
       gridMenuSimpleCallback, (XtPointer) GRID_SPACING_BTN,  NULL},
     NULL,
 };
@@ -323,29 +350,31 @@ static menuEntry_t editMenu[] = {
       NULL,        NULL,                     NULL},
     { "Group",     &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
-    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
+    { "Ungroup",   &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0',NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL, NULL, NULL,
       NULL,        NULL,                     editAlignMenu},
-    { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+    { "Space Evenly", &xmCascadeButtonGadgetClass, 'v', NULL, NULL, NULL,
       NULL,        NULL,                     editSpaceMenu},
+    { "Center",    &xmCascadeButtonGadgetClass, 'e', NULL, NULL, NULL,
+      NULL,        NULL,                     editCenterMenu},
+    { "Size", &xmPushButtonGadgetClass, 'z', NULL, NULL, NULL,
+      NULL,        NULL,                     editSizeMenu},
     { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
       NULL,        NULL,                     editGridMenu},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_SAME_SIZE_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
-      NULL,        NULL,                     NULL},
-    { "Unselect",  &xmPushButtonGadgetClass, 'e', NULL, NULL, NULL,
+    { "Unselect",  &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
     { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Refresh",   &xmPushButtonGadgetClass, 'f', NULL, NULL, NULL,
+    { "Find Outliers", &xmPushButtonGadgetClass, 'F', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_FIND_BTN,  NULL},
+    { "Refresh",   &xmPushButtonGadgetClass, 'h', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
     { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
@@ -365,39 +394,41 @@ static menuEntry_t editModeMenu[] = {
       editMenuSimpleCallback, (XtPointer) EDIT_COPY_BTN,  NULL},
     { "Paste" ,    &xmPushButtonGadgetClass, 'P', "Shift<Key>InsertChar", "Shift+Ins",  NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_PASTE_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',  NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Raise",     &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_RAISE_BTN,  NULL},
     { "Lower",     &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_LOWER_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Group",     &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
-    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
+    { "Ungroup",   &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL, NULL, NULL,
       NULL,        NULL,                     editAlignMenu},
-    { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+    { "Space Evenly", &xmCascadeButtonGadgetClass, 'v', NULL, NULL, NULL,
       NULL,        NULL,                     editSpaceMenu},
+    { "Center",    &xmCascadeButtonGadgetClass, 'e', NULL, NULL, NULL,
+      NULL,        NULL,                     editCenterMenu},
+    { "Size", &xmPushButtonGadgetClass, 'z', NULL, NULL, NULL,
+      NULL,        NULL,                     editSizeMenu},
     { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
       NULL,        NULL,                     editGridMenu},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_SAME_SIZE_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
-      NULL,        NULL,                     NULL},
-    { "Unselect",  &xmPushButtonGadgetClass, 'l', NULL, NULL, NULL,
+    { "Unselect",  &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
     { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Refresh",   &xmPushButtonGadgetClass, 'f', NULL, NULL, NULL,
+    { "Find Outliers", &xmPushButtonGadgetClass, 'F', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_FIND_BTN,  NULL},
+    { "Refresh",   &xmPushButtonGadgetClass, 'h', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
     { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
@@ -1123,12 +1154,6 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
-    case EDIT_SAME_SIZE_BTN:
-	equalSizeSelectedElements();
-	if (cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
-	break;
-
     case EDIT_UNSELECT_BTN:
 	unselectElementsInDisplay();
 	break;
@@ -1139,6 +1164,10 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_REFRESH_BTN:
 	refreshDisplay();
+	break;	
+
+    case EDIT_FIND_BTN:
+	findOutliers();
 	break;	
 
     case EDIT_HELP_BTN:
@@ -1221,8 +1250,66 @@ static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
-    case ALIGN_TO_GRID_BTN:
-	alignSelectedElementsToGrid();
+    case ALIGN_POS_TO_GRID_BTN:
+	alignSelectedElementsToGrid(False);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ALIGN_EDGE_TO_GRID_BTN:
+	alignSelectedElementsToGrid(True);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+static void sizeMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonNumber = (int) cd;
+  
+    switch(buttonNumber) {
+    case SIZE_SAME_BTN:
+	equalSizeSelectedElements();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+
+    case SIZE_TEXT_BTN:
+	sizeSelectedTextElements();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+static void centerMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonNumber = (int) cd;
+  
+    switch(buttonNumber) {
+    case CENTER_HORIZ_BTN:
+	centerSelectedElements(HORIZ_CENTER);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case CENTER_VERT_BTN:
+	centerSelectedElements(VERT_CENTER);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case CENTER_BOTH_BTN:
+	centerSelectedElements(HORIZ_CENTER);
+	centerSelectedElements(VERT_CENTER);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;

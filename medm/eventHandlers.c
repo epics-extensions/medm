@@ -160,6 +160,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			  "Cancel", "Help");
 			if(displayInfo->warningDialogAnswer == 1) {
 			    XrtUpdatePropertyEditor(widget);
+			  /* True means allow load/save of .XRT data files */
 			    XrtPopupPropertyEditor(widget,
 			      "XRT Property Editor",True);
 			} else if(displayInfo->warningDialogAnswer == 3) {

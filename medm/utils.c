@@ -87,6 +87,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 static void pvInfoDialogCallback(Widget, XtPointer, XtPointer cbs);
+static void medmPrintfDlElementList(DlList *l, char *text);
 
 Boolean modalGrab = FALSE;     /* KE: Not used ?? */
 static DlList *tmpDlElementList = NULL;
@@ -1883,7 +1884,7 @@ void selectAllElementsInDisplay()
 }
 
 /*
- * move elements further up (traversed first) in display list
+ * Move elements further up (traversed first) in display list
  *  so that these are "behind" other objects
  */
 void lowerSelectedElements()
@@ -1962,7 +1963,7 @@ void lowerSelectedElements()
 }
 
 /*
- * move elements further down (traversed last) in display list
+ * Move elements further down (traversed last) in display list
  *  so that these are "in front of" other objects
  */
 void raiseSelectedElements()
@@ -2056,7 +2057,7 @@ void ungroupSelectedElements()
 }
 
 /*
- * align selected elements by top, bottom, left, or right edges
+ * Align selected elements by top, bottom, left, or right edges
  */
 void alignSelectedElements(int alignment)
 {
@@ -2076,9 +2077,8 @@ void alignSelectedElements(int alignment)
 
     unhighlightSelectedElements();
 
+  /* Loop and get min/max (x,y) values */
     dlElement = FirstDlElement(cdi->selectedDlElementList);
-
-/* loop and get min/max (x,y) values */
     while (dlElement) {
 	DlObject *po =
 	  &(dlElement->structure.element->structure.rectangle->object);
@@ -2092,13 +2092,13 @@ void alignSelectedElements(int alignment)
     }
     deltaX = (minX + maxX)/2;
     deltaY = (minY + maxY)/2;
-
-/* loop and set x,y values, and move if widgets */
+    
+  /* Loop and set x,y values, and move if widgets */
     dlElement = LastDlElement(cdi->selectedDlElementList);
     while (dlElement != cdi->selectedDlElementList->head) {
 	ele = dlElement->structure.element;
-
-      /* can't move the display */
+	
+      /* Can't move the display */
 	if (ele->type != DL_Display) {
 	    switch(alignment) {
 	    case HORIZ_LEFT:
@@ -2106,13 +2106,13 @@ void alignSelectedElements(int alignment)
 		yOffset = 0;
 		break;
 	    case HORIZ_CENTER:
-	      /* want   x + w/2 = dX  , therefore   x = dX - w/2   */
+	      /* Want   x + w/2 = dX  , therefore   x = dX - w/2   */
 		xOffset = (deltaX - ele->structure.rectangle->object.width/2)
 		  - ele->structure.rectangle->object.x;
 		yOffset = 0;
 		break;
 	    case HORIZ_RIGHT:
-	      /* want   x + w = maxX  , therefore   x = maxX - w  */
+	      /* Want   x + w = maxX  , therefore   x = maxX - w  */
 		xOffset = (maxX - ele->structure.rectangle->object.width)
                   - ele->structure.rectangle->object.x;
 		yOffset = 0;
@@ -2122,13 +2122,13 @@ void alignSelectedElements(int alignment)
 		yOffset = minY - ele->structure.rectangle->object.y;
 		break;
 	    case VERT_CENTER:
-	      /* want   y + h/2 = dY  , therefore   y = dY - h/2   */
+	      /* Want   y + h/2 = dY  , therefore   y = dY - h/2   */
 		xOffset = 0;
 		yOffset = (deltaY - ele->structure.rectangle->object.height/2)
                   - ele->structure.rectangle->object.y;
 		break;
 	    case VERT_BOTTOM:
-	      /* want   y + h = maxY  , therefore   y = maxY - h  */
+	      /* Want   y + h = maxY  , therefore   y = maxY - h  */
 		xOffset = 0;
 		yOffset = (maxY - ele->structure.rectangle->object.height)
 		  - ele->structure.rectangle->object.y;
@@ -2469,7 +2469,7 @@ void spaceSelectedElements2D(void)
 /*
  * Align selected elements to grid
  */
-void alignSelectedElementsToGrid(void)
+void alignSelectedElementsToGrid(Boolean edges)
 {
     DisplayInfo *cdi = currentDisplayInfo;
     int gridSpacing;
@@ -2513,35 +2513,38 @@ void alignSelectedElementsToGrid(void)
 	    }
 
 	  /* Lower right */
-	    x = x00 + pE->structure.rectangle->object.width;
-	    x0 = (x/gridSpacing)*gridSpacing;
-	    xoff = x - x0;
-	    x0=x-xoff;
-	    if(xoff > gridSpacing/2) xoff = xoff - gridSpacing;
-
-	    y = y00 + pE->structure.rectangle->object.height;
-	    y0 = (y/gridSpacing)*gridSpacing;
-	    yoff = y - y0;
-	    y0=y-yoff;
-	    if(yoff > gridSpacing/2) yoff = yoff - gridSpacing;
-
-	    if(xoff != 0 || yoff != 0) {
-		redraw=1;
-		if (pE->run->scale) {
-		    pE->run->scale(pE,-xoff,-yoff);
+	    if(edges) {
+		x = x00 + pE->structure.rectangle->object.width;
+		x0 = (x/gridSpacing)*gridSpacing;
+		xoff = x - x0;
+		x0=x-xoff;
+		if(xoff > gridSpacing/2) xoff = xoff - gridSpacing;
+		
+		y = y00 + pE->structure.rectangle->object.height;
+		y0 = (y/gridSpacing)*gridSpacing;
+		yoff = y - y0;
+		y0=y-yoff;
+		if(yoff > gridSpacing/2) yoff = yoff - gridSpacing;
+		
+		if(xoff != 0 || yoff != 0) {
+		    redraw=1;
+		    if (pE->run->scale) {
+			pE->run->scale(pE,-xoff,-yoff);
+		    }
 		}
-	    }
-	    if(redraw) {
-		if (pE->widget) {
-		  /* Destroy the widget */
-		    destroyElementWidgets(pE);
-		  /* Recreate it */
-		    pE->run->execute(cdi,pE);
+		if(redraw) {
+		    if (pE->widget) {
+		      /* Destroy the widget */
+			destroyElementWidgets(pE);
+		      /* Recreate it */
+			pE->run->execute(cdi,pE);
+		    }
 		}
 	    }
 	}
 	dlElement = dlElement->prev;
     }
+
   /* Cleanup possible damage to non-widgets */
     dmTraverseNonWidgetsInDisplayList(cdi);
 
@@ -2553,6 +2556,227 @@ void alignSelectedElementsToGrid(void)
 	setResourcePaletteEntries();
     }
     
+    highlightSelectedElements();
+}
+
+/*
+ * Find objects lying outside the visible region of the display
+ */
+void findOutliers(void)
+{
+    Position displayH, displayW;
+    DisplayInfo *cdi;
+    DlElement *dlElement, *pE;
+    DlObject *pO;
+    int sides, partial = 0, total = 0;
+    char string[240];
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
+
+  /* Get the (current) height and width for display */
+    XtVaGetValues(cdi->drawingArea,
+      XmNwidth, &displayW,
+      XmNheight, &displayH,
+      NULL);
+
+  /* Loop over elements */
+    dlElement = FirstDlElement(cdi->dlElementList);
+    while (dlElement) {
+	pO = &(dlElement->structure.rectangle->object);
+
+      /* Omit the display */
+	if (dlElement->type != DL_Display) {
+	    if((pO->x > displayW && (pO->x +pO->width) > displayW) ||
+	       (pO->y > displayH && (pO->y +pO->height) > displayH)) {
+		total++;
+		pE = createDlElement(DL_Element, (XtPointer)dlElement, NULL);
+		if (pE) {
+		    appendDlElement(cdi->selectedDlElementList, pE);
+		}
+	    } else if((pO->x +pO->width) > displayW ||
+	       (pO->y +pO->height) > displayH) {
+		partial++;
+		pE = createDlElement(DL_Element, (XtPointer)dlElement, NULL);
+		if (pE) {
+		    appendDlElement(cdi->selectedDlElementList, pE);
+		}
+	    }
+	}
+	dlElement = dlElement->next;
+    }
+
+  /* Display results */
+    if(partial || total) {
+	sprintf(string,"There are %d objects partially out of the visible display area.\n"
+	  "There are %d objects totally out of the visible display area.\n\n"
+	  "These %d objects are currently selected.",
+	  partial, total, partial + total);
+	highlightSelectedElements();
+	dmSetAndPopupWarningDialog(cdi, string, "OK", "List Them", NULL);
+	if(cdi->warningDialogAnswer == 2) {
+	    sprintf(string,"Outliers:\n"
+	      "Display width=%d  Display height=%d\n",
+	      displayW, displayH);
+	    medmPrintfDlElementList(cdi->selectedDlElementList, string);
+	}
+    } else {
+	sprintf(string,"There are %d objects partially out of the visible display area.\n"
+	  "There are %d objects totally out of the visible display area.",
+	  partial, total);
+	highlightSelectedElements();
+	dmSetAndPopupWarningDialog(cdi, string, "OK", NULL, NULL);
+    }
+}
+
+/*
+ * Center selected elements in the display
+ */
+void centerSelectedElements(int alignment)
+{
+    int i, j, minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
+    Position displayH, displayW;
+    DisplayInfo *cdi;
+    DlElement *pE;
+    DlElement *dlElement;
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
+
+    minX = INT_MAX; minY = INT_MAX;
+    maxX = INT_MIN; maxY = INT_MIN;
+
+    unhighlightSelectedElements();
+
+  /* Loop and get min/max (x,y) values */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	DlObject *po =
+	  &(dlElement->structure.element->structure.rectangle->object);
+	minX = MIN(minX, po->x);
+	minY = MIN(minY, po->y);
+	x0 = (po->x + po->width);
+	maxX = MAX(maxX,x0);
+	y0 = (po->y + po->height);
+	maxY = MAX(maxY,y0);
+	dlElement = dlElement->next;
+    }
+    deltaX = (minX + maxX)/2;
+    deltaY = (minY + maxY)/2;
+
+  /* Get the (current) height and width for display */
+    XtVaGetValues(cdi->drawingArea,
+      XmNwidth, &displayW,
+      XmNheight, &displayH,
+      NULL);
+
+  /* Find the offsets */
+    switch(alignment) {
+    case HORIZ_CENTER:
+	xOffset = displayW/2 - deltaX;
+	yOffset = 0;
+	break;
+    case VERT_CENTER:
+	xOffset = 0;
+	yOffset = displayH/2 - deltaY;
+	break;
+    }
+
+  /* Loop and set x,y values, and move if widgets */
+    dlElement = LastDlElement(cdi->selectedDlElementList);
+    while (dlElement != cdi->selectedDlElementList->head) {
+	pE = dlElement->structure.element;
+
+      /* Can't move the display */
+	if (pE->type != DL_Display) {
+	    if (pE->run->move) {
+		pE->run->move(pE, xOffset, yOffset);
+	    }
+	    if (pE->widget) {
+		XtMoveWidget(pE->widget,
+		  (Position)pE->structure.rectangle->object.x,
+		  (Position)pE->structure.rectangle->object.y);
+	    }
+	}
+	dlElement = dlElement->prev;
+    }
+
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
+    highlightSelectedElements();
+}
+
+/*
+ * Make text elements fit the enclosed text
+ */
+void sizeSelectedTextElements(void)
+{
+    int i = 0, usedWidth, usedHeight, x, xOffset, dWidth;
+    DisplayInfo *cdi;
+    DlElement *dlElement, *pE;
+    DlText *dlText;
+    size_t nChars;
+    
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
+
+    unhighlightSelectedElements();
+
+  /* Loop over selected elements */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	pE = dlElement->structure.element;
+	if (pE->type == DL_Text) {
+	    dlText = pE->structure.text;
+
+	  /* Get used width */
+	    nChars = strlen(dlText->textix);
+	    i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
+	      dlText->object.height,dlText->object.width,
+	      &usedHeight,&usedWidth,FALSE);
+	    usedWidth = XTextWidth(fontTable[i],dlText->textix,nChars);
+	    dWidth = usedWidth - dlText->object.width;
+
+	  /* Get new position (before changing width) */
+	    switch (dlText->align) {
+	    case HORIZ_LEFT:
+	    case VERT_TOP:
+		xOffset = 0;
+		break;
+	    case HORIZ_CENTER:
+	    case VERT_CENTER:
+		xOffset = (dlText->object.width - usedWidth)/2;
+		break;
+	    case HORIZ_RIGHT:
+	    case VERT_BOTTOM:
+		xOffset = dlText->object.width - usedWidth;
+		break;
+	    }
+
+	  /* Resize */
+	    if (pE->run->scale && dWidth) {
+		pE->run->scale(pE, dWidth, 0);
+	    }
+
+	  /* Move */
+	    if (pE->run->move && xOffset) {
+		pE->run->move(pE, xOffset, 0);
+	    }
+	}
+	dlElement = dlElement->next;
+    }
+
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
     highlightSelectedElements();
 }
 
@@ -3399,6 +3623,33 @@ void dumpDlElementList(DlList *l)
 	      p->structure.composite->object.y,
 	      p->structure.composite->object.width,
 	      p->structure.composite->object.height);
+	}
+	p = p->next;
+    }
+    return;
+}
+
+/* Prints the elements in a list */
+static void medmPrintfDlElementList(DlList *l, char *text)
+{
+    DlElement *p = 0;
+    DlObject *pO;
+    int i = 0;
+    medmPostMsg("%sNumber of Elements=%d\n",text,l->count);
+    p = FirstDlElement(l);
+    while (p) {
+	if (p->type == DL_Element) {
+	    pO = &(p->structure.element->structure.composite->object);
+	    medmPrintf("%03d (%s) x1=%d x2=%d width=%d y1=%d y2=%d height=%d\n",++i,
+	      elementType(p->structure.element->type),
+	      pO->x, pO->x + pO->width, pO->width,
+	      pO->y, pO->y + pO->height, pO->height);
+	} else {
+	    pO = &(p->structure.composite->object);
+	    medmPrintf("%03d %s x1=%d x2=%d y1=%d y2=%d\n",++i,
+	      elementType(p->type),
+	      pO->x, pO->x + pO->width, pO->width,
+	      pO->y, pO->y + pO->height, pO->height);
 	}
 	p = p->next;
     }

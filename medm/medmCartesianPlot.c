@@ -2285,7 +2285,8 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer)
 static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-#if XRT_VERSION > 2    
+#if XRT_VERSION > 2
+  /* False menas do not destroy the dialog */
     XrtPopdownPropertyEditor(w,False);
 #endif    
 }

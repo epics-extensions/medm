@@ -1372,20 +1372,6 @@ void writeDlObject(FILE *stream, DlObject *dlObject, int level)
     fprintf(stream,"\n%s}",indent);
 }
 
-void writeDlGrid(FILE *stream, DlGrid *dlGrid, int level)
-{
-    char indent[16];
-
-    memset(indent,'\t',level);
-    indent[level] = '\0';
-
-    fprintf(stream,"\n%sgrid {",indent);
-    fprintf(stream,"\n%s\tgridSpacing=%d",indent,dlGrid->gridSpacing);
-    fprintf(stream,"\n%s\tgridOn=%d",indent,dlGrid->gridOn);
-    fprintf(stream,"\n%s\twidtsnapToGrid=%d",indent,dlGrid->snapToGrid);
-    fprintf(stream,"\n%s}",indent);
-}
-
 void genericMove(DlElement *dlElement, int xOffset, int yOffset)
 {
     dlElement->structure.rectangle->object.x += xOffset;

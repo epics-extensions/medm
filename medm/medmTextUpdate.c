@@ -391,6 +391,7 @@ static void textUpdateDraw(XtPointer cd) {
 
 	  /* Draw text */
 	    {
+	      /* KE: y is the same for all and there are only three distinct cases */
 		int x, y;
 		XSetFont(display,displayInfo->gc,fontTable[i]->fid);
 		switch (dlTextUpdate->align) {

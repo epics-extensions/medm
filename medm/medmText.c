@@ -93,11 +93,12 @@ static DlDispatchTable textDlDispatchTable = {
 static void drawText(Display *display,
   Drawable drawable,
   GC gc,
-  DlText *dlText) {
+  DlText *dlText)
+{
     int i = 0, usedWidth, usedHeight;
     int x, y;
     size_t nChars;
-
+    
     nChars = strlen(dlText->textix);
     i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
       dlText->object.height,dlText->object.width,

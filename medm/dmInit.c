@@ -533,6 +533,18 @@ DlElement *parseDisplay(
 		dlDisplay->clr = atoi(token) % DL_MAX_COLORS;
 		displayInfo->drawingAreaForegroundColor =
 		  dlDisplay->clr;
+	    } else if(!strcmp(token,"gridSpacing")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		dlDisplay->grid.gridSpacing = atoi(token);
+	    } else if(!strcmp(token,"gridOn")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		dlDisplay->grid.gridOn = atoi(token);
+	    } else if(!strcmp(token,"snapToGrid")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		dlDisplay->grid.snapToGrid = atoi(token);
 	    }
 	    break;
 	case T_EQUAL:

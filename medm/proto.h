@@ -431,9 +431,12 @@ void lowerSelectedElements(void);
 void ungroupSelectedElements(void);
 void raiseSelectedElements(void);
 void alignSelectedElements(int alignment);
+void findOutliers(void);
+void centerSelectedElements(int alignment);
+void sizeSelectedTextElements(void);
 void equalSizeSelectedElements(void);
 void refreshDisplay(void);
-void alignSelectedElementsToGrid(void);
+void alignSelectedElementsToGrid(Boolean edges);
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail);
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
   DlElement *afterThisElement);
@@ -555,7 +558,6 @@ void writeDlRelatedDisplay(FILE *, DlElement *, int);
 void writeDlShellCommand(FILE *, DlElement *, int);
 void writeDlColormapEntry(FILE *, DlElement *, int);
 void writeDlObject(FILE *, DlObject *, int);
-void writeDlGrid(FILE *, DlGrid *, int);
 void writeDlRelatedDisplayEntry(FILE *, DlRelatedDisplayEntry *, int, int);
 void writeDlShellCommandEntry(FILE *, DlShellCommandEntry *, int, int);
 
