@@ -970,7 +970,7 @@ static void fileMenuSimpleCallback(
       if (displayInfoListHead->next) {
         /* more than one display; query user */
         widget = XmTrackingEvent(mainShell,closeCursor,False, &event);
-        if (widget != (Widget) NULL) return;
+        if (widget == (Widget) NULL) return;
         newDisplayInfo = dmGetDisplayInfoFromWidget(widget);
         if (newDisplayInfo == currentDisplayInfo) {
           highlightAndSetSelectedElements(NULL,0,0);

@@ -69,7 +69,7 @@ static XrtData *nullData = NULL;
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 			DlCartesianPlot *dlCartesianPlot)
 {
-  Channel *pCh;
+  Channel *pCh = NULL;
   CartesianPlotData *cartesianPlotData;
   int i, j, k, n, validTraces, iPrec;
   Arg args[42];
@@ -180,7 +180,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     cartesianPlotData->eraseCh = (XtPointer) pCh;
   }
 
-  drawWhiteRectangle(pCh);
+  if (pCh) drawWhiteRectangle(pCh);
 
   /* from the cartesianPlot structure, we've got CartesianPlot's specifics */
   n = 0;
