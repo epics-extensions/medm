@@ -121,7 +121,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 		}
 	      /* Pre-initialize */
 		pm->updateTask = NULL;
-		pm->records = NULL;
+		pm->record = NULL;
 		pm->dlElement = dlElement;
 
 		pm->updateTask = updateTaskAddTask(displayInfo,
