@@ -513,10 +513,12 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     UpdateTaskStatus *ts = (UpdateTaskStatus *)cd;
     UpdateTask *t = ts->nextToServe;
     UpdateTask *t1;
+    UpdateTask *tStart;
     double endTime;
     XPoint points[4];
     Region region;
     DlElement *pE;
+    int pass;
    
     endTime = medmTime() + WORKINTERVAL; 
  
@@ -551,6 +553,8 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	
       /* At least one update task has been found.  Find one which has
 	 is enabled and has executeRequestsPendingCount > 0 */
+	tStart = t;
+	pass = 0;
 	while(t->executeRequestsPendingCount <= 0 || t->disabled) {
 	    displayInfo = t->displayInfo;
 	    t = t->next;
@@ -560,13 +564,18 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		displayInfo = displayInfo->next;
 	      /* If at the end of the displays, go to the beginning */
 		if(displayInfo == NULL) {
+		    if(++pass > 1) {
+		      /* We already tried this */
+			ts->workProcId = 0;
+			return True;
+		    }
 		    displayInfo = displayInfoListHead->next;
 		}
 		t = displayInfo->updateTaskListHead.next;
 	    }      
 	  /* If t is NULL or found same t again, have checked all
 	     displays and there is nothing to do.  Remove work proc */
-	    if(t == ts->nextToServe) {
+	    if(t == tStart) {
 		ts->workProcId = 0;
 		return True;
 	    }
@@ -681,6 +690,8 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	ts->updateRequestQueued--;
 	
       /* Find the next one */
+	tStart = t;
+	pass = 0;
 	while(t->executeRequestsPendingCount <= 0 ) {
 	    DisplayInfo *displayInfo = t->displayInfo;
 	    t = t->next;
@@ -689,13 +700,18 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		 next display */
 		displayInfo = displayInfo->next;
 		if(displayInfo == NULL) {
+		    if(++pass > 1) {
+		      /* We already tried this */
+			ts->workProcId = 0;
+			return True;
+		    }
 		    displayInfo = displayInfoListHead->next;
 		}
 		t = displayInfo->updateTaskListHead.next;
 	    }
 	  /* If found same t again, have now checked all displays and
 	     there is nothing to do.  Remove work proc */
-	    if(t == ts->nextToServe) {
+	    if(t == tStart) {
 		ts->workProcId = 0;
 		return True;
 	    }

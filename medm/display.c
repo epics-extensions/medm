@@ -638,6 +638,11 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	  /* Clear out old display */
 	    dmCleanupDisplayInfo(displayInfo,False);
 	    clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+	  /* dlFile will be created during parsing so free it */
+	    if(displayInfo->dlFile) {
+		free((char *)displayInfo->dlFile);
+		displayInfo->dlFile = NULL;
+	    }	    
 	    displayInfo->filePtr = filePtr;
 	    cdi = currentDisplayInfo = displayInfo;
 	    cdi->newDisplay = False;
