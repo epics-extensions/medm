@@ -263,7 +263,7 @@ static void ovalDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
-	po->dlElement->data = 0;
+	if(po->dlElement) po->dlElement->data = NULL;
 	free((char *)po);
     }
     return;

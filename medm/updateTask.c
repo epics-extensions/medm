@@ -61,6 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_LOOP 0
 #define DEBUG_REPAINT 0
 #define DEBUG_UPDATE_STATE 0
+#define DEBUG_MEM 0
 
 #include "medm.h"
 
@@ -430,13 +431,13 @@ void updateTaskDeleteAllTask(UpdateTask *pT)
 void updateTaskDisableTask(DlElement *dlElement)
 {
 #if DEBUG_ENABLE
-	print("updateTaskDisableTask:  dlElement=%x %s\n",
-	  dlElement,elementType(dlElement->type));
+    print("updateTaskDisableTask:  dlElement=%x %s\n",
+      dlElement,elementType(dlElement->type));
 #endif
     if(dlElement && dlElement->data) {
 	MedmElement *pe = (MedmElement *)dlElement->data;
 	UpdateTask *pT = pe->updateTask;
-
+	
 	if(pT && !pT->disabled) {
 #if DEBUG_ENABLE
 	    print("  Before: executeRequestsPendingCount=%d\n",
@@ -467,6 +468,13 @@ void updateTaskEnableTask(DlElement *dlElement)
 	MedmElement *pe = (MedmElement *)dlElement->data;
 	UpdateTask *pT = pe->updateTask;
 
+#if DEBUG_MEM
+	print("updateTaskEnableTask: dlElement=%x dlElement->data=%x"
+	  " [%s]\n",
+	  dlElement, dlElement->data, elementType(dlElement->type));
+	print("  dlElement = %x updateTask=%x\n",
+	  pe->dlElement, pe->updateTask);
+#endif    
       /* Don't do anything if it is already enabled */
 	if(pT && pT->disabled) {
 #if DEBUG_ENABLE

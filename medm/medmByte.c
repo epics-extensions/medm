@@ -281,7 +281,7 @@ static void byteDestroyCb(XtPointer cd) {
     MedmByte *pb = (MedmByte *) cd;
     if(pb) {
 	medmDestroyRecord(pb->record);
-	pb->dlElement->data = 0;
+	if(pb->dlElement) pb->dlElement->data = NULL;
 	free((char *)pb);
     }
 }

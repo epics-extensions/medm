@@ -1507,7 +1507,7 @@ static void cartesianPlotDestroyCb(XtPointer cd) {
 	  medmDestroyRecord(pcp->eraseCh.recordX);
 	if(pcp->hcp1) CpDataDestroy(pcp->hcp1);
 	if(pcp->hcp2) CpDataDestroy(pcp->hcp2);
-	pcp->dlElement->data = 0;
+	if(pcp->dlElement) pcp->dlElement->data = NULL;
 	free((char *)pcp);
     }
     return;

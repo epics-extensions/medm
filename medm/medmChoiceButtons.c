@@ -573,7 +573,7 @@ static void choiceButtonDestroyCb(XtPointer cd) {
     MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     if (pcb) {
 	medmDestroyRecord(pcb->record);
-	pcb->dlElement->data = 0;
+	if(pcb->dlElement->data) pcb->dlElement->data = NULL;
 	free((char *)pcb);
     }
 }

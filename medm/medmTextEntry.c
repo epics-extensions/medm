@@ -468,7 +468,7 @@ static void textEntryDestroyCb(XtPointer cd)
     MedmTextEntry *pte = (MedmTextEntry *) cd;
     if(pte) {
 	medmDestroyRecord(pte->record);
-	pte->dlElement->data = 0;
+	if(pte->dlElement) pte->dlElement->data = NULL;
 	free((char *)pte);
     }
     return;

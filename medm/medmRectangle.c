@@ -298,7 +298,7 @@ static void rectangleDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
-	pr->dlElement->data = 0;
+	if(pr->dlElement) pr->dlElement->data = NULL;
 	free((char *)pr);
     }
     return;

@@ -435,7 +435,7 @@ static void barDestroyCb(XtPointer cd) {
     MedmBar *pb = (MedmBar *) cd;
     if(pb) {
 	medmDestroyRecord(pb->record);
-	pb->dlElement->data = 0;
+	if(pb->dlElement) pb->dlElement->data = NULL;
 	free((char *)pb);
     }
     return;

@@ -417,7 +417,7 @@ static void messageButtonDestroyCb(XtPointer cd)
     MedmMessageButton *pmb = (MedmMessageButton *) cd;
     if(pmb) {
 	medmDestroyRecord(pmb->record);
-	pmb->dlElement->data = 0;
+	if(pmb->dlElement) pmb->dlElement->data = NULL;
 	free((char *)pmb);
     }
 }

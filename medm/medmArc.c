@@ -263,7 +263,7 @@ static void arcDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
-	pa->dlElement->data = 0;
+	if(pa->dlElement) pa->dlElement->data = NULL;
 	free((char *)pa);
     }
     return;

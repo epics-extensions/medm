@@ -585,7 +585,7 @@ static void menuDestroyCb(XtPointer cd)
     MedmMenu *pm = (MedmMenu *) cd;
     if(pm) {
 	medmDestroyRecord(pm->record); 
-	pm->dlElement->data = 0;
+	if(pm->dlElement) pm->dlElement->data = NULL;
 	free((char *)pm);
     }
 }

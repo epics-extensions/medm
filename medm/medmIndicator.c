@@ -418,7 +418,7 @@ static void indicatorDestroyCb(XtPointer cd) {
     MedmIndicator *pi = (MedmIndicator *) cd;
     if(pi) {
 	medmDestroyRecord(pi->record);
-	pi->dlElement->data = 0;
+	if(pi->dlElement) pi->dlElement->data = NULL;
 	free((char *)pi);
     }
     return;

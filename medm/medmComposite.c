@@ -435,7 +435,7 @@ static void compositeDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
-	pc->dlElement->data = 0;
+	if(pc->dlElement) pc->dlElement->data = NULL;
 	free((char *)pc);
     }
     return;

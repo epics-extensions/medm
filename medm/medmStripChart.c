@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_RECORDS 0
 #define DEBUG_COLOR 0
 #define DEBUG_TIMEOUT 0
+#define DEBUG_MEM 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -483,6 +484,10 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 
     psc = (MedmStripChart *)calloc(1, sizeof(MedmStripChart));
     dlElement->data = (void *)psc;
+#if DEBUG_MEM
+    print("stripChartAlloc: dlElement=%x dlElement->data=%x\n",
+      dlElement, dlElement->data);
+#endif    
     if(psc == NULL) {
 	medmPrintf(1, "\nstripChartAlloc: Memory allocation error\n");
 	return psc;
@@ -526,6 +531,13 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
       updateTaskAddTask(displayInfo, &(dlStripChart->object),
 	stripChartUpdateTaskCb,
 	(XtPointer)psc);
+#if DEBUG_MEM
+    {
+	MedmElement *pe = (MedmElement *)dlElement->data;
+	print("  dlElement = %x updateTask=%x\n",
+	  pe->dlElement, pe->updateTask);
+    }
+#endif    
     if(psc->updateTask == NULL) {
 	medmPrintf(1, "\nstripChartAlloc: Memory allocation error\n");
     } else {
@@ -536,30 +548,43 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 }
 
 static void freeStripChart(XtPointer cd) {
-    MedmStripChart *psc = (MedmStripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *)cd;
     int i;
-
+    
 #if DEBUG_STRIP_CHART
     fprintf(stderr, "freeStripChart: psc->timerid=%x\n",
       psc->timerid);
 #endif
+#if DEBUG_MEM
+    {
+	DlElement *dlElement = psc->dlElement;
+	MedmElement *pe = (MedmElement *)dlElement->data;	
 
-    if(psc == NULL) return;
-    if(psc->timerid) {
-	XtRemoveTimeOut(psc->timerid);
-	psc->timerid = (XtIntervalId)0;
+	print("freeStripChart: dlElement=%x dlElement->data=%x\n",
+	  dlElement, dlElement->data);
+	print("  dlElement = %x updateTask=%x(pe) or %x(psc)\n",
+	  pe->dlElement, pe->updateTask, psc->updateTask);
     }
-    for(i = 0; i < psc->nChannels; i++) {
-	medmDestroyRecord(psc->record[i]);
+#endif    
+
+    if(psc) {
+	if(psc->timerid) {
+	    XtRemoveTimeOut(psc->timerid);
+	    psc->timerid = (XtIntervalId)0;
+	}
+	for(i = 0; i < psc->nChannels; i++) {
+	    medmDestroyRecord(psc->record[i]);
+	}
+	if(psc->pixmap) {
+	    XFreePixmap(display, psc->pixmap);
+	    psc->pixmap = (Pixmap) NULL;
+	    XFreeGC(display, psc->gc);
+	    psc->gc = NULL;
+	}
+	if(psc->dlElement) psc->dlElement->data = NULL;
+	free((char *)psc);
+	psc = NULL;
     }
-    if(psc->pixmap) {
-	XFreePixmap(display, psc->pixmap);
-	psc->pixmap = (Pixmap) NULL;
-	XFreeGC(display, psc->gc);
-	psc->gc = NULL;
-    }
-    free((char *)psc);
-    psc = NULL;
 }
 
 

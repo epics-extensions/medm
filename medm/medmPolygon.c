@@ -295,7 +295,7 @@ static void polygonDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
-	pp->dlElement->data = 0;
+	if(pp->dlElement) pp->dlElement->data = NULL;
 	free((char *)pp);
     }
     return;

@@ -385,7 +385,7 @@ static void meterDestroyCb(XtPointer cd) {
     MedmMeter *pm = (MedmMeter *)cd;
     if(pm) {
 	medmDestroyRecord(pm->record);
-	pm->dlElement->data = 0;
+	if(pm->dlElement) pm->dlElement->data = NULL;
 	free((char *)pm);
     }
     return;

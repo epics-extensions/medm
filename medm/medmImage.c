@@ -411,7 +411,7 @@ static void imageDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
-	pi->dlElement->data = 0;
+	if(pi->dlElement) pi->dlElement->data = NULL;
 	free((char *)pi);
     }
     return;

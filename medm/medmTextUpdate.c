@@ -236,7 +236,7 @@ static void textUpdateDestroyCb(XtPointer cd)
     MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
     if(ptu) {
 	medmDestroyRecord(ptu->record);
-	ptu->dlElement->data = 0;
+	if(ptu->dlElement) ptu->dlElement->data = NULL;
 	free((char *)ptu);
     }
     return;

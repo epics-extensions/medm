@@ -339,7 +339,7 @@ static void textDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
-	pt->dlElement->data = 0;
+	if(pt->dlElement) pt->dlElement->data = NULL;
 	free((char *)pt);
     }
     return;

@@ -565,7 +565,7 @@ static void valuatorDestroyCb(XtPointer cd) {
     MedmValuator *pv = (MedmValuator *) cd;
     if(pv) {
 	medmDestroyRecord(pv->record);
-	pv->dlElement->data = 0;
+	if(pv->dlElement) pv->dlElement->data = NULL;
 	free((char *)pv);
     }
     return;
