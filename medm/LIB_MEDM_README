@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
  n = 0;
  XtSetArg(...); n++;
  ...
+ /* DrawingAreas and BulletinBoards are the obvious parent widgets... */
  da = XmCreateDrawingArea(mainShell,"da",args,n)
  XtManageChild(da);
 
