@@ -6,8 +6,8 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 
 UNIX_OPT=NO
 STATIC_BUILD = NO
-#CC = cc -g
-CC = purify -first-only -chain-length=25 cc -g
+CC = cc -g
+#CC = purify -first-only -chain-length=25 cc -g
 
 #CC = purify -first-only -chain-length=25  -log-file=purelog cc -g
 #CC = purify -first-only -chain-length=25  -mail-to-user=evans cc -g
@@ -173,6 +173,9 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.22  1997/06/10 18:46:49  evans
+# Made changes to browserHelp.c so it can be used in other programs.
+#
 # Revision 1.21  1997/06/06 21:26:04  evans
 # Eliminated string allocation logic for DlDynamicAttribute.  Allows Undo and
 # Copy to Clipboard to work.

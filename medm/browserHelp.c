@@ -47,16 +47,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Anderson
- *     Second Author   : Frederick Vong
- *     Third Author    : Kenneth Evans, Jr.
+ *     Original Author : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
 
 /* Note that there is a Mosaic version at the end of the file */
 
-/* #define DEBUG */
+#define DEBUG 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +72,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* Function prototypes */
 int callBrowser(char *url);
 static Window checkNetscapeWindow(Window w);
-static int execute(char *s);
+static int eexecute(char *s);
 static Window findNetscapeWindow(void);
 static int ignoreXError(Display *display, XErrorEvent *xev);
 
@@ -121,12 +119,12 @@ int callBrowser(char *url)
 	    else {
 		sprintf(command,"%s -install '%s' &",envstring);
 	    }
-#ifdef DEBUG
-	    printf("execute(before): cmd=%s\n",command);
+#if DEBUG
+	    printf("eexecute(before): cmd=%s\n",command);
 #endif	    
-	    status=execute(command);
-#ifdef DEBUG
-	    printf("execute(after): cmd=%s status=%d\n",command,status);
+	    status=eexecute(command);
+#if DEBUG
+	    printf("eexecute(after): cmd=%s status=%d\n",command,status);
 #endif	    
 	    return 1;
 	}
@@ -142,12 +140,12 @@ int callBrowser(char *url)
 	sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
 	  envstring,netscapew,url);
     }
-#ifdef DEBUG
-    printf("execute(before): cmd=%s\n",command);
+#if DEBUG
+    printf("eexecute(before): cmd=%s\n",command);
 #endif    
-    status=execute(command);
-#ifdef DEBUG
-    printf("execute(after): cmd=%s status=%d\n",command,status);
+    status=eexecute(command);
+#if DEBUG
+    printf("eexecute(after): cmd=%s status=%d\n",command,status);
 #endif    
     return 2;
 }
@@ -172,7 +170,7 @@ static Window checkNetscapeWindow(Window w)
       &typeatom,&format,&nitems,&bytesafter,&version);
   /* If the version property exists, it is the Netscape window */
     if(version && status == Success) wfound=w;
-#ifdef DEBUG
+#if DEBUG
     printf("XGetWindowProperty: status=%d version=%d w=%x wfound=%x\n",
       status,version,w,wfound);
 #endif      
@@ -180,8 +178,8 @@ static Window checkNetscapeWindow(Window w)
     if(version) XFree((void *)version);
     return wfound;
 }
-/**************************** execute *************************************/
-static int execute(char *s)
+/**************************** eexecute ************************************/
+static int eexecute(char *s)
 /* From O'Reilly, Vol. 1, p. 438 */
 {
     int status,pid,w;
@@ -218,7 +216,7 @@ static Window findNetscapeWindow(void)
     for(i=nchildren-1; i >= 0; i--) {
 	w=XmuClientWindow(display,children[i]);
       /* Check if this is the Netsacpe window */
-#ifdef DEBUG
+#if DEBUG
 	printf("Child %d ",i);
 #endif	
 	wfound=checkNetscapeWindow(w);
@@ -230,12 +228,17 @@ static Window findNetscapeWindow(void)
 /**************************** ignoreXError *******************************/
 static int ignoreXError(Display *display, XErrorEvent *xev)
 {
-  /* DEBUG */
+#if DEBUG
     printf("In ignoreXError\n");
+#endif    
     return 0;
 }
 
-/* The following is the version that works with Mosaic */
+/*************************************************************************/
+/*************************************************************************/
+/* Mosaic Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
 #if 0
 
 #ifndef MOSAICPATH
