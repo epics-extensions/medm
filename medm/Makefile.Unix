@@ -12,6 +12,10 @@ CMPLR = STRICT
 #SPECIFY_X11 = NO
 #SPECIFY_MOTIF = NO
 
+# Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
+#XRTGRAPH=/opt/local/xrtgraph2.4.0
+#XRTGRAPH_EXTENSIONS =
+
 ifdef SPECIFY_X11
 # sun X11
 #X11_LIB = /usr/openwin/lib
@@ -20,7 +24,6 @@ ifdef SPECIFY_X11
 X11_LIB = /opt/X11R5/lib
 X11_INC = /opt/X11R5/include
 endif
-
 
 ifdef SPECIFY_MOTIF
 # osf motif

@@ -5,6 +5,8 @@
  *   gives the same results as using the XRT recommended XrtFloatToArg(), but
  *   probably isn't guaranteed */
 
+#define MAX(a,b)  ((a)>(b)?(a):(b))
+
 #include "medmXrtGraph.h"
 
 #if XRT_VERSION < 3

@@ -12,6 +12,9 @@
 
 #define CpDataType XrtDataType
 #define CpDataHandle XrtDataHandle
+#define CpData XrtData
+#define CpDataStyle XrtDataStyle
+
 #define CP_GENERAL XRT_GENERAL
 
 #define CpSetNthDataStyle(graph, index, ds) \
@@ -24,9 +27,6 @@
 #ifdef XRT_EXTENSIONS
 static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
 #endif
-
-#define CpData XrtData
-#define CpDataStyle XrtDataStyle
 
 #define CpDataCreate(hData, nsets, npoints) \
   XrtDataCreate(hData, nsets, npoints)
