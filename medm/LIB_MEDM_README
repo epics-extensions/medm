@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
   XtAppContext appContext;
   Arg args[8];
   Widget mainShell, da;
+  Widget medmDA;
   int n;
   ...
 
@@ -78,9 +79,10 @@ int main(int argc, char *argv[])
   ***/
  /* 1st argument = display file
   * 2nd argument = macro string (like "a=b,c=d,e=f")
-  * 3rd argument = parent widget */
+  * 3rd argument = parent widget
+  * 4th argument = returned DrawingArea widget which MEDM created */
 
-  libMedmImportDisplay("/u/anderson/SBC/test1.adl",NULL,da);
+  libMedmImportDisplay("/u/anderson/SBC/test1.adl",NULL,da,&medmDA);
 
 
   XtAppMainLoop(appContext);

@@ -558,10 +558,13 @@ DisplayInfo *allocateDisplayInfo(Widget parent)
 Boolean libMedmImportDisplay(
 	char *filename,
 	char *macroBuffer,
-	Widget parent)
+	Widget parent,
+	Widget *createdDrawingArea)
 {
   Boolean status;
   FILE *filePtr;
+
+  *createdDrawingArea = (Widget)NULL;
 
   if (!access(filename,F_OK|R_OK)) {
      filePtr = fopen(filename,"r");
@@ -570,6 +573,7 @@ Boolean libMedmImportDisplay(
 		(Boolean)False);
 	fclose(filePtr);
         status = True;
+	*createdDrawingArea = currentDisplayInfo->drawingArea;
      }
   } else {
       fprintf(stderr,

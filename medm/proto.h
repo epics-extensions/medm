@@ -119,7 +119,8 @@ DlElement *handleTextCreate(int x0, int y0);
 DisplayInfo *createDisplay(void);
 
 /* dmInit.c */
-Boolean libMedmImportDisplay(char *filename, char *macroBuffer, Widget parent);
+Boolean libMedmImportDisplay(char *filename, char *macroBuffer, Widget parent,
+	Widget *createdDrawingArea);
 DisplayInfo *allocateDisplayInfo(Widget parent);
 void dmDisplayListParse(FILE *filePtr, char *argsString, char *fullPathName,
 	Widget parent, Boolean fromRelatedDisplayExecution);
