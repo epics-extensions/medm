@@ -160,7 +160,6 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
 		updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
-		pr->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlRectangle->dynAttr, True)) {
 		pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
@@ -249,15 +248,7 @@ static void rectangleDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
 	  drawRectangle(pr);
-	if(pRec->readAccess) {
-#ifdef OPAQUE	    
-	    if(!pr->updateTask->overlapped &&
-	      dlRectangle->dynAttr.vis == V_STATIC) {
-		pr->updateTask->opaque = True;
-	    }
-#endif
-	} else {
-	    pr->updateTask->opaque = False;
+	if(!pRec->readAccess) {
 	    draw3DQuestionMark(pr->updateTask);
 	}
     } else if(isStaticDynamic(&dlRectangle->dynAttr, True)) {

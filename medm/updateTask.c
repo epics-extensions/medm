@@ -122,8 +122,7 @@ static UpdateTask nullTask = {
     (struct _DisplayInfo *)0,
     0,
     {0,0,0,0},     /* Rectangle */
-    False,
-    False,
+    EXTENDED,
     False,
     (struct _UpdateTask *)0,
     (struct _UpdateTask *)0,
@@ -351,11 +350,6 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	    pT->rectangle.height = 0;
 	}
 	pT->overlapType = EXTENDED;  /* Default is worst case */
-#ifdef OPAQUE
-	pT->opaque = True;           /* Default is don't draw the background */
-#else
-	pT->opaque = False;
-#endif	
 	pT->disabled = False;        /* Default is not disabled */
 
 	displayInfo->updateTaskListTail->next = pT;

@@ -200,7 +200,6 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
 		updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
-		pp->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlPolyline->dynAttr, True)) {
 		pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
@@ -266,14 +265,7 @@ static void polylineDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlPolyline->dynAttr, pp->records))
 	  drawPolyline(pp);
-	if(pR->readAccess) {
-#ifdef OPAQUE	    
-	    if(!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
-		pp->updateTask->opaque = True;
-	    }
-#endif
-	} else {
-	    pp->updateTask->opaque = False;
+	if(!pR->readAccess) {
 	    draw3DQuestionMark(pp->updateTask);
 	}
     } else if(isStaticDynamic(&dlPolyline->dynAttr, True)) {

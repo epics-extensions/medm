@@ -189,7 +189,6 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(pp->updateTask,polygonDestroyCb);
 		updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
-		pp->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlPolygon->dynAttr, True)) {
 		pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
@@ -259,14 +258,7 @@ static void polygonDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlPolygon->dynAttr, pp->records))
 	  drawPolygon(pp);
-	if(pR->readAccess) {
-#ifdef OPAQUE	    
-	    if(!pp->updateTask->overlapped && dlPolygon->dynAttr.vis == V_STATIC) {
-		pp->updateTask->opaque = True;
-	    }
-#endif
-	} else {
-	    pp->updateTask->opaque = False;
+	if(!pR->readAccess) {
 	    draw3DQuestionMark(pp->updateTask);
 	}
     } else if(isStaticDynamic(&dlPolygon->dynAttr, True)) {

@@ -146,7 +146,6 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
 		updateTaskAddNameCb(pa->updateTask,arcGetRecord);
-		pa->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlArc->dynAttr, True)) {
 		pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,
@@ -226,14 +225,7 @@ static void arcDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlArc->dynAttr, pa->records))
 	  drawArc(pa);
-	if(pR->readAccess) {
-#ifdef OPAQUE	    
-	    if(!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
-		pa->updateTask->opaque = True;
-	    }
-#endif	    
-	} else {
-	    pa->updateTask->opaque = False;
+	if(!pR->readAccess) {
 	    draw3DQuestionMark(pa->updateTask);
 	}
     } else if(isStaticDynamic(&dlArc->dynAttr, True)) {

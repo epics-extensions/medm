@@ -252,7 +252,6 @@ typedef struct _UpdateTask {
     int         executeRequestsPendingCount;  /* How many update requests are pending */
     XRectangle  rectangle;                    /* Geometry of the object */
     OverlapType overlapType;                  /* Indicates how overlapped by others */
-    Boolean     opaque;                       /* Indicates whether to redraw under */
     Boolean     disabled;                     /* Indicates not to update */
     struct      _UpdateTask *prev;
     struct      _UpdateTask *next;

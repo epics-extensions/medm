@@ -155,7 +155,6 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		} else {
 		    updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
 		    updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
-		    pc->updateTask->opaque = False;
 		}
 		if(!isStaticDynamic(&dlComposite->dynAttr, False)) {
 		    pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
@@ -262,22 +261,13 @@ static void compositeDraw(XtPointer cd)
 	    } else {
 		hideComposite(pc);
 	    }
-	    if(pR->readAccess) {
-#ifdef OPAQUE	    
-		if(!pc->updateTask->overlapped &&
-		  dlComposite->dynAttr.vis == V_STATIC) {
-		    pc->updateTask->opaque = True;
-		}
-#endif		
-	    } else {
-		pc->updateTask->opaque = False;
+	    if(!pR->readAccess) {
 		draw3DQuestionMark(pc->updateTask);
 	    }
 	} else if(isStaticDynamic(&dlComposite->dynAttr, False)) {
 	    executeCompositeChildren(displayInfo, pc->dlElement);
 	} else {
 	    hideComposite(pc);
-	    pc->updateTask->opaque = False;
 	    drawWhiteRectangle(pc->updateTask);
 	}
     } else {

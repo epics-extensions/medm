@@ -198,7 +198,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		} else {
 		    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
 		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
-		    pi->updateTask->opaque = False;
 		}
 		if(*dlImage->dynAttr.chan[0]) {
 		  /* A channel is defined */
@@ -336,15 +335,7 @@ static void imageDraw(XtPointer cd)
 		    drawColoredRectangle(pi->updateTask,
 		      BlackPixel(display,screenNum));
 		}
-		if(pR->readAccess) {
-#ifdef OPAQUE	    
-		    if(!pi->updateTask->overlapped &&
-		      dlImage->dynAttr.vis == V_STATIC) {
-			pi->updateTask->opaque = True;
-		    }
-#endif
-		} else {
-		    pi->updateTask->opaque = False;
+		if(!pR->readAccess) {
 		    draw3DQuestionMark(pi->updateTask);
 		}
 	    }

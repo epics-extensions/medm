@@ -235,7 +235,6 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
 		updateTaskAddNameCb(pt->updateTask,textGetRecord);
-		pt->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlText->dynAttr, True)) {
 		pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
@@ -307,14 +306,7 @@ static void textDraw(XtPointer cd) {
 	if(calcVisibility(&dlText->dynAttr, pt->records))
 	/* KE: Different drawXXX from other drawing objects */
 	  drawText(displayInfo->updatePixmap, displayInfo->gc, dlText);
-	if(pR->readAccess) {
-#ifdef OPAQUE	    
-	    if(!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
-		pt->updateTask->opaque = True;
-	    }
-#endif
-	} else {
-	    pt->updateTask->opaque = False;
+	if(!pR->readAccess) {
 	    draw3DQuestionMark(pt->updateTask);
 	}
     } else if(isStaticDynamic(&dlText->dynAttr, True)) {

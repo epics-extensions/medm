@@ -147,7 +147,6 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
 		updateTaskAddNameCb(po->updateTask,ovalGetRecord);
-		po->updateTask->opaque = False;
 	    }
 	    if(!isStaticDynamic(&dlOval->dynAttr, True)) {
 		po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
@@ -228,14 +227,7 @@ static void ovalDraw(XtPointer cd) {
       /* Draw depending on visibility */
 	if(calcVisibility(&dlOval->dynAttr, po->records))
 	  drawOval(po);
-	if(pR->readAccess) {
-#ifdef OPAQUE	    
-	    if(!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
-		po->updateTask->opaque = True;
-	    }
-#endif
-	} else {
-	    po->updateTask->opaque = False;
+	if(!pR->readAccess) {
 	    draw3DQuestionMark(po->updateTask);
 	}
     } else if(isStaticDynamic(&dlOval->dynAttr, True)) {
