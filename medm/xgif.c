@@ -347,14 +347,14 @@ void resizeGIF(DlImage *dlImage)
 	    gif->eWIDE=w;  gif->eHIGH=h;
 	    
 	    switch (DefaultDepth(display,screenNum)) {
-	    case 8 : {
+	    case 8: {
 		int  ix,iy,ex,ey;
 		Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
 		
 		ximag=(Byte *)malloc(w*h);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag, gif->eWIDE,gif->eHIGH,8,gif->eWIDE);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,0);
 		
 		if (!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -376,17 +376,16 @@ void resizeGIF(DlImage *dlImage)
 		}
 		break;
 	    }
-	    case 24 : {
+	    case 24: {
 		int sx, sy, dx, dy;
 		int sh, dh, sw, dw;
-		char *ximag,*ilptr,*ipptr,*elptr,*epptr;
+		Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
 		int bytesPerPixel=CURIMAGE(gif)->bits_per_pixel/8;
 		
-		ximag=(char *)malloc(w*h*bytesPerPixel);
+		ximag=(Byte *)malloc(w*h*bytesPerPixel);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag, gif->eWIDE,gif->eHIGH,32,
-		  0);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,0);
 		
 		if (!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -401,11 +400,11 @@ void resizeGIF(DlImage *dlImage)
 		sh=CURIMAGE(gif)->height;
 		dw=CUREXPIMAGE(gif)->width;
 		dh=CUREXPIMAGE(gif)->height;
-		elptr=epptr=(char *)CUREXPIMAGE(gif)->data;
+		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
 		for (dy=0;  dy<dh; dy++) {
 		    sy=(sh * dy) / dh;
 		    epptr=elptr;
-		    ilptr=CURIMAGE(gif)->data + (sy * CURIMAGE(gif)->bytes_per_line);
+		    ilptr=(Byte *)CURIMAGE(gif)->data + (sy * CURIMAGE(gif)->bytes_per_line);
 		    for (dx=0;  dx <dw;  dx++) {
 			sx=(sw * dx) / dw;
 			ipptr=ilptr + sx*bytesPerPixel;
@@ -632,7 +631,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
                 gif->defs[i].blue =(Blue[i] &lmask)<<8;
                 gif->defs[i].flags=DoRed | DoGreen | DoBlue;
                 if (!XAllocColor(display,gif->theCmap,&gif->defs[i])) { 
-                    j++;  gif->defs[i].pixel=0xffff;
+                    j++;
+		    gif->defs[i].pixel=0xffff;
 		}
                 gif->cols[i]=gif->defs[i].pixel;
 	    }
@@ -1152,7 +1152,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 
 /* Allocate the X Image */
     switch (ScreenDepth) {
-    case 8 :
+    case 8:
         BytesOffsetPerPixel=1;
 	ImageDataSize=Width*Height;
         Image=(Byte *)malloc(ImageDataSize);
@@ -1165,7 +1165,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	  ScreenDepth,ZPixmap,0,
 	  (char*)Image,Width,Height,32,0);
         break;
-    case 24 :
+    case 24:
 	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
         BytesOffsetPerPixel=bits_per_pixel/8;
 	ImageDataSize=BytesOffsetPerPixel*Width*Height;
@@ -1401,6 +1401,92 @@ void freeGIF(DlImage *dlImage)
       /* Free the GIFData */	
 	free((char *)gif);
 	gif=NULL;
+    }
+}
+
+/* Function to make a new copy of the private data in dlImage1 and
+   store it in dlImage2.  dlImage1 and dlImage2 may point to the same
+   image. */
+void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
+{
+    GIFData *gif1,*gif2;
+    FrameData **frames;
+    int i,nFrames;
+    Byte *ximag;
+    int bytesPerPixel,imageDataSize;
+
+    gif1=(GIFData *)dlImage1->privateData;
+    if(!gif1) {
+	gif2=NULL;
+	dlImage2->privateData=gif2;
+	return;
+    }
+    if (!(gif2=(GIFData *)malloc(sizeof(GIFData)))) {
+	medmPrintf(1,"\ncopyGIF: Memory allocation error:\n"
+	  "  %s\n",gif1->imageName);
+	dlImage2->privateData=gif2;
+	return;
+    }
+    *gif2=*gif1;
+    
+  /* Reallocate the colors, in case they are freed elsewhere */
+    for (i=0; i < gif2->numcols; i++) {
+	if (!XAllocColor(display,gif2->theCmap,&gif2->defs[i])) { 
+	    gif2->defs[i].pixel=0xffff;
+	}
+    }
+    
+  /* Allocate the new frames array */
+    nFrames=gif2->nFrames;
+    frames=(FrameData **)malloc(nFrames*sizeof(FrameData *));
+    gif2->frames=frames;
+    if(!frames) {
+	medmPrintf(1,"\ncopyGIF: Not enough memory to store frame array:\n"
+	  "  %s\n",gif2->imageName);
+	dlImage2->privateData=gif2;
+	return;
+    }
+    
+  /* Allocate the frames */
+    if(frames) {
+    for(i=0; i < nFrames; i++) {
+	frames[i]=(FrameData *)malloc(sizeof(FrameData));
+	if(!frames[i]) {
+	    medmPrintf(1,"\ncopyGIF: Not enough memory to store frames:\n"
+	      "  %s\n",gif2->imageName);
+	    dlImage2->privateData=gif2;
+	    return;
+	}
+	gif1->curFrame=gif2->curFrame=i;
+	if(gif1->frames[i] && frames[i]) {
+	    *frames[i]=*gif1->frames[i];
+	  /* Allocate and copy the images */
+	    if(CURIMAGE(gif1)) {
+		bytesPerPixel=CURIMAGE(gif1)->bits_per_pixel/8;
+		imageDataSize=gif1->iWIDE*gif1->iHIGH*bytesPerPixel;
+		ximag=(Byte *)malloc(imageDataSize);
+		memcpy(ximag,CURIMAGE(gif1)->data,imageDataSize);
+		CURIMAGE(gif2)=XCreateImage(display,gif1->theVisual,
+		  DefaultDepth(display,screenNum),ZPixmap,
+		  0,(char *)ximag,gif1->iWIDE,gif1->iHIGH,32,0);
+	    } else {
+		CURIMAGE(gif2)=NULL;
+	    }
+	    if(CUREXPIMAGE(gif1)) {
+		bytesPerPixel=CUREXPIMAGE(gif1)->bits_per_pixel/8;
+		imageDataSize=gif1->eWIDE*gif1->eHIGH*bytesPerPixel;
+		ximag=(Byte *)malloc(imageDataSize);
+		memcpy(ximag,CUREXPIMAGE(gif1)->data,imageDataSize);
+		CUREXPIMAGE(gif2)=XCreateImage(display,gif1->theVisual,
+		  DefaultDepth(display,screenNum),ZPixmap,
+		  0,(char *)ximag,gif1->eWIDE,gif1->eHIGH,32,0);
+	    } else {
+		CUREXPIMAGE(gif2)=NULL;
+	    }
+	}
+    }
+    gif1->curFrame=gif2->curFrame=0;
+    dlImage2->privateData=gif2;
     }
 }
 

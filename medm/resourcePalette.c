@@ -823,6 +823,9 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case IMAGENAME_RC:
 	strcpy(globalResourceBundle.imageName,stringValue);
 	break;
+    case CALC_RC:
+	strcpy(globalResourceBundle.calc,stringValue);
+	break;
     case DATA_RC:
 	strcpy(globalResourceBundle.data,stringValue);
 	break;
@@ -942,6 +945,9 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case IMAGENAME_RC:
 	newString = globalResourceBundle.imageName;
+	break;
+    case CALC_RC:
+	newString = globalResourceBundle.calc;
 	break;
     case DATA_RC:
 	newString = globalResourceBundle.data;
@@ -1064,6 +1070,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.press_msg[0] = '\0';
     globalResourceBundle.release_msg[0] = '\0';
     globalResourceBundle.imageName[0] = '\0';
+    globalResourceBundle.calc[0] = '\0';
     globalResourceBundle.compositeName[0] = '\0';
     globalResourceBundle.data[0] = '\0';
     globalResourceBundle.cmap[0] = '\0';
@@ -1384,13 +1391,16 @@ static void createResourceEntries(Widget entriesSW) {
 	}
 	XtSetValues(resourceEntryElement[i],&(args[4]),6);
       /* Restrict size of CA PV name entry */
-	if (i == CHAN_RC || i == RDBK_RC || i == CTRL_RC){
-
+	if (i == CHAN_RC || i == RDBK_RC || i == CTRL_RC) {
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
 	    /* Since can have macro-substituted strings, need longer length */
 	      XmNmaxLength,(int)MAX_TOKEN_LENGTH-1,NULL);
-
+	} else if (i == CALC_RC) {
+	    XtVaSetValues(resourceEntryElement[i],
+	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
+	    /* calc in calcRecord is limited to 40 characters including NULL */
+	      XmNmaxLength,(int)39,NULL);
 	} else if (i == MSG_LABEL_RC || i == PRESS_MSG_RC
 	  || i == RELEASE_MSG_RC || i == TEXTIX_RC
 	  || i == TITLE_RC || i == XLABEL_RC || i == YLABEL_RC) {
@@ -1401,7 +1411,6 @@ static void createResourceEntries(Widget entriesSW) {
     }
 
     XtManageChild(entriesRC);
-
 }
 
 /****************************************************************************
@@ -1489,6 +1498,7 @@ static void createEntryRC( Widget parent, int rcType) {
     case PRESS_MSG_RC:
     case RELEASE_MSG_RC:
     case IMAGENAME_RC:
+    case CALC_RC:
     case DATA_RC:
     case CMAP_RC:
     case NAME_RC:
@@ -1894,7 +1904,8 @@ static int resourceTable[] = {
     DL_ShellCommand,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC, -1,
     DL_Image,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGETYPE_RC, IMAGENAME_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGETYPE_RC, IMAGENAME_RC, RDBK_RC,
+    CALC_RC, -1,
     DL_Composite,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, -1,
     DL_Line,
@@ -2649,6 +2660,11 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	case IMAGENAME_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->imageName);
+	    break;
+	}
+	case CALC_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->calc);
 	    break;
 	}
 	case DATA_RC: {
@@ -3736,12 +3752,17 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	updateResourcePaletteObjectAttribute();
 	if (objectDataOnly) return;
 
+	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
+	updateResourcePaletteMonitorAttribute();
 	globalResourceBundle.imageType = p->imageType;
 	optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
 	  globalResourceBundle.imageType - FIRST_IMAGE_TYPE);
 	strcpy(globalResourceBundle.imageName, p->imageName);
 	XmTextFieldSetString(resourceEntryElement[IMAGENAME_RC],
 	  globalResourceBundle.imageName);
+	strcpy(globalResourceBundle.calc, p->calc);
+	XmTextFieldSetString(resourceEntryElement[CALC_RC],
+	  globalResourceBundle.calc);
 	break;
     }
     case DL_Composite: {

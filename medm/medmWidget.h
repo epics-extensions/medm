@@ -449,6 +449,7 @@ typedef struct _ResourceBundle {
     char press_msg[MAX_TOKEN_LENGTH];
     char release_msg[MAX_TOKEN_LENGTH];
     char imageName[MAX_TOKEN_LENGTH];
+    char calc[MAX_TOKEN_LENGTH];
     char compositeName[MAX_TOKEN_LENGTH];
     char data[MAX_TOKEN_LENGTH];
     char cmap[MAX_TOKEN_LENGTH];
@@ -532,32 +533,33 @@ typedef struct _ResourceBundle {
 #define PRESS_MSG_RC    38
 #define RELEASE_MSG_RC  39
 #define IMAGENAME_RC    40
-#define DATA_RC         41
-#define CMAP_RC         42
-#define NAME_RC         43
-#define LINEWIDTH_RC    44
-#define PRECISION_RC    45
-#define SBIT_RC         46
-#define EBIT_RC         47
-#define RD_LABEL_RC     48
-#define RD_VISUAL_RC    49
+#define CALC_RC         41
+#define DATA_RC         42
+#define CMAP_RC         43
+#define NAME_RC         44
+#define LINEWIDTH_RC    45
+#define PRECISION_RC    46
+#define SBIT_RC         47
+#define EBIT_RC         48
+#define RD_LABEL_RC     49
+#define RD_VISUAL_RC    50
 
 /* vectors/matrices of data */
-#define RDDATA_RC       50              /* Related Display data           */
-#define CPDATA_RC       51              /* Cartesian Plot channel data    */
-#define SCDATA_RC       52              /* Strip Chart data               */
-#define SHELLDATA_RC    53              /* Shell Command data             */
-#define CPAXIS_RC       54              /* Cartesian Plot axis data       */
+#define RDDATA_RC       51              /* Related Display data           */
+#define CPDATA_RC       52              /* Cartesian Plot channel data    */
+#define SCDATA_RC       53              /* Strip Chart data               */
+#define SHELLDATA_RC    54              /* Shell Command data             */
+#define CPAXIS_RC       55              /* Cartesian Plot axis data       */
 
 /* other new entry types */
-#define TRIGGER_RC      55              /* Cartesian Plot trigger channel */
+#define TRIGGER_RC      56              /* Cartesian Plot trigger channel */
 #define ERASE_RC        56              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   57              /* Cartesian Plot erase mode      */
+#define ERASE_MODE_RC   58              /* Cartesian Plot erase mode      */
 
 /* grid */
-#define GRID_SPACING_RC	58
-#define GRID_ON_RC      59
-#define GRID_SNAP_RC    60
+#define GRID_SPACING_RC	59
+#define GRID_ON_RC      60
+#define GRID_SNAP_RC    61
 
 #else     /* #ifdef __COLOR_RULE_H__ */
 
@@ -579,32 +581,33 @@ typedef struct _ResourceBundle {
 #define PRESS_MSG_RC	37
 #define RELEASE_MSG_RC	38
 #define IMAGENAME_RC	39
-#define DATA_RC		40
-#define CMAP_RC		41
-#define NAME_RC		42
-#define LINEWIDTH_RC	43
-#define PRECISION_RC	44
-#define SBIT_RC         45
-#define EBIT_RC         46
-#define RD_LABEL_RC     47
-#define RD_VISUAL_RC    48
+#define CALC_RC         40
+#define DATA_RC		41
+#define CMAP_RC		42
+#define NAME_RC		43
+#define LINEWIDTH_RC	44
+#define PRECISION_RC	45
+#define SBIT_RC         46
+#define EBIT_RC         47
+#define RD_LABEL_RC     48
+#define RD_VISUAL_RC    49
 
 /* vectors/matrices of data */
-#define RDDATA_RC	49		/* Related Display data		  */
-#define CPDATA_RC	50		/* Cartesian Plot channel data	  */
-#define SCDATA_RC	51		/* Strip Chart data		  */
-#define SHELLDATA_RC	52		/* Shell Command data		  */
-#define CPAXIS_RC	53		/* Cartesian Plot axis data	  */
+#define RDDATA_RC	50		/* Related Display data		  */
+#define CPDATA_RC	51		/* Cartesian Plot channel data	  */
+#define SCDATA_RC	52		/* Strip Chart data		  */
+#define SHELLDATA_RC	53		/* Shell Command data		  */
+#define CPAXIS_RC	54		/* Cartesian Plot axis data	  */
 
 /* other new entry types */
-#define TRIGGER_RC	54		/* Cartesian Plot trigger channel */
-#define ERASE_RC        55              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   56              /* Cartesian Plot erase mode      */
+#define TRIGGER_RC	55		/* Cartesian Plot trigger channel */
+#define ERASE_RC        56              /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   57              /* Cartesian Plot erase mode      */
 
 /* grid */
-#define GRID_SPACING_RC	57
-#define GRID_ON_RC      58
-#define GRID_SNAP_RC    59
+#define GRID_SPACING_RC	58
+#define GRID_ON_RC      59
+#define GRID_SNAP_RC    60
 
 #endif     /* #ifdef __COLOR_RULE_H__ */
 
@@ -649,6 +652,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Message Label",
     "Press Message", "Release Message",
     "Image Name",
+    "Calc Expression",
     "Data",
     "Colormap",
     "Name",

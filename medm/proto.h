@@ -581,6 +581,7 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void resizeGIF(DlImage *dlImage);
 void freeGIF(DlImage *dlImage);
+void copyGIF(DlImage *dlImage1, DlImage *dlImage2);
 
 /* medmCommon.c */
 void objectAttributeInit(DlObject *object);

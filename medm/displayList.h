@@ -794,8 +794,8 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlMonitor monitor;
-    DlLimits limits;
     ImageType imageType;
+    char calc[MAX_TOKEN_LENGTH];
     char imageName[MAX_TOKEN_LENGTH];
     XtPointer privateData;
 } DlImage;

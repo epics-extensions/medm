@@ -61,30 +61,30 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
   ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
   ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
 
+#include "postfix.h"
 #include "medm.h"
-
 #include "xgif.h"
 
 #include <X11/keysym.h>
 
 typedef struct _Image {
-    DisplayInfo   *displayInfo;
-    DlElement     *dlElement;
-    Record        *record;
-    UpdateTask    *updateTask;
+    DisplayInfo *displayInfo;
+    DlElement *dlElement;
+    Record *record;
+    UpdateTask *updateTask;
+    Boolean validCalc;
+    char post[MAX_TOKEN_LENGTH];
 } MedmImage;
 
 Widget importFSD;
 XmString gifDirMask;
 
 /* Function prototypes */
-static void animateImage(MedmImage *pi);
-static void destroyDlImage(DlElement *);
+
 static void destroyDlImage(DlElement *dlElement);
 static void drawImage(MedmImage *pi);
 static void imageDestroyCb(XtPointer cd);
 static void imageDraw(XtPointer cd);
-static void imageGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void imageGetRecord(XtPointer cd, Record **record, int *count);
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
@@ -92,24 +92,26 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void imageUpdateGraphicalInfoCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
+static void imageScale(DlElement *dlElement, int xOffset, int yOffset);
 static void importCallback(Widget w, XtPointer cd, XtPointer cbs);
 
 static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
-    NULL,
+    destroyDlImage,
     executeDlImage,
     writeDlImage,
-    imageGetLimits,
+    NULL,
     imageGetValues,
     imageInheritValues,
     NULL,
     NULL,
     genericMove,
-    genericScale,
+    imageScale,
     genericOrient,
     NULL,
     NULL};
 
+#if 0
 static void drawImage(MedmImage *pi)
 {
     unsigned int lineWidth;
@@ -118,7 +120,6 @@ static void drawImage(MedmImage *pi)
     Display *display = XtDisplay(widget);
     DlImage *dlImage = pi->dlElement->structure.image;
 
-#if 0
     lineWidth = (dlImage->attr.width+1)/2;
     if (dlImage->attr.fill == F_SOLID) {
 	XFillImage(display,XtWindow(widget),displayInfo->gc,
@@ -131,8 +132,8 @@ static void drawImage(MedmImage *pi)
 	  dlImage->object.width - 2*lineWidth,
 	  dlImage->object.height - 2*lineWidth);
     }
-#endif    
 }
+#endif    
 
 void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
@@ -183,6 +184,8 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	pi->record = NULL;
 	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
 	  imageDraw, (XtPointer)pi);
+	pi->validCalc = False;
+	pi->post[0] = '\0';
 	if (pi->updateTask == NULL) {
 	    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
 	} else {
@@ -192,11 +195,25 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pi->record = NULL;
 	if(*dlImage->monitor.rdbk) {
+	    long status;
+	    short errnum;
+	    
 	  /* A channel is defined */
 	    pi->record = medmAllocateRecord(dlImage->monitor.rdbk,
 	      imageUpdateValueCb,
 	      imageUpdateGraphicalInfoCb,
 	      (XtPointer)pi);
+	  /* Calculate the postfix for calc */
+	    status=postfix(dlImage->calc, pi->post, &errnum);
+	    if(status) {
+		medmPostMsg(1,"executeDlImage:\n"
+		  "  Invalid calc expression [error %d]: %s\n  for %s\n",
+		  errnum, dlImage->calc, dlImage->monitor.rdbk);
+		pi->validCalc=False;
+	    } else {
+		pi->validCalc=True;
+	    }
+	  /* Draw initial white rectangle */
 	    drawWhiteRectangle(pi->updateTask);
 	} else {
 	  /* No channel */
@@ -222,29 +239,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    }
 	}
     }
-
-  /* Update the limits to reflect current src's */
-    updatePvLimits(&dlImage->limits);
-    
 }
-
-#if 0
-static void animateImage(MedmImage *pi)
-{
-    GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
-
-#if DEBUG_ANIMATE
-	print("animateImage: time=%.3f interval=%.3f name=%s\n",
-	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
-#endif    
-  /* Display the next image */
-    if(++gif->curFrame >= gif->nFrames) gif->curFrame=0;
-    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
-
-  /* Reset the time */
-    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
-}
-#endif
 
 /* This routine is the update task.  It is called for updates and for
    drawing area exposures */
@@ -253,13 +248,42 @@ static void imageDraw(XtPointer cd)
     MedmImage *pi = (MedmImage *)cd;
     Record *pr = pi->record;
     DlImage *dlImage = pi->dlElement->structure.image;
+    GIFData *gif = (GIFData *)dlImage->privateData;
 
   /* Branch on whether there is a channel or not */
     if(*dlImage->monitor.rdbk) {
       /* A channel is defined */
+	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(!pr) return;
 	if (pr->connected) {
 	    if (pr->readAccess) {
+		double result;
+		long status;
+
+	      /* Determine the result of the calculation */
+		if(!*dlImage->calc) {
+		  /* calc string is empty */
+		    result=pr->value;
+		    status = 0;
+		} else if(!pi->validCalc) {
+		  /* calc string is invalid */
+		    status = 1;
+		} else {
+		  /* Perform the calculation */
+		    status = calcPerform(&pr->value, &result, pi->post);
+		}
+	      /* Draw depending on status */
+		if(!status) {
+		  /* Result is valid, convert to frame number */
+		    if(result < 0.0) gif->curFrame = 0;
+		    else if(result > gif->nFrames-1) gif->curFrame=gif->nFrames-1;
+		    else gif->curFrame = result +.5;
+		  /* Draw the frame */
+		    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+		} else {
+		  /* Result is invalid */
+		    draw3DPane(pi->updateTask,BlackPixel(display,screenNum));
+		}
 	    } else {
 		draw3DPane(pi->updateTask,
 		  pi->updateTask->displayInfo->colormap[dlImage->monitor.bclr]);
@@ -270,15 +294,13 @@ static void imageDraw(XtPointer cd)
 	}
     } else {
       /* No channel */
-	GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
-	
 #if DEBUG_ANIMATE
 	print("imageDraw: time=%.3f interval=%.3f name=%s\n",
 	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
 #endif
 	if(gif->nFrames > 1) {
 	  /* Draw the next image */
-	    if(++gif->curFrame >= gif->nFrames) gif->curFrame=0;
+	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
 	    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
 	    
 	  /* Reset the time */
@@ -388,21 +410,16 @@ DlElement* handleImageCreate()
 
 static void imageUpdateGraphicalInfoCb(XtPointer cd)
 {
-#if 0
-    Record *pr = (Record *) cd;
-    Meter *pm = (Meter *) pr->clientData;
-    DlMeter *dlMeter = pm->dlElement->structure.meter;
-    Pixel pixel;
-    Widget widget = pm->dlElement->widget;
-    XcVType hopr, lopr, val;
-    short precision;
+    Record *pr = (Record *)cd;
+    MedmImage *pi = (MedmImage *)pr->clientData;
+    DlImage *dlImage = pi->dlElement->structure.image;
 
     switch (pr->dataType) {
     case DBF_STRING :
-	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
-	  "  Cannot attach meter\n",
-	  dlMeter->monitor.rdbk);
+	  "  Cannot attach image\n",
+	  dlImage->monitor.rdbk);
 	return;
     case DBF_ENUM :
     case DBF_CHAR :
@@ -410,61 +427,33 @@ static void imageUpdateGraphicalInfoCb(XtPointer cd)
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pr->hopr;
-	lopr.fval = (float) pr->lopr;
-	val.fval = (float) pr->value;
-	precision = pr->precision;
 	break;
     default :
-	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
-	  "  Cannot attach meter\n",
-	  dlMeter->monitor.rdbk);
+	  "  Cannot attach image\n",
+	  dlImage->monitor.rdbk);
 	break;
     }
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
-	hopr.fval += 1.0;
-    }
-    if (widget != NULL) {
-      /* Set foreground pixel according to alarm */
-	pixel = (dlMeter->clrmod == ALARM) ?
-	  alarmColor(pr->severity) :
-	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
-	XtVaSetValues(widget, XcNmeterForeground,pixel, NULL);
+#if 0    
+    updateTaskMarkUpdate(pi->updateTask);
+#endif    
+}
 
-      /* Set Channel and User limits (if apparently not set yet) */
-	dlMeter->limits.loprChannel = lopr.fval;
-	if(dlMeter->limits.loprSrc != PV_LIMITS_USER &&
-	  dlMeter->limits.loprUser == LOPR_DEFAULT) {
-	    dlMeter->limits.loprUser = lopr.fval;
-	}
-	dlMeter->limits.hoprChannel = hopr.fval;
-	if(dlMeter->limits.hoprSrc != PV_LIMITS_USER &&
-	  dlMeter->limits.hoprUser == HOPR_DEFAULT) {
-	    dlMeter->limits.hoprUser = hopr.fval;
-	}
-	dlMeter->limits.precChannel = precision;
-	if(dlMeter->limits.precSrc != PV_LIMITS_USER &&
-	  dlMeter->limits.precUser == PREC_DEFAULT) {
-	    dlMeter->limits.precUser = precision;
-	}
+static void imageScale(DlElement *dlElement, int xOffset, int yOffset)
+{
+    DlImage *dlImage = dlElement->structure.image;
+    int width, height, oldWidth, oldHeight;
 
-      /* Set values in the widget if src is Channel */
-	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
-	    dlMeter->limits.lopr = lopr.fval;
-	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
-	}
-	if(dlMeter->limits.hoprSrc == PV_LIMITS_CHANNEL) {
-	    dlMeter->limits.hopr = hopr.fval;
-	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
-	}
-	if(dlMeter->limits.precSrc == PV_LIMITS_CHANNEL) {
-	    dlMeter->limits.prec = precision;
-	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
-	}
-	XcMeterUpdateValue(widget,&val);
+    oldWidth = dlImage->object.width;
+    width = MAX(oldWidth + xOffset, 1);
+    dlImage->object.width = width;
+    oldHeight = dlImage->object.height;
+    height = MAX(oldHeight + yOffset, 1);
+    dlImage->object.height = height;
+    if(width != oldWidth || height != oldHeight) {
+	resizeGIF(dlImage);
     }
-#endif
 }
 
 DlElement *createDlImage(DlElement *p)
@@ -476,10 +465,13 @@ DlElement *createDlImage(DlElement *p)
     if (!dlImage) return 0;
     if (p) {
 	*dlImage = *p->structure.image;
+      /* Make copies of the data pointed to by privateData */
+	copyGIF(dlImage,dlImage);
     } else {
 	objectAttributeInit(&(dlImage->object));
 	monitorAttributeInit(&(dlImage->monitor));
-	limitsAttributeInit(&(dlImage->limits));
+	dlImage->calc[0] = '\0';
+	dlImage->calc[0] = '\0';
 	dlImage->imageType = NO_IMAGE;
 	dlImage->imageName[0] = '\0';
 	dlImage->privateData = NULL;
@@ -510,8 +502,6 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 		parseObject(displayInfo,&(dlImage->object));
 	    } else if (!strcmp(token,"monitor")) {
 		parseMonitor(displayInfo,&(dlImage->monitor));
-	    } else if (!strcmp(token,"limits")) {
-		parseLimits(displayInfo,&(dlImage->limits));
 	    } else if (!strcmp(token,"type")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -522,10 +512,14 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 		else if (!strcmp(token,"tiff"))
 		/* KE: There is no TIFF capability */
 		  dlImage->imageType = TIFF_IMAGE;
-	    } else if (!strcmp(token,"image name")) {
+	    } else if(!strcmp(token,"image name")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlImage->imageName,token);
+	    } else if(!strcmp(token,"calc")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(dlImage->calc,token);
 	    }
 	    break;
 	case T_EQUAL:
@@ -561,8 +555,8 @@ void writeDlImage(
     fprintf(stream,"\n%s\ttype=\"%s\"",indent,
       stringValueTable[dlImage->imageType]);
     fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
+    fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dlImage->calc);
     writeDlMonitor(stream,&(dlImage->monitor),level+1);
-    writeDlLimits(stream,&(dlImage->limits),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
@@ -575,16 +569,8 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
       BCLR_RC,       &(dlImage->monitor.bclr),
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
-      LIMITS_RC,     &(dlImage->limits),
+      CALC_RC,       &(dlImage->calc),
       -1);
-}
-
-static void imageGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
-{
-    DlImage *dlImage = pE->structure.image;
-    
-    *(ppL) = &(dlImage->limits);
-    *(pN) = dlImage->monitor.rdbk;
 }
 
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
@@ -600,7 +586,7 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
       BCLR_RC,       &(dlImage->monitor.bclr),
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
-      LIMITS_RC,     &(dlImage->limits),
+      CALC_RC,       &(dlImage->calc),
       -1);
 }
 
