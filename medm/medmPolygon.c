@@ -264,7 +264,7 @@ static void polygonDraw(XtPointer cd) {
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlPolygon);
+    redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
 static void polygonDestroyCb(XtPointer cd) {

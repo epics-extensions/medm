@@ -244,7 +244,7 @@ static void rectangleDraw(XtPointer cd)
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlRectangle);
+    redrawElementsAbove(displayInfo, pr->dlElement);
 }
 
 static void rectangleDestroyCb(XtPointer cd)

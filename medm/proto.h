@@ -506,6 +506,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
   char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement);
+void redrawDrawnElements(DisplayInfo *displayInfo, DlElement *dlElement);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
@@ -658,6 +659,7 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
   DlShellCommandEntry *shellCommand);
 DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
   char *filename);
+void parseAndSkip(DisplayInfo *displayInfo);
 TOKEN getToken(DisplayInfo *displayInfo, char *word);
 
 #endif  /* __PROTO_H__ */

@@ -239,7 +239,7 @@ static void ovalDraw(XtPointer cd) {
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlOval);
+    redrawElementsAbove(displayInfo, po->dlElement);
 }
 
 static void ovalDestroyCb(XtPointer cd) {

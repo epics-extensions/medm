@@ -638,14 +638,18 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	  /* This is an original, pop it down */
 	    XtPopdown(displayInfo->shell);
 #if DEBUG_RELATED_DISPLAY > 1
-	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [1]: displayInfoList");
-	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [1]: displayInfoSaveList");
+	    dumpDisplayInfoList(displayInfoListHead,
+	      "dmDisplayListParse [1]: displayInfoList");
+	    dumpDisplayInfoList(displayInfoSaveListHead,
+	      "dmDisplayListParse [1]: displayInfoSaveList");
 #endif
 	  /* Save it if not already saved */
 	    moveDisplayInfoToDisplayInfoSave(displayInfo);
 #if DEBUG_RELATED_DISPLAY > 1
-	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
-	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [2]: displayInfoSaveList");
+	    dumpDisplayInfoList(displayInfoListHead,
+	      "dmDisplayListParse [2]: displayInfoList");
+	    dumpDisplayInfoList(displayInfoSaveListHead,
+	      "dmDisplayListParse [2]: displayInfoSaveList");
 #endif	    
 	    cdi = currentDisplayInfo = allocateDisplayInfo();
 	    cdi->filePtr = filePtr;

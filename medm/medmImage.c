@@ -360,7 +360,7 @@ static void imageDraw(XtPointer cd)
 	    drawWhiteRectangle(pi->updateTask);
 	}
       /* Update the drawing objects above */
-	redrawElementsAbove(displayInfo, (DlElement *)dlImage);
+	redrawElementsAbove(displayInfo, pi->dlElement);
     } else {
       /* No channel */
 #if DEBUG_ANIMATE

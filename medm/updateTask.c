@@ -950,7 +950,8 @@ Boolean updateTaskWorkProc(XtPointer cd)
 
       /* Check if *t got deleted by the executeTask's.  If so, t is an
          invalid pointer and cannot be used anymore, so start over at
-         the top.  Also, we should not decrement the  */
+         the top.  Also, we should not decrement the
+         executeRequestsPendingCount */
 	t1 = displayInfo->updateTaskListHead.next;
 	found = 0;
 	while (t1) {

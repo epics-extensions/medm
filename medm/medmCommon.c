@@ -100,6 +100,24 @@ int initMedmCommon()
     }
 }
 
+void parseAndSkip(DisplayInfo *displayInfo)
+{
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+
+  /* Just read and look for braces until we return to the same level */
+    do {
+        switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+        }
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
+}
+
 DlFile *createDlFile(DisplayInfo *displayInfo)
 {
     DlFile *dlFile;
@@ -301,12 +319,11 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 
     FILE *savedFilePtr;
 
-/*
- * (MDA) have to be sneaky for these colormap parsing routines:
- *	since possibly external colormap, save and restore 
- *	external file ptr in  displayInfo so that getToken()
- *	works with displayInfo and not the filePtr directly
- */
+
+ /* (MDA) have to be sneaky for these colormap parsing routines: *
+  * since possibly external colormap, save and restore * external file
+  * ptr in displayInfo so that getToken() * works with displayInfo and
+  * not the filePtr directly */
     savedFilePtr = displayInfo->filePtr;
     displayInfo->filePtr = filePtr;
 
@@ -332,7 +349,7 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
-/* and restore displayInfo->filePtr to previous value */
+  /* Restore displayInfo->filePtr to previous value */
     displayInfo->filePtr = savedFilePtr;
 }
 
@@ -1659,7 +1676,9 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
       po->x, po->y, po->width, po->height);
 
   /* Update the drawing objects above this one */
+#if 0
     redrawElementsAbove(displayInfo, dlElement);
+#endif    
 }
 
 void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)

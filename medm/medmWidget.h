@@ -410,6 +410,7 @@ typedef struct _ResourceBundle {
     char imageName[MAX_TOKEN_LENGTH];
     char imageCalc[MAX_TOKEN_LENGTH];
     char compositeName[MAX_TOKEN_LENGTH];
+    char compositeFile[MAX_TOKEN_LENGTH];
     char data[MAX_TOKEN_LENGTH];
     char cmap[MAX_TOKEN_LENGTH];
     char name[MAX_TOKEN_LENGTH];
@@ -449,90 +450,91 @@ typedef struct _ResourceBundle {
  *   widget array.  The order they appear in the resource palette is the order
  *   in which they appear below.  The labels are in the resourceEntryStringTable
  *   and need to be kept consistent with the index values below. */
-#define X_RC		0
-#define Y_RC		1
-#define WIDTH_RC	2
-#define HEIGHT_RC 	3
-#define RDBK_RC		4
-#define CTRL_RC		5
-#define LIMITS_RC       6
-#define TITLE_RC	7
-#define XLABEL_RC	8
-#define YLABEL_RC	9
+#define X_RC              0
+#define Y_RC              1
+#define WIDTH_RC          2
+#define HEIGHT_RC         3
+#define RDBK_RC           4
+#define CTRL_RC           5
+#define LIMITS_RC         6
+#define TITLE_RC          7
+#define XLABEL_RC         8
+#define YLABEL_RC         9
 
-#define CLR_RC		10
-#define BCLR_RC		11
-#define BEGIN_RC	12
-#define PATH_RC		13
-#define ALIGN_RC	14
-#define FORMAT_RC	15
-#define LABEL_RC	16
-#define DIRECTION_RC	17
-#define FILLMOD_RC	18
-#define STYLE_RC	19
-#define FILL_RC		20
-#define CLRMOD_RC	21
-#define VIS_RC          22
-#define VIS_CALC_RC     23
+#define CLR_RC            10
+#define BCLR_RC           11
+#define BEGIN_RC          12
+#define PATH_RC           13
+#define ALIGN_RC          14
+#define FORMAT_RC         15
+#define LABEL_RC          16
+#define DIRECTION_RC      17
+#define FILLMOD_RC        18
+#define STYLE_RC          19
+#define FILL_RC           20
+#define CLRMOD_RC         21
+#define VIS_RC            22
+#define VIS_CALC_RC       23
 #if MAX_CALC_RECORDS != 4
 #error Need to make changes if MAX_CALC_RECORDS != 4
 #endif      
-#define CHAN_A_RC       24
-#define CHAN_B_RC       25
-#define CHAN_C_RC       26
-#define CHAN_D_RC       27
-#define DATA_CLR_RC     28
-#define DIS_RC          29
-#define XYANGLE_RC      30
-#define ZANGLE_RC       31
-#define PERIOD_RC       32
-#define UNITS_RC        33
-#define CSTYLE_RC       34
-#define ERASE_OLDEST_RC 35
-#define COUNT_RC        36
-#define STACKING_RC     37
-#define IMAGE_TYPE_RC   38
-#define TEXTIX_RC       39
-#define MSG_LABEL_RC    40
-#define PRESS_MSG_RC    41
-#define RELEASE_MSG_RC  42
-#define IMAGE_NAME_RC   43
-#define IMAGE_CALC_RC   44
-#define DATA_RC         45
-#define CMAP_RC         46
-#define NAME_RC         47
-#define LINEWIDTH_RC    48
-#define PRECISION_RC    49
-#define SBIT_RC         50
-#define EBIT_RC         51
-#define RD_LABEL_RC     52
-#define RD_VISUAL_RC    53
+#define CHAN_A_RC         24
+#define CHAN_B_RC         25
+#define CHAN_C_RC         26
+#define CHAN_D_RC         27
+#define DATA_CLR_RC       28
+#define DIS_RC            29
+#define XYANGLE_RC        30
+#define ZANGLE_RC         31
+#define PERIOD_RC         32
+#define UNITS_RC          33
+#define CSTYLE_RC         34
+#define ERASE_OLDEST_RC   35
+#define COUNT_RC          36
+#define STACKING_RC       37
+#define IMAGE_TYPE_RC     38
+#define TEXTIX_RC         39
+#define MSG_LABEL_RC      40
+#define PRESS_MSG_RC      41
+#define RELEASE_MSG_RC    42
+#define IMAGE_NAME_RC     43
+#define IMAGE_CALC_RC     44
+#define DATA_RC           45
+#define CMAP_RC           46
+#define NAME_RC           47
+#define COMPOSITE_FILE_RC 48
+#define LINEWIDTH_RC      49
+#define PRECISION_RC      50
+#define SBIT_RC           51
+#define EBIT_RC           52
+#define RD_LABEL_RC       53
+#define RD_VISUAL_RC      54
 
 /* Vectors/matrices of data */
-#define RDDATA_RC       54  /* Related Display data           */
-#define CPDATA_RC       55  /* Cartesian Plot channel data    */
-#define SCDATA_RC       56  /* Strip Chart data               */
-#define SHELLDATA_RC    57  /* Shell Command data             */
-#define CPAXIS_RC       58  /* Cartesian Plot axis data       */
-			    
+#define RDDATA_RC         55  /* Related Display data           */
+#define CPDATA_RC         56  /* Cartesian Plot channel data    */
+#define SCDATA_RC         57  /* Strip Chart data               */
+#define SHELLDATA_RC      58  /* Shell Command data             */
+#define CPAXIS_RC         59  /* Cartesian Plot axis data       */
+                            
 /* Other new entry types */ 
-#define TRIGGER_RC      59  /* Cartesian Plot trigger channel */
-#define ERASE_RC        60  /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   61  /* Cartesian Plot erase mode      */
+#define TRIGGER_RC        60  /* Cartesian Plot trigger channel */
+#define ERASE_RC          61  /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC     62  /* Cartesian Plot erase mode      */
 
 /* Grid */
-#define GRID_SPACING_RC	62
-#define GRID_ON_RC      63
-#define GRID_SNAP_RC    64
+#define GRID_SPACING_RC   63
+#define GRID_ON_RC        64
+#define GRID_SNAP_RC      65
 
 #ifndef __COLOR_RULE_H__
 # define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
 #else
-# define COLOR_RULE_RC  65  /* Color Rule Entry Table         */
+# define COLOR_RULE_RC    66  /* Color Rule Entry Table         */
 # define MAX_RESOURCE_ENTRY (COLOR_RULE_RC + 1)
 #endif
 
-#define MIN_RESOURCE_ENTRY	0
+#define MIN_RESOURCE_ENTRY 0
 
 /***
  *** resourceEntryStringTable for definition of labels for resource entries
@@ -577,6 +579,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Data",
     "Colormap",
     "Name",
+    "Composite File",
     "Line Width",
     "Increment",
     "Start Bit", "End Bit",

@@ -267,7 +267,7 @@ static void polylineDraw(XtPointer cd) {
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlPolyline);
+    redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
 static void polylineDestroyCb(XtPointer cd) {

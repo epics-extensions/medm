@@ -2552,8 +2552,11 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 #if 0	
 	dumpDisplayInfoList(displayInfoListHead,"medm.c [2]: displayInfoList");
 	dumpDisplayInfoList(displayInfoSaveListHead,"medm.c [2]: displayInfoSaveList");
-#endif	
+#endif
+      /* Update the x and y values for each display */
 	updateAllDisplayPositions();
+
+      /* Set appropriate sensitivity */
 	if (relatedDisplayS) XtSetSensitive(relatedDisplayS,True);
 	if (cartesianPlotS) XtSetSensitive(cartesianPlotS,True);
 	if (cartesianPlotAxisS) {
@@ -2579,6 +2582,8 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
+
+      /* Stop the scheduler */
 	stopMedmScheduler();
         if (medmWorkProcId) {
 	    XtRemoveWorkProc(medmWorkProcId);
@@ -2587,8 +2592,13 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case DL_EXECUTE:
+      /* Start the scheduler */
 	startMedmScheduler();
+
+      /* Update the x and y values for each display */
 	updateAllDisplayPositions();
+
+      /* Set appropriate sensitivity */
 	if (relatedDisplayS) {
 	    XtSetSensitive(relatedDisplayS,False);
 	    XtPopdown(relatedDisplayS);
@@ -2612,7 +2622,9 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
-        medmStartUpdateCAStudyDlg();
+	
+      /* Start the PV statistics */
+	medmStartUpdateCAStudyDlg();
 	break;
 
     default:

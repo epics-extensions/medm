@@ -2740,36 +2740,40 @@ void equalSizeSelectedElements(void)
 }
 
 /* Routine to redraw drawing objects above a given drawing object to
- * keep the stacking correct.  The second argument is a pointer to
- * DlArc, DlBar, etc. because it must be used with the Composite
- * element list.  It is cast to a pointer to a DlElement artificially
- * to be generic.  This is OK because only the DlObject part is used.
- * It is not a pointer to a DlElement in the DisplayInfo element list,
- * but rather to the DlElement.structure.element in that list. */
+ * keep the stacking correct. */
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+#if 0
     int found = 0;
     XPoint points[4];
     Region region = NULL;
     DlElement *pE;
     
 #if DEBUG_REDRAW
-    print("redrawElementsAbove: dlElement=%x\n",dlElement);
+    print("redrawElementsAbove: dlElement=%x[%s] structure.element=%x\n",
+      dlElement,elementType(dlElement->type),dlElement->structure.element);
 #endif    
 
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
-	if(!pE->widget) {
-#if DEBUG_REDRAW
-	    print("  pE=%x pE->structure.element=%x\n",
-	      pE,pE->structure.element);
-#endif    
+	if(pE->type == DL_Arc ||
+	  pE->type == DL_Composite ||
+	  pE->type == DL_Image ||
+	  pE->type == DL_Oval ||
+	  pE->type == DL_Polyline ||
+	  pE->type == DL_Polygon ||
+	  pE->type == DL_Rectangle ||
+	  pE->type == DL_Text) {
 	  /* Element is a drawing object */
+#if DEBUG_REDRAW
+	    print("  pE=%x[%s] pE->structure.element=%x\n",
+	      pE,elementType(pE->type),pE->structure.element);
+#endif    
 	    if(!found) {
 	      /* Keep looking until we find the given element */
-		if(pE->structure.element == dlElement) {
-		    DlObject *po = &(pE->structure.rectangle->object);
+		if(pE == dlElement) {
+		    DlObject *po = &(pE->structure.composite->object);
 		    
 #if DEBUG_REDRAW
 		    print("    found: type=%s\n",elementType(pE->type));
@@ -2792,13 +2796,91 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 		}
 	    } else {
 	      /* Element is above the given one in the stacking order */
-		DlObject *po = &(pE->structure.rectangle->object);
+		DlObject *po = &(pE->structure.composite->object);
 		
+	      /* Check if it is overlapped */
 		if(XRectInRegion(region, po->x, po->y,
 		  (int)po->width, (int)po->height) != RectangleOut) {
 #if DEBUG_REDRAW
 		    print("    execute: type=%s\n",elementType(pE->type));
+#endif
+		  /* Execute the element */
+		    if(pE->type == DL_Composite) {
+		      /* Only do execute for composite if it is not hidden */
+			if(!pE->structure.composite->hidden &&
+			  pE->run->execute) {
+#if DEBUG_REDRAW
+			    print("      (executed) x=%d y=%d\n",
+			      po->x, po->y);
+#endif
+			    pE->run->execute(displayInfo, pE);
+			}
+		    } else {
+			if(pE->run->execute) pE->run->execute(displayInfo, pE);
+		    }
+		}
+	    }
+	}
+	pE = pE->next;
+    }
+
+  /* Free the region */
+    if(region) XDestroyRegion(region);
 #endif    
+}
+
+/* Routine to redraw all drawing objects */
+void redrawDrawnElements(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+#if 0
+    XPoint points[4];
+    Region region = NULL;
+    DlElement *pE;
+    DlObject *po;
+
+    if(!displayInfo || !dlElement) return;
+
+  /* Define the region covered by the element */
+    po = &(dlElement->structure.composite->object);
+    points[0].x = po->x;
+    points[0].y = po->y;
+    points[1].x = po->x + (int)po->width;
+    points[1].y = po->y;
+    points[2].x = po->x + (int)po->width;
+    points[2].y = po->y + (int)po->height;
+    points[3].x = po->x;
+    points[3].y = po->y + (int)po->height;
+    region = XPolygonRegion(points,4,EvenOddRule);
+    if (region == NULL) {
+	medmPrintf(0,"\redrawDrawnElements: XPolygonRegion is NULL\n");
+	return;
+    }
+    
+  /* Loop over elements not including the display */
+    pE = SecondDlElement(displayInfo->dlElementList);
+    while(pE) {
+	if(pE->type == DL_Arc ||
+	  pE->type == DL_Composite ||
+	  pE->type == DL_Image ||
+	  pE->type == DL_Oval ||
+	  pE->type == DL_Polyline ||
+	  pE->type == DL_Polygon ||
+	  pE->type == DL_Rectangle ||
+	  pE->type == DL_Text) {
+	  /* Element is a drawing object */
+	    po = &(pE->structure.composite->object);
+	  /* Check if it is overlapped */
+	    if(XRectInRegion(region, po->x, po->y,
+	      (int)po->width, (int)po->height) != RectangleOut) {
+
+	      /* Execute the element */
+		if(pE->type == DL_Composite) {
+		  /* Only do execute for composite if it is not hidden */
+		    if(!pE->structure.composite->hidden &&
+		      pE->run->execute) {
+			pE->run->execute(displayInfo, pE);
+		    }
+		} else {
 		    if(pE->run->execute) pE->run->execute(displayInfo, pE);
 		}
 	    }
@@ -2808,6 +2890,7 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /* Free the region */
     if(region) XDestroyRegion(region);
+#endif
 }
 
 /*

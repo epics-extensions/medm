@@ -244,6 +244,10 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+#if 0
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
+#else    
     Window drawable;
     DlObject *po;
     DlText *dlText;
@@ -284,7 +288,10 @@ void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
     drawText(display,drawable,displayInfo->gc,dlText);
 
   /* Update the drawing objects above this one */
+#if 0
     redrawElementsAbove(displayInfo, dlElement);
+#endif    
+#endif    
 }
 
 static void textUpdateValueCb(XtPointer cd) {
@@ -355,7 +362,7 @@ static void textDraw(XtPointer cd) {
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlText);
+    redrawElementsAbove(displayInfo, pt->dlElement);
 }
 
 static void textDestroyCb(XtPointer cd) {

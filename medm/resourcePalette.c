@@ -699,9 +699,10 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int rcType = (int) cd;
+    int rcType = (int)cd;
     char *stringValue;
     int redoDisplay=0;
+    int clearComposite=0;
 
     stringValue = XmTextFieldGetString(w);
     switch(rcType) {
@@ -854,6 +855,14 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	strcpy(globalResourceBundle.cmap,stringValue);
 	redoDisplay=1;
 	break;
+    case COMPOSITE_FILE_RC:
+      /* If the filename is not blank, set a flag to clear the element
+         list.  When we call run->execute (in
+         updateElementFromGlobalResourceBundle) for the display, it
+         will recreate it from the file */
+	if(*stringValue) clearComposite = 1;
+	strcpy(globalResourceBundle.compositeFile,stringValue);
+	break;
     case PRECISION_RC:
 	globalResourceBundle.dPrecision = atof(stringValue);
 	break;
@@ -874,14 +883,28 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
     XtFree(stringValue);
 
-  /****** Update elements (this is overkill, but okay for now) */
-  /* unhighlight (since objects may move) */
+  /* Update elements (this is overkill, but okay for now) */
+  /* KE: Supposedly only one element is selected when this routine is
+     called */
     if (cdi != NULL) {
 	DlElement *dlElement = FirstDlElement(cdi->selectedDlElementList);
 
 	unhighlightSelectedElements();
 	while (dlElement) {
-	    updateElementFromGlobalResourceBundle(dlElement->structure.element);
+	    DlElement *pE = dlElement->structure.element;
+	    
+	    if(clearComposite && pE->type == DL_Composite) {
+	      /* Clear the composite element list if a composite */
+		DlComposite *dlComposite = pE->structure.composite;
+		
+	      /* Use removeDlDisplayListElementsExceptDisplay instead
+                 of clearDlDisplayList because it also destroys the
+                 widgets and there should not be a display in the
+                 composite element list anyway */
+		removeDlDisplayListElementsExceptDisplay(cdi,
+		  dlComposite->dlElementList);
+	    }
+	    updateElementFromGlobalResourceBundle(pE);
 	    dlElement = dlElement->next;
 	}
 	dmTraverseNonWidgetsInDisplayList(cdi);
@@ -889,8 +912,8 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
     }
-
-  /* Redo the display if indicated.  Is ncessary after a colormap
+    
+  /* Redo the display if indicated.  Is necessary after a colormap
      change to see the change. */
     if(redoDisplay) {
 	dmCleanupDisplayInfo(cdi,False);
@@ -995,6 +1018,9 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case CMAP_RC:
 	newString = globalResourceBundle.cmap;
+	break;
+    case COMPOSITE_FILE_RC:
+	newString = globalResourceBundle.compositeFile;
 	break;
     case PRECISION_RC:
 	sprintf(string,"%f",globalResourceBundle.dPrecision);
@@ -1116,6 +1142,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.imageName[0] = '\0';
     globalResourceBundle.imageCalc[0] = '\0';
     globalResourceBundle.compositeName[0] = '\0';
+    globalResourceBundle.compositeFile[0] = '\0';
     globalResourceBundle.data[0] = '\0';
     globalResourceBundle.cmap[0] = '\0';
     for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
@@ -1557,6 +1584,7 @@ static void createEntryRC( Widget parent, int rcType)
     case DATA_RC:
     case CMAP_RC:
     case NAME_RC:
+    case COMPOSITE_FILE_RC:
     case TRIGGER_RC:
     case ERASE_RC:
     case RD_LABEL_RC:
@@ -1976,7 +2004,7 @@ static int resourceTable[] = {
     VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Composite,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, COMPOSITE_FILE_RC,
     VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Line,
@@ -2113,7 +2141,8 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
 	    while (dlElement) {
-		if (dlElement->structure.element->type = DL_ShellCommand)
+	      /* KE: Changed = to == here */
+		if (dlElement->structure.element->type == DL_ShellCommand)
 		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
@@ -2305,7 +2334,8 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
 	    while (dlElement) {
-		if (dlElement->structure.element->type = DL_StripChart)
+	      /* KE: Changed = to == here */
+		if (dlElement->structure.element->type == DL_StripChart)
 		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
@@ -2770,6 +2800,11 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	case CMAP_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->cmap);
+	    break;
+	}
+	case COMPOSITE_FILE_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->compositeFile);
 	    break;
 	}
 	case NAME_RC: {
@@ -3912,6 +3947,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
        *  groups
        strcpy(globalResourceBundle.compositeName,p->compositeName);
       */
+	strcpy(globalResourceBundle.compositeFile, p->compositeFile);
+	XmTextFieldSetString(resourceEntryElement[COMPOSITE_FILE_RC],
+	  globalResourceBundle.compositeFile);
 	break;
     }
     case DL_Polyline: {

@@ -818,7 +818,9 @@ typedef struct _DlComposite {
     DlObject object;
     DlDynamicAttribute dynAttr;
     char compositeName[MAX_TOKEN_LENGTH];
+    char compositeFile[MAX_TOKEN_LENGTH];
     struct _DlList *dlElementList;
+    int hidden;
 } DlComposite;
 
 /* (if MEDM ever leaves the X environment, a DlPoint should be defined and

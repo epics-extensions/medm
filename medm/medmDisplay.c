@@ -560,8 +560,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
     return(w);
 }
 
-DlElement *parseDisplay(
-  DisplayInfo *displayInfo)
+DlElement *parseDisplay(DisplayInfo *displayInfo)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;

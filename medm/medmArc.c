@@ -243,7 +243,7 @@ static void arcDraw(XtPointer cd)
     }
 
   /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, (DlElement *)dlArc);
+    redrawElementsAbove(displayInfo, pa->dlElement);
 }
 
 static void arcDestroyCb(XtPointer cd)
