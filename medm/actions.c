@@ -326,9 +326,16 @@ void StartDrag(Widget w, XEvent *event)
 	    textWidth = 0;
 	    while (i < count) {
 		if (record[i] && record[i]->name) {
+#ifdef MEDM_CDEV
+		  /* Use fullname insead of name for CDEV */
+		    textWidth = MAX(textWidth,XTextWidth(
+		      fontTable[FONT_TABLE_INDEX],record[i]->fullname,
+		      strlen(record[i]->fullname)));
+#else
 		    textWidth = MAX(textWidth,XTextWidth(
 		      fontTable[FONT_TABLE_INDEX],record[i]->name,
 		      strlen(record[i]->name)));
+#endif
 		}
 		j++;
 		if (j >= column) {
@@ -370,9 +377,16 @@ void StartDrag(Widget w, XEvent *event)
 		if (record[i] && record[i]->name) {
 		    XSetForeground(display,gc,
 		      alarmColor(record[i]->severity));
+#ifdef MEDM_CDEV
+		  /* Use fullname insead of name for CDEV */
+		    XDrawString(display,sourcePixmap,gc,x,y,record[i]->fullname,
+		      strlen(record[i]->fullname));
+		    channelName = record[i]->fullname;
+#else
 		    XDrawString(display,sourcePixmap,gc,x,y,record[i]->name,
 		      strlen(record[i]->name));
 		    channelName = record[i]->name;
+#endif
 		}
 		j++;
 		if (j < column) {

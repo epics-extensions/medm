@@ -272,7 +272,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
       /* The following solves the problem of the pointer hanging when
        *   clicking Btn2 on a Related Display after bringing up the
        *   menu with a Btn 1 click */
-	XBell(display,50);
+	XUngrabPointer(display,CurrentTime);
     }
 }
 

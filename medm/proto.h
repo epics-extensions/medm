@@ -58,6 +58,111 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define __PROTO_H__
 
 
+/* Create methods  */
+DisplayInfo *createDisplay(void);
+DlColormap *createDlColormap(DisplayInfo *displayInfo);
+DlElement *createDlArc(DlElement *);
+DlElement *createDlBar(DlElement *);
+DlElement *createDlByte(DlElement *);
+DlElement *createDlCartesianPlot(DlElement *);
+DlElement *createDlChoiceButton(DlElement *);
+DlElement *createDlComposite(DlElement *);
+DlElement *createDlDisplay(DlElement *);
+DlElement *createDlImage(DlElement *);
+DlElement *createDlIndicator(DlElement *);
+DlElement *createDlMenu(DlElement *);
+DlElement *createDlMessageButton(DlElement *);
+DlElement *createDlMeter(DlElement *);
+DlElement *createDlOval(DlElement *);
+DlElement *createDlPolygon(DlElement *);
+DlElement *createDlPolyline(DlElement *);
+DlElement *createDlRectangle(DlElement *);
+DlElement *createDlRelatedDisplay(DlElement *);
+DlElement *createDlShellCommand(DlElement *);
+DlElement *createDlStripChart(DlElement *);
+DlElement *createDlText(DlElement *);
+DlElement *createDlTextEntry(DlElement *);
+DlElement *createDlTextUpdate(DlElement *);
+DlElement *createDlValuator(DlElement *);
+DlElement *handleImageCreate();
+DlElement *handlePolygonCreate(int x0, int y0);
+DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine);
+DlElement *handleTextCreate(int x0, int y0);
+DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
+DlFile *createDlFile(DisplayInfo *displayInfo);
+void createDlObject(DisplayInfo *displayInfo, DlObject *object);
+
+/* Execute methods */
+void executeDlArc(DisplayInfo *, DlElement *);
+void executeDlBar(DisplayInfo *, DlElement *);
+void executeDlBasicAttribute(DisplayInfo *, DlBasicAttribute *);
+void executeDlByte(DisplayInfo *, DlElement *);
+void executeDlCartesianPlot(DisplayInfo *, DlElement *);
+void executeDlChoiceButton(DisplayInfo *, DlElement *);
+void executeDlColormap(DisplayInfo *, DlColormap *);
+void executeDlComposite(DisplayInfo *, DlElement *);
+void executeDlDisplay(DisplayInfo *, DlElement *);
+void executeDlDynamicAttribute(DisplayInfo *, DlElement *);
+void executeDlImage(DisplayInfo *, DlElement *);
+void executeDlIndicator(DisplayInfo *, DlElement *);
+void executeDlMenu(DisplayInfo *, DlElement *);
+void executeDlMessageButton(DisplayInfo *, DlElement *);
+void executeDlMeter(DisplayInfo *, DlElement *);
+void executeDlOval(DisplayInfo *, DlElement *);
+void executeDlPolygon(DisplayInfo *, DlElement *);
+void executeDlPolyline(DisplayInfo *, DlElement *);
+void executeDlRectangle(DisplayInfo *, DlElement *);
+void executeDlRelatedDisplay(DisplayInfo *, DlElement *);
+void executeDlShellCommand(DisplayInfo *, DlElement *);
+void executeDlStripChart(DisplayInfo *, DlElement *);
+void executeDlSurfacePlot(DisplayInfo *, DlElement *);
+void executeDlText(DisplayInfo *, DlElement *);
+void executeDlTextEntry(DisplayInfo *, DlElement *);
+void executeDlTextUpdate(DisplayInfo *, DlElement *);
+void executeDlValuator(DisplayInfo *, DlElement *);
+
+/* Write methods */
+void writeDlArc(FILE *, DlElement *, int);
+void writeDlBar(FILE *, DlElement *, int);
+void writeDlBasicAttribute(FILE *, DlBasicAttribute *, int);
+void writeDlByte(FILE *, DlElement *, int);
+void writeDlCartesianPlot(FILE *, DlElement *, int);
+void writeDlChoiceButton(FILE *, DlElement *, int);
+void writeDlColormap(FILE *, DlColormap *, int);
+void writeDlColormapEntry(FILE *, DlElement *, int);
+void writeDlComposite(FILE *, DlElement *, int);
+void writeDlComposite(FILE *, DlElement *, int);
+void writeDlCompositeChildren(FILE *, DlElement *, int);
+void writeDlControl(FILE *, DlControl *, int);
+void writeDlDisplay(FILE *, DlElement *, int);
+void writeDlDynamicAttribute(FILE *, DlDynamicAttribute *, int);
+void writeDlFile(FILE *, DlFile *, int);
+void writeDlImage(FILE *, DlElement *, int);
+void writeDlIndicator(FILE *, DlElement *, int);
+void writeDlMenu(FILE *, DlElement *, int);
+void writeDlMessageButton(FILE *, DlElement *, int);
+void writeDlMeter(FILE *, DlElement *, int);
+void writeDlMonitor(FILE *, DlMonitor *, int);
+void writeDlObject(FILE *, DlObject *, int);
+void writeDlOval(FILE *, DlElement *, int);
+void writeDlPen(FILE *, DlPen *, int, int);
+void writeDlPlotAxisDefinition(FILE *, DlPlotAxisDefinition *, int, int);
+void writeDlPlotcom(FILE *, DlPlotcom *, int);
+void writeDlPolygon(FILE *, DlElement *, int);
+void writeDlPolyline(FILE *, DlElement *, int);
+void writeDlRectangle(FILE *, DlElement *, int);
+void writeDlRelatedDisplay(FILE *, DlElement *, int);
+void writeDlRelatedDisplayEntry(FILE *, DlRelatedDisplayEntry *, int, int);
+void writeDlShellCommand(FILE *, DlElement *, int);
+void writeDlShellCommandEntry(FILE *, DlShellCommandEntry *, int, int);
+void writeDlStripChart(FILE *, DlElement *, int);
+void writeDlSurfacePlot(FILE *, DlElement *, int);
+void writeDlText(FILE *, DlElement *, int);
+void writeDlTextEntry(FILE *, DlElement *, int);
+void writeDlTextUpdate(FILE *, DlElement *, int);
+void writeDlTrace(FILE *, DlTrace *, int, int);
+void writeDlValuator(FILE *, DlElement *, int);
+
 /* actions.c */
 void StartDrag(Widget w, XEvent *event);
 
@@ -91,52 +196,8 @@ void createChannel(void);
 void createColor(void);
 void setCurrentDisplayColorsInColorPalette(int rcType, int index);
 
-/* createControllers.c */
-DlElement *createDlChoiceButton(DlElement *);
-DlElement *createDlMenu(DlElement *);
-DlElement *createDlMessageButton(DlElement *);
-DlElement *createDlTextEntry(DlElement *);
-DlElement *createDlValuator(DlElement *);
+/* control.c */
 void controlAttributeInit(DlControl *control);
-
-/* createExtensions.c */
-DlElement *createDlImage(DlElement *);
-DlElement *createDlComposite(DlElement *);
-DlElement *handleImageCreate();
-DlElement *createDlPolyline(DlElement *);
-DlElement *createDlPolygon(DlElement *);
-DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine);
-DlElement *handlePolygonCreate(int x0, int y0);
-
-/* createMonitors.c */
-DlElement *createDlMeter(DlElement *);
-DlElement *createDlBar(DlElement *);
-DlElement *createDlByte(DlElement *);
-DlElement *createDlIndicator(DlElement *);
-DlElement *createDlTextUpdate(DlElement *);
-DlElement *createDlStripChart(DlElement *);
-DlElement *createDlCartesianPlot(DlElement *);
-void monitorAttributeInit(DlMonitor *monitor);
-
-/* createStatics.c */
-DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
-DlFile *createDlFile(DisplayInfo *displayInfo);
-DlElement *createDlDisplay(DlElement *);
-DlColormap *createDlColormap(DisplayInfo *displayInfo);
-DlElement *createDlRectangle(DlElement *);
-DlElement *createDlOval(DlElement *);
-DlElement *createDlArc(DlElement *);
-DlElement *createDlText(DlElement *);
-DlElement *createDlRelatedDisplay(DlElement *);
-DlElement *createDlShellCommand(DlElement *);
-void createDlObject(DisplayInfo *displayInfo, DlObject *object);
-DlElement *handleTextCreate(int x0, int y0);
-void objectAttributeInit(DlObject *object);
-void basicAttributeInit(DlBasicAttribute *attr);
-void dynamicAttributeInit(DlDynamicAttribute *dynAttr);
-
-/* display.c */
-DisplayInfo *createDisplay(void);
 
 /* dmInit.c */
 DisplayInfo *allocateDisplayInfo(void);
@@ -160,7 +221,6 @@ DlElement *handleRectangularCreates(DlElementType, int, int, unsigned int, unsig
   int);
 void addCommonHandlers(Widget w, DisplayInfo *displayInfo);
 
-/* executeControllers.c */
 Widget createPushButton(Widget parent,
   DlObject *po,
   Pixel fg,
@@ -172,41 +232,6 @@ int textFieldFontListIndex(int height);
 int messageButtonFontListIndex(int height);
 int menuFontListIndex(int height);
 int valuatorFontListIndex(DlValuator *dlValuator);
-void executeDlChoiceButton(DisplayInfo *, DlElement *);
-void executeDlMessageButton(DisplayInfo *, DlElement *);
-void executeDlValuator(DisplayInfo *, DlElement *);
-void executeDlTextEntry(DisplayInfo *, DlElement *);
-void executeDlMenu(DisplayInfo *, DlElement *);
-
-/* executeExtensions.c */
-void executeDlImage(DisplayInfo *, DlElement *);
-void executeDlPolyline(DisplayInfo *, DlElement *);
-void executeDlPolygon(DisplayInfo *, DlElement *);
-
-/* executeMonitors.c */
-Channel *allocateChannel(
-  DisplayInfo *displayInfo);
-void executeDlMeter(DisplayInfo *, DlElement *);
-void executeDlBar(DisplayInfo *, DlElement *);
-void executeDlByte(DisplayInfo *, DlElement *);
-void executeDlIndicator(DisplayInfo *, DlElement *);
-void executeDlTextUpdate(DisplayInfo *, DlElement *);
-void executeDlStripChart(DisplayInfo *, DlElement *);
-void executeDlCartesianPlot(DisplayInfo *, DlElement *);
-void executeDlSurfacePlot(DisplayInfo *, DlElement *);
-
-/* executeStatics.c */
-void executeDlComposite(DisplayInfo *, DlElement *);
-void executeDlDisplay(DisplayInfo *, DlElement *);
-void executeDlColormap(DisplayInfo *, DlColormap *);
-void executeDlBasicAttribute(DisplayInfo *, DlBasicAttribute *);
-void executeDlDynamicAttribute(DisplayInfo *, DlElement *);
-void executeDlRectangle(DisplayInfo *, DlElement *);
-void executeDlOval(DisplayInfo *, DlElement *);
-void executeDlArc(DisplayInfo *, DlElement *);
-void executeDlText(DisplayInfo *, DlElement *);
-void executeDlRelatedDisplay(DisplayInfo *, DlElement *);
-void executeDlShellCommand(DisplayInfo *, DlElement *);
 
 /* help.c */
 void errMsgDlgCreateDlg(int raise);
@@ -229,27 +254,75 @@ Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
 void enableEditFunctions();
 void disableEditFunctions();
 
-/* medmCA.c */
+/* medmCA.c and medmCdev.cc */
+#ifdef MEDM_CDEV
+# define medmCAInitialize medmCDEVInitialize
+# define medmCATerminate medmCDEVTerminate
+int  medmCDEVInitialize (void);
+void medmCDEVTerminate (void);
+#else
 int medmCAInitialize(void);
 void medmCATerminate(void);
 void updateListCreate(Channel *);
 void updateListDestroy(Channel *);
-void medmConnectEventCb(struct connection_handler_args);
 void medmDisconnectChannel(Channel *pCh);
+void medmConnectEventCb(struct connection_handler_args);
+void CATaskGetInfo(int *, int *, int *);
+Channel *getChannelFromRecord(Record *pRecord);
+#endif
 Record *medmAllocateRecord(char*,void(*)(XtPointer),void(*)(XtPointer),XtPointer);
 void medmDestoryRecord(Record *);
 void medmSendDouble(Record *, double);
 void medmSendString(Record *, char *);
 void medmSendCharacterArray(Record *, char *, unsigned long);
-void CATaskGetInfo(int *, int *, int *);
-Channel *getChannelFromRecord(Record *pRecord);
+void popupPvInfo(DisplayInfo *displayInfo);
+
+/* medmCartesianPlot.c */
+void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
+void cpUpdateMatrixColors(void);
+Widget createCartesianPlotAxisDialog(Widget parent);
+Widget createCartesianPlotDataDialog(Widget parent);
+Widget createRelatedDisplayDataDialog(Widget parent);
+void dumpCartesianPlot(Widget w);
+void updateCartesianPlotAxisDialog(void);
+void updateCartesianPlotAxisDialogFromWidget(Widget cp);
+void updateCartesianPlotDataDialog(void);
+
+/* medmComposite.c */
+DlElement *groupObjects();
+
+/* medmMonitor.c */
+void monitorAttributeInit(DlMonitor *monitor);
+void penAttributeInit(DlPen *pen);
+void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);
+void plotcomAttributeInit(DlPlotcom *plotcom);
+void traceAttributeInit(DlTrace *trace);
 
 /* medmPixmap.c */
 void medmInitializeImageCache(void);
 void medmClearImageCache(void);
 
+/* medmRelatedDisplay.c */
+void relatedDisplayDataDialogPopup(Widget w);
+void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
+  DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay);
+
+/* medmShellCommand.c */
+Widget createShellCommandPromptD(Widget parent);
+
 /* medmValuator.c */
 void popupValuatorKeyboardEntry(Widget, DisplayInfo *, XEvent *);
+
+/* medmWidget.c */
+void medmInit(char *displayFontName);
+void dmTerminateX(void);
+unsigned long getPixelFromColormapByString(Display *display, int screen,
+  Colormap cmap, char *colorString);
+int initMedmWidget();
+int destroyMedmWidget();
+void hsort(double array[], int indx[], int n);
+void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo);
+void moveDisplayInfoSaveToDisplayInfo(DisplayInfo *displayInfo);
 
 /* objectPalette.c */
 void createObject(void);
@@ -340,8 +413,6 @@ void updateTaskStatusGetInfo(int *taskCount,
   double *timeInterval); 
 void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
 
-
-
 /* updateMonitors.c */
 void localCvtDoubleToString( double, char *, unsigned short);
 void localCvtDoubleToExpNotationString(double, char *, unsigned short);
@@ -361,8 +432,9 @@ int localCvtLongToHexString(long source, char *pdest);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
-void dmRemoveMonitorStructureFromMonitorList(
-  Channel *monitorData);
+#ifndef MEDM_CDEV
+void dmRemoveMonitorStructureFromMonitorList(Channel *monitorData);
+#endif
 void dmRemoveDisplayList(DisplayInfo *displayInfo);
 void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList);
 void dmRemoveDisplayInfo(DisplayInfo *displayInfo);
@@ -477,11 +549,6 @@ void resizeDlElementReferenceList(
   int y,
   float scaleX,
   float scaleY);
-#if 0
-char *allocateString();
-void freeString(char *string);
-void destroyFreeStringList();
-#endif
 void createUndoInfo(DisplayInfo *displayInfo);
 void destroyUndoInfo(DisplayInfo *displayInfo);
 void clearUndoInfo(DisplayInfo *displayInfo);
@@ -489,7 +556,6 @@ void saveUndoInfo(DisplayInfo *displayInfo);
 void restoreUndoInfo(DisplayInfo *displayInfo);
 void updateAllDisplayPositions();
 void setTimeValues(void);
-void popupPvInfo(DisplayInfo *displayInfo);
 void createPvInfoDlg(void);
 Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
 void popupDisplayListDlg(void);
@@ -502,65 +568,6 @@ void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);
 void dumpDisplayInfoList(DisplayInfo *head, char *string);
 
-/* medmWidget.c */
-void medmInit(char *displayFontName);
-void dmTerminateX(void);
-unsigned long getPixelFromColormapByString(Display *display, int screen,
-  Colormap cmap, char *colorString);
-int initMedmWidget();
-int destroyMedmWidget();
-void hsort(double array[], int indx[], int n);
-void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo);
-void moveDisplayInfoSaveToDisplayInfo(DisplayInfo *displayInfo);
-
-/* writeControllers.c */
-void writeDlChoiceButton(FILE *, DlElement *, int);
-void writeDlMessageButton(FILE *, DlElement *, int);
-void writeDlValuator(FILE *, DlElement *, int);
-void writeDlTextEntry(FILE *, DlElement *, int);
-void writeDlMenu(FILE *, DlElement *, int);
-void writeDlControl(FILE *, DlControl *, int);
-
-/* writeExtensions.c */
-void writeDlImage(FILE *, DlElement *, int);
-void writeDlCompositeChildren(FILE *, DlElement *, int);
-void writeDlComposite(FILE *, DlElement *, int);
-void writeDlPolyline(FILE *, DlElement *, int);
-void writeDlPolygon(FILE *, DlElement *, int);
-
-/* writeMonitors.c */
-void writeDlMeter(FILE *, DlElement *, int);
-void writeDlBar(FILE *, DlElement *, int);
-void writeDlByte(FILE *, DlElement *, int);
-void writeDlIndicator(FILE *, DlElement *, int);
-void writeDlTextUpdate(FILE *, DlElement *, int);
-void writeDlStripChart(FILE *, DlElement *, int);
-void writeDlCartesianPlot(FILE *, DlElement *, int);
-void writeDlSurfacePlot(FILE *, DlElement *, int);
-void writeDlMonitor(FILE *, DlMonitor *, int);
-void writeDlPlotcom(FILE *, DlPlotcom *, int);
-void writeDlPen(FILE *, DlPen *, int, int);
-void writeDlTrace(FILE *, DlTrace *, int, int);
-void writeDlPlotAxisDefinition(FILE *, DlPlotAxisDefinition *, int, int);
-
-/* writeStatics.c */
-void writeDlComposite(FILE *, DlElement *, int);
-void writeDlFile(FILE *, DlFile *, int);
-void writeDlDisplay(FILE *, DlElement *, int);
-void writeDlColormap(FILE *, DlColormap *, int);
-void writeDlBasicAttribute(FILE *, DlBasicAttribute *, int);
-void writeDlDynamicAttribute(FILE *, DlDynamicAttribute *, int);
-void writeDlRectangle(FILE *, DlElement *, int);
-void writeDlOval(FILE *, DlElement *, int);
-void writeDlArc(FILE *, DlElement *, int);
-void writeDlText(FILE *, DlElement *, int);
-void writeDlRelatedDisplay(FILE *, DlElement *, int);
-void writeDlShellCommand(FILE *, DlElement *, int);
-void writeDlColormapEntry(FILE *, DlElement *, int);
-void writeDlObject(FILE *, DlObject *, int);
-void writeDlRelatedDisplayEntry(FILE *, DlRelatedDisplayEntry *, int, int);
-void writeDlShellCommandEntry(FILE *, DlShellCommandEntry *, int, int);
-
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
@@ -569,10 +576,10 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 int ReadCode(void);
 void freeGIF(DlImage *dlImage);
 
-/* medmComposite.c */
-DlElement *groupObjects();
-
 /* medmCommon.c */
+void objectAttributeInit(DlObject *object);
+void basicAttributeInit(DlBasicAttribute *attr);
+void dynamicAttributeInit(DlDynamicAttribute *dynAttr);
 int initMedmCommon();
 void destroyDlElement(DlElement *);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
@@ -603,30 +610,5 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
 DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
   char *filename);
 TOKEN getToken(DisplayInfo *displayInfo, char *word);
-
-/* medmRelatedDisplay.c */
-void relatedDisplayDataDialogPopup(Widget w);
-void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay);
-
-/* medmMonitor.c */
-void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);
-void plotcomAttributeInit(DlPlotcom *plotcom);
-void penAttributeInit(DlPen *pen);
-void traceAttributeInit(DlTrace *trace);
-
-/* medmShellCommand.c */
-Widget createShellCommandPromptD(Widget parent);
-
-/* medmCartesianPlot.c */
-void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
-void cpUpdateMatrixColors(void);
-Widget createCartesianPlotAxisDialog(Widget parent);
-Widget createCartesianPlotDataDialog(Widget parent);
-Widget createRelatedDisplayDataDialog(Widget parent);
-void dumpCartesianPlot(Widget w);
-void updateCartesianPlotAxisDialog(void);
-void updateCartesianPlotAxisDialogFromWidget(Widget cp);
-void updateCartesianPlotDataDialog(void);
 
 #endif  /* __PROTO_H__ */

@@ -68,6 +68,8 @@ static void medmRepaintRegion(Channel *);
 
 #define CA_PAGE_SIZE 100
 #define CA_PAGE_COUNT 10
+#define TIME_STRING_MAX 81     /* Maximum length of timestamp string */
+#define CA_PEND_IO_TIME 30.0
 
 typedef struct _CATask {
     int freeListSize;
@@ -793,4 +795,185 @@ void medmRecordAddUpdateValueCb(Record *pr, void (*updateValueCb)(XtPointer)) {
 
 void medmRecordAddGraphicalInfoCb(Record *pr, void (*updateGraphicalInfoCb)(XtPointer)) {
     pr->updateGraphicalInfoCb = updateGraphicalInfoCb;
+}
+
+void popupPvInfo(DisplayInfo *displayInfo)
+{
+    long now; 
+    struct tm *tblock;
+    char timeStampStr[TIME_STRING_MAX];
+    char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
+    Record **records;
+    chid *chids, chId;
+    struct dbr_time_string *timeVals, timeVal;
+    int i, j, count, status;
+    char string[1024];     /* Danger: Fixed length */
+    Record *pR;
+    Channel *pCh;
+    XmTextPosition curpos = 0;
+
+  /* Create the dialog box if it has not been created */
+    if(!pvInfoS) createPvInfoDlg();
+
+  /* Get the records */
+    records = getPvInfoFromDisplay(displayInfo, &count);
+    if(!records) return;   /* (Error messages have been sent) */
+
+  /* Get timestamp */
+    time(&now);
+    tblock = localtime(&now);
+    strftime(timeStampStr,TIME_STRING_MAX,STRFTIME_FORMAT"\n",tblock);
+    timeStampStr[TIME_STRING_MAX-1]='0';
+
+  /* Heading */
+    sprintf(string,"           PV Information\n\n%s\n",timeStampStr);
+    XmTextSetInsertionPosition(pvInfoMessageBox, 0);
+    XmTextSetString(pvInfoMessageBox,string);
+    curpos+=strlen(string);
+    
+  /* Allocate space */
+    timeVals = (struct dbr_time_string *)calloc(count,
+      sizeof(struct dbr_time_string));
+    if(!timeVals) {
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	return;
+    }
+    chids = (chid *)calloc(count,sizeof(chid));
+    if(!chids) {
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
+	free(timeVals);
+	return;
+    }
+
+  /* Loop over the records to get information */
+    for(i=0; i < count; i++) {
+      /* Check for a valid record */
+	chids[i] = NULL;
+	if(records[i]) {
+	    pR = records[i];
+	    pCh = getChannelFromRecord(pR);
+	    if(!pCh) continue;
+	    if(!pCh->chid) continue;
+	    chId = chids[i] = pCh->chid;
+	} else continue;
+	
+      /* Get the time value as a string */
+	status = ca_array_get(DBR_TIME_STRING, 1, chId, &timeVals[i]);
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(1,"popupPvInfo: ca_get: %s\n",
+	      ca_message(status));
+	}
+    }
+
+  /* Wait for results */
+    status=ca_pend_io(CA_PEND_IO_TIME);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"popupPvInfo: Did not get all the PV information\n");
+    }
+    
+  /* Loop over the records to print information */
+    for(i=0; i < count; i++) {
+	
+      /* Check for a valid record */
+	if(!chids[i]) continue;
+
+	chId = chids[i];
+	timeVal = timeVals[i];
+	pR = records[i];
+
+      /* Items from chid */
+	sprintf(string,"%s\n"
+	  "======================================\n",
+	  ca_name(chId));
+	sprintf(string,"%sTYPE: %s\n",string,
+	  dbf_type_to_text(ca_field_type(chId)));
+	sprintf(string,"%sCOUNT: %hu\n",string,ca_element_count(chId));
+	sprintf(string,"%sACCESS: %s%s\n",string,
+	  ca_read_access(chId)?"R":"",ca_write_access(chId)?"W":"");
+	sprintf(string,"%sIOC: %s\n",string,ca_host_name(chId));
+	if(timeVal.value) {
+	    if(ca_element_count(chId) == 1) {
+		sprintf(string,"%sVALUE: %s\n",string,
+		  timeVal.value);
+	    } else {
+		sprintf(string,"%sFIRST VALUE: %s\n",string,
+		  timeVal.value);
+	    }
+	    sprintf(string,"%sSTAMP: %s\n",string,
+	      tsStampToText(&timeVal.stamp,TS_TEXT_MONDDYYYY,tsTxt));
+	} else {
+		sprintf(string,"%sVALUE: Not known\n");
+		sprintf(string,"%sSTAMP: Not known\n");
+	}
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+
+      /* Alarms */
+	switch(pR->severity) {
+	case NO_ALARM:
+	    sprintf(string,"ALARM: NO\n");
+	    break;
+	case MINOR_ALARM:
+	    sprintf(string,"ALARM: MINOR\n");
+	    break;
+	case MAJOR_ALARM:
+	    sprintf(string,"ALARM: MAJOR\n");
+	    break;
+	case INVALID_ALARM:
+	    sprintf(string,"ALARM: INVALID\n");
+	    break;
+	default:
+	    sprintf(string,"ALARM: Unknown\n");
+	    break;
+	}
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+
+      /* Items from record */
+	sprintf(string,"\n");
+	switch(ca_field_type(chId)) {
+        case DBF_STRING: 
+	    break;
+        case DBF_ENUM: 
+	    sprintf(string,"%sSTATES: %d\n",
+	      string, (int)(pR->hopr+1.1));
+	  /* KE: Bad way to use a double */
+	    for (j=0; j <= pR->hopr; j++) {
+		sprintf(string,"%sSTATE %2d: %s\n",
+		  string, j, pR->stateStrings[j]);
+	    }
+	    break;
+        case DBF_CHAR:  
+        case DBF_INT:           
+        case DBF_LONG: 
+	    sprintf(string,"%sHOPR: %g  LOPR: %g\n",
+	      string, pR->hopr ,pR->lopr);
+	    break;
+        case DBF_FLOAT:  
+        case DBF_DOUBLE:
+	    if(pR->precision >= 0 && pR->precision <= 17) {
+		sprintf(string,"%sPRECISION: %d\n",
+		  string, pR->precision);
+	    } else {
+		sprintf(string,"%sPRECISION: %d [Bad Value]\n",
+		  string, pR->precision);
+	    }
+	    sprintf(string,"%sHOPR: %g  LOPR: %g\n",
+	      string, pR->hopr ,pR->lopr);
+	    break;
+        default         : 
+	    break;
+	}
+	sprintf(string,"%s\n",string);
+	XmTextInsert(pvInfoMessageBox, curpos, string);
+	curpos+=strlen(string);
+    }
+
+  /* Free space */
+    free(timeVals);
+    free(chids);
+    free(records);
+
+    XtSetSensitive(pvInfoS,True);
+    XtPopup(pvInfoS,XtGrabNone);
 }

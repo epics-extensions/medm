@@ -115,6 +115,16 @@ extern "C" {
 # include <unistd.h>
 #endif /* #ifdef WIN32 */
     
+#ifdef MEDM_CDEV
+#include "medmCdev.h"
+#else
+#include "epicsVersion.h"
+#include "medmCA.h"
+#endif
+
+#include "medmWidget.h"
+#include "parse.h"
+#include "xgif.h"
 #include "medmCA.h"
 #include "medmWidget.h"
 #include "parse.h"
@@ -221,7 +231,9 @@ extern "C" {
     extern utilPrint(Display *, Window, char *);
 
     EXTERN XtWorkProcId medmWorkProcId;
+#ifndef MEDM_CDEV
     EXTERN Channel *nextToServe;
+#endif
     EXTERN long medmUpdateRequestCount;
     EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
     EXTERN Widget caStudyLabel;

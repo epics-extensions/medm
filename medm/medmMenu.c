@@ -421,7 +421,12 @@ static void menuValueChangedCb(
 
 	if (pd->connected) {
 	    if (pd->writeAccess) {
+#ifdef MEDM_CDEV
+		if (pd->stateStrings) 
+		  medmSendString(pd, pd->stateStrings[btnNumber]);
+#else
 		medmSendDouble(pm->record,(double)btnNumber);
+#endif
 	    } else {
 		fputc('\a',stderr);
 		menuUpdateValueCb((XtPointer)pm->record);

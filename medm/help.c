@@ -106,7 +106,7 @@ void errMsgSendDlgCreateDlg();
 void errMsgSendDlgSendButtonCb(Widget,XtPointer,XtPointer);
 void errMsgSendDlgCloseButtonCb(Widget,XtPointer,XtPointer);
 void errMsgDlgCb(Widget,XtPointer,XtPointer);
-static void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id);
+static void medmUpdateCAStudyDlg(XtPointer data, XtIntervalId *id);
 
 /* Global variables */
 
@@ -924,16 +924,16 @@ void medmCreateCAStudyDlg() {
     caUpdateStudyDlg = True;
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (errMsgDlgTimeOutId == 0)
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudyDlg,NULL);
     } else {
 	errMsgDlgTimeOutId = 0;
     }
 }
 
 #ifdef __cplusplus
-static void medmUpdateCAStudtylDlg(XtPointer, XtIntervalId *id)
+static void medmUpdateCAStudyDlg(XtPointer, XtIntervalId *id)
 #else
-static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id)
+static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 #endif
 {
     if (caUpdateStudyDlg) {
@@ -963,7 +963,12 @@ static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id)
 	  &updateRequestQueued,
 	  &updateExecuted,
 	  &timeInterval); 
+#ifdef MEDM_CDEV
+      /* No channels connected or CA events for CDEV */
+	channelConnected = caEventCount = 0;
+#else
 	CATaskGetInfo(&channelCount,&channelConnected,&caEventCount);
+#endif
 	totalUpdateDiscarded = updateDiscardCount+periodicUpdateDiscardCount;
 	totalUpdateRequested = updateRequestCount+periodicUpdateRequestCount + totalUpdateDiscarded;
 	totalTaskCount = taskCount + periodicTaskCount;
@@ -1015,7 +1020,7 @@ static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id)
 	XmUpdateDisplay(caStudyS);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    if (errMsgDlgTimeOutId == *id)
-	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudyDlg,NULL);
 	} else {
 	    errMsgDlgTimeOutId = 0;
 	}
@@ -1027,7 +1032,7 @@ static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id)
 void medmStartUpdateCAStudyDlg() {
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (errMsgDlgTimeOutId == 0) 
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,3000,medmUpdateCAStudtylDlg,NULL);
+	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,3000,medmUpdateCAStudyDlg,NULL);
     } else {
 	errMsgDlgTimeOutId = 0;
     }

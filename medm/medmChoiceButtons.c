@@ -271,7 +271,12 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
 	
 	if (pd->connected) {
 	    if (pd->writeAccess) {
+#ifdef MEDM_CDEV
+		if (pd->stateStrings)
+		  medmSendString(pd, pd->stateStrings[btnNumber]);
+#else
 		medmSendDouble(pcb->record,(double)btnNumber);
+#endif
 	    } else {
 		XBell(display,50);
 		choiceButtonUpdateValueCb((XtPointer)pcb->record);

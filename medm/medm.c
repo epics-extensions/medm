@@ -3161,7 +3161,9 @@ main(int argc, char *argv[])
     windowPropertyAtom = (Atom)NULL;
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;
+#ifndef MEDM_CDEV
     nextToServe = NULL;
+#endif
     medmCAEventCount = 0;
     medmScreenUpdateCount = 0;
     medmUpdateMissedCount = 0;
@@ -3195,8 +3197,10 @@ main(int argc, char *argv[])
 	return 0;
     }
 
+#ifndef MEDM_CDEV
    /* Initialize channel access here (to get around orphaned windows) */
     SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
+#endif
 
   /* Parse command line */
     request = parseCommandLine(argc,argv);
@@ -3522,6 +3526,22 @@ main(int argc, char *argv[])
 
   /* Create and popup the product description shell
    *  (use defaults for fg/bg) */
+#ifdef MEDM_CDEV
+    sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,CDEV_VERSION_STRING);
+    productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
+      mainShell,
+      "MEDM", fontListTable[8],
+      (Pixmap)NULL,
+      "Motif-Based Editor & Display Manager",
+      fontListTable[6],
+      versionString,
+      "Developed at Argonne National Laboratory\n"
+      "     by Mark Anderson, Fred Vong, & Ken Evans\n"
+      "Extended for CDEV at Jefferson Laboratory\n"
+      "     by Jie Chen",
+     fontListTable[4],
+      -1, -1, 5);
+#else
     sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,EPICS_VERSION_STRING);
     productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
       mainShell,
@@ -3534,6 +3554,7 @@ main(int argc, char *argv[])
       "     by Mark Anderson, Fred Vong, & Ken Evans",
       fontListTable[4],
       -1, -1, 5);
+#endif
 
   /* Add callback for disabled window manager Close function
    *   Need this later than shell creation for some reason (?) */

@@ -66,7 +66,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <ctype.h>
 #include "medm.h"
 #include <Xm/MwmUtil.h>
+#ifndef _MEDM_CDEV
 #include "dbDefs.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
