@@ -515,10 +515,9 @@ static void blinkCursor(XtPointer client_data, XtIntervalId *id)
     } else {
         XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 	  XtWindow(currentDisplayInfo->drawingArea),
-	  currentDisplayInfo->pixmapGC,
+	  currentDisplayInfo->gc,
 	  (int)cursorX, (int)cursorY,
-	  (unsigned int) CURSOR_WIDTH + 1,
-	  (unsigned int) 1,
+	  (unsigned int)CURSOR_WIDTH + 1u, 1u,
 	  (int)cursorX, (int)cursorY);
         state = TRUE;
     }
@@ -592,7 +591,7 @@ DlElement *handleTextCreate(int x0, int y0)
 	    XtRemoveTimeOut(intervalId);
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 	      XtWindow(currentDisplayInfo->drawingArea),
-	      currentDisplayInfo->pixmapGC,
+	      currentDisplayInfo->gc,
 	      (int)cursorX, (int)cursorY,
 	      (unsigned int) CURSOR_WIDTH + 1, (unsigned int)1,
 	      (int)cursorX, (int)cursorY);
@@ -613,14 +612,14 @@ DlElement *handleTextCreate(int x0, int y0)
 		    dlText->textix[stringIndex] = '\0';
 		    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 		      XtWindow(currentDisplayInfo->drawingArea),
-		      currentDisplayInfo->pixmapGC,
+		      currentDisplayInfo->gc,
 		      (int)dlText->object.x, (int)dlText->object.y,
 		      (unsigned int)dlText->object.width,
 		      (unsigned int)dlText->object.height,
 		      (int)dlText->object.x, (int)dlText->object.y);
 		    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 		      XtWindow(currentDisplayInfo->drawingArea),
-		      currentDisplayInfo->pixmapGC,
+		      currentDisplayInfo->gc,
 		      (int)cursorX, (int)cursorY,
 		      (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
 		      (int)cursorX, (int)cursorY);
@@ -639,7 +638,7 @@ DlElement *handleTextCreate(int x0, int y0)
 		XtRemoveTimeOut(intervalId);
 		XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 		  XtWindow(currentDisplayInfo->drawingArea),
-		  currentDisplayInfo->pixmapGC,
+		  currentDisplayInfo->gc,
 		  (int)cursorX, (int)cursorY,
 		  (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
 		  (int)cursorX, (int)cursorY);
@@ -677,7 +676,7 @@ DlElement *handleTextCreate(int x0, int y0)
 	    }
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 	      XtWindow(currentDisplayInfo->drawingArea),
-	      currentDisplayInfo->pixmapGC,
+	      currentDisplayInfo->gc,
 	      (int)dlText->object.x,
 	      (int)dlText->object.y,
 	      (unsigned int)dlText->object.width,
@@ -685,7 +684,7 @@ DlElement *handleTextCreate(int x0, int y0)
 	      (int)dlText->object.x, (int)dlText->object.y);
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 	      XtWindow(currentDisplayInfo->drawingArea),
-	      currentDisplayInfo->pixmapGC,
+	      currentDisplayInfo->gc,
 	      (int)cursorX, (int)cursorY,
 	      (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
 	      (int)cursorX, (int)cursorY);

@@ -735,7 +735,7 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		calculateTheBoundingBox(dlPolygon);
 		XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 		  XtWindow(currentDisplayInfo->drawingArea),
-		  currentDisplayInfo->pixmapGC,
+		  currentDisplayInfo->gc,
 		  dlPolygon->object.x, dlPolygon->object.y,
 		  dlPolygon->object.width, dlPolygon->object.height,
 		  dlPolygon->object.x, dlPolygon->object.y);

@@ -1574,15 +1574,15 @@ void drawGrid(DisplayInfo *displayInfo)
     XtGetValues(displayInfo->drawingArea,args,n);
 
   /* Set the GC */
-    XSetForeground(display,displayInfo->pixmapGC,
+    XSetForeground(display,displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
-    XSetBackground(display,displayInfo->pixmapGC,
+    XSetBackground(display,displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
 
   /* Draw grid */
     for(i=0; i < width; i+=gridSpacing) {
 	for(j=0; j < height; j+=gridSpacing) {
-	    XDrawPoint(display,draw,displayInfo->pixmapGC,i,j);
+	    XDrawPoint(display,draw,displayInfo->gc,i,j);
 	}
     }
 }

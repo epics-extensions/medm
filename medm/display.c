@@ -196,7 +196,6 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
     displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
     displayInfo->gc = 0;
-    displayInfo->pixmapGC = 0;
 
     displayInfo->traversalMode = globalDisplayListTraversalMode;
     displayInfo->hasBeenEditedButNotSaved = False;
@@ -369,10 +368,6 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     if(displayInfo->gc) {
 	XFreeGC(display,displayInfo->gc);
 	displayInfo->gc = NULL;
-    }
-    if(displayInfo->pixmapGC != NULL) {
-	XFreeGC(display,displayInfo->pixmapGC);
-	displayInfo->pixmapGC = NULL;
     }
     displayInfo->drawingAreaBackgroundColor = 0;
     displayInfo->drawingAreaForegroundColor = 0;

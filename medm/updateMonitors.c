@@ -157,7 +157,7 @@ void localCvtDoubleToString(
 /* Used for dynamic objects only */
 void drawWhiteRectangle(UpdateTask *pt)
 {
-    GC gc = pt->displayInfo->pixmapGC;
+    GC gc = pt->displayInfo->gc;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     XSetForeground(display, gc, WhitePixel(display,DefaultScreen(display)));
@@ -169,7 +169,7 @@ void drawWhiteRectangle(UpdateTask *pt)
 /* Used for dynamic objects only */
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
 {
-    GC gc = pt->displayInfo->pixmapGC;
+    GC gc = pt->displayInfo->gc;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     XSetForeground(display, gc, pixel);
@@ -236,7 +236,7 @@ void draw3DQuestionMark(UpdateTask *pt)
 {
     Pixel tsc, bsc, bgc, fgc, slc;
     Display *display = XtDisplay(pt->displayInfo->drawingArea);
-    GC gc = pt->displayInfo->pixmapGC;
+    GC gc = pt->displayInfo->gc;
     Drawable drawable = pt->displayInfo->updatePixmap;
 
     int x = pt->rectangle.x;

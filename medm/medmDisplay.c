@@ -633,7 +633,7 @@ void refreshDisplay(DisplayInfo *displayInfo)
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
-	  displayInfo->pixmapGC != (GC)NULL && 
+	  displayInfo->gc != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
 	  /* Repaint the region without clipping */
 	    updateTaskRepaintRect(displayInfo, NULL, True);

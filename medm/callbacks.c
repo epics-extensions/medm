@@ -170,7 +170,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	  DefaultDepth(display,screenNum));
 	XCopyArea(display,XtWindow(displayInfo->drawingArea),
 	  pixmap,
-	  displayInfo->pixmapGC,0,0,width,height,0,0);
+	  displayInfo->gc,0,0,width,height,0,0);
 	XFlush(display);
 	
 	for(i=0; i < 1; i++) {
@@ -180,7 +180,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	    
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,
 	      XtWindow(displayInfo->drawingArea),
-	      displayInfo->pixmapGC,0,0,width,height,0,0);
+	      displayInfo->gc,0,0,width,height,0,0);
 	    XFlush(display);
 	    
 	    print("%d Background is pixmap\n",i+1);
@@ -189,7 +189,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	    
 	    XCopyArea(display,pixmap,
 	      XtWindow(displayInfo->drawingArea),
-	      displayInfo->pixmapGC,0,0,width,height,0,0);
+	      displayInfo->gc,0,0,width,height,0,0);
 	    XFlush(display);
 	}
 	XFreePixmap(display,pixmap);
@@ -338,7 +338,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	uih = cbs->event->xexpose.height;
 	
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
-	  displayInfo->pixmapGC != (GC)NULL && 
+	  displayInfo->gc != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
 	    
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
@@ -366,7 +366,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		  DefaultDepth(display,screenNum));
 		XCopyArea(display,XtWindow(displayInfo->drawingArea),
 		  pixmap,
-		  displayInfo->pixmapGC,0,0,width,height,0,0);
+		  displayInfo->gc,0,0,width,height,0,0);
 		XFlush(display);
 		
 		for(i=0; i < 1; i++) {
@@ -376,7 +376,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		    
 		    XCopyArea(display,displayInfo->drawingAreaPixmap,
 		      XtWindow(displayInfo->drawingArea),
-		      displayInfo->pixmapGC,0,0,width,height,0,0);
+		      displayInfo->gc,0,0,width,height,0,0);
 		    XFlush(display);
 		    
 		    print("%d Background is pixmap\n",i+1);
@@ -385,7 +385,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		    
 		    XCopyArea(display,pixmap,
 		      XtWindow(displayInfo->drawingArea),
-		      displayInfo->pixmapGC,0,0,width,height,0,0);
+		      displayInfo->gc,0,0,width,height,0,0);
 		    XFlush(display);
 		}
 		XFreePixmap(display,pixmap);
@@ -407,7 +407,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	    } else {
 	      /* EDIT mode */
 		XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
-		  displayInfo->pixmapGC,x,y,uiw,uih,x,y);
+		  displayInfo->gc,x,y,uiw,uih,x,y);
 	    }
 	}
 #if DEBUG_EXPOSE

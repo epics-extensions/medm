@@ -80,7 +80,8 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd);
 static void valuatorUpdateValueCb(XtPointer);
 static void valuatorDestroyCb(XtPointer);
 static void valuatorSetValue(MedmValuator *, double, Boolean force);
-static void valuatorRedrawValue(MedmValuator *, DisplayInfo *, Widget, DlValuator *, double);
+static void valuatorRedrawValue(MedmValuator *, DisplayInfo *, Widget,
+  DlValuator *, double);
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 static void valuatorGetRecord(XtPointer, Record **, int *);
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
@@ -177,7 +178,8 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	pv = (MedmValuator *)malloc(sizeof(MedmValuator));
 	dlElement->data = (void *)pv;
 	if(pv == NULL) {
-	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
+	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
+	      "Memory allocation error\n");
 	    return;
 	}
       /* Pre-initialize */
@@ -191,7 +193,8 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	  (XtPointer)pv);
 	
 	if(pv->updateTask == NULL) {
-	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
+	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
+	      "Memory allocation error\n");
 	    free((char *)pv);
 	    return;
 	} else {
@@ -213,8 +216,10 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNwidth,(Dimension)dlValuator->object.width); n++;
     XtSetArg(args[n],XmNheight,(Dimension)dlValuator->object.height); n++;
     XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-    XtSetArg(args[n],XmNforeground,displayInfo->colormap[dlValuator->control.clr]); n++;
-    XtSetArg(args[n],XmNbackground,displayInfo->colormap[dlValuator->control.bclr]); n++;
+    XtSetArg(args[n],XmNforeground,
+      displayInfo->colormap[dlValuator->control.clr]); n++;
+    XtSetArg(args[n],XmNbackground,
+      displayInfo->colormap[dlValuator->control.bclr]); n++;
     XtSetArg(args[n],XmNhighlightThickness,1); n++;
     XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
     switch(dlValuator->label) {
@@ -459,14 +464,15 @@ static void valuatorDraw(XtPointer cd) {
 		return;
 	    }
 
-	  /* Valuator is only controller/monitor which can have updates disabled */
-
+	  /* Valuator is only controller/monitor which can have
+             updates disabled */
 	    if(dlValuator->enableUpdates) {
 		valuatorSetValue(pv,pr->value,True);
 		{
 		    XExposeEvent event;
 		    event.count = 0;
-		    handleValuatorExpose(widget,(XtPointer) pv,(XEvent *) &event, &dummy);
+		    handleValuatorExpose(widget,(XtPointer)pv,
+		      (XEvent *)&event, &dummy);
 		}
 	    }
 	    if(pr->writeAccess)
@@ -580,6 +586,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     unsigned long gcValueMask;
     XGCValues gcValues;
     DisplayInfo *displayInfo;
+    GC gc;
     double localLopr, localHopr;
     char *localTitle;
     short precision;
@@ -600,7 +607,6 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	localHopr = dlValuator->limits.hopr;
 	precision = MAX(0,dlValuator->limits.prec);
 	localTitle = dlValuator->control.ctrl;
-
     } else {
       /* No controller data, therefore userData = dlValuator */
       /* KE: (Probably) means we are in EDIT mode
@@ -612,11 +618,11 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	precision = 0;
 	localTitle = dlValuator->control.ctrl;
 	displayInfo = dmGetDisplayInfoFromWidget(w);
-	if(displayInfo == NULL) return;
     }
-
+    if(!displayInfo) return;
+    gc = displayInfo->gc;
+    
   /* Since XmScale doesn't really do the right things, we'll do it by hand */
-
     if(dlValuator->label != LABEL_NONE && dlValuator->label != NO_DECORATIONS) {
 
 	foreground = displayInfo->colormap[dlValuator->control.clr];
@@ -629,12 +635,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	gcValues.foreground = foreground;
 	gcValues.background = background;
 	gcValues.font = font->fid;
-	XChangeGC(display, displayInfo->pixmapGC, gcValueMask, &gcValues);
+	XChangeGC(display, gc, gcValueMask, &gcValues);
 #if 0
       /* KE: This interferes with updates.  If it is necessary, it
          needs to be done right. */
-	XSetClipOrigin(display,displayInfo->pixmapGC,0,0);
-	XSetClipMask(display,displayInfo->pixmapGC,None);
+	XSetClipOrigin(display,gc,0,0);
+	XSetClipMask(display,gc,None);
 #endif	
 
       /* KE: Value can be received before the graphical info
@@ -656,12 +662,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = MAX(1,useableWidth - textWidth);
 		    startY = dlValuator->object.height - font->descent - 3;
-		    XSetForeground(display,displayInfo->pixmapGC,background);
-		    XFillRectangle(display,XtWindow(w),displayInfo->pixmapGC,
+		    XSetForeground(display,gc,background);
+		    XFillRectangle(display,XtWindow(w),gc,
 		      startX,MAX(1,startY-font->ascent),
 		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,displayInfo->pixmapGC,foreground);
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XSetForeground(display,gc,foreground);
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      stringValue,nChars);
 		}
 	      /* HOPR */
@@ -677,12 +683,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    } else {
 			startY = font->ascent + 3;
 		    }
-		    XSetForeground(display,displayInfo->pixmapGC,background);
-		    XFillRectangle(display,XtWindow(w),displayInfo->pixmapGC,
+		    XSetForeground(display,gc,background);
+		    XFillRectangle(display,XtWindow(w),gc,
 		      startX,MAX(1,startY-font->ascent),
 		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,displayInfo->pixmapGC,foreground);
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XSetForeground(display,gc,foreground);
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      stringValue,nChars);
 		}
 	    }
@@ -693,7 +699,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    textWidth = XTextWidth(font,localTitle,nChars);
 		    startX = MAX(1,useableWidth - textWidth);
 		    startY = font->ascent + 2;
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      localTitle,nChars);
 		}
 	    }
@@ -712,13 +718,14 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = 2;
-		    startY = useableHeight - font->descent;/* NB: descent=0 for #s */
-		    XSetForeground(display,displayInfo->pixmapGC,background);
-		    XFillRectangle(display,XtWindow(w),displayInfo->pixmapGC,
+		  /* NB: descent=0 for #s */
+		    startY = useableHeight - font->descent;
+		    XSetForeground(display,gc,background);
+		    XFillRectangle(display,XtWindow(w),gc,
 		      startX,MAX(1,startY-font->ascent),
 		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,displayInfo->pixmapGC,foreground);
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XSetForeground(display,gc,foreground);
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      stringValue,nChars);
 		}
 	      /* HOPR */
@@ -728,12 +735,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = dlValuator->object.width - textWidth - 2;
 		    startY = useableHeight - font->descent;
-		    XSetForeground(display,displayInfo->pixmapGC,background);
-		    XFillRectangle(display,XtWindow(w),displayInfo->pixmapGC,
+		    XSetForeground(display,gc,background);
+		    XFillRectangle(display,XtWindow(w),gc,
 		      startX,MAX(1,startY-font->ascent),
 		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,displayInfo->pixmapGC,foreground);
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XSetForeground(display,gc,foreground);
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      stringValue,nChars);
 		}
 	    }
@@ -744,7 +751,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		    textWidth = XTextWidth(font,localTitle,nChars);
 		    startX = 2;
 		    startY = font->ascent + 2;
-		    XDrawString(display,XtWindow(w),displayInfo->pixmapGC,startX,startY,
+		    XDrawString(display,XtWindow(w),gc,startX,startY,
 		      localTitle,nChars);
 		}
 	    }
@@ -912,7 +919,8 @@ static void precisionToggleChangedCallback(Widget w, XtPointer clientData,
     Widget widget;
     long value;
     MedmValuator *pv;
-    XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
+    XmToggleButtonCallbackStruct *call_data =
+      (XmToggleButtonCallbackStruct *)cbs;
     
   /* Only respond to the button actually set */
     if(call_data->event && call_data->set) {
@@ -921,7 +929,8 @@ static void precisionToggleChangedCallback(Widget w, XtPointer clientData,
       /* Set the prec field in the valuator data structure, and update
        *    the valuator (scale) resources */
 	if(pv) {
-	    pv->dlElement->structure.valuator->dPrecision = pow(10.,(double)value);
+	    pv->dlElement->structure.valuator->dPrecision =
+	      pow(10.,(double)value);
 	}
       /* Destroy the popup
        * Hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
@@ -1018,7 +1027,8 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
     }
 }
 
-void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *event)
+void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
+  XEvent *event)
 {
 #define MAX_TOGGLES 20
     Widget keyboardDialog;
@@ -1236,16 +1246,20 @@ void valuatorValueChanged(Widget  w, XtPointer clientData,
 	    
 	  /* Drag - set value based on relative position (easy) */
 	    pv->oldIntegerValue = call_data->value;
-	    value = dlValuator->limits.lopr + ((double)(call_data->value - VALUATOR_MIN))
-	      /((double)(VALUATOR_MAX - VALUATOR_MIN) )*(dlValuator->limits.hopr - dlValuator->limits.lopr);
+	    value = dlValuator->limits.lopr +
+	      ((double)(call_data->value - VALUATOR_MIN))
+	      / ((double)(VALUATOR_MAX - VALUATOR_MIN) ) *
+	      (dlValuator->limits.hopr - dlValuator->limits.lopr);
 	    
 	} else if(call_data->reason == XmCR_VALUE_CHANGED) { 
 	    if(dlValuator->dragging) {
-	      /* Valuechanged can mark conclusion of drag, hence enable updates */
+	      /* Valuechanged can mark conclusion of drag, hence
+                 enable updates */
 		dlValuator->enableUpdates = True;
 		dlValuator->dragging = False;
 	    } else {
-	      /* Rely on Button/KeyRelease event handler to re-enable updates */
+	      /* Rely on Button/KeyRelease event handler to re-enable
+                 updates */
 		dlValuator->enableUpdates = False;
 		dlValuator->dragging = False;
 	    }
@@ -1258,19 +1272,23 @@ void valuatorValueChanged(Widget  w, XtPointer clientData,
 		      /* Multiple increment (10*precision) */
 			if(pv->oldIntegerValue > call_data->value) {
 			  /* Decrease value one 10*precision value */
-			    value = MAX(dlValuator->limits.lopr, pr->value - 10.*dlValuator->dPrecision);
+			    value = MAX(dlValuator->limits.lopr, pr->value -
+			      10.*dlValuator->dPrecision);
 			} else if(pv->oldIntegerValue < call_data->value) {
 			  /* Increase value one 10*precision value */
-			    value = MIN(dlValuator->limits.hopr, pr->value + 10.*dlValuator->dPrecision);
+			    value = MIN(dlValuator->limits.hopr, pr->value +
+			      10.*dlValuator->dPrecision);
 			}
 		    } else {
 		      /* Single increment (precision) */
 			if(pv->oldIntegerValue > call_data->value) {
 			  /* Decrease value one precision value */
-			    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
+			    value = MAX(dlValuator->limits.lopr, pr->value -
+			      dlValuator->dPrecision);
 			} else if(pv->oldIntegerValue < call_data->value) {
 			  /* Increase value one precision value */
-			    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
+			    value = MIN(dlValuator->limits.hopr, pr->value +
+			      dlValuator->dPrecision);
 			}
 		    }
 		} else if(call_data->event->type == ButtonPress) {
@@ -1279,42 +1297,50 @@ void valuatorValueChanged(Widget  w, XtPointer clientData,
 		      /* Handle this as multiple increment/decrement */
 			if(call_data->value - pv->oldIntegerValue < 0) {
 			  /* Decrease value one 10*precision value */
-			    value = MAX(dlValuator->limits.lopr, pr->value - 10.*dlValuator->dPrecision);
+			    value = MAX(dlValuator->limits.lopr, pr->value -
+			      10.*dlValuator->dPrecision);
 			} else if(call_data->value - pv->oldIntegerValue > 0) {
 				/* Increase value one 10*precision value */
-			    value = MIN(dlValuator->limits.hopr, pr->value + 10.*dlValuator->dPrecision);
+			    value = MIN(dlValuator->limits.hopr, pr->value +
+			      10.*dlValuator->dPrecision);
 			}
 		    } else {
 		      /* Single increment (precision) */
 			if(pv->oldIntegerValue > call_data->value) {
 			  /* decrease value one precision value */
-			    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
+			    value = MAX(dlValuator->limits.lopr, pr->value -
+			      dlValuator->dPrecision);
 			} else if(pv->oldIntegerValue < call_data->value) {
 				/* Increase value one precision value */
-			    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
+			    value = MIN(dlValuator->limits.hopr, pr->value +
+			      dlValuator->dPrecision);
 			}
 		    }
 		}  /* end if/else (KeyPress/ButtonPress) */
 	    } else {
-	      /* Handle null events (direct MB1, etc does this)
-	       *   (MDA) modifying valuator to depart somewhat from XmScale, but more
-	       *   useful for real application (of valuator)
-	       * NB: modifying - MB1 either side of slider means move one increment only;
-	       *   even though std. is Multiple (let Ctrl-MB1 mean multiple (not go-to-end))
-	       */
+	      /* Handle null events (direct MB1, etc does this) (MDA)
+	       *   modifying valuator to depart somewhat from XmScale,
+	       *   but more useful for real application (of valuator)
+	       *   NB: modifying - MB1 either side of slider means
+	       *   move one increment only; even though std. is
+	       *   Multiple (let Ctrl-MB1 mean multiple (not
+	       *   go-to-end)) */
 		if(call_data->value - pv->oldIntegerValue < 0) {
 		  /* Decrease value one precision value */
-		    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
+		    value = MAX(dlValuator->limits.lopr, pr->value -
+		      dlValuator->dPrecision);
 		} else if(call_data->value - pv->oldIntegerValue > 0) {
 		  /* Increase value one precision value */
-		    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
+		    value = MIN(dlValuator->limits.hopr, pr->value +
+		      dlValuator->dPrecision);
 		}
 	    }  /* end if(call_data->event != NULL) */
 	}
 	
 	if(pr->writeAccess) {
 	    medmSendDouble(pv->record,value);
-	  /* Move/redraw valuator & value, but force use of user-selected value */
+	  /* Move/redraw valuator & value, but force use of
+             user-selected value */
 	    valuatorSetValue(pv,value,True);
 	} else {
 	    XBell(display,50); XBell(display,50); XBell(display,50);

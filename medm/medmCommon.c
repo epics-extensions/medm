@@ -269,43 +269,29 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	MAX(1,width),MAX(1,height),
 	DefaultDepth(display,screenNum));
 
-  /* Create the pixmap GC */
+  /* Create the GC */
     valueMask = GCForeground | GCBackground ;
     values.foreground = 
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
     values.background =
-      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
-    if(displayInfo->pixmapGC) {
-	XFreeGC(display,displayInfo->pixmapGC);
-    }
-    displayInfo->pixmapGC = XCreateGC(display,
-      XtWindow(displayInfo->drawingArea),valueMask,&values); 
-
-  /* (MDA) don't generate GraphicsExpose events on XCopyArea() */
-    XSetGraphicsExposures(display,displayInfo->pixmapGC,FALSE);
-
-    XFillRectangle(display,displayInfo->drawingAreaPixmap,
-      displayInfo->pixmapGC,0,0,width,height);
-    XFillRectangle(display,displayInfo->updatePixmap,
-      displayInfo->pixmapGC,0,0,width,height);
-    XSetForeground(display,displayInfo->pixmapGC,
-      displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
-
-  /* Draw grid */
-    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
-      drawGrid(displayInfo);
-
-  /* Create the initial display GC */
-    valueMask = GCForeground | GCBackground ;
-    values.foreground = 
-      displayInfo->colormap[displayInfo->drawingAreaForegroundColor];
-    values.background = 
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
     if(displayInfo->gc) {
 	XFreeGC(display,displayInfo->gc);
     }
     displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
       valueMask,&values);
+
+    XFillRectangle(display,displayInfo->drawingAreaPixmap,
+      displayInfo->gc,0,0,width,height);
+    XFillRectangle(display,displayInfo->updatePixmap,
+      displayInfo->gc,0,0,width,height);
+    XSetForeground(display,displayInfo->gc,
+      displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
+    
+  /* Draw grid */
+    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+      drawGrid(displayInfo);
+
 }
 
 

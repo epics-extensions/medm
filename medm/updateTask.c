@@ -770,7 +770,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		
       /* Set the clip region in the GC */
 	XSetRegion(display, displayInfo->gc, region);
-	XSetRegion(display, displayInfo->pixmapGC, region);
 	XClipBox(region, &clipBox);
 	
       /* Copy the drawingAreaPixmap containing the static graphics to
@@ -866,7 +865,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	    if(!XEmptyRegion(updateTaskExposedRegion)) {
 	  /* Set the updateTaskExposedRegion in the GC */
 	    XSetRegion(display, displayInfo->gc, updateTaskExposedRegion);
-	    XSetRegion(display, displayInfo->pixmapGC, updateTaskExposedRegion);
 
 	  /* Redraw the pixmap */
 #if DEBUG_COMPOSITE
@@ -879,7 +877,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 
 	  /* Restore the original region in the GC */
 	    XSetRegion(display, displayInfo->gc, region);
-	    XSetRegion(display, displayInfo->pixmapGC, region);
 
 	  /* Empty the updateTaskExposedRegion */
 	    XDestroyRegion(updateTaskExposedRegion);
@@ -896,8 +893,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
       /* Release the clipping region */
 	XSetClipOrigin(display, displayInfo->gc, 0, 0);
 	XSetClipMask(display, displayInfo->gc, None);
-	XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
-	XSetClipMask(display, displayInfo->pixmapGC, None);
 	XDestroyRegion(region);
 	
       /* Reset the executeRequestsPendingCount */
@@ -1039,8 +1034,6 @@ void updateTaskRepaintRect(DisplayInfo *displayInfo, XRectangle *clipRect,
   /* Clip the GC */
     XSetClipRectangles(display, displayInfo->gc,
       0, 0, &usedRect, 1, YXBanded);
-    XSetClipRectangles(display, displayInfo->pixmapGC,
-      0, 0, &usedRect, 1, YXBanded);
     
 #if DEBUG_REPAINT
     print(" {%3d,%3d}{%3d %3d}\n",
@@ -1095,8 +1088,6 @@ void updateTaskRepaintRect(DisplayInfo *displayInfo, XRectangle *clipRect,
     if(clipRect) {
 	XSetClipOrigin(display, displayInfo->gc, 0, 0);
 	XSetClipMask(display, displayInfo->gc, None);
-	XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
-	XSetClipMask(display, displayInfo->pixmapGC, None);
     }
     if(region) XDestroyRegion(region);
 }

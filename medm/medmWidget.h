@@ -323,7 +323,6 @@ typedef struct _DisplayInfo {
     int drawingAreaBackgroundColor;
     int drawingAreaForegroundColor;
     GC gc;
-    GC pixmapGC;
   /* Execute or edit mode traversal  */
     DlTraversalMode traversalMode;
     Boolean hasBeenEditedButNotSaved;
