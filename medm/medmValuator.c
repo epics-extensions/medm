@@ -235,8 +235,10 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     pv->dlElement->widget =  XtCreateWidget("valuator",
       xmScaleWidgetClass, displayInfo->drawingArea, args, n);
 
+  /* Update the limits to reflect current src's */
+    updatePvLimits(&dlValuator->limits);
+
   /* Set virtual range */
-    adjustPvLimits(&dlValuator->limits);
     n = 0;
   /* The Valuator works with fixed values of these three parameters
    * Only the labels are changed to reflect the actual numbers */
@@ -287,6 +289,9 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
     
+  /* Update the limits to reflect current src's */
+    updatePvLimits(&dlValuator->limits);
+
   /* From the valuator structure, we've got Valuator's specifics */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlValuator->object.x); n++;

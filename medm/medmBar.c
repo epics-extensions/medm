@@ -129,6 +129,9 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	    drawWhiteRectangle(pb->updateTask);
 	}
 
+      /* Update the limits to reflect current src's */
+	updatePvLimits(&dlBar->limits);
+	
       /* from the bar structure, we've got Bar's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlBar->object.x); n++;
@@ -143,7 +146,6 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
        *  widget.  They still need to be set from the lval, however, because
        *  they are XtArgVal's, which Xt typedef's as long (exc. Cray?)
        *  See Intrinsic.h */
-	adjustPvLimits(&dlBar->limits);
 	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
 	XtSetArg(args[n],XcNlowerBound,longFval(dlBar->limits.lopr)); n++;
 	XtSetArg(args[n],XcNupperBound,longFval(dlBar->limits.hopr)); n++;

@@ -117,7 +117,7 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
   XtPointer callData);
 static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
-static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName);
+static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName);
 
 /* Global variables */
 
@@ -4631,7 +4631,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
     if(globalDisplayListTraversalMode == DL_EDIT) {
       /* Update the dialog box from the globalResourceBundle */
 	pL = &globalResourceBundle.limits;
-	resetPvLimits(pL, PV_LIMITS_EDIT_NAME, True);
+	resetPvLimitsDlg(pL, PV_LIMITS_EDIT_NAME, True);
     } else {
       /* Let the user pick the widget */
 	records = getPvInfoFromDisplay(displayInfo, &count, &pE);
@@ -4643,7 +4643,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	    free(records);
 	    records = NULL;
 	} else {
-	    resetPvLimits(NULL, NULL, True);
+	    resetPvLimitsDlg(NULL, NULL, True);
 	    return;   /* (Error messages have been sent) */
 	}
       /* Check if element is valid or if there is a getLimits method */
@@ -4653,7 +4653,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	if(pE && pE->run && pE->run->getLimits) {
 	    pE->run->getLimits(pE, &pL, &pvName);
 	}
-	resetPvLimits(pL, pvName, True);
+	resetPvLimitsDlg(pL, pvName, True);
     }
 	
       /* Pop it up */
@@ -4661,9 +4661,12 @@ void popupPvLimits(DisplayInfo *displayInfo)
     XtPopup(pvLimitsS, XtGrabNone);
 }
 
-void adjustPvLimits(DlLimits *limits)
+void updatePvLimits(DlLimits *limits)
 {
   /* LOPR */
+    if (globalDisplayListTraversalMode == DL_EDIT) {
+	limits->loprSrc = limits->loprSrc0;
+    }
     switch(limits->loprSrc) {
     case PV_LIMITS_CHANNEL:
 	limits->lopr = limits->loprChannel;
@@ -4676,6 +4679,9 @@ void adjustPvLimits(DlLimits *limits)
 	break;
     }
   /* HOPR */
+    if (globalDisplayListTraversalMode == DL_EDIT) {
+	limits->hoprSrc = limits->hoprSrc0;
+    }
     switch(limits->hoprSrc) {
     case PV_LIMITS_CHANNEL:
 	limits->hopr = limits->hoprChannel;
@@ -4688,6 +4694,9 @@ void adjustPvLimits(DlLimits *limits)
 	break;
     }
   /* PREC */
+    if (globalDisplayListTraversalMode == DL_EDIT) {
+	limits->precSrc = limits->precSrc0;
+    }
     switch(limits->precSrc) {
     case PV_LIMITS_CHANNEL:
 	limits->prec = limits->precChannel;
@@ -4701,13 +4710,13 @@ void adjustPvLimits(DlLimits *limits)
     }
 }
 
-static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName)
+static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 {
     char string[1024];     /* Danger: Fixed length */
     XmString xmString;
     
 #if DEBUG_PVLIMITS
-    print("\nresetPvLimits: limits=%x  pvName = |%s|\n",
+    print("\nresetPvLimitsDlg: limits=%x  pvName = |%s|\n",
       limits, pvName?pvName:"NULL");
     if(limits) {
 	print(" loprSrc=    %10s  hoprSrc=    %10s  precSrc=    %10s\n",
@@ -4764,7 +4773,8 @@ static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName)
 	case PV_LIMITS_UNUSED:
 	    optionMenuSet(pvLimitsLoprSrc, PV_LIMITS_CHANNEL-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(pvLimitsLoprSrc, False);
-	    XmTextFieldSetString(pvLimitsLopr, "");
+	    cvtDoubleToString(limits->loprChannel, string, limits->prec);
+	    XmTextFieldSetString(pvLimitsLopr, string);
 	    XtSetSensitive(XtParent(pvLimitsLopr), False);
 	    break;
 	}
@@ -4795,8 +4805,9 @@ static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName)
 	case PV_LIMITS_UNUSED:
 	    optionMenuSet(pvLimitsHoprSrc, PV_LIMITS_CHANNEL-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(pvLimitsHoprSrc, False);
-	    XmTextFieldSetString(XtParent(pvLimitsHopr), "");
-	    XtSetSensitive(pvLimitsHopr, False);
+	    cvtDoubleToString(limits->hoprChannel, string, limits->prec);
+	    XmTextFieldSetString(pvLimitsHopr, string);
+	    XtSetSensitive(XtParent(pvLimitsHopr), False);
 	    break;
 	}
       /* PREC */
@@ -4826,7 +4837,8 @@ static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName)
 	case PV_LIMITS_UNUSED:
 	    optionMenuSet(pvLimitsPrecSrc, PV_LIMITS_CHANNEL-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(pvLimitsPrecSrc, False);
-	    XmTextFieldSetString(pvLimitsPrec, "");
+	    cvtLongToString((long)limits->precChannel, string);
+	    XmTextFieldSetString(pvLimitsPrec, string);
 	    XtSetSensitive(XtParent(pvLimitsPrec), False);
 	    break;
 	}
@@ -5143,6 +5155,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 		src = (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 0);
 		XBell(display,50);
 	    }
+	    pL->loprSrc0 = src;
 	}
 	pL->loprSrc = src;
 	break;
@@ -5155,6 +5168,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 		src = (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 0);
 		XBell(display,50);
 	    }
+	    pL->hoprSrc0 = src;
 	}
 	pL->hoprSrc = src;
 	break;
@@ -5167,6 +5181,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 		src = (PvLimitsSrc_t)(FIRST_PV_LIMITS_SRC + 0);
 		XBell(display,50);
 	    }
+	    pL->precSrc0 = src;
 	}
 	pL->precSrc = src;
 	break;
@@ -5252,8 +5267,8 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
     }
 
   /* Reset the dialog box */
-    adjustPvLimits(pL);
-    resetPvLimits(pL, NULL, False);
+    updatePvLimits(pL);
+    resetPvLimitsDlg(pL, NULL, False);
 
   /* Update from globalResourceBundle for EDIT mode
    *   EXECUTE mode already done */

@@ -75,6 +75,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *, DlElement *);
 void textEntryCreateEditInstance(DisplayInfo *,DlElement *);
 
 static void textEntryDraw(XtPointer cd);
+static void textEntryUpdateGraphicalInfoCb(XtPointer cd);
 static void textEntryUpdateValueCb(XtPointer cd);
 static void textEntryDestroyCb(XtPointer cd);
 static void textEntryValueChanged(Widget, XtPointer, XtPointer);
@@ -84,6 +85,7 @@ static void textEntryGetRecord(XtPointer, Record **, int *);
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textEntrySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textEntrySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+static void textEntryGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable textEntryDlDispatchTable = {
@@ -91,7 +93,7 @@ static DlDispatchTable textEntryDlDispatchTable = {
     NULL,
     executeDlTextEntry,
     writeDlTextEntry,
-    NULL,
+    textEntryGetLimits,
     textEntryGetValues,
     textEntryInheritValues,
     textEntrySetBackgroundColor,
@@ -118,39 +120,40 @@ int textFieldFontListIndex(int height)
 }
 
 char *valueToString(TextEntry *pte, TextFormat format) {
-    Record *pd = pte->record;
+    Record *pr = pte->record;
+    DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
     static char textField[MAX_TOKEN_LENGTH];
     double value;
     short precision = 0;
 
     textField[0] = '\0';
-    switch(pd->dataType) {
+    switch(pr->dataType) {
     case DBF_STRING:
-	if (pd->array) {
-	    strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
+	if (pr->array) {
+	    strncpy(textField,(char *)pr->array, MAX_TEXT_UPDATE_WIDTH-1);
 	    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 	}
 	return textField;
     case DBF_ENUM:
-	if ((pd->precision >= 0) && (pd->hopr+1 > 0)) {
-	    int i = (int) pd->value;
+	if ((pr->precision >= 0) && (pr->hopr+1 > 0)) {
+	    int i = (int) pr->value;
 	  /* getting values of -1 for data->value for invalid connections */
-	    if ( i >= 0 && i < (int) pd->hopr+1) {
-		strncpy(textField,pd->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
+	    if ( i >= 0 && i < (int) pr->hopr+1) {
+		strncpy(textField,pr->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
 		textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		return textField;
 	    } else {
 		return " ";
 	    }
 	} else {
-	    value = pd->value;
+	    value = pr->value;
 	}
 	break;
     case DBF_CHAR:
 	if (format == STRING) {
-	    if (pd->array) {
-		strncpy(textField,pd->array,
-		  MIN(pd->elementCount,(MAX_TOKEN_LENGTH-1)));
+	    if (pr->array) {
+		strncpy(textField,pr->array,
+		  MIN(pr->elementCount,(MAX_TOKEN_LENGTH-1)));
 		textField[MAX_TOKEN_LENGTH-1] = '\0';
 	    }
 	    return textField;
@@ -159,8 +162,8 @@ char *valueToString(TextEntry *pte, TextFormat format) {
     case DBF_LONG:
     case DBF_FLOAT:
     case DBF_DOUBLE:
-	precision = pd->precision;
-	value = pd->value;
+	precision = dlTextEntry->limits.prec;
+	value = pr->value;
 	break;
     default:
 	medmPostMsg(1,"valueToString:\n");
@@ -241,7 +244,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     }
     pte->record = medmAllocateRecord(dlTextEntry->control.ctrl,
       textEntryUpdateValueCb,
-      NULL,
+      textEntryUpdateGraphicalInfoCb,
       (XtPointer) pte);
     pte->updateAllowed = True;
     drawWhiteRectangle(pte->updateTask);
@@ -335,6 +338,11 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
 
 void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+    DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
+
+  /* Update the limits to reflect current src's */
+    updatePvLimits(&dlTextEntry->limits);
+
     if (displayInfo->traversalMode == DL_EXECUTE) {
 	textEntryCreateRunTimeInstance(displayInfo,dlElement);
     } else
@@ -360,19 +368,19 @@ void textEntryUpdateValueCb(XtPointer cd) {
 
 void textEntryDraw(XtPointer cd) {
     TextEntry *pte = (TextEntry *) cd;
-    Record *pd = pte->record;
+    Record *pr = pte->record;
     Widget widget = pte->dlElement->widget;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
 
-    if (pd->connected) {
-	if (pd->readAccess) {
+    if (pr->connected) {
+	if (pr->readAccess) {
 	    if (widget) {
 		addCommonHandlers(widget, pte->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
 	    else
 	      return;
-	    if (pd->writeAccess) {
+	    if (pr->writeAccess) {
 		XtVaSetValues(widget,XmNeditable,True,NULL);
 		XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    } else {
@@ -387,7 +395,7 @@ void textEntryDraw(XtPointer cd) {
 		case DISCRETE:
 		    break;
 		case ALARM:
-		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
 		}
 	    }
@@ -479,14 +487,14 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     double value;
     char *end;
     TextEntry *pte = (TextEntry *)clientData;
-    Record *pd = pte->record;
+    Record *pr = pte->record;
     Boolean match;
     int i;
 
 
-    if ((pd->connected) && pd->writeAccess) {
+    if ((pr->connected) && pr->writeAccess) {
 	if (!(textValue = XmTextFieldGetString(w))) return;
-	switch (pd->dataType) {
+	switch (pr->dataType) {
 	case DBF_STRING:
 	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
 	      textValue[MAX_STRING_SIZE-1] = '\0';
@@ -497,9 +505,9 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	  /* Check for a match */
 	    match = False;
-	    for (i = 0; i < pd->hopr+1; i++) {
-		if (pd->stateStrings[i]) {
-		    if (!strcmp(textValue,pd->stateStrings[i])) {
+	    for (i = 0; i < pr->hopr+1; i++) {
+		if (pr->stateStrings[i]) {
+		    if (!strcmp(textValue,pr->stateStrings[i])) {
 			medmSendString(pte->record,textValue);
 			match = True;
 			break;
@@ -510,14 +518,14 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	      /* Assume it is a number */
 		long longValue=strtol(textValue,&end,10);
 		if(*end == 0 && end != textValue &&
-		  longValue >= 0 && longValue <= pd->hopr) {
+		  longValue >= 0 && longValue <= pr->hopr) {
 		    medmSendString(pte->record,textValue);
 		} else {
 		    char string[BUFSIZ];
 		    sprintf(string,"textEntryValueChanged: Invalid value:\n"
 		      "  Name: %s\n  Value: \"%s\"\n"
 		      " [Use PV Info to determine valid values]\n",
-		      pd->name?pd->name:"NULL",textValue);
+		      pr->name?pr->name:"NULL",textValue);
 		    medmPostMsg(1,string);
 		    dmSetAndPopupWarningDialog(currentDisplayInfo,string,
 		      "OK",NULL,NULL);
@@ -527,7 +535,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	case DBF_CHAR:
 	    if (pte->dlElement->structure.textEntry->format == STRING) {
 		unsigned long len =
-		  MIN((unsigned long)pd->elementCount,
+		  MIN((unsigned long)pr->elementCount,
 		    (unsigned long)(strlen(textValue)+1));
 		textValue[len-1] = '\0';
 		medmSendCharacterArray(pte->record,textValue,len);
@@ -546,7 +554,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 		char string[BUFSIZ];
 		sprintf(string,"textEntryValueChanged: Invalid value:\n"
 		  "  Name: %s\n  Value: \"%s\"\n",
-		  pd->name?pd->name:"NULL",textValue);
+		  pr->name?pr->name:"NULL",textValue);
 		medmPostMsg(1,string);
 		dmSetAndPopupWarningDialog(currentDisplayInfo,string,
 		  "OK",NULL,NULL);
@@ -554,6 +562,44 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	    break;
 	}
 	XtFree(textValue);
+    }
+}
+
+static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
+    Record *pr = (Record *) cd;
+    TextEntry *pte = (TextEntry *) pr->clientData;
+    DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
+    Pixel pixel;
+    Widget widget = pte->dlElement->widget;
+    XcVType hopr, lopr, val;
+    short precision;
+
+
+  /* Get values from the record  and adjust them */
+    hopr.fval = (float) pr->hopr;
+    lopr.fval = (float) pr->lopr;
+    val.fval = (float) pr->value;
+    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+	hopr.fval += 1.0;
+    }
+    precision = pr->precision;
+    if (precision < 0) precision = 0;
+    if(precision > 17) precision = 17;
+    
+  /* Set lopr and hopr to channel - they are aren't used by the TextEntry */
+    dlTextEntry->limits.lopr = lopr.fval;
+    dlTextEntry->limits.loprChannel = lopr.fval;
+    dlTextEntry->limits.hopr = hopr.fval;
+    dlTextEntry->limits.hoprChannel = hopr.fval;
+    
+  /* Set Channel and User limits for prec (if apparently not set yet) */
+    dlTextEntry->limits.precChannel = precision;
+    if(dlTextEntry->limits.precSrc != PV_LIMITS_USER &&
+      dlTextEntry->limits.precUser == PREC_DEFAULT) {
+	dlTextEntry->limits.precUser = precision;
+    }
+    if(dlTextEntry->limits.precSrc == PV_LIMITS_CHANNEL) {
+	dlTextEntry->limits.prec = precision;
     }
 }
 
@@ -575,6 +621,11 @@ DlElement *createDlTextEntry(DlElement *p)
     } else {
 	objectAttributeInit(&(dlTextEntry->object));
 	controlAttributeInit(&(dlTextEntry->control));
+	limitsAttributeInit(&(dlTextEntry->limits));
+	dlTextEntry->limits.loprSrc0 = PV_LIMITS_UNUSED;
+	dlTextEntry->limits.loprSrc = PV_LIMITS_UNUSED;
+	dlTextEntry->limits.hoprSrc0 = PV_LIMITS_UNUSED;
+	dlTextEntry->limits.hoprSrc = PV_LIMITS_UNUSED;
 	dlTextEntry->clrmod = STATIC;
 	dlTextEntry->format = MEDM_DECIMAL;
     }
@@ -584,6 +635,7 @@ DlElement *createDlTextEntry(DlElement *p)
       &textEntryDlDispatchTable))) {
 	free(dlTextEntry);
     }
+
     return dlElement;
 }
 
@@ -603,30 +655,29 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if (!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlTextEntry->object));
-	    else
-	      if (!strcmp(token,"control"))
-		parseControl(displayInfo,&(dlTextEntry->control));
-	      else
-		if (!strcmp(token,"clrmod")) {
-		    getToken(displayInfo,token);
-		    getToken(displayInfo,token);
-		    for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
-			if (!strcmp(token,stringValueTable[i])) {
-			    dlTextEntry->clrmod = i;
-			    break;
-			}
+	    else if (!strcmp(token,"control"))
+	      parseControl(displayInfo,&(dlTextEntry->control));
+	    else if (!strcmp(token,"clrmod")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
+		    if (!strcmp(token,stringValueTable[i])) {
+			dlTextEntry->clrmod = i;
+			break;
 		    }
-		} else
-		  if (!strcmp(token,"format")) {
-		      getToken(displayInfo,token);
-		      getToken(displayInfo,token);
-		      for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
-			  if (!strcmp(token,stringValueTable[i])) {
-			      dlTextEntry->format = i;
-			      break;
-			  }
-		      }
-		  }
+		}
+	    } else if (!strcmp(token,"format")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
+		    if (!strcmp(token,stringValueTable[i])) {
+			dlTextEntry->format = i;
+			break;
+		    }
+		}
+	    } else if (!strcmp(token,"limits")) {
+		parseLimits(displayInfo,&(dlTextEntry->limits));
+	    }
 	    break;
 	case T_EQUAL:
 	    break;
@@ -665,6 +716,7 @@ void writeDlTextEntry(
 	if (dlTextEntry->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextEntry->format]);
+	writeDlLimits(stream,&(dlTextEntry->limits),level+1);
 	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
@@ -675,6 +727,7 @@ void writeDlTextEntry(
 	  stringValueTable[dlTextEntry->clrmod]);
 	fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	  stringValueTable[dlTextEntry->format]);
+	writeDlLimits(stream,&(dlTextEntry->limits),level+1);
 	fprintf(stream,"\n%s}",indent);
     }
 #endif
@@ -688,7 +741,16 @@ static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlTextEntry->control.bclr),
       CLRMOD_RC,     &(dlTextEntry->clrmod),
       FORMAT_RC,     &(dlTextEntry->format),
+      LIMITS_RC,     &(dlTextEntry->limits),
       -1);
+}
+
+static void textEntryGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlTextEntry *dlTextEntry = pE->structure.textEntry;
+
+    *(ppL) = &(dlTextEntry->limits);
+    *(pN) = dlTextEntry->control.ctrl;
 }
 
 static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p) {
@@ -703,6 +765,7 @@ static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlTextEntry->control.bclr),
       CLRMOD_RC,     &(dlTextEntry->clrmod),
       FORMAT_RC,     &(dlTextEntry->format),
+      LIMITS_RC,     &(dlTextEntry->limits),
       -1);
 }
 

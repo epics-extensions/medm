@@ -536,16 +536,19 @@ typedef struct {
 
 typedef struct {
     int loprSrc;
+    int loprSrc0;
     double lopr;
     double loprChannel;
     double loprDefault;
     double loprUser;
     int hoprSrc;
+    int hoprSrc0;
     double hopr;
     double hoprChannel;
     double hoprDefault;
     double hoprUser;
     int precSrc;
+    int precSrc0;
     short prec;
     short precChannel;
     short precDefault;
@@ -672,6 +675,7 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlMonitor monitor;
+    DlLimits limits;
     ColorMode clrmod;
     TextAlign align;
     TextFormat format;
@@ -681,7 +685,6 @@ typedef struct {
     DlObject object;
     DlMonitor monitor;
     DlLimits limits;
-
     LabelType label;
     ColorMode clrmod;
     Direction direction;
@@ -782,6 +785,7 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlControl control;
+    DlLimits limits;
     ColorMode clrmod;
     TextFormat format;
 } DlTextEntry;

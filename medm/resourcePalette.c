@@ -1823,13 +1823,13 @@ static int resourceTable[] = {
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
     LABEL_RC, CLRMOD_RC, DIRECTION_RC, PRECISION_RC, -1,
     DL_TextEntry,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
-    FORMAT_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    CLRMOD_RC, FORMAT_RC, -1,
     DL_Meter,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
     LABEL_RC, CLRMOD_RC, -1,
     DL_TextUpdate,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
     CLRMOD_RC, ALIGN_RC, FORMAT_RC, -1,
     DL_Bar,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
@@ -3378,6 +3378,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 	globalResourceBundle.clrmod = p->clrmod;
 	optionMenuSet(resourceEntryElement[CLRMOD_RC],
 	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
@@ -3428,7 +3429,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
-
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 	globalResourceBundle.clrmod = p->clrmod;
 	optionMenuSet(resourceEntryElement[CLRMOD_RC],
 	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);

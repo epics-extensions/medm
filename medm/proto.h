@@ -563,7 +563,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
   DlElement **pE);
 void popupDisplayListDlg(void);
 void popupPvLimits(DisplayInfo *displayInfo);
-void adjustPvLimits(DlLimits *limits);
+void updatePvLimits(DlLimits *limits);
 void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);

@@ -15,9 +15,9 @@ CMPLR = STRICT
 #PURIFY = YES
 
 ifeq ($(PURIFY),YES)
-  CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
-  #CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPLR))
-  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPLR))
+  CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))
+  #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
+  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
 endif
 
 # Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
@@ -25,8 +25,8 @@ endif
 #XRTGRAPH_EXTENSIONS =
 
 # Use to test SciPlot, Otherwise should come from CONFIG
-#XRTGRAPH =
-#SCIPLOT = YES
+XRTGRAPH =
+SCIPLOT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES

@@ -633,17 +633,17 @@ void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level)
     if (MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%slimits {",indent);
-	if (dlLimits->loprSrc == PV_LIMITS_DEFAULT)
+	if (dlLimits->loprSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
 	if (dlLimits->loprDefault != LOPR_DEFAULT)
 	  fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
-	if (dlLimits->hoprSrc == PV_LIMITS_DEFAULT)
+	if (dlLimits->hoprSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
 	if (dlLimits->hoprDefault != HOPR_DEFAULT)
 	  fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
-	if (dlLimits->precSrc == PV_LIMITS_DEFAULT)
+	if (dlLimits->precSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
 	if (dlLimits->precDefault != PREC_DEFAULT)
@@ -653,13 +653,13 @@ void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level)
     } else {
 	fprintf(stream,"\n%slimits {",indent);
 	fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
-	  stringValueTable[dlLimits->loprSrc]);
+	  stringValueTable[dlLimits->loprSrc0]);
 	fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
 	fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
-	  stringValueTable[dlLimits->hoprSrc]);
+	  stringValueTable[dlLimits->hoprSrc0]);
 	fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
 	fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
-	  stringValueTable[dlLimits->precSrc]);
+	  stringValueTable[dlLimits->precSrc0]);
 	fprintf(stream,"\n%s\tprecDefault=%d",indent,dlLimits->precDefault);
 	fprintf(stream,"\n%s}",indent);
     }
@@ -681,7 +681,7 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 		for (i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
 		    if (!strcmp(token,stringValueTable[i])) {
-			limits->loprSrc = i;
+			limits->loprSrc0 = limits->loprSrc = i;
 			break;
 		    }
 		}
@@ -695,7 +695,7 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 		for (i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
 		    if (!strcmp(token,stringValueTable[i])) {
-			limits->hoprSrc = i;
+			limits->hoprSrc0 = limits->hoprSrc = i;
 			break;
 		    }
 		}
@@ -709,7 +709,7 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 		for (i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
 		    if (!strcmp(token,stringValueTable[i])) {
-			limits->precSrc = i;
+			limits->precSrc0 = limits->precSrc = i;
 			break;
 		    }
 		}
@@ -730,13 +730,13 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 
 void limitsAttributeInit(DlLimits *limits)
 {
-    limits->loprSrc = PV_LIMITS_CHANNEL;
+    limits->loprSrc = limits->loprSrc0 = PV_LIMITS_CHANNEL;
     limits->lopr = limits->loprChannel = limits->loprDefault =
       limits->loprUser = LOPR_DEFAULT;
-    limits->hoprSrc = PV_LIMITS_CHANNEL;
+    limits->hoprSrc = limits->hoprSrc0 = PV_LIMITS_CHANNEL;
     limits->hopr = limits->hoprChannel = limits->hoprDefault =
       limits->hoprUser = HOPR_DEFAULT;
-    limits->precSrc = PV_LIMITS_CHANNEL;
+    limits->precSrc = limits->precSrc0 = PV_LIMITS_CHANNEL;
     limits->prec = limits->precChannel = limits->precDefault =
       limits->precUser = PREC_DEFAULT;
 }

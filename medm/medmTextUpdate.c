@@ -76,11 +76,13 @@ typedef struct _TextUpdate {
 
 static void textUpdateUpdateValueCb(XtPointer cd);
 static void textUpdateDraw(XtPointer cd);
+static void textUpdateUpdateGraphicalInfoCb(XtPointer cd);
 static void textUpdateDestroyCb(XtPointer cd);
 static void textUpdateGetRecord(XtPointer, Record **, int *);
 static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textUpdateSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textUpdateSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+static void textUpdateGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable textUpdateDlDispatchTable = {
@@ -88,7 +90,7 @@ static DlDispatchTable textUpdateDlDispatchTable = {
     NULL,
     executeDlTextUpdate,
     writeDlTextUpdate,
-    NULL,
+    textUpdateGetLimits,
     textUpdateGetValues,
     textUpdateInheritValues,
     textUpdateSetBackgroundColor,
@@ -107,8 +109,12 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
     size_t nChars;
     DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
+  /* Update the limits to reflect current src's */
+    updatePvLimits(&dlTextUpdate->limits);
+
     if (displayInfo->traversalMode == DL_EXECUTE) {
 	TextUpdate *ptu;
+	
 	ptu = (TextUpdate *) malloc(sizeof(TextUpdate));
 	ptu->dlElement = dlElement;
 	ptu->updateTask = updateTaskAddTask(displayInfo,
@@ -124,7 +130,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	ptu->record = medmAllocateRecord(dlTextUpdate->monitor.rdbk,
 	  textUpdateUpdateValueCb,
-	  NULL,
+	  textUpdateUpdateGraphicalInfoCb,
 	  (XtPointer) ptu);
 
 	ptu->fontIndex = dmGetBestFontWithInfo(fontTable,
@@ -135,8 +141,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	drawWhiteRectangle(ptu->updateTask);
 
     } else {
-
-      /* since no ca callbacks to put up text, put up dummy region */
+      /* Since no ca callbacks to put up text, put up dummy region */
 	XSetForeground(display,displayInfo->gc,
 	  displayInfo->colormap[ dlTextUpdate->monitor.bclr]);
 	XFillRectangle(display, XtWindow(displayInfo->drawingArea),
@@ -207,7 +212,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 
-/* and turn off clipping on exit */
+      /* Turn off clipping on exit */
 	XSetClipMask(display,displayInfo->gc,None);
     }
 }
@@ -223,15 +228,15 @@ static void textUpdateDestroyCb(XtPointer cd) {
 }
 
 static void textUpdateUpdateValueCb(XtPointer cd) {
-    Record *pd = (Record *) cd;
-    TextUpdate *ptu = (TextUpdate *) pd->clientData;
+    Record *pr = (Record *) cd;
+    TextUpdate *ptu = (TextUpdate *) pr->clientData;
     updateTaskMarkUpdate(ptu->updateTask);
 }
 
 static void textUpdateDraw(XtPointer cd)
 {
     TextUpdate *ptu = (TextUpdate *) cd;
-    Record *pd = (Record *) ptu->record;
+    Record *pr = (Record *) ptu->record;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
     DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
     Display *display = XtDisplay(displayInfo->drawingArea);
@@ -245,38 +250,38 @@ static void textUpdateDraw(XtPointer cd)
     int textWidth = 0;
     int strLen = 0;
 
-    if (pd->connected) {
+    if (pr->connected) {
       /* KE: Can be connected without graphical info or value yet */
-	if (pd->readAccess) {
+	if (pr->readAccess) {
 	    textField[0] = '\0';
-	    switch (pd->dataType) {
+	    switch (pr->dataType) {
 	    case DBF_STRING :
-		if (pd->array) {
-		    strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
+		if (pr->array) {
+		    strncpy(textField,(char *)pr->array, MAX_TEXT_UPDATE_WIDTH-1);
 		    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		}
 		isNumber = False;
 		break;
 	    case DBF_ENUM :
-		if (pd->precision >= 0 && pd->hopr+1 > 0) {
-		    i = (int) pd->value;
-		    if (i >= 0 && i < (int) pd->hopr+1){
-			strncpy(textField,pd->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
+		if (pr->precision >= 0 && pr->hopr+1 > 0) {
+		    i = (int) pr->value;
+		    if (i >= 0 && i < (int) pr->hopr+1){
+			strncpy(textField,pr->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
 			textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		    } else {
 			textField[0] = ' '; textField[1] = '\0';
 		    }
 		    isNumber = False;
 		} else {
-		    value = pd->value;
+		    value = pr->value;
 		    isNumber = True;
 		}
 		break;
 	    case DBF_CHAR :
 		if (dlTextUpdate->format == STRING) {
-		    if (pd->array) {
-			strncpy(textField,pd->array,
-			  MIN(pd->elementCount,(MAX_TOKEN_LENGTH-1)));
+		    if (pr->array) {
+			strncpy(textField,pr->array,
+			  MIN(pr->elementCount,(MAX_TOKEN_LENGTH-1)));
 			textField[MAX_TOKEN_LENGTH-1] = '\0';
 		    }
 		    isNumber = False;
@@ -286,8 +291,8 @@ static void textUpdateDraw(XtPointer cd)
 	    case DBF_LONG :
 	    case DBF_FLOAT :
 	    case DBF_DOUBLE :
-		value = pd->value;
-		precision = pd->precision;
+		value = pr->value;
+		precision = dlTextUpdate->limits.prec;
 		isNumber = True;
 		break;
 	    default :
@@ -302,6 +307,8 @@ static void textUpdateDraw(XtPointer cd)
 	    if (precision < 0) precision = 0;
 	  /* Convert bad values of precision to high precision */
 	    if(precision > 17) precision = 17;
+
+	  /* Do the value */
 	    if(isNumber) {
 		switch (dlTextUpdate->format) {
 		case STRING:
@@ -349,10 +356,10 @@ static void textUpdateDraw(XtPointer cd)
 	    }
 
 #if DEBUG_SHORT
-	    print("textUpdateDraw: pd->name=%s pd->dataType=%d(%s)\n"
-	      "  pd->value=%g  textField=|%s|\n",
-	      pd->name,pd->dataType,dbf_type_to_text(pd->dataType),
-	      pd->value,textField);
+	    print("textUpdateDraw: pr->name=%s pr->dataType=%d(%s)\n"
+	      "  pr->value=%g  textField=|%s|\n",
+	      pr->name,pr->dataType,dbf_type_to_text(pr->dataType),
+	      pr->value,textField);
 	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),sizeof(long));
 #endif		
 
@@ -372,7 +379,7 @@ static void textUpdateDraw(XtPointer cd)
 		gcValues.foreground = displayInfo->colormap[dlTextUpdate->monitor.clr];
 		break;
 	    case ALARM :
-		gcValues.foreground =  alarmColor(pd->severity);
+		gcValues.foreground =  alarmColor(pr->severity);
 		break;
 	    }
 	    gcValues.background = displayInfo->colormap[dlTextUpdate->monitor.bclr];
@@ -446,6 +453,44 @@ static void textUpdateDraw(XtPointer cd)
     }
 }
 
+static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
+    Record *pr = (Record *) cd;
+    TextUpdate *ptu = (TextUpdate *) pr->clientData;
+    DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
+    Pixel pixel;
+    Widget widget = ptu->dlElement->widget;
+    XcVType hopr, lopr, val;
+    short precision;
+
+
+  /* Get values from the record  and adjust them */
+    hopr.fval = (float) pr->hopr;
+    lopr.fval = (float) pr->lopr;
+    val.fval = (float) pr->value;
+    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+	hopr.fval += 1.0;
+    }
+    precision = pr->precision;
+    if (precision < 0) precision = 0;
+    if(precision > 17) precision = 17;
+    
+  /* Set lopr and hopr to channel - they are aren't used by the TextUpdate */
+    dlTextUpdate->limits.lopr = lopr.fval;
+    dlTextUpdate->limits.loprChannel = lopr.fval;
+    dlTextUpdate->limits.hopr = hopr.fval;
+    dlTextUpdate->limits.hoprChannel = hopr.fval;
+    
+  /* Set Channel and User limits for prec (if apparently not set yet) */
+    dlTextUpdate->limits.precChannel = precision;
+    if(dlTextUpdate->limits.precSrc != PV_LIMITS_USER &&
+      dlTextUpdate->limits.precUser == PREC_DEFAULT) {
+	dlTextUpdate->limits.precUser = precision;
+    }
+    if(dlTextUpdate->limits.precSrc == PV_LIMITS_CHANNEL) {
+	dlTextUpdate->limits.prec = precision;
+    }
+}
+
 static void textUpdateGetRecord(XtPointer cd, Record **record, int *count) {
     TextUpdate *pa = (TextUpdate *) cd;
     *count = 1;
@@ -457,13 +502,18 @@ DlElement *createDlTextUpdate(DlElement *p)
     DlTextUpdate *dlTextUpdate;
     DlElement *dlElement;
 
-    dlTextUpdate = (DlTextUpdate *) malloc(sizeof(DlTextUpdate));
+    dlTextUpdate = (DlTextUpdate *)malloc(sizeof(DlTextUpdate));
     if (!dlTextUpdate) return 0;
     if (p) {
 	*dlTextUpdate = *p->structure.textUpdate;
     } else {
 	objectAttributeInit(&(dlTextUpdate->object));
 	monitorAttributeInit(&(dlTextUpdate->monitor));
+	limitsAttributeInit(&(dlTextUpdate->limits));
+	dlTextUpdate->limits.loprSrc0 = PV_LIMITS_UNUSED;
+	dlTextUpdate->limits.loprSrc = PV_LIMITS_UNUSED;
+	dlTextUpdate->limits.hoprSrc0 = PV_LIMITS_UNUSED;
+	dlTextUpdate->limits.hoprSrc = PV_LIMITS_UNUSED;
 	dlTextUpdate->clrmod = STATIC;
 	dlTextUpdate->align = HORIZ_LEFT;
 	dlTextUpdate->format = MEDM_DECIMAL;
@@ -519,7 +569,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 			break;
 		    }
 		}
-	      /* Backward compatibilityt */
+	      /* Backward compatibility */
 		if (!found) {
 		    if (!strcmp(token,"decimal")) {
 			dlTextUpdate->format = MEDM_DECIMAL;
@@ -562,6 +612,8 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 			dlTextUpdate->align = HORIZ_RIGHT;
 		    }
 		}
+	    } else if (!strcmp(token,"limits")) {
+		parseLimits(displayInfo,&(dlTextUpdate->limits));
 	    }
 	    break;
 	case T_EQUAL:
@@ -601,6 +653,7 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 	if (dlTextUpdate->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->format]);
+	writeDlLimits(stream,&(dlTextUpdate->limits),level+1);
 	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
@@ -613,6 +666,7 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 	  stringValueTable[dlTextUpdate->align]);
 	fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	  stringValueTable[dlTextUpdate->format]);
+	writeDlLimits(stream,&(dlTextUpdate->limits),level+1);
 	fprintf(stream,"\n%s}",indent);
     }
 #endif
@@ -627,9 +681,17 @@ static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {
       CLRMOD_RC,     &(dlTextUpdate->clrmod),
       ALIGN_RC,      &(dlTextUpdate->align),
       FORMAT_RC,     &(dlTextUpdate->format),
+      LIMITS_RC,     &(dlTextUpdate->limits),
       -1);
 }
 
+static void textUpdateGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlTextUpdate *dlTextUpdate = pE->structure.textUpdate;
+
+    *(ppL) = &(dlTextUpdate->limits);
+    *(pN) = dlTextUpdate->monitor.rdbk;
+}
 
 static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
@@ -644,6 +706,7 @@ static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
       CLRMOD_RC,     &(dlTextUpdate->clrmod),
       ALIGN_RC,      &(dlTextUpdate->align),
       FORMAT_RC,     &(dlTextUpdate->format),
+      LIMITS_RC,     &(dlTextUpdate->limits),
       -1);
 }
 
