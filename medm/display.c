@@ -267,7 +267,6 @@ DisplayInfo *allocateDisplayInfo()
 void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 {
     int i;
-    Boolean alreadyFreedUnphysical;
     Widget drawingArea;
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
 
@@ -350,14 +349,9 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 	displayInfo->updatePixmap = (Pixmap)NULL;
     }
     if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
-	alreadyFreedUnphysical = False;
 	for(i = 0; i < displayInfo->dlColormapCounter; i++) {
 	    if(displayInfo->colormap[i] != unphysicalPixel) {
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-	    } else if(!alreadyFreedUnphysical) {
-	      /* only free "unphysical" pixel once */
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-		alreadyFreedUnphysical = True;
+		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0UL);
 	    }
 	}
 	free( (char *) displayInfo->colormap);

@@ -181,13 +181,22 @@ int OutCode[1025];
 /* The color map, read from the GIF header */
 Byte Red[256], Green[256], Blue[256];
 
+/* The pixel for unallocated colors */
+static Pixel blackPixel;
+
 /* Function to initialize for GIF processing */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 {
     int x, y;
     unsigned int w, h;
     Boolean success;
+    int first=1;
 
+    if(first) {
+	blackPixel=BlackPixel(display,screenNum);
+	first=0;
+    }
+    
     x=dlImage->object.x;
     y=dlImage->object.y;
     w=dlImage->object.width;
@@ -961,8 +970,12 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
        * necessary.  There are two stripping algorithms, depending on
        * the value of nostrip */
         if(gif->nostrip) {
+#if 0
 	  /* nostrip=True */
-	  /* KE: Currently nostrip is False */
+	  /* KE: Currently nostrip is False and this branch is not
+             used.  If it were used, it needs to be redone, keeping in
+             mind that freeing colors that are calculated and not
+             allocated will cause problems */
             j=0;
             lmask=lmasks[gif->strip];
             for(i=0; i<gif->numcols; i++) {
@@ -981,8 +994,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
                 XColor ctab[256];
 		
                 medmPrintf(1,"\nloadGIF: Failed to allocate %d out of %d colors\n"
-		  "  Trying extra hard\n",
-		  j,gif->numcols);
+		  "  %s\n",j,gif->numcols,fname);
                 
 	      /* Read in the color table */
                 for(i=0; i<gif->numcols; i++) ctab[i].pixel=i;
@@ -1005,7 +1017,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 			}
 			if(close<0) {
 			    medmPrintf(1,"loadGIF: "
-			     "Simply can't do it -- Sorry\n");
+			     "Simply can't do it -- Sorry\n  %s\n",fname);
 			}
 			memcpy( (void*)(&gif->defs[i]),
 			  (void*)(&gif->defs[close]),
@@ -1014,9 +1026,10 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 		    }
 		}
 	    }
+#endif
 	} else {
-          /* nostrip=False, do the best auto-strip */
-	  /* KE: Currently nostrip is False, and this is the algorithm used */
+          /* nostrip=False */
+	  /* KE: Currently this is the only algorithm used */
             j=0;
             while(gif->strip<8) {
                 lmask=lmasks[gif->strip];
@@ -1025,8 +1038,10 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
                     gif->defs[i].green=(Green[i]&lmask)<<8;
                     gif->defs[i].blue =(Blue[i] &lmask)<<8;
                     gif->defs[i].flags=DoRed | DoGreen | DoBlue;
-                    if(!XAllocColor(display,gif->theCmap,&gif->defs[i]))
-		      break;
+                    if(!XAllocColor(display,gif->theCmap,&gif->defs[i])) {
+			gif->cols[i]=blackPixel;
+			break;
+		    }
                     gif->cols[i]=gif->defs[i].pixel;
 		}
                 if(i<gif->numcols) {     /* Failed */
@@ -1037,25 +1052,41 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 		      gif->defs[i].blue);
 #endif		    
                     gif->strip++;  j++;
-                    XFreeColors(display,gif->theCmap,gif->cols,i,0L);
+                    XFreeColors(display,gif->theCmap,gif->cols,i,0UL);
 		} else {
+		  /* Success */
 		    break;
 		}
 	    }
 	    
             if(j && gif->strip<8) {
 		medmPrintf(0,"\nloadGIF: %s was masked to level %d"
-		  " (mask 0x%2X)\n",
-		  fname,gif->strip,lmask);
+		  " (mask 0x%2X)\n  %s\n",
+		  fname,gif->strip,lmask,fname);
 		if(verbose)
 		  print("loadGIF: %s was masked to level %d (mask 0x%2X)\n",
 		    fname,gif->strip,lmask);
 	    }
 	    
             if(gif->strip==8) {
+	      /* Algorithm not completely successful, Use the last try */
+		j=0;
+                lmask=lmasks[7];
+                for(i=0; i<gif->numcols; i++) {
+                    gif->defs[i].red  =(Red[i]  &lmask)<<8;
+                    gif->defs[i].green=(Green[i]&lmask)<<8;
+                    gif->defs[i].blue =(Blue[i] &lmask)<<8;
+                    gif->defs[i].flags=DoRed | DoGreen | DoBlue;
+                    if(XAllocColor(display,gif->theCmap,&gif->defs[i])) {
+			gif->cols[i]=gif->defs[i].pixel;
+		    } else {
+			j++;
+			gif->cols[i]=blackPixel;
+		    }
+		}
                 medmPrintf(1,"\nloadGIF: "
-		  "Failed to allocate the desired colors\n");
-                for(i=0; i<gif->numcols; i++) gif->cols[i]=i;
+		  "Strip algorithm failed to allocate %d out of %d colors\n"
+		  "  %s\n",j,gif->numcols,fname);
 	    }
 	}
     } else {
@@ -1063,7 +1094,9 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
         medmPrintf(0,"\nloadGIF:  No global color table in %s."
 	  "  Making one.\n",fname);
         if(!gif->numcols) gif->numcols=256;
-        for(i=0; i < gif->numcols; i++) gif->cols[i]=(unsigned long)i;
+        for(i=0; i < gif->numcols; i++) {
+	    gif->cols[i]=blackPixel;
+	}
     }
     
   /* Set the backgroundcolor index */
@@ -1618,7 +1651,8 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	   */
 	    while(CurCode > BitMask) {
 		if(OutCount > 1024){
-		    medmPrintf(1,"\nparseGIFImage: Corrupt GIF file (OutCount)\n");
+		    medmPrintf(1,"\nparseGIFImage: Corrupt GIF file (OutCount)\n"
+		      "  %s\n",fname);
 		    XDestroyImage(CURIMAGE(gif));
 		    return False;
 		}
@@ -1760,7 +1794,13 @@ void freeGIF(DlImage *dlImage)
     if(gif) {
       /* Free the colors */
 	if(gif->numcols > 0) {
-	    XFreeColors(display,gif->theCmap,gif->cols,gif->numcols,(unsigned long)0);
+	  /* We need to free these one by one to check for the
+             blackPixel, which will give a BadAccess error */
+	    for(i=0; i < gif->numcols; i++) {
+		if(gif->cols[i] != blackPixel) {
+		    XFreeColors(display,gif->theCmap,&(gif->cols[i]),1,0UL);
+		}
+	    }
 	    gif->numcols=0;
 	}
       /* Free each image */
@@ -1839,7 +1879,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
   /* Reallocate the colors, in case they are freed elsewhere */
     for(i=0; i < gif2->numcols; i++) {
 	if(!XAllocColor(display,gif2->theCmap,&gif2->defs[i])) { 
-	    gif2->defs[i].pixel=0xffff;
+	    gif2->defs[i].pixel=blackPixel;
 	}
     }
     
