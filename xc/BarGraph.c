@@ -5,6 +5,9 @@
  *          ?       - Integration with MEDM.                             *
  *          June 94 - Added bar graph fill from center.                  *
  *************************************************************************/
+
+#define DEBUG_BAR 0
+
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/StringDefs.h>
@@ -243,14 +246,28 @@ static void Redisplay(w, event)
 	int j;
 	char upper[30], lower[30];
 
+#if DEBUG_BAR
+	printf("BarGraph Redisplay:\n");
+	printf("  core: x=%d y=%d width=%u height=%u border_width=%u\n",
+	  w->core.x,w->core.y,
+	  w->core.width,w->core.height,
+	  w->core.border_width);
+	printf("  barGraph.bar: x=%d y=%d width=%u height=%u\n",
+	  w->barGraph.bar.x,w->barGraph.bar.y,
+	  w->barGraph.bar.width,w->barGraph.bar.height);
+#endif	
+
       /****** Check to see whether or not the widget's window is mapped */
 	if (!XtIsRealized((Widget)w) || !w->core.visible) return;
 	DPRINTF(("BarGraph: executing Redisplay\n"));
 
-      /****** Draw the 3D rectangle background for the BarGraph
+#if 0
+      /* KE: Why is this commented out? */
+      /****** Draw the 3D rectangle background for the BarGraph */
 	XSetClipMask(XtDisplay(w), w->control.gc, None);
 	Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-	0, 0, w->core.width, w->core.height, RAISED); */
+	0, 0, w->core.width, w->core.height, RAISED);
+#endif	
 
       /****** Draw the Label string */
 	XSetClipRectangles(XtDisplay(w), w->control.gc, 0, 0, 
@@ -884,4 +901,3 @@ static void Print_bounds(w, upper, lower)
 	}
 
 }
-

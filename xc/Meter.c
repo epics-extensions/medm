@@ -318,13 +318,23 @@ static void Redisplay(MeterWidget w, XExposeEvent *event, Region region)
       w->control.label, strlen(w->control.label));
    
   /* Draw the inner rectangle which houses the meter */
+#if 0    
     Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
       w->meter.meter_center.x - w->meter.meter.width/2,
       w->meter.meter_center.y - w->meter.meter.height,
       w->meter.meter.width, w->meter.meter.height,
       DEPRESSED);
+#else
+  /* Adjust for changes to Rect3d */
+    Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
+      w->meter.meter_center.x - w->meter.meter.width/2,
+      w->meter.meter_center.y - w->meter.meter.height,
+      w->meter.meter.width+w->control.shade_depth,
+      w->meter.meter.height+w->control.shade_depth,
+      DEPRESSED);
+#endif    
    
-  /* Now draw the Scale segments. */
+  /* Now draw the Scale segments */
     XSetForeground(XtDisplay(w), w->control.gc, w->meter.scale_pixel);
     XDrawSegments(XtDisplay(w), XtWindow(w), w->control.gc,
       w->meter.segs,w->meter.num_segments);

@@ -413,6 +413,10 @@ void Rect3d(w, display, drawable, gc, x, y, width, height, type)
     shade2 = BlackPixel(display, DefaultScreen(display));
     XSetLineAttributes(display, gc, 0, LineOnOffDash, CapButt, JoinRound);
 #endif
+
+  /* Reduce the height and width by 1 to use in drawing lines */
+    if(height > 0) height--;
+    if(width > 0) width--;
     
   /* Draw the shadow lines */
     for (j = 0; j < w->control.shade_depth; j++)
