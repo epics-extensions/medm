@@ -4,7 +4,7 @@ TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Needs work to handle CMPLR=STRICT
-#CMPLR = STRICT
+CMPLR = STRICT
 HOST_OPT = NO
 
 ifdef WIN32
