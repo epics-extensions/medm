@@ -693,9 +693,11 @@ void caDelete(Record *pr) {
     if (caTask.freeListCount >= caTask.freeListSize) {
 	caTask.freeListSize += CA_PAGE_SIZE;
 #if defined(__cplusplus) && !defined(__GNUG__)
-	caTask.freeList = (int *) realloc((malloc_t)caTask.freeList,sizeof(int)*caTask.freeListSize);
+	caTask.freeList = (int *) realloc((malloc_t)caTask.freeList,
+	  sizeof(int)*caTask.freeListSize);
 #else
-	caTask.freeList = (int *) realloc(caTask.freeList,sizeof(int)*caTask.freeListSize);
+	caTask.freeList = (int *) realloc(caTask.freeList,
+	  sizeof(int)*caTask.freeListSize);
 #endif
 	if (caTask.freeList == NULL) {
 	    medmPostMsg(1,"caDelete: Memory allocation error\n");
@@ -707,7 +709,8 @@ void caDelete(Record *pr) {
     caTask.channelCount--;
 }
 
-static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,0,
+/* Note that precision is initialized to -1 and some routines depend on this */
+static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
                             NO_ALARM,NO_ALARM,False,False,False,
                             {NULL,NULL,NULL,NULL,
                              NULL,NULL,NULL,NULL,
