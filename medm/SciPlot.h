@@ -290,6 +290,7 @@ void SciPlotGetXAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
 void SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
   Boolean *isAuto);
 void SciPlotPrintMetrics(Widget wi);
+void SciPlotPrintAxisInfo(Widget wi);
 
 #ifdef __cplusplus
 };

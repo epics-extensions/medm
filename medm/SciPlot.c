@@ -27,6 +27,7 @@
 #define DEBUG_SCIPLOT_TEXT 0
 #define DEBUG_SCIPLOT_LINE 0
 #define DEBUG_SCIPLOT_AXIS 0
+#define DEBUG_SCIPLOT_ALLOC 0
 
 /* KE: Use SCIPLOT_EPS to avoid roundoff in floor and ceil */
 #define SCIPLOT_EPS .0001
@@ -167,8 +168,10 @@ static XtResource resources[] =
   {XtNxRightSpace,  XtCMargin, XtRInt, sizeof(int),
    offset(XRightSpace), XtRImmediate, (XtPointer) (100)},
 /* KE: (From XmFrame.c) */
+#ifdef MOTIF  
   {XmNshadowType, XmCShadowType, XmRShadowType, sizeof(unsigned char),
    offset(ShadowType), XmRImmediate, (XtPointer)XmINVALID_DIMENSION},
+#endif  
 };
 
 static SciPlotFontDesc font_desc_table[] =
@@ -222,8 +225,10 @@ static void sciPlotTrackPointer (SciPlotWidget w,
   XEvent *event, char *args, int n_args);
 
 /* KE: */
+#ifdef MOTIF
 static void DrawShadow (SciPlotWidget w, Boolean raised, real x, real y,
   real width, real height);
+#endif
 
 static char sciPlotTranslations[] = 
 #ifndef _MEDM
@@ -438,6 +443,16 @@ Destroy(Widget ws)
 
   XtFree((char *) w->plot.colors);
 
+#if DEBUG_SCIPLOT_ALLOC
+  SciPlotPrintf("Destroy: alloc_plotlist=%d num_plotlist=%d\n",
+    w->plot.alloc_plotlist,w->plot.num_plotlist);
+  for (i = 0; i < w->plot.alloc_plotlist; i++) {
+    p = w->plot.plotlist + i;
+    SciPlotPrintf("  List %d: allocated=%d legend=%x markertext=%x\n",
+      i, p->allocated, p->legend, p->markertext);
+  }
+#endif
+  
   for (i = 0; i < w->plot.alloc_plotlist; i++) {
     p = w->plot.plotlist + i;
     if (p->allocated > 0)
@@ -996,11 +1011,17 @@ _ListNew (SciPlotWidget w)
 	SciPlotPrintf("Can't realloc memory for SciPlotList\n");
 	exit(1);
       }
+    /* KE: XtRealloc does not zero memory as does the original XtCalloc
+     *   This will cause problems in Destroy for data, legend, markertest, etc.*/
+	p = w->plot.plotlist +  w->plot.alloc_plotlist - NUMPLOTLINEALLOC;
+	memset(p, '\0', NUMPLOTLINEALLOC * sizeof(SciPlotList));
     }
     index = w->plot.num_plotlist - 1;
     p = w->plot.plotlist + index;
   }
 
+/* KE: Since the lists have been zeroed, only the non-zero ones
+ *   really need to be set */
   p->LineStyle = p->LineColor = p->PointStyle = p->PointColor = 0;
   p->number = p->allocated = 0;
   p->data = NULL;
@@ -1008,6 +1029,12 @@ _ListNew (SciPlotWidget w)
   p->draw = p->used = TRUE;
   p->markersize = (real) w->plot.DefaultMarkerSize;
   p->markertext = NULL;
+
+#if DEBUG_SCIPLOT_ALLOC
+  SciPlotPrintf("_ListNew: alloc_plotlist=%d num_plotlist=%d\n",
+    w->plot.alloc_plotlist,w->plot.num_plotlist);
+#endif
+  
   return index;
 }
 
@@ -1035,6 +1062,10 @@ _ListDelete (SciPlotList *p)
   if (p->legend)
     XtFree((char *) p->legend);
   p->legend = NULL;
+
+#if DEBUG_SCIPLOT_ALLOC
+  SciPlotPrintf("_ListDelete:\n");
+#endif
 }
 
 static SciPlotList *
@@ -6025,6 +6056,71 @@ SciPlotPrintMetrics(Widget wi)
   SciPlotPrintf("  y.LabelPos:      %g\n",w->plot.y.LabelPos);
   SciPlotPrintf("  y.LegendPos:     %g\n",w->plot.y.LegendPos);
   SciPlotPrintf("  y.LegendSize     %g\n",w->plot.y.LegendSize);
+}
+
+/* This function prints axis info */
+void
+SciPlotPrintAxisInfo(Widget wi)
+{
+  SciPlotWidget w;
+  
+  if (!XtIsSciPlot(wi)) return;
+  w = (SciPlotWidget)wi;
+  
+  SciPlotPrintf("\nPlot Axis Information\n");
+  SciPlotPrintf("  XLog:            %s\n",w->plot.XLog?"True":"False");
+  SciPlotPrintf("  XAutoScale:      %s\n",w->plot.XAutoScale?"True":"False");
+  SciPlotPrintf("  XNoCompMinMax:   %s\n",w->plot.XNoCompMinMax?"True":"False");
+  SciPlotPrintf("  XFixedLR:        %s\n",w->plot.XFixedLR?"True":"False");
+  SciPlotPrintf("  XLeftSpace:      %d\n",w->plot.XLeftSpace);
+  SciPlotPrintf("  XRightSpace:     %d\n",w->plot.XRightSpace);
+  SciPlotPrintf("  Min.x:           %g\n",w->plot.Min.x);
+  SciPlotPrintf("  Max.x:           %g\n",w->plot.Max.x);
+  SciPlotPrintf("  UserMin.x:       %g\n",w->plot.UserMin.x);
+  SciPlotPrintf("  UserMax.x:       %g\n",w->plot.UserMax.x);
+  SciPlotPrintf("  x.Origin:        %g\n",w->plot.x.Origin);
+  SciPlotPrintf("  x.Size:          %g\n",w->plot.x.Size);
+  SciPlotPrintf("  x.Center:        %g\n",w->plot.x.Center);
+  SciPlotPrintf("  x.TitlePos:      %g\n",w->plot.x.TitlePos);
+  SciPlotPrintf("  x.AxisPos:       %g\n",w->plot.x.AxisPos);
+  SciPlotPrintf("  x.LabelPos:      %g\n",w->plot.x.LabelPos);
+  SciPlotPrintf("  x.LegendPos:     %g\n",w->plot.x.LegendPos);
+  SciPlotPrintf("  x.LegendSize     %g\n",w->plot.x.LegendSize);
+  SciPlotPrintf("  x.DrawOrigin:    %g\n",w->plot.x.DrawOrigin);
+  SciPlotPrintf("  x.DrawSize:      %g\n",w->plot.x.DrawSize);
+  SciPlotPrintf("  x.DrawMax:       %g\n",w->plot.x.DrawMax);
+  SciPlotPrintf("  x.MajorInc:      %g\n",w->plot.x.MajorInc);
+  SciPlotPrintf("  x.MajorNum:      %d\n",w->plot.x.MajorNum);
+  SciPlotPrintf("  x.MinorNum:      %d\n",w->plot.x.MinorNum);
+  SciPlotPrintf("  x.Precision:     %d\n",w->plot.x.Precision);
+  SciPlotPrintf("  x.FixedMargin:   %d\n",w->plot.x.FixedMargin);
+  SciPlotPrintf("  x.Left:          %g\n",w->plot.x.Left);
+  SciPlotPrintf("  x.Right:         %g\n",w->plot.x.Right);
+
+  SciPlotPrintf("  YLog:            %s\n",w->plot.YLog?"True":"False");
+  SciPlotPrintf("  YAutoScale:      %s\n",w->plot.YAutoScale?"True":"False");
+  SciPlotPrintf("  Min.y:           %g\n",w->plot.Min.y);
+  SciPlotPrintf("  Max.y:           %g\n",w->plot.Max.y);
+  SciPlotPrintf("  UserMin.y:       %g\n",w->plot.UserMin.y);
+  SciPlotPrintf("  UserMax.y:       %g\n",w->plot.UserMax.y);
+  SciPlotPrintf("  y.Origin:        %g\n",w->plot.y.Origin);
+  SciPlotPrintf("  y.Size:          %g\n",w->plot.y.Size);
+  SciPlotPrintf("  y.Center:        %g\n",w->plot.y.Center);
+  SciPlotPrintf("  y.TitlePos:      %g\n",w->plot.y.TitlePos);
+  SciPlotPrintf("  y.AxisPos:       %g\n",w->plot.y.AxisPos);
+  SciPlotPrintf("  y.LabelPos:      %g\n",w->plot.y.LabelPos);
+  SciPlotPrintf("  y.LegendPos:     %g\n",w->plot.y.LegendPos);
+  SciPlotPrintf("  y.LegendSize     %g\n",w->plot.y.LegendSize);
+  SciPlotPrintf("  y.DrawOrigin:    %g\n",w->plot.y.DrawOrigin);
+  SciPlotPrintf("  y.DrawSize:      %g\n",w->plot.y.DrawSize);
+  SciPlotPrintf("  y.DrawMax:       %g\n",w->plot.y.DrawMax);
+  SciPlotPrintf("  y.MajorInc:      %g\n",w->plot.y.MajorInc);
+  SciPlotPrintf("  y.MajorNum:      %d\n",w->plot.y.MajorNum);
+  SciPlotPrintf("  y.MinorNum:      %d\n",w->plot.y.MinorNum);
+  SciPlotPrintf("  y.Precision:     %d\n",w->plot.y.Precision);
+  SciPlotPrintf("  y.FixedMargin:   %d\n",w->plot.y.FixedMargin);
+  SciPlotPrintf("  y.Left:          %g\n",w->plot.y.Left);
+  SciPlotPrintf("  y.Right:         %g\n",w->plot.y.Right);
 }
 
 #ifdef MOTIF
