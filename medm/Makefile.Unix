@@ -2,6 +2,10 @@
 # $Id$
 #
 # $Log$
+# Revision 1.16  1996/10/10 18:24:26  vong
+# change Makefile.Unix to get medm to build under sun4 because there
+# is no libX in the /usr/lib directory.
+#
 # Revision 1.15  1996/10/10 16:17:55  vong
 # Version 2.2.5
 # =============
@@ -165,7 +169,8 @@ ifdef XRTGRAPH
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
 endif
-  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
+# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_BASE_LIB)/libCom.a \
