@@ -1315,7 +1315,6 @@ static void pvInfoWriteInfo(void)
     time_t now; 
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
-    char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
     Record *pR;
     chid chId;
     char *descVal;
@@ -1400,6 +1399,7 @@ static void pvInfoWriteInfo(void)
 	  ca_read_access(chId)?"R":"", ca_write_access(chId)?"W":"");
 	sprintf(string, "%sIOC: %s\n", string, ca_host_name(chId));
 	if(timeVal.value) {
+	  /* Do the value */
 	    if(ca_element_count(chId) == 1) {
 		sprintf(string, "%sVALUE: %s\n", string,
 		  timeVal.value);
@@ -1407,8 +1407,15 @@ static void pvInfoWriteInfo(void)
 		sprintf(string, "%sFIRST VALUE: %s\n", string,
 		  timeVal.value);
 	    }
-	    sprintf(string, "%sSTAMP: %s\n", string,
-	      tsStampToText(&timeVal.stamp, TS_TEXT_MONDDYYYY, tsTxt));
+	  /* Convert the seconds part of the timestamp to UNIX time */
+	    now = timeVal.stamp.secPastEpoch + 631152000ul;
+	    tblock = localtime(&now);
+	    strftime(timeStampStr, TIME_STRING_MAX, "%a %b %d, %Y %H:%M:%S",
+	      tblock);
+	    sprintf(timeStampStr,"%s%.3f",timeStampStr,
+	      .000000001*timeVal.stamp.nsec);
+	    timeStampStr[TIME_STRING_MAX-1]='0';
+	    sprintf(string, "%sSTAMP: %s\n", string, timeStampStr);
 	} else {
 		sprintf(string, "%sVALUE: %s\n", NOT_AVAILABLE);
 		sprintf(string, "%sSTAMP: %s\n", NOT_AVAILABLE);
