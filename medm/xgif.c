@@ -741,7 +741,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     register int i,j;
     static Byte lmasks[8]={0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80};
     Byte lmask;
-    char fullPathName[2*MAX_TOKEN_LENGTH], dirName[2*MAX_TOKEN_LENGTH];
+    char fullPathName[PATH_MAX], dirName[PATH_MAX];
     char *dir;
     int startPos;
     int nFrames;
@@ -751,7 +751,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #if DEBUG_DISPOSAL
     print("loadGIF\n");
 #endif
-    
+
     gif=dlImage->privateData;
     fname=dlImage->imageName;
     fp=NULL;
@@ -789,8 +789,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
       displayInfo->dlFile->name) {
 	char *stringPtr;
 	
-	strncpy(fullPathName, displayInfo->dlFile->name, MAX_DIR_LENGTH);
-	fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	strncpy(fullPathName, displayInfo->dlFile->name, PATH_MAX);
+	fullPathName[PATH_MAX-1] = '\0';
 	if(fullPathName && fullPathName[0]) {
 	    stringPtr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
 	    if(stringPtr) {

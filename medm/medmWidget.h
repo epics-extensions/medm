@@ -286,9 +286,6 @@ typedef struct {
    file */
 typedef struct _DisplayInfo {
     FILE *filePtr;
-    Boolean newDisplay;       /* Comes from File|New and not yet saved */
-    Boolean elementsExecuted; /* All elements have been executed in EXECUTE */
-    Boolean hiddenMarkersOn;  /* Hidden button markers are on */
     int versionNumber;
   /* Widgets and main pixmap */
     Widget shell;
@@ -326,13 +323,10 @@ typedef struct _DisplayInfo {
     GC gc;
   /* Execute or edit mode traversal  */
     DlTraversalMode traversalMode;
-    Boolean hasBeenEditedButNotSaved;
-    Boolean fromRelatedDisplayExecution;
   /* Display list pointers */
     DlList *dlElementList;
   /* For edit purposes */
     DlList *selectedDlElementList;
-    Boolean selectedElementsAreHighlighted;
   /* For macro-substitution in display lists */
     NameValueTable *nameValueTable;
     int numNameValues;
@@ -341,6 +335,14 @@ typedef struct _DisplayInfo {
   /* Mark hidden widgets */
     Widget *markerWidgetList;
     int nMarkerWidgets;
+  /* Booleans */
+    Boolean newDisplay;       /* Comes from File|New and not yet saved */
+    Boolean elementsExecuted; /* All elements have been executed in EXECUTE */
+    Boolean hiddenMarkersOn;  /* Hidden button markers are on */
+    Boolean positionDisplay;  /* Needs to set x,y to object.x,y */
+    Boolean hasBeenEditedButNotSaved;
+    Boolean fromRelatedDisplayExecution;
+    Boolean selectedElementsAreHighlighted;
   /* Linked list of displayInfo's    */
     struct _DisplayInfo *next;
     struct _DisplayInfo *prev;

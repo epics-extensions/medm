@@ -379,7 +379,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
       /* KE: Beware below if changing the number of args here */
 	localMenuBar =
-	  XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
+	  XmCreateMenuBar(displayInfo->drawingArea, "relatedDisplayMenuBar",
+	    args, n);
 	dlElement->widget = localMenuBar;
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
@@ -471,7 +472,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if(strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
-		xmString = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
+		xmString = XmStringCreateLocalized(
+		  dlRelatedDisplay->display[i].label);
 		XtSetArg(args[3], XmNlabelString,xmString);
 		XtSetArg(args[4], XmNuserData, displayInfo);
 		relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
@@ -555,7 +557,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	for(i = 0; i < iNumberOfDisplays; i++) {
 	    Widget toggleButton;
 	    
-	    xmString = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
+	    xmString = XmStringCreateLocalized(
+	      dlRelatedDisplay->display[i].label);
 	    XtSetArg(wargs[n],XmNlabelString,xmString);
 	  /* Use gadgets here so that changing foreground of
 	   *   radioBox changes buttons */
@@ -612,7 +615,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  /* Use generic hide for an element with a widget */	dlElement->updateType = STATIC_GRAPHIC;
+  /* Use generic hide for an element with a widget */
+    dlElement->updateType = STATIC_GRAPHIC;
 
     hideWidgetElement(displayInfo, dlElement);
 }
@@ -657,7 +661,8 @@ DlElement *createDlRelatedDisplay(DlElement *p)
     return(dlElement);
 }
 
-void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *relatedDisplay)
+void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
+  DlRelatedDisplayEntry *relatedDisplay)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -761,11 +766,8 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 
 }
 
-void writeDlRelatedDisplayEntry(
-  FILE *stream,
-  DlRelatedDisplayEntry *entry,
-  int index,
-  int level)
+void writeDlRelatedDisplayEntry(FILE *stream, DlRelatedDisplayEntry *entry,
+  int index, int level)
 {
     char indent[16];
 
@@ -797,10 +799,7 @@ void writeDlRelatedDisplayEntry(
 #endif
 }
 
-void writeDlRelatedDisplay(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlRelatedDisplay(FILE *stream, DlElement *dlElement, int level)
 {
     int i;
     char indent[16];
@@ -841,8 +840,8 @@ void writeDlRelatedDisplay(
 #endif
 }
 
-static void relatedDisplayButtonPressedCb(Widget w,
-  XtPointer clientData, XtPointer callbackData)
+static void relatedDisplayButtonPressedCb(Widget w, XtPointer clientData,
+  XtPointer callbackData)
 {
     DlRelatedDisplayEntry *pEntry = (DlRelatedDisplayEntry *)clientData;
     DisplayInfo *displayInfo = 0;
@@ -868,7 +867,7 @@ static void relatedDisplayButtonPressedCb(Widget w,
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay)
 {
-    DisplayInfo *existingDisplayInfo = NULL;
+    DisplayInfo *existingDisplayInfo;
     FILE *filePtr;
     char *argsString, token[MAX_TOKEN_LENGTH];
     char filename[MAX_TOKEN_LENGTH];
@@ -893,7 +892,38 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	performMacroSubstitutions(displayInfo, argsString, processedArgs,
           2*MAX_TOKEN_LENGTH);
-      /* Try to find file with parent's path */
+      /* Check for an existing display */
+	existingDisplayInfo = NULL;
+	if(popupExistingDisplay) {
+	    existingDisplayInfo = findDisplay(filename,processedArgs);
+	    if(existingDisplayInfo) {
+		DisplayInfo *cdi;
+		
+	      /* Remove the old one if appropriate */
+		if(replaceDisplay || pEntry->mode == REPLACE_DISPLAY &&
+		  displayInfo != existingDisplayInfo) {
+		    closeDisplay(displayInfo->shell);
+		}
+
+	      /* Make the existing one be the current one */
+		cdi = currentDisplayInfo = existingDisplayInfo;
+#if 0
+	      /* KE: Doesn't work on WIN32 */
+		XtPopdown(currentDisplayInfo->shell);
+		XtPopup(currentDisplayInfo->shell,XtGrabNone);
+#else
+		if(cdi && cdi->shell && XtIsRealized(cdi->shell)) {
+		    XMapRaised(display, XtWindow(cdi->shell));
+		}
+#endif
+	      /* Refresh the display list dialog box */
+		refreshDisplayListDlg();
+		return;
+	    }
+	}
+	
+      /* There is no existing display to use.  Try to find a file,
+         passing the parent's path. */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
 	if(filePtr == NULL) {
 	    sprintf(token,
@@ -907,26 +937,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		dmDisplayListParse(displayInfo,filePtr,processedArgs,
 		  filename,NULL,(Boolean)True);
 	    } else {
-		if(popupExistingDisplay) {
-		    existingDisplayInfo = findDisplay(filename,processedArgs);
-		}
-		if(existingDisplayInfo) {
-		    DisplayInfo *cdi;
-		    
-		    cdi = currentDisplayInfo = existingDisplayInfo;
-#if 0
-		  /* KE: Doesn't work on WIN32 */
-		    XtPopdown(currentDisplayInfo->shell);
-		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
-#else
-		    if(cdi && cdi->shell && XtIsRealized(cdi->shell)) {
-			XMapRaised(display, XtWindow(cdi->shell));
-		    }
-#endif
-		} else {
-		    dmDisplayListParse(NULL,filePtr,processedArgs,
-		      filename,NULL,(Boolean)True);
-		}
+		dmDisplayListParse(NULL,filePtr,processedArgs,
+		  filename,NULL,(Boolean)True);
 	    }
 	    fclose(filePtr);
 

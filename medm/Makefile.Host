@@ -40,12 +40,14 @@ PURIFY_FLAGS = -first-only -chain-length=26
 # Use to test SciPlot, Otherwise should come from CONFIG
 #XRTGRAPH =
 #SCIPLOT = YES
+#JPT = YES
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES
 
 # Set up for Xrt/Graph
 ifdef XRTGRAPH
   SCIPLOT =     # Don't allow more than one plot package
+  JPT =         # Don't allow more than one plot package
   #USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -DXRTGRAPH
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
@@ -75,10 +77,20 @@ endif     #ifdef XRTGRAPH
 
 # Set up for SciPLot
 ifdef SCIPLOT
+  JPT =         # Don't allow more than one plot package
   USR_CFLAGS += -DSCIPLOT -DMOTIF
   SRCS += medmCartesianPlot.c 
   SRCS += medmSciPlot.c 
   SRCS += SciPlot.c 
+endif
+
+# Set up for JPT
+ifdef JPT
+#  USR_CFLAGS += -DJPT -I$(JPT_INC)
+  USR_LIBS += Jpt
+#  USR_LDFLAGS += -L$(JPT_LIB)
+  SRCS += medmCartesianPlot.c 
+  SRCS += medmJpt.c 
 endif
 
 #ifeq ($(PURIFY),YES)

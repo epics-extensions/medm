@@ -794,9 +794,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
     int argsUsed = 0;
     int fileEntryTableSize = 0;
     request_t *request = NULL;
-#define FULLPATHNAME_SIZE 1024
-    char currentDirectoryName[FULLPATHNAME_SIZE+1];
-    char fullPathName[FULLPATHNAME_SIZE+1];
+    char fullPathName[PATH_MAX];
 
     request = (request_t *)malloc(sizeof(request_t));
     if(request == NULL) return request;
@@ -901,13 +899,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	}
     }
     
-  /* Get the current directory */
-    currentDirectoryName[0] = '\0';
-    getcwd(currentDirectoryName,FULLPATHNAME_SIZE);
-    
   /* Make sure fullPathName is a terminated with '\0' string */
   /* KE: Not necessary, is set to a null string below */
-    fullPathName[FULLPATHNAME_SIZE] = '\0';
+    fullPathName[PATH_MAX] = '\0';
 
   /* Parse the display name */
     for(i = argsUsed+1; i < argc; i++) {
@@ -923,7 +917,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    medmPrintf(1,"\nFile has wrong suffix: %s\n",fileStr);
 	    continue;
 	}
-	if(strlen(fileStr) > (size_t) FULLPATHNAME_SIZE) {
+	if(strlen(fileStr) > (size_t)(PATH_MAX-1)) {
 	    medmPrintf(1,"\nFile name too long: %s\n",fileStr);
 	    continue;
 	}
@@ -933,44 +927,23 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 
       /* Found string with right suffix - presume it's a valid display name */
 	if(canAccess = !access(fileStr,R_OK|F_OK)) {
-	  /* Found the file */
-#if defined(VMS)
-	    int pathTest = (strchr(fileStr, '[') != NULL);
-#elif defined(WIN32)
-	  /* A drive specification will also indicate a full path name */
-	    int pathTest = (fileStr[0] == MEDM_DIR_DELIMITER_CHAR ||
-	      fileStr[1] == ':');
-#else
-	    int pathTest = (fileStr[0] == MEDM_DIR_DELIMITER_CHAR);
-#endif
-	    if(pathTest) {
-	      /* Is a full path name */
-		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
-	    } else {
-	      /* Insert the path before the file name */
-		if(strlen(currentDirectoryName)+strlen(fileStr)+1 <
-		  (size_t) FULLPATHNAME_SIZE) {
-		    strcpy(fullPathName,currentDirectoryName);
-#ifndef VMS
-		    strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
-#endif
-		    strcat(fullPathName,fileStr);
-		} else {
-		    canAccess = False;
-		}
-	    }
+	    int status;
+	    
+	  /* Found the file.  Convert to a full path. */
+	    status = convertNameToFullPath(fileStr, fullPathName, PATH_MAX);
+	    if(!status) canAccess = False;
 	} else {
 	  /* Not found, try with directory specified in the environment */
 	    char *dir = NULL;
-	    char name[FULLPATHNAME_SIZE];
+	    char name[PATH_MAX];
 	    int startPos;
 	    
 	    dir = getenv("EPICS_DISPLAY_PATH");
 	    if(dir != NULL) {
 		startPos = 0;
 		while(extractStringBetweenColons(dir,name,startPos,&startPos)) {
-		    if(strlen(name)+strlen(fileStr)+1 <
-		      (size_t) FULLPATHNAME_SIZE) {
+		    if(strlen(name)+strlen(fileStr) <
+		      (size_t)(PATH_MAX - 1)) {
 			strcpy(fullPathName,name);
 #ifndef VMS
 			strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
@@ -3048,7 +3021,7 @@ main(int argc, char *argv[])
     char versionString[60];
     Window targetWindow;
     Boolean attachToExistingMedm, completeClientMessage;
-    char fullPathName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
+    char fullPathName[PATH_MAX], name[PATH_MAX];
     unsigned char *propertyData;
     int status, format;
     unsigned long nitems, left;
@@ -3291,9 +3264,9 @@ main(int argc, char *argv[])
        *  type:          Actual type of the property
        *                 None if it doesn't exist
        *  propertyData:  The value of the property */
-	status = XGetWindowProperty(display,rootWindow,windowPropertyAtom,
-	  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
-	  &format,&nitems,&left,&propertyData);
+	status = XGetWindowProperty(display, rootWindow, windowPropertyAtom,
+	  0, PATH_MAX, (Bool)False, AnyPropertyType, &type,
+	  &format, &nitems, &left, &propertyData);
 
 #if DEBUG_PROP
 	{

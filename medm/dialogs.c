@@ -1250,9 +1250,10 @@ void popupDisplayListDlg(void)
     }
 
   /* Refresh and pop it up */
-    if(displayListS) {XtPopup(displayListS,XtGrabNone);
+    if(displayListS) {
 	refreshDisplayListDlg();
-	XtPopup(displayListS,XtGrabNone);
+	XtSetSensitive(displayListS, True);
+	XtPopup(displayListS, XtGrabNone);
     }
 }
 

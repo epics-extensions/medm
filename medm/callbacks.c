@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PIXMAP 0
 #define DEBUG_EXPOSE 0
 #define DEBUG_EXECUTE_MENU 0
+#define DEBUG_RELATED_DISPLAY 0
 
 #include "medm.h"
 
@@ -149,8 +150,8 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	popupPvLimits(displayInfo);
 	break;
     case EXECUTE_POPUP_MENU_MAIN_ID:
-      /* KE: This appears to work and deiconify if iconic */
 #if 1	
+      /* KE: This appears to work and deiconify if iconic */
 	XMapRaised(display, XtWindow(mainShell));
 #else
       /* May be more general.  Requires <X11/Xmu/WinUtil.h> */
@@ -340,11 +341,22 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #if DEBUG_EVENTS > 1
     print("\ndrawingAreaCallback(Entered):\n");
 #endif
+    if(!displayInfo) return;
+    
     if(cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE):\n");
 #endif
+
+      /* Move window to be consistent with object.x,y */
+	if(displayInfo->positionDisplay) {
+	    int status = repositionDisplay(displayInfo);
+	  /* Turn switch off if successful */
+	    if(!status) displayInfo->positionDisplay = False;
+	}
+	
+      /* Handle exposure */
 	x = cbs->event->xexpose.x;
 	y = cbs->event->xexpose.y;
 	uiw = cbs->event->xexpose.width;
@@ -353,7 +365,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
 	  displayInfo->gc != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
-	    
+
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	    print("  w=%x DA=%x x=%d y=%d width=%d height=%d\n",
 	      w,displayInfo->drawingArea,x,y,uiw,uih);
@@ -423,6 +435,19 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		  displayInfo->gc,x,y,uiw,uih,x,y);
 	    }
 	}
+#if DEBUG_RELATED_DISPLAY
+	{
+	    Position x, y;
+	    
+	    XtSetArg(args[0],XmNx,&x);
+	    XtSetArg(args[1],XmNy,&y);
+	    XtGetValues(displayInfo->shell,args,2);
+	    print("drawingAreaCallback: x=%d y=%d\n",x,y);
+	    print("  XtIsRealized=%s XtIsManaged=%s\n",
+	      XtIsRealized(displayInfo->shell)?"True":"False",
+	      XtIsManaged(displayInfo->shell)?"True":"False");
+	}
+#endif
 #if DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE): END\n\n");
 #endif

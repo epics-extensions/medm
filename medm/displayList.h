@@ -69,7 +69,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <string.h>
 
 #define MAX_TOKEN_LENGTH        256     /* max size of strings in adl    */
-#define MAX_DIR_LENGTH          512     /* max length of directory name  */
 #define MAX_RELATED_DISPLAYS    8       /* max # of related displays     */
 #define MAX_SHELL_COMMANDS      8       /* max # of shell commands       */
 #define MAX_PENS                8       /* max # of pens on strip chart  */

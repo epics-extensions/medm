@@ -63,7 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 extern Widget mainShell;
 
-static Position x = 0, y = 0;
+static Position xSave = 0, ySave = 0;
 static Widget lastShell;
 
 /* KE: Used to move the display if its x and y are zero
@@ -126,12 +126,6 @@ ParseFuncEntry parseFuncTable[] = {
 
 static int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
 
-/* DEBUG */
-#if 0
-DisplayInfo *debugDisplayInfo=NULL;
-#endif
-/* End DEBUG */
-
 /***  displayInfo routines ***/
 
 /*
@@ -165,6 +159,7 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->filePtr = NULL;
     displayInfo->newDisplay = True;
     displayInfo->elementsExecuted = False;
+    displayInfo->positionDisplay = False;
     displayInfo->versionNumber = 0;
 
     displayInfo->drawingArea = 0;
@@ -185,10 +180,6 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->nMarkerWidgets = 0;    
 
     updateTaskInitHead(displayInfo);
-
-#if 0
-    displayInfo->childCount = 0;
-#endif
 
     displayInfo->colormap = 0;
     displayInfo->dlColormapCounter = 0;
@@ -443,10 +434,23 @@ static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cb
     UNREFERENCED(cd);
     UNREFERENCED(cbs);
     
-    XtSetArg(args[0],XmNx,&x);
-    XtSetArg(args[1],XmNy,&y);
+    XtSetArg(args[0],XmNx,&xSave);
+    XtSetArg(args[1],XmNy,&ySave);
     XtGetValues(shell,args,2);
     lastShell = shell;
+#if DEBUG_RELATED_DISPLAY
+    {
+	Position x, y;
+
+	XtSetArg(args[0],XmNx,&x);
+	XtSetArg(args[1],XmNy,&y);
+	XtGetValues(shell,args,2);
+	print("displayShellPopdownCallback: x=%d y=%d\n",x,y);
+	print("  XtIsRealized=%s XtIsManaged=%s\n",
+	  XtIsRealized(shell)?"True":"False",
+	  XtIsManaged(shell)?"True":"False");
+    }
+#endif    
 }
 
 static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
@@ -459,11 +463,24 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
     UNREFERENCED(cbs);
     
     if(shell == lastShell) {
-	XtSetArg(args[0],XmNx,x);
-	XtSetArg(args[1],XmNy,y);
+	XtSetArg(args[0],XmNx,xSave);
+	XtSetArg(args[1],XmNy,ySave);
 	XtSetValues(shell,args,2);
     }
     if(env != NULL) addDisplayHelpProtocol(displayInfo);
+#if DEBUG_RELATED_DISPLAY
+    {
+	Position x, y;
+
+	XtSetArg(args[0],XmNx,&x);
+	XtSetArg(args[1],XmNy,&y);
+	XtGetValues(shell,args,2);
+	print("displayShellPopupCallback: x=%d y=%d\n",x,y);
+	print("  XtIsRealized=%s XtIsManaged=%s\n",
+	  XtIsRealized(shell)?"True":"False",
+	  XtIsManaged(shell)?"True":"False");
+    }
+#endif    
 }
 
 /***  Parsing routines ***/
@@ -575,7 +592,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
  *  N.B.  this function must be kept in sync with parseCompositeChildren
  *  which follows...
  */
-void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
+void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
   char *argsString, char *filename,  char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
@@ -595,12 +612,12 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	
     
 #if DEBUG_RELATED_DISPLAY
-    print("\ndmDisplayListParse: displayInfo=%x\n"
+    print("\ndmDisplayListParse: displayInfoIn=%x\n"
       "  argsString=%s\n"
       "  filename=%s\n"
       "  geometryString=%s\n"
       "  fromRelatedDisplayExecution=%s\n",
-      displayInfo,
+      displayInfoIn,
       argsString?argsString:"NULL",
       filename?filename:"NULL",
       geometryString?geometryString:"NULL",
@@ -609,7 +626,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 
     initializeGlobalResourceBundle();
 
-    if(!displayInfo) {
+    if(!displayInfoIn) {
       /* Did not come from a display that is to be replaced
        *   Allocate a DisplayInfo structure */
 	cdi = currentDisplayInfo = allocateDisplayInfo();
@@ -621,28 +638,28 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
-	XtGetValues(displayInfo->shell,args,nargs);
+	XtGetValues(displayInfoIn->shell,args,nargs);
 #if DEBUG_RELATED_DISPLAY
 	print("dmDisplayListParse: Old values: x=%d y=%d\n",x,y);
 #endif      
       /* See if we want to reuse it or save it */
-	if(displayInfo->fromRelatedDisplayExecution == True) {
+	if(displayInfoIn->fromRelatedDisplayExecution == True) {
 	  /* Not an original, don't save it, reuse it */
 	    reuse=1;
 	  /* Clear out old display */
-	    dmCleanupDisplayInfo(displayInfo,False);
-	    clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+	    dmCleanupDisplayInfo(displayInfoIn,False);
+	    clearDlDisplayList(displayInfoIn, displayInfoIn->dlElementList);
 	  /* dlFile will be created during parsing so free it */
-	    if(displayInfo->dlFile) {
-		free((char *)displayInfo->dlFile);
-		displayInfo->dlFile = NULL;
+	    if(displayInfoIn->dlFile) {
+		free((char *)displayInfoIn->dlFile);
+		displayInfoIn->dlFile = NULL;
 	    }	    
-	    displayInfo->filePtr = filePtr;
-	    cdi = currentDisplayInfo = displayInfo;
+	    displayInfoIn->filePtr = filePtr;
+	    cdi = currentDisplayInfo = displayInfoIn;
 	    cdi->newDisplay = False;
 	} else {
 	  /* This is an original, pop it down */
-	    XtPopdown(displayInfo->shell);
+	    XtPopdown(displayInfoIn->shell);
 #if DEBUG_RELATED_DISPLAY > 1
 	    dumpDisplayInfoList(displayInfoListHead,
 	      "dmDisplayListParse [1]: displayInfoList");
@@ -650,7 +667,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	      "dmDisplayListParse [1]: displayInfoSaveList");
 #endif
 	  /* Save it if not already saved */
-	    moveDisplayInfoToDisplayInfoSave(displayInfo);
+	    moveDisplayInfoToDisplayInfoSave(displayInfoIn);
 #if DEBUG_RELATED_DISPLAY > 1
 	    dumpDisplayInfoList(displayInfoListHead,
 	      "dmDisplayListParse [2]: displayInfoList");
@@ -702,12 +719,6 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 
 #if DEBUG_RELATED_DISPLAY
     print("  File: %s\n",cdi->dlFile->name);
-#if 0    
-    if(strstr(cdi->dlFile->name,"sMain.adl")) {
-	debugDisplayInfo=displayInfo;
-	print("Set debugDisplayInfo for sMain.adl\n");
-    }
-#endif
 #endif
 
   /* Read the display block (Must be there) */
@@ -779,8 +790,8 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
     
   /* Change DlObject values for x and y to be the same as the original
      if it is a Related Display */
-    if(displayInfo) {
-      /* Note that cdi is not necessarily the same as displayInfo */
+    if(displayInfoIn) {
+      /* Note that cdi is not necessarily the same as displayInfoIn */
 #if DEBUG_RELATED_DISPLAY
 	print("  Set replaced values: XtIsRealized=%s XtIsManaged=%s\n",
 	  XtIsRealized(cdi->shell)?"True":"False",
@@ -804,7 +815,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	nargs++;
 	XtSetArg(args[nargs],XmNheight,dlDisplay->object.height);
 	nargs++;
-	XtSetValues(displayInfo->shell,args,nargs);
+	XtSetValues(displayInfoIn->shell,args,nargs);
     } else if(geometryString && *geometryString) {
       /* Handle geometry string */
       /* Parse the geometry string (mask indicates what was found) */
@@ -844,12 +855,15 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
-	print("dmDisplayListParse: After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+	print("dmDisplayListParse(shell): After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+
+	XtGetValues(cdi->drawingArea,args,nargs);
+	print("dmDisplayListParse(drawA): After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
     }
 #endif      
     
   /* Do moving after it is realized */
-    if(displayInfo && !reuse) {
+    if(displayInfoIn && !reuse) {
 #if DEBUG_RELATED_DISPLAY
 	print("  Move(1)\n");
 	dlDisplay->object.x=x;
@@ -869,13 +883,12 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 #endif
     }
 
-  /* KE: Move it to be consistent with its object values
-   * XtSetValues or XtMoveWidget do not work here
+  /* Mark it to be moved to x, y consistent with object.x,y.
+   * XtSetValues, XtMoveWidget, or XMoveWindow do not work here.
+   * Needs to be done in expose callback when final x,y are correct.
    * Is necessary in part because WM adds borders and title bar,
-       moving the shell down when first created */
-    XMoveWindow(display,XtWindow(cdi->shell),
-      dlDisplay->object.x,
-      dlDisplay->object.y);
+   * moving the shell down when first created */
+    cdi->positionDisplay = True;
 
 #if DEBUG_RELATED_DISPLAY
     print("  Final values:\n"
@@ -890,89 +903,55 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
-	print("dmDisplayListParse: At end: xpos=%d ypos=%d\n",xpos,ypos);
+	print("dmDisplayListParse(shell): At end: xpos=%d ypos=%d\n",xpos,ypos);
+
+	XtGetValues(cdi->drawingArea,args,nargs);
+	print("dmDisplayListParse(drawA): At end: xpos=%d ypos=%d\n",xpos,ypos);
     }
 #endif
     
   /* Refresh the display list dialog box */
     refreshDisplayListDlg();
+#if DEBUG_RELATED_DISPLAY
+    print("dmDisplayListParse: Done\n");
+#endif
 }
 
-/*
- * Function to open a specified file (as .adl if specified as .dl),
- *   looking in EPICS_DISPLAY_PATH directory if unavailable in the
- *   working directory
- */
-
+/* Function to open an ADL file.  If unsuccessful, try to attach path
+ * of Related Display parent if given, then each directory in
+ * EPICS_DISPLAY_PATH */
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 {
     FILE *filePtr;
     int startPos;
-    char name[MAX_TOKEN_LENGTH], fullPathName[MAX_DIR_LENGTH],
-      dirName[MAX_DIR_LENGTH];
+    char name[MAX_TOKEN_LENGTH], fullPathName[PATH_MAX],
+      dirName[PATH_MAX];
     char *dir, *ptr;
-#if DEBUG_FILE
-    static FILE *file=NULL;
-    static pid_t pid=0;
-#endif
 
   /* Try to open with the given name first
    *   (Will be in cwd if not an absolute pathname) */
     strncpy(name, filename, MAX_TOKEN_LENGTH);
     name[MAX_TOKEN_LENGTH-1] = '\0';
     filePtr = fopen(name,"r");
-#if DEBUG_FILE
-    if(!file) {
-	file=fopen("/tmp/medmLog","a");
-	pid=getpid();
-	if(file) {
-	    fprintf(file,"Initializing PID: %d\n",pid);
-	} else {
-	    print("Cannot open /tmp/medmLog\n");
-	}
-    }
-#if DEBUG_FILE > 1
-    print("[%d] dmOpenUsableFile: %s\n",pid,filename);
-    print("  [1] Converted to: %s\n",name);
-    if(filePtr) print("    Found as: %s\n",name);
-#endif	
-    if(file) {
-	fprintf(file,"[%d] dmOpenUsableFile: %s\n",pid,filename);
-	fprintf(file,"  [1] Converted to: %s\n",name);
-	if(filePtr) fprintf(file,"    Found as: %s\n",name);
-	fflush(file);
-    }
-#endif
     if(filePtr) {
-	strcpy(filename, name);
+	convertNameToFullPath(name, filename, MAX_TOKEN_LENGTH);
 	return (filePtr);
     }
 
-  /* If the name starts with / or . then we can do no more */
-    if(name[0] == MEDM_DIR_DELIMITER_CHAR || name[0] == '.') return (NULL);
+  /* If the name is a path, then we can do no more */
+    if(isPath(name)) return (NULL);
 
-  /* If the name comes from a related display,
-   *   then try the directory of the related display */
+  /* If the name comes from a related display, then try the directory
+   * of the related display */
     if(relatedDisplayFilename && *relatedDisplayFilename) {
-	strncpy(fullPathName, relatedDisplayFilename, MAX_DIR_LENGTH);
-	fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	strncpy(fullPathName, relatedDisplayFilename, PATH_MAX);
+	fullPathName[PATH_MAX-1] = '\0';
 	if(fullPathName && fullPathName[0]) {
 	    ptr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
 	    if(ptr) {
 		*(++ptr) = '\0';
 		strcat(fullPathName, name);
 		filePtr = fopen(fullPathName, "r");
-#if DEBUG_FILE
-#if DEBUG_FILE > 1
-		print("  [2] Converted to: %s\n",fullPathName);
-		if(filePtr) print("    Found as: %s\n",fullPathName);
-#endif		
-		if(file) {
-		    fprintf(file,"  [2] Converted to: %s\n",fullPathName);
-		    if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
-		    fflush(file);
-		}
-#endif
 		if(filePtr) {
 		    strcpy(filename, fullPathName);
 		    return (filePtr);
@@ -987,22 +966,11 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	startPos = 0;
 	while(filePtr == NULL &&
 	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
-	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
-	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	    strncpy(fullPathName, dirName, PATH_MAX);
+	    fullPathName[PATH_MAX-1] = '\0';
 	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
 	    strcat(fullPathName, name);
 	    filePtr = fopen(fullPathName, "r");
-#if DEBUG_FILE
-#if DEBUG_FILE > 1
-	    print("  [3] Converted to: %s\n",fullPathName);
-	    if(filePtr) print("    Found as: %s\n",fullPathName);
-#endif		
-	    if(file) {
-		fprintf(file,"  [3] Converted to: %s\n",fullPathName);
-		if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
-		fflush(file);
-	    }
-#endif
 	    if(filePtr) {
 		strcpy(filename, fullPathName);
 		return (filePtr);
@@ -1320,3 +1288,59 @@ void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
     }
 }
 
+/* This function is used to insure the window is placed so the
+   position of its drawing area relative to the root window is the
+   same as its object,x,y.  It is necessary because the window manager
+   may place the window so the title bar is at the object.x,y
+   coordinates.  */
+int repositionDisplay(DisplayInfo *displayInfo)
+{
+    DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+    Position oldX, oldY;
+    int newX, newY;
+    Arg args[2];
+    int retVal = 1;
+    
+    if(pE && XtIsRealized(displayInfo->shell)) {
+	DlDisplay *dlDisplay = pE->structure.display;
+	
+      /* Get current x, y according to X */
+	XtSetArg(args[0],XmNx,&oldX);
+	XtSetArg(args[1],XmNy,&oldY);
+	XtGetValues(displayInfo->shell,args,2);
+
+      /* Calculate new ones, assuming the difference is the window
+         manager borders */
+	newX = 2*dlDisplay->object.x -(int)oldX;
+	newY = 2*dlDisplay->object.y -(int)oldY;
+	if(newX < 0) newX = 0;
+	if(newY < 0) newY = 0;
+
+      /* Move the window */
+	if(newX != oldX || newY != oldY) {
+	    XMoveWindow(display,XtWindow(displayInfo->shell),
+	      newX, newY);
+	}
+
+      /* Indicate success */
+	retVal = 0;
+#if DEBUG_RELATED_DISPLAY
+	{
+	    Position finX, finY;
+	    
+	    XtSetArg(args[0],XmNx,&finX);
+	    XtSetArg(args[1],XmNy,&finY);
+	    XtGetValues(displayInfo->shell,args,2);
+	    
+	    print("repositionDisplay:\n"
+	      "  oldX=%d oldY=%d object.x=%d object.y=%d\n"
+	      "  newX=%d newY=%d finX=%d finY=%d\n",
+	      oldX,oldY,
+	      dlDisplay->object.x,dlDisplay->object.y,newX,newY,
+	      newX,newY,finX,finY);
+	}
+#endif
+    }
+
+    return retVal;
+}

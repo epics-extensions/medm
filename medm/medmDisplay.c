@@ -385,34 +385,18 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     medmSetDisplayTitle(displayInfo);
     XtRealizeWidget(displayInfo->shell);
 
-  /* KE: Move it to be consistent with its object values
-   * XtSetValues (here or above) or XtMoveWidget (here) do not work
+  /* Mark it to be moved to x, y consistent with object.x,y.
+   * XtSetValues, XtMoveWidget, or XMoveWindow do not work here.
+   * Needs to be done in expose callback when final x,y are correct.
    * Is necessary in part because WM adds borders and title bar,
-       moving the shell down when first created */
-    XMoveWindow(display,XtWindow(displayInfo->shell),
-      dlDisplay->object.x,dlDisplay->object.y);
+   * moving the shell down when first created */
+    displayInfo->positionDisplay = True;
 
 #if DEBUG_RELATED_DISPLAY
     print("executeDlDisplay: dlDisplay->object=%x\n"
       "  dlDisplay->object.x=%d dlDisplay->object.y=%d\n",
       dlDisplay->object,
       dlDisplay->object.x,dlDisplay->object.y);
-#if 0
-    print("mainShell: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(mainShell)?"True":"False",
-      XtIsManaged(mainShell)?"True":"False");
-    printWindowAttributes(display,XtWindow(mainShell),"MainShell: ");
-
-    print("shell: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(displayInfo->shell)?"True":"False",
-      XtIsManaged(displayInfo->shell)?"True":"False");
-    printWindowAttributes(display,XtWindow(displayInfo->shell),"Shell: ");
-    
-    print("DA: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(displayInfo->drawingArea)?"True":"False",
-      XtIsManaged(displayInfo->drawingArea)?"True":"False");
-    printWindowAttributes(display,XtWindow(displayInfo->drawingArea),"DA: ");
-#endif    
     {
 	Position xpos,ypos;
 	
@@ -487,6 +471,9 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Execute the colormap (Note that executeDlColormap also defines
      the drawingAreaPixmap and statusPixmap) */
     executeDlColormap(displayInfo,displayInfo->dlColormap);
+#if DEBUG_RELATED_DISPLAY
+    print("executeDlDisplay: Done\n");
+#endif
 }
 
 static void createExecuteModeMenu(DisplayInfo *displayInfo)

@@ -81,6 +81,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <postfix.h>
 #include "medm.h"
 
+#ifdef WIN32
+/* WIN32 does not have unistd.h */
+#include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
+#else
+/* Use unistd.h */
+#include <unistd.h>
+#endif
+
 #ifdef  __TED__
 #include <Dt/Wsm.h>
 #endif
@@ -187,6 +195,74 @@ Boolean extractStringBetweenColons(char *input, char *output,
     else
       return(True);
 }
+
+/* Check if the name is a pathname */
+int isPath(const char *fileString)
+{
+    int pathTest;
+    
+  /* Look for the appropriate leading character */
+    pathTest = (strchr(fileString, '[') != NULL);
+#if defined(VMS)
+    pathTest = (strchr(fileString, '[') != NULL);
+#elif defined(WIN32)
+  /* A drive specification will also indicate a full path name */
+    pathTest = (fileString[0] == MEDM_DIR_DELIMITER_CHAR ||
+      fileString[1] == ':');
+#else
+    pathTest = (fileString[0] == MEDM_DIR_DELIMITER_CHAR);
+#endif
+
+  /* If not successful, look for a leading . or .. */
+#if !defined(VMS)
+    if(!pathTest) {
+	if(fileString[0] == '.') {
+	    if(fileString[1] == '.') {
+		pathTest = (fileString[2] == MEDM_DIR_DELIMITER_CHAR);
+	    } else {
+		pathTest = (fileString[1] == MEDM_DIR_DELIMITER_CHAR);
+	    }
+	}
+    }
+#endif    
+
+    return(pathTest);
+}  
+
+/* Convert name to a full path name.  Returns 1 if converted, 0 if
+   failed. */
+int convertNameToFullPath(const char *name, char *pathName, int nChars)
+{
+    int retVal = 1;
+    
+    if(isPath(name)) {
+      /* Is a full path name */
+	strncpy(pathName, name, nChars);
+	pathName[nChars-1] = '\0';
+    } else {
+	char currentDirectoryName[PATH_MAX];
+	
+      /* Insert the path before the file name */
+	currentDirectoryName[0] = '\0';
+	getcwd(currentDirectoryName, PATH_MAX);
+	
+	if(strlen(currentDirectoryName) + strlen(name) <
+	  (size_t)(nChars - 1)) {
+	    strcpy(pathName, currentDirectoryName);
+#ifndef VMS
+	    strcat(pathName, MEDM_DIR_DELIMITER_STRING);
+#endif
+	    strcat(pathName, name);
+	} else {
+	  /* Hopefully won't get here */
+	    strncpy(pathName, name, nChars);
+	    pathName[nChars-1] = '\0';
+	    retVal = 0;
+	}
+    }
+
+    return retVal;
+}  
 
 /*
  * function to return the best fitting font for the field and string
@@ -3221,6 +3297,7 @@ DisplayInfo *findDisplay(char * filename, char *argsString)
     NameValueTable *nameTable;
     int numNameValues;
     int i, matched;
+    char pathName[MAX_TOKEN_LENGTH];
 
   /* Generate the name-value table for these args */
     if(argsString) {
@@ -3230,11 +3307,14 @@ DisplayInfo *findDisplay(char * filename, char *argsString)
 	numNameValues = 0;
     }
 
+  /* Convert to a full path name */
+    convertNameToFullPath(filename, pathName, MAX_TOKEN_LENGTH);
+
   /* Loop over displays */
     di = displayInfoListHead->next;
     while(di) {
-      /* Continue if the filename does not match */
-	if(strcmp(di->dlFile->name,filename)) {
+      /* Continue if the pathName does not match */
+	if(strcmp(di->dlFile->name, pathName)) {
 	    di = di->next;
 	    continue;
 	}

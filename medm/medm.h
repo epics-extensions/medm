@@ -78,11 +78,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 # endif
 #endif
 
-/* for dumb SUNOS and GNU... */
+/* For dumb SUNOS and GNU... */
 #ifndef FLT_MAX		/* FLT_MAX is supposed to be in limits.h/float.h */
 #  define FLT_MAX ((float)1.+30)
 #endif
-#ifndef M_PI		/* similarly M_PI should be in math.h */
+#ifndef M_PI		/* Similarly M_PI should be in math.h */
 #  define M_PI    3.14159265358979323846
 #endif
 

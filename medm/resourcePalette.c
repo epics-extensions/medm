@@ -63,6 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_RESOURCE 0
 #define DEBUG_TEXT_VERIFY 0
 #define DEBUG_LOSING_FOCUS 0
+#define DEBUG_RELATED_DISPLAY 0
 
 #include <ctype.h>
 #include "medm.h"
@@ -2879,7 +2880,21 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
-
+#if DEBUG_RELATED_DISPLAY	
+	{
+	    Position x, y;
+	    
+	    XtSetArg(args[0],XmNx,&x);
+	    XtSetArg(args[1],XmNy,&y);
+	    XtGetValues(cdi->shell,args,2);
+	    print("updateGlobalResourceBundleAndResourcePalette:"
+	      " x=%d y=%d\n",x,y);
+	    print("  XtIsRealized=%s XtIsManaged=%s\n",
+	      XtIsRealized(cdi->shell)?"True":"False",
+	      XtIsManaged(cdi->shell)?"True":"False");
+	}
+#endif
+	
       /* Set the a and y attributes in case they haven't been set */
 	p->object.x = x;
 	p->object.y = y;

@@ -339,6 +339,7 @@ void setCompositeUpdateState(DlElement *dlElement, CompositeUpdateState state);
 DlElement *parseDisplay(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
 void refreshDisplay(DisplayInfo *displayInfo);
+int repositionDisplay(DisplayInfo *displayInfo);
 
 /* medmMonitor.c */
 void monitorAttributeInit(DlMonitor *monitor);
@@ -517,6 +518,8 @@ Pixel alarmColor(int type);
 int localCvtLongToHexString(long source, char *pdest);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
+int isPath(const char *fileString);
+int convertNameToFullPath(const char *name, char *pathName, int nChars);
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
   int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
 void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo,
