@@ -84,23 +84,23 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 #define DEFAULT_PRINT_TITLE    PRINT_TITLE_SHORT_NAME
 #define DEFAULT_PRINT_TITLE_STRING  ""
 #define DEFAULT_PRINT_FILENAME "medmScreen.ps"
-#ifdef WIN32
-#  define DEFAULT_PRINT_CMD "gsview32.exe"
-#else
-#  define DEFAULT_PRINT_CMD "lpr -P$PSPRINTER"
-#endif
-#if 0
-/* Command used internally before MEDM 2.3.6 */
-#define DEFAULT_PRINT_CMD     "lp -c -d$PSPRINTER"
-#endif
 
-/* Temp file used for screen dumps */
+/* DISPLAY_XWD_FILE is the temp file used for screen dumps */
 #if defined(WIN32)
-# define DISPLAY_XWD_FILE		"%TEMP%\\medm.xwd"
+/* We don't know where the temp directory is on WIN32.  %TEMP%/ will
+   be prepended later if it iexists. */
+# define DISPLAY_XWD_FILE  "medm.xwd"
+# define DEFAULT_PRINT_CMD "gsview32.exe"
 #elif defined(VMS)
-# define DISPLAY_XWD_FILE		"sys$scratch:medm.xwd"
+# define DISPLAY_XWD_FILE  "sys$scratch:medm.xwd"
+# define DEFAULT_PRINT_CMD "print /queue=%s/delete"
 #else
-# define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
+# define DISPLAY_XWD_FILE  "/tmp/medm.xwd"
+# define DEFAULT_PRINT_CMD "lpr -P$PSPRINTER"
+# if 0
+/* Command used internally before MEDM 2.3.6 */
+# define DEFAULT_PRINT_CMD "lp -c -d$PSPRINTER"
+# endif
 #endif
 
 /*** Colormap specifications ***/

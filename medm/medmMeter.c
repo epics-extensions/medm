@@ -115,7 +115,15 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		pm = (MedmMeter *)malloc(sizeof(MedmMeter));
 		dlElement->data = (void *)pm;
+		if(pm == NULL) {
+		    medmPrintf(1,"\nexecuteDlMeter: Memory allocation error\n");
+		    return;
+		}
+	      /* Pre-initialize */
+		pm->updateTask = NULL;
+		pm->records = NULL;
 		pm->dlElement = dlElement;
+
 		pm->updateTask = updateTaskAddTask(displayInfo,
 		  &(dlMeter->object),
 		  meterDraw,

@@ -203,7 +203,16 @@ static void menuCreateRunTimeInstance(DisplayInfo *displayInfo,
     } else {
 	pm = (MedmMenu *)malloc(sizeof(MedmMenu));
 	dlElement->data = (void *)pm;
+	if(pm == NULL) {
+	    medmPrintf(1,"\nmenuCreateRunTimeInstance:"
+	      " Memory allocation error\n");
+	    return;
+	}
+      /* Pre-initialize */
+	pm->updateTask = NULL;
+	pm->record = NULL;
 	pm->dlElement = dlElement;
+	
 	pm->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlMenu->object),
 	  menuDraw,

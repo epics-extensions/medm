@@ -67,6 +67,17 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <stdio.h>
 #include <math.h>
 
+/* PATH_MAX */
+#ifdef WIN32
+/* Is in stdlib.h for WIN32 */
+# define PATH_MAX _MAX_PATH
+#else
+/* May be in limits.h.  Kludge it if not */
+# ifndef PATH_MAX
+# define PATH_MAX 1024
+# endif
+#endif
+
 /* for dumb SUNOS and GNU... */
 #ifndef FLT_MAX		/* FLT_MAX is supposed to be in limits.h/float.h */
 #  define FLT_MAX ((float)1.+30)
@@ -200,10 +211,13 @@ extern "C" {
   */
     
   /* Global variables */
+
+  /* XWD file */
+    EXTERN char xwdFile[PATH_MAX];
     
   /* Window property atom */
-    Atom windowPropertyAtom;
-    char **execMenuCommandList;
+    EXTERN Atom windowPropertyAtom;
+    EXTERN char **execMenuCommandList;
 
   /* Global widgets (all permanent shells, most MWs, etc ) */
     EXTERN Widget mainShell, mainMW;

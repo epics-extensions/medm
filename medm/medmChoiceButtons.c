@@ -486,7 +486,16 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
     } else {
 	pcb = (MedmChoiceButtons *)malloc(sizeof(MedmChoiceButtons));
 	dlElement->data = (void *)pcb;
+	if(pcb == NULL) {
+	    medmPrintf(1,"\nchoiceButtonCreateRunTimeInstance:"
+	      " Memory allocation error\n");
+	    return;
+	}
+      /* Pre-initialize */
+	pcb->updateTask = NULL;
+	pcb->record = NULL;
 	pcb->dlElement = dlElement;
+
 	pcb->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlChoiceButton->object),
 	  choiceButtonDraw,

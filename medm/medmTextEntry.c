@@ -241,7 +241,16 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     } else {
 	pte = (MedmTextEntry *)malloc(sizeof(MedmTextEntry));
 	dlElement->data = (void *)pte;
+	if(pte == NULL) {
+	    medmPrintf(1,"\ntextEntryCreateRunTimeInstance:"
+	      " Memory allocation error\n");
+	    return;
+	}
+      /* Pre-initialize */
+	pte->updateTask = NULL;
+	pte->record = NULL;
 	pte->dlElement = dlElement;
+
 	pte->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlTextEntry->object),
 	  textEntryDraw,
@@ -540,10 +549,23 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 	    }
 	    if(match == False) {
 	      /* Assume it is a number */
-		long longValue=strtol(textValue,&end,10);
+		long longValue;
+		
+		if(dlTextEntry->format == OCTAL) {
+		    longValue = strtoul(textValue,&end,8);
+		} else if(dlTextEntry->format == HEXADECIMAL) {
+		    longValue = strtoul(textValue,&end,16);
+		} else {
+		    if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
+		      && (textValue[1] == 'x' || textValue[1] == 'X')) {
+			longValue = strtoul(textValue,&end,16);
+		    } else {
+			longValue = strtol(textValue,&end,10);
+		    }
+		}
 		if(*end == 0 && end != textValue &&
 		  longValue >= 0 && longValue <= pr->hopr) {
-		    medmSendString(pte->record,textValue);
+		    medmSendDouble(pte->record,(double)longValue);
 		} else {
 		    char string[BUFSIZ];
 		    sprintf(string,"textEntryValueChanged: Invalid value:\n"

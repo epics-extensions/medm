@@ -210,6 +210,13 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     } else {
 	pcp = (MedmCartesianPlot *)malloc(sizeof(MedmCartesianPlot));
 	dlElement->data = pcp;
+	if(pcp == NULL) {
+	    medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance:"
+	      " Memory allocation error\n");
+	    return;
+	}
+      /* Pre-initialize */
+	pcp->updateTask = NULL;
 	pcp->hcp1 = pcp->hcp2 = NULL;
 	pcp->dirty1 = pcp->dirty2 = False;
 	pcp->timeScale = False;
@@ -238,6 +245,7 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    Boolean validTrace = False;
 	  /* X data */
 	    if(dlCartesianPlot->trace[i].xdata[0] != '\0') {
+		pcp->xyTrace[validTraces].recordX = NULL;
 		pcp->xyTrace[validTraces].recordX =
 		  medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
 		    cartesianPlotUpdateScreenFirstTime,
@@ -249,7 +257,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    }
 	  /* Y data */
 	    if(dlCartesianPlot->trace[i].ydata[0] != '\0') {
-		pcp->xyTrace[validTraces].recordY =
+		pcp->xyTrace[validTraces].recordY = NULL;
+		pcp->xyTrace[validTraces].recordY = 
 		  medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
 		    cartesianPlotUpdateScreenFirstTime,
 		    cartesianPlotUpdateGraphicalInfoCb,
@@ -267,6 +276,7 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       /* If no xyTraces, create one fake one */
 	if(validTraces == 0) {
 	    validTraces = 1;
+	    pcp->xyTrace[0].recordX = NULL;
 	    pcp->xyTrace[0].recordX = medmAllocateRecord(" ",
 	      cartesianPlotUpdateScreenFirstTime,
 	      cartesianPlotUpdateGraphicalInfoCb,
@@ -279,6 +289,7 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	
       /* Allocate (or set to NULL) the X Record in the eraseCh XYTrace */
 	if((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
+	    pcp->eraseCh.recordX = NULL;
 	    pcp->eraseCh.recordX =
 	      medmAllocateRecord(dlCartesianPlot->erase,
 		cartesianPlotUpdateScreenFirstTime,
@@ -291,6 +302,7 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	
       /* Allocate (or set to NULL) the X Record in the triggerCh XYTrace */
 	if((dlCartesianPlot->trigger[0] != '\0') && (validTraces > 0)) {
+	    pcp->triggerCh.recordX =  NULL;
 	    pcp->triggerCh.recordX = 
 	      medmAllocateRecord(dlCartesianPlot->trigger,
 		cartesianPlotUpdateScreenFirstTime,

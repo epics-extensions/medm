@@ -177,9 +177,16 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		pi = (MedmImage *)malloc(sizeof(MedmImage));
 		dlElement->data = (void *)pi;
-		pi->displayInfo = displayInfo;
-		pi->dlElement = dlElement;
+		if(pi == NULL) {
+		    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
+		    return;
+		}
+	      /* Pre-initialize */
+		pi->updateTask = NULL;
 		pi->records = NULL;
+
+		pi->dlElement = dlElement;
+		pi->displayInfo = displayInfo;
 		pi->updateTask = updateTaskAddTask(displayInfo,
 		  &(dlImage->object), imageDraw, (XtPointer)pi);
 		pi->validCalc = False;
@@ -192,7 +199,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 		    pi->updateTask->opaque = False;
 		}
-		pi->records = NULL;
 		if(*dlImage->dynAttr.chan[0]) {
 		    long status;
 		    short errnum;

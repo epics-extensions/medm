@@ -109,7 +109,15 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		pi = (MedmIndicator *)malloc(sizeof(MedmIndicator));
 		dlElement->data = (void *)pi;
+		if(pi == NULL) {
+		    medmPrintf(1,"\nexecuteDlIndicator: Memory allocation error\n");
+		    return;
+		}
+	      /* Pre-initialize */
+		pi->updateTask = NULL;
+		pi->record = NULL;
 		pi->dlElement = dlElement;
+
 		pi->updateTask = updateTaskAddTask(displayInfo,
 		  &(dlIndicator->object),
 		  indicatorDraw,

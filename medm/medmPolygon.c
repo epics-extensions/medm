@@ -164,7 +164,15 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    pp = (MedmPolygon *)malloc(sizeof(MedmPolygon));
 	    dlElement->data = (void *)pp;
+	    if(pp == NULL) {
+		medmPrintf(1,"\nexecuteDlPolygon: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    pp->updateTask = NULL;
+	    pp->records = NULL;
 	    pp->dlElement = dlElement;
+
 #if 1
 	    object = dlPolygon->object;
 	    object.width++;

@@ -179,8 +179,16 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
     } else {
 	pmb = (MedmMessageButton *)malloc(sizeof(MedmMessageButton));
 	dlElement->data = (void *)pmb;
+	if(pmb == NULL) {
+	    medmPrintf(1,"\nmessageButtonCreateRunTimeInstance:"
+	      " Memory allocation error\n");
+	    return;
+	}
+      /* Pre-initialize */
+	pmb->updateTask = NULL;
+	pmb->record = NULL;
 	pmb->dlElement = dlElement;
-	
+
 	pmb->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlMessageButton->object),
 	  messageButtonDraw,

@@ -598,13 +598,6 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	w = NULL;
     }
 
-  /* Free space */
-    if(types) free((char *)types);
-    for(i=0; i < nbuttons; i++) {
-	XmStringFree(buttons[i]);
-    }
-    if(buttons) free((char *)buttons);
-
 #if DEBUG_EXECUTE_MENU
     print("createExecuteMenu: w=%x displayInfo=%x executePopupMenu=%x\n",
       w,displayInfo,displayInfo->executePopupMenu);

@@ -127,7 +127,15 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    pa = (MedmArc *)malloc(sizeof(MedmArc));
 	    dlElement->data = (void *)pa;
+	    if(pa == NULL) {
+		medmPrintf(1,"\nexecuteDlArc: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    pa->updateTask = NULL;
+	    pa->records = NULL;
 	    pa->dlElement = dlElement;
+
 	    pa->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlArc->object),
 	      arcDraw,

@@ -1585,9 +1585,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    Arg args[4];
 	    int n = 0;
 	    XmString label = XmStringCreateLocalized("*.adl");
-	  /* for some odd reason can't get PATH_MAX reliably defined between systems */
-#define LOCAL_PATH_MAX 1023
-	    char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
+	    char *cwd = getcwd(NULL,PATH_MAX);
 	    XmString cwdXmString = XmStringCreateLocalized(cwd);
 
 	    XtSetArg(args[n],XmNpattern,label); n++;
@@ -1622,9 +1620,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    int i, n;
 
 	    XmString label = XmStringCreateLocalized("*.adl");
-	  /* for some odd reason can't get PATH_MAX reliably defined between systems */
-#define LOCAL_PATH_MAX  1023
-	    char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
+	    char *cwd = getcwd(NULL,PATH_MAX);
 	    XmString cwdXmString = XmStringCreateLocalized(cwd);
 
 	    n = 0;
@@ -1792,7 +1788,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		    adlName = currentDisplayInfo->dlFile->name;
 		}
 		status = utilPrint(display, currentDisplayInfo->drawingArea,
-		  DISPLAY_XWD_FILE, adlName);
+		  xwdFile, adlName);
 		if(!status) {
 		    medmPrintf(1,"\nmainFileMenuSimpleCallback: "
 		      "Print was not successful\n");
@@ -1827,7 +1823,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 			adlName = currentDisplayInfo->dlFile->name;
 		    }
 		    status = utilPrint(display, currentDisplayInfo->drawingArea,
-		      DISPLAY_XWD_FILE, adlName);
+		      xwdFile, adlName);
 		    if(!status) {
 			medmPrintf(1,"\nmainFileMenuSimpleCallback: "
 			  "Print was not successful\n");
@@ -3150,6 +3146,7 @@ main(int argc, char *argv[])
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
     msgClass_t msgClass;
     Window medmHostWindow = (Window)0;
+    char *tempDir=NULL;
 
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
@@ -3243,6 +3240,21 @@ main(int argc, char *argv[])
     strcpy(printCommand, DEFAULT_PRINT_CMD);
     strcpy(printFile, DEFAULT_PRINT_FILENAME);
     strcpy(printTitleString, DEFAULT_PRINT_TITLE_STRING);
+
+  /* XWD file name */
+#ifdef WIN32
+  /* We don't know the location of the temp directory beforehand.  Get
+     it from the environment variable. */
+    tempDir = getenv("TEMP");
+    if(!tempDir) tempDir = getenv("TMP");
+    if(tempDir) {
+	sprintf(xwdFile,"%s\\%s",tempDir,DISPLAY_XWD_FILE);
+    } else {
+	strcpy(xwdFile,DISPLAY_XWD_FILE);
+    }
+#else
+    strcpy(xwdFile,DISPLAY_XWD_FILE);
+#endif    
 
   /* Handle file conversions */
     if(argc == 4 && (!strcmp(argv[1],"-c21x") ||

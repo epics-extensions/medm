@@ -127,7 +127,15 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    ptu = (MedmTextUpdate *)malloc(sizeof(MedmTextUpdate));
 	    dlElement->data = (void *)ptu;
+	    if(ptu == NULL) {
+		medmPrintf(1,"\nexecuteDlTextUpdate: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    ptu->updateTask = NULL;
+	    ptu->record = NULL;
 	    ptu->dlElement = dlElement;
+
 	    ptu->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlTextUpdate->object),
 	      textUpdateDraw,

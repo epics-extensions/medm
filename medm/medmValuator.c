@@ -180,7 +180,10 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
 	    return;
 	}
+      /* Initialize before calling routines that may fail in complicated ways */
 	pv->dlElement = dlElement;
+	pv->updateTask = NULL;
+	pv->record = NULL;
 	pv->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlValuator->object),
 	  valuatorDraw,
@@ -426,7 +429,7 @@ static void valuatorUpdateValueCb(XtPointer cd) {
 }
 
 static void valuatorDraw(XtPointer cd) {
-    MedmValuator *pv = (MedmValuator *) cd;
+    MedmValuator *pv = (MedmValuator *)cd;
     Record *pr = pv->record;
     DlElement *dlElement = pv->dlElement;
     DlValuator *dlValuator = dlElement->structure.valuator;

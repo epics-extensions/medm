@@ -128,7 +128,15 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    po = (MedmOval *)malloc(sizeof(MedmOval));
 	    dlElement->data = (void *)po;
+	    if(po == NULL) {
+		medmPrintf(1,"\nexecuteDlOval: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    po->updateTask = NULL;
+	    po->records = NULL;
 	    po->dlElement = dlElement;
+
 	    po->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlOval->object),
 	      ovalDraw,

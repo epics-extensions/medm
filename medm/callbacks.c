@@ -132,7 +132,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	    adlName = displayInfo->dlFile->name;
 	}
 	status = utilPrint(display, displayInfo->drawingArea,
-	  DISPLAY_XWD_FILE, adlName);
+	  xwdFile, adlName);
 	if(!status) {
 	    medmPrintf(1,"\nexecutePopupMenuCallback: "
 	      "Print was not successful for\n  %s\n",

@@ -175,7 +175,15 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
 	    dlElement->data = (void *)pp;
+	    if(pp == NULL) {
+		medmPrintf(1,"\nexecuteDlPolyline: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    pp->updateTask = NULL;
+	    pp->records = NULL;
 	    pp->dlElement = dlElement;
+
 #if 1
 	    object = dlPolyline->object;
 	    object.width++;

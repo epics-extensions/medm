@@ -119,7 +119,15 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	    } else {
 		pb = (MedmByte *)malloc(sizeof(MedmByte));
 		dlElement->data = (void *)pb;
+		if(pb == NULL) {
+		    medmPrintf(1,"\nexecuteDlByte: Memory allocation error\n");
+		    return;
+		}
+	      /* Pre-initialize */
+		pb->updateTask = NULL;
+		pb->record = NULL;
 		pb->dlElement = dlElement;
+
 		pb->updateTask = updateTaskAddTask(displayInfo,
 		  &(dlByte->object),
 		  byteDraw,

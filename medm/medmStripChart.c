@@ -420,7 +420,14 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 
     psc = (MedmStripChart *)calloc(1,sizeof(MedmStripChart));
     dlElement->data = (void *)psc;
-    if(psc == NULL) return psc;
+    if(psc == NULL) {
+	medmPrintf(1,"\nstripChartAlloc: Memory allocation error\n");
+	return psc;
+    }
+  /* Pre-initialize */
+    psc->updateTask = NULL;
+    psc->dlElement = dlElement;
+
     psc->w = dlStripChart->object.width;
     psc->h = dlStripChart->object.height;
     psc->dataX0 =  (int)(STRIP_MARGIN*psc->w);
@@ -431,7 +438,6 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
     psc->dataHeight = psc->dataY1 - psc->dataY0;
 
     psc->updateEnable = False;
-    psc->dlElement = dlElement;
     psc->pixmap = (Pixmap)0;
     psc->nextAdvanceTime = medmTime();
     psc->timerid = (XtIntervalId)0;
@@ -1059,6 +1065,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		j = 0;
 		for(i = 0; i < MAX_PENS; i++) {
 		    if(dlStripChart->pen[i].chan[0] != '\0') {
+			psc->record[j] = NULL;
 			psc->record[j] =
 			  medmAllocateRecord(dlStripChart->pen[i].chan,
 			    stripChartUpdateValueCb,
@@ -1073,6 +1080,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		if(psc->nChannels == 0) {
 		  /* if no channel, create a fake channel */
 		    psc->nChannels = 1;
+		    psc->record[0] = NULL;
 		    psc->record[0] = medmAllocateRecord(" ",
 		      NULL,
 		      stripChartUpdateGraphicalInfoCb,

@@ -139,7 +139,15 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
 	    dlElement->data = (void *)pr;
+	    if(pr == NULL) {
+		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    pr->updateTask = NULL;
+	    pr->records = NULL;
 	    pr->dlElement = dlElement;
+
 	    pr->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlRectangle->object),rectangleDraw,(XtPointer)pr);
 	    
