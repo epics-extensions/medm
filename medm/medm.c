@@ -2866,7 +2866,7 @@ main(int argc, char *argv[])
   /* Set XSynchronize for debugging */
 #ifdef XSYNC
     XSynchronize(display,TRUE);
-    fprintf(stderr,"\nRunning in SYNCHRONOUS mode!!");
+    medmPrintf("\nRunning in SYNCHRONOUS mode\n");
 #endif
 
   /* Intern some atoms if they aren't there already */
@@ -2968,7 +2968,9 @@ main(int argc, char *argv[])
 	if (XAllocColor(display,cmap,&color)) {
 	    defaultColormap[i] =  color.pixel;
 	} else {
-	    fprintf(stderr,"\nmain: couldn't allocate requested color");
+	    medmPrintf("\nmain: Cannot not allocate color (%d: "
+	      "r=%d  g=%d  b=%d)\n",i,defaultDlColormap.dl_color[i].r,
+	      defaultDlColormap.dl_color[i].g,defaultDlColormap.dl_color[i].b);
 	  /* Put unphysical pixmap value in there as tag it was invalid */
 	    defaultColormap[i] =  unphysicalPixel;
 	}

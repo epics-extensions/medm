@@ -1388,8 +1388,7 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	sprintf(string,"%f", maxF[rcType%3].fval);
 	break;
     default:
-	fprintf(stderr,
-	  "\ncpAxisTextFieldLosingFocusCallback: unknown rcType = %d",
+	medmPostMsg("cpAxisTextFieldLosingFocusCallback: Unknown rcType = %d",
 	  rcType/3);
 	return;
     }

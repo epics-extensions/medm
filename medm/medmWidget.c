@@ -178,8 +178,8 @@ unsigned long getPixelFromColormapByString(
     XColor color, ignore;
 
     if(!XAllocNamedColor(display,cmap,colorString,&color,&ignore)) {
-	fprintf(stderr,
-	  "\ngetPixelFromColormapByString:  couldn't allocate color %s",colorString);
+	medmPrintf("\ngetPixelFromColormapByString:  Couldn't allocate color %s\n",
+	  colorString);
 	return(WhitePixel(display, screen));
     } else {
 	return(color.pixel);
@@ -277,14 +277,13 @@ void medmInit(char *displayFont)
 /* use the ALIAS fonts if possible */
 	strcpy(displayFont,ALIAS_FONT_PREFIX);
 	sizePosition = strstr(displayFont,"_");
-	fprintf(stderr,"\n%s: Loading aliased fonts.",MEDM_VERSION_STRING);
+	printf("\n%s: Loading aliased fonts.",MEDM_VERSION_STRING);
 	for (i = 0; i < MAX_FONTS; i++) {
 	    sprintf(sizePosition,"_%d",fontSizeTable[i]);
 	    fontTable[i] = XLoadQueryFont(display,displayFont);
-	    fprintf(stderr,".");
+	    printf(".");
 	    if (fontTable[i] == NULL) {
-		fprintf(stderr,
-		  "\nmedmInit: unable to load font %s, trying default (fixed) instead",
+		medmPrintf("\nmedmInit: Unable to load font %s\n  Trying default (fixed) instead\n",
 		  displayFont);
 	      /* one last attempt: try a common default font */
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
@@ -310,17 +309,17 @@ void medmInit(char *displayFont)
 	useDefaultFont = !isScalableFont(displayFont);
 	if (useDefaultFont) {
 	  /* this name wasn't in XLFD format */
-	    fprintf(stderr,"\nmedmInit: %s%s%s",
-	      "Invalid scalable display font selected:\n\n  ",
-	      displayFont,"\n\n(requires XLFD format) using fixed!");
+	    medmPrintf("\nmedmInit: Invalid scalable display font selected  (Not in XLFD format)\n"
+	    "  font: %s\n"
+	    "  Using fixed font\n",displayFont);
 	} else {
-	    fprintf(stderr,"\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
+	    printf("\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
 	}
 	for (i = 0; i < MAX_FONTS; i++) {
 	    if (!useDefaultFont) {
 		fontTable[i] = loadQueryScalableFont(display, screenNum, displayFont,
 		  fontSizeTable[i]);
-		fprintf(stderr,".");
+		printf(".");
 	    } else {
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
 	    }
@@ -335,7 +334,7 @@ void medmInit(char *displayFont)
 	}
     }
 
-    fprintf(stderr,"\n");
+    printf("\n");
 }
 
 /*

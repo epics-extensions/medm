@@ -104,7 +104,7 @@ void libMedmInit(
 /*
  * initialize channel access here (to get around orphaned windows)
  */
-    SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
+    SEVCHK(ca_task_initialize(),"\nlibMedmInit: Error in ca_task_initialize");
 
 /* initialize a few globals */
     privateCmap = False;
@@ -169,7 +169,9 @@ void libMedmInit(
 	if (XAllocColor(display,cmap,&color)) {
 	    defaultColormap[i] =  color.pixel;
 	} else {
-	    fprintf(stderr,"\nmain: couldn't allocate requested color");
+	    medmPrintf("\nlibMedmInit: Cannot allocate color (%d: "
+	      "r=%d  g=%d  b=%d)\n",i,defaultDlColormap.dl_color[i].r,
+	      defaultDlColormap.dl_color[i].g,defaultDlColormap.dl_color[i].b);
 	  /* put unphysical pixmap value in there as tag it was invalid */
 	    defaultColormap[i] =  unphysicalPixel;
 	}

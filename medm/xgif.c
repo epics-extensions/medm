@@ -106,7 +106,7 @@ Boolean initializeGIF(
     freeGIF(dlImage);
 
     if (!(gif = (GIFData *) malloc(sizeof(GIFData)))) {
-	fprintf(stderr,"\ninitializeGIF: malloc error!");
+	medmPrintf("\ninitializeGIF: Memory allocation error\n");
 	return(False);
     }
 
@@ -127,7 +127,7 @@ Boolean initializeGIF(
 
     gif->dispcells = DisplayCells(display, screenNum);
     if (gif->dispcells<255) {
-	fprintf(stderr,"initializeGIF: >= 8-plane display required");
+	medmPrintf("\ninitializeGIF: >= 8-plane display required");
 	return(False);
     }
 
@@ -264,7 +264,7 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
 	      0,(char *)ximag, gif->eWIDE,gif->eHIGH,8,gif->eWIDE);
 
 	    if (!ximag || !gif->expImage) {
-		fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",
+		medmPrintf("\nresizeGIF: Unable to create a %dx%d image\n",
 		  w,h);
 		exit(-1);
 	    }
@@ -296,9 +296,9 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
 	      0);
 
 	    if (!ximag || !gif->expImage) {
-		fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",
+		medmPrintf("\nresizeGIF: Unable to create a %dx%d image\n",
 		  w,h);
-		fprintf(stderr,"24 bit : ximag = %08x, expImage = %08x\n",ximag,
+		medmPrintf("  24 bit: ximag = %08x, expImage = %08x\n",ximag,
 		  gif->expImage);
 		exit(-1);
 	    }
@@ -441,7 +441,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     }
     if (fp == NULL) {
-	fprintf(stderr,"\nloadGIF: file <%s>  not found",fname);
+	medmPrintf("\nloadGIF: Filke not found:\n  %s\n",fname);
 	return(False);
     }
 
@@ -452,22 +452,22 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     success = True;
 
     if (!(ptr = RawGIF = (Byte *) malloc(filesize))) {
-	fprintf(stderr,"loadGIF: not enough memory to read gif file");
+	medmPrintf("\nloadGIF: Not enough memory to read GIF file\n");
 	success = False;
     }
 
     if (!(Raster = (Byte *) malloc(filesize))) {
-	fprintf(stderr,"loadGIF: not enough memory to read gif file");
+	medmPrintf("\nloadGIF: Not enough memory to read GIF file\n");
 	success = False;
     }
 
     if (fread((char *)ptr, filesize, 1, fp) != 1) {
-	fprintf(stderr,"loadGIF: GIF data read failed");
+	medmPrintf("\nloadGIF: GIF data read failed\n");
 	success = False;
     }
 
     if (strncmp((char *)ptr, (char *)id, 6)) {
-	fprintf(stderr,"loadGIF: not a GIF file");
+	medmPrintf("\nloadGIF: Not a GIF file\n  %s\n",fname);
 	success = False;
     }
     if (!success) return(False);
@@ -482,7 +482,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     RHeight = ch + 0x100 * NEXTBYTE;
 
     if (verbose)
-      fprintf(stderr, "loadGIF: screen dims: %dx%d.\n", RWidth, RHeight);
+      printf("\nloadGIF: Screen dimimensions: %dx%d\n", RWidth, RHeight);
 
     ch = NEXTBYTE;
     HasColormap = ((ch & COLORMAPMASK) ? True : False);
@@ -494,16 +494,16 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     Background = NEXTBYTE;		/* background color... not used. */
 
     if (NEXTBYTE) {		/* supposed to be NULL */
-	fprintf(stderr,"loadGIF: corrupt GIF file (bad screen descriptor)");
+	medmPrintf("\nloadGIF: Corrupt GIF file (bad screen descriptor)\n  %s\n",
+	  fname);
     }
 
   /* Read in global colormap. */
 
     if (HasColormap) {
 	if (verbose) {
-	    fprintf(stderr,
-	      "loadGIF: %s is %dx%d, %d bits per pixel, (%d colors).\n",
-	      fname, Width,Height,BitsPerPixel, ColorMapSize);
+	    printf("\nloadGIF: %s is %dx%d, %d bits per pixel, (%d colors).\n",
+	      fname, Width, Height, BitsPerPixel, ColorMapSize);
 	}
 
 	for (i = 0; i < ColorMapSize; i++) {
@@ -531,9 +531,9 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
             if (j) {		/* failed to pull it off */
                 XColor ctab[256];
 		
-                fprintf(stderr,"%s%d%s%d%s","loadGIF: failed to allocate ",
-		  j," out of",gif->numcols,
-		  " colors.  Trying extra hard.\n");
+                medmPrintf("\nloadGIF: Failed to allocate %d out of %d colors\n"
+		  "  Trying extra hard\n",
+		  j,gif->numcols);
                 
 	      /* read in the color table */
                 for (i=0; i<gif->numcols; i++) ctab[i].pixel = i;
@@ -555,8 +555,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 			    if (d<mdist) { mdist=d; close=j; }
 			}
 			if (close<0) {
-			    fprintf(stderr,
-			      "loadGIF: simply can't do it.  Sorry.");
+			    medmPrintf("loadGIF: Simply can't do it -- Sorry\n");
 			}
 			memcpy( (void*)(&gif->defs[i]),
 			  (void*)(&gif->defs[close]),
@@ -586,26 +585,24 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    }
 
             if (j && gif->strip<8)
-	      if (verbose) fprintf(stderr,
-		"loadGIF:  %s stripped %d bits\n",fname,gif->strip);
+	      if (verbose)
+		printf("\nloadGIF: %s stripped %d bits\n",fname,gif->strip);
 
             if (gif->strip==8) {
-                fprintf(stderr,
-		  "loadGIF: failed to allocate the desired colors.\n");
+                medmPrintf("\nloadGIF: Failed to allocate the desired colors\n");
                 for (i=0; i<gif->numcols; i++) gif->cols[i]=i;
 	    }
 	}
     }
     else {  /* no colormap in GIF file */
-        fprintf(stderr,
-	  "loadGIF:  warning!  no colortable in this file.  Winging it.\n");
+        medmPrintf("\nloadGIF:  Warning!  No colortable in this file.  Winging it.\n");
         if (!gif->numcols) gif->numcols=256;
         for (i=0; i<gif->numcols; i++) gif->cols[i] = (unsigned long) i;
     }
 
 /* Check for image seperator */
     if (NEXTBYTE != IMAGESEP) {
-	fprintf(stderr,"loadGIF: corrupt GIF file (no image separator)");
+	medmPrintf("\nloadGIF: Corrupt GIF file (No image separator)\n");
     }
 
 /* Now read in values from the image descriptor */
@@ -620,9 +617,9 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     Interlace = ((NEXTBYTE & INTERLACEMASK) ? True : False);
 
     if (verbose) {
-	fprintf(stderr, "loadGIF: Reading a %d by %d %sinterlaced image...",
+	printf("\nloadGIF: Reading a %d by %d %sinterlaced image...",
 	  Width, Height, (Interlace) ? "" : "non-");
-        fprintf(stderr,"loadGIF:  %s is %dx%d, %d colors, %sinterlaced\n",
+        printf("loadGIF:  %s is %dx%d, %d colors, %sinterlaced\n",
 	  fname, Width,Height,ColorMapSize,(Interlace) ? "" : "non-");
     }
 
@@ -662,14 +659,14 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	ch = ch1 = NEXTBYTE;
 	while (ch--) *ptr1++ = NEXTBYTE;
 	if ((Raster - ptr1) > filesize){
-	    fprintf(stderr,"loadGIF: corrupt GIF file (unblock)");
+	    medmPrintf("\nloadGIF: Corrupt GIF file (Unblock)\n");
 	}
     } while(ch1);
 
     free((char *)RawGIF);	/* We're done with the raw data now... */
 
     if (verbose)
-      fprintf(stderr, "loadGIF: done.\n Decompressing...");
+      printf(stderr, "\nloadGIF: Done\n  Decompressing...");
 
 
 /* Allocate the X Image */
@@ -678,7 +675,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
         BytesOffsetPerPixel = 1;
         Image = (Byte *) malloc(Width*Height);
         if (!Image) {
-	    fprintf(stderr,"loadGIF: not enough memory for XImage");
+	    medmPrintf("\nloadGIF: Not enough memory for XImage\n");
 	    return(False);
         }
         gif->theImage = XCreateImage(display,gif->theVisual,
@@ -690,7 +687,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 /*         printf("BytesOffsetPerPixel = %d\n",BytesOffsetPerPixel); */
         Image = (Byte *) malloc(BytesOffsetPerPixel*Width*Height);
         if (!Image) {
-	    fprintf(stderr,"loadGIF: not enough memory for XImage");
+	    medmPrintf("\nloadGIF: Not enough memory for XImage\n");
 	    return(False);
         }
         gif->theImage = XCreateImage(display,gif->theVisual,
@@ -701,7 +698,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     BytesPerScanline = gif->theImage->bytes_per_line;
 
     if (!gif->theImage) {
-	fprintf(stderr,"loadGIF: unable to create XImage");
+	medmPrintf("\nloadGIF: Unable to create XImage\n");
 	return(False);
     }
 
@@ -743,7 +740,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
 	    while (CurCode > BitMask) {
 		if (OutCount > 1024){
-		    fprintf(stderr,"corrupt GIF file (OutCount)");
+		    medmPrintf("\nloadGIF: Corrupt GIF file (OutCount)\n");
 		    return False;
 		}
 		OutCode[OutCount++] = Suffix[CurCode];
@@ -785,7 +782,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     free((char *)Raster);
 
     if (verbose)
-      fprintf(stderr, "loadGIF: done.\n");
+      printf("\nloadGIF: done\n");
 
     if (fp != stdin)
       fclose(fp);

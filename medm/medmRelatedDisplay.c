@@ -790,10 +790,10 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	    prefixLength = strlen(newFilename) - suffixLength;
 	    newFilename[prefixLength] = '\0';
 	    sprintf(token,
-	      "Can't open related display:\n\n        %s%s\n\nCheck %s\n",
+	      "Cannot open related display:\n  %s%s\nCheck %s\n",
 	      newFilename, DISPLAY_FILE_ASCII_SUFFIX, "EPICS_DISPLAY_PATH");
 	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);
-	    fprintf(stderr,"\n%s",token);
+	    medmPostMsg(token);
 	    free(newFilename);
 	} else {
 	    if (pEntry->mode == REPLACE_DISPLAY) {

@@ -438,14 +438,16 @@ void dmDisplayListParse(
 	    displayInfo->versionNumber = displayInfo->dlFile->versionNumber;
 	    strcpy(displayInfo->dlFile->name,filename);
 	} else {
-	    fprintf(stderr,"\ndmDisplayListParse: out of memory!");
+	    medmPostMsg("dmDisplayListParse: Out of memory\n"
+	      "  file: %s\n",filename);
 	    displayInfo->filePtr = NULL;
 	    dmRemoveDisplayInfo(displayInfo);
 	    currentDisplayInfo = NULL;
 	    return;
 	}
     } else {
-	fprintf(stderr,"\ndmDisplayListParse: invalid .adl file (bad first token)");
+	medmPostMsg("dmDisplayListParse: Invalid .adl file (Bad first token)\n"
+	  "  file: %s\n",filename);
 	displayInfo->filePtr = NULL;
 	dmRemoveDisplayInfo(displayInfo);
 	currentDisplayInfo = NULL;

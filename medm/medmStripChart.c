@@ -1535,9 +1535,8 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 		else if (!strcmp(token,"milli-second")) 
 		  dlStripChart->units = MILLISECONDS;
 		else
-		  fprintf(stderr,
-		    "\nparseStripChart: illegal units %s,%s",token,
-		    "default of SECONDS taken");
+		  medmPostMsg("parseStripChart: Illegal units %s\n"
+		    "  Using SECONDS\n",token);
 	    } else if (!strncmp(token,"pen",3)) {
 		penNumber = MIN(token[4] - '0', MAX_PENS-1);
 		parsePen(displayInfo,&(dlStripChart->pen[penNumber]));

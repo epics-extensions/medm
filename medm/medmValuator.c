@@ -1239,7 +1239,7 @@ void valuatorValueChanged(
 	  /* move/redraw valuator & value, but force use of user-selected value */
 	    valuatorSetValue(pv,value,True);
 	} else {
-	    fprintf(stderr,"\a");
+	    XBell(display,50); XBell(display,50); XBell(display,50);
 	    valuatorSetValue(pv,pd->value,True);
 	}
     }

@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_FD_REGISTRATION 0
+
 #include "medm.h"
 
 static void medmUpdateGraphicalInfoCb(struct event_handler_args args);
@@ -108,12 +110,12 @@ int CATaskInit() {
     caTask.freeListCount = 0;
     caTask.freeList = (int *) malloc(sizeof(int) * CA_PAGE_SIZE);
     if (caTask.freeList == NULL) {
-	medmPrintf("\nCATaskInit: Memory allocation error\n");
+	medmPostMsg("CATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pages = (Channel **) malloc(sizeof(Channel *) * CA_PAGE_COUNT);
     if (caTask.pages == NULL) {
-	medmPrintf("\nCATaskInit: Memory allocation error\n");
+	medmPostMsg("CATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pageCount = 1;
@@ -121,7 +123,7 @@ int CATaskInit() {
   /* allocate the page */
     caTask.pages[0] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
     if (caTask.pages[0] == NULL) {
-	medmPrintf("\nCATaskInit: Memory allocation error\n");
+	medmPostMsg("CATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.nextFree = 0;
@@ -235,7 +237,7 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 
 	} else {
 
-	    fprintf(stderr,"\ndmRegisterCA: info: realloc-ing input fd's array");
+	    medmPostMsg("dmRegisterCA: info: realloc-ing input fd's array");
 
 	    maxInps = 2*maxInps;
 #if defined(__cplusplus) && !defined(__GNUG__)
@@ -286,15 +288,12 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 
     }
 
-  /* DEBUG */
-#if 0
+#if DEBUG_FD_REGISTRATION
     fprintf(stderr,"\ndmRegisterCA: numInps = %d\n\t",numInps);
     for (i = 0; i < maxInps; i++)
       fprintf(stderr,"%d ",inp[i].fd);
     fprintf(stderr,"\n");
 #endif
-  /* End DEBUG */
-
 }
 
 #ifdef __cplusplus
@@ -460,12 +459,12 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	return;
     }
     if (pr->precision < 0) {
-	medmPrintf("\nmedmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
+	medmPostMsg("medmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	  ca_name(pCh->chid), pr->precision);
 	pr->precision = 0;
     } else
       if (pr->precision > 16) {
-	  medmPrintf("\nmedmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
+	  medmPostMsg("medmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	    ca_name(pCh->chid), pr->precision);
 	  pr->precision = 16;
       }
@@ -496,7 +495,7 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	    pCh->data = (dataBuf *) malloc(nBytes);
 	    pCh->size = nBytes;
 	    if (!pCh->data) {
-		medmPrintf("\nmedmUpdateChannelCb: Memory allocation error\n");
+		medmPostMsg("medmUpdateChannelCb: Memory allocation error\n");
 		return;
 	    }
 	} else 
@@ -505,7 +504,7 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	      pCh->data = (dataBuf *) malloc(nBytes);
 	      pCh->size = nBytes;
 	      if (pCh->data == NULL) {
-		  medmPrintf("\nmedmUpdateChannelCb: Memory allocation error\n");
+		  medmPostMsg("medmUpdateChannelCb: Memory allocation error\n");
 		  return;
 	      }
 	  }
@@ -600,14 +599,14 @@ int caAdd(char *name, Record *pr) {
 	    caTask.pages = (Channel **) realloc(caTask.pages,sizeof(Channel *)*caTask.pageSize);
 #endif
 	    if (caTask.pages == NULL) {
-		medmPrintf("\ncaAdd: Memory allocation error\n");
+		medmPostMsg("caAdd: Memory allocation error\n");
 		return -1;
 	    }
 	}
       /* add one more page */
 	caTask.pages[caTask.pageCount] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
 	if (caTask.pages[caTask.pageCount] == NULL) {
-	    medmPrintf("\ncaAdd: Memory allocation error\n");
+	    medmPostMsg("caAdd: Memory allocation error\n");
 	    return -1;
 	}
 	caTask.pageCount++;
@@ -681,7 +680,7 @@ void caDelete(Record *pr) {
 	caTask.freeList = (int *) realloc(caTask.freeList,sizeof(int)*caTask.freeListSize);
 #endif
 	if (caTask.freeList == NULL) {
-	    medmPrintf("\ncaDelete: Memory allocation error\n");
+	    medmPostMsg("caDelete: Memory allocation error\n");
 	    return;
 	}
     }

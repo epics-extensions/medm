@@ -622,7 +622,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
 	if (!strcmp(message,"The specified scale value is"))
 	  return(0);
     } else {
-	fprintf(stderr,"Warning: %s\n", message);
+	medmPostMsg("trapExtraneousWarningsHandler:\n%s\n", message);
     }
   
     return(0);
@@ -870,9 +870,7 @@ void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
 	    } else {
 		char string[48];
 		
-		sprintf(string,"\nfindAllMatchingElements: Could not create element");
-		dmSetAndPopupWarningDialog(currentDisplayInfo,string,"OK",NULL,NULL);
-		fprintf(stderr,"%s",string);
+		medmPostMsg("findAllMatchingElements: Could not create element\n");
 		return;
 	    }
 	}
@@ -1659,7 +1657,7 @@ void copyElementsIntoDisplay()
 	XSetInputFocus(display,XtWindow(cdi->shell),RevertToParent,CurrentTime);
 	currentDisplayInfo = cdi;
     } else {
-	fprintf(stderr,"\ncopyElementsIntoDisplay:  Can't determine current display");
+	medmPrintf("\ncopyElementsIntoDisplay:  Can't determine current display\n");
 	return;
     }
 
@@ -2840,9 +2838,10 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
     } else {
 	outputString[0] = '\0';
     }
-    if (j >= sizeOfOutputString-1) fprintf(stderr,"\n%s%s",
-      " performMacroSubstitutions: substitutions failed",
-      " - output buffer not large enough");
+    if (j >= sizeOfOutputString-1) {
+	medmPostMsg("performMacroSubstitutions: Substitutions failed\n"
+	  "  Output buffer not large enough\n");
+    }
 }
 
 /*
@@ -3474,7 +3473,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
 	    medmPrintf("\nrestoreUndoInfo: Cannot create temporary element list\n");
-	    XBell(display,50);
+	    XBell(display,50); XBell(display,50); XBell(display,50);
 	    return;
 	}
     }

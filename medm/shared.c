@@ -211,7 +211,7 @@ void optionMenuSet(Widget menu, int buttonId)
 	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
 	}
     } else {
-	fprintf(stderr,"\noptionMenuSet: no subMenu found for option menu");
+	medmPrintf("\noptionMenuSet: No subMenu found for option menu\n");
     }
 }
 
@@ -299,7 +299,8 @@ double medmTime()
 double medmTime()
 {
     struct timeval tp;
-    if (gettimeofday(&tp,NULL)) fprintf(stderr,"Failed!\n");
+    if (gettimeofday(&tp,NULL))
+      medmPostMsg("medmTime:  Failed to get time\n");
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
 }
 #endif

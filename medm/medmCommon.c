@@ -209,14 +209,16 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	    if (XAllocColor(display,cmap,&color)) {
 		displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
 	    } else {
-		fprintf(stderr,"\nexecuteDlColormap: couldn't allocate requested color");
+		medmPrintf("\nexecuteDlColormap: Cannot not allocate color (%d: "
+		  "r=%d  g=%d  b=%d)\n",i,defaultDlColormap.dl_color[i].r,
+		  defaultDlColormap.dl_color[i].g,defaultDlColormap.dl_color[i].b);
 		displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
 	    }
 	    
 	    if (displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
 	      displayInfo->dlColormapCounter++;
 	    else
-	      fprintf(stderr,"\nexecuteDlColormap:  too many colormap entries");
+	      medmPrintf("\nexecuteDlColormap:  Too many colormap entries\n");
 	  /* Just keep rewriting that last colormap entry */
 	}
     }
@@ -419,11 +421,9 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
 		getToken(displayInfo,token);
 		dlColormap->ncolors = atoi(token);
 		if (dlColormap->ncolors > DL_MAX_COLORS) {
-		    sprintf(msg,"%s%s%s",
-		      "Maximum # of colors in colormap exceeded;\n\n",
-		      "truncating color space, but will continue...\n\n",
-		      "(you may want to change the colors of some objects)");
-		    fprintf(stderr,"\n%s\n",msg);
+		    medmPrintf("\nMaximum # of colors in colormap exceeded\n"
+		      "  Will continue with truncated color space\n"
+		      "(You may want to change the colors of some objects)\n");
 		    dmSetAndPopupWarningDialog(displayInfo, msg,"OK",NULL,NULL);
 		}
 	    } else if (!strcmp(token,"dl_color")) {
@@ -1120,9 +1120,8 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 	  "Can't open \n\n        \"%s\" (.adl)\n\n%s",filename,
 	  "to extract external colormap - check cmap specification");
 	dmSetAndPopupWarningDialog(displayInfo,msg,"OK",NULL,NULL);
-	fprintf(stderr,
-	  "\nparseAndExtractExternalColormap:can't open file %s (.adl)\n",
-	  filename);
+	medmPrintf("\nparseAndExtractExternalColormap: Cannot open file\n"
+	  "  filename: %s\n",filename);
 /*
  * awfully hard to get back to where we belong 
  * - maybe try setjmp/longjump later

@@ -259,9 +259,8 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  dlDisplay->cmap)) {
 	    executeDlColormap(displayInfo,dlColormap);
 	} else {
-	    fprintf(stderr,
-	      "\nexecuteDlDisplay: can't parse and execute external colormap %s",
-	      dlDisplay->cmap);
+	    medmPostMsg("executeDlDisplay: Cannnot parse and execute external"
+	      " colormap %s\n",dlDisplay->cmap);
 	    medmCATerminate();
 	    dmTerminateX();
 	    exit(-1);
