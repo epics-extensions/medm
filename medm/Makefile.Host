@@ -205,13 +205,13 @@ SRCS += updateMonitors.c
 SRCS += utils.c 
 SRCS += xgif.c
 
+include $(TOP)/config/RULES.Host
+
 RCS_WIN32 += medm.rc
 medm.res:../medm.ico
 
-include $(TOP)/config/RULES.Host
-
 ifdef XRTGRAPH
-buildInstall:: xrtAuth
+build:: xrtAuth
 endif
 
 xrtAuth: medm
