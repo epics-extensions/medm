@@ -285,9 +285,12 @@ int callBrowser(char *url)
     }
     if (!ComSpec) return(0);     /* Abort with no message like the UNIX version*/
   /* Spawn the process that handles a url */
-    strcpy(command, "start ");
-    strcat(command, url);
-    status = _spawnl(_P_WAIT, ComSpec, "/C", command, NULL);
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_WAIT, ComSpec, "command", "/C", command, NULL);
+    if(status == -1) {
+	perror("callBrowser:");
+	return(0);
+    }
     return(1);
 }
 #endif     /* #ifndef WIN32 */
