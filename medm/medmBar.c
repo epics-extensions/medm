@@ -62,6 +62,15 @@ typedef struct _Bar {
     UpdateTask  *updateTask;
 } Bar;
 
+/* Function Prototypes */
+
+/* KE: Note that the following functions are really defined in xc/BarGraph.c as:
+ * e.g. void XcBGUpdateBarForeground(ByteWidget w, unsigned long pixel);
+ * but this is how they are being used and what avoids warnings.
+ */
+void XcBGUpdateBarForeground(Widget w, unsigned long pixel);
+void XcBGUpdateValue(Widget w, XcVType *value);
+
 static void barDraw(XtPointer cd);
 static void barUpdateValueCb(XtPointer cd);
 static void barUpdateGraphicalInfoCb(XtPointer cd);

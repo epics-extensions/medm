@@ -58,17 +58,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function Prototypes */
 
-/* KE: Note that the following function is really defined in xc/Byte.c as:
- * void XcBYUpdateByteForeground(ByteWidget w, unsigned long pixel);
- * but this is how it is being used and what avoids warnings.
+/* KE: Note that the following functions are really defined in xc/Byte.c as:
+ * e.g. void XcBYUpdateByteForeground(ByteWidget w, unsigned long pixel);
+ * but this is how they are being used and what avoids warnings.
  */
 void XcBYUpdateByteForeground(Widget w, unsigned long pixel);
-
-typedef struct _Byte {
-    DlElement   *dlElement;
-    Record      *record;
-    UpdateTask  *updateTask;
-} Bits;
+void XcBYUpdateValue(Widget w, XcVType *value);
 
 static void byteUpdateValueCb(XtPointer cd);
 static void byteDraw(XtPointer cd);
@@ -78,6 +73,12 @@ static void byteGetValues(ResourceBundle *pRCB, DlElement *p);
 static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+
+typedef struct _Byte {
+    DlElement   *dlElement;
+    Record      *record;
+    UpdateTask  *updateTask;
+} Bits;
 
 static DlDispatchTable byteDlDispatchTable = {
     createDlByte,
