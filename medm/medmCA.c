@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_ADD 0
 #define DEBUG_INPUT_ID 0
 #define DEBUG_ERASE 0
+#define DEBUG_CONNECTION 1
 
 #define DO_RTYP 1
 
@@ -104,7 +105,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args);
 static void medmUpdateChannelCb(struct event_handler_args args);
 static void medmReplaceAccessRightsEventCb(
   struct access_rights_handler_args args);
-static void medmCAFdRegistrationCb( void *dummy, int fd, int condition);
+static void medmCAFdRegistrationCb(void *dummy, int fd, int condition);
 static void medmProcessCA(XtPointer, int *, XtInputId *);
 static void medmAddUpdateRequest(Channel *);
 static int caTaskInit();
@@ -112,7 +113,6 @@ static void caTaskDelete();
 static int caAdd(char *name, Record *pr);
 static void caDelete(Record *pr);
 static Channel *getChannelFromRecord(Record *pRecord);
-Boolean medmWorkProc(XtPointer);
 
 #define CA_PAGE_SIZE 100
 #define CA_PAGE_COUNT 10
@@ -266,11 +266,16 @@ int medmCAInitialize()
 
 void medmCATerminate()
 {
+    int status;
+    
   /* Cancel registration of the CA file descriptors */
   /* KE: Doesn't cancel it.  The first argument should be NULL for cancel */
   /* And why do we want to cancel it ? */
-    SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
-      "\nmedmCATerminate:  error removing CA's fd from X");
+    status = ca_task_initialize();
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmCATerminate: ca_add_fd_registration failed: %s\n",
+	  ca_message(status));
+    }
   /* Do a pend_event */
   /* KE: Why? */
 #ifdef __MONITOR_CA_PEND_EVENT__
@@ -288,7 +293,11 @@ void medmCATerminate()
     ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
 #endif
   /* Close down channel access */
-    SEVCHK(ca_task_exit(),"\nmedmCATerminate: error exiting CA");
+    status = ca_task_exit();
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmCATerminate: ca_task_exit failed: %s\n",
+	  ca_message(status));
+    }
   /* Clean up the  memory allocated for Channel's */
   /* KE: Used to be done first */
     caTaskDelete();
@@ -427,7 +436,7 @@ static void medmProcessCA(XtPointer cd, int *source , XtInputId *id)
 
 static void medmConnectEventCb(struct connection_handler_args args) {
     int status;
-    Channel *pCh = (Channel *) ca_puser(args.chid);
+    Channel *pCh = (Channel *)ca_puser(args.chid);
 
   /* Increment the event counter */
     caTask.caEventCount++;
@@ -439,16 +448,40 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	return;
     }
 
-  /* Do a get every time a channel is connected or reconnected
-   *   and has read access
-   * The get will cause the graphical info callback to be called */
+  /* Do a get every time a channel is connected or reconnected and has
+   * read access.  The get will cause the graphical info callback to
+   * be called */
     if(args.op == CA_OP_CONN_UP && ca_read_access(pCh->chid)) {
 	status = ca_array_get_callback(
 	  dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
 	  1, args.chid, medmUpdateGraphicalInfoCb, NULL);
 	if(status != ECA_NORMAL) {
-	    medmPostMsg(0,"medmConnectEventCb: ca_array_get_callback: %s\n",
+	    medmPostMsg(0,"medmConnectEventCb: "
+	      "ca_array_get_callback [%s]:\n %s\n",
+	      ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 	      ca_message(status));
+#if DEBUG_CONNECTION
+	    system("netstat | grep iocacis");
+	    print("  pCh->chid %s args.chid\n",
+	      pCh->chid == args.chid?"==":"!=");
+	    print(
+	      "  Channel Name: %s\n"
+	      "  State: %s\n"
+	      "  Native Type: %s\n"
+	      "  Native Count: %hu\n"
+	      "  Access: %s%s\n"
+	      "  IOC: %s\n",
+	      args.chid?ca_name(args.chid):"Unavailable",
+	      args.chid?ca_state(args.chid) == cs_never_conn?"Never":
+	      ca_state(args.chid) == cs_prev_conn?"Prev":
+	      ca_state(args.chid) == cs_conn?"Conn":
+	      ca_state(args.chid) == cs_closed?"Closed":"Unknown":"Unavailable",
+	      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+	      args.chid?ca_element_count(args.chid):0,
+	      args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
+	      args.chid?(ca_write_access(args.chid)?"W":""):"",
+	      args.chid?ca_host_name(args.chid):"Unavailable");
+#endif	    
 	}
     }
 
@@ -470,7 +503,8 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	      pCh->chid,medmReplaceAccessRightsEventCb);
 	    if(status != ECA_NORMAL) {
 		medmPostMsg(0,"medmConnectEventCb: "
-		  "ca_replace_access_rights_event: %s\n",
+		  "ca_replace_access_rights_event [%s]: %s\n",
+		  ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 		  ca_message(status));
 	    }
 #ifdef __USING_TIME_STAMP__
@@ -485,8 +519,42 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	      medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
 #endif
 	    if(status != ECA_NORMAL) {
-		medmPostMsg(0,"medmConnectEventCb: ca_add_array_event: %s\n",
+	      /* Set the pointer to NULL in case CA didn't.  We don't
+                 want to use it or clear it later. */
+#if DEBUG_CONNECTION
+		if(!pCh->evid) {
+		    printf("medmConnectEventCb: ca_add_array_event: \n"
+		      "  status[%d] != ECA_NORMAL and pCh->evid != NULL\n",
+		      status);
+		}
+#endif
+		pCh->evid = NULL;
+		medmPostMsg(0,"medmConnectEventCb: "
+		  "ca_add_array_event [%s]:\n %s\n",
+		  ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 		  ca_message(status));
+#if DEBUG_CONNECTION
+		system("netstat | grep iocacis");
+		print("  pCh->chid %s args.chid\n",
+		  pCh->chid == args.chid?"==":"!=");
+		print(
+		  "  Channel Name: %s\n"
+		  "  State: %s\n"
+		  "  Native Type: %s\n"
+		  "  Native Count: %hu\n"
+		  "  Access: %s%s\n"
+		  "  IOC: %s\n",
+		  args.chid?ca_name(args.chid):"Unavailable",
+		  args.chid?ca_state(args.chid) == cs_never_conn?"Never":
+		  ca_state(args.chid) == cs_prev_conn?"Prev":
+		  ca_state(args.chid) == cs_conn?"Conn":
+		  ca_state(args.chid) == cs_closed?"Closed":"Unknown":"Unavailable",
+		  args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+		  args.chid?ca_element_count(args.chid):0,
+		  args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
+		  args.chid?(ca_write_access(args.chid)?"W":""):"",
+		  args.chid?ca_host_name(args.chid):"Unavailable");
+#endif	    
 	    }
 	  /* Set this one last so ca_replace_access_rights_event can
              use the old value */
@@ -530,7 +598,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
     if(globalDisplayListTraversalMode != DL_EXECUTE) return;
     if(args.status != ECA_NORMAL) return;
     if(!args.dbr) {
-	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Invalid data [%]s\n",
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Invalid data [%s]\n",
 	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
@@ -627,7 +695,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
     }
 }
 
-void medmUpdateChannelCb(struct event_handler_args args) {
+static void medmUpdateChannelCb(struct event_handler_args args) {
     Channel *pCh = (Channel *)ca_puser(args.chid);
     Boolean severityChanged = False;
     Boolean zeroAndNoneZeroTransition = False;
@@ -893,7 +961,8 @@ static int caAdd(char *name, Record *pr)
     status = ca_search_and_connect(name, &(pCh->chid), medmConnectEventCb,
       pCh);
     if(status != ECA_NORMAL) {
-	SEVCHK(status,"caAdd: ca_search_and_connect failed\n");
+	medmPostMsg(1,"caAdd: ca_search_and_connect failed: %s\n",
+	  ca_message(status));
     } else {
       /* Cast to avoid warning from READONLY */
 	pCh->pr->name = (char *)ca_name(pCh->chid);
@@ -922,14 +991,20 @@ static void caDelete(Record *pr)
 #endif
     if(pCh->evid) {
 	status = ca_clear_event(pCh->evid);
-	SEVCHK(status,"caDelete: ca_clear_event() failed!");
-	if(status != ECA_NORMAL) return;
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(1,"caDelete: ca_clear_event failed: %s\n",
+	      ca_message(status));
+	    return;
+	}
     }
     pCh->evid = NULL;
     if(pCh->chid) {
 	status = ca_clear_channel(pCh->chid);
-	SEVCHK(status,"cadelete: ca_clear_channel failed!");
-	if(status != ECA_NORMAL) return;
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(1,"caDelete: ca_clear_channel failed: %s\n",
+	      ca_message(status));
+	    return;
+	}
     }
     pCh->chid = NULL;
     if(pCh->data) {
@@ -1027,37 +1102,57 @@ void medmDestroyRecord(Record *pr)
 
 void medmSendDouble(Record *pr, double data)
 {
+    int status;
+    
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
-    SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&data),
-      "medmSendDouble: error in ca_put");
+    status = ca_put(DBR_DOUBLE,pCh->chid,&data);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmSendDouble: ca_put failed: %s\n",
+	  ca_message(status));
+    }
     ca_flush_io();
 }  
 
 void medmSendLong(Record *pr, long data)
 {
+    int status;
+
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
-    SEVCHK(ca_put(DBR_LONG,pCh->chid,&data),
-      "medmSendLong: error in ca_put");
+    status = ca_put(DBR_LONG,pCh->chid,&data);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmSendLong: ca_put failed: %s\n",
+	  ca_message(status));
+    }
     ca_flush_io();
 }  
 
 void medmSendCharacterArray(Record *pr, char *data, unsigned long size)
 {
+    int status;
+
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
-    SEVCHK(ca_array_put(DBR_CHAR,size,pCh->chid,data),
-      "medmSendCharacterArray: error in ca_put");
+    status = ca_array_put(DBR_CHAR,size,pCh->chid,data);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmSendCharacterArray: ca_put failed: %s\n",
+	  ca_message(status));
+    }
     ca_flush_io();
 }
 
 void medmSendString(Record *pr, char *data)
 {
+    int status;
+
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
-    SEVCHK(ca_put(DBR_STRING,pCh->chid,data),
-      "medmSendString: error in ca_put");
+    status = ca_put(DBR_STRING,pCh->chid,data);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"medmSendString: ca_put failed: %s\n",
+	  ca_message(status));
+    }
     ca_flush_io();
 }
 

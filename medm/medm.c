@@ -812,7 +812,8 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	if(!strcmp(argv[i],"-x")) {
 	    request->opMode = EXECUTE;
 	    argsUsed = i;
-	} else if(!strcmp(argv[i],"-help") || !strcmp(argv[i],"-?")) {
+	} else if(!strcmp(argv[i],"-help") || !strcmp(argv[i],"-h") ||
+	  !strcmp(argv[i],"-?")) {
 	    request->opMode = HELP;
 	    argsUsed = i;
 	} else if(!strcmp(argv[i],"-version")) {
@@ -894,7 +895,12 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    medmRaiseMessageWindow = 0;
 
 	    argsUsed = i;
+	} else if(argv[i][0] == '-') {
+	    medmPrintf(1,"\nInvalid option: %s\n",argv[i]);
+	    request->opMode = HELP;
+	    argsUsed = i;
 	}
+
     }
     
   /* Parse the display name */
@@ -3186,7 +3192,11 @@ main(int argc, char *argv[])
 
 #ifndef MEDM_CDEV
    /* Initialize channel access here (to get around orphaned windows) */
-    SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
+    status = ca_task_initialize();
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"main: ca_task_initialize failed: %s\n",
+	  ca_message(status));
+    }
 #endif
 
   /* Parse command line */
@@ -3204,7 +3214,7 @@ main(int argc, char *argv[])
 	print("\n%s\n",MEDM_VERSION_STRING);
 	print("Usage:\n"
 	  "  medm [X options]\n"
-	  "  [-help | -?]\n"
+	  "  [-help | -h | -?]\n"
 	  "  [-version]\n"
 	  "  [-x | -e]\n"
 	  "  [-local | -attach | -cleanup]\n"
