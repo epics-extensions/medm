@@ -358,6 +358,8 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     Widget widget = pb->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;
+    Arg args[4];
+    int nargs=0;
 
     switch (pr->dataType) {
     case DBF_STRING :
@@ -392,9 +394,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 	pixel = (dlBar->clrmod == ALARM) ?
 	  alarmColor(pr->severity) :
 	  pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
-	XtVaSetValues(widget,
-	  XcNbarForeground,pixel,
-	  NULL);
+	XtSetArg(args[nargs], XcNbarForeground, pixel); nargs++;
 
       /* Set Channel and User limits (if apparently not set yet) */
 	dlBar->limits.loprChannel = lopr.fval;
@@ -416,17 +416,18 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
       /* Set values in the widget if src is Channel */
 	if(dlBar->limits.loprSrc == PV_LIMITS_CHANNEL) {
 	    dlBar->limits.lopr = lopr.fval;
-	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+	    XtSetArg(args[nargs], XcNlowerBound, lopr.lval); nargs++;
 	}
 	if(dlBar->limits.hoprSrc == PV_LIMITS_CHANNEL) {
 	    dlBar->limits.hopr = hopr.fval;
-	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+	    XtSetArg(args[nargs], XcNupperBound, hopr.lval); nargs++;
 	}
 	if(dlBar->limits.precSrc == PV_LIMITS_CHANNEL) {
 	    dlBar->limits.prec = precision;
-	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
+	    XtSetArg(args[nargs], XcNdecimals, (int)precision); nargs++;
 	}
-	XcBGUpdateValue(widget,&val);
+	XtSetValues(widget, args, nargs);
+	XcBGUpdateValue(widget, &val);
     }
 }
 

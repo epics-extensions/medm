@@ -97,7 +97,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     MedmMeter *pm;
     Arg args[27];
-    int n;
+    int nargs;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
     DlMeter *dlMeter = dlElement->structure.meter;
@@ -150,12 +150,12 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	updatePvLimits(&dlMeter->limits);
 
       /* Create the widget */
-	n = 0;
-	XtSetArg(args[n],XtNx,(Position)dlMeter->object.x); n++;
-	XtSetArg(args[n],XtNy,(Position)dlMeter->object.y); n++;
-	XtSetArg(args[n],XtNwidth,(Dimension)dlMeter->object.width); n++;
-	XtSetArg(args[n],XtNheight,(Dimension)dlMeter->object.height); n++;
-	XtSetArg(args[n],XcNdataType,XcFval); n++;
+	nargs = 0;
+	XtSetArg(args[nargs],XtNx,(Position)dlMeter->object.x); nargs++;
+	XtSetArg(args[nargs],XtNy,(Position)dlMeter->object.y); nargs++;
+	XtSetArg(args[nargs],XtNwidth,(Dimension)dlMeter->object.width); nargs++;
+	XtSetArg(args[nargs],XtNheight,(Dimension)dlMeter->object.height); nargs++;
+	XtSetArg(args[nargs],XcNdataType,XcFval); nargs++;
       /* KE: Need to set these 3 values explicitly and not use the defaults
        *  because the widget is an XcLval by default and the default
        *  initializations are into XcVType.lval, possibly giving meaningless
@@ -163,49 +163,49 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
        *  widget.  They still need to be set from the lval, however, because
        *  they are XtArgVal's, which Xt typedef's as long (exc. Cray?)
        *  See Intrinsic.h */
-	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
-	XtSetArg(args[n],XcNlowerBound,longFval(dlMeter->limits.lopr)); n++;
-	XtSetArg(args[n],XcNupperBound,longFval(dlMeter->limits.hopr)); n++;
-	XtSetArg(args[n],XcNscaleSegments,
-	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
+	XtSetArg(args[nargs],XcNincrement,longFval(0.)); nargs++;     /* Not used */
+	XtSetArg(args[nargs],XcNlowerBound,longFval(dlMeter->limits.lopr)); nargs++;
+	XtSetArg(args[nargs],XcNupperBound,longFval(dlMeter->limits.hopr)); nargs++;
+	XtSetArg(args[nargs],XcNscaleSegments,
+	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); nargs++;
 	switch (dlMeter->label) {
 	case LABEL_NONE:
 	case NO_DECORATIONS:
-	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	    XtSetArg(args[n],XcNlabel," "); n++;
+	    XtSetArg(args[nargs],XcNvalueVisible,FALSE); nargs++;
+	    XtSetArg(args[nargs],XcNlabel," "); nargs++;
 	    break;
 	case OUTLINE:
-	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	    XtSetArg(args[n],XcNlabel," "); n++;
+	    XtSetArg(args[nargs],XcNvalueVisible,FALSE); nargs++;
+	    XtSetArg(args[nargs],XcNlabel," "); nargs++;
 	    break;
 	case LIMITS:
-	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	    XtSetArg(args[n],XcNlabel," "); n++;
+	    XtSetArg(args[nargs],XcNvalueVisible,TRUE); nargs++;
+	    XtSetArg(args[nargs],XcNlabel," "); nargs++;
 	    break;
 	case CHANNEL:
-	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	    XtSetArg(args[n],XcNlabel,dlMeter->monitor.rdbk); n++;
+	    XtSetArg(args[nargs],XcNvalueVisible,TRUE); nargs++;
+	    XtSetArg(args[nargs],XcNlabel,dlMeter->monitor.rdbk); nargs++;
 	    break;
 	}
 	preferredHeight = dlMeter->object.height/METER_FONT_DIVISOR;
 	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
 	  preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
-	XtSetArg(args[n],XcNmeterForeground,
-	  (Pixel)displayInfo->colormap[dlMeter->monitor.clr]); n++;
-	XtSetArg(args[n],XcNmeterBackground,(Pixel)
-	  displayInfo->colormap[dlMeter->monitor.bclr]); n++;
-	XtSetArg(args[n],XtNbackground,
-	  (Pixel)displayInfo->colormap[dlMeter->monitor.bclr]); n++;
-	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-	  displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+	XtSetArg(args[nargs],XtNfont,fontTable[bestSize]); nargs++;
+	XtSetArg(args[nargs],XcNmeterForeground,
+	  (Pixel)displayInfo->colormap[dlMeter->monitor.clr]); nargs++;
+	XtSetArg(args[nargs],XcNmeterBackground,(Pixel)
+	  displayInfo->colormap[dlMeter->monitor.bclr]); nargs++;
+	XtSetArg(args[nargs],XtNbackground,
+	  (Pixel)displayInfo->colormap[dlMeter->monitor.bclr]); nargs++;
+	XtSetArg(args[nargs],XcNcontrolBackground,(Pixel)
+	  displayInfo->colormap[dlMeter->monitor.bclr]); nargs++;
 	/*
 	 * add the pointer to the Channel structure as userData 
 	 *  to widget
 	 */
-	XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
+	XtSetArg(args[nargs],XcNuserData,(XtPointer)pm); nargs++;
 	localWidget = XtCreateWidget("meter", 
-	  xcMeterWidgetClass, displayInfo->drawingArea, args, n);
+	  xcMeterWidgetClass, displayInfo->drawingArea, args, nargs);
 	dlElement->widget = localWidget;
  	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    pm->dlElement->widget = localWidget;
@@ -310,6 +310,8 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     Widget widget = pm->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;
+    Arg args[4];
+    int nargs=0;
 
     switch (pr->dataType) {
     case DBF_STRING :
@@ -344,7 +346,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 	pixel = (dlMeter->clrmod == ALARM) ?
 	  alarmColor(pr->severity) :
 	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
-	XtVaSetValues(widget, XcNmeterForeground,pixel, NULL);
+	XtSetArg(args[nargs], XcNmeterForeground, pixel); nargs++;
 
       /* Set Channel and User limits (if apparently not set yet) */
 	dlMeter->limits.loprChannel = lopr.fval;
@@ -366,17 +368,18 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
       /* Set values in the widget if src is Channel */
 	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
 	    dlMeter->limits.lopr = lopr.fval;
-	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+	    XtSetArg(args[nargs], XcNlowerBound, lopr.lval); nargs++;
 	}
 	if(dlMeter->limits.hoprSrc == PV_LIMITS_CHANNEL) {
 	    dlMeter->limits.hopr = hopr.fval;
-	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+	    XtSetArg(args[nargs], XcNupperBound, hopr.lval); nargs++;
 	}
 	if(dlMeter->limits.precSrc == PV_LIMITS_CHANNEL) {
 	    dlMeter->limits.prec = precision;
-	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
+	    XtSetArg(args[nargs], XcNdecimals, (int)precision); nargs++;
 	}
-	XcMeterUpdateValue(widget,&val);
+	XtSetValues(widget, args, nargs);
+	XcMeterUpdateValue(widget, &val);
     }
 }
 

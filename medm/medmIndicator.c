@@ -178,9 +178,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 
 	switch (dlIndicator->direction) {
-	  /*
-	   * note that this is  "direction of increase"
-	   */
+	  /* Note that this is  "direction of increase" */
 	case DOWN:
 	  /* Override */
 	    medmPrintf(1,"\nexecuteDlIndicator: "
@@ -330,6 +328,8 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     Pixel pixel;
     XcVType hopr, lopr, val;
     short precision;
+    Arg args[4];
+    int nargs=0;
 
     switch (pr->dataType) {
     case DBF_STRING :
@@ -344,9 +344,9 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pr->hopr;
-	lopr.fval = (float) pr->lopr;
-	val.fval = (float) pr->value;
+	hopr.fval = (float)pr->hopr;
+	lopr.fval = (float)pr->lopr;
+	val.fval = (float)pr->value;
 	precision = pr->precision;
 	break;
     default :
@@ -365,9 +365,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	pixel = (dlIndicator->clrmod == ALARM) ?
 	  alarmColor(pr->severity) :
 	  pi->updateTask->displayInfo->colormap[dlIndicator->monitor.clr];
-	XtVaSetValues(widget,
-	  XcNindicatorForeground,pixel,
-	  NULL);
+	XtSetArg(args[nargs], XcNindicatorForeground, pixel); nargs++;
 
       /* Set Channel and User limits (if apparently not set yet) */
 	dlIndicator->limits.loprChannel = lopr.fval;
@@ -389,27 +387,18 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
       /* Set values in the widget if src is Channel */
 	if(dlIndicator->limits.loprSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.lopr = lopr.fval;
-#ifndef ACM
-	  /* ACM: This does not always work */
-	    XtVaSetValues(widget, XcNlowerBound, lopr.lval, NULL);
-#else
-	    XcIndUpdateLowerBound(widget,&lopr);
-#endif	    
+	    XtSetArg(args[nargs], XcNlowerBound, lopr.lval); nargs++;
 	}
 	if(dlIndicator->limits.hoprSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.hopr = hopr.fval;
-#ifndef ACM
-	  /* ACM: This does not always work */
-	    XtVaSetValues(widget, XcNupperBound, hopr.lval, NULL); 
-#else
-	    XcIndUpdateUpperBound(widget,&hopr);
-#endif	    
+	    XtSetArg(args[nargs], XcNupperBound, hopr.lval); nargs++;
 	}
 	if(dlIndicator->limits.precSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.prec = precision;
-	    XtVaSetValues(widget,XcNdecimals, (int)precision, NULL);
+	    XtSetArg(args[nargs], XcNdecimals, (int)precision); nargs++;
 	}
-	XcIndUpdateValue(widget,&val);
+	XtSetValues(widget, args, nargs);
+	XcIndUpdateValue(widget, &val);
     }
 }
 

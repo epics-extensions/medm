@@ -302,9 +302,6 @@ void medmCDEVTerminate(void);
 #else
 int medmCAInitialize(void);
 void medmCATerminate(void);
-void updateListCreate(Channel *);
-void updateListDestroy(Channel *);
-void medmDisconnectChannel(Channel *pCh);
 void caTaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount);
 #endif
 Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),

@@ -1389,7 +1389,9 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
     print("  Root(%7x)\n",root);
     window=XtWindow(mainShell);
     while(True) {
+	children = NULL;
 	XQueryTree(display,window,&root,&parent,&children,&nChildren);
+	if(children) XFree(children);
 	XGetWindowAttributes(display,window,&attr);
 	print("    (%7x):        x=%d y=%d width=%d height=%d\n",
 	  window,attr.x,attr.y,attr.width,attr.height);
@@ -1422,7 +1424,9 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
      presumed to be the window manager window for the mainShell.  */
     root=RootWindow(display,screenNum);
     window=XtWindow(mainShell);
+    children = NULL;
     status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
+    if(children) XFree(children);
     if(!status) return;
     status = XGetWindowAttributes(display,window,&attr);
     if(!status) return;
@@ -1430,7 +1434,9 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
     if(parent == root) return;
     while(True) {
 	wmwindow=parent;
+	children = NULL;
 	status = XQueryTree(display,wmwindow,&root,&parent,&children,&nChildren);
+	if(children) XFree(children);
 	if(!status) return;
 	XGetWindowAttributes(display,wmwindow,&wmattr);
 	if(!status) return;

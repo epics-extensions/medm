@@ -74,16 +74,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "db_access.h"
 #include "alarm.h"			/* alarm status, severity */
 
-/* allow ca_build_and_connect to take NULL strings if user specifies them,
-   and treat them as " " a whitespace string
- */
-#define CA_BUILD_AND_CONNECT(a,b,c,d,e,f,g) \
-( a == NULL ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
-  ( (a)[0] == '\0' ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
-    ca_build_and_connect(a,b,c,d,e,f,g) ) )
-	
-
-
 #define CA_PEND_EVENT_TIME	1e-6			/* formerly 0.0001    */
 #define MAX_STATE_STRING_SIZE	(db_state_text_dim+1)	/* from db_access.h   */
 				/* also have MAX_STRING_SIZE from db_access.h */
@@ -124,7 +114,6 @@ typedef union {
     struct dbr_ctrl_double d;
 } infoBuf;
 
-#define MAX_EVENT_DATA 16
 typedef struct _Record {
     int       caId;
     int       elementCount;
