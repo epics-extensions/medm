@@ -262,21 +262,14 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  pixmap,
 	  label,
 	  (XtPointer) displayInfo);
-	if (globalDisplayListTraversalMode == DL_EDIT) { 
-	  /* Remove all translations if in edit mode */
-	    XtUninstallTranslations(dlElement->widget);
-	  /* Add back the KeyPress handler invoked in executeDlDisplay */
-	    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
-	      handleKeyPress,(XtPointer)displayInfo);
-	  /* Add the ButtonPress handler */
-	    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
-	      handleButtonPress,(XtPointer)displayInfo);
-	} else {
-	  /* Add the callbacks for bringing up the menu */
+      /* Add the callbacks for bringing up the menu */
+	if (globalDisplayListTraversalMode == DL_EXECUTE) { 
 	    XtAddCallback(dlElement->widget,XmNarmCallback,
 	      relatedDisplayButtonPressedCb,
 	      (XtPointer) &(dlRelatedDisplay->display[0]));
 	}
+      /* Add handlers */
+	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
     } else if (dlRelatedDisplay->visual == RD_MENU) {
 	XmString str;
@@ -299,8 +292,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
 	localMenuBar =
 	  XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
-	XtManageChild(localMenuBar);
 	dlElement->widget = localMenuBar;
+      /* Add handlers */
+	addCommonHandlers(dlElement->widget, displayInfo);
+	XtManageChild(dlElement->widget);
 	
 	colorMenuBar(localMenuBar,
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
@@ -373,17 +368,6 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 		  relatedDisplayButtonPressedCb,&(dlRelatedDisplay->display[i]));
 		XmStringFree(xmString);
 	    }
-	}
-	
-	
-      /* add event handlers to relatedDisplay... */
-	if (displayInfo->traversalMode == DL_EDIT) {
-	    
-	  /* remove all translations if in edit mode */
-	    XtUninstallTranslations(localMenuBar);
-	    
-	    XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-	      handleButtonPress, (XtPointer)displayInfo);
 	}
     } else if (dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
@@ -470,21 +454,14 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 		  (XtPointer) &(dlRelatedDisplay->display[i]));
 	    }  else {
 		XtSetSensitive(toggleButton,False);
-		XtUninstallTranslations(toggleButton);
 	    }
 	  /* MDA - for some reason, need to do this after the fact for gadgets... */
 	    XtVaSetValues(toggleButton,XmNalignment,XmALIGNMENT_CENTER,NULL);
 	    XtManageChild(toggleButton);
 	}
-	if (globalDisplayListTraversalMode == DL_EDIT) {
-	  /* add button press handlers for editing */
-	    XtAddEventHandler(widget, ButtonPressMask, False,
-	      handleButtonPress,displayInfo);
-	} else {
-	  /* add in drag/drop translations */
-	    XtOverrideTranslations(widget,parsedTranslations);
-	}
-	XtManageChild(widget);
+      /* Add handlers */
+	addCommonHandlers(dlElement->widget, displayInfo);
+	XtManageChild(dlElement->widget);
     } else if (dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
 	unsigned long gcValueMask;
 	XGCValues gcValues;

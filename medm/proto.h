@@ -76,8 +76,7 @@ void dmCreateRelatedDisplay(Widget, XtPointer, XtPointer);
 void dmExecuteShellCommand(Widget w,
   DlShellCommandEntry *commandEntry,
   XmPushButtonCallbackStruct *call_data);
-void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
-  XmDrawingAreaCallbackStruct *call_data);
+void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData);
 void relatedDisplayMenuButtonDestroy(Widget, XtPointer, XtPointer);
 void warnCallback(Widget, XtPointer, XtPointer);
 void exitCallback(Widget, XtPointer, XtPointer);
@@ -146,12 +145,11 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
 
 /* eventHandlers.c */
 int initEventHandlers(void);
-void popupMenu(Widget, XtPointer, XEvent *, Boolean *);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
+void handleExecuteButtonPress(Widget, XtPointer, XEvent *, Boolean *);
+void handleEditButtonPress(Widget, XtPointer, XEvent *, Boolean *);
 void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
-void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
-void handleKeyPress(Widget, XtPointer, XEvent *, Boolean *);
-void handleRuntimeButtonPress(Widget, XtPointer, XEvent *, Boolean *);
+void handleEditKeyPress(Widget, XtPointer, XEvent *, Boolean *);
 void highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
 void highlightAndAppendSelectedElements(DlList *);
@@ -162,6 +160,7 @@ void updateDraggedElements(Position x0, Position y0, Position x1, Position y1);
 void updateResizedElements(Position x0, Position y0, Position x1, Position y1);
 DlElement *handleRectangularCreates(DlElementType, int, int, unsigned int, unsigned
   int);
+void addCommonHandlers(Widget w, DisplayInfo *displayInfo);
 
 /* executeControllers.c */
 Widget createPushButton(Widget parent,
@@ -224,7 +223,7 @@ void xtErrorHandler(char *message);
 
 /* medm.c */
 int main(int argc, char *argv[]);
-Widget createDisplayMenu(Widget widget);
+void createEditModeMenu(DisplayInfo *displayInfo);
 Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
 void medmExit();
 Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
@@ -422,6 +421,8 @@ DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
 void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0);
+DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
+  DisplayInfo *displayInfo, Position *x, Position *y);
 void findSelectedElements(DlList *pList1, Position x0, Position y0,
   Position x1, Position y1, DlList *pList2, unsigned int mode);
 void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
@@ -521,6 +522,9 @@ void setTimeValues(void);
 void popupPvInfo(DisplayInfo *displayInfo);
 void createPvInfoDlg(void);
 Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
+/* Debugging */
+void dumpCartesianPlot(void);
+void printEventMasks(Display *display, Window win, char *string);
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);

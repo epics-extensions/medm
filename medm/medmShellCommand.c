@@ -170,8 +170,10 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[12],XmNhighlightOnEnter,TRUE);
     localMenuBar =
       XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",args,13);
-    XtManageChild(localMenuBar);
     dlElement->widget = localMenuBar;
+  /* Add handlers */
+    addCommonHandlers(dlElement->widget, displayInfo);
+    XtManageChild(dlElement->widget);
 
     colorMenuBar(localMenuBar,
       (Pixel)displayInfo->colormap[dlShellCommand->clr],
@@ -219,18 +221,6 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)&(dlShellCommand->command[i]));
 	    XmStringFree(xmString);
 	}
-    }
-
-  /* Add event handlers to shellCommand... */
-    if (displayInfo->traversalMode == DL_EDIT) {
-      /* Remove all translations if in edit mode */
-	XtUninstallTranslations(localMenuBar);
-      /* Add back the KeyPress handler invoked in executeDlDisplay */
-	XtAddEventHandler(localMenuBar,KeyPressMask,False,
-	  handleKeyPress,(XtPointer)displayInfo);
-      /* Add the ButtonPress handler */
-	XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-	  handleButtonPress,(XtPointer)displayInfo);
     }
 }
 

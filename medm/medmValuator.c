@@ -238,8 +238,6 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNmaximum,VALUATOR_MAX); n++;
     XtSetArg(args[n],XmNscaleMultiple,VALUATOR_MULTIPLE_INCREMENT); n++;
     XtSetValues(pv->dlElement->widget,args,n);
-  /* add in drag/drop translations */
-    XtOverrideTranslations(pv->dlElement->widget,parsedTranslations);
 
   /* change translations for scrollbar child of valuator */
     for (i = 0; i < numChildren; i++) {
@@ -332,16 +330,6 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     XtVaGetValues(widget,XmNnumChildren,&numChildren,
       XmNchildren,&children,NULL);
     
-  /* Remove all translations if in edit mode */
-    XtUninstallTranslations(widget);
-    for (i = 0; i < numChildren; i++) XtUninstallTranslations(children[i]);
-  /* Add back the KeyPress handler invoked in executeDlDisplay */
-    XtAddEventHandler(widget,KeyPressMask,False,
-      handleKeyPress,(XtPointer)displayInfo);
-  /* Add the ButtonPress handler */
-    XtAddEventHandler(widget,ButtonPressMask,False,
-      handleButtonPress,(XtPointer)displayInfo);
-    
   /* If in EDIT mode, add dlValuator as userData, and pass NULL in xepose */
     XtVaSetValues(widget,XmNuserData,(XtPointer)dlValuator,NULL);
     
@@ -349,6 +337,9 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
    *   in own format */
     XtAddEventHandler(widget,ExposureMask,False,
       (XtEventHandler)handleValuatorExpose,(XtPointer)NULL);
+    
+  /* Add handlers */
+    addCommonHandlers(widget, displayInfo);
     
     XtManageChild(widget);
 }
@@ -381,10 +372,12 @@ static void valuatorDraw(XtPointer cd) {
 
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget) 
-	      XtManageChild(widget);
-	    else
-	      return;
+	    if (widget) {
+		addCommonHandlers(widget, pv->updateTask->displayInfo);
+		XtManageChild(widget);
+	    } else {
+		return;
+	    }
 
 	  /* valuator is only controller/monitor which can have updates disabled */
 

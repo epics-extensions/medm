@@ -265,10 +265,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 		  dlElement->widget = XtCreateWidget("textField",
 		    xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
 
-		/* add in drag/drop translations */
-		  XtOverrideTranslations(dlElement->widget,parsedTranslations);
-
-		/* add the callbacks for update */
+		/* Add the callbacks for update */
 		  XtAddCallback(dlElement->widget,XmNactivateCallback,
 		    (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
 
@@ -295,34 +292,28 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNheight,(Dimension)dlTextEntry->object.height); n++;
     XtSetArg(args[n],XmNforeground,(Pixel)
       displayInfo->colormap[dlTextEntry->control.clr]); n++;
-      XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->colormap[dlTextEntry->control.bclr]); n++;
-	XtSetArg(args[n],XmNhighlightThickness,1); n++;
-	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-	XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNmarginWidth,
-	  ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
-	    ?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
-	    XtSetArg(args[n],XmNmarginHeight,
-	      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
-		?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
-		XtSetArg(args[n],XmNfontList,fontListTable[
-		  textFieldFontListIndex(dlTextEntry->object.height)]); n++;
-		  localWidget = XtCreateWidget("textField",
-		    xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
-		  dlElement->widget = localWidget;
-
-		/* Remove all translations if in edit mode */
-		  XtUninstallTranslations(localWidget);
-		/* Add back the KeyPress handler invoked in executeDlDisplay */
-		  XtAddEventHandler(localWidget,KeyPressMask,False,
-		    handleKeyPress,(XtPointer)displayInfo);
-		/* Add the ButtonPress handler */
-		  XtAddEventHandler(localWidget,ButtonPressMask,False,
-		    handleButtonPress,(XtPointer)displayInfo);
-
-		  XtManageChild(localWidget);
+    XtSetArg(args[n],XmNbackground,(Pixel)
+      displayInfo->colormap[dlTextEntry->control.bclr]); n++;
+    XtSetArg(args[n],XmNhighlightThickness,1); n++;
+    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+    XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
+    XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
+    XtSetArg(args[n],XmNmarginWidth,
+      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
+	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
+    XtSetArg(args[n],XmNmarginHeight,
+      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
+	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
+    XtSetArg(args[n],XmNfontList,fontListTable[
+      textFieldFontListIndex(dlTextEntry->object.height)]); n++;
+    localWidget = XtCreateWidget("textField",
+      xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
+    dlElement->widget = localWidget;
+    
+  /* Add handlers */
+    addCommonHandlers(localWidget, displayInfo);
+    
+    XtManageChild(localWidget);
 }
 
 void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -358,8 +349,10 @@ void textEntryDraw(XtPointer cd) {
 
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget) 
-	      XtManageChild(widget);
+	    if (widget) {
+		addCommonHandlers(widget, pte->updateTask->displayInfo);
+		XtManageChild(widget);
+	    }
 	    else
 	      return;
 	    if (pd->writeAccess) {

@@ -166,22 +166,10 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	localWidget = XtCreateWidget("meter", 
 	  xcMeterWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
-	
-	if (displayInfo->traversalMode == DL_EXECUTE) {
-	    
-	  /* record the widget that this structure belongs to */
+ 	if (displayInfo->traversalMode == DL_EXECUTE) {
 	    pm->dlElement->widget = localWidget;
-	    
-	  /* add in drag/drop translations */
-	    XtOverrideTranslations(localWidget,parsedTranslations);
-	    
-	    
 	} else if (displayInfo->traversalMode == DL_EDIT) {
-	    
-	  /* add button press handlers */
-	    XtAddEventHandler(localWidget,ButtonPressMask,False,
-	      handleButtonPress,(XtPointer)displayInfo);
-	    
+	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
 	}
     } else {
@@ -208,10 +196,12 @@ static void meterDraw(XtPointer cd) {
     XcVType val;
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget)
-	      XtManageChild(widget);
-	    else
-	      return;
+	    if (widget) {
+		addCommonHandlers(widget, pm->updateTask->displayInfo);
+		XtManageChild(widget);
+	    } else {
+		return;
+	    }
 	    val.fval = (float) pd->value;
 	    XcMeterUpdateValue(widget,&val);
 	    switch (dlMeter->clrmod) {

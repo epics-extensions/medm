@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_EVENTS 0
 #define DEBUG_FILE 0
 #define DEBUG_STRING_LIST 0
@@ -263,13 +264,15 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 {
     int i;
     Boolean alreadyFreedUnphysical;
-    Widget DA;
+    Widget drawingArea;
     UpdateTask *ut = &(displayInfo->updateTaskListHead);
 
-  /* save off current DA */
-    DA = displayInfo->drawingArea;
+  /* save off current drawingArea */
+    drawingArea = displayInfo->drawingArea;
   /* now set to NULL in displayInfo to signify "in cleanup" */
     displayInfo->drawingArea = NULL;
+    displayInfo->editPopupMenu = (Widget)0;
+    displayInfo->executePopupMenu = (Widget)0;
 
   /*
    * remove all update tasks in this display 
@@ -280,9 +283,9 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
    * as a composite widget, drawingArea is responsible for destroying
    *  it's children
    */
-    if (DA != NULL) {
-	XtDestroyWidget(DA);
-	DA = NULL;
+    if (drawingArea != NULL) {
+	XtDestroyWidget(drawingArea);
+	drawingArea = NULL;     /* KE: Unnecessary ? */
     }
 
   /* force a wait for all outstanding CA event completion */
@@ -737,7 +740,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 	
 #if DEBUG_PVINFO > 1
 	printf("  Element: %s\n",elementType(pE->type));
-	printf("    x1: %3d  x2: %3d   y1: %3d  y2%3d\n",
+	printf("    x1: %3d  x2: %3d   y1: %3d  y2: %3d\n",
 	  po->x, po->x + po->width, po->y, po->y + po->height);
 #endif
       /* Don't use the display but save it as a fallback */
@@ -754,7 +757,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 		    minArea = area;
 		}
 #if DEBUG_PVINFO
-		printf("  minArea: %g Smallest element: %s\n", minArea,
+		printf("  minArea (so far): %g Smallest element: %s\n", minArea,
 		  pSmallest?elementType(pSmallest->type):NULL);
 #endif
 	    }
@@ -777,6 +780,60 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 }
 
 /*
+ * Find the smallest element at the given coordinates when in EXECUTE mode
+ */
+DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
+  DisplayInfo *displayInfo, Position *x, Position *y)
+{
+    Widget child;
+    Position x0, y0;
+    int nargs;
+    Arg args[2];
+    DlElement *pE, *pE1;
+    
+  /* Get the position relative to the drawing area
+   *   Follow parents upward to the display */
+    child = NULL;
+    while(w != displayInfo->drawingArea) {
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&x0); nargs++;
+	XtSetArg(args[nargs],XmNy,&y0); nargs++;
+	XtGetValues(w,args,nargs);
+	*x += x0;
+	*y += y0;
+	
+	child = w;
+	w = XtParent(w);
+	if(w == mainShell) {
+	    return NULL;
+	}
+    }
+		
+  /* Try to find element from child since execute sizes are different
+   *   from edit sizes */
+    pE = NULL;
+    if(child) {
+	pE1 = displayInfo->dlElementList->tail;
+	while (pE1->prev) {
+	    if(child == pE1-> widget) {
+		pE = pE1;
+		break;
+	    }
+	    pE1 = pE1->prev;
+	}
+    }
+
+  /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
+    if(!pE) {
+	pE = findSmallestTouchedElement(displayInfo->dlElementList,
+	  *x, *y);
+    }
+
+  /* Return */
+     return pE;
+}
+
+  /*
  * Starting at head of composite (specified element), lookup picked object
  */
 DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0)
@@ -3959,15 +4016,14 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
 #else
 #define MAX_COUNT MAX_PENS
 #endif
-    Widget widget, child;
+    Widget widget;
     XEvent event;
-    int nargs;
-    Arg args[2];
     Record *records[MAX_COUNT];
     Record **retRecords;
     UpdateTask *pT;
-    DlElement *pE, *pE1;
-    int i, x, y;
+    DlElement *pE;
+    Position x, y;
+    int i;
 
   /* Choose the object with the process variable */
     widget = XmTrackingEvent(displayInfo->drawingArea,
@@ -3980,51 +4036,12 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
 	  "Did not find object","OK",NULL,NULL);
 	return NULL;
     }
-  /* Get the position relative to the drawing area */
-  /*   (event.xbutton.[xy] are relative to the widget)
-   *   Follow parents upward to the display */
+
+  /* Find the element corresponding to the button press */
     x = event.xbutton.x;
     y = event.xbutton.y;
-    child = NULL;
-    while(widget != displayInfo->drawingArea) {
-	Position x0, y0;
-	
-	nargs=0;
-	XtSetArg(args[nargs],XmNx,&x0); nargs++;
-	XtSetArg(args[nargs],XmNy,&y0); nargs++;
-	XtGetValues(widget,args,nargs);
-	x += x0;
-	y += y0;
-	
-	child = widget;
-	widget = XtParent(widget);
-	if(widget == mainShell) {
-	    medmPostMsg("executeMenuCallback: Did not find object\n");
-	    dmSetAndPopupWarningDialog(displayInfo,
-	      "executeMenuCallback: "
-	      "Did not find object","OK",NULL,NULL);
-	    return NULL;
-	}
-    }
-		
-  /* Try to find element from child since execute sizes are different
-   *   from edit sizes */
-    pE = NULL;
-    if(child) {
-	pE1 = displayInfo->dlElementList->tail;
-	while (pE1->prev) {
-	    if(child == pE1-> widget) {
-		pE = pE1;
-		break;
-	    }
-	    pE1 = pE1->prev;
-	}
-    }
-  /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
-    if(!pE) {
-	pE = findSmallestTouchedElement(displayInfo->dlElementList,
-	  x, y);
-    }
+    pE = findSmallestTouchedExecuteElementFromWidget(widget, displayInfo,
+      &x, &y);
 #if DEBUG_PVINFO
     printf("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
     printf("  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
@@ -4073,4 +4090,137 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     }
     return retRecords;
 #undef MAX_COUNT
+}
+
+/* Debugging routines */
+
+#if DEBUG_CARTESIAN_PLOT
+#include "medmCartesianPlot.h"
+void dumpCartesianPlot(void)
+{
+    Arg args[20];
+    int n=0;
+			    
+    Dimension footerHeight;
+    Dimension footerWidth;
+    Dimension footerBorderWidth;
+    Dimension borderWidth;
+    Dimension shadowThickness;
+    Dimension highlightThickness;
+    Dimension headerBorderWidth;
+    Dimension headerHeight;
+    Dimension headerWidth;
+    Dimension graphBorderWidth;
+    Dimension graphWidth;
+    Dimension graphHeight;
+    Dimension height;
+    Dimension width;
+    Dimension legendBorderWidth;
+    Dimension legendHeight;
+    Dimension legendWidth;
+    unsigned char unitType;
+    time_t timeBase;
+
+
+    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
+    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
+    XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
+    XtSetArg(args[n],XmNwidth,&width); n++;
+    XtSetArg(args[n],XmNheight,&height); n++;
+    XtSetArg(args[n],XtNxrtGraphBorderWidth,&graphBorderWidth); n++;
+    XtSetArg(args[n],XtNxrtGraphWidth,&graphWidth); n++;
+    XtSetArg(args[n],XtNxrtGraphHeight,&graphHeight); n++;
+    XtSetArg(args[n],XtNxrtHeaderWidth,&headerWidth); n++;
+    XtSetArg(args[n],XtNxrtHeaderHeight,&headerHeight); n++;
+    XtSetArg(args[n],XtNxrtHeaderBorderWidth,&headerBorderWidth); n++;
+    XtSetArg(args[n],XmNhighlightThickness,&highlightThickness); n++;
+    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
+    XtSetArg(args[n],XmNborderWidth,&borderWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterHeight,&footerHeight); n++;
+    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+    XtSetArg(args[n],XmNunitType,&unitType); n++;
+    XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
+    XtGetValues(widget,args,n);
+			      
+    printf("width: %d\n",width);
+    printf("height: %d\n",height);
+    printf("highlightThickness: %d\n",highlightThickness);
+    printf("shadowThickness: %d\n",shadowThickness);
+    printf("borderWidth: %d\n",borderWidth);
+    printf("graphBorderWidth: %d\n",graphBorderWidth);
+    printf("graphWidth: %d\n",graphWidth);
+    printf("graphHeight: %d\n",graphHeight);
+    printf("headerBorderWidth: %d\n",headerBorderWidth);
+    printf("headerWidth: %d\n",headerWidth);
+    printf("headerHeight: %d\n",headerHeight);
+    printf("footerWidth: %d\n",footerBorderWidth);
+    printf("footerWidth: %d\n",footerWidth);
+    printf("footerHeight: %d\n",footerHeight);
+    printf("legendBorderWidth: %d\n",legendBorderWidth);
+    printf("legendWidth: %d\n",legendWidth);
+    printf("legendHeight: %d\n",legendHeight);
+    printf("unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
+      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
+    printf("timeBase: %d\n",timeBase);
+}
+#endif
+
+void printEventMasks(Display *display, Window win, char *string)
+{
+    XWindowAttributes attr;
+    int i;
+    long mask;
+  /* These values are from X11/X.h */
+    int nmasks=25;
+    static char *maskNames[]={
+	"KeyPressMask",
+	"KeyReleaseMask",
+	"ButtonPressMask",
+	"ButtonReleaseMask",
+	"EnterWindowMask",
+	"LeaveWindowMask",
+	"PointerMotionMask",
+	"PointerMotionHintMask",
+	"Button1MotionMask",
+	"Button2MotionMask",
+	"Button3MotionMask",
+	"Button4MotionMask",
+	"Button5MotionMask",
+	"ButtonMotionMask",
+	"KeymapStateMask",
+	"ExposureMask",
+	"VisibilityChangeMask",
+	"StructureNotifyMask",
+	"ResizeRedirectMask",
+	"SubstructureNotifyMask",
+	"SubstructureRedirectMask",
+	"FocusChangeMask",
+	"PropertyChangeMask",
+	"ColormapChangeMask",
+	"OwnerGrabButtonMask",
+    };
+
+  /* Get the attributes */
+    if(win) {
+	printf("%sMasks for window %x:\n", string, win);
+	XGetWindowAttributes(display, win, &attr);
+    } else {
+	printf("%sWindow is NULL (Masks are undefined)\n", string);
+	return;
+    }
+    
+    printf("%-27s %-10s %-10s %-10s\n",
+      "Mask","all_event","your_event","do_not_propagate");
+/*     for(i=0; i < nmasks; i++) { */
+    for(i=2; i < 4; i++) {
+	
+	mask=1<<i;
+	printf("%-27s %-10s %-10s %-10s\n",
+	  maskNames[i],
+	  (attr.all_event_masks&mask)?"X":" ",
+	  (attr.your_event_mask&mask)?"X":" ",
+	  (attr.do_not_propagate_mask&mask)?"X":" ");
+    }
 }

@@ -1033,28 +1033,17 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtVaSetValues(localWidget, XmNuserData, (XtPointer) psc, NULL);
 	    XtAddCallback(localWidget,XmNexposeCallback,redisplayStrip,
 	      (XtPointer)psc);
-	    
 #if 0
 	    XtAddCallback(localWidget,XmNdestroyCallback,
 	      (XtCallbackProc)monitorDestroy, (XtPointer)psc);
-#endif
-	  /* add in drag/drop translations */
-	    XtOverrideTranslations(localWidget,parsedTranslations);
-	    drawWhiteRectangle(psc->updateTask);
-#if 0
-	    XtManageChild(localWidget);
 #endif
 	} else if (displayInfo->traversalMode == DL_EDIT) {
 	  /* Add expose callback for EDIT mode */
 	    XtAddCallback(localWidget,XmNexposeCallback,redisplayFakeStrip,
 	      dlStripChart);
+	  /* Add handlers */
+	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
-	  /* Add the KeyPress handler invoked in executeDlDisplay */
-	    XtAddEventHandler(localWidget,KeyPressMask,False,
-	      handleKeyPress,(XtPointer)displayInfo);
-	  /* Add the ButtonPress handler */
-	    XtAddEventHandler(localWidget,ButtonPressMask,False,
-	      handleButtonPress,(XtPointer)displayInfo);
 	}
     } else {
 	DlObject *po = &(dlElement->structure.stripChart->object);
@@ -1091,6 +1080,7 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     }
 
     if (XtIsManaged(widget) == False) {
+	addCommonHandlers(widget, psc->updateTask->displayInfo);
 	XtManageChild(widget);
 	XtAppAddTimeOut(XtWidgetToApplicationContext(widget),100,configStripChart,psc);
     } else
@@ -1214,6 +1204,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 	if (readAccess) {
 	    if (widget) {
 		if (XtIsManaged(widget) == False) {
+		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
 		  /* specified the time interval */
 		    updateTaskSetScanRate(psc->updateTask,psc->timeInterval);
@@ -1266,6 +1257,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 	if (readAccess) {
 	    if (widget) {
 		if (XtIsManaged(widget) == False) {
+		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
 		  /* specified the time interval */
 		    updateTaskSetScanRate(psc->updateTask,psc->timeInterval);

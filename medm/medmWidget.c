@@ -376,3 +376,7 @@ int destroyMedmWidget() {
     }
     return 0;
 }
+
+void addWidgetEvents(Widget w)
+{
+}

@@ -303,8 +303,6 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
 	  (XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)i);
 	XtManageChild(buttons[i]);
     }
-  /* add in drag/drop translations */
-    XtOverrideTranslations(dlElement->widget,parsedTranslations);
     choiceButtonUpdateValueCb(cd);
 }
 
@@ -320,8 +318,10 @@ static void choiceButtonDraw(XtPointer cd) {
     DlChoiceButton *dlChoiceButton = pcb->dlElement->structure.choiceButton;
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget && !XtIsManaged(widget))
-	      XtManageChild(widget);
+	    if (widget && !XtIsManaged(widget)) {
+		addCommonHandlers(widget, pcb->updateTask->displayInfo);
+		XtManageChild(widget);
+	    }
 	    if (pd->precision < 0) return;
 	    if (pd->dataType == DBF_ENUM) {
 		WidgetList children;
@@ -419,20 +419,14 @@ void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlEleme
       displayInfo->colormap[dlChoiceButton->control.bclr],
       2,
       labels,
-      (XtPointer) displayInfo,
+      (XtPointer)displayInfo,
       buttons,
       dlChoiceButton->stacking);
     XmToggleButtonGadgetSetState(buttons[0],True,True);
     XtManageChildren(buttons,2);
 
-  /* Remove all translations if in edit mode */
-    XtUninstallTranslations(dlElement->widget);
-  /* Add back the KeyPress handler invoked in executeDlDisplay */
-    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
-      handleKeyPress,(XtPointer)displayInfo);
-  /* Add the ButtonPress handler */
-    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
-      handleButtonPress,(XtPointer)displayInfo);
+  /* Add handlers */
+    addCommonHandlers(dlElement->widget, displayInfo);
     
     XtManageChild(dlElement->widget);
 

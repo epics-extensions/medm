@@ -82,8 +82,6 @@ typedef struct _parseFuncEntryNode {
 
 /* Function prototypes */
 
-static Widget createExecuteMenu(DisplayInfo *displayInfo);
-
 /* Global variables */
 
 ParseFuncEntry parseFuncTable[] = {
@@ -268,136 +266,14 @@ DisplayInfo *allocateDisplayInfo()
     XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
       (XtCallbackProc)wmCloseCallback,
       (XtPointer)DISPLAY_SHELL);
-
-  /* Create the shell's EXECUTE popup menu */
-    n = 0;
-    XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); n++;
-    XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
-    XtSetArg(args[n], XmNbuttons, executePopupMenuButtons); n++;
-    XtSetArg(args[n], XmNsimpleCallback, executePopupMenuCallback); n++;
-    XtSetArg(args[n], XmNuserData, displayInfo); n++;
-    XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-    displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
-      "executePopupMenu", args, n);
-
-  /* Create the execute-mode popup menu */
-    w = createExecuteMenu(displayInfo);
-    if(!w) {
-      /* Recreate menu without Execute item */
-	XtDestroyWidget(displayInfo->executePopupMenu);
-	n = 0;
-	XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES - 1); n++;
-	XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
-	XtSetArg(args[n], XmNbuttons, executePopupMenuButtons); n++;
-	XtSetArg(args[n], XmNsimpleCallback, executePopupMenuCallback); n++;
-	XtSetArg(args[n], XmNuserData, displayInfo); n++;
-	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-	displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
-	  "executePopupMenu", args, n);
-    }
-
-  /* Create the edit-mode popup menu */
-    displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
-    XtVaSetValues(displayInfo->editPopupMenu,
-      XmNtearOffModel, XmTEAR_OFF_DISABLED,
-      XmNuserData, displayInfo,
-      NULL);
-
-  /* Attach event handlers for menu activation */
-    XtAddEventHandler(displayInfo->shell,ButtonPressMask,False,
-      popupMenu,displayInfo);
-    XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
-      popdownMenu,displayInfo);
-
+    
   /* Append to end of the list */
     displayInfo->next = NULL;
     displayInfo->prev = displayInfoListTail;
     displayInfoListTail->next = displayInfo;
     displayInfoListTail = displayInfo;
-
+    
     return(displayInfo);
-}
-
-static Widget createExecuteMenu(DisplayInfo *displayInfo)
-{
-    Widget w;
-    static XmButtonType *types = (XmButtonType *)0;
-    static XmString *buttons = (XmString *)0;
-    static int nbuttons = 0;
-    int i, len;    
-    int n;
-    static int first = 1;
-    Arg args[8];
-    char *execPath, *string, *pitem, *pcolon, *psemi;
-
-  /* Return if we've already tried unsuccessfully */
-    if(!first && !nbuttons) return (Widget)0;
-
-  /* Get MEDM_EXECUTE_LIST the first time */
-    if(first) {
-	first = 0;
-	execPath = getenv("MEDM_EXEC_LIST");
-	if (!execPath || !execPath[0]) return (Widget)0;
-
-      /* Copy the environment string */
-	len = strlen(execPath);
-	string = (char *)calloc(len+1,sizeof(char));
-	strcpy(string,execPath);
-	
-      /* Count the colons to get the number of buttons */
-	pcolon = string;
-	nbuttons = 1;
-	while(pcolon = strchr(pcolon,':'))
-	  nbuttons++, pcolon++;
-	
-      /* Allocate memory */
-	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
-	buttons = (XmString *)calloc(nbuttons,sizeof(XmString));
-	execMenuCommandList = (char **)calloc(nbuttons,sizeof(char *));
-	  
-      /* Parse the items */
-	pitem = string;
-	for(i=0; i < nbuttons; i++) {
-	    pcolon = strchr(pitem,':');
-	    if(pcolon) *pcolon='\0';
-	  /* Text */
-	    psemi = strchr(pitem,';');
-	    if(!psemi) {
-		medmPrintf("\ncreateExecuteMenu: "
-		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
-		  "  %s\n",pitem);
-		free(types);
-		free(buttons);
-		free(string);
-		return (Widget)0;
-	    } else {
-		*psemi='\0';
-		buttons[i] = XmStringCreateLocalized(pitem);
-		types[i] = XmPUSHBUTTON;
-		pitem = psemi+1;
-		len = strlen(pitem);
-		execMenuCommandList[i]=(char *)calloc(len + 1,sizeof(char));
-		strcpy(execMenuCommandList[i],pitem);
-	    }
-	    pitem = pcolon+1;
-	}
-	free(string);
-    }
-
-  /* Create the menu */
-    n = 0;
-    XtSetArg(args[n], XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); n++;
-    XtSetArg(args[n], XmNbuttonCount, nbuttons); n++;
-    XtSetArg(args[n], XmNbuttonType, types); n++;
-    XtSetArg(args[n], XmNbuttons, buttons); n++;
-    XtSetArg(args[n], XmNsimpleCallback, executeMenuCallback); n++;
-    XtSetArg(args[n], XmNuserData, displayInfo); n++;
-    XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-    w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
-      "executePopupMenu", args, n);
-
-  /* Return */
-    return(w);
 }
 
 TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {

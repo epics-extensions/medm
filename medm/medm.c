@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
+#define DEBUG_EVENTS 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -362,7 +363,7 @@ static menuEntry_t editMenu[] = {
     NULL,
 };
 
-static menuEntry_t displayMenu[] = {
+static menuEntry_t editModeMenu[] = {
     { "Object",    &xmCascadeButtonGadgetClass, 'j', NULL, NULL, NULL,
       NULL,        NULL,                     editObjectMenu},
     { "Undo",      &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
@@ -2412,7 +2413,7 @@ Widget buildMenu(Widget parent,
     }
 
   /* now add the menu items */
-    for (i=0;items[i].label != NULL; i++) {
+    for (i=0; items[i].label != NULL; i++) {
       /* if subitems exist, create the pull-right menu by calling this
        * function recursively. Since the function returns a cascade
        * button, the widget returned is used..
@@ -2670,6 +2671,7 @@ main(int argc, char *argv[])
     Window medmHostWindow = (Window)0;
 
 #if DEBUG_DEFINITIONS
+
     printf("\n");
 #ifdef __EXTENSIONS__
     printf("__EXTENSIONS__= % d\n",__EXTENSIONS__);
@@ -2698,6 +2700,12 @@ main(int argc, char *argv[])
 #else      
     printf("_NO_LONGLONG is undefined\n");
 #endif
+#ifdef NeedFunctionPrototypes
+    printf("NeedFunctionPrototypes = %d\n",NeedFunctionPrototypes);
+#else      
+    printf("NeedFunctionPrototypes is undefined\n");
+#endif
+    
 #endif
 
   /* Initialize global variables */
@@ -3085,7 +3093,30 @@ main(int argc, char *argv[])
   /* Go into event loop
    *   Normally just XtAppMainLoop(appContext)
    *     but we want to handle remote requests from other MEDM's */
+  /* KE: Could have done this with XtAppMainLoop(appContext) and event
+   *   handler for ClientMessage events ? */
     while (True) {
+#if 0
+      /* KE: This causes the program to hang for Btn3 Press */
+	XPeekEvent(display, &event);
+	switch (event.type) {
+	case ButtonPress:
+	case ButtonRelease: {
+	    XButtonEvent bEvent = event.xbutton;
+	    
+	    printf("\nXLIB EVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
+	      "  Shift: %s  Ctrl: %s\n",
+	      (bEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
+	      bEvent.button, bEvent.window, bEvent.subwindow,
+	      bEvent.state&ShiftMask?"Yes":"No",
+	      bEvent.state&ControlMask?"Yes":"No");
+	    printf("  Send_event: %s  State: %x\n",
+	      bEvent.send_event?"True":"False",bEvent.state);
+	    
+	    break;
+	}
+	}
+#endif
 	XtAppNextEvent(appContext,&event);
 	switch (event.type) {
 	case ClientMessage:
@@ -3149,6 +3180,53 @@ main(int argc, char *argv[])
 		XtDispatchEvent(&event);
 	    }
 	    break;
+#if DEBUG_EVENTS
+	case ButtonPress:
+	case ButtonRelease: {
+	    XButtonEvent bEvent = event.xbutton;
+	    Widget w;
+	    Window win;
+	    int i = 0;
+
+	    printf("\nEVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
+	      "  Shift: %s  Ctrl: %s\n",
+	      (bEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
+	      bEvent.button, bEvent.window, bEvent.subwindow,
+	      bEvent.state&ShiftMask?"Yes":"No",
+	      bEvent.state&ControlMask?"Yes":"No");
+	    printf("  Send_event: %s  State: %x\n",
+	      bEvent.send_event?"True":"False",bEvent.state);
+
+	    if(bEvent.subwindow) win=bEvent.subwindow;
+	    else win=bEvent.window;
+	    w=XtWindowToWidget(display,win);
+	    printf("\nHierarchy:\n");
+	    while(1) {
+		printf("%4d %x",i++,win);
+		if(w == mainShell) {
+		    printf(" (mainShell)\n");
+		    break;
+		} else if(win == bEvent.window) {
+		    printf(" (window)\n");
+		} else if(win == bEvent.subwindow) {
+		    printf(" (subwindow)\n");
+		} else {
+		    printf("\n");
+		}
+		w=XtParent(w);
+		win=XtWindow(w);
+	    }
+
+#if 1
+	    printEventMasks(display, bEvent.window, "\n[window] ");
+	    printEventMasks(display, bEvent.subwindow, "\n[subwindow] ");
+#endif	    
+	    
+	    XtDispatchEvent(&event);
+	    break;
+	}
+	
+#endif	    
 	default:
 	  /* Handle all other event types the normal way */
 	    XtDispatchEvent(&event);
@@ -3156,9 +3234,23 @@ main(int argc, char *argv[])
     }
 }
 
-Widget createDisplayMenu(Widget parent) {
-    return buildMenu(parent,XmMENU_POPUP,
-      "displayMenu",'\0',displayMenu);
+void createEditModeMenu(DisplayInfo *displayInfo)
+{
+    Widget w;
+    
+    displayInfo->editPopupMenu = buildMenu(displayInfo->drawingArea,
+      XmMENU_POPUP, "editModeMenu",'\0',editModeMenu);
+    
+  /* Disable the tear off
+   *    KE: Unmanaging the tear-off is a kluge.  Without it, Motif leaves
+   *      the space where the dotted line was, not the first time, but after
+   *      returning from EDIT mode */
+    w = XmGetTearOffControl(displayInfo->editPopupMenu);
+    if(w) XtUnmanageChild(w);
+    XtVaSetValues(displayInfo->editPopupMenu,
+      XmNtearOffModel, XmTEAR_OFF_DISABLED,
+      XmNuserData, displayInfo,
+      NULL);
 }
 
 static void createMain()

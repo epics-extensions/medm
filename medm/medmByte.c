@@ -169,13 +169,8 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 		dlElement->widget = localWidget;
 
 	      /****** Record the widget that this structure belongs to */
-		if (displayInfo->traversalMode == DL_EXECUTE) {
-		  /****** Add in drag/drop translations */
-		    XtOverrideTranslations(localWidget,parsedTranslations);
-		} else if (displayInfo->traversalMode == DL_EDIT) {
-		  /* add button press handlers */
-		    XtAddEventHandler(localWidget,ButtonPressMask,False,
-		      handleButtonPress,(XtPointer)displayInfo);
+		if (displayInfo->traversalMode == DL_EDIT) {
+		    addCommonHandlers(localWidget, displayInfo);
 		    XtManageChild(localWidget);
 		}
     } else {
@@ -203,6 +198,7 @@ static void byteDraw(XtPointer cd) {
     if (pd->connected) {
 	if (pd->readAccess) {
 	    if (widget) {
+		addCommonHandlers(widget, pb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
 		return;

@@ -54,12 +54,18 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_EVENTS 0
+
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 
+/* Function prototypes */
+
+static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath);
+static void createExecuteModeMenu(DisplayInfo *displayInfo);
+static void displayGetValues(ResourceBundle *pRCB, DlElement *p);
 static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
-static void displayGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable displayDlDispatchTable = {
     createDlDisplay,
@@ -189,33 +195,31 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
  
 	displayInfo->drawingArea = XmCreateDrawingArea(displayInfo->shell,
 	  "displayDA",args,nargs);
-      /* add expose & resize  & input callbacks for drawingArea */
+      /* Add expose & resize  & input callbacks for drawingArea */
 	XtAddCallback(displayInfo->drawingArea,XmNexposeCallback,
-	  (XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
+	  drawingAreaCallback,(XtPointer)displayInfo);
 	XtAddCallback(displayInfo->drawingArea,XmNresizeCallback,
-	  (XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
+	  drawingAreaCallback,(XtPointer)displayInfo);
 	XtManageChild(displayInfo->drawingArea);
 	
-      /*
-       * and if in EDIT mode...
-       */
+      /* Branch depending on the mode */
 	if (displayInfo->traversalMode == DL_EDIT) {
+	  /* Create the edit-mode popup menu */
+	    createEditModeMenu(displayInfo);
+	    
 	  /* Handle input (arrow keys) */
 	    XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
-	      (XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
+	      drawingAreaCallback,(XtPointer)displayInfo);
 
 	  /* Handle button presses */
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-	      popupMenu,(XtPointer)displayInfo);
-	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-	      handleButtonPress,(XtPointer)displayInfo);
+	      handleEditButtonPress,(XtPointer)displayInfo);
 
 	  /* Handle enter windows */
 	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
-	      (XtEventHandler)handleEnterWindow,(XtPointer)displayInfo);
+	      handleEnterWindow,(XtPointer)displayInfo);
  
 	} else if (displayInfo->traversalMode == DL_EXECUTE) {
-	    
 	  /*
 	   *  MDA --- HACK to fix DND visuals problem with SUN server
 	   *    Note: This call is in here strictly to satisfy some defect in
@@ -225,9 +229,12 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
 	    XmDropSiteRegister(displayInfo->drawingArea,args,1);
 
+	  /* Create the execute-mode popup menu */
+	    createExecuteModeMenu(displayInfo);	    
+
 	  /* Handle button presses */
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-	      popupMenu,(XtPointer)displayInfo);
+	      handleExecuteButtonPress,(XtPointer)displayInfo);
 	    
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
@@ -257,6 +264,13 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     medmSetDisplayTitle(displayInfo);
     XtRealizeWidget(displayInfo->shell);
 
+#if DEBUG_EVENTS     
+    printEventMasks(display, XtWindow(displayInfo->shell),
+      "\n[displayInfo->shell] ");
+    printEventMasks(display, XtWindow(displayInfo->drawingArea),
+      "\n[displayInfo->drawingArea] ");
+#endif    
+
   /* If there is an external colormap file specification, parse/execute it now */
   /*   (Note that executeDlColormap also defines the drawingAreaPixmap) */
      if (strlen(dlDisplay->cmap) > (size_t)1)  {
@@ -273,6 +287,125 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	executeDlColormap(displayInfo,displayInfo->dlColormap);
     }
+}
+
+static void createExecuteModeMenu(DisplayInfo *displayInfo)
+{
+    Widget w;
+    int nargs;
+    Arg args[8];
+    static int first = 1, doExec = 0;
+    char *execPath = NULL;
+    
+  /* Get MEDM_EXECUTE_LIST only the first time to speed up creating
+   *   successive displays) */
+    if(first) {
+	first = 0;
+	execPath = getenv("MEDM_EXEC_LIST");
+	if(execPath && execPath[0]) doExec = 1;
+    }
+
+  /* Create the execute-mode popup menu */
+    nargs = 0;
+    if (doExec) {
+      /* Include the Execute item */
+	XtSetArg(args[nargs], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); nargs++;
+    } else {
+      /* Don't include the Execute item */
+	XtSetArg(args[nargs], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES - 1); nargs++;
+    }
+    XtSetArg(args[nargs], XmNbuttonType, executePopupMenuButtonType); nargs++;
+    XtSetArg(args[nargs], XmNbuttons, executePopupMenuButtons); nargs++;
+    XtSetArg(args[nargs], XmNsimpleCallback, executePopupMenuCallback); nargs++;
+    XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
+    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
+    displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->drawingArea,
+      "executePopupMenu", args, nargs);
+    
+  /* Create the execute menu */
+    if (doExec) {
+	w = createExecuteMenu(displayInfo, execPath);
+    }
+}
+
+static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
+{
+    Widget w;
+    static int first = 1;
+    static XmButtonType *types = (XmButtonType *)0;
+    static XmString *buttons = (XmString *)0;
+    static int nbuttons = 0;
+    int i, len;    
+    int nargs;
+    Arg args[8];
+    char *string, *pitem, *pcolon, *psemi;
+
+  /* Return if we've already tried unsuccessfully */
+    if(!first && !nbuttons) return (Widget)0;
+
+  /* Parse MEDM_EXEC_LIST, allocate space, and fill arrays first time */
+    if(first) {
+	first = 0;
+
+      /* Copy the environment string */
+	len = strlen(execPath);
+	string = (char *)calloc(len+1,sizeof(char));
+	strcpy(string,execPath);
+	
+      /* Count the colons to get the number of buttons */
+	pcolon = string;
+	nbuttons = 1;
+	while(pcolon = strchr(pcolon,':'))
+	  nbuttons++, pcolon++;
+	
+      /* Allocate memory */
+	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
+	buttons = (XmString *)calloc(nbuttons,sizeof(XmString));
+	execMenuCommandList = (char **)calloc(nbuttons,sizeof(char *));
+	  
+      /* Parse the items */
+	pitem = string;
+	for(i=0; i < nbuttons; i++) {
+	    pcolon = strchr(pitem,':');
+	    if(pcolon) *pcolon='\0';
+	  /* Text */
+	    psemi = strchr(pitem,';');
+	    if(!psemi) {
+		medmPrintf("\ncreateExecuteMenu: "
+		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
+		  "  %s\n",pitem);
+		free(types);
+		free(buttons);
+		free(string);
+		return (Widget)0;
+	    } else {
+		*psemi='\0';
+		buttons[i] = XmStringCreateLocalized(pitem);
+		types[i] = XmPUSHBUTTON;
+		pitem = psemi+1;
+		len = strlen(pitem);
+		execMenuCommandList[i]=(char *)calloc(len + 1,sizeof(char));
+		strcpy(execMenuCommandList[i],pitem);
+	    }
+	    pitem = pcolon+1;
+	}
+	free(string);
+    }
+
+  /* Create the menu */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); nargs++;
+    XtSetArg(args[nargs], XmNbuttonCount, nbuttons); nargs++;
+    XtSetArg(args[nargs], XmNbuttonType, types); nargs++;
+    XtSetArg(args[nargs], XmNbuttons, buttons); nargs++;
+    XtSetArg(args[nargs], XmNsimpleCallback, executeMenuCallback); nargs++;
+    XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
+    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
+    w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
+      "executePopupMenu", args, nargs);
+
+  /* Return */
+    return(w);
 }
 
 void writeDlDisplay(

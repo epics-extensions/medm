@@ -542,9 +542,6 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       displayInfo->drawingArea, args, n);
     dlElement->widget = localWidget;
 
-  /* Add in drag/drop translations */
-    XtOverrideTranslations(localWidget,parsedTranslations);
-
   /* Add destroy callback */
 #if XRT_VERSION > 2    
     XtAddCallback(localWidget,XmNdestroyCallback,
@@ -788,13 +785,8 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
       displayInfo->drawingArea, args, n);
     dlElement->widget = localWidget;
 
-  /* Add the KeyPress handler invoked in executeDlDisplay */
-    XtAddEventHandler(localWidget,KeyPressMask,False,
-      handleKeyPress,(XtPointer)displayInfo);
-
-  /* Add the ButtonPress handler */
-    XtAddEventHandler(localWidget,ButtonPressMask,False,
-      handleButtonPress,(XtPointer)displayInfo);
+  /* Add handlers */
+    addCommonHandlers(localWidget, displayInfo);
 
     XtManageChild(localWidget);
 }
@@ -2003,6 +1995,7 @@ void cartesianPlotDraw(XtPointer cd) {
 		    pcp->dirty2 = False;
 		    XtVaSetValues(widget,XtNxrtData2,pcp->hxrt2,NULL);
 		}
+		addCommonHandlers(widget, pcp->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
 	} else {
@@ -2015,8 +2008,9 @@ void cartesianPlotDraw(XtPointer cd) {
 	    draw3DQuestionMark(pcp->updateTask);
 	}
     } else {
-	if (widget)
-	  XtUnmanageChild(widget);
+	if (widget) {
+	    XtUnmanageChild(widget);
+	}
 	drawWhiteRectangle(pcp->updateTask);
     }
 }

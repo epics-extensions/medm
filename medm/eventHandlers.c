@@ -55,9 +55,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_EVENTS 0
+#define DEBUG_SEND_EVENT 0
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_HIGHLIGHTS 0
-#define DEBUG_POPUP 1
+#define DEBUG_POPUP 0
+#define DEBUG_EDIT_POPUP 0
 #define DEBUG_PVINFO 0
 #include "medm.h"
 #include <X11/IntrinsicP.h>
@@ -66,12 +68,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #if XRT_VERSION > 2
 #include <XrtGraphProp.h>
 #endif
-
-/* DEBUG */
-#if DEBUG_CARTESIAN_PLOT
-#include "medmCartesianPlot.h"
-#endif
-/* DEBUG */
 
 extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
@@ -96,18 +92,23 @@ int initEventHandlers(void)
  */
 
 #ifdef __cplusplus
-void popupMenu(Widget, XtPointer cd, XEvent *event, Boolean *)
+void handleExecuteButtonPress(Widget, XtPointer cd, XEvent *event, Boolean *)
 #else
-void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
+void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
     XButtonEvent *xEvent = (XButtonEvent *)event;
     Widget widget;
-    DlElement *element;
+    DlElement *pE;
+    Position x, y;
 
 #if DEBUG_POPUP
-    printf("\npopupMenu: Entered\n");
+    printf("\nhandleExecuteButtonPress: Entered\n");
+    printf("  Window: %x SubWindow: %x\n",
+      xEvent->window,xEvent->subwindow);
+    printf("  shell Window: %x drawingArea Window: %x\n",
+      XtWindow(displayInfo->shell),XtWindow(displayInfo->drawingArea));
 #endif    
 
     if (displayInfo != currentDisplayInfo) {
@@ -115,6 +116,8 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 	currentColormap = currentDisplayInfo->colormap;
 	currentColormapSize = currentDisplayInfo->dlColormapSize;
     }
+  /* KE: Shouldn't be called in EDIT mode in the first place */
+    if (globalDisplayListTraversalMode == DL_EDIT) return;
 
 /* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(displayInfo->shell));
@@ -123,182 +126,101 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 
     if (xEvent->button == Button3) {
       /* Button 3 */
-	if (globalDisplayListTraversalMode == DL_EDIT) {
-	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
-	    lastEvent = *((XButtonPressedEvent *)event);
-	    XmMenuPosition(currentDisplayInfo->editPopupMenu,
-	      (XButtonPressedEvent *)event);
-	    XtManageChild(currentDisplayInfo->editPopupMenu);
-#if 0	    
-	  /* KE: Are these necessary ? */
-	    XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
-	    XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
-#endif	    
-	    
-	} else {
-	  /*
-	   * In EXECUTE mode, Btn3 can also mean things based on where it occurs,
-	   *   hence, lookup to see if Btn3 occured in an object that cares
-	   */
-	    element = findSmallestTouchedElement(displayInfo->dlElementList,
-	      (Position)xEvent->x, (Position)xEvent->y);
-	    if (element) {
+      /* Lookup to see if Btn3 occured in an object that cares */
+	x = xEvent->x;
+	y = xEvent->y;
+	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
+	  &x, &y);
+	if (pE) {
 #if DEBUG_PVINFO
-		printf("popupMenu: Element: %s\n",elementType(element->type));
-		printf("  xEvent->x: %4d\n",xEvent->x);
-		printf("  xEvent->y: %4d\n",xEvent->y);
+	    printf("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
+	    printf("  xEvent->x: %4d\n",xEvent->x);
+	    printf("  xEvent->y: %4d\n",xEvent->y);
 #endif    
-		switch(element->type) {
-		case DL_Valuator:
-		    if (widget = element->widget) {
-			popupValuatorKeyboardEntry(widget,displayInfo,event);
-			XUngrabPointer(display,CurrentTime);
-			XFlush(display);
-		    }
-		    break;
-
-		case DL_CartesianPlot:
-		    if (widget = element->widget) {
-			if (xEvent->state & ControlMask) {
-#if XRT_VERSION > 2
-			  /* Bring up XRT Property Editor */
-#if 0			    
-			  /* KE: Doesn't seem to help */
-			    XrtPopdownPropertyEditor(widget,True);
-#endif			    
-			    XrtUpdatePropertyEditor(widget);
-			    XrtPopupPropertyEditor(widget,
-			      "XRT Property Editor",True);
-#endif			    
-			} else {
-			  /* Bring up plot axis data dialog */
-			  /* update globalResourceBundle with this element's info */
-			    executeTimeCartesianPlotWidget = widget;
-			    updateGlobalResourceBundleFromElement(element);
-			    if (!cartesianPlotAxisS) {
-				cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
-			    } else {
-				XtSetSensitive(cartesianPlotAxisS,True);
-			    }
-			    
-			  /* update cartesian plot axis data from globalResourceBundle */
-		      /* KE:  Actually from XtGetValues */
-			    updateCartesianPlotAxisDialogFromWidget(widget);
-			    
-			    XtManageChild(cpAxisForm);
-			    XtPopup(cartesianPlotAxisS,XtGrabNone);
-			}
-
-#if DEBUG_CARTESIAN_PLOT
-		      /* Also requires #include "medmCartesianPlot.h" */
-			{
-			    Arg args[20];
-			    int n=0;
-			    
-			    Dimension footerHeight;
-			    Dimension footerWidth;
-			    Dimension footerBorderWidth;
-			    Dimension borderWidth;
-			    Dimension shadowThickness;
-			    Dimension highlightThickness;
-			    Dimension headerBorderWidth;
-			    Dimension headerHeight;
-			    Dimension headerWidth;
-			    Dimension graphBorderWidth;
-			    Dimension graphWidth;
-			    Dimension graphHeight;
-			    Dimension height;
-			    Dimension width;
-			    Dimension legendBorderWidth;
-			    Dimension legendHeight;
-			    Dimension legendWidth;
-			    unsigned char unitType;
-			    time_t timeBase;
-
-
-			    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
-			    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
-			    XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
-			    XtSetArg(args[n],XmNwidth,&width); n++;
-			    XtSetArg(args[n],XmNheight,&height); n++;
-			    XtSetArg(args[n],XtNxrtGraphBorderWidth,&graphBorderWidth); n++;
-			    XtSetArg(args[n],XtNxrtGraphWidth,&graphWidth); n++;
-			    XtSetArg(args[n],XtNxrtGraphHeight,&graphHeight); n++;
-			    XtSetArg(args[n],XtNxrtHeaderWidth,&headerWidth); n++;
-			    XtSetArg(args[n],XtNxrtHeaderHeight,&headerHeight); n++;
-			    XtSetArg(args[n],XtNxrtHeaderBorderWidth,&headerBorderWidth); n++;
-			    XtSetArg(args[n],XmNhighlightThickness,&highlightThickness); n++;
-			    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
-			    XtSetArg(args[n],XmNborderWidth,&borderWidth); n++;
-			    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
-			    XtSetArg(args[n],XtNxrtFooterHeight,&footerHeight); n++;
-			    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
-			    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
-			    XtSetArg(args[n],XmNunitType,&unitType); n++;
-			    XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
-			    XtGetValues(widget,args,n);
-			      
-			    printf("width: %d\n",width);
-			    printf("height: %d\n",height);
-			    printf("highlightThickness: %d\n",highlightThickness);
-			    printf("shadowThickness: %d\n",shadowThickness);
-			    printf("borderWidth: %d\n",borderWidth);
-			    printf("graphBorderWidth: %d\n",graphBorderWidth);
-			    printf("graphWidth: %d\n",graphWidth);
-			    printf("graphHeight: %d\n",graphHeight);
-			    printf("headerBorderWidth: %d\n",headerBorderWidth);
-			    printf("headerWidth: %d\n",headerWidth);
-			    printf("headerHeight: %d\n",headerHeight);
-			    printf("footerWidth: %d\n",footerBorderWidth);
-			    printf("footerWidth: %d\n",footerWidth);
-			    printf("footerHeight: %d\n",footerHeight);
-			    printf("legendBorderWidth: %d\n",legendBorderWidth);
-			    printf("legendWidth: %d\n",legendWidth);
-			    printf("legendHeight: %d\n",legendHeight);
-			    printf("unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
-			      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
-			    printf("timeBase: %d\n",timeBase);
-			}
-#endif			
-		      /* End DEBUG */
-			
-			XUngrabPointer(display,CurrentTime);
-			XFlush(display);
-		    }
-		    break;
-		default:
-		  /* Popup execute-mode popup menu */
-		    XmMenuPosition(displayInfo->executePopupMenu,
-		      (XButtonPressedEvent *)event);
-		    XtManageChild(displayInfo->executePopupMenu);
-#if 0		    
-		  /* KE: Are these necessary ? */
-		    XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
-		    XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
-#endif		    
-		    break;
+	    switch(pE->type) {
+	    case DL_Valuator:
+		if (widget = pE->widget) {
+		    popupValuatorKeyboardEntry(widget,displayInfo,event);
+		    XUngrabPointer(display,CurrentTime);
+		    XFlush(display);
 		}
-	    } else {
+		break;
+		
+	    case DL_CartesianPlot:
+		if (widget = pE->widget) {
+		    if (xEvent->state & ControlMask) {
+#if XRT_VERSION > 2
+		      /* Bring up XRT Property Editor */
+#if 0			    
+		      /* KE: Doesn't seem to help */
+			XrtPopdownPropertyEditor(widget,True);
+#endif			    
+			XrtUpdatePropertyEditor(widget);
+			XrtPopupPropertyEditor(widget,
+			  "XRT Property Editor",True);
+#endif			    
+		    } else {
+		      /* Bring up plot axis data dialog */
+		      /* update globalResourceBundle with this element's info */
+			executeTimeCartesianPlotWidget = widget;
+			updateGlobalResourceBundleFromElement(pE);
+			if (!cartesianPlotAxisS) {
+			    cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
+			} else {
+			    XtSetSensitive(cartesianPlotAxisS,True);
+			}
+			
+		      /* update cartesian plot axis data from globalResourceBundle */
+		      /* KE:  Actually from XtGetValues */
+			updateCartesianPlotAxisDialogFromWidget(widget);
+			
+			XtManageChild(cpAxisForm);
+			XtPopup(cartesianPlotAxisS,XtGrabNone);
+		    }
+#if DEBUG_CARTESIAN_PLOT
+		    dumpCartesianPlot();
+#endif			
+		  /* End DEBUG */
+		    
+		    XUngrabPointer(display,CurrentTime);
+		    XFlush(display);
+		}
+		break;
+	    default:
 	      /* Popup execute-mode popup menu */
 		XmMenuPosition(displayInfo->executePopupMenu,
 		  (XButtonPressedEvent *)event);
 		XtManageChild(displayInfo->executePopupMenu);
+#if 0		    
+	      /* KE: Are these necessary ? */
+		XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
+		XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
+#endif		    
+		break;
 	    }
+	} else {
+	  /* Popup execute-mode popup menu */
+	    XmMenuPosition(displayInfo->executePopupMenu,
+	      (XButtonPressedEvent *)event);
+	    XtManageChild(displayInfo->executePopupMenu);
 	}
-    } else if (xEvent->button == Button1 &&
-      globalDisplayListTraversalMode == DL_EXECUTE) {
-      /* Button 1 in EXECUTE Mode */
-	if (element = findSmallestTouchedElement(displayInfo->dlElementList,
-	  (Position)xEvent->x, (Position)xEvent->y)) {
-	    if (element->type == DL_RelatedDisplay &&
-	      element->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+    } else if (xEvent->button == Button1) {
+      /* Button 1 */
+	x = xEvent->x;
+	y = xEvent->y;
+	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
+	  &x, &y);
+	if (pE) {
+	    if (pE->type == DL_RelatedDisplay &&
+	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
 		relatedDisplayCreateNewDisplay(displayInfo,
-		  &(element->structure.relatedDisplay->display[0]));
+		  &(pE->structure.relatedDisplay->display[0]));
 	    }
 	}
     }
 }
 
+#if 0
 #ifdef __cplusplus
 void popdownMenu(Widget, XtPointer cd, XEvent *event, Boolean *)
 #else
@@ -323,6 +245,7 @@ void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 	}
     }
 }
+#endif
 
 #ifdef __cplusplus
 void handleEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
@@ -335,10 +258,10 @@ void handleEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 
 
 #ifdef __cplusplus
-void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
+void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
   Boolean *)
 #else
-void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
+void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
   Boolean *continueToDispatch)
 #endif
 {
@@ -356,10 +279,10 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
     DlElement *dlElement;
 
 #if DEBUG_POPUP
-    printf("\nhandleButtonPress: Entered\n");
+    printf("\nhandleEditButtonPress: Entered\n");
 #endif    
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n>>> handleButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
+    fprintf(stderr,"\n>>> handleEditButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
       currentActionType == SELECT_ACTION?"SELECT":"CREATE",xEvent->button,
       xEvent->state&ShiftMask,xEvent->state&ControlMask);
 #endif    
@@ -437,9 +360,9 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    int found = False;
 		    
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
+		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
 		    dumpDlElementList(tmpDlElementList);
-		    fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1] displayInfo->selectedDlElementList:\n");
+		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] displayInfo->selectedDlElementList:\n");
 		    dumpDlElementList(displayInfo->selectedDlElementList);
 		    fprintf(stderr,"\n");
 #endif
@@ -516,7 +439,7 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    }
 		}
 #if DEBUG_EVENTS > 1
-		fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1 Done] displayInfo->selectedDlElementList :\n");
+		fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] displayInfo->selectedDlElementList :\n");
 		dumpDlElementList(displayInfo->selectedDlElementList);
 #endif
 	    } else if (xEvent->state & ShiftMask) {
@@ -597,7 +520,7 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    DlElement *pES = FirstDlElement(displayInfo->selectedDlElementList);
 
 #if DEBUG_EVENTS > 1
-			    printf("\nhandleButtonPress: Btn1\n");
+			    printf("\nhandleEditButtonPress: Btn1\n");
 			    printf("Selected: count=%d first=%x struct=%x\n",
 			      displayInfo->selectedDlElementList->count,
 			      FirstDlElement(displayInfo->selectedDlElementList),
@@ -635,13 +558,30 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	  /* SELECT_ACTION Btn2 */
 	    if (xEvent->state & ShiftMask) {
 	      /* SELECT_ACTION Shift-Btn2 */
+#if DEBUG_SEND_EVENT
+		XButtonEvent *bEvent;
+		Status status;
+		
+		bEvent=(XButtonEvent *)calloc(1,sizeof(XButtonEvent));
+		
+		bEvent->type=ButtonPress;
+		bEvent->button = 3;
+		bEvent->window = XtWindow(cdi->drawingArea);
+		
+		status = XSendEvent(display, XtWindow(cdi->drawingArea), True,
+		  ButtonPressMask, (XEvent *)bEvent);
+		if(status != Success) {
+		    printf("\nhandleEditButtonPress: XSendEvent failed\n");
+		}
+		free(bEvent);
+#endif
 		XBell(display,50);
 		break;
 	    }
 	    findSelectedElements(displayInfo->dlElementList,
 	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
 	    if (IsEmpty(tmpDlElementList)) break;
-
+	    
 	    if (xEvent->state & ControlMask) {
 	      /* SELECT_ACTION Ctrl-Btn2 */
 #if DEBUG_EVENTS
@@ -715,7 +655,7 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  XmNheight,&daHeight,
 		  NULL);
 #if DEBUG_EVENTS
-		fprintf(stderr,"\n[handleButtonPress: SELECT Btn2] tmpDlElementList :\n");
+		fprintf(stderr,"\n[handleEditButtonPress: SELECT Btn2] tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
 		saveUndoInfo(cdi);
@@ -785,10 +725,59 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    
 	case Button3:
 	  /* SELECT_ACTION Btn3 */
+#if DEBUG_EVENTS
+	    fprintf(stderr,"SELECT_ACTION Btn3\n");
+#endif
+	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+	    lastEvent = *((XButtonPressedEvent *)event);
+	    XmMenuPosition(currentDisplayInfo->editPopupMenu,
+	      (XButtonPressedEvent *)event);
+	    XtManageChild(currentDisplayInfo->editPopupMenu);
+#if DEBUG_EDIT_POPUP
+	    {
+		Dimension height, width;
+		Position x, y;
+		WidgetList children;
+		Cardinal numChildren;
+		Boolean resizeHeight, resizeWidth, adjustLast;
+		int i;
+		
+		XtVaGetValues(currentDisplayInfo->editPopupMenu,
+		  XmNheight,&height,
+		  XmNwidth,&width,
+		  XmNresizeHeight,&resizeHeight,
+		  XmNresizeWidth,&resizeWidth,
+		  XmNadjustLast,&adjustLast,
+		  XmNchildren,&children,
+		  XmNnumChildren,&numChildren,
+		  NULL);
+		printf("\ncurrentDisplayInfo->editPopupMenu: "
+		  "height: %d   width: %d  children: %d\n"
+		  "  resizeHeight: %d   resizeWidth: %d   adjustLast: %d\n",
+		  height, width, (int)numChildren,
+		  resizeHeight, resizeWidth, adjustLast);
+		for(i=0; i < (int)numChildren; i++) {
+		    XtVaGetValues(children[i],
+		      XmNheight, &height,
+		      XmNwidth, &width,
+		      XmNx, &x,
+		      XmNy, &y,
+		      NULL);
+		    printf("  %2d  %x  height: %2d   width: %3d   x: %d   y: %3d (%3d)\n",
+		      i, children[i], height, width, x, y, y-9);
+		}
+	    }
+#endif	    
+#if 0	    
+	  /* KE: Are these necessary ? */
+	    XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
+	    XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
+#endif	    
+	    
 	    break;
 	}
 #if DEBUG_EVENTS
-	fprintf(stderr,"\n[handleButtonPress: SELECT done] selectedDlElement list :\n");
+	fprintf(stderr,"\n[handleEditButtonPress: SELECT done] selectedDlElement list :\n");
 	dumpDlElementList(displayInfo->selectedDlElementList);
 #endif
     } else if (currentActionType == CREATE_ACTION) {
@@ -869,11 +858,11 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    
 	case Button3:
 	  /* CREATE_ACTION Btn3 */
-	  /* Handled in popupMenu/popdownMenu handler */
+	    XBell(display,50);
 	    break;
 	}
 #if DEBUG_EVENTS
-	fprintf(stderr,"\n[handleButtonPress: CREATE done] selectedDLElement list :\n");
+	fprintf(stderr,"\n[handleEditButtonPress: CREATE done] selectedDLElement list :\n");
 	dumpDlElementList(displayInfo->selectedDlElementList);
 #endif
       /* Clean up */
@@ -885,6 +874,80 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	setActionToSelect();
       /* Set the resource palette according to currentElementType */
 	setResourcePaletteEntries();
+    }
+}
+
+void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *ctd)
+{
+    DisplayInfo *displayInfo = (DisplayInfo *)clientData;
+    XKeyEvent *key = (XKeyEvent *)event;
+    Modifiers modifiers;
+    KeySym keysym;
+
+#if DEBUG_EVENTS
+    fprintf(stderr,"\n>>> handleEditKeyPress: %s Type: %d "
+      "Shift: %d Ctrl: %d\n"
+      "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
+      currentActionType == SELECT_ACTION?"SELECT":"CREATE",key->type,
+      key->state&ShiftMask,key->state&ControlMask,
+      KeyPress,KeyRelease,ButtonPress,ButtonRelease);     /* In X.h */
+    fprintf(stderr,"\n[handleEditKeyPress] displayInfo->selectedDlElementList:\n");
+    dumpDlElementList(displayInfo->selectedDlElementList);
+/*     fprintf(stderr,"\n[handleEditKeyPress] " */
+/*       "currentDisplayInfo->selectedDlElementList:\n"); */
+/*     dumpDlElementList(currentDisplayInfo->selectedDlElementList); */
+    fprintf(stderr,"\n");
+
+#endif
+  /* Explicitly set continue to dispatch to avoid warnings */
+    *ctd=True;
+  /* Left/Right/Up/Down for movement of selected elements */
+    if (currentActionType == SELECT_ACTION && displayInfo &&
+      !IsEmpty(displayInfo->selectedDlElementList)) {
+      /* Handle key press */	    
+	if (key->type == KeyPress) {
+	    int interested=1;
+	    int ctrl;
+	    
+	  /* Determine if Ctrl was pressed */
+	    ctrl=key->state&ControlMask;
+	  /* Branch depending on keysym */
+	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
+	      &modifiers,&keysym);
+#if DEBUG_EVENTS
+	    fprintf(stderr,"handleEditKeyPress: keycode=%d keysym=%d ctrl=%d\n",
+	      key->keycode,keysym,ctrl);
+#endif
+	    switch (keysym) {
+	    case osfXK_Left:
+		if(ctrl) updateResizedElements(1,0,0,0);
+		else updateDraggedElements(1,0,0,0);
+		break;
+	    case osfXK_Right:
+		if(ctrl) updateResizedElements(0,0,1,0);
+		else updateDraggedElements(0,0,1,0);
+		break;
+	    case osfXK_Up:
+		if(ctrl) updateResizedElements(0,1,0,0);
+		else updateDraggedElements(0,1,0,0);
+		break;
+	    case osfXK_Down:
+		if(ctrl) updateResizedElements(0,0,0,1);
+		else updateDraggedElements(0,0,0,1);
+		break;
+	    default:
+		interested=0;
+		break;
+	    }
+	    if(interested) {
+		if (displayInfo->selectedDlElementList->count == 1) {
+		    setResourcePaletteEntries();
+		}
+		if (displayInfo->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(displayInfo);
+		}
+	    }
+	}
     }
 }
 
@@ -1160,4 +1223,23 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
       x, y, width, height);
     XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
       x, y, width, height);
+}
+
+void addCommonHandlers(Widget w, DisplayInfo *displayInfo)
+{
+  /* Switch depending on mode */
+    switch (displayInfo->traversalMode) {
+    case DL_EDIT :
+	XtUninstallTranslations(w);
+	XtAddEventHandler(w, KeyPressMask, False, handleEditKeyPress,
+	  (XtPointer)displayInfo);
+	XtAddEventHandler(w, ButtonPressMask, False, handleEditButtonPress,
+	  (XtPointer)displayInfo);
+	break;
+    case DL_EXECUTE :
+	XtOverrideTranslations(w, parsedTranslations);
+	XtAddEventHandler(w, ButtonPressMask, False, handleExecuteButtonPress,
+	  (XtPointer)displayInfo);
+	break;
+    }
 }

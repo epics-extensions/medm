@@ -202,9 +202,10 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     XBell(display,50);
 }
 
-void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
-  XmDrawingAreaCallbackStruct *call_data)
+void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 {
+    DisplayInfo *displayInfo = (DisplayInfo *)clientData;
+    XmDrawingAreaCallbackStruct *cbs = (XmDrawingAreaCallbackStruct *)callData;    
     int x, y;
     unsigned int uiw, uih;
     Dimension width, height, goodWidth, goodHeight, oldWidth, oldHeight;
@@ -221,18 +222,18 @@ void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
     int rootX,rootY,winX,winY;
     unsigned int mask;
 
-#if DEBUG_EVENTS
+#if DEBUG_EVENTS > 1
 	fprintf(stderr,"\ndrawingAreaCallback(Entered): \n");
 #endif
-    if (call_data->reason == XmCR_EXPOSE) {
-#if DEBUG_EVENTS
+    if (cbs->reason == XmCR_EXPOSE) {
+      /* EXPOSE */
+#if DEBUG_EVENTS > 1
 	fprintf(stderr,"drawingAreaCallback(XmCR_EXPOSE): \n");
 #endif
-      /* EXPOSE */
-	x = call_data->event->xexpose.x;
-	y = call_data->event->xexpose.y;
-	uiw = call_data->event->xexpose.width;
-	uih = call_data->event->xexpose.height;
+	x = cbs->event->xexpose.x;
+	y = cbs->event->xexpose.y;
+	uiw = cbs->event->xexpose.width;
+	uih = cbs->event->xexpose.height;
 
 	if (displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
 	  displayInfo->pixmapGC != (GC)NULL && 
@@ -278,11 +279,11 @@ void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 	    }
 	}
 	return;
-    } else if (call_data->reason == XmCR_RESIZE) {
-#if DEBUG_EVENTS
+    } else if (cbs->reason == XmCR_RESIZE) {
+      /* RESIZE */
+#if DEBUG_EVENTS > 1
 	fprintf(stderr,"drawingAreaCallback(XmCR_RESIZE): \n");
 #endif
-      /* RESIZE */
 	XtSetArg(args[0],XmNwidth,&width);
 	XtSetArg(args[1],XmNheight,&height);
 	XtSetArg(args[2],XmNuserData,&userData);
@@ -353,87 +354,36 @@ void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 #endif
 	}
     }
-    else if (call_data->reason == XmCR_INPUT) {
+#if 0    
+    else if (cbs->reason == XmCR_INPUT) {
       /* INPUT */
-	Boolean ctd=True;
+	XEvent *xEvent = (XEvent *)cbs->event;
+	Boolean ctd = True;
 	
 #if DEBUG_EVENTS
-	fprintf(stderr,"drawingAreaCallback(XmCR_INPUT): \n");
+	fprintf(stderr,"\ndrawingAreaCallback(XmCR_INPUT): \n");
+	switch(xEvent->xany.type) {
+	case ButtonPress:
+	    printf("  ButtonPress\n");
+	    break;
+	case ButtonRelease:
+	    printf("  ButtonRelease\n");
+	    break;
+	case KeyPress:
+	    printf("  KeyPress\n");
+	    break;
+	case KeyRelease:
+	    printf("  KeyRelease\n");
+	    break;
+	}
 #endif
-      /* Call the keypress handler */
-	handleKeyPress(w,(XtPointer)displayInfo,
-	  (XEvent *)&call_data->event->xkey,&ctd);
-    }
-}
-
-void handleKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *ctd)
-{
-    DisplayInfo *displayInfo = (DisplayInfo *)clientData;
-    XKeyEvent *key = (XKeyEvent *)event;
-    Modifiers modifiers;
-    KeySym keysym;
-
-#if DEBUG_EVENTS
-    fprintf(stderr,"\n>>> handleKeyPress: %s Type: %d "
-      "[KeyPress=%d,KeyRelease=%d] Shift: %d Ctrl: %d\n",
-      currentActionType == SELECT_ACTION?"SELECT":"CREATE",key->type,
-      KeyPress,KeyRelease,key->state&ShiftMask,key->state&ControlMask);
-    fprintf(stderr,"\n[handleKeyPress] displayInfo->selectedDlElementList:\n");
-    dumpDlElementList(displayInfo->selectedDlElementList);
-/*     fprintf(stderr,"\n[handleKeyPress] " */
-/*       "currentDisplayInfo->selectedDlElementList:\n"); */
-/*     dumpDlElementList(currentDisplayInfo->selectedDlElementList); */
-    fprintf(stderr,"\n");
-
-#endif
-  /* Explicitly set continue to dispatch to avoid warnings */
-    *ctd=True;
-  /* Left/Right/Up/Down for movement of selected elements */
-    if (currentActionType == SELECT_ACTION && displayInfo &&
-      !IsEmpty(displayInfo->selectedDlElementList)) {
-      /* Handle key press */	    
-	if (key->type == KeyPress) {
-	    int interested=1;
-	    int ctrl;
-	    
-	  /* Determine if Ctrl was pressed */
-	    ctrl=key->state&ControlMask;
-	  /* Branch depending on keysym */
-	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
-	      &modifiers,&keysym);
-#if DEBUG_EVENTS
-	    fprintf(stderr,"handleKeyPress: keycode=%d keysym=%d ctrl=%d\n",
-	      key->keycode,keysym,ctrl);
-#endif
-	    switch (keysym) {
-	    case osfXK_Left:
-		if(ctrl) updateResizedElements(1,0,0,0);
-		else updateDraggedElements(1,0,0,0);
-		break;
-	    case osfXK_Right:
-		if(ctrl) updateResizedElements(0,0,1,0);
-		else updateDraggedElements(0,0,1,0);
-		break;
-	    case osfXK_Up:
-		if(ctrl) updateResizedElements(0,1,0,0);
-		else updateDraggedElements(0,1,0,0);
-		break;
-	    case osfXK_Down:
-		if(ctrl) updateResizedElements(0,0,0,1);
-		else updateDraggedElements(0,0,0,1);
-		break;
-	    default:
-		interested=0;
-		break;
-	    }
-	    if(interested) {
-		if (displayInfo->selectedDlElementList->count == 1) {
-		    setResourcePaletteEntries();
-		}
-		if (displayInfo->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(displayInfo);
-		}
-	    }
+	switch(xEvent->xany.type) {
+	case KeyPress:
+	  /* Call the keypress handler */
+	    handleEditKeyPress(w,(XtPointer)displayInfo,
+	      (XEvent *)&cbs->event->xkey,&ctd);
+	    break;
 	}
     }
+#endif    
 }

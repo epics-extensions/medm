@@ -205,15 +205,9 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtUnmanageChild(XmOptionLabelGadget(localWidget));
 	dlElement->widget = localWidget;
 
-      /* Remove all translations if in edit mode */
-	XtUninstallTranslations(localWidget);
-      /* Add back the KeyPress handler invoked in executeDlDisplay */
-	XtAddEventHandler(localWidget,KeyPressMask,False,
-	  handleKeyPress,(XtPointer)displayInfo);
-      /* Add the ButtonPress handler */
-	XtAddEventHandler(localWidget,ButtonPressMask,False,
-	  handleButtonPress,(XtPointer)displayInfo);
-
+      /* Add handlers */
+	addCommonHandlers(localWidget, displayInfo);
+	
 	XtManageChild(localWidget);
 }
 
@@ -309,11 +303,6 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	/* unmanage the option label gadget, manage the option menu */
 	  XtUnmanageChild(XmOptionLabelGadget(pm->dlElement->widget));
 	  XtManageChild(pm->dlElement->widget);
-
-	/* add in drag/drop translations */
-	  XtOverrideTranslations(pm->dlElement->widget,parsedTranslations);
-	  updateTaskMarkUpdate(pm->updateTask);
-
 }
 
 static void menuUpdateValueCb(XtPointer cd) {
@@ -328,9 +317,11 @@ static void menuDraw(XtPointer cd) {
     DlMenu *dlMenu = pm->dlElement->structure.menu;
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if ((widget) && !XtIsManaged(widget))
-	      XtManageChild(widget);
- 
+	    if ((widget) && !XtIsManaged(widget)) {
+		addCommonHandlers(widget, pm->updateTask->displayInfo);
+		XtManageChild(widget);
+	    }
+	    
 	    if (pd->precision < 0) return;
 
 	    if (pd->dataType == DBF_ENUM) {

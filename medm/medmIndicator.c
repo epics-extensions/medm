@@ -178,37 +178,25 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 
 	XtSetArg(args[n],XcNindicatorForeground,(Pixel)
 	  displayInfo->colormap[dlIndicator->monitor.clr]); n++;
-	  XtSetArg(args[n],XcNindicatorBackground,(Pixel)
-	    displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
-	    XtSetArg(args[n],XtNbackground,(Pixel)
-	      displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
-	      XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-		displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
-	      /*
-	       * add the pointer to the Channel structure as userData 
-	       *  to widget
-	       */
-		XtSetArg(args[n],XcNuserData,(XtPointer)pi); n++;
-		localWidget = XtCreateWidget("indicator", 
-		  xcIndicatorWidgetClass, displayInfo->drawingArea, args, n);
-		dlElement->widget = localWidget;
-
-		if (displayInfo->traversalMode == DL_EXECUTE) {
-
-		  /* record the widget that this structure belongs to */
-		    dlElement->widget = localWidget;
-
-		  /* add in drag/drop translations */
-		    XtOverrideTranslations(localWidget,parsedTranslations);
-
-		} else if (displayInfo->traversalMode == DL_EDIT) {
-
-		  /* add button press handlers */
-		    XtAddEventHandler(localWidget,ButtonPressMask,False,
-		      handleButtonPress,(XtPointer)displayInfo);
-
-		    XtManageChild(localWidget);
-		}
+	XtSetArg(args[n],XcNindicatorBackground,(Pixel)
+	  displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
+	XtSetArg(args[n],XtNbackground,(Pixel)
+	  displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
+	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
+	  displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
+      /*
+       * add the pointer to the Channel structure as userData 
+       *  to widget
+       */
+	XtSetArg(args[n],XcNuserData,(XtPointer)pi); n++;
+	localWidget = XtCreateWidget("indicator", 
+	  xcIndicatorWidgetClass, displayInfo->drawingArea, args, n);
+	dlElement->widget = localWidget;
+	
+	if (displayInfo->traversalMode == DL_EDIT) {
+	    addCommonHandlers(localWidget, displayInfo);
+	    XtManageChild(localWidget);
+	}
     } else {
 	DlObject *po = &(dlElement->structure.indicator->object);
 	XtVaSetValues(dlElement->widget,
@@ -229,10 +217,12 @@ static void indicatorDraw(XtPointer cd) {
 
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget)
-	      XtManageChild(widget);
-	    else
-	      return;
+	    if (widget) {
+		addCommonHandlers(widget, pi->updateTask->displayInfo);
+		XtManageChild(widget);
+	    } else {
+		return;
+	    }
 	    val.fval = (float) pd->value;
 	    XcIndUpdateValue(widget,&val);
 	    switch (dlIndicator->clrmod) {

@@ -160,15 +160,9 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
       dlMessageButton->label,
       (XtPointer) displayInfo);
 
-  /* Remove all translations if in edit mode */
-    XtUninstallTranslations(dlElement->widget);
-  /* Add back the KeyPress handler invoked in executeDlDisplay */
-    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
-      handleKeyPress,(XtPointer)displayInfo);
-  /* Add the ButtonPress handler */
-    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
-      handleButtonPress,(XtPointer)displayInfo);
-
+  /* Add handlers */
+    addCommonHandlers(dlElement->widget, displayInfo);
+    
     XtManageChild(dlElement->widget);
 }
 
@@ -208,10 +202,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       dlMessageButton->label,
       (XtPointer) displayInfo);
 
-  /* add in drag/drop translations */
-    XtOverrideTranslations(dlElement->widget,parsedTranslations);
-
-  /* add the callbacks for update */
+  /* Add the callbacks for update */
     XtAddCallback(dlElement->widget,XmNarmCallback,messageButtonValueChangedCb,
       (XtPointer)pmb);
     XtAddCallback(dlElement->widget,XmNdisarmCallback,messageButtonValueChangedCb,
@@ -307,10 +298,12 @@ static void messageButtonDraw(XtPointer cd) {
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
     if (pd->connected) {
 	if (pd->readAccess) {
-	    if (widget)
-	      XtManageChild(widget);
-	    else 
-	      return;
+	    if (widget) {
+		addCommonHandlers(widget, pmb->updateTask->displayInfo);
+		XtManageChild(widget);
+	    } else {
+		return;
+	    }
 	    switch (dlMessageButton->clrmod) {
 	    case STATIC :
 	    case DISCRETE :
