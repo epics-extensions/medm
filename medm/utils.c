@@ -75,13 +75,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define UNDO
 
+#include "medm.h"
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
 #include <Xm/MwmUtil.h>
 #include <Xm/List.h>
-#include "medm.h"
 
 #ifdef  __TED__
 #include <Dt/Wsm.h>
@@ -4396,7 +4396,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	  ca_name(chId));
 	sprintf(string,"%sTYPE: %s\n",string,
 	  dbf_type_to_text(ca_field_type(chId)));
-	sprintf(string,"%sCOUNT: %d\n",string,ca_element_count(chId));
+	sprintf(string,"%sCOUNT: %hu\n",string,ca_element_count(chId));
 	sprintf(string,"%sACCESS: %s%s\n",string,
 	  ca_read_access(chId)?"R":"",ca_write_access(chId)?"W":"");
 	sprintf(string,"%sIOC: %s\n",string,ca_host_name(chId));

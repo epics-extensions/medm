@@ -88,19 +88,28 @@ extern "C" {
   /* X/Xt/Xm includes, globals */
 #include "xtParams.h"
     
-    
   /* WIN32 differences */
 #ifdef WIN32
+  /* Path delimiter is different */
+# define MEDM_PATH_DELIMITER ';'
   /* Hummingbird extra functions including lprintf
    *   Needs to be included after Intrinsic.h for Exceed 5
    *   (Intrinsic.h is included in xtParams.h) */
-#include <X11/XlibXtra.h>
-# define MEDM_PATH_DELIMITER ';'
-#else
-  /* WIN32 does not have unistd.h */
-#include <unistd.h>
+# include <X11/XlibXtra.h>
+  /* This is done in Exceed 6 but not in Exceed 5
+   *   Need it to define printf as lprintf for Windows
+   *   (as opposed to Console) apps */
+# ifdef _WINDOWS
+#  ifndef printf
+#   define printf lprintf
+#  endif    
+# endif    
+#else /* #ifdef WIN32 */
+  /* Path delimiter is different */
 # define MEDM_PATH_DELIMITER ':'
-#endif
+  /* WIN32 does not have unistd.h */
+# include <unistd.h>
+#endif /* #ifdef WIN32 */
     
 #include "medmCA.h"
 #include "medmWidget.h"

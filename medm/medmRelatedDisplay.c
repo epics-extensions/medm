@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_COMPOSITE 0
 
+#if 0     /* Not using _NTSDK anymore */
 #ifdef WIN32
   /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
    *  as _y0 for Bessel functions.  This screws up XSegment
@@ -64,6 +65,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
    *  Should work for both Exceed 5 and Exceed 6 */
 #include <math.h>
 #undef y1    
+#endif    
 #endif    
 
 #include "medm.h"

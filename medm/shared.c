@@ -54,13 +54,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#include "medm.h"
+
+/* Include this after medm.h to avaoid problems with Exceed 6 */
 #ifdef WIN32
 /* In MSVC timeval is in winsock.h, winsock2.h, ws2spi.h, nowhere else */
 #include <X11/Xos.h>
 #else
 #include <sys/time.h>
 #endif
-#include "medm.h"
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05

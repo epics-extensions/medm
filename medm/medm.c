@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_EVENTS 0
 #define DEBUG_STDC 0
 #define DEBUG_WIN32_LEAKS 0
+#define DEBUG_FILE_RENAME 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -82,7 +83,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define W_OK 02
 #define R_OK 04
 #include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
-#include <io.h>         /* for access (usually in unistd.h) */
+#include <io.h>         /* for access, chmod  (usually in unistd.h) */
 #else
 /* Use unistd.h */
 #include <unistd.h>
@@ -96,9 +97,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 #include <time.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-
 #include <errno.h>
+
 #include "icon25"
 
 #include <Xm/MwmUtil.h>
@@ -1835,12 +1837,56 @@ static void medmExitMapCallback(
 }
 #endif
 
+#if DEBUG_FILE_RENAME
+/* Debug routine for file permissions */
+void printStat(char *filename, char *comment)
+{
+#ifdef WIN32
+    int  status;
+    struct stat statBuf;
+    
+    status = stat(filename,&statBuf);
+    if(status) {
+	printf("stat failed [%s]: %s\n",comment,filename);
+	return;
+    }
+    printf("%s: %c%c%c\n",
+      comment,
+      statBuf.st_mode&S_IREAD?'r':'-',
+      statBuf.st_mode&S_IWRITE?'w':'-',
+      statBuf.st_mode&S_IEXEC?'x':'-');
+#else    
+    int  status;
+    struct stat statBuf;
+    
+    status = stat(filename,&statBuf);
+    if(status) {
+	printf("stat failed [%s]: %s\n",comment,filename);
+	return;
+    }
+    printf("%s: %c%c%c%c%c%c%c%c%c\n",
+      comment,
+      statBuf.st_mode&S_IRUSR?'r':'-',
+      statBuf.st_mode&S_IWUSR?'w':'-',
+      statBuf.st_mode&S_IXUSR?'x':'-',
+      statBuf.st_mode&S_IRGRP?'r':'-',
+      statBuf.st_mode&S_IWGRP?'w':'-',
+      statBuf.st_mode&S_IXGRP?'x':'-',
+      statBuf.st_mode&S_IROTH?'r':'-',
+      statBuf.st_mode&S_IWOTH?'w':'-',
+      statBuf.st_mode&S_IXOTH?'x':'-');
+#endif
+}
+#endif
+
 /* medm allowed a .template used as a suffix for compatibility. This exception is
    caused by a bug in the save routine at checking the ".adl" suffix.
 */
 
 const char *templateSuffix = ".template";
-Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwrite) {
+
+Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwrite)
+{
     char *suffix;
     char f1[MAX_FILE_CHARS], f2[MAX_FILE_CHARS+4];
     char warningString[2*MAX_FILE_CHARS];
@@ -1849,11 +1895,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     FILE *stream;
     Boolean brandNewFile = False;
     Boolean templateException = False;
-#ifdef WIN32    
-    struct _stat statBuf;
-#else
     struct stat statBuf;
-#endif
 
     if (displayInfo == NULL) return False;
     if (filename == NULL) return False;
@@ -1886,21 +1928,32 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     }
   
 
-  /* Create the backup file name with suffux _BAK.adl*/
+  /* Create the backup file name with suffix _BAK.adl*/
     strcpy(f2,f1);
     strcat(f2,DISPLAY_FILE_BACKUP_SUFFIX);
     strcat(f2,DISPLAY_FILE_ASCII_SUFFIX);
+#if DEBUG_FILE_RENAME
+    printf("medmSaveDisplay: \n");
+    printf("  filename=|%s|\n",filename);
+    printf("  f1=|%s|\n",f1);
+    printf("  f2=|%s|\n",f2);
+#endif    
+    
   /* Check for the special case .template */
     if (!templateException) 
       strcat(f1,DISPLAY_FILE_ASCII_SUFFIX);
 
   /* See whether the file already exists. */
+    errno=0;
     if (access(f1,W_OK) == -1) {
 	if (errno == ENOENT) {
 	  /* File not found */
 	    brandNewFile = True;
 	} else {
-	    sprintf(warningString,"Failed to create/write file:\n%s",f1);
+	    char *errstring=strerror(errno);
+	    
+	    sprintf(warningString,"Error accessing file:\n%s\n%s",
+	      f1,errstring);
 	    dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	    return False;
 	}
@@ -1919,9 +1972,13 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    }
 	}
       /* See whether the backup file can be overwritten */
+	errno=0;
 	if (access(f2,W_OK) == -1) {
 	    if (errno != ENOENT) {
-		sprintf(warningString,"Cannot write backup file:\n%s",filename);
+		char *errstring=strerror(errno);
+	    
+		sprintf(warningString,"Cannot write backup file:\n%s\n%s",
+		  filename,errstring);
 		dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 		return False;
 	    }
@@ -1943,16 +2000,26 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    return False;
 	}
       /* Rename it */
+	errno=0;
 	status = rename(f1,f2);
-	if (status) {
-	    medmPrintf(1,"\nCannot rename file %s\n",f2);
+	if(status) {
+	    char *errstring=strerror(errno);
+	    
+	    medmPrintf(1,"\nCannot rename file: %s\n"
+	      "  To: %s\n"
+	      "  %s\n",
+	      f1,f2,errstring);
 	    return False;
 	}
     }
-
-    stream = fopen(f1,"w");
+    
+  /* Open for writing (Use w+ or WIN32 makes it readonly) */
+    stream = fopen(f1,"w+");
     if (stream == NULL) {
-	sprintf(warningString,"Failed to create/write file:\n%s",filename);
+	char *errstring=strerror(errno);
+	
+	sprintf(warningString,"Failed to create/write file:\n%s\n%s",
+	  filename,errstring);
 	dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	return False;
     }
@@ -1962,10 +2029,15 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     displayInfo->hasBeenEditedButNotSaved = False;
     displayInfo->newDisplay = False;
     medmSetDisplayTitle(displayInfo);
-  /* If it is an old file set its mode equal to the old mode */
-  /* KE: Why is this necessary?  */
+  /* If it was an existing file set its mode equal to the old mode */
     if (!brandNewFile) {
+#if DEBUG_FILE_RENAME
+	printStat(f1,"  f1 Current permissions");
+#endif
 	chmod(f1,statBuf.st_mode);
+#if DEBUG_FILE_RENAME
+	printStat(f1,"  f1 Changed permissions");
+#endif
     }
     return True;
 }
@@ -3095,7 +3167,8 @@ main(int argc, char *argv[])
 	FILE *filePtr;
 	initMedmCommon();
 	if (displayInfo = parseDisplayFile(argv[2])) {
-	    filePtr = fopen(argv[3],"w");
+	  /* Open for writing (Use w+ or WIN32 makes it readonly) */
+	    filePtr = fopen(argv[3],"w+");
 	    if (filePtr) {
 		strcpy(displayInfo->dlFile->name,argv[3]);
 		if (!strcmp(argv[1],"-c21x")) {
