@@ -458,7 +458,14 @@ void resizeGIF(DlImage *dlImage)
 	  /* Very special case (size=actual GIF size) */
 	    if(CUREXPIMAGE(gif) != CURIMAGE(gif)) {
 		if(CUREXPIMAGE(gif) != NULL) {
-		    XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
+		  /* Free the memory we allocated to insure it is done
+		   * with the same routines that allocated it.  Can be
+		   * a problem on WIN32 if X frees it. */
+		    XImage *image=(XImage *)(CUREXPIMAGE(gif));
+		    if(image->data) free(image->data);
+		    image->data=NULL;
+		  /* Then destroy the image */
+		    XDestroyImage(image);
 		}
 		CUREXPIMAGE(gif)=CURIMAGE(gif);
 		gif->eWIDE=gif->iWIDE;
@@ -473,7 +480,14 @@ void resizeGIF(DlImage *dlImage)
 	    
 	  /* First, kill the old CUREXPIMAGE(gif), if one exists */
 	    if(CUREXPIMAGE(gif) && CUREXPIMAGE(gif) != CURIMAGE(gif)) {
-		XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
+	      /* Free the memory we allocated to insure it is done
+	       * with the same routines that allocated it.  Can be
+	       * a problem on WIN32 if X frees it. */
+		XImage *image=(XImage *)(CUREXPIMAGE(gif));
+		if(image->data) free(image->data);
+		image->data=NULL;
+	      /* Then destroy the image */
+		XDestroyImage(image);
 	    }
 	    
 	  /* Create CUREXPIMAGE(gif) of the appropriate size */
@@ -798,7 +812,6 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     LogicalScreenHeight=ch + 0x100 * NEXTBYTE;
 
 #if DEBUG_GIF || DEBUG_BYTEORDER
-
     {
 	static int ifirst=1;
 	
@@ -829,7 +842,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     }
 #endif    
-
+    
 #if DEBUG_BYTEORDER
     {
 	static int ifirst=1;
@@ -851,25 +864,25 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    unsigned long blue_mask;
 	    
 	    ifirst=0;
-
+	    
 	  /* Create a pixmap and draw a point */
 	    pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
 	      1,1,XDefaultDepth(display,screenNum));
-
+	    
 	  /* Create a GC */
 	    gc=XCreateGC(display,pixmap,0,NULL);
-
+	    
 	  /* Allocate a color */
 	    color.red=0x1111;
 	    color.green=0x2222;
 	    color.blue=0x3333;
 	    color.flags=DoRed|DoGreen|DoBlue;
 	    XAllocColor(display,cmap,&color);	    
-
+	    
 	  /* Draw a point */
 	    XSetForeground(display,gc,color.pixel);
 	    XDrawPoint(display,pixmap,gc,0,0);
-
+	    
 	  /* Get a XImage of the pixmap */
 	    xImage=XGetImage(display,pixmap,0,0,1,1,AllPlanes,ZPixmap);
 	    depth=xImage->depth;
@@ -898,7 +911,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    print("  blue_mask=%08x\n",blue_mask);
 	    print("  pixel=%08x\n",color.pixel);
 	    print("  data[0][0]=%08x\n",*(Pixel *)xImage->data);
-
+	    
 	  /* Cleanup */
 	    if(gc) XFreeGC(display,gc);
 	    if(pixmap) XFreePixmap(display,pixmap);
@@ -1300,6 +1313,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
       /* Copy in the reduced image */
 	if(frames[i]->theImage) {
+	    XImage *image;
 	  /* Set the byte order since this came from our data */
 	    frames[i]->theImage->byte_order=getCorrectedByteOrder();
 	    XPutImage(display,tempPixmap,
@@ -1307,7 +1321,14 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	      0,0,frames[i]->LeftOffset,frames[i]->TopOffset,
 	      frames[i]->Width,frames[i]->Height);
 	  /* Destroy the current theImage */
-	    XDestroyImage(frames[i]->theImage);
+	  /* Free the memory we allocated to insure it is done
+	   * with the same routines that allocated it.  Can be a
+	   * problem on WIN32 if X frees it. */
+	    image=(XImage *)(frames[i]->theImage);
+	    if(image->data) free(image->data);
+	    image->data=NULL;
+	  /* Then destroy the image */
+	    XDestroyImage(image);
 	}
 #if DEBUG_DISPOSAL
 	{
@@ -1650,9 +1671,17 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	   */
 	    while(CurCode > BitMask) {
 		if(OutCount > 1024){
+		    XImage *image;
 		    medmPrintf(1,"\nparseGIFImage: Corrupt GIF file (OutCount)\n"
 		      "  %s\n",fname);
-		    XDestroyImage(CURIMAGE(gif));
+		  /* Free the memory we allocated to insure it is done
+		   * with the same routines that allocated it.  Can be a
+		   * problem on WIN32 if X frees it. */
+		    image=(XImage *)(CURIMAGE(gif));
+		    if(image->data) free(image->data);
+		    image->data=NULL;
+		  /* Then destroy the image */
+		    XDestroyImage(image);
 		    return False;
 		}
 		OutCode[OutCount++]=Suffix[CurCode];
@@ -1818,12 +1847,14 @@ void freeGIF(DlImage *dlImage)
 		if(frame) {
 		  /* Kill the old images */
 		    if(frame->expImage) {
-#if 0
-		      /* XDestroyImage destroys the data */
-			free(frame->expImage->data);
-			frame->expImage->data=NULL;
-#endif
-			XDestroyImage((XImage *)(frame->expImage));
+		      /* Free the memory we allocated to insure it is done
+		       * with the same routines that allocated it.  Can be a
+		       * problem on WIN32 if X frees it. */
+			XImage *image=(XImage *)(frame->expImage);
+			if(image->data) free(image->data);
+			image->data=NULL;
+		      /* Then destroy the image */
+			XDestroyImage(image);
 		      /* Check if theImage is the same as expImage 
                          (Resize special case) */
 			if(frame->expImage == frame->theImage) {
@@ -1832,12 +1863,14 @@ void freeGIF(DlImage *dlImage)
 			frame->expImage=NULL;
 		    }
 		    if(frame->theImage) {
-#if 0
-		      /* XDestroyImage destroys the data */
-			free(frame->theImage->data);
-			frame->theImage->data=NULL;
-#endif
-			XDestroyImage((XImage *)(frame->theImage));
+		      /* Free the memory we allocated to insure it is done
+		       * with the same routines that allocated it.  Can be a
+		       * problem on WIN32 if X frees it. */
+			XImage *image=(XImage *)(frame->theImage);
+			if(image->data) free(image->data);
+			image->data=NULL;
+		      /* Then destroy the image */
+			XDestroyImage(image);
 			frame->theImage=NULL;
 		    }
 		    free(frame);

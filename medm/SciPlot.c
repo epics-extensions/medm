@@ -49,12 +49,12 @@
 #endif
 
 #ifdef WIN32
-  /* Hummingbird extra functions including lprintf
-   *   Needs to be included after Intrinsic.h for Exceed 5 */
+/* Hummingbird extra functions including lprintf
+ *   Needs to be included after Intrinsic.h for Exceed 5 */
 # include <X11/XlibXtra.h>
-  /* The following is done in Exceed 6 but not in Exceed 5
-   *   Need it to define printf as lprintf for Windows
-   *   (as opposed to Console) apps */
+/* The following is done in Exceed 6 but not in Exceed 5
+ *   Need it to define printf as lprintf for Windows
+ *   (as opposed to Console) apps */
 # ifdef _WINDOWS
 #  ifndef printf
 #   define printf lprintf
@@ -385,6 +385,10 @@ GCInitialize(SciPlotWidget new)
   values.background = WhitePixelOfScreen(XtScreen(new));
   values.background = new->core.background_pixel;
   new->plot.BackgroundColor = ColorStore(new, values.background);
+/* KE: Moved this up here 1-11-01 so 1 would be the foreground color
+   as in the documentation */
+  values.foreground = colorsave = BlackPixelOfScreen(XtScreen(new));
+  new->plot.ForegroundColor = ColorStore(new, values.foreground);
 #ifdef MOTIF
   new->core.background_pixel = values.background;
   {
@@ -398,9 +402,7 @@ GCInitialize(SciPlotWidget new)
     new->primitive.bottom_shadow_color = shade2;
   }
 #endif
-  values.foreground = colorsave = BlackPixelOfScreen(XtScreen(new));
-  new->plot.ForegroundColor = ColorStore(new, values.foreground);
-
+  
   mask = GCLineStyle | GCLineWidth | GCFillStyle | GCForeground | GCBackground;
   new->plot.defaultGC = XCreateGC(XtDisplay(new),XtWindow(new), mask, &values);
 /* Eliminate events that we do not handle anyway */
@@ -1257,17 +1259,17 @@ XDrawVString (Display *display, Window win, GC gc, int x, int y, char *str, int 
   XDrawImageString(display, pix, drawGC, 0, (int) FontAscent(f),
     str, strlen(str));
 
-  source0 = (char *) XtCalloc((((width + 7) / 8) * height), 1);
+  source0 = (char *) calloc((((width + 7) / 8) * height), 1);
   before = XCreateImage(display, DefaultVisual(display, DefaultScreen(display)),
-			1, XYPixmap, 0, source0, width, height, 8, 0);
+    1, XYPixmap, 0, source0, width, height, 8, 0);
   before->byte_order = before->bitmap_bit_order = MSBFirst;
   XGetSubImage(display, pix, 0, 0, width, height, 1L, XYPixmap, before, 0, 0);
-
-  source1 = (char *) XtCalloc((((height + 7) / 8) * width), 1);
+  
+  source1 = (char *) calloc((((height + 7) / 8) * width), 1);
   after = XCreateImage(display, DefaultVisual(display, DefaultScreen(display)),
-		       1, XYPixmap, 0, source1, height, width, 8, 0);
+    1, XYPixmap, 0, source1, height, width, 8, 0);
   after->byte_order = after->bitmap_bit_order = MSBFirst;
-
+  
   for (yloop = 0; yloop < height; yloop++) {
     for (xloop = 0; xloop < width; xloop++) {
       source = before->data + (xloop / 8) +
@@ -1331,8 +1333,8 @@ XDrawVString (Display *display, Window win, GC gc, int x, int y, char *str, int 
   /* free data */
   before->data = 0;
   after->data = 0;
-  XtFree (source0);
-  XtFree (source1);
+  free(source0);
+  free(source1);
 
   XDestroyImage(before);
   XDestroyImage(after);
@@ -3149,6 +3151,11 @@ ComputeDimensions (SciPlotWidget w)
      */
     height = (real) w->core.height - (real) w->plot.Margin - y;
 
+#ifdef MOTIF
+    width -= w->primitive.shadow_thickness;
+    height -= w->primitive.shadow_thickness;
+#endif    
+
     w->plot.x.Origin = x;
     w->plot.y.Origin = y;
 
@@ -3190,6 +3197,11 @@ ComputeDimensions (SciPlotWidget w)
     height = (real) w->core.height - (real) w->plot.Margin - y;
     width = (real) w->core.width - (real) w->plot.XLeftSpace -
       (real)w->plot.XRightSpace;
+
+#ifdef MOTIF
+    width -= w->primitive.shadow_thickness;
+    height -= w->primitive.shadow_thickness;
+#endif    
 
     w->plot.x.Origin = w->plot.XLeftSpace;
     w->plot.y.Origin = y;
@@ -3329,6 +3341,11 @@ AdjustDimensionsCartesian (SciPlotWidget w)
      */
     height = (real) w->core.height - (real) w->plot.Margin - y;
 
+#ifdef MOTIF
+    width -= w->primitive.shadow_thickness;
+    height -= w->primitive.shadow_thickness;
+#endif    
+
     w->plot.x.Origin = x;
     w->plot.y.Origin = y;
 
@@ -3428,6 +3445,11 @@ AdjustDimensionsCartesian (SciPlotWidget w)
      *           - Height of Title (including margin)
      */
     height = (real) w->core.height - (real) w->plot.Margin - y;
+
+#ifdef MOTIF
+    width -= w->primitive.shadow_thickness;
+    height -= w->primitive.shadow_thickness;
+#endif    
 
     w->plot.x.Origin = x;
     w->plot.y.Origin = y;
@@ -3563,6 +3585,11 @@ AdjustDimensionsPolar (SciPlotWidget w)
    */
   height = (real) w->core.height - (real) w->plot.Margin - w->plot.y.Origin - yextra;
   
+#ifdef MOTIF
+    width -= w->primitive.shadow_thickness;
+    height -= w->primitive.shadow_thickness;
+#endif    
+
   /* Adjust the size depending upon what sorts of text are visible. */
   if (w->plot.ShowTitle)
     height -= (real) w->plot.TitleMargin +

@@ -349,7 +349,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
 {
     if(message && *message) {
       /* "Attempt to remove non-existant passive grab" */
-	if(!strcmp(message,"Attempt to remove non-existant passive grab"))
+	if(!strcmp(message,"Attempt to remove non-existent passive grab"))
 	  return(0);
       /* "The specified scale value is less than the minimum scale value." */
       /* "The specified scale value is greater than the maximum scale value." */
