@@ -743,7 +743,7 @@ Name of file in which to save display:",
     NULL,
 };
 
-typedef enum {EDIT,EXECUTE,ERROR} opMode_t;
+typedef enum {EDIT,EXECUTE,HELP,VERSION} opMode_t;
 typedef enum {NORMAL,CLEANUP,LOCAL} medmMode_t;
 typedef enum {FIXED,SCALABLE} fontStyle_t;
 
@@ -807,7 +807,10 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    request->opMode = EXECUTE;
 	    argsUsed = i;
 	} else if (!strcmp(argv[i],"-help") || !strcmp(argv[i],"-?")) {
-	    request->opMode = ERROR;
+	    request->opMode = HELP;
+	    argsUsed = i;
+	} else if (!strcmp(argv[i],"-version")) {
+	    request->opMode = VERSION;
 	    argsUsed = i;
 	} else if (!strcmp(argv[i],"-local")) {
 	    request->medmMode = LOCAL;
@@ -2744,11 +2747,12 @@ main(int argc, char *argv[])
     }
 
   /* Usage and error exit */
-    if (request->opMode == ERROR) {
-	fprintf(stderr,"\n%s\n",MEDM_VERSION_STRING);
-	fprintf(stderr,"Usage:\n"
+    if (request->opMode == HELP) {
+	printf("\n%s\n",MEDM_VERSION_STRING);
+	printf("Usage:\n"
 	  "  medm [X options]\n"
 	  "  [-help | -?]\n"
+	  "  [-version]\n"
 	  "  [-x | -e]\n"
 	  "  [-local | -cleanup]\n"
 	  "  [-cmap]\n"
@@ -2759,7 +2763,10 @@ main(int argc, char *argv[])
 	  "  [display-files]\n"
 	  "  [&]\n"
 	  "\n");
-	exit(2);
+	exit(0);
+    } else if (request->opMode == VERSION) {
+	printf("\n%s\n",MEDM_VERSION_STRING);
+	exit(0);
     }
 
   /* Do remote protocol stuff if not LOCAL */

@@ -590,7 +590,8 @@ void medmPostMsg(char *format, ...) {
     va_end(args);
 
   /* Raise window */
-    XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgDlg && XtIsRealized(errMsgDlg))
+      XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
 void medmPrintf(char *format, ...)
@@ -616,7 +617,8 @@ void medmPrintf(char *format, ...)
     va_end(args);
 
   /* Raise window */
-    XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgDlg && XtIsRealized(errMsgDlg))
+      XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
 /* KE: No longer used */
@@ -645,7 +647,8 @@ void medmPostTime() {
     fprintf(stderr, timeStampStr);
 
   /* Raise window */
-    XRaiseWindow(display,XtWindow(errMsgDlg));
+    if(errMsgDlg && XtIsRealized(errMsgDlg))
+      XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
 static char caStudyMsg[512];
@@ -899,11 +902,11 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
     char buf[4096];     /* Warning: Fixed Size */
     
     XGetErrorText(dpy,event->error_code,buf,BUFSIZ);
-    fprintf(stderr,"%s\n",buf);
+    fprintf(stderr,"\n%s\n",buf);
     return 0;
 }
 
 void xtErrorHandler(char *message)
 {
-    fprintf(stderr,"%s\n",message);
+    fprintf(stderr,"\n%s\n",message);
 }
