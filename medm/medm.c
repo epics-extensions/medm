@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 #define DEBUG_EVENTS 0
