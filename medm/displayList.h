@@ -793,7 +793,7 @@ typedef struct {
 /****** Extensions */
 typedef struct {
     DlObject object;
-    DlMonitor monitor;
+    DlDynamicAttribute dynAttr;
     ImageType imageType;
     char calc[MAX_TOKEN_LENGTH];
     char imageName[MAX_TOKEN_LENGTH];

@@ -194,12 +194,12 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pi->updateTask->opaque = False;
 	}
 	pi->record = NULL;
-	if(*dlImage->monitor.rdbk) {
+	if(*dlImage->dynAttr.chan) {
 	    long status;
 	    short errnum;
 	    
 	  /* A channel is defined */
-	    pi->record = medmAllocateRecord(dlImage->monitor.rdbk,
+	    pi->record = medmAllocateRecord(dlImage->dynAttr.chan,
 	      imageUpdateValueCb,
 	      imageUpdateGraphicalInfoCb,
 	      (XtPointer)pi);
@@ -208,7 +208,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    if(status) {
 		medmPostMsg(1,"executeDlImage:\n"
 		  "  Invalid calc expression [error %d]: %s\n  for %s\n",
-		  errnum, dlImage->calc, dlImage->monitor.rdbk);
+		  errnum, dlImage->calc, dlImage->dynAttr.chan);
 		pi->validCalc=False;
 	    } else {
 		pi->validCalc=True;
@@ -251,7 +251,7 @@ static void imageDraw(XtPointer cd)
     GIFData *gif = (GIFData *)dlImage->privateData;
 
   /* Branch on whether there is a channel or not */
-    if(*dlImage->monitor.rdbk) {
+    if(*dlImage->dynAttr.chan) {
       /* A channel is defined */
 	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(!pr) return;
@@ -275,18 +275,19 @@ static void imageDraw(XtPointer cd)
 	      /* Draw depending on status */
 		if(!status) {
 		  /* Result is valid, convert to frame number */
-		    if(result < 0.0) gif->curFrame = 0;
-		    else if(result > gif->nFrames-1) gif->curFrame=gif->nFrames-1;
-		    else gif->curFrame = result +.5;
-		  /* Draw the frame */
-		    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+		    if(gif) {
+			if(result < 0.0) gif->curFrame = 0;
+			else if(result > gif->nFrames-1) gif->curFrame=gif->nFrames-1;
+			else gif->curFrame = result +.5;
+		      /* Draw the frame */
+			drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+		    }
 		} else {
 		  /* Result is invalid */
 		    draw3DPane(pi->updateTask,BlackPixel(display,screenNum));
 		}
 	    } else {
-		draw3DPane(pi->updateTask,
-		  pi->updateTask->displayInfo->colormap[dlImage->monitor.bclr]);
+		pi->updateTask->opaque = False;
 		draw3DQuestionMark(pi->updateTask);
 	    }
 	} else {
@@ -298,16 +299,18 @@ static void imageDraw(XtPointer cd)
 	print("imageDraw: time=%.3f interval=%.3f name=%s\n",
 	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
 #endif
-	if(gif->nFrames > 1) {
-	  /* Draw the next image */
-	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
-	    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
-	    
-	  /* Reset the time */
-	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
-	} else {
-	  /* Draw the image */
-	    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+	if(gif) {
+	    if(gif->nFrames > 1) {
+	      /* Draw the next image */
+		if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
+		drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+		
+	      /* Reset the time */
+		updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
+	    } else {
+	      /* Draw the image */
+		drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+	    }
 	}
     }
 }
@@ -419,7 +422,7 @@ static void imageUpdateGraphicalInfoCb(XtPointer cd)
 	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach image\n",
-	  dlImage->monitor.rdbk);
+	  dlImage->dynAttr.chan);
 	return;
     case DBF_ENUM :
     case DBF_CHAR :
@@ -432,7 +435,7 @@ static void imageUpdateGraphicalInfoCb(XtPointer cd)
 	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach image\n",
-	  dlImage->monitor.rdbk);
+	  dlImage->dynAttr.chan);
 	break;
     }
 #if 0    
@@ -469,7 +472,7 @@ DlElement *createDlImage(DlElement *p)
 	copyGIF(dlImage,dlImage);
     } else {
 	objectAttributeInit(&(dlImage->object));
-	monitorAttributeInit(&(dlImage->monitor));
+	dynamicAttributeInit(&(dlImage->dynAttr));
 	dlImage->calc[0] = '\0';
 	dlImage->calc[0] = '\0';
 	dlImage->imageType = NO_IMAGE;
@@ -500,8 +503,8 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlImage->object));
-	    } else if (!strcmp(token,"monitor")) {
-		parseMonitor(displayInfo,&(dlImage->monitor));
+	    } else if (!strcmp(token,"dynamic attribute")) {
+		parseDynamicAttribute(displayInfo,&(dlImage->dynAttr));
 	    } else if (!strcmp(token,"type")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -556,7 +559,7 @@ void writeDlImage(
       stringValueTable[dlImage->imageType]);
     fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
     fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dlImage->calc);
-    writeDlMonitor(stream,&(dlImage->monitor),level+1);
+    writeDlDynamicAttribute(stream,&(dlImage->dynAttr),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
@@ -564,12 +567,15 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
 {
     DlImage *dlImage = p->structure.image;
     medmGetValues(pRCB,
-      RDBK_RC,       &(dlImage->monitor.rdbk),
-      CLR_RC,        &(dlImage->monitor.clr),
-      BCLR_RC,       &(dlImage->monitor.bclr),
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
       CALC_RC,       &(dlImage->calc),
+      CLRMOD_RC,     &(dlImage->dynAttr.clr),
+      VIS_RC,        &(dlImage->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlImage->dynAttr.chan),
       -1);
 }
 
@@ -581,12 +587,15 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
       Y_RC,          &(dlImage->object.y),
       WIDTH_RC,      &(dlImage->object.width),
       HEIGHT_RC,     &(dlImage->object.height),
-      RDBK_RC,       &(dlImage->monitor.rdbk),
-      CLR_RC,        &(dlImage->monitor.clr),
-      BCLR_RC,       &(dlImage->monitor.bclr),
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
       CALC_RC,       &(dlImage->calc),
+      CLRMOD_RC,     &(dlImage->dynAttr.clr),
+      VIS_RC,        &(dlImage->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlImage->dynAttr.chan),
       -1);
 }
 

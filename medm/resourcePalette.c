@@ -1904,7 +1904,7 @@ static int resourceTable[] = {
     DL_ShellCommand,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC, -1,
     DL_Image,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGETYPE_RC, IMAGENAME_RC, RDBK_RC,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGETYPE_RC, IMAGENAME_RC, CHAN_RC,
     CALC_RC, -1,
     DL_Composite,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, -1,
@@ -3752,8 +3752,8 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	updateResourcePaletteObjectAttribute();
 	if (objectDataOnly) return;
 
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
+	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+	updateResourcePaletteDynamicAttribute();
 	globalResourceBundle.imageType = p->imageType;
 	optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
 	  globalResourceBundle.imageType - FIRST_IMAGE_TYPE);
