@@ -263,6 +263,10 @@ static String fallbackResources[] = {
 };
 
 
+Widget mainFilePDM, mainHelpPDM;
+static XtCallbackProc fileMenuDialogCallback(Widget, int, XmAnyCallbackStruct *);
+
+
 /********************************************
  **************** Callbacks *****************
  ********************************************/
@@ -378,11 +382,43 @@ static XtCallbackProc fileMenuSimpleCallback(Widget w, int buttonNumber,
 		break;
 
 	case FILE_OPEN_BTN:
+		XDefineCursor(display,XtWindow(mainShell),watchCursor);
+		if (openFSD == NULL) {
+                  /*
+                   * note - all FILE pdm entry dialogs are sharing a single callback
+                   *	  fileMenuDialogCallback, with client data
+                   *	  of the BTN id in the simple menu...
+                   */
+
+
+                  /*
+                   * create the Open... file selection dialog
+                   */
+		  Arg args[4];
+                  int  n = 0;
+                  XmString label = XmStringCreateSimple("*.adl");
+                  /* for some odd reason can't get PATH_MAX reliably defined between systems */
+                  #define LOCAL_PATH_MAX  1023
+                  char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
+                  XmString cwdXmString = XmStringCreateSimple(cwd);
+                  XtSetArg(args[n],XmNpattern,label); n++;
+                  XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
+                  openFSD = XmCreateFileSelectionDialog(mainFilePDM,"openFSD",args,n);
+                  XtAddCallback(openFSD,XmNokCallback,(XtCallbackProc)dmDisplayListOk,
+	                (XtPointer)openFSD);
+                  XtAddCallback(openFSD,XmNcancelCallback,
+	                (XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
+                  XmStringFree(label);
+                  XmStringFree(cwdXmString);
+                  free(cwd);
+		}
+
 		XtVaGetValues(openFSD,XmNdirMask,&dirMask,NULL);
 		XmListDeselectAllItems(XmFileSelectionBoxGetChild(openFSD,
 			XmDIALOG_LIST));
 		XmFileSelectionDoSearch(openFSD,dirMask);
 		XtManageChild(openFSD);
+		XUndefineCursor(display,XtWindow(mainShell));
 		break;
 
 	case FILE_SAVE_BTN:
@@ -1962,7 +1998,6 @@ static void createMain()
   XmString label, string, cwdXmString;
   XmButtonType buttonType[N_MAX_MENU_ELES];
   Widget mainMB, mainBB, frame, frameLabel;
-  Widget mainFilePDM, mainHelpPDM;
   Widget menuHelpWidget, modeRB, modeEditTB, modeExecTB;
   char *cwd;
   char name[12];
@@ -2292,33 +2327,6 @@ static void createMain()
 /************************************************
  ****** create main-window related dialogs ******
  ************************************************/
-
- /*
-  * note - all FILE pdm entry dialogs are sharing a single callback
-  *	  fileMenuDialogCallback, with client data
-  *	  of the BTN id in the simple menu...
-  */
-
-
-/*
- * create the Open... file selection dialog
- */
-  n = 0;
-  label = XmStringCreateSimple("*.adl");
-  XtSetArg(args[n],XmNpattern,label); n++;
-/* for some odd reason can't get PATH_MAX reliably defined between systems */
-#define LOCAL_PATH_MAX  1023
-  cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
-  cwdXmString = XmStringCreateSimple(cwd);
-  XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
-  openFSD = XmCreateFileSelectionDialog(mainFilePDM,"openFSD",args,n);
-  XtAddCallback(openFSD,XmNokCallback,(XtCallbackProc)dmDisplayListOk,
-	(XtPointer)openFSD);
-  XtAddCallback(openFSD,XmNcancelCallback,
-	(XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
-  XmStringFree(label);
-  XmStringFree(cwdXmString);
-  free(cwd);
 
 /*
  * create the Close... question dialog
