@@ -1289,9 +1289,15 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
 	if(displayInfo->hasBeenEditedButNotSaved) {
 	    strcpy(str,tmp1);
 	    strcat(str," (edited)");
-	    XtVaSetValues(displayInfo->shell,XmNtitle,str,NULL);
+	    XtVaSetValues(displayInfo->shell,
+	      XmNtitle,str,
+	      XmNiconName,tmp1,
+	      NULL);
 	} else {
-	    XtVaSetValues(displayInfo->shell,XmNtitle,tmp1,NULL);
+	    XtVaSetValues(displayInfo->shell,
+	      XmNtitle,tmp1,
+	      XmNiconName,tmp1,
+	      NULL);
 	}
     }
 }
