@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .03  09-08-95        vong    conform to c++ syntax
  * .04  09-28-95        vong    add back Ctrl-X to the 'file' menu for 'Exit'
  *                              entry.
+ * .05  10-02-95        vong    handle the special case .template suffix.
  *
  *****************************************************************************
 */
@@ -1042,14 +1043,20 @@ static void medmExitMapCallback(
 }
 #endif
 
+/* medm allowed a .template used as a suffix for compatibility. This exception is
+   caused by a bug in the save routine at checking the ".adl" suffix.
+*/
+
+const char *templateSuffix = ".template";
 Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwrite) {
   char *suffix;
   char f1[MAX_FILE_CHARS], f2[MAX_FILE_CHARS+4];
   char warningString[2*MAX_FILE_CHARS];
-  int  strLen1, strLen2, strLen3;
+  int  strLen1, strLen2, strLen3, strLen4;
   int  status;
   FILE *stream;
   Boolean brandNewFile = False;
+  Boolean templateException = False;
   struct stat statBuf;
 
   if (displayInfo == NULL) return False;
@@ -1058,26 +1065,39 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
   strLen1 = strlen(filename);
   strLen2 = strlen(DISPLAY_FILE_BACKUP_SUFFIX);
   strLen3 = strlen(DISPLAY_FILE_ASCII_SUFFIX);
+  strLen4 = strlen(templateSuffix);
 
-  /* search for the position of the suffix */
+ 
   if (strLen1 >= MAX_FILE_CHARS) {
     medmPrintf("Path too Long %s\n:",filename);
     return False;
   }
+
+  /* search for the position of the .adl suffix */
   strcpy(f1,filename);
   suffix = strstr(f1,DISPLAY_FILE_ASCII_SUFFIX);
   if ((suffix) && (suffix == f1 + strLen1 - strLen3)) {
-    /* chop off the suffix */
+    /* chop off the .adl suffix */
     *suffix = '\0';
     strLen1 = strLen1 - strLen3;
+  } else {
+    /* search for the position of the .template suffix */
+    suffix = strstr(f1,templateSuffix);
+    if ((suffix) && (suffix == f1 + strLen1 - strLen4)) { 
+      /* this is a .template special case */
+      templateException = True;
+    }
   }
+  
 
-  /* create the backup file name */
+  /* create the backup file name with suffux _BAK.adl*/
   strcpy(f2,f1);
   strcat(f2,DISPLAY_FILE_BACKUP_SUFFIX);
   strcat(f2,DISPLAY_FILE_ASCII_SUFFIX);
-  /* append the suffix */
-  strcat(f1,DISPLAY_FILE_ASCII_SUFFIX);
+  /* append the .adl suffix */
+  /* check for the special case .template */
+  if (!templateException) 
+    strcat(f1,DISPLAY_FILE_ASCII_SUFFIX);
 
   /* See whether the file already exists. */
   if (access(f1,W_OK) == -1) {

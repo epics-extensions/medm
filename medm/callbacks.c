@@ -400,6 +400,7 @@ void dmExecuteShellCommand(
 
 }
 
+#if 0
 #ifdef __cplusplus
 void traverseDisplayLater(XtPointer cd, XtIntervalId *) {
 #else
@@ -408,6 +409,7 @@ void traverseDisplayLater(XtPointer cd, XtIntervalId *id) {
   DisplayInfo *displayInfo = (DisplayInfo *) cd;
   dmTraverseDisplayList(displayInfo);
 }
+#endif
 
 void drawingAreaCallback(
   Widget  w,
@@ -559,7 +561,7 @@ void drawingAreaCallback(
    if (resized) {
      clearResourcePaletteEntries();	/* clear any selected entries */
      dmCleanupDisplayInfo(displayInfo,FALSE);
-#if 1
+#if 0
      XtAppAddTimeOut(appContext,1000,traverseDisplayLater,displayInfo); 
 #else
      dmTraverseDisplayList(displayInfo);
