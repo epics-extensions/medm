@@ -5,9 +5,9 @@ include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
 # Needs work to handle CMPLR=STRICT
-#CMPLR = STRICT
-#UNIX_OPT = NO
-#CC += -g
+CMPLR = STRICT
+UNIX_OPT = NO
+CC += -g
 
 USR_CFLAGS = -I$(MOTIF_INC) -I$(X11_INC)
 
@@ -37,6 +37,12 @@ bar1: $(OBJS) $(DEPLIBS) bar1.c
 # $Id$
 #
 # $Log$
+# Revision 1.6  1998/05/20 18:15:56  evans
+# Rewrote code to have function prototypes and give no warnings with
+# CMPILR=STRICT on Solaris.  Changed Rect3d to use Motif shadow colors.
+# Changed fallback resources in medm.c to omit borders.  Added 3d border
+# to BarGraph.
+#
 # Revision 1.5  1997/06/20 13:46:42  evans
 # Make some changes to support CMPLR=STRICT.  Needs more though.
 #

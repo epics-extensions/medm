@@ -19,8 +19,8 @@ typedef struct _ValueClassRec *ValueWidgetClass;
 typedef struct _ValueRec *ValueWidget;
 
 /****** Widget class functions. */
-extern float Correlate();
-extern char *Print_value();
-extern void Position_val();
+float Correlate(float from_val, float from_range, float to_range);
+char *Print_value(XcDType datatype, XcVType *value, int decimals);
+void Position_val(Widget w);
 
 #endif

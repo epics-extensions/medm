@@ -69,19 +69,21 @@ typedef struct
     char *label;				/* Widget's Label string. */
     XFontStruct *font;			/* Font for Label string. */
     int shade_depth;			/* Depth of the 3D effect in pixels. */
-
-   /* Private instance variables. */
+    
+  /* Private instance variables. */
     Pixmap shade;			/* Stipple bitmap for generating 
 					 * 3D shading effect.
 					 */
+#ifdef NICE_SHADES
     XColor shade1, shade2;		/* Colors derived from background
 					 * used with the -DNICE_SHADES compiler
 					 * option for 3D shading of widget.
 					 */
+#endif    
     GC gc;				/* GC used for drawing in this 
 					 * widget.
 					 */
-
+    
 } ControlPart;
 
 /*

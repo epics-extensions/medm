@@ -30,8 +30,8 @@ extern WidgetClass xcBarGraphWidgetClass;
 typedef struct _BarGraphClassRec *BarGraphWidgetClass;
 typedef struct _BarGraphRec *BarGraphWidget;
 
-/****** Widget functions */
-extern void XcBGUpdateValue();
-extern void XcBGUpdateBarForeground();
+/* Function prototypes for widget methods */
+extern void XcBGUpdateValue(Widget w, XcVType *value);
+extern void XcBGUpdateBarForeground(Widget w, Pixel pixel);
 
 #endif

@@ -34,6 +34,6 @@ typedef struct _MeterRec *MeterWidget;
 
 /* Widget functions */
 extern void XcMeterUpdateValue(Widget w, XcVType *value);
-extern void XcMeterUpdateMeterForeground(Widget w, unsigned long pixel);
+extern void XcMeterUpdateMeterForeground(Widget w, Pixel pixel);
 
 #endif

@@ -39,10 +39,8 @@ typedef struct _IndicatorClassRec *IndicatorWidgetClass;
 typedef struct _IndicatorRec *IndicatorWidget;
 
 
-/* Widget functions */
-extern void XcIndUpdateValue(Widget w, XcVType *value);
-extern void XcIndUpdateIndicatorForeground(Widget w,
-  unsigned long pixel);
-
+/* Function prototypes for public widget methods */
+void XcIndUpdateValue(Widget w, XcVType *value);
+void XcIndUpdateIndicatorForeground(Widget w, Pixel pixel);
 
 #endif

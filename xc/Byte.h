@@ -27,8 +27,8 @@ typedef struct _ByteClassRec *ByteWidgetClass;
 typedef struct _ByteRec *ByteWidget;
 
 /****** Widget functions */
-extern void XcBYUpdateValue();
-extern void XcBYUpdateByteForeground();
+void XcBYUpdateValue(Widget w, XcVType *value);
+void XcBYUpdateByteForeground(Widget w, Pixel pixel);
 
 #endif
 

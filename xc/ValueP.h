@@ -19,7 +19,6 @@
 #include "Xc.h"
 #include "ControlP.h"
 
-
 /*
  * Include this widget class public header.
  */
@@ -29,7 +28,6 @@
 /* Maximum and minimum decimal precision settings. */
 #define MIN_DECIMALS		0
 #define MAX_DECIMALS		8
-
 
 /*
  * Class part.
@@ -54,8 +52,6 @@ typedef struct _ValueClassRec
  * file.
  */
 extern ValueClassRec valueClassRec;
-
-
 
 /*
  * Instance part.
@@ -94,7 +90,5 @@ typedef struct _ValueRec
     ControlPart control;
     ValuePart value;
 } ValueRec;
-
-
 
 #endif  /* __XC_VALUEP_H */

@@ -33,34 +33,21 @@
 /* Macro redefinition for offset. */
 #define offset(field) XtOffset(IndicatorWidget, field)
 
-
-/* Declare widget methods */
+/* Function prototypes for widget methods */
 static void ClassInitialize();
-static void Initialize(IndicatorWidget request, IndicatorWidget new);
-static void Redisplay(IndicatorWidget w, XExposeEvent *event, Region region);
-static void Destroy(IndicatorWidget w);
-static void Resize(IndicatorWidget w);
-static XtGeometryResult QueryGeometry(
-  IndicatorWidget w,
-  XtWidgetGeometry *proposed, XtWidgetGeometry *answer);
-static Boolean SetValues(
-  IndicatorWidget cur,
-  IndicatorWidget req,
-  IndicatorWidget new);
-
-
-
-/* Declare functions and variables private to this widget */
-static void Draw_display(
-  IndicatorWidget w,
-  Display *display,
-  Drawable drawable,
-  GC gc);
-static void Get_value(XtPointer client_data,XtIntervalId *id);
-static void Print_bounds(IndicatorWidget w, char *upper, char *lower);
-
-
-
+static void Initialize(Widget request, Widget new,
+  ArgList args, Cardinal *nargs);
+static void Redisplay(Widget w, XEvent *event, Region region);
+static Boolean SetValues(Widget cur, Widget req,
+  Widget new, ArgList args, Cardinal *nargs);
+static void Resize(Widget w);
+static XtGeometryResult QueryGeometry(Widget w, XtWidgetGeometry *proposed,
+  XtWidgetGeometry *answer);
+static void Destroy(Widget w);
+static void Get_value(XtPointer client_data, XtIntervalId *id);
+static void Draw_display(Widget w, Display *display,
+  Drawable drawable, GC gc);
+static void Print_bounds(Widget w, char *upper, char *lower);
 
 /* Define the widget's resource list */
 static XtResource resources[] =
@@ -147,50 +134,50 @@ IndicatorClassRec indicatorClassRec =
 {
     {
       /* core_class part */
-	(WidgetClass) &valueClassRec,		/* superclass */
-	"Indicator",				/* class_name */
-	sizeof(IndicatorRec),			/* widget_size */
-	ClassInitialize,				/* class_initialize */
-	NULL,					/* class_part_initialize */
-	FALSE,					/* class_inited */
-	Initialize,					/* initialize */
-	NULL,					/* initialize_hook */
-	XtInheritRealize,				/* realize */
-	NULL,					/* actions */
-	0,						/* num_actions */
-	resources,					/* resources */
-	XtNumber(resources),			/* num_resources */
-	NULLQUARK,					/* xrm_class */
-	TRUE,					/* compress_motion */
-	XtExposeCompressMaximal,			/* compress_exposure */
-	TRUE,					/* compress_enterleave */
-	TRUE,					/* visible_interest */
-	Destroy,					/* destroy */
-	Resize,					/* resize */
-	Redisplay,					/* expose */
-	SetValues,					/* set_values */
-	NULL,					/* set_values_hook */
-	XtInheritSetValuesAlmost,			/* set_values_almost */
-	NULL,					/* get_values_hook */
-	NULL,					/* accept_focus */
-	XtVersion,					/* version */
-	NULL,					/* callback_private */
-	NULL,					/* tm_table */
-	QueryGeometry,				/* query_geometry */
-	NULL,					/* display_accelerator */
-	NULL,					/* extension */
-    },
-    {
-      /* Control class part */
-	0,						/* dummy_field */
-    },
-    {
-      /* Value class part */
-	0,						/* dummy_field */
+        (WidgetClass) &valueClassRec,    /* superclass */
+        "Indicator",                   /* class_name */
+        sizeof(IndicatorRec),          /* widget_size */
+        ClassInitialize,               /* class_initialize */
+        NULL,                          /* class_part_initialize */
+        FALSE,                         /* class_inited */
+        Initialize,                    /* initialize */
+        NULL,                          /* initialize_hook */
+        XtInheritRealize,              /* realize */
+        NULL,                          /* actions */
+        0,                             /* num_actions */
+        resources,                     /* resources */
+        XtNumber(resources),           /* num_resources */
+        NULLQUARK,                     /* xrm_class */
+        TRUE,                          /* compress_motion */
+        XtExposeCompressMaximal,       /* compress_exposure */
+        TRUE,                          /* compress_enterleave */
+        TRUE,                          /* visible_interest */
+        Destroy,                       /* destroy */
+        Resize,                        /* resize */
+        Redisplay,                     /* expose */
+        SetValues,                     /* set_values */
+        NULL,                          /* set_values_hook */
+        XtInheritSetValuesAlmost,      /* set_values_almost */
+        NULL,                          /* get_values_hook */
+        NULL,                          /* accept_focus */
+        XtVersion,                     /* version */
+        NULL,                          /* callback_private */
+        NULL,                          /* tm_table */
+        QueryGeometry,                 /* query_geometry */
+        NULL,                          /* display_accelerator */
+        NULL,                          /* extension */
+    },				       
+    {				       
+      /* Control class part */	       
+        0,                             /* dummy_field */
+    },				       
+    {				       
+      /* Value class part */	       
+        0,                             /* dummy_field */
     },
     {
       /* Indicator class part */
-	0,						/* dummy_field */
+        0,                                              /* dummy_field */
     }
 };
 
@@ -203,531 +190,461 @@ WidgetClass xcIndicatorWidgetClass = (WidgetClass)&indicatorClassRec;
  NAME:		ClassInitialize.	
  DESCRIPTION:
    This method initializes the Indicator widget class. Specifically,
-it registers resource value converter functions with Xt.
+ it registers resource value converter functions with Xt.
 
 *******************************************************************/
 
 static void ClassInitialize()
 {
-
     XtAddConverter(XtRString, XcROrient, CvtStringToOrient, NULL, 0);
-
-}  /* end of ClassInitialize */
-
-
-
-
-
+}
 
 /*******************************************************************
  NAME:		Initialize.		
  DESCRIPTION:
    This is the initialize method for the Indicator widget.  It 
-validates user-modifiable instance resources and initializes private 
-widget variables and structures.  This function also creates any server 
-resources (i.e., GCs, fonts, Pixmaps, etc.) used by this widget.  This
-method is called by Xt when the application calls XtCreateWidget().
+ validates user-modifiable instance resources and initializes private 
+ widget variables and structures.  This function also creates any server 
+ resources (i.e., GCs, fonts, Pixmaps, etc.) used by this widget.  This
+ method is called by Xt when the application calls XtCreateWidget().
 
 *******************************************************************/
 
-static void Initialize(
-  IndicatorWidget request, IndicatorWidget new)
+static void Initialize(Widget request, Widget new,
+  ArgList args, Cardinal *nargs)
+  /* KE: request, args, nargs are not used */
+  /* KE: The definition of XtInitProc seems to be wrong in
+   *   O'Reilly Vol. 4, p. 494 */
 {
-  /* Local variables */
+    IndicatorWidget wnew = (IndicatorWidget)new;
     Display *display = XtDisplay(new);
 
-
     DPRINTF(("Indicator: executing Initialize...\n"));
-
+    
   /*
- * Validate public instance variable settings.
- */
-/* Check orientation resource setting. */
-    if ((new->indicator.orient != XcVert) && (new->indicator.orient != XcHoriz))
-	{
-	    XtWarning("Indicator: invalid orientation setting");
-	    new->indicator.orient = XcVert;
-	}
-
+   * Validate public instance variable settings.
+   */
+  /* Check orientation resource setting. */
+    if ((wnew->indicator.orient != XcVert) &&
+      (wnew->indicator.orient != XcHoriz)) {
+	XtWarning("Indicator: invalid orientation setting");
+	wnew->indicator.orient = XcVert;
+    }
+    
   /* Check the interval resource setting. */
-    if (new->indicator.interval >0)
-	{
-	    new->indicator.interval_id = 
-	      XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
-		new->indicator.interval, Get_value, new);
-	}
-
+    if (wnew->indicator.interval >0) {
+	wnew->indicator.interval_id = 
+	  XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
+	    wnew->indicator.interval, Get_value, new);
+    }
+    
   /* Check the scaleSegments resource setting. */
-    if (new->indicator.num_segments < MIN_SCALE_SEGS)
-	{
-	    XtWarning("Indicator: invalid number of scale segments");
-	    new->indicator.num_segments = MIN_SCALE_SEGS;
-	}
-    else if (new->indicator.num_segments > MAX_SCALE_SEGS)
-	{
-	    XtWarning("Indicator: invalid number of scale segments");
-	    new->indicator.num_segments = MAX_SCALE_SEGS;
-	}
+    if (wnew->indicator.num_segments < MIN_SCALE_SEGS) {
+	XtWarning("Indicator: invalid number of scale segments");
+	wnew->indicator.num_segments = MIN_SCALE_SEGS;
+    } else if (wnew->indicator.num_segments > MAX_SCALE_SEGS) {
+	XtWarning("Indicator: invalid number of scale segments");
+	wnew->indicator.num_segments = MAX_SCALE_SEGS;
+    }
    
   /* Check the valueVisible resource setting. */
-    if ((new->indicator.value_visible != True) &&
-      (new->indicator.value_visible != False))
-	{
-	    XtWarning("Indicator: invalid valueVisible setting");
-	    new->indicator.value_visible = True;
-	}
-
+    if ((wnew->indicator.value_visible != True) &&
+      (wnew->indicator.value_visible != False))	{
+	XtWarning("Indicator: invalid valueVisible setting");
+	wnew->indicator.value_visible = True;
+    }
+    
   /* Initialize the Indicator width and height. */
-    if (new->core.width < MIN_INDICATOR_WIDTH)
-      new->core.width = MIN_INDICATOR_WIDTH; 
-    if (new->core.height < MIN_INDICATOR_HEIGHT)
-      new->core.height = MIN_INDICATOR_HEIGHT; 
-   
-/* Initialize private instance variables.  */
-
-/* Set the initial geometry of the Indicator elements. */
+    if (wnew->core.width < MIN_INDICATOR_WIDTH)
+      wnew->core.width = MIN_INDICATOR_WIDTH; 
+    if (wnew->core.height < MIN_INDICATOR_HEIGHT)
+      wnew->core.height = MIN_INDICATOR_HEIGHT; 
+    
+  /* Initialize private instance variables.  */
+    
+  /* Set the initial geometry of the Indicator elements. */
     Resize(new);
 
-
     DPRINTF(("Indicator: done Initialize\n"));
-
-}  /* end of Initialize */
-
-
-
-
+}
 
 /*******************************************************************
  NAME:		Redisplay.	
  DESCRIPTION:
    This function is the Indicator's Expose method.  It redraws the
-Indicator's 3D rectangle background, Value Box, label, Bar indicator,
-and the Scale.  All drawing takes place within the widget's window 
-(no need for an off-screen pixmap).
-
+ Indicator's 3D rectangle background, Value Box, label, Bar indicator,
+ and the Scale.  All drawing takes place within the widget's window 
+ (no need for an off-screen pixmap).
 *******************************************************************/
 
-static void Redisplay(IndicatorWidget w, XExposeEvent *event, Region region)
+static void Redisplay(Widget w, XEvent *event, Region region)
 {
-  /* Local variables */
+    IndicatorWidget wi = (IndicatorWidget)w;
     int j;
     char upper[30], lower[30];
 
   /*
- * Check to see whether or not the widget's window is mapped.  You can't
- * draw into a window that is not mapped.  Realizing a widget doesn't 
- * mean its mapped, but this call will work for most Window Managers.
- */
-    if (!XtIsRealized((Widget)w) || !w->core.visible)
+   * Check to see whether or not the widget's window is mapped.  You can't
+   * draw into a window that is not mapped.  Realizing a widget doesn't 
+   * mean its mapped, but this call will work for most Window Managers.
+   */
+    if (!XtIsRealized((Widget)w) || !wi->core.visible)
       return;
-
+    
     DPRINTF(("Indicator: executing Redisplay\n"));
-
+    
   /* Draw the 3D rectangle background for the Indicator. */
-    XSetClipMask(XtDisplay(w), w->control.gc, None);
-    Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-      0, 0, w->core.width, w->core.height, RAISED);
-
+    XSetClipMask(XtDisplay(w), wi->control.gc, None);
+    Rect3d(w, XtDisplay(w), XtWindow(w), wi->control.gc,
+      0, 0, wi->core.width, wi->core.height, RAISED);
+    
   /* Draw the Label string. */
-    XSetClipRectangles(XtDisplay(w), w->control.gc, 0, 0, 
-      &(w->indicator.face), 1, Unsorted); 
-    XSetForeground(XtDisplay(w), w->control.gc,
-      w->control.label_pixel);
-    XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-      w->indicator.lbl.x, w->indicator.lbl.y, 
-      w->control.label, strlen(w->control.label));
-
+    XSetClipRectangles(XtDisplay(w), wi->control.gc, 0, 0, 
+      &(wi->indicator.face), 1, Unsorted); 
+    XSetForeground(XtDisplay(w), wi->control.gc,
+      wi->control.label_pixel);
+    XDrawString(XtDisplay(w), XtWindow(w), wi->control.gc,
+      wi->indicator.lbl.x, wi->indicator.lbl.y, 
+      wi->control.label, strlen(wi->control.label));
+    
   /* Draw the Scale */
-    if (w->indicator.num_segments > 0) {
-	XSetForeground(XtDisplay(w), w->control.gc,
-	  w->indicator.scale_pixel);
-	XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-	  w->indicator.scale_line.x1, w->indicator.scale_line.y1,
-	  w->indicator.scale_line.x2, w->indicator.scale_line.y2);
+    if (wi->indicator.num_segments > 0) {
+	XSetForeground(XtDisplay(w), wi->control.gc,
+	  wi->indicator.scale_pixel);
+	XDrawLine(XtDisplay(w), XtWindow(w), wi->control.gc,
+	  wi->indicator.scale_line.x1, wi->indicator.scale_line.y1,
+	  wi->indicator.scale_line.x2, wi->indicator.scale_line.y2);
 
       /* Draw the max and min value segments. */
-	if (w->indicator.orient == XcVert) {
+	if (wi->indicator.orient == XcVert) {
 	} else {
-	    XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-	      w->indicator.scale_line.x1, 
-	      w->indicator.scale_line.y1 - w->indicator.seg_length, 
-	      w->indicator.scale_line.x1, w->indicator.scale_line.y1);
-	    XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-	      w->indicator.scale_line.x2, 
-	      w->indicator.scale_line.y2 - w->indicator.seg_length, 
-	      w->indicator.scale_line.x2, w->indicator.scale_line.y2);
+	    XDrawLine(XtDisplay(w), XtWindow(w), wi->control.gc,
+	      wi->indicator.scale_line.x1, 
+	      wi->indicator.scale_line.y1 - wi->indicator.seg_length, 
+	      wi->indicator.scale_line.x1, wi->indicator.scale_line.y1);
+	    XDrawLine(XtDisplay(w), XtWindow(w), wi->control.gc,
+	      wi->indicator.scale_line.x2, 
+	      wi->indicator.scale_line.y2 - wi->indicator.seg_length, 
+	      wi->indicator.scale_line.x2, wi->indicator.scale_line.y2);
 	}
-
+	
       /* Now draw the rest of the Scale segments. */
-	for (j = 0; j < w->indicator.num_segments; j++) {
-	    if (w->indicator.orient == XcVert)
-	      XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->indicator.segs[j].x, w->indicator.segs[j].y,
-		w->indicator.scale_line.x1, w->indicator.segs[j].y);
+	for (j = 0; j < wi->indicator.num_segments; j++) {
+	    if (wi->indicator.orient == XcVert)
+	      XDrawLine(XtDisplay(w), XtWindow(w), wi->control.gc,
+		wi->indicator.segs[j].x, wi->indicator.segs[j].y,
+		wi->indicator.scale_line.x1, wi->indicator.segs[j].y);
 	    else
-	      XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->indicator.segs[j].x, w->indicator.segs[j].y,
-		w->indicator.segs[j].x, w->indicator.scale_line.y1);
+	      XDrawLine(XtDisplay(w), XtWindow(w), wi->control.gc,
+		wi->indicator.segs[j].x, wi->indicator.segs[j].y,
+		wi->indicator.segs[j].x, wi->indicator.scale_line.y1);
 	}
-
+	
       /* Draw the max and min value string indicators */
 	Print_bounds(w, upper, lower);
-	XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-	  w->indicator.max_val.x, w->indicator.max_val.y,
+	XDrawString(XtDisplay(w), XtWindow(w), wi->control.gc,
+	  wi->indicator.max_val.x, wi->indicator.max_val.y,
 	  upper, strlen(upper)); 
-	XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-	  w->indicator.min_val.x, w->indicator.min_val.y, 
+	XDrawString(XtDisplay(w), XtWindow(w), wi->control.gc,
+	  wi->indicator.min_val.x, wi->indicator.min_val.y, 
 	  lower, strlen(lower)); 
     }
-
-
+    
   /* Draw the Bar indicator border */
-    Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-      w->indicator.indicator.x - w->control.shade_depth, 
-      w->indicator.indicator.y - w->control.shade_depth,
-      w->indicator.indicator.width + (2*w->control.shade_depth),  
-      w->indicator.indicator.height + (2*w->control.shade_depth), DEPRESSED);
-
+    Rect3d(w, XtDisplay(w), XtWindow(w), wi->control.gc,
+      wi->indicator.indicator.x - wi->control.shade_depth, 
+      wi->indicator.indicator.y - wi->control.shade_depth,
+      wi->indicator.indicator.width + (2*wi->control.shade_depth),  
+      wi->indicator.indicator.height + (2*wi->control.shade_depth), DEPRESSED);
+    
   /* Draw the Value Box */
-    if (w->indicator.value_visible == True)
-      Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-	w->value.value_box.x - w->control.shade_depth, 
-	w->value.value_box.y - w->control.shade_depth,
-	w->value.value_box.width + (2*w->control.shade_depth),  
-	w->value.value_box.height + (2*w->control.shade_depth), DEPRESSED);
-
+    if (wi->indicator.value_visible == True)
+      Rect3d(w, XtDisplay(w), XtWindow(w), wi->control.gc,
+	wi->value.value_box.x - wi->control.shade_depth, 
+	wi->value.value_box.y - wi->control.shade_depth,
+	wi->value.value_box.width + (2*wi->control.shade_depth),  
+	wi->value.value_box.height + (2*wi->control.shade_depth), DEPRESSED);
+    
   /* Draw the new value represented by the Bar indicator and the value string */
-    Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
-
+    Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
 
     DPRINTF(("Indicator: done Redisplay\n"));
 
-}  /* end of Redisplay */
-
-
-
-
+}
 
 /*******************************************************************
  NAME:		SetValues.
  DESCRIPTION:
    This is the set_values method for this widget. It validates resource
-settings set with XtSetValues. If a resource is changed that would
-require re-drawing the widget, return True.
+ settings set with XtSetValues. If a resource is changed that would
+ require re-drawing the widget, return True.
 
 *******************************************************************/
 
-static Boolean SetValues(
-  IndicatorWidget cur, IndicatorWidget req, IndicatorWidget new)
+static Boolean SetValues(Widget cur, Widget req,
+  Widget new, ArgList args, Cardinal *nargs)
+  /* KE: req, args, nargs is not used */
 {
-  /* Local variables */
+    IndicatorWidget wnew = (IndicatorWidget)new;
+    IndicatorWidget wcur = (IndicatorWidget)cur;
     Boolean do_redisplay = False, do_resize = True;
-
 
     DPRINTF(("Indicator: executing SetValues \n"));
 
   /* Validate new resource settings. */
-
-/* Check widget color resource settings. */
-    if ((new->indicator.indicator_foreground 
-      != cur->indicator.indicator_foreground) ||
-      (new->indicator.indicator_background 
-	!= cur->indicator.indicator_background) ||
-      (new->indicator.scale_pixel != cur->indicator.scale_pixel)) 
+    
+  /* Check widget color resource settings. */
+    if ((wnew->indicator.indicator_foreground 
+      != wcur->indicator.indicator_foreground) ||
+      (wnew->indicator.indicator_background 
+	!= wcur->indicator.indicator_background) ||
+      (wnew->indicator.scale_pixel != wcur->indicator.scale_pixel)) 
       do_redisplay = True;
-
-/* Check orientation resource setting. */
-    if (new->indicator.orient != cur->indicator.orient)
-	{
-	    do_redisplay = True;
-	    if ((new->indicator.orient != XcVert) 
-	      && (new->indicator.orient != XcHoriz))
-		{
-		    XtWarning("Indicator: invalid orientation setting");
-		    new->indicator.orient = XcVert;
-		}
+    
+  /* Check orientation resource setting. */
+    if (wnew->indicator.orient != wcur->indicator.orient) {
+	do_redisplay = True;
+	if ((wnew->indicator.orient != XcVert) 
+	  && (wnew->indicator.orient != XcHoriz)) {
+	    XtWarning("Indicator: invalid orientation setting");
+	    wnew->indicator.orient = XcVert;
 	}
-
+    }
+    
   /* Check the interval resource setting. */
-    if (new->indicator.interval != cur->indicator.interval) 
-	{
-	    if (cur->indicator.interval > 0)
-	      XtRemoveTimeOut (cur->indicator.interval_id);
-	    if (new->indicator.interval > 0)
-	      new->indicator.interval_id = 
-		XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
-		  new->indicator.interval, Get_value, new);
-	}
-
+    if (wnew->indicator.interval != wcur->indicator.interval) {
+	if (wcur->indicator.interval > 0)
+	  XtRemoveTimeOut (wcur->indicator.interval_id);
+	if (wnew->indicator.interval > 0)
+	  wnew->indicator.interval_id = 
+	    XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
+	      wnew->indicator.interval, Get_value, new);
+    }
+    
   /* Check the scaleSegments resource setting. */
-    if (new->indicator.num_segments != cur->indicator.num_segments)
-	{
-	    if (new->indicator.num_segments < MIN_SCALE_SEGS)
-		{
-		    XtWarning("Indicator: invalid number of scale segments");
-		    new->indicator.num_segments = MIN_SCALE_SEGS;
-		}
-	    else if (new->indicator.num_segments > MAX_SCALE_SEGS)
-		{
-		    XtWarning("Indicator: invalid number of scale segments");
-		    new->indicator.num_segments = MAX_SCALE_SEGS;
-		}
+    if (wnew->indicator.num_segments != wcur->indicator.num_segments) {
+	if (wnew->indicator.num_segments < MIN_SCALE_SEGS) {
+	    XtWarning("Indicator: invalid number of scale segments");
+	    wnew->indicator.num_segments = MIN_SCALE_SEGS;
+	} else if (wnew->indicator.num_segments > MAX_SCALE_SEGS) {
+	    XtWarning("Indicator: invalid number of scale segments");
+	    wnew->indicator.num_segments = MAX_SCALE_SEGS;
 	}
-
+    }
+    
   /* Check the valueVisible resource setting. */
-    if (new->indicator.value_visible != cur->indicator.value_visible)
-	{
-	    do_redisplay = True;
-	    if ((new->indicator.value_visible != True) &&
-	      (new->indicator.value_visible != False))
-		{
-		    XtWarning("Indicator: invalid valueVisible setting");
-		    new->indicator.value_visible = True;
-		}
+    if (wnew->indicator.value_visible != wcur->indicator.value_visible) {
+	do_redisplay = True;
+	if ((wnew->indicator.value_visible != True) &&
+	  (wnew->indicator.value_visible != False)) {
+	    XtWarning("Indicator: invalid valueVisible setting");
+	    wnew->indicator.value_visible = True;
 	}
-
+    }
+    
   /* Check to see if the value has changed. */
-    if ((((new->value.datatype == XcLval) || (new->value.datatype == XcHval)) && 
-      (new->value.val.lval != cur->value.val.lval))
-      || ((new->value.datatype == XcFval) && 
-	(new->value.val.fval != cur->value.val.fval)))
-	{
-	    do_redisplay = True;
-	}
-
+    if ((((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval)) && 
+      (wnew->value.val.lval != wcur->value.val.lval))
+      || ((wnew->value.datatype == XcFval) && 
+	(wnew->value.val.fval != wcur->value.val.fval))) {
+	do_redisplay = True;
+    }
+    
   /* (MDA) want to force resizing if min/max changed  or decimals setting */
-    if (new->value.decimals != cur->value.decimals) do_resize = True;
-
-    if ( ((new->value.datatype == XcLval) || (new->value.datatype == XcHval)) &&
-      ( (new->value.lower_bound.lval != cur->value.lower_bound.lval) ||
-	(new->value.upper_bound.lval != cur->value.upper_bound.lval) ))
-	{
-	    do_resize = True;
-	}
-    else if ( (new->value.datatype == XcFval) &&
-      ( (new->value.lower_bound.fval != cur->value.lower_bound.fval) ||
-	(new->value.upper_bound.fval != cur->value.upper_bound.fval) ))
-	{
-	    do_resize = True;
-	}
+    if (wnew->value.decimals != wcur->value.decimals) do_resize = True;
+    
+    if ( ((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval)) &&
+      ( (wnew->value.lower_bound.lval != wcur->value.lower_bound.lval) ||
+	(wnew->value.upper_bound.lval != wcur->value.upper_bound.lval) )) {
+	do_resize = True;
+    } else if ( (wnew->value.datatype == XcFval) &&
+      ( (wnew->value.lower_bound.fval != wcur->value.lower_bound.fval) ||
+	(wnew->value.upper_bound.fval != wcur->value.upper_bound.fval) )) {
+	do_resize = True;
+    }
     if (do_resize) {
         Resize(new);
         do_redisplay = True;
     }
 
-
     DPRINTF(("Indicator: done SetValues\n"));
     return do_redisplay;
-
-
-}  /* end of SetValues */
-
-
-
+}
 
 /*******************************************************************
  NAME:		Resize.
  DESCRIPTION:
    This is the resize method of the Indicator widget. It resizes the
-Indicator's graphics based on the new width and height of the widget's
-window.  
-
+ Indicator's graphics based on the new width and height of the widget's
+ window.  
 *******************************************************************/
 
-static void Resize(IndicatorWidget w)
+static void Resize(Widget w)
 {
-  /* Local variables */
+    IndicatorWidget wi = (IndicatorWidget)w;
     int j;
     int seg_spacing;
     int max_val_width, min_val_width, max_width;
     int font_center, font_height;
     char upper[30], lower[30];
     Boolean displayValue, displayLabel;
-
+    
     DPRINTF(("Indicator: executing Resize\n"));
-
-/* (MDA) for numbers, usually safe to ignore descent to save space */
-    font_height = (w->control.font)->ascent;
-
+    
+  /* (MDA) for numbers, usually safe to ignore descent to save space */
+    font_height = (wi->control.font)->ascent;
+    
   /* Set the widgets new width and height. */
-    w->indicator.face.x = w->indicator.face.y = w->control.shade_depth;
-    w->indicator.face.width = w->core.width - (2*w->control.shade_depth);
-    w->indicator.face.height = w->core.height - (2*w->control.shade_depth);
-
+    wi->indicator.face.x = wi->indicator.face.y = wi->control.shade_depth;
+    wi->indicator.face.width = wi->core.width - (2*wi->control.shade_depth);
+    wi->indicator.face.height = wi->core.height - (2*wi->control.shade_depth);
+    
   /* Calculate min/max string attributes */
     Print_bounds(w, upper, lower);
-    max_val_width = XTextWidth(w->control.font, upper, strlen(upper));
-    min_val_width = XTextWidth(w->control.font, lower, strlen(lower));
-    max_width = MAX(min_val_width,max_val_width) + 2*w->control.shade_depth;
-    if (w->indicator.num_segments == 0) max_width = w->indicator.face.width
-					  - 2*w->control.shade_depth;
-
+    max_val_width = XTextWidth(wi->control.font, upper, strlen(upper));
+    min_val_width = XTextWidth(wi->control.font, lower, strlen(lower));
+    max_width = MAX(min_val_width,max_val_width) + 2*wi->control.shade_depth;
+    if (wi->indicator.num_segments == 0) max_width = wi->indicator.face.width
+					   - 2*wi->control.shade_depth;
    
-/* Establish the new Value Box geometry. */
-    if (w->indicator.value_visible == True) {
+  /* Establish the new Value Box geometry. */
+    if (wi->indicator.value_visible == True) {
 	displayValue = True;
-	if (w->indicator.orient == XcVert) {
-	    w->value.value_box.x = w->core.width/2 - max_width/2;
-	    w->value.value_box.y = w->core.height - font_height -
-	      3*w->control.shade_depth;
-	    w->value.value_box.width = max_width;
-	    w->value.value_box.height = font_height;
+	if (wi->indicator.orient == XcVert) {
+	    wi->value.value_box.x = wi->core.width/2 - max_width/2;
+	    wi->value.value_box.y = wi->core.height - font_height -
+	      3*wi->control.shade_depth;
+	    wi->value.value_box.width = max_width;
+	    wi->value.value_box.height = font_height;
 	} else {
-	    w->value.value_box.x = w->core.width/2 - max_width/2;
-	    w->value.value_box.y = w->core.height - font_height -
-	      2*w->control.shade_depth -2;
-	    w->value.value_box.width = max_width;
-	    w->value.value_box.height = font_height;
+	    wi->value.value_box.x = wi->core.width/2 - max_width/2;
+	    wi->value.value_box.y = wi->core.height - font_height -
+	      2*wi->control.shade_depth -2;
+	    wi->value.value_box.width = max_width;
+	    wi->value.value_box.height = font_height;
 	}
       /* Set the position of the displayed value within the Value Box. */
-	Position_val((ValueWidget)w);
-
+	Position_val(w);
     } else {
 	displayValue = False;
-	w->value.value_box.x = 0;
-	w->value.value_box.y = w->core.height - 2*w->control.shade_depth;
-	w->value.value_box.width = 0;
-	w->value.value_box.height = 0;   
+	wi->value.value_box.x = 0;
+	wi->value.value_box.y = wi->core.height - 2*wi->control.shade_depth;
+	wi->value.value_box.width = 0;
+	wi->value.value_box.height = 0;   
     }
 
-
   /* Set the new label location. */
-   
-    if (strlen(w->control.label) > 1 ||
-      (strlen(w->control.label) == 1 && w->control.label[0] != ' '))
-	{
-	    displayLabel = True;
-	    w->indicator.lbl.x = (w->core.width / 2) -
-	      (XTextWidth(w->control.font, w->control.label, 
-		strlen(w->control.label)) / 2); 
-	    w->indicator.lbl.y = w->indicator.face.y + w->control.font->ascent + 1;
-	}
-    else
-	{
-	    displayLabel = False;
-	    w->indicator.lbl.x = w->indicator.face.x;
-	    w->indicator.lbl.y = w->indicator.face.y;
-	}   
-
+    if (strlen(wi->control.label) > 1 ||
+      (strlen(wi->control.label) == 1 && wi->control.label[0] != ' ')) {
+	displayLabel = True;
+	wi->indicator.lbl.x = (wi->core.width / 2) -
+	  (XTextWidth(wi->control.font, wi->control.label, 
+	    strlen(wi->control.label)) / 2); 
+	wi->indicator.lbl.y = wi->indicator.face.y + wi->control.font->ascent + 1;
+    } else {
+	displayLabel = False;
+	wi->indicator.lbl.x = wi->indicator.face.x;
+	wi->indicator.lbl.y = wi->indicator.face.y;
+    }   
+    
   /* Resize the Bar indicator */
-    if (w->indicator.orient == XcVert)
-	{
-	    w->indicator.indicator.x = w->indicator.face.x
-	      + (w->indicator.num_segments > 0 ? max_width +
-		+ (w->indicator.face.width / 32) : 0)
-	      + 2*w->control.shade_depth;	 
-	    w->indicator.indicator.y = w->indicator.lbl.y  + w->control.font->descent
-	      + 2*w->control.shade_depth;
-	    w->indicator.indicator.width = MAX(0,(int)(w->indicator.face.width 
-	      - w->indicator.indicator.x - w->control.shade_depth));
-	    w->indicator.indicator.height = w->value.value_box.y 
-	      - w->indicator.indicator.y
-	      - (displayValue == True
-		? font_height - w->control.font->descent 
-		: 2*w->control.shade_depth);
-	}
-    else
-	{
-	    w->indicator.indicator.x = w->indicator.face.x +
-	      (short)(w->indicator.face.width / 16) +
-	      w->control.shade_depth;
-	    w->indicator.indicator.y =  w->indicator.lbl.y
-	      + (w->indicator.num_segments > 0 ?
-		font_height/2 + w->indicator.face.height/8 + 1 :
-		0)
-	      + 2*w->control.shade_depth;
-	    w->indicator.indicator.width = (short)
-	      ((9 * (int)w->indicator.face.width)/10) - 2*w->control.shade_depth;
-	    w->indicator.indicator.height = MAX(1,
-	      w->value.value_box.y - w->indicator.indicator.y
-	      - (displayValue == True ? font_height : 0)
-	      - w->control.shade_depth);
-	}
-
+    if (wi->indicator.orient == XcVert) {
+	wi->indicator.indicator.x = wi->indicator.face.x
+	  + (wi->indicator.num_segments > 0 ? max_width +
+	    + (wi->indicator.face.width / 32) : 0)
+	  + 2*wi->control.shade_depth;	 
+	wi->indicator.indicator.y = wi->indicator.lbl.y  + wi->control.font->descent
+	  + 2*wi->control.shade_depth;
+	wi->indicator.indicator.width = MAX(0,(int)(wi->indicator.face.width 
+	  - wi->indicator.indicator.x - wi->control.shade_depth));
+	wi->indicator.indicator.height = wi->value.value_box.y 
+	  - wi->indicator.indicator.y
+	  - (displayValue == True
+	    ? font_height - wi->control.font->descent 
+	    : 2*wi->control.shade_depth);
+    } else {
+	wi->indicator.indicator.x = wi->indicator.face.x +
+	  (short)(wi->indicator.face.width / 16) +
+	  wi->control.shade_depth;
+	wi->indicator.indicator.y =  wi->indicator.lbl.y
+	  + (wi->indicator.num_segments > 0 ?
+	    font_height/2 + wi->indicator.face.height/8 + 1 :
+	    0)
+	  + 2*wi->control.shade_depth;
+	wi->indicator.indicator.width = (short)
+	  ((9 * (int)wi->indicator.face.width)/10) - 2*wi->control.shade_depth;
+	wi->indicator.indicator.height = MAX(1,
+	  wi->value.value_box.y - wi->indicator.indicator.y
+	  - (displayValue == True ? font_height : 0)
+	  - wi->control.shade_depth);
+    }
 
   /* Resize the Scale line. */
-    if (w->indicator.orient == XcVert)
-	{
-	    w->indicator.scale_line.x1 = w->indicator.indicator.x 
-	      - w->control.shade_depth - (w->indicator.face.width / 32);
-	    w->indicator.scale_line.y1 = w->indicator.indicator.y;
-	    w->indicator.scale_line.x2 = w->indicator.scale_line.x1;
-	    w->indicator.scale_line.y2 = w->indicator.indicator.y 
-	      + w->indicator.indicator.height;
-	}
-    else
-	{
-	    w->indicator.scale_line.x1 = w->indicator.indicator.x;
-	    w->indicator.scale_line.y1 = w->indicator.indicator.y 
-	      - w->control.shade_depth - (w->indicator.face.height / 32);
-	    w->indicator.scale_line.x2 = w->indicator.indicator.x 
-	      + w->indicator.indicator.width;
-	    w->indicator.scale_line.y2 = w->indicator.scale_line.y1;
-	}
-
+    if (wi->indicator.orient == XcVert)	{
+	wi->indicator.scale_line.x1 = wi->indicator.indicator.x 
+	  - wi->control.shade_depth - (wi->indicator.face.width / 32);
+	wi->indicator.scale_line.y1 = wi->indicator.indicator.y;
+	wi->indicator.scale_line.x2 = wi->indicator.scale_line.x1;
+	wi->indicator.scale_line.y2 = wi->indicator.indicator.y 
+	  + wi->indicator.indicator.height;
+    } else {
+	wi->indicator.scale_line.x1 = wi->indicator.indicator.x;
+	wi->indicator.scale_line.y1 = wi->indicator.indicator.y 
+	  - wi->control.shade_depth - (wi->indicator.face.height / 32);
+	wi->indicator.scale_line.x2 = wi->indicator.indicator.x 
+	  + wi->indicator.indicator.width;
+	wi->indicator.scale_line.y2 = wi->indicator.scale_line.y1;
+    }
+    
   /* Now, resize Scale line segments */
-    if (w->indicator.num_segments > 0)
-	{
-	    if (w->indicator.orient == XcVert)
-		{
-		    w->indicator.seg_length = (w->indicator.face.width / 16);
-		    seg_spacing = ((int)w->indicator.indicator.height / 
-		      (w->indicator.num_segments + 1));
-		    for (j = 0; j < w->indicator.num_segments; j++)
-			{
-			    w->indicator.segs[j].x = w->indicator.scale_line.x1 -
-			      w->indicator.seg_length;
-			    w->indicator.segs[j].y = w->indicator.scale_line.y1 + 
-			      ((j+1) * seg_spacing);
-			}
-		}
-	    else
-		{
-		    w->indicator.seg_length = (w->indicator.face.height / 16);
-		    seg_spacing = ((int)w->indicator.indicator.width / 
-		      (w->indicator.num_segments + 1));
-		    for (j = 0; j < w->indicator.num_segments; j++)
-			{
-			    w->indicator.segs[j].x = w->indicator.scale_line.x1 + 
-			      ((j+1) * seg_spacing);
-			    w->indicator.segs[j].y = w->indicator.scale_line.y1 - 
-			      w->indicator.seg_length;
-			}
-		}
+    if (wi->indicator.num_segments > 0)	{
+	if (wi->indicator.orient == XcVert) {
+	    wi->indicator.seg_length = (wi->indicator.face.width / 16);
+	    seg_spacing = ((int)wi->indicator.indicator.height / 
+	      (wi->indicator.num_segments + 1));
+	    for (j = 0; j < wi->indicator.num_segments; j++) {
+		wi->indicator.segs[j].x = wi->indicator.scale_line.x1 -
+		  wi->indicator.seg_length;
+		wi->indicator.segs[j].y = wi->indicator.scale_line.y1 + 
+		  ((j+1) * seg_spacing);
+	    }
+	} else {
+	    wi->indicator.seg_length = (wi->indicator.face.height / 16);
+	    seg_spacing = ((int)wi->indicator.indicator.width / 
+	      (wi->indicator.num_segments + 1));
+	    for (j = 0; j < wi->indicator.num_segments; j++) {
+		wi->indicator.segs[j].x = wi->indicator.scale_line.x1 + 
+		  ((j+1) * seg_spacing);
+		wi->indicator.segs[j].y = wi->indicator.scale_line.y1 - 
+		  wi->indicator.seg_length;
+	    }
 	}
-
+    }
+    
   /* Set the position of the max and min value strings */
-    if (w->indicator.orient == XcVert)
-	{
-	    font_center = ((w->control.font->ascent + 
-	      w->control.font->descent) / 2) 
-	      - w->control.font->descent;
-	    w->indicator.max_val.x = MAX(w->control.shade_depth,
-	      w->indicator.scale_line.x2 - (max_val_width));
-	    w->indicator.max_val.y = w->indicator.scale_line.y1 + font_center;
-	    w->indicator.min_val.x = MAX(w->control.shade_depth,
-	      w->indicator.scale_line.x2 - (min_val_width));
-	    w->indicator.min_val.y = w->indicator.scale_line.y2 + font_center;
-	}
-    else
-	{
-	    w->indicator.max_val.x = MIN(
-	      (int)(w->indicator.face.width + w->control.shade_depth
-		- max_val_width),
-	      w->indicator.scale_line.x2 - (max_val_width / 2));
-	    w->indicator.max_val.y = w->indicator.min_val.y =
-	      w->indicator.scale_line.y1 - w->indicator.seg_length - 1;
-	    w->indicator.min_val.x = MAX(w->control.shade_depth,
-	      w->indicator.scale_line.x1 - (min_val_width / 2));
-	}
-
+    if (wi->indicator.orient == XcVert)	{
+	font_center = ((wi->control.font->ascent + 
+	  wi->control.font->descent) / 2) 
+	  - wi->control.font->descent;
+	wi->indicator.max_val.x = MAX(wi->control.shade_depth,
+	  wi->indicator.scale_line.x2 - (max_val_width));
+	wi->indicator.max_val.y = wi->indicator.scale_line.y1 + font_center;
+	wi->indicator.min_val.x = MAX(wi->control.shade_depth,
+	  wi->indicator.scale_line.x2 - (min_val_width));
+	wi->indicator.min_val.y = wi->indicator.scale_line.y2 + font_center;
+    } else {
+	wi->indicator.max_val.x = MIN(
+	  (int)(wi->indicator.face.width + wi->control.shade_depth
+	    - max_val_width),
+	  wi->indicator.scale_line.x2 - (max_val_width / 2));
+	wi->indicator.max_val.y = wi->indicator.min_val.y =
+	  wi->indicator.scale_line.y1 - wi->indicator.seg_length - 1;
+	wi->indicator.min_val.x = MAX(wi->control.shade_depth,
+	  wi->indicator.scale_line.x1 - (min_val_width / 2));
+    }
 
     DPRINTF(("Indicator: done Resize\n"));
-
-}  /* end of Resize */
-
-
-
+}
 
 /*******************************************************************
  NAME:		QueryGeometry.		
@@ -740,110 +657,94 @@ size.
 
 *******************************************************************/
 
-static XtGeometryResult QueryGeometry(
-  IndicatorWidget w,
-  XtWidgetGeometry *proposed, XtWidgetGeometry *answer)
+static XtGeometryResult QueryGeometry(Widget w, XtWidgetGeometry *proposed,
+  XtWidgetGeometry *answer)
 {
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
   /* Set the request mode mask for the returned answer. */
     answer->request_mode = CWWidth | CWHeight;
 
-/* Set the recommended size. */
-    answer->width = (w->core.width > MAX_INDICATOR_WIDTH)
-      ? MAX_INDICATOR_WIDTH : w->core.width;
-    answer->height = (w->core.height > MAX_INDICATOR_HEIGHT)
-      ? MAX_INDICATOR_HEIGHT : w->core.height;
-
-/* 
- * Check the proposed dimensions. If the proposed size is larger than
- * appropriate, return the recommended size.
- */
+  /* Set the recommended size. */
+    answer->width = (wi->core.width > MAX_INDICATOR_WIDTH)
+      ? MAX_INDICATOR_WIDTH : wi->core.width;
+    answer->height = (wi->core.height > MAX_INDICATOR_HEIGHT)
+      ? MAX_INDICATOR_HEIGHT : wi->core.height;
+    
+  /* 
+   * Check the proposed dimensions. If the proposed size is larger than
+   * appropriate, return the recommended size.
+   */
     if (((proposed->request_mode & (CWWidth | CWHeight)) == (CWWidth | CWHeight))
       && proposed->width == answer->width 
       && proposed->height == answer->height)
       return XtGeometryYes;
-    else if (answer->width == w->core.width && answer->height == w->core.height)
+    else if (answer->width == wi->core.width && answer->height == wi->core.height)
       return XtGeometryNo;
     else
       return XtGeometryAlmost;
-
-}  /* end of QueryGeometry */
-
-
-
+}
 
 /*******************************************************************
  NAME:		Destroy.
  DESCRIPTION:
    This function is the widget's destroy method.  It simply releases
-any server resources acquired during the life of the widget.
-
+ any server resources acquired during the life of the widget.
 *******************************************************************/
 
-static void Destroy(IndicatorWidget w)
+static void Destroy(Widget w)
 {
-
-    if (w->indicator.interval > 0)
-      XtRemoveTimeOut (w->indicator.interval_id);
-
-}  /* end of Destroy */
-
-
-
-
-
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
+    if (wi->indicator.interval > 0)
+      XtRemoveTimeOut (wi->indicator.interval_id);
+}
 /* Widget action functions. */
 
 /*******************************************************************
  NAME:		Get_value.		
  DESCRIPTION:
    This function is the time out procedure called at XcNinterval 
-intervals.  It calls the application registered callback function to
-get the latest value and updates the Indicator display accordingly.
-
+ intervals.  It calls the application registered callback function to
+ get the latest value and updates the Indicator display accordingly.
 *******************************************************************/
 
-static void Get_value(
-  XtPointer client_data,
-  XtIntervalId *id)		/* unused */
+static void Get_value(XtPointer client_data, XtIntervalId *id)
 {
   /* Local variables */
     static XcCallData call_data;
-    IndicatorWidget w = (IndicatorWidget)client_data;
-   
+    Widget w = (Widget)client_data;
+    IndicatorWidget wi = (IndicatorWidget)client_data;
+    
   /* Get the new value by calling the application's callback if it exists. */
-    if (w->indicator.update_callback == NULL)
+    if (wi->indicator.update_callback == NULL)
       return;
-
-/* Re-register this TimeOut procedure for the next interval. */
-    if (w->indicator.interval > 0)
-      w->indicator.interval_id = 
+    
+  /* Re-register this TimeOut procedure for the next interval. */
+    if (wi->indicator.interval > 0)
+      wi->indicator.interval_id = 
 	XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)w),
-	  w->indicator.interval, Get_value, client_data);
-
+	  wi->indicator.interval, Get_value, client_data);
+    
   /* Set the widget's current value and datatype before calling the callback. */
-    call_data.dtype = w->value.datatype;
-    call_data.decimals = w->value.decimals;
-    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
-      call_data.value.lval = w->value.val.lval;
-    else if (w->value.datatype == XcFval)
-      call_data.value.fval = w->value.val.fval;
+    call_data.dtype = wi->value.datatype;
+    call_data.decimals = wi->value.decimals;
+    if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval))  
+      call_data.value.lval = wi->value.val.lval;
+    else if (wi->value.datatype == XcFval)
+      call_data.value.fval = wi->value.val.fval;
     XtCallCallbacks((Widget)w, XcNupdateCallback, &call_data);
-
-
+    
+    
   /* Update the new value, update the Indicator display. */
-    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
-      w->value.val.lval = call_data.value.lval;
-    else if (w->value.datatype == XcFval)
-      w->value.val.fval = call_data.value.fval;
-
+    if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval))  
+      wi->value.val.lval = call_data.value.lval;
+    else if (wi->value.datatype == XcFval)
+      wi->value.val.fval = call_data.value.fval;
+    
     if (XtIsRealized((Widget)w))
-      Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
-   
-
-}  /* end of Get_value */
-
-
-
+      Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+}
 
 /*******************************************************************
  NAME:		XcIndUpdateValue.		
@@ -854,30 +755,24 @@ The application passes the new value to be updated with.
 
 *******************************************************************/
 
-void XcIndUpdateValue(Widget widget, XcVType *value)
+void XcIndUpdateValue(Widget w, XcVType *value)
 {
-  /* Local variables */
-
-    IndicatorWidget w = (IndicatorWidget) widget;
-
-    if (!w->core.visible) return;
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
+    if (!wi->core.visible) return;
     
   /* Update the new value, then update the Indicator display. */
-    if (value != NULL)
-	{
-	    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
-	      w->value.val.lval = value->lval;
-	    else if (w->value.datatype == XcFval)
-	      w->value.val.fval = value->fval;
-
-	    if (XtIsRealized((Widget)w))
-	      Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
-
-	}
+    if (value != NULL) {
+	if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval))  
+	  wi->value.val.lval = value->lval;
+	else if (wi->value.datatype == XcFval)
+	  wi->value.val.fval = value->fval;
+	
+	if (XtIsRealized((Widget)w))
+	  Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+    }
    
-}  /* end of XcIndUpdateValue */
-
-
+}
 
 /*******************************************************************
  NAME:		XcIndUpdateIndicatorForeground.		
@@ -889,23 +784,19 @@ void XcIndUpdateValue(Widget widget, XcVType *value)
 
 *******************************************************************/
 
-void XcIndUpdateIndicatorForeground(Widget widget, unsigned long pixel)
+void XcIndUpdateIndicatorForeground(Widget w, Pixel pixel)
 {
-  /* Local variables */
-    IndicatorWidget w = (IndicatorWidget) widget;
-
-    if (!w->core.visible) return;
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
+    if (!wi->core.visible) return;
     
   /* Update the new value, then update the Indicator display. */
-    if (w->indicator.indicator_foreground != pixel) {
-	w->indicator.indicator_foreground = pixel;
+    if (wi->indicator.indicator_foreground != pixel) {
+	wi->indicator.indicator_foreground = pixel;
 	if (XtIsRealized((Widget)w))
-	  Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
+	  Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
     }
-   
-}  /* end of XcIndUpdateIndicatorForeground */
-
-
+}
 
 /*******************************************************************
  NAME:		Draw_display.		
@@ -915,152 +806,134 @@ Value Box.
 
 *******************************************************************/
 
-static void Draw_display(
-  IndicatorWidget w,
-  Display *display,
-  Drawable drawable,
-  GC gc)
+static void Draw_display(Widget w, Display *display,
+  Drawable drawable, GC gc)
 {
-  /* Local variables */
+    IndicatorWidget wi = (IndicatorWidget)w;
     XRectangle clipRect[1];
     char *temp;
     float range, dim;
     unsigned int indicator_size;
     XPoint points[4];
     int nPoints = 4;
-
+    
   /* Draw the Bar indicator */
   /* Fill the Bar with its background color. */
-    XSetForeground(display, gc, w->indicator.indicator_background); 
+    XSetForeground(display, gc, wi->indicator.indicator_background); 
     XFillRectangle(display, drawable, gc,
-      w->indicator.indicator.x, w->indicator.indicator.y, 
-      w->indicator.indicator.width, w->indicator.indicator.height); 
-
+      wi->indicator.indicator.x, wi->indicator.indicator.y, 
+      wi->indicator.indicator.width, wi->indicator.indicator.height); 
+    
   /* Draw the Bar in its foreground color according to the value. */
-    if (w->indicator.orient == XcVert)
-      range = (float)(w->indicator.indicator.height);
+    if (wi->indicator.orient == XcVert)
+      range = (float)(wi->indicator.indicator.height);
     else
-      range = (float)(w->indicator.indicator.width);
-
-    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))
-      dim = Correlate(((float)(w->value.val.lval)
-	- (float)(w->value.lower_bound.lval)),
-	((float)(w->value.upper_bound.lval) -
-	  (float)(w->value.lower_bound.lval)), range);
-    else if (w->value.datatype == XcFval)
-      dim = Correlate((w->value.val.fval
-	- w->value.lower_bound.fval),
-	(w->value.upper_bound.fval -
-	  w->value.lower_bound.fval), range);
-
-    if (w->indicator.orient == XcVert) {
-	indicator_size = MAX(5,(int)w->indicator.indicator.height/10);
+      range = (float)(wi->indicator.indicator.width);
+    
+    if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval))
+      dim = Correlate(((float)(wi->value.val.lval)
+	- (float)(wi->value.lower_bound.lval)),
+	((float)(wi->value.upper_bound.lval) -
+	  (float)(wi->value.lower_bound.lval)), range);
+    else if (wi->value.datatype == XcFval)
+      dim = Correlate((wi->value.val.fval
+	- wi->value.lower_bound.fval),
+	(wi->value.upper_bound.fval -
+	  wi->value.lower_bound.fval), range);
+    
+    if (wi->indicator.orient == XcVert) {
+	indicator_size = MAX(5,(int)wi->indicator.indicator.height/10);
     } else {
-	indicator_size = MAX(5,(int)w->indicator.indicator.width/10);
+	indicator_size = MAX(5,(int)wi->indicator.indicator.width/10);
     }
-
+    
     if ((int)dim < 1)
       dim = 1;
-    XSetForeground(display, gc, w->indicator.indicator_foreground); 
-    clipRect[0].x = w->indicator.indicator.x;
-    clipRect[0].y = w->indicator.indicator.y;
-    clipRect[0].width = w->indicator.indicator.width;
-    clipRect[0].height = w->indicator.indicator.height;
+    XSetForeground(display, gc, wi->indicator.indicator_foreground); 
+    clipRect[0].x = wi->indicator.indicator.x;
+    clipRect[0].y = wi->indicator.indicator.y;
+    clipRect[0].width = wi->indicator.indicator.width;
+    clipRect[0].height = wi->indicator.indicator.height;
     XSetClipRectangles(display,gc,0,0,clipRect,1,Unsorted);
-    if (w->indicator.orient == XcVert) {
-	points[0].x = w->indicator.indicator.x;
-	points[0].y = w->indicator.indicator.y
-	  + w->indicator.indicator.height - (int)dim;
-	points[1].x = points[0].x + w->indicator.indicator.width/2;
+    if (wi->indicator.orient == XcVert) {
+	points[0].x = wi->indicator.indicator.x;
+	points[0].y = wi->indicator.indicator.y
+	  + wi->indicator.indicator.height - (int)dim;
+	points[1].x = points[0].x + wi->indicator.indicator.width/2;
 	points[1].y = points[0].y - indicator_size/2;
-
+	
 	points[2].x = points[1].x + (points[1].x - points[0].x);
 	points[2].y = points[0].y;
 	points[3].x = points[1].x;
 	points[3].y = points[0].y + (points[0].y - points[1].y);
     } else {
-	points[0].x = w->indicator.indicator.x + (int)dim - indicator_size/2 - 1;
-	points[0].y = w->indicator.indicator.y + w->indicator.indicator.height/2;
+	points[0].x = wi->indicator.indicator.x + (int)dim - indicator_size/2 - 1;
+	points[0].y = wi->indicator.indicator.y + wi->indicator.indicator.height/2;
 	points[1].x = points[0].x + indicator_size/2;
-	points[1].y = points[0].y - w->indicator.indicator.height/2;
-
+	points[1].y = points[0].y - wi->indicator.indicator.height/2;
+	
 	points[2].x = points[1].x + (points[1].x - points[0].x);
 	points[2].y = points[0].y;
 	points[3].x = points[1].x;
 	points[3].y = points[0].y + (points[0].y - points[1].y);
     }
-
+    
     XFillPolygon(display,drawable,gc,points,nPoints,Convex,CoordModeOrigin);
-
+    
     XSetClipMask(display,gc,None);
-
-
+    
+    
   /* If the value string is supposed to be displayed, draw it. */
-    if (w->indicator.value_visible == True)
-	{
-	  /* Clear the Value Box by re-filling it with its background color. */
-	    XSetForeground(display, gc, w->value.value_bg_pixel); 
-	    XFillRectangle(display, drawable, gc,
-	      w->value.value_box.x, w->value.value_box.y, 
-	      w->value.value_box.width, w->value.value_box.height); 
-
-	  /*
-    * Now draw the value string in its foreground color, clipped by the
-    * Value Box.
-    */
-	    XSetForeground(display, gc, w->value.value_fg_pixel); 
-	    XSetClipRectangles(display, gc, 0, 0, 
-	      &(w->value.value_box), 1, Unsorted); 
-
-	    temp = Print_value(w->value.datatype, &w->value.val, w->value.decimals);
-
-	    Position_val((ValueWidget)w);
-
-	    XDrawString(display, drawable, gc,
-	      w->value.vp.x, w->value.vp.y, temp, strlen(temp)); 
-	}
+    if (wi->indicator.value_visible == True) {
+      /* Clear the Value Box by re-filling it with its background color. */
+	XSetForeground(display, gc, wi->value.value_bg_pixel); 
+	XFillRectangle(display, drawable, gc,
+	  wi->value.value_box.x, wi->value.value_box.y, 
+	  wi->value.value_box.width, wi->value.value_box.height); 
+	
+      /*
+       * Now draw the value string in its foreground color, clipped by the
+       * Value Box.
+       */
+	XSetForeground(display, gc, wi->value.value_fg_pixel); 
+	XSetClipRectangles(display, gc, 0, 0, 
+	  &(wi->value.value_box), 1, Unsorted); 
+	
+	temp = Print_value(wi->value.datatype, &wi->value.val, wi->value.decimals);
+	
+	Position_val(w);
+	
+	XDrawString(display, drawable, gc,
+	  wi->value.vp.x, wi->value.vp.y, temp, strlen(temp)); 
+    }
 
   /* Reset the clip_mask to no clipping. */
     XSetClipMask(display, gc, None);
-
-}  /* end of Draw_display */
-
-
-
+}
 
 /*******************************************************************
  NAME:		Print_bounds.		
  DESCRIPTION:
    This is a utility function used by the Redisplay and Resize methods to
-print the upper and lower bound values as strings for displaying and resizing
-purposes.
+ print the upper and lower bound values as strings for displaying and resizing
+ purposes.
 
 *******************************************************************/
 
-static void Print_bounds(
-  IndicatorWidget w,
-  char *upper, char *lower)
+static void Print_bounds(Widget w, char *upper, char *lower)
 {
+    IndicatorWidget wi = (IndicatorWidget)w;
 
-    if (w->value.datatype == XcLval)  
-	{
-	    cvtLongToString(w->value.upper_bound.lval, upper); 
-	    cvtLongToString(w->value.lower_bound.lval, lower); 
-	} 
-    else if (w->value.datatype == XcHval)  
-	{
-	    cvtLongToHexString(w->value.upper_bound.lval, upper); 
-	    cvtLongToHexString(w->value.lower_bound.lval, lower); 
-	} 
-    else if (w->value.datatype == XcFval)  
-	{
-	    cvtFloatToString(w->value.upper_bound.fval, upper,
-	      (unsigned short)w->value.decimals); 
-	    cvtFloatToString(w->value.lower_bound.fval, lower,
-	      (unsigned short)w->value.decimals); 
-	} 
-
-}  /* end of Print_bounds */
-
-
-/* end of Indicator.c */
+    if (wi->value.datatype == XcLval) {
+	cvtLongToString(wi->value.upper_bound.lval, upper); 
+	cvtLongToString(wi->value.lower_bound.lval, lower); 
+    } else if (wi->value.datatype == XcHval) {
+	cvtLongToHexString(wi->value.upper_bound.lval, upper); 
+	cvtLongToHexString(wi->value.lower_bound.lval, lower); 
+    } else if (wi->value.datatype == XcFval) {
+	cvtFloatToString(wi->value.upper_bound.fval, upper,
+	  (unsigned short)wi->value.decimals); 
+	cvtFloatToString(wi->value.lower_bound.fval, lower,
+	  (unsigned short)wi->value.decimals); 
+    } 
+}

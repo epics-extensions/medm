@@ -22,16 +22,14 @@
 #define DPRINTF(statement)  
 #endif 
 
-
 /*
  * This macro is used by the resource string conversion routines to 
  * assign the converted type elements to the XrmValue struct.
  */
 #define CvtDone(type, address) \
-{ toVal->size = sizeof(type); \
-				toVal->addr = (XtPointer)address; \
-								    return; } 
-
+  toVal->size = sizeof(type); \
+  toVal->addr = (XtPointer)address; \
+  return
 
 /*
  * This enumeration defines the possible 3D rectangle types, used in the
@@ -61,13 +59,16 @@ typedef struct _ControlClassRec *ControlWidgetClass;
 typedef struct _ControlRec *ControlWidget;
 
 
-/* Declaration of widget class functions */
-extern Boolean Point_In_Rect();
-extern void Rect3d();
-extern void VarRect3d();
-extern void Arrow3d();
-extern void ToLower();
-extern void CvtStringToOrient();
-
+/* Function prototypes for widget methods */
+Boolean Point_In_Rect(int x, int y, int rect_x, int rect_y,
+  int width, int height);    
+void Rect3d(Widget w, Display *display, Drawable drawable,
+  GC gc, int x, int y, unsigned int width, unsigned int height,
+  Type3d type);
+void ToLower(char *source, char *dest);
+void CvtStringToOrient(XrmValuePtr args, Cardinal *nargs,
+  XrmValuePtr fromVal, XrmValuePtr toVal);
+void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
+  XRectangle *bounds, ArrowType orientation,Type3d type);
 
 #endif /* __XC_CONTROL_H */
