@@ -109,7 +109,10 @@ PROD = medm
 USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 ifeq ($(HOST_ARCH),WIN32)
-PROD_LIBS = GraphX ANLwidgets
+# Use Obj for object libraries and no Obj for import libraries
+ PROD_LIBS = GraphXObj ANLwidgetsObj
+ GraphXObj_DIR = $(INSTALL_LIB)
+ ANLwidgetsObj_DIR = $(INSTALL_LIB)
 else
 PROD_LIBS = GraphX ANLwidgets PrintUtils
 endif
