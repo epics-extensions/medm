@@ -1805,7 +1805,7 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polyline->object.x) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polyline->object.width <= 0 ? 1 :
-		   (short)(((float)globalResourceBundle.width/
+		   (((float)globalResourceBundle.width/
 		   (float)elementPtr->structure.polyline->object.width)));
 	elementPtr->structure.polyline->points[j].y =
 		elementPtr->structure.polyline->object.y +
@@ -1813,7 +1813,7 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polyline->object.y) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polyline->object.height <= 0 ? 1 :
-		   (short)(((float)globalResourceBundle.height/
+		   (((float)globalResourceBundle.height/
 		   (float)elementPtr->structure.polyline->object.height)));
       }
     } else if (elementPtr->type == DL_Polygon) {
@@ -1831,7 +1831,7 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polygon->object.x) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polygon->object.width == 0 ? 1 :
-		   (short)(((float)globalResourceBundle.width/
+		   (((float)globalResourceBundle.width/
 		   (float)elementPtr->structure.polygon->object.width)));
 	elementPtr->structure.polygon->points[j].y =
 		elementPtr->structure.polygon->object.y +
@@ -1839,7 +1839,7 @@ void updateElementFromGlobalResourceBundle(
 		elementPtr->structure.polygon->object.y) *
 /* avoid divide by 0 */
 		(elementPtr->structure.polygon->object.height == 0 ? 1 :
-		   (short)(((float)globalResourceBundle.height/
+		   (((float)globalResourceBundle.height/
 		   (float)elementPtr->structure.polygon->object.height)));
       }
     }
