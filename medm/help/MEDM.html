@@ -66,7 +66,9 @@
 </B><FONT SIZE=2><P>2.3.6</P>
 
 <UL>
-<LI>The </FONT><A HREF="#Image"><FONT SIZE=2>Image</FONT></A><FONT SIZE=2> has been enhanced to read GIF89a files (the latest GIF specification).  It now handles multiple-frame GIFs.  Multiple-frame GIFs can be set to animate or to display a specific frame based on a </FONT><A HREF="#CalcExpression"><FONT SIZE=2>CALC expression</FONT></A><FONT SIZE=2> that can include up to four process variables.  This opens a wide range of creative possibilities, including implementing </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.  There is also a new </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2> called </FONT><A HREF="http://www.aps.anl.gov/epics/EpicsDocumentation"><FONT SIZE=2>Simple GIF Animator (SGA)</FONT></A><FONT SIZE=2> that allows you to create and change animated GIFs.</LI>
+<LI>There is an item on the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A><FONT SIZE=2> to mark hidden buttons (see </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2>) by surrounding them with a flashing marquee.  This is for use when the user cannot find the buttons.</LI>
+<LI>The </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A><FONT SIZE=2> now has options for down and left as well as for up and right.  (See the </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2> attribute.)</LI>
+<LI> The </FONT><A HREF="#Image"><FONT SIZE=2>Image</FONT></A><FONT SIZE=2> has been enhanced to read GIF89a files (the latest GIF specification).  It now handles multiple-frame GIFs.  Multiple-frame GIFs can be set to animate or to display a specific frame based on a </FONT><A HREF="#CalcExpression"><FONT SIZE=2>CALC expression</FONT></A><FONT SIZE=2> that can include up to four process variables.  This opens a wide range of creative possibilities, including implementing </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.  There is also a new </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2> called </FONT><A HREF="http://www.aps.anl.gov/epics/EpicsDocumentation"><FONT SIZE=2>Simple GIF Animator (SGA)</FONT></A><FONT SIZE=2> that allows you to create and change animated GIFs.</LI>
 <LI>The </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> used by graphics objects has been extended to have its visibility be based on a </FONT><A HREF="#CalcExpression"><FONT SIZE=2>CALC expression</FONT></A><FONT SIZE=2> that can include up to four process variables and more.</LI>
 <LI>The </FONT><A HREF="#Composite"><FONT SIZE=2>Composite</FONT></A><FONT SIZE=2> now has a </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2>.  This means whole sections of the display can be made to appear, disappear, or change based on the values of process variables.  Also, by grouping any single object, it can be made to be Composite and therefore have a Dynamic Attribute.  The objects for a Composite may now be read from an </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL file</FONT></A><FONT SIZE=2> in addition to being defined through grouping.</LI>
 <LI>There is a </FONT><A HREF="#SiteSpecific"><FONT SIZE=2>siteSpecific.h</FONT></A><FONT SIZE=2> file, where certain defaults may be defined when MEDM is built.</LI>
@@ -480,6 +482,8 @@
 </B><FONT SIZE=2><P>&#9;The Arc has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Visibility Calc, Channels A-D) attributes.  In addition, there is a Begin Angle and a Path Angle.  The Arc is drawn on the display drawing area and is not a widget.  The Begin Angle is the start of the arc in degrees.  The Path Angle is the length of the arc in degrees.  (Internally the angles are specified in integer 1/64-degree units.)</P>
 </FONT><B><P><A NAME="BarMonitor"></A>Bar Monitor</P>
 </B><FONT SIZE=2><P>&#9;The Bar Monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Limits"><FONT SIZE=2>Limits</FONT></A><FONT SIZE=2> (Low Limit, High Limit, Precision), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, </FONT><A HREF="#FillMode"><FONT SIZE=2>Fill Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.</P>
+<P>&#9;The Bar Monitor is designed to display values as a bar that expands or contracts as the value changes.  The Bar Monitor can have several decorations as specified by the Label, can go up, down, left, or right, as specified by the Direction attribute, and can start from the edge or from the center, as specified by the Fill Mode attribute.  The Bar Monitor with the Label set to "no decorations" can be used to make bar graphs.</P>
+<P>&#9;On some platforms the Bar Monitor may flash as the value changes.  There is an option in </FONT><A HREF="#SiteSpecific"><FONT SIZE=2>siteSpecific.h</FONT></A><FONT SIZE=2> that will fix this.</P>
 </FONT><B><P><A NAME="ByteMonitor"></A>Byte Monitor</P>
 </B><FONT SIZE=2><P>&#9;The Byte Monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  It also has a Start Bit and End Bit.</P>
 <P>&#9;The Byte Monitor is designed to monitor mbbiDirect and mbboDirect records.  It was developed at the Thomas Jefferson National Accelerator Facility (formerly CEBAF) by David M. Wetherholt.</P>
@@ -1215,12 +1219,12 @@
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>down</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same up for backward compatibility.</FONT></TD>
+<FONT SIZE=2><P>Only used in the Bar Monitor.  Otherwise, MEDM treats this the same as up.</FONT></TD>
 </TR>
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>left</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same right for backward compatibility.</FONT></TD>
+<FONT SIZE=2><P>Only used in the Bar Monitor.  Otherwise, MEDM treats this the same as right.</FONT></TD>
 </TR>
 </TABLE>
 
@@ -1389,7 +1393,7 @@
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>invisible</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>Do not show anything for the choices.  This mode is intended to be used with a graphic on top of the related display.  The graphic should make the operation of the Related Display clear.</FONT></TD>
+<FONT SIZE=2><P>Do not show anything for the choices.  This mode is intended to be used with a graphic or other object on top of the related display.  The graphic should make the operation of the Related Display clear.  In EXECUTE mode, the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A><FONT SIZE=2> contains an item to toggle the makring of hidden buttons in case the user cannot find them.</FONT></TD>
 </TR>
 </TABLE>
 
@@ -2164,6 +2168,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.</P>
-<P><ADDRESS>Modified November 8, 1999<P>
+<P><ADDRESS>Modified November 17, 1999<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
