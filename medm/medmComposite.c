@@ -919,9 +919,6 @@ static void compositeInheritValues(ResourceBundle *pRCB, DlElement *p)
     DlComposite *dlComposite = p->structure.composite;
     medmGetValues(pRCB,
       VIS_RC,        &(dlComposite->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlComposite->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlComposite->dynAttr.calc),
       CHAN_A_RC,     &(dlComposite->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlComposite->dynAttr.chan[1]),
@@ -951,9 +948,6 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
       BCLR_RC,       &(bclr),
 #endif      
       VIS_RC,        &(dlComposite->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlComposite->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlComposite->dynAttr.calc),
       CHAN_A_RC,     &(dlComposite->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlComposite->dynAttr.chan[1]),

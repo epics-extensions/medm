@@ -800,9 +800,6 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
     
     dynAttr->clr = STATIC;
     dynAttr->vis = V_STATIC;
-#ifdef __COLOR_RULE_H__
-    dynAttr->colorRule = 0;
-#endif
     *(dynAttr->calc) = '\0';
     *(dynAttr->post) = '\0';
     dynAttr->validCalc = False;
@@ -878,12 +875,7 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-#ifdef __COLOR_RULE_H__
-		if(!strcmp(token,"discrete") ||
-		  !strcmp(token,"color rule"))
-#else
 		  if(!strcmp(token,"discrete"))
-#endif
 		    dynAttr->clr = DISCRETE;
 		  else if(!strcmp(token,"static"))
 		    dynAttr->clr = STATIC;
@@ -900,19 +892,6 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 		  dynAttr->vis = IF_ZERO;
 		else if(!strcmp(token,"calc"))
 		  dynAttr->vis = V_CALC;
-#ifdef __COLOR_RULE_H__
-	    } else if(!strcmp(token,"colorRule")) {
-		getToken(displayInfo,token);
-		getToken(displayInfo,token);
-		if(!strcmp(token,"set#1"))
-		  dynAttr->colorRule = 0;
-		else if(!strcmp(token,"set#2"))
-		  dynAttr->colorRule = 1;
-		else if(!strcmp(token,"set#3"))
-		  dynAttr->colorRule = 2;
-		else if(!strcmp(token,"set#4"))
-		  dynAttr->colorRule = 3;
-#endif
 	    } else if(!strcmp(token,"calc")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -1219,11 +1198,7 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-#ifdef __COLOR_RULE_H__
-		if(!strcmp(token,"discrete") || !strcmp(token,"color rule"))
-#else
 		if(!strcmp(token,"discrete"))
-#endif
 		  dynAttr->clr = DISCRETE;
 		else if(!strcmp(token,"static"))
 		  dynAttr->clr = STATIC;
@@ -1240,19 +1215,6 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 		  dynAttr->vis = IF_ZERO;
 		else if(!strcmp(token,"calc"))
 		  dynAttr->vis = V_CALC;
-#ifdef __COLOR_RULE_H__
-	    } else if(!strcmp(token,"colorRule")) {
-		getToken(displayInfo,token);
-		getToken(displayInfo,token);
-		if(!strcmp(token,"set#1"))
-		  dynAttr->colorRule = 0;
-		else if(!strcmp(token,"set#2"))
-		  dynAttr->colorRule = 1;
-		else if(!strcmp(token,"set#3"))
-		  dynAttr->colorRule = 2;
-		else if(!strcmp(token,"set#4"))
-		  dynAttr->colorRule = 3;
-#endif
 	    }
 	    break;
 	case T_LEFT_BRACE:
@@ -1506,10 +1468,6 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 	  fprintf(stream,"\n%s\tclr=\"%s\"",indent,stringValueTable[dynAttr->clr]);
   	if(dynAttr->vis != V_STATIC)
 	  fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dynAttr->vis]);
-#ifdef __COLOR_RULE_H__
-  	if(dynAttr->colorRule != 0)
-	  fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
-#endif
   	if(*dynAttr->calc)
 	  fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dynAttr->calc);
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -1530,9 +1488,6 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
   	fprintf(stream,"\n%s\t\tmod {",indent);
 	fprintf(stream,"\n%s\t\t\tclr=\"%s\"",indent,stringValueTable[dynAttr->clr]);
    	fprintf(stream,"\n%s\t\t\tvis=\"%s\"",indent,stringValueTable[dynAttr->vis]);
-#ifdef __COLOR_RULE_H__
-	fprintf(stream,"\n%s\t\t\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
-#endif
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t\tparam {",indent);
   	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->chan[0]);

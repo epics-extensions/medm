@@ -253,23 +253,9 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case DIRECTION_RC: 
 	globalResourceBundle.direction = (Direction)(FIRST_DIRECTION + buttonId);
 	break;
-#ifdef __COLOR_RULE_H__
-    case CLRMOD_RC:
-	globalResourceBundle.clrmod = (ColorMode)(FIRST_COLOR_MODE + buttonId);
-	if(globalResourceBundle.clrmod == DISCRETE) {
-	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-	} else {
-	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-	}
-	break;
-    case COLOR_RULE_RC:
-	globalResourceBundle.colorRule = buttonId;
-	break;
-#else
     case CLRMOD_RC: 
 	globalResourceBundle.clrmod = (ColorMode)(FIRST_COLOR_MODE + buttonId);
 	break;
-#endif
     case FILLMOD_RC: 
 	globalResourceBundle.fillmod = (FillMode)(FIRST_FILL_MODE + buttonId);
 	break;
@@ -719,20 +705,10 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	    XtSetSensitive(resourceEntryRC[VIS_RC],True);
 	    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
-#ifdef __COLOR_RULE_H__
-	    if(globalResourceBundle.clrmod == DISCRETE) {
-		XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-	    } else {
-		XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-	    }
-#endif
 	} else {
 	    XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
 	    XtSetSensitive(resourceEntryRC[VIS_RC],False);
 	    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
-#ifdef __COLOR_RULE_H__
-	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
 	}
 	break;
     case CHAN_B_RC:
@@ -1043,9 +1019,6 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.label = LABEL_NONE;
     globalResourceBundle.direction = RIGHT;
     globalResourceBundle.clrmod = STATIC;
-#ifdef __COLOR_RULE_H__
-    globalResourceBundle.colorRule = 0;
-#endif
     globalResourceBundle.fillmod = FROM_EDGE;
     globalResourceBundle.style = SOLID;
     globalResourceBundle.fill = F_SOLID;
@@ -1615,20 +1588,6 @@ static void createEntryRC( Widget parent, int rcType)
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
 
-#ifdef __COLOR_RULE_H__
-    case COLOR_RULE_RC:
-	n = 0;
-	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-	XtSetArg(args[n],XmNbuttons,
-	  &(xmStringValueTable[FIRST_COLOR_RULE])); n++;
-	XtSetArg(args[n],XmNbuttonCount,NUM_COLOR_RULE); n++;
-	XtSetArg(args[n],XmNsimpleCallback,
-	  (XtCallbackProc)optionMenuSimpleCallback); n++;
-	XtSetArg(args[n],XmNuserData,rcType); n++;
-	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
-	break;
-#endif
-
     case FILLMOD_RC:
 	n = 0;
 	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
@@ -1893,43 +1852,22 @@ static int resourceTable[] = {
     -1,
     DL_Rectangle,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Oval,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Arc,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, BEGIN_RC, PATH_RC, CLR_RC, STYLE_RC,
     FILL_RC, LINEWIDTH_RC, CLRMOD_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Text,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, TEXTIX_RC, ALIGN_RC, CLR_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC,
     CHAN_C_RC, CHAN_D_RC,
     -1,
-  /* KE: Related display shouldn't have CLR_MOD_RC, VIS_RC, CHAN_RC
-   *   ((Dynamic Attributes) */
-/*     DL_RelatedDisplay, */
-/*     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CLRMOD_RC, */
-/* #ifdef __COLOR_RULE_H__ */
-/*     COLOR_RULE_RC, VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1, */
-/* #else */
-/*     VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1, */
-/* #endif */
     DL_RelatedDisplay,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
     RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC,
@@ -1947,23 +1885,14 @@ static int resourceTable[] = {
     -1,
     DL_Line,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, LINEWIDTH_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Polyline,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, LINEWIDTH_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Polygon,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC,
-#endif
     CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
 };
@@ -2167,13 +2096,6 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    *pvalue = pRB->clrmod;
 	    break;
 	}
-#ifdef __COLOR_RULE_H__
-	case COLOR_RULE_RC: {
-	    int *pvalue = va_arg(ap,int *);
-	    *pvalue = pRB->colorRule;
-	    break;
-	}
-#endif
 	case VIS_RC: {
 	    VisibilityMode *pvalue = va_arg(ap,VisibilityMode *);
 	    *pvalue = pRB->vis;
@@ -2511,9 +2433,6 @@ void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr)
     
     globalResourceBundle.clrmod = dynAttr->clr;
     globalResourceBundle.vis = dynAttr->vis;
-#ifdef __COLOR_RULE_H__
-    globalResourceBundle.colorRule = dynAttr->colorRule;
-#endif
     strcpy(globalResourceBundle.visCalc,dynAttr->calc);
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	strcpy(globalResourceBundle.chan[i],dynAttr->chan[i]);
@@ -2526,9 +2445,6 @@ void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr)
     
     dynAttr->clr = globalResourceBundle.clrmod;
     dynAttr->vis = globalResourceBundle.vis;
-#ifdef __COLOR_RULE_H__
-    dynAttr->colorRule = globalResourceBundle.colorRule;
-#endif
     strcpy(dynAttr->calc,globalResourceBundle.visCalc);
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	strcpy(dynAttr->chan[i],globalResourceBundle.chan[i]);
@@ -2541,10 +2457,6 @@ void updateResourcePaletteDynamicAttribute()
       globalResourceBundle.clrmod - FIRST_COLOR_MODE);
     optionMenuSet(resourceEntryElement[VIS_RC],
       globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-#ifdef __COLOR_RULE_H__
-    optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
-      globalResourceBundle.colorRule);
-#endif
     XmTextFieldSetString(resourceEntryElement[VIS_CALC_RC],
       globalResourceBundle.visCalc);
     XmTextFieldSetString(resourceEntryElement[CHAN_A_RC],
@@ -2559,16 +2471,10 @@ void updateResourcePaletteDynamicAttribute()
 	XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	XtSetSensitive(resourceEntryRC[VIS_RC],True);
 	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
-#ifdef __COLOR_RULE_H__
-	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-#endif
     } else {
 	XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
 	XtSetSensitive(resourceEntryRC[VIS_RC],False);
 	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
-#ifdef __COLOR_RULE_H__
-	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
     }
 }
 
@@ -2710,9 +2616,6 @@ void setResourcePaletteEntries()
     XtSetSensitive(resourceEntryRC[VIS_RC],True);
     XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
     XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
-#ifdef __COLOR_RULE_H__
-    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-#endif
 
   /* Manage new resource entries */
     XtManageChildren(
@@ -2741,10 +2644,6 @@ void setResourcePaletteEntries()
     if(globalResourceBundle.chan[0][0] == '\0') {
 	XtSetSensitive(resourceEntryRC[VIS_RC],False);
 	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
-#ifdef __COLOR_RULE_H__
-	if(globalResourceBundle.clrmod != DISCRETE)
-	  XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
 	if((!ELEMENT_HAS_WIDGET(currentElementType)) &&
 	  (currentElementType != DL_TextUpdate))
 	  XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);

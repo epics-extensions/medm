@@ -56,7 +56,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_ANIMATE 0
 #define DEBUG_CALC 0
-#define DEBUG_VISIBILITY 0
 
 #define DEFAULT_TIME 1
 #define ANIMATE_TIME(gif) \
@@ -164,7 +163,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(gif && gif->nFrames <= 1 && !*dlImage->dynAttr.chan[0]) {
 	  /* Is an unanimated, non-dynamic image.  Don't update. Just
              draw it.  */
-	    Drawable drawable=updateInProgress?
+	    Drawable drawable = updateInProgress?
 	      displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
 	    
 	    dlElement->updateType = STATIC_GRAPHIC;
@@ -213,12 +212,12 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		  /* Check if the image calc is blank */
 		    if(!*dlImage->calc) {
 		      /* Animate */
-			pi->animate = True;
+			if(gif && gif->nFrames > 1) pi->animate = True;
 			pi->validCalc = False;
 		    } else {
 		      /* Calculate the postfix for the image calc */
 			pi->animate = False;
-			status=postfix(dlImage->calc, pi->post, &errnum);
+			status = postfix(dlImage->calc, pi->post, &errnum);
 			if(status) {
 			    medmPostMsg(1,"executeDlImage:\n"
 			      "  Invalid calc expression [error %d]: "
@@ -230,43 +229,68 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			}
 		    }
 		    
-		  /* Do rest of setup only if vis is not static */
-		    if(!isStaticDynamic(&dlImage->dynAttr, False)) {
-			pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
-			  imageUpdateValueCb,
-			  imageUpdateGraphicalInfoCb,
-			  (XtPointer)pi);
+		  /* Do rest of setup only if vis is not static and
+                     there is no calc */
+		    if(!isStaticDynamic(&dlImage->dynAttr, False) ||
+		      pi->validCalc) {
+		      /* Allocate the records */
+			pi->records =
+			  medmAllocateDynamicRecords(&dlImage->dynAttr,
+			    imageUpdateValueCb,
+			    imageUpdateGraphicalInfoCb,
+			    (XtPointer)pi);
 			
 		      /* Calculate the postfix for visibility calc */
-			calcPostfix(&dlImage->dynAttr);
-			setMonitorChanged(&dlImage->dynAttr, pi->records);
+			if(!isStaticDynamic(&dlImage->dynAttr, False)) {
+			    calcPostfix(&dlImage->dynAttr);
+			}
 
-		      /* Override the visibility monitorChanged parameters
-			 if there is a valid image calc */
-			if(pi->validCalc) {
-			    for(i=0; i < MAX_CALC_RECORDS; i++) {
-				if(pi->records[i]) {
-				    pi->records[i]->monitorValueChanged = True;
-				}
+		      /* Monitor the value changed */
+			setMonitorChanged(&dlImage->dynAttr, pi->records);
+			for(i=0; i < MAX_CALC_RECORDS; i++) {
+			    if(pi->records[i]) {
+				pi->records[i]->monitorValueChanged = True;
 			    }
 			}
 		    }
 		} else {
 		  /* No channel */
-		    if(gif) {
-			if(gif->nFrames > 1) {
+		    short errnum;
+		    long status;
+		    
+		  /* Check if the image calc is blank */
+		    if(!*dlImage->calc) {
+		      /* Animate */
+			if(gif && gif->nFrames > 1) pi->animate = True;
+			pi->validCalc = False;
+		    } else {
+		      /* Calculate the postfix for the image calc */
+			pi->animate = False;
+			status = postfix(dlImage->calc, pi->post, &errnum);
+			if(status) {
+			    medmPostMsg(1,"executeDlImage:\n"
+			      "  Invalid calc expression [error %d]: "
+			      "%s\n  for %s\n",
+			      errnum, dlImage->calc, dlImage->dynAttr.chan);
+			    pi->validCalc = False;
+			} else {
+			    pi->validCalc = True;
+			}
+		    }
+#if 0
+			if(gif && gif->nFrames > 1) {
 			    pi->animate = True;
 			    updateTaskSetScanRate(pi->updateTask,
 			      ANIMATE_TIME(gif));
 			}
-		    }
+#endif		    
 		}
 	    }
 	}
     } else {
       /* EDIT mode */
 	if(gif != NULL) {
-	    gif->curFrame=0;
+	    gif->curFrame = 0;
 	    if(dlImage->object.width == gif->currentWidth &&
 	      dlImage->object.height == gif->currentHeight) {
 		drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
@@ -295,11 +319,6 @@ static void imageDraw(XtPointer cd)
     GIFData *gif = (GIFData *)dlImage->privateData;
     int i;
 
-#if DEBUG_VISIBILITY
-    DlObject *po = &(dlImage->object);
-
-    if(po->y == 481) print("imageDraw: [%d,%d]\n",po->x,po->y);
-#endif    
   /* Branch on whether there is a channel or not */
     if(*dlImage->dynAttr.chan[0]) {
       /* A channel is defined */
@@ -311,20 +330,7 @@ static void imageDraw(XtPointer cd)
 	      /* Draw depending on visibility */
 		if(status == 0) {
 		    if(calcVisibility(&dlImage->dynAttr, pi->records)) {
-#if DEBUG_VISIBILITY
-			if(po->y == 481) print("  Called drawImage\n");
-#endif
 			drawImage(pi);
-		    } else {
-#if DEBUG_VISIBILITY
-			if(po->y == 481) print("  Drew colored rectangle\n");
-#endif
-#if 0
-		      /* KE: Really don't want to do this.  Want to do nothing. */
-			drawColoredRectangle(pi->updateTask,
-			  displayInfo->colormap[
-			    displayInfo->drawingAreaBackgroundColor]);
-#endif			
 		    }
 		} else {
 		  /* Result is invalid */
@@ -361,11 +367,21 @@ static void imageDraw(XtPointer cd)
 	}
     } else {
       /* No channel */
-#if DEBUG_ANIMATE
-	print("imageDraw: time=%.3f interval=%.3f name=%s\n",
-	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
-#endif
-	drawImage(pi);
+	if(pi->validCalc) {
+	    long status = calculateAndSetImageFrame(pi);;
+	    
+	  /* Draw */
+	    if(status == 0) {
+	      /* Result is valid */
+		drawImage(pi);
+	    } else {
+	      /* Result is invalid */
+		drawColoredRectangle(pi->updateTask,
+		  BlackPixel(display,screenNum));
+	    }
+	} else {
+	    drawImage(pi);
+	}
     }
 }
 
@@ -599,7 +615,7 @@ DlElement *parseImage(DisplayInfo *displayInfo)
     if(!dlElement) return 0;
     dlImage = dlElement->structure.image;
     do {
-        switch( (tokenType=getToken(displayInfo,token)) ) {
+        switch( (tokenType = getToken(displayInfo,token)) ) {
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlImage->object));
@@ -671,9 +687,6 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *pE)
     medmGetValues(pRCB,
       IMAGE_CALC_RC, &(dlImage->calc),
       VIS_RC,        &(dlImage->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlImage->dynAttr.calc),
       CHAN_A_RC,     &(dlImage->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlImage->dynAttr.chan[1]),
@@ -694,9 +707,6 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *pE)
       IMAGE_NAME_RC, &(dlImage->imageName),
       IMAGE_CALC_RC, &(dlImage->calc),
       VIS_RC,        &(dlImage->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlImage->dynAttr.calc),
       CHAN_A_RC,     &(dlImage->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlImage->dynAttr.chan[1]),
@@ -760,7 +770,7 @@ static long calculateAndSetImageFrame(MedmImage *pi)
 		if(gif) {
 		    if(result < 0.0) gif->curFrame = 0;
 		    else if(result > gif->nFrames-1)
-		      gif->curFrame=gif->nFrames-1;
+		      gif->curFrame = gif->nFrames-1;
 		    else gif->curFrame = (int)(result +.5);
 		}
 	    }

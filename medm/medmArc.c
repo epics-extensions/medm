@@ -206,26 +206,10 @@ static void arcDraw(XtPointer cd)
     if(isConnected(pa->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlArc->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC:
-	    <<<<<<< medmArc.c
-		      gcValues.foreground = displayInfo->colormap[pa->attr.clr];
-	    =======
-		      gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
-		      >>>>>>> 1.7
-				break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pR->value,
-	      dlArc->dynAttr.colorRule,
-	      dlArc->attr.clr);
-	    break;
-#else
 	case STATIC :
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
 	    break;
-#endif
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
@@ -450,9 +434,6 @@ static void arcGetValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlArc->attr.width),
       CLRMOD_RC,     &(dlArc->dynAttr.clr),
       VIS_RC,        &(dlArc->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlArc->dynAttr.calc),
       CHAN_A_RC,     &(dlArc->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlArc->dynAttr.chan[1]),
@@ -473,9 +454,6 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlArc->attr.width),
       CLRMOD_RC,     &(dlArc->dynAttr.clr),
       VIS_RC,        &(dlArc->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlArc->dynAttr.calc),
       CHAN_A_RC,     &(dlArc->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlArc->dynAttr.chan[1]),

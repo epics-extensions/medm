@@ -247,22 +247,10 @@ static void polylineDraw(XtPointer cd)
     if(isConnected(pp->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlPolyline->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC :
-	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pR->value,
-	      dlPolyline->dynAttr.colorRule,
-	      dlPolyline->attr.clr);
-	    break;
-#else
 	case STATIC :
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
 	    break;
-#endif
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
@@ -907,9 +895,6 @@ static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p) {
       LINEWIDTH_RC,  &(dlPolyline->attr.width),
       CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
       VIS_RC,        &(dlPolyline->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlPolyline->dynAttr.calc),
       CHAN_A_RC,     &(dlPolyline->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlPolyline->dynAttr.chan[1]),
@@ -943,9 +928,6 @@ static void polylineGetValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlPolyline->attr.width),
       CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
       VIS_RC,        &(dlPolyline->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlPolyline->dynAttr.calc),
       CHAN_A_RC,     &(dlPolyline->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlPolyline->dynAttr.chan[1]),

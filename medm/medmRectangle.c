@@ -233,17 +233,6 @@ static void rectangleDraw(XtPointer cd)
     if(isConnected(pr->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC:
-	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pRec->value,
-	      dlRectangle->dynAttr.colorRule,
-	      dlRectangle->attr.clr);
-	    break;
-#else
 	case STATIC:
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
@@ -251,7 +240,6 @@ static void rectangleDraw(XtPointer cd)
 	case ALARM:
 	    gcValues.foreground = alarmColor(pRec->severity);
 	    break;
-#endif
 	}
 	gcValues.line_width = dlRectangle->attr.width;
 	gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ?
@@ -426,9 +414,6 @@ static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlRectangle->attr.width),
       CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
       VIS_RC,        &(dlRectangle->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlRectangle->dynAttr.calc),
       CHAN_A_RC,     &(dlRectangle->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlRectangle->dynAttr.chan[1]),
@@ -451,9 +436,6 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlRectangle->attr.width),
       CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
       VIS_RC,        &(dlRectangle->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlRectangle->dynAttr.calc),
       CHAN_A_RC,     &(dlRectangle->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlRectangle->dynAttr.chan[1]),

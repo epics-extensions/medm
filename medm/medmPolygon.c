@@ -240,22 +240,10 @@ static void polygonDraw(XtPointer cd)
     if(isConnected(pp->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlPolygon->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC :
-	    gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pR->value,
-	      dlPolygon->dynAttr.colorRule,
-	      dlPolygon->attr.clr);
-	    break;
-#else
 	case STATIC :
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
 	    break;
-#endif
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
@@ -938,9 +926,6 @@ static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlPolygon->attr.width),
       CLRMOD_RC,     &(dlPolygon->dynAttr.clr),
       VIS_RC,        &(dlPolygon->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlPolygon->dynAttr.calc),
       CHAN_A_RC,     &(dlPolygon->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlPolygon->dynAttr.chan[1]),
@@ -972,9 +957,6 @@ static void polygonGetValues(ResourceBundle *pRCB, DlElement *p)
       LINEWIDTH_RC,  &(dlPolygon->attr.width),
       CLRMOD_RC,     &(dlPolygon->dynAttr.clr),
       VIS_RC,        &(dlPolygon->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlPolygon->dynAttr.calc),
       CHAN_A_RC,     &(dlPolygon->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlPolygon->dynAttr.chan[1]),

@@ -587,9 +587,6 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 void optionMenuSet(Widget menu, int buttonId);
 void optionMenuRemoveLabel(Widget menu);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
-#ifdef __COLOR_RULE_H__
-Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
-#endif
 void appendDlElement(DlList *tail, DlElement *p);
 DlList *createDlList();
 void emptyDlList(DlList *);

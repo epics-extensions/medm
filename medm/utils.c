@@ -3428,20 +3428,6 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     XtUnmanageChild(displayInfo->warningDialog);
 }
 
-#ifdef __COLOR_RULE_H__
-Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor) {
-    setOfColorRule_t *color = &(setOfColorRule[colorRule]);
-    int i;
-    for(i = 0; i<MAX_COLOR_RULES; i++) {
-	if(value <=color->rule[i].upperBoundary
-	  && value >= color->rule[i].lowerBoundary) {
-	    return displayInfo->dlColormap[color->rule[i].colorIndex];
-	}
-    }
-    return displayInfo->dlColormap[defaultColor];
-}
-#endif
-
 #ifdef __TED__
 void GetWorkSpaceList(Widget w) {
     Atom *paWs;
@@ -4314,9 +4300,6 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 		pR->monitorSeverityChanged = True;
 		break;
 	    case DISCRETE:
-#ifdef __COLOR_RULE_H__
-		pR->monitorValueChanged = True;
-#endif
 		break;
 	    }
 	  /* Set the minimum requirement for each VisibilityMode */

@@ -212,21 +212,10 @@ static void ovalDraw(XtPointer cd) {
     if(isConnected(po->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlOval->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC :
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pR->value,
-	      dlOval->dynAttr.colorRule,
-	      dlOval->attr.clr);
-	    break;
-#else
 	case STATIC :
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlOval->attr.clr];
 	    break;
-#endif
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
@@ -401,9 +390,6 @@ static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
       LINEWIDTH_RC,  &(dlOval->attr.width),
       CLRMOD_RC,     &(dlOval->dynAttr.clr),
       VIS_RC,        &(dlOval->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlOval->dynAttr.calc),
       CHAN_A_RC,     &(dlOval->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlOval->dynAttr.chan[1]),
@@ -425,9 +411,6 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
       LINEWIDTH_RC,  &(dlOval->attr.width),
       CLRMOD_RC,     &(dlOval->dynAttr.clr),
       VIS_RC,        &(dlOval->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlOval->dynAttr.calc),
       CHAN_A_RC,     &(dlOval->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlOval->dynAttr.chan[1]),

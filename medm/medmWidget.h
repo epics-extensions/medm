@@ -415,9 +415,6 @@ typedef struct _ResourceBundle {
     LabelType label;
     Direction direction;
     ColorMode clrmod;
-#ifdef __COLOR_RULE_H__
-    int colorRule;
-#endif
     FillMode fillmod;
     EdgeStyle style;
     FillStyle fill;
@@ -559,13 +556,7 @@ typedef struct _ResourceBundle {
 #define GRID_ON_RC        64
 #define GRID_SNAP_RC      65
 
-#ifndef __COLOR_RULE_H__
-# define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
-#else
-# define COLOR_RULE_RC    66  /* Color Rule Entry Table         */
-# define MAX_RESOURCE_ENTRY (COLOR_RULE_RC + 1)
-#endif
-
+#define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
 #define MIN_RESOURCE_ENTRY 0
 
 /***
@@ -632,9 +623,6 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Grid Spacing",
     "Grid On",
     "Snap To Grid",
-#ifdef __COLOR_RULE_H__
-    "Color Rule",
-#endif
 };
 #endif
 
@@ -662,25 +650,6 @@ typedef struct _ResourceMap{
 extern ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
 #else
 ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
-#endif
-
-#ifdef __COLOR_RULE_H__
-/* Color Rule */
-#define MAX_COLOR_RULES 16
-#define MAX_SET_OF_COLOR_RULE 4
-typedef struct {
-    double lowerBoundary;
-    double upperBoundary;
-    int    colorIndex;
-} colorRule_t;
-
-typedef struct {
-    colorRule_t rule[MAX_COLOR_RULES];
-} setOfColorRule_t;
-
-#ifndef ALLOCATE_STORAGE
-extern setOfColorRule_t setOfColorRule[MAX_SET_OF_COLOR_RULE];
-#endif
 #endif
 
 /* Global variables */

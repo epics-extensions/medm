@@ -373,28 +373,8 @@ const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
 extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 #endif
 
-#ifdef __COLOR_RULE_H__
-#define NUM_COLOR_RULE 4
-typedef enum {
-    COLOR_RULE_1 = 76,
-    COLOR_RULE_2 = 77,
-    COLOR_RULE_3 = 78,
-    COLOR_RULE_4 = 79
-} colorRuleMode_t;
-
-#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
-const colorRuleMode_t FIRST_COLOR_RULE = COLOR_RULE_1;
-#else
-extern const colorRuleMode_t FIRST_COLOR_RULE;
-#endif
-#endif
-
 #define MAX_OPTIONS             8     /* NUM_TEXT_FORMATS */
-#ifndef __COLOR_RULE_H__
 #define NUMBER_STRING_VALUES    (76)  /* COLOR_RULE_1 */
-#else
-#define NUMBER_STRING_VALUES    (80)  /* COLOR_RULE_1 + NUM_COLOR_RULE */
-#endif
 
 /*********************************************************************
  * stringValueTable for string-valued tokens - position sensitive!   *
@@ -431,9 +411,6 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "wd hh:00",
     "false", "true",
     "channel", "default", "user", "unused",
-#ifdef __COLOR_RULE_H__
-    "set #1", "set #2", "set #3", "set #4",
-#endif
 };
 XmString xmStringValueTable[NUMBER_STRING_VALUES];
 
@@ -523,9 +500,6 @@ typedef struct {
 typedef struct {
     ColorMode clr;
     VisibilityMode vis;
-#ifdef __COLOR_RULE_H__
-    int colorRule;
-#endif
     char chan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
     char calc[MAX_TOKEN_LENGTH];
     char post[MAX_TOKEN_LENGTH];

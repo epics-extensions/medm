@@ -287,22 +287,10 @@ static void textDraw(XtPointer cd) {
     if(isConnected(pt->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC:
-	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pR->value,
-	      dlText->dynAttr.colorRule,
-	      dlText->attr.clr);
-	    break;
-#else
 	case STATIC :
 	case DISCRETE:
 	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
 	    break;
-#endif
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
@@ -727,9 +715,6 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
      a nuisance than a help */
       CLRMOD_RC,     &(dlText->dynAttr.clr),
       VIS_RC,        &(dlText->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlText->dynAttr.calc),
       CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
@@ -754,9 +739,6 @@ static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
       CLR_RC,        &(dlText->attr.clr),
       CLRMOD_RC,     &(dlText->dynAttr.clr),
       VIS_RC,        &(dlText->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlText->dynAttr.calc),
       CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
@@ -777,9 +759,6 @@ static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
       CLR_RC,        &(dlText->attr.clr),
       CLRMOD_RC,     &(dlText->dynAttr.clr),
       VIS_RC,        &(dlText->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
-#endif
       VIS_CALC_RC,   &(dlText->dynAttr.calc),
       CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
       CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
