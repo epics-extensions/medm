@@ -10,8 +10,8 @@
 /* WheelSwitch widget class */
 /* F. Di Maio - CERN 1990   */
 
-#ifndef SWITCHP_H
-#define SWITCHP_H
+#ifndef __WHEELSWITCHP_H
+#define __WHEELSWITCHP_H
 
 #include <Xm/Xm.h>
 #include <Xm/XmP.h>
@@ -23,8 +23,8 @@ typedef struct _WswRec *WswWidget;
 
 typedef struct {
     WswWidget widget;
-    XEvent * event;
-} CallData;
+    XEvent *event;
+} WswCallData;
 
 /* New fields for the widget record */
 
@@ -45,6 +45,8 @@ typedef struct {
     Boolean conform_to_content;
     
   /* Derived and private */
+    double format_min_value;
+    double format_max_value;
     GC foreground_GC;   /* GC for text */
     GC background_GC;
     Boolean GC_inited;
@@ -77,6 +79,9 @@ typedef struct {
     char *kbd_value;
     XtIntervalId blink_timeout_id;
     Boolean to_clear;
+
+  /* Shadows, in addition to what is in Manager */
+    unsigned int shadow_type;
 } WswPart;
 
 /* New instance declaration */
@@ -92,7 +97,7 @@ typedef struct _WswRec {
 /* New fields for the widget class record */
 
 typedef struct {
-    caddr_t extensions;
+    XtPointer extension;
 } WswClassPart;
 
 /* Full class record declaration */
@@ -107,4 +112,4 @@ typedef struct _WswClassRec {
 /* Class record variable */
 extern  WswClassRec wswClassRec;
 
-#endif  /* #ifndef SWITCHP_H */
+#endif  /* #ifndef __WHEELSWITCHP_H */
