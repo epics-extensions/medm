@@ -96,6 +96,22 @@ void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount)
 
 static void medmCAExceptionHandlerCb(struct exception_handler_args args)
 {
+#define MAX_EXCEPTIONS 25    
+    static int nexceptions=0;
+    static int ended=0;
+
+    if(ended) return;
+    if(nexceptions++ > MAX_EXCEPTIONS) {
+	ended=1;
+	medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
+	  "Too many exceptions [%d]\n"
+	  "No more will be handled\n"
+	  "Please fix the problem and restart MEDM\n",
+	  MAX_EXCEPTIONS);
+	ca_add_exception_event(NULL, NULL);
+	return;
+    }
+    
     medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
       "  Channel Name: %s\n"
       "  Native Type: %s\n"
