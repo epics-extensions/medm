@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release 
  * .03  09-07-95        vong    conform to c++ syntax
+ * .04  02-23-96        vong    fixe the wrong aspect calculation.
  *
  *****************************************************************************
 */
@@ -536,7 +537,7 @@ void drawingAreaCallback(
 	newAspectRatio = (float)width/(float)height;
 	if (newAspectRatio > aspectRatio) {
   /* w too big; derive w=f(h) */
-	  goodWidth = (unsigned short) aspectRatio*height;
+	  goodWidth = (unsigned short) (aspectRatio*(float)height);
 	  goodHeight = height;
 	} else {
   /* h too big; derive h=f(w) */
