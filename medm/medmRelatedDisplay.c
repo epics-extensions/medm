@@ -54,6 +54,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#ifdef WIN32
+  /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
+   *  as _y0 for Bessel functions.  This screws up XSegment
+   *  Exceed 5 includes math.h differently than Exceed 6
+   *  Include math.h here and undefine y1 since we don't use it
+   *  Should work for both Exceed 5 and Exceed 6 */
+#include <math.h>
+#undef y1    
+#endif    
+
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 
@@ -121,12 +131,6 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
-
-#ifdef WIN32
-  /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
-   *  as _y0 for Bessel functions.  This screws up the following */
-#undef y1    
-#endif    
 
     segments[0].x1 = (short)(segmentData[0].x*height);
     segments[0].y1 = (short)(segmentData[0].y*height);
