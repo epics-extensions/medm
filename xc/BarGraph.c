@@ -1,29 +1,20 @@
-/*******************************************************************
- FILE:		BarGraph.c
- CONTENTS:	Definitions for structures, methods, and actions of the 
-		BarGraph widget.
- AUTHOR:	Mark Anderson, derived from Paul D. Johnston's BarGraf widget
-********************************************************************/
-
+/*************************************************************************
+ * Program: BarGraph.c                                                   *
+ * Author : Paul D. Johnston, Mark Anderson, DMW Software.               *
+ * Mods   : 1.0 Original                                                 *
+ *          ?       - Integration with MEDM.                             *
+ *          June 94 - Added bar graph fill from center.                  *
+ *************************************************************************/
 #include <stdio.h>
-
-/* Xlib includes */
 #include <X11/Xlib.h>
-
-/* Xt includes */
 #include <X11/StringDefs.h>
 #include <X11/IntrinsicP.h>
 
-
-/* Widget includes */
 #include "Xc.h"
 #include "Control.h"
 #include "Value.h"
 #include "BarGraphP.h"
-
 #include "cvtFast.h"
-
-
 
 #ifndef MIN
 # define  MIN(a,b)    (((a) < (b)) ? (a) :  (b))
@@ -32,41 +23,26 @@
 #  define  MAX(a,b)    (((a) > (b)) ? (a) :  (b))
 #endif
 
-/* Macro redefinition for offset. */
+/****** Macro redefinition for offset. */
 #define offset(field) XtOffset(BarGraphWidget, field)
 
-
-/* Declare widget methods */
+/****** Declare widget methods */
 static void ClassInitialize();
-static void Initialize(BarGraphWidget request, BarGraphWidget new);
-static void Redisplay(BarGraphWidget w, XExposeEvent *event, Region region);
-static void Destroy(BarGraphWidget w);
-static void Resize(BarGraphWidget w);
-static XtGeometryResult QueryGeometry(
-  BarGraphWidget w,
-  XtWidgetGeometry *proposed, XtWidgetGeometry *answer);
-static Boolean SetValues(
-  BarGraphWidget cur,
-  BarGraphWidget req,
-  BarGraphWidget new);
-
-
+static void Initialize();
+static void Redisplay();
+static void Destroy();
+static void Resize();
+static XtGeometryResult QueryGeometry();
+static Boolean SetValues();
 
 /* Declare functions and variables private to this widget */
-static void Draw_display(
-  BarGraphWidget w,
-  Display *display,
-  Drawable drawable,
-  GC gc);
-static void Get_value(XtPointer client_data,XtIntervalId *id);
-static void Print_bounds(BarGraphWidget w, char *upper, char *lower);
-
-
-
+static void Update_value();
+static void Draw_display();
+static void Get_value();
+static void Print_bounds();
 
 /* Define the widget's resource list */
-static XtResource resources[] =
-{
+static XtResource resources[] = {
   {
     XcNorient,
     XcCOrient,
@@ -75,6 +51,15 @@ static XtResource resources[] =
     offset(barGraph.orient),
     XtRString,
     "vertical"
+  },
+  {
+    XcNfillmod,
+    XcCFillmod,
+    XcRFillmod,
+    sizeof(XcFillmod),
+    offset(barGraph.fillmod),
+    XtRString,
+    "from edge"
   },
   {
     XcNbarForeground,
@@ -141,12 +126,8 @@ static XtResource resources[] =
   },
 };
 
-
-
-
 /* Widget Class Record initialization */
-BarGraphClassRec barGraphClassRec =
-{
+BarGraphClassRec barGraphClassRec = {
   {
   /* core_class part */
     (WidgetClass) &valueClassRec,		/* superclass */
@@ -164,7 +145,7 @@ BarGraphClassRec barGraphClassRec =
     XtNumber(resources),			/* num_resources */
     NULLQUARK,					/* xrm_class */
     TRUE,					/* compress_motion */
-    XtExposeCompressMaximal,			/* compress_exposure */
+    TRUE,					/* compress_exposure */
     TRUE,					/* compress_enterleave */
     TRUE,					/* visible_interest */
     Destroy,					/* destroy */
@@ -181,234 +162,165 @@ BarGraphClassRec barGraphClassRec =
     QueryGeometry,				/* query_geometry */
     NULL,					/* display_accelerator */
     NULL,					/* extension */
-  },
-  {
-  /* Control class part */
-    0,						/* dummy_field */
-  },
-  {
-  /* Value class part */
-    0,						/* dummy_field */
-  },
-  {
-  /* BarGraph class part */
-    0,						/* dummy_field */
-  }
+  }, 
+/****** Control class part, value class part, barGraph class part */
+  { 0, }, { 0, }, { 0, }
 };
 
 WidgetClass xcBarGraphWidgetClass = (WidgetClass)&barGraphClassRec;
 
-
-/* Widget method function definitions */
-
-/*******************************************************************
- NAME:		ClassInitialize.	
- DESCRIPTION:
-   This method initializes the BarGraph widget class. Specifically,
-it registers resource value converter functions with Xt.
-
-*******************************************************************/
-
-static void ClassInitialize()
-{
-
+static void ClassInitialize() {
+/*************************************************************************
+ * ClassInitialize: This method initializes the BarGraph widget class.   *
+ *   It registers resource value converter functions with Xt.            *
+ *************************************************************************/
    XtAddConverter(XtRString, XcROrient, CvtStringToOrient, NULL, 0);
+}
 
-}  /* end of ClassInitialize */
+static void Initialize(request, new)
+/*************************************************************************
+ * Initialize: This is the initialize method for the BarGraph widget.    *
+ *   It validates user-modifiable instance resources and initializes     *
+ *   private widget variables and structures.  This function also        *
+ *   creates any server resources (i.e., GCs, fonts, Pixmaps, etc.) used *
+ *   by this widget.  This method is called by Xt when the application   *
+ *   calls XtCreateWidget().                                             *
+ *************************************************************************/
+  BarGraphWidget request, new; {
+    Display *display = XtDisplay(new);
+    DPRINTF(("BarGraph: executing Initialize...\n"));
 
-
-
-
-
-
-/*******************************************************************
- NAME:		Initialize.		
- DESCRIPTION:
-   This is the initialize method for the BarGraph widget.  It 
-validates user-modifiable instance resources and initializes private 
-widget variables and structures.  This function also creates any server 
-resources (i.e., GCs, fonts, Pixmaps, etc.) used by this widget.  This
-method is called by Xt when the application calls XtCreateWidget().
-
-*******************************************************************/
-
-static void Initialize(BarGraphWidget request, BarGraphWidget new)
-{
-/* Local variables */
-Display *display = XtDisplay(new);
-
-
-DPRINTF(("BarGraph: executing Initialize...\n"));
-
-/*
- * Validate public instance variable settings.
- */
-/* Check orientation resource setting. */
-   if ((new->barGraph.orient != XcVert) && (new->barGraph.orient != XcHoriz))
-   {
+/****** Validate public instance variable settings.
+        Check orientation resource setting. */
+    if ((new->barGraph.orient != XcVert) && (new->barGraph.orient != XcHoriz)){
       XtWarning("BarGraph: invalid orientation setting");
       new->barGraph.orient = XcVert;
-   }
+    }
 
-/* Check the interval resource setting. */
-   if (new->barGraph.interval >0)
-   {
+/****** Check the interval resource setting. */
+    if (new->barGraph.interval >0) {
       new->barGraph.interval_id = 
-		XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
-				new->barGraph.interval, Get_value, new);
+	XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)new),
+          new->barGraph.interval, Get_value, new);
    }
 
-/* Check the scaleSegments resource setting. */
-   if (new->barGraph.num_segments < MIN_SCALE_SEGS)
-   {
+/****** Check the scaleSegments resource setting. */
+   if (new->barGraph.num_segments < MIN_SCALE_SEGS) {
       XtWarning("BarGraph: invalid number of scale segments");
       new->barGraph.num_segments = MIN_SCALE_SEGS;
    }
-   else if (new->barGraph.num_segments > MAX_SCALE_SEGS)
-   {
+   else if (new->barGraph.num_segments > MAX_SCALE_SEGS) {
       XtWarning("BarGraph: invalid number of scale segments");
       new->barGraph.num_segments = MAX_SCALE_SEGS;
    }
    
-/* Check the valueVisible resource setting. */
+/****** Check the valueVisible resource setting. */
    if ((new->barGraph.value_visible != True) &&
-		(new->barGraph.value_visible != False))
-   {
+     (new->barGraph.value_visible != False)) {
       XtWarning("BarGraph: invalid valueVisible setting");
       new->barGraph.value_visible = True;
    }
 
 /* Initialize the BarGraph width and height. */
-   if (new->core.width < MIN_BG_WIDTH)
-      new->core.width = MIN_BG_WIDTH; 
-   if (new->core.height < MIN_BG_HEIGHT)
-      new->core.height = MIN_BG_HEIGHT; 
+   if (new->core.width < MIN_BG_WIDTH) new->core.width = MIN_BG_WIDTH; 
+   if (new->core.height < MIN_BG_HEIGHT) new->core.height = MIN_BG_HEIGHT; 
    
-/* Initialize private instance variables.  */
-
 /* Set the initial geometry of the BarGraph elements. */
    Resize(new);
 
-
 DPRINTF(("BarGraph: done Initialize\n"));
+}
 
-}  /* end of Initialize */
+static void Redisplay(w, event)
+/*************************************************************************
+ * Redisplay : This function is the BarGraph's Expose method.  It redraws*
+ *   the BarGraph's 3D rectangle background, Value Box, label, Bar       *
+ *   indicator, and the Scale.  All drawing takes place within the       *
+ *   widget's window (no need for an off-screen pixmap).                 *
+ *************************************************************************/
+  BarGraphWidget w;
+  XExposeEvent *event; {
+    int j;
+    char upper[30], lower[30];
 
+/****** Check to see whether or not the widget's window is mapped */
+    if (!XtIsRealized((Widget)w) || !w->core.visible) return;
+    DPRINTF(("BarGraph: executing Redisplay\n"));
 
+/****** Draw the 3D rectangle background for the BarGraph
+    XSetClipMask(XtDisplay(w), w->control.gc, None);
+    Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
+		0, 0, w->core.width, w->core.height, RAISED); */
 
+/****** Draw the Label string */
+    XSetClipRectangles(XtDisplay(w), w->control.gc, 0, 0, 
+      &(w->barGraph.face), 1, Unsorted); 
+    XSetForeground(XtDisplay(w), w->control.gc, w->control.label_pixel);
+    XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
+      w->barGraph.lbl.x, w->barGraph.lbl.y, 
+      w->control.label, strlen(w->control.label));
 
-
-/*******************************************************************
- NAME:		Redisplay.	
- DESCRIPTION:
-   This function is the BarGraph's Expose method.  It redraws the
-BarGraph's 3D rectangle background, Value Box, label, Bar indicator,
-and the Scale.  All drawing takes place within the widget's window 
-(no need for an off-screen pixmap).
-
-*******************************************************************/
-
-static void Redisplay(BarGraphWidget w, XExposeEvent *event, Region region)
-{
-/* Local variables */
-int j;
-char upper[30], lower[30];
-
-/*
- * Check to see whether or not the widget's window is mapped.  You can't
- * draw into a window that is not mapped.  Realizing a widget doesn't 
- * mean its mapped, but this call will work for most Window Managers.
- */
-   if (!XtIsRealized((Widget)w) || !w->core.visible)
-      return;
-
-DPRINTF(("BarGraph: executing Redisplay\n"));
-
-/* Draw the 3D rectangle background for the BarGraph. */
-   XSetClipMask(XtDisplay(w), w->control.gc, None);
-   Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-		0, 0, w->core.width, w->core.height, RAISED);
-
-/* Draw the Label string. */
-   XSetClipRectangles(XtDisplay(w), w->control.gc, 0, 0, 
-  			&(w->barGraph.face), 1, Unsorted); 
-   XSetForeground(XtDisplay(w), w->control.gc,
-                        w->control.label_pixel);
-   XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-	w->barGraph.lbl.x, w->barGraph.lbl.y, 
-	w->control.label, strlen(w->control.label));
-
-/* Draw the Scale */
+/****** Draw the Scale */
    if (w->barGraph.num_segments > 0) {
-      XSetForeground(XtDisplay(w), w->control.gc,
-                        w->barGraph.scale_pixel);
-      XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-	w->barGraph.scale_line.x1, w->barGraph.scale_line.y1,
-	w->barGraph.scale_line.x2, w->barGraph.scale_line.y2);
+     XSetForeground(XtDisplay(w), w->control.gc, w->barGraph.scale_pixel);
+     XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
+       w->barGraph.scale_line.x1, w->barGraph.scale_line.y1,
+       w->barGraph.scale_line.x2, w->barGraph.scale_line.y2);
 
-/* Draw the max and min value segments. */
-      if (w->barGraph.orient == XcVert) {
-      } else {
-        XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->barGraph.scale_line.x1, 
-		w->barGraph.scale_line.y1 - w->barGraph.seg_length, 
-		w->barGraph.scale_line.x1, w->barGraph.scale_line.y1);
-        XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->barGraph.scale_line.x2, 
-		w->barGraph.scale_line.y2 - w->barGraph.seg_length, 
-		w->barGraph.scale_line.x2, w->barGraph.scale_line.y2);
+/****** Draw the max and min value segments */
+     if (w->barGraph.orient == XcVert) {
+     } else {
+       XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
+         w->barGraph.scale_line.x1, 
+         w->barGraph.scale_line.y1 - w->barGraph.seg_length, 
+         w->barGraph.scale_line.x1, w->barGraph.scale_line.y1);
+       XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
+         w->barGraph.scale_line.x2, 
+         w->barGraph.scale_line.y2 - w->barGraph.seg_length, 
+         w->barGraph.scale_line.x2, w->barGraph.scale_line.y2);
       }
 
-/* Now draw the rest of the Scale segments. */
+/****** Now draw the rest of the Scale segments */
       for (j = 0; j < w->barGraph.num_segments; j++) {
-         if (w->barGraph.orient == XcVert)
-	    XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->barGraph.segs[j].x, w->barGraph.segs[j].y,
-		w->barGraph.scale_line.x1, w->barGraph.segs[j].y);
-         else
-	    XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
-		w->barGraph.segs[j].x, w->barGraph.segs[j].y,
-		w->barGraph.segs[j].x, w->barGraph.scale_line.y1);
+        if (w->barGraph.orient == XcVert)
+          XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
+            w->barGraph.segs[j].x, w->barGraph.segs[j].y,
+            w->barGraph.scale_line.x1, w->barGraph.segs[j].y);
+        else
+          XDrawLine(XtDisplay(w), XtWindow(w), w->control.gc,
+            w->barGraph.segs[j].x, w->barGraph.segs[j].y,
+            w->barGraph.segs[j].x, w->barGraph.scale_line.y1);
       }
 
-/* Draw the max and min value string indicators */
+/****** Draw the max and min value string indicators */
       Print_bounds(w, upper, lower);
       XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-    	w->barGraph.max_val.x, w->barGraph.max_val.y,
-						upper, strlen(upper)); 
+        w->barGraph.max_val.x, w->barGraph.max_val.y, upper, strlen(upper)); 
       XDrawString(XtDisplay(w), XtWindow(w), w->control.gc,
-    	w->barGraph.min_val.x, w->barGraph.min_val.y, 
-						lower, strlen(lower)); 
-   }
+        w->barGraph.min_val.x, w->barGraph.min_val.y, lower, strlen(lower)); 
+    }
 
 
-/* Draw the Bar indicator border */
-   Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-	w->barGraph.bar.x - w->control.shade_depth, 
-	w->barGraph.bar.y - w->control.shade_depth,
-	w->barGraph.bar.width + (2 * w->control.shade_depth),  
-	w->barGraph.bar.height + (2 * w->control.shade_depth), DEPRESSED);
+/****** Draw the Bar indicator border */
+    Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
+      w->barGraph.bar.x - w->control.shade_depth, 
+      w->barGraph.bar.y - w->control.shade_depth,
+      w->barGraph.bar.width + (2 * w->control.shade_depth),  
+      w->barGraph.bar.height + (2 * w->control.shade_depth), DEPRESSED);
 
-/* Draw the Value Box */
-   if (w->barGraph.value_visible == True)
-      Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
-	w->value.value_box.x - w->control.shade_depth, 
-	w->value.value_box.y - w->control.shade_depth,
-	w->value.value_box.width + (2 * w->control.shade_depth),  
-	w->value.value_box.height + (2 * w->control.shade_depth), 
-							DEPRESSED);
+/****** Draw the Value Box */
+     if (w->barGraph.value_visible == True)
+       Rect3d(w, XtDisplay(w), XtWindow(w), w->control.gc,
+         w->value.value_box.x - w->control.shade_depth, 
+         w->value.value_box.y - w->control.shade_depth,
+         w->value.value_box.width + (2 * w->control.shade_depth),  
+         w->value.value_box.height + (2 * w->control.shade_depth), DEPRESSED);
 
-/* Draw the new value represented by the Bar indicator and the value string */
-   Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
+/****** Draw the new values of Bar indicator and the value string */
+     Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
+     DPRINTF(("BarGraph: done Redisplay\n"));
 
-
-DPRINTF(("BarGraph: done Redisplay\n"));
-
-}  /* end of Redisplay */
-
-
-
-
+}
 
 /*******************************************************************
  NAME:		SetValues.
@@ -418,19 +330,11 @@ settings set with XtSetValues. If a resource is changed that would
 require re-drawing the widget, return True.
 
 *******************************************************************/
+static Boolean SetValues(cur, req, new)
+  BarGraphWidget cur, req, new; {
+    Boolean do_redisplay = False, do_resize = False;
 
-static Boolean SetValues(
-  BarGraphWidget cur,
-  BarGraphWidget req,
-  BarGraphWidget new)
-{
-/* Local variables */
-Boolean do_redisplay = False, do_resize = False;
-
-
-DPRINTF(("BarGraph: executing SetValues \n"));
-
-/* Validate new resource settings. */
+    DPRINTF(("BarGraph: executing SetValues\n"));
 
 /* Check widget color resource settings. */
    if ((new->barGraph.bar_foreground != cur->barGraph.bar_foreground) ||
@@ -512,48 +416,38 @@ DPRINTF(("BarGraph: executing SetValues \n"));
       do_resize = True;
    }
    if (do_resize) {
-        Resize(new);
-        do_redisplay = True;
+     Resize(new);
+     do_redisplay = True;
    }
 
 
 DPRINTF(("BarGraph: done SetValues\n"));
    return do_redisplay;
 
-
 }  /* end of SetValues */
 
+static void Resize(w)
+/*************************************************************************
+ * Resize: This is the resize method of the BarGraph widget. It re-sizes *
+ *   the BarGraph's graphics based on the new width and height of the    *
+ *   widget's window.                                                    *
+ *************************************************************************/
+  BarGraphWidget w; {
 
+    int j, max_val_width, min_val_width, max_width;
+    int seg_spacing, font_center, font_height;
+    char upper[30], lower[30];
+    Boolean displayValue, displayLabel;
 
+    DPRINTF(("BarGraph: executing Resize\n"));
 
-/*******************************************************************
- NAME:		Resize.
- DESCRIPTION:
-   This is the resize method of the BarGraph widget. It resizes the
-BarGraph's graphics based on the new width and height of the widget's
-window.  
-
-*******************************************************************/
-
-static void Resize(BarGraphWidget w)
-{
-/* Local variables */
-int j;
-int seg_spacing;
-int max_val_width, min_val_width, max_width;
-int font_center, font_height;
-char upper[30], lower[30];
-Boolean displayValue, displayLabel;
-
-DPRINTF(("BarGraph: executing Resize\n"));
-
-/* (MDA) for numbers, usually safe to ignore descent to save space */
-   font_height = (w->control.font)->ascent;
+/****** For numbers, usually safe to ignore descent to save space */
+    font_height = (w->control.font)->ascent;
 
 /* Set the widgets new width and height. */
-   w->barGraph.face.x = w->barGraph.face.y = w->control.shade_depth;
-   w->barGraph.face.width = w->core.width - (2*w->control.shade_depth);
-   w->barGraph.face.height = w->core.height - (2*w->control.shade_depth);
+    w->barGraph.face.x = w->barGraph.face.y = w->control.shade_depth;
+    w->barGraph.face.width = w->core.width - (2*w->control.shade_depth);
+    w->barGraph.face.height = w->core.height - (2*w->control.shade_depth);
 
 /* Calculate min/max string attributes */
    Print_bounds(w, upper, lower);
@@ -580,7 +474,7 @@ DPRINTF(("BarGraph: executing Resize\n"));
       w->value.value_box.height = font_height;
      }
    /* Set the position of the displayed value within the Value Box. */
-     Position_val((ValueWidget)w);
+     Position_val(w);
 
    } else {
 
@@ -613,26 +507,20 @@ DPRINTF(("BarGraph: executing Resize\n"));
 
 
 /* Resize the Bar indicator */
-   if (w->barGraph.orient == XcVert)
-   {
+    if (w->barGraph.orient == XcVert) {
       w->barGraph.bar.x = (short)(w->barGraph.face.x + 
-			+ (w->barGraph.num_segments > 0 ? max_width
-				+ (w->barGraph.face.width/32) : 0)
-			+ 2*w->control.shade_depth);
+        + (w->barGraph.num_segments > 0 ? max_width + 
+        (w->barGraph.face.width/32) : 0) + 2*w->control.shade_depth);
       w->barGraph.bar.y = (short)(w->barGraph.lbl.y + w->control.font->descent
-			+ 2*w->control.shade_depth);
-      w->barGraph.bar.width = (unsigned short)
-			MAX(0,
-			(int)(w->barGraph.face.width - w->barGraph.bar.x
-			- w->control.shade_depth));
+        + 2*w->control.shade_depth);
+      w->barGraph.bar.width = (unsigned short) MAX(0,
+        (int)(w->barGraph.face.width - w->barGraph.bar.x - 
+        w->control.shade_depth));
       w->barGraph.bar.height = (unsigned short)
-			(w->value.value_box.y - w->barGraph.bar.y 
-			- (displayValue == True 
-				? font_height - w->control.font->descent
-				: 2*w->control.shade_depth));
-   }
-   else
-   {
+	(w->value.value_box.y - w->barGraph.bar.y - (displayValue == True 
+	? font_height - w->control.font->descent : 2*w->control.shade_depth));
+    }
+    else {
       w->barGraph.bar.x = w->barGraph.face.x +
 			(short)(w->barGraph.face.width/16) +
 				w->control.shade_depth;
@@ -728,11 +616,7 @@ DPRINTF(("BarGraph: executing Resize\n"));
 
 
 DPRINTF(("BarGraph: done Resize\n"));
-
-}  /* end of Resize */
-
-
-
+}
 
 /*******************************************************************
  NAME:		QueryGeometry.		
@@ -742,17 +626,16 @@ checks the proposed size and returns the appropriate value based on
 the proposed size.  If the proposed size is greater than the maximum
 appropriate size for this widget, QueryGeometry returns the recommended
 size.
-
 *******************************************************************/
 
-static XtGeometryResult QueryGeometry(
-  BarGraphWidget w,
-  XtWidgetGeometry *proposed, XtWidgetGeometry *answer)
-{
-/* Set the request mode mask for the returned answer. */
+static XtGeometryResult QueryGeometry(w, proposed, answer)
+  BarGraphWidget w;
+  XtWidgetGeometry *proposed, *answer; {
+
+/****** Set the request mode mask for the returned answer. */
    answer->request_mode = CWWidth | CWHeight;
 
-/* Set the recommended size. */
+/****** Set the recommended size. */
    answer->width = (w->core.width > MAX_BG_WIDTH)
 	? MAX_BG_WIDTH : w->core.width;
    answer->height = (w->core.height > MAX_BG_HEIGHT)
@@ -773,9 +656,6 @@ static XtGeometryResult QueryGeometry(
 
 }  /* end of QueryGeometry */
 
-
-
-
 /*******************************************************************
  NAME:		Destroy.
  DESCRIPTION:
@@ -783,20 +663,11 @@ static XtGeometryResult QueryGeometry(
 any server resources acquired during the life of the widget.
 
 *******************************************************************/
+static void Destroy(w)
+  BarGraphWidget w; {
 
-static void Destroy(BarGraphWidget w)
-{
-
-   if (w->barGraph.interval > 0)
-      XtRemoveTimeOut (w->barGraph.interval_id);
-
-}  /* end of Destroy */
-
-
-
-
-
-/* Widget action functions. */
+    if (w->barGraph.interval > 0) XtRemoveTimeOut (w->barGraph.interval_id);
+}
 
 /*******************************************************************
  NAME:		Get_value.		
@@ -806,25 +677,22 @@ intervals.  It calls the application registered callback function to
 get the latest value and updates the BarGraph display accordingly.
 
 *******************************************************************/
-
-static void Get_value(XtPointer client_data,
-XtIntervalId *id)		/* unused */
-{
-/* Local variables */
-static XcCallData call_data;
-BarGraphWidget w = (BarGraphWidget)client_data;
+static void Get_value(client_data, id)
+XtPointer client_data;
+XtIntervalId *id; {
+    static XcCallData call_data;
+    BarGraphWidget w = (BarGraphWidget)client_data;
    
-/* Get the new value by calling the application's callback if it exists. */
-   if (w->barGraph.update_callback == NULL)
-       return;
+/****** Get the new value by calling the application's callback if it exists */
+   if (w->barGraph.update_callback == NULL) return;
 
-/* Re-register this TimeOut procedure for the next interval. */
+/****** Re-register this TimeOut procedure for the next interval */
    if (w->barGraph.interval > 0)
       w->barGraph.interval_id = 
-	XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)w),
-		       w->barGraph.interval, Get_value, client_data);
+        XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)w),
+        w->barGraph.interval, Get_value, client_data);
 
-/* Set the widget's current value and datatype before calling the callback. */
+/* Set the widget's current value and datatype before calling the callback */
    call_data.dtype = w->value.datatype;
    call_data.decimals = w->value.decimals;
    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
@@ -833,8 +701,7 @@ BarGraphWidget w = (BarGraphWidget)client_data;
       call_data.value.fval = w->value.val.fval;
    XtCallCallbacks((Widget)w, XcNupdateCallback, &call_data);
 
-
-/* Update the new value, update the BarGraph display. */
+/****** Update the new value, update the BarGraph display */
    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
 	w->value.val.lval = call_data.value.lval;
    else if (w->value.datatype == XcFval)
@@ -842,35 +709,22 @@ BarGraphWidget w = (BarGraphWidget)client_data;
 
    if (XtIsRealized((Widget)w))
       Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
-   
+}
 
-}  /* end of Get_value */
-
-
-
-
-/*******************************************************************
- NAME:		XcBGUpdateValue.		
- DESCRIPTION:
-   This convenience function is called by the application in order to
-update the value (a little quicker than using XtSetArg/XtSetValue).
-The application passes the new value to be updated with.
-
-*******************************************************************/
-
-void XcBGUpdateValue(
-  Widget widget,
-  XcVType *value)
-{
-/* Local variables */
-
-  BarGraphWidget w = (BarGraphWidget) widget;
+void XcBGUpdateValue(w, value)
+/*************************************************************************
+ * Xc Bar Graph Update Value:  This convenience function is called by the*
+ *   application in order to update the value (a little quicker than     *
+ *   using XtSetArg/XtSetValue).  The application passes the new value   *
+ *   to be updated with.                                                 *
+ *************************************************************************/
+  BarGraphWidget w;
+  XcVType *value; {
 
     if (!w->core.visible) return;
-    
-/* Update the new value, then update the BarGraph display. */
-   if (value != NULL)
-   {
+
+/****** Update the new value, then update the BarGraph display. */
+   if (value != NULL) {
       if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))  
 	 w->value.val.lval = value->lval;
       else if (w->value.datatype == XcFval)
@@ -878,10 +732,8 @@ void XcBGUpdateValue(
 
       if (XtIsRealized((Widget)w))
          Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
-
    }
-   
-}  /* end of XcBGUpdateValue */
+}
 
 
 
@@ -894,14 +746,11 @@ The application passes the new value to be updated with.
 
 *******************************************************************/
 
-void XcBGUpdateBarForeground(
-  Widget widget,
-  unsigned long pixel)
-{
+void XcBGUpdateBarForeground(w, pixel)
+BarGraphWidget w;
+unsigned long pixel; {
+
 /* Local variables */
-
-  BarGraphWidget w = (BarGraphWidget) widget;
-
     if (!w->core.visible) return;
     
 /* Update the new value, then update the BarGraph display. */
@@ -910,97 +759,97 @@ void XcBGUpdateBarForeground(
       if (XtIsRealized((Widget)w))
          Draw_display(w, XtDisplay(w), XtWindow(w), w->control.gc);
    }
-   
-}  /* end of XcBGUpdateBarForeground */
+}
 
+static void Draw_display( w, display, drawable, gc)
+/*************************************************************************
+ * Draw Display: This function redraws the Bar indicator and the value   *
+ *   string in the Value Box.                                            *
+ *************************************************************************/
+  BarGraphWidget w;
+  Display *display;
+  Drawable drawable;
+  GC gc; {
+    int  xy;
+    char *temp;
+    float dim, range;
 
+/****** Draw the Bar indicator, fill the Bar with its background color */
+    XSetForeground(display, gc, w->barGraph.bar_background); 
+    XFillRectangle(display, drawable, gc, w->barGraph.bar.x, w->barGraph.bar.y, 
+      w->barGraph.bar.width, w->barGraph.bar.height); 
 
-/*******************************************************************
- NAME:		Draw_display.		
- DESCRIPTION:
-   This function redraws the Bar indicator and the value string in the 
-Value Box.
+    if (w->barGraph.orient == XcVert) range = (float)(w->barGraph.bar.height);
+    else range = (float)(w->barGraph.bar.width);
 
-*******************************************************************/
-
-static void Draw_display(
-  BarGraphWidget w,
-  Display *display,
-  Drawable drawable,
-  GC gc)
-{
-/* Local variables */
-char *temp;
-float range, dim;
-
-/* Draw the Bar indicator */
-/* Fill the Bar with its background color. */
-   XSetForeground(display, gc, w->barGraph.bar_background); 
-   XFillRectangle(display, drawable, gc,
-  	w->barGraph.bar.x, w->barGraph.bar.y, 
-  	w->barGraph.bar.width, w->barGraph.bar.height); 
-
-/* Draw the Bar in its foreground color according to the value. */
-   if (w->barGraph.orient == XcVert)
-      range = (float)(w->barGraph.bar.height);
-   else
-      range = (float)(w->barGraph.bar.width);
-
-   if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))
+/****** Figure dim value */
+    if ((w->value.datatype == XcLval) || (w->value.datatype == XcHval))
       dim = Correlate(((float)(w->value.val.lval)
-				- (float)(w->value.lower_bound.lval)),
-			((float)(w->value.upper_bound.lval) -
-			 (float)(w->value.lower_bound.lval)), range);
-   else if (w->value.datatype == XcFval)
-      dim = Correlate((w->value.val.fval
-				- w->value.lower_bound.fval),
-			(w->value.upper_bound.fval -
-		 	 w->value.lower_bound.fval), range);
+      - (float)(w->value.lower_bound.lval)),
+      ((float)(w->value.upper_bound.lval) - 
+      (float)(w->value.lower_bound.lval)), range);
+    else if (w->value.datatype == XcFval)
+      dim = Correlate((w->value.val.fval - w->value.lower_bound.fval),
+      (w->value.upper_bound.fval - w->value.lower_bound.fval), range);
 
-   if ((int)dim < 1)
-      dim = 1;
-   XSetForeground(display, gc, w->barGraph.bar_foreground); 
-   if (w->barGraph.orient == XcVert)
-      XFillRectangle(display, drawable, gc, w->barGraph.bar.x,
-		(w->barGraph.bar.y + w->barGraph.bar.height - (int)dim),
-		w->barGraph.bar.width, (int)dim);
-   else
-      XFillRectangle(display, drawable, gc, w->barGraph.bar.x,
-		w->barGraph.bar.y, (int)dim, w->barGraph.bar.height);
+/****** Draw the bar */
+    if ((int)dim < 1) dim = 1;
+    XSetForeground(display, gc, w->barGraph.bar_foreground); 
+    if (w->barGraph.orient == XcVert) {
+      if (w->barGraph.fillmod == XcCenter) {
+        xy = w->barGraph.bar.height;
+        if (dim > (float)(xy/2)) XFillRectangle(display, drawable, gc, 
+          w->barGraph.bar.x, (w->barGraph.bar.y + xy - (int)dim), 
+          w->barGraph.bar.width, (int)(dim - (xy/2)));
+        else XFillRectangle(display, drawable, gc, 
+          w->barGraph.bar.x, (w->barGraph.bar.y + (int)(xy/2)), 
+          w->barGraph.bar.width, (int)((xy/2) - dim));
+      }
+      else 
+        XFillRectangle(display, drawable, gc, w->barGraph.bar.x,
+          (w->barGraph.bar.y + w->barGraph.bar.height - (int)dim),
+          w->barGraph.bar.width, (int)dim);
+    }
+    else {
+      if (w->barGraph.fillmod == XcCenter) {
+        xy = w->barGraph.bar.width;
+        if (dim > (float)(xy/2)) XFillRectangle(display, drawable, gc, 
+          (w->barGraph.bar.x + (int)(xy/2)), w->barGraph.bar.y,
+          (int)(dim - (xy/2)), w->barGraph.bar.height);
+        else XFillRectangle(display, drawable, gc, 
+          (w->barGraph.bar.x + (int)dim), w->barGraph.bar.y,
+          (int)((xy/2) - dim), w->barGraph.bar.height);
+       }
+       else XFillRectangle(display, drawable, gc, w->barGraph.bar.x,
+         w->barGraph.bar.y, (int)dim, w->barGraph.bar.height);
+    }
 
-
-/* If the value string is supposed to be displayed, draw it. */
-   if (w->barGraph.value_visible == True)
-   {
-   /* Clear the Value Box by re-filling it with its background color. */
+/****** If the value string is supposed to be displayed, draw it */
+    if (w->barGraph.value_visible == True) {
+/****** Clear the Value Box by re-filling it with its background color. */
       XSetForeground(display, gc, w->value.value_bg_pixel); 
       XFillRectangle(display, drawable, gc,
   	w->value.value_box.x, w->value.value_box.y, 
   	w->value.value_box.width, w->value.value_box.height); 
 
-   /*
-    * Now draw the value string in its foreground color, clipped by the
-    * Value Box.
-    */
+/****** Now draw the value string in its foreground color, clipped by the
+        Value Box.  */
       XSetForeground(display, gc, w->value.value_fg_pixel); 
       XSetClipRectangles(display, gc, 0, 0, 
   	&(w->value.value_box), 1, Unsorted); 
 
       temp = Print_value(w->value.datatype, &w->value.val, w->value.decimals);
 
-      Position_val((ValueWidget)w);
+      Position_val(w);
 
       XDrawString(display, drawable, gc,
     	w->value.vp.x, w->value.vp.y, temp, strlen(temp)); 
-   }
+    }
 
-/* Reset the clip_mask to no clipping. */
-   XSetClipMask(display, gc, None);
+/****** Reset the clip_mask to no clipping */
+    XSetClipMask(display, gc, None);
 
-}  /* end of Draw_display */
-
-
-
+}
 
 /*******************************************************************
  NAME:		Print_bounds.		
@@ -1011,9 +860,9 @@ purposes.
 
 *******************************************************************/
 
-static void Print_bounds(
-  BarGraphWidget w,
-  char *upper, char *lower)
+static void Print_bounds(w, upper, lower)
+BarGraphWidget w;
+char *upper, *lower;
 {
 
    if (w->value.datatype == XcLval)
@@ -1034,8 +883,5 @@ static void Print_bounds(
                                 (unsigned short)w->value.decimals);
    }
 
-}  /* end of Print_bounds */
-
-
-/* end of BarGraph.c */
+}
 

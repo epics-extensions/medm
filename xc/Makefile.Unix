@@ -2,7 +2,13 @@
 # $Id$
 #
 # $Log$
-# Revision 1.3  1994/11/09 20:55:34  jba
+# Revision 1.4  1995/02/28 18:19:21  vong
+# medm Version 2.0.0
+# ------------------
+# - add byte widget
+# - add center fill for bargraph
+#
+# Revision 1.3  1994/11/09  20:55:34  jba
 # Motif references changed to $(MOTIF_INC) and $(MOTIF_LIB)
 #
 # Revision 1.2  1994/10/25  15:51:50  winans
@@ -22,10 +28,10 @@ USR_CFLAGS = -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = -ANLwidgets -lca -lCom -lXm -lXt -lX11 -lm
 
-SRCS.c = ../BarGraph.c ../Caption.c ../Clip.c ../Control.c ../Indicator.c ../Matrix.c \
+SRCS.c = ../BarGraph.c ../Caption.c ../Clip.c ../Control.c ../Indicator.c ../Matrix.c ../Byte.c\
 	../Meter.c ../Value.c ../bae.c ../bar1.c ../indicator1.c ../meter1.c ../utils.c ../version.c
 
-LIBOBJS = BarGraph.o Caption.o Clip.o Control.o Indicator.o Matrix.o \
+LIBOBJS = BarGraph.o Caption.o Clip.o Control.o Indicator.o Matrix.o Byte.o\
 	Meter.o Value.o utils.o version.o
 
 LIBNAME = libANLwidgets.a

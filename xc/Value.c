@@ -47,25 +47,13 @@
 
 /* Declare widget methods */
 static void ClassInitialize();
-static void Initialize(ValueWidget request, ValueWidget new);
-static Boolean SetValues(ValueWidget cur, ValueWidget req, ValueWidget new);
+static void Initialize();
+static Boolean SetValues();
 
 /* Declare widget class functions */
-static void CvtStringToDType(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal);
-static void CvtStringToVType(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal);
-static void CvtStringToValueJustify(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal);
+static void CvtStringToDType();
+static void CvtStringToVType();
+static void CvtStringToValueJustify();
 
 
 
@@ -194,7 +182,7 @@ ValueClassRec valueClassRec =
     XtNumber(resources),			/* num_resources */
     NULLQUARK,					/* xrm_class */
     TRUE,					/* compress_motion */
-    XtExposeCompressMaximal,			/* compress_exposure */
+    TRUE,					/* compress_exposure */
     TRUE,					/* compress_enterleave */
     TRUE,					/* visible_interest */
     NULL,					/* destroy */
@@ -256,7 +244,8 @@ widget variables and structures.
 
 *******************************************************************/
 
-static void Initialize(ValueWidget request, ValueWidget new)
+static void Initialize(request, new)
+ValueWidget request, new;
 {
 
 DPRINTF(("Value: executing Initialize \n"));
@@ -356,8 +345,8 @@ require re-drawing the widget, return True.
 
 *******************************************************************/
 
-static Boolean SetValues(
-  ValueWidget cur, ValueWidget req, ValueWidget new)
+static Boolean SetValues(cur, req, new)
+ValueWidget cur, req, new;
 {
 /* Local variables */
 Boolean do_redisplay = False;
@@ -484,11 +473,11 @@ XtRDType representation type.
 
 *******************************************************************/
 
-static void CvtStringToDType(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal)
+static void CvtStringToDType(args, num_args, fromVal, toVal)
+XrmValuePtr args;		/* unused */
+Cardinal *num_args;		/* unused */
+XrmValuePtr fromVal;
+XrmValuePtr toVal;
 {
 /* Local variables */
 static XcDType datatype;
@@ -540,11 +529,11 @@ XtRVType representation type.
 
 *******************************************************************/
 
-static void CvtStringToVType(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal)
+static void CvtStringToVType(args, num_args, fromVal, toVal)
+XrmValuePtr args;		/* unused */
+Cardinal *num_args;		/* unused */
+XrmValuePtr fromVal;
+XrmValuePtr toVal;
 {
 /* Local variables */
 long num;
@@ -594,11 +583,11 @@ XcRValueJustify representation type.
 
 *******************************************************************/
 
-static void CvtStringToValueJustify(
-  XrmValuePtr args,		/* unused */
-  Cardinal *num_args,		/* unused */
-  XrmValuePtr fromVal,
-  XrmValuePtr toVal)
+static void CvtStringToValueJustify(args, num_args, fromVal, toVal)
+XrmValuePtr args;		/* unused */
+Cardinal *num_args;		/* unused */
+XrmValuePtr fromVal;
+XrmValuePtr toVal;
 {
 /* Local variables */
 static XcValueJustify val_justify;
@@ -638,22 +627,19 @@ char lowerstring[100];
 }  /* end of CvtStringToValueJustify */
 
 
-
-/*******************************************************************
- NAME:          Correlate.
- DESCRIPTION:
-   This function takes the given value between the given range and
-correlates it to the destination range, returning the correlated value.
-
-*******************************************************************/
-float Correlate(float from_val, float from_range, float to_range)
-{
+float Correlate(from_val, from_range, to_range)
+/*************************************************************************
+ * Correlate: This function takes the given value between the given      *
+ *   range and correlates it to the destination range, returning the     *
+ *   correlated value.                                                   *
+ *************************************************************************/
+  float from_val, from_range, to_range; {
 /* Local variables */
 float percent, result;
 
    percent = ((from_val * 100.0) / from_range);
 
-/* clip to 0 and 100 */
+/****** Clip to 0 and 100 */
    percent = MAX(0.,percent);
    percent = MIN(100.,percent);
 
@@ -661,8 +647,7 @@ float percent, result;
 
    return result;
 
-}  /* end of Correlate */
-
+}
 
 
 /*********************************************************************
@@ -699,7 +684,8 @@ on the XcNvalueJustify resource setting.
 
 *********************************************************************/
 
-void Position_val(ValueWidget w)
+void Position_val(w)
+  ValueWidget w;
 {
 /* Local variables */
 char *val_string;

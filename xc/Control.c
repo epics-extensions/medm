@@ -22,10 +22,12 @@
 /* Xt includes */
 #include <X11/StringDefs.h>
 #include <X11/IntrinsicP.h>
+#ifndef _HPUX_SOURCE
 #ifdef X11R3
 #include <X11/Xmu.h>
 #else
 #include <X11/Xmu/Xmu.h>
+#endif
 #endif
 
 /* Widget includes */
@@ -48,8 +50,6 @@ static char shade_bits[] = { 0x02, 0x01};
 static void Initialize();
 static void Destroy();
 static Boolean SetValues();
-
-
 
 /* Define the widget's resource list */
 static XtResource resources[] =
@@ -97,12 +97,10 @@ static XtResource resources[] =
     sizeof(int),
     offset(control.shade_depth),
     XtRString,
-    "3"
+    "2"
   },
 
 };
-
-
 
 /* Widget Class Record initialization */
 ControlClassRec controlClassRec =
@@ -124,7 +122,7 @@ ControlClassRec controlClassRec =
     XtNumber(resources),			/* num_resources */
     NULLQUARK,					/* xrm_class */
     TRUE,					/* compress_motion */
-    XtExposeCompressMaximal,			/* compress_exposure */
+    TRUE,					/* compress_exposure */
     TRUE,					/* compress_enterleave */
     TRUE,					/* visible_interest */
     Destroy,					/* destroy */
@@ -150,9 +148,7 @@ ControlClassRec controlClassRec =
 
 WidgetClass xcControlWidgetClass = (WidgetClass)&controlClassRec;
 
-
 /* Widget method function definitions */
-
 /*******************************************************************
  NAME:		Initialize.		
  DESCRIPTION:
