@@ -477,7 +477,6 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 
 void CpEraseData(Widget w, int axis, CpDataHandle hData)
 {
-    static first = 1;
     Arg args[1];
     int nargs;
 

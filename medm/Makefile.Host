@@ -37,10 +37,11 @@ PURIFY_FLAGS = -first-only -chain-length=26
 #XRTGRAPH=/opt/local/xrtgraph2.4.0
 #XRTGRAPH_EXTENSIONS =
 
-# Use to test SciPlot, Otherwise should come from CONFIG
-#XRTGRAPH =
+# Use to test SciPlot or JPT, otherwise should come from CONFIG
+# Set the one you want and reset any that come from CONFIG
+XRTGRAPH =
 #SCIPLOT = YES
-#JPT = YES
+JPT = YES
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES
 
@@ -86,7 +87,8 @@ endif
 
 # Set up for JPT
 ifdef JPT
-#  USR_CFLAGS += -DJPT -I$(JPT_INC)
+  JPT_INC = ../../../jpt
+  USR_CFLAGS += -DJPT -I$(JPT_INC)
   USR_LIBS += Jpt
 #  USR_LDFLAGS += -L$(JPT_LIB)
   SRCS += medmCartesianPlot.c 
@@ -228,6 +230,8 @@ xxxx:
 	@echo RES: $(RES)
 	@echo PROD_RESS: $(PROD_RESS)
 	@echo XRTGRAPH_EXTENSIONS: $(XRTGRAPH_EXTENSIONS)
+	@echo XRTGRAPH: $(XRTGRAPH)
+	@echo JPT: $(JPT)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

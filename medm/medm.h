@@ -92,7 +92,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EXTERN extern
 #endif
 
-#if defined(XRTGRAPH) || defined(SCIPLOT)
+#if defined(XRTGRAPH) || defined(SCIPLOT) || defined(JPT)
 #define CARTESIAN_PLOT
 #endif
 
