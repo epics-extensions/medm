@@ -40,9 +40,12 @@
 
 /* The following is the prototype for the _XmDrawShadow
  *   from Obsolete.c */
+#ifndef linux
+/* Linux defines this function and defines it differently */
 void _XmDrawShadow (Display *display, Drawable d, 
   GC top_GC, GC bottom_GC, int size, int x, int y, 
   int width, int height);
+#endif
 
   /*
    * MDA - want to use memmove() instead of bcopy() for portability!
