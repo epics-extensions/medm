@@ -3,6 +3,8 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
+CMPLR = STRICT
+
 # Optimization
 ifdef WIN32
 HOST_OPT = NO

@@ -17,7 +17,6 @@ int xwd(Display *display, Window window, char *file);
 
 /* pUtils */
 void get_time_and_date(char mytime[], char mydate[]);
-void fullread(int file, char *data, int nbytes);
 void xwd2ps_swapshort(register char *bp, register long n);
 void xwd2ps_swaplong(register char *bp, register long n);
 void xwd2ps_usage(void);

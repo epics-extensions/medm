@@ -654,10 +654,14 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    colors[im].green = 255;
 		    colors[im].blue = 255;
 		}
-	    } 
-	    fprintf(fo,"%02x",   colors[im].red);
-	    fprintf(fo,"%02x",   colors[im].green);
-	    fprintf(fo,"%02x\n", colors[im].blue);
+	    }
+	  /* KE: The following mask is reported to solve problems on
+             DecUnix.  The cause, however, may be that the swaptest
+             and shift logic in get_raster_header is not right. It
+             shouldn't hurt in any event.  */
+	    fprintf(fo,"%02x",   colors[im].red&0xff);
+	    fprintf(fo,"%02x",   colors[im].green&0xff);
+	    fprintf(fo,"%02x\n", colors[im].blue&0xff);
 	}
 	fprintf(fo,"\n");
 	fprintf(fo,"\ndrawcolorimage\n");
@@ -734,9 +738,13 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"\n%% get rgb color table\n");
 	    fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
 	    for(im = 0; im < (int)win.ncolors; im++) {
-		fprintf(fo,"%02x",   colors[im].red);
-		fprintf(fo,"%02x",   colors[im].green);
-		fprintf(fo,"%02x\n", colors[im].blue);
+	      /* KE: The following mask is reported to solve problems
+		 on DecUnix.  The cause, however, may be that the
+		 swaptest and shift logic in get_raster_header is not
+		 right. It shouldn't hurt in any event.  */
+		fprintf(fo,"%02x",   colors[im].red&0xff);
+		fprintf(fo,"%02x",   colors[im].green&0xff);
+		fprintf(fo,"%02x\n", colors[im].blue&0xff);
 	    }
 	    fprintf(fo,"\n");
 	    fprintf(fo,"\ndrawcolorimage\n");

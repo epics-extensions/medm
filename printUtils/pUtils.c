@@ -56,10 +56,13 @@
 #include <unistd.h>
 #endif
 
-/* Functin prototypes */
+#if 0
+/* KE: This is not used but kept around for imformation */
+/* Function prototypes */
 static void _swapbits(register unsigned char *b, register long n);
 
 extern char progname[];
+#endif
 
 /*
  ** get_time_and_date() - return the time and date as strings
@@ -86,42 +89,12 @@ void get_time_and_date(char mytime[], char mydate[])
     mytime[8] = '\0';
 }
 
-/*
- ** fullread() - read nbytes from a file and deal with errors
- */
-void fullread(int file, char *data, int nbytes)
-{
-    int bytes_read;
-    int tmp_cnt=0; /* for partial read */
-    bytes_read = read(file, data, nbytes);
-    if (bytes_read < 0) {
-	fprintf(stderr, "%s: Error while reading standard input.\n", progname);
-	return;
-    }
-    else if (bytes_read == 0) {
-	fprintf(stderr, "%s: Premature end of file.\n", progname);
-	return;
-    }
-  /*
-   * sometimes pipes do not give a full read
-   */
-    if(bytes_read != nbytes){
-      /* 
-       * debug check for seeing how many times pipe does not read
-       fprintf(stderr,"nbytes=%d bytes_read=%d data=%d",nbytes,bytes_read,data);
-       */
-	while((tmp_cnt += bytes_read) != nbytes){
-	    data += bytes_read;
-	    bytes_read = read(file,data, nbytes - tmp_cnt);
-	}
-	return;
-    }
-    data += bytes_read;
-}
-
+#if 0
 /*
  ** xwd2ps_swapshort() - swap the bytes in the next n shorts
  */
+/* KE: This is a little different from the corresponding swap routine
+   in xwd.c.  It isn't used but kept around in case. */
 void xwd2ps_swapshort(register char *bp, register long n)
 {
     register char c;
@@ -134,10 +107,13 @@ void xwd2ps_swapshort(register char *bp, register long n)
 	bp++;
     }  while (bp < ep);
 }
+#endif
 
 /*
  ** xwd2ps_swaplong() - swap the bytes in the shorts, then swap the shorts
  */
+/* KE: This is a little different from the corresponding swap routine
+   in xwd.c */
 void xwd2ps_swaplong(register char *bp, register long n)
 {
     register char c;
@@ -161,6 +137,9 @@ void xwd2ps_swaplong(register char *bp, register long n)
  * This subroutine
  * Written January 1989 by Robert Tatar.
  */
+
+#if 0
+/* KE: This is not used but kept around for imformation */
 void xwd2ps_usage(void)
 {
     fprintf(stderr,"\nusage: %s [options] XWD_raster_file_name\n", progname);
@@ -200,8 +179,10 @@ void xwd2ps_usage(void)
     fprintf(stderr,"  %s -h6.2 -w4.5 -f border.ps brain.xwd > brain.eps\n\n", progname);
     exit(1);
 }
+#endif
 
-
+#if 0
+/* KE: This is not used but kept around in case */
 static unsigned char _reverse_byte[0x100] = {
     0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
     0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
@@ -237,7 +218,6 @@ static unsigned char _reverse_byte[0x100] = {
     0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff
 };
 
-
 static void _swapbits(register unsigned char *b, register long n)
 {
     do {
@@ -245,6 +225,7 @@ static void _swapbits(register unsigned char *b, register long n)
 	b++;
     } while (--n > 0);
 }
+#endif
 
 
 /*

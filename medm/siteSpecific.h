@@ -86,21 +86,34 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 #define DEFAULT_PRINT_TITLE_STRING  ""
 #define DEFAULT_PRINT_FILENAME "medmScreen.ps"
 
-/* DISPLAY_XWD_FILE is the temp file used for screen dumps */
+/* MEDM screen dumps first create an XWD file with the name
+ * PRINT_XWD_FILE and then convert it to a Postscript file with the
+ * same name with a ps suffix.  DEFAULT_PRINT_REMOVE_TEMP_FILES
+ * determines how these files are disposed of:
+ *   0 Don't remove either temporary file
+ *   1 Remove PRINT_XWD_FILE file from XWD
+ *   2 Remove PRINT_XWD_FILE and the Postscript file */
 #if defined(WIN32)
+# define DEFAULT_PRINT_CMD "gsview32.exe"
 /* We don't know where the temp directory is on WIN32.  For WIN32
    %TEMP%/ will be prepended later if it exists. For the other
    platforms, the name is used as entered here. */
-# define DISPLAY_XWD_FILE  "medm.xwd"
-# define DEFAULT_PRINT_CMD "gsview32.exe"
+# define PRINT_XWD_FILE "medm.xwd"
+/* Even with PRINT_REMOVE_TEMP_FILES=2, WIN32 usually prevents the
+   Postscript file from being deleted provided Ghostview starts fast
+   enough.  You can set it to 1 to be sure. */
+# define PRINT_REMOVE_TEMP_FILES 1
 #elif defined(VMS)
-# define DISPLAY_XWD_FILE  "sys$scratch:medm.xwd"
 # define DEFAULT_PRINT_CMD "print /queue=%s/delete"
+# define PRINT_XWD_FILE "sys$scratch:medm.xwd"
+# define PRINT_REMOVE_TEMP_FILES 2
 #else
-# define DISPLAY_XWD_FILE  "/tmp/medm.xwd"
 # define DEFAULT_PRINT_CMD "lpr -P$PSPRINTER"
+# define PRINT_XWD_FILE "/tmp/medm.xwd"
+# define PRINT_REMOVE_TEMP_FILES 2
 # if 0
-/* Use for testing to save paper and time */
+/* Use for testing to save paper and time. Doesn't require
+   PRINT_REMOVE_TEMP_FILES=2 */
 #  define DEFAULT_PRINT_CMD "ghostview"
 /* Command used internally before MEDM 2.3.6 */
 #  define DEFAULT_PRINT_CMD "lp -c -d$PSPRINTER"

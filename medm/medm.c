@@ -3237,7 +3237,7 @@ main(int argc, char *argv[])
     printTime = DEFAULT_PRINT_TIME;
     printDate = DEFAULT_PRINT_DATE;
     printWidth = printHeight = 0.0;
-    printRemoveTempFiles = DEFAULT_PRINT_REMOVE_TEMP_FILES;
+    printRemoveTempFiles = PRINT_REMOVE_TEMP_FILES;
     strcpy(printCommand, DEFAULT_PRINT_CMD);
     strcpy(printFile, DEFAULT_PRINT_FILENAME);
     strcpy(printTitleString, DEFAULT_PRINT_TITLE_STRING);
@@ -3249,12 +3249,12 @@ main(int argc, char *argv[])
     tempDir = getenv("TEMP");
     if(!tempDir) tempDir = getenv("TMP");
     if(tempDir) {
-	sprintf(xwdFile,"%s\\%s",tempDir,DISPLAY_XWD_FILE);
+	sprintf(xwdFile,"%s\\%s",tempDir,PRINT_XWD_FILE);
     } else {
-	strcpy(xwdFile,DISPLAY_XWD_FILE);
+	strcpy(xwdFile,PRINT_XWD_FILE);
     }
 #else
-    strcpy(xwdFile,DISPLAY_XWD_FILE);
+    strcpy(xwdFile,PRINT_XWD_FILE);
 #endif    
 
   /* Handle file conversions */

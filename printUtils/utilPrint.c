@@ -176,7 +176,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	goto CLEAN;
     }
 #if DEBUG_PRINT == 0    /* (When not debugging) */
-    if(printRemoveTempFiles) remove(newFileName);
+    if(printRemoveTempFiles > 0) remove(newFileName);
 #endif
     
   /* All done if print to file, otherwise print */
@@ -192,7 +192,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	      commandBuffer);
 	} else {
 #if DEBUG_PRINT == 0    /* (When not debugging) */
-	    if(printRemoveTempFiles) remove(psFileName);
+	    if(printRemoveTempFiles > 1) remove(psFileName);
 #endif
 	}
     }
