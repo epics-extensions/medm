@@ -83,11 +83,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 #ifdef WIN32
-/* WIN32 does not have unistd.h */
 #include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
-#else
-/* Use unistd.h */
-#include <unistd.h>
 #endif
 
 #ifdef  __TED__

@@ -120,6 +120,8 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     GIFData *gif;
     DlImage *dlImage = dlElement->structure.image;
+    long status;
+    short errnum;
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
@@ -156,11 +158,15 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(dlImage->privateData != NULL) freeGIF(dlImage);
 	gif = NULL;
     }
-
+    
+    
+  /* Return if there is no gif */
+    if(!gif) return;
+    
   /* Allocate and fill in MedmImage struct */
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
-	if(gif && gif->nFrames <= 1 && !*dlImage->dynAttr.chan[0]) {
+	if(gif->nFrames <= 1 && !*dlImage->dynAttr.chan[0]) {
 	  /* Is an unanimated, non-dynamic image.  Don't update. Just
              draw it.  */
 	    Drawable drawable = updateInProgress?
@@ -169,12 +175,12 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    dlElement->updateType = STATIC_GRAPHIC;
 	    drawGIF(displayInfo, dlImage, drawable);
 	} else {
+	  /* Handle any possible update situation */
 	    MedmImage *pi;
 	    int i;
 	    
-	    if(dlElement->data) {
-		pi = (MedmImage *)dlElement->data;
-	    } else {
+	  /* If the data is not defined, define it.  Otherwise go on */
+	    if(!dlElement->data) {
 		pi = (MedmImage *)malloc(sizeof(MedmImage));
 		dlElement->updateType = DYNAMIC_GRAPHIC;
 		dlElement->data = (void *)pi;
@@ -182,54 +188,53 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
 		    return;
 		}
+
 	      /* Pre-initialize */
 		pi->updateTask = NULL;
 		pi->records = NULL;
-
 		pi->dlElement = dlElement;
 		pi->displayInfo = displayInfo;
-		pi->updateTask = updateTaskAddTask(displayInfo,
-		  &(dlImage->object), imageDraw, (XtPointer)pi);
 		pi->validCalc = False;
 		pi->animate = False;
 		pi->post[0] = '\0';
+		pi->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlImage->object), imageDraw, (XtPointer)pi);
 		if(pi->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
+		    return;
 		} else {
 		    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
 		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 		}
+
+	      /* Check if the image calc is blank */
+		if(!*dlImage->calc) {
+		  /* Animate */
+		    if(gif->nFrames > 1) pi->animate = True;
+		    pi->validCalc = False;
+		} else {
+		  /* Calculate the postfix for the image calc */
+		    pi->animate = False;
+		    status = postfix(dlImage->calc, pi->post, &errnum);
+		    if(status) {
+			medmPostMsg(1,"executeDlImage:\n"
+			  "  Invalid calc expression [error %d]: "
+			  "%s\n  for %s\n",
+			  errnum, dlImage->calc, dlImage->dynAttr.chan);
+			pi->validCalc = False;
+		    } else {
+			pi->validCalc = True;
+		    }
+		}
+		
+	      /* Setup records if there is a channel */
 		if(*dlImage->dynAttr.chan[0]) {
-		  /* A channel is defined */
-		    long status;
-		    short errnum;
-		    
 		    if(pi->updateTask) {
 			updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 		    }
 		    
-		  /* Check if the image calc is blank */
-		    if(!*dlImage->calc) {
-		      /* Animate */
-			if(gif && gif->nFrames > 1) pi->animate = True;
-			pi->validCalc = False;
-		    } else {
-		      /* Calculate the postfix for the image calc */
-			pi->animate = False;
-			status = postfix(dlImage->calc, pi->post, &errnum);
-			if(status) {
-			    medmPostMsg(1,"executeDlImage:\n"
-			      "  Invalid calc expression [error %d]: "
-			      "%s\n  for %s\n",
-			      errnum, dlImage->calc, dlImage->dynAttr.chan);
-			    pi->validCalc = False;
-			} else {
-			    pi->validCalc = True;
-			}
-		    }
-		    
-		  /* Do rest of setup only if vis is not static and
-                     there is no calc */
+		  /* Do rest of setup only if vis is not static or
+                     there is a valid image calc */
 		    if(!isStaticDynamic(&dlImage->dynAttr, False) ||
 		      pi->validCalc) {
 		      /* Allocate the records */
@@ -252,51 +257,18 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			    }
 			}
 		    }
-		} else {
-		  /* No channel */
-		    short errnum;
-		    long status;
-		    
-		  /* Check if the image calc is blank */
-		    if(!*dlImage->calc) {
-		      /* Animate */
-			if(gif && gif->nFrames > 1) pi->animate = True;
-			pi->validCalc = False;
-		    } else {
-		      /* Calculate the postfix for the image calc */
-			pi->animate = False;
-			status = postfix(dlImage->calc, pi->post, &errnum);
-			if(status) {
-			    medmPostMsg(1,"executeDlImage:\n"
-			      "  Invalid calc expression [error %d]: "
-			      "%s\n  for %s\n",
-			      errnum, dlImage->calc, dlImage->dynAttr.chan);
-			    pi->validCalc = False;
-			} else {
-			    pi->validCalc = True;
-			}
-		    }
-#if 0
-			if(gif && gif->nFrames > 1) {
-			    pi->animate = True;
-			    updateTaskSetScanRate(pi->updateTask,
-			      ANIMATE_TIME(gif));
-			}
-#endif		    
 		}
 	    }
 	}
     } else {
       /* EDIT mode */
-	if(gif != NULL) {
-	    gif->curFrame = 0;
-	    if(dlImage->object.width == gif->currentWidth &&
-	      dlImage->object.height == gif->currentHeight) {
-		drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
-	    } else {
-		resizeGIF(dlImage);
-		drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
-	    }
+	gif->curFrame = 0;
+	if(dlImage->object.width == gif->currentWidth &&
+	  dlImage->object.height == gif->currentHeight) {
+	    drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
+	} else {
+	    resizeGIF(dlImage);
+	    drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
 	}
     }
 }
@@ -341,8 +313,9 @@ static void imageDraw(XtPointer cd)
 	    } else {
 		drawBlackRectangle(pi->updateTask);
 	    }
-	} else if(isStaticDynamic(&dlImage->dynAttr, False)) {
-	  /* vis is static */
+	} else if(isStaticDynamic(&dlImage->dynAttr, False) &&
+	  !pi->validCalc) {
+	  /* vis is static and there is no valid image calc */
 	    long status = calculateAndSetImageFrame(pi);
 	    
 	  /* Draw */

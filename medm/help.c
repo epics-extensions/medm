@@ -55,7 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_STATISTICS 0
-#define DEBUG_SRICAT 1
+#define DEBUG_SRICAT 0
 
 #define MAX_ERRORS 25
 
@@ -88,7 +88,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <process.h>
 #else
 #include <sys/types.h>
-#include <unistd.h>
 #endif
 
 /* Function prototypes */

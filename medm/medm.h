@@ -282,7 +282,7 @@ extern "C" {
 #else
   /* KE: This used to be None<Btn2Down> but NumLock became a modifier
      key on Solaris 8 and it didn't work (and in addition caused a
-     slider to move to the cursor) */
+     slider to move the cursor) */
     static char dragTranslations[] = "#override <Btn2Down>:StartDrag()";
     static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
 #endif

@@ -41,6 +41,10 @@
 #define PRINT_SETUP_DATE_BTN       17
 #define PRINT_SETUP_TIME_BTN       18
 
+#ifdef WIN32
+/* For getpid() */
+#include <process.h>
+#endif
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
@@ -1066,8 +1070,8 @@ void createDisplayListDlg(void)
       NULL);
 
   /* Create label 1 */
-    sprintf(string,"DISPLAYS (MEDM Window ID: 0x%x)",
-      XtWindow(mainShell));
+    sprintf(string,"DISPLAYS (MEDM PID: %d Window ID: 0x%x)",
+      getpid(),XtWindow(mainShell));
     xmString = XmStringCreateLocalized(string);    
     w = XtVaCreateManagedWidget("label",
       xmLabelWidgetClass, pane,

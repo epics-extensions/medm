@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_SYNC 1
+#define DEBUG_SYNC 0
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 #define DEBUG_EVENTS 0
@@ -88,9 +88,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define R_OK 04
 #include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
 #include <io.h>         /* for access, chmod  (usually in unistd.h) */
-#else
-/* Use unistd.h */
-#include <unistd.h>
 #endif
 
 #include <signal.h>
