@@ -91,6 +91,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #define EXTERN extern
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * X/Xt/Xm includes, globals
@@ -153,6 +156,7 @@ EXTERN ImageType imageType;
 /* resource bundle stuff */
 #define SELECTION_BUNDLE 0
 EXTERN int resourceBundleCounter;
+extern utilPrint(Display *, Window, char *);
 
 EXTERN XtWorkProcId medmWorkProcId;
 EXTERN Channel *nextToServe;
@@ -163,7 +167,7 @@ EXTERN XtIntervalId medmStatusIntervalId;
 
 typedef struct menuEntry{
   char*           label;
-  WidgetClass*    class;
+  WidgetClass*    widgetClass;
   char            mnemonic;
   char*           accelerator;
   char*           accText;
@@ -172,6 +176,9 @@ typedef struct menuEntry{
   XtPointer       callbackData;
   struct menuEntry *subItems;
 } menuEntry_t;
+
+typedef void(*medmExecProc)(XtPointer, XtPointer, Boolean);
+typedef void(*medmWriteProc)(XtPointer, XtPointer, int);
 
 #include "proto.h"
 #include "medmInitTask.h"
@@ -204,5 +211,9 @@ typedef struct menuEntry{
  relatedDisplay25
  shellCommand25
  */
+
+#ifdef __cplusplus
+}  /* Close scope of 'extern "C"' declaration which encloses file. */
+#endif
 
 #endif  /* __MEDM_H__ */
