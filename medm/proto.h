@@ -252,13 +252,11 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
 	DlShellCommand *dlShellCommand, Boolean dummy);
 
 /* help.c */
-XtCallbackProc globalHelpCallback(Widget w, int helpIndex,
-	XmAnyCallbackStruct *call_data);
+void globalHelpCallback(Widget, XtPointer, XtPointer);
 void medmPostMsg(char *);
 void medmPostTime();
 void memdPrintf(char*,...);
 void medmCreateCAStudyDlg();
-void medmUpdateCAStudtylDlg(XtPointer, XtIntervalId *);
 
 /* medm.c */
 int main(int argc, char *argv[]);
