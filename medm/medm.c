@@ -72,7 +72,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <errno.h>
 #include "icon25"
 
-/* for X property cleanup */
+/* For X property cleanup */
 #include <signal.h>
 #include <Xm/MwmUtil.h>
 #include <X11/IntrinsicP.h>
@@ -586,9 +586,9 @@ extern "C" {
 	   }
 #endif
 
-/*
- * globals for use by all routines in this file
- */
+/* Global variables */
+
+static Widget modeRB, modeEditTB, modeExecTB;
 static Widget openFSD;
 static Widget mainEditPDM, mainViewPDM, mainPalettesPDM;
 static Widget productDescriptionShell;
@@ -738,9 +738,6 @@ typedef struct {
     char **fileList;
 } request_t;
 
-/* Global Variables */
-Widget modeRB, modeEditTB, modeExecTB;
-
 void requestDestroy(request_t *request) {
     if (request) {
 	if (request->macroString) free(request->macroString);
@@ -760,9 +757,9 @@ void requestDestroy(request_t *request) {
     }
 }
 
-request_t * requestCreate(int argc, char *argv[]) {
+request_t * parseCommandLine(int argc, char *argv[]) {
     int i;
-    int argsUsed = 1;                /* because argv[0] = "medm" */
+    int argsUsed = 0;
     int fileEntryTableSize = 0;
     request_t *request = NULL;
 #define FULLPATHNAME_SIZE 1024
@@ -782,7 +779,7 @@ request_t * requestCreate(int argc, char *argv[]) {
     request->fileCnt = 0;
     request->fileList = NULL;
 
-  /* parse the switches */
+  /* Parse the switches */
     for (i = 1; i < argc; i++) {
 	if (!strcmp(argv[i],"-x")) {
 	    request->opMode = EXECUTE;
@@ -828,7 +825,8 @@ request_t * requestCreate(int argc, char *argv[]) {
 		      request->fontStyle = SCALABLE;
 		}
 	    }
-	} else if (!strcmp(argv[i],"-display")) {     /* KE: Won't X trap this? */
+	} else if (!strcmp(argv[i],"-display")) {
+	  /* (Not trapped by X because this routine is called first) */
 	    char *tmp;
 	    argsUsed = i;
 	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
@@ -2431,13 +2429,6 @@ Widget buildMenu(Widget parent,
     return (menuType == XmMENU_POPUP) ? menu : cascade;
 }
 
-/*
- * globals needed for remote display invocation...
- *   have limited scope (main() and dmTerminateX() are only routines which care
- */
-Atom MEDM_EDIT_FIXED = (Atom)NULL, MEDM_EXEC_FIXED = (Atom)NULL,
-    MEDM_EDIT_SCALABLE = (Atom)NULL, MEDM_EXEC_SCALABLE = (Atom)NULL;
-
 /* 
  * SIGNAL HANDLER
  *   function to perform cleanup of X root window MEDM... properties
@@ -2451,22 +2442,17 @@ static void handleSignals(int sig)
     else if (sig==SIGSEGV) fprintf(stderr,"\nSIGSEGV\n");
     else if (sig==SIGBUS) fprintf(stderr,"\nSIGBUS\n");
 
-  /* remove the properties on the root window */
-    if (MEDM_EDIT_FIXED != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EDIT_FIXED);
-    if (MEDM_EXEC_FIXED != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EXEC_FIXED);
-    if (MEDM_EDIT_SCALABLE != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EDIT_SCALABLE);
-    if (MEDM_EXEC_SCALABLE != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EXEC_SCALABLE);
+  /* Remove the property on the root window (if not LOCAL) */
+    if (windowPropertyAtom != (Atom)NULL)
+      XDeleteProperty(display,rootWindow,windowPropertyAtom);
     XFlush(display);
-
+    
+  /* Exit */
     if (sig == SIGSEGV || sig == SIGBUS) {
-      /* want core dump */
+      /* Exit with core dump */
 	abort();
     } else {
-      /* and exit */
+      /* Just exit */
 	exit(0);
     }
 }
@@ -2640,7 +2626,7 @@ main(int argc, char *argv[])
     char versionString[60];
     Window targetWindow;
 
-    Boolean medmAlreadyRunning, completeClientMessage;
+    Boolean attachToExistingMedm, completeClientMessage;
     char fullPathName[FULLPATHNAME_SIZE+1],
       currentDirectoryName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
     unsigned char *propertyData;
@@ -2652,7 +2638,6 @@ main(int argc, char *argv[])
     request_t *request;
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
     msgClass_t msgClass;
-
     Window medmHostWindow = (Window)0;
 
 #if DEBUG_DEFINITIONS
@@ -2686,7 +2671,8 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-  /*  Initialize global variables */
+  /* Initialize global variables */
+    windowPropertyAtom = (Atom)NULL;
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;
     nextToServe = NULL;
@@ -2696,6 +2682,7 @@ main(int argc, char *argv[])
     MedmUseNewFileFormat = True;
     setTimeValues();
 
+  /* Handle file conversions */
     if (argc == 4 && (!strcmp(argv[1],"-c21x") ||
       !strcmp(argv[1],"-c22x"))) {
 	DisplayInfo *displayInfo = NULL;
@@ -2713,39 +2700,28 @@ main(int argc, char *argv[])
 		dmWriteDisplayList(displayInfo,filePtr);
 		fclose(filePtr);
 	    } else {
-		printf("can't create display file: \"%s\"",argv[3]);
+		medmPrintf("Cannot create display file: \"%s\"",argv[3]);
 	    }
 	} else {
-	    printf("can't open display file: \"%s\"",argv[2]);
+	    medmPrintf("Cannot open display file: \"%s\"",argv[2]);
 	}
 	return 0;
-    } else {
-#if 0
-	printf("usage : convert adl file to 2.1 format\n");
-	printf("           convertAdlFile -c21x <input file> <output file>\n");
-	printf("        convert adl file to 2.2 format\n");
-	printf("           convertAdlFile -c22x <input file> <output file>\n");
-	return 0;
-#endif
     }
 
-  /*
-   * initialize channel access here (to get around orphaned windows)
-   */
+   /* Initialize channel access here (to get around orphaned windows) */
     SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
 
-    request = requestCreate(argc,argv);
+  /* Parse command line */
+    request = parseCommandLine(argc,argv);
 
-  /*
-   * allow for quick startup (using existing MEDM)
-   *  open display, check for atoms, etc
-   */
     if (request->macroString != NULL && request->opMode != EXECUTE) {
-	fprintf(stderr,"\nmedm: %s %s","-macro command line option only valid",
+	medmPrintf("\nmedm: %s %s","-macro command line option only valid",
 	  "for execute (-x) mode operation");
 	free(request->macroString);
 	request->macroString = NULL;
     }
+
+  /* Usage and error exit */
     if (request->opMode == ERROR) {
 	fprintf(stderr,"\n%s\n",MEDM_VERSION_STRING);
 	fprintf(stderr,"Usage:\n"
@@ -2764,106 +2740,86 @@ main(int argc, char *argv[])
 	exit(2);
     }
 
+  /* Do remote protocol stuff if not LOCAL */
     if (request->medmMode != LOCAL) {
-      /* do remote protocol stuff */
+      /* Open display */
 	display = XOpenDisplay(request->displayName);
 	if (display == NULL) {
-	    fprintf(stderr,"\nmedm: could not open Display!");
-	    exit(0);
+	    medmPrintf("\nCould not open Display!");
+	    exit(1);
 	}
 	screenNum = DefaultScreen(display);
 	rootWindow = RootWindow(display,screenNum);
 
-      /*  don't create the atom if it doesn't exist - this tells us if another
-       *  instance of MEDM is already running in proper startup mode (-e or -x) */
+      /*   Intern the appropriate atom if it doesn't exist (False implies this) */
 	if (request->fontStyle == FIXED) {
 	    if (request->opMode == EXECUTE) {
-		MEDM_EXEC_FIXED = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
-		status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_FIXED,
-		  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
-		  &format,&nitems,&left,&propertyData);
+		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
 	    } else {
-		MEDM_EDIT_FIXED = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
-		status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_FIXED,
-		  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
-		  &format,&nitems,&left,&propertyData);
+		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
 	    }
-	} else
-	  if (request->fontStyle == SCALABLE) {
-	      if (request->opMode == EXECUTE) {
-		  MEDM_EXEC_SCALABLE = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
-		  status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_SCALABLE,
-		    0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
-		    &format,&nitems,&left,&propertyData);
-	      } else {
-		  MEDM_EDIT_SCALABLE = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
-		  status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_SCALABLE,
-		    0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
-		    &format,&nitems,&left,&propertyData);
-	      }
-	  } 
+	} else if (request->fontStyle == SCALABLE) {
+	    if (request->opMode == EXECUTE) {
+		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
+	    } else {
+		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
+	    }
+	} 
 
+      /*   Get the property  (Should a the mainShell window number)
+       *     type:          Actual type of the property (None if it doesn't exist)
+       *     propertyData:  The value of the property */
+	status = XGetWindowProperty(display,rootWindow,windowPropertyAtom,
+	  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
+	  &format,&nitems,&left,&propertyData);
+
+      /* Decide whether to attach to existing MEDM */
 	if (type != None) {
 	    medmHostWindow = *((Window *)propertyData);
-	    medmAlreadyRunning = (request->medmMode == CLEANUP) ? False : True;
+	    attachToExistingMedm = (request->medmMode == CLEANUP) ? False : True;
 	    XFree(propertyData);
 	} else {
-	    medmAlreadyRunning = False;
+	    attachToExistingMedm = False;
 	}
-      /*
-       * go get the requested files (*.adl), convert to full path name if necessary,
-       *   and change the property to initiate the display request to the
-       *   remote MEDM
-       */
 
-	if (medmAlreadyRunning) {
+      /* Attach to existing MEDM if appropriate
+       *   Note that we only know there is a property
+       *   We do not know if there actually is an MEDM running */	
+	if (attachToExistingMedm) {
 	    char *fileStr;
 	    int i;
+	    
+	  /* Check if there were valid display files specified */
 	    if (request->fileCnt > 0) {
+		printf("\nAttaching to existing MEDM\n");
 		for (i=0; i<request->fileCnt; i++) {
 		    if (fileStr = request->fileList[i]) {
-			fprintf(stderr,"\n  - dispatched display request to remote MEDM:\n    \"%s\"",fileStr);
-			if (request->opMode == EXECUTE) {
-			    if (request->fontStyle == FIXED)
-			      sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-				request->macroString,request->displayGeometry,MEDM_EXEC_FIXED);
-			    else 
-			      if (request->fontStyle == SCALABLE)
-				sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-				  request->macroString,request->displayGeometry,MEDM_EXEC_SCALABLE);
-			} else
-			  if (request->opMode == EDIT) {
-			      if (request->fontStyle == FIXED)
-				sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-				  request->macroString,request->displayGeometry,MEDM_EDIT_FIXED);
-			      else
-				if (request->fontStyle == SCALABLE)
-				  sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-				    request->macroString,request->displayGeometry,MEDM_EDIT_SCALABLE);
-			  }	
+			sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
+			  request->macroString,request->displayGeometry,windowPropertyAtom);
 			XFlush(display);
+			printf("  Dispatched: %s\n",fileStr);
 		    }
 		}
-		fprintf(stderr,
-		  "\n\n    (use -local for private copy or -cleanup to ignore existing MEDM)\n");
 	    } else {
-		fprintf(stderr,"%s%s",
-		  "\n  - no display to dispatch, and already a remote MEDM running:",
-		  "\n    (use -local for private copy or -cleanup to ignore existing MEDM)\n");
+		printf("\nAborting: No valid display specified and already a remote MEDM running.\n");
 	    }
-	  /************ we leave here if another MEDM can do our work  **************/
+	    printf("  (Use -local to not use existing MEDM\n"
+	      "     or -cleanup to set this MEDM as the existing one)\n");
+
+	  /* Leave this MEDM */
 	    XCloseDisplay(display);
 	    exit(0);
 	}  
 
+      /* Close the display that was opened (Will start over later) */
 	XCloseDisplay(display);
-    } /* end if (!request->medmMode) */
+    } /* End if(request->medmMode != LOCAL) */
 
-  /*
-   * Initialize the Intrinsics..., create main shell
-   */   
+  /* Initialize the Intrinsics
+   *   Create mainShell
+   *   Map window manager menu Close function to do nothing
+   *     (Will handle this ourselves) */
     n = 0;
-  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
     mainShell = XtAppInitialize(&appContext, CLASS, NULL, 0, &argc, argv,
@@ -2884,11 +2840,15 @@ main(int argc, char *argv[])
     XmRegisterConverters();
     XmRepTypeInstallTearOffModelConverter();
 
+  /* Set display and related quantities */
     display = XtDisplay(mainShell);
     if (display == NULL) {
-	XtWarning("cannot open display");
+	XtWarning("Cannot open display");
 	exit(-1);
     }
+    screenNum = DefaultScreen(display);
+    rootWindow = RootWindow(display,screenNum);
+    cmap = DefaultColormap(display,screenNum);	/* X default colormap */
 
   /* Set XSynchronize for debugging */
 #ifdef XSYNC
@@ -2896,27 +2856,13 @@ main(int argc, char *argv[])
     fprintf(stderr,"\nRunning in SYNCHRONOUS mode!!");
 #endif
 
+  /* Intern some atoms if they aren't there already */
     WM_DELETE_WINDOW = XmInternAtom(display,"WM_DELETE_WINDOW",False);
     WM_TAKE_FOCUS =  XmInternAtom(display,"WM_TAKE_FOCUS",False);
     COMPOUND_TEXT =  XmInternAtom(display,"COMPOUND_TEXT",False);
-    screenNum = DefaultScreen(display);
-    rootWindow = RootWindow(display,screenNum);
-    cmap = DefaultColormap(display,screenNum);	/* X default colormap */
 
-    if (request->privateCmap) {
-      /* cheap/easy way to get colormap - do real PseudoColor cmap alloc later
-       *  note this really creates a colormap for default visual with no
-       *  entries
-       */
-	cmap = XCopyColormapAndFree(display,cmap);
-	XtVaSetValues(mainShell,XmNcolormap,cmap,NULL);
-    }
-    
-  /*
-   * for remote display start-up:
-   *  register signal handlers to assure property states (unfortunately
-   *  SIGKILL, SIGSTOP can't be caught...)
-   */
+  /* Register signal handlers so we can shut down ourselves
+   *   (Unfortunately SIGKILL, SIGSTOP can't be caught...) */
 #if defined(__cplusplus) && !defined(__GNUG__)
     signal(SIGQUIT,(SIG_PF)handleSignals);
     signal(SIGINT, (SIG_PF)handleSignals);
@@ -2931,7 +2877,7 @@ main(int argc, char *argv[])
     signal(SIGBUS, handleSignals);
 #endif
 
-  /* add translations/actions for drag-and-drop */
+  /* Add translations/actions for drag-and-drop */
     parsedTranslations = XtParseTranslationTable(dragTranslations);
     XtAppAddActions(appContext,dragActions,XtNumber(dragActions));
 
@@ -2949,9 +2895,7 @@ main(int argc, char *argv[])
 	  globalDisplayListTraversalMode = DL_EDIT;
       }
 
-  /*
-   * initialize some globals
-   */
+  /* Initialize some globals */
     globalModifiedFlag = False;
     mainMW = NULL;
     objectS = NULL; objectMW = NULL;
@@ -2971,59 +2915,61 @@ main(int argc, char *argv[])
     pointerInDisplayInfo = NULL;
     resourceBundleCounter = 0;
     currentElementType = 0;
-  /* not really unphysical, but being used for unallocable color cells */
+  /* Not really unphysical, but being used for unallocable color cells */
     unphysicalPixel = BlackPixel(display,screenNum);
+  /* Set default action for MB in display to select
+   *   (Afterward regulated by object palette) */
+    currentActionType = SELECT_ACTION;
 
-  /* initialize the default colormap */
-    
+  /* Initialize the private colormap if there is one */    
     if (request->privateCmap) {
-      /* first add in black and white pixels to match [Black/White]Pixel(dpy,scr) */
+      /* Cheap/easy way to get colormap - do real PseudoColor cmap alloc later
+       *   Note this really creates a colormap for default visual with no
+       *     entries */
+	cmap = XCopyColormapAndFree(display,cmap);
+	XtVaSetValues(mainShell,XmNcolormap,cmap,NULL);
+    
+      /* Add in black and white pixels to match [Black/White]Pixel(dpy,scr) */
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
 	XQueryColors(display,DefaultColormap(display,screenNum),colors,2);
-      /* need to allocate 0 pixel first, then 1 pixel, usually Black, White...
-       *  note this is slightly risky in case of non Pseudo-Color visuals I think,
-       *  but the preallocated colors of Black=0, White=1 for Psuedo-Color
-       *  visuals is common, and only for Direct/TrueColor visuals will
-       *  this be way off, but then we won't be using the private colormap
-       *  since we won't run out of colors in that instance...
-       */
+      /* Need to allocate 0 pixel first, then 1 pixel, usually Black, White...
+       *   note this is slightly risky in case of non Pseudo-Color visuals I think,
+       *   but the preallocated colors of Black=0, White=1 for Psuedo-Color
+       *   visuals is common, and only for Direct/TrueColor visuals will
+       *   this be way off, but then we won't be using the private colormap
+       *   since we won't run out of colors in that instance...  */
 	if (colors[0].pixel == 0) XAllocColor(display,cmap,&(colors[0]));
 	else XAllocColor(display,cmap,&(colors[1]));
 	if (colors[1].pixel == 1) XAllocColor(display,cmap,&(colors[1]));
 	else XAllocColor(display,cmap,&(colors[0]));
     }
     
+  /* Allocate colors */
     for (i = 0; i < DL_MAX_COLORS; i++) {
-	
-      /* scale [0,255] to [0,65535] */
+      /* Scale [0,255] to [0,65535] */
 	color.red  = (unsigned short) COLOR_SCALE*(defaultDlColormap.dl_color[i].r);
 	color.green= (unsigned short) COLOR_SCALE*(defaultDlColormap.dl_color[i].g);
 	color.blue = (unsigned short) COLOR_SCALE*(defaultDlColormap.dl_color[i].b);
-      /* allocate a shareable color cell with closest RGB value */
+      /* Allocate a shareable color cell with closest RGB value */
 	if (XAllocColor(display,cmap,&color)) {
 	    defaultColormap[i] =  color.pixel;
 	} else {
 	    fprintf(stderr,"\nmain: couldn't allocate requested color");
-	  /* put unphysical pixmap value in there as tag it was invalid */
+	  /* Put unphysical pixmap value in there as tag it was invalid */
 	    defaultColormap[i] =  unphysicalPixel;
 	}
-
     }
     currentColormap = defaultColormap;
     currentColormapSize = DL_MAX_COLORS;
 
-  /* and initialize the global resource bundle */
+  /* Initialize the global resource bundle */
     initializeGlobalResourceBundle();
     globalResourceBundle.next = NULL;
     globalResourceBundle.prev = NULL;
 
-  /* default action for MB in display is select (regulated by object palette) */
-    currentActionType = SELECT_ACTION;
 
-  /*
-   * intialize MEDM stuff
-   */
+  /* Intialize MEDM stuff */
     medmInit(request->displayFont);
     medmInitializeImageCache();
     createCursors();
@@ -3034,36 +2980,14 @@ main(int argc, char *argv[])
     initEventHandlers();
     initMedmWidget();
 
-  /*
-   *  ...we're the first MEDM around in this mode - proceed with full execution
-   *   but store dummy property first
-   */
+  /* We're the first MEDM around in this mode - proceed with full execution
+   *   Store mainShell window as the property if the atom is defined
+   *     (Will be stored if CLEANUP or first MEDM, won't be stored if LOCAL)  */
     targetWindow = XtWindow(mainShell);
-    if (request->opMode == EXECUTE) {
-	if (request->fontStyle == FIXED) {
-	    if (MEDM_EXEC_FIXED != (Atom)NULL)
-	      XChangeProperty(display,rootWindow,MEDM_EXEC_FIXED,
+    XChangeProperty(display,rootWindow,windowPropertyAtom,
 		XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
-	} else if (request->fontStyle == SCALABLE) {
-	    if (MEDM_EXEC_SCALABLE != (Atom)NULL)
-	      XChangeProperty(display,rootWindow,MEDM_EXEC_SCALABLE,
-		XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
-	}
-    } else if (request->opMode == EDIT) {
-	if (request->fontStyle == FIXED) {
-	    if (MEDM_EDIT_FIXED != (Atom)NULL)
-	      XChangeProperty(display,rootWindow,MEDM_EDIT_FIXED,
-		XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
-	} else if (request->fontStyle == SCALABLE) {
-	    if (MEDM_EDIT_SCALABLE != (Atom)NULL)
-	      XChangeProperty(display,rootWindow,MEDM_EDIT_SCALABLE,
-		XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
-	}
-    }
 
-  /*
-   * start any command-line specified displays
-   */
+  /* Start any command-line specified displays */
     for (i=0; i < request->fileCnt; i++) {
 	char *fileStr;
 	if (fileStr = request->fileList[i]) {
@@ -3081,10 +3005,8 @@ main(int argc, char *argv[])
 	enableEditFunctions();
     }
 
-  /*
-   * create and popup the product description shell
-   *  (use defaults for fg/bg)
-   */
+  /* Create and popup the product description shell
+   *  (use defaults for fg/bg) */
     sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,EPICS_VERSION_STRING);
     productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
       mainShell,
@@ -3098,43 +3020,40 @@ main(int argc, char *argv[])
       fontListTable[4],
       -1, -1, 5);
 
-  /* need this later than shell creation for some reason (?) */
+  /* Add callback for disabled window manager Close function
+   *   Need this later than shell creation for some reason (?) */
     XmAddWMProtocolCallback(mainShell,WM_DELETE_WINDOW,
       wmCloseCallback, (XtPointer) OTHER_SHELL);
 
+  /* Add the initialization work proc */
     XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
 
-  /*
-   * now go into event loop - formerly XtAppMainLoop(appContext);
-   */
-
 #ifdef __TED__
+  /* Get CDE workspace list */
     GetWorkSpaceList(mainMW);
 #endif
+
+  /* Go into event loop
+   *   Normally just XtAppMainLoop(appContext)
+   *     but we want to handle remote requests from other MEDM's */
     while (True) {
 	XtAppNextEvent(appContext,&event);
 	switch (event.type) {
 	case ClientMessage:
-	    if ( (event.xclient.message_type == MEDM_EDIT_FIXED &&
-	      request->opMode == EDIT && request->fontStyle == FIXED) ||
-	      (event.xclient.message_type == MEDM_EXEC_FIXED &&
-		request->opMode == EXECUTE && request->fontStyle == FIXED) ||
-	      (event.xclient.message_type == MEDM_EDIT_SCALABLE &&
-		request->opMode == EDIT && request->fontStyle == SCALABLE) ||
-	      (event.xclient.message_type == MEDM_EXEC_SCALABLE &&
-		request->opMode == EXECUTE && request->fontStyle == SCALABLE) ) {
+	    if(windowPropertyAtom && event.xclient.message_type == windowPropertyAtom) {
+	      /* Request from remote MEDM */
 		char geometryString[256];
 
-	      /* concatenate clientMessage events to get full name from form: (xyz) */
+	      /* Concatenate ClientMessage events to get full name from form: (xyz) */
 		completeClientMessage = False;
 		for (i = 0; i < MAX_CHARS_IN_CLIENT_MESSAGE; i++) {
 		    switch (event.xclient.data.b[i]) {
-		      /* start with filename */
+		      /* Start with filename */
 		    case '(':  index = 0;
 			ptr = fullPathName;
 			msgClass = FILENAME_MSG;
 			break;
-		      /* keep filling in until ';', then start macro string if any */
+		      /* Keep filling in until ';', then start macro string if any */
 		    case ';':  ptr[index++] = '\0';
 			if (msgClass == FILENAME_MSG) {
 			    msgClass = MACROSTR_MSG;
@@ -3145,7 +3064,7 @@ main(int argc, char *argv[])
 			}
 			index = 0;
 			break;
-		      /* terminate whatever string is being filled in */
+		      /* Terminate whatever string is being filled in */
 		    case ')':  completeClientMessage = True;
 			ptr[index++] = '\0';
 			break;
@@ -3162,27 +3081,29 @@ main(int argc, char *argv[])
 			if (globalDisplayListTraversalMode == DL_EDIT) {
 			    enableEditFunctions();
 			}
-			if (geometryString[0] != '\0')
-			  medmPrintf("    geometry = %s\n\n",geometryString);
-			if (name[0] != '\0')
-			  medmPrintf("    macro = %s\n",name);
+			medmPostTime();
+			medmPrintf("File Dispatch Request:\n");
 			if (fullPathName[0] != '\0')
 			  medmPrintf("    filename = %s\n",fullPathName);
-			medmPrintf("File Dispatch Request :\n");
-			medmPostTime();
+			if (name[0] != '\0')
+			  medmPrintf("    macro = %s\n",name);
+			if (geometryString[0] != '\0')
+			  medmPrintf("    geometry = %s\n\n",geometryString);
+			medmPrintf("\n");
 			fclose(filePtr);
 		    } else {
 			medmPrintf(
-			  "\nMEDM: could not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
+			  "\nCould not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
 			  fullPathName);
 		    }
 		}
-
-	    } else
-	      XtDispatchEvent(&event);
+	    } else {
+	      /* Handle these ClientMessage's the normal way */
+		XtDispatchEvent(&event);
+	    }
 	    break;
-
 	default:
+	  /* Handle all other event types the normal way */
 	    XtDispatchEvent(&event);
 	}
     }

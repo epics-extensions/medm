@@ -60,11 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 static  char *alarmColorString[] = {"#00C000",
 				    "#FFFF00","#FF0000","#FFFFFF",};
 
-extern Atom MEDM_EDIT_FIXED, MEDM_EXEC_FIXED, MEDM_EDIT_SCALABLE,
-  MEDM_EXEC_SCALABLE;
-
-
-/* from the O'Reilly books - this scalable font handling code:
+/* From the O'Reilly books - this scalable font handling code:
  *   (next two functions)
 */
 /*
@@ -347,16 +343,9 @@ void medmInit(char *displayFont)
  */
 void dmTerminateX()
 {
-/* remove the properties on the root window */
-    if (MEDM_EDIT_FIXED != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EDIT_FIXED);
-    if (MEDM_EXEC_FIXED != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EXEC_FIXED);
-    if (MEDM_EDIT_SCALABLE != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EDIT_SCALABLE);
-    if (MEDM_EXEC_SCALABLE != (Atom)NULL)
-      XDeleteProperty(display,rootWindow,MEDM_EXEC_SCALABLE);
-
+/* Remove the properties on the root window */
+    if (windowPropertyAtom != (Atom)NULL)
+      XDeleteProperty(display,rootWindow,windowPropertyAtom);
     XFlush(display);
 
     XtDestroyApplicationContext(appContext);

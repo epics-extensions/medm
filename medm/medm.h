@@ -143,7 +143,7 @@ extern "C" {
 
 #include "proto.h"
 #include "medmInitTask.h"
-
+    
   /* pixmap names : must be accessible by program according to Motif rules:
 
      rectangle25
@@ -154,7 +154,7 @@ extern "C" {
      polyline25
      polygon25
      bezierCurve25
-
+     
      meter25
      bar25
      indicator25
@@ -162,20 +162,23 @@ extern "C" {
      stripChart25
      cartesianPlot25
      surfacePlot25
-
+     
      choiceButton25
      messageButton25
      menu25
      textEntry25
      valuator25
-
+     
      relatedDisplay25
      shellCommand25
-     */
-
+  */
+    
   /* Global variables */
+    
+  /* Window property atom */
+    Atom windowPropertyAtom;
 
-   /* Global widgets (all permanent shells, most MWs, etc ) */
+  /* Global widgets (all permanent shells, most MWs, etc ) */
     EXTERN Widget mainShell, mainMW;
     EXTERN Widget objectS, objectMW;
     EXTERN Widget resourceS, resourceMW;

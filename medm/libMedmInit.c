@@ -67,14 +67,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <sys/stat.h>
 
 /*
- * globals needed for remote display invocation...
- *   have limited scope (main(), libMedmInit() and dmTerminateX() are only
- *   routines which care
- */
-Atom MEDM_EDIT_FIXED = (Atom)NULL, MEDM_EXEC_FIXED = (Atom)NULL,
-  MEDM_EDIT_SCALABLE = (Atom)NULL, MEDM_EXEC_SCALABLE = (Atom)NULL;
-
-/*
  * Jeff claims you need this even if using some fd mgr. funtion (select(fd...))
  *   for refreshing tcp/ip connections, CA "flow control", etc
  */
