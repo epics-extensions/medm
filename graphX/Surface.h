@@ -73,7 +73,7 @@ struct _Surface {
 
     XtPointer	    userData;		/* pointer to arbitrary user data */
 
-    };
+};
 
 
 typedef struct _Surface Surface;
@@ -96,7 +96,7 @@ extern void surfacePrint(Surface *);
 extern void surfaceRefresh(Surface *);
 extern void surfaceResize(Surface *);
 extern void surfaceSet(Surface *, double *, double *, double *, int, int,
-	char *, char *, char *, char *, char*, SurfaceStorageMode);
+  char *, char *, char *, char *, char*, SurfaceStorageMode);
 extern void surfaceSetRenderMode(Surface *, SurfaceRenderMode);
 extern void surfaceSetView(Surface *, float, float, float);
 extern void surfaceTerm(Surface *);

@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-07-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -94,14 +90,14 @@ static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-  switch(((XmAnyCallbackStruct *) cbs)->reason){
-	case XmCR_CANCEL:
-		XtUnmanageChild(w);
-		break;
-	case XmCR_OK:
-		XtUnmanageChild(w);
-		break;
-  }
+    switch(((XmAnyCallbackStruct *) cbs)->reason){
+    case XmCR_CANCEL:
+	XtUnmanageChild(w);
+	break;
+    case XmCR_OK:
+	XtUnmanageChild(w);
+	break;
+    }
 }
 
 #ifdef __cplusplus
@@ -110,44 +106,44 @@ static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-  int buttonNumber = (int) cd;
-  XmString label;
-  int n;
-  Arg args[10];
-  Widget textField;
+    int buttonNumber = (int) cd;
+    XmString label;
+    int n;
+    Arg args[10];
+    Widget textField;
 
     switch(buttonNumber) {
-	    case FILE_OPEN_BTN:
-		if (openFSD == NULL) {
-		    n = 0;
-		    label = XmStringCreateSimple(CHANNEL_DIALOG_MASK);
-		    XtSetArg(args[n],XmNdirMask,label); n++;
-		    XtSetArg(args[n],XmNdialogStyle,
-				XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-		    openFSD = XmCreateFileSelectionDialog(channelFilePDM,
-				"openFSD",args,n);
+    case FILE_OPEN_BTN:
+	if (openFSD == NULL) {
+	    n = 0;
+	    label = XmStringCreateSimple(CHANNEL_DIALOG_MASK);
+	    XtSetArg(args[n],XmNdirMask,label); n++;
+	    XtSetArg(args[n],XmNdialogStyle,
+	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
+	      openFSD = XmCreateFileSelectionDialog(channelFilePDM,
+		"openFSD",args,n);
 /* make Filter text field insensitive to prevent user hand-editing dirMask */
-		    textField = XmFileSelectionBoxGetChild(openFSD,
-				XmDIALOG_FILTER_TEXT);
-		    XtSetSensitive(textField,FALSE);
-		    XtAddCallback(openFSD,XmNokCallback,
-				(XtCallbackProc)fileOpenCallback,
-				FILE_OPEN_BTN);
-		    XtAddCallback(openFSD,XmNcancelCallback,
-				(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
-		    XmStringFree(label);
-		    XtManageChild(openFSD);
-		} else {
-		    XtManageChild(openFSD);
-		}
-		break;
-	    case FILE_SAVE_BTN:
-		break;
-	    case FILE_SAVE_AS_BTN:
-		break;
-	    case FILE_CLOSE_BTN:
-		XtPopdown(channelS);
-		break;
+	      textField = XmFileSelectionBoxGetChild(openFSD,
+		XmDIALOG_FILTER_TEXT);
+	      XtSetSensitive(textField,FALSE);
+	      XtAddCallback(openFSD,XmNokCallback,
+		(XtCallbackProc)fileOpenCallback,
+		FILE_OPEN_BTN);
+	      XtAddCallback(openFSD,XmNcancelCallback,
+		(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
+	      XmStringFree(label);
+	      XtManageChild(openFSD);
+	} else {
+	    XtManageChild(openFSD);
+	}
+	break;
+    case FILE_SAVE_BTN:
+	break;
+    case FILE_SAVE_AS_BTN:
+	break;
+    case FILE_CLOSE_BTN:
+	XtPopdown(channelS);
+	break;
     }
 }
 
@@ -162,110 +158,110 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 void createChannel()
 {
-  Widget paletteSW;
+    Widget paletteSW;
 
-  XmString buttons[N_MAX_MENU_ELES];
-  KeySym keySyms[N_MAX_MENU_ELES];
-  XmButtonType buttonType[N_MAX_MENU_ELES];
-  Widget channelMB;
-  Widget channelHelpPDM;
-  Widget menuHelpWidget;
-
-
- int i, n;
-
- char name[20];
- Arg args[10];
+    XmString buttons[N_MAX_MENU_ELES];
+    KeySym keySyms[N_MAX_MENU_ELES];
+    XmButtonType buttonType[N_MAX_MENU_ELES];
+    Widget channelMB;
+    Widget channelHelpPDM;
+    Widget menuHelpWidget;
 
 
+    int i, n;
 
- openFSD = NULL;
+    char name[20];
+    Arg args[10];
+
+
+
+    openFSD = NULL;
 
 /*
  * create a main window in a shell
  */
- n = 0;
- XtSetArg(args[n],XmNiconName,"Channels"); n++;
- XtSetArg(args[n],XmNtitle,"Channel Palette"); n++;
- XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
- XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
+    n = 0;
+    XtSetArg(args[n],XmNiconName,"Channels"); n++;
+    XtSetArg(args[n],XmNtitle,"Channel Palette"); n++;
+    XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
+    XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
 /* map window manager menu Close function to application close... */
- XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
- channelS = XtCreatePopupShell("channelS",topLevelShellWidgetClass,
-		mainShell,args,n);
- XmAddWMProtocolCallback(channelS,WM_DELETE_WINDOW,
-		(XtCallbackProc)wmCloseCallback, (XtPointer)OTHER_SHELL);
+    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    channelS = XtCreatePopupShell("channelS",topLevelShellWidgetClass,
+      mainShell,args,n);
+    XmAddWMProtocolCallback(channelS,WM_DELETE_WINDOW,
+      (XtCallbackProc)wmCloseCallback, (XtPointer)OTHER_SHELL);
 
- channelMW = XmCreateMainWindow(channelS,"channelMW",NULL,0);
+    channelMW = XmCreateMainWindow(channelS,"channelMW",NULL,0);
 
 
 /*
  * create the menu bar
  */
-  buttons[0] = XmStringCreateSimple("File");
-  buttons[1] = XmStringCreateSimple("Help");
-  keySyms[0] = 'F';
-  keySyms[1] = 'H';
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  channelMB = XmCreateSimpleMenuBar(channelMW, "channelMB",args,n);
+    buttons[0] = XmStringCreateSimple("File");
+    buttons[1] = XmStringCreateSimple("Help");
+    keySyms[0] = 'F';
+    keySyms[1] = 'H';
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    channelMB = XmCreateSimpleMenuBar(channelMW, "channelMB",args,n);
 
   /* set the Help cascade button in the menu bar */
-  menuHelpWidget = XtNameToWidget(channelMB,"*button_1");
-  XtVaSetValues(channelMB,XmNmenuHelpWidget,menuHelpWidget,
-		NULL);
-  for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
+    menuHelpWidget = XtNameToWidget(channelMB,"*button_1");
+    XtVaSetValues(channelMB,XmNmenuHelpWidget,menuHelpWidget,
+      NULL);
+    for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
 
 
 /*
  * create the file pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("Open...");
-  buttons[1] = XmStringCreateSimple("Save");
-  buttons[2] = XmStringCreateSimple("Save As...");
-  buttons[3] = XmStringCreateSimple("Separator");
-  buttons[4] = XmStringCreateSimple("Close");
-  keySyms[0] = 'O';
-  keySyms[1] = 'S';
-  keySyms[2] = 'A';
-  keySyms[3] = ' ';
-  keySyms[4] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
-  buttonType[1] = XmPUSHBUTTON;
-  buttonType[2] = XmPUSHBUTTON;
-  buttonType[3] = XmSEPARATOR;
-  buttonType[4] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_FILE_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,(XtCallbackProc)fileMenuSimpleCallback);
-	n++;
-  channelFilePDM = XmCreateSimplePulldownMenu(channelMB,"channelFilePDM",
-	args,n);
-  for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
+    buttons[0] = XmStringCreateSimple("Open...");
+    buttons[1] = XmStringCreateSimple("Save");
+    buttons[2] = XmStringCreateSimple("Save As...");
+    buttons[3] = XmStringCreateSimple("Separator");
+    buttons[4] = XmStringCreateSimple("Close");
+    keySyms[0] = 'O';
+    keySyms[1] = 'S';
+    keySyms[2] = 'A';
+    keySyms[3] = ' ';
+    keySyms[4] = 'C';
+    buttonType[0] = XmPUSHBUTTON;
+    buttonType[1] = XmPUSHBUTTON;
+    buttonType[2] = XmPUSHBUTTON;
+    buttonType[3] = XmSEPARATOR;
+    buttonType[4] = XmPUSHBUTTON;
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_FILE_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
+    XtSetArg(args[n],XmNsimpleCallback,(XtCallbackProc)fileMenuSimpleCallback);
+    n++;
+    channelFilePDM = XmCreateSimplePulldownMenu(channelMB,"channelFilePDM",
+      args,n);
+    for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
 
 
 
 /*
  * create the help pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("On Channel Palette...");
-  keySyms[0] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
-  channelHelpPDM = XmCreateSimplePulldownMenu(channelMB,
-		"channelHelpPDM",args,n);
-  XmStringFree(buttons[0]);
+    buttons[0] = XmStringCreateSimple("On Channel Palette...");
+    keySyms[0] = 'C';
+    buttonType[0] = XmPUSHBUTTON;
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
+    channelHelpPDM = XmCreateSimplePulldownMenu(channelMB,
+      "channelHelpPDM",args,n);
+    XmStringFree(buttons[0]);
 
 
 
@@ -273,17 +269,17 @@ void createChannel()
  * Add the Palette Radio Box for the drawing channel toggle buttons
  *
  */
- paletteSW = XmCreateScrolledWindow(channelMW,"paletteSW",NULL,0);
+    paletteSW = XmCreateScrolledWindow(channelMW,"paletteSW",NULL,0);
 
-  XmMainWindowSetAreas(channelMW,channelMB,NULL,NULL,NULL,paletteSW);
+    XmMainWindowSetAreas(channelMW,channelMB,NULL,NULL,NULL,paletteSW);
 
 
 /*
  * manage the composites
  */
-  XtManageChild(channelMB);
-  XtManageChild(paletteSW);
-  XtManageChild(channelMW);
+    XtManageChild(channelMB);
+    XtManageChild(paletteSW);
+    XtManageChild(channelMW);
 
 }
 

@@ -23,15 +23,15 @@
 
 /****** Class part - minimum of one member required */
 typedef struct {
-   int dummy;
+    int dummy;
 } ByteClassPart;
 
 /****** Class record */
 typedef struct _ByteClassRec {
-   CoreClassPart core_class;
-   ControlClassPart control_class;
-   ValueClassPart value_class;
-   ByteClassPart byte_class;
+    CoreClassPart core_class;
+    ControlClassPart control_class;
+    ValueClassPart value_class;
+    ByteClassPart byte_class;
 } ByteClassRec;
 
 /****** Declare the widget class record as external for widget source file */
@@ -39,25 +39,24 @@ extern ByteClassRec byteClassRec;
 
 /****** Instance part */
 typedef struct {
-   XcOrient orient;                     /* Byte orientation */
-   int   interval;			/* Time interval for updateCallback */
-   XtCallbackList update_callback;	/* The updateCallback function */
-   Pixel byte_background;		/* Background color of the byte */
-   Pixel byte_foreground;		/* Foreground color of the byte */
-   XRectangle face;                     /* Geometry of the Byte face */
-   int   sbit, ebit;                    /* Starting, Ending bit */
-   int   interval_id;			/* Xt TimeOut interval ID */
+    XcOrient orient;                     /* Byte orientation */
+    int   interval;			/* Time interval for updateCallback */
+    XtCallbackList update_callback;	/* The updateCallback function */
+    Pixel byte_background;		/* Background color of the byte */
+    Pixel byte_foreground;		/* Foreground color of the byte */
+    XRectangle face;                     /* Geometry of the Byte face */
+    int   sbit, ebit;                    /* Starting, Ending bit */
+    int   interval_id;			/* Xt TimeOut interval ID */
 } BytePart;
 
 /****** Instance record */
 typedef struct _ByteRec {
-   CorePart core;
-   ControlPart control;
-   ValuePart value;
-   BytePart byte;
+    CorePart core;
+    ControlPart control;
+    ValuePart value;
+    BytePart byte;
 } ByteRec;
 
 /****** Declare widget class functions here */
 
 #endif
-

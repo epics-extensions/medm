@@ -43,12 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  * Modification Log:
  * -----------------
@@ -80,6 +81,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .26  11-13-96        vong    2.2.7 release
  * .27  11-20-96        vong    2.2.8 release
  * .28  12-03-96        vong    2.2.9 release
+ * .29  12-11-96        evans   2.3.0 release
+ * .30  12-12-96        evans   2.3.1 release
  *
  *****************************************************************************
 */
@@ -89,11 +92,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  */
 #define MEDM_VERSION		2
 #define MEDM_REVISION		3
-#define MEDM_UPDATE_LEVEL	0
+#define MEDM_UPDATE_LEVEL	1
 
 #ifdef __COLOR_RULE_H__
-#define MEDM_VERSION_STRING	"MEDM Version 2.3.0a"
+#define MEDM_VERSION_STRING	"MEDM Version 2.3.1a"
 #else
-#define MEDM_VERSION_STRING	"MEDM Version 2.3.0"
+#define MEDM_VERSION_STRING	"MEDM Version 2.3.1"
 #endif
-#define MEDM_VERSION_DIGITS	"MEDM020300"
+#define MEDM_VERSION_DIGITS	"MEDM020301"

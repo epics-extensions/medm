@@ -41,7 +41,7 @@
  */
 typedef struct 
 {
-   int dummy;	/* Minimum of one member required. */
+    int dummy;	/* Minimum of one member required. */
 } IndicatorClassPart;
 
 /*
@@ -49,10 +49,10 @@ typedef struct
  */
 typedef struct _IndicatorClassRec
 {
-   CoreClassPart core_class;
-   ControlClassPart control_class;
-   ValueClassPart value_class;
-   IndicatorClassPart indicator_class;
+    CoreClassPart core_class;
+    ControlClassPart control_class;
+    ValueClassPart value_class;
+    IndicatorClassPart indicator_class;
 } IndicatorClassRec;
 
 /*
@@ -68,34 +68,34 @@ extern IndicatorClassRec indicatorClassRec;
  */
 typedef struct
 {
-   /* Public instance variables. */
-   XcOrient orient;			/* Indicator's orientation: vertical
+  /* Public instance variables. */
+    XcOrient orient;			/* Indicator's orientation: vertical
 					 * or horizontal.
 					 */
-   int interval;			/* Time interval for updateCallback */
-   XtCallbackList update_callback;	/* The updateCallback function. */
-   Pixel indicator_background;		/* Background color of the indicator. */
-   Pixel indicator_foreground;		/* Foreground color of the indicator. */
-   Pixel scale_pixel;			/* Color of the Scale indicator. */
-   int num_segments;			/* Number of segments in the Scale */
-   Boolean value_visible;		/* Enable/Disable display of the 
+    int interval;			/* Time interval for updateCallback */
+    XtCallbackList update_callback;	/* The updateCallback function. */
+    Pixel indicator_background;		/* Background color of the indicator. */
+    Pixel indicator_foreground;		/* Foreground color of the indicator. */
+    Pixel scale_pixel;			/* Color of the Scale indicator. */
+    int num_segments;			/* Number of segments in the Scale */
+    Boolean value_visible;		/* Enable/Disable display of the 
 					 * value in the Value Box.
 					 */
 
    /* Private instance variables. */
-   XRectangle face;			/* Geometry of the Indicator face */
-   XPoint lbl;				/* Location of the Label string */
-   XRectangle indicator;		/* Rectangle for the Bar indicator. */
-   XSegment scale_line;			/* Scale line along Bar indicator. */
-   XPoint segs[MAX_SCALE_SEGS+1];	/* Line segments for the Scale. */
-   int seg_length;			/* Length of Scale line segments. */
-   XPoint max_val;			/* Point at which to draw the max
+    XRectangle face;			/* Geometry of the Indicator face */
+    XPoint lbl;				/* Location of the Label string */
+    XRectangle indicator;		/* Rectangle for the Bar indicator. */
+    XSegment scale_line;			/* Scale line along Bar indicator. */
+    XPoint segs[MAX_SCALE_SEGS+1];	/* Line segments for the Scale. */
+    int seg_length;			/* Length of Scale line segments. */
+    XPoint max_val;			/* Point at which to draw the max
 					 * value string on the Scale.
 					 */
-   XPoint min_val;			/* Point at which to draw the min
+    XPoint min_val;			/* Point at which to draw the min
 					 * value string on the Scale.
 					 */
-   int interval_id;			/* Xt TimeOut interval ID. */
+    int interval_id;			/* Xt TimeOut interval ID. */
 
 } IndicatorPart;
 
@@ -104,10 +104,10 @@ typedef struct
  */
 typedef struct _IndicatorRec
 {
-   CorePart core;
-   ControlPart control;
-   ValuePart value;
-   IndicatorPart indicator;
+    CorePart core;
+    ControlPart control;
+    ValuePart value;
+    IndicatorPart indicator;
 } IndicatorRec;
 
 
@@ -115,4 +115,3 @@ typedef struct _IndicatorRec
 
 
 #endif  /* INDICATORP_H */
-

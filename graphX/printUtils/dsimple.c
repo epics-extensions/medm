@@ -57,14 +57,14 @@ extern int screen;
  * Malloc: like malloc but handles out of memory using Fatal_Error.
  */
 char *Malloc(size)
-     unsigned size;
+    unsigned size;
 {
-	char *data, *malloc();
+    char *data, *malloc();
 
-	if (!(data = malloc(size)))
-	  Fatal_Error("Out of memory!"," ");
+    if (!(data = malloc(size)))
+      Fatal_Error("Out of memory!"," ");
 
-	return(data);
+    return(data);
 }
 	
 
@@ -72,18 +72,18 @@ char *Malloc(size)
  * Realloc: like Malloc except for realloc, handles NULL using Malloc.
  */
 char *Realloc(ptr, size)
-        char *ptr;
-        int size;
+    char *ptr;
+    int size;
 {
-	char *new_ptr, *realloc();
+    char *new_ptr, *realloc();
 
-	if (!ptr)
-	  return(Malloc(size));
+    if (!ptr)
+      return(Malloc(size));
 
-	if (!(new_ptr = realloc(ptr, size)))
-	  Fatal_Error("Out of memory!"," ");
+    if (!(new_ptr = realloc(ptr, size)))
+      Fatal_Error("Out of memory!"," ");
 
-	return(new_ptr);
+    return(new_ptr);
 }
 
 
@@ -111,9 +111,9 @@ char *Get_Display_Name(pargc, argv)
 	    continue;
 	}
 	if (!strcmp(arg,"-")) {
-		while (i<argc)
-			*pargv++ = argv[i++];
-		break;
+	    while (i<argc)
+	      *pargv++ = argv[i++];
+	    break;
 	}
 	*pargv++ = arg;
     }
@@ -128,19 +128,19 @@ char *Get_Display_Name(pargc, argv)
  *               Does not require dpy or screen defined on entry.
  */
 Display *Open_Display(display_name)
-char *display_name;
+    char *display_name;
 {
-	Display *d;
+    Display *d;
 
-	d = XOpenDisplay(display_name);
-	if (d == NULL) {
-	    fprintf (stderr, "%s:  unable to open display '%s'\n",
-		     program_name, XDisplayName (display_name));
-	    usage ();
-	    /* doesn't return */
-	}
+    d = XOpenDisplay(display_name);
+    if (d == NULL) {
+	fprintf (stderr, "%s:  unable to open display '%s'\n",
+	  program_name, XDisplayName (display_name));
+	usage ();
+      /* doesn't return */
+    }
 
-	return(d);
+    return(d);
 }
 
 
@@ -152,11 +152,11 @@ char *display_name;
  *                           Does not require dpy or screen defined.
  */
 void Setup_Display_And_Screen(argc, argv)
-int *argc;      /* MODIFIED */
-char **argv;    /* MODIFIED */
+    int *argc;      /* MODIFIED */
+    char **argv;    /* MODIFIED */
 {
-	dpy = Open_Display (Get_Display_Name(argc, argv));
-	screen = DefaultScreen(dpy);
+    dpy = Open_Display (Get_Display_Name(argc, argv));
+    screen = DefaultScreen(dpy);
 }
 
 
@@ -164,14 +164,14 @@ char **argv;    /* MODIFIED */
  * Open_Font: This routine opens a font with error handling.
  */
 XFontStruct *Open_Font(name)
-char *name;
+    char *name;
 {
-	XFontStruct *font;
+    XFontStruct *font;
 
-	if (!(font=XLoadQueryFont(dpy, name)))
-	  Fatal_Error("Unable to open font %s!", name);
+    if (!(font=XLoadQueryFont(dpy, name)))
+      Fatal_Error("Unable to open font %s!", name);
 
-	return(font);
+    return(font);
 }
 
 
@@ -180,7 +180,7 @@ char *name;
  */
 void Beep()
 {
-	XBell(dpy, 50);
+    XBell(dpy, 50);
 }
 
 
@@ -189,32 +189,32 @@ void Beep()
  *                 directly and handles errors using Fatal_Error.
  */
 static void _bitmap_error(status, filename)
-     int status;
-     char *filename;
+    int status;
+    char *filename;
 {
-  if (status == BitmapOpenFailed)
-    Fatal_Error("Can't open file %s!", filename);
-  else if (status == BitmapFileInvalid)
-    Fatal_Error("file %s: Bad bitmap format.", filename);
-  else
-    Fatal_Error("Out of memory!", " ");
+    if (status == BitmapOpenFailed)
+      Fatal_Error("Can't open file %s!", filename);
+    else if (status == BitmapFileInvalid)
+      Fatal_Error("file %s: Bad bitmap format.", filename);
+    else
+      Fatal_Error("Out of memory!", " ");
 }
 
 Pixmap ReadBitmapFile(d, filename, width, height, x_hot, y_hot)
-     Drawable d;
-     char *filename;
-     int *width, *height, *x_hot, *y_hot;
+    Drawable d;
+    char *filename;
+    int *width, *height, *x_hot, *y_hot;
 {
-  Pixmap bitmap;
-  int status;
+    Pixmap bitmap;
+    int status;
 
-  status = XReadBitmapFile(dpy, RootWindow(dpy, screen), filename,
-			   (unsigned int *)width, (unsigned int *)height,
-			   &bitmap, x_hot, y_hot);
-  if (status != BitmapSuccess)
-    _bitmap_error(status, filename);
+    status = XReadBitmapFile(dpy, RootWindow(dpy, screen), filename,
+      (unsigned int *)width, (unsigned int *)height,
+      &bitmap, x_hot, y_hot);
+    if (status != BitmapSuccess)
+      _bitmap_error(status, filename);
 
-  return(bitmap);
+    return(bitmap);
 }
 
 
@@ -223,16 +223,16 @@ Pixmap ReadBitmapFile(d, filename, width, height, x_hot, y_hot)
  *                  using Fatal_Error.
  */
 void WriteBitmapFile(filename, bitmap, width, height, x_hot, y_hot)
-     char *filename;
-     Pixmap bitmap;
-     int width, height, x_hot, y_hot;
+    char *filename;
+    Pixmap bitmap;
+    int width, height, x_hot, y_hot;
 {
-  int status;
+    int status;
 
-  status= XWriteBitmapFile(dpy, filename, bitmap, width, height, x_hot,
-			   y_hot);
-  if (status != BitmapSuccess)
-    _bitmap_error(status, filename);
+    status= XWriteBitmapFile(dpy, filename, bitmap, width, height, x_hot,
+      y_hot);
+    if (status != BitmapSuccess)
+      _bitmap_error(status, filename);
 }
 
 
@@ -259,55 +259,55 @@ void WriteBitmapFile(filename, bitmap, width, height, x_hot, y_hot)
  *                     For examples of usage, see xwininfo, xwd, or xprop.
  */
 Window Select_Window_Args(rargc, argv)
-     int *rargc;
-     char **argv;
+    int *rargc;
+    char **argv;
 #define ARGC (*rargc)
 {
-	int nargc=1;
-	int argc;
-	char **nargv;
-	Window w=0;
+    int nargc=1;
+    int argc;
+    char **nargv;
+    Window w=0;
 
-	nargv = argv+1; argc = ARGC;
+    nargv = argv+1; argc = ARGC;
 #define OPTION argv[0]
 #define NXTOPTP ++argv, --argc>0
 #define NXTOPT if (++argv, --argc==0) usage()
 #define COPYOPT nargv++[0]=OPTION; nargc++
 
-	while (NXTOPTP) {
-		if (!strcmp(OPTION, "-")) {
-			COPYOPT;
-			while (NXTOPTP)
-			  COPYOPT;
-			break;
-		}
-		if (!strcmp(OPTION, "-root")) {
-			w=RootWindow(dpy, screen);
-			continue;
-		}
-		if (!strcmp(OPTION, "-name")) {
-			NXTOPT;
-			w = Window_With_Name(dpy, RootWindow(dpy, screen),
-					     OPTION);
-			if (!w)
-			  Fatal_Error("No window with name %s exists!",OPTION);
-			continue;
-		}
-		if (!strcmp(OPTION, "-id")) {
-			NXTOPT;
-			w=0;
-			sscanf(OPTION, "0x%lx", &w);
-			if (!w)
-			  sscanf(OPTION, "%ld", &w);
-			if (!w)
-			  Fatal_Error("Invalid window id format: %s.", OPTION);
-			continue;
-		}
-		COPYOPT;
+    while (NXTOPTP) {
+	if (!strcmp(OPTION, "-")) {
+	    COPYOPT;
+	    while (NXTOPTP)
+	      COPYOPT;
+	    break;
 	}
-	ARGC = nargc;
+	if (!strcmp(OPTION, "-root")) {
+	    w=RootWindow(dpy, screen);
+	    continue;
+	}
+	if (!strcmp(OPTION, "-name")) {
+	    NXTOPT;
+	    w = Window_With_Name(dpy, RootWindow(dpy, screen),
+	      OPTION);
+	    if (!w)
+	      Fatal_Error("No window with name %s exists!",OPTION);
+	    continue;
+	}
+	if (!strcmp(OPTION, "-id")) {
+	    NXTOPT;
+	    w=0;
+	    sscanf(OPTION, "0x%lx", &w);
+	    if (!w)
+	      sscanf(OPTION, "%ld", &w);
+	    if (!w)
+	      Fatal_Error("Invalid window id format: %s.", OPTION);
+	    continue;
+	}
+	COPYOPT;
+    }
+    ARGC = nargc;
 	
-	return(w);
+    return(w);
 }
 
 /*
@@ -332,32 +332,32 @@ extern int screen;
  *                be defined.
  */
 unsigned long Resolve_Color(w, name)
-     Window w;
-     char *name;
+    Window w;
+    char *name;
 {
-	XColor c;
-	Colormap colormap;
-	XWindowAttributes wind_info;
+    XColor c;
+    Colormap colormap;
+    XWindowAttributes wind_info;
 
-	/*
-	 * The following is a hack to insure machines without a rgb table
-	 * handle at least white & black right.
-	 */
-	if (!strcmp(name, "white"))
-	  name="#ffffffffffff";
-	if (!strcmp(name, "black"))
-	  name="#000000000000";
+  /*
+   * The following is a hack to insure machines without a rgb table
+   * handle at least white & black right.
+   */
+    if (!strcmp(name, "white"))
+      name="#ffffffffffff";
+    if (!strcmp(name, "black"))
+      name="#000000000000";
 
-	XGetWindowAttributes(dpy, w, &wind_info);
-	colormap = wind_info.colormap;
+    XGetWindowAttributes(dpy, w, &wind_info);
+    colormap = wind_info.colormap;
 
-	if (!XParseColor(dpy, colormap, name, &c))
-	  Fatal_Error("Bad color format '%s'.", name);
+    if (!XParseColor(dpy, colormap, name, &c))
+      Fatal_Error("Bad color format '%s'.", name);
 
-	if (!XAllocColor(dpy, colormap, &c))
-	  Fatal_Error("XAllocColor failed!", " ");
+    if (!XAllocColor(dpy, colormap, &c))
+      Fatal_Error("XAllocColor failed!", " ");
 
-	return(c.pixel);
+    return(c.pixel);
 }
 
 
@@ -368,25 +368,25 @@ unsigned long Resolve_Color(w, name)
  *                   If needed, they can be obtained via. XGetGeometry.
  */
 Pixmap Bitmap_To_Pixmap(dpy, d, gc, bitmap, width, height)
-     Display *dpy;
-     Drawable d;
-     GC gc;
-     Pixmap bitmap;
-     int width, height;
+    Display *dpy;
+    Drawable d;
+    GC gc;
+    Pixmap bitmap;
+    int width, height;
 {
-  Pixmap pix;
-  int x;
-  unsigned int i, depth;
-  Drawable root;
+    Pixmap pix;
+    int x;
+    unsigned int i, depth;
+    Drawable root;
 
-  if (!XGetGeometry(dpy, d, &root, &x, &x, &i, &i, &i, &depth))
-    return(0);
+    if (!XGetGeometry(dpy, d, &root, &x, &x, &i, &i, &i, &depth))
+      return(0);
 
-  pix = XCreatePixmap(dpy, d, width, height, (int)depth);
+    pix = XCreatePixmap(dpy, d, width, height, (int)depth);
 
-  XCopyPlane(dpy, bitmap, pix, gc, 0, 0, width, height, 0, 0, 1);
+    XCopyPlane(dpy, bitmap, pix, gc, 0, 0, width, height, 0, 0, 1);
 
-  return(pix);
+    return(pix);
 }
 
 
@@ -395,7 +395,7 @@ Pixmap Bitmap_To_Pixmap(dpy, d, gc, bitmap, width, height)
  */
 void blip()
 {
-  outl("blip!");
+    outl("blip!");
 }
 
 
@@ -404,46 +404,46 @@ void blip()
  */
 
 Window Select_Window(dpy)
-     Display *dpy;
+    Display *dpy;
 {
-  int status;
-  Cursor cursor;
-  XEvent event;
-  Window target_win = None, root = RootWindow(dpy,screen);
-  int buttons = 0;
+    int status;
+    Cursor cursor;
+    XEvent event;
+    Window target_win = None, root = RootWindow(dpy,screen);
+    int buttons = 0;
 
   /* Make the target cursor */
-  cursor = XCreateFontCursor(dpy, XC_crosshair);
+    cursor = XCreateFontCursor(dpy, XC_crosshair);
 
   /* Grab the pointer using target cursor, letting it room all over */
-  status = XGrabPointer(dpy, root, False,
-			ButtonPressMask|ButtonReleaseMask, GrabModeSync,
-			GrabModeAsync, root, cursor, CurrentTime);
-  if (status != GrabSuccess) Fatal_Error("Can't grab the mouse.", " ");
+    status = XGrabPointer(dpy, root, False,
+      ButtonPressMask|ButtonReleaseMask, GrabModeSync,
+      GrabModeAsync, root, cursor, CurrentTime);
+    if (status != GrabSuccess) Fatal_Error("Can't grab the mouse.", " ");
 
   /* Let the user select a window... */
-  while ((target_win == None) || (buttons != 0)) {
-    /* allow one more event */
-    XAllowEvents(dpy, SyncPointer, CurrentTime);
-    XWindowEvent(dpy, root, ButtonPressMask|ButtonReleaseMask, &event);
-    switch (event.type) {
-    case ButtonPress:
-      if (target_win == None) {
-	target_win = event.xbutton.subwindow; /* window selected */
-	if (target_win == None) target_win = root;
-      }
-      buttons++;
-      break;
-    case ButtonRelease:
-      if (buttons > 0) /* there may have been some down before we started */
-	buttons--;
-       break;
-    }
-  } 
+    while ((target_win == None) || (buttons != 0)) {
+      /* allow one more event */
+	XAllowEvents(dpy, SyncPointer, CurrentTime);
+	XWindowEvent(dpy, root, ButtonPressMask|ButtonReleaseMask, &event);
+	switch (event.type) {
+	case ButtonPress:
+	    if (target_win == None) {
+		target_win = event.xbutton.subwindow; /* window selected */
+		if (target_win == None) target_win = root;
+	    }
+	    buttons++;
+	    break;
+	case ButtonRelease:
+	    if (buttons > 0) /* there may have been some down before we started */
+	      buttons--;
+	    break;
+	}
+    } 
 
-  XUngrabPointer(dpy, CurrentTime);      /* Done with pointer */
+    XUngrabPointer(dpy, CurrentTime);      /* Done with pointer */
 
-  return(target_win);
+    return(target_win);
 }
 
 
@@ -455,29 +455,29 @@ Window Select_Window(dpy)
  *                   are looked at.  Normally, top should be the RootWindow.
  */
 Window Window_With_Name(dpy, top, name)
-     Display *dpy;
-     Window top;
-     char *name;
+    Display *dpy;
+    Window top;
+    char *name;
 {
-	Window *children, dummy;
-	unsigned int nchildren;
-	int i;
-	Window w=0;
-	char *window_name;
+    Window *children, dummy;
+    unsigned int nchildren;
+    int i;
+    Window w=0;
+    char *window_name;
 
-	if (XFetchName(dpy, top, &window_name) && !strcmp(window_name, name))
-	  return(top);
+    if (XFetchName(dpy, top, &window_name) && !strcmp(window_name, name))
+      return(top);
 
-	if (!XQueryTree(dpy, top, &dummy, &dummy, &children, &nchildren))
-	  return(0);
+    if (!XQueryTree(dpy, top, &dummy, &dummy, &children, &nchildren))
+      return(0);
 
-	for (i=0; i<nchildren; i++) {
-		w = Window_With_Name(dpy, children[i], name);
-		if (w)
-		  break;
-	}
-	if (children) XFree ((char *)children);
-	return(w);
+    for (i=0; i<nchildren; i++) {
+	w = Window_With_Name(dpy, children[i], name);
+	if (w)
+	  break;
+    }
+    if (children) XFree ((char *)children);
+    return(w);
 }
 
 /*
@@ -487,13 +487,13 @@ Window Window_With_Name(dpy, top, name)
  *       printf with up to 7 arguments.
  */
 outl(msg, arg0,arg1,arg2,arg3,arg4,arg5,arg6)
-     char *msg;
-     char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
+    char *msg;
+    char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
 {
-	fflush(stdout);
-	fprintf(stderr, msg, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-	fprintf(stderr, "\n");
-	fflush(stderr);
+    fflush(stdout);
+    fprintf(stderr, msg, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
 
@@ -502,13 +502,13 @@ outl(msg, arg0,arg1,arg2,arg3,arg4,arg5,arg6)
  * Does not require dpy or screen defined.
  */
 void Fatal_Error(msg, arg0)
- char *msg;
- char *arg0;
+    char *msg;
+    char *arg0;
 {
-	fflush(stdout);
-	fflush(stderr);
-	fprintf(stderr, "%s: error: ", program_name);
-	fprintf(stderr, msg, arg0);
-	fprintf(stderr, "\n");
-	exit(1);
+    fflush(stdout);
+    fflush(stderr);
+    fprintf(stderr, "%s: error: ", program_name);
+    fprintf(stderr, msg, arg0);
+    fprintf(stderr, "\n");
+    exit(1);
 }

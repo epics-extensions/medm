@@ -43,7 +43,7 @@
  */
 typedef struct 
 {
-   int dummy;	/* Minimum of one member required. */
+    int dummy;	/* Minimum of one member required. */
 } MeterClassPart;
 
 /*
@@ -51,10 +51,10 @@ typedef struct
  */
 typedef struct _MeterClassRec
 {
-   CoreClassPart core_class;
-   ControlClassPart control_class;
-   ValueClassPart value_class;
-   MeterClassPart meter_class;
+    CoreClassPart core_class;
+    ControlClassPart control_class;
+    ValueClassPart value_class;
+    MeterClassPart meter_class;
 } MeterClassRec;
 
 /*
@@ -70,32 +70,32 @@ extern MeterClassRec meterClassRec;
  */
 typedef struct
 {
-   /* Public instance variables. */
-   int interval;			/* Time interval for updateCallback */
-   XtCallbackList update_callback;	/* The updateCallback function. */
-   Pixel meter_background;		/* Background color of the meter. */
-   Pixel meter_foreground;		/* Foreground color of the meter. */
-   Pixel scale_pixel;			/* Color of the Scale. */
-   int num_segments;			/* Number of segments in the Scale */
-   Boolean value_visible;		/* Enable/Disable display of the 
+  /* Public instance variables. */
+    int interval;			/* Time interval for updateCallback */
+    XtCallbackList update_callback;	/* The updateCallback function. */
+    Pixel meter_background;		/* Background color of the meter. */
+    Pixel meter_foreground;		/* Foreground color of the meter. */
+    Pixel scale_pixel;			/* Color of the Scale. */
+    int num_segments;			/* Number of segments in the Scale */
+    Boolean value_visible;		/* Enable/Disable display of the 
 					 * value in the Value Box.
 					 */
 
    /* Private instance variables. */
-   XRectangle face;			/* Geometry of the Meter face */
-   XPoint lbl;				/* Location of the Label string */
-   XRectangle meter;			/* Rectangle for the Meter. */
-   XSegment segs[MAX_SCALE_SEGS+1];	/* Line segments for the Scale. */
-   XPoint max_val;			/* Point at which to draw the max
+    XRectangle face;			/* Geometry of the Meter face */
+    XPoint lbl;				/* Location of the Label string */
+    XRectangle meter;			/* Rectangle for the Meter. */
+    XSegment segs[MAX_SCALE_SEGS+1];	/* Line segments for the Scale. */
+    XPoint max_val;			/* Point at which to draw the max
 					 * value string on the Scale.
 					 */
-   XPoint min_val;			/* Point at which to draw the min
+    XPoint min_val;			/* Point at which to draw the min
 					 * value string on the Scale.
 					 */
-   XPoint meter_center;			/* center of meter radius  */
-   int inner_radius;			/* inner radius length     */
-   int outer_radius;			/* outer radius length	   */
-   int interval_id;			/* Xt TimeOut interval ID. */
+    XPoint meter_center;			/* center of meter radius  */
+    int inner_radius;			/* inner radius length     */
+    int outer_radius;			/* outer radius length	   */
+    int interval_id;			/* Xt TimeOut interval ID. */
 
 } MeterPart;
 
@@ -104,10 +104,10 @@ typedef struct
  */
 typedef struct _MeterRec
 {
-   CorePart core;
-   ControlPart control;
-   ValuePart value;
-   MeterPart meter;
+    CorePart core;
+    ControlPart control;
+    ValuePart value;
+    MeterPart meter;
 } MeterRec;
 
 
@@ -115,4 +115,3 @@ typedef struct _MeterRec
 
 
 #endif  /* __XC_METERP_H */
-

@@ -62,7 +62,7 @@ extern XbaeCaptionClassRec xbaeCaptionClassRec;
  * New fields for the Caption widget record
  */
 typedef struct {
-    /* resources */
+  /* resources */
     XmFontList		font_list;
     XbaeLabelAlignment	label_alignment;
     int			label_offset;
@@ -72,7 +72,7 @@ typedef struct {
     unsigned char	label_text_alignment;
     unsigned char	label_type;
 
-    /* private state */
+  /* private state */
 
 } XbaeCaptionPart;
 

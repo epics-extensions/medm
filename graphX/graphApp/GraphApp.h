@@ -42,28 +42,28 @@
 
 
 typedef enum {
-	SEQL_TYPE,
-	GRAPH_TYPE,
-	STRIP_TYPE,
-	GRAPH3D_TYPE,
-	SURFACE_TYPE
+    SEQL_TYPE,
+    GRAPH_TYPE,
+    STRIP_TYPE,
+    GRAPH3D_TYPE,
+    SURFACE_TYPE
 } GraphXType;
 
 
 typedef struct {
-	Widget    shell;
-	Widget    canvas;
-	Window    window;
-	GraphXType graphType;
-	XtPointer   graphicPtr;		/* pointer to arbitrary graphX type */
+    Widget    shell;
+    Widget    canvas;
+    Window    window;
+    GraphXType graphType;
+    XtPointer   graphicPtr;		/* pointer to arbitrary graphX type */
 } ShellInfo;
 
 typedef struct {
-	XtAppContext	appContext;
-	Display		*display;
-	int		screen;
-	ShellInfo	shellInfo[MAX_SHELLS];
-	int		shellPtr;
+    XtAppContext	appContext;
+    Display		*display;
+    int		screen;
+    ShellInfo	shellInfo[MAX_SHELLS];
+    int		shellPtr;
 } GraphApp;
 
 

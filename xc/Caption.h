@@ -93,4 +93,3 @@ typedef enum _XbaeLabelAlignment {
 
 #endif /* _Xbae_Caption_h */
 /* DON'T ADD STUFF AFTER THIS #endif */
-

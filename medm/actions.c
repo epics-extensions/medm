@@ -43,20 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              remove the object type knowledge from
- *                              the get name routine of drag and drop.
- * .03  09-07-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -102,28 +95,28 @@ static Boolean DragConvertProc(
   XtRequestId *request_id)
 #endif
 {
-  XmString cString;
-  char *cText, *passText;
+    XmString cString;
+    char *cText, *passText;
 
-  if (channelName != NULL) {
-    if (*target != COMPOUND_TEXT) return(False);
-    cString = XmStringCreateSimple(channelName);
-    cText = XmCvtXmStringToCT(cString);
-    passText = XtMalloc(strlen(cText)+1);
-    memcpy(passText,cText,strlen(cText)+1);
-   /* probably need this too */
-    XmStringFree(cString);
+    if (channelName != NULL) {
+	if (*target != COMPOUND_TEXT) return(False);
+	cString = XmStringCreateSimple(channelName);
+	cText = XmCvtXmStringToCT(cString);
+	passText = XtMalloc(strlen(cText)+1);
+	memcpy(passText,cText,strlen(cText)+1);
+      /* probably need this too */
+	XmStringFree(cString);
 
-   /* format the value for return */
-    *typeRtn = COMPOUND_TEXT;
-    *valueRtn = (XtPointer)passText;
-    *lengthRtn = strlen(passText);
-    *formatRtn = 8;	/* from example - related to #bits for data elements */
-    return(True);
-  } else {
-/* monitorData not found */
-    return(False);
-  }
+      /* format the value for return */
+	*typeRtn = COMPOUND_TEXT;
+	*valueRtn = (XtPointer)passText;
+	*lengthRtn = strlen(passText);
+	*formatRtn = 8;	/* from example - related to #bits for data elements */
+	return(True);
+    } else {
+      /* monitorData not found */
+	return(False);
+    }
 
 }
 
@@ -143,24 +136,24 @@ static void dragDropFinish(
   XtPointer call)
 #endif
 {
-  Widget sourceIcon;
-  Pixmap pixmap;
-  Arg args[2];
+    Widget sourceIcon;
+    Pixmap pixmap;
+    Arg args[2];
 
 /* perform cleanup at conclusion of DND */
-  XtSetArg(args[0],XmNsourcePixmapIcon,&sourceIcon);
-  XtGetValues(w,args,1);
+    XtSetArg(args[0],XmNsourcePixmapIcon,&sourceIcon);
+    XtGetValues(w,args,1);
 
-  XtSetArg(args[0],XmNpixmap,&pixmap);
-  XtGetValues(sourceIcon,args,1);
+    XtSetArg(args[0],XmNpixmap,&pixmap);
+    XtGetValues(sourceIcon,args,1);
 
-  XFreePixmap(display,pixmap);
-  XtDestroyWidget(sourceIcon);
+    XFreePixmap(display,pixmap);
+    XtDestroyWidget(sourceIcon);
 }
 
 static XtCallbackRec dragDropFinishCB[] = {
-        {dragDropFinish,NULL},
-        {NULL,NULL}
+    {dragDropFinish,NULL},
+    {NULL,NULL}
 };
 
 
@@ -169,22 +162,22 @@ void StartDrag(
   Widget w,
   XEvent *event)
 {
-  Arg args[8];
-  Cardinal n;
-  Atom exportList[1];
-  Widget sourceIcon;
-  UpdateTask *pt;
-  int textWidth, maxWidth, maxHeight, fontHeight, ascent;
-  unsigned long fg, bg;
-  Widget searchWidget;
-  XButtonEvent *xbutton;
-  XGCValues gcValues;
-  unsigned long gcValueMask;
-  DisplayInfo *displayInfo;
+    Arg args[8];
+    Cardinal n;
+    Atom exportList[1];
+    Widget sourceIcon;
+    UpdateTask *pt;
+    int textWidth, maxWidth, maxHeight, fontHeight, ascent;
+    unsigned long fg, bg;
+    Widget searchWidget;
+    XButtonEvent *xbutton;
+    XGCValues gcValues;
+    unsigned long gcValueMask;
+    DisplayInfo *displayInfo;
 
-  static char *channelNames[MAX(MAX_PENS,MAX_TRACES)][2];
-  Pixmap sourcePixmap = (Pixmap)NULL;
-  static GC gc = NULL;
+    static char *channelNames[MAX(MAX_PENS,MAX_TRACES)][2];
+    Pixmap sourcePixmap = (Pixmap)NULL;
+    static GC gc = NULL;
 
 /* a nice sized font */
 #define FONT_TABLE_INDEX 6
@@ -200,128 +193,127 @@ void StartDrag(
  * - NB if drawing areas as children of the main drawing area are allowed
  *   as parents of controllers/monitors, this logic must change...
  */
-  searchWidget = w;
-  if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
-		&& strcmp(XtName(searchWidget),stripChartWidgetName)) {
-    /* starting search from a DrawingArea which is not a StripChart 
-     *  (i.e., DL_Display) therefore lookup "graphic" (non-widget) elements 
-     *  ---get data from position
-     */
-    displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
-    xbutton = (XButtonEvent *)event;
-    pt = getUpdateTaskFromPosition(displayInfo,
-		xbutton->x,xbutton->y);
-  } else {
-   /* ---get data from widget */
-#if 0
-    while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
-	searchWidget = XtParent(searchWidget);
-#endif
-    pt = getUpdateTaskFromWidget(searchWidget);
-  }
-
-
-  printf("start drag : 0x%08x\n",pt);
-  if (pt) {
-    #define MAX_COL 4
-    char *name[MAX_PENS*MAX_COL];
-    short severity[MAX_PENS*MAX_COL];
-    int count;
-    int column;
-    int row;
-
-    if (pt->name == NULL) return;
-    pt->name(pt->clientData, name, severity, &count);
-
-    column = count / 100;
-    if (column == 0) column = 1;
-    if (column > MAX_COL) column = MAX_COL;
-    count = count % 100;
-    row = 0;
-
-    bg = BlackPixel(display,screenNum);
-    fg = WhitePixel(display,screenNum);
-    ascent = fontTable[FONT_TABLE_INDEX]->ascent;
-    fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
-
-    if (count == 0) {
-      channelName = NULL;
-      return;
+    searchWidget = w;
+    if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
+      && strcmp(XtName(searchWidget),stripChartWidgetName)) {
+      /* starting search from a DrawingArea which is not a StripChart 
+       *  (i.e., DL_Display) therefore lookup "graphic" (non-widget) elements 
+       *  ---get data from position
+       */
+	displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
+	xbutton = (XButtonEvent *)event;
+	pt = getUpdateTaskFromPosition(displayInfo,
+	  xbutton->x,xbutton->y);
     } else {
-      int i, j;
-      int x, y;
-
-      i = 0; j = 0;
-      textWidth = 0;
-      while (i < count) {
-        if (name[i]) {
- 	  textWidth = MAX(textWidth,XTextWidth(fontTable[FONT_TABLE_INDEX],name[i],strlen(name[i])));
-        }
-        j++;
-        if (j >= column) {
-          j = 0;
-          row++;
-        }
-        i++;
-      }
-      maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
-      maxHeight = row*fontHeight + 2*MARGIN;
-      sourcePixmap = XCreatePixmap(display,RootWindow(display, screenNum),maxWidth,maxHeight,
-			DefaultDepth(display,screenNum));
-      if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
-      gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
-      gcValues.foreground = bg;
-      gcValues.background = bg;
-      gcValues.function = GXcopy;
-      gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
-      XChangeGC(display,gc,gcValueMask,&gcValues);
-      XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,maxHeight);
-      i = 0; j = 0;
-      x = X_SHIFT;
-      y = ascent + MARGIN;
-      while (i < count) {
-        if (name[i]) {
-          XSetForeground(display,gc,alarmColorPixel[severity[i]]);
-          XDrawString(display,sourcePixmap,gc,x,y,name[i],strlen(name[i]));
-          channelName = name[i];
-        }
-        j++;
-        if (j < column) {
-          x += textWidth + MARGIN;
-        } else {
-          j = 0;
-          x = X_SHIFT;
-          y += fontHeight;
-        }
-        i++;
-      }
-    } 
-  }
+      /* ---get data from widget */
+#if 0
+	while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
+	  searchWidget = XtParent(searchWidget);
+#endif
+	pt = getUpdateTaskFromWidget(searchWidget);
+    }
 
 
-  if (sourcePixmap != (Pixmap)NULL) {
+    printf("start drag : 0x%08x\n",pt);
+    if (pt) {
+#define MAX_COL 4
+	char *name[MAX_PENS*MAX_COL];
+	short severity[MAX_PENS*MAX_COL];
+	int count;
+	int column;
+	int row;
 
-/* use source widget as parent - can inherit visual attributes that way */
-    n = 0;
-    XtSetArg(args[n],XmNpixmap,sourcePixmap); n++;
-    XtSetArg(args[n],XmNwidth,maxWidth); n++;
-    XtSetArg(args[n],XmNheight,maxHeight); n++;
-    XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
-    sourceIcon = XmCreateDragIcon(XtParent(searchWidget),"sourceIcon",args,n);
+	if (pt->name == NULL) return;
+	pt->name(pt->clientData, name, severity, &count);
 
-/* establish list of valid target types */
-    exportList[0] = COMPOUND_TEXT;
+	column = count / 100;
+	if (column == 0) column = 1;
+	if (column > MAX_COL) column = MAX_COL;
+	count = count % 100;
+	row = 0;
 
-    n = 0;
-    XtSetArg(args[n],XmNexportTargets,exportList); n++;
-    XtSetArg(args[n],XmNnumExportTargets,1); n++;
-    XtSetArg(args[n],XmNdragOperations,XmDROP_COPY); n++;
-    XtSetArg(args[n],XmNconvertProc,DragConvertProc); n++;
-    XtSetArg(args[n],XmNsourcePixmapIcon,sourceIcon); n++;
-    XtSetArg(args[n],XmNcursorForeground,fg); n++;
-    XtSetArg(args[n],XmNcursorBackground,bg); n++;
-    XtSetArg(args[n],XmNdragDropFinishCallback,dragDropFinishCB); n++;
-    XmDragStart(searchWidget,event,args,n);
+	bg = BlackPixel(display,screenNum);
+	fg = WhitePixel(display,screenNum);
+	ascent = fontTable[FONT_TABLE_INDEX]->ascent;
+	fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
 
-  }
+	if (count == 0) {
+	    channelName = NULL;
+	    return;
+	} else {
+	    int i, j;
+	    int x, y;
+
+	    i = 0; j = 0;
+	    textWidth = 0;
+	    while (i < count) {
+		if (name[i]) {
+		    textWidth = MAX(textWidth,XTextWidth(fontTable[FONT_TABLE_INDEX],name[i],strlen(name[i])));
+		}
+		j++;
+		if (j >= column) {
+		    j = 0;
+		    row++;
+		}
+		i++;
+	    }
+	    maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
+	    maxHeight = row*fontHeight + 2*MARGIN;
+	    sourcePixmap = XCreatePixmap(display,RootWindow(display, screenNum),maxWidth,maxHeight,
+	      DefaultDepth(display,screenNum));
+	    if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
+	    gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
+	    gcValues.foreground = bg;
+	    gcValues.background = bg;
+	    gcValues.function = GXcopy;
+	    gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
+	    XChangeGC(display,gc,gcValueMask,&gcValues);
+	    XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,maxHeight);
+	    i = 0; j = 0;
+	    x = X_SHIFT;
+	    y = ascent + MARGIN;
+	    while (i < count) {
+		if (name[i]) {
+		    XSetForeground(display,gc,alarmColorPixel[severity[i]]);
+		    XDrawString(display,sourcePixmap,gc,x,y,name[i],strlen(name[i]));
+		    channelName = name[i];
+		}
+		j++;
+		if (j < column) {
+		    x += textWidth + MARGIN;
+		} else {
+		    j = 0;
+		    x = X_SHIFT;
+		    y += fontHeight;
+		}
+		i++;
+	    }
+	} 
+    }
+
+
+    if (sourcePixmap != (Pixmap)NULL) {
+
+      /* use source widget as parent - can inherit visual attributes that way */
+	n = 0;
+	XtSetArg(args[n],XmNpixmap,sourcePixmap); n++;
+	XtSetArg(args[n],XmNwidth,maxWidth); n++;
+	XtSetArg(args[n],XmNheight,maxHeight); n++;
+	XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
+	sourceIcon = XmCreateDragIcon(XtParent(searchWidget),"sourceIcon",args,n);
+
+      /* establish list of valid target types */
+	exportList[0] = COMPOUND_TEXT;
+
+	n = 0;
+	XtSetArg(args[n],XmNexportTargets,exportList); n++;
+	XtSetArg(args[n],XmNnumExportTargets,1); n++;
+	XtSetArg(args[n],XmNdragOperations,XmDROP_COPY); n++;
+	XtSetArg(args[n],XmNconvertProc,DragConvertProc); n++;
+	XtSetArg(args[n],XmNsourcePixmapIcon,sourceIcon); n++;
+	XtSetArg(args[n],XmNcursorForeground,fg); n++;
+	XtSetArg(args[n],XmNcursorBackground,bg); n++;
+	XtSetArg(args[n],XmNdragDropFinishCallback,dragDropFinishCB); n++;
+	XmDragStart(searchWidget,event,args,n);
+    }
 }

@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -98,15 +94,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 extern "C" {
 #endif
 
-/*
- * X/Xt/Xm includes, globals
- */
+  /*
+   * X/Xt/Xm includes, globals
+   */
 #include "xtParams.h"
 
 
-/*
- * MEDM includes
- */
+  /*
+   * MEDM includes
+   */
 #include "medmWidget.h"
 #include "medmCA.h"
 #include "parse.h"
@@ -115,110 +111,110 @@ extern "C" {
 #include "epicsVersion.h"
 #include "medmVersion.h"
 
-/***
- *** and on with the rest of Medm
- ***/
+  /***
+  *** and on with the rest of Medm
+  ***/
 
 #define MAIN_NAME "Medm"
 #define OBJECT_PALETTE_NAME "Object "
 
 
-/*
- * define the help layers
- */
+  /*
+   * define the help layers
+   */
 #define HELP_MAIN 0
 
 
 
-/*
- * global widgets (all permanent shells, most MWs, etc )
- */
-EXTERN Widget mainShell, mainMW;
-EXTERN Widget objectS, objectMW;
-EXTERN Widget resourceS, resourceMW;
-EXTERN Widget colorS, colorMW;
-EXTERN Widget channelS, channelMW;
-/* shells for related display, shell command,
-	cartesian plot and strip chart data vectors */
-EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
-	cartesianPlotAxisS, stripChartS;
-EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
+  /*
+   * global widgets (all permanent shells, most MWs, etc )
+   */
+    EXTERN Widget mainShell, mainMW;
+    EXTERN Widget objectS, objectMW;
+    EXTERN Widget resourceS, resourceMW;
+    EXTERN Widget colorS, colorMW;
+    EXTERN Widget channelS, channelMW;
+  /* shells for related display, shell command,
+     cartesian plot and strip chart data vectors */
+    EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
+      cartesianPlotAxisS, stripChartS;
+    EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
 
-EXTERN Widget exitQD, saveAsPD;
+    EXTERN Widget exitQD, saveAsPD;
 
-/* the global Help Information Dialog */
-EXTERN Widget helpS, helpMessageBox;
+  /* the global Help Information Dialog */
+    EXTERN Widget helpS, helpMessageBox;
 
 
-/* in main shell: labels on bulletin board for current display information */
-EXTERN Widget statusBB, displayL, nElementsL, nColorsL;
+  /* in main shell: labels on bulletin board for current display information */
+    EXTERN Widget statusBB, displayL, nElementsL, nColorsL;
 
-/* currently specified image type (from ObjectPalette's OpenFSD) */
-EXTERN ImageType imageType;
+  /* currently specified image type (from ObjectPalette's OpenFSD) */
+    EXTERN ImageType imageType;
 
-/* resource bundle stuff */
+  /* resource bundle stuff */
 #define SELECTION_BUNDLE 0
-EXTERN int resourceBundleCounter;
-extern utilPrint(Display *, Window, char *);
+    EXTERN int resourceBundleCounter;
+    extern utilPrint(Display *, Window, char *);
 
-EXTERN XtWorkProcId medmWorkProcId;
-EXTERN Channel *nextToServe;
-EXTERN long medmUpdateRequestCount;
-EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
-EXTERN Widget caStudyLabel;
-EXTERN XtIntervalId medmStatusIntervalId;
-EXTERN Boolean MedmUseNewFileFormat;
+    EXTERN XtWorkProcId medmWorkProcId;
+    EXTERN Channel *nextToServe;
+    EXTERN long medmUpdateRequestCount;
+    EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
+    EXTERN Widget caStudyLabel;
+    EXTERN XtIntervalId medmStatusIntervalId;
+    EXTERN Boolean MedmUseNewFileFormat;
 
-typedef struct menuEntry{
-  char*           label;
-  WidgetClass*    widgetClass;
-  char            mnemonic;
-  char*           accelerator;
-  char*           accText;
-  Widget          widget;
-  XtCallbackProc  callback;
-  XtPointer       callbackData;
-  struct menuEntry *subItems;
-} menuEntry_t;
+    typedef struct menuEntry{
+	char*           label;
+	WidgetClass*    widgetClass;
+	char            mnemonic;
+	char*           accelerator;
+	char*           accText;
+	Widget          widget;
+	XtCallbackProc  callback;
+	XtPointer       callbackData;
+	struct menuEntry *subItems;
+    } menuEntry_t;
 
-typedef void(*medmExecProc)(DisplayInfo *,DlElement *);
-typedef void(*medmWriteProc)(FILE *,DlElement *,int);
-typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
+    typedef void(*medmExecProc)(DisplayInfo *,DlElement *);
+    typedef void(*medmWriteProc)(FILE *,DlElement *,int);
+    typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
 
 #include "proto.h"
 #include "medmInitTask.h"
 
-/* pixmap names : must be accessible by program according to Motif rules:
+  /* pixmap names : must be accessible by program according to Motif rules:
 
- rectangle25
- oval25
- arc25
- text25
- line25
- polyline25
- polygon25
- bezierCurve25
+     rectangle25
+     oval25
+     arc25
+     text25
+     line25
+     polyline25
+     polygon25
+     bezierCurve25
 
- meter25
- bar25
- indicator25
- textUpdate25
- stripChart25
- cartesianPlot25
- surfacePlot25
+     meter25
+     bar25
+     indicator25
+     textUpdate25
+     stripChart25
+     cartesianPlot25
+     surfacePlot25
 
- choiceButton25
- messageButton25
- menu25
- textEntry25
- valuator25
+     choiceButton25
+     messageButton25
+     menu25
+     textEntry25
+     valuator25
 
- relatedDisplay25
- shellCommand25
- */
+     relatedDisplay25
+     shellCommand25
+     */
 
 #ifdef __cplusplus
-}  /* Close scope of 'extern "C"' declaration which encloses file. */
+	   }  /* Close scope of 'extern "C"' declaration which encloses file. */
 #endif
 
 #endif  /* __MEDM_H__ */

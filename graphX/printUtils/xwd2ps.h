@@ -30,64 +30,64 @@
 #define MAXPERLINE    35    /* PostScript image data line length-1 */
 
 typedef struct Image {
-  float height;
-  float width;
-  float gamma;             /* gamma correction factor for brightening images */
-  float width_frac;        /* fraction of horizontal raster to use for image */
-  float height_frac;       /* fraction of vertical raster to use for image */
-  int   orientation;
-  int   pixels_width;
-  int   ps_width;
-  int   ps_height;
+    float height;
+    float width;
+    float gamma;             /* gamma correction factor for brightening images */
+    float width_frac;        /* fraction of horizontal raster to use for image */
+    float height_frac;       /* fraction of vertical raster to use for image */
+    int   orientation;
+    int   pixels_width;
+    int   ps_width;
+    int   ps_height;
 } Image;
 
 typedef struct Page {
-  char  type[20];        /* page size, e.g. A or letter, B, A4, A3 */
-  float ximagepos;
-  float yimagepos;
-  float maxhsize;
-  float maxwsize;
-  float xcenter;
-  float ycenter;
-  float default_height;
-  float default_width;
-  float yoffset;
-  float height_adjust;
-  float time_date_height;
+    char  type[20];        /* page size, e.g. A or letter, B, A4, A3 */
+    float ximagepos;
+    float yimagepos;
+    float maxhsize;
+    float maxwsize;
+    float xcenter;
+    float ycenter;
+    float default_height;
+    float default_width;
+    float yoffset;
+    float height_adjust;
+    float time_date_height;
 } Page;
 
 typedef struct Flag {
-  int logo;
-  int black2white; /* map black values to white */
-  int date;
-  int title;
-  int time;
-  int w;
-  int h;
-  int gamma;      /* gamma correction flag */
-  int mono;       /* monochrome flag: TRUE = create monochrome PS */
-  int inc_file;    /* include file flag: TRUE = append a file */
-  int landscape;
-  int portrait;
-  int border;
-  int invert;
-  int error;            /* option error flag */
+    int logo;
+    int black2white; /* map black values to white */
+    int date;
+    int title;
+    int time;
+    int w;
+    int h;
+    int gamma;      /* gamma correction flag */
+    int mono;       /* monochrome flag: TRUE = create monochrome PS */
+    int inc_file;    /* include file flag: TRUE = append a file */
+    int landscape;
+    int portrait;
+    int border;
+    int invert;
+    int error;            /* option error flag */
 } Flag;
 
 typedef struct Title {
-  char  *string;
-  int   font_size;
-  float height;
+    char  *string;
+    int   font_size;
+    float height;
 } Title;
 
 typedef struct File {
-  FILE *pointer;
-  char *name;
+    FILE *pointer;
+    char *name;
 } File;
 
 typedef struct Options {
-  Title title;
-  int   ncopies;
-  File  input_file;
-  File  inc_file;
+    Title title;
+    int   ncopies;
+    File  input_file;
+    File  inc_file;
 } Options;

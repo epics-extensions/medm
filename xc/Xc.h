@@ -115,28 +115,28 @@
 
 /****** Type for a widget's orientation, and fill mode */
 typedef enum {
-   XcVert = 1,
-   XcHoriz
+    XcVert = 1,
+    XcHoriz
 } XcOrient;
 
 typedef enum {
-   XcEdge = 1,
-   XcCenter
+    XcEdge = 1,
+    XcCenter
 } XcFillmod;
 
 /* Data type of the value manipulated with a Xc widget subclass. */
 typedef enum {
-   XcLval = 1,
-   XcFval,
-   XcHval
+    XcLval = 1,
+    XcFval,
+    XcHval
 } XcDType;
 
 /* Type for a widget's valueJustify resource setting. */
 typedef enum
 {
-   XcJustifyLeft = 1,
-   XcJustifyRight,
-   XcJustifyCenter
+    XcJustifyLeft = 1,
+    XcJustifyRight,
+    XcJustifyCenter
 } XcValueJustify;
 
 /* This respresentation type is a union for the possible Xc datatypes */
@@ -144,8 +144,8 @@ typedef enum
 
 /* Type used for holding values manipulated with an Xc widget subclass */
 typedef union v_t {
-   long lval;
-   float fval;
+    long lval;
+    float fval;
 } XcVType;
 
 /* This structure is used by Xc widget action functions to communicate
@@ -154,9 +154,9 @@ typedef union v_t {
  * parameter.
  */
 typedef struct xc_stuff {
-   XcDType dtype;
-   XcVType value;
-   int decimals;
+    XcDType dtype;
+    XcVType value;
+    int decimals;
 } XcCallData, *XcData;
 
 #endif  /* __XC_H */

@@ -49,166 +49,166 @@ extern "C" {
 #define CONST
 #endif
 
-typedef void (*XbaeMatrixSetCellProc)(
+    typedef void (*XbaeMatrixSetCellProc)(
 #if NeedFunctionPrototypes
-				      Widget		/* w */,
-				      int		/* row */,
-				      int		/* column */,
-				      CONST String	/* value */
+      Widget		/* w */,
+      int		/* row */,
+      int		/* column */,
+      CONST String	/* value */
 #endif
-				      );
+	);
 
-typedef String (*XbaeMatrixGetCellProc)(
+    typedef String (*XbaeMatrixGetCellProc)(
 #if NeedFunctionPrototypes
-					Widget	/* w */,
-					int	/* row */,
-					int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-					);
+	);
 
-typedef void (*XbaeMatrixEditCellProc)(
+    typedef void (*XbaeMatrixEditCellProc)(
 #if NeedFunctionPrototypes
-				       Widget	/* w */,
-				       int	/* row */,
-				       int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-				       );
+	);
 
-typedef void (*XbaeMatrixSelectCellProc)(
+    typedef void (*XbaeMatrixSelectCellProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */,
-					 int	/* row */,
-					 int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixSelectRowProc)(
+    typedef void (*XbaeMatrixSelectRowProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */,
-					 int	/* row */
+      Widget	/* w */,
+      int	/* row */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixSelectColumnProc)(
+    typedef void (*XbaeMatrixSelectColumnProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */,
-					 int	/* column */
+      Widget	/* w */,
+      int	/* column */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixDeselectAllProc)(
+    typedef void (*XbaeMatrixDeselectAllProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */
+      Widget	/* w */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixDeselectCellProc)(
+    typedef void (*XbaeMatrixDeselectCellProc)(
 #if NeedFunctionPrototypes
-					   Widget/* w */,
-					   int	/* row */,
-					   int	/* column */
+      Widget/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixDeselectRowProc)(
+    typedef void (*XbaeMatrixDeselectRowProc)(
 #if NeedFunctionPrototypes
-					   Widget/* w */,
-					   int	/* row */
+      Widget/* w */,
+      int	/* row */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixDeselectColumnProc)(
+    typedef void (*XbaeMatrixDeselectColumnProc)(
 #if NeedFunctionPrototypes
-					   Widget/* w */,
-					   int	/* column */
+      Widget/* w */,
+      int	/* column */
 #endif
-					 );
+	);
 
-typedef Boolean (*XbaeMatrixCommitEditProc)(
+    typedef Boolean (*XbaeMatrixCommitEditProc)(
 #if NeedFunctionPrototypes
-					    Widget	/* w */,
-					    Boolean	/* unmap */
+      Widget	/* w */,
+      Boolean	/* unmap */
 #endif
-					    );
+	);
 
-typedef void (*XbaeMatrixCancelEditProc)(
+    typedef void (*XbaeMatrixCancelEditProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */,
-					 Boolean/* unmap */
+      Widget	/* w */,
+      Boolean/* unmap */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixAddRowsProc)(
+    typedef void (*XbaeMatrixAddRowsProc)(
 #if NeedFunctionPrototypes
-				      Widget	/* w */,
-				      int	/* position */,
-				      String * 	/* rows */,
-				      String * 	/* labels */,
-				      Pixel * 	/* colors */,
-				      int 	/* num_rows */
+      Widget	/* w */,
+      int	/* position */,
+      String * 	/* rows */,
+      String * 	/* labels */,
+      Pixel * 	/* colors */,
+      int 	/* num_rows */
 #endif
-				      );
+	);
 
-typedef void (*XbaeMatrixDeleteRowsProc)(
+    typedef void (*XbaeMatrixDeleteRowsProc)(
 #if NeedFunctionPrototypes
-					 Widget	/* w */,
-					 int	/* position */,
-					 int	/* num_rows */
+      Widget	/* w */,
+      int	/* position */,
+      int	/* num_rows */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixAddColumnsProc)(
+    typedef void (*XbaeMatrixAddColumnsProc)(
 #if NeedFunctionPrototypes
-					 Widget		/* w */,
-					 int		/* position */,
-					 String *	/* columns */,
-					 String *	/* labels */,
-					 short *	/* widths */,
-					 int *		/* max_lengths */,
-					 unsigned char* /* alignments */,
-					 unsigned char* /* label_alignments */,
-					 Pixel *	/* colors */,
-					 int		/* num_columns */
+      Widget		/* w */,
+      int		/* position */,
+      String *	/* columns */,
+      String *	/* labels */,
+      short *	/* widths */,
+      int *		/* max_lengths */,
+      unsigned char* /* alignments */,
+      unsigned char* /* label_alignments */,
+      Pixel *	/* colors */,
+      int		/* num_columns */
 #endif
-					 );
+	);
 
-typedef void (*XbaeMatrixDeleteColumnsProc)(
+    typedef void (*XbaeMatrixDeleteColumnsProc)(
 #if NeedFunctionPrototypes
-					    Widget	/* w */,
-					    int		/* position */,
-					    int		/* num_columns */
+      Widget	/* w */,
+      int		/* position */,
+      int		/* num_columns */
 #endif
-					    );
+	);
 
-typedef void (*XbaeMatrixSetRowColorsProc)(
+    typedef void (*XbaeMatrixSetRowColorsProc)(
 #if NeedFunctionPrototypes
-					   Widget	/* w */,
-					   int		/* position */,
-					   Pixel *	/* colors */,
-					   int		/* num_colors */
+      Widget	/* w */,
+      int		/* position */,
+      Pixel *	/* colors */,
+      int		/* num_colors */
 #endif
-					   );
+	);
 
-typedef void (*XbaeMatrixSetColumnColorsProc)(
+    typedef void (*XbaeMatrixSetColumnColorsProc)(
 #if NeedFunctionPrototypes
-					      Widget	/* w */,
-					      int	/* position */,
-					      Pixel *	/* colors */,
-					      int	/* num_colors */
+      Widget	/* w */,
+      int	/* position */,
+      Pixel *	/* colors */,
+      int	/* num_colors */
 #endif
-					      );
+	);
 
-typedef void (*XbaeMatrixSetCellColorProc)(
+    typedef void (*XbaeMatrixSetCellColorProc)(
 #if NeedFunctionPrototypes
-					      Widget	/* w */,
-					      int	/* row */,
-					      int	/* column */,
-					      Pixel 	/* color */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */,
+      Pixel 	/* color */
 #endif
-					      );
+	);
 
 #if defined (__cplusplus) || defined(c_plusplus)
-}
+	   }
 #endif
 #undef CONST
 
@@ -313,10 +313,10 @@ typedef struct _ColumnLabelLines {
  * New fields for the Matrix widget record
  */
 typedef struct {
-    /* resources */
+  /* resources */
     int		rows, columns;	    /* number of cells per row/column */
     Dimension	fixed_rows,	    /* number of fixed rows OR columns */
-		fixed_columns;
+      fixed_columns;
     Pixel	**colors;	    /* 2D array of Pixels */
     Dimension	visible_columns;    /* number of columns to make visible */
     Dimension	visible_rows;	    /* number of rows to make visible */
@@ -328,11 +328,11 @@ typedef struct {
     String	*row_labels;	    /* array of labels next to each row */
     String	*column_labels;	    /* array of labels above each column */
     unsigned char
-		*column_alignments; /* alignment of each column */
+    *column_alignments; /* alignment of each column */
     unsigned char
-		*column_label_alignments; /* alignment of each column label */
+    *column_label_alignments; /* alignment of each column label */
     unsigned char
-		row_label_alignment;/* alignment of row labels */
+    row_label_alignment;/* alignment of row labels */
 
     XmFontList	font_list;	    /* fontList of widget and textField */
 
@@ -342,33 +342,33 @@ typedef struct {
     Boolean	**selected_cells;   /* 2D array indicating selected cells */
 
     Dimension	cell_margin_width,  /* margin resources for textField */
-		cell_margin_height;
+      cell_margin_height;
     Dimension	cell_shadow_thickness; /* shadow thickness for textField */
     Dimension	cell_highlight_thickness; /* highlight thickness for
 					   * textField */
     XtTranslations
-		text_translations;  /* translations for textField widget */
+    text_translations;  /* translations for textField widget */
 
     XtCallbackList
-		modify_verify_callback; /* verify change to textField */
+    modify_verify_callback; /* verify change to textField */
     XtCallbackList
-		enter_cell_callback;/* called when a cell is entered */
+    enter_cell_callback;/* called when a cell is entered */
     XtCallbackList
-		leave_cell_callback;/* called when a cell is left */
+    leave_cell_callback;/* called when a cell is left */
     XtCallbackList
-		traverse_cell_callback; /* determines the next cell to
-					   traverse to */
+    traverse_cell_callback; /* determines the next cell to
+			       traverse to */
     XtCallbackList
-		select_cell_callback;/* called when cells are selected */
+    select_cell_callback;/* called when cells are selected */
 
     int		top_row;	    /* vertical origin (in row space) */
 
 
-    /* private state */
+  /* private state */
     int		horiz_origin;	    /* horizontal origin (in pixel space) */
 
     int		current_row,	    /* row/column we are editing */
-		current_column;
+      current_column;
 
     int		text_baseline;	    /* baseline of text in each cell */
 
@@ -389,19 +389,19 @@ typedef struct {
 					(not truncated to nearest row) */
 
     Dimension	desired_width,	    /* width/height widget wants to be */
-		desired_height;
+      desired_height;
 
     SmScrollMgr matrix_scroll_mgr,  /* ScrollMgrs for Matrix and Clip */
-		clip_scroll_mgr;
+      clip_scroll_mgr;
 
     int		traversing;	    /* set to direction we are traversing,
 				     * or NOT_TRAVERSING */
 
     ColumnLabelLines
-		column_label_lines; /* structs to handle multi line column
-				     * labels */
+    column_label_lines; /* structs to handle multi line column
+			 * labels */
     int		column_label_maxlines;
-				    /* max # lines in column labels */
+  /* max # lines in column labels */
 
 } XbaeMatrixPart;
 

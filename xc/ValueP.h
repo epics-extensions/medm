@@ -36,7 +36,7 @@
  */
 typedef struct 
 {
-   int dummy;	/* Minimum of one member required. */
+    int dummy;	/* Minimum of one member required. */
 } ValueClassPart;
 
 /*
@@ -44,9 +44,9 @@ typedef struct
  */
 typedef struct _ValueClassRec
 {
-   CoreClassPart core_class;
-   ControlClassPart control_class;
-   ValueClassPart value_class;
+    CoreClassPart core_class;
+    ControlClassPart control_class;
+    ValueClassPart value_class;
 } ValueClassRec;
 
 /*
@@ -62,26 +62,26 @@ extern ValueClassRec valueClassRec;
  */
 typedef struct
 {
-   /* Public instance variables. */
-   Pixel value_fg_pixel;		/* Value string foreground color */
-   Pixel value_bg_pixel;		/* Value Box background color */
-   XtCallbackList callback;		/* Widget callbacks */
-   XcDType datatype;			/* Value's data type */
-   int decimals;			/* No. of decimal points (if Fval). */
-   XcVType increment;			/* Widget's increment. */
-   XcVType upper_bound;			/* Upper range limit. */
-   XcVType lower_bound;			/* Lower range limit. */
-   XcVType val;				/* Storage for the current value
+  /* Public instance variables. */
+    Pixel value_fg_pixel;		/* Value string foreground color */
+    Pixel value_bg_pixel;		/* Value Box background color */
+    XtCallbackList callback;		/* Widget callbacks */
+    XcDType datatype;			/* Value's data type */
+    int decimals;			/* No. of decimal points (if Fval). */
+    XcVType increment;			/* Widget's increment. */
+    XcVType upper_bound;			/* Upper range limit. */
+    XcVType lower_bound;			/* Lower range limit. */
+    XcVType val;				/* Storage for the current value
 					 * manipulated by the widget.
 					 */
-   XcValueJustify justify;		/* Left, Right, or Center justification
+    XcValueJustify justify;		/* Left, Right, or Center justification
 					 * of the value within the Value Box.
 					 */
-   XtPointer userData;			/* userData field (arbitrary ptr). */
+    XtPointer userData;			/* userData field (arbitrary ptr). */
 
-   /* Private instance variables. */
-   XRectangle value_box;		/* Value Box to display value in. */
-   XPoint vp;				/* Place in Value Box to draw value. */
+  /* Private instance variables. */
+    XRectangle value_box;		/* Value Box to display value in. */
+    XPoint vp;				/* Place in Value Box to draw value. */
 
 } ValuePart;
 
@@ -90,12 +90,11 @@ typedef struct
  */
 typedef struct _ValueRec
 {
-   CorePart core;
-   ControlPart control;
-   ValuePart value;
+    CorePart core;
+    ControlPart control;
+    ValuePart value;
 } ValueRec;
 
 
 
 #endif  /* __XC_VALUEP_H */
-

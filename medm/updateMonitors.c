@@ -43,18 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- * .03  09-13-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -83,217 +78,215 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 /* optimized replacements for numeric sprintf()'s... */
 #include "cvtFast.h"
 
-
 void localCvtDoubleToExpNotationString(
   double value,
   char *textField,
   unsigned short precision)
 {
-  double absVal, newVal;
-  Boolean minus;
-  int exp, k, l;
-  char TF[MAX_TEXT_UPDATE_WIDTH];
+    double absVal, newVal;
+    Boolean minus;
+    int exp, k, l;
+    char TF[MAX_TEXT_UPDATE_WIDTH];
 
-  absVal = fabs(value);
-  minus = (value < 0.0 ? True : False);
-  newVal = absVal;
+    absVal = fabs(value);
+    minus = (value < 0.0 ? True : False);
+    newVal = absVal;
 
-  if (absVal < 1.) {
+    if (absVal < 1.) {
 
 /* absVal < 1. */
-    exp = 0;
-    if (absVal != 0.) {		/* really ought to test against some epsilon */
-      do {
-	newVal *= 1000.0;
-	exp += 3;
-      } while (newVal < 1.);
-    }
-    localCvtDoubleToString(newVal,TF,precision);
-    k = 0; l = 0;
-    if (minus) textField[k++] = '-';
-    while (TF[l] != '\0') textField[k++] = TF[l++];
-    textField[k++] = 'e';
-    if (exp == 0) {
-	textField[k++] = '+';	/* want e+00 for consistency with norms */
-    } else {
-	textField[k++] = '-';
-    }
-    textField[k++] = '0' + exp/10;
-    textField[k++] = '0' + exp%10;
-    textField[k++] = '\0';
+	exp = 0;
+	if (absVal != 0.) {		/* really ought to test against some epsilon */
+	    do {
+		newVal *= 1000.0;
+		exp += 3;
+	    } while (newVal < 1.);
+	}
+	localCvtDoubleToString(newVal,TF,precision);
+	k = 0; l = 0;
+	if (minus) textField[k++] = '-';
+	while (TF[l] != '\0') textField[k++] = TF[l++];
+	textField[k++] = 'e';
+	if (exp == 0) {
+	    textField[k++] = '+';	/* want e+00 for consistency with norms */
+	} else {
+	    textField[k++] = '-';
+	}
+	textField[k++] = '0' + exp/10;
+	textField[k++] = '0' + exp%10;
+	textField[k++] = '\0';
 
-  } else {
+    } else {
 
 /* absVal >= 1. */
-    exp = 0;
-    while (newVal >= 1000.) {
-	newVal *= 0.001; /* since multiplying is usually faster than dividing */
-	exp += 3;
+	exp = 0;
+	while (newVal >= 1000.) {
+	    newVal *= 0.001; /* since multiplying is usually faster than dividing */
+	    exp += 3;
+	}
+	localCvtDoubleToString(newVal,TF,precision);
+	k = 0; l = 0;
+	if (minus) textField[k++] = '-';
+	while (TF[l] != '\0') textField[k++] = TF[l++];
+	textField[k++] = 'e';
+	textField[k++] = '+';
+	textField[k++] = '0' + exp/10;
+	textField[k++] = '0' + exp%10;
+	textField[k++] = '\0';
     }
-    localCvtDoubleToString(newVal,TF,precision);
-    k = 0; l = 0;
-    if (minus) textField[k++] = '-';
-    while (TF[l] != '\0') textField[k++] = TF[l++];
-    textField[k++] = 'e';
-    textField[k++] = '+';
-    textField[k++] = '0' + exp/10;
-    textField[k++] = '0' + exp%10;
-    textField[k++] = '\0';
-  }
 }
 
-
 void localCvtDoubleToString(
-	double flt_value,
-	char  *pstr_value,
-	unsigned short precision)
+  double flt_value,
+  char  *pstr_value,
+  unsigned short precision)
 {
-  sprintf(pstr_value,"%.*f",precision,flt_value);
+    sprintf(pstr_value,"%.*f",precision,flt_value);
 }
 
 void drawWhiteRectangle(UpdateTask *pt) {
-  Display *display  = XtDisplay(pt->displayInfo->drawingArea);
-  GC      gc        = pt->displayInfo->pixmapGC;
-  Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
+    GC      gc        = pt->displayInfo->pixmapGC;
+    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
 
-  XSetForeground(display,gc,WhitePixel(display,DefaultScreen(display)));
-  XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
-	         pt->rectangle.width,pt->rectangle.height);
-  return;
+    XSetForeground(display,gc,WhitePixel(display,DefaultScreen(display)));
+    XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
+      pt->rectangle.width,pt->rectangle.height);
+    return;
 }
 
 void draw3DPane(UpdateTask *pt, Pixel bgc) {
 
-  Pixel   tsc, bsc, fgc, slc;
-  DisplayInfo *displayInfo = pt->displayInfo;
-  Display *display = XtDisplay(displayInfo->drawingArea);
-  GC      gc        = displayInfo->gc;
-  Pixmap  pixmap    = displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(displayInfo->drawingArea);
-  int x = pt->rectangle.x;
-  int y = pt->rectangle.y;
-  int w = pt->rectangle.width;
-  int h = pt->rectangle.height;
+    Pixel   tsc, bsc, fgc, slc;
+    DisplayInfo *displayInfo = pt->displayInfo;
+    Display *display = XtDisplay(displayInfo->drawingArea);
+    GC      gc        = displayInfo->gc;
+    Pixmap  pixmap    = displayInfo->drawingAreaPixmap;
+    Drawable drawable = XtWindow(displayInfo->drawingArea);
+    int x = pt->rectangle.x;
+    int y = pt->rectangle.y;
+    int w = pt->rectangle.width;
+    int h = pt->rectangle.height;
 
-  XPoint  points[7];
-  int n;
-  int shadowThickness = 2;
+    XPoint  points[7];
+    int n;
+    int shadowThickness = 2;
 
 #if 0
-  XtVaGetValues(displayInfo->drawingArea,XmNshadowThickness,&shadowThickness,NULL);
+    XtVaGetValues(displayInfo->drawingArea,XmNshadowThickness,&shadowThickness,NULL);
 #endif
 
-  XmGetColors(XtScreen(displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
+    XmGetColors(XtScreen(displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
   /* create the top shadow */
-  n = 0;
-  points[n].x = x;                       points[n].y = y;                       n++;
-  points[n].x = x + w;                   points[n].y = y;                       n++;
-  points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
-  points[n].x = x + shadowThickness;     points[n].y = y + shadowThickness;     n++;
-  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
-  points[n].x = x;                       points[n].y = y + h;                   n++;
-  points[n].x = x;                       points[n].y = y;                       n++;
-  XSetForeground(display,gc,tsc);
-  XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
+    n = 0;
+    points[n].x = x;                       points[n].y = y;                       n++;
+    points[n].x = x + w;                   points[n].y = y;                       n++;
+    points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
+    points[n].x = x + shadowThickness;     points[n].y = y + shadowThickness;     n++;
+    points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
+    points[n].x = x;                       points[n].y = y + h;                   n++;
+    points[n].x = x;                       points[n].y = y;                       n++;
+    XSetForeground(display,gc,tsc);
+    XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
   /* create the background pane */
-  XSetForeground(display,gc,bgc);
-  XFillRectangle(display, drawable, gc,
-                          x+shadowThickness,y+shadowThickness,
-                          w-2*shadowThickness,h-2*shadowThickness);
+    XSetForeground(display,gc,bgc);
+    XFillRectangle(display, drawable, gc,
+      x+shadowThickness,y+shadowThickness,
+      w-2*shadowThickness,h-2*shadowThickness);
   /* create the bottom shadow */
-  n = 0;
-  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
-  points[n].x = x + w - shadowThickness; points[n].y = y + h - shadowThickness; n++;
-  points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
-  points[n].x = x + w;                   points[n].y = y;          n++;
-  points[n].x = x + w;                   points[n].y = y + h;      n++;
-  points[n].x = x;                       points[n].y = y + h;      n++;
-  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
-  XSetForeground(display,gc,bsc);
-  XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
+    n = 0;
+    points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
+    points[n].x = x + w - shadowThickness; points[n].y = y + h - shadowThickness; n++;
+    points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
+    points[n].x = x + w;                   points[n].y = y;          n++;
+    points[n].x = x + w;                   points[n].y = y + h;      n++;
+    points[n].x = x;                       points[n].y = y + h;      n++;
+    points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
+    XSetForeground(display,gc,bsc);
+    XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
 }
 
 void draw3DQuestionMark(UpdateTask *pt) {
-  Pixel   tsc, bsc, bgc, fgc, slc;
-  Display *display  = XtDisplay(pt->displayInfo->drawingArea);
-  GC      gc        = pt->displayInfo->pixmapGC;
-  Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
-  int x = pt->rectangle.x;
-  int y = pt->rectangle.y;
-  int w = pt->rectangle.width;
-  int h = pt->rectangle.height;
-  Dimension qmh, qmw, qmlw;  /*  qmh = height of the drawing area for the question mark
+    Pixel   tsc, bsc, bgc, fgc, slc;
+    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
+    GC      gc        = pt->displayInfo->pixmapGC;
+    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+    int x = pt->rectangle.x;
+    int y = pt->rectangle.y;
+    int w = pt->rectangle.width;
+    int h = pt->rectangle.height;
+    Dimension qmh, qmw, qmlw;  /*  qmh = height of the drawing area for the question mark
 				*  qmw = width of the drawing area for the question mark
 				*  qmlw = line width of the question mark
 				*/
-  int ax, ay;                  
-  unsigned int aw, ah;
-  int lx1, lx2, ly1, ly2;
-  int dx, dy;
-  unsigned int dw, dh;
-  char dotted[2] = {1,1};
+    int ax, ay;                  
+    unsigned int aw, ah;
+    int lx1, lx2, ly1, ly2;
+    int dx, dy;
+    unsigned int dw, dh;
+    char dotted[2] = {1,1};
 
 
-  bgc = alarmColorPixel[2];
-  XmGetColors(XtScreen(pt->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
+    bgc = alarmColorPixel[2];
+    XmGetColors(XtScreen(pt->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
 
-  qmlw = (h > w) ? (w / 10) : (h / 10);  /* calculate the line width */
-  if (qmlw != (qmlw/2*2)) qmlw = qmlw + 1;  /* if odd, make it even */
-  qmh = h - qmlw * 4;
-  if (qmh != (qmh/2*2)) qmh = qmh + 1;      /* if odd, make it even */
-  qmw = w - qmlw * 4;
-  if (qmw != (qmw/2*2)) qmw = qmw + 1;      /* if odd, make it even */
-  if (qmh < qmw) {
-    qmw = qmh;
-  }
+    qmlw = (h > w) ? (w / 10) : (h / 10);  /* calculate the line width */
+    if (qmlw != (qmlw/2*2)) qmlw = qmlw + 1;  /* if odd, make it even */
+    qmh = h - qmlw * 4;
+    if (qmh != (qmh/2*2)) qmh = qmh + 1;      /* if odd, make it even */
+    qmw = w - qmlw * 4;
+    if (qmw != (qmw/2*2)) qmw = qmw + 1;      /* if odd, make it even */
+    if (qmh < qmw) {
+	qmw = qmh;
+    }
   /* calculate the size of the top arc of the question mark */
-  ax = x + w / 2 - qmw / 2;
-  ay = y + qmlw * 2;
-  ah = qmh / 2;
-  aw = qmw;
+    ax = x + w / 2 - qmw / 2;
+    ay = y + qmlw * 2;
+    ah = qmh / 2;
+    aw = qmw;
   /* calculate the size and position of the middle stroke */
-  lx1 = x + w / 2;
-  ly1 = y + h/ 2 - qmlw/2;
-  lx2 = lx1;
-  ly2 = ly1 + qmh / 4;
-  if (lx1 > lx2) lx2 = lx1;
-  if (ly1 > ly2) ly2 = ly1;
+    lx1 = x + w / 2;
+    ly1 = y + h/ 2 - qmlw/2;
+    lx2 = lx1;
+    ly2 = ly1 + qmh / 4;
+    if (lx1 > lx2) lx2 = lx1;
+    if (ly1 > ly2) ly2 = ly1;
   /* calculate the size and position of the bottom circle */
-  dx = lx1 - qmw / 8;
-  dy = ly2 + qmlw; 
-  dw = qmw / 4;
-  dh = qmh / 4;
-  if (dw <= 0) dw = 1;
-  if (dh <= 0) dh = 1;
+    dx = lx1 - qmw / 8;
+    dy = ly2 + qmlw; 
+    dw = qmw / 4;
+    dh = qmh / 4;
+    if (dw <= 0) dw = 1;
+    if (dh <= 0) dh = 1;
   /* draw the foreground of the question mark */
-  XSetForeground(display, gc, bgc);
-  XSetLineAttributes(display,gc, qmlw,LineSolid,CapButt,JoinMiter);
+    XSetForeground(display, gc, bgc);
+    XSetLineAttributes(display,gc, qmlw,LineSolid,CapButt,JoinMiter);
   /* draw mirror image */
-  XDrawArc(display,drawable,gc, ax,ay,aw,ah,180*64,-270*64);
-  XDrawLine(display,drawable, gc, lx1, ly1, lx2, ly2);
-  XFillArc(display, drawable, gc, dx,dy,dw,dh,0,360*64);
+    XDrawArc(display,drawable,gc, ax,ay,aw,ah,180*64,-270*64);
+    XDrawLine(display,drawable, gc, lx1, ly1, lx2, ly2);
+    XFillArc(display, drawable, gc, dx,dy,dw,dh,0,360*64);
   /* draw the top shadow */
-  XSetDashes(display, gc, 0, dotted, 2);
-  XSetForeground(display, gc, tsc);
-  XSetLineAttributes(display,gc, qmlw/5,LineSolid,CapButt,JoinMiter);
+    XSetDashes(display, gc, 0, dotted, 2);
+    XSetForeground(display, gc, tsc);
+    XSetLineAttributes(display,gc, qmlw/5,LineSolid,CapButt,JoinMiter);
 /*  XSetLineAttributes(display,gc, qmlw/5,LineOnOffDash,CapButt,JoinMiter,FillSolid); */
   /* draw mirror image */
-  XDrawArc(display,drawable,gc, ax-qmlw/2,ay-qmlw/2,aw+qmlw,ah+qmlw,180*64,-135*64);
-  XDrawArc(display,drawable,gc, ax+qmlw/2,ay+qmlw/2,aw-qmlw,ah-qmlw,45*64,-128*64);
-  XDrawLine(display,drawable, gc, lx1-qmlw/2, ly1, lx2-qmlw/2, ly2);
-  XDrawLine(display,drawable, gc, lx1-qmlw/2, ly1, lx2+qmlw/2, ly1);
-  XDrawArc(display, drawable, gc, dx,dy,dw,dh,45*64,180*64);
+    XDrawArc(display,drawable,gc, ax-qmlw/2,ay-qmlw/2,aw+qmlw,ah+qmlw,180*64,-135*64);
+    XDrawArc(display,drawable,gc, ax+qmlw/2,ay+qmlw/2,aw-qmlw,ah-qmlw,45*64,-128*64);
+    XDrawLine(display,drawable, gc, lx1-qmlw/2, ly1, lx2-qmlw/2, ly2);
+    XDrawLine(display,drawable, gc, lx1-qmlw/2, ly1, lx2+qmlw/2, ly1);
+    XDrawArc(display, drawable, gc, dx,dy,dw,dh,45*64,180*64);
   /* draw the bottom shadow */
-  XSetForeground(display, gc, bsc);
-  XSetLineAttributes(display,gc, qmlw/5,LineSolid,CapButt,JoinMiter);
+    XSetForeground(display, gc, bsc);
+    XSetLineAttributes(display,gc, qmlw/5,LineSolid,CapButt,JoinMiter);
 /*  XSetLineAttributes(display,gc, qmlw/5,LineOnOffDash,CapButt,JoinMiter,FillSolid);  */
   /* draw mirror image */
-  XDrawArc(display,drawable,gc, ax-qmlw/2,ay-qmlw/2,aw+qmlw,ah+qmlw,45*64,-128*64);
-  XDrawArc(display,drawable,gc, ax+qmlw/2,ay+qmlw/2,aw-qmlw,ah-qmlw,180*64,-135*64);
-  XDrawLine(display,drawable, gc, ax-qmlw/2, ay+ah/2, ax+qmlw/2, ay+ah/2);
-  XDrawLine(display,drawable, gc, lx1+qmlw/2, ly1+qmlw, lx2+qmlw/2, ly2);
-  XDrawLine(display,drawable, gc, lx1-qmlw/2, ly2, lx2+qmlw/2, ly2);
-  XDrawArc(display, drawable, gc, dx,dy,dw,dh,225*64,180*64);
+    XDrawArc(display,drawable,gc, ax-qmlw/2,ay-qmlw/2,aw+qmlw,ah+qmlw,45*64,-128*64);
+    XDrawArc(display,drawable,gc, ax+qmlw/2,ay+qmlw/2,aw-qmlw,ah-qmlw,180*64,-135*64);
+    XDrawLine(display,drawable, gc, ax-qmlw/2, ay+ah/2, ax+qmlw/2, ay+ah/2);
+    XDrawLine(display,drawable, gc, lx1+qmlw/2, ly1+qmlw, lx2+qmlw/2, ly2);
+    XDrawLine(display,drawable, gc, lx1-qmlw/2, ly2, lx2+qmlw/2, ly2);
+    XDrawArc(display, drawable, gc, dx,dy,dw,dh,225*64,180*64);
 }

@@ -53,12 +53,12 @@ typedef struct {
 
 struct _seqlInteraction {
 
-        unsigned long crosshairPixel;
-        BOOLEAN first;
-        int saveX0, saveY0, saveX1, saveY1;
-        int useX0, useY0, useX1, useY1;
-        GC xorGC;
-        int bufNum;
+    unsigned long crosshairPixel;
+    BOOLEAN first;
+    int saveX0, saveY0, saveX1, saveY1;
+    int useX0, useY0, useX1, useY1;
+    GC xorGC;
+    int bufNum;
 
 };
 typedef struct _seqlInteraction SeqlInteraction;
@@ -96,7 +96,7 @@ struct _Seql {
     unsigned long   w;
     unsigned long   h;
 
-    /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
+  /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
     unsigned long    dataX0;		/* upper left corner - data region X */
     unsigned long    dataY0;		/* upper left corner - data region Y */
     unsigned long    dataX1;		/* lower right corner - data region X */
@@ -124,7 +124,7 @@ struct _Seql {
 
     SeqlInteraction *interactive;
 
-  };
+};
 
 typedef struct _Seql Seql;
 
@@ -151,8 +151,8 @@ extern void seqlPrint(Seql *);
 extern void seqlRefresh(Seql *);
 extern void seqlResize(Seql *);
 extern void seqlSet(Seql *, int, int, double **, int *, SeqlType,
-	char *, char *, char *, char *, char *, char *, char *, char **,
-	SeqlStorageMode);
+  char *, char *, char *, char *, char *, char *, char *, char **,
+  SeqlStorageMode);
 extern void seqlSetRange(Seql *, int, char, double, double);
 extern void seqlSetRangeDefault(Seql *, int, char);
 extern void seqlSetDisplayType(Seql *, SeqlType);

@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -82,9 +78,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
    and treat them as " " a whitespace string
  */
 #define CA_BUILD_AND_CONNECT(a,b,c,d,e,f,g) \
-	( a == NULL ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
-	 ( (a)[0] == '\0' ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
-	   ca_build_and_connect(a,b,c,d,e,f,g) ) )
+( a == NULL ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
+  ( (a)[0] == '\0' ? ca_build_and_connect(" ",b,c,d,e,f,g) : \
+    ca_build_and_connect(a,b,c,d,e,f,g) ) )
 	
 
 
@@ -97,73 +93,73 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  ***/
 
 #ifdef __USING_TIME_STAMP__
-typedef union {
-  struct dbr_time_string s;
-  struct dbr_time_enum   e;
-  struct dbr_time_char   c;
-  struct dbr_time_short  i;
-  struct dbr_time_long   l;
-  struct dbr_time_float  f;
-  struct dbr_time_double d;
-} dataBuf;
+    typedef union {
+	struct dbr_time_string s;
+	struct dbr_time_enum   e;
+	struct dbr_time_char   c;
+	struct dbr_time_short  i;
+	struct dbr_time_long   l;
+	struct dbr_time_float  f;
+	struct dbr_time_double d;
+    } dataBuf;
 #else
 typedef union {
-  struct dbr_sts_string s;
-  struct dbr_sts_enum   e;
-  struct dbr_sts_char   c;
-  struct dbr_sts_short  i;
-  struct dbr_sts_long   l;
-  struct dbr_sts_float  f;
-  struct dbr_sts_double d;
+    struct dbr_sts_string s;
+    struct dbr_sts_enum   e;
+    struct dbr_sts_char   c;
+    struct dbr_sts_short  i;
+    struct dbr_sts_long   l;
+    struct dbr_sts_float  f;
+    struct dbr_sts_double d;
 } dataBuf;
 #endif
 
 typedef union {
-  struct dbr_sts_string  s;
-  struct dbr_ctrl_enum   e;
-  struct dbr_ctrl_char   c;
-  struct dbr_ctrl_short  i;
-  struct dbr_ctrl_long   l;
-  struct dbr_ctrl_float  f;
-  struct dbr_ctrl_double d;
+    struct dbr_sts_string  s;
+    struct dbr_ctrl_enum   e;
+    struct dbr_ctrl_char   c;
+    struct dbr_ctrl_short  i;
+    struct dbr_ctrl_long   l;
+    struct dbr_ctrl_float  f;
+    struct dbr_ctrl_double d;
 } infoBuf;
 
 #define MAX_EVENT_DATA 16
 typedef struct _Record {
-  int       caId;
-  int       elementCount;
-  short     dataType;
-  double    value;
-  double    hopr;
-  double    lopr;
-  short     precision;
-  short     status;
-  short     severity;
-  Boolean   connected;
-  Boolean   readAccess;
-  Boolean   writeAccess;
-  char      *stateStrings[16];
-  char      *name;
-  XtPointer array;
-  TS_STAMP  time;
+    int       caId;
+    int       elementCount;
+    short     dataType;
+    double    value;
+    double    hopr;
+    double    lopr;
+    short     precision;
+    short     status;
+    short     severity;
+    Boolean   connected;
+    Boolean   readAccess;
+    Boolean   writeAccess;
+    char      *stateStrings[16];
+    char      *name;
+    XtPointer array;
+    TS_STAMP  time;
 
-  XtPointer clientData;
-  void (*updateValueCb)(XtPointer); 
-  void (*updateGraphicalInfoCb)(XtPointer); 
-  Boolean  monitorSeverityChanged;
-  Boolean  monitorValueChanged;
-  Boolean  monitorZeroAndNoneZeroTransition;
+    XtPointer clientData;
+    void (*updateValueCb)(XtPointer); 
+    void (*updateGraphicalInfoCb)(XtPointer); 
+    Boolean  monitorSeverityChanged;
+    Boolean  monitorValueChanged;
+    Boolean  monitorZeroAndNoneZeroTransition;
 } Record;
 
 typedef struct _Channel {
-  int       caId;
-  dataBuf   *data;
-  infoBuf   info;
-  chid      chid;
-  evid      evid;
-  int       size;             /* size of data buffer (number of char) */
-  Record    *pr;
-  Boolean   previouslyConnected;
+    int       caId;
+    dataBuf   *data;
+    infoBuf   info;
+    chid      chid;
+    evid      evid;
+    int       size;             /* size of data buffer (number of char) */
+    Record    *pr;
+    Boolean   previouslyConnected;
 } Channel;
 
 void medmDestroyRecord(Record *pr);

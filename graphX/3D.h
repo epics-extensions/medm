@@ -46,74 +46,74 @@
 /* structures for 3D */
  
 struct depths {				/* structure  used to depth */
-	float zmax;			/* sort facets		    */
-	int facet;
-	};
+    float zmax;			/* sort facets		    */
+    int facet;
+};
 
 
 struct _3d {
 
-  Display *display;
-  Window window;
-  XWindowAttributes wind_struct;
-  GC gc;
-  Pixmap pixmap;			/* pixmap backing store */
+    Display *display;
+    Window window;
+    XWindowAttributes wind_struct;
+    GC gc;
+    Pixmap pixmap;			/* pixmap backing store */
 
-  unsigned long forePixel, backPixel, dataPixel;
+    unsigned long forePixel, backPixel, dataPixel;
 
-  float xMin, xMax, xDelta;		/* need these to go from normalized  */
-  float yMin, yMax, yDelta;		/*  data [0,1] and back again        */
-  float zMin, zMax, zDelta;
-
-
-/* 3D data structures */
-
-  int nverts;				/* total number of vertices */
-  int nfacets;				/* total number of facets */
-  int draw_mode;			/* SOLID or SHADED */
-  int **facets;				/* vertices in facet */
-  int *ncorners;			/* number of vertices / facet */
-  float **vertices;			/* 3D vertex positions */
-  float **out_verts;			/* xformed 3D vertex positions */
-  float obj_box[2][3];			/* object bounding box */
-  float screen_box[2][3];		/* screen space bounding box */
-
-  struct depths *facet_depth;
+    float xMin, xMax, xDelta;		/* need these to go from normalized  */
+    float yMin, yMax, yDelta;		/*  data [0,1] and back again        */
+    float zMin, zMax, zDelta;
 
 
-/* colour map and parameters */
+  /* 3D data structures */
 
-  Colormap map;
-  XColor *colours;
-  int red_level;
-  int blue_level;
-  int green_level;
-  int num_colours;
-  unsigned long pixels[MAX_COLORS];
+    int nverts;				/* total number of vertices */
+    int nfacets;				/* total number of facets */
+    int draw_mode;			/* SOLID or SHADED */
+    int **facets;				/* vertices in facet */
+    int *ncorners;			/* number of vertices / facet */
+    float **vertices;			/* 3D vertex positions */
+    float **out_verts;			/* xformed 3D vertex positions */
+    float obj_box[2][3];			/* object bounding box */
+    float screen_box[2][3];		/* screen space bounding box */
+
+    struct depths *facet_depth;
 
 
-/* Matrix which maps world coordinates to ndc coordinates */
-  float world_to_ndc[4][4];
+  /* colour map and parameters */
 
-/* Matrix which maps normalised device coor. to  screen pixel coor. */
-  float ndc_to_screen[4][4];	
+    Colormap map;
+    XColor *colours;
+    int red_level;
+    int blue_level;
+    int green_level;
+    int num_colours;
+    unsigned long pixels[MAX_COLORS];
 
-/* Matrix product of ndc_to_screen x world_to_ndc 
-	(maps world coordinates to screen pixels */
-  float world_to_screen[4][4];
 
-/* Concatenated viewing transformation - maps world coordinates to screen 
-	pixels i.e. the whole viewing pipeline */
-  float cvt[4][4];
+  /* Matrix which maps world coordinates to ndc coordinates */
+    float world_to_ndc[4][4];
 
-/* Current transformation matrix - operates on world coordinates producing 
-	transformed world coordinates */
-  float ctm[4][4];
+  /* Matrix which maps normalised device coor. to  screen pixel coor. */
+    float ndc_to_screen[4][4];	
 
-/*  parameters for rotation, translation, and scaling parameters */
-  float	rotation[3];
-  float	translation[3];
-  float	scaling[3];
+  /* Matrix product of ndc_to_screen x world_to_ndc 
+     (maps world coordinates to screen pixels */
+    float world_to_screen[4][4];
+
+  /* Concatenated viewing transformation - maps world coordinates to screen 
+     pixels i.e. the whole viewing pipeline */
+    float cvt[4][4];
+
+  /* Current transformation matrix - operates on world coordinates producing 
+     transformed world coordinates */
+    float ctm[4][4];
+
+  /*  parameters for rotation, translation, and scaling parameters */
+    float	rotation[3];
+    float	translation[3];
+    float	scaling[3];
 
 };
 
@@ -136,7 +136,7 @@ extern void rotate3d(ThreeD *, float, float, float);
 extern void setPixmap3d(ThreeD *, Pixmap);
 extern void setStyle3d(ThreeD *, int);
 extern void set3d(ThreeD *, Display *, Window, Pixmap, GC, unsigned long,
-	unsigned long, unsigned long);
+  unsigned long, unsigned long);
 extern void draw3d(ThreeD *);
 extern void term3d(ThreeD *);
 #endif

@@ -42,31 +42,30 @@ String *cells[ROWS];
 short widths[5] = { 6, 3, 10, 10, 10 };
 
 main(argc, argv)
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
     Widget toplevel, mw;
     XtAppContext app;
     int i;
 
     toplevel = XtVaAppInitialize(&app, "Simple",
-				 NULL, 0,
-				 (Cardinal *)&argc, argv,
-				 NULL,
-				 NULL);
+      NULL, 0,
+      (Cardinal *)&argc, argv,
+      NULL,
+      NULL);
 
     for (i = 0; i < ROWS; i++)
-	cells[i] = &rows[i][0];
+      cells[i] = &rows[i][0];
 
     mw = XtVaCreateManagedWidget("mw",
-				 xbaeMatrixWidgetClass, toplevel,
-				 XmNrows,		ROWS,
-				 XmNcolumns,		COLUMNS,
-				 XmNcolumnWidths,	widths,
-				 XmNcells,		cells,
-				 NULL);
+      xbaeMatrixWidgetClass, toplevel,
+      XmNrows,		ROWS,
+      XmNcolumns,		COLUMNS,
+      XmNcolumnWidths,	widths,
+      XmNcells,		cells,
+      NULL);
 
     XtRealizeWidget(toplevel);
     XtAppMainLoop(app);
 }
-

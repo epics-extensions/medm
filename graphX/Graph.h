@@ -55,12 +55,12 @@ typedef struct {
 
 struct _graphInteraction {
 
-        unsigned long crosshairPixel;
-        BOOLEAN first;
-        int saveX0, saveY0, saveX1, saveY1;
-        int useX0, useY0, useX1, useY1;
-        GC xorGC;
-        int bufNum;
+    unsigned long crosshairPixel;
+    BOOLEAN first;
+    int saveX0, saveY0, saveX1, saveY1;
+    int useX0, useY0, useX1, useY1;
+    GC xorGC;
+    int bufNum;
 
 };
 typedef struct _graphInteraction GraphInteraction;
@@ -99,7 +99,7 @@ struct _Graph {
     unsigned long    w;
     unsigned long    h;
 
-    /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
+  /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
     unsigned long    dataX0;            /* upper left corner - data region X */
     unsigned long    dataY0;            /* upper left corner - data region Y */
     unsigned long    dataX1;            /* lower right corner - data region X */
@@ -128,7 +128,7 @@ struct _Graph {
 
     GraphInteraction *interactive;
 
-    };
+};
 typedef struct _Graph Graph;
 
 
@@ -155,8 +155,8 @@ extern void graphPrint(Graph *);
 extern void graphRefresh(Graph *);
 extern void graphResize(Graph *);
 extern void graphSet(Graph *, int, int, XYdataPoint **, int *, GraphType,
-	char *, char *,  char *, char *, char *, char *, char *, char **,
-	GraphStorageMode);
+  char *, char *,  char *, char *, char *, char *, char *, char **,
+  GraphStorageMode);
 extern void graphSetRange(Graph *, int, char, double, double);
 extern void graphSetRangeDefault(Graph *, int, char);
 extern void graphSetBins(Graph *, int, int);

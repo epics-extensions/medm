@@ -43,19 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              - using new screen update dispatch mechanism
- * .03  09-11-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -63,9 +57,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Bar {
-  DlElement   *dlElement;
-  Record      *record;
-  UpdateTask  *updateTask;
+    DlElement   *dlElement;
+    Record      *record;
+    UpdateTask  *updateTask;
 } Bar;
 
 static void barDraw(XtPointer cd);
@@ -77,378 +71,364 @@ static void barInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void barGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable barDlDispatchTable = {
-         createDlBar,
-         NULL,
-         executeDlBar,
-         writeDlBar,
-         NULL,
-         barGetValues,
-         barInheritValues,
-         NULL,
-         NULL,
-         genericMove,
-         genericScale,
-         NULL,
-         NULL};
+    createDlBar,
+    NULL,
+    executeDlBar,
+    writeDlBar,
+    NULL,
+    barGetValues,
+    barInheritValues,
+    NULL,
+    NULL,
+    genericMove,
+    genericScale,
+    NULL,
+    NULL};
 
 void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  Bar *pb;
-  Arg args[30];
-  int n;
-  int usedHeight, usedCharWidth, bestSize, preferredHeight;
-  Widget localWidget;
-  DlBar *dlBar = dlElement->structure.bar;
+    Bar *pb;
+    Arg args[30];
+    int n;
+    int usedHeight, usedCharWidth, bestSize, preferredHeight;
+    Widget localWidget;
+    DlBar *dlBar = dlElement->structure.bar;
 
-  if (!dlElement->widget) {
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-      pb = (Bar *) malloc(sizeof(Bar));
-      pb->dlElement = dlElement;
-      pb->updateTask = updateTaskAddTask(displayInfo,
-				       &(dlBar->object),
-				       barDraw,
-				       (XtPointer)pb);
+    if (!dlElement->widget) {
+	if (displayInfo->traversalMode == DL_EXECUTE) {
+	    pb = (Bar *) malloc(sizeof(Bar));
+	    pb->dlElement = dlElement;
+	    pb->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlBar->object),
+	      barDraw,
+	      (XtPointer)pb);
 
-      if (pb->updateTask == NULL) {
-        medmPrintf("barCreateRunTimeInstance : memory allocation error\n");
-      } else {
-        updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
-        updateTaskAddNameCb(pb->updateTask,barName);
-      }
-      pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
-                  barUpdateValueCb,
-                  barUpdateGraphicalInfoCb,
-                  (XtPointer) pb);
-      drawWhiteRectangle(pb->updateTask);
-    }
-
-    /* from the bar structure, we've got Bar's specifics */
-    n = 0;
-    XtSetArg(args[n],XtNx,(Position)dlBar->object.x); n++;
-    XtSetArg(args[n],XtNy,(Position)dlBar->object.y); n++;
-    XtSetArg(args[n],XtNwidth,(Dimension)dlBar->object.width); n++;
-    XtSetArg(args[n],XtNheight,(Dimension)dlBar->object.height); n++;
-    XtSetArg(args[n],XcNdataType,XcFval); n++;
-    switch (dlBar->label) {
-      case LABEL_NONE:
-	XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-      case OUTLINE:
-	XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-      case LIMITS:
-	XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-      case CHANNEL:
-	XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	XtSetArg(args[n],XcNlabel,dlBar->monitor.rdbk); n++;
-	break;
-    }
-    switch (dlBar->direction) {
-    /*
-     * note that this is  "direction of increase" for Bar
-     */
-      case LEFT:
-	medmPrintf("\nexecuteDlBar: LEFT direction BARS not supported");
-      case RIGHT:
-	XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	XtSetArg(args[n],XcNscaleSegments,
-		(dlBar->object.width>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
-	if (dlBar->label == LABEL_NONE) {
-		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	    if (pb->updateTask == NULL) {
+		medmPrintf("barCreateRunTimeInstance : memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
+		updateTaskAddNameCb(pb->updateTask,barName);
+	    }
+	    pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
+	      barUpdateValueCb,
+	      barUpdateGraphicalInfoCb,
+	      (XtPointer) pb);
+	    drawWhiteRectangle(pb->updateTask);
 	}
-	break;
 
-      case DOWN:
-	medmPrintf("\nexecuteDlBar: DOWN direction BARS not supported");
-      case UP:
-	XtSetArg(args[n],XcNorient,XcVert); n++;
-	XtSetArg(args[n],XcNscaleSegments,
-		(dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
-	if (dlBar->label == LABEL_NONE) {
-		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+      /* from the bar structure, we've got Bar's specifics */
+	n = 0;
+	XtSetArg(args[n],XtNx,(Position)dlBar->object.x); n++;
+	XtSetArg(args[n],XtNy,(Position)dlBar->object.y); n++;
+	XtSetArg(args[n],XtNwidth,(Dimension)dlBar->object.width); n++;
+	XtSetArg(args[n],XtNheight,(Dimension)dlBar->object.height); n++;
+	XtSetArg(args[n],XcNdataType,XcFval); n++;
+	switch (dlBar->label) {
+	case LABEL_NONE:
+	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case OUTLINE:
+	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case LIMITS:
+	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case CHANNEL:
+	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNlabel,dlBar->monitor.rdbk); n++;
+	    break;
 	}
-	break;
-    }
+	switch (dlBar->direction) {
+	  /*
+	   * note that this is  "direction of increase" for Bar
+	   */
+	case LEFT:
+	    medmPrintf("\nexecuteDlBar: LEFT direction BARS not supported");
+	case RIGHT:
+	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
+	    XtSetArg(args[n],XcNscaleSegments,
+	      (dlBar->object.width>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	      if (dlBar->label == LABEL_NONE) {
+		  XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	      }
+	      break;
 
-    if (dlBar->fillmod == FROM_CENTER) {
-      XtSetArg(args[n], XcNfillmod, XcCenter); n++;
+	case DOWN:
+	    medmPrintf("\nexecuteDlBar: DOWN direction BARS not supported");
+	case UP:
+	    XtSetArg(args[n],XcNorient,XcVert); n++;
+	    XtSetArg(args[n],XcNscaleSegments,
+	      (dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	      if (dlBar->label == LABEL_NONE) {
+		  XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	      }
+	      break;
+	}
+
+	if (dlBar->fillmod == FROM_CENTER) {
+	    XtSetArg(args[n], XcNfillmod, XcCenter); n++;
+	} else {
+	    XtSetArg(args[n], XcNfillmod, XcEdge); n++;
+	}
+
+
+	preferredHeight = dlBar->object.height/INDICATOR_FONT_DIVISOR;
+	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
+	  preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
+	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
+
+	XtSetArg(args[n],XcNbarForeground,(Pixel)
+	  displayInfo->colormap[dlBar->monitor.clr]); n++;
+	  XtSetArg(args[n],XcNbarBackground,(Pixel)
+	    displayInfo->colormap[dlBar->monitor.bclr]); n++;
+	    XtSetArg(args[n],XtNbackground,(Pixel)
+	      displayInfo->colormap[dlBar->monitor.bclr]); n++;
+	      XtSetArg(args[n],XcNcontrolBackground,(Pixel)
+		displayInfo->colormap[dlBar->monitor.bclr]); n++;
+	      /*
+	       * add the pointer to the Channel structure as userData 
+	       *  to widget
+	       */
+		XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
+		localWidget = XtCreateWidget("bar", 
+		  xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
+		dlElement->widget = localWidget;
+
+		if (displayInfo->traversalMode == DL_EXECUTE) {
+
+		  /* add in drag/drop translations */
+		    XtOverrideTranslations(localWidget,parsedTranslations);
+
+		} else if (displayInfo->traversalMode == DL_EDIT) {
+
+		  /* add button press handlers */
+		    XtAddEventHandler(localWidget,ButtonPressMask,False,
+		      handleButtonPress,(XtPointer)displayInfo);
+
+		    XtManageChild(localWidget);
+		}
     } else {
-      XtSetArg(args[n], XcNfillmod, XcEdge); n++;
+	DlObject *po = &(dlElement->structure.bar->object);
+	XtVaSetValues(dlElement->widget,
+	  XmNx, (Position) po->x,
+	  XmNy, (Position) po->y,
+	  XmNwidth, (Dimension) po->width,
+	  XmNheight, (Dimension) po->height,
+	  NULL);
+	printf("x=%d, y=%d, w=%d, h=%d\n",po->x,po->y,po->width,po->height);
     }
-
-
-    preferredHeight = dlBar->object.height/INDICATOR_FONT_DIVISOR;
-    bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
-	preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-    XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
-
-    XtSetArg(args[n],XcNbarForeground,(Pixel)
-	displayInfo->colormap[dlBar->monitor.clr]); n++;
-    XtSetArg(args[n],XcNbarBackground,(Pixel)
-	displayInfo->colormap[dlBar->monitor.bclr]); n++;
-    XtSetArg(args[n],XtNbackground,(Pixel)
-	displayInfo->colormap[dlBar->monitor.bclr]); n++;
-    XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-	displayInfo->colormap[dlBar->monitor.bclr]); n++;
-    /*
-     * add the pointer to the Channel structure as userData 
-     *  to widget
-     */
-    XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
-    localWidget = XtCreateWidget("bar", 
-		xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
-    dlElement->widget = localWidget;
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      /* add in drag/drop translations */
-      XtOverrideTranslations(localWidget,parsedTranslations);
-
-    } else if (displayInfo->traversalMode == DL_EDIT) {
-
-      /* add button press handlers */
-      XtAddEventHandler(localWidget,ButtonPressMask,False,
-		handleButtonPress,(XtPointer)displayInfo);
-
-      XtManageChild(localWidget);
-    }
-  } else {
-    DlObject *po = &(dlElement->structure.bar->object);
-    XtVaSetValues(dlElement->widget,
-        XmNx, (Position) po->x,
-        XmNy, (Position) po->y,
-        XmNwidth, (Dimension) po->width,
-        XmNheight, (Dimension) po->height,
-        NULL);
-    printf("x=%d, y=%d, w=%d, h=%d\n",po->x,po->y,po->width,po->height);
-  }
 }
 
 static void barUpdateValueCb(XtPointer cd) {
-  Bar *pb = (Bar *) ((Record *) cd)->clientData;
-  updateTaskMarkUpdate(pb->updateTask);
+    Bar *pb = (Bar *) ((Record *) cd)->clientData;
+    updateTaskMarkUpdate(pb->updateTask);
 }
 
 static void barDraw(XtPointer cd) {
-  Bar *pb = (Bar *) cd;
-  Record *pd = pb->record;
-  Widget widget = pb->dlElement->widget;
-  DlBar *dlBar = pb->dlElement->structure.bar;
-  XcVType val;
+    Bar *pb = (Bar *) cd;
+    Record *pd = pb->record;
+    Widget widget = pb->dlElement->widget;
+    DlBar *dlBar = pb->dlElement->structure.bar;
+    XcVType val;
 
-  if (pd->connected) {
-    if (pd->readAccess) {
-      if (widget)
-	XtManageChild(widget);
-      else
-	return;
-      val.fval = (float) pd->value;
-      XcBGUpdateValue(widget,&val);
-      switch (dlBar->clrmod) {
-        case STATIC :
-        case DISCRETE :
-	  break;
-        case ALARM :
-	  XcBGUpdateBarForeground(widget,alarmColorPixel[pd->severity]);
-	  break;
-      }
+    if (pd->connected) {
+	if (pd->readAccess) {
+	    if (widget)
+	      XtManageChild(widget);
+	    else
+	      return;
+	    val.fval = (float) pd->value;
+	    XcBGUpdateValue(widget,&val);
+	    switch (dlBar->clrmod) {
+	    case STATIC :
+	    case DISCRETE :
+		break;
+	    case ALARM :
+		XcBGUpdateBarForeground(widget,alarmColorPixel[pd->severity]);
+		break;
+	    }
+	} else {
+	    if (widget) XtUnmanageChild(widget);
+	    draw3DPane(pb->updateTask,
+	      pb->updateTask->displayInfo->colormap[dlBar->monitor.bclr]);
+	    draw3DQuestionMark(pb->updateTask);
+	}
     } else {
-      if (widget) XtUnmanageChild(widget);
-      draw3DPane(pb->updateTask,
-          pb->updateTask->displayInfo->colormap[dlBar->monitor.bclr]);
-      draw3DQuestionMark(pb->updateTask);
+	if (widget) XtUnmanageChild(widget);
+	drawWhiteRectangle(pb->updateTask);
     }
-  } else {
-    if (widget) XtUnmanageChild(widget);
-    drawWhiteRectangle(pb->updateTask);
-  }
 }
 
 static void barUpdateGraphicalInfoCb(XtPointer cd) {
-  Record *pd = (Record *) cd;
-  Bar *pb = (Bar *) pd->clientData;
-  XcVType hopr, lopr, val;
-  Pixel pixel;
-  int precision;
-  Widget widget = pb->dlElement->widget;
-  DlBar *dlBar = pb->dlElement->structure.bar;
+    Record *pd = (Record *) cd;
+    Bar *pb = (Bar *) pd->clientData;
+    XcVType hopr, lopr, val;
+    Pixel pixel;
+    int precision;
+    Widget widget = pb->dlElement->widget;
+    DlBar *dlBar = pb->dlElement->structure.bar;
 
-  if (widget == NULL) return;
-  switch (pd->dataType) {
-  case DBF_STRING :
-  case DBF_ENUM :
-    medmPrintf("barUpdateGraphicalInfoCb : %s %s %s\n",
-	"illegal channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
-    medmPostTime();
-    return;
-  case DBF_CHAR :
-  case DBF_INT :
-  case DBF_LONG :
-  case DBF_FLOAT :
-  case DBF_DOUBLE :
-    hopr.fval = (float) pd->hopr;
-    lopr.fval = (float) pd->lopr;
-    val.fval = (float) pd->value;
-    precision = pd->precision;
-    break;
-  default :
-    medmPrintf("barUpdateGraphicalInfoCb: %s %s %s\n",
-	"unknown channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
-    medmPostTime();
-    break;
-  }
-  if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
-    hopr.fval += 1.0;
-  }
+    if (widget == NULL) return;
+    switch (pd->dataType) {
+    case DBF_STRING :
+    case DBF_ENUM :
+	medmPrintf("barUpdateGraphicalInfoCb : %s %s %s\n",
+	  "illegal channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
+	medmPostTime();
+	return;
+    case DBF_CHAR :
+    case DBF_INT :
+    case DBF_LONG :
+    case DBF_FLOAT :
+    case DBF_DOUBLE :
+	hopr.fval = (float) pd->hopr;
+	lopr.fval = (float) pd->lopr;
+	val.fval = (float) pd->value;
+	precision = pd->precision;
+	break;
+    default :
+	medmPrintf("barUpdateGraphicalInfoCb: %s %s %s\n",
+	  "unknown channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
+	medmPostTime();
+	break;
+    }
+    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+	hopr.fval += 1.0;
+    }
 
-  pixel = (dlBar->clrmod == ALARM) ?
-	    alarmColorPixel[pd->severity] :
-	    pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
-  XtVaSetValues(widget,
-    XcNlowerBound,lopr.lval,
-    XcNupperBound,hopr.lval,
-    XcNbarForeground,pixel,
-    XcNdecimals, precision,
-    NULL);
-  XcBGUpdateValue(widget,&val);
+    pixel = (dlBar->clrmod == ALARM) ?
+      alarmColorPixel[pd->severity] :
+	pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
+    XtVaSetValues(widget,
+      XcNlowerBound,lopr.lval,
+      XcNupperBound,hopr.lval,
+      XcNbarForeground,pixel,
+      XcNdecimals, precision,
+      NULL);
+    XcBGUpdateValue(widget,&val);
 }
 
 static void barDestroyCb(XtPointer cd) {
-  Bar *pb = (Bar *) cd;
-  if (pb) {
-    medmDestroyRecord(pb->record);
-    free((char *)pb);
-  }
-  return;
+    Bar *pb = (Bar *) cd;
+    if (pb) {
+	medmDestroyRecord(pb->record);
+	free((char *)pb);
+    }
+    return;
 }
 
 static void barName(XtPointer cd, char **name, short *severity, int *count) {
-  Bar *pb = (Bar *) cd;
-  *count = 1;
-  name[0] = pb->record->name;
-  severity[0] = pb->record->severity;
+    Bar *pb = (Bar *) cd;
+    *count = 1;
+    name[0] = pb->record->name;
+    severity[0] = pb->record->severity;
 }
 
 DlElement *createDlBar(DlElement *p)
 {
-  DlBar *dlBar;
-  DlElement *dlElement;
+    DlBar *dlBar;
+    DlElement *dlElement;
 
-  dlBar = (DlBar *) malloc(sizeof(DlBar));
-  if (!dlBar) return 0;
-  if (p) {
-    *dlBar = *p->structure.bar;
-  } else {
-    objectAttributeInit(&(dlBar->object));
-    monitorAttributeInit(&(dlBar->monitor));
-    dlBar->label = LABEL_NONE;
-    dlBar->clrmod = STATIC;
-    dlBar->direction = RIGHT;
-    dlBar->fillmod = FROM_EDGE;
-  }
+    dlBar = (DlBar *) malloc(sizeof(DlBar));
+    if (!dlBar) return 0;
+    if (p) {
+	*dlBar = *p->structure.bar;
+    } else {
+	objectAttributeInit(&(dlBar->object));
+	monitorAttributeInit(&(dlBar->monitor));
+	dlBar->label = LABEL_NONE;
+	dlBar->clrmod = STATIC;
+	dlBar->direction = RIGHT;
+	dlBar->fillmod = FROM_EDGE;
+    }
 
-  if (!(dlElement = createDlElement(DL_Bar,
-                    (XtPointer)      dlBar,
-                    &barDlDispatchTable))) {
-    free(dlBar);
-  }
-  return(dlElement);
+    if (!(dlElement = createDlElement(DL_Bar,
+      (XtPointer)      dlBar,
+      &barDlDispatchTable))) {
+	free(dlBar);
+    }
+    return(dlElement);
 }
 
 DlElement *parseBar(DisplayInfo *displayInfo)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel = 0;
-  DlBar *dlBar;
-  DlElement *dlElement = createDlBar(NULL);
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+    DlBar *dlBar;
+    DlElement *dlElement = createDlBar(NULL);
  
-  if (!dlElement) return 0;
-  dlBar = dlElement->structure.bar;
+    if (!dlElement) return 0;
+    dlBar = dlElement->structure.bar;
  
-  do {
-    switch( (tokenType=getToken(displayInfo,token)) ) {
-    case T_WORD:
-      if (!strcmp(token,"object")) {
-        parseObject(displayInfo,&(dlBar->object));
-      } else
-      if (!strcmp(token,"monitor")) {
-        parseMonitor(displayInfo,&(dlBar->monitor));
-      } else
-      if (!strcmp(token,"label")) {
-        getToken(displayInfo,token);
-        getToken(displayInfo,token);
-        if (!strcmp(token,"none"))
-          dlBar->label = LABEL_NONE;
-        else
-        if (!strcmp(token,"outline"))
-          dlBar->label = OUTLINE;
-        else
-        if (!strcmp(token,"limits"))
-          dlBar->label = LIMITS;
-        else
-        if (!strcmp(token,"channel"))
-          dlBar->label = CHANNEL;
-      } else
-      if (!strcmp(token,"clrmod")) {
-        getToken(displayInfo,token);
-        getToken(displayInfo,token);
-        if (!strcmp(token,"static"))
-          dlBar->clrmod = STATIC;
-        else
-        if (!strcmp(token,"alarm"))
-          dlBar->clrmod = ALARM;
-        else
-        if (!strcmp(token,"discrete"))
-          dlBar->clrmod = DISCRETE;
-      } else
-      if (!strcmp(token,"direction")) {
-        getToken(displayInfo,token);
-        getToken(displayInfo,token);
-        if (!strcmp(token,"up"))
-          dlBar->direction = UP;
-        else
-        if (!strcmp(token,"down"))
-          dlBar->direction = DOWN;
-        else
-        if (!strcmp(token,"right"))
-          dlBar->direction = RIGHT;
-        else
-        if (!strcmp(token,"left"))
-          dlBar->direction = LEFT;
-      } else
-      if (!strcmp(token,"fillmod")) {
-        getToken(displayInfo,token);
-        getToken(displayInfo,token);
-        if (!strcmp(token,"from edge"))
-          dlBar->fillmod = FROM_EDGE;
-        else
-        if(!strcmp(token,"from center"))
-          dlBar->fillmod = FROM_CENTER;
-      }
-      break;
-    case T_EQUAL:
-      break;
-    case T_LEFT_BRACE:
-      nestingLevel++; break;
-    case T_RIGHT_BRACE:
-      nestingLevel--; break;
-    }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-                && (tokenType != T_EOF) );
- 
-  return dlElement;
- 
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if (!strcmp(token,"object")) {
+		parseObject(displayInfo,&(dlBar->object));
+	    } else if (!strcmp(token,"monitor")) {
+		parseMonitor(displayInfo,&(dlBar->monitor));
+	    } else if (!strcmp(token,"label")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (!strcmp(token,"none"))
+		  dlBar->label = LABEL_NONE;
+		else if (!strcmp(token,"outline"))
+		  dlBar->label = OUTLINE;
+		else if (!strcmp(token,"limits"))
+		  dlBar->label = LIMITS;
+		else
+		  if (!strcmp(token,"channel"))
+		    dlBar->label = CHANNEL;
+	    } else if (!strcmp(token,"clrmod")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (!strcmp(token,"static"))
+		  dlBar->clrmod = STATIC;
+		else if (!strcmp(token,"alarm"))
+		  dlBar->clrmod = ALARM;
+		else if (!strcmp(token,"discrete"))
+		  dlBar->clrmod = DISCRETE;
+	    } else if (!strcmp(token,"direction")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (!strcmp(token,"up"))
+		  dlBar->direction = UP;
+		else if (!strcmp(token,"down"))
+		  dlBar->direction = DOWN;
+		else if (!strcmp(token,"right"))
+		  dlBar->direction = RIGHT;
+		else if (!strcmp(token,"left"))
+		  dlBar->direction = LEFT;
+	    } else if (!strcmp(token,"fillmod")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (!strcmp(token,"from edge"))
+		  dlBar->fillmod = FROM_EDGE;
+		else if(!strcmp(token,"from center"))
+		  dlBar->fillmod = FROM_CENTER;
+	    }
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	}
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
+    
+    return dlElement;
 }
 
 void writeDlBar( FILE *stream, DlElement *dlElement, int level) {
-  int i;
-  char indent[16];
-  DlBar *dlBar = dlElement->structure.bar;
+    int i;
+    char indent[16];
+    DlBar *dlBar = dlElement->structure.bar;
 
     for (i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
@@ -478,31 +458,31 @@ void writeDlBar( FILE *stream, DlElement *dlElement, int level) {
 }
 
 static void barInheritValues(ResourceBundle *pRCB, DlElement *p) {
-  DlBar *dlBar = p->structure.bar;
-  medmGetValues(pRCB,
-    RDBK_RC,       &(dlBar->monitor.rdbk),
-    CLR_RC,        &(dlBar->monitor.clr),
-    BCLR_RC,       &(dlBar->monitor.bclr),
-    LABEL_RC,      &(dlBar->label),
-    DIRECTION_RC,  &(dlBar->direction),
-    CLRMOD_RC,     &(dlBar->clrmod),
-    FILLMOD_RC,    &(dlBar->fillmod),
-    -1);
+    DlBar *dlBar = p->structure.bar;
+    medmGetValues(pRCB,
+      RDBK_RC,       &(dlBar->monitor.rdbk),
+      CLR_RC,        &(dlBar->monitor.clr),
+      BCLR_RC,       &(dlBar->monitor.bclr),
+      LABEL_RC,      &(dlBar->label),
+      DIRECTION_RC,  &(dlBar->direction),
+      CLRMOD_RC,     &(dlBar->clrmod),
+      FILLMOD_RC,    &(dlBar->fillmod),
+      -1);
 }
 
 static void barGetValues(ResourceBundle *pRCB, DlElement *p) {
-  DlBar *dlBar = p->structure.bar;
-  medmGetValues(pRCB,
-    X_RC,          &(dlBar->object.x),
-    Y_RC,          &(dlBar->object.y),
-    WIDTH_RC,      &(dlBar->object.width),
-    HEIGHT_RC,     &(dlBar->object.height),
-    RDBK_RC,       &(dlBar->monitor.rdbk),
-    CLR_RC,        &(dlBar->monitor.clr),
-    BCLR_RC,       &(dlBar->monitor.bclr),
-    LABEL_RC,      &(dlBar->label),
-    DIRECTION_RC,  &(dlBar->direction),
-    CLRMOD_RC,     &(dlBar->clrmod),
-    FILLMOD_RC,    &(dlBar->fillmod),
-    -1);
+    DlBar *dlBar = p->structure.bar;
+    medmGetValues(pRCB,
+      X_RC,          &(dlBar->object.x),
+      Y_RC,          &(dlBar->object.y),
+      WIDTH_RC,      &(dlBar->object.width),
+      HEIGHT_RC,     &(dlBar->object.height),
+      RDBK_RC,       &(dlBar->monitor.rdbk),
+      CLR_RC,        &(dlBar->monitor.clr),
+      BCLR_RC,       &(dlBar->monitor.bclr),
+      LABEL_RC,      &(dlBar->label),
+      DIRECTION_RC,  &(dlBar->direction),
+      CLRMOD_RC,     &(dlBar->clrmod),
+      FILLMOD_RC,    &(dlBar->fillmod),
+      -1);
 }

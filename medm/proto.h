@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -70,15 +66,15 @@ void dmDisplayListOk(Widget, XtPointer, XtPointer);
 void executePopupMenuCallback(Widget, XtPointer, XtPointer);
 void dmCreateRelatedDisplay(Widget, XtPointer, XtPointer);
 void dmExecuteShellCommand(Widget w,
-	DlShellCommandEntry *commandEntry,
-	XmPushButtonCallbackStruct *call_data);
+  DlShellCommandEntry *commandEntry,
+  XmPushButtonCallbackStruct *call_data);
 void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
-	XmDrawingAreaCallbackStruct *call_data);
+  XmDrawingAreaCallbackStruct *call_data);
 void relatedDisplayMenuButtonDestroy(Widget, XtPointer, XtPointer);
 void warnCallback(Widget, XtPointer, XtPointer);
 void exitCallback(Widget, XtPointer, XtPointer);
 void simpleRadioBoxCallback(Widget w, int buttonNumber,
-	XmToggleButtonCallbackStruct *call_data);
+  XmToggleButtonCallbackStruct *call_data);
 void valuatorValueChanged(Widget, XtPointer, XtPointer);
 
 /* channelPalette.c */
@@ -152,20 +148,20 @@ void unselectSelectedElements(void);
 void highlightAndAppendSelectedElements(DlList *);
 Boolean unhighlightAndUnselectElement(DlElement *element, int *numSelected);
 void moveCompositeChildren(DisplayInfo *cdi, DlElement *element,
-	int xOffset, int yOffset, Boolean moveWidgets);
+  int xOffset, int yOffset, Boolean moveWidgets);
 void updateDraggedElements(Position x0, Position y0, Position x1, Position y1);
 void updateResizedElements(Position x0, Position y0, Position x1, Position y1);
 DlElement *handleRectangularCreates(DlElementType, int, int, unsigned int, unsigned
- int);
+  int);
 
 /* executeControllers.c */
 Widget createPushButton(Widget parent,
-                        DlObject *po,
-                        Pixel fg,
-                        Pixel bg,
-                        Pixmap pixmap,
-                        char *label,
-                        XtPointer userData);
+  DlObject *po,
+  Pixel fg,
+  Pixel bg,
+  Pixmap pixmap,
+  char *label,
+  XtPointer userData);
 int textFieldFontListIndex(int height);
 int messageButtonFontListIndex(int height);
 int menuFontListIndex(int height);
@@ -183,7 +179,7 @@ void executeDlPolygon(DisplayInfo *, DlElement *);
 
 /* executeMonitors.c */
 Channel *allocateChannel(
-	DisplayInfo *displayInfo);
+  DisplayInfo *displayInfo);
 void executeDlMeter(DisplayInfo *, DlElement *);
 void executeDlBar(DisplayInfo *, DlElement *);
 void executeDlByte(DisplayInfo *, DlElement *);
@@ -284,7 +280,7 @@ void parsePlotcom(DisplayInfo *displayInfo, DlPlotcom *plotcom);
 void parsePen(DisplayInfo *displayInfo, DlPen *pen);
 void parseTrace(DisplayInfo *displayInfo, DlTrace *trace);
 void parsePlotAxisDefinition(DisplayInfo *displayInfo,
-	DlPlotAxisDefinition *axisDefinition);
+  DlPlotAxisDefinition *axisDefinition);
 
 /* parseStatics.c */
 DlFile *parseFile(DisplayInfo *displayInfo);
@@ -303,14 +299,14 @@ DlElement *parseFallingLine(DisplayInfo *);
 DlElement *parseRelatedDisplay(DisplayInfo *);
 DlElement * parseShellCommand(DisplayInfo *);
 void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
-	DlColormapEntry *dlColor);
+  DlColormapEntry *dlColor);
 void parseObject(DisplayInfo *displayInfo, DlObject *object);
 void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
-	DlRelatedDisplayEntry *relatedDisplay);
+  DlRelatedDisplayEntry *relatedDisplay);
 void parseShellCommandEntry(DisplayInfo *displayInfo,
-	DlShellCommandEntry *shellCommand);
+  DlShellCommandEntry *shellCommand);
 DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
-	char *filename);
+  char *filename);
 TOKEN getToken(DisplayInfo *displayInfo, char *word);
 
 /* resourcePalette.c */
@@ -339,7 +335,7 @@ void updateStripChartDataDialog(void);
 /* shared.c */
 void wmCloseCallback(Widget, XtPointer, XtPointer);
 XtCallbackProc wmTakeFocusCallback(Widget w, ShellType shellType,
-	XmAnyCallbackStruct *call_data);
+  XmAnyCallbackStruct *call_data);
 void updateStatusFields(void);
 void optionMenuSet(Widget menu, int buttonId);
 double medmTime();
@@ -355,14 +351,14 @@ void updateTaskMarkUpdate(UpdateTask *pt);
 void updateTaskRepaintRegion(DisplayInfo *, Region *);
 Boolean medmInitSharedDotC();
 void updateTaskStatusGetInfo(int *taskCount,
-                             int *periodicTaskCount,
-                             int *updateRequestCount,
-                             int *updateDiscardCount,
-                             int *periodicUpdateRequestCount,
-                             int *periodicUpdateDiscardCount,
-                             int *updateRequestQueued,
-                             int *updateExecuted,
-                             double *timeInterval); 
+  int *periodicTaskCount,
+  int *updateRequestCount,
+  int *updateDiscardCount,
+  int *periodicUpdateRequestCount,
+  int *periodicUpdateDiscardCount,
+  int *updateRequestQueued,
+  int *updateExecuted,
+  double *timeInterval); 
 void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, char **, short *, int *));
 
 
@@ -372,8 +368,8 @@ void localCvtDoubleToString( double, char *, unsigned short);
 void localCvtDoubleToExpNotationString(double, char *, unsigned short);
 
 void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
-	int regionX, int regionY, unsigned int regionWidth,
-	unsigned int regionHeight);
+  int regionX, int regionY, unsigned int regionWidth,
+  unsigned int regionHeight);
 void updateTextUpdate(UpdateTask *);
 void draw3DQuestionMark(UpdateTask *);
 void draw3DPane(UpdateTask *, Pixel);
@@ -384,9 +380,9 @@ void drawWhiteRectangle(UpdateTask *);
 int localCvtLongToHexString(long source, char *pdest);
 FILE *dmOpenUseableFile(char *filename);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
-	int  *endPos);
+  int  *endPos);
 void dmRemoveMonitorStructureFromMonitorList(
-	Channel *monitorData);
+  Channel *monitorData);
 void dmRemoveDisplayList(DisplayInfo *displayInfo);
 void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList);
 void dmRemoveDisplayInfo(DisplayInfo *displayInfo);
@@ -395,17 +391,17 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo);
 void dmTraverseAllDisplayLists(void);
 void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo);
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
-	int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
+  int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
 void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo,
-                                 char        *message,
-                                 char        *okBtnLabel,
-                                 char        *cancelBtnLabel,
-                                 char        *helpBtnLabel);
+  char        *message,
+  char        *okBtnLabel,
+  char        *cancelBtnLabel,
+  char        *helpBtnLabel);
 void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
-                                 char        *message,
-                                 char        *okBtnLabel,
-                                 char        *cancelBtnLabel,
-                                 char        *helpBtnLabel);
+  char        *message,
+  char        *okBtnLabel,
+  char        *cancelBtnLabel,
+  char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
@@ -413,24 +409,24 @@ void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
 DlElement *lookupElement(DlList *dlList, Position x0, Position y0);
 DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0);
 void selectedElementsLookup(DlList *dlList, Position x0, Position y0,
-	Position x1, Position y1, DlList *);
+  Position x1, Position y1, DlList *);
 DlElement *lookupCompositeElement(DlElement *elementPtr);
 DlElement *lookupDynamicAttributeElement(DlElement *elementPtr);
 DlElement *lookupBasicAttributeElement(DlElement *elementPtr);
 Boolean dmResizeDisplayList(DisplayInfo *displayInfo, Dimension newWidth,
-	Dimension newHeight);
+  Dimension newHeight);
 Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
-	Dimension newHeight);
+  Dimension newHeight);
 void initializeRubberbanding(void);
 void doRubberbanding(Window window, Position *initialX, Position *initialY,
-	Position *finalX, Position *finalY);
+  Position *finalX, Position *finalY);
 Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
-	Position initialX,Position initialY,Position *finalX,Position *finalY);
+  Position initialX,Position initialY,Position *finalX,Position *finalY);
 DisplayInfo *doPasting(Position *displayX, Position *displayY, int *offsetX,
-	int *offsetY);
+  int *offsetY);
 Boolean alreadySelected(DlElement *element);
 Boolean doResizing(Window window, Position initialX, Position initialY, 
-	Position *finalX, Position *finalY);
+  Position *finalX, Position *finalY);
 Widget lookupElementWidget(DisplayInfo *displayInfo, DlObject *object);
 void destroyElementWidget(DisplayInfo *displayInfo, Widget widget);
 void clearClipboard(void);
@@ -446,16 +442,16 @@ void raiseSelectedElements(DisplayInfo *);
 void alignSelectedElements(int alignment);
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail);
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
-	DlElement *afterThisElement);
+  DlElement *afterThisElement);
 void deleteAndFreeElementAndStructure(DisplayInfo *displayInfo, DlElement *ele);
 UpdateTask *getUpdateTaskFromWidget(Widget sourceWidget);
 UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y);
 NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
-	char *name);
+  char *name);
 void freeNameValueTable(NameValueTable *nameValueTable, int numEntries);
 void performMacroSubstitutions(DisplayInfo *displayInfo,
-        char *inputString, char *outputString, int sizeOfOutputString);
+  char *inputString, char *outputString, int sizeOfOutputString);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
@@ -484,7 +480,7 @@ void destroyFreeStringList();
 void medmInit(char *displayFontName);
 void dmTerminateX(void);
 unsigned long getPixelFromColormapByString(Display *display, int screen,
-			Colormap cmap, char *colorString);
+  Colormap cmap, char *colorString);
 int initMedmWidget();
 int destroyMedmWidget();
 

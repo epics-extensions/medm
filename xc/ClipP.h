@@ -45,14 +45,14 @@
 extern "C" {
 #endif
 
-typedef void (*XbaeClipRedrawProc)(
+    typedef void (*XbaeClipRedrawProc)(
 #if NeedFunctionPrototypes
-				   Widget	/* w */
+      Widget	/* w */
 #endif
-				   );
+	);
 
 #if defined (__cplusplus) || defined(c_plusplus)
-}
+	   }
 #endif
 
 /*
@@ -83,7 +83,7 @@ extern XbaeClipClassRec xbaeClipClassRec;
  * New fields for the Clip widget record
  */
 typedef struct {
-    /* resources */
+  /* resources */
     XtExposeProc	expose_proc;	/* function to call on expose */
     XtCallbackList	focus_callback;	/* callbacks for when we get focus */
 } XbaeClipPart;

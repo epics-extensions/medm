@@ -143,167 +143,167 @@ extern "C" {
 #define CONST
 #endif
 
-extern void XbaeMatrixSetCell(
+    extern void XbaeMatrixSetCell(
 #if NeedFunctionPrototypes
-			      Widget		/* w */,
-			      int		/* row */,
-			      int		/* column */,
-			      CONST String	/* value */
+      Widget		/* w */,
+      int		/* row */,
+      int		/* column */,
+      CONST String	/* value */
 #endif
-			      );
+	);
 
-extern void XbaeMatrixEditCell(
+    extern void XbaeMatrixEditCell(
 #if NeedFunctionPrototypes
-			       Widget	/* w */,
-			       int	/* row */,
-			       int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-			       );
+	);
 
-extern void XbaeMatrixSelectCell(
+    extern void XbaeMatrixSelectCell(
 #if NeedFunctionPrototypes
-				 Widget	/* w */,
-				 int	/* row */,
-				 int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixSelectRow(
+    extern void XbaeMatrixSelectRow(
 #if NeedFunctionPrototypes
-				Widget	/* w */,
-				int	/* row */
+      Widget	/* w */,
+      int	/* row */
 #endif
-				);
+	);
 
-extern void XbaeMatrixSelectColumn(
+    extern void XbaeMatrixSelectColumn(
 #if NeedFunctionPrototypes
-				   Widget	/* w */,
-				   int		/* column */
+      Widget	/* w */,
+      int		/* column */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixDeselectAll(
+    extern void XbaeMatrixDeselectAll(
 #if NeedFunctionPrototypes
-				 Widget	/* w */
+      Widget	/* w */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixDeselectCell(
+    extern void XbaeMatrixDeselectCell(
 #if NeedFunctionPrototypes
-				   Widget/* w */,
-				   int	/* row */,
-				   int	/* column */
+      Widget/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixDeselectRow(
+    extern void XbaeMatrixDeselectRow(
 #if NeedFunctionPrototypes
-				   Widget/* w */,
-				   int	/* row */
+      Widget/* w */,
+      int	/* row */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixDeselectColumn(
+    extern void XbaeMatrixDeselectColumn(
 #if NeedFunctionPrototypes
-				   Widget/* w */,
-				   int	/* column */
+      Widget/* w */,
+      int	/* column */
 #endif
-				 );
+	);
 
-extern String XbaeMatrixGetCell(
+    extern String XbaeMatrixGetCell(
 #if NeedFunctionPrototypes
-				Widget	/* w */,
-				int	/* row */,
-				int	/* column */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */
 #endif
-				);
+	);
 
-extern Boolean XbaeMatrixCommitEdit(
+    extern Boolean XbaeMatrixCommitEdit(
 #if NeedFunctionPrototypes
-				    Widget	/* w */,
-				    Boolean	/* unmap */
+      Widget	/* w */,
+      Boolean	/* unmap */
 #endif
-				    );
+	);
 
-extern void XbaeMatrixCancelEdit(
+    extern void XbaeMatrixCancelEdit(
 #if NeedFunctionPrototypes
-				 Widget		/* w */,
-				 Boolean	/* unmap */
+      Widget		/* w */,
+      Boolean	/* unmap */
 #endif
-				 );
+	);
 
 
-extern void XbaeMatrixAddRows(
+    extern void XbaeMatrixAddRows(
 #if NeedFunctionPrototypes
-			      Widget	/* w */,
-			      int	/* position */,
-			      String *	/* rows */,
-			      String *	/* labels */,
-			      Pixel *	/* colors */,
-			      int	/* num_colors */
+      Widget	/* w */,
+      int	/* position */,
+      String *	/* rows */,
+      String *	/* labels */,
+      Pixel *	/* colors */,
+      int	/* num_colors */
 #endif
-			      );
+	);
 
-extern void XbaeMatrixDeleteRows(
+    extern void XbaeMatrixDeleteRows(
 #if NeedFunctionPrototypes
-				 Widget	/* w */,
-				 int	/* position */,
-				 int	/* num_rows */
+      Widget	/* w */,
+      int	/* position */,
+      int	/* num_rows */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixAddColumns(
+    extern void XbaeMatrixAddColumns(
 #if NeedFunctionPrototypes
-				 Widget		/* w */,
-				 int		/* position */,
-				 String *	/* columns */,
-				 String *	/* labels */,
-				 short *	/* widths */,
-				 int *		/* max_lengths */,
-				 unsigned char * /* alignments */,
-				 unsigned char * /* label_alignments */,
-				 Pixel *	/* colors */,
-				 int		/* num_columns */
+      Widget		/* w */,
+      int		/* position */,
+      String *	/* columns */,
+      String *	/* labels */,
+      short *	/* widths */,
+      int *		/* max_lengths */,
+      unsigned char * /* alignments */,
+      unsigned char * /* label_alignments */,
+      Pixel *	/* colors */,
+      int		/* num_columns */
 #endif
-				 );
+	);
 
-extern void XbaeMatrixDeleteColumns(
+    extern void XbaeMatrixDeleteColumns(
 #if NeedFunctionPrototypes
-				    Widget	/* w */,
-				    int		/* position */,
-				    int		/* num_columns */
+      Widget	/* w */,
+      int		/* position */,
+      int		/* num_columns */
 #endif
-				    );
+	);
 
-extern void XbaeMatrixSetRowColors(
+    extern void XbaeMatrixSetRowColors(
 #if NeedFunctionPrototypes
-				   Widget	/* w */,
-				   int		/* position */,
-				   Pixel *	/* colors */,
-				   int		/* num_colors */
+      Widget	/* w */,
+      int		/* position */,
+      Pixel *	/* colors */,
+      int		/* num_colors */
 #endif
-				   );
+	);
 
-extern void XbaeMatrixSetColumnColors(
+    extern void XbaeMatrixSetColumnColors(
 #if NeedFunctionPrototypes
-				      Widget	/* w */,
-				      int	/* position */,
-				      Pixel *	/* colors */,
-				      int	/* num_colors */
+      Widget	/* w */,
+      int	/* position */,
+      Pixel *	/* colors */,
+      int	/* num_colors */
 #endif
-				      );
+	);
 
-extern void XbaeMatrixSetCellColor(
+    extern void XbaeMatrixSetCellColor(
 #if NeedFunctionPrototypes
-				      Widget	/* w */,
-				      int	/* row */,
-				      int	/* column */,
-				      Pixel	/* color */
+      Widget	/* w */,
+      int	/* row */,
+      int	/* column */,
+      Pixel	/* color */
 #endif
-				      );
+	);
 
 #if defined (__cplusplus) || defined(c_plusplus)
-}
+	   }
 #endif
 #undef CONST
 
@@ -375,4 +375,3 @@ typedef struct _XbaeMatrixSelectCellCallbackStruct {
 
 #endif /* _Xbae_Matrix_h */
 /* DON'T ADD STUFF AFTER THIS #endif */
-

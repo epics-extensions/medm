@@ -43,26 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              - strip chart list is removed
- *                                from the displayInfo structure.
- *                              - a updateTaskList is added to the 
- *                                displayInfo structure.
- * .03  09-08-95        vong    conform to c++ syntax
- * .04  10-03-95        vong    call dmResizeDisplayList() before
- *                              dmTraverseDisplayList() instead of
- *                              using XResizeWindows()
- *                              
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -81,82 +68,82 @@ static Widget lastShell;
 
 typedef DlElement *(*medmParseFunc)(DisplayInfo *);
 typedef struct {
-   char *name;
-   medmParseFunc func;
+    char *name;
+    medmParseFunc func;
 } ParseFuncEntry;
 
 typedef struct _parseFuncEntryNode {
-   ParseFuncEntry *entry;
-   struct _parseFuncEntryNode *next;
-   struct _parseFuncEntryNode *prev;
+    ParseFuncEntry *entry;
+    struct _parseFuncEntryNode *next;
+    struct _parseFuncEntryNode *prev;
 } ParseFuncEntryNode;
 
 ParseFuncEntry parseFuncTable[] = {
-         {"rectangle",            parseRectangle},
-         {"oval",                 parseOval},
-         {"arc",                  parseArc},
-         {"text",                 parseText},
-         {"falling line",         parseFallingLine},
-         {"rising line",          parseRisingLine},
-         {"related display",      parseRelatedDisplay},
-         {"shell command",        parseShellCommand},
-         {"bar",                  parseBar},
-         {"indicator",            parseIndicator},
-         {"meter",                parseMeter},
-         {"byte",                 parseByte},
-         {"strip chart",          parseStripChart},
-         {"cartesian plot",       parseCartesianPlot},
-         {"text update",          parseTextUpdate},
-         {"choice button",        parseChoiceButton},
-         {"button",               parseChoiceButton},
-         {"message button",       parseMessageButton},
-         {"menu",                 parseMenu},
-         {"text entry",           parseTextEntry},
-         {"valuator",             parseValuator},
-         {"image",                parseImage},
-         {"composite",            parseComposite},
-         {"polyline",             parsePolyline},
-         {"polygon",              parsePolygon},
+    {"rectangle",            parseRectangle},
+    {"oval",                 parseOval},
+    {"arc",                  parseArc},
+    {"text",                 parseText},
+    {"falling line",         parseFallingLine},
+    {"rising line",          parseRisingLine},
+    {"related display",      parseRelatedDisplay},
+    {"shell command",        parseShellCommand},
+    {"bar",                  parseBar},
+    {"indicator",            parseIndicator},
+    {"meter",                parseMeter},
+    {"byte",                 parseByte},
+    {"strip chart",          parseStripChart},
+    {"cartesian plot",       parseCartesianPlot},
+    {"text update",          parseTextUpdate},
+    {"choice button",        parseChoiceButton},
+    {"button",               parseChoiceButton},
+    {"message button",       parseMessageButton},
+    {"menu",                 parseMenu},
+    {"text entry",           parseTextEntry},
+    {"valuator",             parseValuator},
+    {"image",                parseImage},
+    {"composite",            parseComposite},
+    {"polyline",             parsePolyline},
+    {"polygon",              parsePolygon},
 };
 
 int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
-  int i;
-  for (i=0; i<parseFuncTableSize; i++) {
-    if (!strcmp(token,parseFuncTable[i].name)) {
-      return parseFuncTable[i].func(pDI);
+    int i;
+    for (i=0; i<parseFuncTableSize; i++) {
+	if (!strcmp(token,parseFuncTable[i].name)) {
+	    return parseFuncTable[i].func(pDI);
+	}
     }
-  }
-  return 0;
+    return 0;
 }
 
 #ifdef __cplusplus
 static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
 #else
-static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
+    static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
 #endif
 {
-  Arg args[2];
-  XtSetArg(args[0],XmNx,&x);
-  XtSetArg(args[1],XmNy,&y);
-  XtGetValues(shell,args,2);
-  lastShell = shell;
+    Arg args[2];
+    XtSetArg(args[0],XmNx,&x);
+    XtSetArg(args[1],XmNy,&y);
+    XtGetValues(shell,args,2);
+    lastShell = shell;
 }
 
 #ifdef __cplusplus
 static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
 #else
-static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
+    static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 #endif
 {
-  Arg args[2];
+    Arg args[2];
 
-  if (shell == lastShell) {
-    XtSetArg(args[0],XmNx,x);
-    XtSetArg(args[1],XmNy,y);
-    XtSetValues(shell,args,2);
-  }
-  help_protocol(shell);
+    if (shell == lastShell) {
+	XtSetArg(args[0],XmNx,x);
+	XtSetArg(args[1],XmNy,y);
+	XtSetValues(shell,args,2);
+    }
+    help_protocol(shell);
 }
 
 /***
@@ -169,211 +156,211 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
  */
 DisplayInfo *allocateDisplayInfo()
 {
-  DisplayInfo *displayInfo;
-  int n;
-  Arg args[8];
+    DisplayInfo *displayInfo;
+    int n;
+    Arg args[8];
 
 /* 
  * allocate a DisplayInfo structure and shell for this display file/list
  */
-  displayInfo = (DisplayInfo *) malloc(sizeof(DisplayInfo));
-  if (!displayInfo) return NULL;
+    displayInfo = (DisplayInfo *) malloc(sizeof(DisplayInfo));
+    if (!displayInfo) return NULL;
 
-  displayInfo->dlElementList = createDlList();
-  if (!displayInfo->dlElementList) {
-    free(displayInfo);
-    return NULL;
-  }
+    displayInfo->dlElementList = createDlList();
+    if (!displayInfo->dlElementList) {
+	free(displayInfo);
+	return NULL;
+    }
 
-  displayInfo->selectedDlElementList = createDlList();
-  if (!displayInfo->selectedDlElementList) {
-    free(displayInfo->dlElementList);
-    free(displayInfo);
-    return NULL;
-  }
-  displayInfo->selectedElementsAreHighlighted = False;
+    displayInfo->selectedDlElementList = createDlList();
+    if (!displayInfo->selectedDlElementList) {
+	free(displayInfo->dlElementList);
+	free(displayInfo);
+	return NULL;
+    }
+    displayInfo->selectedElementsAreHighlighted = False;
 
-  displayInfo->filePtr = NULL;
-  displayInfo->newDisplay = True;
-  displayInfo->versionNumber = 0;
+    displayInfo->filePtr = NULL;
+    displayInfo->newDisplay = True;
+    displayInfo->versionNumber = 0;
 
-  displayInfo->drawingArea = 0;
-  displayInfo->drawingAreaPixmap = 0;
-  displayInfo->cartesianPlotPopupMenu = 0;
-  displayInfo->selectedCartesianPlot = 0;
-  displayInfo->warningDialog = NULL;
-  displayInfo->warningDialogAnswer = 0;
-  displayInfo->questionDialog = NULL;
-  displayInfo->questionDialogAnswer = 0;
-  displayInfo->shellCommandPromptD = NULL;
+    displayInfo->drawingArea = 0;
+    displayInfo->drawingAreaPixmap = 0;
+    displayInfo->cartesianPlotPopupMenu = 0;
+    displayInfo->selectedCartesianPlot = 0;
+    displayInfo->warningDialog = NULL;
+    displayInfo->warningDialogAnswer = 0;
+    displayInfo->questionDialog = NULL;
+    displayInfo->questionDialogAnswer = 0;
+    displayInfo->shellCommandPromptD = NULL;
 
-  updateTaskInit(displayInfo);
+    updateTaskInit(displayInfo);
 
 #if 0
-  displayInfo->childCount = 0;
+    displayInfo->childCount = 0;
 #endif
 
-  displayInfo->colormap = 0;
-  displayInfo->dlColormapCounter = 0;
-  displayInfo->dlColormapSize = 0;
-  displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
-  displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
-  displayInfo->gc = 0;
-  displayInfo->pixmapGC = 0;
+    displayInfo->colormap = 0;
+    displayInfo->dlColormapCounter = 0;
+    displayInfo->dlColormapSize = 0;
+    displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
+    displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
+    displayInfo->gc = 0;
+    displayInfo->pixmapGC = 0;
 
-  displayInfo->traversalMode = globalDisplayListTraversalMode;
-  displayInfo->hasBeenEditedButNotSaved = False;
-  displayInfo->fromRelatedDisplayExecution = FALSE;
+    displayInfo->traversalMode = globalDisplayListTraversalMode;
+    displayInfo->hasBeenEditedButNotSaved = False;
+    displayInfo->fromRelatedDisplayExecution = FALSE;
 
-  displayInfo->nameValueTable = NULL;
-  displayInfo->numNameValues = 0;
+    displayInfo->nameValueTable = NULL;
+    displayInfo->numNameValues = 0;
 
-  displayInfo->dlFile = NULL;
-  displayInfo->dlColormap = NULL;
+    displayInfo->dlFile = NULL;
+    displayInfo->dlColormap = NULL;
 
   /*
    * create the shell and add callbacks
    */
-  n = 0;
-  XtSetArg(args[n],XmNiconName,"display"); n++;
-  XtSetArg(args[n],XmNtitle,"display"); n++;
-  XtSetArg(args[n],XmNallowShellResize,TRUE); n++;
- /* for highlightOnEnter on pointer motion, this must be set for shells */
-  XtSetArg(args[n],XmNkeyboardFocusPolicy,XmPOINTER); n++;
- /* map window manager menu Close function to application close... */
-  XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
-  if (privateCmap) {
-    XtSetArg(args[n],XmNcolormap,cmap); n++;
-  }
-  displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
-			mainShell,args,n);
-  XtAddCallback(displayInfo->shell,XmNpopupCallback,
-			displayShellPopupCallback,NULL);
-  XtAddCallback(displayInfo->shell,XmNpopdownCallback,
-			displayShellPopdownCallback,NULL);
+    n = 0;
+    XtSetArg(args[n],XmNiconName,"display"); n++;
+    XtSetArg(args[n],XmNtitle,"display"); n++;
+    XtSetArg(args[n],XmNallowShellResize,TRUE); n++;
+  /* for highlightOnEnter on pointer motion, this must be set for shells */
+    XtSetArg(args[n],XmNkeyboardFocusPolicy,XmPOINTER); n++;
+  /* map window manager menu Close function to application close... */
+    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    if (privateCmap) {
+	XtSetArg(args[n],XmNcolormap,cmap); n++;
+    }
+    displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
+      mainShell,args,n);
+    XtAddCallback(displayInfo->shell,XmNpopupCallback,
+      displayShellPopupCallback,NULL);
+    XtAddCallback(displayInfo->shell,XmNpopdownCallback,
+      displayShellPopdownCallback,NULL);
 
   /* register interest in these protocols */
-  { Atom atoms[2];
+    { Atom atoms[2];
     atoms[0] = WM_DELETE_WINDOW;
     atoms[1] = WM_TAKE_FOCUS;
     XmAddWMProtocols(displayInfo->shell,atoms,2);
-  }
+    }
 
   /* and register the callbacks for these protocols */
-  XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
-			(XtCallbackProc)wmCloseCallback,
-			(XtPointer)DISPLAY_SHELL);
+    XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
+      (XtCallbackProc)wmCloseCallback,
+      (XtPointer)DISPLAY_SHELL);
 
   /* 
    * create the shell's EXECUTE popup menu
    */
-  n = 0;
-  XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); n++;
-  XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
-  XtSetArg(args[n], XmNbuttons, executePopupMenuButtons); n++;
-  XtSetArg(args[n], XmNsimpleCallback, executePopupMenuCallback); n++;
-  XtSetArg(args[n], XmNuserData, displayInfo); n++;
-  XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-  displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
-	"executePopupMenu", args, n);
+    n = 0;
+    XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); n++;
+    XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
+    XtSetArg(args[n], XmNbuttons, executePopupMenuButtons); n++;
+    XtSetArg(args[n], XmNsimpleCallback, executePopupMenuCallback); n++;
+    XtSetArg(args[n], XmNuserData, displayInfo); n++;
+    XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+    displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
+      "executePopupMenu", args, n);
   /* 
    * create the shell's EDIT popup menu
    */
-  displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
-  XtVaSetValues(displayInfo->editPopupMenu,
-		XmNtearOffModel, XmTEAR_OFF_DISABLED,
-		XmNuserData, displayInfo,
-		NULL);
+    displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
+    XtVaSetValues(displayInfo->editPopupMenu,
+      XmNtearOffModel, XmTEAR_OFF_DISABLED,
+      XmNuserData, displayInfo,
+      NULL);
 
 /*
  * attach event handlers for menu activation
  */
-  XtAddEventHandler(displayInfo->shell,ButtonPressMask,False,
-	popupMenu,displayInfo);
-  XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
-	popdownMenu,displayInfo);
+    XtAddEventHandler(displayInfo->shell,ButtonPressMask,False,
+      popupMenu,displayInfo);
+    XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
+      popdownMenu,displayInfo);
 
   /* append to end of the list */
-  displayInfo->next = NULL;
-  displayInfo->prev = displayInfoListTail;
-  displayInfoListTail->next = displayInfo;
-  displayInfoListTail = displayInfo;
+    displayInfo->next = NULL;
+    displayInfo->prev = displayInfoListTail;
+    displayInfoListTail->next = displayInfo;
+    displayInfoListTail = displayInfo;
 
-  return(displayInfo);
+    return(displayInfo);
 }
 
 
 TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
-  TOKEN tokenType;
-  char token[MAX_TOKEN_LENGTH];
-  int nestingLevel = 0;
-  static DlBasicAttribute attr;
-  static DlDynamicAttribute dynAttr;
-  static Boolean init = True;
+    TOKEN tokenType;
+    char token[MAX_TOKEN_LENGTH];
+    int nestingLevel = 0;
+    static DlBasicAttribute attr;
+    static DlDynamicAttribute dynAttr;
+    static Boolean init = True;
  
-  if (init && displayInfo->versionNumber < 20200) {
-    basicAttributeInit(&attr);
-    dynamicAttributeInit(&dynAttr);
-    init = False;
-  }
- 
-  do {
-    switch (tokenType=getToken(displayInfo,token)) {
-      case T_WORD : {
-        DlElement *pe = 0;
-        if (pe = getNextElement(displayInfo,token)) {
-          if (displayInfo->versionNumber < 20200) {
-            switch (pe->type) {
-            case DL_Rectangle :
-            case DL_Oval      :
-            case DL_Arc       :
-            case DL_Text      :
-            case DL_Polyline  :
-            case DL_Polygon   :
-              pe->structure.rectangle->attr = attr;
-              if (dynAttr.name && dynAttr.name[0] != '\0') {
-                pe->structure.rectangle->dynAttr = dynAttr;
-                dynAttr.name = 0;
-              }
-              break;
-            }
-          }
-        } else
-        if (displayInfo->versionNumber < 20200) {
-          if (!strcmp(token,"<<basic atribute>>") ||
-              !strcmp(token,"basic attribute") ||
-              !strcmp(token,"<<basic attribute>>")) {
-            parseOldBasicAttribute(displayInfo,&attr);
-          } else
-          if (!strcmp(token,"dynamic attribute") ||
-              !strcmp(token,"<<dynamic attribute>>")) {
-            parseOldDynamicAttribute(displayInfo,&dynAttr);
-          }
-        }
-        if (pe) {
-          appendDlElement(dlList,pe);
-        }
-      }
-      case T_EQUAL:
-        break;
-      case T_LEFT_BRACE:
-        nestingLevel++; break;
-      case T_RIGHT_BRACE:
-        nestingLevel--; break;
-      default :
-        break;
+    if (init && displayInfo->versionNumber < 20200) {
+	basicAttributeInit(&attr);
+	dynamicAttributeInit(&dynAttr);
+	init = False;
     }
-  } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-           && (tokenType != T_EOF));
+ 
+    do {
+	switch (tokenType=getToken(displayInfo,token)) {
+	case T_WORD : {
+	    DlElement *pe = 0;
+	    if (pe = getNextElement(displayInfo,token)) {
+		if (displayInfo->versionNumber < 20200) {
+		    switch (pe->type) {
+		    case DL_Rectangle :
+		    case DL_Oval      :
+		    case DL_Arc       :
+		    case DL_Text      :
+		    case DL_Polyline  :
+		    case DL_Polygon   :
+			pe->structure.rectangle->attr = attr;
+			if (dynAttr.name && dynAttr.name[0] != '\0') {
+			    pe->structure.rectangle->dynAttr = dynAttr;
+			    dynAttr.name = 0;
+			}
+			break;
+		    }
+		}
+	    } else
+	      if (displayInfo->versionNumber < 20200) {
+		  if (!strcmp(token,"<<basic atribute>>") ||
+		    !strcmp(token,"basic attribute") ||
+		    !strcmp(token,"<<basic attribute>>")) {
+		      parseOldBasicAttribute(displayInfo,&attr);
+		  } else
+		    if (!strcmp(token,"dynamic attribute") ||
+		      !strcmp(token,"<<dynamic attribute>>")) {
+			parseOldDynamicAttribute(displayInfo,&dynAttr);
+		    }
+	      }
+	    if (pe) {
+		appendDlElement(dlList,pe);
+	    }
+	}
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	default :
+	    break;
+	}
+    } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF));
   /* reset the inti flag */
-  if (tokenType == T_EOF) init = True;
+    if (tokenType == T_EOF) init = True;
 #if 0
-  if (dynAttr.name) {
-    freeString(dynAttr.name);
-    dynAttr.name = NULL;
-  }
+    if (dynAttr.name) {
+	freeString(dynAttr.name);
+	dynAttr.name = NULL;
+    }
 #endif
-  return tokenType;
+    return tokenType;
 }
 
 /***
@@ -393,167 +380,167 @@ void dmDisplayListParse(
   char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  Arg args[7];
-  DlElement *dlElement;
-  int numPairs;
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    Arg args[7];
+    DlElement *dlElement;
+    int numPairs;
 
-  initializeGlobalResourceBundle();
+    initializeGlobalResourceBundle();
 
-  if (!displayInfo) {
-    /* 
-     * allocate a DisplayInfo structure and shell for this display file/list
-     */
-    displayInfo = allocateDisplayInfo();
-    displayInfo->filePtr = filePtr;
-    currentDisplayInfo = displayInfo;
-    currentDisplayInfo->newDisplay = False;
-  } else {
-    dmCleanupDisplayInfo(displayInfo,False);
-    destroyDlDisplayList(displayInfo->dlElementList);
-    displayInfo->filePtr = filePtr;
-    currentDisplayInfo = displayInfo;
-    currentDisplayInfo->newDisplay = False;
-  }
+    if (!displayInfo) {
+      /* 
+       * allocate a DisplayInfo structure and shell for this display file/list
+       */
+	displayInfo = allocateDisplayInfo();
+	displayInfo->filePtr = filePtr;
+	currentDisplayInfo = displayInfo;
+	currentDisplayInfo->newDisplay = False;
+    } else {
+	dmCleanupDisplayInfo(displayInfo,False);
+	destroyDlDisplayList(displayInfo->dlElementList);
+	displayInfo->filePtr = filePtr;
+	currentDisplayInfo = displayInfo;
+	currentDisplayInfo->newDisplay = False;
+    }
   
-  fromRelatedDisplayExecution = displayInfo->fromRelatedDisplayExecution;
+    fromRelatedDisplayExecution = displayInfo->fromRelatedDisplayExecution;
 
   /*
    * generate the name-value table for macro substitutions (related display)
    */
-  if (argsString) {
-    displayInfo->nameValueTable = generateNameValueTable(argsString,&numPairs);
-    displayInfo->numNameValues = numPairs;
-  } else {
-    displayInfo->nameValueTable = NULL;
-    displayInfo->numNameValues = 0;
-  }
+    if (argsString) {
+	displayInfo->nameValueTable = generateNameValueTable(argsString,&numPairs);
+	displayInfo->numNameValues = numPairs;
+    } else {
+	displayInfo->nameValueTable = NULL;
+	displayInfo->numNameValues = 0;
+    }
 
 
   /* if first token isn't "file" then bail out! */
-  tokenType=getToken(displayInfo,token);
-  if (tokenType == T_WORD && !strcmp(token,"file")) {
-    displayInfo->dlFile = parseFile(displayInfo);
-    if (displayInfo->dlFile) {
-      displayInfo->versionNumber = displayInfo->dlFile->versionNumber;
-      strcpy(displayInfo->dlFile->name,filename);
+    tokenType=getToken(displayInfo,token);
+    if (tokenType == T_WORD && !strcmp(token,"file")) {
+	displayInfo->dlFile = parseFile(displayInfo);
+	if (displayInfo->dlFile) {
+	    displayInfo->versionNumber = displayInfo->dlFile->versionNumber;
+	    strcpy(displayInfo->dlFile->name,filename);
+	} else {
+	    fprintf(stderr,"\ndmDisplayListParse: out of memory!");
+	    displayInfo->filePtr = NULL;
+	    dmRemoveDisplayInfo(displayInfo);
+	    currentDisplayInfo = NULL;
+	    return;
+	}
     } else {
-      fprintf(stderr,"\ndmDisplayListParse: out of memory!");
-      displayInfo->filePtr = NULL;
-      dmRemoveDisplayInfo(displayInfo);
-      currentDisplayInfo = NULL;
-      return;
+	fprintf(stderr,"\ndmDisplayListParse: invalid .adl file (bad first token)");
+	displayInfo->filePtr = NULL;
+	dmRemoveDisplayInfo(displayInfo);
+	currentDisplayInfo = NULL;
+	return;
     }
-  } else {
-    fprintf(stderr,"\ndmDisplayListParse: invalid .adl file (bad first token)");
-    displayInfo->filePtr = NULL;
-    dmRemoveDisplayInfo(displayInfo);
-    currentDisplayInfo = NULL;
-    return;
-  }
 
-  tokenType=getToken(displayInfo,token);
-  if (tokenType ==T_WORD && !strcmp(token,"display")) {
-	  parseDisplay(displayInfo);
-  }
+    tokenType=getToken(displayInfo,token);
+    if (tokenType ==T_WORD && !strcmp(token,"display")) {
+	parseDisplay(displayInfo);
+    }
 
-  tokenType=getToken(displayInfo,token);
-  if (tokenType == T_WORD && 
+    tokenType=getToken(displayInfo,token);
+    if (tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
-       !strcmp(token,"<<color map>>"))) {
-    displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
-	  if (!displayInfo->dlColormap) {
-	    /* error - do total bail out */
+	!strcmp(token,"<<color map>>"))) {
+	displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
+	if (!displayInfo->dlColormap) {
+	  /* error - do total bail out */
 	    fclose(displayInfo->filePtr);
 	    dmRemoveDisplayInfo(displayInfo);
 	    return;
-	  }
-  }
+	}
+    }
 
   /*
    * proceed with parsing
    */
-  while (parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList)
-         != T_EOF );
+    while (parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList)
+      != T_EOF );
 
-  displayInfo->filePtr = NULL;
+    displayInfo->filePtr = NULL;
 
 /*
  * traverse (execute) this displayInfo and associated display list
  */
-  {
-    int x, y;
-    unsigned int w, h;
-    int mask;
+    {
+	int x, y;
+	unsigned int w, h;
+	int mask;
 
-    mask = XParseGeometry(geometryString,&x,&y,&w,&h);
+	mask = XParseGeometry(geometryString,&x,&y,&w,&h);
 
-    if ((mask & WidthValue) && (mask & HeightValue)) {
-      dmResizeDisplayList(displayInfo,w,h);
+	if ((mask & WidthValue) && (mask & HeightValue)) {
+	    dmResizeDisplayList(displayInfo,w,h);
+	}
+	dmTraverseDisplayList(displayInfo);
+
+	XtPopup(displayInfo->shell,XtGrabNone);
+
+	if ((mask & XValue) && (mask & YValue)) {
+	    XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
+	}
     }
-    dmTraverseDisplayList(displayInfo);
-
-    XtPopup(displayInfo->shell,XtGrabNone);
-
-    if ((mask & XValue) && (mask & YValue)) {
-      XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
-    }
-  }
 }
 
 DlElement *parseDisplay(
   DisplayInfo *displayInfo)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel = 0;
-  DlDisplay *dlDisplay;
-  DlElement *dlElement = createDlDisplay(NULL);
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+    DlDisplay *dlDisplay;
+    DlElement *dlElement = createDlDisplay(NULL);
  
-  if (!dlElement) return 0;
-  dlDisplay = dlElement->structure.display;
+    if (!dlElement) return 0;
+    dlDisplay = dlElement->structure.display;
  
-  do {
+    do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
-            case T_WORD:
-                if (!strcmp(token,"object")) {
-                        parseObject(displayInfo,&(dlDisplay->object));
-                } else if (!strcmp(token,"cmap")) {
+	case T_WORD:
+	    if (!strcmp(token,"object")) {
+		parseObject(displayInfo,&(dlDisplay->object));
+	    } else if (!strcmp(token,"cmap")) {
 /* parse separate display list to get and use that colormap */
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        if (strlen(token) > (size_t) 0) {
-                            strcpy(dlDisplay->cmap,token);
-                        }
-                } else if (!strcmp(token,"bclr")) {
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        dlDisplay->bclr = atoi(token) % DL_MAX_COLORS;
-                        displayInfo->drawingAreaBackgroundColor =
-                                dlDisplay->bclr;
-                } else if (!strcmp(token,"clr")) {
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        dlDisplay->clr = atoi(token) % DL_MAX_COLORS;
-                        displayInfo->drawingAreaForegroundColor =
-                                dlDisplay->clr;
-                }
-                break;
-            case T_EQUAL:
-                break;
-            case T_LEFT_BRACE:
-                nestingLevel++; break;
-            case T_RIGHT_BRACE:
-                nestingLevel--; break;
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (strlen(token) > (size_t) 0) {
+		    strcpy(dlDisplay->cmap,token);
+		}
+	    } else if (!strcmp(token,"bclr")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		dlDisplay->bclr = atoi(token) % DL_MAX_COLORS;
+		displayInfo->drawingAreaBackgroundColor =
+		  dlDisplay->bclr;
+	    } else if (!strcmp(token,"clr")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		dlDisplay->clr = atoi(token) % DL_MAX_COLORS;
+		displayInfo->drawingAreaForegroundColor =
+		  dlDisplay->clr;
+	    }
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
         }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-                && (tokenType != T_EOF) );
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
 
-  appendDlElement(displayInfo->dlElementList,dlElement); 
+    appendDlElement(displayInfo->dlElementList,dlElement); 
   /* fix up x,y so that 0,0 (old defaults) are replaced */
-  if (dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
-  if (dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
+    if (dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
+    if (dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
  
-  return dlElement;
+    return dlElement;
 }

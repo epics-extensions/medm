@@ -23,27 +23,27 @@
  */
 
 int getOKStringPosition(stringPosition,usedSpots,usedCtr,stringHeight)
-  int stringPosition, usedSpots[], *usedCtr, stringHeight;
+    int stringPosition, usedSpots[], *usedCtr, stringHeight;
 {
-int i, j, newPosition;
+    int i, j, newPosition;
 
- newPosition = stringPosition;
+    newPosition = stringPosition;
 
 
- for (i=0; i<*usedCtr; i++) {
-   if (newPosition > usedSpots[i] - stringHeight/2 &&
-       newPosition < usedSpots[i] + stringHeight/2) {
-	   newPosition = newPosition + 3*stringHeight/4;
-	   newPosition = getOKStringPosition(newPosition,
-				usedSpots,usedCtr,stringHeight);
-	   return(newPosition);
-   }
- }
+    for (i=0; i<*usedCtr; i++) {
+	if (newPosition > usedSpots[i] - stringHeight/2 &&
+	  newPosition < usedSpots[i] + stringHeight/2) {
+	    newPosition = newPosition + 3*stringHeight/4;
+	    newPosition = getOKStringPosition(newPosition,
+	      usedSpots,usedCtr,stringHeight);
+	    return(newPosition);
+	}
+    }
 
- usedSpots[*usedCtr] = newPosition;
- (*usedCtr)++;
+    usedSpots[*usedCtr] = newPosition;
+    (*usedCtr)++;
 
- return(newPosition);
+    return(newPosition);
 
 }
 
@@ -53,33 +53,33 @@ int i, j, newPosition;
  */
 
 void getOKStringPositionXY(stringPositionX, stringPositionY, 
-	used, numUsed, nTicks, stringHeight)
-  int *stringPositionX, *stringPositionY, used[], numUsed[], 
-	nTicks, stringHeight;
+  used, numUsed, nTicks, stringHeight)
+    int *stringPositionX, *stringPositionY, used[], numUsed[], 
+  nTicks, stringHeight;
 {
-int i, j, newPositionX, newPositionY;
+    int i, j, newPositionX, newPositionY;
 
- newPositionX = *stringPositionX;
- newPositionY = *stringPositionY;
+    newPositionX = *stringPositionX;
+    newPositionY = *stringPositionY;
 
-/* change Y position if there are already entries there for that X position */
+  /* change Y position if there are already entries there for that X position */
 
- for (i=0; i<nTicks; i++) {
-   if (numUsed[i] != 0) {
-      if (newPositionX > used[i] - AVGSTRINGSIZE &&
-	newPositionX < used[i] + AVGSTRINGSIZE) {
-	    newPositionY = *stringPositionY + numUsed[i]*(3*stringHeight/4);
-	    numUsed[i]++;
-	    *stringPositionX = newPositionX;
-	    *stringPositionY = newPositionY;
+    for (i=0; i<nTicks; i++) {
+	if (numUsed[i] != 0) {
+	    if (newPositionX > used[i] - AVGSTRINGSIZE &&
+	      newPositionX < used[i] + AVGSTRINGSIZE) {
+		newPositionY = *stringPositionY + numUsed[i]*(3*stringHeight/4);
+		numUsed[i]++;
+		*stringPositionX = newPositionX;
+		*stringPositionY = newPositionY;
+		return;
+	    }
+	} else {
+	    used[i] = newPositionX;
+	    numUsed[i] = 1;
 	    return;
-      }
-   } else {
-      used[i] = newPositionX;
-      numUsed[i] = 1;
-      return;
-   }
- }
+	}
+    }
 }
 
 
@@ -97,61 +97,61 @@ int i, j, newPositionX, newPositionY;
  */
 
 char *graphXGetBestFont(display,family,face,type,size)
-  Display *display;
-  char *family;			/* font family; e.g., "times" */
-  char *face;			/* font typeface; e.g.,  "medium" or "bold" */
-  char *type;			/* font type; e.g., "r" (roman), "i" (italic) */
-  int size;			/* point size; e.g., 12 */
+    Display *display;
+    char *family;			/* font family; e.g., "times" */
+    char *face;			/* font typeface; e.g.,  "medium" or "bold" */
+    char *type;			/* font type; e.g., "r" (roman), "i" (italic) */
+    int size;			/* point size; e.g., 12 */
 {
-  char **fontList;
-  char pattern[PATTERN_SIZE];
-  char *fontString;
-  int numFonts;
-  int l, localSize;
-  int loopCount;
+    char **fontList;
+    char pattern[PATTERN_SIZE];
+    char *fontString;
+    int numFonts;
+    int l, localSize;
+    int loopCount;
 
-/*
- * first see if the specified font exists
- */
-  sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,size);
-printf("graphXGetBestFont: pattern = %s\n",pattern);
-  fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
+  /*
+   * first see if the specified font exists
+   */
+    sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,size);
+    printf("graphXGetBestFont: pattern = %s\n",pattern);
+    fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
 
-  if (numFonts >= 1) {
-/*
- * found the specified font, simply return that string
- */
-      fontString = ((char *) malloc(strlen(fontList[0])+1));
-      strcpy(fontString,fontList[0]);
-      XFreeFontNames(fontList);
-printf("graphXGetBestFont: found string: %s\n",fontString);
-      return fontString;
-  } else {
-/*
- * didn't find that one, therefore try looking for ones around that size
- */
-      l = 0;
-      while ((numFonts <= 0) && (l <= MAX_QUERIES)) {
-	l++;
-	localSize = ((l%2 == 1) ? (size - (l -l/2)) : (size + (l - l/2)));
-	sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,localSize);
-printf("graphXGetBestFont: pattern = %s\n",pattern);
-	fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
-      }
+    if (numFonts >= 1) {
+      /*
+       * found the specified font, simply return that string
+       */
+	fontString = ((char *) malloc(strlen(fontList[0])+1));
+	strcpy(fontString,fontList[0]);
+	XFreeFontNames(fontList);
+	printf("graphXGetBestFont: found string: %s\n",fontString);
+	return fontString;
+    } else {
+      /*
+       * didn't find that one, therefore try looking for ones around that size
+       */
+	l = 0;
+	while ((numFonts <= 0) && (l <= MAX_QUERIES)) {
+	    l++;
+	    localSize = ((l%2 == 1) ? (size - (l -l/2)) : (size + (l - l/2)));
+	    sprintf(pattern,"*-*%s*-*%s*-%s-*--%d-*",family,face,type,localSize);
+	    printf("graphXGetBestFont: pattern = %s\n",pattern);
+	    fontList = XListFonts(display,pattern,MAX_FONT_NAMES,&numFonts);
+	}
 
-      if (l >= MAX_QUERIES) {
-printf("graphXGetBestFont: exceeded MAX_QUERIES; returning default string: %s\n"
-		,DEFAULT_FONT);
-         return (DEFAULT_FONT);
-      } else {
-         fontString = ((char *) malloc(strlen(fontList[0])+1));
-         strcpy(fontString,fontList[0]);
-         XFreeFontNames(fontList);
-printf("graphXGetBestFont: found string: %s\n",fontString);
-         return fontString;
-      }
+	if (l >= MAX_QUERIES) {
+	    printf("graphXGetBestFont: exceeded MAX_QUERIES; returning default string: %s\n"
+	      ,DEFAULT_FONT);
+	    return (DEFAULT_FONT);
+	} else {
+	    fontString = ((char *) malloc(strlen(fontList[0])+1));
+	    strcpy(fontString,fontList[0]);
+	    XFreeFontNames(fontList);
+	    printf("graphXGetBestFont: found string: %s\n",fontString);
+	    return fontString;
+	}
 
-  }
+    }
 
 }
 
@@ -161,19 +161,18 @@ printf("graphXGetBestFont: found string: %s\n",fontString);
  * function to return a pixel value from a specified color string
  */
 unsigned long getPixelFromString(display,screen,colorString)
-  Display *display;
-  int screen;
-  char *colorString;
+    Display *display;
+    int screen;
+    char *colorString;
 {
-  XColor color, ignore;
+    XColor color, ignore;
 
-  if(!XAllocNamedColor(display,DefaultColormap(display,screen),
-         colorString,&color,&ignore)) {
+    if(!XAllocNamedColor(display,DefaultColormap(display,screen),
+      colorString,&color,&ignore)) {
         fprintf(stderr, "\ngetPixelFromString:  couldn't allocate color %s",
-                colorString);
+	  colorString);
         return(WhitePixel(display, screen));
     } else {
         return(color.pixel);
     }
 }
-

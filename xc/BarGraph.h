@@ -35,4 +35,3 @@ extern void XcBGUpdateValue();
 extern void XcBGUpdateBarForeground();
 
 #endif
-

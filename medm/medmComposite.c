@@ -43,20 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              correct the falling line and rising line to
- *                              polyline geometry calculation
- * .03  09-08-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -69,195 +62,195 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p);
 static void compositeCleanup(DlElement *element);
 
 static DlDispatchTable compositeDlDispatchTable = {
-         createDlComposite,
-         destroyDlComposite,
-         executeDlComposite,
-         writeDlComposite,
-         NULL,
-         compositeGetValues,
-         NULL,
-         NULL,
-         NULL,
-         compositeMove,
-         compositeScale,
-         NULL,
-         compositeCleanup};
+    createDlComposite,
+    destroyDlComposite,
+    executeDlComposite,
+    writeDlComposite,
+    NULL,
+    compositeGetValues,
+    NULL,
+    NULL,
+    NULL,
+    compositeMove,
+    compositeScale,
+    NULL,
+    compositeCleanup};
 
 void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  DlComposite *dlComposite = dlElement->structure.composite;
-  DlElement *element;
+    DlComposite *dlComposite = dlElement->structure.composite;
+    DlElement *element;
 
-  if (displayInfo->traversalMode == DL_EDIT) {
-    element = FirstDlElement(dlComposite->dlElementList);
-    while (element) {
-      (element->run->execute)(displayInfo, element);
-      element = element->next;
-    }
-  } else
-  if (displayInfo->traversalMode == DL_EXECUTE) {
-    if (dlComposite->visible) {
-      element = FirstDlElement(dlComposite->dlElementList);
-      while (element) {
-        (element->run->execute)(displayInfo, element);
-        element = element->next;
+    if (displayInfo->traversalMode == DL_EDIT) {
+	element = FirstDlElement(dlComposite->dlElementList);
+	while (element) {
+	    (element->run->execute)(displayInfo, element);
+	    element = element->next;
+	}
+    } else
+      if (displayInfo->traversalMode == DL_EXECUTE) {
+	  if (dlComposite->visible) {
+	      element = FirstDlElement(dlComposite->dlElementList);
+	      while (element) {
+		  (element->run->execute)(displayInfo, element);
+		  element = element->next;
+	      }
+	  }
       }
-    }
-  }
 }
 
 DlElement *createDlComposite(DlElement *p) {
-  DlComposite *dlComposite;
-  DlElement *dlElement;
+    DlComposite *dlComposite;
+    DlElement *dlElement;
 
-  dlComposite = (DlComposite *) malloc(sizeof(DlComposite));
-  if (!dlComposite) return 0;
-  if (p) {
-    DlElement *child;
-    *dlComposite = *p->structure.composite;
+    dlComposite = (DlComposite *) malloc(sizeof(DlComposite));
+    if (!dlComposite) return 0;
+    if (p) {
+	DlElement *child;
+	*dlComposite = *p->structure.composite;
 
-    /* create the first node */
-    dlComposite->dlElementList = createDlList();
-    if (!dlComposite->dlElementList) {
-      free(dlComposite);
-      return NULL;
+      /* create the first node */
+	dlComposite->dlElementList = createDlList();
+	if (!dlComposite->dlElementList) {
+	    free(dlComposite);
+	    return NULL;
+	}
+      /* copy all childrern */
+	child = FirstDlElement(p->structure.composite->dlElementList);
+	while (child) {
+	    DlElement *copy = child->run->create(child);
+	    if (copy) 
+	      appendDlElement(dlComposite->dlElementList,copy);
+	    child = child->next;
+	}
+    } else {
+	objectAttributeInit(&(dlComposite->object));
+	dlComposite->compositeName[0] = '\0';
+	dlComposite->vis = V_STATIC;
+	dlComposite->chan[0] = '\0';
+	dlComposite->dlElementList = createDlList();
+	if (!dlComposite->dlElementList) {
+	    free(dlComposite);
+	    return NULL;
+	}
+	dlComposite->visible = True;
     }
-    /* copy all childrern */
-    child = FirstDlElement(p->structure.composite->dlElementList);
-    while (child) {
-      DlElement *copy = child->run->create(child);
-      if (copy) 
-        appendDlElement(dlComposite->dlElementList,copy);
-      child = child->next;
-    }
-  } else {
-    objectAttributeInit(&(dlComposite->object));
-    dlComposite->compositeName[0] = '\0';
-    dlComposite->vis = V_STATIC;
-    dlComposite->chan[0] = '\0';
-    dlComposite->dlElementList = createDlList();
-    if (!dlComposite->dlElementList) {
-      free(dlComposite);
-      return NULL;
-    }
-    dlComposite->visible = True;
-  }
 
-  if (!(dlElement = createDlElement(DL_Composite,
-                    (XtPointer) dlComposite, &compositeDlDispatchTable))) {
-    free(dlComposite->dlElementList);
-    free(dlComposite);
-    return NULL;
-  }
-  return dlElement;
+    if (!(dlElement = createDlElement(DL_Composite,
+      (XtPointer) dlComposite, &compositeDlDispatchTable))) {
+	free(dlComposite->dlElementList);
+	free(dlComposite);
+	return NULL;
+    }
+    return dlElement;
 }
 
 DlElement *groupObjects(DisplayInfo *displayInfo)
 {
-  DlComposite *dlComposite;
-  DlElement *dlElement, *elementPtr;
-  int i, minX, minY, maxX, maxY;
+    DlComposite *dlComposite;
+    DlElement *dlElement, *elementPtr;
+    int i, minX, minY, maxX, maxY;
 
   /* if there is no element selected, return */
-  if (IsEmpty(displayInfo->selectedDlElementList)) return 0;
+    if (IsEmpty(displayInfo->selectedDlElementList)) return 0;
 
-  if (!(dlElement = createDlComposite(NULL))) return 0;
-  appendDlElement(displayInfo->dlElementList,dlElement);
-  dlComposite = dlElement->structure.composite;
+    if (!(dlElement = createDlComposite(NULL))) return 0;
+    appendDlElement(displayInfo->dlElementList,dlElement);
+    dlComposite = dlElement->structure.composite;
 
 /*
  *  now loop over all selected elements and and determine x/y/width/height
  *    of the newly created composite and insert the element.
  */
-  minX = INT_MAX; minY = INT_MAX;
-  maxX = INT_MIN; maxY = INT_MIN;
+    minX = INT_MAX; minY = INT_MAX;
+    maxX = INT_MIN; maxY = INT_MIN;
 
-  elementPtr = FirstDlElement(displayInfo->selectedDlElementList);
-  while (elementPtr) { 
-    DlElement *pE = elementPtr->structure.element;
-    if (pE->type != DL_Display) {
-      DlObject *po = &(pE->structure.rectangle->object);
-      minX = MIN(minX,po->x);
-      maxX = MAX(maxX,(int)(po->x+po->width));
-      minY = MIN(minY,po->y);
-      maxY = MAX(maxY,(int)(po->y+po->height));
-      removeDlElement(displayInfo->dlElementList,pE);
-      appendDlElement(dlComposite->dlElementList,pE);
+    elementPtr = FirstDlElement(displayInfo->selectedDlElementList);
+    while (elementPtr) { 
+	DlElement *pE = elementPtr->structure.element;
+	if (pE->type != DL_Display) {
+	    DlObject *po = &(pE->structure.rectangle->object);
+	    minX = MIN(minX,po->x);
+	    maxX = MAX(maxX,(int)(po->x+po->width));
+	    minY = MIN(minY,po->y);
+	    maxY = MAX(maxY,(int)(po->y+po->height));
+	    removeDlElement(displayInfo->dlElementList,pE);
+	    appendDlElement(dlComposite->dlElementList,pE);
+	}
+	elementPtr = elementPtr->next;
     }
-    elementPtr = elementPtr->next;
-  }
 
-  dlComposite->object.x = minX;
-  dlComposite->object.y = minY;
-  dlComposite->object.width = maxX - minX;
-  dlComposite->object.height = maxY - minY;
+    dlComposite->object.x = minX;
+    dlComposite->object.y = minY;
+    dlComposite->object.width = maxX - minX;
+    dlComposite->object.height = maxY - minY;
 
-  clearResourcePaletteEntries();
-  unhighlightSelectedElements();
-  destroyDlDisplayList(displayInfo->selectedDlElementList);
-  if (!(elementPtr = createDlElement(NULL,NULL,NULL))) {
-    return 0;
-  }
-  elementPtr->structure.element = dlElement;
-  appendDlElement(displayInfo->selectedDlElementList,elementPtr);
-  highlightSelectedElements();
-  currentActionType = SELECT_ACTION;
-  currentElementType = DL_Composite;
-  setResourcePaletteEntries();
+    clearResourcePaletteEntries();
+    unhighlightSelectedElements();
+    destroyDlDisplayList(displayInfo->selectedDlElementList);
+    if (!(elementPtr = createDlElement(NULL,NULL,NULL))) {
+	return 0;
+    }
+    elementPtr->structure.element = dlElement;
+    appendDlElement(displayInfo->selectedDlElementList,elementPtr);
+    highlightSelectedElements();
+    currentActionType = SELECT_ACTION;
+    currentElementType = DL_Composite;
+    setResourcePaletteEntries();
 
-  return(dlElement);
+    return(dlElement);
 }
 
 
 DlElement *parseComposite(DisplayInfo *displayInfo)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel = 0;
-  DlComposite *newDlComposite;
-  DlElement *dlElement = createDlComposite(NULL);
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+    DlComposite *newDlComposite;
+    DlElement *dlElement = createDlComposite(NULL);
  
-  if (!dlElement) return 0;
-  newDlComposite = dlElement->structure.composite;
+    if (!dlElement) return 0;
+    newDlComposite = dlElement->structure.composite;
 
-  do {
+    do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
-            case T_WORD:
-                if (!strcmp(token,"object")) {
-                        parseObject(displayInfo,&(newDlComposite->object));
-                } else if (!strcmp(token,"composite name")) {
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        strcpy(newDlComposite->compositeName,token);
-                } else if (!strcmp(token,"vis")) {
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        if (!strcmp(token,"static"))
-                                newDlComposite->vis = V_STATIC;
-                        else if (!strcmp(token,"if not zero"))
-                                newDlComposite->vis = IF_NOT_ZERO;
-                        else if (!strcmp(token,"if zero"))
-                                newDlComposite->vis = IF_ZERO;
-                } else if (!strcmp(token,"chan")) {
-                        getToken(displayInfo,token);
-                        getToken(displayInfo,token);
-                        strcpy(newDlComposite->chan,token);
-                } else if (!strcmp(token,"children")) {
-                        parseAndAppendDisplayList(displayInfo,
-                            newDlComposite->dlElementList);
-                }
-                break;
-            case T_EQUAL:
-                break;
-            case T_LEFT_BRACE:
-                nestingLevel++; break;
-            case T_RIGHT_BRACE:
-                nestingLevel--; break;
+	case T_WORD:
+	    if (!strcmp(token,"object")) {
+		parseObject(displayInfo,&(newDlComposite->object));
+	    } else if (!strcmp(token,"composite name")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(newDlComposite->compositeName,token);
+	    } else if (!strcmp(token,"vis")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		if (!strcmp(token,"static"))
+		  newDlComposite->vis = V_STATIC;
+		else if (!strcmp(token,"if not zero"))
+		  newDlComposite->vis = IF_NOT_ZERO;
+		else if (!strcmp(token,"if zero"))
+		  newDlComposite->vis = IF_ZERO;
+	    } else if (!strcmp(token,"chan")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(newDlComposite->chan,token);
+	    } else if (!strcmp(token,"children")) {
+		parseAndAppendDisplayList(displayInfo,
+		  newDlComposite->dlElementList);
+	    }
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
         }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-                && (tokenType != T_EOF) );
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
 
-  return dlElement;
+    return dlElement;
 
 }
 
@@ -266,23 +259,23 @@ void writeDlCompositeChildren(
   DlElement *dlElement,
   int level)
 {
-  int i;
-  char indent[16];
-  DlElement *element;
-  DlComposite *dlComposite = dlElement->structure.composite;
+    int i;
+    char indent[16];
+    DlElement *element;
+    DlComposite *dlComposite = dlElement->structure.composite;
 
-  for (i = 0; i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
+    for (i = 0; i < level; i++) indent[i] = '\t';
+    indent[i] = '\0';
 
-  fprintf(stream,"\n%schildren {",indent);
+    fprintf(stream,"\n%schildren {",indent);
 
-  element = FirstDlElement(dlComposite->dlElementList);
-  while (element != NULL) {		/* any union member is okay here */
-     (element->run->write)(stream, element, level+1);
-     element = element->next;
-  }
+    element = FirstDlElement(dlComposite->dlElementList);
+    while (element != NULL) {		/* any union member is okay here */
+	(element->run->write)(stream, element, level+1);
+	element = element->next;
+    }
 
-  fprintf(stream,"\n%s}",indent);
+    fprintf(stream,"\n%s}",indent);
 }
 
 
@@ -291,21 +284,21 @@ void writeDlComposite(
   DlElement *dlElement,
   int level)
 {
-  int i;
-  char indent[16];
-  DlComposite *dlComposite = dlElement->structure.composite;
+    int i;
+    char indent[16];
+    DlComposite *dlComposite = dlElement->structure.composite;
 
-  for (i = 0; i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
+    for (i = 0; i < level; i++) indent[i] = '\t';
+    indent[i] = '\0';
 
-  fprintf(stream,"\n%scomposite {",indent);
-  writeDlObject(stream,&(dlComposite->object),level+1);
-  fprintf(stream,"\n%s\t\"composite name\"=\"%s\"",indent,
-		dlComposite->compositeName);
-  fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dlComposite->vis]);
-  fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlComposite->chan);
-  writeDlCompositeChildren(stream,dlElement,level+1);
-  fprintf(stream,"\n%s}",indent);
+    fprintf(stream,"\n%scomposite {",indent);
+    writeDlObject(stream,&(dlComposite->object),level+1);
+    fprintf(stream,"\n%s\t\"composite name\"=\"%s\"",indent,
+      dlComposite->compositeName);
+    fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dlComposite->vis]);
+    fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlComposite->chan);
+    writeDlCompositeChildren(stream,dlElement,level+1);
+    fprintf(stream,"\n%s}",indent);
 }
 
 /*
@@ -315,30 +308,30 @@ void writeDlComposite(
  */
 void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
 {
-  int width, height;
-  float scaleX = 1.0, scaleY = 1.0;
+    int width, height;
+    float scaleX = 1.0, scaleY = 1.0;
 
-  if (dlElement->type != DL_Composite) return;
-  width = MAX(1,((int)dlElement->structure.composite->object.width
-                  + xOffset));
-  height = MAX(1,((int)dlElement->structure.composite->object.height
-                  + yOffset));
-  scaleX = (float)width/(float)dlElement->structure.composite->object.width;
-  scaleY = (float)height/(float)dlElement->structure.composite->object.height;
-  resizeDlElementList(dlElement->structure.composite->dlElementList,
-                    dlElement->structure.composite->object.x,
-                    dlElement->structure.composite->object.y,
-                    scaleX,
-                    scaleY);
-  dlElement->structure.composite->object.width = width;
-  dlElement->structure.composite->object.height = height;
+    if (dlElement->type != DL_Composite) return;
+    width = MAX(1,((int)dlElement->structure.composite->object.width
+      + xOffset));
+    height = MAX(1,((int)dlElement->structure.composite->object.height
+      + yOffset));
+    scaleX = (float)width/(float)dlElement->structure.composite->object.width;
+    scaleY = (float)height/(float)dlElement->structure.composite->object.height;
+    resizeDlElementList(dlElement->structure.composite->dlElementList,
+      dlElement->structure.composite->object.x,
+      dlElement->structure.composite->object.y,
+      scaleX,
+      scaleY);
+    dlElement->structure.composite->object.width = width;
+    dlElement->structure.composite->object.height = height;
 }
 
 static void destroyDlComposite(DlElement *dlElement) {
-  destroyDlDisplayList(dlElement->structure.composite->dlElementList);
-  free((char *) dlElement->structure.composite->dlElementList);
-  free((char *) dlElement->structure.composite);
-  free((char *) dlElement);
+    destroyDlDisplayList(dlElement->structure.composite->dlElementList);
+    free((char *) dlElement->structure.composite->dlElementList);
+    free((char *) dlElement->structure.composite);
+    free((char *) dlElement);
 }
 
 /*
@@ -347,60 +340,60 @@ static void destroyDlComposite(DlElement *dlElement) {
  */
 void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 {
-  DlElement *ele;
+    DlElement *ele;
 
-  if (dlElement->type != DL_Composite) return; 
-  ele = FirstDlElement(dlElement->structure.composite->dlElementList);
-  while (ele != NULL) {
-    if (ele->type != DL_Display) {
+    if (dlElement->type != DL_Composite) return; 
+    ele = FirstDlElement(dlElement->structure.composite->dlElementList);
+    while (ele != NULL) {
+	if (ele->type != DL_Display) {
 #if 0
-      if (ele->widget) {
-        XtMoveWidget(widget,
-          (Position) (ele->structure.rectangle->object.x + xOffset),
-          (Position) (ele->structure.rectangle->object.y + yOffset));
-      }
+	    if (ele->widget) {
+		XtMoveWidget(widget,
+		  (Position) (ele->structure.rectangle->object.x + xOffset),
+		  (Position) (ele->structure.rectangle->object.y + yOffset));
+	    }
 #endif
-      if (ele->run->move)
-        ele->run->move(ele,xOffset,yOffset);
+	    if (ele->run->move)
+	      ele->run->move(ele,xOffset,yOffset);
+	}
+	ele = ele->next;
     }
-    ele = ele->next;
-  }
-  dlElement->structure.composite->object.x += xOffset;
-  dlElement->structure.composite->object.y += yOffset;
+    dlElement->structure.composite->object.x += xOffset;
+    dlElement->structure.composite->object.y += yOffset;
 }
 
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
-  DlComposite *dlComposite = p->structure.composite;
-  int x, y;
-  unsigned int width, height;
-  int xOffset, yOffset;
+    DlComposite *dlComposite = p->structure.composite;
+    int x, y;
+    unsigned int width, height;
+    int xOffset, yOffset;
 
-  medmGetValues(pRCB,
-    X_RC,          &x,
-    Y_RC,          &y,
-    WIDTH_RC,      &width,
-    HEIGHT_RC,     &height,
-    -1);
+    medmGetValues(pRCB,
+      X_RC,          &x,
+      Y_RC,          &y,
+      WIDTH_RC,      &width,
+      HEIGHT_RC,     &height,
+      -1);
     xOffset = (int) width - (int) dlComposite->object.width;
     yOffset = (int) height - (int) dlComposite->object.height;
     if (!xOffset || !yOffset) {
-      compositeScale(p,xOffset,yOffset);
+	compositeScale(p,xOffset,yOffset);
     }
     xOffset = x - dlComposite->object.x;
     yOffset = y - dlComposite->object.y;
     if (!xOffset || !yOffset) {
-      compositeMove(p,xOffset,yOffset);
+	compositeMove(p,xOffset,yOffset);
     }
 }
 
 static void compositeCleanup(DlElement *dlElement) {
-  DlElement *pE = FirstDlElement(dlElement->structure.composite->dlElementList);
-  while (pE) {
-    if (pE->run->cleanup) {
-      pE->run->cleanup(pE);
-    } else {
-      pE->widget = NULL;
+    DlElement *pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+    while (pE) {
+	if (pE->run->cleanup) {
+	    pE->run->cleanup(pE);
+	} else {
+	    pE->widget = NULL;
+	}
+	pE = pE->next;
     }
-    pE = pE->next;
-  }
 }

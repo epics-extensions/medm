@@ -37,4 +37,3 @@ extern void XcMeterUpdateValue(Widget w, XcVType *value);
 extern void XcMeterUpdateMeterForeground(Widget w, unsigned long pixel);
 
 #endif
-

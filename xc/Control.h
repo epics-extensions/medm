@@ -29,8 +29,8 @@
  */
 #define CvtDone(type, address) \
 { toVal->size = sizeof(type); \
-  toVal->addr = (XtPointer)address; \
-  return; } 
+				toVal->addr = (XtPointer)address; \
+								    return; } 
 
 
 /*
@@ -39,17 +39,17 @@
  */
 typedef enum rect3d_t
 {
-   RAISED,
-   DEPRESSED
+    RAISED,
+    DEPRESSED
 } Type3d;
 
 /* Type used to indicate the Arrow direction (i.e., up, down, etc.) */
 typedef enum
 {
-   UP,
-   DOWN,
-   LEFT,
-   RIGHT
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
 } ArrowType;
 
 
@@ -71,4 +71,3 @@ extern void CvtStringToOrient();
 
 
 #endif /* __XC_CONTROL_H */
-

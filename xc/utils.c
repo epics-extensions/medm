@@ -16,16 +16,16 @@
  */
 
 unsigned long getPixelFromString(display,colorString)
-  Display *display;
-  char *colorString;
+    Display *display;
+    char *colorString;
 {
-  XColor color, ignore;
+    XColor color, ignore;
 
-  if(!XAllocNamedColor(display,DefaultColormap(display,DefaultScreen(display)),
-     colorString,&color,&ignore)) {
+    if(!XAllocNamedColor(display,DefaultColormap(display,DefaultScreen(display)),
+      colorString,&color,&ignore)) {
         fprintf(stderr, 
-	   "\ngetPixelFromString:  couldn't allocate color %s",
-                colorString);
+	  "\ngetPixelFromString:  couldn't allocate color %s",
+	  colorString);
         return(WhitePixel(display, DefaultScreen(display)));
     } else {
         return(color.pixel);
@@ -40,16 +40,16 @@ unsigned long getPixelFromString(display,colorString)
  */
 
 unsigned long getPixelFromStringW(w,colorString)
-  Widget w;
-  char *colorString;
+    Widget w;
+    char *colorString;
 {
-  XColor color, ignore;
+    XColor color, ignore;
 
-  if(!XAllocNamedColor(XtDisplay(w),DefaultColormap(XtDisplay(w),
-	DefaultScreen(XtDisplay(w))), colorString,&color,&ignore)) {
+    if(!XAllocNamedColor(XtDisplay(w),DefaultColormap(XtDisplay(w),
+      DefaultScreen(XtDisplay(w))), colorString,&color,&ignore)) {
         fprintf(stderr, 
-	   "\ngetPixelFromStringW:  couldn't allocate color %s",
-                colorString);
+	  "\ngetPixelFromStringW:  couldn't allocate color %s",
+	  colorString);
         return(WhitePixel(XtDisplay(w), DefaultScreen(XtDisplay(w))));
     } else {
         return(color.pixel);
@@ -63,17 +63,16 @@ unsigned long getPixelFromStringW(w,colorString)
  *   and string
  */
 XFontStruct *getFontStructFromStringW(w,string)
-  Widget w;
-  char *string;
+    Widget w;
+    char *string;
 {
 
-  XFontStruct *returnFontStruct;
+    XFontStruct *returnFontStruct;
 
-  if ((returnFontStruct=XLoadQueryFont(XtDisplay(w),string)) == NULL) {
+    if ((returnFontStruct=XLoadQueryFont(XtDisplay(w),string)) == NULL) {
 	return (XLoadQueryFont(XtDisplay(w),XtDefaultFont));
-  } else {
+    } else {
 	return (returnFontStruct);
-  }
+    }
 
 }
-

@@ -42,8 +42,7 @@ typedef struct _IndicatorRec *IndicatorWidget;
 /* Widget functions */
 extern void XcIndUpdateValue(Widget w, XcVType *value);
 extern void XcIndUpdateIndicatorForeground(Widget w,
-	unsigned long pixel);
+  unsigned long pixel);
 
 
 #endif
-

@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  09-05-95        vong    2.1.0 release
- * .02  09-08-95        vong    conform to c++ syntax
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -104,15 +100,15 @@ static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-  XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
-  switch(call_data->reason){
-	case XmCR_CANCEL:
-		XtUnmanageChild(w);
-		break;
-	case XmCR_OK:
-		XtUnmanageChild(w);
-		break;
-  }
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
+    switch(call_data->reason){
+    case XmCR_CANCEL:
+	XtUnmanageChild(w);
+	break;
+    case XmCR_OK:
+	XtUnmanageChild(w);
+	break;
+    }
 }
 
 #ifdef __cplusplus
@@ -121,48 +117,48 @@ static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-  int buttonNumber = (int) cd;
+    int buttonNumber = (int) cd;
 #ifdef EXTENDED_INTERFACE
-  int n;
-  Arg args[10];
-  Widget textField;
+    int n;
+    Arg args[10];
+    Widget textField;
 #endif
 
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
-	    case FILE_OPEN_BTN:
-		if (openFSD == NULL) {
-		    n = 0;
-		    label = XmStringCreateSimple(COLOR_DIALOG_MASK);
-		    XtSetArg(args[n],XmNdirMask,label); n++;
-		    XtSetArg(args[n],XmNdialogStyle,
-				XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-		    openFSD = XmCreateFileSelectionDialog(colorFilePDM,
-				"openFSD",args,n);
+    case FILE_OPEN_BTN:
+	if (openFSD == NULL) {
+	    n = 0;
+	    label = XmStringCreateSimple(COLOR_DIALOG_MASK);
+	    XtSetArg(args[n],XmNdirMask,label); n++;
+	    XtSetArg(args[n],XmNdialogStyle,
+	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
+	      openFSD = XmCreateFileSelectionDialog(colorFilePDM,
+		"openFSD",args,n);
 /* make Filter text field insensitive to prevent user hand-editing dirMask */
-		    textField = XmFileSelectionBoxGetChild(openFSD,
-				XmDIALOG_FILTER_TEXT);
-		    XtSetSensitive(textField,FALSE);
-		    XtAddCallback(openFSD,XmNokCallback,
-				fileOpenCallback,
-				FILE_OPEN_BTN);
-		    XtAddCallback(openFSD,XmNcancelCallback,
-				(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
-		    XmStringFree(label);
-		    XtManageChild(openFSD);
-		} else {
-		    XtManageChild(openFSD);
-		}
-		break;
-	    case FILE_SAVE_BTN:
-		break;
-	    case FILE_SAVE_AS_BTN:
-		break;
+	      textField = XmFileSelectionBoxGetChild(openFSD,
+		XmDIALOG_FILTER_TEXT);
+	      XtSetSensitive(textField,FALSE);
+	      XtAddCallback(openFSD,XmNokCallback,
+		fileOpenCallback,
+		FILE_OPEN_BTN);
+	      XtAddCallback(openFSD,XmNcancelCallback,
+		(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
+	      XmStringFree(label);
+	      XtManageChild(openFSD);
+	} else {
+	    XtManageChild(openFSD);
+	}
+	break;
+    case FILE_SAVE_BTN:
+	break;
+    case FILE_SAVE_AS_BTN:
+	break;
 #endif
-	    case FILE_CLOSE_BTN:
-		XtPopdown(colorS);
-		break;
+    case FILE_CLOSE_BTN:
+	XtPopdown(colorS);
+	break;
     }
 }
 
@@ -173,240 +169,233 @@ static void colorPaletteActivateCallback(Widget, XtPointer cd, XtPointer)
 static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-  int colorIndex = (int) cd;
-  DisplayInfo *cdi;
-  Widget widget;
-  int i;
-  Arg args[4];
-  Dimension width,height;
-  DlElement *dlElement;
+    int colorIndex = (int) cd;
+    DisplayInfo *cdi;
+    Widget widget;
+    int i;
+    Arg args[4];
+    Dimension width,height;
+    DlElement *dlElement;
 
 /* (MDA) requests to leave color palette up
-  XtPopdown(colorS);
- */
+   XtPopdown(colorS);
+   */
 
-  if (currentDisplayInfo) 
-    currentColormap = defaultColormap;
-  else
-    currentColormap = currentDisplayInfo->colormap;
+    if (currentDisplayInfo) 
+      currentColormap = defaultColormap;
+    else
+      currentColormap = currentDisplayInfo->colormap;
 
-  if (!(cdi = currentDisplayInfo)) return;
+    if (!(cdi = currentDisplayInfo)) return;
 
-  switch (elementTypeWhoseColorIsBeingEditted) {
-  case CLR_RC:
-    globalResourceBundle.clr = colorIndex;
-    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-      medmMarkDisplayBeingEdited(currentDisplayInfo);
+    switch (elementTypeWhoseColorIsBeingEditted) {
+    case CLR_RC:
+	globalResourceBundle.clr = colorIndex;
+	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	    medmMarkDisplayBeingEdited(currentDisplayInfo);
+	}
+	break;
+    case BCLR_RC:
+	globalResourceBundle.bclr = colorIndex;
+	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	    medmMarkDisplayBeingEdited(currentDisplayInfo);
+	}
+	break;
+    case DATA_CLR_RC:
+	globalResourceBundle.data_clr = colorIndex;
+	break;
+    case SCDATA_RC:
+	globalResourceBundle.scData[
+	  elementTypeWhoseColorIsBeingEdittedIndex].clr = colorIndex;
+	scUpdateMatrixColors();
+	break;
+    case CPDATA_RC:
+	globalResourceBundle.cpData[
+	  elementTypeWhoseColorIsBeingEdittedIndex].data_clr = colorIndex;
+	cpUpdateMatrixColors();
+	break;
+    default :
+	return;
     }
-    break;
-  case BCLR_RC:
-    globalResourceBundle.bclr = colorIndex;
-    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-      medmMarkDisplayBeingEdited(currentDisplayInfo);
-    }
-    break;
-  case DATA_CLR_RC:
-    globalResourceBundle.data_clr = colorIndex;
-    break;
-  case SCDATA_RC:
-    globalResourceBundle.scData[
-        elementTypeWhoseColorIsBeingEdittedIndex].clr = colorIndex;
-    scUpdateMatrixColors();
-    break;
-  case CPDATA_RC:
-    globalResourceBundle.cpData[
-        elementTypeWhoseColorIsBeingEdittedIndex].data_clr = colorIndex;
-    cpUpdateMatrixColors();
-    break;
-  default :
-    return;
-  }
 
   /* update color bar in resource palette */
   /* 9-19-94  vong
    * makesure the resource palette is create before doing XtVaSetValues
    */
-  if (resourceMW) {
-    XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEditted],
-		XmNbackground,currentColormap[colorIndex], NULL);
-  }
+    if (resourceMW) {
+	XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEditted],
+	  XmNbackground,currentColormap[colorIndex], NULL);
+    }
 
 /*
  * update all selected elements in display (this is overkill, but okay for now)
  *      -- not as efficient as it should be (don't update EVERYTHING if only
  *         one item changed!)
  */
-  dlElement = FirstDlElement(cdi->selectedDlElementList);
-  while (dlElement) {
-    DlElement *pE = dlElement->structure.element;
-    updateElementFromGlobalResourceBundle(pE);
-    if (widget = pE->widget){
-      switch (elementTypeWhoseColorIsBeingEditted) {
-      case CLR_RC:
-        XtVaSetValues(widget,XmNforeground,
-                        currentColormap[globalResourceBundle.clr],NULL);
-        /* if drawingArea: update drawingAreaForegroundColor */
-        if (widget == cdi->drawingArea) {
-          cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
-        }
-        break;
-      case BCLR_RC:
-        XtVaSetValues(widget,XmNbackground,
-            currentColormap[globalResourceBundle.bclr],NULL);
-        break;
-      case DATA_CLR_RC:
-        XtVaSetValues(widget,XmNbackground,
-            currentColormap[globalResourceBundle.data_clr],NULL);
-        break;
-      }
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	DlElement *pE = dlElement->structure.element;
+	updateElementFromGlobalResourceBundle(pE);
+	if (widget = pE->widget){
+	    switch (elementTypeWhoseColorIsBeingEditted) {
+	    case CLR_RC:
+		XtVaSetValues(widget,XmNforeground,
+		  currentColormap[globalResourceBundle.clr],NULL);
+	      /* if drawingArea: update drawingAreaForegroundColor */
+		if (widget == cdi->drawingArea) {
+		    cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
+		}
+		break;
+	    case BCLR_RC:
+		XtVaSetValues(widget,XmNbackground,
+		  currentColormap[globalResourceBundle.bclr],NULL);
+		break;
+	    case DATA_CLR_RC:
+		XtVaSetValues(widget,XmNbackground,
+		  currentColormap[globalResourceBundle.data_clr],NULL);
+		break;
+	    }
+	}
+	dlElement = dlElement->next;
     }
-    dlElement = dlElement->next;
-  }
-  dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
+    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 }
-
-
-
-
-
-
-
 
 /***********************************************************
  ***********************************************************
  ***********************************************************/
 void createColor()
 {
- Widget paletteRC;
+    Widget paletteRC;
 
- XmString buttons[N_MAX_MENU_ELES];
- KeySym keySyms[N_MAX_MENU_ELES];
- XmButtonType buttonType[N_MAX_MENU_ELES];
- Widget colorMB;
- Widget colorHelpPDM;
- Widget menuHelpWidget;
+    XmString buttons[N_MAX_MENU_ELES];
+    KeySym keySyms[N_MAX_MENU_ELES];
+    XmButtonType buttonType[N_MAX_MENU_ELES];
+    Widget colorMB;
+    Widget colorHelpPDM;
+    Widget menuHelpWidget;
 
- Pixel fg, bg;
- int i, n, childCount;
- Arg args[10];
+    Pixel fg, bg;
+    int i, n, childCount;
+    Arg args[10];
 
 
 #ifdef EXTENDED_INTERFACE
- openFSD = NULL;
+    openFSD = NULL;
 #endif
 
 /*
  * create a main window in a dialog, and then the palette radio box
  */
- n = 0;
- XtSetArg(args[n],XtNiconName,"Colors"); n++;
- XtSetArg(args[n],XtNtitle,"Color Palette"); n++;
- XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
- XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
+    n = 0;
+    XtSetArg(args[n],XtNiconName,"Colors"); n++;
+    XtSetArg(args[n],XtNtitle,"Color Palette"); n++;
+    XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
+    XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
 /* map window manager menu Close function to application close... */
- XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
- XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
- colorS = XtCreatePopupShell("colorS",topLevelShellWidgetClass,
-				mainShell,args,n);
- XmAddWMProtocolCallback(colorS,WM_DELETE_WINDOW,
-				(XtCallbackProc)wmCloseCallback,
-				(XtPointer)OTHER_SHELL);
+    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+    colorS = XtCreatePopupShell("colorS",topLevelShellWidgetClass,
+      mainShell,args,n);
+    XmAddWMProtocolCallback(colorS,WM_DELETE_WINDOW,
+      (XtCallbackProc)wmCloseCallback,
+      (XtPointer)OTHER_SHELL);
 
- colorMW = XmCreateMainWindow(colorS,"colorMW",NULL,0);
+    colorMW = XmCreateMainWindow(colorS,"colorMW",NULL,0);
 
 
 /*
  * create the menu bar
  */
-  buttons[0] = XmStringCreateSimple("File");
-  buttons[1] = XmStringCreateSimple("Help");
+    buttons[0] = XmStringCreateSimple("File");
+    buttons[1] = XmStringCreateSimple("Help");
 #if 0
-  keySyms[0] = 'F';
-  keySyms[1] = 'H';
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNforeground,defaultForeground); n++;
-  XtSetArg(args[n],XmNbackground,defaultBackground); n++;
-  colorMB = XmCreateSimpleMenuBar(colorMW, "colorMB",args,n);
+    keySyms[0] = 'F';
+    keySyms[1] = 'H';
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    XtSetArg(args[n],XmNforeground,defaultForeground); n++;
+    XtSetArg(args[n],XmNbackground,defaultBackground); n++;
+    colorMB = XmCreateSimpleMenuBar(colorMW, "colorMB",args,n);
 #endif
 
-  colorMB = XmVaCreateSimpleMenuBar(colorMW, "colorMB",
-    XmVaCASCADEBUTTON, buttons[0], 'F',
-    XmVaCASCADEBUTTON, buttons[1], 'H',
-    NULL);
+    colorMB = XmVaCreateSimpleMenuBar(colorMW, "colorMB",
+      XmVaCASCADEBUTTON, buttons[0], 'F',
+      XmVaCASCADEBUTTON, buttons[1], 'H',
+      NULL);
 
 
 /* color colorMB properly (force so VUE doesn't interfere) */
-  colorMenuBar(colorMB,defaultForeground,defaultBackground);
+    colorMenuBar(colorMB,defaultForeground,defaultBackground);
 
   /* set the Help cascade button in the menu bar */
-  menuHelpWidget = XtNameToWidget(colorMB,"*button_1");
-  XtVaSetValues(colorMB,XmNmenuHelpWidget,menuHelpWidget,
-		NULL);
-  for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
+    menuHelpWidget = XtNameToWidget(colorMB,"*button_1");
+    XtVaSetValues(colorMB,XmNmenuHelpWidget,menuHelpWidget,
+      NULL);
+    for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
 
 
 /*
  * create the file pulldown menu pane
  */
 #ifdef EXTENDED_INTERFACE
-  buttons[0] = XmStringCreateSimple("Open...");
-  buttons[1] = XmStringCreateSimple("Save");
-  buttons[2] = XmStringCreateSimple("Save As...");
-  buttons[3] = XmStringCreateSimple("Separator");
-  buttons[4] = XmStringCreateSimple("Close");
-  keySyms[0] = 'O';
-  keySyms[1] = 'S';
-  keySyms[2] = 'A';
-  keySyms[3] = ' ';
-  keySyms[4] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
-  buttonType[1] = XmPUSHBUTTON;
-  buttonType[2] = XmPUSHBUTTON;
-  buttonType[3] = XmSEPARATOR;
-  buttonType[4] = XmPUSHBUTTON;
+    buttons[0] = XmStringCreateSimple("Open...");
+    buttons[1] = XmStringCreateSimple("Save");
+    buttons[2] = XmStringCreateSimple("Save As...");
+    buttons[3] = XmStringCreateSimple("Separator");
+    buttons[4] = XmStringCreateSimple("Close");
+    keySyms[0] = 'O';
+    keySyms[1] = 'S';
+    keySyms[2] = 'A';
+    keySyms[3] = ' ';
+    keySyms[4] = 'C';
+    buttonType[0] = XmPUSHBUTTON;
+    buttonType[1] = XmPUSHBUTTON;
+    buttonType[2] = XmPUSHBUTTON;
+    buttonType[3] = XmSEPARATOR;
+    buttonType[4] = XmPUSHBUTTON;
 #else
-  buttons[0] = XmStringCreateSimple("Close");
-  keySyms[0] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
+    buttons[0] = XmStringCreateSimple("Close");
+    keySyms[0] = 'C';
+    buttonType[0] = XmPUSHBUTTON;
 #endif
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_FILE_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,fileMenuSimpleCallback);
-	n++;
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_FILE_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
+    XtSetArg(args[n],XmNsimpleCallback,fileMenuSimpleCallback);
+    n++;
 #if 0
-  colorFilePDM = XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
-	args,n);
+    colorFilePDM = XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
+      args,n);
 #endif
-  XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
-	args,n);
-  for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
+    XmCreateSimplePulldownMenu(colorMB,"colorFilePDM",
+      args,n);
+    for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
 
 
 
 /*
  * create the help pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("On Color Palette...");
-  keySyms[0] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
-  colorHelpPDM = XmCreateSimplePulldownMenu(colorMB,
-		"colorHelpPDM",args,n);
-  XmStringFree(buttons[0]);
+    buttons[0] = XmStringCreateSimple("On Color Palette...");
+    keySyms[0] = 'C';
+    buttonType[0] = XmPUSHBUTTON;
+    n = 0;
+    XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
+    XtSetArg(args[n],XmNbuttons,buttons); n++;
+    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
+    XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
+    colorHelpPDM = XmCreateSimplePulldownMenu(colorMB,
+      "colorHelpPDM",args,n);
+    XmStringFree(buttons[0]);
   /* (MDA) for now, disable this menu */
-  XtSetSensitive(colorHelpPDM,False);
+    XtSetSensitive(colorHelpPDM,False);
 
 
 
@@ -414,49 +403,49 @@ void createColor()
  * Add the Palette Radio Box for the drawing color toggle buttons
  *
  */
- n = 0;
- XtSetArg(args[n],XmNadjustLast,False); n++;
- XtSetArg(args[n],XmNadjustLast,False); n++;
- XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
- XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
- XtSetArg(args[n],XmNnumColumns,(short)(DL_MAX_COLORS/DL_COLORS_COLUMN_SIZE)); n++;
- XtSetArg(args[n],XmNspacing,0); n++;
- paletteRC = XmCreateRowColumn(colorMW,"paletteRC",args,n);
- XtVaGetValues(paletteRC,XmNforeground,&fg,XmNbackground,&bg,NULL);
+    n = 0;
+    XtSetArg(args[n],XmNadjustLast,False); n++;
+    XtSetArg(args[n],XmNadjustLast,False); n++;
+    XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
+    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+    XtSetArg(args[n],XmNnumColumns,(short)(DL_MAX_COLORS/DL_COLORS_COLUMN_SIZE)); n++;
+    XtSetArg(args[n],XmNspacing,0); n++;
+    paletteRC = XmCreateRowColumn(colorMW,"paletteRC",args,n);
+    XtVaGetValues(paletteRC,XmNforeground,&fg,XmNbackground,&bg,NULL);
 
 
 /*
  * create the (maximum number of) color buttons
  */
 
-  n = 0;
-  XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-  XtSetArg(args[n],XmNrecomputeSize,False); n++;
-  for (childCount = 0; childCount < DL_MAX_COLORS; childCount++) {
-    /* use values in default colormap if in valid area of colormap */
-    globalColorPalettePB[childCount] = XmCreatePushButton(paletteRC,"colorPB",
-							  args,n);
-    XtAddCallback(globalColorPalettePB[childCount],XmNactivateCallback,
-		colorPaletteActivateCallback,
-		(XtPointer)childCount);
-  }
+    n = 0;
+    XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
+    XtSetArg(args[n],XmNrecomputeSize,False); n++;
+    for (childCount = 0; childCount < DL_MAX_COLORS; childCount++) {
+      /* use values in default colormap if in valid area of colormap */
+	globalColorPalettePB[childCount] = XmCreatePushButton(paletteRC,"colorPB",
+	  args,n);
+	XtAddCallback(globalColorPalettePB[childCount],XmNactivateCallback,
+	  colorPaletteActivateCallback,
+	  (XtPointer)childCount);
+    }
 
 /* want to keep same shadow colors... but different background */
-  for (childCount = 0; childCount < DL_MAX_COLORS; childCount++) {
-    XtSetArg(args[0],XmNbackground,(Pixel)defaultColormap[childCount]);
-    XtSetValues(globalColorPalettePB[childCount],args,1);
-  }
+    for (childCount = 0; childCount < DL_MAX_COLORS; childCount++) {
+	XtSetArg(args[0],XmNbackground,(Pixel)defaultColormap[childCount]);
+	XtSetValues(globalColorPalettePB[childCount],args,1);
+    }
 
-  XmMainWindowSetAreas(colorMW,colorMB,NULL,NULL,NULL,paletteRC);
+    XmMainWindowSetAreas(colorMW,colorMB,NULL,NULL,NULL,paletteRC);
 
 
 /*
  * manage the composites
  */
-  XtManageChild(colorMB);
-  XtManageChildren(globalColorPalettePB,childCount);
-  XtManageChild(paletteRC);
-  XtManageChild(colorMW);
+    XtManageChild(colorMB);
+    XtManageChildren(globalColorPalettePB,childCount);
+    XtManageChild(paletteRC);
+    XtManageChild(colorMW);
 
 
 }
@@ -471,30 +460,28 @@ void setCurrentDisplayColorsInColorPalette(
   int rcType,
   int index)	/* for types with color vectors, also specify element */
 {
-  Arg args[2];
-  int i, n = 0;
+    Arg args[2];
+    int i, n = 0;
 
 /* create the color palette if it doesn't yet exist */
-  if (colorMW == NULL) createColor();
+    if (colorMW == NULL) createColor();
 
-  if (currentDisplayInfo == NULL)  {
-  /* reset to default colormap */
-    currentColormap = defaultColormap;
-    for (i = 0; i < DL_MAX_COLORS; i++) {
-      XtSetArg(args[0],XmNbackground,(Pixel)currentColormap[i]);
-      XtSetValues(globalColorPalettePB[i],args,1);
+    if (currentDisplayInfo == NULL)  {
+      /* reset to default colormap */
+	currentColormap = defaultColormap;
+	for (i = 0; i < DL_MAX_COLORS; i++) {
+	    XtSetArg(args[0],XmNbackground,(Pixel)currentColormap[i]);
+	    XtSetValues(globalColorPalettePB[i],args,1);
+	}
+    } else {
+	currentColormap = currentDisplayInfo->colormap;
+	for (i = 0; i < MIN(currentDisplayInfo->dlColormapCounter,
+	  DL_MAX_COLORS); i++) {
+	    XtSetArg(args[0],XmNbackground,currentColormap[i]); n++;
+	    XtSetValues(globalColorPalettePB[i],args,1);
+	}
     }
-  } else {
-    currentColormap = currentDisplayInfo->colormap;
-    for (i = 0; i < MIN(currentDisplayInfo->dlColormapCounter,
-		DL_MAX_COLORS); i++) {
-       XtSetArg(args[0],XmNbackground,currentColormap[i]); n++;
-       XtSetValues(globalColorPalettePB[i],args,1);
-    }
-  }
 
-  elementTypeWhoseColorIsBeingEditted = rcType;
-  elementTypeWhoseColorIsBeingEdittedIndex = index;
+    elementTypeWhoseColorIsBeingEditted = rcType;
+    elementTypeWhoseColorIsBeingEdittedIndex = index;
 }
-
-

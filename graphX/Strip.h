@@ -66,7 +66,7 @@ struct _Strip {
 					   returning sampled value */
     BOOLEAN	    paused;		/* state variable: is strip paused? */
 
-    /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
+  /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
     unsigned long    dataX0;		/* upper left corner - data region X */
     unsigned long    dataY0;		/* upper left corner - data region Y */
     unsigned long    dataX1;		/* lower right corner - data region X */
@@ -108,7 +108,7 @@ struct _Strip {
     XtAppContext    appContext;		/* default or user-created AppContext */
     XtIntervalId    timeoutId;
 
-    };
+};
 typedef struct _Strip Strip;
 
 
@@ -118,8 +118,8 @@ extern void stripPrint(Strip *);
 extern void stripRefresh(Strip *);
 extern void stripResize(Strip *);
 extern void stripSet(Strip *, int, int, double **, StripRange *, double,
-	double(*[])(), char *, char *, char *, char *, char *,
-	char *, char *, char **, StripStorageMode);
+  double(*[])(), char *, char *, char *, char *, char *,
+  char *, char *, char **, StripStorageMode);
 extern void stripSetDataColor(Strip *, int, char *);
 extern void stripSetRange(Strip *, int, double, double);
 extern void stripSetInterval(Strip *, double);

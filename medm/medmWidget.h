@@ -43,17 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  03-01-95        vong    2.1.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -179,14 +175,14 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 
 /* Speedo scalable, available from  X11R5 font server */
 #define DEFAULT_SCALABLE_DISPLAY_FONT \
-		"-bitstream-charter-bold-r-normal--0-0-0-0-p-0-iso8859-1"
+"-bitstream-charter-bold-r-normal--0-0-0-0-p-0-iso8859-1"
 
 
 #ifndef ALLOCATE_STORAGE
-  extern int fontSizeTable[MAX_FONTS];
+extern int fontSizeTable[MAX_FONTS];
 #else
-  int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
-					22,24,30,36,40,48,60,};
+int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
+				22,24,30,36,40,48,60,};
 #endif
 
 
@@ -195,16 +191,13 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
  */
 #if 0
 static XtActionsRec actions[] = {
-	{"popupValuatorKeyboardEntry",popupValuatorKeyboardEntry},
+    {"popupValuatorKeyboardEntry",popupValuatorKeyboardEntry},
 };
 #endif
-
-
 
 /************************************************************************
  * special types
  ************************************************************************/
-
 
 /*
  * shell types that mdm/medd must worry about
@@ -221,33 +214,33 @@ typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
  */
 
 typedef struct _UpdateTask {
-  void       (*executeTask)(XtPointer);    /* update rountine */
-  void       (*destroyTask)(XtPointer);
-  Widget     (*widget)(XtPointer);
-  void       (*name)(XtPointer, char **, short *, int *);
-  XtPointer  clientData;                           
-  double     timeInterval;                 /* if not 0.0, periodic task */
-  double     nextExecuteTime;               
-  struct     _DisplayInfo *displayInfo;
-  struct     _UpdateTask *next;
-  int        executeRequestsPendingCount;  /* how many update requests are pending */
-  XRectangle rectangle;                    /* geometry of the Object */
-  Boolean    overlapped;                   /* tell whether this object is overlapped
-                                            * by other objects */
-  Boolean    opaque;
+    void       (*executeTask)(XtPointer);    /* update rountine */
+    void       (*destroyTask)(XtPointer);
+    Widget     (*widget)(XtPointer);
+    void       (*name)(XtPointer, char **, short *, int *);
+    XtPointer  clientData;                           
+    double     timeInterval;                 /* if not 0.0, periodic task */
+    double     nextExecuteTime;               
+    struct     _DisplayInfo *displayInfo;
+    struct     _UpdateTask *next;
+    int        executeRequestsPendingCount;  /* how many update requests are pending */
+    XRectangle rectangle;                    /* geometry of the Object */
+    Boolean    overlapped;                   /* tell whether this object is overlapped
+					      * by other objects */
+    Boolean    opaque;
 } UpdateTask;
 
 typedef struct _InitTask {
-  Boolean init;
-  Boolean (*initTask)();
+    Boolean init;
+    Boolean (*initTask)();
 } InitTask;
 
 /*
  * name-value table (for macro substitutions in display files)
  */
 typedef struct {
-  char *name;
-  char *value;
+    char *name;
+    char *value;
 } NameValueTable;
 
 
@@ -256,60 +249,60 @@ typedef struct {
  */
 
 typedef struct _DisplayInfo {
-  FILE		  *filePtr;
-  Boolean   newDisplay;
-  int       versionNumber;
-/* widgets and main pixmap */
-  Widget    shell;
-  Widget    drawingArea;
-  Pixmap    drawingAreaPixmap;
-  Widget    editPopupMenu;
-  Widget    executePopupMenu;
-  Widget    cartesianPlotPopupMenu;
-  Widget    selectedCartesianPlot;
-  Widget    warningDialog;
-  int       warningDialogAnswer;
-  Widget    questionDialog;
-  int       questionDialogAnswer;
-  Widget    shellCommandPromptD;
-/* widget instance data */
+    FILE		  *filePtr;
+    Boolean   newDisplay;
+    int       versionNumber;
+  /* widgets and main pixmap */
+    Widget    shell;
+    Widget    drawingArea;
+    Pixmap    drawingAreaPixmap;
+    Widget    editPopupMenu;
+    Widget    executePopupMenu;
+    Widget    cartesianPlotPopupMenu;
+    Widget    selectedCartesianPlot;
+    Widget    warningDialog;
+    int       warningDialogAnswer;
+    Widget    questionDialog;
+    int       questionDialogAnswer;
+    Widget    shellCommandPromptD;
+  /* widget instance data */
 #if 0
-  Widget		child[MAX_CHILDREN];	  /* children of drawing area */
-  int		    childCount;
+    Widget		child[MAX_CHILDREN];	  /* children of drawing area */
+    int		    childCount;
 #endif
-/* periodic tasks */
-  UpdateTask      updateTaskListHead;
-  UpdateTask      *updateTaskListTail;
-  int             periodicTaskCount;
-/* colormap and attribute data (one exists at a time for each display)        */
-  Pixel *colormap;
-	int		dlColormapCounter;
-	int		dlColormapSize;
-	int		drawingAreaBackgroundColor;
-	int		drawingAreaForegroundColor;
-	GC		gc;
-	GC		pixmapGC;
-/* execute or edit mode traversal  */
-	DlTraversalMode	traversalMode;
-	Boolean		hasBeenEditedButNotSaved;
-	Boolean		fromRelatedDisplayExecution;
-/* display list pointers */
-  DlList *dlElementList;
+  /* periodic tasks */
+    UpdateTask      updateTaskListHead;
+    UpdateTask      *updateTaskListTail;
+    int             periodicTaskCount;
+  /* colormap and attribute data (one exists at a time for each display)        */
+    Pixel *colormap;
+    int		dlColormapCounter;
+    int		dlColormapSize;
+    int		drawingAreaBackgroundColor;
+    int		drawingAreaForegroundColor;
+    GC		gc;
+    GC		pixmapGC;
+  /* execute or edit mode traversal  */
+    DlTraversalMode	traversalMode;
+    Boolean		hasBeenEditedButNotSaved;
+    Boolean		fromRelatedDisplayExecution;
+  /* display list pointers */
+    DlList *dlElementList;
 
-/* for edit purposes */
-  DlList *selectedDlElementList;
-	Boolean selectedElementsAreHighlighted;
+  /* for edit purposes */
+    DlList *selectedDlElementList;
+    Boolean selectedElementsAreHighlighted;
 
-/* for macro-substitution in display lists */
-	NameValueTable	*nameValueTable;
-	int		 numNameValues;
+  /* for macro-substitution in display lists */
+    NameValueTable	*nameValueTable;
+    int		 numNameValues;
 
-  DlFile *dlFile;
-  DlColormap *dlColormap;
+    DlFile *dlFile;
+    DlColormap *dlColormap;
 
-/* linked list of displayInfo's    */
-	struct _DisplayInfo *next;
-	struct _DisplayInfo *prev;
+  /* linked list of displayInfo's    */
+    struct _DisplayInfo *next;
+    struct _DisplayInfo *prev;
 
 } DisplayInfo;
 
@@ -319,10 +312,10 @@ typedef struct _DisplayInfo {
  * miscellaneous support structures
  */
 typedef struct {
-	XtPointer	controllerData;	/* (ChannelAccessControllerData *) */
-	int		nButtons;
-	XmButtonType	*buttonType;
-	XmStringTable	buttons;
+    XtPointer	controllerData;	/* (ChannelAccessControllerData *) */
+    int		nButtons;
+    XmButtonType	*buttonType;
+    XmStringTable	buttons;
 } OptionMenuData;			/* used for MENU type */
 
 
@@ -332,18 +325,18 @@ typedef struct {
  ***	in displayList.h must have corresponding changes in this table!!
  ***/
 #ifndef ALLOCATE_STORAGE
-  extern char *elementStringTable[NUM_DL_ELEMENT_TYPES];
-  extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
+extern char *elementStringTable[NUM_DL_ELEMENT_TYPES];
+extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #else
-  char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
-	"Element","Composite", "Display",
-  "Choice Button", "Menu", "Message Button", "Related Display",
-  "Shell Command", "Text Entry", "Valuator",
-  "Bar", "Byte", "Cartesian Plot", "Indicator", "Meter",
-  "Strip Chart", "Text Update",
-  "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
-  };
-  XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
+char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
+    "Element","Composite", "Display",
+    "Choice Button", "Menu", "Message Button", "Related Display",
+    "Shell Command", "Text Entry", "Valuator",
+    "Bar", "Byte", "Cartesian Plot", "Indicator", "Meter",
+    "Strip Chart", "Text Update",
+    "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
+};
+XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #endif
 
 /****************************************************************************
@@ -352,94 +345,92 @@ typedef struct {
  ***  this gets tricky - this is the aggregate set of all "attributes"
  ***	or resources for any object in mdm/medd.  there is some intersection
  ***	between objects (e.g., sharing DlObject) but any object ought to
- ***	be able to retrieve it's necessary resources from this structure
+ ***	be able to retrieve its necessary resources from this structure
  ***	somewhere.  look at   displayList.h   for definition of these
  ***	structure components... 
  ***	NOTE:  exceptions: Display and Colormap not in here (these are
  ***	modified by other, more user-friendly, methods)
  ****************************************************************************/
 
-
-
 /*
  * Resource bundle type
  */
 typedef struct _ResourceBundle {
 
-/* the aggregate types have been decomposed into scalar/atomic types to
-   support the set intersection necessary */
-	Position		x;
-	Position		y;
-	Dimension		width;
-	Dimension		height;
-	char			title[MAX_TOKEN_LENGTH];
-	char			xlabel[MAX_TOKEN_LENGTH];
-	char			ylabel[MAX_TOKEN_LENGTH];
-	int			clr;
-	int			bclr;
-	int			begin;
-	int			path;
-	TextAlign		align;
-	TextFormat		format;
-	LabelType		label;
-	Direction		direction;
-	ColorMode		clrmod;
+  /* the aggregate types have been decomposed into scalar/atomic types to
+     support the set intersection necessary */
+    Position		x;
+    Position		y;
+    Dimension		width;
+    Dimension		height;
+    char			title[MAX_TOKEN_LENGTH];
+    char			xlabel[MAX_TOKEN_LENGTH];
+    char			ylabel[MAX_TOKEN_LENGTH];
+    int			clr;
+    int			bclr;
+    int			begin;
+    int			path;
+    TextAlign		align;
+    TextFormat		format;
+    LabelType		label;
+    Direction		direction;
+    ColorMode		clrmod;
 #ifdef __COLOR_RULE_H__
-        int                     colorRule;
+    int                     colorRule;
 #endif
-	FillMode		fillmod;
-	EdgeStyle		style;
-	FillStyle		fill;
-	VisibilityMode		vis;
-	char			chan[MAX_TOKEN_LENGTH];
-	int			data_clr;
-	int			dis;
-	int			xyangle;
-	int			zangle;
-	double                  period;
-	TimeUnits		units;
-	CartesianPlotStyle	cStyle;
-	EraseOldest		erase_oldest;
-	int			count;
-	Stacking		stacking;
-	ImageType		imageType;
-	char			textix[MAX_TOKEN_LENGTH];
-	char			messageLabel[MAX_TOKEN_LENGTH];
-	char			press_msg[MAX_TOKEN_LENGTH];
-	char			release_msg[MAX_TOKEN_LENGTH];
-	char			imageName[MAX_TOKEN_LENGTH];
-	char			compositeName[MAX_TOKEN_LENGTH];
-	char			data[MAX_TOKEN_LENGTH];
-	char			cmap[MAX_TOKEN_LENGTH];
-	char			name[MAX_TOKEN_LENGTH];
-	int			lineWidth;
-	double			dPrecision;
-  int                     sbit, ebit;
-  char      rdLabel[MAX_TOKEN_LENGTH];
-	DlTrace			cpData[MAX_TRACES];
-	DlPen			scData[MAX_PENS];
-	DlRelatedDisplayEntry	rdData[MAX_RELATED_DISPLAYS];
-	DlShellCommandEntry	cmdData[MAX_SHELL_COMMANDS];
+    FillMode		fillmod;
+    EdgeStyle		style;
+    FillStyle		fill;
+    VisibilityMode		vis;
+    char			chan[MAX_TOKEN_LENGTH];
+    int			data_clr;
+    int			dis;
+    int			xyangle;
+    int			zangle;
+    double                  period;
+    TimeUnits		units;
+    CartesianPlotStyle	cStyle;
+    EraseOldest		erase_oldest;
+    int			count;
+    Stacking		stacking;
+    ImageType		imageType;
+    char			textix[MAX_TOKEN_LENGTH];
+    char			messageLabel[MAX_TOKEN_LENGTH];
+    char			press_msg[MAX_TOKEN_LENGTH];
+    char			release_msg[MAX_TOKEN_LENGTH];
+    char			imageName[MAX_TOKEN_LENGTH];
+    char			compositeName[MAX_TOKEN_LENGTH];
+    char			data[MAX_TOKEN_LENGTH];
+    char			cmap[MAX_TOKEN_LENGTH];
+    char			name[MAX_TOKEN_LENGTH];
+    int			lineWidth;
+    double			dPrecision;
+    int                     sbit, ebit;
+    char      rdLabel[MAX_TOKEN_LENGTH];
+    DlTrace			cpData[MAX_TRACES];
+    DlPen			scData[MAX_PENS];
+    DlRelatedDisplayEntry	rdData[MAX_RELATED_DISPLAYS];
+    DlShellCommandEntry	cmdData[MAX_SHELL_COMMANDS];
 
-	/* X_AXIS_ELEMENT, Y1_AXIS_ELEMENT, Y2_AXIS_ELEMENT */
-	DlPlotAxisDefinition	axis[3];
+  /* X_AXIS_ELEMENT, Y1_AXIS_ELEMENT, Y2_AXIS_ELEMENT */
+    DlPlotAxisDefinition	axis[3];
 
-	char			trigger[MAX_TOKEN_LENGTH];
-	char                    erase[MAX_TOKEN_LENGTH];
-	eraseMode_t             eraseMode;
+    char			trigger[MAX_TOKEN_LENGTH];
+    char                    erase[MAX_TOKEN_LENGTH];
+    eraseMode_t             eraseMode;
 
   /* related display specific */
-  relatedDisplayVisual_t rdVisual;
+    relatedDisplayVisual_t rdVisual;
 
-	struct _ResourceBundle	*next;	/* linked list of resourceBundle's   */
-	struct _ResourceBundle	*prev;
+    struct _ResourceBundle	*next;	/* linked list of resourceBundle's   */
+    struct _ResourceBundle	*prev;
 
 } ResourceBundle, *ResourceBundlePtr;
 
 
 /*
  * and define IDs for the resource entries for displacements into
- *	resource RC widget array
+ *   resource RC widget array
  */
 #define X_RC		0
 #define Y_RC		1
@@ -556,9 +547,9 @@ typedef struct _ResourceBundle {
  ***	changes in this table!!
  ***/
 #ifndef ALLOCATE_STORAGE
-  extern char *resourceEntryStringTable[MAX_RESOURCE_ENTRY];
+extern char *resourceEntryStringTable[MAX_RESOURCE_ENTRY];
 #else
-  char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
+char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "X Position", "Y Position", "Width", "Height",
     "Readback Channel", "Control Channel",
     "Title", "X Label", "Y Label",
@@ -611,20 +602,20 @@ typedef struct _ResourceBundle {
  ***/
 #define MAX_RESOURCES_FOR_DL_ELEMENT 18
 typedef struct _ResourceMap{
-	Cardinal childIndexRC[MAX_RESOURCES_FOR_DL_ELEMENT];
-	Cardinal numChildren;
-	Widget children[MAX_RESOURCES_FOR_DL_ELEMENT];
+    Cardinal childIndexRC[MAX_RESOURCES_FOR_DL_ELEMENT];
+    Cardinal numChildren;
+    Widget children[MAX_RESOURCES_FOR_DL_ELEMENT];
 } ResourceMap;
 
 
 /***
- *** see ../medd/resourcePalette.c (initializeResourcePaletteElements())
- ***	for the enumerated set of dependencies
+ *** see resourcePalette.c (initializeResourcePaletteElements())
+ ***    for the enumerated set of dependencies
  ***/
 #ifndef ALLOCATE_STORAGE
-  extern ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
+extern ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
 #else
-  ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
+ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
 #endif
 
 
@@ -634,79 +625,79 @@ typedef struct _ResourceMap{
  ***/
 #define DEFAULT_DL_COLORMAP_SIZE	65
 #ifndef ALLOCATE_STORAGE
-  extern DlColormap defaultDlColormap;
+extern DlColormap defaultDlColormap;
 #else
-  DlColormap defaultDlColormap = {
-	/* ncolors */
-	 65,
-	 /* r,  g,   b,   inten */
-	{{ 255, 255, 255, 255, },
-	 { 236, 236, 236, 0, },
-	 { 218, 218, 218, 0, },
-	 { 200, 200, 200, 0, },
-	 { 187, 187, 187, 0, },
-	 { 174, 174, 174, 0, },
-	 { 158, 158, 158, 0, },
-	 { 145, 145, 145, 0, },
-	 { 133, 133, 133, 0, },
-	 { 120, 120, 120, 0, },
-	 { 105, 105, 105, 0, },
-	 { 90, 90, 90, 0, },
-	 { 70, 70, 70, 0, },
-	 { 45, 45, 45, 0, },
-	 { 0, 0, 0, 0, },
-	 { 0, 216, 0, 0, },
-	 { 30, 187, 0, 0, },
-	 { 51, 153, 0, 0, },
-	 { 45, 127, 0, 0, },
-	 { 33, 108, 0, 0, },
-	 { 253, 0, 0, 0, },
-	 { 222, 19, 9, 0, },
-	 { 190, 25, 11, 0, },
-	 { 160, 18, 7, 0, },
-	 { 130, 4, 0, 0, },
-	 { 88, 147, 255, 0, },
-	 { 89, 126, 225, 0, },
-	 { 75, 110, 199, 0, },
-	 { 58, 94, 171, 0, },
-	 { 39, 84, 141, 0, },
-	 { 251, 243, 74, 0, },
-	 { 249, 218, 60, 0, },
-	 { 238, 182, 43, 0, },
-	 { 225, 144, 21, 0, },
-	 { 205, 97, 0, 0, },
-	 { 255, 176, 255, 0, },
-	 { 214, 127, 226, 0, },
-	 { 174, 78, 188, 0, },
-	 { 139, 26, 150, 0, },
-	 { 97, 10, 117, 0, },
-	 { 164, 170, 255, 0, },
-	 { 135, 147, 226, 0, },
-	 { 106, 115, 193, 0, },
-	 { 77, 82, 164, 0, },
-	 { 52, 51, 134, 0, },
-	 { 199, 187, 109, 0, },
-	 { 183, 157, 92, 0, },
-	 { 164, 126, 60, 0, },
-	 { 125, 86, 39, 0, },
-	 { 88, 52, 15, 0, },
-	 { 153, 255, 255, 0, },
-	 { 115, 223, 255, 0, },
-	 { 78, 165, 249, 0, },
-	 { 42, 99, 228, 0, },
-	 { 10, 0, 184, 0, },
-	 { 235, 241, 181, 0, },
-	 { 212, 219, 157, 0, },
-	 { 187, 193, 135, 0, },
-	 { 166, 164, 98, 0, },
-	 { 139, 130, 57, 0, },
-	 { 115, 255, 107, 0, },
-	 { 82, 218, 59, 0, },
-	 { 60, 180, 32, 0, },
-	 { 40, 147, 21, 0, },
-	 { 26, 115, 9, 0, },
-	}
-  };
+DlColormap defaultDlColormap = {
+  /* ncolors */
+    65,
+  /* r,  g,   b,   inten */
+    {{ 255, 255, 255, 255, },
+     { 236, 236, 236, 0, },
+     { 218, 218, 218, 0, },
+     { 200, 200, 200, 0, },
+     { 187, 187, 187, 0, },
+     { 174, 174, 174, 0, },
+     { 158, 158, 158, 0, },
+     { 145, 145, 145, 0, },
+     { 133, 133, 133, 0, },
+     { 120, 120, 120, 0, },
+     { 105, 105, 105, 0, },
+     { 90, 90, 90, 0, },
+     { 70, 70, 70, 0, },
+     { 45, 45, 45, 0, },
+     { 0, 0, 0, 0, },
+     { 0, 216, 0, 0, },
+     { 30, 187, 0, 0, },
+     { 51, 153, 0, 0, },
+     { 45, 127, 0, 0, },
+     { 33, 108, 0, 0, },
+     { 253, 0, 0, 0, },
+     { 222, 19, 9, 0, },
+     { 190, 25, 11, 0, },
+     { 160, 18, 7, 0, },
+     { 130, 4, 0, 0, },
+     { 88, 147, 255, 0, },
+     { 89, 126, 225, 0, },
+     { 75, 110, 199, 0, },
+     { 58, 94, 171, 0, },
+     { 39, 84, 141, 0, },
+     { 251, 243, 74, 0, },
+     { 249, 218, 60, 0, },
+     { 238, 182, 43, 0, },
+     { 225, 144, 21, 0, },
+     { 205, 97, 0, 0, },
+     { 255, 176, 255, 0, },
+     { 214, 127, 226, 0, },
+     { 174, 78, 188, 0, },
+     { 139, 26, 150, 0, },
+     { 97, 10, 117, 0, },
+     { 164, 170, 255, 0, },
+     { 135, 147, 226, 0, },
+     { 106, 115, 193, 0, },
+     { 77, 82, 164, 0, },
+     { 52, 51, 134, 0, },
+     { 199, 187, 109, 0, },
+     { 183, 157, 92, 0, },
+     { 164, 126, 60, 0, },
+     { 125, 86, 39, 0, },
+     { 88, 52, 15, 0, },
+     { 153, 255, 255, 0, },
+     { 115, 223, 255, 0, },
+     { 78, 165, 249, 0, },
+     { 42, 99, 228, 0, },
+     { 10, 0, 184, 0, },
+     { 235, 241, 181, 0, },
+     { 212, 219, 157, 0, },
+     { 187, 193, 135, 0, },
+     { 166, 164, 98, 0, },
+     { 139, 130, 57, 0, },
+     { 115, 255, 107, 0, },
+     { 82, 218, 59, 0, },
+     { 60, 180, 32, 0, },
+     { 40, 147, 21, 0, },
+     { 26, 115, 9, 0, },
+    }
+};
 #endif
 
 #ifdef __COLOR_RULE_H__
@@ -714,25 +705,23 @@ typedef struct _ResourceMap{
 #define MAX_COLOR_RULES 16
 #define MAX_SET_OF_COLOR_RULE 4
 typedef struct {
-        double lowerBoundary;
-        double upperBoundary;
-        int    colorIndex;
+    double lowerBoundary;
+    double upperBoundary;
+    int    colorIndex;
 } colorRule_t;
 
 typedef struct {
-  colorRule_t rule[MAX_COLOR_RULES];
+    colorRule_t rule[MAX_COLOR_RULES];
 } setOfColorRule_t;
 
 #ifndef ALLOCATE_STORAGE
-  extern setOfColorRule_t setOfColorRule[MAX_SET_OF_COLOR_RULE];
+extern setOfColorRule_t setOfColorRule[MAX_SET_OF_COLOR_RULE];
 #endif
 #endif
 
 /*******************************************************************
  ********                 global variables                 *********
  *******************************************************************/
-
-
 
 /* 
  * only one of these in all the address space

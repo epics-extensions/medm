@@ -43,20 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              - using the new screen update mechanism
- * .03  09-11-95        vong    conform to c++ syntax
- * .04  09-25-95        vong    add the primitive color rule set
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -64,9 +57,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Arc {
-  DlElement        *dlElement;
-  Record           *record;
-  UpdateTask       *updateTask;
+    DlElement        *dlElement;
+    Record           *record;
+    UpdateTask       *updateTask;
 } Arc;
 
 static void arcDraw(XtPointer cd);
@@ -77,292 +70,292 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable arcDlDispatchTable = {
-         createDlArc,
-         destroyElementWithDynamicAttribute,
-         executeDlArc,
-         writeDlArc,
-         NULL,
-         arcGetValues,
-         arcInheritValues,
-         NULL,
-         NULL,
-         genericMove,
-         genericScale,
-         NULL,
-         NULL};
+    createDlArc,
+    destroyElementWithDynamicAttribute,
+    executeDlArc,
+    writeDlArc,
+    NULL,
+    arcGetValues,
+    arcInheritValues,
+    NULL,
+    NULL,
+    genericMove,
+    genericScale,
+    NULL,
+    NULL};
 
 static void drawArc(Arc *pa) {
-  unsigned int lineWidth;
-  DisplayInfo *displayInfo = pa->updateTask->displayInfo;
-  Widget widget = pa->updateTask->displayInfo->drawingArea;
-  Display *display = XtDisplay(widget);
-  DlArc *dlArc = pa->dlElement->structure.arc;
+    unsigned int lineWidth;
+    DisplayInfo *displayInfo = pa->updateTask->displayInfo;
+    Widget widget = pa->updateTask->displayInfo->drawingArea;
+    Display *display = XtDisplay(widget);
+    DlArc *dlArc = pa->dlElement->structure.arc;
 
-  lineWidth = (dlArc->attr.width+1)/2;
-  if (dlArc->attr.fill == F_SOLID) {
-    XFillArc(display,XtWindow(widget),displayInfo->gc,
-        dlArc->object.x,dlArc->object.y,
-        dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-  } else
-  if (dlArc->attr.fill == F_OUTLINE) {
-    XDrawArc(display,XtWindow(widget),displayInfo->gc,
-        dlArc->object.x + lineWidth,
-        dlArc->object.y + lineWidth,
-        dlArc->object.width - 2*lineWidth,
-        dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-  }
+    lineWidth = (dlArc->attr.width+1)/2;
+    if (dlArc->attr.fill == F_SOLID) {
+	XFillArc(display,XtWindow(widget),displayInfo->gc,
+	  dlArc->object.x,dlArc->object.y,
+	  dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
+    } else
+      if (dlArc->attr.fill == F_OUTLINE) {
+	  XDrawArc(display,XtWindow(widget),displayInfo->gc,
+	    dlArc->object.x + lineWidth,
+	    dlArc->object.y + lineWidth,
+	    dlArc->object.width - 2*lineWidth,
+	    dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+      }
 }
 
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  DlArc *dlArc = dlElement->structure.arc;
-  if ((displayInfo->traversalMode == DL_EXECUTE) 
+    DlArc *dlArc = dlElement->structure.arc;
+    if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (dlArc->dynAttr.name)) {
-    Arc *pa;
-    pa = (Arc *) malloc(sizeof(Arc));
-    pa->dlElement = dlElement;
-    pa->updateTask = updateTaskAddTask(displayInfo,
-				       &(dlArc->object),
-				       arcDraw,
-				       (XtPointer)pa);
+	Arc *pa;
+	pa = (Arc *) malloc(sizeof(Arc));
+	pa->dlElement = dlElement;
+	pa->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlArc->object),
+	  arcDraw,
+	  (XtPointer)pa);
 
-    if (pa->updateTask == NULL) {
-      medmPrintf("arcCreateRunTimeInstance : memory allocation error\n");
-    } else {
-      updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
-      updateTaskAddNameCb(pa->updateTask,arcName);
-      pa->updateTask->opaque = False;
-    }
-    pa->record = medmAllocateRecord(
-                  dlArc->dynAttr.name,
-                  arcUpdateValueCb,
-                  NULL,
-                  (XtPointer) pa);
+	if (pa->updateTask == NULL) {
+	    medmPrintf("arcCreateRunTimeInstance : memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
+	    updateTaskAddNameCb(pa->updateTask,arcName);
+	    pa->updateTask->opaque = False;
+	}
+	pa->record = medmAllocateRecord(
+	  dlArc->dynAttr.name,
+	  arcUpdateValueCb,
+	  NULL,
+	  (XtPointer) pa);
 #if 0
-    drawWhiteRectangle(pa->updateTask);
+	drawWhiteRectangle(pa->updateTask);
 #endif
 
 #ifdef __COLOR_RULE_H__
-    switch (dlArc->dynAttr.clr) {
-      STATIC :
-        pa->record->monitorValueChanged = False;
-        pa->record->monitorSeverityChanged = False;
-        break;
-      ALARM :
-        pa->record->monitorValueChanged = False;
-        break;
-      DISCRETE :
-        pa->record->monitorSeverityChanged = False;
-        break;
-    }
+	switch (dlArc->dynAttr.clr) {
+	    STATIC :
+	      pa->record->monitorValueChanged = False;
+	    pa->record->monitorSeverityChanged = False;
+	    break;
+	    ALARM :
+	      pa->record->monitorValueChanged = False;
+	    break;
+	    DISCRETE :
+	      pa->record->monitorSeverityChanged = False;
+	    break;
+	}
 #else
-    pa->record->monitorValueChanged = False;
-    if (dlArc->dynAttr.clr != ALARM ) {
-      pa->record->monitorSeverityChanged = False;
-    }
+	pa->record->monitorValueChanged = False;
+	if (dlArc->dynAttr.clr != ALARM ) {
+	    pa->record->monitorSeverityChanged = False;
+	}
 #endif
 
-    if (dlArc->dynAttr.vis == V_STATIC ) {
-      pa->record->monitorZeroAndNoneZeroTransition = False;
-    }
-  } else {
-    executeDlBasicAttribute(displayInfo,&(dlArc->attr));
-    if (dlArc->attr.fill == F_SOLID) {
-      unsigned int lineWidth = (dlArc->attr.width+1)/2;
-      XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-        dlArc->object.x,dlArc->object.y,
-        dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-      XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-        dlArc->object.x,dlArc->object.y,
-        dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
+	if (dlArc->dynAttr.vis == V_STATIC ) {
+	    pa->record->monitorZeroAndNoneZeroTransition = False;
+	}
+    } else {
+	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
+	if (dlArc->attr.fill == F_SOLID) {
+	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
+	    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+	      dlArc->object.x,dlArc->object.y,
+	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
+	    XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	      dlArc->object.x,dlArc->object.y,
+	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
 
-    } else
-    if (dlArc->attr.fill == F_OUTLINE) {
-      unsigned int lineWidth = (dlArc->attr.width+1)/2;
-      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-        dlArc->object.x + lineWidth,
-        dlArc->object.y + lineWidth,
-        dlArc->object.width - 2*lineWidth,
-        dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-      XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-        dlArc->object.x + lineWidth,
-        dlArc->object.y + lineWidth,
-        dlArc->object.width - 2*lineWidth,
-        dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+	} else
+	  if (dlArc->attr.fill == F_OUTLINE) {
+	      unsigned int lineWidth = (dlArc->attr.width+1)/2;
+	      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+		dlArc->object.x + lineWidth,
+		dlArc->object.y + lineWidth,
+		dlArc->object.width - 2*lineWidth,
+		dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+	      XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+		dlArc->object.x + lineWidth,
+		dlArc->object.y + lineWidth,
+		dlArc->object.width - 2*lineWidth,
+		dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+	  }
     }
-  }
 }
 
 static void arcUpdateValueCb(XtPointer cd) {
-  Arc *pa = (Arc *) ((Record *) cd)->clientData;
-  updateTaskMarkUpdate(pa->updateTask);
+    Arc *pa = (Arc *) ((Record *) cd)->clientData;
+    updateTaskMarkUpdate(pa->updateTask);
 }
 
 static void arcDraw(XtPointer cd) {
-  Arc *pa = (Arc *) cd;
-  Record *pd = pa->record;
-  DisplayInfo *displayInfo = pa->updateTask->displayInfo;
-  XGCValues gcValues;
-  unsigned long gcValueMask;
-  Display *display = XtDisplay(pa->updateTask->displayInfo->drawingArea);
-  DlArc *dlArc = pa->dlElement->structure.arc;
+    Arc *pa = (Arc *) cd;
+    Record *pd = pa->record;
+    DisplayInfo *displayInfo = pa->updateTask->displayInfo;
+    XGCValues gcValues;
+    unsigned long gcValueMask;
+    Display *display = XtDisplay(pa->updateTask->displayInfo->drawingArea);
+    DlArc *dlArc = pa->dlElement->structure.arc;
 
-  if (pd->connected) {
-    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-    switch (dlArc->dynAttr.clr) {
+    if (pd->connected) {
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
-      case STATIC :
-<<<<<<< medmArc.c
-        gcValues.foreground = displayInfo->colormap[pa->attr.clr];
-=======
-        gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
->>>>>>> 1.7
-        break;
-      case DISCRETE:
-        gcValues.foreground = extractColor(displayInfo,
-                                  pd->value,
-                                  dlArc->dynAttr.colorRule,
-                                  dlArc->attr.clr);
-        break;
+	case STATIC :
+	    <<<<<<< medmArc.c
+		      gcValues.foreground = displayInfo->colormap[pa->attr.clr];
+	    =======
+		      gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
+		      >>>>>>> 1.7
+				break;
+	case DISCRETE:
+	    gcValues.foreground = extractColor(displayInfo,
+	      pd->value,
+	      dlArc->dynAttr.colorRule,
+	      dlArc->attr.clr);
+	    break;
 #else
-      case STATIC :
-      case DISCRETE:
-        gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
-        break;
+	case STATIC :
+	case DISCRETE:
+	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
+	    break;
 #endif
-      case ALARM :
-        gcValues.foreground = alarmColorPixel[pd->severity];
-        break;
-      default :
-        gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
-	medmPrintf("internal error : arcUpdatevalueCb : unknown attribute\n");
-	break;
-    }
-    gcValues.line_width = dlArc->attr.width;
-    gcValues.line_style = ((dlArc->attr.style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	case ALARM :
+	    gcValues.foreground = alarmColorPixel[pd->severity];
+	    break;
+	default :
+	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
+	    medmPrintf("internal error : arcUpdatevalueCb : unknown attribute\n");
+	    break;
+	}
+	gcValues.line_width = dlArc->attr.width;
+	gcValues.line_style = ((dlArc->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (dlArc->dynAttr.vis) {
-      case V_STATIC:
-        drawArc(pa);
-        break;
-      case IF_NOT_ZERO:
-        if (pd->value != 0.0)
-          drawArc(pa);
-        break;
-      case IF_ZERO:
-        if (pd->value == 0.0)
-          drawArc(pa);
-        break;
-      default :
-        medmPrintf("arcUpdateValueCb : internal error\n");
-        break;
-    }
-    if (pd->readAccess) {
-      if (!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
-        pa->updateTask->opaque = True;
-      }
+	switch (dlArc->dynAttr.vis) {
+	case V_STATIC:
+	    drawArc(pa);
+	    break;
+	case IF_NOT_ZERO:
+	    if (pd->value != 0.0)
+	      drawArc(pa);
+	    break;
+	case IF_ZERO:
+	    if (pd->value == 0.0)
+	      drawArc(pa);
+	    break;
+	default :
+	    medmPrintf("arcUpdateValueCb : internal error\n");
+	    break;
+	}
+	if (pd->readAccess) {
+	    if (!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
+		pa->updateTask->opaque = True;
+	    }
+	} else {
+	    pa->updateTask->opaque = False;
+	    draw3DQuestionMark(pa->updateTask);
+	}
     } else {
-      pa->updateTask->opaque = False;
-      draw3DQuestionMark(pa->updateTask);
-    }
-  } else {
-    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-    gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.line_width = dlArc->attr.width;
-    gcValues.line_style = ((dlArc->attr.style == SOLID) ?
-                          LineSolid : LineOnOffDash);
-    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
-    drawArc(pa);
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
+	gcValues.line_width = dlArc->attr.width;
+	gcValues.line_style = ((dlArc->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawArc(pa);
 
-  }
+    }
 }
 
 static void arcDestroyCb(XtPointer cd) {
-  Arc *pa = (Arc *) cd;
-  if (pa) {
-    medmDestroyRecord(pa->record);
-    free((char *)pa);
-  }
-  return;
+    Arc *pa = (Arc *) cd;
+    if (pa) {
+	medmDestroyRecord(pa->record);
+	free((char *)pa);
+    }
+    return;
 }
 
 static void arcName(XtPointer cd, char **name, short *severity, int *count) {
-  Arc *pa = (Arc *) cd;
-  *count = 1;
-  name[0] = pa->record->name;
-  severity[0] = pa->record->severity;
+    Arc *pa = (Arc *) cd;
+    *count = 1;
+    name[0] = pa->record->name;
+    severity[0] = pa->record->severity;
 }
 
 DlElement *createDlArc(DlElement *p)
 {
-  DlArc *dlArc;
-  DlElement *dlElement;
+    DlArc *dlArc;
+    DlElement *dlElement;
  
-  dlArc = (DlArc*) malloc(sizeof(DlArc));
-  if (!dlArc) return 0;
-  if (p) {
-    *dlArc = *p->structure.arc;
-  } else { 
-    objectAttributeInit(&(dlArc->object));
-    basicAttributeInit(&(dlArc->attr));
-    dynamicAttributeInit(&(dlArc->dynAttr));
-    dlArc->begin = 0;
-    dlArc->path = 90*64;
-  }
+    dlArc = (DlArc*) malloc(sizeof(DlArc));
+    if (!dlArc) return 0;
+    if (p) {
+	*dlArc = *p->structure.arc;
+    } else { 
+	objectAttributeInit(&(dlArc->object));
+	basicAttributeInit(&(dlArc->attr));
+	dynamicAttributeInit(&(dlArc->dynAttr));
+	dlArc->begin = 0;
+	dlArc->path = 90*64;
+    }
  
-  if (!(dlElement = createDlElement(DL_Arc,
-                    (XtPointer)      dlArc,
-										&arcDlDispatchTable))) {
-    free(dlArc);
-  }
+    if (!(dlElement = createDlElement(DL_Arc,
+      (XtPointer)      dlArc,
+      &arcDlDispatchTable))) {
+	free(dlArc);
+    }
 
-  return(dlElement);
+    return(dlElement);
 }
 
 DlElement *parseArc(DisplayInfo *displayInfo)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel = 0;
-  DlArc *dlArc;
-  DlElement *dlElement = createDlArc(NULL);
-  if (!dlElement) return 0;
-  dlArc = dlElement->structure.arc;
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+    DlArc *dlArc;
+    DlElement *dlElement = createDlArc(NULL);
+    if (!dlElement) return 0;
+    dlArc = dlElement->structure.arc;
  
-  do {
-    switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD:
-        if (!strcmp(token,"object"))
-          parseObject(displayInfo,&(dlArc->object));
-        if (!strcmp(token,"basic attribute"))
-          parseBasicAttribute(displayInfo,&(dlArc->attr));
-        else
-        if (!strcmp(token,"dynamic attribute"))
-          parseDynamicAttribute(displayInfo,&(dlArc->dynAttr));
-        else
-        if (!strcmp(token,"begin")) {
-          getToken(displayInfo,token);
-          getToken(displayInfo,token);
-          dlArc->begin = atoi(token);
-        } else
-        if (!strcmp(token,"path")) {
-          getToken(displayInfo,token);
-          getToken(displayInfo,token);
-          dlArc->path = atoi(token);
-        }
-        break;
-      case T_EQUAL:
-        break;
-      case T_LEFT_BRACE:
-        nestingLevel++; break;
-      case T_RIGHT_BRACE:
-        nestingLevel--; break;
-    }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-                && (tokenType != T_EOF) );
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if (!strcmp(token,"object"))
+	      parseObject(displayInfo,&(dlArc->object));
+	    if (!strcmp(token,"basic attribute"))
+	      parseBasicAttribute(displayInfo,&(dlArc->attr));
+	    else
+	      if (!strcmp(token,"dynamic attribute"))
+		parseDynamicAttribute(displayInfo,&(dlArc->dynAttr));
+	      else
+		if (!strcmp(token,"begin")) {
+		    getToken(displayInfo,token);
+		    getToken(displayInfo,token);
+		    dlArc->begin = atoi(token);
+		} else
+		  if (!strcmp(token,"path")) {
+		      getToken(displayInfo,token);
+		      getToken(displayInfo,token);
+		      dlArc->path = atoi(token);
+		  }
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	}
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
 
-  return dlElement; 
+    return dlElement; 
 }
 
 void writeDlArc(
@@ -370,14 +363,14 @@ void writeDlArc(
   DlElement *dlElement,
   int level)
 {
-  char indent[16];
-  DlArc *dlArc = dlElement->structure.arc;
+    char indent[16];
+    DlArc *dlArc = dlElement->structure.arc;
 
-  memset(indent,'\t',level); 
-  indent[level] = '\0';
+    memset(indent,'\t',level); 
+    indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  if (MedmUseNewFileFormat) {
+    if (MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%sarc {",indent);
   	writeDlObject(stream,&(dlArc->object),level+1);
@@ -387,7 +380,7 @@ void writeDlArc(
   	fprintf(stream,"\n%s\tpath=%d",indent,dlArc->path);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  } else {
+    } else {
   	writeDlObject(stream,&(dlArc->object),level);
   	writeDlBasicAttribute(stream,&(dlArc->attr),level);
   	fprintf(stream,"\n%sarc {",indent);
@@ -395,46 +388,46 @@ void writeDlArc(
   	fprintf(stream,"\n%s\tbegin=%d",indent,dlArc->begin);
   	fprintf(stream,"\n%s\tpath=%d",indent,dlArc->path);
   	fprintf(stream,"\n%s}",indent);
-  }
+    }
 #endif
 }
 
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p) {
-  DlArc *dlArc = p->structure.arc;
-  medmGetValues(pRCB,
-    X_RC,          &(dlArc->object.x),
-    Y_RC,          &(dlArc->object.y),
-    WIDTH_RC,      &(dlArc->object.width),
-    HEIGHT_RC,     &(dlArc->object.height),
-    CLR_RC,        &(dlArc->attr.clr),
-    STYLE_RC,      &(dlArc->attr.style),
-    FILL_RC,       &(dlArc->attr.fill),
-    LINEWIDTH_RC,  &(dlArc->attr.width),
-    CLRMOD_RC,     &(dlArc->dynAttr.clr),
-    VIS_RC,        &(dlArc->dynAttr.vis),
+    DlArc *dlArc = p->structure.arc;
+    medmGetValues(pRCB,
+      X_RC,          &(dlArc->object.x),
+      Y_RC,          &(dlArc->object.y),
+      WIDTH_RC,      &(dlArc->object.width),
+      HEIGHT_RC,     &(dlArc->object.height),
+      CLR_RC,        &(dlArc->attr.clr),
+      STYLE_RC,      &(dlArc->attr.style),
+      FILL_RC,       &(dlArc->attr.fill),
+      LINEWIDTH_RC,  &(dlArc->attr.width),
+      CLRMOD_RC,     &(dlArc->dynAttr.clr),
+      VIS_RC,        &(dlArc->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
+      COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-    CHAN_RC,       &(dlArc->dynAttr.name),
-    BEGIN_RC,      &(dlArc->begin),
-    PATH_RC,       &(dlArc->path),
-    -1);
+      CHAN_RC,       &(dlArc->dynAttr.name),
+      BEGIN_RC,      &(dlArc->begin),
+      PATH_RC,       &(dlArc->path),
+      -1);
 }
 
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p) {
-  DlArc *dlArc = p->structure.arc;
-  medmGetValues(pRCB,
-    CLR_RC,        &(dlArc->attr.clr),
-    STYLE_RC,      &(dlArc->attr.style),
-    FILL_RC,       &(dlArc->attr.fill),
-    LINEWIDTH_RC,  &(dlArc->attr.width),
-    CLRMOD_RC,     &(dlArc->dynAttr.clr),
-    VIS_RC,        &(dlArc->dynAttr.vis),
+    DlArc *dlArc = p->structure.arc;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlArc->attr.clr),
+      STYLE_RC,      &(dlArc->attr.style),
+      FILL_RC,       &(dlArc->attr.fill),
+      LINEWIDTH_RC,  &(dlArc->attr.width),
+      CLRMOD_RC,     &(dlArc->dynAttr.clr),
+      VIS_RC,        &(dlArc->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
+      COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-    CHAN_RC,       &(dlArc->dynAttr.name),
-    BEGIN_RC,      &(dlArc->begin),
-    PATH_RC,       &(dlArc->path),
-    -1);
+      CHAN_RC,       &(dlArc->dynAttr.name),
+      BEGIN_RC,      &(dlArc->begin),
+      PATH_RC,       &(dlArc->path),
+      -1);
 }

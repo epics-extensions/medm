@@ -43,16 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -132,17 +129,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  */
 #include "XrtGraph.h"
 
-
-
-
-
-
 extern char *graphXGetBestFont();
-
 
 #define NAME	"medm"
 #define CLASS	"Medm"
-
 
 /*
  * global X/Xt/Motif parameters
@@ -152,9 +142,9 @@ EXTERN XtAppContext appContext;
 EXTERN Window rootWindow;
 EXTERN int screenNum;
 EXTERN Cursor helpCursor, closeCursor, printCursor, 
-	saveCursor, crosshairCursor, watchCursor,
-	rubberbandCursor, dragCursor, resizeCursor, xtermCursor,
-	noWriteAccessCursor;
+  saveCursor, crosshairCursor, watchCursor,
+  rubberbandCursor, dragCursor, resizeCursor, xtermCursor,
+  noWriteAccessCursor;
 EXTERN Colormap cmap;
 EXTERN Atom WM_DELETE_WINDOW;
 EXTERN Atom WM_TAKE_FOCUS;
@@ -163,19 +153,18 @@ EXTERN GC highlightGC;
 EXTERN XtTranslations parsedTranslations;
 
 extern unsigned long getPixelFromString(Display *display, int screen,
-	char *colorString);
+  char *colorString);
 extern unsigned long getPixelFromStringW(Widget w, char *colorString);
 
 extern void StartDrag(Widget w, XEvent *event);
 
 
 #ifndef ALLOCATE_STORAGE
-  extern char *dragTranslations;
-  extern XtActionsRec *dragActions;
+extern char *dragTranslations;
+extern XtActionsRec *dragActions;
 #else
-  static char dragTranslations[] = "#override <Btn2Down>:StartDrag()";
-  static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
+static char dragTranslations[] = "#override <Btn2Down>:StartDrag()";
+static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
 #endif
-
 
 #endif  /* __XTPARAMS_H__ */

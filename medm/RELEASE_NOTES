@@ -1,5 +1,13 @@
 MEDM Release Notes
 
+Version 2.3.1
+=============
+- The same as Version 2.3.0 except:
+-   The .c and .h files have been reformatted.
+-   The copyright header has been updated.
+-   Old, out-of-date, modification data has been removed.
+- Fixed prototypes to eliminate compiler warnings in medmCommon.c.
+
 Version 2.3.0
 =============
 - Fred Vong's development version when he left merged with 2.2.9

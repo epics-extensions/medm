@@ -43,23 +43,18 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
 
 /*
- * xgif.h
- *
  * definition of image-related data types for GIF images
  */
 
@@ -70,26 +65,24 @@ typedef unsigned char Byte;
 
 typedef struct {
 
-	XImage	      *theImage;
-	XImage	      *expImage;
+    XImage	      *theImage;
+    XImage	      *expImage;
 
-	int           dispcells;
-	Colormap      theCmap;
-	GC            theGC;
-	Pixel	      fcol,bcol;
-	Font          mfont;
-	XFontStruct   *mfinfo;
-	Visual        *theVisual;
+    int           dispcells;
+    Colormap      theCmap;
+    GC            theGC;
+    Pixel	      fcol,bcol;
+    Font          mfont;
+    XFontStruct   *mfinfo;
+    Visual        *theVisual;
 
-	int            iWIDE,iHIGH,eWIDE,eHIGH,numcols,strip,nostrip;
-	unsigned long cols[256];
-	XColor        defs[256];
+    int            iWIDE,iHIGH,eWIDE,eHIGH,numcols,strip,nostrip;
+    unsigned long cols[256];
+    XColor        defs[256];
 
-	unsigned int	currentWidth;
-	unsigned int	currentHeight;
+    unsigned int	currentWidth;
+    unsigned int	currentHeight;
 
 } GIFData;
-
-
 
 #endif  /* __XGIF_H__ */

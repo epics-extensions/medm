@@ -102,7 +102,7 @@ struct _Graph3d {
 
     XtPointer	     userData;		/* pointer to arbitrary user data */
 
-    };
+};
 typedef struct _Graph3d Graph3d;
 
 
@@ -126,8 +126,8 @@ extern void graph3dPrint(Graph3d *);
 extern void graph3dRefresh(Graph3d *);
 extern void graph3dResize(Graph3d *);
 extern void graph3dSet(Graph3d *, XYZdataPoint *, int, Graph3dType,
-	char *, char *, char *, char *, char *, char *, char *, char *,
-	Graph3dStorageMode);
+  char *, char *, char *, char *, char *, char *, char *, char *,
+  Graph3dStorageMode);
 extern void graph3dSetRange(Graph3d *, char, double, double);
 extern void graph3dSetRangeDefault(Graph3d *, char);
 extern void graph3dSetBins(Graph3d *, char, int);

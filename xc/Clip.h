@@ -63,14 +63,14 @@ typedef struct _XbaeClipRec *XbaeClipWidget;
 extern "C" {
 #endif
 
-extern void XbaeClipRedraw(
+    extern void XbaeClipRedraw(
 #if NeedFunctionPrototypes
-			   Widget	/* w */
+      Widget	/* w */
 #endif
-			   );
+	);
 
 #if defined (__cplusplus) || defined(c_plusplus)
-}
+	   }
 #endif
 
 #endif /* _Xbae_Clip_h */

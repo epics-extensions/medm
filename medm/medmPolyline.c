@@ -43,20 +43,13 @@ OWNED RIGHTS.
 
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
-DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-05-95        vong    2.1.0 release
- *                              - using new screen update dispatch mechanism
- * .03  09-12-95        vong    conform to c++ syntax
- * .04  09-25-95        vong    add the primitive color rule set
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
  *
  *****************************************************************************
 */
@@ -66,24 +59,24 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #define INITIAL_NUM_POINTS 16
 
 typedef struct _Polyline {
-  DlElement        *dlElement;
-  Record           *record;
-  UpdateTask       *updateTask;
+    DlElement        *dlElement;
+    Record           *record;
+    UpdateTask       *updateTask;
 } Polyline;
 
 /* from utils.c - get XOR GC */
 extern GC xorGC;
 
 /* for use in handlePoly*Create() functions */
-static double okRadiansTable[24]  =    { 0.,
-                                        1.*M_PI/4., 1.*M_PI/4.,
-                                        2.*M_PI/4., 2.*M_PI/4.,
-                                        3.*M_PI/4., 3.*M_PI/4.,
-                                        4.*M_PI/4., 4.*M_PI/4.,
-                                        5.*M_PI/4., 5.*M_PI/4.,
-                                        6.*M_PI/4., 6.*M_PI/4.,
-                                        7.*M_PI/4., 7.*M_PI/4.,
-                                        0.};
+static double okRadiansTable[24] = { 0.,
+				     1.*M_PI/4., 1.*M_PI/4.,
+				     2.*M_PI/4., 2.*M_PI/4.,
+				     3.*M_PI/4., 3.*M_PI/4.,
+				     4.*M_PI/4., 4.*M_PI/4.,
+				     5.*M_PI/4., 5.*M_PI/4.,
+				     6.*M_PI/4., 6.*M_PI/4.,
+				     7.*M_PI/4., 7.*M_PI/4.,
+				     0.};
 
 static void polylineUpdateValueCb(XtPointer cd);
 static void polylineDraw(XtPointer cd);
@@ -97,347 +90,347 @@ static void polylineScale(DlElement *dlElement, int xOffset, int yOffset);
 static int handlePolylineVertexManipulation(DlElement *, int, int);
 
 static DlDispatchTable polylineDlDispatchTable = {
-         createDlPolyline,
-         destroyDlPolyline,
-         executeDlPolyline,
-         writeDlPolyline,
-         NULL,
-         polylineGetValues,
-         polylineInheritValues,
-         NULL,
-         NULL,
-         polylineMove,
-         polylineScale,
-         handlePolylineVertexManipulation,
-         NULL};
+    createDlPolyline,
+    destroyDlPolyline,
+    executeDlPolyline,
+    writeDlPolyline,
+    NULL,
+    polylineGetValues,
+    polylineInheritValues,
+    NULL,
+    NULL,
+    polylineMove,
+    polylineScale,
+    handlePolylineVertexManipulation,
+    NULL};
 
 static void calculateTheBoundingBox(DlPolyline* dlPolyline) {
-  int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
-  int i;
-  for (i = 0; i < dlPolyline->nPoints; i++) {
-    minX = MIN(minX,dlPolyline->points[i].x);
-    maxX = MAX(maxX,dlPolyline->points[i].x);
-    minY = MIN(minY,dlPolyline->points[i].y);
-    maxY = MAX(maxY,dlPolyline->points[i].y);
-  }
-  dlPolyline->object.x = minX - dlPolyline->attr.width/2;
-  dlPolyline->object.y = minY - dlPolyline->attr.width/2;
-  dlPolyline->object.width = maxX - minX + dlPolyline->attr.width;
-  dlPolyline->object.height = maxY - minY + dlPolyline->attr.width;
+    int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
+    int i;
+    for (i = 0; i < dlPolyline->nPoints; i++) {
+	minX = MIN(minX,dlPolyline->points[i].x);
+	maxX = MAX(maxX,dlPolyline->points[i].x);
+	minY = MIN(minY,dlPolyline->points[i].y);
+	maxY = MAX(maxY,dlPolyline->points[i].y);
+    }
+    dlPolyline->object.x = minX - dlPolyline->attr.width/2;
+    dlPolyline->object.y = minY - dlPolyline->attr.width/2;
+    dlPolyline->object.width = maxX - minX + dlPolyline->attr.width;
+    dlPolyline->object.height = maxY - minY + dlPolyline->attr.width;
 }
 
 static void drawPolyline(Polyline *pp) {
-  DisplayInfo *displayInfo = pp->updateTask->displayInfo;
-  Widget widget = pp->updateTask->displayInfo->drawingArea;
-  Display *display = XtDisplay(widget);
-  DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
+    DisplayInfo *displayInfo = pp->updateTask->displayInfo;
+    Widget widget = pp->updateTask->displayInfo->drawingArea;
+    Display *display = XtDisplay(widget);
+    DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
 
-  XDrawLines(display,XtWindow(widget),displayInfo->gc,
-          dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
+    XDrawLines(display,XtWindow(widget),displayInfo->gc,
+      dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
 }
 
 void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  DlPolyline *dlPolyline = dlElement->structure.polyline;
-  if (dlPolyline->isFallingOrRisingLine) {
-    /* convert the falling line and rising line into polyline format */
-    if (dlPolyline->attr.width > 0) {
-      int width = dlPolyline->attr.width;
-      int halfWidth = width/2;
-      if (dlPolyline->points[1].y > dlPolyline->points[0].y) {
-        /* falling line */
-        dlPolyline->points[0].x += halfWidth;
-        dlPolyline->points[0].y += halfWidth;
-        dlPolyline->points[1].x -= halfWidth;
-        dlPolyline->points[1].y -= halfWidth;
-      } else
-      if (dlPolyline->points[1].y < dlPolyline->points[0].y) {
-        /* rising line */
-        dlPolyline->points[0].x += halfWidth;
-        dlPolyline->points[0].y -= width;
-        dlPolyline->points[1].x -= width;
-        dlPolyline->points[1].y -= halfWidth;
-      }
+    DlPolyline *dlPolyline = dlElement->structure.polyline;
+    if (dlPolyline->isFallingOrRisingLine) {
+      /* convert the falling line and rising line into polyline format */
+	if (dlPolyline->attr.width > 0) {
+	    int width = dlPolyline->attr.width;
+	    int halfWidth = width/2;
+	    if (dlPolyline->points[1].y > dlPolyline->points[0].y) {
+	      /* falling line */
+		dlPolyline->points[0].x += halfWidth;
+		dlPolyline->points[0].y += halfWidth;
+		dlPolyline->points[1].x -= halfWidth;
+		dlPolyline->points[1].y -= halfWidth;
+	    } else
+	      if (dlPolyline->points[1].y < dlPolyline->points[0].y) {
+		/* rising line */
+		  dlPolyline->points[0].x += halfWidth;
+		  dlPolyline->points[0].y -= width;
+		  dlPolyline->points[1].x -= width;
+		  dlPolyline->points[1].y -= halfWidth;
+	      }
+	}
+	dlPolyline->isFallingOrRisingLine = False;
     }
-    dlPolyline->isFallingOrRisingLine = False;
-  }
-  if ((displayInfo->traversalMode == DL_EXECUTE) 
+    if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (dlPolyline->dynAttr.name)){
 
-    Polyline *pp;
-    DlObject object;
-    pp = (Polyline *) malloc(sizeof(Polyline));
-    pp->dlElement = dlElement;
+	Polyline *pp;
+	DlObject object;
+	pp = (Polyline *) malloc(sizeof(Polyline));
+	pp->dlElement = dlElement;
 #if 1
-    object = dlPolyline->object;
-    object.width++;
-    object.height++;
+	object = dlPolyline->object;
+	object.width++;
+	object.height++;
 #endif
-    pp->updateTask = updateTaskAddTask(displayInfo,
-                                       &object,
-                                       polylineDraw,
-                                       (XtPointer)pp);
+	pp->updateTask = updateTaskAddTask(displayInfo,
+	  &object,
+	  polylineDraw,
+	  (XtPointer)pp);
 
-    if (pp->updateTask == NULL) {
-      medmPrintf("polylineCreateRunTimeInstance : memory allocation error\n");
-    } else {
-      updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
-      updateTaskAddNameCb(pp->updateTask,polylineName);
-      pp->updateTask->opaque = False;
-    }
-    pp->record = medmAllocateRecord(
-                  dlPolyline->dynAttr.name,
-                  polylineUpdateValueCb,
-                  NULL,
-                  (XtPointer) pp);
+	if (pp->updateTask == NULL) {
+	    medmPrintf("polylineCreateRunTimeInstance : memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
+	    updateTaskAddNameCb(pp->updateTask,polylineName);
+	    pp->updateTask->opaque = False;
+	}
+	pp->record = medmAllocateRecord(
+	  dlPolyline->dynAttr.name,
+	  polylineUpdateValueCb,
+	  NULL,
+	  (XtPointer) pp);
 #if 0
-    drawWhiteRectangle(pp->updateTask);
+	drawWhiteRectangle(pp->updateTask);
 #endif
 
 #ifdef __COLOR_RULE_H__
-    switch (dlPolyline->dynAttr.clr) {
-      STATIC :
-        pp->record->monitorValueChanged = False;
-        pp->record->monitorSeverityChanged = False;
-        break;
-      ALARM :
-        pp->record->monitorValueChanged = False;
-        break;
-      DISCRETE :
-        pp->record->monitorSeverityChanged = False;
-        break;
-    }
+	switch (dlPolyline->dynAttr.clr) {
+	    STATIC :
+	      pp->record->monitorValueChanged = False;
+	    pp->record->monitorSeverityChanged = False;
+	    break;
+	    ALARM :
+	      pp->record->monitorValueChanged = False;
+	    break;
+	    DISCRETE :
+	      pp->record->monitorSeverityChanged = False;
+	    break;
+	}
 #else
-    pp->record->monitorValueChanged = False;
-    if (dlPolyline->dynAttr.clr != ALARM ) {
-      pp->record->monitorSeverityChanged = False;
-    }
+	pp->record->monitorValueChanged = False;
+	if (dlPolyline->dynAttr.clr != ALARM ) {
+	    pp->record->monitorSeverityChanged = False;
+	}
 #endif
 
-    if (dlPolyline->dynAttr.vis == V_STATIC ) {
-      pp->record->monitorZeroAndNoneZeroTransition = False;
-    }
+	if (dlPolyline->dynAttr.vis == V_STATIC ) {
+	    pp->record->monitorZeroAndNoneZeroTransition = False;
+	}
 
-  } else {
-    executeDlBasicAttribute(displayInfo,&(dlPolyline->attr));
-    XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+    } else {
+	executeDlBasicAttribute(displayInfo,&(dlPolyline->attr));
+	XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
           dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
-    XDrawLines(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	XDrawLines(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
           dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
-  }
+    }
 }
 
 static void polylineUpdateValueCb(XtPointer cd) {
-  Polyline *pp = (Polyline *) ((Record *) cd)->clientData;
-  updateTaskMarkUpdate(pp->updateTask);
+    Polyline *pp = (Polyline *) ((Record *) cd)->clientData;
+    updateTaskMarkUpdate(pp->updateTask);
 }
 
 static void polylineDraw(XtPointer cd) {
-  Polyline *pp = (Polyline *) cd;
-  Record *pd = pp->record;
-  DisplayInfo *displayInfo = pp->updateTask->displayInfo;
-  XGCValues gcValues;
-  unsigned long gcValueMask;
-  Widget widget = pp->updateTask->displayInfo->drawingArea;
-  Display *display = XtDisplay(widget);
-  DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
+    Polyline *pp = (Polyline *) cd;
+    Record *pd = pp->record;
+    DisplayInfo *displayInfo = pp->updateTask->displayInfo;
+    XGCValues gcValues;
+    unsigned long gcValueMask;
+    Widget widget = pp->updateTask->displayInfo->drawingArea;
+    Display *display = XtDisplay(widget);
+    DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
 
-  if (pd->connected) {
-    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-    switch (dlPolyline->dynAttr.clr) {
+    if (pd->connected) {
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	switch (dlPolyline->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
-      case STATIC :
-        gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
-        break;
-      case DISCRETE:
-        gcValues.foreground = extractColor(displayInfo,
-                                  pd->value,
-                                  dlPolyline->dynAttr.colorRule,
-                                  dlPolyline->attr.clr);
-        break;
+	case STATIC :
+	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
+	    break;
+	case DISCRETE:
+	    gcValues.foreground = extractColor(displayInfo,
+	      pd->value,
+	      dlPolyline->dynAttr.colorRule,
+	      dlPolyline->attr.clr);
+	    break;
 #else
-      case STATIC :
-      case DISCRETE:
-        gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
-        break;
+	case STATIC :
+	case DISCRETE:
+	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
+	    break;
 #endif
-      case ALARM :
-        gcValues.foreground = alarmColorPixel[pd->severity];
-        break;
-      default :
-	gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
-	break;
-    }
-    gcValues.line_width = dlPolyline->attr.width;
-    gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	case ALARM :
+	    gcValues.foreground = alarmColorPixel[pd->severity];
+	    break;
+	default :
+	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
+	    break;
+	}
+	gcValues.line_width = dlPolyline->attr.width;
+	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (dlPolyline->dynAttr.vis) {
-      case V_STATIC:
-        drawPolyline(pp);
-        break;
-      case IF_NOT_ZERO:
-        if (pd->value != 0.0)
-          drawPolyline(pp);
-        break;
-      case IF_ZERO:
-        if (pd->value == 0.0)
-          drawPolyline(pp);
-        break;
-      default :
-        medmPrintf("internal error : polylineUpdateValueCb : unknown visibility modifier\n");
-        break;
-    }
-    if (pd->readAccess) {
-      if (!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
-        pp->updateTask->opaque = True;
-      }
+	switch (dlPolyline->dynAttr.vis) {
+	case V_STATIC:
+	    drawPolyline(pp);
+	    break;
+	case IF_NOT_ZERO:
+	    if (pd->value != 0.0)
+	      drawPolyline(pp);
+	    break;
+	case IF_ZERO:
+	    if (pd->value == 0.0)
+	      drawPolyline(pp);
+	    break;
+	default :
+	    medmPrintf("internal error : polylineUpdateValueCb : unknown visibility modifier\n");
+	    break;
+	}
+	if (pd->readAccess) {
+	    if (!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
+		pp->updateTask->opaque = True;
+	    }
+	} else {
+	    pp->updateTask->opaque = False;
+	    draw3DQuestionMark(pp->updateTask);
+	}
     } else {
-      pp->updateTask->opaque = False;
-      draw3DQuestionMark(pp->updateTask);
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
+	gcValues.line_width = dlPolyline->attr.width;
+	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawPolyline(pp);
     }
-  } else {
-    gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-    gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.line_width = dlPolyline->attr.width;
-    gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
-    drawPolyline(pp);
-  }
 }
 
 static void polylineDestroyCb(XtPointer cd) {
-  Polyline *pp = (Polyline *) cd;
-  if (pp) {
-    medmDestroyRecord(pp->record);
-    free((char *)pp);
-  }
-  return;
+    Polyline *pp = (Polyline *) cd;
+    if (pp) {
+	medmDestroyRecord(pp->record);
+	free((char *)pp);
+    }
+    return;
 }
 
 static void polylineName(XtPointer cd, char **name, short *severity, int *count) {
-  Polyline *pp = (Polyline *) cd;
-  *count = 1;
-  name[0] = pp->record->name;
-  severity[0] = pp->record->severity;
+    Polyline *pp = (Polyline *) cd;
+    *count = 1;
+    name[0] = pp->record->name;
+    severity[0] = pp->record->severity;
 }
 
 DlElement *createDlPolyline(DlElement *p)
 {
-  DlPolyline *dlPolyline;
-  DlElement *dlElement;
+    DlPolyline *dlPolyline;
+    DlElement *dlElement;
  
  
-  dlPolyline = (DlPolyline *) malloc(sizeof(DlPolyline));
-  if (!dlPolyline) return 0;
-  if (p) {
-    int i;
-    *dlPolyline = *p->structure.polyline;
-    dlPolyline->points = (XPoint *)malloc(dlPolyline->nPoints*sizeof(XPoint));
-    for (i = 0; i < dlPolyline->nPoints; i++) {
-      dlPolyline->points[i] = p->structure.polyline->points[i];
+    dlPolyline = (DlPolyline *) malloc(sizeof(DlPolyline));
+    if (!dlPolyline) return 0;
+    if (p) {
+	int i;
+	*dlPolyline = *p->structure.polyline;
+	dlPolyline->points = (XPoint *)malloc(dlPolyline->nPoints*sizeof(XPoint));
+	for (i = 0; i < dlPolyline->nPoints; i++) {
+	    dlPolyline->points[i] = p->structure.polyline->points[i];
+	}
+    } else {
+	objectAttributeInit(&(dlPolyline->object));
+	basicAttributeInit(&(dlPolyline->attr));
+	dynamicAttributeInit(&(dlPolyline->dynAttr));
+	dlPolyline->points = NULL;
+	dlPolyline->nPoints = 0;
+	dlPolyline->isFallingOrRisingLine = False;
     }
-  } else {
-    objectAttributeInit(&(dlPolyline->object));
-    basicAttributeInit(&(dlPolyline->attr));
-    dynamicAttributeInit(&(dlPolyline->dynAttr));
-    dlPolyline->points = NULL;
-    dlPolyline->nPoints = 0;
-    dlPolyline->isFallingOrRisingLine = False;
-  }
  
-  if (!(dlElement = createDlElement(DL_Polyline,
-                    (XtPointer)      dlPolyline,
-										&polylineDlDispatchTable))) {
-    free(dlPolyline);
-  }
+    if (!(dlElement = createDlElement(DL_Polyline,
+      (XtPointer)      dlPolyline,
+      &polylineDlDispatchTable))) {
+	free(dlPolyline);
+    }
 
-  return(dlElement);
+    return(dlElement);
 }
 
 void parsePolylinePoints(
   DisplayInfo *displayInfo,
   DlPolyline *dlPolyline)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel;
-  int pointsArraySize = INITIAL_NUM_POINTS;
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel;
+    int pointsArraySize = INITIAL_NUM_POINTS;
 
 /* initialize some data in structure */
-  dlPolyline->nPoints = 0;
-  dlPolyline->points = (XPoint *)malloc(pointsArraySize*sizeof(XPoint));
+    dlPolyline->nPoints = 0;
+    dlPolyline->points = (XPoint *)malloc(pointsArraySize*sizeof(XPoint));
 
-  nestingLevel = 0;
-  do {
-    switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD:
-	if (!strcmp(token,"(")) {
-	  if (dlPolyline->nPoints >= pointsArraySize) {
-	    /* reallocate the points array: enlarge by 4X, etc */
-	    pointsArraySize *= 4;
-	    dlPolyline->points = (XPoint *)realloc(
-				dlPolyline->points,
-				(pointsArraySize+1)*sizeof(XPoint));
-	  }
-	  getToken(displayInfo,token);
-	  dlPolyline->points[dlPolyline->nPoints].x = atoi(token);
-	  getToken(displayInfo,token);	/* separator	*/
-	  getToken(displayInfo,token);
-	  dlPolyline->points[dlPolyline->nPoints].y = atoi(token);
-	  getToken(displayInfo,token);	/*   ")"	*/
-	  dlPolyline->nPoints++;
+    nestingLevel = 0;
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if (!strcmp(token,"(")) {
+		if (dlPolyline->nPoints >= pointsArraySize) {
+		  /* reallocate the points array: enlarge by 4X, etc */
+		    pointsArraySize *= 4;
+		    dlPolyline->points = (XPoint *)realloc(
+		      dlPolyline->points,
+		      (pointsArraySize+1)*sizeof(XPoint));
+		}
+		getToken(displayInfo,token);
+		dlPolyline->points[dlPolyline->nPoints].x = atoi(token);
+		getToken(displayInfo,token);	/* separator	*/
+		getToken(displayInfo,token);
+		dlPolyline->points[dlPolyline->nPoints].y = atoi(token);
+		getToken(displayInfo,token);	/*   ")"	*/
+		dlPolyline->nPoints++;
+	    }
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
 	}
-	break;
-      case T_EQUAL:
-	break;
-      case T_LEFT_BRACE:
-	nestingLevel++; break;
-      case T_RIGHT_BRACE:
-	nestingLevel--; break;
-    }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-		&& (tokenType != T_EOF) );
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
 
 }
 
 
 DlElement *parsePolyline(DisplayInfo *displayInfo)
 {
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel = 0;
-  DlPolyline *dlPolyline;
-  DlElement *dlElement = createDlPolyline(NULL);
-  if (!dlElement) return 0;
-  dlPolyline = dlElement->structure.polyline;
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+    DlPolyline *dlPolyline;
+    DlElement *dlElement = createDlPolyline(NULL);
+    if (!dlElement) return 0;
+    dlPolyline = dlElement->structure.polyline;
 
-  do {
-    switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD:
-	if (!strcmp(token,"object"))
-	  parseObject(displayInfo,&(dlPolyline->object));
-	else
-        if (!strcmp(token,"basic attribute"))
-          parseBasicAttribute(displayInfo,&(dlPolyline->attr));
-        else
-        if (!strcmp(token,"dynamic attribute"))
-          parseDynamicAttribute(displayInfo,&(dlPolyline->dynAttr));
-        else
-        if (!strcmp(token,"points"))
-          parsePolylinePoints(displayInfo,dlPolyline);
-	break;
-      case T_EQUAL:
-	break;
-      case T_LEFT_BRACE:
-	nestingLevel++; break;
-      case T_RIGHT_BRACE:
-	nestingLevel--; break;
-    }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-		&& (tokenType != T_EOF) );
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if (!strcmp(token,"object"))
+	      parseObject(displayInfo,&(dlPolyline->object));
+	    else
+	      if (!strcmp(token,"basic attribute"))
+		parseBasicAttribute(displayInfo,&(dlPolyline->attr));
+	      else
+		if (!strcmp(token,"dynamic attribute"))
+		  parseDynamicAttribute(displayInfo,&(dlPolyline->dynAttr));
+		else
+		  if (!strcmp(token,"points"))
+		    parsePolylinePoints(displayInfo,dlPolyline);
+	    break;
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	}
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
 
-  return dlElement;
+    return dlElement;
 }
 
 
@@ -449,20 +442,20 @@ void writeDlPolylinePoints(
   DlPolyline *dlPolyline, 
   int level)
 {
-  int i;
-  char indent[16];
+    int i;
+    char indent[16];
 
-  memset(indent,'\t',level);
-  indent[level] = '\0';
+    memset(indent,'\t',level);
+    indent[level] = '\0';
 
-  fprintf(stream,"\n%spoints {",indent);
+    fprintf(stream,"\n%spoints {",indent);
 
-  for (i = 0; i < dlPolyline->nPoints; i++) {
-    fprintf(stream,"\n%s\t(%d,%d)",indent,
-        dlPolyline->points[i].x,dlPolyline->points[i].y);
-  }
+    for (i = 0; i < dlPolyline->nPoints; i++) {
+	fprintf(stream,"\n%s\t(%d,%d)",indent,
+	  dlPolyline->points[i].x,dlPolyline->points[i].y);
+    }
 
-  fprintf(stream,"\n%s}",indent);
+    fprintf(stream,"\n%s}",indent);
 }
 
 
@@ -471,14 +464,14 @@ void writeDlPolyline(
   DlElement *dlElement,
   int level)
 {
-  char indent[16];
-  DlPolyline *dlPolyline = dlElement->structure.polyline;
+    char indent[16];
+    DlPolyline *dlPolyline = dlElement->structure.polyline;
 
-  memset(indent,'\t',level);
-  indent[level] = '\0';
+    memset(indent,'\t',level);
+    indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  if (MedmUseNewFileFormat) {
+    if (MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%spolyline {",indent);
   	writeDlObject(stream,&(dlPolyline->object),level+1);
@@ -487,14 +480,14 @@ void writeDlPolyline(
   	writeDlPolylinePoints(stream,dlPolyline,level+1);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  } else {
+    } else {
   	writeDlBasicAttribute(stream,&(dlPolyline->attr),level);
   	writeDlDynamicAttribute(stream,&(dlPolyline->dynAttr),level);
   	fprintf(stream,"\n%spolyline {",indent);
   	writeDlObject(stream,&(dlPolyline->object),level+1);
   	writeDlPolylinePoints(stream,dlPolyline,level+1);
   	fprintf(stream,"\n%s}",indent);
-  }
+    }
 #endif
 }
 
@@ -506,72 +499,72 @@ int handlePolylineVertexManipulation(
   DlElement *dlElement,
   int x0, int y0)
 {
-  XEvent event;
-  Window window;
-  int i;
-  int x01, y01;
-  DlPolyline *dlPolyline = dlElement->structure.polyline;
-  int pointIndex = 0;
+    XEvent event;
+    Window window;
+    int i;
+    int x01, y01;
+    DlPolyline *dlPolyline = dlElement->structure.polyline;
+    int pointIndex = 0;
 
-  int deltaX, deltaY, okIndex;
-  double radians, okRadians, length;
-  int foundVertex = False;
+    int deltaX, deltaY, okIndex;
+    double radians, okRadians, length;
+    int foundVertex = False;
 
-  window = XtWindow(currentDisplayInfo->drawingArea);
+    window = XtWindow(currentDisplayInfo->drawingArea);
 
-  for (i = 0; i < dlPolyline->nPoints; i++) {
-    x01 = dlPolyline->points[i].x;
-    y01 = dlPolyline->points[i].y;
+    for (i = 0; i < dlPolyline->nPoints; i++) {
+	x01 = dlPolyline->points[i].x;
+	y01 = dlPolyline->points[i].y;
 #define TOR 6
-    if ((x01 + TOR > x0) && (x01 - TOR < x0) &&
-        (y01 + TOR > y0) && (y01 - TOR < y0)) {
-      pointIndex = i;
-      foundVertex = True;
-      break;
-    }
+	if ((x01 + TOR > x0) && (x01 - TOR < x0) &&
+	  (y01 + TOR > y0) && (y01 - TOR < y0)) {
+	    pointIndex = i;
+	    foundVertex = True;
+	    break;
+	}
 #undef TOR
-  }
+    }
 
-  if (!foundVertex) return 0;
+    if (!foundVertex) return 0;
 
-  XGrabPointer(display,window,FALSE,
-	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
-	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-  XGrabServer(display);
+    XGrabPointer(display,window,FALSE,
+      (unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
+      GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
+    XGrabServer(display);
 
 
 /* now loop until button is released */
-  while (TRUE) {
+    while (TRUE) {
 
-      XtAppNextEvent(appContext,&event);
+	XtAppNextEvent(appContext,&event);
 
-      switch(event.type) {
+	switch(event.type) {
 
 	case ButtonRelease:
 
-  /* modify point and leave here */
+	  /* modify point and leave here */
 	    if (event.xbutton.state & ShiftMask) {
 /* constrain to 45 degree increments */
-	      deltaX = event.xmotion.x - dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-	      deltaY = event.xmotion.y - dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
-	      length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
-	      radians = atan2((double)(deltaY),(double)(deltaX));
-	/* use positive radians */
-	      if (radians < 0.) radians = 2*M_PI + radians;
-	      okIndex = (int)((radians*8.0)/M_PI);
-	      okRadians = okRadiansTable[okIndex];
-	      x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-	      y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
-	      dlPolyline->points[pointIndex].x = x01;
-	      dlPolyline->points[pointIndex].y = y01;
+		deltaX = event.xmotion.x - dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
+		deltaY = event.xmotion.y - dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
+		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
+		radians = atan2((double)(deltaY),(double)(deltaX));
+	      /* use positive radians */
+		if (radians < 0.) radians = 2*M_PI + radians;
+		okIndex = (int)((radians*8.0)/M_PI);
+		okRadians = okRadiansTable[okIndex];
+		x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
+		y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
+		dlPolyline->points[pointIndex].x = x01;
+		dlPolyline->points[pointIndex].y = y01;
 	    } else {
 /* unconstrained */
-	      dlPolyline->points[pointIndex].x = event.xbutton.x;
-	      dlPolyline->points[pointIndex].y = event.xbutton.y;
+		dlPolyline->points[pointIndex].x = event.xbutton.x;
+		dlPolyline->points[pointIndex].y = event.xbutton.y;
 	    }
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
@@ -588,54 +581,54 @@ int handlePolylineVertexManipulation(
 	    return 1;
 
 	case MotionNotify:
-	/* undraw old line segments */
-	  if (pointIndex > 0)
+	  /* undraw old line segments */
+	    if (pointIndex > 0)
 	      XDrawLine(display,window,xorGC,
 		dlPolyline->points[pointIndex-1].x,
 		dlPolyline->points[pointIndex-1].y, x01,y01);
-	  if (pointIndex < dlPolyline->nPoints-1)
+	    if (pointIndex < dlPolyline->nPoints-1)
 	      XDrawLine(display,window,xorGC,
 		dlPolyline->points[pointIndex+1].x,
 		dlPolyline->points[pointIndex+1].y, x01,y01);
 
-	  if (event.xmotion.state & ShiftMask) {
+	    if (event.xmotion.state & ShiftMask) {
 /* constrain redraw to 45 degree increments */
-	    deltaX = event.xmotion.x - dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-	    deltaY = event.xmotion.y - dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
-	    length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
-	    radians = atan2((double)(deltaY),(double)(deltaX));
-	/* use positive radians */
-	    if (radians < 0.) radians = 2*M_PI + radians;
-	    okIndex = (int)((radians*8.0)/M_PI);
-	    okRadians = okRadiansTable[okIndex];
-	    x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-	    y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
-		    (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
-	  } else {
+		deltaX = event.xmotion.x - dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
+		deltaY = event.xmotion.y - dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
+		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
+		radians = atan2((double)(deltaY),(double)(deltaX));
+	      /* use positive radians */
+		if (radians < 0.) radians = 2*M_PI + radians;
+		okIndex = (int)((radians*8.0)/M_PI);
+		okRadians = okRadiansTable[okIndex];
+		x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
+		y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
+		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
+	    } else {
 /* unconstrained */
-	    x01 = event.xmotion.x;
-	    y01 = event.xmotion.y;
-	  }
-	/* draw new line segments */
-	  if (pointIndex > 0)
+		x01 = event.xmotion.x;
+		y01 = event.xmotion.y;
+	    }
+	  /* draw new line segments */
+	    if (pointIndex > 0)
 	      XDrawLine(display,window,xorGC,
 		dlPolyline->points[pointIndex-1].x,
 		dlPolyline->points[pointIndex-1].y, x01,y01);
-	  if (pointIndex < dlPolyline->nPoints-1)
+	    if (pointIndex < dlPolyline->nPoints-1)
 	      XDrawLine(display,window,xorGC,
 		dlPolyline->points[pointIndex+1].x,
 		dlPolyline->points[pointIndex+1].y, x01,y01);
 
-	  break;
+	    break;
 
 	default:
-	  XtDispatchEvent(&event);
-	  break;
-     }
-  }
+	    XtDispatchEvent(&event);
+	    break;
+	}
+    }
 
 }
 
@@ -648,278 +641,277 @@ int handlePolylineVertexManipulation(
 DlElement *handlePolylineCreate(
   int x0, int y0, Boolean simpleLine)
 {
-  XEvent event, newEvent;
-  int newEventType;
-  Window window;
-  DlPolyline *dlPolyline;
-  DlElement *element, **array;
-  int pointsArraySize = INITIAL_NUM_POINTS;
-  int i;
-  int x01, y01;
+    XEvent event, newEvent;
+    int newEventType;
+    Window window;
+    DlPolyline *dlPolyline;
+    DlElement *element, **array;
+    int pointsArraySize = INITIAL_NUM_POINTS;
+    int i;
+    int x01, y01;
 
-  int deltaX, deltaY, okIndex;
-  double radians, okRadians, length;
+    int deltaX, deltaY, okIndex;
+    double radians, okRadians, length;
 
-  window = XtWindow(currentDisplayInfo->drawingArea);
-  element = createDlPolyline(NULL);
-  if (!element) return 0;
-  dlPolyline = element->structure.polyline;
-  polylineInheritValues(&globalResourceBundle,element);
-  objectAttributeSet(&(dlPolyline->object),x0,y0,0,0);
+    window = XtWindow(currentDisplayInfo->drawingArea);
+    element = createDlPolyline(NULL);
+    if (!element) return 0;
+    dlPolyline = element->structure.polyline;
+    polylineInheritValues(&globalResourceBundle,element);
+    objectAttributeSet(&(dlPolyline->object),x0,y0,0,0);
 
 /* first click is first point... */
-  dlPolyline->nPoints = 1;
-  if (simpleLine) {
-    dlPolyline->points = (XPoint *)malloc(2*sizeof(XPoint));
-  } else {
-    dlPolyline->points = (XPoint *)malloc((pointsArraySize+1)*sizeof(XPoint));
-  }
-  dlPolyline->points[0].x = (short)x0;
-  dlPolyline->points[0].y = (short)y0;
-  x01 = x0; y01 = y0;
+    dlPolyline->nPoints = 1;
+    if (simpleLine) {
+	dlPolyline->points = (XPoint *)malloc(2*sizeof(XPoint));
+    } else {
+	dlPolyline->points = (XPoint *)malloc((pointsArraySize+1)*sizeof(XPoint));
+    }
+    dlPolyline->points[0].x = (short)x0;
+    dlPolyline->points[0].y = (short)y0;
+    x01 = x0; y01 = y0;
 
-  XGrabPointer(display,window,FALSE,
-	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
-	GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-  XGrabServer(display);
+    XGrabPointer(display,window,FALSE,
+      (unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
+      GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
+    XGrabServer(display);
 
 
 /* now loop until button is double-clicked (or until 2 points if simpleLine) */
-  while (TRUE) {
-    XtAppNextEvent(appContext,&event);
-    switch(event.type) {
-      case ButtonPress:
-        if (!simpleLine) {
-          /* need double click to end */
-	  XWindowEvent(display,XtWindow(currentDisplayInfo->drawingArea),
-              ButtonPressMask|Button1MotionMask|PointerMotionMask,&newEvent);
-          newEventType = newEvent.type;
-	} else {
-          /* just need second point, set type so we
-             can terminate wi/ 2 points */
-          newEventType = ButtonPress;
-        }
-        if (newEventType == ButtonPress) {
-          /* -> double click... add last point and leave here */
-          if (event.xbutton.state & ShiftMask) {
-            /* constrain to 45 degree increments */
-            deltaX = event.xbutton.x -
-                     dlPolyline->points[dlPolyline->nPoints-1].x;
-            deltaY = event.xbutton.y -
-                     dlPolyline->points[dlPolyline->nPoints-1].y;
-            length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
-            radians = atan2((double)(deltaY),(double)(deltaX));
-            /* use positive radians */
-            if (radians < 0.) radians = 2*M_PI + radians;
-            okIndex = (int)((radians*8.0)/M_PI);
-            okRadians = okRadiansTable[okIndex];
-            x01 = (int) (cos(okRadians)*length) +
-                  dlPolyline->points[dlPolyline->nPoints-1].x;
-            y01 = (int) (sin(okRadians)*length) +
-                  dlPolyline->points[dlPolyline->nPoints-1].y;
-            dlPolyline->nPoints++;
-            dlPolyline->points[dlPolyline->nPoints-1].x = x01;
-            dlPolyline->points[dlPolyline->nPoints-1].y = y01;
-	  } else {
-            /* unconstrained */
-            dlPolyline->nPoints++;
-             dlPolyline->points[dlPolyline->nPoints-1].x = event.xbutton.x;
-             dlPolyline->points[dlPolyline->nPoints-1].y = event.xbutton.y;
-          }
-          XUngrabPointer(display,CurrentTime);
-          XUngrabServer(display);
-          calculateTheBoundingBox(dlPolyline);
-          XBell(display,50); XBell(display,50);
-          return (element);
-        } else {
-          /* not last point: more points to add.. */
-          /* undraw old last line segment */
-	  XDrawLine(display,window,xorGC,
-                    dlPolyline->points[dlPolyline->nPoints-1].x,
-                    dlPolyline->points[dlPolyline->nPoints-1].y,
-                    x01, y01);
-          /* new line segment added: update coordinates */
-          if (dlPolyline->nPoints >= pointsArraySize) {
-            /* reallocate the points array: enlarge by 4X, etc */
-            pointsArraySize *= 4;
-            dlPolyline->points = (XPoint *)realloc(dlPolyline->points,
-                                       (pointsArraySize+1)*sizeof(XPoint));
-          }
-          if (event.xbutton.state & ShiftMask) {
-            /* constrain to 45 degree increments */
-            deltaX = event.xbutton.x -
-                     dlPolyline->points[dlPolyline->nPoints-1].x;
-            deltaY = event.xbutton.y -
-                     dlPolyline->points[dlPolyline->nPoints-1].y;
-            length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
-            radians = atan2((double)(deltaY),(double)(deltaX));
-            /* use positive radians */
-            if (radians < 0.) radians = 2*M_PI + radians;
-            okIndex = (int)((radians*8.0)/M_PI);
-            okRadians = okRadiansTable[okIndex];
-            x01 = (int) (cos(okRadians)*length) +
-                  dlPolyline->points[dlPolyline->nPoints-1].x;
-            y01 = (int) (sin(okRadians)*length) +
-                  dlPolyline->points[dlPolyline->nPoints-1].y;
-            dlPolyline->nPoints++;
-            dlPolyline->points[dlPolyline->nPoints-1].x = x01;
-            dlPolyline->points[dlPolyline->nPoints-1].y = y01;
-          } else {
-            /* unconstrained */
-            dlPolyline->nPoints++;
-            dlPolyline->points[dlPolyline->nPoints-1].x = event.xbutton.x;
-            dlPolyline->points[dlPolyline->nPoints-1].y = event.xbutton.y;
-            x01 = event.xbutton.x; y01 = event.xbutton.y;
-          }
-          /* draw new line segment */
-          XDrawLine(display,window,xorGC,
-                    dlPolyline->points[dlPolyline->nPoints-2].x,
-                    dlPolyline->points[dlPolyline->nPoints-2].y,
-                    dlPolyline->points[dlPolyline->nPoints-1].x,
-                    dlPolyline->points[dlPolyline->nPoints-1].y);
-        }
-        break;
+    while (TRUE) {
+	XtAppNextEvent(appContext,&event);
+	switch(event.type) {
+	case ButtonPress:
+	    if (!simpleLine) {
+	      /* need double click to end */
+		XWindowEvent(display,XtWindow(currentDisplayInfo->drawingArea),
+		  ButtonPressMask|Button1MotionMask|PointerMotionMask,&newEvent);
+		newEventType = newEvent.type;
+	    } else {
+	      /* just need second point, set type so we
+		 can terminate wi/ 2 points */
+		newEventType = ButtonPress;
+	    }
+	    if (newEventType == ButtonPress) {
+	      /* -> double click... add last point and leave here */
+		if (event.xbutton.state & ShiftMask) {
+		  /* constrain to 45 degree increments */
+		    deltaX = event.xbutton.x -
+		      dlPolyline->points[dlPolyline->nPoints-1].x;
+		    deltaY = event.xbutton.y -
+		      dlPolyline->points[dlPolyline->nPoints-1].y;
+		    length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
+		    radians = atan2((double)(deltaY),(double)(deltaX));
+		  /* use positive radians */
+		    if (radians < 0.) radians = 2*M_PI + radians;
+		    okIndex = (int)((radians*8.0)/M_PI);
+		    okRadians = okRadiansTable[okIndex];
+		    x01 = (int) (cos(okRadians)*length) +
+		      dlPolyline->points[dlPolyline->nPoints-1].x;
+		    y01 = (int) (sin(okRadians)*length) +
+		      dlPolyline->points[dlPolyline->nPoints-1].y;
+		    dlPolyline->nPoints++;
+		    dlPolyline->points[dlPolyline->nPoints-1].x = x01;
+		    dlPolyline->points[dlPolyline->nPoints-1].y = y01;
+		} else {
+		  /* unconstrained */
+		    dlPolyline->nPoints++;
+		    dlPolyline->points[dlPolyline->nPoints-1].x = event.xbutton.x;
+		    dlPolyline->points[dlPolyline->nPoints-1].y = event.xbutton.y;
+		}
+		XUngrabPointer(display,CurrentTime);
+		XUngrabServer(display);
+		calculateTheBoundingBox(dlPolyline);
+		XBell(display,50); XBell(display,50);
+		return (element);
+	    } else {
+	      /* not last point: more points to add.. */
+	      /* undraw old last line segment */
+		XDrawLine(display,window,xorGC,
+		  dlPolyline->points[dlPolyline->nPoints-1].x,
+		  dlPolyline->points[dlPolyline->nPoints-1].y,
+		  x01, y01);
+	      /* new line segment added: update coordinates */
+		if (dlPolyline->nPoints >= pointsArraySize) {
+		  /* reallocate the points array: enlarge by 4X, etc */
+		    pointsArraySize *= 4;
+		    dlPolyline->points = (XPoint *)realloc(dlPolyline->points,
+		      (pointsArraySize+1)*sizeof(XPoint));
+		}
+		if (event.xbutton.state & ShiftMask) {
+		  /* constrain to 45 degree increments */
+		    deltaX = event.xbutton.x -
+		      dlPolyline->points[dlPolyline->nPoints-1].x;
+		    deltaY = event.xbutton.y -
+		      dlPolyline->points[dlPolyline->nPoints-1].y;
+		    length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
+		    radians = atan2((double)(deltaY),(double)(deltaX));
+		  /* use positive radians */
+		    if (radians < 0.) radians = 2*M_PI + radians;
+		    okIndex = (int)((radians*8.0)/M_PI);
+		    okRadians = okRadiansTable[okIndex];
+		    x01 = (int) (cos(okRadians)*length) +
+		      dlPolyline->points[dlPolyline->nPoints-1].x;
+		    y01 = (int) (sin(okRadians)*length) +
+		      dlPolyline->points[dlPolyline->nPoints-1].y;
+		    dlPolyline->nPoints++;
+		    dlPolyline->points[dlPolyline->nPoints-1].x = x01;
+		    dlPolyline->points[dlPolyline->nPoints-1].y = y01;
+		} else {
+		  /* unconstrained */
+		    dlPolyline->nPoints++;
+		    dlPolyline->points[dlPolyline->nPoints-1].x = event.xbutton.x;
+		    dlPolyline->points[dlPolyline->nPoints-1].y = event.xbutton.y;
+		    x01 = event.xbutton.x; y01 = event.xbutton.y;
+		}
+	      /* draw new line segment */
+		XDrawLine(display,window,xorGC,
+		  dlPolyline->points[dlPolyline->nPoints-2].x,
+		  dlPolyline->points[dlPolyline->nPoints-2].y,
+		  dlPolyline->points[dlPolyline->nPoints-1].x,
+		  dlPolyline->points[dlPolyline->nPoints-1].y);
+	    }
+	    break;
 
-      case MotionNotify:
-        /* undraw old last line segment */
-        XDrawLine(display,window,xorGC,
-                  dlPolyline->points[dlPolyline->nPoints-1].x,
-                  dlPolyline->points[dlPolyline->nPoints-1].y,
-                  x01, y01);
-        if (event.xmotion.state & ShiftMask) {
-          /* constrain redraw to 45 degree increments */
-	    deltaX = event.xmotion.x -
-			dlPolyline->points[dlPolyline->nPoints-1].x;
-	    deltaY = event.xmotion.y -
-			dlPolyline->points[dlPolyline->nPoints-1].y;
-	    length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
-	    radians = atan2((double)(deltaY),(double)(deltaX));
-			/* use positive radians */
-	    if (radians < 0.) radians = 2*M_PI + radians;
-	    okIndex = (int)((radians*8.0)/M_PI);
-	    okRadians = okRadiansTable[okIndex];
-	    x01 = (int) (cos(okRadians)*length)
-			 + dlPolyline->points[dlPolyline->nPoints-1].x;
-	    y01 = (int) (sin(okRadians)*length)
-			 + dlPolyline->points[dlPolyline->nPoints-1].y;
-	  } else {
-			/* unconstrained */
-	    x01 = event.xmotion.x;
-	    y01 = event.xmotion.y;
-	  }
-		/* draw new last line segment */
-	  XDrawLine(display,window,xorGC,
-			dlPolyline->points[dlPolyline->nPoints-1].x,
-			dlPolyline->points[dlPolyline->nPoints-1].y,
-			x01,y01);
-	  break;
+	case MotionNotify:
+	  /* undraw old last line segment */
+	    XDrawLine(display,window,xorGC,
+	      dlPolyline->points[dlPolyline->nPoints-1].x,
+	      dlPolyline->points[dlPolyline->nPoints-1].y,
+	      x01, y01);
+	    if (event.xmotion.state & ShiftMask) {
+	      /* constrain redraw to 45 degree increments */
+		deltaX = event.xmotion.x -
+		  dlPolyline->points[dlPolyline->nPoints-1].x;
+		deltaY = event.xmotion.y -
+		  dlPolyline->points[dlPolyline->nPoints-1].y;
+		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
+		radians = atan2((double)(deltaY),(double)(deltaX));
+	      /* use positive radians */
+		if (radians < 0.) radians = 2*M_PI + radians;
+		okIndex = (int)((radians*8.0)/M_PI);
+		okRadians = okRadiansTable[okIndex];
+		x01 = (int) (cos(okRadians)*length)
+		  + dlPolyline->points[dlPolyline->nPoints-1].x;
+		y01 = (int) (sin(okRadians)*length)
+		  + dlPolyline->points[dlPolyline->nPoints-1].y;
+	    } else {
+	      /* unconstrained */
+		x01 = event.xmotion.x;
+		y01 = event.xmotion.y;
+	    }
+	  /* draw new last line segment */
+	    XDrawLine(display,window,xorGC,
+	      dlPolyline->points[dlPolyline->nPoints-1].x,
+	      dlPolyline->points[dlPolyline->nPoints-1].y,
+	      x01,y01);
+	    break;
 
 	default:
-	  XtDispatchEvent(&event);
-	  break;
-     }
-  }
-
+	    XtDispatchEvent(&event);
+	    break;
+	}
+    }
 }
 
 void polylineMove(DlElement *dlElement, int xOffset, int yOffset) {
-  int i;
-  XPoint *pts;
-  if (dlElement->type != DL_Polyline) return;
-  dlElement->structure.polyline->object.x += xOffset;
-  dlElement->structure.polyline->object.y += yOffset;
-  pts = dlElement->structure.polyline->points;
-  for (i = 0; i < dlElement->structure.polyline->nPoints; i++) {
-    pts[i].x += xOffset;
-    pts[i].y += yOffset;
-  }
+    int i;
+    XPoint *pts;
+    if (dlElement->type != DL_Polyline) return;
+    dlElement->structure.polyline->object.x += xOffset;
+    dlElement->structure.polyline->object.y += yOffset;
+    pts = dlElement->structure.polyline->points;
+    for (i = 0; i < dlElement->structure.polyline->nPoints; i++) {
+	pts[i].x += xOffset;
+	pts[i].y += yOffset;
+    }
 }
 
 void polylineScale(DlElement *dlElement, int xOffset, int yOffset) {
-  float sX, sY;
-  int i;
-  DlPolyline *dlPolyline;
-  int width, height;
+    float sX, sY;
+    int i;
+    DlPolyline *dlPolyline;
+    int width, height;
 
-  if (dlElement->type != DL_Polyline) return;
-  dlPolyline = dlElement->structure.polyline;
+    if (dlElement->type != DL_Polyline) return;
+    dlPolyline = dlElement->structure.polyline;
 
-  width = (int)dlPolyline->object.width + xOffset;
-  height = (int)dlPolyline->object.height + yOffset;
-  if (dlPolyline->object.width) {
-    sX = (float)((float)width/(float)dlPolyline->object.width);
-  } else {
-    sX = (float)width;
-  }
-  if (dlPolyline->object.height) {
-    sY = (float)((float)height/(float)dlPolyline->object.height);
-  } else {
-    sY = (float)height;
-  }
-  for (i = 0; i < dlPolyline->nPoints; i++) {
-    dlPolyline->points[i].x = (short) (dlPolyline->object.x +
-      sX*(dlPolyline->points[i].x - dlPolyline->object.x));
-    dlPolyline->points[i].y = (short) (dlPolyline->object.y +
-      sY*(dlPolyline->points[i].y - dlPolyline->object.y));
-  }
-  calculateTheBoundingBox(dlPolyline);
+    width = (int)dlPolyline->object.width + xOffset;
+    height = (int)dlPolyline->object.height + yOffset;
+    if (dlPolyline->object.width) {
+	sX = (float)((float)width/(float)dlPolyline->object.width);
+    } else {
+	sX = (float)width;
+    }
+    if (dlPolyline->object.height) {
+	sY = (float)((float)height/(float)dlPolyline->object.height);
+    } else {
+	sY = (float)height;
+    }
+    for (i = 0; i < dlPolyline->nPoints; i++) {
+	dlPolyline->points[i].x = (short) (dlPolyline->object.x +
+	  sX*(dlPolyline->points[i].x - dlPolyline->object.x));
+	dlPolyline->points[i].y = (short) (dlPolyline->object.y +
+	  sY*(dlPolyline->points[i].y - dlPolyline->object.y));
+    }
+    calculateTheBoundingBox(dlPolyline);
 }
 
 static void polylineGetValues(ResourceBundle *pRCB, DlElement *p) {
-  DlPolyline *dlPolyline = p->structure.polyline;
-  int x, y;
-  unsigned int width, height;
-  int xOffset, yOffset;
+    DlPolyline *dlPolyline = p->structure.polyline;
+    int x, y;
+    unsigned int width, height;
+    int xOffset, yOffset;
 
-  medmGetValues(pRCB,
-    X_RC,          &x,
-    Y_RC,          &y,
-    WIDTH_RC,      &width,
-    HEIGHT_RC,     &height,
-    CLR_RC,        &(dlPolyline->attr.clr),
-    STYLE_RC,      &(dlPolyline->attr.style),
-    FILL_RC,       &(dlPolyline->attr.fill),
-    LINEWIDTH_RC,  &(dlPolyline->attr.width),
-    CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
-    VIS_RC,        &(dlPolyline->dynAttr.vis),
+    medmGetValues(pRCB,
+      X_RC,          &x,
+      Y_RC,          &y,
+      WIDTH_RC,      &width,
+      HEIGHT_RC,     &height,
+      CLR_RC,        &(dlPolyline->attr.clr),
+      STYLE_RC,      &(dlPolyline->attr.style),
+      FILL_RC,       &(dlPolyline->attr.fill),
+      LINEWIDTH_RC,  &(dlPolyline->attr.width),
+      CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
+      VIS_RC,        &(dlPolyline->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
+      COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-    CHAN_RC,       &(dlPolyline->dynAttr.name),
-    -1);
+      CHAN_RC,       &(dlPolyline->dynAttr.name),
+      -1);
     xOffset = (int) width - (int) dlPolyline->object.width;
     yOffset = (int) height - (int) dlPolyline->object.height;
     if (xOffset || yOffset) {
-      polylineScale(p,xOffset,yOffset);
+	polylineScale(p,xOffset,yOffset);
     }
     xOffset = x - dlPolyline->object.x;
     yOffset = y - dlPolyline->object.y;
     if (xOffset || yOffset) {
-      polylineMove(p,xOffset,yOffset);
+	polylineMove(p,xOffset,yOffset);
     }
 }
 
 static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p) {
-  DlPolyline *dlPolyline = p->structure.polyline;
-  medmGetValues(pRCB,
-    CLR_RC,        &(dlPolyline->attr.clr),
-    STYLE_RC,      &(dlPolyline->attr.style),
-    FILL_RC,       &(dlPolyline->attr.fill),
-    LINEWIDTH_RC,  &(dlPolyline->attr.width),
-    CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
-    VIS_RC,        &(dlPolyline->dynAttr.vis),
+    DlPolyline *dlPolyline = p->structure.polyline;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlPolyline->attr.clr),
+      STYLE_RC,      &(dlPolyline->attr.style),
+      FILL_RC,       &(dlPolyline->attr.fill),
+      LINEWIDTH_RC,  &(dlPolyline->attr.width),
+      CLRMOD_RC,     &(dlPolyline->dynAttr.clr),
+      VIS_RC,        &(dlPolyline->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
+      COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-    CHAN_RC,       &(dlPolyline->dynAttr.name),
-    -1);
+      CHAN_RC,       &(dlPolyline->dynAttr.name),
+      -1);
 }
 
 static void destroyDlPolyline(DlElement *dlElement) {
-  if (dlElement->structure.polyline->dynAttr.name) {
-    freeString(dlElement->structure.polyline->dynAttr.name);
-  }
-  free ((char *)dlElement->structure.polyline->points);
-  free ((char *)dlElement->structure.polyline);
-  free ((char *)dlElement);
+    if (dlElement->structure.polyline->dynAttr.name) {
+	freeString(dlElement->structure.polyline->dynAttr.name);
+    }
+    free ((char *)dlElement->structure.polyline->points);
+    free ((char *)dlElement->structure.polyline);
+    free ((char *)dlElement);
 }
