@@ -56,6 +56,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - fix the file closing problem
  *                                when using the 'file->close' memu button.
+ * .03  09-08-95        vong    conform to c++ syntax
+ * .04  09-28-95        vong    add back Ctrl-X to the 'file' menu for 'Exit'
+ *                              entry.
  *
  *****************************************************************************
 */
@@ -74,6 +77,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 /* for X property cleanup */
 #include <signal.h>
 #include <Xm/MwmUtil.h>
+#include <IntrinsicP.h>
 
 #define HOT_SPOT_WIDTH 24
 
@@ -269,23 +273,23 @@ static menuEntry_t editMenu[] = {
     editMenuSimpleCallback, (XtPointer) EDIT_COPY_BTN,  NULL},
   { "Paste" ,    &xmPushButtonGadgetClass, 'P', "Shift<Key>InsertChar", "Shift+Ins",  NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_PASTE_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  ' ', NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Raise",     &xmPushButtonGadgetClass, 'R', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_RAISE_BTN,  NULL},
   { "Lower",     &xmPushButtonGadgetClass, 'L', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_LOWER_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  NULL, NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Group",     &xmPushButtonGadgetClass, 'G', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
   { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  NULL,NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0',NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL,                NULL,         NULL,
     NULL,        NULL,                     editAlignEntry},
-  { "Separator", &xmSeparatorGadgetClass,  NULL, NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Unselect",  &xmPushButtonGadgetClass, 'U', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
@@ -303,23 +307,23 @@ static menuEntry_t displayMenu[] = {
     editMenuSimpleCallback, (XtPointer) EDIT_COPY_BTN,  NULL},
   { "Paste" ,    &xmPushButtonGadgetClass, 'P', "Shift<Key>InsertChar", "Shift+Ins",  NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_PASTE_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  ' ', NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Raise",     &xmPushButtonGadgetClass, 'R', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_RAISE_BTN,  NULL},
   { "Lower",     &xmPushButtonGadgetClass, 'L', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_LOWER_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  NULL, NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Group",     &xmPushButtonGadgetClass, 'G', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
   { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
-  { "Separator", &xmSeparatorGadgetClass,  NULL,NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0',NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL,                NULL,         NULL,
     NULL,        NULL,                     editAlignEntry},
-  { "Separator", &xmSeparatorGadgetClass,  NULL, NULL,                   NULL,         NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
     NULL,        NULL,                     NULL},
   { "Unselect",  &xmPushButtonGadgetClass, 'U', NULL,                   NULL,         NULL,
     editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
@@ -341,9 +345,9 @@ static menuEntry_t fileMenu[] = {
     fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN, NULL},
   { "Print...",  &xmPushButtonGadgetClass, 'P', NULL,         NULL, NULL,
     fileMenuSimpleCallback, (XtPointer) FILE_PRINT_BTN, NULL},
-  { "Separator", &xmSeparatorGadgetClass,  NULL, NULL,         NULL, NULL,
+  { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,         NULL, NULL,
     NULL,        NULL,                     NULL},
-  { "Exit",      &xmPushButtonGadgetClass, 'x', NULL,         NULL, NULL,
+  { "Exit",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>x", "Ctrl+x", NULL,
     fileMenuSimpleCallback, (XtPointer) FILE_EXIT_BTN, NULL},
   NULL,
 };
@@ -397,6 +401,9 @@ static menuEntry_t helpMenu[] = {
 XButtonPressedEvent lastEvent;
 
 /* one lonesome function prototype without a home */
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern Widget createAndPopupProductDescriptionShell(
   XtAppContext appContext, Widget topLevelShell,
   char *name, XmFontList nameFontList,
@@ -404,6 +411,9 @@ extern Widget createAndPopupProductDescriptionShell(
   char *description, XmFontList descriptionFontList,
   char *versionInfo, char *developedAt, XmFontList otherFontList,
   int background, int foreground, int seconds);
+#ifdef __cplusplus
+}
+#endif
 
 static void createMain();
 
@@ -555,10 +565,10 @@ void requestDestroy(request_t *request) {
       for (i=0; i < request->fileCnt; i++) {
         if (request->fileList[i]) free(request->fileList[i]);
       }
-      free(request->fileList);
+      free((char *)request->fileList);
       request->fileList = NULL;
     }
-    free(request);
+    free((char *)request);
     request = NULL;
   }
 }
@@ -718,7 +728,11 @@ request_t * requestCreate(int argc, char *argv[]) {
       }
       if (fileEntryTableSize > request->fileCnt) {
         fileEntryTableSize *= 2;
+#if defined(__cplusplus) && !defined(__GNUG__)
+        request->fileList = (char **) realloc((malloc_t)request->fileList,fileEntryTableSize);
+#else
         request->fileList = (char **) realloc(request->fileList,fileEntryTableSize);
+#endif
       }
       if (request->fileList) {
         request->fileList[request->fileCnt] = STRDUP(fullPathName);
@@ -733,12 +747,13 @@ request_t * requestCreate(int argc, char *argv[]) {
  **************** Callbacks *****************
  ********************************************/
 
-static void viewMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void viewMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
+  int buttonNumber = (int) cd;
 
   switch(buttonNumber) {
     case VIEW_MESSAGE_WINDOW_BTN:
@@ -752,12 +767,13 @@ static void viewMenuSimpleCallback(
   }
 }
 
-static void editMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void editMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
- int buttonNumber = (int) clientData;
+ int buttonNumber = (int) cd;
 
 /* simply return if no current display */
   if (currentDisplayInfo == NULL) return;
@@ -821,13 +837,13 @@ static void editMenuSimpleCallback(
 }
 
 
-
-static void alignHorizontalMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void alignHorizontalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void alignHorizontalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
+  int buttonNumber = (int) cd;
   
     switch(buttonNumber) {
 /* reuse the TextAlign values here */
@@ -850,12 +866,13 @@ static void alignHorizontalMenuSimpleCallback(
 }
 
 
-static void alignVerticalMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void alignVerticalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void alignVerticalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
+  int buttonNumber = (int) cd;
 
     switch(buttonNumber) {
 /* reuse the TextAlign values here */
@@ -877,14 +894,14 @@ static void alignVerticalMenuSimpleCallback(
     }
 }
 
-static void fileMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
+  int buttonNumber = (int) cd;
   Widget widget;
-  DisplayInfo *newDisplayInfo;
   XmString dirMask;
   XEvent event;
 
@@ -918,9 +935,9 @@ static void fileMenuSimpleCallback(
         XtSetArg(args[n],XmNpattern,label); n++;
         XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
         openFSD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),"openFSD",args,n);
-        XtAddCallback(openFSD,XmNokCallback,(XtCallbackProc)dmDisplayListOk,(XtPointer)openFSD);
+        XtAddCallback(openFSD,XmNokCallback,dmDisplayListOk,(XtPointer)openFSD);
         XtAddCallback(openFSD,XmNcancelCallback,
-	     (XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
+	     fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
         XmStringFree(label);
         XmStringFree(cwdXmString);
         free(cwd);
@@ -1005,13 +1022,13 @@ static void fileMenuSimpleCallback(
   }
 }
 
-static XtCallbackProc medmExitMapCallback(
+#if 0
+static void medmExitMapCallback(
   Widget w,
   DisplayInfo *displayInfo,
   XmAnyCallbackStruct *call_data)
 {
   Position X, Y;
-  XmString xmString;
 
   XtTranslateCoords(displayInfo->shell,0,0,&X,&Y);
   /* try to force correct popup the first time */
@@ -1023,10 +1040,11 @@ static XtCallbackProc medmExitMapCallback(
   XmStringFree(xmString);
   */
 }
+#endif
 
 Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwrite) {
   char *suffix;
-  char f1[MAX_FILE_CHARS], f2[MAX_FILE_CHARS+4], *tmp, *tmp1;
+  char f1[MAX_FILE_CHARS], f2[MAX_FILE_CHARS+4];
   char warningString[2*MAX_FILE_CHARS];
   int  strLen1, strLen2, strLen3;
   int  status;
@@ -1122,12 +1140,9 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 }
 
 void medmExit() {
-  Widget widget;
-  XmString xmMessageStr, xmTitleStr;
   char *filename, *tmp;
   char str[2*MAX_FILE_CHARS];
   Arg args[2];
-  int n;
   Boolean saveAll = False;
   Boolean saveThis = False;
 
@@ -1190,15 +1205,9 @@ static void fileMenuDialogCallback(
   XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) callbackStruct;
   XmSelectionBoxCallbackStruct *select;
   char *filename, warningString[2*MAX_FILE_CHARS];
-  FILE *stream;
   XmString warningXmstring;
-  int i, k, startPos, status;
-  Boolean brandNewFile;
 
-  char *suffixPosition;
-  int appendPosition;
   char backupFilename[MAX_FILE_CHARS];
-  struct stat statBuf;
 
   switch(call_data->reason){
 	case XmCR_CANCEL:
@@ -1247,12 +1256,13 @@ static void fileMenuDialogCallback(
 }
 
 
-static void palettesMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void palettesMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
+  int buttonNumber = (int) cd;
   
     switch(buttonNumber) {
 
@@ -1290,13 +1300,14 @@ static void palettesMenuSimpleCallback(
 
 
 
-static void helpMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void helpMenuSimpleCallback(Widget, XtPointer cd, XtPointer cbs)
+#else
+static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  int buttonNumber = (int) clientData;
-  XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) callbackStruct;
+  int buttonNumber = (int) cd;
+  XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
   Widget widget;
   XEvent event;
 
@@ -1323,13 +1334,13 @@ static void helpMenuSimpleCallback(
 }
 
 
-
-static XtCallbackProc helpDialogCallback(
-  Widget w,
-  XtPointer client_data,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void helpDialogCallback(Widget, XtPointer, XtPointer cbs)
+#else
+static void helpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  switch(call_data->reason){
+  switch(((XmAnyCallbackStruct *) cbs)->reason){
 	case XmCR_OK:
 	case XmCR_CANCEL:
 		XtPopdown(helpS);
@@ -1337,15 +1348,15 @@ static XtCallbackProc helpDialogCallback(
   }
 }
 
-static void modeCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+#ifdef __cplusplus
+static void modeCallback(Widget, XtPointer cd, XtPointer cbs)
+#else
+static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
-  DlTraversalMode mode = (DlTraversalMode) clientData;
-  XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
+  DlTraversalMode mode = (DlTraversalMode) cd;
+  XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
   DisplayInfo *displayInfo, *nextDisplayInfo;
-  DlElement *element;
 
 /*
  * since both on & off will invoke this callback, only care about transition
@@ -1413,7 +1424,7 @@ static void modeCallback(
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
-        XtAppAddTimeOut(appContext,3000,medmUpdateCAStudtylDlg,NULL);
+        medmStartUpdateCAStudyDlg();
 	break;
 
       default:
@@ -1458,10 +1469,11 @@ static void modeCallback(
 
 
 
-static XtCallbackProc mapCallback(
-  Widget w,
-  XtPointer client_data,
-  XmAnyCallbackStruct *call_data)
+#ifdef __cplusplus
+static void mapCallback(Widget w, XtPointer , XtPointer)
+#else
+static void mapCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
 {
   Position X, Y;
   XmString xmString;
@@ -1634,7 +1646,7 @@ Widget buildMenu(Widget parent,
 			 items[i].subItems);
     } else {
       items[i].widget = XtVaCreateManagedWidget(items[i].label,
-			 *items[i].class, menu,
+			 *items[i].widgetClass, menu,
 			 NULL);
     }
 
@@ -1833,26 +1845,21 @@ void sendFullPathNameAndMacroAsClientMessages(
 
 main(int argc, char *argv[])
 {
-  int c, i, n, index;
+  int i, n, index;
   Arg args[5];
-  Pixel greyPixel;
   FILE *filePtr;
   XColor color;
   XEvent event;
   char versionString[60];
   Window targetWindow;
 
-  int j;
-  Boolean canAccess, medmAlreadyRunning, atLeastOneValidFile,
-	completeClientMessage;
+  Boolean medmAlreadyRunning, completeClientMessage;
   char fullPathName[FULLPATHNAME_SIZE+1],
 	currentDirectoryName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
-  char *dir;
   unsigned char *propertyData;
   int status, format;
   unsigned long nitems, left;
   Atom type;
-  int startPos, quoteIndex;
   char *macroString = NULL, *ptr;
   XColor colors[2];
   request_t *request;
@@ -2033,11 +2040,19 @@ main(int argc, char *argv[])
  *  register signal handlers to assure property states (unfortunately
  *    SIGKILL, SIGSTOP can't be caught...)
  */
+#if defined(__cplusplus) && !defined(__GNUG__)
+  signal(SIGQUIT,(SIG_PF)handleSignals);
+  signal(SIGINT, (SIG_PF)handleSignals);
+  signal(SIGTERM,(SIG_PF)handleSignals);
+  signal(SIGSEGV,(SIG_PF)handleSignals);
+  signal(SIGBUS,(SIG_PF)handleSignals);
+#else
   signal(SIGQUIT,handleSignals);
   signal(SIGINT, handleSignals);
   signal(SIGTERM,handleSignals);
   signal(SIGSEGV,handleSignals);
-  signal(SIGBUS,handleSignals);
+  signal(SIGBUS, handleSignals);
+#endif
 
 
 /* add translations/actions for drag-and-drop */
@@ -2198,7 +2213,7 @@ main(int argc, char *argv[])
 
 /* need this later than shell creation for some reason (?) */
   XmAddWMProtocolCallback(mainShell,WM_DELETE_WINDOW,
-		(XtCallbackProc)wmCloseCallback, (XtPointer) OTHER_SHELL);
+		wmCloseCallback, (XtPointer) OTHER_SHELL);
 
 
   XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
@@ -2285,7 +2300,7 @@ main(int argc, char *argv[])
 
 Widget createDisplayMenu(Widget parent) {
   return buildMenu(parent,XmMENU_POPUP,
-		    "displayMenu",NULL,displayMenu);
+		    "displayMenu",'\0',displayMenu);
 }
 
 static void createMain()
@@ -2295,13 +2310,12 @@ static void createMain()
   KeySym keySyms[N_MAX_MENU_ELES];
   String accelerators[N_MAX_MENU_ELES];
   XmString acceleratorText[N_MAX_MENU_ELES];
-  XmString label, string, cwdXmString;
+  XmString label;
   XmButtonType buttonType[N_MAX_MENU_ELES];
   Widget mainMB, mainBB, frame, frameLabel;
-  Widget menuHelpWidget, modeRB, modeEditTB, modeExecTB;
-  char *cwd;
+  Widget modeRB, modeEditTB, modeExecTB;
   char name[12];
-  int i, j, n;
+  int n;
   Arg args[20];
 
   n = 0;
@@ -2382,7 +2396,7 @@ static void createMain()
   XtSetArg(args[n],XmNmarginWidth,18); n++;
   mainBB = XmCreateBulletinBoard(mainMW,"mainBB",args,n);
   XtAddCallback(mainBB,XmNhelpCallback,
-		(XtCallbackProc)globalHelpCallback,(XtPointer)HELP_MAIN);
+		globalHelpCallback,(XtPointer)HELP_MAIN);
 
 
 /*
@@ -2419,14 +2433,14 @@ static void createMain()
     XtSetArg(args[n],XmNset,TRUE); n++;		/* start with EDIT as set */
     modeEditTB = XmCreateToggleButton(modeRB,"modeEditTB",args,n);
     XtAddCallback(modeEditTB,XmNvalueChangedCallback,
-	(XtCallbackProc)modeCallback, (XtPointer)DL_EDIT);
+	modeCallback, (XtPointer)DL_EDIT);
     XmStringFree(label);
     label = XmStringCreateSimple("Execute");
     n = 0;
     XtSetArg(args[n],XmNlabelString,label); n++;
     modeExecTB = XmCreateToggleButton(modeRB,"modeExecTB",args,n);
     XtAddCallback(modeExecTB,XmNvalueChangedCallback,
-		(XtCallbackProc)modeCallback,(XtPointer)DL_EXECUTE);
+		modeCallback,(XtPointer)DL_EXECUTE);
     XmStringFree(label);
     XtManageChild(modeRB);
     XtManageChild(modeEditTB);
@@ -2474,10 +2488,10 @@ static void createMain()
   saveAsPD = XmCreatePromptDialog(XtParent(mainFilePDM),"saveAsPD",args,n);
   XtUnmanageChild(XmSelectionBoxGetChild(saveAsPD,XmDIALOG_HELP_BUTTON));
   XtAddCallback(saveAsPD,XmNcancelCallback,
-	(XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
-  XtAddCallback(saveAsPD,XmNokCallback,(XtCallbackProc)fileMenuDialogCallback,
+	fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
+  XtAddCallback(saveAsPD,XmNokCallback,fileMenuDialogCallback,
 	(XtPointer)FILE_SAVE_AS_BTN);
-  XtAddCallback(saveAsPD,XmNmapCallback,(XtCallbackProc)mapCallback,
+  XtAddCallback(saveAsPD,XmNmapCallback,mapCallback,
 	(XtPointer)NULL);
 
 /*
@@ -2488,8 +2502,8 @@ static void createMain()
   XtVaSetValues(XtParent(exitQD),XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH, NULL);
   XtUnmanageChild(XmMessageBoxGetChild(exitQD,XmDIALOG_HELP_BUTTON));
   XtAddCallback(exitQD,XmNcancelCallback,
-	(XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_EXIT_BTN);
-  XtAddCallback(exitQD,XmNokCallback,(XtCallbackProc)fileMenuDialogCallback,
+	fileMenuDialogCallback,(XtPointer)FILE_EXIT_BTN);
+  XtAddCallback(exitQD,XmNokCallback,fileMenuDialogCallback,
 	(XtPointer)FILE_EXIT_BTN);
 
 /*
@@ -2507,15 +2521,15 @@ static void createMain()
   helpS = XtCreatePopupShell("helpS",topLevelShellWidgetClass,
 		mainShell,args,n);
   XmAddWMProtocolCallback(helpS,WM_DELETE_WINDOW,
-		(XtCallbackProc)wmCloseCallback,(XtPointer)OTHER_SHELL);
+		wmCloseCallback,(XtPointer)OTHER_SHELL);
   n = 0;
   XtSetArg(args[n],XmNdialogType,XmDIALOG_INFORMATION); n++;
   helpMessageBox = XmCreateMessageBox(helpS,"helpMessageBox",
 			args,n);
   XtAddCallback(helpMessageBox,XmNcancelCallback,
-	(XtCallbackProc)helpDialogCallback, (XtPointer)NULL);
+	helpDialogCallback, (XtPointer)NULL);
   XtAddCallback(helpMessageBox,XmNokCallback,
-	(XtCallbackProc)helpDialogCallback,(XtPointer)NULL);
+	helpDialogCallback,(XtPointer)NULL);
 
   XtManageChild(helpMessageBox);
 
@@ -2527,35 +2541,11 @@ static void createMain()
 
 }
 
-Widget createMessageDialog(w,title,msg)
-Widget w;
-char *title, *msg;
-{
-  Widget dlg;
-  XmString XmStr, XmTitle;
-
-  fprintf(stderr,"\007");
-  dlg = XmCreateWarningDialog(w,title,NULL,0);
-
-  XmStr = XmStringCreateSimple(msg);
-  XmTitle = XmStringCreateSimple(title);
-  XtVaSetValues(dlg,
-    XmNdialogTitle, XmTitle,
-    XmNmessageString, XmStr,
-    XmNmessageAlignment, XmALIGNMENT_CENTER,
-    XmNdeleteResponse, XmDESTROY,
-    XmNdialogStyle, XmDIALOG_PRIMARY_APPLICATION_MODAL,
-    NULL);
-  XmStringFree(XmTitle);
-  XmStringFree(XmStr);
-
-  XtUnmanageChild(XmMessageBoxGetChild(dlg,XmDIALOG_HELP_BUTTON));
-
-  XtUnmanageChild(XmMessageBoxGetChild(dlg,XmDIALOG_CANCEL_BUTTON));
-  XtManageChild(dlg);
-}
-
+#ifdef __cplusplus
+Boolean medmInitWorkProc(XtPointer) {
+#else
 Boolean medmInitWorkProc(XtPointer cd) {
+#endif
   int i;
   for (i=0; i<LAST_INIT_C; i++) {
     if (medmInitTask[i].init == False) {
