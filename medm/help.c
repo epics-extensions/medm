@@ -254,7 +254,9 @@ void errMsgDlgCreateDlg() {
     int n;
 
     if (errMsgS != NULL) {
+	if(XtIsManaged(errMsgS)) XtUnmanageChild(errMsgS);
 	XtManageChild(errMsgS);
+	XRaiseWindow(display,XtWindow(errMsgS));
 	return;
     }
 
