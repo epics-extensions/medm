@@ -191,11 +191,13 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
 		pp->updateTask->opaque = False;
 	    }
-	    pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
-	      polygonUpdateValueCb, NULL, (XtPointer) pp);
+	    if(!isStaticDynamic(&dlPolygon->dynAttr, True)) {
+		pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
+		  polygonUpdateValueCb, NULL, (XtPointer) pp);
+		calcPostfix(&dlPolygon->dynAttr);
+		setMonitorChanged(&dlPolygon->dynAttr, pp->records);
+	    }
 	}
-	calcPostfix(&dlPolygon->dynAttr);
-	setMonitorChanged(&dlPolygon->dynAttr, pp->records);
     } else {
       /* Static */
 	Drawable drawable=updateInProgress?
@@ -228,7 +230,7 @@ static void polygonUpdateValueCb(XtPointer cd)
 static void polygonDraw(XtPointer cd)
 {
     MedmPolygon *pp = (MedmPolygon *)cd;
-    Record *pR = pp->records[0];
+    Record *pR = pp->records?pp->records[0]:NULL;
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -262,7 +264,8 @@ static void polygonDraw(XtPointer cd)
 	    break;
 	}
 	gcValues.line_width = dlPolygon->attr.width;
-	gcValues.line_style = ((dlPolygon->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlPolygon->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
@@ -278,11 +281,21 @@ static void polygonDraw(XtPointer cd)
 	    pp->updateTask->opaque = False;
 	    draw3DQuestionMark(pp->updateTask);
 	}
+    } else if(isStaticDynamic(&dlPolygon->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
+	gcValues.line_width = dlPolygon->attr.width;
+	gcValues.line_style = ((dlPolygon->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawPolygon(pp);
     } else {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
 	gcValues.line_width = dlPolygon->attr.width;
-	gcValues.line_style = ((dlPolygon->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlPolygon->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolygon(pp);
     }

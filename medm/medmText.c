@@ -237,10 +237,12 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(pt->updateTask,textGetRecord);
 		pt->updateTask->opaque = False;
 	    }
-	    pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
-	      textUpdateValueCb, NULL,(XtPointer) pt);
-	    calcPostfix(&dlText->dynAttr);
-	    setMonitorChanged(&dlText->dynAttr, pt->records);
+	    if(!isStaticDynamic(&dlText->dynAttr, True)) {
+		pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
+		  textUpdateValueCb, NULL,(XtPointer) pt);
+		calcPostfix(&dlText->dynAttr);
+		setMonitorChanged(&dlText->dynAttr, pt->records);
+	    }
 	}
     } else {
       /* Static */
@@ -269,7 +271,7 @@ static void textUpdateValueCb(XtPointer cd) {
 
 static void textDraw(XtPointer cd) {
     MedmText *pt = (MedmText *)cd;
-    Record *pR = pt->records[0];
+    Record *pR = pt->records?pt->records[0]:NULL;
     DisplayInfo *displayInfo = pt->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -316,8 +318,7 @@ static void textDraw(XtPointer cd) {
       /* Draw depending on visibility */
 	if(calcVisibility(&dlText->dynAttr, pt->records))
 	/* KE: Different drawXXX from other drawing objects */
-	  drawText(displayInfo->updatePixmap, displayInfo->gc,
-	    dlText);
+	  drawText(displayInfo->updatePixmap, displayInfo->gc, dlText);
 	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
@@ -328,6 +329,15 @@ static void textDraw(XtPointer cd) {
 	    pt->updateTask->opaque = False;
 	    draw3DQuestionMark(pt->updateTask);
 	}
+    } else if(isStaticDynamic(&dlText->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
+	gcValues.line_width = dlText->attr.width;
+	gcValues.line_style = ((dlText->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawText(displayInfo->updatePixmap, displayInfo->gc, dlText);
     } else {
 #if DEBUG_BACKGROUND
 	print("  drawWhiteRectangle\n");

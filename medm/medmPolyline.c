@@ -202,10 +202,12 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
 		pp->updateTask->opaque = False;
 	    }
-	    pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
-	      polylineUpdateValueCb, NULL, (XtPointer) pp);
-	    calcPostfix(&dlPolyline->dynAttr);
-	    setMonitorChanged(&dlPolyline->dynAttr, pp->records);
+	    if(!isStaticDynamic(&dlPolyline->dynAttr, True)) {
+		pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
+		  polylineUpdateValueCb, NULL, (XtPointer) pp);
+		calcPostfix(&dlPolyline->dynAttr);
+		setMonitorChanged(&dlPolyline->dynAttr, pp->records);
+	    }
 	}
     } else {
       /* Static */
@@ -234,7 +236,7 @@ static void polylineUpdateValueCb(XtPointer cd)
 static void polylineDraw(XtPointer cd)
 {
     MedmPolyline *pp = (MedmPolyline *)cd;
-    Record *pR = pp->records[0];
+    Record *pR = pp->records?pp->records[0]:NULL;
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -269,7 +271,8 @@ static void polylineDraw(XtPointer cd)
 	    break;
 	}
 	gcValues.line_width = dlPolyline->attr.width;
-	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
@@ -285,11 +288,21 @@ static void polylineDraw(XtPointer cd)
 	    pp->updateTask->opaque = False;
 	    draw3DQuestionMark(pp->updateTask);
 	}
+    } else if(isStaticDynamic(&dlPolyline->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
+	gcValues.line_width = dlPolyline->attr.width;
+	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawPolyline(pp);
     } else {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
 	gcValues.line_width = dlPolyline->attr.width;
-	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolyline(pp);
     }

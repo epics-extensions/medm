@@ -149,11 +149,13 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(po->updateTask,ovalGetRecord);
 		po->updateTask->opaque = False;
 	    }
-	    po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
-	      ovalUpdateValueCb, NULL, (XtPointer)po);
+	    if(!isStaticDynamic(&dlOval->dynAttr, True)) {
+		po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
+		  ovalUpdateValueCb, NULL, (XtPointer)po);
+		calcPostfix(&dlOval->dynAttr);
+		setMonitorChanged(&dlOval->dynAttr, po->records);
+	    }
 	}
-	calcPostfix(&dlOval->dynAttr);
-	setMonitorChanged(&dlOval->dynAttr, po->records);
     } else {
       /* Static */
 	Drawable drawable=updateInProgress?
@@ -197,7 +199,7 @@ static void ovalUpdateValueCb(XtPointer cd) {
 
 static void ovalDraw(XtPointer cd) {
     MedmOval *po = (MedmOval *)cd;
-    Record *pR = po->records[0];
+    Record *pR = po->records?po->records[0]:NULL;
     DisplayInfo *displayInfo = po->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -212,7 +214,6 @@ static void ovalDraw(XtPointer cd) {
 	switch (dlOval->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
 	case STATIC :
-	    gcValues.foreground = displayInfo->dlColormap[dlOval->attr.clr];
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
@@ -231,7 +232,8 @@ static void ovalDraw(XtPointer cd) {
 	    break;
 	}
 	gcValues.line_width = dlOval->attr.width;
-	gcValues.line_style = ((dlOval->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlOval->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
@@ -247,11 +249,21 @@ static void ovalDraw(XtPointer cd) {
 	    po->updateTask->opaque = False;
 	    draw3DQuestionMark(po->updateTask);
 	}
+    } else if(isStaticDynamic(&dlOval->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlOval->attr.clr];
+	gcValues.line_width = dlOval->attr.width;
+	gcValues.line_style = ((dlOval->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawOval(po);
     } else {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
 	gcValues.line_width = dlOval->attr.width;
-	gcValues.line_style = ((dlOval->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlOval->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawOval(po);
     }

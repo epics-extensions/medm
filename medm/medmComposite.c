@@ -157,17 +157,14 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		    updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
 		    pc->updateTask->opaque = False;
 		}
-		pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
-		  compositeUpdateValueCb,
-		  compositeUpdateGraphicalInfoCb,
-		  (XtPointer)pc);
-#if DEBUG_COMPOSITE > 1
-		print("  pc=%x\n",pc);
-#endif    
-		
-	      /* Calculate the postfix for visbilitiy calc */
-		calcPostfix(&dlComposite->dynAttr);
-		setMonitorChanged(&dlComposite->dynAttr, pc->records);
+		if(!isStaticDynamic(&dlComposite->dynAttr, False)) {
+		    pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
+		      compositeUpdateValueCb,
+		      compositeUpdateGraphicalInfoCb,
+		      (XtPointer)pc);
+		    calcPostfix(&dlComposite->dynAttr);
+		    setMonitorChanged(&dlComposite->dynAttr, pc->records);
+		}
 	    }
 	} else {
 	  /* Static */
@@ -238,9 +235,8 @@ static void compositeDraw(XtPointer cd)
 #endif    
   /* Branch on whether there is a channel or not */
     if(*dlComposite->dynAttr.chan[0]) {
-      /* A channel is defined */
-	if(!pR) return;
 	if(isConnected(pc->records)) {
+      /* A channel is defined */
 #if DEBUG_COMPOSITE > 1
 	    print("  vis=%s\n",stringValueTable[dlComposite->dynAttr.vis]);
 	    print("  calc=%s\n",dlComposite->dynAttr.calc);
@@ -277,6 +273,8 @@ static void compositeDraw(XtPointer cd)
 		pc->updateTask->opaque = False;
 		draw3DQuestionMark(pc->updateTask);
 	    }
+	} else if(isStaticDynamic(&dlComposite->dynAttr, False)) {
+	    executeCompositeChildren(displayInfo, pc->dlElement);
 	} else {
 	    hideComposite(pc);
 	    pc->updateTask->opaque = False;

@@ -106,6 +106,11 @@ static void medmReplaceAccessRightsEventCb(
 static void medmCAFdRegistrationCb( void *dummy, int fd, int condition);
 static void medmProcessCA(XtPointer, int *, XtInputId *);
 static void medmAddUpdateRequest(Channel *);
+static int caTaskInit();
+static void caTaskDelete();
+static int caAdd(char *name, Record *pr);
+static void caDelete(Record *pr);
+static Channel *getChannelFromRecord(Record *pRecord);
 Boolean medmWorkProc(XtPointer);
 
 #define CA_PAGE_SIZE 100
@@ -129,7 +134,7 @@ typedef struct _CATask {
 
 static CATask caTask;
 
-void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount)
+void caTaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount)
 {
     *channelCount = caTask.channelCount;
     *channelConnected = caTask.channelConnected;
@@ -182,18 +187,18 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
       args.pFile?args.lineNo:0);
 }
 
-int CATaskInit()
+static int caTaskInit()
 {
     caTask.freeListSize = CA_PAGE_SIZE;
     caTask.freeListCount = 0;
     caTask.freeList = (int *)malloc(sizeof(int) * CA_PAGE_SIZE);
     if(caTask.freeList == NULL) {
-	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
+	medmPostMsg(1,"caTaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pages = (Channel **)malloc(sizeof(Channel *) * CA_PAGE_COUNT);
     if(caTask.pages == NULL) {
-	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
+	medmPostMsg(1,"caTaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pageCount = 1;
@@ -201,7 +206,7 @@ int CATaskInit()
   /* allocate the page */
     caTask.pages[0] = (Channel *)malloc(sizeof(Channel) * CA_PAGE_SIZE);
     if(caTask.pages[0] == NULL) {
-	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
+	medmPostMsg(1,"caTaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.nextFree = 0;
@@ -212,7 +217,8 @@ int CATaskInit()
     return ECA_NORMAL;
 }
 
-void caTaskDelete() {
+static void caTaskDelete()
+{
     if(caTask.freeList) {
 	free((char *)caTask.freeList);
 	caTask.freeList = NULL;
@@ -231,7 +237,7 @@ void caTaskDelete() {
     } 
 }
 
-Channel *getChannelFromRecord(Record *pRecord)
+static Channel *getChannelFromRecord(Record *pRecord)
 {
     Channel *pCh;
 
@@ -253,7 +259,7 @@ int medmCAInitialize()
     status = ca_add_exception_event(medmCAExceptionHandlerCb, NULL);
     if(status != ECA_NORMAL) return status;
 
-    status = CATaskInit();
+    status = caTaskInit();
     return status;
 }
 
@@ -802,7 +808,8 @@ static void medmReplaceAccessRightsEventCb(
       pCh->pr->updateValueCb((XtPointer)pCh->pr); 
 }
 
-int caAdd(char *name, Record *pr) {
+static int caAdd(char *name, Record *pr)
+{
     Channel *pCh;
     int status;
     
@@ -869,7 +876,8 @@ int caAdd(char *name, Record *pr) {
     return pCh->caId;
 }
 
-void caDelete(Record *pr) {
+static void caDelete(Record *pr)
+{
     int status;
     Channel *pCh;
 

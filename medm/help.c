@@ -993,7 +993,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
       /* No channels connected or CA events for CDEV */
 	channelConnected = caEventCount = 0;
 #else
-	CATaskGetInfo(&channelCount, &channelConnected, &caEventCount);
+	caTaskGetInfo(&channelCount, &channelConnected, &caEventCount);
 #endif
 	totalUpdateDiscarded = updateDiscardCount + periodicUpdateDiscardCount;
 	totalUpdateRequested = updateRequestCount + periodicUpdateRequestCount +

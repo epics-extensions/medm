@@ -4133,6 +4133,8 @@ Boolean isConnected(Record **records)
 {
     int i;
     Boolean connected = True;
+
+    if(!records) return False;
     
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	if(records[i] && !records[i]->connected) {
@@ -4142,6 +4144,25 @@ Boolean isConnected(Record **records)
     }
 
     return connected;
+}
+
+/* Returns True if vis = V_STATIC and, if includeColor is True, also
+   clr = Static.  That is, the object has an updateTask but does not
+   need a PV. */
+Boolean isStaticDynamic(DlDynamicAttribute *dynAttr, Boolean includeColor)
+{
+    if(dynAttr) {
+	if(dynAttr->vis == V_STATIC) {
+	    if(includeColor) {
+		if(dynAttr->clr == STATIC) {
+		    return True;
+		}
+	    } else {
+		return True;
+	    }
+	}
+    }
+    return False;
 }
 
 /*** CALC routines ***/

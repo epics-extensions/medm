@@ -148,10 +148,12 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(pa->updateTask,arcGetRecord);
 		pa->updateTask->opaque = False;
 	    }
-	    pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,arcUpdateValueCb,
-	      NULL,(XtPointer) pa);
-	    calcPostfix(&dlArc->dynAttr);
-	    setMonitorChanged(&dlArc->dynAttr, pa->records);
+	    if(!isStaticDynamic(&dlArc->dynAttr, True)) {
+		pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,
+		  arcUpdateValueCb, NULL, (XtPointer) pa);
+		calcPostfix(&dlArc->dynAttr);
+		setMonitorChanged(&dlArc->dynAttr, pa->records);
+	    }
 	}
     } else {
       /* Static */
@@ -194,7 +196,7 @@ static void arcUpdateValueCb(XtPointer cd)
 static void arcDraw(XtPointer cd)
 {
     MedmArc *pa = (MedmArc *)cd;
-    Record *pR = pa->records[0];
+    Record *pR = pa->records?pa->records[0]:NULL;
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -233,7 +235,8 @@ static void arcDraw(XtPointer cd)
 	    break;
 	}
 	gcValues.line_width = dlArc->attr.width;
-	gcValues.line_style = ((dlArc->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlArc->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
@@ -249,6 +252,15 @@ static void arcDraw(XtPointer cd)
 	    pa->updateTask->opaque = False;
 	    draw3DQuestionMark(pa->updateTask);
 	}
+    } else if(isStaticDynamic(&dlArc->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
+	gcValues.line_width = dlArc->attr.width;
+	gcValues.line_style = ((dlArc->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawArc(pa);
     } else {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	gcValues.foreground = WhitePixel(display,DefaultScreen(display));

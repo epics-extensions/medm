@@ -297,16 +297,15 @@ Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
 #ifdef MEDM_CDEV
 # define medmCAInitialize medmCDEVInitialize
 # define medmCATerminate medmCDEVTerminate
-int  medmCDEVInitialize (void);
-void medmCDEVTerminate (void);
+int  medmCDEVInitialize(void);
+void medmCDEVTerminate(void);
 #else
 int medmCAInitialize(void);
 void medmCATerminate(void);
 void updateListCreate(Channel *);
 void updateListDestroy(Channel *);
 void medmDisconnectChannel(Channel *pCh);
-void CATaskGetInfo(int *, int *, int *);
-Channel *getChannelFromRecord(Record *pRecord);
+void caTaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount);
 #endif
 Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData);
@@ -626,6 +625,7 @@ void setTimeValues(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
 Boolean isConnected(Record **records);
+Boolean isStaticDynamic(DlDynamicAttribute *dynAttr, Boolean includeColor);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
 void calcPostfix(DlDynamicAttribute *attr);
 void setMonitorChanged(DlDynamicAttribute *attr, Record **records);

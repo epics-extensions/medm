@@ -95,6 +95,7 @@ static void imageUpdateValueCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
 static void imageScale(DlElement *dlElement, int xOffset, int yOffset);
 static void imageFileSelectionCb(Widget w, XtPointer cd, XtPointer cbs);
+static long calculateAndSetImageFrame(MedmImage *pi);
 
 static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
@@ -201,21 +202,14 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		    pi->updateTask->opaque = False;
 		}
 		if(*dlImage->dynAttr.chan[0]) {
+		  /* A channel is defined */
 		    long status;
 		    short errnum;
 		    
-		  /* A channel is defined */
 		    if(pi->updateTask) {
 			updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 		    }
-		    pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
-		      imageUpdateValueCb,
-		      imageUpdateGraphicalInfoCb,
-		      (XtPointer)pi);
 		    
-		  /* Calculate the postfix for visbilitiy calc */
-		    calcPostfix(&dlImage->dynAttr);
-		    setMonitorChanged(&dlImage->dynAttr, pi->records);
 		  /* Check if the image calc is blank */
 		    if(!*dlImage->calc) {
 		      /* Animate */
@@ -235,12 +229,25 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			    pi->validCalc = True;
 			}
 		    }
-		  /* Override the visibility monitorChanged parameters
-		     if there is a valid image calc */
-		    if(pi->validCalc) {
-			for(i=0; i < MAX_CALC_RECORDS; i++) {
-			    if(pi->records[i]) {
-				pi->records[i]->monitorValueChanged = True;
+		    
+		  /* Do rest of setup only if vis is not static */
+		    if(!isStaticDynamic(&dlImage->dynAttr, False)) {
+			pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
+			  imageUpdateValueCb,
+			  imageUpdateGraphicalInfoCb,
+			  (XtPointer)pi);
+			
+		      /* Calculate the postfix for visibility calc */
+			calcPostfix(&dlImage->dynAttr);
+			setMonitorChanged(&dlImage->dynAttr, pi->records);
+
+		      /* Override the visibility monitorChanged parameters
+			 if there is a valid image calc */
+			if(pi->validCalc) {
+			    for(i=0; i < MAX_CALC_RECORDS; i++) {
+				if(pi->records[i]) {
+				    pi->records[i]->monitorValueChanged = True;
+				}
 			    }
 			}
 		    }
@@ -297,63 +304,10 @@ static void imageDraw(XtPointer cd)
     if(*dlImage->dynAttr.chan[0]) {
       /* A channel is defined */
 	updateTaskSetScanRate(pi->updateTask, 0.0);
-	if(!pR) return;
 	if(isConnected(pi->records)) {
 	    if(pR->readAccess) {
-		double result;
-		long status;
-
-		if(!pi->animate) {
-		  /* Determine the result of the calculation */
-		    if(!*dlImage->calc) {
-		      /* calc string is empty */
-			result=pR->value;
-			status = 0;
-		    } else if(!pi->validCalc) {
-		      /* calc string is invalid */
-			status = 1;
-		    } else {
-			double valueArray[MAX_CALC_INPUTS];
-			Record **records = pi->records;
-			DlDynamicAttribute *attr = &dlImage->dynAttr;;
-			
-		      /* Fill in the input array */
-			for(i=0; i < MAX_CALC_RECORDS; i++) {
-			    if(*attr->chan[i] && records[i]->connected) {
-				valueArray[i] = records[i]->value;
-			    } else {
-				valueArray[i] = 0.0;
-			    }
-			}
-			valueArray[4] = 0.0;              /* E: Reserved */
-			valueArray[5] = 0.0;              /* F: Reserved */
-			valueArray[6] = pR->elementCount; /* G: count */
-			valueArray[7] = pR->hopr;         /* H: hopr */
-			valueArray[8] = pR->status;       /* I: status */
-			valueArray[9] = pR->severity;     /* J: severity */
-			valueArray[10] = pR->precision;   /* K: precision */
-			valueArray[11] = pR->lopr;        /* L: lopr */
-			
-		      /* Perform the calculation */
-			status = calcPerform(valueArray, &result, pi->post);
-			if(!status) {
-			  /* Result is valid, convert to frame number */
-			    if(gif) {
-				if(result < 0.0) gif->curFrame = 0;
-				else if(result > gif->nFrames-1)
-				  gif->curFrame=gif->nFrames-1;
-				else gif->curFrame = (int)(result +.5);
-			    }
-			}
-		    }
-#if DEBUG_CALC
-		    print("imageDraw: calc=%s result=%g sevr=%d animate=%d\n",
-		      dlImage->calc,result,pR->severity,pi->animate);
-#endif		    
-		} else {
-		  /* Result is always valid for animate */
-		    status = 0;
-		}
+		long status = calculateAndSetImageFrame(pi);;
+		
 	      /* Draw depending on visibility */
 		if(status == 0) {
 		    if(calcVisibility(&dlImage->dynAttr, pi->records)) {
@@ -365,9 +319,12 @@ static void imageDraw(XtPointer cd)
 #if DEBUG_VISIBILITY
 			if(po->y == 481) print("  Drew colored rectangle\n");
 #endif
+#if 0
+		      /* KE: Really don't want to do this.  Want to do nothing. */
 			drawColoredRectangle(pi->updateTask,
 			  displayInfo->colormap[
 			    displayInfo->drawingAreaBackgroundColor]);
+#endif			
 		    }
 		} else {
 		  /* Result is invalid */
@@ -386,6 +343,19 @@ static void imageDraw(XtPointer cd)
 		    draw3DQuestionMark(pi->updateTask);
 		}
 	    }
+	} else if(isStaticDynamic(&dlImage->dynAttr, False)) {
+	  /* vis is static */
+	    long status = calculateAndSetImageFrame(pi);;
+	    
+	  /* Draw */
+	    if(status == 0) {
+	      /* Result is valid */
+		drawImage(pi);
+	    } else {
+	      /* Result is invalid */
+		drawColoredRectangle(pi->updateTask,
+		  BlackPixel(display,screenNum));
+	    }
 	} else {
 	    drawWhiteRectangle(pi->updateTask);
 	}
@@ -396,8 +366,6 @@ static void imageDraw(XtPointer cd)
 	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
 #endif
 	drawImage(pi);
-      /* Don't update the drawing objects above (Could get to be
-       * expensive) */
     }
 }
 
@@ -737,3 +705,70 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *pE)
       -1);
 }
 
+static long calculateAndSetImageFrame(MedmImage *pi)
+{
+    Record *pR = pi->records?pi->records[0]:NULL;
+    DlImage *dlImage = pi->dlElement->structure.image;
+    GIFData *gif = (GIFData *)dlImage->privateData;
+    int i;
+    long status;
+    double result;
+
+    if(!pi->animate) {
+      /* Determine the result of the calculation */
+	if(!*dlImage->calc) {
+	  /* calc string is empty */
+	    result = 0;
+	    status = 0;
+	} else if(!pi->validCalc) {
+	  /* calc string is invalid */
+	    status = 1;
+	} else {
+	    double valueArray[MAX_CALC_INPUTS];
+	    Record **records = pi->records;
+	    DlDynamicAttribute *attr = &dlImage->dynAttr;;
+	    
+	  /* Fill in the input array */
+	    if(records) {
+	      /* There are valid records */
+		for(i=0; i < MAX_CALC_RECORDS; i++) {
+		    if(*attr->chan[i] && records[i]->connected) {
+			valueArray[i] = records[i]->value;
+		    } else {
+			valueArray[i] = 0.0;
+		    }
+		}
+		valueArray[4] = 0.0;              /* E: Reserved */
+		valueArray[5] = 0.0;              /* F: Reserved */
+		valueArray[6] = pR->elementCount; /* G: count */
+		valueArray[7] = pR->hopr;         /* H: hopr */
+		valueArray[8] = pR->status;       /* I: status */
+		valueArray[9] = pR->severity;     /* J: severity */
+		valueArray[10] = pR->precision;   /* K: precision */
+		valueArray[11] = pR->lopr;        /* L: lopr */
+	    } else {
+	      /* Use all zeros */
+		for(i=0; i<12; i++) {
+		    valueArray[i] = 0.0;
+		}
+	    }
+	    
+	  /* Perform the calculation */
+	    status = calcPerform(valueArray, &result, pi->post);
+	    if(!status) {
+	      /* Result is valid, convert to frame number */
+		if(gif) {
+		    if(result < 0.0) gif->curFrame = 0;
+		    else if(result > gif->nFrames-1)
+		      gif->curFrame=gif->nFrames-1;
+		    else gif->curFrame = (int)(result +.5);
+		}
+	    }
+	}
+    } else {
+      /* Result is always valid for animate */
+	status = 0;
+    }
+
+    return status;
+}

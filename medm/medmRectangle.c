@@ -162,10 +162,12 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 		updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
 		pr->updateTask->opaque = False;
 	    }
-	    pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
-	      rectangleUpdateValueCb,NULL,(XtPointer)pr);
-	    calcPostfix(&dlRectangle->dynAttr);
-	    setMonitorChanged(&dlRectangle->dynAttr, pr->records);
+	    if(!isStaticDynamic(&dlRectangle->dynAttr, True)) {
+		pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
+		  rectangleUpdateValueCb,NULL,(XtPointer)pr);
+		calcPostfix(&dlRectangle->dynAttr);
+		setMonitorChanged(&dlRectangle->dynAttr, pr->records);
+	    }
 	}
     } else {
       /* Static */
@@ -215,7 +217,7 @@ static void rectangleUpdateValueCb(XtPointer cd)
 static void rectangleDraw(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)cd;
-    Record *pRec = pr->records[0];
+    Record *pRec = pr->records?pr->records[0]:NULL;
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -252,7 +254,8 @@ static void rectangleDraw(XtPointer cd)
 #endif
 	}
 	gcValues.line_width = dlRectangle->attr.width;
-	gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
@@ -260,7 +263,8 @@ static void rectangleDraw(XtPointer cd)
 	  drawRectangle(pr);
 	if(pRec->readAccess) {
 #ifdef OPAQUE	    
-	    if(!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
+	    if(!pr->updateTask->overlapped &&
+	      dlRectangle->dynAttr.vis == V_STATIC) {
 		pr->updateTask->opaque = True;
 	    }
 #endif
@@ -268,11 +272,21 @@ static void rectangleDraw(XtPointer cd)
 	    pr->updateTask->opaque = False;
 	    draw3DQuestionMark(pr->updateTask);
 	}
+    } else if(isStaticDynamic(&dlRectangle->dynAttr, True)) {
+      /* clr and vis are both static */
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = displayInfo->colormap[dlRectangle->attr.clr];
+	gcValues.line_width = dlRectangle->attr.width;
+	gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawRectangle(pr);
     } else {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
 	gcValues.line_width = dlRectangle->attr.width;
-	gcValues.line_style = ((dlRectangle->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlRectangle->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawRectangle(pr);
     }
