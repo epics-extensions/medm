@@ -56,15 +56,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-/* "green", "yellow", "red", "white", */
-#ifdef WIN32
-/* Should not be necessary -- May be an Exceed problem */
-static  char *alarmColorString[ALARM_MAX] = {"Green3","Yellow","Red",
-					     "White","Gray80"};
-#else
-static  char *alarmColorString[ALARM_MAX] = {"#00C000","#FFFF00","#FF0000",
-					     "#FFFFFF","#CCCCCC"};
-#endif
+/* "Green3", "Yellow", "Red", "White", "Gray80" */
+static  char *alarmColorString[ALARM_MAX] = {
+    "#00C000","#FFFF00","#FF0000","#FFFFFF","#CCCCCC"
+};
 
 /* From the O'Reilly books - this scalable font handling code:
  *   (next two functions)
