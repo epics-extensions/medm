@@ -203,8 +203,8 @@ DisplayInfo *allocateDisplayInfo()
 
   /* Create the shell and add callbacks */
     nargs = 0;
-    XtSetArg(args[nargs],XmNiconName,"display"); nargs++;
-    XtSetArg(args[nargs],XmNtitle,"display"); nargs++;
+    XtSetArg(args[nargs],XmNiconName,"Display"); nargs++;
+    XtSetArg(args[nargs],XmNtitle,"Display"); nargs++;
     XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
   /* Turn resize handles off
    * KE: Is is really good to do this? */

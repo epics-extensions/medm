@@ -380,7 +380,6 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[nargs],XmNy,(Position)dlDisplay->object.y); nargs++;
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlDisplay->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlDisplay->object.height); nargs++;
-    XtSetArg(args[nargs],XmNiconName,displayInfo->dlFile->name); nargs++;
     XtSetValues(displayInfo->shell,args,nargs);
     medmSetDisplayTitle(displayInfo);
     XtRealizeWidget(displayInfo->shell);
@@ -507,7 +506,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
     XtSetArg(args[nargs], XmNbuttons, executePopupMenuButtons); nargs++;
     XtSetArg(args[nargs], XmNsimpleCallback, executePopupMenuCallback); nargs++;
     XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
-    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
+    XtSetArg(args[nargs], XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
     displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->drawingArea,
       "executePopupMenu", args, nargs);
     
