@@ -1829,6 +1829,9 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	    if (pcp = (CartesianPlot *) userData)
 	      dlCartesianPlot = (DlCartesianPlot *) 
 		pcp->dlElement->structure.cartesianPlot;
+	} else {
+	    medmPostMsg(1,"cpAxisOptionMenuSimpleCallback: Element is no longer valid\n");
+	    XtPopdown(cartesianPlotAxisS);
 	}
     }
 
@@ -1848,35 +1851,46 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	case CP_X_AXIS_STYLE:
 	    switch (style) {
 	    case LINEAR_AXIS:
-		CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_X);
+		if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		    CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_X);
+		}
 		XtSetSensitive(axisTimeFormat,False);
 		if(pcp) pcp->timeScale = False;
 		break;
 	    case LOG10_AXIS:
-		CpSetAxisLog(executeTimeCartesianPlotWidget, CP_X);
+		if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		    CpSetAxisLog(executeTimeCartesianPlotWidget, CP_X);
+		}
 		XtSetSensitive(axisTimeFormat,False);
 		if(pcp) pcp->timeScale = False;
 		break;
 	    case TIME_AXIS:
-		CpSetAxisTime(executeTimeCartesianPlotWidget, CP_X, time900101,
-		  cpTimeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
-		    FIRST_CP_TIME_FORMAT]);
+		if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		    CpSetAxisTime(executeTimeCartesianPlotWidget, CP_X,
+		      time900101, cpTimeFormatString[
+			(int)globalResourceBundle.axis[0].timeFormat -
+			FIRST_CP_TIME_FORMAT]);
+		}
 		XtSetSensitive(axisTimeFormat,True);
 		if(pcp) pcp->timeScale = True;
 		break;
 	    }
 	    break;
 	case CP_Y_AXIS_STYLE:
-	    CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y);
-	    (style == LOG10_AXIS) ?
-	      CpSetAxisLog(executeTimeCartesianPlotWidget, CP_Y) :
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
 		CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y);
+		(style == LOG10_AXIS) ?
+		  CpSetAxisLog(executeTimeCartesianPlotWidget, CP_Y) :
+		  CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y);
+	    }
 	    break;
 	case CP_Y2_AXIS_STYLE:
-	    CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y2);
-	    (style == LOG10_AXIS) ?
-	      CpSetAxisLog(executeTimeCartesianPlotWidget, CP_Y2) :
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
 		CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y2);
+		(style == LOG10_AXIS) ?
+		  CpSetAxisLog(executeTimeCartesianPlotWidget, CP_Y2) :
+		  CpSetAxisLinear(executeTimeCartesianPlotWidget, CP_Y2);
+	    }
 	    break;
 	}
 	break;
@@ -2780,7 +2794,7 @@ static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
 
     case CP_CLOSE_BTN:
 	XtPopdown(cartesianPlotAxisS);
-      /* since done with CP Axis dialog, reset that selected widget */
+      /* Since done with CP Axis dialog, reset the selected widget */
 	executeTimeCartesianPlotWidget  = NULL;
 	break;
     }
