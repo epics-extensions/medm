@@ -67,6 +67,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_GIF 1
+
 /* include files */
 #include "medm.h"
 #include "xgif.h"
@@ -149,6 +151,27 @@ Boolean initializeGIF(
 
     resizeGIF(displayInfo,dlImage);
 
+#if DEBUG_GIF
+    {
+	int i,j,n;
+	Pixel pixel;
+	int ntimes=11;
+
+	n=0;
+	printf("Pixel Map\n"
+	  "        x    y    Pixel\n");
+	for(j=0; j < gif->iHIGH; j++) {
+	    for(i=0; i < gif->iWIDE; i++) {
+		if(n++ < ntimes) {
+		    pixel=XGetPixel(gif->theImage,i,j);
+		    printf("%4d %4d %4d %8x\n",
+		      n,i,j,pixel);
+		}
+	    }
+	}
+    }
+#endif    
+    
     if (gif->expImage) {
 	XSetForeground(display,gif->theGC,gif->bcol);
 	XFillRectangle(display,XtWindow(displayInfo->drawingArea),
@@ -227,10 +250,14 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
     gif->currentWidth = w;
     gif->currentHeight= h;
 
-    if ((int)w==gif->iWIDE && (int)h==gif->iHIGH) {		/* very special case */
+    if ((int)w==gif->iWIDE && (int)h==gif->iHIGH) {
+      /* Very special case (size = actual GIF size) */
         if (gif->expImage != gif->theImage) {
-            if (gif->expImage != NULL)
-	      XDestroyImage((XImage *)(gif->expImage));
+            if (gif->expImage != NULL) {
+		free(gif->expImage->data);
+		gif->expImage->data = NULL;
+		XDestroyImage((XImage *)(gif->expImage));
+	    }
             gif->expImage = gif->theImage;
             gif->eWIDE = gif->iWIDE;  gif->eHIGH = gif->iHIGH;
 	}
@@ -367,7 +394,11 @@ int BitOffset,			/* Bit Offset of next code */
   ScreenDepth;                /* Bits per Pixel */
 
 Boolean Interlace, HasColormap;
+#if DEBUG_GIF
+Boolean verbose = True;
+#else
 Boolean verbose = False;
+#endif
 
 Byte *Image;			/* The result array */
 Byte *RawGIF;			/* The heap array to hold it, raw */
@@ -384,6 +415,7 @@ int OutCode[1025];
 Byte Red[256], Green[256], Blue[256];
 
 char *id = "GIF87a";
+char *id89 = "GIF89a";
 
 /*****************************/
 #ifdef __cplusplus
@@ -397,6 +429,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     char *fname;
     Boolean success;
     int            filesize;
+    int            bits_per_pixel;
     register Byte  ch, ch1;
     register Byte *ptr, *ptr1;
     register int   i,j;
@@ -423,7 +456,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	fname = "<stdin>";
     } else {
 #ifdef WIN32
-      /* WIN32 opens files in text mode by default which throes out CRLF */
+      /* WIN32 opens files in text mode by default and then throws out CRLF */
 	fp = fopen(fname,"rb");
 #else
 	fp = fopen(fname,"r");
@@ -471,8 +504,11 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	success = False;
     }
 
-    if (strncmp((char *)ptr, (char *)id, 6)) {
-	medmPrintf(1,"\nloadGIF: Not a GIF file\n  %s\n",fname);
+    if (!strncmp((char *)ptr, (char *)id89, 6)) {
+	medmPrintf(1,"\nloadGIF: %s is not supported yet\n  %s\n",id89,fname);
+	success = False;
+    } else if (strncmp((char *)ptr, (char *)id, 6)) {
+	medmPrintf(1,"\nloadGIF: Not a valid GIF file\n  %s\n",fname);
 	success = False;
     }
     if (!success) return(False);
@@ -486,8 +522,36 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     ch = NEXTBYTE;
     RHeight = ch + 0x100 * NEXTBYTE;
 
+#if DEBUG_GIF
+    {
+	static int ifirst=1;
+	
+	if(ifirst) {
+	    int depth=DefaultDepth(display,screenNum);
+	    int bitmap_bit_order=BitmapBitOrder(display);
+	    int bitmap_pad=BitmapPad(display);
+	    int bitmap_unit=BitmapUnit(display);
+	    int byte_order=ImageByteOrder(display);
+	    int bits_per_pixel=_XGetBitsPerPixel(display,depth);
+	    
+	    ifirst=0;
+	    printf("\nX Server Image Properties:\n");
+	    printf("  depth=%d [%d colors (0-%x)]\n",depth,1<<depth,
+	      (int)(1<<depth)-1);
+	    printf("  bitmap_bit_order = %d [LSBFirst = %d MSBFirst = %d]\n",
+	      bitmap_bit_order,LSBFirst,MSBFirst);
+	    printf("  bitmap_pad = %d\n",bitmap_pad);
+	    printf("  bitmap_unit = %d\n",bitmap_unit);
+	    printf("  byte_order = %d [LSBFirst = %d MSBFirst = %d]\n",
+	      byte_order,LSBFirst,MSBFirst);
+	    printf("  bits_per_pixel = %d\n",bits_per_pixel);
+	}
+    }
+#endif    
+
     if (verbose)
-      printf("\nloadGIF: Screen dimimensions: %dx%d\n", RWidth, RHeight);
+      printf("\nloadGIF: %s has screen dimimensions: %dx%d\n",
+	fname, RWidth, RHeight);
 
     ch = NEXTBYTE;
     HasColormap = ((ch & COLORMAPMASK) ? True : False);
@@ -507,8 +571,8 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
     if (HasColormap) {
 	if (verbose) {
-	    printf("\nloadGIF: %s is %dx%d, %d bits per pixel, (%d colors).\n",
-	      fname, Width, Height, BitsPerPixel, ColorMapSize);
+	    printf("loadGIF: %s is %dx%d, %d bits per pixel, (%d colors).\n",
+	      fname, RWidth, RHeight, BitsPerPixel, ColorMapSize);
 	}
 
 	for (i = 0; i < ColorMapSize; i++) {
@@ -519,7 +583,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
       /* Allocate the X colors for this picture */
 
-        if (gif->nostrip)  {   /* nostrip was set.  try REAL hard to do it */
+        if (gif->nostrip) {   /* nostrip was set.  try REAL hard to do it */
             j = 0;
             lmask = lmasks[gif->strip];
             for (i=0; i<gif->numcols; i++) {
@@ -569,8 +633,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 		    }
 		}
 	    }
-	}
-        else {          /* strip wasn't set, do the best auto-strip */
+	} else {          /* strip wasn't set, do the best auto-strip */
             j = 0;
             while (gif->strip<8) {
                 lmask = lmasks[gif->strip];
@@ -579,33 +642,47 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
                     gif->defs[i].green = (Green[i]&lmask)<<8;
                     gif->defs[i].blue  = (Blue[i] &lmask)<<8;
                     gif->defs[i].flags = DoRed | DoGreen | DoBlue;
-                    if (!XAllocColor(display,gif->theCmap,&gif->defs[i])) break;
+                    if (!XAllocColor(display,gif->theCmap,&gif->defs[i]))
+		      break;
                     gif->cols[i] = gif->defs[i].pixel;
 		}
-                if (i<gif->numcols) {		/* failed */
+                if (i<gif->numcols) {     /* Failed */
+#if DEBUG_GIF
+		    printf("Auto strip %d (mask %2x) failed for color %d"
+		      " [R=%hx G=%hx B=%hx]\n",
+		      gif->strip,lmask,i,gif->defs[i].red,gif->defs[i].green,
+		      gif->defs[i].blue);
+#endif		    
                     gif->strip++;  j++;
                     XFreeColors(display,gif->theCmap,gif->cols,i,0L);
+		} else {
+		    break;
 		}
-                else break;
 	    }
-
-            if (j && gif->strip<8)
-	      if (verbose)
-		printf("\nloadGIF: %s stripped %d bits\n",fname,gif->strip);
-
+	    
+            if (j && gif->strip<8) {
+		medmPrintf(0,"\nloadGIF: %s was masked to level %d"
+		  " (mask 0x%2X)\n",
+		  fname,gif->strip,lmask);
+		if (verbose)
+		  printf("loadGIF: %s was masked to level %d (mask 0x%2X)\n",
+		    fname,gif->strip,lmask);
+	    }
+	    
             if (gif->strip==8) {
-                medmPrintf(1,"\nloadGIF: Failed to allocate the desired colors\n");
+                medmPrintf(1,"\nloadGIF: "
+		  "Failed to allocate the desired colors\n");
                 for (i=0; i<gif->numcols; i++) gif->cols[i]=i;
 	    }
 	}
-    }
-    else {  /* no colormap in GIF file */
-        medmPrintf(1,"\nloadGIF:  Warning!  No colortable in this file.  Winging it.\n");
+    } else {  /* no colormap in GIF file */
+        medmPrintf(1,"\nloadGIF:  Warning!  No colortable in this file."
+	  "  Winging it.\n");
         if (!gif->numcols) gif->numcols=256;
         for (i=0; i<gif->numcols; i++) gif->cols[i] = (unsigned long) i;
     }
 
-/* Check for image seperator */
+/* Check for image separator */
     if (NEXTBYTE != IMAGESEP) {
 	medmPrintf(1,"\nloadGIF: Corrupt GIF file (No image separator)\n");
     }
@@ -622,9 +699,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     Interlace = ((NEXTBYTE & INTERLACEMASK) ? True : False);
 
     if (verbose) {
-	printf("\nloadGIF: Reading a %d by %d %sinterlaced image...",
-	  Width, Height, (Interlace) ? "" : "non-");
-        printf("loadGIF:  %s is %dx%d, %d colors, %sinterlaced\n",
+        printf("loadGIF: %s is %dx%d, %d colors, %sinterlaced\n",
 	  fname, Width,Height,ColorMapSize,(Interlace) ? "" : "non-");
     }
 
@@ -671,7 +746,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     free((char *)RawGIF);	/* We're done with the raw data now... */
 
     if (verbose)
-      printf("\nloadGIF: Done\n  Decompressing...");
+      printf("loadGIF: %s decompressing...\n",fname);
 
 
 /* Allocate the X Image */
@@ -688,8 +763,13 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  (char*)Image,Width,Height,32,0);
         break;
     case 24 :
-        BytesOffsetPerPixel = _XGetBitsPerPixel(display, ScreenDepth)/8;
-/*         printf("BytesOffsetPerPixel = %d\n",BytesOffsetPerPixel); */
+	bits_per_pixel = _XGetBitsPerPixel(display, ScreenDepth);
+        BytesOffsetPerPixel = bits_per_pixel/8;
+#if DEBUG_GIF	
+        printf("LoadGIF: %s (24-bit display, %d bits per pixel)\n"
+	  "  BytesOffsetPerPixel = %d\n",
+	  fname, bits_per_pixel, BytesOffsetPerPixel);
+#endif	
         Image = (Byte *) malloc(BytesOffsetPerPixel*Width*Height);
         if (!Image) {
 	    medmPrintf(1,"\nloadGIF: Not enough memory for XImage\n");
@@ -787,7 +867,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     free((char *)Raster);
 
     if (verbose)
-      printf("\nloadGIF: done\n");
+      printf("loadGIF: %s done\n",fname);
 
     if (fp != stdin)
       fclose(fp);
