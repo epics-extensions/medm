@@ -208,6 +208,9 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 #endif    
 	break;
     }
+    case EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID:
+	flashHiddenButtons(displayInfo);
+	break;
     }
 }
 

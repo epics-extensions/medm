@@ -91,6 +91,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DISPLAY_LIST_REFRESH_BTN   3
 #define DISPLAY_LIST_HELP_BTN      4
 
+#define FLASH_ON_TIME 5000     /* msec */
+#define FLASH_OFF_TIME 1000     /* msec */
+#define FLASH_COUNT 1
+
 #define UNDO
 
 #include <string.h>
@@ -125,6 +129,12 @@ static void toggleHighlightRectangles(DisplayInfo *displayInfo,
 static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
   DlElement *dlElement);
 static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData);
+static int countHiddenButtons(DlElement *dlElement);
+static void createFlashWidgets(DisplayInfo *displayInfo, DlElement *dlElement);
+static void createFlashWidget(DisplayInfo *displayInfo, DlElement *dlElement);
+static void flashWidgetsOn(XtPointer cd, XtIntervalId *id);
+static void flashWidgetsOff(XtPointer cd, XtIntervalId *id);
+static void flashWidgetsDestroy(XtPointer cd, XtIntervalId *id);
 
 /* Global variables */
 
@@ -133,6 +143,8 @@ static DlList *tmpDlElementList = NULL;
 static Widget displayListBox1 = NULL, displayListBox2 = NULL;
 static Widget pvLimitsName, pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
 static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
+static Widget *flashWidgetList = NULL;
+static int nFlashWidgets = 0;
 
 /* Function to convert float to long for use with X resources */
 long longFval(double f)
@@ -5173,6 +5185,188 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 	callBrowser(MEDM_HELP_PATH"/MEDM.html#DisplayListDialogBox");
 	break;
     }
+}
+
+/*** Hidden button flashing routines ***/
+
+void flashHiddenButtons(DisplayInfo *displayInfo)
+{
+    DlElement *pE;
+    int i;
+    unsigned long time;
+    
+  /* Don't do anything if there are already flash widgets or the
+     displayInfo is invalid */
+    if(!displayInfo || nFlashWidgets) return;
+    
+  /* Count the number of hidden buttons */
+    pE = FirstDlElement(displayInfo->dlElementList);
+    while(pE) {
+	nFlashWidgets += countHiddenButtons(pE);
+	
+	pE = pE->next;
+    }
+
+  /* Popup a dialog and return if there are no hidden buttons */
+    print("flashHiddenButtons: nFlashButtons=%d\n",nFlashWidgets);
+    if(!nFlashWidgets) {
+	char token[MAX_TOKEN_LENGTH];
+	
+	sprintf(token,
+	  "There are no hidden buttons in this display.");
+	dmSetAndPopupWarningDialog(displayInfo, token, "OK", NULL, NULL);
+	return;
+    }
+
+  /* Allocate space for the list of widgets */
+    flashWidgetList = (Widget *)malloc(nFlashWidgets*sizeof(Widget));
+    if(!flashWidgetList) {
+	medmPrintf(1,"\nflashHiddenButtons: Cannot create widget list\n");
+	return;
+    }
+
+    /* Create the flash widgets */
+    nFlashWidgets = 0;
+    pE = FirstDlElement(displayInfo->dlElementList);
+    while(pE) {
+	createFlashWidgets(displayInfo, pE);
+
+	pE = pE->next;
+    }
+    print("flashHiddenButtons: nFlashButtons=%d\n",nFlashWidgets);
+
+  /* Set the timer routines for flashing */
+    time = FLASH_ON_TIME;
+    for(i=1; i < FLASH_COUNT; i++) {
+	XtAppAddTimeOut(appContext, time, flashWidgetsOff, NULL);
+	time += FLASH_OFF_TIME;
+	XtAppAddTimeOut(appContext, time, flashWidgetsOn, NULL);
+	time += FLASH_ON_TIME;
+    }
+    XtAppAddTimeOut(appContext, time, flashWidgetsDestroy, NULL);
+    flashWidgetsOn(displayInfo->drawingArea, (XtIntervalId *)0);
+}
+
+static int countHiddenButtons(DlElement *dlElement)
+{
+    DlElement *pE;
+    int n = 0;
+    
+    if(dlElement->type == DL_Composite) {
+	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+	while(pE) {
+	    if(pE->type == DL_Composite) {
+		n+=countHiddenButtons(pE);
+	    } else if(pE->type == DL_RelatedDisplay &&
+	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		n++;
+	    }
+	    pE = pE->next;
+	}
+    } else if(dlElement->type == DL_RelatedDisplay &&
+      dlElement->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	n++;
+    }
+
+    return(n);
+}
+
+static void createFlashWidgets(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    DlElement *pE;
+    
+    if(dlElement->type == DL_Composite) {
+	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+	while(pE) {
+	    if(pE->type == DL_Composite) {
+		createFlashWidgets(displayInfo, pE);
+	    } else if(pE->type == DL_RelatedDisplay &&
+	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		createFlashWidget(displayInfo, pE);
+	    }
+	    pE = pE->next;
+	}
+    } else if(dlElement->type == DL_RelatedDisplay &&
+      dlElement->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	createFlashWidget(displayInfo, dlElement);
+    }
+}
+
+static void createFlashWidget(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    DlObject *pO = &(dlElement->structure.composite->object);
+    int nargs;
+    Arg args[3];
+    Widget w;
+    Dimension bw, daX, daY;
+
+  /* Get the drawing area origin */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNx, &daX); nargs++;
+    XtSetArg(args[nargs], XtNy, &daY); nargs++;
+    XtGetValues(displayInfo->drawingArea, args, nargs);
+    
+  /* Create a shell */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNx, pO->x + daX); nargs++;
+    XtSetArg(args[nargs], XtNy, pO->y + daY); nargs++;
+    XtSetArg(args[nargs], XtNbackground, displayInfo->
+      colormap[displayInfo->drawingAreaForegroundColor]); nargs++;
+    w = XtCreatePopupShell("flash", overrideShellWidgetClass,
+      displayInfo->drawingArea, args, nargs);
+    flashWidgetList[nFlashWidgets++] = w;
+
+  /* Find the borderwidth */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNborderWidth, &bw); nargs++;
+    XtGetValues(w, args, nargs);
+    bw*=2;
+
+  /* Set the width and height */
+    nargs = 0;
+    XtSetArg(args[nargs], XtNwidth, pO->width - bw); nargs++;
+    XtSetArg(args[nargs], XtNheight, pO->height - bw); nargs++;
+    XtSetValues(w, args, nargs);
+}
+
+static void flashWidgetsOn(XtPointer cd, XtIntervalId *id)
+{
+    int i;
+
+    for(i=0; i < nFlashWidgets; i++) {
+	XtRealizeWidget(flashWidgetList[i]);
+	XMapRaised(display, XtWindow(flashWidgetList[i]));
+    }
+}
+
+static void flashWidgetsOff(XtPointer cd, XtIntervalId *id)
+{
+    int i;
+
+    for(i=0; i < nFlashWidgets; i++) {
+	XtUnmapWidget(flashWidgetList[i]);
+    }
+}
+
+static void flashWidgetsDestroy(XtPointer cd, XtIntervalId *id)
+{
+    int i;
+
+  /* Unmap them to be sure */
+    for(i=0; i < nFlashWidgets; i++) {
+	XtUnmapWidget(flashWidgetList[i]);
+    }
+    XFlush(display);
+
+  /* Destroy them */
+    for(i=0; i < nFlashWidgets; i++) {
+	XtDestroyWidget(flashWidgetList[i]);
+    }
+    if(flashWidgetList) {
+	free((char *)flashWidgetList);
+	flashWidgetList = NULL;
+    }
+    nFlashWidgets = 0;
 }
 
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)

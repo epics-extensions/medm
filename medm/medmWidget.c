@@ -130,7 +130,8 @@ XFontStruct *loadQueryScalableFont(
     
   /* calculate our screen resolution in dots per inch. 25.4mm = 1 inch */
     res_x = (int) (DisplayWidth(dpy, screen)/(DisplayWidthMM(dpy, screen)/25.4));
-    res_y = (int) (DisplayHeight(dpy, screen)/(DisplayHeightMM(dpy, screen)/25.4));
+    res_y = (int) (DisplayHeight(dpy, screen)/
+      (DisplayHeightMM(dpy, screen)/25.4));
     
   /* copy the font name, changing the scalable fields as we do so */
     for(i = j = field = 0; name[i] != '\0' && field <= 14; i++) {
@@ -181,7 +182,8 @@ unsigned long getPixelFromColormapByString(
     XColor color, ignore;
 
     if(!XAllocNamedColor(display,cmap,colorString,&color,&ignore)) {
-	medmPrintf(1,"\ngetPixelFromColormapByString:  Couldn't allocate color %s\n",
+	medmPrintf(1,"\ngetPixelFromColormapByString:"
+	  "  Couldn't allocate color %s\n",
 	  colorString);
 	return(WhitePixel(display, screen));
     } else {
@@ -214,16 +216,16 @@ void medmInit(char *displayFont)
     XtSetWarningHandler((XtErrorHandler)trapExtraneousWarningsHandler);
     
   /* Initialize alarm color array */
-    alarmColorPixel[NO_ALARM]=getPixelFromColormapByString(display,screenNum,
-      cmap,alarmColorString[NO_ALARM]);
-    alarmColorPixel[MINOR_ALARM]=getPixelFromColormapByString(display,screenNum,
-      cmap,alarmColorString[MINOR_ALARM]);
-    alarmColorPixel[MAJOR_ALARM]=getPixelFromColormapByString(display,screenNum,
-      cmap,alarmColorString[MAJOR_ALARM]);
-    alarmColorPixel[INVALID_ALARM]=getPixelFromColormapByString(display,screenNum,
-      cmap,alarmColorString[INVALID_ALARM]);
-    alarmColorPixel[ALARM_MAX-1]=getPixelFromColormapByString(display,screenNum,
-      cmap,alarmColorString[ALARM_MAX-1]);
+    alarmColorPixel[NO_ALARM]=getPixelFromColormapByString(display,
+      screenNum,cmap,alarmColorString[NO_ALARM]);
+    alarmColorPixel[MINOR_ALARM]=getPixelFromColormapByString(display,
+      screenNum,cmap,alarmColorString[MINOR_ALARM]);
+    alarmColorPixel[MAJOR_ALARM]=getPixelFromColormapByString(display,
+      screenNum,cmap,alarmColorString[MAJOR_ALARM]);
+    alarmColorPixel[INVALID_ALARM]=getPixelFromColormapByString(display,
+      screenNum,cmap,alarmColorString[INVALID_ALARM]);
+    alarmColorPixel[ALARM_MAX-1]=getPixelFromColormapByString(display,
+      screenNum,cmap,alarmColorString[ALARM_MAX-1]);
 
   /* Initialize Channel Access */
     medmCAInitialize();
@@ -244,8 +246,9 @@ void medmInit(char *displayFont)
   /* Create the highlight GC */
     highlightGC = XCreateGC(display,rootWindow,0,NULL);
     XSetFunction(display,highlightGC,GXinvert);
-  /* Pick a color which XOR-ing with makes reasonable sense for most colors */
-  /* KE: Forgroung is irrelevant for GXinvert */
+  /* Pick a color which XOR-ing with makes reasonable sense for most
+     colors */
+  /* KE: Forground is irrelevant for GXinvert */
     XSetForeground(display,highlightGC,WhitePixel(display,screenNum));
 #if 0
     XSetForeground(display,highlightGC,getPixelFromColormapByString(display,
@@ -263,13 +266,22 @@ void medmInit(char *displayFont)
     executePopupMenuButtonType[2] = XmPUSHBUTTON;
     executePopupMenuButtonType[3] = XmPUSHBUTTON;
     executePopupMenuButtonType[4] = XmPUSHBUTTON;
-    executePopupMenuButtonType[5] = XmCASCADEBUTTON;
-    executePopupMenuButtons[0] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PRINT);
-    executePopupMenuButtons[1] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_CLOSE);
-    executePopupMenuButtons[2] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVINFO);
-    executePopupMenuButtons[3] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVLIMITS);
-    executePopupMenuButtons[4] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
-    executePopupMenuButtons[5] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
+    executePopupMenuButtonType[5] = XmPUSHBUTTON;
+    executePopupMenuButtonType[6] = XmCASCADEBUTTON;
+    executePopupMenuButtons[0] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_PRINT);
+    executePopupMenuButtons[1] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_CLOSE);
+    executePopupMenuButtons[2] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVINFO);
+    executePopupMenuButtons[3] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVLIMITS);
+    executePopupMenuButtons[4] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
+    executePopupMenuButtons[5] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_FLASH_HIDDEN);
+    executePopupMenuButtons[6] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
   /* Load font and fontList tables (but only once) */
     if (!strcmp(displayFont,FONT_ALIASES_STRING)) {
@@ -283,7 +295,8 @@ void medmInit(char *displayFont)
 	    fontTable[i] = XLoadQueryFont(display,displayFont);
 	    printf(".");
 	    if (fontTable[i] == NULL) {
-		medmPrintf(1,"\nmedmInit: Unable to load font %s\n  Trying default (fixed) instead\n",
+		medmPrintf(1,"\nmedmInit: Unable to load font %s\n"
+		  "  Trying default (fixed) instead\n",
 		  displayFont);
 	      /* one last attempt: try a common default font */
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
@@ -302,23 +315,25 @@ void medmInit(char *displayFont)
 
     } else {
       /* Try using scalable font - either default or passed in one */
-      /* User requested default scalable, copy that name into string and proceed */
+      /* User requested default scalable, copy that name into string
+         and proceed */
 	if(!strcmp(displayFont,DEFAULT_SCALABLE_STRING))
 	  strcpy(displayFont,DEFAULT_SCALABLE_DISPLAY_FONT);
 
 	useDefaultFont = !isScalableFont(displayFont);
 	if (useDefaultFont) {
 	  /* This name wasn't in XLFD format */
-	    medmPrintf(1,"\nmedmInit: Invalid scalable display font selected  (Not in XLFD format)\n"
-	      "  font: %s\n"
+	    medmPrintf(1,"\nmedmInit:"
+	      "  Invalid scalable display font selected  (Not in XLFD format)\n"
+	      "    font: %s\n"
 	      "  Using fixed font\n",displayFont);
 	} else {
 	    printf("\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
 	}
 	for (i = 0; i < MAX_FONTS; i++) {
 	    if (!useDefaultFont) {
-		fontTable[i] = loadQueryScalableFont(display, screenNum, displayFont,
-		  fontSizeTable[i]);
+		fontTable[i] = loadQueryScalableFont(display, screenNum,
+		  displayFont, fontSizeTable[i]);
 		printf(".");
 	    } else {
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
