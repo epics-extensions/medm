@@ -128,6 +128,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNdataType,XcFval); n++;
 	switch (dlIndicator->label) {
 	case LABEL_NONE:
+	case NO_DECORATIONS:
 	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
@@ -153,7 +154,8 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.width >INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
 	      XtSetArg(args[n],XcNorient,XcVert); n++;
-	      if (dlIndicator->label == LABEL_NONE) {
+	      if (dlIndicator->label == LABEL_NONE ||
+		dlIndicator->label == NO_DECORATIONS) {
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
 	      break;
@@ -161,7 +163,8 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
 	      XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	      if (dlIndicator->label == LABEL_NONE) {
+	      if (dlIndicator->label == LABEL_NONE ||
+		dlIndicator->label == NO_DECORATIONS) {
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
 	      break;
@@ -361,6 +364,8 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"none")) 
 		  dlIndicator->label = LABEL_NONE;
+		else if (!strcmp(token,"no decorations"))
+		  dlIndicator->label = NO_DECORATIONS;
 		else if (!strcmp(token,"outline"))
 		  dlIndicator->label = OUTLINE;
 		else if (!strcmp(token,"limits"))

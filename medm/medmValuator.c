@@ -111,6 +111,7 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	case UP:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
+	    case NO_DECORATIONS:
 		if ( (int)(.30*dlValuator->object.width) >= 
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
@@ -131,6 +132,7 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	case RIGHT:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
+	    case NO_DECORATIONS:
 	    case OUTLINE:
 	    case LIMITS:
 		if ( (int)(.45*dlValuator->object.height) >= 
@@ -197,10 +199,12 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
     switch(dlValuator->label) {
     case LABEL_NONE: 		/* add in border for keyboard popup */
+    case NO_DECORATIONS:
 	scalePopupBorder = BORDER_WIDTH;
 	heightDivisor = 1;
 	break;
-    case OUTLINE: case LIMITS: 
+    case OUTLINE:
+    case LIMITS: 
 	scalePopupBorder = 0;
 	heightDivisor = 2;
 	break;
@@ -293,10 +297,12 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
     switch(dlValuator->label) {
     case LABEL_NONE: 		/* Add in border for keyboard popup */
+    case NO_DECORATIONS:
 	scalePopupBorder = BORDER_WIDTH;
 	heightDivisor = 1;
 	break;
-    case OUTLINE: case LIMITS: 
+    case OUTLINE:
+    case LIMITS: 
 	scalePopupBorder = 0;
 	heightDivisor = 2;
 	break;
@@ -475,7 +481,7 @@ void handleValuatorExpose(
 
   /* Since XmScale doesn't really do the right things, we'll do it by hand */
 
-    if (dlValuator->label != LABEL_NONE) {
+    if (dlValuator->label != LABEL_NONE && dlValuator->label != NO_DECORATIONS) {
 
 	foreground = displayInfo->colormap[dlValuator->control.clr];
 	background = displayInfo->colormap[dlValuator->control.bclr];
@@ -1267,6 +1273,8 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"none"))
 		  dlValuator->label = LABEL_NONE;
+		else if (!strcmp(token,"no decorations"))
+		  dlValuator->label = NO_DECORATIONS;
 		else if (!strcmp(token,"outline"))
 		  dlValuator->label = OUTLINE;
 		else if (!strcmp(token,"limits"))

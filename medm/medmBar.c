@@ -140,6 +140,11 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
+	case NO_DECORATIONS:
+	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    XtSetArg(args[n],XcNdecorations,FALSE); n++;
+	    break;
 	case OUTLINE:
 	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
@@ -159,20 +164,22 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	   */
 	case RIGHT:
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	    XtSetArg(args[n],XcNscaleSegments,
-	      (dlBar->object.width>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
-	      if (dlBar->label == LABEL_NONE) {
-		  XtSetArg(args[n],XcNscaleSegments, 0); n++;
-	      }
-	      break;
+	    if (dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	    } else {
+		XtSetArg(args[n],XcNscaleSegments,
+		  (dlBar->object.width>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	    }
+	    break;
 	case UP:
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
-	    XtSetArg(args[n],XcNscaleSegments,
-	      (dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
-	      if (dlBar->label == LABEL_NONE) {
-		  XtSetArg(args[n],XcNscaleSegments, 0); n++;
-	      }
-	      break;
+	    if (dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+		XtSetArg(args[n],XcNscaleSegments, 0); n++;
+	    } else {
+		XtSetArg(args[n],XcNscaleSegments,
+		  (dlBar->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
+	    }
+	    break;
 	}
 
 	if (dlBar->fillmod == FROM_CENTER) {
@@ -216,7 +223,6 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XmNwidth, (Dimension) po->width,
 	  XmNheight, (Dimension) po->height,
 	  NULL);
-	printf("x=%d, y=%d, w=%d, h=%d\n",po->x,po->y,po->width,po->height);
     }
 }
 
@@ -377,6 +383,8 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		if (!strcmp(token,"none"))
 		  dlBar->label = LABEL_NONE;
+		else if (!strcmp(token,"no decorations"))
+		  dlBar->label = NO_DECORATIONS;
 		else if (!strcmp(token,"outline"))
 		  dlBar->label = OUTLINE;
 		else if (!strcmp(token,"limits"))

@@ -131,6 +131,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
 	switch (dlMeter->label) {
 	case LABEL_NONE:
+	case NO_DECORATIONS:
 	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
 	    XtSetArg(args[n],XcNlabel," "); n++;
 	    break;
