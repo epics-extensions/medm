@@ -364,8 +364,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-    
-  /* KE: This removes the updateGraphicalInfoCb in the Record */
+
+  /* KE: This causes it to not do anything for the reconnection */
     medmRecordAddGraphicalInfoCb(pr,NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */

@@ -1110,10 +1110,12 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
 
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  /* !!!!! This is a temperory work around !!!!! */
+  /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-    medmRecordAddGraphicalInfoCb(pd,NULL);
+
+  /* KE: This causes it to not do anything for the reconnection */
+    medmRecordAddGraphicalInfoCb(pd, NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! End work around                 !!!!! */
@@ -1143,7 +1145,7 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
       /* do it half second later */
 	if(!psc->timerid) psc->timerid=XtAppAddTimeOut(
 	  XtWidgetToApplicationContext(widget),
-	  100,configStripChart,psc);
+	  100, configStripChart, psc);
 #if(DEBUG_STRIP_CHART)
 	fprintf(stderr,"stripChartUpdateGraphicalInfoCb(2): psc->timerid=%x\n",
 	  psc->timerid);

@@ -621,7 +621,11 @@ extern char *resourceEntryStringTable[MAX_RESOURCE_ENTRY];
 #else
 char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "X Position", "Y Position", "Width", "Height",
+#ifndef MEDM_CDEV
     "Readback Channel", "Control Channel",
+#else
+    "Readback Dev/Attr", "Control Dev/Attr",
+#endif
     "Channel Limits",
     "Title", "X Label", "Y Label",
     "Foreground", "Background",
@@ -657,8 +661,13 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Channel/Color",        /* Strip Chart data               */
     "Label/Cmd/Args",       /* Shell Command data             */
     "Axis Data",            /* Cartesian Plot axis data       */
+#ifndef MEDM_CDEV
     "Trigger Channel",      /* Cartesian Plot trigger channel */
     "Erase Channel",        /* Cartesian Plot erase channel   */
+#else
+    "Trigger Dev/Attr",     /* Cartesian Plot trigger device  */
+    "Erase Dev/Attr",       /* Cartesian Plot erase device    */
+#endif
     "Erase Mode",           /* Cartesian Plot erase mode      */
     "Grid Spacing",
     "Grid On",

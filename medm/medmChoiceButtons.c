@@ -300,6 +300,8 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
   /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+  /* KE: This causes it to not do anything for the reconnection */
     medmRecordAddGraphicalInfoCb(cb->record,NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */

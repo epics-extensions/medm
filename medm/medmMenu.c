@@ -54,6 +54,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_MENU 1
+
+#define OPTION_MENU_ADJUST_WIDTH 22
+#define OPTION_MENU_ADJUST_HEIGHT 4
+#define SETSIZE 1
+
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
@@ -64,8 +70,10 @@ typedef struct _Menu {
     Pixel       color;
 } Menu;
 
-void menuCreateRunTimeInstance(DisplayInfo *, DlElement *);
-void menuCreateEditInstance(DisplayInfo *, DlElement *);
+static void menuCreateRunTimeInstance(DisplayInfo *, DlElement *);
+static void menuCreateEditInstance(DisplayInfo *, DlElement *);
+static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
+  XmStringTable labels, int nbuttons);
 
 static void menuDraw(XtPointer);
 static void menuUpdateValueCb(XtPointer);
@@ -77,6 +85,10 @@ static void menuInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void menuSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static void menuDump(Widget w);
+static void handleMenuButtonPress(Widget w, XtPointer cd, XEvent *event,
+  Boolean *ctd);
 
 static DlDispatchTable menuDlDispatchTable = {
     createDlMenu,
@@ -109,6 +121,24 @@ int menuFontListIndex(int height)
     return (0);
 }
 
+void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    switch (displayInfo->traversalMode) {
+    case DL_EXECUTE:
+	menuCreateRunTimeInstance(displayInfo,dlElement);
+	break;
+    case DL_EDIT:
+	if (dlElement->widget) {
+	    XtDestroyWidget(dlElement->widget);
+	    dlElement->widget = NULL;
+	}
+	menuCreateEditInstance(displayInfo,dlElement);
+	break;
+    default:
+	break;
+    }
+}
+
 void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
     Menu *pm;
     DlMenu *dlMenu = dlElement->structure.menu;
@@ -135,127 +165,42 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
 }
 
 void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
-    Arg args[15];
-    XmString buttons[1];
-    XmButtonType buttonType[1];
-    int i, n;
-    Widget localWidget, optionButtonGadget, menu;
-    WidgetList children;
-    Cardinal numChildren;
-    XmFontList fontList;
-    Dimension useableWidth;
+    Widget localWidget;
+    XmString labels[1];
     DlMenu *dlMenu = dlElement->structure.menu;
 
-    buttons[0] = XmStringCreateLocalized("menu");
-    buttonType[0] = XmPUSHBUTTON;
-  /* from the menu structure, we've got Menu's specifics */
-  /*
-   * take a guess here  - keep this constant the same is in medmCA.c
-   *	this takes out the extra space needed for the cascade pixmap, etc
-   */
-#define OPTION_MENU_SUBTRACTIVE_WIDTH 23
-    if (dlMenu->object.width > OPTION_MENU_SUBTRACTIVE_WIDTH)
-      useableWidth = (Dimension) (dlMenu->object.width
-	- OPTION_MENU_SUBTRACTIVE_WIDTH);
-    else
-      useableWidth = (Dimension) dlMenu->object.width;
-    n = 0;
-    XtSetArg(args[n],XmNx,(Position)dlMenu->object.x); n++;
-    XtSetArg(args[n],XmNy,(Position)dlMenu->object.y); n++;
-    XtSetArg(args[n],XmNwidth,(Dimension)useableWidth); n++;
-    XtSetArg(args[n],XmNheight,(Dimension)dlMenu->object.height); n++;
-    XtSetArg(args[n],XmNforeground,(Pixel)
-      displayInfo->colormap[dlMenu->control.clr]); n++;
-      XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->colormap[dlMenu->control.bclr]); n++;
-	XtSetArg(args[n],XmNbuttonCount,1); n++;
-	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-	XtSetArg(args[n],XmNbuttons,buttons); n++;
-	XtSetArg(args[n],XmNresizeWidth,FALSE); n++;
-	XtSetArg(args[n],XmNresizeHeight,FALSE); n++;
-	XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-	XtSetArg(args[n],XmNmarginWidth,0); n++;
-	XtSetArg(args[n],XmNmarginHeight,0); n++;
-	fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
-	XtSetArg(args[n],XmNfontList,fontList); n++;
-	localWidget = XmCreateSimpleOptionMenu(displayInfo->drawingArea,
-	  "menu",args,n);
-
-      /* resize children */
-	XtVaGetValues(localWidget,XmNsubMenuId,&menu,NULL);
-	XtVaGetValues(menu,XmNnumChildren,&numChildren,XmNchildren,&children,NULL);
-	for (i = 0; i < (int)numChildren; i++) {
-#if 0
-	  /* KE: Should not be necessary */
-	    XtUninstallTranslations(children[i]);
-#endif	    
-	    XtVaSetValues(children[i], XmNfontList, fontList,
-	      XmNwidth, (Dimension) useableWidth,
-	      XmNheight, (Dimension)dlMenu->object.height,
-	      NULL);
-	    XtResizeWidget(children[i],useableWidth,dlMenu->object.height,0);
-	}
-	optionButtonGadget = XmOptionButtonGadget(localWidget);
-	XtVaSetValues(optionButtonGadget, XmNfontList, fontList,
-	  XmNwidth, (Dimension)useableWidth,
-	  XmNheight, (Dimension)dlMenu->object.height,
-	  NULL);
-	XtResizeWidget(optionButtonGadget,useableWidth,
-	  dlMenu->object.height,0);
-
-	XmStringFree(buttons[0]);
-
-      /* Unmanage the label in the option menu */
-	XtUnmanageChild(XmOptionLabelGadget(localWidget));
-	dlElement->widget = localWidget;
-
-      /* Add handlers */
-	addCommonHandlers(localWidget, displayInfo);
-	
-	XtManageChild(localWidget);
-}
-
-void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
-{
-    switch (displayInfo->traversalMode) {
-    case DL_EXECUTE:
-	menuCreateRunTimeInstance(displayInfo,dlElement);
-	break;
-    case DL_EDIT:
-	if (dlElement->widget) {
-	    XtDestroyWidget(dlElement->widget);
-	    dlElement->widget = NULL;
-	}
-	menuCreateEditInstance(displayInfo,dlElement);
-	break;
-    default:
-	break;
-    }
+    labels[0] = XmStringCreateLocalized("Menu");
+    localWidget = createMenu(displayInfo, NULL, dlMenu, labels, 1);
+    dlElement->widget = localWidget;
+    XmStringFree(labels[0]);
+    
+  /* Add handlers */
+    addCommonHandlers(localWidget, displayInfo);
+    
+    XtManageChild(localWidget);
 }
 
 void menuUpdateGraphicalInfoCb(XtPointer cd) {
-    Record *pd = (Record *) cd;
-    Menu *pm = (Menu *) pd->clientData;
+    Record *pr = (Record *) cd;
+    Menu *pm = (Menu *) pr->clientData;
     DlElement *dlElement = pm->dlElement;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
-    XmFontList fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
-    int i,n;
-    Arg args[20];
-    Widget buttons[db_state_dim], menu;
+    XmStringTable labels;
+    int i, nbuttons;
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  /* !!!!! This is a temperory work around !!!!! */
+  /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-    medmRecordAddGraphicalInfoCb(pm->record,NULL);
+
+  /* KE: This causes it to not do anything for the reconnection */
+    medmRecordAddGraphicalInfoCb(pm->record, NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! End work around                 !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-  /* buildMenu function needs an extra entry to work */
-
-    if (pd->dataType != DBF_ENUM) {
+    if (pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
 	  "  Cannot create Choice Button for %s\n",
 	  "  Is not an ENUM type\n",
@@ -263,57 +208,212 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	return;
     }
 
-    n = 0;
-    if (dlMenu->object.width > OPTION_MENU_SUBTRACTIVE_WIDTH) {
-	XtSetArg(args[0],XmNwidth,dlMenu->object.width -
-	  OPTION_MENU_SUBTRACTIVE_WIDTH); n++;
-    } else {
-	XtSetArg(args[0],XmNwidth,dlMenu->object.width); n++;
+  /* Allocate the menu string table and fill it
+   *   XmStringTable is a typedef for (XmString *) */
+    labels = NULL;
+    nbuttons = 0;
+    if(pr->hopr) {
+	nbuttons = pr->hopr + 1;
+	labels = (XmStringTable)calloc(nbuttons, sizeof(XmString));
     }
-    XtSetArg(args[1],XmNheight,dlMenu->object.height); n++;
-    XtSetArg(args[2],XmNforeground,
-      ((dlMenu->clrmod == ALARM)?
-	alarmColor(pd->severity) :
-	pm->updateTask->displayInfo->colormap[dlMenu->control.clr])); n++;
-	XtSetArg(args[3],XmNbackground,
-	  pm->updateTask->displayInfo->colormap[dlMenu->control.bclr]); n++;
-	  XtSetArg(args[4],XmNrecomputeSize,False); n++;
-	  XtSetArg(args[5],XmNfontList, fontList); n++;
-	  XtSetArg(args[6],XmNuserData, pm), n++;
-	  XtSetArg(args[7],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
-	  XtSetArg(args[8],XmNentryAlignment, XmALIGNMENT_CENTER); n++;
-	  XtSetArg(args[9],XmNisAligned,True); n++;
-	  menu = XmCreatePulldownMenu(pm->updateTask->displayInfo->drawingArea,
-	    "menu",args,n);
-	  XtSetArg(args[7],XmNalignment,XmALIGNMENT_CENTER);
-	  for (i=0; i<=pd->hopr; i++) {
-	      XmString xmStr;
-	      xmStr = XmStringCreateLocalized(pd->stateStrings[i]);
-	      XtSetArg(args[8], XmNlabelString, xmStr);
-	      buttons[i] = XmCreatePushButtonGadget(menu,"menuButtons",args,9);
-	      XtAddCallback(buttons[i], XmNactivateCallback,
-		menuValueChangedCb, (XtPointer) i);
-	      XmStringFree(xmStr);
-	  }
-	  XtManageChildren(buttons,i);
-	  n = 7;
-	  XtSetArg(args[n],XmNx, dlMenu->object.x); n++;
-	  XtSetArg(args[n],XmNy, dlMenu->object.y); n++;
-	  XtSetArg(args[n],XmNmarginWidth, 0); n++;
-	  XtSetArg(args[n],XmNmarginHeight, 0); n++;
-	  XtSetArg(args[n],XmNsubMenuId, menu); n++;
-	  XtSetArg(args[n],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
-	  pm->dlElement->widget =
-	    XmCreateOptionMenu(pm->updateTask->displayInfo->drawingArea,
-	      "optionMenu",args,n);
-		
-	/* Add handlers */
-	  addCommonHandlers(pm->dlElement->widget,
-	    pm->updateTask->displayInfo);
+    if(!labels) {
+	nbuttons = 0;
+	medmPrintf(1,"\nmenuUpdateGraphicalInfoCb: Memory allocation error\n");
+    }
+    for (i=0; i < nbuttons; i++) {
+	labels[i] = XmStringCreateLocalized(pr->stateStrings[i]);
+    }
 
-      /* Unmanage the option label gadget, manage the option menu */
-	  XtUnmanageChild(XmOptionLabelGadget(pm->dlElement->widget));
-	  XtManageChild(pm->dlElement->widget);
+  /* Create the option menu */
+    pm->dlElement->widget = createMenu(pm->updateTask->displayInfo, pr, dlMenu,
+      labels, nbuttons);
+
+  /* Free the XmStrings */
+    for (i=0; i < nbuttons; i++) XmStringFree(labels[i]);
+    if(labels) free((char *)labels);
+
+  /* Add handlers and manage will be done in menuDraw */
+}
+
+/* This routine creates the Option Menu for either EDIT or EXEC
+ *   Only the menu items, colors, and callbacks are different
+ * This is hard because the option menu is designed to set its own size based
+ *   on the items in the menu.  We have to circumvent this behavior.
+ * If SETSIZE is not True, the menu will size itself as it wishes and
+ *   always look attractive, but not have exactly the same sizes as
+ *   specified in the object.   SETSIZE is left in to show what needs to be
+ *   changed */
+static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
+  XmStringTable labels, int nbuttons)
+{
+    Widget w, menu, pushbutton;
+    Menu *pm;
+    Arg args[25];
+    int i, nargs, nargs0;
+    Widget optionButtonGadget;
+    WidgetList children;
+    Cardinal numChildren;
+    XmFontList fontList;
+    Dimension useableWidth, useableHeight;
+    Pixel foreground, background;
+
+  /* Determine the font based on the height */
+    fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
+    
+  /* Set the foreground and background colors depending on mode */
+    if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	pm = (Menu *)pr->clientData;
+	foreground = (dlMenu->clrmod == ALARM)?
+	  alarmColor(pr->severity) :
+	  pm->updateTask->displayInfo->colormap[dlMenu->control.clr];
+	background = pm->updateTask->displayInfo->colormap[dlMenu->control.bclr];
+    } else {
+	pm = NULL;
+	foreground =  displayInfo->colormap[dlMenu->control.clr];
+	background =  displayInfo->colormap[dlMenu->control.bclr];
+    }
+
+#if SETSIZE
+    {
+	int intnum;
+	
+      /* Adjust for the width of the cascade button glyph, which Motif
+       *   adds to our width */
+	intnum = (int)dlMenu->object.width - OPTION_MENU_ADJUST_WIDTH;
+	if(intnum > 0) useableWidth = intnum;
+	else useableWidth = 1;
+      /* Adjust for the shadow height that Motif adds to the height of the
+       *   items (push button gadgets) in the menu */
+	intnum = (int)dlMenu->object.height - OPTION_MENU_ADJUST_HEIGHT;
+	if(intnum > 0) useableHeight = intnum;
+	else useableHeight = 1;
+    }
+#else
+    useableWidth = (int)dlMenu->object.width;
+    useableHeight = (int)dlMenu->object.height;
+#endif
+
+  /* Create the pulldown menu */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
+    XtSetArg(args[nargs], XmNbackground, background); nargs++;
+    XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+    menu = XmCreatePulldownMenu(displayInfo->drawingArea, "menu", args, nargs);
+
+  /* Add the push button gadget children */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
+    XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
+    XtSetArg(args[nargs], XmNfontList,fontList); nargs++;
+    XtSetArg(args[nargs], XmNuserData, (XtPointer)pm); nargs++;
+#if SETSIZE
+  /* The option menu will not allow resizing that doesn't allow space on
+   *   the cascade button gadget for the largest menu item, so make them
+   *   all be the useable size */
+    XtSetArg(args[nargs], XmNrecomputeSize, FALSE); nargs++;
+    XtSetArg(args[nargs], XmNwidth, useableWidth); nargs++;
+    XtSetArg(args[nargs], XmNheight, useableHeight); nargs++;
+#endif
+    nargs0 = nargs;
+    for (i = 0; i < nbuttons; i++) {
+	nargs = nargs0;
+	XtSetArg(args[nargs],XmNlabelString, labels[i]); nargs++;
+	pushbutton = XmCreatePushButtonGadget(menu, "menuButtons", args, nargs);
+	XtManageChild(pushbutton);
+
+      /* Add callback and userData in execute mode */
+	if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	    XtAddCallback(pushbutton, XmNactivateCallback,
+	      menuValueChangedCb, (XtPointer)i);
+	}
+    }    
+    
+  /* Create the option menu */
+    nargs = 0;
+    XtSetArg(args[nargs], XmNx, (Position)dlMenu->object.x); nargs++;
+    XtSetArg(args[nargs], XmNy, (Position)dlMenu->object.y); nargs++;
+    XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
+    XtSetArg(args[nargs], XmNbackground, background); nargs++;
+    XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
+    XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
+    XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+    XtSetArg(args[nargs], XmNsubMenuId, menu); nargs++;
+    w = XmCreateOptionMenu(displayInfo->drawingArea, "menu", args, nargs);
+
+  /* Unmanage the label gadget child */
+    XtUnmanageChild(XmOptionLabelGadget(w));
+
+  /* Adjust the cascade button child
+   * Add the things that don't get set when you set them above
+   *   and resize the button */
+    optionButtonGadget = XmOptionButtonGadget(w);
+    nargs = 0;
+    XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
+    XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
+    XtSetArg(args[nargs], XmNhighlightThickness, 0); nargs++;
+    XtSetValues(optionButtonGadget, args, nargs);
+#if SETSIZE
+    XtResizeWidget(optionButtonGadget,
+      dlMenu->object.width, dlMenu->object.height, 0);
+#endif
+    
+#if DEBUG_MENU
+    {
+	Dimension height,width,borderWidth;
+	Dimension oheight,owidth;
+	Widget wbutton;
+
+      /* Add special handler */
+	XtAddEventHandler(w, ButtonPressMask, False, handleMenuButtonPress,
+	  (XtPointer)w);	
+	
+	print("\n\014createMenu: mode=%s optionMenu=%x OptionButton=%x\n",
+	  globalDisplayListTraversalMode == DL_EXECUTE?"EXECUTE":"EDIT",
+	  w,optionButtonGadget);
+	if(w) {
+	    XtVaGetValues(w,XmNheight,&height,XmNwidth,&width,NULL);
+	    wbutton = XmOptionButtonGadget(w);
+	    XtVaGetValues(wbutton,XmNheight,&oheight,XmNwidth,&owidth,NULL);
+	    i=menuFontListIndex(dlMenu->object.height);
+	    print("  w=%d wuse=%d wact=%d,%d h=%d hact=%d,%d indx=%d font=%d %d %d\n",
+	      dlMenu->object.width, useableWidth, width, owidth,
+	      dlMenu->object.height, height, oheight, i,
+	      fontTable[i]->ascent,
+	      fontTable[i]->descent,
+	      fontTable[i]->ascent + fontTable[i]->descent);
+#if 0
+	    print("  numChildren=%d\n",numChildren);
+	    for (i=0; i < numChildren; i++) {
+		XmStringContext context;
+		char string[1024], *pstring, *text;
+		XmStringCharSet tag;
+		XmStringDirection direction;
+		Boolean separator;		
+
+		if(XmStringInitContext(&context, labels[i])) {
+		    pstring=string;
+		    while(XmStringGetNextSegment(context,&text,
+		      &tag,&direction,&separator)) {
+			pstring+=(strlen(strcpy(pstring,text)));
+			if(separator) {
+			    *pstring++='\n';
+			    *pstring='\0';}
+			XtFree(text);
+		    }
+		    XmStringFreeContext(context);
+		    print("  Button %2d: %x %s\n",i,children[i],string);
+		}
+	    }
+#endif
+#if 0
+	    menuDump(w);
+#endif	    
+	}
+    }
+    
+#endif
+
+    return w;
 }
 
 static void menuUpdateValueCb(XtPointer cd) {
@@ -323,12 +423,12 @@ static void menuUpdateValueCb(XtPointer cd) {
 
 static void menuDraw(XtPointer cd) {
     Menu *pm = (Menu *) cd;
-    Record *pd = pm->record;
+    Record *pr = pm->record;
     Widget widget = pm->dlElement->widget;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
-    if (pd->connected) {
+    if (pr->connected) {
 	if(!widget) return;
-	if (pd->readAccess) {
+	if (pr->readAccess) {
 	    if (!XtIsManaged(widget)) {
 #if 0		
 		printf("\nmenuDraw: pm->dlElement->widget=%x\n",
@@ -337,8 +437,8 @@ static void menuDraw(XtPointer cd) {
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pd->precision < 0) return;    /* Wait for pd->value */
-	    if (pd->dataType == DBF_ENUM) {
+	    if (pr->precision < 0) return;    /* Wait for pr->value */
+	    if (pr->dataType == DBF_ENUM) {
 		Widget menuWidget;
 		WidgetList children;
 		Cardinal numChildren;
@@ -349,7 +449,7 @@ static void menuDraw(XtPointer cd) {
 		  XmNchildren,&children,
 		  XmNnumChildren,&numChildren,
 		  NULL);
-		i = (int) pd->value;
+		i = (int) pr->value;
 		if ((i >=0) && (i < (int) numChildren)) {
 		    XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
 		} else {
@@ -361,8 +461,8 @@ static void menuDraw(XtPointer cd) {
 		case DISCRETE :
 		    break;
 		case ALARM :
-		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
-		    XtVaSetValues(menuWidget,XmNforeground,alarmColor(pd->severity),NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
+		    XtVaSetValues(menuWidget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
 		default :
 		    medmPostMsg(1,"menuUpdateValueCb:\n");
@@ -376,12 +476,12 @@ static void menuDraw(XtPointer cd) {
 		medmPrintf(0,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if (pd->writeAccess)
+	    if (pr->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if (widget) XtUnmanageChild(widget);
+	    if (widget && XtIsManaged(widget)) XtUnmanageChild(widget);
 	    draw3DPane(pm->updateTask,pm->color);
 	    draw3DQuestionMark(pm->updateTask);
 	}
@@ -406,24 +506,23 @@ static void menuValueChangedCb(
   XtPointer callbackStruct)
 {
     Menu *pm;
-    Record *pd;
+    Record *pr;
     int btnNumber = (int) clientData;
-    XmPushButtonCallbackStruct *call_data = (XmPushButtonCallbackStruct *) callbackStruct;
+    XmPushButtonCallbackStruct *call_data =
+      (XmPushButtonCallbackStruct *) callbackStruct;
 
-/*
- * only do ca_put if this widget actually initiated the channel change
- */
+  /* Only do ca_put if this widget actually initiated the channel change */
     if (call_data->event != NULL && call_data->reason == XmCR_ACTIVATE) {
 
       /* button's parent (menuPane) has the displayInfo pointer */
 	XtVaGetValues(w,XmNuserData,&pm,NULL);
-	pd = pm->record;
+	pr = pm->record;
 
-	if (pd->connected) {
-	    if (pd->writeAccess) {
+	if (pr->connected) {
+	    if (pr->writeAccess) {
 #ifdef MEDM_CDEV
-		if (pd->stateStrings) 
-		  medmSendString(pd, pd->stateStrings[btnNumber]);
+		if (pr->stateStrings) 
+		  medmSendString(pr, pr->stateStrings[btnNumber]);
 #else
 		medmSendDouble(pm->record,(double)btnNumber);
 #endif
@@ -578,3 +677,222 @@ static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
       CLR_RC,        &(dlMenu->control.clr),
       -1);
 }
+
+#if DEBUG_MENU
+/* EXEC: Ctrl-Btn2 will invoke this without invoking other things */
+/* Use Shift-Btn to get a menuDump, too */
+static void handleMenuButtonPress(Widget w, XtPointer cd, XEvent *event,
+  Boolean *ctd)
+{
+    XButtonEvent *xEvent = (XButtonEvent *)event;
+    Widget wrc = (Widget)cd;
+    Widget wbutton;
+    Dimension height,width;
+    Dimension oheight,owidth;
+
+    if(!w) return;
+
+    wbutton = XmOptionButtonGadget(wrc);
+    print("\nhandleMenuButtonPress: mode=%s optionMenu=%x OptionButton=%x\n",
+      globalDisplayListTraversalMode == DL_EXECUTE?"EXECUTE":"EDIT",
+      wrc, wbutton);
+    XtVaGetValues(w,XmNheight,&height,XmNwidth,&width,NULL);
+    XtVaGetValues(wbutton,XmNheight,&oheight,XmNwidth,&owidth,NULL);
+    print("  w%d,%d h=%d,%d\n",
+      width, owidth, height, oheight);
+
+    if(xEvent->state & ShiftMask) menuDump(wrc);    
+}
+
+static void menuDump(Widget w0)
+{
+    Widget w, menu;
+    Dimension borderWidth;
+    Dimension height;
+    Dimension width;
+    Dimension entryBorder;
+    Dimension marginHeight;
+    Dimension marginWidth;
+    Dimension shadowThickness;
+    Dimension spacing;
+    Dimension highlightThickness;
+    Dimension marginTop;
+    Dimension marginBottom;
+    Dimension marginLeft;
+    Dimension marginRight;
+    Boolean resizeHeight;
+    Boolean resizeWidth;
+    Boolean traversalOn;
+    Boolean recomputeSize;
+    Widget subMenuId;
+    XtPointer userData;
+    WidgetList children;
+    Cardinal numChildren;
+
+    print("\nmenuDump:\n");
+    
+  /* OptionMenu */
+    w=w0;
+    print("OptionMenu (XmRowColumn) %x\n",w);
+    if(w) {
+	XtVaGetValues(w,
+	  XmNborderWidth,&borderWidth,
+	  XmNheight,&height,
+	  XmNwidth,&width,
+	  XmNentryBorder,&entryBorder,
+	  XmNmarginHeight,&marginHeight,
+	  XmNmarginWidth,&marginWidth,
+	  XmNshadowThickness,&shadowThickness,
+	  XmNspacing,&spacing,
+	  XmNresizeHeight,&resizeHeight,
+	  XmNresizeWidth,&resizeWidth,
+	  XmNtraversalOn,&traversalOn,
+	  XmNsubMenuId,&subMenuId,
+	  XmNuserData,&userData,
+	  NULL);
+	print("  borderWidth=%d\n",borderWidth);
+	print("  height=%d\n",height);
+	print("  width=%d\n",width);
+	print("  entryBorder=%d\n",entryBorder);
+	print("  marginHeight=%d\n",marginHeight);
+	print("  marginWidth=%d\n",marginWidth);
+	print("  shadowThickness=%d\n",shadowThickness);
+	print("  spacing=%d\n",spacing);
+	print("  resizeHeight=%s\n",resizeHeight?"True":"False");
+	print("  resizeWidth=%s\n",resizeWidth?"True":"False");
+	print("  traversalOn=%s\n",traversalOn?"True":"False");
+	print("  subMenuId=%x\n",subMenuId);
+	print("  userData=%x\n",userData);
+	menu=subMenuId;
+    }
+    
+  /* OptionButton */
+    w=XmOptionButtonGadget(w0);
+    print("OptionButton (XmCascadeButtonGadget) %x\n",w);
+    if(w) {
+	XtVaGetValues(w,
+	  XmNborderWidth,&borderWidth,
+	  XmNheight,&height,
+	  XmNwidth,&width,
+	  XmNmarginTop,&marginTop,
+	  XmNmarginBottom,&marginBottom,
+	  XmNmarginLeft,&marginLeft,
+	  XmNmarginRight,&marginRight,
+	  XmNmarginHeight,&marginHeight,
+	  XmNmarginWidth,&marginWidth,
+	  XmNshadowThickness,&shadowThickness,
+	  XmNhighlightThickness,&highlightThickness,
+	  XmNtraversalOn,&traversalOn,
+	  XmNrecomputeSize,&recomputeSize,
+	  XmNuserData,&userData,
+	  NULL);
+	print("  borderWidth=%d\n",borderWidth);
+	print("  height=%d\n",height);
+	print("  width=%d\n",width);
+	print("  marginTop=%d\n",marginTop);
+	print("  marginBottom=%d\n",marginBottom);
+	print("  marginLeft=%d\n",marginLeft);
+	print("  marginRight=%d\n",marginRight);
+	print("  marginHeight=%d\n",marginHeight);
+	print("  marginWidth=%d\n",marginWidth);
+	print("  shadowThickness=%d\n",shadowThickness);
+	print("  highlightThickness=%d\n",highlightThickness);
+	print("  traversalOn=%s\n",traversalOn?"True":"False");
+	print("  recomputeSize=%s\n",recomputeSize?"True":"False");
+	print("  userData=%x\n",userData);
+    }
+    
+#if 0
+  /* popup_menu */
+    w=XtParent(menu);
+    print("popup_menu (XmMenuShell) %x\n",w);
+    if(w) {
+	XtVaGetValues(w,
+	  XmNborderWidth,&borderWidth,
+	  XmNheight,&height,
+	  XmNwidth,&width,
+	  NULL);
+	print("  borderWidth=%d\n",borderWidth);
+	print("  height=%d\n",height);
+	print("  width=%d\n",width);
+    }
+#endif
+    
+  /* menu */
+    w=menu;
+    print("menu (XmRowColumn) %x\n",w);
+    if(w) {
+	XtVaGetValues(w,
+	  XmNborderWidth,&borderWidth,
+	  XmNheight,&height,
+	  XmNwidth,&width,
+	  XmNentryBorder,&entryBorder,
+	  XmNmarginHeight,&marginHeight,
+	  XmNmarginWidth,&marginWidth,
+	  XmNshadowThickness,&shadowThickness,
+	  XmNspacing,&spacing,
+	  XmNresizeHeight,&resizeHeight,
+	  XmNresizeWidth,&resizeWidth,
+	  XmNtraversalOn,&traversalOn,
+	  XmNsubMenuId,&subMenuId,
+	  XmNuserData,&userData,
+	  NULL);
+	print("  borderWidth=%d\n",borderWidth);
+	print("  height=%d\n",height);
+	print("  width=%d\n",width);
+	print("  entryBorder=%d\n",entryBorder);
+	print("  marginHeight=%d\n",marginHeight);
+	print("  marginWidth=%d\n",marginWidth);
+	print("  shadowThickness=%d\n",shadowThickness);
+	print("  spacing=%d\n",spacing);
+	print("  resizeHeight=%s\n",resizeHeight?"True":"False");
+	print("  resizeWidth=%s\n",resizeWidth?"True":"False");
+	print("  traversalOn=%s\n",traversalOn?"True":"False");
+	print("  subMenuId=%x\n",subMenuId);
+	print("  userData=%x\n",userData);
+    }
+    
+  /* menuButtons */
+    XtVaGetValues(menu,
+      XmNnumChildren,&numChildren,
+      XmNchildren,&children,
+      NULL);
+    if(numChildren) w=children[0];
+    else w=0;
+    print("menuButtons (XmPushButtonGadget) %x\n",w);
+    if(w) {
+	XtVaGetValues(w,
+	  XmNborderWidth,&borderWidth,
+	  XmNheight,&height,
+	  XmNwidth,&width,
+	  XmNmarginTop,&marginTop,
+	  XmNmarginBottom,&marginBottom,
+	  XmNmarginLeft,&marginLeft,
+	  XmNmarginRight,&marginRight,
+	  XmNmarginHeight,&marginHeight,
+	  XmNmarginWidth,&marginWidth,
+	  XmNshadowThickness,&shadowThickness,
+	  XmNhighlightThickness,&highlightThickness,
+	  XmNtraversalOn,&traversalOn,
+	  XmNrecomputeSize,&recomputeSize,
+	  XmNuserData,&userData,
+	  NULL);
+	print("  numChildren=%d\n",numChildren);
+	print("  borderWidth=%d\n",borderWidth);
+	print("  height=%d\n",height);
+	print("  width=%d\n",width);
+	print("  marginTop=%d\n",marginTop);
+	print("  marginBottom=%d\n",marginBottom);
+	print("  marginLeft=%d\n",marginLeft);
+	print("  marginRight=%d\n",marginRight);
+	print("  marginHeight=%d\n",marginHeight);
+	print("  marginWidth=%d\n",marginWidth);
+	print("  shadowThickness=%d\n",shadowThickness);
+	print("  highlightThickness=%d\n",highlightThickness);
+	print("  traversalOn=%s\n",traversalOn?"True":"False");
+	print("  recomputeSize=%s\n",recomputeSize?"True":"False");
+	print("  userData=%x\n",userData);
+    }
+}
+
+#endif
