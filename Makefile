@@ -6,9 +6,9 @@ ifneq ($(wildcard $(TOP)/config)x,x)
   include $(TOP)/config/CONFIG_EXTENSIONS
 
   ifeq ($(HOST_ARCH),WIN32)
-   DIRS = graphX xc medm
+   DIRS = xc medm
   else
-   DIRS = graphX graphX/printUtils xc medm
+   DIRS = printUtils xc medm
   endif
 
   include $(TOP)/config/RULES_DIRS
@@ -18,9 +18,9 @@ else
   include $(EPICS)/config/CONFIG_EXTENSIONS
 
   ifeq ($(HOST_ARCH),WIN32)
-   DIRS = graphX xc medm
+   DIRS = xc medm
   else
-   DIRS = graphX graphX/printUtils xc medm
+   DIRS = printUtils xc medm
   endif
 
   include $(EPICS)/config/RULES_DIRS
