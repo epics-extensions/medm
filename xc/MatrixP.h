@@ -43,10 +43,10 @@
  */
 
 #if defined (__cplusplus) || defined(c_plusplus)
-#define CONST const
+#define MCONST const
 extern "C" {
 #else
-#define CONST
+#define MCONST
 #endif
 
     typedef void (*XbaeMatrixSetCellProc)(
@@ -54,7 +54,7 @@ extern "C" {
       Widget		/* w */,
       int		/* row */,
       int		/* column */,
-      CONST String	/* value */
+      MCONST String	/* value */
 #endif
 	);
 
@@ -208,9 +208,9 @@ extern "C" {
 	);
 
 #if defined (__cplusplus) || defined(c_plusplus)
-	   }
+}
 #endif
-#undef CONST
+#undef MCONST
 
 /*
  * Different than the traversal directions in Xm.h

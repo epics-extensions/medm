@@ -172,7 +172,6 @@ static void Initialize(Widget request, Widget new,
    *   O'Reilly Vol. 4, p. 494 */
 {
     ControlWidget wnew = (ControlWidget)new;
-    XColor bg, exact;
     Display *display = XtDisplay(new);
     int scr = DefaultScreen(XtDisplay(new));
     XGCValues values;
@@ -388,6 +387,7 @@ void Rect3d(Widget w, Display *display, Drawable drawable,
     ControlWidget wc = (ControlWidget)w;
     int j;
     unsigned long shade1, shade2;
+    unsigned int depth = wc->control.shade_depth;
     
   /* Set basic GC attributes used in drawing the 3D rectangle. */
 #if defined(NICE_SHADES)
@@ -407,7 +407,7 @@ void Rect3d(Widget w, Display *display, Drawable drawable,
     if(width > 0) width--;
     
   /* Draw the shadow lines */
-    for (j = 0; j < wc->control.shade_depth; j++) {
+    for (j = 0; j < (int)depth; j++) {
 	if (type == RAISED)
 	  XSetForeground(display, gc, shade1);
 	else
@@ -429,11 +429,10 @@ void Rect3d(Widget w, Display *display, Drawable drawable,
     XSetLineAttributes(display, gc, 0, LineSolid, CapButt, JoinRound);
 #endif    
     XSetForeground(display, gc, wc->control.background_pixel);
-    if ((width > (2 * wc->control.shade_depth)) && 
-      (height > (2 * wc->control.shade_depth))) {
-	XFillRectangle(display, drawable, gc, x+wc->control.shade_depth, 
-	  y+wc->control.shade_depth, width-(2 * wc->control.shade_depth), 
-	  height-(2 * wc->control.shade_depth));
+    if ((width > (2 * depth)) &&  (height > (2 * depth))) {
+	XFillRectangle(display, drawable, gc, x+depth, 
+	  y+depth, width-(2 * depth), 
+	  height-(2 * depth));
     }
 }
 
@@ -509,7 +508,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
   XRectangle *bounds, ArrowType orientation,Type3d type)
 {
     ControlWidget wc = (ControlWidget)w;
-    int i, j, adjustment = wc->control.shade_depth+1;
+    int j, adjustment = wc->control.shade_depth+1;
     XPoint points[4];
     unsigned long shade1, shade2;
     
@@ -540,7 +539,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
 	points[0].x = bounds->x;
 	points[0].y = bounds->y + bounds->height;
       /* arrow tip */
-	points[1].x = points[0].x + (bounds->width / 2 + 0.5);
+	points[1].x = (short)(points[0].x + (bounds->width / 2 + 0.5));
 	points[1].y = bounds->y;
       /* right corner */
 	points[2].x = points[0].x + bounds->width;
@@ -550,7 +549,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
 	points[0].x = bounds->x;  
 	points[0].y = bounds->y;  
       /* arrow tip */
-	points[1].x = points[0].x + (bounds->width / 2 + 0.5); 
+	points[1].x = (short)(points[0].x + (bounds->width / 2 + 0.5)); 
 	points[1].y = bounds->y + bounds->height; 
       /* right corner */
 	points[2].x = points[0].x + bounds->width;
@@ -561,7 +560,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
 	points[0].y = bounds->y + bounds->height;  
       /* arrow tip */
 	points[1].x = bounds->x;
-	points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
+	points[1].y = (short)(bounds->y + (bounds->height / 2 + 0.5));
       /* right corner */
 	points[2].x = points[0].x; 
 	points[2].y = bounds->y;
@@ -571,7 +570,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
 	points[0].y = bounds->y;
       /* arrow tip */
 	points[1].x = bounds->x + bounds->width;
-	points[1].y = bounds->y + (bounds->height / 2 + 0.5);  
+	points[1].y = (short)(bounds->y + (bounds->height / 2 + 0.5));
       /* right corner */
 	points[2].x = points[0].x; 
 	points[2].y = bounds->y + bounds->height;

@@ -27,9 +27,9 @@
  */
 
 #include <ctype.h>
-#include <X11/Xos.h>
-#include <X11/StringDefs.h>
 #include <Xm/XmP.h>
+#include <X11/StringDefs.h>
+
 #include <Xm/Label.h>
 #include "CaptionP.h"
 
@@ -75,99 +75,114 @@ static XtResource resources[] = {
   && XtIsManaged(UserChild(w)))
 
 
-  /*
+/*
  * Declaration of methods
  */
-    static void ClassInitialize();
-    static void Initialize();
-    static void InsertChild();
-    static Boolean SetValues();
-    static void SetValuesAlmost();
-    static void GetValuesHook();
-    static void Resize();
-    static void ChangeManaged();
-    static XtGeometryResult GeometryManager();
-    static XtGeometryResult QueryGeometry();
+static void ClassInitialize(void);
+static void Initialize(Widget greq, Widget gnew, ArgList args,
+  Cardinal *num_args);
+static void InsertChild(Widget w);
+static Boolean SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
+  Cardinal *num_args);
+static void SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
+  XtWidgetGeometry *reply);
+static void GetValuesHook(Widget gcw, ArgList args, Cardinal *num_args);
+static void Redisplay(Widget w, XEvent *event, Region region);
+static void Resize(Widget gcw);
+static void ChangeManaged(Widget gcw);
+static XtGeometryResult GeometryManager(Widget w, XtWidgetGeometry *desired,
+  XtWidgetGeometry *allowed);
+static XtGeometryResult QueryGeometry(Widget gcw, XtWidgetGeometry *proposed,
+  XtWidgetGeometry *desired);
+
 
 /*
  * Private functions
  */
-static void ComputeSize(), ComputeUserChildSize(), Layout();
-static Boolean CompareStrings();
+static void ComputeSize(XbaeCaptionWidget cw, Dimension *cwWidth,
+  Dimension *cwHeight, Dimension childWidth, Dimension childHeight,
+  Dimension childBorderWidth);
+static void ComputeUserChildSize(XbaeCaptionWidget cw, Dimension cwWidth,
+  Dimension cwHeight, Dimension *childWidth, Dimension *childHeight,
+  Dimension childBorderWidth);
+static void Layout(XbaeCaptionWidget cw, Boolean configure);
+static Boolean CompareStrings(String in, String test);
 
 /*
  * Type converters
  */
-static Boolean CvtStringToLabelPosition(), CvtStringToLabelAlignment();
-
+static Boolean CvtStringToLabelAlignment(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
+static Boolean CvtStringToLabelPosition(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
 
 XbaeCaptionClassRec xbaeCaptionClassRec = {
     {
       /* core_class fields */
-      /* superclass			*/ (WidgetClass) &xmManagerClassRec,
-					 /* class_name			*/ "XbaeCaption",
-					 /* widget_size			*/ sizeof(XbaeCaptionRec),
-					 /* class_initialize		*/ ClassInitialize,
-					 /* class_part_initialize	*/ NULL,
-					 /* class_inited			*/ False,
-					 /* initialize			*/ Initialize,
-					 /* initialize_hook		*/ NULL,
-					 /* realize			*/ XtInheritRealize,
-					 /* actions			*/ NULL,
-					 /* num_actions			*/ 0,
-					 /* resources			*/ resources,
-					 /* num_resources		*/ XtNumber(resources),
-					 /* xrm_class			*/ NULLQUARK,
-					 /* compress_motion		*/ True,
-					 /* compress_exposure		*/ XtExposeCompressMaximal,
-					 /* compress_enterleave		*/ True,
-					 /* visible_interest		*/ False,
-					 /* destroy			*/ NULL,
-					 /* resize			*/ Resize,
-					 /* expose			*/ _XmRedisplayGadgets,
-					 /* set_values			*/ SetValues,
-					 /* set_values_hook		*/ NULL,
-					 /* set_values_almost		*/ SetValuesAlmost,
-					 /* get_values_hook		*/ GetValuesHook,
-					 /* accept_focus			*/ NULL,
-					 /* version			*/ XtVersion,
-					 /* callback_private		*/ NULL,
-					 /* tm_table			*/ XtInheritTranslations,
-					 /* query_geometry		*/ QueryGeometry,
-					 /* display_accelerator		*/ NULL,
-					 /* extension			*/ NULL
+      /* superclass                */ (WidgetClass) &xmManagerClassRec,
+    /* class_name                  */ "XbaeCaption",
+    /* widget_size                 */ sizeof(XbaeCaptionRec),
+    /* class_initialize            */ ClassInitialize,
+    /* class_part_initialize       */ NULL,
+    /* class_inited                */ False,
+    /* initialize                  */ Initialize,
+    /* initialize_hook             */ NULL,
+    /* realize                     */ XtInheritRealize,
+    /* actions                     */ NULL,
+    /* num_actions                 */ 0,
+    /* resources                   */ resources,
+    /* num_resources               */ XtNumber(resources),
+    /* xrm_class                   */ NULLQUARK,
+    /* compress_motion             */ True,
+    /* compress_exposure           */ XtExposeCompressMaximal,
+    /* compress_enterleave         */ True,
+    /* visible_interest            */ False,
+    /* destroy                     */ NULL,
+    /* resize                      */ Resize,
+    /* expose                      */ Redisplay,
+    /* set_values                  */ SetValues,
+    /* set_values_hook             */ NULL,
+    /* set_values_almost           */ SetValuesAlmost,
+    /* get_values_hook             */ GetValuesHook,
+    /* accept_focus                */ NULL,
+    /* version                     */ XtVersion,
+    /* callback_private            */ NULL,
+    /* tm_table                    */ XtInheritTranslations,
+    /* query_geometry              */ QueryGeometry,
+    /* display_accelerator         */ NULL,
+    /* extension                   */ NULL
     },
     {
       /* composite_class fields */
-      /* geometry_manager		*/ GeometryManager,
-					 /* change_managed		*/ ChangeManaged,
-					 /* insert_child			*/ InsertChild,
-					 /* delete_child			*/ XtInheritDeleteChild,
-					 /* extension			*/ NULL,
+      /* geometry_manager          */ GeometryManager,
+    /* change_managed              */ ChangeManaged,
+    /* insert_child                */ InsertChild,
+    /* delete_child                */ XtInheritDeleteChild,
+    /* extension                   */ NULL,
     },
     {
       /* constraint_class fields */
-      /* resources			*/ NULL,
-					 /* num_resources		*/ 0,
-					 /* constraint_size		*/ 0,
-					 /* initialize			*/ NULL,
-					 /* destroy			*/ NULL,
-					 /* set_values			*/ NULL,
-					 /* extension			*/ NULL
+      /* resources                 */ NULL,
+    /* num_resources               */ 0,
+    /* constraint_size             */ 0,
+    /* initialize                  */ NULL,
+    /* destroy                     */ NULL,
+    /* set_values                  */ NULL,
+    /* extension                   */ NULL
     },
     {
       /* manager_class fields */
-      /* translations			*/  XtInheritTranslations,
-					  /* syn_resources		*/  NULL,
-					  /* num_syn_resources		*/  0,
-					  /* syn_constraint_resources	*/  NULL,
-					  /* num_syn_constraint_resources */  0,
-					  /* parent_process		*/  XmInheritParentProcess,
-					  /* extension			*/  NULL
+      /* translations              */  XtInheritTranslations,
+    /* syn_resources               */  NULL,
+    /* num_syn_resources           */  0,
+    /* syn_constraint_resources    */  NULL,
+    /* num_syn_constraint_resources */  0,
+    /* parent_process              */  XmInheritParentProcess,
+    /* extension                   */  NULL
     },
     {
       /* caption_class fields */
-      /* extension			*/ NULL,
+      /* extension                 */ NULL,
     }
 };
 
@@ -175,7 +190,7 @@ WidgetClass xbaeCaptionWidgetClass = (WidgetClass)&xbaeCaptionClassRec;
 
 
 static void
-ClassInitialize()
+ClassInitialize(void)
 {
     XtSetTypeConverter(XmRString, XmRLabelAlignment,
       CvtStringToLabelAlignment, NULL, 0,
@@ -188,11 +203,11 @@ ClassInitialize()
 
 /* ARGSUSED */
 static void
-Initialize(request, new, args, num_args)
-    XbaeCaptionWidget request, new;
-    ArgList args;
-    Cardinal *num_args;
+Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
+    XbaeCaptionWidget request = (XbaeCaptionWidget)greq;
+    XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
+    
   /*
    * Validate our labelPosition
    */
@@ -263,8 +278,7 @@ Initialize(request, new, args, num_args)
 }
 
 static void
-InsertChild(w)
-    Widget w;
+InsertChild(Widget w)
 {
     if (((CompositeWidget)XtParent(w))->composite.num_children > 1) {
         XtAppWarningMsg(XtWidgetToApplicationContext(w),
@@ -282,11 +296,13 @@ InsertChild(w)
 
 /* ARGSUSED */
 static Boolean
-SetValues(current, request, new, args, num_args)
-    XbaeCaptionWidget current, request, new;
-    ArgList args;
-    Cardinal *num_args;
+SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
+  Cardinal *num_args)
 {
+    XbaeCaptionWidget current = (XbaeCaptionWidget)gcur;
+    XbaeCaptionWidget request = (XbaeCaptionWidget)greq;
+    XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
+    
     Dimension old_label_width, old_label_height;
     Boolean layout = False;
     int n;
@@ -420,14 +436,20 @@ SetValues(current, request, new, args, num_args)
 #undef NE
 }
 
+static void
+Redisplay(Widget w, XEvent *event, Region region)
+{
+    _XmRedisplayGadgets(w, event, region);
+}
+
 /* ARGSUSED */
 static void
-SetValuesAlmost(old, new, request, reply)
-    XbaeCaptionWidget old;
-    XbaeCaptionWidget new;
-    XtWidgetGeometry *request;
-    XtWidgetGeometry *reply;
+SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
+  XtWidgetGeometry *reply)
 {
+    XbaeCaptionWidget old = (XbaeCaptionWidget)gold;
+    XbaeCaptionWidget new =  (XbaeCaptionWidget)gnew;
+
   /*
    * If XtGeometryAlmost, accept compromize - our resize method
    * will take care of it.
@@ -449,18 +471,16 @@ SetValuesAlmost(old, new, request, reply)
 }
 
 static void
-GetValuesHook(cw, args, num_args)
-    XbaeCaptionWidget cw;
-    ArgList args;
-    Cardinal *num_args;
+GetValuesHook(Widget gcw, ArgList args, Cardinal *num_args)
 {
+    XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
     int i;
 
   /*
    * We don't save a copy of the label_string or font_list.
    * If the user wants these, we get them from the label widget.
    */
-    for (i = 0; i < *num_args; i++)
+    for (i = 0; i < (int)*num_args; i++)
       if (strcmp(args[i].name, XmNlabelString) == 0)
 	XtGetValues(LabelChild(cw), &args[i], 1);
       else if (strcmp(args[i].name, XmNfontList) == 0)
@@ -474,9 +494,7 @@ GetValuesHook(cw, args, num_args)
  * the initiating child (the label never initiates)
  */
 static void
-Layout(cw, configure)
-    XbaeCaptionWidget cw;
-    Boolean configure;
+Layout(XbaeCaptionWidget cw, Boolean configure)
 {
     Position label_x, label_y;
     Position user_x, user_y;
@@ -610,9 +628,10 @@ Layout(cw, configure)
 }
 
 static void
-Resize(cw)
-    XbaeCaptionWidget cw;
+Resize(Widget gcw)
 {
+    XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
+    
     Layout(cw, True);
 }
 
@@ -621,14 +640,9 @@ Resize(cw)
  * of the user's child, compute the width and height of the user's child.
  */
 static void
-ComputeUserChildSize(cw, cwWidth, cwHeight, childWidth, childHeight,
-  childBorderWidth)
-    XbaeCaptionWidget cw;
-    Dimension cwWidth;
-    Dimension cwHeight;
-    Dimension *childWidth;
-    Dimension *childHeight;
-    Dimension childBorderWidth;
+ComputeUserChildSize(XbaeCaptionWidget cw, Dimension cwWidth, Dimension cwHeight,
+  Dimension *childWidth, Dimension *childHeight,
+  Dimension childBorderWidth)
 {
     int width = cwWidth - 2 * childBorderWidth;
     int height = cwHeight - 2 * childBorderWidth;
@@ -675,13 +689,8 @@ ComputeUserChildSize(cw, cwWidth, cwHeight, childWidth, childHeight,
  * current size of the label child)
  */
 static void
-ComputeSize(cw, cwWidth, cwHeight, childWidth, childHeight, childBorderWidth)
-    XbaeCaptionWidget cw;
-    Dimension *cwWidth;
-    Dimension *cwHeight;
-    Dimension childWidth;
-    Dimension childHeight;
-    Dimension childBorderWidth;
+ComputeSize(XbaeCaptionWidget cw, Dimension *cwWidth, Dimension *cwHeight,
+  Dimension childWidth, Dimension childHeight, Dimension childBorderWidth)
 {
     childWidth += 2 * childBorderWidth;
     childHeight += 2 * childBorderWidth;
@@ -720,9 +729,9 @@ ComputeSize(cw, cwWidth, cwHeight, childWidth, childHeight, childBorderWidth)
 }
 
 static void
-ChangeManaged(cw)
-    XbaeCaptionWidget cw;
+ChangeManaged(Widget gcw)
 {
+    XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
     Dimension width, height;
     XtGeometryResult result;
 
@@ -760,11 +769,9 @@ ChangeManaged(cw)
 
 /* ARGSUSED */
 static XtGeometryResult
-GeometryManager(w, desired, allowed)
-    Widget w;
-    XtWidgetGeometry *desired, *allowed;
+GeometryManager(Widget w, XtWidgetGeometry *desired, XtWidgetGeometry *allowed)
 {
-    XbaeCaptionWidget cw = (XbaeCaptionWidget) XtParent(w);
+    XbaeCaptionWidget cw = (XbaeCaptionWidget)XtParent(w);
     Dimension save_width, save_height, save_border_width;
 
 #define Wants(flag) (desired->request_mode & flag)
@@ -906,12 +913,12 @@ GeometryManager(w, desired, allowed)
 }
 
 static XtGeometryResult
-QueryGeometry(cw, proposed, desired)
-    XbaeCaptionWidget cw;
-    XtWidgetGeometry *proposed, *desired;
+QueryGeometry(Widget gcw, XtWidgetGeometry *proposed, XtWidgetGeometry *desired)
 {
 #define Set(bit) (proposed->request_mode & bit)
 
+    XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
+    
   /*
    * If we don't have a user child, we want to be the size of the label.
    */
@@ -1041,8 +1048,7 @@ QueryGeometry(cw, proposed, desired)
  * string is ignored.
  */
 static Boolean
-CompareStrings(in, test)
-    String in, test;
+CompareStrings(String in, String test)
 {
   /*
    * Strip leading whitespace off the in string.
@@ -1068,12 +1074,8 @@ CompareStrings(in, test)
 
 /* ARGSUSED */
 static Boolean
-CvtStringToLabelPosition(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToLabelPosition(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static XbaeLabelPosition position;
 
@@ -1119,12 +1121,8 @@ CvtStringToLabelPosition(dpy, args, num_args, from, to, data)
 
 /* ARGSUSED */
 static Boolean
-CvtStringToLabelAlignment(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToLabelAlignment(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static XbaeLabelAlignment alignment;
 

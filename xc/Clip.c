@@ -49,20 +49,22 @@ static XtResource resources[] = {
 /*
  * Declaration of methods
  */
-static void ClassPartInitialize();
-static void Realize();
-static void Redisplay();
-static void Redraw();
+static void ClassPartInitialize(WidgetClass wc);
+static void Realize(Widget w, XtValueMask *valueMask,
+  XSetWindowAttributes *attributes);
+static void Redisplay(Widget w, XEvent *event, Region region);
+static void Redraw(Widget w);
 
 /*
  * Public convenience function
  */
-void XbaeClipRedraw();
+void XbaeClipRedraw(Widget w);
 
 /*
  * Clip actions
  */
-static void FocusInACT();
+static void FocusInACT(Widget w, XEvent * event, String *params,
+  Cardinal *nparams);
 
 static XtActionsRec actions[] =
 {
@@ -72,55 +74,55 @@ static XtActionsRec actions[] =
 XbaeClipClassRec xbaeClipClassRec = {
     {
       /* core_class fields */
-      /* superclass		*/ (WidgetClass) &xmPrimitiveClassRec,
-				 /* class_name		*/ "XbaeClip",
-				 /* widget_size		*/ sizeof(XbaeClipRec),
-				 /* class_initialize	*/ NULL,
-				 /* class_part_initialize*/ ClassPartInitialize,
-				 /* class_inited		*/ False,
-				 /* initialize		*/ NULL,
-				 /* initialize_hook	*/ NULL,
-				 /* realize		*/ Realize,
-				 /* actions		*/ actions,
-				 /* num_actions		*/ XtNumber(actions),
-				 /* resources		*/ resources,
-				 /* num_resources	*/ XtNumber(resources),
-				 /* xrm_class		*/ NULLQUARK,
-				 /* compress_motion	*/ True,
-				 /* compress_exposure	*/ XtExposeCompressSeries |
-				   XtExposeGraphicsExpose |
-				   XtExposeNoExpose,
-				 /* compress_enterleave	*/ True,
-				 /* visible_interest	*/ False,
-				 /* destroy		*/ NULL,
-				 /* resize		*/ NULL,
-				 /* expose		*/ Redisplay,
-				 /* set_values		*/ NULL,
-				 /* set_values_hook	*/ NULL,
-				 /* set_values_almost	*/ XtInheritSetValuesAlmost,
-				 /* get_values_hook	*/ NULL,
-				 /* accept_focus		*/ NULL,
-				 /* version		*/ XtVersion,
-				 /* callback_private	*/ NULL,
-				 /* tm_table		*/ defaultTranslations,
-				 /* query_geometry	*/ NULL,
-				 /* display_accelerator	*/ NULL,
-				 /* extension		*/ NULL
+      /* superclass        */ (WidgetClass) &xmPrimitiveClassRec,
+    /* class_name          */ "XbaeClip",
+    /* widget_size         */ sizeof(XbaeClipRec),
+    /* class_initialize    */ NULL,
+    /* class_part_initialize */ ClassPartInitialize,
+    /* class_inited        */ False,
+    /* initialize          */ NULL,
+    /* initialize_hook     */ NULL,
+    /* realize             */ Realize,
+    /* actions             */ actions,
+    /* num_actions         */ XtNumber(actions),
+    /* resources           */ resources,
+    /* num_resources       */ XtNumber(resources),
+    /* xrm_class           */ NULLQUARK,
+    /* compress_motion     */ True,
+    /* compress_exposure   */ XtExposeCompressSeries |
+      XtExposeGraphicsExpose |
+      XtExposeNoExpose,
+    /* compress_enterleave */ True,
+    /* visible_interest    */ False,
+    /* destroy             */ NULL,
+    /* resize              */ NULL,
+    /* expose              */ Redisplay,
+    /* set_values          */ NULL,
+    /* set_values_hook     */ NULL,
+    /* set_values_almost   */ XtInheritSetValuesAlmost,
+    /* get_values_hook     */ NULL,
+    /* accept_focus        */ NULL,
+    /* version             */ XtVersion,
+    /* callback_private    */ NULL,
+    /* tm_table            */ defaultTranslations,
+    /* query_geometry      */ NULL,
+    /* display_accelerator */ NULL,
+    /* extension           */ NULL
     },
   /* primitive_class fields */
     {
-      /* border_highlight	*/ NULL,
-				 /* border_unhighlight	*/ NULL,
-				 /* translations		*/ NULL,
-				 /* arm_and_activate	*/ NULL,
-				 /* syn_resources	*/ NULL,
-				 /* num_syn_resources	*/ 0,
-				 /* extension		*/ NULL
+      /* border_highlight  */ NULL,
+    /* border_unhighlight  */ NULL,
+    /* translations        */ NULL,
+    /* arm_and_activate    */ NULL,
+    /* syn_resources       */ NULL,
+    /* num_syn_resources   */ 0,
+    /* extension           */ NULL
     },
   /* clip_class fields */
     {
-      /* redraw		*/ Redraw,
-			 /* extension		*/ NULL,
+      /* redraw            */ Redraw,
+    /* extension           */ NULL,
     }
 };
 
@@ -128,9 +130,9 @@ WidgetClass xbaeClipWidgetClass = (WidgetClass) & xbaeClipClassRec;
 
 
 static void
-ClassPartInitialize(cwc)
-    XbaeClipWidgetClass cwc;
+ClassPartInitialize(WidgetClass wc)
 {
+    XbaeClipWidgetClass cwc = (XbaeClipWidgetClass)wc;
     register XbaeClipWidgetClass super =
       (XbaeClipWidgetClass) cwc->core_class.superclass;
 
@@ -142,11 +144,9 @@ ClassPartInitialize(cwc)
 }
 
 static void
-Realize(cw, valueMask, attributes)
-    XbaeClipWidget cw;
-    XtValueMask *valueMask;
-    XSetWindowAttributes *attributes;
+Realize(Widget w, XtValueMask *valueMask, XSetWindowAttributes *attributes)
 {
+    XbaeClipWidget cw = (XbaeClipWidget)w;
   /*
    * Don't call our superclasses realize method, because Primitive sets
    * bit_gravity and do_not_propagate
@@ -157,11 +157,10 @@ Realize(cw, valueMask, attributes)
 
 /* ARGSUSED */
 static void
-Redisplay(cw, event, region)
-    XbaeClipWidget cw;
-    XEvent *event;
-    Region region;
+Redisplay(Widget w, XEvent *event, Region region)
 {
+    XbaeClipWidget cw = (XbaeClipWidget)w;
+    
     if (cw->clip.expose_proc)
       cw->clip.expose_proc((Widget)cw, event, region);
 }
@@ -171,9 +170,10 @@ Redisplay(cw, event, region)
  */
 /* ARGSUSED */
 static void
-Redraw(cw)
-    XbaeClipWidget cw;
+Redraw(Widget w)
 {
+    XbaeClipWidget cw = (XbaeClipWidget)w;
+
   /*
    * Clear the window generating Expose events.
    * XXX It might be more efficient to fake up an Expose event
@@ -190,8 +190,7 @@ Redraw(cw)
  * Public interface to redraw method
  */
 void
-XbaeClipRedraw(w)
-    Widget w;
+XbaeClipRedraw(Widget w)
 {
   /*
    * Make sure w is a Clip or a subclass
@@ -208,12 +207,10 @@ XbaeClipRedraw(w)
 
 /* ARGSUSED */
 static void
-FocusInACT(cw, event, params, nparams)
-    XbaeClipWidget cw;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+FocusInACT(Widget w, XEvent * event, String *params, Cardinal *nparams)
 {
+    XbaeClipWidget cw = (XbaeClipWidget)w;
+      
     if (event->xany.type != FocusIn || !event->xfocus.send_event)
       return;
 

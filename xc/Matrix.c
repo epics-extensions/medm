@@ -347,114 +347,186 @@ typedef enum {FixedCell, NonFixedCell} CellType;
 /*
  * Declaration of methods
  */
-static void ClassInitialize();
-static void ClassPartInitialize();
-static void Initialize();
-static void Realize();
-static void InsertChild();
-static void Redisplay();
-static Boolean SetValues();
-static void SetValuesAlmost();
-static void Destroy();
-static void Resize();
-static XtGeometryResult GeometryManager();
-static XtGeometryResult QueryGeometry();
+static void ClassInitialize(void);
+static void ClassPartInitialize(WidgetClass wc);
+static void Initialize(Widget greq, Widget gnew, ArgList args,
+  Cardinal *num_args);
+static void Realize(Widget w, XtValueMask *valueMask,
+  XSetWindowAttributes *attributes);
+static void InsertChild(Widget w);
+static void Redisplay(Widget w, XEvent * event, Region region);
+static Boolean SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
+  Cardinal * num_args);
+static void SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
+  XtWidgetGeometry *reply);
+static void Destroy(Widget w);
+static void Resize(Widget w);
+static XtGeometryResult GeometryManager(Widget w, XtWidgetGeometry *desired,
+  XtWidgetGeometry *allowed);
+static XtGeometryResult QueryGeometry(Widget w, XtWidgetGeometry *proposed,
+  XtWidgetGeometry *desired);
 
-/*
- * Redraw function for clip widget
- */
-static void ClipRedisplay();
+/* Redraw function for clip widget */
+static void ClipRedisplay(Widget w, XEvent *event, Region region);
 
-/*
- * New Matrix methods
- */
-static void SetCell();
-static void EditCell();
-static void SelectCell();
-static void SelectRow();
-static void SelectColumn();
-static void DeselectAll();
-static void DeselectCell();
-static void DeselectRow();
-static void DeselectColumn();
-static String GetCell();
+/* New Matrix methods */
+static void SetCell(Widget w, int row, int column, String value);
+static String GetCell(Widget w, int row, int column);
+static void EditCell(Widget w, int row, int column);
+static void SelectCell(Widget w, int row, int column);
+static void SelectRow(Widget w, int row);
+static void SelectColumn(Widget w, int column);
+static void DeselectAll(Widget w);
+static void DeselectCell(Widget w, int row, int column);
+static void DeselectRow(Widget w, int row);
+static void DeselectColumn(Widget w, int column);
 static Boolean CommitEdit(Widget w, Boolean unmap);
 static void CancelEdit(Widget w, Boolean unmap);
-static void AddRows();
-static void DeleteRows();
-static void AddColumns();
-static void DeleteColumns();
-static void SetRowColors();
-static void SetColumnColors();
-static void SetCellColor();
+static void AddRows(Widget w, int position, String *rows, String *labels,
+  Pixel *colors, int num_rows);
+static void DeleteRows(Widget w, int position, int num_rows);
+static void AddColumns(Widget w, int position, String *columns, String *labels,
+  short *widths, int *max_lengths, unsigned char *alignments,
+  unsigned char *label_alignments, Pixel *colors, int num_columns);
+static void DeleteColumns(Widget w, int position, int num_columns);
+static void SetRowColors(Widget w, int position, Pixel *colors,
+  int num_colors);
+static void SetColumnColors(Widget w, int position, Pixel *colors,
+  int num_colors);
+static void SetCellColor(Widget w, int row, int column, Pixel color);
 
-/*
- * Private functions unique to Matrix
- */
-static void CreateDrawGC(), GetInverseGC(),
-  CreateDrawClipGC(), CreateInverseClipGC(),
-  CreateTopShadowClipGC(), CreateBottomShadowClipGC(),
-  SetClipMask(), NewFont(),
-  GetCellTotalWidth(), GetColumnPositions(),
-  DrawString(), DrawColumnLabel(), DrawRowLabel(), DrawCell(),
-  RedrawCells(), RedrawLabelsAndFixed(), ComputeSize(),
-  FreeCells(), FreeRowLabels(), FreeColumnLabels(), FreeColors(),
-  FreeSelectedCells(), CreateColors(), CopySelectedCells(),
-  ResizeCells(), ResizeSelectedCells(), ResizeColors(), RowColToXY(),
-  AddRowsToTable(), DeleteRowsFromTable(), AddColumnsToTable(),
-  DeleteColumnsFromTable(), ClearCell(), GetVisibleRows(),
-  GetVisibleColumns(), GetVisibleCells(),
-  MakeRowVisible(), MakeColumnVisible(),
-  MakeCellVisible(), AdjustTopRow();
-static Boolean IsRowVisible(), IsColumnVisible(), IsCellVisible(),
-  XYToRowCol(), DoCommitEdit(), EventToXY();
-static short MaxRowLabel();
-static int XtoCol();
-static void CopyRowLabels(), CopyColumnLabels(), CopyCells(),
-  CopyColumnWidths(), CopyColumnMaxLengths(),
-  CopyColumnAlignments(), CopyColumnLabelAlignments(), CopyColors();
-static void ParseColumnLabel();
+/* Private functions unique to Matrix */
+static void CreateDrawGC(XbaeMatrixWidget mw);
+static void GetInverseGC(XbaeMatrixWidget mw);
+static void CreateDrawClipGC(XbaeMatrixWidget mw);
+static void CreateInverseClipGC(XbaeMatrixWidget mw);
+static void CreateTopShadowClipGC(XbaeMatrixWidget mw);
+static void CreateBottomShadowClipGC(XbaeMatrixWidget mw);
+static void SetClipMask(XbaeMatrixWidget mw);
+static void NewFont(XbaeMatrixWidget mw);
+static void GetColumnPositions(XbaeMatrixWidget mw);
+static void DrawString(XbaeMatrixWidget mw, Window win, String string,
+  int length, int x, int y, int maxlen, unsigned char alignment,
+  Boolean highlight, Boolean bold, Boolean clip, Pixel color);
+static void DrawColumnLabel(XbaeMatrixWidget mw, int column);
+static void DrawRowLabel(XbaeMatrixWidget mw, int row);
+static void DrawCell(XbaeMatrixWidget mw, int row, int column);
+static void RedrawCells(XbaeMatrixWidget mw, XbaeRectangle *expose);
+static void RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose);
+static void ComputeSize(XbaeMatrixWidget mw, Boolean compute_width,
+  Boolean compute_height);
+static void FreeCells(XbaeMatrixWidget mw);
+static void FreeRowLabels(XbaeMatrixWidget mw);
+static void FreeColumnLabels(XbaeMatrixWidget mw);
+static void FreeColors(XbaeMatrixWidget mw);
+static void FreeSelectedCells(XbaeMatrixWidget mw);
+static void CreateColors(XbaeMatrixWidget mw);
+static void CopySelectedCells(XbaeMatrixWidget mw);
+static void ResizeCells(XbaeMatrixWidget current, XbaeMatrixWidget new);
+static void ResizeSelectedCells(XbaeMatrixWidget current, XbaeMatrixWidget new);
+static void ResizeColors(XbaeMatrixWidget current, XbaeMatrixWidget new);
+static void RowColToXY(XbaeMatrixWidget mw, int row, int column, int *x, int *y);
+static void AddRowsToTable(XbaeMatrixWidget mw, int position, String *rows,
+  String *labels, Pixel *colors, int num_rows);
+static void ClearCell(XbaeMatrixWidget mw, int row, int column);
+static void GetVisibleRows(XbaeMatrixWidget mw, int *top_row, int *bottom_row);
+static void GetVisibleColumns(XbaeMatrixWidget mw, int *left_column,
+  int *right_column);
+static void GetVisibleCells(XbaeMatrixWidget mw, int *top_row, int *bottom_row,
+  int *left_column, int *right_column);
+static void MakeRowVisible(XbaeMatrixWidget mw, int row);
+static void MakeColumnVisible(XbaeMatrixWidget mw, int column);
+static void MakeCellVisible(XbaeMatrixWidget mw, int row, int column);
+static void AdjustTopRow(XbaeMatrixWidget mw);
+
+static void AddColumnsToTable(XbaeMatrixWidget mw, int position, String *columns,
+  String *labels, short *widths, int *max_lengths, unsigned char *alignments,
+  unsigned char *label_alignments, Pixel *colors, int num_columns);
+static void DeleteColumnsFromTable(XbaeMatrixWidget mw, int position,
+  int num_columns);
+static void DeleteRowsFromTable(XbaeMatrixWidget mw, int position, int num_rows);
+static Boolean IsRowVisible(XbaeMatrixWidget mw, int row);
+static Boolean IsColumnVisible(XbaeMatrixWidget mw, int column);
+static Boolean IsCellVisible(XbaeMatrixWidget mw, int row, int column);
+static Boolean XYToRowCol(XbaeMatrixWidget mw, int *x, int *y, int *row,
+  int *column, CellType cell);
+static Boolean DoCommitEdit(XbaeMatrixWidget mw);
+static Boolean EventToXY(XbaeMatrixWidget mw, XEvent *event, int *x, int *y,
+  CellType *cell);
+static void GetCellTotalWidth(XbaeMatrixWidget mw);
+static short MaxRowLabel(XbaeMatrixWidget mw);
+static int XtoCol(XbaeMatrixWidget mw, int x);
+static void CopyRowLabels(XbaeMatrixWidget mw);
+static void CopyColumnLabels(XbaeMatrixWidget mw);
+static void CopyCells(XbaeMatrixWidget mw);
+static void CopyColumnWidths(XbaeMatrixWidget mw);
+static void CopyColumnMaxLengths(XbaeMatrixWidget mw);
+static void CopyColumnAlignments(XbaeMatrixWidget mw);
+static void CopyColumnLabelAlignments(XbaeMatrixWidget mw);
+static void CopyColors(XbaeMatrixWidget mw);
+static void ParseColumnLabel(String label, ColumnLabelLines lines);
 
 /*
  * Scrollbar callbacks
  */
-static void ScrollVertCB(), ScrollHorizCB();
+static void ScrollVertCB(Widget w, XtPointer client, XtPointer call);
+static void ScrollHorizCB(Widget w, XtPointer client, XtPointer call);
 
 /*
  * TextField modifyVerifyCallback
  */
-static void ModifyVerifyCB();
+static void ModifyVerifyCB(Widget w, XtPointer client, XtPointer call);
 
 /*
  * Clip widget focusCallback
  */
-static void TraverseInCB();
+static void TraverseInCB(Widget w, XtPointer client, XtPointer call);
 
 /*
  * ScrollMgr implementation
  */
-static SmScrollMgr SmCreateScrollMgr();
-static void SmDestroyScrollMgr(), SmAddScroll(),
-  SmRemoveScroll(), SmScrollEvent();
+static SmScrollMgr SmCreateScrollMgr(void);
+static void SmDestroyScrollMgr(SmScrollMgr scrollMgr);
+static void SmAddScroll(SmScrollMgr scrollMgr, int delta_x, int delta_y);
+static void SmRemoveScroll(SmScrollMgr scrollMgr);
+static void SmScrollEvent(SmScrollMgr scrollMgr, XEvent *event);
 
 /*
  * Type converters
  */
-Boolean CvtStringToStringArray();
-void StringArrayDestructor();
-Boolean CvtStringToWidthArray();
-void WidthArrayDestructor();
-Boolean CvtStringToMaxLengthArray();
-void MaxLengthArrayDestructor();
-static Boolean StringsAreEqual();
-Boolean CvtStringToAlignmentArray();
-void AlignmentArrayDestructor();
+Boolean CvtStringToStringArray(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
+void StringArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args);
+Boolean CvtStringToWidthArray(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
+void WidthArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args);
+Boolean CvtStringToMaxLengthArray(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
+void MaxLengthArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args);
+static Boolean StringsAreEqual(String in, String test, int length);
+Boolean CvtStringToAlignmentArray(Display *dpy, XrmValuePtr args,
+  Cardinal *num_args, XrmValuePtr from, XrmValuePtr to, XtPointer *data);
+void AlignmentArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args);
 
 /*
  * Actions
  */
-static void EditCellACT(), CancelEditACT(), CommitEditACT(),
-  SelectCellACT(), TraverseNextACT(), TraversePrevACT();
+static void EditCellACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
+static void SelectCellACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
+static void CancelEditACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
+static void CommitEditACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
+static void TraverseNextACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
+static void TraversePrevACT(Widget w, XEvent * event, String * params,
+  Cardinal * nparams);
 
 /*
  * Matrix actions
@@ -569,7 +641,7 @@ XbaeMatrixClassRec xbaeMatrixClassRec = {
 };
 
 static void
-ClassInitialize()
+ClassInitialize(void)
 {
   /*
    * String to StringArray is used for XmNrowLabels and XmNcolumnLabels
@@ -609,9 +681,9 @@ ClassInitialize()
 }
 
 static void
-ClassPartInitialize(mwc)
-    XbaeMatrixWidgetClass mwc;
+ClassPartInitialize(WidgetClass wc)
 {
+    XbaeMatrixWidgetClass mwc = (XbaeMatrixWidgetClass)wc;
     register XbaeMatrixWidgetClass super =
       (XbaeMatrixWidgetClass) mwc->core_class.superclass;
 
@@ -661,8 +733,7 @@ ClassPartInitialize(mwc)
 }
 
 static void
-CreateDrawGC(mw)
-    XbaeMatrixWidget mw;
+CreateDrawGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     unsigned long mask = GCForeground | GCFont;
@@ -679,8 +750,7 @@ CreateDrawGC(mw)
 }
 
 static void
-GetInverseGC(mw)
-    XbaeMatrixWidget mw;
+GetInverseGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     XtGCMask mask = GCForeground | GCFont;
@@ -694,8 +764,7 @@ GetInverseGC(mw)
 }
 
 static void
-CreateDrawClipGC(mw)
-    XbaeMatrixWidget mw;
+CreateDrawClipGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     unsigned long mask = GCForeground | GCFont;
@@ -711,8 +780,7 @@ CreateDrawClipGC(mw)
 }
 
 static void
-CreateInverseClipGC(mw)
-    XbaeMatrixWidget mw;
+CreateInverseClipGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     XtGCMask mask = GCForeground | GCFont;
@@ -729,8 +797,7 @@ CreateInverseClipGC(mw)
 }
 
 static void
-CreateTopShadowClipGC(mw)
-    XbaeMatrixWidget mw;
+CreateTopShadowClipGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     XtGCMask mask = GCForeground | GCBackground;
@@ -753,8 +820,7 @@ CreateTopShadowClipGC(mw)
 }
 
 static void
-CreateBottomShadowClipGC(mw)
-    XbaeMatrixWidget mw;
+CreateBottomShadowClipGC(XbaeMatrixWidget mw)
 {
     XGCValues values;
     XtGCMask mask = GCForeground | GCBackground;
@@ -781,8 +847,7 @@ CreateBottomShadowClipGC(mw)
  * drawing non-fixed column labels and fixed rows.
  */
 static void
-SetClipMask(mw)
-    XbaeMatrixWidget mw;
+SetClipMask(XbaeMatrixWidget mw)
 {
     XRectangle r;
 
@@ -808,8 +873,7 @@ SetClipMask(mw)
 }
 
 static void
-NewFont(mw)
-    XbaeMatrixWidget mw;
+NewFont(XbaeMatrixWidget mw)
 {
     XmFontContext context;
     XmStringCharSet charset;
@@ -846,8 +910,7 @@ NewFont(mw)
  * Return the length of the longest row label
  */
 static short
-MaxRowLabel(mw)
-    XbaeMatrixWidget mw;
+MaxRowLabel(XbaeMatrixWidget mw)
 {
     int i;
     short max = 0, len;
@@ -867,8 +930,7 @@ MaxRowLabel(mw)
  * Get the total pixel width of the non-fixed cell area
  */
 static void
-GetCellTotalWidth(mw)
-    XbaeMatrixWidget mw;
+GetCellTotalWidth(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -885,8 +947,7 @@ GetCellTotalWidth(mw)
  * Cache the pixel position of each column
  */
 static void
-GetColumnPositions(mw)
-    XbaeMatrixWidget mw;
+GetColumnPositions(XbaeMatrixWidget mw)
 {
     int i, x;
 
@@ -902,23 +963,23 @@ GetColumnPositions(mw)
  */
 static XtCallbackRec VSCallback[] =
 {
-    {(XtCallbackProc) ScrollVertCB, (XtPointer) NULL},
+    {(XtCallbackProc) ScrollVertCB, (XtPointer)NULL},
     {(XtCallbackProc) NULL, NULL}
 };
 static XtCallbackRec HSCallback[] =
 {
-    {(XtCallbackProc) ScrollHorizCB, (XtPointer) NULL},
+    {(XtCallbackProc) ScrollHorizCB, (XtPointer)NULL},
     {(XtCallbackProc) NULL, NULL}
 };
 
 /* ARGSUSED */
 static void
-Initialize(request, new, args, num_args)
-    XbaeMatrixWidget request, new;
-    ArgList args;
-    Cardinal *num_args;
+Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
-  /*
+    XbaeMatrixWidget request = (XbaeMatrixWidget)greq;
+    XbaeMatrixWidget new = (XbaeMatrixWidget)gnew;
+
+/*
    * Check rows/cols set by resources for consistency/validity
    */
     if (new->matrix.rows == 0 || new->matrix.columns == 0) {
@@ -1191,7 +1252,8 @@ Initialize(request, new, args, num_args)
    * Use request because superclasses modify width/height.
    */
     if (request->core.width == 0 || request->core.height == 0)
-      ComputeSize(new, request->core.width == 0, request->core.height == 0);
+      ComputeSize(new, (Boolean)(request->core.width == 0),
+	(Boolean)(request->core.height == 0));
 
   /*
    * Make sure top_row is sensible before we call Resize
@@ -1210,15 +1272,14 @@ Initialize(request, new, args, num_args)
   /*
    * Layout the scrollbars and clip widget based on our size
    */
-    Resize(new);
+    Resize(gnew);
 }
 
 static void
-Realize(mw, valueMask, attributes)
-    XbaeMatrixWidget mw;
-    XtValueMask *valueMask;
-    XSetWindowAttributes *attributes;
+Realize(Widget w, XtValueMask *valueMask, XSetWindowAttributes *attributes)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+
     *valueMask |= CWDontPropagate;
     attributes->do_not_propagate_mask =
       ButtonPressMask | ButtonReleaseMask |
@@ -1243,8 +1304,7 @@ Realize(mw, valueMask, attributes)
 }
 
 static void
-InsertChild(w)
-    Widget w;
+InsertChild(Widget w)
 {
     if (((CompositeWidget)XtParent(w))->composite.num_children > 3) {
 	String params[1];
@@ -1266,9 +1326,7 @@ InsertChild(w)
  * Convert a pixel position to the column it is contained in.
  */
 static int
-XtoCol(mw, x)
-    XbaeMatrixWidget mw;
-    int x;
+XtoCol(XbaeMatrixWidget mw, int x)
 {
     int i;
 
@@ -1285,10 +1343,7 @@ XtoCol(mw, x)
  * fixed cells, or the clip window for non-fixed).
  */
 static void
-RowColToXY(mw, row, column, x, y)
-    XbaeMatrixWidget mw;
-    int row, column;
-    int *x, *y;
+RowColToXY(XbaeMatrixWidget mw, int row, int column, int *x, int *y)
 {
   /*
    * If we are in a fixed cell, calculate x/y relative to Matrixs
@@ -1336,11 +1391,8 @@ RowColToXY(mw, row, column, x, y)
  * picked cell.
  */
 static Boolean
-XYToRowCol(mw, x, y, row, column, cell)
-    XbaeMatrixWidget mw;
-    int *x, *y;
-    int *row, *column;
-    CellType cell;
+XYToRowCol(XbaeMatrixWidget mw, int *x, int *y, int *row, int *column,
+  CellType cell)
 {
     XbaeRectangle rect;
 
@@ -1460,19 +1512,9 @@ XYToRowCol(mw, x, y, row, column, cell)
  * use a GC clip_mask, so we clip by characters. This complicates the code.
  */
 static void
-DrawString(mw, win, string, length, x, y, maxlen, alignment, highlight,
-  bold, clip, color)
-    XbaeMatrixWidget mw;
-    Window win;
-    String string;
-    int length;
-    int x, y;
-    int maxlen;
-    unsigned char alignment;
-    Boolean highlight;
-    Boolean bold;
-    Boolean clip;
-    Pixel color;
+DrawString(XbaeMatrixWidget mw, Window win, String string, int length,
+  int x, int y, int maxlen, unsigned char alignment, Boolean highlight,
+  Boolean bold, Boolean clip, Pixel color)
 {
     int start, width, maxwidth;
     GC gc;
@@ -1498,7 +1540,7 @@ DrawString(mw, win, string, length, x, y, maxlen, alignment, highlight,
    */
     if (width > maxwidth) {
 	
-	switch (alignment) {
+	switch(alignment) {
 
 	case XmALIGNMENT_CENTER: {
 	    int startx = x;
@@ -1629,9 +1671,7 @@ DrawString(mw, win, string, length, x, y, maxlen, alignment, highlight,
  * fixed and non-fixed columns.
  */
 static void
-DrawColumnLabel(mw, column)
-    XbaeMatrixWidget mw;
-    int column;
+DrawColumnLabel(XbaeMatrixWidget mw, int column)
 {
     String label;
     int x, y, i;
@@ -1662,13 +1702,13 @@ DrawColumnLabel(mw, column)
 	DrawString(mw, XtWindow(mw),
 	  label, mw->matrix.column_label_lines[column].lengths[i],
 	  x, y,
-	  mw->matrix.column_widths[column],
-	  mw->matrix.column_label_alignments
+	  (int)mw->matrix.column_widths[column],
+	  (unsigned char)(mw->matrix.column_label_alignments
 	  ? mw->matrix.column_label_alignments[column]
-	  : XmALIGNMENT_BEGINNING,
+	  : XmALIGNMENT_BEGINNING),
 	  False,
 	  mw->matrix.bold_labels,
-	  column >= mw->matrix.fixed_columns,
+	  (Boolean)(column >= (int)mw->matrix.fixed_columns),
 	  mw->manager.foreground);
 	y += TEXT_HEIGHT(mw);
 	label += mw->matrix.column_label_lines[column].lengths[i] + 1;
@@ -1680,9 +1720,7 @@ DrawColumnLabel(mw, column)
  * non-fixed rows.
  */
 static void
-DrawRowLabel(mw, row)
-    XbaeMatrixWidget mw;
-    int row;
+DrawRowLabel(XbaeMatrixWidget mw, int row)
 {
     int y;
 
@@ -1716,9 +1754,7 @@ DrawRowLabel(mw, row)
  * to the correct window and the cell is drawn in that window.
  */
 static void
-DrawCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+DrawCell(XbaeMatrixWidget mw, int row, int column)
 {
     int x, y;
     Pixel color;
@@ -1776,14 +1812,25 @@ DrawCell(mw, row, column)
     if (*mw->matrix.cells[row][column] != '\0') {
 	DrawString(mw, win,
 	  mw->matrix.cells[row][column],
-	  strlen(mw->matrix.cells[row][column]),
+	  (int)strlen(mw->matrix.cells[row][column]),
 	  x + TEXT_X_OFFSET(mw), y + TEXT_Y_OFFSET(mw),
-	  mw->matrix.column_widths[column],
-	  mw->matrix.column_alignments
+	  (int)(mw->matrix.column_widths[column]),
+	  (unsigned char)(mw->matrix.column_alignments
 	  ? mw->matrix.column_alignments[column]
-	  : XmALIGNMENT_BEGINNING,
+	  : XmALIGNMENT_BEGINNING),
 	  mw->matrix.selected_cells[row][column],
 	  False, clipped, color);
+#if 0
+DrawString(XbaeMatrixWidget mw, Window win,
+  String string, int length,
+  int x, int y,
+  int maxlen,
+  unsigned char alignment,
+  Boolean highlight,
+  Boolean bold,
+  Boolean clip,
+  Pixel color)
+#endif
     }
 
   /*
@@ -1820,9 +1867,7 @@ DrawCell(mw, row, column)
  * that are overlapped by the Rectangle argument.
  */
 static void
-RedrawLabelsAndFixed(mw, expose)
-    XbaeMatrixWidget mw;
-    XbaeRectangle *expose;
+RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
 {
   /*
    * Handle the row labels that are in fixed rows
@@ -2082,11 +2127,9 @@ RedrawLabelsAndFixed(mw, expose)
  */
 /* ARGSUSED */
 static void
-Redisplay(mw, event, region)
-    XbaeMatrixWidget mw;
-    XEvent *event;
-    Region region;
+Redisplay(Widget w, XEvent * event, Region region)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     XbaeRectangle expose;
 
   /*
@@ -2145,9 +2188,7 @@ Redisplay(mw, event, region)
  * non-fixed cells.
  */
 static void
-RedrawCells(mw, expose)
-    XbaeMatrixWidget mw;
-    XbaeRectangle *expose;
+RedrawCells(XbaeMatrixWidget mw, XbaeRectangle *expose)
 {
     int startCol, endCol, startRow, endRow, i, j;
     XbaeRectangle rect;
@@ -2187,10 +2228,7 @@ RedrawCells(mw, expose)
  */
 /* ARGSUSED */
 static void
-ClipRedisplay(w, event, region)
-    Widget w;
-    XEvent *event;
-    Region region;
+ClipRedisplay(Widget w, XEvent *event, Region region)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget) XtParent(w);
     XbaeRectangle expose, clip, intersect;
@@ -2259,11 +2297,13 @@ ClipRedisplay(w, event, region)
 
 /* ARGSUSED */
 static Boolean
-SetValues(current, request, new, args, num_args)
-    XbaeMatrixWidget current, request, new;
-    ArgList args;
-    Cardinal *num_args;
+SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
+  Cardinal * num_args)
 {
+    XbaeMatrixWidget current = (XbaeMatrixWidget)gcur;
+    XbaeMatrixWidget request = (XbaeMatrixWidget)greq;
+    XbaeMatrixWidget new = (XbaeMatrixWidget)gnew;
+
     Boolean redisplay = False;		/* need to redraw */
     Boolean relayout = False;		/* need to layout, but same size */
     Boolean new_column_widths = False;	/* column widths changed */
@@ -2760,7 +2800,8 @@ SetValues(current, request, new, args, num_args)
    */
     if (NE(matrix.visible_rows) || NE(matrix.visible_columns) ||
       request->core.height == 0 || request->core.width == 0)
-      ComputeSize(new, request->core.width == 0, request->core.height == 0);
+      ComputeSize(new, (Boolean)(request->core.width == 0),
+	(Boolean)(request->core.height == 0));
 
   /*
    * If our size didn't change, but we need to layout, call Resize.
@@ -2769,7 +2810,7 @@ SetValues(current, request, new, args, num_args)
    *	 then SetValuesAlmost will call Resize to layout.
    */
     if (EQ(core.width) && EQ(core.height) && relayout)
-      Resize(new);
+      Resize(gnew);
 
   /*
    * The user forced a new top_row or something changed to force
@@ -2811,12 +2852,11 @@ SetValues(current, request, new, args, num_args)
 
 /* ARGSUSED */
 static void
-SetValuesAlmost(old, new, request, reply)
-    XbaeMatrixWidget old;
-    XbaeMatrixWidget new;
-    XtWidgetGeometry *request;
-    XtWidgetGeometry *reply;
+SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
+  XtWidgetGeometry *reply)
 {
+    XbaeMatrixWidget old = (XbaeMatrixWidget)gold;
+    XbaeMatrixWidget new = (XbaeMatrixWidget)gnew;
   /*
    * If XtGeometryAlmost, accept compromize - Resize will take care of it
    */
@@ -2833,16 +2873,14 @@ SetValuesAlmost(old, new, request, reply)
     else {
         if ((request->request_mode & CWWidth ||
 	  request->request_mode & CWHeight))
-	  Resize(new);
+	  Resize(gnew);
 
 	request->request_mode = 0;
     }
 }
 
 static void
-ComputeSize(mw, compute_width, compute_height)
-    XbaeMatrixWidget mw;
-    Boolean compute_width, compute_height;
+ComputeSize(XbaeMatrixWidget mw, Boolean compute_width, Boolean compute_height)
 {
     unsigned long full_width = CELL_TOTAL_WIDTH(mw) + FIXED_COLUMN_WIDTH(mw) +
       ROW_LABEL_WIDTH(mw) + 2 * mw->manager.shadow_thickness;
@@ -2884,8 +2922,8 @@ ComputeSize(mw, compute_width, compute_height)
   /*
    * Store our calculated size.
    */
-    mw->core.width = width;
-    mw->core.height = height;
+    mw->core.width = (Dimension)width;
+    mw->core.height = (Dimension)height;
 
   /*
    * If we are less than full width, then we need an HSB, so increment
@@ -2916,9 +2954,10 @@ ComputeSize(mw, compute_width, compute_height)
 
 
 static void
-Destroy(mw)
-    XbaeMatrixWidget mw;
+Destroy(Widget w)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+
     XtReleaseGC((Widget)mw, mw->matrix.inverse_gc);
 
     XFreeGC(XtDisplay(mw), mw->matrix.draw_gc);
@@ -2949,9 +2988,9 @@ Destroy(mw)
  * Position and size the scrollbars and clip widget for our new size.
  */
 static void
-Resize(mw)
-    XbaeMatrixWidget mw;
+Resize(Widget w)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int cell_width, cell_height, rows_visible;
     Boolean has_horiz, has_vert;
     int width = mw->core.width;
@@ -3222,9 +3261,8 @@ Resize(mw)
  */
 /* ARGSUSED */
 static XtGeometryResult
-GeometryManager(w, desired, allowed)
-    Widget w;
-    XtWidgetGeometry *desired, *allowed;
+GeometryManager(Widget w, XtWidgetGeometry *desired,
+  XtWidgetGeometry *allowed)
 {
 #define Wants(flag) (desired->request_mode & flag)
 
@@ -3252,11 +3290,11 @@ GeometryManager(w, desired, allowed)
  * desired_width/height
  */
 static XtGeometryResult
-QueryGeometry(mw, proposed, desired)
-    XbaeMatrixWidget mw;
-    XtWidgetGeometry *proposed, *desired;
+QueryGeometry(Widget w, XtWidgetGeometry *proposed,
+  XtWidgetGeometry *desired)
 {
 #define Set(bit) (proposed->request_mode & bit)
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
 
     desired->width = mw->matrix.desired_width;
     desired->height = mw->matrix.desired_height;
@@ -3279,12 +3317,10 @@ QueryGeometry(mw, proposed, desired)
  */
 /* ARGSUSED */
 static void
-ScrollVertCB(w, client_data, call_data)
-    Widget w;
-    XtPointer client_data;
-    XmScrollBarCallbackStruct *call_data;
+ScrollVertCB(Widget w, XtPointer client, XtPointer call)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);
+    XmScrollBarCallbackStruct *call_data = (XmScrollBarCallbackStruct *)call;
     int src_y, dest_y, height;
 
   /*
@@ -3458,12 +3494,10 @@ ScrollVertCB(w, client_data, call_data)
  */
 /* ARGSUSED */
 static void
-ScrollHorizCB(w, client_data, call_data)
-    Widget w;
-    XtPointer client_data;
-    XmScrollBarCallbackStruct *call_data;
+ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);
+    XmScrollBarCallbackStruct *call_data = (XmScrollBarCallbackStruct *)call;
     int src_x, dest_x, width;
 
   /*
@@ -3638,11 +3672,10 @@ ScrollHorizCB(w, client_data, call_data)
  */
 /* ARGSUSED */
 static void
-ModifyVerifyCB(w, mw, verify)
-    Widget w;
-    XbaeMatrixWidget mw;
-    XmTextVerifyCallbackStruct *verify;
+ModifyVerifyCB(Widget w, XtPointer client, XtPointer call)
 {
+    XmTextVerifyCallbackStruct *verify = (XmTextVerifyCallbackStruct *)call;
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     XbaeMatrixModifyVerifyCallbackStruct call_data;
 
     if (mw->matrix.modify_verify_callback == NULL)
@@ -3664,11 +3697,10 @@ ModifyVerifyCB(w, mw, verify)
  */
 /* ARGSUSED */
 static void
-TraverseInCB(w, mw, call_data)
-    Widget w;
-    XbaeMatrixWidget mw;
-    XtPointer call_data;
+TraverseInCB(Widget w, XtPointer client, XtPointer call)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+    
   /*
    * If the traversing flag is set, then Clip got the focus because
    * textField was trying to traverse out of mw.  We'll help it along.
@@ -3733,8 +3765,7 @@ TraverseInCB(w, mw, call_data)
 }
 
 static void
-CopyCells(mw)
-    XbaeMatrixWidget mw;
+CopyCells(XbaeMatrixWidget mw)
 {
     String **copy;
     int i, j;
@@ -3781,8 +3812,7 @@ CopyCells(mw)
 }
 
 static void
-CopyRowLabels(mw)
-    XbaeMatrixWidget mw;
+CopyRowLabels(XbaeMatrixWidget mw)
 {
     String *copy;
     int i;
@@ -3804,8 +3834,7 @@ CopyRowLabels(mw)
 }
 
 static void
-CopyColumnLabels(mw)
-    XbaeMatrixWidget mw;
+CopyColumnLabels(XbaeMatrixWidget mw)
 {
     String *copy;
     int i;
@@ -3844,8 +3873,7 @@ CopyColumnLabels(mw)
 }
 
 static void
-CopyColumnWidths(mw)
-    XbaeMatrixWidget mw;
+CopyColumnWidths(XbaeMatrixWidget mw)
 {
     short *copy;
     int i;
@@ -3872,8 +3900,7 @@ CopyColumnWidths(mw)
 }
 
 static void
-CopyColumnMaxLengths(mw)
-    XbaeMatrixWidget mw;
+CopyColumnMaxLengths(XbaeMatrixWidget mw)
 {
     int *copy;
     int i;
@@ -3900,8 +3927,7 @@ CopyColumnMaxLengths(mw)
 }
 
 static void
-CopyColumnAlignments(mw)
-    XbaeMatrixWidget mw;
+CopyColumnAlignments(XbaeMatrixWidget mw)
 {
     unsigned char *copy;
     int i;
@@ -3929,8 +3955,7 @@ CopyColumnAlignments(mw)
 }
 
 static void
-CopyColumnLabelAlignments(mw)
-    XbaeMatrixWidget mw;
+CopyColumnLabelAlignments(XbaeMatrixWidget mw)
 {
     unsigned char *copy;
     int i;
@@ -3960,8 +3985,7 @@ CopyColumnLabelAlignments(mw)
 }
 
 static void
-CopyColors(mw)
-    XbaeMatrixWidget mw;
+CopyColors(XbaeMatrixWidget mw)
 {
     Pixel **copy;
     int i, j;
@@ -3989,8 +4013,7 @@ CopyColors(mw)
  * represent selected cells if it is NULL.
  */
 static void
-CopySelectedCells(mw)
-    XbaeMatrixWidget mw;
+CopySelectedCells(XbaeMatrixWidget mw)
 {
     Boolean **copy;
     int i, j;
@@ -4018,9 +4041,7 @@ CopySelectedCells(mw)
 }
 
 static void
-ParseColumnLabel(label, lines)
-    String label;
-    ColumnLabelLines lines;
+ParseColumnLabel(String label, ColumnLabelLines lines)
 {
     char *nl;
 
@@ -4064,8 +4085,7 @@ ParseColumnLabel(label, lines)
 }
 
 static void
-FreeCells(mw)
-    XbaeMatrixWidget mw;
+FreeCells(XbaeMatrixWidget mw)
 {
     int i, j;
 
@@ -4088,8 +4108,7 @@ FreeCells(mw)
 }
 
 static void
-FreeRowLabels(mw)
-    XbaeMatrixWidget mw;
+FreeRowLabels(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -4103,8 +4122,7 @@ FreeRowLabels(mw)
 }
 
 static void
-FreeColumnLabels(mw)
-    XbaeMatrixWidget mw;
+FreeColumnLabels(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -4122,8 +4140,7 @@ FreeColumnLabels(mw)
 
 
 static void
-FreeColors(mw)
-    XbaeMatrixWidget mw;
+FreeColors(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -4143,8 +4160,7 @@ FreeColors(mw)
 }
 
 static void
-FreeSelectedCells(mw)
-    XbaeMatrixWidget mw;
+FreeSelectedCells(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -4164,8 +4180,7 @@ FreeSelectedCells(mw)
  * Create a matrix of Pixels
  */
 static void
-CreateColors(mw)
-    XbaeMatrixWidget mw;
+CreateColors(XbaeMatrixWidget mw)
 {
     int i;
 
@@ -4186,9 +4201,7 @@ CreateColors(mw)
  * Add rows/columns of cells when set_values changes our rows/columns
  */
 static void
-ResizeCells(current, new)
-    XbaeMatrixWidget current;
-    XbaeMatrixWidget new;
+ResizeCells(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i, j;
     int safe_rows;
@@ -4274,9 +4287,7 @@ ResizeCells(current, new)
  * Add rows/columns of selected flags when set_values changes our rows/columns
  */
 static void
-ResizeSelectedCells(current, new)
-    XbaeMatrixWidget current;
-    XbaeMatrixWidget new;
+ResizeSelectedCells(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i;
     int safe_rows;
@@ -4345,9 +4356,7 @@ ResizeSelectedCells(current, new)
  * Add rows/columns of colors when set_values changes our rows/columns
  */
 static void
-ResizeColors(current, new)
-    XbaeMatrixWidget current;
-    XbaeMatrixWidget new;
+ResizeColors(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i, j;
     int safe_rows;
@@ -4421,13 +4430,8 @@ ResizeColors(current, new)
  * If rows or labels is NULL, add empty rows.
  */
 static void
-AddRowsToTable(mw, position, rows, labels, colors, num_rows)
-    XbaeMatrixWidget mw;
-    int position;
-    String *rows;
-    String *labels;
-    Pixel *colors;
-    int num_rows;
+AddRowsToTable(XbaeMatrixWidget mw, int position, String *rows,
+  String *labels, Pixel *colors, int num_rows)
 {
     int i, j;
 
@@ -4517,10 +4521,7 @@ AddRowsToTable(mw, position, rows, labels, colors, num_rows)
  * Delete rows from the internal cells data structure.
  */
 static void
-DeleteRowsFromTable(mw, position, num_rows)
-    XbaeMatrixWidget mw;
-    int position;
-    int num_rows;
+DeleteRowsFromTable(XbaeMatrixWidget mw, int position, int num_rows)
 {
     int i, j;
 
@@ -4580,18 +4581,9 @@ DeleteRowsFromTable(mw, position, num_rows)
  * widths must not be NULL.
  */
 static void
-AddColumnsToTable(mw, position, columns, labels, widths, max_lengths,
-  alignments, label_alignments, colors, num_columns)
-    XbaeMatrixWidget mw;
-    int position;
-    String *columns;
-    String *labels;
-    short *widths;
-    int *max_lengths;
-    unsigned char *alignments;
-    unsigned char *label_alignments;
-    Pixel *colors;
-    int num_columns;
+AddColumnsToTable(XbaeMatrixWidget mw, int position, String *columns,
+  String *labels, short *widths, int *max_lengths, unsigned char *alignments,
+  unsigned char *label_alignments, Pixel *colors, int num_columns)
 {
     int i, j;
 
@@ -4780,10 +4772,7 @@ AddColumnsToTable(mw, position, columns, labels, widths, max_lengths,
  * Delete columns from the internal cells data structure.
  */
 static void
-DeleteColumnsFromTable(mw, position, num_columns)
-    XbaeMatrixWidget mw;
-    int position;
-    int num_columns;
+DeleteColumnsFromTable(XbaeMatrixWidget mw, int position, int num_columns)
 {
     int i, j;
 
@@ -4890,8 +4879,7 @@ DeleteColumnsFromTable(mw, position, num_columns)
  * If we can't make topRow the top row, make it as close as possible.
  */
 static void
-AdjustTopRow(mw)
-    XbaeMatrixWidget mw;
+AdjustTopRow(XbaeMatrixWidget mw)
 {
     int rows_visible = VISIBLE_HEIGHT(mw) / ROW_HEIGHT(mw);
 
@@ -4918,9 +4906,7 @@ AdjustTopRow(mw)
  * Return the top and bottom-most visible non-fixed row
  */
 static void
-GetVisibleRows(mw, top_row, bottom_row)
-    XbaeMatrixWidget mw;
-    int *top_row, *bottom_row;
+GetVisibleRows(XbaeMatrixWidget mw, int *top_row, int *bottom_row)
 {
     *top_row = VERT_ORIGIN(mw) + mw->matrix.fixed_rows;
     *bottom_row = *top_row + VISIBLE_HEIGHT(mw) / ROW_HEIGHT(mw);
@@ -4930,9 +4916,7 @@ GetVisibleRows(mw, top_row, bottom_row)
  * Return the left and right-most visible non-fixed column
  */
 static void
-GetVisibleColumns(mw, left_column, right_column)
-    XbaeMatrixWidget mw;
-    int *left_column, *right_column;
+GetVisibleColumns(XbaeMatrixWidget mw, int *left_column, int *right_column)
 {
     *left_column = XtoCol(mw, FIXED_COLUMN_WIDTH(mw) +  HORIZ_ORIGIN(mw));
     *right_column = XtoCol(mw, FIXED_COLUMN_WIDTH(mw) +  HORIZ_ORIGIN(mw) +
@@ -4944,9 +4928,8 @@ GetVisibleColumns(mw, left_column, right_column)
  * the visible non-fixed cells
  */
 static void
-GetVisibleCells(mw, top_row, bottom_row, left_column, right_column)
-    XbaeMatrixWidget mw;
-    int *top_row, *bottom_row, *left_column, *right_column;
+GetVisibleCells(XbaeMatrixWidget mw, int *top_row, int *bottom_row,
+  int *left_column, int *right_column)
 {
     GetVisibleRows(mw, top_row, bottom_row);
     GetVisibleColumns(mw, left_column, right_column);
@@ -4958,9 +4941,7 @@ GetVisibleCells(mw, top_row, bottom_row, left_column, right_column)
  * Does not check if the cell is actually visible before clearing it.
  */
 static void
-ClearCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+ClearCell(XbaeMatrixWidget mw, int row, int column)
 {
     int x, y;
     Window win = CELL_WINDOW(mw, row, column);
@@ -4981,9 +4962,7 @@ ClearCell(mw, row, column)
  * Return True if a row is visible on the screen (not scrolled totally off)
  */
 static Boolean
-IsRowVisible(mw, row)
-    XbaeMatrixWidget mw;
-    int row;
+IsRowVisible(XbaeMatrixWidget mw, int row)
 {
   /*
    * If we are not in a fixed row, see if we are on the screen vertically
@@ -5006,9 +4985,7 @@ IsRowVisible(mw, row)
  * Return True if a column is visible on the screen (not scrolled totally off)
  */
 static Boolean
-IsColumnVisible(mw, column)
-    XbaeMatrixWidget mw;
-    int column;
+IsColumnVisible(XbaeMatrixWidget mw, int column)
 {
   /*
    * If we are not in a fixed column, see if we are on the screen
@@ -5040,9 +5017,7 @@ IsColumnVisible(mw, column)
  * Return True if a cell is visible on the screen (not scrolled totally off)
  */
 static Boolean
-IsCellVisible(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+IsCellVisible(XbaeMatrixWidget mw, int row, int column)
 {
     return IsRowVisible(mw, row) && IsColumnVisible(mw, column);
 }
@@ -5051,9 +5026,7 @@ IsCellVisible(mw, row, column)
  * Scroll a row so it is visible on the screen.
  */
 static void
-MakeRowVisible(mw, row)
-    XbaeMatrixWidget mw;
-    int row;
+MakeRowVisible(XbaeMatrixWidget mw, int row)
 {
     int rows_visible;
     int value, slider_size, increment, page_increment, vert_value;
@@ -5101,9 +5074,7 @@ MakeRowVisible(mw, row)
  * Scroll a column so it is visible on the screen.
  */
 static void
-MakeColumnVisible(mw, column)
-    XbaeMatrixWidget mw;
-    int column;
+MakeColumnVisible(XbaeMatrixWidget mw, int column)
 {
     int value, slider_size, increment, page_increment, x, horiz_value;
 
@@ -5154,17 +5125,14 @@ MakeColumnVisible(mw, column)
  * Scrolls a fixed or non-fixed cell so it is visible on the screen.
  */
 static void
-MakeCellVisible(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+MakeCellVisible(XbaeMatrixWidget mw, int row, int column)
 {
     MakeRowVisible(mw, row);
     MakeColumnVisible(mw, column);
 }
 
 static Boolean
-DoCommitEdit(mw)
-    XbaeMatrixWidget mw;
+DoCommitEdit(XbaeMatrixWidget mw)
 {
     String cell;
 
@@ -5230,11 +5198,10 @@ DoCommitEdit(mw)
  * Matrix set_cell method
  */
 static void
-SetCell(mw, row, column, value)
-    XbaeMatrixWidget mw;
-    int row, column;
-    String value;
+SetCell(Widget w, int row, int column, String value)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+    
     if (row >= mw->matrix.rows || row < 0 ||
       column >= mw->matrix.columns || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5278,10 +5245,7 @@ SetCell(mw, row, column, value)
  * Public interface to set_cell method
  */
 void
-XbaeMatrixSetCell(w, row, column, value)
-    Widget w;
-    int row, column;
-    String value;
+XbaeMatrixSetCell(Widget w, int row, int column, String value)
 {
   /*
    * Make sure w is a Matrix or a subclass
@@ -5299,10 +5263,10 @@ XbaeMatrixSetCell(w, row, column, value)
  * Matrix edit_cell method
  */
 static void
-EditCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+EditCell(Widget w, int row, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+    
     Boolean edit = True;
     int x, y;
 
@@ -5443,10 +5407,10 @@ XbaeMatrixEditCell(w, row, column)
  * Matrix select_cell method
  */
 static void
-SelectCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+SelectCell(Widget w, int row, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+    
     if (row >= mw->matrix.rows || row < 0 ||
       column >= mw->matrix.columns || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5494,10 +5458,9 @@ XbaeMatrixSelectCell(w, row, column)
  * Matrix select_row method
  */
 static void
-SelectRow(mw, row)
-    XbaeMatrixWidget mw;
-    int row;
+SelectRow(Widget w, int row)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int j, lc, rc;
 
     if (row >= mw->matrix.rows || row < 0) {
@@ -5553,10 +5516,9 @@ XbaeMatrixSelectRow(w, row)
  * Matrix select_column method
  */
 static void
-SelectColumn(mw, column)
-    XbaeMatrixWidget mw;
-    int column;
+SelectColumn(Widget w, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int i, tr, br;
 
     if (column >= mw->matrix.columns || column < 0) {
@@ -5612,9 +5574,9 @@ XbaeMatrixSelectColumn(w, column)
  * Matrix deselect_all method
  */
 static void
-DeselectAll(mw)
-    XbaeMatrixWidget mw;
+DeselectAll(Widget w)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int i, j;
     int tr, br, lc, rc;
 
@@ -5637,30 +5599,29 @@ DeselectAll(mw)
  * Public interface to deselect_all method
  */
 void
-XbaeMatrixDeselectAll(w)
-    Widget w;
+XbaeMatrixDeselectAll(Widget w)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+
   /*
    * Make sure w is a Matrix or a subclass
    */
-    XtCheckSubclass(w, xbaeMatrixWidgetClass, NULL);
+    XtCheckSubclass(mw, xbaeMatrixWidgetClass, NULL);
 
   /*
    * Call the deselect_all method
    */
-    (*((XbaeMatrixWidgetClass) XtClass(w))->matrix_class.deselect_all)
-      ((Widget)w);
+    (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.deselect_all)(w);
 }
 
 /*
  * Matrix deselect_cell method
  */
 static void
-DeselectCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row;
-    int column;
+DeselectCell(Widget w, int row, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+
     if (row >= mw->matrix.rows || row < 0 ||
       column > mw->matrix.columns - 1 || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5704,10 +5665,9 @@ XbaeMatrixDeselectCell(w, row, column)
  * Matrix deselect_row method
  */
 static void
-DeselectRow(mw, row)
-    XbaeMatrixWidget mw;
-    int row;
+DeselectRow(Widget w, int row)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int j, lc, rc;
 
     if (row >= mw->matrix.rows || row < 0) {
@@ -5758,10 +5718,9 @@ XbaeMatrixDeselectRow(w, row)
  * Matrix deselect_column method
  */
 static void
-DeselectColumn(mw, column)
-    XbaeMatrixWidget mw;
-    int column;
+DeselectColumn(Widget w, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int i, tr, br;
 
     if (column >= mw->matrix.columns || column < 0) {
@@ -5812,10 +5771,10 @@ XbaeMatrixDeselectColumn(w, column)
  * Matrix get_cell method
  */
 static String
-GetCell(mw, row, column)
-    XbaeMatrixWidget mw;
-    int row, column;
+GetCell(Widget w, int row, int column)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+
     if (row >= mw->matrix.rows || row < 0 ||
       column > mw->matrix.columns - 1 || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5955,14 +5914,10 @@ void XbaeMatrixCancelEdit(Widget w, Boolean unmap)
  * Matrix add_rows method
  */
 static void
-AddRows(mw, position, rows, labels, colors, num_rows)
-    XbaeMatrixWidget mw;
-    int position;
-    String *rows;
-    String *labels;
-    Pixel *colors;
-    int num_rows;
+AddRows(Widget w, int position, String *rows, String *labels, Pixel *colors,
+  int num_rows)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
   /*
    * Do some error checking.
      */
@@ -5992,7 +5947,7 @@ AddRows(mw, position, rows, labels, colors, num_rows)
   /*
      * Relayout.
      */
-    Resize(mw);
+    Resize(w);
 
   /*
      * Call our cancel_edit method since the rows shifted underneath us
@@ -6041,11 +5996,9 @@ XbaeMatrixAddRows(w, position, rows, labels, colors, num_rows)
  * Matrix delete_rows method
  */
 static void
-DeleteRows(mw, position, num_rows)
-    XbaeMatrixWidget mw;
-    int position;
-    int num_rows;
+DeleteRows(Widget w, int position, int num_rows)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
   /*
    * Do some error checking.
    */
@@ -6083,7 +6036,7 @@ DeleteRows(mw, position, num_rows)
   /*
    * Relayout.
    */
-    Resize(mw);
+    Resize(w);
 
   /*
    * Call our cancel_edit method since the rows shifted underneath us
@@ -6129,19 +6082,11 @@ XbaeMatrixDeleteRows(w, position, num_rows)
  * Matrix add_columns method.
  */
 static void
-AddColumns(mw, position, columns, labels, widths, max_lengths,
-  alignments, label_alignments, colors, num_columns)
-    XbaeMatrixWidget mw;
-    int position;
-    String *columns;
-    String *labels;
-    short *widths;
-    int *max_lengths;
-    unsigned char *alignments;
-    unsigned char *label_alignments;
-    Pixel *colors;
-    int num_columns;
+AddColumns(Widget w, int position, String *columns, String *labels,
+  short *widths, int *max_lengths, unsigned char *alignments,
+  unsigned char *label_alignments, Pixel *colors, int num_columns)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
   /*
    * Do some error checking.
      */
@@ -6178,7 +6123,7 @@ AddColumns(mw, position, columns, labels, widths, max_lengths,
   /*
      * Relayout.
      */
-    Resize(mw);
+    Resize(w);
 
   /*
      * Call our cancel_edit method since the columns shifted underneath us
@@ -6233,11 +6178,9 @@ XbaeMatrixAddColumns(w, position, columns, labels, widths, max_lengths,
  * Matrix delete_columns method
  */
 static void
-DeleteColumns(mw, position, num_columns)
-    XbaeMatrixWidget mw;
-    int position;
-    int num_columns;
+DeleteColumns(Widget w, int position, int num_columns)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
   /*
    * Do some error checking.
    */
@@ -6274,7 +6217,7 @@ DeleteColumns(mw, position, num_columns)
   /*
    * Relayout.
    */
-    Resize(mw);
+    Resize(w);
 
   /*
    * Call our cancel_edit method since the columns shifted underneath us
@@ -6320,12 +6263,9 @@ XbaeMatrixDeleteColumns(w, position, num_columns)
  * Matrix set_row_colors method
  */
 static void
-SetRowColors(mw, position, colors, num_colors)
-    XbaeMatrixWidget mw;
-    int position;
-    Pixel *colors;
-    int num_colors;
+SetRowColors(Widget w, int position, Pixel *colors, int num_colors)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     XbaeRectangle rect;
     int i, j;
 
@@ -6410,12 +6350,9 @@ XbaeMatrixSetRowColors(w, position, colors, num_colors)
  * Matrix set_column_colors method
  */
 static void
-SetColumnColors(mw, position, colors, num_colors)
-    XbaeMatrixWidget mw;
-    int position;
-    Pixel *colors;
-    int num_colors;
+SetColumnColors(Widget w, int position, Pixel *colors, int num_colors)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     XbaeRectangle rect;
     int i, j;
 
@@ -6500,12 +6437,9 @@ XbaeMatrixSetColumnColors(w, position, colors, num_colors)
  * Matrix set_cell_color method
  */
 static void
-SetCellColor(mw, row, column, color)
-    XbaeMatrixWidget mw;
-    int row;
-    int column;
-    Pixel color;
+SetCellColor(Widget w, int row, int column, Pixel color)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     int i, j;
 
   /*
@@ -6548,11 +6482,7 @@ SetCellColor(mw, row, column, color)
  * Public interface to set_cell_color method
  */
 void
-XbaeMatrixSetCellColor(w, row, column, color)
-    Widget w;
-    int row;
-    int column;
-    Pixel color;
+XbaeMatrixSetCellColor(Widget w, int row, int column, Pixel color)
 {
   /*
    * Make sure w is a Matrix or a subclass
@@ -6572,11 +6502,7 @@ XbaeMatrixSetCellColor(w, row, column, color)
  */
 /* ARGSUSED */
 static void
-EditCellACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+EditCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
     int row, column;
@@ -6778,11 +6704,7 @@ EditCellACT(w, event, params, nparams)
  */
 /* ARGSUSED */
 static void
-CancelEditACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+CancelEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
     Boolean unmap;
@@ -6840,11 +6762,7 @@ CancelEditACT(w, event, params, nparams)
  */
 /* ARGSUSED */
 static void
-CommitEditACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+CommitEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
     Boolean unmap;
@@ -6902,11 +6820,7 @@ CommitEditACT(w, event, params, nparams)
  */
 /* ARGSUSED */
 static Boolean
-EventToXY(mw, event, x, y, cell)
-    XbaeMatrixWidget mw;
-    XEvent *event;
-    int *x, *y;
-    CellType *cell;
+EventToXY(XbaeMatrixWidget mw, XEvent *event, int *x, int *y, CellType *cell)
 {
     switch (event->type) {
     case ButtonPress:
@@ -6954,11 +6868,7 @@ EventToXY(mw, event, x, y, cell)
 
 /* ARGSUSED */
 static void
-SelectCellACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+SelectCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
     int x, y;
@@ -7017,11 +6927,7 @@ SelectCellACT(w, event, params, nparams)
 
 /* ARGSUSED */
 static void
-TraverseNextACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+TraverseNextACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
 
@@ -7052,11 +6958,7 @@ TraverseNextACT(w, event, params, nparams)
 
 /* ARGSUSED */
 static void
-TraversePrevACT(w, event, params, nparams)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *nparams;
+TraversePrevACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
     XbaeMatrixWidget mw;
 
@@ -7096,12 +6998,8 @@ TraversePrevACT(w, event, params, nparams)
  */
 /* ARGSUSED */
 Boolean
-CvtStringToStringArray(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static String *array;
     String start = from->addr;
@@ -7275,12 +7173,8 @@ CvtStringToStringArray(dpy, args, num_args, from, to, data)
  */
 /* ARGSUSED */
 void
-StringArrayDestructor(app, to, converter_data, args, num_args)
-    XtAppContext app;
-    XrmValuePtr to;
-    XtPointer converter_data;
-    XrmValuePtr args;
-    Cardinal *num_args;
+StringArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
 {
     String *array = *(String **) to->addr;
     String *entry;
@@ -7300,12 +7194,8 @@ StringArrayDestructor(app, to, converter_data, args, num_args)
  */
 /* ARGSUSED */
 Boolean
-CvtStringToWidthArray(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToWidthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static short *array;
     String start = from->addr;
@@ -7372,12 +7262,8 @@ CvtStringToWidthArray(dpy, args, num_args, from, to, data)
  */
 /* ARGSUSED */
 void
-WidthArrayDestructor(app, to, converter_data, args, num_args)
-    XtAppContext app;
-    XrmValuePtr to;
-    XtPointer converter_data;
-    XrmValuePtr args;
-    Cardinal *num_args;
+WidthArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
 {
     short *array = *(short **) to->addr;
 
@@ -7390,12 +7276,8 @@ WidthArrayDestructor(app, to, converter_data, args, num_args)
  */
 /* ARGSUSED */
 Boolean
-CvtStringToMaxLengthArray(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToMaxLengthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static int *array;
     String start = from->addr;
@@ -7463,12 +7345,8 @@ CvtStringToMaxLengthArray(dpy, args, num_args, from, to, data)
  */
 /* ARGSUSED */
 void
-MaxLengthArrayDestructor(app, to, converter_data, args, num_args)
-    XtAppContext app;
-    XrmValuePtr to;
-    XtPointer converter_data;
-    XrmValuePtr args;
-    Cardinal *num_args;
+MaxLengthArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
 {
     int *array = *(int **) to->addr;
 
@@ -7481,10 +7359,7 @@ MaxLengthArrayDestructor(app, to, converter_data, args, num_args)
  * Used by StringToAlignmentArray converter.
  */
 static Boolean
-StringsAreEqual(in, test, length)
-    String in;
-    String test;
-    int length;
+StringsAreEqual(String in, String test, int length)
 {
     int i;
 
@@ -7517,12 +7392,8 @@ StringsAreEqual(in, test, length)
  */
 /* ARGSUSED */
 Boolean
-CvtStringToAlignmentArray(dpy, args, num_args, from, to, data)
-    Display *dpy;
-    XrmValuePtr args;
-    Cardinal *num_args;
-    XrmValuePtr from, to;
-    XtPointer *data;
+CvtStringToAlignmentArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
+  XrmValuePtr from, XrmValuePtr to, XtPointer *data)
 {
     static unsigned char *array;
     String start = from->addr;
@@ -7613,12 +7484,8 @@ CvtStringToAlignmentArray(dpy, args, num_args, from, to, data)
  */
 /* ARGSUSED */
 void
-AlignmentArrayDestructor(app, to, converter_data, args, num_args)
-    XtAppContext app;
-    XrmValuePtr to;
-    XtPointer converter_data;
-    XrmValuePtr args;
-    Cardinal *num_args;
+AlignmentArrayDestructor(XtAppContext app, XrmValuePtr to,
+  XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
 {
     unsigned char *array = *(unsigned char **) to->addr;
 
@@ -7651,7 +7518,7 @@ AlignmentArrayDestructor(app, to, converter_data, args, num_args)
  * Create and initialize a ScrollMgr
  */
 static SmScrollMgr
-SmCreateScrollMgr()
+SmCreateScrollMgr(void)
 {
     SmScrollMgr scrollMgr = XtNew(SmScrollMgrRec);
 
@@ -7668,8 +7535,7 @@ SmCreateScrollMgr()
  * Destroy a ScrollMgr, including any queued scrolls
  */
 static void
-SmDestroyScrollMgr(scrollMgr)
-    SmScrollMgr scrollMgr;
+SmDestroyScrollMgr(SmScrollMgr scrollMgr)
 {
     if (scrollMgr->scroll_queue) {
 	SmScrollNode node = scrollMgr->scroll_queue->next;
@@ -7689,10 +7555,7 @@ SmDestroyScrollMgr(scrollMgr)
  * Record a new scroll request in the ScrollMgr
  */
 static void
-SmAddScroll(scrollMgr, delta_x, delta_y)
-    SmScrollMgr scrollMgr;
-    int delta_x;
-    int delta_y;
+SmAddScroll(SmScrollMgr scrollMgr, int delta_x, int delta_y)
 {
     SmScrollNode node = XtNew(SmScrollNodeRec);
 
@@ -7725,8 +7588,7 @@ SmAddScroll(scrollMgr, delta_x, delta_y)
  * Remove a scroll from the ScrollMgr queue
  */
 static void
-SmRemoveScroll(scrollMgr)
-    SmScrollMgr scrollMgr;
+SmRemoveScroll(SmScrollMgr scrollMgr)
 {
     if (scrollMgr->scroll_count) {
 	SmScrollNode node = scrollMgr->scroll_queue;
@@ -7754,9 +7616,7 @@ SmRemoveScroll(scrollMgr)
  * Handle an expose event
  */
 static void
-SmScrollEvent(scrollMgr, event)
-    SmScrollMgr scrollMgr;
-    XEvent *event;
+SmScrollEvent(SmScrollMgr scrollMgr, XEvent *event)
 {
     switch (event->type) {
 

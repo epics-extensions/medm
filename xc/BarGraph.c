@@ -31,12 +31,13 @@
 #define offset(field) XtOffset(BarGraphWidget, field)
 
 /****** Declare widget methods */
-static void ClassInitialize();
+static void ClassInitialize(void);
 static void Initialize(Widget request, Widget new,
   ArgList args, Cardinal *nargs);
 static void Redisplay(Widget w, XEvent *event, Region region);
 static Boolean SetValues(Widget cur, Widget req,
   Widget new, ArgList args, Cardinal *nargs);
+static void Redisplay(Widget w, XEvent *event, Region region);
 static void Destroy(Widget w);
 static void Resize(Widget w);
 static XtGeometryResult QueryGeometry(Widget w, XtWidgetGeometry *proposed,
@@ -185,7 +186,7 @@ BarGraphClassRec barGraphClassRec = {
 
 WidgetClass xcBarGraphWidgetClass = (WidgetClass)&barGraphClassRec;
 
-static void ClassInitialize() {
+static void ClassInitialize(void) {
   /*************************************************************************
    * ClassInitialize: This method initializes the BarGraph widget class.   *
    *   It registers resource value converter functions with Xt.            *

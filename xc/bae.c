@@ -29,6 +29,10 @@
 #define ROWS		6
 #define COLUMNS		5
 
+/* Function prototypes */
+int main(int argc, char *argv[]);
+
+
 static String rows[ROWS][COLUMNS] = {
     "Orange", "12", "Rough", "Inches", "Large",
     "Blue", "323", "Smooth", "Feet", "Medium",
@@ -41,9 +45,7 @@ String *cells[ROWS];
 
 short widths[5] = { 6, 3, 10, 10, 10 };
 
-main(argc, argv)
-    int argc;
-    char *argv[];
+int main(int argc, char *argv[])
 {
     Widget toplevel, mw;
     XtAppContext app;
@@ -51,7 +53,7 @@ main(argc, argv)
 
     toplevel = XtVaAppInitialize(&app, "Simple",
       NULL, 0,
-      (Cardinal *)&argc, argv,
+      &argc, argv,
       NULL,
       NULL);
 
@@ -68,4 +70,6 @@ main(argc, argv)
 
     XtRealizeWidget(toplevel);
     XtAppMainLoop(app);
+
+    return(0);
 }

@@ -34,7 +34,7 @@
 #define offset(field) XtOffset(MeterWidget, field)
 
 /* Function prototypes for widget methods */
-static void ClassInitialize();
+static void ClassInitialize(void);
 static void Initialize(Widget request, Widget new,
   ArgList args, Cardinal *nargs);
 static void Redisplay(Widget w, XEvent *event, Region region);
@@ -184,7 +184,7 @@ WidgetClass xcMeterWidgetClass = (WidgetClass)&meterClassRec;
  it registers resource value converter functions with Xt.
 *******************************************************************/
 
-static void ClassInitialize()
+static void ClassInitialize(void)
 {
     XtAddConverter(XtRString, XcROrient, CvtStringToOrient, NULL, 0);
 }
@@ -259,7 +259,6 @@ static void Redisplay(Widget w, XEvent *event, Region region)
 {
     MeterWidget wm = (MeterWidget)w;
     char upper[30], lower[30];
-    int shift, diameter;
     
   /*
    * Check to see whether or not the widget's window is mapped.  You can't
@@ -429,7 +428,7 @@ static void Resize(Widget w)
     MeterWidget wm = (MeterWidget)w;
     int j;
     int max_val_width, min_val_width, max_width;
-    int font_center, font_height, marker_width, center_x, center_y;
+    int font_height, marker_width, center_x, center_y;
     char upper[30], lower[30];
     double angle, cosine, sine;
 
@@ -506,10 +505,14 @@ static void Resize(Widget w)
 	      *(MAX_ANGLE - MIN_ANGLE));
 	    cosine = cos(angle);
 	    sine = sin(angle);
-	    wm->meter.segs[j].x1 = center_x + wm->meter.outer_radius*cosine;
-	    wm->meter.segs[j].y1 = center_y - wm->meter.outer_radius*sine;
-	    wm->meter.segs[j].x2 = center_x + wm->meter.inner_radius*cosine; 
-	    wm->meter.segs[j].y2 = center_y - wm->meter.inner_radius*sine; 
+	    wm->meter.segs[j].x1 =
+	      (short)(center_x + wm->meter.outer_radius*cosine);
+	    wm->meter.segs[j].y1 =
+	      (short)(center_y - wm->meter.outer_radius*sine);
+	    wm->meter.segs[j].x2 =
+	      (short)(center_x + wm->meter.inner_radius*cosine); 
+	    wm->meter.segs[j].y2 =
+	      (short)(center_y - wm->meter.inner_radius*sine); 
 	}
     }
     
@@ -688,7 +691,6 @@ static void Draw_display(Widget w, Display *display,
     char *temp;
     float range, dim;
     int shift, diameter, radius, center_x, center_y;
-    unsigned int lineWidth, meter_size;
     double angle, sine, cosine, base_multiplier;
     XPoint point, triangle[3];
     XRectangle clipRect[1];
@@ -732,9 +734,9 @@ static void Draw_display(Widget w, Display *display,
     sine = sin(angle);
     center_x = wm->meter.meter_center.x;
     center_y = wm->meter.meter_center.y - wm->control.shade_depth;
-    point.x = center_x + (wm->meter.inner_radius-4)*cosine;
-    point.y = center_y - (wm->meter.inner_radius-4)*sine;
-    base_multiplier = (double) MAX(3,wm->meter.inner_radius/15);
+    point.x = (short)(center_x + (wm->meter.inner_radius-4)*cosine);
+    point.y = (short)(center_y - (wm->meter.inner_radius-4)*sine);
+    base_multiplier = (short)MAX(3,wm->meter.inner_radius/15);
     triangle[0].x = point.x;
     triangle[0].y = point.y;
     triangle[1].x = center_x - (int)(base_multiplier*sine);

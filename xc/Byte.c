@@ -29,7 +29,7 @@
 #define offset(field) XtOffset(ByteWidget, field)
 
 /****** Declare widget methods */
-static void ClassInitialize();
+static void ClassInitialize(void);
 static void Initialize(Widget request, Widget new,
   ArgList args, Cardinal *nargs);
 static void Resize(Widget w);
@@ -150,7 +150,7 @@ ByteClassRec byteClassRec = {
 
 WidgetClass xcByteWidgetClass = (WidgetClass)&byteClassRec;
 
-static void ClassInitialize()
+static void ClassInitialize(void)
   /*************************************************************************
    * ClassInitialize: This method initializes the Byte widget class.       *
    *   It registers resource value converter functions with Xt.            *
@@ -207,10 +207,7 @@ static void Resize(Widget w)
    *************************************************************************/
 {
     ByteWidget wb = (ByteWidget)w;
-    int j, max_val_width, min_val_width, max_width;
-    int seg_spacing, font_center, font_height;
-    char upper[30], lower[30];
-    Boolean displayValue, displayLabel;
+    int font_height;
     
     DPRINTF(("Byte: executing Resize\n"));
   /* printf("BY: executing Resize1\n"); */
@@ -242,8 +239,6 @@ static void Redisplay(Widget w, XEvent *event, Region region)
  *************************************************************************/
 {
     ByteWidget wb = (ByteWidget)w;
-    int j;
-    char upper[30], lower[30];
     
   /****** Check to see whether or not the widget's window is mapped */
     if (!XtIsRealized((Widget)w) || !wb->core.visible) return;

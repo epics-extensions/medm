@@ -34,7 +34,7 @@
 #define offset(field) XtOffset(IndicatorWidget, field)
 
 /* Function prototypes for widget methods */
-static void ClassInitialize();
+static void ClassInitialize(void);
 static void Initialize(Widget request, Widget new,
   ArgList args, Cardinal *nargs);
 static void Redisplay(Widget w, XEvent *event, Region region);
@@ -194,7 +194,7 @@ WidgetClass xcIndicatorWidgetClass = (WidgetClass)&indicatorClassRec;
 
 *******************************************************************/
 
-static void ClassInitialize()
+static void ClassInitialize(void)
 {
     XtAddConverter(XtRString, XcROrient, CvtStringToOrient, NULL, 0);
 }

@@ -44,16 +44,18 @@
 /* Macro redefinition for offset. */
 #define offset(field) XtOffset(ValueWidget, field)
 
-
-/* Declare widget methods */
-static void ClassInitialize();
-static void Initialize();
-static Boolean SetValues();
-
-/* Declare widget class functions */
-static void CvtStringToDType();
-static void CvtStringToVType();
-static void CvtStringToValueJustify();
+/* Widget method function prototypes */
+static void ClassInitialize(void);
+static void Initialize(Widget request, Widget new,
+  ArgList args, Cardinal *nargs);
+static Boolean SetValues(Widget cur, Widget req,
+  Widget new, ArgList args, Cardinal *nargs);
+static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
+  XrmValue *fromVal, XrmValue *toVal);
+static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
+  XrmValue *fromVal, XrmValue *toVal);
+static void CvtStringToValueJustify(XrmValue *args, Cardinal *nargs,
+  XrmValue *fromVal, XrmValue *toVal);
 
 /* Define the widget's resource list */
 static XtResource resources[] =
@@ -210,20 +212,6 @@ ValueClassRec valueClassRec =
 
 WidgetClass xcValueWidgetClass = (WidgetClass)&valueClassRec;
 
-/* Widget method function prototypes */
-static void ClassInitialize();
-static void Initialize(Widget request, Widget new,
-  ArgList args, Cardinal *nargs);
-static Boolean SetValues(Widget cur, Widget req,
-  Widget new, ArgList args, Cardinal *nargs);
-static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
-  XrmValue *fromVal, XrmValue *toVal);
-static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
-  XrmValue *fromVal, XrmValue *toVal);
-static void CvtStringToValueJustify(XrmValue *args, Cardinal *nargs,
-  XrmValue *fromVal, XrmValue *toVal);
-
-    
 /*******************************************************************
  NAME:		ClassInitialize.	
  DESCRIPTION:
@@ -562,7 +550,8 @@ float Correlate(float from_val, float from_range, float to_range)
  *   correlated value.                                                   *
  *************************************************************************/
 {
-    float percent, result;
+    double percent;
+    float result;
     
     percent = ((from_val * 100.0) / from_range);
     
@@ -570,7 +559,7 @@ float Correlate(float from_val, float from_range, float to_range)
     percent = MAX(0.,percent);
     percent = MIN(100.,percent);
     
-    result = (to_range * (percent / 100));
+    result = (float)(to_range * (percent / 100));
     
     return result;
 }
