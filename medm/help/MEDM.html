@@ -10,7 +10,7 @@
 <P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>March 2003</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>November 2003</P>
 </B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
@@ -559,7 +559,7 @@
 
 <FONT SIZE=2>
 <B><P><A NAME="SciPlot"></A>SciPlot</P>
-</B><P>&#9;MEDM also supports SciPlot, a freely distributable package written by Rob McMullen at the University of Texas.  Its home page is </FONT><A HREF="http://www.ae.utexas.edu/~rwmcm/SciPlot.html"><FONT SIZE=2>http://www.ae.utexas.edu/~rwmcm/SciPlot.html</FONT></A><FONT SIZE=2>.  The version used in MEDM has been modified to add features and fix bugs, but is essentially the work of Rob McMullen.  There is a license, which is included in the files and discussed on the web site.  At present, SciPlot does not support a Y axis, fill, or time labels, as well as some less-important features.  However, it has enough features to be very useful, and it does some things better than XRT/Graph.  It has been used extensively and is tested.  It can be used where XRT/Graph is not available, for instance on the </FONT><A HREF="#WIN32"><FONT SIZE=2>WIN32</FONT></A><FONT SIZE=2> platform.  To build MEDM with SciPlot, define the makefile variable SCIPLOT, preferably setting it to YES.</P>
+</B><P>&#9;MEDM also supports SciPlot, a freely distributable package originally written by Rob McMullen at the University of Texas.  Its web page no longer exists.  The version used in MEDM has been significantly modified to add features and fix bugs, but SciPlot is essentially the work of Rob McMullen.  There is a license, which is included in the files.  At present, SciPlot does not support a Y axis, fill, or time labels, as well as some less-important features.  However, it has enough features to be very useful, and it does some things better than XRT/Graph.  It has been used extensively and is tested.  It can be used where XRT/Graph is not available, for instance on the </FONT><A HREF="#WIN32"><FONT SIZE=2>WIN32</FONT></A><FONT SIZE=2> platform.  To build MEDM with SciPlot, define the makefile variable SCIPLOT, preferably setting it to YES.</P>
 <B><P><A NAME="JPT"></A>JPT</P>
 </B><P>&#9;JPT, the Jefferson Plotting Toolkit, developed at the Thomas Jefferson National Accelerator Facility by Ge Lei, may also be used with the MEDM Cartesian Plot.  This package has a second Y axis, fill, and time labels, unlike SciPlot.  However, at this time it has not been extensively tested with MEDM, and it is known that it does not work correctly in several cases, in particular when the X variable is a vector.  There are problems with the second Y axis and the time labels, as well.  Be sure that it works for what you want to do before using it.  To build MEDM with JPT, define the makefile variable JPT, preferably setting it to YES.</P>
 <P>&#9;If none of the makefile variables XRTGRAPH, SCIPLOT, or JPT is defined, MEDM can still be built but will ignore any Cartesian Plots.  Any Cartesian Plots in an existing ADL file will be lost if the file is modified and saved.</P>
@@ -2279,6 +2279,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.*</P>
-<P><ADDRESS>Modified March 14, 2003<P>
+<P><ADDRESS>Modified November 14, 2003<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
