@@ -264,7 +264,8 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 
     n = 0;
     if (dlMenu->object.width > OPTION_MENU_SUBTRACTIVE_WIDTH) {
-	XtSetArg(args[0],XmNwidth,dlMenu->object.width - OPTION_MENU_SUBTRACTIVE_WIDTH); n++;
+	XtSetArg(args[0],XmNwidth,dlMenu->object.width -
+	  OPTION_MENU_SUBTRACTIVE_WIDTH); n++;
     } else {
 	XtSetArg(args[0],XmNwidth,dlMenu->object.width); n++;
     }
@@ -281,14 +282,16 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	  XtSetArg(args[7],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
 	  XtSetArg(args[8],XmNentryAlignment, XmALIGNMENT_CENTER); n++;
 	  XtSetArg(args[9],XmNisAligned,True); n++;
-	  menu = XmCreatePulldownMenu(pm->updateTask->displayInfo->drawingArea,"menu",args,n);
+	  menu = XmCreatePulldownMenu(pm->updateTask->displayInfo->drawingArea,
+	    "menu",args,n);
 	  XtSetArg(args[7],XmNalignment,XmALIGNMENT_CENTER);
 	  for (i=0; i<=pd->hopr; i++) {
 	      XmString xmStr;
 	      xmStr = XmStringCreateLocalized(pd->stateStrings[i]);
 	      XtSetArg(args[8], XmNlabelString, xmStr);
-	      buttons[i] = XmCreatePushButtonGadget(menu, "menuButtons", args, 9);
-	      XtAddCallback(buttons[i], XmNactivateCallback, menuValueChangedCb, (XtPointer) i);
+	      buttons[i] = XmCreatePushButtonGadget(menu,"menuButtons",args,9);
+	      XtAddCallback(buttons[i], XmNactivateCallback,
+		menuValueChangedCb, (XtPointer) i);
 	      XmStringFree(xmStr);
 	  }
 	  XtManageChildren(buttons,i);
@@ -303,7 +306,11 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	    XmCreateOptionMenu(pm->updateTask->displayInfo->drawingArea,
 	      "optionMenu",args,n);
 		
-	/* unmanage the option label gadget, manage the option menu */
+	/* Add handlers */
+	  addCommonHandlers(pm->dlElement->widget,
+	    pm->updateTask->displayInfo);
+
+      /* Unmanage the option label gadget, manage the option menu */
 	  XtUnmanageChild(XmOptionLabelGadget(pm->dlElement->widget));
 	  XtManageChild(pm->dlElement->widget);
 }
@@ -321,6 +328,8 @@ static void menuDraw(XtPointer cd) {
     if (pd->connected) {
 	if (pd->readAccess) {
 	    if ((widget) && !XtIsManaged(widget)) {
+		printf("\nmenuDraw: pm->dlElement->widget=%x\n",
+		  pm->dlElement->widget);
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
