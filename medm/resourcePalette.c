@@ -1359,6 +1359,7 @@ static void createResourceEntries(Widget entriesSW)
     Widget entriesRC;
     Arg args[12];
     int i, n;
+    short maxCols;
 
     n = 0;
     XtSetArg(args[n],XmNnumColumns,1); n++;
@@ -1375,6 +1376,13 @@ static void createResourceEntries(Widget entriesSW)
     }
     initializeResourcePaletteElements();
 
+  /* Define the column width for PV names, etc. For 3.13 base this
+     used to be PVNAME_STRINGSZ+FLDNAME_SZ+1=33.  For 3.14
+     PVNAME_STRINGSZ is much larger and FLDNAME_SZ is undefined and
+     unlimited.  Use 33 (number of characters excluding space and 1
+     less than before) always. */
+    maxCols=33;
+	  
   /* Resize the labels and elements (to maximum's width) for uniform appearance */
     XtSetArg(args[0],XmNwidth,maxLabelWidth);
     XtSetArg(args[1],XmNheight,maxLabelHeight);
@@ -1406,20 +1414,21 @@ static void createResourceEntries(Widget entriesSW)
 	  || i == RDBK_RC || i == CTRL_RC) {
 	  /* Since can have macro-substituted strings, need longer length */
 	    XtVaSetValues(resourceEntryElement[i],
-	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
+	      XmNcolumns,maxCols,
 	      XmNmaxLength,(int)MAX_TOKEN_LENGTH-1,NULL);
 	} else if(i == VIS_CALC_RC || i == IMAGE_CALC_RC) {
-	  /* calc in calcRecord is limited to 40 characters including NULL */
+	  /* calc in calcRecord is limited to MAX_STRING_SIZE=40
+             characters including NULL */
 	    XtVaSetValues(resourceEntryElement[i],
-	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
-	      XmNmaxLength,(int)39,NULL);
+	      XmNcolumns,maxCols,
+	      XmNmaxLength,(int)MAX_STRING_SIZE-1,NULL);
 	} else if(i == MSG_LABEL_RC || i == PRESS_MSG_RC
 	  || i == RELEASE_MSG_RC || i == TEXTIX_RC
 	  || i == TITLE_RC || i == XLABEL_RC || i == YLABEL_RC
 	  || i == IMAGE_NAME_RC) {
 	  /* Use size of CA PV name entry for these text-oriented fields */
 	    XtVaSetValues(resourceEntryElement[i],
-	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),NULL);
+	      XmNcolumns,maxCols,NULL);
 	}
     }
 
