@@ -6,8 +6,8 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 
 # Needs work to handle CMPLR=STRICT
 CMPLR = STRICT
-UNIX_OPT = NO
-CC += -g
+#UNIX_OPT = NO
+#CC += -g
 
 USR_CFLAGS = -I$(MOTIF_INC) -I$(X11_INC)
 
@@ -37,6 +37,9 @@ bar1: $(OBJS) $(DEPLIBS) bar1.c
 # $Id$
 #
 # $Log$
+# Revision 1.7  1998/07/15 18:05:51  evans
+# MEDM 2.3.4.
+#
 # Revision 1.6  1998/05/20 18:15:56  evans
 # Rewrote code to have function prototypes and give no warnings with
 # CMPILR=STRICT on Solaris.  Changed Rect3d to use Motif shadow colors.

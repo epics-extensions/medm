@@ -4,10 +4,10 @@ EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-UNIX_OPT = NO
-STATIC_BUILD = NO
-CMPLR = STRICT
+#UNIX_OPT = NO
+#STATIC_BUILD = YES
 #PURIFY = YES
+CMPLR = STRICT
 
 #SPECIFY_X11 = NO
 #SPECIFY_MOTIF = NO
@@ -41,7 +41,7 @@ CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
 endif
 
 CC += -g
-CC += -xsb
+#CC += -xsb
 #CC += -P
 #CC += -xP
 #CC += -H
