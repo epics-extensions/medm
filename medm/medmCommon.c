@@ -209,6 +209,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     Dimension width, height;
     XtGCMask valueMask;
     XGCValues values;
+    int j;
 
     if(!displayInfo) return;
 
@@ -219,8 +220,10 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	displayInfo->dlColormapSize = dlColormap->ncolors;
 	
       /* Allocate the X colormap from dlColormap data */
+	j = 0;
 	for(i = 0; i < dlColormap->ncolors; i++) {
 	    XColor color;
+	    
 	  /* Scale [0,255] to [0,65535] */
 	    color.red   = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].r); 
 	    color.green = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].g); 
@@ -229,9 +232,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	    if(XAllocColor(display,cmap,&color)) {
 		displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
 	    } else {
-		medmPrintf(1,"\nexecuteDlColormap: Cannot not allocate color (%d: "
-		  "r=%d  g=%d  b=%d)\n",i,defaultDlColormap.dl_color[i].r,
-		  defaultDlColormap.dl_color[i].g,defaultDlColormap.dl_color[i].b);
+		j++;
 		displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
 	    }
 	    
@@ -240,6 +241,11 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	    else
 	      medmPrintf(1,"\nexecuteDlColormap:  Too many colormap entries\n");
 	  /* Just keep rewriting that last colormap entry */
+	}
+	if(j) {
+	    medmPrintf(1,"\nexecuteDlColormap: "
+	      "Cannot not allocate %d of %d pixels\n",
+	      j,dlColormap->ncolors);
 	}
     }
     
