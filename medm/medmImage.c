@@ -77,16 +77,32 @@ typedef struct _Image {
 
 Widget importFSD;
 XmString gifDirMask;
+
+/* Function prototypes */
+static void animateImage(XtPointer cd, XtIntervalId *id);
 static void destroyDlImage(DlElement *);
+static void destroyDlImage(DlElement *dlElement);
+static void drawImage(MedmImage *pi);
+static void imageDestroyCb(XtPointer cd);
+static void imageDraw(XtPointer cd);
+static void imageGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
+static void imageGetRecord(XtPointer cd, Record **record, int *count);
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
+static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
+static void imageInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void imageUpdateGraphicalInfoCb(XtPointer cd);
+static void imageUpdateValueCb(XtPointer cd);
+static void imageUpdateValueCb(XtPointer cd);
+static void importCallback(Widget w, XtPointer cd, XtPointer cbs);
+
 static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
     NULL,
     executeDlImage,
     writeDlImage,
-    NULL,
+    imageGetLimits,
     imageGetValues,
-    NULL,
+    imageInheritValues,
     NULL,
     NULL,
     genericMove,
@@ -94,19 +110,6 @@ static DlDispatchTable imageDlDispatchTable = {
     genericOrient,
     NULL,
     NULL};
-
-/* Function prototypes */
-
-static void animateImage(XtPointer cd, XtIntervalId *id);
-static void destroyDlImage(DlElement *dlElement);
-static void drawImage(MedmImage *pi);
-static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
-static void imageUpdateValueCb(XtPointer cd);
-static void imageUpdateValueCb(XtPointer cd);
-static void importCallback(Widget w, XtPointer cd, XtPointer cbs);
-static void imageDraw(XtPointer cd);
-static void imageDestroyCb(XtPointer cd);
-static void imageGetRecord(XtPointer cd, Record **record, int *count);
 
 static void drawImage(MedmImage *pi)
 {
@@ -137,11 +140,11 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     GIFData *gif;
     DlImage *dlImage = dlElement->structure.image;
 
-  /* From the DlImage structure, we've got the image's dimensions */
+  /* Get the image */
     switch (dlImage->imageType) {
     case GIF_IMAGE:
-      /* KE: GIF is the only type */
 	if (dlImage->privateData == NULL) {
+	  /* Not initialized */
 	    if (!initializeGIF(displayInfo,dlImage)) {
 	      /* Something failed - bail out! */
 		if(dlImage->privateData != NULL) {
@@ -155,6 +158,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlImage,gif,gif?gif->nFrames:-1);
 #endif
 	} else {
+	  /* Already initialized */
 	    gif = (GIFData *)dlImage->privateData;
 	    if (gif != NULL) {
 		gif->curFrame=0;
@@ -172,11 +176,16 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    }
 	}
 	break;
+    case NO_IMAGE:
+    case TIFF_IMAGE:
+	gif = NULL;
     }
 
   /* Allocate and fill in MedmImage struct */
     if (displayInfo->traversalMode == DL_EXECUTE) {
+      /* EXECUTE mode */
 	MedmImage *pi;
+	
 	pi = (MedmImage *)malloc(sizeof(MedmImage));
 	pi->displayInfo = displayInfo;
 	pi->dlElement = dlElement;
@@ -191,53 +200,49 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 	    pi->updateTask->opaque = False;
 	}
-	if(*dlImage->dynAttr.chan) {
-	    pi->record = medmAllocateRecord(dlImage->dynAttr.chan,
-	      imageUpdateValueCb,NULL,(XtPointer) pi);
-	    pi->record->monitorValueChanged = False;
-
-#ifdef __COLOR_RULE_H__
-	    switch (dlImage->dynAttr.clr) {
-	    case STATIC:
-		pi->record->monitorValueChanged = False;
-		pi->record->monitorSeverityChanged = False;
-		break;
-	    case ALARM:
-		pi->record->monitorValueChanged = False;
-		break;
-	    case DISCRETE:
-		pi->record->monitorSeverityChanged = False;
-		break;
-	    }
-#else
-	    pi->record->monitorValueChanged = False;
-	    if (dlImage->dynAttr.clr != ALARM ) {
-		pi->record->monitorSeverityChanged = False;
-	    }
-#endif
-	    if (dlImage->dynAttr.vis == V_STATIC ) {
-		pi->record->monitorZeroAndNoneZeroTransition = False;
-	    }
+	pi->record = NULL;
+	if(*dlImage->monitor.rdbk) {
+	  /* A channel is defined */
+	    pi->record = medmAllocateRecord(dlImage->monitor.rdbk,
+	      imageUpdateValueCb,
+	      imageUpdateGraphicalInfoCb,
+	      (XtPointer)pi);
+	    drawWhiteRectangle(pi->updateTask);
 	} else {
 	  /* No channel */
 	    if(gif && gif->nFrames > 1) {
 #if DEBUG_ANIMATE
-		fprintf(stderr,"executeDlImage (3): pi=%x dlElement=%x "
+		print("executeDlImage (3): pi=%x dlElement=%x "
 		  "gif=%x nFrames=%d pi->timerid=%x\n",
 		  &pi,pi->dlElement,gif,gif->nFrames,pi->timerid);
+		print("  sizeof(GIFData)=%d sizeof(DlImage)=%d\n",
+		  sizeof(GIFData),sizeof(DlImage));
 #endif
 		pi->timerid=XtAppAddTimeOut(appContext,
 		  ANIMATE_TIME(gif), animateImage, (XtPointer)pi);
 	    }
 	}
     } else {
+      /* EDIT mode */
+	if (gif != NULL) {
+	    gif->curFrame=0;
+	    if (dlImage->object.width == gif->currentWidth &&
+	      dlImage->object.height == gif->currentHeight) {
+		drawGIF(displayInfo,dlImage);
+	    } else {
+		resizeGIF(dlImage);
+		drawGIF(displayInfo,dlImage);
+	    }
 #if DEBUG_ANIMATE
-	fprintf(stderr,"executeDlImage: dlElement=%x dlImage=%x clr=%d "
-	  "width=%d\n",
-	  dlElement,dlImage,dlImage->attr.clr,dlImage->attr.width);
+	    fprintf(stderr,"executeDlImage (2): dlImage=%x gif=%x nFrames=%d\n",
+	      dlImage,gif,gif?gif->nFrames:-1);
 #endif
-	executeDlBasicAttribute(displayInfo,&(dlImage->attr));
+	}
     }
+
+  /* Update the limits to reflect current src's */
+    updatePvLimits(&dlImage->limits);
+    
 }
 
 static void animateImage(XtPointer cd, XtIntervalId *id)
@@ -245,7 +250,7 @@ static void animateImage(XtPointer cd, XtIntervalId *id)
     MedmImage *pi = (MedmImage *)cd;
     GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
 
-#if DEBUG_ANIMATE
+#if DEBUG_ANIMATE > 1
     fprintf(stderr,"animateImage: pi=%x dlElement=%x "
       "gif=%x nFrames=%d curFrame=%d pi->timerid=%x\n",
       &pi,pi->dlElement,gif,gif->nFrames,gif->nFrames,pi->timerid);
@@ -263,71 +268,18 @@ static void imageDraw(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
     Record *pr = pi->record;
-    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
-    XGCValues gcValues;
-    unsigned long gcValueMask;
-    Display *display = XtDisplay(pi->updateTask->displayInfo->drawingArea);
     DlImage *dlImage = pi->dlElement->structure.image;
-    
+
     if(!pr) return;
     if (pr->connected) {
-	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-	switch (dlImage->dynAttr.clr) {
-#ifdef __COLOR_RULE_H__
-	case STATIC :
-	    gcValues.foreground = displayInfo->colormap[dlImage->attr.clr];
-	    break;
-	case DISCRETE:
-	    gcValues.foreground = extractColor(displayInfo,
-	      pr->value,
-	      dlImage->dynAttr.colorRule,
-	      dlImage->attr.clr);
-	    break;
-#else
-	case STATIC :
-	case DISCRETE:
-	    gcValues.foreground = displayInfo->colormap[dlImage->attr.clr];
-	    break;
-	case ALARM :
-	    gcValues.foreground = alarmColor(pr->severity);
-	    break;
-#endif
-	}
-	gcValues.line_width = dlImage->attr.width;
-	gcValues.line_style = ( (dlImage->attr.style == SOLID) ? LineSolid : LineOnOffDash);
-	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
-
-	switch (dlImage->dynAttr.vis) {
-	case V_STATIC:
-	    drawImage(pi);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pr->value != 0.0)
-	      drawImage(pi);
-	    break;
-	case IF_ZERO:
-	    if (pr->value == 0.0)
-	      drawImage(pi);
-	    break;
-	default :
-	    medmPrintf(1,"\nimageUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
 	if (pr->readAccess) {
-	    if (!pi->updateTask->overlapped && dlImage->dynAttr.vis == V_STATIC) {
-		pi->updateTask->opaque = True;
-	    }
 	} else {
-	    pi->updateTask->opaque = False;
+	    draw3DPane(pi->updateTask,
+	      pi->updateTask->displayInfo->colormap[dlImage->monitor.bclr]);
 	    draw3DQuestionMark(pi->updateTask);
 	}
     } else {
-	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
-	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-	gcValues.line_width = dlImage->attr.width;
-	gcValues.line_style = ((dlImage->attr.style == SOLID) ? LineSolid : LineOnOffDash);
-	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
-	drawImage(pi);
+	drawWhiteRectangle(pi->updateTask);
     }
 }
 
@@ -430,6 +382,87 @@ DlElement* handleImageCreate()
     return dlElement;
 }
 
+static void imageUpdateGraphicalInfoCb(XtPointer cd)
+{
+#if 0
+    Record *pr = (Record *) cd;
+    Meter *pm = (Meter *) pr->clientData;
+    DlMeter *dlMeter = pm->dlElement->structure.meter;
+    Pixel pixel;
+    Widget widget = pm->dlElement->widget;
+    XcVType hopr, lopr, val;
+    short precision;
+
+    switch (pr->dataType) {
+    case DBF_STRING :
+	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
+	  "  Illegal channel type for %s\n"
+	  "  Cannot attach meter\n",
+	  dlMeter->monitor.rdbk);
+	return;
+    case DBF_ENUM :
+    case DBF_CHAR :
+    case DBF_INT :
+    case DBF_LONG :
+    case DBF_FLOAT :
+    case DBF_DOUBLE :
+	hopr.fval = (float) pr->hopr;
+	lopr.fval = (float) pr->lopr;
+	val.fval = (float) pr->value;
+	precision = pr->precision;
+	break;
+    default :
+	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
+	  "  Unknown channel type for %s\n"
+	  "  Cannot attach meter\n",
+	  dlMeter->monitor.rdbk);
+	break;
+    }
+    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+	hopr.fval += 1.0;
+    }
+    if (widget != NULL) {
+      /* Set foreground pixel according to alarm */
+	pixel = (dlMeter->clrmod == ALARM) ?
+	  alarmColor(pr->severity) :
+	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
+	XtVaSetValues(widget, XcNmeterForeground,pixel, NULL);
+
+      /* Set Channel and User limits (if apparently not set yet) */
+	dlMeter->limits.loprChannel = lopr.fval;
+	if(dlMeter->limits.loprSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.loprUser == LOPR_DEFAULT) {
+	    dlMeter->limits.loprUser = lopr.fval;
+	}
+	dlMeter->limits.hoprChannel = hopr.fval;
+	if(dlMeter->limits.hoprSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.hoprUser == HOPR_DEFAULT) {
+	    dlMeter->limits.hoprUser = hopr.fval;
+	}
+	dlMeter->limits.precChannel = precision;
+	if(dlMeter->limits.precSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.precUser == PREC_DEFAULT) {
+	    dlMeter->limits.precUser = precision;
+	}
+
+      /* Set values in the widget if src is Channel */
+	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    dlMeter->limits.lopr = lopr.fval;
+	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+	}
+	if(dlMeter->limits.hoprSrc == PV_LIMITS_CHANNEL) {
+	    dlMeter->limits.hopr = hopr.fval;
+	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+	}
+	if(dlMeter->limits.precSrc == PV_LIMITS_CHANNEL) {
+	    dlMeter->limits.prec = precision;
+	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
+	}
+	XcMeterUpdateValue(widget,&val);
+    }
+#endif
+}
+
 DlElement *createDlImage(DlElement *p)
 {
     DlImage *dlImage;
@@ -441,15 +474,14 @@ DlElement *createDlImage(DlElement *p)
 	*dlImage = *p->structure.image;
     } else {
 	objectAttributeInit(&(dlImage->object));
-	basicAttributeInit(&(dlImage->attr));
-	dynamicAttributeInit(&(dlImage->dynAttr));
+	monitorAttributeInit(&(dlImage->monitor));
+	limitsAttributeInit(&(dlImage->limits));
 	dlImage->imageType = NO_IMAGE;
 	dlImage->imageName[0] = '\0';
 	dlImage->privateData = NULL;
     }
 
-    if (!(dlElement = createDlElement(DL_Image,
-      (XtPointer)      dlImage,
+    if (!(dlElement = createDlElement(DL_Image, (XtPointer)dlImage,
       &imageDlDispatchTable))) {
 	free(dlImage);
     }
@@ -477,10 +509,10 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlImage->object));
-	    } else if (!strcmp(token,"basic attribute")) {
-		parseBasicAttribute(displayInfo,&(dlImage->attr));
-	    } else if(!strcmp(token,"dynamic attribute")) {
-		parseDynamicAttribute(displayInfo,&(dlImage->dynAttr));
+	    } else if (!strcmp(token,"monitor")) {
+		parseMonitor(displayInfo,&(dlImage->monitor));
+	    } else if (!strcmp(token,"limits")) {
+		parseLimits(displayInfo,&(dlImage->limits));
 	    } else if (!strcmp(token,"type")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -527,12 +559,33 @@ void writeDlImage(
     
     fprintf(stream,"\n%simage {",indent);
     writeDlObject(stream,&(dlImage->object),level+1);
-    writeDlBasicAttribute(stream,&(dlImage->attr),level+1);
-    writeDlDynamicAttribute(stream,&(dlImage->dynAttr),level+1);
     fprintf(stream,"\n%s\ttype=\"%s\"",indent,
       stringValueTable[dlImage->imageType]);
     fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
+    writeDlMonitor(stream,&(dlImage->monitor),level+1);
+    writeDlLimits(stream,&(dlImage->limits),level+1);
     fprintf(stream,"\n%s}",indent);
+}
+
+static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
+    DlImage *dlImage = p->structure.image;
+    medmGetValues(pRCB,
+      RDBK_RC,       &(dlImage->monitor.rdbk),
+      CLR_RC,        &(dlImage->monitor.clr),
+      BCLR_RC,       &(dlImage->monitor.bclr),
+      IMAGETYPE_RC,  &(dlImage->imageType),
+      IMAGENAME_RC,  &(dlImage->imageName),
+      LIMITS_RC,     &(dlImage->limits),
+      -1);
+}
+
+static void imageGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlImage *dlImage = pE->structure.image;
+    
+    *(ppL) = &(dlImage->limits);
+    *(pN) = dlImage->monitor.rdbk;
 }
 
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
@@ -543,7 +596,11 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
       Y_RC,          &(dlImage->object.y),
       WIDTH_RC,      &(dlImage->object.width),
       HEIGHT_RC,     &(dlImage->object.height),
+      RDBK_RC,       &(dlImage->monitor.rdbk),
+      CLR_RC,        &(dlImage->monitor.clr),
+      BCLR_RC,       &(dlImage->monitor.bclr),
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
+      LIMITS_RC,     &(dlImage->limits),
       -1);
 }

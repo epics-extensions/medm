@@ -67,7 +67,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_GIF 1
+#define DEBUG_GIF 0
 
 /* include files */
 #include <string.h>
@@ -105,45 +105,52 @@ static int readCode(void);
 #define COMMENT 0xfe
 #define MASK0   0x01
 #define MASK210 0x07
+#define MASK432 0x1c
+#define MASK3   0x08
 #define MASK6   0x40
 #define MASK7   0x80
 
 FILE *fp;
 
-int BitOffset;                 /* Bit Offset of next code */
-int XC, YC;                    /* Output X and Y coords of current pixel */
-int Pass;                      /* Used by output routine if interlaced pic */
-int OutCount;                  /* Decompressor output 'stack count' */
-int RWidth, RHeight;           /* Screen dimensions */
-int Width, Height;             /* Image dimensions */
-int LeftOfs, TopOfs;           /* Image offset */
-int BitsPerPixel;              /* Bits per pixel, read from GIF header */
-int BytesPerScanline;          /* Bytes per scanline in output raster */
-int ColorTableEntries;         /* Number of colors in global color table */
-int Background;                /* Background color */
-int AspectRatio;               /* Pixel aspect ratio */
-int CodeSize;                  /* Code size, read from GIF header */
-int InitCodeSize;              /* Starting code size, used during Clear */
-int Code;                      /* Value returned by readCode */
-int MaxCode;                   /* Limiting value for current code size */
-int ClearCode;                 /* GIF clear code */
-int EOFCode;                   /* GIF end-of-information code */
-int CurCode, OldCode, InCode;  /* Decompressor variables */
-int FirstFree;                 /* First free code, generated per GIF spec */
-int FreeCode;                  /* Decompressor, next free slot in hash table */
-int FinChar;                   /* Decompressor variable */
-int BitMask;                   /* AND mask for data size */
-int ReadMask;                  /* Code AND mask for current code size */
-int BytesOffsetPerPixel;       /* Bytes offset per pixel */   
-int ScreenDepth;               /* Bits per Pixel */
-int LocalColorTableFlag;       /* Flag denoting a local color table */
-int SizeOfLocalColorTable;     /* Size of a local color table */
-int LocalColorTableEntries;    /* Number of colors in local color table */
-Byte TransparentColorFlag;     /* Use Transparent color for the frame */
-Byte TransparentIndex;         /* Transparent color index for the frame */
-int DelayTime;                 /* Delay time in 1/100 sec for the frame */
+int BitOffset;                    /* Bit Offset of next code */
+int XC, YC;                       /* Output X and Y coords of current pixel */
+int Pass;                         /* Used by output routine if interlaced pic */
+int OutCount;                     /* Decompressor output 'stack count' */
+int LogicalScreenWidth;           /* Logical screen width */
+int LogicalScreenHeight;          /* Logical screen height */
+Boolean GlobalColorTableFlag;     /* Flag indicating global color table follows */
+Boolean GlobalColorTableSortFlag; /* Flag indicating global color table is sorted */
+int SizeOfGlobalColorTable;       /* Size of Global Color Table from header */
+int BitsPerPixel;                 /* Bits per pixel (SizeOfGlobalColorTable = 1) */
+int Width, Height;                /* Image dimensions */
+int LeftOffset, TopOffset;        /* Image offsets from logical screen */
+int DisposalMethod;               /* Image disposal method */
+int BytesPerScanline;             /* Bytes per scanline in output raster */
+int ColorTableEntries;            /* Number of colors in global color table */
+int BackgroundColorIndex;         /* BackgroundColorIndex color */
+int PixelAspectRatio;             /* Pixel aspect ratio */
+int CodeSize;                     /* Code size, read from GIF header */
+int InitCodeSize;                 /* Starting code size, used during Clear */
+int Code;                         /* Value returned by readCode */
+int MaxCode;                      /* Limiting value for current code size */
+int ClearCode;                    /* GIF clear code */
+int EOFCode;                      /* GIF end-of-information code */
+int CurCode, OldCode, InCode;     /* Decompressor variables */
+int FirstFree;                    /* First free code, generated per GIF spec */
+int FreeCode;                     /* Decompressor, next free slot in hash table */
+int FinChar;                      /* Decompressor variable */
+int BitMask;                      /* AND mask for data size */
+int ReadMask;                     /* Code AND mask for current code size */
+int BytesOffsetPerPixel;          /* Bytes offset per pixel */   
+int ScreenDepth;                  /* Bits per Pixel */
+int LocalColorTableFlag;          /* Flag denoting a local color table */
+int SizeOfLocalColorTable;        /* Size of a local color table */
+int LocalColorTableEntries;       /* Number of colors in local color table */
+Byte TransparentColorFlag;        /* Use Transparent color for the frame */
+Byte TransparentIndex;            /* Transparent color index for the frame */
+int DelayTime;                    /* Delay time in 1/100 sec for the frame */
+Boolean Interlace;
 
-Boolean Interlace, HasColormap;
 #if DEBUG_GIF
 Boolean verbose=True;
 #else
@@ -221,35 +228,16 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	return(False);
     }
     
-    gif->iWIDE=CURIMAGE(gif)->width;
-    gif->iHIGH=CURIMAGE(gif)->height;
+    gif->iWIDE=LogicalScreenWidth;
+    gif->iHIGH=LogicalScreenHeight;
     
     gif->eWIDE=gif->iWIDE;
     gif->eHIGH=gif->iHIGH;
     
     resizeGIF(dlImage);
     
-#if DEBUG_GIF > 1
-    {
-	int i,j,n;
-	Pixel pixel;
-	int ntimes=11;
-	
-	n=0;
-	print("Pixel Map\n"
-	  "        x    y    Pixel\n");
-	for(j=0; j < gif->iHIGH; j++) {
-	    for(i=0; i < gif->iWIDE; i++) {
-		if(n++ < ntimes) {
-		    pixel=XGetPixel(CURIMAGE(gif),i,j);
-		    print("%4d %4d %4d %8x\n",
-		      n,i,j,pixel);
-		}
-	    }
-	}
-    }
-#endif    
-    
+  /* Don't automatically draw any more */
+#if 0
     if (gif->frames) {
 	XImage *image=CUREXPIMAGE(gif);
 	
@@ -270,6 +258,8 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  0,0,x,y,w,h);
 	XSetForeground(display,gif->theGC,gif->fcol);
     }
+#endif
+    
     return(True);
 
 }
@@ -318,7 +308,6 @@ void resizeGIF(DlImage *dlImage)
 
   /* simply return if no GIF image attached */
     if (!gif->frames) return;
-
 
     gif->currentWidth=w;
     gif->currentHeight= h;
@@ -447,6 +436,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     char *dir;
     int startPos;
     int nFrames;
+    Pixmap tempPixmap=NULL;
+    int prevFrame;
 
     gif=dlImage->privateData;
     fname=dlImage->imageName;
@@ -537,11 +528,11 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
   /* Parse the Logical Screen Descriptor */
   /* Parse the required ScreenWidth, not used */
     ch=NEXTBYTE;
-    RWidth=ch + 0x100 * NEXTBYTE;
+    LogicalScreenWidth=ch + 0x100 * NEXTBYTE;
 
   /* Parse the required ScreenHeight, not used */
     ch=NEXTBYTE;
-    RHeight=ch + 0x100 * NEXTBYTE;
+    LogicalScreenHeight=ch + 0x100 * NEXTBYTE;
 
 #if DEBUG_GIF
     {
@@ -570,14 +561,6 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     }
 #endif    
 
-    if (verbose) {
-	char version[7];
-	
-	strncpy(version,(char *)RawGIF,6);
-	version[6]='\0';
-	print("\nloadGIF: %s is %s  filesize: %d\n",fname,version,filesize);
-    }
-
   /* Parse the Packed byte
    * Bits 0-2: MASK210 Size of the Global Color Table
    * Bit 3:            Color Table Sort Flag (Ignored)
@@ -585,25 +568,42 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
    * Bit 7:    MASK7   Global Color Table Flag
    */
     ch=NEXTBYTE;
-    HasColormap=((ch & MASK7) ? True : False);
-    BitsPerPixel=(ch & MASK210) + 1;
+    GlobalColorTableFlag=((ch & MASK7) ? True : False);
+    GlobalColorTableSortFlag=((ch & MASK3) ? True : False);
+    SizeOfGlobalColorTable=ch & MASK210;
+    BitsPerPixel= SizeOfGlobalColorTable + 1;
     gif->numcols=ColorTableEntries=1 << BitsPerPixel;
     BitMask=ColorTableEntries - 1;
 
-  /* Parse the BackgroundColor, not used. */
-    Background=NEXTBYTE;
+  /* Parse the BackgroundColorIndexColor */
+    BackgroundColorIndex=NEXTBYTE;
 
-  /* Parse the AspectRatio, not used. */
-    AspectRatio=NEXTBYTE;
+  /* Parse the PixelAspectRatio, not used. */
+    PixelAspectRatio=NEXTBYTE;
+
+  /* End of header */
+    if (verbose) {
+	char version[7];
+	
+	strncpy(version,(char *)RawGIF,6);
+	version[6]='\0';
+	print("\nloadGIF: %s filesize=%d\n",fname,filesize);
+	print("HEADER Version=%s\n",version);
+	print("  LogicalScreenWidth=%d LogicalScreenHeight=%d\n",
+	  LogicalScreenWidth,LogicalScreenHeight);
+	print("  GlobalColorTableFlag=%s Sorted=%s\n",
+	  GlobalColorTableFlag?"True":"False",
+	  GlobalColorTableSortFlag?"True":"False");
+	print("  SizeOfGlobalColorTable=%d (%d-bit, %d colors)\n",
+	  SizeOfGlobalColorTable,
+	  BitsPerPixel,ColorTableEntries);
+	print("  BackgroundColorIndex=%d PixelAspectRatio=%d\n",
+	  BackgroundColorIndex,PixelAspectRatio);
+    }
 
   /* Parse the Global Color Table if present */
   /* KE: Note that if there is no global table, there may be local tables */
-    if(HasColormap) {
-	if (verbose) {
-	    print("loadGIF: %s is %dx%d, %d bits per pixel (%d colors).\n",
-	      fname, RWidth, RHeight, BitsPerPixel, ColorTableEntries);
-	}
-
+    if(GlobalColorTableFlag) {
 	for (i=0; i < ColorTableEntries; i++) {
 	    Red[i]=NEXTBYTE;
 	    Green[i]=NEXTBYTE;
@@ -721,6 +721,9 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
         if (!gif->numcols) gif->numcols=256;
         for (i=0; i < gif->numcols; i++) gif->cols[i]=(unsigned long)i;
     }
+    
+  /* Set the backgroundcolor index */
+    gif->background=gif->cols[BackgroundColorIndex&(gif->numcols-1)];
 
   /* Determine the number of images */
     pData=ptr;
@@ -729,9 +732,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	gif->nFrames=0;
 	goto CLEANUP;
     }
-    if (verbose) {
-	if(nFrames < 0) print("loadGIF: %s has errors\n",fname);
-	else print("loadGIF: %s has %d image(s)\n",fname,nFrames);
+    if(verbose) {
+	print("  %s has %d image(s)\n",fname,nFrames);
     }
   /* Allocate the GIFData array */
     gif->nFrames=nFrames;
@@ -751,6 +753,14 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
 	frames[i]->theImage=NULL;
 	frames[i]->expImage=NULL;
+	frames[i]->Height=0;
+	frames[i]->Width=0;
+	frames[i]->TopOffset=0;
+	frames[i]->LeftOffset=0;
+	frames[i]->TransparentColorFlag=0;
+	frames[i]->TransparentIndex=0;
+	frames[i]->DisposalMethod=0;
+	frames[i]->DelayTime=0;
     }
     
   /* Parse the data until the terminator is reached */
@@ -777,17 +787,24 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    if(!parseGIFImage(displayInfo,dlImage)) done=True;
 	  /* Write the graph control params to the FrameData */
 #if DEBUG_GIF
-	    print("  TransparentColorFlag=%d TransparentIndex=%d DelayTime=%d\n",
-	      TransparentColorFlag,TransparentIndex,DelayTime);
+	    print("  TransparentColorFlag=%d TransparentIndex=%d\n"
+	      "  DelayTime=%d DisposalMethod=%d\n",
+	      TransparentColorFlag,TransparentIndex,
+	      DelayTime,DisposalMethod);
 #endif
+	    gif->frames[CURFRAME(gif)]->Height=Height;
+	    gif->frames[CURFRAME(gif)]->Width=Width;
+	    gif->frames[CURFRAME(gif)]->TopOffset=TopOffset;
+	    gif->frames[CURFRAME(gif)]->LeftOffset=LeftOffset;
 	    gif->frames[CURFRAME(gif)]->TransparentColorFlag=
 	      TransparentColorFlag;
-	    gif->frames[CURFRAME(gif)]->TransparentIndex=
-	      TransparentIndex;
+	    gif->frames[CURFRAME(gif)]->TransparentIndex=TransparentIndex;
+	    gif->frames[CURFRAME(gif)]->DisposalMethod=DisposalMethod;
 	    gif->frames[CURFRAME(gif)]->DelayTime=DelayTime;
 	  /* Restore graph control params (only have scope of one frame) */
 	    TransparentColorFlag=0;
 	    TransparentIndex=0;
+	    DisposalMethod=0;
 	    DelayTime=0;
 	    break;
 	case EXTENSION:
@@ -812,8 +829,99 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     }
 
+#if DEBUG_GIF
+    print("loadGIF: Enlarging images\n");
+#endif	
+  /* Make full-size images for each frame if necessary.  Make a pixmap
+   *   and do the image manipulation with the pixmap rather than
+   *   manipulating bytes.  This way is platform independent though it
+   *   may be slower */
+    for(i=0; i < nFrames; i++) {
+#if DEBUG_GIF
+	print("Frame %d: Width=%d Height=%d\n",
+	  i,frames[i]->Width,frames[i]->Height);
+	print("  LogicalScreenWidth=%d LogicalScreenHeight=%d\n",
+	  LogicalScreenWidth,LogicalScreenHeight);
+	print("  LeftOffset=%d TopOffset=%d\n",
+	  frames[i]->LeftOffset,frames[i]->TopOffset);
+	print("  TransparentColorFlag=%d TransparentColorIndex=%d\n",
+	  frames[i]->TransparentColorFlag,frames[i]->TransparentIndex);
+	print("  BackgroundColorIndex=%d DisposalMethod=%d\n",
+	  BackgroundColorIndex,frames[i]->DisposalMethod);
+	print("  theImage(1)=%x\n",frames[i]->theImage);
+#endif	
+      /* Don't do anything if the frame is full size */
+	if(frames[i]->Height == LogicalScreenHeight &&
+	  frames[i]->Width == LogicalScreenWidth) continue;
+
+      /* Create a pixmap if not already created */
+	if(!tempPixmap) {
+	    tempPixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+	      LogicalScreenWidth,LogicalScreenHeight,
+	      XDefaultDepth(display,screenNum));
+	    if(!tempPixmap) {
+		medmPrintf(1,"\nloadGIF: Not enough memory for"
+		  " temporary pixmap for:\n  %s\n",fname);
+		goto CLEANUP;
+	    }
+	}
+
+      /* Fill the pixmap */
+	if(i == 0) {
+	  /* Fill first frame with GIF background */
+	    if(frames[i]->TransparentIndex == BackgroundColorIndex) {
+	      /* Background is the transparent color, use display background */
+		XSetForeground(display,gif->theGC,gif->bcol);
+	    } else {
+	      /* Use GIF background */
+		XSetForeground(display,gif->theGC,gif->background);
+	    }
+	    XFillRectangle(display,tempPixmap,gif->theGC,
+	      0,0,LogicalScreenWidth,LogicalScreenHeight);
+	} else {
+	  /* Fill based on the disposal method for the previous frame */
+	    prevFrame=i-1;
+	    switch(frames[prevFrame]->DisposalMethod) {
+	    case 1:     /* Leave in place */
+	      /* Copy the previous image */
+		XPutImage(display,tempPixmap,
+		  gif->theGC,frames[prevFrame]->theImage,
+		  0,0,0,0,LogicalScreenWidth,LogicalScreenHeight);
+		break;
+	    case 0:     /* No action */
+	    case 2:     /* Restore to background */
+	    case 3:     /* Restore to previous */
+	    default:    /* To be defined */
+	      /* Fill with display background */
+		XSetForeground(display,gif->theGC,gif->bcol);
+		XFillRectangle(display,tempPixmap,gif->theGC,
+		  0,0,LogicalScreenWidth,LogicalScreenHeight);
+		break;
+	    }
+	}
+
+      /* Copy in the reduced image */
+	if(frames[i]->theImage) {
+	    XPutImage(display,tempPixmap,
+	      gif->theGC,frames[i]->theImage,
+	      0,0,frames[i]->LeftOffset,frames[i]->TopOffset,
+	      frames[i]->Width,frames[i]->Height);
+	  /* Destroy the current theImage */
+	    XDestroyImage(frames[i]->theImage);
+	}
+
+      /* Define theImage from the temporary pixmap */
+	frames[i]->theImage=XGetImage(display,tempPixmap,0,0,
+	  LogicalScreenWidth,LogicalScreenHeight,
+	  AllPlanes,ZPixmap);
+#if DEBUG_GIF
+	print("  theImage(2)=%x\n",frames[i]->theImage);
+#endif	
+    }
+
   /* Clean up */
   CLEANUP:
+    if(tempPixmap) XFreePixmap(display,tempPixmap);
     if(Raster) free((char *)Raster);
     if (fp && fp != stdin) fclose(fp);
     if(error) freeGIF(dlImage);
@@ -950,10 +1058,10 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
   /* Now read in values from the image descriptor */
   /* Parse the Left word */
     ch=NEXTBYTE;
-    LeftOfs=ch + 0x100 * NEXTBYTE;
+    LeftOffset=ch + 0x100 * NEXTBYTE;
   /* Parse the Top word */
     ch=NEXTBYTE;
-    TopOfs=ch + 0x100 * NEXTBYTE;
+    TopOffset=ch + 0x100 * NEXTBYTE;
   /* Parse the Width word */
     ch=NEXTBYTE;
     Width=ch + 0x100 * NEXTBYTE;
@@ -982,7 +1090,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 
     if (verbose) {
         print("parseGIFImage: %s is %dx%d+%d+%d, %d colors, %s\n",
-	  fname, Width,Height,LeftOfs,TopOfs,ColorTableEntries,
+	  fname, Width,Height,LeftOffset,TopOffset,ColorTableEntries,
 	  (Interlace) ? "Interlaced" : "Non-Interlaced");
 	if(LocalColorTableFlag) {
 	    print("  LocalColorTableEntries=%d\n",LocalColorTableEntries);
@@ -1037,8 +1145,8 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
         BytesOffsetPerPixel=1;
         Image=(Byte *)malloc(Width*Height);
         if (!Image) {
-	    medmPrintf(1,"\nparseGIFImage: Not enough memory for XImage for %s\n",
-	      fname);
+	    medmPrintf(1,"\nparseGIFImage: Not enough memory for XImage"
+	      " for %s\n",fname);
 	    return(False);
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
@@ -1106,6 +1214,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	    while (CurCode > BitMask) {
 		if (OutCount > 1024){
 		    medmPrintf(1,"\nparseGIFImage: Corrupt GIF file (OutCount)\n");
+		    XDestroyImage(CURIMAGE(gif));
 		    return False;
 		}
 		OutCode[OutCount++]=Suffix[CurCode];
@@ -1143,6 +1252,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
 	Code=readCode();
     }
+
     return True;
 }
 
@@ -1161,12 +1271,13 @@ static Boolean parseGIFExtension(void)
 	BlockSize=NEXTBYTE;     /* Should be 4 */
       /* Parse the Packed byte
        * Bits 5-7:         Reserved (Ignored)
-       * Bits 2-4:         Disposal Method (Ignored)
+       * Bits 2-4:         Disposal Method
        * Bit 1:            User Input Flag (Ignored)
        * Bit 0:            Transparent Flag
        */
 	ch=NEXTBYTE;
 	TransparentColorFlag=ch & MASK0;
+	DisposalMethod=(ch & MASK432)>>2;
       /* Parse the Delay Time (1/100 sec ) */
 	ch=NEXTBYTE;
 	DelayTime=ch + 0x100 * NEXTBYTE;

@@ -74,9 +74,14 @@ typedef unsigned char Byte;
 typedef struct {
     XImage        *theImage;
     XImage        *expImage;
+    int           Height;
+    int           Width;
+    int           TopOffset;
+    int           LeftOffset;
     Byte          TransparentColorFlag;
-    int           DelayTime;
     Byte          TransparentIndex;
+    int           DisposalMethod;
+    int           DelayTime;
 } FrameData;
 
 typedef struct {
@@ -84,6 +89,7 @@ typedef struct {
     Colormap      theCmap;
     GC            theGC;
     Pixel         fcol,bcol;
+    Pixel         background;
     Font          mfont;
     XFontStruct   *mfinfo;
     Visual        *theVisual;

@@ -116,7 +116,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
 	      meterUpdateValueCb,
 	      meterUpdateGraphicalInfoCb,
-	      (XtPointer) pm);
+	      (XtPointer)pm);
 	    drawWhiteRectangle(pm->updateTask);
 	}
 	

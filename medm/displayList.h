@@ -793,8 +793,8 @@ typedef struct {
 /****** Extensions */
 typedef struct {
     DlObject object;
-    DlBasicAttribute attr;
-    DlDynamicAttribute dynAttr;
+    DlMonitor monitor;
+    DlLimits limits;
     ImageType imageType;
     char imageName[MAX_TOKEN_LENGTH];
     XtIntervalId timerid;
