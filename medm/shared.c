@@ -252,7 +252,7 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 	ca_pend_event(0.00000001);
 	t = medmTime() - t;
 	if (t > 0.5) {
-	    printf("medmScheduler : time used by ca_pend_event = %8.1f\n",t);
+	    fprintf(stderr,"medmScheduler : time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -269,17 +269,17 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 	      /* DEBUG */
 #if 0
 		if(strstr(d->dlFile->name,"sMain.adl")) {
-		    printf("medmScheduler:\n");
-		    printf("  d->updateTaskListHead.next is %d\n",d->updateTaskListHead.next);
-		    printf("  d->periodicTaskCount: %d\n",d->periodicTaskCount);
-		    printf("  d->dlFile->name: |%s|\n",d->dlFile->name);
+		    fprintf(stderr,"medmScheduler:\n");
+		    fprintf(stderr,"  d->updateTaskListHead.next is %d\n",d->updateTaskListHead.next);
+		    fprintf(stderr,"  d->periodicTaskCount: %d\n",d->periodicTaskCount);
+		    fprintf(stderr,"  d->dlFile->name: |%s|\n",d->dlFile->name);
 		}
 		if(!pt) {
-		    printf("medmScheduler:\n");
-		    printf("  d->updateTaskListHead.next is NULL\n");
-		    printf("  d->periodicTaskCount: %d\n",d->periodicTaskCount);
-		    printf("  d->dlFile->name: |%s|\n",d->dlFile->name);
-		    printf("Aborting\n");
+		    fprintf(stderr,"medmScheduler:\n");
+		    fprintf(stderr,"  d->updateTaskListHead.next is NULL\n");
+		    fprintf(stderr,"  d->periodicTaskCount: %d\n",d->periodicTaskCount);
+		    fprintf(stderr,"  d->dlFile->name: |%s|\n",d->dlFile->name);
+		    fprintf(stderr,"Aborting\n");
 		    abort();
 		} else
 #endif		  
@@ -464,7 +464,7 @@ void updateTaskDeleteAllTask(UpdateTask *pt)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if (t > 0.5) {   
-	    printf("updateTaskDeleteAllTask : time used by ca_pend_event = %8.1f\n",t);
+	    fprintf(stderr,"updateTaskDeleteAllTask : time used by ca_pend_event = %8.1f\n",t);
 	} 
     }
 #else
