@@ -582,7 +582,7 @@ request_t * requestCreate(int argc, char *argv[]) {
   strcpy(request->displayFont,FONT_ALIASES_STRING);
   request->displayName = NULL;
   request->displayGeometry = NULL;
-  request->fileCnt == 0;
+  request->fileCnt = 0;
   request->fileList = NULL;
 
   /* parse the switches */
@@ -965,7 +965,8 @@ static void fileMenuSimpleCallback(
         /* only one display; no need to query user */
         highlightAndSetSelectedElements(NULL,0,0);
         clearResourcePaletteEntries();
-        currentDisplayInfo = displayInfoListHead->next;
+        newDisplayInfo = currentDisplayInfo;
+        currentDisplayInfo = NULL;
       } else
       if (displayInfoListHead->next) {
         /* more than one display; query user */
@@ -975,28 +976,28 @@ static void fileMenuSimpleCallback(
         if (newDisplayInfo == currentDisplayInfo) {
           highlightAndSetSelectedElements(NULL,0,0);
           clearResourcePaletteEntries();
-          currentDisplayInfo = displayInfoListHead->next;
+          currentDisplayInfo = NULL;
         }
       } else {
         /* no display */
         return;
       }
-      if (currentDisplayInfo->hasBeenEditedButNotSaved) {
+      if (newDisplayInfo->hasBeenEditedButNotSaved) {
         XmString warningXmstring;
         char warningString[2*MAX_FILE_CHARS];
         char *tmp, *tmp1;
 
         strcpy(warningString,"Save before closing display :\n");
-        tmp = tmp1 = dmGetDisplayFileName(currentDisplayInfo);
+        tmp = tmp1 = dmGetDisplayFileName(newDisplayInfo);
         while (*tmp != '\0') 
           if (*tmp++ == '/') tmp1 = tmp;
         strcat(warningString,tmp1);
-	dmSetAndPopupQuestionDialog(currentDisplayInfo,warningString,"Yes","No","Cancel");
-	switch (currentDisplayInfo->questionDialogAnswer) {
+	dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
+	switch (newDisplayInfo->questionDialogAnswer) {
 	  case 1 :
 	    /* Yes, save display */
-	    if (medmSaveDisplay(currentDisplayInfo,
-	            dmGetDisplayFileName(currentDisplayInfo),True) == False) return;
+	    if (medmSaveDisplay(newDisplayInfo,
+	            dmGetDisplayFileName(newDisplayInfo),True) == False) return;
 	    break;
 	  case 2 :
 	    /* No, return */
@@ -1009,8 +1010,7 @@ static void fileMenuSimpleCallback(
 	}
       }
       /* remove currentDisplayInfo from displayInfoList and cleanup */
-      dmRemoveDisplayInfo(currentDisplayInfo);
-      currentDisplayInfo = NULL;
+      dmRemoveDisplayInfo(newDisplayInfo);
       break;
 
     case FILE_PRINT_BTN:
