@@ -541,8 +541,8 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMajor,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMinor,False); nargs++;
-    XtSetArg(args[nargs],XtNdragX,True); nargs++;
-    XtSetArg(args[nargs],XtNdragY,True); nargs++;
+    XtSetArg(args[nargs],XtNdragX,False); nargs++;
+    XtSetArg(args[nargs],XtNdragY,False); nargs++;
 #if 0
   /* KE: These extend the origin to include zero
    *   They don't make the axes cross at zero */
