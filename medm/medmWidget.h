@@ -75,9 +75,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 #include "xtParams.h"
 
-
 #include "displayList.h"
-
 
 /* this is ugly, but we need it for the action table */
 #if 0
@@ -200,29 +198,6 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define VALUATOR_MAX 		1000000
 #define VALUATOR_INCREMENT 	1
 #define VALUATOR_MULTIPLE_INCREMENT 2
-
-/*
- * specific fonts being used (intended to be aliased to best fitting font)
- */
-#define MAX_FONTS		16		/* max # of fonts             */
-#define LAST_CHANCE_FONT	"fixed"		/* a common font              */
-#define ALIAS_FONT_PREFIX	"widgetDM_"	/* append pixel sz. for alias */
-
-#define FONT_ALIASES_STRING	"alias"
-#define DEFAULT_SCALABLE_STRING	"scalable"
-
-/* Speedo scalable, available from  X11R5 font server */
-#define DEFAULT_SCALABLE_DISPLAY_FONT \
-"-bitstream-charter-bold-r-normal--0-0-0-0-p-0-iso8859-1"
-
-
-#ifndef ALLOCATE_STORAGE
-extern int fontSizeTable[MAX_FONTS];
-#else
-int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
-				22,24,30,36,40,48,60,};
-#endif
-
 
 /*
  * add in action table for complicated actions
@@ -652,88 +627,6 @@ typedef struct _ResourceMap{
 extern ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
 #else
 ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
-#endif
-
-
-/***
- *** default colormap for "New..." display creation
- ***	default colormap size must be less than DL_MAX_COLORS!
- ***/
-#define DEFAULT_DL_COLORMAP_SIZE	65
-#ifndef ALLOCATE_STORAGE
-extern DlColormap defaultDlColormap;
-#else
-DlColormap defaultDlColormap = {
-  /* ncolors */
-    65,
-  /* r,  g,   b,   inten */
-    {{ 255, 255, 255, 255, },
-     { 236, 236, 236, 0, },
-     { 218, 218, 218, 0, },
-     { 200, 200, 200, 0, },
-     { 187, 187, 187, 0, },
-     { 174, 174, 174, 0, },
-     { 158, 158, 158, 0, },
-     { 145, 145, 145, 0, },
-     { 133, 133, 133, 0, },
-     { 120, 120, 120, 0, },
-     { 105, 105, 105, 0, },
-     { 90, 90, 90, 0, },
-     { 70, 70, 70, 0, },
-     { 45, 45, 45, 0, },
-     { 0, 0, 0, 0, },
-     { 0, 216, 0, 0, },
-     { 30, 187, 0, 0, },
-     { 51, 153, 0, 0, },
-     { 45, 127, 0, 0, },
-     { 33, 108, 0, 0, },
-     { 253, 0, 0, 0, },
-     { 222, 19, 9, 0, },
-     { 190, 25, 11, 0, },
-     { 160, 18, 7, 0, },
-     { 130, 4, 0, 0, },
-     { 88, 147, 255, 0, },
-     { 89, 126, 225, 0, },
-     { 75, 110, 199, 0, },
-     { 58, 94, 171, 0, },
-     { 39, 84, 141, 0, },
-     { 251, 243, 74, 0, },
-     { 249, 218, 60, 0, },
-     { 238, 182, 43, 0, },
-     { 225, 144, 21, 0, },
-     { 205, 97, 0, 0, },
-     { 255, 176, 255, 0, },
-     { 214, 127, 226, 0, },
-     { 174, 78, 188, 0, },
-     { 139, 26, 150, 0, },
-     { 97, 10, 117, 0, },
-     { 164, 170, 255, 0, },
-     { 135, 147, 226, 0, },
-     { 106, 115, 193, 0, },
-     { 77, 82, 164, 0, },
-     { 52, 51, 134, 0, },
-     { 199, 187, 109, 0, },
-     { 183, 157, 92, 0, },
-     { 164, 126, 60, 0, },
-     { 125, 86, 39, 0, },
-     { 88, 52, 15, 0, },
-     { 153, 255, 255, 0, },
-     { 115, 223, 255, 0, },
-     { 78, 165, 249, 0, },
-     { 42, 99, 228, 0, },
-     { 10, 0, 184, 0, },
-     { 235, 241, 181, 0, },
-     { 212, 219, 157, 0, },
-     { 187, 193, 135, 0, },
-     { 166, 164, 98, 0, },
-     { 139, 130, 57, 0, },
-     { 115, 255, 107, 0, },
-     { 82, 218, 59, 0, },
-     { 60, 180, 32, 0, },
-     { 40, 147, 21, 0, },
-     { 26, 115, 9, 0, },
-    }
-};
 #endif
 
 #ifdef __COLOR_RULE_H__

@@ -388,9 +388,18 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
 	free ( (char *) displayInfo->selectedDlElementList);
     }
-    free ( (char *) displayInfo->dlFile);
-    free ( (char *) displayInfo->dlColormap);
-    free ( (char *) displayInfo);
+    if(displayInfo->dlFile) {
+	free((char *)displayInfo->dlFile);
+	displayInfo->dlFile = NULL;
+    }
+    if(displayInfo->dlColormap) {
+	free((char *)displayInfo->dlColormap);
+	displayInfo->dlColormap = NULL;
+    }
+    if(displayInfo) {
+	free((char *)displayInfo);
+	displayInfo = NULL;
+    }
 
     if(displayInfoListHead == displayInfoListTail) {
 	currentColormap = defaultColormap;
@@ -468,14 +477,17 @@ DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     return 0;
 }
 
-TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
+TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
+  char *firstToken, TOKEN firstTokenType)
+{
     TOKEN tokenType;
     char token[MAX_TOKEN_LENGTH];
     int nestingLevel = 0;
     static DlBasicAttribute attr;
     static DlDynamicAttribute dynAttr;
     static Boolean init = True;
- 
+    int first = 1;
+    
   /* Initialize attributes to defaults for old format */
     if (init && displayInfo->versionNumber < 20200) {
 	basicAttributeInit(&attr);
@@ -485,7 +497,14 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
  
   /* Loop over tokens until T_EOF */
     do {
-	switch (tokenType=getToken(displayInfo,token)) {
+	if(first) {
+	    tokenType=firstTokenType;
+	    strcpy(token,firstToken);
+	    first = 0;
+	} else {
+	    tokenType=getToken(displayInfo,token);
+	}
+	switch(tokenType) {
 	case T_WORD : {
 	    DlElement *pe = 0;
 	    if (pe = getNextElement(displayInfo,token)) {
@@ -560,6 +579,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
   Boolean fromRelatedDisplayExecution)
 {
     DisplayInfo *cdi;
+    DlDisplay *dlDisplay;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int numPairs;
@@ -644,7 +664,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	cdi->numNameValues = 0;
     }
 
-
+  /* Read the file block (Must be there) */
   /* If first token isn't "file" then bail out */
     tokenType=getToken(cdi,token);
     if (tokenType == T_WORD && !strcmp(token,"file")) {
@@ -661,7 +681,8 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	    return;
 	}
     } else {
-	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file (Bad first token)\n"
+	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file "
+	  "(First block is not file block)\n"
 	  "  file: %s\n",filename);
 	cdi->filePtr = NULL;
 	dmRemoveDisplayInfo(cdi);
@@ -679,57 +700,88 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 #endif
 #endif
 
+  /* Read the display block (Must be there) */
     tokenType=getToken(cdi,token);
-    if (tokenType ==T_WORD && !strcmp(token,"display")) {
+    if (tokenType == T_WORD && !strcmp(token,"display")) {
 	parseDisplay(cdi);
+    } else {
+	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file "
+	  "(Second block is not display block)\n"
+	  "  file: %s\n",filename);
+	cdi->filePtr = NULL;
+	dmRemoveDisplayInfo(cdi);
+	cdi = NULL;
+	return;
     }
 
+  /* Read the colormap if there.  Will also create cdi->dlColormap. */
     tokenType=getToken(cdi,token);
     if (tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
-
-	DlElement *pE;
-	
+      /* This is a colormap block, parse it */
 	cdi->dlColormap=parseColormap(cdi,cdi->filePtr);
-	if (!cdi->dlColormap) {
-	  /* error - do total bail out */
-	    fclose(cdi->filePtr);
+	if(cdi->dlColormap) {
+	  /* Success.  Get the next token */
+	    tokenType=getToken(cdi,token);
+	} else {
+	  /* Error */
+	    medmPostMsg(1,"dmDisplayListParse: Invalid .adl file "
+	      "(Cannot parse colormap)\n"
+	      "  file: %s\n",filename);
+	    cdi->filePtr = NULL;
 	    dmRemoveDisplayInfo(cdi);
+	    cdi = NULL;
 	    return;
 	}
-#if 0	
-      /* Since a valid colormap element has been brought into the
-         display list, remove the external cmap reference in the
-         dlDisplay element */
-	if(pE = FirstDlElement(displayInfo->dlElementList)) {
-	    pE->structure.display->cmap[0] = '\0';
-	}
-#endif	
     }
 
   /* Proceed with parsing */
-    while (parseAndAppendDisplayList(cdi,
-      cdi->dlElementList) != T_EOF );
+    while(parseAndAppendDisplayList(cdi, cdi->dlElementList, token, tokenType)
+      != T_EOF) {
+	tokenType=getToken(cdi,token);
+    }
+
+  /* NULL the file pointer.  We are done with it */
     cdi->filePtr = NULL;
 
   /* The display is the first element */
     pE = FirstDlElement(cdi->dlElementList);
+    if(!pE || !pE->structure.display) {
+      /* Error */
+	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file "
+	  "(Display is not the first element)\n"
+	  "  file: %s\n",filename);
+	cdi->filePtr = NULL;
+	dmRemoveDisplayInfo(cdi);
+	cdi = NULL;
+	return;
+    }
+    dlDisplay = pE->structure.display;
 
-  /* Change DlObject values for x and y to be the same as the original */
+  /* The presense of a cmap overrides the presense of a color map
+    block.  If there is a colormap in the displayInfo from parsing a
+    color map block, free it. */
+    if(*dlDisplay->cmap && cdi->dlColormap) {
+	free((char *)cdi->dlColormap);
+	cdi->dlColormap = NULL;
+    }
+    
+  /* Change DlObject values for x and y to be the same as the original
+     if it is a Related Display */
     if(displayInfo) {
       /* Note that cdi is not necessarily the same as displayInfo */
 #if DEBUG_RELATED_DISPLAY
 	print("  Set replaced values: XtIsRealized=%s XtIsManaged=%s\n",
 	  XtIsRealized(cdi->shell)?"True":"False",
 	  XtIsManaged(cdi->shell)?"True":"False");
-	print("  x=%d pE->structure.display->object.x=%d\n"
-	  "  y=%d pE->structure.display->object.y=%d\n",
-	  x,pE->structure.display->object.x,
-	  y,pE->structure.display->object.y);
+	print("  x=%d dlDisplay->object.x=%d\n"
+	  "  y=%d dlDisplay->object.y=%d\n",
+	  x,dlDisplay->object.x,
+	  y,dlDisplay->object.y);
 #endif	
-	pE->structure.display->object.x = x;
-	pE->structure.display->object.y = y;
+	dlDisplay->object.x = x;
+	dlDisplay->object.y = y;
     }
 
   /* Do resizing */
@@ -738,9 +790,9 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
        *   (There should be no resize callback yet so it will not try
        *     to resize all the elements) */
 	nargs=0;
-	XtSetArg(args[nargs],XmNwidth,pE->structure.display->object.width);
+	XtSetArg(args[nargs],XmNwidth,dlDisplay->object.width);
 	nargs++;
-	XtSetArg(args[nargs],XmNheight,pE->structure.display->object.height);
+	XtSetArg(args[nargs],XmNheight,dlDisplay->object.height);
 	nargs++;
 	XtSetValues(displayInfo->shell,args,nargs);
     } else if(geometryString && *geometryString) {
@@ -767,10 +819,10 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
       XtIsRealized(cdi->shell)?"True":"False",
       XtIsManaged(cdi->shell)?"True":"False");
     print("  Current values:\n"
-      "    pE->structure.display->object.x=%d\n"
-      "    pE->structure.display->object.y=%d\n",
-      pE->structure.display->object.x,
-      pE->structure.display->object.y);
+      "    dlDisplay->object.x=%d\n"
+      "    dlDisplay->object.y=%d\n",
+      dlDisplay->object.x,
+      dlDisplay->object.y);
     {
 	Position xpos,ypos;
 	
@@ -786,16 +838,16 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
     if(displayInfo && !reuse) {
 #if DEBUG_RELATED_DISPLAY
 	print("  Move(1)\n");
-	pE->structure.display->object.x=x;
-	pE->structure.display->object.y=y;
+	dlDisplay->object.x=x;
+	dlDisplay->object.y=y;
 #endif	
     } else if(geometryString && *geometryString) {
 #if DEBUG_RELATED_DISPLAY
 	print("  Move(2)\n");
 #endif	
 	if ((mask & XValue) && (mask & YValue)) {
-	    pE->structure.display->object.x=xg;
-	    pE->structure.display->object.y=yg;
+	    dlDisplay->object.x=xg;
+	    dlDisplay->object.y=yg;
 	}
 #if DEBUG_RELATED_DISPLAY
     } else {
@@ -808,15 +860,15 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
    * Is necessary in part because WM adds borders and title bar,
        moving the shell down when first created */
     XMoveWindow(display,XtWindow(cdi->shell),
-      pE->structure.display->object.x,
-      pE->structure.display->object.y);
+      dlDisplay->object.x,
+      dlDisplay->object.y);
 
 #if DEBUG_RELATED_DISPLAY
     print("  Final values:\n"
-      "    pE->structure.display->object.x=%d\n"
-      "    pE->structure.display->object.y=%d\n",
-      pE->structure.display->object.x,
-      pE->structure.display->object.y);
+      "    dlDisplay->object.x=%d\n"
+      "    dlDisplay->object.y=%d\n",
+      dlDisplay->object.x,
+      dlDisplay->object.y);
     {
 	Position xpos,ypos;
 	
@@ -1179,16 +1231,21 @@ DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
 {
     DlElement *element;
+    DlDisplay *dlDisplay = NULL;
 
     writeDlFile(stream,displayInfo->dlFile,0);
     if(element = FirstDlElement(displayInfo->dlElementList)) {
       /* This must be DL_DISPLAY */
 	(element->run->write)(stream,element,0);
+	dlDisplay=element->structure.display;
     }
-    if(displayInfo->dlColormap)
+
+  /* Write the colormap unless there is a cmap defined for the display */
+    if(displayInfo->dlColormap && dlDisplay && !*dlDisplay->cmap)
       writeDlColormap(stream,displayInfo->dlColormap,0);
+
+  /* Traverse the display list */
     element = element->next;
-  /* traverse the display list */
     while (element) {
 	(element->run->write)(stream,element,0);
 	element = element->next;

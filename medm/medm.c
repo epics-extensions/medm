@@ -905,10 +905,10 @@ request_t * parseCommandLine(int argc, char *argv[]) {
     if (request == NULL) return request;
     request->opMode = EDIT;
     request->medmMode = LOCAL;
-    request->fontStyle = FIXED_FONT;
+    request->fontStyle = MEDM_DEFAULT_FONT_STYLE;
     request->privateCmap = False;
     request->macroString = NULL;
-    strcpy(request->displayFont,FONT_ALIASES_STRING);
+    strcpy(request->displayFont,MEDM_DEFAULT_DISPLAY_FONT);
     request->displayName = NULL;
     request->displayGeometry = NULL;
     request->fileCnt = 0;
@@ -959,12 +959,22 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    if (tmp) {
 		argsUsed = i + 1;
 		strcpy(request->displayFont,tmp);
+#if 0		
+	      /* KE: The following code is useless.  We could change
+                 == to !=, however, request->fontStyle eventually is
+                 only used to set the windowPropertyAtom.  Currently,
+                 it will be set to whatever the default is for
+                 request->fontStyle.  Moreover, if the displayFont is
+                 an X font specification, this method will not be able
+                 to determine if it is scalable or not. Further, it
+                 probably doesn't make a difference.  */
 		if (request->displayFont[0] == '\0') {
 		    if (!strcmp(request->displayFont,FONT_ALIASES_STRING))
 		      request->fontStyle = FIXED_FONT;
 		    else if (!strcmp(request->displayFont,DEFAULT_SCALABLE_STRING))
 		      request->fontStyle = SCALABLE_FONT;
 		}
+#endif		
 	    }
 	} else if (!strcmp(argv[i],"-display")) {
 	  /* (Not trapped by X because this routine is called first) */
@@ -3119,6 +3129,8 @@ void sendFullPathNameAndMacroAsClientMessages(
 
 }
 
+/* This routines is used for file conversions only. */
+/* KE: The error handling could be improved.  See dmDisplayListParse.  */
 char token[MAX_TOKEN_LENGTH];
 DisplayInfo* parseDisplayFile(char *filename) {
     DisplayInfo *displayInfo = 0;
@@ -3141,22 +3153,24 @@ DisplayInfo* parseDisplayFile(char *filename) {
 	    return 0;
 	}
 	tokenType=getToken(displayInfo,token);
-	if (tokenType ==T_WORD && !strcmp(token,"display")) {
+	if (tokenType == T_WORD && !strcmp(token,"display")) {
 	    parseDisplay(displayInfo);
 	}
 	tokenType=getToken(displayInfo,token);
 	if (tokenType == T_WORD && (!strcmp(token,"color map") ||
 	  !strcmp(token,"<<color map>>"))) {
 	    displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
+	    tokenType=getToken(displayInfo,token);
 	} else {
 	    return 0;
 	}
  
-      /*
-       * proceed with parsing
-       */
-	while (parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList)
-	  != T_EOF );
+      /* Proceed with parsing */
+	while(parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList,
+	  token,tokenType) != T_EOF) {
+	    tokenType=getToken(displayInfo,token);
+	}
+
 	fclose(filePtr);
     }
     return displayInfo;

@@ -200,7 +200,7 @@ void medmInit(char *displayFont)
     char *sizePosition;
     
 #if 0    
-  /* KE: This doesn't appear in the documentation.
+  /* KE: This doesn't appear in the Motif documentation.
    *   Assume it is not needed any more. */
     XmRegisterConverters();
 #endif

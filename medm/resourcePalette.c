@@ -701,6 +701,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;
     char *stringValue;
+    int redoDisplay=0;
 
     stringValue = XmTextFieldGetString(w);
     switch(rcType) {
@@ -843,7 +844,15 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	strcpy(globalResourceBundle.data,stringValue);
 	break;
     case CMAP_RC:
+      /* Free the colormap, so when we call run->execute (in
+         updateElementFromGlobalResourceBundle) for the display, it
+         will use the new one */
+	if(cdi && cdi->dlColormap) {
+	    free((char *)cdi->dlColormap);
+	    cdi->dlColormap = NULL;
+	}
 	strcpy(globalResourceBundle.cmap,stringValue);
+	redoDisplay=1;
 	break;
     case PRECISION_RC:
 	globalResourceBundle.dPrecision = atof(stringValue);
@@ -879,6 +888,13 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	highlightSelectedElements();
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
+    }
+
+  /* Redo the display if indicated.  Is ncessary after a colormap
+     change to see the change. */
+    if(redoDisplay) {
+	dmCleanupDisplayInfo(cdi,False);
+	dmTraverseDisplayList(cdi);
     }
 }
 

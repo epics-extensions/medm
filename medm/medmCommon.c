@@ -383,7 +383,7 @@ void parseOldDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 }
 
 /* parseColormap and parseDlColor have two arguments, since could in fact
- *   be parsing and external colormap file, hence need to pass in the 
+ *   be parsing an external colormap file, hence need to pass in the 
  *   explicit file ptr for the current colormap file
  */
 DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
@@ -392,12 +392,20 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
     char msg[2*MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
-    DlColormap *dlColormap = createDlColormap(displayInfo);
+    DlColormap *dlColormap;
     DlColormapEntry dummyColormapEntry;
     DlElement *dlTarget;
     int counter;
-    
     FILE *savedFilePtr;
+
+  /* Free any existing colormap and create a new onep */
+    if(!displayInfo) return NULL;
+    if(displayInfo->dlColormap) {
+	free((char *)displayInfo->dlColormap);
+	displayInfo->dlColormap = NULL;
+    }
+    dlColormap = createDlColormap(displayInfo);
+    if(!dlColormap) return NULL;
     
   /*
    * (MDA) have to be sneaky for these colormap parsing routines:
@@ -1282,48 +1290,41 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
       && (tokenType != T_EOF) );
 }
 
-/* KE: Not sure that this function is called since DisplayInfo.cmap is
-   initialized to "" and is never parsed.  There was no return value
-   at the end, so it should not have worked. */
-DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *filename)
+/* Reads a colormap from an external file */
+DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
+  char *filename)
 {
-    DlColormap *dlColormap;
+    DlColormap *dlColormap = NULL;
     FILE *externalFilePtr, *savedFilePtr;
     char token[MAX_TOKEN_LENGTH];
-    char msg[512];		/* since common longest filename is 255... */
+    char msg[2*MAX_TOKEN_LENGTH];
     TOKEN tokenType;
-    int nestingLevel = 0;
+    int nestingLevel = 0, done = 0;
 
-    dlColormap = NULL;
     externalFilePtr = dmOpenUsableFile(filename, NULL);
     if(externalFilePtr == NULL) {
+      /* Error opening file */
 	sprintf(msg,
-	  "Can't open \n\n        \"%s\" (.adl)\n\n%s",filename,
-	  "to extract external colormap - check cmap specification");
+	  "Can't open external colormap file\n"
+	  "Name=\"%s\"\n"
+	  "Check cmap specification",
+	  filename);
 	dmSetAndPopupWarningDialog(displayInfo,msg,"OK",NULL,NULL);
 	medmPrintf(1,"\nparseAndExtractExternalColormap: Cannot open file\n"
 	  "  filename: %s\n",filename);
-/*
- * awfully hard to get back to where we belong 
- * - maybe try setjmp/longjump later
- */
-	medmCATerminate();
-	dmTerminateX();
-	exit(-1);
-	  
     } else {
-
+      /* File opened */
 	savedFilePtr = displayInfo->filePtr;
 	displayInfo->filePtr = externalFilePtr;
 
 	do {
 	    switch( (tokenType=getToken(displayInfo,token)) ) {
 	    case T_WORD:
-		if(!strcmp(token,"<<color map>>")) {
-		    dlColormap = 
-		      parseColormap(displayInfo,externalFilePtr);
-		  /* don't want to needlessly parse, so we'll return here */
-		    return(dlColormap);
+		if(!strcmp(token,"color map") ||
+		  !strcmp(token,"<<color map>>")) {
+		    dlColormap = parseColormap(displayInfo,externalFilePtr);
+		  /* Don't need to parse further, so we'll return here */
+		    done = 1;
 		}
 		break;
 	    case T_EQUAL:
@@ -1333,7 +1334,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 	    case T_RIGHT_BRACE:
 		nestingLevel--; break;
 	    }
-	} while (tokenType != T_EOF);
+	} while (!done && tokenType != T_EOF);
 
 	fclose(externalFilePtr);
 
@@ -1344,16 +1345,12 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
     return(dlColormap);
 }
 
-/***
- *** the lexical analyzer
- ***/
 
-/*
- * a lexical analyzer (as a state machine), based upon ideas from
- *	"Advanced Unix Programming"  by Marc J. Rochkind, with extensions:
- * understands macros of the form $(xyz), and substitutes the value in
- *	displayInfo's nameValueTable..name with nameValueTable..value
- */
+ /* A lexical analyzer (as a state machine), based upon ideas from
+  *   "Advanced Unix Programming" by Marc J. Rochkind, with
+  *   extensions.  Understands macros of the form $(xyz), and
+  *   substitutes the value in displayInfo's nameValueTable..name with
+  *   nameValueTable..value */
 TOKEN getToken(DisplayInfo *displayInfo, char *word)
 {
     FILE *filePtr;

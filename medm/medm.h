@@ -130,6 +130,7 @@ extern "C" {
 #include "medmVMS.h"      
 #endif				   
 
+#include "siteSpecific.h"
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
@@ -139,11 +140,10 @@ extern "C" {
 #define OBJECT_PALETTE_NAME "Object "
   /* The following works on both WIN32 and Solaris */
 #define STRFTIME_FORMAT "%a %b %d %H:%M:%S %Z %Y"
-
+    
   /* Define the help layers  */
 #define HELP_MAIN 0
-
-
+    
     typedef struct menuEntry{
 	char*           label;
 	WidgetClass*    widgetClass;

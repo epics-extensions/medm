@@ -520,7 +520,7 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
     newDlComposite = dlElement->structure.composite;
 
     do {
-        switch( (tokenType=getToken(displayInfo,token)) ) {
+        switch(tokenType=getToken(displayInfo,token)) {
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(newDlComposite->object));
@@ -531,8 +531,9 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		strcpy(newDlComposite->compositeName,token);
 	    } else if(!strcmp(token,"children")) {
+		tokenType=getToken(displayInfo,token);
 		parseAndAppendDisplayList(displayInfo,
-		  newDlComposite->dlElementList);
+		  newDlComposite->dlElementList,token,tokenType);
 	    }
 	    break;
 	case T_EQUAL:

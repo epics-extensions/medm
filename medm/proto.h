@@ -468,7 +468,8 @@ void drawColoredRectangle(UpdateTask *pt, Pixel pixel);
 /* display.c */
 DisplayInfo *allocateDisplayInfo(void);
 void dmDisplayListParse(DisplayInfo *, FILE *, char *, char *, char*, Boolean);
-TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
+TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
+  char *firstToken, TOKEN firstTokenType);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
 void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list);
 void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
