@@ -6,11 +6,7 @@
  ***/
 
 #include <X11/Xlib.h>
-#ifdef SYSV
 # include <string.h>
-#else
-#  include <strings.h>
-#endif
 #include <stdio.h>
 
 
