@@ -1,3 +1,8 @@
+Version 2.2.1
+=============
+- Fix a bug which causes MEDM to crash. The problem is related to an 
+  uninitialized pointer related to composite widget.
+
 Version 2.2.0
 =============
 - Support a new .adl file format.

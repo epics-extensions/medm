@@ -121,6 +121,7 @@ DlElement *createDlComposite(DisplayInfo *displayInfo) {
     return NULL;
   }
   dlComposite->dlElementListHead->next = 0;
+  dlComposite->dlElementListHead->prev = 0;
   dlComposite->dlElementListTail = dlComposite->dlElementListHead;
   dlComposite->visible = True;
 
