@@ -54,10 +54,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define CHECK_NAN
+#define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
 #define DEBUG_TIME 0
+#define DEBUG_XRT 0
+
+#define CHECK_NAN
 
 #ifdef CHECK_NAN
 /* Note that for Solaris isnand and isnanf are defined in ieeefp.h.
@@ -81,14 +84,24 @@ extern int isnan(double);     /* Because it is not in math.h as it should be */
 #endif     /* End #ifdef CHECK_NAN */
 
 #include "medm.h"
+#include <Xm/MwmUtil.h>
 #include "medmCartesianPlot.h"
 
-#include <XrtGraph.h>
-#if XRT_VERSION > 2
-#ifdef XRT_EXTENSIONS
-#include <XrtGraphProp.h>
-#endif
-#endif
+/* Function for generic plotting routines */
+
+CpDataHandle CpDataCreate(CpDataType hData, int nsets, int npoints);
+int CpDataGetLastPoint(CpDataHandle hData, int set);
+double CpDataGetXElement(CpDataHandle hData, int set, int point);
+double CpDataGetYElement(CpDataHandle hData, int set, int point);
+void CpDataDestroy(CpDataHandle hData);
+int CpDataSetHole(CpDataHandle hData, double hole);
+int CpDataSetLastPoint(CpDataHandle hData, int set, int npoints);
+int CpDataSetXElement(CpDataHandle hData, int set, int point, double x);
+int CpDataSetYElement(CpDataHandle hData, int set, int point, double y);
+void CpSetNthDataStyle(Widget graph, int index, CpDataStyle *ds);
+void CpSetNthDataStyle2(Widget graph, int index, CpDataStyle *ds);
+  
+/* Function prototypes */
 
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *, DlElement *);
 void cartesianPlotCreateEditInstance(DisplayInfo *, DlElement *);
@@ -103,68 +116,10 @@ static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
-#if XRT_VERSION > 2
-#ifdef XRT_EXTENSIONS
-static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
-#endif
-#endif
+static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 
-#if XRT_VERSION < 3
-/* Routines to make XRT/graph backward compatible from Version 3.0 */
-
-XrtDataHandle XrtDataCreate(XrtDataType hData, int nsets, int npoints);
-int XrtDataGetLastPoint(XrtDataHandle hData, int set);
-double XrtDataGetXElement(XrtDataHandle hData, int set, int point);
-double XrtDataGetYElement(XrtDataHandle hData, int set, int point);
-int XrtDataDestroy(XrtDataHandle hData);
-int XrtDataSetHole(XrtDataHandle hData, double hole);
-int XrtDataSetLastPoint(XrtDataHandle hData, int set, int npoints);
-int XrtDataSetXElement(XrtDataHandle hData, int set, int point, double x);
-int XrtDataSetYElement(XrtDataHandle hData, int set, int point, double y);
-
-XrtDataHandle XrtDataCreate(XrtDataType type, int nsets, int npoints) {
-    return XrtMakeData(type,nsets,npoints,True);
-}
-
-int XrtDataGetLastPoint(XrtDataHandle hData, int set) {
-    return (MAX(hData->g.data[set].npoints-1,0));
-}
-
-double XrtDataGetXElement(XrtDataHandle hData, int set, int point) {
-    return hData->g.data[set].xp[point];
-}
-
-double XrtDataGetYElement(XrtDataHandle hData, int set, int point) {
-    return hData->g.data[set].yp[point];
-}
-
-int XrtDataDestroy(XrtDataHandle hData) {
-    if(hData) XrtDestroyData(hData,True);
-    return 1;
-}
-
-int XrtDataSetHole(XrtDataHandle hData, double hole) {
-    hData->g.hole = hole;
-    return 1;
-}
-
-int XrtDataSetLastPoint(XrtDataHandle hData, int set, int point) {
-    hData->g.data[0].npoints = point+1;
-    return 1;
-}
-
-int XrtDataSetXElement(XrtDataHandle hData, int set, int point, double x) {
-    hData->g.data[set].xp[point] = x;
-    return 1;
-}
-
-int XrtDataSetYElement(XrtDataHandle hData, int set, int point, double y) {
-    hData->g.data[set].yp[point] = y;
-    return 1;
-}
-#endif
-
-static XrtDataHandle hxrtNullData = (XrtDataHandle)0;
+static CpDataHandle hcpNullData = (CpDataHandle)0;
+Widget cpMatrix = NULL, cpForm = NULL;
 
 char *timeFormatString[NUM_CP_TIME_FORMAT] = {
     "%H:%M:%S",
@@ -228,18 +183,18 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     XcVType minF, maxF, tickF;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
 
-  /* Initialize hxrtNullData if not done */
-    if(!hxrtNullData) {
-	hxrtNullData = XrtDataCreate(XRT_GENERAL,1,1);
-	XrtDataSetHole(hxrtNullData,0.0);
-	XrtDataSetLastPoint(hxrtNullData,0,0);
-	XrtDataSetXElement(hxrtNullData,0,0,0.0);
-	XrtDataSetYElement(hxrtNullData,0,0,0.0);
+  /* Initialize hcpNullData if not done */
+    if(!hcpNullData) {
+	hcpNullData = CpDataCreate(CP_GENERAL,1,1);
+	CpDataSetHole(hcpNullData,0.0);
+	CpDataSetLastPoint(hcpNullData,0,0);
+	CpDataSetXElement(hcpNullData,0,0,0.0);
+	CpDataSetYElement(hcpNullData,0,0,0.0);
     }
 
   /* Allocate a CartesianPlot and fill part of it in */
     pcp = (CartesianPlot *) malloc(sizeof(CartesianPlot));
-    pcp->hxrt1 = pcp->hxrt2 = NULL;
+    pcp->hcp1 = pcp->hcp2 = NULL;
     pcp->dirty1 = pcp->dirty2 = False;
     pcp->timeScale = False;
     pcp->startTime.secPastEpoch = 0;
@@ -842,8 +797,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     Widget widget = pcp->dlElement->widget;
     XColor xColors[MAX_TRACES];
     char rgb[MAX_TRACES][16];
-    XrtDataHandle hxrt1, hxrt2;
-    XrtDataStyle myds1[MAX_TRACES], myds2[MAX_TRACES];
+    CpDataHandle hcp1, hcp2;
+    CpDataStyle myds1[MAX_TRACES], myds2[MAX_TRACES];
     float minX, maxX, minY, maxY, minY2, maxY2;
     XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
     char string[24];
@@ -899,11 +854,11 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	  maxElements = MAX(maxElements,(int)t->recordY->elementCount);
     }
 
-  /* Allocate the XRT data structures with size maxElements */
-    hxrt1 = hxrt2 = NULL;
-    hxrt1 = XrtDataCreate(XRT_GENERAL,1,maxElements);
+  /* Allocate the CP data structures with size maxElements */
+    hcp1 = hcp2 = NULL;
+    hcp1 = CpDataCreate(CP_GENERAL,1,maxElements);
     if (pcp->nTraces > 1) {
-	hxrt2 = XrtDataCreate(XRT_GENERAL,pcp->nTraces-1,maxElements);
+	hcp2 = CpDataCreate(CP_GENERAL,pcp->nTraces-1,maxElements);
     }
 
   /* Loop over all the traces */
@@ -928,11 +883,11 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	    }
 	  /* Put initial data in */
 	    if (i <= 0) {
-		XrtDataSetLastPoint(hxrt1,i,0);
+		CpDataSetLastPoint(hcp1,i,0);
 		minY = MIN(minY,t->recordY->lopr);
 		maxY = MAX(maxY,t->recordY->hopr);
 	    } else {
-		XrtDataSetLastPoint(hxrt2,i-1,0);
+		CpDataSetLastPoint(hcp2,i-1,0);
 		minY2 = MIN(minY2,t->recordY->lopr);
 		maxY2 = MAX(maxY2,t->recordY->hopr);
 	    }
@@ -945,12 +900,12 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		t->type = CP_XVector;
 		if (i <= 0) {
 		    for (j = 0; j < (int)t->recordX->elementCount; j++)
-		      XrtDataSetYElement(hxrt1,i,j,(float)j);
+		      CpDataSetYElement(hcp1,i,j,(float)j);
 		    minY = MIN(minY,0.);
 		    maxY = MAX(maxY,(float)((int)t->recordX->elementCount-1));
 		} else {
 		    for(j = 0; j < (int)t->recordX->elementCount; j++)
-		     XrtDataSetYElement(hxrt2,i-1,j,(float)j);
+		     CpDataSetYElement(hcp2,i-1,j,(float)j);
 		    minY2 = MIN(minY2,0.);
 		    maxY2 = MAX(maxY2,(float)t->recordX->elementCount-1);
 		}
@@ -961,14 +916,14 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		t->type = CP_XScalar;
 		if (i <= 0) {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      XrtDataSetYElement(hxrt1,i,j,(float)j);
-		    XrtDataSetXElement(hxrt1,i,0,(float)t->recordX->value);
+		      CpDataSetYElement(hcp1,i,j,(float)j);
+		    CpDataSetXElement(hcp1,i,0,(float)t->recordX->value);
 		    minY = MIN(minY,0.);
 		    maxY = MAX(maxY,(float)dlCartesianPlot->count);
 		} else {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      XrtDataSetYElement(hxrt2,i-1,j,(float)j);
-		    XrtDataSetXElement(hxrt2,i-1,0,(float)t->recordX->value);
+		      CpDataSetYElement(hcp2,i-1,j,(float)j);
+		    CpDataSetXElement(hcp2,i-1,0,(float)t->recordX->value);
 		    minY2 = MIN(minY2,0.);
 		    maxY2 = MAX(maxY2,(float)dlCartesianPlot->count);
 		}
@@ -982,12 +937,12 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		t->type = CP_YVector;
 		if (i <= 0) {
 		    for(j = 0; j < t->recordY->elementCount; j++)
-		      XrtDataSetYElement(hxrt1,i,j,(float)j);
+		      CpDataSetYElement(hcp1,i,j,(float)j);
 		    minY = MIN(minY,t->recordY->lopr);
 		    maxY = MAX(maxY,t->recordY->hopr);
 		} else {
 		    for(j = 0; j < t->recordY->elementCount; j++)
-		      XrtDataSetXElement(hxrt2,i-1,j,(float)j);
+		      CpDataSetXElement(hcp2,i-1,j,(float)j);
 		    minY2 = MIN(minY2,t->recordY->lopr);
 		    maxY2 = MAX(maxY2,t->recordY->hopr);
 		}
@@ -998,16 +953,16 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		t->type = CP_YScalar;
 		if (i <= 0) {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      XrtDataSetXElement(hxrt1,0,j,(float)j);
-		    XrtDataSetYElement(hxrt1,0,0,(float)t->recordY->value);
-		    XrtDataSetLastPoint(hxrt1,0,0);
+		      CpDataSetXElement(hcp1,0,j,(float)j);
+		    CpDataSetYElement(hcp1,0,0,(float)t->recordY->value);
+		    CpDataSetLastPoint(hcp1,0,0);
 		    minY = MIN(minY,t->recordY->lopr);
 		    maxY = MAX(maxY,t->recordY->hopr);
 		} else {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      XrtDataSetXElement(hxrt2,0,j,(float)j);
-		    XrtDataSetYElement(hxrt2,0,0,(float)t->recordY->value);
-		    XrtDataSetLastPoint(hxrt2,0,0);
+		      CpDataSetXElement(hcp2,0,j,(float)j);
+		    CpDataSetYElement(hcp2,0,0,(float)t->recordY->value);
+		    CpDataSetLastPoint(hcp2,0,0);
 		    minY2 = MIN(minY2,t->recordY->lopr);
 		    maxY2 = MAX(maxY2,t->recordY->hopr);
 		}
@@ -1017,7 +972,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	}
     }     /* End for loop over traces */
     
-  /* Loop over traces and initialize XrtDataStyle array */
+  /* Loop over traces and initialize CpDataStyle array */
     for (i = 0; i < MAX_TRACES; i++) {
       /* there is really only going to be one myds1 in a graph */
 	myds1[i].lpat = XRT_LPAT_SOLID;
@@ -1042,7 +997,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     }
 
 
-  /* Loop over traces and set XrtDataStyle array */
+  /* Loop over traces and set CpDataStyle array */
     for (i = 0; i < pcp->nTraces; i++) {
 	switch(dlCartesianPlot->style) {
 	case POINT_PLOT:
@@ -1068,13 +1023,13 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		myds1[i].color = rgb[i];
 		myds1[i].pcolor = rgb[i];
 		myds1[i].psize = MAX(2, dlCartesianPlot->object.height/70);
-		XrtSetNthDataStyle(widget,i,&myds1[i]);
+		CpSetNthDataStyle(widget,i,&myds1[i]);
 	    } else {
 		myds2[i-1].fpat = XRT_FPAT_NONE;
 		myds2[i-1].color = rgb[i];
 		myds2[i-1].pcolor = rgb[i];
 		myds2[i-1].psize = MAX(2, dlCartesianPlot->object.height/70);
-		XrtSetNthDataStyle2(widget, i-1,&myds2[i-1]);
+		CpSetNthDataStyle2(widget, i-1,&myds2[i-1]);
 	    }
 	    break;
 	case FILL_UNDER_PLOT:
@@ -1082,12 +1037,12 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		myds1[i].color = rgb[i];
 		myds1[i].pcolor = rgb[i];
 		myds1[i].psize = MAX(2, dlCartesianPlot->object.height/70);
-		XrtSetNthDataStyle(widget,i,&myds1[i]);
+		CpSetNthDataStyle(widget,i,&myds1[i]);
 	    } else {
 		myds2[i-1].color = rgb[i];
 		myds2[i-1].pcolor = rgb[i];
 		myds2[i-1].psize = MAX(2, dlCartesianPlot->object.height/70);
-		XrtSetNthDataStyle2(widget, i-1,&myds2[i-1]);
+		CpSetNthDataStyle2(widget, i-1,&myds2[i-1]);
 	    }
 	    break;
 	}
@@ -1098,17 +1053,17 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 
 	if ( i <= 0) {
-	    t->hxrt = hxrt1;
+	    t->hcp = hcp1;
 	    t->trace = i;
 	} else {
-	    t->hxrt = hxrt2;
+	    t->hcp = hcp2;
 	    t->trace = i-1;
 	}
     }
 
   /* Set the data pointers in the CartesianPlot */
-    pcp->hxrt1 = hxrt1;
-    pcp->hxrt2 = hxrt2;
+    pcp->hcp1 = hcp1;
+    pcp->hcp2 = hcp2;
 
   /* Fill in connect-time channel-based range specifications
    *   This is different than the min/max stored in the display element */
@@ -1236,15 +1191,15 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     switch(pt->type) {
     case CP_XYScalar:
       /* x,y channels specified - scalars, up to dlCartesianPlot->count pairs */
-	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
 	else pt->init=1;
 	if (nextPoint < dlCartesianPlot->count) {
-	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,
+	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
-	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,
+	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordY->value));
-	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
 	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
@@ -1252,14 +1207,14 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	      /* Shift everybody down one, add at end */
 		int j;
 		for (j = 1; j < dlCartesianPlot->count; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
-		      XrtDataGetXElement(pt->hxrt,pt->trace,j));
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
-		      XrtDataGetYElement(pt->hxrt,pt->trace,j));
+		    CpDataSetXElement(pt->hcp,pt->trace,j-1,
+		      CpDataGetXElement(pt->hcp,pt->trace,j));
+		    CpDataSetYElement(pt->hcp,pt->trace,j-1,
+		      CpDataGetYElement(pt->hcp,pt->trace,j));
 		}
-		XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
+		CpDataSetXElement(pt->hcp,pt->trace,j-1,
 		  SAFEFLOAT(pt->recordX->value));
-		XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
+		CpDataSetYElement(pt->hcp,pt->trace,j-1,
 		  SAFEFLOAT(pt->recordY->value));
 	    }
 	}
@@ -1268,26 +1223,26 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	  nextPoint,dlCartesianPlot->count,
 	  pt->recordX->value,pt->recordY->value);
 	printf("x1=%g x2=%g x3=%g\n",
-	  XrtDataGetXElement(pt->hxrt,pt->trace,0),
-	  XrtDataGetXElement(pt->hxrt,pt->trace,1),
-	  XrtDataGetXElement(pt->hxrt,pt->trace,2));
+	  CpDataGetXElement(pt->hcp,pt->trace,0),
+	  CpDataGetXElement(pt->hcp,pt->trace,1),
+	  CpDataGetXElement(pt->hcp,pt->trace,2));
 	printf("y1=%g y2=%g y3=%g\n\n",
-	  XrtDataGetYElement(pt->hxrt,pt->trace,0),
-	  XrtDataGetYElement(pt->hxrt,pt->trace,1),
-	  XrtDataGetYElement(pt->hxrt,pt->trace,2));
+	  CpDataGetYElement(pt->hcp,pt->trace,0),
+	  CpDataGetYElement(pt->hcp,pt->trace,1),
+	  CpDataGetYElement(pt->hcp,pt->trace,2));
 #endif		
 	break;
 
     case CP_XScalar:
       /* x channel scalar, up to dlCartesianPlot->count pairs */
-	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
 	else pt->init=1;
 	if (nextPoint < dlCartesianPlot->count) {
-	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,
+	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
-	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,(float)nextPoint);
-	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,(float)nextPoint);
+	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
 	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
@@ -1295,13 +1250,13 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	      /* Shift everybody down one, add at end */
 		int j;
 		for (j = 1; j < dlCartesianPlot->count; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
-		      XrtDataGetXElement(pt->hxrt,pt->trace,j));
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j-1,(float)(j-1));
+		    CpDataSetXElement(pt->hcp,pt->trace,j-1,
+		      CpDataGetXElement(pt->hcp,pt->trace,j));
+		    CpDataSetYElement(pt->hcp,pt->trace,j-1,(float)(j-1));
 		}
-		XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
+		CpDataSetXElement(pt->hcp,pt->trace,j-1,
 		  SAFEFLOAT(pt->recordX->value));
-		XrtDataSetYElement(pt->hxrt,pt->trace,j-1,(float)(j-1));
+		CpDataSetYElement(pt->hcp,pt->trace,j-1,(float)(j-1));
 	    }
 	}
 	break;
@@ -1309,13 +1264,13 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_XVector:
       /* x channel vector, ca_element_count(chid) elements */
-	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordX->elementCount-1,0));
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordX->elementCount-1,0));
 	switch(pt->recordX->dataType) {
 	case DBF_STRING:
 	{
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,0.0);
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,0.0);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1323,8 +1278,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    short *pShort = (short *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pShort[j]);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1332,8 +1287,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    float *pFloat = (float *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pFloat[j]));
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1341,8 +1296,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    unsigned short *pUShort = (unsigned short *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1350,8 +1305,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    unsigned char *pUChar = (unsigned char *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1359,8 +1314,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pLong[j]);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1368,8 +1323,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    double *pDouble = (double *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pDouble[j]));
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j]));
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	    }
@@ -1378,7 +1333,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_YScalar:
       /* y channel scalar, up to dlCartesianPlot->count pairs */
-	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
 	else pt->init=1;
 #if DEBUG_CARTESIAN_PLOT_UPDATE
@@ -1396,13 +1351,13 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		  NULL);
 		pcp->startTime = pt->recordY->time;
 	    }
-	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,(pcp->timeScale) ?
+	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,(pcp->timeScale) ?
 	      (float)(pt->recordY->time.secPastEpoch -
 		pcp->startTime.secPastEpoch) :
 	      (float) nextPoint);
-	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,
+	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,
 	      (float)pt->recordY->value);
-	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
 	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
@@ -1418,22 +1373,22 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 #endif    
 		if (pcp->timeScale) {
 		    for (j = 1; j < dlCartesianPlot->count; j++) {
-			XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
-			  XrtDataGetXElement(pt->hxrt,pt->trace,j));
-			XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
-			  XrtDataGetYElement(pt->hxrt,pt->trace,j));
+			CpDataSetXElement(pt->hcp,pt->trace,j-1,
+			  CpDataGetXElement(pt->hcp,pt->trace,j));
+			CpDataSetYElement(pt->hcp,pt->trace,j-1,
+			  CpDataGetYElement(pt->hcp,pt->trace,j));
 		    }
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
+		    CpDataSetXElement(pt->hcp,pt->trace,j-1,
 		      (float)(pt->recordY->time.secPastEpoch -
 		      pcp->startTime.secPastEpoch)); 
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
+		    CpDataSetYElement(pt->hcp,pt->trace,j-1,
 		      (float)pt->recordY->value);
 		} else {
 		    for (j = 1; j < dlCartesianPlot->count; j++) {
-			XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
-			  XrtDataGetYElement(pt->hxrt,pt->trace,j));
+			CpDataSetYElement(pt->hcp,pt->trace,j-1,
+			  CpDataGetYElement(pt->hcp,pt->trace,j));
 		    }
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
+		    CpDataSetYElement(pt->hcp,pt->trace,j-1,
 		      (float)pt->recordY->value);
 		} 
 	    }
@@ -1445,7 +1400,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    static char filename[]="xrtdata.data";
 
 	    if(nextPoint == 10) {
-		XrtDataSaveToFile(pt->hxrt,filename,NULL);
+		XrtDataSaveToFile(pt->hcp,filename,NULL);
 		printf("Data saved to %s\n",filename);
 	    }
 	    
@@ -1457,22 +1412,22 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	      (float)nextPoint1,
 	      (float)pt->recordY->value);
 	    printf("  nextPoint=%d XElement=%f YElement=%f\n",
-	      XrtDataGetLastPoint(pt->hxrt,pt->trace),
-	      XrtDataGetXElement(pt->hxrt,pt->trace,nextPoint1),
-	      XrtDataGetYElement(pt->hxrt,pt->trace,nextPoint1));
+	      CpDataGetLastPoint(pt->hcp,pt->trace),
+	      CpDataGetXElement(pt->hcp,pt->trace,nextPoint1),
+	      CpDataGetYElement(pt->hcp,pt->trace,nextPoint1));
 	}
 #endif    
 	break;
 
     case CP_YVector:
       /* plot first "count" elements of vector per dlCartesianPlot */
-	XrtDataSetLastPoint(pt->hxrt,pt->trace,pt->recordY->elementCount-1);
+	CpDataSetLastPoint(pt->hcp,pt->trace,pt->recordY->elementCount-1);
 	switch(pt->recordY->dataType) {
 	case DBF_STRING:
 	{
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,0.0);
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,0.0);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1480,8 +1435,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    short *pShort = (short *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pShort[j]);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1489,8 +1444,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    float *pFloat = (float *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pFloat[j]));
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1498,8 +1453,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    unsigned short *pUShort = (unsigned short *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1507,8 +1462,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    unsigned char *pUChar = (unsigned char *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1516,8 +1471,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pLong[j]);
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1525,8 +1480,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    double *pDouble = (double *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetYElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pDouble[j]));
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)j);
+		CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j]));
+		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
 	    break;
 	}
@@ -1535,14 +1490,14 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
 
     case CP_XVectorYScalar:
-	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordX->elementCount-1,0));
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordX->elementCount-1,0));
 	if (pr == pt->recordX) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordX->dataType) {
 	    case DBF_STRING:
 	    {
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,0.0);
+		    CpDataSetXElement(pt->hcp,pt->trace,j,0.0);
 		}
 		break;
 	    }
@@ -1550,7 +1505,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		short *pShort = (short *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
+		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		}
 		break;
 	    }
@@ -1558,7 +1513,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		float *pFloat = (float *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pFloat[j]));
+		    CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
 		}
 		break;
 	    }
@@ -1566,7 +1521,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		unsigned short *pUShort = (unsigned short *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
+		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		}
 		break;
 	    }
@@ -1574,7 +1529,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		unsigned char *pUChar = (unsigned char *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
+		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		}
 		break;
 	    }
@@ -1582,7 +1537,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
+		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		}
 		break;
 	    }
@@ -1590,7 +1545,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		double *pDouble = (double *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetXElement(pt->hxrt,pt->trace,j,
+		    CpDataSetXElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pDouble[j]));
 		}
 		break;
@@ -1599,7 +1554,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	} else {
 	    if (pr == pt->recordY) {
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,
+		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pt->recordY->value));
 		}
 	    }
@@ -1607,14 +1562,14 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
 
     case CP_YVectorXScalar:
-	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordY->elementCount-1,0));
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordY->elementCount-1,0));
 	if (pr == pt->recordY) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordY->dataType) {
 	    case DBF_STRING:
 	    {
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,0.0);
+		    CpDataSetYElement(pt->hcp,pt->trace,j,0.0);
 		}
 		break;
 	    }
@@ -1622,7 +1577,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		short *pShort = (short *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
+		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		}
 		break;
 	    }
@@ -1630,7 +1585,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		float *pFloat = (float *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,
+		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pFloat[j]));
 		}
 		break;
@@ -1639,7 +1594,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		unsigned short *pUShort = (unsigned short *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
+		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		}
 		break;
 	    }
@@ -1647,7 +1602,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		unsigned char *pUChar = (unsigned char *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
+		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		}
 		break;
 	    }
@@ -1655,7 +1610,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
+		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		}
 		break;
 	    }
@@ -1663,7 +1618,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		double *pDouble = (double *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    XrtDataSetYElement(pt->hxrt,pt->trace,j,
+		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pDouble[j]));
 		}
 		break;
@@ -1671,7 +1626,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	} else  if (pr == pt->recordX) {
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		XrtDataSetXElement(pt->hxrt,pt->trace,j,
+		CpDataSetXElement(pt->hcp,pt->trace,j,
 		  SAFEFLOAT(pt->recordX->value));
 	    }
 	}
@@ -1682,7 +1637,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	int count;
 
 	count = MIN(pt->recordX->elementCount, pt->recordY->elementCount);
-	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(count-1,0));
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
 
 	if (pr == pt->recordX) {
 	    dox = 1;
@@ -1711,9 +1666,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		dbr_long_t offset = (dbr_long_t) pcp->startTime.secPastEpoch;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)(pLong[j] - offset));
+		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)(pLong[j] - offset));
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)(pLong[j] - offset));
+		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)(pLong[j] - offset));
 		}
 		break;
 	    }
@@ -1723,9 +1678,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		double offset = (double) pcp->startTime.secPastEpoch;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
+		      CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
+		      CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
 		}
 		break;
 	    }
@@ -1737,9 +1692,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_STRING:
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,0.0);
+		      CpDataSetXElement(pt->hcp,pt->trace,j,0.0);
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,0.0);
+		      CpDataSetYElement(pt->hcp,pt->trace,j,0.0);
 		}
 		break;
 	    case DBF_INT:
@@ -1747,9 +1702,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		short *pShort = (short *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
+		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pShort[j]);
+		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		}
 		break;
 	    }
@@ -1758,10 +1713,10 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		float *pFloat = (float *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,
+		      CpDataSetXElement(pt->hcp,pt->trace,j,
 			SAFEFLOAT(pFloat[j]));
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,
+		      CpDataSetYElement(pt->hcp,pt->trace,j,
 			SAFEFLOAT(pFloat[j]));
 		}
 		break;
@@ -1771,9 +1726,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		unsigned short *pUShort = (unsigned short *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
+		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUShort[j]);
+		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		}
 		break;
 	    }
@@ -1782,9 +1737,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		unsigned char *pUChar = (unsigned char *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
+		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pUChar[j]);
+		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		}
 		break;
 	    }
@@ -1793,9 +1748,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		dbr_long_t *pLong = (dbr_long_t *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
+		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,(float)pLong[j]);
+		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		}
 		break;
 	    }
@@ -1804,10 +1759,10 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		double *pDouble = (double *) pr->array;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      XrtDataSetXElement(pt->hxrt,pt->trace,j,
+		      CpDataSetXElement(pt->hcp,pt->trace,j,
 			SAFEFLOAT(pDouble[j]));
 		    else
-		      XrtDataSetYElement(pt->hxrt,pt->trace,j,
+		      CpDataSetYElement(pt->hcp,pt->trace,j,
 			SAFEFLOAT(pDouble[j]));
 		}
 		break;
@@ -1839,8 +1794,8 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 #if DEBUG_CARTESIAN_PLOT_UPDATE
-	printf("  recordX=%x recordY=%x hxrt=%x\n",
-	  t->recordX,t->recordY,t->hxrt);
+	printf("  recordX=%x recordY=%x hcp=%x\n",
+	  t->recordX,t->recordY,t->hcp);
 	if(t->recordX) {
 	    printf("  x: array=%x precision=%d\n",
 	      t->recordX->array,t->recordX->precision);
@@ -1851,7 +1806,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	}
 #endif    
 	if ((t->recordX) || (t->recordY)) {
-	    if (t->hxrt == NULL) return;
+	    if (t->hcp == NULL) return;
 	    if ((t->recordX) &&
 	      ((!t->recordX->array) || (t->recordX->precision < 0))) return;
 	    if ((t->recordY) &&
@@ -1878,10 +1833,10 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	} else {
 	    continue;
 	}
-	if (t->hxrt == pcp->hxrt1)
-	  XtVaSetValues(widget,XtNxrtData,t->hxrt,NULL);
-	else if (t->hxrt == pcp->hxrt2) {
-	    XtVaSetValues(widget,XtNxrtData2,t->hxrt,NULL);
+	if (t->hcp == pcp->hcp1)
+	  XtVaSetValues(widget,XtNxrtData,t->hcp,NULL);
+	else if (t->hcp == pcp->hcp2) {
+	    XtVaSetValues(widget,XtNxrtData2,t->hcp,NULL);
 	}
     }
   /* Erase the plot */
@@ -1892,16 +1847,16 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	    for (i = 0; i < pcp->nTraces; i++) {
 		XYTrace *t = &(pcp->xyTrace[i]);
 		if ((t->recordX) || (t->recordY)) {
-		    int n = XrtDataGetLastPoint(t->hxrt,t->trace);
+		    int n = CpDataGetLastPoint(t->hcp,t->trace);
 		    if (n > 0) {
-			if ((t->hxrt == pcp->hxrt1) && (clearDataSet1)) {
-			    XtVaSetValues(widget,XtNxrtData,hxrtNullData,NULL);
+			if ((t->hcp == pcp->hcp1) && (clearDataSet1)) {
+			    XtVaSetValues(widget,XtNxrtData,hcpNullData,NULL);
 			    clearDataSet1 = False;
-			} else if ((t->hxrt == pcp->hxrt2) && (clearDataSet2)) {
-			    XtVaSetValues(widget,XtNxrtData2,hxrtNullData,NULL);
+			} else if ((t->hcp == pcp->hcp2) && (clearDataSet2)) {
+			    XtVaSetValues(widget,XtNxrtData2,hcpNullData,NULL);
 			    clearDataSet2 = False;
 			}
-			XrtDataSetLastPoint(t->hxrt,t->trace,0);
+			CpDataSetLastPoint(t->hcp,t->trace,0);
 		    }
 		} 
 	    }
@@ -1954,18 +1909,18 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	for (i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
 	    if ((t->recordX) || (t->recordY)) {
-		int n = XrtDataGetLastPoint(t->hxrt,t->trace);
+		int n = CpDataGetLastPoint(t->hcp,t->trace);
 		if (n > 0) {
-		    if ((t->hxrt == pcp->hxrt1) && (clearDataSet1)) {
-			XtVaSetValues(widget,XtNxrtData,hxrtNullData,NULL);
+		    if ((t->hcp == pcp->hcp1) && (clearDataSet1)) {
+			XtVaSetValues(widget,XtNxrtData,hcpNullData,NULL);
 			clearDataSet1 = False;
 			pcp->dirty1 = False;
-		    } else if ((t->hxrt == pcp->hxrt2) && (clearDataSet2)) {
-			XtVaSetValues(widget,XtNxrtData2,hxrtNullData,NULL);
+		    } else if ((t->hcp == pcp->hcp2) && (clearDataSet2)) {
+			XtVaSetValues(widget,XtNxrtData2,hcpNullData,NULL);
 			clearDataSet2 = False;
 			pcp->dirty2 = False;
 		    }
-		    XrtDataSetLastPoint(t->hxrt,t->trace,0);
+		    CpDataSetLastPoint(t->hcp,t->trace,0);
 		}
 	    }
 	}
@@ -1986,31 +1941,31 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	for (i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
 	    if ((t->recordX == NULL) && (t->recordY == NULL)) continue;
-	    if ((t->recordX) && (t->hxrt)) {
+	    if ((t->recordX) && (t->hcp)) {
 		cartesianPlotUpdateTrace((XtPointer)t->recordX);
 		if (t->type == CP_XYVector)
 		  cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		if (t->hxrt == pcp->hxrt1)
+		if (t->hcp == pcp->hcp1)
 		  pcp->dirty1 = True;
-		else if (t->hxrt == pcp->hxrt2)
+		else if (t->hcp == pcp->hcp2)
 		  pcp->dirty2 = True;
-	    } else if ((t->recordY) && (t->hxrt)) {
+	    } else if ((t->recordY) && (t->hcp)) {
 		cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		if (t->hxrt == pcp->hxrt1)
+		if (t->hcp == pcp->hcp1)
 		  pcp->dirty1 = True;
-		else if (t->hxrt == pcp->hxrt2)
+		else if (t->hcp == pcp->hcp2)
 		  pcp->dirty2 = True;
 	    }
 	}
     } else {
       /* No trigger channel, proceed as normal */
 	cartesianPlotUpdateTrace((XtPointer)pr);
-	if (pt->hxrt == pcp->hxrt1) {
+	if (pt->hcp == pcp->hcp1) {
 	    pcp->dirty1 = True;
-	} else if (pt->hxrt == pcp->hxrt2) {
+	} else if (pt->hcp == pcp->hcp2) {
 	    pcp->dirty2 = True;
 	} else {
-	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal xrtDataSet specified\n");
+	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal cpDataSet specified\n");
 	}
     }
     updateTaskMarkUpdate(pcp->updateTask);
@@ -2037,8 +1992,8 @@ void cartesianPlotDestroyCb(XtPointer cd) {
 	  medmDestroyRecord(pcp->triggerCh.recordX);
 	if (pcp->eraseCh.recordX)
 	  medmDestroyRecord(pcp->eraseCh.recordX);
-	if (pcp->hxrt1) XrtDataDestroy(pcp->hxrt1);
-	if (pcp->hxrt2) XrtDataDestroy(pcp->hxrt2);
+	if (pcp->hcp1) CpDataDestroy(pcp->hcp1);
+	if (pcp->hcp2) CpDataDestroy(pcp->hcp2);
 	free((char *)pcp);
     }
     return;
@@ -2090,11 +2045,11 @@ void cartesianPlotDraw(XtPointer cd) {
 	    if (widget) {
 		if (pcp->dirty1) {
 		    pcp->dirty1 = False;
-		    XtVaSetValues(widget,XtNxrtData,pcp->hxrt1,NULL);
+		    XtVaSetValues(widget,XtNxrtData,pcp->hcp1,NULL);
 		}
 		if (pcp->dirty2) {
 		    pcp->dirty2 = False;
-		    XtVaSetValues(widget,XtNxrtData2,pcp->hxrt2,NULL);
+		    XtVaSetValues(widget,XtNxrtData2,pcp->hcp2,NULL);
 		}
 		addCommonHandlers(widget, pcp->updateTask->displayInfo);
 		XtManageChild(widget);
@@ -2393,3 +2348,1331 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
 }
 #endif			    
 #endif    
+
+/*
+ * Set Cartesian Plot Axis attributes
+ * (complex - has to handle both EDIT and EXECUTE time interactions)
+ */
+#ifdef __cplusplus
+static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
+#else
+static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{     
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonId = (int) cd;
+    int i, k, n, rcType, iPrec;
+    char string[24];
+    DlElement *elementPtr;
+    Arg args[10];
+    String resourceName;
+    XcVType minF, maxF, tickF;
+    XtPointer userData;
+    CartesianPlot *pcp = NULL;
+    DlCartesianPlot *dlCartesianPlot = NULL;
+
+  /* Get current cartesian plot */
+    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	if (executeTimeCartesianPlotWidget) {
+	    XtVaGetValues(executeTimeCartesianPlotWidget,
+	      XmNuserData, &userData, NULL);
+	    if (pcp = (CartesianPlot *) userData)
+	      dlCartesianPlot = (DlCartesianPlot *) 
+		pcp->dlElement->structure.cartesianPlot;
+	}
+    }
+
+  /* rcType (and therefore which option menu...) is stored in userData */
+    XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
+    n = 0;
+    switch (rcType) {
+    case CP_X_AXIS_STYLE: 
+    case CP_Y_AXIS_STYLE: 
+    case CP_Y2_AXIS_STYLE:
+    {
+	CartesianPlotAxisStyle style 
+	  = (CartesianPlotAxisStyle)(FIRST_CARTESIAN_PLOT_AXIS_STYLE+buttonId);
+	
+	globalResourceBundle.axis[rcType - CP_X_AXIS_STYLE].axisStyle = style;
+	switch (rcType) {
+	case CP_X_AXIS_STYLE:
+	    switch (style) {
+	    case LINEAR_AXIS:
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,False); n++;
+		XtSetSensitive(axisTimeFormat,False);
+		if(pcp) pcp->timeScale = False;
+		break;
+	    case LOG10_AXIS:
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,True); n++;
+		XtSetSensitive(axisTimeFormat,False);
+		if(pcp) pcp->timeScale = False;
+		break;
+	    case TIME_AXIS:
+		XtSetSensitive(axisTimeFormat,True);
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,False); n++;
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_TIME_LABELS); n++;
+		XtSetArg(args[n],XtNxrtTimeBase,time900101); n++;
+		XtSetArg(args[n],XtNxrtTimeUnit,XRT_TMUNIT_SECONDS); n++;
+		XtSetArg(args[n],XtNxrtTimeFormatUseDefault,False); n++;
+		XtSetArg(args[n],XtNxrtTimeFormat,
+		  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+		      FIRST_CP_TIME_FORMAT]); n++;
+		if(pcp) pcp->timeScale = True;
+	    }
+	    break;
+	case CP_Y_AXIS_STYLE:
+	    XtSetArg(args[n],XtNxrtYAxisLogarithmic,
+	      (style == LOG10_AXIS) ? True : False); n++;
+	    break;
+	case CP_Y2_AXIS_STYLE:
+	    XtSetArg(args[n],XtNxrtY2AxisLogarithmic,
+	      (style == LOG10_AXIS) ? True : False); n++;
+	    break;
+	}
+	break;
+    }
+    case CP_X_RANGE_STYLE:
+    case CP_Y_RANGE_STYLE:
+    case CP_Y2_RANGE_STYLE:
+	globalResourceBundle.axis[rcType-CP_X_RANGE_STYLE].rangeStyle
+	  = (CartesianPlotRangeStyle)(FIRST_CARTESIAN_PLOT_RANGE_STYLE
+	    + buttonId);
+	switch(globalResourceBundle.axis[rcType%3].rangeStyle) {
+	case USER_SPECIFIED_RANGE:
+	    XtSetSensitive(axisRangeMinRC[rcType%3],True);
+	    XtSetSensitive(axisRangeMaxRC[rcType%3],True);
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		if (dlCartesianPlot) /* get min from element if possible */
+		  minF.fval = dlCartesianPlot->axis[rcType%3].minRange;
+		else
+		  minF.fval = globalResourceBundle.axis[rcType%3].minRange;
+		sprintf(string,"%f",minF.fval);
+		XmTextFieldSetString(axisRangeMin[rcType%3],string);
+		if (dlCartesianPlot) /* get max from element if possible */
+		  maxF.fval = dlCartesianPlot->axis[rcType%3].maxRange;
+		else
+		  maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
+		sprintf(string,"%f",maxF.fval);
+		XmTextFieldSetString(axisRangeMax[rcType%3],string);
+		tickF.fval = (maxF.fval - minF.fval)/4.0;
+		sprintf(string,"%f",tickF.fval);
+		k = strlen(string)-1;
+		while (string[k] == '0') k--;	/* strip off trailing zeroes */
+		iPrec = k;
+		while (string[k] != '.' && k >= 0) k--;
+		iPrec = iPrec - k;
+		switch(rcType%3) {
+		case X_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtXMin,minF.lval); n++;
+		    XtSetArg(args[n],XtNxrtXMax,maxF.lval); n++;
+		    XtSetArg(args[n],XtNxrtXTick,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtXNum,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtXPrecision,iPrec); n++;
+		    break;
+		case Y1_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtYMin,minF.lval); n++;
+		    XtSetArg(args[n],XtNxrtYMax,maxF.lval); n++;
+		    XtSetArg(args[n],XtNxrtYTick,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtYNum,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtYPrecision,iPrec); n++;
+		    break;
+		case Y2_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtY2Min,minF.lval); n++;
+		    XtSetArg(args[n],XtNxrtY2Max,maxF.lval); n++;
+		    XtSetArg(args[n],XtNxrtY2Tick,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtY2Num,tickF.lval); n++;
+		    XtSetArg(args[n],XtNxrtY2Precision,iPrec); n++;
+		    break;
+		}
+	    }
+	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
+	    break;
+	case CHANNEL_RANGE: 
+	    XtSetSensitive(axisRangeMinRC[rcType%3],False);
+	    XtSetSensitive(axisRangeMaxRC[rcType%3],False);
+	    if (pcp) {
+	      /* get channel-based range specifiers - NB: these are
+	       *   different than the display element version of these
+	       *   which are the user-specified values
+	       */
+		minF.fval = pcp->axisRange[rcType%3].axisMin;
+		maxF.fval = pcp->axisRange[rcType%3].axisMax;
+	    }
+	    switch(rcType%3) {
+	    case X_AXIS_ELEMENT:
+		XtSetArg(args[n],XtNxrtXMin,minF.lval); n++;
+		XtSetArg(args[n],XtNxrtXMax,maxF.lval); n++;
+		XtSetArg(args[n],XtNxrtXTickUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtXNumUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtXPrecisionUseDefault,True); n++;
+		break;
+	    case Y1_AXIS_ELEMENT:
+		XtSetArg(args[n],XtNxrtYMin,minF.lval); n++;
+		XtSetArg(args[n],XtNxrtYMax,maxF.lval); n++;
+		XtSetArg(args[n],XtNxrtYTickUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtYNumUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtYPrecisionUseDefault,True); n++;
+		break;
+	    case Y2_AXIS_ELEMENT:
+		XtSetArg(args[n],XtNxrtY2Min,minF.lval); n++;
+		XtSetArg(args[n],XtNxrtY2Max,maxF.lval); n++;
+		XtSetArg(args[n],XtNxrtY2TickUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtY2NumUseDefault,True); n++;
+		XtSetArg(args[n],XtNxrtY2PrecisionUseDefault,True); n++;
+		break;
+	    }
+	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = True;
+	    break;
+	case AUTO_SCALE_RANGE:
+	    XtSetSensitive(axisRangeMinRC[rcType%3],False);
+	    XtSetSensitive(axisRangeMaxRC[rcType%3],False);
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		switch(rcType%3) {
+		case X_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtXMinUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtXMaxUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtXTickUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtXNumUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtXPrecisionUseDefault,True);n++;
+		    break;
+		case Y1_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtYMinUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtYMaxUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtYTickUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtYNumUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtYPrecisionUseDefault,True);n++;
+		    break;
+		case Y2_AXIS_ELEMENT:
+		    XtSetArg(args[n],XtNxrtY2MinUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtY2MaxUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtY2TickUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtY2NumUseDefault,True);n++;
+		    XtSetArg(args[n],XtNxrtY2PrecisionUseDefault,True);n++;
+		    break;
+		}
+	    }
+	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
+	    break;
+	default:
+	    break;
+	}
+	break;
+    case CP_X_TIME_FORMAT:
+	globalResourceBundle.axis[0].timeFormat =
+	  (CartesianPlotTimeFormat_t)(FIRST_CP_TIME_FORMAT + buttonId);
+	XtSetArg(args[n],XtNxrtTimeFormat,
+	  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+	    FIRST_CP_TIME_FORMAT]); n++;
+	break;
+    default:
+	medmPrintf(1,"\ncpAxisOptionMenuSimpleCallback: Unknown rcType = %d\n",rcType/3);
+	break;
+    }
+    
+  /* Update for EDIT or EXECUTE mode */
+    switch(globalDisplayListTraversalMode) {
+    case DL_EDIT:
+	if (cdi) {
+	    DlElement *dlElement = FirstDlElement(
+	      cdi->selectedDlElementList);
+	    unhighlightSelectedElements();
+	    while (dlElement) {
+		updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		dlElement = dlElement->next;
+	    }
+	    dmTraverseNonWidgetsInDisplayList(cdi);
+	    highlightSelectedElements();
+	}
+	break;
+    case DL_EXECUTE:
+	if (executeTimeCartesianPlotWidget)
+	  XtSetValues(executeTimeCartesianPlotWidget,args,n);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
+#else
+void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int rcType = (int)cd;
+    char *stringValue, string[24];
+    int i, k, n, iPrec;
+    Arg args[10];
+    XcVType valF, minF, maxF, tickF;
+    String resourceName;
+
+#if DEBUG_XRT
+    print("\ncpAxisTextFieldActivateCallback: Entered\n");
+#endif    
+    stringValue = XmTextFieldGetString(w);
+
+  /* Determine axis max or min
+   *   Note: For the strcpy() calls, note that the textField has a maxLength 
+	  resource set such that the strcpy always succeeds) */
+    n = 0;
+    switch(rcType) {
+    case CP_X_RANGE_MIN:
+    case CP_Y_RANGE_MIN:
+    case CP_Y2_RANGE_MIN:
+	globalResourceBundle.axis[rcType%3].minRange= atof(stringValue);
+	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    valF.fval = globalResourceBundle.axis[rcType%3].minRange;
+	    switch(rcType%3) {
+	    case X_AXIS_ELEMENT: resourceName = XtNxrtXMin; break;
+	    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYMin; break;
+	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Min; break;
+	    default:
+		medmPrintf(1,"\ncpAxisTextFieldActivateCallback (MIN): "
+		  "Unknown rcType%%3 = %d\n",rcType%3);
+		return;
+	    }
+	    XtSetArg(args[n],resourceName,valF.lval); n++;
+#if DEBUG_XRT
+	    print("\ncpAxisTextFieldActivateCallback [MIN]: "
+	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
+	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
+#endif    
+	}
+	break;
+    case CP_X_RANGE_MAX:
+    case CP_Y_RANGE_MAX:
+    case CP_Y2_RANGE_MAX:
+	globalResourceBundle.axis[rcType%3].maxRange= atof(stringValue);
+	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    valF.fval = globalResourceBundle.axis[rcType%3].maxRange;
+	    switch(rcType%3) {
+	    case X_AXIS_ELEMENT: resourceName = XtNxrtXMax; break;
+	    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYMax; break;
+	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Max; break;
+	    default:
+		medmPrintf(1,"\ncpAxisTextFieldActivateCallback (MAX): "
+		  "Unknown rcType%%3 = %d\n",rcType%3);
+		return;
+	    }
+	    XtSetArg(args[n],resourceName,valF.lval); n++;
+#if DEBUG_XRT
+	    print("\ncpAxisTextFieldActivateCallback [MAX]: "
+	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
+	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
+#endif    
+	}
+	break;
+    default:
+	medmPrintf(1,"\ncpAxisTextFieldActivateCallback: "
+	  "Unknown rcType = %d\n",rcType);
+	return;
+    }
+    XtFree(stringValue);
+
+  /* Recalculate ticks */
+    minF.fval = globalResourceBundle.axis[rcType%3].minRange;
+    maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
+    tickF.fval = (maxF.fval - minF.fval)/4.0;
+#if DEBUG_XRT
+    print("cpAxisTextFieldActivateCallback: "
+      "minF.fval =%g minF.lval=%ld Converted: %d\n",
+      minF.fval,minF.lval,XrtFloatToArgVal(minF.fval));
+    print("cpAxisTextFieldActivateCallback: "
+      "maxF.fval =%g maxF.lval=%ld Converted: %d\n",
+      maxF.fval,maxF.lval,XrtFloatToArgVal(maxF.fval));
+    print("cpAxisTextFieldActivateCallback: "
+      "tickF.fval =%g tickF.lval=%ld Converted: %d\n",
+      tickF.fval,tickF.lval,XrtFloatToArgVal(tickF.fval));
+#endif    
+
+  /* Increment between axis ticks */
+    switch(rcType%3) {
+    case X_AXIS_ELEMENT: resourceName = XtNxrtXTick; break;
+    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYTick; break;
+    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Tick; break;
+    default:
+	medmPrintf(1,"\ncpAxisTextFieldActivateCallback (Tick): "
+	  "Unknown rcType%%3 = %d\n",rcType%3);
+	return;
+    }
+    XtSetArg(args[n],resourceName,tickF.lval); n++;
+
+  /* Increment between axis numbering (set to tick value) */
+    switch(rcType%3) {
+    case X_AXIS_ELEMENT: resourceName = XtNxrtXNum; break;
+    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYNum; break;
+    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Num; break;
+    default:
+	medmPrintf(1,"\ncpAxisTextFieldActivateCallback (Num): "
+	  "Unknown rcType%%3 = %d\n",rcType%3);
+	return;
+    }
+
+  /* Digits after the decimal point */
+    XtSetArg(args[n],resourceName,tickF.lval); n++;
+    switch(rcType%3) {
+    case X_AXIS_ELEMENT: resourceName = XtNxrtXPrecision; break;
+    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYPrecision; break;
+    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Precision; break;
+    default:
+	medmPrintf(1,"\ncpAxisTextFieldActivateCallback (Precision): "
+	  "Unknown rcType%%3 = %d\n",rcType%3);
+	return;
+    }
+#if 0
+  /* KE: Doesn't make sense and is redone below */
+    XtSetArg(args[n],resourceName,tickF.lval); n++;
+#endif    
+    sprintf(string,"%f",tickF.fval);
+    k = strlen(string)-1;
+    while (string[k] == '0') k--;	/* strip off trailing zeroes */
+    iPrec = k;
+    while (string[k] != '.' && k >= 0) k--;
+    iPrec = iPrec - k;
+    XtSetArg(args[n],resourceName,iPrec); n++;
+    
+  /* Update for EDIT or EXECUTE mode  */
+    switch(globalDisplayListTraversalMode) {
+    case DL_EDIT:
+      /*
+       * update elements (this is overkill, but okay for now)
+       *	-- not as efficient as it should be (don't update EVERYTHING if only
+       *	   one item changed!)
+       */
+	if (cdi != NULL) {
+	    DlElement *dlElement = FirstDlElement(
+	      cdi->selectedDlElementList);
+	    unhighlightSelectedElements();
+	    while (dlElement) {
+		updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		dlElement = dlElement->next;
+	    }
+	    dmTraverseNonWidgetsInDisplayList(cdi);
+	    highlightSelectedElements();
+	}
+	break;
+
+    case DL_EXECUTE:
+	if (executeTimeCartesianPlotWidget != NULL)
+	  XtSetValues(executeTimeCartesianPlotWidget,args,n);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
+#else
+void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+  /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS, too */
+{
+    int rcType = (int) cd;
+    char string[MAX_TOKEN_LENGTH], *currentString;
+    int tail;
+    XcVType minF[3], maxF[3];
+
+#if DEBUG_XRT
+    print("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
+    print("  executeTimeCartesianPlotWidget: %d\n",
+      executeTimeCartesianPlotWidget);
+    print("  rcType: %d  rcType%%3: %d\n",rcType,rcType%3);
+    print("  axisRangeMin[rcType%%3]: %d  axisRangeMax[rcType%%3]: %d  "
+      "w: %d\n",axisRangeMin[rcType%3],axisRangeMax[rcType%3],w);
+#endif    
+  /* Losing focus - make sure that the text field remains accurate wrt 
+   *   values stored in widget (not necessarily what is in globalResourceBundle) */
+    if (executeTimeCartesianPlotWidget != NULL)
+      XtVaGetValues(executeTimeCartesianPlotWidget,
+	XtNxrtXMin,&minF[X_AXIS_ELEMENT].lval,
+	XtNxrtYMin,&minF[Y1_AXIS_ELEMENT].lval,
+	XtNxrtY2Min,&minF[Y2_AXIS_ELEMENT].lval,
+	XtNxrtXMax,&maxF[X_AXIS_ELEMENT].lval,
+	XtNxrtYMax,&maxF[Y1_AXIS_ELEMENT].lval,
+	XtNxrtY2Max,&maxF[Y2_AXIS_ELEMENT].lval, NULL);
+    else
+      return;
+  /*
+   * losing focus - make sure that the text field remains accurate
+   *	wrt values stored in widget (not necessarily what is in
+   *	globalResourceBundle)
+   */
+
+    switch(rcType) {
+    case CP_X_RANGE_MIN:
+    case CP_Y_RANGE_MIN:
+    case CP_Y2_RANGE_MIN:
+	sprintf(string,"%f", minF[rcType%3].fval);
+	break;
+    case CP_X_RANGE_MAX:
+    case CP_Y_RANGE_MAX:
+    case CP_Y2_RANGE_MAX:
+	sprintf(string,"%f", maxF[rcType%3].fval);
+	break;
+    default:
+	medmPostMsg(1,"cpAxisTextFieldLosingFocusCallback: Unknown rcType = %d",
+	  rcType/3);
+	return;
+    }
+  /* strip trailing zeroes */
+    tail = strlen(string);
+    while (string[--tail] == '0') string[tail] = '\0';
+    currentString = XmTextFieldGetString(w);
+    if (strcmp(string,currentString))
+      XmTextFieldSetString(w,string);
+    XtFree(currentString);
+}
+
+/*
+ * Menu entry support routine for the Cartesian Plot Axis Dialog...
+ */
+void createCartesianPlotAxisDialogMenuEntry(
+  Widget parentRC,
+  XmString axisLabelXmString,
+  Widget *label,
+  Widget *menu,
+  XmString *menuLabelXmStrings,
+  XmButtonType *buttonType,
+  int numberOfLabels,
+  XtPointer clientData)
+{
+    Arg args[10];
+    int n = 0;
+    Widget rowColumn;
+
+  /* create rowColumn widget to hold the label and menu widgets */
+    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+    XtSetArg(args[n],XmNpacking,XmPACK_NONE); n++;
+    rowColumn = XmCreateRowColumn(parentRC,"entryRC",args,n);
+ 
+  /* create the label widget */
+    n = 0;
+    XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;
+    XtSetArg(args[n],XmNlabelString,axisLabelXmString); n++;
+    XtSetArg(args[n],XmNrecomputeSize,False); n++;
+    *label = XmCreateLabel(rowColumn,"localLabel",args,n);
+ 
+  /* create the text widget */
+    n = 0;
+    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+    XtSetArg(args[n],XmNbuttons,menuLabelXmStrings); n++;
+    XtSetArg(args[n],XmNbuttonCount,numberOfLabels); n++;
+    XtSetArg(args[n],XmNsimpleCallback,cpAxisOptionMenuSimpleCallback); n++;
+    XtSetArg(args[n],XmNuserData,clientData); n++;
+    *menu = XmCreateSimpleOptionMenu(rowColumn,"localElement",args,n);
+    XtUnmanageChild(XmOptionLabelGadget(*menu));
+    XtManageChild(rowColumn);
+}
+
+/*
+ * Text entry support routine for the Cartesian Plot Axis Dialog...
+ */
+void createCartesianPlotAxisDialogTextEntry(
+  Widget parentRC,
+  XmString axisLabelXmString,
+  Widget *rowColumn,
+  Widget *label,
+  Widget *text,
+  XtPointer clientData)
+{
+    Arg args[10];
+    int n = 0;
+  /* Create a row column widget to hold the label and textfield widget */
+    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+    XtSetArg(args[n],XmNpacking,XmPACK_NONE); n++;
+    *rowColumn = XmCreateRowColumn(parentRC,"entryRC",args,n);
+ 
+  /* Create the label */
+    n = 0;
+    XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;
+    XtSetArg(args[n],XmNlabelString,axisLabelXmString); n++;
+    XtSetArg(args[n],XmNrecomputeSize,False); n++;
+    *label = XmCreateLabel(*rowColumn,"localLabel",args,n);
+ 
+  /* Create the text field */
+    n = 0;
+    XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
+    *text = XmCreateTextField(*rowColumn,"localElement",args,n);
+    XtAddCallback(*text,XmNactivateCallback,cpAxisTextFieldActivateCallback,
+      clientData);
+    XtAddCallback(*text,XmNlosingFocusCallback,cpAxisTextFieldLosingFocusCallback,
+      clientData);
+    XtAddCallback(*text,XmNmodifyVerifyCallback,textFieldFloatVerifyCallback,
+      NULL);
+    XtManageChild(*rowColumn);
+}
+     
+
+/*
+ * Create Cartesian Plot axis dialog box
+ */
+#ifdef __cplusplus
+Widget createCartesianPlotAxisDialog(Widget)
+#else
+Widget createCartesianPlotAxisDialog(Widget parent)
+#endif
+{
+    Widget shell, closeButton;
+    Arg args[12];
+    int counter;
+    XmString xmString, axisStyleXmString, axisRangeXmString, axisMinXmString,
+      axisMaxXmString, axisTimeFmtXmString, frameLabelXmString;
+    int i, n;
+    static Boolean first = True;
+    XmButtonType buttonType[MAX_CP_AXIS_BUTTONS];
+    Widget entriesRC, frame, localRC, localLabel, localElement, parentRC;
+  /* For keeping list of widgets around */
+    Widget entryLabel[MAX_CP_AXIS_ELEMENTS], entryElement[MAX_CP_AXIS_ELEMENTS];
+    Dimension width, height;
+    static int maxWidth = 0, maxHeight = 0;
+
+  /* Indexed like dlCartesianPlot->axis[]: X_ELEMENT_AXIS, Y1_ELEMENT_AXIS... */
+    static char *frameLabelString[3] = {"X Axis", "Y1 Axis", "Y2 Axis",};
+
+  /* Initialize XmString value tables (since this can be edit or execute time) */
+    initializeXmStringValueTables();
+
+  /* Set buttons to be push button */
+    for (i = 0; i < MAX_CP_AXIS_BUTTONS; i++) buttonType[i] = XmPUSHBUTTON;
+
+  /*
+   * Create the interface
+   *		     ...
+   *		 OK     CANCEL
+   */
+    
+  /* Shell */
+    n = 0;
+    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+    XtSetArg(args[n],XmNautoUnmanage,False); n++;
+    XtSetArg(args[n],XmNtitle,"Cartesian Plot Axis Data"); n++;
+    shell = XtCreatePopupShell("cartesianPlotAxisS",
+      topLevelShellWidgetClass,mainShell,args,n);
+    XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
+      cartesianPlotAxisActivate,
+      (XtPointer)CP_CLOSE_BTN);
+
+  /* Form */
+    n = 0;
+    XtSetArg(args[n],XmNautoUnmanage,False); n++;
+    XtSetArg(args[n],XmNmarginHeight,8); n++;
+    XtSetArg(args[n],XmNmarginWidth,8); n++;
+    XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
+    cpAxisForm = XmCreateForm(shell,"cartesianPlotAxisF",args,n);
+
+  /* RowColumn */
+    n = 0;
+    XtSetArg(args[n],XmNnumColumns,1); n++;
+    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+    XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
+    entriesRC = XmCreateRowColumn(cpAxisForm,"entriesRC",args,n);
+
+    axisStyleXmString = XmStringCreateLocalized("Axis Style");
+    axisRangeXmString = XmStringCreateLocalized("Axis Range");
+    axisMinXmString = XmStringCreateLocalized("Minimum Value");
+    axisMaxXmString = XmStringCreateLocalized("Maximum Value");
+    axisTimeFmtXmString = XmStringCreateLocalized("Time format");
+
+  /* Loop over major elements */
+    counter = 0;
+    for (i = X_AXIS_ELEMENT /* 0 */; i <= Y2_AXIS_ELEMENT /* 2 */; i++) {
+      /* Frame */
+	n = 0;
+	XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
+	frame = XmCreateFrame(entriesRC,"frame",args,n);
+	XtManageChild(frame);
+
+      /* Label */
+	n = 0;
+	frameLabelXmString = XmStringCreateLocalized(frameLabelString[i]);
+	XtSetArg(args[n],XmNlabelString,frameLabelXmString); n++;
+	XtSetArg(args[n],XmNmarginWidth,0); n++;
+	XtSetArg(args[n],XmNmarginHeight,0); n++;
+	XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
+      /* (Use font calculation for textField (which uses ~90% of height)) */
+	XtSetArg(args[n],XmNfontList,fontListTable[textFieldFontListIndex(24)]);n++;
+	localLabel = XmCreateLabel(frame,"label",args,n);
+	XtManageChild(localLabel);
+	XmStringFree(frameLabelXmString);
+
+      /* RC within frame */
+	n = 0;
+	XtSetArg(args[n],XmNnumColumns,1); n++;
+	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+	XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
+	parentRC = XmCreateRowColumn(frame,"parentRC",args,n);
+	XtManageChild(parentRC);
+
+      /* Create Axis Style Entry */
+	createCartesianPlotAxisDialogMenuEntry(
+	  parentRC,
+	  axisStyleXmString,
+	  &(entryLabel[counter]),
+	  &(entryElement[counter]),
+	  &(xmStringValueTable[FIRST_CARTESIAN_PLOT_AXIS_STYLE]),
+	  buttonType,
+	  (!i)?NUM_CARTESIAN_PLOT_AXIS_STYLES:NUM_CARTESIAN_PLOT_AXIS_STYLES-1,
+	  (XtPointer)(CP_X_AXIS_STYLE+i));
+	axisStyleMenu[i] =  entryElement[counter];
+	counter++;
+
+      /* Create Range Style Entry */
+	createCartesianPlotAxisDialogMenuEntry(parentRC,
+	  axisRangeXmString,
+	  &(entryLabel[counter]),
+	  &(entryElement[counter]),
+	  &(xmStringValueTable[FIRST_CARTESIAN_PLOT_RANGE_STYLE]),
+	  buttonType,
+	  NUM_CARTESIAN_PLOT_RANGE_STYLES,
+	  (XtPointer)(CP_X_RANGE_STYLE+i));
+	axisRangeMenu[i] =  entryElement[counter];
+	counter++;
+
+      /* Create Min text field entry */
+	createCartesianPlotAxisDialogTextEntry(
+	  parentRC, axisMinXmString,
+	  &(axisRangeMinRC[i]), &(entryLabel[counter]),
+	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MIN+i));
+	axisRangeMin[i] = entryElement[counter];
+	counter++;
+ 
+      /* Create Max text field entry */
+	createCartesianPlotAxisDialogTextEntry(
+	  parentRC, axisMaxXmString,
+	  &(axisRangeMaxRC[i]), &(entryLabel[counter]),
+	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MAX+i));
+	axisRangeMax[i] = entryElement[counter];
+	counter++;
+
+      /* Create time format menu entry for X axis only */
+	if (i == X_AXIS_ELEMENT) {
+	    createCartesianPlotAxisDialogMenuEntry(
+	      parentRC,
+	      axisTimeFmtXmString,
+	      &(entryLabel[counter]),
+	      &(entryElement[counter]),
+	      &(xmStringValueTable[FIRST_CP_TIME_FORMAT]),
+	      buttonType,
+	      NUM_CP_TIME_FORMAT,
+	      (XtPointer)(CP_X_TIME_FORMAT));
+	    axisTimeFormat = entryElement[counter];
+	    counter++;
+	}
+    }
+
+  /* Get max sizes and manage */
+    for (i = 0; i < counter; i++) {
+	XtVaGetValues(entryLabel[i],XmNwidth,&width,XmNheight,&height,NULL);
+	maxLabelWidth = MAX(maxLabelWidth,width);
+	maxLabelHeight = MAX(maxLabelHeight,height);
+	XtVaGetValues(entryElement[i],XmNwidth,&width,XmNheight,&height,NULL);
+	maxLabelWidth = MAX(maxLabelWidth,width);
+	maxLabelHeight = MAX(maxLabelHeight,height);
+#if 0
+      /* Is done below */
+	XtManageChild(entryLabel[i]);
+	XtManageChild(entryElement[i]);
+#endif	
+    }
+
+   /* Resize the labels and elements (to max width) for uniform appearance */
+    for (i = 0; i < counter; i++) {
+      /* Set label */
+	XtVaSetValues(entryLabel[i],XmNwidth,maxLabelWidth,
+	  XmNheight,maxLabelHeight,XmNrecomputeSize,False,
+	  XmNalignment,XmALIGNMENT_END,NULL);
+
+      /* Set element */
+	if (XtClass(entryElement[i]) == xmRowColumnWidgetClass) {
+	  /* must be option menu - unmanage label widget */
+	    XtVaSetValues(XmOptionButtonGadget(entryElement[i]),
+	      XmNx,(Position)maxLabelWidth, XmNwidth,maxLabelWidth,
+	      XmNheight,maxLabelHeight,
+	      XmNrecomputeSize,False, XmNresizeWidth,True,
+	      XmNmarginWidth,0,
+	      NULL);
+	}
+	XtVaSetValues(entryElement[i],
+	  XmNx,(Position)maxLabelWidth, XmNwidth,maxLabelWidth,
+	  XmNheight,maxLabelHeight,
+	  XmNrecomputeSize,False, XmNresizeWidth,True,
+	  XmNmarginWidth,0,
+	  NULL);
+	XtManageChild(entryLabel[i]);
+	XtManageChild(entryElement[i]);
+    }
+
+  /* Free strings */
+    XmStringFree(axisStyleXmString);
+    XmStringFree(axisRangeXmString);
+    XmStringFree(axisMinXmString);
+    XmStringFree(axisMaxXmString);
+    XmStringFree(axisTimeFmtXmString);
+    
+  /* Set values for entriesRC (After resizing) */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+    XtSetValues(entriesRC,args,n);
+
+  /* Manage the RC */
+    XtManageChild(entriesRC);
+    
+  /* Close button */
+    n = 0;
+    xmString = XmStringCreateLocalized("Close");
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+    XtSetArg(args[n],XmNtopWidget,entriesRC); n++;
+    XtSetArg(args[n],XmNtopOffset,12); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
+    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNbottomOffset,12); n++;
+  /* HACK - approximate centering button by putting at 43% of form width */
+    XtSetArg(args[n],XmNleftPosition,(Position)43); n++;
+    closeButton = XmCreatePushButton(cpAxisForm,"closeButton",args,n);
+    XtAddCallback(closeButton,XmNactivateCallback,
+      cartesianPlotAxisActivate, (XtPointer)CP_CLOSE_BTN);
+    XtManageChild(closeButton);
+    XmStringFree(xmString);
+
+  /* Return the shell */
+    return (shell);
+}
+
+/*
+ * access function (for file-scoped globals, etc) to udpate the
+ *	cartesian plot axis dialog with the values currently in
+ *	globalResourceBundle
+ */
+void updateCartesianPlotAxisDialog()
+{
+    int i, tail;
+    char string[MAX_TOKEN_LENGTH];
+
+    for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
+	optionMenuSet(axisStyleMenu[i], globalResourceBundle.axis[i].axisStyle
+	  - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+	optionMenuSet(axisRangeMenu[i], globalResourceBundle.axis[i].rangeStyle
+	  - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+	if (globalResourceBundle.axis[i].rangeStyle == USER_SPECIFIED_RANGE) {
+	    sprintf(string,"%f",globalResourceBundle.axis[i].minRange);
+	  /* strip trailing zeroes */
+	    tail = strlen(string);
+	    while (string[--tail] == '0') string[tail] = '\0';
+	    XmTextFieldSetString(axisRangeMin[i],string);
+	    sprintf(string,"%f",globalResourceBundle.axis[i].maxRange);
+	  /* strip trailing zeroes */
+	    tail = strlen(string);
+	    while (string[--tail] == '0') string[tail] = '\0';
+	    XmTextFieldSetString(axisRangeMax[i],string);
+	    XtSetSensitive(axisRangeMinRC[i],True);
+	    XtSetSensitive(axisRangeMaxRC[i],True);
+	} else {
+	    XtSetSensitive(axisRangeMinRC[i],False);
+	    XtSetSensitive(axisRangeMaxRC[i],False);
+	}
+    }
+    if (globalResourceBundle.axis[0].axisStyle == TIME_AXIS) {
+	XtSetSensitive(axisTimeFormat,True);
+	optionMenuSet(axisTimeFormat,globalResourceBundle.axis[0].timeFormat
+	  - FIRST_CP_TIME_FORMAT);
+    } else {
+	XtSetSensitive(axisTimeFormat,False);
+    }
+}
+
+/*
+ * access function (for file-scoped globals, etc) to udpate the
+ *      cartesian plot axis dialog with the values currently in
+ *      the subject cartesian plot
+ */
+void updateCartesianPlotAxisDialogFromWidget(Widget cp)
+{
+    int i, tail, buttonId;
+    char string[MAX_TOKEN_LENGTH];
+    CartesianPlot *pcp;
+    XtPointer userData;
+    Boolean xAxisIsLog, y1AxisIsLog, y2AxisIsLog,
+      xMinUseDef, y1MinUseDef, y2MinUseDef,
+      xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
+      y2IsCurrentlyFromChannel;
+    XrtAnnoMethod xAnnoMethod;
+    XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
+    Arg args[2];
+    char *timeFormat;
+
+    if (globalDisplayListTraversalMode != DL_EXECUTE) return;
+
+    XtVaGetValues(cp,
+      XmNuserData,&userData,
+      XtNxrtXAnnotationMethod, &xAnnoMethod,
+      XtNxrtXAxisLogarithmic,&xAxisIsLog,
+      XtNxrtYAxisLogarithmic,&y1AxisIsLog,
+      XtNxrtY2AxisLogarithmic,&y2AxisIsLog,
+      XtNxrtXMin,&xMinF.lval,
+      XtNxrtYMin,&y1MinF.lval,
+      XtNxrtY2Min,&y2MinF.lval,
+      XtNxrtXMax,&xMaxF.lval,
+      XtNxrtYMax,&y1MaxF.lval,
+      XtNxrtY2Max,&y2MaxF.lval,
+      XtNxrtXMinUseDefault,&xMinUseDef,
+      XtNxrtYMinUseDefault,&y1MinUseDef,
+      XtNxrtY2MinUseDefault,&y2MinUseDef,
+      XtNxrtTimeFormat,&timeFormat,
+      NULL);
+
+    if (pcp = (CartesianPlot *)userData ) {
+	xIsCurrentlyFromChannel =
+	  pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
+	y1IsCurrentlyFromChannel =
+	  pcp->axisRange[Y1_AXIS_ELEMENT].isCurrentlyFromChannel;
+	y2IsCurrentlyFromChannel =
+	  pcp->axisRange[Y2_AXIS_ELEMENT].isCurrentlyFromChannel;
+    }
+
+  /* X Axis */
+    if (xAnnoMethod == XRT_ANNO_TIME_LABELS)  {
+      /* Style */
+	optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
+	  TIME_AXIS - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+      /* Time format */
+	buttonId = 0;     /* Use for  default */
+	for(i = 0; i < NUM_CP_TIME_FORMAT; i++) {
+	    if(!strcmp(timeFormatString[i],timeFormat)) {
+		buttonId = i;
+		break;
+	    }
+	}
+	optionMenuSet(axisTimeFormat, buttonId);
+	XtSetSensitive(axisTimeFormat, True);
+    } else {
+      /* Style */
+	optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
+	  (xAxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+	  - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+	XtSetSensitive(axisTimeFormat, False);
+    }
+  /* Range */
+    buttonId = (xIsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (xMinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+    optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
+    if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
+	sprintf(string,"%f",xMinF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMin[X_AXIS_ELEMENT],string);
+	sprintf(string,"%f",xMaxF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMax[X_AXIS_ELEMENT],string);
+    }
+    if (!xMinUseDef && !xIsCurrentlyFromChannel) { 
+	XtSetSensitive(axisRangeMinRC[X_AXIS_ELEMENT],True);
+	XtSetSensitive(axisRangeMaxRC[X_AXIS_ELEMENT],True);
+    } else {
+	XtSetSensitive(axisRangeMinRC[X_AXIS_ELEMENT],False);
+	XtSetSensitive(axisRangeMaxRC[X_AXIS_ELEMENT],False);
+    }
+
+
+  /* Y1 Axis */
+    optionMenuSet(axisStyleMenu[Y1_AXIS_ELEMENT],
+      (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+      - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+    buttonId = (y1IsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (y1MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+    optionMenuSet(axisRangeMenu[Y1_AXIS_ELEMENT], buttonId);
+    if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
+	sprintf(string,"%f",y1MinF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMin[Y1_AXIS_ELEMENT],string);
+	sprintf(string,"%f",y1MaxF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMax[Y1_AXIS_ELEMENT],string);
+    }
+    if (!y1MinUseDef && !y1IsCurrentlyFromChannel) {
+	XtSetSensitive(axisRangeMinRC[Y1_AXIS_ELEMENT],True);
+	XtSetSensitive(axisRangeMaxRC[Y1_AXIS_ELEMENT],True);
+    } else {
+	XtSetSensitive(axisRangeMinRC[Y1_AXIS_ELEMENT],False);
+	XtSetSensitive(axisRangeMaxRC[Y1_AXIS_ELEMENT],False);
+    }
+
+
+  /* Y2 Axis */
+    optionMenuSet(axisStyleMenu[Y2_AXIS_ELEMENT],
+      (y2AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+      - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+    buttonId = (y2IsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (y2MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+    optionMenuSet(axisRangeMenu[Y2_AXIS_ELEMENT], buttonId);
+    if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
+	sprintf(string,"%f",y2MinF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMin[Y2_AXIS_ELEMENT],string);
+	sprintf(string,"%f",y2MaxF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMax[Y2_AXIS_ELEMENT],string);
+    }
+    if (!y2MinUseDef && !y2IsCurrentlyFromChannel) {
+	XtSetSensitive(axisRangeMinRC[Y2_AXIS_ELEMENT],True);
+	XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],True);
+    } else {
+	XtSetSensitive(axisRangeMinRC[Y2_AXIS_ELEMENT],False);
+	XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],False);
+    }
+}
+
+#ifdef __cplusplus
+static void cartesianPlotActivate(Widget, XtPointer cd, XtPointer)
+#else
+static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonType = (int) cd;
+    String **newCells;
+    int i;
+
+    switch (buttonType) {
+    case CP_APPLY_BTN:
+      /* commit changes in matrix to global matrix array data */
+	XbaeMatrixCommitEdit(cpMatrix,False);
+	XtVaGetValues(cpMatrix,XmNcells,&newCells,NULL);
+      /* now update globalResourceBundle...*/
+	for (i = 0; i < MAX_TRACES; i++) {
+	    strcpy(globalResourceBundle.cpData[i].xdata,
+	      newCells[i][CP_XDATA_COLUMN]);
+	    strcpy(globalResourceBundle.cpData[i].ydata,
+	      newCells[i][CP_YDATA_COLUMN]);
+	    globalResourceBundle.cpData[i].data_clr = 
+	      (int) cpColorRows[i][CP_COLOR_COLUMN];
+	}
+      /* and update the elements (since this level of "Apply" is analogous
+       *	to changing text in a text field in the resource palette
+       *	(don't need to traverse the display list since these changes
+       *	 aren't visible at the first level)
+       */
+	if (cdi) {
+	    DlElement *dlElement = FirstDlElement(
+	      cdi->selectedDlElementList);
+	    unhighlightSelectedElements();
+	    while (dlElement) {
+		if (dlElement->structure.element->type = DL_CartesianPlot)
+		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		dlElement = dlElement->next;
+	    }
+	}
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	XtPopdown(cartesianPlotS);
+	break;
+    case CP_CLOSE_BTN:
+	XtPopdown(cartesianPlotS);
+	break;
+    }
+}
+
+
+#ifdef __cplusplus
+static void cartesianPlotAxisActivate(Widget, XtPointer cd, XtPointer)
+#else
+static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    int buttonType = (int) cd;
+
+    switch (buttonType) {
+
+    case CP_CLOSE_BTN:
+	XtPopdown(cartesianPlotAxisS);
+      /* since done with CP Axis dialog, reset that selected widget */
+	executeTimeCartesianPlotWidget  = NULL;
+	break;
+    }
+}
+
+/*
+ * function to handle cell selection in the matrix
+ *	mostly it passes through for the text field entry
+ *	but pops up the color editor for the color field selection
+ */
+#ifdef __cplusplus
+void cpEnterCellCallback(Widget, XtPointer, XtPointer cbs)
+#else
+void cpEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
+    int row;
+    if (call_data->column == CP_COLOR_COLUMN) {
+      /* set this cell non-editable */
+	call_data->doit = False;
+      /* update the color palette, set index of the color vector element to set */
+	row = call_data->row;
+	setCurrentDisplayColorsInColorPalette(CPDATA_RC,row);
+	XtPopup(colorS,XtGrabNone);
+    }
+}
+
+
+/*
+ * function to actually update the colors in the COLOR_COLUMN of the matrix
+ */
+void cpUpdateMatrixColors()
+{
+    int i;
+
+  /* XmNcolors needs pixel values */
+    for (i = 0; i < MAX_TRACES; i++) {
+	cpColorRows[i][CP_COLOR_COLUMN] = currentColormap[
+	  globalResourceBundle.cpData[i].data_clr];
+    }
+    if (cpMatrix != NULL) XtVaSetValues(cpMatrix,XmNcolors,cpColorCells,NULL);
+
+  /* but for resource editing cpData should contain indexes into colormap */
+  /* this resource is copied, hence this is okay to do */
+    for (i = 0; i < MAX_TRACES; i++) {
+	cpColorRows[i][CP_COLOR_COLUMN] = globalResourceBundle.cpData[i].data_clr;
+    }
+}
+
+/*
+ * create data dialog
+ */
+Widget createCartesianPlotDataDialog(Widget parent)
+{
+    Widget shell, applyButton, closeButton;
+    Dimension cWidth, cHeight, aWidth, aHeight;
+    Arg args[12];
+    XmString xmString;
+    int i, j, n;
+    static Boolean first = True;
+
+
+  /* Initialize file-scoped globals */
+    if (first) {
+	first = False;
+	for (i = 0; i < MAX_TRACES; i++) {
+	    for (j = 0; j < 2; j++) cpRows[i][j] = NULL;
+	    cpRows[i][2] = dashes;
+	    cpCells[i] = &cpRows[i][0];
+	    cpColorCells[i] = &cpColorRows[i][0];
+	}
+    }
+
+  /*
+   * Create the interface
+   *
+   *	       xdata | ydata | color
+   *	       ---------------------
+   *	    1 |  A      B      C
+   *	    2 | 
+   *	    3 | 
+   *		     ...
+   *		 OK     CANCEL
+   */
+    
+    n = 0;
+    XtSetArg(args[n],XmNautoUnmanage,False); n++;
+    XtSetArg(args[n],XmNmarginHeight,8); n++;
+    XtSetArg(args[n],XmNmarginWidth,8); n++;
+    XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
+    cpForm = XmCreateFormDialog(parent,"cartesianPlotDataF",args,n);
+    shell = XtParent(cpForm);
+    n = 0;
+    XtSetArg(args[n],XmNtitle,"Cartesian Plot Data"); n++;
+    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+    XtSetValues(shell,args,n);
+    XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
+      cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
+    n = 0;
+    XtSetArg(args[n],XmNrows,MAX_TRACES); n++;
+    XtSetArg(args[n],XmNcolumns,3); n++;
+    XtSetArg(args[n],XmNcolumnMaxLengths,cpColumnMaxLengths); n++;
+    XtSetArg(args[n],XmNcolumnWidths,cpColumnWidths); n++;
+    XtSetArg(args[n],XmNcolumnLabels,cpColumnLabels); n++;
+    XtSetArg(args[n],XmNcolumnMaxLengths,cpColumnMaxLengths); n++;
+    XtSetArg(args[n],XmNcolumnWidths,cpColumnWidths); n++;
+    XtSetArg(args[n],XmNcolumnLabelAlignments,cpColumnLabelAlignments); n++;
+    XtSetArg(args[n],XmNboldLabels,False); n++;
+    cpMatrix = XtCreateManagedWidget("cpMatrix",
+      xbaeMatrixWidgetClass,cpForm,args,n);
+    cpUpdateMatrixColors();
+    XtAddCallback(cpMatrix,XmNenterCellCallback,
+      cpEnterCellCallback,(XtPointer)NULL);
+
+
+    xmString = XmStringCreateLocalized("Cancel");
+    n = 0;
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
+    closeButton = XmCreatePushButton(cpForm,"closeButton",args,n);
+    XtAddCallback(closeButton,XmNactivateCallback,
+      cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
+    XtManageChild(closeButton);
+    XmStringFree(xmString);
+
+    xmString = XmStringCreateLocalized("Apply");
+    n = 0;
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
+    applyButton = XmCreatePushButton(cpForm,"applyButton",args,n);
+    XtAddCallback(applyButton,XmNactivateCallback,
+      cartesianPlotActivate,(XtPointer)CP_APPLY_BTN);
+    XtManageChild(applyButton);
+    XmStringFree(xmString);
+
+  /* Make APPLY and CLOSE buttons same size */
+    XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
+    XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
+    XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
+      XmNheight,MAX(cHeight,aHeight),NULL);
+
+  /* Make the APPLY button the default for the form */
+    XtVaSetValues(cpForm,XmNdefaultButton,applyButton,NULL);
+
+  /*
+   * Do form layout 
+   */
+
+  /* cpMatrix */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+    XtSetValues(cpMatrix,args,n);
+  /* apply */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+    XtSetArg(args[n],XmNtopWidget,cpMatrix); n++;
+    XtSetArg(args[n],XmNtopOffset,12); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
+    XtSetArg(args[n],XmNleftPosition,25); n++;
+    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNbottomOffset,12); n++;
+    XtSetValues(applyButton,args,n);
+  /* close */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+    XtSetArg(args[n],XmNtopWidget,cpMatrix); n++;
+    XtSetArg(args[n],XmNtopOffset,12); n++;
+    XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
+    XtSetArg(args[n],XmNrightPosition,75); n++;
+    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNbottomOffset,12); n++;
+    XtSetValues(closeButton,args,n);
+
+
+    XtManageChild(cpForm);
+
+    return shell;
+}
+
+/*
+ * access function (for file-scoped globals, etc) to udpate the
+ *	cartesian plot data dialog with the values currently in
+ *	globalResourceBundle
+ */
+void updateCartesianPlotDataDialog()
+{
+    int i;
+
+    for (i = 0; i < MAX_TRACES; i++) {
+	cpRows[i][0] = globalResourceBundle.cpData[i].xdata;
+	cpRows[i][1] = globalResourceBundle.cpData[i].ydata;
+	cpRows[i][2] =  dashes;
+    }
+  /* handle data_clr in here */
+    cpUpdateMatrixColors();
+    if (cpMatrix)
+      XtVaSetValues(cpMatrix,XmNcells,cpCells,NULL);
+}
+
+#if DEBUG_CARTESIAN_PLOT
+#include "medmCartesianPlot.h"
+void dumpCartesianPlot(void)
+{
+    Arg args[20];
+    int n=0;
+			    
+    Dimension footerHeight;
+    Dimension footerWidth;
+    Dimension footerBorderWidth;
+    Dimension borderWidth;
+    Dimension shadowThickness;
+    Dimension highlightThickness;
+    Dimension headerBorderWidth;
+    Dimension headerHeight;
+    Dimension headerWidth;
+    Dimension graphBorderWidth;
+    Dimension graphWidth;
+    Dimension graphHeight;
+    Dimension height;
+    Dimension width;
+    Dimension legendBorderWidth;
+    Dimension legendHeight;
+    Dimension legendWidth;
+    unsigned char unitType;
+    time_t timeBase;
+
+
+    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
+    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
+    XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
+    XtSetArg(args[n],XmNwidth,&width); n++;
+    XtSetArg(args[n],XmNheight,&height); n++;
+    XtSetArg(args[n],XtNxrtGraphBorderWidth,&graphBorderWidth); n++;
+    XtSetArg(args[n],XtNxrtGraphWidth,&graphWidth); n++;
+    XtSetArg(args[n],XtNxrtGraphHeight,&graphHeight); n++;
+    XtSetArg(args[n],XtNxrtHeaderWidth,&headerWidth); n++;
+    XtSetArg(args[n],XtNxrtHeaderHeight,&headerHeight); n++;
+    XtSetArg(args[n],XtNxrtHeaderBorderWidth,&headerBorderWidth); n++;
+    XtSetArg(args[n],XmNhighlightThickness,&highlightThickness); n++;
+    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
+    XtSetArg(args[n],XmNborderWidth,&borderWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterHeight,&footerHeight); n++;
+    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
+    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+    XtSetArg(args[n],XmNunitType,&unitType); n++;
+    XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
+    XtGetValues(widget,args,n);
+			      
+    print(,"width: %d\n",width);
+    print(,"height: %d\n",height);
+    print(,"highlightThickness: %d\n",highlightThickness);
+    print(,"shadowThickness: %d\n",shadowThickness);
+    print(,"borderWidth: %d\n",borderWidth);
+    print(,"graphBorderWidth: %d\n",graphBorderWidth);
+    print(,"graphWidth: %d\n",graphWidth);
+    print(,"graphHeight: %d\n",graphHeight);
+    print(,"headerBorderWidth: %d\n",headerBorderWidth);
+    print(,"headerWidth: %d\n",headerWidth);
+    print(,"headerHeight: %d\n",headerHeight);
+    print(,"footerWidth: %d\n",footerBorderWidth);
+    print(,"footerWidth: %d\n",footerWidth);
+    print(,"footerHeight: %d\n",footerHeight);
+    print(,"legendBorderWidth: %d\n",legendBorderWidth);
+    print(,"legendWidth: %d\n",legendWidth);
+    print(,"legendHeight: %d\n",legendHeight);
+    print(,"unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
+      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
+    print(,"timeBase: %d\n",timeBase);
+}
+#endif
+

@@ -106,8 +106,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Xm/MwmUtil.h>
 #include <X11/IntrinsicP.h>
 
+/* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
+#if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
 #include <XrtGraph.h>
+#include <XrtGraphProp.h>
+#endif
+#endif
 #endif
 
 #define HOT_SPOT_WIDTH 24
@@ -806,6 +812,7 @@ Name of file in which to save display:",
 
 #ifdef XRTGRAPH
 #if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
   /* XRTGraph Property Editor */
     "Medm*.PropEdit_shell*.background:                  White",
     "Medm*.PropEdit_shell*.foreground:                  Black",
@@ -821,6 +828,7 @@ Name of file in which to save display:",
     "Medm*.PropEdit_shell*.XmXrtFloatField.foreground:  Black",
     "Medm*.PropEdit_shell*.XmXrtDateField.background:   White",
     "Medm*.PropEdit_shell*.XmXrtDateField.foreground:   Black",
+#endif
 #endif
 #endif
     

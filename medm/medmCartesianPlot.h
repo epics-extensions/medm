@@ -58,11 +58,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define CARTESIAN_PLOT_H
 
 #ifdef XRTGRAPH
-#include "XrtGraph.h"
-
-#if XRT_VERSION <= 2
-typedef XrtData * XrtDataHandle;
-#endif
+#include "medmXrtGraph.h"
+#else
+#error No plot package to implement the Cartesian Plot has been defined.
 #endif
 
 #define CP_XDATA_COLUMN         0
@@ -87,10 +85,9 @@ typedef enum {
     CP_XYVector
 } XYChannelTypeEnum;
 
-#ifdef XRTGRAPH
 typedef struct {
     struct _CartesianPlot *cartesianPlot;
-    XrtDataHandle         hxrt;
+    CpDataHandle          hcp;
     int                   trace;
     Record                *recordX;
     Record                *recordY;
@@ -105,23 +102,21 @@ typedef struct _CartesianPlot {
     XYTrace         triggerCh;
     UpdateTask      *updateTask;
     int             nTraces;              /* number of traces (<=MAX_TRACES) */
-    XrtDataHandle   hxrt1, hxrt2;         /* XrtData handles */
+    CpDataHandle    hcp1, hcp2;           /* CpData handles */
   /* Used for channel-based range determination (filled in at connect) */
     CartesianPlotAxisRange  axisRange[3]; /* X, Y, Y2 _AXIS_ELEMENT          */
     eraseMode_t     eraseMode;            /* erase mode */
-    Boolean         dirty1;               /* xrtData1 needs screen update */
-    Boolean         dirty2;               /* xrtData2 needs screen update */
+    Boolean         dirty1;               /* cpData1 needs screen update */
+    Boolean         dirty2;               /* cpData2 needs screen update */
     TS_STAMP        startTime;
     Boolean         timeScale;
 } CartesianPlot;
-#endif
 
 #endif
 
 /****************************************************************************
  * CARTESIAN PLOT DATA
  *********************************************************************/
-static Widget cpMatrix = NULL, cpForm = NULL;
 static String cpColumnLabels[] = {"X Data","Y Data","Color",};
 static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
 static short cpColumnWidths[] = {36,36,6,};
@@ -132,7 +127,6 @@ static unsigned char cpColumnLabelAlignments[] = {XmALIGNMENT_CENTER,
 */
 static String cpRows[MAX_TRACES][3];
 static String *cpCells[MAX_TRACES];
-static String dashes = "******";
  
 static Pixel cpColorRows[MAX_TRACES][3];
 static Pixel *cpColorCells[MAX_TRACES];
@@ -174,4 +168,3 @@ static Widget axisTimeFormat;
 /* The following should be the largest of NUM_CP_TIME_FORMAT,
  *   NUM_CARTESIAN_PLOT_RANGE_STYLES, NUM_CARTESIAN_PLOT_AXIS_STYLES */
 #define MAX_CP_AXIS_BUTTONS  NUM_CP_TIME_FORMAT
-  

@@ -4,7 +4,7 @@ EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-#UNIX_OPT = NO
+UNIX_OPT = NO
 #STATIC_BUILD = YES
 #PURIFY = YES
 CMPLR = STRICT
@@ -116,6 +116,7 @@ SRCS.c += ../medmByte.c
 SRCS.c += ../medmCA.c
 ifdef XRTGRAPH
 SRCS.c += ../medmCartesianPlot.c
+SRCS.c += ../medmXrtGraph.c
 endif
 SRCS.c += ../medmChoiceButtons.c
 SRCS.c += ../medmCommon.c
@@ -165,6 +166,7 @@ OBJS += medmByte.o
 OBJS += medmCA.o
 ifdef XRTGRAPH
 OBJS += medmCartesianPlot.o
+OBJS += medmXrtGraph.o
 endif
 OBJS += medmChoiceButtons.o
 OBJS += medmCommon.o

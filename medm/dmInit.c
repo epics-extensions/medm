@@ -106,9 +106,9 @@ ParseFuncEntry parseFuncTable[] = {
     {"meter",                parseMeter},
     {"byte",                 parseByte},
     {"strip chart",          parseStripChart},
-#ifdef XRTGRAPH
+#ifdef CARTESIAN_PLOT
     {"cartesian plot",       parseCartesianPlot},
-#endif     /* #ifdef XRTGRAPH */
+#endif     /* #ifdef CARTESIAN_PLOT */
     {"text update",          parseTextUpdate},
     {"choice button",        parseChoiceButton},
     {"button",               parseChoiceButton},

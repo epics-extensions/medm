@@ -287,36 +287,29 @@ void parsePlotAxisDefinition(DisplayInfo *displayInfo,
   DlPlotAxisDefinition *axisDefinition);
 
 /* resourcePalette.c */
-void initializeGlobalResourceBundle(void);
+void clearResourcePaletteEntries(void);
 void createResource(void);
-void textFieldNumericVerifyCallback(Widget, XtPointer, XtPointer);
-void textFieldFloatVerifyCallback(Widget, XtPointer, XtPointer);
-void textFieldActivateCallback(Widget w, XtPointer, XtPointer);
-void textFieldLosingFocusCallback(Widget w, XtPointer, XtPointer);
-Widget createRelatedDisplayDataDialog(Widget parent);
-void updateRelatedDisplayDataDialog(void);
 Widget createShellCommandDataDialog(Widget parent);
-void updateShellCommandDataDialog(void);
-void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
-void cpUpdateMatrixColors(void);
-Widget createCartesianPlotDataDialog(Widget parent);
-void updateCartesianPlotDataDialog(void);
-Widget createCartesianPlotAxisDialog(Widget parent);
-void updateCartesianPlotAxisDialog(void);
-void updateCartesianPlotAxisDialogFromWidget(Widget cp);
+Widget createStripChartDataDialog(Widget parent);
+void initializeGlobalResourceBundle(void);
+void medmGetValues(ResourceBundle *pRB, ...);
+void resetGlobalResourceBundleAndResourcePalette(void);
 void scEnterCellCallback(Widget w, XtPointer, XtPointer);
 void scUpdateMatrixColors(void);
-Widget createStripChartDataDialog(Widget parent);
-void updateStripChartDataDialog(void);
-void clearResourcePaletteEntries(void);
 void setResourcePaletteEntries(void);
-void updateGlobalResourceBundleFromElement(DlElement *element);
-void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element);
+void textFieldActivateCallback(Widget w, XtPointer, XtPointer);
+void textFieldFloatVerifyCallback(Widget, XtPointer, XtPointer);
+void textFieldLosingFocusCallback(Widget w, XtPointer, XtPointer);
+void textFieldNumericVerifyCallback(Widget, XtPointer, XtPointer);
 void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element);
+void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element);
 void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
-void resetGlobalResourceBundleAndResourcePalette(void);
-void medmGetValues(ResourceBundle *pRB, ...);
+void updateGlobalResourceBundleFromElement(DlElement *element);
+void updateRelatedDisplayDataDialog(void);
+void updateShellCommandDataDialog(void);
+void updateStripChartDataDialog(void);
+void initializeXmStringValueTables();
 
 /* shared.c */
 void wmCloseCallback(Widget, XtPointer, XtPointer);
@@ -504,7 +497,6 @@ void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
 /* Debugging */
-void dumpCartesianPlot(void);
 void printEventMasks(Display *display, Window win, char *string);
 void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);
@@ -625,5 +617,16 @@ void traceAttributeInit(DlTrace *trace);
 
 /* medmShellCommand.c */
 Widget createShellCommandPromptD(Widget parent);
+
+/* medmCartesianPlot.c */
+void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
+void cpUpdateMatrixColors(void);
+Widget createCartesianPlotAxisDialog(Widget parent);
+Widget createCartesianPlotDataDialog(Widget parent);
+Widget createRelatedDisplayDataDialog(Widget parent);
+void dumpCartesianPlot(void);
+void updateCartesianPlotAxisDialog(void);
+void updateCartesianPlotAxisDialogFromWidget(Widget cp);
+void updateCartesianPlotDataDialog(void);
 
 #endif  /* __PROTO_H__ */

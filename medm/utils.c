@@ -54,7 +54,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_DISPLAY_LIST 0
 #define DEBUG_EVENTS 0
 #define DEBUG_FILE 0
@@ -5167,79 +5166,6 @@ void print(const char *fmt, ...)
 }
 
 /* Debugging routines */
-
-#if DEBUG_CARTESIAN_PLOT
-#include "medmCartesianPlot.h"
-void dumpCartesianPlot(void)
-{
-    Arg args[20];
-    int n=0;
-			    
-    Dimension footerHeight;
-    Dimension footerWidth;
-    Dimension footerBorderWidth;
-    Dimension borderWidth;
-    Dimension shadowThickness;
-    Dimension highlightThickness;
-    Dimension headerBorderWidth;
-    Dimension headerHeight;
-    Dimension headerWidth;
-    Dimension graphBorderWidth;
-    Dimension graphWidth;
-    Dimension graphHeight;
-    Dimension height;
-    Dimension width;
-    Dimension legendBorderWidth;
-    Dimension legendHeight;
-    Dimension legendWidth;
-    unsigned char unitType;
-    time_t timeBase;
-
-
-    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
-    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
-    XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
-    XtSetArg(args[n],XmNwidth,&width); n++;
-    XtSetArg(args[n],XmNheight,&height); n++;
-    XtSetArg(args[n],XtNxrtGraphBorderWidth,&graphBorderWidth); n++;
-    XtSetArg(args[n],XtNxrtGraphWidth,&graphWidth); n++;
-    XtSetArg(args[n],XtNxrtGraphHeight,&graphHeight); n++;
-    XtSetArg(args[n],XtNxrtHeaderWidth,&headerWidth); n++;
-    XtSetArg(args[n],XtNxrtHeaderHeight,&headerHeight); n++;
-    XtSetArg(args[n],XtNxrtHeaderBorderWidth,&headerBorderWidth); n++;
-    XtSetArg(args[n],XmNhighlightThickness,&highlightThickness); n++;
-    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
-    XtSetArg(args[n],XmNborderWidth,&borderWidth); n++;
-    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
-    XtSetArg(args[n],XtNxrtFooterHeight,&footerHeight); n++;
-    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
-    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
-    XtSetArg(args[n],XmNunitType,&unitType); n++;
-    XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
-    XtGetValues(widget,args,n);
-			      
-    print(,"width: %d\n",width);
-    print(,"height: %d\n",height);
-    print(,"highlightThickness: %d\n",highlightThickness);
-    print(,"shadowThickness: %d\n",shadowThickness);
-    print(,"borderWidth: %d\n",borderWidth);
-    print(,"graphBorderWidth: %d\n",graphBorderWidth);
-    print(,"graphWidth: %d\n",graphWidth);
-    print(,"graphHeight: %d\n",graphHeight);
-    print(,"headerBorderWidth: %d\n",headerBorderWidth);
-    print(,"headerWidth: %d\n",headerWidth);
-    print(,"headerHeight: %d\n",headerHeight);
-    print(,"footerWidth: %d\n",footerBorderWidth);
-    print(,"footerWidth: %d\n",footerWidth);
-    print(,"footerHeight: %d\n",footerHeight);
-    print(,"legendBorderWidth: %d\n",legendBorderWidth);
-    print(,"legendWidth: %d\n",legendWidth);
-    print(,"legendHeight: %d\n",legendHeight);
-    print(,"unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
-      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
-    print(,"timeBase: %d\n",timeBase);
-}
-#endif
 
 void printEventMasks(Display *display, Window win, char *string)
 {

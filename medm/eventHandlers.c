@@ -69,10 +69,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
+/* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
-#include <XrtGraph.h>
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
+#include <XrtGraph.h>
 #include <XrtGraphProp.h>
 #endif
 #endif
@@ -162,7 +163,8 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		break;
 		
 	    case DL_CartesianPlot:
-#ifdef XRTGRAPH
+#ifdef CARTESIAN_PLOT
+	      /* Implement Xrt/Graph property editor */
 		if (widget = pE->widget) {
 		    if (xEvent->state & ControlMask) {
 #if XRT_VERSION > 2
@@ -209,7 +211,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		    XUngrabPointer(display,CurrentTime);
 		    XFlush(display);
 		}
-#endif     /* #ifdef XRTGRAPH */
+#endif     /* #ifdef CARTESIAN_PLOT */
 		break;
 	    default:
 	      /* Popup execute-mode popup menu */
@@ -1290,11 +1292,11 @@ DlElement *handleRectangularCreates(DlElementType type,
     case DL_StripChart:
 	pE = createDlStripChart(NULL);
 	break;
-#ifdef XRTGRAPH
+#ifdef CARTESIAN_PLOT
     case DL_CartesianPlot:
 	pE = createDlCartesianPlot(NULL);
 	break;
-#endif     /* #ifdef XRTGRAPH */
+#endif     /* #ifdef CARTESIAN_PLOT */
     case DL_Rectangle:
 	pE = createDlRectangle(NULL);
 	break;

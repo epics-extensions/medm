@@ -81,6 +81,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EXTERN extern
 #endif
 
+#if defined(XRTGRAPH) || defined(SCIPLOT)
+#define CARTESIAN_PLOT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -223,7 +227,11 @@ extern "C" {
     EXTERN Widget caStudyLabel;
     EXTERN XtIntervalId medmStatusIntervalId;
     EXTERN Boolean MedmUseNewFileFormat;
-
+    EXTERN Dimension maxLabelWidth;
+    EXTERN Dimension maxLabelHeight;
+    EXTERN Widget cpMatrix, cpForm;
+    EXTERN String dashes;
+    
   /* Time data */
     EXTERN time_t time900101, time700101, timeOffset;
 
