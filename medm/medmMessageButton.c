@@ -183,7 +183,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       (XtPointer)pmb);
 
     if (!pmb->updateTask) {
-	medmPrintf("\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
+	medmPrintf(1,"\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
 	updateTaskAddNameCb(pmb->updateTask,messageButtonGetRecord);

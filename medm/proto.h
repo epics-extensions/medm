@@ -209,11 +209,10 @@ void executeDlRelatedDisplay(DisplayInfo *, DlElement *);
 void executeDlShellCommand(DisplayInfo *, DlElement *);
 
 /* help.c */
-void errMsgDlgCreateDlg();
+void errMsgDlgCreateDlg(Boolean raise);
 void globalHelpCallback(Widget, XtPointer, XtPointer);
-void medmPostMsg(char *format, ...);
-void medmPostTime();
-void medmPrintf(char *format, ...);
+void medmPostMsg(int priority, char *format, ...);
+void medmPrintf(int priority, char *format, ...);
 void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
 int xErrorHandler(Display *dpy, XErrorEvent *event);

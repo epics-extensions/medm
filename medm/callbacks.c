@@ -177,7 +177,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		points[3].y = y + uih;
 		region = XPolygonRegion(points,4,EvenOddRule);
 		if (region == NULL) {
-		    medmPostMsg("medmRepaintRegion: XPolygonRegion is NULL\n");
+		    medmPostMsg(0,"medmRepaintRegion: XPolygonRegion is NULL\n");
 		    return;
 		}
 

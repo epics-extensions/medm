@@ -106,7 +106,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)pi);
 
 	    if (pi->updateTask == NULL) {
-		medmPrintf("\nindicatorCreateRunTimeInstance: Memory allocation error\n");
+		medmPrintf(1,"\nindicatorCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
 		updateTaskAddNameCb(pi->updateTask,indicatorGetRecord);
@@ -255,7 +255,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     switch (pd->dataType) {
     case DBF_STRING :
     case DBF_ENUM :
-	medmPostMsg("indicatorUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"indicatorUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach Indicator\n",
 	  dlIndicator->monitor.rdbk);
@@ -271,7 +271,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	precision = pd->precision;
 	break;
     default :
-	medmPostMsg("indicatorUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"indicatorUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach Indicator\n",
 	  dlIndicator->monitor.rdbk);

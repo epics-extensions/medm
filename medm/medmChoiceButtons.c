@@ -303,7 +303,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
     if (pd->dataType != DBF_ENUM) {
-	medmPostMsg("choiceButtonUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"choiceButtonUpdateGraphicalInfoCb:\n"
 	  "  %s is not an ENUM type\n"
 	  "  Cannot create Choice Button\n",
 	  pCB->control.ctrl);
@@ -374,9 +374,9 @@ static void choiceButtonDraw(XtPointer cd) {
 		    XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
 		    break;
 		default :
-		    medmPostMsg("choiceButtonUpdateValueCb:\n");
-		    medmPrintf("  Channel Name : %s\n",dlChoiceButton->control.ctrl);
-		    medmPrintf("  Message: Unknown color modifier\n");
+		    medmPostMsg(1,"choiceButtonUpdateValueCb:\n");
+		    medmPrintf(0,"  Channel Name : %s\n",dlChoiceButton->control.ctrl);
+		    medmPrintf(0,"  Message: Unknown color modifier\n");
 		    return;
 		}
 		i = (int) pd->value;
@@ -422,15 +422,15 @@ static void choiceButtonDraw(XtPointer cd) {
 		    }
 #endif
 		} else {
-		    medmPostMsg("choiceButtonUpdateValueCb:\n");
-		    medmPrintf("  Channel Name: %s\n",dlChoiceButton->control.ctrl);
-		    medmPrintf("  Message: Value out of range\n");
+		    medmPostMsg(1,"choiceButtonUpdateValueCb:\n");
+		    medmPrintf(1,"  Channel Name: %s\n",dlChoiceButton->control.ctrl);
+		    medmPrintf(1,"  Message: Value out of range\n");
 		    return;
 		}
 	    } else {
-		medmPostMsg("choiceButtonUpdateValueCb:\n");
-		medmPrintf("  Channel Name: %s\n",dlChoiceButton->control.ctrl);
-		medmPrintf("  Message: Data type must be enum\n");
+		medmPostMsg(1,"choiceButtonUpdateValueCb:\n");
+		medmPrintf(1,"  Channel Name: %s\n",dlChoiceButton->control.ctrl);
+		medmPrintf(1,"  Message: Data type must be enum\n");
 		return;
 	    }
 	    if (pd->writeAccess) 
@@ -461,7 +461,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       choiceButtonDraw,
       (XtPointer) pcb);
     if (pcb->updateTask == NULL) {
-	medmPrintf("\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
+	medmPrintf(1,"\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
 	updateTaskAddNameCb(pcb->updateTask,choiceButtonGetRecord);

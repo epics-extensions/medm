@@ -294,7 +294,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  dlDisplay->cmap)) {
 	    executeDlColormap(displayInfo,dlColormap);
 	} else {
-	    medmPostMsg("executeDlDisplay: Cannnot parse and execute external"
+	    medmPostMsg(1,"executeDlDisplay: Cannnot parse and execute external"
 	      " colormap %s\n",dlDisplay->cmap);
 	    medmCATerminate();
 	    dmTerminateX();
@@ -387,7 +387,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	  /* Text */
 	    psemi = strchr(pitem,';');
 	    if(!psemi) {
-		medmPrintf("\ncreateExecuteMenu: "
+		medmPrintf(1,"\ncreateExecuteMenu: "
 		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
 		  "  %s\n",pitem);
 		free(types);

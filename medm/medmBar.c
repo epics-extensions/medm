@@ -115,7 +115,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)pb);
 
 	    if (pb->updateTask == NULL) {
-		medmPrintf("\nbarCreateRunTimeInstance: Memory allocation error\n");
+		medmPrintf(1,"\nbarCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
 		updateTaskAddNameCb(pb->updateTask,barGetRecord);
@@ -274,7 +274,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     switch (pd->dataType) {
     case DBF_STRING :
     case DBF_ENUM :
-	medmPostMsg("barUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"barUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach bar\n",
 	  dlBar->monitor.rdbk);
@@ -290,7 +290,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 	precision = pd->precision;
 	break;
     default :
-	medmPostMsg("barUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"barUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach bar\n",
 	  dlBar->monitor.rdbk);

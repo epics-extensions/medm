@@ -442,7 +442,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf("\nexecuteDlStripChart: Unknown time unit\n");
+	medmPrintf(1,"\nexecuteDlStripChart: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
@@ -451,7 +451,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	stripChartUpdateTaskCb,
 	(XtPointer)psc);
     if (psc->updateTask == NULL) {
-	medmPrintf("\nexecuteDlStripChart: Memory allocation error\n");
+	medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(psc->updateTask,freeStripChart);
 	updateTaskAddNameCb(psc->updateTask,stripChartGetRecord);
@@ -782,7 +782,7 @@ static void stripChartConfig(StripChart *psc) {
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf("\nexecuteDlStripChart: Unknown time unit\n");
+	medmPrintf(1,"\nexecuteDlStripChart: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
@@ -1003,7 +1003,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	    
 	    psc = stripChartAlloc(displayInfo,dlElement);
 	    if (psc == NULL) {
-		medmPrintf("\nexecuteDlStripChart: Memory allocation error\n");
+		medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
 		return;
 	    }
 	    
@@ -1526,7 +1526,7 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 		else if (!strcmp(token,"milli-second")) 
 		  dlStripChart->units = MILLISECONDS;
 		else
-		  medmPostMsg("parseStripChart: Illegal units %s\n"
+		  medmPostMsg(1,"parseStripChart: Illegal units %s\n"
 		    "  Using SECONDS\n",token);
 	    } else if (!strncmp(token,"pen",3)) {
 		penNumber = MIN(token[4] - '0', MAX_PENS-1);

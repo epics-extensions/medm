@@ -117,7 +117,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	      (XtPointer)pb);
 
 	    if (pb->updateTask == NULL) {
-		medmPrintf("\nbyteCreateRunTimeInstance: Memory allocation error\n");
+		medmPrintf(1,"\nbyteCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
 		updateTaskAddNameCb(pb->updateTask,byteGetRecord);

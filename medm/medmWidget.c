@@ -178,7 +178,7 @@ unsigned long getPixelFromColormapByString(
     XColor color, ignore;
 
     if(!XAllocNamedColor(display,cmap,colorString,&color,&ignore)) {
-	medmPrintf("\ngetPixelFromColormapByString:  Couldn't allocate color %s\n",
+	medmPrintf(1,"\ngetPixelFromColormapByString:  Couldn't allocate color %s\n",
 	  colorString);
 	return(WhitePixel(display, screen));
     } else {
@@ -272,7 +272,7 @@ void medmInit(char *displayFont)
 	    fontTable[i] = XLoadQueryFont(display,displayFont);
 	    printf(".");
 	    if (fontTable[i] == NULL) {
-		medmPrintf("\nmedmInit: Unable to load font %s\n  Trying default (fixed) instead\n",
+		medmPrintf(1,"\nmedmInit: Unable to load font %s\n  Trying default (fixed) instead\n",
 		  displayFont);
 	      /* one last attempt: try a common default font */
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
@@ -298,7 +298,7 @@ void medmInit(char *displayFont)
 	useDefaultFont = !isScalableFont(displayFont);
 	if (useDefaultFont) {
 	  /* This name wasn't in XLFD format */
-	    medmPrintf("\nmedmInit: Invalid scalable display font selected  (Not in XLFD format)\n"
+	    medmPrintf(1,"\nmedmInit: Invalid scalable display font selected  (Not in XLFD format)\n"
 	      "  font: %s\n"
 	      "  Using fixed font\n",displayFont);
 	} else {

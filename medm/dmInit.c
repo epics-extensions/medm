@@ -456,7 +456,7 @@ void dmDisplayListParse(
 	    currentDisplayInfo->versionNumber = currentDisplayInfo->dlFile->versionNumber;
 	    strcpy(currentDisplayInfo->dlFile->name,filename);
 	} else {
-	    medmPostMsg("dmDisplayListParse: Out of memory\n"
+	    medmPostMsg(1,"dmDisplayListParse: Out of memory\n"
 	      "  file: %s\n",filename);
 	    currentDisplayInfo->filePtr = NULL;
 	    dmRemoveDisplayInfo(currentDisplayInfo);
@@ -464,7 +464,7 @@ void dmDisplayListParse(
 	    return;
 	}
     } else {
-	medmPostMsg("dmDisplayListParse: Invalid .adl file (Bad first token)\n"
+	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file (Bad first token)\n"
 	  "  file: %s\n",filename);
 	currentDisplayInfo->filePtr = NULL;
 	dmRemoveDisplayInfo(currentDisplayInfo);

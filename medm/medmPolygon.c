@@ -162,7 +162,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pp);
 
 	if (pp->updateTask == NULL) {
-	    medmPrintf("\npolygonCreateRunTimeInstance: Memory allocation error\n");
+	    medmPrintf(1,"\npolygonCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pp->updateTask,polygonDestroyCb);
 	    updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
@@ -274,7 +274,7 @@ static void polygonDraw(XtPointer cd) {
 	      drawPolygon(pp);
 	    break;
 	default :
-	    medmPrintf("\npolygonUpdateValueCb: Unknown visibility\n");
+	    medmPrintf(1,"\npolygonUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {

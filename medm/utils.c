@@ -674,7 +674,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
 	if(!strcmp(message,"The specified scale value is"))
 	  return(0);
     } else {
-	medmPostMsg("trapExtraneousWarningsHandler:\n%s\n", message);
+	medmPostMsg(1,"trapExtraneousWarningsHandler:\n%s\n", message);
     }
   
     return(0);
@@ -989,7 +989,7 @@ void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
 	    } else {
 		char string[48];
 		
-		medmPostMsg("findAllMatchingElements: Could not create element\n");
+		medmPostMsg(1,"findAllMatchingElements: Could not create element\n");
 		return;
 	    }
 	}
@@ -1989,7 +1989,7 @@ int copyElementsIntoDisplay()
   /* If no current display, simply return */
     cdi = currentDisplayInfo;
     if(!cdi) {
-	medmPostMsg("copyElementsIntoDisplay:  Can't determine current display\n");
+	medmPostMsg(1,"copyElementsIntoDisplay:  Can't determine current display\n");
 	return 0;
     }
     XRaiseWindow(display,XtWindow(cdi->shell));
@@ -2145,7 +2145,7 @@ void lowerSelectedElements()
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("\nlowerSelectedElements: Cannot create temporary element list\n");
+	    medmPrintf(1,"\nlowerSelectedElements: Cannot create temporary element list\n");
 	    return;
 	}
     }
@@ -2223,7 +2223,7 @@ void raiseSelectedElements()
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("\nraiseSelectedElements: Cannot create temporary element list\n");
+	    medmPrintf(1,"\nraiseSelectedElements: Cannot create temporary element list\n");
 	    return;
 	}
     }
@@ -2420,13 +2420,13 @@ void spaceSelectedElements(int plane)
     if(!earray) return;
     array = (double *)calloc(nele,sizeof(double));
     if(!array) {
-	medmPrintf("\nspaceSelectedElements: Memory allocation error\n");
+	medmPrintf(1,"\nspaceSelectedElements: Memory allocation error\n");
 	free((char *)earray);
 	return;
     }
     indx = (int *)calloc(nele,sizeof(int));
     if(!indx) {
-	medmPrintf("\nspaceSelectedElements: Memory allocation error\n");
+	medmPrintf(1,"\nspaceSelectedElements: Memory allocation error\n");
 	free((char *)earray);
 	free((char *)array);
 	return;
@@ -2587,7 +2587,7 @@ void spaceSelectedElements2D(void)
   /* Allocate array to hold the number of elements for each row */
     nele=(int *)calloc(nrows,sizeof(int));
     if(!nele) {
-	medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
+	medmPrintf(1,"\nspaceSelectedElements2D: Memory allocation error\n");
 	return;
     }
 
@@ -2613,7 +2613,7 @@ void spaceSelectedElements2D(void)
     array = (double **)calloc(nrows,sizeof(double *));
     indx = (int **)calloc(nrows,sizeof(int *));
     if(!earray || !array || !indx) {
-	medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
+	medmPrintf(1,"\nspaceSelectedElements2D: Memory allocation error\n");
 	highlightSelectedElements();
 	return;
     }
@@ -2623,7 +2623,7 @@ void spaceSelectedElements2D(void)
 	array[i] = (double *)calloc(nele[i],sizeof(double));
 	indx[i] = (int *)calloc(nele[i],sizeof(int));
 	if(!earray[i] || !array[i] || !indx[i]) {
-	    medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
+	    medmPrintf(1,"\nspaceSelectedElements2D: Memory allocation error\n");
 	    highlightSelectedElements();
 	    return;
 	}
@@ -3409,7 +3409,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 	outputString[0] = '\0';
     }
     if(j >= sizeOfOutputString-1) {
-	medmPostMsg("performMacroSubstitutions: Substitutions failed\n"
+	medmPostMsg(1,"performMacroSubstitutions: Substitutions failed\n"
 	  "  Output buffer not large enough\n");
     }
 }
@@ -3881,18 +3881,18 @@ static void medmPrintfDlElementList(DlList *l, char *text)
     DlElement *p = 0;
     DlObject *pO;
     int i = 0;
-    medmPostMsg("%sNumber of Elements=%d\n",text,l->count);
+    medmPostMsg(1,"%sNumber of Elements=%d\n",text,l->count);
     p = FirstDlElement(l);
     while (p) {
 	if(p->type == DL_Element) {
 	    pO = &(p->structure.element->structure.composite->object);
-	    medmPrintf("%03d (%s) x1=%d x2=%d width=%d y1=%d y2=%d height=%d\n",++i,
+	    medmPrintf(0,"%03d (%s) x1=%d x2=%d width=%d y1=%d y2=%d height=%d\n",++i,
 	      elementType(p->structure.element->type),
 	      pO->x, pO->x + (int)pO->width, (int)pO->width,
 	      pO->y, pO->y + (int)pO->height, (int)pO->height);
 	} else {
 	    pO = &(p->structure.composite->object);
-	    medmPrintf("%03d %s x1=%d x2=%d y1=%d y2=%d\n",++i,
+	    medmPrintf(0,"%03d %s x1=%d x2=%d y1=%d y2=%d\n",++i,
 	      elementType(p->type),
 	      pO->x, pO->x + (int)pO->width, (int)pO->width,
 	      pO->y, pO->y + (int)pO->height, (int)pO->height);
@@ -3966,7 +3966,7 @@ void createUndoInfo(DisplayInfo *displayInfo)
 
     undoInfo->dlElementList = createDlList();
     if(!undoInfo->dlElementList) {
-	medmPrintf("\ncreateUndoInfo: Cannot create element list\n");
+	medmPrintf(1,"\ncreateUndoInfo: Cannot create element list\n");
 	free(undoInfo);
 	displayInfo->undoInfo = NULL;
     }
@@ -4070,8 +4070,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("\nrestoreUndoInfo: Cannot create temporary element list\n");
-	    XBell(display,50); XBell(display,50); XBell(display,50);
+	    medmPostMsg(1,"restoreUndoInfo: Cannot create temporary element list\n");
 	    return;
 	}
     }
@@ -4283,12 +4282,12 @@ void popupPvInfo(DisplayInfo *displayInfo)
     timeVals = (struct dbr_time_string *)calloc(count,
       sizeof(struct dbr_time_string));
     if(!timeVals) {
-	medmPostMsg("popupPvInfo: Memory allocation error\n");
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
 	return;
     }
     chids = (chid *)calloc(count,sizeof(chid));
     if(!chids) {
-	medmPostMsg("popupPvInfo: Memory allocation error\n");
+	medmPostMsg(1,"popupPvInfo: Memory allocation error\n");
 	free(timeVals);
 	return;
     }
@@ -4308,7 +4307,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
       /* Get the time value as a string */
 	status = ca_array_get(DBR_TIME_STRING, 1, chId, &timeVals[i]);
 	if(status != ECA_NORMAL) {
-	    medmPostMsg("popupPvInfo: ca_get: %s\n",
+	    medmPostMsg(1,"popupPvInfo: ca_get: %s\n",
 	      ca_message(status));
 	}
     }
@@ -4316,7 +4315,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
   /* Wait for results */
     status=ca_pend_io(CA_PEND_IO_TIME);
     if(status != ECA_NORMAL) {
-	medmPostMsg("popupPvInfo: Did not get all the PV information\n");
+	medmPostMsg(1,"popupPvInfo: Did not get all the PV information\n");
     }
     
   /* Loop over the records to print information */
@@ -4453,7 +4452,7 @@ void createPvInfoDlg(void)
     XtSetArg(args[n], XmNeditable, False); n++;
     pvInfoMessageBox = XmCreateScrolledText(pane,"text",args,n);
     XtManageChild(pvInfoMessageBox);
-    actionArea = XtVaCreateWidget("ActionArea",
+    actionArea = XtVaCreateWidget("actionArea",
       xmFormWidgetClass, pane,
       XmNshadowThickness, 0,
       XmNfractionBase, 5,
@@ -4544,7 +4543,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
       pvCursor, True, &event);
     XFlush(display);    /* For debugger */
     if(!widget) {
-	medmPostMsg("executeMenuCallback: Choosing object failed\n");
+	medmPostMsg(1,"executeMenuCallback: Choosing object failed\n");
 	dmSetAndPopupWarningDialog(displayInfo,
 	  "executeMenuCallback: "
 	  "Did not find object","OK",NULL,NULL);
@@ -4562,7 +4561,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     printf("  y: %4d  event.xbutton.y: %4d\n",y,event.xbutton.y);
 #endif    
     if(!pE) {
-	medmPostMsg("executeMenuCallback: Not on an object\n");
+	medmPostMsg(1,"executeMenuCallback: Not on an object\n");
 	dmSetAndPopupWarningDialog(displayInfo,
 	  "executeMenuCallback: "
 	  "Not on an object","OK",NULL,NULL);
@@ -4576,11 +4575,8 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
 	pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
     }
     if(!pT || !pT->getRecord) {
-	medmPostMsg("executeMenuCallback: "
+	medmPostMsg(1,"executeMenuCallback: "
 	  "No process variable associated with object\n");
-	dmSetAndPopupWarningDialog(displayInfo,
-	  "executeMenuCallback: "
-	  "No process variable associated with object","OK",NULL,NULL);
 	return NULL;
     }
 		
@@ -4588,7 +4584,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     pT->getRecord(pT->clientData, records, count);
     (*count)%=100;
     if(*count > MAX_COUNT) {
-	medmPostMsg("getPvInfoFromDisplay: Maximum count exceeded\n"
+	medmPostMsg(1,"getPvInfoFromDisplay: Maximum count exceeded\n"
 	  "  Programming Error: Please notify person in charge of MEDM\n");
 	return NULL;
     }
@@ -4618,7 +4614,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     clen = strlen(cmd);
     for(i=0, ic=0; i < clen; i++) {
 	if(ic >= 1024) {
-	    medmPostMsg("parseAndExecCommand: Command is too long\n");
+	    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 	    return;
 	}
 	if(cmd[i] != '&') {
@@ -4639,7 +4635,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 #endif			
 			len = strlen(name);
 			if(ic + len >= 1024) {
-			    medmPostMsg("executeMenuCallback: Command is too long\n");
+			    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
 			    free(records);
 			    return;
 			}
@@ -4648,7 +4644,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		      /* Put in a space if required */
 			if(j < count-1) {
 			    if(ic + 1 >= 1024) {
-				medmPostMsg("executeMenuCallback: Command is too long\n");
+				medmPostMsg(1,"executeMenuCallback: Command is too long\n");
 				free(records);
 				return;
 			    }
@@ -4664,7 +4660,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		name = displayInfo->dlFile->name;
 		len = strlen(name);
 		if(ic + len >= 1024) {
-		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
 		    return;
 		}
 		strcpy(command+ic,name);
@@ -4676,7 +4672,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		  if(*name++ == '/') title = name;
 		len = strlen(title);
 		if(ic + len >= 1024) {
-		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
 		    return;
 		}
 		strcpy(command+ic,title);

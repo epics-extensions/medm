@@ -113,7 +113,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)ptu);
 
 	if (ptu->updateTask == NULL) {
-	    medmPrintf("\ntextUpdateCreateRunTimeInstance: Memory allocation error\n");
+	    medmPrintf(1,"\ntextUpdateCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(ptu->updateTask,textUpdateDestroyCb);
 	    updateTaskAddNameCb(ptu->updateTask,textUpdateGetRecord);
@@ -290,7 +290,7 @@ static void textUpdateDraw(XtPointer cd) {
 		isNumber = True;
 		break;
 	    default :
-		medmPostMsg("textUpdateUpdateValueCb:\n"
+		medmPostMsg(1,"textUpdateUpdateValueCb:\n"
 		  "  Unknown channel type for %s\n"
 		  "  Cannot attach TextUpdate\n",
 		  dlTextUpdate->monitor.rdbk);
@@ -331,7 +331,7 @@ static void textUpdateDraw(XtPointer cd) {
 		    cvtLongToOctalString((long)value, textField);
 		    break;
 		default :
-		    medmPostMsg("textUpdateUpdateValueCb:\n"
+		    medmPostMsg(1,"textUpdateUpdateValueCb:\n"
 		      "  Unknown channel type for %s\n"
 		      "  Cannot attach TextUpdate\n",
 		      dlTextUpdate->monitor.rdbk);

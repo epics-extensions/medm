@@ -119,7 +119,7 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
       (XtPointer)pm);
 
     if (pm->updateTask == NULL) {
-	medmPrintf("\nmenuCreateRunTimeInstance: Memory allocation error\n");
+	medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
 	updateTaskAddNameCb(pm->updateTask,menuGetRecord);
@@ -255,7 +255,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   /* buildMenu function needs an extra entry to work */
 
     if (pd->dataType != DBF_ENUM) {
-	medmPostMsg("menuUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
 	  "  Cannot create Choice Button for %s\n",
 	  "  Is not an ENUM type\n",
 	  dlMenu->control.ctrl);
@@ -351,7 +351,7 @@ static void menuDraw(XtPointer cd) {
 		if ((i >=0) && (i < (int) numChildren)) {
 		    XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
 		} else {
-		    medmPostMsg("menuUpdateValueCb: Invalid menuHistory child\n");
+		    medmPostMsg(1,"menuUpdateValueCb: Invalid menuHistory child\n");
 		    return;
 		}
 		switch (dlMenu->clrmod) {
@@ -363,15 +363,15 @@ static void menuDraw(XtPointer cd) {
 		    XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pd->severity],NULL);
 		    break;
 		default :
-		    medmPostMsg("menuUpdateValueCb:\n");
-		    medmPrintf("  Channel Name: %s\n",dlMenu->control.ctrl);
-		    medmPrintf("  Message: Unknown color modifier\n");
+		    medmPostMsg(1,"menuUpdateValueCb:\n");
+		    medmPrintf(0,"  Channel Name: %s\n",dlMenu->control.ctrl);
+		    medmPrintf(0,"  Message: Unknown color modifier\n");
 		    return;
 		}
 	    } else {
-		medmPostMsg("menuUpdateValueCb:\n");
-		medmPrintf("  Channel Name: %s\n",dlMenu->control.ctrl);
-		medmPrintf("  Message: Data type must be enum\n");
+		medmPostMsg(1,"menuUpdateValueCb:\n");
+		medmPrintf(0,"  Channel Name: %s\n",dlMenu->control.ctrl);
+		medmPrintf(0,"  Message: Data type must be enum\n");
 		return;
 	    }
 	    if (pd->writeAccess)
@@ -426,7 +426,7 @@ static void menuValueChangedCb(
 		menuUpdateValueCb((XtPointer)pm->record);
 	    } 
 	} else {
-	    medmPrintf("\nmenuValueChangedCb: %s not connected\n",
+	    medmPrintf(1,"\nmenuValueChangedCb: %s not connected\n",
 	      pm->dlElement->structure.menu->control.ctrl);
 	}
     }

@@ -107,7 +107,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)pm);
 	    
 	    if (pm->updateTask == NULL) {
-		medmPrintf("\nmeterCreateRunTimeInstance: Memory allocation error\n");
+		medmPrintf(1,"\nmeterCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
 		updateTaskAddNameCb(pm->updateTask,meterGetRecord);
@@ -235,7 +235,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     switch (pd->dataType) {
     case DBF_STRING :
     case DBF_ENUM :
-	medmPostMsg("meterUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
 	  "  Cannot attach meter\n",
 	  dlMeter->monitor.rdbk);
@@ -251,7 +251,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 	precision = pd->precision;
 	break;
     default :
-	medmPostMsg("meterUpdateGraphicalInfoCb:\n"
+	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach meter\n",
 	  dlMeter->monitor.rdbk);

@@ -727,6 +727,11 @@ Name of file in which to save display:",
     "Medm*channelMW*XmLabel.marginWidth: 0",
 #endif
   /***
+  *** message window
+  ***/
+    "Medm.errorMsgS.x: 10",
+    "Medm.errorMsgS.y: 10",
+  /***
   *** medmWidget resource specifications
   ***/
     "Medm*warningDialog.foreground: white",
@@ -909,11 +914,11 @@ request_t * parseCommandLine(int argc, char *argv[]) {
       /* KE: May not be a suffix (junk.adlebrained.txt fits) */
 	fileStr = argv[i];
 	if (strstr(fileStr,DISPLAY_FILE_ASCII_SUFFIX) == NULL) {
-	    medmPrintf("\nFile has wrong suffix: %s\n",fileStr);
+	    medmPrintf(1,"\nFile has wrong suffix: %s\n",fileStr);
 	    continue;
 	}
 	if (strlen(fileStr) > (size_t) FULLPATHNAME_SIZE) {
-	    medmPrintf("\nFile name too long: %s\n",fileStr);
+	    medmPrintf(1,"\nFile name too long: %s\n",fileStr);
 	    continue;
 	}
 
@@ -978,7 +983,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		request->fileCnt++;
 	    }
 	} else {
-	    medmPrintf("\nCannot access file: %s\n",fileStr);
+	    medmPrintf(1,"\nCannot access file: %s\n",fileStr);
 	}
     }
     return request;
@@ -1083,7 +1088,7 @@ static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     switch(buttonNumber) {
     case VIEW_MESSAGE_WINDOW_BTN:
-	errMsgDlgCreateDlg();
+	  errMsgDlgCreateDlg(True);
 	break;
     case VIEW_STATUS_WINDOW_BTN:
 	medmCreateCAStudyDlg();
@@ -1741,7 +1746,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 
  
     if (strLen1 >= MAX_FILE_CHARS) {
-	medmPrintf("\nPath too Long: %s\n",filename);
+	medmPrintf(1,"\nPath too Long: %s\n",filename);
 	return False;
     }
 
@@ -1804,12 +1809,12 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	}
 	status = stat(f1,&statBuf);
 	if (status) {
-	    medmPrintf("\nFailed to read status of file %s\n",filename);
+	    medmPrintf(1,"\nFailed to read status of file %s\n",filename);
 	    return False;
 	}
 	status = rename(f1,f2);
 	if (status) {
-	    medmPrintf("\nCannot rename file %s\n",filename);
+	    medmPrintf(1,"\nCannot rename file %s\n",filename);
 	    return False;
 	}
     }
@@ -2921,10 +2926,10 @@ main(int argc, char *argv[])
 		dmWriteDisplayList(displayInfo,filePtr);
 		fclose(filePtr);
 	    } else {
-		medmPrintf("\nCannot create display file: \"%s\"\n",argv[3]);
+		medmPrintf(1,"\nCannot create display file: \"%s\"\n",argv[3]);
 	    }
 	} else {
-	    medmPrintf("\nCannot open display file: \"%s\"\n",argv[2]);
+	    medmPrintf(1,"\nCannot open display file: \"%s\"\n",argv[2]);
 	}
 	return 0;
     }
@@ -2936,7 +2941,7 @@ main(int argc, char *argv[])
     request = parseCommandLine(argc,argv);
 
     if (request->macroString != NULL && request->opMode != EXECUTE) {
-	medmPrintf("\nIgnored -macro command line option\n"
+	medmPrintf(0,"\nIgnored -macro command line option\n"
 	  "  (Only valid for Execute (-x) mode operation)\n");
 	free(request->macroString);
 	request->macroString = NULL;
@@ -2970,7 +2975,7 @@ main(int argc, char *argv[])
       /* Open display */
 	display = XOpenDisplay(request->displayName);
 	if (display == NULL) {
-	    medmPrintf("\nCould not open Display\n");
+	    medmPrintf(1,"\nCould not open Display\n");
 	    exit(1);
 	}
 	screenNum = DefaultScreen(display);
@@ -3091,7 +3096,7 @@ main(int argc, char *argv[])
   /* Set XSynchronize for debugging */
 #ifdef XSYNC
     XSynchronize(display,TRUE);
-    medmPrintf("\nRunning in SYNCHRONOUS mode\n");
+    medmPrintf(0,"\nRunning in SYNCHRONOUS mode\n");
 #endif
 
   /* Intern some atoms if they aren't there already */
@@ -3193,7 +3198,7 @@ main(int argc, char *argv[])
 	if (XAllocColor(display,cmap,&color)) {
 	    defaultColormap[i] =  color.pixel;
 	} else {
-	    medmPrintf("\nmain: Cannot not allocate color (%d: "
+	    medmPrintf(1,"\nmain: Cannot not allocate color (%d: "
 	      "r=%d  g=%d  b=%d)\n",i,defaultDlColormap.dl_color[i].r,
 	      defaultDlColormap.dl_color[i].g,defaultDlColormap.dl_color[i].b);
 	  /* Put unphysical pixmap value in there as tag it was invalid */
@@ -3237,7 +3242,7 @@ main(int argc, char *argv[])
 		  request->displayGeometry,(Boolean)False);
 		fclose(filePtr);
 	    } else {
-		medmPrintf("\nCannot open display file: \"%s\"\n",fileStr);
+		medmPrintf(1,"\nCannot open display file: \"%s\"\n",fileStr);
 	    }
 	}
     }
@@ -3345,16 +3350,16 @@ main(int argc, char *argv[])
 			if (globalDisplayListTraversalMode == DL_EDIT) {
 			    enableEditFunctions();
 			}
-			medmPostMsg("File Dispatch Request:\n");
+			medmPostMsg(0,"File Dispatch Request:\n");
 			if (fullPathName[0] != '\0')
-			  medmPrintf("  filename = %s\n",fullPathName);
+			  medmPrintf(0,"  filename = %s\n",fullPathName);
 			if (name[0] != '\0')
-			  medmPrintf("  macro = %s\n",name);
+			  medmPrintf(0,"  macro = %s\n",name);
 			if (geometryString[0] != '\0')
-			  medmPrintf("  geometry = %s\n",geometryString);
+			  medmPrintf(0,"  geometry = %s\n",geometryString);
 			fclose(filePtr);
 		    } else {
-			medmPrintf(
+			medmPrintf(1,
 			  "\nCould not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
 			  fullPathName);
 		    }

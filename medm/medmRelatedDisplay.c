@@ -772,7 +772,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	      "Cannot open related display:\n  %s\nCheck %s\n",
 	      filename, "EPICS_DISPLAY_PATH");
 	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);
-	    medmPostMsg(token);
+	    medmPostMsg(1,token);
 	} else {
 	    if (replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
 		dmDisplayListParse(displayInfo,filePtr,processedArgs,

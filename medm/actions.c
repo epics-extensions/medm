@@ -292,14 +292,14 @@ void StartDrag(Widget w, XEvent *event)
 	if (column == 0) column = 1;
 	if (column > MAX_COL) {
 	    column = MAX_COL;
-	    medmPostMsg("StartDrag: Maximum number of columns exceeded\n"
+	    medmPostMsg(1,"StartDrag: Maximum number of columns exceeded\n"
 	      "  Programming Error: Please notify person in charge of MEDM\n");
 	    return;
 	}
 	row = 0;
 	count = count % 100;
 	if (count > MAX_COUNT) {
-	    medmPostMsg("StartDrag: Maximum count exceeded\n"
+	    medmPostMsg(1,"StartDrag: Maximum count exceeded\n"
 	      "  Programming Error: Please notify person in charge of MEDM\n");
 	    return;
 	}

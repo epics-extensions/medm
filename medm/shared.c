@@ -211,7 +211,7 @@ void optionMenuSet(Widget menu, int buttonId)
 	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
 	}
     } else {
-	medmPrintf("\noptionMenuSet: No subMenu found for option menu\n");
+	medmPrintf(1,"\noptionMenuSet: No subMenu found for option menu\n");
     }
 }
 
@@ -301,7 +301,7 @@ double medmTime()
     struct timeval tp;
     
     if (gettimeofday(&tp,NULL))
-      medmPostMsg("medmTime:  Failed to get time\n");
+      medmPostMsg(1,"medmTime:  Failed to get time\n");
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
 }
 #endif
@@ -619,7 +619,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	    region = XPolygonRegion(points,4,EvenOddRule);
 
 	    if (region == NULL) {
-		medmPrintf("\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
+		medmPrintf(0,"\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
 		/* kill the work proc */
 		ts->workProcId = 0;
 		return True;

@@ -193,9 +193,9 @@ float safeFloat(double x) {
 	if(print) {
 	    if( nerrs < 25) {
 		nerrs++;
-		medmPostMsg("CartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
+		medmPostMsg(0,"CartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
 		if(nerrs >= 25) {
-		    medmPrintf("\nCartesianPlot: Suppressing further NaN error messages\n");
+		    medmPrintf(0,"\nCartesianPlot: Suppressing further NaN error messages\n");
 		    print = 0;
 		}
 	    }
@@ -244,7 +244,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       cartesianPlotDraw,
       (XtPointer)pcp);
     if (pcp->updateTask == NULL) {
-	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Memory allocation error\n");
+	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pcp->updateTask,cartesianPlotDestroyCb);
 	updateTaskAddNameCb(pcp->updateTask,cartesianPlotGetRecord);
@@ -429,7 +429,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     }
     break;
     default:
-	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Unknown X axis style\n");
+	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Unknown X axis style\n");
 	break;
     }
 
@@ -458,7 +458,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtXPrecision,iPrec); n++;
 	break;
     default:
-	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Unknown X range style\n");
+	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Unknown X range style\n");
 	break;
     }
 
@@ -470,7 +470,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtYAxisLogarithmic,True); n++;
 	break;
     default:
-	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Unknown Y1 axis style\n");
+	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Unknown Y1 axis style\n");
 	break;
     }
 
@@ -499,7 +499,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtYPrecision,iPrec); n++;
 	break;
     default:
-	medmPrintf("\ncartesianPlotCreateRunTimeInstance: Unknown Y1 range style\n");
+	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Unknown Y1 range style\n");
 	break;
     }
 
@@ -511,7 +511,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtY2AxisLogarithmic,True); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateRunTimeInstance: Unknown Y2 axis style\n");
 	break;
     }
@@ -541,7 +541,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtY2Precision,iPrec); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateRunTimeInstance: Unknown Y2 range style\n");
 	break;
     }
@@ -671,7 +671,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
     case TIME_AXIS:
 	break;
     default:
-	medmPrintf("\ncartesianPlotCreateEditInstance: Unknown X axis style\n"); 
+	medmPrintf(1,"\ncartesianPlotCreateEditInstance: Unknown X axis style\n"); 
 	break;
     }
 
@@ -700,7 +700,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtXPrecision,iPrec); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateEditInstance: Unknown X range style\n");
 	break;
     }
@@ -713,7 +713,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtYAxisLogarithmic,True); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateEditInstance: Unknown Y1 axis style\n");
 	break;
     }
@@ -743,7 +743,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtYPrecision,iPrec); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateEditInstance: Unknown Y1 range style\n");
 	break;
     }
@@ -756,7 +756,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtY2AxisLogarithmic,True); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateEditInstance: Unknown Y2 axis style\n");
 	break;
     }
@@ -786,7 +786,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XtNxrtY2Precision,iPrec); n++;
 	break;
     default:
-	medmPrintf(
+	medmPrintf(1,
 	  "\ncartesianPlotCreateEditInstance: Unknown Y2 range style\n");
 	break;
     }
@@ -1753,7 +1753,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
     }
     default:
-	medmPrintf("\ncartesianPlotUpdateTrace: Unknown dataType\n");
+	medmPrintf(1,"\ncartesianPlotUpdateTrace: Unknown dataType\n");
     }
 }
 
@@ -1927,7 +1927,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	} else if (pt->hxrt == pcp->hxrt2) {
 	    pcp->dirty2 = True;
 	} else {
-	    medmPrintf("\ncartesianPlotUpdateValueCb: Illegal xrtDataSet specified\n");
+	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal xrtDataSet specified\n");
 	}
     }
     updateTaskMarkUpdate(pcp->updateTask);
