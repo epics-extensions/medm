@@ -40,8 +40,8 @@
 
 /* The following is the prototype for the _XmDrawShadow
  *   from Obsolete.c */
-#if (!defined(linux) && !defined(__APPLE__))
-/* Linux and OS X define this function and define it differently */
+#if !defined(linux) && !defined(__APPLE__) && !defined(CYGWIN32)
+/* Above platforms define this function and define it differently */
 void _XmDrawShadow (Display *display, Drawable d, 
   GC top_GC, GC bottom_GC, int size, int x, int y, 
   int width, int height);

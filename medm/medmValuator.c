@@ -449,7 +449,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
 	  (Dimension)dlValuator->object.height);
     }
 #endif
-#ifdef linux
+#if defined(linux) || defined(CYGWIN32)
   /* Several version of Motif for Linux change the width from what we
      specified, so set it back */
     XtVaSetValues(widget,
@@ -523,7 +523,7 @@ static void valuatorDraw(XtPointer cd) {
 	    if(widget) {
 		addCommonHandlers(widget, pv->updateTask->displayInfo);
 		XtManageChild(widget);
-#ifdef linux
+#if defined(linux) || defined(CYGWIN32)
 	      /* Several version of Motif for Linux change the width from what we
 		 specified, so set it back */
 		XtVaSetValues(widget,

@@ -1011,7 +1011,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	    XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&gridVal);
 	    cdi->grid->gridSpacing = atoi(gridVal);
 	    if(cdi->grid->gridSpacing < 2) cdi->grid->gridSpacing = 2;
-	    free(gridVal);
+	    XtFree(gridVal);
 	    XmStringFree(xmString);
 	    XtUnmanageChild(w);
 	    updateGlobalResourceBundleAndResourcePalette(False);
