@@ -13,13 +13,10 @@
  * routine through which all graphic print requests are channeled
  */
 
-/* KE: Added for function prototypes */
 #include "xwd2ps.h"
+#include "utilPrint.h"
 
-void utilPrint(display,window,fileName)
-    Display *display;
-    Window window;
-    char *fileName;
+void utilPrint(Display *display, Window window, char *fileName)
 {
     char *commandBuffer=NULL, *newFileName=NULL, *psFileName=NULL, *printer=NULL;
     time_t seconds;
@@ -36,7 +33,7 @@ void utilPrint(display,window,fileName)
       || fileName == (char *)NULL) return;
 
     seconds = time(NULL);
-    newFileName = (char *) calloc(1,256);
+    newFileName = (char *)calloc(1,256);
     sprintf(newFileName,"%s%d",fileName,seconds);
 
     commandBuffer = (char *) calloc(1,256);
@@ -45,10 +42,10 @@ void utilPrint(display,window,fileName)
 
 #if 0
   /* KE: Not necessary */
-    newFileName = (char *) calloc(1,256);
+    newFileName = (char *)calloc(1,256);
     sprintf(newFileName,"%s%d",fileName,seconds);
 #endif    
-    psFileName = (char *) calloc(1,256);
+    psFileName = (char *)calloc(1,256);
 #ifndef VMS
     sprintf(psFileName,"%s%s",newFileName,".ps");
 #else
@@ -75,7 +72,6 @@ void utilPrint(display,window,fileName)
 	}
 	xwd2ps(myArgc,myArgv,fo);
 	fclose(fo);
-
     }
 
 #if DEBUG_PRINT == 0

@@ -137,3 +137,8 @@ void outputColorImage(FILE *fo);
 void outputLogo(FILE *fo, Image the_image);
 void printPS(FILE *fo, char **p);
 void printEPSF(FILE *fo, Image image, Page  page, char  *file_name);
+
+
+
+
+

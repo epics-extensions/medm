@@ -1,6 +1,6 @@
 # Makefile for printUtils
 
-TOP = ../../../../..
+TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 #USR_CFLAGS += -H
