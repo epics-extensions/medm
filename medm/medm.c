@@ -1453,7 +1453,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	    fontStyle = SCALABLE;
     } else if (!strcmp(argv[i],"-display")) {
 	displayName = ( ((i+1) < argc) ? argv[i+1] : NULL); savedIndex = i+1;
-    } else if ((!strcmp(argv[i],"-dg")) || (!strcmp(argv[i],"-displayGeomtry"))) {
+    } else if ((!strcmp(argv[i],"-dg")) || (!strcmp(argv[i],"-displayGeometry"))) {
 	geometryString = (((i+1) < argc) ? argv[i+1] : NULL); savedIndex = i+1;
     }
   }
