@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_INFO 0
+#define DEBUG_MARK_UPDATE 0
 #define DEBUG_COMPOSITE 0
 #define DEBUG_ENABLE 0
 #define DEBUG_SCHEDULER 0
@@ -140,6 +142,16 @@ void updateTaskStatusGetInfo(int *taskCount,
   double *timeInterval)
 {
     double time = medmTime();
+
+#if DEBUG_INFO
+    print("updateTaskStatusGetInfo: RC=%d DC=%d URC=%d UDC=%d UE=%d TI=%.2f\n",
+    updateTaskStatus.updateRequestCount,
+    updateTaskStatus.updateDiscardCount,
+    updateTaskStatus.periodicUpdateRequestCount,
+    updateTaskStatus.periodicUpdateDiscardCount,
+    updateTaskStatus.updateExecuted,
+    time-updateTaskStatus.since);
+#endif
     
   /* If some of these are not set, just do a reset */
     if(periodicTaskCount && updateRequestCount && updateDiscardCount &&
@@ -163,6 +175,16 @@ void updateTaskStatusGetInfo(int *taskCount,
     updateTaskStatus.periodicUpdateDiscardCount = 0;
     updateTaskStatus.updateExecuted = 0;
     updateTaskStatus.since = time;
+
+#if DEBUG_INFO
+    print("                    End: RC=%d DC=%d URC=%d UDC=%d UE=%d TI=%.2f\n",
+    updateTaskStatus.updateRequestCount,
+    updateTaskStatus.updateDiscardCount,
+    updateTaskStatus.periodicUpdateRequestCount,
+    updateTaskStatus.periodicUpdateDiscardCount,
+    updateTaskStatus.updateExecuted,
+    time-updateTaskStatus.since);
+#endif
 }
 
 /* Timer proc for update tasks.  Is called every TIMERINTERVAL sec.
@@ -537,6 +559,18 @@ void updateTaskMarkUpdate(UpdateTask *pT)
 {
     if(pT->disabled) return;
     
+#if DEBUG_MARK_UPDATE
+    {
+	MedmElement *pElement=(MedmElement *)pT->clientData;
+	DlElement *pET = pElement->dlElement;
+	
+	print("Marking pT=%x pE=%x"
+	  " pE->type=%s x=%d y=%d pend=%d\n",
+	  pT,pET,elementType(pET->type),
+	  pT->rectangle.x,pT->rectangle.y,
+	  pT->executeRequestsPendingCount);
+    }
+#endif    
     if(pT->executeRequestsPendingCount > 0) {
 	updateTaskStatus.updateDiscardCount++;
     } else {
@@ -609,7 +643,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 #if DEBUG_COMPOSITE
     print("\nupdateTaskWorkProc: time=%.3f requestsQueued=%d\n",
       medmElapsedTime(),ts->updateRequestQueued);
-#if 1
+#if 0
     {
 	UpdateTask *pT;
 	int i=0;
@@ -633,6 +667,14 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     }
 #endif
 #endif    
+#if DEBUG_INFO
+    print("updateTaskWorkProc: RC=%d DC=%d URC=%d UDC=%d UE=%d\n",
+    updateTaskStatus.updateRequestCount,
+    updateTaskStatus.updateDiscardCount,
+    updateTaskStatus.periodicUpdateRequestCount,
+    updateTaskStatus.periodicUpdateDiscardCount,
+    updateTaskStatus.updateExecuted);
+#endif
 
   /* Do for WORKINTERVAL sec */
     do {
@@ -804,6 +846,9 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	case CONTAINED:
 	case EXTENDED:
 	  /* Loop over all tasks in region */
+#if DEBUG_COMPOSITE
+	    print("Before loop over all tasks in region\n");
+#endif	  
 	    t1 = t->displayInfo->updateTaskListHead.next;
 	    while(t1) {
 		if(!t1->disabled && XRectInRegion(region,
@@ -812,9 +857,19 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		    if(t1->executeTask) {
 #if DEBUG_COMPOSITE
 			{
+			    MedmElement *pElement=(MedmElement *)t1->clientData;
+			    DlElement *pET = pElement->dlElement;
+			    
+			    print("  Updating: pT=%x pE=%x"
+			      " pE->type=%s x=%d y=%d pend=%d\n",
+			      t1,pET,elementType(pET->type),
+			      t1->rectangle.x,t1->rectangle.y,
+			      t1->executeRequestsPendingCount);
+#if 0
 			    pE1 = getElementFromUpdateTask(t1);
 			    print(" Executing task: %s\n",
 			      elementType(pE1->type));
+#endif
 			}
 #endif
 			t1->executeTask(t1->clientData);
@@ -838,7 +893,11 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	    break;
 	}
 	updateInProgress = False;
-
+	
+#if DEBUG_COMPOSITE
+	print("After loop over all tasks in region\n");
+#endif	  
+	
       /* If the primary element is a composite, add the region to the
          updateTaskExposedRegion, since we do not know what might have
          changed in the drawingAreaPixmap */
@@ -867,27 +926,30 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		}
 	    }
 	}
-	    
-	  /* Check the updateTaskExposedRegion */
-	    if(!XEmptyRegion(updateTaskExposedRegion)) {
+	
+      /* Check the updateTaskExposedRegion */
+	if(!XEmptyRegion(updateTaskExposedRegion)) {
 	  /* Set the updateTaskExposedRegion in the GC */
 	    XSetRegion(display, displayInfo->gc, updateTaskExposedRegion);
-
+	    
 	  /* Redraw the pixmap */
 #if DEBUG_COMPOSITE
-	    print("Before updateTaskRedrawPixmap with !XEmptyRegion)\n");
+	    print("Before redraw pixmap (XEmptyRegion is False)\n");
 #endif	  
 	    updateTaskRedrawPixmap(displayInfo, updateTaskExposedRegion);
-
+	    
 	  /* Repaint the region */
 	    updateTaskRepaintRegion(displayInfo, updateTaskExposedRegion);
-
+	    
 	  /* Restore the original region in the GC */
 	    XSetRegion(display, displayInfo->gc, region);
-
+	    
 	  /* Empty the updateTaskExposedRegion */
 	    XDestroyRegion(updateTaskExposedRegion);
 	    updateTaskExposedRegion = XCreateRegion();
+#if DEBUG_COMPOSITE
+	    print("After redraw pixmap\n");
+#endif	  
 	}
 	
       /* Copy the updatePixmap to the window */
@@ -912,7 +974,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 #if DEBUG_COMPOSITE
 	print("Update Done updateRequestQueued=%d updateExecuted=%d\n",
 	  ts->updateRequestQueued,ts->updateExecuted);
-#if 1
+#if 0
     {
 	UpdateTask *pT;
 	int i=0;
@@ -996,8 +1058,16 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     } while(endTime > medmTime());
     
   /* Keep the work proc active */
+#if DEBUG_INFO
+    print("updateTaskWorkProc: RC=%d DC=%d URC=%d UDC=%d UE=%d\n",
+    updateTaskStatus.updateRequestCount,
+    updateTaskStatus.updateDiscardCount,
+    updateTaskStatus.periodicUpdateRequestCount,
+    updateTaskStatus.periodicUpdateDiscardCount,
+    updateTaskStatus.updateExecuted);
+#endif
 #if DEBUG_RETURN
-    print("Return False\n");
+    print("Return 9 False\n");
 #endif	    
     return False;
 }

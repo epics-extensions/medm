@@ -976,7 +976,17 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
     } else {
 	DisplayInfo *cdi=currentDisplayInfo;
 
-	if(pE && pE->run && pE->run->execute) pE->run->execute(cdi, pE);
+	if(pE) {
+	    if(pE->updateType == DYNAMIC_GRAPHIC) {
+	      /* The textUpdate is the only case -- make it update */
+		UpdateTask *pT=getUpdateTaskFromElement(pE);
+
+		if(pT) updateTaskMarkUpdate(pT);
+	    } else {
+	      /* It should be a widget -- execute it */
+		if(pE->run && pE->run->execute) pE->run->execute(cdi, pE);
+	    }
+	}
     }
 }
 

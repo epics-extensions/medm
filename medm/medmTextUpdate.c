@@ -125,7 +125,6 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Necessary for PV Limits, Cannot use textUpdateDraw since
              it is drawn on the pixmap, unlike widgets */
 	    ptu = (MedmTextUpdate *)dlElement->data;
-	    if(ptu) updateTaskMarkUpdate(ptu->updateTask);
 	} else {
 	    ptu = (MedmTextUpdate *)malloc(sizeof(MedmTextUpdate));
 	    dlElement->updateType = DYNAMIC_GRAPHIC;
