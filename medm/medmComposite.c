@@ -631,9 +631,11 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -645,6 +647,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
     FILE *file, *savedFile;
+    int savedVersionNumber;
     char *filename;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -668,8 +671,10 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     }
 
   /* Since getToken() uses the displayInfo, we have to save the file
-     pointer in the displayInfo and plug in the current one */
+     pointer in the displayInfo and plug in the current one.  We also
+     have to save the version number. (It is zero for a new display.)  */
     savedFile = displayInfo->filePtr;
+    savedVersionNumber = displayInfo->versionNumber;
     displayInfo->filePtr = file;
 
   /* Read the file block (Must be there) */
@@ -679,25 +684,28 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     if(tokenType == T_WORD && !strcmp(token,"file")) {
 	parseAndSkip(displayInfo);
     } else {
-	medmPostMsg(1,"parseCompositeFile: Invalid .adl file "
+	medmPostMsg(1,"compositeFileParse: Invalid .adl file "
 	  "(First block is not file block)\n"
 	  "  file: %s\n",filename);
 	goto RETURN;
     }
+  /* Plug the current version number into the displayInfo */
+    displayInfo->versionNumber = dlFile->versionNumber;
     free((char *)dlFile);
 
   /* Read the display block */
     tokenType=getToken(displayInfo,token);
     if(tokenType == T_WORD && !strcmp(token,"display")) {
 	parseAndSkip(displayInfo);
+	tokenType=getToken(displayInfo,token);
     }
 
   /* Read the colormap */
-    tokenType=getToken(displayInfo,token);
     if(tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
 	parseAndSkip(displayInfo);
+	tokenType=getToken(displayInfo,token);
     }
 
   /* Proceed with parsing */
@@ -766,8 +774,9 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 
   RETURN:
     
-  /* Restore displayInfo->filePtr to previous value */
+  /* Restore displayInfo file parameters */
     displayInfo->filePtr = savedFile;
+    displayInfo->versionNumber = savedVersionNumber;
 }
 
 void writeDlCompositeChildren(FILE *stream, DlElement *dlElement,

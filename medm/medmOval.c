@@ -322,12 +322,10 @@ DlElement *parseOval(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlOval->object));
-	    else
-	      if(!strcmp(token,"basic attribute"))
-		parseBasicAttribute(displayInfo,&(dlOval->attr));
-	      else
-		if(!strcmp(token,"dynamic attribute"))
-		  parseDynamicAttribute(displayInfo,&(dlOval->dynAttr));
+	    else if(!strcmp(token,"basic attribute"))
+	      parseBasicAttribute(displayInfo,&(dlOval->attr));
+	    else if(!strcmp(token,"dynamic attribute"))
+	      parseDynamicAttribute(displayInfo,&(dlOval->dynAttr));
 	    break;
 	case T_EQUAL:
 	    break;

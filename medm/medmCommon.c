@@ -114,8 +114,8 @@ void parseAndSkip(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-      && (tokenType != T_EOF) );
+    } while( (tokenType != T_RIGHT_BRACE || nestingLevel > 0) &&
+      (nestingLevel > 0) && (tokenType != T_EOF) );
 }
 
 DlFile *createDlFile(DisplayInfo *displayInfo)
