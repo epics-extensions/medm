@@ -84,14 +84,10 @@ static menuEntry_t helpMenu[] = {
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-String dashes = "******";
-
 #ifdef EXTENDED_INTERFACE
 static Widget resourceFilePDM;
 static Widget resourceBundlePDM, openFSD;
 #endif
-Dimension maxLabelWidth = 0;
-Dimension maxLabelHeight = 0;
 
 XmString xmstringSelect;
 

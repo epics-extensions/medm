@@ -3117,6 +3117,10 @@ int main(int argc, char *argv[])
 #endif     /*  DEBUG_DEFINITIONS */
 
   /* Initialize global variables */
+    maxLabelWidth = 0;
+    maxLabelHeight = 0;
+    dashes = "******";
+    cpMatrix = cpForm = NULL;
     medmInitializeUpdateTasks();
     updateTaskExposedRegion =  XCreateRegion();
     windowPropertyAtom = (Atom)NULL;

@@ -62,7 +62,7 @@ static void closeProductDescriptionCallback2(Widget w,
 static void popdownProductDescriptionShell(XtPointer xtPointer);
 
 /* Global variables */
-Atom WM_DELETE_WINDOW;
+static Atom WM_DELETE_WINDOW;
 
 /*
  * Function to create, set and popup an EPICS product description shell

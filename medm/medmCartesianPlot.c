@@ -87,8 +87,6 @@ static void dumpCartesianPlotData(const char *title,
   MedmCartesianPlot *pcp);
 #endif
 
-Widget cpMatrix = NULL, cpForm = NULL;
-
 static DlDispatchTable cartesianPlotDlDispatchTable = {
     createDlCartesianPlot,
     NULL,

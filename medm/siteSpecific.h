@@ -288,3 +288,11 @@ It should not be necessary.  The problem has been fixed by specifying
 in case that fix doesn't work. */
 
 #define EXPLICITLY_OVERWRITE_CDE_COLORS 0
+
+/* Define this to include RTYP (DBR_CLASSNAME) in PvInfo.  For IOCs
+with later versions of EPICS base, this is a good idea.  However, if
+RTYP is not defined for the PV, it will take PvInfo a long time to
+determine that and be sure it is not defined.  In that case, defining
+DO_RTYPE to be zero will eliminate the delay before the PvInfo popup
+appears. */
+#define DO_RTYP 1

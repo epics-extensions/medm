@@ -24,8 +24,6 @@
 #define DEBUG_CONNECTION 0
 #define DEBUG_TIMESTAMP 0
 
-#define DO_RTYP 1
-
 #define NOT_AVAILABLE "Not available"
 #define PVINFO_TIMEOUT 60000     /* ms */
 
@@ -1338,7 +1336,8 @@ static void pvInfoRtypGetCb(struct event_handler_args args)
 
 #if DEBUG_PVINFO    
     print("pvInfoRtypGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
-#endif    
+#endif
+  /* KE: Checking infi->descChid not necessary */
     if(!pvInfo || !info || !info->descChid || !args.dbr) return;
 
     if(args.status == ECA_NORMAL) {
@@ -1346,7 +1345,7 @@ static void pvInfoRtypGetCb(struct event_handler_args args)
     } else {
 	strcpy(info->rtypVal, NOT_AVAILABLE);
     }
-	info->rtypOk = True;
+    info->rtypOk = True;
 
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
