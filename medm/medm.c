@@ -2199,7 +2199,19 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case HELP_ON_HELP_BTN:
     {
-	XmString xmString=XmStringCreateLocalized(
+	XmString xmString=XmStringCreateLtoR(
+#ifdef WIN32
+	  "     Help is implemented in the WIN32 version of MEDM by using your\n"
+	  "default browser.  The browser is called using the start command with\n"
+	  "the name of the relevant help URL.  If the browser is not running,\n"
+	  "this should cause it to come up with the URL.  If it is already up,\n"
+	  "this should cause it to change to the requested URL.  It is necessary\n"
+	  "for the environment variable ComSpec to be defined, but it should be\n"
+	  "defined by default.\n"
+	  "\n"
+	  "     You should be able to change the displayed URL via the MEDM Help\n"
+	  "menu or the context-sensitive Help buttons.\n",
+#else	  
 	  "     Help in this version of MEDM is implemented using Netscape.  If\n"
 	  "the environmental variable NETSCAPEPATH containing the full pathname\n"
 	  "of the Netscape executable exists, then that path is used to call\n"
@@ -2209,8 +2221,9 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "\n"
 	  "     If Netscape is running when MEDM first calls it, then the\n"
 	  "response should be fairly quick.  Otherwise, the first call to help\n"
-	  "must wait until Netscape comes up, which will take somewhat longer.\n"
-	    );
+	  "must wait until Netscape comes up, which will take somewhat longer.\n",
+#endif	  
+	  XmFONTLIST_DEFAULT_TAG);
 	Arg args[20];
 	int nargs;
 	
