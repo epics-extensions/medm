@@ -72,6 +72,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_DISPOSAL_FILE 0
 #define DEBUG_CODES 0
 #define DEBUG_OPEN 0
+#define DEBUG_EXODUS 0
 
 /* include files */
 #include <string.h>
@@ -227,8 +228,13 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     *gif->imageName='\0';
 
     gif->displayCells=DisplayCells(display,screenNum);
+#if DEBUG_EXODUS
+    print("initializeGIF: DisplayCells=%d\n",gif->displayCells);
+#endif    
+    
     if(gif->displayCells < 255) {
-	medmPrintf(1,"\ninitializeGIF: At least an 8-plane display is required");
+	medmPrintf(1,"\ninitializeGIF: Need at least 256 color cells, got %d\n",
+	  gif->displayCells);
 	freeGIF(dlImage);
 	return(False);
     }
@@ -417,7 +423,7 @@ void resizeGIF(DlImage *dlImage)
     h=dlImage->object.height;
 
   /* simply return if no GIF image attached */
-    if(!gif->frames) return;
+    if(!gif || !gif->frames) return;
 
     gif->currentWidth=w;
     gif->currentHeight= h;
