@@ -191,7 +191,7 @@ void retryConnections(void)
 	print(" caTask.nextPage != caTask.pageCount-1\n");
     }
 #else
-  // Check if all channels are connected */
+  /* Check if all channels are connected */
     if(caTask.channelCount == caTask.channelConnected) {
 	medmPostMsg(1,"retryConnections: All channels are connected\n");
 	XBell(display, 50);
