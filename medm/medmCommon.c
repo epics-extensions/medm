@@ -312,8 +312,8 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD: {
-	    char *tmp;
-	    unsigned long color = strtoul(token,&tmp,16);
+	    char *end;
+	    unsigned long color = strtoul(token,&end,16);
 	    if(counter < DL_MAX_COLORS) {
 		dlColor[counter].r = (color & 0x00ff0000) >> 16;
 		dlColor[counter].g = (color & 0x0000ff00) >> 8;

@@ -239,6 +239,8 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
     int i;
     Boolean match;
+    char *end;
+		
 
     switch (pd->dataType) {
     case DBF_STRING:
@@ -256,7 +258,15 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		}
 	    }
 	    if (match == False) {
-		pmb->pressValue = (double) atof(dlMessageButton->press_msg);
+		pmb->pressValue = strtod(dlMessageButton->press_msg,&end);
+		if(*end != '\0' || end == dlMessageButton->press_msg) {
+		    medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
+		      "Invalid press value:\n"
+		      "  Name: %s\n"
+		      "  Value: \"%s\"\n",
+		      pd->name?pd->name:"NULL",
+		      dlMessageButton->press_msg);
+		}
 	    }
 	}
 	if (dlMessageButton->release_msg[0] != '\0') {
@@ -271,15 +281,41 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		}
 	    }
 	    if (match == False) {
-		pmb->releaseValue = (double) atof(dlMessageButton->release_msg);
+		pmb->releaseValue = strtod(dlMessageButton->release_msg,&end);
+		if(*end != '\0' || end == dlMessageButton->release_msg) {
+		    medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
+		      "Invalid release value:\n"
+		      "  Name: %s\n"
+		      "  Value: \"%s\"\n",
+		      pd->name?pd->name:"NULL",
+		      dlMessageButton->release_msg);
+		}
 	    }
 	}
 	break;
     default:
-	if (dlMessageButton->press_msg[0] != '\0')
-	  pmb->pressValue = (double) atof(dlMessageButton->press_msg);
-	if (dlMessageButton->release_msg[0] != '\0')
-	  pmb->releaseValue = (double) atof(dlMessageButton->release_msg);
+	if (dlMessageButton->press_msg[0] != '\0') {
+	    pmb->pressValue = strtod(dlMessageButton->press_msg,&end);
+	    if(*end != '\0' || end == dlMessageButton->press_msg) {
+		medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
+		  "Invalid press value:\n"
+		  "  Name: %s\n"
+		  "  Value: \"%s\"\n",
+		  pd->name?pd->name:"NULL",
+		  dlMessageButton->press_msg);
+	    }
+	}
+	if (dlMessageButton->release_msg[0] != '\0') {
+	    pmb->releaseValue = strtod(dlMessageButton->release_msg,&end);
+	    if(*end != '\0' || end == dlMessageButton->release_msg) {
+		medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
+		  "Invalid release value:\n"
+		  "  Name: %s\n"
+		  "  Value: \"%s\"\n",
+		  pd->name?pd->name:"NULL",
+		  dlMessageButton->release_msg);
+	    }
+	}
 	break;
     }
 }

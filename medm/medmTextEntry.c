@@ -459,7 +459,8 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 {
     char *textValue;
     double value;
-    TextEntry *pte = (TextEntry *) clientData;
+    char *end;
+    TextEntry *pte = (TextEntry *)clientData;
     Record *pd = pte->record;
 
 
@@ -467,6 +468,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	if (!(textValue = XmTextFieldGetString(w))) return;
 	switch (pd->dataType) {
 	case DBF_STRING:
+	case DBF_ENUM:
 	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	    medmSendString(pte->record,textValue);
@@ -483,13 +485,21 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	default:
 	    if ((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
 	      && (textValue[1] == 'x' || textValue[1] == 'X')) {
-		unsigned long longValue;
-		longValue = strtoul(textValue,NULL,16);
-		value = (double) longValue;
+		value = (double)strtoul(textValue,&end,16);
 	    } else {
-		value = (double) atof(textValue);
+		value = (double)strtod(textValue,&end);
 	    }
-	    medmSendDouble(pte->record,value);
+	    if(*end == '\0' && end != textValue) {
+		medmSendDouble(pte->record,value);
+	    } else {
+		char string[BUFSIZ];
+		sprintf(string,"textEntryValueChanged: Invalid value:\n"
+		  "  Name: %s\n  Value: \"%s\"\n",
+		  pd->name?pd->name:"NULL",textValue);
+		medmPostMsg(1,string);
+		dmSetAndPopupWarningDialog(currentDisplayInfo,string,
+		  "OK",NULL,NULL);
+	    }
 	    break;
 	}
 	XtFree(textValue);
