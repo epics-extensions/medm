@@ -214,11 +214,6 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		XmMenuPosition(displayInfo->executePopupMenu,
 		  (XButtonPressedEvent *)event);
 		XtManageChild(displayInfo->executePopupMenu);
-#if 0		    
-	      /* KE: Are these necessary ? */
-		XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
-		XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
-#endif		    
 		break;
 	    }
 	} else {
@@ -820,12 +815,6 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		}
 	    }
 #endif	    
-#if 0	    
-	  /* KE: Are these necessary ? */
-	    XtPopup(XtParent(cdi->editPopupMenu),XtGrabNone);
-	    XRaiseWindow(display,XtWindow(cdi->editPopupMenu));
-#endif	    
-	    
 	    break;
 	}
 #if DEBUG_EVENTS

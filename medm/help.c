@@ -54,8 +54,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG 1
-
 #define TIME_STRING_MAX 81
 #define EARLY_MESSAGE_SIZE 2048
 
@@ -114,11 +112,6 @@ static void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id);
 
 static int raiseMessageWindow = 1;
 static Widget raiseMessageWindowTB;
-
-/* Debug */
-#if debug
-
-#endif
 
 #ifdef __cplusplus
 void globalHelpCallback(Widget, XtPointer cd, XtPointer)
@@ -275,14 +268,18 @@ void errMsgDlgCreateDlg(int raise)
 
     if (errMsgS != NULL) {
 	if(raise) {
+	    Window w=XtWindow(errMsgS);;
+	
 	    if(XtIsManaged(errMsgS)) XtUnmanageChild(errMsgS);
 	    XtManageChild(errMsgS);
-	    XRaiseWindow(display,XtWindow(errMsgS));
+	  /* Raise the window if it exists (widget is realized) */
+	    if(w) XRaiseWindow(display,w);
 	}
 	return;
     }
 
     if (mainShell == NULL) return;
+
     errMsgS = XtVaCreatePopupShell("errorMsgS",
 #if 0
     /* KE: Gets iconized this way */
@@ -723,6 +720,7 @@ void medmPrintf(int priority, char *format, ...)
 #else
     fprintf(stderr, medmPrintfStr);
 #endif    
+
     va_end(args);
 }
 

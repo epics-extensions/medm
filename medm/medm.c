@@ -3969,8 +3969,13 @@ static void createMain()
     XtManageChild(editHelpMessageBox);
 
   /* Initialize other shells */
-    pvInfoS = (Widget)0;
+    caStudyS = (Widget)0;
     displayListS = (Widget)0;
+    editHelpS = (Widget)0;
+    errMsgS = (Widget)0;
+    errMsgSendS = (Widget)0;
+    helpS = (Widget)0;
+    pvInfoS = (Widget)0;
 
   /* Realize the toplevel shell widget */
     XtRealizeWidget(mainShell);
