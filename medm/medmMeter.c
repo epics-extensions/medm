@@ -266,7 +266,7 @@ static void meterDraw(XtPointer cd) {
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pr->value;
+	    val.fval = (float)pr->value;
 	    XcMeterUpdateValue(widget,&val);
 	    switch (dlMeter->clrmod) {
 	    case STATIC :
@@ -283,7 +283,8 @@ static void meterDraw(XtPointer cd) {
 	    draw3DQuestionMark(pm->updateTask);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+	if((widget) && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pm->updateTask);
     }
 }

@@ -289,7 +289,8 @@ static void indicatorDraw(XtPointer cd) {
 	    draw3DQuestionMark(pi->updateTask);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+	if((widget) && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pi->updateTask);
     }
 }

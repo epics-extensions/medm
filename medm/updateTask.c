@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_DELETE 0
 #define DEBUG_HIDE 0
 #define DEBUG_EXPOSE 0
+#define DEBUG_TASK_COUNT 0
 
 #include "medm.h"
 
@@ -132,7 +133,7 @@ typedef struct {
 } PeriodicTask;
 
 /* Function prototypes */
-Boolean medmInitSharedDotC();
+Boolean medmInitUpdateTask();
 static void medmScheduler(XtPointer, XtIntervalId *);
 static Boolean updateTaskWorkProc(XtPointer);
 static DlElement *getElementFromUpdateTask(UpdateTask *t);
@@ -206,13 +207,6 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 #if DEBUG_UPDATE
     print("medmScheduler: time=%.3f\n",medmElapsedTime());
 #endif    
-#ifdef MEDM_SOFT_CLOCK
-    t->tenthSecond += 0.1;
-    if(currentTime != t->systemTime) {
-	t->systemTime = currentTime;
-	t->tenthSecond = 0.0;
-    }
-#endif
 
   /* Poll channel access  */
 #ifdef __MONITOR_CA_PEND_EVENT__
@@ -307,12 +301,6 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     t->id = XtAppAddTimeOut(appContext,TIMERINTERVAL,medmScheduler,cd);
 }
 
-#ifdef MEDM_SOFT_CLOCK
-double medmTime()
-{
-    return task.systemTime + task.tenthSecond;
-}
-#else
 double medmTime()
 {
     struct timeval tp;
@@ -329,17 +317,14 @@ double medmTime()
 #endif
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
 }
-#endif
 
 void startMedmScheduler(void)
 {
-    if(!moduleInitialized) medmInitSharedDotC();
-    medmScheduler((XtPointer)&periodicTask, NULL);
+    if(!medmWorkProcId) medmScheduler((XtPointer)&periodicTask, NULL);
 }
 
 void stopMedmScheduler(void)
 {
-    if(!moduleInitialized) medmInitSharedDotC();
     if(periodicTask.id) {
 	XtRemoveTimeOut(periodicTask.id);
 	periodicTask.id = (XtIntervalId)0;
@@ -378,17 +363,11 @@ void updateTaskInitHead(DisplayInfo *displayInfo)
   /* Set up the displayInfo */
     displayInfo->updateTaskListTail = pt;
     displayInfo->periodicTaskCount = 0;
-
-    if(!moduleInitialized) medmInitSharedDotC();
 }
 
-Boolean medmInitSharedDotC()
+void medmInitializeUpdateTasks(void)
 {
-#if 0
-    if(moduleInitialized) return True;
-#endif    
-    
-  /* Initialize static global variable updateTaskStatus */
+/* Initialize static global variable updateTaskStatus */
     updateTaskStatus.workProcId          = 0;
     updateTaskStatus.nextToServe         = NULL;
     updateTaskStatus.taskCount           = 0;
@@ -400,14 +379,16 @@ Boolean medmInitSharedDotC()
     updateTaskStatus.updateRequestQueued = 0;
     updateTaskStatus.updateExecuted      = 0;
     updateTaskStatus.since = medmTime();
+#if DEBUG_TASK_COUNT
+    print("medmInitializeUpdateTasks: updateTaskStatus.taskCount = %d\n",
+      updateTaskStatus.taskCount);
+#endif
 
   /* Initialize the periodic task */
     periodicTask.systemTime = medmStartTime = medmTime();
     periodicTask.tenthSecond = 0.0; 
     periodicTask.id = (XtIntervalId)0; 
     moduleInitialized = True;
-
-    return True;
 }
 
 UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
@@ -446,7 +427,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	displayInfo->updateTaskListTail->next = pT;
 	displayInfo->updateTaskListTail = pT;
 
-#if DEBUG_COMPOSITE || DEBUG_DELETE
+#if DEBUG_COMPOSITE || DEBUG_DELETE || DEBUG_TASK_COUNT
 	{
 	    MedmElement *pElement=(MedmElement *)pT->clientData;
 	    DlElement *pET = pElement->dlElement;
@@ -467,6 +448,10 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	    }
 	}
 	updateTaskStatus.taskCount++;
+#if DEBUG_TASK_COUNT
+	print("updateTaskAddTask: updateTaskStatus.taskCount = %d\n",
+	  updateTaskStatus.taskCount);
+#endif
 	return pT;
     } else {
 	return NULL;
@@ -495,6 +480,10 @@ void updateTaskDeleteAllTask(UpdateTask *pT)
 	    updateTaskStatus.periodicTaskCount--;
 	}
 	updateTaskStatus.taskCount--;
+#if DEBUG_TASK_COUNT
+	print("updateTaskDeleteAllTask: updateTaskStatus.taskCount = %d\n",
+	  updateTaskStatus.taskCount);
+#endif
 	if(tmp1->executeRequestsPendingCount > 0) {
 	    updateTaskStatus.updateRequestQueued--;
 	}
@@ -599,6 +588,10 @@ void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pT)
 	updateTaskStatus.periodicTaskCount--;
     }
     updateTaskStatus.taskCount--;
+#if DEBUG_TASK_COUNT
+    print("updateTaskDeleteTask: updateTaskStatus.taskCount = %d\n",
+      updateTaskStatus.taskCount);
+#endif
     if(pT->executeRequestsPendingCount > 0) {
 	updateTaskStatus.updateRequestQueued--;
     }
@@ -1080,9 +1073,9 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
 	    if(t->executeTask) {
 #if 0     /* !!!!! */
 		DlElement *pE = getElementFromUpdateTask(t);
-
-
-                 done later in the loop. */
+		
+		
+	      /* done later in the loop. */
 		if(pE->type != DL_Composite) {
 #if DEBUG_COMPOSITE
 		    print("updateTaskRepaintRegion: "
@@ -1093,46 +1086,46 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
 		}
 #else
 #if DEBUG_EXPOSE
-		 {
-		     MedmElement *pElement=(MedmElement *)t->clientData;
-		     DlElement *pET = pElement->dlElement;
-		     
-		     print("updateTaskRepaintRegion: "
-		       "pE->type=%s[%d,%d,%d,%d]\n",
-		       elementType(pET->type),
-		       t->rectangle.x,t->rectangle.y,
-		       t->rectangle.width,t->rectangle.height);		       
-		 }
+		{
+		    MedmElement *pElement=(MedmElement *)t->clientData;
+		    DlElement *pET = pElement->dlElement;
+		    
+		    print("updateTaskRepaintRegion: "
+		      "pE->type=%s[%d,%d,%d,%d]\n",
+		      elementType(pET->type),
+		      t->rectangle.x,t->rectangle.y,
+		      t->rectangle.width,t->rectangle.height);		       
+		}
 #endif			
-		 t->executeTask(t->clientData);
+		t->executeTask(t->clientData);
 #if DEBUG_EXPOSE > 1
-		 {
-		     MedmElement *pElement=(MedmElement *)t->clientData;
-		     DlElement *pET = pElement->dlElement;
-		     char title[80];
-		     Pixmap debugPixmap;
-		     DlElement *pE=FirstDlElement(displayInfo->dlElementList);
-		     DlDisplay *pD = pE->structure.display;
-		     DlObject *pO = &(pD->object);
-		     GC gc = XCreateGC(display,rootWindow,0,NULL);
-
-		     debugPixmap=XCreatePixmap(display,
-		       RootWindow(display,screenNum),
-		       pO->width,pO->height,XDefaultDepth(display,screenNum));
-		     XCopyArea(display,XtWindow(displayInfo->drawingArea),
-		       debugPixmap,gc,0,0,pO->width,pO->height,0,0);
-		     XSetForeground(display,displayInfo->gc,
-		       WhitePixel(display,screenNum));
-		     XFillRectangle(display,debugPixmap,displayInfo->gc,0,0,
-		       pO->width,pO->height);
-		     sprintf(title,"pE->type=%s[%d,%d,%d,%d]",
-		       elementType(pET->type),
-		       t->rectangle.x,t->rectangle.y,
-		       t->rectangle.width,t->rectangle.height);		       
-		     dumpPixmap(debugPixmap,pO->width,pO->height,title);
-		     XFreePixmap(display,debugPixmap);
-		     XFreeGC(display,gc);
-		 }
+		{
+		    MedmElement *pElement=(MedmElement *)t->clientData;
+		    DlElement *pET = pElement->dlElement;
+		    char title[80];
+		    Pixmap debugPixmap;
+		    DlElement *pE=FirstDlElement(displayInfo->dlElementList);
+		    DlDisplay *pD = pE->structure.display;
+		    DlObject *pO = &(pD->object);
+		    GC gc = XCreateGC(display,rootWindow,0,NULL);
+		    
+		    debugPixmap=XCreatePixmap(display,
+		      RootWindow(display,screenNum),
+		      pO->width,pO->height,XDefaultDepth(display,screenNum));
+		    XCopyArea(display,XtWindow(displayInfo->drawingArea),
+		      debugPixmap,gc,0,0,pO->width,pO->height,0,0);
+		    XSetForeground(display,displayInfo->gc,
+		      WhitePixel(display,screenNum));
+		    XFillRectangle(display,debugPixmap,displayInfo->gc,0,0,
+		      pO->width,pO->height);
+		    sprintf(title,"pE->type=%s[%d,%d,%d,%d]",
+		      elementType(pET->type),
+		      t->rectangle.x,t->rectangle.y,
+		      t->rectangle.width,t->rectangle.height);		       
+		    dumpPixmap(debugPixmap,pO->width,pO->height,title);
+		    XFreePixmap(display,debugPixmap);
+		    XFreeGC(display,gc);
+		}
 #endif
 #endif		 
 	    }

@@ -12,8 +12,6 @@
    
 */
 
-#include "displayList.h"
-
 /*** Font specifications ***/
 
 #define MAX_FONTS		16		/* max # of fonts             */
@@ -60,21 +58,41 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 /*** Help path ***/
 
 /* MEDM help uses Netscape to display MEDM.html.  If you want to use a
-  local URL for MEDM help, define it here.  The default points to the
-  APS web site.  The version there is updated regularly to reflect the
-  latest changes in MEDM.  Some of these changes may not be in this
-  version.  The MEDM.html that goes with this version is in the help
-  subdirectory to this directory. */
+   local URL for MEDM help, define it here.  The default points to the
+   APS web site.  The version there is updated regularly to reflect
+   the latest changes in MEDM.  Some of these changes may not be in
+   this version.  The MEDM.html that goes with this version is in the
+   help subdirectory to this directory. */
 
 #define MEDM_HELP_PATH \
 "http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM/MEDM.html"
 
+/*** Print setup defaults ***/
+
+/* See medm/printUtils/utilPrint.h for definitions of macros */
+
+/* The following are 1 for true and 0 for false */
+#define DEFAULT_PRINT_TOFILE   0
+#define DEFAULT_PRINT_TITLE    1
+#define DEFAULT_PRINT_TIME     1
+#define DEFAULT_PRINT_DATE     1
+/* Alternatives are PRINT_PORTRAIT or PRINT_LANDSCAPE */
+#define DEFAULT_PRINT_ORIENTATION PRINT_PORTRAIT
+/* Alternatives are PRINT_A, PRINT_B, PRINT_A3, and PRINT_A4 */
+#define DEFAULT_PRINT_SIZE     PRINT_A
+#define DEFAULT_PRINT_FILENAME "medmScreen.ps"
+#define DEFAULT_PRINT_CMD      "lpr -P$PSPRINTER"
+#if 0
+/* Command used internally before MEDM 2.3.6 */
+#define DEFAULT_PRINT_CMD     "lp -c -d$PSPRINTER"
+#endif
+
 /*** Colormap specifications ***/
 
-/* The RGB values in the default display colormap should be
-  changeable.  The inten field is for backward compatibility and is
-  not used in the new ADL file format. Changing the
-  DEFAULT_DL_COLORMAP_SIZE may cause problems. */
+/* The RGB values in the default display colormap are changeable.  The
+  inten field is for backward compatibility and is not used in the new
+  ADL file format. Changing the DEFAULT_DL_COLORMAP_SIZE may cause
+  problems. */
 
 /* Default colormap for "New...". The default colormap size must be
   less than DL_MAX_COLORS. */

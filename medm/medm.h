@@ -136,11 +136,12 @@ extern "C" {
 #include "medmVMS.h"      
 #endif				   
 
-#include "utilPrint.h"
+#include "displayList.h"
 #include "siteSpecific.h"
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
+#include "utilPrint.h"
 #include "medmVersion.h"
 
 #define MAIN_NAME "Medm"
@@ -168,7 +169,6 @@ extern "C" {
     typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
     
 #include "proto.h"
-#include "medmInitTask.h"
     
   /* pixmap names : must be accessible by program according to Motif rules:
 
@@ -225,7 +225,7 @@ extern "C" {
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;
     EXTERN Widget editHelpS, editHelpMessageBox;
-    EXTERN Widget pvInfoS, pvLimitsS, pvInfoMessageBox;
+    EXTERN Widget pvInfoS, pvLimitsS, pvInfoMessageBox, printSetupS;
     EXTERN Widget displayListS;
     EXTERN Widget errMsgS, errMsgSendS, caStudyS;
 

@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PVINFO 0
 #define DEBUG_FD_REGISTRATION 0
 #define DEBUG_CHANNEL_CB 0
+#define DEBUG_ADD 0
 
 #define DO_RTYP 1
 
@@ -794,10 +795,10 @@ int caAdd(char *name, Record *pr) {
 	if(caTask.pageCount >= caTask.pageSize) {
 	    caTask.pageSize += CA_PAGE_COUNT;
 #if defined(__cplusplus) && !defined(__GNUG__)
-	    caTask.pages = (Channel **) realloc((malloc_t)caTask.pages,
+	    caTask.pages = (Channel **)realloc((malloc_t)caTask.pages,
 	      sizeof(Channel *)*caTask.pageSize);
 #else
-	    caTask.pages = (Channel **) realloc(caTask.pages,
+	    caTask.pages = (Channel **)realloc(caTask.pages,
 	      sizeof(Channel *)*caTask.pageSize);
 #endif
 	    if(caTask.pages == NULL) {
@@ -850,6 +851,10 @@ int caAdd(char *name, Record *pr) {
 	pCh->pr->name = (char *)ca_name(pCh->chid);
     }
     caTask.channelCount++;
+#if DEBUG_ADD
+    print("caAdd: %3d name=%s\n",
+      caTask.channelCount, name);
+#endif
     return pCh->caId;
 }
 
@@ -899,6 +904,9 @@ void caDelete(Record *pr) {
     caTask.freeList[caTask.freeListCount] = pCh->caId;
     caTask.freeListCount++;
     caTask.channelCount--;
+#if DEBUG_ADD
+    print("caAdd: channelCount=%3d\n",caTask.channelCount);
+#endif
 }
 
 /* Note that precision is initialized to -1 and some routines depend on this */

@@ -323,7 +323,8 @@ static void barDraw(XtPointer cd) {
 	    draw3DQuestionMark(pb->updateTask);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+	if((widget) && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pb->updateTask);
     }
 }

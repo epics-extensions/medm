@@ -170,6 +170,7 @@ SRCS += callbacks.c
 SRCS += browserHelp.c 
 SRCS += channelPalette.c 
 SRCS += colorPalette.c 
+SRCS += dialogs.c 
 SRCS += display.c 
 SRCS += eventHandlers.c 
 SRCS += help.c 

@@ -230,7 +230,6 @@ extern int putenv(const char *);    /* May not be defined for strict ANSI */
 
 static void createCursors(void);
 static void createMain(void);
-static Boolean medmInitWorkProc(XtPointer cd);
 static void fileMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void fileMenuDialogCallback(Widget,XtPointer,XtPointer);
 static void editMenuSimpleCallback(Widget,XtPointer,XtPointer);
@@ -1550,6 +1549,7 @@ static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    sprintf(label,"%d",cdi->grid->gridSpacing);
 	    xmString = XmStringCreateLocalized(label);
 	    n = 0;
+	    XtSetArg(args[n],XmNtitle,"Grid Spacing"); n++;
 	    XtSetArg(args[n],XmNtextString,xmString); n++;
 	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
 	    gridDlg = XmCreatePromptDialog(XtParent(mainEditPDM),"gridPD",args,n);
@@ -1619,6 +1619,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     static Widget radioBox = 0;
     XEvent event;
     Boolean saveAll = False;
+    int status;
 
     UNREFERENCED(cbs);
 
@@ -1821,27 +1822,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case FILE_PRINT_SETUP_BTN:
-	XDefineCursor(display,XtWindow(mainShell),watchCursor);
-	XFlush(display);
-	if(!printerSetupDlg) {
-	    int n = 0;
-	    Arg args[4];
-	    
-	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
-	    printerSetupDlg = XmCreatePromptDialog(
-	      XtParent(mainFilePDM),
-	      "printerSetupPD",args,n);
-	    XtUnmanageChild(XmSelectionBoxGetChild(
-	      printerSetupDlg,XmDIALOG_HELP_BUTTON));
-	    XtAddCallback(printerSetupDlg,XmNokCallback,printerSetupDlgCb,
-	      PRINTER_SETUP_OK);
-	    XtAddCallback(printerSetupDlg,XmNcancelCallback,
-	      printerSetupDlgCb,(XtPointer)PRINTER_SETUP_CANCEL);
-	    XtAddCallback(printerSetupDlg,XmNmapCallback,
-	      printerSetupDlgCb,(XtPointer)PRINTER_SETUP_MAP);
-	}
-	XtManageChild(printerSetupDlg);
-	XUndefineCursor(display,XtWindow(mainShell));
+	popupPrintSetup();
 	break;
 
     case FILE_PRINT_BTN:
@@ -1850,16 +1831,22 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    currentDisplayInfo = displayInfoListHead->next;
 	    if(currentDisplayInfo != NULL) {
 #ifdef WIN32
-		dmSetAndPopupWarningDialog(currentDisplayInfo,
-		  "Printing from MEDM is not available for WIN32\n"
-		  "You can use Alt+PrintScreen to copy the window to the clipboard",
-		  "OK", NULL, NULL);
-#else	    
-		utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
-		  XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+		if(!printToFile) {
+		    dmSetAndPopupWarningDialog(currentDisplayInfo,
+		      "Printing from MEDM is not available for WIN32\n"
+		      "You can use Alt+PrintScreen to copy the window "
+		      "to the clipboard",
+		      "OK", NULL, NULL);
+		}
+		break;
 #endif
+		status = utilPrint(display, currentDisplayInfo->drawingArea,
+		  DISPLAY_XWD_FILE, currentDisplayInfo->dlFile->name);
+		if(!status) {
+		    medmPrintf(1,"\nfileMenuSimpleCallback: "
+		      "Print was not successful\n");
+		}
 	    }
-
 	} else
 	  if(displayInfoListHead->next) {
 	    /* more than one display; query user */
@@ -1868,14 +1855,21 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		  currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
 		  if(currentDisplayInfo != NULL) {
 #ifdef WIN32
-		      dmSetAndPopupWarningDialog(currentDisplayInfo,
-			"Printing from MEDM is not available for WIN32\n"
-			"You can use Alt+PrintScreen to copy the window to the clipboard",
-			"OK", NULL, NULL);
-#else	    
-		      utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
-			XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+		      if(!printToFile) {
+			  dmSetAndPopupWarningDialog(currentDisplayInfo,
+			    "Printing from MEDM is not available for WIN32\n"
+			    "You can use Alt+PrintScreen to copy the window "
+			    "to the clipboard",
+			    "OK", NULL, NULL);
+		      }
+		      break;
 #endif
+		      status = utilPrint(display, currentDisplayInfo->drawingArea,
+			DISPLAY_XWD_FILE, currentDisplayInfo->dlFile->name);
+		      if(!status) {
+			  medmPrintf(1,"\nfileMenuSimpleCallback: "
+			    "Print was not successful\n");
+		      }
 		  }
 	      }
 	  }
@@ -2596,6 +2590,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetSensitive(stripChartS,False);
 	    XtPopdown(stripChartS);
 	}
+	if(printSetupS) {
+	    XtSetSensitive(printSetupS,False);
+	    XtPopdown(printSetupS);
+	}
 	if(pvLimitsS) {
 	    XtSetSensitive(pvLimitsS,False);
 	    XtPopdown(pvLimitsS);
@@ -3189,7 +3187,7 @@ main(int argc, char *argv[])
     int status, format;
     unsigned long nitems, left;
     Atom type;
-    char *macroString = NULL, *ptr;
+    char *macroString = NULL, *ptr = NULL;
     XColor colors[2];
     request_t *request;
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
@@ -3268,6 +3266,7 @@ main(int argc, char *argv[])
 #endif     /*  DEBUG_DEFINITIONS */
 
   /* Initialize global variables */
+    medmInitializeUpdateTasks();
     windowPropertyAtom = (Atom)NULL;
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;
@@ -3277,6 +3276,15 @@ main(int argc, char *argv[])
     MedmUseNewFileFormat = True;
     medmRaiseMessageWindow = 1;
     setTimeValues();
+    printOrientation = DEFAULT_PRINT_ORIENTATION;
+    printSize =  DEFAULT_PRINT_SIZE;
+    printToFile = DEFAULT_PRINT_TOFILE;
+    printTitle = DEFAULT_PRINT_TITLE;
+    printTime = DEFAULT_PRINT_TIME;
+    printDate = DEFAULT_PRINT_DATE;
+    printWidth = printHeight = 0.0;
+    strcpy(printCommand, DEFAULT_PRINT_CMD);
+    strcpy(printFile, DEFAULT_PRINT_FILENAME);
 
   /* Handle file conversions */
     if(argc == 4 && (!strcmp(argv[1],"-c21x") ||
@@ -3507,17 +3515,16 @@ main(int argc, char *argv[])
 
     if(request->opMode == EDIT) {
 	globalDisplayListTraversalMode = DL_EDIT;
-    } else
-      if(request->opMode == EXECUTE) {
-	  globalDisplayListTraversalMode = DL_EXECUTE;
-	  if(request->fileCnt > 0) {	/* assume .adl file names follow */
-	      XtVaSetValues(mainShell,
-		XmNinitialState,IconicState,
-		NULL);
-	  }
-      } else {
-	  globalDisplayListTraversalMode = DL_EDIT;
-      }
+    } else if(request->opMode == EXECUTE) {
+	globalDisplayListTraversalMode = DL_EXECUTE;
+	if(request->fileCnt > 0) {	/* assume .adl file names follow */
+	    XtVaSetValues(mainShell, XmNinitialState,IconicState,  NULL);
+	}
+      /* Start the scheduler */
+	startMedmScheduler();
+    } else {
+	globalDisplayListTraversalMode = DL_EDIT;
+    }
 
   /* Initialize some globals */
     globalModifiedFlag = False;
@@ -3670,9 +3677,6 @@ main(int argc, char *argv[])
     XmAddWMProtocolCallback(mainShell,WM_DELETE_WINDOW,
       wmCloseCallback, (XtPointer) OTHER_SHELL);
 
-  /* Add the initialization work proc */
-    XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
-
   /* Check if there were early messages and bring up Message Window */
     checkEarlyMessages();    
 
@@ -3717,7 +3721,6 @@ main(int argc, char *argv[])
 
 	      /* Concatenate ClientMessage events to get full name from form: (xyz) */
 		completeClientMessage = False;
-		ptr = NULL;     /* Initialize it to avoid warnings */
 		for(i = 0; i < MAX_CHARS_IN_CLIENT_MESSAGE; i++) {
 		    switch (event.xclient.data.b[i]) {
 		      /* Start with filename */
@@ -4114,26 +4117,12 @@ static void createMain()
     displayListS = (Widget)0;
     errMsgS = (Widget)0;
     errMsgSendS = (Widget)0;
+    printSetupS = (Widget)0;
     pvInfoS = (Widget)0;
     pvLimitsS = (Widget)0;
 
   /* Realize the toplevel shell widget */
     XtRealizeWidget(mainShell);
-}
-
-static Boolean medmInitWorkProc(XtPointer cd)
-{
-    int i;
-
-    UNREFERENCED(cd);
-
-    for(i=0; i<LAST_INIT_C; i++) {
-	if(medmInitTask[i].init == False) {
-	    medmInitTask[i].init = medmInitTask[i].initTask();
-	    return False;
-	}
-    }
-    return True;
 }
 
 void enableEditFunctions() {

@@ -230,6 +230,17 @@ void setCurrentDisplayColorsInColorPalette(int rcType, int index);
 /* control.c */
 void controlAttributeInit(DlControl *control);
 
+/* dialogs.c */
+void popupPrintSetup(void);
+void popupPvInfo(DisplayInfo *displayInfo);
+void popupPvLimits(DisplayInfo *displayInfo);
+void updatePvLimits(DlLimits *limits);
+void createPvInfoDlg(void);
+Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
+  DlElement **pE);
+void popupDisplayListDlg(void);
+void refreshDisplayListDlg(void);
+
 /* eventHandlers.c */
 int initEventHandlers(void);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
@@ -269,6 +280,7 @@ void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
 int xErrorHandler(Display *dpy, XErrorEvent *event);
 void xtErrorHandler(char *message);
+int xInfoMsg(Widget parent, const char *fmt, ...);
 void addDisplayHelpProtocol(DisplayInfo *displayInfo);
 
 /* medm.c */
@@ -304,7 +316,6 @@ void medmDestoryRecord(Record *);
 void medmSendDouble(Record *, double);
 void medmSendString(Record *, char *);
 void medmSendCharacterArray(Record *, char *, unsigned long);
-void popupPvInfo(DisplayInfo *displayInfo);
 
 /* medmCartesianPlot.c */
 void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
@@ -443,7 +454,7 @@ void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
 void updateTaskAddDestroyCb(UpdateTask *, void (*)(XtPointer));
 void updateTaskMarkUpdate(UpdateTask *pt);
 void updateTaskRepaintRegion(DisplayInfo *, Region *);
-Boolean medmInitSharedDotC();
+void medmInitializeUpdateTasks(void);
 void updateTaskStatusGetInfo(int *taskCount,
   int *periodicTaskCount,
   int *updateRequestCount,
@@ -606,13 +617,6 @@ void saveUndoInfo(DisplayInfo *displayInfo);
 void restoreUndoInfo(DisplayInfo *displayInfo);
 void updateAllDisplayPositions();
 void setTimeValues(void);
-void createPvInfoDlg(void);
-Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
-  DlElement **pE);
-void popupDisplayListDlg(void);
-void popupPvLimits(DisplayInfo *displayInfo);
-void updatePvLimits(DlLimits *limits);
-void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);

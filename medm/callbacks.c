@@ -99,10 +99,11 @@ int getNumberOfCompositeElements(DlElement *dlElement, int indent, int n)
 void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     Arg args[1];
     XtPointer data;
     DisplayInfo *displayInfo;
+    int status;
     
   /* Button's parent (menuPane) has the displayInfo pointer */
     XtSetArg(args[0],XmNuserData,&data);
@@ -112,14 +113,20 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
     case EXECUTE_POPUP_MENU_PRINT_ID:
 #ifdef WIN32
-	dmSetAndPopupWarningDialog(displayInfo,
-	  "Printing from MEDM is not available for WIN32\n"
-	  "You can use Alt+PrintScreen to copy the window to the clipboard",
-	  "OK", NULL, NULL);
-#else	
-	utilPrint(XtDisplay(displayInfo->drawingArea),
-	  XtWindow(displayInfo->drawingArea),DISPLAY_XWD_FILE);
-#endif	
+	if(!printToFile) {
+	    dmSetAndPopupWarningDialog(displayInfo,
+	      "Printing from MEDM is not available for WIN32\n"
+	      "You can use Alt+PrintScreen to copy the window to the clipboard",
+	      "OK", NULL, NULL);
+	}
+	break;
+#endif
+	status = utilPrint(display, displayInfo->drawingArea,
+	  DISPLAY_XWD_FILE, displayInfo->dlFile->name);
+	if(!status) {
+	    medmPrintf(1,"\nexecutePopupMenuCallback: "
+	      "Print was not successful\n");
+	}
 	break;
     case EXECUTE_POPUP_MENU_CLOSE_ID:
 	closeDisplay(w);
@@ -504,6 +511,8 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(helpS);
 	} else if (w == editHelpS) {
 	    XtPopdown(editHelpS);
+	} else if (w == pvInfoS) {
+	    XtPopdown(printSetupS);
 	} else if (w == pvInfoS) {
 	    XtPopdown(pvInfoS);
 	} else if (w == errMsgS) {

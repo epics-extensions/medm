@@ -137,7 +137,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	medmRaiseMessageWindow = XmToggleButtonGetState(raiseMessageWindowTB);
 	break;
     case ERR_MSG_CLOSE_BTN:
-	if (errMsgS != NULL) {
+	if(errMsgS != NULL) {
 	    XtUnmanageChild(errMsgS);
 	}
 	break;
@@ -148,7 +148,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    char timeStampStr[TIME_STRING_MAX];
 	    XmTextPosition curpos = 0;
     
-	    if (errMsgText == NULL) return;
+	    if(errMsgText == NULL) return;
 	    
 	  /* Clear the buffer */
 	    XmTextSetString(errMsgText,"");
@@ -173,15 +173,32 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    char timeStampStr[TIME_STRING_MAX];
 	    char *tmp, *psFileName, *commandBuffer;
 	    
-	    if (errMsgText == NULL) return;
-	    if (getenv("PSPRINTER") == (char *)NULL) {
-		medmPrintf(1,
-		  "\nerrMsgDlgPrintButtonCb: "
-		  "PSPRINTER environment variable not set,"
-		  " printing disallowed\n");
+	    if(errMsgText == NULL) {
+		XBell(display,50); XBell(display,50); XBell(display,50);
 		return;
 	    }
-	    
+	    if(printToFile && !*printFile) {
+		medmPrintf(1,"\nerrMsgDlgCb: "
+		  "Printer Setup specifies Print To File, but there is no filename\n");
+		XBell(display,50); XBell(display,50); XBell(display,50);
+		return;
+	    }
+	    if(!printToFile && !*printCommand) {
+		medmPrintf(1,"\nerrMsgDlgCb: "
+		  "Printer Setup specifies Print To File, but there is no filename\n");
+		XBell(display,50); XBell(display,50); XBell(display,50);
+		return;
+	    }
+#ifdef WIN32
+	    if(!printToFile) {
+		medmPrintf(1,"\nerrMsgDlgCb: "
+		  "Printing to a printer is not available for WIN32\n"
+		  "  You can print to a file by using Print Setup\n");
+		XBell(display,50); XBell(display,50); XBell(display,50);
+		return;
+	    }
+#endif
+
 	  /* Get selection and timestamp */
 	    time(&now);
 	    tblock = localtime(&now);
@@ -189,7 +206,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    strftime(timeStampStr,TIME_STRING_MAX,
 	      "MEDM Message Window Selection at "STRFTIME_FORMAT":\n\n",
 	      tblock);
-	    if (tmp == NULL) {
+	    if(tmp == NULL) {
 		tmp = XmTextGetString(errMsgText);
 		strftime(timeStampStr,TIME_STRING_MAX,
 		  "MEDM Message Window at "STRFTIME_FORMAT":\n\n",tblock);
@@ -197,17 +214,22 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    timeStampStr[TIME_STRING_MAX-1]='0';
 	    
 	  /* Create filename */
-	    psFileName = (char *)calloc(1,256);
-	    sprintf(psFileName,"/tmp/medmMessageWindowPrintFile%d",getpid());
+	    psFileName = (char *)calloc(1,MAX_TOKEN_LENGTH);
+	    if(printToFile) {
+		strcpy(psFileName,printFile);
+	    } else {
+		sprintf(psFileName,"/tmp/medmMessageWindowPrintFile%d",
+		  getpid());
+	    }
 	    
 	  /* Write file */
 	    file = fopen(psFileName,"w+");
-	    if (file == NULL) {
-		medmPrintf(1,"\nerrMsgDlgPrintButtonCb:  "
-		  "Unable to open file: %s",
+	    if(file == NULL) {
+		medmPrintf(1,"\nerrMsgDlgCb: Unable to open file: %s",
 		  psFileName);
 		XtFree(tmp);
 		free(psFileName);
+		XBell(display,50); XBell(display,50); XBell(display,50);
 		return;
 	    }
 	    fprintf(file,timeStampStr);
@@ -216,17 +238,21 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    fclose(file);
 	    
 	  /* Print file */
-	    commandBuffer = (char *)calloc(1,256);
-	    sprintf(commandBuffer,"lp -d$PSPRINTER %s",psFileName);
-	    system(commandBuffer);
+	    if(printToFile) {
+		xInfoMsg(w,"Output sent to:\n  %s\n",psFileName);
+	    } else {
+		commandBuffer = (char *)calloc(1,MAX_TOKEN_LENGTH+256);
+		sprintf(commandBuffer,"%s %s",printCommand,psFileName);
+		system(commandBuffer);
 	    
-	  /* Delete file */
-	    sprintf(commandBuffer,"rm %s",psFileName);
-	    system(commandBuffer);
+	      /* Delete file */
+		sprintf(commandBuffer,"rm %s",psFileName);
+		system(commandBuffer);
+		free(commandBuffer);
+	    }
 	    
 	  /* Clean up */
 	    free(psFileName);
-	    free(commandBuffer);
 	    XBell(display,50);
 	}
 	break;
@@ -234,15 +260,15 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	{
 	    char *tmp;
 	    
-	    if (errMsgText == NULL) return;
-	    if (errMsgSendS == NULL) {
+	    if(errMsgText == NULL) return;
+	    if(errMsgSendS == NULL) {
 		errMsgSendDlgCreateDlg();
 	    }
 	    XmTextSetString(errMsgSendToText,"");
 	    XmTextSetString(errMsgSendSubjectText,
 	      "MEDM Message Window Contents");
 	    tmp = XmTextGetSelection(errMsgText);
-	    if (tmp == NULL) {
+	    if(tmp == NULL) {
 		tmp = XmTextGetString(errMsgText);
 	    }
 	    XmTextSetString(errMsgSendText,tmp);
@@ -266,7 +292,7 @@ void errMsgDlgCreateDlg(int raise)
     Arg args[10];
     int n;
 
-    if (errMsgS != NULL) {
+    if(errMsgS != NULL) {
 	if(raise) {
 	    Window w=XtWindow(errMsgS);;
 	
@@ -278,7 +304,7 @@ void errMsgDlgCreateDlg(int raise)
 	return;
     }
 
-    if (mainShell == NULL) return;
+    if(mainShell == NULL) return;
 
     errMsgS = XtVaCreatePopupShell("errorMsgS",
 #if 0
@@ -377,12 +403,8 @@ void errMsgDlgCreateDlg(int raise)
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    6,
       NULL);
-#ifdef WIN32
-    XtSetSensitive(printButton,False);
-#else
     XtAddCallback(printButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_PRINT_BTN);
-#endif    
 
     sendButton = XtVaCreateManagedWidget("Mail",
       xmPushButtonWidgetClass, actionArea,
@@ -450,30 +472,30 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
-    if (errMsgSendS == NULL) return;
+    if(errMsgSendS == NULL) return;
     subject = XmTextFieldGetString(errMsgSendSubjectText);
     to = XmTextFieldGetString(errMsgSendToText);
     text = XmTextGetString(errMsgSendText);
-    if (!(p = getenv("MEDM_MAIL_CMD")))
+    if(!(p = getenv("MEDM_MAIL_CMD")))
       p = "mail";
     p = strcpy(cmd,p);
     p += strlen(cmd);
     *p++ = ' ';
 #if 0    
-    if (subject && *subject) {
+    if(subject && *subject) {
       /* KE: Doesn't work with Solaris */
 	sprintf(p, "-s \"%s\" ", subject);
 	p += strlen(p);
     }
 #endif    
-    if (to && *to) {
+    if(to && *to) {
 	sprintf(p, "%s", to);
     } else {
 	medmPostMsg(1,"errMsgSendDlgSendButtonCb: "
 	  "No recipient specified for mail\n");
-	if (to) XtFree(to);
-	if (subject) XtFree(subject);
-	if (text) XtFree(text);
+	if(to) XtFree(to);
+	if(subject) XtFree(subject);
+	if(text) XtFree(text);
 	return;
     }
 
@@ -483,16 +505,16 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
 #else
     pp = popen(cmd, "w");
 #endif
-    if (!pp) {
+    if(!pp) {
 	medmPostMsg(1,"errMsgSendDlgSendButtonCb: "
 	  "Cannot execute mail command\n");
-	if (to) XtFree(to);
-	if (subject) XtFree(subject);
-	if (text) XtFree(text);
+	if(to) XtFree(to);
+	if(subject) XtFree(subject);
+	if(text) XtFree(text);
 	return;
     }
 #if 1    
-    if (subject && *subject) {
+    if(subject && *subject) {
 	fputs("Subject: ", pp);
 	fputs(subject, pp);
 	fputs("\n\n", pp);
@@ -504,9 +526,9 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
   /* KE: Shouldn't be necessary to comment this out for WIN32 */
     status = pclose(pp);  /* close mail program */
 #endif
-    if (to) XtFree(to);
-    if (subject) XtFree(subject);
-    if (text) XtFree(text);
+    if(to) XtFree(to);
+    if(subject) XtFree(subject);
+    if(text) XtFree(text);
     XBell(display,50);
     XtUnmanageChild(errMsgSendS);
     return;
@@ -517,7 +539,7 @@ void errMsgSendDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callDa
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
-    if (errMsgSendS != NULL)
+    if(errMsgSendS != NULL)
       XtUnmanageChild(errMsgSendS);
 }
 
@@ -535,8 +557,8 @@ void errMsgSendDlgCreateDlg()
     Arg    args[10];
     int n;
 
-    if (errMsgS == NULL) return;
-    if (errMsgSendS == NULL) {
+    if(errMsgS == NULL) return;
+    if(errMsgSendS == NULL) {
 	errMsgSendS = XtVaCreatePopupShell("errorMsgSendS",
 #if 0
 	/* KE: Gets iconized this way */
@@ -819,7 +841,7 @@ void caStudyDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callData)
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
-    if (caStudyS != NULL) {
+    if(caStudyS != NULL) {
 	XtUnmanageChild(caStudyS);
 	caUpdateStudyDlg = False;
     }
@@ -856,9 +878,9 @@ void medmCreateCAStudyDlg() {
     Widget modeButton;
     XmString str;
 
-    if (!caStudyS) {
+    if(!caStudyS) {
 
-	if (mainShell == NULL) return;
+	if(mainShell == NULL) return;
 
 	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
@@ -927,8 +949,8 @@ void medmCreateCAStudyDlg() {
 
     XtManageChild(caStudyS);
     caUpdateStudyDlg = True;
-    if (globalDisplayListTraversalMode == DL_EXECUTE) {
-	if (errMsgDlgTimeOutId == 0)
+    if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	if(errMsgDlgTimeOutId == 0)
 	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
 	    medmUpdateCAStudyDlg,NULL);
     } else {
@@ -941,7 +963,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
-    if (caUpdateStudyDlg) {
+    if(caUpdateStudyDlg) {
 	XmString str;
 	int taskCount;
 	int periodicTaskCount;
@@ -951,7 +973,6 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 	int periodicUpdateDiscardCount;
 	int updateRequestQueued;
 	int updateExecuted;
-	int totalTaskCount;
 	int totalUpdateRequested;
 	int totalUpdateDiscarded;
 	double timeInterval; 
@@ -977,8 +998,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 	totalUpdateDiscarded = updateDiscardCount + periodicUpdateDiscardCount;
 	totalUpdateRequested = updateRequestCount + periodicUpdateRequestCount +
 	  totalUpdateDiscarded;
-	totalTaskCount = taskCount + periodicTaskCount;
-	if (caStudyAverageMode) {
+	if(caStudyAverageMode) {
 	    double elapseTime = totalTimeElapsed;
 	    totalTimeElapsed += timeInterval;
 	    aveCAEventCount = (aveCAEventCount * elapseTime + caEventCount) /
@@ -1019,7 +1039,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 	      channelCount,
 	      channelConnected,
 	      caEventCount,
-	      totalTaskCount,
+	      taskCount,
 	      updateExecuted,
 	      totalUpdateRequested,
 	      totalUpdateDiscarded,
@@ -1030,8 +1050,8 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 	XmStringFree(str);
 	XFlush(XtDisplay(caStudyS));
 	XmUpdateDisplay(caStudyS);
-	if (globalDisplayListTraversalMode == DL_EXECUTE) {
-	    if (errMsgDlgTimeOutId == *id)
+	if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	    if(errMsgDlgTimeOutId == *id)
 	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
 		medmUpdateCAStudyDlg, NULL);
 	} else {
@@ -1043,8 +1063,8 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 }
 
 void medmStartUpdateCAStudyDlg() {
-    if (globalDisplayListTraversalMode == DL_EXECUTE) {
-	if (errMsgDlgTimeOutId == 0) 
+    if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	if(errMsgDlgTimeOutId == 0) 
 	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 3000,
 	    medmUpdateCAStudyDlg, NULL);
     } else {
@@ -1073,6 +1093,43 @@ void xtErrorHandler(char *message)
 #endif    
 }
 
+int xInfoMsg(Widget parent, const char *fmt, ...)
+{
+    Widget warningBox,child;
+    va_list vargs;
+    static char lstring[1024];     /* Warning: Fixed Size */
+    XmString xmString;
+    Arg args[2];
+    int nargs;
+    
+    va_start(vargs,fmt);
+    (void)vsprintf(lstring,fmt,vargs);
+    va_end(vargs);
+    
+    if(lstring[0] != '\0') {
+	xmString=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
+	nargs=0;
+	XtSetArg(args[nargs],XmNtitle,"Information"); nargs++;
+	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
+	warningBox=XmCreateWarningDialog(parent,"infoMessage",
+	  args,nargs);
+	XmStringFree(xmString);
+	child=XmMessageBoxGetChild(warningBox,XmDIALOG_CANCEL_BUTTON);
+	XtDestroyWidget(child);
+	child=XmMessageBoxGetChild(warningBox,XmDIALOG_HELP_BUTTON);
+	XtDestroyWidget(child);
+	XtManageChild(warningBox);
+	XmUpdateDisplay(warningBox);
+    }
+#ifdef WIN32
+    lprintf("%s\n",lstring);
+#else
+    fprintf(stderr,"%s\n",lstring);
+#endif
+
+    return 0;
+}
+
 /*****************************************************************************
  *
  * Display Help
@@ -1094,7 +1151,7 @@ static void displayHelpCallback(Widget shell, XtPointer client_data,
     char *env = getenv("MEDM_HELP");
     char *name = displayInfo->dlFile->name;
 
-    if (env != NULL) {
+    if(env != NULL) {
       /* Run the help command */
 	char *command;
 	
