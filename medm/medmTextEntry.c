@@ -281,9 +281,14 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	XmDropSiteUnregister(dlElement->widget);
     }
     
-  /* special stuff: if user started entering new data into text field, but
-   *  doesn't do the actual Activate <CR>, then restore old value on
-   *  losing focus...
+  /* Add a callback called when the user starts entering new data into
+   *   the text field.  The textEntryModifyVerifyCallback only adds the
+   *   textEntryLosingFocus callback and only if it is not added already.
+   *   The textEntryLosingFocus callback handles incomplete input by
+   *   calling updateTaskMarkUpdate.  The textEntryLosingFocusCallback
+   *   removes itself.
+   * KE: But it isn't removed with textEntryValueChanged.  It stays
+   *   in effect until the Text Entry loses focus
    */
     XtAddCallback(dlElement->widget,XmNmodifyVerifyCallback,
       (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pte);
@@ -408,10 +413,11 @@ void textEntryDestroyCb(XtPointer cd) {
 }
 
 /*
- * TextEntry special handling:  if user starts editing text field,
- *  then be sure to update value on losingFocus (since until activate,
- *  the value isn't ca_put()-ed, and the text field can be inconsistent
- *  with the underlying channel
+ * This routine removes itself and calls textEntryUpdateValueCbTextEntry
+ *   if the focus is lost.  This keeps the Text Field consistent with
+ *   the underlying channel.
+ * This callback is added by the textEntryModifyVerifyCallback when
+ *   User input starts.
  */
 #ifdef __cplusplus
 static void textEntryLosingFocusCallback(
@@ -433,6 +439,9 @@ static void textEntryLosingFocusCallback(
 }
 
 
+/* This routine adds the textEntryLosingFocusCallback when user input starts
+ *   if it has not already been added.
+ */
 void textEntryModifyVerifyCallback(
   Widget w,
   XtPointer clientData,
@@ -446,16 +455,18 @@ void textEntryModifyVerifyCallback(
 	switch (XtHasCallbacks(w,XmNlosingFocusCallback)) {
 	case XtCallbackNoList:
 	case XtCallbackHasNone:
+	  /* No callback installed */
 	    XtAddCallback(w,XmNlosingFocusCallback,
 	      (XtCallbackProc)textEntryLosingFocusCallback,pte);
 	    pte->updateAllowed = False; 
 	    break;
 	case XtCallbackHasSome:
+	  /* Callback already installed */
 	    break;
 	}
+      /* Allow the modification that triggered this callback  */
 	pcbs->doit = True;
     }
-
 }
 
 #ifdef __cplusplus
