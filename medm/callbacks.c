@@ -72,24 +72,195 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
-    Arg args[3];
+    Arg args[1];
     XtPointer data;
     DisplayInfo *displayInfo;
-
+    
   /* Button's parent (menuPane) has the displayInfo pointer */
     XtSetArg(args[0],XmNuserData,&data);
     XtGetValues(XtParent(w),args,1);
-    displayInfo = (DisplayInfo *) data;
+    displayInfo = (DisplayInfo *)data;
 
-    if (buttonNumber == EXECUTE_POPUP_MENU_PRINT_ID) {
-
+    switch(buttonNumber) {
+    case EXECUTE_POPUP_MENU_PRINT_ID:
 	utilPrint(XtDisplay(displayInfo->drawingArea),
 	  XtWindow(displayInfo->drawingArea),DISPLAY_XWD_FILE);
-
-    } else if (buttonNumber == EXECUTE_POPUP_MENU_CLOSE_ID) {
+	break;
+    case EXECUTE_POPUP_MENU_CLOSE_ID:
 	closeDisplay(w);
+	break;
+#if 0	
+    case EXECUTE_POPUP_MENU_EXECUTE_ID:
+	break;
+#endif	
     }
+}
 
+void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
+{
+    int buttonNumber = (int) cd;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
+    char *cmd, *name, *title;
+    char command[1024];     /* Danger: Fixed length */
+    int nargs;
+    Arg args[2];
+    XtPointer data;
+    DisplayInfo *displayInfo;
+    char *pamp;
+    int i, j, ic, len, clen;
+
+  /* Button's parent (menuPane) has the displayInfo pointer */
+    nargs=0;
+    XtSetArg(args[nargs],XmNuserData,&data); nargs++;
+    XtGetValues(XtParent(w),args,nargs);
+    displayInfo = (DisplayInfo *)data;
+
+  /* Parse command */
+    cmd = execMenuCommandList[buttonNumber];
+    clen = strlen(cmd);
+    for(i=0, ic=0; i < clen; i++) {
+	if(ic >= 1024) {
+	    medmPostMsg("executeMenuCallback: Command is too long\n");
+	    return;
+	}
+	if(cmd[i] != '&') {
+	    *(command+ic) = *(cmd+i); ic++;
+	} else {
+	    switch(cmd[i+1]) {
+	    case 'P': {
+#define MAX_COL 4
+		Widget widget;
+		XEvent event;
+		char *pvNames[MAX_PENS*MAX_COL];
+		short severity[MAX_PENS*MAX_COL];
+		int count;
+		UpdateTask *pT;
+		DlElement *pE;
+		int x, y;
+
+	      /* Get object with the process variable */
+		widget = XmTrackingEvent(displayInfo->drawingArea,
+		  crosshairCursor, True, &event);
+		XFlush(display);    /* For debugger */
+		if(!widget) {
+		    medmPostMsg("executeMenuCallback: Did not find object\n");
+		    dmSetAndPopupWarningDialog(displayInfo,
+		      "executeMenuCallback: "
+		      "Did not find object","OK",NULL,NULL);
+		    return;
+		}
+	      /* Get the position relative to the drawing area */
+	      /*   (event.xbutton.[xy] are relative to the widget) */
+		if(widget == displayInfo->drawingArea) {
+		    x = event.xbutton.x;
+		    y = event.xbutton.y;
+		} else {
+		    Position x0, y0;
+		    
+		    nargs=0;
+		    XtSetArg(args[nargs],XmNx,&x0); nargs++;
+		    XtSetArg(args[nargs],XmNy,&y0); nargs++;
+		    XtGetValues(widget,args,nargs);
+
+		    x = x0 + event.xbutton.x;
+		    y = y0 + event.xbutton.y;
+		}
+		
+	      /* Find the element */
+		pE = findSmallestTouchedElement(displayInfo->dlElementList,
+		  x, y);
+		if(!pE) {
+		    medmPostMsg("executeMenuCallback: Not on an object\n");
+		    dmSetAndPopupWarningDialog(displayInfo,
+		      "executeMenuCallback: "
+		      "Not on an object","OK",NULL,NULL);
+		    return;
+		}
+#if DEBUG_EXEC_MENU		
+		printf("x=%d y=%d Element=%s\n",x,y,elementType(pE->type));
+#endif		
+		
+	      /* Get the update task */
+		if(pE->widget) {
+		    pT = getUpdateTaskFromWidget(pE->widget);
+		} else {
+		    pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
+		}
+		if(!pT || !pT->name) {
+		    medmPostMsg("executeMenuCallback: "
+		      "No process variable associated with object\n");
+		    dmSetAndPopupWarningDialog(displayInfo,
+		      "executeMenuCallback: "
+		      "No process variable associated with object","OK",NULL,NULL);
+		    return;
+		}
+		
+	      /* Run the element's name procedure */
+		pT->name(pT->clientData, pvNames, severity, &count);
+		count%=100;
+		
+	      /* Insert the names */
+		for(j=0; j < count; j++) {
+		    name = pvNames[j];
+		    if(name) {
+#if DEBUG_EXEC_MENU		
+			printf("%2d |%s|\n",j,name);
+#endif			
+			len = strlen(name);
+			if(ic + len >= 1024) {
+			    medmPostMsg("executeMenuCallback: Command is too long\n");
+			    return;
+			}
+			strcpy(command+ic,name);
+			ic+=len;
+		      /* Put in a space if required */
+			if(j < count-1) {
+			    if(ic + 1 >= 1024) {
+				medmPostMsg("executeMenuCallback: Command is too long\n");
+			    return;
+			    }
+			    strcpy(command+ic," ");
+			    ic++;
+			}
+		    }
+		}
+		i++;
+		break;
+	    }
+	    case 'A':
+		name = displayInfo->dlFile->name;
+		len = strlen(name);
+		if(ic + len >= 1024) {
+		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    return;
+		}
+		strcpy(command+ic,name);
+		i++; ic+=len;
+		break;
+	    case 'T':
+		title = name = displayInfo->dlFile->name;
+		while (*name != '\0')
+		  if (*name++ == '/') title = name;
+		len = strlen(title);
+		if(ic + len >= 1024) {
+		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    return;
+		}
+		strcpy(command+ic,title);
+		i++; ic+=len;
+		break;
+	    default:
+		*(command+ic) = *(cmd+i); ic++;
+		break;
+	    }
+	}
+    }
+    command[ic]='\0';
+#if DEBUG_EXEC_MENU		
+    if(command && *command) printf("%s\n",command);
+#endif    
+    if(command && *command) system(command);
+    XBell(display,50);
 }
 
 void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
@@ -148,7 +319,7 @@ void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 		points[3].y = y + uih;
 		region = XPolygonRegion(points,4,EvenOddRule);
 		if (region == NULL) {
-		    medmPrintf("\nmedmRepaintRegion: XPolygonRegion is NULL\n");
+		    medmPostMsg("medmRepaintRegion: XPolygonRegion is NULL\n");
 		    return;
 		}
 

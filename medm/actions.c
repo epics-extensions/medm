@@ -159,9 +159,7 @@ static XtCallbackRec dragDropFinishCB[] = {
 
 
 
-void StartDrag(
-  Widget w,
-  XEvent *event)
+void StartDrag(Widget w, XEvent *event)
 {
     Arg args[8];
     Cardinal n;

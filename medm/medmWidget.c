@@ -266,8 +266,10 @@ void medmInit(char *displayFont)
  */
     executePopupMenuButtonType[0] = XmPUSHBUTTON;
     executePopupMenuButtonType[1] = XmPUSHBUTTON;
+    executePopupMenuButtonType[2] = XmCASCADEBUTTON;
     executePopupMenuButtons[0] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PRINT);
     executePopupMenuButtons[1] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_CLOSE);
+    executePopupMenuButtons[2] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
 /*
  * now load font and fontList tables (but only once)

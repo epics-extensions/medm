@@ -558,9 +558,8 @@ void medmPostMsg(char *format, ...) {
     char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;
 
-    if (errMsgDlg == NULL) {
-	errMsgDlgCreateDlg();
-    }
+  /* Create (or manage) the error dialog */
+    errMsgDlgCreateDlg();
 
   /* Do timestamp */
     time(&now);
@@ -585,9 +584,13 @@ void medmPostMsg(char *format, ...) {
 	XmTextShowPosition(errMsgText, curpos);
 	XFlush(display);
     }
+
   /* Also print to stderr */
     fprintf(stderr, medmPrintfStr);
     va_end(args);
+
+  /* Raise window */
+    XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
 void medmPrintf(char *format, ...)
@@ -595,9 +598,9 @@ void medmPrintf(char *format, ...)
     va_list args;
     XmTextPosition curpos;
 
-    if (errMsgDlg == NULL) {
-	errMsgDlgCreateDlg();
-    }
+  /* Create (or manage) the error dialog */
+    errMsgDlgCreateDlg();
+
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
     if(errMsgText) {
@@ -611,17 +614,21 @@ void medmPrintf(char *format, ...)
   /* Also print to stderr */
     fprintf(stderr, medmPrintfStr);
     va_end(args);
+
+  /* Raise window */
+    XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
+/* KE: No longer used */
 void medmPostTime() {
     long now; 
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;
 
-    if (errMsgDlg == NULL) {
-	errMsgDlgCreateDlg();
-    }
+  /* Create (or manage) the error dialog */
+    errMsgDlgCreateDlg();
+
     time(&now);
     tblock = localtime(&now);
     strftime(timeStampStr,TIME_STRING_MAX,"\n%a %h %e %k:%M:%S %Z %Y\n",tblock);
@@ -636,6 +643,9 @@ void medmPostTime() {
     }
   /* Also print to stderr */
     fprintf(stderr, timeStampStr);
+
+  /* Raise window */
+    XRaiseWindow(display,XtWindow(errMsgDlg));
 }
 
 static char caStudyMsg[512];

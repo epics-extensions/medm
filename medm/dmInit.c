@@ -66,6 +66,8 @@ static Widget lastShell;
 #define DISPLAY_DEFAULT_X 10
 #define DISPLAY_DEFAULT_Y 10
 
+#define MEDM_EXEC_LIST_MAX 1024
+
 typedef DlElement *(*medmParseFunc)(DisplayInfo *);
 typedef struct {
     char *name;
@@ -77,6 +79,12 @@ typedef struct _parseFuncEntryNode {
     struct _parseFuncEntryNode *next;
     struct _parseFuncEntryNode *prev;
 } ParseFuncEntryNode;
+
+/* Function prototypes */
+
+static Widget createExecuteMenu(DisplayInfo *displayInfo);
+
+/* Global variables */
 
 ParseFuncEntry parseFuncTable[] = {
     {"rectangle",            parseRectangle},
@@ -108,13 +116,13 @@ ParseFuncEntry parseFuncTable[] = {
     {"polygon",              parsePolygon},
 };
 
+static int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
+
 /* DEBUG */
 #if 0
 DisplayInfo *debugDisplayInfo=NULL;
 #endif
 /* End DEBUG */
-
-int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
 
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     int i;
@@ -166,12 +174,11 @@ static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
 DisplayInfo *allocateDisplayInfo()
 {
     DisplayInfo *displayInfo;
+    Widget w;
     int n;
     Arg args[8];
 
-/* 
- * allocate a DisplayInfo structure and shell for this display file/list
- */
+/* Allocate a DisplayInfo structure and shell for this display file/list */
     displayInfo = (DisplayInfo *) malloc(sizeof(DisplayInfo));
     if (!displayInfo) return NULL;
 
@@ -231,16 +238,14 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->dlFile = NULL;
     displayInfo->dlColormap = NULL;
 
-  /*
-   * create the shell and add callbacks
-   */
+  /* Create the shell and add callbacks */
     n = 0;
     XtSetArg(args[n],XmNiconName,"display"); n++;
     XtSetArg(args[n],XmNtitle,"display"); n++;
     XtSetArg(args[n],XmNallowShellResize,TRUE); n++;
-  /* for highlightOnEnter on pointer motion, this must be set for shells */
+  /* For highlightOnEnter on pointer motion, this must be set for shells */
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmPOINTER); n++;
-  /* map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     if (privateCmap) {
 	XtSetArg(args[n],XmNcolormap,cmap); n++;
@@ -252,21 +257,19 @@ DisplayInfo *allocateDisplayInfo()
     XtAddCallback(displayInfo->shell,XmNpopdownCallback,
       displayShellPopdownCallback,NULL);
 
-  /* register interest in these protocols */
+  /* Register interest in these protocols */
     { Atom atoms[2];
     atoms[0] = WM_DELETE_WINDOW;
     atoms[1] = WM_TAKE_FOCUS;
     XmAddWMProtocols(displayInfo->shell,atoms,2);
     }
 
-  /* and register the callbacks for these protocols */
+  /* Register the callbacks for these protocols */
     XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
       (XtCallbackProc)wmCloseCallback,
       (XtPointer)DISPLAY_SHELL);
 
-  /* 
-   * create the shell's EXECUTE popup menu
-   */
+  /* Create the shell's EXECUTE popup menu */
     n = 0;
     XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); n++;
     XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
@@ -276,24 +279,37 @@ DisplayInfo *allocateDisplayInfo()
     XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
     displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
       "executePopupMenu", args, n);
-  /* 
-   * create the shell's EDIT popup menu
-   */
+
+  /* Create the execute menu */
+    w = createExecuteMenu(displayInfo);
+    if(!w) {
+      /* Recreate menu without exec */
+	XtDestroyWidget(displayInfo->executePopupMenu);
+	n = 0;
+	XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES - 1); n++;
+	XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
+	XtSetArg(args[n], XmNbuttons, executePopupMenuButtons); n++;
+	XtSetArg(args[n], XmNsimpleCallback, executePopupMenuCallback); n++;
+	XtSetArg(args[n], XmNuserData, displayInfo); n++;
+	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+	displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
+	  "executePopupMenu", args, n);
+    }
+
+  /* Create the shell's EDIT popup menu */
     displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
     XtVaSetValues(displayInfo->editPopupMenu,
       XmNtearOffModel, XmTEAR_OFF_DISABLED,
       XmNuserData, displayInfo,
       NULL);
 
-/*
- * attach event handlers for menu activation
- */
+  /* Attach event handlers for menu activation */
     XtAddEventHandler(displayInfo->shell,ButtonPressMask,False,
       popupMenu,displayInfo);
     XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
       popdownMenu,displayInfo);
 
-  /* append to end of the list */
+  /* Append to end of the list */
     displayInfo->next = NULL;
     displayInfo->prev = displayInfoListTail;
     displayInfoListTail->next = displayInfo;
@@ -302,6 +318,87 @@ DisplayInfo *allocateDisplayInfo()
     return(displayInfo);
 }
 
+static Widget createExecuteMenu(DisplayInfo *displayInfo)
+{
+    Widget w;
+    static XmButtonType *types = (XmButtonType *)0;
+    static XmString *buttons = (XmString *)0;
+    static int nbuttons = 0;
+    int i, len;    
+    int n;
+    static int first = 1;
+    Arg args[8];
+    char *execPath, *string, *pitem, *pcolon, *psemi;
+
+  /* Return if we've already tried unsuccessfully */
+    if(!first && !nbuttons) return (Widget)0;
+
+  /* Get MEDM_EXECUTE_LIST the first time */
+    if(first) {
+	first = 0;
+	execPath = getenv("MEDM_EXEC_LIST");
+	if (!execPath || !execPath[0]) return (Widget)0;
+
+      /* Copy the environment string */
+	len = strlen(execPath);
+	string = (char *)calloc(len+1,sizeof(char));
+	strcpy(string,execPath);
+	
+      /* Count the colons to get the number of buttons */
+	pcolon = string;
+	nbuttons = 1;
+	while(pcolon = strchr(pcolon,':'))
+	  nbuttons++, pcolon++;
+	
+      /* Allocate memory */
+	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
+	buttons = (XmString *)calloc(nbuttons,sizeof(XmString));
+	execMenuCommandList = (char **)calloc(nbuttons,sizeof(char *));
+	  
+      /* Parse the items */
+	pitem = string;
+	for(i=0; i < nbuttons; i++) {
+	    pcolon = strchr(pitem,':');
+	    if(pcolon) *pcolon='\0';
+	  /* Text */
+	    psemi = strchr(pitem,';');
+	    if(!psemi) {
+		medmPrintf("\ncreateExecuteMenu: "
+		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
+		  "  %s\n",pitem);
+		free(types);
+		free(buttons);
+		free(string);
+		return (Widget)0;
+	    } else {
+		*psemi='\0';
+		buttons[i] = XmStringCreateLocalized(pitem);
+		types[i] = XmPUSHBUTTON;
+		pitem = psemi+1;
+		len = strlen(pitem);
+		execMenuCommandList[i]=(char *)calloc(len,sizeof(char));
+		strcpy(execMenuCommandList[i],pitem);
+	    }
+	    pitem = pcolon+1;
+	}
+	free(string);
+    }
+
+  /* Create the menu */
+    n = 0;
+    XtSetArg(args[n], XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); n++;
+    XtSetArg(args[n], XmNbuttonCount, nbuttons); n++;
+    XtSetArg(args[n], XmNbuttonType, types); n++;
+    XtSetArg(args[n], XmNbuttons, buttons); n++;
+    XtSetArg(args[n], XmNsimpleCallback, executeMenuCallback); n++;
+    XtSetArg(args[n], XmNuserData, displayInfo); n++;
+    XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+    w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
+      "executePopupMenu", args, n);
+
+  /* Return */
+    return(w);
+}
 
 TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
     TOKEN tokenType;

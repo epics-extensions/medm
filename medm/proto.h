@@ -71,6 +71,7 @@ int callBrowser(char *url);
 /* callbacks.c */
 void dmDisplayListOk(Widget, XtPointer, XtPointer);
 void executePopupMenuCallback(Widget, XtPointer, XtPointer);
+void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs);
 void dmCreateRelatedDisplay(Widget, XtPointer, XtPointer);
 void dmExecuteShellCommand(Widget w,
   DlShellCommandEntry *commandEntry,

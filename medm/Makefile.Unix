@@ -40,7 +40,6 @@ ifdef XRTGRAPH
 endif
 
 ifeq ($(XRTGRAPH),$(XRTGRAPH3))
-  USR_CFLAGS += -DXRTGRAPH3
   USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
 endif
 
@@ -179,6 +178,7 @@ ifdef XRTGRAPH
 	else\
 		echo "**************************************************************";\
 		echo "License warnings for XRT field, table, and gear may be ignored";\
+		echo "Patch successful";\
 		echo "**************************************************************";\
 	fi
 endif
@@ -193,6 +193,7 @@ xrtAuth: medm
 	else\
 		echo "**************************************************************";\
 		echo "License warnings for XRT field, table, and gear may be ignored";\
+		echo "Patch successful";\
 		echo "**************************************************************";\
 	fi
 
@@ -200,6 +201,9 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.26  1997/08/07 17:37:38  evans
+# Added Execute Menu.
+#
 # Revision 1.25  1997/07/31 16:28:22  evans
 # Added routines for XRT/graph 3.0 and changed fontTable[]->fid to fontListTable[].
 #

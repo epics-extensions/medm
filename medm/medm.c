@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_RADIO_BUTTONS 1
+#define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 
 #define ALLOCATE_STORAGE
@@ -713,7 +713,8 @@ Name of file in which to save display:",
   /***
   *** medmWidget resource specifications
   ***/
-    "Medm*warningDialog.background: salmon",
+    "Medm*warningDialog.foreground: white",
+    "Medm*warningDialog.background: red",
     "Medm*warningDialog.dialogTitle: Warning",
     "Medm*Indicator.AxisWidth: 3",
     "Medm*Bar.AxisWidth: 3",

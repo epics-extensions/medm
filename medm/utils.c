@@ -55,7 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_EVENTS 0
-#define DEBUG_FILE 1
+#define DEBUG_FILE 0
 #define DEBUG_STRING_LIST 0
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
@@ -1064,7 +1064,7 @@ void doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
-	    XFlush(display);
+	    XFlush(display);	  /* For debugger */
 	    *initialX =  MIN(x0,event.xbutton.x);
 	    *initialY =  MIN(y0,event.xbutton.y);
 	    *finalX   =  MAX(x0,event.xbutton.x);
@@ -2925,11 +2925,11 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 	XtAddCallback(displayInfo->questionDialog,XmNhelpCallback,questionDialogCb,displayInfo);
     }
     if (message == NULL) return;
-    xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
+    xmString = XmStringCreateLocalized(message);
     XtVaSetValues(displayInfo->questionDialog,XmNmessageString,xmString,NULL);
     XmStringFree(xmString);
     if (okBtnLabel) {
-	xmString = XmStringCreateLtoR(okBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(okBtnLabel);
 	XtVaSetValues(displayInfo->questionDialog,XmNokLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_OK_BUTTON));
@@ -2937,7 +2937,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 	XtUnmanageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_OK_BUTTON));
     }
     if (cancelBtnLabel) {
-	xmString = XmStringCreateLtoR(cancelBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(cancelBtnLabel);
 	XtVaSetValues(displayInfo->questionDialog,XmNcancelLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_CANCEL_BUTTON));
@@ -2945,7 +2945,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 	XtUnmanageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_CANCEL_BUTTON));
     }
     if (helpBtnLabel) {
-	xmString = XmStringCreateLtoR(helpBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(helpBtnLabel);
 	XtVaSetValues(displayInfo->questionDialog,XmNhelpLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_HELP_BUTTON));
@@ -3019,11 +3019,11 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
 	XtAddCallback(displayInfo->warningDialog,XmNhelpCallback,warningDialogCb,displayInfo);
     }
     if (message == NULL) return;
-    xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
+    xmString = XmStringCreateLocalized(message);
     XtVaSetValues(displayInfo->warningDialog,XmNmessageString,xmString,NULL);
     XmStringFree(xmString);
     if (okBtnLabel) {
-	xmString = XmStringCreateLtoR(okBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(okBtnLabel);
 	XtVaSetValues(displayInfo->warningDialog,XmNokLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_OK_BUTTON));
@@ -3031,7 +3031,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
 	XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_OK_BUTTON));
     }
     if (cancelBtnLabel) {
-	xmString = XmStringCreateLtoR(cancelBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(cancelBtnLabel);
 	XtVaSetValues(displayInfo->warningDialog,XmNcancelLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_CANCEL_BUTTON));
@@ -3039,7 +3039,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
 	XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_CANCEL_BUTTON));
     }
     if (helpBtnLabel) {
-	xmString = XmStringCreateLtoR(helpBtnLabel,XmFONTLIST_DEFAULT_TAG);
+	xmString = XmStringCreateLocalized(helpBtnLabel);
 	XtVaSetValues(displayInfo->warningDialog,XmNhelpLabelString,xmString,NULL);
 	XmStringFree(xmString);
 	XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_HELP_BUTTON));

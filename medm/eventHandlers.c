@@ -254,16 +254,21 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 		    }
 		    break;
 		default:
+		  /* Popup execute-mode popup menu */
 		    XmMenuPosition(displayInfo->executePopupMenu,
 		      (XButtonPressedEvent *)event);
 		    XtManageChild(displayInfo->executePopupMenu);
+#if 0		    
+		  /* KE: Are these necessary ? */
 		    XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
 		    XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
+#endif		    
 		    break;
 		}
 	    } else {
-	      /* Execute menu does have valid/unique displayInfo ptr, hence use it */
-		XmMenuPosition(displayInfo->executePopupMenu,(XButtonPressedEvent *)event);
+	      /* Popup execute-mode popup menu */
+		XmMenuPosition(displayInfo->executePopupMenu,
+		  (XButtonPressedEvent *)event);
 		XtManageChild(displayInfo->executePopupMenu);
 	    }
 	}

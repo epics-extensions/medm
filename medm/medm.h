@@ -177,6 +177,7 @@ extern "C" {
     
   /* Window property atom */
     Atom windowPropertyAtom;
+    char **execMenuCommandList;
 
   /* Global widgets (all permanent shells, most MWs, etc ) */
     EXTERN Widget mainShell, mainMW;
