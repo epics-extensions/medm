@@ -121,6 +121,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
     static char textField[MAX_TOKEN_LENGTH];
     double value;
     short precision = 0;
+
     textField[0] = '\0';
     switch(pd->dataType) {
     case DBF_STRING :
@@ -166,13 +167,21 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	medmPostMsg("Msg   : Unknown Data Type!\n");
 	return "Error!";
     }
+
     if (precision < 0) {
 	precision = 0;
     }
+
     switch (format) {
-    case DECIMAL:
     case STRING:
 	cvtDoubleToString(value,textField,precision);
+	break;
+    case DECIMAL:
+	cvtDoubleToString(value,textField,precision);
+      /* Could be an exponential */
+	if(strchr(textField,'e')) {
+	    localCvtDoubleToString(value,textField,precision);
+	}
 	break;
     case EXPONENTIAL:
 	cvtDoubleToExpString(value,textField,precision);
@@ -346,6 +355,7 @@ void textEntryDraw(XtPointer cd) {
     Record *pd = pte->record;
     Widget widget = pte->dlElement->widget;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
+
     if (pd->connected) {
 	if (pd->readAccess) {
 	    if (widget) 

@@ -300,14 +300,21 @@ static void textUpdateDraw(XtPointer cd) {
 	    }
 	    if (isNumber) {
 		switch (dlTextUpdate->format) {
-		case DECIMAL:
 		case STRING:
 		    cvtDoubleToString(value,textField,precision);
+		    break;
+		case DECIMAL:
+		    cvtDoubleToString(value,textField,precision);
+		  /* Could be an exponential */
+		    if(strchr(textField,'e')) {
+			localCvtDoubleToString((double)value,textField,precision);
+		    }
 		    break;
 		case EXPONENTIAL:
 #if 0
 		    cvtDoubleToExpString(value,textField,precision);
 #endif
+		  /* KE: This is different from textEntryDRAW/valueToString */
 		    sprintf(textField,"%.*e",precision,value);
 		    break;
 		case ENGR_NOTATION:
