@@ -1764,12 +1764,14 @@ void createResource() {
     XtSetSensitive(resourceHelpPDM,False);
 #endif	
 
+#ifdef UNNECESSARY
   /****** Add the resource bundle scrolled window and contents */
     n = 0;
     XtSetArg(args[n],XmNscrollingPolicy,XmAUTOMATIC); n++;
     XtSetArg(args[n],XmNscrollBarDisplayPolicy,XmAS_NEEDED); n++;
     bundlesSW = XmCreateScrolledWindow(resourceMW,"bundlesSW",args,n);
     createResourceBundles(bundlesSW);
+#endif    
 
   /****** Add the resource entry scrolled window and contents */
     n = 0;
@@ -1790,14 +1792,20 @@ void createResource() {
   /****** Manage the composites */
     XtManageChild(messageF);
     XtManageChild(resourceMB);
+#ifdef UNNECESSARY
     XtManageChild(bundlesSW);
+#endif    
     XtManageChild(entriesSW);
     XtManageChild(resourceMW);
 
     XmMainWindowSetAreas(resourceMW,resourceMB,NULL,NULL,NULL,entriesSW);
+#ifdef UNNECESSARY
     XtVaSetValues(resourceMW,XmNmessageWindow,messageF,XmNcommandWindow,
       bundlesSW, NULL);
-
+#else
+    XtVaSetValues(resourceMW,XmNmessageWindow,messageF,NULL);
+#endif
+    
   /****** Now popup the dialog and restore cursor */
     XtPopup(resourceS,XtGrabNone);
 
@@ -2419,6 +2427,7 @@ static void initializeResourcePaletteElements() {
     }  
 }
 
+#ifdef UNNECESSARY
 /****************************************************************************
  * Create Resource Bundles : Create resource bundles in scrolled window.    *
  ****************************************************************************/
@@ -2461,6 +2470,7 @@ static void createBundleTB(Widget bundlesRB, char *name) {
 
     XtManageChild(bundlesTB);
 }
+#endif
 
 #ifdef __cplusplus
 static void shellCommandActivate(Widget, XtPointer cd, XtPointer)
