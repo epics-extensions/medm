@@ -1820,17 +1820,6 @@ DrawCell(XbaeMatrixWidget mw, int row, int column)
 	  : XmALIGNMENT_BEGINNING),
 	  mw->matrix.selected_cells[row][column],
 	  False, clipped, color);
-#if 0
-DrawString(XbaeMatrixWidget mw, Window win,
-  String string, int length,
-  int x, int y,
-  int maxlen,
-  unsigned char alignment,
-  Boolean highlight,
-  Boolean bold,
-  Boolean clip,
-  Pixel color)
-#endif
     }
 
   /*
@@ -3674,8 +3663,8 @@ ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
 static void
 ModifyVerifyCB(Widget w, XtPointer client, XtPointer call)
 {
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)client;
     XmTextVerifyCallbackStruct *verify = (XmTextVerifyCallbackStruct *)call;
-    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
     XbaeMatrixModifyVerifyCallbackStruct call_data;
 
     if (mw->matrix.modify_verify_callback == NULL)
@@ -3699,7 +3688,7 @@ ModifyVerifyCB(Widget w, XtPointer client, XtPointer call)
 static void
 TraverseInCB(Widget w, XtPointer client, XtPointer call)
 {
-    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)client;
     
   /*
    * If the traversing flag is set, then Clip got the focus because
@@ -5601,17 +5590,15 @@ DeselectAll(Widget w)
 void
 XbaeMatrixDeselectAll(Widget w)
 {
-    XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
-
   /*
    * Make sure w is a Matrix or a subclass
    */
-    XtCheckSubclass(mw, xbaeMatrixWidgetClass, NULL);
+    XtCheckSubclass(w, xbaeMatrixWidgetClass, NULL);
 
   /*
    * Call the deselect_all method
    */
-    (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.deselect_all)(w);
+    (*((XbaeMatrixWidgetClass) XtClass(w))->matrix_class.deselect_all)(w);
 }
 
 /*
