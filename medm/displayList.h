@@ -690,6 +690,7 @@ typedef struct {
     DlPlotAxisDefinition axis[3];     /* x = 0, y = 1, y2 = 2 */
     char trigger[MAX_TOKEN_LENGTH];
     char erase[MAX_TOKEN_LENGTH];
+    char countPvName[MAX_TOKEN_LENGTH];
     eraseMode_t eraseMode;
 } DlCartesianPlot;
 

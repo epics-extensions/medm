@@ -342,7 +342,7 @@ typedef struct _ResourceBundle {
 	TimeUnits		units;
 	CartesianPlotStyle	cStyle;
 	EraseOldest		erase_oldest;
-	int			count;
+	char			countPvName[MAX_TOKEN_LENGTH];
 	Stacking		stacking;
 	ImageType		imageType;
 	char			textix[MAX_TOKEN_LENGTH];

@@ -63,6 +63,7 @@ extern int isnan(double);  /* In case it's not in math.h as it should be */
 #error No plot package to implement the Cartesian Plot has been defined.
 #endif
 
+#include <ctype.h>
 #include "medmCartesianPlot.h"
 
 /* Function prototypes */
@@ -273,6 +274,24 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    pcp->triggerCh.recordX = NULL;
 	}
 	
+#ifndef DONE
+      /* Allocate (or set to NULL) the X Record in the countCh XYTrace */
+	if((dlCartesianPlot->count == 0)
+	  && (dlCartesianPlot->countPvName[0] != '\0')
+	  && (!isdigit(dlCartesianPlot->countPvName[0]))
+	  && (validTraces > 0)) {
+	    pcp->countCh.recordX =  NULL;
+	    pcp->countCh.recordX = 
+	      medmAllocateRecord(dlCartesianPlot->countPvName,
+		cartesianPlotUpdateScreenFirstTime,
+		cartesianPlotUpdateGraphicalInfoCb,
+		(XtPointer) &(pcp->countCh));
+	    pcp->countCh.cartesianPlot = pcp;
+	} else {
+	    pcp->countCh.recordX = NULL;
+	}
+#endif
+	
       /* Note: Only the Record and MedmCartesianPlot parts of the
        *   XYTrace's are filled in now, the rest is filled in in
        *   cartesianPlotUpdateGraphicalInfoCb() */
@@ -366,6 +385,12 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
   /* Return until all channels get their graphical information */
+    if(pcp->eraseCh.recordX && (pcp->eraseCh.recordX->precision < 0))
+      return;
+    if(pcp->triggerCh.recordX && (pcp->triggerCh.recordX->precision < 0))
+      return;
+    if(pcp->countCh.recordX && (pcp->countCh.recordX->precision < 0))
+      return;
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 	if(t->recordX) {
@@ -384,8 +409,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     XQueryColors(XtDisplay(widget),cmap,xColors,pcp->nTraces);
 
   /* Set the maximum count (for allocating data structures) to be the
-   *   largest of any of the Channel Access counts and the specified
-       count (from the DlCartesianPlot) */
+   * largest of any of the Channel Access counts and the specified
+   * count (from the DlCartesianPlot) */
     maxElements = dlCartesianPlot->count;
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
@@ -1107,6 +1132,15 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	int count;
 
 	count = MIN(pt->recordX->elementCount, pt->recordY->elementCount);
+#ifndef DONE
+      // Use count from the PV
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+
+	  // Must be greater than 0 and less than the native count
+	    if(chCount > 0 && chCount < count) count = chCount;
+	}
+#endif
 	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
 
 	if(pr == pt->recordX) {
@@ -1307,6 +1341,12 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	    goto INITIALIZE;
 	}
     }
+    if(pcp->countCh.recordX) {
+	if(pcp->countCh.recordX->precision < 0) {
+	    initialize = False;
+	    goto INITIALIZE;
+	}
+    }
 
   INITIALIZE:
     if(!initialize) {
@@ -1375,6 +1415,10 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     }
     if(pcp->triggerCh.recordX) {
 	medmRecordAddUpdateValueCb(pcp->triggerCh.recordX,
+	  cartesianPlotUpdateValueCb);
+    }
+    if(pcp->countCh.recordX) {
+	medmRecordAddUpdateValueCb(pcp->countCh.recordX,
 	  cartesianPlotUpdateValueCb);
     }
     CpUpdateWidget(widget, CP_FULL);
@@ -1499,10 +1543,12 @@ static void cartesianPlotDestroyCb(XtPointer cd) {
 		medmDestroyRecord(pr);
 	    }
 	}
-	if(pcp->triggerCh.recordX)
-	  medmDestroyRecord(pcp->triggerCh.recordX);
 	if(pcp->eraseCh.recordX)
 	  medmDestroyRecord(pcp->eraseCh.recordX);
+	if(pcp->triggerCh.recordX)
+	  medmDestroyRecord(pcp->triggerCh.recordX);
+	if(pcp->countCh.recordX)
+	  medmDestroyRecord(pcp->countCh.recordX);
 	if(pcp->hcp1) CpDataDestroy(pcp->hcp1);
 	if(pcp->hcp2) CpDataDestroy(pcp->hcp2);
 	if(pcp->dlElement) pcp->dlElement->data = NULL;
@@ -1552,6 +1598,15 @@ static void cartesianPlotDraw(XtPointer cd) {
 	    if(pr->precision < 0) validPrecision = False;
 	}
     }
+    if(pcp->eraseCh.recordX) {
+	Record *pr = pcp->eraseCh.recordX;
+	if(!pr->connected) {
+	    connected = False;
+	} else if(!pr->readAccess) {
+	    readAccess = False;
+	}
+	if(pr->precision < 0) validPrecision = False;
+    }
     if(pcp->triggerCh.recordX) {
 	Record *pr = pcp->triggerCh.recordX;
 	if(!pr->connected) {
@@ -1561,8 +1616,8 @@ static void cartesianPlotDraw(XtPointer cd) {
 	}
 	if(pr->precision < 0) validPrecision = False;
     }
-    if(pcp->eraseCh.recordX) {
-	Record *pr = pcp->eraseCh.recordX;
+    if(pcp->countCh.recordX) {
+	Record *pr = pcp->countCh.recordX;
 	if(!pr->connected) {
 	    connected = False;
 	} else if(!pr->readAccess) {
@@ -1610,13 +1665,18 @@ static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)
 	record[j++] = pt->recordX;
 	record[j++] = pt->recordY;
     }
+    if(pcp->eraseCh.recordX) {
+	record[j++] = pcp->eraseCh.recordX;
+    } else {     /* Count these even if NULL */
+	record[j++] = NULL;
+    }
     if(pcp->triggerCh.recordX) {
 	record[j++] = pcp->triggerCh.recordX;
     } else {     /* Count these even if NULL */
 	record[j++] = NULL;
     }
-    if(pcp->eraseCh.recordX) {
-	record[j++] = pcp->eraseCh.recordX;
+    if(pcp->countCh.recordX) {
+	record[j++] = pcp->countCh.recordX;
     } else {     /* Count these even if NULL */
 	record[j++] = NULL;
     }
@@ -1682,6 +1742,7 @@ DlElement *parseCartesianPlot(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlCartesianPlot->count= atoi(token);
+	        strcpy(dlCartesianPlot->countPvName,token);
 	    } else if(!strcmp(token,"style")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -1777,8 +1838,8 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	if(dlCartesianPlot->erase_oldest != ERASE_OLDEST_OFF)
 	  fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
 	    stringValueTable[dlCartesianPlot->erase_oldest]);
-	if(dlCartesianPlot->count != 1)
-	  fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
+        if(dlCartesianPlot->count != 1)
+	  fprintf(stream,"\n%s\tcount=\"%s\"",indent,dlCartesianPlot->countPvName);
 	for(i = 0; i < MAX_TRACES; i++) {
 	    writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
 	}
@@ -1801,7 +1862,7 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	  stringValueTable[dlCartesianPlot->style]);
 	fprintf(stream,"\n%s\terase_oldest=\"%s\"",indent,
 	  stringValueTable[dlCartesianPlot->erase_oldest]);
-	fprintf(stream,"\n%s\tcount=\"%d\"",indent,dlCartesianPlot->count);
+	fprintf(stream,"\n%s\tcount=\"%s\"",indent,dlCartesianPlot->countPvName);
 	for(i = 0; i < MAX_TRACES; i++) {
 	    writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
 	}
@@ -1840,7 +1901,7 @@ static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p) {
       YLABEL_RC,     &(dlCartesianPlot->plotcom.ylabel),
       CLR_RC,        &(dlCartesianPlot->plotcom.clr),
       BCLR_RC,       &(dlCartesianPlot->plotcom.bclr),
-      COUNT_RC,      &(dlCartesianPlot->count),
+      COUNT_RC,      &(dlCartesianPlot->countPvName),
       CSTYLE_RC,     &(dlCartesianPlot->style),
       ERASE_OLDEST_RC,&(dlCartesianPlot->erase_oldest),
       CPDATA_RC,     &(dlCartesianPlot->trace),
@@ -3134,6 +3195,14 @@ static void dumpCartesianPlotData(const char *title,
 	  pcp->triggerCh.recordX,
 	  pcp->triggerCh.recordX->name,
 	  pcp->triggerCh.recordX->value);
+    }
+
+  /* Count Channel */
+    if(pcp->countCh.recordX) {
+	print("Count Channel: [%x] %34s %15g\n",
+	  pcp->countCh.recordX,
+	  pcp->countCh.recordX->name,
+	  pcp->countCh.recordX->value);
     }
 
     print("\n");

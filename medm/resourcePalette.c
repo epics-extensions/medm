@@ -693,7 +693,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	globalResourceBundle.period = atof(stringValue);
 	break;
     case COUNT_RC:
-	globalResourceBundle.count = atoi(stringValue);
+	strcpy(globalResourceBundle.countPvName,stringValue);
 	break;
     case TEXTIX_RC:
 	strcpy(globalResourceBundle.textix,stringValue);
@@ -882,7 +882,7 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	cvtDoubleToString(globalResourceBundle.period,string,0);
 	break;
     case COUNT_RC:
-	sprintf(string,"%d",globalResourceBundle.count);
+	newString= globalResourceBundle.countPvName;
 	break;
     case TEXTIX_RC:
 	newString = globalResourceBundle.textix;
@@ -1017,7 +1017,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.units = SECONDS;
     globalResourceBundle.cStyle = POINT_PLOT;
     globalResourceBundle.erase_oldest = ERASE_OLDEST_OFF;
-    globalResourceBundle.count = 1;
+    globalResourceBundle.countPvName[0] = '\0';
     globalResourceBundle.stacking = ROW;
     globalResourceBundle.imageType= NO_IMAGE;
     globalResourceBundle.name[0] = '\0';
@@ -1444,7 +1444,6 @@ static void createEntryRC( Widget parent, int rcType)
     case XYANGLE_RC:
     case ZANGLE_RC:
     case PERIOD_RC:
-    case COUNT_RC:
     case LINEWIDTH_RC:
     case GRID_SPACING_RC:
 	n = 0;
@@ -1491,6 +1490,7 @@ static void createEntryRC( Widget parent, int rcType)
     case COMPOSITE_FILE_RC:
     case TRIGGER_RC:
     case ERASE_RC:
+    case COUNT_RC:
     case RD_LABEL_RC:
 	n = 0;
 	XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
@@ -2159,8 +2159,8 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    break;
 	}
 	case COUNT_RC: {
-	    int *pvalue = va_arg(ap,int *);
-	    *pvalue = pRB->count;
+	    char* pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->countPvName);
 	    break;
 	}
 	case STACKING_RC: {
@@ -3155,9 +3155,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	globalResourceBundle.bclr = p->plotcom.bclr;
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  cdi->colormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.count = p->count;
-	sprintf(string,"%d",globalResourceBundle.count);
-	XmTextFieldSetString(resourceEntryElement[COUNT_RC],string);
+	strcpy(globalResourceBundle.countPvName, p->countPvName);
+	XmTextFieldSetString(resourceEntryElement[COUNT_RC],
+	  globalResourceBundle.countPvName);
 	globalResourceBundle.cStyle = p->style;
 	optionMenuSet(resourceEntryElement[CSTYLE_RC],
 	  globalResourceBundle.cStyle - FIRST_CARTESIAN_PLOT_STYLE);

@@ -70,6 +70,7 @@ typedef struct _MedmCartesianPlot {
     XYTrace          xyTrace[MAX_TRACES];
     XYTrace          eraseCh;
     XYTrace          triggerCh;
+    XYTrace          countCh;
     int              nTraces;       /* number of traces (<=MAX_TRACES) */
     CpDataHandle     hcp1, hcp2;    /* CpData handles */
   /* Used for channel-based range determination (filled in at connect) */

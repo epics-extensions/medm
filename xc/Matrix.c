@@ -38,6 +38,8 @@
 #include "Clip.h"
 #include "MatrixP.h"
 
+#include <Xm/DrawP.h>
+
 /* The following is the prototype for the _XmDrawShadow
  *   from Obsolete.c */
 #if !defined(linux) && !defined(__APPLE__) && !defined(CYGWIN32)

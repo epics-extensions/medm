@@ -37,10 +37,6 @@ extern "C" {
 #include <Xm/PrimitiveP.h>
 #endif
 #endif
-#ifdef  __sgi
-#include <sys/types.h>
-#include <malloc.h>
-#endif /* __sgi */
 
 #include "SciPlot.h"
 #include <X11/Xcms.h>
