@@ -5,7 +5,7 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 #
 ifdef WIN32
-#HOST_OPT = NO
+HOST_OPT = NO
 else
 HOST_OPT = NO
 endif
@@ -25,8 +25,8 @@ endif
 #XRTGRAPH_EXTENSIONS =
 
 # Use to test SciPlot, Otherwise should come from CONFIG
-XRTGRAPH =
-SCIPLOT = YES
+#XRTGRAPH =
+#SCIPLOT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES

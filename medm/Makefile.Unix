@@ -14,8 +14,8 @@ CMPLR = STRICT
 #XRTGRAPH_EXTENSIONS =
 
 # Use to test SciPlot, Otherwise should come from CONFIG
-XRTGRAPH =
-SCIPLOT = YES
+#XRTGRAPH =
+#SCIPLOT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG
 #MEDM_CDEV = YES

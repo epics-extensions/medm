@@ -146,7 +146,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	x = xEvent->x;
 	y = xEvent->y;
 	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
-	  &x, &y);
+	  &x, &y, True);
 	if (pE) {
 #if DEBUG_PVINFO
 	    print("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
@@ -235,12 +235,14 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	x = xEvent->x;
 	y = xEvent->y;
       /* Find the bottommost of equal-sized elements */
-	pE = findSmallestTouchedElement(displayInfo->dlElementList,
-	  x, y, False);
+	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
+	  &x, &y, False);
 	if (pE) {
 #if DEBUG_RELATED_DISPLAY		    
 	    print("\nhandleExecuteButtonPress: type=%s\n",
 	      elementType(pE->type));
+	    print("  x=%d y=%d xEvent: x=%d y=%d window=%x subwindow=%x\n",
+	      x, y, xEvent->x, xEvent->y, xEvent->window, xEvent->subwindow);
 #endif		    
 	    if (pE->type == DL_RelatedDisplay &&
 	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {

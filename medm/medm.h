@@ -96,6 +96,8 @@ extern "C" {
 #ifdef WIN32
   /* Path delimiter is different */
 # define MEDM_PATH_DELIMITER ';'
+# define MEDM_DIR_DELIMITER_CHAR '\\'
+# define MEDM_DIR_DELIMITER_STRING "\\"
   /* Hummingbird extra functions including lprintf
    *   Needs to be included after Intrinsic.h for Exceed 5
    *   (Intrinsic.h is included in xtParams.h) */
@@ -111,6 +113,8 @@ extern "C" {
 #else /* #ifdef WIN32 */
   /* Path delimiter is different */
 # define MEDM_PATH_DELIMITER ':'
+# define MEDM_DIR_DELIMITER_CHAR '/'
+# define MEDM_DIR_DELIMITER_STRING "/"
   /* WIN32 does not have unistd.h */
 # include <unistd.h>
 #endif /* #ifdef WIN32 */

@@ -187,7 +187,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     }
 
   /* If the name starts with / or . then we can do no more */
-    if(name[0] == '/' || name[0] == '.') return (NULL);
+    if(name[0] == MEDM_DIR_DELIMITER_CHAR || name[0] == '.') return (NULL);
 
   /* If the name comes from a related display,
    *   then try the directory of the related display */
@@ -195,7 +195,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	strncpy(fullPathName, relatedDisplayFilename, MAX_DIR_LENGTH);
 	fullPathName[MAX_DIR_LENGTH-1] = '\0';
 	if(fullPathName && fullPathName[0]) {
-	    ptr = strrchr(fullPathName, '/');
+	    ptr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
 	    if(ptr) {
 		*(++ptr) = '\0';
 		strcat(fullPathName, name);
@@ -227,7 +227,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
 	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
 	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
-	    strcat(fullPathName, "/");
+	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
 	    strcat(fullPathName, name);
 	    filePtr = fopen(fullPathName, "r");
 #if DEBUG_FILE
@@ -778,7 +778,7 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
 	char *tmp, *tmp1;
 	tmp = tmp1 = displayInfo->dlFile->name;
 	while (*tmp != '\0')
-	  if(*tmp++ == '/') tmp1 = tmp;
+	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
 	if(displayInfo->hasBeenEditedButNotSaved) {
 	    strcpy(str,tmp1);
 	    strcat(str," (edited)");
@@ -866,7 +866,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
  * Find the smallest element at the given coordinates when in EXECUTE mode
  */
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
-  DisplayInfo *displayInfo, Position *x, Position *y)
+  DisplayInfo *displayInfo, Position *x, Position *y, Boolean top)
 {
     Widget child;
     Position x0, y0;
@@ -909,7 +909,7 @@ DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
   /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
     if(!pE) {
 	pE = findSmallestTouchedElement(displayInfo->dlElementList,
-	  *x, *y, True);
+	  *x, *y, top);
     }
 
   /* Return */
@@ -3799,7 +3799,7 @@ void closeDisplay(Widget w) {
 	strcpy(warningString,"Save before closing display :\n");
 	tmp = tmp1 = newDisplayInfo->dlFile->name;
 	while (*tmp != '\0')
-	  if(*tmp++ == '/') tmp1 = tmp;
+	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
 	strcat(warningString,tmp1);
 	dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
 	switch (newDisplayInfo->questionDialogAnswer) {
@@ -4557,7 +4557,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     x = event.xbutton.x;
     y = event.xbutton.y;
     *ppE = pE = findSmallestTouchedExecuteElementFromWidget(widget, displayInfo,
-      &x, &y);
+      &x, &y, True);
 #if DEBUG_PVINFO
     print("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
     print("  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
@@ -5692,7 +5692,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 	    case 'T':
 		title = name = displayInfo->dlFile->name;
 		while (*name != '\0')
-		  if(*name++ == '/') title = name;
+		  if(*name++ == MEDM_DIR_DELIMITER_CHAR) title = name;
 		len = strlen(title);
 		if(ic + len >= 1024) {
 		    medmPostMsg(1,"executeMenuCallback: Command is too long\n");

@@ -255,7 +255,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
    *   XmStringTable is a typedef for (XmString *) */
     labels = NULL;
     nbuttons = 0;
-    if(pr->hopr) {
+    if(pr->hopr >= 0.0) {
 	nbuttons = (int)(pr->hopr + 1.5);
 	labels = (XmStringTable)calloc(nbuttons, sizeof(XmString));
     }

@@ -462,7 +462,7 @@ void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
-  DisplayInfo *displayInfo, Position *x, Position *y);
+  DisplayInfo *displayInfo, Position *x, Position *y, Boolean top);
 void findSelectedElements(DlList *pList1, Position x0, Position y0,
   Position x1, Position y1, DlList *pList2, unsigned int mode);
 void findAllMatchingElements(DlList *pList1, Position x0, Position y0,

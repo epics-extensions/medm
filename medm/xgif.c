@@ -499,7 +499,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    while (fp == NULL &&
 	      extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
 		strcpy(fullPathName,dirName);
-		strcat(fullPathName,"/");
+		strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
 		strcat(fullPathName,fname);
 #ifdef WIN32
 	      /* WIN32 opens files in text mode by default and then throws out CRLF */

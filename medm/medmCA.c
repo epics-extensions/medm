@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PVINFO 0
 #define DEBUG_FD_REGISTRATION 0
 
+#define DO_RTYP 1
+
 #define NOT_AVAILABLE "Not available"
 #define PVINFO_TIMEOUT 60000     /* ms */
 
@@ -72,7 +74,7 @@ typedef struct {
     chid descChid;
     Boolean descOk;
     char descVal[MAX_STRING_SIZE];
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
     Boolean rtypOk;
     char rtypVal[MAX_STRING_SIZE];
 #endif    
@@ -86,7 +88,7 @@ static Boolean pvInfoTimerOn = False;
 static unsigned long pvInfoTime;
 
 static void pvInfoDescGetCb(struct event_handler_args args);
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
 static void pvInfoRtypGetCb(struct event_handler_args args);
 #endif
 static void pvInfoTimeGetCb(struct event_handler_args args);
@@ -984,7 +986,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	pvInfo[i].descChid = NULL;
 	pvInfo[i].descOk = False;
 	strcpy(pvInfo[i].descVal, NOT_AVAILABLE);
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
 	pvInfo[i].rtypOk = False;
 	strcpy(pvInfo[i].rtypVal, NOT_AVAILABLE);
 #endif    
@@ -1065,7 +1067,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	      ca_name(chId), ca_message(status));
 	}
 	
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
       /* Get the RTYP */
 	status = ca_get_callback(DBR_CLASS_NAME, chId, pvInfoRtypGetCb,
 	  &pvInfo[i]);
@@ -1124,7 +1126,7 @@ static void pvInfoDescGetCb(struct event_handler_args args)
 #endif    
 }
 
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
 static void pvInfoRtypGetCb(struct event_handler_args args)
 {
     PvInfo *info = (PvInfo *)args.usr;
@@ -1179,7 +1181,7 @@ static void pvInfoWriteInfo(void)
     Record *pR;
     chid chId;
     char *descVal;
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
     char *rtypVal;
 #endif    
     struct dbr_time_string timeVal;
@@ -1230,7 +1232,7 @@ static void pvInfoWriteInfo(void)
 	    sprintf(string, "%sDESC: %s\n", string, NOT_AVAILABLE);
 	}
 	if(pvInfo[i].descChid) ca_clear_channel(pvInfo[i].descChid);
-#ifdef DBR_CLASS_NAME
+#if defined(DBR_CLASS_NAME) && DO_RTYP
       /* RTYP */
 	rtypVal = pvInfo[i].rtypVal;
 	if(pvInfo[i].rtypOk && rtypVal && *rtypVal) {

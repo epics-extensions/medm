@@ -7,7 +7,7 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 # Needs work to handle CMPLR=STRICT
 CMPLR = STRICT
 #UNIX_OPT = NO
-#CC += -g
+CC += -g
 
 USR_CFLAGS = -I$(MOTIF_INC) -I$(X11_INC)
 

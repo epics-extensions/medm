@@ -872,7 +872,7 @@ void medmCreateCAStudyDlg() {
 
 	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
-	  XmNtitle, "MEDM Status Window",
+	  XmNtitle, "MEDM Statistics Window",
 	  XmNdeleteResponse, XmDO_NOTHING,
 	  NULL);
 
@@ -1004,17 +1004,17 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 	      (aveUpdateRequestDiscarded * elapseTime + totalUpdateDiscarded) /
 	      totalTimeElapsed;
 	    sprintf(caStudyMsg,
-	      "AVERAGE :\n"
-	      "Total Time Elapsed        = %8.1f\n"
+	      "AVERAGES\n\n"
 	      "CA Incoming Events        = %8.1f\n"
-	      "Objects Updated           = %8.1f\n"
+	      "MEDM Objects Updated      = %8.1f\n"
 	      "Update Requests           = %8.1f\n"
-	      "Update Requests Discarded = %8.1f\n",
-	      totalTimeElapsed,
+	      "Update Requests Discarded = %8.1f\n\n"
+	      "Total Time Elapsed        = %8.1f\n",
 	      aveCAEventCount,
 	      aveUpdateExecuted,
 	      aveUpdateRequested,
-	      aveUpdateRequestDiscarded);
+	      aveUpdateRequestDiscarded,
+	      totalTimeElapsed);
 	} else { 
 	    sprintf(caStudyMsg,  
 	      "Time Interval (sec)       = %8.2f\n"

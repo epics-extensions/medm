@@ -626,7 +626,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
 #else
     "Readback Dev/Attr", "Control Dev/Attr",
 #endif
-    "Channel Limits",
+    "PV Limits",
     "Title", "X Label", "Y Label",
     "Foreground", "Background",
     "Begin Angle", "Path Angle",

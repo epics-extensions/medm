@@ -60,7 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_STDC 0
 #define DEBUG_WIN32_LEAKS 0
 #define DEBUG_FILE_RENAME 0
-#define DEBUG_SAVE_ALL 1
+#define DEBUG_SAVE_ALL 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -532,7 +532,7 @@ static menuEntry_t fileMenu[] = {
 static menuEntry_t viewMenu[] = {
     { "Message Window", &xmPushButtonGadgetClass, 'M', NULL, NULL, NULL,
       viewMenuSimpleCallback, (XtPointer) VIEW_MESSAGE_WINDOW_BTN, NULL},
-    { "Status Window", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
+    { "Statistics Window", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       viewMenuSimpleCallback, (XtPointer) VIEW_STATUS_WINDOW_BTN, NULL},
     NULL,
 };
@@ -1025,7 +1025,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 #ifdef VMS
             if (strchr (fileStr, '[') != NULL) {
 #else
-	    if (fileStr[0] == '/') {
+	    if (fileStr[0] == MEDM_DIR_DELIMITER_CHAR) {
 #endif
 	      /* Is a full path name */
 		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
@@ -1035,7 +1035,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		  (size_t) FULLPATHNAME_SIZE) {
 		    strcpy(fullPathName,currentDirectoryName);
 #ifndef VMS
-		    strcat(fullPathName,"/");
+		    strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
 #endif
 		    strcat(fullPathName,fileStr);
 		} else {
@@ -1055,7 +1055,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		      (size_t) FULLPATHNAME_SIZE) {
 			strcpy(fullPathName,name);
 #ifndef VMS
-			strcat(fullPathName,"/");
+			strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
 #endif
 			strcat(fullPathName,fileStr);
 			if (canAccess = !access(fullPathName,R_OK|F_OK)) break;
@@ -2151,7 +2151,7 @@ void medmExit()
 		filename = tmp = displayInfo->dlFile->name;
 	      /* strip off the path */
 		while (*tmp != '\0') {
-		    if (*tmp == '/') 
+		    if (*tmp == MEDM_DIR_DELIMITER_CHAR) 
 		      filename = tmp+1;
 		    tmp++;
 		}
