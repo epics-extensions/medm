@@ -944,6 +944,10 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
       dirName[PATH_MAX];
     char *dir, *ptr;
 
+#ifdef WIN32
+    convertDirDelimiterToWIN32(filename);
+#endif
+    
   /* Try to open with the given name first
    *   (Will be in cwd if not an absolute pathname) */
     strncpy(name, filename, MAX_TOKEN_LENGTH);
@@ -963,6 +967,9 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	strncpy(fullPathName, relatedDisplayFilename, PATH_MAX);
 	fullPathName[PATH_MAX-1] = '\0';
 	if(fullPathName && fullPathName[0]) {
+#ifdef WIN32
+	    convertDirDelimiterToWIN32(fullPathName);
+#endif
 	    ptr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
 	    if(ptr) {
 		*(++ptr) = '\0';
@@ -984,6 +991,9 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
 	    strncpy(fullPathName, dirName, PATH_MAX);
 	    fullPathName[PATH_MAX-1] = '\0';
+#ifdef WIN32
+	    convertDirDelimiterToWIN32(fullPathName);
+#endif
 	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
 	    strcat(fullPathName, name);
 	    filePtr = fopen(fullPathName, "r");

@@ -3407,7 +3407,7 @@ main(int argc, char *argv[])
   /* Set display and related quantities */
     display = XtDisplay(mainShell);
     if(display == NULL) {
-	XtWarning("Cannot open display");
+	XtWarning("MEDM initialization: Cannot open display");
 	exit(-1);
     }
 #if DEBUG_PROP
@@ -3432,8 +3432,8 @@ main(int argc, char *argv[])
 
   /* Intern some atoms if they aren't there already */
     WM_DELETE_WINDOW = XmInternAtom(display,"WM_DELETE_WINDOW",False);
-    WM_TAKE_FOCUS =  XmInternAtom(display,"WM_TAKE_FOCUS",False);
-    COMPOUND_TEXT =  XmInternAtom(display,"COMPOUND_TEXT",False);
+    WM_TAKE_FOCUS = XmInternAtom(display,"WM_TAKE_FOCUS",False);
+    COMPOUND_TEXT = XmInternAtom(display,"COMPOUND_TEXT",False);
 
   /* Register signal handlers so we can shut down ourselves
    *   (Unfortunately SIGKILL, SIGSTOP can't be caught...) */

@@ -519,6 +519,7 @@ Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
 int isPath(const char *fileString);
 int convertNameToFullPath(const char *name, char *pathName, int nChars);
+void convertDirDelimiterToWIN32(char *pathName);
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
   int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
 void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo,

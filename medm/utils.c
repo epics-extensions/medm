@@ -263,7 +263,19 @@ int convertNameToFullPath(const char *name, char *pathName, int nChars)
     }
 
     return retVal;
-}  
+}
+
+/* Function to convert / to \ to avoid inconsistencies in WIN32 */
+void convertDirDelimiterToWIN32(char *pathName)
+{
+    char *ptr;
+    
+    ptr=strchr(pathName,'/');
+    while(ptr) {
+	*ptr='\\';
+	ptr=strchr(ptr,'/');
+    }
+}
 
 /*
  * function to return the best fitting font for the field and string
