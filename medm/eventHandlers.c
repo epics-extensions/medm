@@ -1238,9 +1238,7 @@ void addCommonHandlers(Widget w, DisplayInfo *displayInfo)
   /* Switch depending on mode */
     switch (displayInfo->traversalMode) {
     case DL_EDIT :
-#if 0	
-	XtUninstallTranslations(w);     /* KE: Unnecessary ? */
-#endif	
+	XtUninstallTranslations(w);     /* KE: This is necessary */
 	XtAddEventHandler(w, KeyPressMask, False, handleEditKeyPress,
 	  (XtPointer)displayInfo);
 	XtAddEventHandler(w, ButtonPressMask, False, handleEditButtonPress,
