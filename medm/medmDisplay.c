@@ -546,8 +546,15 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
       /* Count the colons to get the number of buttons */
 	pcolon = string;
 	nbuttons = 1;
-	while(pcolon = strchr(pcolon,':'))
-	  nbuttons++, pcolon++;
+	while(pcolon = strchr(pcolon,':')) {
+#ifdef WIN32
+	  /* Skip :\, assumed to be part of a path */
+	    if(*(pcolon+1) != '\\') nbuttons++;
+	    pcolon++;
+#else	  
+	    nbuttons++, pcolon++;
+#endif
+	}
 	
       /* Allocate memory */
 	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
@@ -558,6 +565,12 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	pitem = string;
 	for(i=0; i < nbuttons; i++) {
 	    pcolon = strchr(pitem,':');
+#ifdef WIN32
+	  /* Skip :\, assumed to be part of a path */
+	    while(pcolon && *(pcolon+1) == '\\') {
+		pcolon = strchr(pcolon+1,':');
+	    }
+#endif	    
 	    if(pcolon) *pcolon='\0';
 	  /* Text */
 	    psemi = strchr(pitem,';');
