@@ -58,9 +58,12 @@ int main(int argc, char *argv[])
   *** initialize MEDM under this appContext
   ***/
 
- /* 3rd argument = {"alias" or "scalable" or <xlfd>}
+ /* 1st argument = app context
+  * 2nd argument = widget returned from XtAppInitialize()
+  * 3rd argument = {"alias" or "scalable" or <xlfd>}
   * (oen of widgetDM.h's FONT_ALIASES_STRING or DEFAULT_SCALABLE_DISPLAY_FONT */
-  libMedmInit(appContext,XtDisplay(mainShell),"alias");
+
+  libMedmInit(appContext,mainShell,"alias");
 
 
  /***
@@ -76,7 +79,9 @@ int main(int argc, char *argv[])
  /* 1st argument = display file
   * 2nd argument = macro string (like "a=b,c=d,e=f")
   * 3rd argument = parent widget */
+
   libMedmImportDisplay("/u/anderson/SBC/test1.adl",NULL,da);
+
 
   XtAppMainLoop(appContext);
 

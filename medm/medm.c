@@ -33,39 +33,8 @@
 #define FILE_PRINT_BTN 5
 #define FILE_EXIT_BTN 6
 
-#define N_EDIT_MENU_ELES 16
-
 #define EDIT_BTN_POSN 1
-#define EDIT_CUT_BTN 0
-#define EDIT_COPY_BTN 1
-#define EDIT_PASTE_BTN 2
-#define EDIT_DELETE_BTN 3
-#define EDIT_RAISE_BTN 4
-#define EDIT_LOWER_BTN 5
-
-#define EDIT_GROUP_BTN 6
-#define EDIT_UNGROUP_BTN 7
-
-#define EDIT_ALIGN_BTN 8
-#define EDIT_UNSELECT_BTN 9
-#define EDIT_SELECT_ALL_BTN 10
-
-#define N_ALIGN_MENU_ELES 2
-#define ALIGN_BTN_POSN 12
-
-#define N_HORIZ_ALIGN_MENU_ELES 3
-#define HORIZ_ALIGN_BTN_POSN 0
-
-#define ALIGN_HORIZ_LEFT_BTN 0
-#define ALIGN_HORIZ_CENTER_BTN 1
-#define ALIGN_HORIZ_RIGHT_BTN 2
-
-#define N_VERT_ALIGN_MENU_ELES 3
-#define VERT_ALIGN_BTN_POSN 1
-
-#define ALIGN_VERT_TOP_BTN 0
-#define ALIGN_VERT_CENTER_BTN 1
-#define ALIGN_VERT_BOTTOM_BTN 2
+/* but note this menu is laid out in dmInit.c createEditMenu() */
 
 #define N_VIEW_MENU_ELES 3
 #define VIEW_BTN_POSN 2
@@ -267,100 +236,6 @@ static String fallbackResources[] = {
  **************** Callbacks *****************
  ********************************************/
 
-static XtCallbackProc editMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
-{
-
-/* simply return if no current display */
-  if (currentDisplayInfo == NULL) return;
-
-
-/* (MDA) could be smarter about this too, and not do whole traversals...*/
-
-    switch(buttonNumber) {
-
-	case EDIT_CUT_BTN:
-	case EDIT_DELETE_BTN:
-	   copyElementsIntoClipboard();
-	   deleteElementsInDisplay();
-	   break;
-
-	case EDIT_COPY_BTN:
-	   copyElementsIntoClipboard();
-	   break;
-
-	case EDIT_PASTE_BTN:
-	   copyElementsIntoDisplay();
-	   break;
-
-	case EDIT_RAISE_BTN:
-	   raiseSelectedElements();
-	   break;
-
-	case EDIT_LOWER_BTN:
-	   lowerSelectedElements();
-	   break;
-
-	case EDIT_GROUP_BTN:
-	   createDlComposite(currentDisplayInfo);
-	   break;
-
-	case EDIT_UNGROUP_BTN:
-	   ungroupSelectedElements();
-	   break;
-
-	case EDIT_UNSELECT_BTN:
-	   unselectElementsInDisplay();
-	   break;
-
-	case EDIT_SELECT_ALL_BTN:
-	   selectAllElementsInDisplay();
-	   break;
-    }
-}
-
-
-
-static XtCallbackProc alignHorizontalMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
-{
-    switch(buttonNumber) {
-/* reuse the TextAlign values here */
-	case ALIGN_HORIZ_LEFT_BTN:
-	   alignSelectedElements(HORIZ_LEFT);
-	   break;
-	case ALIGN_HORIZ_CENTER_BTN:
-	   alignSelectedElements(HORIZ_CENTER);
-	   break;
-	case ALIGN_HORIZ_RIGHT_BTN:
-	   alignSelectedElements(HORIZ_RIGHT);
-	   break;
-    }
-}
-
-
-static XtCallbackProc alignVerticalMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
-{
-    switch(buttonNumber) {
-/* reuse the TextAlign values here */
-	case ALIGN_VERT_TOP_BTN:
-	   alignSelectedElements(VERT_TOP);
-	   break;
-	case ALIGN_VERT_CENTER_BTN:
-	   alignSelectedElements(VERT_CENTER);
-	   break;
-	case ALIGN_VERT_BOTTOM_BTN:
-	   alignSelectedElements(VERT_BOTTOM);
-	   break;
-    }
-}
 
 static XtCallbackProc fileMenuSimpleCallback(Widget w, int buttonNumber,
 		XmAnyCallbackStruct *call_data)
@@ -978,215 +853,6 @@ static void createCursors()
 
 }
 
-
-
-Widget createEditMenu(
-  unsigned int menuType,		/* XmMENU_POPUP, XmMENU_PULLDOWN */
-  Widget parent,
-  char *name,
-  int postFromButton,		/* for XmMENU_PULLDOWN, specify */
-  DisplayInfo *displayInfo)	/* for XmMENU_POPUP, specify    */
-{
-  Arg args[20];
-  int i, j, n;
-  Widget menu;
-  XmString buttons[N_MAX_MENU_ELES];
-  KeySym keySyms[N_MAX_MENU_ELES];
-  String accelerators[N_MAX_MENU_ELES];
-  XmString acceleratorText[N_MAX_MENU_ELES];
-  XmButtonType buttonType[N_MAX_MENU_ELES];
-  Widget mainArrangePDM, mainAlignPDM, horizAlignPDM, vertAlignPDM;
-  int buttonNumber;
-
-/*
- * create the edit menu pane
- */
-  buttons[0] = XmStringCreateSimple("Cut");
-  buttons[1] = XmStringCreateSimple("Copy");
-  buttons[2] = XmStringCreateSimple("Paste");
-  buttons[3] = XmStringCreateSimple("Separator");
-  buttons[4] = XmStringCreateSimple("Delete");
-  buttons[5] = XmStringCreateSimple("Separator");
-  buttons[6] = XmStringCreateSimple("Raise");
-  buttons[7] = XmStringCreateSimple("Lower");
-  buttons[8] = XmStringCreateSimple("Separator");
-
-  buttons[9] = XmStringCreateSimple("Group");
-  buttons[10] = XmStringCreateSimple("Ungroup");
-  buttons[11] = XmStringCreateSimple("Separator");
-
-  buttons[12] = XmStringCreateSimple("Align");
-  buttons[13] = XmStringCreateSimple("Separator");
-  buttons[14] = XmStringCreateSimple("Unselect");
-  buttons[15] = XmStringCreateSimple("Select All");
-  keySyms[0] = 't';
-  keySyms[1] = 'C';
-  keySyms[2] = 'P';
-  keySyms[3] = ' ';
-  keySyms[4] = 'D';
-  keySyms[5] = ' ';
-  keySyms[6] = 'R';
-  keySyms[7] = 'L';
-  keySyms[8] = ' ';
-
-  keySyms[9] = 'G';
-  keySyms[10] = 'n';
-  keySyms[11] = ' ';
-
-  keySyms[12] = 'A';
-  keySyms[13] = ' ';
-  keySyms[14] = 'U';
-  keySyms[15] = 'S';
-  accelerators[0] = "Shift<Key>DeleteChar";
-  accelerators[1] = "Ctrl<Key>InsertChar";
-  accelerators[2] = "Shift<Key>InsertChar";
-  accelerators[3] = "";
-  accelerators[4] = "";
-  accelerators[5] = "";
-  accelerators[6] = "";
-  accelerators[7] = "";
-  accelerators[8] = "";
-  accelerators[9] = "";
-  accelerators[10] = "";
-  accelerators[11] = "";
-  accelerators[12] = "";
-  accelerators[13] = "";
-  accelerators[14] = "";
-  accelerators[15] = "";
-  acceleratorText[0] = XmStringCreateSimple("Shift+Del");
-  acceleratorText[1] = XmStringCreateSimple("Ctrl+Ins"); 
-  acceleratorText[2] = XmStringCreateSimple("Shift+Ins");
-  acceleratorText[3] = XmStringCreateSimple("");
-  acceleratorText[4] = XmStringCreateSimple("");
-  acceleratorText[5] = XmStringCreateSimple("");
-  acceleratorText[6] = XmStringCreateSimple("");
-  acceleratorText[7] = XmStringCreateSimple("");
-  acceleratorText[8] = XmStringCreateSimple("");
-  acceleratorText[9] = XmStringCreateSimple("");
-  acceleratorText[10] = XmStringCreateSimple("");
-  acceleratorText[11] = XmStringCreateSimple("");
-  acceleratorText[12] = XmStringCreateSimple("");
-  acceleratorText[13] = XmStringCreateSimple("");
-  acceleratorText[14] = XmStringCreateSimple("");
-  acceleratorText[15] = XmStringCreateSimple("");
-
-  buttonType[0] = XmPUSHBUTTON;
-  buttonType[1] = XmPUSHBUTTON;
-  buttonType[2] = XmPUSHBUTTON;
-  buttonType[3] = XmSEPARATOR;
-  buttonType[4] = XmPUSHBUTTON;
-  buttonType[5] = XmSEPARATOR;
-  buttonType[6] = XmPUSHBUTTON;
-  buttonType[7] = XmPUSHBUTTON;
-  buttonType[8] = XmSEPARATOR;
-  buttonType[9] = XmPUSHBUTTON;
-  buttonType[10] = XmPUSHBUTTON;
-  buttonType[11] = XmSEPARATOR;
-  buttonType[12] = XmCASCADEBUTTON;
-  buttonType[13] = XmSEPARATOR;
-  buttonType[14] = XmPUSHBUTTON;
-  buttonType[15] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_EDIT_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonAccelerators,accelerators); n++;
-  XtSetArg(args[n],XmNbuttonAcceleratorText,acceleratorText); n++;
-  XtSetArg(args[n],XmNsimpleCallback,(XtCallbackProc)editMenuSimpleCallback);
-	n++;
-
-  if (menuType == XmMENU_PULLDOWN) {
-    XtSetArg(args[n],XmNpostFromButton,postFromButton); n++;
-    menu = XmCreateSimplePulldownMenu(parent,name,args,n);
-  } else if (menuType == XmMENU_POPUP) {
-    XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-    XtSetArg(args[n],XmNuserData,displayInfo); n++;
-    menu = XmCreateSimplePopupMenu(parent,name,args,n);
-  } else {
-    fprintf(stderr,"\ncreateEditMenu: invalid menuType.");
-    menu = NULL;
-  }
-
-  for (i = 0; i < N_EDIT_MENU_ELES; i++) {
-    XmStringFree(buttons[i]);
-    XmStringFree(acceleratorText[i]);
-  }
-
-
-/*
- * create the align cascading menu child of edit menu
- */
-  buttons[0] = XmStringCreateSimple("Horizontal");
-  buttons[1] = XmStringCreateSimple("Vertical");
-  keySyms[0] = 'H';
-  keySyms[1] = 'V';
-  buttonType[0] = XmCASCADEBUTTON;
-  buttonType[1] = XmCASCADEBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_ALIGN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNpostFromButton,ALIGN_BTN_POSN); n++;
-  XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-  mainAlignPDM = XmCreateSimplePulldownMenu(menu,
-	"mainAlignPDM",args,n);
-  for (i = 0; i < N_ALIGN_MENU_ELES; i++) XmStringFree(buttons[i]);
-
-/*
- * create the horizontal cascading menu child of align menu
- */
-  buttons[0] = XmStringCreateSimple("Left");
-  buttons[1] = XmStringCreateSimple("Center");
-  buttons[2] = XmStringCreateSimple("Right");
-  keySyms[0] = 'L';
-  keySyms[1] = 'C';
-  keySyms[2] = 'R';
-  buttonType[0] = XmPUSHBUTTON;
-  buttonType[1] = XmPUSHBUTTON;
-  buttonType[2] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_HORIZ_ALIGN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNpostFromButton,HORIZ_ALIGN_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)alignHorizontalMenuSimpleCallback); n++;
-  XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-  horizAlignPDM = XmCreateSimplePulldownMenu(mainAlignPDM,
-	"horizAlignPDM",args,n);
-  for (i = 0; i < N_HORIZ_ALIGN_MENU_ELES; i++) XmStringFree(buttons[i]);
-
-/*
- * create the vertical cascading menu child of align menu
- */
-  buttons[0] = XmStringCreateSimple("Top");
-  buttons[1] = XmStringCreateSimple("Center");
-  buttons[2] = XmStringCreateSimple("Bottom");
-  keySyms[0] = 'L';
-  keySyms[1] = 'C';
-  keySyms[2] = 'R';
-  buttonType[0] = XmPUSHBUTTON;
-  buttonType[1] = XmPUSHBUTTON;
-  buttonType[2] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_VERT_ALIGN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNpostFromButton,VERT_ALIGN_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)alignVerticalMenuSimpleCallback); n++;
-  XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-  vertAlignPDM = XmCreateSimplePulldownMenu(mainAlignPDM,
-	"vertAlignPDM",args,n);
-  for (i = 0; i < N_VERT_ALIGN_MENU_ELES; i++) XmStringFree(buttons[i]);
-
-
-  return menu;
-}
 
 
 /*
@@ -1810,7 +1476,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 		strcat(fullPathName,"/");
 		strcat(fullPathName,argv[i]);
 	    }
-            dmDisplayListParse(filePtr,macroBuffer,fullPathName,
+            dmDisplayListParse(filePtr,macroBuffer,fullPathName,(Widget)NULL,
 					(Boolean)False);
 	    fclose(filePtr);
         }
@@ -1889,7 +1555,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	  if (completeClientMessage) {
 	    filePtr = fopen(fullPathName,"r");
 	    if (filePtr != NULL) {
-	      dmDisplayListParse(filePtr,name,fullPathName,
+	      dmDisplayListParse(filePtr,name,fullPathName,(Widget)NULL,
 				(Boolean)False);
 	      fclose(filePtr);
 	    } else {
@@ -2357,4 +2023,6 @@ static void createMain()
   XtRealizeWidget(mainShell);
 
 }
+
+
 

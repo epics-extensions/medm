@@ -2,7 +2,11 @@
 # $Id$
 #
 # $Log$
-# Revision 1.2  1994/10/07 15:00:20  jba
+# Revision 1.3  1994/10/20 15:14:40  mda
+# Add support for "embedded MEDM" via libMedmInit() and libMedmImportDisplay()
+# functions, and rearranged MEDM code.
+#
+# Revision 1.2  1994/10/07  15:00:20  jba
 # Added xrtAuth rule
 #
 # Revision 1.1  1994/10/05  18:56:52  jba
@@ -20,17 +24,20 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
 USR_LDFLAGS = -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF)/lib -L$(X11_LIB)
 USR_LDLIBS = -lANLwidgets -lPrintUtils -lGraphX -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
 
-SRCS = ../actions.c ../caDM.c ../callbacks.c ../channelPalette.c ../colorPalette.c \
-	 ../createControllers.c ../createExtensions.c ../createMonitors.c \
+SRCS =	../actions.c ../caDM.c ../callbacks.c \
+	../channelPalette.c ../colorPalette.c \
+	../createControllers.c ../createExtensions.c ../createMonitors.c \
 	../createStatics.c ../display.c ../dmInit.c ../dummy.c \
 	../eventHandlers.c ../executeControllers.c ../executeExtensions.c \
-	../executeMonitors.c ../executeStatics.c ../help.c ../medm.c ../medmPixmap.c \
-	../objectPalette.c ../parseControllers.c ../parseExtensions.c ../parseMonitors.c \
+	../executeMonitors.c ../executeStatics.c ../help.c ../medm.c \
+	../medmPixmap.c  ../libMedmInit.c \
+	../objectPalette.c ../parseControllers.c ../parseExtensions.c \
+	../parseMonitors.c \
 	../parseStatics.c ../resourcePalette.c ../shared.c \
 	../updateMonitors.c ../utils.c ../widgetDM.c ../writeControllers.c \
 	../writeExtensions.c ../writeMonitors.c ../writeStatics.c ../xgif.c
 
-OBJS = actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
+OBJS =	actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
 	createControllers.o createExtensions.o createMonitors.o \
 	createStatics.o display.o dmInit.o dummy.o \
 	eventHandlers.o executeControllers.o executeExtensions.o \
@@ -40,6 +47,17 @@ OBJS = actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
 	shared.o updateMonitors.o utils.o widgetDM.o writeControllers.o \
 	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
 
+LIBOBJS = actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
+	createControllers.o createExtensions.o createMonitors.o \
+	createStatics.o display.o dmInit.o dummy.o \
+	eventHandlers.o executeControllers.o executeExtensions.o \
+	executeMonitors.o executeStatics.o help.o medmPixmap.o \
+	libMedmInit.o objectPalette.o parseControllers.o \
+	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
+	shared.o updateMonitors.o utils.o widgetDM.o writeControllers.o \
+	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
+
+LIBNAME = libMedm.a
 PROD = medm
 
 include $(EPICS)/config/RULES.Unix

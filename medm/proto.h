@@ -119,10 +119,13 @@ DlElement *handleTextCreate(int x0, int y0);
 DisplayInfo *createDisplay(void);
 
 /* dmInit.c */
-DisplayInfo *allocateDisplayInfo(void);
+Boolean libMedmImportDisplay(char *filename, char *macroBuffer, Widget parent);
+DisplayInfo *allocateDisplayInfo(Widget parent);
 void dmDisplayListParse(FILE *filePtr, char *argsString, char *fullPathName,
-	Boolean fromRelatedDisplayExecution);
+	Widget parent, Boolean fromRelatedDisplayExecution);
 void parseCompositeChildren(DisplayInfo *displayInfo, DlComposite *dlComposite);
+Widget createEditMenu(unsigned int menuType, Widget parent, char *name,
+	int postFromButton, DisplayInfo *displayInfo);
 
 /* eventHandlers.c */
 XtEventHandler popupMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
@@ -229,8 +232,6 @@ XtCallbackProc globalHelpCallback(Widget w, int helpIndex,
 
 /* medm.c */
 int main(int argc, char *argv[]);
-Widget createEditMenu(unsigned int menuType, Widget parent, char *name,
-	int postFromButton, DisplayInfo *displayInfo);
 
 /* medmPixmap.c */
 void medmInitializeImageCache(void);
@@ -425,9 +426,11 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 
 /* widgetDM.c */
 void medmInit(char *displayFontName);
+void libMedmInit(XtAppContext appContext, Widget passedInMainShell,
+	char *displayFont);
 void dmTerminateX(void);
 unsigned long getPixelFromColormapByString(Display *display, int screen,
-			Colormap cmap, char *colorString);
+	Colormap cmap, char *colorString);
 
 
 /* writeControllers.c */
