@@ -194,7 +194,7 @@ Widget createToggleButtons(Widget parent,
       po,numberOfButtons,stacking)];
     n = 0;
     XtSetArg(wargs[n],XmNshadowThickness,2); n++;
-    XtSetArg(wargs[n],XmNhighlightThickness,1); n++;
+    XtSetArg(wargs[n],XmNhighlightThickness,0); n++;
     XtSetArg(wargs[n],XmNrecomputeSize,False); n++;
     XtSetArg(wargs[n],XmNwidth,(Dimension)usedWidth); n++;
     XtSetArg(wargs[n],XmNheight,(Dimension)usedHeight); n++;
@@ -478,7 +478,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       choiceButtonUpdateValueCb,
       choiceButtonUpdateGraphicalInfoCb,
       (XtPointer) pcb);
-  /* put up white rectangle so that unconnected channels are obvious */
+  /* Put up white rectangle so that unconnected channels are obvious */
     drawWhiteRectangle(pcb->updateTask);
 
     return;
