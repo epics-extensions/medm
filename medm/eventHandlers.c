@@ -59,7 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 */
 
 #include "medm.h"
-#include <IntrinsicP.h>
+#include <X11/IntrinsicP.h>
 
 
 extern Widget resourceMW, resourceS;
@@ -1317,7 +1317,7 @@ void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
 /* destroy old widget */
 	  destroyElementWidget(cdi,widget);
 /* create new widget */
-	  (*ele->dmExecute)(cdi,ele->structure.file,FALSE);
+	  (*ele->dmExecute)((XtPointer)cdi,(XtPointer)ele->structure.file,FALSE);
      }
 
     }
@@ -1475,8 +1475,8 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 /* destroy old widget */
 	    destroyElementWidget(cdi,widget);
 /* create new widget */
-	    (*cdi->selectedElementsArray[i]->dmExecute)(cdi,
-	      cdi->selectedElementsArray[i]->structure.file,FALSE);
+	    (*cdi->selectedElementsArray[i]->dmExecute)((XtPointer) cdi,
+	      (XtPointer) cdi->selectedElementsArray[i]->structure.file,FALSE);
 	  }
 	}
        }
@@ -1518,14 +1518,14 @@ void handleRectangularCreates(
     if (!ELEMENT_HAS_WIDGET(elementType) && elementType != DL_TextUpdate) {
 /* create a basic attribute */
       element = createDlBasicAttribute(currentDisplayInfo);
-      (*element->dmExecute)(currentDisplayInfo,
-			element->structure.basicAttribute,FALSE);
+      (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.basicAttribute,FALSE);
 /* create a dynamic attribute if appropriate */
-      if (strlen(globalResourceBundle.chan) > 0 &&
+      if (strlen(globalResourceBundle.chan) > (size_t) 0 &&
         globalResourceBundle.vis != V_STATIC) {
         element = createDlDynamicAttribute(currentDisplayInfo);
-        (*element->dmExecute)(currentDisplayInfo,
-			element->structure.dynamicAttribute,FALSE);
+        (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.dynamicAttribute,FALSE);
       }
     }
 
@@ -1539,63 +1539,63 @@ void handleRectangularCreates(
 /* others are more straight-forward */
 	  case DL_Valuator:
 	    element = createDlValuator(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.valuator,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.valuator,FALSE);
 	    break;
 	  case DL_ChoiceButton:
 	    element = createDlChoiceButton(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.choiceButton,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.choiceButton,FALSE);
 	    break;
 	  case DL_MessageButton:
 	    element = createDlMessageButton(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.messageButton,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.messageButton,FALSE);
 	    break;
 	  case DL_TextEntry:
 	    element = createDlTextEntry(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.textEntry,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.textEntry,FALSE);
 	    break;
 	  case DL_Menu:
 	    element = createDlMenu(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.menu,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.menu,FALSE);
 	    break;
 	  case DL_Meter:
 	    element = createDlMeter(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.meter,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.meter,FALSE);
 	    break;
 	  case DL_TextUpdate:
 	    element = createDlTextUpdate(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.textUpdate,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.textUpdate,FALSE);
 	    break;
 	  case DL_Bar:
 	    element = createDlBar(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.bar,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.bar,FALSE);
 	    break;
 	  case DL_Indicator:
 	    element = createDlIndicator(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.indicator,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.indicator,FALSE);
 	    break;
           case DL_Byte:
             element = createDlByte(currentDisplayInfo);
-            (*element->dmExecute)(currentDisplayInfo,
-              element->structure.byte,FALSE);
+            (*element->dmExecute)((XtPointer) currentDisplayInfo,
+              (XtPointer) element->structure.byte,FALSE);
             break;
 	  case DL_StripChart:
 	    element = createDlStripChart(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.stripChart,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.stripChart,FALSE);
 	    break;
 	  case DL_CartesianPlot:
 	    element = createDlCartesianPlot(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.cartesianPlot,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.cartesianPlot,FALSE);
 	    break;
 #if 0
 	  case DL_SurfacePlot:
@@ -1606,36 +1606,36 @@ void handleRectangularCreates(
 #endif
 	  case DL_Rectangle:
 	    element = createDlRectangle(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.rectangle,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.rectangle,FALSE);
 	    break;
 	  case DL_Oval:
 	    element = createDlOval(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.oval,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.oval,FALSE);
 	    break;
 	  case DL_Arc:
 	    element = createDlArc(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.arc,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.arc,FALSE);
 	    break;
 	  case DL_RelatedDisplay:
 	    element = createDlRelatedDisplay(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.relatedDisplay,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.relatedDisplay,FALSE);
 	    break;
 	  case DL_ShellCommand:
 	    element = createDlShellCommand(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.shellCommand,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.shellCommand,FALSE);
 	    break;
 	  case DL_Text:
 	  /* for rectangular create of text, clear the field *
 	   *  (like direct typing style entry)		     */
 	    globalResourceBundle.textix[0] = '\0';
 	    element = createDlText(currentDisplayInfo);
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.text,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			(XtPointer) element->structure.text,FALSE);
 	    break;
 
 /*** (MDA) ***

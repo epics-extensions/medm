@@ -191,7 +191,7 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
 /* if there is an external colormap file specification, parse/execute it now */
 
 
-  if (strlen(dlDisplay->cmap) > 1)  {
+  if (strlen(dlDisplay->cmap) > (size_t)1)  {
 
       dlColormap = parseAndExtractExternalColormap(displayInfo,
 				dlDisplay->cmap);
@@ -577,7 +577,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 	(XtPointer)relatedDisplayPixmap);
 
   for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-     if (strlen(dlRelatedDisplay->display[i].name) > 1) {
+     if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
 	xmString = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
         XtSetArg(args[3], XmNlabelString,xmString);
 	name = STRDUP(dlRelatedDisplay->display[i].name);
@@ -736,7 +736,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
 	(XtPointer)shellCommandPixmap);
 
   for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
-     if (strlen(dlShellCommand->command[i].command) > 0) {
+     if (strlen(dlShellCommand->command[i].command) > (size_t)0) {
 	xmString = XmStringCreateSimple(dlShellCommand->command[i].label);
         XtSetArg(args[3], XmNlabelString,xmString);
 	/* set the displayInfo as the button's userData */

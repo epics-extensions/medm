@@ -949,7 +949,7 @@ void popupValuatorKeyboardEntry(
     if (pv) {
       pd = pv->record;
       channel = pv->dlValuator->control.ctrl;
-      if ((pd->connected) && pd->writeAccess && strlen(channel) > 0) {
+      if ((pd->connected) && pd->writeAccess && strlen(channel) > (size_t)0) {
         /* create selection box/prompt dialog */
         strcpy(valueLabel,"VALUE: ");
         strcat(valueLabel,channel);

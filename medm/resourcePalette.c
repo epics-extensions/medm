@@ -1025,7 +1025,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
         and CLRMOD must be visible */
      case CHAN_RC:
 	strcpy(globalResourceBundle.chan,stringValue);
-	if (strlen(stringValue) > 0) {
+	if (strlen(stringValue) > (size_t) 0) {
           XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
           XtSetSensitive(resourceEntryRC[VIS_RC],True);
 	} else {
@@ -1086,7 +1086,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
 	break;
      case ERASE_RC:
 	strcpy(globalResourceBundle.erase,stringValue);
-        if (strlen(stringValue) > 0) {
+        if (strlen(stringValue) > (size_t) 0) {
           XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
         } else {
           XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],False);

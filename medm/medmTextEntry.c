@@ -428,12 +428,12 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     textValue = XmTextFieldGetString(w);
     switch (pd->dataType) {
       case DBF_STRING:
-        if (strlen(textValue) >= MAX_STRING_SIZE) 
+        if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
           textValue[MAX_STRING_SIZE-1] = '\0';
         medmSendString(pte->record,textValue);
         break;
       default:
-        if ((strlen(textValue) > 2) && (textValue[0] == '0')
+        if ((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
           && (textValue[1] == 'x' || textValue[1] == 'X')) {
           long longValue;
           longValue = strtol(textValue,NULL,16);

@@ -853,7 +853,8 @@ static void stripChartConfig(StripChart *psc) {
       int textWidth;
       char *label;
 
-      if ((dlStripChart->plotcom.xlabel) && (strlen(dlStripChart->plotcom.xlabel) > 0)) {
+      if ((dlStripChart->plotcom.xlabel)
+           && (strlen(dlStripChart->plotcom.xlabel) > (size_t) 0)) {
         label = dlStripChart->plotcom.xlabel;
       } else {
         switch (dlStripChart->units) {

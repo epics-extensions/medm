@@ -1882,7 +1882,7 @@ void updateElementFromGlobalResourceBundle(
        strcpy(dyn->structure.dynamicAttribute->attr.param.chan,
 		globalResourceBundle.chan);
      } else {
-       if (strlen(globalResourceBundle.chan) > 0) {
+       if (strlen(globalResourceBundle.chan) > (size_t) 0) {
      /* didn't find a dynamic attribute, but need one since a channel
 	has been specified for dynamics */
 	dyn = createDlDynamicAttribute(currentDisplayInfo);
@@ -2278,8 +2278,8 @@ void updateElementFromGlobalResourceBundle(
         if (widget != NULL) {
 	   if (widget != currentDisplayInfo->drawingArea) {
 		destroyElementWidget(currentDisplayInfo,widget);
-		(*elementPtr->dmExecute)(currentDisplayInfo,
-				elementPtr->structure.file,FALSE);
+		(*elementPtr->dmExecute)((XtPointer) currentDisplayInfo,
+				(XtPointer) elementPtr->structure.file,FALSE);
 	   }
         }
     }

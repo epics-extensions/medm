@@ -626,7 +626,7 @@ int caAdd(char *name, Record *pr) {
   pCh->size = 0;
   pCh->pr = pr;
   pCh->previouslyConnected = False;
-  if (strlen(name) > 0) {
+  if (strlen(name) > (size_t)0) {
     status = ca_build_and_connect(name,TYPENOTCONN,0,
            &(pCh->chid),NULL,medmConnectEventCb,pCh);
   } else {

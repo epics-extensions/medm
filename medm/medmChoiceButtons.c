@@ -187,7 +187,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
   }
   maxChars = 0;
   for (i = 0; i <= pd->hopr; i++) {
-    maxChars = MAX(maxChars,strlen(pd->stateStrings[i]));
+    maxChars = MAX((size_t) maxChars,strlen(pd->stateStrings[i]));
   }
 
   fg = (pCB->clrmod == ALARM ? alarmColorPixel[pd->severity] :

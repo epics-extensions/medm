@@ -78,7 +78,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 /* for X property cleanup */
 #include <signal.h>
 #include <Xm/MwmUtil.h>
-#include <IntrinsicP.h>
+#include <X11/IntrinsicP.h>
 
 #define HOT_SPOT_WIDTH 24
 
@@ -172,6 +172,9 @@ Widget mainFilePDM, mainHelpPDM;
 void medmExit();
 Boolean medmInitWorkProc(XtPointer cd);
 
+#ifdef __TED__
+void GetWorkSpaceList(Widget w);
+#endif
 static menuEntry_t graphicsObjectMenu[] = {
   { "Text",        &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
     objectMenuCallback, (XtPointer) DL_Text,  NULL},
@@ -685,7 +688,7 @@ request_t * requestCreate(int argc, char *argv[]) {
     /* check the next argument, if doesn't match the suffix, continue */
     fileStr = argv[i];
     if (strstr(fileStr,DISPLAY_FILE_ASCII_SUFFIX) == NULL) continue;
-    if (strlen(fileStr) > FULLPATHNAME_SIZE) continue;
+    if (strlen(fileStr) > (size_t) FULLPATHNAME_SIZE) continue;
 
     /* mark the fullPathName as an empty string */
     fullPathName[0] = '\0';
@@ -696,7 +699,7 @@ request_t * requestCreate(int argc, char *argv[]) {
         strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
       } else {
         /* insert the path before the file name */
-        if (strlen(currentDirectoryName)+strlen(fileStr)+1 < FULLPATHNAME_SIZE) {
+        if (strlen(currentDirectoryName)+strlen(fileStr)+1 < (size_t) FULLPATHNAME_SIZE) {
           strcpy(fullPathName,currentDirectoryName);
           strcat(fullPathName,"/");
           strcat(fullPathName,fileStr);
@@ -712,7 +715,7 @@ request_t * requestCreate(int argc, char *argv[]) {
       if (dir != NULL) {
         startPos = 0;
         while (extractStringBetweenColons(dir,name,startPos,&startPos)) {
-          if (strlen(name)+strlen(fileStr)+1 < FULLPATHNAME_SIZE) {
+          if (strlen(name)+strlen(fileStr)+1 < (size_t) FULLPATHNAME_SIZE) {
             strcpy(fullPathName,name);
             strcat(fullPathName,"/");
             strcat(fullPathName,fileStr);
@@ -2242,6 +2245,9 @@ main(int argc, char *argv[])
  * now go into event loop - formerly XtAppMainLoop(appContext);
  */
 
+#ifdef __TED__
+  GetWorkSpaceList(mainMW);
+#endif
   while (True) {
     XtAppNextEvent(appContext,&event);
     switch (event.type) {

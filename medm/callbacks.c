@@ -112,7 +112,7 @@ static void shellCommandCallback(
   if (command != NULL) {
     performMacroSubstitutions(displayInfo,command,processedCommand,
 					2*MAX_TOKEN_LENGTH);
-    if (strlen(processedCommand) > 0) system(processedCommand);
+    if (strlen(processedCommand) > (size_t) 0) system(processedCommand);
 
     XtFree(command);
   }
@@ -370,7 +370,7 @@ void dmExecuteShellCommand(
 	performMacroSubstitutions(displayInfo,
 		shellCommand,processedShellCommand,
 		2*MAX_TOKEN_LENGTH);
-	if (strlen(processedShellCommand) > 0) system(processedShellCommand);
+	if (strlen(processedShellCommand) > (size_t) 0) system(processedShellCommand);
 	shellCommand[0] = '\0';
 
     } else {
@@ -393,7 +393,7 @@ void dmExecuteShellCommand(
     performMacroSubstitutions(displayInfo,
 		shellCommand,processedShellCommand,
 		2*MAX_TOKEN_LENGTH);
-    if (strlen(processedShellCommand) > 0) system(processedShellCommand);
+    if (strlen(processedShellCommand) > (size_t) 0) system(processedShellCommand);
     shellCommand[0] = '\0';
 
   }

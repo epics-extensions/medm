@@ -68,8 +68,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 #include <string.h>
 #include <ctype.h>
-#include <IntrinsicP.h>
+#include <X11/IntrinsicP.h>
 #include "medm.h"
+
+#ifdef  __TED__
+#include <Dt/Wsm.h>
+#endif
 
 #define MAX_DIR_LENGTH 512		/* max. length of directory name */
 
@@ -435,7 +439,8 @@ void dmTraverseDisplayList(
   while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-	(*element->dmExecute)(displayInfo,element->structure.file,FALSE);
+	(*element->dmExecute)((XtPointer) displayInfo,
+                              (XtPointer) element->structure.file,FALSE);
 	element = element->next;
   }
 
@@ -471,7 +476,8 @@ void dmTraverseAllDisplayLists()
     while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-	(*element->dmExecute)(displayInfo,element->structure.file,FALSE);
+	(*element->dmExecute)((XtPointer) displayInfo,
+                              (XtPointer) element->structure.file,FALSE);
 	element = element->next;
     }
 
@@ -510,7 +516,8 @@ void traverseCompositeNonWidgets(DisplayInfo *displayInfo,
 	/* special handling for composite - don't execute children wi/widgets */
 	     traverseCompositeNonWidgets(displayInfo,child);
 	   } else {
-	     (*child->dmExecute)(displayInfo,child->structure.file,FALSE);
+	     (*child->dmExecute)((XtPointer) displayInfo,
+                                 (XtPointer) child->structure.file,FALSE);
 	   }
      }
      child = child->next;
@@ -550,7 +557,8 @@ void dmTraverseNonWidgetsInDisplayList(
 	/* special handling for composite - don't execute children wi/widgets */
 	     traverseCompositeNonWidgets(displayInfo,element);
 	   } else {
-	     (*element->dmExecute)(displayInfo,element->structure.file,FALSE);
+	     (*element->dmExecute)((XtPointer) displayInfo,
+                                   (XtPointer) element->structure.file,FALSE);
 	   }
 	}
 	element = element->next;
@@ -723,7 +731,8 @@ void dmWriteDisplayList(
  *  internal
  */
      if (element->type == DL_Display) {
-        (*element->dmWrite)(stream,element->structure.display,0);
+        (*element->dmWrite)((XtPointer) stream,
+                            (XtPointer) element->structure.display,0);
 /* go find colormap element, in case it's not immediately following */
 	 cmapElement = element->next;
 	 while (cmapElement != NULL && cmapElement->type != DL_Colormap) {
@@ -733,7 +742,8 @@ void dmWriteDisplayList(
 	    writeDlColormap(stream,&defaultDlColormap,0);
      } else {
        if (element->type != DL_Colormap)
-		(*element->dmWrite)(stream,element->structure.file,0);
+		(*element->dmWrite)((XtPointer) stream,
+                                    (XtPointer) element->structure.file,0);
      }
 
      element = element->next;
@@ -2683,7 +2693,8 @@ void copyElementsIntoDisplay()
       }
 
 /* execute the structure */
-      (elementPtr->dmExecute)(cdi,structurePtr.rectangle,FALSE);
+      (elementPtr->dmExecute)((XtPointer) cdi,
+                              (XtPointer) structurePtr.rectangle,FALSE);
 
 
     }
@@ -3454,13 +3465,13 @@ NameValueTable *generateNameValueTable(
      if (name != NULL && value != NULL) {
       /* found legitimate name/value pair, put in table */
       j = 0;
-      for (i = 0; i < strlen(name); i++) {
+      for (i = 0; i < (int) strlen(name); i++) {
 	if (!isspace(name[i]))
 	   nameEntry[j++] =  name[i];
       }
       nameEntry[j] = '\0';
       j = 0;
-      for (i = 0; i < strlen(value); i++) {
+      for (i = 0; i < (int) strlen(value); i++) {
 	if (!isspace(value[i]))
 	   valueEntry[j++] =  value[i];
       }
@@ -3547,7 +3558,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 
 
   i = 0; j = 0; k = 0;
-  if (inputString != NULL && strlen(inputString) > 0) {
+  if (inputString != NULL && strlen(inputString) > (size_t)0) {
     while (inputString[i] != '\0' && j < sizeOfOutputString-1) {
 
       if ( inputString[i] != '$') {
@@ -3840,3 +3851,30 @@ void closeDisplay(Widget w) {
   dmRemoveDisplayInfo(newDisplayInfo);
 
 }
+
+#ifdef __TED__
+void GetWorkSpaceList(Widget w) {
+  Atom *paWs;
+  char *pchWs;
+  DtWsmWorkspaceInfo *pWsInfo;
+  unsigned long numWorkspaces;
+
+  if (DtWsmGetWorkspaceList(XtDisplay(w),
+                             XRootWindowOfScreen(XtScreen(w)),
+                             &paWs, (int *)&numWorkspaces) == Success)
+  {
+     int i;
+     for (i=0; i<numWorkspaces; i++) {
+       DtWsmGetWorkspaceInfo(XtDisplay(w),
+                              XRootWindowOfScreen(XtScreen(w)),
+                              paWs[i],
+                              &pWsInfo);
+       pchWs = (char *) XmGetAtomName (XtDisplay(w),
+                                       pWsInfo->workspace);
+       printf ("workspace %d : %s\n",pchWs);
+     }
+  }
+}
+#endif
+      
+                     

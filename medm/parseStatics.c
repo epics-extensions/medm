@@ -154,7 +154,7 @@ void parseDisplay(
 /* parse separate display list to get and use that colormap */
 			getToken(displayInfo,token);
 			getToken(displayInfo,token);
-			if (strlen(token) > 0) {
+			if (strlen(token) > (size_t) 0) {
 			    strcpy(dlDisplay->cmap,token);
 			}
 		} else if (!strcmp(token,"bclr")) {
@@ -1094,7 +1094,7 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttrParam *dynAttr)
 		if (!strcmp(token,"chan")) {
 			getToken(displayInfo,token);
 			getToken(displayInfo,token);
-			if (strlen(token) > 0) {
+			if (strlen(token) > (size_t) 0) {
 			    strcpy(dynAttr->chan,token);
 			}
 		}
@@ -1331,13 +1331,13 @@ TOKEN getToken(	/* get and classify token */
 			   value = lookupNameValue(displayInfo->nameValueTable,
 				displayInfo->numNameValues,macro);
 			   if (value != NULL) {
-			      for (j = 0; j < strlen(value); j++) {
+			      for (j = 0; j < (int) strlen(value); j++) {
 				*w++ = value[j];
 			      }
 			   } else {
 			      *w++ = '$';
 			      *w++ = '(';
-			      for (j = 0; j < strlen(macro); j++) {
+			      for (j = 0; j < (int) strlen(macro); j++) {
 				*w++ = macro[j];
 			      }
 			      *w++ = ')';

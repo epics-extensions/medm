@@ -149,8 +149,9 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
 					&(fullPathName[dirLength]));
 			    globalResourceBundle.imageType = GIF_IMAGE;
 			    element = createDlImage(currentDisplayInfo);
-			    (*element->dmExecute)(currentDisplayInfo,
-						element->structure.image,FALSE);
+			    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+						  (XtPointer) element->structure.image,
+                                                  FALSE);
 
 			    /* now select this element for resource edits */
 			    highlightAndSetSelectedElements(NULL,0,0);
@@ -479,14 +480,16 @@ DlElement *handlePolylineCreate(
 
 /* create a basic attribute */
   element = createDlBasicAttribute(currentDisplayInfo);
-  (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.basicAttribute,FALSE);
+  (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                        (XtPointer) element->structure.basicAttribute,
+                                    FALSE);
 /* create a dynamic attribute if appropriate */
-  if (strlen(globalResourceBundle.chan) > 0 &&
+  if (strlen(globalResourceBundle.chan) > (size_t) 0 &&
       globalResourceBundle.vis != V_STATIC) {
     element = createDlDynamicAttribute(currentDisplayInfo);
-    (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.dynamicAttribute,FALSE);
+    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                          (XtPointer) element->structure.dynamicAttribute,
+                                      FALSE);
   }
 
 
@@ -587,8 +590,9 @@ DlElement *handlePolylineCreate(
 	  /* update nPoints and assign the points array to the polyline */
 	    element->structure.polyline->nPoints = dlPolyline.nPoints;
 	    element->structure.polyline->points = dlPolyline.points;
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.polyline,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			          (XtPointer) element->structure.polyline,
+                                  FALSE);
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 			XtWindow(currentDisplayInfo->drawingArea),
 			currentDisplayInfo->pixmapGC,
@@ -754,14 +758,16 @@ DlElement *handlePolygonCreate(
 
 /* create a basic attribute */
   element = createDlBasicAttribute(currentDisplayInfo);
-  (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.basicAttribute,FALSE);
+  (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                        (XtPointer) element->structure.basicAttribute,
+                                    FALSE);
 /* create a dynamic attribute if appropriate */
-  if (strlen(globalResourceBundle.chan) > 0 &&
+  if (strlen(globalResourceBundle.chan) > (size_t) 0 &&
       globalResourceBundle.vis != V_STATIC) {
     element = createDlDynamicAttribute(currentDisplayInfo);
-    (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.dynamicAttribute,FALSE);
+    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                          (XtPointer) element->structure.dynamicAttribute,
+                                      FALSE);
   }
 
 
@@ -869,8 +875,9 @@ DlElement *handlePolygonCreate(
 	  /* update nPoints and assign the points array to the polygon */
 	    element->structure.polygon->nPoints = dlPolygon.nPoints;
 	    element->structure.polygon->points = dlPolygon.points;
-	    (*element->dmExecute)(currentDisplayInfo,
-			element->structure.polygon,FALSE);
+	    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			          (XtPointer) element->structure.polygon,
+                                  FALSE);
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 			XtWindow(currentDisplayInfo->drawingArea),
 			currentDisplayInfo->pixmapGC,

@@ -231,14 +231,16 @@ DlElement *handleTextCreate(
 
 /* create a basic attribute */
   element = createDlBasicAttribute(currentDisplayInfo);
-  (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.basicAttribute,FALSE);
+  (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                        (XtPointer) element->structure.basicAttribute,
+                        FALSE);
 /* create a dynamic attribute if appropriate */
-  if (strlen(globalResourceBundle.chan) > 0 &&
+  if (strlen(globalResourceBundle.chan) > (size_t) 0 &&
       globalResourceBundle.vis != V_STATIC) {
     element = createDlDynamicAttribute(currentDisplayInfo);
-    (*element->dmExecute)(currentDisplayInfo,
-                        element->structure.dynamicAttribute,FALSE);
+    (*element->dmExecute)((XtPointer) currentDisplayInfo,
+                          (XtPointer) element->structure.dynamicAttribute,
+                                      FALSE);
   }
 
 
@@ -290,8 +292,9 @@ DlElement *handleTextCreate(
 	  strcpy(globalResourceBundle.textix,dlText.textix);
 	  globalResourceBundle.width = dlText.object.width;
 	  element = createDlText(currentDisplayInfo);
-	  (*element->dmExecute)(currentDisplayInfo,
-			element->structure.text,FALSE);
+	  (*element->dmExecute)((XtPointer) currentDisplayInfo,
+			        (XtPointer) element->structure.text,
+                                            FALSE);
 	  XtRemoveTimeOut(intervalId);
 	  XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
 			XtWindow(currentDisplayInfo->drawingArea),

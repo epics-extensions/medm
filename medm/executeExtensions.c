@@ -125,7 +125,9 @@ void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
     while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-        (*element->dmExecute)(displayInfo,element->structure.file,FALSE);
+        (*element->dmExecute)((XtPointer) displayInfo,
+                              (XtPointer) element->structure.file,
+                                          FALSE);
         element = element->next;
     }
 
@@ -140,8 +142,9 @@ void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
       while (element != NULL) {
 /* type in union is unimportant: just trying to get to element structure */
 /* third argument is for statics acting as dynamics (for forced display) */
-        (*element->dmExecute)(displayInfo,element->structure.file,
-			forcedDisplayToWindow);
+        (*element->dmExecute)((XtPointer) displayInfo,
+                              (XtPointer) element->structure.file,
+			                  forcedDisplayToWindow);
         element = element->next;
       }
 

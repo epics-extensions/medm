@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 */
 
 #include "medm.h"
-#include <IntrinsicP.h>
+#include <X11/IntrinsicP.h>
 
 typedef struct _Menu {
   Widget      widget;

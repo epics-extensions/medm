@@ -116,7 +116,8 @@ void writeDlCompositeChildren(
 
   element = ((DlElement *)dlComposite->dlElementListHead)->next;
   while (element != NULL) {		/* any union member is okay here */
-     (*element->dmWrite)(stream,element->structure.rectangle,level+1);
+     (*element->dmWrite)((XtPointer) stream,
+                         (XtPointer) element->structure.rectangle,level+1);
      element = element->next;
   }
 
