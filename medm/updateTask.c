@@ -126,7 +126,7 @@ static UpdateTask nullTask = {
     (struct _DisplayInfo *)0,
     0,
     {0,0,0,0},     /* Rectangle */
-    EXTENDED,
+    UNDEFINED,
     False,
     (struct _UpdateTask *)0,
     (struct _UpdateTask *)0,
@@ -378,7 +378,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	    pT->rectangle.width  = 0;
 	    pT->rectangle.height = 0;
 	}
-	pT->overlapType = EXTENDED;  /* Default is worst case */
+	pT->overlapType = UNDEFINED;
 	pT->disabled = False;        /* Default is not disabled */
 
 	displayInfo->updateTaskListTail->next = pT;
@@ -633,7 +633,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     DlElement *pE, *pE1;
     OverlapType newOverlapType;
     XRectangle clipBox;
-    int allDone, pass;
+    int pass;
    
   /* Define the ending time for this proc */
     endTime = medmTime() + WORKINTERVAL; 
@@ -784,37 +784,26 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	}
 	XUnionRectWithRegion(&t->rectangle, region, region);
 
-      /* Extend the region if necessary */
-	allDone = 0;
-      /* Keep looping until we find all affected regions */
-	if(t->overlapType == EXTENDED) {
-	    while(!allDone) {
-		allDone = 1;
-		newOverlapType = NO_OVERLAP;
-		t1 = t->displayInfo->updateTaskListHead.next;
-		while(t1) {
-		    pE1 = getElementFromUpdateTask(t1);
-		    if(pE1->updateType != WIDGET && t1 != t) {
-			int status = XRectInRegion(region,
-			  t1->rectangle.x, t1->rectangle.y,
-			  t1->rectangle.width, t1->rectangle.height);
-			switch(status) {
-			case RectangleIn:
-			    if(newOverlapType < CONTAINED) newOverlapType = CONTAINED;
-			    break;
-			case RectanglePart:
-			    if(newOverlapType < EXTENDED) newOverlapType = EXTENDED;
-#if 0			    
-			    if(!t1->disabled && t1->executeRequestsPendingCount) {
-				XUnionRectWithRegion(&t1->rectangle, region, region);
-				allDone = 0;
-			    }
-#endif			    
-			    break;
-			}
+      /* Determine the overlapType if not done.  Assumes no new tasks
+         will be created */
+	if(t->overlapType == UNDEFINED) {
+	    newOverlapType = NO_OVERLAP;
+	    t1 = t->displayInfo->updateTaskListHead.next;
+	    while(t1) {
+		pE1 = getElementFromUpdateTask(t1);
+		if(pE1->updateType != WIDGET && t1 != t) {
+		    int status = XRectInRegion(region,
+		      t1->rectangle.x, t1->rectangle.y,
+		      t1->rectangle.width, t1->rectangle.height);
+		    switch(status) {
+		    case RectangleIn:
+		    case RectanglePart:
+			if(newOverlapType < OVERLAP) newOverlapType = OVERLAP;
+			break;
 		    }
-		    t1 = t1->next;
+		    if(newOverlapType == OVERLAP) break;
 		}
+		t1 = t1->next;
 	    }
 	    t->overlapType = newOverlapType;
 	}
@@ -845,8 +834,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t->executeTask(t->clientData);
 	    }
 	    break;
-	case CONTAINED:
-	case EXTENDED:
+	case OVERLAP:
 	  /* Loop over all tasks in region */
 #if DEBUG_COMPOSITE
 	    print("Before loop over all tasks in region\n");
@@ -1133,6 +1121,7 @@ void updateTaskRepaintRect(DisplayInfo *displayInfo, XRectangle *clipRect,
       usedRect.x, usedRect.y);
 	
   /* Do executeTask for each updateTask in the region for this display */
+    updateInProgress = True;
     t = displayInfo->updateTaskListHead.next;
     if(clipRect) {
       /* Clipping */
@@ -1157,6 +1146,7 @@ void updateTaskRepaintRect(DisplayInfo *displayInfo, XRectangle *clipRect,
 	    t = t->next;
 	}
     }
+    updateInProgress = False;
 
   /* Copy the updatePixmap to the window */
     XCopyArea(display, displayInfo->updatePixmap,
@@ -1188,6 +1178,7 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region region)
       clipRect.x, clipRect.y);
 	
   /* Do executeTask for each updateTask in the region for this display */
+    updateInProgress = True;
     t = displayInfo->updateTaskListHead.next;
     while(t) {
 	if(!t->disabled && XRectInRegion(region,
@@ -1199,6 +1190,7 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region region)
 	}
 	t = t->next;
     }
+    updateInProgress = False;
 
   /* Copy the updatePixmap to the window */
     XCopyArea(display, displayInfo->updatePixmap,
@@ -1285,7 +1277,7 @@ static void updateTaskRedrawPixmap(DisplayInfo *displayInfo,
 		print("    execute\n");
 #endif	    
 		pE->run->execute(displayInfo, pE);
-#if DEBUG_REDRAW
+#if DEBUG_REDRAW && 0
     print("Dumping pixmap\n");
     {
 	char string[80];

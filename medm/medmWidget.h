@@ -231,7 +231,7 @@ typedef enum {DISPLAY_SHELL, OTHER_SHELL} ShellType;
 typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 
 /* Overlap types for update logic */
-typedef enum {NO_OVERLAP=0, CONTAINED=1, EXTENDED=2} OverlapType;
+typedef enum {UNDEFINED=0, NO_OVERLAP, OVERLAP} OverlapType;
 
 /* Composite update states for update logic */
 typedef enum {COMPOSITE_NEW=0,
