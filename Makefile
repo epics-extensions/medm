@@ -4,25 +4,12 @@ TOP = ../..
 ifneq ($(wildcard $(TOP)/config)x,x)
   # New Makefile.Host config file location
   include $(TOP)/config/CONFIG_EXTENSIONS
-
-  ifeq ($(HOST_ARCH),WIN32)
-   DIRS = xc medm
-  else
-   DIRS = printUtils xc medm
-  endif
-
+  DIRS = printUtils xc medm
   include $(TOP)/config/RULES_DIRS
 else
   # Old Makefile.Unix config file location
   EPICS=../../..
   include $(EPICS)/config/CONFIG_EXTENSIONS
-
-  ifeq ($(HOST_ARCH),WIN32)
-   DIRS = xc medm
-  else
-   DIRS = printUtils xc medm
-  endif
-
+  DIRS = printUtils xc medm
   include $(EPICS)/config/RULES_DIRS
 endif
-
