@@ -718,18 +718,21 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #ifdef WIN32
       /* WIN32 opens files in text mode by default and then throws out CRLF */
 	fp=fopen(fname,"rb");
-#if DEBUG_OPEN
-	print("loadGIF: fopen(1): fp=%x |%s|\n",fp,fname);
-#endif	
 #else
 	fp=fopen(fname,"r");
 #endif
+#if DEBUG_OPEN
+	print("loadGIF: fopen(1): fp=%x |%s|\n",fp,fname);
+#endif	
     }
 
   /* If not found and the name is a full path then can do no more */
     if(fp == NULL && isPath(fname)) {
 	medmPrintf(1,"\nloadGIF: Cannot open file:\n"
 	  "  %s\n",fname);
+#if DEBUG_OPEN
+	print("loadGIF: fopen(isPath): fp=%x |%s|\n",fp,fname);
+#endif	
 	goto CLEANUP;
     }
 
@@ -748,12 +751,12 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #ifdef WIN32
 	      /* WIN32 opens files in text mode by default and then throws out CRLF */
 		fp=fopen(fullPathName,"rb");
-#if DEBUG_OPEN
-		print("loadGIF: fopen(2): fp=%x |%s|\n",fp,fullPathName);
-#endif	
 #else
 		fp=fopen(fullPathName,"r");
 #endif
+#if DEBUG_OPEN
+		print("loadGIF: fopen(2): fp=%x |%s|\n",fp,fullPathName);
+#endif	
 	    }
 	}
     }
@@ -771,12 +774,12 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #ifdef WIN32
 	      /* WIN32 opens files in text mode by default and then throws out CRLF */
 		fp=fopen(fullPathName,"rb");
-#if DEBUG_OPEN
-	print("loadGIF: fopen(3): fp=%x |%s|\n",fp,fullPathName);
-#endif	
 #else
 		fp=fopen(fullPathName,"r");
 #endif
+#if DEBUG_OPEN
+	print("loadGIF: fopen(3): fp=%x |%s|\n",fp,fullPathName);
+#endif	
 	    }
 	}
     }
