@@ -68,6 +68,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_GIF 0
+#define DEBUG_CODES 0
 
 /* include files */
 #include <string.h>
@@ -361,7 +362,7 @@ void resizeGIF(DlImage *dlImage)
 		ximag=(Byte *)malloc(w*h);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,0);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,gif->eWIDE);
 		
 		if(!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -392,7 +393,7 @@ void resizeGIF(DlImage *dlImage)
 		ximag=(Byte *)malloc(w*h*bytesPerPixel);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,0);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,gif->eWIDE);
 		
 		if(!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -727,7 +728,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     } else {
       /* No global colormap in GIF file */
-        medmPrintf(0,"\nloadGIF:  No global colortable in %s."
+        medmPrintf(0,"\nloadGIF:  No global color table in %s."
 	  "  Making one.\n",fname);
         if(!gif->numcols) gif->numcols=256;
         for (i=0; i < gif->numcols; i++) gif->cols[i]=(unsigned long)i;
@@ -782,6 +783,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     TransparentColorFlag=0;
     TransparentIndex=0;
     DelayTime=0;
+    DisposalMethod=0;
     while(!done && ptr < eof) {
 	ch=NEXTBYTE;
 	switch(ch) {
@@ -1103,6 +1105,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	medmPrintf(1,"\nparseGIFImage: Cannot currently handle local color table."
 	  "  Using global table.\n"
 	  "  %s\n",fname);
+      /* Skip over it */
 	ptr+=3*LocalColorTableEntries;
     }
 
@@ -1123,11 +1126,10 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
     EOFCode=ClearCode + 1;
     FreeCode=FirstFree=ClearCode + 2;
     
-  /* The GIF spec has it that the code size is the code size used to
-   * compute the above values is the code size given in the file, but the
-   * code size used in compression/decompression is the code size given in
-   * the file plus one. (thus the ++).
-   */
+  /* The GIF spec has it that the code size used to compute the above
+   * values is the code size given in the file, but the code size used
+   * in compression/decompression is the code size given in the file
+   * plus one. (thus the ++).  */
     CodeSize++;
     InitCodeSize=CodeSize;
     MaxCode=(1 << CodeSize);
@@ -1151,6 +1153,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	if((Raster - ptr1) > filesize){
 	    medmPrintf(1,"\nparseGIFImage: "
 	      "Trying to read past end of file for %s\n",fname);
+	    return(False);
 	}
     } while(ch1);     /* Continue until block terminator */
 
@@ -1170,7 +1173,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
 	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,32,0);
+	  (char*)Image,Width,Height,32,Width);
         break;
     case 24:
 	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
@@ -1191,7 +1194,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
 	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,32,0);
+	  (char*)Image,Width,Height,32,Width);
         break;
     }
     if(!CURIMAGE(gif)) {
@@ -1522,12 +1525,12 @@ static int readCode()
     RawCode=Raster[ByteOffset]+(0x100*Raster[ByteOffset+1]);
     if(CodeSize >= 8)
       RawCode+=(0x10000*Raster[ByteOffset+2]);
-#if 0
+#if DEBUG_CODES
     print("readCode: XC=%d YC=%d BitOffset=%d ByteOffset=%d Rawcode=%x",
       XC,YC,BitOffset,ByteOffset,RawCode);
 #endif    
     RawCode>>=(BitOffset%8);
-#if 0
+#if DEBUG_CODES
     print("->%x ReadMask=%x RawCode&ReadMask=%x\n",
       RawCode,ReadMask,RawCode&ReadMask);
 #endif    

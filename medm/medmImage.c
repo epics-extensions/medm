@@ -433,7 +433,7 @@ DlElement* handleImageCreate()
 {
     DlElement *dlElement = NULL;
     XEvent event;
-    int response = 0;
+    static int response = 0;     /* Keep it off the stack */
     
     if(!(dlElement = createDlImage(NULL))) return dlElement;
 
