@@ -240,6 +240,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtPopup(shellCommandS,XtGrabNone);
 	break;
     case CPDATA_RC:
+#ifdef XRTGRAPH	
 	if (!cartesianPlotS) {
 	    cartesianPlotS = createCartesianPlotDataDialog(w);
 	}
@@ -247,6 +248,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	updateCartesianPlotDataDialog();
 	XtManageChild(cpForm);
 	XtPopup(cartesianPlotS,XtGrabNone);
+#endif     /* #ifdef XRTGRAPH */
 	break;
     case SCDATA_RC:
 	if (!stripChartS) {
@@ -258,6 +260,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtPopup(stripChartS,XtGrabNone);
 	break;
     case CPAXIS_RC:
+#ifdef XRTGRAPH
 	if (!cartesianPlotAxisS) {
 	    cartesianPlotAxisS = createCartesianPlotAxisDialog(w);
 	}
@@ -267,6 +270,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  medmMarkDisplayBeingEdited(cdi);
 	XtManageChild(cpAxisForm);
 	XtPopup(cartesianPlotAxisS,XtGrabNone);
+#endif     /* #ifdef XRTGRAPH */
 	break;
     default:
 	medmPrintf(1,"\npushButtonActivate: Invalid type = %d\n",rcType);
@@ -383,6 +387,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 
+#ifdef XRTGRAPH
 /*
  * Set Cartesian Plot Axis attributes
  * (complex - has to handle both EDIT and EXECUTE time interactions)
@@ -626,6 +631,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	break;
     }
 }
+#endif     /* #ifdef XRTGRAPH */
 
 #ifdef __cplusplus
 static void colorSelectCallback(Widget, XtPointer cd, XtPointer)
@@ -1085,6 +1091,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
+#ifdef XRTGRAPH
 #ifdef __cplusplus
 void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
 #else
@@ -1251,6 +1258,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     }
 }
+#endif     /* #ifdef XRTGRAPH */
 
 #ifdef __cplusplus
 void textFieldLosingFocusCallback(Widget, XtPointer cd, XtPointer)
@@ -1360,6 +1368,7 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     XmTextFieldSetString(resourceEntryElement[rcType],newString);
 }
 
+#ifdef XRTGRAPH
 #ifdef __cplusplus
 void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
 #else
@@ -1422,6 +1431,7 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
       XmTextFieldSetString(w,string);
     XtFree(currentString);
 }
+#endif     /* #ifdef XRTGRAPH */
 
 #ifdef EXTENDED_INTERFACE
 /****************************************************************************
@@ -1482,7 +1492,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.begin = 0;
     globalResourceBundle.path = 64*90;		/* arc in first quadrant */
     globalResourceBundle.align= HORIZ_LEFT;
-    globalResourceBundle.format = DECIMAL;
+    globalResourceBundle.format = MEDM_DECIMAL;
     globalResourceBundle.label = LABEL_NONE;
     globalResourceBundle.direction = RIGHT;
     globalResourceBundle.clrmod = STATIC;
@@ -3135,6 +3145,7 @@ void updateStripChartDataDialog()
   
 }
 
+#ifdef XRTGRAPH
 /*
  * Menu entry support routine for the Cartesian Plot Axis Dialog...
  */
@@ -3650,6 +3661,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],False);
     }
 }
+#endif     /* #ifdef XRTGRAPH */
 
 void medmGetValues(ResourceBundle *pRB, ...)
 {

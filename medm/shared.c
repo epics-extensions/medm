@@ -54,8 +54,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#include "medm.h"
+#ifdef WIN32
+#include <winsock.h>
+#else
 #include <sys/time.h>
+#endif
+#include "medm.h"
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05

@@ -697,7 +697,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
 	dlElement = (DlElement *) malloc(sizeof(DlElement));
     }
   /* If unsuccessful, return */
-    if(!dlElement) return 0;
+    if(!dlElement) return dlElement;
   /* Define the elements of the struct */
     dlElement->type = type;
   /* Note: structure is a union of pointers
@@ -1239,6 +1239,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 		break;
 	    case ' ' :
 	    case '\t':
+            case '\r':
 	    case '\n': break;
 
 	      /* for constructs of the form (a,b) */
@@ -1297,6 +1298,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	case INWORD:
 	    switch(c) {
 	    case ' ' :
+            case '\r':
 	    case '\n':
 	    case '\t':
 	    case '=' :

@@ -83,8 +83,15 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 
     switch(buttonNumber) {
     case EXECUTE_POPUP_MENU_PRINT_ID:
+#ifdef WIN32
+	dmSetAndPopupWarningDialog(displayInfo,
+	  "Printing from MEDM is not available for WIN32\n"
+	  "You can use Alt+PrintScreen to copy the window to the clipboard",
+	  "OK", NULL, NULL);
+#else	
 	utilPrint(XtDisplay(displayInfo->drawingArea),
 	  XtWindow(displayInfo->drawingArea),DISPLAY_XWD_FILE);
+#endif	
 	break;
     case EXECUTE_POPUP_MENU_CLOSE_ID:
 	closeDisplay(w);
@@ -180,7 +187,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		points[3].y = y + uih;
 		region = XPolygonRegion(points,4,EvenOddRule);
 		if (region == NULL) {
-		    medmPostMsg(0,"medmRepaintRegion: XPolygonRegion is NULL\n");
+		    medmPostMsg(0,"drawingAreaCallback: XPolygonRegion is NULL\n");
 		    return;
 		}
 

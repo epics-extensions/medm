@@ -217,6 +217,12 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
     int currentNumInps;
 
 #define NUM_INITIAL_FDS 100
+#ifdef WIN32
+    int medmInputMask=XtInputReadWinsock;
+#else
+    int medmInputMask=XtInputReadMask;
+#endif
+
     typedef struct {
         XtInputId inputId;
         int fd;
@@ -242,7 +248,7 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
-	      (XtPointer)XtInputReadMask,
+	      (XtPointer)medmInputMask,
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
 
@@ -258,7 +264,7 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 #endif
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
-	      (XtPointer)XtInputReadMask,
+	      (XtPointer)medmInputMask,
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
 	}
@@ -652,7 +658,8 @@ int caAdd(char *name, Record *pr) {
     if (status != ECA_NORMAL) {
 	SEVCHK(status,"caAdd : ca_build_and_connect failed\n");
     } else {
-	pCh->pr->name = ca_name(pCh->chid);
+      /* Cast to avoid warning from READONLY */
+	pCh->pr->name = (char *)ca_name(pCh->chid);
     }
     caTask.channelCount++;
     return pCh->caId;
@@ -700,7 +707,7 @@ void caDelete(Record *pr) {
     caTask.channelCount--;
 }
 
-static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
+static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,0,
                             NO_ALARM,NO_ALARM,False,False,False,
                             {NULL,NULL,NULL,NULL,
                              NULL,NULL,NULL,NULL,

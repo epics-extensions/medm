@@ -165,7 +165,7 @@ extern const FillStyle FIRST_FILL_STYLE;
 
 #define NUM_TEXT_FORMATS        8
 typedef enum {
-    DECIMAL       = 18,
+    MEDM_DECIMAL  = 18,
     EXPONENTIAL   = 19,
     ENGR_NOTATION = 20,
     COMPACT       = 21,
@@ -175,7 +175,7 @@ typedef enum {
     STRING        = 25
 } TextFormat;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
-const TextFormat FIRST_TEXT_FORMAT = DECIMAL;
+const TextFormat FIRST_TEXT_FORMAT = MEDM_DECIMAL;
 #else
 extern const TextFormat FIRST_TEXT_FORMAT;
 #endif

@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 #define DEBUG_EVENTS 0
+#define DEBUG_STDC 0
+#define DEBUG_WIN32_LEAKS 1
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -66,19 +68,45 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/Xmu/Editres.h>
 #endif
 
+#if DEBUG_WIN32_LEAKS
+#ifdef WIN32
+#include <crtdbg.h>
+#endif
+#endif
+
+#ifdef WIN32
+/* Hummingbird specific */
+#include <X11/XlibXtra.h>
+/* WIN32 does not have unistd.h and does not define the following constants */
+#define F_OK 00
+#define W_OK 02
+#define R_OK 04
+#include <direct.h>     /* for getcwd (usually in sys/parm.h or unistd.h) */
+#include <io.h>         /* for access (usually in unistd.h) */
+#else
+/* Use unistd.h */
 #include <unistd.h>
+#endif
+
+#include <signal.h>
+#ifdef WIN32
+/* Define signals that Windows does not define */
+#define SIGQUIT SIGTERM
+#define SIGBUS SIGILL
+#endif
+
 #include <time.h>
 #include <sys/stat.h>
 
 #include <errno.h>
 #include "icon25"
 
-/* For X property cleanup */
-#include <signal.h>
 #include <Xm/MwmUtil.h>
 #include <X11/IntrinsicP.h>
 
+#ifdef XRTGRAPH
 #include <XrtGraph.h>
+#endif
 
 #define HOT_SPOT_WIDTH 24
 
@@ -185,7 +213,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 
-extern int putenv(const char *);     /* May not be defined for strict ANSI */
+#ifndef WIN32
+/* KE: Why is it not OK to include this? */
+extern int putenv(const char *);    /* May not be defined for strict ANSI */
+#endif
 static void createCursors(void);
 static void createMain(void);
 static Boolean medmInitWorkProc(XtPointer cd);
@@ -765,6 +796,7 @@ Name of file in which to save display:",
     "Medm*Bar.ShadowThickness: 2",
     "Medm*Meter.ShadowThickness: 2",
 
+#ifdef XRTGRAPH
 #if XRT_VERSION > 2
   /* XRTGraph Property Editor */
     "Medm*.PropEdit_shell*.background:                  White",
@@ -782,13 +814,14 @@ Name of file in which to save display:",
     "Medm*.PropEdit_shell*.XmXrtDateField.background:   White",
     "Medm*.PropEdit_shell*.XmXrtDateField.foreground:   Black",
 #endif
+#endif
     
     NULL,
 };
 
 typedef enum {EDIT,EXECUTE,HELP,VERSION} opMode_t;
 typedef enum {NORMAL,CLEANUP,LOCAL} medmMode_t;
-typedef enum {FIXED,SCALABLE} fontStyle_t;
+typedef enum {FIXED_FONT,SCALABLE_FONT} fontStyle_t;
 
 typedef struct {
     opMode_t opMode;
@@ -823,6 +856,20 @@ void requestDestroy(request_t *request) {
     }
 }
 
+#if DEBUG_STDC
+#ifndef __STDC__
+#error __STDC__ is undefined
+#else
+#if __STDC__ == 0
+#error __STDC__=0
+#elif __STDC__ == 1
+#error __STDC__=1
+#else
+#error __STDC__ is defined and not 0 or 1
+#endif
+#endif
+#endif
+
 request_t * parseCommandLine(int argc, char *argv[]) {
     int i;
     int argsUsed = 0;
@@ -836,7 +883,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
     if (request == NULL) return request;
     request->opMode = EDIT;
     request->medmMode = NORMAL;
-    request->fontStyle = FIXED;
+    request->fontStyle = FIXED_FONT;
     request->privateCmap = False;
     request->macroString = NULL;
     strcpy(request->displayFont,FONT_ALIASES_STRING);
@@ -889,9 +936,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		strcpy(request->displayFont,tmp);
 		if (request->displayFont[0] == '\0') {
 		    if (!strcmp(request->displayFont,FONT_ALIASES_STRING))
-		      request->fontStyle = FIXED;
+		      request->fontStyle = FIXED_FONT;
 		    else if (!strcmp(request->displayFont,DEFAULT_SCALABLE_STRING))
-		      request->fontStyle = SCALABLE;
+		      request->fontStyle = SCALABLE_FONT;
 		}
 	    }
 	} else if (!strcmp(argv[i],"-display")) {
@@ -1733,9 +1780,17 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (displayInfoListHead->next == displayInfoListTail) {
 	  /* only one display; no need to query user */
 	    currentDisplayInfo = displayInfoListHead->next;
-	    if (currentDisplayInfo != NULL)
-	      utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
-		XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+	    if (currentDisplayInfo != NULL) {
+#ifdef WIN32
+		dmSetAndPopupWarningDialog(currentDisplayInfo,
+		  "Printing from MEDM is not available for WIN32\n"
+		  "You can use Alt+PrintScreen to copy the window to the clipboard",
+		  "OK", NULL, NULL);
+#else	    
+		utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
+		  XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+#endif
+	    }
 
 	} else
 	  if (displayInfoListHead->next) {
@@ -1743,13 +1798,21 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	      widget = XmTrackingEvent(mainShell,printCursor,False,&event);
 	      if (widget != (Widget)NULL) {
 		  currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
-		  if (currentDisplayInfo != NULL) 
-		    utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
-		      XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+		  if (currentDisplayInfo != NULL) {
+#ifdef WIN32
+		      dmSetAndPopupWarningDialog(currentDisplayInfo,
+			"Printing from MEDM is not available for WIN32\n"
+			"You can use Alt+PrintScreen to copy the window to the clipboard",
+			"OK", NULL, NULL);
+#else	    
+		      utilPrint(XtDisplay(currentDisplayInfo->drawingArea),
+			XtWindow(currentDisplayInfo->drawingArea),DISPLAY_XWD_FILE);
+#endif
+		  }
 	      }
 	  }
 	break;
-
+	
     case FILE_EXIT_BTN:
 	medmExit();
 	break;
@@ -1790,7 +1853,11 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     FILE *stream;
     Boolean brandNewFile = False;
     Boolean templateException = False;
+#ifdef WIN32    
+    struct _stat statBuf;
+#else
     struct stat statBuf;
+#endif
 
     if (displayInfo == NULL) return False;
     if (filename == NULL) return False;
@@ -1806,15 +1873,15 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	return False;
     }
 
-  /* search for the position of the .adl suffix */
+  /* Search for the position of the .adl suffix */
     strcpy(f1,filename);
     suffix = strstr(f1,DISPLAY_FILE_ASCII_SUFFIX);
     if ((suffix) && (suffix == f1 + strLen1 - strLen3)) {
-      /* chop off the .adl suffix */
+      /* Chop off the .adl suffix */
 	*suffix = '\0';
 	strLen1 = strLen1 - strLen3;
     } else {
-      /* search for the position of the .template suffix */
+      /* Search for the position of the .template suffix */
 	suffix = strstr(f1,templateSuffix);
 	if ((suffix) && (suffix == f1 + strLen1 - strLen4)) { 
 	  /* this is a .template special case */
@@ -1823,61 +1890,73 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     }
   
 
-  /* create the backup file name with suffux _BAK.adl*/
+  /* Create the backup file name with suffux _BAK.adl*/
     strcpy(f2,f1);
     strcat(f2,DISPLAY_FILE_BACKUP_SUFFIX);
     strcat(f2,DISPLAY_FILE_ASCII_SUFFIX);
-  /* append the .adl suffix */
-  /* check for the special case .template */
+  /* Check for the special case .template */
     if (!templateException) 
       strcat(f1,DISPLAY_FILE_ASCII_SUFFIX);
 
   /* See whether the file already exists. */
     if (access(f1,W_OK) == -1) {
 	if (errno == ENOENT) {
+	  /* File not found */
 	    brandNewFile = True;
 	} else {
-	    sprintf(warningString,"Fail to create/write file :\n%s",filename);
+	    sprintf(warningString,"Fail to create/write file:\n%s",f1);
 	    dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	    return False;
 	}
     } else {
-      /* file exists, see whether the user wants to overwrite the file. */
+      /* File exists, see whether the user wants to overwrite the file. */
 	if (!overwrite) {
-	    sprintf(warningString,"Do you want to overwrite file :\n%s",f1);
+	    sprintf(warningString,"Do you want to overwrite file:\n%s",f1);
 	    dmSetAndPopupQuestionDialog(displayInfo,warningString,"Yes","No",NULL);
 	    switch (displayInfo->questionDialogAnswer) {
-	    case 1 :
+	    case 1:
 	      /* Yes, Save the file */
 		break;
-	    default :
+	    default:
 	      /* No, return */
 		return False;
 	    }
 	}
-      /* see whether the backup file can be overwritten */
+      /* See whether the backup file can be overwritten */
 	if (access(f2,W_OK) == -1) {
 	    if (errno != ENOENT) {
-		sprintf(warningString,"Cannot write backup file :\n%s",filename);
+		sprintf(warningString,"Cannot write backup file:\n%s",filename);
 		dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 		return False;
 	    }
-	}
+	} else {
+	  /* File exists and has write permission */
+#ifdef WIN32
+	  /* WIN32 cannot rename the file if the name is in use so delete it */
+	    status = remove(f2);
+	    if (status) {
+	        medmPrintf(1,"\nCannot remove old file:\n%s",f2);
+	        return False;
+            }
+#endif
+        }
+      /* Get the status of the file to be renamed */
 	status = stat(f1,&statBuf);
 	if (status) {
-	    medmPrintf(1,"\nFailed to read status of file %s\n",filename);
+	    medmPrintf(1,"\nFailed to get status of file %s\n",f1);
 	    return False;
 	}
+      /* Rename it */
 	status = rename(f1,f2);
 	if (status) {
-	    medmPrintf(1,"\nCannot rename file %s\n",filename);
+	    medmPrintf(1,"\nCannot rename file %s\n",f2);
 	    return False;
 	}
     }
 
     stream = fopen(f1,"w");
     if (stream == NULL) {
-	sprintf(warningString,"Failed to create/write file :\n%s",filename);
+	sprintf(warningString,"Failed to create/write file:\n%s",filename);
 	dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	return False;
     }
@@ -1887,6 +1966,8 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     displayInfo->hasBeenEditedButNotSaved = False;
     displayInfo->newDisplay = False;
     medmSetDisplayTitle(displayInfo);
+  /* If it is an old file set its mode equal to the old mode */
+  /* KE: Why is this necessary?  */
     if (!brandNewFile) {
 	chmod(f1,statBuf.st_mode);
     }
@@ -1926,15 +2007,15 @@ void medmExit() {
 		  dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No","Cancel");
 #endif
 		switch (displayInfo->questionDialogAnswer) {
-		case 1 :
+		case 1:
 		  /* Yes, save this file */
 		    saveThis = True;
 		    break;
-		case 2 :
+		case 2:
 		  /* No, check next file */
 		    saveThis = False;
 		    break;
-		case 3 :
+		case 3:
 #ifdef PROMPT_TO_EXIT
 		  /* Save all files */
 		    saveAll = True;
@@ -1944,7 +2025,7 @@ void medmExit() {
 		  /* Cancel */
 		    return;
 #endif
-		default :
+		default:
 		    saveThis = False;
 		    break;
 		}
@@ -2293,7 +2374,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(cartesianPlotAxisS);
 	}
 	if (stripChartS) {
-	    XtSetSensitive(stripChartS,False);
+	    XtSetSensitive(stripChartS,True);
 	    XtPopdown(stripChartS);
 	}
 	if (pvInfoS) {
@@ -2721,7 +2802,7 @@ static void handleSignals(int sig)
     else if (sig==SIGINT)  fprintf(stderr,"\nSIGINT\n");
     else if (sig==SIGTERM) fprintf(stderr,"\nSIGTERM\n");
     else if (sig==SIGSEGV) fprintf(stderr,"\nSIGSEGV\n");
-    else if (sig==SIGBUS) fprintf(stderr,"\nSIGBUS\n");
+    else if (sig==SIGBUS)  fprintf(stderr,"\nSIGBUS\n");
 
   /* Remove the property on the root window (if not LOCAL) */
     if (windowPropertyAtom != (Atom)NULL)
@@ -2921,6 +3002,33 @@ main(int argc, char *argv[])
     msgClass_t msgClass;
     Window medmHostWindow = (Window)0;
 
+#ifdef WIN32
+  /* Hummingbird Exceed XDK initialization for WIN32 */
+    HCLXmInit();
+#endif
+
+#if DEBUG_WIN32_LEAKS
+#ifdef WIN32
+    {
+	int tmpDbgFlag;
+
+	/* Get the flag */
+	tmpDbgFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+	/* Enable memory block checking (Should be default) */
+	tmpDbgFlag |= _CRTDBG_ALLOC_MEM_DF;
+	/* Enable checking at every allocation (slower but pinpoints error) */
+	tmpDbgFlag |= _CRTDBG_CHECK_ALWAYS_DF;
+	/* Enable keeping freed memory to check overwriting it */
+	tmpDbgFlag |= _CRTDBG_DELAY_FREE_MEM_DF;
+	/* Enable memory leak report at exit */
+	tmpDbgFlag |= _CRTDBG_LEAK_CHECK_DF;
+	_CrtSetDbgFlag(tmpDbgFlag);
+/*	_CrtSetBreakAlloc(84); */
+    }
+#endif
+#endif
+    
+    
 #if DEBUG_DEFINITIONS
 
     printf("\n");
@@ -2956,8 +3064,12 @@ main(int argc, char *argv[])
 #else      
     printf("NeedFunctionPrototypes is undefined\n");
 #endif
-    
-#endif
+    printf("sizeof(1 && 2)=%d\n",sizeof(1 && 2));
+    printf("sizeof(Boolean)=%d\n",sizeof(Boolean));
+    printf("This came from printf\n");
+    fprintf(stdout,"This came from fprintf to stdout\n");
+
+#endif     /*  DEBUG_DEFINITIONS */
 
   /* Initialize global variables */
     windowPropertyAtom = (Atom)NULL;
@@ -3044,13 +3156,13 @@ main(int argc, char *argv[])
 	rootWindow = RootWindow(display,screenNum);
 
       /*   Intern the appropriate atom if it doesn't exist (False implies this) */
-	if (request->fontStyle == FIXED) {
+	if (request->fontStyle == FIXED_FONT) {
 	    if (request->opMode == EXECUTE) {
 		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
 	    } else {
 		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
 	    }
-	} else if (request->fontStyle == SCALABLE) {
+	} else if (request->fontStyle == SCALABLE_FONT) {
 	    if (request->opMode == EXECUTE) {
 		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
 	    } else {
@@ -3088,8 +3200,8 @@ main(int argc, char *argv[])
 	    if(!status) {
 	      /* Window doesn't exist */
 		printf("\nCannot connect to existing MEDM because it is invalid\n"
-		  "  (This is the cause of the Bad Window error that may have been printed)\n"
-		  "  Continuing with this MEDM as if -cleanup were specified\n");
+ 		  "  (An accompanying Bad Window error can be ignored)\n"
+		  "  Continuing with this one as if -cleanup were specified\n");
 		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 	    } else {

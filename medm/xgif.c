@@ -127,7 +127,7 @@ Boolean initializeGIF(
 
     gif->dispcells = DisplayCells(display, screenNum);
     if (gif->dispcells<255) {
-	medmPrintf(1,"\ninitializeGIF: >= 8-plane display required");
+	medmPrintf(1,"\ninitializeGIF: At least an 8-plane display is required");
 	return(False);
     }
 
@@ -234,14 +234,12 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
             gif->expImage = gif->theImage;
             gif->eWIDE = gif->iWIDE;  gif->eHIGH = gif->iHIGH;
 	}
-    }
-
-    else {				/* have to do some work */
+    } else {				/* have to do some work */
       /* if it's a big image, this'll take a while.  mention it */
         if (w*h>(400*400)) {
 	  /* (MDA) - could change cursor to stopwatch...*/
 	}
-
+	
       /* first, kill the old gif->expImage, if one exists */
 	if (gif->expImage && gif->expImage != gif->theImage) {
             free(gif->expImage->data);
@@ -252,23 +250,23 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
       /* create gif->expImage of the appropriate size */
         
         gif->eWIDE = w;  gif->eHIGH = h;
-
+	
 	switch (DefaultDepth(display,screenNum)) {
 	case 8 : {
 	    int  ix,iy,ex,ey;
 	    Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
-
+	    
 	    ximag = (Byte *) malloc(w*h);
 	    gif->expImage = XCreateImage(display,gif->theVisual,
 	      DefaultDepth(display,screenNum),ZPixmap,
 	      0,(char *)ximag, gif->eWIDE,gif->eHIGH,8,gif->eWIDE);
-
+	    
 	    if (!ximag || !gif->expImage) {
 		medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
 		  w,h);
 		exit(-1);
 	    }
-
+	    
 	    elptr = epptr = (Byte *) gif->expImage->data;
 
 	    for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
@@ -423,7 +421,14 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     if (strcmp(fname,"-")==0) {
 	fp = stdin;
 	fname = "<stdin>";
-    } else fp = fopen(fname,"r");
+    } else {
+#ifdef WIN32
+      /* WIN32 opens files in text mode by default which throes out CRLF */
+	fp = fopen(fname,"rb");
+#else
+	fp = fopen(fname,"r");
+#endif
+    }
 
   /* try to get a valid GIF file somewhere */
   /* if not in current directory, look in EPICS_DISPLAY_PATH directory */
@@ -623,12 +628,12 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  fname, Width,Height,ColorMapSize,(Interlace) ? "" : "non-");
     }
 
- /* Note that I ignore the possible existence of a local color map.
-  * I'm told there aren't many files around that use them, and the spec
-  * says it's defined for future use.  This could lead to an error
-  * reading some files. 
-  */
-
+  /* Note that I ignore the possible existence of a local color map.
+   * I'm told there aren't many files around that use them, and the spec
+   * says it's defined for future use.  This could lead to an error
+   * reading some files. 
+   */
+    
   /* Start reading the raster data. First we get the intial code size
    * and compute decompressor constant values, based on this code size.
    */
@@ -637,7 +642,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     ClearCode = (1 << CodeSize);
     EOFCode = ClearCode + 1;
     FreeCode = FirstFree = ClearCode + 2;
-
+    
   /* The GIF spec has it that the code size is the code size used to
    * compute the above values is the code size given in the file, but the
    * code size used in compression/decompression is the code size given in
@@ -718,7 +723,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    FreeCode = FirstFree;
 	    CurCode = OldCode = Code = ReadCode();
 	    FinChar = CurCode & BitMask;
-	    AddToPixel(gif,FinChar);
+	    AddToPixel(gif,(Byte)FinChar);
 	}
 	else {
 
@@ -755,7 +760,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	   * It's been stacked LIFO, so deal with it that way...
 	   */
 	    for (i = OutCount - 1; i >= 0; i--)
-	      AddToPixel(gif,OutCode[i]);
+	      AddToPixel(gif,(Byte)OutCode[i]);
 	    OutCount = 0;
 
 	  /* Build the hash table on-the-fly. No table is stored in the file. */
@@ -914,7 +919,7 @@ void freeGIF(DlImage *dlImage)
 	}
 
 	if (gif->numcols > 0) {
-	    XFreeColors(display,gif->theCmap,gif->cols,gif->numcols,NULL);
+	    XFreeColors(display,gif->theCmap,gif->cols,gif->numcols,(unsigned long)0);
 	    gif->numcols = 0;
 	}
 /* free existing private data */

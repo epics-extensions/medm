@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG 1
+
 #define TIME_STRING_MAX 81
 #define EARLY_MESSAGE_SIZE 2048
 
@@ -98,7 +100,6 @@ static XtIntervalId errMsgDlgTimeOutId = 0;
 void errMsgSendDlgCreateDlg();
 void errMsgSendDlgSendButtonCb(Widget,XtPointer,XtPointer);
 void errMsgSendDlgCloseButtonCb(Widget,XtPointer,XtPointer);
-void errMsgDlgCreateDlg(Boolean raise);
 void errMsgDlgCb(Widget,XtPointer,XtPointer);
 static void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id);
 
@@ -106,6 +107,11 @@ static void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id);
 
 static int raiseMessageWindow = 1;
 static Widget raiseMessageWindowTB;
+
+/* Debug */
+#if debug
+
+#endif
 
 #ifdef __cplusplus
 void globalHelpCallback(Widget, XtPointer cd, XtPointer)
@@ -250,7 +256,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
     }
 }
 
-void errMsgDlgCreateDlg(Boolean raise)
+void errMsgDlgCreateDlg(int raise)
 {
     Widget pane;
     Widget actionArea;
@@ -310,7 +316,7 @@ void errMsgDlgCreateDlg(Boolean raise)
     raiseMessageWindowTB =  XtVaCreateManagedWidget("toggleButton",
       xmToggleButtonWidgetClass, optionArea,
       XmNlabelString, label,
-      XmNset, raiseMessageWindow,
+      XmNset, (Boolean)raiseMessageWindow,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
       XmNleftAttachment,   XmATTACH_POSITION,
@@ -367,8 +373,12 @@ void errMsgDlgCreateDlg(Boolean raise)
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    6,
       NULL);
+#ifdef WIN32
+    XtSetSensitive(printButton,False);
+#else
     XtAddCallback(printButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_PRINT_BTN);
+#endif    
 
     sendButton = XtVaCreateManagedWidget("Mail",
       xmPushButtonWidgetClass, actionArea,
@@ -379,8 +389,12 @@ void errMsgDlgCreateDlg(Boolean raise)
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    8,
       NULL);
+#ifdef WIN32
+    XtSetSensitive(sendButton,False);
+#else
     XtAddCallback(sendButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_SEND_BTN);
+#endif    
 
     helpButton = XtVaCreateManagedWidget("Help",
       xmPushButtonWidgetClass, actionArea,
@@ -456,8 +470,13 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 	if (text) XtFree(text);
 	return;
     }
-    
+
+#ifdef WIN32
+  /* Mail not implemented on WIN32 */
+    pp = NULL;
+#else
     pp = popen(cmd, "w");
+#endif
     if (!pp) {
 	medmPostMsg(1,"errMsgSendDlgSendButtonCb: Cannot execute mail command\n");
 	if (to) XtFree(to);
@@ -474,7 +493,10 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif    
     fputs(text, pp);
     fputc('\n', pp);      /* make sure there's a terminating newline */
+#ifndef WIN32
+  /* KE: Shouldn't be necessary to comment this out for WIN32 */
     status = pclose(pp);  /* close mail program */
+#endif
     if (to) XtFree(to);
     if (subject) XtFree(subject);
     if (text) XtFree(text);
@@ -600,7 +622,11 @@ void errMsgSendDlgCreateDlg()
 	  XmNrightAttachment,  XmATTACH_POSITION,
 	  XmNrightPosition,    4,
 	  NULL);
+#ifdef WIN32
+	XtSetSensitive(sendButton,False);
+#else
 	XtAddCallback(sendButton,XmNactivateCallback,errMsgSendDlgSendButtonCb, NULL);
+#endif	
     }
     XtManageChild(actionArea);
     XtManageChild(rowCol);
@@ -617,7 +643,7 @@ void medmPostMsg(int priority, char *format, ...) {
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority > 0);
+    errMsgDlgCreateDlg(raiseMessageWindow && priority > 1);
 
   /* Do timestamp */
     time(&now);
@@ -659,7 +685,7 @@ void medmPrintf(int priority, char *format, ...)
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority > 0);
+    errMsgDlgCreateDlg(raiseMessageWindow && priority > 1);
 
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);

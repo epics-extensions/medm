@@ -67,10 +67,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
+#ifdef XRTGRAPH
 #include <XrtGraph.h>
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
 #include <XrtGraphProp.h>
+#endif
 #endif
 #endif
 
@@ -158,6 +160,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		break;
 		
 	    case DL_CartesianPlot:
+#ifdef XRTGRAPH
 		if (widget = pE->widget) {
 		    if (xEvent->state & ControlMask) {
 #if XRT_VERSION > 2
@@ -204,6 +207,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		    XUngrabPointer(display,CurrentTime);
 		    XFlush(display);
 		}
+#endif     /* #ifdef XRTGRAPH */
 		break;
 	    default:
 	      /* Popup execute-mode popup menu */
@@ -1276,9 +1280,11 @@ DlElement *handleRectangularCreates(DlElementType type,
     case DL_StripChart:
 	pE = createDlStripChart(NULL);
 	break;
+#ifdef XRTGRAPH
     case DL_CartesianPlot:
 	pE = createDlCartesianPlot(NULL);
 	break;
+#endif     /* #ifdef XRTGRAPH */
     case DL_Rectangle:
 	pE = createDlRectangle(NULL);
 	break;

@@ -62,7 +62,7 @@ typedef struct _Polyline {
     DlElement        *dlElement;
     Record           *record;
     UpdateTask       *updateTask;
-} Polyline;
+} MedmPolyline;
 
 /* from utils.c - get XOR GC */
 extern GC xorGC;
@@ -123,7 +123,7 @@ static void calculateTheBoundingBox(DlPolyline* dlPolyline) {
     dlPolyline->object.height = maxY - minY + dlPolyline->attr.width;
 }
 
-static void drawPolyline(Polyline *pp) {
+static void drawPolyline(MedmPolyline *pp) {
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     Widget widget = pp->updateTask->displayInfo->drawingArea;
     Display *display = XtDisplay(widget);
@@ -160,9 +160,9 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
     }
     if (displayInfo->traversalMode == DL_EXECUTE && *dlPolyline->dynAttr.chan) {
 
-	Polyline *pp;
+	MedmPolyline *pp;
 	DlObject object;
-	pp = (Polyline *) malloc(sizeof(Polyline));
+	pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
 	pp->dlElement = dlElement;
 #if 1
 	object = dlPolyline->object;
@@ -224,12 +224,12 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void polylineUpdateValueCb(XtPointer cd) {
-    Polyline *pp = (Polyline *) ((Record *) cd)->clientData;
+    MedmPolyline *pp = (MedmPolyline *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pp->updateTask);
 }
 
 static void polylineDraw(XtPointer cd) {
-    Polyline *pp = (Polyline *) cd;
+    MedmPolyline *pp = (MedmPolyline *)cd;
     Record *pd = pp->record;
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
@@ -303,7 +303,7 @@ static void polylineDraw(XtPointer cd) {
 }
 
 static void polylineDestroyCb(XtPointer cd) {
-    Polyline *pp = (Polyline *) cd;
+    MedmPolyline *pp = (MedmPolyline *)cd;
     if (pp) {
 	medmDestroyRecord(pp->record);
 	free((char *)pp);
@@ -312,7 +312,7 @@ static void polylineDestroyCb(XtPointer cd) {
 }
 
 static void polylineGetRecord(XtPointer cd, Record **record, int *count) {
-    Polyline *pp = (Polyline *) cd;
+    MedmPolyline *pp = (MedmPolyline *)cd;
     *count = 1;
     record[0] = pp->record;
 }

@@ -91,7 +91,7 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
  * local function to render the related display icon into a pixmap
  */
 static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
-  Pixel fg, Pixel bg, Dimension width, Dimension height)
+  Pixel fg, Pixel bg, unsigned int width, unsigned int height)
 {
     typedef struct { float x; float y;} XY;
 /* icon is based on the 25 pixel (w & h) bitmap shellCommand25 */

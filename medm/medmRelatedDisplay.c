@@ -62,7 +62,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  
 static Widget rdMatrix = NULL, rdForm = NULL;
 static Widget table[MAX_RELATED_DISPLAYS][4];
-static Pixmap stipple = NULL;
+static Pixmap stipple = (Pixmap)0;
 
 static void relatedDisplayInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);

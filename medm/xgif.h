@@ -65,23 +65,23 @@ typedef unsigned char Byte;
 
 typedef struct {
 
-    XImage	      *theImage;
-    XImage	      *expImage;
+    XImage        *theImage;
+    XImage        *expImage;
 
     int           dispcells;
     Colormap      theCmap;
     GC            theGC;
-    Pixel	      fcol,bcol;
+    Pixel         fcol,bcol;
     Font          mfont;
     XFontStruct   *mfinfo;
     Visual        *theVisual;
 
-    int            iWIDE,iHIGH,eWIDE,eHIGH,numcols,strip,nostrip;
+    int           iWIDE,iHIGH,eWIDE,eHIGH,numcols,strip,nostrip;
     unsigned long cols[256];
     XColor        defs[256];
 
-    unsigned int	currentWidth;
-    unsigned int	currentHeight;
+    unsigned int  currentWidth;
+    unsigned int  currentHeight;
 
 } GIFData;
 

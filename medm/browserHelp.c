@@ -52,9 +52,17 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+/* Note that there are separate WIN32 and UNIX versions */
 /* Note that there is a Mosaic version at the end of the file */
 
 #define DEBUG 0
+
+#ifndef WIN32
+/*************************************************************************/
+/*************************************************************************/
+/* Netscape UNIX Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,9 +95,9 @@ extern Display *display;
 
 /**************************** callBrowser ********************************/
 int callBrowser(char *url)
-/* Returns non-zero on success, 0 on failure */
-/* url is the URL that Mosaic is to display  */
-/*   or "quit" to terminate Mosaic           */
+  /* Returns non-zero on success, 0 on failure      */
+  /* url is the URL that the browser is to display  */
+  /*   or "quit" to terminate the browser           */
 {
     int (*oldhandler)(Display *, XErrorEvent *);
     static Window netscapew=(Window)0;
@@ -240,12 +248,56 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
     return 0;
 }
 
+#else     /*ifndef WIN32 */
+/*************************************************************************/
+/*************************************************************************/
+/* WIN32 Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <process.h>
+
+int callBrowser(char *url);
+
+/**************************** callBrowser (WIN32) ************************/
+int callBrowser(char *url)
+  /* Returns non-zero on success, 0 on failure */
+  /* Should use the default browser            */
+  /* Does nothing with "quit"                  */
+{
+    static int first=1;
+    static char *ComSpec;
+    char command[BUFSIZ];
+    int status;
+    
+  /* Handle quit */
+    if(!strcmp(url,"quit")) {
+      /* For compatibility, but do nothing */
+	return(3);
+    }
+    
+  /* Get ComSpec for the command shell (should be defined) */
+    if (first) {
+	first=0;
+	ComSpec = getenv("ComSpec");
+    }
+    if (!ComSpec) return(0);     /* Abort with no message like the UNIX version*/
+  /* Spawn the process that handles a url */
+    strcpy(command, "start ");
+    strcat(command, url);
+    status = _spawnl(_P_WAIT, ComSpec, "/C", command, NULL);
+    return(1);
+}
+#endif     /* #ifndef WIN32 */
+
+#if 0
 /*************************************************************************/
 /*************************************************************************/
 /* Mosaic Version                                                        */ 
 /*************************************************************************/
 /*************************************************************************/
-#if 0
 
 #ifndef MOSAICPATH
 /* #define MOSAICPATH "/usr/bin/X11/mosaic" */

@@ -87,16 +87,19 @@ void localCvtDoubleToExpNotationString(
     Boolean minus;
     int exp, k, l;
     char TF[MAX_TEXT_UPDATE_WIDTH];
+    
+  /* The PREC field is a short, which can be negative, which will be a
+   *   large number when converted to unsigned short.  This is handled
+   *   in localCvtDoubleToString. */
 
     absVal = fabs(value);
     minus = (value < 0.0 ? True : False);
     newVal = absVal;
-
+    
     if (absVal < 1.) {
-
-/* absVal < 1. */
+      /* absVal < 1. */
 	exp = 0;
-	if (absVal != 0.) {		/* really ought to test against some epsilon */
+	if (absVal != 0.) {     /* really ought to test against some epsilon */
 	    do {
 		newVal *= 1000.0;
 		exp += 3;
@@ -108,17 +111,17 @@ void localCvtDoubleToExpNotationString(
 	while (TF[l] != '\0') textField[k++] = TF[l++];
 	textField[k++] = 'e';
 	if (exp == 0) {
-	    textField[k++] = '+';	/* want e+00 for consistency with norms */
+	    textField[k++] = '+';     /* want e+00 for consistency with norms */
 	} else {
 	    textField[k++] = '-';
 	}
 	textField[k++] = '0' + exp/10;
 	textField[k++] = '0' + exp%10;
 	textField[k++] = '\0';
-
+	
     } else {
-
-/* absVal >= 1. */
+	
+      /* absVal >= 1. */
 	exp = 0;
 	while (newVal >= 1000.) {
 	    newVal *= 0.001; /* since multiplying is usually faster than dividing */
@@ -141,7 +144,14 @@ void localCvtDoubleToString(
   char  *pstr_value,
   unsigned short precision)
 {
-    sprintf(pstr_value,"%.*f",precision,flt_value);
+  /* The PREC field is a short, which can be negative, which will be a
+   *   large number when converted to unsigned short.  Handle this by
+   *   not letting precision be larger than 17 (as for libCom:
+   *   cvtDoubleToString()).  Letting it be zero here would be OK, but
+   *   not in general, since precision is the number of significant
+   *   digits for g and e formats. */
+    if(precision > 17) precision=17;
+    sprintf(pstr_value,"%.*f",(int)precision,flt_value);
 }
 
 void drawWhiteRectangle(UpdateTask *pt) {

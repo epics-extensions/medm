@@ -57,10 +57,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #ifndef CARTESIAN_PLOT_H
 #define CARTESIAN_PLOT_H
 
+#ifdef XRTGRAPH
 #include "XrtGraph.h"
 
 #if XRT_VERSION <= 2
 typedef XrtData * XrtDataHandle;
+#endif
 #endif
 
 #define CP_XDATA_COLUMN         0
@@ -85,6 +87,7 @@ typedef enum {
     CP_XYVector
 } XYChannelTypeEnum;
 
+#ifdef XRTGRAPH
 typedef struct {
     struct _CartesianPlot *cartesianPlot;
     XrtDataHandle         hxrt;
@@ -110,6 +113,7 @@ typedef struct _CartesianPlot {
     TS_STAMP        startTime;
     Boolean         timeScale;
 } CartesianPlot;
+#endif
 
 #endif
 

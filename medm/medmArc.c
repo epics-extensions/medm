@@ -60,7 +60,7 @@ typedef struct _Arc {
     DlElement        *dlElement;
     Record           *record;
     UpdateTask       *updateTask;
-} Arc;
+} MedmArc;
 
 static void arcDraw(XtPointer cd);
 static void arcUpdateValueCb(XtPointer cd);
@@ -88,7 +88,7 @@ static DlDispatchTable arcDlDispatchTable = {
     NULL,
     NULL};
 
-static void drawArc(Arc *pa) {
+static void drawArc(MedmArc *pa) {
     unsigned int lineWidth;
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
     Widget widget = pa->updateTask->displayInfo->drawingArea;
@@ -114,8 +114,8 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
     if (displayInfo->traversalMode == DL_EXECUTE && *dlArc->dynAttr.chan) {
-	Arc *pa;
-	pa = (Arc *) malloc(sizeof(Arc));
+	MedmArc *pa;
+	pa = (MedmArc *) malloc(sizeof(MedmArc));
 	pa->dlElement = dlElement;
 	pa->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlArc->object),
@@ -187,12 +187,12 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void arcUpdateValueCb(XtPointer cd) {
-    Arc *pa = (Arc *) ((Record *) cd)->clientData;
+    MedmArc *pa = (MedmArc *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pa->updateTask);
 }
 
 static void arcDraw(XtPointer cd) {
-    Arc *pa = (Arc *) cd;
+    MedmArc *pa = (MedmArc *)cd;
     Record *pd = pa->record;
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
     XGCValues gcValues;
@@ -272,7 +272,7 @@ static void arcDraw(XtPointer cd) {
 }
 
 static void arcDestroyCb(XtPointer cd) {
-    Arc *pa = (Arc *) cd;
+    MedmArc *pa = (MedmArc *)cd;
     if (pa) {
 	medmDestroyRecord(pa->record);
 	free((char *)pa);
@@ -281,7 +281,7 @@ static void arcDestroyCb(XtPointer cd) {
 }
 
 static void arcGetRecord(XtPointer cd, Record **record, int *count) {
-    Arc *pa = (Arc *) cd;
+    MedmArc *pa = (MedmArc *)cd;
     *count = 1;
     record[0] = pa->record;
 }

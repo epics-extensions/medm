@@ -152,14 +152,14 @@ DlElement *groupObjects()
 {
     DisplayInfo *cdi = currentDisplayInfo;
     DlComposite *dlComposite;
-    DlElement *dlElement, *elementPtr;
+    DlElement *dlElement, *pE;
     int i, minX, minY, maxX, maxY;
 
   /* if there is no element selected, return */
-    if (IsEmpty(cdi->selectedDlElementList)) return 0;
+    if (IsEmpty(cdi->selectedDlElementList)) return (DlElement *)0;
     saveUndoInfo(cdi);
 
-    if (!(dlElement = createDlComposite(NULL))) return 0;
+    if (!(dlElement = createDlComposite(NULL))) return (DlElement *)0;
     appendDlElement(cdi->dlElementList,dlElement);
     dlComposite = dlElement->structure.composite;
 
@@ -170,9 +170,9 @@ DlElement *groupObjects()
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
 
-    elementPtr = FirstDlElement(cdi->selectedDlElementList);
-    while (elementPtr) { 
-	DlElement *pE = elementPtr->structure.element;
+    pE = FirstDlElement(cdi->selectedDlElementList);
+    while (pE) { 
+	DlElement *pE = pE->structure.element;
 	if (pE->type != DL_Display) {
 	    DlObject *po = &(pE->structure.rectangle->object);
 	    minX = MIN(minX,po->x);
@@ -182,7 +182,7 @@ DlElement *groupObjects()
 	    removeDlElement(cdi->dlElementList,pE);
 	    appendDlElement(dlComposite->dlElementList,pE);
 	}
-	elementPtr = elementPtr->next;
+	pE = pE->next;
     }
 
     dlComposite->object.x = minX;
@@ -193,11 +193,10 @@ DlElement *groupObjects()
     clearResourcePaletteEntries();
     unhighlightSelectedElements();
     clearDlDisplayList(cdi->selectedDlElementList);
-    if (!(elementPtr = createDlElement(NULL,NULL,NULL))) {
-	return 0;
+    if (!(pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL))) {
+	return (DlElement *)0;
     }
-    elementPtr->structure.element = dlElement;
-    appendDlElement(cdi->selectedDlElementList,elementPtr);
+    appendDlElement(cdi->selectedDlElementList,pE);
     highlightSelectedElements();
     currentActionType = SELECT_ACTION;
     currentElementType = DL_Composite;

@@ -209,7 +209,7 @@ void executeDlRelatedDisplay(DisplayInfo *, DlElement *);
 void executeDlShellCommand(DisplayInfo *, DlElement *);
 
 /* help.c */
-void errMsgDlgCreateDlg(Boolean raise);
+void errMsgDlgCreateDlg(int raise);
 void globalHelpCallback(Widget, XtPointer, XtPointer);
 void medmPostMsg(int priority, char *format, ...);
 void medmPrintf(int priority, char *format, ...);

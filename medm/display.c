@@ -374,7 +374,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
       /* Count the colons to get the number of buttons */
 	pcolon = string;
 	nbuttons = 1;
-	while(pcolon = strchr(pcolon,':'))
+	while(pcolon = strchr(pcolon,MEDM_PATH_DELIMITER))
 	  nbuttons++, pcolon++;
 	
       /* Allocate memory */
@@ -385,7 +385,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
       /* Parse the items */
 	pitem = string;
 	for(i=0; i < nbuttons; i++) {
-	    pcolon = strchr(pitem,':');
+	    pcolon = strchr(pitem,MEDM_PATH_DELIMITER);
 	    if(pcolon) *pcolon='\0';
 	  /* Text */
 	    psemi = strchr(pitem,';');

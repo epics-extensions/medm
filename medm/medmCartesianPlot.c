@@ -66,8 +66,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  * Consequently we use isnan and prototype it explicitly.
  * This should work on all systems and be safe.
  */
+#ifdef WIN32
+#include <float.h>
+#define isnan(a) _isnan(a)  /* For some reason MS has leading _ */
+#else
 #include <math.h>
 extern int isnan(double);     /* Because it is not in math.h as it should be */
+#endif /* WIN32 */
 #define NAN_SUBSTITUTE 0.0
 #define SAFEFLOAT(x) (safeFloat(x))
 #else

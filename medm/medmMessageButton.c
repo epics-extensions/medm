@@ -157,7 +157,7 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
       &(dlMessageButton->object),
       displayInfo->colormap[dlMessageButton->control.clr],
       displayInfo->colormap[dlMessageButton->control.bclr],
-      NULL,
+      (Pixmap)0,
       dlMessageButton->label,
       (XtPointer) displayInfo);
 
@@ -199,7 +199,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       &(dlMessageButton->object),
       displayInfo->colormap[dlMessageButton->control.clr],
       displayInfo->colormap[dlMessageButton->control.bclr],
-      NULL,
+      (Pixmap)0,
       dlMessageButton->label,
       (XtPointer) displayInfo);
 

@@ -61,7 +61,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 
 /* STANDARDS CONFORMANCE: AES, XPG2, XPG3, XPG4, POSIX.1, POSIX.2 */
+#ifndef WIN32
+/* WIN32 does not have unistd.h */
 #include <unistd.h>
+#endif
 #include <limits.h>
 #include <float.h>	/* XPG4 limits.h doesn't include float.h */
 
@@ -118,6 +121,11 @@ extern "C" {
 #define MAIN_NAME "Medm"
 #define OBJECT_PALETTE_NAME "Object "
 
+#ifdef WIN32
+# define MEDM_PATH_DELIMITER ';'
+#else
+# define MEDM_PATH_DELIMITER ':'
+#endif
 
   /*
    * define the help layers

@@ -74,7 +74,7 @@ typedef struct _Polygon {
     DlElement       *dlElement;
     Record           *record;
     UpdateTask       *updateTask;
-} Polygon;
+} MedmPolygon;
 
 static void polygonDraw(XtPointer cd);
 static void polygonUpdateValueCb(XtPointer cd);
@@ -106,7 +106,7 @@ static DlDispatchTable polygonDlDispatchTable = {
     handlePolygonVertexManipulation,
     NULL};
 
-static void drawPolygon(Polygon *pp) {
+static void drawPolygon(MedmPolygon *pp) {
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     Widget widget = pp->updateTask->displayInfo->drawingArea;
     Display *display = XtDisplay(widget);
@@ -149,10 +149,10 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
     DlPolygon *dlPolygon = dlElement->structure.polygon;
     if (displayInfo->traversalMode == DL_EXECUTE  && *dlPolygon->dynAttr.chan) {
 
-	Polygon *pp;
+	MedmPolygon *pp;
 	DlObject object;
 
-	pp = (Polygon *) malloc(sizeof(Polygon));
+	pp = (MedmPolygon *) malloc(sizeof(MedmPolygon));
 	pp->dlElement = dlElement;
 #if 1
 	object = dlPolygon->object;
@@ -221,12 +221,12 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void polygonUpdateValueCb(XtPointer cd) {
-    Polygon *pp = (Polygon *) ((Record *) cd)->clientData;
+    MedmPolygon *pp = (MedmPolygon *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pp->updateTask);
 }
 
 static void polygonDraw(XtPointer cd) {
-    Polygon *pp = (Polygon *) cd;
+    MedmPolygon *pp = (MedmPolygon *)cd;
     Record *pd = pp->record;
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
@@ -299,7 +299,7 @@ static void polygonDraw(XtPointer cd) {
 }
 
 static void polygonDestroyCb(XtPointer cd) {
-    Polygon *pp = (Polygon *) cd;
+    MedmPolygon *pp = (MedmPolygon *)cd;
     if (pp) {
 	medmDestroyRecord(pp->record);
 	free((char *)pp);
@@ -308,7 +308,7 @@ static void polygonDestroyCb(XtPointer cd) {
 }
 
 static void polygonGetRecord(XtPointer cd, Record **record, int *count) {
-    Polygon *pp = (Polygon *) cd;
+    MedmPolygon *pp = (MedmPolygon *)cd;
     *count = 1;
     record[0] = pp->record;
 }

@@ -234,7 +234,7 @@ Boolean extractStringBetweenColons(char *input, char *output,
 
     i = startPos; j = 0;
     while (input[i] != '\0') {
-	if(input[i] != ':') {
+	if(input[i] != MEDM_PATH_DELIMITER) {
 	    output[j++] = input[i];
 	} else break;
 	i++;

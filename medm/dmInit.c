@@ -100,7 +100,9 @@ ParseFuncEntry parseFuncTable[] = {
     {"meter",                parseMeter},
     {"byte",                 parseByte},
     {"strip chart",          parseStripChart},
+#ifdef XRTGRAPH
     {"cartesian plot",       parseCartesianPlot},
+#endif     /* #ifdef XRTGRAPH */
     {"text update",          parseTextUpdate},
     {"choice button",        parseChoiceButton},
     {"button",               parseChoiceButton},
@@ -516,7 +518,7 @@ void dmDisplayListParse(
 
       /* Resize it and its contents if specified in geometry */
 	if ((mask & WidthValue) && (mask & HeightValue)) {
-	    dmResizeDisplayList(cdi,w,h);
+	    dmResizeDisplayList(cdi,(Dimension)w,(Dimension)h);
 	}
 	dmTraverseDisplayList(cdi);
 

@@ -60,7 +60,7 @@ typedef struct _Rectangle {
     DlElement        *dlElement;
     Record           *record;
     UpdateTask       *updateTask;
-} Rectangle;
+} MedmRectangle;
 
 static void rectangleDraw(XtPointer cd);
 static void rectangleUpdateValueCb(XtPointer cd);
@@ -86,7 +86,7 @@ static DlDispatchTable rectangleDlDispatchTable = {
     NULL,
     NULL};
 
-static void drawRectangle(Rectangle *pr) {
+static void drawRectangle(MedmRectangle *pr) {
     unsigned int lineWidth;
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     Widget widget = pr->updateTask->displayInfo->drawingArea;
@@ -112,8 +112,8 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
     if (displayInfo->traversalMode == DL_EXECUTE && *dlRectangle->dynAttr.chan) {
-	Rectangle *pr;
-	pr = (Rectangle *) malloc(sizeof(Rectangle));
+	MedmRectangle *pr;
+	pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
 	pr->dlElement = dlElement;
 	pr->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlRectangle->object),
@@ -186,12 +186,12 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void rectangleUpdateValueCb(XtPointer cd) {
-    Rectangle *pr = (Rectangle *) ((Record *) cd)->clientData;
+    MedmRectangle *pr = (MedmRectangle *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pr->updateTask);
 }
 
 static void rectangleDraw(XtPointer cd) {
-    Rectangle *pr = (Rectangle *) cd;
+    MedmRectangle *pr = (MedmRectangle *)cd;
     Record *pd = pr->record;
     DisplayInfo *displayInfo = pr->updateTask->displayInfo;
     XGCValues gcValues;
@@ -261,7 +261,7 @@ static void rectangleDraw(XtPointer cd) {
 }
 
 static void rectangleDestroyCb(XtPointer cd) {
-    Rectangle *pr = (Rectangle *) cd;
+    MedmRectangle *pr = (MedmRectangle *)cd;
     if (pr) {
 	medmDestroyRecord(pr->record);
 	free((char *)pr);
@@ -270,7 +270,7 @@ static void rectangleDestroyCb(XtPointer cd) {
 }
 
 static void rectangleGetRecord(XtPointer cd, Record **record, int *count) {
-    Rectangle *pr = (Rectangle *) cd;
+    MedmRectangle *pr = (MedmRectangle *)cd;
     *count = 1;
     record[0] = pr->record;
 }
