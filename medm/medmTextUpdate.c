@@ -76,6 +76,8 @@ static void textUpdateDraw(XtPointer cd);
 static void textUpdateDestroyCb(XtPointer cd);
 static void textUpdateName(XtPointer, char **, short *, int *);
 static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void textUpdateSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void textUpdateSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable textUpdateDlDispatchTable = {
@@ -86,8 +88,8 @@ static DlDispatchTable textUpdateDlDispatchTable = {
     NULL,
     textUpdateGetValues,
     textUpdateInheritValues,
-    NULL,
-    NULL,
+    textUpdateSetBackgroundColor,
+    textUpdateSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -585,6 +587,19 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 #endif
 }
 
+static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {
+    DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
+    medmGetValues(pRCB,
+      CTRL_RC,       &(dlTextUpdate->monitor.rdbk),
+      CLR_RC,        &(dlTextUpdate->monitor.clr),
+      BCLR_RC,       &(dlTextUpdate->monitor.bclr),
+      CLRMOD_RC,     &(dlTextUpdate->clrmod),
+      ALIGN_RC,      &(dlTextUpdate->align),
+      FORMAT_RC,     &(dlTextUpdate->format),
+      -1);
+}
+
+
 static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
     medmGetValues(pRCB,
@@ -601,15 +616,18 @@ static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void textUpdateSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
     DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
     medmGetValues(pRCB,
-      CTRL_RC,       &(dlTextUpdate->monitor.rdbk),
-      CLR_RC,        &(dlTextUpdate->monitor.clr),
       BCLR_RC,       &(dlTextUpdate->monitor.bclr),
-      CLRMOD_RC,     &(dlTextUpdate->clrmod),
-      ALIGN_RC,      &(dlTextUpdate->align),
-      FORMAT_RC,     &(dlTextUpdate->format),
       -1);
 }
 
+static void textUpdateSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlTextUpdate->monitor.clr),
+      -1);
+}

@@ -155,14 +155,14 @@ void writeDlFile(
 }
 
 /*
- * this function gets called for executing the colormap section of
- *  each display list, for new display creation and for edit <-> execute
- *  transitions.  we could be more clever here for the edit/execute
+ * This function gets called for executing the colormap section of
+ *  each display list, for new display creation and for edit -> execute
+ *  transitions.  We could be more clever here for the edit/execute
  *  transitions and not re-execute the colormap info, but that would
  *  require changes to the cleanup code, etc...  hence let us leave
  *  this as is (since the colors are properly being freed (ref-count
  *  being decremented) and performance seems fine...
- *  -- for edit <-> execute type running, performance is not a big issue
+ *  -- for edit -> execute type running, performance is not a big issue
  *  anyway and there is no additional cost incurred for the straight
  *  execute time running --
  */
@@ -175,44 +175,43 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     XGCValues values;
 
     if (!displayInfo) return;
-  /* already have a colormap - don't allow a second one! */
-    if (displayInfo->colormap) return;
 
-    displayInfo->colormap = (Pixel *) malloc(dlColormap->ncolors *
-      sizeof(Pixel));
-    displayInfo->dlColormapSize = dlColormap->ncolors;
-
-  /**** allocate the X colormap from dlColormap data ****/
-    for (i = 0; i < dlColormap->ncolors; i++) {
-	XColor color;
-      /* scale [0,255] to [0,65535] */
-	color.red   = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].r); 
-	color.green = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].g); 
-	color.blue  = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].b); 
-      /* allocate a shareable color cell with closest RGB value */
-	if (XAllocColor(display,cmap,&color)) {
-	    displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
-	} else {
-	    fprintf(stderr,"\nexecuteDlColormap: couldn't allocate requested color");
-	    displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
+  /* Only do the colormap the first time */
+    if (!displayInfo->colormap) {
+	displayInfo->colormap = (Pixel *) malloc(dlColormap->ncolors *
+	  sizeof(Pixel));
+	displayInfo->dlColormapSize = dlColormap->ncolors;
+	
+      /* Allocate the X colormap from dlColormap data */
+	for (i = 0; i < dlColormap->ncolors; i++) {
+	    XColor color;
+	  /* Scale [0,255] to [0,65535] */
+	    color.red   = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].r); 
+	    color.green = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].g); 
+	    color.blue  = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].b); 
+	  /* Allocate a shareable color cell with closest RGB value */
+	    if (XAllocColor(display,cmap,&color)) {
+		displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
+	    } else {
+		fprintf(stderr,"\nexecuteDlColormap: couldn't allocate requested color");
+		displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
+	    }
+	    
+	    if (displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
+	      displayInfo->dlColormapCounter++;
+	    else
+	      fprintf(stderr,"\nexecuteDlColormap:  too many colormap entries");
+	  /* Just keep rewriting that last colormap entry */
 	}
-
-	if (displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
-	  displayInfo->dlColormapCounter++;
-	else
-	  fprintf(stderr,"\nexecuteDlColormap:  too many colormap entries");
-      /* just keep rewriting that last colormap entry */
     }
-
-  /*
-   * set the foreground and background of the display 
-   */
+    
+  /* Set the foreground and background of the display  */
     XtVaSetValues(displayInfo->drawingArea,
       XmNbackground,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor],
       NULL);
 
-  /* and create the drawing area pixmap */
+  /* Create the drawing area pixmap */
     XtVaGetValues(displayInfo->drawingArea,
       XmNwidth,(Dimension *)&width,
       XmNheight,(Dimension *)&height,
@@ -225,7 +224,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	MAX(1,width),MAX(1,height),
 	DefaultDepth(display,screenNum));
 
-  /* create the pixmap GC */
+  /* Create the pixmap GC */
     valueMask = GCForeground | GCBackground ;
     values.foreground = 
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
@@ -243,8 +242,10 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
       displayInfo->pixmapGC,0,0,width,height);
     XSetForeground(display,displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
-
-/* create the initial display GC */
+  /* Draw grid */
+    if(displayInfo->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+      drawGrid(displayInfo);
+  /* Create the initial display GC */
     valueMask = GCForeground | GCBackground ;
     values.foreground = 
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor];
@@ -258,8 +259,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 }
 
 
-DlColormap *createDlColormap(
-  DisplayInfo *displayInfo)
+DlColormap *createDlColormap(DisplayInfo *displayInfo)
 {
     DlColormap *dlColormap;
 
@@ -417,7 +417,7 @@ DlColormap *parseColormap(
 		      "truncating color space, but will continue...\n\n",
 		      "(you may want to change the colors of some objects)");
 		    fprintf(stderr,"\n%s\n",msg);
-		    dmSetAndPopupWarningDialog(displayInfo, msg,"Ok",NULL,NULL);
+		    dmSetAndPopupWarningDialog(displayInfo, msg,"OK",NULL,NULL);
 		}
 	    } else if (!strcmp(token,"dl_color")) {
 	      /* continue parsing but throw away "excess" colormap entries */
@@ -672,6 +672,8 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr) {
     dynAttr->name = 0;
 }
 
+/* Function prototypes */
+
 void destroyDlElement(DlElement *);
 DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
 void writeDlElement(FILE *stream, DlElement *DlElement, int level);
@@ -706,18 +708,29 @@ DlElement* createDlElement(
   DlDispatchTable *dlDispatchTable)
 {
     DlElement *dlElement;
+
+  /* Obtain dlElement */
     if (dlElementFreeList->count > 0) {
+      /* Get it from the free list */
 	dlElement = dlElementFreeList->tail;
 	removeDlElement(dlElementFreeList,dlElement);
 #if 0
 	printf("createDlElement, %d\n",dlElementFreeList->count);
 #endif
     } else {
+      /* Allocate it */
 	dlElement = (DlElement *) malloc(sizeof(DlElement));
     }
+  /* If unsuccessful, return */
     if (!dlElement) return 0;
+  /* Define the elements of the struct */
     dlElement->type = type;
-    dlElement->structure.composite = (DlComposite *) structure;
+  /* Note: structure is a union of pointers
+   *   Just need to define the (one) pointer
+   *   Use composite (doesn't matter which member of the union you use) */
+    dlElement->structure.composite = (DlComposite *)structure;
+  /* Use the supplied dispatch table or a default if the supplied one is NULL
+    * Note: createDlElement for DL_Element passes a NULL dispatch table */
     if (dlDispatchTable) {
 	dlElement->run = dlDispatchTable;
     } else {
@@ -733,7 +746,8 @@ DlElement* createDlElement(
     return dlElement;
 }
 
-void destroyDlElement(DlElement *dlElement) {
+void destroyDlElement(DlElement *dlElement)
+{
     appendDlElement(dlElementFreeList,dlElement);
 #if 0
     printf("destroyDlElement, %d\n",dlElementFreeList->count);
@@ -791,7 +805,7 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 	    } else if (!strcmp(token,"chan")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if ((strlen(token) > (size_t) 0)) {
+		if ((strlen(token) > (size_t)0)) {
 		    if (!dynAttr->name) dynAttr->name = allocateString();
 		    if (dynAttr->name)
 		      strcpy(dynAttr->name,token);
@@ -1148,7 +1162,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 	sprintf(msg,
 	  "Can't open \n\n        \"%s\" (.adl)\n\n%s",filename,
 	  "to extract external colormap - check cmap specification");
-	dmSetAndPopupWarningDialog(displayInfo,msg,"Ok",NULL,NULL);
+	dmSetAndPopupWarningDialog(displayInfo,msg,"OK",NULL,NULL);
 	fprintf(stderr,
 	  "\nparseAndExtractExternalColormap:can't open file %s (.adl)\n",
 	  filename);
@@ -1400,6 +1414,7 @@ void genericScale(DlElement *dlElement, int xOffset, int yOffset) {
 void destroyElementWithDynamicAttribute(DlElement *dlElement) {
     if (dlElement->structure.rectangle->dynAttr.name) {
 	freeString(dlElement->structure.rectangle->dynAttr.name);
+	dlElement->structure.rectangle->dynAttr.name = NULL;
     }
     free( (char *) dlElement->structure.composite);
     destroyDlElement(dlElement);

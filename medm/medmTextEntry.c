@@ -82,6 +82,8 @@ static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
 static char *valueToString(TextEntry *, TextFormat format);
 static void textEntryName(XtPointer, char **, short *, int *);
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void textEntrySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void textEntrySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable textEntryDlDispatchTable = {
@@ -92,8 +94,8 @@ static DlDispatchTable textEntryDlDispatchTable = {
     NULL,
     textEntryGetValues,
     textEntryInheritValues,
-    NULL,
-    NULL,
+    textEntrySetBackgroundColor,
+    textEntrySetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -302,13 +304,14 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
 		    xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
 		  dlElement->widget = localWidget;
 
-  /* remove all translations if in edit mode */
+		/* Remove all translations if in edit mode */
 		  XtUninstallTranslations(localWidget);
-		/*
-	* add button press handlers too
-	*/
-		  XtAddEventHandler(localWidget, ButtonPressMask, False,
-		    (XtEventHandler)handleButtonPress,(XtPointer)displayInfo);
+		/* Add back the KeyPress handler invoked in executeDlDisplay */
+		  XtAddEventHandler(localWidget,KeyPressMask,False,
+		    handleKeyPress,(XtPointer)displayInfo);
+		/* Add the ButtonPress handler */
+		  XtAddEventHandler(localWidget,ButtonPressMask,False,
+		    handleButtonPress,(XtPointer)displayInfo);
 
 		  XtManageChild(localWidget);
 }
@@ -632,5 +635,21 @@ static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlTextEntry->control.bclr),
       CLRMOD_RC,     &(dlTextEntry->clrmod),
       FORMAT_RC,     &(dlTextEntry->format),
+      -1);
+}
+
+static void textEntrySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlTextEntry *dlTextEntry = p->structure.textEntry;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlTextEntry->control.bclr),
+      -1);
+}
+
+static void textEntrySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlTextEntry *dlTextEntry = p->structure.textEntry;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlTextEntry->control.clr),
       -1);
 }

@@ -81,7 +81,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  * a title of shell widget.
  *
 
-*****************************************************************************/
+  *****************************************************************************/
 static XtCallbackProc medm_help_callback (Widget shell, 
   caddr_t closure,
   caddr_t call_data)
@@ -89,22 +89,23 @@ static XtCallbackProc medm_help_callback (Widget shell,
     char * title = NULL;
     char * env = getenv("MEDM_HELP");
 
-    if (env != NULL) 
-	{
-	    char * command;
+  /* Get window title */
+    XtVaGetValues (shell, XmNtitle, &title, NULL);
     
-	    XtVaGetValues (shell, XmNtitle, &title, NULL);
-
-	    command = (char*) malloc (strlen(env) + strlen(title) + 5);
-	    sprintf (command, "%s %s &", env, title);
-
-	    (void) system (command);
-	    free (command);
-	} 
-    else 
-	{
-	    fprintf (stderr, "Sorry, environment MEDM_HELP is not set..\n");
-	}
+    if (env != NULL) {
+      /* Run the help command */
+	char * command;
+	
+	command = (char*) malloc (strlen(env) + strlen(title) + 5);
+	sprintf (command, "%s %s &", env, title);
+	
+	(void) system (command);
+	free (command);
+    } else {
+      /* Print error message */
+	fprintf (stderr, "Sorry, the environment variable MEDM_HELP is not set.\n"
+	  "  Cannot get help for %s\n",title);
+    }
 }
 
 

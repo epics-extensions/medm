@@ -68,6 +68,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry);
 
 static void relatedDisplayInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void relatedDisplaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplayGetValues(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplayButtonPressedCb(Widget, XtPointer, XtPointer);
 
@@ -79,8 +81,8 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     NULL,
     relatedDisplayGetValues,
     relatedDisplayInheritValues,
-    NULL,
-    NULL,
+    relatedDisplaySetBackgroundColor,
+    relatedDisplaySetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -227,13 +229,13 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtDestroyWidget(dlElement->widget);
 	dlElement->widget = NULL;
     }
-  /* count number of displays */
+  /* Count number of displays with non-NULL labels */
     for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	if (dlRelatedDisplay->display[i].label[0] != '\0') {
 	    iNumberOfDisplays++;
 	}
     } 
-
+  /* 1 display, not hidden */
     if (iNumberOfDisplays == 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
 	Pixmap pixmap = 0;
 	char *label = 0;
@@ -264,258 +266,256 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  label,
 	  (XtPointer) displayInfo);
 	if (globalDisplayListTraversalMode == DL_EDIT) { 
-	  /* remove all translations if in edit mode */
+	  /* Remove all translations if in edit mode */
 	    XtUninstallTranslations(dlElement->widget);
-	  /*
-	   * add button press handlers too
-	   */
-	    XtAddEventHandler(dlElement->widget,ButtonPressMask, False,
+	  /* Add back the KeyPress handler invoked in executeDlDisplay */
+	    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
+	      handleKeyPress,(XtPointer)displayInfo);
+	  /* Add the ButtonPress handler */
+	    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
 	      handleButtonPress,(XtPointer)displayInfo);
 	} else {
-	  /* add the callbacks for bring up menu */
+	  /* Add the callbacks for bringing up the menu */
 	    XtAddCallback(dlElement->widget,XmNarmCallback,
 	      relatedDisplayButtonPressedCb,
 	      (XtPointer) &(dlRelatedDisplay->display[0]));
 	}
 	XtManageChild(dlElement->widget);
-    } else
-      if (dlRelatedDisplay->visual == RD_MENU) {
-	  XmString str;
-	  n = 0;
-	  XtSetArg(args[n],XmNbackground,(Pixel)
-	    displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
-	    XtSetArg(args[n],XmNforeground,(Pixel)
-	      displayInfo->colormap[dlRelatedDisplay->clr]); n++;
-	      XtSetArg(args[n],XmNhighlightThickness,1); n++;
-	      XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
-	      XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
-	      XtSetArg(args[n],XmNmarginHeight,0); n++;
-	      XtSetArg(args[n],XmNmarginWidth,0); n++;
-	      XtSetArg(args[n],XmNresizeHeight,(Boolean)FALSE); n++;
-	      XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	      XtSetArg(args[n],XmNspacing,0); n++;
-	      XtSetArg(args[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
-	      XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
-	      XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-	      XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
-	      localMenuBar =
-		XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
-	      XtManageChild(localMenuBar);
-	      dlElement->widget = localMenuBar;
-  
-	      colorMenuBar(localMenuBar,
-		(Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
-		(Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
-
-	      relatedDisplayPulldownMenu = XmCreatePulldownMenu(
-		localMenuBar,"relatedDisplayPulldownMenu",args,2);
-	      tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
-	      if (tearOff) {
-		  XtVaSetValues(tearOff,
-		    XmNforeground,(Pixel) displayInfo->colormap[dlRelatedDisplay->clr],
-		    XmNbackground,(Pixel) displayInfo->colormap[dlRelatedDisplay->bclr],
-		    XmNtearOffModel,XmTEAR_OFF_DISABLED,
-		    NULL);
-	      }
-
-	      n = 7;
-	      XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
-	      if (dlRelatedDisplay->label[0] == '\0') {
-		  pixmapSize = MIN(dlRelatedDisplay->object.width,
-		    dlRelatedDisplay->object.height);
-		/* allowing for shadows etc */
-		  pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
-
-		/* create relatedDisplay icon (render to appropriate size) */
-		  relatedDisplayPixmap = XCreatePixmap(display,
-		    RootWindow(display,screenNum), pixmapSize, pixmapSize,
-		    XDefaultDepth(display,screenNum));
-		  renderRelatedDisplayPixmap(display,relatedDisplayPixmap,
-		    displayInfo->colormap[dlRelatedDisplay->clr],
-		    displayInfo->colormap[dlRelatedDisplay->bclr],
-		    pixmapSize, pixmapSize);
-		  XtSetArg(args[n],XmNlabelPixmap,relatedDisplayPixmap); n++;
-		  XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-	      } else {
-		  XtSetArg(args[n],XmNlabelType,XmSTRING); n++;
-		  XtSetArg(args[n],XmNfontList,fontListTable[
-		    messageButtonFontListIndex(dlRelatedDisplay->object.height)]); n++;
-	      }
-	      XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
-	      XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-	      XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-
-	      XtSetArg(args[n],XmNmarginLeft,0); n++;
-	      XtSetArg(args[n],XmNmarginRight,0); n++;
-	      XtSetArg(args[n],XmNmarginTop,0); n++;
-	      XtSetArg(args[n],XmNmarginBottom,0); n++;
-	      XtSetArg(args[n],XmNmarginWidth,0); n++;
-	      XtSetArg(args[n],XmNmarginHeight,0); n++;
-
-	      widget = XtCreateManagedWidget("relatedDisplayMenuLabel",
-		xmCascadeButtonGadgetClass,
-		dlElement->widget, args, n);
-
-	      str = XmStringCreateSimple(dlRelatedDisplay->label);
-	      XtVaSetValues(widget,XmNlabelString,str,NULL);
-	      XmStringFree(str);
-
-	      XtAddCallback(widget, XmNdestroyCallback,freePixmapCallback,
-		(XtPointer)relatedDisplayPixmap);
-
-	      for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-		  if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
-		      xmString = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
-		      XtSetArg(args[3], XmNlabelString,xmString);
-		      XtSetArg(args[4], XmNuserData, displayInfo);
-		      relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
-			xmPushButtonWidgetClass, relatedDisplayPulldownMenu, args, 5);
-		      XtAddCallback(relatedDisplayMenuButton,XmNactivateCallback,
-			relatedDisplayButtonPressedCb,&(dlRelatedDisplay->display[i]));
-		      XmStringFree(xmString);
-		  }
-	      }
-
-
-	    /* add event handlers to relatedDisplay... */
-	      if (displayInfo->traversalMode == DL_EDIT) {
-
-		/* remove all translations if in edit mode */
-		  XtUninstallTranslations(localMenuBar);
-
-		  XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-		    handleButtonPress, (XtPointer)displayInfo);
-	      }
-      } else
-	if (dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
-	  dlRelatedDisplay->visual == RD_COL_OF_BTN) {
-	    Arg wargs[20];
-	    int i, n, maxChars, usedWidth, usedHeight;
-	    short sqrtEntries;
-	    double dSqrt;
-	    XmFontList fontList;
-	    Pixel fg, bg;
-	    Widget widget;
- 
-	    maxChars = 0;
-	    for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-		maxChars = MAX((size_t) maxChars,
-		  strlen(dlRelatedDisplay->display[i].label));
+    } else if (dlRelatedDisplay->visual == RD_MENU) {
+	XmString str;
+	n = 0;
+	XtSetArg(args[n],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
+	XtSetArg(args[n],XmNforeground,(Pixel)
+	  displayInfo->colormap[dlRelatedDisplay->clr]); n++;
+	XtSetArg(args[n],XmNhighlightThickness,1); n++;
+	XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
+	XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
+	XtSetArg(args[n],XmNmarginHeight,0); n++;
+	XtSetArg(args[n],XmNmarginWidth,0); n++;
+	XtSetArg(args[n],XmNresizeHeight,(Boolean)FALSE); n++;
+	XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
+	XtSetArg(args[n],XmNspacing,0); n++;
+	XtSetArg(args[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
+	XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
+	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+	localMenuBar =
+	  XmCreateMenuBar(displayInfo->drawingArea,"relatedDisplayMenuBar",args,n);
+	XtManageChild(localMenuBar);
+	dlElement->widget = localMenuBar;
+	
+	colorMenuBar(localMenuBar,
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
+	
+	relatedDisplayPulldownMenu = XmCreatePulldownMenu(
+	  localMenuBar,"relatedDisplayPulldownMenu",args,2);
+	tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
+	if (tearOff) {
+	    XtVaSetValues(tearOff,
+	      XmNforeground,(Pixel) displayInfo->colormap[dlRelatedDisplay->clr],
+	      XmNbackground,(Pixel) displayInfo->colormap[dlRelatedDisplay->bclr],
+	      XmNtearOffModel,XmTEAR_OFF_DISABLED,
+	      NULL);
+	}
+	
+	n = 7;
+	XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
+	if (dlRelatedDisplay->label[0] == '\0') {
+	    pixmapSize = MIN(dlRelatedDisplay->object.width,
+	      dlRelatedDisplay->object.height);
+	  /* allowing for shadows etc */
+	    pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
+	    
+	  /* create relatedDisplay icon (render to appropriate size) */
+	    relatedDisplayPixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapSize, pixmapSize,
+	      XDefaultDepth(display,screenNum));
+	    renderRelatedDisplayPixmap(display,relatedDisplayPixmap,
+	      displayInfo->colormap[dlRelatedDisplay->clr],
+	      displayInfo->colormap[dlRelatedDisplay->bclr],
+	      pixmapSize, pixmapSize);
+	    XtSetArg(args[n],XmNlabelPixmap,relatedDisplayPixmap); n++;
+	    XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
+	} else {
+	    XtSetArg(args[n],XmNlabelType,XmSTRING); n++;
+	    XtSetArg(args[n],XmNfontList,fontListTable[
+	      messageButtonFontListIndex(dlRelatedDisplay->object.height)]); n++;
+	}
+	XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
+	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+	XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
+	
+	XtSetArg(args[n],XmNmarginLeft,0); n++;
+	XtSetArg(args[n],XmNmarginRight,0); n++;
+	XtSetArg(args[n],XmNmarginTop,0); n++;
+	XtSetArg(args[n],XmNmarginBottom,0); n++;
+	XtSetArg(args[n],XmNmarginWidth,0); n++;
+	XtSetArg(args[n],XmNmarginHeight,0); n++;
+	
+	widget = XtCreateManagedWidget("relatedDisplayMenuLabel",
+	  xmCascadeButtonGadgetClass,
+	  dlElement->widget, args, n);
+	
+	str = XmStringCreateSimple(dlRelatedDisplay->label);
+	XtVaSetValues(widget,XmNlabelString,str,NULL);
+	XmStringFree(str);
+	
+	XtAddCallback(widget, XmNdestroyCallback,freePixmapCallback,
+	  (XtPointer)relatedDisplayPixmap);
+	
+	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	    if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
+		xmString = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
+		XtSetArg(args[3], XmNlabelString,xmString);
+		XtSetArg(args[4], XmNuserData, displayInfo);
+		relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
+		  xmPushButtonWidgetClass, relatedDisplayPulldownMenu, args, 5);
+		XtAddCallback(relatedDisplayMenuButton,XmNactivateCallback,
+		  relatedDisplayButtonPressedCb,&(dlRelatedDisplay->display[i]));
+		XmStringFree(xmString);
 	    }
-	    fg = displayInfo->colormap[dlRelatedDisplay->clr];
-	    bg = displayInfo->colormap[dlRelatedDisplay->bclr];
-	    n = 0;
-	    XtSetArg(wargs[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
-	    XtSetArg(wargs[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
-	    XtSetArg(wargs[n],XmNwidth,(Dimension)dlRelatedDisplay->object.width); n++;
-	    XtSetArg(wargs[n],XmNheight,(Dimension)dlRelatedDisplay->object.height); n++;
-	    XtSetArg(wargs[n],XmNforeground,fg); n++;
-	    XtSetArg(wargs[n],XmNbackground,bg); n++;
-	    XtSetArg(wargs[n],XmNindicatorOn,(Boolean)FALSE); n++;
-	    XtSetArg(wargs[n],XmNmarginWidth,0); n++;
-	    XtSetArg(wargs[n],XmNmarginHeight,0); n++;
-	    XtSetArg(wargs[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	    XtSetArg(wargs[n],XmNresizeHeight,(Boolean)FALSE); n++;
-	    XtSetArg(wargs[n],XmNspacing,0); n++;
-	    XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-	    XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
-	    switch (dlRelatedDisplay->visual) {
-	    case RD_COL_OF_BTN:
-		XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
-		usedWidth = dlRelatedDisplay->object.width;
-		usedHeight = (int) (dlRelatedDisplay->object.height/
-		  MAX(1,iNumberOfDisplays));
-		break;
-	    case RD_ROW_OF_BTN:
-		XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
-		usedWidth = (int) (dlRelatedDisplay->object.width/
-		  MAX(1,iNumberOfDisplays));
-		usedHeight = dlRelatedDisplay->object.height;
-		break;
-	    default:
-		break;
+	}
+	
+	
+      /* add event handlers to relatedDisplay... */
+	if (displayInfo->traversalMode == DL_EDIT) {
+	    
+	  /* remove all translations if in edit mode */
+	    XtUninstallTranslations(localMenuBar);
+	    
+	    XtAddEventHandler(localMenuBar,ButtonPressMask,False,
+	      handleButtonPress, (XtPointer)displayInfo);
+	}
+    } else if (dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
+      dlRelatedDisplay->visual == RD_COL_OF_BTN) {
+	Arg wargs[20];
+	int i, n, maxChars, usedWidth, usedHeight;
+	short sqrtEntries;
+	double dSqrt;
+	XmFontList fontList;
+	Pixel fg, bg;
+	Widget widget;
+	
+	maxChars = 0;
+	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	    maxChars = MAX((size_t) maxChars,
+	      strlen(dlRelatedDisplay->display[i].label));
+	}
+	fg = displayInfo->colormap[dlRelatedDisplay->clr];
+	bg = displayInfo->colormap[dlRelatedDisplay->bclr];
+	n = 0;
+	XtSetArg(wargs[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
+	XtSetArg(wargs[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
+	XtSetArg(wargs[n],XmNwidth,(Dimension)dlRelatedDisplay->object.width); n++;
+	XtSetArg(wargs[n],XmNheight,(Dimension)dlRelatedDisplay->object.height); n++;
+	XtSetArg(wargs[n],XmNforeground,fg); n++;
+	XtSetArg(wargs[n],XmNbackground,bg); n++;
+	XtSetArg(wargs[n],XmNindicatorOn,(Boolean)FALSE); n++;
+	XtSetArg(wargs[n],XmNmarginWidth,0); n++;
+	XtSetArg(wargs[n],XmNmarginHeight,0); n++;
+	XtSetArg(wargs[n],XmNresizeWidth,(Boolean)FALSE); n++;
+	XtSetArg(wargs[n],XmNresizeHeight,(Boolean)FALSE); n++;
+	XtSetArg(wargs[n],XmNspacing,0); n++;
+	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
+	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
+	switch (dlRelatedDisplay->visual) {
+	case RD_COL_OF_BTN:
+	    XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
+	    usedWidth = dlRelatedDisplay->object.width;
+	    usedHeight = (int) (dlRelatedDisplay->object.height/
+	      MAX(1,iNumberOfDisplays));
+	    break;
+	case RD_ROW_OF_BTN:
+	    XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
+	    usedWidth = (int) (dlRelatedDisplay->object.width/
+	      MAX(1,iNumberOfDisplays));
+	    usedHeight = dlRelatedDisplay->object.height;
+	    break;
+	default:
+	    break;
+	}
+	widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",wargs,n);
+	dlElement->widget = widget;
+	
+      /* now make push-in type radio buttons of the correct size */
+	fontList = fontListTable[relatedDisplayFontListIndex(
+	  dlRelatedDisplay,iNumberOfDisplays,maxChars)];
+	n = 0;
+	XtSetArg(wargs[n],XmNindicatorOn,False); n++;
+	XtSetArg(wargs[n],XmNshadowThickness,2); n++;
+	XtSetArg(wargs[n],XmNhighlightThickness,1); n++;
+	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
+	XtSetArg(wargs[n],XmNwidth,(Dimension)usedWidth); n++;
+	XtSetArg(wargs[n],XmNheight,(Dimension)usedHeight); n++;
+	XtSetArg(wargs[n],XmNfontList,fontList); n++;
+	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
+	XtSetArg(wargs[n],XmNindicatorOn,False); n++;
+	XtSetArg(wargs[n],XmNindicatorSize,0); n++;
+	XtSetArg(wargs[n],XmNspacing,0); n++;
+	XtSetArg(wargs[n],XmNvisibleWhenOff,False); n++;
+	XtSetArg(wargs[n],XmNforeground,fg); n++;
+	XtSetArg(wargs[n],XmNbackground,bg); n++;
+	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
+	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
+	for (i = 0; i < iNumberOfDisplays; i++) {
+	    XmString xmStr;
+	    Widget   toggleButton;
+	    xmStr = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
+	    XtSetArg(wargs[n],XmNlabelString,xmStr);
+	  /* use gadgets here so that changing foreground of
+	     radioBox changes buttons */
+	    toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
+	      wargs,n+1);
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		XtAddCallback(toggleButton,XmNarmCallback,relatedDisplayButtonPressedCb,
+		  (XtPointer) &(dlRelatedDisplay->display[i]));
+	    }  else {
+		XtSetSensitive(toggleButton,False);
+		XtUninstallTranslations(toggleButton);
 	    }
-	    widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",wargs,n);
-	    dlElement->widget = widget;
- 
-	  /* now make push-in type radio buttons of the correct size */
-	    fontList = fontListTable[relatedDisplayFontListIndex(
-	      dlRelatedDisplay,iNumberOfDisplays,maxChars)];
-	    n = 0;
-	    XtSetArg(wargs[n],XmNindicatorOn,False); n++;
-	    XtSetArg(wargs[n],XmNshadowThickness,2); n++;
-	    XtSetArg(wargs[n],XmNhighlightThickness,1); n++;
-	    XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-	    XtSetArg(wargs[n],XmNwidth,(Dimension)usedWidth); n++;
-	    XtSetArg(wargs[n],XmNheight,(Dimension)usedHeight); n++;
-	    XtSetArg(wargs[n],XmNfontList,fontList); n++;
-	    XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-	    XtSetArg(wargs[n],XmNindicatorOn,False); n++;
-	    XtSetArg(wargs[n],XmNindicatorSize,0); n++;
-	    XtSetArg(wargs[n],XmNspacing,0); n++;
-	    XtSetArg(wargs[n],XmNvisibleWhenOff,False); n++;
-	    XtSetArg(wargs[n],XmNforeground,fg); n++;
-	    XtSetArg(wargs[n],XmNbackground,bg); n++;
-	    XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-	    XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
-	    for (i = 0; i < iNumberOfDisplays; i++) {
-		XmString xmStr;
-		Widget   toggleButton;
-		xmStr = XmStringCreateSimple(dlRelatedDisplay->display[i].label);
-		XtSetArg(wargs[n],XmNlabelString,xmStr);
-	      /* use gadgets here so that changing foreground of
-		 radioBox changes buttons */
-		toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
-		  wargs,n+1);
-		if (globalDisplayListTraversalMode == DL_EXECUTE) {
-		    XtAddCallback(toggleButton,XmNarmCallback,relatedDisplayButtonPressedCb,
-		      (XtPointer) &(dlRelatedDisplay->display[i]));
-		}  else {
-		    XtSetSensitive(toggleButton,False);
-		    XtUninstallTranslations(toggleButton);
-		}
-	      /* MDA - for some reason, need to do this after the fact for gadgets... */
-		XtVaSetValues(toggleButton,XmNalignment,XmALIGNMENT_CENTER,NULL);
-		XtManageChild(toggleButton);
-	    }
-	    if (globalDisplayListTraversalMode == DL_EDIT) {
-	      /* add button press handlers for editing */
-		XtAddEventHandler(widget, ButtonPressMask, False,
-		  handleButtonPress,displayInfo);
-	    } else {
-	      /* add in drag/drop translations */
-		XtOverrideTranslations(widget,parsedTranslations);
-	    }
-	    XtManageChild(widget);
-	} else
-	  if (dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
-	      unsigned long gcValueMask;
-	      XGCValues gcValues;
-	      Display *display = XtDisplay(displayInfo->drawingArea);
-	      gcValueMask = GCForeground | GCBackground | GCFillStyle | GCStipple;
-	      gcValues.foreground = displayInfo->colormap[dlRelatedDisplay->clr];
-	      gcValues.background = displayInfo->colormap[dlRelatedDisplay->bclr];
-	      gcValues.fill_style = FillStippled;
-	      if (!stipple) {
-		  static char stipple_bitmap[] = {0x03, 0x03, 0x0c, 0x0c};
-
-		  stipple = XCreateBitmapFromData(display,
-		    RootWindow(display, DefaultScreen(display)),
-		    stipple_bitmap, 4, 4);
-	      }
-	      gcValues.stipple = stipple;
-	      XChangeGC(XtDisplay(displayInfo->drawingArea),
-		displayInfo->gc,
-		gcValueMask, &gcValues);
-	      XFillRectangle(XtDisplay(displayInfo->drawingArea),
-		XtWindow(displayInfo->drawingArea),displayInfo->gc,
-		dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
-		dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
-	      XFillRectangle(XtDisplay(displayInfo->drawingArea),
-		displayInfo->drawingAreaPixmap,displayInfo->gc,
-		dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
-		dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
-	  }
+	  /* MDA - for some reason, need to do this after the fact for gadgets... */
+	    XtVaSetValues(toggleButton,XmNalignment,XmALIGNMENT_CENTER,NULL);
+	    XtManageChild(toggleButton);
+	}
+	if (globalDisplayListTraversalMode == DL_EDIT) {
+	  /* add button press handlers for editing */
+	    XtAddEventHandler(widget, ButtonPressMask, False,
+	      handleButtonPress,displayInfo);
+	} else {
+	  /* add in drag/drop translations */
+	    XtOverrideTranslations(widget,parsedTranslations);
+	}
+	XtManageChild(widget);
+    } else if (dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
+	unsigned long gcValueMask;
+	XGCValues gcValues;
+	Display *display = XtDisplay(displayInfo->drawingArea);
+	gcValueMask = GCForeground | GCBackground | GCFillStyle | GCStipple;
+	gcValues.foreground = displayInfo->colormap[dlRelatedDisplay->clr];
+	gcValues.background = displayInfo->colormap[dlRelatedDisplay->bclr];
+	gcValues.fill_style = FillStippled;
+	if (!stipple) {
+	    static char stipple_bitmap[] = {0x03, 0x03, 0x0c, 0x0c};
+	    
+	    stipple = XCreateBitmapFromData(display,
+	      RootWindow(display, DefaultScreen(display)),
+	      stipple_bitmap, 4, 4);
+	}
+	gcValues.stipple = stipple;
+	XChangeGC(XtDisplay(displayInfo->drawingArea),
+	  displayInfo->gc,
+	  gcValueMask, &gcValues);
+	XFillRectangle(XtDisplay(displayInfo->drawingArea),
+	  XtWindow(displayInfo->drawingArea),displayInfo->gc,
+	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
+	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
+	XFillRectangle(XtDisplay(displayInfo->drawingArea),
+	  displayInfo->drawingAreaPixmap,displayInfo->gc,
+	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
+	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
+    }
 }
 
 #ifdef __cplusplus
@@ -749,32 +749,10 @@ void writeDlRelatedDisplay(
 #endif
 }
 
-static void relatedDisplayInheritValues(ResourceBundle *pRCB, DlElement *p) {
-    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
-    medmGetValues(pRCB,
-      CLR_RC,        &(dlRelatedDisplay->clr),
-      BCLR_RC,       &(dlRelatedDisplay->bclr),
-      -1);
-}
-
-static void relatedDisplayGetValues(ResourceBundle *pRCB, DlElement *p) {
-    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
-    medmGetValues(pRCB,
-      X_RC,          &(dlRelatedDisplay->object.x),
-      Y_RC,          &(dlRelatedDisplay->object.y),
-      WIDTH_RC,      &(dlRelatedDisplay->object.width),
-      HEIGHT_RC,     &(dlRelatedDisplay->object.height),
-      CLR_RC,        &(dlRelatedDisplay->clr),
-      BCLR_RC,       &(dlRelatedDisplay->bclr),
-      RD_LABEL_RC,   &(dlRelatedDisplay->label),
-      RD_VISUAL_RC,  &(dlRelatedDisplay->visual),
-      RDDATA_RC,     &(dlRelatedDisplay->display),
-      -1);
-}
-
 static void relatedDisplayButtonPressedCb(Widget w,
   XtPointer clientData,
-  XtPointer callbackData) {
+  XtPointer callbackData)
+{
     DlRelatedDisplayEntry *pEntry = (DlRelatedDisplayEntry *) clientData;
     DisplayInfo *displayInfo = 0;
     XtVaGetValues(w,XmNuserData,&displayInfo,NULL);
@@ -782,7 +760,8 @@ static void relatedDisplayButtonPressedCb(Widget w,
 }
 
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *pEntry) { 
+  DlRelatedDisplayEntry *pEntry)
+{ 
     char *filename, *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
     FILE *filePtr;
     char *adlPtr;
@@ -790,12 +769,13 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     int suffixLength, prefixLength;
     filename = pEntry->name;
     argsString = pEntry->args;
-/*
- * if we want to be able to have RD's inherit their parent's
- *   macro-substitutions, then we must perform any macro substitution on
- *   this argument string in this displayInfo's context before passing
- *   it to the created child display
- */
+    
+  /*
+   * if we want to be able to have RD's inherit their parent's
+   *   macro-substitutions, then we must perform any macro substitution on
+   *   this argument string in this displayInfo's context before passing
+   *   it to the created child display
+   */
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	performMacroSubstitutions(displayInfo,argsString,processedArgs,
           2*MAX_TOKEN_LENGTH);
@@ -813,10 +793,9 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	    prefixLength = strlen(newFilename) - suffixLength;
 	    newFilename[prefixLength] = '\0';
 	    sprintf(token,
-	      "Can't open related display:\n\n        %s%s\n\n%s",
-	      newFilename, DISPLAY_FILE_ASCII_SUFFIX,
-	      "--> check EPICS_DISPLAY_PATH ");
-	    dmSetAndPopupWarningDialog(displayInfo,token,"Ok",NULL,NULL);
+	      "Can't open related display:\n\n        %s%s\n\nCheck %s\n",
+	      newFilename, DISPLAY_FILE_ASCII_SUFFIX,DISPLAY_LIST_ENV);
+	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);
 	    fprintf(stderr,"\n%s",token);
 	    free(newFilename);
 	} else {
@@ -893,13 +872,14 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 /*
  * create related display data dialog
  */
-Widget createRelatedDisplayDataDialog (Widget parent) {
+Widget createRelatedDisplayDataDialog (Widget parent)
+{
     Widget form, shell, applyButton, closeButton;
     Dimension cWidth, cHeight, aWidth, aHeight;
     Arg args[12];
     XmString xmString;
     int i, j, n;
- 
+    
 /*
  * now create the interface
  *
@@ -1041,7 +1021,8 @@ void updateRelatedDisplayDataDialog()
     }
 }
 
-void relatedDisplayDataDialogPopup(Widget w) {
+void relatedDisplayDataDialogPopup(Widget w)
+{
     if (relatedDisplayS == NULL) {
 	relatedDisplayS = createRelatedDisplayDataDialog(w);
     }
@@ -1049,4 +1030,45 @@ void relatedDisplayDataDialogPopup(Widget w) {
     updateRelatedDisplayDataDialog();
     XtManageChild(rdForm);
     XtPopup(relatedDisplayS,XtGrabNone);
+}
+
+static void relatedDisplayInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
+    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlRelatedDisplay->clr),
+      BCLR_RC,       &(dlRelatedDisplay->bclr),
+      -1);
+}
+
+static void relatedDisplayGetValues(ResourceBundle *pRCB, DlElement *p)
+{
+    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
+    medmGetValues(pRCB,
+      X_RC,          &(dlRelatedDisplay->object.x),
+      Y_RC,          &(dlRelatedDisplay->object.y),
+      WIDTH_RC,      &(dlRelatedDisplay->object.width),
+      HEIGHT_RC,     &(dlRelatedDisplay->object.height),
+      CLR_RC,        &(dlRelatedDisplay->clr),
+      BCLR_RC,       &(dlRelatedDisplay->bclr),
+      RD_LABEL_RC,   &(dlRelatedDisplay->label),
+      RD_VISUAL_RC,  &(dlRelatedDisplay->visual),
+      RDDATA_RC,     &(dlRelatedDisplay->display),
+      -1);
+}
+
+static void relatedDisplaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlRelatedDisplay->bclr),
+      -1);
+}
+
+static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlRelatedDisplay *dlRelatedDisplay = p->structure.relatedDisplay;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlRelatedDisplay->clr),
+      -1);
 }

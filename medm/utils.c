@@ -54,6 +54,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_EVENTS 0
+#define DEBUG_FILE 1
+#define DEBUG_STRING_LIST 1
+#define DEBUG_TRAVERSAL 0
+#define DEBUG_UNDO 0
+#define UNDO
+
 #include <string.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
@@ -65,9 +72,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define MAX_DIR_LENGTH 512		/* max. length of directory name */
 
+/* #define GRAB_WINDOW window */
+#define GRAB_WINDOW None
 
-Boolean modalGrab = FALSE;
-
+Boolean modalGrab = FALSE;     /* KE: Not used ?? */
+static DlList *tmpDlElementList = NULL;
 
 /*
  * function to open a specified file (as .adl if specified as .dl),
@@ -82,13 +91,17 @@ FILE *dmOpenUseableFile(char *filename)
       dirName[MAX_DIR_LENGTH];
     char *dir, *adlPtr;
     int suffixLength, usedLength, startPos;
+#if DEBUG_FILE
+    static FILE *file=NULL;
+    static pid_t pid=0;
+#endif
 
-/*
- * try to open the file as a ".adl"  rather than ".dl" which the
- *    editor generates
- */
-
-/* look in current directory first */
+  /*
+   * try to open the file as a ".adl"  rather than ".dl" which the
+   *    editor generates
+   */
+    
+  /* look in current directory first */
     adlPtr = strstr(filename,DISPLAY_FILE_ASCII_SUFFIX);
     if (adlPtr != NULL) {
       /* ascii name */
@@ -103,8 +116,21 @@ FILE *dmOpenUseableFile(char *filename)
     name[usedLength-suffixLength] = '\0';
     strcat(name,DISPLAY_FILE_ASCII_SUFFIX);
     filePtr = fopen(name,"r");
+#if DEBUG_FILE
+    if(!file) {
+	file=fopen("/tmp/medmLog","a");
+	pid=getpid();
+	fprintf(file,"Initializing PID: %d\n",pid);
+    }
+    if(file) {
+	fprintf(file,"[%d] dmOpenUseableFile: %s\n",pid,filename);
+	fprintf(file,"  Converted to: %s\n",name);
+	if(filePtr) fprintf(file,"    Found as: %s\n",name);
+	fflush(file);
+    }
+#endif
 
-/* if not in current directory, look in EPICS_DISPLAY_PATH directory */
+  /* if not in current directory, look in EPICS_DISPLAY_PATH directory */
     if (filePtr == NULL) {
 	dir = getenv(DISPLAY_LIST_ENV);
 	if (dir != NULL) {
@@ -115,6 +141,13 @@ FILE *dmOpenUseableFile(char *filename)
 		strcat(fullPathName,"/");
 		strcat(fullPathName,name);
 		filePtr = fopen(fullPathName,"r");
+#if DEBUG_FILE
+		if(file) {
+		    fprintf(file,"  Converted to: %s\n",fullPathName);
+		    if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
+		    fflush(file);
+		}
+#endif
 	    }
 	}
     }
@@ -125,11 +158,8 @@ FILE *dmOpenUseableFile(char *filename)
  *  extract strings between colons from input to output
  *    this function works as an iterator...
  */
-Boolean extractStringBetweenColons(
-  char *input,
-  char *output,
-  int  startPos,
-  int  *endPos)
+Boolean extractStringBetweenColons(char *input, char *output,
+  int  startPos, int  *endPos)
 {
     int i, j;
 
@@ -154,36 +184,70 @@ Boolean extractStringBetweenColons(
 /*
  * clean up the memory-resident display list (if there is one)
  */
-void destroyDlDisplayList(DlList *l) {
-    DlElement *dlElement, *freeElement;
-    if (l->count == 0) return;
-    dlElement = FirstDlElement(l);
+void clearDlDisplayList(DlList *list)
+{
+    DlElement *dlElement, *pE;
+    
+    if (list->count == 0) return;
+    dlElement = FirstDlElement(list);
     while (dlElement) {
-	freeElement = dlElement;
+	pE = dlElement;
 	dlElement = dlElement->next;
-	if (freeElement->run->destroy) {
-	    freeElement->run->destroy(freeElement);
+	if (pE->run->destroy) {
+	    pE->run->destroy(pE);
 	} else {
-	    free( (char *) freeElement->structure.composite);
-	    destroyDlElement(freeElement);
+	    free((char *)pE->structure.composite);
+	    destroyDlElement(pE);
 	}
     }
-    emptyDlList(l);
+    emptyDlList(list);
+}
+
+/*
+ * Same as clearDlDisplayList except that it does not clear the display
+ * and it destroys any widgets
+ */
+void removeDlDisplayListElementsExceptDisplay(DlList *list)
+{
+    DlElement *dlElement, *pE;
+    DlElement *psave = NULL;
+    
+    if (list->count == 0) return;
+    dlElement = FirstDlElement(list);
+    while (dlElement) {
+	pE = dlElement;
+	if (dlElement->type != DL_Display) {
+	    dlElement = dlElement->next;
+	    destroyElementWidgets(pE);
+	    if (pE->run->destroy) {
+		pE->run->destroy(pE);
+	    } else {
+		free((char *)pE->structure.composite);
+		destroyDlElement(pE);
+	    }
+	} else {
+	    psave = pE;
+	    dlElement = dlElement->next;
+	}
+    }
+    emptyDlList(list);
+
+  /* Put the display back if there was one */
+    if(psave) {
+	appendDlElement(list, psave);
+    }
 }
 
 /*
  * function which cleans up a given displayInfo in the displayInfoList
  * (including the displayInfo's display list if specified)
  */
-void dmCleanupDisplayInfo(
-  DisplayInfo *displayInfo,
-  Boolean cleanupDisplayList)
+void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 {
     int i;
     Boolean alreadyFreedUnphysical;
     Widget DA;
     UpdateTask *ut = &(displayInfo->updateTaskListHead);
-
 
   /* save off current DA */
     DA = displayInfo->drawingArea;
@@ -226,11 +290,15 @@ void dmCleanupDisplayInfo(
    *   then global cleanup ==> delete shell, free memory/structures, etc
    */
 
+  /* Destroy undo information */
+    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
+    
+  /* Branch depending on cleanup mode */
     if (cleanupDisplayList) {
 	XtDestroyWidget(displayInfo->shell);
 	displayInfo->shell = NULL;
       /* remove display list here */
-	destroyDlDisplayList(displayInfo->dlElementList);
+	clearDlDisplayList(displayInfo->dlElementList);
     } else {
 	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
 	while (dlElement) {
@@ -279,8 +347,7 @@ void dmCleanupDisplayInfo(
 }
 
 
-void dmRemoveDisplayInfo(
-  DisplayInfo *displayInfo)
+void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 {
     displayInfo->prev->next = displayInfo->next;
     if (displayInfo->next != NULL)
@@ -289,15 +356,17 @@ void dmRemoveDisplayInfo(
       displayInfoListTail = displayInfoListTail->prev;
     if (displayInfoListTail == displayInfoListHead )
       displayInfoListHead->next = NULL;
-/* cleaup resources and free display list */
+/* Cleanup resources and free display list */
     dmCleanupDisplayInfo(displayInfo,True);
     freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
     if (displayInfo->dlElementList) {
+	clearDlDisplayList(displayInfo->dlElementList);
+	free ( (char *) displayInfo->dlElementList);
     }
-    destroyDlDisplayList(displayInfo->dlElementList);
-    free ( (char *) displayInfo->dlElementList);
-    destroyDlDisplayList(displayInfo->selectedDlElementList);
-    free ( (char *) displayInfo->selectedDlElementList);
+    if (displayInfo->selectedDlElementList) {
+	clearDlDisplayList(displayInfo->selectedDlElementList);
+	free ( (char *) displayInfo->selectedDlElementList);
+    }
     free ( (char *) displayInfo->dlFile);
     free ( (char *) displayInfo->dlColormap);
     free ( (char *) displayInfo);
@@ -333,29 +402,30 @@ void dmRemoveAllDisplayInfo()
 }
 
 /*
- * traverse (execute) specified displayInfo's display list
+ * Traverse (execute) specified displayInfo's display list
  */
-void dmTraverseDisplayList(
-  DisplayInfo *displayInfo)
+void dmTraverseDisplayList(DisplayInfo *displayInfo)
 {
     DlElement *element;
 
-  /* traverse the display list */
+  /* Traverse the display list */
+#if DEBUG_TRAVERSAL
+    fprintf(stderr,"\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
+    dumpDlElementList(displayInfo->dlElementList);
+#endif
     element = FirstDlElement(displayInfo->dlElementList);
     while (element) {
 	(element->run->execute)(displayInfo,element);
 	element = element->next;
     }
 
+  /* Change the cursor for the drawing area */
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
-
-  /*
-   * flush CA send buffer and continue, since connection event handler used
-   *	also flush X buffer
-   */
+  /* Flush the display to implement the cursor change */
     XFlush(display);
 
+  /* Poll CA */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -373,7 +443,9 @@ void dmTraverseDisplayList(
 
 
 /*
- * traverse (execute) all displayInfos and display lists
+ * Traverse (execute) all displayInfos and display lists
+ * (Could call dmTraverseDisplayList inside the displayInfo traversal,
+ *    but only need one XFlush and one ca_pend_event)
  */
 void dmTraverseAllDisplayLists()
 {
@@ -382,27 +454,31 @@ void dmTraverseAllDisplayLists()
 
     displayInfo = displayInfoListHead->next;
 
+  /* Traverse the displayInfo list */
     while (displayInfo != NULL) {
 
-      /* traverse the display list */
+      /* Traverse the display list for this displayInfo */
+#if DEBUG_TRAVERSAL
+	fprintf(stderr,"\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
+	dumpDlElementList(displayInfo->dlElementList);
+#endif
 	element = FirstDlElement(displayInfo->dlElementList);
 	while (element) {
 	    (element->run->execute)(displayInfo,element);
 	    element = element->next;
 	}
 
-      /* change drawingArea's cursor to the appropriate cursor */
+      /* Change the cursor for the drawing area for this displayInfo */
 	XDefineCursor(display,XtWindow(displayInfo->drawingArea),
 	  (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
+      /* Flush the display to implement cursor changes */
+      /* Also necessary to keep the stacking order rendered correctly */
+	XFlush(display);
 
 	displayInfo = displayInfo->next;
     }
 
-  /*
-   * flush CA send buffer and continue, since connection event handler used
-   *	also flush X buffer
-   */
-    XFlush(display);
+  /* Poll CA */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -422,15 +498,17 @@ void dmTraverseAllDisplayLists()
 /*
  * traverse (execute) specified displayInfo's display list non-widget elements
  */
-void dmTraverseNonWidgetsInDisplayList(
-  DisplayInfo *displayInfo)
+void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 {
     DlElement *element;
     Dimension width,height;
 
     if (displayInfo == NULL) return;
 
-  /* fill the background with the background color */
+  /* Unhighlight any selected elements */
+    unhighlightSelectedElements();
+    
+  /* Fill the background with the background color */
     XSetForeground(display,displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
     XtVaGetValues(displayInfo->drawingArea,
@@ -438,8 +516,12 @@ void dmTraverseNonWidgetsInDisplayList(
     XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
       0, 0, (unsigned int)width,(unsigned int)height);
 
-  /* traverse the display list */
-  /* point element after the display */
+  /* Draw grid */
+    if(displayInfo->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+     drawGrid(displayInfo);
+
+  /* Traverse the display list */
+  /* Point to element after the display */
     element = FirstDlElement(displayInfo->dlElementList)->next;
     while (element) {
 	if (!element->widget) {
@@ -448,13 +530,16 @@ void dmTraverseNonWidgetsInDisplayList(
 	element = element->next;
     }
 
-  /* since the execute traversal copies to the pixmap, now udpate the window */
+  /* Since the execute traversal copies to the pixmap, now udpate the window */
     XCopyArea(display,displayInfo->drawingAreaPixmap,
       XtWindow(displayInfo->drawingArea),
       displayInfo->pixmapGC, 0, 0, (unsigned int)width,
       (unsigned int)height, 0, 0);
 
-  /* change drawingArea's cursor to the appropriate cursor */
+  /* Highlight any selected elements */
+    highlightSelectedElements();
+    
+  /* Change drawingArea's cursor to the appropriate cursor */
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ?
 	rubberbandCursor : crosshairCursor));
@@ -468,15 +553,8 @@ void dmTraverseNonWidgetsInDisplayList(
  *	make judgment based on height info only & return
  *	width of largest character as *usedW
  */
-int dmGetBestFontWithInfo(
-  XFontStruct **fontTable,
-  int nFonts,
-  char *text,
-  int h,
-  int w, 
-  int *usedH, 
-  int *usedW,
-  Boolean textWidthFlag)
+int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
+  int h, int w, int *usedH, int *usedW, Boolean textWidthFlag)
 {
     int i, temp, count, upper, lower;
     static int errorOnI = -1;
@@ -510,7 +588,8 @@ int dmGetBestFontWithInfo(
 
 	*usedW = temp;
 
-#ifdef DEBUG
+      /* DEBUG */
+#if 0
 	if ( *usedH > h || *usedW > w)
 	  if (errorOnI != i) {
 	      errorOnI = i;
@@ -519,6 +598,7 @@ int dmGetBestFontWithInfo(
 		h);
 	  }
 #endif
+      /* End DEBUG */
     }
 
     return (i);
@@ -547,8 +627,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
  * function to march up widget hierarchy to retrieve top shell, and
  *  then run over displayInfoList and return the corresponding DisplayInfo *
  */
-DisplayInfo *dmGetDisplayInfoFromWidget(
-  Widget widget)
+DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
 {
     Widget w;
     DisplayInfo *displayInfo = NULL;
@@ -570,9 +649,7 @@ DisplayInfo *dmGetDisplayInfoFromWidget(
 /*
  * write specified displayInfo's display list
  */
-void dmWriteDisplayList(
-  DisplayInfo *displayInfo,
-  FILE *stream)
+void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
 {
     DlElement *element, *cmapElement;
 
@@ -621,69 +698,57 @@ void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
 }
 
 /*
- * starting at tail of display list, look for smallest object which bounds
+ * Starting at tail of display list, look for smallest object which contains
  *   the specified position 
  */
-DlElement *lookupElement(DlList *l, Position x0, Position y0)
+DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 {
-    DlElement *element, *saveElement, *displayElement;
-    int minWidth, minHeight;
+    DlElement *pE, *pSmallest, *pDisplay;
+    double area, minArea;
 
-  /* traverse the display list */
-    minWidth = INT_MAX;		/* according to XPG2's values.h */
-    minHeight = INT_MAX;
-    saveElement = NULL;
+  /* Traverse the display list */
+    pSmallest = pDisplay = NULL;
+    minArea = (double)(INT_MAX)*(double)(INT_MAX);
+    pE = pList->tail;
+    while (pE->prev) {
+	DlObject *po = &(pE->structure.rectangle->object);
 
-  /*
-   * single element lookup
-   */
-    element = l->tail;
-
-    while (element->prev) {
-	DlObject *po = &(element->structure.rectangle->object);
-	if (((x0 >= po->x) && (x0 <= po->x + po->width))	&&
-	  ((y0 >= po->y) && (y0 <= po->y + po->height))) {
-	  /* eligible element, now see if smallest element so far */
-	    if (po->width < minWidth && po->height < minHeight) {
-	      /* if only DL_Display is smaller than object, return object */
-		if (element->type != DL_Display || saveElement == NULL) {
-		    minWidth = po->width;
-		    minHeight = po->height;
-		    saveElement = element;
+      /* Don't use the display but save it as a fallback */
+	if (pE->type == DL_Display) {
+	    pDisplay = pE;
+	} else {
+	  /* See if the point falls inside the element */
+	    if (((x0 >= po->x) && (x0 <= po->x + po->width))	&&
+	      ((y0 >= po->y) && (y0 <= po->y + po->height))) {
+	      /* See if smallest element so far */
+		area=(double)(po->width)*(double)(po->height);
+		if (area < minArea) {
+		    pSmallest = pE;
+		    minArea = area;
 		}
 	    }
 	}
-	if (element->type == DL_Display) {
-	    minWidth = (element->structure.rectangle)->object.width;
-	    minHeight = (element->structure.rectangle)->object.height;
-	    displayElement = element;
-	}
-	element = element->prev;
+	pE = pE->prev;
     }
 
-  /* assume we'll always find a DL_Display, use that as fallback */
-    if (saveElement == NULL) saveElement = displayElement;
+  /* Use the display as the fallback (Assume we'll always find one) */
+    if (pSmallest == NULL) pSmallest = pDisplay;
 
-  /*
-   * if we are in EXECUTE mode, then we need to decompose a group hit into
-   *  its component, if in EDIT mode, then the group is what we want
-   */
-    if (globalDisplayListTraversalMode == DL_EXECUTE) {
-	if (saveElement->type == DL_Composite) {
-	  /* find child of composite which was picked */
-	    return(lookupCompositeChild(saveElement,x0,y0));
-	}
+  /* If in EXECUTE mode decompose a composite element */
+    if (globalDisplayListTraversalMode == DL_EXECUTE &&
+      pSmallest->type == DL_Composite) {
+      /* Find the particular component that was picked */
+	pSmallest = lookupCompositeChild(pSmallest,x0,y0);
     }
-    return (saveElement);
+
+  /* Return the element */
+    return (pSmallest);
 }
 
 /*
- * starting at head of composite (specified element), lookup picked object
+ * Starting at head of composite (specified element), lookup picked object
  */
-DlElement *lookupCompositeChild(
-  DlElement *composite,
-  Position x0,
-  Position y0)
+DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0)
 {
     DlElement *element, *saveElement;
     int minWidth, minHeight;
@@ -695,9 +760,7 @@ DlElement *lookupCompositeChild(
     minHeight = INT_MAX;
     saveElement = NULL;
 
-  /*
-   * single element lookup
-   */
+  /* Single element lookup  */
     element = FirstDlElement(composite->structure.composite->dlElementList);
 
     while (element) {
@@ -714,104 +777,106 @@ DlElement *lookupCompositeChild(
 	element = element->prev;
     }
     if (saveElement) {
-      /* found a new element - if it is composite,
-	 recurse, otherwise return it */
+      /* Found a new element
+       *   If it is composite, recurse, otherwise return it */
 	if (saveElement->type == DL_Composite) {
 	    return(lookupCompositeChild(saveElement,x0,y0));
 	} else {
 	    return(saveElement);
 	}
     } else {
-      /* didn't find anything, return old composite */
+      /* Didn't find anything, return old composite */
 	return(composite);
     }
 }
 
 /*
- * starting at tail of display list, look for smallest object which bounds
- *   the specified position if single point select, else look for list
- *   of objects bounded by the region defined by (x0,y0) and (x1,y1)
- *
- * if the smallest bounding object has a composite "parent" (is a member of
- *   a group) then actually select the composite/group
- *
- *   - also update currentDisplayInfo's attribute / dynamicAttribute structures
- *     from previous data in display list for single element select
+ * Finds elements in list 1 and puts them into list 2 according to
+ *   the mode mask specification AND whether the points are close or not
  */
-void selectedElementsLookup(
-  DlList *l1,
-  Position x0, 
-  Position y0,
-  Position x1,
-  Position y1,
-  DlList *l2)
+void findSelectedElements(DlList *pList1, Position x0, Position y0,
+  Position x1, Position y1, DlList *pList2, unsigned int mode)
 {
-    DlElement *element, *saveElement, *displayElement;
-    Position x, y;
-    int minWidth, minHeight;
-    char string[48];
-
-  /* traverse the display list */
-    minWidth = INT_MAX;		/* according to XPG2's values.h */
-    minHeight = INT_MAX;
-    saveElement = NULL;
-    displayElement = NULL;
-
-  /* number of pixels to consider  same as no motion... */
+  /* Number of pixels to consider to be the same as no motion */
 #define RUBBERBAND_EPSILON 4
 
     if ((x1 - x0) <= RUBBERBAND_EPSILON && (y1 - y0) <= RUBBERBAND_EPSILON) {
-      /*
-       * single element lookup
-       *   N.B. - this is really just lookupElement()!
-       */
-	DlElement *dlElement;
-	x = (x0 + x1)/2;
-	y = (y0 + y1)/2;
-	dlElement = lookupElement(l1,x,y);
-	if (dlElement) {
-	    DlElement *pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
-	    if (pE) {
-		appendDlElement(l2, pE);
-	    }
-	}
-	return;
-    } else {
-      /*
-       * multi-element lookup
-       *	don't allow DL_Display to be part of multi-element lookup
-       *	(only single element lookups for display - this avoids problems
-       *	further down the pike and makes sense since logically the display
-       *	can in fact extend beyond visible borders {since objects can
-       *	extend beyond visible borders})
-       */
-	element = LastDlElement(l1);
+      /* No motion, treat as a point */
+	if (mode&SmallestTouched) {
+	  /* Find the smallest element that is touched by the point */
+	    Position x = (x0 + x1)/2, y = (y0 + y1)/2;
+	    DlElement *pE;
 
-	while (element->prev) {
-	    DlObject *po = &(element->structure.rectangle->object);
-	    if (element->type != DL_Display &&
-	      (x0 <= po->x && x1 >= po->x + po->width) &&
-	      (y0 <= po->y && y1 >= po->y + po->height)) {
-		DlElement *pE = createDlElement(DL_Element,(XtPointer)element,NULL);
-		if (pE) {
-		    insertDlElement(l2, pE);
-		} else {
-		    sprintf(string,"\nselectedElementsLookup: realloc failed!");
-		    dmSetAndPopupWarningDialog(currentDisplayInfo,string,"Ok",NULL,NULL);
-		    fprintf(stderr,"%s",string);
-		    return;
+	    pE = findSmallestTouchedElement(pList1,x,y);
+	    if (pE) {
+		DlElement *pENew = createDlElement(DL_Element,(XtPointer)pE,NULL);
+		if (pENew) {
+		    appendDlElement(pList2, pENew);
 		}
 	    }
-	    element = element->prev;
 	}
-	return;
+	if (mode&AllTouched) {
+	  /* Find all the elements that are touched by the point */
+	    findAllMatchingElements(pList1,x0,y0,x1,y1,pList2,AllTouched);
+	}
+    } else {
+      /* Treat as a rectangle */
+	if (mode&AllEnclosed) {
+	  /* Find all the elements that are enclosed by the rectangle */
+	    findAllMatchingElements(pList1,x0,y0,x1,y1,pList2,AllEnclosed);
+	}
     }
 }
 
-Boolean dmResizeDisplayList(
-  DisplayInfo *displayInfo,
-  Dimension newWidth, 
-  Dimension newHeight)
+/*
+ * Finds all elements in list 1 that match according to the mode mask
+ *   and inserts them into the front of list 2
+ *   Does not include the display
+ */
+void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
+  Position x1, Position y1, DlList *pList2, unsigned int mode)
+{
+    DlElement *pE = LastDlElement(pList1);
+    int criterion;
+    
+    while (pE->prev) {
+	DlObject *po = &(pE->structure.rectangle->object);
+
+	if(mode&AllTouched) {
+	  /* Find all the elements that are touched by the midpoint */
+	    Position x = (x0 + x1)/2, y = (y0 + y1)/2;
+	    
+	    criterion = po->x <= x && (po->x + po->width) >= x &&
+	      po->y <= y && (po->y + po->height) >= y;
+	} else if(mode&AllEnclosed) {
+	  /* Find all the elements that are enclosed by the rectangle */
+	    criterion = x0 <= po->x && x1 >= (po->x + po->width) &&
+	      y0 <= po->y && y1 >= (po->y + po->height);
+	} else {
+	    return;
+	}
+	
+      /* Do not include the display */
+	if (pE->type != DL_Display && criterion) {
+	    DlElement *pENew = createDlElement(DL_Element,(XtPointer)pE,NULL);
+	    if (pENew) {
+		insertDlElement(pList2, pENew);
+	    } else {
+		char string[48];
+		
+		sprintf(string,"\nfindAllMatchingElements: Could not create element");
+		dmSetAndPopupWarningDialog(currentDisplayInfo,string,"OK",NULL,NULL);
+		fprintf(stderr,"%s",string);
+		return;
+	    }
+	}
+	pE = pE->prev;
+    }
+    return;
+}
+
+Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
+  Dimension newWidth, Dimension newHeight)
 {
     DlElement *elementPtr;
     float sX, sY;
@@ -846,9 +911,7 @@ Boolean dmResizeDisplayList(
  *   is resized.
  */
 
-Boolean dmResizeSelectedElements(
-  DisplayInfo *displayInfo,
-  Dimension newWidth, 
+Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth, 
   Dimension newHeight)
 {
     DlElement *elementPtr;
@@ -877,12 +940,8 @@ Boolean dmResizeSelectedElements(
     return (TRUE);
 }
 
-void resizeDlElementReferenceList(
-  DlList *dlElementList,
-  int x,
-  int y,
-  float scaleX,
-  float scaleY)
+void resizeDlElementReferenceList(DlList *dlElementList, int x, int y,
+  float scaleX, float scaleY)
 {
     DlElement *dlElement;
     if (dlElementList->count < 1) return;
@@ -909,12 +968,8 @@ void resizeDlElementReferenceList(
     }
 }
 
-void resizeDlElementList(
-  DlList *dlElementList,
-  int x,
-  int y,
-  float scaleX,
-  float scaleY)
+void resizeDlElementList(DlList *dlElementList, int x, int y,
+  float scaleX, float scaleY)
 {
     DlElement *ele;
     if (dlElementList->count < 1) return;
@@ -946,35 +1001,25 @@ void resizeDlElementList(
 
 GC xorGC;
 
-/*
- * initialize rubberbanding
- */
 void initializeRubberbanding()
 {
-/*
- * create the xorGC and rubberbandCursor for drawing while dragging
- */
+/* Create the xorGC and rubberbandCursor for drawing while dragging */
     xorGC = XCreateGC(display,rootWindow,0,NULL);
     XSetSubwindowMode(display,xorGC,IncludeInferiors);
-    XSetFunction(display,xorGC,GXinvert);
+    XSetFunction(display,xorGC,GXxor);
+    XSetForeground(display,xorGC,~0);
 #if 0
-#endif
+    XSetBackground(display,xorGC,WhitePixel(display,screenNum));
     XSetForeground(display,xorGC,WhitePixel(display,screenNum));
-#if 0
     XSetForeground(display,xorGC,getPixelFromColormapByString(display,screenNum,
       cmap,"grey50"));
+    XSetFunction(display,xorGC,GXxor);
+    XSetFunction(display,xorGC,GXinvert);
 #endif
 }
 
-/*
- * do rubberbanding
- */
-void doRubberbanding(
-  Window window,
-  Position *initialX,
-  Position *initialY,
-  Position *finalX,
-  Position *finalY)
+void doRubberbanding(Window window, Position *initialX, Position *initialY,
+  Position *finalX,  Position *finalY)
 {
     XEvent event;
 
@@ -990,26 +1035,29 @@ void doRubberbanding(
     w = (Dimension) 0;
     h = (Dimension) 0;
 
-/* have all interesting events go to window */
+/* Have all interesting events go to window */
+#if DEBUG_EVENTS > 1
+    printf("In doRubberbanding before XGrabPointer\n");
+#endif
     XGrabPointer(display,window,FALSE,
-      (unsigned int) (ButtonMotionMask|ButtonReleaseMask),
-      GrabModeAsync,GrabModeAsync,None,rubberbandCursor,CurrentTime);
+      (unsigned int)(ButtonMotionMask|ButtonReleaseMask),
+      GrabModeAsync,GrabModeAsync,GRAB_WINDOW,rubberbandCursor,CurrentTime);
 
-/* grab the server to ensure that XORing will be okay */
+/* Grab the server to ensure that XORing will be okay */
     XGrabServer(display);
-    XDrawRectangle(display,window, xorGC,
-      MIN(x0,x1), MIN(y0,y1), w, h);
+    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h);
 
-/*
- * now loop until the button is released
- */
+  /* Loop until the button is released */
     while (TRUE) {
 	XtAppNextEvent(appContext,&event);
 	switch (event.type) {
 	case ButtonRelease:
-	  /* undraw old one */
-	    XDrawRectangle(display,window, xorGC,
-	      MIN(x0,x1), MIN(y0,y1), w, h);
+#if DEBUG_EVENTS > 1
+	    printf("ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
+	  /* Undraw old one */
+	    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
 	    *initialX =  MIN(x0,event.xbutton.x);
@@ -1018,17 +1066,19 @@ void doRubberbanding(
 	    *finalY   =  MAX(y0,event.xbutton.y);
 	    return;		/* return from while(TRUE) */
 	case MotionNotify:
-	  /* undraw old one */
-	    XDrawRectangle(display,window, xorGC,
-	      MIN(x0,x1), MIN(y0,y1), w, h);
-	  /* update current coordinates */
+	  /* Undraw old one */
+	    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h);
+	  /* Update current coordinates */
 	    x1 = event.xbutton.x;
 	    y1 = event.xbutton.y;
 	    w =  (MAX(x0,x1) - MIN(x0,x1));
 	    h =  (MAX(y0,y1) - MIN(y0,y1));
-	  /* draw new one */
-	    XDrawRectangle(display,window, xorGC,
-	      MIN(x0,x1), MIN(y0,y1), w, h); 
+	  /* Draw new one */
+#if DEBUG_EVENTS > 1
+	    printf("MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
+	    XDrawRectangle(display,window,xorGC,MIN(x0,x1),MIN(y0,y1),w,h); 
 	    break;
 	default:
 	    XtDispatchEvent(&event);
@@ -1041,14 +1091,8 @@ void doRubberbanding(
  *	RETURNS: boolean indicating whether drag ended in the window
  *	(and hence was valid)
  */
-Boolean doDragging(
-  Window window,
-  Dimension daWidth,
-  Dimension daHeight,
-  Position initialX, 
-  Position initialY, 
-  Position *finalX,
-  Position *finalY)
+Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
+  Position initialX, Position initialY, Position *finalX, Position *finalY)
 {
     int i, minX, maxX, minY, maxY, groupWidth, groupHeight,
       groupDeltaX0, groupDeltaY0, groupDeltaX1, groupDeltaY1;
@@ -1058,7 +1102,7 @@ Boolean doDragging(
     int xdel, ydel;
     DlElement *dlElement;
 
-  /* if on current display, simply return */
+  /* If on current display, simply return */
     if (currentDisplayInfo == NULL) return (False);
 
     cdi = currentDisplayInfo;
@@ -1069,14 +1113,14 @@ Boolean doDragging(
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
 
-  /* have all interesting events go to window */
+  /* Have all interesting events go to window */
     XGrabPointer(display,window,FALSE,
       (unsigned int)(ButtonMotionMask|ButtonReleaseMask),
-      GrabModeAsync,GrabModeAsync,None,dragCursor,CurrentTime);
-  /* grab the server to ensure that XORing will be okay */
+      GrabModeAsync,GrabModeAsync,GRAB_WINDOW,dragCursor,CurrentTime);
+  /* Grab the server to ensure that XORing will be okay */
     XGrabServer(display);
 
-  /* as usual, type in union unimportant as long as object is 1st thing...*/
+  /* As usual, type in union unimportant as long as object is 1st thing...*/
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
 	DlElement *pE = dlElement->structure.element;
@@ -1093,23 +1137,21 @@ Boolean doDragging(
     }
     groupWidth = maxX - minX;
     groupHeight = maxY - minY;
-  /* how many pixels is the cursor position from the left edge of all objects */
+  /* How many pixels is the cursor position from the left edge of all objects */
     groupDeltaX0 = initialX - minX;
-  /* how many pixels is the cursor position from the top edge of all objects */
+  /* How many pixels is the cursor position from the top edge of all objects */
     groupDeltaY0 = initialY - minY;
-  /* how many pixels is the cursor position from the right edge of all objects */
+  /* How many pixels is the cursor position from the right edge of all objects */
     groupDeltaX1 = groupWidth - groupDeltaX0;
-/* how many pixels is the cursor position from the bottom edge of all objects */
+  /* How many pixels is the cursor position from the bottom edge of all objects */
     groupDeltaY1 = groupHeight - groupDeltaY0;
 
-/*
- * now loop until the button is released
- */
+/* Loop until the button is released */
     while (TRUE) {
 	XtAppNextEvent(appContext,&event);
 	switch (event.type) {
 	case ButtonRelease:
-	  /* undraw old ones */
+	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while (dlElement) {
 		DlElement *pE = dlElement->structure.element;
@@ -1124,10 +1166,10 @@ Boolean doDragging(
 	    XUngrabPointer(display,CurrentTime);
 	    *finalX = initialX + xOffset;
 	    *finalY = initialY + yOffset;
-	  /* (always return true - for clipped dragging...) */
+	  /* (Always return true - for clipped dragging...) */
 	    return (True);	/* return from while(TRUE) */
 	case MotionNotify:
-	  /* undraw old ones */
+	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while (dlElement) {
 		DlElement *pE = dlElement->structure.element;
@@ -1138,7 +1180,7 @@ Boolean doDragging(
 		}
 		dlElement = dlElement->next;
 	    }
-	  /* update current coordinates */
+	  /* Update current coordinates */
 	    if (event.xmotion.x < groupDeltaX0)
 	      xdel = groupDeltaX0;
 	    else
@@ -1179,11 +1221,8 @@ Boolean doDragging(
  *	RETURNS: DisplayInfo ptr indicating whether drag ended in a display
  *		 and the positions in that display
  */
-DisplayInfo *doPasting(
-  Position *displayX, 
-  Position *displayY,
-  int *offsetX,
-  int *offsetY)
+DisplayInfo *doPasting(Position *displayX, Position *displayY,
+  int *offsetX, int *offsetY)
 {
     XEvent event;
     DisplayInfo *displayInfo;
@@ -1231,7 +1270,7 @@ DisplayInfo *doPasting(
   /* have all interesting events go to window  - including some for WM's sake */
     XGrabPointer(display,window,False, (unsigned int)(PointerMotionMask|
       ButtonReleaseMask|ButtonPressMask|EnterWindowMask),
-      GrabModeAsync,GrabModeAsync,None,dragCursor,CurrentTime);
+      GrabModeAsync,GrabModeAsync,GRAB_WINDOW,dragCursor,CurrentTime);
   /* grab the server to ensure that XORing will be okay */
     XGrabServer(display);
 
@@ -1339,20 +1378,43 @@ Boolean alreadySelected(DlElement *element)
     return (False);
 }
 
-void toggleHighLightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffset) {
+void toggleHighlightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffset)
+{
     DlElement *dlElement = FirstDlElement(displayInfo->selectedDlElementList);
+    DlElementType type;
+    DlObject *po;
+    int width, height;
+#if DEBUG_EVENTS > 1
+    printf("\n[toggleHighlightRectangles] selectedDlElement list :\n");
+    dumpDlElementList(displayInfo->selectedDlElementList);
+#endif
+  /* Traverse the elements */
     while (dlElement) {
-	if (dlElement->type != DL_Display) {
-	    DlObject *po = &(dlElement->structure.rectangle->object);
-	    int width, height;
-	    width = (po->width + xOffset);
-	    width = MAX(1,width);
-	    height = (po->height + yOffset);
-	    height = MAX(1,height);
+	if (dlElement->type == DL_Element) {
+	    type = dlElement->structure.element->type;
+	    po = &dlElement->structure.element->structure.composite->object;
+	} else {     /* Should not be using this branch */
+	    type = dlElement->type;
+	    po = &dlElement->structure.composite->object;
+	}
+	width = (po->width + xOffset);
+	width = MAX(1,width);
+	height = (po->height + yOffset);
+	height = MAX(1,height);
+#if DEBUG_EVENTS > 1
+	printf("  %s (%s): x: %d y: %d width: %u height: %u\n"
+	  "    xOffset: %d yOffset: %d Used-width: %d Used-height %d\n",
+	  elementType(dlElement->type),
+	  elementType(type),
+	  po->x,po->y,po->width,po->height,xOffset,yOffset,width,height);
+#endif
+      /* If not the display, draw a rectangle */
+	if (type != DL_Display) {
 	    XDrawRectangle(XtDisplay(displayInfo->drawingArea),
 	      XtWindow(displayInfo->drawingArea),xorGC,
-	      po->x, po->y, (Dimension)width, (Dimension)height);
+	      po->x,po->y,(Dimension)width,(Dimension)height);
 	}
+      /* Set next element */
 	dlElement = dlElement->next;
     }
 }
@@ -1361,13 +1423,10 @@ void toggleHighLightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffse
  * do (multiple) resizing of all elements in global selectedElementsArray
  *	RETURNS: boolean indicating whether resize ended in the window
  *	(and hence was valid)
+ * KE: This is not correct; It ALWAYS returns true
  */
-Boolean doResizing(
-  Window window,
-  Position initialX, 
-  Position initialY, 
-  Position *finalX, 
-  Position *finalY)
+Boolean doResizing(Window window, Position initialX, Position initialY, 
+  Position *finalX, Position *finalY)
 {
     int i, xOffset, yOffset;
     XEvent event;
@@ -1384,37 +1443,47 @@ Boolean doResizing(
 
     inWindow = True;
 
-  /* have all interesting events go to window */
+#if DEBUG_EVENTS
+    printf("In doResizing before XGrabPointer\n");
+#endif
+  /* Grab all interesting events */
     XGrabPointer(display,window,FALSE,
-      (unsigned int) (ButtonMotionMask|ButtonReleaseMask),
-      GrabModeAsync,GrabModeAsync,None,resizeCursor,CurrentTime);
-  /* grab the server to ensure that XORing will be okay */
+      (unsigned int)(ButtonMotionMask|ButtonReleaseMask),
+      GrabModeAsync,GrabModeAsync,GRAB_WINDOW,resizeCursor,CurrentTime);
+  /* Grab the server to ensure that XORing will be okay */
     XGrabServer(display);
 
-    toggleHighLightRectangles(currentDisplayInfo,xOffset,yOffset);
+  /* XOR the outline */
+    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 
-  /*
-   * now loop until the button is released
-   */
+   /* Loop until the button is released */
     while (TRUE) {
 	XtAppNextEvent(appContext,&event);
 	switch (event.type) {
 	case ButtonRelease:
-	  /* undraw old ones */
-	    toggleHighLightRectangles(currentDisplayInfo,xOffset,yOffset);
+	  /* Undraw old ones (XOR again) */
+#if DEBUG_EVENTS > 1
+	    printf("ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
+	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
 	    *finalX =  initialX + xOffset;
 	    *finalY =  initialY + yOffset;
-	    return (inWindow);	/* return from while(TRUE) */
+	    return (inWindow);	/* Return from while(TRUE) */
 	case MotionNotify:
-	  /* undraw old ones */
-	    toggleHighLightRectangles(currentDisplayInfo,xOffset,yOffset);
-	  /* update current coordinates */
+	  /* Undraw old ones (XOR again to restore original) */
+	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
+	  /* Update current coordinates */
 	    xOffset = event.xbutton.x - initialX;
 	    yOffset = event.xbutton.y - initialY;
-	  /* draw new ones */
-	    toggleHighLightRectangles(currentDisplayInfo,xOffset,yOffset);
+	  /* Draw new ones (XOR the outline) */
+#if DEBUG_EVENTS > 1
+	    printf("MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    fflush(stdout);
+#endif	    
+	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 	    break;
 	default:
 	    XtDispatchEvent(&event);
@@ -1423,8 +1492,45 @@ Boolean doResizing(
 }
 
 /*
+ * Function to delete all widgets in an element and its children
+ * Does a depth-first search for any children of composites
+ * KE: Doesn't seem to use displayInfo
+ */
+void destroyElementWidgets(DlElement *element)
+{
+    DlElement *child;
+
+  /* Do not delete the display */
+    if (element->type == DL_Display) return;
+  /* Delete any children if it is composite */
+    if (element->type == DL_Composite) {
+	child = FirstDlElement(element->structure.composite->dlElementList);
+	while (child) {
+	    DlElement *pE = child;
+	    
+	    if (pE->type == DL_Composite) {
+		destroyElementWidgets(pE);
+	    } else if (pE->widget) {
+	      /* lookup widget of specified x,y,width,height and destroy */
+		XtDestroyWidget(pE->widget);
+		pE->widget = NULL;
+	    }
+	    child = child->next;
+	}
+    }
+  /* Remove the widget */
+    if (element->widget) {
+	XtDestroyWidget(element->widget);
+	element->widget = NULL;
+    }
+}
+
+#if 0
+/*
  * function to delete composite's children/grandchildren... WIDGETS ONLY
  *  this does a depth-first search for any descendent composites...
+ *  KE: No longer used.  Replaced by destroyElementWidgets
+ *  KE: Doesn't seem to use displayInfo
  */
 void deleteWidgetsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 {
@@ -1448,18 +1554,53 @@ void deleteWidgetsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 	}
     }
 }
+#endif
+
+void drawGrid(DisplayInfo *displayInfo)
+{
+    Drawable draw = displayInfo->drawingAreaPixmap;
+    int x, y, xmax, ymax;
+    int gridSpacing;
+    Dimension width, height;
+    int i, j, n;
+    Arg args[2];
+
+  /* Return if displayInfo is invalid */
+    if(!displayInfo || !displayInfo->drawingArea || !draw) return;
+    gridSpacing = displayInfo->gridSpacing;
+
+  /* Get the size of the drawing area */
+    n=0;
+    XtSetArg(args[n],XmNwidth,&width); n++;
+    XtSetArg(args[n],XmNheight,&height); n++;
+    XtGetValues(displayInfo->drawingArea,args,n);
+    xmax = width-1;
+    ymax = height-1;
+
+  /* Set the GC */
+    XSetForeground(display,displayInfo->pixmapGC,
+      displayInfo->drawingAreaForegroundColor);
+    XSetBackground(display,displayInfo->pixmapGC,
+      displayInfo->drawingAreaBackgroundColor);
+
+  /* Draw grid */
+    for(i=0; i < width; i+=gridSpacing) {
+	for(j=0; j < height; j+=gridSpacing) {
+	    XDrawPoint(display,draw,displayInfo->pixmapGC,i,j);
+	}
+    }
+}
 
 void copySelectedElementsIntoClipboard()
 {
-    DisplayInfo *cdi;
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
 
-    if (!currentDisplayInfo) return;
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
 
-    cdi = currentDisplayInfo;
     if (!IsEmpty(clipboard)) {
-	destroyDlDisplayList(clipboard);
+	clearDlDisplayList(clipboard);
     }
   
     dlElement = FirstDlElement(cdi->selectedDlElementList);
@@ -1512,14 +1653,13 @@ void copyElementsIntoDisplay()
 	XSetInputFocus(display,XtWindow(cdi->shell),RevertToParent,CurrentTime);
 	currentDisplayInfo = cdi;
     } else {
-	fprintf(stderr,"\ncopyElementsIntoDisplay:  can't discern current display");
+	fprintf(stderr,"\ncopyElementsIntoDisplay:  Can't determine current display");
 	return;
     }
 
-  /***
-  *** now do actual element creation (with insertion into display list)
-  ***/
-    destroyDlDisplayList(cdi->selectedDlElementList);
+  /* Do actual element creation (with insertion into display list) */
+    saveUndoInfo(cdi);
+    clearDlDisplayList(cdi->selectedDlElementList);
     dlElement = FirstDlElement(clipboard);
     while (dlElement) {
 	if (dlElement->type != DL_Display) {
@@ -1551,39 +1691,34 @@ void copyElementsIntoDisplay()
 void deleteElementsInDisplay()
 {
     int i;
-    DisplayInfo *cdi;
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
 
-    if (!currentDisplayInfo) return;
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
 
-  /* unhighlight, unselect,  and clear resource palette */
+  /* Unhighlight selected elements */
     unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
-    cdi = currentDisplayInfo;
-
-    dlElement = FirstDlElement(currentDisplayInfo->selectedDlElementList);
+  /* Traverse the elements in the selected element list */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
-	DlElement *elementPtr = dlElement->structure.element;
-	if (elementPtr->type != DL_Display) {
-	  /* now delete the selected element */
-	    if (elementPtr->widget) {
-	      /* lookup widget of specified x,y,width,height and destroy */
-		XtDestroyWidget(elementPtr->widget);
-		elementPtr->widget = NULL;
-	    } else
-	      if (elementPtr->type == DL_Composite) {
-		/* if composite, delete any widget children */
-		  deleteWidgetsInComposite(cdi,elementPtr);
-	      }
-	    removeDlElement(cdi->dlElementList,elementPtr);
-	    elementPtr->run->destroy(elementPtr);
+      /* Get the structure (element of union is as good as any) */
+	DlElement *pE = dlElement->structure.element;
+	if (pE->type != DL_Display) {
+	  /* Destroy its widgets */
+	    destroyElementWidgets(pE);
+	  /* Remove it from the list */
+	    removeDlElement(cdi->dlElementList,pE);
+	  /* Destroy it with its destroy method if there is one */
+	    if(pE->run->destroy) pE->run->destroy(pE);
 	}
 	dlElement = dlElement->next;
     }
-    destroyDlDisplayList(currentDisplayInfo->selectedDlElementList);
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
 
+  /* Cleanup possible damage to non-widgets */
   /* (MDA) could use a new element-lookup based on region (write routine
    *      which returns all elements which intersect rather than are
    *      bounded by a given region) and do partial traversal based on
@@ -1591,39 +1726,40 @@ void deleteElementsInDisplay()
    *      more efficient and not suffer from the "flash" updates
    */
     dmTraverseNonWidgetsInDisplayList(cdi);
-
-}
-
-void unselectElementsInDisplay()
-{
-    DisplayInfo *cdi;
-
-    if (!currentDisplayInfo) return;
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
-  /* unhighlight and clear resource palette */
-    unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
 }
 
 /*
- * select all renderable objects in display - note that this excludes the
- *	display itself
+ * Unhighlights and unselects any selected elements, then clears the resource
+ *   palette
+ */
+void unselectElementsInDisplay()
+{
+    DisplayInfo *cdi = currentDisplayInfo;
+
+    if (!cdi) return;
+  /* Clear resource palette */
+    clearResourcePaletteEntries();
+  /* Return if no selected elements */
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+  /* Unhighlight and unselect */
+    unhighlightSelectedElements();
+    clearDlDisplayList(cdi->selectedDlElementList);
+}
+
+/*
+ * Selects all renderable objects in display excluding the display itself
  */
 void selectAllElementsInDisplay()
 {
-    DisplayInfo *cdi;
+    DisplayInfo *cdi = currentDisplayInfo;
     Position x, y;
     Dimension width, height;
     DlElement *dlElement;
 
-    if (!currentDisplayInfo) return;
-    cdi = currentDisplayInfo;
+    if (!cdi) return;
 
-  /* unhighlight and clear resource palette */
-    unhighlightSelectedElements();
-    destroyDlDisplayList(cdi->selectedDlElementList);
-    clearResourcePaletteEntries();
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
 
     dlElement = FirstDlElement(cdi->dlElementList);
     while (dlElement) {
@@ -1646,66 +1782,142 @@ void selectAllElementsInDisplay()
  * move elements further up (traversed first) in display list
  *  so that these are "behind" other objects
  */
-void lowerSelectedElements(DisplayInfo *pD)
+void lowerSelectedElements()
 {
-    DlElement *pE = 0; /* point to the element in the selected element list */
-    DlElement *pF = 0; /* point to the first element in
-			  the display element list */
-    if (IsEmpty(pD->selectedDlElementList)) return;
-    pF = FirstDlElement(pD->dlElementList);
-    pE = LastDlElement(pD->selectedDlElementList);
-    while (pE && (pE != pD->selectedDlElementList->head)) {
-	DlElement *pT = pE->structure.element;
-	if (pT->type != DL_Display) {
-	    removeDlElement(pD->dlElementList,pT);
-	    insertAfter(pD->dlElementList,pF,pT);
+    DisplayInfo *cdi = currentDisplayInfo;
+    DlElement *pE = 0; /* pointer to the element in the selected element list */
+    DlElement *pFirst = 0; /* pointer to the first element in the display element list */
+    DlElement *pTemp;
+    
+#if DEBUG_EVENTS
+    printf("\n[lowerSelectedElements:1]dlElementList :\n");
+    dumpDlElementList(cdi->dlElementList);
+    printf("\n[lowerSelectedElements:1]selectedDlElementList :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+  /* If the temporary list does not exist, create it */
+    if(!tmpDlElementList) {
+	tmpDlElementList=createDlList();
+	if(!tmpDlElementList) {
+	    medmPrintf("lowerSelectedElements: Cannot create temporary element list\n");
+	    return;
 	}
-	pE = pE->prev;
+    }
+    clearDlDisplayList(tmpDlElementList);
+    saveUndoInfo(cdi);
+
+    unhighlightSelectedElements();
+    
+    pFirst = FirstDlElement(cdi->dlElementList);
+    pE = LastDlElement(cdi->selectedDlElementList);
+#if DEBUG_EVENTS > 1
+    printf("\n[lowerSelectedElements] selectedDlElement list :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+    printf("\n[lowerSelectedElements] tmpDlElement list :\n");
+    dumpDlElementList(tmpDlElementList);
+#endif
+    while (pE && (pE != cdi->selectedDlElementList->head)) {
+	DlElement *pX = pE->structure.element;
+#if DEBUG_EVENTS > 1
+	printf("   (%s) x=%d y=%d width=%u height=%u\n",
+	  elementType(pE->structure.element->type),
+	  pE->structure.element->structure.composite->object.x,
+	  pE->structure.element->structure.composite->object.y,
+	  pE->structure.element->structure.composite->object.width,
+	  pE->structure.element->structure.composite->object.height);
+#endif
+	pTemp = pE->prev;
+	if (pX->type != DL_Display) {
+	    removeDlElement(cdi->dlElementList,pX);
+	    insertAfter(cdi->dlElementList,pFirst,pX);
+	    removeDlElement(cdi->selectedDlElementList,pE);
+	    insertDlElement(tmpDlElementList,pE);
+	}
+	pE = pTemp;
     }
 
-  /* unhighlight and clear resource palette */
-    unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
-
-    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
+  /* Unselect formerly selected elements */
+    unselectElementsInDisplay();
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+  /* Select new ones */
+    appendDlList(cdi->selectedDlElementList,tmpDlElementList);
+    highlightSelectedElements();
+    if (cdi->selectedDlElementList->count == 1) {
+	setResourcePaletteEntries();
+    }
+  /* Cleanup temporary list */
+    clearDlDisplayList(tmpDlElementList);
+#if DEBUG_EVENTS
+    printf("\n[lowerSelectedElements:2]dlElement list :\n");
+    dumpDlElementList(cdi->dlElementList);
+    printf("\n[lowerSelectedElements:2]selectedDlElementList :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif
 }
 
 /*
  * move elements further down (traversed last) in display list
  *  so that these are "in front of" other objects
  */
-void raiseSelectedElements(DisplayInfo* pD)
+void raiseSelectedElements()
 {
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *pE = 0;
-    if (IsEmpty(pD->selectedDlElementList)) return;
-    pE = FirstDlElement(pD->selectedDlElementList);
-#if -1
-    printf("\nelement list :\n");
-    dumpDlElementList(pD->dlElementList);
-    printf("\nselected element list :\n");
-    dumpDlElementList(pD->selectedDlElementList);
+    DlElement *pTemp;
+    
+#if DEBUG_EVENTS
+    printf("\n[raiseSelectedElements:1]dlElementList :\n");
+    dumpDlElementList(cdi->dlElementList);
+    printf("\n[raiseSelectedElements:1]selectedDlElementList :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
 #endif
-    while (pE) {
-	DlElement *pT = pE->structure.element;
-	if (pT->type != DL_Display) {
-	    removeDlElement(pD->dlElementList,pT);
-	    appendDlElement(pD->dlElementList,pT);
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+  /* If the temporary list does not exist, create it */
+    if(!tmpDlElementList) {
+	tmpDlElementList=createDlList();
+	if(!tmpDlElementList) {
+	    medmPrintf("raiseSelectedElements: Cannot create temporary element list\n");
+	    return;
 	}
-	pE = pE->next;
     }
-#if -1
-    printf("\nelement list :\n");
-    dumpDlElementList(pD->dlElementList);
-    printf("\nselected element list :\n");
-    dumpDlElementList(pD->selectedDlElementList);
-#endif
-  /* unhighlight and clear resource palette */
-    unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
+    clearDlDisplayList(tmpDlElementList);
+    saveUndoInfo(cdi);
 
-    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
+    unhighlightSelectedElements();
+
+    pE = FirstDlElement(cdi->selectedDlElementList);
+    while (pE) {
+	DlElement *pX = pE->structure.element;
+
+	pTemp = pE->next;
+	if (pX->type != DL_Display) {
+	    removeDlElement(cdi->dlElementList,pX);
+	    appendDlElement(cdi->dlElementList,pX);
+	    removeDlElement(cdi->selectedDlElementList,pE);
+	    appendDlElement(tmpDlElementList,pE);
+	}
+	pE = pTemp;
+    }
+  /* Unselect formerly selected elements */
+    unselectElementsInDisplay();
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+  /* Select new ones */
+    appendDlList(cdi->selectedDlElementList,tmpDlElementList);
+    highlightSelectedElements();
+    if (cdi->selectedDlElementList->count == 1) {
+	setResourcePaletteEntries();
+    }
+  /* Cleanup temporary list */
+    clearDlDisplayList(tmpDlElementList);
+#if DEBUG_EVENTS
+    printf("\n[raiseSelectedElements:2]dlElement list :\n");
+    dumpDlElementList(cdi->dlElementList);
+    printf("\n[raiseSelectedElements:2]selectedDlElementList :\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif
 }
 
 /*
@@ -1715,15 +1927,10 @@ void raiseSelectedElements(DisplayInfo* pD)
  */
 void ungroupSelectedElements()
 {
-    DisplayInfo *cdi;
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *ele, *child, *dlElement;
     int i;
 
-
-  /* unhighlight */
-    unhighlightSelectedElements();
-
-    cdi = currentDisplayInfo;
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
 	ele = dlElement->structure.element;
@@ -1738,18 +1945,16 @@ void ungroupSelectedElements()
 	dlElement = dlElement->next;
     }
 
-  /* unselect and clear resource palette */
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
-
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
+  /* Cleanup possible damage to non-widgets */
     dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 }
 
 /*
  * align selected elements by top, bottom, left, or right edges
  */
-void alignSelectedElements(
-  int alignment)
+void alignSelectedElements(int alignment)
 {
     int i, j, minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
     DisplayInfo *cdi;
@@ -1759,6 +1964,8 @@ void alignSelectedElements(
     if (!currentDisplayInfo) return;
     cdi = currentDisplayInfo;
     if (IsEmpty(cdi->selectedDlElementList)) return;
+    if (NumberOfDlElement(cdi->selectedDlElementList) == 1) return;
+    saveUndoInfo(cdi);
 
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
@@ -1834,22 +2041,521 @@ void alignSelectedElements(
 	}
 	dlElement = dlElement->prev;
     }
-
-
-/* retraverse all non-widgets (since potential window damage can result from
- * the movement of objects) */
+  /* Cleanup possible damage to non-widgets */
     dmTraverseNonWidgetsInDisplayList(cdi);
 
     highlightSelectedElements();
 }
 
 /*
+ * Space selected elements horizontally
+ */
+void spaceSelectedElements(int plane)
+{
+    int i, deltaz, z, nele, gridSpacing;
+    DisplayInfo *cdi;
+    DlElement *pE;
+    DlElement *dlElement;
+    DlElement **earray;
+    double *array;
+    int *indx;
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    nele = NumberOfDlElement(cdi->selectedDlElementList);
+    if(nele < 2) return;
+    saveUndoInfo(cdi);
+    gridSpacing=cdi->gridSpacing;
+
+  /* Allocate space */
+    earray = (DlElement **)calloc(nele,sizeof(DlElement *));
+    if (!earray) return;
+    array = (double *)calloc(nele,sizeof(double));
+    if (!array) {
+	medmPrintf("Memory allocation error in spaceSelectedElements\n");
+	free((char *)earray);
+	return;
+    }
+    indx = (int *)calloc(nele,sizeof(int));
+    if (!indx) {
+	medmPrintf("Memory allocation error in spaceSelectedElements\n");
+	free((char *)earray);
+	free((char *)array);
+	return;
+    }
+
+    unhighlightSelectedElements();
+
+  /* Loop and put elements and z into the arrays */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    i=0;
+    while (dlElement) {
+	DlObject *po =
+	  &(dlElement->structure.element->structure.rectangle->object);
+	earray[i]=dlElement;
+	if(plane == HORIZONTAL) {
+	    array[i]=po->x;
+	} else {
+	    array[i]=po->y;
+	}
+	dlElement = dlElement->next;
+	i++;
+    }
+
+#if 0
+    printf("\nnele=%d\n",nele);
+    for(i=0; i < nele; i++) {
+	printf("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
+    }
+#endif    
+  /* Sort elements by position */
+    hsort(array,indx,nele);
+#if 0
+    printf("nele=%d\n",nele);
+    for(i=0; i < nele; i++) {
+	printf("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
+    }
+#endif    
+
+  /* Loop and and move */
+    z = -1;
+    for(i=0; i < nele; i++) {
+	dlElement = earray[indx[i]];
+	pE = dlElement->structure.element;
+      /* Can't move the display */
+	if (pE->type != DL_Display) {
+	  /* Get position of first element to start */
+	    if(z < 0) {
+		if(plane == HORIZONTAL) {
+		    z = pE->structure.rectangle->object.x;
+		} else {
+		    z = pE->structure.rectangle->object.y;
+		}
+	    } else {
+		if(plane == HORIZONTAL) {
+		    deltaz = z - pE->structure.rectangle->object.x;
+		    if (pE->run->move) {
+			pE->run->move(pE,deltaz,0);
+		    }
+		} else {
+		    deltaz = z - pE->structure.rectangle->object.y;
+		    if (pE->run->move) {
+			pE->run->move(pE,0,deltaz);
+		    }
+		}
+		if (pE->widget) {
+		    XtMoveWidget(pE->widget,
+		      (Position) pE->structure.rectangle->object.x,
+		      (Position) pE->structure.rectangle->object.y);
+		}
+	    }
+	  /* Get next position */
+	    if(plane == HORIZONTAL) {
+		z += (pE->structure.rectangle->object.width + gridSpacing);
+	    } else {
+		z += (pE->structure.rectangle->object.height + gridSpacing);
+	    }
+	}
+    }
+
+  /* Free space */
+    free((char *)earray);
+    free((char *)array);
+    free((char *)indx);
+
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
+    highlightSelectedElements();
+}
+
+/*
+ * Space selected elements in both directions
+ */
+void spaceSelectedElements2D(void)
+{
+    int y, y1, height, deltay, x, width, deltax, gridSpacing;
+    int n, maxY, minY, deltaY, avgH, minX;
+    int nrows, nrows1, xcen1, xleft, xright, ytop, ybottom, ycen;
+    int i, irow, iarr;
+    DisplayInfo *cdi;
+    DlElement *pE;
+    DlElement *dlElement, *dlElement1;
+    DlElement ***earray = NULL;
+    double **array = NULL;
+    int **indx =NULL;
+    int *nele = NULL;
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    n = NumberOfDlElement(cdi->selectedDlElementList);
+    if(n < 2) return;
+    saveUndoInfo(cdi);
+    gridSpacing=cdi->gridSpacing;
+
+  /* Determine the number of rows */
+    minY = minX = INT_MAX;
+    maxY = INT_MIN;
+    nrows = 1;
+    n = avgH = 0;
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	pE = dlElement->structure.element;
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	    DlObject *po =  &(pE->structure.rectangle->object);
+	    ytop = po->y;
+	    height = po->height;
+	    ybottom = ytop + height;
+	    avgH += height;
+	    if(ytop < minY) minY = ytop;
+	    if(ybottom > maxY) maxY = ybottom;
+	    n++;
+	  /* Loop and find elements whose centers are between xleft and xright */
+	    xleft = po->x;
+	    if(xleft < minX) minX = xleft;
+	    width = po->width;
+	    xright = xleft + width;
+	    nrows1 = 0;
+	    dlElement1 = FirstDlElement(cdi->selectedDlElementList);
+	    while (dlElement1) {
+		pE = dlElement1->structure.element;
+		if (pE->type != DL_Display) {
+		    DlObject *po =  &(pE->structure.rectangle->object);
+		    xcen1 = po->x + .5*po->width +.5;
+		    if(xcen1 >= xleft && xcen1 <= xright) nrows1++;
+		}
+		dlElement1 = dlElement1->next;
+	    }
+	    if(nrows1 > nrows) nrows = nrows1;
+	}
+	dlElement = dlElement->next;
+    }
+    if(n < 1) return;
+    avgH = (double)(avgH)/(double)(n)+.5;
+    deltaY = (double)(maxY - minY)/(double)nrows + .99999;
+    maxY = minY + nrows * deltaY;     /* (Adjust maxY) */
+
+  /* Allocate array to hold the number of elements for each row */
+    nele=(int *)calloc(nrows,sizeof(int));
+    if(!nele) {
+	medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
+	return;
+    }
+
+  /* Loop and count the number of elements in each row */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	pE = dlElement->structure.element;
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	    DlObject *po =  &(pE->structure.rectangle->object);
+	    ytop = po->y;
+	    ycen = po->y + .5*po->height +.5;
+	    irow = (ycen - minY) / deltaY;
+	    if(irow < 0) irow = 0;
+	    else if(irow >= nrows) irow = nrows-1;
+	    nele[irow]++;
+	}
+	dlElement = dlElement->next;
+    }
+
+  /* Allocate array storage */
+    earray = (DlElement ***)calloc(nrows,sizeof(DlElement **));
+    array = (double **)calloc(nrows,sizeof(double *));
+    indx = (int **)calloc(nrows,sizeof(int *));
+    if (!earray || !array || !indx) {
+	    medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
+	    highlightSelectedElements();
+	    return;
+    }
+    for(i=0; i < nrows; i++) {
+	if(nele[i] <= 0)  continue;
+	earray[i] = (DlElement **)calloc(nele[i],sizeof(DlElement *));
+	array[i] = (double *)calloc(nele[i],sizeof(double));
+	indx[i] = (int *)calloc(nele[i],sizeof(int));
+	if (!earray[i] || !array[i] || !indx[i]) {
+	    medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
+	    highlightSelectedElements();
+	    return;
+	}
+    }
+
+  /* Fill arrays with current values before they are moved */
+    for(i=0; i < nrows; i++) {
+	if(nele[i] <= 0) continue;
+
+      /* Loop and put elements and x into the arrays */
+	dlElement = FirstDlElement(cdi->selectedDlElementList);
+	iarr=0;
+	while (dlElement) {
+	    pE = dlElement->structure.element;
+	  /* Don't include the display */
+	    if (pE->type != DL_Display) {
+		DlObject *po =  &(pE->structure.rectangle->object);
+		ytop = po->y;
+		ycen = po->y + .5*po->height +.5;
+		irow = (ycen - minY) / deltaY;
+		if(irow < 0) irow = 0;
+		else if(irow >= nrows) irow = nrows-1;
+		if(irow == i) {
+		  /* This element is in this group */
+		    earray[i][iarr]=dlElement;
+		    array[i][iarr]=po->x;
+		    iarr++;
+		}
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+
+    unhighlightSelectedElements();
+
+  /* Move the elements */
+    for(i=0; i < nrows; i++) {
+	if(nele[i] <= 0) continue;
+      /* Sort elements by position */
+	hsort(array[i],indx[i],nele[i]);
+      /* Loop over elements and and move */
+	x = -1;
+	y = minY + i*(avgH + gridSpacing);
+	for(iarr=0; iarr < nele[i]; iarr++) {
+	    dlElement = earray[i][indx[i][iarr]];
+	    pE = dlElement->structure.element;
+	  /* Can't move the display */
+	    if (pE->type != DL_Display) {
+	      /* Set position of first element */
+		if(x < 0) {
+		    x = minX;
+		}
+		deltax = x - pE->structure.rectangle->object.x;
+		deltay = y - pE->structure.rectangle->object.y;
+		if (pE->run->move) {
+		    pE->run->move(pE,deltax,deltay);
+		    if (pE->widget) {
+			    XtMoveWidget(pE->widget,
+			      (Position) pE->structure.rectangle->object.x,
+			      (Position) pE->structure.rectangle->object.y);
+		    }
+		}
+	      /* Get next position */
+		x += (pE->structure.rectangle->object.width + gridSpacing);
+	    }
+	}
+    }
+
+  /* Free array storage */
+    for(i=0; i < nrows; i++) {
+	if(nele[i] <= 0)  continue;
+	free((char *)earray[i]);
+	free((char *)array[i]);
+	free((char *)indx[i]);
+    }
+    free((char *)earray);
+    free((char *)array);
+    free((char *)indx);
+    free((char *)nele);
+
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+    
+    highlightSelectedElements();
+}
+
+/*
+ * Align selected elements to grid
+ */
+void alignSelectedElementsToGrid(void)
+{
+    DisplayInfo *cdi = currentDisplayInfo;
+    int gridSpacing;
+    int x, y, x0, y0, x00, y00, xoff, yoff, redraw;
+    DlElement *pE;
+    DlElement *dlElement;
+
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
+    gridSpacing = cdi->gridSpacing;
+
+    unhighlightSelectedElements();
+
+  /* Loop and move the corners to grid */
+    dlElement = LastDlElement(cdi->selectedDlElementList);
+    while (dlElement != cdi->selectedDlElementList->head) {
+	pE = dlElement->structure.element;
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	  /* Upper left */
+	    x = pE->structure.rectangle->object.x;
+	    x0 = (x/gridSpacing)*gridSpacing;
+	    xoff = x - x0;
+	    if(xoff > gridSpacing/2) xoff = xoff - gridSpacing;
+	    x00 = x - xoff;
+
+	    y = pE->structure.rectangle->object.y;
+	    y0 = (y/gridSpacing)*gridSpacing;
+	    yoff = y - y0;
+	    if(yoff > gridSpacing/2) yoff = yoff - gridSpacing;
+	    y00 = y - yoff;
+
+	  /* Move it only if the new values are different */
+	    redraw=0;
+	    if(xoff != 0 || yoff != 0) {
+		redraw=1;
+		if (pE->run->move) {
+		    pE->run->move(pE,-xoff,-yoff);
+		}
+	    }
+
+	  /* Lower right */
+	    x = x00 + pE->structure.rectangle->object.width;
+	    x0 = (x/gridSpacing)*gridSpacing;
+	    xoff = x - x0;
+	    x0=x-xoff;
+	    if(xoff > gridSpacing/2) xoff = xoff - gridSpacing;
+
+	    y = y00 + pE->structure.rectangle->object.height;
+	    y0 = (y/gridSpacing)*gridSpacing;
+	    yoff = y - y0;
+	    y0=y-yoff;
+	    if(yoff > gridSpacing/2) yoff = yoff - gridSpacing;
+
+	    if(xoff != 0 || yoff != 0) {
+		redraw=1;
+		if (pE->run->scale) {
+		    pE->run->scale(pE,-xoff,-yoff);
+		}
+	    }
+	    if(redraw) {
+		if (pE->widget) {
+		  /* Destroy the widget */
+		    destroyElementWidgets(pE);
+		  /* Recreate it */
+		    pE->run->execute(cdi,pE);
+		}
+	    }
+	}
+	dlElement = dlElement->prev;
+    }
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
+  /* Update resource palette if there is only one element */
+    if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
+	setResourcePaletteEntries();
+    }
+    
+    highlightSelectedElements();
+}
+
+/*
+ * Make selected elements the same size
+ */
+void equalSizeSelectedElements(void)
+{
+    int i, j, n, avgW, avgH, xOffset, yOffset;
+    DisplayInfo *cdi;
+    DlElement *pE;
+    DlElement *dlElement;
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
+
+    unhighlightSelectedElements();
+
+/* Loop and get avgerage height and width values */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    avgW = avgH = n = 0;
+    while (dlElement) {
+	pE = dlElement->structure.element;
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	    DlObject *po =  &(pE->structure.rectangle->object);
+	    avgW += po->width;
+	    avgH += po->height;
+	    n++;
+	}
+	dlElement = dlElement->next;
+    }
+    if(n < 1) return;
+    avgW = (double)(avgW)/(double)(n)+.5;
+    avgH = (double)(avgH)/(double)(n)+.5;
+
+/* Loop and set width and height values to average */
+    dlElement = LastDlElement(cdi->selectedDlElementList);
+    while (dlElement != cdi->selectedDlElementList->head) {
+	pE = dlElement->structure.element;
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	    DlObject *po =  &(pE->structure.rectangle->object);
+	    if (pE->run->scale) {
+		pE->run->scale(pE,avgW - po->width,avgH - po->height);
+	    }
+	    if (pE->widget) {
+	      /* Destroy the widget */
+		destroyElementWidgets(pE);
+	      /* Recreate it */
+		pE->run->execute(cdi,pE);
+	    }
+	}
+	dlElement = dlElement->prev;
+    }
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
+    highlightSelectedElements();
+}
+
+/*
+ * Refresh display
+ *  Redraw to get all widgets in proper stacking order
+ *  (Uses dlElementList, not selectedDlElementList)
+ */
+void refreshDisplay(void)
+{
+    DisplayInfo *cdi;
+    DlElement *pE;
+
+    if (!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    if (IsEmpty(cdi->dlElementList)) return;
+
+    unhighlightSelectedElements();
+
+/* Loop and recreate widgets */
+#if DEBUG_TRAVERSAL
+	fprintf(stderr,"\n[refreshDisplay: cdi->dlElementList:\n");
+	dumpDlElementList(cdi->dlElementList);
+#endif
+    pE = FirstDlElement(cdi->dlElementList);
+    while (pE) {
+      /* Don't include the display */
+	if (pE->type != DL_Display) {
+	    if (pE->widget) {
+	      /* Destroy the widget */
+		destroyElementWidgets(pE);
+	      /* Recreate it */
+		pE->run->execute(cdi,pE);
+	    }
+	}
+	pE = pE->next;
+    }
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+    
+    highlightSelectedElements();
+}
+
+/*
  * moves specified <src> element to position just after specified <dst> element
  */
-void moveElementAfter(
-  DlElement *dst,
-  DlElement *src,
-  DlElement **tail)
+void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail)
 {
     if (dst == src) return;
     if (src == *tail) {
@@ -1877,8 +2583,7 @@ void moveElementAfter(
  *	N.B.: this can move them up or down in relative visibility
  *	("stacking order" a la painter's algorithm)
  */
-void  moveSelectedElementsAfterElement(
-  DisplayInfo *displayInfo,
+void  moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
   DlElement *afterThisElement)
 {
     int i;
@@ -1908,8 +2613,7 @@ void  moveSelectedElementsAfterElement(
 /*
  * return Channel ptr given a widget id
  */
-UpdateTask *getUpdateTaskFromWidget(
-  Widget widget)
+UpdateTask *getUpdateTaskFromWidget(Widget widget)
 {
     DisplayInfo *displayInfo;
     UpdateTask *pt;
@@ -1937,10 +2641,7 @@ UpdateTask *getUpdateTaskFromWidget(
 /*
  * return UpdateTask ptr given a DisplayInfo* and x,y positions
  */
-UpdateTask *getUpdateTaskFromPosition(
-  DisplayInfo *displayInfo,
-  int x,
-  int y)
+UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
 {
     UpdateTask *ptu, *ptuSaved = NULL;
     int minWidth, minHeight;
@@ -1975,9 +2676,7 @@ UpdateTask *getUpdateTaskFromPosition(
  *	and the number of values in the second parameter
  *	Syntax: argsString: "a=b,c=d,..."
  */
-NameValueTable *generateNameValueTable(
-  char *argsString,
-  int *numNameValues)
+NameValueTable *generateNameValueTable(char *argsString, int *numNameValues)
 {
     char *copyOfArgsString,  *name, *value;
     char *s1;
@@ -2051,10 +2750,7 @@ NameValueTable *generateNameValueTable(
  * lookup name in name-value table, return associated value (or NULL if no
  *	match)
  */
-char *lookupNameValue(
-  NameValueTable *nameValueTable,
-  int numEntries,
-  char *name)
+char *lookupNameValue(NameValueTable *nameValueTable, int numEntries, char *name)
 {
     int i;
     if (nameValueTable != NULL && numEntries > 0) {
@@ -2072,9 +2768,7 @@ char *lookupNameValue(
  *	first, all the strings pointed to by its entries
  *	then the table itself
  */
-void freeNameValueTable(
-  NameValueTable *nameValueTable,
-  int numEntries)
+void freeNameValueTable(NameValueTable *nameValueTable, int numEntries)
 {
     int i;
     if (nameValueTable != NULL) {
@@ -2150,10 +2844,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
  *   color the passed in widget (usually menu bar) and its children
  *   to the specified foreground/background colors
  */
-void colorMenuBar(
-  Widget widget,
-  Pixel fg,
-  Pixel bg)
+void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
 {
     Cardinal numChildren;
     WidgetList children;
@@ -2179,13 +2870,9 @@ void colorMenuBar(
 }
 
 #ifdef __cplusplus
-void questionDialogCb(Widget, 
-  XtPointer clientData,
-  XtPointer callbackStruct)
+void questionDialogCb(Widget, XtPointer clientData, XtPointer callbackStruct)
 #else
-void questionDialogCb(Widget widget, 
-  XtPointer clientData,
-  XtPointer callbackStruct)
+void questionDialogCb(Widget widget, XtPointer clientData, XtPointer callbackStruct)
 #endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) clientData;
@@ -2268,6 +2955,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 	XtDispatchEvent(&event);
     }
     XtUnmanageChild(displayInfo->questionDialog);
+    XtRemoveGrab(XtParent(displayInfo->questionDialog));
 }
 
 #ifdef __cplusplus
@@ -2368,10 +3056,8 @@ void closeDisplay(Widget w) {
     DisplayInfo *newDisplayInfo;
     newDisplayInfo = dmGetDisplayInfoFromWidget(w);
     if (newDisplayInfo == currentDisplayInfo) {
-#if 0
-	highlightAndSetSelectedElements(NULL,0,0);
-#endif
-	clearResourcePaletteEntries();
+      /* Unselect any selected elements */
+	unselectElementsInDisplay();
 	currentDisplayInfo = NULL;
     }
     if (newDisplayInfo->hasBeenEditedButNotSaved) {
@@ -2483,6 +3169,7 @@ int localCvtLongToHexString(
     return((int)(pdest-startAddr));
 }
 
+/* Makes a new, empty list */
 DlList *createDlList() {
     DlList *dlList = malloc(sizeof(DlList));
     if (dlList) {
@@ -2495,7 +3182,9 @@ DlList *createDlList() {
     return dlList;
 }
 
-void appendDlElement(DlList *l, DlElement *p) {
+/* Put element at the end of the list (Doesn't create element) */
+void appendDlElement(DlList *l, DlElement *p)
+{
     p->prev = l->tail;
     p->next = NULL;
     l->tail->next = p;
@@ -2503,7 +3192,9 @@ void appendDlElement(DlList *l, DlElement *p) {
     l->count++;
 }
 
-void insertDlElement(DlList *l, DlElement *p) {
+/* Put element at the head of the list */
+void insertDlElement(DlList *l, DlElement *p)
+{
     p->prev = l->head;
     p->next = l->head->next;
     if (l->tail == l->head) {
@@ -2515,7 +3206,9 @@ void insertDlElement(DlList *l, DlElement *p) {
     l->count++;
 }
 
-void insertAfter(DlList *l, DlElement *p1, DlElement *p2) {
+/* Adjusts pointers to include (Doesn't create element) */
+void insertAfter(DlList *l, DlElement *p1, DlElement *p2)
+{
     p2->prev = p1;
     p2->next = p1->next;
     if (l->tail == p1) {
@@ -2527,40 +3220,48 @@ void insertAfter(DlList *l, DlElement *p1, DlElement *p2) {
     l->count++;
 }
 
-void insertDlListAfter(DlList *l1, DlElement *p, DlList *l2) {
-    if (IsEmpty(l2)) return;
-    FirstDlElement(l2)->prev = p;
-    LastDlElement(l2)->next = p->next;
-    if (l1->tail == p) {
-	l1->tail = LastDlElement(l2);
+/* Moves elements from src to after an element in dest */
+void insertDlListAfter(DlList *pDest, DlElement *p, DlList *pSrc)
+{
+    if (IsEmpty(pSrc)) return;
+    FirstDlElement(pSrc)->prev = p;
+    LastDlElement(pSrc)->next = p->next;
+    if (pDest->tail == p) {
+	pDest->tail = LastDlElement(pSrc);
     } else {
-	p->next->prev = LastDlElement(l2);
+	p->next->prev = LastDlElement(pSrc);
     }
-    p->next = FirstDlElement(l2);
-    l1->count += l2->count;
-    emptyDlList(l2);
+    p->next = FirstDlElement(pSrc);
+    pDest->count += pSrc->count;
+    emptyDlList(pSrc);
 }
 
-void appendDlList(DlList *l1, DlList *l2) {
+/* Moves elements from src to the end of dest */
+void appendDlList(DlList *pDest, DlList *pSrc)
+{
     DlElement *p;
-    if (l2->count <= 0) return;
-    l1->count += l2->count;
-    l2->count = 0;
-    p = l2->head->next;
-    l2->head->next = NULL;
-    p->prev = l1->tail;
-    l1->tail->next = p;
-    l1->tail = l2->tail;
-    l2->tail = l2->head;
+    if (pSrc->count <= 0) return;
+    pDest->count += pSrc->count;
+    pSrc->count = 0;
+    p = pSrc->head->next;
+    pSrc->head->next = NULL;
+    p->prev = pDest->tail;
+    pDest->tail->next = p;
+    pDest->tail = pSrc->tail;
+    pSrc->tail = pSrc->head;
 }
 
-void emptyDlList(DlList *l) {
+/* Adjusts pointers to be empty list (Doesn't free elements) */
+void emptyDlList(DlList *l)
+{
     l->head->next = 0;
     l->tail = l->head;
     l->count = 0;
 }
 
-void removeDlElement(DlList *l, DlElement *p) {
+/* Adjusts pointers to eliminate element (Doesn't free element) */
+void removeDlElement(DlList *l, DlElement *p)
+{
     l->count--;
     p->prev->next = p->next;
     if (l->tail == p) {
@@ -2571,22 +3272,44 @@ void removeDlElement(DlList *l, DlElement *p) {
     p->next = p->prev = 0;
 }
 
-void dumpDlElementList(DlList *l) {
+/* Prints the elements in a list */
+void dumpDlElementList(DlList *l)
+{
     DlElement *p = 0;
     int i = 0;
-    printf("Number of Element = %d\n",l->count);
+    printf("Number of Elements = %d\n",l->count);
     p = FirstDlElement(l);
     while (p) {
 	if (p->type == DL_Element) {
-	    printf("%03d (%s)\n",
-	      i++,elementStringTable[p->structure.element->type-DL_Element]);
+	    printf("%03d (%s) x=%d y=%d width=%u height=%u\n",i++,
+	      elementType(p->structure.element->type),
+	      p->structure.element->structure.composite->object.x,
+	      p->structure.element->structure.composite->object.y,
+	      p->structure.element->structure.composite->object.width,
+	      p->structure.element->structure.composite->object.height);
 	} else {
-	    printf("%03d %s\n",i++,elementStringTable[p->type-DL_Element]);
+	    printf("%03d %s x=%d y=%d width=%u height=%u\n",i++,
+	      elementType(p->type),
+	      p->structure.composite->object.x,
+	      p->structure.composite->object.y,
+	      p->structure.composite->object.width,
+	      p->structure.composite->object.height);
 	}
 	p = p->next;
     }
     return;
 }
+
+/*
+ * String allocation
+ *   Keep an array of ARRAY_SIZE string pointers to unused strings
+ *     and a count of how many are available
+ *   When allocating strings, use an available one if possible
+ *     otherwise allocate space for a string of MAX_TOKEN_LENGTH chars
+ *   When freeing strings, put them in the unused list if it isn't full
+ *     otherwise delete them
+ *   Should help keep memory unfragmented, at least
+ */
 
 #define ARRAY_SIZE 256
 typedef struct {
@@ -2594,7 +3317,7 @@ typedef struct {
     int   count;
 } nameList_t;
 
-static nameList_t freeStringList[ARRAY_SIZE] = {
+static nameList_t freeStringList = {
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -2604,37 +3327,331 @@ static nameList_t freeStringList[ARRAY_SIZE] = {
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     0};
+
+#if DEBUG_STRING_LIST
 static int allocateStringCount = 0;
 static int freeStringCount = 0;
+#endif
 
 char *allocateString() {
-    char *tmp;
-    if (freeStringList->count) {
-	freeStringList->count--;
-	tmp = freeStringList->array[freeStringList->count];
+    char *string;
+    if (freeStringList.count) {
+      /* Use a free one */
+	freeStringList.count--;
+	string = freeStringList.array[freeStringList.count];
     } else {
-	tmp = malloc(MAX_TOKEN_LENGTH);
+      /* Allocate one */
+	string = malloc(MAX_TOKEN_LENGTH);
+#if DEBUG_STRING_LIST
+	allocateStringCount++;
+#endif	
     }
-    allocateStringCount++;
-    return tmp;
+#if DEBUG_STRING_LIST
+    printf("allocateString: Count: %d  Malloc's: %d  Free's: %d\n",
+      freeStringList.count,allocateStringCount,freeStringCount);
+#endif	
+    return string;
 }
 
 void freeString(char *string) {
-    if (freeStringList->count < ARRAY_SIZE) {
-	freeStringList->array[freeStringList->count] = string;
-	freeStringList->count++;
+    if (freeStringList.count < ARRAY_SIZE) {
+      /* Save it in the free list */
+	freeStringList.array[freeStringList.count] = string;
+	freeStringList.count++;
     } else {
+      /* Free it */
 	free(string);
+#if DEBUG_STRING_LIST
+	freeStringCount++;
+#endif	
     }
-    freeStringCount++;
+#if DEBUG_STRING_LIST
+    printf("freeString: Count: %d  Malloc's: %d  Free's: %d\n",
+      freeStringList.count,allocateStringCount,freeStringCount);
+#endif	
 }
 
 void destroyFreeStringList() {
     int i;
-    printf("string list : %d, %d, %d\n",freeStringList->count,
-      allocateStringCount,freeStringCount);
-    for (i=0;i<freeStringList->count;i++) {
-	free(freeStringList->array[i]);
+#if DEBUG_STRING_LIST    
+    printf("destroyFreeStringList: Count: %d  Malloc's: %d  Free's: %d\n",
+      freeStringList.count,allocateStringCount,freeStringCount);
+#endif    
+    for (i=0; i<freeStringList.count; i++) {
+	free(freeStringList.array[i]);
     }
-    freeStringList->count = 0;
+    freeStringList.count = 0;
+}
+
+/*
+ * Heap sort routine
+ *  Sorts an array of length n into ascending order and puts the sorted
+ *    indices in indx
+ */
+void hsort(double array[], int indx[], int n)
+{
+    int l,j,ir,indxt,i;
+    double q;
+
+  /* All done if none or one element */
+    if(n == 0) return;
+    if(n == 1) {
+	indx[0]=0;
+	return;
+    }
+    
+  /* Initialize indx array */
+    for(j=0; j < n; j++) indx[j]=j;
+  /* Loop over elements */
+    l=(n>>1);
+    ir=n-1;
+    for(;;) {
+	if(l > 0) q=array[(indxt=indx[--l])];
+	else {
+	    q=array[(indxt=indx[ir])];
+	    indx[ir]=indx[0];
+	    if(--ir == 0) {
+		indx[0]=indxt;
+		return;
+	    }
+	}
+	i=l;
+	j=(l<<1)+1;
+	while(j <= ir) {
+	    if(j < ir && array[indx[j]] < array[indx[j+1]]) j++;
+	    if(q < array[indx[j]]) {
+		indx[i]=indx[j];
+		j+=((i=j)+1);
+		
+	    }
+	    else break;
+	}
+	indx[i]=indxt;
+    }
+}
+
+/* Undo Routines */
+
+/* Allocate UndoInfo struct (if necessary) and element list inside it */
+void createUndoInfo(DisplayInfo *displayInfo)
+{
+    UndoInfo *undoInfo;
+
+    if(!displayInfo) return;
+    if(displayInfo->undoInfo) {
+	clearUndoInfo(displayInfo);
+    } else {
+	displayInfo->undoInfo = (UndoInfo *)calloc(1,sizeof(UndoInfo));
+    }
+    undoInfo = displayInfo->undoInfo;
+
+    undoInfo->dlElementList = createDlList();
+    if (!undoInfo->dlElementList) {
+	medmPrintf("createUndoInfo: Cannot create element list\n");
+	free(undoInfo);
+	displayInfo->undoInfo = NULL;
+    }
+}
+
+/* Free UndoInfo struct and element list inside it */
+void destroyUndoInfo(DisplayInfo *displayInfo)
+{
+    if(!displayInfo) return;
+    if(!displayInfo->undoInfo) return;
+    clearUndoInfo(displayInfo);
+    free((char *)displayInfo->undoInfo);
+    displayInfo->undoInfo = NULL;
+}
+
+/* Free element list inside UndoInfo struct (Indicates undo is not available) */
+void clearUndoInfo(DisplayInfo *displayInfo)
+{
+    UndoInfo *undoInfo;
+
+    if(!displayInfo) return;
+    undoInfo = displayInfo->undoInfo;
+    if(!undoInfo) return;
+  /*    clearDlDisplayList(undoInfo->dlElementList); */
+    free ((char *) undoInfo->dlElementList);
+}
+
+/* Save Undo information */
+void saveUndoInfo(DisplayInfo *displayInfo)
+{
+#ifdef UNDO    
+    UndoInfo *undoInfo;
+    DlElement *dlElement;
+
+    if(!displayInfo) return;
+    undoInfo = displayInfo->undoInfo;
+    if(!undoInfo) {
+	createUndoInfo(displayInfo);
+	undoInfo = displayInfo->undoInfo;
+    }
+    if(!undoInfo) return;
+
+#if DEBUG_UNDO
+    fprintf(stderr,"\nSAVE\n");
+    fprintf(stderr,"\n[saveUndoInfo: displayInfo->dlElementList(Before):\n");
+    dumpDlElementList(displayInfo->dlElementList);
+    fprintf(stderr,"\n[saveUndoInfo: undoInfo->dlElementList(Before):\n");
+    dumpDlElementList(undoInfo->dlElementList);
+#endif
+
+    if (!IsEmpty(undoInfo->dlElementList)) {
+	clearDlDisplayList(undoInfo->dlElementList);
+    }
+    if (IsEmpty(displayInfo->dlElementList)) return;
+  
+    dlElement = FirstDlElement(displayInfo->dlElementList);
+    while (dlElement) {
+	DlElement *element = dlElement;
+	if (element->type != DL_Display) {
+	    DlElement *pE = element->run->create(element);
+	    appendDlElement(undoInfo->dlElementList,pE);
+	}
+	dlElement = dlElement->next;
+    }
+
+#if DEBUG_UNDO
+    fprintf(stderr,"\n[saveUndoInfo: displayInfo->dlElementList(After):\n");
+    dumpDlElementList(displayInfo->dlElementList);
+    fprintf(stderr,"\n[saveUndoInfo: undoInfo->dlElementList(After):\n");
+    dumpDlElementList(undoInfo->dlElementList);
+    fprintf(stderr,"\n");
+#endif
+
+    undoInfo->gridSpacing = displayInfo->gridSpacing;
+    undoInfo->gridOn = displayInfo->gridOn;
+    undoInfo->drawingAreaBackgroundColor = displayInfo->drawingAreaBackgroundColor;
+    undoInfo->drawingAreaForegroundColor = displayInfo->drawingAreaForegroundColor;
+#endif
+}
+
+/* Restore from saved undo information and save current information for redo */
+void restoreUndoInfo(DisplayInfo *displayInfo)
+{
+#ifdef UNDO    
+    UndoInfo *undoInfo;
+    DlElement *dlElement;
+
+  /* Check if undo is available */
+    if(!displayInfo) {
+	XBell(display,50);
+	return;
+    }
+    undoInfo = displayInfo->undoInfo;
+    if(!undoInfo) {
+	XBell(display,50);
+	return;
+    }
+
+  /* If the temporary list does not exist, create it */
+    if(!tmpDlElementList) {
+	tmpDlElementList=createDlList();
+	if(!tmpDlElementList) {
+	    medmPrintf("restoreUndoInfo: Cannot create temporary element list\n");
+	    XBell(display,50);
+	    return;
+	}
+    }
+
+  /* Unselect any selected elements since we aren't keeping track of them */
+    unselectElementsInDisplay();
+    
+#if DEBUG_UNDO
+    fprintf(stderr,"\nRESTORE\n");
+    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(Before):\n");
+    dumpDlElementList(displayInfo->dlElementList);
+    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(Before):\n");
+    dumpDlElementList(undoInfo->dlElementList);
+    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(Before):\n");
+    dumpDlElementList(tmpDlElementList);
+#endif
+
+  /* Save current list in temporary list */
+    if (!IsEmpty(tmpDlElementList)) {
+	clearDlDisplayList(tmpDlElementList);
+    }
+    if (!IsEmpty(displayInfo->dlElementList)) {
+	dlElement = FirstDlElement(displayInfo->dlElementList);
+	while (dlElement) {
+	    DlElement *element = dlElement;
+	    if (element->type != DL_Display) {
+		DlElement *pE = element->run->create(element);
+		appendDlElement(tmpDlElementList,pE);
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+#if DEBUG_UNDO
+    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(1):\n");
+    dumpDlElementList(tmpDlElementList);
+#endif
+
+  /* Copy undo list to current list */
+    if (!IsEmpty(displayInfo->dlElementList)) {
+	removeDlDisplayListElementsExceptDisplay(displayInfo->dlElementList);
+    }
+    if (!IsEmpty(undoInfo->dlElementList)) {  
+	dlElement = FirstDlElement(undoInfo->dlElementList);
+	while (dlElement) {
+	    DlElement *element = dlElement;
+	    if (element->type != DL_Display) {
+		DlElement *pE = element->run->create(element);
+		if (pE->run->execute) {
+		    (pE->run->execute)(displayInfo, pE);
+		}
+		appendDlElement(displayInfo->dlElementList,pE);
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+#if DEBUG_UNDO
+    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(2):\n");
+    dumpDlElementList(displayInfo->dlElementList);
+#endif
+
+  /* Copy temporary list to undo list */
+    if (!IsEmpty(undoInfo->dlElementList)) {
+	clearDlDisplayList(undoInfo->dlElementList);
+    }
+    if (!IsEmpty(tmpDlElementList)) {
+	dlElement = FirstDlElement(tmpDlElementList);
+	while (dlElement) {
+	    DlElement *element = dlElement;
+	    if (element->type != DL_Display) {
+		DlElement *pE = element->run->create(element);
+		appendDlElement(undoInfo->dlElementList,pE);
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+#if DEBUG_UNDO
+    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(3):\n");
+    dumpDlElementList(undoInfo->dlElementList);
+#endif
+	
+#if DEBUG_UNDO
+    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(After):\n");
+    dumpDlElementList(displayInfo->dlElementList);
+    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(After):\n");
+    dumpDlElementList(undoInfo->dlElementList);
+    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(After):\n");
+    dumpDlElementList(tmpDlElementList);
+#endif
+
+  /* Clear the temporary element list to be neat */
+    clearDlDisplayList(tmpDlElementList);
+
+  /* Do direct copies */
+    displayInfo->gridSpacing = undoInfo->gridSpacing;
+    displayInfo->gridOn = undoInfo->gridOn;
+    displayInfo->drawingAreaBackgroundColor = undoInfo->drawingAreaBackgroundColor;
+    displayInfo->drawingAreaForegroundColor = undoInfo->drawingAreaForegroundColor;
+
+  /* Insure that this is the currentDisplayInfo and refresh */
+    currentDisplayInfo = displayInfo;     /* Shouldn't be necessary */
+    refreshDisplay();
+#endif    
 }

@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <medm.h>
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void shellCommandSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void shellCommandSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void shellCommandGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable shellCommandDlDispatchTable = {
@@ -67,8 +69,8 @@ static DlDispatchTable shellCommandDlDispatchTable = {
     NULL,
     shellCommandGetValues,
     shellCommandInheritValues,
-    NULL,
-    NULL,
+    shellCommandSetBackgroundColor,
+    shellCommandSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -199,11 +201,11 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       xmCascadeButtonGadgetClass,
       localMenuBar, args, 12);
 
-/* add destroy callback to free pixmap from pixmap cache */
+/* Add destroy callback to free pixmap from pixmap cache */
     XtAddCallback(widget,
       XmNdestroyCallback,freePixmapCallback,
       (XtPointer)shellCommandPixmap);
-
+    
     for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	if (strlen(dlShellCommand->command[i].command) > (size_t)0) {
 	    xmString = XmStringCreateSimple(dlShellCommand->command[i].label);
@@ -219,17 +221,17 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
     }
 
-
-/* add event handlers to shellCommand... */
+  /* Add event handlers to shellCommand... */
     if (displayInfo->traversalMode == DL_EDIT) {
-
-/* remove all translations if in edit mode */
+      /* Remove all translations if in edit mode */
 	XtUninstallTranslations(localMenuBar);
-
+      /* Add back the KeyPress handler invoked in executeDlDisplay */
+	XtAddEventHandler(localMenuBar,KeyPressMask,False,
+	  handleKeyPress,(XtPointer)displayInfo);
+      /* Add the ButtonPress handler */
 	XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-	  handleButtonPress, (XtPointer)displayInfo);
+	  handleButtonPress,(XtPointer)displayInfo);
     }
-
 }
 
 #ifdef __cplusplus
@@ -624,5 +626,21 @@ static void shellCommandGetValues(ResourceBundle *pRCB, DlElement *p) {
       CLR_RC,        &(dlShellCommand->clr),
       BCLR_RC,       &(dlShellCommand->bclr),
       SHELLDATA_RC,  &(dlShellCommand->command),
+      -1);
+}
+
+static void shellCommandSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlShellCommand *dlShellCommand = p->structure.shellCommand;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlShellCommand->bclr),
+      -1);
+}
+
+static void shellCommandSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlShellCommand *dlShellCommand = p->structure.shellCommand;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlShellCommand->clr),
       -1);
 }

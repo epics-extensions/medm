@@ -125,46 +125,6 @@ extern "C" {
 #define HELP_MAIN 0
 
 
-
-  /*
-   * global widgets (all permanent shells, most MWs, etc )
-   */
-    EXTERN Widget mainShell, mainMW;
-    EXTERN Widget objectS, objectMW;
-    EXTERN Widget resourceS, resourceMW;
-    EXTERN Widget colorS, colorMW;
-    EXTERN Widget channelS, channelMW;
-  /* shells for related display, shell command,
-     cartesian plot and strip chart data vectors */
-    EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
-      cartesianPlotAxisS, stripChartS;
-    EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
-
-    EXTERN Widget exitQD, saveAsPD;
-
-  /* the global Help Information Dialog */
-    EXTERN Widget helpS, helpMessageBox;
-
-
-  /* in main shell: labels on bulletin board for current display information */
-    EXTERN Widget statusBB, displayL, nElementsL, nColorsL;
-
-  /* currently specified image type (from ObjectPalette's OpenFSD) */
-    EXTERN ImageType imageType;
-
-  /* resource bundle stuff */
-#define SELECTION_BUNDLE 0
-    EXTERN int resourceBundleCounter;
-    extern utilPrint(Display *, Window, char *);
-
-    EXTERN XtWorkProcId medmWorkProcId;
-    EXTERN Channel *nextToServe;
-    EXTERN long medmUpdateRequestCount;
-    EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
-    EXTERN Widget caStudyLabel;
-    EXTERN XtIntervalId medmStatusIntervalId;
-    EXTERN Boolean MedmUseNewFileFormat;
-
     typedef struct menuEntry{
 	char*           label;
 	WidgetClass*    widgetClass;
@@ -212,6 +172,47 @@ extern "C" {
      relatedDisplay25
      shellCommand25
      */
+
+  /* Global variables */
+
+   /* Global widgets (all permanent shells, most MWs, etc ) */
+    EXTERN Widget mainShell, mainMW;
+    EXTERN Widget objectS, objectMW;
+    EXTERN Widget resourceS, resourceMW;
+    EXTERN Widget colorS, colorMW;
+    EXTERN Widget channelS, channelMW;
+
+  /* Shells for related display, shell command,
+   * Cartesian plot and strip chart data vectors */
+    EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
+      cartesianPlotAxisS, stripChartS;
+    EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
+
+    EXTERN Widget exitQD, saveAsPD;
+
+  /* Help information dialogs */
+    EXTERN Widget helpS, helpMessageBox;
+    EXTERN Widget editHelpS, editHelpMessageBox;
+
+
+  /* In main shell: labels on bulletin board for current display information */
+    EXTERN Widget statusBB, displayL, nElementsL, nColorsL;
+
+  /* Currently specified image type (from ObjectPalette's OpenFSD) */
+    EXTERN ImageType imageType;
+
+  /* Resource bundle stuff */
+#define SELECTION_BUNDLE 0
+    EXTERN int resourceBundleCounter;
+    extern utilPrint(Display *, Window, char *);
+
+    EXTERN XtWorkProcId medmWorkProcId;
+    EXTERN Channel *nextToServe;
+    EXTERN long medmUpdateRequestCount;
+    EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
+    EXTERN Widget caStudyLabel;
+    EXTERN XtIntervalId medmStatusIntervalId;
+    EXTERN Boolean MedmUseNewFileFormat;
 
 #ifdef __cplusplus
 	   }  /* Close scope of 'extern "C"' declaration which encloses file. */

@@ -68,6 +68,7 @@ static void ovalDestroyCb(XtPointer cd);
 static void ovalName(XtPointer, char **, short *, int *);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void ovalSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void ovalSetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 
@@ -80,7 +81,7 @@ static DlDispatchTable ovalDlDispatchTable = {
     ovalGetValues,
     ovalInheritValues,
     NULL,
-    NULL,
+    ovalSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -373,6 +374,26 @@ void writeDlOval(
 #endif
 }
 
+static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
+    DlOval *dlOval = p->structure.oval;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlOval->attr.clr),
+      STYLE_RC,      &(dlOval->attr.style),
+      FILL_RC,       &(dlOval->attr.fill),
+      LINEWIDTH_RC,  &(dlOval->attr.width),
+      CLRMOD_RC,     &(dlOval->dynAttr.clr),
+      VIS_RC,        &(dlOval->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlOval->dynAttr.name),
+      -1);
+}
+
+static void ovalSetValues(ResourceBundle *pRCB, DlElement *p) {
+    DlOval *dlOval = p->structure.oval;
+}
+
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlOval *dlOval = p->structure.oval;
     medmGetValues(pRCB,
@@ -393,22 +414,10 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void ovalSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
     DlOval *dlOval = p->structure.oval;
     medmGetValues(pRCB,
       CLR_RC,        &(dlOval->attr.clr),
-      STYLE_RC,      &(dlOval->attr.style),
-      FILL_RC,       &(dlOval->attr.fill),
-      LINEWIDTH_RC,  &(dlOval->attr.width),
-      CLRMOD_RC,     &(dlOval->dynAttr.clr),
-      VIS_RC,        &(dlOval->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
-#endif
-      CHAN_RC,       &(dlOval->dynAttr.name),
       -1);
-}
-
-static void ovalSetValues(ResourceBundle *pRCB, DlElement *p) {
-    DlOval *dlOval = p->structure.oval;
 }

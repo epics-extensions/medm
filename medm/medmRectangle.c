@@ -16,7 +16,7 @@ with the Department of Energy.
 
 Portions of this material resulted from work developed under a U.S.
 Government contract and are subject to the following license:  For
-a period of five years from Mrectangleh 30, 1993, the Government is
+a period of five years from March 30, 1993, the Government is
 granted for itself and others acting on its behalf a paid-up,
 nonexclusive, irrevocable worldwide license in this computer
 software to reproduce, prepare derivative works, and perform
@@ -67,6 +67,7 @@ static void rectangleUpdateValueCb(XtPointer cd);
 static void rectangleDestroyCb(XtPointer cd);
 static void rectangleName(XtPointer, char **, short *, int *);
 static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void rectangleSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable rectangleDlDispatchTable = {
@@ -78,7 +79,7 @@ static DlDispatchTable rectangleDlDispatchTable = {
     rectangleGetValues,
     rectangleInheritValues,
     NULL,
-    NULL,
+    rectangleSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -369,6 +370,23 @@ void writeDlRectangle(
 }
 
 
+static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
+    DlRectangle *dlRectangle = p->structure.rectangle;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlRectangle->attr.clr),
+      STYLE_RC,      &(dlRectangle->attr.style),
+      FILL_RC,       &(dlRectangle->attr.fill),
+      LINEWIDTH_RC,  &(dlRectangle->attr.width),
+      CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
+      VIS_RC,        &(dlRectangle->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlRectangle->dynAttr.name),
+      -1);
+}
+
+
 static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlRectangle *dlRectangle = p->structure.rectangle;
     medmGetValues(pRCB,
@@ -389,19 +407,10 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
  
-static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void rectangleSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
     DlRectangle *dlRectangle = p->structure.rectangle;
     medmGetValues(pRCB,
       CLR_RC,        &(dlRectangle->attr.clr),
-      STYLE_RC,      &(dlRectangle->attr.style),
-      FILL_RC,       &(dlRectangle->attr.fill),
-      LINEWIDTH_RC,  &(dlRectangle->attr.width),
-      CLRMOD_RC,     &(dlRectangle->dynAttr.clr),
-      VIS_RC,        &(dlRectangle->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
-#endif
-      CHAN_RC,       &(dlRectangle->dynAttr.name),
       -1);
 }
-

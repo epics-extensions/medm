@@ -74,6 +74,8 @@ static void messageButtonDestroyCb(XtPointer);
 static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
 static void messageButtonName(XtPointer, char **, short *, int *);
 static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void messageButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void messageButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void messageButtonGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable messageButtonDlDispatchTable = {
@@ -84,8 +86,8 @@ static DlDispatchTable messageButtonDlDispatchTable = {
     NULL,
     messageButtonGetValues,
     messageButtonInheritValues,
-    NULL,
-    NULL,
+    messageButtonSetBackgroundColor,
+    messageButtonSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -158,11 +160,15 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
       dlMessageButton->label,
       (XtPointer) displayInfo);
 
-  /* remove all translations if in edit mode */
+  /* Remove all translations if in edit mode */
     XtUninstallTranslations(dlElement->widget);
-  /* add button press handlers too */
-    XtAddEventHandler(dlElement->widget,ButtonPressMask, False,
+  /* Add back the KeyPress handler invoked in executeDlDisplay */
+    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
+      handleKeyPress,(XtPointer)displayInfo);
+  /* Add the ButtonPress handler */
+    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
       handleButtonPress,(XtPointer)displayInfo);
+
     XtManageChild(dlElement->widget);
 }
 
@@ -546,5 +552,21 @@ static void messageButtonGetValues(ResourceBundle *pRCB, DlElement *p) {
       PRESS_MSG_RC,  &(dlMessageButton->press_msg),
       RELEASE_MSG_RC,&(dlMessageButton->release_msg),
       CLRMOD_RC,     &(dlMessageButton->clrmod),
+      -1);
+}
+
+static void messageButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMessageButton *dlMessageButton = p->structure.messageButton;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlMessageButton->control.bclr),
+      -1);
+}
+
+static void messageButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMessageButton *dlMessageButton = p->structure.messageButton;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlMessageButton->control.clr),
       -1);
 }

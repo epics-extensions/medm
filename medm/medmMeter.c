@@ -68,6 +68,9 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd);
 static void meterDestroyCb(XtPointer cd);
 static void meterName(XtPointer, char **, short *, int *);
 static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void meterSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void meterSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+
 static void meterGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable meterDlDispatchTable = {
@@ -78,8 +81,8 @@ static DlDispatchTable meterDlDispatchTable = {
     NULL,
     meterGetValues,
     meterInheritValues,
-    NULL,
-    NULL,
+    meterSetBackgroundColor,
+    meterSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -102,7 +105,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &(dlMeter->object),
 	      meterDraw,
 	      (XtPointer)pm);
-
+	    
 	    if (pm->updateTask == NULL) {
 		medmPrintf("meterCreateRunTimeInstance : memory allocation error\n");
 	    } else {
@@ -115,7 +118,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer) pm);
 	    drawWhiteRectangle(pm->updateTask);
 	}
-
+	
       /* from the meter structure, we've got Meter's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlMeter->object.x); n++;
@@ -125,69 +128,69 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNdataType,XcFval); n++;
 	XtSetArg(args[n],XcNscaleSegments,
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
-	  switch (dlMeter->label) {
-	  case LABEL_NONE:
-	      XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	      XtSetArg(args[n],XcNlabel," "); n++;
-	      break;
-	  case OUTLINE:
-	      XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	      XtSetArg(args[n],XcNlabel," "); n++;
-	      break;
-	  case LIMITS:
-	      XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	      XtSetArg(args[n],XcNlabel," "); n++;
-	      break;
-	  case CHANNEL:
-	      XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	      XtSetArg(args[n],XcNlabel,dlMeter->monitor.rdbk); n++;
-	      break;
-	  }
-	  preferredHeight = dlMeter->object.height/METER_FONT_DIVISOR;
-	  bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
-	    preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-	  XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
-	  XtSetArg(args[n],XcNmeterForeground,(Pixel)
-	    displayInfo->colormap[dlMeter->monitor.clr]); n++;
-	    XtSetArg(args[n],XcNmeterBackground,(Pixel)
-	      displayInfo->colormap[dlMeter->monitor.bclr]); n++;
-	      XtSetArg(args[n],XtNbackground,(Pixel)
-		displayInfo->colormap[dlMeter->monitor.bclr]); n++;
-		XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-		  displayInfo->colormap[dlMeter->monitor.bclr]); n++;
-		/*
-		 * add the pointer to the Channel structure as userData 
-		 *  to widget
-		 */
-		  XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
-		  localWidget = XtCreateWidget("meter", 
-		    xcMeterWidgetClass, displayInfo->drawingArea, args, n);
-		  dlElement->widget = localWidget;
-
-		  if (displayInfo->traversalMode == DL_EXECUTE) {
-
-		    /* record the widget that this structure belongs to */
-		      pm->dlElement->widget = localWidget;
-
-		    /* add in drag/drop translations */
-		      XtOverrideTranslations(localWidget,parsedTranslations);
-
-
-		  } else if (displayInfo->traversalMode == DL_EDIT) {
-  
-		    /* add button press handlers */
-		      XtAddEventHandler(localWidget,ButtonPressMask,False,
-			handleButtonPress,(XtPointer)displayInfo);
-
-		      XtManageChild(localWidget);
-		  }
+	switch (dlMeter->label) {
+	case LABEL_NONE:
+	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case OUTLINE:
+	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case LIMITS:
+	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNlabel," "); n++;
+	    break;
+	case CHANNEL:
+	    XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	    XtSetArg(args[n],XcNlabel,dlMeter->monitor.rdbk); n++;
+	    break;
+	}
+	preferredHeight = dlMeter->object.height/METER_FONT_DIVISOR;
+	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
+	  preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
+	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
+	XtSetArg(args[n],XcNmeterForeground,
+	  (Pixel)displayInfo->colormap[dlMeter->monitor.clr]); n++;
+	XtSetArg(args[n],XcNmeterBackground,(Pixel)
+	  displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+	XtSetArg(args[n],XtNbackground,
+	  (Pixel)displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
+	  displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+	/*
+	 * add the pointer to the Channel structure as userData 
+	 *  to widget
+	 */
+	XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
+	localWidget = XtCreateWidget("meter", 
+	  xcMeterWidgetClass, displayInfo->drawingArea, args, n);
+	dlElement->widget = localWidget;
+	
+	if (displayInfo->traversalMode == DL_EXECUTE) {
+	    
+	  /* record the widget that this structure belongs to */
+	    pm->dlElement->widget = localWidget;
+	    
+	  /* add in drag/drop translations */
+	    XtOverrideTranslations(localWidget,parsedTranslations);
+	    
+	    
+	} else if (displayInfo->traversalMode == DL_EDIT) {
+	    
+	  /* add button press handlers */
+	    XtAddEventHandler(localWidget,ButtonPressMask,False,
+	      handleButtonPress,(XtPointer)displayInfo);
+	    
+	    XtManageChild(localWidget);
+	}
     } else {
 	DlObject *po = &(dlElement->structure.meter->object);
 	XtVaSetValues(dlElement->widget,
-	  XmNx, (Position) po->x,
-	  XmNy, (Position) po->y,
-	  XmNwidth, (Dimension) po->width,
-	  XmNheight, (Dimension) po->height,
+	  XmNx, (Position)po->x,
+	  XmNy, (Position)po->y,
+	  XmNwidth, (Dimension)po->width,
+	  XmNheight, (Dimension)po->height,
 	  NULL);
     }
 }
@@ -312,8 +315,7 @@ DlElement *createDlMeter(DlElement *p)
 	dlMeter->clrmod = STATIC;
     }
 
-    if (!(dlElement = createDlElement(DL_Meter,
-      (XtPointer)      dlMeter,
+    if (!(dlElement = createDlElement(DL_Meter, (XtPointer)dlMeter,
       &meterDlDispatchTable))) {
 	free(dlMeter);
     }
@@ -427,5 +429,21 @@ static void meterGetValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlMeter->monitor.bclr),
       LABEL_RC,      &(dlMeter->label),
       CLRMOD_RC,     &(dlMeter->clrmod),
+      -1);
+}
+
+static void meterSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMeter *dlMeter = p->structure.meter;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlMeter->monitor.bclr),
+      -1);
+}
+
+static void meterSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMeter *dlMeter = p->structure.meter;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlMeter->monitor.clr),
       -1);
 }

@@ -56,7 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-#include <Xm/ToggleBG.h>
+#include <Xm/ToggleB.h>
 #include <Xm/MwmUtil.h>
 
 #ifdef __cplusplus
@@ -69,69 +69,73 @@ extern "C" {
 
 #ifdef EXTENDED_INTERFACE
 # define N_MAIN_MENU_ELES 3
-# define N_OPTIONS_MENU_ELES 1
+# define N_OPTIONS_MENU_ELES 2
 # define OPTIONS_BTN_POSN 1
-# define HELP_BTN_POSN 2
+# define HELP_BTN_POSN 3
 #else
-# define N_MAIN_MENU_ELES 2
-# define HELP_BTN_POSN 1
+# define N_MAIN_MENU_ELES 3
+# define HELP_BTN_POSN 2
 #endif
 
 #define N_FILE_MENU_ELES 1
 #define FILE_BTN_POSN 0
 #define FILE_CLOSE_BTN 0
-#define N_HELP_MENU_ELES 1
+
+#define HELP_OBJECT_PALETTE_BTN 0
+#define HELP_OBJECT_OBJECTS_BTN 1
 
 typedef struct {
     char *         pixmapName;
     Widget         widget;
     XtCallbackProc callback;
     XtPointer      clientData;
+    char *         bubbleHelpString;
 } buttons_t;
 
+static void helpObjectCallback(Widget,XtPointer,XtPointer);
 static void objectToggleCallback(Widget, XtPointer, XtPointer);
 
 static XtCallbackProc objectToggleSelectCallback(
   Widget, XtPointer, XmToggleButtonCallbackStruct *);
 
 buttons_t paletteGraphicsButton[] = {
-    {"rectangle25",NULL,objectToggleCallback,(XtPointer) DL_Rectangle},
-    {"oval25",NULL,objectToggleCallback,(XtPointer) DL_Oval},
-    {"arc25",NULL,objectToggleCallback,(XtPointer) DL_Arc},
-    {"text25",NULL,objectToggleCallback,(XtPointer) DL_Text},
-    {"polyline25",NULL,objectToggleCallback,(XtPointer) DL_Polyline},
-    {"line25",NULL,objectToggleCallback,(XtPointer) DL_Line},
-    {"polygon25",NULL,objectToggleCallback,(XtPointer) DL_Polygon},
-    {"image25",NULL,objectToggleCallback,(XtPointer) DL_Image},
+    {"rectangle25",NULL,objectToggleCallback,(XtPointer)DL_Rectangle,"Rectangle"},
+    {"oval25",NULL,objectToggleCallback,(XtPointer)DL_Oval,"Oval"},
+    {"arc25",NULL,objectToggleCallback,(XtPointer)DL_Arc,"Arc"},
+    {"text25",NULL,objectToggleCallback,(XtPointer)DL_Text,"Text"},
+    {"polyline25",NULL,objectToggleCallback,(XtPointer)DL_Polyline,"Polyline"},
+    {"line25",NULL,objectToggleCallback,(XtPointer)DL_Line,"Line"},
+    {"polygon25",NULL,objectToggleCallback,(XtPointer)DL_Polygon,"Polygon"},
+    {"image25",NULL,objectToggleCallback,(XtPointer)DL_Image,"Image"},
     NULL};
-/* not implement
-  {"bezierCurve25",NULL,objectToggleCallback,(XtPointer) DL_BezierCurve},
+/* Not implemented
+  {"bezierCurve25",NULL,objectToggleCallback,(XtPointer)DL_BezierCurve},
 */
 buttons_t paletteMonitorButton[] = {
-    {"meter25",NULL,objectToggleCallback,(XtPointer) DL_Meter},
-    {"bar25",NULL,objectToggleCallback,(XtPointer) DL_Bar},
-    {"stripChart25",NULL,objectToggleCallback,(XtPointer) DL_StripChart},
-    {"textUpdate25",NULL,objectToggleCallback,(XtPointer) DL_TextUpdate},
-    {"indicator25",NULL,objectToggleCallback,(XtPointer) DL_Indicator},
-    {"cartesianPlot25",NULL,objectToggleCallback,(XtPointer) DL_CartesianPlot},
-/* not implement
-   {"surfacePlot25",NULL,objectToggleCallback,(XtPointer) DL_SurfacePlot},
+    {"meter25",NULL,objectToggleCallback,(XtPointer)DL_Meter,"Meter"},
+    {"bar25",NULL,objectToggleCallback,(XtPointer)DL_Bar,"Bar Monitor"},
+    {"stripChart25",NULL,objectToggleCallback,(XtPointer)DL_StripChart,"Strip Chart"},
+    {"textUpdate25",NULL,objectToggleCallback,(XtPointer)DL_TextUpdate,"Text Monitor"},
+    {"indicator25",NULL,objectToggleCallback,(XtPointer)DL_Indicator,"Scale Monitor"},
+    {"cartesianPlot25",NULL,objectToggleCallback,(XtPointer)DL_CartesianPlot,"Cartesian Plot"},
+/* Not implemented
+   {"surfacePlot25",NULL,objectToggleCallback,(XtPointer)DL_SurfacePlot,"Surface Plot"},
    */
-    {"byte25",NULL,objectToggleCallback,(XtPointer) DL_Byte},
+    {"byte25",NULL,objectToggleCallback,(XtPointer)DL_Byte,"Byte Monitor"},
     NULL};
 
 buttons_t paletteControllerButton[] = {
-    {"choiceButton25",NULL, objectToggleCallback,(XtPointer) DL_ChoiceButton},
-    {"textEntry25",NULL, objectToggleCallback,(XtPointer) DL_TextEntry},
-    {"messageButton25",NULL, objectToggleCallback,(XtPointer) DL_MessageButton},
-    {"menu25",NULL, objectToggleCallback,(XtPointer) DL_Menu},
-    {"valuator25",NULL, objectToggleCallback,(XtPointer) DL_Valuator},
-    {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer) DL_RelatedDisplay},
-    {"shellCommand25",NULL, objectToggleCallback,(XtPointer) DL_ShellCommand},
+    {"choiceButton25",NULL, objectToggleCallback,(XtPointer)DL_ChoiceButton,"Choice Button"},
+    {"textEntry25",NULL, objectToggleCallback,(XtPointer)DL_TextEntry,"Text Entry"},
+    {"messageButton25",NULL, objectToggleCallback,(XtPointer)DL_MessageButton,"Message Button"},
+    {"menu25",NULL, objectToggleCallback,(XtPointer)DL_Menu,"Menu"},
+    {"valuator25",NULL, objectToggleCallback,(XtPointer)DL_Valuator,"Slider"},
+    {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer)DL_RelatedDisplay,"Related Display"},
+    {"shellCommand25",NULL, objectToggleCallback,(XtPointer)DL_ShellCommand,"Shell Command"},
     NULL};
 
 buttons_t paletteMiscButton[] = {
-    {"select25",NULL, objectToggleCallback,NULL},
+    {"select25",NULL, objectToggleCallback,NULL,"Select"},
     NULL};
 
 buttons_t *buttonList[] = {
@@ -145,163 +149,14 @@ static Widget lastButton = NULL;
 Widget objectFilePDM;
 extern Widget importFSD;
 
-extern XmString xmstringSelect;
-
-/* last mouse position of the display before popup the menu */
-extern XButtonPressedEvent lastEvent;
-
-
 /*
  * global widget for ObjectPalette's SELECT toggle button (needed for
  *	programmatic toggle/untoggle of SELECT/CREATE modes
  */
 Widget objectPaletteSelectToggleButton;
 
-void updateGlobalResourceBundleObjectAttribute(DlObject *object) {
-    globalResourceBundle.x = object->x;
-    globalResourceBundle.y = object->y;
-    globalResourceBundle.width = object->width;
-    globalResourceBundle.height= object->height;
-}
+extern XButtonPressedEvent lastEvent;
 
-void updateElementObjectAttribute(DlObject *object) {
-    object->x = globalResourceBundle.x;
-    object->y = globalResourceBundle.y;
-    object->width = globalResourceBundle.width;
-    object->height = globalResourceBundle.height;
-}
-
-void updateResourcePaletteObjectAttribute() {
-    char string[MAX_TOKEN_LENGTH];
-    sprintf(string,"%d",globalResourceBundle.x);
-    XmTextFieldSetString(resourceEntryElement[X_RC],string);
-    sprintf(string,"%d",globalResourceBundle.y);
-    XmTextFieldSetString(resourceEntryElement[Y_RC],string);
-    sprintf(string,"%d",globalResourceBundle.width);
-    XmTextFieldSetString(resourceEntryElement[WIDTH_RC],string);
-    sprintf(string,"%d",globalResourceBundle.height);
-    XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
-}
-
-void updateGlobalResourceBundleBasicAttribute(DlBasicAttribute *attr) {
-    globalResourceBundle.clr = attr->clr;
-    globalResourceBundle.style = attr->style;
-    globalResourceBundle.fill = attr->fill;
-    globalResourceBundle.lineWidth = attr->width;
-}
-
-void updateElementBasicAttribute(DlBasicAttribute *attr) {
-    attr->clr = globalResourceBundle.clr;
-    attr->style = globalResourceBundle.style;
-    attr->fill = globalResourceBundle.fill;
-    attr->width = globalResourceBundle.lineWidth;
-}
-
-void updateResourcePaletteBasicAttribute() {
-    char string[MAX_TOKEN_LENGTH];
-    XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-      currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-    optionMenuSet(resourceEntryElement[STYLE_RC],
-      globalResourceBundle.style - FIRST_EDGE_STYLE);
-    optionMenuSet(resourceEntryElement[FILL_RC],
-      globalResourceBundle.fill - FIRST_FILL_STYLE);
-    sprintf(string,"%d",globalResourceBundle.lineWidth);
-    XmTextFieldSetString(resourceEntryElement[LINEWIDTH_RC],string);
-}
-
-void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
-    globalResourceBundle.clrmod = dynAttr->clr;
-    globalResourceBundle.vis = dynAttr->vis;
-#ifdef __COLOR_RULE_H__
-    globalResourceBundle.colorRule = dynAttr->colorRule;
-#endif
-    if (dynAttr->name) {
-	strcpy(globalResourceBundle.chan,dynAttr->name);
-    } else {
-	globalResourceBundle.chan[0] = '\0';
-    }
-}
-
-void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
-    dynAttr->clr = globalResourceBundle.clrmod;
-    dynAttr->vis = globalResourceBundle.vis;
-#ifdef __COLOR_RULE_H__
-    dynAttr->colorRule = globalResourceBundle.colorRule;
-#endif
-    if (globalResourceBundle.chan[0] == '\0') {
-	if (dynAttr->name) free (dynAttr->name);
-    } else {
-	if (!dynAttr->name) dynAttr->name = allocateString();
-	if (dynAttr->name) 
-	  strcpy(dynAttr->name,globalResourceBundle.chan);
-    }
-}
-
-void updateResourcePaletteDynamicAttribute() {
-    optionMenuSet(resourceEntryElement[CLRMOD_RC],
-      globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-    optionMenuSet(resourceEntryElement[VIS_RC],
-      globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-#ifdef __COLOR_RULE_H__
-    optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
-      globalResourceBundle.colorRule);
-#endif
-    XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-      globalResourceBundle.chan);
-    if (globalResourceBundle.chan[0] != '\0') {
-	XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
-	XtSetSensitive(resourceEntryRC[VIS_RC],True);
-#ifdef __COLOR_RULE_H__
-	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-#endif
-    } else {
-	XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
-	XtSetSensitive(resourceEntryRC[VIS_RC],False);
-#ifdef __COLOR_RULE_H__
-	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
-    }
-}
-
-void updateGlobalResourceBundleControlAttribute(DlControl *control) {
-    strcpy(globalResourceBundle.chan, control->ctrl);
-    globalResourceBundle.clr = control->clr;
-    globalResourceBundle.bclr = control->bclr;
-}
-
-void updateElementControlAttribute(DlControl *control) {
-    strcpy(control->ctrl, globalResourceBundle.chan);
-    control->clr = globalResourceBundle.clr;
-    control->bclr = globalResourceBundle.bclr;
-}
-
-void updateResourcePaletteControlAttribute() {
-    XmTextFieldSetString(resourceEntryElement[CTRL_RC],globalResourceBundle.chan);
-    XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-      currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-    XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-      currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-}
-
-void updateGlobalResourceBundleMonitorAttribute(DlMonitor *monitor) {
-    strcpy(globalResourceBundle.chan, monitor->rdbk);
-    globalResourceBundle.clr = monitor->clr;
-    globalResourceBundle.bclr = monitor->bclr;
-}
-
-void updateElementMonitorAttribute(DlMonitor *monitor) {
-    strcpy(monitor->rdbk, globalResourceBundle.chan);
-    monitor->clr = globalResourceBundle.clr;
-    monitor->bclr = globalResourceBundle.bclr;
-}
-
-void updateResourcePaletteMonitorAttribute() {
-    XmTextFieldSetString(resourceEntryElement[RDBK_RC],globalResourceBundle.chan);
-    XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-      currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-    XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-      currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-}
 /********************************************
  **************** Callbacks *****************
  ********************************************/
@@ -310,33 +165,25 @@ void updateResourcePaletteMonitorAttribute() {
  * object palette's state transition callback - updates resource palette
  */
 #ifdef __cplusplus
-void objectMenuCallback(
-  Widget,
-  XtPointer clientData,
-  XtPointer)
+void objectMenuCallback(Widget, XtPointer clientData, XtPointer)
 #else
-void objectMenuCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
+void objectMenuCallback(Widget w, XtPointer clientData, XtPointer callbackStruct)
 #endif
 {
-    DlElementType elementType = (DlElementType) clientData;
+    DlElementType type = (DlElementType) clientData;
     DisplayInfo *di;
 
-  /* move the pointer back the original location */
+  /* Move the pointer back the original location */
     di = currentDisplayInfo;
     XWarpPointer(display,None,XtWindow(di->drawingArea),0,0,
       0,0,lastEvent.x, lastEvent.y);
 
-/* unhighlight and unselect any selected elements */
-    unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
 
-/* set global action (from object palette) to CREATE, & global element type */
+  /* Set global action (from object palette) to CREATE, & global element type */
     currentActionType = CREATE_ACTION;
-    currentElementType = elementType;
+    currentElementType = type;
     setResourcePaletteEntries();
     di = displayInfoListHead->next;
     while(di != NULL) {
@@ -347,20 +194,19 @@ void objectMenuCallback(
     if (objectS) {
 	int i,j;
 
-      /* allow only one button pressed at a time */
+      /* Allow only one button pressed at a time */
 	if (lastButton)
-	  XmToggleButtonGadgetSetState(lastButton,False,False);
+	  XmToggleButtonSetState(lastButton,False,False);
 	for (i = 0; buttonList[i] != NULL; i++) {
 	    for (j = 0; buttonList[i][j].pixmapName != NULL; j++) {
-		if (buttonList[i][j].clientData == (XtPointer) elementType) {
+		if (buttonList[i][j].clientData == (XtPointer)type) {
 		    lastButton = buttonList[i][j].widget;
-		    XmToggleButtonGadgetSetState(lastButton,True,False);
+		    XmToggleButtonSetState(lastButton,True,False);
 		    return;
 		}
 	    }
 	}
     }
-
     return;
 }
 
@@ -370,6 +216,7 @@ void setActionToSelect() {
   /* set global action (from object palette) to SELECT, not CREATE... */
     currentActionType = SELECT_ACTION;
 
+#if 0    
   /* since currentElementType is not really reset yet (don't know what is
    *	selected yet), clearResourcePaletteEntries() may not popdown
    *	these associated shells  - therefore use brute force */
@@ -387,6 +234,10 @@ void setActionToSelect() {
 	    clearResourcePaletteEntries();
 	}
     }
+#else
+  /* KE: This should work and do the above */
+    clearResourcePaletteEntries();
+#endif
 
     if (objectS) 
       XDefineCursor(display,XtWindow(objectS),rubberbandCursor);
@@ -401,38 +252,33 @@ void setActionToSelect() {
 /*
  * object palette's state transition callback - updates resource palette
  */
-static void objectToggleCallback(
-  Widget w,
-  XtPointer clientData,
+static void objectToggleCallback(Widget w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     DisplayInfo *di;
-    DlElementType elementType = (DlElementType) clientData;
+    DlElementType type = (DlElementType) clientData;     /* KE: Not used, Possibly not valid  */
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
 
-  /* pushing one of these toggles implies create object of this type,
-   *      and MB in a display now takes on CREATE semantics
-   */
+  /* Pushing one of these toggles implies create object of this type,
+   *   and MB in a display now takes on CREATE semantics */
 
     if (call_data->set == False) return;
 
-  /* allow only one button pressed at a time */
+  /* Allow only one button pressed at a time */
     if ((lastButton) && (lastButton != w)) {
-	XmToggleButtonGadgetSetState(lastButton,False,False);
+	XmToggleButtonSetState(lastButton,False,False);
 	lastButton = w;
     }
 
     if (w == objectPaletteSelectToggleButton) {
 	setActionToSelect();
     } else {
-      /* unhighlight and unselect any selected elements */
-	unhighlightSelectedElements();
-	unselectSelectedElements();
-	clearResourcePaletteEntries();
+      /* Unselect any selected elements */
+	unselectElementsInDisplay();
 
-      /* set global action (from object palette) to CREATE, & global element type */
+      /* Set global action (from object palette) to CREATE, & global element type */
 	currentActionType = CREATE_ACTION;
-	currentElementType = elementType;
+	currentElementType = type;
 	setResourcePaletteEntries();
 	XDefineCursor(display,XtWindow(objectS),crosshairCursor);
 	di = displayInfoListHead->next;
@@ -476,6 +322,7 @@ static XtCallbackProc optionsMenuSimpleCallback(
 }
 #endif
 
+/* Used to create radio buttons in the object palette */
 Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
     Widget background, label, rowCol;
     Pixel fg, bg;
@@ -503,11 +350,9 @@ Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
     for (i=0; b[i].pixmapName != NULL; i++) {
 	Pixmap pixmap;
 
-	pixmap = XmGetPixmap(XtScreen(rowCol),
-	  b[i].pixmapName,
-	  fg, bg);
+	pixmap = XmGetPixmap(XtScreen(rowCol),b[i].pixmapName,fg,bg);
 	b[i].widget = XtVaCreateManagedWidget(b[i].pixmapName,
-	  xmToggleButtonGadgetClass, rowCol,
+	  xmToggleButtonWidgetClass, rowCol,     /* Must be a widget for event handler */
 	  XmNlabelType, XmPIXMAP,
 	  XmNmarginTop, 0,
 	  XmNmarginBottom, 0,
@@ -525,6 +370,8 @@ Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
 	  XmNrecomputeSize, False,
 	  NULL);
 	XtAddCallback(b[i].widget,XmNvalueChangedCallback,b[i].callback,b[i].clientData);
+	XtAddEventHandler(b[i].widget,EnterWindowMask|LeaveWindowMask,False,
+	  (XtEventHandler)handleBubbleHelp,(XtPointer)b[i].bubbleHelpString);
     }
     if (((i>>1)<<1) == i) { /* check for odd/even */
 	col = i >> 1;
@@ -541,21 +388,23 @@ Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
 
 static menuEntry_t fileMenu[] = {
     { "Close",  &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN,  NULL},
+      fileMenuSimpleCallback, (XtPointer)FILE_CLOSE_BTN,  NULL},
     NULL,
 };
 
 #ifdef EXTENDED_INTERFACE
 static menuEntry_t optionMenu[] = {
     { "User Palette...",  &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
-      fileMenuSimpleCallback, (XtPointer) OPTION_USER_PALETTE_BTN,  NULL},
+      fileMenuSimpleCallback, (XtPointer)OPTION_USER_PALETTE_BTN,  NULL},
     NULL,
 };
 #endif
 
 static menuEntry_t helpMenu[] = {
-    { "On Object Palette...",  &xmPushButtonGadgetClass, 'O', NULL, NULL, NULL,
-      NULL, NULL, NULL},
+    { "On Object Palette",  &xmPushButtonGadgetClass, 'P', NULL, NULL, NULL,
+      helpObjectCallback, (XtPointer)HELP_OBJECT_PALETTE_BTN, NULL},
+    { "Object Index", &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
+      helpObjectCallback, (XtPointer)HELP_OBJECT_OBJECTS_BTN, NULL},
     NULL,
 };
 
@@ -623,7 +472,7 @@ void createObject()
       "Help", 'H', helpMenu);
     XtVaSetValues(objectMB, XmNmenuHelpWidget, objectHelpPDM, NULL);
   /* (MDA) for now, disable this menu */
-    XtSetSensitive(objectHelpPDM,False);
+/*     XtSetSensitive(objectHelpPDM,False); */
 
 /*
  * create work area Row Column
@@ -652,706 +501,23 @@ void createObject()
     XtManageChild(objectMW);
 }
 
-/*
- * clear current resourcePalette entries
- */
-void clearResourcePaletteEntries()
-{
-  /* if no resource palette yet, simply return */
-    if (!resourceMW) return;
- 
-  /* popdown any of the associated shells */
-    if (relatedDisplayS)    XtPopdown(relatedDisplayS);
-    if (shellCommandS)      XtPopdown(shellCommandS);
-    if (cartesianPlotS)     XtPopdown(cartesianPlotS);
-    if (cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
-    if (stripChartS)        XtPopdown(stripChartS);
- 
-  /*
-   * unsetting the current button: unmanage previous resource entries
-   * and update current element type label in resourceMW (to Select...)
-   * by default
-   */
- 
-    XtVaSetValues(resourceElementTypeLabel,XmNlabelString,xmstringSelect,NULL);
- 
-  /* must normalize back to 0 as index into array for element type */
-    if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
-      currentElementType <= MAX_DL_ELEMENT_TYPE) {
-	int i = currentElementType-MIN_DL_ELEMENT_TYPE;
-	XtUnmanageChildren(
-	  resourcePaletteElements[i].children,
-	  resourcePaletteElements[i].numChildren);
-    }
-}
-
-/*
- * set resourcePalette entries based on current type
- */
-void setResourcePaletteEntries()
-{
-/* must normalize back to 0 as index into array for element type */
-    XmString buttons[NUM_IMAGE_TYPES-1];
-    XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-    Arg args[10];
-    Boolean objectDataOnly;
-    DlElementType displayType;
-
-  /* if no resource palette yet, create it */
-    if (!resourceMW) createResource();
-
-  /* make sure the resource palette shell is popped-up */
-    XtPopup(resourceS,XtGrabNone);
-
-  /* make these sensitive in case they are managed */
-    XtSetSensitive(resourceEntryRC[VIS_RC],True);
-    XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
-#ifdef __COLOR_RULE_H__
-    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
-#endif
-
-  /* setting the new button: manage new resource entries */
-    XtManageChildren(
-      resourcePaletteElements[currentElementType -
-	MIN_DL_ELEMENT_TYPE].children,
-      resourcePaletteElements[currentElementType -
-	MIN_DL_ELEMENT_TYPE].numChildren);
-
-  /* update current element type label in resourceMW */
-  /* if polyline with 2 points display Line as label, not Polyline */
-    displayType = currentElementType;
-    if ((currentDisplayInfo->selectedDlElementList->count == 1) &&
-      (currentElementType == DL_Polyline) &&
-      (FirstDlElement(currentDisplayInfo->selectedDlElementList)->
-	structure.element->structure.polyline->nPoints == 2))
-      displayType = DL_Line;
-    XtVaSetValues(resourceElementTypeLabel,
-      XmNlabelString,elementXmStringTable[displayType-MIN_DL_ELEMENT_TYPE],
-      NULL);
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) {
-      /* restore globalResourceBundle and resource palette
-       *	x/y/width/height to defaults (as in initializeResourceBundle)
-       */
-	resetGlobalResourceBundleAndResourcePalette();
-
-    } else {
-	objectDataOnly = False;
-	updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-    }
-
-  /* if not a monitor or controller type object, and no  dynamics channel
-   * specified, then insensitize the related entries
-   */
-    if (strlen(globalResourceBundle.chan) == 0) {
-	XtSetSensitive(resourceEntryRC[VIS_RC],False);
-	if ( (!ELEMENT_HAS_WIDGET(currentElementType)) &&
-	  (currentElementType != DL_TextUpdate))
-	  XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
-#ifdef __COLOR_RULE_H__
-	if (globalResourceBundle.clrmod != DISCRETE)
-	  XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
-#endif
-    }
-
-  /* make these sensitive in case they are managed */
-    if (strlen(globalResourceBundle.erase) == 0)
-      XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],False);
-    else
-      XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
-}
-
-void updateGlobalResourceBundleFromElement(DlElement *element) {
-    DlCartesianPlot *p;
-    int i;
-    if (!element || (element->type != DL_CartesianPlot)) return;
-    p = element->structure.cartesianPlot;
-
-    for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
-	globalResourceBundle.axis[i].axisStyle = p->axis[i].axisStyle;
-	globalResourceBundle.axis[i].rangeStyle = p->axis[i].rangeStyle;
-	globalResourceBundle.axis[i].minRange = p->axis[i].minRange;
-	globalResourceBundle.axis[i].maxRange = p->axis[i].maxRange;
-    }
-}
-
-void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
-    DlElement *elementPtr;
-    char string[MAX_TOKEN_LENGTH];
-    int i, tail;
-
-/* simply return if not valid to update */
-    if (currentDisplayInfo->selectedDlElementList->count != 1) return;
-
-    elementPtr = FirstDlElement(currentDisplayInfo->selectedDlElementList);
-    elementPtr = elementPtr->structure.element;
-
-/* if no resource palette yet, create it */
-    if (!resourceMW) {
-	currentElementType = elementPtr->type;
-	setResourcePaletteEntries();
-	return;
-    }
-
-    switch (elementPtr->type) {
-    case DL_Display:
-	updateGlobalResourceBundleObjectAttribute(
-	  &(elementPtr->structure.display->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-	globalResourceBundle.clr = elementPtr->structure.display->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = elementPtr->structure.display->bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-	strcpy(globalResourceBundle.cmap,elementPtr->structure.display->cmap);
-	XmTextFieldSetString(resourceEntryElement[CMAP_RC],
-	  globalResourceBundle.cmap);
-	break;
-
-    case DL_Valuator: {
-	DlValuator *p = elementPtr->structure.valuator;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleControlAttribute(&(p->control));
-	updateResourcePaletteControlAttribute();
-	globalResourceBundle.label = p->label;
-	optionMenuSet(resourceEntryElement[LABEL_RC],
-	  globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction = p->direction;
-	optionMenuSet(resourceEntryElement[DIRECTION_RC],
-	  globalResourceBundle.direction - FIRST_DIRECTION);
-	globalResourceBundle.dPrecision = p->dPrecision;
-	sprintf(string,"%f",globalResourceBundle.dPrecision);
-      /* strip trailing zeroes */
-	tail = strlen(string);
-	while (string[--tail] == '0') string[tail] = '\0';
-	XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
-	break;
-    }
-    case DL_ChoiceButton: {
-	DlChoiceButton *p = elementPtr->structure.choiceButton;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleControlAttribute(&(p->control));
-	updateResourcePaletteControlAttribute();
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.stacking = p->stacking;
-	optionMenuSet(resourceEntryElement[STACKING_RC],
-	  globalResourceBundle.stacking - FIRST_STACKING);
-	break;
-    }
-    case DL_MessageButton: {
-	DlMessageButton *p = elementPtr->structure.messageButton;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleControlAttribute(&(p->control));
-	updateResourcePaletteControlAttribute();
-	strcpy(globalResourceBundle.messageLabel, p->label);
-	XmTextFieldSetString(resourceEntryElement[MSG_LABEL_RC],
-	  globalResourceBundle.messageLabel);
-	strcpy(globalResourceBundle.press_msg, p->press_msg);
-	XmTextFieldSetString(resourceEntryElement[PRESS_MSG_RC],
-	  globalResourceBundle.press_msg);
-	strcpy(globalResourceBundle.release_msg, p->release_msg);
-	XmTextFieldSetString(resourceEntryElement[RELEASE_MSG_RC],
-	  globalResourceBundle.release_msg);
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
-    }
-    case DL_TextEntry: {
-	DlTextEntry *p = elementPtr->structure.textEntry;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleControlAttribute(&(p->control));
-	updateResourcePaletteControlAttribute();
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.format = p->format;
-	optionMenuSet(resourceEntryElement[FORMAT_RC],
-	  globalResourceBundle.format - FIRST_TEXT_FORMAT);
-	break;
-    }
-    case DL_Menu: {
-	DlMenu *p = elementPtr->structure.menu;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleControlAttribute(&(p->control));
-	updateResourcePaletteControlAttribute();
-
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
-    }
-    case DL_Meter: {
-	DlMeter *p = elementPtr->structure.meter;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
-
-	globalResourceBundle.label = p->label;
-	optionMenuSet(resourceEntryElement[LABEL_RC],
-	  globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	break;
-    }
-    case DL_TextUpdate: {
-	DlTextUpdate *p = elementPtr->structure.textUpdate;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
-
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.align = p->align;
-	optionMenuSet(resourceEntryElement[ALIGN_RC],
-	  globalResourceBundle.align - FIRST_TEXT_ALIGN);
-	globalResourceBundle.format = p->format;
-	optionMenuSet(resourceEntryElement[FORMAT_RC],
-	  globalResourceBundle.format - FIRST_TEXT_FORMAT);
-	break;
-    }
-    case DL_Bar: {
-	DlBar *p = elementPtr->structure.bar;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
-
-	globalResourceBundle.label = p->label;
-	optionMenuSet(resourceEntryElement[LABEL_RC],
-	  globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction = p->direction;
-	optionMenuSet(resourceEntryElement[DIRECTION_RC],
-	  globalResourceBundle.direction - FIRST_DIRECTION);
-	globalResourceBundle.fillmod = p->fillmod;
-	optionMenuSet(resourceEntryElement[FILLMOD_RC],
-	  globalResourceBundle.fillmod - FIRST_FILL_MODE);
-	break;
-    }
-    case DL_Byte: {
-	DlByte *p = elementPtr->structure.byte;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
-
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-          globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction = p->direction;
-	optionMenuSet(resourceEntryElement[DIRECTION_RC],
-          globalResourceBundle.direction - FIRST_DIRECTION);
-	globalResourceBundle.sbit = p->sbit;
-	sprintf(string,"%d",globalResourceBundle.sbit);
-	XmTextFieldSetString(resourceEntryElement[SBIT_RC],string);
-	globalResourceBundle.ebit = p->ebit;
-	sprintf(string,"%d",globalResourceBundle.ebit);
-	XmTextFieldSetString(resourceEntryElement[EBIT_RC],string);
-	break;
-    }
-    case DL_Indicator: {
-	DlIndicator *p = elementPtr->structure.indicator;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
-	updateResourcePaletteMonitorAttribute();
-
-	globalResourceBundle.label = p->label;
-	optionMenuSet(resourceEntryElement[LABEL_RC],
-	  globalResourceBundle.label - FIRST_LABEL_TYPE);
-	globalResourceBundle.clrmod = p->clrmod;
-	optionMenuSet(resourceEntryElement[CLRMOD_RC],
-	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
-	globalResourceBundle.direction = p->direction;
-	optionMenuSet(resourceEntryElement[DIRECTION_RC],
-	  globalResourceBundle.direction - FIRST_DIRECTION);
-	break;
-    }
-    case DL_StripChart: {
-	DlStripChart *p = elementPtr->structure.stripChart;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	strcpy(globalResourceBundle.title, p->plotcom.title);
-	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
-	  globalResourceBundle.title);
-	strcpy(globalResourceBundle.xlabel, p->plotcom.xlabel);
-	XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
-	  globalResourceBundle.xlabel);
-	strcpy(globalResourceBundle.ylabel, p->plotcom.ylabel);
-	XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
-	  globalResourceBundle.ylabel);
-	globalResourceBundle.clr = p->plotcom.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = p->plotcom.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.period = p->period;
-	cvtDoubleToString(globalResourceBundle.period,string,0);
-	XmTextFieldSetString(resourceEntryElement[PERIOD_RC],string);
-	globalResourceBundle.units = p->units;
-	optionMenuSet(resourceEntryElement[UNITS_RC],
-	  globalResourceBundle.units - FIRST_TIME_UNIT);
-	for (i = 0; i < MAX_PENS; i++){
-	    strcpy(globalResourceBundle.scData[i].chan,p->pen[i].chan);  
-	    globalResourceBundle.scData[i].clr = p->pen[i].clr;
-	}
-	break;
-    }
-    case DL_CartesianPlot: {
-	DlCartesianPlot *p = elementPtr->structure.cartesianPlot;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	strcpy(globalResourceBundle.title, p->plotcom.title);
-	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
-	  globalResourceBundle.title);
-	strcpy(globalResourceBundle.xlabel, p->plotcom.xlabel);
-	XmTextFieldSetString(resourceEntryElement[XLABEL_RC],
-	  globalResourceBundle.xlabel);
-	strcpy(globalResourceBundle.ylabel, p->plotcom.ylabel);
-	XmTextFieldSetString(resourceEntryElement[YLABEL_RC],
-	  globalResourceBundle.ylabel);
-	globalResourceBundle.clr = p->plotcom.clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = p->plotcom.bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.count = p->count;
-	sprintf(string,"%d",globalResourceBundle.count);
-	XmTextFieldSetString(resourceEntryElement[COUNT_RC],string);
-	globalResourceBundle.cStyle = p->style;
-	optionMenuSet(resourceEntryElement[CSTYLE_RC],
-	  globalResourceBundle.cStyle - FIRST_CARTESIAN_PLOT_STYLE);
-	globalResourceBundle.erase_oldest = p->erase_oldest;
-	optionMenuSet(resourceEntryElement[ERASE_OLDEST_RC],
-	  globalResourceBundle.erase_oldest - FIRST_ERASE_OLDEST);
-	for (i = 0; i < MAX_TRACES; i++){
-	    strcpy(globalResourceBundle.cpData[i].xdata, p->trace[i].xdata);  
-	    strcpy(globalResourceBundle.cpData[i].ydata, p->trace[i].ydata);  
-	    globalResourceBundle.cpData[i].data_clr = p->trace[i].data_clr;
-	}
-	for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
-	    globalResourceBundle.axis[i] = p->axis[i];
-	}
-	strcpy(globalResourceBundle.trigger, p->trigger);
-	XmTextFieldSetString(resourceEntryElement[TRIGGER_RC],
-	  globalResourceBundle.trigger);
-	strcpy(globalResourceBundle.erase, p->erase);
-	XmTextFieldSetString(resourceEntryElement[ERASE_RC],
-	  globalResourceBundle.erase);
-	globalResourceBundle.eraseMode = p->eraseMode;
-	optionMenuSet(resourceEntryElement[ERASE_MODE_RC],
-	  globalResourceBundle.eraseMode - FIRST_ERASE_MODE);
-	break;
-    }
-    case DL_Rectangle: {
-	DlRectangle *p = elementPtr->structure.rectangle;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-	break;
-    }
-    case DL_Oval: {
-	DlOval *p = elementPtr->structure.oval;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-	break;
-    }
-    case DL_Arc: {
-	DlArc *p = elementPtr->structure.arc;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-
-      /* want user to see degrees, but internally use
-       * degrees*64 as Xlib requires
-       */
-	globalResourceBundle.begin = p->begin;
-	XmScaleSetValue(resourceEntryElement[BEGIN_RC],
-	  globalResourceBundle.begin/64);
-	globalResourceBundle.path = p->path;
-	XmScaleSetValue(resourceEntryElement[PATH_RC],
-	  globalResourceBundle.path/64);
-	break;
-    }
-    case DL_Text: {
-	DlText *p = elementPtr->structure.text;
-
-#if -1
-        printf("\nUGR selected element list :\n");
-        dumpDlElementList(currentDisplayInfo->selectedDlElementList);
-#endif
-
-#if 0
-	if (objectDataOnly) {
-	    updateGlobalResourceBundleObjectAttribute(&(p->object));
-	    updateResourcePaletteObjectAttribute();
-	} else {
-	    elementPtr->setValues(&globaleResourceBundle,elementPtr);
-	    updateResourceBundle(&globalResourceBundle);
-	}
+#ifdef __cplusplus
+static void helpObjectCallback(Widget, XtPointer cd, XtPointer cbs)
 #else
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-
-	strcpy(globalResourceBundle.textix, p->textix);
-	XmTextFieldSetString(resourceEntryElement[TEXTIX_RC],
-	  globalResourceBundle.textix);
-	globalResourceBundle.align = p->align;
-	optionMenuSet(resourceEntryElement[ALIGN_RC],
-	  globalResourceBundle.align - FIRST_TEXT_ALIGN);
+static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
-	break;
-    }
-    case DL_RelatedDisplay: {
-	DlRelatedDisplay *p = elementPtr->structure.relatedDisplay;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	globalResourceBundle.clr = p->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-          currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = p->bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-          currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-	strcpy(globalResourceBundle.rdLabel,p->label);
-	XmTextFieldSetString(resourceEntryElement[RD_LABEL_RC],
-          globalResourceBundle.rdLabel);
-	globalResourceBundle.rdVisual = p->visual;
-	optionMenuSet(resourceEntryElement[RD_VISUAL_RC],
-          globalResourceBundle.rdVisual - FIRST_RD_VISUAL);
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-	    strcpy(globalResourceBundle.rdData[i].label, p->display[i].label);  
-	    strcpy(globalResourceBundle.rdData[i].name, p->display[i].name);  
-	    strcpy(globalResourceBundle.rdData[i].args, p->display[i].args);  
-	    globalResourceBundle.rdData[i].mode = p->display[i].mode;
-	  /* update the related display dialog (matrix of values) if appr. */
-	    updateRelatedDisplayDataDialog();
-	}
-	break;
-    }
-    case DL_ShellCommand: {
-	DlShellCommand *p = elementPtr->structure.shellCommand;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	globalResourceBundle.clr = p->clr;
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.clr],NULL);
-	globalResourceBundle.bclr = p->bclr;
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-	  currentDisplayInfo->colormap[globalResourceBundle.bclr],NULL);
-	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-	    strcpy(globalResourceBundle.cmdData[i].label, p->command[i].label);  
-	    strcpy(globalResourceBundle.cmdData[i].command, p->command[i].command);
-	    strcpy(globalResourceBundle.cmdData[i].args, p->command[i].args);  
-	  /* update the shell command dialog (matrix of values) if appr. */
-	    updateShellCommandDataDialog();
-	}
-	break;
-    }
-    case DL_Image: {
-	DlImage *p = elementPtr->structure.image;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	globalResourceBundle.imageType = p->imageType;
-	optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
-	  globalResourceBundle.imageType - FIRST_IMAGE_TYPE);
-	strcpy(globalResourceBundle.imageName, p->imageName);
-	XmTextFieldSetString(resourceEntryElement[IMAGENAME_RC],
-	  globalResourceBundle.imageName);
-	break;
-    }
-    case DL_Composite: {
-	DlComposite *p = elementPtr->structure.composite;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	globalResourceBundle.vis = p->vis;
-	optionMenuSet(resourceEntryElement[VIS_RC],
-	  globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-	strcpy(globalResourceBundle.chan,p->chan);
-	XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-	  globalResourceBundle.chan);
-/* need to add this entry to widgetDM.h and finish this if we want named
- *  groups
- strcpy(globalResourceBundle.compositeName,p->compositeName);
- */
-	break;
-    }
-    case DL_Polyline: {
-	DlPolyline *p = elementPtr->structure.polyline;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-	break;
-    }
-    case DL_Polygon: {
-	DlPolygon *p = elementPtr->structure.polygon;
-
-	updateGlobalResourceBundleObjectAttribute(&(p->object));
-	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
-
-	updateGlobalResourceBundleBasicAttribute(&(p->attr));
-	updateResourcePaletteBasicAttribute();
-	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
-	updateResourcePaletteDynamicAttribute();
-	break;
-    }
-    default:
-	medmPrintf(    
-	  "\n updateGlobalResourceBundleAndResourcePalette: unknown element type %d",
-	  elementPtr->type);
-	break;
-
-    }
-}
-
-void updateElementFromGlobalResourceBundle(
-  DlElement *elementPtr)
 {
-  /* simply return if not valid to update */
-    if (!elementPtr || !currentDisplayInfo) return;
-
-    if (elementPtr->run->getValues) {
-	elementPtr->run->getValues(&globalResourceBundle,elementPtr);
+    int buttonNumber = (int)cd;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
+    Widget widget;
+    XEvent event;
+    
+    switch(buttonNumber) {
+    case HELP_OBJECT_PALETTE_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectPalette");
+	break;
+    case HELP_OBJECT_OBJECTS_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectIndex");
+	break;
     }
-    if (elementPtr->widget) {
-	(elementPtr->run->execute)(currentDisplayInfo,elementPtr);
-    }
-}
-
-/*
- * function to clear/reset the global resource bundle data structure
- *	and to put those resource values into the resourcePalette
- *	elements (for the specified element type)
- */
-
-void resetGlobalResourceBundleAndResourcePalette()
-{
-    char string[MAX_TOKEN_LENGTH];
-
-
-    if (ELEMENT_IS_RENDERABLE(currentElementType) ) {
-
-/* get object data: must have object entry  - use rectangle type (arbitrary) */
-	globalResourceBundle.x = 0;
-	globalResourceBundle.y = 0;
-
-/*
- * special case for text -
- *   since can type to input, want to inherit width/height
- */
-	if (currentElementType != DL_Text) {
-	    globalResourceBundle.width = 10;
-	    globalResourceBundle.height = 10;
-	}
-
-	sprintf(string,"%d",globalResourceBundle.x);
-	XmTextFieldSetString(resourceEntryElement[X_RC],string);
-	sprintf(string,"%d",globalResourceBundle.y);
-	XmTextFieldSetString(resourceEntryElement[Y_RC],string);
-	sprintf(string,"%d",globalResourceBundle.width);
-	XmTextFieldSetString(resourceEntryElement[WIDTH_RC],string);
-	sprintf(string,"%d",globalResourceBundle.height);
-	XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
-
-    }
-
 }

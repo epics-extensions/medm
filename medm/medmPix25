@@ -47,14 +47,17 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 /*****************************************************************************
  *
+ *     Original Author : Mark Anderson
+ *     Second Author   : Frederick Vong
+ *     Third Author    : Kenneth Evans, Jr.
+ *
+ *****************************************************************************
+*/
+
+/*
+/*****************************************************************************
+ *
  *     Original Author : David M. Wetherholt (CEBAF) & Mark Anderson
- *     Current Author  : Frederick Vong
- *
- * Modification Log:
- * -----------------
- * .01  03-01-95        vong    2.0.0 release
- * .02  09-12-95        vong    conform to C++ syntax
- *
  *****************************************************************************
 */
 

@@ -136,6 +136,8 @@ static void freeStripChart(XtPointer);
 static void stripChartName(XtPointer, char **, short *, int *);
 static void configStripChart(XtPointer, XtIntervalId *);
 static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void stripChartSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void stripChartSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static char* titleStr = "Strip Chart";
@@ -151,8 +153,8 @@ static DlDispatchTable stripChartDlDispatchTable = {
     NULL,
     stripChartGetValues,
     stripChartInheritValues,
-    NULL,
-    NULL,
+    stripChartSetBackgroundColor,
+    stripChartSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -969,7 +971,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
     Arg args[15];
     Widget localWidget;
     DlStripChart *dlStripChart = dlElement->structure.stripChart;
-
+    
     if (!dlElement->widget) {
       /* create the drawing widget for the strip chart */
 	n = 0;
@@ -982,73 +984,73 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNshadowThickness,2); n++;
 	XtSetArg(args[n],XmNforeground,(Pixel)
 	  displayInfo->colormap[dlStripChart->plotcom.clr]); n++;
-	  XtSetArg(args[n],XmNbackground,(Pixel)
-	    displayInfo->colormap[dlStripChart->plotcom.bclr]); n++;
-	    XtSetArg(args[n],XmNtraversalOn,False); n++;
-	    localWidget = XmCreateDrawingArea(displayInfo->drawingArea,
-	      stripChartWidgetName,args,n);
-	    dlElement->widget = localWidget;
-
-	  /* if execute mode, create stripChart and setup all the channels */
-	    if (displayInfo->traversalMode == DL_EXECUTE) {
-		int i,j;
-		StripChart *psc;
-
-		psc = stripChartAlloc(displayInfo,dlElement);
-		if (psc == NULL) {
-		    medmPrintf("memory allocation error at executeDlStripChart\n");
-		    return;
-		}
-
-	      /* connect channels */
-		j = 0;
-		for (i = 0; i < MAX_PENS; i++) {
-		    if (dlStripChart->pen[i].chan[0] != '\0') {
-			psc->record[j] = medmAllocateRecord(dlStripChart->pen[i].chan,
-			  stripChartUpdateValueCb,
-			  stripChartUpdateGraphicalInfoCb,
-			  (XtPointer) psc);
-			j++;
-		    }
-		}
-	      /* record the number of channels in the strip chart */
-		psc->nChannels = j;
-
-		if (psc->nChannels == 0) {
-		  /* if no channel, create a fake channel */
-		    psc->nChannels = 1;
-		    psc->record[0] = medmAllocateRecord(" ",
-		      NULL,
+	XtSetArg(args[n],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlStripChart->plotcom.bclr]); n++;
+	XtSetArg(args[n],XmNtraversalOn,False); n++;
+	localWidget = XmCreateDrawingArea(displayInfo->drawingArea,
+	  stripChartWidgetName,args,n);
+	dlElement->widget = localWidget;
+	
+      /* if execute mode, create stripChart and setup all the channels */
+	if (displayInfo->traversalMode == DL_EXECUTE) {
+	    int i,j;
+	    StripChart *psc;
+	    
+	    psc = stripChartAlloc(displayInfo,dlElement);
+	    if (psc == NULL) {
+		medmPrintf("memory allocation error at executeDlStripChart\n");
+		return;
+	    }
+	    
+	  /* connect channels */
+	    j = 0;
+	    for (i = 0; i < MAX_PENS; i++) {
+		if (dlStripChart->pen[i].chan[0] != '\0') {
+		    psc->record[j] = medmAllocateRecord(dlStripChart->pen[i].chan,
+		      stripChartUpdateValueCb,
 		      stripChartUpdateGraphicalInfoCb,
 		      (XtPointer) psc);
+		    j++;
 		}
-   
-		XtVaSetValues(localWidget, XmNuserData, (XtPointer) psc, NULL);
-		XtAddCallback(localWidget,XmNexposeCallback,redisplayStrip,
-		  (XtPointer)psc);
-
+	    }
+	  /* record the number of channels in the strip chart */
+	    psc->nChannels = j;
+	    
+	    if (psc->nChannels == 0) {
+	      /* if no channel, create a fake channel */
+		psc->nChannels = 1;
+		psc->record[0] = medmAllocateRecord(" ",
+		  NULL,
+		  stripChartUpdateGraphicalInfoCb,
+		  (XtPointer) psc);
+	    }
+	    
+	    XtVaSetValues(localWidget, XmNuserData, (XtPointer) psc, NULL);
+	    XtAddCallback(localWidget,XmNexposeCallback,redisplayStrip,
+	      (XtPointer)psc);
+	    
 #if 0
-		XtAddCallback(localWidget,XmNdestroyCallback,
-		  (XtCallbackProc)monitorDestroy, (XtPointer)psc);
+	    XtAddCallback(localWidget,XmNdestroyCallback,
+	      (XtCallbackProc)monitorDestroy, (XtPointer)psc);
 #endif
-	      /* add in drag/drop translations */
-		XtOverrideTranslations(localWidget,parsedTranslations);
-		drawWhiteRectangle(psc->updateTask);
+	  /* add in drag/drop translations */
+	    XtOverrideTranslations(localWidget,parsedTranslations);
+	    drawWhiteRectangle(psc->updateTask);
 #if 0
-		XtManageChild(localWidget);
+	    XtManageChild(localWidget);
 #endif
-	    } else
-	      if (displayInfo->traversalMode == DL_EDIT) {
-
-		  XtAddCallback(localWidget,XmNexposeCallback,redisplayFakeStrip,dlStripChart);
-		  XtManageChild(localWidget);
-
-
-		/* add button press handlers */
-		  XtAddEventHandler(localWidget,
-		    ButtonPressMask,False,(XtEventHandler)handleButtonPress,
-		    (XtPointer)displayInfo);
-	      }
+	} else if (displayInfo->traversalMode == DL_EDIT) {
+	  /* Add expose callback for EDIT mode */
+	    XtAddCallback(localWidget,XmNexposeCallback,redisplayFakeStrip,
+	      dlStripChart);
+	    XtManageChild(localWidget);
+	  /* Add the KeyPress handler invoked in executeDlDisplay */
+	    XtAddEventHandler(localWidget,KeyPressMask,False,
+	      handleKeyPress,(XtPointer)displayInfo);
+	  /* Add the ButtonPress handler */
+	    XtAddEventHandler(localWidget,ButtonPressMask,False,
+	      handleButtonPress,(XtPointer)displayInfo);
+	}
     } else {
 	DlObject *po = &(dlElement->structure.stripChart->object);
 	XtVaSetValues(dlElement->widget,
@@ -1477,7 +1479,7 @@ DlElement *createDlStripChart(DlElement *p)
 	dlStripChart->period = 60.0;
 	dlStripChart->units = SECONDS;
 #if 1
-      /* for backward compatible */
+      /* For backward compatibility */
 	dlStripChart->delay = -1.0;
 	dlStripChart->oldUnits = SECONDS;
 #endif
@@ -1486,11 +1488,10 @@ DlElement *createDlStripChart(DlElement *p)
       penAttributeInit(&(dlStripChart->pen[penNumber]));
 
     if (!(dlElement = createDlElement(DL_StripChart,
-      (XtPointer)      dlStripChart,
+      (XtPointer)dlStripChart,
       &stripChartDlDispatchTable))) {
 	free(dlStripChart);
     }
-
 
     return(dlElement);
 }
@@ -1677,5 +1678,21 @@ static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p) {
       PERIOD_RC,     &(dlStripChart->period),
       UNITS_RC,      &(dlStripChart->units),
       SCDATA_RC,     &(dlStripChart->pen),
+      -1);
+}
+
+static void stripChartSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlStripChart *dlStripChart = p->structure.stripChart;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlStripChart->plotcom.bclr),
+      -1);
+}
+
+static void stripChartSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlStripChart *dlStripChart = p->structure.stripChart;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlStripChart->plotcom.clr),
       -1);
 }

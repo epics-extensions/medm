@@ -61,6 +61,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* actions.c */
 void StartDrag(Widget w, XEvent *event);
 
+/* bubbleHelp.c */
+void handleBubbleHelp(Widget w, XtPointer clientData, XEvent *event,
+  Boolean *ctd);
+
+/* browserHelp.c */
+int callBrowser(char *url);
+
 /* callbacks.c */
 void dmDisplayListOk(Widget, XtPointer, XtPointer);
 void executePopupMenuCallback(Widget, XtPointer, XtPointer);
@@ -141,10 +148,10 @@ void popupMenu(Widget, XtPointer, XEvent *, Boolean *);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
 void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
 void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
+void handleKeyPress(Widget, XtPointer, XEvent *, Boolean *);
 void handleRuntimeButtonPress(Widget, XtPointer, XEvent *, Boolean *);
 void highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
-void unselectSelectedElements(void);
 void highlightAndAppendSelectedElements(DlList *);
 Boolean unhighlightAndUnselectElement(DlElement *element, int *numSelected);
 void moveCompositeChildren(DisplayInfo *cdi, DlElement *element,
@@ -210,6 +217,8 @@ void medmPostTime();
 void medmPrintf(char*,...);
 void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
+int xErrorHandler(Display *dpy, XErrorEvent *event);
+void xtErrorHandler(char *message);
 
 /* medm.c */
 int main(int argc, char *argv[]);
@@ -243,15 +252,9 @@ void popupValuatorKeyboardEntry(Widget, DisplayInfo *, XEvent *);
 
 /* objectPalette.c */
 void createObject(void);
-void clearResourcePaletteEntries(void);
 void objectMenuCallback(Widget,XtPointer,XtPointer);
 void objectPaletteSetSensitivity(Boolean);
 void setActionToSelect();
-void setResourcePaletteEntries(void);
-void updateGlobalResourceBundleFromElement(DlElement *element);
-void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
-void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
-void resetGlobalResourceBundleAndResourcePalette(void);
 
 /* parseControllers.c */
 DlElement *parseChoiceButton(DisplayInfo *); 
@@ -331,6 +334,14 @@ void scEnterCellCallback(Widget w, XtPointer, XtPointer);
 void scUpdateMatrixColors(void);
 Widget createStripChartDataDialog(Widget parent);
 void updateStripChartDataDialog(void);
+void clearResourcePaletteEntries(void);
+void setResourcePaletteEntries(void);
+void updateGlobalResourceBundleFromElement(DlElement *element);
+void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element);
+void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element);
+void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
+void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
+void resetGlobalResourceBundleAndResourcePalette(void);
 
 /* shared.c */
 void wmCloseCallback(Widget, XtPointer, XtPointer);
@@ -406,10 +417,12 @@ XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
 void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
-DlElement *lookupElement(DlList *dlList, Position x0, Position y0);
+DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0);
+void findSelectedElements(DlList *pList1, Position x0, Position y0,
+  Position x1, Position y1, DlList *pList2, unsigned int mode);
+void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
+  Position x1, Position y1, DlList *pList2, unsigned int mode);
 DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0);
-void selectedElementsLookup(DlList *dlList, Position x0, Position y0,
-  Position x1, Position y1, DlList *);
 DlElement *lookupCompositeElement(DlElement *elementPtr);
 DlElement *lookupDynamicAttributeElement(DlElement *elementPtr);
 DlElement *lookupBasicAttributeElement(DlElement *elementPtr);
@@ -427,22 +440,26 @@ DisplayInfo *doPasting(Position *displayX, Position *displayY, int *offsetX,
 Boolean alreadySelected(DlElement *element);
 Boolean doResizing(Window window, Position initialX, Position initialY, 
   Position *finalX, Position *finalY);
-Widget lookupElementWidget(DisplayInfo *displayInfo, DlObject *object);
-void destroyElementWidget(DisplayInfo *displayInfo, Widget widget);
-void clearClipboard(void);
+void destroyElementWidgets(DlElement *element);
+void drawGrid(DisplayInfo *displayInfo);
 void copySelectedElementsIntoClipboard(void);
 DlStructurePtr createCopyOfElementType(DlElementType type, DlStructurePtr ptr);
 void copyElementsIntoDisplay(void);
 void deleteElementsInDisplay(void);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);
-void lowerSelectedElements(DisplayInfo *);
+void lowerSelectedElements(void);
 void ungroupSelectedElements(void);
-void raiseSelectedElements(DisplayInfo *);
+void raiseSelectedElements(void);
 void alignSelectedElements(int alignment);
+void equalSizeSelectedElements(void);
+void refreshDisplay(void);
+void alignSelectedElementsToGrid(void);
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail);
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
   DlElement *afterThisElement);
+void spaceSelectedElements(int plane);
+void spaceSelectedElements2D(void);
 void deleteAndFreeElementAndStructure(DisplayInfo *displayInfo, DlElement *ele);
 UpdateTask *getUpdateTaskFromWidget(Widget sourceWidget);
 UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y);
@@ -456,10 +473,23 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
-void destroyDlDisplayList(DlList *);
+void clearDlDisplayList(DlList *);
+void removeDlDisplayListElementsExceptDisplay(DlList *list);
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
 #endif
+void appendDlElement(DlList *tail, DlElement *p);
+DlList *createDlList();
+void emptyDlList(DlList *);
+void appendDlList(DlList *, DlList *);
+void insertDlElement(DlList *,DlElement *);
+void insertAfter(DlList *l, DlElement *p1, DlElement *p2);
+void insertDlListAfter(DlList *l1, DlElement *p, DlList *l2);
+void removeDlElement(DlList *,DlElement *);
+void dumpDlElementList(DlList *l);
+void genericMove(DlElement *, int, int);
+void genericScale(DlElement *, int, int);
+void destroyElementWithDynamicAttribute(DlElement *dlElement);
 void resizeDlElementList(
   DlList *dlElementList,
   int x,
@@ -475,6 +505,11 @@ void resizeDlElementReferenceList(
 char *allocateString();
 void freeString(char *string);
 void destroyFreeStringList();
+void createUndoInfo(DisplayInfo *displayInfo);
+void destroyUndoInfo(DisplayInfo *displayInfo);
+void clearUndoInfo(DisplayInfo *displayInfo);
+void saveUndoInfo(DisplayInfo *displayInfo);
+void restoreUndoInfo(DisplayInfo *displayInfo);
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);
@@ -483,6 +518,7 @@ unsigned long getPixelFromColormapByString(Display *display, int screen,
   Colormap cmap, char *colorString);
 int initMedmWidget();
 int destroyMedmWidget();
+void hsort(double array[], int indx[], int n);
 
 
 /* writeControllers.c */
@@ -542,20 +578,6 @@ int ReadCode(void);
 void freeGIF(DlImage *dlImage);
 
 /* medmComposite.c */
-DlElement *groupObjects(DisplayInfo *);
-
-/* medmCommon.c */
-void appendDlElement(DlList *tail, DlElement *p);
-DlList *createDlList();
-void emptyDlList(DlList *);
-void appendDlList(DlList *, DlList *);
-void insertDlElement(DlList *,DlElement *);
-void insertAfter(DlList *l, DlElement *p1, DlElement *p2);
-void insertDlListAfter(DlList *l1, DlElement *p, DlList *l2);
-void removeDlElement(DlList *,DlElement *);
-void dumpDlElementList(DlList *l);
-void genericMove(DlElement *, int, int);
-void genericScale(DlElement *, int, int);
-void destroyElementWithDynamicAttribute(DlElement *dlElement);
+DlElement *groupObjects();
 
 #endif  /* __PROTO_H__ */

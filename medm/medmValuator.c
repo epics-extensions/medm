@@ -81,6 +81,8 @@ static void valuatorRedrawValue(Valuator *, DisplayInfo *, Widget, DlValuator *,
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 static void valuatorName(XtPointer, char **, short *, int *);
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void valuatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void valuatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p);
 static void handleValuatorRelease(Widget, XtPointer, XEvent *, Boolean *);
 
@@ -92,8 +94,8 @@ static DlDispatchTable valuatorDlDispatchTable = {
     NULL,
     valuatorGetValues,
     valuatorInheritValues,
-    NULL,
-    NULL,
+    valuatorSetBackgroundColor,
+    valuatorSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -277,8 +279,8 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     WidgetList children;
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
-
-/* from the valuator structure, we've got Valuator's specifics */
+    
+  /* from the valuator structure, we've got Valuator's specifics */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlValuator->object.x); n++;
     XtSetArg(args[n],XmNy,(Position)dlValuator->object.y); n++;
@@ -287,70 +289,68 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
     XtSetArg(args[n],XmNforeground,(Pixel)
       displayInfo->colormap[dlValuator->control.clr]); n++;
-      XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->colormap[dlValuator->control.bclr]); n++;
-	XtSetArg(args[n],XmNhighlightThickness,1); n++;
-	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-	switch(dlValuator->label) {
-	case LABEL_NONE: 		/* add in border for keyboard popup */
-	    scalePopupBorder = BORDER_WIDTH;
-	    heightDivisor = 1;
-	    break;
-	case OUTLINE: case LIMITS: 
-	    scalePopupBorder = 0;
-	    heightDivisor = 2;
-	    break;
-	case CHANNEL:
-	    scalePopupBorder = 0;
-	    heightDivisor = 3;
-	    break;
-	}
-/* need to handle Direction */
-	switch (dlValuator->direction) {
-	case UP: case DOWN:
-	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
-	      - scalePopupBorder); n++;
-	      break;
-	case LEFT: case RIGHT:
-	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-	    XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
-	      - scalePopupBorder); n++;
-	      break;
-	}
-/* add in CA controllerData as userData for valuator keyboard entry handling */
-	XtSetArg(args[n],XmNfontList,fontListTable[
-	  valuatorFontListIndex(dlValuator)]); n++;
-	  widget =  XtCreateWidget("valuator",
-	    xmScaleWidgetClass, displayInfo->drawingArea, args, n);
-
-	  dlElement->widget = widget;
-
-  /* get children of scale */
-	  XtVaGetValues(widget,XmNnumChildren,&numChildren,
-	    XmNchildren,&children,NULL);
-	/* remove all translations if in edit mode */
-	  XtUninstallTranslations(widget);
-	/* remove translations for children of valuator */
-	  for (i = 0; i < numChildren; i++) XtUninstallTranslations(children[i]);
-
-	/*
-	* add button press handlers too
-	*/
-	  XtAddEventHandler(widget,
-	    ButtonPressMask, False, (XtEventHandler)handleButtonPress,
-	    (XtPointer)displayInfo);
-
-	/* if in EDIT mode, add dlValuator as userData, and pass NULL in xepose */
-	  XtVaSetValues(widget,XmNuserData,(XtPointer)dlValuator, NULL);
-
-	/* add event handler for expose - forcing display of min/max and value
-	*	in own format
-	*/
-	  XtAddEventHandler(widget,ExposureMask,False,
-	    (XtEventHandler)handleValuatorExpose,(XtPointer)NULL);
-
-	  XtManageChild(widget);
+    XtSetArg(args[n],XmNbackground,(Pixel)
+      displayInfo->colormap[dlValuator->control.bclr]); n++;
+    XtSetArg(args[n],XmNhighlightThickness,1); n++;
+    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+    switch(dlValuator->label) {
+    case LABEL_NONE: 		/* add in border for keyboard popup */
+	scalePopupBorder = BORDER_WIDTH;
+	heightDivisor = 1;
+	break;
+    case OUTLINE: case LIMITS: 
+	scalePopupBorder = 0;
+	heightDivisor = 2;
+	break;
+    case CHANNEL:
+	scalePopupBorder = 0;
+	heightDivisor = 3;
+	break;
+    }
+  /* need to handle Direction */
+    switch (dlValuator->direction) {
+    case UP: case DOWN:
+	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	  - scalePopupBorder); n++;
+	break;
+    case LEFT: case RIGHT:
+	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
+	  - scalePopupBorder); n++;
+	break;
+    }
+  /* add in CA controllerData as userData for valuator keyboard entry handling */
+    XtSetArg(args[n],XmNfontList,fontListTable[
+      valuatorFontListIndex(dlValuator)]); n++;
+    widget =  XtCreateWidget("valuator",
+      xmScaleWidgetClass, displayInfo->drawingArea, args, n);
+    
+    dlElement->widget = widget;
+    
+  /* Get children of scale */
+    XtVaGetValues(widget,XmNnumChildren,&numChildren,
+      XmNchildren,&children,NULL);
+    
+  /* Remove all translations if in edit mode */
+    XtUninstallTranslations(widget);
+    for (i = 0; i < numChildren; i++) XtUninstallTranslations(children[i]);
+  /* Add back the KeyPress handler invoked in executeDlDisplay */
+    XtAddEventHandler(widget,KeyPressMask,False,
+      handleKeyPress,(XtPointer)displayInfo);
+  /* Add the ButtonPress handler */
+    XtAddEventHandler(widget,ButtonPressMask,False,
+      handleButtonPress,(XtPointer)displayInfo);
+    
+  /* If in EDIT mode, add dlValuator as userData, and pass NULL in xepose */
+    XtVaSetValues(widget,XmNuserData,(XtPointer)dlValuator,NULL);
+    
+  /* Add event handler for expose - forcing display of min/max and value
+   *   in own format */
+    XtAddEventHandler(widget,ExposureMask,False,
+      (XtEventHandler)handleValuatorExpose,(XtPointer)NULL);
+    
+    XtManageChild(widget);
 }
 
 void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -1424,5 +1424,21 @@ static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p) {
       DIRECTION_RC,  &(dlValuator->direction),
       CLRMOD_RC,     &(dlValuator->clrmod),
       PRECISION_RC,  &(dlValuator->dPrecision),
+      -1);
+}
+
+static void valuatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlValuator *dlValuator = p->structure.valuator;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlValuator->control.bclr),
+      -1);
+}
+
+static void valuatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlValuator *dlValuator = p->structure.valuator;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlValuator->control.clr),
       -1);
 }

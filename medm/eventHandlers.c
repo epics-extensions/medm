@@ -54,9 +54,18 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_EVENTS 0
+#define DEBUG_CARTESIAN_PLOT 0
+#define DEBUG_HIGHLIGHTS 0
+
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
+/* DEBUG */
+#if DEBUG_CARTESIAN_PLOT
+#include "medmCartesianPlot.h"
+#endif
+/* DEBUG */
 
 extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
@@ -80,17 +89,9 @@ int initEventHandlers() {
  */
 
 #ifdef __cplusplus
-void popupMenu(
-  Widget,
-  XtPointer cd,
-  XEvent *event,
-  Boolean *)
+void popupMenu(Widget, XtPointer cd, XEvent *event, Boolean *)
 #else
-void popupMenu(
-  Widget w,
-  XtPointer cd,
-  XEvent *event,
-  Boolean *ctd)
+void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
@@ -102,31 +103,30 @@ void popupMenu(
 	currentDisplayInfo = displayInfo;
 	currentColormap = currentDisplayInfo->colormap;
 	currentColormapSize = currentDisplayInfo->dlColormapSize;
-
     }
 
-/* and always make sure the window is on top and has input focus */
+/* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(displayInfo->shell));
     XSetInputFocus(display,XtWindow(displayInfo->shell),
       RevertToParent,CurrentTime);
 
-/* MB3 = Menu */
     if (xEvent->button == Button3) {
+      /* Button 3 */
 	if (globalDisplayListTraversalMode == DL_EDIT) {
-	  /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
 	    lastEvent = *((XButtonPressedEvent *)event);
 	    XmMenuPosition(currentDisplayInfo->editPopupMenu,
 	      (XButtonPressedEvent *)event);
 	    XtManageChild(currentDisplayInfo->editPopupMenu);
 	    XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
 	    XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
-        
+	    
 	} else {
 	  /*
-	   * in EXECUTE mode, MB3 can also mean things based on where it occurs,
-	   *   hence, lookup to see if MB3 occured in an object that cares
+	   * In EXECUTE mode, Btn3 can also mean things based on where it occurs,
+	   *   hence, lookup to see if Btn3 occured in an object that cares
 	   */
-	    element = lookupElement(displayInfo->dlElementList,
+	    element = findSmallestTouchedElement(displayInfo->dlElementList,
 	      (Position)xEvent->x, (Position)xEvent->y);
 	    if (element) {
 		switch(element->type) {
@@ -151,7 +151,77 @@ void popupMenu(
 			updateCartesianPlotAxisDialogFromWidget(widget);
 			XtManageChild(cpAxisForm);
 			XtPopup(cartesianPlotAxisS,XtGrabNone);
- 
+
+		      /* DEBUG */
+#if DEBUG_CARTESIAN_PLOT
+		      /* Also requires #include "medmCartesianPlot.h" */
+			{
+			    Arg args[20];
+			    int n=0;
+			    
+			    Dimension footerHeight;
+			    Dimension footerWidth;
+			    Dimension footerBorderWidth;
+			    Dimension borderWidth;
+			    Dimension shadowThickness;
+			    Dimension highlightThickness;
+			    Dimension headerBorderWidth;
+			    Dimension headerHeight;
+			    Dimension headerWidth;
+			    Dimension graphBorderWidth;
+			    Dimension graphWidth;
+			    Dimension graphHeight;
+			    Dimension height;
+			    Dimension width;
+			    Dimension legendBorderWidth;
+			    Dimension legendHeight;
+			    Dimension legendWidth;
+			    unsigned char unitType;
+
+			    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
+			    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
+			    XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
+			    XtSetArg(args[n],XmNwidth,&width); n++;
+			    XtSetArg(args[n],XmNheight,&height); n++;
+			    XtSetArg(args[n],XtNxrtGraphBorderWidth,&graphBorderWidth); n++;
+			    XtSetArg(args[n],XtNxrtGraphWidth,&graphWidth); n++;
+			    XtSetArg(args[n],XtNxrtGraphHeight,&graphHeight); n++;
+			    XtSetArg(args[n],XtNxrtHeaderWidth,&headerWidth); n++;
+			    XtSetArg(args[n],XtNxrtHeaderHeight,&headerHeight); n++;
+			    XtSetArg(args[n],XtNxrtHeaderBorderWidth,&headerBorderWidth); n++;
+			    XtSetArg(args[n],XmNhighlightThickness,&highlightThickness); n++;
+			    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
+			    XtSetArg(args[n],XmNborderWidth,&borderWidth); n++;
+			    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+			    XtSetArg(args[n],XtNxrtFooterHeight,&footerHeight); n++;
+			    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
+			    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
+			    XtSetArg(args[n],XmNunitType,&unitType); n++;
+			    XtGetValues(widget,args,n);
+			      
+			    printf("width: %d\n",width);
+			    printf("height: %d\n",height);
+			    printf("highlightThickness: %d\n",highlightThickness);
+			    printf("shadowThickness: %d\n",shadowThickness);
+			    printf("borderWidth: %d\n",borderWidth);
+			    printf("graphBorderWidth: %d\n",graphBorderWidth);
+			    printf("graphWidth: %d\n",graphWidth);
+			    printf("graphHeight: %d\n",graphHeight);
+			    printf("headerBorderWidth: %d\n",headerBorderWidth);
+			    printf("headerWidth: %d\n",headerWidth);
+			    printf("headerHeight: %d\n",headerHeight);
+			    printf("footerWidth: %d\n",footerBorderWidth);
+			    printf("footerWidth: %d\n",footerWidth);
+			    printf("footerHeight: %d\n",footerHeight);
+			    printf("legendBorderWidth: %d\n",legendBorderWidth);
+			    printf("legendWidth: %d\n",legendWidth);
+			    printf("legendHeight: %d\n",legendHeight);
+			    printf("unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
+			      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
+			}
+#endif			
+		      /* End DEBUG */
+			
 			XUngrabPointer(display,CurrentTime);
 		    }
 		    break;
@@ -164,43 +234,35 @@ void popupMenu(
 		    break;
 		}
 	    } else {
-	      /* execute menu does have valid/unique displayInfo ptr, hence use it */
+	      /* Execute menu does have valid/unique displayInfo ptr, hence use it */
 		XmMenuPosition(displayInfo->executePopupMenu,(XButtonPressedEvent *)event);
 		XtManageChild(displayInfo->executePopupMenu);
 	    }
 	}
-    } else 
-      if (xEvent->button == Button1 &&
-	globalDisplayListTraversalMode == DL_EXECUTE) {
-	  if (element = lookupElement(displayInfo->dlElementList,
-	    (Position)xEvent->x, (Position)xEvent->y)) {
-	      if (element->type == DL_RelatedDisplay &&
-		element->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
-		  relatedDisplayCreateNewDisplay(displayInfo,
-		    &(element->structure.relatedDisplay->display[0]));
-	      }
-	  }
-      }
+    } else if (xEvent->button == Button1 &&
+      globalDisplayListTraversalMode == DL_EXECUTE) {
+      /* Button 1 in EXECUTE Mode */
+	if (element = findSmallestTouchedElement(displayInfo->dlElementList,
+	  (Position)xEvent->x, (Position)xEvent->y)) {
+	    if (element->type == DL_RelatedDisplay &&
+	      element->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+		relatedDisplayCreateNewDisplay(displayInfo,
+		  &(element->structure.relatedDisplay->display[0]));
+	    }
+	}
+    }
 }
 
 #ifdef __cplusplus
-void popdownMenu(
-  Widget,
-  XtPointer cd,
-  XEvent *event,
-  Boolean *)
+void popdownMenu(Widget, XtPointer cd, XEvent *event, Boolean *)
 #else
-void popdownMenu(
-  Widget w,
-  XtPointer cd,
-  XEvent *event,
-  Boolean *ctd)
+void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
     XButtonEvent *xEvent = (XButtonEvent *)event;
 
-/* MB3 = Menu */
+  /* Button 3 */
     if (xEvent->button == Button3) {
 	if (globalDisplayListTraversalMode == DL_EDIT) {
 	  /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
@@ -212,20 +274,10 @@ void popdownMenu(
     }
 }
 
-
-
 #ifdef __cplusplus
-void handleEnterWindow(
-  Widget,
-  XtPointer cd,
-  XEvent *,
-  Boolean *)
+void handleEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
 #else
-void handleEnterWindow(
-  Widget w,
-  XtPointer cd,
-  XEvent *event,
-  Boolean *ctd)
+void handleEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
     pointerInDisplayInfo = (DisplayInfo *) cd;
@@ -233,20 +285,14 @@ void handleEnterWindow(
 
 
 #ifdef __cplusplus
-void handleButtonPress(
-  Widget w,
-  XtPointer clientData,
-  XEvent *event,
+void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
   Boolean *)
 #else
-void handleButtonPress(
-  Widget w,
-  XtPointer clientData,
-  XEvent *event,
+void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
   Boolean *continueToDispatch)
 #endif
 {
-    DisplayInfo *displayInfo = (DisplayInfo *) clientData;
+    DisplayInfo *displayInfo = (DisplayInfo *)clientData;
     XButtonEvent *xEvent = (XButtonEvent *)event;
     int j, k;
     Position x0, y0, x1, y1;
@@ -256,383 +302,549 @@ void handleButtonPress(
     XEvent newEvent;
     Boolean objectDataOnly, foundVertex = False, foundPoly = False;
     int newEventType;
-    DisplayInfo *di;
+    DisplayInfo *di, *cdi;
     DlElement *dlElement;
 
-  /* if in execute mode - update currentDisplayInfo and simply return */
+#if DEBUG_EVENTS
+    fprintf(stderr,"\n>>> handleButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
+      currentActionType == SELECT_ACTION?"SELECT":"CREATE",xEvent->button,
+      xEvent->state&ShiftMask,xEvent->state&ControlMask);
+#endif    
+
+  /* If in execute mode, update currentDisplayInfo and simply return */
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	currentDisplayInfo = displayInfo;
 	return;
     }
 
-  /* loop over all displays, unhighlight and unselect previously
-   * selected elements
-   */
-
+  /* Unselect everything in other displays */
     di = displayInfoListHead->next;
     while (di) {
 	if (di != displayInfo) {
 	    currentDisplayInfo = di;
 	    unhighlightSelectedElements();
-	    destroyDlDisplayList(di->selectedDlElementList);
+	    clearDlDisplayList(currentDisplayInfo->selectedDlElementList);
 	}
 	di = di->next;
     }
 
-    currentDisplayInfo = displayInfo;
-    currentColormap = currentDisplayInfo->colormap;
-    currentColormapSize = currentDisplayInfo->dlColormapSize;
-
-  /* and always make sure the window is on top and has input focus */
+  /* Set current values */
+    cdi = currentDisplayInfo = displayInfo;
+    currentColormap = cdi->colormap;
+    currentColormapSize = cdi->dlColormapSize;
+    
+  /* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(displayInfo->shell));
     XSetInputFocus(display,XtWindow(displayInfo->shell),
       RevertToParent,CurrentTime);
-
+    
+  /* Get button coordinates */
     x0 = event->xbutton.x;
     y0 = event->xbutton.y;
+  /* Add offsets if the ButtonPress was in another window */
     if (w != displayInfo->drawingArea) {
 	Dimension dx0, dy0;
-      /* other widget trapped the button press, therefore "normalize" */
+	
 	XtVaGetValues(w,XmNx,&dx0,XmNy,&dy0,NULL);
 	x0 += dx0;
 	y0 += dy0;
     }
-
-  /*
-   * handle differently, based on currentActionType
-   */
-
-  /* change drawingArea's cursor back to the appropriate cursor */
-    XDefineCursor(display,XtWindow(currentDisplayInfo->drawingArea),
+    
+  /* Change drawingArea's cursor to the appropriate cursor */
+    XDefineCursor(display,XtWindow(cdi->drawingArea),
       (currentActionType == SELECT_ACTION ?
 	rubberbandCursor : crosshairCursor));
-
-
-  /**********************************
-  ***       SELECT_ACTION        ***
-  **********************************/
-
+    
+  /* Branch depending on action */
     if (currentActionType == SELECT_ACTION) {
-
-      /****************************************
-       * MB1       =  select (rubberband)     *
-       * shift-MB1 =  multi-select            *
-       * MB2       =  adjust (drag)           *
-       * ctrl-MB2  =  adjust( resize)         *
-       * MB3       =  menu                    *
-       ****************************************/
-
+      /* SELECT_ACTION
+       * ****************************************
+       * Btn1        =  select (rubberband)     *
+       * Ctrl-Btn1   =  cycle selections        *
+       * Shift-Btn1  =  multi-select            *
+       * Btn2        =  move                    *
+       * Ctrl-Btn2   =  resize                  *
+       * Shift-Btn2  =  nothing                 *
+       * Btn3        =  nothing here            *
+       * ****************************************/
 	switch (xEvent->button) {
 	case Button1:
+	  /* SELECT_ACTION Btn1 */
 	    if (xEvent->state & ControlMask) {
-	      /* Ctrl-MB1 = NOTHING */
-		break;
-	    } else
-	      if (xEvent->state & ShiftMask) {
-		/* Shift-MB1 = toggle and append selections */
-		  doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-		  selectedElementsLookup(displayInfo->dlElementList,
-		    x0,y0,x1,y1,tmpDlElementList);
-		  if (!IsEmpty(tmpDlElementList)) {
-		      DlElement *pE = FirstDlElement(tmpDlElementList);
-		      int found = False;
-		      unhighlightSelectedElements();
-		      while (pE) {
-			  DlElement *pT =
-			    FirstDlElement(displayInfo->selectedDlElementList);
-			  int found = False;
-			/* if found, remove it from the selected list */
-			  while (pT) {
-			      if (pT->structure.element == pE->structure.element) {
-				  removeDlElement(displayInfo->selectedDlElementList,pT);
-				  destroyDlElement(pT);
-				  found = True;
-				  break;
-			      }
-			      pT = pT->next;
-			  }
-			/* if not found, add it to the selected list */
-			  if (!found) {
-			      DlElement *pF = pE;
-			      pE = pE->next;
-			      removeDlElement(tmpDlElementList,pF);
-			      appendDlElement(displayInfo->selectedDlElementList,pF);
-			  } else {
-			      pE = pE->next;
-			  }
-		      }
-		      highlightSelectedElements();
-		      destroyDlDisplayList(tmpDlElementList);
-		  }
-	      } else {
-		/* handle the MB1 */
-		/* see whether this is a vertex edit */
-		  selectedElementsLookup(displayInfo->dlElementList,
-		    x0,y0,x0,y0,tmpDlElementList);
-		  if (NumberOfDlElement(displayInfo->selectedDlElementList) == 1) {
-		      DlElement *dlElement =
-			FirstDlElement(displayInfo->selectedDlElementList)
-			->structure.element;
-		      if (dlElement->run->editVertex) {
-			  unhighlightSelectedElements();
-			  if (dlElement->run->editVertex(dlElement,x0,y0)) {
-			      foundVertex = True;
-			  }
-			  highlightSelectedElements();
-		      }
-		  }
-		  destroyDlDisplayList(tmpDlElementList);
-		/* if this is not a vertex edit */
-		  if (!foundVertex) {
-		      doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-		      selectedElementsLookup(displayInfo->dlElementList,
-			x0,y0,x1,y1,tmpDlElementList);
-		      if (!IsEmpty(tmpDlElementList)) {
-			  unhighlightSelectedElements();
-			  destroyDlDisplayList(displayInfo->selectedDlElementList);
-			  appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
-			  highlightSelectedElements();
-			  destroyDlDisplayList(tmpDlElementList);
-		      }
-		  }
-	      }
-	    if (!foundVertex) {
-		clearResourcePaletteEntries();
-		if (NumberOfDlElement(currentDisplayInfo->selectedDlElementList)==1){
-		    currentElementType =
-		      FirstDlElement(currentDisplayInfo->selectedDlElementList)
-                      ->structure.element->type;
-		    setResourcePaletteEntries();
+	      /* SELECT_ACTION Ctrl-Btn1 */
+	      /* Cycle through selections */
+#if DEBUG_EVENTS
+		fprintf(stderr,"SELECT_ACTION Ctrl-Btn1\n");
+#endif
+		doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
+		findSelectedElements(displayInfo->dlElementList,
+		  x0,y0,x1,y1,tmpDlElementList,AllTouched|AllEnclosed);
+		if (!IsEmpty(tmpDlElementList)) {
+		    DlElement *pT = FirstDlElement(tmpDlElementList);
+		    int found = False;
+		    
+#if DEBUG_EVENTS > 1
+		    fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
+		    dumpDlElementList(tmpDlElementList);
+		    fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1] displayInfo->selectedDlElementList:\n");
+		    dumpDlElementList(displayInfo->selectedDlElementList);
+		    fprintf(stderr,"\n");
+#endif
+		    unhighlightSelectedElements();
+		    while (pT) {
+			DlElement *pE =
+			  FirstDlElement(displayInfo->selectedDlElementList);
+		      /* Traverse the selected list */
+			while (pE) {
+#if DEBUG_EVENTS > 1
+			    printf("Temp: Type=%s (%s) %x\n",
+			      elementType(pT->type),elementType(pT->structure.element->type),
+			      pT->structure.element);
+			    printf("Sel:  Type=%s (%s) %x\n",
+			      elementType(pE->type),elementType(pE->structure.element->type),
+			      pE->structure.element);
+#endif
+			    if (pE->structure.element == pT->structure.element) {
+				DlElement *pENew;
+				
+				clearDlDisplayList(displayInfo->selectedDlElementList);
+				if (pT->next) {
+				  /* Use the next one */
+				    pENew = createDlElement(DL_Element,
+				      (XtPointer)pT->next->structure.rectangle,NULL);
+				} else {
+				  /* No next one, use the first */
+				    DlElement *pEFirst = FirstDlElement(tmpDlElementList);
+				    
+				    pENew = createDlElement(DL_Element,
+				      (XtPointer)pEFirst->structure.rectangle,
+				      NULL);
+				}
+				if (pENew) {
+				    appendDlElement(displayInfo->selectedDlElementList,
+				      pENew);
+				}
+				found=True;
+#if DEBUG_EVENTS > 1
+				printf("Found: found=%d\n",found);
+#endif
+				break;
+			    }
+			    pE = pE->next;
+			}
+			if (found) break;
+			else pT = pT->next;
+		    }
+		  /* If no matches found use the first one in the new list */
+		    if (!found) {
+			DlElement *pENew;
+			DlElement *pEFirst = FirstDlElement(tmpDlElementList);
+			
+#if DEBUG_EVENTS > 1
+			printf("Not found: found=%d\n",found);
+#endif
+			clearDlDisplayList(displayInfo->selectedDlElementList);
+			pENew = createDlElement(DL_Element,
+			  (XtPointer)pEFirst->structure.rectangle,
+			  NULL);
+			if (pENew) {
+			    appendDlElement(displayInfo->selectedDlElementList,
+			      pENew);
+			}
+		    }
+		    highlightSelectedElements();
+		    clearDlDisplayList(tmpDlElementList);
+		    clearResourcePaletteEntries();
+		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+			currentElementType =
+			  FirstDlElement(cdi->selectedDlElementList)
+			  ->structure.element->type;
+			setResourcePaletteEntries();
+		    }
+		}
+#if DEBUG_EVENTS > 1
+		fprintf(stderr,"\n[handleButtonPress: SELECT Ctrl-Btn1 Done] displayInfo->selectedDlElementList :\n");
+		dumpDlElementList(displayInfo->selectedDlElementList);
+#endif
+	    } else if (xEvent->state & ShiftMask) {
+	      /* SELECT_ACTION Shift-Btn1 */
+	      /* Toggle and append selections */
+		doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
+		findSelectedElements(displayInfo->dlElementList,
+		  x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
+		if (!IsEmpty(tmpDlElementList)) {
+		    DlElement *pT = FirstDlElement(tmpDlElementList);
+		    int found = False;
+		    unhighlightSelectedElements();
+		    while (pT) {
+			DlElement *pE =
+			  FirstDlElement(displayInfo->selectedDlElementList);
+			int found = False;
+		      /* If found, remove it from the selected list */
+			while (pE) {
+			    if (pE->structure.element == pT->structure.element) {
+				removeDlElement(displayInfo->selectedDlElementList,pE);
+				destroyDlElement(pE);
+				found = True;
+				break;
+			    }
+			    pE = pE->next;
+			}
+		      /* If not found, add it to the selected list */
+			if (!found) {
+			    DlElement *pF = pT;
+			    pT = pT->next;
+			    removeDlElement(tmpDlElementList,pF);
+			    appendDlElement(displayInfo->selectedDlElementList,pF);
+			} else {
+			    pT = pT->next;
+			}
+		    }
+		    highlightSelectedElements();
+		    clearDlDisplayList(tmpDlElementList);
+		    clearResourcePaletteEntries();
+		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+			currentElementType =
+			  FirstDlElement(cdi->selectedDlElementList)
+			  ->structure.element->type;
+			setResourcePaletteEntries();
+		    }
+		}
+	    } else {
+	      /* SELECT_ACTION Btn1, not Shift or Crtl) */
+	      /* See whether this is a vertex edit (1 already selected element
+	       *   that has an editVertex function defined) and do the vertex
+	       *   edit if so */
+		if (NumberOfDlElement(displayInfo->selectedDlElementList) == 1) {
+		    DlElement *dlElement =
+		      FirstDlElement(displayInfo->selectedDlElementList)
+		      ->structure.element;
+		    if (dlElement->run->editVertex) {
+			saveUndoInfo(cdi);
+			unhighlightSelectedElements();
+		      /* Do vertex edit */
+			if (dlElement->run->editVertex(dlElement,x0,y0)) {
+			    foundVertex = True;
+			    highlightSelectedElements();
+			}
+		    }
+		}
+	      /* If this was not a vertex edit then do rubberbanding, etc. */
+		if (!foundVertex) {
+		    doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
+		    findSelectedElements(displayInfo->dlElementList,
+		      x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
+		    if (!IsEmpty(tmpDlElementList)) {
+			unhighlightSelectedElements();
+		      /* If this is the only element and is the same as before
+		       *   then unselect it */
+			if (tmpDlElementList->count == 1 &&
+			  displayInfo->selectedDlElementList->count == 1) {
+			    DlElement *pET = FirstDlElement(tmpDlElementList);
+			    DlElement *pES = FirstDlElement(displayInfo->selectedDlElementList);
+
+#if DEBUG_EVENTS > 1
+			    printf("\nhandleButtonPress: Btn1\n");
+			    printf("Selected: count=%d first=%x struct=%x\n",
+			      displayInfo->selectedDlElementList->count,
+			      FirstDlElement(displayInfo->selectedDlElementList),
+			      pES->structure.element);
+			    printf("Temp: count=%d first=%x struct=%x\n",
+			      tmpDlElementList->count,
+			      FirstDlElement(tmpDlElementList),
+			      pET->structure.element);
+#endif
+			    if (pET->structure.element == pES->structure.element) {
+				clearDlDisplayList(displayInfo->selectedDlElementList);
+			    } else {
+				clearDlDisplayList(displayInfo->selectedDlElementList);
+				appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
+			    }
+			} else {
+			    clearDlDisplayList(displayInfo->selectedDlElementList);
+			    appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
+			}
+			highlightSelectedElements();
+			clearDlDisplayList(tmpDlElementList);
+			clearResourcePaletteEntries();
+			if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
+			    currentElementType =
+			      FirstDlElement(cdi->selectedDlElementList)
+			      ->structure.element->type;
+			    setResourcePaletteEntries();
+			}
+		    }
 		}
 	    }
 	    break;
-
-
-	  /**************************************************************/
-	  /**************************************************************/
+	    
 	case Button2:
+	  /* SELECT_ACTION Btn2 */
 	    if (xEvent->state & ShiftMask) {
-	      /***********************/
-	      /* Shift-MB2 = NOTHING */
-	      /***********************/
+	      /* SELECT_ACTION Shift-Btn2 */
+		XBell(display,50);
 		break;
 	    }
-	    selectedElementsLookup(displayInfo->dlElementList,
-	      x0,y0,x0,y0,tmpDlElementList);
+	    findSelectedElements(displayInfo->dlElementList,
+	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
 	    if (IsEmpty(tmpDlElementList)) break;
 
 	    if (xEvent->state & ControlMask) {
-	      /*********************/
-	      /* Ctrl-MB2 = RESIZE */
-	      /*********************/
+	      /* SELECT_ACTION Ctrl-Btn2 */
+#if DEBUG_EVENTS
+		fprintf(stderr,"SELECT_ACTION Ctrl-Btn2\n");
+#endif
+		saveUndoInfo(cdi);
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
-		  /* element already selected - resize it and any others */
+#if DEBUG_EVENTS
+		    fprintf(stderr,"Already selected\n");
+#endif
+		  /* Element already selected - resize it and any others */
 		  /* (MDA) ?? separate resize of display here? */
-		  /* unhighlight currently selected elements */
+		  /* Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
-		  /* this element already selected: resize all selected elements */
+		  /* This element already selected: resize all selected elements */
 		    validResize = doResizing(XtWindow(displayInfo->drawingArea),
 		      x0,y0,&x1,&y1);
-		    if (validResize) {
+#if DEBUG_EVENTS > 1
+		    fprintf(stderr,"validResize=%d\n",validResize);
+		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+#endif
+		    if (validResize) {     /* (It is always valid) */
 			updateResizedElements(x0,y0,x1,y1);
-			if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(currentDisplayInfo);
+			if (cdi->hasBeenEditedButNotSaved == False) {
+			    medmMarkDisplayBeingEdited(cdi);
 			}
 		    }
-		  /* highlight currently selected elements */
+		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
-		  /* if only one selected, use first one (only) in list */
-		    if (currentDisplayInfo->selectedDlElementList->count == 1) {
+		  /* Update object prooperties of this element */
+		    if (cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
 			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
 		    }
 		} else {
-		  /* this element not already selected,
-		     deselect others and resize it */
+		  /* This element not already selected, deselect others and resize it */
+		  /* Unhighlight currently selected elements */
+#if DEBUG_EVENTS
+		    fprintf(stderr,"Not already selected\n");
+#endif
 		    unhighlightSelectedElements();
-		    destroyDlDisplayList(currentDisplayInfo->selectedDlElementList);
-		    appendDlList(currentDisplayInfo->selectedDlElementList,
+		    clearDlDisplayList(cdi->selectedDlElementList);
+		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
 		    validResize = doResizing(XtWindow(displayInfo->drawingArea),
 		      x0,y0,&x1,&y1);
-		    if (validResize) {
+#if DEBUG_EVENTS > 1
+		    fprintf(stderr,"validResize=%d\n",validResize);
+		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+#endif
+		    if (validResize) {     /* (It is always valid) */
 			updateResizedElements(x0,y0,x1,y1);
-			if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(currentDisplayInfo);
+			if (cdi->hasBeenEditedButNotSaved == False) {
+			    medmMarkDisplayBeingEdited(cdi);
 			}
 		    }
-		  /* highlight currently selected elements */
 		    highlightSelectedElements();
-		  /* if only one selected, use first one (only) in list */
+		    clearDlDisplayList(tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (currentDisplayInfo->selectedDlElementList->count == 1) {
-			objectDataOnly = True;
-			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-		    } 
+		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+			currentElementType =
+			  FirstDlElement(cdi->selectedDlElementList)
+			  ->structure.element->type;
+			setResourcePaletteEntries();
+		    }
 		}
 	    } else {
-	      /************************/
-	      /* MB2 = ADJUST (MOVE)  */
-	      /************************/
+	      /* SELECT_ACTION Btn2, not Shift or Crtl) */
 		XtVaGetValues(displayInfo->drawingArea,
 		  XmNwidth,&daWidth,
 		  XmNheight,&daHeight,
 		  NULL);
-#if -1
-		printf("\nTemp. element list :\n");
+#if DEBUG_EVENTS
+		fprintf(stderr,"\n[handleButtonPress: SELECT Btn2] tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
+		saveUndoInfo(cdi);
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
-		  /* element already selected - move it and any others */
-		  /* unhighlight currently selected elements */
+		  /* Element already selected - move it and any others
+		  /* Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
-		  /* this element already selected: move all selected elements */
+#if DEBUG_EVENTS
+		    fprintf(stderr,"Already selected\n");
+#endif
+		  /* This element already selected: move all selected elements */
 		    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
+#if DEBUG_EVENTS > 1
+		    fprintf(stderr,"validDrag=%d\n",validDrag);
+		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+#endif
 		    if (validDrag) {
 			updateDraggedElements(x0,y0,x1,y1);
-			if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(currentDisplayInfo);
+			if (cdi->hasBeenEditedButNotSaved == False) {
+			    medmMarkDisplayBeingEdited(cdi);
 			}
 		    }
-		  /* highlight currently selected elements */
+		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
-		  /* if only one selected, use first one (only) in list */
-		    if (currentDisplayInfo->selectedDlElementList->count == 1) {
+		  /* Update object prooperties of this element */
+		    if (cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
 			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
 		    }
 		} else {
-		  /* this element not already selected,
-		     deselect others and move it */
+		  /* This element not already selected,deselect others and move it */
+		  /* Unhighlight currently selected elements */
+#if DEBUG_EVENTS
+		    fprintf(stderr,"Not already selected\n");
+#endif
 		    unhighlightSelectedElements();
-		    destroyDlDisplayList(currentDisplayInfo->selectedDlElementList);
-		    appendDlList(currentDisplayInfo->selectedDlElementList,
+		    clearDlDisplayList(cdi->selectedDlElementList);
+		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
 		    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
-		    printf("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+#if DEBUG_EVENTS > 1
+		    fprintf(stderr,"validDrag=%d\n",validDrag);
+		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+#endif
+		  /* Move this element */
 		    if (validDrag) {
 			updateDraggedElements(x0,y0,x1,y1);
-			if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(currentDisplayInfo);
+			if (cdi->hasBeenEditedButNotSaved == False) {
+			    medmMarkDisplayBeingEdited(cdi);
 			}
 		    }
-		  /* highlight currently selected elements */
 		    highlightSelectedElements();
-		  /* if only one selected, use first one (only) in list */
-		    if (currentDisplayInfo->selectedDlElementList->count ==1 ) {
-			objectDataOnly = True;
-			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+		    clearDlDisplayList(tmpDlElementList);
+		    clearResourcePaletteEntries();
+		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+			currentElementType =
+			  FirstDlElement(cdi->selectedDlElementList)
+			  ->structure.element->type;
+			setResourcePaletteEntries();
 		    }
 		}
 	    }
-	    destroyDlDisplayList(tmpDlElementList);
+	    clearDlDisplayList(tmpDlElementList);
 	    break;
-
+	    
 	case Button3:
-	  /************************************************************/
-	  /* MB3 = MENU  --- this is really handled in                */
-	  /*                 popupMenu/popdownMenu handler            */
-	  /************************************************************/
+	  /* SELECT_ACTION Btn3 */
 	    break;
 	}
-    } else
-      if (currentActionType == CREATE_ACTION) {
-	/**********************************
-	***			CREATE_ACTION					***
-	**********************************/
-	  DlElement *dlElement = 0;
-	/************************************************
-	 * MB1       =  create (rubberband)		*
-	 * MB2       =  adjust (drag)     {as above}	*
-	 * ctrl-MB2  =  adjust( resize)			*
-	 * MB3       =  menu				*
-	 ************************************************/
-	  switch (xEvent->button) {
-	  case Button1:
-	    /*****************************/
-	    /* MB1 = CREATE (Rubberband) */
-	    /*****************************/
-	    /* see how to handle text -
-	       either rectangular-create or type-create */
-	      XWindowEvent(display,XtWindow(displayInfo->drawingArea),
-		ButtonReleaseMask|Button1MotionMask,&newEvent);
-	      newEventType = newEvent.type;
-	      XPutBackEvent(display,&newEvent);
-
-	      if (currentElementType == DL_Text &&
-		newEventType == ButtonRelease) {
-		  dlElement = handleTextCreate(x0,y0);
-	      } else if (currentElementType == DL_Polyline) {
-		  dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
-	      } else if (currentElementType == DL_Line) {
-		  dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
-	      } else if (currentElementType == DL_Polygon) {
-		  dlElement = handlePolygonCreate(x0,y0);
-	      } else {
-		  if (ELEMENT_HAS_WIDGET(currentElementType))
-		    minSize = 12;
-		  else
-		    minSize = 2;
-		/* actually create elements */
-		  dlElement = handleRectangularCreates(currentElementType, x0, y0,
-		    MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
-	      }
-	      if (dlElement) {
-		  DlElement *pSE = 0;
-		  if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-		      medmMarkDisplayBeingEdited(currentDisplayInfo);
-		  }
-		  appendDlElement(currentDisplayInfo->dlElementList,dlElement);
-		  (*dlElement->run->execute)(currentDisplayInfo,dlElement);
-		  
-		  unhighlightSelectedElements();
-		  destroyDlDisplayList(displayInfo->selectedDlElementList);
-		  pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
-		  if (pSE) {
-		      appendDlElement(displayInfo->selectedDlElementList,pSE);
-		  }
-		  currentElementType =
-		    FirstDlElement(currentDisplayInfo->selectedDlElementList)
-		    ->structure.element->type;
-		  highlightSelectedElements();
-	      }
-	      break;
-	  case Button2:
-	    /****************/
-	    /* MB2 = ADJUST */
-	    /****************/
-	      break;
-
-	  case Button3:
-	    /********************************************/
-	    /* MB3 = MENU  --- this is really           */
-	    /* handled in popupMenu/popdownMenu handler */
-	    /********************************************/
-	      break;
-	  }
-#if -1
-	  printf("\nselected element list :\n");
-	  dumpDlElementList(displayInfo->selectedDlElementList);
+#if DEBUG_EVENTS
+	fprintf(stderr,"\n[handleButtonPress: SELECT done] selectedDlElement list :\n");
+	dumpDlElementList(displayInfo->selectedDlElementList);
 #endif
-	/* now toggle back to SELECT_ACTION from CREATE_ACTION */
-	  if (objectS != NULL) {
-	      XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
-	  }
-	  setActionToSelect();
-	  clearResourcePaletteEntries();
-	  setResourcePaletteEntries();
-      }
+    } else if (currentActionType == CREATE_ACTION) {
+      /* CREATE_ACTION
+       * ********************************************
+       * Btn1    =  create (rubberband)             *
+       * Btn2    =  nothing                         *
+       * Btn3    =  nothing here                    *
+       * ********************************************/
+	DlElement *dlElement = 0;
+	
+	switch (xEvent->button) {
+	case Button1:
+	  /* CREATE_ACTION Btn1 */
+	  /* Destroy any undo information (for now anyway) */
+	    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
+	  /* Wait for next event and look at it */
+	    XWindowEvent(display,XtWindow(displayInfo->drawingArea),
+	      ButtonReleaseMask|Button1MotionMask,&newEvent);
+	    newEventType = newEvent.type;
+	    XPutBackEvent(display,&newEvent);
+	    
+	  /* Create the element according to its method */
+	    if (currentElementType == DL_Text &&
+	      newEventType == ButtonRelease) {
+		dlElement = handleTextCreate(x0,y0);
+	    } else if (currentElementType == DL_Polyline) {
+		dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
+	    } else if (currentElementType == DL_Line) {
+		dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
+	    } else if (currentElementType == DL_Polygon) {
+		dlElement = handlePolygonCreate(x0,y0);
+	    } else {
+	      /* Set minimum initial size */
+		if (ELEMENT_HAS_WIDGET(currentElementType)) {
+		    minSize = 12;
+		} else {
+		    minSize = 2;
+		}
+	      /* Do rubber banding for initial size */
+		doRubberbanding(XtWindow(displayInfo->drawingArea),
+		  &x0,&y0,&x1,&y1);
+	      /* Actually create elements */
+		dlElement = handleRectangularCreates(currentElementType, x0, y0,
+		  MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
+	    }
+	  /* Element defined, do bookkeeping */
+	    if (dlElement) {
+		DlElement *pSE = 0;
+	      /* Mark display as not saved */
+		if (cdi->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(cdi);
+		}
+	      /* Add it to cdi */
+		appendDlElement(cdi->dlElementList,dlElement);
+		(*dlElement->run->execute)(cdi,dlElement);
+	      /* Unselect any selected elements */
+		unhighlightSelectedElements();
+		clearDlDisplayList(displayInfo->selectedDlElementList);
+	      /* Create a DL_Element */
+		pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
+	      /* Add it to selectedDlElementList */
+		if (pSE) {
+		    appendDlElement(displayInfo->selectedDlElementList,pSE);
+		}
+	      /* Set currentElementTypey */
+		currentElementType =
+		  FirstDlElement(cdi->selectedDlElementList)
+		  ->structure.element->type;
+	      /* Hightlight it */
+		highlightSelectedElements();
+	    }
+	    break;
+	case Button2:
+	  /* CREATE_ACTION Btn2 */
+	    XBell(display,50);
+	    break;
+	    
+	case Button3:
+	  /* CREATE_ACTION Btn3 */
+	  /* Handled in popupMenu/popdownMenu handler */
+	    break;
+	}
+#if DEBUG_EVENTS
+	fprintf(stderr,"\n[handleButtonPress: CREATE done] selectedDLElement list :\n");
+	dumpDlElementList(displayInfo->selectedDlElementList);
+#endif
+      /* Clean up */
+      /* Toggle CREATE_ACTION to SELECT_ACTION */
+	if (objectS != NULL) {
+	    XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
+	}
+      /* Set the object palette to Select */
+	setActionToSelect();
+      /* Set the resource palette according to currentElementType */
+	setResourcePaletteEntries();
+    }
 }
 
 void highlightSelectedElements()
 {
-    DisplayInfo *cdi; /* abbreviation for currentDisplayInfo for clarity */
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
 
-    if (!currentDisplayInfo) return;
-    cdi = currentDisplayInfo;
+#if DEBUG_HIGHLIGHTS
+    printf("In highlightSelectedElements\n");
+#endif
+    
+    if (!cdi) return;
     if (IsEmpty(cdi->selectedDlElementList)) return;
     if (cdi->selectedElementsAreHighlighted) return;
     cdi->selectedElementsAreHighlighted = True;
@@ -644,20 +856,23 @@ void highlightSelectedElements()
 }
 
 /*
- *  function to unhighlight the currently highlighted (and  therfore
- *	selected) elements
+ *  Function to unhighlight the currently highlighted (and therefore
+ *    selected) elements
  */
 void unhighlightSelectedElements()
 {
-    DisplayInfo *pDI; /* abbreviation for currentDisplayInfo for clarity */
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
 
-    if (!currentDisplayInfo) return;
-    pDI = currentDisplayInfo;
-    if (IsEmpty(pDI->selectedDlElementList)) return;
-    if (!pDI->selectedElementsAreHighlighted) return;
-    pDI->selectedElementsAreHighlighted = False;
-    dlElement = FirstDlElement(pDI->selectedDlElementList);
+#if DEBUG_HIGHLIGHTS
+    printf("In unhighlightSelectedElements\n");
+#endif
+    
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
+    if (!cdi->selectedElementsAreHighlighted) return;
+    cdi->selectedElementsAreHighlighted = False;
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
 	toggleSelectedElementHighlight(dlElement->structure.element);
 	dlElement = dlElement->next;
@@ -665,236 +880,214 @@ void unhighlightSelectedElements()
 }
 
 /*
- *  function to determine if specified element is already in selected list
- *	and unhighlight and unselect if it is...
- *	RETURNS: Boolean - True if an element was found and unselected,
- *		False if none found...
- *	also - the TOTAL number of elements selected is returned in
- *		numSelected  argument
- */
-Boolean unhighlightAndUnselectElement(
-  DlElement *element,
-  int *numSelected)
-{
-    int j;
-    DisplayInfo *cdi;
-    DlElement *dlElement = 0;
-
-  /*
-   *	N.B.: need to highlight in both window and pixmap in case
-   *	there are expose events...
-   */
-
-  /* simply return if no current display */
-    if (!currentDisplayInfo) return False;
-    cdi = currentDisplayInfo;
-    if (!IsEmpty(cdi->selectedDlElementList)) {
-	DlElement *pE = FirstDlElement(cdi->selectedDlElementList);
-	while (pE && !dlElement) {
-	    if (pE->structure.element == element) dlElement = pE;
-	    pE = pE->next;
-	}
-    }
-
-  /* element not found - no changes */
-    if (!dlElement) {
-	return (False);
-    }
-
-  /* undraw the highlight */
-    toggleSelectedElementHighlight(dlElement->structure.element);
-
-    removeDlElement(cdi->selectedDlElementList,dlElement);
-    dlElement->run->destroy(dlElement);
-    return(True);
-}
-
-
-/*
- * update (move) all currently selected elements and rerender
+ * Update (move) all currently selected elements and rerender
  */
 void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
 {
-    int i, j;
-    int xOffset, yOffset;
-    DisplayInfo *cdi;
+    int i, j, xOffset, yOffset;
+    DisplayInfo *cdi = currentDisplayInfo;    
     Widget widget;
-    Boolean moveWidgets;
-    DlElement *pE;
-    Display *display;
-    GC gc;
+    DlElement *pElement;
 
-  /* if no current display or selected elements array, simply return */
-    if (!currentDisplayInfo) return;
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
-
-    cdi = currentDisplayInfo;
-    display = XtDisplay(cdi->drawingArea);
-    gc = cdi->gc;
-
+  /* If no current display or selected elements array, simply return */
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
     xOffset = x1 - x0;
     yOffset = y1 - y0;
 
+  /* See destroy-recreate comments in updateResizedElements */
+  /* As usual, type in union unimportant as long as object is 1st thing...*/
     unhighlightSelectedElements();
-  /* as usual, type in union unimportant as long as object is 1st thing...*/
-    pE = FirstDlElement(currentDisplayInfo->selectedDlElementList);
-    while (pE) {
-	DlElement *dlElement = pE->structure.element;
-	if (dlElement->run->move) 
-	  dlElement->run->move(dlElement,xOffset,yOffset);
-	if (dlElement->widget) 
-	  dlElement->run->execute(currentDisplayInfo,dlElement);
-	pE = pE->next;
+    pElement = FirstDlElement(cdi->selectedDlElementList);
+    while (pElement) {
+	DlElement *pE = pElement->structure.element;
+#if DEBUG_EVENTS > 1
+	fprintf(stderr,"\nupdateDraggedElements: x0=%d y0=%d x1=%d y1=%d"
+	  " xOffset=%d yOffset=%d\n",
+	  x0,y0,x1,y1,xOffset,yOffset);
+	fprintf(stderr,"  %s (%s) pE->run->move=%x\n",
+	  elementType(pElement->type),
+	  elementType(pE->type),
+	  pE->run->move);
+#endif
+	if (pE->run->move) {
+	    pE->run->move(pE,xOffset,yOffset);
+	}
+	if (pE->widget) {
+	  /* Destroy the widgets */
+	    destroyElementWidgets(pE);
+	  /* Recreate them */
+	    pE->run->execute(cdi,pE);
+	}
+	pElement = pElement->next;
     }
     dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
     highlightSelectedElements();
 }
 
 /*
- * update all currently selected elements and rerender
- *	note: elements are only resized if their size remains physical 
- *		
+ * Update (resize) all currently selected elements and rerender
  */
 void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 {
-    int i, j, xOffset, yOffset, width, height, oldWidth, oldHeight;
-    DisplayInfo *cdi;
+    int i, j, xOffset, yOffset;
+    DisplayInfo *cdi = currentDisplayInfo;
     Widget widget;
-    float sX, sY;
-    DlElement *dlElement, *ele;
+    DlElement *pElement;
 
-/* if no current display or selected elements array, simply return */
-    if (!currentDisplayInfo) return;
-    if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
-
-    cdi = currentDisplayInfo;
+/* If no current display or selected elements array, simply return */
+    if (!cdi) return;
+    if (IsEmpty(cdi->selectedDlElementList)) return;
 
     xOffset = x1 - x0;
     yOffset = y1 - y0;
 
-/*
- * Use expensive but reliable destroy-update-recreate sequence to get
- *	resizing right.  (XtResizeWidget mostly worked here, except for
- *	aggregate types like menu which had children which really defined
- *	it's parent's size.)
- * One additional advantage - this method guarantees WYSIWYG wrt fonts, etc
- */
+  /*
+   * Use expensive but reliable destroy-update-recreate sequence to get
+   *   resizing right.  (XtResizeWidget mostly worked here, except for
+   *   aggregate types like menu which had children which really defined
+   *   their parent's size.)
+   * One additional advantage - this method guarantees WYSIWYG w.r.t. fonts, etc
+   * KE:  Also, it will not let you resize them with XtGetValues if they are off
+   *   the edge of the display, but you can recreate them off the edge
+   */
 
-  /* as usual, type in union unimportant as long as object is 1st thing...*/
-    dlElement = FirstDlElement(currentDisplayInfo->selectedDlElementList);
-    while (dlElement) {
-	DlElement *pE = dlElement->structure.element;
+  /* As usual, type in union unimportant as long as object is 1st thing... */
+    unhighlightSelectedElements();
+    pElement = FirstDlElement(cdi->selectedDlElementList);
+    while (pElement) {
+	DlElement *pE = pElement->structure.element;
 	if (pE->run->scale) {
 	    pE->run->scale(pE,xOffset,yOffset);
 	}
 	if (pE->widget) {
-	    pE->run->execute(currentDisplayInfo,pE);
+	  /* Destroy the widget */
+	    destroyElementWidgets(pE);
+	  /* Recreate it */
+	    pE->run->execute(cdi,pE);
+#if DEBUG_EVENTS > 1
+	    {
+		DlObject *po = &pE->structure.composite->object;
+		Arg args[20];
+		int n=0;
+		Position x,y;
+		Dimension width,height;
+		
+		XFlush(display);
+		XtSetArg(args[n],XmNx,&x); n++;
+		XtSetArg(args[n],XmNy,&y); n++;
+		XtSetArg(args[n],XmNwidth,&width); n++;
+		XtSetArg(args[n],XmNheight,&height); n++;
+		XtGetValues(pE->widget,args,n);
+		
+		fprintf(stderr,"\nupdateResizedElements\n");
+		fprintf(stderr,"Widget:  %s: x=%d y=%d width=%u height=%u\n",
+		  elementType(pE->type),
+		  x,y,width,height);
+		fprintf(stderr,"Element: %s: x=%d y=%d width=%u height=%u\n",
+		  elementType(pE->type),
+		  po->x,po->y,po->width,po->height);
+	    }
+#endif
 	}
-	dlElement = dlElement->next;
+	pElement = pElement->next;
     }
-    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
+    dmTraverseNonWidgetsInDisplayList(cdi);
+    highlightSelectedElements();
 }
-
-
-
-
 
 /* 
- * handle creates (based on filled in globalResourceBundle values and
- *	currentElementType);
- *
+ * Handle creates (based on filled in globalResourceBundle values and
+ *   currentElementType);
  */
-DlElement *handleRectangularCreates(
-  DlElementType elementType,
-  int x,
-  int y,
-  unsigned int width,
-  unsigned int height)
+DlElement *handleRectangularCreates(DlElementType type,
+  int x, int y, unsigned int width,  unsigned int height)
 {
-    DlElement *element = 0, **array;
+    DlElement *pE = 0;
 
-    element = (DlElement *) NULL;
+    pE = (DlElement *)NULL;
 
-/* now create the actual element */
-    switch(elementType) {
+  /* Create the actual element */
+    switch(type) {
     case DL_Image:
-	element = handleImageCreate();
+	pE = handleImageCreate();
 	break;
-/* others are more straight-forward */
+      /* Others are more straight-forward */
     case DL_Valuator:
-	element = createDlValuator(NULL);
+	pE = createDlValuator(NULL);
 	break;
     case DL_ChoiceButton:
-	element = createDlChoiceButton(NULL);
+	pE = createDlChoiceButton(NULL);
 	break;
     case DL_MessageButton:
-	element = createDlMessageButton(NULL);
+	pE = createDlMessageButton(NULL);
 	break;
     case DL_TextEntry:
-	element = createDlTextEntry(NULL);
+	pE = createDlTextEntry(NULL);
 	break;
     case DL_Menu:
-	element = createDlMenu(NULL);
+	pE = createDlMenu(NULL);
 	break;
     case DL_Meter:
-	element = createDlMeter(NULL);
+	pE = createDlMeter(NULL);
 	break;
     case DL_TextUpdate:
-	element = createDlTextUpdate(NULL);
+	pE = createDlTextUpdate(NULL);
 	break;
     case DL_Bar:
-	element = createDlBar(NULL);
+	pE = createDlBar(NULL);
 	break;
     case DL_Indicator:
-	element = createDlIndicator(NULL);
+	pE = createDlIndicator(NULL);
 	break;
     case DL_Byte:
-	element = createDlByte(NULL);
+	pE = createDlByte(NULL);
 	break;
     case DL_StripChart:
-	element = createDlStripChart(NULL);
+	pE = createDlStripChart(NULL);
 	break;
     case DL_CartesianPlot:
-	element = createDlCartesianPlot(NULL);
+	pE = createDlCartesianPlot(NULL);
 	break;
     case DL_Rectangle:
-	element = createDlRectangle(NULL);
+	pE = createDlRectangle(NULL);
 	break;
     case DL_Oval:
-	element = createDlOval(NULL);
+	pE = createDlOval(NULL);
 	break;
     case DL_Arc:
-	element = createDlArc(NULL);
+	pE = createDlArc(NULL);
 	break;
     case DL_RelatedDisplay:
-	element = createDlRelatedDisplay(NULL);
+	pE = createDlRelatedDisplay(NULL);
 	break;
     case DL_ShellCommand:
-	element = createDlShellCommand(NULL);
+	pE = createDlShellCommand(NULL);
 	break;
     case DL_Text:
-	element = createDlText(NULL);
+	pE = createDlText(NULL);
 	break;
     default:
-	fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d",
-	  elementType);
+	fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d\n",
+	  type);
 	break;
     }
 
-    if (element) {
-	if (element->run->inheritValues) {
-	    element->run->inheritValues(&globalResourceBundle,element);
+    if (pE) {
+	if (pE->run->inheritValues) {
+	    pE->run->inheritValues(&globalResourceBundle,pE);
 	}
-	objectAttributeSet(&(element->structure.rectangle->object),x,y,width,height);
+	objectAttributeSet(&(pE->structure.rectangle->object),x,y,width,height);
     }
-    return element;
+    return pE;
 }
 
-void toggleSelectedElementHighlight(DlElement *dlElement) {
+void toggleSelectedElementHighlight(DlElement *dlElement)
+{
     DisplayInfo *cdi = currentDisplayInfo;
     int x, y, width, height; 
     DlObject *po = &(dlElement->structure.display->object);
-
+    
     if (dlElement->type == DL_Display) {
 	x = HIGHLIGHT_LINE_THICKNESS;
 	y = HIGHLIGHT_LINE_THICKNESS;
@@ -914,8 +1107,4 @@ void toggleSelectedElementHighlight(DlElement *dlElement) {
       x, y, width, height);
     XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
       x, y, width, height);
-}
-
-void unselectSelectedElements() {
-    return;
 }

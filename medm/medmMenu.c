@@ -74,6 +74,8 @@ static void menuDestroyCb(XtPointer cd);
 static void menuValueChangedCb(Widget, XtPointer, XtPointer);
 static void menuName(XtPointer, char **, short *, int *);
 static void menuInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void menuSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable menuDlDispatchTable = {
@@ -84,8 +86,8 @@ static DlDispatchTable menuDlDispatchTable = {
     NULL,
     menuGetValues,
     menuInheritValues,
-    NULL,
-    NULL,
+    menuSetBackgroundColor,
+    menuSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -197,19 +199,22 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtResizeWidget(optionButtonGadget,useableWidth,
 	  dlMenu->object.height,0);
 
-
 	XmStringFree(buttons[0]);
-      /* unmanage the label in the option menu */
+
+      /* Unmanage the label in the option menu */
 	XtUnmanageChild(XmOptionLabelGadget(localWidget));
-	XtManageChild(localWidget);
-	dlElement->widget =  localWidget;
+	dlElement->widget = localWidget;
 
-      /* remove all translations if in edit mode */
+      /* Remove all translations if in edit mode */
 	XtUninstallTranslations(localWidget);
-
-      /* add button press handler */
-	XtAddEventHandler(localWidget, ButtonPressMask, False,
+      /* Add back the KeyPress handler invoked in executeDlDisplay */
+	XtAddEventHandler(localWidget,KeyPressMask,False,
+	  handleKeyPress,(XtPointer)displayInfo);
+      /* Add the ButtonPress handler */
+	XtAddEventHandler(localWidget,ButtonPressMask,False,
 	  handleButtonPress,(XtPointer)displayInfo);
+
+	XtManageChild(localWidget);
 }
 
 void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -548,5 +553,21 @@ static void menuGetValues(ResourceBundle *pRCB, DlElement *p) {
       CLR_RC,        &(dlMenu->control.clr),
       BCLR_RC,       &(dlMenu->control.bclr),
       CLRMOD_RC,     &(dlMenu->clrmod),
+      -1);
+}
+
+static void menuSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMenu *dlMenu = p->structure.menu;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlMenu->control.bclr),
+      -1);
+}
+
+static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlMenu *dlMenu = p->structure.menu;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlMenu->control.clr),
       -1);
 }

@@ -54,9 +54,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_RADIO_BUTTONS 1
+
 #define ALLOCATE_STORAGE
 #include "medm.h"
 #include <Xm/RepType.h>
+
+#ifdef EDITRES
+#include <X11/Xmu/Editres.h>
+#endif
+
 #include <unistd.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -90,6 +97,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define PRINTER_SETUP_CANCEL 1
 #define PRINTER_SETUP_MAP    2
 
+#define GRID_OK     0
+#define GRID_CANCEL 1
+#define GRID_HELP   2
+
 #define EDIT_BTN_POSN 1
 #define EDIT_OBJECT_BTN           0
 #define EDIT_CUT_BTN              1
@@ -104,52 +115,64 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EDIT_ALIGN_BTN            8
 #define EDIT_UNSELECT_BTN         9
 #define EDIT_SELECT_ALL_BTN      10
+#define EDIT_REFRESH_BTN         11
+#define EDIT_SAME_SIZE_BTN       12
+#define EDIT_GRID_SPACING_BTN    13
+#define EDIT_GRID_TOGGLE_BTN     14
+#define EDIT_SPACE_BTN           15
+#define EDIT_HELP_BTN            16
+#define EDIT_UNDO_BTN            17
 
-#define N_VIEW_MENU_ELES     3
-#define VIEW_BTN_POSN        2
+#define N_VIEW_MENU_ELES         3
+#define VIEW_BTN_POSN            2
 #define VIEW_MESSAGE_WINDOW_BTN  1
 #define VIEW_STATUS_WINDOW_BTN   2
 
-#define N_ALIGN_MENU_ELES 2
-#define ALIGN_BTN_POSN 13
+#define N_ALIGN_MENU_ELES  2
+#define ALIGN_BTN_POSN    13
 
 #define N_HORIZ_ALIGN_MENU_ELES 3
-#define HORIZ_ALIGN_BTN_POSN 0
+#define HORIZ_ALIGN_BTN_POSN    0
 
-#define ALIGN_HORIZ_LEFT_BTN 0
+#define ALIGN_HORIZ_LEFT_BTN   0
 #define ALIGN_HORIZ_CENTER_BTN 1
-#define ALIGN_HORIZ_RIGHT_BTN 2
+#define ALIGN_HORIZ_RIGHT_BTN  2
+#define ALIGN_TO_GRID_BTN      3
 
 #define N_VERT_ALIGN_MENU_ELES 3
-#define VERT_ALIGN_BTN_POSN 1
+#define VERT_ALIGN_BTN_POSN    1
 
-#define ALIGN_VERT_TOP_BTN 0
+#define ALIGN_VERT_TOP_BTN    0
 #define ALIGN_VERT_CENTER_BTN 1
 #define ALIGN_VERT_BOTTOM_BTN 2
+
+#define SPACE_HORIZ_BTN 0
+#define SPACE_VERT_BTN  1
+#define SPACE_2D_BTN  2
 
 #ifdef EXTENDED_INTERFACE
 #define N_PALETTES_MENU_ELES 4
 #else
 #define N_PALETTES_MENU_ELES 3
 #endif
-#define PALETTES_BTN_POSN 3
+#define PALETTES_BTN_POSN    3
 
-#define PALETTES_OBJECT_BTN 0
+#define PALETTES_OBJECT_BTN   0
 #define PALETTES_RESOURCE_BTN 1
-#define PALETTES_COLOR_BTN 2
+#define PALETTES_COLOR_BTN    2
 #ifdef EXTENDED_INTERFACE
-#define PALETTES_CHANNEL_BTN 3
+#define PALETTES_CHANNEL_BTN  3
 #endif
 
 #define N_HELP_MENU_ELES 7
-#define HELP_BTN_POSN 4
+#define HELP_BTN_POSN    4
 
-#define HELP_ON_CONTEXT_BTN 0
-#define HELP_ON_WINDOW_BTN 1
-#define HELP_ON_KEYS_BTN 2
-#define HELP_INDEX_BTN 3
-#define HELP_ON_HELP_BTN 4
-#define HELP_TUTORIAL_BTN 5
+#define HELP_OVERVIEW_BTN   0
+#define HELP_CONTENTS_BTN   1
+#define HELP_OBJECTS_BTN    2
+#define HELP_EDIT_BTN       3
+#define HELP_NEW_BTN        4
+#define HELP_ON_HELP_BTN    5
 #define HELP_ON_VERSION_BTN 6
 
 static void fileMenuSimpleCallback(Widget,XtPointer,XtPointer);
@@ -159,10 +182,12 @@ static void palettesMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void helpMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void alignHorizontalMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void alignVerticalMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
 
 Widget mainFilePDM, mainHelpPDM;
 static Widget printerSetupDlg = 0;
+static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
 
 void medmExit();
@@ -192,15 +217,15 @@ static menuEntry_t graphicsObjectMenu[] = {
 };
 
 static menuEntry_t monitorsObjectMenu[] = {
-    { "Text Update",   &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
+    { "Text Monitor",  &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_TextUpdate,  NULL},
     { "Meter",         &xmPushButtonGadgetClass, 'M', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Meter,  NULL},
-    { "Bar",           &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+    { "Bar Monitor",   &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Bar,  NULL},
-    { "Byte",          &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
+    { "Byte Monitor",  &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Byte,  NULL},
-    { "Indicator",     &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
+    { "Scale Monitor", &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Indicator,  NULL},
     { "Strip Chart",   &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_StripChart,  NULL},
@@ -216,7 +241,7 @@ static menuEntry_t controllersObjectMenu[] = {
       objectMenuCallback, (XtPointer) DL_ChoiceButton,  NULL},
     { "Menu",           &xmPushButtonGadgetClass, 'M', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Menu,  NULL},
-    { "Valuator",       &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+    { "Slider",       &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Valuator,  NULL},
     { "Message Button", &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_MessageButton,  NULL},
@@ -248,11 +273,23 @@ static menuEntry_t editAlignVertMenu[] = {
 };
   
 
-static menuEntry_t editAlignEntry[] = {
+static menuEntry_t editAlignMenu[] = {
     { "Horizontal", &xmCascadeButtonGadgetClass, 'H', NULL, NULL, NULL,
       NULL, NULL, editAlignHorzMenu},
     { "Vertical",   &xmCascadeButtonGadgetClass, 'V', NULL, NULL, NULL,
       NULL, NULL, editAlignVertMenu},
+    { "To Grid",    &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
+      alignHorizontalMenuSimpleCallback, (XtPointer) ALIGN_TO_GRID_BTN,  NULL},
+    NULL,
+};
+  
+static menuEntry_t editSpaceMenu[] = {
+    { "Horizontal", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
+      spaceMenuSimpleCallback, (XtPointer) SPACE_HORIZ_BTN,  NULL},
+    { "Vertical",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+      spaceMenuSimpleCallback, (XtPointer) SPACE_VERT_BTN,  NULL},
+    { "2-D",       &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+      spaceMenuSimpleCallback, (XtPointer) SPACE_2D_BTN,  NULL},
     NULL,
 };
   
@@ -267,68 +304,108 @@ static menuEntry_t editObjectMenu[] = {
 };
 
 static menuEntry_t editMenu[] = {
+    { "Undo",      &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_UNDO_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0',
+      NULL,        NULL,                     NULL},
     { "Cut",       &xmPushButtonGadgetClass, 't', "Shift<Key>DeleteChar", "Shift+Del", NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_CUT_BTN,  NULL},
     { "Copy",      &xmPushButtonGadgetClass, 'C', "Ctrl<Key>InsertChar",  "Ctrl+Ins",   NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_COPY_BTN,  NULL},
     { "Paste" ,    &xmPushButtonGadgetClass, 'P', "Shift<Key>InsertChar", "Shift+Ins",  NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_PASTE_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',  NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Raise",     &xmPushButtonGadgetClass, 'R', NULL,                   NULL,         NULL,
+    { "Raise",     &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_RAISE_BTN,  NULL},
-    { "Lower",     &xmPushButtonGadgetClass, 'L', NULL,                   NULL,         NULL,
+    { "Lower",     &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_LOWER_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Group",     &xmPushButtonGadgetClass, 'G', NULL,                   NULL,         NULL,
+    { "Group",     &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
-    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL,                   NULL,         NULL,
+    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL,                NULL,         NULL,
-      NULL,        NULL,                     editAlignEntry},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL, NULL, NULL,
+      NULL,        NULL,                     editAlignMenu},
+    { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+      NULL,        NULL,                     editSpaceMenu},
+    { "Toggle Grid",       &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_GRID_TOGGLE_BTN,  NULL},
+    { "Grid...",   &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_GRID_SPACING_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Unselect",  &xmPushButtonGadgetClass, 'U', NULL,                   NULL,         NULL,
+    { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_SAME_SIZE_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+      NULL,        NULL,                     NULL},
+    { "Unselect",  &xmPushButtonGadgetClass, 'e', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
-    { "Select All",&xmPushButtonGadgetClass, 'S', NULL,                   NULL,         NULL,
+    { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+      NULL,        NULL,                     NULL},
+    { "Refresh",   &xmPushButtonGadgetClass, 'f', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
+    { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
     NULL,
 };
 
 static menuEntry_t displayMenu[] = {
-    { "Object",    &xmCascadeButtonGadgetClass, 'O', NULL,                   NULL, NULL,
+    { "Object",    &xmCascadeButtonGadgetClass, 'j', NULL, NULL, NULL,
       NULL,        NULL,                     editObjectMenu},
+    { "Undo",      &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_UNDO_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0',
+      NULL,        NULL,                     NULL},
     { "Cut",       &xmPushButtonGadgetClass, 't', "Shift<Key>DeleteChar", "Shift+Del", NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_CUT_BTN,  NULL},
     { "Copy",      &xmPushButtonGadgetClass, 'C', "Ctrl<Key>InsertChar",  "Ctrl+Ins",   NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_COPY_BTN,  NULL},
     { "Paste" ,    &xmPushButtonGadgetClass, 'P', "Shift<Key>InsertChar", "Shift+Ins",  NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_PASTE_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Raise",     &xmPushButtonGadgetClass, 'R', NULL,                   NULL,         NULL,
+    { "Raise",     &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_RAISE_BTN,  NULL},
-    { "Lower",     &xmPushButtonGadgetClass, 'L', NULL,                   NULL,         NULL,
+    { "Lower",     &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_LOWER_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Group",     &xmPushButtonGadgetClass, 'G', NULL,                   NULL,         NULL,
+    { "Group",     &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_GROUP_BTN,  NULL},
-    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL,                   NULL,         NULL,
+    { "Ungroup",   &xmPushButtonGadgetClass, 'n', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNGROUP_BTN,  NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0',NULL,                   NULL,         NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL,                NULL,         NULL,
-      NULL,        NULL,                     editAlignEntry},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,                   NULL,         NULL,
+    { "Align",     &xmCascadeButtonGadgetClass, 'A', NULL, NULL, NULL,
+      NULL,        NULL,                     editAlignMenu},
+    { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+      NULL,        NULL,                     editSpaceMenu},
+    { "Toggle Grid",       &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_GRID_TOGGLE_BTN,  NULL},
+    { "Grid...",   &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_GRID_SPACING_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Unselect",  &xmPushButtonGadgetClass, 'U', NULL,                   NULL,         NULL,
+    { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_SAME_SIZE_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+      NULL,        NULL,                     NULL},
+    { "Unselect",  &xmPushButtonGadgetClass, 'l', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_UNSELECT_BTN,  NULL},
-    { "Select All",&xmPushButtonGadgetClass, 'S', NULL,                   NULL,         NULL,
+    { "Select All",&xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_SELECT_ALL_BTN,  NULL},
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
+      NULL,        NULL,                     NULL},
+    { "Refresh",   &xmPushButtonGadgetClass, 'f', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
+    { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
+      editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
     NULL,
 };
 
@@ -345,9 +422,9 @@ static menuEntry_t fileMenu[] = {
       fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN, NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,         NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Printer Setup",  &xmPushButtonGadgetClass, 'u', NULL,      NULL, NULL,
+    { "Printer Setup...",  &xmPushButtonGadgetClass, 'u', NULL,      NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_PRINT_SETUP_BTN, NULL},
-    { "Print...",  &xmPushButtonGadgetClass, 'P', NULL,         NULL, NULL,
+    { "Print",  &xmPushButtonGadgetClass, 'P', NULL,         NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_PRINT_BTN, NULL},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,         NULL, NULL,
       NULL,        NULL,                     NULL},
@@ -384,18 +461,18 @@ static menuEntry_t palettesMenu[] = {
       };
 
 static menuEntry_t helpMenu[] = {
-{ "On context",  &xmPushButtonGadgetClass, 'C', "Ctrl<key>H", NULL, NULL,
-  helpMenuSimpleCallback, (XtPointer) HELP_ON_CONTEXT_BTN, NULL},
-{ "On Window...",&xmPushButtonGadgetClass, 'W', NULL, NULL, NULL,
-    helpMenuSimpleCallback, (XtPointer) HELP_ON_WINDOW_BTN, NULL},
-{ "On Keys...",  &xmPushButtonGadgetClass, 'K', NULL, NULL, NULL,
-    helpMenuSimpleCallback, (XtPointer) HELP_ON_KEYS_BTN, NULL},
-{ "Index...",    &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
-    helpMenuSimpleCallback, (XtPointer) HELP_INDEX_BTN, NULL},
-{ "On Help...",  &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
+{ "Overview",  &xmPushButtonGadgetClass, 'O', "Ctrl<key>H", NULL, NULL,
+  helpMenuSimpleCallback, (XtPointer) HELP_OVERVIEW_BTN, NULL},
+{ "Contents",&xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+    helpMenuSimpleCallback, (XtPointer) HELP_CONTENTS_BTN, NULL},
+{ "Object Index", &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
+    helpMenuSimpleCallback, (XtPointer) HELP_OBJECTS_BTN, NULL},
+{ "Editing",  &xmPushButtonGadgetClass, 'E', NULL, NULL, NULL,
+    helpMenuSimpleCallback, (XtPointer) HELP_EDIT_BTN, NULL},
+{ "New Features",    &xmPushButtonGadgetClass, 'N', NULL, NULL, NULL,
+    helpMenuSimpleCallback, (XtPointer) HELP_NEW_BTN, NULL},
+{ "On Help",  &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_ON_HELP_BTN, NULL},
-{ "Tutorial...", &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
-    helpMenuSimpleCallback, (XtPointer) HELP_TUTORIAL_BTN, NULL},
 { "On Version",  &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_ON_VERSION_BTN, NULL},
   NULL,
@@ -494,12 +571,12 @@ XButtonPressedEvent lastEvent;
 extern "C" {
 #endif
     extern Widget createAndPopupProductDescriptionShell(
-	XtAppContext appContext, Widget topLevelShell,
-	char *name, XmFontList nameFontList,
-	Pixmap namePixmap,
-	char *description, XmFontList descriptionFontList,
-	char *versionInfo, char *developedAt, XmFontList otherFontList,
-	int background, int foreground, int seconds);
+      XtAppContext appContext, Widget topLevelShell,
+      char *name, XmFontList nameFontList,
+      Pixmap namePixmap,
+      char *description, XmFontList descriptionFontList,
+      char *versionInfo, char *developedAt, XmFontList otherFontList,
+      int background, int foreground, int seconds);
 #ifdef __cplusplus
 	   }
 #endif
@@ -529,9 +606,10 @@ None<Key>osfDelete:     delete-previous-character() \n\
 None<Key>osfBackSpace:  delete-next-character()",
 
     "Medm*XmTextField.verifyBell: False",
-/***
-*** main window
-***/
+  /***
+  *** main window
+  ***/
+    "Medm.geometry: -5+5",
     "Medm.mainMW.mainMB*fontList: 8x13",
     "Medm.mainMW*frameLabel*fontList: 8x13",
     "Medm.mainMW*modeRB*XmToggleButton.indicatorOn: false",
@@ -539,41 +617,55 @@ None<Key>osfBackSpace:  delete-next-character()",
     "Medm.mainMW*modeRB*XmToggleButton.highlightThickness: 1",
     "Medm.mainMW*openFSD.dialogTitle: Open",
     "Medm.mainMW*helpMessageBox.dialogTitle: Help",
+    "Medm.mainMW*editHelpMessageBox.dialogTitle: Edit Summary",
     "Medm.mainMW*saveAsPD.dialogTitle: Save As...",
     "Medm.mainMW*saveAsPD.selectionLabelString: \
-Name of file to save display in:",
+Name of file in which to save display:",
     "Medm.mainMW*saveAsPD.okLabelString: Save",
     "Medm.mainMW*saveAsPD.cancelLabelString: Cancel",
+    "Medm.mainMW*printerSetupPD.selectionLabelString: Printer Name:",
+    "Medm.mainMW*gridPD.selectionLabelString: Grid Spacing:",
+#ifdef PROMPT_TO_EXIT
     "Medm.mainMW*exitQD.dialogTitle: Exit",
     "Medm.mainMW*exitQD.messageString: Do you really want to Exit?",
     "Medm.mainMW*exitQD.okLabelString: Yes",
     "Medm.mainMW*exitQD.cancelLabelString: No",
+#endif    
     "Medm.mainMW*XmRowColumn.tearOffModel: XmTEAR_OFF_ENABLED",
-/***
-*** objectPalette
-***/
+  /***
+  *** objectPalette
+  ***/
+    "Medm.objectS.geometry: -5+137",
     "Medm*objectMW.objectMB*fontList: 8x13",
     "Medm*objectMW*XmLabel.marginWidth: 0",
-/***
-*** display area
-***/
+  /***
+  *** bubbleHelp
+  ***/
+    "Medm*bubbleHelpD*background: #f9da3c",
+    "Medm*bubbleHelpD*borderColor: black",
+    "Medm*bubbleHelpD*borderWidth: 1",
+  /***
+  *** display area
+  ***/
     "Medm*displayDA*XmRowColumn.tearOffModel: XmTEAR_OFF_ENABLED",
-/* override some normal functions in displays for operational safety reasons */
+  /* override some normal functions in displays for operational safety reasons */
     "Medm*displayDA*XmPushButton.translations: #override  <Key>space: ",
     "Medm*displayDA*XmPushButtonGadget.translations: #override <Key>space: ",
     "Medm*displayDA*XmToggleButton.translations: #override  <Key>space: ",
     "Medm*displayDA*XmToggleButtonGadget.translations: #override <Key>space: ",
     "Medm*displayDA*radioBox*translations: #override <Key>space: ",
-/***
-*** colorPalette
-***/
+  /***
+  *** colorPalette
+  ***/
+    "Medm.colorS.geometry: -5-5",
     "Medm*colorMW.colorMB*fontList: 8x13",
     "Medm*colorMW*XmLabel.marginWidth: 0",
     "Medm*colorMW*colorPB.width: 20",
     "Medm*colorMW*colorPB.height: 20",
-/***
-*** resourcePalette
-***/
+  /***
+  *** resourcePalette
+  ***/
+    "Medm.resourceS.geometry: -5+304",
     "Medm*resourceMW.width: 360",
     "Medm*resourceMW.height: 460",
     "Medm*resourceMW.resourceMB*fontList: 8x13",
@@ -606,16 +698,16 @@ Name of file to save display in:",
     "Medm*resourceMW*importFSD*XmToggleButton.indicatorOn: True",
     "Medm*resourceMW*importFSD*XmToggleButton.labelType: XmString",
 #ifdef EXTENDED_INTERFACE
-/***
-*** channelPalette
-***/
+  /***
+  *** channelPalette
+  ***/
     "Medm*channelMW.width: 140",
     "Medm*channelMW.channelMB*fontList: 8x13",
     "Medm*channelMW*XmLabel.marginWidth: 0",
 #endif
-/***
-*** medmWidget resource specifications
-***/
+  /***
+  *** medmWidget resource specifications
+  ***/
     "Medm*warningDialog.background: salmon",
     "Medm*warningDialog.dialogTitle: Warning",
     "Medm*Indicator.AxisWidth: 3",
@@ -636,7 +728,7 @@ typedef struct {
     fontStyle_t fontStyle;
     Boolean privateCmap;
     char *macroString;
-    char displayFont[256];          /* !!!! warning : fix array size */
+    char displayFont[256];          /* !!!! warning : fixed array size */
     char *displayName;
     char *displayGeometry;
     int  fileCnt;
@@ -646,7 +738,7 @@ typedef struct {
 void requestDestroy(request_t *request) {
     if (request) {
 	if (request->macroString) free(request->macroString);
-/*    if (request->displayFont) free(request->displayFont);     */
+/*      if (request->displayFont) free(request->displayFont);     */
 	if (request->displayName) free(request->displayName);
 	if (request->displayGeometry) free(request->displayGeometry);
 	if (request->fileList) {
@@ -730,7 +822,7 @@ request_t * requestCreate(int argc, char *argv[]) {
 		      request->fontStyle = SCALABLE;
 		}
 	    }
-	} else if (!strcmp(argv[i],"-display")) {
+	} else if (!strcmp(argv[i],"-display")) {     /* KE: Won't X trap this? */
 	    char *tmp;
 	    argsUsed = i;
 	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
@@ -748,6 +840,7 @@ request_t * requestCreate(int argc, char *argv[]) {
 	    }
 	} else if (!strcmp(argv[i],"-bigMousePointer")) {
 	    medmUseBigCursor = 1;
+
 	    argsUsed = i;
 	}
     }
@@ -847,7 +940,7 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	XtVaGetValues(w,XmNtextString,&xmString,NULL);
 	XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&printerName);
 	variable = (char*) malloc(
-	    sizeof(char)*(strlen(printerName) + strlen(prefix) + 1));
+	  sizeof(char)*(strlen(printerName) + strlen(prefix) + 1));
 	if (variable) {
 	    strcpy(variable,prefix);
 	    strcat(variable,printerName);
@@ -878,6 +971,41 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 #ifdef __cplusplus
+static void gridDlgCb(Widget w, XtPointer cd, XtPointer)
+#else
+static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    Position X, Y;
+    XmString xmString;
+
+    switch ((int)cd) {
+    case GRID_OK:
+	if(cdi) {
+	    char *gridVal;
+	    XmString xmString;
+	    
+	    XtVaGetValues(w,XmNtextString,&xmString,NULL);
+	    XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&gridVal);
+	    cdi->gridSpacing = atoi(gridVal);
+	    if(cdi->gridSpacing < 2) cdi->gridSpacing = 2;
+	    free(gridVal);
+	    XmStringFree(xmString);
+	    XtUnmanageChild(w);
+	    dmTraverseNonWidgetsInDisplayList(cdi);
+	}
+	break;
+    case GRID_CANCEL:
+	XtUnmanageChild(w);
+	break;
+    case GRID_HELP:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#Grid");
+	break;
+    }
+}
+
+#ifdef __cplusplus
 static void viewMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 #else
 static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
@@ -903,22 +1031,27 @@ static void editMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
+    DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
 
-/* simply return if no current display */
-    if (currentDisplayInfo == NULL) return;
+  /* simply return if no current display */
+    if (cdi == NULL) return;
 
-/* (MDA) could be smarter about this too, and not do whole traversals...*/
+  /* (MDA) could be smarter about this too, and not do whole traversals...*/
 
     switch(buttonNumber) {
     case EDIT_OBJECT_BTN:
 	break;
 
+    case EDIT_UNDO_BTN:
+	restoreUndoInfo(cdi);
+	break;
+
     case EDIT_CUT_BTN:
 	copySelectedElementsIntoClipboard();
 	deleteElementsInDisplay();
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False)
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False)
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_COPY_BTN:
@@ -927,34 +1060,82 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_PASTE_BTN:
 	copyElementsIntoDisplay();
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_RAISE_BTN:
-	raiseSelectedElements(currentDisplayInfo);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	raiseSelectedElements();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_LOWER_BTN:
-	lowerSelectedElements(currentDisplayInfo);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	lowerSelectedElements();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_GROUP_BTN:
-	groupObjects(currentDisplayInfo);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	groupObjects();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_UNGROUP_BTN:
 	ungroupSelectedElements();
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
+    case EDIT_SAME_SIZE_BTN:
+	equalSizeSelectedElements();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+
+    case EDIT_GRID_SPACING_BTN:
+	XDefineCursor(display,XtWindow(mainShell),watchCursor);
+	if (!gridDlg) {
+	    int n;
+	    Arg args[4];
+	    XmString xmString;
+	    char label[1024];
+	    
+	    sprintf(label,"%d",cdi->gridSpacing);
+	    xmString = XmStringCreateLocalized(label);
+	    n = 0;
+	    XtSetArg(args[n],XmNtextString,xmString); n++;
+	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
+	    gridDlg = XmCreatePromptDialog(XtParent(mainEditPDM),"gridPD",args,n);
+	    XtAddCallback(gridDlg,XmNokCallback,gridDlgCb,
+	      (XtPointer)GRID_OK);
+	    XtAddCallback(gridDlg,XmNcancelCallback,
+	      gridDlgCb,(XtPointer)GRID_CANCEL);
+	    XtAddCallback(gridDlg,XmNhelpCallback,
+	      gridDlgCb,(XtPointer)GRID_HELP);
+	} else {
+	    int n;
+	    Arg args[4];
+	    XmString xmString;
+	    char label[1024];
+	    
+	    sprintf(label,"%d",cdi->gridSpacing);
+	    xmString = XmStringCreateLocalized(label);
+	    n = 0;
+	    XtSetArg(args[n],XmNtextString,xmString); n++;
+	    XtSetValues(gridDlg,args,n);
+	    XmStringFree(xmString);
+	}
+	XtManageChild(gridDlg);
+	XUndefineCursor(display,XtWindow(mainShell));
+	break;
+
+    case EDIT_GRID_TOGGLE_BTN:
+	cdi->gridOn=!cdi->gridOn;
+	dmTraverseNonWidgetsInDisplayList(cdi);
+	break;
+	
     case EDIT_UNSELECT_BTN:
 	unselectElementsInDisplay();
 	break;
@@ -962,33 +1143,81 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case EDIT_SELECT_ALL_BTN:
 	selectAllElementsInDisplay();
 	break;
+
+    case EDIT_REFRESH_BTN:
+	refreshDisplay();
+	break;	
+
+    case EDIT_HELP_BTN:
+    {
+	XmString xmString=XmStringCreateLocalized(
+	  "             EDIT Operations Summary\n"
+	  "\n"
+	  "Pointer in Create Mode (Crosshair Cursor)\n"
+	  "=========================================\n"
+	  "Btn1         Drag to create object.\n"
+	  "Btn3         Popup edit menu.\n"
+	  "\n"
+	  "Pointer in Select Mode (Pointing Hand Cursor)\n"
+	  "=============================================\n"
+	  "Btn1         Select objects.\n"
+	  "             Vertex edit for Polygon and Polyline.\n"
+	  "               (Shift afterward constrains direction.)\n"
+	  "Shift-Btn1   Add or remove from selected objects.\n"
+	  "Ctrl-Btn1    Cycle selection through overlapping objects.\n"
+	  "Btn2         Move objects.\n"
+	  "Ctrl-Btn2    Resize objects.\n"
+	  "Btn3         Popup edit menu.\n"
+	  "\n"
+	  "Keyboard\n"
+	  "========\n"
+	  "Arrow Key    Move selected objects.\n"
+	  "Shift-Arrow  Move selected objects.\n"
+	  "Ctrl-Arrow   Resize selected objects.\n"
+	    );
+	Arg args[20];
+	int nargs;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
+	XtSetValues(editHelpMessageBox,args,nargs);
+	XmStringFree(xmString);
+	XtPopup(editHelpS,XtGrabNone);
+	break;
+    }
     }
 }
-
+    
 #ifdef __cplusplus
 static void alignHorizontalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 #else
 static void alignHorizontalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
+    DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
     switch(buttonNumber) {
-/* reuse the TextAlign values here */
+      /* reuse the TextAlign values here */
     case ALIGN_HORIZ_LEFT_BTN:
 	alignSelectedElements(HORIZ_LEFT);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_CENTER_BTN:
 	alignSelectedElements(HORIZ_CENTER);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_RIGHT_BTN:
 	alignSelectedElements(HORIZ_RIGHT);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ALIGN_TO_GRID_BTN:
+	alignSelectedElementsToGrid();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -999,24 +1228,54 @@ static void alignVerticalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 static void alignVerticalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
+    DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
 
     switch(buttonNumber) {
-/* reuse the TextAlign values here */
+      /* reuse the TextAlign values here */
     case ALIGN_VERT_TOP_BTN:
 	alignSelectedElements(VERT_TOP);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_CENTER_BTN:
 	alignSelectedElements(VERT_CENTER);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_BOTTOM_BTN:
 	alignSelectedElements(VERT_BOTTOM);
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+static void spaceMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonNumber = (int) cd;
+
+    switch(buttonNumber) {
+      /* reuse the TextAlign values here */
+    case SPACE_HORIZ_BTN:
+	spaceSelectedElements(HORIZONTAL);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case SPACE_VERT_BTN:
+	spaceSelectedElements(VERTICAL);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case SPACE_2D_BTN:
+	spaceSelectedElements2D();
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -1041,9 +1300,9 @@ static void mapCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 static void fileTypeCallback(
-    Widget w,
-    int buttonNumber,
-    XmToggleButtonCallbackStruct *call_data)
+  Widget w,
+  int buttonNumber,
+  XmToggleButtonCallbackStruct *call_data)
 {
     Widget fsb;
     Arg args[4];
@@ -1190,10 +1449,10 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
       /* for some reason, currentDisplay is not valid, break */
 	if ((currentDisplayInfo->newDisplay)
 	  || (buttonNumber == FILE_SAVE_AS_BTN)) {
-	  /* new display or user want to save as a different name */
+	  /* new display or user wants to save as a different name */
 	    WidgetList children;
 	    XmListDeselectAllItems(
-		XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_LIST));
+	      XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_LIST));
 	    XmFileSelectionDoSearch(saveAsPD,NULL);
 	    XtVaGetValues(radioBox,
 	      XmNchildren, &children, NULL);
@@ -1228,12 +1487,13 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (!printerSetupDlg) {
 	    int n = 0;
 	    Arg args[4];
+	    
 	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
 	    printerSetupDlg = XmCreatePromptDialog(
-		XtParent(mainFilePDM),
-		"printerSetupPD",args,n);
+	      XtParent(mainFilePDM),
+	      "printerSetupPD",args,n);
 	    XtUnmanageChild(XmSelectionBoxGetChild(
-		printerSetupDlg,XmDIALOG_HELP_BUTTON));
+	      printerSetupDlg,XmDIALOG_HELP_BUTTON));
 	    XtAddCallback(printerSetupDlg,XmNokCallback,printerSetupDlgCb,
 	      PRINTER_SETUP_OK);
 	    XtAddCallback(printerSetupDlg,XmNcancelCallback,
@@ -1274,9 +1534,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 #if 0
 static void medmExitMapCallback(
-    Widget w,
-    DisplayInfo *displayInfo,
-    XmAnyCallbackStruct *call_data)
+  Widget w,
+  DisplayInfo *displayInfo,
+  XmAnyCallbackStruct *call_data)
 {
     Position X, Y;
 
@@ -1354,11 +1614,11 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    brandNewFile = True;
 	} else {
 	    sprintf(warningString,"Fail to create/write file :\n%s",filename);
-	    dmSetAndPopupWarningDialog(displayInfo,warningString,"Ok",NULL,NULL);
+	    dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	    return False;
 	}
     } else {
-      /* file exists, see whether the user want to overwrite the file. */
+      /* file exists, see whether the user wants to overwrite the file. */
 	if (!overwrite) {
 	    sprintf(warningString,"Do you want to overwrite file :\n%s",f1);
 	    dmSetAndPopupQuestionDialog(displayInfo,warningString,"Yes","No",NULL);
@@ -1375,7 +1635,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	if (access(f2,W_OK) == -1) {
 	    if (errno != ENOENT) {
 		sprintf(warningString,"Cannot write backup file :\n%s",filename);
-		dmSetAndPopupWarningDialog(displayInfo,warningString,"Ok",NULL,NULL);
+		dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 		return False;
 	    }
 	}
@@ -1394,7 +1654,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     stream = fopen(f1,"w");
     if (stream == NULL) {
 	sprintf(warningString,"Fail to create/write file :\n%s",filename);
-	dmSetAndPopupWarningDialog(displayInfo,warningString,"Ok",NULL,NULL);
+	dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	return False;
     }
     strcpy(displayInfo->dlFile->name,f1);
@@ -1429,10 +1689,19 @@ void medmExit() {
 		    tmp++;
 		}
 		sprintf(str,"Save display \"%s\" before exit?",filename);
+#ifdef PROMPT_TO_EXIT
+	      /* Don't use Cancel, use All (Only 3 buttons) */
 		if (displayInfo->next)
 		  dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No","All");
 		else
 		  dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No",NULL);
+#else
+	      /* Use Cancel, don't use All (Only 3 buttons) */
+		if (displayInfo->next)
+		  dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No","Cancel");
+		else
+		  dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No","Cancel");
+#endif
 		switch (displayInfo->questionDialogAnswer) {
 		case 1 :
 		  /* Yes, save this file */
@@ -1443,9 +1712,14 @@ void medmExit() {
 		    saveThis = False;
 		    break;
 		case 3 :
-		  /* save all files */
+#ifdef PROMPT_TO_EXIT
+		  /* Save all files */
 		    saveAll = True;
 		    saveThis = True;
+#else
+		  /* Cancel */
+		    return;
+#endif
 		    break;
 		default :
 		    saveThis = False;
@@ -1458,18 +1732,29 @@ void medmExit() {
 	}
 	displayInfo = displayInfo->next;
     }
+#ifdef PROMPT_TO_EXIT
+  /* Prompt to exit */
     XtVaSetValues(mainShell,
       XmNiconic, False,
       NULL);
     XtPopup(mainShell,XtGrabNone);
     XtManageChild(exitQD);
     XtPopup(XtParent(exitQD),XtGrabNone);
+#else
+  /* Exit without prompt */
+    medmClearImageCache();
+    medmCATerminate();
+    destroyFreeStringList();
+    destroyMedmWidget();
+    dmTerminateX();
+    exit(0);
+#endif
 }
 
 static void fileMenuDialogCallback(
-    Widget w,
-    XtPointer clientData,
-    XtPointer callbackStruct)
+  Widget w,
+  XtPointer clientData,
+  XtPointer callbackStruct)
 {
     int btn = (int) clientData;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) callbackStruct;
@@ -1585,31 +1870,63 @@ static void helpMenuSimpleCallback(Widget, XtPointer cd, XtPointer cbs)
 static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-    int buttonNumber = (int) cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
+    int buttonNumber = (int)cd;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     Widget widget;
     XEvent event;
-
+    
     switch(buttonNumber) {
       /* implement context sensitive help */
-    case HELP_ON_CONTEXT_BTN:
-	widget = XmTrackingEvent(mainShell,helpCursor,False,&event);
-	if (widget != (Widget)NULL) {
-	    call_data->reason = XmCR_HELP;
-	    XtCallCallbacks(widget,XmNhelpCallback,&call_data);
-	}
+/*     case HELP_OVERVIEW_BTN: */
+/* 	widget = XmTrackingEvent(mainShell,helpCursor,False,&event); */
+/* 	if (widget != (Widget)NULL) { */
+/* 	    call_data->reason = XmCR_HELP; */
+/* 	    XtCallCallbacks(widget,XmNhelpCallback,&call_data); */
+/* 	} */
+/* 	break; */
+    case HELP_OVERVIEW_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#Overview");
 	break;
-    case HELP_ON_WINDOW_BTN:
-    case HELP_ON_KEYS_BTN:
-    case HELP_INDEX_BTN:
+    case HELP_CONTENTS_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#Contents");
+	break;
+    case HELP_OBJECTS_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectIndex");
+	break;
+    case HELP_EDIT_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#Editing");
+	break;
+    case HELP_NEW_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#NewFeatures");
+	break;
     case HELP_ON_HELP_BTN:
-    case HELP_TUTORIAL_BTN:
+    {
+	XmString xmString=XmStringCreateLocalized(
+	  "     Help in this version of MEDM is implemented using Netscape.  If\n"
+	  "the environmental variable NETSCAPEPATH containing the full pathname\n"
+	  "of the Netscape executable exists, then that path is used to call\n"
+	  "Netscape.  Otherwise, it is called using just the command, netscape.\n"
+	  "If Netscape is not available, then most of the MEDM help is not\n"
+	  "available.\n"
+	  "\n"
+	  "     If Netscape is running when MEDM first calls it, then the\n"
+	  "response should be fairly quick.  Otherwise, the first call to help\n"
+	  "must wait until Netscape comes up, which will take somewhat longer.\n"
+	    );
+	Arg args[20];
+	int nargs;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
+	XtSetValues(helpMessageBox,args,nargs);
+	XmStringFree(xmString);
+	XtPopup(helpS,XtGrabNone);
 	break;
+    }
     case HELP_ON_VERSION_BTN:
 	XtPopup(productDescriptionShell,XtGrabNone);
 	break;
     }
-
 }
 
 #ifdef __cplusplus
@@ -1627,34 +1944,67 @@ static void helpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 #ifdef __cplusplus
+static void editHelpDialogCallback(Widget, XtPointer, XtPointer cbs)
+#else
+static void editHelpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    switch(((XmAnyCallbackStruct *) cbs)->reason){
+    case XmCR_OK:
+    case XmCR_CANCEL:
+	XtPopdown(editHelpS);
+	break;
+    }
+}
+
+#ifdef __cplusplus
 static void modeCallback(Widget, XtPointer cd, XtPointer cbs)
 #else
 static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-    DlTraversalMode mode = (DlTraversalMode) cd;
-    XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
+    DlTraversalMode mode = (DlTraversalMode)cd;
+    XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *)cbs;
     DisplayInfo *displayInfo;
 
-/*
- * since both on & off will invoke this callback, only care about transition
- * of one to ON (with real change of state)
- */
+#ifdef DEBUG_RADIO_BUTTONS
+    {
+	Boolean radioBehavior,set;
+	unsigned char indicatorType;
+	Arg args[20];
+	int nargs;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
+	XtGetValues(XtParent(w),args,nargs);
+	printf("\nmodeCallback: mode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
+	  mode,DL_EXECUTE,DL_EDIT);
+	printf("\nParent(%d): XmNradioBehavior=%d \n",XtParent(w),(int)radioBehavior);
+
+	nargs=0;
+	XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
+	XtSetArg(args[nargs],XmNset,&set); nargs++;
+	XtGetValues(w,args,nargs);
+	printf("Widget(%d): XmNindicatorType=%d "
+	  "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
+	  w,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
+	printf("Widget(%d): XmNset=%d\n",w,(int)set);
+    }
+#endif
+
+  /* Since both on & off will invoke this callback, only care about transition
+   *   of one to ON (with real change of state) */
     if (call_data->set == False ||
       globalDisplayListTraversalMode == mode) return;
 
-/*
- * set all the displayInfo->traversalMode(s) to the specified mode, and
- * then invoke the traversal
- */
+  /* Set all the displayInfo->traversalMode(s) to the specified mode, and
+   *   then invoke the traversal */
     globalDisplayListTraversalMode = mode;
 
-/* unselect anything that might be selected */
-#if 0
-    highlightAndSetSelectedElements(NULL,0,0);
-#endif
-    clearResourcePaletteEntries();
+  /* Unselect any selected elements */
+    unselectElementsInDisplay();
 
+  /* Disable EDIT functions */
     disableEditFunctions();
 
     switch(mode) {
@@ -1700,18 +2050,14 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 
     executeTimeCartesianPlotWidget = NULL;
-/* no display is current */
+  /* No display is current */
     currentDisplayInfo = (DisplayInfo *)NULL;
 
+  /* Go through the whole display list, if any display is
+   *   brought up as a related display, shut down that display
+   *   and remove that display from the display list, otherwise,
+   *   just shutdown that display. */
     displayInfo = displayInfoListHead->next;
-
-  /*
-   * Go through the whole display list, if any display is
-   * brought up as a related display, shut down that display
-   * and remove that display from the display list, otherwise,
-   * just shutdown that display.
-   */
-
     while (displayInfo) {
 	DisplayInfo *pDI = displayInfo;
 
@@ -1724,12 +2070,9 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
     }
 
-  /*
-   * See whether there is any display in the display list.
-   * If any, enable resource palette, object palette and
-   * color palette, traverse the whole display list.
-   */
-
+  /* See whether there is any display in the display list.
+   *   If any, enable resource palette, object palette and
+   *   color palette, traverse the whole display list. */
     if (displayInfoListHead->next) {
 	if (globalDisplayListTraversalMode == DL_EDIT) {
 	    enableEditFunctions();
@@ -1752,7 +2095,6 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 #else
     ca_pend_event(CA_PEND_EVENT_TIME);
 #endif
-
 }
 
 static void createCursors()
@@ -1766,14 +2108,14 @@ static void createCursors()
     Dimension hotSpotWidth = HOT_SPOT_WIDTH;
     Dimension radius;
 
-/*
- * create pixmap cursors
- */
+  /*
+   * create pixmap cursors
+   */
     colors[0].pixel = BlackPixel(display,screenNum);
     colors[1].pixel = WhitePixel(display,screenNum);
     XQueryColors(display,cmap,colors,2);
 
-/* CLOSE cursor */
+  /* CLOSE cursor */
     XTextExtents(fontTable[6],"Close",5,&dir,&asc,&desc,&overall);
     sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
       overall.width+hotSpotWidth,asc+desc,1);
@@ -1800,7 +2142,7 @@ static void createCursors()
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
-/* SAVE cursor */
+  /* SAVE cursor */
     XTextExtents(fontTable[6],"Save",4,&dir,&asc,&desc,&overall);
     sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
       overall.width+hotSpotWidth,asc+desc,1);
@@ -1822,7 +2164,7 @@ static void createCursors()
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
-/* PRINT cursor */
+  /* PRINT cursor */
     XTextExtents(fontTable[6],"Print",5,&dir,&asc,&desc,&overall);
     sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
       overall.width+hotSpotWidth,asc+desc,1);
@@ -1844,7 +2186,7 @@ static void createCursors()
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
-/* no write access cursor */
+  /* no write access cursor */
     colors[0].pixel = alarmColorPixel[MAJOR_ALARM];
     colors[1].pixel = WhitePixel(display,screenNum);
     XQueryColors(display,cmap,colors,2);
@@ -1858,7 +2200,7 @@ static void createCursors()
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
-/* big hand cursor */
+  /* big hand cursor */
     if (medmUseBigCursor) {
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -1876,7 +2218,7 @@ static void createCursors()
 	rubberbandCursor = XCreateFontCursor(display,XC_hand2);
     }
 
-/* big cross cursor */
+  /* big cross cursor */
     if (medmUseBigCursor) {
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -1894,7 +2236,7 @@ static void createCursors()
 	crosshairCursor = XCreateFontCursor(display,XC_crosshair);
     }
 
-/* big 4 way pointers */
+  /* big 4 way pointers */
     if (medmUseBigCursor) {
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -1913,7 +2255,7 @@ static void createCursors()
 	dragCursor = XCreateFontCursor(display,XC_fleur);
     }
 
-/* big size cursor pointers */
+  /* big size cursor pointers */
     if (medmUseBigCursor) {
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -1933,7 +2275,7 @@ static void createCursors()
 	resizeCursor = XCreateFontCursor(display,XC_bottom_right_corner);
     }
 
-/* big watch cursor pointers */
+  /* big watch cursor pointers */
     if (medmUseBigCursor) {
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -1955,9 +2297,9 @@ static void createCursors()
 
     XFreeGC(display,gc);
 
-/*
- * now create standard font cursors
- */
+  /*
+   * now create standard font cursors
+   */
     helpCursor = XCreateFontCursor(display,XC_question_arrow);
     xtermCursor = XCreateFontCursor(display,XC_xterm);
 
@@ -2093,11 +2435,11 @@ static void handleSignals(int sig)
  */
 
 void sendFullPathNameAndMacroAsClientMessages(
-    Window targetWindow,
-    char *fullPathName,
-    char *macroString,
-    char *geometryString,
-    Atom atom)
+  Window targetWindow,
+  char *fullPathName,
+  char *macroString,
+  char *geometryString,
+  Atom atom)
 {
     XClientMessageEvent clientMessageEvent;
     int index, i;
@@ -2113,11 +2455,11 @@ void sendFullPathNameAndMacroAsClientMessages(
     clientMessageEvent.message_type = atom;
     clientMessageEvent.format = 8;
     ptr = fullPathName;
-/* leading "(" */
+  /* leading "(" */
     clientMessageEvent.data.b[0] = '(';
     index = 1;
 
-/* body of full path name string */
+  /* body of full path name string */
     while (ptr[0] != '\0') {
 	if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
 	    XSendEvent(display,targetWindow,True,NoEventMask,
@@ -2157,7 +2499,7 @@ void sendFullPathNameAndMacroAsClientMessages(
     }
     clientMessageEvent.data.b[index++] = ';';
 
-/* body of geometry string if one was specified */
+  /* body of geometry string if one was specified */
     if ((ptr = geometryString) != NULL) {
 	while (ptr[0] != '\0') {
 	    if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
@@ -2170,14 +2512,14 @@ void sendFullPathNameAndMacroAsClientMessages(
 	}
     }
 
-/* trailing ")" */
+  /* trailing ")" */
     if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
 	XSendEvent(display,targetWindow,True,NoEventMask,
 	  (XEvent *)&clientMessageEvent);
 	index = 0;
     }
     clientMessageEvent.data.b[index++] = ')';
-/* fill out client event with spaces just for "cleanliness" */
+  /* fill out client event with spaces just for "cleanliness" */
     for (i = index; i < MAX_CHARS_IN_CLIENT_MESSAGE; i++)
       clientMessageEvent.data.b[i] = ' ';
     XSendEvent(display,targetWindow,True,NoEventMask,
@@ -2256,7 +2598,7 @@ main(int argc, char *argv[])
 
     Window medmHostWindow = (Window)0;
 
-/*  channel status */
+  /*  Initialize global variables */
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;
     nextToServe = NULL;
@@ -2298,17 +2640,17 @@ main(int argc, char *argv[])
 #endif
     }
 
-/*
- * initialize channel access here (to get around orphaned windows)
- */
+  /*
+   * initialize channel access here (to get around orphaned windows)
+   */
     SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
 
     request = requestCreate(argc,argv);
 
-/*
- * allow for quick startup (using existing MEDM)
- *  open display, check for atoms, etc
- */
+  /*
+   * allow for quick startup (using existing MEDM)
+   *  open display, check for atoms, etc
+   */
     if (request->macroString != NULL && request->opMode != EXECUTE) {
 	fprintf(stderr,"\nmedm: %s %s","-macro command line option only valid",
 	  "for execute (-x) mode operation");
@@ -2316,8 +2658,19 @@ main(int argc, char *argv[])
 	request->macroString = NULL;
     }
     if (request->opMode == ERROR) {
-	fprintf(stderr,"\nusage: medm -x  files... for execution  or  medm -e  files... for edit");
-	fprintf(stderr,"\n       -local  for forced local display/execution...\n");
+	fprintf(stderr,"\nUsage:\n"
+	  "  medm [X options]\n"
+	  "  [-help | -?]\n"
+	  "  [-x | -e]\n"
+	  "  [-local | -cleanup]\n"
+	  "  [-cmap]\n"
+	  "  [-bigMousePointer]\n"
+	  "  [-displayFont font-spec]\n"
+	  "  [-macro \"xxx=aaa,yyy=bbb, ...\"]\n"
+	  "  [-dg [xpos[xypos]][+xoffset[+yoffset]]\n"
+	  "  [display-files]\n"
+	  "  [&]\n"
+	  "\n");
 	exit(2);
     }
 
@@ -2416,17 +2769,28 @@ main(int argc, char *argv[])
 	XCloseDisplay(display);
     } /* end if (!request->medmMode) */
 
-/*
- * initialize the Intrinsics..., create main shell
- */   
+  /*
+   * Initialize the Intrinsics..., create main shell
+   */   
     n = 0;
-/* map window manager menu Close function to application close... */
+  /* Map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
     mainShell = XtAppInitialize(&appContext, CLASS, NULL, 0, &argc, argv,
       fallbackResources, args, n);
 
-/* add necessary Motif resource converters */
+  /* Set error handlers */
+    XtAppSetErrorHandler(appContext,xtErrorHandler);
+    XtAppSetWarningHandler(appContext,xtErrorHandler);
+    XSetErrorHandler(xErrorHandler);
+    
+
+  /* Enable Editres */
+#ifdef EDITRES    
+    XtAddEventHandler(mainShell,(EventMask)NULL,TRUE,_XEditResCheckMessages,NULL);
+#endif
+    
+  /* Add necessary Motif resource converters */
     XmRegisterConverters();
     XmRepTypeInstallTearOffModelConverter();
 
@@ -2435,7 +2799,9 @@ main(int argc, char *argv[])
 	XtWarning("cannot open display");
 	exit(-1);
     }
-#ifdef DEBUG
+
+  /* Set XSynchronize for debugging */
+#ifdef XSYNC
     XSynchronize(display,TRUE);
     fprintf(stderr,"\nRunning in SYNCHRONOUS mode!!");
 #endif
@@ -2455,12 +2821,12 @@ main(int argc, char *argv[])
 	cmap = XCopyColormapAndFree(display,cmap);
 	XtVaSetValues(mainShell,XmNcolormap,cmap,NULL);
     }
-
-/*
- * for remote display start-up:
- *  register signal handlers to assure property states (unfortunately
- *    SIGKILL, SIGSTOP can't be caught...)
- */
+    
+  /*
+   * for remote display start-up:
+   *  register signal handlers to assure property states (unfortunately
+   *  SIGKILL, SIGSTOP can't be caught...)
+   */
 #if defined(__cplusplus) && !defined(__GNUG__)
     signal(SIGQUIT,(SIG_PF)handleSignals);
     signal(SIGINT, (SIG_PF)handleSignals);
@@ -2475,7 +2841,7 @@ main(int argc, char *argv[])
     signal(SIGBUS, handleSignals);
 #endif
 
-/* add translations/actions for drag-and-drop */
+  /* add translations/actions for drag-and-drop */
     parsedTranslations = XtParseTranslationTable(dragTranslations);
     XtAppAddActions(appContext,dragActions,XtNumber(dragActions));
 
@@ -2493,9 +2859,9 @@ main(int argc, char *argv[])
 	  globalDisplayListTraversalMode = DL_EDIT;
       }
 
-/*
- * initialize some globals
- */
+  /*
+   * initialize some globals
+   */
     globalModifiedFlag = False;
     mainMW = NULL;
     objectS = NULL; objectMW = NULL;
@@ -2565,9 +2931,9 @@ main(int argc, char *argv[])
   /* default action for MB in display is select (regulated by object palette) */
     currentActionType = SELECT_ACTION;
 
-/*
- * intialize MEDM stuff
- */
+  /*
+   * intialize MEDM stuff
+   */
     medmInit(request->displayFont);
     medmInitializeImageCache();
     createCursors();
@@ -2578,10 +2944,10 @@ main(int argc, char *argv[])
     initEventHandlers();
     initMedmWidget();
 
-/*
- *  ...we're the first MEDM around in this mode - proceed with full execution
- *   but store dummy property first
- */
+  /*
+   *  ...we're the first MEDM around in this mode - proceed with full execution
+   *   but store dummy property first
+   */
     targetWindow = XtWindow(mainShell);
     if (request->opMode == EXECUTE) {
 	if (request->fontStyle == FIXED) {
@@ -2605,9 +2971,9 @@ main(int argc, char *argv[])
 	}
     }
 
-/*
- * start any command-line specified displays
- */
+  /*
+   * start any command-line specified displays
+   */
     for (i=0; i < request->fileCnt; i++) {
 	char *fileStr;
 	if (fileStr = request->fileList[i]) {
@@ -2625,32 +2991,32 @@ main(int argc, char *argv[])
 	enableEditFunctions();
     }
 
-/*
- * create and popup the product description shell
- *  (use defaults for fg/bg)
- */
-
+  /*
+   * create and popup the product description shell
+   *  (use defaults for fg/bg)
+   */
     sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,EPICS_VERSION_STRING);
     productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
       mainShell,
       "MEDM", fontListTable[8],
       (Pixmap)NULL,
-      "Motif-based Editor & Display Manager",
+      "Motif-Based Editor & Display Manager",
       fontListTable[6],
       versionString,
-      "developed at Argonne National Laboratory, by Fred Vong & Mark Anderson",
+      "Developed at Argonne National Laboratory\n"
+      "     by Mark Anderson, Fred Vong, & Ken Evans",
       fontListTable[4],
-      -1, -1, 3);
+      -1, -1, 5);
 
-/* need this later than shell creation for some reason (?) */
+  /* need this later than shell creation for some reason (?) */
     XmAddWMProtocolCallback(mainShell,WM_DELETE_WINDOW,
       wmCloseCallback, (XtPointer) OTHER_SHELL);
 
     XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
 
-/*
- * now go into event loop - formerly XtAppMainLoop(appContext);
- */
+  /*
+   * now go into event loop - formerly XtAppMainLoop(appContext);
+   */
 
 #ifdef __TED__
     GetWorkSpaceList(mainMW);
@@ -2717,8 +3083,8 @@ main(int argc, char *argv[])
 			fclose(filePtr);
 		    } else {
 			medmPrintf(
-			    "\nMEDM: could not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
-			    fullPathName);
+			  "\nMEDM: could not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
+			  fullPathName);
 		    }
 		}
 
@@ -2752,26 +3118,27 @@ static void createMain()
     int n;
     Arg args[20];
 
+  /* create a main window child of the main shell */
     n = 0;
-/* create a main window child of the main shell */
     mainMW = XmCreateMainWindow(mainShell,"mainMW",args,n);
 
-/* get default fg/bg colors from mainMW for later use */
-    XtSetArg(args[0],XmNbackground,&defaultBackground);
-    XtSetArg(args[1],XmNforeground,&defaultForeground);
-    XtGetValues(mainMW,args,2);
+  /* get default fg/bg colors from mainMW for later use */
+    n = 0;
+    XtSetArg(args[n],XmNbackground,&defaultBackground); n++;
+    XtSetArg(args[n],XmNforeground,&defaultForeground); n++;
+    XtGetValues(mainMW,args,n);
 
-/*
- * create the menu bar
- */
+  /*
+   * create the menu bar
+   */
     mainMB = XmCreateMenuBar(mainMW,"mainMB",NULL,0);
 
-/* color mainMB properly (force so VUE doesn't interfere) */
+  /* color mainMB properly (force so VUE doesn't interfere) */
     colorMenuBar(mainMB,defaultForeground,defaultBackground);
 
-/*
- * create the file pulldown menu pane
- */
+  /*
+   * create the file pulldown menu pane
+   */
 
     mainFilePDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
@@ -2782,45 +3149,45 @@ static void createMain()
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
     }
 
-/*
- * create the edit pulldown menu pane
- */
+  /*
+   * create the edit pulldown menu pane
+   */
     mainEditPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Edit", 'E', editMenu);
 
     if (globalDisplayListTraversalMode == DL_EXECUTE)
       XtSetSensitive(mainEditPDM,False);
 
-/*
- * create the view pulldown menu pane
- */
+  /*
+   * create the view pulldown menu pane
+   */
     mainViewPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "View", 'V', viewMenu);
 
-/*
- * create the palettes pulldown menu pane
- */
+  /*
+   * create the palettes pulldown menu pane
+   */
     mainPalettesPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Palettes", 'P', palettesMenu);
 
     if (globalDisplayListTraversalMode == DL_EXECUTE)
       XtSetSensitive(mainPalettesPDM,False);
 
-/*
- * create the help pulldown menu pane
- */
+  /*
+   * create the help pulldown menu pane
+   */
     mainHelpPDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "Help", 'H', helpMenu);
 
     XtVaSetValues(mainMB, XmNmenuHelpWidget, mainHelpPDM, NULL);
 
-/* don't enable other help functions yet */
-    XtSetSensitive(helpMenu[HELP_ON_CONTEXT_BTN].widget,False);
-    XtSetSensitive(helpMenu[HELP_ON_WINDOW_BTN].widget,False);
-    XtSetSensitive(helpMenu[HELP_ON_KEYS_BTN].widget,False);
-    XtSetSensitive(helpMenu[HELP_INDEX_BTN].widget,False);
-    XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False);
-    XtSetSensitive(helpMenu[HELP_TUTORIAL_BTN].widget,False);
+  /* don't enable other help functions yet */
+/*     XtSetSensitive(helpMenu[HELP_OVERVIEW_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_CONTENTS_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_OBJECTS_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_EDIT_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_NEW_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False); */
 
     n = 0;
     XtSetArg(args[n],XmNmarginHeight,9); n++;
@@ -2829,9 +3196,9 @@ static void createMain()
     XtAddCallback(mainBB,XmNhelpCallback,
       globalHelpCallback,(XtPointer)HELP_MAIN);
 
-/*
- * create mode frame
- */
+  /*
+   * create mode frame
+   */
     n = 0;
     XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
     frame = XmCreateFrame(mainBB,"frame",args,n);
@@ -2847,9 +3214,9 @@ static void createMain()
     XtManageChild(frame);
 
     if (globalDisplayListTraversalMode == DL_EDIT) {
-/*
- * create the mode radio box and buttons
- */
+      /*
+       * create the mode radio box and buttons
+       */
 	n = 0;
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
@@ -2878,10 +3245,10 @@ static void createMain()
 
     } else {
 
-/* if started in execute mode, then no editing allowed, therefore
- * the modeRB widget is really a frame with a label indicating
- * execute-only mode
- */
+      /* if started in execute mode, then no editing allowed, therefore
+       * the modeRB widget is really a frame with a label indicating
+       * execute-only mode
+       */
 	label = XmStringCreateSimple("Execute-Only");
 	n = 0;
 	XtSetArg(args[n],XmNlabelString,label); n++;
@@ -2894,20 +3261,20 @@ static void createMain()
 
     }
 
-/*
- * manage the composites
- */
+  /*
+   * manage the composites
+   */
     XtManageChild(mainBB);
     XtManageChild(mainMB);
     XtManageChild(mainMW);
 
-/************************************************
-****** create main-window related dialogs ******
-************************************************/
+  /************************************************
+  ****** create main-window related dialogs ******
+  ************************************************/
 #if 0
-/*
- * create the Save As... prompt dialog
- */
+  /*
+   * create the Save As... prompt dialog
+   */
     {
 	n = 0;
 	XtSetArg(args[n],XmNdefaultPosition,False); n++;
@@ -2951,11 +3318,12 @@ static void createMain()
 	    for (i = 0; i < 2; i++) XmStringFree(buttons[i]);
 	}
     }
-
 #endif
-/*
- * create the Exit... warning dialog
- */
+    
+#ifdef PROMPT_TO_EXIT
+  /*
+   * create the Exit... warning dialog
+   */
 
     exitQD = XmCreateQuestionDialog(XtParent(mainFilePDM),"exitQD",NULL,0);
     XtVaSetValues(XtParent(exitQD),XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH, NULL);
@@ -2964,16 +3332,17 @@ static void createMain()
       fileMenuDialogCallback,(XtPointer)FILE_EXIT_BTN);
     XtAddCallback(exitQD,XmNokCallback,fileMenuDialogCallback,
       (XtPointer)FILE_EXIT_BTN);
-
-/*
- * create the Help information shell
- */
+#endif
+    
+  /*
+   * create the Help information shell
+   */
     n = 0;
     XtSetArg(args[n],XtNiconName,"Help"); n++;
     XtSetArg(args[n],XtNtitle,"Medm Help System"); n++;
     XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
     XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
-/* map window manager menu Close function to application close... */
+  /* map window manager menu Close function to application close... */
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
 
@@ -2985,16 +3354,43 @@ static void createMain()
     XtSetArg(args[n],XmNdialogType,XmDIALOG_INFORMATION); n++;
     helpMessageBox = XmCreateMessageBox(helpS,"helpMessageBox",
       args,n);
-    XtAddCallback(helpMessageBox,XmNcancelCallback,
-      helpDialogCallback, (XtPointer)NULL);
+    XtUnmanageChild(XmMessageBoxGetChild(helpMessageBox,XmDIALOG_CANCEL_BUTTON));
+    XtUnmanageChild(XmMessageBoxGetChild(helpMessageBox,XmDIALOG_HELP_BUTTON));
     XtAddCallback(helpMessageBox,XmNokCallback,
       helpDialogCallback,(XtPointer)NULL);
 
     XtManageChild(helpMessageBox);
 
-/*
- * and realize the toplevel shell widget
- */
+  /*
+   * create the EditHelp information shell
+   */
+    n = 0;
+    XtSetArg(args[n],XtNiconName,"EditHelp"); n++;
+    XtSetArg(args[n],XtNtitle,"Edit Help"); n++;
+    XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
+    XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
+  /* map window manager menu Close function to application close... */
+    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+
+    editHelpS = XtCreatePopupShell("editHelpS",topLevelShellWidgetClass,
+      mainShell,args,n);
+    XmAddWMProtocolCallback(editHelpS,WM_DELETE_WINDOW,
+      wmCloseCallback,(XtPointer)OTHER_SHELL);
+    n = 0;
+    XtSetArg(args[n],XmNdialogType,XmDIALOG_INFORMATION); n++;
+    editHelpMessageBox = XmCreateMessageBox(editHelpS,"editHelpMessageBox",
+      args,n);
+    XtUnmanageChild(XmMessageBoxGetChild(editHelpMessageBox,XmDIALOG_CANCEL_BUTTON));
+    XtUnmanageChild(XmMessageBoxGetChild(editHelpMessageBox,XmDIALOG_HELP_BUTTON));
+    XtAddCallback(editHelpMessageBox,XmNokCallback,
+      editHelpDialogCallback,(XtPointer)NULL);
+
+    XtManageChild(editHelpMessageBox);
+
+  /*
+   * and realize the toplevel shell widget
+   */
     XtRealizeWidget(mainShell);
 
 }

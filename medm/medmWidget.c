@@ -252,7 +252,8 @@ void medmInit(char *displayFont)
  */
     highlightGC = XCreateGC(display,rootWindow,0,NULL);
     XSetFunction(display,highlightGC,GXinvert);
-  /* pick a color which XOR-ing with makes reasonable sense for most colors */
+  /* Pick a color which XOR-ing with makes reasonable sense for most colors */
+  /* KE: Forgroung is irrelevant for GXinvert */
     XSetForeground(display,highlightGC,WhitePixel(display,screenNum));
 #if 0
     XSetForeground(display,highlightGC,getPixelFromColormapByString(display,
@@ -378,7 +379,7 @@ int destroyMedmWidget() {
     if (executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
     if (highlightGC) XFreeGC(display,highlightGC);
     if (clipboard) {
-	destroyDlDisplayList(clipboard);
+	clearDlDisplayList(clipboard);
 	free(clipboard);
     }
     return 0;

@@ -83,8 +83,10 @@ ParseFuncEntry parseFuncTable[] = {
     {"oval",                 parseOval},
     {"arc",                  parseArc},
     {"text",                 parseText},
-    {"falling line",         parseFallingLine},
-    {"rising line",          parseRisingLine},
+/*     {"falling line",         parseFallingLine}, */
+/*     {"rising line",          parseRisingLine}, */
+    {"falling line",         parsePolyline},
+    {"rising line",          parsePolyline},
     {"related display",      parseRelatedDisplay},
     {"shell command",        parseShellCommand},
     {"bar",                  parseBar},
@@ -106,7 +108,14 @@ ParseFuncEntry parseFuncTable[] = {
     {"polygon",              parsePolygon},
 };
 
+/* DEBUG */
+#if 0
+DisplayInfo *debugDisplayInfo=NULL;
+#endif
+/* End DEBUG */
+
 int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
+
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     int i;
     for (i=0; i<parseFuncTableSize; i++) {
@@ -120,7 +129,7 @@ DlElement *getNextElement(DisplayInfo *pDI, char *token) {
 #ifdef __cplusplus
 static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
 #else
-    static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
+static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
 #endif
 {
     Arg args[2];
@@ -193,6 +202,10 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->questionDialog = NULL;
     displayInfo->questionDialogAnswer = 0;
     displayInfo->shellCommandPromptD = NULL;
+
+    displayInfo->gridOn = DEFAULT_GRID_ON;
+    displayInfo->gridSpacing = DEFAULT_GRID_SPACING;
+    displayInfo->undoInfo = NULL;
 
     updateTaskInit(displayInfo);
 
@@ -325,18 +338,16 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 			break;
 		    }
 		}
-	    } else
-	      if (displayInfo->versionNumber < 20200) {
-		  if (!strcmp(token,"<<basic atribute>>") ||
-		    !strcmp(token,"basic attribute") ||
-		    !strcmp(token,"<<basic attribute>>")) {
-		      parseOldBasicAttribute(displayInfo,&attr);
-		  } else
-		    if (!strcmp(token,"dynamic attribute") ||
-		      !strcmp(token,"<<dynamic attribute>>")) {
-			parseOldDynamicAttribute(displayInfo,&dynAttr);
-		    }
-	      }
+	    } else if (displayInfo->versionNumber < 20200) {
+		if (!strcmp(token,"<<basic atribute>>") ||
+		  !strcmp(token,"basic attribute") ||
+		  !strcmp(token,"<<basic attribute>>")) {
+		    parseOldBasicAttribute(displayInfo,&attr);
+		} else if (!strcmp(token,"dynamic attribute") ||
+		  !strcmp(token,"<<dynamic attribute>>")) {
+		    parseOldDynamicAttribute(displayInfo,&dynAttr);
+		}
+	    }
 	    if (pe) {
 		appendDlElement(dlList,pe);
 	    }
@@ -352,7 +363,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 	}
     } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
-  /* reset the inti flag */
+  /* reset the intit flag */
     if (tokenType == T_EOF) init = True;
 #if 0
     if (dynAttr.name) {
@@ -398,7 +409,7 @@ void dmDisplayListParse(
 	currentDisplayInfo->newDisplay = False;
     } else {
 	dmCleanupDisplayInfo(displayInfo,False);
-	destroyDlDisplayList(displayInfo->dlElementList);
+	clearDlDisplayList(displayInfo->dlElementList);
 	displayInfo->filePtr = filePtr;
 	currentDisplayInfo = displayInfo;
 	currentDisplayInfo->newDisplay = False;
@@ -439,6 +450,16 @@ void dmDisplayListParse(
 	currentDisplayInfo = NULL;
 	return;
     }
+
+  /* DEBUG */
+#if 0    
+    printf("File: %s\n",displayInfo->dlFile->name);
+    if(strstr(displayInfo->dlFile->name,"sMain.adl")) {
+	debugDisplayInfo=displayInfo;
+	printf("Set debugDisplayInfo for sMain.adl\n");
+    }
+#endif
+  /* End DEBUG */
 
     tokenType=getToken(displayInfo,token);
     if (tokenType ==T_WORD && !strcmp(token,"display")) {
@@ -507,7 +528,7 @@ DlElement *parseDisplay(
 	    if (!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlDisplay->object));
 	    } else if (!strcmp(token,"cmap")) {
-/* parse separate display list to get and use that colormap */
+	      /* Parse separate display list to get and use that colormap */
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		if (strlen(token) > (size_t) 0) {

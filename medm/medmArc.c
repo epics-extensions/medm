@@ -67,6 +67,7 @@ static void arcUpdateValueCb(XtPointer cd);
 static void arcDestroyCb(XtPointer cd);
 static void arcName(XtPointer, char **, short *, int *);
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void arcSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable arcDlDispatchTable = {
@@ -78,7 +79,7 @@ static DlDispatchTable arcDlDispatchTable = {
     arcGetValues,
     arcInheritValues,
     NULL,
-    NULL,
+    arcSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -392,7 +393,8 @@ void writeDlArc(
 #endif
 }
 
-static void arcGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void arcGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlArc *dlArc = p->structure.arc;
     medmGetValues(pRCB,
       X_RC,          &(dlArc->object.x),
@@ -414,7 +416,8 @@ static void arcGetValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void arcInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void arcInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlArc *dlArc = p->structure.arc;
     medmGetValues(pRCB,
       CLR_RC,        &(dlArc->attr.clr),
@@ -429,5 +432,13 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p) {
       CHAN_RC,       &(dlArc->dynAttr.name),
       BEGIN_RC,      &(dlArc->begin),
       PATH_RC,       &(dlArc->path),
+      -1);
+}
+
+static void arcSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlArc *dlArc = p->structure.arc;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlArc->attr.clr),
       -1);
 }

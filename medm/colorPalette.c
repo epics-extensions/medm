@@ -59,7 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* menu-related values */
 #define N_MAX_MENU_ELES 10
-#define N_MAIN_MENU_ELES 2
+#define N_MAIN_MENU_ELES 1
 /* create the file pulldown menu pane */
 #ifdef EXTENDED_INTERFACE
 # define N_FILE_MENU_ELES 5
@@ -74,19 +74,31 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define FILE_BTN_POSN 0
 
 /* create the help pulldown menu pane */
-#define N_HELP_MENU_ELES 1
+#define N_HELP_MENU_ELES 2
 #define HELP_BTN_POSN 1
 
+#define HELP_COLOR_PALETTE_BTN 0
+#define HELP_COLOR_CONVENTIONS_BTN 1
 
+static void helpColorCallback(Widget,XtPointer,XtPointer);
 static Widget globalColorPalettePB[DL_MAX_COLORS];
+
+static menuEntry_t helpMenu[] = {
+    { "On Color Palette",  &xmPushButtonGadgetClass, 'P', NULL, NULL, NULL,
+      helpColorCallback, (XtPointer)HELP_COLOR_PALETTE_BTN, NULL},
+    { "Color Conventions",  &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+      helpColorCallback, (XtPointer)HELP_COLOR_CONVENTIONS_BTN, NULL},
+    NULL,
+};
+
 /*
  * this is a bit ugly, but we use this variable to communicate which
- *	rcType (element in resource palette) is being color-editted
+ *	rcType (element in resource palette) is being color-edited
  *	Since this is static and there should only be one of these in
  *	the world (just like one colorPalette) this should be okay
  */
-static int elementTypeWhoseColorIsBeingEditted = -1;
-static int elementTypeWhoseColorIsBeingEdittedIndex = 0;
+static int elementTypeWhoseColorIsBeingEdited = -1;
+static int elementTypeWhoseColorIsBeingEditedIndex = 0;
 
 #ifdef EXTENDED_INTERFACE
 static Widget openFSD = NULL;
@@ -188,7 +200,7 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     if (!(cdi = currentDisplayInfo)) return;
 
-    switch (elementTypeWhoseColorIsBeingEditted) {
+    switch (elementTypeWhoseColorIsBeingEdited) {
     case CLR_RC:
 	globalResourceBundle.clr = colorIndex;
 	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
@@ -206,55 +218,47 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case SCDATA_RC:
 	globalResourceBundle.scData[
-	  elementTypeWhoseColorIsBeingEdittedIndex].clr = colorIndex;
+	  elementTypeWhoseColorIsBeingEditedIndex].clr = colorIndex;
 	scUpdateMatrixColors();
 	break;
     case CPDATA_RC:
 	globalResourceBundle.cpData[
-	  elementTypeWhoseColorIsBeingEdittedIndex].data_clr = colorIndex;
+	  elementTypeWhoseColorIsBeingEditedIndex].data_clr = colorIndex;
 	cpUpdateMatrixColors();
 	break;
     default :
 	return;
     }
 
-  /* update color bar in resource palette */
+  /* Update color bar in resource palette */
   /* 9-19-94  vong
-   * makesure the resource palette is create before doing XtVaSetValues
+   * Make sure the resource palette is created before doing XtVaSetValues
    */
     if (resourceMW) {
-	XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEditted],
+	XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEdited],
 	  XmNbackground,currentColormap[colorIndex], NULL);
     }
 
-/*
- * update all selected elements in display (this is overkill, but okay for now)
- *      -- not as efficient as it should be (don't update EVERYTHING if only
- *         one item changed!)
- */
+  /* Update appropriate color property */
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
 	DlElement *pE = dlElement->structure.element;
-	updateElementFromGlobalResourceBundle(pE);
-	if (widget = pE->widget){
-	    switch (elementTypeWhoseColorIsBeingEditted) {
-	    case CLR_RC:
-		XtVaSetValues(widget,XmNforeground,
-		  currentColormap[globalResourceBundle.clr],NULL);
-	      /* if drawingArea: update drawingAreaForegroundColor */
-		if (widget == cdi->drawingArea) {
-		    cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
-		}
-		break;
-	    case BCLR_RC:
-		XtVaSetValues(widget,XmNbackground,
-		  currentColormap[globalResourceBundle.bclr],NULL);
-		break;
-	    case DATA_CLR_RC:
+	switch (elementTypeWhoseColorIsBeingEdited) {
+	case CLR_RC:
+	    updateElementForegroundColorFromGlobalResourceBundle(pE);
+	    break;
+	case BCLR_RC:
+	    updateElementBackgroundColorFromGlobalResourceBundle(pE);
+	    break;
+	case DATA_CLR_RC:
+	  /* KE: This is overkill.  Will update all properties */
+	  /* This will not loop over composite children */
+	    updateElementFromGlobalResourceBundle(pE);
+	    if (widget = pE->widget){
 		XtVaSetValues(widget,XmNbackground,
 		  currentColormap[globalResourceBundle.data_clr],NULL);
-		break;
 	    }
+	    break;
 	}
 	dlElement = dlElement->next;
     }
@@ -308,34 +312,17 @@ void createColor()
  * create the menu bar
  */
     buttons[0] = XmStringCreateSimple("File");
-    buttons[1] = XmStringCreateSimple("Help");
-#if 0
-    keySyms[0] = 'F';
-    keySyms[1] = 'H';
-    n = 0;
-    XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
-    XtSetArg(args[n],XmNbuttons,buttons); n++;
-    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-    XtSetArg(args[n],XmNforeground,defaultForeground); n++;
-    XtSetArg(args[n],XmNbackground,defaultBackground); n++;
-    colorMB = XmCreateSimpleMenuBar(colorMW, "colorMB",args,n);
-#endif
 
     colorMB = XmVaCreateSimpleMenuBar(colorMW, "colorMB",
       XmVaCASCADEBUTTON, buttons[0], 'F',
-      XmVaCASCADEBUTTON, buttons[1], 'H',
       NULL);
 
 
-/* color colorMB properly (force so VUE doesn't interfere) */
+  /* Color colorMB properly (force so VUE doesn't interfere) */
     colorMenuBar(colorMB,defaultForeground,defaultBackground);
 
-  /* set the Help cascade button in the menu bar */
-    menuHelpWidget = XtNameToWidget(colorMB,"*button_1");
-    XtVaSetValues(colorMB,XmNmenuHelpWidget,menuHelpWidget,
-      NULL);
+  /* Free strings */
     for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
-
 
 /*
  * create the file pulldown menu pane
@@ -382,22 +369,11 @@ void createColor()
 /*
  * create the help pulldown menu pane
  */
-    buttons[0] = XmStringCreateSimple("On Color Palette...");
-    keySyms[0] = 'C';
-    buttonType[0] = XmPUSHBUTTON;
-    n = 0;
-    XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
-    XtSetArg(args[n],XmNbuttons,buttons); n++;
-    XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-    XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-    XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
-    colorHelpPDM = XmCreateSimplePulldownMenu(colorMB,
-      "colorHelpPDM",args,n);
-    XmStringFree(buttons[0]);
+    colorHelpPDM = buildMenu(colorMB,XmMENU_PULLDOWN,
+      "Help", 'H', helpMenu);
+    XtVaSetValues(colorMB, XmNmenuHelpWidget, colorHelpPDM, NULL);
   /* (MDA) for now, disable this menu */
-    XtSetSensitive(colorHelpPDM,False);
-
-
+/*     XtSetSensitive(colorHelpPDM,False); */
 
 /*
  * Add the Palette Radio Box for the drawing color toggle buttons
@@ -482,6 +458,27 @@ void setCurrentDisplayColorsInColorPalette(
 	}
     }
 
-    elementTypeWhoseColorIsBeingEditted = rcType;
-    elementTypeWhoseColorIsBeingEdittedIndex = index;
+    elementTypeWhoseColorIsBeingEdited = rcType;
+    elementTypeWhoseColorIsBeingEditedIndex = index;
+}
+
+#ifdef __cplusplus
+static void helpColorCallback(Widget, XtPointer cd, XtPointer cbs)
+#else
+static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    int buttonNumber = (int)cd;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
+    Widget widget;
+    XEvent event;
+    
+    switch(buttonNumber) {
+    case HELP_COLOR_PALETTE_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ColorPalette");
+	break;
+    case HELP_COLOR_CONVENTIONS_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ColorConventions");
+	break;
+    }
 }

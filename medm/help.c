@@ -674,3 +674,16 @@ void medmStartUpdateCAStudyDlg() {
 	errMsgDlgTimeOutId = 0;
     }
 }
+
+int xErrorHandler(Display *dpy, XErrorEvent *event)
+{
+    char * buf[4096];     /* Warning: Fixed Size */
+    
+    XGetErrorText(dpy,event->error_code,buf,BUFSIZ);
+    fprintf(stderr,"%s\n",buf);
+}
+
+void xtErrorHandler(char *message)
+{
+    fprintf(stderr,"%s\n",message);
+}

@@ -71,6 +71,8 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer);
 static void choiceButtonDestroyCb(XtPointer cd);
 static void choiceButtonName(XtPointer, char **, short *, int *);
 static void choiceButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void choiceButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void choiceButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void choiceButtonGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable choiceButtonDlDispatchTable = {
@@ -81,8 +83,8 @@ static DlDispatchTable choiceButtonDlDispatchTable = {
     NULL,
     choiceButtonGetValues,
     choiceButtonInheritValues,
-    NULL,
-    NULL,
+    choiceButtonSetBackgroundColor,
+    choiceButtonSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -261,7 +263,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
     Widget buttons[16];
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  /* !!!!! This is a temperory work around !!!!! */
+  /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
     medmRecordAddGraphicalInfoCb(cb->record,NULL);
@@ -402,8 +404,8 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
     return;
 }
 
-void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
-
+void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement)
+{
     Arg args[24];
     int n;
     Widget buttons[2];
@@ -420,14 +422,20 @@ void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlEleme
       (XtPointer) displayInfo,
       buttons,
       dlChoiceButton->stacking);
-  /* remove all translations if in edit mode */
-    XtUninstallTranslations(dlElement->widget);
     XmToggleButtonGadgetSetState(buttons[0],True,True);
     XtManageChildren(buttons,2);
+
+  /* Remove all translations if in edit mode */
+    XtUninstallTranslations(dlElement->widget);
+  /* Add back the KeyPress handler invoked in executeDlDisplay */
+    XtAddEventHandler(dlElement->widget,KeyPressMask,False,
+      handleKeyPress,(XtPointer)displayInfo);
+  /* Add the ButtonPress handler */
+    XtAddEventHandler(dlElement->widget,ButtonPressMask,False,
+      handleButtonPress,(XtPointer)displayInfo);
+    
     XtManageChild(dlElement->widget);
-  /* add button press handlers for editing */
-    XtAddEventHandler(dlElement->widget, ButtonPressMask, False,
-      handleButtonPress,displayInfo);
+
     return;
 }
 
@@ -600,5 +608,21 @@ static void choiceButtonGetValues(ResourceBundle *pRCB, DlElement *p) {
       BCLR_RC,       &(dlChoiceButton->control.bclr),
       CLRMOD_RC,     &(dlChoiceButton->clrmod),
       STACKING_RC,   &(dlChoiceButton->stacking),
+      -1);
+}
+
+static void choiceButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlChoiceButton *dlChoiceButton = p->structure.choiceButton;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlChoiceButton->control.bclr),
+      -1);
+}
+
+static void choiceButtonSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlChoiceButton *dlChoiceButton = p->structure.choiceButton;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlChoiceButton->control.clr),
       -1);
 }

@@ -57,6 +57,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <time.h>
 
+#define TIMERINTERVAL 100 /* ms */
+#define WORKINTERVAL .05
+#define EXECINTERVAL 3600.
+
 typedef struct _UpdateTaskStatus {
     XtWorkProcId workProcId;
     UpdateTask  *nextToServe;
@@ -84,9 +88,10 @@ static Boolean moduleInitialized = False;
 static void medmScheduler(XtPointer, XtIntervalId *);
 static Boolean updateTaskWorkProc(XtPointer);
 
-Boolean medmInitSharedDotC() {
+Boolean medmInitSharedDotC()
+{
     if (moduleInitialized) return True;
-  /* initialize the update task */
+  /* initialize static global variable updateTaskStatus */
     updateTaskStatus.workProcId          = 0;
     updateTaskStatus.nextToServe         = NULL;
     updateTaskStatus.taskCount           = 0;
@@ -115,8 +120,10 @@ void updateTaskStatusGetInfo(int *taskCount,
   int *periodicUpdateDiscardCount,
   int *updateRequestQueued,
   int *updateExecuted,
-  double *timeInterval) {
+  double *timeInterval)
+{
     double time = medmTime();
+    
     *taskCount = updateTaskStatus.taskCount;
     *periodicTaskCount = updateTaskStatus.periodicTaskCount;
     *updateRequestCount = updateTaskStatus.updateRequestCount;
@@ -166,6 +173,8 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(channelS);
 	} else if (w == helpS) {
 	    XtPopdown(helpS);
+	} else if (w == editHelpS) {
+	    XtPopdown(editHelpS);
 	}
 	break;
     }
@@ -205,6 +214,7 @@ void optionMenuSet(Widget menu, int buttonId)
     }
 }
 
+/* timer proc for updateTask, is called every .1 sec */
 #ifdef __cplusplus
 static void medmScheduler(XtPointer cd, XtIntervalId *)
 #else
@@ -222,7 +232,7 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     }
 #endif
 
-  /* poll channel access connection event every one tenth of a second */
+  /* poll channel access  */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -237,33 +247,56 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     ca_pend_event(0.00000001);
 #endif
 
-  /* wake up any periodic task which is time out */
+  /* wake up any periodic task which is timed out */
     if (updateTaskStatus.periodicTaskCount > 0) { 
 	DisplayInfo *d = displayInfoListHead->next;
 	while (d) {
 	    if (d->periodicTaskCount > 0) {
 		UpdateTask *pt = d->updateTaskListHead.next;
+		
+	      /* DEBUG */
+#if 0
+		if(strstr(d->dlFile->name,"sMain.adl")) {
+		    printf("medmScheduler:\n");
+		    printf("  d->updateTaskListHead.next is %d\n",d->updateTaskListHead.next);
+		    printf("  d->periodicTaskCount: %d\n",d->periodicTaskCount);
+		    printf("  d->dlFile->name: |%s|\n",d->dlFile->name);
+		}
+		if(!pt) {
+		    printf("medmScheduler:\n");
+		    printf("  d->updateTaskListHead.next is NULL\n");
+		    printf("  d->periodicTaskCount: %d\n",d->periodicTaskCount);
+		    printf("  d->dlFile->name: |%s|\n",d->dlFile->name);
+		    printf("Aborting\n");
+		    abort();
+		} else
+#endif		  
+	      /* End DEBUG */
 		if (pt->nextExecuteTime < currentTime) {
 		    updateTaskMarkTimeout(pt,currentTime);
 		}
 	    }
 	    d = d->next;
 	}
-    }  
+    }
+  /* if needed, install the work proc */
     if ((updateTaskStatus.updateRequestQueued > 0) && 
       (!updateTaskStatus.workProcId)) {
 	updateTaskStatus.workProcId =
 	  XtAppAddWorkProc(appContext,updateTaskWorkProc,&updateTaskStatus);
     }
-    t->id = XtAppAddTimeOut(appContext,100,medmScheduler,cd);
+  /* reinstall the timer proc to be called in TIMERINTERVAL ms */
+    t->id = XtAppAddTimeOut(appContext,TIMERINTERVAL,medmScheduler,cd);
 }
 
 #ifdef MEDM_SOFT_CLOCK
-double medmTime() {
+double medmTime()
+{
     return task.systemTime + task.tenthSecond;
 }
 #else
-double medmTime() {
+double medmTime()
+{
     struct timeval tp;
     if (gettimeofday(&tp,NULL)) fprintf(stderr,"Failed!\n");
     return (double) tp.tv_sec + (double) tp.tv_usec*1e-6;
@@ -276,17 +309,19 @@ double medmTime() {
  *  ---------------------------
  */
 
-void updateTaskInit(DisplayInfo *displayInfo) {
+void updateTaskInit(DisplayInfo *displayInfo)
+{
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
     pt->executeTask = NULL;
     pt->destroyTask = NULL;
     pt->clientData = NULL;
-    pt->timeInterval = 3600.0;            /* pull every hours */
+    pt->timeInterval = EXECINTERVAL;
     pt->nextExecuteTime = medmTime() + pt->timeInterval;
     pt->displayInfo = displayInfo;
     pt->next = NULL;
     pt->executeRequestsPendingCount = 0;
     displayInfo->updateTaskListTail = pt;
+    displayInfo->periodicTaskCount = 0;
 
     if (!moduleInitialized) medmInitSharedDotC();
 }
@@ -295,9 +330,10 @@ UpdateTask *updateTaskAddTask(
   DisplayInfo *displayInfo, 
   DlObject *rectangle,
   void (*executeTask)(XtPointer),
-  XtPointer clientData) {
-
+  XtPointer clientData)
+{
     UpdateTask *pt;
+    
     if (displayInfo) {
 	pt = (UpdateTask *) malloc(sizeof(UpdateTask));
 	if (pt == NULL) return pt;
@@ -321,11 +357,12 @@ UpdateTask *updateTaskAddTask(
 	    pt->rectangle.width  = 0;
 	    pt->rectangle.height = 0;
 	}
-	pt->overlapped = True;  /* make the default is True */
+	pt->overlapped = True;  /* make the default be True */
 	pt->opaque = True;      /* don't draw the background */
 	displayInfo->updateTaskListTail->next = pt;
 	displayInfo->updateTaskListTail = pt;
 
+      /* ??? Should never execute this branch since pt->timeInterval=0.0 */
 	if (pt->timeInterval > 0.0) {
 	    displayInfo->periodicTaskCount++;
 	    updateTaskStatus.periodicTaskCount++;
@@ -340,20 +377,25 @@ UpdateTask *updateTaskAddTask(
     }
 }  
 
-void updateTaskDeleteTask(UpdateTask *pt) {
+void updateTaskDeleteTask(UpdateTask *pt)
+{
     UpdateTask *tmp;
+    
     if (pt == NULL) return;
     tmp = &(pt->displayInfo->updateTaskListHead);
     while (tmp->next) {
 	if (tmp->next == pt) {
 	    tmp->next = pt->next;
+	  /* If it is the tail, reset the tail */
 	    if (pt == pt->displayInfo->updateTaskListTail) {
 		pt->displayInfo->updateTaskListTail = tmp;
 	    }
+	  /* If it is periodic, take it out of periodicTaskCount */
 	    if (pt->timeInterval > 0.0) {
 		pt->displayInfo->periodicTaskCount--;
 		updateTaskStatus.periodicTaskCount--;
 	    }
+	  /* Take it out of taskCount */
 	    updateTaskStatus.taskCount--;
 	    free((char *)pt);
 	    break;
@@ -361,9 +403,11 @@ void updateTaskDeleteTask(UpdateTask *pt) {
     }
 }
 
-void updateTaskDeleteAllTask(UpdateTask *pt) {
+void updateTaskDeleteAllTask(UpdateTask *pt)
+{
     UpdateTask *tmp;
     DisplayInfo *displayInfo;
+    
     if (pt == NULL) return;
     displayInfo = pt->displayInfo;
     displayInfo->periodicTaskCount = 0;
@@ -384,6 +428,7 @@ void updateTaskDeleteAllTask(UpdateTask *pt) {
 	if (updateTaskStatus.nextToServe == tmp1) {
 	    updateTaskStatus.nextToServe = NULL;
 	}
+      /* ??? Why is this necessary, the space is going to be freed */
 	tmp1->executeTask = NULL;
 	free((char *)tmp1);
     }
@@ -408,11 +453,13 @@ void updateTaskDeleteAllTask(UpdateTask *pt) {
 #endif
 }
   
-int updateTaskMarkTimeout(UpdateTask *pt, double currentTime) {
+int updateTaskMarkTimeout(UpdateTask *pt, double currentTime)
+{
     UpdateTask *head = &(pt->displayInfo->updateTaskListHead);
     UpdateTask *tmp = head->next;
     int count = 0;
-  /* reset the nextExecuteTime for the display an hour later */
+    
+  /* reset the nextExecuteTime for the display */
     head->nextExecuteTime = currentTime + head->timeInterval;
     while (tmp) {
       /* if periodic task */
@@ -439,7 +486,8 @@ int updateTaskMarkTimeout(UpdateTask *pt, double currentTime) {
     return count;
 }   
 
-void updateTaskMarkUpdate(UpdateTask *pt) {
+void updateTaskMarkUpdate(UpdateTask *pt)
+{
     if (pt->executeRequestsPendingCount > 0) {
 	updateTaskStatus.updateDiscardCount++;
     } else {
@@ -449,25 +497,27 @@ void updateTaskMarkUpdate(UpdateTask *pt) {
     pt->executeRequestsPendingCount++;
 }
 
-void updateTaskSetScanRate(UpdateTask *pt, double timeInterval) {
+void updateTaskSetScanRate(UpdateTask *pt, double timeInterval)
+{
     UpdateTask *head = &(pt->displayInfo->updateTaskListHead);
     double currentTime = medmTime();
 
   /*
-   * increase or decrease the periodic task count depends
-   * on the condition
+   * whether to increase or decrease the periodic task count depends
+   * on how timeInterval changes
    */
     if ((pt->timeInterval == 0.0) && (timeInterval != 0.0)) {
+      /* was zero, now non-zero */
 	pt->displayInfo->periodicTaskCount++;
 	updateTaskStatus.periodicTaskCount++;
-    } else
-      if ((pt->timeInterval != 0.0) && (timeInterval == 0.0)) {
-	  pt->displayInfo->periodicTaskCount--;
-	  updateTaskStatus.periodicTaskCount--;
-      }
+    } else if ((pt->timeInterval != 0.0) && (timeInterval == 0.0)) {
+      /* was non-zero, now zero */
+	pt->displayInfo->periodicTaskCount--;
+	updateTaskStatus.periodicTaskCount--;
+    }
 
   /*
-   * set up the next scan time for this task, if it
+   * set up the next scan time for this task, if
    * this is the sooner one, set it to the display
    * scan time too.
    */
@@ -478,64 +528,72 @@ void updateTaskSetScanRate(UpdateTask *pt, double timeInterval) {
     }
 }
 
-void updateTaskAddExecuteCb(UpdateTask *pt, void (*executeTaskCb)(XtPointer)) {
+void updateTaskAddExecuteCb(UpdateTask *pt, void (*executeTaskCb)(XtPointer))
+{
     pt->executeTask = executeTaskCb;
 }
 
-void updateTaskAddDestroyCb(UpdateTask *pt, void (*destroyTaskCb)(XtPointer)) {
+void updateTaskAddDestroyCb(UpdateTask *pt, void (*destroyTaskCb)(XtPointer))
+{
     pt->destroyTask = destroyTaskCb;
 }
 
-Boolean updateTaskWorkProc(XtPointer cd) {
+/* work proc for updateTask, is called when medm is not busy */
+Boolean updateTaskWorkProc(XtPointer cd)
+{
     UpdateTaskStatus *ts = (UpdateTaskStatus *) cd;
     UpdateTask *t = ts->nextToServe;
     double endTime;
    
-    endTime = medmTime() + 0.05; 
+    endTime = medmTime() + WORKINTERVAL; 
  
-    do { 
-	if (ts->updateRequestQueued <=0) {
+  /* Do for WORKINTERVAL sec */
+    do {
+      /* if no requests queued, remove work proc */
+	if (ts->updateRequestQueued <= 0) {
 	    ts->workProcId = 0; 
 	    return True;
 	} 
       /* if no valid update task, find one */
 	if (t == NULL) {
 	    DisplayInfo *d = displayInfoListHead->next;
+
+	  /* if no display, remove work proc */
 	    if (d == NULL) {
-	      /* no display, tell Xt LIB that this routine is finished */
 		ts->workProcId = 0;
 		return True;
 	    }
 	  /* find the next update task */
 	    while (d) {
-		if (t = d->updateTaskListHead.next)
-		  break;
+		if (t = d->updateTaskListHead.next) break;
 		d = d->next;
 	    }
+	  /* if no update task found, remove work proc */
 	    if (t == NULL) {
-	      /* no update task, tell Xt LIB that this routine is finished */
 		ts->workProcId = 0;
 		return True;
 	    }
 	    ts->nextToServe = t;
 	}
 
-      /* Now, at least one update task found */
-      /* find one of which executeRequestsPendingCount > 0 */ 
-	while (t->executeRequestsPendingCount <=0 ) {
+      /* at least one update task has been found
+	 find one which has executeRequestsPendingCount > 0 */ 
+	while (t->executeRequestsPendingCount <= 0 ) {
 	    DisplayInfo *d = t->displayInfo;
 	    t = t->next;
 	    while (t == NULL) {
-	      /* end of the update task for this display */
-	      /* check the next display.                 */
+	      /* end of the update tasks for this display,
+		 check the next display */
 		d = d->next;
+	      /* if at the end of the displays, go to the beginning */
 		if (d == NULL) {
 		    d = displayInfoListHead->next;
 		}
 		t = d->updateTaskListHead.next;
 	    }      
+	  /* found same t again, have now checked all displays,
+	     there is nothing to do, remove work proc */
 	    if (t == ts->nextToServe) {
-	      /* check all display, no update is needed */
 		ts->workProcId = 0;
 		return True;
 	    }
@@ -561,7 +619,8 @@ Boolean updateTaskWorkProc(XtPointer cd) {
 	    region = XPolygonRegion(points,4,EvenOddRule);
 
 	    if (region == NULL) {
-		medmPrintf("medmRepaintRegion : XPolygonRegion() return NULL\n");
+		medmPrintf("updateTaskWorkProc: XPolygonRegion() returned NULL\n");
+		/* kill the work proc */
 		ts->workProcId = 0;
 		return True;
 	    }
@@ -628,11 +687,15 @@ Boolean updateTaskWorkProc(XtPointer cd) {
 	}
 	ts->nextToServe = t;
     } while (endTime > medmTime());
+  /* keep the work proc active */
     return False;
 }
 
-void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region) {
+void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
+{
     UpdateTask *t = displayInfo->updateTaskListHead.next;
+
+  /* Do executeTask for each updateTask in the region for this display */
     while (t) {
 	if (XRectInRegion(*region, t->rectangle.x, t->rectangle.y,
 	  t->rectangle.width, t->rectangle.height) != RectangleOut) {
@@ -643,6 +706,7 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region) {
     }
 }
 
-void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer, char **, short *, int *)) {
+void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer, char **, short *, int *))
+{
     pt->name = nameCb;
 }

@@ -16,7 +16,7 @@ with the Department of Energy.
 
 Portions of this material resulted from work developed under a U.S.
 Government contract and are subject to the following license:  For
-a period of five years from Mpolygonh 30, 1993, the Government is
+a period of five years from March 30, 1993, the Government is
 granted for itself and others acting on its behalf a paid-up,
 nonexclusive, irrevocable worldwide license in this computer
 software to reproduce, prepare derivative works, and perform
@@ -82,6 +82,7 @@ static void polygonDestroyCb(XtPointer cd);
 static void polygonName(XtPointer, char **, short *, int *);
 static void polygonGetValues(ResourceBundle *pRCB, DlElement *p);
 static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void polygonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void polygonMove(DlElement *, int, int);
 static void polygonScale(DlElement *, int, int);
 static void destroyDlPolygon(DlElement *);
@@ -96,7 +97,7 @@ static DlDispatchTable polygonDlDispatchTable = {
     polygonGetValues,
     polygonInheritValues,
     NULL,
-    NULL,
+    polygonSetForegroundColor,
     polygonMove,
     polygonScale,
     handlePolygonVertexManipulation,
@@ -496,12 +497,9 @@ void writeDlPolygon(
 }
 
 /*
- * manipulate a polygon vertex
+ * Manipulate a polygon vertex
  */
-
-static int handlePolygonVertexManipulation(
-  DlElement *dlElement,
-  int x0, int y0)
+static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 {
     XEvent event;
     Window window;
@@ -537,25 +535,21 @@ static int handlePolygonVertexManipulation(
     XGrabServer(display);
 
 
-  /* now loop until button is released */
+  /* Loop until button is released */
     while (TRUE) {
-
 	XtAppNextEvent(appContext,&event);
-
 	switch(event.type) {
-
 	case ButtonRelease:
-
-	  /* modify point and leave here */
+	  /* Modify point and leave here */
 	    if (event.xbutton.state & ShiftMask) {
-	      /* constrain to 45 degree increments */
+	      /* Constrain to 45 degree increments */
 		deltaX = event.xbutton.x - dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].x;
 		deltaY = event.xbutton.y - dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].y;
 		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
 		radians = atan2((double)(deltaY),(double)(deltaX));
-	      /* use positive radians */
+	      /* Use positive radians */
 		if (radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
@@ -566,12 +560,12 @@ static int handlePolygonVertexManipulation(
 		dlPolygon->points[pointIndex].x = x01;
 		dlPolygon->points[pointIndex].y = y01;
 	    } else {
-	      /* unconstrained */
+	      /* Unconstrained */
 		dlPolygon->points[pointIndex].x = event.xbutton.x;
 		dlPolygon->points[pointIndex].y = event.xbutton.y;
 	    }
 
-	  /* also update 0 or nPoints-1 point to keep order of polygon same */
+	  /* Also update 0 or nPoints-1 point to keep order of polygon same */
 	    if (pointIndex == 0) {
 		dlPolygon->points[dlPolygon->nPoints-1] = dlPolygon->points[0];
 	    } else if (pointIndex == dlPolygon->nPoints-1) {
@@ -581,19 +575,19 @@ static int handlePolygonVertexManipulation(
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
             calculateTheBoundingBox(dlPolygon);
-	  /* update global resource bundle  - then do create out of it */
+	  /* Update global resource bundle  - then do create out of it */
 	    globalResourceBundle.x = dlPolygon->object.x;
 	    globalResourceBundle.y = dlPolygon->object.y;
 	    globalResourceBundle.width = dlPolygon->object.width;
 	    globalResourceBundle.height = dlPolygon->object.height;
 
 	    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
-	  /* since dmTraverseNonWidgets... clears the window, redraw highlights */
+	  /* Since dmTraverseNonWidgets... clears the window, redraw highlights */
 	    highlightSelectedElements();
 	    return 1;
 
 	case MotionNotify:
-	  /* undraw old line segments */
+	  /* Undraw old line segments */
 	    if (pointIndex > 0)
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[pointIndex-1].x,
@@ -612,14 +606,14 @@ static int handlePolygonVertexManipulation(
 		dlPolygon->points[0].x,dlPolygon->points[0].y, x01,y01);
 
 	    if (event.xmotion.state & ShiftMask) {
-	      /* constrain redraw to 45 degree increments */
+	      /* Constrain redraw to 45 degree increments */
 		deltaX =  event.xmotion.x - dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].x;
 		deltaY = event.xmotion.y - dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].y;
 		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
 		radians = atan2((double)(deltaY),(double)(deltaX));
-	      /* use positive radians */
+	      /* Use positive radians */
 		if (radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
@@ -628,11 +622,11 @@ static int handlePolygonVertexManipulation(
 		y01 = (int) (sin(okRadians)*length) + dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].y;
 	    } else {
-	      /* unconstrained */
+	      /* Unconstrained */
 		x01 = event.xmotion.x;
 		y01 = event.xmotion.y;
 	    }
-	  /* draw new line segments */
+	  /* Draw new line segments */
 	    if (pointIndex > 0)
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[pointIndex-1].x,
@@ -648,7 +642,6 @@ static int handlePolygonVertexManipulation(
 	    else
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[0].x,dlPolygon->points[0].y, x01,y01);
-
 	    break;
 
 	default:
@@ -658,8 +651,7 @@ static int handlePolygonVertexManipulation(
     }
 }
 
-DlElement *handlePolygonCreate(
-  int x0, int y0)
+DlElement *handlePolygonCreate(int x0, int y0)
 {
     XEvent event, newEvent;
     int newEventType;
@@ -680,7 +672,7 @@ DlElement *handlePolygonCreate(
     polygonInheritValues(&globalResourceBundle,dlElement);
     objectAttributeSet(&(dlPolygon->object),x0,y0,0,0);
 
-/* first click is first point... */
+  /* First click is first point... */
     dlPolygon->nPoints = 1;
     dlPolygon->points = (XPoint *)malloc((pointsArraySize+3)*sizeof(XPoint));
     dlPolygon->points[0].x = (short)x0;
@@ -692,22 +684,18 @@ DlElement *handlePolygonCreate(
       GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
     XGrabServer(display);
 
-
-  /* now loop until button is double-clicked */
+  /* Now loop until button is double-clicked */
     while (TRUE) {
-
 	XtAppNextEvent(appContext,&event);
-
 	switch(event.type) {
-
 	case ButtonPress:
 	    XWindowEvent(display,XtWindow(currentDisplayInfo->drawingArea),
 	      ButtonPressMask|Button1MotionMask|PointerMotionMask,&newEvent);
 	    newEventType = newEvent.type;
 	    if (newEventType == ButtonPress) {
-	      /* -> double click... add last point and leave here */
+	      /* -> Double click... add last point and leave here */
 		if (event.xbutton.state & ShiftMask) {
-		  /* constrain to 45 degree increments */
+		  /* Constrain to 45 degree increments */
 		    deltaX = event.xbutton.x -
 		      dlPolygon->points[dlPolygon->nPoints-1].x;
 		    deltaY = event.xbutton.y -
@@ -726,14 +714,14 @@ DlElement *handlePolygonCreate(
 		    dlPolygon->points[dlPolygon->nPoints-1].x = x01;
 		    dlPolygon->points[dlPolygon->nPoints-1].y = y01;
 		} else {
-		  /* unconstrained */
+		  /* Unconstrained */
 		    dlPolygon->nPoints++;
 		    dlPolygon->points[dlPolygon->nPoints-1].x = event.xbutton.x;
 		    dlPolygon->points[dlPolygon->nPoints-1].y = event.xbutton.y;
 		}
 		XUngrabPointer(display,CurrentTime);
 		XUngrabServer(display);
-	      /* to ensure closure, make sure last point = first point */
+	      /* To ensure closure, make sure last point = first point */
 		if(!(dlPolygon->points[0].x ==
 		  dlPolygon->points[dlPolygon->nPoints-1].x &&
 		  dlPolygon->points[0].y ==
@@ -751,8 +739,8 @@ DlElement *handlePolygonCreate(
 		XBell(display,50); XBell(display,50);
 		return (dlElement);
 	    } else {
-	      /* not last point: more points to add.. */
-	      /* undraw old line segments */
+	      /* Not last point: more points to add.. */
+	      /* Undraw old line segments */
 		XDrawLine(display,window,xorGC,
 		  dlPolygon->points[dlPolygon->nPoints-1].x,
 		  dlPolygon->points[dlPolygon->nPoints-1].y, x01, y01);
@@ -760,21 +748,21 @@ DlElement *handlePolygonCreate(
 		  XDrawLine(display,window,xorGC,dlPolygon->points[0].x,
 		    dlPolygon->points[0].y, x01, y01);
 
-	      /* new line segment added: update coordinates */
+	      /* New line segment added: update coordinates */
 		if (dlPolygon->nPoints >= pointsArraySize) {
-		  /* reallocate the points array: enlarge by 4X, etc */
+		  /* Reallocate the points array: enlarge by 4X, etc */
 		    pointsArraySize *= 4;
 		    dlPolygon->points = (XPoint *)realloc(dlPolygon->points,
 		      (pointsArraySize+3)*sizeof(XPoint));
 		}
 
 		if (event.xbutton.state & ShiftMask) {
-		  /* constrain to 45 degree increments */
+		  /* Constrain to 45 degree increments */
 		    deltaX = event.xbutton.x - dlPolygon->points[dlPolygon->nPoints-1].x;
 		    deltaY = event.xbutton.y - dlPolygon->points[dlPolygon->nPoints-1].y;
 		    length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
 		    radians = atan2((double)(deltaY),(double)(deltaX));
-		  /* use positive radians */
+		  /* Use positive radians */
 		    if (radians < 0.) radians = 2*M_PI + radians;
 		    okIndex = (int)((radians*8.0)/M_PI);
 		    okRadians = okRadiansTable[okIndex];
@@ -786,13 +774,13 @@ DlElement *handlePolygonCreate(
 		    dlPolygon->points[dlPolygon->nPoints-1].x = x01;
 		    dlPolygon->points[dlPolygon->nPoints-1].y = y01;
 		} else {
-		  /* unconstrained */
+		  /* Unconstrained */
 		    dlPolygon->nPoints++;
 		    dlPolygon->points[dlPolygon->nPoints-1].x = event.xbutton.x;
 		    dlPolygon->points[dlPolygon->nPoints-1].y = event.xbutton.y;
 		    x01 = event.xbutton.x; y01 = event.xbutton.y;
 		}
-	      /* draw new line segments */
+	      /* Draw new line segments */
 		XDrawLine(display,window,xorGC,
 		  dlPolygon->points[dlPolygon->nPoints-2].x,
 		  dlPolygon->points[dlPolygon->nPoints-2].y,
@@ -804,7 +792,7 @@ DlElement *handlePolygonCreate(
 	    break;
 
 	case MotionNotify:
-	  /* undraw old line segments */
+	  /* Undraw old line segments */
 	    XDrawLine(display,window,xorGC,
 	      dlPolygon->points[dlPolygon->nPoints-1].x,
 	      dlPolygon->points[dlPolygon->nPoints-1].y,
@@ -812,16 +800,15 @@ DlElement *handlePolygonCreate(
 	    if (dlPolygon->nPoints > 1) XDrawLine(display,window,xorGC,
 	      dlPolygon->points[0].x,dlPolygon->points[0].y, x01, y01);
 
-
 	    if (event.xmotion.state & ShiftMask) {
-	      /* constrain redraw to 45 degree increments */
+	      /* Constrain redraw to 45 degree increments */
 		deltaX = event.xmotion.x -
 		  dlPolygon->points[dlPolygon->nPoints-1].x;
 		deltaY = event.xmotion.y -
 		  dlPolygon->points[dlPolygon->nPoints-1].y;
 		length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
 		radians = atan2((double)(deltaY),(double)(deltaX));
-	      /* use positive radians */
+	      /* Use positive radians */
 		if (radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
@@ -830,11 +817,11 @@ DlElement *handlePolygonCreate(
 		y01 = (int) (sin(okRadians)*length)
 		  + dlPolygon->points[dlPolygon->nPoints-1].y;
 	    } else {
-	      /* unconstrained */
+	      /* Unconstrained */
 		x01 = event.xmotion.x;
 		y01 = event.xmotion.y;
 	    }
-	  /* draw new last line segment */
+	  /* Draw new last line segment */
 	    XDrawLine(display,window,xorGC,
 	      dlPolygon->points[dlPolygon->nPoints-1].x,
 	      dlPolygon->points[dlPolygon->nPoints-1].y,
@@ -887,6 +874,32 @@ void polygonScale(DlElement *dlElement, int xOffset, int yOffset) {
     dlPolygon->object.height = height;
 }
 
+static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
+    DlPolygon *dlPolygon = p->structure.polygon;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlPolygon->attr.clr),
+      STYLE_RC,      &(dlPolygon->attr.style),
+      FILL_RC,       &(dlPolygon->attr.fill),
+      LINEWIDTH_RC,  &(dlPolygon->attr.width),
+      CLRMOD_RC,     &(dlPolygon->dynAttr.clr),
+      VIS_RC,        &(dlPolygon->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlPolygon->dynAttr.name),
+      -1);
+}
+
+static void destroyDlPolygon(DlElement *dlElement) {
+    if (dlElement->structure.polygon->dynAttr.name) {
+	freeString(dlElement->structure.polygon->dynAttr.name);
+	dlElement->structure.polygon->dynAttr.name = NULL;
+    }
+    free ((char *)dlElement->structure.polygon->points);
+    free ((char *)dlElement->structure.polygon);
+    free ((char *)dlElement);
+}
+
 static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlPolygon *dlPolygon = p->structure.polygon;
     int x, y;
@@ -920,27 +933,10 @@ static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {
     }
 }
 
-static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void polygonSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
     DlPolygon *dlPolygon = p->structure.polygon;
     medmGetValues(pRCB,
       CLR_RC,        &(dlPolygon->attr.clr),
-      STYLE_RC,      &(dlPolygon->attr.style),
-      FILL_RC,       &(dlPolygon->attr.fill),
-      LINEWIDTH_RC,  &(dlPolygon->attr.width),
-      CLRMOD_RC,     &(dlPolygon->dynAttr.clr),
-      VIS_RC,        &(dlPolygon->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
-#endif
-      CHAN_RC,       &(dlPolygon->dynAttr.name),
       -1);
-}
-
-static void destroyDlPolygon(DlElement *dlElement) {
-    if (dlElement->structure.polygon->dynAttr.name) {
-	freeString(dlElement->structure.polygon->dynAttr.name);
-    }
-    free ((char *)dlElement->structure.polygon->points);
-    free ((char *)dlElement->structure.polygon);
-    free ((char *)dlElement);
 }

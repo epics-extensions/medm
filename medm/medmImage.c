@@ -178,24 +178,15 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    strcpy(dlImage->imageName, &(fullPathName[dirLength]));
 	    dlImage->imageType = GIF_IMAGE;
 	    (dlElement->run->execute)(currentDisplayInfo, dlElement);
-	  /* now select this element for resource edits */
-#if 0
-	    highlightAndSetSelectedElements(NULL,0,0);
-#endif
-	    clearResourcePaletteEntries();
-	    array = (DlElement **)malloc(1*sizeof(DlElement *));
-	    array[0] = dlElement;
-#if 0
-	    highlightAndSetSelectedElements(array,1,1);
-#endif
+	  /* Unselect any selected elements */
+	    unselectElementsInDisplay();
+	    
 	    setResourcePaletteEntries();
-
 	}
 	XtFree(fullPathName);
 	XtFree(dirName);
 	break;
     }
-
 }
 
 /*

@@ -16,7 +16,7 @@ with the Department of Energy.
 
 Portions of this material resulted from work developed under a U.S.
 Government contract and are subject to the following license:  For
-a period of five years from Mtexth 30, 1993, the Government is
+a period of five years from March 30, 1993, the Government is
 granted for itself and others acting on its behalf a paid-up,
 nonexclusive, irrevocable worldwide license in this computer
 software to reproduce, prepare derivative works, and perform
@@ -68,6 +68,7 @@ static void textDestroyCb(XtPointer cd);
 static void textName(XtPointer, char **, short *, int *);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void textSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textSetValues(ResourceBundle *pRCB, DlElement *p);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 
@@ -80,7 +81,7 @@ static DlDispatchTable textDlDispatchTable = {
     textGetValues,
     textInheritValues,
     NULL,
-    NULL,
+    textSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -150,15 +151,15 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
 #ifdef __COLOR_RULE_H__
 	switch (dlText->dynAttr.clr) {
-	    STATIC :
-	      pt->record->monitorValueChanged = False;
+	  STATIC:
+	    pt->record->monitorValueChanged = False;
 	    pt->record->monitorSeverityChanged = False;
 	    break;
-	    ALARM :
-	      pt->record->monitorValueChanged = False;
+	  ALARM:
+	    pt->record->monitorValueChanged = False;
 	    break;
-	    DISCRETE :
-	      pt->record->monitorSeverityChanged = False;
+	  DISCRETE:
+	    pt->record->monitorSeverityChanged = False;
 	    break;
 	}
 #else
@@ -200,7 +201,7 @@ static void textDraw(XtPointer cd) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
-	case STATIC :
+	case STATIC:
 	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
 	    break;
 	case DISCRETE:
@@ -428,8 +429,7 @@ static void blinkCursor(
       XtAppAddTimeOut(appContext,BLINK_INTERVAL,blinkCursor,NULL);
 }
  
-DlElement *handleTextCreate(
-  int x0, int y0)
+DlElement *handleTextCreate(int x0, int y0)
 {
     XEvent event;
     XKeyEvent *key;
@@ -595,25 +595,6 @@ DlElement *handleTextCreate(
     }
 }
 
-static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
-    DlText *dlText = p->structure.text;
-    medmGetValues(pRCB,
-      X_RC,          &(dlText->object.x),
-      Y_RC,          &(dlText->object.y),
-      WIDTH_RC,      &(dlText->object.width),
-      HEIGHT_RC,     &(dlText->object.height),
-      CLR_RC,        &(dlText->attr.clr),
-      CLRMOD_RC,     &(dlText->dynAttr.clr),
-      VIS_RC,        &(dlText->dynAttr.vis),
-#ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
-#endif
-      CHAN_RC,       &(dlText->dynAttr.name),
-      ALIGN_RC,      &(dlText->align),
-      TEXTIX_RC,       dlText->textix,
-      -1);
-}
-
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
     DlText *dlText = p->structure.text;
     medmGetValues(pRCB,
@@ -648,4 +629,31 @@ static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
       TEXTIX_RC,     p->text->textix,
       -1);
 #endif
+}
+
+static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
+    DlText *dlText = p->structure.text;
+    medmGetValues(pRCB,
+      X_RC,          &(dlText->object.x),
+      Y_RC,          &(dlText->object.y),
+      WIDTH_RC,      &(dlText->object.width),
+      HEIGHT_RC,     &(dlText->object.height),
+      CLR_RC,        &(dlText->attr.clr),
+      CLRMOD_RC,     &(dlText->dynAttr.clr),
+      VIS_RC,        &(dlText->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
+#endif
+      CHAN_RC,       &(dlText->dynAttr.name),
+      ALIGN_RC,      &(dlText->align),
+      TEXTIX_RC,       dlText->textix,
+      -1);
+}
+
+static void textSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlText *dlText = p->structure.text;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlText->attr.clr),
+      -1);
 }

@@ -7,15 +7,20 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 UNIX_OPT=NO
 STATIC_BUILD = NO
 CC = cc -g
-#CC = cc -g -DDEBUG
-#CC = purify -first-only -chain-length=10 cc -g
+#CC = purify -first-only -chain-length=25 cc -g
+
+#CC = purify -first-only -chain-length=25  -log-file=purelog cc -g
+#CC = purify -first-only -chain-length=25  -mail-to-user=evans cc -g
+
+#CC = cc -g -xsb
+#CC = cc -g -DXSYNC
 #CC = purify cc -g
 #CC = gcc
 
 
-USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
+USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 
-USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
+USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 
 ifdef XRTGRAPH
@@ -24,18 +29,27 @@ ifdef XRTGRAPH
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
 endif
-# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
-  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
+#  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
+#  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu -lm
+
+ifdef MEDM_HELP_PATH
+   USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
+else
+   USR_CFLAGS += -DMEDM_HELP_PATH="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM\""
+endif
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_BASE_LIB)/libCom.a \
           $(EPICS_EXTENSIONS_LIB)/libUnix.a \
-          $(EPICS_EXTENSIONS_LIB)/libPrintUtils.a \
-          $(EPICS_EXTENSIONS_LIB)/libGraphX.a
+          $(INSTALL_LIB)/libPrintUtils.a \
+          $(INSTALL_LIB)/libGraphX.a
 
 SRCS.c = \
   ../actions.c \
+  ../bubbleHelp.c \
   ../callbacks.c \
+  ../browserHelp.c \
   ../channelPalette.c \
   ../colorPalette.c \
   ../display.c \
@@ -75,6 +89,7 @@ SRCS.c = \
   ../medmWidget.c \
   ../objectPalette.c \
   ../resourcePalette.c \
+  ../productDescriptionShell.c \
   ../shared.c \
   ../updateMonitors.c \
   ../utils.c \
@@ -82,7 +97,9 @@ SRCS.c = \
 
 OBJS = \
   actions.o \
+  bubbleHelp.o \
   callbacks.o \
+  browserHelp.o \
   channelPalette.o \
   colorPalette.o \
   display.o \
@@ -120,6 +137,7 @@ OBJS = \
   medmValuator.o \
   medmWidget.o \
   objectPalette.o \
+  productDescriptionShell.o \
   resourcePalette.o \
   shared.o \
   updateMonitors.o \
@@ -155,6 +173,11 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.20  1997/06/06 18:56:35  evans
+# These files are the first commit of changes made since starting 2.3.0.
+# There are many changes.  Most editing capability has been restored,
+# but Undo and Copy to the clipboard are known to not work.
+#
 # Revision 1.19  1996/12/11 15:53:24  evans
 # Version 2.3.0
 # =============

@@ -53,6 +53,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_NAN
+
+#ifdef DEBUG_NAN
+#define NAN_SUBSTITUTE 0.0
+#define SAFEFLOAT(x) (safeFloat(x))
+#else
+#define SAFEFLOAT(x) ((float)(x))
+#endif
+
 #include "medm.h"
 #include "medmCartesianPlot.h"
 
@@ -65,6 +74,8 @@ static void cartesianPlotUpdateValueCb(XtPointer cd);
 static void cartesianPlotDestroyCb(XtPointer cd);
 static void cartesianPlotName(XtPointer, char **, short *, int *);
 static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static XrtData *nullData = NULL;
@@ -88,12 +99,30 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
     NULL,
     cartesianPlotGetValues,
     cartesianPlotInheritValues,
-    NULL,
-    NULL,
+    cartesianPlotSetBackgroundColor,
+    cartesianPlotSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
     NULL};
+
+#ifdef DEBUG_NAN
+float safeFloat(double x) {
+    static int nerrs=0;
+    
+    if (isnan(x)) {
+	if(nerrs < 50) {
+	    nerrs++;
+	    medmPrintf("CartesianPlot : value is NaN, using %g\n",NAN_SUBSTITUTE);
+	} else {
+	    medmPrintf("CartesianPlot : supressing further NaN error messages\n");
+	}
+	return NAN_SUBSTITUTE;
+    } else {
+	return (float)x;
+    }
+}
+#endif
 
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
@@ -227,6 +256,13 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNwidth,(Dimension)dlCartesianPlot->object.width); n++;
     XtSetArg(args[n],XmNheight,(Dimension)dlCartesianPlot->object.height); n++;
     XtSetArg(args[n],XmNhighlightThickness,0); n++;
+
+  /* DEBUG */
+#if 0    
+    printf("dlCartesianPlot->object.width: %d\n",dlCartesianPlot->object.width);
+    printf("dlCartesianPlot->object.height: %d\n",dlCartesianPlot->object.height);
+#endif    
+  /* End DEBUG */
 
   /* long way around for color handling... but XRT/Graph insists on strings! */
     xColors[0].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.clr];
@@ -653,13 +689,10 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 	  "\nexecuteDlCartesianPlot: unknown Y2 range style");
 	break;
     }
-  
-
 
     XtSetArg(args[n],XmNtraversalOn,False); n++;
-/*
- * add the pointer to the CartesianPlot structure as userData to widget
- */
+
+   /* Add the pointer to the CartesianPlot structure as userData to widget */
     XtSetArg(args[n], XmNuserData, (XtPointer) pcp); n++;
     XtSetArg(args[n], XtNxrtDoubleBuffer, True); n++;
 #if 1
@@ -671,9 +704,12 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 #endif
     dlElement->widget = localWidget;
 
-/* add button press handlers */
-    XtAddEventHandler(localWidget,ButtonPressMask,False,handleButtonPress,
-      (XtPointer)displayInfo);
+  /* Add the KeyPress handler invoked in executeDlDisplay */
+    XtAddEventHandler(localWidget,KeyPressMask,False,
+      handleKeyPress,(XtPointer)displayInfo);
+  /* Add the ButtonPress handler */
+    XtAddEventHandler(localWidget,ButtonPressMask,False,
+      handleButtonPress,(XtPointer)displayInfo);
 
     XtManageChild(localWidget);
 }
@@ -1115,8 +1151,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
       /* X: x & y channels specified - scalars, up to dlCartesianPlot->count pairs */
 	count = pt->xrtData->g.data[pt->trace].npoints;
 	if (count <= dlCartesianPlot->count-1) {
-	    pt->xrtData->g.data[pt->trace].xp[count] = (float) pt->recordX->value;
-	    pt->xrtData->g.data[pt->trace].yp[count] = (float) pt->recordY->value;
+	    pt->xrtData->g.data[pt->trace].xp[count] = SAFEFLOAT(pt->recordX->value);
+	    pt->xrtData->g.data[pt->trace].yp[count] = SAFEFLOAT(pt->recordY->value);
 	    pt->xrtData->g.data[pt->trace].npoints++;
 	} else if (count > dlCartesianPlot->count-1) {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
@@ -1130,8 +1166,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		    pt->xrtData->g.data[pt->trace].yp[j-1] =
 		      pt->xrtData->g.data[pt->trace].yp[j];
 		}
-		pt->xrtData->g.data[pt->trace].xp[j-1] = (float) pt->recordX->value;
-		pt->xrtData->g.data[pt->trace].yp[j-1] = (float) pt->recordY->value;
+		pt->xrtData->g.data[pt->trace].xp[j-1] = SAFEFLOAT(pt->recordX->value);
+		pt->xrtData->g.data[pt->trace].yp[j-1] = SAFEFLOAT(pt->recordY->value);
 		pt->xrtData->g.data[pt->trace].npoints = dlCartesianPlot->count;
 	    }
 	}
@@ -1141,7 +1177,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
       /* x channel scalar, up to dlCartesianPlot->count pairs */
 	count = pt->xrtData->g.data[pt->trace].npoints;
 	if (count <= dlCartesianPlot->count-1) {
-	    pt->xrtData->g.data[pt->trace].xp[count] = (float) pt->recordX->value;
+	    pt->xrtData->g.data[pt->trace].xp[count] = SAFEFLOAT(pt->recordX->value);
 	    pt->xrtData->g.data[pt->trace].yp[count] = (float) count;
 	    pt->xrtData->g.data[pt->trace].npoints++;
 	} else if (count > dlCartesianPlot->count-1) {
@@ -1156,7 +1192,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		    pt->xrtData->g.data[pt->trace].yp[j-1] =
 		      (float) (j-1);
 		}
-		pt->xrtData->g.data[pt->trace].xp[j-1] = (float) pt->recordX->value;
+		pt->xrtData->g.data[pt->trace].xp[j-1] = SAFEFLOAT(pt->recordX->value);
 		pt->xrtData->g.data[pt->trace].yp[j-1] = (float) (j-1);
 	    }
 	}
@@ -1187,7 +1223,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    float *pFloat = (float *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].xp[j] = (float) pFloat[j];
+		pt->xrtData->g.data[pt->trace].xp[j] = SAFEFLOAT(pFloat[j]);
 		pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
 	    }
 	    break;
@@ -1203,9 +1239,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	}
 	case DBF_CHAR:
 	{
-	    unsigned char *ptar = (unsigned char *) pt->recordX->array;
+	    unsigned char *pUChar = (unsigned char *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].xp[j] = (float) ptar[j];
+		pt->xrtData->g.data[pt->trace].xp[j] = (float) pUChar[j];
 		pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
 	    }
 	    break;
@@ -1223,7 +1259,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    double *pDouble = (double *) pt->recordX->array;
 	    for (j = 0; j < pt->recordX->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].xp[j] = (float) pDouble[j];
+		pt->xrtData->g.data[pt->trace].xp[j] = SAFEFLOAT(pDouble[j]);
 		pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
 	    }
 	    break;
@@ -1300,7 +1336,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    float *pFloat = (float *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].yp[j] = (float) pFloat[j];
+		pt->xrtData->g.data[pt->trace].yp[j] = SAFEFLOAT(pFloat[j]);
 		pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
 	    }
 	    break;
@@ -1316,9 +1352,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	}
 	case DBF_CHAR:
 	{
-	    unsigned char *ptar = (unsigned char *) pt->recordY->array;
+	    unsigned char *pUChar = (unsigned char *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].yp[j] = (float) ptar[j];
+		pt->xrtData->g.data[pt->trace].yp[j] = (float) pUChar[j];
 		pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
 	    }
 	    break;
@@ -1336,7 +1372,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	{
 	    double *pDouble = (double *) pt->recordY->array;
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].yp[j] = (float) pDouble[j];
+		pt->xrtData->g.data[pt->trace].yp[j] = SAFEFLOAT(pDouble[j]);
 		pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
 	    }
 	    break;
@@ -1370,7 +1406,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		float *pFloat = (float *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].xp[j] = pFloat[j];
+		    pt->xrtData->g.data[pt->trace].xp[j] = SAFEFLOAT(pFloat[j]);
 		}
 		break;
 	    }
@@ -1384,9 +1420,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	    case DBF_CHAR:
 	    {
-		unsigned char *ptar = (unsigned char *) pt->recordX->array;
+		unsigned char *pUChar = (unsigned char *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].xp[j] = (float) ptar[j];
+		    pt->xrtData->g.data[pt->trace].xp[j] = (float) pUChar[j];
 		}
 		break;
 	    }
@@ -1402,7 +1438,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		double *pDouble = (double *) pt->recordX->array;
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].xp[j] = (double) pDouble[j];
+		    pt->xrtData->g.data[pt->trace].xp[j] = SAFEFLOAT(pDouble[j]);
 		}
 		break;
 	    }
@@ -1410,7 +1446,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	} else {
 	    if (pd == pt->recordY) {
 		for (j = 0; j < pt->recordX->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].yp[j] = (float) pt->recordY->value;
+		    pt->xrtData->g.data[pt->trace].yp[j] = SAFEFLOAT(pt->recordY->value);
 		}
 	    }
 	}
@@ -1440,7 +1476,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		float *pFloat = (float *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].yp[j] = pFloat[j];
+		    pt->xrtData->g.data[pt->trace].yp[j] = SAFEFLOAT(pFloat[j]);
 		}
 		break;
 	    }
@@ -1454,9 +1490,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	    case DBF_CHAR:
 	    {
-		unsigned char *ptar = (unsigned char *) pt->recordY->array;
+		unsigned char *pUChar = (unsigned char *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].yp[j] = (float) ptar[j];
+		    pt->xrtData->g.data[pt->trace].yp[j] = (float) pUChar[j];
 		}
 		break;
 	    }
@@ -1472,14 +1508,14 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		double *pDouble = (double *) pt->recordY->array;
 		for (j = 0; j < pt->recordY->elementCount; j++) {
-		    pt->xrtData->g.data[pt->trace].yp[j] = (double) pDouble[j];
+		    pt->xrtData->g.data[pt->trace].yp[j] = SAFEFLOAT(pDouble[j]);
 		}
 		break;
 	    }
 	    }
 	} else  if (pd == pt->recordX) {
 	    for (j = 0; j < pt->recordY->elementCount; j++) {
-		pt->xrtData->g.data[pt->trace].xp[j] = (float) pt->recordX->value;
+		pt->xrtData->g.data[pt->trace].xp[j] = SAFEFLOAT(pt->recordX->value);
 	    }
 	}
 	break;
@@ -1524,7 +1560,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		double *pDouble = (double *) pd->array;
 		double offset = (double) pcp->startTime.secPastEpoch;
 		for (j = 0; j < count; j++) {
-		    pfa[j] = (float) (pDouble[j] - offset);
+		    pfa[j] = SAFEFLOAT(pDouble[j] - offset);
 		}
 		break;
 	    }
@@ -1550,7 +1586,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		float *pFloat = (float *) pd->array;
 		for (j = 0; j < count; j++) {
-		    pfa[j] = pFloat[j];
+		    pfa[j] = SAFEFLOAT(pFloat[j]);
 		}
 		break;
 	    }
@@ -1564,9 +1600,9 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	    case DBF_CHAR:
 	    {
-		unsigned char *pChar = (unsigned char *) pd->array;
+		unsigned char *pUChar = (unsigned char *) pd->array;
 		for (j = 0; j < count; j++) {
-		    pfa[j] = (float) pChar[j];
+		    pfa[j] = (float) pUChar[j];
 		}
 		break;
 	    }
@@ -1582,7 +1618,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    {
 		double *pDouble = (double *) pd->array;
 		for (j = 0; j < count; j++) {
-		    pfa[j] = (float) pDouble[j];
+		    pfa[j] = SAFEFLOAT(pDouble[j]);
 		}
 		break;
 	    }
@@ -2139,5 +2175,21 @@ static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p) {
       TRIGGER_RC,    &(dlCartesianPlot->trigger),
       ERASE_RC,      &(dlCartesianPlot->erase),
       ERASE_MODE_RC, &(dlCartesianPlot->eraseMode),
+      -1);
+}
+
+static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlCartesianPlot *dlCartesianPlot = p->structure.cartesianPlot;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlCartesianPlot->plotcom.bclr),
+      -1);
+}
+
+static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlCartesianPlot *dlCartesianPlot = p->structure.cartesianPlot;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlCartesianPlot->plotcom.clr),
       -1);
 }

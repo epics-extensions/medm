@@ -145,17 +145,18 @@ DlElement *createDlComposite(DlElement *p) {
     return dlElement;
 }
 
-DlElement *groupObjects(DisplayInfo *displayInfo)
+DlElement *groupObjects()
 {
+    DisplayInfo *cdi = currentDisplayInfo;
     DlComposite *dlComposite;
     DlElement *dlElement, *elementPtr;
     int i, minX, minY, maxX, maxY;
 
   /* if there is no element selected, return */
-    if (IsEmpty(displayInfo->selectedDlElementList)) return 0;
+    if (IsEmpty(cdi->selectedDlElementList)) return 0;
 
     if (!(dlElement = createDlComposite(NULL))) return 0;
-    appendDlElement(displayInfo->dlElementList,dlElement);
+    appendDlElement(cdi->dlElementList,dlElement);
     dlComposite = dlElement->structure.composite;
 
 /*
@@ -165,7 +166,7 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
 
-    elementPtr = FirstDlElement(displayInfo->selectedDlElementList);
+    elementPtr = FirstDlElement(cdi->selectedDlElementList);
     while (elementPtr) { 
 	DlElement *pE = elementPtr->structure.element;
 	if (pE->type != DL_Display) {
@@ -174,7 +175,7 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
 	    maxX = MAX(maxX,(int)(po->x+po->width));
 	    minY = MIN(minY,po->y);
 	    maxY = MAX(maxY,(int)(po->y+po->height));
-	    removeDlElement(displayInfo->dlElementList,pE);
+	    removeDlElement(cdi->dlElementList,pE);
 	    appendDlElement(dlComposite->dlElementList,pE);
 	}
 	elementPtr = elementPtr->next;
@@ -187,12 +188,12 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
 
     clearResourcePaletteEntries();
     unhighlightSelectedElements();
-    destroyDlDisplayList(displayInfo->selectedDlElementList);
+    clearDlDisplayList(cdi->selectedDlElementList);
     if (!(elementPtr = createDlElement(NULL,NULL,NULL))) {
 	return 0;
     }
     elementPtr->structure.element = dlElement;
-    appendDlElement(displayInfo->selectedDlElementList,elementPtr);
+    appendDlElement(cdi->selectedDlElementList,elementPtr);
     highlightSelectedElements();
     currentActionType = SELECT_ACTION;
     currentElementType = DL_Composite;
@@ -328,7 +329,7 @@ void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
 }
 
 static void destroyDlComposite(DlElement *dlElement) {
-    destroyDlDisplayList(dlElement->structure.composite->dlElementList);
+    clearDlDisplayList(dlElement->structure.composite->dlElementList);
     free((char *) dlElement->structure.composite->dlElementList);
     free((char *) dlElement->structure.composite);
     free((char *) dlElement);
@@ -364,15 +365,23 @@ void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlComposite *dlComposite = p->structure.composite;
+    DlElement *childE;
     int x, y;
     unsigned int width, height;
     int xOffset, yOffset;
+#if 0   
+    int clr, bclr;
+#endif    
 
     medmGetValues(pRCB,
       X_RC,          &x,
       Y_RC,          &y,
       WIDTH_RC,      &width,
       HEIGHT_RC,     &height,
+#if 0      
+      CLR_RC,        &(clr),
+      BCLR_RC,       &(bclr),
+#endif      
       -1);
     xOffset = (int) width - (int) dlComposite->object.width;
     yOffset = (int) height - (int) dlComposite->object.height;
@@ -384,6 +393,19 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
     if (!xOffset || !yOffset) {
 	compositeMove(p,xOffset,yOffset);
     }
+#if 0    
+  /* Colors */
+    childE = FirstDlElement(dlComposite->dlElementList);
+    while (childE) {
+	if (childE->run->setForegroundColor) {
+	    childE->run->setForegroundColor(pRCB, childE);
+	}
+	if (childE->run->setBackgroundColor) {
+	    childE->run->setBackgroundColor(pRCB, childE);
+	}
+	childE = childE->next;
+    }
+#endif    
 }
 
 static void compositeCleanup(DlElement *dlElement) {

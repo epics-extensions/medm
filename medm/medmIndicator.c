@@ -68,6 +68,8 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd);
 static void indicatorDestroyCb(XtPointer cd);
 static void indicatorName(XtPointer, char **, short *, int *);
 static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void indicatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void indicatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void indicatorGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable indicatorDlDispatchTable = {
@@ -78,8 +80,8 @@ static DlDispatchTable indicatorDlDispatchTable = {
     NULL,
     indicatorGetValues,
     indicatorInheritValues,
-    NULL,
-    NULL,
+    indicatorSetBackgroundColor,
+    indicatorSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -472,5 +474,21 @@ static void indicatorGetValues(ResourceBundle *pRCB, DlElement *p) {
       LABEL_RC,      &(dlIndicator->label),
       DIRECTION_RC,  &(dlIndicator->direction),
       CLRMOD_RC,     &(dlIndicator->clrmod),
+      -1);
+}
+
+static void indicatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlIndicator *dlIndicator = p->structure.indicator;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlIndicator->monitor.bclr),
+      -1);
+}
+
+static void indicatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlIndicator *dlIndicator = p->structure.indicator;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlIndicator->monitor.clr),
       -1);
 }

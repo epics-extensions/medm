@@ -107,7 +107,7 @@ extern const LabelType FIRST_LABEL_TYPE;
 #define NUM_COLOR_MODES		3
 typedef enum {
     STATIC	= 6,
-    ALARM		= 7,
+    ALARM	= 7,
     DISCRETE	= 8
 } ColorMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -184,12 +184,12 @@ extern const TextFormat FIRST_TEXT_FORMAT;
 
 #define NUM_TEXT_ALIGNS		6
 typedef enum {
-    HORIZ_LEFT	= 28,
-    HORIZ_CENTER	= 29,
-    HORIZ_RIGHT	= 30,
-    VERT_TOP	= 31,
-    VERT_BOTTOM	= 32,
-    VERT_CENTER	= 33
+    HORIZ_LEFT	 = 28,
+    HORIZ_CENTER = 29,
+    HORIZ_RIGHT	 = 30,
+    VERT_TOP	 = 31,
+    VERT_BOTTOM	 = 32,
+    VERT_CENTER	 = 33
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -435,7 +435,7 @@ typedef enum {
     DL_RelatedDisplay=106,
     DL_ShellCommand  =107,
     DL_TextEntry     =108,
-    DL_Valuator  	   =109,
+    DL_Valuator      =109,
   /* monitors */
     DL_Bar           =110,
     DL_Byte          =111,
@@ -464,8 +464,7 @@ typedef enum {
 
 #define ELEMENT_HAS_WIDGET(type) ((type >= DL_Display && type <= DL_StripChart))
 
-#define ELEMENT_IS_CONTROLLER(type) \
-((type >= DL_choiceButton && type <= DL_Valuator))
+#define ELEMENT_IS_CONTROLLER(type) ((type >= DL_choiceButton && type <= DL_Valuator))
 
 /* this macro defines those elements which occupy space/position and can
  *  be rendered.  Note: Composite is not strictly renderable because no
@@ -473,19 +472,22 @@ typedef enum {
  *  DL_Display appears to be a sort of exception, since it's creation gives
  *  the backcloth upon which all rendering actually occurs.
  */
-#define ELEMENT_IS_RENDERABLE(type) \
-    ((type >= FIRST_RENDERABLE) ? True : False)
+#define ELEMENT_IS_RENDERABLE(type) ((type >= FIRST_RENDERABLE) ? True : False)
 
+/* Masks used for determining selected elements */
+#define SmallestTouched 1    
+#define AllTouched      2    
+#define AllEnclosed     4    
 
-/*********************************************************************
- * Nested structures                                                 *
- *********************************************************************/
-    typedef struct {
-	int clr;
-        EdgeStyle style;
-	FillStyle fill;
-	unsigned int width;
-    } DlBasicAttribute;
+/*******************
+ * Nested structures
+ *******************/
+typedef struct {
+    int clr;
+    EdgeStyle style;
+    FillStyle fill;
+    unsigned int width;
+} DlBasicAttribute;
 
 typedef struct {
     ColorMode clr;
@@ -776,6 +778,8 @@ typedef struct {
    display list in memory (with notion of composite/hierarchical structures) */
 
 typedef union {
+  /* Note: DlStructurePtr depends on DlElement depends on DlStructurePtr
+   *   so can't use DLElement here  */
     struct _DlElement *element;
     DlDisplay *display;
     DlRectangle *rectangle;
@@ -806,17 +810,24 @@ struct _ResourceBundle;
 struct _DisplayInfo;
 
 typedef struct {
+  /* Create (Allocate structures) method */
     struct _DlElement *(*create)();     /* note: 3 args in createDlElement, 1 in createDlxxx */
+  /* Destroy (Free structures) method */
     void (*destroy)(struct _DlElement *);
+  /* Execute (Make it appear on the display) method */
     void (*execute)(struct _DisplayInfo *, struct _DlElement *);
-  /* execute thyself method         */
+  /* Write (to file) method */
     void (*write)(FILE *, struct _DlElement *, int);
-  /* write thyself (to file) method */
-    void (*setValues)(struct _ResourceBundle *, struct _DlElement *); 
+  /* KE: The following is not used in any dispatch table */
+    void (*setValues)(struct _ResourceBundle *, struct _DlElement *);
+  /* Get values from the resource bundle method */
     void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
+  /* Inherit (some of the) values from the resource bundle method */
     void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
-    void (*setBackgroundColor)(struct _DlElement *, Pixel);
-    void (*setForegroundColor)(struct _DlElement *, Pixel);
+/*     void (*setBackgroundColor)(struct _DlElement *, Pixel); */
+/*     void (*setForegroundColor)(struct _DlElement *, Pixel); */
+    void (*setBackgroundColor)(struct _ResourceBundle *, struct _DlElement *);
+    void (*setForegroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*move)(struct _DlElement *, int, int);
     void (*scale)(struct _DlElement *, int, int);
     int  (*editVertex)(struct _DlElement *, int, int);

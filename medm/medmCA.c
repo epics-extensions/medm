@@ -285,12 +285,14 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 
     }
 
-#ifdef DEBUG
+  /* DEBUG */
+#if 0
     fprintf(stderr,"\ndmRegisterCA: numInps = %d\n\t",numInps);
     for (i = 0; i < maxInps; i++)
       fprintf(stderr,"%d ",inp[i].fd);
     fprintf(stderr,"\n");
 #endif
+  /* End DEBUG */
 
 }
 

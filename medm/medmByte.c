@@ -68,6 +68,8 @@ static void byteDestroyCb(XtPointer cd);
 static void byteName(XtPointer, char **, short *, int *);
 static void byteGetValues(ResourceBundle *pRCB, DlElement *p);
 static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable byteDlDispatchTable = {
     createDlByte,
@@ -77,8 +79,8 @@ static DlDispatchTable byteDlDispatchTable = {
     NULL,
     byteGetValues,
     byteInheritValues,
-    NULL,
-    NULL,
+    byteSetBackgroundColor,
+    byteSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -361,5 +363,21 @@ static void byteGetValues(ResourceBundle *pRCB, DlElement *p) {
       CLRMOD_RC,     &(dlByte->clrmod),
       SBIT_RC,       &(dlByte->sbit),
       EBIT_RC,       &(dlByte->ebit),
+      -1);
+}
+
+static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlByte *dlByte = p->structure.byte;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlByte->monitor.bclr),
+      -1);
+}
+
+static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlByte *dlByte = p->structure.byte;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlByte->monitor.clr),
       -1);
 }

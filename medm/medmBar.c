@@ -68,6 +68,8 @@ static void barUpdateGraphicalInfoCb(XtPointer cd);
 static void barDestroyCb(XtPointer cd);
 static void barName(XtPointer, char **, short *, int *);
 static void barInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void barSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
+static void barSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void barGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable barDlDispatchTable = {
@@ -78,8 +80,8 @@ static DlDispatchTable barDlDispatchTable = {
     NULL,
     barGetValues,
     barInheritValues,
-    NULL,
-    NULL,
+    barSetBackgroundColor,
+    barSetForegroundColor,
     genericMove,
     genericScale,
     NULL,
@@ -484,5 +486,21 @@ static void barGetValues(ResourceBundle *pRCB, DlElement *p) {
       DIRECTION_RC,  &(dlBar->direction),
       CLRMOD_RC,     &(dlBar->clrmod),
       FILLMOD_RC,    &(dlBar->fillmod),
+      -1);
+}
+
+static void barSetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlBar *dlBar = p->structure.bar;
+    medmGetValues(pRCB,
+      BCLR_RC,       &(dlBar->monitor.bclr),
+      -1);
+}
+
+static void barSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+{
+    DlBar *dlBar = p->structure.bar;
+    medmGetValues(pRCB,
+      CLR_RC,        &(dlBar->monitor.clr),
       -1);
 }

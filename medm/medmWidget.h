@@ -60,7 +60,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #ifndef __MEDMWIDGET_H__
 #define __MEDMWIDGET_H__
 
-
 #ifdef ALLOCATE_STORAGE
 #define EXTERN
 #else
@@ -154,6 +153,14 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define DEFAULT_DISPLAY_WIDTH	400
 #define DEFAULT_DISPLAY_HEIGHT	400
 
+/* Default grid parameters */
+#define DEFAULT_GRID_SPACING 5
+#define DEFAULT_GRID_ON      False
+
+/* Space parameters */
+#define HORIZONTAL 0
+#define VERTICAL   1
+
 /* highlight line thickness */
 #define HIGHLIGHT_LINE_THICKNESS 2
 
@@ -243,6 +250,17 @@ typedef struct {
     char *value;
 } NameValueTable;
 
+/*
+ * Undo information structure
+ */
+
+typedef struct {
+    int     gridSpacing;
+    Boolean gridOn;
+    int	    drawingAreaBackgroundColor;
+    int	    drawingAreaForegroundColor;
+    DlList  *dlElementList;
+} UndoInfo;
 
 /* 
  * EPICS Display specific information: one per display file
@@ -252,7 +270,7 @@ typedef struct _DisplayInfo {
     FILE		  *filePtr;
     Boolean   newDisplay;
     int       versionNumber;
-  /* widgets and main pixmap */
+  /* Widgets and main pixmap */
     Widget    shell;
     Widget    drawingArea;
     Pixmap    drawingAreaPixmap;
@@ -265,16 +283,21 @@ typedef struct _DisplayInfo {
     Widget    questionDialog;
     int       questionDialogAnswer;
     Widget    shellCommandPromptD;
-  /* widget instance data */
+  /* Grid */
+    int       gridSpacing;
+    Boolean   gridOn;
+  /* Undo */
+    UndoInfo  *undoInfo;
+  /* Widget instance data */
 #if 0
-    Widget		child[MAX_CHILDREN];	  /* children of drawing area */
-    int		    childCount;
+    Widget    child[MAX_CHILDREN];	  /* children of drawing area */
+    int	      childCount;
 #endif
-  /* periodic tasks */
+  /* Periodic tasks */
     UpdateTask      updateTaskListHead;
-    UpdateTask      *updateTaskListTail;
+    UpdateTask     *updateTaskListTail;
     int             periodicTaskCount;
-  /* colormap and attribute data (one exists at a time for each display)        */
+  /* Colormap and attribute data (one exists at a time for each display)        */
     Pixel *colormap;
     int		dlColormapCounter;
     int		dlColormapSize;
@@ -282,28 +305,23 @@ typedef struct _DisplayInfo {
     int		drawingAreaForegroundColor;
     GC		gc;
     GC		pixmapGC;
-  /* execute or edit mode traversal  */
-    DlTraversalMode	traversalMode;
-    Boolean		hasBeenEditedButNotSaved;
-    Boolean		fromRelatedDisplayExecution;
-  /* display list pointers */
+  /* Execute or edit mode traversal  */
+    DlTraversalMode traversalMode;
+    Boolean	    hasBeenEditedButNotSaved;
+    Boolean	    fromRelatedDisplayExecution;
+  /* Display list pointers */
     DlList *dlElementList;
-
-  /* for edit purposes */
+  /* For edit purposes */
     DlList *selectedDlElementList;
     Boolean selectedElementsAreHighlighted;
-
-  /* for macro-substitution in display lists */
-    NameValueTable	*nameValueTable;
-    int		 numNameValues;
-
+  /* For macro-substitution in display lists */
+    NameValueTable *nameValueTable;
+    int             numNameValues;
     DlFile *dlFile;
     DlColormap *dlColormap;
-
-  /* linked list of displayInfo's    */
+  /* Linked list of displayInfo's    */
     struct _DisplayInfo *next;
     struct _DisplayInfo *prev;
-
 } DisplayInfo;
 
 
@@ -331,13 +349,15 @@ extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
     "Element","Composite", "Display",
     "Choice Button", "Menu", "Message Button", "Related Display",
-    "Shell Command", "Text Entry", "Valuator",
-    "Bar", "Byte", "Cartesian Plot", "Indicator", "Meter",
-    "Strip Chart", "Text Update",
+    "Shell Command", "Text Entry", "Slider",
+    "Bar", "Byte", "Cartesian Plot", "Scale Indicator", "Meter",
+    "Strip Chart", "Text Indicator",
     "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
 };
 XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #endif
+
+#define elementType(x) (elementStringTable[(x)-DL_Element])
 
 /****************************************************************************
  ****				Resource Bundle type			 ****
