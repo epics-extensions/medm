@@ -314,16 +314,27 @@ int callBrowser(char *url)
   /* Doesn't work on 95 (No such file or directory), works on NT */
     sprintf(command,"start \"%s\"",url);
     status = _spawnl(_P_NOWAIT, ComSpec, "/C", command, NULL);
-#else    
+
+  /* Works on 95, not NT, no command window
+   *   No start.exe for NT */
     sprintf(command,"\"%s\"",url);
     status = _spawnlp(_P_DETACH, "start", "start", command, NULL);
+
+  /* Doesn't work on 95 */
+    sprintf(command,"\"start %s\"",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
+#else
+  /* This seems to work on 95 and NT, with a command box on 95
+   *   It may have trouble if the URL has spaces */
+    sprintf(command,"start %s",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
 #endif    
     if(status == -1) {
 	char *errstring=strerror(errno);
 
 	medmPrintf(1,"\ncallBrowser: Cannot start browser:\n"
-	  "start %s\n"
-	  "  %s\n",command,errstring);
+	  "%s %s\n"
+	  "  %s\n",ComSpec,command,errstring);
 /* 	perror("callBrowser:"); */
 	return(0);
     }
