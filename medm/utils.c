@@ -62,7 +62,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_UNDO 0
 #define DEBUG_PVINFO 0
 #define DEBUG_PVLIMITS 0
-#define DEBUG_COMMAND 1
+#define DEBUG_COMMAND 0
+#define DEBUG_REDRAW 0
 
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
@@ -3275,6 +3276,69 @@ void equalSizeSelectedElements(void)
     dmTraverseNonWidgetsInDisplayList(cdi);
 
     highlightSelectedElements();
+}
+
+/* Routine to redraw drawing objects above a given drawing object to
+ * keep the stacking correct */
+void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    int found = 0;
+    XPoint points[4];
+    Region region;
+    DlElement *pE;
+    
+#if DEBUG_REDRAW
+    print("redrawElementsAbove: dlElement=%x\n",dlElement);
+#endif    
+
+  /* Loop over elements not including the display */
+    pE = SecondDlElement(displayInfo->dlElementList);
+    while(pE) {
+	if(!pE->widget) {
+#if DEBUG_REDRAW
+	    print("  pE=%x pE->structure.element=%x\n",
+	      pE,pE->structure.element);
+#endif    
+	  /* Element is a drawing object */
+	    if(!found) {
+	      /* Keep looking until we find the given element */
+		if(pE->structure.element == dlElement) {
+		    DlObject *po = &(pE->structure.rectangle->object);
+		    
+#if DEBUG_REDRAW
+		    print("    found: type=%s\n",elementType(pE->type));
+#endif    
+		    found = 1;
+		    points[0].x = po->x;
+		    points[0].y = po->y;
+		    points[1].x = po->x + (int)po->width;
+		    points[1].y = po->y;
+		    points[2].x = po->x + (int)po->width;
+		    points[2].y = po->y + (int)po->height;
+		    points[3].x = po->x;
+		    points[3].y = po->y + (int)po->height;
+		    region = XPolygonRegion(points,4,EvenOddRule);
+		    if (region == NULL) {
+			medmPrintf(0,"\redrawElementsAbove: "
+			  "XPolygonRegion is NULL\n");
+			return;
+		    }
+		}
+	    } else {
+	      /* Element is above the given one in the stacking order */
+		DlObject *po = &(pE->structure.rectangle->object);
+		
+		if(XRectInRegion(region, po->x, po->y,
+		  (int)po->width, (int)po->height) != RectangleOut) {
+# if DEBUG_REDRAW
+		    print("    execute: type=%s\n",elementType(pE->type));
+#endif    
+		    pE->run->execute(displayInfo,pE);
+		}
+	    }
+	}
+	pE = pE->next;
+    }
 }
 
 /*
