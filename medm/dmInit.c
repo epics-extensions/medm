@@ -311,17 +311,20 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
     static DlDynamicAttribute dynAttr;
     static Boolean init = True;
  
+  /* Initialize attributes to defaults for old format */
     if (init && displayInfo->versionNumber < 20200) {
 	basicAttributeInit(&attr);
 	dynamicAttributeInit(&dynAttr);
 	init = False;
     }
  
+  /* Loop over tokens until T_EOF */
     do {
 	switch (tokenType=getToken(displayInfo,token)) {
 	case T_WORD : {
 	    DlElement *pe = 0;
 	    if (pe = getNextElement(displayInfo,token)) {
+	      /* Found an element via the parseFuncTable */
 		if (displayInfo->versionNumber < 20200) {
 		    switch (pe->type) {
 		    case DL_Rectangle :
@@ -330,12 +333,18 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 		    case DL_Text      :
 		    case DL_Polyline  :
 		    case DL_Polygon   :
+		      /* Use the last found attributes */
 			pe->structure.rectangle->attr = attr;
 			pe->structure.rectangle->dynAttr = dynAttr;
+		      /* Reset the attributes to defaults */
+			basicAttributeInit(&attr);
+			dynamicAttributeInit(&dynAttr);
 			break;
 		    }
 		}
 	    } else if (displayInfo->versionNumber < 20200) {
+	      /* Did not find an element and old file version */
+	      /* Parse attributes, which appear before the object does */
 		if (!strcmp(token,"<<basic atribute>>") ||
 		  !strcmp(token,"basic attribute") ||
 		  !strcmp(token,"<<basic attribute>>")) {
@@ -360,6 +369,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 	}
     } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
+
   /* Reset the init flag */
     if (tokenType == T_EOF) init = True;
     return tokenType;

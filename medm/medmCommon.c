@@ -319,23 +319,20 @@ void parseDlColor(
     displayInfo->filePtr = savedFilePtr;
 }
 
-void parseOldDlColor(
-  DisplayInfo *displayInfo,
-  FILE *filePtr,
+void parseOldDlColor(DisplayInfo *displayInfo, FILE *filePtr,
   DlColormapEntry *dlColor)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
- 
     FILE *savedFilePtr;
  
-/*
- * (MDA) have to be sneaky for these colormap parsing routines:
- *      since possibly external colormap, save and restore
- *      external file ptr in  displayInfo so that getToken()
- *      works with displayInfo and not the filePtr directly
- */
+  /*
+   * (MDA) have to be sneaky for these colormap parsing routines:
+   *      since possibly external colormap, save and restore
+   *      external file ptr in  displayInfo so that getToken()
+   *      works with displayInfo and not the filePtr directly
+   */
     savedFilePtr = displayInfo->filePtr;
     displayInfo->filePtr = filePtr;
  
@@ -345,18 +342,16 @@ void parseOldDlColor(
 	    if (!strcmp(token,"r")) {
 		getToken(displayInfo,token);getToken(displayInfo,token);
 		dlColor->r = atoi(token);
-	    } else
-	      if (!strcmp(token,"g")) {
-		  getToken(displayInfo,token);getToken(displayInfo,token);
-		  dlColor->g = atoi(token);
-	      } else
-		if (!strcmp(token,"b")) {
-		    getToken(displayInfo,token);getToken(displayInfo,token);
-		    dlColor->b = atoi(token);
-		} else if (!strcmp(token,"inten")) {
-		    getToken(displayInfo,token);getToken(displayInfo,token);
-		    dlColor->inten = atoi(token);
-		}
+	    } else if (!strcmp(token,"g")) {
+		getToken(displayInfo,token);getToken(displayInfo,token);
+		dlColor->g = atoi(token);
+	    } else if (!strcmp(token,"b")) {
+		getToken(displayInfo,token);getToken(displayInfo,token);
+		dlColor->b = atoi(token);
+	    } else if (!strcmp(token,"inten")) {
+		getToken(displayInfo,token);getToken(displayInfo,token);
+		dlColor->inten = atoi(token);
+	    }
 	    break;
 	case T_LEFT_BRACE:
 	    nestingLevel++; break;
@@ -365,8 +360,8 @@ void parseOldDlColor(
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
- 
-/* and restore displayInfo->filePtr to previous value */
+    
+  /* and restore displayInfo->filePtr to previous value */
     displayInfo->filePtr = savedFilePtr;
 }
 
@@ -374,9 +369,7 @@ void parseOldDlColor(
  *   be parsing and external colormap file, hence need to pass in the 
  *   explicit file ptr for the current colormap file
  */
-DlColormap *parseColormap(
-  DisplayInfo *displayInfo,
-  FILE *filePtr)
+DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
 {
     char token[MAX_TOKEN_LENGTH];
     char msg[2*MAX_TOKEN_LENGTH];
@@ -386,24 +379,24 @@ DlColormap *parseColormap(
     DlColormapEntry dummyColormapEntry;
     DlElement *dlTarget;
     int counter;
-
+    
     FILE *savedFilePtr;
-
-/*
- * (MDA) have to be sneaky for these colormap parsing routines:
- *	since possibly external colormap, save and restore 
- *	external file ptr in  displayInfo so that getToken()
- *	works with displayInfo and not the filePtr directly
- */
+    
+  /*
+   * (MDA) have to be sneaky for these colormap parsing routines:
+   *	since possibly external colormap, save and restore 
+   *	external file ptr in  displayInfo so that getToken()
+   *	works with displayInfo and not the filePtr directly
+   */
     savedFilePtr = displayInfo->filePtr;
     displayInfo->filePtr = filePtr;
-
+    
   /* initialize some data in structure */
     dlColormap->ncolors = 0;
-
+    
   /* new colormap, get values (pixel values are being stored) */
     counter = 0;
-
+    
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -441,7 +434,7 @@ DlColormap *parseColormap(
 	}
     } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
       (tokenType != T_EOF));
-
+    
   /*
    *  now since a valid colormap element has been brought into display list,
    *  remove the external cmap reference in the dlDisplay element
@@ -455,24 +448,21 @@ DlColormap *parseColormap(
 }
 
 
-void writeDlColormap(
-  FILE *stream,
-  DlColormap *dlColormap,
-  int level)
+void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
 {
     int i;
     char indent[16];
-
+    
     for (i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
-
+    
     fprintf(stream,"\n%s\"color map\" {",indent);
     fprintf(stream,"\n%s\tncolors=%d",indent,dlColormap->ncolors);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if (MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%s\tcolors {",indent,dlColormap->ncolors);
-
+	
 	for (i = 0; i < dlColormap->ncolors; i++) {
 	    fprintf(stream,"\n\t\t%s%06x,",indent,
               dlColormap->dl_color[i].r*0x10000+
@@ -520,12 +510,12 @@ void executeDlBasicAttribute(DisplayInfo *displayInfo,
     XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 }
 
-void parseBasicAttribute(DisplayInfo *displayInfo,
-  DlBasicAttribute *attr) {
+void parseBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
+{
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
-
+    
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -564,18 +554,13 @@ void parseBasicAttribute(DisplayInfo *displayInfo,
       && (tokenType != T_EOF) );
 }
 
-void parseOldBasicAttribute(DisplayInfo *displayInfo,
-  DlBasicAttribute *attr)
+void parseOldBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
-
-    attr->clr = 0;
-    attr->style = SOLID;
-    attr->fill = F_SOLID;
-    attr->width = 0;
-
+    
+    basicAttributeInit(attr);
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -589,7 +574,6 @@ void parseOldBasicAttribute(DisplayInfo *displayInfo,
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-
 }
 
 void writeDlBasicAttribute(FILE *stream, DlBasicAttribute *attr, int level)
@@ -626,13 +610,9 @@ void writeDlBasicAttribute(FILE *stream, DlBasicAttribute *attr, int level)
 }
 
 #ifdef __cplusplus
-void createDlObject(
-  DisplayInfo *,
-  DlObject *object)
+void createDlObject(DisplayInfo *, DlObject *object)
 #else
-void createDlObject(
-  DisplayInfo *displayInfo,
-  DlObject *object)
+void createDlObject(DisplayInfo *displayInfo, DlObject *object)
 #endif
 {
     object->x = globalResourceBundle.x;
@@ -641,7 +621,8 @@ void createDlObject(
     object->height = globalResourceBundle.height;
 }
 
-void objectAttributeInit(DlObject *object) {
+void objectAttributeInit(DlObject *object)
+{
     object->x = 0;
     object->y = 0;
     object->width = 10;
@@ -649,21 +630,24 @@ void objectAttributeInit(DlObject *object) {
 }
 
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
-  unsigned int height) {
+  unsigned int height)
+{
     object->x = x;
     object->y = y;
     object->width = width;
     object->height = height;
 }
 
-void basicAttributeInit(DlBasicAttribute *attr) {
+void basicAttributeInit(DlBasicAttribute *attr)
+{
     attr->clr = 0;
     attr->style = SOLID;
     attr->fill = F_SOLID;
     attr->width = 0;
 }
 
-void dynamicAttributeInit(DlDynamicAttribute *dynAttr) {
+void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
+{
     dynAttr->clr = STATIC;
     dynAttr->vis = V_STATIC;
 #ifdef __COLOR_RULE_H__
@@ -674,10 +658,8 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr) {
 
 /* Function prototypes */
 
-void destroyDlElement(DlElement *);
-DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
-void writeDlElement(FILE *stream, DlElement *DlElement, int level);
-void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement);
+static void writeDlElement(FILE *stream, DlElement *DlElement, int level);
+static void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement);
 
 void writeDlElement(FILE *stream, DlElement *DlElement, int level)
 {
@@ -702,9 +684,7 @@ static DlDispatchTable elementDlDispatchTable = {
     NULL,
     NULL};
 
-DlElement* createDlElement(
-  DlElementType type,
-  XtPointer structure,
+DlElement* createDlElement(DlElementType type, XtPointer structure,
   DlDispatchTable *dlDispatchTable)
 {
     DlElement *dlElement;
@@ -826,14 +806,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
     TOKEN tokenType;
     int nestingLevel = 0;
 
-
-    dynAttr->clr = STATIC;	/* ColorMode, actually */
-#ifdef __COLOR_RULE_H__
-    dynAttr->colorRule = 0;   /* Color Rule # */
-#endif
-    dynAttr->vis = V_STATIC;
-    *(dynAttr->chan) = '\0';
-
+    dynamicAttributeInit(dynAttr);
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
