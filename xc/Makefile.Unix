@@ -1,0 +1,37 @@
+#
+# $Id$
+#
+# $Log$
+# Revision 1.1  1994/10/05 18:56:56  jba
+# Initial versions
+#
+#
+
+EPICS = ../../../../..
+include Target.include
+include $(EPICS)/config/CONFIG_EXTENSIONS
+
+USR_CFLAGS = -I$(MOTIF)/include -I$(X11_INC)
+
+USR_LDFLAGS = -L$(MOTIF)/lib -L$(X11_LIB)
+USR_LDLIBS = -ANLwidgets -lca -lCom -lXm -lXt -lX11 -lm
+
+SRCS = ../BarGraph.c ../Caption.c ../Clip.c ../Control.c ../Indicator.c ../Matrix.c \
+	../Meter.c ../Value.c ../bae.c ../bar1.c ../indicator1.c ../meter1.c ../utils.c ../version.c
+
+LIBOBJS = BarGraph.o Caption.o Clip.o Control.o Indicator.o Matrix.o \
+	Meter.o Value.o utils.o version.o
+
+LIBNAME = libANLwidgets.a
+
+include $(EPICS)/config/RULES.Unix
+
+meter1: $(OBJS) $(DEPLIBS) meter1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
+
+indicator1 : $(OBJS) $(DEPLIBS) indicator1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
+
+bar1: $(OBJS) $(DEPLIBS) bar1.c
+	$(LINK.c) -o $@ $@.c $(LDLIBS)
+

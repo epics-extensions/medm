@@ -1,22 +1,14 @@
-ADD_ON = ../../..
+#
+# $Id$
+#
+# $Log$
+# Revision 1.2  1994/10/05 18:56:40  jba
+# Initial versions
+#
+#
 
-include $(ADD_ON)/src/config/CONFIG
+EPICS=../../../..
 
-
-USR_CFLAGS = $(MOTIF_CFLAGS) $(X11_CFLAGS)
-
-SUB_DIRS =  printUtils
-
-include $(ADD_ON)/src/config/HRULES
-
-
-SRCS = algorithms.c graph.c graph3d.c graphInteraction.c seql.c seqlInteraction.c \
-	strip.c surface.c surfaceInternals.c utils.c
-
-OBJS = algorithms.o graph.o graph3d.o graphInteraction.o seql.o seqlInteraction.o \
-	strip.o surface.o surfaceInternals.o utils.o
-
-LIBNAME = libGraphX.a
-
-include $(ADD_ON)/src/config/RULES
+include $(EPICS)/config/CONFIG_EXTENSIONS
+include $(EPICS)/config/RULES_ARCHS
 

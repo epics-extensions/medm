@@ -1,0 +1,22 @@
+#
+# $Id$
+#
+#  $Log$
+#  Revision 1.1  1994/10/05 18:56:46  jba
+#  Initial versions
+#
+#
+#
+
+EPICS = ../../../../../..
+include Target.include
+include $(EPICS)/config/CONFIG_EXTENSIONS
+
+SRCS = ../dsimple.c ../pUtils.c ../ps_utils.c ../utilPrint.c ../xwd.c ../xwd2ps.c
+
+LIBOBJS = dsimple.o pUtils.o ps_utils.o utilPrint.o xwd.o xwd2ps.o
+
+LIBNAME = libPrintUtils.a
+
+include $(EPICS)/config/RULES.Unix
+

@@ -1,6 +1,18 @@
-ADD_ON = ../..
+#
+# $Id$
+#
+# Makefile for building subdirectories
+#
+# $Log$
+# Revision 1.2  1994/10/05 18:56:29  jba
+# Initial versions
+#
+#
 
-SUB_DIRS = graphX xc medm
+EPICS=../../..
+include $(EPICS)/config/CONFIG_EXTENSIONS
 
-include $(ADD_ON)/src/config/HRULES
+DIRS = graphX graphX/printUtils xc medm
+
+include $(EPICS)/config/RULES_DIRS
 
