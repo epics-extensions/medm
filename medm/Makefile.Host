@@ -40,15 +40,16 @@ ifdef XRTGRAPH
   USR_LIBS += xrtm
   xrtm_DIR = $(XRTGRAPH)/lib
 
-#  The following sets up for the XRT/graph 3.0 extensions
+#  The following sets up for the XRT/graph 4.0 extensions
   ifdef XRTGRAPH_EXTENSIONS
     ifeq ($(XRTGRAPH_EXTENSIONS),YES)
       USR_CFLAGS += -DXRT_EXTENSIONS
-      USR_LIBS += xrtmprop xrtfield xrttable xrtgear Xpm Xext
+      USR_LIBS += xrtmprop xrtfield xrttable xrtgear pdsutil Xpm Xext
       xrtmprop_DIR = $(XRTGRAPH)/lib
       xrtfield_DIR = $(XRTGRAPH)/lib 
       xrttable_DIR = $(XRTGRAPH)/lib 
       xrtgear_DIR = $(XRTGRAPH)/lib 
+      pdsutil_DIR = $(XRTGRAPH)/lib 
       Xpm = $(X11)/lib 
       Xext = $(X11)/lib 
     endif
