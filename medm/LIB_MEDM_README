@@ -7,30 +7,44 @@
 #  -lXm -lXt -lX11 -lm
 #
 # noting that -lxrtm above is XRT/Graph from KL Group (used for
-# the cartesian plots in MEDM)
+# the cartesian plots in MEDM) and that applications which use
+# embedded MEDM with cartesian plots need to be xrt_auth-ed after
+# linking.
+#
 
 ...
 
-#include ...
 
-#define CLASS_NAME SBC		/* or whatever obviously */
+/*
+ *      Mark Anderson, Argonne National Laboratory,
+ *              (U.S. DOE, University of Chicago)
+ */
 
+
+#include "sbc.h"
+#include <Xm/ArrowB.h>
+#include <Xm/Frame.h>
 
 static String fallbackResources[] = {
   "SBC*foreground: black",
-  "SBC*background: #b0c3ca",
+  "SBC*background: grey70",
+
+  "SBC*shadowThickness: 2",
+  NULL
 };
 
 
 
-int main(int argc, char *argv[])
+
+main(int argc, char *argv[])
 {
+  Widget mainShell;
+  Widget bb, f1, f2, m1, m2, da1, da2, pb;
   XtAppContext appContext;
-  Arg args[8];
-  Widget mainShell, da;
-  Widget medmDA;
+  Display *display;
   int n;
-  ...
+  Arg args[12];
+
 
  /*
   * to get around ca repeater task not running problem (with resultant
@@ -38,53 +52,100 @@ int main(int argc, char *argv[])
   */
   SEVCHK(ca_task_initialize(),"\nmain: error in ca_task_initialize");
 
+  /*
+   * initialize the Intrinsics..., create main shell
+   */   
+   n = 0;
+   mainShell = XtAppInitialize(&appContext, CLASS, NULL, 0, &argc, argv,
+			fallbackResources, args, n);
+   display = XtDisplay(mainShell);
+   if (display == NULL) {
+	XtWarning("cannot open display");
+	exit(-1);
+   }
+   n = 0;
+   XtSetArg(args[n],XmNwidth,1000); n++;
+   XtSetArg(args[n],XmNheight,800); n++;
+   bb = XmCreateBulletinBoard(mainShell,"bb",args,n);
+   XtManageChild(bb);
 
- /*
-  * now initialize the Intrinsics..., create main shell, etc.
-  */   
-  mainShell = XtAppInitialize(&appContext, CLASS_NAME, NULL, 0, &argc, argv,
-			     fallbackResources, args, n);
-
- ...
-
- n = 0;
- XtSetArg(...); n++;
- ...
- /* DrawingAreas and BulletinBoards are the obvious parent widgets... */
- da = XmCreateDrawingArea(mainShell,"da",args,n)
- XtManageChild(da);
-
-
- /***
-  *** initialize MEDM under this appContext
-  ***/
-
- /* 1st argument = app context
-  * 2nd argument = widget returned from XtAppInitialize()
-  * 3rd argument = {"alias" or "scalable" or <xlfd>}
-  * (oen of widgetDM.h's FONT_ALIASES_STRING or DEFAULT_SCALABLE_DISPLAY_FONT */
-
-  libMedmInit(appContext,mainShell,"alias");
+  /*
+   * create 2 BB's for MEDM to use, surround with frame for visuals...
+   *  note that the parent widget is given an explicit position, but
+   *  not given an explicit size but that it resizes based upon the
+   *  display's size
+   *
+   *  - we don't need the frame here at all, but it adds a nice touch
+   */
+   n = 0;
+   XtSetArg(args[n],XmNx,750); n++;
+   XtSetArg(args[n],XmNy,50); n++;
+   XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_OUT); n++;
+   f1 = XmCreateFrame(bb,"f1",args,n);
+   n = 0;
+   XtSetArg(args[n],XmNshadowThickness,0); n++;
+   XtSetArg(args[n],XmNmarginWidth,0); n++;
+   XtSetArg(args[n],XmNmarginHeight,0); n++;
+   m1 = XmCreateBulletinBoard(f1,"m1",args,n);
+   XtManageChild(m1);
+   XtManageChild(f1);
 
 
- /***
-  *** now realize the top level widget, then do the libMedmImportDisplay()s
-  ***/
-  XtRealizeWidget(mainShell);		/* this can be done earlier too */
+   n = 0;
+   XtSetArg(args[n],XmNx,50); n++;
+   XtSetArg(args[n],XmNy,300); n++;
+   XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_OUT); n++;
+   f2 = XmCreateFrame(bb,"f2",args,n);
+   n = 0;
+   XtSetArg(args[n],XmNshadowThickness,0); n++;
+   XtSetArg(args[n],XmNmarginWidth,0); n++;
+   XtSetArg(args[n],XmNmarginHeight,0); n++;
+   m2 = XmCreateBulletinBoard(f2,"m2",args,n);
+   XtManageChild(m2);
+   XtManageChild(f2);
 
 
+/***
+ *** initialize MEDM under this appContext
+ ***/
 
- /***
-  *** import an MEDM display
-  ***/
+ /* 3rd argument = {"alias" or "scalable" or <xlfd>}
+  * (oen of widgetDM.h's FONT_ALIASES_STRING or DEFAULT_SCALABLE_DISPLAY_FONT
+  */
+   libMedmInit(appContext,mainShell,"alias");
+
+   XtRealizeWidget(mainShell);
+
+
+/***
+ *** import MEDM displays
+ ***/
+
  /* 1st argument = display file
   * 2nd argument = macro string (like "a=b,c=d,e=f")
   * 3rd argument = parent widget
-  * 4th argument = returned DrawingArea widget which MEDM created */
+  * 4th argument = returned DrawingArea which MEDM created
+  */
+   libMedmImportDisplay("apsStatus.adl",NULL,m1,&da1);
+   libMedmImportDisplay("beamlineStatus.adl",NULL,m2,&da2);
 
-  libMedmImportDisplay("/u/anderson/SBC/test1.adl",NULL,da,&medmDA);
+
+/* also note that you can create widgets inside MEDM's top level
+ * (returned) drawing area
+ */
+   n = 0;
+   XtSetArg(args[n],XmNx,20); n++;
+   XtSetArg(args[n],XmNy,20); n++;
+   XtSetArg(args[n],XmNwidth,30); n++;
+   XtSetArg(args[n],XmNheight,30); n++;
+   pb = XmCreateArrowButton(da2,"pb",args,n);
+   XtManageChild(pb);
+
+  ...
 
 
-  XtAppMainLoop(appContext);
+
+   XtAppMainLoop(appContext);
 
 }
+
