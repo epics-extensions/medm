@@ -87,6 +87,8 @@ typedef struct _parseFuncEntryNode {
 } ParseFuncEntryNode;
 
 /* Function prototypes */
+static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer);
+static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer);
 
 /* Global variables */
 
@@ -130,50 +132,7 @@ DisplayInfo *debugDisplayInfo=NULL;
 #endif
 /* End DEBUG */
 
-DlElement *getNextElement(DisplayInfo *pDI, char *token) {
-    int i;
-    for (i=0; i<parseFuncTableSize; i++) {
-	if (!strcmp(token,parseFuncTable[i].name)) {
-	    return parseFuncTable[i].func(pDI);
-	}
-    }
-    return 0;
-}
-
-#ifdef __cplusplus
-static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
-#else
-static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
-#endif
-{
-    Arg args[2];
-    XtSetArg(args[0],XmNx,&x);
-    XtSetArg(args[1],XmNy,&y);
-    XtGetValues(shell,args,2);
-    lastShell = shell;
-}
-
-#ifdef __cplusplus
-static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
-#else
-static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
-#endif
-{
-    DisplayInfo *displayInfo = (DisplayInfo *)cd;
-    Arg args[2];
-    char *env = getenv("MEDM_HELP");
-
-    if (shell == lastShell) {
-	XtSetArg(args[0],XmNx,x);
-	XtSetArg(args[1],XmNy,y);
-	XtSetValues(shell,args,2);
-    }
-    if (env != NULL) addDisplayHelpProtocol(displayInfo);
-}
-
-/***
- ***  displayInfo creation
- ***/
+/***  displayInfo routines ***/
 
 /*
  * create and return a DisplayInfo structure pointer on tail of displayInfoList
@@ -298,6 +257,217 @@ DisplayInfo *allocateDisplayInfo()
     return(displayInfo);
 }
 
+/*
+ * function which cleans up a given displayInfo in the displayInfoList
+ * (including the displayInfo's display list if specified)
+ */
+void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
+{
+    int i;
+    Boolean alreadyFreedUnphysical;
+    Widget drawingArea;
+    UpdateTask *pt = &(displayInfo->updateTaskListHead);
+
+  /* save off current drawingArea */
+    drawingArea = displayInfo->drawingArea;
+  /* now set to NULL in displayInfo to signify "in cleanup" */
+    displayInfo->drawingArea = NULL;
+    displayInfo->editPopupMenu = (Widget)0;
+    displayInfo->executePopupMenu = (Widget)0;
+
+  /*
+   * remove all update tasks in this display 
+   */
+    updateTaskDeleteAllTask(pt);
+ 
+  /* 
+   * as a composite widget, drawingArea is responsible for destroying
+   *  it's children
+   */
+    if(drawingArea != NULL) {
+	XtDestroyWidget(drawingArea);
+	drawingArea = NULL;
+    }
+
+  /* force a wait for all outstanding CA event completion */
+  /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
+   */
+#ifdef __MONITOR_CA_PEND_EVENT__
+    {
+	double t;
+	t = medmTime();
+	ca_pend_event(CA_PEND_EVENT_TIME);
+	t = medmTime() - t;
+	if(t > 0.5) {
+	    print("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
+	}
+    }
+#else
+    ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
+
+  /*
+   * if cleanupDisplayList == TRUE
+   *   then global cleanup ==> delete shell, free memory/structures, etc
+   */
+
+  /* Destroy undo information */
+    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
+    
+  /* Branch depending on cleanup mode */
+    if(cleanupDisplayList) {
+	XtDestroyWidget(displayInfo->shell);
+	displayInfo->shell = NULL;
+      /* remove display list here */
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+    } else {
+	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
+	while (dlElement) {
+	    if(dlElement->run->cleanup) {
+		dlElement->run->cleanup(dlElement);
+	    } else {
+		dlElement->widget = NULL;
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+
+  /*
+   * free other X resources
+   */
+    if(displayInfo->drawingAreaPixmap != (Pixmap)NULL) {
+	XFreePixmap(display,displayInfo->drawingAreaPixmap);
+	displayInfo->drawingAreaPixmap = (Pixmap)NULL;
+    }
+    if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
+	alreadyFreedUnphysical = False;
+	for (i = 0; i < displayInfo->dlColormapCounter; i++) {
+	    if(displayInfo->colormap[i] != unphysicalPixel) {
+		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
+	    } else if(!alreadyFreedUnphysical) {
+	      /* only free "unphysical" pixel once */
+		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
+		alreadyFreedUnphysical = True;
+	    }
+	}
+	free( (char *) displayInfo->colormap);
+	displayInfo->colormap = NULL;
+	displayInfo->dlColormapCounter = 0;
+	displayInfo->dlColormapSize = 0;
+    }
+    if(displayInfo->gc) {
+	XFreeGC(display,displayInfo->gc);
+	displayInfo->gc = NULL;
+    }
+    if(displayInfo->pixmapGC != NULL) {
+	XFreeGC(display,displayInfo->pixmapGC);
+	displayInfo->pixmapGC = NULL;
+    }
+    displayInfo->drawingAreaBackgroundColor = 0;
+    displayInfo->drawingAreaForegroundColor = 0;
+}
+
+
+void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
+{
+    displayInfo->prev->next = displayInfo->next;
+    if(displayInfo->next != NULL)
+      displayInfo->next->prev = displayInfo->prev;
+    if(displayInfoListTail == displayInfo)
+      displayInfoListTail = displayInfoListTail->prev;
+    if(displayInfoListTail == displayInfoListHead )
+      displayInfoListHead->next = NULL;
+/* Cleanup resources and free display list */
+    dmCleanupDisplayInfo(displayInfo,True);
+    freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
+    if(displayInfo->dlElementList) {
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+	free ( (char *) displayInfo->dlElementList);
+    }
+    if(displayInfo->selectedDlElementList) {
+	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
+	free ( (char *) displayInfo->selectedDlElementList);
+    }
+    free ( (char *) displayInfo->dlFile);
+    free ( (char *) displayInfo->dlColormap);
+    free ( (char *) displayInfo);
+
+    if(displayInfoListHead == displayInfoListTail) {
+	currentColormap = defaultColormap;
+	currentColormapSize = DL_MAX_COLORS;
+	currentDisplayInfo = NULL;
+    }
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
+}
+
+/*
+ * function to remove ALL displayInfo's
+ *   this includes a full cleanup of associated resources and displayList
+ */
+void dmRemoveAllDisplayInfo()
+{
+    DisplayInfo *nextDisplay, *displayInfo;
+
+    displayInfo = displayInfoListHead->next;
+    while (displayInfo != NULL) {
+	nextDisplay = displayInfo->next;
+	dmRemoveDisplayInfo(displayInfo);
+	displayInfo = nextDisplay;
+    }
+    displayInfoListHead->next = NULL;
+    displayInfoListTail = displayInfoListHead;
+
+    currentColormap = defaultColormap;
+    currentColormapSize = DL_MAX_COLORS;
+    currentDisplayInfo = NULL;
+}
+
+/*** Callbck routines ***/
+
+#ifdef __cplusplus
+static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
+{
+    Arg args[2];
+    XtSetArg(args[0],XmNx,&x);
+    XtSetArg(args[1],XmNy,&y);
+    XtGetValues(shell,args,2);
+    lastShell = shell;
+}
+
+#ifdef __cplusplus
+static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *displayInfo = (DisplayInfo *)cd;
+    Arg args[2];
+    char *env = getenv("MEDM_HELP");
+
+    if (shell == lastShell) {
+	XtSetArg(args[0],XmNx,x);
+	XtSetArg(args[1],XmNy,y);
+	XtSetValues(shell,args,2);
+    }
+    if (env != NULL) addDisplayHelpProtocol(displayInfo);
+}
+
+/***  Parsing routines ***/
+
+DlElement *getNextElement(DisplayInfo *pDI, char *token) {
+    int i;
+    for (i=0; i<parseFuncTableSize; i++) {
+	if (!strcmp(token,parseFuncTable[i].name)) {
+	    return parseFuncTable[i].func(pDI);
+	}
+    }
+    return 0;
+}
+
 TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
     TOKEN tokenType;
     char token[MAX_TOKEN_LENGTH];
@@ -379,10 +549,6 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
     if (tokenType == T_EOF) init = True;
     return tokenType;
 }
-
-/***
- ***  parsing and drawing/widget creation routines
- ***/
 
 /*
  * routine which actually parses the display list in the opened file
@@ -782,6 +948,8 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     return (NULL);
 }
 
+/*** Other routines ***/
+
 /*
  * clean up the memory-resident display list (if there is one)
  */
@@ -836,172 +1004,6 @@ void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
     if(psave) {
 	appendDlElement(list, psave);
     }
-}
-
-/*
- * function which cleans up a given displayInfo in the displayInfoList
- * (including the displayInfo's display list if specified)
- */
-void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
-{
-    int i;
-    Boolean alreadyFreedUnphysical;
-    Widget drawingArea;
-    UpdateTask *pt = &(displayInfo->updateTaskListHead);
-
-  /* save off current drawingArea */
-    drawingArea = displayInfo->drawingArea;
-  /* now set to NULL in displayInfo to signify "in cleanup" */
-    displayInfo->drawingArea = NULL;
-    displayInfo->editPopupMenu = (Widget)0;
-    displayInfo->executePopupMenu = (Widget)0;
-
-  /*
-   * remove all update tasks in this display 
-   */
-    updateTaskDeleteAllTask(pt);
- 
-  /* 
-   * as a composite widget, drawingArea is responsible for destroying
-   *  it's children
-   */
-    if(drawingArea != NULL) {
-	XtDestroyWidget(drawingArea);
-	drawingArea = NULL;
-    }
-
-  /* force a wait for all outstanding CA event completion */
-  /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
-   */
-#ifdef __MONITOR_CA_PEND_EVENT__
-    {
-	double t;
-	t = medmTime();
-	ca_pend_event(CA_PEND_EVENT_TIME);
-	t = medmTime() - t;
-	if(t > 0.5) {
-	    print("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
-	}
-    }
-#else
-    ca_pend_event(CA_PEND_EVENT_TIME);
-#endif
-
-  /*
-   * if cleanupDisplayList == TRUE
-   *   then global cleanup ==> delete shell, free memory/structures, etc
-   */
-
-  /* Destroy undo information */
-    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
-    
-  /* Branch depending on cleanup mode */
-    if(cleanupDisplayList) {
-	XtDestroyWidget(displayInfo->shell);
-	displayInfo->shell = NULL;
-      /* remove display list here */
-	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
-    } else {
-	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
-	while (dlElement) {
-	    if(dlElement->run->cleanup) {
-		dlElement->run->cleanup(dlElement);
-	    } else {
-		dlElement->widget = NULL;
-	    }
-	    dlElement = dlElement->next;
-	}
-    }
-
-  /*
-   * free other X resources
-   */
-    if(displayInfo->drawingAreaPixmap != (Pixmap)NULL) {
-	XFreePixmap(display,displayInfo->drawingAreaPixmap);
-	displayInfo->drawingAreaPixmap = (Pixmap)NULL;
-    }
-    if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
-	alreadyFreedUnphysical = False;
-	for (i = 0; i < displayInfo->dlColormapCounter; i++) {
-	    if(displayInfo->colormap[i] != unphysicalPixel) {
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-	    } else if(!alreadyFreedUnphysical) {
-	      /* only free "unphysical" pixel once */
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-		alreadyFreedUnphysical = True;
-	    }
-	}
-	free( (char *) displayInfo->colormap);
-	displayInfo->colormap = NULL;
-	displayInfo->dlColormapCounter = 0;
-	displayInfo->dlColormapSize = 0;
-    }
-    if(displayInfo->gc) {
-	XFreeGC(display,displayInfo->gc);
-	displayInfo->gc = NULL;
-    }
-    if(displayInfo->pixmapGC != NULL) {
-	XFreeGC(display,displayInfo->pixmapGC);
-	displayInfo->pixmapGC = NULL;
-    }
-    displayInfo->drawingAreaBackgroundColor = 0;
-    displayInfo->drawingAreaForegroundColor = 0;
-}
-
-
-void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
-{
-    displayInfo->prev->next = displayInfo->next;
-    if(displayInfo->next != NULL)
-      displayInfo->next->prev = displayInfo->prev;
-    if(displayInfoListTail == displayInfo)
-      displayInfoListTail = displayInfoListTail->prev;
-    if(displayInfoListTail == displayInfoListHead )
-      displayInfoListHead->next = NULL;
-/* Cleanup resources and free display list */
-    dmCleanupDisplayInfo(displayInfo,True);
-    freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
-    if(displayInfo->dlElementList) {
-	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
-	free ( (char *) displayInfo->dlElementList);
-    }
-    if(displayInfo->selectedDlElementList) {
-	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
-	free ( (char *) displayInfo->selectedDlElementList);
-    }
-    free ( (char *) displayInfo->dlFile);
-    free ( (char *) displayInfo->dlColormap);
-    free ( (char *) displayInfo);
-
-    if(displayInfoListHead == displayInfoListTail) {
-	currentColormap = defaultColormap;
-	currentColormapSize = DL_MAX_COLORS;
-	currentDisplayInfo = NULL;
-    }
-  /* Refresh the display list dialog box */
-    refreshDisplayListDlg();
-}
-
-/*
- * function to remove ALL displayInfo's
- *   this includes a full cleanup of associated resources and displayList
- */
-void dmRemoveAllDisplayInfo()
-{
-    DisplayInfo *nextDisplay, *displayInfo;
-
-    displayInfo = displayInfoListHead->next;
-    while (displayInfo != NULL) {
-	nextDisplay = displayInfo->next;
-	dmRemoveDisplayInfo(displayInfo);
-	displayInfo = nextDisplay;
-    }
-    displayInfoListHead->next = NULL;
-    displayInfoListTail = displayInfoListHead;
-
-    currentColormap = defaultColormap;
-    currentColormapSize = DL_MAX_COLORS;
-    currentDisplayInfo = NULL;
 }
 
 /*
