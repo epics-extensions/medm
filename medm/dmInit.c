@@ -153,8 +153,8 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
     XtSetArg(args[0],XmNx,x);
     XtSetArg(args[1],XmNy,y);
     XtSetValues(shell,args,2);
-
   }
+  help_protocol(shell);
 }
 
 

@@ -427,9 +427,15 @@ void writeDlBar( FILE *stream, DlBar *dlBar, int level) {
     if (dlBar->clrmod != STATIC)
       fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
         stringValueTable[dlBar->clrmod]);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
     if (dlBar->direction != RIGHT)
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlBar->direction]);
+#else
+    if ((dlBar->direction != RIGHT) || (!MedmUseNewFileFormat))
+      fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+        stringValueTable[dlBar->direction]);
+#endif
     if (dlBar->fillmod != FROM_EDGE) 
       fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
         stringValueTable[dlBar->fillmod]);

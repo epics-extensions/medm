@@ -2,6 +2,16 @@
 # $Id$
 #
 # $Log$
+# Revision 1.15  1996/10/10 16:17:55  vong
+# Version 2.2.5
+# =============
+# - Fix another 24 bit color bug.
+# - the image now works correctly on a 24 bit X-Server running on PC.
+# - add a new feature which contributed by desy. An extra entry in
+#   the shell menu to bring up help for that particular screen.  The
+#   help program is specified in the environment variable MEDM_HELP.
+#    Medm make a system() call with the display name as an argument.
+#
 # Revision 1.14  1996/05/14 21:00:18  vong
 # Version 2.2.0
 # =============
@@ -148,13 +158,14 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
-	     -lca -lCom -lUnix -lXm -lXt -lX11 -lm
 
 ifdef XRTGRAPH
-  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm 
+#  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
+  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
 endif
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_BASE_LIB)/libCom.a \
@@ -170,13 +181,13 @@ SRCS.c = ../actions.c ../callbacks.c ../channelPalette.c ../colorPalette.c \
 	../medmTextEntry.c ../medmValuator.c \
 	../medmMeter.c ../medmIndicator.c ../medmTextUpdate.c ../medmBar.c \
 	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c \
-        ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
-        ../medmPolyline.c ../medmPolygon.c ../medmComposite.c ../medmImage.c\
+  ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
+  ../medmPolyline.c ../medmPolygon.c ../medmComposite.c ../medmImage.c\
 	../medmRelatedDisplay.c ../medmShellCommand.c\
 	../medmCommon.c ../medmControl.c ../medmMonitor.c\
 	../objectPalette.c ../resourcePalette.c ../shared.c \
 	../updateMonitors.c ../utils.c ../medmWidget.c \
-	../xgif.c
+  ../xgif.c ../help_protocol.c
 
 OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 	display.o dmInit.o eventHandlers.o \
@@ -185,33 +196,18 @@ OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 	medmTextEntry.o medmValuator.o \
 	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
 	medmStripChart.o medmByte.o medmCartesianPlot.o \
-        medmArc.o medmOval.o medmRectangle.o medmText.o \
-        medmPolyline.o medmPolygon.o medmComposite.o medmImage.o\
+  medmArc.o medmOval.o medmRectangle.o medmText.o \
+  medmPolyline.o medmPolygon.o medmComposite.o medmImage.o\
 	medmRelatedDisplay.o medmShellCommand.o\
 	medmCommon.o medmControl.o medmMonitor.o\
 	objectPalette.o resourcePalette.o \
 	shared.o updateMonitors.o utils.o medmWidget.o \
-	xgif.o
-
-#LIBOBJS = actions.o callbacks.o channelPalette.o colorPalette.o \
-#	createControllers.o createExtensions.o createMonitors.o \
-#	createStatics.o display.o dmInit.o \
-#	eventHandlers.o executeExtensions.o \
-#	executeStatics.o help.o medmPixmap.o medmCA.o \
-#	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
-#	medmTextEntry.o medmValuator.o \
-#	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
-#	medmStripChart.o medmByte.o medmCartesianPlot.o \
-#       medmArc.o medmOval.o medmRectangle.o medmText.o \
-#       medmPolyline.o medmPolygon.o \
-#	libMedmInit.o objectPalette.o parseControllers.o \
-#	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
-#	shared.o updateMonitors.o utils.o medmWidget.o writeControllers.o \
-#	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
+  xgif.o help_protocol.o
 
 #LIBNAME = libMedm.a
 PROD = medm
 
+#STATIC_BUILD = YES
 include $(EPICS)/config/RULES.Unix
 
 #CC = cc -g

@@ -1,3 +1,12 @@
+Version 2.2.5
+=============
+- Fix another 24 bit color bug.
+- the image now works correctly on a 24 bit X-Server running on PC.
+- add a new feature which contributed by desy. An extra entry in
+  the shell menu to bring up help for that particular screen.  The 
+  help program is specified in the environment variable MEDM_HELP.
+   Medm make a system() call with the display name as an argument.
+
 Version 2.2.4
 =============
 - Fix the following bug :
@@ -18,7 +27,7 @@ Version 2.2.2
 Version 2.2.1
 =============
 - Fix a bug which causes MEDM to crash. The problem is related to an 
-  uninitialized pointer related to composite widget.
+  uninitialized pointer of composite widget.
 
 Version 2.2.0
 =============

@@ -423,9 +423,15 @@ void writeDlIndicator( FILE *stream, DlIndicator *dlIndicator, int level) {
     if (dlIndicator->clrmod != STATIC)
       fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
         stringValueTable[dlIndicator->clrmod]);
-    if (dlIndicator->direction != RIGHT) 
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+    if (dlIndicator->direction != RIGHT)
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlIndicator->direction]);
+#else
+    if ((dlIndicator->direction != RIGHT) || (!MedmUseNewFileFormat))
+      fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
+        stringValueTable[dlIndicator->direction]);
+#endif
     fprintf(stream,"\n%s}",indent);
 }
 

@@ -3047,6 +3047,7 @@ void moveElementAfter(
   DlElement *src,
   DlElement **tail)
 {
+  if (dst == src) return;
   if (src == *tail) {
     src->prev->next = NULL;
     *tail = src->prev;

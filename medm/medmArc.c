@@ -203,13 +203,13 @@ static void arcDraw(XtPointer cd) {
     switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
-        gcValues.foreground = displayInfo->dlColormap[pa->attr.clr];
+        gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
                                   pd->value,
-                                  pa->dynAttr.colorRule,
-                                  pa->attr.clr);
+                                  dlArc->dynAttr.colorRule,
+                                  dlArc->attr.clr);
         break;
 #else
       case STATIC :

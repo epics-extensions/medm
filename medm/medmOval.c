@@ -135,7 +135,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
 #endif
 
 #ifdef __COLOR_RULE_H__
-    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+    switch (dlOval->dynAttr.clr) {
       STATIC :
         po->record->monitorValueChanged = False;
         po->record->monitorSeverityChanged = False;
@@ -207,7 +207,7 @@ static void ovalDraw(XtPointer cd) {
     switch (dlOval->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
-        gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
+        gcValues.foreground = displayInfo->dlColormap[dlOval->attr.clr];
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
