@@ -442,7 +442,7 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 	XtUnmanageChild(displayInfo->shellCommandPromptD);
 	break;
     case XmCR_OK:
-	XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&command);
+	XmStringGetLtoR(call_data->value,XmFONTLIST_DEFAULT_TAG,&command);
       /* (MDA) NB: system() blocks! need to background (&) to not block */
       /* KE: User has to do this as it is coded */
 	if (command && *command) {

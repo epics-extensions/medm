@@ -175,32 +175,8 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
 	  textUpdateValueCb, NULL,(XtPointer) pt);
-	drawWhiteRectangle(pt->updateTask);
-
-#ifdef __COLOR_RULE_H__
-	switch (dlText->dynAttr.clr) {
-	  STATIC:
-	    pt->record->monitorValueChanged = False;
-	    pt->record->monitorSeverityChanged = False;
-	    break;
-	  ALARM:
-	    pt->record->monitorValueChanged = False;
-	    break;
-	  DISCRETE:
-	    pt->record->monitorSeverityChanged = False;
-	    break;
-	}
-#else
-	pt->records[0]->monitorValueChanged = False;
-	if (dlText->dynAttr.clr != ALARM ) {
-	    pt->records[0]->monitorSeverityChanged = False;
-	}
-#endif
-
-	if (dlText->dynAttr.vis == V_STATIC ) {
-	    pt->records[0]->monitorZeroAndNoneZeroTransition = False;
-	}
-
+	calcPostfix(&dlText->dynAttr);
+	setMonitorChanged(&dlText->dynAttr, pt->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
 #if DEBUG_FONTS > 1
@@ -261,36 +237,11 @@ static void textDraw(XtPointer cd) {
 	gcValues.line_style = ((dlText->attr.style == SOLID) ? LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-	switch (dlText->dynAttr.vis) {
-	case V_STATIC:
-#if DEBUG_FONTS
-	    printf("textUpdateValueCb [V_STATIC]: Calling drawText\n");
-#endif	
-	    drawText(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,dlText);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pr->value != 0.0) {
-#if DEBUG_FONTS
-		printf("textUpdateValueCb [IF_NOT_ZERO]: Calling drawText\n");
-#endif	
-		drawText(display,XtWindow(displayInfo->drawingArea),
-		  displayInfo->gc,dlText);
-	    }
-	    break;
-	case IF_ZERO:
-	    if (pr->value == 0.0) {
-#if DEBUG_FONTS
-		printf("textUpdateValueCb [IF_ZERO]: Calling drawText\n");
-#endif	
-		drawText(display,XtWindow(displayInfo->drawingArea),
-		  displayInfo->gc,dlText);
-	    }
-	    break;
-	default :
-	    medmPrintf(1,"\ntextUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
+      /* Draw depending on visibility */
+	if(calcVisibility(&dlText->dynAttr, pt->records))
+	/* KE: Different drawXXX from other drawing objects */
+	  drawText(display,XtWindow(displayInfo->drawingArea),
+	    displayInfo->gc,dlText);
 	if (pr->readAccess) {
 	    if (!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
 		pt->updateTask->opaque = True;
@@ -680,7 +631,11 @@ DlElement *handleTextCreate(int x0, int y0)
 
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
     DlText *dlText = p->structure.text;
+
     medmGetValues(pRCB,
+#if 0
+    /* KE: Inheriting thse values for Text is more a nuisance than a
+     help */
       HEIGHT_RC,     &(dlText->object.height),
       CLR_RC,        &(dlText->attr.clr),
       CLRMOD_RC,     &(dlText->dynAttr.clr),
@@ -688,30 +643,38 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlText->dynAttr.chan),
+      VIS_CALC_RC,   &(dlText->dynAttr.calc),
+      CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlText->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlText->dynAttr.chan[3]),
+#endif    
       ALIGN_RC,      &(dlText->align),
       -1);
 }
 
 static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
     DlText *dlText = p->structure.text;
-#if 0
-    medmSetValues(pRCB,
-      X_RC,          p->text->object.x,
-      Y_RC,          p->text->object.y,
-      WIDTH_RC,      p->text->object.width,
-      HEIGHT_RC,     p->text->object.height,
-      CLR_RC,        p->text->attr.clr,
-      CLRMOD_RC,     p->text->dynAttr.clr,
-      VIS_RC,        p->text->dynAttr.vis,
+
+    medmGetValues(pRCB,
+      X_RC,          &(dlText->object.x),
+      Y_RC,          &(dlText->object.y),
+      WIDTH_RC,      &(dlText->object.width),
+      HEIGHT_RC,     &(dlText->object.height),
+      CLR_RC,        &(dlText->attr.clr),
+      CLRMOD_RC,     &(dlText->dynAttr.clr),
+      VIS_RC,        &(dlText->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
-      COLOR_RULE_RC, p->text->dynAttr.colorRule,
+      COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(p->text->dynAttr.name),
-      ALIGN_RC,      p->text->align,
-      TEXTIX_RC,     p->text->textix,
+      VIS_CALC_RC,   &(dlText->dynAttr.calc),
+      CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlText->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlText->dynAttr.chan[3]),
+      ALIGN_RC,      &(dlText->align),
+      TEXTIX_RC,     &(dlText->textix),
       -1);
-#endif
 }
 
 static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
@@ -727,7 +690,11 @@ static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlText->dynAttr.chan),
+      VIS_CALC_RC,   &(dlText->dynAttr.calc),
+      CHAN_A_RC,     &(dlText->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlText->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlText->dynAttr.chan[3]),
       ALIGN_RC,      &(dlText->align),
       TEXTIX_RC,       dlText->textix,
       -1);

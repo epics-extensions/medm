@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_VISIBILITY 0
+
 #include "medm.h"
 
 typedef struct _Oval {
@@ -69,7 +71,6 @@ static void ovalGetRecord(XtPointer, Record **, int *);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
-static void ovalSetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable ovalDlDispatchTable = {
@@ -116,6 +117,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlOval->dynAttr.chan[0]) {
 	MedmOval *po;
+	
 	po = (MedmOval *) malloc(sizeof(MedmOval));
 	po->dlElement = dlElement;
 	po->updateTask = updateTaskAddTask(displayInfo,
@@ -132,34 +134,8 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
 	  ovalUpdateValueCb, NULL, (XtPointer)po);
-#if 0
-	drawWhiteRectangle(po->updateTask);
-#endif
-
-#ifdef __COLOR_RULE_H__
-	switch (dlOval->dynAttr.clr) {
-	case STATIC:
-	    po->record->monitorValueChanged = False;
-	    po->record->monitorSeverityChanged = False;
-	    break;
-	case ALARM:
-	    po->record->monitorValueChanged = False;
-	    break;
-	case DISCRETE:
-	    po->record->monitorSeverityChanged = False;
-	    break;
-	}
-#else
-	po->records[0]->monitorValueChanged = False;
-	if (dlOval->dynAttr.clr != ALARM ) {
-	    po->records[0]->monitorSeverityChanged = False;
-	}
-
-	if (dlOval->dynAttr.vis == V_STATIC ) {
-	    po->records[0]->monitorZeroAndNoneZeroTransition = False;
-	}
-#endif
-
+	calcPostfix(&dlOval->dynAttr);
+	setMonitorChanged(&dlOval->dynAttr, po->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlOval->attr));
 	if (dlOval->attr.fill == F_SOLID) {
@@ -188,9 +164,11 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
-
 static void ovalUpdateValueCb(XtPointer cd) {
     MedmOval *po = (MedmOval *) ((Record *) cd)->clientData;
+#if DEBUG_VISIBILITY
+    print("ovalUpdateValueCb: \n");
+#endif    
     updateTaskMarkUpdate(po->updateTask);
 }
 
@@ -203,7 +181,10 @@ static void ovalDraw(XtPointer cd) {
     Display *display = XtDisplay(po->updateTask->displayInfo->drawingArea);
     DlOval *dlOval = po->dlElement->structure.oval;
 
-    if (pd->connected) {
+#if DEBUG_VISIBILITY
+    print("ovalDraw: \n");
+#endif    
+    if(pd->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlOval->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -230,22 +211,9 @@ static void ovalDraw(XtPointer cd) {
 	gcValues.line_style = ((dlOval->attr.style == SOLID) ? LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-	switch (dlOval->dynAttr.vis) {
-	case V_STATIC:
-	    drawOval(po);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pd->value != 0.0)
-	      drawOval(po);
-	    break;
-	case IF_ZERO:
-	    if (pd->value == 0.0)
-	      drawOval(po);
-	    break;
-	default :
-	    medmPrintf(1,"\novalUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
+      /* Draw depending on visibility */
+	if(calcVisibility(&dlOval->dynAttr, po->records))
+	  drawOval(po);
 	if (pd->readAccess) {
 	    if (!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
 		po->updateTask->opaque = True;
@@ -398,12 +366,12 @@ static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlOval->dynAttr.chan),
+      VIS_CALC_RC,   &(dlOval->dynAttr.calc),
+      CHAN_A_RC,     &(dlOval->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlOval->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlOval->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlOval->dynAttr.chan[3]),
       -1);
-}
-
-static void ovalSetValues(ResourceBundle *pRCB, DlElement *p) {
-    DlOval *dlOval = p->structure.oval;
 }
 
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
@@ -422,7 +390,11 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlOval->dynAttr.chan),
+      VIS_CALC_RC,   &(dlOval->dynAttr.calc),
+      CHAN_A_RC,     &(dlOval->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlOval->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlOval->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlOval->dynAttr.chan[3]),
       -1);
 }
 

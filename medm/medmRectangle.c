@@ -130,30 +130,8 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
 	  rectangleUpdateValueCb,NULL,(XtPointer)pr);
-
-#ifdef __COLOR_RULE_H__
-	switch (dlRectangle->dynAttr.clr) {
-	case STATIC:
-	    pr->record->monitorValueChanged = False;
-	    pr->record->monitorSeverityChanged = False;
-	    break;
-	case ALARM:
-	    pr->record->monitorValueChanged = False;
-	    break;
-	case DISCRETE:
-	    pr->record->monitorSeverityChanged = False;
-	    break;
-	}
-#else
-	pr->records[0]->monitorValueChanged = False;
-	if (dlRectangle->dynAttr.clr != ALARM ) {
-	    pr->records[0]->monitorSeverityChanged = False;
-	}
-#endif
-
-	if (dlRectangle->dynAttr.vis == V_STATIC ) {
-	    pr->records[0]->monitorZeroAndNoneZeroTransition = False;
-	}
+	calcPostfix(&dlRectangle->dynAttr);
+	setMonitorChanged(&dlRectangle->dynAttr, pr->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
 
@@ -228,22 +206,9 @@ static void rectangleDraw(XtPointer cd)
 	gcValues.line_style = ( (dlRectangle->attr.style == SOLID) ? LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-	switch (dlRectangle->dynAttr.vis) {
-	case V_STATIC:
-	    drawRectangle(pr);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pd->value != 0.0)
-	      drawRectangle(pr);
-	    break;
-	case IF_ZERO:
-	    if (pd->value == 0.0)
-	      drawRectangle(pr);
-	    break;
-	default:
-	    medmPrintf(1,"\nrectangleUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
+      /* Draw depending on visibility */
+	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
+	  drawRectangle(pr);
 	if (pd->readAccess) {
 	    if (!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
 		pr->updateTask->opaque = True;
@@ -394,7 +359,11 @@ static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlRectangle->dynAttr.chan),
+      VIS_CALC_RC,   &(dlRectangle->dynAttr.calc),
+      CHAN_A_RC,     &(dlRectangle->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlRectangle->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlRectangle->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlRectangle->dynAttr.chan[3]),
       -1);
 }
 
@@ -414,7 +383,11 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlRectangle->dynAttr.chan),
+      VIS_CALC_RC,   &(dlRectangle->dynAttr.calc),
+      CHAN_A_RC,     &(dlRectangle->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlRectangle->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlRectangle->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlRectangle->dynAttr.chan[3]),
       -1);
 }
  

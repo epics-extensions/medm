@@ -55,13 +55,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_ANIMATE 0
+#define DEBUG_CALC 1
 
 #define DEFAULT_TIME 1
 #define ANIMATE_TIME(gif) \
   ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
   ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
 
-#include "postfix.h"
+#include <ctype.h>
+#include <postfix.h>
 #include "medm.h"
 #include "xgif.h"
 
@@ -73,11 +75,9 @@ typedef struct _Image {
     Record **records;
     UpdateTask *updateTask;
     Boolean validCalc;
+    Boolean animate;
     char post[MAX_TOKEN_LENGTH];
 } MedmImage;
-
-Widget importFSD;
-XmString gifDirMask;
 
 /* Function prototypes */
 
@@ -93,7 +93,7 @@ static void imageUpdateGraphicalInfoCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
 static void imageUpdateValueCb(XtPointer cd);
 static void imageScale(DlElement *dlElement, int xOffset, int yOffset);
-static void importCallback(Widget w, XtPointer cd, XtPointer cbs);
+static void imageFileSelectionCb(Widget w, XtPointer cd, XtPointer cbs);
 
 static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
@@ -111,29 +111,8 @@ static DlDispatchTable imageDlDispatchTable = {
     NULL,
     NULL};
 
-#if 0
-static void drawImage(MedmImage *pi)
-{
-    unsigned int lineWidth;
-    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
-    Widget widget = pi->updateTask->displayInfo->drawingArea;
-    Display *display = XtDisplay(widget);
-    DlImage *dlImage = pi->dlElement->structure.image;
-
-    lineWidth = (dlImage->attr.width+1)/2;
-    if (dlImage->attr.fill == F_SOLID) {
-	XFillImage(display,XtWindow(widget),displayInfo->gc,
-          dlImage->object.x,dlImage->object.y,
-          dlImage->object.width,dlImage->object.height);
-    } else if (dlImage->attr.fill == F_OUTLINE) {
-	XDrawImage(display,XtWindow(widget),displayInfo->gc,
-	  dlImage->object.x + lineWidth,
-	  dlImage->object.y + lineWidth,
-	  dlImage->object.width - 2*lineWidth,
-	  dlImage->object.height - 2*lineWidth);
-    }
-}
-#endif    
+Widget imageNameFSD;     /* Cannot be static - is initialized elsewhere */
+static char imageName[MAX_TOKEN_LENGTH];
 
 void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
@@ -177,6 +156,8 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     if (displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	MedmImage *pi;
+	char *pC, upstring[MAX_TOKEN_LENGTH];
+	int i;
 	
 	pi = (MedmImage *)malloc(sizeof(MedmImage));
 	pi->displayInfo = displayInfo;
@@ -185,6 +166,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
 	  imageDraw, (XtPointer)pi);
 	pi->validCalc = False;
+	pi->animate = False;
 	pi->post[0] = '\0';
 	if (pi->updateTask == NULL) {
 	    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
@@ -203,24 +185,51 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	      imageUpdateValueCb,
 	      imageUpdateGraphicalInfoCb,
 	      (XtPointer)pi);
-	  /* Calculate the postfix for calc */
-	    status=postfix(dlImage->calc, pi->post, &errnum);
-	    if(status) {
-		medmPostMsg(1,"executeDlImage:\n"
-		  "  Invalid calc expression [error %d]: %s\n  for %s\n",
-		  errnum, dlImage->calc, dlImage->dynAttr.chan);
-		pi->validCalc=False;
-	    } else {
-		pi->validCalc=True;
+	    
+	  /* Calculate the postfix for visbilitiy calc */
+	    calcPostfix(&dlImage->dynAttr);
+	    setMonitorChanged(&dlImage->dynAttr, pi->records);
+	  /* Calculate the postfix for the image calc */
+	  /* First, check for ANIMATE in the string */
+	    for(i=0; i < 4; i++) {
+		upstring[i] = toupper(dlImage->calc[i]);
 	    }
+	    if(!strncmp(upstring,"ANIM",4)) {
+	      /* Calc is set to animate */
+		pi->animate = True;
+		pi->validCalc = False;
+	    } else {
+		pi->animate = False;
+		status=postfix(dlImage->calc, pi->post, &errnum);
+		if(status) {
+		    medmPostMsg(1,"executeDlImage:\n"
+		      "  Invalid calc expression [error %d]: %s\n  for %s\n",
+		      errnum, dlImage->calc, dlImage->dynAttr.chan);
+		    pi->validCalc = False;
+		} else {
+		    pi->validCalc = True;
+		}
+	    }
+	  /* Override the visibility monitorChanged paramaters if
+             there is a valid image calc */
+	    if(pi->validCalc) {
+		for(i=0; i < MAX_CALC_RECORDS; i++) {
+		    pi->records[i]->monitorValueChanged = True;
+		}
+	    }
+#if 0	    
 	  /* Draw initial white rectangle */
+	  /* KE: Check if this is necessary */
 	    drawWhiteRectangle(pi->updateTask);
+#endif	    
 	} else {
 	  /* No channel */
 	    if(gif) {
 		if(gif->nFrames > 1) {
+		    pi->animate = True;
 		    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
 		} else {
+		    pi->animate = False;
 		  /* Draw the first frame */
 		    drawGIF(displayInfo,dlImage);
 		}
@@ -250,6 +259,7 @@ static void imageDraw(XtPointer cd)
     Record *pr = pi->records?pi->records[0]:NULL;
     DlImage *dlImage = pi->dlElement->structure.image;
     GIFData *gif = (GIFData *)dlImage->privateData;
+    int i;
 
   /* Branch on whether there is a channel or not */
     if(*dlImage->dynAttr.chan[0]) {
@@ -261,35 +271,80 @@ static void imageDraw(XtPointer cd)
 		double result;
 		long status;
 
-	      /* Determine the result of the calculation */
-		if(!*dlImage->calc) {
-		  /* calc string is empty */
-		    result=pr->value;
-		    status = 0;
-		} else if(!pi->validCalc) {
-		  /* calc string is invalid */
-		    status = 1;
+		if(!pi->animate) {
+		  /* Determine the result of the calculation */
+		    if(!*dlImage->calc) {
+		      /* calc string is empty */
+			result=pr->value;
+			status = 0;
+		    } else if(!pi->validCalc) {
+		      /* calc string is invalid */
+			status = 1;
+		    } else {
+			double valueArray[MAX_CALC_INPUTS];
+			Record **records = pi->records;
+			DlDynamicAttribute *attr = &dlImage->dynAttr;;
+			
+		      /* Fill in the input array */
+			for(i=0; i < MAX_CALC_RECORDS; i++) {
+			    if(*attr->chan[i] && records[i]->connected) {
+				valueArray[i] = records[i]->value;
+			    } else {
+				valueArray[i] = 0.0;
+			    }
+			}
+			valueArray[4] = 0.0;              /* E: Reserved */
+			valueArray[5] = 0.0;              /* F: Reserved */
+			valueArray[6] = pr->elementCount; /* G: count */
+			valueArray[7] = pr->hopr;         /* H: hopr */
+			valueArray[8] = pr->status;       /* I: status */
+			valueArray[9] = pr->severity;     /* J: severity */
+			valueArray[10] = pr->precision;   /* K: precision */
+			valueArray[11] = pr->lopr;        /* L: lopr */
+			
+		      /* Perform the calculation */
+			status = calcPerform(valueArray, &result, pi->post);
+			if(!status) {
+			  /* Result is valid, convert to frame number */
+			    if(gif) {
+				if(result < 0.0) gif->curFrame = 0;
+				else if(result > gif->nFrames-1)
+				  gif->curFrame=gif->nFrames-1;
+				else gif->curFrame = result +.5;
+			    }
+			}
+		    }
+#if DEBUG_CALC
+		    print("imageDraw: calc=%s result=%g sevr=%d animate=%d\n",
+		      dlImage->calc,result,pr->severity,pi->animate);
+#endif		    
 		} else {
-		  /* Perform the calculation */
-		    status = calcPerform(&pr->value, &result, pi->post);
+		  /* Result is always valid for animate */
+		    status = 0;
 		}
-	      /* Draw depending on status */
-		if(!status) {
-		  /* Result is valid, convert to frame number */
-		    if(gif) {
-			if(result < 0.0) gif->curFrame = 0;
-			else if(result > gif->nFrames-1) gif->curFrame=gif->nFrames-1;
-			else gif->curFrame = result +.5;
-		      /* Draw the frame */
-			drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+	      /* Draw depending on visibility */
+		if(status == 0) {
+		    if(calcVisibility(&dlImage->dynAttr, pi->records)) {
+			drawImage(pi);
+		    } else {
+			drawColoredRectangle(pi->updateTask,
+			  displayInfo->colormap[
+			    displayInfo->drawingAreaBackgroundColor]);
 		    }
 		} else {
 		  /* Result is invalid */
-		    draw3DPane(pi->updateTask,BlackPixel(display,screenNum));
+		    drawColoredRectangle(pi->updateTask,
+		      BlackPixel(display,screenNum));
 		}
-	    } else {
-		pi->updateTask->opaque = False;
-		draw3DQuestionMark(pi->updateTask);
+		if (pr->readAccess) {
+		    if (!pi->updateTask->overlapped &&
+		      dlImage->dynAttr.vis == V_STATIC) {
+			pi->updateTask->opaque = True;
+		    }
+		} else {
+		    pi->updateTask->opaque = False;
+		    draw3DQuestionMark(pi->updateTask);
+		}
 	    }
 	} else {
 	    drawWhiteRectangle(pi->updateTask);
@@ -302,21 +357,31 @@ static void imageDraw(XtPointer cd)
 	print("imageDraw: time=%.3f interval=%.3f name=%s\n",
 	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
 #endif
-	if(gif) {
-	    if(gif->nFrames > 1) {
-	      /* Draw the next image */
-		if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
-		drawGIF(pi->displayInfo, pi->dlElement->structure.image);
-		
-	      /* Reset the time */
-		updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
-	    } else {
-	      /* Draw the image */
-		drawGIF(pi->displayInfo, pi->dlElement->structure.image);
-	    }
-	}
+	drawImage(pi);
       /* Don't update the drawing objects above (Could get to be
        * expensive) */
+    }
+}
+
+static void drawImage(MedmImage *pi)
+{
+    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
+    DlImage *dlImage = pi->dlElement->structure.image;
+    GIFData *gif = (GIFData *)dlImage->privateData;
+    
+    if(gif) {
+	if(pi->animate) {
+	  /* Draw the next image */
+	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
+	    drawGIF(displayInfo, dlImage);
+	  /* Reset the time */
+	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
+	} else {
+	  /* Draw the image */
+	    drawGIF(displayInfo, dlImage);
+	  /* Reset the time */
+	    updateTaskSetScanRate(pi->updateTask, 0.0);
+	}
     }
 }
 
@@ -362,69 +427,100 @@ static void imageUpdateValueCb(XtPointer cd)
     updateTaskMarkUpdate(pi->updateTask);
 }
 
-static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
-{
-    XmFileSelectionBoxCallbackStruct *call_data =
-      (XmFileSelectionBoxCallbackStruct *) cbs;
-    char *fullPathName, *dirName;
-    int dirLength;
-
-    switch(call_data->reason){
-    case XmCR_CANCEL:
-	XtUnmanageChild(w);
-	break;
-
-    case XmCR_OK:
-	if (call_data->value != NULL && call_data->dir != NULL) {
-	    DlElement *dlElement = *((DlElement **) cd);
-	    DlImage *dlImage;
-	    if (!dlElement) return;
-	    dlImage = dlElement->structure.image;
-
-	    XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&fullPathName);
-	    XmStringGetLtoR(call_data->dir,XmSTRING_DEFAULT_CHARSET,&dirName);
-	    dirLength = strlen(dirName);
-	    XtUnmanageChild(w);
-#ifndef VMS
-	    strcpy(dlImage->imageName, &(fullPathName[dirLength]));
-#else
-	    strcpy(dlImage->imageName, &(fullPathName[0]));
-#endif
-	    dlImage->imageType = GIF_IMAGE;
-	    (dlElement->run->execute)(currentDisplayInfo, dlElement);
-	  /* Unselect any selected elements */
-	    unselectElementsInDisplay();
-	    
-	    setResourcePaletteEntries();
-	}
-	XtFree(fullPathName);
-	XtFree(dirName);
-	break;
-    }
-}
-
-/* Function which handles creation (and initial display) of images */
+/* Function which handles creation (and initial display) of images.
+   It pops up file selection dialog and waits for the response (0 = No
+   response, 1 = OK, 2 = Cancel) */
 DlElement* handleImageCreate()
 {
-    int n;
-    Arg args[10];
-    static DlElement *dlElement = 0;
-    if (!(dlElement = createDlImage(NULL))) return 0;
+    DlElement *dlElement = NULL;
+    XEvent event;
+    int response = 0;
+    
+    if(!(dlElement = createDlImage(NULL))) return dlElement;
 
-    if (importFSD == NULL) {
-	gifDirMask = XmStringCreateLocalized("*.gif");
-	globalResourceBundle.imageType = GIF_IMAGE;
+  /* Create or manage the file selection dialog */
+    if(imageNameFSD == NULL) {
+	int n;
+	Arg args[10];
+	XmString gifDirMask = XmStringCreateLocalized("*.gif");
+	
 	n = 0;
 	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
-	XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-	importFSD = XmCreateFileSelectionDialog(resourceMW,"importFSD",args,n);
-	XtAddCallback(importFSD,XmNokCallback,importCallback,&dlElement);
-	XtAddCallback(importFSD,XmNcancelCallback,importCallback,NULL);
-	XtManageChild(importFSD);
+	XtSetArg(args[n],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); n++;
+	imageNameFSD = XmCreateFileSelectionDialog(resourceMW,"imageNameFSD",args,n);
+	XtAddCallback(imageNameFSD,XmNokCallback,imageFileSelectionCb,&response);
+	XtAddCallback(imageNameFSD,XmNcancelCallback,imageFileSelectionCb,&response);
+	XtManageChild(imageNameFSD);
+	XmStringFree(gifDirMask);
     } else {
-	XtManageChild(importFSD);
+	XtManageChild(imageNameFSD);
     }
+
+  /* This routine is called by handleRectangularCreates. We need to
+     stay in this routine until the filename is chosen so the
+     succeeding processing will be meaningful */
+    while (!response || XtAppPending(appContext)) {
+	XtAppNextEvent(appContext,&event);
+	XtDispatchEvent(&event);
+    }
+
+  /* Check response */
+    if(response == 2) {
+      /* Cancel */
+	destroyDlImage(dlElement);
+	dlElement = NULL;
+    } else {
+      /* OK */
+	DlImage *dlImage = dlElement->structure.image;
+
+      /* Set the globalResourceBundle so inheritValues will work in
+         the succeeding processing */
+	dlImage->imageType = GIF_IMAGE;
+	strcpy(dlImage->imageName, imageName);
+    }
+    
     return dlElement;
+}
+
+static void imageFileSelectionCb(Widget w, XtPointer clientData,
+  XtPointer callData)
+{
+    int *response = (int *)clientData;
+    XmFileSelectionBoxCallbackStruct *cbs =
+      (XmFileSelectionBoxCallbackStruct *)callData;
+
+    switch(cbs->reason){
+    case XmCR_CANCEL:
+	XtUnmanageChild(w);
+	*response = 2;
+	break;
+    case XmCR_OK:
+	if(cbs->value != NULL) {
+	    char *fullPathName, *dirName;
+	    int dirLength;
+	    
+	    *response = 1;
+	    XmStringGetLtoR(cbs->value, XmFONTLIST_DEFAULT_TAG, &fullPathName);
+	    XmStringGetLtoR(cbs->dir, XmSTRING_DEFAULT_CHARSET, &dirName);
+	    dirLength = strlen(dirName);
+#ifndef VMS
+	  /* Copy the file name starting after the directory part */
+	    strncpy(imageName, fullPathName + dirLength, MAX_TOKEN_LENGTH);
+#else
+	  /* Copy the whole file name */
+	    strncpy(imageName, fullPathName, MAX_TOKEN_LENGTH);
+#endif
+	    imageName[MAX_TOKEN_LENGTH-1] = '\0';
+	    XtFree(fullPathName);
+	    XtUnmanageChild(w);
+	} else {
+	    *response = 2;
+	}
+	break;
+    default:
+	*response = 2;
+	break;
+    }
 }
 
 static void imageUpdateGraphicalInfoCb(XtPointer cd)
@@ -585,15 +681,16 @@ static void imageInheritValues(ResourceBundle *pRCB, DlElement *p)
 {
     DlImage *dlImage = p->structure.image;
     medmGetValues(pRCB,
-      IMAGETYPE_RC,  &(dlImage->imageType),
-      IMAGENAME_RC,  &(dlImage->imageName),
-      CALC_RC,       &(dlImage->calc),
-      CLRMOD_RC,     &(dlImage->dynAttr.clr),
+      IMAGE_CALC_RC, &(dlImage->calc),
       VIS_RC,        &(dlImage->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlImage->dynAttr.chan),
+      VIS_CALC_RC,   &(dlImage->dynAttr.calc),
+      CHAN_A_RC,     &(dlImage->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlImage->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlImage->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlImage->dynAttr.chan[3]),
       -1);
 }
 
@@ -605,15 +702,18 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
       Y_RC,          &(dlImage->object.y),
       WIDTH_RC,      &(dlImage->object.width),
       HEIGHT_RC,     &(dlImage->object.height),
-      IMAGETYPE_RC,  &(dlImage->imageType),
-      IMAGENAME_RC,  &(dlImage->imageName),
-      CALC_RC,       &(dlImage->calc),
-      CLRMOD_RC,     &(dlImage->dynAttr.clr),
+      IMAGE_TYPE_RC, &(dlImage->imageType),
+      IMAGE_NAME_RC, &(dlImage->imageName),
+      IMAGE_CALC_RC, &(dlImage->calc),
       VIS_RC,        &(dlImage->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlImage->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlImage->dynAttr.chan),
+      VIS_CALC_RC,   &(dlImage->dynAttr.calc),
+      CHAN_A_RC,     &(dlImage->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlImage->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlImage->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlImage->dynAttr.chan[3]),
       -1);
 }
 

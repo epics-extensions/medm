@@ -956,7 +956,7 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 	
 	if (pv == NULL) return;
 	
-	XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&stringValue);
+	XmStringGetLtoR(call_data->value,XmFONTLIST_DEFAULT_TAG,&stringValue);
 	if (stringValue != NULL) {
 	    value = atof(stringValue);
 	    

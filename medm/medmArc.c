@@ -132,33 +132,8 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,arcUpdateValueCb,
 	  NULL,(XtPointer) pa);
-#if 0
-	drawWhiteRectangle(pa->updateTask);
-#endif
-
-#ifdef __COLOR_RULE_H__
-	switch (dlArc->dynAttr.clr) {
-	case STATIC:
-	    pa->record->monitorValueChanged = False;
-	    pa->record->monitorSeverityChanged = False;
-	    break;
-	case ALARM:
-	    pa->records[0]->monitorValueChanged = False;
-	    break;
-	case DISCRETE:
-	    pa->records[0]->monitorSeverityChanged = False;
-	    break;
-	}
-#else
-	pa->records[0]->monitorValueChanged = False;
-	if (dlArc->dynAttr.clr != ALARM ) {
-	    pa->records[0]->monitorSeverityChanged = False;
-	}
-#endif
-
-	if (dlArc->dynAttr.vis == V_STATIC ) {
-	    pa->records[0]->monitorZeroAndNoneZeroTransition = False;
-	}
+	calcPostfix(&dlArc->dynAttr);
+	setMonitorChanged(&dlArc->dynAttr, pa->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
 	if (dlArc->attr.fill == F_SOLID) {
@@ -236,22 +211,9 @@ static void arcDraw(XtPointer cd) {
 	gcValues.line_style = ((dlArc->attr.style == SOLID) ? LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-	switch (dlArc->dynAttr.vis) {
-	case V_STATIC:
-	    drawArc(pa);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pd->value != 0.0)
-	      drawArc(pa);
-	    break;
-	case IF_ZERO:
-	    if (pd->value == 0.0)
-	      drawArc(pa);
-	    break;
-	default :
-	    medmPrintf(1,"\narcUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
+      /* Draw depending on visibility */
+	if(calcVisibility(&dlArc->dynAttr, pa->records))
+	  drawArc(pa);
 	if (pd->readAccess) {
 	    if (!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
 		pa->updateTask->opaque = True;
@@ -451,7 +413,11 @@ static void arcGetValues(ResourceBundle *pRCB, DlElement *p)
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlArc->dynAttr.chan),
+      VIS_CALC_RC,   &(dlArc->dynAttr.calc),
+      CHAN_A_RC,     &(dlArc->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlArc->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlArc->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlArc->dynAttr.chan[3]),
       BEGIN_RC,      &(dlArc->begin),
       PATH_RC,       &(dlArc->path),
       -1);
@@ -470,7 +436,11 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p)
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlArc->dynAttr.chan),
+      VIS_CALC_RC,   &(dlArc->dynAttr.calc),
+      CHAN_A_RC,     &(dlArc->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlArc->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlArc->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlArc->dynAttr.chan[3]),
       BEGIN_RC,      &(dlArc->begin),
       PATH_RC,       &(dlArc->path),
       -1);

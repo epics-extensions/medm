@@ -433,6 +433,7 @@ void draw3DQuestionMark(UpdateTask *);
 void draw3DPane(UpdateTask *, Pixel);
 void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
+void drawColoredRectangle(UpdateTask *pt, Pixel pixel);
 
 /* utils.c */
 long longFval(double f);
@@ -574,6 +575,9 @@ void updatePvLimits(DlLimits *limits);
 void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
+Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
+void calcPostfix(DlDynamicAttribute *attr);
+void setMonitorChanged(DlDynamicAttribute *attr, Record **records);
 /* Debugging */
 void printEventMasks(Display *display, Window win, char *string);
 void printWindowAttributes(Display *display, Window win, char *string);

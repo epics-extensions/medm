@@ -881,7 +881,7 @@ void medmCreateCAStudyDlg() {
 	  XmNsashHeight, 1,
 	  NULL);
 
-	str = XmStringLtoRCreate(caStatusDummyString,XmSTRING_DEFAULT_CHARSET);
+	str = XmStringLtoRCreate(caStatusDummyString,XmFONTLIST_DEFAULT_TAG);
 
 	caStudyLabel = XtVaCreateManagedWidget("status",
 	  xmLabelWidgetClass, pane,
@@ -1035,7 +1035,7 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 	      totalUpdateDiscarded,
 	      updateRequestQueued);
 	}                   
-	str = XmStringLtoRCreate(caStudyMsg,XmSTRING_DEFAULT_CHARSET);
+	str = XmStringLtoRCreate(caStudyMsg,XmFONTLIST_DEFAULT_TAG);
 	XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
 	XmStringFree(str);
 	XFlush(XtDisplay(caStudyS));

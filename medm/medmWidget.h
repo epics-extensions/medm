@@ -237,20 +237,13 @@ static XtActionsRec actions[] = {
  * special types
  ************************************************************************/
 
-/*
- * shell types that mdm/medd must worry about
- */
+/* Shell types that MEDM must worry about */
 typedef enum {DISPLAY_SHELL, OTHER_SHELL} ShellType;
 
-/*
- * action types for MB in display (based on object palette state
- */
+/* Action types for MB in display (based on object palette state */
 typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 
-/*
- *  update tasks
- */
-
+/* Update tasks */
 typedef struct _UpdateTask {
     void       (*executeTask)(XtPointer);    /* update rountine */
     void       (*destroyTask)(XtPointer);
@@ -273,72 +266,64 @@ typedef struct _InitTask {
     Boolean (*initTask)();
 } InitTask;
 
-/*
- * name-value table (for macro substitutions in display files)
- */
+/* Name-value table (for macro substitutions in display files) */
 typedef struct {
     char *name;
     char *value;
 } NameValueTable;
 
-/*
- * Undo information structure
- */
-
+/* Undo information structure */
 typedef struct {
     DlGrid  grid;
-    int	    drawingAreaBackgroundColor;
-    int	    drawingAreaForegroundColor;
+    int drawingAreaBackgroundColor;
+    int drawingAreaForegroundColor;
     DlList  *dlElementList;
 } UndoInfo;
 
-/* 
- * EPICS Display specific information: one per display file
- */
-
+/* DisplayInfo: EPICS Display specific information, one per display
+   file */
 typedef struct _DisplayInfo {
-    FILE		  *filePtr;
-    Boolean   newDisplay;
-    int       versionNumber;
+    FILE *filePtr;
+    Boolean newDisplay;
+    int versionNumber;
   /* Widgets and main pixmap */
-    Widget    shell;
-    Widget    drawingArea;
-    Pixmap    drawingAreaPixmap;
-    Widget    editPopupMenu;
-    Widget    executePopupMenu;
-    Widget    cartesianPlotPopupMenu;
-    Widget    selectedCartesianPlot;
-    Widget    warningDialog;
-    int       warningDialogAnswer;
-    Widget    questionDialog;
-    int       questionDialogAnswer;
-    Widget    shellCommandPromptD;
+    Widget shell;
+    Widget drawingArea;
+    Pixmap drawingAreaPixmap;
+    Widget editPopupMenu;
+    Widget executePopupMenu;
+    Widget cartesianPlotPopupMenu;
+    Widget selectedCartesianPlot;
+    Widget warningDialog;
+    int warningDialogAnswer;
+    Widget questionDialog;
+    int questionDialogAnswer;
+    Widget shellCommandPromptD;
   /* Grid */
-    DlGrid    *grid;
+    DlGrid *grid;
   /* Undo */
     UndoInfo  *undoInfo;
   /* Widget instance data */
 #if 0
-    Widget    child[MAX_CHILDREN];	  /* children of drawing area */
-    int	      childCount;
+    Widget child[MAX_CHILDREN];        /* children of drawing area */
+    int childCount;
 #endif
   /* Periodic tasks */
-    UpdateTask      updateTaskListHead;
-    UpdateTask     *updateTaskListTail;
-    int             periodicTaskCount;
+    UpdateTask updateTaskListHead;
+    UpdateTask *updateTaskListTail;
+    int  periodicTaskCount;
   /* Colormap and attribute data (one exists at a time for each display)        */
     Pixel *colormap;
-    int		dlColormapCounter;
-    int		dlColormapSize;
-    int		drawingAreaBackgroundColor;
-    int		drawingAreaForegroundColor;
-    GC		gc;
-    GC		pixmapGC;
+    int dlColormapCounter;
+    int dlColormapSize;
+    int drawingAreaBackgroundColor;
+    int drawingAreaForegroundColor;
+    GC gc;
+    GC pixmapGC;
   /* Execute or edit mode traversal  */
     DlTraversalMode traversalMode;
-    Boolean	    hasBeenEditedButNotSaved;
-    Boolean	    fromRelatedDisplayExecution;
-    
+    Boolean hasBeenEditedButNotSaved;
+    Boolean fromRelatedDisplayExecution;
   /* Display list pointers */
     DlList *dlElementList;
   /* For edit purposes */
@@ -346,19 +331,15 @@ typedef struct _DisplayInfo {
     Boolean selectedElementsAreHighlighted;
   /* For macro-substitution in display lists */
     NameValueTable *nameValueTable;
-    int             numNameValues;
+    int numNameValues;
     DlFile *dlFile;
-    DlColormap *dlColormap;
+    DlColormap  *dlColormap;
   /* Linked list of displayInfo's    */
     struct _DisplayInfo *next;
     struct _DisplayInfo *prev;
 } DisplayInfo;
 
-
-
-/*
- * miscellaneous support structures
- */
+/* Miscellaneous support structures */
 typedef struct {
     XtPointer	controllerData;	/* (ChannelAccessControllerData *) */
     int		nButtons;
@@ -389,14 +370,15 @@ XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 
 #define elementType(x) (elementStringTable[(x)-DL_Element])
 
+
 /****************************************************************************
  ****				Resource Bundle type			 ****
  ***
- ***  this gets tricky - this is the aggregate set of all "attributes"
- ***	or resources for any object in mdm/medd.  there is some intersection
+ ***  This gets tricky - this is the aggregate set of all "attributes"
+ ***	or resources for any object in MEDM.  There is some intersection
  ***	between objects (e.g., sharing DlObject) but any object ought to
  ***	be able to retrieve its necessary resources from this structure
- ***	somewhere.  look at   displayList.h   for definition of these
+ ***	somewhere.  Look at displayList.h for definition of these
  ***	structure components... 
  ***	NOTE:  exceptions: Display and Colormap not in here (these are
  ***	modified by other, more user-friendly, methods)
@@ -407,8 +389,8 @@ XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
  */
 typedef struct _ResourceBundle {
 
-  /* the aggregate types have been decomposed into scalar/atomic types to
-     support the set intersection necessary */
+  /* The aggregate types have been decomposed into scalar/atomic types
+   * to support the set intersection necessary */
     Position x;
     Position y;
     Dimension width;
@@ -432,8 +414,8 @@ typedef struct _ResourceBundle {
     EdgeStyle style;
     FillStyle fill;
     VisibilityMode vis;
-    char chan[MAX_TOKEN_LENGTH];
-    char dynChan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
+    char visCalc[MAX_TOKEN_LENGTH];
+    char chan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
     int data_clr;
     int dis;
     int xyangle;
@@ -450,7 +432,7 @@ typedef struct _ResourceBundle {
     char press_msg[MAX_TOKEN_LENGTH];
     char release_msg[MAX_TOKEN_LENGTH];
     char imageName[MAX_TOKEN_LENGTH];
-    char calc[MAX_TOKEN_LENGTH];
+    char imageCalc[MAX_TOKEN_LENGTH];
     char compositeName[MAX_TOKEN_LENGTH];
     char data[MAX_TOKEN_LENGTH];
     char cmap[MAX_TOKEN_LENGTH];
@@ -514,106 +496,67 @@ typedef struct _ResourceBundle {
 #define STYLE_RC	19
 #define FILL_RC		20
 #define CLRMOD_RC	21
-#ifdef __COLOR_RULE_H__
-#define COLOR_RULE_RC   22              /* Color Rule Entry Table         */
-#define VIS_RC          23
-#define CHAN_RC         24
-#define DATA_CLR_RC     25
-#define DIS_RC          26
-#define XYANGLE_RC      27
-#define ZANGLE_RC       28
-#define PERIOD_RC       29
-#define UNITS_RC        30
-#define CSTYLE_RC       31
-#define ERASE_OLDEST_RC 32
-#define COUNT_RC        33
-#define STACKING_RC     34
-#define IMAGETYPE_RC    35
-#define TEXTIX_RC       36
-#define MSG_LABEL_RC    37
-#define PRESS_MSG_RC    38
-#define RELEASE_MSG_RC  39
-#define IMAGENAME_RC    40
-#define CALC_RC         41
-#define DATA_RC         42
-#define CMAP_RC         43
-#define NAME_RC         44
-#define LINEWIDTH_RC    45
-#define PRECISION_RC    46
-#define SBIT_RC         47
-#define EBIT_RC         48
-#define RD_LABEL_RC     49
-#define RD_VISUAL_RC    50
+#define VIS_RC          22
+#define VIS_CALC_RC     23
+#if MAX_CALC_RECORDS != 4
+#error Need to make changes if MAX_CALC_RECORDS != 4
+#endif      
+#define CHAN_A_RC       24
+#define CHAN_B_RC       25
+#define CHAN_C_RC       26
+#define CHAN_D_RC       27
+#define DATA_CLR_RC     28
+#define DIS_RC          29
+#define XYANGLE_RC      30
+#define ZANGLE_RC       31
+#define PERIOD_RC       32
+#define UNITS_RC        33
+#define CSTYLE_RC       34
+#define ERASE_OLDEST_RC 35
+#define COUNT_RC        36
+#define STACKING_RC     37
+#define IMAGE_TYPE_RC   38
+#define TEXTIX_RC       39
+#define MSG_LABEL_RC    40
+#define PRESS_MSG_RC    41
+#define RELEASE_MSG_RC  42
+#define IMAGE_NAME_RC   43
+#define IMAGE_CALC_RC   44
+#define DATA_RC         45
+#define CMAP_RC         46
+#define NAME_RC         47
+#define LINEWIDTH_RC    48
+#define PRECISION_RC    49
+#define SBIT_RC         50
+#define EBIT_RC         51
+#define RD_LABEL_RC     52
+#define RD_VISUAL_RC    53
 
-/* vectors/matrices of data */
-#define RDDATA_RC       51              /* Related Display data           */
-#define CPDATA_RC       52              /* Cartesian Plot channel data    */
-#define SCDATA_RC       53              /* Strip Chart data               */
-#define SHELLDATA_RC    54              /* Shell Command data             */
-#define CPAXIS_RC       55              /* Cartesian Plot axis data       */
+/* Vectors/matrices of data */
+#define RDDATA_RC       54  /* Related Display data           */
+#define CPDATA_RC       55  /* Cartesian Plot channel data    */
+#define SCDATA_RC       56  /* Strip Chart data               */
+#define SHELLDATA_RC    57  /* Shell Command data             */
+#define CPAXIS_RC       58  /* Cartesian Plot axis data       */
+			    
+/* Other new entry types */ 
+#define TRIGGER_RC      59  /* Cartesian Plot trigger channel */
+#define ERASE_RC        60  /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   61  /* Cartesian Plot erase mode      */
 
-/* other new entry types */
-#define TRIGGER_RC      56              /* Cartesian Plot trigger channel */
-#define ERASE_RC        56              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   58              /* Cartesian Plot erase mode      */
+/* Grid */
+#define GRID_SPACING_RC	62
+#define GRID_ON_RC      63
+#define GRID_SNAP_RC    64
 
-/* grid */
-#define GRID_SPACING_RC	59
-#define GRID_ON_RC      60
-#define GRID_SNAP_RC    61
-
-#else     /* #ifdef __COLOR_RULE_H__ */
-
-#define VIS_RC		22
-#define CHAN_RC		23
-#define DATA_CLR_RC	24
-#define DIS_RC		25
-#define XYANGLE_RC	26
-#define ZANGLE_RC	27
-#define PERIOD_RC	28
-#define UNITS_RC	29
-#define CSTYLE_RC	30
-#define ERASE_OLDEST_RC	31
-#define COUNT_RC	32
-#define STACKING_RC	33
-#define IMAGETYPE_RC	34
-#define TEXTIX_RC	35
-#define MSG_LABEL_RC	36
-#define PRESS_MSG_RC	37
-#define RELEASE_MSG_RC	38
-#define IMAGENAME_RC	39
-#define CALC_RC         40
-#define DATA_RC		41
-#define CMAP_RC		42
-#define NAME_RC		43
-#define LINEWIDTH_RC	44
-#define PRECISION_RC	45
-#define SBIT_RC         46
-#define EBIT_RC         47
-#define RD_LABEL_RC     48
-#define RD_VISUAL_RC    49
-
-/* vectors/matrices of data */
-#define RDDATA_RC	50		/* Related Display data		  */
-#define CPDATA_RC	51		/* Cartesian Plot channel data	  */
-#define SCDATA_RC	52		/* Strip Chart data		  */
-#define SHELLDATA_RC	53		/* Shell Command data		  */
-#define CPAXIS_RC	54		/* Cartesian Plot axis data	  */
-
-/* other new entry types */
-#define TRIGGER_RC	55		/* Cartesian Plot trigger channel */
-#define ERASE_RC        56              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   57              /* Cartesian Plot erase mode      */
-
-/* grid */
-#define GRID_SPACING_RC	58
-#define GRID_ON_RC      59
-#define GRID_SNAP_RC    60
-
-#endif     /* #ifdef __COLOR_RULE_H__ */
+#ifndef __COLOR_RULE_H__
+# define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
+#else
+# define COLOR_RULE_RC  65  /* Color Rule Entry Table         */
+# define MAX_RESOURCE_ENTRY (COLOR_RULE_RC + 1)
+#endif
 
 #define MIN_RESOURCE_ENTRY	0
-#define MAX_RESOURCE_ENTRY	(GRID_SNAP_RC + 1)
 
 /***
  *** resourceEntryStringTable for definition of labels for resource entries
@@ -639,11 +582,12 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Direction",
     "Fill Mode", "Style", "Fill",
     "Color Mode",
-#ifdef __COLOR_RULE_H__
-    "Color Rule",
-#endif
     "Visibility",
-    "Channel",
+    "Visibility Calc",
+    "Channel A",
+    "Channel B",
+    "Channel C",
+    "Channel D",
     "Data Color", "Distance", "XY Angle", "Z Angle",
     "Period", "Units",
     "Plot Style", "Plot Mode", "Count",
@@ -653,7 +597,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Message Label",
     "Press Message", "Release Message",
     "Image Name",
-    "Calc Expression",
+    "Image Calc",
     "Data",
     "Colormap",
     "Name",
@@ -677,6 +621,9 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Grid Spacing",
     "Grid On",
     "Snap To Grid",
+#ifdef __COLOR_RULE_H__
+    "Color Rule",
+#endif
 };
 #endif
 
@@ -807,27 +754,20 @@ extern setOfColorRule_t setOfColorRule[MAX_SET_OF_COLOR_RULE];
 #endif
 #endif
 
-/*******************************************************************
- ********                 global variables                 *********
- *******************************************************************/
+/* Global variables */
 
-/* 
- * only one of these in all the address space
- */
-
-/* display, connection, and miscellaneous */
-
+/* Display, connection, and miscellaneous */
 EXTERN XmString dlXmStringMoreToComeSymbol;
 EXTERN XmButtonType executePopupMenuButtonType[NUM_EXECUTE_POPUP_ENTRIES];
 EXTERN XmString executePopupMenuButtons[NUM_EXECUTE_POPUP_ENTRIES];
 
 EXTERN Pixel defaultForeground, defaultBackground;
 
-/* should be dimensioned to ALARM_NSEV+1 (alarm.h), with corresponding values */
+/* Should be dimensioned to ALARM_NSEV+1 (alarm.h), with corresponding values */
 #define ALARM_MAX 5
 EXTERN Pixel alarmColorPixel[ALARM_MAX];
 
-/* initial (default - not related to any displays) colormap */
+/* Initial (default - not related to any displays) colormap */
 EXTERN Pixel defaultColormap[DL_MAX_COLORS];
 EXTERN Pixel *currentColormap;
 EXTERN int currentColormapSize;
@@ -851,13 +791,13 @@ EXTERN Widget resourceElementTypeLabel;
 
 EXTERN DlTraversalMode globalDisplayListTraversalMode;
 
+/* Flag which says to traverse monitor list */
 EXTERN Boolean globalModifiedFlag;
-				/* flag which says to traverse monitor list */
 
-/* for object palette selections and single object selection */
+/* For object palette selections and single object selection */
 EXTERN DlElementType currentElementType;
 
-/* for clipboard/edit purposes  - note that this has objects and attributes */
+/* For clipboard/edit purposes  - note that this has objects and attributes */
 #if 0
 EXTERN DlElement *clipboardElementsArray;  /* array of DlElements, not ptrs */
 EXTERN int numClipboardElements;
@@ -866,13 +806,11 @@ EXTERN Boolean clipboardDelete;
 #endif
 EXTERN DlList *clipboard;
 
-/* define MB1 semantics in the display window -
-	select, or create (based on object palette selection)
-*/
+/* Define MB1 semantics in the display window - select, or create
+ * (based on object palette selection) */
 EXTERN ActionType currentActionType;
 
-/* for private or shared/default colormap utilization */
+/* For private or shared/default colormap utilization */
 EXTERN Boolean privateCmap;
-
 
 #endif  /* __MEDMWIDGET_H__ */

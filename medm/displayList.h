@@ -75,8 +75,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define MAX_TRACES              8       /* max # of traces on cart. plot */
 #define MAX_FILE_CHARS          256     /* max # of chars in filename    */
 #define MAX_CALC_RECORDS        4       /* max # of records for calc     */
+#define MAX_CALC_INPUTS         12      /* max # of inputs for calc
+					   (fixed by EPICS) */
 #define DL_MAX_COLORS           65      /* max # of colors for display   */
 #define DL_COLORS_COLUMN_SIZE   5       /* # of colors in each column    */
+
+#if MAX_CALC_RECORDS != 4
+#error Need to make changes (CALC_A_RC, etc.) if MAX_CALC_RECORDS != 4
+#endif      
 
 /*********************************************************************
  * Resource Types                                                    *
@@ -118,11 +124,12 @@ const ColorMode FIRST_COLOR_MODE = STATIC;
 extern const ColorMode FIRST_COLOR_MODE;
 #endif
 
-#define NUM_VISIBILITY_MODES    3
+#define NUM_VISIBILITY_MODES    4
 typedef enum {
     V_STATIC    = 10,
     IF_NOT_ZERO = 11,
-    IF_ZERO     = 12
+    IF_ZERO     = 12,
+    V_CALC      = 13
 } VisibilityMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const VisibilityMode FIRST_VISIBILITY_MODE = V_STATIC;
@@ -132,8 +139,8 @@ extern const VisibilityMode FIRST_VISIBILITY_MODE;
 
 #define NUM_DIRECTIONS          2
 typedef enum {
-    UP    = 13,
-    RIGHT = 14
+    UP    = 14,
+    RIGHT = 15
 } Direction;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Direction FIRST_DIRECTION = UP;
@@ -144,8 +151,8 @@ extern const Direction FIRST_DIRECTION;
 
 #define NUM_EDGE_STYLES         2
 typedef enum {
-    SOLID = 15,
-    DASH  = 16
+    SOLID = 16,
+    DASH  = 17
 } EdgeStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EdgeStyle FIRST_EDGE_STYLE = SOLID;
@@ -155,8 +162,8 @@ extern const EdgeStyle FIRST_EDGE_STYLE;
 
 #define NUM_FILL_STYLES         2
 typedef enum {
-    F_SOLID   = 17,
-    F_OUTLINE = 18
+    F_SOLID   = 18,
+    F_OUTLINE = 19
 } FillStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillStyle FIRST_FILL_STYLE = F_SOLID;
@@ -167,14 +174,14 @@ extern const FillStyle FIRST_FILL_STYLE;
 
 #define NUM_TEXT_FORMATS        8
 typedef enum {
-    MEDM_DECIMAL  = 19,
-    EXPONENTIAL   = 20,
-    ENGR_NOTATION = 21,
-    COMPACT       = 22,
-    TRUNCATED     = 23,
-    HEXADECIMAL   = 24,
-    OCTAL         = 25,
-    STRING        = 26
+    MEDM_DECIMAL  = 20,
+    EXPONENTIAL   = 21,
+    ENGR_NOTATION = 22,
+    COMPACT       = 23,
+    TRUNCATED     = 24,
+    HEXADECIMAL   = 25,
+    OCTAL         = 26,
+    STRING        = 27
 } TextFormat;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextFormat FIRST_TEXT_FORMAT = MEDM_DECIMAL;
@@ -184,9 +191,9 @@ extern const TextFormat FIRST_TEXT_FORMAT;
 
 #define NUM_TEXT_ALIGNS         3
 typedef enum {
-    HORIZ_LEFT   = 27,
-    HORIZ_CENTER = 28,
-    HORIZ_RIGHT  = 29
+    HORIZ_LEFT   = 28,
+    HORIZ_CENTER = 29,
+    HORIZ_RIGHT  = 30
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -196,9 +203,9 @@ extern const TextAlign FIRST_TEXT_ALIGN;
 
 #define NUM_STACKINGS           3
 typedef enum {
-    COLUMN      = 30,
-    ROW         = 31,
-    ROW_COLUMN  = 32
+    COLUMN      = 31,
+    ROW         = 32,
+    ROW_COLUMN  = 33
 } Stacking;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Stacking FIRST_STACKING = COLUMN;
@@ -208,8 +215,8 @@ extern const Stacking FIRST_STACKING;
 
 #define NUM_FILL_MODES          2
 typedef enum {
-    FROM_EDGE   = 33,
-    FROM_CENTER = 34 
+    FROM_EDGE   = 34,
+    FROM_CENTER = 35 
 } FillMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
@@ -219,9 +226,9 @@ extern const FillMode FIRST_FILL_MODE;
 
 #define NUM_TIME_UNITS          3
 typedef enum {
-    MILLISECONDS = 35,
-    SECONDS      = 36,
-    MINUTES      = 37
+    MILLISECONDS = 36,
+    SECONDS      = 37,
+    MINUTES      = 38
 } TimeUnits;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TimeUnits FIRST_TIME_UNIT = MILLISECONDS;
@@ -231,9 +238,9 @@ extern const TimeUnits FIRST_TIME_UNIT;
 
 #define NUM_CARTESIAN_PLOT_STYLES       3
 typedef enum {
-    POINT_PLOT      = 38,
-    LINE_PLOT       = 39,
-    FILL_UNDER_PLOT = 40
+    POINT_PLOT      = 39,
+    LINE_PLOT       = 40,
+    FILL_UNDER_PLOT = 41
 } CartesianPlotStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE = POINT_PLOT;
@@ -243,8 +250,8 @@ extern const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE;
 
 #define NUM_ERASE_OLDESTS       2
 typedef enum {
-    ERASE_OLDEST_OFF = 41,
-    ERASE_OLDEST_ON  = 42
+    ERASE_OLDEST_OFF = 42,
+    ERASE_OLDEST_ON  = 43
 } EraseOldest;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
@@ -254,9 +261,9 @@ extern const EraseOldest FIRST_ERASE_OLDEST;
 
 #define NUM_IMAGE_TYPES 3
 typedef enum {
-    NO_IMAGE   = 43,
-    GIF_IMAGE  = 44,
-    TIFF_IMAGE = 45
+    NO_IMAGE   = 44,
+    GIF_IMAGE  = 45,
+    TIFF_IMAGE = 46
 } ImageType;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
@@ -266,9 +273,9 @@ extern const ImageType FIRST_IMAGE_TYPE;
 
 #define NUM_CARTESIAN_PLOT_AXIS_STYLES 3
 typedef enum {
-    LINEAR_AXIS = 46,
-    LOG10_AXIS  = 47,
-    TIME_AXIS   = 48
+    LINEAR_AXIS = 47,
+    LOG10_AXIS  = 48,
+    TIME_AXIS   = 49
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -278,9 +285,9 @@ extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
 
 #define NUM_CARTESIAN_PLOT_RANGE_STYLES 3
 typedef enum {
-    CHANNEL_RANGE        = 49,
-    USER_SPECIFIED_RANGE = 50,
-    AUTO_SCALE_RANGE     = 51
+    CHANNEL_RANGE        = 50,
+    USER_SPECIFIED_RANGE = 51,
+    AUTO_SCALE_RANGE     = 52
 } CartesianPlotRangeStyle;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -291,8 +298,8 @@ extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 
 #define NUM_ERASE_MODES 2
 typedef enum {
-    ERASE_IF_NOT_ZERO = 52,
-    ERASE_IF_ZERO     = 53
+    ERASE_IF_NOT_ZERO = 53,
+    ERASE_IF_ZERO     = 54
 } eraseMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
@@ -302,8 +309,8 @@ extern const eraseMode_t FIRST_ERASE_MODE;
 
 #define NUM_RD_MODES 2
 typedef enum {
-    ADD_NEW_DISPLAY = 54,
-    REPLACE_DISPLAY = 55
+    ADD_NEW_DISPLAY = 55,
+    REPLACE_DISPLAY = 56
 } relatedDisplayMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayMode_t FIRST_RD_MODE = ADD_NEW_DISPLAY;
@@ -313,10 +320,10 @@ extern const relatedDisplayMode_t FIRST_RD_MODE;
 
 #define NUM_RD_VISUAL 4
 typedef enum {
-    RD_MENU       = 56,
-    RD_ROW_OF_BTN = 57,
-    RD_COL_OF_BTN = 58,
-    RD_HIDDEN_BTN = 59
+    RD_MENU       = 57,
+    RD_ROW_OF_BTN = 58,
+    RD_COL_OF_BTN = 59,
+    RD_HIDDEN_BTN = 60
 } relatedDisplayVisual_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayVisual_t FIRST_RD_VISUAL = RD_MENU;
@@ -326,13 +333,13 @@ extern const relatedDisplayVisual_t FIRST_RD_VISUAL;
 
 #define NUM_CP_TIME_FORMAT 7
 typedef enum {
-    HHMMSS    = 60,
-    HHMM      = 61,
-    HH00      = 62,
-    MMMDDYYYY = 63,
-    MMMDD     = 64,
-    MMDDHH00  = 65,
-    WDHH00    = 66
+    HHMMSS    = 61,
+    HHMM      = 62,
+    HH00      = 63,
+    MMMDDYYYY = 64,
+    MMMDD     = 65,
+    MMDDHH00  = 66,
+    WDHH00    = 67
 } CartesianPlotTimeFormat_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;
@@ -342,8 +349,8 @@ extern const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT;
 
 #define NUM_BOOLEAN 2
 typedef enum {
-    BOOLEAN_FALSE = 67,
-    BOOLEAN_TRUE  = 68
+    BOOLEAN_FALSE = 68,
+    BOOLEAN_TRUE  = 69
 } Boolean_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
@@ -353,10 +360,10 @@ extern const Boolean_t FIRST_BOOLEAN;
 
 #define NUM_PV_LIMITS_SRC 4
 typedef enum {
-    PV_LIMITS_CHANNEL = 69,
-    PV_LIMITS_DEFAULT = 70,
-    PV_LIMITS_USER    = 71,
-    PV_LIMITS_UNUSED  = 72
+    PV_LIMITS_CHANNEL = 70,
+    PV_LIMITS_DEFAULT = 71,
+    PV_LIMITS_USER    = 72,
+    PV_LIMITS_UNUSED  = 73
 } PvLimitsSrc_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
@@ -367,10 +374,10 @@ extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-    COLOR_RULE_1 = 73,
-    COLOR_RULE_2 = 74,
-    COLOR_RULE_3 = 75,
-    COLOR_RULE_4 = 76
+    COLOR_RULE_1 = 74,
+    COLOR_RULE_2 = 75,
+    COLOR_RULE_3 = 76,
+    COLOR_RULE_4 = 77
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -382,9 +389,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS             8     /* NUM_TEXT_FORMATS */
 #ifndef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (73)  /* COLOR_RULE_1 */
+#define NUMBER_STRING_VALUES    (74)  /* COLOR_RULE_1 */
 #else
-#define NUMBER_STRING_VALUES    (77)  /* COLOR_RULE_1 + NUM_COLOR_RULE */
+#define NUMBER_STRING_VALUES    (78)  /* COLOR_RULE_1 + NUM_COLOR_RULE */
 #endif
 
 /*********************************************************************
@@ -400,7 +407,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "execute", "edit",
     "none", "no decorations", "outline", "limits", "channel",
     "static", "alarm", "discrete",
-    "static", "if not zero", "if zero",
+    "static", "if not zero", "if zero", "calc",
     "up", "right",
     "solid", "dash",
     "solid", "outline",
@@ -519,6 +526,8 @@ typedef struct {
 #endif
     char chan[MAX_CALC_RECORDS][MAX_TOKEN_LENGTH];
     char calc[MAX_TOKEN_LENGTH];
+    char post[MAX_TOKEN_LENGTH];
+    Boolean validCalc;
 } DlDynamicAttribute;
         
 typedef struct {

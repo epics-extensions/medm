@@ -183,34 +183,8 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
 	  polylineUpdateValueCb, NULL, (XtPointer) pp);
-#if 0
-	drawWhiteRectangle(pp->updateTask);
-#endif
-
-#ifdef __COLOR_RULE_H__
-	switch (dlPolyline->dynAttr.clr) {
-	case STATIC:
-	    pp->record->monitorValueChanged = False;
-	    pp->record->monitorSeverityChanged = False;
-	    break;
-	case ALARM:
-	    pp->record->monitorValueChanged = False;
-	    break;
-	case DISCRETE:
-	    pp->record->monitorSeverityChanged = False;
-	    break;
-	}
-#else
-	pp->records[0]->monitorValueChanged = False;
-	if (dlPolyline->dynAttr.clr != ALARM ) {
-	    pp->records[0]->monitorSeverityChanged = False;
-	}
-#endif
-
-	if (dlPolyline->dynAttr.vis == V_STATIC ) {
-	    pp->records[0]->monitorZeroAndNoneZeroTransition = False;
-	}
-
+	calcPostfix(&dlPolyline->dynAttr);
+	setMonitorChanged(&dlPolyline->dynAttr, pp->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlPolyline->attr));
 	XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
@@ -265,22 +239,9 @@ static void polylineDraw(XtPointer cd) {
 	gcValues.line_style = ((dlPolyline->attr.style == SOLID) ? LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-	switch (dlPolyline->dynAttr.vis) {
-	case V_STATIC:
-	    drawPolyline(pp);
-	    break;
-	case IF_NOT_ZERO:
-	    if (pd->value != 0.0)
-	      drawPolyline(pp);
-	    break;
-	case IF_ZERO:
-	    if (pd->value == 0.0)
-	      drawPolyline(pp);
-	    break;
-	default :
-	    medmPrintf(1,"\npolylineUpdateValueCb: Unknown visibility\n");
-	    break;
-	}
+      /* Draw depending on visibility */
+	if(calcVisibility(&dlPolyline->dynAttr, pp->records))
+	  drawPolyline(pp);
 	if (pd->readAccess) {
 	    if (!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
 		pp->updateTask->opaque = True;
@@ -900,7 +861,11 @@ static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolyline->dynAttr.chan),
+      VIS_CALC_RC,   &(dlPolyline->dynAttr.calc),
+      CHAN_A_RC,     &(dlPolyline->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlPolyline->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlPolyline->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlPolyline->dynAttr.chan[3]),
       -1);
 }
 
@@ -930,7 +895,11 @@ static void polylineGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolyline->dynAttr.chan),
+      VIS_CALC_RC,   &(dlPolyline->dynAttr.calc),
+      CHAN_A_RC,     &(dlPolyline->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlPolyline->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlPolyline->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlPolyline->dynAttr.chan[3]),
       -1);
     xOffset = (int) width - (int) dlPolyline->object.width;
     yOffset = (int) height - (int) dlPolyline->object.height;

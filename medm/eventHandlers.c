@@ -111,7 +111,8 @@ int initEventHandlers(void)
 #ifdef __cplusplus
 void handleExecuteButtonPress(Widget, XtPointer cd, XEvent *event, Boolean *)
 #else
-void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
+void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
+  Boolean *ctd)
 #endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
@@ -178,9 +179,12 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 #if XRT_VERSION > 2 && defined(XRT_EXTENSIONS)
 		      /* Bring up XRT Property Editor */
 			dmSetAndPopupWarningDialog(displayInfo,
-			  "The XRT/graph Property Editor is known to cause memory leaks.\n"
-			  "XRT has been notified of the problem.  Until it is fixed, the\n"
-			  "Property Editor should be used sparingly and with care.", "OK",
+			  "The XRT/graph Property Editor is known to cause "
+			  "memory leaks.\n"
+			  "XRT has been notified of the problem.  Until it "
+			  "is fixed, the\n"
+			  "Property Editor should be used sparingly and with "
+			  "care.", "OK",
 			  "Cancel", "Help");
 			if(displayInfo->warningDialogAnswer == 1) {
 			    XrtUpdatePropertyEditor(widget);
@@ -188,7 +192,8 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			    XrtPopupPropertyEditor(widget,
 			      "XRT Property Editor",True);
 			} else if(displayInfo->warningDialogAnswer == 3) {
-			    callBrowser(MEDM_HELP_PATH"/MEDM.html#XRTGraphInteractions");
+			    callBrowser(MEDM_HELP_PATH"/MEDM.html"
+			      "#XRTGraphInteractions");
 			}
 #endif			    
 		    } else {
@@ -201,12 +206,14 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			executeTimeCartesianPlotWidget = widget;
 			updateGlobalResourceBundleFromElement(pE);
 			if (!cartesianPlotAxisS) {
-			    cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
+			    cartesianPlotAxisS =
+			      createCartesianPlotAxisDialog(mainShell);
 			} else {
 			    XtSetSensitive(cartesianPlotAxisS,True);
 			}
 			
-		      /* update cartesian plot axis data from globalResourceBundle */
+		      /* Update cartesian plot axis data from
+                         globalResourceBundle */
 		      /* KE:  Actually from XtGetValues */
 			updateCartesianPlotAxisDialogFromWidget(widget);
 			
@@ -300,10 +307,12 @@ void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
   /* Button 3 */
     if (xEvent->button == Button3) {
 	if (globalDisplayListTraversalMode == DL_EDIT) {
-	  /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+	  /* Edit menu doesn't have valid/unique displayInfo ptr,
+             hence use current */
 	    XtUnmanageChild(currentDisplayInfo->editPopupMenu);
 	} else {
-	  /* execute menu does have valid/unique displayInfo ptr, hence use it */
+	  /* Execute menu does have valid/unique displayInfo ptr,
+             hence use it */
 	    XtUnmanageChild(displayInfo->executePopupMenu);
 	}
     }
@@ -421,9 +430,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    int found = False;
 		    
 #if DEBUG_EVENTS > 1
-		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
+		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1]"
+		      " tmpDlElementList:\n");
 		    dumpDlElementList(tmpDlElementList);
-		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1] cdi->selectedDlElementList:\n");
+		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1]"
+		      " cdi->selectedDlElementList:\n");
 		    dumpDlElementList(cdi->selectedDlElementList);
 		    print("\n");
 #endif
@@ -435,10 +446,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			while (pE) {
 #if DEBUG_EVENTS > 1
 			    print("Temp: Type=%s (%s) %x\n",
-			      elementType(pT->type),elementType(pT->structure.element->type),
+			      elementType(pT->type),
+			      elementType(pT->structure.element->type),
 			      pT->structure.element);
 			    print("Sel:  Type=%s (%s) %x\n",
-			      elementType(pE->type),elementType(pE->structure.element->type),
+			      elementType(pE->type),
+			      elementType(pE->structure.element->type),
 			      pE->structure.element);
 #endif
 			    if (pE->structure.element == pT->structure.element) {
@@ -448,10 +461,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 				if (pT->next) {
 				  /* Use the next one */
 				    pENew = createDlElement(DL_Element,
-				      (XtPointer)pT->next->structure.rectangle,NULL);
+				      (XtPointer)pT->next->structure.rectangle,
+				      NULL);
 				} else {
 				  /* No next one, use the first */
-				    DlElement *pEFirst = FirstDlElement(tmpDlElementList);
+				    DlElement *pEFirst =
+				      FirstDlElement(tmpDlElementList);
 				    
 				    pENew = createDlElement(DL_Element,
 				      (XtPointer)pEFirst->structure.rectangle,
@@ -500,7 +515,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    }
 		}
 #if DEBUG_EVENTS > 1
-		print("\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] cdi->selectedDlElementList :\n");
+		print("\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done]"
+		  " cdi->selectedDlElementList :\n");
 		dumpDlElementList(cdi->selectedDlElementList);
 #endif
 	    } else if (xEvent->state & ShiftMask) {
@@ -583,7 +599,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			if (tmpDlElementList->count == 1 &&
 			  cdi->selectedDlElementList->count == 1) {
 			    DlElement *pET = FirstDlElement(tmpDlElementList);
-			    DlElement *pES = FirstDlElement(cdi->selectedDlElementList);
+			    DlElement *pES =
+			      FirstDlElement(cdi->selectedDlElementList);
 
 #if DEBUG_EVENTS > 1
 			    print("\nhandleEditButtonPress: Btn1\n");
@@ -596,15 +613,18 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			      FirstDlElement(tmpDlElementList),
 			      pET->structure.element);
 #endif
-			    if (pET->structure.element == pES->structure.element) {
+			    if (pET->structure.element ==
+			      pES->structure.element) {
 				clearDlDisplayList(cdi->selectedDlElementList);
 			    } else {
 				clearDlDisplayList(cdi->selectedDlElementList);
-				appendDlList(cdi->selectedDlElementList,tmpDlElementList);
+				appendDlList(cdi->selectedDlElementList,
+				  tmpDlElementList);
 			    }
 			} else {
 			    clearDlDisplayList(cdi->selectedDlElementList);
-			    appendDlList(cdi->selectedDlElementList,tmpDlElementList);
+			    appendDlList(cdi->selectedDlElementList,
+			      tmpDlElementList);
 			}
 			highlightSelectedElements();
 			clearDlDisplayList(tmpDlElementList);
@@ -661,7 +681,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* (MDA) ?? separate resize of display here? */
 		  /* Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
-		  /* This element already selected: resize all selected elements */
+		  /* This element already selected: resize all
+                     selected elements */
 		    validResize = doResizing(XtWindow(cdi->drawingArea),
 		      x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
@@ -680,10 +701,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Update object prooperties of this element */
 		    if (cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
-			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+			updateGlobalResourceBundleAndResourcePalette(
+			  objectDataOnly);
 		    }
 		} else {
-		  /* This element not already selected, deselect others and resize it */
+		  /* This element not already selected, deselect
+                     others and resize it */
 		  /* Unhighlight currently selected elements */
 #if DEBUG_EVENTS
 		    print("Not already selected\n");
@@ -722,7 +745,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  XmNheight,&daHeight,
 		  NULL);
 #if DEBUG_EVENTS
-		print("\n[handleEditButtonPress: SELECT Btn2] tmpDlElementList :\n");
+		print("\n[handleEditButtonPress: SELECT Btn2]"
+		  " tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
@@ -732,7 +756,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS
 		    print("Already selected\n");
 #endif
-		  /* This element already selected: move all selected elements */
+		  /* This element already selected: move all selected
+                     elements */
 		    validDrag = doDragging(XtWindow(cdi->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
@@ -751,10 +776,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Update object prooperties of this element */
 		    if (cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
-			updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+			updateGlobalResourceBundleAndResourcePalette(
+			  objectDataOnly);
 		    }
 		} else {
-		  /* This element not already selected,deselect others and move it */
+		  /* This element not already selected,deselect others
+                     and move it */
 		  /* Unhighlight currently selected elements */
 #if DEBUG_EVENTS
 		    print("Not already selected\n");
@@ -780,7 +807,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    highlightSelectedElements();
 		    clearDlDisplayList(tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+		    if (NumberOfDlElement(cdi->selectedDlElementList)==1) {
 			currentElementType =
 			  FirstDlElement(cdi->selectedDlElementList)
 			  ->structure.element->type;
@@ -796,7 +823,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS
 	    print("SELECT_ACTION Btn3\n");
 #endif
-	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+	  /* Edit menu doesn't have valid/unique displayInfo ptr,
+             hence use current */
 	    lastEvent = *((XButtonPressedEvent *)event);
 	    XmMenuPosition(cdi->editPopupMenu,
 	      (XButtonPressedEvent *)event);
@@ -831,7 +859,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		      XmNx, &x,
 		      XmNy, &y,
 		      NULL);
-		    print("  %2d  %x  height: %2d   width: %3d   x: %d   y: %3d (%3d)\n",
+		    print("  %2d  %x  height: %2d   width: %3d   x: %d"
+		      "   y: %3d (%3d)\n",
 		      i, children[i], height, width, x, y, y-9);
 		}
 	    }
@@ -839,7 +868,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    break;
 	}
 #if DEBUG_EVENTS
-	print("\n[handleEditButtonPress: SELECT done] selectedDlElement list :\n");
+	print("\n[handleEditButtonPress: SELECT done]"
+	  " selectedDlElement list :\n");
 	dumpDlElementList(cdi->selectedDlElementList);
 #endif
     } else if (currentActionType == CREATE_ACTION) {
@@ -854,9 +884,10 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	switch (xEvent->button) {
 	case Button1:
 	  /* CREATE_ACTION Btn1 */
-	  /* Wait for next event and look at it */
 #if DEBUG_CREATE
-	    print("\nhandleButtonPress EVENT: Type: %-13s  Button: %d  Window %x  SubWindow: %x\n"
+	  /* Wait for next event and look at it */
+	    print("\nhandleButtonPress EVENT: Type: %-13s  Button: %d"
+	      "  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
 	      (xEvent->type == ButtonPress)?"ButtonPress":"ButtonRelease",
 	      xEvent->button, xEvent->window, xEvent->subwindow,
@@ -870,14 +901,17 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		XEvent newEvent;
 		
 		XPeekEvent(display,&newEvent);
-		print("              peekEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		print("              peekEVENT: Type: %d  Button: %d"
+		  "  Window %x  SubWindow: %x\n"
 		  "  Shift: %s  Ctrl: %s\n",
 		  newEvent.xbutton.type,
-		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
+		  newEvent.xbutton.button,
+		  newEvent.xbutton.window, newEvent.xbutton.subwindow,
 		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
 		  newEvent.xbutton.state&ControlMask?"Yes":"No");
 		print("  Send_event: %s  State: %x\n",
-		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
+		  newEvent.xbutton.send_event?"True":"False",
+		  newEvent.xbutton.state);
 	    }
 #endif
 	  /* Don't allow starting on a widget */
@@ -885,8 +919,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		XBell(display,50);
 		return;
 	    }
-	  /* For DL_Text check if a ButtonRelease comes before a MotionNotify
-	   *   (Indicating create text by typing) */
+	  /* For DL_Text check if a ButtonRelease comes before a
+	   *   MotionNotify (Indicating create text by typing) */
 	    doTextByTyping = 0;
 	    if(currentElementType == DL_Text) {
 		XEvent newEvent;
@@ -896,14 +930,17 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if(newEvent.type == ButtonRelease) doTextByTyping = 1;
 		XPutBackEvent(display,&newEvent);
 #if DEBUG_CREATE
-		print("               newEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		print("               newEVENT: Type: %d  Button: %d"
+		  "  Window %x  SubWindow: %x\n"
 		  "  Shift: %s  Ctrl: %s\n",
 		  newEvent.xbutton.type,
-		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
+		  newEvent.xbutton.button,
+		  newEvent.xbutton.window, newEvent.xbutton.subwindow,
 		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
 		  newEvent.xbutton.state&ControlMask?"Yes":"No");
 		print("  Send_event: %s  State: %x\n",
-		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
+		  newEvent.xbutton.send_event?"True":"False",
+		  newEvent.xbutton.state);
 #endif
 	    }
 	  /* Create the element according to its method */
@@ -964,6 +1001,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		}
 	      /* Add it to cdi */
 		appendDlElement(cdi->dlElementList,dlElement);
+	      /* Run its execute method */
 		(*dlElement->run->execute)(cdi,dlElement);
 	      /* Unselect any selected elements */
 		unhighlightSelectedElements();
@@ -993,13 +1031,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    break;
 	}
 #if DEBUG_EVENTS
-	print("\n[handleEditButtonPress: CREATE done] selectedDLElement list :\n");
+	print("\n[handleEditButtonPress: CREATE done] "
+	  "selectedDLElement list :\n");
 	dumpDlElementList(cdi->selectedDlElementList);
 #endif
       /* Clean up */
       /* Toggle CREATE_ACTION to SELECT_ACTION */
 	if (objectS != NULL) {
-	    XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
+	    XmToggleButtonSetState(objectPaletteSelectToggleButton,
+	      True,True);
 	}
       /* Set the object palette to Select */
 	setActionToSelect();
@@ -1008,7 +1048,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     }
 }
 
-void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *ctd)
+void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
+  Boolean *ctd)
 {
     DisplayInfo *displayInfo = (DisplayInfo *)clientData;
     XKeyEvent *key = (XKeyEvent *)event;
@@ -1266,9 +1307,9 @@ DlElement *handleRectangularCreates(DlElementType type,
   /* Create the actual element */
     switch(type) {
     case DL_Image:
+      /* More involved than most */
 	pE = handleImageCreate();
 	break;
-      /* Others are more straight-forward */
     case DL_Valuator:
 	pE = createDlValuator(NULL);
 	break;

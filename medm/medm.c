@@ -781,15 +781,15 @@ Name of file in which to save display:",
     "Medm*resourceMW*bundlesTB.visibleWhenOff: False",
     "Medm*resourceMW*bundlesTB.borderWidth: 0",
     "Medm*resourceMW*bundlesTB.shadowThickness: 2",
-    "Medm*resourceMW*importFSD.dialogTitle: Import...",
-    "Medm*resourceMW*importFSD.form.shadowThickness: 0",
-    "Medm*resourceMW*importFSD.form.typeLabel.labelString: Image Type:",
-    "Medm*resourceMW*importFSD.form.typeLabel.marginTop: 4",
-    "Medm*resourceMW*importFSD.form.frame.radioBox.orientation: XmHORIZONTAL",
-    "Medm*resourceMW*importFSD.form.frame.radioBox.numColumns: 1",
-    "Medm*resourceMW*importFSD.form.frame.radioBox*shadowThickness: 0",
-    "Medm*resourceMW*importFSD*XmToggleButton.indicatorOn: True",
-    "Medm*resourceMW*importFSD*XmToggleButton.labelType: XmString",
+    "Medm*resourceMW*imageNameFSD.dialogTitle: Image File Name",
+    "Medm*resourceMW*imageNameFSD.form.shadowThickness: 0",
+    "Medm*resourceMW*imageNameFSD.form.typeLabel.labelString: Image Type:",
+    "Medm*resourceMW*imageNameFSD.form.typeLabel.marginTop: 4",
+    "Medm*resourceMW*imageNameFSD.form.frame.radioBox.orientation: XmHORIZONTAL",
+    "Medm*resourceMW*imageNameFSD.form.frame.radioBox.numColumns: 1",
+    "Medm*resourceMW*imageNameFSD.form.frame.radioBox*shadowThickness: 0",
+    "Medm*resourceMW*imageNameFSD*XmToggleButton.indicatorOn: True",
+    "Medm*resourceMW*imageNameFSD*XmToggleButton.labelType: XmString",
 #endif    
 #ifdef EXTENDED_INTERFACE
   /***
@@ -2249,7 +2249,7 @@ static void fileMenuDialogCallback(
 	    if (call_data->value == NULL) return;
 
           /* Get the filename string from the selection box */
-	    XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
+	    XmStringGetLtoR(call_data->value, XmFONTLIST_DEFAULT_TAG, &filename);
 
 	    if (filename) {
 		filePtr = fopen(filename,"r");
@@ -2270,7 +2270,7 @@ static void fileMenuDialogCallback(
 	    break;
         case FILE_SAVE_AS_BTN:
 	    select = (XmSelectionBoxCallbackStruct *)call_data;
-	    XmStringGetLtoR(select->value,XmSTRING_DEFAULT_CHARSET,&filename);
+	    XmStringGetLtoR(select->value,XmFONTLIST_DEFAULT_TAG,&filename);
 	    medmSaveDisplay(currentDisplayInfo,filename,False);
 	    sprintf(warningString,"%s","Name of file to save display in:");
 	    warningXmstring = XmStringCreateLocalized(warningString);

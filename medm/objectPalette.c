@@ -147,7 +147,7 @@ buttons_t *buttonList[] = {
 static Widget lastButton = NULL;
 
 Widget objectFilePDM;
-extern Widget importFSD;
+extern Widget imageNameFSD;
 
 /*
  * global widget for ObjectPalette's SELECT toggle button (needed for
@@ -397,7 +397,7 @@ void createObject()
 /*
  * initialize local static globals
  */
-    importFSD = NULL;
+    imageNameFSD = NULL;
 
 /*
  * create a MainWindow in a shell, and then the palette radio box

@@ -154,7 +154,8 @@ void localCvtDoubleToString(
     sprintf(pstr_value,"%.*f",(int)precision,flt_value);
 }
 
-void drawWhiteRectangle(UpdateTask *pt) {
+void drawWhiteRectangle(UpdateTask *pt)
+{
     Display *display  = XtDisplay(pt->displayInfo->drawingArea);
     GC      gc        = pt->displayInfo->pixmapGC;
     Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
@@ -166,7 +167,21 @@ void drawWhiteRectangle(UpdateTask *pt) {
     return;
 }
 
-void draw3DPane(UpdateTask *pt, Pixel bgc) {
+void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
+{
+    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
+    GC      gc        = pt->displayInfo->pixmapGC;
+    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+
+    XSetForeground(display,gc,pixel);
+    XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
+      pt->rectangle.width,pt->rectangle.height);
+    return;
+}
+
+void draw3DPane(UpdateTask *pt, Pixel bgc)
+{
 
     Pixel   tsc, bsc, fgc, slc;
     DisplayInfo *displayInfo = pt->displayInfo;
@@ -217,7 +232,8 @@ void draw3DPane(UpdateTask *pt, Pixel bgc) {
     XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
 }
 
-void draw3DQuestionMark(UpdateTask *pt) {
+void draw3DQuestionMark(UpdateTask *pt)
+{
     Pixel   tsc, bsc, bgc, fgc, slc;
     Display *display  = XtDisplay(pt->displayInfo->drawingArea);
     GC      gc        = pt->displayInfo->pixmapGC;

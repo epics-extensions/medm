@@ -64,6 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PVLIMITS 0
 #define DEBUG_COMMAND 0
 #define DEBUG_REDRAW 0
+#define DEBUG_VISIBILITY 0
 
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
@@ -91,7 +92,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define UNDO
 
-#include "medm.h"
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
@@ -99,6 +99,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Xm/MwmUtil.h>
 #include <Xm/List.h>
 #include <cvtFast.h>
+#include <postfix.h>
+#include "medm.h"
 
 #ifdef  __TED__
 #include <Dt/Wsm.h>
@@ -3284,7 +3286,7 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     int found = 0;
     XPoint points[4];
-    Region region;
+    Region region = NULL;
     DlElement *pE;
     
 #if DEBUG_REDRAW
@@ -3339,6 +3341,9 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pE = pE->next;
     }
+
+  /* Free the region */
+    if(region) XDestroyRegion(region);
 }
 
 /*
@@ -5810,6 +5815,175 @@ void print(const char *fmt, ...)
 #else
 	printf("%s",lstring);
 #endif
+    }
+}
+
+Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
+{
+    int i;
+
+#if DEBUG_VISIBILITY
+	printf("calcVisibility: attr->vis=%d validCalc: %s\n",
+	  attr->vis,attr->validCalc?"True":"False");
+#endif
+  /* Determine whether to draw or not */
+    switch(attr->vis) {
+    case V_STATIC:
+	return True;	
+    case IF_NOT_ZERO:
+	return (records[0]->value != 0.0);
+    case IF_ZERO:
+	return (records[0]->value == 0.0);
+    case V_CALC:
+#if DEBUG_VISIBILITY > 1
+	printf("calcVisibility: validCalc: %s\n",
+	  attr->validCalc?"True":"False");
+#endif
+      /* Determine the result of the calculation */
+	if(attr->validCalc) {
+	    Record *pr = records[0];
+	    double valueArray[MAX_CALC_INPUTS];
+	    double result;
+	    long status;
+	    
+	  /* Fill in the input array */
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(*attr->chan[i] && records[i]->connected) {
+		    valueArray[i] = records[i]->value;
+		} else {
+		    valueArray[i] = 0.0;
+		}
+	    }
+	    valueArray[4] = 0.0;              /* E: Reserved */
+	    valueArray[5] = 0.0;              /* F: Reserved */
+	    valueArray[6] = pr->elementCount; /* G: count */
+	    valueArray[7] = pr->hopr;         /* H: hopr */
+	    valueArray[8] = pr->status;       /* I: status */
+	    valueArray[9] = pr->severity;     /* J: severity */
+	    valueArray[10] = pr->precision;   /* K: precision */
+	    valueArray[11] = pr->lopr;        /* L: lopr */
+
+	  /* Perform the calculation */
+	    status = calcPerform(valueArray, &result, attr->post);
+#if DEBUG_VISIBILITY
+	    printf(" valueA=%g valueB=%g valueC=%g valueC=%g"
+	      " calc=%s result=%g\n",
+	      valueArray[0],
+	      valueArray[1],
+	      valueArray[2],
+	      valueArray[3],
+	      attr->calc,
+	      result);
+#endif
+	    if(!status) {
+	      /* Result is valid */
+		return result;
+	    } else {
+	      /* Result is invalid */
+		return False;
+	    }
+	} else {
+	  /* Calc expression is invalid */
+	    return False;
+	}
+    default :
+	medmPrintf(1, "\ncalcVisibility: Unknown visibility: %d\n"
+	  "  Associated channels:\n",
+	  attr->vis);
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    medmPrintf(1, "    Channel %c: %s\n",
+	      'A'+i, *attr->chan[i]?attr->chan[i]:"None");
+	}
+	return False;	
+    }
+}
+
+void calcPostfix(DlDynamicAttribute *attr)
+{
+    if(*attr->chan[0] && attr->vis == V_CALC && *attr->calc){
+	long status;
+	short errnum;
+
+	status=postfix(attr->calc, attr->post, &errnum);
+	if(status) {
+	    medmPostMsg(1,"calcPostFix:\n"
+	      "  Invalid calc expression [error %d]: %s\n",
+	      errnum, attr->calc);
+	    *attr->post == '\0';
+	    attr->validCalc = False;
+	} else {
+	    attr->validCalc = True;
+	}
+    } else {
+      /* If VisibilityMode = calc, print an error message */
+	if(attr->vis == V_CALC){
+	    int i;
+	    
+	    medmPostMsg(1, "calcPostFix: "
+	      "Cannot calculate postfix expression:\n");
+	    medmPrintf(1, "    calc: %s\n",
+	      *attr->calc?attr->calc:"None");
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		medmPrintf(1, "    Channel %c: %s\n",
+		  'A'+i, *attr->chan[i]?attr->chan[i]:"None");
+	    }
+	}
+	*attr->post == '\0';
+	attr->validCalc = False;
+    }
+}
+
+/* Set when we want an update value callback.  Note that valueChanged
+ * overrides severityChanged overrides zeroNndNone */
+void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
+{
+    int i;
+    
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	Record *pr = records[i];
+	
+	if(i == 0) {
+	  /* The main record */
+	  /* Set all requirements to zero */
+	    pr->monitorValueChanged = False;
+	    pr->monitorSeverityChanged = False;
+	    pr->monitorZeroAndNoneZeroTransition = False;
+	  /* Set the minimum requirement for ColorMode */
+	    switch (attr->clr) {
+	    case STATIC:
+		break;
+	    case ALARM:
+		pr->monitorSeverityChanged = True;
+		break;
+	    case DISCRETE:
+#ifdef __COLOR_RULE_H__
+		pr->monitorValueChanged = True;
+#endif
+		break;
+	    }
+	  /* Set the minimum requirement for each VisibilityMode */
+	    switch(attr->vis) {
+	    case V_STATIC:
+		break;
+	    case IF_NOT_ZERO:
+	    case IF_ZERO:
+		pr->monitorZeroAndNoneZeroTransition = True;
+		break;
+	    case V_CALC:
+		pr->monitorValueChanged = True;
+		break;
+	    }
+	} else {
+	  /* Not the main record */
+	  /* Set all requirements to zero */
+	    pr->monitorValueChanged = False;
+	    pr->monitorSeverityChanged = False;
+	    pr->monitorZeroAndNoneZeroTransition = False;
+	  /* Set the minimum requirement for each VisibilityMode */
+	    if(attr->vis == V_CALC) {
+		pr->monitorValueChanged = True;
+	    }
+	}
     }
 }
 

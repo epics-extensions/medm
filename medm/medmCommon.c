@@ -788,6 +788,8 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
     dynAttr->colorRule = 0;
 #endif
     *(dynAttr->calc) = '\0';
+    *(dynAttr->post) = '\0';
+    dynAttr->validCalc = False;
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	*(dynAttr->chan[i]) = '\0';
     }
@@ -887,6 +889,8 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 		  dynAttr->vis = IF_NOT_ZERO;
 		else if(!strcmp(token,"if zero"))
 		  dynAttr->vis = IF_ZERO;
+		else if(!strcmp(token,"calc"))
+		  dynAttr->vis = V_CALC;
 #ifdef __COLOR_RULE_H__
 	    } else if(!strcmp(token,"colorRule")) {
 		getToken(displayInfo,token);
@@ -1225,6 +1229,8 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 		  dynAttr->vis = IF_NOT_ZERO;
 		else if(!strcmp(token,"if zero"))
 		  dynAttr->vis = IF_ZERO;
+		else if(!strcmp(token,"calc"))
+		  dynAttr->vis = V_CALC;
 #ifdef __COLOR_RULE_H__
 	    } else if(!strcmp(token,"colorRule")) {
 		getToken(displayInfo,token);
@@ -1480,7 +1486,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 
   /* Check for channels */
     for(i=0; i < MAX_CALC_RECORDS; i++) {
-	if(*(dynAttr->chan[i])) {
+	if(*dynAttr->chan[i]) {
 	    found=1;
 	    break;
 	}
@@ -1506,10 +1512,12 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 	  fprintf(stream,"\n%s\tcalc=\"%s\"",indent,dynAttr->calc);
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
 	    char chanName[6];
-	    
-	    sprintf(chanName,"chan%c",i?'A'+i:'\0');
-	    if(*dynAttr->chan[i])
-	      fprintf(stream,"\n%s\t%s=\"%s\"",indent,chanName,dynAttr->chan[i]);
+
+	    if(*(dynAttr->chan[i])) {
+		sprintf(chanName,"chan%c",i?'A'+i:'\0');
+		if(*dynAttr->chan[i])
+		  fprintf(stream,"\n%s\t%s=\"%s\"",indent,chanName,dynAttr->chan[i]);
+	    }
 	}
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT

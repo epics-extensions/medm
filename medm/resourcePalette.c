@@ -345,7 +345,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case STACKING_RC: 
 	globalResourceBundle.stacking = (Stacking)(FIRST_STACKING + buttonId);
 	break;
-    case IMAGETYPE_RC: 
+    case IMAGE_TYPE_RC: 
 	globalResourceBundle.imageType = (ImageType)(FIRST_IMAGE_TYPE + buttonId);
 	break;
     case ERASE_MODE_RC:
@@ -437,7 +437,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
 	    openFSD = XmCreateFileSelectionDialog(resourceFilePDM,
 	      "openFSD",args,n);
-	  /* make Filter text field insensitive to prevent user hand-editing dirMask */
+	  /* Make Filter text field insensitive to prevent user
+             hand-editing dirMask */
 	    textField = XmFileSelectionBoxGetChild(openFSD,
 	      XmDIALOG_FILTER_TEXT);
 	    XtSetSensitive(textField,FALSE);
@@ -465,10 +466,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 #ifdef EXTENDED_INTERFACE
-static void bundleMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data) {
+static void bundleMenuSimpleCallback(Widget w, int buttonNumber,
+  XmAnyCallbackStruct *call_data)
+{
     XmString label;
     int n;
     Arg args[10];
@@ -717,10 +717,10 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	globalResourceBundle.height = atoi(stringValue);
 	break;
     case RDBK_RC:
-	strcpy(globalResourceBundle.chan,stringValue);
+	strcpy(globalResourceBundle.chan[0],stringValue);
 	break;
     case CTRL_RC:
-	strcpy(globalResourceBundle.chan,stringValue);
+	strcpy(globalResourceBundle.chan[0],stringValue);
 	break;
     case TITLE_RC:
 	strcpy(globalResourceBundle.title,stringValue);
@@ -770,13 +770,17 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     }
 
-  /****** Since a non-NULL string value for the dynamics channel means that VIS 
-	  and CLRMOD must be visible */
-    case CHAN_RC:
-	strcpy(globalResourceBundle.chan,stringValue);
-	if (strlen(stringValue) > (size_t) 0) {
+    case VIS_CALC_RC:
+	strcpy(globalResourceBundle.visCalc,stringValue);
+	break;
+    case CHAN_A_RC:
+	strcpy(globalResourceBundle.chan[0],stringValue);
+      /* A non-NULL string value for the dynamics channel means that VIS
+       * and CLRMOD must be visible */
+	if (*stringValue != '\0') {
 	    XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	    XtSetSensitive(resourceEntryRC[VIS_RC],True);
+	    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
 #ifdef __COLOR_RULE_H__
 	    if (globalResourceBundle.clrmod == DISCRETE) {
 		XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
@@ -787,12 +791,21 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	} else {
 	    XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
 	    XtSetSensitive(resourceEntryRC[VIS_RC],False);
+	    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
 #ifdef __COLOR_RULE_H__
 	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
 #endif
 	}
 	break;
-
+    case CHAN_B_RC:
+	strcpy(globalResourceBundle.chan[1],stringValue);
+	break;
+    case CHAN_C_RC:
+	strcpy(globalResourceBundle.chan[2],stringValue);
+	break;
+    case CHAN_D_RC:
+	strcpy(globalResourceBundle.chan[3],stringValue);
+	break;
     case DIS_RC:
 	globalResourceBundle.dis = atoi(stringValue);
 	break;
@@ -820,11 +833,11 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case RELEASE_MSG_RC:
 	strcpy(globalResourceBundle.release_msg,stringValue);
 	break;
-    case IMAGENAME_RC:
+    case IMAGE_NAME_RC:
 	strcpy(globalResourceBundle.imageName,stringValue);
 	break;
-    case CALC_RC:
-	strcpy(globalResourceBundle.calc,stringValue);
+    case IMAGE_CALC_RC:
+	strcpy(globalResourceBundle.imageCalc,stringValue);
 	break;
     case DATA_RC:
 	strcpy(globalResourceBundle.data,stringValue);
@@ -899,10 +912,10 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	sprintf(string,"%d",globalResourceBundle.lineWidth);
 	break;
     case RDBK_RC:
-	newString = globalResourceBundle.chan;
+	newString = globalResourceBundle.chan[0];
 	break;
     case CTRL_RC:
-	newString = globalResourceBundle.chan;
+	newString = globalResourceBundle.chan[0];
 	break;
     case TITLE_RC:
 	newString = globalResourceBundle.title;
@@ -913,8 +926,20 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     case YLABEL_RC:
 	newString = globalResourceBundle.ylabel;
 	break;
-    case CHAN_RC:
-	newString = globalResourceBundle.chan;
+    case VIS_CALC_RC:
+	newString = globalResourceBundle.visCalc;
+	break;
+    case CHAN_A_RC:
+	newString = globalResourceBundle.chan[0];
+	break;
+    case CHAN_B_RC:
+	newString = globalResourceBundle.chan[1];
+	break;
+    case CHAN_C_RC:
+	newString = globalResourceBundle.chan[2];
+	break;
+    case CHAN_D_RC:
+	newString = globalResourceBundle.chan[3];
 	break;
     case DIS_RC:
 	sprintf(string,"%d",globalResourceBundle.dis);
@@ -943,11 +968,11 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     case RELEASE_MSG_RC:
 	newString = globalResourceBundle.release_msg;
 	break;
-    case IMAGENAME_RC:
+    case IMAGE_NAME_RC:
 	newString = globalResourceBundle.imageName;
 	break;
-    case CALC_RC:
-	newString = globalResourceBundle.calc;
+    case IMAGE_CALC_RC:
+	newString = globalResourceBundle.imageCalc;
 	break;
     case DATA_RC:
 	newString = globalResourceBundle.data;
@@ -984,10 +1009,9 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 /****************************************************************************
  * Bundle Call-back                                                         *
  ****************************************************************************/
-static void bundleCallback(
-  Widget w,
-  int bundleId,
-  XmToggleButtonCallbackStruct *call_data) {
+static void bundleCallback(Widget w, int bundleId,
+  XmToggleButtonCallbackStruct *call_data)
+{
 
   /** Since both on & off will invoke this callback, only care about transition
    * of one to ON
@@ -1052,7 +1076,11 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.lineWidth = 0;
     globalResourceBundle.dPrecision = 1.;
     globalResourceBundle.vis = V_STATIC;
-    globalResourceBundle.chan[0] = '\0';
+    globalResourceBundle.visCalc[0] = '\0';
+    globalResourceBundle.chan[0][0] = '\0';
+    globalResourceBundle.chan[1][0] = '\0';
+    globalResourceBundle.chan[2][0] = '\0';
+    globalResourceBundle.chan[3][0] = '\0';
     globalResourceBundle.data_clr = 0;
     globalResourceBundle.dis = 10;
     globalResourceBundle.xyangle = 45;
@@ -1070,7 +1098,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.press_msg[0] = '\0';
     globalResourceBundle.release_msg[0] = '\0';
     globalResourceBundle.imageName[0] = '\0';
-    globalResourceBundle.calc[0] = '\0';
+    globalResourceBundle.imageCalc[0] = '\0';
     globalResourceBundle.compositeName[0] = '\0';
     globalResourceBundle.data[0] = '\0';
     globalResourceBundle.cmap[0] = '\0';
@@ -1132,7 +1160,8 @@ void initializeXmStringValueTables()
  * Create Resource: Create and initialize the resourcePalette,              *
  *   resourceBundle and related widgets.                                    *
  ****************************************************************************/
-void createResource() {
+void createResource()
+{
     DisplayInfo *cdi=currentDisplayInfo;
     Widget entriesSW, resourceMB, messageF, resourceHelpPDM;
     XmString buttons[N_MAX_MENU_ELES];
@@ -1270,8 +1299,10 @@ void createResource() {
     resourceHelpPDM = buildMenu(resourceMB,XmMENU_PULLDOWN,
       "Help", 'H', helpMenu);
     XtVaSetValues(resourceMB, XmNmenuHelpWidget, resourceHelpPDM, NULL);
+#if 0    
   /* (MDA) for now, disable this menu */
-  /*     XtSetSensitive(resourceHelpPDM,False); */
+    XtSetSensitive(resourceHelpPDM,False);
+#endif
 
 #if 0
   /****** create the help pulldown menu pane */
@@ -1336,7 +1367,7 @@ void createResource() {
   /****** Now popup the dialog and restore cursor */
     XtPopup(resourceS,XtGrabNone);
 
-  /* change drawingArea's cursor back to the appropriate cursor */
+  /* Change drawingArea's cursor back to the appropriate cursor */
     if (cdi != NULL)
       XDefineCursor(display,XtWindow(cdi->drawingArea),
 	(currentActionType == SELECT_ACTION ? rubberbandCursor: crosshairCursor));
@@ -1345,7 +1376,8 @@ void createResource() {
 /****************************************************************************
  * Create Resource Entries: Create resource entries in scrolled window      *
  ****************************************************************************/
-static void createResourceEntries(Widget entriesSW) {
+static void createResourceEntries(Widget entriesSW)
+{
     Widget entriesRC;
     Arg args[12];
     int i, n;
@@ -1390,16 +1422,18 @@ static void createResourceEntries(Widget entriesSW) {
 	      &(args[4]),6);
 	}
 	XtSetValues(resourceEntryElement[i],&(args[4]),6);
+      /* KE: Why not do this in createEntryRC */
       /* Restrict size of CA PV name entry */
-	if (i == CHAN_RC || i == RDBK_RC || i == CTRL_RC) {
+	if (i == CHAN_A_RC || i == CHAN_B_RC || i == CHAN_C_RC || i == CHAN_D_RC
+	  || i == RDBK_RC || i == CTRL_RC) {
+	  /* Since can have macro-substituted strings, need longer length */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
-	    /* Since can have macro-substituted strings, need longer length */
 	      XmNmaxLength,(int)MAX_TOKEN_LENGTH-1,NULL);
-	} else if (i == CALC_RC) {
+	} else if (i == i == VIS_CALC_RC || IMAGE_CALC_RC) {
+	  /* calc in calcRecord is limited to 40 characters including NULL */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
-	    /* calc in calcRecord is limited to 40 characters including NULL */
 	      XmNmaxLength,(int)39,NULL);
 	} else if (i == MSG_LABEL_RC || i == PRESS_MSG_RC
 	  || i == RELEASE_MSG_RC || i == TEXTIX_RC
@@ -1417,7 +1451,8 @@ static void createResourceEntries(Widget entriesSW) {
  * Create Entry RC: Create the various row-columns for each resource entry  *
  * rcType = {X_RC,Y_RC,...}.                                                *
  ****************************************************************************/
-static void createEntryRC( Widget parent, int rcType) {
+static void createEntryRC( Widget parent, int rcType)
+{
     DisplayInfo *cdi=currentDisplayInfo;
     Widget localRC, localLabel, localElement;
     XmString labelString;
@@ -1492,13 +1527,17 @@ static void createEntryRC( Widget parent, int rcType) {
     case TITLE_RC:
     case XLABEL_RC:
     case YLABEL_RC:
-    case CHAN_RC:
+    case VIS_CALC_RC:
+    case CHAN_A_RC:
+    case CHAN_B_RC:
+    case CHAN_C_RC:
+    case CHAN_D_RC:
     case TEXTIX_RC:
     case MSG_LABEL_RC:
     case PRESS_MSG_RC:
     case RELEASE_MSG_RC:
-    case IMAGENAME_RC:
-    case CALC_RC:
+    case IMAGE_NAME_RC:
+    case IMAGE_CALC_RC:
     case DATA_RC:
     case CMAP_RC:
     case NAME_RC:
@@ -1714,7 +1753,7 @@ static void createEntryRC( Widget parent, int rcType) {
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
 
-    case IMAGETYPE_RC:
+    case IMAGE_TYPE_RC:
 	n = 0;
 	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
 	XtSetArg(args[n],XmNbuttons,
@@ -1820,71 +1859,86 @@ static void createEntryRC( Widget parent, int rcType) {
 static int resourceTable[] = {
     DL_Display,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CMAP_RC,
-    GRID_SPACING_RC, GRID_ON_RC, GRID_SNAP_RC, -1,
+    GRID_SPACING_RC, GRID_ON_RC, GRID_SNAP_RC,
+    -1,
     DL_ChoiceButton,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
-    STACKING_RC, -1,
+    STACKING_RC,
+    -1,
     DL_Menu,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
+    -1,
     DL_MessageButton,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, MSG_LABEL_RC,
-    PRESS_MSG_RC, RELEASE_MSG_RC, CLRMOD_RC, -1,
+    PRESS_MSG_RC, RELEASE_MSG_RC, CLRMOD_RC,
+    -1,
     DL_Valuator,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    LABEL_RC, CLRMOD_RC, DIRECTION_RC, PRECISION_RC, -1,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC, PRECISION_RC,
+    -1,
     DL_TextEntry,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    CLRMOD_RC, FORMAT_RC, -1,
+    CLRMOD_RC, FORMAT_RC,
+    -1,
     DL_Meter,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    LABEL_RC, CLRMOD_RC, -1,
+    LABEL_RC, CLRMOD_RC,
+    -1,
     DL_TextUpdate,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    CLRMOD_RC, ALIGN_RC, FORMAT_RC, -1,
+    CLRMOD_RC, ALIGN_RC, FORMAT_RC,
+    -1,
     DL_Bar,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    LABEL_RC, CLRMOD_RC, DIRECTION_RC, FILLMOD_RC, -1,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC, FILLMOD_RC,
+    -1,
     DL_Byte,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, SBIT_RC,
-    EBIT_RC, CLRMOD_RC, DIRECTION_RC, -1,
+    EBIT_RC, CLRMOD_RC, DIRECTION_RC,
+    -1,
     DL_Indicator,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    LABEL_RC, CLRMOD_RC, DIRECTION_RC, -1,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC,
+    -1,
     DL_StripChart,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, TITLE_RC, XLABEL_RC, YLABEL_RC, CLR_RC,
-    BCLR_RC, PERIOD_RC, UNITS_RC, SCDATA_RC, -1,
+    BCLR_RC, PERIOD_RC, UNITS_RC, SCDATA_RC,
+    -1,
     DL_CartesianPlot,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, TITLE_RC, XLABEL_RC, YLABEL_RC, CLR_RC,
     BCLR_RC, CSTYLE_RC, ERASE_OLDEST_RC, COUNT_RC, CPDATA_RC, CPAXIS_RC,
-    TRIGGER_RC, ERASE_RC, ERASE_MODE_RC, -1,
+    TRIGGER_RC, ERASE_RC, ERASE_MODE_RC,
+    -1,
     DL_Rectangle,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Oval,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Arc,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, BEGIN_RC, PATH_RC, CLR_RC, STYLE_RC,
+    FILL_RC, LINEWIDTH_RC, CLRMOD_RC,
 #ifdef __COLOR_RULE_H__
-    FILL_RC, LINEWIDTH_RC, CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    FILL_RC, LINEWIDTH_RC, CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Text,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, TEXTIX_RC, ALIGN_RC, CLR_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC,
+    CHAN_C_RC, CHAN_D_RC,
+    -1,
   /* KE: Related display shouldn't have CLR_MOD_RC, VIS_RC, CHAN_RC
    *   ((Dynamic Attributes) */
 /*     DL_RelatedDisplay, */
@@ -1896,42 +1950,43 @@ static int resourceTable[] = {
 /* #endif */
     DL_RelatedDisplay,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
-#ifdef __COLOR_RULE_H__
-    COLOR_RULE_RC, VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1,
-#else
-    RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1,
-#endif
+    RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC,
+    -1,
     DL_ShellCommand,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC,
+    -1,
     DL_Image,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGETYPE_RC, IMAGENAME_RC, CHAN_RC,
-    CALC_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGE_TYPE_RC, IMAGE_NAME_RC, IMAGE_CALC_RC,
+    VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Composite,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
+    -1,
     DL_Line,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, LINEWIDTH_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Polyline,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, LINEWIDTH_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
     DL_Polygon,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
 #ifdef __COLOR_RULE_H__
-    CLRMOD_RC, COLOR_RULE_RC, VIS_RC, CHAN_RC, -1,
-#else
-    CLRMOD_RC, VIS_RC, CHAN_RC, -1,
+    COLOR_RULE_RC,
 #endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
 };
 
-static void initializeResourcePaletteElements() {
+static void initializeResourcePaletteElements()
+{
     int i, j, index;
     int tableSize = sizeof(resourceTable)/sizeof(int);
 
@@ -1966,7 +2021,8 @@ static void initializeResourcePaletteElements() {
 /****************************************************************************
  * Create Resource Bundles : Create resource bundles in scrolled window.    *
  ****************************************************************************/
-static void createResourceBundles(Widget bundlesSW) {
+static void createResourceBundles(Widget bundlesSW)
+{
     Arg args[10];
     int n;
 
@@ -1981,7 +2037,8 @@ static void createResourceBundles(Widget bundlesSW) {
 /****************************************************************************
  * Create Bundle Bundles : Create resource bundles in scrolled window       *
  ****************************************************************************/
-static void createBundleTB(Widget bundlesRB, char *name) {
+static void createBundleTB(Widget bundlesRB, char *name)
+{
     Widget bundlesTB;
     Arg args[10];
     int n;
@@ -2020,10 +2077,10 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 
     switch (buttonType) {
     case CMD_APPLY_BTN:
-      /* commit changes in matrix to global matrix array data */
+      /* Commit changes in matrix to global matrix array data */
 	XbaeMatrixCommitEdit(cmdMatrix,False);
 	XtVaGetValues(cmdMatrix,XmNcells,&newCells,NULL);
-      /* now update globalResourceBundle...*/
+      /* Now update globalResourceBundle...*/
 	for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	    strcpy(globalResourceBundle.cmdData[i].label, newCells[i][0]);
 	    strcpy(globalResourceBundle.cmdData[i].command, newCells[i][1]);
@@ -2184,7 +2241,8 @@ Widget createShellCommandDataDialog(
  *	shell command data dialog with the values currently in
  *	globalResourceBundle
  */
-void updateShellCommandDataDialog() {
+void updateShellCommandDataDialog()
+{
     int i;
 
     for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
@@ -2477,12 +2535,12 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	}
 	case RDBK_RC: {
 	    char *pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,pRB->chan);
+	    strcpy(pvalue,pRB->chan[0]);
 	    break;
 	}
 	case CTRL_RC: {
 	    char *pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,pRB->chan);
+	    strcpy(pvalue,pRB->chan[0]);
 	    break;
 	}
 	case LIMITS_RC: {
@@ -2577,9 +2635,29 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    *pvalue = pRB->vis;
 	    break;
 	}
-	case CHAN_RC: {
+	case VIS_CALC_RC: {
 	    char *pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,pRB->chan);
+	    strcpy(pvalue,pRB->visCalc);
+	    break;
+	}
+	case CHAN_A_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->chan[0]);
+	    break;
+	}
+	case CHAN_B_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->chan[1]);
+	    break;
+	}
+	case CHAN_C_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->chan[2]);
+	    break;
+	}
+	case CHAN_D_RC: {
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->chan[3]);
 	    break;
 	}
 	case DATA_CLR_RC: {
@@ -2632,7 +2710,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    *pvalue = pRB->stacking;
 	    break;
 	}
-	case IMAGETYPE_RC: {
+	case IMAGE_TYPE_RC: {
 	    ImageType *pvalue = va_arg(ap,ImageType *);
 	    *pvalue = pRB->imageType;
 	    break;
@@ -2657,14 +2735,14 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    strcpy(pvalue,pRB->release_msg);
 	    break;
 	}
-	case IMAGENAME_RC: {
+	case IMAGE_NAME_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->imageName);
 	    break;
 	}
-	case CALC_RC: {
+	case IMAGE_CALC_RC: {
 	    char *pvalue = va_arg(ap,char *);
-	    strcpy(pvalue,pRB->calc);
+	    strcpy(pvalue,pRB->imageCalc);
 	    break;
 	}
 	case DATA_RC: {
@@ -2814,29 +2892,29 @@ static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-/* ********************************************************************
- * Routines formerly in objectPalette.c
- * ********************************************************************/
-
-void updateGlobalResourceBundleObjectAttribute(DlObject *object) {
+void updateGlobalResourceBundleObjectAttribute(DlObject *object)
+{
     globalResourceBundle.x = object->x;
     globalResourceBundle.y = object->y;
     globalResourceBundle.width = object->width;
     globalResourceBundle.height= object->height;
 }
 
-void updateGlobalResourceBundleLimitsAttribute(DlLimits *limits) {
+void updateGlobalResourceBundleLimitsAttribute(DlLimits *limits)
+{
     globalResourceBundle.limits = *limits;
 }
 
-void updateElementObjectAttribute(DlObject *object) {
+void updateElementObjectAttribute(DlObject *object)
+{
     object->x = globalResourceBundle.x;
     object->y = globalResourceBundle.y;
     object->width = globalResourceBundle.width;
     object->height = globalResourceBundle.height;
 }
 
-void updateResourcePaletteObjectAttribute() {
+void updateResourcePaletteObjectAttribute()
+{
     char string[MAX_TOKEN_LENGTH];
     sprintf(string,"%d",globalResourceBundle.x);
     XmTextFieldSetString(resourceEntryElement[X_RC],string);
@@ -2848,21 +2926,24 @@ void updateResourcePaletteObjectAttribute() {
     XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
 }
 
-void updateGlobalResourceBundleBasicAttribute(DlBasicAttribute *attr) {
+void updateGlobalResourceBundleBasicAttribute(DlBasicAttribute *attr)
+{
     globalResourceBundle.clr = attr->clr;
     globalResourceBundle.style = attr->style;
     globalResourceBundle.fill = attr->fill;
     globalResourceBundle.lineWidth = attr->width;
 }
 
-void updateElementBasicAttribute(DlBasicAttribute *attr) {
+void updateElementBasicAttribute(DlBasicAttribute *attr)
+{
     attr->clr = globalResourceBundle.clr;
     attr->style = globalResourceBundle.style;
     attr->fill = globalResourceBundle.fill;
     attr->width = globalResourceBundle.lineWidth;
 }
 
-void updateResourcePaletteBasicAttribute() {
+void updateResourcePaletteBasicAttribute()
+{
     DisplayInfo *cdi=currentDisplayInfo;
     char string[MAX_TOKEN_LENGTH];
     
@@ -2876,7 +2957,8 @@ void updateResourcePaletteBasicAttribute() {
     XmTextFieldSetString(resourceEntryElement[LINEWIDTH_RC],string);
 }
 
-void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
+void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr)
+{
     int i;
     
     globalResourceBundle.clrmod = dynAttr->clr;
@@ -2884,13 +2966,14 @@ void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     globalResourceBundle.colorRule = dynAttr->colorRule;
 #endif
-    strcpy(globalResourceBundle.chan,dynAttr->chan[0]);
+    strcpy(globalResourceBundle.visCalc,dynAttr->calc);
     for(i=0; i < MAX_CALC_RECORDS; i++) {
-	strcpy(globalResourceBundle.dynChan[i],dynAttr->chan[i]);
+	strcpy(globalResourceBundle.chan[i],dynAttr->chan[i]);
     }
 }
 
-void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
+void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr)
+{
     int i;
     
     dynAttr->clr = globalResourceBundle.clrmod;
@@ -2898,13 +2981,14 @@ void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     dynAttr->colorRule = globalResourceBundle.colorRule;
 #endif
-    strcpy(dynAttr->chan[0],globalResourceBundle.chan);
+    strcpy(dynAttr->calc,globalResourceBundle.visCalc);
     for(i=0; i < MAX_CALC_RECORDS; i++) {
-	strcpy(dynAttr->chan[i],globalResourceBundle.dynChan[i]);
+	strcpy(dynAttr->chan[i],globalResourceBundle.chan[i]);
     }
 }
 
-void updateResourcePaletteDynamicAttribute() {
+void updateResourcePaletteDynamicAttribute()
+{
     optionMenuSet(resourceEntryElement[CLRMOD_RC],
       globalResourceBundle.clrmod - FIRST_COLOR_MODE);
     optionMenuSet(resourceEntryElement[VIS_RC],
@@ -2913,70 +2997,86 @@ void updateResourcePaletteDynamicAttribute() {
     optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
       globalResourceBundle.colorRule);
 #endif
-    XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-      globalResourceBundle.chan);
-    if (globalResourceBundle.chan[0] != '\0') {
+    XmTextFieldSetString(resourceEntryElement[VIS_CALC_RC],
+      globalResourceBundle.visCalc);
+    XmTextFieldSetString(resourceEntryElement[CHAN_A_RC],
+      globalResourceBundle.chan[0]);
+    XmTextFieldSetString(resourceEntryElement[CHAN_B_RC],
+      globalResourceBundle.chan[1]);
+    XmTextFieldSetString(resourceEntryElement[CHAN_C_RC],
+      globalResourceBundle.chan[2]);
+    XmTextFieldSetString(resourceEntryElement[CHAN_D_RC],
+      globalResourceBundle.chan[3]);
+    if (globalResourceBundle.chan[0][0] != '\0') {
 	XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	XtSetSensitive(resourceEntryRC[VIS_RC],True);
+	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
 #ifdef __COLOR_RULE_H__
 	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
 #endif
     } else {
 	XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
 	XtSetSensitive(resourceEntryRC[VIS_RC],False);
+	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
 #ifdef __COLOR_RULE_H__
 	XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
 #endif
     }
 }
 
-void updateGlobalResourceBundleControlAttribute(DlControl *control) {
-    strcpy(globalResourceBundle.chan, control->ctrl);
+void updateGlobalResourceBundleControlAttribute(DlControl *control)
+{
+    strcpy(globalResourceBundle.chan[0], control->ctrl);
     globalResourceBundle.clr = control->clr;
     globalResourceBundle.bclr = control->bclr;
 }
 
-void updateElementControlAttribute(DlControl *control) {
-    strcpy(control->ctrl, globalResourceBundle.chan);
+void updateElementControlAttribute(DlControl *control)
+{
+    strcpy(control->ctrl, globalResourceBundle.chan[0]);
     control->clr = globalResourceBundle.clr;
     control->bclr = globalResourceBundle.bclr;
 }
 
-void updateResourcePaletteControlAttribute() {
+void updateResourcePaletteControlAttribute()
+{
     DisplayInfo *cdi=currentDisplayInfo;
 
-    XmTextFieldSetString(resourceEntryElement[CTRL_RC],globalResourceBundle.chan);
+    XmTextFieldSetString(resourceEntryElement[CTRL_RC],
+      globalResourceBundle.chan[0]);
     XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
       cdi->colormap[globalResourceBundle.clr],NULL);
     XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
       cdi->colormap[globalResourceBundle.bclr],NULL);
 }
 
-void updateGlobalResourceBundleMonitorAttribute(DlMonitor *monitor) {
-    strcpy(globalResourceBundle.chan, monitor->rdbk);
+void updateGlobalResourceBundleMonitorAttribute(DlMonitor *monitor)
+{
+    strcpy(globalResourceBundle.chan[0], monitor->rdbk);
     globalResourceBundle.clr = monitor->clr;
     globalResourceBundle.bclr = monitor->bclr;
 }
 
-void updateElementMonitorAttribute(DlMonitor *monitor) {
-    strcpy(monitor->rdbk, globalResourceBundle.chan);
+void updateElementMonitorAttribute(DlMonitor *monitor)
+{
+    strcpy(monitor->rdbk, globalResourceBundle.chan[0]);
     monitor->clr = globalResourceBundle.clr;
     monitor->bclr = globalResourceBundle.bclr;
 }
 
-void updateResourcePaletteMonitorAttribute() {
+void updateResourcePaletteMonitorAttribute()
+{
     DisplayInfo *cdi=currentDisplayInfo;
 
-    XmTextFieldSetString(resourceEntryElement[RDBK_RC],globalResourceBundle.chan);
+    XmTextFieldSetString(resourceEntryElement[RDBK_RC],
+      globalResourceBundle.chan[0]);
     XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
       cdi->colormap[globalResourceBundle.clr],NULL);
     XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
       cdi->colormap[globalResourceBundle.bclr],NULL);
 }
 
-/*
- * Clear resourcePalette dialog box
- */
+/* Clear all the entries in the resource palette */
 void clearResourcePaletteEntries()
 {
 #if DEBUG_RESOURCE
@@ -3015,13 +3115,10 @@ void clearResourcePaletteEntries()
     }
 }
 
-/*
- * Set resourcePalette entries based on current type
- */
+/* Set entries in the resource palette based on current type */
 void setResourcePaletteEntries()
 {
     DisplayInfo *cdi=currentDisplayInfo;
-  /* Must normalize back to 0 as index into array for element type */
     Boolean objectDataOnly;
     DlElementType displayType;
 
@@ -3052,14 +3149,15 @@ void setResourcePaletteEntries()
 	return;
     }
 
-  /* Make these sensitive in case they are managed */
+  /* Make these sensitive by default in case they are managed */
     XtSetSensitive(resourceEntryRC[VIS_RC],True);
+    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
     XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 #ifdef __COLOR_RULE_H__
     XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
 #endif
 
-  /* Setting the new button: manage new resource entries */
+  /* Manage new resource entries */
     XtManageChildren(
       resourcePaletteElements[currentElementType -
 	MIN_DL_ELEMENT_TYPE].children,
@@ -3081,17 +3179,18 @@ void setResourcePaletteEntries()
     objectDataOnly = False;
     updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
 
-  /* If not a monitor or controller type object, and no  dynamics channel
-   * specified, then insensitize the related entries */
-    if (strlen(globalResourceBundle.chan) == 0) {
+  /* If not a monitor, controller, or dynamic attribute channel, then
+   * insensitize the related entries */
+    if (globalResourceBundle.chan[0][0] == '\0') {
 	XtSetSensitive(resourceEntryRC[VIS_RC],False);
-	if ( (!ELEMENT_HAS_WIDGET(currentElementType)) &&
-	  (currentElementType != DL_TextUpdate))
-	  XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
+	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
 #ifdef __COLOR_RULE_H__
 	if (globalResourceBundle.clrmod != DISCRETE)
 	  XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
 #endif
+	if ((!ELEMENT_HAS_WIDGET(currentElementType)) &&
+	  (currentElementType != DL_TextUpdate))
+	  XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
     }
 
   /* Make these sensitive in case they are managed */
@@ -3236,7 +3335,8 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
 }
 
 /* Only used for Cartesian Plot */
-void updateGlobalResourceBundleFromElement(DlElement *element) {
+void updateGlobalResourceBundleFromElement(DlElement *element)
+{
     DlCartesianPlot *p;
     int i;
 
@@ -3264,7 +3364,8 @@ void updateGlobalResourceBundleFromElement(DlElement *element) {
  *	elements (for the specified element type)
  */
 
-void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
+void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
+{
     DisplayInfo *cdi=currentDisplayInfo;
     DlElement *elementPtr;
     char string[MAX_TOKEN_LENGTH];
@@ -3765,14 +3866,14 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
 	updateResourcePaletteDynamicAttribute();
 	globalResourceBundle.imageType = p->imageType;
-	optionMenuSet(resourceEntryElement[IMAGETYPE_RC],
+	optionMenuSet(resourceEntryElement[IMAGE_TYPE_RC],
 	  globalResourceBundle.imageType - FIRST_IMAGE_TYPE);
 	strcpy(globalResourceBundle.imageName, p->imageName);
-	XmTextFieldSetString(resourceEntryElement[IMAGENAME_RC],
+	XmTextFieldSetString(resourceEntryElement[IMAGE_NAME_RC],
 	  globalResourceBundle.imageName);
-	strcpy(globalResourceBundle.calc, p->calc);
-	XmTextFieldSetString(resourceEntryElement[CALC_RC],
-	  globalResourceBundle.calc);
+	strcpy(globalResourceBundle.imageCalc, p->calc);
+	XmTextFieldSetString(resourceEntryElement[IMAGE_CALC_RC],
+	  globalResourceBundle.imageCalc);
 	break;
     }
     case DL_Composite: {
@@ -3795,11 +3896,14 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	  defaultBackground,NULL);
 #endif	
 	globalResourceBundle.vis = p->vis;
+#if 0	
+      /* KE: Need to fix this */
 	optionMenuSet(resourceEntryElement[VIS_RC],
 	  globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-	strcpy(globalResourceBundle.chan,p->chan);
+	strcpy(globalResourceBundle.chan[0],p->chan);
 	XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-	  globalResourceBundle.chan);
+	  globalResourceBundle.chan[0]);
+#endif	
       /* need to add this entry to widgetDM.h and finish this if we want named
        *  groups
        strcpy(globalResourceBundle.compositeName,p->compositeName);
