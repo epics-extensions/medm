@@ -7150,7 +7150,7 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     }
 
     if (to->addr == NULL)
-      to->addr = (caddr_t) &array;
+      to->addr = (XtPointer) &array;
     else
       *(String **) to->addr = array;
     to->size = sizeof(String *);
@@ -7239,7 +7239,7 @@ CvtStringToWidthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     }
 
     if (to->addr == NULL)
-      to->addr = (caddr_t) &array;
+      to->addr = (XtPointer) &array;
     else
       *(short **) to->addr = array;
     to->size = sizeof(short *);
@@ -7321,7 +7321,7 @@ CvtStringToMaxLengthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     }
 
     if (to->addr == NULL)
-      to->addr = (caddr_t) &array;
+      to->addr = (XtPointer) &array;
     else
       *(int **) to->addr = array;
     to->size = sizeof(int *);
@@ -7461,7 +7461,7 @@ CvtStringToAlignmentArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     }
 
     if (to->addr == NULL)
-      to->addr = (caddr_t) &array;
+      to->addr = (XtPointer) &array;
     else
       *(unsigned char **) to->addr = array;
     to->size = sizeof(unsigned char *);
