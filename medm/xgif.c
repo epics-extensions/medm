@@ -97,8 +97,10 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage);
 static Boolean parseGIFExtension(void);
 static void addToPixel(GIFData *gif, Byte Index);
+#if 0
 static void dumpGIF(GIFData *gif);
 static int getClientByteOrder();
+#endif
 static int getCorrectedByteOrder();
 static int readCode(void);
 
@@ -406,7 +408,6 @@ void resizeGIF(DlImage *dlImage)
     GIFData *gif;
     unsigned int w,h;
     int i;
-    static char *rstr="Resizing Image.  Please wait...";
 
   /* warning:  this code'll only run machines where int=32-bits */
 
@@ -1435,7 +1436,9 @@ static int countImages(void)
 	    ptr++;
 	    BlockSize=NEXTBYTE;
 	    ptr+=BlockSize;
-	    while(DataBlockSize=NEXTBYTE) {
+	  /* Note that double parentheses around a truth value keep
+             GCC quiet */
+	    while((DataBlockSize=NEXTBYTE)) {
 		ptr+=DataBlockSize;
 	    }
 	    nFrames++;
@@ -1452,7 +1455,7 @@ static int countImages(void)
 #endif	    
 		BlockSize=NEXTBYTE;     /* Should be 4 */
 		ptr+=BlockSize;
-		while(DataBlockSize=NEXTBYTE) {
+		while((DataBlockSize=NEXTBYTE)) {
 		    ptr+=DataBlockSize;
 		}
 		break;
@@ -1462,7 +1465,7 @@ static int countImages(void)
 #endif	    
 		BlockSize=NEXTBYTE;     /* Should be 12 */
 		ptr+=BlockSize;
-		while(DataBlockSize=NEXTBYTE) {
+		while((DataBlockSize=NEXTBYTE)) {
 		    ptr+=DataBlockSize;
 		}
 		break;
@@ -1472,7 +1475,7 @@ static int countImages(void)
 #endif	    
 		BlockSize=NEXTBYTE;
 		ptr+=BlockSize;
-		while(DataBlockSize=NEXTBYTE) {
+		while((DataBlockSize=NEXTBYTE)) {
 		    ptr+=DataBlockSize;
 		}
 		break;
@@ -1481,7 +1484,7 @@ static int countImages(void)
 		print("  COMMENT [%2x]\n",ch);
 #endif	    
 	      /* There is no block before the data here */
-		while(DataBlockSize=NEXTBYTE) {
+		while((DataBlockSize=NEXTBYTE)) {
 		    ptr+=DataBlockSize;
 		}
 		break;
@@ -1756,7 +1759,7 @@ static Boolean parseGIFExtension(void)
 	  "DelayTime=%d\n",
 	  TransparentColorFlag,TransparentIndex,DelayTime);
 #endif	
-	while(DataBlockSize=NEXTBYTE) {
+	while((DataBlockSize=NEXTBYTE)) {
 	    ptr+=DataBlockSize;
 	}
 	break;
@@ -1767,7 +1770,7 @@ static Boolean parseGIFExtension(void)
       /* Ignore */
 	BlockSize=NEXTBYTE;     /* Should be 12 */
 	ptr+=BlockSize;
-	while(DataBlockSize=NEXTBYTE) {
+	while((DataBlockSize=NEXTBYTE)) {
 	    ptr+=DataBlockSize;
 	}
 	break;
@@ -1787,7 +1790,7 @@ static Boolean parseGIFExtension(void)
 	}
 #endif	
 	ptr+=BlockSize;
-	while(DataBlockSize=NEXTBYTE) {
+	while((DataBlockSize=NEXTBYTE)) {
 	    ptr+=DataBlockSize;
 	}
 	break;
@@ -1796,7 +1799,7 @@ static Boolean parseGIFExtension(void)
 	print("  COMMENT [%2x]\n",ch);
 #endif	    
       /* Ignore (There is no block before the data here) */
-	while(DataBlockSize=NEXTBYTE) {
+	while((DataBlockSize=NEXTBYTE)) {
 	    ptr+=DataBlockSize;
 	}
 	break;
@@ -1981,6 +1984,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 
 /* Static utility functions */
 
+#if 0
 /* Function to determine the byte order on the client  */
 static int getClientByteOrder()
 {
@@ -1988,6 +1992,7 @@ static int getClientByteOrder()
     
     return (*(char*)&i == 1) ? LSBFirst : MSBFirst;
 }
+#endif
 
 /* Function to determine the byte order to be used on the server */
 static int getCorrectedByteOrder()
@@ -2045,6 +2050,7 @@ static int readCode()
     return(RawCode&ReadMask);
 }
 
+#if 0
 static void dumpGIF(GIFData *gif)
 {
     int i;
@@ -2056,6 +2062,7 @@ static void dumpGIF(GIFData *gif)
     }
     print("\n");
 }
+#endif
 
 static void addToPixel(GIFData *gif, Byte Index)
 {

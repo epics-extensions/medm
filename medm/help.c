@@ -826,7 +826,6 @@ int checkEarlyMessages(void)
 }
 
 static char caStudyMsg[512];
-static Boolean caUpdateStudyDlg = False;
 static char *caStatusDummyString =
 "Time Interval (sec)       =         \n"
 "CA Channels               =         \n"
@@ -1336,6 +1335,6 @@ void addDisplayHelpProtocol(DisplayInfo *displayInfo)
     XmAddProtocolCallback(displayInfo->shell, message, protocol,
       displayHelpCallback, (XtPointer)displayInfo);
 
-    sprintf (buf, "Help _H Ctrl<Key>h f.send_msg %d", protocol);
+    sprintf (buf, "Help _H Ctrl<Key>h f.send_msg %ld", protocol);
     XtVaSetValues (displayInfo->shell, XmNmwmMenu, buf, NULL);
 }

@@ -117,6 +117,8 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     NULL,
     NULL};
 
+#if 0
+/* Unused */
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     Pixmap pixmap = (Pixmap) cd;
@@ -127,6 +129,7 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
     if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
     pixmap=(Pixmap)0;
 }
+#endif
 
 /*
  * Local function to render the related display icon into a pixmap
@@ -240,6 +243,8 @@ int relatedDisplayFontListIndex(DlRelatedDisplay *dlRelatedDisplay,
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
+	default:
+	    break;
 	}
     }
     return(0);
@@ -250,7 +255,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget localMenuBar, tearOff;
     Arg args[30];
     int n;
-    int i, displayNumber=0, index, icon;
+    int i, index, icon;
     char *label;
     XmString xmString;
     Pixmap pixmap;
@@ -693,9 +698,13 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
@@ -757,9 +766,13 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
@@ -851,7 +864,8 @@ static void relatedDisplayButtonPressedCb(Widget w, XtPointer clientData,
     Boolean replace = False;
     
   /* See if it was a ctrl-click indicating replace */
-    if(event->type = ButtonPress  &&
+  /* KE: Replace = with == in next line */
+    if(event->type == ButtonPress  &&
       ((XButtonEvent *)event)->state & ControlMask) {
 	replace = True;
     }
@@ -903,8 +917,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		DisplayInfo *cdi;
 		
 	      /* Remove the old one if appropriate */
-		if(replaceDisplay || pEntry->mode == REPLACE_DISPLAY &&
-		  displayInfo != existingDisplayInfo) {
+		if(replaceDisplay || (pEntry->mode == REPLACE_DISPLAY &&
+		  displayInfo != existingDisplayInfo)) {
 		    closeDisplay(displayInfo->shell);
 		}
 
@@ -964,15 +978,18 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
       /* Commit changes in matrix to global matrix array data */
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    char *tmp = NULL;
-	    if(tmp = XmTextFieldGetString(table[i][0])) {
+	    tmp = XmTextFieldGetString(table[i][0]);
+	    if(tmp) {
 		strcpy(globalResourceBundle.rdData[i].label, tmp);
 		XtFree(tmp);
 	    }
-	    if(tmp = XmTextFieldGetString(table[i][1])) {
+	    tmp = XmTextFieldGetString(table[i][1]);
+	    if(tmp) {
 		strcpy(globalResourceBundle.rdData[i].name, tmp);
 		XtFree(tmp);
 	    }
-	    if(tmp = XmTextFieldGetString(table[i][2])) {
+	    tmp = XmTextFieldGetString(table[i][2]);
+	    if(tmp) {
 		strcpy(globalResourceBundle.rdData[i].args, tmp);
 		XtFree(tmp);
 	    }

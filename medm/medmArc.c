@@ -162,8 +162,6 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
 	if(dlArc->attr.fill == F_SOLID) {
-	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
-	    
 	    XFillArc(display,drawable,displayInfo->gc,
 	      dlArc->object.x,dlArc->object.y,
 	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
@@ -344,9 +342,13 @@ DlElement *parseArc(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	  default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

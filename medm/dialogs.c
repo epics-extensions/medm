@@ -70,7 +70,10 @@ static void updatePrintSetupFromDialog();
 static void updatePrintSetupDlg();
 
 /* Global variables */
-static Widget displayListBox1 = NULL, displayListBox2 = NULL;
+static Widget displayListBox1 = NULL;
+#if DEBUG_DISPLAY_LIST
+static Widget displayListBox2 = NULL;
+#endif
 static Widget pvLimitsName, pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
 static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
 static Widget printSetupCommandTF, printSetupFileTF, printSetupTitleTF;
@@ -1071,7 +1074,7 @@ void createDisplayListDlg(void)
 
   /* Create label 1 */
     sprintf(string,"DISPLAYS (MEDM PID: %d Window ID: 0x%x)",
-      getpid(),XtWindow(mainShell));
+      getpid(),(unsigned int)XtWindow(mainShell));
     xmString = XmStringCreateLocalized(string);    
     w = XtVaCreateManagedWidget("label",
       xmLabelWidgetClass, pane,

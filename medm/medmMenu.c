@@ -89,9 +89,11 @@ static void menuSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void menuGetValues(ResourceBundle *pRCB, DlElement *p);
 
+#if DEBUG_MENU
 static void menuDump(Widget w);
 static void handleMenuButtonPress(Widget w, XtPointer cd, XEvent *event,
   Boolean *ctd);
+#endif
 
 static DlDispatchTable menuDlDispatchTable = {
     createDlMenu,
@@ -257,7 +259,6 @@ static void menuUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pr = (Record *)cd;
     MedmMenu *pm = (MedmMenu *)pr->clientData;
-    DlElement *dlElement = pm->dlElement;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
     XmStringTable labels;
     int i, nbuttons;
@@ -428,7 +429,11 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
     XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
     XtSetArg(args[nargs], XmNhighlightThickness, 0); nargs++;
-#ifdef FIX_SOLARIS_COLOR_PROBLEM
+#if defined(SOLARIS) && defined(FIX_SOLARIS_COLOR_PROBLEM)
+  /* Solaris 8 changes the color we specify back to the background.
+     This resets the color, but the borders remain commensurate with
+     the background.  It shouldn't hurt to do this when there is no
+     bug. */
     XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
     XtSetArg(args[nargs], XmNbackground, background); nargs++;
 #endif
@@ -692,9 +697,13 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

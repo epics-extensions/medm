@@ -388,7 +388,8 @@ void dmTerminateX()
 
 int initMedmWidget() {
     if(clipboard) return 0;
-    if(clipboard = createDlList()) {
+    clipboard = createDlList();
+    if(clipboard) {
 	return 0;
     } else {
 	return -1;
@@ -431,8 +432,6 @@ void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
   /* Check if it is already there */
     di = displayInfoSaveListHead->next;
     while(di) {
-	DisplayInfo *pDI = displayInfo->next;
-
 	if(!strcmp(filename, di->dlFile->name)) {
 	  /* Already there, remove it */
 	    dmRemoveDisplayInfo(displayInfo);

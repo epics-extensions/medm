@@ -123,9 +123,13 @@ void parseMonitor(DisplayInfo *displayInfo, DlMonitor *monitor)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -167,9 +171,13 @@ void parsePlotcom(DisplayInfo *displayInfo, DlPlotcom *plotcom)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -230,9 +238,13 @@ void parsePlotAxisDefinition(DisplayInfo *displayInfo, DlPlotAxisDefinition *dlP
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -267,9 +279,13 @@ void parsePen(DisplayInfo *displayInfo, DlPen *pen)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -303,9 +319,13 @@ void parseTrace(DisplayInfo *displayInfo, DlTrace *trace)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

@@ -75,7 +75,7 @@ void handleBubbleHelp(Widget w, XtPointer clientData, XEvent *event,
   Boolean *ctd)
 {
   /* Avoid compiler warning messages */
-    ctd;
+    UNREFERENCED(ctd);
     
   /* Switch depending on type */
     switch (event->type) {

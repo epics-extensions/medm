@@ -95,9 +95,6 @@ typedef struct {
 static void helpObjectCallback(Widget,XtPointer,XtPointer);
 static void objectToggleCallback(Widget, XtPointer, XtPointer);
 
-static XtCallbackProc objectToggleSelectCallback(
-  Widget, XtPointer, XmToggleButtonCallbackStruct *);
-
 buttons_t paletteGraphicsButton[] = {
     {"rectangle25",NULL,objectToggleCallback,(XtPointer)DL_Rectangle,"Rectangle"},
     {"oval25",NULL,objectToggleCallback,(XtPointer)DL_Oval,"Oval"},
@@ -107,7 +104,9 @@ buttons_t paletteGraphicsButton[] = {
     {"line25",NULL,objectToggleCallback,(XtPointer)DL_Line,"Line"},
     {"polygon25",NULL,objectToggleCallback,(XtPointer)DL_Polygon,"Polygon"},
     {"image25",NULL,objectToggleCallback,(XtPointer)DL_Image,"Image"},
-    NULL};
+    {NULL,NULL,NULL,NULL,NULL},
+};
+
 /* Not implemented
   {"bezierCurve25",NULL,objectToggleCallback,(XtPointer)DL_BezierCurve},
 */
@@ -122,7 +121,8 @@ buttons_t paletteMonitorButton[] = {
    {"surfacePlot25",NULL,objectToggleCallback,(XtPointer)DL_SurfacePlot,"Surface Plot"},
    */
     {"byte25",NULL,objectToggleCallback,(XtPointer)DL_Byte,"Byte Monitor"},
-    NULL};
+    {NULL,NULL,NULL,NULL,NULL},
+};
 
 buttons_t paletteControllerButton[] = {
     {"choiceButton25",NULL, objectToggleCallback,(XtPointer)DL_ChoiceButton,"Choice Button"},
@@ -132,17 +132,20 @@ buttons_t paletteControllerButton[] = {
     {"valuator25",NULL, objectToggleCallback,(XtPointer)DL_Valuator,"Slider"},
     {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer)DL_RelatedDisplay,"Related Display"},
     {"shellCommand25",NULL, objectToggleCallback,(XtPointer)DL_ShellCommand,"Shell Command"},
-    NULL};
+    {NULL,NULL,NULL,NULL,NULL},
+};
 
 buttons_t paletteMiscButton[] = {
     {"select25",NULL, objectToggleCallback,NULL,"Select"},
-    NULL};
+    {NULL,NULL,NULL,NULL,NULL},
+};
 
 buttons_t *buttonList[] = {
     paletteGraphicsButton,
     paletteMonitorButton,
     paletteControllerButton,
-    NULL};
+    NULL,
+};
 
 static Widget lastButton = NULL;
 
@@ -362,14 +365,14 @@ Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
 static menuEntry_t fileMenu[] = {
     { "Close",  &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
       fileMenuSimpleCallback, (XtPointer)FILE_CLOSE_BTN,  NULL},
-    NULL,
+    {NULL,NULL,0,NULL,NULL,NULL},
 };
 
 #ifdef EXTENDED_INTERFACE
 static menuEntry_t optionMenu[] = {
     { "User Palette...",  &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
       fileMenuSimpleCallback, (XtPointer)OPTION_USER_PALETTE_BTN,  NULL},
-    NULL,
+    {NULL,NULL,0,NULL,NULL,NULL},
 };
 #endif
 
@@ -378,7 +381,7 @@ static menuEntry_t helpMenu[] = {
       helpObjectCallback, (XtPointer)HELP_OBJECT_PALETTE_BTN, NULL},
     { "Object Index", &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
       helpObjectCallback, (XtPointer)HELP_OBJECT_OBJECTS_BTN, NULL},
-    NULL,
+    {NULL,NULL,0,NULL,NULL,NULL},
 };
 
 void createObject()
@@ -479,9 +482,9 @@ void createObject()
 static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
     UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
     case HELP_OBJECT_PALETTE_BTN:

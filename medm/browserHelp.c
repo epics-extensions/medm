@@ -110,7 +110,7 @@ int callBrowser(char *url, char *bookmark)
     int (*oldhandler)(Display *, XErrorEvent *);
     static Window netscapew=(Window)0;
     static pid_t pid=0;
-    int ntries=0,found,status;
+    int status;
     char command[BUFSIZ];
     char *envstring;
     
@@ -161,7 +161,7 @@ int callBrowser(char *url, char *bookmark)
     if(!envstring) {
 #ifndef VMS
 	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
-	  NETSCAPEPATH,netscapew,url,bookmark);
+	  NETSCAPEPATH,(unsigned int)netscapew,url,bookmark);
 #else
         sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\"",
 	  NETSCAPEPATH,netscapew,url,bookmark);
@@ -170,7 +170,7 @@ int callBrowser(char *url, char *bookmark)
     else {
 #ifndef VMS
 	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
-	  envstring,netscapew,url,bookmark);
+	  envstring,(unsigned int)netscapew,url,bookmark);
 #else
 	sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\" &",
 	  envstring,netscapew,url,bookmark);

@@ -189,8 +189,6 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 #endif
 	if(dlRectangle->attr.fill == F_SOLID) {
-	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
-	    
 	    XFillRectangle(display,drawable,
 	      displayInfo->gc,
 	      dlRectangle->object.x,dlRectangle->object.y,
@@ -370,6 +368,8 @@ DlElement *parseRectangle(DisplayInfo *displayInfo)
 	    break;
 	case T_RIGHT_BRACE:
 	    nestingLevel--;
+	    break;
+	default:
 	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)

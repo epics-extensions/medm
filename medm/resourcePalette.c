@@ -120,7 +120,7 @@ static void helpResourceCallback(Widget,XtPointer,XtPointer);
 static menuEntry_t helpMenu[] = {
     { "On Resource Palette",  &xmPushButtonGadgetClass, 'P', NULL, NULL, NULL,
       helpResourceCallback, (XtPointer)HELP_RESOURCE_PALETTE_BTN, NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 String dashes = "******";
@@ -129,7 +129,6 @@ String dashes = "******";
 static Widget resourceFilePDM;
 static Widget resourceBundlePDM, openFSD;
 #endif
-static Widget bundlesRB;
 Dimension maxLabelWidth = 0;
 Dimension maxLabelHeight = 0;
 
@@ -137,8 +136,6 @@ XmString xmstringSelect;
 
 static void createResourceEntries(Widget entriesSW);
 static void initializeResourcePaletteElements();
-static void createResourceBundles(Widget bundlesSW);
-static void createBundleTB(Widget bundlesRB, char *name);
 static void createEntryRC( Widget parent, int rcType);
 
 static void createBundleButtons( Widget messageF) {
@@ -2378,9 +2375,9 @@ void medmGetValues(ResourceBundle *pRB, ...)
 static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
     UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
     case HELP_RESOURCE_PALETTE_BTN:

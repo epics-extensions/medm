@@ -509,8 +509,10 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     int preferredHeight;
     XcVType minF, maxF;
     Widget w;
+#if 0
     int validTraces = pcp ? pcp->nTraces : 0;
-
+#endif
+    
   /* Set widget args from the dlCartesianPlot structure */
     nargs = 0;
     XtSetArg(args[nargs],XmNx,(Position)dlCartesianPlot->object.x); nargs++;

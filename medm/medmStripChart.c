@@ -171,7 +171,6 @@ static void stripChartDraw(XtPointer cd);
 static void stripChartUpdateTaskCb(XtPointer cd);
 static void stripChartUpdateValueCb(XtPointer cd);
 static void stripChartUpdateGraphicalInfoCb(XtPointer cd);
-static void stripChartDestroyCb(XtPointer cd);
 static void redisplayStrip(Widget, XtPointer, XtPointer);
 static void stripChartUpdateGraph(XtPointer);
 static MedmStripChart *stripChartAlloc(DisplayInfo *, DlElement *);
@@ -191,7 +190,9 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs);
 static void stripChartDialogUpdateElement(void);
 static void stripChartDialogReset(void);
 static void stripChartDialogStoreTextEntries(void);
+#if DEBUG_DIALOG
 static void printPens(DlPen *pen, char *title);
+#endif
 
 static DlDispatchTable stripChartDlDispatchTable = {
     createDlStripChart,
@@ -223,7 +224,6 @@ static Widget scForm = NULL;
 static Widget table[MAX_PENS][SC_COLS];
 static Widget scPeriodLabelW, scPeriodW, scUnitsW, scExecuteControlsW;
 static Widget scActionAreaW, scApplyButtonW, scCancelButtonW;
-static Widget scHelpButtonW;
 static Range range[MAX_PENS];
 static Range nullRange = {0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0};
 static StripChartConfigData sccd;
@@ -1382,8 +1382,6 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 {
     MedmStripChart *psc = (MedmStripChart *) cd;
     DlElement *dlElement = psc->dlElement;
-    DlStripChart *dlStripChart = dlElement->structure.stripChart;
-    DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     GC gc = psc->gc;
     
     UNREFERENCED(cbs);
@@ -1461,7 +1459,6 @@ static void stripChartUpdateValueCb(XtPointer cd) {
     Boolean validPrecision = True;
     int i;
     Widget widget = psc->dlElement->widget;
-    DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
 
     for(i = 0; i< psc->nChannels; i++) {
 	Record *ptmp = psc->record[i];
@@ -1534,7 +1531,6 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
     Boolean readAccess = True;
     Boolean validPrecision = True;
     Widget widget = psc->dlElement->widget;
-    DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     int i;
 
     for(i = 0; i< psc->nChannels; i++) {
@@ -1598,7 +1594,6 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 static void stripChartUpdateGraph(XtPointer cd) {
     Record *pR = (Record *)cd;
     MedmStripChart *psc = (MedmStripChart *)pR->clientData;
-    DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     double currentTime, lopr, hopr;
     int n = 0;
 
@@ -1610,7 +1605,6 @@ static void stripChartUpdateGraph(XtPointer cd) {
   /* See whether it is time to advance the graph */
     if(currentTime > psc->nextAdvanceTime) {
       /* update the graph */
-	Window window = XtWindow(psc->dlElement->widget);
 	GC gc = psc->gc;
 	DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
 	DisplayInfo *displayInfo  = psc->updateTask->displayInfo;
@@ -1666,7 +1660,6 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		double base;
 		int nextSlot = psc->nextSlot + psc->dataX0;
 		int limit = psc->dataWidth + psc->dataX0;
-		Record *pR = psc->record[i];
 
 		updatePvLimits(&dlStripChart->pen[i].limits);
 		lopr = dlStripChart->pen[i].limits.lopr;
@@ -1879,9 +1872,13 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -2662,7 +2659,6 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
   /* The type is in the low word of the cd and the row is in the high word */
     int type = GETLOW((int)cd);
     int row = GETHIGH((int)cd);
-    int userData = (int)cd;
     int button, src;
     double val;
     DlLimits *pL = NULL;
@@ -2845,12 +2841,13 @@ static void stripChartDialogStoreTextEntries(void)
       /* Update the limits to reflect current src's */
 	updatePvLimits(pL);
 
-	if(string = XmTextFieldGetString(table[i][0])) {
+	string = XmTextFieldGetString(table[i][0]);
+	if(string) {
 	    strcpy(tempPen[i].chan, string);
 	    XtFree(string);
 	}
-	
-	if(string = XmTextFieldGetString(table[i][3])) {
+	string = XmTextFieldGetString(table[i][3]);
+	if(string) {
 	    val = atof(string);
 	    XtFree(string);
 	    src = pL->loprSrc;
@@ -2869,8 +2866,8 @@ static void stripChartDialogStoreTextEntries(void)
 		}
 	    }
 	}
-	
-	if(string = XmTextFieldGetString(table[i][5])) {
+	string = XmTextFieldGetString(table[i][5]);
+	if(string) {
 	    val = atof(string);
 	    XtFree(string);
 	    src = pL->hoprSrc;
@@ -2894,7 +2891,8 @@ static void stripChartDialogStoreTextEntries(void)
   /* Execute controls */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
       /* Period */
-	if(string = XmTextFieldGetString(scPeriodW)) {
+	string = XmTextFieldGetString(scPeriodW);
+	if(string) {
 	    tempPeriod = atof(string);
 	}
     }
@@ -2991,6 +2989,7 @@ static void stripChartDialogUpdateElement(void)
     }
 }
 
+#if 0
 /* Use for debugging */
 static void printPens(DlPen *pens, char *title)
 {
@@ -3005,3 +3004,4 @@ static void printPens(DlPen *pens, char *title)
 	  &pens[i].limits);
     }
 }
+#endif

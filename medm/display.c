@@ -534,8 +534,8 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 	}
 	switch(tokenType) {
 	case T_WORD : {
-	    DlElement *pe = 0;
-	    if(pe = getNextElement(displayInfo,token)) {
+	    DlElement *pe = getNextElement(displayInfo,token);
+	    if(pe) {
 	      /* Found an element via the parseFuncTable */
 		if(displayInfo->versionNumber < 20200) {
 		    switch (pe->type) {
@@ -561,6 +561,8 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 			    dynAttr.chan[0][0] = '\0';
 			}
 #endif			
+			break;
+		    default:
 			break;
 		    }
 		}
@@ -1312,7 +1314,8 @@ void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
     DlDisplay *dlDisplay = NULL;
 
     writeDlFile(stream,displayInfo->dlFile,0);
-    if(pE = FirstDlElement(displayInfo->dlElementList)) {
+    pE = FirstDlElement(displayInfo->dlElementList);
+    if(pE) {
       /* This must be DL_DISPLAY */
 	(pE->run->write)(stream,pE,0);
 	dlDisplay=pE->structure.display;

@@ -75,7 +75,9 @@ static void textGetRecord(XtPointer, Record **, int *);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+#if 0
 static void textSetValues(ResourceBundle *pRCB, DlElement *p);
+#endif
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static void drawText(Drawable drawable,  GC gc, DlText *dlText);
@@ -437,9 +439,13 @@ DlElement *parseText(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -720,6 +726,8 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
+#if 0
+/* Unused */
 static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
     DlText *dlText = p->structure.text;
 
@@ -740,6 +748,7 @@ static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
       TEXTIX_RC,     &(dlText->textix),
       -1);
 }
+#endif
 
 static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlText *dlText = p->structure.text;

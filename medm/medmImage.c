@@ -284,10 +284,8 @@ void hideDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 static void imageDraw(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
-    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
     Record *pR = pi->records?pi->records[0]:NULL;
     DlImage *dlImage = pi->dlElement->structure.image;
-    GIFData *gif = (GIFData *)dlImage->privateData;
 
   /* Branch on whether there is a channel or not */
     if(*dlImage->dynAttr.chan[0]) {
@@ -517,9 +515,9 @@ static void imageFileSelectionCb(Widget w, XtPointer clientData,
 
 static void imageUpdateGraphicalInfoCb(XtPointer cd)
 {
+#if 0    
     Record *pR = (Record *)cd;
     MedmImage *pi = (MedmImage *)pR->clientData;
-#if 0    
     updateTaskMarkUpdate(pi->updateTask);
 #endif    
 }
@@ -609,9 +607,13 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

@@ -243,13 +243,18 @@ void medmLocalCvtDoubleToSexaStr(double value,  char *string,
     char *ptr;
     int i, min, sec;
     
-  /* Check the precision field */
+  /* Check the precision field is less than zero */
+  /* KE: Because it is an unsigned short, this test is unnecessary */
+#if 0    
     if(prec < 0) {
 	*status = 1;
 	prec = 0;
     } else {
 	*status = 0;
     }
+#else
+    *status = 0;
+#endif
     
   /* Round the multiplier required to represent the value as an integer,
      retaining the required precision */

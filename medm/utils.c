@@ -277,7 +277,6 @@ int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
   int h, int w, int *usedH, int *usedW, Boolean textWidthFlag)
 {
     int i, temp, count, upper, lower;
-    static int errorOnI = -1;
 
     i = nFonts/2;
     upper = nFonts-1;
@@ -4529,7 +4528,6 @@ void printEventMasks(Display *display, Window win, char *string)
     int i;
     long mask;
   /* These values are from X11/X.h */
-    int nmasks=25;
     static char *maskNames[]={
 	"KeyPressMask",
 	"KeyReleaseMask",

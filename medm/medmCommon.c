@@ -93,7 +93,8 @@ static DlDispatchTable elementDlDispatchTable = {
 int initMedmCommon()
 {
     if(dlElementFreeList) return 0;
-    if(dlElementFreeList = createDlList()) {
+    dlElementFreeList = createDlList();
+    if(dlElementFreeList) {
 	return 0;
     } else {
 	return -1;
@@ -110,9 +111,13 @@ void parseAndSkip(DisplayInfo *displayInfo)
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE || nestingLevel > 0) &&
       (nestingLevel > 0) && (tokenType != T_EOF) );
@@ -157,9 +162,13 @@ DlFile *parseFile(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) 
       && (tokenType != T_EOF) );
@@ -350,9 +359,13 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	    break;
 	}
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -396,9 +409,13 @@ void parseOldDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -475,9 +492,13 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
       (tokenType != T_EOF));
@@ -501,7 +522,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
 #endif
-  	fprintf(stream,"\n%s\tcolors {",indent,dlColormap->ncolors);
+  	fprintf(stream,"\n%s\tcolors {",indent);
 	
 	for(i = 0; i < dlColormap->ncolors; i++) {
 	    fprintf(stream,"\n\t\t%s%06x,",indent,
@@ -585,9 +606,13 @@ void parseBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -607,9 +632,13 @@ void parseOldBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	      parseAttr(displayInfo,attr);
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -746,9 +775,13 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -926,9 +959,13 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -949,9 +986,13 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
 	      parseDynamicAttr(displayInfo,dynAttr);
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -983,9 +1024,13 @@ DlElement *parseFallingLine(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1031,9 +1076,13 @@ DlElement *parseRisingLine(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1086,9 +1135,13 @@ void parseObject(DisplayInfo *displayInfo, DlObject *object)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1118,9 +1171,13 @@ void parseGrid(DisplayInfo *displayInfo, DlGrid *grid)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1163,9 +1220,13 @@ void parseAttr(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) ) ;     /* Do nothing */
@@ -1187,9 +1248,13 @@ void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1227,9 +1292,13 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1268,9 +1337,13 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1316,9 +1389,13 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
 	    case T_EQUAL:
 		break;
 	    case T_LEFT_BRACE:
-		nestingLevel++; break;
+		nestingLevel++;
+		break;
 	    case T_RIGHT_BRACE:
-		nestingLevel--; break;
+		nestingLevel--;
+		break;
+	    default:
+		break;
 	    }
 	} while(!done && tokenType != T_EOF);
 

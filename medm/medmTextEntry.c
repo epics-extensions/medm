@@ -713,7 +713,6 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd)
     Record *pr = (Record *) cd;
     MedmTextEntry *pte = (MedmTextEntry *) pr->clientData;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
-    Widget widget = pte->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;
 
@@ -826,9 +825,13 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

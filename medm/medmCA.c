@@ -108,7 +108,6 @@ static void medmReplaceAccessRightsEventCb(
   struct access_rights_handler_args args);
 static void medmCAFdRegistrationCb(void *dummy, int fd, int condition);
 static void medmProcessCA(XtPointer, int *, XtInputId *);
-static void medmAddUpdateRequest(Channel *);
 static int caTaskInit();
 static void caTaskDelete();
 static int caAdd(char *name, Record *pr);

@@ -5189,6 +5189,8 @@ OutputY (SciPlotWidget w, real yin)
   return yout;
 }
 
+#if 0
+/* Not used */
 static void 
 ComputeXMinMax_i (SciPlotWidget w, real* xmin, real* xmax)
 {
@@ -5267,6 +5269,7 @@ ComputeXMinMax_i (SciPlotWidget w, real* xmin, real* xmax)
   *xmin = tmin;
   *xmax = tmax;
 }
+#endif
 
 static void 
 ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,

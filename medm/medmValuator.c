@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_DELETE 0
+#define DEBUG_LINUX 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -398,6 +399,18 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
       xmScaleWidgetClass, displayInfo->drawingArea, args, n);
     
     dlElement->widget = widget;
+
+#if DEBUG_LINUX
+    {
+	Dimension height,width;
+	
+	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
+	print("createValuatorEditInstance(1): w=%d h=%d o.w=%d o.h=%d\n",
+	  width,height,
+	  (Dimension)dlValuator->object.width,
+	  (Dimension)dlValuator->object.height);
+    }
+#endif    
     
   /* Get children of scale */
     XtVaGetValues(widget,XmNnumChildren,&numChildren,
@@ -419,6 +432,37 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     addCommonHandlers(widget, displayInfo);
     
     XtManageChild(widget);
+
+#if DEBUG_LINUX
+    {
+	Dimension height,width;
+	
+	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
+	print("createValuatorEditInstance(2): w=%d h=%d o.w=%d o.h=%d\n",
+	  width,height,
+	  (Dimension)dlValuator->object.width,
+	  (Dimension)dlValuator->object.height);
+    }
+#endif
+#ifdef linux
+  /* Several version of Motif for Linux change the width from what we
+     specified, so set it back */
+    XtVaSetValues(widget,
+      XmNwidth,(Dimension)dlValuator->object.width,
+      XmNheight,(Dimension)dlValuator->object.height,
+      NULL);
+#endif    
+#if DEBUG_LINUX
+    {
+	Dimension height,width;
+	
+	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
+	print("createValuatorEditInstance(3): w=%d h=%d o.w=%d o.h=%d\n",
+	  width,height,
+	  (Dimension)dlValuator->object.width,
+	  (Dimension)dlValuator->object.height);
+    }
+#endif    
 }
 
 void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -474,6 +518,14 @@ static void valuatorDraw(XtPointer cd) {
 	    if(widget) {
 		addCommonHandlers(widget, pv->updateTask->displayInfo);
 		XtManageChild(widget);
+#ifdef linux
+	      /* Several version of Motif for Linux change the width from what we
+		 specified, so set it back */
+		XtVaSetValues(widget,
+		  XmNwidth,(Dimension)dlValuator->object.width,
+		  XmNheight,(Dimension)dlValuator->object.height,
+		  NULL);
+#endif    
 	    } else {
 		return;
 	    }
@@ -1472,9 +1524,13 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

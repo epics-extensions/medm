@@ -148,7 +148,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     Widget localMenuBar;
     Arg args[16];
-    int i, shellNumber=0;
+    int i;
     XmString xmString;
     Pixmap shellCommandPixmap;
     unsigned int pixmapSize;
@@ -351,9 +351,13 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
 	    }
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -399,9 +403,13 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );

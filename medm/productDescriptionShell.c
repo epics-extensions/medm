@@ -33,49 +33,31 @@ static Widget okButton;
 
 /* Function prototypes */
 
-static void closeProductDescriptionCallback(Widget w,
-  XtPointer client_data, XtPointer call_data);
+Widget createAndPopupProductDescriptionShell(
+  XtAppContext appContext,	/* application context		*/
+  Widget topLevelShell,		/* application's topLevel shell	*/
+  char *name,			/* product/program name		*/
+  XmFontList nameFontList,	/*   and font list (or NULL)	*/
+  Pixmap namePixmap,		/* name Pixmap (or NULL)	*/
+  char *description,		/* product description		*/
+  XmFontList descriptionFontList,/*   and font list (or NULL)	*/
+  char *versionInfo,		/* product version number	*/
+  char *developedAt,		/* at and by...			*/
+  XmFontList otherFontList,	/*   and font list (or NULL)	*/
+  int background,		/* background color (or -1)	*/
+  int foreground,		/* foreground color (or -1)	*/
+  int seconds);			/* seconds to leave posted	*/
+static void closeProductDescriptionCallback1(Widget w,
+  XtPointer clientData, XtPointer callData);
+static void closeProductDescriptionCallback2(Widget w,
+  XtPointer clientData, XtPointer callData);
 static void popdownProductDescriptionShell(XtPointer xtPointer);
 
-static void closeProductDescriptionCallback(Widget w,
-  XtPointer client_data, XtPointer call_data)
-{
-    Widget shell = (Widget)client_data;
-    XtPopdown(shell);
-}
-
-static void popdownProductDescriptionShell(XtPointer xtPointer)
-{
-    Arg args[3];
-    Widget widget;
-    Atom WM_DELETE_WINDOW;
-    Cardinal nargs;
-
-    widget = (Widget) xtPointer;
-    XtPopdown(widget);
-
-    nargs=0;
-    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
-#if OMIT_RESIZE_HANDLES
-    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
-  /* KE: The following is necessary for Exceed, which turns off the
-     resize function with the handles.  It should not be necessary */
-    XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
-#endif
-    XtSetValues(widget,args,nargs);
-
-    WM_DELETE_WINDOW = XmInternAtom(XtDisplay(widget),
-      "WM_DELETE_WINDOW",False);
-    XmAddWMProtocolCallback(widget,WM_DELETE_WINDOW,
-      (XtCallbackProc)closeProductDescriptionCallback,(XtPointer)widget);
-
-  /* Next time up the OK button will show */
-    XtManageChild(okButton);
-}
-
+/* Global variables */
+Atom WM_DELETE_WINDOW;
 
 /*
- * function to create, set and popup an EPICS product description shell
+ * Function to create, set and popup an EPICS product description shell
  *  widget hierarchy:
  *
  * productDescriptionShell
@@ -108,7 +90,8 @@ Widget createAndPopupProductDescriptionShell(
     Arg args[16];
     Widget children[6], nameLabel, descriptionLabel, versionInfoLabel,
       separator, developedAtLabel;
-    XmString nameXmString = (XmString)NULL, descriptionXmString = (XmString)NULL,
+    XmString nameXmString = (XmString)NULL,
+      descriptionXmString = (XmString)NULL,
       versionInfoXmString = (XmString)NULL,
       developedAtXmString = (XmString)NULL, okXmString = (XmString)NULL;
     Dimension formHeight, nameHeight;
@@ -121,10 +104,12 @@ Widget createAndPopupProductDescriptionShell(
   /* Create the shell */
     nargs = 0;
     if(background >= 0) {
-	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++;
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background);
+	nargs++;
     }
     if(foreground >= 0) {
-	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++;
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
+	nargs++;
     }
     XtSetArg(args[nargs],XmNmwmDecorations, MWM_DECOR_ALL|
       MWM_DECOR_BORDER|MWM_DECOR_RESIZEH|MWM_DECOR_TITLE|MWM_DECOR_MENU|
@@ -136,11 +121,22 @@ Widget createAndPopupProductDescriptionShell(
     display=XtDisplay(productDescriptionShell);
     screen=DefaultScreen(display);
       
+  /* Set the window manager close callback to the first callback.
+     This should not be necessary because the window manager close
+     button should not appear, but it does anyway with some window
+     managers */
+    WM_DELETE_WINDOW = XmInternAtom(display,"WM_DELETE_WINDOW",False);
+    XmAddWMProtocolCallback(productDescriptionShell,WM_DELETE_WINDOW,
+      (XtCallbackProc)closeProductDescriptionCallback1,
+      (XtPointer)productDescriptionShell);
+
     nargs = 0;
     if(background >= 0) {
-	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background);
+	nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
+	nargs++; }
     XtSetArg(args[nargs],XmNnoResize,True); nargs++;
     XtSetArg(args[nargs],XmNshadowThickness,2); nargs++;
     XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
@@ -151,11 +147,14 @@ Widget createAndPopupProductDescriptionShell(
     if(name != NULL) nameXmString = XmStringCreateLtoR(name,
       XmFONTLIST_DEFAULT_TAG);
     if(description != NULL) descriptionXmString =
-			       XmStringCreateLtoR(description,XmFONTLIST_DEFAULT_TAG);
+			       XmStringCreateLtoR(description,
+				 XmFONTLIST_DEFAULT_TAG);
     if(versionInfo != NULL) versionInfoXmString =
-			       XmStringCreateLtoR(versionInfo,XmFONTLIST_DEFAULT_TAG);
+			       XmStringCreateLtoR(versionInfo,
+				 XmFONTLIST_DEFAULT_TAG);
     if(developedAt != NULL) developedAtXmString =
-			       XmStringCreateLtoR(developedAt,XmFONTLIST_DEFAULT_TAG);
+			       XmStringCreateLtoR(developedAt,
+				 XmFONTLIST_DEFAULT_TAG);
 
   /* Create the label children  */
   /* Name */
@@ -174,9 +173,11 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[nargs],XmNleftPosition,1); nargs++;
     XtSetArg(args[nargs],XmNresizable,False); nargs++;
     if(background >= 0) {
-	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background);
+	nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
+	nargs++; }
     nameLabel = XmCreateLabel(form,"nameLabel",args,nargs);
     
     
@@ -190,9 +191,11 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[nargs],XmNshadowThickness,2); nargs++;
     XtSetArg(args[nargs],XmNseparatorType,XmSHADOW_ETCHED_IN); nargs++;
     if(background >= 0) {
-	XtSetArg(args[nargs],XmNbackground,(unsigned long)background); nargs++; }
+	XtSetArg(args[nargs],XmNbackground,(unsigned long)background);
+	nargs++; }
     if(foreground >= 0) {
-	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
+	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
+	nargs++; }
     separator = XmCreateSeparator(form,"separator",args,nargs);
     
   /* Description */
@@ -273,7 +276,7 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
     okButton = XmCreatePushButton(form,"okButton",args,nargs);
     XtAddCallback(okButton,XmNactivateCallback,
-      (XtCallbackProc)closeProductDescriptionCallback,
+      (XtCallbackProc)closeProductDescriptionCallback2,
       (XtPointer)productDescriptionShell); nargs++;
     XmStringFree(okXmString);
       
@@ -317,7 +320,8 @@ Widget createAndPopupProductDescriptionShell(
 	Position newx, newy;
 
 	printf("createAndPopupProductDescriptionShell:\n");
-	printf("  sizeof(XtArgVal)=%d sizeof(Position)=%d sizeof(Dimension)=%d sizeof(100)=%d\n",
+	printf("  sizeof(XtArgVal)=%d sizeof(Position)=%d "
+	  "sizeof(Dimension)=%d sizeof(100)=%d\n",
 	  sizeof(XtArgVal),sizeof(Position),sizeof(Dimension),sizeof(100));
 	printf("  shellHeight=%d  shellWidth=%d\n",shellHeight,shellWidth);
 	printf("  screenHeight=%d  screenWidth=%d\n",screenHeight,screenWidth);
@@ -325,7 +329,8 @@ Widget createAndPopupProductDescriptionShell(
 	printf("  newY=%hx  newX=%hx\n",newY,newX);
 	printf("  newY=%x  newX=%x\n",newY,newX);
 
-	printf("(1) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
+	printf("(1) args[0].value=%4x  args[1].value=%4x\n",
+	  args[0].value,args[1].value);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
@@ -339,7 +344,8 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNx,440); nargs++;
 	XtSetValues(productDescriptionShell,args,nargs);
 	
-	printf("(2) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
+	printf("(2) args[0].value=%4x  args[1].value=%4x\n",
+	  args[0].value,args[1].value);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
@@ -353,7 +359,8 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNx,newX); nargs++;
 	XtSetValues(productDescriptionShell,args,nargs);
 	
-	printf("(3) args[0].value=%4x  args[1].value=%4x\n",args[0].value,args[1].value);
+	printf("(3) args[0].value=%4x  args[1].value=%4x\n",
+	  args[0].value,args[1].value);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
@@ -367,11 +374,15 @@ Widget createAndPopupProductDescriptionShell(
     
   /* Free strings */
     if(nameXmString != (XmString)NULL) XmStringFree(nameXmString);
-    if(descriptionXmString != (XmString)NULL) XmStringFree(descriptionXmString);
-    if(versionInfoXmString != (XmString)NULL) XmStringFree(versionInfoXmString);
-    if(developedAtXmString != (XmString)NULL) XmStringFree(developedAtXmString);
+    if(descriptionXmString != (XmString)NULL)
+      XmStringFree(descriptionXmString);
+    if(versionInfoXmString != (XmString)NULL)
+      XmStringFree(versionInfoXmString);
+    if(developedAtXmString != (XmString)NULL)
+      XmStringFree(developedAtXmString);
     
-  /* Register timeout procedure to make the dialog go away after N seconds */
+  /* Register timeout procedure to make the dialog go away after N
+     seconds */
     XtAppAddTimeOut(appContext,(unsigned long)(1000*seconds),
       (XtTimerCallbackProc)popdownProductDescriptionShell,
       (XtPointer)productDescriptionShell);
@@ -379,6 +390,50 @@ Widget createAndPopupProductDescriptionShell(
     return(productDescriptionShell);
 }
 
+/* Window manager close callback to be used the first time */
+static void closeProductDescriptionCallback1(Widget w,
+  XtPointer clientData, XtPointer callData)
+{
+    popdownProductDescriptionShell(clientData);
+}
+
+/* Window manager close callback to be used thereafter */
+static void closeProductDescriptionCallback2(Widget w,
+  XtPointer clientData, XtPointer callData)
+{
+    Widget shell = (Widget)clientData;
+    XtPopdown(shell);
+}
+
+static void popdownProductDescriptionShell(XtPointer xtPointer)
+{
+    Arg args[3];
+    Widget widget;
+    Cardinal nargs;
+
+    widget = (Widget)xtPointer;
+    XtPopdown(widget);
+
+    nargs=0;
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
+#if OMIT_RESIZE_HANDLES
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
+    nargs++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
+#endif
+    XtSetValues(widget,args,nargs);
+
+  /* Set the window manager close callback  to the first callback */
+    XmRemoveWMProtocolCallback(widget,WM_DELETE_WINDOW,
+      (XtCallbackProc)closeProductDescriptionCallback1,(XtPointer)widget);
+    XmAddWMProtocolCallback(widget,WM_DELETE_WINDOW,
+      (XtCallbackProc)closeProductDescriptionCallback2,(XtPointer)widget);
+
+  /* Next time up the OK button will show */
+    XtManageChild(okButton);
+}
 
 #ifdef TEST_PRODUCT_DESCRIPTION_SHELL
 /*************************************************************************/

@@ -188,14 +188,13 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pR = (Record *)cd;
-    MedmComposite *pc = (MedmComposite *)pR->clientData;
-
 #if DEBUG_COMPOSITE
+    Record *pR = (Record *)cd;
     print("compositeUpdateGraphicalInfoCb: record=%x[%s] value=%g\n",
       pR,pR->name,pR->value);
 #endif    
 #if 0    
+    MedmComposite *pc = (MedmComposite *)pR->clientData;
     updateTaskMarkUpdate(pc->updateTask);
 #endif    
 }
@@ -221,7 +220,6 @@ static void compositeDraw(XtPointer cd)
     MedmComposite *pc = (MedmComposite *)cd;
     Record *pR = pc->records?pc->records[0]:NULL;
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
-    Display *display = XtDisplay(pc->updateTask->displayInfo->drawingArea);
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
 #if DEBUG_COMPOSITE
@@ -282,7 +280,6 @@ static void compositeDraw(XtPointer cd)
 static void drawComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
-    DlComposite *dlComposite = pc->dlElement->structure.composite;
     
     executeCompositeChildren(displayInfo, pc->dlElement);
 }
@@ -334,7 +331,6 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 static void hideComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
-    DlComposite *dlComposite = pc->dlElement->structure.composite;
 
   /* Don't do anything if already hidden and updated */
     if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
@@ -371,8 +367,6 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
   /* Hide them */
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
-	UpdateTask *t = getUpdateTaskFromElement(pE);
-
 	if(pE->run->hide) {
 #if DEBUG_COMPOSITE
 	    print("  hid: pE=%x[%s] x=%d y=%d\n",
@@ -636,6 +630,8 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 	    break;
 	case T_RIGHT_BRACE:
 	    nestingLevel--;
+	    break;
+	  default:
 	    break;
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)

@@ -88,7 +88,7 @@ static menuEntry_t helpMenu[] = {
       helpColorCallback, (XtPointer)HELP_COLOR_PALETTE_BTN, NULL},
     { "Color Conventions",  &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
       helpColorCallback, (XtPointer)HELP_COLOR_CONVENTIONS_BTN, NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 /*
@@ -106,6 +106,8 @@ static Widget colorFilePDM = NULL;
 #endif
 
 
+#if 0
+/* Unused */
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
@@ -121,6 +123,7 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     }
 }
+#endif
 
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
@@ -250,7 +253,8 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  /* KE: This is overkill.  Will update all properties */
 	  /* This will not loop over composite children */
 	    updateElementFromGlobalResourceBundle(pE);
-	    if (widget = pE->widget){
+	    widget = pE->widget;
+	    if(widget) {
 		XtVaSetValues(widget,XmNbackground,
 		  currentColormap[globalResourceBundle.data_clr],NULL);
 	    }
@@ -458,10 +462,8 @@ void setCurrentDisplayColorsInColorPalette(int rcType, int index)
 static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-
     UNREFERENCED(w);
-
+    UNREFERENCED(cbs);
     
     switch(buttonNumber) {
     case HELP_COLOR_PALETTE_BTN:

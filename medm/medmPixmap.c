@@ -72,9 +72,6 @@ static XImage arc25, bar25, byte25, bezierCurve25, cartesianPlot25, choiceButton
  */
 void medmInitializeImageCache()
 {
-    Visual *visual = DefaultVisual(display,screenNum);
-
-
     arc25.width = arc25_width;
     arc25.height = arc25_height;
     arc25.data = (char *)arc25_bits;

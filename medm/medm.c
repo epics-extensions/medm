@@ -221,7 +221,6 @@ static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
 
 Widget mainFilePDM, mainHelpPDM, mainMB;
-static Widget printerSetupDlg = 0;
 static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
 
@@ -250,7 +249,7 @@ static menuEntry_t graphicsObjectMenu[] = {
       objectMenuCallback, (XtPointer) DL_Arc,  NULL},
     { "Image",       &xmPushButtonGadgetClass, 'I', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_Image,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t monitorsObjectMenu[] = {
@@ -268,7 +267,7 @@ static menuEntry_t monitorsObjectMenu[] = {
       objectMenuCallback, (XtPointer) DL_StripChart,  NULL},
     { "Cartesian Plot",&xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_CartesianPlot,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t controllersObjectMenu[] = {
@@ -286,7 +285,7 @@ static menuEntry_t controllersObjectMenu[] = {
       objectMenuCallback, (XtPointer) DL_RelatedDisplay,  NULL},
     { "Shell Command",  &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_ShellCommand,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t editAlignMenu[] = {
@@ -306,7 +305,7 @@ static menuEntry_t editAlignMenu[] = {
       alignMenuSimpleCallback, (XtPointer) ALIGN_POS_TO_GRID_BTN,  NULL},
     { "Edges to Grid",     &xmPushButtonGadgetClass, 'E', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_EDGE_TO_GRID_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editSizeMenu[] = {
@@ -314,7 +313,7 @@ static menuEntry_t editSizeMenu[] = {
       sizeMenuSimpleCallback, (XtPointer) SIZE_SAME_BTN,  NULL},
     { "Text to Contents", &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
       sizeMenuSimpleCallback, (XtPointer) SIZE_TEXT_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editCenterMenu[] = {
@@ -324,7 +323,7 @@ static menuEntry_t editCenterMenu[] = {
       centerMenuSimpleCallback, (XtPointer) CENTER_VERT_BTN,  NULL},
     { "Both",                    &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
       centerMenuSimpleCallback, (XtPointer) CENTER_BOTH_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editOrientMenu[] = {
@@ -336,7 +335,7 @@ static menuEntry_t editOrientMenu[] = {
       orientMenuSimpleCallback, (XtPointer) ORIENT_CW_BTN,  NULL},
     { "Rotate Counterclockwise",   &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
       orientMenuSimpleCallback, (XtPointer) ORIENT_CCW_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editSpaceMenu[] = {
@@ -346,7 +345,7 @@ static menuEntry_t editSpaceMenu[] = {
       spaceMenuSimpleCallback, (XtPointer) SPACE_VERT_BTN,  NULL},
     { "2-D",        &xmPushButtonGadgetClass, 'D', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_2D_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editGridMenu[] = {
@@ -356,7 +355,7 @@ static menuEntry_t editGridMenu[] = {
       gridMenuSimpleCallback, (XtPointer) GRID_SNAP_BTN,  NULL},
     { "Grid Spacing...", &xmPushButtonGadgetClass, 'c', NULL, NULL, NULL,
       gridMenuSimpleCallback, (XtPointer) GRID_SPACING_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
   
 static menuEntry_t editObjectMenu[] = {
@@ -366,7 +365,7 @@ static menuEntry_t editObjectMenu[] = {
       NULL,        NULL,                     monitorsObjectMenu},
     { "Controllers",&xmCascadeButtonGadgetClass,'C', NULL, NULL, NULL,
       NULL,        NULL,                     controllersObjectMenu},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t editMenu[] = {
@@ -422,7 +421,7 @@ static menuEntry_t editMenu[] = {
       editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
     { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t editModeMenu[] = {
@@ -480,7 +479,7 @@ static menuEntry_t editModeMenu[] = {
       editMenuSimpleCallback, (XtPointer) EDIT_REFRESH_BTN,  NULL},
     { "Edit Summary...", &xmPushButtonGadgetClass, 'y', NULL, NULL, NULL,
       editMenuSimpleCallback, (XtPointer) EDIT_HELP_BTN,  NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t fileMenu[] = {
@@ -506,7 +505,7 @@ static menuEntry_t fileMenu[] = {
       NULL,        NULL,                     NULL},
     { "Exit",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>X", "Ctrl+X", NULL,
       mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_EXIT_BTN, NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t viewMenu[] = {
@@ -516,7 +515,7 @@ static menuEntry_t viewMenu[] = {
       viewMenuSimpleCallback, (XtPointer) VIEW_STATUS_WINDOW_BTN, NULL},
     { "Display List", &xmPushButtonGadgetClass, 'D', NULL, NULL, NULL,
       viewMenuSimpleCallback, (XtPointer) VIEW_DISPLAY_LIST_BTN, NULL},
-    NULL,
+    { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static menuEntry_t palettesMenu[] = {
@@ -530,7 +529,7 @@ static menuEntry_t palettesMenu[] = {
     "Channel",  &xmPushButtonGadgetClass, 'h', NULL, NULL, NULL,
     palettesMenuSimpleCallback, (XtPointer) PALETTES_CHANNEL_BTN, NULL},
 #endif
-      NULL,
+      { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
       };
 
 static menuEntry_t helpMenu[] = {
@@ -550,7 +549,7 @@ static menuEntry_t helpMenu[] = {
     helpMenuSimpleCallback, (XtPointer) HELP_ON_HELP_BTN, NULL},
 { "On Version",  &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_ON_VERSION_BTN, NULL},
-  NULL,
+  { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
   };
 
 /* last mouse position of the display before popup the menu */
@@ -929,7 +928,8 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	fullPathName[0] = '\0';
 
       /* Found string with right suffix - presume it's a valid display name */
-	if(canAccess = !access(fileStr,R_OK|F_OK)) {
+	canAccess = !access(fileStr,R_OK|F_OK);
+	if(canAccess) {
 	    int status;
 	    
 	  /* Found the file.  Convert to a full path. */
@@ -952,7 +952,8 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 			strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
 #endif
 			strcat(fullPathName,fileStr);
-			if(canAccess = !access(fullPathName,R_OK|F_OK)) break;
+			canAccess = !access(fullPathName,R_OK|F_OK);
+			if(canAccess) break;
 		    }
 		}
 	    }
@@ -1152,8 +1153,10 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_HELP_BTN:
     {
-      /* Use XmStringGetLtoR because it handles multiple lines */
-	XmString xmString=XmStringCreateLtoR(
+      /* Use XmStringGetLtoR because it handles multiple lines.  Use
+         two strings to avoid the minimum length (509) ISO C89 is
+         required to support */
+	XmString xmString1=XmStringCreateLtoR(
 	  "             EDIT Operations Summary\n"
 	  "\n"
 	  "Pointer in Create Mode (Crosshair Cursor)\n"
@@ -1165,7 +1168,9 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "=============================================\n"
 	  "Btn1         Select objects.\n"
 	  "             Vertex edit for Polygon and Polyline.\n"
-	  "               (Shift afterward constrains direction.)\n"
+	  "               (Shift afterward constrains direction.)\n",
+	  XmFONTLIST_DEFAULT_TAG);
+	XmString xmString2=XmStringCreateLtoR(
 	  "Shift-Btn1   Add or remove from selected objects.\n"
 	  "Ctrl-Btn1    Cycle selection through overlapping objects.\n"
 	  "Btn2         Move objects.\n"
@@ -1178,12 +1183,15 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "Shift-Arrow  Move selected objects.\n"
 	  "Ctrl-Arrow   Resize selected objects.\n",
 	  XmFONTLIST_DEFAULT_TAG);
+	XmString xmString=XmStringConcat(xmString1,xmString2);
 	Arg args[20];
 	int nargs;
 	
 	nargs=0;
 	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
 	XtSetValues(editHelpMessageBox,args,nargs);
+	XmStringFree(xmString1);
+	XmStringFree(xmString2);
 	XmStringFree(xmString);
 	XtPopup(editHelpS,XtGrabNone);
 	break;
@@ -2155,9 +2163,9 @@ static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
     UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
       /* implement context sensitive help */
@@ -2188,37 +2196,46 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case HELP_ON_HELP_BTN:
     {
-	XmString xmString=XmStringCreateLtoR(
 #ifdef WIN32
+	XmString xmString1=XmStringCreateLtoR(
 	  "     Help is implemented in the WIN32 version of MEDM by using your\n"
 	  "default browser.  The browser is called using the start command with\n"
 	  "the name of the relevant help URL.  If the browser is not running,\n"
-	  "this should cause it to come up with the URL.  If it is already up,\n"
+	  "this should cause it to come up with the URL.  If it is already up,\n",
+	  XmFONTLIST_DEFAULT_TAG);
+	XmString xmString2=XmStringCreateLtoR(
 	  "this should cause it to change to the requested URL.  It is necessary\n"
 	  "for the environment variable ComSpec to be defined, but it should be\n"
 	  "defined by default.\n"
 	  "\n"
 	  "     You should be able to change the displayed URL via the MEDM Help\n"
 	  "menu or the context-sensitive Help buttons.\n",
+	  XmFONTLIST_DEFAULT_TAG);
 #else	  
+	XmString xmString1=XmStringCreateLtoR(
 	  "     Help in this version of MEDM is implemented using Netscape.  If\n"
 	  "the environmental variable NETSCAPEPATH containing the full pathname\n"
 	  "of the Netscape executable exists, then that path is used to call\n"
-	  "Netscape.  Otherwise, it is called using just the command, netscape.\n"
+	  "Netscape.  Otherwise, it is called using just the command, netscape.\n",
+	  XmFONTLIST_DEFAULT_TAG);
+	XmString xmString2=XmStringCreateLtoR(
 	  "If Netscape is not available, then most of the MEDM help is not\n"
 	  "available.\n"
 	  "\n"
 	  "     If Netscape is running when MEDM first calls it, then the\n"
 	  "response should be fairly quick.  Otherwise, the first call to help\n"
 	  "must wait until Netscape comes up, which will take somewhat longer.\n",
-#endif	  
 	  XmFONTLIST_DEFAULT_TAG);
+#endif	  
+	XmString xmString=XmStringConcat(xmString1,xmString2);
 	Arg args[20];
 	int nargs;
 	
 	nargs=0;
 	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
 	XtSetValues(helpMessageBox,args,nargs);
+	XmStringFree(xmString1);
+	XmStringFree(xmString2);
 	XmStringFree(xmString);
 	XtPopup(helpS,XtGrabNone);
 	break;
@@ -2975,7 +2992,8 @@ DisplayInfo* parseDisplayFile(char *filename) {
     DisplayInfo *displayInfo = NULL;
     FILE *filePtr;
     TOKEN tokenType;
-    if(filePtr = fopen(filename,"r")) {
+    filePtr = fopen(filename,"r");
+    if(filePtr) {
 	displayInfo = (DisplayInfo *)malloc(sizeof(DisplayInfo));
 	displayInfo->dlElementList = createDlList();
 	currentDisplayInfo = displayInfo;
@@ -3021,7 +3039,7 @@ DisplayInfo* parseDisplayFile(char *filename) {
 /**************************************************************************/
 /**************************** main ****************************************/
 /**************************************************************************/
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int i, n, index;
     Arg args[5];
@@ -3036,16 +3054,15 @@ main(int argc, char *argv[])
     int status, format;
     unsigned long nitems, left;
     Atom type;
-    char *macroString = NULL, *ptr = NULL;
+    char *ptr = NULL;
     XColor colors[2];
     request_t *request;
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
     msgClass_t msgClass;
     Window medmHostWindow = (Window)0;
-    char *tempDir = NULL;
     char *envPrintCommand = NULL;
     char *envHelpPath = NULL;
-
+    
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
     HCLXmInit();
@@ -3158,29 +3175,32 @@ main(int argc, char *argv[])
     } else {
 	strcpy(medmHelpPath, MEDM_HELP_PATH);
     }
-
+    
   /* XWD file name */
 #ifdef WIN32
-  /* We don't know the location of the temp directory beforehand.  Get
-     it from the environment variable. */
-    tempDir = getenv("TEMP");
-    if(!tempDir) tempDir = getenv("TMP");
-    if(tempDir) {
-	sprintf(xwdFile,"%s\\%s",tempDir,PRINT_XWD_FILE);
-    } else {
-	strcpy(xwdFile,PRINT_XWD_FILE);
+    {
+      /* We don't know the location of the temp directory beforehand.  Get
+	 it from the environment variable. */
+	char *tempDir = getenv("TEMP");
+	if(!tempDir) tempDir = getenv("TMP");
+	if(tempDir) {
+	    sprintf(xwdFile,"%s\\%s",tempDir,PRINT_XWD_FILE);
+	} else {
+	    strcpy(xwdFile,PRINT_XWD_FILE);
+	}
     }
 #else
     strcpy(xwdFile,PRINT_XWD_FILE);
 #endif    
-
+    
   /* Handle file conversions */
     if(argc == 4 && (!strcmp(argv[1],"-c21x") ||
       !strcmp(argv[1],"-c22x"))) {
 	DisplayInfo *displayInfo = NULL;
 	FILE *filePtr;
 	initMedmCommon();
-	if(displayInfo = parseDisplayFile(argv[2])) {
+	displayInfo = parseDisplayFile(argv[2]);
+	if(displayInfo) {
 	  /* Open for writing (Use w+ or WIN32 makes it readonly) */
 	    filePtr = fopen(argv[3],"w+");
 	    if(filePtr) {
@@ -3332,7 +3352,8 @@ main(int argc, char *argv[])
 		if(request->fileCnt > 0) {
 		    print("\nAttaching to existing MEDM\n");
 		    for(i=0; i<request->fileCnt; i++) {
-			if(fileStr = request->fileList[i]) {
+			fileStr = request->fileList[i];
+			if(fileStr) {
 			    sendFullPathNameAndMacroAsClientMessages(
 			      medmHostWindow,fileStr,
 			      request->macroString,request->displayGeometry,
@@ -3649,8 +3670,10 @@ main(int argc, char *argv[])
   /* Start any command-line specified displays */
     for(i=0; i < request->fileCnt; i++) {
 	char *fileStr;
-	if(fileStr = request->fileList[i]) {
-	    if(filePtr = fopen(fileStr,"r")) {
+	fileStr = request->fileList[i];
+	if(fileStr) {
+	    filePtr = fopen(fileStr,"r");
+	    if(filePtr) {
 		dmDisplayListParse(NULL,filePtr,request->macroString,fileStr,
 		  request->displayGeometry,(Boolean)False);
 		fclose(filePtr);

@@ -121,8 +121,10 @@ static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 
+#if DEBUG_ERASE
 static void dumpCartesianPlotData(const char *title,
   MedmCartesianPlot *pcp);
+#endif
 
 Widget cpMatrix = NULL, cpForm = NULL;
 
@@ -1529,10 +1531,12 @@ static void cartesianPlotDestroyCb(XtPointer cd) {
 	int i;
 	for(i = 0; i < pcp->nTraces; i++) {
 	    Record *pr;
-	    if(pr = pcp->xyTrace[i].recordX) {
+	    pr = pcp->xyTrace[i].recordX;
+	    if(pr) {
 		medmDestroyRecord(pr);
 	    }
-	    if(pr = pcp->xyTrace[i].recordY) {
+	    pr = pcp->xyTrace[i].recordY;
+	    if(pr) {
 		medmDestroyRecord(pr);
 	    }
 	}
@@ -1568,7 +1572,8 @@ static void cartesianPlotDraw(XtPointer cd) {
   /* Check for connection */
     for(i = 0; i < pcp->nTraces; i++) {
 	Record *pr;
-	if(pr = pcp->xyTrace[i].recordX) {
+	pr = pcp->xyTrace[i].recordX;
+	if(pr) {
 	    if(!pr->connected < 0) {
 		connected = False;
 		break;
@@ -1577,7 +1582,8 @@ static void cartesianPlotDraw(XtPointer cd) {
 	    }
 	    if(pr->precision < 0) validPrecision = False;
 	}
-	if(pr = pcp->xyTrace[i].recordY) {
+	pr = pcp->xyTrace[i].recordY;
+	if(pr) {
 	    if(!pr->connected) {
 		connected = False;
 		break;
@@ -1776,9 +1782,13 @@ DlElement *parseCartesianPlot(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
@@ -1921,7 +1931,8 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	if(executeTimeCartesianPlotWidget) {
 	    XtVaGetValues(executeTimeCartesianPlotWidget,
 	      XmNuserData, &userData, NULL);
-	    if(pcp = (MedmCartesianPlot *) userData)
+	    pcp = (MedmCartesianPlot *)userData;
+	    if(pcp)
 	      dlCartesianPlot = (DlCartesianPlot *) 
 		pcp->dlElement->structure.cartesianPlot;
 	} else {
@@ -2430,13 +2441,11 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     XmString xmString, axisStyleXmString, axisRangeXmString, axisMinXmString,
       axisMaxXmString, axisTimeFmtXmString, frameLabelXmString;
     int i, n;
-    static Boolean first = True;
     XmButtonType buttonType[MAX_CP_AXIS_BUTTONS];
     Widget entriesRC, frame, localLabel, parentRC;
   /* For keeping list of widgets around */
     Widget entryLabel[MAX_CP_AXIS_ELEMENTS], entryElement[MAX_CP_AXIS_ELEMENTS];
     Dimension width, height;
-    static int maxWidth = 0, maxHeight = 0;
   /* Indexed like dlCartesianPlot->axis[]: X_ELEMENT_AXIS, Y1_ELEMENT_AXIS... */
     static char *frameLabelString[3] = {"X Axis", "Y1 Axis", "Y2 Axis",};
 
@@ -2731,7 +2740,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     /* Determine range by first checking if from channel using the
      *   MedmCartesianPlot.  If not from channel, determine whether
      *   auto or user from AxisIsAuto. */
-      if(pcp = (MedmCartesianPlot *)userData) {
+    pcp = (MedmCartesianPlot *)userData;
+    if(pcp) {
 	xIsCurrentlyFromChannel =
 	  pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
 	y1IsCurrentlyFromChannel =
@@ -2879,7 +2889,8 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
 	    while(dlElement) {
-		if(dlElement->structure.element->type = DL_CartesianPlot)
+	      /* KE: This was =, changed to == */
+		if(dlElement->structure.element->type == DL_CartesianPlot)
 		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }

@@ -103,8 +103,9 @@ static DlList *tmpDlElementList = NULL;
 
 int initEventHandlers(void)
 {
-    if (tmpDlElementList) return 0;
-    if (tmpDlElementList = createDlList()) {
+    if(tmpDlElementList) return 0;
+    tmpDlElementList = createDlList();
+    if(tmpDlElementList) {
 	return 0;
     } else {
 	return -1;
@@ -135,13 +136,13 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       XtWindow(displayInfo->shell),XtWindow(displayInfo->drawingArea));
 #endif    
 
-    if (displayInfo != currentDisplayInfo) {
+    if(displayInfo != currentDisplayInfo) {
 	currentDisplayInfo = displayInfo;
 	currentColormap = currentDisplayInfo->colormap;
 	currentColormapSize = currentDisplayInfo->dlColormapSize;
     }
   /* KE: Shouldn't be called in EDIT mode in the first place */
-    if (globalDisplayListTraversalMode == DL_EDIT) return;
+    if(globalDisplayListTraversalMode == DL_EDIT) return;
 
 #ifdef MEDM_AUTO_RAISE
   /* Make sure the window is on top and has input focus */
@@ -150,14 +151,14 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       RevertToParent,CurrentTime);
 #endif    
 
-    if (xEvent->button == Button3) {
+    if(xEvent->button == Button3) {
       /* Button 3 */
       /* Lookup to see if Btn3 occured in an object that cares */
 	x = xEvent->x;
 	y = xEvent->y;
 	pE = findSmallestTouchedExecuteElement(w, displayInfo,
 	  &x, &y, False);
-	if (pE) {
+	if(pE) {
 #if DEBUG_PVINFO
 	    print("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
 	    print("  xEvent->button: %4d\n",xEvent->button);
@@ -171,7 +172,8 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 #endif    
 	    switch(pE->type) {
 	    case DL_Valuator:
-		if (widget = pE->widget) {
+		widget = pE->widget;
+		if(widget) {
 		    popupValuatorKeyboardEntry(widget,displayInfo,event);
 		  /* KE: Is this just for debugging ? */
 		    XUngrabPointer(display,CurrentTime);
@@ -182,8 +184,9 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	    case DL_CartesianPlot:
 #ifdef CARTESIAN_PLOT
 	      /* Implement Xrt/Graph property editor */
-		if (widget = pE->widget) {
-		    if (xEvent->state & ControlMask) {
+		widget = pE->widget;
+		if(widget) {
+		    if(xEvent->state & ControlMask) {
 #if XRT_VERSION > 2 && defined(XRT_EXTENSIONS)
 		      /* Bring up XRT Property Editor */
 			dmSetAndPopupWarningDialog(displayInfo,
@@ -212,7 +215,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 		      /* update globalResourceBundle with this element's info */
 			executeTimeCartesianPlotWidget = widget;
 			updateGlobalResourceBundleFromElement(pE);
-			if (!cartesianPlotAxisS) {
+			if(!cartesianPlotAxisS) {
 			    cartesianPlotAxisS =
 			      createCartesianPlotAxisDialog(mainShell);
 			} else {
@@ -249,7 +252,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	      (XButtonPressedEvent *)event);
 	    XtManageChild(displayInfo->executePopupMenu);
 	}
-    } else if (xEvent->button == Button1) {
+    } else if(xEvent->button == Button1) {
       /* Button 1 */
 	x = xEvent->x;
 	y = xEvent->y;
@@ -300,7 +303,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	y = xEvent->y;
 	pE = findSmallestTouchedExecuteElement(w, displayInfo,
 	  &x, &y, False);
-	if (pE) {
+	if(pE) {
 	    static int first=1;
 	    XtTranslations xlations=NULL;
 	    String xString=NULL;
@@ -364,7 +367,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     Dimension daWidth, daHeight;
     Boolean validDrag, validResize;
     int minSize;
-    Boolean objectDataOnly, foundVertex = False, foundPoly = False;
+    Boolean objectDataOnly, foundVertex = False;
     int doTextByTyping;
     DisplayInfo *di, *cdi;
 
@@ -380,15 +383,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif    
 
   /* If in execute mode, update currentDisplayInfo and simply return */
-    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	currentDisplayInfo = displayInfo;
 	return;
     }
 
   /* Unselect everything in other displays */
     di = displayInfoListHead->next;
-    while (di) {
-	if (di != displayInfo) {
+    while(di) {
+	if(di != displayInfo) {
 	    currentDisplayInfo = di;
 	    unhighlightSelectedElements();
 	    clearDlDisplayList(currentDisplayInfo,
@@ -413,7 +416,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     x0 = event->xbutton.x;
     y0 = event->xbutton.y;
   /* Add offsets if the ButtonPress was in another window */
-    if (w != cdi->drawingArea) {
+    if(w != cdi->drawingArea) {
 	Dimension dx0, dy0;
 	
 	XtVaGetValues(w,XmNx,&dx0,XmNy,&dy0,NULL);
@@ -427,7 +430,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	rubberbandCursor : crosshairCursor));
     
   /* Branch depending on action */
-    if (currentActionType == SELECT_ACTION) {
+    if(currentActionType == SELECT_ACTION) {
       /* SELECT_ACTION
        * ****************************************
        * Btn1        =  select (rubberband)     *
@@ -441,7 +444,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	switch (xEvent->button) {
 	case Button1:
 	  /* SELECT_ACTION Btn1 */
-	    if (xEvent->state & ControlMask) {
+	    if(xEvent->state & ControlMask) {
 	      /* SELECT_ACTION Ctrl-Btn1 */
 	      /* Cycle through selections */
 #if DEBUG_EVENTS
@@ -451,7 +454,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  False);
 		findSelectedEditElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,AllTouched|AllEnclosed);
-		if (!IsEmpty(tmpDlElementList)) {
+		if(!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
 		    int found = False;
 		    
@@ -465,11 +468,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("\n");
 #endif
 		    unhighlightSelectedElements();
-		    while (pT) {
+		    while(pT) {
 			DlElement *pE =
 			  FirstDlElement(cdi->selectedDlElementList);
 		      /* Traverse the selected list */
-			while (pE) {
+			while(pE) {
 #if DEBUG_EVENTS > 1
 			    print("Temp: Type=%s (%s) %x\n",
 			      elementType(pT->type),
@@ -480,12 +483,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			      elementType(pE->structure.element->type),
 			      pE->structure.element);
 #endif
-			    if (pE->structure.element == pT->structure.element) {
+			    if(pE->structure.element == pT->structure.element) {
 				DlElement *pENew;
 				
 				clearDlDisplayList(cdi,
 				  cdi->selectedDlElementList);
-				if (pT->next) {
+				if(pT->next) {
 				  /* Use the next one */
 				    pENew = createDlElement(DL_Element,
 				      (XtPointer)pT->next->structure.rectangle,
@@ -499,7 +502,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 				      (XtPointer)pEFirst->structure.rectangle,
 				      NULL);
 				}
-				if (pENew) {
+				if(pENew) {
 				    appendDlElement(cdi->selectedDlElementList,
 				      pENew);
 				}
@@ -511,11 +514,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    }
 			    pE = pE->next;
 			}
-			if (found) break;
+			if(found) break;
 			else pT = pT->next;
 		    }
 		  /* If no matches found use the first one in the new list */
-		    if (!found) {
+		    if(!found) {
 			DlElement *pENew;
 			DlElement *pEFirst = FirstDlElement(tmpDlElementList);
 			
@@ -526,7 +529,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			pENew = createDlElement(DL_Element,
 			  (XtPointer)pEFirst->structure.rectangle,
 			  NULL);
-			if (pENew) {
+			if(pENew) {
 			    appendDlElement(cdi->selectedDlElementList,
 			      pENew);
 			}
@@ -534,7 +537,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    highlightSelectedElements();
 		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+		    if(NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
 			  FirstDlElement(cdi->selectedDlElementList)
 			  ->structure.element->type;
@@ -546,24 +549,23 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  " cdi->selectedDlElementList :\n");
 		dumpDlElementList(cdi->selectedDlElementList);
 #endif
-	    } else if (xEvent->state & ShiftMask) {
+	    } else if(xEvent->state & ShiftMask) {
 	      /* SELECT_ACTION Shift-Btn1 */
 	      /* Toggle and append selections */
 		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		  False);
 		findSelectedEditElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
-		if (!IsEmpty(tmpDlElementList)) {
+		if(!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
-		    int found = False;
 		    unhighlightSelectedElements();
-		    while (pT) {
+		    while(pT) {
 			DlElement *pE =
 			  FirstDlElement(cdi->selectedDlElementList);
 			int found = False;
 		      /* If found, remove it from the selected list */
-			while (pE) {
-			    if (pE->structure.element == pT->structure.element) {
+			while(pE) {
+			    if(pE->structure.element == pT->structure.element) {
 				removeDlElement(cdi->selectedDlElementList,pE);
 				destroyDlElement(cdi,pE);
 				found = True;
@@ -572,7 +574,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    pE = pE->next;
 			}
 		      /* If not found, add it to the selected list */
-			if (!found) {
+			if(!found) {
 			    DlElement *pF = pT;
 			    pT = pT->next;
 			    removeDlElement(tmpDlElementList,pF);
@@ -584,7 +586,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    highlightSelectedElements();
 		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+		    if(NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
 			  FirstDlElement(cdi->selectedDlElementList)
 			  ->structure.element->type;
@@ -596,32 +598,32 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      /* See whether this is a vertex edit (1 already selected element
 	       *   that has an editVertex function defined) and do the vertex
 	       *   edit if so */
-		if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
+		if(NumberOfDlElement(cdi->selectedDlElementList) == 1) {
 		    DlElement *dlElement =
 		      FirstDlElement(cdi->selectedDlElementList)
 		      ->structure.element;
-		    if (dlElement->run->editVertex) {
+		    if(dlElement->run->editVertex) {
 			saveUndoInfo(cdi);
 			medmMarkDisplayBeingEdited(cdi);
 			unhighlightSelectedElements();
 		      /* Do vertex edit */
-			if (dlElement->run->editVertex(dlElement,x0,y0)) {
+			if(dlElement->run->editVertex(dlElement,x0,y0)) {
 			    foundVertex = True;
 			    highlightSelectedElements();
 			}
 		    }
 		}
 	      /* If this was not a vertex edit then do rubberbanding, etc. */
-		if (!foundVertex) {
+		if(!foundVertex) {
 		    doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		      False);
 		    findSelectedEditElements(cdi->dlElementList,
 		      x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
-		    if (!IsEmpty(tmpDlElementList)) {
+		    if(!IsEmpty(tmpDlElementList)) {
 			unhighlightSelectedElements();
 		      /* If this is the only element and is the same as before
 		       *   then unselect it */
-			if (tmpDlElementList->count == 1 &&
+			if(tmpDlElementList->count == 1 &&
 			  cdi->selectedDlElementList->count == 1) {
 			    DlElement *pET = FirstDlElement(tmpDlElementList);
 			    DlElement *pES =
@@ -638,7 +640,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			      FirstDlElement(tmpDlElementList),
 			      pET->structure.element);
 #endif
-			    if (pET->structure.element ==
+			    if(pET->structure.element ==
 			      pES->structure.element) {
 				clearDlDisplayList(cdi,
 				  cdi->selectedDlElementList);
@@ -657,7 +659,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			highlightSelectedElements();
 			clearDlDisplayList(NULL, tmpDlElementList);
 			clearResourcePaletteEntries();
-			if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
+			if(NumberOfDlElement(cdi->selectedDlElementList) == 1) {
 			    currentElementType =
 			      FirstDlElement(cdi->selectedDlElementList)
 			      ->structure.element->type;
@@ -670,7 +672,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    
 	case Button2:
 	  /* SELECT_ACTION Btn2 */
-	    if (xEvent->state & ShiftMask) {
+	    if(xEvent->state & ShiftMask) {
 	      /* SELECT_ACTION Shift-Btn2 */
 #if DEBUG_SEND_EVENT
 		XButtonEvent *bEvent;
@@ -694,14 +696,14 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    }
 	    findSelectedEditElements(cdi->dlElementList,
 	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
-	    if (IsEmpty(tmpDlElementList)) break;
+	    if(IsEmpty(tmpDlElementList)) break;
 	    
-	    if (xEvent->state & ControlMask) {
+	    if(xEvent->state & ControlMask) {
 	      /* SELECT_ACTION Ctrl-Btn2 */
 #if DEBUG_EVENTS
 		print("SELECT_ACTION Ctrl-Btn2\n");
 #endif
-		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
+		if(alreadySelected(FirstDlElement(tmpDlElementList))) {
 #if DEBUG_EVENTS
 		    print("Already selected\n");
 #endif
@@ -717,7 +719,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("validResize=%d\n",validResize);
 		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
-		    if (validResize) {
+		    if(validResize) {
 			saveUndoInfo(cdi);
 			medmMarkDisplayBeingEdited(cdi);
 			updateResizedElements(x0,y0,x1,y1);
@@ -725,7 +727,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
 		  /* Update object prooperties of this element */
-		    if (cdi->selectedDlElementList->count == 1) {
+		    if(cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
 			updateGlobalResourceBundleAndResourcePalette(
 			  objectDataOnly);
@@ -747,7 +749,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("validResize=%d\n",validResize);
 		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
-		    if (validResize) {
+		    if(validResize) {
 			saveUndoInfo(cdi);
 			medmMarkDisplayBeingEdited(cdi);
 			updateResizedElements(x0,y0,x1,y1);
@@ -755,7 +757,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    highlightSelectedElements();
 		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
+		    if(NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
 			  FirstDlElement(cdi->selectedDlElementList)
 			  ->structure.element->type;
@@ -773,7 +775,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  " tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
-		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
+		if(alreadySelected(FirstDlElement(tmpDlElementList))) {
 		  /* Element already selected - move it and any others
 		   * Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
@@ -788,7 +790,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("validDrag=%d\n",validDrag);
 		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
-		    if (validDrag) {
+		    if(validDrag) {
 			saveUndoInfo(cdi);
 			medmMarkDisplayBeingEdited(cdi);
 			updateDraggedElements(x0,y0,x1,y1);
@@ -796,7 +798,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
 		  /* Update object prooperties of this element */
-		    if (cdi->selectedDlElementList->count == 1) {
+		    if(cdi->selectedDlElementList->count == 1) {
 			objectDataOnly = True;
 			updateGlobalResourceBundleAndResourcePalette(
 			  objectDataOnly);
@@ -819,7 +821,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		  /* Move this element */
-		    if (validDrag) {
+		    if(validDrag) {
 			saveUndoInfo(cdi);
 			medmMarkDisplayBeingEdited(cdi);
 			updateDraggedElements(x0,y0,x1,y1);
@@ -827,7 +829,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    highlightSelectedElements();
 		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
-		    if (NumberOfDlElement(cdi->selectedDlElementList)==1) {
+		    if(NumberOfDlElement(cdi->selectedDlElementList)==1) {
 			currentElementType =
 			  FirstDlElement(cdi->selectedDlElementList)
 			  ->structure.element->type;
@@ -892,7 +894,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	  " selectedDlElement list :\n");
 	dumpDlElementList(cdi->selectedDlElementList);
 #endif
-    } else if (currentActionType == CREATE_ACTION) {
+    } else if(currentActionType == CREATE_ACTION) {
       /* CREATE_ACTION
        * ********************************************
        * Btn1    =  create (rubberband)             *
@@ -964,19 +966,19 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 	    }
 	  /* Create the element according to its method */
-	    if (currentElementType == DL_Text && doTextByTyping) {
+	    if(currentElementType == DL_Text && doTextByTyping) {
 		saveUndoInfo(cdi);
 		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handleTextCreate(x0,y0);
-	    } else if (currentElementType == DL_Polyline) {
+	    } else if(currentElementType == DL_Polyline) {
 		saveUndoInfo(cdi);
 		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
-	    } else if (currentElementType == DL_Line) {
+	    } else if(currentElementType == DL_Line) {
 		saveUndoInfo(cdi);
 		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
-	    } else if (currentElementType == DL_Polygon) {
+	    } else if(currentElementType == DL_Polygon) {
 		saveUndoInfo(cdi);
 		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolygonCreate(x0,y0);
@@ -985,7 +987,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if(!doRubberbanding(XtWindow(cdi->drawingArea),
 		  &x0,&y0,&x1,&y1,True)) break;
 	      /* Set minimum initial size */
-		if (ELEMENT_HAS_WIDGET(currentElementType)) {
+		if(ELEMENT_HAS_WIDGET(currentElementType)) {
 		    minSize = 12;
 		} else {
 		    minSize = 2;
@@ -1003,7 +1005,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
 	    }
 	  /* Element defined, do bookkeeping */
-	    if (dlElement) {
+	    if(dlElement) {
 		DlElement *pSE = 0;
 
 	      /* Mark display as not saved */
@@ -1019,7 +1021,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      /* Create a DL_Element */
 		pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
 	      /* Add it to selectedDlElementList */
-		if (pSE) {
+		if(pSE) {
 		    appendDlElement(cdi->selectedDlElementList,pSE);
 		}
 	      /* Set currentElementType */
@@ -1052,7 +1054,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
       /* Clean up */
       /* Toggle CREATE_ACTION to SELECT_ACTION */
-	if (objectS != NULL) {
+	if(objectS != NULL) {
 	    XmToggleButtonSetState(objectPaletteSelectToggleButton,
 	      True,True);
 	}
@@ -1089,10 +1091,10 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
   /* Explicitly set continue to dispatch to avoid warnings */
     *ctd=True;
   /* Left/Right/Up/Down for movement of selected elements */
-    if (currentActionType == SELECT_ACTION && displayInfo &&
+    if(currentActionType == SELECT_ACTION && displayInfo &&
       !IsEmpty(displayInfo->selectedDlElementList)) {
       /* Handle key press */	    
-	if (key->type == KeyPress) {
+	if(key->type == KeyPress) {
 	    int interested=1;
 	    int ctrl;
 	    
@@ -1127,7 +1129,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
 		break;
 	    }
 	    if(interested) {
-		if (displayInfo->selectedDlElementList->count == 1) {
+		if(displayInfo->selectedDlElementList->count == 1) {
 		    setResourcePaletteEntries();
 		}
 		medmMarkDisplayBeingEdited(displayInfo);
@@ -1148,16 +1150,16 @@ void highlightSelectedElements()
     print("In highlightSelectedElements\n");
 #endif
     
-    if (!cdi) return;
-    if (IsEmpty(cdi->selectedDlElementList)) return;
-    if (cdi->selectedElementsAreHighlighted) return;
+    if(!cdi) return;
+    if(IsEmpty(cdi->selectedDlElementList)) return;
+    if(cdi->selectedElementsAreHighlighted) return;
 #if DEBUG_UNGROUP
     print("\nhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif    
     cdi->selectedElementsAreHighlighted = True;
     pE = FirstDlElement(cdi->selectedDlElementList);
-    while (pE) {
+    while(pE) {
 	toggleSelectedElementHighlight(pE->structure.element);
 	pE = pE->next;
     }
@@ -1175,16 +1177,16 @@ void unhighlightSelectedElements()
     print("In unhighlightSelectedElements\n");
 #endif
     
-    if (!cdi) return;
-    if (IsEmpty(cdi->selectedDlElementList)) return;
-    if (!cdi->selectedElementsAreHighlighted) return;
+    if(!cdi) return;
+    if(IsEmpty(cdi->selectedDlElementList)) return;
+    if(!cdi->selectedElementsAreHighlighted) return;
     cdi->selectedElementsAreHighlighted = False;
 #if DEBUG_UNGROUP
     print("\nunhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif    
     pE = FirstDlElement(cdi->selectedDlElementList);
-    while (pE) {
+    while(pE) {
 	toggleSelectedElementHighlight(pE->structure.element);
 	pE = pE->next;
     }
@@ -1201,8 +1203,8 @@ static void updateDraggedElements(Position x0, Position y0,
     DlElement *pElement;
 
   /* If no current display or selected elements array, simply return */
-    if (!cdi) return;
-    if (IsEmpty(cdi->selectedDlElementList)) return;
+    if(!cdi) return;
+    if(IsEmpty(cdi->selectedDlElementList)) return;
     xOffset = x1 - x0;
     yOffset = y1 - y0;
 
@@ -1210,7 +1212,7 @@ static void updateDraggedElements(Position x0, Position y0,
   /* As usual, type in union unimportant as long as object is 1st thing...*/
     unhighlightSelectedElements();
     pElement = FirstDlElement(cdi->selectedDlElementList);
-    while (pElement) {
+    while(pElement) {
 	DlElement *pE = pElement->structure.element;
 #if DEBUG_EVENTS > 1
 	print("\nupdateDraggedElements: x0=%d y0=%d x1=%d y1=%d"
@@ -1221,8 +1223,8 @@ static void updateDraggedElements(Position x0, Position y0,
 	  elementType(pE->type),
 	  pE->run->move);
 #endif
-	if (pE->run->move) pE->run->move(pE, xOffset, yOffset);
-	if (pE->widget) {
+	if(pE->run->move) pE->run->move(pE, xOffset, yOffset);
+	if(pE->widget) {
 	  /* Destroy the widgets */
 	    destroyElementWidgets(pE);
 	  /* Recreate them */
@@ -1244,8 +1246,8 @@ static void updateResizedElements(Position x0, Position y0, Position x1, Positio
     DlElement *pElement;
 
 /* If no current display or selected elements array, simply return */
-    if (!cdi) return;
-    if (IsEmpty(cdi->selectedDlElementList)) return;
+    if(!cdi) return;
+    if(IsEmpty(cdi->selectedDlElementList)) return;
 
     xOffset = x1 - x0;
     yOffset = y1 - y0;
@@ -1263,12 +1265,12 @@ static void updateResizedElements(Position x0, Position y0, Position x1, Positio
   /* As usual, type in union unimportant as long as object is 1st thing... */
     unhighlightSelectedElements();
     pElement = FirstDlElement(cdi->selectedDlElementList);
-    while (pElement) {
+    while(pElement) {
 	DlElement *pE = pElement->structure.element;
-	if (pE->run->scale) {
+	if(pE->run->scale) {
 	    pE->run->scale(pE,xOffset,yOffset);
 	}
-	if (pE->widget) {
+	if(pE->widget) {
 	  /* Destroy the widget */
 	    destroyElementWidgets(pE);
 	  /* Recreate it */
@@ -1398,7 +1400,7 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
     int x, y, width, height; 
     DlObject *po = &(dlElement->structure.display->object);
     
-    if (dlElement->type == DL_Display) {
+    if(dlElement->type == DL_Display) {
 	x = HIGHLIGHT_LINE_THICKNESS;
 	y = HIGHLIGHT_LINE_THICKNESS;
 	width = (int)po->width - 2*HIGHLIGHT_LINE_THICKNESS;

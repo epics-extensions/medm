@@ -700,7 +700,8 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	    }
 	  /* Loop over displays to find an update task */
 	    while(displayInfo) {
-		if(t = displayInfo->updateTaskListHead.next) break;
+		t = displayInfo->updateTaskListHead.next;
+		if(t) break;
 		displayInfo = displayInfo->next;
 	    }
 	  /* If no update task found, remove work proc */

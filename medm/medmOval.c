@@ -163,8 +163,6 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlOval->attr));
 	if(dlOval->attr.fill == F_SOLID) {
-	    unsigned int lineWidth = (dlOval->attr.width+1)/2;
-	    
 	    XFillArc(display,drawable,displayInfo->gc,
 	      dlOval->object.x,dlOval->object.y,
 	      dlOval->object.width,dlOval->object.height,0,360*64);
@@ -332,9 +330,13 @@ DlElement *parseOval(DisplayInfo *displayInfo)
 	case T_EQUAL:
 	    break;
 	case T_LEFT_BRACE:
-	    nestingLevel++; break;
+	    nestingLevel++;
+	    break;
 	case T_RIGHT_BRACE:
-	    nestingLevel--; break;
+	    nestingLevel--;
+	    break;
+	default:
+	    break;
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
