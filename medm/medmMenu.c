@@ -236,14 +236,14 @@ static void menuUpdateGraphicalInfoCb(XtPointer cd)
 
     if(pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
-	  "  Cannot create Menu for %s\n",
+	  "  Cannot create Menu for %s\n"
 	  "  Is not an ENUM type\n",
 	  dlMenu->control.ctrl);
 	return;
     }
     if(pr->hopr <= 0.0) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
-	  "  Cannot create Menu for %s\n",
+	  "  Cannot create Menu for %s\n"
 	  "  There are no states to assign to menu items\n",
 	  dlMenu->control.ctrl);
 	return;

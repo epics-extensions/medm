@@ -40,8 +40,8 @@
 #include <float.h>
 #define isnan(a) _isnan(a)  /* For some reason MS has leading _ */
 #else
-#include <math.h>
-extern int isnan(double);     /* Because it is not in math.h as it should be */
+extern int isnan(double);  /* In case it's not in math.h as it should be */
+#include <math.h>  /* Must follow extern statement in case isnan is a macro */
 #endif /* WIN32 */
 #define NAN_SUBSTITUTE 0.0
 #define SAFEFLOAT(x) (safeFloat(x))
