@@ -485,10 +485,12 @@ void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
   int regionX, int regionY, unsigned int regionWidth,
   unsigned int regionHeight);
 void updateTextUpdate(UpdateTask *);
+#if 0
 void draw3DQuestionMark(UpdateTask *);
 void draw3DPane(UpdateTask *, Pixel);
-void drawReadOnlySymbol(UpdateTask *);
+#endif
 void drawWhiteRectangle(UpdateTask *);
+void drawBlackRectangle(UpdateTask *);
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel);
 
 /* display.c */

@@ -452,13 +452,14 @@ static void textEntryDraw(XtPointer cd)
 		}
 	    }
 	} else {
-	    draw3DPane(pte->updateTask,
-	      pte->updateTask->displayInfo->colormap[dlTextEntry->control.bclr]);
-	    draw3DQuestionMark(pte->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pte->updateTask);
 	    if(widget) XtUnmanageChild(widget);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+	if(widget && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pte->updateTask);
     }
 }

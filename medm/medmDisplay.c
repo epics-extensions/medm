@@ -630,7 +630,8 @@ void refreshDisplay(DisplayInfo *displayInfo)
 	    if(pE->type == DL_Composite) {
 		refreshComposite(pE->structure.composite);
 	    } else {
-		if(pE->widget && !pE->hidden) {
+		if(pE->widget && XtIsRealized(pE->widget) &&
+		  XtIsManaged(pE->widget) && !pE->hidden) {
 		    XUnmapWindow(display, XtWindow(pE->widget));
 		    XMapWindow(display, XtWindow(pE->widget));
 		}
@@ -683,7 +684,8 @@ static void refreshComposite(DlComposite *dlComposite)
 	if(pE->type == DL_Composite) {
 	    refreshComposite(pE->structure.composite);
 	} else {
-	    if(pE->widget && !pE->hidden) {
+	    if(pE->widget && XtIsRealized(pE->widget) &&
+	      XtIsManaged(pE->widget) && !pE->hidden) {
 		XUnmapWindow(display, XtWindow(pE->widget));
 		XMapWindow(display, XtWindow(pE->widget));
 	    }

@@ -167,15 +167,14 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XFillArc(display,drawable,displayInfo->gc,
 	      dlArc->object.x,dlArc->object.y,
 	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-	} else
-	  if(dlArc->attr.fill == F_OUTLINE) {
-	      unsigned int lineWidth = (dlArc->attr.width+1)/2;
-	      
-	      XDrawArc(display,drawable,displayInfo->gc,
-		dlArc->object.x + lineWidth,
-		dlArc->object.y + lineWidth,
-		dlArc->object.width - 2*lineWidth,
-		dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+	} else if(dlArc->attr.fill == F_OUTLINE) {
+	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
+	    
+	    XDrawArc(display,drawable,displayInfo->gc,
+	      dlArc->object.x + lineWidth,
+	      dlArc->object.y + lineWidth,
+	      dlArc->object.width - 2*lineWidth,
+	      dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
 	  }
     }
 }
@@ -214,7 +213,7 @@ static void arcDraw(XtPointer cd)
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
-	    medmPrintf(1,"\narcUpdatevalueCb: Unknown attribute\n");
+	    medmPrintf(1,"\narcDraw: Unknown attribute\n");
 	    break;
 	}
 	gcValues.line_width = dlArc->attr.width;
@@ -226,7 +225,7 @@ static void arcDraw(XtPointer cd)
 	if(calcVisibility(&dlArc->dynAttr, pa->records))
 	  drawArc(pa);
 	if(!pR->readAccess) {
-	    draw3DQuestionMark(pa->updateTask);
+	    drawBlackRectangle(pa->updateTask);
 	}
     } else if(isStaticDynamic(&dlArc->dynAttr, True)) {
       /* clr and vis are both static */

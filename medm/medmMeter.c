@@ -291,13 +291,12 @@ static void meterDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if(widget) XtUnmanageChild(widget);
-	    draw3DPane(pm->updateTask,
-	      pm->updateTask->displayInfo->colormap[dlMeter->monitor.bclr]);
-	    draw3DQuestionMark(pm->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pm->updateTask);
 	}
     } else {
-	if((widget) && XtIsManaged(widget))
+	if(widget && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pm->updateTask);
     }

@@ -225,7 +225,7 @@ int relatedDisplayFontListIndex(DlRelatedDisplay *dlRelatedDisplay,
 #define SHADOWS_SIZE 4    /* each Toggle Button has 2 shadows...*/
  
 /* more complicated calculation based on orientation, etc */
-    for(i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >= 0; i--) {
 	switch(dlRelatedDisplay->visual) {
 	case RD_COL_OF_BTN:
 	    if((int)(dlRelatedDisplay->object.height/MAX(1,numButtons)

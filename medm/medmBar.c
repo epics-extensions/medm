@@ -339,13 +339,12 @@ static void barDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if(widget) XtUnmanageChild(widget);
-	    draw3DPane(pb->updateTask,
-	      pb->updateTask->displayInfo->colormap[dlBar->monitor.bclr]);
-	    draw3DQuestionMark(pb->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pb->updateTask);
 	}
     } else {
-	if((widget) && XtIsManaged(widget))
+	if(widget && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pb->updateTask);
     }

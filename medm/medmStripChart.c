@@ -61,6 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_COLOR 0
 #define DEBUG_TIMEOUT 0
 #define DEBUG_MEM 0
+#define DEBUG_ACCESS 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -1226,6 +1227,10 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     int i, row;
 
 
+#if DEBUG_ACCESS
+    print("stripChartUpdateGraphicalInfoCb\n");
+#endif    
+
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
@@ -1305,11 +1310,13 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
 	}
     }
 
-  /* Make sure all the channel get their operating ranges before
+  /* Make sure all the channels get their operating ranges before
      proceeding */
     for(i = 0; i < psc->nChannels; i++) {
-	if(psc->record[i]->precision < 0)
-	  return;  /* wait for other channels */
+	if(psc->record[i]->precision < 0) {
+	  /* Wait for other channels */
+	    return;
+	}
     }
 
     if(XtIsManaged(widget) == False) {
@@ -1412,6 +1419,10 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 			(w,h)
 			*/
     
+#if DEBUG_ACCESS
+    print("redisplayStrip\n");
+#endif    
+
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -1441,10 +1452,11 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 }
 
 static void stripChartUpdateValueCb(XtPointer cd) {
-    Record *pR = (Record *) cd;
-    MedmStripChart *psc = (MedmStripChart *) pR->clientData;
+    Record *pR = (Record *)cd;
+    MedmStripChart *psc = (MedmStripChart *)pR->clientData;
     Boolean connected = True;
     Boolean readAccess = True;
+    Boolean validPrecision = True;
     int i;
     Widget widget = psc->dlElement->widget;
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
@@ -1458,11 +1470,23 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 	if(!ptmp->readAccess) {
 	    readAccess = False;
 	}
+	if(ptmp->precision < 0) {
+	    validPrecision = False;
+	}
     }
+
+
+#if DEBUG_ACCESS
+    print("stripChartUpdateValueCb: connected=%s readAccess=%s"
+      " validPrecision=%s\n",
+      connected?"True":"False",
+      readAccess?"True":"False",
+      validPrecision?"True":"False");
+#endif    
 
     if(connected) {
 	if(readAccess) {
-	    if(widget) {
+	    if(widget && validPrecision) {
 		if(XtIsManaged(widget) == False) {
 		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
@@ -1473,24 +1497,31 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 		  stripChartUpdateGraph((XtPointer)cd);
 	    }
 	} else {
-	    if(widget) {
-		if(XtIsManaged(widget)) {
-		    XtUnmanageChild(widget);
-		  /* stop periodic update */
-		    updateTaskSetScanRate(psc->updateTask, 0.0);
-		}
+	    if(widget && XtIsManaged(widget)) {
+		XtUnmanageChild(widget);
+	      /* Stop periodic update */
+		updateTaskSetScanRate(psc->updateTask, 0.0);
 	    }
-	    draw3DPane(psc->updateTask,
-	      psc->updateTask->displayInfo->
-	      colormap[dlStripChart->plotcom.bclr]);
-	    draw3DQuestionMark(psc->updateTask);
+#if DEBUG_ACCESS
+	    print("  drawBlackRectangle\n");
+#endif    
+	    drawBlackRectangle(psc->updateTask);
+	  /* The black rectangle is drawn on the updatePixmap.  If
+	    this routine is called as a result of the
+	    ca_replace_access_rights_event call, then the updatePixmap
+	    may not be copied. So mark it for update. If you don't do
+	    this it may end up white, rather than black.  */
+	    updateTaskMarkUpdate(psc->updateTask);
 	}
     } else {
-	if((widget) && (XtIsManaged(widget))) {
+	if(widget && XtIsManaged(widget)) {
 	    XtUnmanageChild(widget);
-	  /* stop periodic update */
+	  /* Stop periodic update */
 	    updateTaskSetScanRate(psc->updateTask, 0.0);
 	}
+#if DEBUG_ACCESS
+	print("  drawWhiteRectangle\n");
+#endif    
 	drawWhiteRectangle(psc->updateTask);
     }
 }
@@ -1499,6 +1530,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
     MedmStripChart *psc = (MedmStripChart *) cd;
     Boolean connected = True;
     Boolean readAccess = True;
+    Boolean validPrecision = True;
     Widget widget = psc->dlElement->widget;
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     int i;
@@ -1512,39 +1544,51 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 	if(!ptmp->readAccess) {
 	    readAccess = False;
 	}
+	if(ptmp->precision < 0) {
+	    validPrecision = False;
+	}
     }
+
+#if DEBUG_ACCESS
+    print("stripChartUpdateTaskCb: connected=%s readAccess=%s"
+      " validPrecision=%s\n",
+      connected?"True":"False",
+      readAccess?"True":"False",
+      validPrecision?"True":"False");
+#endif    
 
     if(connected) {
 	if(readAccess) {
-	    if(widget) {
+	    if(widget && validPrecision) {
 		if(XtIsManaged(widget) == False) {
 		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
-		  /* specified the time interval */
+		  /* Specifiy the time interval */
 		    updateTaskSetScanRate(psc->updateTask, psc->timeInterval);
 		}
 		if(psc->updateEnable) 
 		  stripChartDraw((XtPointer)psc);
 	    }
 	} else {
-	    if(widget) {
-		if(XtIsManaged(widget)) {
-		    XtUnmanageChild(widget);
-		  /* stop periodic update */
-		    updateTaskSetScanRate(psc->updateTask, 0.0);
-		}
+	    if(widget && XtIsManaged(widget)) {
+		XtUnmanageChild(widget);
+	      /* Stop periodic update */
+		updateTaskSetScanRate(psc->updateTask, 0.0);
 	    }
-	    draw3DPane(psc->updateTask,
-	      psc->updateTask->displayInfo->
-	      colormap[dlStripChart->plotcom.bclr]);
-	    draw3DQuestionMark(psc->updateTask);
+#if DEBUG_ACCESS
+	    print("  drawBlackRectangle\n");
+#endif    
+	    drawBlackRectangle(psc->updateTask);
 	}
     } else {
-	if((widget) && (XtIsManaged(widget))) {
+	if(widget && XtIsManaged(widget)) {
 	    XtUnmanageChild(widget);
-	  /* stop periodic update */
+	  /* Stop periodic update */
 	    updateTaskSetScanRate(psc->updateTask, 0.0);
 	}
+#if DEBUG_ACCESS
+	print("  drawWhiteRectangle\n");
+#endif    
 	drawWhiteRectangle(psc->updateTask);
     }
 }
@@ -1686,6 +1730,10 @@ static void stripChartDraw(XtPointer cd) {
     Window window = XtWindow(widget);
     GC gc = psc->gc;
     int startPos;
+
+#if DEBUG_ACCESS
+    print("stripChartDraw\n");
+#endif    
 
   /* Check if hidden */
     if(dlElement->hidden) {

@@ -262,7 +262,7 @@ static void rectangleDraw(XtPointer cd)
 	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
 	  drawRectangle(pr);
 	if(!pRec->readAccess) {
-	    draw3DQuestionMark(pr->updateTask);
+	    drawBlackRectangle(pr->updateTask);
 	}
     } else if(isStaticDynamic(&dlRectangle->dynAttr, True)) {
       /* clr and vis are both static */

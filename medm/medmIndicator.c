@@ -306,13 +306,12 @@ static void indicatorDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if(widget) XtUnmanageChild(widget);
-	    draw3DPane(pi->updateTask,
-	      pi->updateTask->displayInfo->colormap[dlIndicator->monitor.bclr]);
-	    draw3DQuestionMark(pi->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pi->updateTask);
 	}
     } else {
-	if((widget) && XtIsManaged(widget))
+	if(widget && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pi->updateTask);
     }

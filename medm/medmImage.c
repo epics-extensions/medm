@@ -323,7 +323,7 @@ static void imageDraw(XtPointer cd)
 	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(isConnected(pi->records)) {
 	    if(pR->readAccess) {
-		long status = calculateAndSetImageFrame(pi);;
+		long status = calculateAndSetImageFrame(pi);
 		
 	      /* Draw depending on visibility */
 		if(status == 0) {
@@ -336,12 +336,14 @@ static void imageDraw(XtPointer cd)
 		      BlackPixel(display,screenNum));
 		}
 		if(!pR->readAccess) {
-		    draw3DQuestionMark(pi->updateTask);
+		    drawBlackRectangle(pi->updateTask);
 		}
+	    } else {
+		drawBlackRectangle(pi->updateTask);
 	    }
 	} else if(isStaticDynamic(&dlImage->dynAttr, False)) {
 	  /* vis is static */
-	    long status = calculateAndSetImageFrame(pi);;
+	    long status = calculateAndSetImageFrame(pi);
 	    
 	  /* Draw */
 	    if(status == 0) {
@@ -358,7 +360,7 @@ static void imageDraw(XtPointer cd)
     } else {
       /* No channel */
 	if(pi->validCalc) {
-	    long status = calculateAndSetImageFrame(pi);;
+	    long status = calculateAndSetImageFrame(pi);
 	    
 	  /* Draw */
 	    if(status == 0) {
@@ -726,7 +728,7 @@ static long calculateAndSetImageFrame(MedmImage *pi)
 	} else {
 	    double valueArray[MAX_CALC_INPUTS];
 	    Record **records = pi->records;
-	    DlDynamicAttribute *attr = &dlImage->dynAttr;;
+	    DlDynamicAttribute *attr = &dlImage->dynAttr;
 	    
 	  /* Fill in the input array */
 	    if(records) {

@@ -266,7 +266,7 @@ static void polylineDraw(XtPointer cd)
 	if(calcVisibility(&dlPolyline->dynAttr, pp->records))
 	  drawPolyline(pp);
 	if(!pR->readAccess) {
-	    draw3DQuestionMark(pp->updateTask);
+	    drawBlackRectangle(pp->updateTask);
 	}
     } else if(isStaticDynamic(&dlPolyline->dynAttr, True)) {
       /* clr and vis are both static */

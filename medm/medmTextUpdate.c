@@ -470,9 +470,7 @@ static void textUpdateDraw(XtPointer cd)
 	    }
 	} else {
 	  /* No read access */
-	    draw3DPane(ptu->updateTask,
-	      ptu->updateTask->displayInfo->colormap[dlTextUpdate->monitor.bclr]);
-	    draw3DQuestionMark(ptu->updateTask);
+	    drawBlackRectangle(ptu->updateTask);
 	}
     } else {
       /* no connection or disconnected */

@@ -262,7 +262,8 @@ static void compositeDraw(XtPointer cd)
 		hideComposite(pc);
 	    }
 	    if(!pR->readAccess) {
-		draw3DQuestionMark(pc->updateTask);
+		hideComposite(pc);
+		drawBlackRectangle(pc->updateTask);
 	    }
 	} else if(isStaticDynamic(&dlComposite->dynAttr, False)) {
 	    executeCompositeChildren(displayInfo, pc->dlElement);

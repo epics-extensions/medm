@@ -480,13 +480,13 @@ static void valuatorDraw(XtPointer cd) {
 	    else
 	      XDefineCursor(display,XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    draw3DPane(pv->updateTask,
-	      pv->updateTask->displayInfo->colormap[dlValuator->control.bclr]);
-	    draw3DQuestionMark(pv->updateTask);
-	    if(widget) XtUnmanageChild(widget);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pv->updateTask);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+	if(widget && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pv->updateTask);
     }
 }

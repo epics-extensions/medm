@@ -259,7 +259,7 @@ static void polygonDraw(XtPointer cd)
 	if(calcVisibility(&dlPolygon->dynAttr, pp->records))
 	  drawPolygon(pp);
 	if(!pR->readAccess) {
-	    draw3DQuestionMark(pp->updateTask);
+	    drawBlackRectangle(pp->updateTask);
 	}
     } else if(isStaticDynamic(&dlPolygon->dynAttr, True)) {
       /* clr and vis are both static */

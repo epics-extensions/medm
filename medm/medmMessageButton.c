@@ -400,13 +400,12 @@ static void messageButtonDraw(XtPointer cd)
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if(widget) XtUnmanageChild(widget);
-	    draw3DPane(pmb->updateTask,
-	      pmb->updateTask->displayInfo->colormap[dlMessageButton->control.bclr]);
-	    draw3DQuestionMark(pmb->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pmb->updateTask);
 	}
     } else {
-	if((widget) && XtIsManaged(widget))
+	if(widget && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pmb->updateTask);
     }

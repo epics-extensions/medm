@@ -168,17 +168,15 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XFillArc(display,drawable,displayInfo->gc,
 	      dlOval->object.x,dlOval->object.y,
 	      dlOval->object.width,dlOval->object.height,0,360*64);
-
-	} else
-	  if(dlOval->attr.fill == F_OUTLINE) {
-	      unsigned int lineWidth = (dlOval->attr.width+1)/2;
-	      
-	      XDrawArc(display,drawable,displayInfo->gc,
-		dlOval->object.x + lineWidth,
-		dlOval->object.y + lineWidth,
-		dlOval->object.width - 2*lineWidth,
-		dlOval->object.height - 2*lineWidth,0,360*64);
-	  }
+	} else if(dlOval->attr.fill == F_OUTLINE) {
+	    unsigned int lineWidth = (dlOval->attr.width+1)/2;
+	    
+	    XDrawArc(display,drawable,displayInfo->gc,
+	      dlOval->object.x + lineWidth,
+	      dlOval->object.y + lineWidth,
+	      dlOval->object.width - 2*lineWidth,
+	      dlOval->object.height - 2*lineWidth,0,360*64);
+	}
     }
 }
 
@@ -218,6 +216,10 @@ static void ovalDraw(XtPointer cd) {
 	case ALARM :
 	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
+	default :
+	    gcValues.foreground = displayInfo->colormap[dlOval->attr.clr];
+	    medmPrintf(1,"\novalDraw: Unknown attribute\n");
+	    break;
 	}
 	gcValues.line_width = dlOval->attr.width;
 	gcValues.line_style = ((dlOval->attr.style == SOLID) ?
@@ -228,7 +230,7 @@ static void ovalDraw(XtPointer cd) {
 	if(calcVisibility(&dlOval->dynAttr, po->records))
 	  drawOval(po);
 	if(!pR->readAccess) {
-	    draw3DQuestionMark(po->updateTask);
+	    drawBlackRectangle(po->updateTask);
 	}
     } else if(isStaticDynamic(&dlOval->dynAttr, True)) {
       /* clr and vis are both static */

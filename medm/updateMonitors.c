@@ -154,7 +154,6 @@ void localCvtDoubleToString(
     sprintf(pstr_value,"%.*f",(int)precision,flt_value);
 }
 
-/* Used for dynamic objects only */
 void drawWhiteRectangle(UpdateTask *pt)
 {
     GC gc = pt->displayInfo->gc;
@@ -166,7 +165,18 @@ void drawWhiteRectangle(UpdateTask *pt)
     return;
 }
 
-/* Used for dynamic objects only */
+void drawBlackRectangle(UpdateTask *pt)
+{
+    GC gc = pt->displayInfo->gc;
+    Drawable drawable = pt->displayInfo->updatePixmap;
+
+    XSetForeground(display, gc, BlackPixel(display,DefaultScreen(display)));
+    XFillRectangle(display, drawable, gc, pt->rectangle.x, pt->rectangle.y,
+      pt->rectangle.width, pt->rectangle.height);
+    return;
+}
+
+/* Used for image only */
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
 {
     GC gc = pt->displayInfo->gc;
@@ -178,6 +188,8 @@ void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
     return;
 }
 
+#if 0
+/* KE: No longer used */
 /* Used for dynamic objects only */
 void draw3DPane(UpdateTask *pt, Pixel bgc)
 {
@@ -316,3 +328,4 @@ void draw3DQuestionMark(UpdateTask *pt)
     XDrawLine(display,drawable, gc, lx1-qmlw/2, ly2, lx2+qmlw/2, ly2);
     XDrawArc(display, drawable, gc, dx,dy,dw,dh,225*64,180*64);
 }
+#endif

@@ -307,7 +307,7 @@ static void textDraw(XtPointer cd) {
 	/* KE: Different drawXXX from other drawing objects */
 	  drawText(displayInfo->updatePixmap, displayInfo->gc, dlText);
 	if(!pR->readAccess) {
-	    draw3DQuestionMark(pt->updateTask);
+	    drawBlackRectangle(pt->updateTask);
 	}
     } else if(isStaticDynamic(&dlText->dynAttr, True)) {
       /* clr and vis are both static */

@@ -61,6 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_XRT 0
 #define DEBUG_HISTOGRAM 0
 #define DEBUG_ERASE 0
+#define DEBUG_ACCESS 0
 
 #ifndef VMS
 #define CHECK_NAN
@@ -1295,15 +1296,16 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     int i;
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
+    Boolean initialize = True;
 
-#if DEBUG_CARTESIAN_PLOT_UPDATE
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_ACCESS
     printf("cartesianPlotUpdateScreenFirstTime: nTraces=%d\n",
       pcp->nTraces);
 #endif    
   /* Return until all channels get their graphical information */
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
-#if DEBUG_CARTESIAN_PLOT_UPDATE
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_ACCESS
 	printf("  recordX=%x recordY=%x hcp=%x\n",
 	  t->recordX,t->recordY,t->hcp);
 	if(t->recordX) {
@@ -1316,18 +1318,40 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	}
 #endif    
 	if((t->recordX) || (t->recordY)) {
-	    if(t->hcp == NULL) return;
-	    if((t->recordX) &&
-	      ((!t->recordX->array) || (t->recordX->precision < 0))) return;
-	    if((t->recordY) &&
-	      ((!t->recordY->array) || (t->recordY->precision < 0))) return;
+	    if(t->hcp == NULL) {
+		initialize = False;
+		goto INITIALIZE;
+	    }
+	    if(t->recordX &&
+	      (!t->recordX->array || t->recordX->precision < 0)) {
+		initialize = False;
+		goto INITIALIZE;
+	    }
+	    if(t->recordY &&
+	      (!t->recordY->array || t->recordY->precision < 0)) {
+		initialize = False;
+		goto INITIALIZE;
+	    }
 	}
     }
     if(pcp->triggerCh.recordX) {
-	if(pcp->triggerCh.recordX->precision < 0) return;
+	if(pcp->triggerCh.recordX->precision < 0) {
+	    initialize = False;
+	    goto INITIALIZE;
+	}
     }
     if(pcp->eraseCh.recordX) {
-	if(pcp->eraseCh.recordX->precision < 0) return;
+	if(pcp->eraseCh.recordX->precision < 0) {
+	    initialize = False;
+	    goto INITIALIZE;
+	}
+    }
+
+  INITIALIZE:
+    if(!initialize) {
+      /* Update the plot for access, etc. */
+	updateTaskMarkUpdate(pcp->updateTask);
+	return;
     }
 
   /* Draw all traces once */
@@ -1393,7 +1417,6 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	  cartesianPlotUpdateValueCb);
     }
     CpUpdateWidget(widget, CP_FULL);
-    updateTaskMarkUpdate(pcp->updateTask);
 }
 
 
@@ -1404,7 +1427,7 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
     Widget widget = pcp->dlElement->widget;
     int i;
 
-#if DEBUG_CARTESIAN_PLOT_UPDATE
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_ACCESS
     printf("cartesianPlotUpdateValueCb:\n");
 #endif    
   /* If this is an erase channel, erase screen */
@@ -1532,6 +1555,7 @@ static void cartesianPlotDraw(XtPointer cd) {
     int i;
     Boolean connected = True;
     Boolean readAccess = True;
+    Boolean validPrecision = True;
 
   /* Check if hidden */
     if(dlElement->hidden) {
@@ -1545,18 +1569,22 @@ static void cartesianPlotDraw(XtPointer cd) {
     for(i = 0; i < pcp->nTraces; i++) {
 	Record *pr;
 	if(pr = pcp->xyTrace[i].recordX) {
-	    if(!pr->connected) {
+	    if(!pr->connected < 0) {
 		connected = False;
 		break;
-	    } else if(!pr->readAccess)
-	      readAccess = False;
+	    } else if(!pr->readAccess) {
+		readAccess = False;
+	    }
+	    if(pr->precision < 0) validPrecision = False;
 	}
 	if(pr = pcp->xyTrace[i].recordY) {
 	    if(!pr->connected) {
 		connected = False;
 		break;
-	    } else if(!pr->readAccess)
-	      readAccess = False;
+	    } else if(!pr->readAccess) {
+		readAccess = False;
+	    }
+	    if(pr->precision < 0) validPrecision = False;
 	}
     }
     if(pcp->triggerCh.recordX) {
@@ -1566,6 +1594,7 @@ static void cartesianPlotDraw(XtPointer cd) {
 	} else if(!pr->readAccess) {
 	    readAccess = False;
 	}
+	if(pr->precision < 0) validPrecision = False;
     }
     if(pcp->eraseCh.recordX) {
 	Record *pr = pcp->eraseCh.recordX;
@@ -1574,10 +1603,11 @@ static void cartesianPlotDraw(XtPointer cd) {
 	} else if(!pr->readAccess) {
 	    readAccess = False;
 	}
+	if(pr->precision < 0) validPrecision = False;
     }
     if(connected) {
 	if(readAccess) {
-	    if(widget) {
+	    if(widget && validPrecision) {
 		if(pcp->dirty1) {
 		    pcp->dirty1 = False;
 		    CpSetData(widget, CP_Y, pcp->hcp1);
@@ -1590,18 +1620,13 @@ static void cartesianPlotDraw(XtPointer cd) {
 		XtManageChild(widget);
 	    }
 	} else {
-	    if(widget) {
-		XtUnmanageChild(widget);
-	    }
-	    draw3DPane(pcp->updateTask,
-	      pcp->updateTask->displayInfo->colormap[
-		pcp->dlElement->structure.cartesianPlot->plotcom.bclr]);
-	    draw3DQuestionMark(pcp->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pcp->updateTask);
 	}
     } else {
-	if(widget) {
-	    XtUnmanageChild(widget);
-	}
+	if(widget && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pcp->updateTask);
     }
   /* KE: Used to use CP_FAST here.  SciPlot autoscales to larger, but

@@ -177,7 +177,7 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
       args.chid?ca_name(args.chid):"Unavailable",
       args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
       args.chid?ca_element_count(args.chid):0,
-      args.chid?(ca_read_access(args.chid)?"R":""):"Unavailable",
+      args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
       args.chid?(ca_write_access(args.chid)?"W":""):"",
       args.chid?ca_host_name(args.chid):"Unavailable",
       ca_message(args.stat)?ca_message(args.stat):"Unavailable",
@@ -442,7 +442,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
   /* Do a get every time a channel is connected or reconnected
    *   and has read access
    * The get will cause the graphical info callback to be called */
-    if((args.op == CA_OP_CONN_UP) && (ca_read_access(pCh->chid))) {
+    if(args.op == CA_OP_CONN_UP && ca_read_access(pCh->chid)) {
 	status = ca_array_get_callback(
 	  dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
 	  1, args.chid, medmUpdateGraphicalInfoCb, NULL);
@@ -457,9 +457,15 @@ static void medmConnectEventCb(struct connection_handler_args args) {
       /* Connected */
 	if(pCh->previouslyConnected == False) {
 	  /* Connected and not previously connected */
-	  /* Add the access-rights-change callback and the significant-change
-	   *   (value, alarm or severity) callback
-	   * Don't call the updateValue callback because no value yet */
+	  /* Set these first so they will be right for the updateValueCb */
+	    pCh->pr->elementCount = ca_element_count(pCh->chid);
+	    pCh->pr->dataType = ca_field_type(args.chid);
+	    pCh->pr->connected = True;
+	    caTask.channelConnected++;
+	  /* Add the access-rights-change callback and the
+	     significant-change (value, alarm or severity)
+	     callback. Don't call the updateValueCb because
+	     ca_replace_access_rights_event will call it. */
 	    status = ca_replace_access_rights_event(
 	      pCh->chid,medmReplaceAccessRightsEventCb);
 	    if(status != ECA_NORMAL) {
@@ -482,11 +488,9 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 		medmPostMsg(0,"medmConnectEventCb: ca_add_array_event: %s\n",
 		  ca_message(status));
 	    }
+	  /* Set this one last so ca_replace_access_rights_event can
+             use the old value */
 	    pCh->previouslyConnected = True;
-	    pCh->pr->elementCount = ca_element_count(pCh->chid);
-	    pCh->pr->dataType = ca_field_type(args.chid);
-	    pCh->pr->connected = True;
-	    caTask.channelConnected++;
 	} else {
 	  /* Connected and previously connected */
 	    pCh->pr->connected = True;
@@ -795,6 +799,7 @@ static void medmReplaceAccessRightsEventCb(
   struct access_rights_handler_args args)
 {
     Channel *pCh = (Channel *) ca_puser(args.chid);
+    Boolean readAccessChangedToRead = False;
 
   /* Increment the event counter */
     caTask.caEventCount++;
@@ -807,11 +812,30 @@ static void medmReplaceAccessRightsEventCb(
 	return;
     }
 
+  /* Determine if the rights are changing from no read to read */
+    if(!pCh->pr->readAccess && ca_read_access(pCh->chid)) {
+	readAccessChangedToRead = True;
+    }
   /* Change the access rights in the Record */
     pCh->pr->readAccess = ca_read_access(pCh->chid);
     pCh->pr->writeAccess = ca_write_access(pCh->chid);
     if(pCh->pr->updateValueCb) 
-      pCh->pr->updateValueCb((XtPointer)pCh->pr); 
+      pCh->pr->updateValueCb((XtPointer)pCh->pr);
+
+  /* Do a get as in medmConnectEventCb.  The get will cause the
+     graphical info callback to be called.  This is necessary for some
+     objects if the access rights are changing from no read to
+     read. */
+    if(pCh->pr->connected && pCh->previouslyConnected
+      && readAccessChangedToRead) {
+	int status = ca_array_get_callback(
+	  dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
+	  1, args.chid, medmUpdateGraphicalInfoCb, NULL);
+	if(status != ECA_NORMAL) {
+	    medmPostMsg(0,"medmReplaceAccessRightsEventCb: %s\n",
+	      ca_message(status));
+	}
+    }
 }
 
 static int caAdd(char *name, Record *pr)

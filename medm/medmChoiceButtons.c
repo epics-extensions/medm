@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_TOGGLE_BUTTONS 0
+#define DEBUG_ACCESS 0
 
 #include "medm.h"
 
@@ -297,6 +298,10 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
     char *labels[16];
     Widget buttons[16];
     
+#if DEBUG_TOGGLE_BUTTONS || DEBUG_ACCESS
+    printf("\nchoiceButtonUpdateGraphicalInfoCb:\n");
+#endif
+
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
@@ -354,7 +359,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 static void choiceButtonUpdateValueCb(XtPointer cd) {
     MedmChoiceButtons *pcb = (MedmChoiceButtons *)((Record *) cd)->clientData;
 
-#if DEBUG_TOGGLE_BUTTONS
+#if DEBUG_TOGGLE_BUTTONS || DEBUG_ACCESS
     printf("\nchoiceButtonUpdateValueCb:\n");
 #endif
     updateTaskMarkUpdate(pcb->updateTask);
@@ -367,6 +372,11 @@ static void choiceButtonDraw(XtPointer cd) {
     Widget widget = dlElement->widget;
     DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
 
+#if DEBUG_ACCESS
+    printf("\nchoiceButtonDraw: widget=%x managed=%s\n",
+      widget,widget?(XtIsManaged(widget)?"Yes":"No"):"NA");
+#endif
+    
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -376,14 +386,20 @@ static void choiceButtonDraw(XtPointer cd) {
     }
     
     if(pr && pr->connected) {
-	if(!widget) return;
-	if (pr->readAccess) {
-	    if (widget && !XtIsManaged(widget)) {
+	if(pr->readAccess) {
+#if DEBUG_ACCESS
+	    printf("  [connected/access] widget=%x managed=%s precision=%d\n",
+	      widget,widget?(XtIsManaged(widget)?"Yes":"No"):"NA",
+	      pr->precision);
+#endif
+
+	    if(!widget) return;
+	    if(widget && !XtIsManaged(widget)) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pr->precision < 0) return;    /* Wait for pr->value */
-	    if (pr->dataType == DBF_ENUM) {
+	    if(pr->precision < 0) return;    /* Wait for pr->value */
+	    if(pr->dataType == DBF_ENUM) {
 		WidgetList children;
 		Cardinal numChildren;
 		int i;
@@ -406,7 +422,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		    return;
 		}
 		i = (int) pr->value;
-		if ((i >= 0) && (i < (int)numChildren)) {
+		if((i >= 0) && (i < (int)numChildren)) {
 #if DEBUG_TOGGLE_BUTTONS
 		    {
 			int ic;
@@ -459,18 +475,28 @@ static void choiceButtonDraw(XtPointer cd) {
 		medmPrintf(1,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if (pr->writeAccess) 
+	    if(pr->writeAccess) 
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if (widget && XtIsManaged(widget)) XtUnmanageChild(widget);
-	    draw3DPane(pcb->updateTask,
-	      pcb->updateTask->displayInfo->colormap[dlChoiceButton->control.bclr]);
-	    draw3DQuestionMark(pcb->updateTask);
+#if DEBUG_ACCESS
+	    printf("  [connected/no access] widget=%x managed=%s precision=%d\n",
+	      widget,widget?(XtIsManaged(widget)?"Yes":"No"):"NA",
+	      pr->precision);
+#endif
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pcb->updateTask);
 	}
     } else {
-	if(widget) XtUnmanageChild(widget);
+#if DEBUG_ACCESS
+	printf("  [not connected] widget=%x managed=%s precision=%d\n",
+	  widget,widget?(XtIsManaged(widget)?"Yes":"No"):"NA",
+	  pr->precision);
+#endif
+	if(widget && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pcb->updateTask);
     }
 }
@@ -500,7 +526,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  &(dlChoiceButton->object),
 	  choiceButtonDraw,
 	  (XtPointer) pcb);
-	if (pcb->updateTask == NULL) {
+	if(pcb->updateTask == NULL) {
 	    medmPrintf(1,"\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
@@ -550,10 +576,10 @@ void executeDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
 	choiceButtonCreateRunTimeInstance(displayInfo, dlElement);
-    } else if (displayInfo->traversalMode == DL_EDIT) {
-	if (dlElement->widget) {
+    } else if(displayInfo->traversalMode == DL_EDIT) {
+	if(dlElement->widget) {
 #if 1
 	    XtDestroyWidget(dlElement->widget);
 #endif
@@ -571,7 +597,7 @@ void hideDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void choiceButtonDestroyCb(XtPointer cd) {
     MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
-    if (pcb) {
+    if(pcb) {
 	medmDestroyRecord(pcb->record);
 	if(pcb->dlElement->data) pcb->dlElement->data = NULL;
 	free((char *)pcb);
@@ -590,8 +616,8 @@ DlElement *createDlChoiceButton(DlElement *p)
     DlElement *dlElement;
  
     dlChoiceButton = (DlChoiceButton *)malloc(sizeof(DlChoiceButton));
-    if (!dlChoiceButton) return 0;
-    if (p) {
+    if(!dlChoiceButton) return 0;
+    if(p) {
 	*dlChoiceButton = *(p->structure.choiceButton);
     } else {
 	objectAttributeInit(&(dlChoiceButton->object));
@@ -600,7 +626,7 @@ DlElement *createDlChoiceButton(DlElement *p)
 	dlChoiceButton->stacking = ROW;
     }
  
-    if (!(dlElement = createDlElement(DL_ChoiceButton,
+    if(!(dlElement = createDlElement(DL_ChoiceButton,
       (XtPointer)      dlChoiceButton,
       &choiceButtonDlDispatchTable))) {
 	free(dlChoiceButton);
@@ -617,33 +643,33 @@ DlElement *parseChoiceButton(DisplayInfo *displayInfo)
     DlChoiceButton *dlChoiceButton;
     DlElement *dlElement = createDlChoiceButton(NULL);
  
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlChoiceButton = dlElement->structure.choiceButton;
  
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlChoiceButton->object));
-	    else if (!strcmp(token,"control"))
+	    else if(!strcmp(token,"control"))
 	      parseControl(displayInfo,&(dlChoiceButton->control));
-	    else if (!strcmp(token,"clrmod")) {
+	    else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dlChoiceButton->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlChoiceButton->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlChoiceButton->clrmod = DISCRETE;
-	    } else if (!strcmp(token,"stacking")) {
+	    } else if(!strcmp(token,"stacking")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"row"))
+		if(!strcmp(token,"row"))
 		  dlChoiceButton->stacking = ROW;
-		else if (!strcmp(token,"column"))
+		else if(!strcmp(token,"column"))
 		  dlChoiceButton->stacking = COLUMN;
-		else if (!strcmp(token,"row column"))
+		else if(!strcmp(token,"row column"))
 		  dlChoiceButton->stacking = ROW_COLUMN;
 	    }
 	    break;
@@ -672,15 +698,15 @@ void writeDlChoiceButton(
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif 
 	fprintf(stream,"\n%s\"choice button\" {",indent);
 	writeDlObject(stream,&(dlChoiceButton->object),level+1);
 	writeDlControl(stream,&(dlChoiceButton->control),level+1);
-	if (dlChoiceButton->clrmod != STATIC) 
+	if(dlChoiceButton->clrmod != STATIC) 
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlChoiceButton->clrmod]);
-	if (dlChoiceButton->stacking != ROW)
+	if(dlChoiceButton->stacking != ROW)
 	  fprintf(stream,"\n%s\tstacking=\"%s\"",indent,
 	    stringValueTable[dlChoiceButton->stacking]);
 	fprintf(stream,"\n%s}",indent);

@@ -122,7 +122,7 @@ int menuFontListIndex(int height)
 	    h = j + 1;
 	    h1 = (int)(.90*h) - 4;
 	    indx1 = 0;
-	    for(i = MAX_FONTS-1; i >=  0; i--) {
+	    for(i = MAX_FONTS-1; i >= 0; i--) {
 		if( ((int)(.90*h) - 4) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx1 = i;
@@ -131,7 +131,7 @@ int menuFontListIndex(int height)
 	    }
 	    h2 = (int)(h) - 8;
 	    indx2 = 0;
-	    for(i = MAX_FONTS-1; i >=  0; i--) {
+	    for(i = MAX_FONTS-1; i >= 0; i--) {
 		if( ((int)(h) - 8) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx2 = i;
@@ -147,7 +147,7 @@ int menuFontListIndex(int height)
 #if 0
   /* Don't allow height of font to exceed 90% - 4 pixels of menu
    *   widget.  Includes nominal 2*shadowThickness = 4 */
-    for(i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >= 0; i--) {
 	if( ((int)(.90*height) - 4) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
@@ -156,7 +156,7 @@ int menuFontListIndex(int height)
   /* Allow for shadowThickness + marginHeight 2*(2+2)=8.  Allow full
    *   ascent + descent.  Gives better spacing of the menu items for
    *   small Menu's */
-    for(i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >= 0; i--) {
 	if( ((int)(height) - 8) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
@@ -344,8 +344,8 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 	background = pm->updateTask->displayInfo->colormap[dlMenu->control.bclr];
     } else {
 	pm = NULL;
-	foreground =  displayInfo->colormap[dlMenu->control.clr];
-	background =  displayInfo->colormap[dlMenu->control.bclr];
+	foreground = displayInfo->colormap[dlMenu->control.clr];
+	background = displayInfo->colormap[dlMenu->control.bclr];
     }
 
 #if SETSIZE
@@ -519,8 +519,8 @@ static void menuDraw(XtPointer cd)
     }
     
     if(pr && pr->connected) {
-	if(!widget) return;
 	if(pr->readAccess) {
+	    if(!widget) return;
 	    if(!XtIsManaged(widget)) {
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
@@ -569,12 +569,12 @@ static void menuDraw(XtPointer cd)
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if(widget && XtIsManaged(widget)) XtUnmanageChild(widget);
-	    draw3DPane(pm->updateTask,pm->color);
-	    draw3DQuestionMark(pm->updateTask);
+	    if(widget && XtIsManaged(widget))
+	      XtUnmanageChild(widget);
+	    drawBlackRectangle(pm->updateTask);
 	}
     } else {
-	if((widget) && XtIsManaged(widget))
+	if(widget && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pm->updateTask);
     }
