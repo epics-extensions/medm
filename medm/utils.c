@@ -4457,9 +4457,14 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	      string, pR->hopr ,pR->lopr);
 	    break;
         case DBF_FLOAT:  
-        case DBF_DOUBLE: 
-	    sprintf(string,"%sPRECISION: %d\n",
-	      string, pR->precision);
+        case DBF_DOUBLE:
+	    if(pR->precision >= 0 && pR->precision <= 17) {
+		sprintf(string,"%sPRECISION: %d\n",
+		  string, pR->precision);
+	    } else {
+		sprintf(string,"%sPRECISION: %d [Bad Value]\n",
+		  string, pR->precision);
+	    }
 	    sprintf(string,"%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr ,pR->lopr);
 	    break;
