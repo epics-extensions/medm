@@ -53,13 +53,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
-
-/****************************************************************************
- ***                             proto.h                                  ***
- ****************************************************************************/
 
 #ifndef __PROTO_H__
 #define __PROTO_H__
@@ -79,8 +76,7 @@ XtCallbackProc executePopupMenuCallback(Widget w, int buttonNumber,
 	XmAnyCallbackStruct *call_data);
 XtCallbackProc popdownDisplayFileDialog(Widget w, XtPointer client_data,
 	XmSelectionBoxCallbackStruct *call_data);
-XtCallbackProc dmCreateRelatedDisplay(Widget w, DisplayInfo *displayInfo,
-	XmPushButtonCallbackStruct *call_data);
+void dmCreateRelatedDisplay(Widget, XtPointer, XtPointer);
 void dmExecuteShellCommand(Widget w,
 	DlShellCommandEntry *commandEntry,
 	XmPushButtonCallbackStruct *call_data);
@@ -99,8 +95,6 @@ XtCallbackProc simpleOptionMenuCallback(Widget w, int buttonNumber,
 void simpleRadioBoxCallback(Widget w, int buttonNumber,
 	XmToggleButtonCallbackStruct *call_data);
 void valuatorValueChanged(Widget, XtPointer, XtPointer);
-XtCallbackProc redisplayStrip(Widget w, Strip **strip,
-	XmAnyCallbackStruct *call_data);
 
 /* channelPalette.c */
 void createChannel(void);
@@ -169,12 +163,6 @@ XtEventHandler popdownMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
 XtEventHandler handleEnterWindow(Widget w, DisplayInfo *displayInfo,
 	XEvent *event);
 void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
-void valuatorSetValue(Channel *monitorData, double forcedValue,
-	Boolean force);
-void valuatorRedrawValue(Channel *monitorData,
-	double forcedValue, Boolean force, DisplayInfo *displayInfo, Widget w,
-	DlValuator *dlValuator);
-void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 int highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
 void unselectSelectedElements(void);
@@ -269,12 +257,15 @@ XtCallbackProc globalHelpCallback(Widget w, int helpIndex,
 void medmPostMsg(char *);
 void medmPostTime();
 void memdPrintf(char*,...);
+void medmCreateCAStudyDlg();
+void medmUpdateCAStudtylDlg(XtPointer, XtIntervalId *);
 
 /* medm.c */
 int main(int argc, char *argv[]);
 Widget createDisplayMenu(Widget widget);
 Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
 Widget createMessageDialog(Widget,char *,char *);
+Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
 
 /* medmCA.c */
 int medmCAInitialize(void);
@@ -283,6 +274,11 @@ void updateListCreate(Channel *);
 void updateListDestroy(Channel *);
 void medmConnectEventCb(struct connection_handler_args);
 void medmDisconnectChannel(Channel *pCh);
+Record *medmAllocateRecord(char*,void(*)(XtPointer),void(*)(XtPointer),XtPointer);
+void medmDestoryRecord(Record *);
+void medmSendDouble(Record *, double);
+void medmSendString(Record *, char *);
+void CATaskGetInfo(int *, int *, int *);
 
 /* medmPixmap.c */
 void medmInitializeImageCache(void);
@@ -387,12 +383,34 @@ Widget createStripChartDataDialog(Widget parent);
 void updateStripChartDataDialog(void);
 
 /* shared.c */
-void wmCloseCallback(Widget w, ShellType shellType,
-	XmAnyCallbackStruct *call_data);
+void wmCloseCallback(Widget, XtPointer, XtPointer);
 XtCallbackProc wmTakeFocusCallback(Widget w, ShellType shellType,
 	XmAnyCallbackStruct *call_data);
 void updateStatusFields(void);
 void optionMenuSet(Widget menu, int buttonId);
+double medmTime();
+void updateTaskInit(DisplayInfo *displayInfo);
+UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer), XtPointer);
+void updateTaskDeleteTask(UpdateTask *);
+void updateTaskDeleteAllTask(UpdateTask *);
+int updateTaskMarkTimeout(UpdateTask *, double);
+void updateTaskSetScanRate(UpdateTask *, double);
+void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
+void updateTaskAddDestroyCb(UpdateTask *, void (*)(XtPointer));
+void updateTaskRepaintRegion(DisplayInfo *, Region *);
+Boolean medmInitSharedDotC();
+void updateTaskStatusGetInfo(int *taskCount,
+                             int *periodicTaskCount,
+                             int *updateRequestCount,
+                             int *updateDiscardCount,
+                             int *periodicUpdateRequestCount,
+                             int *periodicUpdateDiscardCount,
+                             int *updateRequestQueued,
+                             int *updateExecuted,
+                             double *timeInterval); 
+void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, char **, short *, int *));
+
+
 
 /* updateMonitors.c */
 int localCvtDoubleToString( double, char *, unsigned short);
@@ -400,9 +418,10 @@ int localCvtDoubleToString( double, char *, unsigned short);
 void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
 	int regionX, int regionY, unsigned int regionWidth,
 	unsigned int regionHeight);
-void updateTextUpdate(Channel *data);
-void drawReadOnlySymbol(Channel *data);
-char *valueToString(Channel *, TextFormat);
+void updateTextUpdate(UpdateTask *);
+void draw3DPane(UpdateTask *, Pixel);
+void drawReadOnlySymbol(UpdateTask *);
+void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
 FILE *dmOpenUseableFile(char *filename);
@@ -475,8 +494,8 @@ void moveElementAfter(DisplayInfo *cdi, DlComposite *dlComposite,
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
 	DlElement *afterThisElement);
 void deleteAndFreeElementAndStructure(DisplayInfo *displayInfo, DlElement *ele);
-Channel *dmGetChannelFromWidget(Widget sourceWidget);
-Channel *dmGetChannelFromPosition(DisplayInfo *displayInfo, int x, int y);
+UpdateTask *getUpdateTaskFromWidget(Widget sourceWidget);
+UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y);
 NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
 	char *name);
@@ -486,6 +505,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
+void closeDisplay(Widget);
 
 
 /* medmWidget.c */

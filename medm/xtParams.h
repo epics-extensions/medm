@@ -122,7 +122,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  */
 #include "GraphXMacros.h"
 #include "Seql.h"
+/*
 #include "Strip.h"
+*/
 #include "Graph.h"
 
 /*

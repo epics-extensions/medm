@@ -53,42 +53,54 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void meterUpdateValueCb(Channel *pCh);
-static void meterUpdateGraphicalInfoCb(Channel *pCh);
-static void meterDestroyCb(Channel *pCh);
+typedef struct _Meter {
+  Widget      widget;
+  DlMeter     *dlMeter;
+  Record      *record;
+  UpdateTask  *updateTask;
+} Meter;
+
+static void meterUpdateValueCb(XtPointer cd);
+static void meterDraw(XtPointer cd);
+static void meterUpdateGraphicalInfoCb(XtPointer cd);
+static void meterDestroyCb(XtPointer cd);
+static void meterName(XtPointer, char **, short *, int *);
 
 void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
 {
-  Channel *pCh;
+  Meter *pm;
   Arg args[24];
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
+    pm = (Meter *) malloc(sizeof(Meter));
+    pm->dlMeter = dlMeter;
+    pm->updateTask = updateTaskAddTask(displayInfo,
+                                       &(dlMeter->object),
+                                       meterDraw,
+                                       (XtPointer)pm);
 
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_Meter;
-    pCh->specifics = (XtPointer) dlMeter;
-    pCh->clrmod = dlMeter->clrmod;
-    pCh->backgroundColor = displayInfo->dlColormap[dlMeter->monitor.bclr];
-    pCh->label = dlMeter->label;
-
-    pCh->updateChannelCb = meterUpdateValueCb;
-    pCh->updateGraphicalInfoCb = meterUpdateGraphicalInfoCb;
-    pCh->destroyChannel = meterDestroyCb;
-
-    drawWhiteRectangle(pCh);
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlMeter->monitor.rdbk,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb, pCh), 
-	"executeDlMeter: error in CA_BUILD_AND_CONNECT");
+    if (pm->updateTask == NULL) {
+      medmPrintf("meterCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
+      updateTaskAddNameCb(pm->updateTask,meterName);
+    }
+    pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
+                  meterUpdateValueCb,
+                  meterUpdateGraphicalInfoCb,
+                  (XtPointer) pm);
+    drawWhiteRectangle(pm->updateTask);
   }
 
 /* from the meter structure, we've got Meter's specifics */
@@ -134,7 +146,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
  * add the pointer to the Channel structure as userData 
  *  to widget
  */
-  XtSetArg(args[n],XcNuserData,(XtPointer)pCh); n++;
+  XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
   localWidget = XtCreateWidget("meter", 
 		xcMeterWidgetClass, displayInfo->drawingArea, args, n);
   displayInfo->child[displayInfo->childCount++] = localWidget;
@@ -142,7 +154,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
   if (displayInfo->traversalMode == DL_EXECUTE) {
 
 /* record the widget that this structure belongs to */
-    pCh->self = localWidget;
+    pm->widget = localWidget;
 
 /* add in drag/drop translations */
     XtOverrideTranslations(localWidget,parsedTranslations);
@@ -159,44 +171,54 @@ void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
 
 }
 
-static void meterUpdateValueCb(Channel *pCh) {
+static void meterUpdateValueCb(XtPointer cd) {
+  Meter *pm = (Meter *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pm->updateTask);
+}
+
+static void meterDraw(XtPointer cd) {
+  Meter *pm = (Meter *) cd;
+  Record *pd = pm->record;
   XcVType val;
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-        XtManageChild(pCh->self);
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pm->widget)
+        XtManageChild(pm->widget);
       else
         return;
-      val.fval = (float) pCh->value;
-      XcMeterUpdateValue(pCh->self,&val);
-      switch (pCh->clrmod) {
+      val.fval = (float) pd->value;
+      XcMeterUpdateValue(pm->widget,&val);
+      switch (pm->dlMeter->clrmod) {
         case STATIC :
         case DISCRETE :
           break;
         case ALARM :
-	  XcMeterUpdateMeterForeground(pCh->self,alarmColorPixel[pCh->severity]);
+	  XcMeterUpdateMeterForeground(pm->widget,alarmColorPixel[pd->severity]);
           break;
       }
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pm->widget) XtUnmanageChild(pm->widget);
+      draw3DPane(pm->updateTask,
+          pm->updateTask->displayInfo->dlColormap[pm->dlMeter->monitor.bclr]);
+      draw3DQuestionMark(pm->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pm->widget) XtUnmanageChild(pm->widget);
+    drawWhiteRectangle(pm->updateTask);
   }
 }
 
-static void meterUpdateGraphicalInfoCb(Channel *pCh) {
+static void meterUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  Meter *pm = (Meter *) pd->clientData;
   XcVType hopr, lopr, val;
   int precision;
 
-  switch (ca_field_type(pCh->chid)) {
+  switch (pd->dataType) {
   case DBF_STRING :
   case DBF_ENUM :
     medmPrintf("meterUpdateGraphicalInfoCb : %s %s %s\n",
-	"illegal channel type for",ca_name(pCh->chid), ": cannot attach Meter");
+	"illegal channel type for",pm->dlMeter->monitor.rdbk, ": cannot attach Meter");
     medmPostTime();
     return;
   case DBF_CHAR :
@@ -204,36 +226,48 @@ static void meterUpdateGraphicalInfoCb(Channel *pCh) {
   case DBF_LONG :
   case DBF_FLOAT :
   case DBF_DOUBLE :
-    hopr.fval = (float) pCh->hopr;
-    lopr.fval = (float) pCh->lopr;
-    val.fval = (float) pCh->value;
-    precision = pCh->precision;
+    hopr.fval = (float) pd->hopr;
+    lopr.fval = (float) pd->lopr;
+    val.fval = (float) pd->value;
+    precision = pd->precision;
     break;
   default :
     medmPrintf("meterUpdateGraphicalInfoCb: %s %s %s\n",
-	"unknown channel type for",ca_name(pCh->chid), ": cannot attach Meter");
+	"unknown channel type for",pm->dlMeter->monitor.rdbk, ": cannot attach Meter");
     medmPostTime();
     break;
   }
   if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
     hopr.fval += 1.0;
   }
-  if (pCh->self != NULL) {
+  if (pm->widget != NULL) {
     Pixel pixel;
-    pixel = (pCh->clrmod == ALARM) ?
-	    alarmColorPixel[pCh->info->f.severity] :
-	    pCh->displayInfo->dlColormap[((DlMeter *) pCh->specifics)->monitor.clr];
-    XtVaSetValues(pCh->self,
+    pixel = (pm->dlMeter->clrmod == ALARM) ?
+	    alarmColorPixel[pd->severity] :
+	    pm->updateTask->displayInfo->dlColormap[pm->dlMeter->monitor.clr];
+    XtVaSetValues(pm->widget,
       XcNlowerBound,lopr.lval,
       XcNupperBound,hopr.lval,
       XcNmeterForeground,pixel,
       XcNdecimals, precision,
       NULL);
-    XcMeterUpdateValue(pCh->self,&val);
+    XcMeterUpdateValue(pm->widget,&val);
   }
 }
 
-static void meterDestroyCb(Channel *pCh) {
+static void meterDestroyCb(XtPointer cd) {
+  Meter *pm = (Meter *) cd;
+  if (pm) {
+    medmDestroyRecord(pm->record);
+    free(pm);
+  }
   return;
+}
+
+static void meterName(XtPointer cd, char **name, short *severity, int *count) {
+  Meter *pm = (Meter *) cd;
+  *count = 1;
+  name[0] = pm->record->name;
+  severity[0] = pm->record->severity;
 }
 

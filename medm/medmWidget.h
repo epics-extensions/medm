@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  03-01-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -71,6 +72,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #endif
 
 #include <limits.h>
+#include <sys/types.h>
+#include <sys/times.h>
 #include "xtParams.h"
 
 
@@ -143,8 +146,6 @@ extern void popupValuatorKeyboardEntry();
 
 #define STRIP_NSAMPLES		60	/* number of samples to save       */
 
-#define SECS_PER_MICROSEC	.000001
-#define SECS_PER_MILLISEC	.001
 #define SECS_PER_MIN		60.0
 #define SECS_PER_HOUR		(60.0 * SECS_PER_MIN)
 #define SECS_PER_DAY		(24.0 * SECS_PER_HOUR)
@@ -211,14 +212,30 @@ typedef enum {DISPLAY_SHELL, OTHER_SHELL} ShellType;
 typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 
 /*
- * list of strip charts in a given display
+ *  update tasks
  */
 
-typedef struct _StripChartList {
-	Strip			*strip;
-	struct _StripChartList	*next;
-} StripChartList;
-	
+typedef struct _UpdateTask {
+  void       (*executeTask)(XtPointer);    /* update rountine */
+  void       (*destroyTask)(XtPointer);
+  Widget     (*widget)(XtPointer);
+  void       (*name)(XtPointer, char **, short *, int *);
+  XtPointer  clientData;                           
+  double     timeInterval;                 /* if not 0.0, periodic task */
+  double     nextExecuteTime;               
+  struct     _DisplayInfo *displayInfo;
+  struct     _UpdateTask *next;
+  int        executeRequestsPendingCount;  /* how many update requests are pending */
+  XRectangle rectangle;                    /* geometry of the Object */
+  Boolean    overlapped;                   /* tell whether this object is overlapped
+                                            * by other objects */
+  Boolean    opaque;
+} UpdateTask;
+
+typedef struct _InitTask {
+  Boolean init;
+  Boolean (*initTask)();
+} InitTask;
 
 /*
  * name-value table (for macro substitutions in display files)
@@ -256,9 +273,10 @@ typedef struct _DisplayInfo {
 	Widget		otherChild[MAX_CHILDREN]; /* misc. other children     */
 	int		childCount;
 	int		otherChildCount;
-/* strip charts (since special with their timeouts)                           */
-	StripChartList	*stripChartListHead;
-	StripChartList	*stripChartListTail;
+/* periodic tasks */
+        UpdateTask      updateTaskListHead;
+        UpdateTask      *updateTaskListTail;
+        int             periodicTaskCount;
 /* colormap and attribute data (one exists at a time for each display)        */
 	unsigned long	*dlColormap;
 	int		dlColormapCounter;
@@ -308,30 +326,6 @@ typedef struct {
 	XmStringTable	buttons;
 } OptionMenuData;			/* used for MENU type */
 
-typedef struct {
-	Strip		*strip;		/* instance of strip chart structure */
-	int		nChannels;	/* number of channels ( <= MAX_PENS) */
-	XtPointer	monitors[MAX_PENS]; /* array of MonitorData pointers */
-} StripChartData;
-	
-
-typedef struct {
-	float axisMin;
-	float axisMax;
-	Boolean isCurrentlyFromChannel;
-} CartesianPlotAxisRange;
-
-typedef struct {
-	int		nTraces;	/* number of traces ( <= MAX_TRACES) */
-	XtPointer	monitors[MAX_TRACES][2]; /* array of MonitorData ptrs*/
-	XrtData		*xrtData1, *xrtData2;	 /* XrtData                  */
-	/* used for channel-based range determination - filled in at connect */
-	CartesianPlotAxisRange  axisRange[3];	 /* X, Y, Y2 _AXIS_ELEMENT   */
-	XtPointer	triggerCh;	         /* channel for trigger      */
-	XtPointer       eraseCh;                 /* channel for erase        */
-	eraseMode_t     eraseMode;               /* erase mode               */
-} CartesianPlotData;
-	
 
 /***
  *** ELEMENT_STRING_TABLE for definition of strings for display elements
@@ -404,7 +398,7 @@ typedef struct _ResourceBundle {
 	int			dis;
 	int			xyangle;
 	int			zangle;
-	int			delay;
+	double                  period;
 	TimeUnits		units;
 	CartesianPlotStyle	cStyle;
 	EraseOldest		erase_oldest;
@@ -474,7 +468,7 @@ typedef struct _ResourceBundle {
 #define DIS_RC		24
 #define XYANGLE_RC	25
 #define ZANGLE_RC	26
-#define DELAY_RC	27
+#define PERIOD_RC	27
 #define UNITS_RC	28
 #define CSTYLE_RC	29
 #define ERASE_OLDEST_RC	30
@@ -532,7 +526,7 @@ typedef struct _ResourceBundle {
 	"Visibility",
 	"Channel",
 	"Data Color", "Distance", "XY Angle", "Z Angle",
-	"Delay", "Units",
+	"Period", "Units",
 	"Plot Style", "Plot Mode", "Count",
 	"Stacking",
 	"Image Type",

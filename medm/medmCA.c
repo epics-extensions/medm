@@ -53,21 +53,49 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - decouple the graphic object from
+ *                                channel access.
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-#define intersect(TP,TL,BR) (((TL.x <= TP.x) && (TP.x <= BR.x)) && ((TL.y <= TP.y) && (TP.y <= BR.y)))
-#define INIT_SIZE 256
-
 static void medmUpdateGraphicalInfoCb(struct event_handler_args args);
 static void medmUpdateChannelCb(struct event_handler_args args);
 static void medmCAFdRegistrationCb( void *dummy, int fd, int condition);
-static XtInputCallbackProc medmProcessCA();
-static void medmRepaintRegion(Channel *pCh);
+static void medmProcessCA(XtPointer, int *, XtInputId *);
+static void medmAddUpdateRequest(Channel *);
+Boolean medmWorkProc(XtPointer);
+static void medmRepaintRegion(Channel *);
 
+#define CA_PAGE_SIZE 100
+#define CA_PAGE_COUNT 10
+
+typedef struct _CATask {
+  int freeListSize;
+  int freeListCount;
+  int *freeList;
+  Channel **pages;
+  int pageCount;
+  int pageSize;
+  int nextPage;
+  int nextFree;
+  int channelCount;
+  int channelConnected;
+  int caEventCount;
+} CATask;
+
+static CATask caTask;
+
+void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) {
+  *channelCount = caTask.channelCount;
+  *channelConnected = caTask.channelConnected;
+  *caEventCount = caTask.caEventCount;
+  caTask.caEventCount = 0;
+  return;
+}
 
 static void medmCAExceptionHandlerCb(struct exception_handler_args args) {
   if (args.chid == NULL) {
@@ -80,9 +108,58 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args) {
   return;
 }
 
+int CATaskInit() {
+  caTask.freeListSize = CA_PAGE_SIZE;
+  caTask.freeListCount = 0;
+  caTask.freeList = (int *) malloc(sizeof(int) * CA_PAGE_SIZE);
+  if (caTask.freeList == NULL) {
+    medmPrintf("CATaskInit : memory allocation error!\n");
+    return -1;
+  }
+  caTask.pages = (Channel **) malloc(sizeof(Channel *) * CA_PAGE_COUNT);
+  if (caTask.pages == NULL) {
+    medmPrintf("CATaskInit : memory allocation error!\n");
+    return -1;
+  }
+  caTask.pageCount = 1;
+  caTask.pageSize = CA_PAGE_COUNT;
+  /* allocate the page */
+  caTask.pages[0] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
+  if (caTask.pages[0] == NULL) {
+    medmPrintf("CATaskInit : memory allocation error!\n");
+    return -1;
+  }
+  caTask.nextFree = 0;
+  caTask.nextPage = 0;
+  caTask.channelCount = 0;
+  caTask.channelConnected = 0;
+  caTask.caEventCount = 0;
+  return ECA_NORMAL;
+}
+
+void caTaskDelete() {
+  if (caTask.freeList) {
+    free(caTask.freeList);
+    caTask.freeList = NULL;
+    caTask.freeListCount = 0;
+    caTask.freeListSize = 0;
+  }  
+  if (caTask.pageCount) {
+    int i;
+    for (i=0; i < caTask.pageCount; i++) {
+      if (caTask.pages[i])
+        free(caTask.pages[i]);
+    }
+    free(caTask.pages);
+    caTask.pages = NULL;
+    caTask.pageCount = 0;
+  } 
+}
+  
 int medmCAInitialize()
 {
   int status;
+  int i;
   /*
    * add CA's fd to X
    */
@@ -92,19 +169,22 @@ int medmCAInitialize()
   status = ca_add_exception_event(medmCAExceptionHandlerCb, NULL);
   if (status != ECA_NORMAL) return status;
 
+  status = CATaskInit();
+  return status;
 }
 
 void medmCATerminate()
 {
 
-   /* cancel registration of the CA file descriptors */
-      SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
+  caTaskDelete();
+  /* cancel registration of the CA file descriptors */
+  SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
                 "\ndmTerminateCA:  error removing CA's fd from X");
-   /* and close channel access */
-      ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
+  /* and close channel access */
+  ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
 
 
-      SEVCHK(ca_task_exit(),"\ndmTerminateCA: error exiting CA");
+  SEVCHK(ca_task_exit(),"\ndmTerminateCA: error exiting CA");
 
 }
 
@@ -139,7 +219,7 @@ typedef struct {
         inp[numInps].fd = fd;
         inp[numInps].inputId  = XtAppAddInput(appContext,fd,
                         (XtPointer)XtInputReadMask,
-                        (XtInputCallbackProc)medmProcessCA,(XtPointer)NULL);
+                        medmProcessCA,(XtPointer)NULL);
         numInps++;
 
    } else {
@@ -151,7 +231,7 @@ fprintf(stderr,"\ndmRegisterCA: info: realloc-ing input fd's array");
         inp[numInps].fd = fd;
         inp[numInps].inputId  = XtAppAddInput(appContext,fd,
                         (XtPointer)XtInputReadMask,
-                        (XtInputCallbackProc)medmProcessCA,(XtPointer)NULL);
+                        medmProcessCA,(XtPointer)NULL);
         numInps++;
    }
 
@@ -200,7 +280,7 @@ fprintf(stderr,"\n");
 
 }
 
-static XtInputCallbackProc medmProcessCA()
+static void medmProcessCA(XtPointer dummy1, int *dummy2, XtInputId *dummy3)
 {
   ca_pend_event(CA_PEND_EVENT_TIME);    /* don't allow early return */
 }
@@ -209,356 +289,405 @@ static void medmReplaceAccessRightsEventCb(struct access_rights_handler_args arg
 {
   Channel *pCh = (Channel *) ca_puser(args.chid);
 
+  caTask.caEventCount++;
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
   if (pCh == NULL) return;
-  if (pCh->displayInfo == NULL) return;
-  if (pCh->displayInfo->drawingArea == NULL) return;
-  medmRepaintRegion(pCh);
+  pCh->pr->readAccess = ca_read_access(pCh->chid);
+  pCh->pr->writeAccess = ca_write_access(pCh->chid);
+  if (pCh->pr->updateValueCb) 
+    pCh->pr->updateValueCb((XtPointer)pCh->pr); 
 }
 
 void medmConnectEventCb(struct connection_handler_args args) {
+  int status;
   Channel *pCh = (Channel *) ca_puser(args.chid);
+
+  caTask.caEventCount++;
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
   if (pCh == NULL) return;
-  if (pCh->displayInfo == NULL) return;
-  if (pCh->displayInfo->drawingArea == NULL) return;
 
-  if ((args.op == CA_OP_CONN_UP) && (pCh->previouslyConnected == False)) {
-    pCh->caStatus = ca_replace_access_rights_event(pCh->chid,medmReplaceAccessRightsEventCb);
-    if (pCh->caStatus != ECA_NORMAL) {
-      medmPrintf("Error : connectionEventCb : ca_replace_access_rights_event : %s\n",
-		   ca_message(pCh->caStatus));
+  if ((args.op == CA_OP_CONN_UP) && (ca_read_access(pCh->chid))) {
+    /* get the graphical information every time a channel is connected
+       or reconnected. */
+    status = ca_array_get_callback(dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
+                      1, args.chid, medmUpdateGraphicalInfoCb, NULL);
+    if (status != ECA_NORMAL) {
+      medmPrintf("Error : connectionEventCb : ca_get_callback : %s\n",
+           ca_message(status));
       medmPostTime();
     }
-    if (pCh->handleArray == True) {
-      pCh->caStatus = ca_add_array_event(
-			  dbf_type_to_DBR_TIME(ca_field_type(pCh->chid)),
-			  ca_element_count(pCh->chid),pCh->chid,
-			  medmUpdateChannelCb, pCh,
-			  0.0,0.0,0.0, &(pCh->evid));
-    } else {
-      /* just ask for one count */
-      pCh->caStatus = ca_add_array_event(
-			  dbf_type_to_DBR_TIME(ca_field_type(pCh->chid)),
-			  1,pCh->chid,
-			  medmUpdateChannelCb, pCh,
-			  0.0,0.0,0.0, &(pCh->evid));
+  }
+  if ((args.op == CA_OP_CONN_UP) && (pCh->previouslyConnected == False)) {
+    status = ca_replace_access_rights_event(pCh->chid,medmReplaceAccessRightsEventCb);
+    if (status != ECA_NORMAL) {
+      medmPrintf("Error : connectionEventCb : ca_replace_access_rights_event : %s\n",
+		   ca_message(status));
+      medmPostTime();
     }
-    if (pCh->caStatus != ECA_NORMAL) {
+    status = ca_add_array_event(
+                 dbf_type_to_DBR_TIME(ca_field_type(pCh->chid)),
+		 ca_element_count(pCh->chid),pCh->chid,
+		 medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
+    if (status != ECA_NORMAL) {
       medmPrintf("Error : connectionEventCb : ca_add_event : %s\n",
-		   ca_message(pCh->caStatus));
+		   ca_message(status));
       medmPostTime();
     }
     pCh->previouslyConnected = True;
+    pCh->pr->elementCount = ca_element_count(pCh->chid);
+    pCh->pr->dataType = ca_field_type(args.chid);
+    pCh->pr->connected = True;
+    caTask.channelConnected++;
   } else {
+    if (args.op == CA_OP_CONN_UP) {
+      pCh->pr->connected = True;
+      caTask.channelConnected++;
+    } else {
+      pCh->pr->connected = False;
+      caTask.channelConnected--;
+    }   
+    if (pCh->pr->updateValueCb)
+      pCh->pr->updateValueCb((XtPointer)pCh->pr); 
   }
-  if (ca_read_access(pCh->chid)) {
-    /* get the graphical information every time a channel is connected
-       or reconnected. */
-    pCh->caStatus = ca_array_get_callback(dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
-		      1, args.chid, medmUpdateGraphicalInfoCb, NULL);
-    if (pCh->caStatus != ECA_NORMAL) {
-      medmPrintf("Error : connectionEventCb : ca_get_callback : %s\n",
-		ca_message(pCh->caStatus));
-      medmPostTime();
-    }
-  }
-  medmRepaintRegion(pCh);
 }
+
 
 static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
   int nBytes;
+  int i;
   Channel *pCh = (Channel *) ca_puser(args.chid);
-  char *tmp;
-  if (pCh->displayInfo->drawingArea == NULL) return;
+  Record *pr = pCh->pr;
 
-  if (pCh->info == NULL) {
-    pCh->info = (infoBuf *) malloc(sizeof(infoBuf));
-    if (pCh->info == NULL) {
-      medmPrintf("medmUpdateGraphicalInfoCb : memory allocation error\n");
-      return;
-    }
-  } 
+  caTask.caEventCount++;
   nBytes = dbr_size_n(args.type, args.count);
-  memcpy((void *)pCh->info,args.dbr,nBytes);
+  memcpy((void *)&(pCh->info),args.dbr,nBytes);
   switch (ca_field_type(args.chid)) {
   case DBF_STRING :
-    pCh->value = 0.0;
-    pCh->hopr = 0.0;
-    pCh->lopr = 0.0;
-    pCh->precision = 0;
+    pr->value = 0.0;
+    pr->hopr = 0.0;
+    pr->lopr = 0.0;
+    pr->precision = 0;
     break;
   case DBF_ENUM :
-    pCh->value = (double) pCh->info->e.value;
-    pCh->hopr = (double) pCh->info->e.no_str - 1.0;
-    pCh->lopr = 0.0;
-    pCh->precision = 0;
+    pr->value = (double) pCh->info.e.value;
+    pr->hopr = (double) pCh->info.e.no_str - 1.0;
+    pr->lopr = 0.0;
+    pr->precision = 0;
+    for (i = 0; i < pCh->info.e.no_str; i++) { 
+     pr->stateStrings[i] = pCh->info.e.strs[i];
+    }
     break;
   case DBF_CHAR :
-    pCh->value = (double) pCh->info->c.value;
-    pCh->hopr = (double) pCh->info->c.upper_disp_limit;
-    pCh->lopr = (double) pCh->info->c.lower_disp_limit;
-    pCh->precision = 0;
+    pr->value = (double) pCh->info.c.value;
+    pr->hopr = (double) pCh->info.c.upper_disp_limit;
+    pr->lopr = (double) pCh->info.c.lower_disp_limit;
+    pr->precision = 0;
     break;
   case DBF_INT :
-    pCh->value = (double) pCh->info->i.value;
-    pCh->hopr = (double) pCh->info->i.upper_disp_limit;
-    pCh->lopr = (double) pCh->info->i.lower_disp_limit;
-    pCh->precision = 0;
+    pr->value = (double) pCh->info.i.value;
+    pr->hopr = (double) pCh->info.i.upper_disp_limit;
+    pr->lopr = (double) pCh->info.i.lower_disp_limit;
+    pr->precision = 0;
     break;
   case DBF_LONG :
-    pCh->value = (double) pCh->info->l.value;
-    pCh->hopr = (double) pCh->info->l.upper_disp_limit;
-    pCh->lopr = (double) pCh->info->l.lower_disp_limit;
-    pCh->precision = 0;
+    pr->value = (double) pCh->info.l.value;
+    pr->hopr = (double) pCh->info.l.upper_disp_limit;
+    pr->lopr = (double) pCh->info.l.lower_disp_limit;
+    pr->precision = 0;
     break;
   case DBF_FLOAT :
-    pCh->value = (double) pCh->info->f.value;
-    pCh->hopr = (double) pCh->info->f.upper_disp_limit;
-    pCh->lopr = (double) pCh->info->f.lower_disp_limit;
-    pCh->precision = pCh->info->f.precision;
+    pr->value = (double) pCh->info.f.value;
+    pr->hopr = (double) pCh->info.f.upper_disp_limit;
+    pr->lopr = (double) pCh->info.f.lower_disp_limit;
+    pr->precision = pCh->info.f.precision;
     break;
   case DBF_DOUBLE :
-    pCh->value = (double) pCh->info->d.value;
-    pCh->hopr = (double) pCh->info->d.upper_disp_limit;
-    pCh->lopr = (double) pCh->info->d.lower_disp_limit;
-    pCh->precision = pCh->info->f.precision;
+    pr->value = (double) pCh->info.d.value;
+    pr->hopr = (double) pCh->info.d.upper_disp_limit;
+    pr->lopr = (double) pCh->info.d.lower_disp_limit;
+    pr->precision = pCh->info.f.precision;
     break;
   default :
     medmPostMsg("medmUpdateGraphicalInfoCb : unknown data type\n");
     return;
   }
-  if (pCh->updateGraphicalInfoCb) {
-    pCh->updateGraphicalInfoCb(pCh);
-  } else {
-    medmRepaintRegion(pCh);
+  if (pCh->pr->updateGraphicalInfoCb) {
+    pCh->pr->updateGraphicalInfoCb((XtPointer)pCh->pr);
+  } else
+  if (pCh->pr->updateValueCb) {
+    pCh->pr->updateValueCb((XtPointer)pCh->pr);
   }
 }
 
 void medmUpdateChannelCb(struct event_handler_args args) {
   int nBytes;
   Channel *pCh = (Channel *) ca_puser(args.chid);
-  unsigned short valueChanged = False;
-  unsigned short severityChanged = False;
-  unsigned short visibilityChanged = False;
-  double tmp;
+  Boolean severityChanged = False;
+  Boolean zeroAndNoneZeroTransition = False;
+  double value;
   short severity;
+  Record *pr = pCh->pr;
 
-  if (pCh->displayInfo->drawingArea == NULL) return;
+  caTask.caEventCount++;
   if (ca_read_access(args.chid)) {
     /* if we have the read access */
     nBytes = dbr_size_n(args.type, args.count);
     if (pCh->data == NULL) {
       pCh->data = (dataBuf *) malloc(nBytes);
       pCh->size = nBytes;
+      if (pCh->data == NULL) {
+        medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
+        return;
+      }
+      switch (ca_field_type(args.chid)) {
+      case DBF_STRING :
+        pr->array = (XtPointer) pCh->data->s.value;
+        break;
+      case DBF_ENUM :
+        pr->array = (XtPointer) &(pCh->data->e.value);
+        break;
+      case DBF_CHAR :
+        pr->array = (XtPointer) &(pCh->data->c.value);
+        break;
+      case DBF_INT :
+        pr->array = (XtPointer) &(pCh->data->i.value);
+        break;
+      case DBF_LONG :
+        pr->array = (XtPointer) &(pCh->data->l.value);
+        break;
+      case DBF_FLOAT :
+        pr->array = (XtPointer) &(pCh->data->f.value);
+        break;
+      case DBF_DOUBLE :
+        pr->array = (XtPointer) &(pCh->data->d.value);
+        break;
+      default :
+        break;
+      }
     } else 
     if (pCh->size < nBytes) {
-      free(pCh->data);
+      free((char *)pCh->data);
       pCh->data = (dataBuf *) malloc(nBytes);
       pCh->size = nBytes;
+      if (pCh->data == NULL) {
+        medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
+        return;
+      }
+      switch (ca_field_type(args.chid)) {
+      case DBF_STRING :
+        pr->array = (XtPointer) pCh->data->s.value;
+        break;
+      case DBF_ENUM :
+        pr->array = (XtPointer) &(pCh->data->e.value);
+        break;
+      case DBF_CHAR :
+        pr->array = (XtPointer) &(pCh->data->c.value);
+        break;
+      case DBF_INT :
+        pr->array = (XtPointer) &(pCh->data->i.value);
+        break;
+      case DBF_LONG :
+        pr->array = (XtPointer) &(pCh->data->l.value);
+        break;
+      case DBF_FLOAT :
+        pr->array = (XtPointer) &(pCh->data->f.value);
+        break;
+      case DBF_DOUBLE :
+        pr->array = (XtPointer) &(pCh->data->d.value);
+        break;
+      default :
+        break;
+      }
     }
-    if (pCh->data == NULL) {
-      medmPrintf("medmUpdateChannelCb : memory allocation error\n");
-      return;
+
+    if (ca_field_type(args.chid) == DBF_STRING || ca_element_count(args.chid) > 1) {
+      memcpy((void *)pCh->data,args.dbr,nBytes);
     }
-    memcpy((void *)pCh->data,args.dbr,nBytes);
     switch (ca_field_type(args.chid)) {
     case DBF_STRING :
-      tmp = 0.0;
-      if (strcmp(pCh->stringValue,pCh->data->s.value)) {
-	strcpy(pCh->stringValue,pCh->data->s.value);
-        valueChanged = True;
-      }
-      severity = pCh->data->s.severity;
+      value = 0.0;
       break;
     case DBF_ENUM :
-      tmp = (double) pCh->data->e.value;
-      severity = pCh->data->e.severity;
+      value = (double) ((dataBuf *) (args.dbr))->e.value;
       break;
     case DBF_CHAR :
-      tmp = (double) pCh->data->c.value;
-      severity = pCh->data->c.severity;
+      value = (double) ((dataBuf *) (args.dbr))->c.value;
       break;
     case DBF_INT :
-      tmp = (double) pCh->data->i.value;
-      severity = pCh->data->i.severity;
+      value = (double) ((dataBuf *) (args.dbr))->i.value;
       break;
     case DBF_LONG :
-      tmp = (double) pCh->data->l.value;
-      severity = pCh->data->l.severity;
+      value = (double) ((dataBuf *) (args.dbr))->l.value;
       break;
     case DBF_FLOAT :
-      tmp = (double) pCh->data->f.value;
-      severity = pCh->data->f.severity;
+      value = (double) ((dataBuf *) (args.dbr))->f.value;
       break;
     case DBF_DOUBLE :
-      tmp = (double) pCh->data->d.value;
-      severity = pCh->data->d.severity;
+      value = ((dataBuf *) (args.dbr))->d.value;
       break;
     default :
+      value = 0.0;
       break;
     }
-    if (((tmp == 0.0) && (pCh->value != 0.0)) || ((tmp != 0.0) && (pCh->value == 0.0)))
-      visibilityChanged = True;
-    if (pCh->value != tmp) {
-      pCh->value = tmp;
-      valueChanged = True;
-    }
-    if (pCh->severity != severity) {
-      pCh->severity = severity;
+
+    if (((value == 0.0) && (pr->value != 0.0)) || ((value != 0.0) && (pr->value == 0.0)))
+      zeroAndNoneZeroTransition = True;
+    pr->value = value;
+
+    if (pr->severity != ((dataBuf *) (args.dbr))->d.severity) {
+      pr->severity = ((dataBuf *) (args.dbr))->d.severity;
       severityChanged = True;
     }
-    if (pCh->updateDataCb) pCh->updateDataCb(pCh);
-    if ((!pCh->ignoreValueChanged) && (valueChanged))
-      medmRepaintRegion(pCh);
-    else
-    if ((pCh->clrmod == ALARM) && (severityChanged)) 
-      medmRepaintRegion(pCh);
-    else
-    if ((pCh->vismod != V_STATIC) && (visibilityChanged))
-      medmRepaintRegion(pCh);
+    if (pr->monitorValueChanged && pCh->pr->updateValueCb) {
+        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+    } else
+    if (pr->monitorSeverityChanged && severityChanged && pCh->pr->updateValueCb) {
+        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+    } else
+    if (pr->monitorZeroAndNoneZeroTransition 
+        && zeroAndNoneZeroTransition && pCh->pr->updateValueCb) {
+        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+    }
   }
 }
 
-void medmDisconnectChannel(Channel *pCh) {
-  if (pCh->chid) {
-    ca_puser(pCh->chid) = NULL;
-    ca_clear_channel(pCh->chid);
-    ca_pend_event(CA_PEND_EVENT_TIME);
-    pCh->chid = NULL;
-    if (pCh->data) free(pCh->data);
-    if (pCh->info) free(pCh->info);
-  }
-}
-
-/*
-#include "medm.h"
-
-#include <Xm/DrawingAP.h>
-
-#include <X11/keysym.h>
-
-char *stripChartWidgetName = "stripChart";
-
-*/
-Channel *allocateChannel(
-  DisplayInfo *displayInfo)
-{
-  Channel *pCh = (Channel *) malloc(sizeof(Channel));
-  pCh->modified = NOT_MODIFIED;
-  pCh->previouslyConnected = FALSE;
-  pCh->chid = NULL;
-  pCh->evid = NULL;
-  pCh->self = NULL;
-  pCh->value = 0.0;
-  pCh->displayedValue = 0.0;
-  strcpy(pCh->stringValue," ");
-  pCh->updateAllowed = True;
-  pCh->numberStateStrings = 0;
-  pCh->stateStrings = NULL;
-  pCh->hopr = 0.0;
-  pCh->lopr = 0.0;
-  pCh->precision = 0;
-  pCh->oldIntegerValue = 0;
-  pCh->status = 0;
-  pCh->severity = NO_ALARM;
-  pCh->oldSeverity = NO_ALARM;
-  pCh->next = NULL;
-  pCh->prev = channelAccessMonitorListTail;
-  pCh->displayInfo = displayInfo;
-  pCh->clrmod = STATIC;
-  pCh->vismod = V_STATIC;
-  pCh->label = LABEL_NONE;
-  pCh->fontIndex = 0;
-  pCh->dlAttr = NULL;
-  pCh->xrtData = NULL;
-  pCh->xrtDataSet = 1;
-  pCh->trace = 0;
-  pCh->xyChannelType = CP_XYScalarX;
-  pCh->other = NULL;
-  pCh->shadowBorderWidth = 2;
-
-  /* initialize all the callback routines to NULL */
-  pCh->updateChannelCb = NULL;
-  pCh->updateDataCb = NULL;
-  pCh->updateGraphicalInfoCb = NULL;
-  pCh->destroyChannel = NULL;
-
-  pCh->lastUpdateRequest = MEDMNoOp;
-  /* initialize the data pointer to NULL */
-  pCh->updateList = NULL;
-  pCh->data = NULL;
-  pCh->info = NULL;
-  pCh->size = 1;
-
-  pCh->handleArray = False;
-  pCh->ignoreValueChanged = False;
-  pCh->opaque = False;
-
-  /* add this ca monitor data node into monitor list */
-  channelAccessMonitorListTail->next = pCh;
-  channelAccessMonitorListTail= pCh;
-
-  return (pCh);
-}
-
-static void medmRepaintRegion(Channel *pCh) {
-  DlRectangle *pR = (DlRectangle *) pCh->specifics;
-  DisplayInfo *pDI = pCh->displayInfo;
-  Display *display = XtDisplay(pDI->drawingArea);
-  GC gc = pDI->gc;
-  XPoint points[4];
-  Region region;
-  Channel *pTmp;
-  XRectangle clipRect;
-
-  points[0].x = pR->object.x;
-  points[0].y = pR->object.y;
-  points[1].x = pR->object.x + pR->object.width;
-  points[1].y = pR->object.y;
-  points[2].x = pR->object.x + pR->object.width;
-  points[2].y = pR->object.y + pR->object.height;
-  points[3].x = pR->object.x;
-  points[3].y = pR->object.y + pR->object.height;
-  region = XPolygonRegion(points,4,EvenOddRule);
-  if (region == NULL) {
-    medmPrintf("medmRepaintRegion : XPolygonRegion() return NULL\n");
-    return;
-  }
-
-  /* clip the region */
-  clipRect.x = pR->object.x;
-  clipRect.y = pR->object.y;
-  clipRect.width = pR->object.width;
-  clipRect.height = pR->object.height;
-
-  XSetClipRectangles(display,gc,0,0,&clipRect,1,YXBanded);
-
-  if (!pCh->opaque)
-    XCopyArea(display,pCh->displayInfo->drawingAreaPixmap,
-        XtWindow(pCh->displayInfo->drawingArea),
-        pCh->displayInfo->pixmapGC,
-        pR->object.x, pR->object.y,
-        pR->object.width, pR->object.height,
-        pR->object.x, pR->object.y);
-
-  pTmp = channelAccessMonitorListHead->next;
-  while (pTmp != NULL) {
-    if (pTmp->displayInfo == pCh->displayInfo) {
-      if (XRectInRegion(region,
-          ((DlRectangle *)pTmp->specifics)->object.x,
-          ((DlRectangle *)pTmp->specifics)->object.y,
-          ((DlRectangle *)pTmp->specifics)->object.width,
-          ((DlRectangle *)pTmp->specifics)->object.height)!=RectangleOut) {
-        if (pTmp->updateChannelCb) {
-            pTmp->updateChannelCb(pTmp);
-        }
+int caAdd(char *name, Record *pr) {
+  Channel *pCh;
+  int status;
+  if ((caTask.freeListCount < 1) && (caTask.nextFree >= CA_PAGE_SIZE)) {
+    /* if not enought pages, increase number of pages */
+    if (caTask.pageCount >= caTask.pageSize) {
+      caTask.pageSize += CA_PAGE_COUNT;
+      caTask.pages = (Channel **) realloc(caTask.pages,sizeof(Channel *)*caTask.pageSize);
+      if (caTask.pages == NULL) {
+        medmPrintf("\ncaAdd : memory allocation error\n");
+        return -1;
       }
     }
-    pTmp = pTmp->next;
+    /* add one more page */
+    caTask.pages[caTask.pageCount] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
+    if (caTask.pages[caTask.pageCount] == NULL) {
+      medmPrintf("\ncaAdd : memory allocation error\n");
+      return -1;
+    }
+    caTask.pageCount++;
+    caTask.nextPage++;
+    caTask.nextFree=0;
   }
-  /* release the clipping region */
-  XSetClipOrigin(display,gc,0,0);
-  XSetClipMask(display,gc,None);
-  if (region) XDestroyRegion(region);
+  if (caTask.nextFree < CA_PAGE_SIZE) {
+    pCh = &((caTask.pages[caTask.nextPage])[caTask.nextFree]);
+    pCh->caId = caTask.nextPage * CA_PAGE_SIZE + caTask.nextFree;
+    caTask.nextFree++;
+  } else {
+    int index;
+    caTask.freeListCount--;
+    index = caTask.freeList[caTask.freeListCount];
+    pCh = &((caTask.pages[index/CA_PAGE_SIZE])[index % CA_PAGE_SIZE]);
+    pCh->caId = index;
+  }
+
+  pCh->data = NULL;
+  pCh->chid = NULL;
+  pCh->evid = NULL;
+  pCh->size = 0;
+  pCh->pr = pr;
+  pCh->previouslyConnected = False;
+  if (strlen(name) > 0) {
+    status = ca_build_and_connect(name,TYPENOTCONN,0,
+           &(pCh->chid),NULL,medmConnectEventCb,pCh);
+  } else {
+    status = ca_build_and_connect(" ",TYPENOTCONN,0,
+           &(pCh->chid),NULL,medmConnectEventCb,pCh);
+  }
+  if (status != ECA_NORMAL) {
+    SEVCHK(status,"caAdd : ca_build_and_connect failed\n");
+  } else {
+    pCh->pr->name = ca_name(pCh->chid);
+  }
+  caTask.channelCount++;
+  return pCh->caId;
+}
+
+void caDelete(Record *pr) {
+  int status;
+  Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
+  if (ca_state(pCh->chid) == cs_conn)
+    caTask.channelConnected--;
+  if (pCh->evid) {
+    status = ca_clear_event(pCh->evid);
+    SEVCHK(status,"caDelete : ca_clear_event() failed!");
+    if (status != ECA_NORMAL) return;
+  }
+  pCh->evid = NULL;
+  if (pCh->chid) {
+    status = ca_clear_channel(pCh->chid);
+    SEVCHK(status,"vCA::vCA() : ca_add_exception_event failed!");
+    if (status != ECA_NORMAL) return;
+  }
+  pCh->chid = NULL;
+  if (pCh->data) {
+    free(pCh->data);
+    pCh->data = NULL;
+  }
+  if (caTask.freeListCount >= caTask.freeListSize) {
+    caTask.freeListSize += CA_PAGE_SIZE;
+    caTask.freeList = (int *) realloc(caTask.freeList,sizeof(int)*caTask.freeListSize);
+    if (caTask.freeList == NULL) {
+      medmPrintf("\ncaDelete : memory allocation error\n");
+      return;
+    }
+  }
+  caTask.freeList[caTask.freeListCount] = pCh->caId;
+  caTask.freeListCount++;
+  caTask.channelCount--;
+}
+
+static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
+                            NO_ALARM,NO_ALARM,False,False,False,
+                            {NULL,NULL,NULL,NULL,
+                             NULL,NULL,NULL,NULL,
+                             NULL,NULL,NULL,NULL,
+                             NULL,NULL,NULL,NULL},
+                            NULL,NULL,NULL,NULL,NULL,
+                            True,True,True};
+
+Record *medmAllocateRecord(char *name,
+                           void (*updateValueCb)(XtPointer),
+                           void (*updateGraphicalInfoCb)(XtPointer),
+                           XtPointer clientData) {
+  Record *record;
+  record = (Record *) malloc(sizeof(Record));
+  if (record) {
+    *record = nullRecord;
+    record->caId = caAdd(name,record);
+    record->updateValueCb = updateValueCb;
+    record->updateGraphicalInfoCb = updateGraphicalInfoCb;
+    record->clientData = clientData;
+  }
+  return record;
+}
+
+void medmDestroyRecord(Record *pr) {
+  caDelete(pr);
+  free(pr);
+}
+
+void medmSendDouble(Record *pr, double data) {
+  Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
+  SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&data),"medmSendDouble: error in ca_put");
+  ca_flush_io();
+}  
+
+void medmSendString(Record *pr, char *data) {
+  Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
+  SEVCHK(ca_put(DBR_STRING,pCh->chid,data),"medmSendDouble: error in ca_put");
+  ca_flush_io();
+}
+
+void medmRecordAddUpdateValueCb(Record *pr, void (*updateValueCb)(XtPointer)) {
+  pr->updateValueCb = updateValueCb;
+}
+
+void medmRecordAddGraphicalInfoCb(Record *pr, void (*updateGraphicalInfoCb)(XtPointer)) {
+  pr->updateGraphicalInfoCb = updateGraphicalInfoCb;
 }

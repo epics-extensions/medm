@@ -16,7 +16,7 @@ with the Department of Energy.
 
 Portions of this material resulted from work developed under a U.S.
 Government contract and are subject to the following license:  For
-a period of five years from March 30, 1993, the Government is
+a period of five years from Mrectangleh 30, 1993, the Government is
 granted for itself and others acting on its behalf a paid-up,
 nonexclusive, irrevocable worldwide license in this computer
 software to reproduce, prepare derivative works, and perform
@@ -53,30 +53,43 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void rectangleUpdateValueCb(Channel *pCh);
-static void rectangleDestroyCb(Channel *pCh);
+typedef struct _Rectangle {
+  Widget           widget;
+  DlRectangle      *dlRectangle;
+  Record           *record;
+  UpdateTask       *updateTask;
+  DlDynamicAttrMod dynAttr;
+  DlAttribute      attr;
+} Rectangle;
+
+static void rectangleDraw(XtPointer cd);
+static void rectangleUpdateValueCb(XtPointer cd);
+static void rectangleDestroyCb(XtPointer cd);
+static void rectangleName(XtPointer, char **, short *, int *);
 
 
-static void drawRectangle(Channel *pCh) {
+static void drawRectangle(Rectangle *pr) {
   unsigned int lineWidth;
-  DisplayInfo *displayInfo = pCh->displayInfo;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
-  DlRectangle *dlRectangle = (DlRectangle *) pCh->specifics;
+  DisplayInfo *displayInfo = pr->updateTask->displayInfo;
+  Display *display = XtDisplay(pr->widget);
+  DlRectangle *dlRectangle = pr->dlRectangle;
 
-  lineWidth = (pCh->dlAttr->width+1)/2;
-  if (pCh->dlAttr->fill == F_SOLID) {
-    XFillRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  lineWidth = (pr->attr.width+1)/2;
+  if (pr->attr.fill == F_SOLID) {
+    XFillRectangle(display,XtWindow(pr->widget),displayInfo->gc,
           dlRectangle->object.x,dlRectangle->object.y,
           dlRectangle->object.width,dlRectangle->object.height);
   } else
-  if (pCh->dlAttr->fill == F_OUTLINE) {
-    XDrawRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  if (pr->attr.fill == F_OUTLINE) {
+    XDrawRectangle(display,XtWindow(pr->widget),displayInfo->gc,
           dlRectangle->object.x + lineWidth,
           dlRectangle->object.y + lineWidth,
           dlRectangle->object.width - 2*lineWidth,
@@ -89,28 +102,39 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
+    Rectangle *pr;
+    pr = (Rectangle *) malloc(sizeof(Rectangle));
+    pr->dlRectangle = dlRectangle;
+    pr->updateTask = updateTaskAddTask(displayInfo,
+				       &(dlRectangle->object),
+				       rectangleDraw,
+				       (XtPointer)pr);
 
-    Channel *pCh = allocateChannel(displayInfo);
-    if (pCh == NULL) return;
+    if (pr->updateTask == NULL) {
+      medmPrintf("rectangleCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
+      updateTaskAddNameCb(pr->updateTask,rectangleName);
+      pr->updateTask->opaque = False;
+    }
+    pr->record = medmAllocateRecord(
+                  displayInfo->dynamicAttribute.attr.param.chan,
+                  rectangleUpdateValueCb,
+                  NULL,
+                  (XtPointer) pr);
 
-    pCh->dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-    if (pCh->dlAttr == NULL) return;
-    *pCh->dlAttr =displayInfo->attribute;
+    pr->record->monitorValueChanged = False;
+    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+      pr->record->monitorSeverityChanged = False;
+    }
 
-    pCh->clrmod = displayInfo->dynamicAttribute.attr.mod.clr;
-    pCh->vismod = displayInfo->dynamicAttribute.attr.mod.vis;
+    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+      pr->record->monitorZeroAndNoneZeroTransition = False;
+    }
 
-    pCh->monitorType = DL_Rectangle;
-    pCh->specifics = (XtPointer) dlRectangle;
-    pCh->updateChannelCb = rectangleUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = rectangleDestroyCb;
-    pCh->ignoreValueChanged = True;
-
-
-    SEVCHK(CA_BUILD_AND_CONNECT(displayInfo->dynamicAttribute.attr.param.chan,TYPENOTCONN,0,
-      &(pCh->chid),NULL,medmConnectEventCb, pCh),
-      "executeDlRectangle: error in CA_BUILD_AND_CONNECT");
+    pr->widget = displayInfo->drawingArea;
+    pr->attr = displayInfo->attribute;
+    pr->dynAttr = displayInfo->dynamicAttribute.attr.mod;
   } else
   if (displayInfo->attribute.fill == F_SOLID) {
     unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
@@ -136,56 +160,82 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
   }
 }
 
-static void rectangleUpdateValueCb(Channel *pCh) {
+static void rectangleUpdateValueCb(XtPointer cd) {
+  Rectangle *pr = (Rectangle *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pr->updateTask);
+}
+
+static void rectangleDraw(XtPointer cd) {
+  Rectangle *pr = (Rectangle *) cd;
+  Record *pd = pr->record;
+  DisplayInfo *displayInfo = pr->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
+  Display *display = XtDisplay(pr->widget);
 
-  if (ca_state(pCh->chid) == cs_conn) {
+  if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (pCh->clrmod) {
+    switch (pr->dynAttr.clr) {
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+        gcValues.foreground = displayInfo->dlColormap[pr->attr.clr];
         break;
       case ALARM :
-        gcValues.foreground = alarmColorPixel[pCh->severity];
+        gcValues.foreground = alarmColorPixel[pd->severity];
         break;
     }
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ( (pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = pr->attr.width;
+    gcValues.line_style = ( (pr->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (pCh->vismod) {
+    switch (pr->dynAttr.vis) {
       case V_STATIC:
-        drawRectangle(pCh);
+        drawRectangle(pr);
         break;
       case IF_NOT_ZERO:
-        if (pCh->value != 0.0)
-          drawRectangle(pCh);
+        if (pd->value != 0.0)
+          drawRectangle(pr);
         break;
       case IF_ZERO:
-        if (pCh->value == 0.0)
-          drawRectangle(pCh);
+        if (pd->value == 0.0)
+          drawRectangle(pr);
         break;
       default :
         medmPrintf("internal error : rectangleUpdateValueCb\n");
         break;
     }
-    if (!ca_read_access(pCh->chid))
-      draw3DQuestionMark(pCh);
+    if (pd->readAccess) {
+      if (!pr->updateTask->overlapped && pr->dynAttr.vis == V_STATIC) {
+        pr->updateTask->opaque = True;
+      }
+    } else {
+      pr->updateTask->opaque = False;
+      draw3DQuestionMark(pr->updateTask);
+    }
   } else {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
-    drawRectangle(pCh);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = pr->attr.width;
+    gcValues.line_style = ((pr->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+    drawRectangle(pr);
   }
 }
 
-static void rectangleDestroyCb(Channel *pCh) {
+static void rectangleDestroyCb(XtPointer cd) {
+  Rectangle *pr = (Rectangle *) cd;
+  if (pr) {
+    medmDestroyRecord(pr->record);
+    free(pr);
+  }
   return;
+}
+
+static void rectangleName(XtPointer cd, char **name, short *severity, int *count) {
+  Rectangle *pr = (Rectangle *) cd;
+  *count = 1;
+  name[0] = pr->record->name;
+  severity[0] = pr->record->severity;
 }

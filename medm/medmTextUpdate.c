@@ -53,14 +53,26 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void textUpdateUpdateValueCb(Channel *pCh);
-static void textUpdateDestroyCb(Channel *pCh);
+typedef struct _TextUpdate {
+  Widget        widget;
+  DlTextUpdate  *dlTextUpdate;
+  Record        *record;
+  UpdateTask    *updateTask;
+  int           fontIndex;
+} TextUpdate;
+
+static void textUpdateUpdateValueCb(XtPointer cd);
+static void textUpdateDraw(XtPointer cd);
+static void textUpdateDestroyCb(XtPointer cd);
+static void textUpdateName(XtPointer, char **, short *, int *);
 
 void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
 				Boolean dummy)
@@ -71,32 +83,32 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
   int localFontIndex;
   size_t nChars;
 
-
-  displayInfo->useDynamicAttribute = FALSE;
-
   if (displayInfo->traversalMode == DL_EXECUTE) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_TextUpdate;
-    pCh->specifics = (XtPointer) dlTextUpdate;
-    pCh->clrmod = dlTextUpdate->clrmod;
-    pCh->backgroundColor = displayInfo->dlColormap[dlTextUpdate->monitor.bclr];
-    pCh->label = LABEL_NONE;
+    TextUpdate *ptu;
+    ptu = (TextUpdate *) malloc(sizeof(TextUpdate));
+    ptu->dlTextUpdate = dlTextUpdate;
+    ptu->updateTask = updateTaskAddTask(displayInfo,
+                                        &(dlTextUpdate->object),
+                                        textUpdateDraw,
+                                        (XtPointer)ptu);
 
-    pCh->updateChannelCb = textUpdateUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = textUpdateDestroyCb;
-    pCh->opaque = True;
+    if (ptu->updateTask == NULL) {
+      medmPrintf("textUpdateCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(ptu->updateTask,textUpdateDestroyCb);
+      updateTaskAddNameCb(ptu->updateTask,textUpdateName);
+    }
+    ptu->record = medmAllocateRecord(dlTextUpdate->monitor.rdbk,
+                  textUpdateUpdateValueCb,
+                  NULL,
+                  (XtPointer) ptu);
 
-    drawWhiteRectangle(pCh);
+    ptu->fontIndex = dmGetBestFontWithInfo(fontTable,
+        MAX_FONTS,DUMMY_TEXT_FIELD,
+        dlTextUpdate->object.height, dlTextUpdate->object.width,
+        &usedHeight, &usedWidth, FALSE);        /* don't use width */
 
-    pCh->fontIndex = dmGetBestFontWithInfo(fontTable,
-	MAX_FONTS,DUMMY_TEXT_FIELD,
-	dlTextUpdate->object.height, dlTextUpdate->object.width, 
-	&usedHeight, &usedWidth, FALSE);	/* don't use width */
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlTextUpdate->monitor.rdbk,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb, pCh),
-	"executeDlTextUpdate: error in CA_BUILD_AND_CONNECT");
+    drawWhiteRectangle(ptu->updateTask);
 
   } else {
 
@@ -181,44 +193,61 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
 }
 
 
-static void textUpdateDestroyCb(Channel *pCh) {
+static void textUpdateDestroyCb(XtPointer cd) {
+  TextUpdate *ptu = (TextUpdate *) cd;
+  if (ptu) {
+    medmDestroyRecord(ptu->record);
+    free(ptu);
+  }
   return;
 }
 
+static void textUpdateUpdateValueCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  TextUpdate *ptu = (TextUpdate *) pd->clientData;
+  updateTaskMarkUpdate(ptu->updateTask);
+}
 
-static void textUpdateUpdateValueCb(Channel *pCh) {
-  DlTextUpdate *pTU = (DlTextUpdate *) pCh->specifics;
-  DisplayInfo *pDI = pCh->displayInfo;
-  Display *display = XtDisplay(pDI->drawingArea);
+static void textUpdateDraw(XtPointer cd) {
+  TextUpdate *ptu = (TextUpdate *) cd;
+  Record *pd = (Record *) ptu->record;
+  DlTextUpdate *dlTextUpdate = ptu->dlTextUpdate;
+  DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
+  Display *display = XtDisplay(displayInfo->drawingArea);
   char textField[MAX_TEXT_UPDATE_WIDTH];
   int i;
   XRectangle clipRect[1];
   XGCValues gcValues;
   unsigned long gcValueMask;
-  int usedWidth, usedHeight;
   Boolean isNumber;
   double value = 0.0;
-  unsigned short precision = 0;
+  int precision = 0;
+  int textWidth = 0;
+  int strLen = 0;
 
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      switch (ca_field_type(pCh->chid)) {
+  if (pd->connected) {
+    if (pd->readAccess) {
+      switch (pd->dataType) {
         case DBF_STRING :
-          strncpy(textField,pCh->stringValue, MAX_TEXT_UPDATE_WIDTH-1);
-          textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
+          if (pd->array) {
+            strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
+            textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
+          } else {
+            textField[0] = '\0';
+          }
           isNumber = False;
           break;
         case DBF_ENUM :
-          if ((pCh->info) && (pCh->info->e.no_str > 0)) {
-            i = (int) pCh->value;
-            if (i >= 0 && i < pCh->info->e.no_str) {
-              strcpy(textField,pCh->info->e.strs[i]);
+          if (pd->hopr+1 > 0) {
+            i = (int) pd->value;
+            if ((i >= 0 && i < pd->hopr+1) && (pd->precision >= 0)){
+              strcpy(textField,pd->stateStrings[i]);
             } else {
               textField[0] = ' '; textField[1] = '\0';
             }
             isNumber = False;
           } else {
-            value = (double) pCh->value;
+            value = (double) pd->value;
 	    precision = 0;
             isNumber = True;
           }
@@ -228,23 +257,29 @@ static void textUpdateUpdateValueCb(Channel *pCh) {
         case DBF_LONG :
         case DBF_FLOAT :
         case DBF_DOUBLE :
-          value = pCh->value;
-          precision = pCh->precision;
+          value = pd->value;
+          precision = pd->precision;
+          if (precision < 0) {
+            precision = 0;
+          }
           isNumber = True;
           break;
         default :
           medmPrintf("textUpdateUpdateValueCb: %s %s %s\n",
-	    "unknown channel type for",ca_name(pCh->chid), ": cannot attach Meter");
+	    "unknown channel type for",ptu->dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
           medmPostTime();
           break;
       }
       if (isNumber) {
-        switch (pTU->format) {
+        switch (dlTextUpdate->format) {
           case DECIMAL:
-            localCvtDoubleToString(value,textField,precision);
+            cvtDoubleToString(value,textField,precision);
             break;
           case EXPONENTIAL:
+#if 0
             cvtDoubleToExpString(value,textField,precision);
+#endif
+            sprintf(textField,"%.*e",precision,value);
             break;
           case ENGR_NOTATION:
             localCvtDoubleToExpNotationString(value,textField,precision);
@@ -263,102 +298,109 @@ static void textUpdateUpdateValueCb(Channel *pCh) {
             break;
           default :
             medmPrintf("textUpdateUpdateValueCb: %s %s %s\n",
-	          "unknown channel type for",ca_name(pCh->chid), ": cannot attach Meter");
+	          "unknown channel type for",ptu->dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
             medmPostTime();
             break;
         }
       }
-      i = pCh->fontIndex;
 
-      XSetForeground(display,pDI->gc, pDI->dlColormap[pTU->monitor.bclr]);
-      XFillRectangle(display, XtWindow(pDI->drawingArea),
-			pDI->gc,
-			pTU->object.x,pTU->object.y,
-			pTU->object.width,
-			pTU->object.height);
+      XSetForeground(display,displayInfo->gc, displayInfo->dlColormap[dlTextUpdate->monitor.bclr]);
+      XFillRectangle(display, XtWindow(displayInfo->drawingArea),
+			displayInfo->gc,
+			dlTextUpdate->object.x,dlTextUpdate->object.y,
+			dlTextUpdate->object.width,
+			dlTextUpdate->object.height);
 
 
       /* calculate the color */
       gcValueMask = GCForeground | GCBackground;
-      switch (pTU->clrmod) {
+      switch (dlTextUpdate->clrmod) {
         case STATIC :
         case DISCRETE:
-          gcValues.foreground = pDI->dlColormap[pTU->monitor.clr];
+          gcValues.foreground = displayInfo->dlColormap[dlTextUpdate->monitor.clr];
           break;
       case ALARM :
-          gcValues.foreground =  alarmColorPixel[pCh->severity];
+          gcValues.foreground =  alarmColorPixel[pd->severity];
           break;
       }
-      gcValues.background = pDI->dlColormap[pTU->monitor.bclr];
-      XChangeGC(display,pDI->gc, gcValueMask,&gcValues);
+      gcValues.background = displayInfo->dlColormap[dlTextUpdate->monitor.bclr];
+      XChangeGC(display,displayInfo->gc, gcValueMask,&gcValues);
 
-      /* do the text alignment */
-      switch (pTU->align) {
-        case HORIZ_LEFT:
-          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
-		pTU->object.height,pTU->object.width,
-		&usedHeight,&usedWidth,TRUE);
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea), pDI->gc,
-	    pTU->object.x,
-	    pTU->object.y + fontTable[i]->ascent,
-	    textField,strlen(textField));
-          break;
-        case HORIZ_CENTER:
-          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
-		pTU->object.height,pTU->object.width,
-		&usedHeight,&usedWidth,TRUE);
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea), pDI->gc,
-		pTU->object.x + (pTU->object.width - usedWidth)/2,
-		pTU->object.y + fontTable[i]->ascent,
-		textField,strlen(textField));
-          break;
-        case HORIZ_RIGHT:
-          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
-		pTU->object.height,pTU->object.width,
-		&usedHeight,&usedWidth,TRUE);
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea),pDI->gc,
-		pTU->object.x + pTU->object.width - usedWidth,
-		pTU->object.y + fontTable[i]->ascent,
-		textField,strlen(textField));
-          break;
-        case VERT_TOP:
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea),pDI->gc,
-		pTU->object.x,
-		pTU->object.y + fontTable[i]->ascent,
-		textField,strlen(textField));
-          break;
-        case VERT_BOTTOM:
-          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
-	        pTU->object.height,pTU->object.width,
-		&usedHeight,&usedWidth,TRUE);
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea), pDI->gc,
-		pTU->object.x + (pTU->object.width - usedWidth)/2,
-		pTU->object.y + fontTable[i]->ascent,
-		textField,strlen(textField));
-		break;
-        case VERT_CENTER:
-          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
-		pTU->object.height,pTU->object.width,
-		&usedHeight,&usedWidth,TRUE);
-          XSetFont(display,pDI->gc,fontTable[i]->fid);
-          XDrawString(display,XtWindow(pDI->drawingArea), pDI->gc,
-		pTU->object.x + (pTU->object.width - usedWidth)/2,
-		pTU->object.y + fontTable[i]->ascent,
-		textField,strlen(textField));
-		break;
+      i = ptu->fontIndex;
+      strLen = strlen(textField);
+      textWidth = XTextWidth(fontTable[i],textField,strLen);
+
+      /* for compatibility reason, only the HORIZ_CENTER,
+       * HORIZ_RIGHT, VERT_BOTTOM and VERT_CENTER
+       * will recalculate the font size if the number does
+       * not fit. */
+      if (dlTextUpdate->object.width  < textWidth) {
+        switch(dlTextUpdate->align) {
+          case HORIZ_CENTER:
+          case HORIZ_RIGHT:
+          case VERT_BOTTOM:
+          case VERT_CENTER:
+            while (i > 0) {
+              i--;
+              textWidth = XTextWidth(fontTable[i],textField,strLen);
+              if (dlTextUpdate->object.width > textWidth) break;
+            }
+            break;
+          default :
+            break;
+        }
+      }
+
+      /* print text */
+      {
+        int x, y;
+        XSetFont(display,displayInfo->gc,fontTable[i]->fid);
+        switch (dlTextUpdate->align) {
+          case HORIZ_LEFT:
+	    x = dlTextUpdate->object.x;
+	    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+            break;
+          case HORIZ_CENTER:
+	    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
+	    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+            break;
+          case HORIZ_RIGHT:
+	    x = dlTextUpdate->object.x + dlTextUpdate->object.width - textWidth;
+	    y =dlTextUpdate->object.y + fontTable[i]->ascent;
+            break;
+          case VERT_TOP:
+	    x = dlTextUpdate->object.x;
+	    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+            break;
+          case VERT_BOTTOM:
+	    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
+	    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+	    break;
+          case VERT_CENTER:
+	    x = dlTextUpdate->object.x + (dlTextUpdate->object.width - textWidth)/2;
+	    y = dlTextUpdate->object.y + fontTable[i]->ascent;
+	    break;
+        }
+        XDrawString(display,XtWindow(displayInfo->drawingArea),
+                  displayInfo->gc, x, y,
+		  textField,strLen);
       }
     } else {
       /* no read access */
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      draw3DPane(ptu->updateTask,
+          ptu->updateTask->displayInfo->dlColormap[ptu->dlTextUpdate->monitor.bclr]);
+      draw3DQuestionMark(ptu->updateTask);
     }
   } else {
     /* no connection or disconnected */
-    drawWhiteRectangle(pCh);
+    drawWhiteRectangle(ptu->updateTask);
   }
 }
+
+static void textUpdateName(XtPointer cd, char **name, short *severity, int *count) {
+  TextUpdate *pa = (TextUpdate *) cd;
+  *count = 1;
+  name[0] = pa->record->name;
+  severity[0] = pa->record->severity;
+}
+

@@ -53,30 +53,43 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using the new screen update mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void arcUpdateValueCb(Channel *pCh);
-static void arcDestroyCb(Channel *pCh);
+typedef struct _Arc {
+  Widget           widget;
+  DlArc            *dlArc;
+  Record           *record;
+  UpdateTask       *updateTask;
+  DlDynamicAttrMod dynAttr;
+  DlAttribute      attr; 
+} Arc;
+
+static void arcDraw(XtPointer cd);
+static void arcUpdateValueCb(XtPointer cd);
+static void arcDestroyCb(XtPointer cd);
+static void arcName(XtPointer, char **, short *, int *);
 
 
-static void drawArc(Channel *pCh) {
+static void drawArc(Arc *pa) {
   unsigned int lineWidth;
-  DisplayInfo *displayInfo = pCh->displayInfo;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
-  DlArc *dlArc = (DlArc *) pCh->specifics;
+  DisplayInfo *displayInfo = pa->updateTask->displayInfo;
+  Display *display = XtDisplay(pa->widget);
+  DlArc *dlArc = pa->dlArc;
 
-  lineWidth = (pCh->dlAttr->width+1)/2;
-  if (pCh->dlAttr->fill == F_SOLID) {
-    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  lineWidth = (pa->attr.width+1)/2;
+  if (pa->attr.fill == F_SOLID) {
+    XFillArc(display,XtWindow(pa->widget),displayInfo->gc,
         dlArc->object.x,dlArc->object.y,
         dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
   } else
-  if (pCh->dlAttr->fill == F_OUTLINE) {
-    XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  if (pa->attr.fill == F_OUTLINE) {
+    XDrawArc(display,XtWindow(pa->widget),displayInfo->gc,
         dlArc->object.x + lineWidth,
         dlArc->object.y + lineWidth,
         dlArc->object.width - 2*lineWidth,
@@ -89,27 +102,42 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
 {
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
+    Arc *pa;
+    pa = (Arc *) malloc(sizeof(Arc));
+    pa->dlArc = dlArc;
+    pa->updateTask = updateTaskAddTask(displayInfo,
+				       &(dlArc->object),
+				       arcDraw,
+				       (XtPointer)pa);
 
-    Channel *pCh = allocateChannel(displayInfo);
-    if (pCh == NULL) return;
+    if (pa->updateTask == NULL) {
+      medmPrintf("arcCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
+      updateTaskAddNameCb(pa->updateTask,arcName);
+      pa->updateTask->opaque = False;
+    }
+    pa->record = medmAllocateRecord(
+                  displayInfo->dynamicAttribute.attr.param.chan,
+                  arcUpdateValueCb,
+                  NULL,
+                  (XtPointer) pa);
+#if 0
+    drawWhiteRectangle(pa->updateTask);
+#endif
 
-    pCh->dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-    if (pCh->dlAttr == NULL) return;
-    *pCh->dlAttr =displayInfo->attribute;
+    pa->record->monitorValueChanged = False;
+    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+      pa->record->monitorSeverityChanged = False;
+    }
 
-    pCh->clrmod = displayInfo->dynamicAttribute.attr.mod.clr;
-    pCh->vismod = displayInfo->dynamicAttribute.attr.mod.vis;
+    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+      pa->record->monitorZeroAndNoneZeroTransition = False;
+    }
 
-    pCh->monitorType = DL_Arc;
-    pCh->specifics = (XtPointer) dlArc;
-    pCh->updateChannelCb = arcUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = arcDestroyCb;
-    pCh->ignoreValueChanged = True;
-
-    SEVCHK(CA_BUILD_AND_CONNECT(displayInfo->dynamicAttribute.attr.param.chan,TYPENOTCONN,0,
-      &(pCh->chid),NULL,medmConnectEventCb, pCh),
-      "executeDlArc: error in CA_BUILD_AND_CONNECT");
+    pa->widget = displayInfo->drawingArea;
+    pa->attr = displayInfo->attribute;
+    pa->dynAttr = displayInfo->dynamicAttribute.attr.mod;
   } else
   if (displayInfo->attribute.fill == F_SOLID) {
     unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
@@ -136,61 +164,87 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
   }
 }
 
-static void arcUpdateValueCb(Channel *pCh) {
+static void arcUpdateValueCb(XtPointer cd) {
+  Arc *pa = (Arc *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pa->updateTask);
+}
+
+static void arcDraw(XtPointer cd) {
+  Arc *pa = (Arc *) cd;
+  Record *pd = pa->record;
+  DisplayInfo *displayInfo = pa->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
+  Display *display = XtDisplay(pa->widget);
 
-  if (ca_state(pCh->chid) == cs_conn) {
+  if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (pCh->clrmod) {
+    switch (pa->dynAttr.clr) {
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+        gcValues.foreground = displayInfo->dlColormap[pa->attr.clr];
         break;
       case ALARM :
-        gcValues.foreground = alarmColorPixel[pCh->severity];
+        gcValues.foreground = alarmColorPixel[pd->severity];
         break;
       default :
-        gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+        gcValues.foreground = displayInfo->dlColormap[pa->attr.clr];
 	medmPrintf("internal error : arcUpdatevalueCb : unknown attribute\n");
 	break;
     }
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = pa->attr.width;
+    gcValues.line_style = ((pa->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (pCh->vismod) {
+    switch (pa->dynAttr.vis) {
       case V_STATIC:
-        drawArc(pCh);
+        drawArc(pa);
         break;
       case IF_NOT_ZERO:
-        if (pCh->value != 0.0)
-          drawArc(pCh);
+        if (pd->value != 0.0)
+          drawArc(pa);
         break;
       case IF_ZERO:
-        if (pCh->value == 0.0)
-          drawArc(pCh);
+        if (pd->value == 0.0)
+          drawArc(pa);
         break;
       default :
         medmPrintf("arcUpdateValueCb : internal error\n");
         break;
     }
-
-    if (!ca_read_access(pCh->chid)) 
-      draw3DQuestionMark(pCh);
+    if (pd->readAccess) {
+      if (!pa->updateTask->overlapped && pa->dynAttr.vis == V_STATIC) {
+        pa->updateTask->opaque = True;
+      }
+    } else {
+      pa->updateTask->opaque = False;
+      draw3DQuestionMark(pa->updateTask);
+    }
   } else {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ( (pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display, pCh->displayInfo->gc, gcValueMask,&gcValues);
-    drawArc(pCh);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = pa->attr.width;
+    gcValues.line_style = ( (pa->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display, displayInfo->gc, gcValueMask,&gcValues);
+    drawArc(pa);
   }
 }
 
-static void arcDestroyCb(Channel *pCh) {
+static void arcDestroyCb(XtPointer cd) {
+  Arc *pa = (Arc *) cd;
+  if (pa) {
+    medmDestroyRecord(pa->record);
+    free(pa);
+  }
   return;
 }
+
+static void arcName(XtPointer cd, char **name, short *severity, int *count) {
+  Arc *pa = (Arc *) cd;
+  *count = 1;
+  name[0] = pa->record->name;
+  severity[0] = pa->record->severity;
+}
+

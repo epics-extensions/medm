@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -531,6 +532,7 @@ void parseStripChart(
   DlStripChart *dlStripChart;
   DlElement *dlElement;
   int penNumber;
+  int isVersion2_1_x = False;
 
 
   dlStripChart = (DlStripChart *) calloc(1,sizeof(DlStripChart));
@@ -538,8 +540,9 @@ void parseStripChart(
 /* initialize some data in structure */
   dlStripChart->object = defaultObject;
   dlStripChart->plotcom = defaultPlotcom;
-  dlStripChart->delay = 500;
-  dlStripChart->units = MILLISECONDS;
+  dlStripChart->period = 60.0;
+  dlStripChart->delay = -1.0;
+  dlStripChart->units = SECONDS;
 
   do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -548,7 +551,12 @@ void parseStripChart(
 			parseObject(displayInfo,&(dlStripChart->object));
 		else if (!strcmp(token,"plotcom"))
 			parsePlotcom(displayInfo,&(dlStripChart->plotcom));
-		else if (!strcmp(token,"delay")) {
+		else if (!strcmp(token,"period")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			dlStripChart->period = atof(token);
+                        isVersion2_1_x = True;
+		} else if (!strcmp(token,"delay")) {
 			getToken(displayInfo,token);
 			getToken(displayInfo,token);
 			dlStripChart->delay = atoi(token);
@@ -586,6 +594,33 @@ void parseStripChart(
   dlElement->type = DL_StripChart;
   dlElement->structure.stripChart = dlStripChart;
   dlElement->next = NULL;
+
+  if (isVersion2_1_x) {
+    dlStripChart->delay = -1.0;  /* -1.0 is used as a indicator to save
+                                    as new format */
+  } else
+  if (dlStripChart->delay > 0) {
+    double val, dummy1, dummy2;
+    switch (dlStripChart->units) {
+      case MILLISECONDS:
+        dummy1 = -0.060 * (double) dlStripChart->delay;
+        break;
+      case SECONDS:
+        dummy1 = -60 * (double) dlStripChart->delay;
+        break;
+      case MINUTES:
+        dummy1 = -3600.0 * (double) dlStripChart->delay;
+        break;
+      default:
+        dummy1 = -60 * (double) dlStripChart->delay;
+        break;
+    }
+
+    linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
+    dlStripChart->period = -val; 
+    dlStripChart->oldUnits = dlStripChart->units;
+    dlStripChart->units = SECONDS;
+  }
 
   POSITION_ELEMENT_ON_LIST();
 
@@ -733,6 +768,7 @@ void parseSurfacePlot(
   DlElement *dlElement;
   int penNumber;
 
+#if 0
   dlSurfacePlot = (DlSurfacePlot *) malloc(sizeof(DlSurfacePlot));
 
 /* initialize some data in structure */
@@ -792,7 +828,7 @@ void parseSurfacePlot(
 
   dlElement->dmExecute =  (void(*)())executeDlSurfacePlot;
   dlElement->dmWrite =  (void(*)())writeDlSurfacePlot;
-
+#endif
 }
 
 

@@ -52,32 +52,35 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+#include "medmCartesianPlot.h"
+
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,DlCartesianPlot *dlCartesianPlot);
 void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,DlCartesianPlot *dlCartesianPlot);
-static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh);
-static void cartesianPlotUpdateScreen(Channel *pCh);
-static void cartesianPlotUpdateScreenFirstTime(Channel *pCh);
-static void cartesianPlotUpdateValueCb(Channel *pCh);
-static void cartesianPlotDestroyCb(Channel *pCh);
+static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd);
+static void cartesianPlotUpdateScreenFirstTime(XtPointer cd);
+static void cartesianPlotDraw(XtPointer cd);
+static void cartesianPlotUpdateValueCb(XtPointer cd);
+static void cartesianPlotDestroyCb(XtPointer cd);
+static void cartesianPlotName(XtPointer, char **, short *, int *);
 
 static XrtData *nullData = NULL;
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 			DlCartesianPlot *dlCartesianPlot)
 {
-  Channel *pCh = NULL;
-  CartesianPlotData *cartesianPlotData;
+  CartesianPlot *pcp;
   int i, j, k, n, validTraces, iPrec;
   Arg args[42];
   Widget localWidget;
   XColor xColors[2];
   char *headerStrings[2];
   char rgb[2][16], string[24];
-  Boolean validTrace;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   XcVType minF, maxF, tickF;
   int precision, log10Precision;
@@ -90,97 +93,87 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     nullData->g.data[0].yp[0] = 0.0;
   }
   validTraces = 0;
-  cartesianPlotData = (CartesianPlotData *)
-				calloc(1,sizeof(CartesianPlotData));
-  cartesianPlotData->xrtData1 = cartesianPlotData->xrtData2 = NULL;
-  cartesianPlotData->triggerCh = (XtPointer) NULL;
-  cartesianPlotData->eraseCh = (XtPointer) NULL;
-  cartesianPlotData->eraseMode = dlCartesianPlot->eraseMode;
+  pcp = (CartesianPlot *) malloc(sizeof(CartesianPlot));
+  pcp->xrtData1 = pcp->xrtData2 = NULL;
+  pcp->dirty1 = pcp->dirty2 = False;
+  pcp->eraseMode = dlCartesianPlot->eraseMode;
+  pcp->dlCartesianPlot = dlCartesianPlot;
+  pcp->updateTask = updateTaskAddTask(displayInfo,
+           &(dlCartesianPlot->object),
+	   cartesianPlotDraw,
+	   (XtPointer)pcp);
+  if (pcp->updateTask == NULL) {
+    medmPrintf("cartesianPlotCreateRunTimeInstance : memory allocation error\n");
+  } else {
+    updateTaskAddDestroyCb(pcp->updateTask,cartesianPlotDestroyCb);
+    updateTaskAddNameCb(pcp->updateTask,cartesianPlotName);
+  }
 
   for (i = 0; i < MAX_TRACES; i++) {
-    validTrace = False;
+    Boolean validTrace = False;
     /* X data */
-    if (dlCartesianPlot->trace[validTraces].xdata[0] != '\0') {
-      pCh = allocateChannel(displayInfo);
-      pCh->monitorType = DL_CartesianPlot;
-      pCh->specifics = (XtPointer) dlCartesianPlot;
-      pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
-
-      pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-      pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
-      pCh->updateGraphicalInfoCb = cartesianPlotUpdateGraphicalInfoCb;
-      pCh->destroyChannel = cartesianPlotDestroyCb;
-      pCh->handleArray = True;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlCartesianPlot->trace[validTraces].xdata,
-	       TYPENOTCONN,0,&(pCh->chid),NULL,medmConnectEventCb,pCh),
-	       "executeDlCartesianPlot: error in CA_BUILD_AND_CONNECT");
-      /* add pointer to this monitor data structure to the cartesian plot structure */
-      cartesianPlotData->monitors[validTraces][0] = (XtPointer) pCh;
+    if (dlCartesianPlot->trace[i].xdata[0] != '\0') {
+      pcp->xyTrace[validTraces].recordX =
+              medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
+                cartesianPlotUpdateScreenFirstTime,
+                cartesianPlotUpdateGraphicalInfoCb,
+                (XtPointer) &(pcp->xyTrace[validTraces]));
       validTrace = True;
+    } else {
+      pcp->xyTrace[validTraces].recordX = NULL;
     }
     /* Y data */
-    if (dlCartesianPlot->trace[validTraces].ydata[0] != '\0') {
-      pCh = allocateChannel(displayInfo);
-      pCh->monitorType = DL_CartesianPlot;
-      pCh->specifics = (XtPointer) dlCartesianPlot;
-      pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
-
-      pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-      pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
-      pCh->updateGraphicalInfoCb = cartesianPlotUpdateGraphicalInfoCb;
-      pCh->destroyChannel = cartesianPlotDestroyCb;
-      pCh->handleArray = True;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlCartesianPlot->trace[validTraces].ydata,
-	       TYPENOTCONN, 0,&(pCh->chid),NULL,medmConnectEventCb,pCh),
-	       "executeDlCartesianPlot: error in CA_BUILD_AND_CONNECT");
-      /* add pointer to this monitor data structure to the cartesian plot structure */
-      cartesianPlotData->monitors[validTraces][1] = (XtPointer) pCh;
+    if (dlCartesianPlot->trace[i].ydata[0] != '\0') {
+      pcp->xyTrace[validTraces].recordY =
+              medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
+                cartesianPlotUpdateScreenFirstTime,
+                cartesianPlotUpdateGraphicalInfoCb,
+                (XtPointer) &(pcp->xyTrace[validTraces]));
       validTrace = True;
+    } else {
+      pcp->xyTrace[validTraces].recordY = NULL;
     }
-    if (validTrace) validTraces++;
+    if (validTrace) {
+      pcp->xyTrace[validTraces].cartesianPlot = pcp;
+      validTraces++;
+    }
+  }
+
+  if (validTraces == 0) {
+    /* if no channel, create a fake channel */
+    validTraces = 1;
+    pcp->xyTrace[0].recordX = medmAllocateRecord(" ",
+                cartesianPlotUpdateScreenFirstTime,
+                cartesianPlotUpdateGraphicalInfoCb,
+                (XtPointer) &(pcp->xyTrace[0]));
+    pcp->xyTrace[0].recordY = NULL;
   }
 
   /* now add monitor for trigger channel if appropriate */
   if ((dlCartesianPlot->trigger[0] != '\0') && (validTraces > 0)) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_CartesianPlot;
-    pCh->specifics = (XtPointer) dlCartesianPlot;
-    pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
-
-    pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-    pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = cartesianPlotDestroyCb;
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlCartesianPlot->trigger, TYPENOTCONN,
-	0,&(pCh->chid),NULL,medmConnectEventCb,pCh),
-	"executeDlCartesianPlot: error in CA_BUILD_AND_CONNECT");
-    /* add ptr. to trigger monitor data structure to the cartesian plot structure */
-    cartesianPlotData->triggerCh = (XtPointer) pCh;
+    pcp->triggerCh.recordX = 
+              medmAllocateRecord(dlCartesianPlot->trigger,
+                cartesianPlotUpdateScreenFirstTime,
+                cartesianPlotUpdateGraphicalInfoCb,
+                (XtPointer) &(pcp->triggerCh));
+    pcp->triggerCh.cartesianPlot = pcp;
+  } else {
+    pcp->triggerCh.recordX = NULL;
   }
 
   /* now add monitor for erase channel if appropriate */
   if ((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_CartesianPlot;
-    pCh->specifics = (XtPointer) dlCartesianPlot;
-    pCh->backgroundColor = displayInfo->dlColormap[dlCartesianPlot->plotcom.bclr];
-
-    pCh->updateChannelCb =  cartesianPlotUpdateValueCb;
-    pCh->updateDataCb = cartesianPlotUpdateScreenFirstTime;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = cartesianPlotDestroyCb;
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlCartesianPlot->erase, TYPENOTCONN,
-        0,&(pCh->chid),NULL,medmConnectEventCb,pCh),
-        "executeDlCartesianPlot: error in CA_BUILD_AND_CONNECT");
-    /* add ptr. to trigger monitor data structure to the cartesian plot structure */
-    cartesianPlotData->eraseCh = (XtPointer) pCh;
+    pcp->eraseCh.recordX =
+              medmAllocateRecord(dlCartesianPlot->erase,
+                cartesianPlotUpdateScreenFirstTime,
+                cartesianPlotUpdateGraphicalInfoCb,
+                (XtPointer) &(pcp->eraseCh));
+    pcp->eraseCh.cartesianPlot = pcp;
+  } else {
+    pcp->eraseCh.recordX = NULL;
   }
 
-  if (pCh) drawWhiteRectangle(pCh);
+  drawWhiteRectangle(pcp->updateTask);
 
   /* from the cartesianPlot structure, we've got CartesianPlot's specifics */
   n = 0;
@@ -374,28 +367,20 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
   XtSetArg(args[n],XmNtraversalOn,False); n++;
 /*
- * add the pointer to the CartesianPlotData structure as userData to widget
+ * add the pointer to the CartesianPlot structure as userData to widget
  */
-  XtSetArg(args[n], XmNuserData, (XtPointer) cartesianPlotData); n++;
+  XtSetArg(args[n], XmNuserData, (XtPointer) pcp); n++;
   XtSetArg(args[n], XtNxrtDoubleBuffer, True); n++;
   localWidget = XtCreateWidget("cartesianPlot",xtXrtGraphWidgetClass,
 		displayInfo->drawingArea, args, n);
   displayInfo->child[displayInfo->childCount++] = localWidget;
 
 /* record the number of traces in the cartesian plot */
-  cartesianPlotData->nTraces = validTraces;
+  pcp->nTraces = validTraces;
 
 /* record the widget that the monitor structures belong to */
-  if (cartesianPlotData->triggerCh)
-    ((Channel *)cartesianPlotData->triggerCh)->self = localWidget;
-  if (cartesianPlotData->eraseCh)
-    ((Channel *)cartesianPlotData->eraseCh)->self = localWidget;
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    for (j = 0; j <= 1; j++) {
-      if (pCh = (Channel *) cartesianPlotData->monitors[i][j]) 
-        pCh->self = localWidget;
-    }
-  }
+  pcp->widget = localWidget;
+
 /* add in drag/drop translations */
   XtOverrideTranslations(localWidget,parsedTranslations);
 
@@ -406,7 +391,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 {
   Channel *pCh, *monitorData,
 	*triggerCh;
-  CartesianPlotData *cartesianPlotData;
+  CartesianPlot *pcp;
   int i, j, k, n, validTraces, iPrec;
   Arg args[42];
   Widget localWidget;
@@ -421,7 +406,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 
   displayInfo->useDynamicAttribute = FALSE;
 
-  cartesianPlotData = NULL;
+  pcp = NULL;
   triggerCh = (Channel *)NULL;
 
   validTraces = 0;
@@ -618,9 +603,9 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 
   XtSetArg(args[n],XmNtraversalOn,False); n++;
 /*
- * add the pointer to the CartesianPlotData structure as userData to widget
+ * add the pointer to the CartesianPlot structure as userData to widget
  */
-  XtSetArg(args[n], XmNuserData, (XtPointer) cartesianPlotData); n++;
+  XtSetArg(args[n], XmNuserData, (XtPointer) pcp); n++;
   XtSetArg(args[n], XtNxrtDoubleBuffer, True); n++;
   localWidget = XtCreateWidget("cartesianPlot",xtXrtGraphWidgetClass,
 		displayInfo->drawingArea, args, n);
@@ -646,11 +631,12 @@ void executeDlCartesianPlot(DisplayInfo *displayInfo,
 
 }
 
-static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
-  /* Cartesian Plot variables */
-  DisplayInfo *displayInfo;
-  CartesianPlotData *cartesianPlotData;
-  DlCartesianPlot *dlCartesianPlot;
+static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  XYTrace *pt = (XYTrace *) pd->clientData;
+  CartesianPlot *pcp = pt->cartesianPlot;
+  DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
+  DlCartesianPlot *dlCartesianPlot = pcp->dlCartesianPlot;
   chid xChid, yChid;
   XColor xColors[MAX_TRACES];
   char rgb[MAX_TRACES][16];
@@ -660,10 +646,9 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
   float minX, maxX, minY, maxY, minY2, maxY2;
   XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
   char string[24];
-  Channel *monitorData, *monitorDataX, *monitorDataY;
   int iPrec, kk;
 
-  int maxElements;
+  int maxElements = 0;
   int i,j;
   int n;
   Arg widgetArgs[20];
@@ -672,7 +657,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
   /* !!!!! This is a temperory work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  pCh->updateGraphicalInfoCb = NULL;
+  medmRecordAddGraphicalInfoCb(pd,NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! End work around                 !!!!! */
@@ -680,25 +665,15 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
 
   xrtData1 = xrtData2 = NULL;
 
-  XtVaGetValues(pCh->self,XmNuserData,(XtPointer)&cartesianPlotData,NULL);
-
-  /* MDA - okay I hate to do this but the nesting of ifs is getting out of hand */
-  if (cartesianPlotData == (CartesianPlotData *)NULL) {
-    medmPostMsg("processMonitorGrGetCallback: cartesianPlotData == NULL, returning\n");
-    return;
-  }
-
   /* return until all channels get their graphical information */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *tmpCh;
-    tmpCh = (Channel *) cartesianPlotData->monitors[i][0];
-    if (tmpCh != NULL) {
-      if (tmpCh->info == NULL) return;
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if (t->recordX != NULL) {
+      if (t->recordX->precision < 0) return;
     }
 
-    tmpCh = (Channel*) cartesianPlotData->monitors[i][1];
-    if (tmpCh != NULL) {
-      if (tmpCh->info == NULL) return;
+    if (t->recordY != NULL) {
+      if (t->recordY->precision < 0) return;
     }
   }
 
@@ -706,11 +681,10 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
   minX = minY = minY2 = FLT_MAX;
   maxX = maxY = maxY2 = -0.99*FLT_MAX;
 
-  dlCartesianPlot = (DlCartesianPlot *) pCh->specifics;
-  for (i = 0; i < cartesianPlotData->nTraces; i++)
-    xColors[i].pixel = pCh->displayInfo->dlColormap[dlCartesianPlot->trace[i].data_clr];
-  XQueryColors(display,cmap,xColors,cartesianPlotData->nTraces);
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
+  for (i = 0; i < pcp->nTraces; i++)
+    xColors[i].pixel = displayInfo->dlColormap[dlCartesianPlot->trace[i].data_clr];
+  XQueryColors(XtDisplay(pcp->widget),cmap,xColors,pcp->nTraces);
+  for (i = 0; i < pcp->nTraces; i++) {
     sprintf(rgb[i],"#%2.2x%2.2x%2.2x", xColors[i].red>>8,
                  xColors[i].green>>8, xColors[i].blue>>8);
   }
@@ -721,144 +695,130 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
 
   /* find out the maximum number of element */
   maxElements = dlCartesianPlot->count;
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-    if (pChX)
-      if (pChX->chid)
-        maxElements = MAX(maxElements,(int)ca_element_count(pChX->chid));
-    if (pChY)
-      if (pChY->chid)
-        maxElements = MAX(maxElements,(int)ca_element_count(pChY->chid));
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if (t->recordX)
+      maxElements = MAX(maxElements,(int)t->recordX->elementCount);
+    if (t->recordY)
+      maxElements = MAX(maxElements,(int)t->recordY->elementCount);
   }
 
   xrtData1 = XrtMakeData(XRT_GENERAL,1,maxElements,TRUE);
   /* now 2nd xrt data set if appropriate */
-  if (cartesianPlotData->nTraces > 1) {
-    xrtData2 = XrtMakeData(XRT_GENERAL,cartesianPlotData->nTraces-1,maxElements,TRUE);
+  if (pcp->nTraces > 1) {
+    xrtData2 = XrtMakeData(XRT_GENERAL,pcp->nTraces-1,maxElements,TRUE);
   }
 
   /* loop over monitors, extracting information */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    /* trace i, X data */
-    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-    /* trace i, Y data */
-    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
     /*
      * now process data type (based on type (scalar or vector) of data)
      */
-    if (pChX != NULL && pChY != NULL) {
-      if ( ca_element_count(pChX->chid) > 1 && ca_element_count(pChY->chid) > 1 ) {
-        pChX->xyChannelType = CP_XYVectorX;
-        pChY->xyChannelType = CP_XYVectorY;
+    if (t->recordX != NULL && t->recordY != NULL) {
+      if ( t->recordX->elementCount > 1 && t->recordY->elementCount > 1 ) {
+        t->type = CP_XYVector;
       } else
-      if ( ca_element_count(pChX->chid) > 1 && ca_element_count(pChY->chid) <= 1 ) {
-        pChX->xyChannelType = CP_XVectorYScalarX;
-        pChY->xyChannelType = CP_XVectorYScalarY;
+      if ( t->recordX->elementCount > 1 && t->recordY->elementCount <= 1 ) {
+        t->type = CP_XVectorYScalar;
       } else
-      if ( ca_element_count(pChY->chid) > 1 && ca_element_count(pChX->chid) <= 1 ) {
-        pChX->xyChannelType = CP_YVectorXScalarX;
-        pChY->xyChannelType = CP_YVectorXScalarY;
+      if ( t->recordY->elementCount > 1 && t->recordX->elementCount <= 1 ) {
+        t->type = CP_YVectorXScalar;
       } else
-      if ( ca_element_count(pChX->chid) <= 1 && ca_element_count(pChY->chid) <= 1 ) {
-        pChX->xyChannelType = CP_XYScalarX;
-        pChY->xyChannelType = CP_XYScalarY;
+      if ( t->recordX->elementCount <= 1 && t->recordY->elementCount <= 1 ) {
+        t->type = CP_XYScalar;
       }
-
-      pChX->other = pChY;
-      pChY->other = pChX;
       /* put initial data in */
       if (i <= 0) {
         xrtData1->g.data[i].npoints = 0;
-        minY = MIN(minY,pChY->lopr);
-        maxY = MAX(maxY,pChY->hopr);
+        minY = MIN(minY,t->recordY->lopr);
+        maxY = MAX(maxY,t->recordY->hopr);
       } else {
         xrtData2->g.data[i-1].npoints = 0;
-        minY2 = MIN(minY2,pChY->lopr);
-        maxY2 = MAX(maxY2,pChY->hopr);
+        minY2 = MIN(minY2,t->recordY->lopr);
+        maxY2 = MAX(maxY2,t->recordY->hopr);
       }
-      minX = MIN(minX,pChX->lopr);
-      maxX = MAX(maxX,pChX->hopr);
+      minX = MIN(minX,t->recordX->lopr);
+      maxX = MAX(maxX,t->recordX->hopr);
 
     } else
-    if (pChX != NULL && pChY == NULL) {
+    if (t->recordX != NULL && t->recordY == NULL) {
       /* X channel - supporting scalar or waveform */
-      if (ca_element_count(pChX->chid) > 1) {
+      if (t->recordX->elementCount > 1) {
         /* vector/waveform */
-        pChX->xyChannelType = CP_XVector;
+        t->type = CP_XVector;
         if (i <= 0) {
-          for (j = 0; j < (int)ca_element_count(pChX->chid); j++)
+          for (j = 0; j < (int)t->recordX->elementCount; j++)
             xrtData1->g.data[i].yp[j]= (float)j;
           minY = MIN(minY,0.);
-          maxY = MAX(maxY,(float)((int)ca_element_count(pChX->chid)-1));
+          maxY = MAX(maxY,(float)((int)t->recordX->elementCount-1));
         } else {
-          for(j = 0; j < (int)ca_element_count(pChX->chid); j++)
+          for(j = 0; j < (int)t->recordX->elementCount; j++)
             xrtData2->g.data[i-1].yp[j]= (float)j;
           minY2 = MIN(minY2,0.);
-          maxY2 = MAX(maxY2,(float)ca_element_count(pChX->chid));
+          maxY2 = MAX(maxY2,(float)t->recordX->elementCount-1);
         }
-        minX = MIN(minX,pChX->lopr);
-        maxX = MAX(maxX,pChX->hopr);
+        minX = MIN(minX,t->recordX->lopr);
+        maxX = MAX(maxX,t->recordX->hopr);
       } else {
         /* scalar */
-        pChX->xyChannelType = CP_XScalar;
+        t->type = CP_XScalar;
         if (i <= 0) {
           for(j = 0; j < dlCartesianPlot->count; j++)
             xrtData1->g.data[i].yp[j]= (float)j;
-          xrtData1->g.data[i].xp[0]= (float)pChX->value;
+          xrtData1->g.data[i].xp[0]= (float)t->recordX->value;
           minY = MIN(minY,0.);
           maxY = MAX(maxY,(float)dlCartesianPlot->count);
         } else {
           for(j = 0; j < dlCartesianPlot->count; j++)
             xrtData2->g.data[i-1].yp[j]= (float)j;
-          xrtData2->g.data[i-1].xp[0]= (float)pChX->value;
+          xrtData2->g.data[i-1].xp[0]= (float)t->recordX->value;
           minY2 = MIN(minY2,0.);
           maxY2 = MAX(maxY2,(float)dlCartesianPlot->count);
         }
-        minX = MIN(minX,pChX->lopr);
-        maxX = MAX(maxX,pChX->hopr);
+        minX = MIN(minX,t->recordX->lopr);
+        maxX = MAX(maxX,t->recordX->hopr);
       }
     } else
-    if (pChX == NULL && pChY != NULL) {
+    if (t->recordX == NULL && t->recordY != NULL) {
       /* Y channel - supporting scalar or waveform */
-      if (ca_element_count(pChY->chid) > 1) {
+      if (t->recordY->elementCount > 1) {
         /* vector/waveform */
-        pChY->xyChannelType = CP_YVector;
+        t->type = CP_YVector;
         if (i <= 0) {
-          for(j = 0; j < (int)ca_element_count(pChY->chid); j++)
+          for(j = 0; j < t->recordY->elementCount; j++)
             xrtData1->g.data[i].xp[j]= (float)j;
-          minY = MIN(minY,pChY->lopr);
-          maxY = MAX(maxY,pChY->hopr);
+          minY = MIN(minY,t->recordY->lopr);
+          maxY = MAX(maxY,t->recordY->hopr);
         } else {
-          for(j = 0; j < (int)ca_element_count(pChY->chid); j++)
+          for(j = 0; j < t->recordY->elementCount; j++)
             xrtData2->g.data[i-1].xp[j]= (float)j;
-          minY2 = MIN(minY2,pChY->lopr);
-          maxY2 = MAX(maxY2,pChY->hopr);
+          minY2 = MIN(minY2,t->recordY->lopr);
+          maxY2 = MAX(maxY2,t->recordY->hopr);
         }
         minX = MIN(minX,0.);
-        maxX = MAX(maxX,(float)((int)ca_element_count(pChY->chid)-1));
+        maxX = MAX(maxX,(float)(t->recordY->elementCount-1));
       } else {
         /* scalar */
-        pChY->xyChannelType = CP_YScalar;
+        t->type = CP_YScalar;
         if (i <= 0) {
           for(j = 0; j < dlCartesianPlot->count; j++)
             xrtData1->g.data[i].xp[j]= (float)j;
-          xrtData1->g.data[i].yp[0]= (float)pChY->value;
-          minY = MIN(minY,pChY->lopr);
-          maxY = MAX(maxY,pChY->hopr);
+          xrtData1->g.data[i].yp[0]= (float)t->recordY->value;
+          minY = MIN(minY,t->recordY->lopr);
+          maxY = MAX(maxY,t->recordY->hopr);
         } else {
           for(j = 0; j < dlCartesianPlot->count; j++)
             xrtData2->g.data[i-1].xp[j]= (float)j;
-          xrtData2->g.data[i-1].yp[0]= (float)pChY->value;
-          minY2 = MIN(minY2,pChY->lopr);
-          maxY2 = MAX(maxY2,pChY->hopr);
+          xrtData2->g.data[i-1].yp[0]= (float)t->recordY->value;
+          minY2 = MIN(minY2,t->recordY->lopr);
+          maxY2 = MAX(maxY2,t->recordY->hopr);
         }
         minX = MIN(minX,0.);
         maxX = MAX(maxX,(float)dlCartesianPlot->count);
       }
     } /* end for */
   }
-  monitorData = pCh;
 
   /*
    * now set XrtDataStyle
@@ -890,12 +850,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
 
 
   /* loop over each trace and set xrtData attributes */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    monitorData = (Channel *) cartesianPlotData->monitors[i][0];
-    if (monitorData == NULL)
-      monitorData = (Channel*)cartesianPlotData->monitors[i][1];
-    if (monitorData != NULL) {
-      switch(dlCartesianPlot->style) {
+  for (i = 0; i < pcp->nTraces; i++) {
+    switch(dlCartesianPlot->style) {
       case POINT_PLOT:
         if (i <= 0) {
           myds1[i].lpat = XRT_LPAT_NONE;
@@ -903,14 +859,14 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
           myds1[i].color = rgb[i];
           myds1[i].pcolor = rgb[i];
           myds1[i].psize = MAX(2,dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle(monitorData->self,i,&myds1[i]);
+          XrtSetNthDataStyle(pcp->widget,i,&myds1[i]);
         } else {
           myds2[i-1].lpat = XRT_LPAT_NONE;
           myds2[i-1].fpat = XRT_FPAT_NONE;
           myds2[i-1].color = rgb[i];
           myds2[i-1].pcolor = rgb[i];
           myds2[i-1].psize = MAX(2, dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle2(monitorData->self, i-1,&myds2[i-1]);
+          XrtSetNthDataStyle2(pcp->widget, i-1,&myds2[i-1]);
         }
         break;
       case LINE_PLOT:
@@ -919,13 +875,13 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
           myds1[i].color = rgb[i];
           myds1[i].pcolor = rgb[i];
           myds1[i].psize = MAX(2, dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle(monitorData->self,i,&myds1[i]);
+          XrtSetNthDataStyle(pcp->widget,i,&myds1[i]);
         } else {
           myds2[i-1].fpat = XRT_FPAT_NONE;
           myds2[i-1].color = rgb[i];
           myds2[i-1].pcolor = rgb[i];
           myds2[i-1].psize = MAX(2, dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle2(monitorData->self, i-1,&myds2[i-1]);
+          XrtSetNthDataStyle2(pcp->widget, i-1,&myds2[i-1]);
         }
         break;
       case FILL_UNDER_PLOT:
@@ -933,45 +889,28 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
           myds1[i].color = rgb[i];
           myds1[i].pcolor = rgb[i];
           myds1[i].psize = MAX(2, dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle(monitorData->self,i,&myds1[i]);
+          XrtSetNthDataStyle(pcp->widget,i,&myds1[i]);
         } else {
           myds2[i-1].color = rgb[i];
           myds2[i-1].pcolor = rgb[i];
           myds2[i-1].psize = MAX(2, dlCartesianPlot->object.height/70);
-          XrtSetNthDataStyle2(monitorData->self, i-1,&myds2[i-1]);
+          XrtSetNthDataStyle2(pcp->widget, i-1,&myds2[i-1]);
         }
         break;
-      }
     }
   }
 
   /*
    * now register event handlers for vectors of channels/monitors
    */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *pChTmp = (Channel *) cartesianPlotData->monitors[i][0];
-    if (pChTmp != NULL) {
-      if ( i <= 0) {
-        pChTmp->xrtData = xrtData1;
-        pChTmp->xrtDataSet = 1;
-        pChTmp->trace = i;
-      } else {
-        pChTmp->xrtData = xrtData2;
-        pChTmp->xrtDataSet = 2;
-        pChTmp->trace = i-1;
-      }
-    }
-    pChTmp = (Channel *) cartesianPlotData->monitors[i][1];
-    if (pChTmp != NULL) {
-      if ( i <= 0) {
-        pChTmp->xrtData = xrtData1;
-        pChTmp->xrtDataSet = 1;
-        pChTmp->trace = i;
-      } else {
-        pChTmp->xrtData = xrtData2;
-        pChTmp->xrtDataSet = 2;
-        pChTmp->trace = i-1;
-      }
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if ( i <= 0) {
+      t->xrtData = xrtData1;
+      t->trace = i;
+    } else {
+      t->xrtData = xrtData2;
+      t->trace = i-1;
     }
   }
 
@@ -979,17 +918,17 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
   /* fill in connect-time channel-based range specifications - NB:
    *  this is different than the min/max stored in the display element
    */
-  cartesianPlotData->axisRange[X_AXIS_ELEMENT].axisMin = minX;
-  cartesianPlotData->axisRange[X_AXIS_ELEMENT].axisMax = maxX;
-  cartesianPlotData->axisRange[Y1_AXIS_ELEMENT].axisMin = minY;
-  cartesianPlotData->axisRange[Y1_AXIS_ELEMENT].axisMax = maxY;
-  cartesianPlotData->axisRange[Y2_AXIS_ELEMENT].axisMin = minY2;
-  cartesianPlotData->axisRange[Y2_AXIS_ELEMENT].axisMax = maxY2;
+  pcp->axisRange[X_AXIS_ELEMENT].axisMin = minX;
+  pcp->axisRange[X_AXIS_ELEMENT].axisMax = maxX;
+  pcp->axisRange[Y1_AXIS_ELEMENT].axisMin = minY;
+  pcp->axisRange[Y1_AXIS_ELEMENT].axisMax = maxY;
+  pcp->axisRange[Y2_AXIS_ELEMENT].axisMin = minY2;
+  pcp->axisRange[Y2_AXIS_ELEMENT].axisMax = maxY2;
   for (kk = X_AXIS_ELEMENT; kk <= Y2_AXIS_ELEMENT; kk++) {
     if (dlCartesianPlot->axis[kk].rangeStyle==CHANNEL_RANGE) {
-      cartesianPlotData->axisRange[kk].isCurrentlyFromChannel= True;
+      pcp->axisRange[kk].isCurrentlyFromChannel= True;
     } else {
-      cartesianPlotData->axisRange[kk].isCurrentlyFromChannel = False;
+      pcp->axisRange[kk].isCurrentlyFromChannel = False;
     }
   }
   minXF.fval = minX;
@@ -1084,37 +1023,36 @@ static void cartesianPlotUpdateGraphicalInfoCb(Channel *pCh) {
   }
 
 
-  XtSetValues(pCh->self,widgetArgs,n);
+  XtSetValues(pcp->widget,widgetArgs,n);
 
   /* add destroy callback */
   /* not freeing monitorData here, rather using monitorData for
      it's information */
-  cartesianPlotData->xrtData1 = xrtData1;
-  cartesianPlotData->xrtData2 = xrtData2;
-  XtAddCallback(pCh->self,XmNdestroyCallback,
-          (XtCallbackProc)monitorDestroy, (XtPointer)cartesianPlotData);
+  pcp->xrtData1 = xrtData1;
+  pcp->xrtData2 = xrtData2;
+#if 0
+  XtAddCallback(pcp->widget,XmNdestroyCallback,
+          (XtCallbackProc)monitorDestroy, (XtPointer)pcp);
+#endif
+  cartesianPlotUpdateScreenFirstTime(cd);
 }
 
-void cartesianPlotUpdateTrace(Channel *pCh) {
-  CartesianPlotData *cartesianPlotData;
-  DlCartesianPlot *dlCartesianPlot;
-  int count, i;
-  unsigned short j;
+void cartesianPlotUpdateTrace(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  XYTrace *pt = (XYTrace *) pd->clientData;
+  CartesianPlot *pcp = pt->cartesianPlot;
+  DlCartesianPlot *dlCartesianPlot = pcp->dlCartesianPlot;
+  int count, i, j;
   Arg args[20];
 
-  XtVaGetValues((Widget)pCh->self,
-                 XmNuserData,(XtPointer)&cartesianPlotData,
-                 NULL);
-  dlCartesianPlot = (DlCartesianPlot *)pCh->specifics;
-
-  switch(pCh->xyChannelType) {
-  case CP_XYScalarX:
+  switch(pt->type) {
+  case CP_XYScalar:
     /* X: x & y channels specified - scalars, up to dlCartesianPlot->count pairs */
-    count = pCh->xrtData->g.data[pCh->trace].npoints;
+    count = pt->xrtData->g.data[pt->trace].npoints;
     if (count <= dlCartesianPlot->count-1) {
-      pCh->xrtData->g.data[pCh->trace].xp[count] = (float) pCh->value;
-      pCh->xrtData->g.data[pCh->trace].yp[count] = (float) pCh->other->value;
-      pCh->xrtData->g.data[pCh->trace].npoints++;
+      pt->xrtData->g.data[pt->trace].xp[count] = (float) pt->recordX->value;
+      pt->xrtData->g.data[pt->trace].yp[count] = (float) pt->recordY->value;
+      pt->xrtData->g.data[pt->trace].npoints++;
     } else
     if (count > dlCartesianPlot->count-1) {
       if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
@@ -1124,52 +1062,25 @@ void cartesianPlotUpdateTrace(Channel *pCh) {
         /* shift everybody down one, add at end */
         int j;
         for (j = 1; j < dlCartesianPlot->count; j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j-1] =
-                   pCh->xrtData->g.data[pCh->trace].xp[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j-1] =
-                   pCh->xrtData->g.data[pCh->trace].yp[j];
+          pt->xrtData->g.data[pt->trace].xp[j-1] =
+                   pt->xrtData->g.data[pt->trace].xp[j];
+          pt->xrtData->g.data[pt->trace].yp[j-1] =
+                   pt->xrtData->g.data[pt->trace].yp[j];
         }
-        pCh->xrtData->g.data[pCh->trace].xp[j-1] = (float) pCh->value;
-        pCh->xrtData->g.data[pCh->trace].yp[j-1] = (float) pCh->other->value;
-        pCh->xrtData->g.data[pCh->trace].npoints = dlCartesianPlot->count;
-      }
-    }
-    break;
-
-  case CP_XYScalarY:
-    /* Y: x & y channels specified - scalars, up to dlCartesianPlot->count pairs */
-    count = pCh->xrtData->g.data[pCh->trace].npoints;
-    if (count <= dlCartesianPlot->count-1) {
-      pCh->xrtData->g.data[pCh->trace].yp[count] = (float) pCh->value;
-      pCh->xrtData->g.data[pCh->trace].xp[count] = (float) pCh->other->value;
-      pCh->xrtData->g.data[pCh->trace].npoints++;
-    } else
-    if (count > dlCartesianPlot->count-1) {
-      if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
-        /* don't update */
-      } else
-      if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
-        /* shift everybody down one, add at end */
-	int j;
-        for (j = 1; j < dlCartesianPlot->count; j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j-1] =
-                   pCh->xrtData->g.data[pCh->trace].yp[j];
-          pCh->xrtData->g.data[pCh->trace].xp[j-1] =
-                   pCh->xrtData->g.data[pCh->trace].xp[j];
-        }
-        pCh->xrtData->g.data[pCh->trace].yp[j-1] = (float) pCh->value;
-        pCh->xrtData->g.data[pCh->trace].xp[j-1] = (float) pCh->other->value;
+        pt->xrtData->g.data[pt->trace].xp[j-1] = (float) pt->recordX->value;
+        pt->xrtData->g.data[pt->trace].yp[j-1] = (float) pt->recordY->value;
+        pt->xrtData->g.data[pt->trace].npoints = dlCartesianPlot->count;
       }
     }
     break;
 
   case CP_XScalar:
     /* x channel scalar, up to dlCartesianPlot->count pairs */
-    count = pCh->xrtData->g.data[pCh->trace].npoints;
+    count = pt->xrtData->g.data[pt->trace].npoints;
     if (count <= dlCartesianPlot->count-1) {
-      pCh->xrtData->g.data[pCh->trace].xp[count] = (float) pCh->value;
-      pCh->xrtData->g.data[pCh->trace].yp[count] = (float) count;
-      pCh->xrtData->g.data[pCh->trace].npoints++;
+      pt->xrtData->g.data[pt->trace].xp[count] = (float) pt->recordX->value;
+      pt->xrtData->g.data[pt->trace].yp[count] = (float) count;
+      pt->xrtData->g.data[pt->trace].npoints++;
     } else
     if (count > dlCartesianPlot->count-1) {
       if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
@@ -1179,13 +1090,13 @@ void cartesianPlotUpdateTrace(Channel *pCh) {
         /* shift everybody down one, add at end */
 	int j;
         for (j = 1; j < dlCartesianPlot->count; j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j-1] =
-                   pCh->xrtData->g.data[pCh->trace].xp[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j-1] =
+          pt->xrtData->g.data[pt->trace].xp[j-1] =
+                   pt->xrtData->g.data[pt->trace].xp[j];
+          pt->xrtData->g.data[pt->trace].yp[j-1] =
                    (float) (j-1);
         }
-        pCh->xrtData->g.data[pCh->trace].xp[j-1] = (float) pCh->value;
-        pCh->xrtData->g.data[pCh->trace].yp[j-1] = (float) (j-1);
+        pt->xrtData->g.data[pt->trace].xp[j-1] = (float) pt->recordX->value;
+        pt->xrtData->g.data[pt->trace].yp[j-1] = (float) (j-1);
       }
     }
     break;
@@ -1193,85 +1104,80 @@ void cartesianPlotUpdateTrace(Channel *pCh) {
 
   case CP_XVector:
     /* x channel vector, ca_element_count(chid) elements */
-
-    /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
+    switch(pt->recordX->dataType) {
       case DBF_STRING:
       {
-        medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-                "illegal field type for Cartesian Plot channel",
-                ca_name(pCh->chid));
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = 0.0;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = 0.0;
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_INT:
       {
-        short *pShort = &pCh->data->i.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pShort[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        short *pShort = (short *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) pShort[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_FLOAT:
       {
-        float *pFloat =  &pCh->data->f.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pFloat[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        float *pFloat = (float *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) pFloat[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_ENUM:
       {
-        unsigned short *pUShort = &pCh->data->e.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pUShort[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        unsigned short *pUShort = (unsigned short *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) pUShort[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_CHAR:
       {
-        unsigned char *pChar = &pCh->data->c.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pChar[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        unsigned char *ptar = (unsigned char *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) ptar[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_LONG:
       {
-        dbr_long_t *pLong = &pCh->data->l.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pLong[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) pLong[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
       case DBF_DOUBLE:
       {
-        double *pDouble = &pCh->data->d.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pDouble[j];
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) j;
+        double *pDouble = (double *) pt->recordX->array;
+        for (j = 0; j < pt->recordX->elementCount; j++) {
+          pt->xrtData->g.data[pt->trace].xp[j] = (float) pDouble[j];
+          pt->xrtData->g.data[pt->trace].yp[j] = (float) j;
         }
         break;
       }
     }
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
+    pt->xrtData->g.data[pt->trace].npoints = pt->recordX->elementCount;
     break;
 
   case CP_YScalar:
     /* y channel scalar, up to dlCartesianPlot->count pairs */
-    count = pCh->xrtData->g.data[pCh->trace].npoints;
+    count = pt->xrtData->g.data[pt->trace].npoints;
     if (count <= dlCartesianPlot->count-1) {
-      pCh->xrtData->g.data[pCh->trace].yp[count] = (float) pCh->value;
-      pCh->xrtData->g.data[pCh->trace].xp[count] = (float) count;
-      pCh->xrtData->g.data[pCh->trace].npoints++;
+      pt->xrtData->g.data[pt->trace].yp[count] = (float) pt->recordY->value;
+      pt->xrtData->g.data[pt->trace].xp[count] = (float) count;
+      pt->xrtData->g.data[pt->trace].npoints++;
     } else
     if (count > dlCartesianPlot->count-1) {
       if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
@@ -1281,708 +1187,671 @@ void cartesianPlotUpdateTrace(Channel *pCh) {
         /* shift everybody down one, add at end */
 	int j;
         for (j = 1; j < dlCartesianPlot->count; j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j-1] =
-              pCh->xrtData->g.data[pCh->trace].yp[j];
-          pCh->xrtData->g.data[pCh->trace].xp[j-1] = (float) (j-1);
+          pt->xrtData->g.data[pt->trace].yp[j-1] =
+              pt->xrtData->g.data[pt->trace].yp[j];
+          pt->xrtData->g.data[pt->trace].xp[j-1] = (float) (j-1);
         }
-        pCh->xrtData->g.data[pCh->trace].yp[j-1] = (float) pCh->value;
-        pCh->xrtData->g.data[pCh->trace].xp[j-1] = (float) (j-1);
+        pt->xrtData->g.data[pt->trace].yp[j-1] = (float) pt->recordY->value;
+        pt->xrtData->g.data[pt->trace].xp[j-1] = (float) (j-1);
       }
     }
     break;
 
   case CP_YVector:
     /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
+    switch(pt->recordY->dataType) {
     case DBF_STRING:
     {
-      medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-                "illegal field type for Cartesian Plot channel",
-                ca_name(pCh->chid));
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = 0.0;
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = 0.0;
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_INT:
     {
-      short *pShort = &pCh->data->i.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pShort[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      short *pShort = (short *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pShort[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_FLOAT:
     {
-      float *pFloat = &pCh->data->f.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pFloat[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      float *pFloat = (float *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pFloat[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_ENUM:
     {
-      unsigned short *pUShort = &pCh->data->e.value;;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pUShort[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      unsigned short *pUShort = (unsigned short *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pUShort[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_CHAR:
     {
-      unsigned char *pChar = &pCh->data->c.value;;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pChar[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      unsigned char *ptar = (unsigned char *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) ptar[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_LONG:
     {
-      dbr_long_t *pLong = &pCh->data->l.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pLong[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pLong[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
     case DBF_DOUBLE:
     {
-      double *pDouble = &pCh->data->d.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pDouble[j];
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) j;
+      double *pDouble = (double *) pt->recordY->array;
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pDouble[j];
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) j;
       }
       break;
     }
   }
-  pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
+  pt->xrtData->g.data[pt->trace].npoints = pt->recordY->elementCount;
   break;
 
 
-  case CP_XVectorYScalarX:
- /* x channel vector, ca_element_count(chid) elements */
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-
-    /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
-    case DBF_STRING:
-    {
-      medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-              "illegal field type for Cartesian Plot channel",
-              ca_name(pCh->chid));
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = 0.0;
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_INT:
-    {
-      short *pShort = &pCh->data->i.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pShort[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_FLOAT:
-    {
-      float *pFloat = &pCh->data->f.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = pFloat[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_ENUM:
-    {
-      unsigned short *pUShort = &pCh->data->e.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pUShort[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_CHAR:
-    {
-      unsigned char *pChar = &pCh->data->c.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pChar[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_LONG:
-    {
-      dbr_long_t *pLong = &pCh->data->l.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pLong[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-    case DBF_DOUBLE:
-    {
-      double *pDouble = &pCh->data->d.value;
-      for (j = 0; j < ca_element_count(pCh->chid); j++) {
-        pCh->xrtData->g.data[pCh->trace].xp[j] = (double) pDouble[j];
-        pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->other->value;
-      }
-      break;
-    }
-  }
-  pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-  break;
-
-
-  case CP_YVectorXScalarY:
-    /* y channel vector, ca_element_count(chid) elements */
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-
-    /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
-      case DBF_STRING:
-      {
-        medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-                     "illegal field type for Cartesian Plot channel",
-                     ca_name(pCh->chid));
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = 0.0;
+  case CP_XVectorYScalar:
+    pt->xrtData->g.data[pt->trace].npoints = pt->recordX->elementCount;
+    if (pd == pt->recordX) {
+      /* plot first "count" elements of vector per dlCartesianPlot*/
+      switch(pt->recordX->dataType) {
+        case DBF_STRING:
+        {
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = 0.0;
+          }
+          break;
         }
-        break;
-      }
-      case DBF_INT:
-      {
-        short *pShort = &pCh->data->i.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pShort[j];
+        case DBF_INT:
+        {
+          short *pShort = (short *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pShort[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_FLOAT:
-      {
-        float *pFloat = &pCh->data->f.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = pFloat[j];
+        case DBF_FLOAT:
+        {
+          float *pFloat = (float *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = pFloat[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_ENUM:
-      {
-        unsigned short *pUShort = &pCh->data->e.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pUShort[j];
+        case DBF_ENUM:
+        {
+          unsigned short *pUShort = (unsigned short *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pUShort[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_CHAR:
-      {
-        unsigned char *pChar = &pCh->data->c.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pChar[j];
+        case DBF_CHAR:
+        {
+          unsigned char *ptar = (unsigned char *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) ptar[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_LONG:
-      {
-        dbr_long_t *pLong = &pCh->data->l.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pLong[j];
+        case DBF_LONG:
+        {
+          dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pLong[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_DOUBLE:
-      {
-        double *pDouble = &pCh->data->d.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->other->value;
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pDouble[j];
+        case DBF_DOUBLE:
+        {
+          double *pDouble = (double *) pt->recordX->array;
+          for (j = 0; j < pt->recordX->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (double) pDouble[j];
+          }
+          break;
         }
-        break;
       }
-    }
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-    break;
-
-  case CP_XVectorYScalarY:
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-    for (j = 0; j < ca_element_count(pCh->chid); j++) {
-      pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pCh->value;
+    } else 
+    if (pd == pt->recordY) {
+      for (j = 0; j < pt->recordX->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].yp[j] = (float) pt->recordY->value;
+      }
     }
     break;
 
-  case CP_YVectorXScalarX:
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-    for (j = 0; j < ca_element_count(pCh->chid); j++) {
-      pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pCh->value;
+  case CP_YVectorXScalar:
+    pt->xrtData->g.data[pt->trace].npoints = pt->recordY->elementCount;
+    if (pd == pt->recordY) {
+      /* plot first "count" elements of vector per dlCartesianPlot*/
+      switch(pt->recordY->dataType) {
+        case DBF_STRING:
+        {
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = 0.0;
+          }
+          break;
+        }
+        case DBF_INT:
+        {
+          short *pShort = (short *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pShort[j];
+          }
+          break;
+        }
+        case DBF_FLOAT:
+        {
+          float *pFloat = (float *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = pFloat[j];
+          }
+          break;
+        }
+        case DBF_ENUM:
+        {
+          unsigned short *pUShort = (unsigned short *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pUShort[j];
+          }
+          break;
+        }
+        case DBF_CHAR:
+        {
+          unsigned char *ptar = (unsigned char *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) ptar[j];
+          }
+          break;
+        }
+        case DBF_LONG:
+        {
+          dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pLong[j];
+          }
+          break;
+        }
+        case DBF_DOUBLE:
+          {
+          double *pDouble = (double *) pt->recordY->array;
+          for (j = 0; j < pt->recordY->elementCount; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (double) pDouble[j];
+          }
+          break;
+        }
+      }
+    } else 
+    if (pd == pt->recordX) {
+      for (j = 0; j < pt->recordY->elementCount; j++) {
+        pt->xrtData->g.data[pt->trace].xp[j] = (float) pt->recordX->value;
+      }
     }
     break;
 
-/**** N.B. - not handling update of other vector in this call, relying
- ****           upon old value information until it is also updated
- ****           by monitor events.  Note that this is probabilistically
- ****           equivalent to the other more complicated monitor-occurred-
- ****           on-this-channel-but-fill-in-other-channel-from-its-current-
- ****           value
- ****/
-  case CP_XYVectorX:
-    /* x channel vector, ca_element_count(chid) elements */
-    pCh->xrtData->g.data[pCh->trace].npoints =
-      MIN(ca_element_count(pCh->chid), ca_element_count(pCh->other->chid));
+  case CP_XYVector:
+    pt->xrtData->g.data[pt->trace].npoints =
+      MIN(pt->recordX->elementCount, pt->recordY->elementCount);
 
-    /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
-      case DBF_STRING:
-        medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-                        "illegal field type for Cartesian Plot channel",
-                        ca_name(pCh->chid));
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = 0.0;
+    if (pd == pt->recordX) {
+      int count = pt->xrtData->g.data[pt->trace].npoints;
+      switch(pt->recordX->dataType) {
+        case DBF_STRING:
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = 0.0;
+          }
+          break;
+        case DBF_INT:
+        {
+          short *pShort = (short *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pShort[j];
+          }
+          break;
         }
-        break;
-      case DBF_INT:
-      {
-        short *pShort = &pCh->data->i.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pShort[j];
+        case DBF_FLOAT:
+        {
+          float *pFloat = (float *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = pFloat[j];
+          }
+          break;
         }
-        break;
+        case DBF_ENUM:
+        {
+          unsigned short *pUShort = (unsigned short *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pUShort[j];
+          }
+          break;
+        }
+        case DBF_CHAR:
+        {
+          unsigned char *ptar = (unsigned char *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) ptar[j];
+          }
+          break;
+        }
+        case DBF_LONG:
+        {
+          dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pLong[j];
+          }
+          break;
+        }
+        case DBF_DOUBLE:
+        {
+          double *pDouble = (double *) pt->recordX->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].xp[j] = (float) pDouble[j];
+          }
+          break;
+        }
       }
-      case DBF_FLOAT:
-      {
-        float *pFloat = &pCh->data->f.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = pFloat[j];
+    } else
+    if (pd == pt->recordY) {
+      int count = pt->xrtData->g.data[pt->trace].npoints;
+      switch(pt->recordY->dataType) {
+        case DBF_STRING:
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = 0.0;
+          }
+          break;
+        case DBF_INT:
+        {
+          short *pShort = (short *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pShort[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_ENUM:
-      {
-        unsigned short *pUShort = &pCh->data->e.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pUShort[j];
+        case DBF_FLOAT:
+        {
+          float *pFloat = (float *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = pFloat[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_CHAR:
-      {
-        unsigned char *pChar = &pCh->data->c.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pChar[j];
+        case DBF_ENUM:
+        {
+          unsigned short *pUShort = (unsigned short *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pUShort[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_LONG:
-      {
-        dbr_long_t *pLong = &pCh->data->l.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pLong[j];
+        case DBF_CHAR:
+        {
+          unsigned char *ptar = (unsigned char *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) ptar[j];
+          }
+          break;
         }
-        break;
-      }
-      case DBF_DOUBLE:
-      {
-        double *pDouble = &pCh->data->d.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].xp[j] = (float) pDouble[j];
+        case DBF_LONG:
+        {
+          dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pLong[j];
+          }
+          break;
         }
-        break;
+        case DBF_DOUBLE:
+        {
+          double *pDouble = (double *) pt->recordY->array;
+          for (j = 0; j < count; j++) {
+            pt->xrtData->g.data[pt->trace].yp[j] = (float) pDouble[j];
+          }
+          break;
+        }
       }
     }
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
-    break;
-
-
-  case CP_XYVectorY:
-    /* y channel vector, ca_element_count(chid) elements */
-    pCh->xrtData->g.data[pCh->trace].npoints =
-      MIN(ca_element_count(pCh->chid), ca_element_count(pCh->other->chid));
-
-    /* plot first "count" elements of vector per dlCartesianPlot*/
-    switch(ca_field_type(pCh->chid)) {
-      case DBF_STRING:
-        medmPrintf("\ncartesianPlotUpdateTrace: %s: %s",
-                        "illegal field type for Cartesian Plot channel",
-                        ca_name(pCh->chid));
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = 0.0;
-        }
-        break;
-      case DBF_INT:
-      {
-        short *pShort = &pCh->data->i.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pShort[j];
-        }
-        break;
-      }
-      case DBF_FLOAT:
-      {
-        float *pFloat = &pCh->data->f.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = pFloat[j];
-        }
-        break;
-      }
-      case DBF_ENUM:
-      {
-        unsigned short *pUShort = &pCh->data->e.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pUShort[j];
-        }
-        break;
-      }
-      case DBF_CHAR:
-      {
-        unsigned char *pChar = &pCh->data->c.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pChar[j];
-        }
-        break;
-      }
-      case DBF_LONG:
-      {
-        dbr_long_t *pLong = &pCh->data->l.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pLong[j];
-        }
-        break;
-      }
-      case DBF_DOUBLE:
-      {
-        double *pDouble = &pCh->data->d.value;
-        for (j = 0; j < ca_element_count(pCh->chid); j++) {
-          pCh->xrtData->g.data[pCh->trace].yp[j] = (float) pDouble[j];
-        }
-        break;
-      }
-    }
-    pCh->xrtData->g.data[pCh->trace].npoints = ca_element_count(pCh->chid);
     break;
   default:
-    medmPrintf("\ncartesianPlotUpdateTrace: unhandled CP case: %d",
-                        pCh->xyChannelType);
+      medmPrintf("\ncartesianPlotUpdateTrace: unhandled CP case\n");
   }
 }
 
-void cartesianPlotUpdateScreenFirstTime(Channel *pCh) {
-  CartesianPlotData *cartesianPlotData;
-  DlCartesianPlot *dlCartesianPlot;
+void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  XYTrace *pt = (XYTrace *) pd->clientData;
+  CartesianPlot *pcp = pt->cartesianPlot;
   int count, i;
   unsigned short j;
   Arg args[20];
   Boolean clearDataSet1 = True;
   Boolean clearDataSet2 = True;
-  Channel *tmpCh;
-
-
-  XtVaGetValues((Widget)pCh->self,
-                 XmNuserData,(XtPointer)&cartesianPlotData,
-                 NULL);
-  if (cartesianPlotData == (CartesianPlotData *)NULL) {
-    medmPrintf("\ncartesianPlotUpdateScreen: cartesianPlotData == NULL");
-    return;
-  }
 
   /* return until all channels get their graphical information */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    tmpCh = (Channel *) cartesianPlotData->monitors[i][0];
-    if (tmpCh != NULL) {
-      if (tmpCh->xrtData == NULL) return;
-      if (tmpCh->data == NULL) return;
-    }
-    tmpCh = (Channel *) cartesianPlotData->monitors[i][1];
-    if (tmpCh != NULL) {
-      if (tmpCh->xrtData == NULL) return;
-      if (tmpCh->data == NULL) return;
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if ((t->recordX) || (t->recordY)) {
+      if (t->xrtData == NULL) return;
+      if ((t->recordX) &&
+         ((!t->recordX->array) || (t->recordX->precision < 0))) return;
+      if ((t->recordY) &&
+         ((!t->recordY->array) || (t->recordY->precision < 0))) return;
     }
   }
-  if (cartesianPlotData->eraseCh) {
-    tmpCh = (Channel *) cartesianPlotData->eraseCh;
-    if (tmpCh->data == NULL) return;
+  if (pcp->triggerCh.recordX) {
+    if (pcp->triggerCh.recordX->precision < 0) return;
+  }
+  if (pcp->eraseCh.recordX) {
+    if (pcp->eraseCh.recordX->precision < 0) return;
   }
   /* draw all plots once */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-    if ((pChX == NULL) && (pChY == NULL)) continue;
-    if ((pChX) && (pChX->xrtData)) {
-      cartesianPlotUpdateTrace(pChX);
-      if (pChX->xyChannelType == CP_XYVectorX)
-        cartesianPlotUpdateTrace(pChY);
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if (t->recordX) {
+      cartesianPlotUpdateTrace((XtPointer)t->recordX);
+      if (t->type == CP_XYVector)
+        cartesianPlotUpdateTrace((XtPointer)t->recordY);
     } else
-    if ((pChY) && (pChY->xrtData))
-      cartesianPlotUpdateTrace(pChY);
-    if (pChX) {
-      if (pChX->xrtDataSet == 1)
-        XtVaSetValues(pChX->self,XtNxrtData,pChX->xrtData,NULL);
-      else
-      if (pChX->xrtDataSet == 2)
-        XtVaSetValues(pChX->self,XtNxrtData2,pChX->xrtData,NULL);
+    if (t->recordY) {
+      cartesianPlotUpdateTrace((XtPointer)t->recordY);
     } else {
-      if (pChY->xrtDataSet == 1)
-        XtVaSetValues(pChY->self,XtNxrtData,pChY->xrtData,NULL);
-      else
-      if (pChY->xrtDataSet == 2)
-        XtVaSetValues(pChY->self,XtNxrtData2,pChY->xrtData,NULL);
+      continue;
     }
+    if (t->xrtData == pcp->xrtData1)
+      XtVaSetValues(pcp->widget,XtNxrtData,t->xrtData,NULL);
+    else
+    if (t->xrtData == pcp->xrtData2)
+      XtVaSetValues(pcp->widget,XtNxrtData2,t->xrtData,NULL);
   }
   /* erase the plot */
-  tmpCh = (Channel *) cartesianPlotData->eraseCh;
-  if (tmpCh) {
-    if (((tmpCh->value == 0) && (cartesianPlotData->eraseMode == ERASE_IF_ZERO))
-      || ((tmpCh->value != 0) && (cartesianPlotData->eraseMode == ERASE_IF_NOT_ZERO))) {
-      for (i = 0; i < cartesianPlotData->nTraces; i++) {
-        Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-        Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-        if (pChX) {
-          int n = pChX->xrtData->g.data[pChX->trace].npoints;
+  if (pcp->eraseCh.recordX) {
+    Record *pr = pcp->eraseCh.recordX;
+    if (((pr->value == 0.0) && (pcp->eraseMode == ERASE_IF_ZERO))
+      || ((pr->value != 0.0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))) {
+      for (i = 0; i < pcp->nTraces; i++) {
+        XYTrace *t = &(pcp->xyTrace[i]);
+        if ((t->recordX) || (t->recordY)) {
+          int n = t->xrtData->g.data[t->trace].npoints;
           if (n > 0) {
-            if ((pChX->xrtDataSet == 1) && (clearDataSet1)) {
-              XtVaSetValues(pChX->self,XtNxrtData,nullData,NULL);
+            if ((t->xrtData == pcp->xrtData1) && (clearDataSet1)) {
+              XtVaSetValues(pcp->widget,XtNxrtData,nullData,NULL);
               clearDataSet1 = False;
             } else
-            if ((pChX->xrtDataSet == 2) && (clearDataSet2)) {
-              XtVaSetValues(pChX->self,XtNxrtData2,nullData,NULL);
+            if ((t->xrtData == pcp->xrtData2) && (clearDataSet2)) {
+              XtVaSetValues(pcp->widget,XtNxrtData2,nullData,NULL);
               clearDataSet2 = False;
             }
-            pChX->xrtData->g.data[pChX->trace].npoints = 0;
+            t->xrtData->g.data[t->trace].npoints = 0;
           }
-        } else
-        if (pChY) {
-          int n = pChY->xrtData->g.data[pChY->trace].npoints;
-          if (n > 0) {
-            if ((pChY->xrtDataSet == 1) && (clearDataSet1)) {
-              XtVaSetValues(pChY->self,XtNxrtData,nullData,NULL);
-              clearDataSet1 = False;
-            } else
-            if ((pChY->xrtDataSet == 2) && (clearDataSet2)) {
-              XtVaSetValues(pChY->self,XtNxrtData2,nullData,NULL);
-              clearDataSet2 = False;
-            }
-            pChY->xrtData->g.data[pChY->trace].npoints = 0;
-          }
-        }
+        } 
       }
     }
   }
   /* switch back to regular update routine */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-    Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-    if (pChX) {
-      pChX->updateDataCb = cartesianPlotUpdateScreen;
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *t = &(pcp->xyTrace[i]);
+    if (t->recordX) {
+      medmRecordAddUpdateValueCb(t->recordX,cartesianPlotUpdateValueCb);
     }
-    if (pChY) {
-      pChY->updateDataCb = cartesianPlotUpdateScreen;
+    if (t->recordY) {
+      medmRecordAddUpdateValueCb(t->recordY,cartesianPlotUpdateValueCb);
     }
   }
-  if (cartesianPlotData->eraseCh) {
-    ((Channel *)cartesianPlotData->eraseCh)->updateDataCb = cartesianPlotUpdateScreen;
+  if (pcp->eraseCh.recordX) {
+    medmRecordAddUpdateValueCb(pcp->eraseCh.recordX,cartesianPlotUpdateValueCb);
   }
-  if (cartesianPlotData->triggerCh) {
-    ((Channel *)cartesianPlotData->triggerCh)->updateDataCb = cartesianPlotUpdateScreen;
+  if (pcp->triggerCh.recordX) {
+    medmRecordAddUpdateValueCb(pcp->triggerCh.recordX,cartesianPlotUpdateValueCb);
   }
+  updateTaskMarkUpdate(pcp->updateTask);
 }
 
 
-void cartesianPlotUpdateScreen(Channel *pCh) {
-  CartesianPlotData *cartesianPlotData;
-  DlCartesianPlot *dlCartesianPlot;
+void cartesianPlotUpdateValueCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  XYTrace *pt = (XYTrace *) pd->clientData;
+  CartesianPlot *pcp = pt->cartesianPlot;
   int count, i;
   unsigned short j;
   Arg args[20];
-
-  XtVaGetValues((Widget)pCh->self,
-                 XmNuserData,(XtPointer)&cartesianPlotData,
-                 NULL);
-  if (cartesianPlotData == (CartesianPlotData *)NULL) {
-    medmPrintf("\ncartesianPlotUpdateScreen: cartesianPlotData == NULL");
-    return;
-  }
 
   /* if this is in trigger mode, and this update request is not from
    * the trigger, do not update.
    */
 
   /* if this is an erase channel, erase screen */
-  if (pCh == (Channel *) cartesianPlotData->eraseCh) {
+  if (pd == pcp->eraseCh.recordX) {
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
     XrtDataStyle style;
 
-    if (((pCh->value == 0) && (cartesianPlotData->eraseMode == ERASE_IF_NOT_ZERO))
-	||((pCh->value != 0) && (cartesianPlotData->eraseMode == ERASE_IF_ZERO))) {
+    /* not the right value, return */
+    if (((pd->value == 0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))
+	||((pd->value != 0) && (pcp->eraseMode == ERASE_IF_ZERO))) {
       return;
     }
-    for (i = 0; i < cartesianPlotData->nTraces; i++) {
-      Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-      Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-      if (pChX) {
-	int n = pChX->xrtData->g.data[pChX->trace].npoints;
+
+    /* erase */
+    for (i = 0; i < pcp->nTraces; i++) {
+      XYTrace *t = &(pcp->xyTrace[i]);
+      if ((t->recordX) || (t->recordY)) {
+	int n = t->xrtData->g.data[t->trace].npoints;
         if (n > 0) {
-	  if ((pChX->xrtDataSet == 1) && (clearDataSet1)) {
-	    XtVaSetValues(pChX->self,XtNxrtData,nullData,NULL);
+	  if ((t->xrtData == pcp->xrtData1) && (clearDataSet1)) {
+	    XtVaSetValues(pcp->widget,XtNxrtData,nullData,NULL);
 	    clearDataSet1 = False;
+            pcp->dirty1 = False;
 	  } else
-	  if ((pChX->xrtDataSet == 2) && (clearDataSet2)) {
-	    XtVaSetValues(pChX->self,XtNxrtData2,nullData,NULL);
+	  if ((t->xrtData == pcp->xrtData2) && (clearDataSet2)) {
+	    XtVaSetValues(pcp->widget,XtNxrtData2,nullData,NULL);
 	    clearDataSet2 = False;
+            pcp->dirty2 = False;
 	  }
-	  pChX->xrtData->g.data[pChX->trace].npoints = 0;
-	}
-      } else
-      if (pChY) {
-	int n = pChY->xrtData->g.data[pChY->trace].npoints;
-        if (n > 0) {
-	  if ((pChY->xrtDataSet == 1) && (clearDataSet1)) {
-	    XtVaSetValues(pChY->self,XtNxrtData,nullData,NULL);
-	    clearDataSet1 = False;
-	  } else
-	  if ((pChY->xrtDataSet == 2) && (clearDataSet2)) {
-	    XtVaSetValues(pChY->self,XtNxrtData2,nullData,NULL);
-	    clearDataSet2 = False;
-	  }
-	  pChY->xrtData->g.data[pChY->trace].npoints = 0;
+	  t->xrtData->g.data[t->trace].npoints = 0;
 	}
       }
     }
+    updateTaskMarkUpdate(pcp->updateTask);
     return;
   }
 
-  if (cartesianPlotData->triggerCh) {
-    if (pCh != (Channel *)cartesianPlotData->triggerCh)
+  /* if there is a trigger channel, but this is not the one, return */
+  if (pcp->triggerCh.recordX) {
+    if (pd != pcp->triggerCh.recordX)
       return;
   }
 
-
-  dlCartesianPlot = (DlCartesianPlot *)pCh->specifics;
-
-  if (cartesianPlotData->triggerCh) {
+  if (pcp->triggerCh.recordX) {
     /* trigger channel monitor, update appropriate plots */
-    for (i = 0; i < cartesianPlotData->nTraces; i++) {
-      Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
-      Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
-      if ((pChX == NULL) && (pChY == NULL)) continue;
-      if ((pChX) && (pChX->xrtData)) {
-        cartesianPlotUpdateTrace(pChX);
-        if (pChX->xyChannelType == CP_XYVectorX)
-          cartesianPlotUpdateTrace(pChY);
+    for (i = 0; i < pcp->nTraces; i++) {
+      XYTrace *t = &(pcp->xyTrace[i]);
+      if ((t->recordX == NULL) && (t->recordY == NULL)) continue;
+      if ((t->recordX) && (t->xrtData)) {
+        cartesianPlotUpdateTrace((XtPointer)t->recordX);
+        if (t->type == CP_XYVector)
+          cartesianPlotUpdateTrace((XtPointer)t->recordY);
+        if (t->xrtData == pcp->xrtData1)
+          pcp->dirty1 = True;
+	else
+	if (t->xrtData == pcp->xrtData2)
+          pcp->dirty2 = True;
       } else
-      if ((pChY) && (pChY->xrtData))
-        cartesianPlotUpdateTrace(pChY);
-      if (pChX) {
-        if (pChX->xrtDataSet == 1)
-	  XtVaSetValues(pChX->self,XtNxrtData,pChX->xrtData,NULL);
+      if ((t->recordY) && (t->xrtData)) {
+        cartesianPlotUpdateTrace((XtPointer)t->recordY);
+	if (t->xrtData == pcp->xrtData1)
+          pcp->dirty1 = True;
 	else
-	if (pChX->xrtDataSet == 2)
-	  XtVaSetValues(pChX->self,XtNxrtData2,pChX->xrtData,NULL);
-      } else {
-	if (pChY->xrtDataSet == 1)
-	  XtVaSetValues(pChY->self,XtNxrtData,pChY->xrtData,NULL);
-	else
-	if (pChY->xrtDataSet == 2)
-	  XtVaSetValues(pChY->self,XtNxrtData2,pChY->xrtData,NULL);
+	if (t->xrtData == pcp->xrtData2)
+          pcp->dirty2 = True;
       }
     }
   } else {
-    cartesianPlotUpdateTrace(pCh);
+    cartesianPlotUpdateTrace((XtPointer)pd);
     /* not in CP related to trigger channel, proceed as normal */
-    if (pCh->xrtDataSet == 1) {
-      XtVaSetValues(pCh->self,XtNxrtData,pCh->xrtData,NULL);
+    if (pt->xrtData == pcp->xrtData1) {
+      pcp->dirty1 = True;
     } else
-    if (pCh->xrtDataSet == 2) {
-      XtVaSetValues(pCh->self,XtNxrtData2,pCh->xrtData,NULL);
+    if (pt->xrtData == pcp->xrtData2) {
+      pcp->dirty2 = True;
     } else
-      medmPrintf("\ncartesianPlotUpdateScreen : illegal xrtDataSet specified (%d)",
-                      pCh->xrtDataSet);
+      medmPrintf("\ncartesianPlotUpdateScreen : illegal xrtDataSet specified\n");
   }
+  updateTaskMarkUpdate(pcp->updateTask);
 }
 
-void cartesianPlotDestroyCb(Channel *pCh) {
-  if (executeTimeCartesianPlotWidget == pCh->self) {
+void cartesianPlotDestroyCb(XtPointer cd) {
+  CartesianPlot *pcp = (CartesianPlot *) cd;
+  if (executeTimeCartesianPlotWidget == pcp->widget) {
     executeTimeCartesianPlotWidget = NULL;
     XtSetSensitive(cartesianPlotAxisS,False);
+  }
+  if (pcp) {
+    int i;
+    for (i = 0; i < pcp->nTraces; i++) {
+      Record *pr;
+      if (pr = pcp->xyTrace[i].recordX) {
+        medmDestroyRecord(pr);
+      }
+      if (pr = pcp->xyTrace[i].recordY) {
+        medmDestroyRecord(pr);
+      }
+    }
+    if (pcp->triggerCh.recordX)
+      medmDestroyRecord(pcp->triggerCh.recordX);
+    if (pcp->eraseCh.recordX)
+      medmDestroyRecord(pcp->eraseCh.recordX);
+    free(pcp);
   }
   return;
 }
 
-void cartesianPlotUpdateValueCb(Channel *pCh) {
-  CartesianPlotData *cartesianPlotData;
-  DlCartesianPlot *dlCartesianPlot;
+void cartesianPlotDraw(XtPointer cd) {
+  CartesianPlot *pcp = (CartesianPlot *) cd;
   int count, i;
   Boolean connected = True;
   Boolean readAccess = True;
 
-  XtVaGetValues((Widget)pCh->self,XmNuserData,(XtPointer)&cartesianPlotData,NULL);
-  if (cartesianPlotData == (CartesianPlotData *)NULL) {
-    medmPrintf("\ncartesianPlotUpdateValueCb: cartesianPlotData == NULL");
-    return;
-  }
-
   /* check for connection */
-  for (i = 0; i < cartesianPlotData->nTraces; i++) {
-    Channel *tmpCh;
-    tmpCh = (Channel *) cartesianPlotData->monitors[i][0];
-    if (tmpCh != NULL) {
-      if (ca_state(tmpCh->chid) != cs_conn) {
+  for (i = 0; i < pcp->nTraces; i++) {
+    Record *pr;
+    if (pr = pcp->xyTrace[i].recordX) {
+      if (!pr->connected) {
 	connected = False;
 	break;
-      }
-      if (!ca_read_access(tmpCh->chid)) readAccess = False;
+      } else
+      if (!pr->readAccess)
+        readAccess = False;
     }
-    tmpCh = (Channel *) cartesianPlotData->monitors[i][1];
-    if (tmpCh != NULL) {
-      if (ca_state(tmpCh->chid) != cs_conn) {
+    if (pr = pcp->xyTrace[i].recordY) {
+      if (!pr->connected) {
 	connected = False;
 	break;
-      }
-      if (!ca_read_access(tmpCh->chid)) readAccess = False;
+      } else
+      if (!pr->readAccess)
+        readAccess = False;
     }
   }
 
-  if (cartesianPlotData->triggerCh) {
-    Channel *tmpCh = (Channel *) cartesianPlotData->triggerCh;
-    if (ca_state(tmpCh->chid) != cs_conn) {
+  if (pcp->triggerCh.recordX) {
+    Record *pr = pcp->triggerCh.recordX;
+    if (!pr->connected) {
       connected = False;
     } else
-    if (!ca_read_access(tmpCh->chid)) readAccess = False;
+    if (!pr->readAccess)
+      readAccess = False;
   }
 
-  if (cartesianPlotData->eraseCh) {
-    Channel *tmpCh = (Channel *) cartesianPlotData->eraseCh;
-    if (ca_state(tmpCh->chid) != cs_conn) {
+  if (pcp->eraseCh.recordX) {
+    Record *pr = pcp->eraseCh.recordX;
+    if (!pr->connected) {
       connected = False;
     } else
-    if (!ca_read_access(tmpCh->chid)) readAccess = False;
+    if (!pr->readAccess)
+      readAccess = False;
   }
 
   if (connected) {
     if (readAccess) {
-      if (pCh->self) {
-        XtManageChild(pCh->self);
+      if (pcp->widget) {
+        if (pcp->dirty1) {
+          pcp->dirty1 = False;
+          XtVaSetValues(pcp->widget,XtNxrtData,pcp->xrtData1,NULL);
+        }
+        if (pcp->dirty2) {
+          pcp->dirty2 = False;
+          XtVaSetValues(pcp->widget,XtNxrtData2,pcp->xrtData2,NULL);
+        }
+        XtManageChild(pcp->widget);
       }
     } else {
-      if (pCh->self) {
-        XtUnmanageChild(pCh->self);
+      if (pcp->widget) {
+        XtUnmanageChild(pcp->widget);
       }
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      draw3DPane(pcp->updateTask,
+          pcp->updateTask->displayInfo->dlColormap[pcp->dlCartesianPlot->plotcom.bclr]);
+      draw3DQuestionMark(pcp->updateTask);
     }
   } else {
-    if (pCh->self)
-      XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pcp->widget)
+      XtUnmanageChild(pcp->widget);
+    drawWhiteRectangle(pcp->updateTask);
   }
+}
+
+static void cartesianPlotName(XtPointer cd, char **name, short *severity, int *count) {
+  CartesianPlot *pcp = (CartesianPlot *) cd;
+  int i, j;
+
+  j = 0;
+  for (i = 0; i < pcp->nTraces; i++) {
+    XYTrace *pt = &(pcp->xyTrace[i]);
+    if (pt->recordX) {
+      name[j] = pt->recordX->name;
+      severity[j] = pt->recordX->severity;
+    } else {
+      name[j] = NULL;
+      severity[j] = NO_ALARM;
+    }
+    j++;
+    if (pt->recordY) {
+      name[j] = pt->recordY->name;
+      severity[j] = pt->recordY->severity;
+    } else {
+      name[j] = NULL;
+      severity[j] = NO_ALARM;
+    }
+    j++;
+  }
+  if (pcp->triggerCh.recordX) {
+    name[j] = pcp->triggerCh.recordX->name;
+    severity[j] = pcp->triggerCh.recordX->severity;
+  } else {
+    name[j] = NULL;
+    severity[j] = NO_ALARM;
+  }
+  j++;
+  if (pcp->eraseCh.recordX) {
+    name[j] = pcp->eraseCh.recordX->name;
+    severity[j] = pcp->eraseCh.recordX->severity;
+  } else {
+    name[j] = NULL;
+    severity[j] = NO_ALARM;
+  }
+  j++;
+  /* 200 means two columns */
+  *count = j + 200;
 }

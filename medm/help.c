@@ -53,6 +53,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - add the status dialog.
  *
  *****************************************************************************
 */
@@ -402,4 +404,216 @@ void medmPostTime() {
   tblock = localtime(&now);
   strftime(timeStampStr,60,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
   XmTextInsert(errMsgText, 0, timeStampStr);
+}
+
+static char caStudyMsg[512];
+static Widget caStudyDlg = NULL;
+static Boolean caUpdateStudyDlg = False;
+static char *caStatusDummyString =
+                         "Time Interval (sec)       =         \n"
+                         "CA connection(s)          =         \n"
+                         "CA connected              =         \n"
+                         "CA incoming event(s)      =         \n"
+                         "Active Objects            =         \n"
+                         "Object(s) Updated         =         \n"
+                         "Update Requests           =         \n"
+                         "Update Requests Discarded =         \n"
+                         "Update Requests Queued    =         \n";
+
+
+static double totalTimeElapsed = 0.0;
+static double aveCAEventCount = 0.0;
+static double aveUpdateExecuted = 0;
+static double aveUpdateRequested = 0;
+static double aveUpdateRequestDiscarded = 0;
+static Boolean caStudyAverageMode = False;
+
+
+void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+  if (caStudyDlg != NULL) {
+    XtUnmanageChild(caStudyDlg);
+    caUpdateStudyDlg = False;
+  }
+  return;
+}
+
+void caStudyDlgResetButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+  totalTimeElapsed = 0.0;
+  aveCAEventCount = 0.0;
+  aveUpdateExecuted = 0.0;
+  aveUpdateRequested = 0.0;
+  aveUpdateRequestDiscarded = 0.0;
+  return;
+}
+
+void caStudyDlgModeButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2) {
+  XmString str;
+  caStudyAverageMode = !(caStudyAverageMode);
+  return;
+}
+
+void medmCreateCAStudyDlg() {
+  Widget pane;
+  Widget actionArea;
+  Widget closeButton;
+  Widget resetButton;
+  Widget modeButton;
+  XmString str;
+
+  if (!caStudyDlg) {
+
+    if (mainShell == NULL) return;
+
+    caStudyDlg = XtVaCreatePopupShell("status",
+                 xmDialogShellWidgetClass, mainShell,
+                 XmNtitle, "MEDM Message Window",
+                 XmNdeleteResponse, XmDO_NOTHING,
+                 NULL);
+
+    pane = XtVaCreateWidget("panel",
+                 xmPanedWindowWidgetClass, caStudyDlg,
+                 XmNsashWidth, 1,
+                 XmNsashHeight, 1,
+                 NULL);
+
+    str = XmStringLtoRCreate(caStatusDummyString,XmSTRING_DEFAULT_CHARSET);
+
+    caStudyLabel = XtVaCreateManagedWidget("status",
+                 xmLabelWidgetClass, pane,
+                 XmNalignment, XmALIGNMENT_BEGINNING,
+                 XmNlabelString,str,
+                 NULL);
+    XmStringFree(str);
+  
+    
+    actionArea = XtVaCreateWidget("ActionArea",
+                    xmFormWidgetClass, pane,
+                    XmNshadowThickness, 0,
+                    XmNfractionBase, 7,
+                    XmNskipAdjust, True,
+                    NULL);
+    closeButton = XtVaCreateManagedWidget("Close",
+                    xmPushButtonWidgetClass, actionArea,
+                    XmNtopAttachment,    XmATTACH_FORM,
+                    XmNbottomAttachment, XmATTACH_FORM,
+                    XmNleftAttachment,   XmATTACH_POSITION,
+                    XmNleftPosition,     1,
+                    XmNrightAttachment,  XmATTACH_POSITION,
+                    XmNrightPosition,    2,
+                    NULL);
+    resetButton = XtVaCreateManagedWidget("Reset",
+                    xmPushButtonWidgetClass, actionArea,
+                    XmNtopAttachment,    XmATTACH_FORM,
+                    XmNbottomAttachment, XmATTACH_FORM,
+                    XmNleftAttachment,   XmATTACH_POSITION,
+                    XmNleftPosition,     3,
+                    XmNrightAttachment,  XmATTACH_POSITION,
+                    XmNrightPosition,    4,
+                    NULL);
+    modeButton = XtVaCreateManagedWidget("Mode",
+                    xmPushButtonWidgetClass, actionArea,
+                    XmNtopAttachment,    XmATTACH_FORM,
+                    XmNbottomAttachment, XmATTACH_FORM,
+                    XmNleftAttachment,   XmATTACH_POSITION,
+                    XmNleftPosition,     5,
+                    XmNrightAttachment,  XmATTACH_POSITION,
+                    XmNrightPosition,    6,
+                    NULL);
+    XtAddCallback(closeButton,XmNactivateCallback,caStudyDlgCloseButtonCb, NULL);
+    XtAddCallback(resetButton,XmNactivateCallback,caStudyDlgResetButtonCb, NULL);
+    XtAddCallback(modeButton,XmNactivateCallback,caStudyDlgModeButtonCb, NULL);
+    XtManageChild(actionArea);
+    XtManageChild(pane);
+  }
+
+  XtManageChild(caStudyDlg);
+  caUpdateStudyDlg = True;
+  if (globalDisplayListTraversalMode == DL_EXECUTE) {
+    XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+  }
+}
+
+void medmUpdateCAStudtylDlg(XtPointer data, XtIntervalId *id) {
+  if (caUpdateStudyDlg) {
+    XmString str;
+    XEvent event;
+    int taskCount;
+    int periodicTaskCount;
+    int updateRequestCount;
+    int updateDiscardCount;
+    int periodicUpdateRequestCount;
+    int periodicUpdateDiscardCount;
+    int updateRequestQueued;
+    int updateExecuted;
+    int totalTaskCount;
+    int totalUpdateRequested;
+    int totalUpdateDiscarded;
+    double timeInterval; 
+    int channelCount;
+    int channelConnected;
+    int caEventCount;
+
+    updateTaskStatusGetInfo(&taskCount,
+                            &periodicTaskCount,
+                            &updateRequestCount,
+                            &updateDiscardCount,
+                            &periodicUpdateRequestCount,
+                            &periodicUpdateDiscardCount,
+                            &updateRequestQueued,
+                            &updateExecuted,
+                            &timeInterval); 
+    CATaskGetInfo(&channelCount,&channelConnected,&caEventCount);
+    totalUpdateDiscarded = updateDiscardCount+periodicUpdateDiscardCount;
+    totalUpdateRequested = updateRequestCount+periodicUpdateRequestCount + totalUpdateDiscarded;
+    totalTaskCount = taskCount + periodicTaskCount;
+    if (caStudyAverageMode) {
+      double elapseTime = totalTimeElapsed;
+      totalTimeElapsed += timeInterval;
+      aveCAEventCount = (aveCAEventCount * elapseTime + caEventCount) / totalTimeElapsed;
+      aveUpdateExecuted = (aveUpdateExecuted * elapseTime + updateExecuted) / totalTimeElapsed;
+      aveUpdateRequested = (aveUpdateRequested * elapseTime + totalUpdateRequested) / totalTimeElapsed;
+      aveUpdateRequestDiscarded =
+           (aveUpdateRequestDiscarded * elapseTime + totalUpdateDiscarded) / totalTimeElapsed;
+      sprintf(caStudyMsg,
+                         "AVERAGE :\n"
+                         "Total Time Elapsed        = %8.1f\n"
+                         "CA Incoming Event(s)      = %8.1f\n"
+                         "Object(s) Updated         = %8.1f\n"
+                         "Update Requests           = %8.1f\n"
+                         "Update Requests Discarded = %8.1f\n",
+                         totalTimeElapsed,
+                         aveCAEventCount,
+                         aveUpdateExecuted,
+                         aveUpdateRequested,
+                         aveUpdateRequestDiscarded);
+    } else { 
+      sprintf(caStudyMsg,  
+                         "Time Interval (sec)       = %8.2f\n"
+                         "CA connection(s)          = %8d\n"
+                         "CA connected              = %8d\n"
+                         "CA incoming event(s)      = %8d\n"
+                         "Active Objects            = %8d\n"
+                         "Object(s) Updated         = %8d\n"
+                         "Update Requests           = %8d\n"
+                         "Update Requests Discarded = %8d\n"
+                         "Update Requests Queued    = %8d\n",
+                         timeInterval,
+                         channelCount,
+                         channelConnected,
+                         caEventCount,
+                         totalTaskCount,
+                         updateExecuted,
+                         totalUpdateRequested,
+                         totalUpdateDiscarded,
+                         updateRequestQueued);
+    }                   
+    str = XmStringLtoRCreate(caStudyMsg,XmSTRING_DEFAULT_CHARSET);
+    XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
+    XmStringFree(str);
+    XFlush(XtDisplay(caStudyDlg));
+    XmUpdateDisplay(caStudyDlg);
+    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+      XtAppAddTimeOut(appContext,1000,medmUpdateCAStudtylDlg,NULL);
+    }
+  }
 }

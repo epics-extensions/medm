@@ -53,19 +53,32 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
+typedef struct _TextEntry {
+  Widget      widget;
+  DlTextEntry *dlTextEntry;
+  Record      *record;
+  UpdateTask  *updateTask;
+  Boolean     updateAllowed;
+} TextEntry;
+
 void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,DlTextEntry *dlTextEntry);
 void textEntryCreateEditInstance(DisplayInfo *displayInfo,DlTextEntry *dlTextEntry);
 
-static void textEntryUpdateValueCb(Channel *pCh);
-static void textEntryDestroyCb(Channel *pCh);
+static void textEntryDraw(XtPointer cd);
+static void textEntryUpdateValueCb(XtPointer cd);
+static void textEntryDestroyCb(XtPointer cd);
 static void textEntryValueChanged(Widget, XtPointer, XtPointer);
 static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
+static char *valueToString(TextEntry *, TextFormat format);
+static void textEntryName(XtPointer, char **, short *, int *);
 
 
 int textFieldFontListIndex(int height)
@@ -82,35 +95,105 @@ int textFieldFontListIndex(int height)
   return (0);
 }
 
+char *valueToString(TextEntry *pte, TextFormat format) {
+  Record *pd = pte->record;
+  static char textField[MAX_TEXT_UPDATE_WIDTH];
+  double value;
+  unsigned short precision = 0;
+  switch(pd->dataType) {
+    case DBF_STRING :
+      return (char *) pd->array;
+    case DBF_ENUM :
+      if ((pd->hopr+1 > 0)) {
+        int i = (int) pd->value;
+        /* getting values of -1 for data->value for invalid connections */
+        if ( i >= 0 && i < (int) pd->hopr+1) {
+          return pd->stateStrings[(int)pd->value];
+        } else {
+          return " ";
+        }
+      } else {
+        value = pd->value;
+      }
+      break;
+    case DBF_CHAR :
+    case DBF_INT :
+    case DBF_LONG :
+      value = pd->value;
+      break;
+    case DBF_FLOAT :
+      precision = pd->precision;
+      value = (double) pd->value;
+      break;
+    case DBF_DOUBLE :
+      precision = pd->precision;
+      value = pd->value;
+      break;
+    default :
+      medmPrintf("Name  : %s\n",pte->dlTextEntry->control.ctrl);
+      medmPrintf("Error : valueToString\n");
+      medmPostMsg("Msg   : Unknown Data Type!\n");
+      return "Error!";
+  }
+  switch (format) {
+    case DECIMAL:
+      cvtDoubleToString(value,textField,precision);
+      break;
+    case EXPONENTIAL:
+      cvtDoubleToExpString(value,textField,precision);
+      break;
+    case ENGR_NOTATION:
+      localCvtDoubleToExpNotationString(value,textField,precision);
+      break;
+    case COMPACT:
+      cvtDoubleToCompactString(value,textField,precision);
+      break;
+    case TRUNCATED:
+      cvtLongToString((long)value,textField);
+      break;
+    case HEXADECIMAL:
+      cvtLongToHexString((long)value, textField);
+      break;
+    case OCTAL:
+      cvtLongToOctalString((long)value, textField);
+      break;
+    default :
+      medmPrintf("Name  : %s\n",pte->dlTextEntry->control.ctrl);
+      medmPrintf("Error : valueToString\n");
+      medmPostMsg("Msg   : Unknown Format Type!\n");
+      return "Error!";
+  }
+  return textField;
+}
+ 
 /***
  *** Text Entry
  ***/
 void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 				    DlTextEntry *dlTextEntry) {
-  Channel *pCh;
+  TextEntry *pte;
   Arg args[20];
   int n;
 
-  pCh = allocateChannel(displayInfo);
+  pte = (TextEntry *) malloc(sizeof(TextEntry));
+  pte->dlTextEntry = dlTextEntry;
+  pte->updateTask = updateTaskAddTask(displayInfo,
+				      &(dlTextEntry->object),
+				      textEntryDraw,
+				      (XtPointer)pte);
 
-  pCh->monitorType = DL_TextEntry;
-  pCh->specifics=(XtPointer)dlTextEntry;
-  pCh->clrmod = dlTextEntry->clrmod;
-  pCh->backgroundColor = displayInfo->dlColormap[dlTextEntry->control.bclr];
-  pCh->updateList = NULL;
-
-  /* setup the callback rountine */
-  pCh->updateChannelCb = textEntryUpdateValueCb;
-  pCh->updateGraphicalInfoCb = NULL;
-  pCh->destroyChannel = textEntryDestroyCb;
-
-  /* put up white rectangle so that unconnected channels are obvious */
-  drawWhiteRectangle(pCh);
-
-
-  SEVCHK(CA_BUILD_AND_CONNECT(dlTextEntry->control.ctrl,TYPENOTCONN,0,
-			  &(pCh->chid),NULL,medmConnectEventCb,pCh),
-			  "executeDlTextEntry: error in CA_BUILD_AND_CONNECT for Monitor");
+  if (pte->updateTask == NULL) {
+    medmPrintf("menuCreateRunTimeInstance : memory allocation error\n");
+  } else {
+    updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
+    updateTaskAddNameCb(pte->updateTask,textEntryName);
+  }
+  pte->record = medmAllocateRecord(dlTextEntry->control.ctrl,
+                  textEntryUpdateValueCb,
+                  NULL,
+                  (XtPointer) pte);
+  pte->updateAllowed = True;
+  drawWhiteRectangle(pte->updateTask);
 
 /* from the text entry structure, we've got TextEntry's specifics */
   n = 0;
@@ -134,23 +217,23 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
   XtSetArg(args[n],XmNfontList,fontListTable[
 	textFieldFontListIndex(dlTextEntry->object.height)]); n++;
-  pCh->self = XtCreateWidget("textField",
+  pte->widget = XtCreateWidget("textField",
 		xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = pCh->self;
+  displayInfo->child[displayInfo->childCount++] = pte->widget;
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pCh->self,parsedTranslations);
+  XtOverrideTranslations(pte->widget,parsedTranslations);
 
   /* add the callbacks for update */
-  XtAddCallback(pCh->self,XmNactivateCallback,
-	  (XtCallbackProc)textEntryValueChanged, (XtPointer)pCh);
+  XtAddCallback(pte->widget,XmNactivateCallback,
+	  (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
 
   /* special stuff: if user started entering new data into text field, but
 	*  doesn't do the actual Activate <CR>, then restore old value on
 	*  losing focus...
 	*/
-  XtAddCallback(pCh->self,XmNmodifyVerifyCallback,
-	 (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pCh);
+  XtAddCallback(pte->widget,XmNmodifyVerifyCallback,
+	 (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pte);
 }
 
 void textEntryCreateEditInstance(DisplayInfo *displayInfo,
@@ -199,8 +282,6 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
 void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
 				Boolean dummy)
 {
-  displayInfo->useDynamicAttribute = FALSE;
-  
   if (displayInfo->traversalMode == DL_EXECUTE) {
 	 textEntryCreateRunTimeInstance(displayInfo,dlTextEntry);
   } else
@@ -209,45 +290,58 @@ void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
   }
 }
 
-void textEntryUpdateValueCb(Channel *pCh) {
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self) 
-	XtManageChild(pCh->self);
+void textEntryUpdateValueCb(XtPointer cd) {
+  TextEntry *pte = (TextEntry *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pte->updateTask);
+}
+
+void textEntryDraw(XtPointer cd) {
+  TextEntry *pte = (TextEntry *) cd;
+  Record *pd = pte->record;
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pte->widget) 
+	XtManageChild(pte->widget);
       else
         return;
-      if (ca_write_access(pCh->chid)) {
-	XtVaSetValues(pCh->self,XmNeditable,True,NULL);
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),rubberbandCursor);
+      if (pd->writeAccess) {
+	XtVaSetValues(pte->widget,XmNeditable,True,NULL);
+	XDefineCursor(XtDisplay(pte->widget),XtWindow(pte->widget),rubberbandCursor);
       } else {
-	XtVaSetValues(pCh->self,XmNeditable,False,NULL);
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),noWriteAccessCursor);
-        pCh->updateAllowed = True;
+	XtVaSetValues(pte->widget,XmNeditable,False,NULL);
+	XDefineCursor(XtDisplay(pte->widget),XtWindow(pte->widget),noWriteAccessCursor);
+        pte->updateAllowed = True;
       }
-      if (pCh->updateAllowed) {
-        XmTextFieldSetString(pCh->self,valueToString(pCh,
-		       ((DlTextEntry *) pCh->specifics)->format));
-        switch (pCh->clrmod) {
+      if (pte->updateAllowed) {
+        XmTextFieldSetString(pte->widget,valueToString(pte,
+		       pte->dlTextEntry->format));
+        switch (pte->dlTextEntry->clrmod) {
           case STATIC :
           case DISCRETE:
             break;
           case ALARM:
-            XtVaSetValues(pCh->self,XmNforeground,alarmColorPixel[pCh->severity],NULL);
+            XtVaSetValues(pte->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
             break;
         }
       }
     } else {
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
-      if (pCh->self) XtUnmanageChild(pCh->self);
+      draw3DPane(pte->updateTask,
+          pte->updateTask->displayInfo->dlColormap[pte->dlTextEntry->control.bclr]);
+      draw3DQuestionMark(pte->updateTask);
+      if (pte->widget) XtUnmanageChild(pte->widget);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pte->widget) XtUnmanageChild(pte->widget);
+    drawWhiteRectangle(pte->updateTask);
   }
 }
 
-void textEntryDestroyCb(Channel *pCh) {
+void textEntryDestroyCb(XtPointer cd) {
+  TextEntry *pte = (TextEntry *) cd;
+  if (pte) {
+    medmDestroyRecord(pte->record);
+    free(pte);
+  }
   return;
 }
 
@@ -257,15 +351,16 @@ void textEntryDestroyCb(Channel *pCh) {
  *  the value isn't ca_put()-ed, and the text field can be inconsistent
  *  with the underlying channel
  */
-static XtCallbackProc textEntryLosingFocusCallback(
+static void textEntryLosingFocusCallback(
   Widget w,
-  Channel *pCh,
-  XmTextVerifyCallbackStruct *call_data)
+  XtPointer cd,
+  XtPointer cbs)
 {
+  TextEntry *pte = (TextEntry *) cd;
   XtRemoveCallback(w,XmNlosingFocusCallback,
-        (XtCallbackProc)textEntryLosingFocusCallback,pCh);
-  pCh->updateAllowed = True;
-  textEntryUpdateValueCb(pCh);
+        (XtCallbackProc)textEntryLosingFocusCallback,pte);
+  pte->updateAllowed = True;
+  textEntryUpdateValueCb((XtPointer)pte->record);
 }
 
 
@@ -274,7 +369,7 @@ void textEntryModifyVerifyCallback(
   XtPointer clientData,
   XtPointer pCallbackData)
 {
-  Channel *pCh = (Channel *) clientData;
+  TextEntry *pte = (TextEntry *) clientData;
   XmTextVerifyCallbackStruct *pcbs = (XmTextVerifyCallbackStruct *) pCallbackData;
 
   /* NULL event means value changed programmatically; hence don't process */
@@ -283,8 +378,8 @@ void textEntryModifyVerifyCallback(
       case XtCallbackNoList:
       case XtCallbackHasNone:
         XtAddCallback(w,XmNlosingFocusCallback,
-                (XtCallbackProc)textEntryLosingFocusCallback,pCh);
-        pCh->updateAllowed = False; 
+                (XtCallbackProc)textEntryLosingFocusCallback,pte);
+        pte->updateAllowed = False; 
         break;
       case XtCallbackHasSome:
         break;
@@ -298,29 +393,31 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 {
   char *textValue;
   double value;
-  Channel *pCh = (Channel *) clientData;
+  TextEntry *pte = (TextEntry *) clientData;
+  Record *pd = pte->record;
 
-  if (pCh == NULL) return;
-  if (pCh->chid == NULL) return;
 
-  if ((ca_state(pCh->chid) == cs_conn) && ca_write_access(pCh->chid)) {
-
-    globalModifiedFlag = True;
+  if ((pd->connected) && pd->writeAccess) {
 
     textValue = XmTextFieldGetString(w);
-    switch (ca_field_type(pCh->chid)) {
+    switch (pd->dataType) {
       case DBF_STRING:
         if (strlen(textValue) >= MAX_STRING_SIZE) 
           textValue[MAX_STRING_SIZE-1] = '\0';
-        SEVCHK(ca_put(DBR_STRING,pCh->chid,textValue),"textEntryValueChanged: error in ca_put");
+        medmSendString(pte->record,textValue);
         break;
       default:
         value = (double) atof(textValue);
-        SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&value),
-          "textEntryValueChanged: error in ca_put");
+        medmSendDouble(pte->record,value);
         break;
     }
     XtFree(textValue);
-    ca_flush_io();
   }
+}
+
+static void textEntryName(XtPointer cd, char **name, short *severity, int *count) {
+  TextEntry *pte = (TextEntry *) cd;
+  *count = 1;
+  name[0] = pte->record->name;
+  severity[0] = pte->record->severity;
 }

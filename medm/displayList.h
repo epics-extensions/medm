@@ -53,6 +53,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - change "engr notation" to "engr. notation"
+ *                              - strip chart has two more fields
+ *                                "period" and "oldUnits".
+ *                              - polyLine has a new field "isFallingOrRisingLine".
  *
  *****************************************************************************
 */
@@ -69,7 +74,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
+#if 0
 #include <strings.h>
+#endif
 
 #define MAX_TOKEN_LENGTH	256	/* max size of strings in adl  */
 #define MAX_RELATED_DISPLAYS	8	/* max # of related displays   */
@@ -324,7 +331,7 @@ extern const eraseMode_t FIRST_ERASE_MODE;
     "up","right", "down","left",
     "solid","dash",
     "solid","outline",
-    "decimal", "exponential", "engr notation", "compact", "truncated",
+    "decimal", "exponential", "engr. notation", "compact", "truncated",
       "hexadecimal", "octal",
     "horiz. left","horiz. centered","horiz. right",
       "vert. top","vert. bottom","vert. centered",
@@ -444,7 +451,8 @@ typedef int DlMonitorType;
  *********************************************************************/
 typedef struct {
 	int clr;
-	FillStyle style, fill;
+        EdgeStyle style;
+	FillStyle fill;
 	unsigned int width;
 } DlAttribute;
 
@@ -525,6 +533,7 @@ typedef struct {
 
 typedef struct {
 	char name[MAX_TOKEN_LENGTH];
+        int versionNumber;
 } DlFile;
 
 typedef struct {
@@ -642,8 +651,12 @@ typedef struct {
 typedef struct {
 	DlObject object;
 	DlPlotcom plotcom;
-	int delay;
+        double period;
 	TimeUnits units;
+#if 1
+        double delay;           /* the delay and oldUnits are for compatible reason */
+	TimeUnits oldUnits;     /* they will be removed for future release */
+#endif
 	DlPen pen[MAX_PENS];
 } DlStripChart;
 
@@ -733,6 +746,7 @@ typedef struct {
 	DlObject object;
 	XPoint *points;
 	int nPoints;
+        int isFallingOrRisingLine;
 } DlPolyline;
 
 typedef struct {

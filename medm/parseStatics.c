@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -81,7 +82,7 @@ void parseFile(
 
 /* initialize some data in structure */
   strcpy(dlFile->name,"display.adl");
-
+  dlFile->versionNumber = 0;
 
   do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -91,6 +92,11 @@ void parseFile(
 			getToken(displayInfo,token);
 			strcpy(dlFile->name,token);
 		}
+                if (!strcmp(token,"version")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        dlFile->versionNumber = atoi(token);
+                }
 		break;
 	    case T_EQUAL:
 		break;
@@ -628,6 +634,7 @@ void parseFallingLine(
   dlPolyline->object = defaultObject;
   dlPolyline->nPoints = 0;
   dlPolyline->points = (XPoint *)NULL;
+  dlPolyline->isFallingOrRisingLine = True;
 
   do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -650,7 +657,7 @@ void parseFallingLine(
   dlPolyline->nPoints = 2;
   dlPolyline->points[0].x = dlPolyline->object.x;
   dlPolyline->points[0].y = dlPolyline->object.y;
-  dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width;
+  dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width; 
   dlPolyline->points[1].y = dlPolyline->object.y + dlPolyline->object.height;
 
   dlElement = (DlElement *) malloc(sizeof(DlElement));
@@ -680,6 +687,7 @@ void parseRisingLine(
   dlPolyline->object = defaultObject;
   dlPolyline->nPoints = 0;
   dlPolyline->points = (XPoint *)NULL;
+  dlPolyline->isFallingOrRisingLine = True;
 
   do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {

@@ -53,13 +53,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - add version number into the FILE object
  *
  *****************************************************************************
 */
-
-/*****************************************************************************
- ******				 createStatics.c			******
- *****************************************************************************/
 
 #include "medm.h"
 
@@ -73,14 +71,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 XtIntervalId intervalId;
 int cursorX, cursorY;
 
-
-/**********************************************************************
- *********    nested objects (not to be put in display list)  *********
- **********************************************************************/
-
-
-
-
 void createDlObject(
   DisplayInfo *displayInfo,
   DlObject *object)
@@ -91,9 +81,6 @@ void createDlObject(
   object->height = globalResourceBundle.height;
 }
 
-
-
-
 static void createDlDynAttrMod(
   DisplayInfo *displayInfo,
   DlDynamicAttrMod *dynAttr)
@@ -102,15 +89,12 @@ static void createDlDynAttrMod(
   dynAttr->vis = globalResourceBundle.vis;
 }
 
-
-
 static void createDlDynAttrParam(
   DisplayInfo *displayInfo,
   DlDynamicAttrParam *dynAttr)
 {
   strcpy(dynAttr->chan,globalResourceBundle.chan);
 }
-
 
 static void createDlAttr(
   DisplayInfo *displayInfo,
@@ -121,7 +105,6 @@ static void createDlAttr(
   attr->fill = globalResourceBundle.fill;
   attr->width = globalResourceBundle.lineWidth;
 }
-
 
 static void createDlDynamicAttr(
   DisplayInfo *displayInfo,
@@ -400,6 +383,7 @@ DlElement *createDlFile(
 
   dlFile = (DlFile *) malloc(sizeof(DlFile));
   strcpy(dlFile->name,globalResourceBundle.name);
+  dlFile->versionNumber = MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
 
   dlElement = (DlElement *) malloc(sizeof(DlElement));
   dlElement->type = DL_File;

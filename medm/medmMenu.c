@@ -53,18 +53,31 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+
+typedef struct _Menu {
+  Widget      widget;
+  DlMenu      *dlMenu; 
+  Record      *record; 
+  UpdateTask  *updateTask;
+  Pixel       color;
+} Menu;
+
 void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlMenu *dlChoiceButton);
 void menuCreateEditInstance(DisplayInfo *displayInfo,DlMenu *dlChoiceButton);
 
-static void menuUpdateValueCb(Channel *pCh);
-static void menuUpdateGraphicalInfoCb(Channel *pCh);
-static void menuDestroyCb(Channel *pCh);
+static void menuDraw(XtPointer);
+static void menuUpdateValueCb(XtPointer);
+static void menuUpdateGraphicalInfoCb(XtPointer);
+static void menuDestroyCb(XtPointer cd);
 static void menuValueChangedCb(Widget, XtPointer, XtPointer);
+static void menuName(XtPointer, char **, short *, int *);
 
 int menuFontListIndex(int height)
 {
@@ -81,37 +94,28 @@ int menuFontListIndex(int height)
 }
 
 void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlMenu *dlMenu) {
-  Channel *pCh;
-  Display *display = XtDisplay(displayInfo->drawingArea);
+  Menu *pm;
+  pm = (Menu *) malloc(sizeof(Menu));
+  pm->dlMenu = dlMenu;
+  pm->updateTask = updateTaskAddTask(displayInfo,
+                                     &(dlMenu->object),
+                                     menuDraw,
+                                     (XtPointer)pm);
 
-  pCh = allocateChannel(displayInfo);
-
-  pCh->monitorType = DL_Menu;
-  pCh->specifics = (XtPointer) dlMenu;
-  pCh->clrmod = dlMenu->clrmod;
-  pCh->backgroundColor = displayInfo->dlColormap[dlMenu->control.bclr];
-  pCh->updateList = NULL;
-
-  /* setup the callback rountine */
-  pCh->updateChannelCb = menuUpdateValueCb;
-  pCh->updateGraphicalInfoCb = menuUpdateGraphicalInfoCb;
-  pCh->destroyChannel = menuDestroyCb;
-
-
-  /* put up white rectangle so that unconnected channels are obvious */
-
-  XSetForeground(display,displayInfo->pixmapGC,WhitePixel(display,DefaultScreen(display)));
-  XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
-	dlMenu->object.x,dlMenu->object.y,
-	dlMenu->object.width,dlMenu->object.height);
-  XSetForeground(display,displayInfo->gc,WhitePixel(display,DefaultScreen(display)));
-  XFillRectangle(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-	dlMenu->object.x,dlMenu->object.y,
-	dlMenu->object.width,dlMenu->object.height);
-
-  SEVCHK(CA_BUILD_AND_CONNECT(dlMenu->control.ctrl,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb,pCh),
-	"executeDlMenu: error in CA_BUILD_AND_CONNECT for Monitor");
+  if (pm->updateTask == NULL) {
+    medmPrintf("menuCreateRunTimeInstance : memory allocation error\n");
+  } else {
+    updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
+    updateTaskAddNameCb(pm->updateTask,menuName);
+  }
+  pm->record = medmAllocateRecord(dlMenu->control.ctrl,
+                  menuUpdateValueCb,
+                  menuUpdateGraphicalInfoCb,
+                  (XtPointer) pm);
+  drawWhiteRectangle(pm->updateTask);
+  pm->color = displayInfo->dlColormap[dlMenu->control.bclr];
+  pm->widget = NULL;
+  return;
 }
 
 void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
@@ -211,8 +215,10 @@ void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy)
   }
 }
 
-void menuUpdateGraphicalInfoCb(Channel *pCh) {
-  DlMenu *dlMenu = (DlMenu *) pCh->specifics;
+void menuUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  Menu *pm = (Menu *) pd->clientData;
+  DlMenu *dlMenu = pm->dlMenu;
   XmFontList fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
   int i,n;
   Arg args[20];
@@ -222,7 +228,7 @@ void menuUpdateGraphicalInfoCb(Channel *pCh) {
   /* !!!!! This is a temperory work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  pCh->updateGraphicalInfoCb = NULL;
+  medmRecordAddGraphicalInfoCb(pm->record,NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! End work around                 !!!!! */
@@ -230,41 +236,44 @@ void menuUpdateGraphicalInfoCb(Channel *pCh) {
 
   /* buildMenu function needs an extra entry to work */
 
-  if (ca_field_type(pCh->chid) != DBF_ENUM) {
+  if (pd->dataType != DBF_ENUM) {
     medmPrintf("menuUpdateGraphicalInfoCb :\n    %s\n    \"%s\" %s\n\n",
                 "Cannot create Choice Button,",
-                ca_name(pCh->chid),"is not an ENUM type!");
+                dlMenu->control.ctrl,"is not an ENUM type!");
     medmPostTime();
     return;
   }
 
-  if (dlMenu->object.width > OPTION_MENU_SUBTRACTIVE_WIDTH)
-    XtSetArg(args[0],XmNwidth,dlMenu->object.width - OPTION_MENU_SUBTRACTIVE_WIDTH);
-  else
-    XtSetArg(args[0],XmNwidth,dlMenu->object.width);
-  XtSetArg(args[1],XmNheight,dlMenu->object.height);
+  n = 0;
+  if (dlMenu->object.width > OPTION_MENU_SUBTRACTIVE_WIDTH) {
+    XtSetArg(args[0],XmNwidth,dlMenu->object.width - OPTION_MENU_SUBTRACTIVE_WIDTH); n++;
+  } else {
+    XtSetArg(args[0],XmNwidth,dlMenu->object.width); n++;
+  }
+  XtSetArg(args[1],XmNheight,dlMenu->object.height); n++;
   XtSetArg(args[2],XmNforeground,
-	    ((pCh->clrmod == ALARM)?
-	      alarmColorPixel[pCh->info->e.severity] :
-	      pCh->displayInfo->dlColormap[dlMenu->control.clr]));
-  XtSetArg(args[3],XmNbackground, pCh->displayInfo->dlColormap[dlMenu->control.bclr]);
-  XtSetArg(args[4],XmNrecomputeSize,False);
-  XtSetArg(args[5],XmNfontList, fontList);
-  XtSetArg(args[6],XmNuserData, pCh),
-  XtSetArg(args[7],XmNtearOffModel, XmTEAR_OFF_DISABLED);
-  XtSetArg(args[8],XmNentryAlignment, XmALIGNMENT_CENTER);
-  XtSetArg(args[9],XmNisAligned,True);
-  menu = XmCreatePulldownMenu(pCh->displayInfo->drawingArea,"menu",args,10);
+	    ((dlMenu->clrmod == ALARM)?
+	      alarmColorPixel[pd->severity] :
+	      pm->updateTask->displayInfo->dlColormap[dlMenu->control.clr])); n++;
+  XtSetArg(args[3],XmNbackground,
+              pm->updateTask->displayInfo->dlColormap[dlMenu->control.bclr]); n++;
+  XtSetArg(args[4],XmNrecomputeSize,False); n++;
+  XtSetArg(args[5],XmNfontList, fontList); n++;
+  XtSetArg(args[6],XmNuserData, pm), n++;
+  XtSetArg(args[7],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
+  XtSetArg(args[8],XmNentryAlignment, XmALIGNMENT_CENTER); n++;
+  XtSetArg(args[9],XmNisAligned,True); n++;
+  menu = XmCreatePulldownMenu(pm->updateTask->displayInfo->drawingArea,"menu",args,n);
   XtSetArg(args[7],XmNalignment,XmALIGNMENT_CENTER);
-  for (i=0; i<pCh->info->e.no_str; i++) {
+  for (i=0; i<=pd->hopr; i++) {
     XmString xmStr;
-    xmStr = XmStringCreateSimple(pCh->info->e.strs[i]);
+    xmStr = XmStringCreateSimple(pd->stateStrings[i]);
     XtSetArg(args[8], XmNlabelString, xmStr);
     buttons[i] = XmCreatePushButtonGadget(menu, "menuButtons", args, 9);
     XtAddCallback(buttons[i], XmNactivateCallback, menuValueChangedCb, (XtPointer) i);
     XmStringFree(xmStr);
   }
-  XtManageChildren(buttons,pCh->info->e.no_str);
+  XtManageChildren(buttons,i);
   n = 7;
   XtSetArg(args[n],XmNx, dlMenu->object.x); n++;
   XtSetArg(args[n],XmNy, dlMenu->object.y); n++;
@@ -272,85 +281,97 @@ void menuUpdateGraphicalInfoCb(Channel *pCh) {
   XtSetArg(args[n],XmNmarginHeight, 0); n++;
   XtSetArg(args[n],XmNsubMenuId, menu); n++;
   XtSetArg(args[n],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
-  pCh->self = XmCreateOptionMenu(pCh->displayInfo->drawingArea,
+  pm->widget = XmCreateOptionMenu(pm->updateTask->displayInfo->drawingArea,
 		  "optionMenu",args,n);
-  pCh->displayInfo->child[pCh->displayInfo->childCount++]
-	      = pCh->self;
+  pm->updateTask->displayInfo->child[pm->updateTask->displayInfo->childCount++]
+	      = pm->widget;
 		
   /* unmanage the option label gadget, manage the option menu */
-  XtUnmanageChild(XmOptionLabelGadget(pCh->self));
-  XtManageChild(pCh->self);
+  XtUnmanageChild(XmOptionLabelGadget(pm->widget));
+  XtManageChild(pm->widget);
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pCh->self,parsedTranslations);
-  menuUpdateValueCb(pCh);
+  XtOverrideTranslations(pm->widget,parsedTranslations);
+  updateTaskMarkUpdate(pm->updateTask);
 
 }
 
-static void menuUpdateValueCb(Channel *pCh) {
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-        XtManageChild(pCh->self);
-      else
-        return;
+static void menuUpdateValueCb(XtPointer cd) {
+  Menu *pm = (Menu *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pm->updateTask);
+}
 
-      if (ca_field_type(pCh->chid) == DBF_ENUM) {
+static void menuDraw(XtPointer cd) {
+  Menu *pm = (Menu *) cd;
+  Record *pd = pm->record;
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if ((pm->widget) && !XtIsManaged(pm->widget))
+        XtManageChild(pm->widget);
+ 
+      if (pd->precision < 0) return;
+
+      if (pd->dataType == DBF_ENUM) {
         Widget menuWidget;
         WidgetList children;
         Cardinal numChildren;
         int i;
 
-        XtVaGetValues(pCh->self,XmNsubMenuId,&menuWidget,NULL);
+        XtVaGetValues(pm->widget,XmNsubMenuId,&menuWidget,NULL);
         XtVaGetValues(menuWidget,
 		XmNchildren,&children,
 		XmNnumChildren,&numChildren,
 		NULL);
-        i = (int) pCh->value;
+        i = (int) pd->value;
         if ((i >=0) && (i < (int) numChildren)) {
-          XtVaSetValues(pCh->self,XmNmenuHistory,children[i],NULL);
+          XtVaSetValues(pm->widget,XmNmenuHistory,children[i],NULL);
         } else {
           medmPrintf("menuUpdateValueCb: invalid menuHistory child\n");
           medmPostTime();
           return;
         }
-        switch (pCh->clrmod) {
+        switch (pm->dlMenu->clrmod) {
           case STATIC :
           case DISCRETE :
             break;
           case ALARM :
-            XtVaSetValues(pCh->self,XmNforeground,alarmColorPixel[pCh->severity],NULL);
-            XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pCh->severity],NULL);
+            XtVaSetValues(pm->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+            XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pd->severity],NULL);
             break;
           default :
             medmPrintf("Message: Unknown color modifier!\n");
-            medmPrintf("Channel Name : %s\n",ca_name(pCh->chid));
+            medmPrintf("Channel Name : %s\n",pm->dlMenu->control.ctrl);
             medmPostMsg("Error: menuUpdateValueCb\n");
             return;
         }
       } else {
         medmPrintf("Message: Data type must be enum!\n");
-        medmPrintf("Channel Name : %s\n",ca_name(pCh->chid));
+        medmPrintf("Channel Name : %s\n",pm->dlMenu->control.ctrl);
         medmPostMsg("Error: menuUpdateValueCb\n");
         return;
       }
-      if (ca_write_access(pCh->chid))
-        XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),rubberbandCursor);
+      if (pd->writeAccess)
+        XDefineCursor(XtDisplay(pm->widget),XtWindow(pm->widget),rubberbandCursor);
       else
-        XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),noWriteAccessCursor);
+        XDefineCursor(XtDisplay(pm->widget),XtWindow(pm->widget),noWriteAccessCursor);
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pm->widget) XtUnmanageChild(pm->widget);
+      draw3DPane(pm->updateTask,pm->color);
+      draw3DQuestionMark(pm->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if ((pm->widget) && XtIsManaged(pm->widget))
+      XtUnmanageChild(pm->widget);
+    drawWhiteRectangle(pm->updateTask);
   }
 }
 
-static void menuDestroyCb(Channel *pCh) {
-  return;
+static void menuDestroyCb(XtPointer cd) {
+  Menu *pm = (Menu *) cd;
+  if (pm) {
+    medmDestroyRecord(pm->record); 
+    free(pm);
+  }
 }
 
 static void menuValueChangedCb(
@@ -359,7 +380,8 @@ static void menuValueChangedCb(
   XtPointer callbackStruct)
 {
   Arg args[3];
-  Channel *pCh;
+  Menu *pm;
+  Record *pd;
   short btnNumber = (short) clientData;
   XmPushButtonCallbackStruct *call_data = (XmPushButtonCallbackStruct *) callbackStruct;
 
@@ -369,23 +391,27 @@ static void menuValueChangedCb(
   if (call_data->event != NULL && call_data->reason == XmCR_ACTIVATE) {
 
     /* button's parent (menuPane) has the displayInfo pointer */
-    XtVaGetValues(w,XmNuserData,&pCh,NULL);
+    XtVaGetValues(w,XmNuserData,&pm,NULL);
+    pd = pm->record;
 
-    if (pCh == NULL) return;
-
-    if (ca_state(pCh->chid) == cs_conn) {
-      if (ca_write_access(pCh->chid)) {
-        SEVCHK(ca_put(DBR_SHORT,pCh->chid,&(btnNumber)),
-          "menuValueChangedCb : error in ca_put");
-        ca_flush_io();
+    if (pd->connected) {
+      if (pd->writeAccess) {
+      medmSendDouble(pm->record,(double)btnNumber);
       } else {
         fputc('\a',stderr);
-        menuUpdateValueCb(pCh);
+        menuUpdateValueCb((XtPointer)pm->record);
       } 
     } else {
       medmPrintf("menuValueChangedCb : %s not connected",
-                ca_name(pCh->chid));
+                pm->dlMenu->control.ctrl);
     }
   }
+}
+
+static void menuName(XtPointer cd, char **name, short *severity, int *count) {
+  Menu *pm = (Menu *) cd;
+  *count = 1;
+  name[0] = pm->record->name;
+  severity[0] = pm->record->severity;
 }
 

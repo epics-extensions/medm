@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -114,14 +115,7 @@ typedef union {
   struct dbr_ctrl_double d;
 } infoBuf;
 
-typedef enum {
-    CP_XYScalarX,       CP_XYScalarY,
-    CP_XScalar,         CP_YScalar,
-    CP_XVector,         CP_YVector,
-    CP_XVectorYScalarX, CP_XVectorYScalarY,
-    CP_YVectorXScalarX, CP_YVectorXScalarY,
-    CP_XYVectorX,       CP_XYVectorY
-} XYChannelTypeEnum;
+#if 0
 
 typedef enum {
   NOT_MODIFIED,		/* monitor not modified                              */
@@ -137,7 +131,6 @@ typedef enum {MEDMNoOp, MEDMNoConnection, MEDMNoReadAccess, MEDMNoWriteAccess,
 typedef struct _Channel {
 	DlMonitorType monitorType;		/* type of monitor obj       */
 	XtPointer specifics;			/* display element pointer   */
-        ModifiedTypeEnum modified;		/* data modified flag        */
 	Boolean previouslyConnected;		/* chid previously connected */
         chid   chid;
         evid   evid;
@@ -205,15 +198,49 @@ typedef struct _Channel {
 	Boolean handleArray;                    /* channel handle array */
 	Boolean ignoreValueChanged;             /* Don't update if only value changed */
 	Boolean opaque;                         /* Don't redraw background */
+        Boolean dirty;		                /* data modified flag        */
 } Channel;
 
 /*
  * global variables
  */
 
-/* monitor data list head and tail (a single monitor list for all displays) */
-EXTERN Channel *channelAccessMonitorListHead;
-EXTERN Channel *channelAccessMonitorListTail;
+#endif
 
+#define MAX_EVENT_DATA 16
+typedef struct _Record {
+  int       caId;
+  int       elementCount;
+  short     dataType;
+  double    value;
+  double    hopr;
+  double    lopr;
+  short     precision;
+  short     status;
+  short     severity;
+  Boolean   connected;
+  Boolean   readAccess;
+  Boolean   writeAccess;
+  char      *stateStrings[16];
+  char      *name;
+  XtPointer array;
 
+  XtPointer clientData;
+  void (*updateValueCb)(XtPointer); 
+  void (*updateGraphicalInfoCb)(XtPointer); 
+  Boolean  monitorSeverityChanged;
+  Boolean  monitorValueChanged;
+  Boolean  monitorZeroAndNoneZeroTransition;
+} Record;
+
+typedef struct _Channel {
+  int       caId;
+  dataBuf   *data;
+  infoBuf   info;
+  chid      chid;
+  evid      evid;
+  int       size;             /* size of data buffer (number of char) */
+  Record    *pr;
+  Boolean   previouslyConnected;
+} Channel;
 #endif  /* __MEDMCA_H__ */

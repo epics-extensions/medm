@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -61,7 +62,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * MEDM Version information
  */
 #define MEDM_VERSION		2
-#define MEDM_REVISION		0
-#define MEDM_UPDATE_LEVEL	6
+#define MEDM_REVISION		1
+#define MEDM_UPDATE_LEVEL	0
 
-#define MEDM_VERSION_STRING	"MEDM Version 2.0.6"
+#define MEDM_VERSION_STRING	"MEDM Version 2.1.0"

@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -81,12 +82,14 @@ void writeDlFile(
 {
   int i;
   char indent[16];
+  int versionNumber = MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
 
   fprintf(stream,"\n%sfile {",indent);
   fprintf(stream,"\n%s\tname=\"%s\"",indent,dlFile->name);
+  fprintf(stream,"\n%s\tversion=%06d",indent,versionNumber);
   fprintf(stream,"\n%s}",indent);
 }
 

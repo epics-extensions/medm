@@ -154,12 +154,12 @@ void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
       if (dlComposite->chan[0] != '\0' && dlComposite->vis != V_STATIC) {
 
 
+/*
 	Channel *channelAccessMonitorData =
                         allocateChannel(displayInfo);
 	channelAccessMonitorData->monitorType = DL_Composite;
 	channelAccessMonitorData->specifics = (XtPointer) dlComposite;
 	channelAccessMonitorData->dlAttr = NULL;
-/*
 	SEVCHK(CA_BUILD_AND_CONNECT(dlComposite->chan,TYPENOTCONN,0,
           &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
           NULL),

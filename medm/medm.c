@@ -53,6 +53,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - fix the file closing problem
+ *                                when using the 'file->close' memu button.
  *
  *****************************************************************************
 */
@@ -105,7 +108,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 #define N_VIEW_MENU_ELES     3
 #define VIEW_BTN_POSN        2
-#define VIEW_MESSAGE_WINDOW_BTN  11
+#define VIEW_MESSAGE_WINDOW_BTN  1
+#define VIEW_STATUS_WINDOW_BTN   2
 
 #define N_ALIGN_MENU_ELES 2
 #define ALIGN_BTN_POSN 13
@@ -161,7 +165,7 @@ static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
 Widget mainFilePDM, mainHelpPDM;
 
 void medmExit();
-Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwrite);
+Boolean medmInitWorkProc(XtPointer cd);
 
 static menuEntry_t graphicsObjectMenu[] = {
   { "Text",        &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
@@ -347,6 +351,8 @@ static menuEntry_t fileMenu[] = {
 static menuEntry_t viewMenu[] = {
   { "Message Window", &xmPushButtonGadgetClass, 'M', NULL, NULL, NULL,
     viewMenuSimpleCallback, (XtPointer) VIEW_MESSAGE_WINDOW_BTN, NULL},
+  { "Status Window", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
+    viewMenuSimpleCallback, (XtPointer) VIEW_STATUS_WINDOW_BTN, NULL},
   NULL,
 };
 /*
@@ -434,12 +440,6 @@ static String fallbackResources[] = {
   "Medm.mainMW*modeRB*XmToggleButton.highlightThickness: 1",
   "Medm.mainMW*openFSD.dialogTitle: Open",
   "Medm.mainMW*helpMessageBox.dialogTitle: Help",
-  "Medm.mainMW*closeQD.dialogTitle: Close",
-  "Medm.mainMW*closeQD.messageString: Do you really want to Close \
-    this display\nand (potentially) lose changes?",
-  "Medm.mainMW*closeQD.okLabelString: Yes",
-  "Medm.mainMW*closeQD.cancelLabelString: No",
-  "Medm.mainMW*closeQD.helpLabelString: Cancel",
   "Medm.mainMW*saveAsPD.dialogTitle: Save As...",
   "Medm.mainMW*saveAsPD.selectionLabelString: \
     Name of file to save display in:",
@@ -630,7 +630,7 @@ request_t * requestCreate(int argc, char *argv[]) {
       if (tmp) {
         argsUsed = i + 1;
         strcpy(request->displayFont,tmp);
-        if (request->displayFont) {
+        if (request->displayFont[0] == '\0') {
           if (!strcmp(request->displayFont,FONT_ALIASES_STRING))
             request->fontStyle = FIXED;
           else if (!strcmp(request->displayFont,DEFAULT_SCALABLE_STRING))
@@ -705,7 +705,7 @@ request_t * requestCreate(int argc, char *argv[]) {
             strcpy(fullPathName,name);
             strcat(fullPathName,"/");
             strcat(fullPathName,fileStr);
-            if (canAccess = access(fullPathName,R_OK|F_OK)) break;
+            if (canAccess = !access(fullPathName,R_OK|F_OK)) break;
           }
         }
       }
@@ -743,6 +743,9 @@ static void viewMenuSimpleCallback(
   switch(buttonNumber) {
     case VIEW_MESSAGE_WINDOW_BTN:
       errMsgDlgCreateDlg();
+      break;
+    case VIEW_STATUS_WINDOW_BTN:
+      medmCreateCAStudyDlg();
       break;
     default :
       break;
@@ -960,57 +963,19 @@ static void fileMenuSimpleCallback(
       break;
 
     case FILE_CLOSE_BTN:
-      /* manage closeQD - based on interactive selection of display */
       if (displayInfoListHead->next == displayInfoListTail) {
         /* only one display; no need to query user */
-        highlightAndSetSelectedElements(NULL,0,0);
-        clearResourcePaletteEntries();
-        newDisplayInfo = currentDisplayInfo;
-        currentDisplayInfo = NULL;
+        widget = displayInfoListTail->drawingArea;
       } else
       if (displayInfoListHead->next) {
         /* more than one display; query user */
         widget = XmTrackingEvent(mainShell,closeCursor,False, &event);
         if (widget == (Widget) NULL) return;
-        newDisplayInfo = dmGetDisplayInfoFromWidget(widget);
-        if (newDisplayInfo == currentDisplayInfo) {
-          highlightAndSetSelectedElements(NULL,0,0);
-          clearResourcePaletteEntries();
-          currentDisplayInfo = NULL;
-        }
       } else {
         /* no display */
         return;
       }
-      if (newDisplayInfo->hasBeenEditedButNotSaved) {
-        XmString warningXmstring;
-        char warningString[2*MAX_FILE_CHARS];
-        char *tmp, *tmp1;
-
-        strcpy(warningString,"Save before closing display :\n");
-        tmp = tmp1 = dmGetDisplayFileName(newDisplayInfo);
-        while (*tmp != '\0') 
-          if (*tmp++ == '/') tmp1 = tmp;
-        strcat(warningString,tmp1);
-	dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
-	switch (newDisplayInfo->questionDialogAnswer) {
-	  case 1 :
-	    /* Yes, save display */
-	    if (medmSaveDisplay(newDisplayInfo,
-	            dmGetDisplayFileName(newDisplayInfo),True) == False) return;
-	    break;
-	  case 2 :
-	    /* No, return */
-	    break;
-	  case 4 :
-	    /* Don't close display */
-	    return;
-	  default :
-	    return;
-	}
-      }
-      /* remove currentDisplayInfo from displayInfoList and cleanup */
-      dmRemoveDisplayInfo(newDisplayInfo);
+      closeDisplay(widget);
       break;
 
     case FILE_PRINT_BTN:
@@ -1207,6 +1172,10 @@ void medmExit() {
     }
     displayInfo = displayInfo->next;
   }
+  XtVaSetValues(mainShell,
+      XmNiconic, False,
+      NULL);
+  XtPopup(mainShell,XtGrabNone);
   XtManageChild(exitQD);
   XtPopup(XtParent(exitQD),XtGrabNone);
 }
@@ -1368,20 +1337,6 @@ static XtCallbackProc helpDialogCallback(
   }
 }
 
-
-/* 
- * Jeff claims you need this even if using some fd mgr. funtion (select(fd...))
- *   for refreshing tcp/ip connections, CA "flow control", etc
- */
-static XtTimerCallbackProc caHeartBeat(XtPointer dummy)
-{
-  ca_pend_event(CA_PEND_EVENT_TIME);	/* need this rather than ca_pend_io */
-
-/* reregister 2 second TimeOut function to handle lost connections, etc */
-  XtAppAddTimeOut(appContext,100,(XtTimerCallbackProc)caHeartBeat,NULL);
-}
-
-
 static void modeCallback(
   Widget w,
   XtPointer clientData,
@@ -1425,6 +1380,10 @@ static void modeCallback(
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
+        if (medmWorkProcId) {
+          XtRemoveWorkProc(medmWorkProcId);
+          medmWorkProcId = 0;
+        }
 	break;
 
       case DL_EXECUTE:
@@ -1454,6 +1413,7 @@ static void modeCallback(
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
+        XtAppAddTimeOut(appContext,3000,medmUpdateCAStudtylDlg,NULL);
 	break;
 
       default:
@@ -1506,19 +1466,14 @@ static XtCallbackProc mapCallback(
   Position X, Y;
   XmString xmString;
 
-  if (w == closeQD || w == saveAsPD) {
-    XtTranslateCoords(currentDisplayInfo->shell,0,0,&X,&Y);
-    /* try to force correct popup the first time */
-    XtMoveWidget(XtParent(w),X,Y);
-  }
+  XtTranslateCoords(currentDisplayInfo->shell,0,0,&X,&Y);
+  /* try to force correct popup the first time */
+  XtMoveWidget(XtParent(w),X,Y);
 
-  if (w == saveAsPD) {
   /* be nice to the users - supply default text field as display name */
-    xmString = XmStringCreateSimple(dmGetDisplayFileName(currentDisplayInfo));
-    XtVaSetValues(w,XmNtextString,xmString,NULL);
-    XmStringFree(xmString);
-  }
-
+  xmString = XmStringCreateSimple(dmGetDisplayFileName(currentDisplayInfo));
+  XtVaSetValues(w,XmNtextString,xmString,NULL);
+  XmStringFree(xmString);
 }
 
 
@@ -1906,6 +1861,13 @@ main(int argc, char *argv[])
 
   Window medmHostWindow = (Window)0;
 
+/*  channel status */
+  medmWorkProcId = 0;
+  medmUpdateRequestCount = 0;
+  nextToServe = NULL;
+  medmCAEventCount = 0;
+  medmScreenUpdateCount = 0;
+  medmUpdateMissedCount = 0;
 
 /*
  * initialize channel access here (to get around orphaned windows)
@@ -2088,8 +2050,9 @@ main(int argc, char *argv[])
   if (request->opMode == EXECUTE) {
     globalDisplayListTraversalMode = DL_EXECUTE;
     if (request->fileCnt > 0) {	/* assume .adl file names follow */
-	XtSetArg(args[0],XmNinitialState,IconicState);
-	XtSetValues(mainShell,args,1);
+        XtVaSetValues(mainShell,
+            XmNinitialState,IconicState,
+            NULL);
     }
   } else {
     globalDisplayListTraversalMode = DL_EDIT;
@@ -2238,8 +2201,7 @@ main(int argc, char *argv[])
 		(XtCallbackProc)wmCloseCallback, (XtPointer) OTHER_SHELL);
 
 
-/* add 2 second TimeOut function to handle lost CA connections, etc */
-  XtAppAddTimeOut(appContext,2000,(XtTimerCallbackProc)caHeartBeat,NULL);
+  XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
 
 /*
  * now go into event loop - formerly XtAppMainLoop(appContext);
@@ -2293,9 +2255,12 @@ main(int argc, char *argv[])
 	    if (filePtr != NULL) {
 	      dmDisplayListParse(filePtr,name,fullPathName,geometryString,
 				(Boolean)False);
-	      if (geometryString) medmPrintf("    geometry = %s\n\n",geometryString);
-	      if (name) medmPrintf("    macro = %s\n",name);
-	      if (fullPathName) medmPrintf("    filename = %s\n",fullPathName);
+	      if (geometryString[0] != '\0')
+                medmPrintf("    geometry = %s\n\n",geometryString);
+	      if (name[0] != '\0')
+                medmPrintf("    macro = %s\n",name);
+	      if (fullPathName[0] != '\0')
+                medmPrintf("    filename = %s\n",fullPathName);
 	      medmPrintf("File Dispatch Request :\n");
               medmPostTime();
 	      fclose(filePtr);
@@ -2501,22 +2466,6 @@ static void createMain()
  ************************************************/
 
 /*
- * create the Close... question dialog
- */
-
-  n = 0;
-  XtSetArg(args[n],XmNdefaultPosition,False); n++;
-  closeQD = XmCreateQuestionDialog(XtParent(mainFilePDM),"closeQD",args,n);
-  XtVaSetValues(XtParent(closeQD),
-      XmNmwmDecorations, MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
-      NULL);
-  XtAddCallback(closeQD,XmNcancelCallback,
-	(XtCallbackProc)fileMenuDialogCallback,(XtPointer)FILE_CLOSE_BTN);
-  XtAddCallback(closeQD,XmNokCallback,(XtCallbackProc)fileMenuDialogCallback,
-	(XtPointer)FILE_CLOSE_BTN);
-  XtAddCallback(closeQD,XmNmapCallback,(XtCallbackProc)mapCallback,(XtPointer)NULL);
-
-/*
  * create the Save As... prompt dialog
  */
 
@@ -2604,4 +2553,15 @@ char *title, *msg;
 
   XtUnmanageChild(XmMessageBoxGetChild(dlg,XmDIALOG_CANCEL_BUTTON));
   XtManageChild(dlg);
+}
+
+Boolean medmInitWorkProc(XtPointer cd) {
+  int i;
+  for (i=0; i<LAST_INIT_C; i++) {
+    if (medmInitTask[i].init == False) {
+       medmInitTask[i].init = medmInitTask[i].initTask();
+       return False;
+    }
+  }
+  return True;
 }

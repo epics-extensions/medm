@@ -53,6 +53,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              correct the falling line and rising line to
+ *                              polyline geometry calculation
  *
  *****************************************************************************
 */
@@ -425,6 +428,7 @@ DlElement *createDlPolyline(
   createDlObject(displayInfo,&(dlPolyline->object));
   dlPolyline->points = NULL;
   dlPolyline->nPoints = 0;
+  dlPolyline->isFallingOrRisingLine = False;
 
   dlElement = (DlElement *) malloc(sizeof(DlElement));
   dlElement->type = DL_Polyline;

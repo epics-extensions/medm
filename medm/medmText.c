@@ -16,7 +16,7 @@ with the Department of Energy.
 
 Portions of this material resulted from work developed under a U.S.
 Government contract and are subject to the following license:  For
-a period of five years from March 30, 1993, the Government is
+a period of five years from Mtexth 30, 1993, the Government is
 granted for itself and others acting on its behalf a paid-up,
 nonexclusive, irrevocable worldwide license in this computer
 software to reproduce, prepare derivative works, and perform
@@ -53,22 +53,35 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void textUpdateValueCb(Channel *pCh);
-static void textDestroyCb(Channel *pCh);
+typedef struct _Text {
+  Widget           widget;
+  DlText           *dlText;
+  Record           *record;
+  UpdateTask       *updateTask;
+  DlDynamicAttrMod dynAttr;
+  DlAttribute      attr;
+} Text;
+
+static void textUpdateValueCb(XtPointer cd);
+static void textDraw(XtPointer cd);
+static void textDestroyCb(XtPointer cd);
+static void textName(XtPointer, char **, short *, int *);
 
 
-static void drawText(Channel *pCh) {
+static void drawText(Text *pt) {
   int i = 0, usedWidth, usedHeight;
   size_t nChars;
-  DisplayInfo *displayInfo = pCh->displayInfo;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
-  DlText *dlText = (DlText *) pCh->specifics;
+  DisplayInfo *displayInfo = pt->updateTask->displayInfo;
+  Display *display = XtDisplay(pt->widget);
+  DlText *dlText = pt->dlText;
 
   nChars = strlen(dlText->textix);
   i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
@@ -109,26 +122,41 @@ void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
 
-    Channel *pCh = allocateChannel(displayInfo);
-    if (pCh == NULL) return;
+    Text *pt;
+    pt = (Text *) malloc(sizeof(Text));
+    pt->dlText = dlText;
+    pt->updateTask = updateTaskAddTask(displayInfo,
+                                       &(dlText->object),
+                                       textDraw,
+                                       (XtPointer)pt);
 
-    pCh->dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-    if (pCh->dlAttr == NULL) return;
-    *pCh->dlAttr =displayInfo->attribute;
+    if (pt->updateTask == NULL) {
+      medmPrintf("textCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
+      updateTaskAddNameCb(pt->updateTask,textName);
+      pt->updateTask->opaque = False;
+    }
+    pt->record = medmAllocateRecord(
+                  displayInfo->dynamicAttribute.attr.param.chan,
+                  textUpdateValueCb,
+                  NULL,
+                  (XtPointer) pt);
+    drawWhiteRectangle(pt->updateTask);
 
-    pCh->clrmod = displayInfo->dynamicAttribute.attr.mod.clr;
-    pCh->vismod = displayInfo->dynamicAttribute.attr.mod.vis;
+    pt->record->monitorValueChanged = False;
+    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+      pt->record->monitorSeverityChanged = False;
+    }
 
-    pCh->monitorType = DL_Text;
-    pCh->specifics = (XtPointer) dlText;
-    pCh->updateChannelCb = textUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = textDestroyCb;
-    pCh->ignoreValueChanged = True;
+    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+      pt->record->monitorZeroAndNoneZeroTransition = False;
+    }
 
-    SEVCHK(CA_BUILD_AND_CONNECT(displayInfo->dynamicAttribute.attr.param.chan,TYPENOTCONN,0,
-      &(pCh->chid),NULL,medmConnectEventCb, pCh),
-      "executeDlText: error in CA_BUILD_AND_CONNECT");
+    pt->widget = displayInfo->drawingArea;
+    pt->attr = displayInfo->attribute;
+    pt->dynAttr = displayInfo->dynamicAttribute.attr.mod;
+
   } else {
     int i = 0, usedWidth, usedHeight;
     size_t nChars;
@@ -177,71 +205,80 @@ void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
   }
 }
 
-static void textUpdateStateCb(Channel *pCh) {
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      textUpdateValueCb(pCh);
-    } else {
-      textUpdateValueCb(pCh);
-      draw3DQuestionMark(pCh);
-    }
-  } else {
-    textUpdateValueCb(pCh);
-  }
+static void textUpdateValueCb(XtPointer cd) {
+  Text *pt = (Text *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pt->updateTask);
 }
 
-static void textUpdateValueCb(Channel *pCh) {
+static void textDraw(XtPointer cd) {
+  Text *pt = (Text *) cd;
+  Record *pd = pt->record;
+  DisplayInfo *displayInfo = pt->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
+  Display *display = XtDisplay(pt->widget);
 
-  if (ca_state(pCh->chid) == cs_conn) {
+  if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (pCh->clrmod) {
+    switch (pt->dynAttr.clr) {
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+        gcValues.foreground = displayInfo->dlColormap[pt->attr.clr];
         break;
       case ALARM :
-        gcValues.foreground = alarmColorPixel[pCh->severity];
+        gcValues.foreground = alarmColorPixel[pd->severity];
         break;
       default :
-	gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+	gcValues.foreground = displayInfo->dlColormap[pt->attr.clr];
 	break;
     }
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = pt->attr.width;
+    gcValues.line_style = ((pt->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (pCh->vismod) {
+    switch (pt->dynAttr.vis) {
       case V_STATIC:
-        drawText(pCh);
+        drawText(pt);
         break;
       case IF_NOT_ZERO:
-        if (pCh->value != 0.0)
-          drawText(pCh);
+        if (pd->value != 0.0)
+          drawText(pt);
         break;
       case IF_ZERO:
-        if (pCh->value == 0.0)
-          drawText(pCh);
+        if (pd->value == 0.0)
+          drawText(pt);
         break;
       default :
         medmPrintf("internal error : textUpdateValueCb\n");
         break;
     }
-    if (!ca_read_access(pCh->chid))
-      draw3DQuestionMark(pCh);
+    if (pd->readAccess) {
+      if (!pt->updateTask->overlapped && pt->dynAttr.vis == V_STATIC) {
+        pt->updateTask->opaque = True;
+      }
+    } else {
+      pt->updateTask->opaque = False;
+      draw3DQuestionMark(pt->updateTask);
+    }
   } else {
-    gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
+    drawWhiteRectangle(pt->updateTask);
   }
 }
 
-static void textDestroyCb(Channel *pCh) {
+static void textDestroyCb(XtPointer cd) {
+  Text *pt = (Text *) cd;
+  if (pt) {
+    medmDestroyRecord(pt->record);
+    free(pt);
+  }
   return;
 }
+
+static void textName(XtPointer cd, char **name, short *severity, int *count) {
+  Text *pt = (Text *) cd;
+  *count = 1;
+  name[0] = pt->record->name;
+  severity[0] = pt->record->severity;
+}
+

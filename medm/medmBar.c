@@ -53,19 +53,30 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  05-09-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void barUpdateValueCb(Channel *pCh);
-static void barUpdateGraphicalInfoCb(Channel *pCh);
-static void barDestroyCb(Channel *pCh);
+typedef struct _Bar {
+  Widget      widget;
+  DlBar      *dlBar;
+  Record      *record;
+  UpdateTask  *updateTask;
+} Bar;
+
+static void barDraw(XtPointer cd);
+static void barUpdateValueCb(XtPointer cd);
+static void barUpdateGraphicalInfoCb(XtPointer cd);
+static void barDestroyCb(XtPointer cd);
+static void barName(XtPointer, char **, short *, int *);
 
 void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
 {
-  Channel *pCh;
+  Bar *pb;
   Arg args[30];
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
@@ -75,22 +86,24 @@ void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
   displayInfo->useDynamicAttribute = FALSE;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_Bar;
-    pCh->specifics = (XtPointer) dlBar;
-    pCh->clrmod = dlBar->clrmod;
-    pCh->backgroundColor = displayInfo->dlColormap[dlBar->monitor.bclr];
-    pCh->label = dlBar->label;
+    pb = (Bar *) malloc(sizeof(Bar));
+    pb->dlBar = dlBar;
+    pb->updateTask = updateTaskAddTask(displayInfo,
+				       &(dlBar->object),
+				       barDraw,
+				       (XtPointer)pb);
 
-    pCh->updateChannelCb = barUpdateValueCb;
-    pCh->updateGraphicalInfoCb = barUpdateGraphicalInfoCb;
-    pCh->destroyChannel = barDestroyCb;
-
-    drawWhiteRectangle(pCh);
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlBar->monitor.rdbk,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb, pCh),
-	"executeDlBar: error in CA_BUILD_AND_CONNECT");
+    if (pb->updateTask == NULL) {
+      medmPrintf("barCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
+      updateTaskAddNameCb(pb->updateTask,barName);
+    }
+    pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
+                  barUpdateValueCb,
+                  barUpdateGraphicalInfoCb,
+                  (XtPointer) pb);
+    drawWhiteRectangle(pb->updateTask);
   }
 
 /* from the bar structure, we've got Bar's specifics */
@@ -169,7 +182,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
  * add the pointer to the Channel structure as userData 
  *  to widget
  */
-  XtSetArg(args[n],XcNuserData,(XtPointer)pCh); n++;
+  XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
   localWidget = XtCreateWidget("bar", 
 		xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
   displayInfo->child[displayInfo->childCount++] = localWidget;
@@ -177,7 +190,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
   if (displayInfo->traversalMode == DL_EXECUTE) {
 
 /* record the widget that this structure belongs to */
-    pCh->self = localWidget;
+    pb->widget = localWidget;
 
 /* add in drag/drop translations */
     XtOverrideTranslations(localWidget,parsedTranslations);
@@ -192,47 +205,57 @@ void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy)
   }
 }
 
-static void barUpdateValueCb(Channel *pCh) {
+static void barUpdateValueCb(XtPointer cd) {
+  Bar *pb = (Bar *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pb->updateTask);
+}
+
+static void barDraw(XtPointer cd) {
+  Bar *pb = (Bar *) cd;
+  Record *pd = pb->record;
   XcVType val;
 
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-	XtManageChild(pCh->self);
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pb->widget)
+	XtManageChild(pb->widget);
       else
 	return;
-      val.fval = (float) pCh->value;
-      XcBGUpdateValue(pCh->self,&val);
-      switch (pCh->clrmod) {
+      val.fval = (float) pd->value;
+      XcBGUpdateValue(pb->widget,&val);
+      switch (pb->dlBar->clrmod) {
         case STATIC :
         case DISCRETE :
 	  break;
         case ALARM :
-	  XcBGUpdateBarForeground(pCh->self,alarmColorPixel[pCh->severity]);
+	  XcBGUpdateBarForeground(pb->widget,alarmColorPixel[pd->severity]);
 	  break;
       }
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pb->widget) XtUnmanageChild(pb->widget);
+      draw3DPane(pb->updateTask,
+          pb->updateTask->displayInfo->dlColormap[pb->dlBar->monitor.bclr]);
+      draw3DQuestionMark(pb->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pb->widget) XtUnmanageChild(pb->widget);
+    drawWhiteRectangle(pb->updateTask);
   }
 }
 
-static void barUpdateGraphicalInfoCb(Channel *pCh) {
+static void barUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  Bar *pb = (Bar *) pd->clientData;
   XcVType hopr, lopr, val;
   Pixel pixel;
   int precision;
 
-  if (pCh->self == NULL) return;
-  switch (ca_field_type(pCh->chid)) {
+  if (pb->widget == NULL) return;
+  switch (pd->dataType) {
   case DBF_STRING :
   case DBF_ENUM :
     medmPrintf("barUpdateGraphicalInfoCb : %s %s %s\n",
-	"illegal channel type for",ca_name(pCh->chid), ": cannot attach Bar");
+	"illegal channel type for",pb->dlBar->monitor.rdbk, ": cannot attach Bar");
     medmPostTime();
     return;
   case DBF_CHAR :
@@ -240,14 +263,14 @@ static void barUpdateGraphicalInfoCb(Channel *pCh) {
   case DBF_LONG :
   case DBF_FLOAT :
   case DBF_DOUBLE :
-    hopr.fval = (float) pCh->hopr;
-    lopr.fval = (float) pCh->lopr;
-    val.fval = (float) pCh->value;
-    precision = pCh->precision;
+    hopr.fval = (float) pd->hopr;
+    lopr.fval = (float) pd->lopr;
+    val.fval = (float) pd->value;
+    precision = pd->precision;
     break;
   default :
     medmPrintf("barUpdateGraphicalInfoCb: %s %s %s\n",
-	"unknown channel type for",ca_name(pCh->chid), ": cannot attach Bar");
+	"unknown channel type for",pb->dlBar->monitor.rdbk, ": cannot attach Bar");
     medmPostTime();
     break;
   }
@@ -255,19 +278,30 @@ static void barUpdateGraphicalInfoCb(Channel *pCh) {
     hopr.fval += 1.0;
   }
 
-  pixel = (pCh->clrmod == ALARM) ?
-	    alarmColorPixel[pCh->info->f.severity] :
-	    pCh->displayInfo->dlColormap[((DlBar *) pCh->specifics)->monitor.clr];
-  XtVaSetValues(pCh->self,
+  pixel = (pb->dlBar->clrmod == ALARM) ?
+	    alarmColorPixel[pd->severity] :
+	    pb->updateTask->displayInfo->dlColormap[pb->dlBar->monitor.clr];
+  XtVaSetValues(pb->widget,
     XcNlowerBound,lopr.lval,
     XcNupperBound,hopr.lval,
     XcNbarForeground,pixel,
     XcNdecimals, precision,
     NULL);
-  XcBGUpdateValue(pCh->self,&val);
+  XcBGUpdateValue(pb->widget,&val);
 }
 
-static void barDestroyCb(Channel *pCh) {
+static void barDestroyCb(XtPointer cd) {
+  Bar *pb = (Bar *) cd;
+  if (pb) {
+    medmDestroyRecord(pb->record);
+    free(pb);
+  }
   return;
 }
 
+static void barName(XtPointer cd, char **name, short *severity, int *count) {
+  Bar *pb = (Bar *) cd;
+  *count = 1;
+  name[0] = pb->record->name;
+  severity[0] = pb->record->severity;
+}

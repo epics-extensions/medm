@@ -1,3 +1,63 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *
+ *****************************************************************************
+*/
+
 
 /************************************************************************
  ****                  Utility Functions                             ****
@@ -137,72 +197,14 @@ Boolean extractStringBetweenColons(
     i++;
   }
   output[j] = '\0';
-  i++;
-
+  if (input[i] != '\0') {
+    i++;
+  }
   *endPos = i;
   if (j == 0)
      return(False);
   else
      return(True);
-}
-
-
-/*
- * function to determine if the specified monitorData is in the current
- *	monitor list
- */
-Boolean isCurrentMonitor(Channel *monitorData)
-{
-  Channel *data;
-
-  data = channelAccessMonitorListHead->next;
-  while (data != NULL) {
-     if (data == monitorData) return(True);
-     data = data->next;
-  }
-  return(False);
-}
-
-
-
-/*
- * function which removes a monitor structure from monitor list and does
- *   appropriate CA cleanup...
- *   but does not free specifics field, since this is usually the
- *   dlBar, dlMeter... pointer which we want to keep around
- */
-void dmRemoveMonitorStructureFromMonitorList(
-  Channel *pCh)
-{
-  int i;
-  DisplayInfo *displayInfo = pCh->displayInfo;
-
-  if (pCh->destroyChannel)
-    pCh->destroyChannel(pCh);
-
-  medmDisconnectChannel(pCh);
-
-  if (pCh->dlAttr != NULL) {
-    free ((char *) pCh->dlAttr);
-    pCh->dlAttr = NULL;
-  }
-
-  /* disable all callbacks */
-  pCh->updateChannelCb = NULL;
-  pCh->updateGraphicalInfoCb = NULL;
-  pCh->destroyChannel = NULL;
-
-  /* remove the this node from the double link list */
-  /* and free the memory */
-  pCh->prev->next = pCh->next;
-  if (pCh->next != NULL) pCh->next->prev = pCh->prev;
-  if (channelAccessMonitorListTail == pCh) 
-    channelAccessMonitorListTail = channelAccessMonitorListTail->prev;
-  if (channelAccessMonitorListTail == channelAccessMonitorListHead)
-    channelAccessMonitorListHead->next = NULL;
-  free( (char *) pCh);
-
-  return;
 }
 
 
@@ -276,9 +278,9 @@ void dmCleanupDisplayInfo(
 {
   int i;
   Channel *data, *saveData;
-  StripChartList *stripElement, *oldStrip;
   Boolean alreadyFreedUnphysical;
   Widget DA;
+  UpdateTask *ut = &(displayInfo->updateTaskListHead);
 
 
 /* save off current DA */
@@ -287,18 +289,10 @@ void dmCleanupDisplayInfo(
   displayInfo->drawingArea = NULL;
 
 /*
- * remove any strip charts in this display 
+ * remove all update tasks in this display 
  */
-  stripElement = displayInfo->stripChartListHead;
-  while (stripElement != NULL) {
-    stripPause(stripElement->strip);
-    stripTerm(stripElement->strip);
-    oldStrip = stripElement;
-    stripElement = stripElement->next;
-    free( (char *) oldStrip);
-  }
-  displayInfo->stripChartListHead = NULL;
-  displayInfo->stripChartListTail = NULL;
+ updateTaskDeleteAllTask(ut);
+ 
 
 /* 
  * as a composite widget, drawingArea is responsible for destroying
@@ -308,24 +302,6 @@ void dmCleanupDisplayInfo(
 	XtDestroyWidget(DA);
 	DA = NULL;
   }
-
-/*
- * close the monitored channels, and free elements from the monitor
- *	list if this is the displayInfo being cleared
- */
-  data = channelAccessMonitorListHead->next;
-  while (data != NULL) {
-    if (data->displayInfo == displayInfo) {
-      /* this monitorData belongs to this display */
-      saveData = data->next;
-      dmRemoveMonitorStructureFromMonitorList(data);
-      data = saveData;
-    } else {
-      data = data->next;
-    }
-  }
-
-
 
 /* force a wait for all outstanding CA event completion */
 /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
@@ -3377,65 +3353,62 @@ void deleteAndFreeElementAndStructure(
 /*
  * return Channel ptr given a widget id
  */
-Channel *dmGetChannelFromWidget(
-  Widget sourceWidget)
+UpdateTask *getUpdateTaskFromWidget(
+  Widget widget)
 {
   DisplayInfo *displayInfo;
   DlElement *ele, *targetEle;
-  Channel *mData;
- 
-  mData = channelAccessMonitorListHead->next;
-  while (mData != NULL) {
-     if (mData->self == sourceWidget) {
-	return mData;
+  UpdateTask *pt;
+
+  if (!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
+     return NULL; 
+
+  pt = displayInfo->updateTaskListHead.next; 
+  while (pt) {
+     if (*((Widget *) pt->clientData) == widget) {
+	return pt;
      }
-     mData = mData->next;
+     pt = pt->next;
   }
-  return ((Channel *)NULL);
+  return NULL;
 
 }
 
 
 /*
- * return Channel ptr given a DisplayInfo* and x,y positions
+ * return UpdateTask ptr given a DisplayInfo* and x,y positions
  */
-Channel *dmGetChannelFromPosition(
+UpdateTask *getUpdateTaskFromPosition(
   DisplayInfo *displayInfo,
   int x,
   int y)
 {
-  Channel *mData, *saveMonitorData;
+  UpdateTask *ptu, *ptuSaved = NULL;
   DlRectangle *dlRectangle;
   int minWidth, minHeight;
   
-  saveMonitorData = (Channel *)NULL;
-  if (displayInfo == (DisplayInfo *)NULL) return(saveMonitorData);
+  if (displayInfo == (DisplayInfo *)NULL) return NULL;
 
   minWidth = INT_MAX;	 	/* according to XPG2's values.h */
   minHeight = INT_MAX;
 
-  mData = channelAccessMonitorListHead->next;
-  while (mData != NULL) {
-    if (mData->displayInfo == displayInfo) {
-/* as long as OBJECT is the first part of any structure, this works... */
-      dlRectangle = (DlRectangle *)mData->specifics;
-      if (x >= dlRectangle->object.x &&
-	 x <= dlRectangle->object.x + dlRectangle->object.width &&
-	 y >= dlRectangle->object.y &&
-	 y <= dlRectangle->object.y + dlRectangle->object.height) {
+  ptu = displayInfo->updateTaskListHead.next;
+  while (ptu) {
+    if (x >= (int)ptu->rectangle.x &&
+	 x <= (int)ptu->rectangle.x + (int)ptu->rectangle.width &&
+	 y >= (int)ptu->rectangle.y &&
+	 y <= (int)ptu->rectangle.y + (int)ptu->rectangle.height) {
   /* eligible element, see if smallest so far */
-        if (dlRectangle->object.width < minWidth &&
-	   dlRectangle->object.height < minHeight) {
-	   minWidth = dlRectangle->object.width;
-	   minHeight = dlRectangle->object.height;
-	   saveMonitorData = mData;
-        }
+      if ((int)ptu->rectangle.width < minWidth &&
+           (int)ptu->rectangle.height < minHeight) {
+	   minWidth = ptu->rectangle.width;
+	   minHeight = ptu->rectangle.height;
+	   ptuSaved = ptu;
       }
     }
-    mData = mData->next;
+    ptu = ptu->next;
   }
-  return (saveMonitorData);
-
+  return ptuSaved;
 }
 
 
@@ -3831,3 +3804,42 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
   XtUnmanageChild(displayInfo->warningDialog);
 }
 
+void closeDisplay(Widget w) {
+  DisplayInfo *newDisplayInfo;
+  newDisplayInfo = dmGetDisplayInfoFromWidget(w);
+  if (newDisplayInfo == currentDisplayInfo) {
+    highlightAndSetSelectedElements(NULL,0,0);
+    clearResourcePaletteEntries();
+    currentDisplayInfo = NULL;
+  }
+  if (newDisplayInfo->hasBeenEditedButNotSaved) {
+    XmString warningXmstring;
+    char warningString[2*MAX_FILE_CHARS];
+    char *tmp, *tmp1;
+
+    strcpy(warningString,"Save before closing display :\n");
+    tmp = tmp1 = dmGetDisplayFileName(newDisplayInfo);
+    while (*tmp != '\0')
+      if (*tmp++ == '/') tmp1 = tmp;
+    strcat(warningString,tmp1);
+    dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
+    switch (newDisplayInfo->questionDialogAnswer) {
+      case 1 :
+        /* Yes, save display */
+        if (medmSaveDisplay(newDisplayInfo,
+                dmGetDisplayFileName(newDisplayInfo),True) == False) return;
+        break;
+      case 2 :
+        /* No, return */
+        break;
+      case 3 :
+        /* Don't close display */
+        return;
+      default :
+        return;
+    }
+  }
+  /* remove newDisplayInfo from displayInfoList and cleanup */
+  dmRemoveDisplayInfo(newDisplayInfo);
+
+}

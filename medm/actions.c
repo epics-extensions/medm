@@ -53,6 +53,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              remove the object type knowledge from
+ *                              the get name routine of drag and drop.
  *
  *****************************************************************************
 */
@@ -142,7 +145,6 @@ static XtCallbackRec dragDropFinishCB[] = {
 
 
 
-
 void StartDrag(
   Widget w,
   XEvent *event)
@@ -151,19 +153,14 @@ void StartDrag(
   Cardinal n;
   Atom exportList[1];
   Widget sourceIcon;
-  Channel *mData, *md, *mdArray[MAX(MAX_PENS,MAX_TRACES)][2];
-  int dir, asc, desc, maxWidth, maxHeight, maxAsc, maxDesc, maxTextWidth;
-  int nominalY, i, j, liveChannels, liveTraces;
-  XCharStruct overall;
+  UpdateTask *pt;
+  int textWidth, maxWidth, maxHeight, fontHeight, ascent;
   unsigned long fg, bg;
   Widget searchWidget;
   XButtonEvent *xbutton;
   XtPointer userData;
-  StripChartData *stripChartData;
-  CartesianPlotData *cartesianPlotData;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Boolean newTrace, haveXY;
   DisplayInfo *displayInfo;
 
   static char *channelNames[MAX(MAX_PENS,MAX_TRACES)][2];
@@ -193,202 +190,90 @@ void StartDrag(
      */
     displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
     xbutton = (XButtonEvent *)event;
-    mData = dmGetChannelFromPosition(displayInfo,
+    pt = getUpdateTaskFromPosition(displayInfo,
 		xbutton->x,xbutton->y);
   } else {
    /* ---get data from widget */
     while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
 	searchWidget = XtParent(searchWidget);
-    mData = dmGetChannelFromWidget(searchWidget);
+    pt = getUpdateTaskFromWidget(searchWidget);
   }
 
 
-  if (mData != NULL) {
+  if (pt) {
+    #define MAX_COL 4
+    char *name[MAX_PENS*MAX_COL];
+    short severity[MAX_PENS*MAX_COL];
+    int count;
+    int column;
+    int row;
 
-/* always color according to severity (to convey channel name and severity) */
+    if (pt->name == NULL) return;
+    pt->name(pt->clientData, name, severity, &count);
+
+    column = count / 100;
+    if (column == 0) column = 1;
+    if (column > MAX_COL) column = MAX_COL;
+    count = count % 100;
+    row = 0;
+
     bg = BlackPixel(display,screenNum);
+    fg = WhitePixel(display,screenNum);
+    ascent = fontTable[FONT_TABLE_INDEX]->ascent;
+    fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
 
-    switch (mData->monitorType) {
+    if (count == 0) {
+      channelName = NULL;
+      return;
+    } else {
+      int i, j;
+      int x, y;
 
-	case DL_StripChart:
-		channelName = NULL;
-		maxAsc = 0; maxDesc = 0; maxWidth = 0;
-		liveChannels = 0;
-		for (i = 0; i < MAX_PENS; i++) {
-		   channelNames[i][0]= NULL;
-		   mdArray[i][0] = NULL;
-		}
-		if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
-		    && strcmp(XtName(searchWidget),stripChartWidgetName)) {
-		/* if we got here via parent DA (not StripChart), get widget */
-		   searchWidget = mData->self;
-		}
-		XtVaGetValues(searchWidget,XmNuserData,&userData,NULL);
-		stripChartData = (StripChartData *)userData;
-		for (i = 0; i < stripChartData->nChannels; i++) {
-		  if (stripChartData->monitors[i] != NULL){
-		    md = (Channel *)
-				stripChartData->monitors[i];
-		    mdArray[liveChannels][0] = md;
-		    if ( md->chid != NULL) {
-		      channelNames[liveChannels][0] = ca_name(md->chid);
- 		      XTextExtents(fontTable[FONT_TABLE_INDEX],
-			channelNames[liveChannels][0],
-			strlen(channelNames[liveChannels][0]),
-			&dir,&asc,&desc,&overall);
-		      maxWidth = MAX(maxWidth,overall.width);
-		      maxAsc = MAX(maxAsc,asc);
-		      maxDesc = MAX(maxDesc,desc);
-		      liveChannels++;
-		    }
-		  }
-		}
-		/* since most information for StripCharts is from connect...*/
-		if (liveChannels > 0) {
-		  maxWidth += X_SHIFT + MARGIN;
-		  maxHeight = liveChannels*(maxAsc+maxDesc+MARGIN);
-		  nominalY = maxAsc + MARGIN;
-		  sourcePixmap = XCreatePixmap(display,RootWindow(display,
-			screenNum),maxWidth,maxHeight,
+      i = 0; j = 0;
+      textWidth = 0;
+      while (i < count) {
+        if (name[i]) {
+ 	  textWidth = MAX(textWidth,XTextWidth(fontTable[FONT_TABLE_INDEX],name[i],strlen(name[i])));
+        }
+        j++;
+        if (j >= column) {
+          j = 0;
+          row++;
+        }
+        i++;
+      }
+      maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
+      maxHeight = row*fontHeight + 2*MARGIN;
+      sourcePixmap = XCreatePixmap(display,RootWindow(display, screenNum),maxWidth,maxHeight,
 			DefaultDepth(display,screenNum));
-		  if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
-		  gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
-		  gcValues.foreground = bg;
-		  gcValues.background = bg;
-		  gcValues.function = GXcopy;
-		  gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
-		  XChangeGC(display,gc,gcValueMask,&gcValues);
-		  XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,
-			maxHeight);
-		  for (i = 0; i < liveChannels; i++) {
-		    if (mdArray[i][0] != NULL && channelNames[i][0] != NULL) {
-		      fg = alarmColorPixel[mdArray[i][0]->severity];
-		      XSetForeground(display,gc,fg);
-		      XDrawString(display,sourcePixmap,gc,X_SHIFT,
-			(i+1)*nominalY,channelNames[i][0],
-			strlen(channelNames[i][0]));
-		    }
-		  }
-		}
-		break;
-
-	case DL_CartesianPlot:
-		channelName = NULL;
-		maxAsc = 0; maxDesc = 0; maxWidth = 0;
-		liveTraces = 0;
-		for (i = 0; i < MAX_PENS; i++)
-		  for (j = 0; j <= 1; j++) {
-		     channelNames[i][j] = NULL;
-		     mdArray[i][j] = NULL;
-		  }
-		if (XtClass(searchWidget) == xmDrawingAreaWidgetClass) {
-		/* if we got here via parent DA (not CP), get widget */
-		   searchWidget = mData->self;
-		}
-		XtVaGetValues(searchWidget,XmNuserData,&userData,NULL);
-		cartesianPlotData = (CartesianPlotData *)userData;
-		for (i = 0; i < cartesianPlotData->nTraces; i++) {
-		  newTrace = False;
-		  for (j = 0; j <= 1; j++) {
-		    if (cartesianPlotData->monitors[i][j] != NULL){
-		      md = (Channel *)
-				cartesianPlotData->monitors[i][j];
-		      newTrace = True;
-		      mdArray[liveTraces][j] = md;
-		      if ( md->chid != NULL) {
-		        channelNames[liveTraces][j] = ca_name(md->chid);
- 		        XTextExtents(fontTable[FONT_TABLE_INDEX],
-			  channelNames[liveTraces][j],
-			  strlen(channelNames[liveTraces][j]),
-			  &dir,&asc,&desc,&overall);
-		        maxWidth = MAX(maxWidth,overall.width);
-		        maxAsc = MAX(maxAsc,asc);
-		        maxDesc = MAX(maxDesc,desc);
-		      }
-		    }
-		  }
-		  if (newTrace) liveTraces++;
-		}
-	     /* since most information for CartesianPlots is from connect..*/
-		if (liveTraces > 0) {
-		/* see if we have XY plot; if so make room for x,y in pixmap */
-		  haveXY = False;
-		  for (i = 0; i < liveTraces; i++) {
-		    if (mdArray[i][0] != NULL && mdArray[i][1] != NULL)
-			haveXY = True;
-		  }
-		  maxTextWidth = maxWidth;
-		  if (haveXY) {
-		    maxWidth += maxWidth + X_SHIFT + 4*MARGIN;
-		  } else {
-		    maxWidth += X_SHIFT + MARGIN;
-		  }
-		  maxHeight = liveTraces*(maxAsc+maxDesc+MARGIN);
-		  nominalY = maxAsc + MARGIN;
-		  sourcePixmap = XCreatePixmap(display,RootWindow(display,
-			screenNum),maxWidth,maxHeight,
-			DefaultDepth(display,screenNum));
-		  if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
-		  gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
-		  gcValues.foreground = bg;
-		  gcValues.background = bg;
-		  gcValues.function = GXcopy;
-		  gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
-		  XChangeGC(display,gc,gcValueMask,&gcValues);
-		  XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,
-			maxHeight);
-		  for (i = 0; i < liveTraces; i++) {
-		    for (j = 0; j <= 1; j++) {
-		      if (mdArray[i][j] != NULL && channelNames[i][j] != NULL) {
-		        fg = alarmColorPixel[mdArray[i][j]->severity];
-		        XSetForeground(display,gc,fg);
-		        XDrawString(display,sourcePixmap,gc,
-			  (j == 0 ? X_SHIFT :
-				maxTextWidth + 3*MARGIN + X_SHIFT),
-			  (i+1)*nominalY,
-			  channelNames[i][j],strlen(channelNames[i][j]));
-		      }
-		    }
-		  }
-		}
-		break;
-
-	default:
-		fg = alarmColorPixel[mData->severity];
-		overall.width = 0;
-		asc = 0; desc = 0;
-		channelName = NULL;
-		if (mData->chid != NULL) channelName = ca_name(mData->chid);
-		if (channelName != NULL) {
- 		  XTextExtents(fontTable[FONT_TABLE_INDEX],channelName,
-			strlen(channelName),&dir,&asc,&desc,&overall);
-		  overall.width += X_SHIFT + MARGIN;
-		  maxWidth = overall.width;
-		  maxHeight = asc+desc+2*MARGIN;
-		  sourcePixmap = XCreatePixmap(display,RootWindow(display,
-			screenNum),maxWidth,maxHeight,
-			DefaultDepth(display,screenNum));
-		  if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
-		  gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
-		  gcValues.foreground = bg;
-		  gcValues.background = bg;
-		  gcValues.function = GXcopy;
-		  gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
-		  XChangeGC(display,gc,gcValueMask,&gcValues);
-		  XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,
-			maxHeight);
-		  XSetForeground(display,gc,fg);
-		  XDrawString(display,sourcePixmap,gc,X_SHIFT,asc+MARGIN,
-			channelName,strlen(channelName));
-		}
-		break;
-    }
-
-  } else {
-
-    channelName = NULL;
-    return;
-
+      if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
+      gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
+      gcValues.foreground = bg;
+      gcValues.background = bg;
+      gcValues.function = GXcopy;
+      gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
+      XChangeGC(display,gc,gcValueMask,&gcValues);
+      XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,maxHeight);
+      i = 0; j = 0;
+      x = X_SHIFT;
+      y = ascent + MARGIN;
+      while (i < count) {
+        if (name[i]) {
+          XSetForeground(display,gc,alarmColorPixel[severity[i]]);
+          XDrawString(display,sourcePixmap,gc,x,y,name[i],strlen(name[i]));
+          channelName = name[i];
+        }
+        j++;
+        if (j < column) {
+          x += textWidth + MARGIN;
+        } else {
+          j = 0;
+          x = X_SHIFT;
+          y += fontHeight;
+        }
+        i++;
+      }
+    } 
   }
 
 

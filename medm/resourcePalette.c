@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -65,6 +66,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 #include "dbDefs.h"
+#include "medmCartesianPlot.h"
 
 #define N_MAX_MENU_ELES 5
 #ifdef EXTENDED_INTERFACE
@@ -413,7 +415,8 @@ static XtCallbackProc optionMenuSimpleCallback(
   }
 }
 
-static XtCallbackProc cpAxisOptionMenuSimpleCallback(
+
+static void cpAxisOptionMenuSimpleCallback(
 /** set Cartesian Plot Axis attributes
  * (complex - has to handle both EDIT and EXECUTE time interactions)
  */
@@ -428,8 +431,7 @@ static XtCallbackProc cpAxisOptionMenuSimpleCallback(
     String resourceName;
     XcVType minF, maxF, tickF;
     XtPointer userData;
-    CartesianPlotData *cartesianPlotData = NULL;
-    Channel *cpMonitorData = NULL;
+    CartesianPlot *pcp = NULL;
     DlCartesianPlot *dlCartesianPlot = NULL;
 
 /****** Get current cartesian plot */
@@ -437,11 +439,9 @@ static XtCallbackProc cpAxisOptionMenuSimpleCallback(
     if (executeTimeCartesianPlotWidget != NULL) {
       XtSetArg(args[0],XmNuserData,&userData);
       XtGetValues(executeTimeCartesianPlotWidget,args,1);
-      cartesianPlotData = (CartesianPlotData *) userData;
-      cpMonitorData = dmGetChannelFromWidget(
-				executeTimeCartesianPlotWidget);
-      if (cpMonitorData != NULL)
-	  dlCartesianPlot = (DlCartesianPlot *)cpMonitorData->specifics;
+      pcp = (CartesianPlot *) userData;
+      if (pcp)
+	  dlCartesianPlot = (DlCartesianPlot *) pcp->dlCartesianPlot;
     }
   }
 
@@ -538,21 +538,19 @@ static XtCallbackProc cpAxisOptionMenuSimpleCallback(
 	     iPrec = iPrec - k;
 	     XtSetArg(args[n],resourceName,iPrec); n++;
 	  }
-	  if (cartesianPlotData != NULL) cartesianPlotData->axisRange[
-				rcType%3].isCurrentlyFromChannel = False;
-
+	  if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
        } else if (globalResourceBundle.axis[rcType%3].rangeStyle
 					== CHANNEL_RANGE) {
 
 	  XtSetSensitive(axisRangeMinRC[rcType%3],False);
 	  XtSetSensitive(axisRangeMaxRC[rcType%3],False);
-	  if (cartesianPlotData != NULL) {
+	  if (pcp) {
 	    /* get channel-based range specifiers - NB: these are
 	     *   different than the display element version of these
 	     *   which are the user-specified values
 	     */
-	      minF.fval = cartesianPlotData->axisRange[rcType%3].axisMin;
-	      maxF.fval = cartesianPlotData->axisRange[rcType%3].axisMax;
+	      minF.fval = pcp->axisRange[rcType%3].axisMin;
+	      maxF.fval = pcp->axisRange[rcType%3].axisMax;
 	  }
 	  switch(rcType%3) {
 	      case X_AXIS_ELEMENT: resourceName = XtNxrtXMin; break;
@@ -566,9 +564,7 @@ static XtCallbackProc cpAxisOptionMenuSimpleCallback(
 	      case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Max; break;
 	  }
 	  XtSetArg(args[n],resourceName,maxF.lval); n++;
-	  if (cartesianPlotData != NULL) cartesianPlotData->axisRange[
-				rcType%3].isCurrentlyFromChannel = True;
-
+	  if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = True;
 	  switch(rcType%3) {
 		case X_AXIS_ELEMENT: resourceName = XtNxrtXTickUseDefault;
 							break;
@@ -647,8 +643,7 @@ static XtCallbackProc cpAxisOptionMenuSimpleCallback(
 	     }
 	     XtSetArg(args[n],resourceName,True); n++;
 	  }
-	  if (cartesianPlotData != NULL) cartesianPlotData->axisRange[
-				rcType%3].isCurrentlyFromChannel = False;
+	  if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
        }
        break;
     default:
@@ -1053,8 +1048,8 @@ XtCallbackProc textFieldActivateCallback(
      case ZANGLE_RC:
 	globalResourceBundle.zangle = atoi(stringValue);
 	break;
-     case DELAY_RC:
-	globalResourceBundle.delay = atoi(stringValue);
+     case PERIOD_RC:
+	globalResourceBundle.period = atof(stringValue);
 	break;
      case COUNT_RC:
 	globalResourceBundle.count = atoi(stringValue);
@@ -1338,11 +1333,11 @@ XtCallbackProc textFieldLosingFocusCallback(
 	   XmTextFieldSetString(resourceEntryElement[ZANGLE_RC],string);
 	XtFree(currentString);
 	break;
-     case DELAY_RC:
-	sprintf(string,"%d",globalResourceBundle.delay);
-	currentString = XmTextFieldGetString(resourceEntryElement[DELAY_RC]);
+     case PERIOD_RC:
+        cvtDoubleToString(globalResourceBundle.period,string,0);
+	currentString = XmTextFieldGetString(resourceEntryElement[PERIOD_RC]);
 	if (strcmp(string,currentString))
-	   XmTextFieldSetString(resourceEntryElement[DELAY_RC],string);
+	   XmTextFieldSetString(resourceEntryElement[PERIOD_RC],string);
 	XtFree(currentString);
 	break;
      case COUNT_RC:
@@ -1573,8 +1568,8 @@ void initializeGlobalResourceBundle()
  globalResourceBundle.dis = 10;
  globalResourceBundle.xyangle = 45;
  globalResourceBundle.zangle = 45;
- globalResourceBundle.delay = 500;
- globalResourceBundle.units = MILLISECONDS;
+ globalResourceBundle.period = 60.0;
+ globalResourceBundle.units = SECONDS;
  globalResourceBundle.cStyle = POINT_PLOT;
  globalResourceBundle.erase_oldest = ERASE_OLDEST_OFF;
  globalResourceBundle.count = 1;
@@ -1706,12 +1701,19 @@ void createResource() {
 
     keySyms[0] = 'F';
     n = 0;
+#if 0
     XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
     XtSetArg(args[n],XmNbuttons,buttons); n++;
     XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
     XtSetArg(args[n],XmNforeground,defaultForeground); n++;
     XtSetArg(args[n],XmNbackground,defaultBackground); n++;
     resourceMB = XmCreateSimpleMenuBar(resourceMW, "resourceMB",args,n);
+#endif
+
+    resourceMB = XmVaCreateSimpleMenuBar(resourceMW, "resourceMB",
+      XmVaCASCADEBUTTON, buttons[0], 'F',
+      XmVaCASCADEBUTTON, buttons[1], 'H',
+      NULL);
 
 /****** Color resourceMB properly (force so VUE doesn't interfere) */
     colorMenuBar(resourceMB,defaultForeground,defaultBackground);
@@ -1963,7 +1965,7 @@ static void createEntryRC( Widget parent, int rcType) {
      case DIS_RC:
      case XYANGLE_RC:
      case ZANGLE_RC:
-     case DELAY_RC:
+     case PERIOD_RC:
      case COUNT_RC:
      case LINEWIDTH_RC:
 	n = 0;
@@ -2463,7 +2465,7 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = YLABEL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLR_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = BCLR_RC; i++;
- resourcePaletteElements[index].childIndexRC[i] = DELAY_RC; i++;
+ resourcePaletteElements[index].childIndexRC[i] = PERIOD_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = UNITS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = SCDATA_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -3195,7 +3197,7 @@ static XtCallbackProc cartesianPlotActivate(
 }
 
 
-static XtCallbackProc cartesianPlotAxisActivate(
+static void cartesianPlotAxisActivate(
   Widget w,
   int buttonType,
   XmPushButtonCallbackStruct *call_data)
@@ -4011,22 +4013,21 @@ void updateCartesianPlotAxisDialog()
   
 }
 
-
 /*
  * access function (for file-scoped globals, etc) to udpate the
- *	cartesian plot axis dialog with the values currently in
- *	the subject cartesian plot
+ *      cartesian plot axis dialog with the values currently in
+ *      the subject cartesian plot
  */
 void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 {
   int i, tail, buttonId;
   char string[MAX_TOKEN_LENGTH];
-  CartesianPlotData *cartesianPlotData;
+  CartesianPlot *pcp;
   XtPointer userData;
   Boolean xAxisIsLog, y1AxisIsLog, y2AxisIsLog,
-	xMinUseDef, y1MinUseDef, y2MinUseDef, 
-	xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
-	y2IsCurrentlyFromChannel;
+        xMinUseDef, y1MinUseDef, y2MinUseDef,
+        xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
+        y2IsCurrentlyFromChannel;
   XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
   Arg args[2];
 
@@ -4034,39 +4035,39 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
      if (cp != NULL) {
         XtSetArg(args[0],XmNuserData,&userData);
         XtGetValues(cp,args,1);
-        cartesianPlotData = (CartesianPlotData *) userData;
+        pcp = (CartesianPlot *) userData;
      }
   }
-  if (cartesianPlotData != NULL) {
+  if (pcp != NULL) {
     xIsCurrentlyFromChannel =
-	cartesianPlotData->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
+        pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
     y1IsCurrentlyFromChannel =
-	cartesianPlotData->axisRange[Y1_AXIS_ELEMENT].isCurrentlyFromChannel;
+        pcp->axisRange[Y1_AXIS_ELEMENT].isCurrentlyFromChannel;
     y2IsCurrentlyFromChannel =
-	cartesianPlotData->axisRange[Y2_AXIS_ELEMENT].isCurrentlyFromChannel;
+        pcp->axisRange[Y2_AXIS_ELEMENT].isCurrentlyFromChannel;
   }
 
   XtVaGetValues(cp, XtNxrtXAxisLogarithmic,&xAxisIsLog,
-		    XtNxrtYAxisLogarithmic,&y1AxisIsLog,
-		    XtNxrtY2AxisLogarithmic,&y2AxisIsLog,
-		    XtNxrtXMin,&xMinF.lval,
-		    XtNxrtYMin,&y1MinF.lval,
-		    XtNxrtY2Min,&y2MinF.lval,
-		    XtNxrtXMax,&xMaxF.lval,
-		    XtNxrtYMax,&y1MaxF.lval,
-		    XtNxrtY2Max,&y2MaxF.lval,
-		    XtNxrtXMinUseDefault,&xMinUseDef,
-		    XtNxrtYMinUseDefault,&y1MinUseDef,
-		    XtNxrtY2MinUseDefault,&y2MinUseDef, NULL);
+                    XtNxrtYAxisLogarithmic,&y1AxisIsLog,
+                    XtNxrtY2AxisLogarithmic,&y2AxisIsLog,
+                    XtNxrtXMin,&xMinF.lval,
+                    XtNxrtYMin,&y1MinF.lval,
+                    XtNxrtY2Min,&y2MinF.lval,
+                    XtNxrtXMax,&xMaxF.lval,
+                    XtNxrtYMax,&y1MaxF.lval,
+                    XtNxrtY2Max,&y2MaxF.lval,
+                    XtNxrtXMinUseDefault,&xMinUseDef,
+                    XtNxrtYMinUseDefault,&y1MinUseDef,
+                    XtNxrtY2MinUseDefault,&y2MinUseDef, NULL);
 
 
 /* X Axis */
     optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
-	(xAxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
-		- FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+        (xAxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+                - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (xMinUseDef ? AUTO_SCALE_RANGE :
-	(xIsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
-		- FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+        (xIsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
+                - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
       sprintf(string,"%f",xMinF.fval);
@@ -4091,11 +4092,11 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 
 /* Y1 Axis */
     optionMenuSet(axisStyleMenu[Y1_AXIS_ELEMENT],
-	(y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
-		- FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-    buttonId = 	(y1MinUseDef ? AUTO_SCALE_RANGE :
-	(y1IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
-		- FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+        (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+                - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+    buttonId =  (y1MinUseDef ? AUTO_SCALE_RANGE :
+        (y1IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
+                - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y1_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
       sprintf(string,"%f",y1MinF.fval);
@@ -4120,11 +4121,11 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 
 /* Y2 Axis */
     optionMenuSet(axisStyleMenu[Y2_AXIS_ELEMENT],
-		(y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
-		- FIRST_CARTESIAN_PLOT_AXIS_STYLE);
+                (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+                - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (y2MinUseDef ? AUTO_SCALE_RANGE :
-	(y2IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
-		- FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+        (y2IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
+                - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y2_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
       sprintf(string,"%f",y2MinF.fval);
@@ -4145,6 +4146,5 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       XtSetSensitive(axisRangeMinRC[Y2_AXIS_ELEMENT],False);
       XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],False);
     }
-  
 }
 

@@ -53,30 +53,42 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void ovalUpdateValueCb(Channel *pCh);
-static void ovalDestroyCb(Channel *pCh);
+typedef struct _Oval {
+  Widget           widget;
+  DlOval           *dlOval;
+  Record           *record;
+  UpdateTask       *updateTask;
+  DlDynamicAttrMod dynAttr;
+  DlAttribute      attr;
+} Oval;
 
+static void ovalDraw(XtPointer cd);
+static void ovalUpdateValueCb(XtPointer cd);
+static void ovalDestroyCb(XtPointer cd);
+static void ovalName(XtPointer, char **, short *, int *);
 
-static void drawOval(Channel *pCh) {
+static void drawOval(Oval *po) {
   unsigned int lineWidth;
-  DisplayInfo *displayInfo = pCh->displayInfo;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
-  DlOval *dlOval = (DlOval *) pCh->specifics;
+  DisplayInfo *displayInfo = po->updateTask->displayInfo;
+  Display *display = XtDisplay(po->widget);
+  DlOval *dlOval = po->dlOval;
 
-  lineWidth = (pCh->dlAttr->width+1)/2;
-  if (pCh->dlAttr->fill == F_SOLID) {
-    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  lineWidth = (po->attr.width+1)/2;
+  if (po->attr.fill == F_SOLID) {
+    XFillArc(display,XtWindow(po->widget),displayInfo->gc,
         dlOval->object.x,dlOval->object.y,
         dlOval->object.width,dlOval->object.height,0,360*64);
   } else
-  if (pCh->dlAttr->fill == F_OUTLINE) {
-    XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+  if (po->attr.fill == F_OUTLINE) {
+    XDrawArc(display,XtWindow(po->widget),displayInfo->gc,
         dlOval->object.x + lineWidth,
         dlOval->object.y + lineWidth,
         dlOval->object.width - 2*lineWidth,
@@ -90,26 +102,42 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
   if ((displayInfo->traversalMode == DL_EXECUTE) 
       && (displayInfo->useDynamicAttribute != FALSE)){
 
-    Channel *pCh = allocateChannel(displayInfo);
-    if (pCh == NULL) return;
+    Oval *po;
+    po = (Oval *) malloc(sizeof(Oval));
+    po->dlOval = dlOval;
+    po->updateTask = updateTaskAddTask(displayInfo,
+				       &(dlOval->object),
+				       ovalDraw,
+				       (XtPointer)po);
 
-    pCh->dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-    if (pCh->dlAttr == NULL) return;
-    *pCh->dlAttr =displayInfo->attribute;
+    if (po->updateTask == NULL) {
+      medmPrintf("ovalCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
+      updateTaskAddNameCb(po->updateTask,ovalName);
+      po->updateTask->opaque = False;
+    }
+    po->record = medmAllocateRecord(
+                  displayInfo->dynamicAttribute.attr.param.chan,
+                  ovalUpdateValueCb,
+                  NULL,
+                  (XtPointer) po);
+#if 0
+    drawWhiteRectangle(po->updateTask);
+#endif
 
-    pCh->clrmod = displayInfo->dynamicAttribute.attr.mod.clr;
-    pCh->vismod = displayInfo->dynamicAttribute.attr.mod.vis;
+    po->record->monitorValueChanged = False;
+    if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
+      po->record->monitorSeverityChanged = False;
+    }
 
-    pCh->monitorType = DL_Oval;
-    pCh->specifics = (XtPointer) dlOval;
-    pCh->updateChannelCb = ovalUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = ovalDestroyCb;
-    pCh->ignoreValueChanged = True;
+    if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
+      po->record->monitorZeroAndNoneZeroTransition = False;
+    }
 
-    SEVCHK(CA_BUILD_AND_CONNECT(displayInfo->dynamicAttribute.attr.param.chan,TYPENOTCONN,0,
-      &(pCh->chid),NULL,medmConnectEventCb, pCh),
-      "executeDlOval: error in CA_BUILD_AND_CONNECT");
+    po->widget = displayInfo->drawingArea;
+    po->attr = displayInfo->attribute;
+    po->dynAttr = displayInfo->dynamicAttribute.attr.mod;
   } else
   if (displayInfo->attribute.fill == F_SOLID) {
     unsigned int lineWidth = (displayInfo->attribute.width+1)/2;
@@ -137,56 +165,83 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
 }
 
 
-static void ovalUpdateValueCb(Channel *pCh) {
+static void ovalUpdateValueCb(XtPointer cd) {
+  Oval *po = (Oval *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(po->updateTask);
+}
+
+static void ovalDraw(XtPointer cd) {
+  Oval *po = (Oval *) cd;
+  Record *pd = po->record;
+  DisplayInfo *displayInfo = po->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pCh->displayInfo->drawingArea);
+  Display *display = XtDisplay(po->widget);
 
-  if (ca_state(pCh->chid) == cs_conn) {
+  if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
-    switch (pCh->clrmod) {
+    switch (po->dynAttr.clr) {
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = pCh->displayInfo->dlColormap[pCh->dlAttr->clr];
+        gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
         break;
       case ALARM :
-        gcValues.foreground = alarmColorPixel[pCh->severity];
+        gcValues.foreground = alarmColorPixel[pd->severity];
         break;
     }
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = po->attr.width;
+    gcValues.line_style = ((po->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
-    switch (pCh->vismod) {
+    switch (po->dynAttr.vis) {
       case V_STATIC:
-        drawOval(pCh);
+        drawOval(po);
         break;
       case IF_NOT_ZERO:
-        if (pCh->value != 0.0)
-          drawOval(pCh);
+        if (pd->value != 0.0)
+          drawOval(po);
         break;
       case IF_ZERO:
-        if (pCh->value == 0.0)
-          drawOval(pCh);
+        if (pd->value == 0.0)
+          drawOval(po);
         break;
       default :
         medmPrintf("internal error : ovalUpdateValueCb\n");
         break;
     }
-    if (!ca_read_access(pCh->chid))
-      draw3DQuestionMark(pCh);
+    if (pd->readAccess) {
+      if (!po->updateTask->overlapped && po->dynAttr.vis == V_STATIC) {
+        po->updateTask->opaque = True;
+      }
+    } else {
+      po->updateTask->opaque = False;
+      draw3DQuestionMark(po->updateTask);
+    }
   } else {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     gcValues.foreground = WhitePixel(display,DefaultScreen(display));
-    gcValues.background = pCh->displayInfo->dlColormap[pCh->displayInfo->drawingAreaBackgroundColor];
-    gcValues.line_width = pCh->dlAttr->width;
-    gcValues.line_style = ((pCh->dlAttr->style == SOLID) ? LineSolid : LineOnOffDash);
-    XChangeGC(display,pCh->displayInfo->gc,gcValueMask,&gcValues);
-    drawOval(pCh);
+    gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
+    gcValues.line_width = po->attr.width;
+    gcValues.line_style = ((po->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+    XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+    drawOval(po);
   }
 }
 
-static void ovalDestroyCb(Channel *pCh) {
+static void ovalDestroyCb(XtPointer cd) {
+  Oval *po = (Oval *) cd;
+  if (po) {
+    medmDestroyRecord(po->record);
+    free(po);
+  }
   return;
 }
+
+static void ovalName(XtPointer cd, char **name, short *severity, int *count) {
+  Oval *po = (Oval *) cd;
+  *count = 1;
+  name[0] = po->record->name;
+  severity[0] = po->record->severity;
+}
+

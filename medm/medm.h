@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -137,7 +138,7 @@ EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
 	cartesianPlotAxisS, stripChartS;
 EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
 
-EXTERN Widget exitQD, closeQD, saveAsPD, exitAndSaveQD;
+EXTERN Widget exitQD, saveAsPD;
 
 /* the global Help Information Dialog */
 EXTERN Widget helpS, helpMessageBox;
@@ -153,6 +154,13 @@ EXTERN ImageType imageType;
 #define SELECTION_BUNDLE 0
 EXTERN int resourceBundleCounter;
 
+EXTERN XtWorkProcId medmWorkProcId;
+EXTERN Channel *nextToServe;
+EXTERN long medmUpdateRequestCount;
+EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
+EXTERN Widget caStudyLabel;
+EXTERN XtIntervalId medmStatusIntervalId;
+
 typedef struct menuEntry{
   char*           label;
   WidgetClass*    class;
@@ -166,6 +174,7 @@ typedef struct menuEntry{
 } menuEntry_t;
 
 #include "proto.h"
+#include "medmInitTask.h"
 
 /* pixmap names : must be accessible by program according to Motif rules:
 

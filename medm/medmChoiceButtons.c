@@ -53,18 +53,29 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
+typedef struct _ChoiceButtons {
+  Widget         widget;
+  DlChoiceButton *dlChoiceButton;
+  Record         *record;
+  UpdateTask     *updateTask;
+} ChoiceButtons;
+
 void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,DlChoiceButton *dlChoiceButton);
 void choiceButtonCreateEditInstance(DisplayInfo *displayInfo,DlChoiceButton *dlChoiceButton);
 
-static void choiceButtonUpdateValueCb(Channel *pCh);
-static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh);
-static void choiceButtonDestroyCb(Channel *pCh);
+static void choiceButtonDraw(XtPointer);
+static void choiceButtonUpdateValueCb(XtPointer);
+static void choiceButtonUpdateGraphicalInfoCb(XtPointer);
+static void choiceButtonDestroyCb(XtPointer cd);
+static void choiceButtonName(XtPointer, char **, short *, int *);
 
 
 int choiceButtonFontListIndex(
@@ -113,9 +124,10 @@ void choiceButtonValueChangedCb(
   XtPointer clientData,
   XtPointer callbackStruct)
 {
-  Channel *pCh;
+  ChoiceButtons *pcb;
   short btnNumber = (short) clientData;
   XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
+  Record *pd;
 
 /*
  * only do ca_put if this widget actually initiated the channel change
@@ -123,64 +135,63 @@ void choiceButtonValueChangedCb(
   if (call_data->event != NULL && call_data->set == True) {
 
     /* button's parent (menuPane) has the displayInfo pointer */
-    XtVaGetValues(XtParent(w),XmNuserData,&pCh,NULL);
+    XtVaGetValues(XtParent(w),XmNuserData,&pcb,NULL);
+    pd = pcb->record;
 
-    if (pCh == NULL) return;
-
-    if (ca_state(pCh->chid) == cs_conn) {
-      if (ca_write_access(pCh->chid)) {
-        SEVCHK(ca_put(DBR_SHORT,pCh->chid,&(btnNumber)),
-	  "choiceButtonValueChangedCb: error in ca_put");
-        ca_flush_io();
+    if (pd->connected) {
+      if (pd->writeAccess) {
+        medmSendDouble(pcb->record,(double)btnNumber);
       } else {
         fputc('\a',stderr);
-	choiceButtonUpdateValueCb(pCh);
+	choiceButtonUpdateValueCb((XtPointer)pcb->record);
       }
     }
   }
 }
 
-static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh) {
-  
-  DlChoiceButton *pCB = (DlChoiceButton *) pCh->specifics;
+static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  ChoiceButtons *cb = (ChoiceButtons *) pd->clientData;
+  DlChoiceButton *pCB = cb->dlChoiceButton;
   Arg wargs[20];
   int i, n, maxChars, usedWidth, usedHeight;
   short sqrtEntries;
   double dSqrt;
   XmFontList fontList;
+  Pixel fg, bg;
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temperory work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  pCh->updateGraphicalInfoCb = NULL;
+  medmRecordAddGraphicalInfoCb(cb->record,NULL);
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! End work around                 !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-  if (ca_field_type(pCh->chid) != DBF_ENUM) {
+  if (pd->dataType != DBF_ENUM) {
     medmPrintf("choiceButtonUpdateGraphicalInfoCb :\n    %s\n    \"%s\" %s\n\n",
                 "Cannot create Choice Button,",
-		ca_name(pCh->chid),"is not an ENUM type!");
+		pCB->control.ctrl,"is not an ENUM type!");
     medmPostTime();
     return;
   }
   maxChars = 0;
-  for (i = 0; i < pCh->info->e.no_str; i++) {
-    maxChars = MAX(maxChars,strlen(pCh->info->e.strs[i]));
+  for (i = 0; i <= pd->hopr; i++) {
+    maxChars = MAX(maxChars,strlen(pd->stateStrings[i]));
   }
-	
+
+  fg = (pCB->clrmod == ALARM ? alarmColorPixel[pd->severity] :
+         cb->updateTask->displayInfo->dlColormap[pCB->control.clr]);
+  bg = cb->updateTask->displayInfo->dlColormap[pCB->control.bclr];
   n = 0;
   XtSetArg(wargs[n],XmNx,(Position)pCB->object.x); n++;
   XtSetArg(wargs[n],XmNy,(Position)pCB->object.y); n++;
   XtSetArg(wargs[n],XmNwidth,(Dimension)pCB->object.width); n++;
   XtSetArg(wargs[n],XmNheight,(Dimension)pCB->object.height); n++;
-  XtSetArg(wargs[n],XmNforeground,(Pixel)
-	(pCh->clrmod == ALARM ? alarmColorPixel[pCh->info->e.severity] :
-	 pCh->displayInfo->dlColormap[pCB->control.clr])); n++;
-  XtSetArg(wargs[n],XmNbackground,(Pixel)
-	pCh->displayInfo->dlColormap[pCB->control.bclr]); n++;
+  XtSetArg(wargs[n],XmNforeground,fg); n++;
+  XtSetArg(wargs[n],XmNbackground,bg); n++;
   XtSetArg(wargs[n],XmNindicatorOn,(Boolean)FALSE); n++;
   XtSetArg(wargs[n],XmNmarginWidth,0); n++;
   XtSetArg(wargs[n],XmNmarginHeight,0); n++;
@@ -188,21 +199,21 @@ static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh) {
   XtSetArg(wargs[n],XmNresizeHeight,(Boolean)FALSE); n++;
   XtSetArg(wargs[n],XmNspacing,0); n++;
   XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-  XtSetArg(wargs[n],XmNuserData,pCh); n++;
+  XtSetArg(wargs[n],XmNuserData,cb); n++;
   switch (pCB->stacking) {
   case ROW:
     XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
     usedWidth = pCB->object.width;
-    usedHeight = pCB->object.height/MAX(1,pCh->info->e.no_str);
+    usedHeight = pCB->object.height/MAX(1,pd->hopr+1);
     break;
   case COLUMN:
     XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
-    usedWidth = pCB->object.width/MAX(1,pCh->info->e.no_str);
+    usedWidth = pCB->object.width/MAX(1,pd->hopr+1);
     usedHeight = pCB->object.height;
     break;
   case ROW_COLUMN:
     XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
-    dSqrt = ceil(sqrt((double)pCh->info->e.no_str));
+    dSqrt = ceil(sqrt((double)pd->hopr+1));
     sqrtEntries = MAX(2,(short)dSqrt);
     XtSetArg(wargs[n],XmNnumColumns,sqrtEntries); n++;
     usedWidth = pCB->object.width/sqrtEntries;
@@ -214,13 +225,13 @@ static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh) {
     medmPostTime();
     break;
   }
-  pCh->self = XmCreateRadioBox(pCh->displayInfo->drawingArea,
+  cb->widget = XmCreateRadioBox(cb->updateTask->displayInfo->drawingArea,
 			"radioBox",wargs,n);
-  pCh->displayInfo->child[pCh->displayInfo->childCount++] = pCh->self;
+  cb->updateTask->displayInfo->child[cb->updateTask->displayInfo->childCount++] = cb->widget;
 
   /* now make push-in type radio buttons of the correct size */
   fontList = fontListTable[choiceButtonFontListIndex(
-			pCB,pCh->info->e.no_str,maxChars)];
+			pCB,pd->hopr+1,maxChars)];
   n = 0;
   XtSetArg(wargs[n],XmNindicatorOn,False); n++;
   XtSetArg(wargs[n],XmNshadowThickness,2); n++;
@@ -234,21 +245,18 @@ static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh) {
   XtSetArg(wargs[n],XmNindicatorSize,0); n++;
   XtSetArg(wargs[n],XmNspacing,0); n++;
   XtSetArg(wargs[n],XmNvisibleWhenOff,False); n++;
-  XtSetArg(wargs[n],XmNforeground,(Pixel)
-	(pCh->clrmod == ALARM ? alarmColorPixel[pCh->info->e.severity] :
-	 pCh->displayInfo->dlColormap[pCB->control.clr])); n++;
-  XtSetArg(wargs[n],XmNbackground,(Pixel)
-	    pCh->displayInfo->dlColormap[pCB->control.bclr]); n++;
+  XtSetArg(wargs[n],XmNforeground,fg); n++;
+  XtSetArg(wargs[n],XmNbackground,bg); n++;
   XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-  for (i = 0; i < pCh->info->e.no_str; i++) {
+  for (i = 0; i <= pd->hopr; i++) {
     XmString xmStr;
     Widget   toggleButton;
-    xmStr = XmStringCreateSimple(pCh->info->e.strs[i]);
+    xmStr = XmStringCreateSimple(pd->stateStrings[i]);
     XtSetArg(wargs[n],XmNlabelString,xmStr);
     /* use gadgets here so that changing foreground of radioBox changes buttons */
-    toggleButton = XmCreateToggleButtonGadget(pCh->self,"toggleButton",
+    toggleButton = XmCreateToggleButtonGadget(cb->widget,"toggleButton",
 					wargs,n+1);
-    if (i==(int)pCh->value)
+    if (i==(int)pd->value)
       XmToggleButtonGadgetSetState(toggleButton,True,True);
     XtAddCallback(toggleButton,XmNvalueChangedCallback,
 	(XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)i);
@@ -259,95 +267,102 @@ static void choiceButtonUpdateGraphicalInfoCb(Channel *pCh) {
     XtManageChild(toggleButton);
   }
   /* add in drag/drop translations */
-  XtOverrideTranslations(pCh->self,parsedTranslations);
-  choiceButtonUpdateValueCb(pCh);
+  XtOverrideTranslations(cb->widget,parsedTranslations);
+  choiceButtonUpdateValueCb(cd);
 }
 
-static void choiceButtonUpdateValueCb(Channel *pCh) {
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-        XtManageChild(pCh->self);
-      else
-        return;
-      if (ca_field_type(pCh->chid) == DBF_ENUM) {
+static void choiceButtonUpdateValueCb(XtPointer cd) {
+  ChoiceButtons *pcb = (ChoiceButtons *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pcb->updateTask);
+}
+
+static void choiceButtonDraw(XtPointer cd) {
+  ChoiceButtons *pcb = (ChoiceButtons *) cd;
+  Record *pd = pcb->record;
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pcb->widget && !XtIsManaged(pcb->widget))
+        XtManageChild(pcb->widget);
+      if (pd->precision < 0) return;
+      if (pd->dataType == DBF_ENUM) {
         WidgetList children;
         Cardinal numChildren;
         int i;
-        XtVaGetValues(pCh->self,
+        XtVaGetValues(pcb->widget,
            XmNchildren,&children,
   	   XmNnumChildren,&numChildren,
 	   NULL);
         /* Change the color */
-        switch (pCh->clrmod) {
+        switch (pcb->dlChoiceButton->clrmod) {
           case STATIC :
           case DISCRETE :
   	    break;
           case ALARM :
 	    /* set alarm color */
-	    XtVaSetValues(pCh->self,XmNforeground,alarmColorPixel[pCh->severity], NULL);
+	    XtVaSetValues(pcb->widget,XmNforeground,alarmColorPixel[pd->severity], NULL);
 	    break;
           default :
 	    medmPrintf("Message: Unknown color modifier!\n");
-	    medmPrintf("Channel Name : %s\n",ca_name(pCh->chid));
+	    medmPrintf("Channel Name : %s\n",pcb->dlChoiceButton->control.ctrl);
 	    medmPostMsg("Error: choiceButtonUpdateValueCb\n");
 	    return;
         }
-        i = (int) pCh->value;
+        i = (int) pd->value;
         if ((i >= 0) && (i < (int) numChildren)) {
           XmToggleButtonGadgetSetState(children[i],True,True);
         } else {
           medmPrintf("Message: Value out of range!\n");
-          medmPrintf("Channel Name : %s\n",ca_name(pCh->chid));
+          medmPrintf("Channel Name : %s\n",pcb->dlChoiceButton->control.ctrl);
           medmPostMsg("Error: choiceButtonUpdateValueCb\n");
 	  return;
         }
       } else {
         medmPrintf("Message: Data type must be enum!\n");
-        medmPrintf("Channel Name : %s\n",ca_name(pCh->chid));
+        medmPrintf("Channel Name : %s\n",pcb->dlChoiceButton->control.ctrl);
         medmPostMsg("Error: choiceButtonUpdateValueCb\n");
 	return;
       }
-      if (ca_write_access(pCh->chid)) 
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),rubberbandCursor);
+      if (pd->writeAccess) 
+	XDefineCursor(XtDisplay(pcb->widget),XtWindow(pcb->widget),rubberbandCursor);
       else
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),noWriteAccessCursor);
+	XDefineCursor(XtDisplay(pcb->widget),XtWindow(pcb->widget),noWriteAccessCursor);
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pcb->widget && XtIsManaged(pcb->widget)) XtUnmanageChild(pcb->widget);
+      draw3DPane(pcb->updateTask,
+         pcb->updateTask->displayInfo->dlColormap[pcb->dlChoiceButton->control.bclr]);
+      draw3DQuestionMark(pcb->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pcb->widget) XtUnmanageChild(pcb->widget);
+    drawWhiteRectangle(pcb->updateTask);
   }
 }
 
 void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 		DlChoiceButton *dlChoiceButton) {
 
-  Channel *pCh;
+  ChoiceButtons *pcb;
+  pcb = (ChoiceButtons *) malloc(sizeof(ChoiceButtons));
+  pcb->dlChoiceButton = dlChoiceButton;
+  pcb->updateTask = updateTaskAddTask(displayInfo,
+                              &(dlChoiceButton->object),
+                              choiceButtonDraw,
+                              (XtPointer) pcb);
+  if (pcb->updateTask == NULL) {
+    medmPrintf("choiceButtonCreateRunTimeInstance : memory allocation error\n");
+  } else {
+    updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
+    updateTaskAddNameCb(pcb->updateTask,choiceButtonName);
+  }
 
-  /* also add in as monitor */
-  pCh = allocateChannel(displayInfo);
-
-  pCh->monitorType = DL_ChoiceButton;
-  pCh->specifics = (XtPointer) dlChoiceButton;
-  pCh->clrmod = dlChoiceButton->clrmod;
-  pCh->backgroundColor = displayInfo->dlColormap[dlChoiceButton->control.bclr];
-  pCh->updateList = NULL;
-
-  /* setup the callback rountine */
-  pCh->updateChannelCb = choiceButtonUpdateValueCb;
-  pCh->updateGraphicalInfoCb = choiceButtonUpdateGraphicalInfoCb;
-  pCh->destroyChannel = choiceButtonDestroyCb;
-
+  pcb->record = medmAllocateRecord(dlChoiceButton->control.ctrl,
+              choiceButtonUpdateValueCb,
+              choiceButtonUpdateGraphicalInfoCb,
+              (XtPointer) pcb);
+  pcb->widget = NULL;
   /* put up white rectangle so that unconnected channels are obvious */
-  drawWhiteRectangle(pCh);
+  drawWhiteRectangle(pcb->updateTask);
 
-  SEVCHK(CA_BUILD_AND_CONNECT(dlChoiceButton->control.ctrl,TYPENOTCONN,0,
-	&(pCh->chid), NULL,medmConnectEventCb, pCh),
-	"executeDlChoiceButton: error in CA_BUILD_AND_CONNECT for Monitor");
   return;
 }
 
@@ -459,6 +474,18 @@ void executeDlChoiceButton(DisplayInfo *displayInfo,
   }
 }
 
-static void choiceButtonDestroyCb(Channel *pCh) {
+static void choiceButtonDestroyCb(XtPointer cd) {
+  ChoiceButtons *pcb = (ChoiceButtons *) cd;
+  if (pcb) {
+    medmDestroyRecord(pcb->record);
+    free(pcb);
+  }
+}
+
+static void choiceButtonName(XtPointer cd, char **name, short *severity, int *count) {
+  ChoiceButtons *pcb = (ChoiceButtons *) cd;
+  *count = 1;
+  name[0] = pcb->record->name;
+  severity[0] = pcb->record->severity;
 }
 

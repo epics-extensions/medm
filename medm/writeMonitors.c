@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -179,6 +180,34 @@ void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level) {
 void writeDlStripChart( FILE *stream, DlStripChart *dlStripChart, int level) {
   int i;
   char indent[16];
+ 
+#if 1 
+    /* for the compatibility */
+
+    if (dlStripChart->delay > 0.0) {
+      double val, dummy1, dummy2;
+      switch (dlStripChart->oldUnits) {
+        case MILLISECONDS:
+          dummy1 = -0.060 * (double) dlStripChart->delay;
+          break;
+        case SECONDS:
+          dummy1 = -60 * (double) dlStripChart->delay;
+          break;
+        case MINUTES:
+          dummy1 = -3600.0 * (double) dlStripChart->delay;
+          break;
+        default:
+          dummy1 = -60 * (double) dlStripChart->delay;
+          break;
+      }
+
+      linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
+      if (dlStripChart->period != -val  || dlStripChart->units != SECONDS) {
+        dlStripChart->delay = -1;
+      }
+    }
+#endif
+    
 
     for (i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
@@ -186,9 +215,18 @@ void writeDlStripChart( FILE *stream, DlStripChart *dlStripChart, int level) {
     fprintf(stream,"\n%s\"strip chart\" {",indent);
     writeDlObject(stream,&(dlStripChart->object),level+1);
     writeDlPlotcom(stream,&(dlStripChart->plotcom),level+1);
-    fprintf(stream,"\n%s\tdelay=%d",indent,dlStripChart->delay);
-    fprintf(stream,"\n%s\tunits=\"%s\"",indent,
-      stringValueTable[dlStripChart->units]);
+    if (dlStripChart->delay < 0.0) {
+      fprintf(stream,"\n%s\tperiod=%f",indent,dlStripChart->period);
+      fprintf(stream,"\n%s\tunits=\"%s\"",indent,
+        stringValueTable[dlStripChart->units]);
+    } else {
+#if 1
+      /* for the compatibility */
+      fprintf(stream,"\n%s\tdelay=%f",indent,dlStripChart->delay);
+      fprintf(stream,"\n%s\tunits=\"%s\"",indent,
+        stringValueTable[dlStripChart->oldUnits]);
+#endif
+    }
     for (i = 0; i < MAX_PENS; i++) {
       writeDlPen(stream,&(dlStripChart->pen[i]),i,level+1);
     }

@@ -53,19 +53,32 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
+typedef struct _MessageButton {
+  Widget             widget;
+  DlMessageButton    *dlMessageButton;
+  Record             *record;
+  UpdateTask         *updateTask;
+  double             pressValue;
+  double             releaseValue;
+} MessageButton;
+
 void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,DlMessageButton *dlMessageButton);
 void messageButtonCreateEditInstance(DisplayInfo *displayInfo,DlMessageButton *dlMessageButton);
 
-static void messageButtonUpdateValueCb(Channel *pCh);
-static void messageButtonUpdateGraphicalInfoCb(Channel *pCh);
-static void messageButtonDestroyCb(Channel *pCh);
+static void messageButtonDraw(XtPointer cd);
+static void messageButtonUpdateValueCb(XtPointer cd);
+static void messageButtonUpdateGraphicalInfoCb(XtPointer cd);
+static void messageButtonDestroyCb(XtPointer);
 static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
+static void messageButtonName(XtPointer, char **, short *, int *);
 
 
 int messageButtonFontListIndex(int height)
@@ -125,30 +138,31 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
 
 void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 		DlMessageButton *dlMessageButton) {
-  Channel *pCh;
+  MessageButton *pmb;
   XmString xmString;
   int n;
   Arg args[20];
 
-  pCh = allocateChannel(displayInfo);
-  pCh->monitorType = DL_MessageButton;
-  pCh->specifics = (XtPointer) dlMessageButton;
-  pCh->clrmod = dlMessageButton->clrmod;
-  pCh->backgroundColor = displayInfo->dlColormap[dlMessageButton->control.bclr];
-  pCh->updateList = NULL;
+  pmb = (MessageButton *) malloc(sizeof(MessageButton));
+  pmb->dlMessageButton = dlMessageButton;
 
-  /* setup the callback rountine */
-  pCh->updateChannelCb = messageButtonUpdateValueCb;     
-  pCh->updateGraphicalInfoCb =  messageButtonUpdateGraphicalInfoCb;
-  pCh->destroyChannel = messageButtonDestroyCb;
+  pmb->updateTask = updateTaskAddTask(displayInfo,
+                                     &(dlMessageButton->object),
+                                     messageButtonDraw,
+                                     (XtPointer)pmb);
 
-  /* put up white rectangle so that unconnected channels are obvious */
-  drawWhiteRectangle(pCh);
-
-  SEVCHK(CA_BUILD_AND_CONNECT(dlMessageButton->control.ctrl,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb,pCh),
-	"executeDlButton: error in CA_BUILD_AND_CONNECT for Monitor");
-
+  if (pmb->updateTask == NULL) {
+    medmPrintf("messageButtonCreateRunTimeInstance : memory allocation error\n");
+  } else {
+    updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
+    updateTaskAddNameCb(pmb->updateTask,messageButtonName);
+  }
+  pmb->record = medmAllocateRecord(dlMessageButton->control.ctrl,
+                  messageButtonUpdateValueCb,
+                  messageButtonUpdateGraphicalInfoCb,
+                  (XtPointer) pmb);
+  drawWhiteRectangle(pmb->updateTask);
+ 
   xmString = XmStringCreateSimple(dlMessageButton->label);
   n = 0;
   XtSetArg(args[n],XmNx,(Position)dlMessageButton->object.x); n++;
@@ -167,19 +181,19 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
   XtSetArg(args[n],XmNlabelType, XmSTRING); n++;
   XtSetArg(args[n],XmNfontList,fontListTable[
 	 messageButtonFontListIndex(dlMessageButton->object.height)]); n++;
-  pCh->self = XtCreateWidget("messageButton",
+  pmb->widget = XtCreateWidget("messageButton",
 		xmPushButtonWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = pCh->self;
+  displayInfo->child[displayInfo->childCount++] = pmb->widget;
   XmStringFree(xmString);
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pCh->self,parsedTranslations);
+  XtOverrideTranslations(pmb->widget,parsedTranslations);
 
   /* add the callbacks for update */
-  XtAddCallback(pCh->self,XmNarmCallback,messageButtonValueChangedCb,
-	(XtPointer)pCh);
-  XtAddCallback(pCh->self,XmNdisarmCallback,messageButtonValueChangedCb,
-	(XtPointer)pCh);
+  XtAddCallback(pmb->widget,XmNarmCallback,messageButtonValueChangedCb,
+	(XtPointer)pmb);
+  XtAddCallback(pmb->widget,XmNdisarmCallback,messageButtonValueChangedCb,
+	(XtPointer)pmb);
 }
 
 void executeDlMessageButton(DisplayInfo *displayInfo,
@@ -196,132 +210,137 @@ void executeDlMessageButton(DisplayInfo *displayInfo,
   }
 }
 
-static void messageButtonUpdateGraphicalInfoCb(Channel *pCh) {
-  DlMessageButton *dlMessageButton = (DlMessageButton *) pCh->specifics;
+static void messageButtonUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  MessageButton *pmb = (MessageButton *) pd->clientData;
+  DlMessageButton *dlMessageButton = pmb->dlMessageButton;
   int i,j;
   Boolean match;
 
-  switch (ca_field_type(pCh->chid)) {
+  switch (pd->dataType) {
     case DBF_STRING:
       break;
     case DBF_ENUM :
       if (dlMessageButton->press_msg[0] != '\0') {
         match = False;
-        for (i = 0; i < pCh->info->e.no_str; i++) {
-          if (pCh->info->e.strs[i]) {
-            if (!strcmp(dlMessageButton->press_msg,pCh->info->e.strs[i])) {
-              pCh->pressValue = (double) i;
+        for (i = 0; i < pd->hopr+1; i++) {
+          if (pd->stateStrings[i]) {
+            if (!strcmp(dlMessageButton->press_msg,pd->stateStrings[i])) {
+              pmb->pressValue = (double) i;
               match = True;
               break;
             }
 	  }
         }
         if (match == False) {
-          pCh->pressValue = (double) atof(dlMessageButton->press_msg);
+          pmb->pressValue = (double) atof(dlMessageButton->press_msg);
         }
       }
       if (dlMessageButton->release_msg[0] != '\0') {
         match = False;
-        for (i = 0; i < pCh->info->e.no_str; i++) {
-          if (pCh->info->e.strs[i]) {
-            if (!strcmp(dlMessageButton->release_msg,pCh->info->e.strs[i])) {
-              pCh->releaseValue = (double) i;
+        for (i = 0; i < pd->hopr+1; i++) {
+          if (pd->stateStrings[i]) {
+            if (!strcmp(dlMessageButton->release_msg,pd->stateStrings[i])) {
+              pmb->releaseValue = (double) i;
               match = True;
               break;
             }
           }
 	}
         if (match == False) {
-           pCh->releaseValue = (double) atof(dlMessageButton->release_msg);
+           pmb->releaseValue = (double) atof(dlMessageButton->release_msg);
         }
       }
       break;
     default:
       if (dlMessageButton->press_msg[0] != '\0')
-        pCh->pressValue = (double) atof(dlMessageButton->press_msg);
+        pmb->pressValue = (double) atof(dlMessageButton->press_msg);
       if (dlMessageButton->release_msg[0] != '\0')
-        pCh->releaseValue = (double) atof(dlMessageButton->release_msg);
+        pmb->releaseValue = (double) atof(dlMessageButton->release_msg);
       break;
   }
 }
 
 
-static void messageButtonUpdateValueCb(Channel *pCh) {
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-	XtManageChild(pCh->self);
+static void messageButtonUpdateValueCb(XtPointer cd) {
+  MessageButton *pmb = (MessageButton *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pmb->updateTask);
+}
+
+static void messageButtonDraw(XtPointer cd) {
+  MessageButton *pmb = (MessageButton *) cd;
+  Record *pd = pmb->record;
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pmb->widget)
+	XtManageChild(pmb->widget);
       else 
         return;
-      switch (pCh->clrmod) {
+      switch (pmb->dlMessageButton->clrmod) {
         case STATIC :
         case DISCRETE :
           break;
         case ALARM :
-          XtVaSetValues(pCh->self,XmNforeground,alarmColorPixel[pCh->severity],NULL);
+          XtVaSetValues(pmb->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
           break;
         default :
           break;
       }
-      if (ca_write_access(pCh->chid))
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),rubberbandCursor);
+      if (pd->writeAccess)
+	XDefineCursor(XtDisplay(pmb->widget),XtWindow(pmb->widget),rubberbandCursor);
       else
-	XDefineCursor(XtDisplay(pCh->self),XtWindow(pCh->self),noWriteAccessCursor);
+	XDefineCursor(XtDisplay(pmb->widget),XtWindow(pmb->widget),noWriteAccessCursor);
     } else {
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
-      if (pCh->self) XtUnmanageChild(pCh->self);
+      draw3DPane(pmb->updateTask,
+         pmb->updateTask->displayInfo->dlColormap[pmb->dlMessageButton->control.bclr]);
+      draw3DQuestionMark(pmb->updateTask);
+      if (pmb->widget) XtUnmanageChild(pmb->widget);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pmb->widget) XtUnmanageChild(pmb->widget);
+    drawWhiteRectangle(pmb->updateTask);
   }
 }
 
-static void messageButtonDestroyCb(Channel *pCh) {
-  return;
+static void messageButtonDestroyCb(XtPointer cd) {
+  MessageButton *pmb = (MessageButton *) cd;
+  if (pmb) {
+    medmDestroyRecord(pmb->record);
+    free(pmb);
+  }
 }
 
 static void messageButtonValueChangedCb(Widget w,
                 XtPointer clientData,
                 XtPointer callbackData) {
-
-  Channel *pCh = (Channel *) clientData;
+  MessageButton *pmb = (MessageButton *) clientData;
+  Record *pd = pmb->record;
   XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
-  DlMessageButton *dlMessageButton;
+  DlMessageButton *dlMessageButton = pmb->dlMessageButton;
 
-  if (pCh == NULL) return;
-  if (pCh->chid == NULL) return;
-  if (pushCallData == NULL) return;
-
-  if (ca_state(pCh->chid) == cs_conn) {
-    dlMessageButton = (DlMessageButton *) pCh->specifics;
-    if (ca_write_access(pCh->chid)) {
+  if (pd->connected) {
+    if (pd->writeAccess) {
       if (pushCallData->reason == XmCR_ARM) {
         /* message button can only put strings */
         if (dlMessageButton->press_msg[0] != '\0') {
-          switch (ca_field_type(pCh->chid)) {
+          switch (pd->dataType) {
             case DBF_STRING:
-              SEVCHK(ca_put(DBR_STRING,pCh->chid,dlMessageButton->press_msg),
-                  "messageButtonValueChangedCb : error in ca_put");
+              medmSendString(pmb->record,dlMessageButton->press_msg);
               break;
             default:
-              SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&pCh->pressValue),
-                  "messageButtonValueChangedCb : error in ca_put");
+              medmSendDouble(pmb->record,pmb->pressValue);
               break;
           }
         }
       } else
       if (pushCallData->reason == XmCR_DISARM) {
         if (dlMessageButton->release_msg[0] != '\0') {
-          switch (ca_field_type(pCh->chid)) {
+          switch (pd->dataType) {
             case DBF_STRING:
-              SEVCHK(ca_put(DBR_STRING,pCh->chid,dlMessageButton->release_msg),
-                  "messageButtonValueChangedCb : error in ca_put");
+              medmSendString(pmb->record,dlMessageButton->release_msg);
               break;
             default:
-              SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&pCh->releaseValue),
-                  "messageButtonValueChangedCb : error in ca_put");
+              medmSendDouble(pmb->record,pmb->releaseValue);
               break;
           }
         }
@@ -330,4 +349,11 @@ static void messageButtonValueChangedCb(Widget w,
       fputc((int)'\a',stderr);
     }
   }
+}
+
+static void messageButtonName(XtPointer cd, char **name, short *severity, int *count) {
+  MessageButton *pmb = (MessageButton *) cd;
+  *count = 1;
+  name[0] = pmb->record->name;
+  severity[0] = pmb->record->severity;
 }

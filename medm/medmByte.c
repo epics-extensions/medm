@@ -47,50 +47,61 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 */
 /*****************************************************************************
  *
- *     Original Author : Mark Andersion
+ *     Original Author : David M. Wetherholt (CEBAF) & Mark Anderson
  *     Current Author  : Frederick Vong
  *
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void byteUpdateValueCb(Channel *pCh);
-static void byteDestroyCb(Channel *pCh);
+typedef struct _Byte {
+  Widget      widget;
+  DlByte      *dlByte;
+  Record      *record;
+  UpdateTask  *updateTask;
+} Bits;
+
+static void byteUpdateValueCb(XtPointer cd);
+static void byteDraw(XtPointer cd);
+static void byteDestroyCb(XtPointer cd);
+static void byteName(XtPointer, char **, short *, int *);
 
 void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
 /****************************************************************************
  * Execute DL Byte                                                          *
  ****************************************************************************/
-  Channel *pCh;
   Arg args[30];
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
-
-  displayInfo->useDynamicAttribute = FALSE;
+  Bits *pb;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_Byte;
-    pCh->specifics = (XtPointer) dlByte;
-    pCh->clrmod = dlByte->clrmod;
-    pCh->backgroundColor = displayInfo->dlColormap[dlByte->monitor.bclr];
+    pb = (Bits *) malloc(sizeof(Bits));
+    pb->dlByte = dlByte;
+    pb->updateTask = updateTaskAddTask(displayInfo,
+                                       &(dlByte->object),
+                                       byteDraw,
+                                       (XtPointer)pb);
 
-    pCh->updateChannelCb = byteUpdateValueCb;
-    pCh->updateGraphicalInfoCb = NULL;
-    pCh->destroyChannel = byteDestroyCb;
-
-    drawWhiteRectangle(pCh);
-
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlByte->monitor.rdbk,TYPENOTCONN,0,
-        &(pCh->chid),NULL,medmConnectEventCb,pCh),
-        "executeDlByte: error in CA_BUILD_AND_CONNECT");
+    if (pb->updateTask == NULL) {
+      medmPrintf("byteCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
+      updateTaskAddNameCb(pb->updateTask,byteName);
+    }
+    pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
+                  byteUpdateValueCb,
+                  NULL,
+                  (XtPointer) pb);
+    drawWhiteRectangle(pb->updateTask);
   }
 
 /****** from the DlByte structure, we've got Byte's specifics */
@@ -127,14 +138,14 @@ void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
 
 /****** Add the pointer to the ChannelAccessMonitorData structure as
         userData to widget */
-    XtSetArg(args[n],XcNuserData,(XtPointer)pCh); n++;
+    XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
     localWidget = XtCreateWidget("byte",
       xcByteWidgetClass, displayInfo->drawingArea, args, n);
     displayInfo->child[displayInfo->childCount++] = localWidget;
 
 /****** Record the widget that this structure belongs to */
     if (displayInfo->traversalMode == DL_EXECUTE) {
-      pCh->self = localWidget;
+      pb->widget = localWidget;
 /****** Add in drag/drop translations */
       XtOverrideTranslations(localWidget,parsedTranslations);
     } else if (displayInfo->traversalMode == DL_EDIT) {
@@ -145,36 +156,55 @@ void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
     }
 }
 
-static void byteUpdateValueCb(Channel *pCh) {
+static void byteUpdateValueCb(XtPointer cd) {
+  Bits *pb = (Bits *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pb->updateTask);
+}
+
+static void byteDraw(XtPointer cd) {
+  Bits *pb = (Bits *) cd;
+  Record *pd = pb->record;
   XcVType val;
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self) {
-        XtManageChild(pCh->self);
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pb->widget) {
+        XtManageChild(pb->widget);
       } else {
 	return;
       }
-      val.fval = (float) pCh->value;
-      XcBYUpdateValue(pCh->self,&val);
-      switch (pCh->clrmod) {
+      val.fval = (float) pd->value;
+      XcBYUpdateValue(pb->widget,&val);
+      switch (pb->dlByte->clrmod) {
 	case STATIC :
 	case DISCRETE :
 	  break;
 	case ALARM :
-          XcBYUpdateByteForeground(pCh->self,alarmColorPixel[pCh->severity]);
+          XcBYUpdateByteForeground(pb->widget,alarmColorPixel[pd->severity]);
 	  break;
       }
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pb->widget) XtUnmanageChild(pb->widget);
+      draw3DPane(pb->updateTask,
+          pb->updateTask->displayInfo->dlColormap[pb->dlByte->monitor.bclr]);
+      draw3DQuestionMark(pb->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pb->widget) XtUnmanageChild(pb->widget);
+    drawWhiteRectangle(pb->updateTask);
   }
 }
 
-static void byteDestroyCb(Channel *pCh) {
+static void byteDestroyCb(XtPointer cd) {
+  Bits *pb = (Bits *) cd;
+  if (pb) {
+    medmDestroyRecord(pb->record);
+    free(pb);
+  }
 }
 
+static void byteName(XtPointer cd, char **name, short *severity, int *count) {
+  Bits *pb = (Bits *) cd;
+  *count = 1;
+  name[0] = pb->record->name;
+  severity[0] = pb->record->severity;
+}

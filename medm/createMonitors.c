@@ -326,8 +326,13 @@ DlElement *createDlStripChart(
   dlStripChart = (DlStripChart *) malloc(sizeof(DlStripChart));
   createDlObject(displayInfo,&(dlStripChart->object));
   createDlPlotcom(displayInfo,&(dlStripChart->plotcom));
-  dlStripChart->delay = globalResourceBundle.delay;
+  dlStripChart->period = globalResourceBundle.period;
   dlStripChart->units = globalResourceBundle.units;
+#if 1
+  /* for backward compatible */
+  dlStripChart->delay = -1.0;
+  dlStripChart->oldUnits = globalResourceBundle.units;
+#endif
   for (penNumber = 0; penNumber < MAX_PENS; penNumber++)
 	createDlPen(displayInfo,&(dlStripChart->pen[penNumber]),penNumber);
 
@@ -404,6 +409,7 @@ DlElement *createDlSurfacePlot(
   DlSurfacePlot *dlSurfacePlot;
   DlElement *dlElement;
 
+#if 0
   dlSurfacePlot = (DlSurfacePlot *) malloc(sizeof(DlSurfacePlot));
   createDlObject(displayInfo,&(dlSurfacePlot->object));
   createDlPlotcom(displayInfo,&(dlSurfacePlot->plotcom));
@@ -422,7 +428,7 @@ DlElement *createDlSurfacePlot(
   displayInfo->dlElementListTail = dlElement;
   dlElement->dmExecute = (void(*)())executeDlSurfacePlot;
   dlElement->dmWrite = (void(*)())writeDlSurfacePlot;
-
+#endif
   return(dlElement);
 }
 

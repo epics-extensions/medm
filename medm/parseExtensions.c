@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -280,6 +281,7 @@ void parsePolyline(
   dlPolyline->object = defaultObject;
   dlPolyline->nPoints = 0;
   dlPolyline->points = (XPoint *)NULL;
+  dlPolyline->isFallingOrRisingLine = False;
 
   nestingLevel = 0;
   do {

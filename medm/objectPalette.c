@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -874,8 +875,8 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 		elementPtr->structure.stripChart->plotcom.clr;
 	globalResourceBundle.bclr =
 		elementPtr->structure.stripChart->plotcom.bclr;
-	globalResourceBundle.delay = 
-		elementPtr->structure.stripChart->delay;
+	globalResourceBundle.period = 
+		elementPtr->structure.stripChart->period;
 	globalResourceBundle.units =
 		elementPtr->structure.stripChart->units;
 	for (i = 0; i < MAX_PENS; i++){
@@ -1459,10 +1460,10 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 		elementPtr->structure.stripChart->plotcom.bclr;
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 		currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
-	globalResourceBundle.delay = 
-		elementPtr->structure.stripChart->delay;
-	sprintf(string,"%d",globalResourceBundle.delay);
-	XmTextFieldSetString(resourceEntryElement[DELAY_RC],string);
+	globalResourceBundle.period = 
+		elementPtr->structure.stripChart->period;
+        cvtDoubleToString(globalResourceBundle.period,string,0);
+	XmTextFieldSetString(resourceEntryElement[PERIOD_RC],string);
 	globalResourceBundle.units =
 		elementPtr->structure.stripChart->units;
         optionMenuSet(resourceEntryElement[UNITS_RC],
@@ -2070,8 +2071,8 @@ void updateElementFromGlobalResourceBundle(
 		globalResourceBundle.clr;
 	elementPtr->structure.stripChart->plotcom.bclr =
 		globalResourceBundle.bclr;
-	elementPtr->structure.stripChart->delay =
-		globalResourceBundle.delay;
+	elementPtr->structure.stripChart->period =
+		globalResourceBundle.period;
 	elementPtr->structure.stripChart->units =
 		globalResourceBundle.units;
 	for (i = 0; i < MAX_PENS; i++){

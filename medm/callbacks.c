@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release 
  *
  *****************************************************************************
 */
@@ -64,7 +65,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 /* for modal dialogs - defined in utils.c and referenced here in callbacks.c */
 extern Boolean modalGrab;
-extern Widget closeQD;
 extern Widget mainMW;
 
 extern char *stripChartWidgetName;
@@ -209,22 +209,7 @@ XtCallbackProc executePopupMenuCallback(
 		XtWindow(displayInfo->drawingArea),DISPLAY_XWD_FILE);
 
   } else if (buttonNumber == EXECUTE_POPUP_MENU_CLOSE_ID) {
-
-  /* clear resource palette if this is the current display... */
-     if (displayInfo == currentDisplayInfo) {
-	highlightAndSetSelectedElements(NULL,0,0);
-	clearResourcePaletteEntries();
-     }
-
-     currentDisplayInfo = displayInfo;
-     if (currentDisplayInfo->hasBeenEditedButNotSaved) {
-	XtManageChild(closeQD);
-     } else {
-     /* remove currentDisplayInfo from displayInfoList and cleanup */
-	dmRemoveDisplayInfo(currentDisplayInfo);
-	currentDisplayInfo = NULL;
-     }
-
+    closeDisplay(w);
   }
 
 }
@@ -246,11 +231,9 @@ XtCallbackProc popdownDisplayFileDialog(
 
 
 
-XtCallbackProc dmCreateRelatedDisplay(
-  Widget  w,
-  DisplayInfo *displayInfo,
-  XmPushButtonCallbackStruct *call_data)
+void dmCreateRelatedDisplay(Widget  w, XtPointer cd, XtPointer cbs)
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) cd;
   char *filename, *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
   char **nameArgs;
   Arg args[5];
@@ -457,7 +440,6 @@ void drawingAreaCallback(
 
 	XPoint points[4];
         Region region;
-        Channel *pTmp;
 	XRectangle clipRect;
 
 	points[0].x = x;
@@ -469,6 +451,10 @@ void drawingAreaCallback(
         points[3].x = x;
         points[3].y = y + uih;
         region = XPolygonRegion(points,4,EvenOddRule);
+        if (region == NULL) {
+          medmPrintf("medmRepaintRegion : XPolygonRegion() return NULL\n");
+          return;
+        }
 
         /* clip the region */
         clipRect.x = x;
@@ -479,24 +465,11 @@ void drawingAreaCallback(
 
         XSetClipRectangles(display,gc,0,0,&clipRect,1,YXBanded);
 
-        pTmp = channelAccessMonitorListHead->next;
-        while (pTmp != NULL) {
-          if (pTmp->displayInfo == displayInfo) {
-            if (XRectInRegion(region,
-                ((DlRectangle *)pTmp->specifics)->object.x,
-                ((DlRectangle *)pTmp->specifics)->object.y,
-                ((DlRectangle *)pTmp->specifics)->object.width,
-                ((DlRectangle *)pTmp->specifics)->object.height)!=RectangleOut) {
-              if (pTmp->updateChannelCb) {
-                pTmp->updateChannelCb(pTmp);
-              }
-            }
-          }
-          pTmp = pTmp->next;
-        }
+        updateTaskRepaintRegion(displayInfo,&region);
         /* release the clipping region */
         XSetClipOrigin(display,gc,0,0);
         XSetClipMask(display,gc,None);
+        if (region) XDestroyRegion(region);
       }
     }
     return;
@@ -658,6 +631,7 @@ XtCallbackProc relatedDisplayMenuButtonDestroy(
     }
 }
 
+#if 0
 void monitorDestroy(
   Widget  w,
   XtPointer data,
@@ -711,7 +685,7 @@ void monitorDestroy(
 
 }
 
-
+#endif
 
 
 
@@ -769,8 +743,6 @@ void simpleRadioBoxCallback(
      XtVaGetValues(XtParent(w),XmNuserData,&pCh,NULL);
 
      if (pCh == NULL) return;
-     pCh->modified = PRIMARY_MODIFIED;
-     globalModifiedFlag = True;
 
      if (ca_state(pCh->chid) == cs_conn) {
        SEVCHK(ca_put(DBR_SHORT,pCh->chid,&(btnNumber)),
@@ -783,17 +755,3 @@ void simpleRadioBoxCallback(
   }
 
 }
-
-/*
- * refresh/redisplay callback for strip charts
- */
-
-XtCallbackProc redisplayStrip(
-  Widget  w,
-  Strip **strip,
-  XmAnyCallbackStruct *call_data)
-{
-  if (*strip != NULL) stripRefresh(*strip);
-}
-
-

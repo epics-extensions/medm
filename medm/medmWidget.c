@@ -239,18 +239,6 @@ void medmInit(char *displayFont)
  */
   medmCAInitialize();
 
-
-/*
- * create an empty (placeholder) Channel for the
- *    channelAccessMonitorListHead and Tail 
- */
-  channelAccessMonitorListHead = (Channel *)
-	malloc(sizeof(Channel));
-  channelAccessMonitorListHead->modified = NOT_MODIFIED;
-  channelAccessMonitorListHead->next = NULL;
-  channelAccessMonitorListHead->prev = NULL;
-  channelAccessMonitorListTail = channelAccessMonitorListHead;
-
 /*
  * likewise for DisplayInfo structures list
  */

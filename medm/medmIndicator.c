@@ -53,45 +53,56 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
+ *                              - using new screen update dispatch mechanism
  *
  *****************************************************************************
 */
 
 #include "medm.h"
 
-static void indicatorUpdateValueCb(Channel *pCh);
-static void indicatorUpdateGraphicalInfoCb(Channel *pCh);
-static void indicatorDestroyCb(Channel *pCh);
+typedef struct _Indicator {
+  Widget      widget;
+  DlIndicator *dlIndicator;
+  Record      *record;
+  UpdateTask  *updateTask;
+} Indicator;
+
+static void indicatorUpdateValueCb(XtPointer cd);
+static void indicatorDraw(XtPointer cd);
+static void indicatorUpdateGraphicalInfoCb(XtPointer cd);
+static void indicatorDestroyCb(XtPointer cd);
+static void indicatorName(XtPointer, char **, short *, int *);
 
 void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
 				Boolean dummy)
 {
-  Channel *pCh;
+  
   Arg args[30];
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
-
-
-  displayInfo->useDynamicAttribute = FALSE;
+  Indicator *pi;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
-    pCh = allocateChannel(displayInfo);
-    pCh->monitorType = DL_Indicator;
-    pCh->specifics = (XtPointer) dlIndicator;
-    pCh->clrmod = dlIndicator->clrmod;
-    pCh->backgroundColor = displayInfo->dlColormap[dlIndicator->monitor.bclr];
-    pCh->label = dlIndicator->label;
+    pi = (Indicator *) malloc(sizeof(Indicator));
+    pi->dlIndicator = dlIndicator;
+    pi->updateTask = updateTaskAddTask(displayInfo,
+                                       &(dlIndicator->object),
+                                       indicatorDraw,
+                                       (XtPointer)pi);
 
-    pCh->updateChannelCb = indicatorUpdateValueCb;
-    pCh->updateGraphicalInfoCb = indicatorUpdateGraphicalInfoCb;
-    pCh->destroyChannel = indicatorDestroyCb;
-
-    drawWhiteRectangle(pCh);
-
-    SEVCHK(CA_BUILD_AND_CONNECT(dlIndicator->monitor.rdbk,TYPENOTCONN,0,
-	&(pCh->chid),NULL,medmConnectEventCb, pCh),
-	"executeDlIndicator: error in CA_BUILD_AND_CONNECT");
+    if (pi->updateTask == NULL) {
+      medmPrintf("indicatorCreateRunTimeInstance : memory allocation error\n");
+    } else {
+      updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
+      updateTaskAddNameCb(pi->updateTask,indicatorName);
+    }
+    pi->record = medmAllocateRecord(dlIndicator->monitor.rdbk,
+                  indicatorUpdateValueCb,
+                  indicatorUpdateGraphicalInfoCb,
+                  (XtPointer) pi);
+    drawWhiteRectangle(pi->updateTask);
   }
 
 /* from the indicator structure, we've got Indicator's specifics */
@@ -165,7 +176,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
  * add the pointer to the Channel structure as userData 
  *  to widget
  */
-  XtSetArg(args[n],XcNuserData,(XtPointer)pCh); n++;
+  XtSetArg(args[n],XcNuserData,(XtPointer)pi); n++;
   localWidget = XtCreateWidget("indicator", 
 		xcIndicatorWidgetClass, displayInfo->drawingArea, args, n);
   displayInfo->child[displayInfo->childCount++] = localWidget;
@@ -173,7 +184,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
   if (displayInfo->traversalMode == DL_EXECUTE) {
 
 /* record the widget that this structure belongs to */
-    pCh->self = localWidget;
+    pi->widget = localWidget;
 
 /* add in drag/drop translations */
     XtOverrideTranslations(localWidget,parsedTranslations);
@@ -189,44 +200,55 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
 
 }
 
-static void indicatorUpdateValueCb(Channel *pCh) {
+static void indicatorDraw(XtPointer cd) {
+  Indicator *pi = (Indicator *) cd;
+  Record *pd = pi->record;
   XcVType val;
-  if (ca_state(pCh->chid) == cs_conn) {
-    if (ca_read_access(pCh->chid)) {
-      if (pCh->self)
-	XtManageChild(pCh->self);
+
+  if (pd->connected) {
+    if (pd->readAccess) {
+      if (pi->widget)
+	XtManageChild(pi->widget);
       else
 	return;
-      val.fval = (float) pCh->value;
-      XcIndUpdateValue(pCh->self,&val);
-      switch (pCh->clrmod) {
+      val.fval = (float) pd->value;
+      XcIndUpdateValue(pi->widget,&val);
+      switch (pi->dlIndicator->clrmod) {
         case STATIC :
         case DISCRETE :
 	  break;
         case ALARM :
-	  XcIndUpdateIndicatorForeground(pCh->self,alarmColorPixel[pCh->severity]);
+	  XcIndUpdateIndicatorForeground(pi->widget,alarmColorPixel[pd->severity]);
 	  break;
       }
     } else {
-      if (pCh->self) XtUnmanageChild(pCh->self);
-      draw3DPane(pCh);
-      draw3DQuestionMark(pCh);
+      if (pi->widget) XtUnmanageChild(pi->widget);
+      draw3DPane(pi->updateTask,
+         pi->updateTask->displayInfo->dlColormap[pi->dlIndicator->monitor.bclr]);
+      draw3DQuestionMark(pi->updateTask);
     }
   } else {
-    if (pCh->self) XtUnmanageChild(pCh->self);
-    drawWhiteRectangle(pCh);
+    if (pi->widget) XtUnmanageChild(pi->widget);
+    drawWhiteRectangle(pi->updateTask);
   }
 }
 
-static void indicatorUpdateGraphicalInfoCb(Channel *pCh) {
+static void indicatorUpdateValueCb(XtPointer cd) {
+  Indicator *pi = (Indicator *) ((Record *) cd)->clientData;
+  updateTaskMarkUpdate(pi->updateTask);
+}
+
+static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
+  Record *pd = (Record *) cd;
+  Indicator *pi = (Indicator *) pd->clientData;
   XcVType hopr, lopr, val;
   int precision;
 
-  switch (ca_field_type(pCh->chid)) {
+  switch (pd->dataType) {
   case DBF_STRING :
   case DBF_ENUM :
     medmPrintf("indicatorUpdateGraphicalInfoCb : %s %s %s\n",
-	"illegal channel type for",ca_name(pCh->chid), ": cannot attach Indicator");
+	"illegal channel type for",pi->dlIndicator->monitor.rdbk, ": cannot attach Indicator");
     medmPostTime();
     return;
   case DBF_CHAR :
@@ -234,14 +256,14 @@ static void indicatorUpdateGraphicalInfoCb(Channel *pCh) {
   case DBF_LONG :
   case DBF_FLOAT :
   case DBF_DOUBLE :
-    hopr.fval = (float) pCh->hopr;
-    lopr.fval = (float) pCh->lopr;
-    val.fval = (float) pCh->value;
-    precision = pCh->precision;
+    hopr.fval = (float) pd->hopr;
+    lopr.fval = (float) pd->lopr;
+    val.fval = (float) pd->value;
+    precision = pd->precision;
     break;
   default :
     medmPrintf("indicatorUpdateGraphicalInfoCb: %s %s %s\n",
-	"unknown channel type for",ca_name(pCh->chid), ": cannot attach Indicator");
+	"unknown channel type for",pi->dlIndicator->monitor.rdbk, ": cannot attach Indicator");
     medmPostTime();
     break;
   }
@@ -249,22 +271,34 @@ static void indicatorUpdateGraphicalInfoCb(Channel *pCh) {
     hopr.fval += 1.0;
   }
 
-  if (pCh->self != NULL) {
+  if (pi->widget != NULL) {
     Pixel pixel;
-    pixel = (pCh->clrmod == ALARM) ?
-	    alarmColorPixel[pCh->info->f.severity] :
-	    pCh->displayInfo->dlColormap[((DlIndicator *) pCh->specifics)->monitor.clr];
-    XtVaSetValues(pCh->self,
+    pixel = (pi->dlIndicator->clrmod == ALARM) ?
+	    alarmColorPixel[pd->severity] :
+	    pi->updateTask->displayInfo->dlColormap[pi->dlIndicator->monitor.clr];
+    XtVaSetValues(pi->widget,
       XcNlowerBound,lopr.lval,
       XcNupperBound,hopr.lval,
       XcNindicatorForeground,pixel,
       XcNdecimals, precision,
       NULL);
-    XcIndUpdateValue(pCh->self,&val);
+    XcIndUpdateValue(pi->widget,&val);
   }
 }
 
-static void indicatorDestroyCb(Channel *pCh) {
+static void indicatorDestroyCb(XtPointer cd) {
+  Indicator *pi = (Indicator *) cd;
+  if (pi) {
+    medmDestroyRecord(pi->record);
+    free(pi);
+  }
   return;
+}
+
+static void indicatorName(XtPointer cd, char **name, short *severity, int *count) {
+  Indicator *pi = (Indicator *) cd;
+  *count = 1;
+  name[0] = pi->record->name;
+  severity[0] = pi->record->severity;
 }
 

@@ -53,6 +53,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * Modification Log:
  * -----------------
  * .01  03-01-95        vong    2.0.0 release
+ * .02  09-05-95        vong    2.1.0 release
  *
  *****************************************************************************
 */
@@ -151,144 +152,79 @@ int localCvtDoubleToString(
   sprintf(pstr_value,formatStr,flt_value);
 }
 
-char *valueToString(Channel *pCh, TextFormat format) {
-  static char textField[MAX_TEXT_UPDATE_WIDTH];
-  double value;
-  unsigned short precision = 0;
-  switch(ca_field_type(pCh->chid)) {
-    case DBF_STRING :
-      return pCh->stringValue;
-    case DBF_ENUM :
-      if ((pCh->info) && (pCh->info->e.no_str > 0)) {
-	int i = (int) pCh->value;
-        /* getting values of -1 for data->value for invalid connections */
-        if ( i >= 0 && i < (int) pCh->info->e.no_str) {
-	  return pCh->info->e.strs[(int)pCh->value];
-        } else {
-	  return " ";
-        }
-      } else {
-	value = pCh->value;
-      }
-      break;
-    case DBF_CHAR :
-    case DBF_INT :
-    case DBF_LONG :
-      value = pCh->value;
-      break;
-    case DBF_FLOAT :
-      if (pCh->info)
-        precision = pCh->info->f.precision;
-      value = (double) pCh->value;
-      break;
-    case DBF_DOUBLE :
-      if (pCh->info)
-        precision = pCh->info->d.precision;
-      value = pCh->value;
-      break;
-    default :
-      medmPrintf("Name  : %s\n",ca_name(pCh->chid));
-      medmPrintf("Error : valueToString\n");
-      medmPostMsg("Msg   : Unknown Data Type!\n");
-      return "Error!";
-  }
-  switch (format) {
-    case DECIMAL:
-      localCvtDoubleToString(value,textField,precision);
-      break;
-    case EXPONENTIAL:
-      cvtDoubleToExpString(value,textField,precision);
-      break;
-    case ENGR_NOTATION:
-      localCvtDoubleToExpNotationString(value,textField,precision);
-      break;
-    case COMPACT:
-      cvtDoubleToCompactString(value,textField,precision);
-      break;
-    case TRUNCATED:
-      cvtLongToString((long)value,textField);
-      break;
-    case HEXADECIMAL:
-      cvtLongToHexString((long)value, textField);
-      break;
-    case OCTAL:
-      cvtLongToOctalString((long)value, textField);
-      break;
-    default :
-      medmPrintf("Name  : %s\n",ca_name(pCh->chid));
-      medmPrintf("Error : valueToString\n");
-      medmPostMsg("Msg   : Unknown Format Type!\n");
-      return "Error!";
-  }
-  return textField;
-}
-  
-void drawWhiteRectangle(Channel *pCh) {
-  Display *display  = XtDisplay(pCh->displayInfo->drawingArea);
-  GC      gc        = pCh->displayInfo->pixmapGC;
-  DlRectangle *p    = (DlRectangle *) pCh->specifics;
-  Pixmap  pixmap    = pCh->displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(pCh->displayInfo->drawingArea);
+void drawWhiteRectangle(UpdateTask *pt) {
+  Display *display  = XtDisplay(pt->displayInfo->drawingArea);
+  GC      gc        = pt->displayInfo->pixmapGC;
+  Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
+  Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
 
   XSetForeground(display,gc,WhitePixel(display,DefaultScreen(display)));
-  XFillRectangle(display,drawable,gc,p->object.x,p->object.y,
-	         p->object.width,p->object.height);
+  XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
+	         pt->rectangle.width,pt->rectangle.height);
   return;
 }
 
-void draw3DPane(Channel *pCh) {
-  Pixel   tsc, bsc, bgc, fgc, slc;
-  Display *display  = XtDisplay(pCh->displayInfo->drawingArea);
-  GC      gc        = pCh->displayInfo->pixmapGC;
-  Pixmap  pixmap    = pCh->displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(pCh->displayInfo->drawingArea);
-  int x = ((DlRectangle *) pCh->specifics)->object.x;
-  int y = ((DlRectangle *) pCh->specifics)->object.y;
-  int w = ((DlRectangle *) pCh->specifics)->object.width;
-  int h = ((DlRectangle *) pCh->specifics)->object.height;
-  int bw = pCh->shadowBorderWidth;
-  XPoint   points[7];
-  int n;
+void draw3DPane(UpdateTask *pt, Pixel bgc) {
 
-  bgc = pCh->backgroundColor;
-  XmGetColors(XtScreen(pCh->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
+  Pixel   tsc, bsc, fgc, slc;
+  DisplayInfo *displayInfo = pt->displayInfo;
+  Display *display = XtDisplay(displayInfo->drawingArea);
+  GC      gc        = displayInfo->gc;
+  Pixmap  pixmap    = displayInfo->drawingAreaPixmap;
+  Drawable drawable = XtWindow(displayInfo->drawingArea);
+  int x = pt->rectangle.x;
+  int y = pt->rectangle.y;
+  int w = pt->rectangle.width;
+  int h = pt->rectangle.height;
+
+  XPoint  points[7];
+  int n;
+  int shadowThickness = 2;
+
+#if 0
+  XtVaGetValues(displayInfo->drawingArea,XmNshadowThickness,&shadowThickness,NULL);
+#endif
+
+  XmGetColors(XtScreen(displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
   /* create the top shadow */
   n = 0;
-  points[n].x = x;          points[n].y = y;          n++;
-  points[n].x = x + w;      points[n].y = y;          n++;
-  points[n].x = x + w - bw; points[n].y = y + bw;     n++;
-  points[n].x = x + bw;     points[n].y = y + bw;     n++;
-  points[n].x = x + bw;     points[n].y = y + h - bw; n++;
-  points[n].x = x;          points[n].y = y + h;      n++;
-  points[n].x = x;          points[n].y = y;          n++;
+  points[n].x = x;                       points[n].y = y;                       n++;
+  points[n].x = x + w;                   points[n].y = y;                       n++;
+  points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
+  points[n].x = x + shadowThickness;     points[n].y = y + shadowThickness;     n++;
+  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
+  points[n].x = x;                       points[n].y = y + h;                   n++;
+  points[n].x = x;                       points[n].y = y;                       n++;
   XSetForeground(display,gc,tsc);
   XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
   /* create the background pane */
   XSetForeground(display,gc,bgc);
-  XFillRectangle(display, drawable, gc,x+bw,y+bw,w-2*bw,h-2*bw);
+  XFillRectangle(display, drawable, gc,
+                          x+shadowThickness,y+shadowThickness,
+                          w-2*shadowThickness,h-2*shadowThickness);
   /* create the bottom shadow */
   n = 0;
-  points[n].x = x + bw;     points[n].y = y + h - bw; n++;
-  points[n].x = x + w - bw; points[n].y = y + h - bw; n++;
-  points[n].x = x + w - bw; points[n].y = y + bw;     n++;
-  points[n].x = x + w;      points[n].y = y;          n++;
-  points[n].x = x + w;      points[n].y = y + h;      n++;
-  points[n].x = x;          points[n].y = y + h;      n++;
-  points[n].x = x + bw;     points[n].y = y + h - bw; n++;
+  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
+  points[n].x = x + w - shadowThickness; points[n].y = y + h - shadowThickness; n++;
+  points[n].x = x + w - shadowThickness; points[n].y = y + shadowThickness;     n++;
+  points[n].x = x + w;                   points[n].y = y;          n++;
+  points[n].x = x + w;                   points[n].y = y + h;      n++;
+  points[n].x = x;                       points[n].y = y + h;      n++;
+  points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
   XSetForeground(display,gc,bsc);
   XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
 }
 
-void draw3DQuestionMark(Channel *pCh) {
+void draw3DQuestionMark(UpdateTask *pt) {
   Pixel   tsc, bsc, bgc, fgc, slc;
-  Display *display  = XtDisplay(pCh->displayInfo->drawingArea);
-  GC      gc        = pCh->displayInfo->pixmapGC;
-  Pixmap  pixmap    = pCh->displayInfo->drawingAreaPixmap;
-  Drawable drawable = XtWindow(pCh->displayInfo->drawingArea);
-  int x = ((DlRectangle *) pCh->specifics)->object.x;
-  int y = ((DlRectangle *) pCh->specifics)->object.y;
-  int w = ((DlRectangle *) pCh->specifics)->object.width;
-  int h = ((DlRectangle *) pCh->specifics)->object.height;
+  Display *display  = XtDisplay(pt->displayInfo->drawingArea);
+  GC      gc        = pt->displayInfo->pixmapGC;
+  Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
+  Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+  int x = pt->rectangle.x;
+  int y = pt->rectangle.y;
+  int w = pt->rectangle.width;
+  int h = pt->rectangle.height;
   Dimension qmh, qmw, qmlw;  /*  qmh = height of the drawing area for the question mark
 				*  qmw = width of the drawing area for the question mark
 				*  qmlw = line width of the question mark
@@ -302,19 +238,14 @@ void draw3DQuestionMark(Channel *pCh) {
 
 
   bgc = alarmColorPixel[2];
-  XmGetColors(XtScreen(pCh->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
+  XmGetColors(XtScreen(pt->displayInfo->drawingArea),cmap,bgc,&fgc,&tsc,&bsc,&slc);
 
-
-  if (h > w) {
-    qmlw = w / 10;
-  } else {
-    qmlw = h / 10;
-  }
+  qmlw = (h > w) ? (w / 10) : (h / 10);  /* calculate the line width */
   if (qmlw != (qmlw/2*2)) qmlw = qmlw + 1;  /* if odd, make it even */
   qmh = h - qmlw * 4;
   if (qmh != (qmh/2*2)) qmh = qmh + 1;      /* if odd, make it even */
   qmw = w - qmlw * 4;
-  if (qmw != (qmw/2*2)) qmh = qmh + 1;      /* if odd, make it even */
+  if (qmw != (qmw/2*2)) qmw = qmw + 1;      /* if odd, make it even */
   if (qmh < qmw) {
     qmw = qmh;
   }
@@ -328,11 +259,15 @@ void draw3DQuestionMark(Channel *pCh) {
   ly1 = y + h/ 2 - qmlw/2;
   lx2 = lx1;
   ly2 = ly1 + qmh / 4;
+  if (lx1 > lx2) lx2 = lx1;
+  if (ly1 > ly2) ly2 = ly1;
   /* calculate the size and position of the bottom circle */
   dx = lx1 - qmw / 8;
   dy = ly2 + qmlw; 
   dw = qmw / 4;
   dh = qmh / 4;
+  if (dw <= 0) dw = 1;
+  if (dh <= 0) dh = 1;
   /* draw the foreground of the question mark */
   XSetForeground(display, gc, bgc);
   XSetLineAttributes(display,gc, qmlw,LineSolid,CapButt,JoinMiter);
