@@ -240,13 +240,13 @@ static int execute(char *s)
     int status,spawn_sts;
     int spawnFlags=CLI$M_NOWAIT;
     struct dsc$descriptor cmdDesc;
-    printf("command : %s\n",s);
     cmdDesc.dsc$w_length  = strlen(s);
     cmdDesc.dsc$b_dtype   = DSC$K_DTYPE_T;
     cmdDesc.dsc$b_class   = DSC$K_CLASS_S;
     cmdDesc.dsc$a_pointer = s;
     spawn_sts = lib$spawn(&cmdDesc,0,0,&spawnFlags,0,0, &status,0,0,0,0,0);
-    printf("statuss %d %d\n",spawn_sts, status);
+    if(spawn_sts != 1)
+      printf("statuss %d %d\n",spawn_sts, status);
 #endif
 }
 /**************************** findNetscapeWindow *************************/

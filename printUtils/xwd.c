@@ -184,7 +184,12 @@ int xwd(Display *display, Window window, char *filename)
 
 static int Window_Dump(Display *display, Window window, FILE *file)
 {
+#ifndef VMS
     unsigned long swaptest = 1;
+#else
+  /* ACM:  This empirically works on VMS */
+    unsigned long swaptest = 0;
+#endif
     XColor *colors;
     unsigned buffer_size;
     int win_name_size;

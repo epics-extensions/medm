@@ -210,7 +210,22 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	      }
 	      break;
 	}
+#if 1
 	preferredHeight = dlIndicator->object.height/INDICATOR_FONT_DIVISOR;
+#else
+      /* ACM: Suggested change */
+      /* KE: Not a good idea */
+        switch(dlIndicator->direction) {
+	  case LEFT:
+	  case RIGHT:
+	    preferredHeight = dlIndicator->object.height/INDICATOR_FONT_DIVISOR;
+	    break;
+	  case DOWN:
+	  case UP:
+	    preferredHeight = dlIndicator->object.width/INDICATOR_FONT_DIVISOR;
+	    break;
+	}
+#endif
 	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
 	  preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
 	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
@@ -375,11 +390,21 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
       /* Set values in the widget if src is Channel */
 	if(dlIndicator->limits.loprSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.lopr = lopr.fval;
-	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+#ifndef ACM
+	  /* ACM: This does not always work */
+	    XtVaSetValues(widget, XcNlowerBound, lopr.lval, NULL);
+#else
+	    XcIndUpdateLowerBound(widget,&lopr);
+#endif	    
 	}
 	if(dlIndicator->limits.hoprSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.hopr = hopr.fval;
-	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+#ifndef ACM
+	  /* ACM: This does not always work */
+	    XtVaSetValues(widget, XcNupperBound, hopr.lval, NULL); 
+#else
+	    XcIndUpdateUpperBound(widget,&hopr);
+#endif	    
 	}
 	if(dlIndicator->limits.precSrc == PV_LIMITS_CHANNEL) {
 	    dlIndicator->limits.prec = precision;
@@ -494,8 +519,8 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
       && (tokenType != T_EOF) );
 
     return dlElement;
-
 }
+
 void writeDlIndicator( FILE *stream, DlElement *dlElement, int level) {
 /****************************************************************************
  * Write DL Indicator                                                       *

@@ -183,7 +183,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     int outputcount;
   /*, image.ps_width, image.ps_height, image.pixels_width; */
     int line_skip, line_end, col_skip, col_start, col_end;
+#ifndef VMS
     long swaptest = 1;
+#else
+  /* ACM:  This empirically works on VMS */
+    long swaptest = 0;
+#endif
 
     unsigned long intensity0, intensity1;
 
@@ -458,7 +463,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     for (i=0; i< argc; i++)
       fprintf(fo," %s", argv[i]);
     fprintf(fo,"\n");
-#ifndef WIN32    
+#if !defined WIN32 && !defined VMS    
     pswd = getpwuid (getuid ());
     gethostname (hostname, sizeof hostname);
     fprintf(fo,"%% by %s:%s (%s)\n",hostname, pswd->pw_name, pswd->pw_gecos);
@@ -652,6 +657,19 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    colors[im].blue = 255;
 		}
 	    }
+	    
+#ifdef GREY_PRINTS_WHITE
+	  /* ACM: Use if you use a standard grey scale as background,
+             and want white on the printer */
+            if(colors[im].red == 0xc8 && 
+	      colors[im].green == 0xc8 &&
+	      colors[im].blue == 0xc8) {
+		colors[im].red = 255;
+		colors[im].green = 255;
+		colors[im].blue = 255;
+            }
+#endif
+	    
 	  /* KE: The following mask is reported to solve problems on
              DecUnix.  The cause, however, may be that the swaptest
              and shift logic in get_raster_header is not right. It
@@ -1014,7 +1032,12 @@ static int get_page_info(Page *the_page)
  */
 static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 {
+#ifndef VMS
     unsigned long swaptest = 1;
+#else
+  /* ACM:  This empirically works on VMS */
+    unsigned long swaptest = 0;
+#endif
     int i, zflg, idifsize;
 
 #if DEBUG_FORMAT

@@ -3976,6 +3976,14 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     int i, j, ic, len, clen, count;
     DlElement *pE;
 
+#ifdef VMS
+#include <descrip.h>
+#include <clidef.h>
+    int status,spawn_sts;
+    int spawnFlags=CLI$M_NOWAIT;
+    struct dsc$descriptor cmdDesc;
+#endif
+
   /* Parse the command */
     clen = strlen(cmd);
     for(i=0, ic=0; i < clen; i++) {
@@ -4072,7 +4080,20 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 #if DEBUG_COMMAND
     if(command && *command) print("\nparseAndExecCommand: %s\n",command);
 #endif    
-    if(command && *command) system(command);
+    if(command && *command) 
+#ifndef VMS
+    /* KE: This blocks unless the command includes & (on UNIX) */
+    /* It should probably be fixed for WIN32 */
+      system(command);
+#else
+  /* ACM: This does not block the whole application, but spawns a command */
+    cmdDesc.dsc$w_length  = strlen(command);
+    cmdDesc.dsc$b_dtype   = DSC$K_DTYPE_T;
+    cmdDesc.dsc$b_class   = DSC$K_CLASS_S;
+    cmdDesc.dsc$a_pointer = command;
+    spawn_sts = lib$spawn(&cmdDesc,0,0,&spawnFlags,0,0, &status,0,0,0,0,0);
+    if(spawn_sts != 1) printf("statuss %d %d\n",spawn_sts, status);
+#endif
 #if 0    
     XBell(display,50);
 #endif    

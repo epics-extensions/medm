@@ -188,6 +188,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
          which case you can look at the files instead */
 	sprintf(commandBuffer, "%s %s", printCommand, psFileName);
 	status=system(commandBuffer);
+#ifndef VMS
 	if(status) {
 	    errMsg("utilPrint: Print command [%s] failed\n",
 	      commandBuffer);
@@ -196,6 +197,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	    if(printRemoveTempFiles > 1) remove(psFileName);
 #endif
 	}
+#endif
     }
 
   CLEAN:

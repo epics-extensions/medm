@@ -17,7 +17,6 @@
 /* Superclass header */
 #include "Value.h"
 
-
 /*
  * Define widget resource names, classes, and representation types.
  * Use these resource strings in your resource files.
@@ -28,8 +27,6 @@
 #define XcNscaleSegments	"scaleSegments"
 #define XcCScaleSegments	"ScaleSegments"
 #define XcNvalueVisible		"valueVisible"
-
-
 
 /* Class record declarations */
 
@@ -42,5 +39,9 @@ typedef struct _IndicatorRec *IndicatorWidget;
 /* Function prototypes for public widget methods */
 void XcIndUpdateValue(Widget w, XcVType *value);
 void XcIndUpdateIndicatorForeground(Widget w, Pixel pixel);
+#ifdef ACM
+void XcIndUpdateLowerBound(Widget w, XcVType *value);
+void XcIndUpdateUpperBound(Widget w, XcVType *value);
+#endif
 
 #endif

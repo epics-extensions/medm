@@ -235,8 +235,22 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n], XcNfillmod, XcEdge); n++;
 	}
 
-
+#if 1
 	preferredHeight = dlBar->object.height/INDICATOR_FONT_DIVISOR;
+#else
+      /* ACM: Suggested change */
+      /* KE: Not a good idea */
+        switch(dlBar->direction) {
+	  case LEFT:
+	  case RIGHT:
+	    preferredHeight = dlBar->object.height/INDICATOR_FONT_DIVISOR;
+	    break;
+	  case DOWN:
+	  case UP:
+	    preferredHeight = dlBar->object.width/INDICATOR_FONT_DIVISOR;
+	    break;
+	}
+#endif
 	bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS, NULL,
 	  preferredHeight, 0, &usedHeight, &usedCharWidth, False);
 	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;

@@ -1909,7 +1909,12 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 /* Function to determine byte order on the client  */
 static int getClientByteOrder()
 {
+#ifndef VMS    
     short i=1;
+#else
+  /* Kludge that apparently works for VMS */
+    short i=0;
+#endif
     
     return (*(char*)&i == 1) ? LSBFirst : MSBFirst;
 }

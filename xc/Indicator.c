@@ -779,6 +779,86 @@ void XcIndUpdateValue(Widget w, XcVType *value)
    
 }
 
+#ifdef ACM
+/*******************************************************************
+ NAME:		XcIndUpdateLowerBound.		
+ DESCRIPTION:
+   This convenience function is called by the application in order to
+update the value (a little quicker than using XtSetArg/XtSetValue).
+The application passes the new value to be updated with.
+
+*******************************************************************/
+
+void XcIndUpdateLowerBound(Widget w, XcVType *value)
+{
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
+#ifdef USE_CORE_VISIBLE
+    if (!wi->core.visible) return;
+#endif
+    
+  /* Update the new value, then update the Indicator display. */
+    if (value != NULL) {
+	if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval)) {
+	    if(value->lval != wi->value.lower_bound.lval) {
+		wi->value.lower_bound.lval = value->lval;
+		if (XtIsRealized((Widget)w)) {
+		    Resize(w);
+		    Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+		}
+	    }
+        } else if (wi->value.datatype == XcFval) {
+	    if(value->fval != wi->value.lower_bound.fval) {
+		wi->value.lower_bound.fval = value->fval;
+		if (XtIsRealized((Widget)w)) {
+		    Resize(w);
+		    Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+		}
+	    }
+	}
+    }
+}
+
+/*******************************************************************
+ NAME:		XcIndUpdateUpperBound.		
+ DESCRIPTION:
+   This convenience function is called by the application in order to
+update the value (a little quicker than using XtSetArg/XtSetValue).
+The application passes the new value to be updated with.
+
+*******************************************************************/
+
+void XcIndUpdateUpperBound(Widget w, XcVType *value)
+{
+    IndicatorWidget wi = (IndicatorWidget)w;
+    
+#ifdef USE_CORE_VISIBLE
+    if (!wi->core.visible) return;
+#endif
+    
+  /* Update the new value, then update the Indicator display. */
+    if (value != NULL) {
+	if ((wi->value.datatype == XcLval) || (wi->value.datatype == XcHval)) {
+	    if(value->lval != wi->value.upper_bound.lval) {
+		wi->value.upper_bound.lval = value->lval;
+		if (XtIsRealized((Widget)w)) {
+		    Resize(w);
+		    Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+		}
+	    }
+        } else if (wi->value.datatype == XcFval) {
+	    if(value->fval != wi->value.upper_bound.fval) {
+		wi->value.upper_bound.fval = value->fval;
+		if (XtIsRealized((Widget)w)) {
+		    Resize(w);
+		    Draw_display(w, XtDisplay(w), XtWindow(w), wi->control.gc);
+		}
+	    }
+	}
+    }
+}
+#endif
+
 /*******************************************************************
  NAME:		XcIndUpdateIndicatorForeground.		
  DESCRIPTION:
@@ -862,7 +942,9 @@ static void Draw_display(Widget w, Display *display,
     clipRect[0].width = wi->indicator.indicator.width;
     clipRect[0].height = wi->indicator.indicator.height;
     XSetClipRectangles(display,gc,0,0,clipRect,1,Unsorted);
+
     if (wi->indicator.orient == XcVert) {
+#ifndef INDICATOR_NOT_DIAMOND
 	points[0].x = wi->indicator.indicator.x;
 	points[0].y = wi->indicator.indicator.y
 	  + wi->indicator.indicator.height - (int)dim;
@@ -873,7 +955,21 @@ static void Draw_display(Widget w, Display *display,
 	points[2].y = points[0].y;
 	points[3].x = points[1].x;
 	points[3].y = points[0].y + (points[0].y - points[1].y);
+#else
+      /* ACM: I do not like the diamond at all */
+	points[0].x = wi->indicator.indicator.x;
+	points[0].y = wi->indicator.indicator.y 
+	               + wi->indicator.indicator.height - (int)dim -3;
+	points[1].x = points[0].x + wi->indicator.indicator.width;
+	points[1].y = points[0].y;
+	
+	points[2].x = points[1].x;
+	points[2].y = points[1].y +6;
+	points[3].x = points[0].x;
+	points[3].y = points[2].y;
+#endif	
     } else {
+#ifndef INDICATOR_NOT_DIAMOND
 	points[0].x = wi->indicator.indicator.x + (int)dim - indicator_size/2 - 1;
 	points[0].y = wi->indicator.indicator.y + wi->indicator.indicator.height/2;
 	points[1].x = points[0].x + indicator_size/2;
@@ -883,6 +979,18 @@ static void Draw_display(Widget w, Display *display,
 	points[2].y = points[0].y;
 	points[3].x = points[1].x;
 	points[3].y = points[0].y + (points[0].y - points[1].y);
+#else
+      /* ACM: I do not like the diamond at all */
+	points[0].x = wi->indicator.indicator.x + (int)dim - 3;
+	points[0].y = wi->indicator.indicator.y;
+	points[1].x = points[0].x;
+	points[1].y = points[0].y + wi->indicator.indicator.height;
+	
+	points[2].x = points[0].x + 6;
+	points[2].y = points[1].y;
+	points[3].x = points[2].x;
+	points[3].y = points[0].y;
+#endif	
     }
     
     XFillPolygon(display,drawable,gc,points,nPoints,Convex,CoordModeOrigin);
