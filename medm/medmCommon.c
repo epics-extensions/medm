@@ -1629,7 +1629,6 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     Window drawable;
     DlObject *po;
-    GC gc;
 
     if(!displayInfo || !dlElement) return;
     
@@ -1639,13 +1638,22 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
     
   /* Draw the display background where the element would go on both
    *   the window and the pixmap */
-    po = &(dlElement->structure.composite->object);
-    gc = displayInfo->gc;
-    XSetForeground(display,gc,
+
+  /* Set the foreground to the display background */
+    XSetForeground(display,displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
+    
+  /* Remove any clipping */
+    XSetClipOrigin(display,displayInfo->gc,0,0);
+    XSetClipMask(display,displayInfo->gc,None);
+
+  /* Draw on the window */
+    po = &(dlElement->structure.composite->object);
     drawable = XtWindow(displayInfo->drawingArea);
     XFillRectangle(display, drawable, displayInfo->gc,
       po->x, po->y, po->width, po->height);
+
+  /* Draw on the pixmap */
     drawable = displayInfo->drawingAreaPixmap;
     XFillRectangle(display, drawable, displayInfo->gc,
       po->x, po->y, po->width, po->height);

@@ -169,12 +169,14 @@ void hideDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
     hideDrawnElement(displayInfo, dlElement);
 }
 
-static void arcUpdateValueCb(XtPointer cd) {
+static void arcUpdateValueCb(XtPointer cd)
+{
     MedmArc *pa = (MedmArc *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pa->updateTask);
 }
 
-static void arcDraw(XtPointer cd) {
+static void arcDraw(XtPointer cd)
+{
     MedmArc *pa = (MedmArc *)cd;
     Record *pd = pa->records[0];
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
@@ -244,7 +246,8 @@ static void arcDraw(XtPointer cd) {
     redrawElementsAbove(displayInfo, (DlElement *)dlArc);
 }
 
-static void arcDestroyCb(XtPointer cd) {
+static void arcDestroyCb(XtPointer cd)
+{
     MedmArc *pa = (MedmArc *)cd;
 
     if (pa) {
@@ -262,7 +265,8 @@ static void arcDestroyCb(XtPointer cd) {
     return;
 }
 
-static void arcGetRecord(XtPointer cd, Record **record, int *count) {
+static void arcGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmArc *pa = (MedmArc *)cd;
     int i;
     
@@ -343,10 +347,7 @@ DlElement *parseArc(DisplayInfo *displayInfo)
     return dlElement; 
 }
 
-void writeDlArc(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlArc(FILE *stream, DlElement *dlElement, int level)
 {
     char indent[16];
     DlArc *dlArc = dlElement->structure.arc;

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_COMPOSITE 0
+#define DEBUG_DELETE 0
 
 #include "medm.h"
 
@@ -162,9 +163,16 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    DlComposite *dlComposite = dlElement->structure.composite;
+    DlComposite *dlComposite;
 
+    if(!displayInfo || !dlElement) return;
+    
+  /* Delete any update tasks.  The destroyCb will free the
+     record(s) and private structure */
+    updateTaskDeleteElementTasks(displayInfo,dlElement);
+    
   /* The same code as in hideComposite */
+    dlComposite = dlElement->structure.composite;
     hideCompositeChildren(displayInfo, dlComposite);
 }
 
@@ -204,6 +212,10 @@ static void compositeDraw(XtPointer cd)
 
 #if DEBUG_COMPOSITE
     print("\ncompositeDraw: pc=%x\n",pc);
+#endif    
+#if DEBUG_DELETE
+    print("compositeDraw: connected=%s readAccess=%s value=%g\n",
+      pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
 #endif    
   /* Branch on whether there is a channel or not */
     if(*dlComposite->dynAttr.chan[0]) {
@@ -265,14 +277,6 @@ static void drawComposite(MedmComposite *pc)
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
     
-#if DEBUG_COMPOSITE
-    print("drawComposite: childrenExecuted=%s\n",
-      pc->childrenExecuted?"True":"False !!!");
-    print(" dlComposite=%x x=%d y=%d\n",
-      dlComposite,
-      dlComposite->object.x,
-      dlComposite->object.y);
-#endif    
     if(!pc->childrenExecuted) {
 	executeCompositeChildren(displayInfo, dlComposite);
 	pc->childrenExecuted= True;

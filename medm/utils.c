@@ -2740,7 +2740,12 @@ void equalSizeSelectedElements(void)
 }
 
 /* Routine to redraw drawing objects above a given drawing object to
- * keep the stacking correct */
+ * keep the stacking correct.  The second argument is a pointer to
+ * DlArc, DlBar, etc. because it must be used with the Composite
+ * element list.  It is cast to a pointer to a DlElement artificially
+ * to be generic.  This is OK because only the DlObject part is used.
+ * It is not a pointer to a DlElement in the DisplayInfo element list,
+ * but rather to the DlElement.structure.element in that list. */
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     int found = 0;
@@ -2791,7 +2796,7 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 		
 		if(XRectInRegion(region, po->x, po->y,
 		  (int)po->width, (int)po->height) != RectangleOut) {
-# if DEBUG_REDRAW
+#if DEBUG_REDRAW
 		    print("    execute: type=%s\n",elementType(pE->type));
 #endif    
 		    if(pE->run->execute) pE->run->execute(displayInfo, pE);

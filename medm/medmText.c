@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_FONTS 0
+#define DEBUG_HIDE 0
 
 #include <X11/keysym.h>
 #include <ctype.h>
@@ -110,10 +111,10 @@ static void drawText(Display *display,
 
 #if DEBUG_FONTS
      {
+#if DEBUG_FONTS > 1
 	static int ifirst=1;
 	int j;
 
-#if DEBUG_FONTS > 1
 	if(ifirst) {
 	    ifirst=0;
 	    printf("\nFonts\n");
@@ -124,10 +125,10 @@ static void drawText(Display *display,
 	    printf("\n");
 	}
 #endif	
-	printf("drawText: h=%d %s%d %s\n",dlText->object.height,
+	printf("drawText: h=%d %s%d \"%s\"\n",dlText->object.height,
 	  ALIAS_FONT_PREFIX,fontSizeTable[i],dlText->textix);
     }
-#endif    
+#endif
 
     XSetFont(display,gc,fontTable[i]->fid);
 
@@ -143,7 +144,55 @@ static void drawText(Display *display,
 	x = dlText->object.x + dlText->object.width - usedWidth;
 	break;
     }
+
+#if DEBUG_HIDE > 2
+    XSetForeground(display,gc,WhitePixel(display,screenNum));
+    XSetClipOrigin(display,gc,0,0);
+    XSetClipMask(display,gc,None);
+#endif     
     XDrawString(display,drawable,gc,x,y,dlText->textix,nChars);
+#if DEBUG_HIDE
+  /* Goes here because the values are not set until it needs them */
+    {
+	if(!strcmp(dlText->textix,"Test Display")) {
+	    int status;
+	    XGCValues values;
+	    static Pixel pixel=0;
+	    static int num=0;
+	    char numString[11];
+	    
+	    status=XGetGCValues(display,gc,
+	      GCForeground|GCClipXOrigin|GCClipYOrigin,
+	      &values);
+	    print("  drawable=%x\n",drawable);
+	    print("  %s GCForeground=%6x "
+	      "GCClipXOrigin=%d GCClipYOrigin=%d\n",
+	      status?"":"(Failed)",values.foreground,
+	      values.clip_x_origin,values.clip_y_origin);
+	    
+	    pixel+=0xff;
+#if 0
+	    print(  "Drawing a white rectangle\n");
+	    XSetForeground(display,gc,WhitePixel(display,screenNum));
+	    XFillRectangle(display,drawable,gc,
+	      0,0,1000,1000);
+	    XSetForeground(display,gc,values.foreground);
+	    XDrawString(display,drawable,gc,x,y,dlText->textix,nChars);
+	    XSetForeground(display,gc,0x0000ff);
+	    XDrawString(display,drawable,gc,x,y,dlText->textix,nChars);
+
+	    print(  "pixel=%d\n",pixel);
+	    XSetForeground(display,gc,pixel);
+	    XDrawString(display,drawable,gc,x+5,y,dlText->textix,nChars);
+	    XSetForeground(display,gc,values.foreground);
+#endif
+	    sprintf(numString,"%10d",++num);
+	    print(  "num=%s\n",numString);
+	    XDrawString(display,drawable,gc,x+5,y,numString,10);
+	    XSetForeground(display,gc,values.foreground);
+	}
+    }
+#endif     
 }
 
 void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -180,12 +229,12 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	setMonitorChanged(&dlText->dynAttr, pt->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
-#if DEBUG_FONTS > 1
+#if DEBUG_FONTS > 1 || DEBUG_HIDE
 	printf("executeDlText: Calling drawText DA\n");
 #endif	
 	drawText(display,XtWindow(displayInfo->drawingArea),
 	  displayInfo->gc,dlText);
-#if DEBUG_FONTS > 1
+#if DEBUG_FONTS > 1 || DEBUG_HIDE
 	printf("executeDlText: Calling drawText PM\n");
 #endif
 	drawText(display,displayInfo->drawingAreaPixmap,
@@ -195,8 +244,47 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  /* Use generic hide for an element drawn on the display drawingArea */
-    hideDrawnElement(displayInfo, dlElement);
+    Window drawable;
+    DlObject *po;
+    DlText *dlText;
+
+#if DEBUG_HIDE
+    printf("hideDlText: displayInfo=%x dlElement=%x\n",
+      displayInfo,dlElement);
+#endif	
+    
+    if(!displayInfo || !dlElement) return;
+    
+  /* Delete any update tasks.  The destroyCb will free the
+     record(s) and private structure */
+    updateTaskDeleteElementTasks(displayInfo,dlElement);
+    
+  /* Draw using the display background where the element would go */
+    XSetForeground(display,displayInfo->gc,
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
+
+  /* Remove any clipping */
+    XSetClipOrigin(display,displayInfo->gc,0,0);
+    XSetClipMask(display,displayInfo->gc,None);
+    
+  /* Draw on the window */
+#if DEBUG_HIDE
+    printf("hideDlText: Calling drawText DA\n");
+#endif	
+    dlText = dlElement->structure.text;
+    po = &(dlElement->structure.composite->object);
+    drawable = XtWindow(displayInfo->drawingArea);
+    drawText(display,drawable,displayInfo->gc,dlText);
+
+  /* Draw on the pixmap */
+#if DEBUG_HIDE
+    printf("hideDlText: Calling drawText PM\n");
+#endif	
+    drawable = displayInfo->drawingAreaPixmap;
+    drawText(display,drawable,displayInfo->gc,dlText);
+
+  /* Update the drawing objects above this one */
+    redrawElementsAbove(displayInfo, dlElement);
 }
 
 static void textUpdateValueCb(XtPointer cd) {
@@ -214,6 +302,11 @@ static void textDraw(XtPointer cd) {
     Display *display = XtDisplay(widget);
     DlText *dlText = pt->dlElement->structure.text;
 
+#if DEBUG_HIDE
+    printf("textDraw: displayInfo=%x dlElement=%x\n",
+      displayInfo,pt->dlElement);
+#endif	
+    
     if(pr->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {

@@ -953,6 +953,7 @@ void medmDestroyRecord(Record *pr) {
 	caDelete(pr);
 	*pr = nullRecord;
 	free((char *)pr);
+	pr = (Record *)0;
     }
 }
 

@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_DELETE 0
+
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 
@@ -396,6 +398,11 @@ static void valuatorDraw(XtPointer cd) {
     Boolean dummy;
     Widget widget = pv->dlElement->widget;
 
+#if DEBUG_DELETE
+    print("valuatorDraw: connected=%s readAccess=%s value=%g\n",
+      pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
+#endif    
+    
     if (pr->connected) {
 	if (pr->readAccess) {
 	    if (widget) {

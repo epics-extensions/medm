@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_COMPOSITE 0
+#define DEBUG_DELETE 0
 
 #include "medm.h"
 
@@ -232,6 +233,12 @@ static void meterDraw(XtPointer cd) {
     Widget widget = pm->dlElement->widget;
     DlMeter *dlMeter = pm->dlElement->structure.meter;
     XcVType val;
+
+#if DEBUG_DELETE
+    print("meterDraw: connected=%s readAccess=%s value=%g\n",
+      pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
+#endif    
+    
     if (pr->connected) {
 	if (pr->readAccess) {
 	    if (widget) {
@@ -341,8 +348,8 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void meterDestroyCb(XtPointer cd) {
-    Meter *pm = (Meter *) cd;
-    if (pm) {
+    Meter *pm = (Meter *)cd;
+    if(pm) {
 	medmDestroyRecord(pm->record);
 	free((char *)pm);
     }
