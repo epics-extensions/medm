@@ -295,6 +295,7 @@ void updateCartesianPlotDataDialog(void);
 
 /* medmComposite.c */
 DlElement *groupObjects();
+void ungroupSelectedElements(void);
 
 /* medmMonitor.c */
 void monitorAttributeInit(DlMonitor *monitor);
@@ -502,7 +503,6 @@ void deleteElementsInDisplay(void);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);
 void lowerSelectedElements(void);
-void ungroupSelectedElements(void);
 void raiseSelectedElements(void);
 void alignSelectedElements(int alignment);
 void findOutliers(void);

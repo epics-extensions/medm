@@ -268,7 +268,7 @@ DlElement *createDlOval(DlElement *p)
     DlOval *dlOval;
     DlElement *dlElement;
  
-    dlOval = (DlOval *) malloc(sizeof(DlOval));
+    dlOval = (DlOval *)malloc(sizeof(DlOval));
     if (!dlOval) return 0;
     if (p) {
 	*dlOval = *p->structure.oval;
@@ -278,12 +278,11 @@ DlElement *createDlOval(DlElement *p)
 	dynamicAttributeInit(&(dlOval->dynAttr));
     }
  
-    if (!(dlElement = createDlElement(DL_Oval,
-      (XtPointer)      dlOval,
+    if (!(dlElement = createDlElement(DL_Oval, (XtPointer)dlOval,
       &ovalDlDispatchTable))) {
 	free(dlOval);
     }
-
+    
     return(dlElement);
 }
 

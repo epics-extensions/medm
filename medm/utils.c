@@ -2389,41 +2389,6 @@ void raiseSelectedElements()
 }
 
 /*
- * ungroup any grouped (composite) elements which are currently selected.
- *  this removes the appropriate Composite element and moves any children
- *  to reflect their new-found autonomy...
- */
-void ungroupSelectedElements()
-{
-    DisplayInfo *cdi = currentDisplayInfo;
-    DlElement *ele, *dlElement;
-
-    if(!cdi) return;
-    saveUndoInfo(cdi);
-    if(IsEmpty(cdi->selectedDlElementList)) return;
-    unhighlightSelectedElements();
-
-    dlElement = FirstDlElement(cdi->selectedDlElementList);
-    while (dlElement) {
-	ele = dlElement->structure.element;
-	if(ele->type == DL_Composite) {
-	    insertDlListAfter(cdi->dlElementList,ele->prev,
-	      ele->structure.composite->dlElementList);
-	    removeDlElement(cdi->dlElementList,ele);
-	    free ((char *) ele->structure.composite->dlElementList);
-	    free ((char *) ele->structure.composite);
-	    free ((char *) ele);
-	}
-	dlElement = dlElement->next;
-    }
-
-  /* Unselect any selected elements */
-    unselectElementsInDisplay();
-  /* Cleanup possible damage to non-widgets */
-    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
-}
-
-/*
  * Align selected elements by top, bottom, left, or right edges
  */
 void alignSelectedElements(int alignment)
