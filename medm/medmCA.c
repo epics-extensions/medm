@@ -127,14 +127,14 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
       "  Source File: %s\n"
       "  Line number: %u\n",
       args.chid?ca_name(args.chid):"Unavailable",
-      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+      args.chid?dbr_type_to_text(ca_field_type(args.chid)):"Unavailable",
       args.chid?ca_element_count(args.chid):0,
       args.chid?(ca_read_access(args.chid)?"R":""):"Unavailable",
       args.chid?(ca_write_access(args.chid)?"W":""):"",
       args.chid?ca_host_name(args.chid):"Unavailable",
       ca_message(args.stat)?ca_message(args.stat):"Unavailable",
       args.ctx?args.ctx:"Unavailable",
-      dbf_type_to_text(args.type),
+      dbr_type_to_text(args.type),
       args.count,
       args.pFile?args.pFile:"Unavailable",
       args.pFile?args.lineNo:0);
@@ -887,7 +887,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	  "======================================\n",
 	  ca_name(chId));
 	sprintf(string,"%sTYPE: %s\n",string,
-	  dbf_type_to_text(ca_field_type(chId)));
+	  dbr_type_to_text(ca_field_type(chId)));
 	sprintf(string,"%sCOUNT: %hu\n",string,ca_element_count(chId));
 	sprintf(string,"%sACCESS: %s%s\n",string,
 	  ca_read_access(chId)?"R":"",ca_write_access(chId)?"W":"");
