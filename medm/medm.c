@@ -3431,7 +3431,7 @@ main(int argc, char *argv[])
 	    printf("  Send_event: %s  State: %x\n",
 	      xEvent.send_event?"True":"False",xEvent.state);
 
-#if 0
+#if 1
 	    if(xEvent.subwindow) win=xEvent.subwindow;
 	    else win=xEvent.window;
 	    w=XtWindowToWidget(display,win);

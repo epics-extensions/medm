@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_TOGGLE_BUTTONS 0
+
 #include "medm.h"
 
 typedef struct _ChoiceButtons {
@@ -145,7 +147,7 @@ Widget createToggleButtons(Widget parent,
  
     maxChars = 0;
     for (i = 0; i < numberOfButtons; i++) {
-	maxChars = MAX((size_t) maxChars, strlen(labels[i]));
+	maxChars = MAX((size_t)maxChars, strlen(labels[i]));
     }
     n = 0;
     XtSetArg(wargs[n],XmNx,(Position)po->x); n++;
@@ -208,7 +210,7 @@ Widget createToggleButtons(Widget parent,
 	XmString xmStr;
 	xmStr = XmStringCreateLocalized(labels[i]);
 	XtSetArg(wargs[n],XmNlabelString,xmStr);
-      /* use gadgets here so that changing foreground
+      /* Use gadgets here so that changing foreground
 	 of radioBox changes buttons */
 	buttons[i] = XmCreateToggleButtonGadget(widget,"toggleButton",
 	  wargs,n+1);
@@ -219,30 +221,58 @@ Widget createToggleButtons(Widget parent,
     }
     return widget;
 }
-void choiceButtonValueChangedCb(
-  Widget  w,
-  XtPointer clientData,
+
+void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     ChoiceButtons *pcb;
-    int btnNumber = (int) clientData;
-    XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
+    int btnNumber = (int)clientData;
+    XmToggleButtonCallbackStruct *call_data =
+      (XmToggleButtonCallbackStruct *)callbackStruct;
     Record *pd;
+    
+#if DEBUG_TOGGLE_BUTTONS
+#if 0    
+    printf("\nchoiceButtonValueChangedCb:  btnNumber=%d call_data->set=%d\n",
+      btnNumber,call_data->set);
+#endif    
+    {
+	int ic;
+	Boolean set,vis,radioBehavior;
+	unsigned char indicatorType;
+	WidgetList children;
+	Cardinal numChildren;
 
-/*
- * only do ca_put if this widget actually initiated the channel change
- */
+	XtVaGetValues(XtParent(w),
+	  XmNchildren,&children, XmNnumChildren,&numChildren,
+	  NULL);
+	XtVaGetValues(XtParent(children[0]),
+	  XmNradioBehavior,&radioBehavior,NULL);
+	printf("\nchoiceButtonValueChangedCb: btnNumber=%d  XmNradioBehavior=%d  XmNindicatorType: [XmONE_OF_MANY=%d]\n",
+	  btnNumber,radioBehavior,XmONE_OF_MANY);
+	for(ic=0; ic < (int)numChildren; ic++) {
+	    XtVaGetValues(children[ic],
+	      XmNset,&set,
+	      XmNindicatorType,&indicatorType,
+	      XmNvisibleWhenOff,&vis,
+	      NULL);
+	    printf("Button %2d:  XmNset=%d  XmNindicatorType=%d  "
+	      "XmNvisibleWhenOff=%d\n",ic,set,indicatorType,vis);
+	}
+    }
+#endif
+  /* Only do ca_put if this widget actually initiated the channel change */
     if (call_data->event != NULL && call_data->set == True) {
-
-      /* button's parent (menuPane) has the displayInfo pointer */
+	
+      /* Button's parent (menuPane) has the displayInfo pointer */
 	XtVaGetValues(XtParent(w),XmNuserData,&pcb,NULL);
 	pd = pcb->record;
-
+	
 	if (pd->connected) {
 	    if (pd->writeAccess) {
 		medmSendDouble(pcb->record,(double)btnNumber);
 	    } else {
-		fputc('\a',stderr);
+		XBell(display,50);
 		choiceButtonUpdateValueCb((XtPointer)pcb->record);
 	    }
 	}
@@ -307,7 +337,11 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void choiceButtonUpdateValueCb(XtPointer cd) {
-    ChoiceButtons *pcb = (ChoiceButtons *) ((Record *) cd)->clientData;
+    ChoiceButtons *pcb = (ChoiceButtons *)((Record *) cd)->clientData;
+
+#if DEBUG_TOGGLE_BUTTONS
+    printf("\nchoiceButtonUpdateValueCb:\n");
+#endif
     updateTaskMarkUpdate(pcb->updateTask);
 }
 
@@ -346,8 +380,47 @@ static void choiceButtonDraw(XtPointer cd) {
 		    return;
 		}
 		i = (int) pd->value;
-		if ((i >= 0) && (i < (int) numChildren)) {
+		if ((i >= 0) && (i < (int)numChildren)) {
+#if DEBUG_TOGGLE_BUTTONS
+		    {
+			int ic;
+			Boolean set,vis,radioBehavior;
+			unsigned char indicatorType;
+
+			XtVaGetValues(XtParent(children[0]),
+			  XmNradioBehavior,&radioBehavior,NULL);
+			printf("\nchoiceButtonDraw: i=%d  XmNradioBehavior=%d  XmNindicatorType: [XmONE_OF_MANY=%d]\n",
+			  i,radioBehavior,XmONE_OF_MANY);
+			for(ic=0; ic < (int)numChildren; ic++) {
+			    XtVaGetValues(children[ic],
+			      XmNset,&set,
+			      XmNindicatorType,&indicatorType,
+			      XmNvisibleWhenOff,&vis,
+			      NULL);
+			    printf("Button %2d:  XmNset=%d  XmNindicatorType=%d  "
+			      "XmNvisibleWhenOff=%d\n",ic,set,indicatorType,vis);
+			}
+		    }
+#endif
 		    XmToggleButtonGadgetSetState(children[i],True,True);
+#if DEBUG_TOGGLE_BUTTONS > 1
+		    {
+			int ic;
+			Boolean set,vis;
+			unsigned char indicatorType;
+
+			printf("after:\n");
+			for(ic=0; ic < (int)numChildren; ic++) {
+			    XtVaGetValues(children[ic],
+			      XmNset,&set,
+			      XmNindicatorType,&indicatorType,
+			      XmNvisibleWhenOff,&vis,
+			      NULL);
+			    printf("Button %2d:  XmNset=%d  XmNindicatorType=%d  "
+			      "XmNvisibleWhenOff=%d\n",ic,set,indicatorType,vis);
+			}
+		    }
+#endif
 		} else {
 		    medmPostMsg("choiceButtonUpdateValueCb:\n");
 		    medmPrintf("  Channel Name: %s\n",dlChoiceButton->control.ctrl);

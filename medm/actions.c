@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_DRAG 0
+#define USE_SOURCE_PIXMAP_MASK 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -63,12 +64,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 extern char *stripChartWidgetName;
 
-/*
- * action routines (XtActionProc) and some associated callbacks
- */
-
-/* since passing client_data didn't seem to work... */
+/* Since passing client_data didn't seem to work... */
 static char *channelName;
+
+/* Used to cleanup damage to Choice Button */
+static Widget dragDropWidget = (Widget)0;
 
 #ifdef __cplusplus
 static Boolean DragConvertProc(
@@ -105,43 +105,89 @@ static Boolean DragConvertProc(
 	cText = XmCvtXmStringToCT(cString);
 	passText = XtMalloc(strlen(cText)+1);
 	memcpy(passText,cText,strlen(cText)+1);
-      /* probably need this too */
+      /* Probably need this too */
 	XmStringFree(cString);
 
-      /* format the value for return */
+      /* Format the value for return */
 	*typeRtn = COMPOUND_TEXT;
 	*valueRtn = (XtPointer)passText;
 	*lengthRtn = strlen(passText);
 	*formatRtn = 8;	/* from example - related to #bits for data elements */
 	return(True);
     } else {
-      /* monitorData not found */
+      /* Monitordata not found */
 	return(False);
     }
-
 }
 
 
 /*
- * cleanup after drag/drop
+ * Cleanup after drag/drop
  */
 #ifdef __cplusplus
-static void dragDropFinish(
-  Widget w,
-  XtPointer,
-  XtPointer)
+static void dragDropFinish(Widget w, XtPointer, XtPointer)
 #else
-static void dragDropFinish(
-  Widget w,
-  XtPointer client,
-  XtPointer call)
+static void dragDropFinish(Widget w, XtPointer client, XtPointer call)
 #endif
 {
     Widget sourceIcon;
     Pixmap pixmap;
     Arg args[2];
 
-/* perform cleanup at conclusion of DND */
+  /* KE: The following is a kludge to repair Btn2 drag and drop leaving toggle
+   *   buttons down in the Choice Menu.  The buttons only appear to be down.
+   *   No callbacks are called and the values of XmNset are correct.
+   *   (This seems to be a Motif bug and violates radio box behavior.)
+   * A number of other kludges did not work:
+   *   Unamanging, then managing radioBox and/or toggleButtons
+   *   Sending VisibilityChange and Exposure events to radioBox
+   *   XmToggleButtonSetState(children[i],getState,False); by itself
+   * Note that the Choice Menu is a radioBox with toggleButton children */
+    if(dragDropWidget && !strcmp(XtName(dragDropWidget),"radioBox")) {
+	int i;
+	WidgetList children;
+	Cardinal numChildren;
+	Boolean getState;
+	
+	XtVaGetValues(dragDropWidget,
+	  XmNchildren,&children, XmNnumChildren,&numChildren,
+	  NULL);
+	for(i=0; i < (int)numChildren; i++) {
+	    if(!strcmp(XtName(children[i]),"toggleButton")) {
+		getState=XmToggleButtonGetState(children[i]);
+		XmToggleButtonSetState(children[i],!getState,False);
+		XmToggleButtonSetState(children[i],getState,False);
+	    }
+	}
+    }
+
+#if DEBUG_DRAG
+    if(dragDropWidget && !strcmp(XtName(dragDropWidget),"radioBox")) {
+	int i;
+	Boolean set,vis,radioBehavior;
+	unsigned char indicatorType;
+	
+	XtVaGetValues(dragDropWidget,
+	  XmNradioBehavior,&radioBehavior,NULL);
+	printf("\ndragDropFinish: XmNradioBehavior=%d  XmNindicatorType: [XmONE_OF_MANY=%d]\n",
+	  radioBehavior,XmONE_OF_MANY);
+	for(i=0; i < (int)numChildren; i++) {
+	    Boolean getState;
+
+	    if(!strcmp(XtName(children[i]),"toggleButton")) {
+		XtVaGetValues(children[i],
+		  XmNset,&set,
+		  XmNindicatorType,&indicatorType,
+		  XmNvisibleWhenOff,&vis,
+		  NULL);
+		printf("Button %2d:  State=%d  XmNset=%d  XmNindicatorType=%d  "
+		  "XmNvisibleWhenOff=%d\n",i,getState,set,indicatorType,vis);
+	    }
+	}
+    }
+#endif    
+
+  /* Perform cleanup at conclusion of drag and drop */
     XtSetArg(args[0],XmNsourcePixmapIcon,&sourceIcon);
     XtGetValues(w,args,1);
 
@@ -150,6 +196,10 @@ static void dragDropFinish(
 
     XFreePixmap(display,pixmap);
     XtDestroyWidget(sourceIcon);
+
+#if USE_SOURCE_PIXMAP_MASK
+    Implement cleanup for XmNmask here
+#endif
 }
 
 static XtCallbackRec dragDropFinishCB[] = {
@@ -174,24 +224,30 @@ void StartDrag(Widget w, XEvent *event)
     unsigned long gcValueMask;
     DisplayInfo *displayInfo;
 
+#if USE_SOURCE_PIXMAP_MASK
+    int doMask = 0;
+    Pixmap maskPixmap = (Pixmap)NULL;
+#endif    
+
     static char *channelNames[MAX(MAX_PENS,MAX_TRACES)][2];
     Pixmap sourcePixmap = (Pixmap)NULL;
     static GC gc = NULL;
 
-/* a nice sized font */
+  /* A nice sized font */
 #define FONT_TABLE_INDEX 6
-/* move the text over... */
+  /* Move the text over... */
 #define X_SHIFT 8
 #define MARGIN  2
 
   
-/* (MDA) since widget doing drag could be toggleButton or optionMenu button
- *   (which has more than just flat, single parent),
- *   find the widget that has a parent that is the drawing area and
- *   search based on that *   (since that is what is rooted in the display)
- * - NB if drawing areas as children of the main drawing area are allowed
- *   as parents of controllers/monitors, this logic must change...
- */
+  /* (MDA) since widget doing drag could be toggleButton or optionMenu button
+   *   (which has more than just flat, single parent),
+   *   find the widget that has a parent that is the drawing area and
+   *   search based on that *   (since that is what is rooted in the display)
+   * - NB if drawing areas as children of the main drawing area are allowed
+   *   as parents of controllers/monitors, this logic must change...
+   */
+    dragDropWidget=(Widget)0;     /* Used in cleanup */
     searchWidget = w;
     if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
       && strcmp(XtName(searchWidget),stripChartWidgetName)) {
@@ -204,11 +260,10 @@ void StartDrag(Widget w, XEvent *event)
 	pt = getUpdateTaskFromPosition(displayInfo,
 	  xbutton->x,xbutton->y);
     } else {
-      /* ---get data from widget */
-#if 0
+      /* Traverse up to the drawing area */
+      /* KE: Probably necessary only for the Scale when in the trough */
 	while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
 	  searchWidget = XtParent(searchWidget);
-#endif
 	pt = getUpdateTaskFromWidget(searchWidget);
     }
 
@@ -232,7 +287,7 @@ void StartDrag(Widget w, XEvent *event)
       /* Call the getRecord procedure, if there is one */
 	if (pt->getRecord == NULL) return;
 	pt->getRecord(pt->clientData, record, &count);
-
+	
 	column = count / 100;
 	if (column == 0) column = 1;
 	if (column > MAX_COL) {
@@ -249,18 +304,19 @@ void StartDrag(Widget w, XEvent *event)
 	    return;
 	}
 	
+      /* Make the source icon pixmap */
 	bg = BlackPixel(display,screenNum);
 	fg = WhitePixel(display,screenNum);
 	ascent = fontTable[FONT_TABLE_INDEX]->ascent;
 	fontHeight = ascent + fontTable[FONT_TABLE_INDEX]->descent;
-	
 	if (count == 0) {
 	    channelName = NULL;
 	    return;
 	} else {
 	    int i, j;
 	    int x, y;
-
+	    
+	  /* Determine the dimensions of the pixmap */
 	    i = 0; j = 0;
 	    textWidth = 0;
 	    while (i < count) {
@@ -276,10 +332,23 @@ void StartDrag(Widget w, XEvent *event)
 		}
 		i++;
 	    }
+	  /* KE: When the source pixmap is not extended below the state and
+	   *  operation icons, garbage pixels occur in this region.  Extending
+	   *  the row to 2 seems to eliminate this problem (at the expense of
+	   *  making the source pixmap larger than necessary).  Trying to use
+	   *  a mask gives Bad Match errors as the icon is created and/or
+	   *  dragged.  Note: If the mask is implemented it should be freed in
+	   *  dragDropFinish */
+	    if(row < 2) {
+#if USE_SOURCE_PIXMAP_MASK
+		doMask = 1;
+#endif		
+		row = 2;
+	    }
 	    maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
 	    maxHeight = row*fontHeight + 2*MARGIN;
 	    sourcePixmap = XCreatePixmap(display,
-	      RootWindow(display, screenNum),maxWidth,maxHeight,
+	      RootWindow(display,screenNum),maxWidth,maxHeight,
 	      DefaultDepth(display,screenNum));
 	    if (gc == NULL) gc = XCreateGC(display,sourcePixmap,0,NULL);
 	    gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
@@ -310,9 +379,19 @@ void StartDrag(Widget w, XEvent *event)
 		}
 		i++;
 	    }
+#if USE_SOURCE_PIXMAP_MASK
+	    if(doMask) {
+		maskPixmap = XCreatePixmap(display,
+		  RootWindow(display,screenNum),maxWidth,maxHeight,
+		  DefaultDepth(display,screenNum));
+		XSetFunction(display,gc,GXset);
+		XFillRectangle(display,maskPixmap,gc,0,0,maxWidth,maxHeight);
+		XSetFunction(display,gc,GXclear);
+		XFillRectangle(display,maskPixmap,gc,0,fontHeight+MARGIN+1,maxWidth,maxHeight);
+	    }
+#endif	    
 	} 
     }
-
 
     if (sourcePixmap != (Pixmap)NULL) {
       /* Use source widget as parent - can inherit visual attributes that way */
@@ -321,11 +400,18 @@ void StartDrag(Widget w, XEvent *event)
 	XtSetArg(args[n],XmNwidth,maxWidth); n++;
 	XtSetArg(args[n],XmNheight,maxHeight); n++;
 	XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
+#if USE_SOURCE_PIXMAP_MASK
+	if(doMask) {
+	    XtSetArg(args[n],XmNmask,maskPixmap); n++;
+	}
+#endif	
 	sourceIcon = XmCreateDragIcon(XtParent(searchWidget),"sourceIcon",args,n);
 
       /* Establish list of valid target types */
 	exportList[0] = COMPOUND_TEXT;
 
+      /* Start the drag */
+	dragDropWidget = searchWidget;     /* Save widget for cleanup */
 	n = 0;
 	XtSetArg(args[n],XmNexportTargets,exportList); n++;
 	XtSetArg(args[n],XmNnumExportTargets,1); n++;

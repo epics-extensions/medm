@@ -291,7 +291,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNhighlightThickness,1); n++;
     XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
     switch(dlValuator->label) {
-    case LABEL_NONE: 		/* add in border for keyboard popup */
+    case LABEL_NONE: 		/* Add in border for keyboard popup */
 	scalePopupBorder = BORDER_WIDTH;
 	heightDivisor = 1;
 	break;
