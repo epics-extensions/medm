@@ -543,9 +543,9 @@ static int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
+		x01 = (int)(cos(okRadians)*length) + dlPolyline->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-		y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
+		y01 = (int)(sin(okRadians)*length) + dlPolyline->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
 		dlPolyline->points[pointIndex].x = x01;
 		dlPolyline->points[pointIndex].y = y01;
@@ -590,9 +590,9 @@ static int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length) + dlPolyline->points[
+		x01 = (int)(cos(okRadians)*length) + dlPolyline->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].x;
-		y01 = (int) (sin(okRadians)*length) + dlPolyline->points[
+		y01 = (int)(sin(okRadians)*length) + dlPolyline->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolyline->nPoints-1)].y;
 	    } else {
 	      /* Unconstrained */
@@ -643,7 +643,7 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
     polylineInheritValues(&globalResourceBundle,element);
     objectAttributeSet(&(dlPolyline->object),x0,y0,0,0);
 
-/* First click is first point... */
+  /* First click is first point... */
     dlPolyline->nPoints = 1;
     if(simpleLine) {
 	dlPolyline->points = (XPoint *)malloc(2*sizeof(XPoint));
@@ -660,7 +660,7 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
     XGrabServer(display);
 
 
-/* Loop until button is double-clicked (or until 2 points if simpleLine) */
+  /* Loop until button is double-clicked (or until 2 points if simpleLine) */
     while(TRUE) {
 	XtAppNextEvent(appContext,&event);
 	switch(event.type) {
@@ -688,9 +688,9 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
 		    if(radians < 0.) radians = 2*M_PI + radians;
 		    okIndex = (int)((radians*8.0)/M_PI);
 		    okRadians = okRadiansTable[okIndex];
-		    x01 = (int) (cos(okRadians)*length) +
+		    x01 = (int)(cos(okRadians)*length) +
 		      dlPolyline->points[dlPolyline->nPoints-1].x;
-		    y01 = (int) (sin(okRadians)*length) +
+		    y01 = (int)(sin(okRadians)*length) +
 		      dlPolyline->points[dlPolyline->nPoints-1].y;
 		    dlPolyline->nPoints++;
 		    dlPolyline->points[dlPolyline->nPoints-1].x = x01;
@@ -733,9 +733,9 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
 		    if(radians < 0.) radians = 2*M_PI + radians;
 		    okIndex = (int)((radians*8.0)/M_PI);
 		    okRadians = okRadiansTable[okIndex];
-		    x01 = (int) (cos(okRadians)*length) +
+		    x01 = (int)(cos(okRadians)*length) +
 		      dlPolyline->points[dlPolyline->nPoints-1].x;
-		    y01 = (int) (sin(okRadians)*length) +
+		    y01 = (int)(sin(okRadians)*length) +
 		      dlPolyline->points[dlPolyline->nPoints-1].y;
 		    dlPolyline->nPoints++;
 		    dlPolyline->points[dlPolyline->nPoints-1].x = x01;
@@ -774,9 +774,9 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length)
+		x01 = (int)(cos(okRadians)*length)
 		  + dlPolyline->points[dlPolyline->nPoints-1].x;
-		y01 = (int) (sin(okRadians)*length)
+		y01 = (int)(sin(okRadians)*length)
 		  + dlPolyline->points[dlPolyline->nPoints-1].y;
 	    } else {
 	      /* Unconstrained */
@@ -926,16 +926,17 @@ static void polylineGetValues(ResourceBundle *pRCB, DlElement *p)
       CHAN_C_RC,     &(dlPolyline->dynAttr.chan[2]),
       CHAN_D_RC,     &(dlPolyline->dynAttr.chan[3]),
       -1);
-    xOffset = (int) width - (int) dlPolyline->object.width;
-    yOffset = (int) height - (int) dlPolyline->object.height;
+    xOffset = (int)width - (int)dlPolyline->object.width;
+    yOffset = (int)height - (int)dlPolyline->object.height;
     if(xOffset || yOffset) {
-	polylineScale(p,xOffset,yOffset);
+	polylineScale(p, xOffset, yOffset);
     }
     xOffset = x - dlPolyline->object.x;
     yOffset = y - dlPolyline->object.y;
     if(xOffset || yOffset) {
-	polylineMove(p,xOffset,yOffset);
+	polylineMove(p, xOffset, yOffset);
     }
+    calculateTheBoundingBox(dlPolyline);
 }
 
 static void polylineSetForegroundColor(ResourceBundle *pRCB, DlElement *p)

@@ -548,9 +548,9 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length) + dlPolygon->points[
+		x01 = (int)(cos(okRadians)*length) + dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].x;
-		y01 = (int) (sin(okRadians)*length) + dlPolygon->points[
+		y01 = (int)(sin(okRadians)*length) + dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].y;
 		dlPolygon->points[pointIndex].x = x01;
 		dlPolygon->points[pointIndex].y = y01;
@@ -613,9 +613,9 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length) + dlPolygon->points[
+		x01 = (int)(cos(okRadians)*length) + dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].x;
-		y01 = (int) (sin(okRadians)*length) + dlPolygon->points[
+		y01 = (int)(sin(okRadians)*length) + dlPolygon->points[
 		  (pointIndex > 0 ? pointIndex-1 : dlPolygon->nPoints-1)].y;
 	    } else {
 	      /* Unconstrained */
@@ -701,9 +701,9 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		    if(radians < 0.) radians = 2*M_PI + radians;
 		    okIndex = (int)((radians*8.0)/M_PI);
 		    okRadians = okRadiansTable[okIndex];
-		    x01 = (int) (cos(okRadians)*length)
+		    x01 = (int)(cos(okRadians)*length)
 		      + dlPolygon->points[dlPolygon->nPoints-1].x;
-		    y01 = (int) (sin(okRadians)*length)
+		    y01 = (int)(sin(okRadians)*length)
 		      + dlPolygon->points[dlPolygon->nPoints-1].y;
 		    dlPolygon->nPoints++;
 		    dlPolygon->points[dlPolygon->nPoints-1].x = x01;
@@ -762,9 +762,9 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		    if(radians < 0.) radians = 2*M_PI + radians;
 		    okIndex = (int)((radians*8.0)/M_PI);
 		    okRadians = okRadiansTable[okIndex];
-		    x01 = (int) (cos(okRadians)*length)
+		    x01 = (int)(cos(okRadians)*length)
 		      + dlPolygon->points[dlPolygon->nPoints-1].x;
-		    y01 = (int) (sin(okRadians)*length)
+		    y01 = (int)(sin(okRadians)*length)
 		      + dlPolygon->points[dlPolygon->nPoints-1].y;
 		    dlPolygon->nPoints++;
 		    dlPolygon->points[dlPolygon->nPoints-1].x = x01;
@@ -808,9 +808,9 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		if(radians < 0.) radians = 2*M_PI + radians;
 		okIndex = (int)((radians*8.0)/M_PI);
 		okRadians = okRadiansTable[okIndex];
-		x01 = (int) (cos(okRadians)*length)
+		x01 = (int)(cos(okRadians)*length)
 		  + dlPolygon->points[dlPolygon->nPoints-1].x;
-		y01 = (int) (sin(okRadians)*length)
+		y01 = (int)(sin(okRadians)*length)
 		  + dlPolygon->points[dlPolygon->nPoints-1].y;
 	    } else {
 	      /* Unconstrained */
@@ -870,6 +870,7 @@ static void polygonScale(DlElement *dlElement, int xOffset, int yOffset)
     }
     dlPolygon->object.width = width;
     dlPolygon->object.height = height;
+    calculateTheBoundingBox(dlPolygon);
 }
 
 static void polygonOrient(DlElement *dlElement, int type, int xCenter,
@@ -955,16 +956,17 @@ static void polygonGetValues(ResourceBundle *pRCB, DlElement *p)
       CHAN_C_RC,     &(dlPolygon->dynAttr.chan[2]),
       CHAN_D_RC,     &(dlPolygon->dynAttr.chan[3]),
       -1);
-    xOffset = (int) width - (int) dlPolygon->object.width;
-    yOffset = (int) height - (int) dlPolygon->object.height;
+    xOffset = (int)width - (int)dlPolygon->object.width;
+    yOffset = (int)height - (int)dlPolygon->object.height;
     if(xOffset || yOffset) {
-	polygonScale(p,xOffset,yOffset);
+	polygonScale(p, xOffset, yOffset);
     }
     xOffset = x - dlPolygon->object.x;
     yOffset = y - dlPolygon->object.y;
     if(xOffset || yOffset) {
-	polygonMove(p,xOffset,yOffset);
+	polygonMove(p, xOffset, yOffset);
     }
+    calculateTheBoundingBox(dlPolygon);
 }
 
 static void polygonSetForegroundColor(ResourceBundle *pRCB, DlElement *p)

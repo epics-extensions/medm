@@ -73,6 +73,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <time.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
+#include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
 #include <Xm/List.h>
 #include <cvtFast.h>
@@ -1333,6 +1334,8 @@ static int doPasting(int *offsetX, int *offsetY)
 	    XKeyEvent *kevent = (XKeyEvent *)&event;
 	    Modifiers modifiers;
 	    KeySym keysym;
+	    int deltaX = 0, deltaY = 0, mult = 1;
+	    
 	    
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
@@ -1344,9 +1347,111 @@ static int doPasting(int *offsetX, int *offsetY)
 	      kevent->state&ShiftMask,kevent->state&ControlMask,
 	      KeyPress,KeyRelease,ButtonPress,ButtonRelease);     /* In X.h */
 #endif
-	    if(keysym != osfXK_Cancel) break;
-	    returnVal = False;
-	  /* Fall through */
+	    if(kevent->state&ControlMask ) {
+		mult = 5;
+	    } else if(kevent->state&ShiftMask) {
+		mult = 25;
+	    }
+	    switch (keysym) {
+	    case osfXK_Left:
+		deltaX = -mult;
+		break;
+	    case osfXK_Right:
+		deltaX = mult;
+		break;
+	    case osfXK_Up:
+		deltaY = -mult;
+		break;
+	    case osfXK_Down:
+		deltaY = mult;
+		break;
+	    default:
+		break;
+	    }
+	  /* Move if there was any motion indicated */
+	    if(deltaX != 0 || deltaY != 0) {
+	      /* Undraw old ones */
+		dlElement = FirstDlElement(clipboard);
+		while(dlElement) {
+		    if(dlElement->type != DL_Display) {
+			DlObject *po = &(dlElement->structure.rectangle->object);
+			XDrawRectangle(display, window, xorGC,
+			  winX + po->x - dx, winY + po->y - dy,
+			  po->width, po->height);
+		    }
+		    dlElement = dlElement->next;
+		}
+		
+	      /* Set coordinates */
+		if(snap) {
+		    winX += gridSpacing * deltaX;
+		    winY += gridSpacing * deltaY;
+		} else {
+		    winX += deltaX;
+		    winY += deltaY;
+		}
+
+	      /* Branch depending on snap to grid */
+		if(snap) {
+		  /* Insure x0 and y0 are on the grid */
+		    int x0New, y0New;
+		    
+		    x0New = ((winX -dx + x0 + gridSpacing/2)/gridSpacing)*
+		      gridSpacing;
+		    winX = x0New - x0 + dx;
+		    y0New = ((winY -dy + y0 + gridSpacing/2)/gridSpacing)*
+		      gridSpacing;
+		    winY = y0New - y0 + dy;
+		  /* Insure nothing goes outside the display */
+		    while(winX < daLeft) winX += gridSpacing;
+		    while(winX > daRight) winX -= gridSpacing;
+		    while(winY < daTop) winY += gridSpacing;
+		    while(winY > daBottom) winY -= gridSpacing;
+#if 0
+		    print("x=%d winX=%d daLeft=%d daRight=%d x0=%d x1=%d x0New=%d y0New=%d dx=%d daWidth=%d\n",
+		      event.xbutton.x,winX,daLeft,daRight,x0,x1,x0New,y0New,dx,(int)daWidth);
+#endif	   
+		} else {
+		  /* Insure nothing goes outside the display */
+		    if(winX < daLeft) winX = daLeft;
+		    if(winX > daRight) winX = daRight;
+		    if(winY < daTop) winY = daTop;
+		    if(winY > daBottom) winY = daBottom;
+		}
+		
+	      /* Draw new ones */
+		dlElement = FirstDlElement(clipboard);
+		while(dlElement) {
+		    if(dlElement->type != DL_Display) {
+			DlObject *po = &(dlElement->structure.rectangle->object);
+#if 0
+			print(" type=%s x=%d y=%d width=%d height=%d\n",
+			  elementType(dlElement->type),
+			  winX + po->x - dx,
+			  winY + po->y - dy,
+			  (int)po->width,
+			  (int)po->height);
+#endif		      
+			XDrawRectangle(display, window, xorGC,
+			  winX + po->x - dx, winY + po->y - dy,
+			  po->width, po->height);
+		    }
+		    dlElement = dlElement->next;
+		}
+	      /* Move the pointer to the same place */
+		XWarpPointer(display, None, window, 0, 0, 0, 0, winX, winY);
+		break;
+	    } else if(keysym == osfXK_Cancel) {
+	      /* Cancel was pressed.  Set returnVal and fall through
+                 to Button Release to quit */
+		returnVal = False;
+	    } else if(keysym == XK_Return || keysym == osfXK_Activate) {
+	      /* Enter was pressed.  Fall through to Button Release to
+                 quit */
+	    } else {
+	      /* Do nothing */
+		break;
+	    }
 	}
 
 	case ButtonRelease:

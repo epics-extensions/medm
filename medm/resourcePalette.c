@@ -175,7 +175,7 @@ static void createBundleButtons( Widget messageF) {
 
 static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     int rcType = (int) cd;
 
     UNREFERENCED(cbs);
@@ -231,7 +231,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     int buttonId = (int)cd;
     int rcType;
     DlElement *elementPtr;
@@ -446,7 +446,7 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
     if(!cbs->text->length) return;
 
   /* Check the new characters, character by character */
-    abort=0;
+    abort = 0;
     for (i = 0; i < cbs->text->length && !abort; i++) {
       /* Digits are OK, check non-digits */
 	if(!isdigit(cbs->text->ptr[i])) {
@@ -455,23 +455,23 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
 	    case '-':
 	      /* Abort if this is not the first new char */
 		if(i) {
-		    abort=1;
+		    abort = 1;
 		    break;
 		}
 	      /* OK if insertion point is at 0 */
 		if(!cbs->currInsert) break;
 	      /* OK if insertion point is after a replacement starting at 0 */
-		if(cbs->startPos ==0 && cbs->startPos != cbs->endPos &&
+		if(cbs->startPos == 0 && cbs->startPos != cbs->endPos &&
 		  cbs->endPos == cbs->currInsert) break;
 	      /* Else abort */
-		abort=1;
+		abort = 1;
 		break;
 	    default:
-		abort=4;
+		abort = 4;
 	    }
 	}
     }
-    if(abort) cbs->doit=False;
+    if(abort) cbs->doit = False;
 #if DEBUG_TEXT_VERIFY
     print("  doit: %d",cbs->doit);
     if(!abort) print("\n");
@@ -519,7 +519,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
     if(!cbs->text->length) return;
 
   /* Check the new characters, character by character */
-    newDot=replace=abort=0;
+    newDot = replace = abort = 0;
     for (i = 0; i < cbs->text->length && !abort; i++) {
       /* Digits are OK, check non-digits */
 	if(!isdigit(cbs->text->ptr[i])) {
@@ -528,29 +528,29 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 	    case '-':
 	      /* Abort if this is not the first new char */
 		if(i) {
-		    abort=1;
+		    abort = 1;
 		    break;
 		}
 	      /* OK if insertion point is at 0 */
 		if(!cbs->currInsert) break;
 	      /* OK if insertion point is after a replacement starting at 0 */
-		if(cbs->startPos ==0 && cbs->startPos != cbs->endPos &&
+		if(cbs->startPos == 0 && cbs->startPos != cbs->endPos &&
 		  cbs->endPos == cbs->currInsert) break;
 	      /* Else abort */
-		abort=1;
+		abort = 1;
 		break;
 	    case '.':
 	      /* Abort if already have a new dot */
 		if(newDot) {
-		    abort=2;
+		    abort = 2;
 		    break;
 		}
-		newDot=1;
+		newDot = 1;
 	      /* Get the current string */
 		curString = XmTextFieldGetString(w);
-		len=strlen(curString);
+		len = strlen(curString);
 	      /* Check if this is a replacement */
-		if(cbs->startPos != cbs->endPos) replace=1;
+		if(cbs->startPos != cbs->endPos) replace = 1;
 	      /* Check character by character outside the replacement */
 		for (j = 0; j < len; j++) {
 		    if(replace && j >= cbs->startPos && j < cbs->endPos) {
@@ -558,18 +558,18 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 		    }
 		  /* Abort if there is already a . */
 		    if(curString[j] == '.') {
-			abort=3;
+			abort = 3;
 			break;
 		    }
 		}
 		XtFree(curString);
 		break;
 	    default:
-		abort=4;
+		abort = 4;
 	    }
 	}
     }
-    if(abort) cbs->doit=False;
+    if(abort) cbs->doit = False;
 #if DEBUG_TEXT_VERIFY
     print("  doit: %d",cbs->doit);
     if(!abort) print("\n");
@@ -582,7 +582,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 
 void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     int rcType = (int) cd;  /* the resource element type */
     XmScaleCallbackStruct *scbs = (XmScaleCallbackStruct *)cbs;
 
@@ -618,11 +618,12 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     int rcType = (int)cd;
     char *stringValue;
-    int redoDisplay=0;
-    int clearComposite=0;
+    int redoDisplay = 0;
+    int clearComposite = 0;
+    int updateResourcePalette = 0;
 
     UNREFERENCED(cbs);
 
@@ -657,6 +658,9 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case LINEWIDTH_RC:
 	globalResourceBundle.lineWidth = atoi(stringValue);
+      /* This may cause the bounding box to change for Polyline and
+         Polygon */
+	updateResourcePalette = 1;
 	break;
     case SBIT_RC: 
     {
@@ -765,7 +769,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    cdi->dlColormap = NULL;
 	}
 	strcpy(globalResourceBundle.cmap,stringValue);
-	redoDisplay=1;
+	redoDisplay = 1;
 	break;
     case COMPOSITE_FILE_RC:
       /* If the filename is not blank, set a flag to clear the element
@@ -805,8 +809,8 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	while(dlElement) {
 	    DlElement *pE = dlElement->structure.element;
 	    
+	  /* Clear the composite element list if a composite */
 	    if(clearComposite && pE->type == DL_Composite) {
-	      /* Clear the composite element list if a composite */
 		DlComposite *dlComposite = pE->structure.composite;
 		
 	      /* Use removeDlDisplayListElementsExceptDisplay instead
@@ -816,7 +820,19 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 		removeDlDisplayListElementsExceptDisplay(cdi,
 		  dlComposite->dlElementList);
 	    }
+
+	  /* Update the element */
 	    updateElementFromGlobalResourceBundle(pE);
+
+	  /* Update the resource palette if other element data may
+             have changed.  Currently after LineWidth change for
+             Polyline and Polygon */
+	    if(updateResourcePalette &&
+	      (pE->type == DL_Polyline || pE->type == DL_Polygon)) {
+	      /* Use objectDataOnly = True */
+		updateGlobalResourceBundleAndResourcePalette(True);
+	    }
+	    
 	    dlElement = dlElement->next;
 	}
 	dmTraverseNonWidgetsInDisplayList(cdi);
@@ -979,7 +995,7 @@ static void bundleCallback(Widget w, int bundleId,
  */
 void initializeGlobalResourceBundle()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     int i;
 
     globalResourceBundle.x = 0;
@@ -1086,7 +1102,7 @@ void initializeGlobalResourceBundle()
 }
 
 /****************************************************************************
- * Initialize XmStrintg Value Tables: ResourceBundle and related widgets.   *
+ * Initialize XmString Value Tables: ResourceBundle and related widgets.    *
  ****************************************************************************/
 void initializeXmStringValueTables()
 {
@@ -1113,7 +1129,7 @@ void initializeXmStringValueTables()
  ****************************************************************************/
 void createResource()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     Widget entriesSW, resourceMB, messageF, resourceHelpPDM;
     XmString buttons[N_MAX_MENU_ELES];
     KeySym keySyms[N_MAX_MENU_ELES];
@@ -1408,7 +1424,7 @@ static void createResourceEntries(Widget entriesSW)
  ****************************************************************************/
 static void createEntryRC( Widget parent, int rcType)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     Widget localRC, localLabel, localElement;
     XmString labelString;
     Dimension width, height;
@@ -2414,7 +2430,7 @@ void updateElementBasicAttribute(DlBasicAttribute *attr)
 
 void updateResourcePaletteBasicAttribute()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     char string[MAX_TOKEN_LENGTH];
     
     XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
@@ -2494,7 +2510,7 @@ void updateElementControlAttribute(DlControl *control)
 
 void updateResourcePaletteControlAttribute()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
 
     XmTextFieldSetString(resourceEntryElement[CTRL_RC],
       globalResourceBundle.chan[0]);
@@ -2520,7 +2536,7 @@ void updateElementMonitorAttribute(DlMonitor *monitor)
 
 void updateResourcePaletteMonitorAttribute()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
 
     XmTextFieldSetString(resourceEntryElement[RDBK_RC],
       globalResourceBundle.chan[0]);
@@ -2581,7 +2597,7 @@ void clearResourcePaletteEntries()
 /* Set entries in the resource palette based on current type */
 void setResourcePaletteEntries()
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     Boolean objectDataOnly;
     DlElementType displayType;
 
@@ -2821,7 +2837,7 @@ void updateGlobalResourceBundleFromElement(DlElement *element)
  */
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 {
-    DisplayInfo *cdi=currentDisplayInfo;
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *elementPtr;
     char string[MAX_TOKEN_LENGTH];
     int i, tail;
@@ -2851,7 +2867,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	Position x, y;
 	
       /* Get the current values */
-	nargs=0;
+	nargs = 0;
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
