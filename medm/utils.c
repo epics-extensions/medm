@@ -88,6 +88,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 
+static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
+  Position x0, Position y0, Boolean dynamicOnly);
+static DlElement *findHiddenRelatedDisplayInComposite(DlElement *pEC,
+  Position x0, Position y0);
 static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
 static void toggleHighlightRectangles(DisplayInfo *displayInfo,
@@ -299,34 +303,110 @@ void optionMenuRemoveLabel(Widget menu)
 XtErrorHandler trapExtraneousWarningsHandler(String message)
 {
     if(message && *message) {
-/* "Attempt to remove non-existant passive grab" */
+      /* "Attempt to remove non-existant passive grab" */
 	if(!strcmp(message,"Attempt to remove non-existant passive grab"))
 	  return(0);
-/* "The specified scale value is less than the minimum scale value." */
-/* "The specified scale value is greater than the maximum scale value." */
+      /* "The specified scale value is less than the minimum scale value." */
+      /* "The specified scale value is greater than the maximum scale value." */
 	if(!strcmp(message,"The specified scale value is"))
 	  return(0);
     } else {
 	medmPostMsg(1,"trapExtraneousWarningsHandler:\n%s\n", message);
     }
-  
+    
     return(0);
 }
 
-
-/*
- * Look for smallest object which contains the specified position.  With top
- *   finds the topmost of two equal-sized elements.  Otherwise finds the
- *   bottommost (for Related Display hidden button). */
-DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
-  Boolean top)
+/* Look for a hidden related display */
+DlElement *findHiddenRelatedDisplay(DisplayInfo *displayInfo,
+  Position x0, Position y0)
 {
-    DlElement *pE, *pSmallest, *pDisplay;
+    DlElement *pE, *pE1;
+    DlObject *po;
+    
+  /* Loop over elements in the composite */
+    pE = SecondDlElement(displayInfo->dlElementList);
+    while(pE) {
+      /* See if it is a widget and hence not a hidden related display */
+	if(pE->widget) {
+	    pE = pE->next;
+	    continue;
+	}
+
+      /* See if the point falls inside the element */
+	po = &(pE->structure.rectangle->object);
+	if(((x0 < po->x) || (x0 > po->x + (int)po->width)) ||
+	  ((y0 < po->y) || (y0 > po->y + (int)po->height))) {
+	    pE = pE->next;
+	    continue;
+	}
+
+      /* Check for hidden related display */
+	if(pE->type == DL_RelatedDisplay &&
+	  pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	    return(pE);
+	} else if(pE->type == DL_Composite) {
+	    pE1 = findHiddenRelatedDisplayInComposite(pE, x0, y0);
+	    if(pE1) return pE1;
+	}
+	pE = pE->next;
+    }
+
+  /* Return */
+     return NULL;
+}
+
+/* Look for a hidden related display in a composite */
+static DlElement *findHiddenRelatedDisplayInComposite(DlElement *pEC,
+  Position x0, Position y0)
+{
+    DlElement *pE, *pE1;
+    DlObject *po;
+    
+  /* Loop over elements not including the display */
+    pE = FirstDlElement(pEC->structure.composite->dlElementList);
+    while(pE) {
+      /* See if it is a widget and hence not a hidden related display */
+	if(pE->widget) {
+	    pE = pE->next;
+	    continue;
+	}
+
+      /* See if the point falls inside the element */
+	po = &(pE->structure.rectangle->object);
+	if(((x0 < po->x) || (x0 > po->x + (int)po->width)) ||
+	  ((y0 < po->y) || (y0 > po->y + (int)po->height))) {
+	    pE = pE->next;
+	    continue;
+	}
+
+      /* Check for hidden related display */
+	if(pE->type == DL_RelatedDisplay &&
+	  pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+	    return(pE);
+	} else if(pE->type == DL_Composite) {
+	    pE1 = findHiddenRelatedDisplayInComposite(pE, x0, y0);
+	    if(pE1) return pE1;
+	}
+	pE = pE->next;
+    }
+
+  /* Return */
+     return NULL;
+}
+
+/* Look for smallest object which contains the specified position.
+ * With dynamicOnly finds only elements with update tasks. */
+DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
+  Boolean dynamicOnly)
+{
+    DlElement *pE, *pE1, *pE2, *pSmallest, *pDisplay;
+    DlObject *po, *po1;
     double area, minArea;
     
 #if DEBUG_PVINFO
-    print("findSmallestTouchedElement: top=%s x0: %d   y0: %d\n",
-      top?"True":"False",x0,y0);
+    print("findSmallestTouchedElement: dynamicOnly=%s x0=%3d y0=%3d\n",
+      dynamicOnly?"True ":"False",x0,y0);
 #endif
     
   /* Traverse the display list */
@@ -334,56 +414,77 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
     pE = FirstDlElement(pList);
     while(pE) {
-	DlObject *po = &(pE->structure.rectangle->object);
-	
-#if DEBUG_PVINFO > 1
-	print("  Element: %s\n",elementType(pE->type));
-	print("    x1: %3d  x2: %3d   y1: %3d  y2: %3d\n",
-	  po->x, po->x + (int)po->width, po->y, po->y + (int)po->height);
-#endif
+      /* Don't look at hidden elements */
+	if(pE->hidden) {
+	    pE = pE->next;
+	    continue;
+	}
+
       /* Don't use the display but save it as a fallback */
 	if(pE->type == DL_Display) {
-	    pDisplay = pE;
-	} else if(!pE->hidden) {
-	  /* See if the point falls inside the element */
-	    if(((x0 >= po->x) && (x0 <= po->x + (int)po->width)) &&
-	      ((y0 >= po->y) && (y0 <= po->y + (int)po->height))) {
-	      /* See if it is smallest element */
-		area=(double)(po->width)*(double)(po->height);
-	      /* Keep the last one for top, otherwise the first */
-		if(top?area <= minArea:area < minArea) {
-		    pSmallest = pE;
-		    minArea = area;
-		}
-#if DEBUG_PVINFO
-		print("  minArea (so far): %g"
-		  " Smallest element: %s\n", minArea,
-		  pSmallest?elementType(pSmallest->type):NULL);
-#endif
+	    if(!dynamicOnly) pDisplay = pE;
+	    pE = pE->next;
+	    continue;
+	}
+	
+      /* See if the point falls inside the element */
+	po = &(pE->structure.rectangle->object);
+	if(((x0 < po->x) || (x0 > po->x + (int)po->width)) ||
+	  ((y0 < po->y) || (y0 > po->y + (int)po->height))) {
+	    pE = pE->next;
+	    continue;
+	}
+	    
+      /* If in EXECUTE mode recurse into a composite element */
+	pE1 = pE;
+	po1 = po;
+	if(globalDisplayListTraversalMode == DL_EXECUTE &&
+	  pE->type == DL_Composite) {
+	    DlElement *pE2;
+	    
+	    pE2 = findSmallestTouchedCompositeElement(pE, x0, y0, dynamicOnly);
+	    if(pE2) {
+		pE1 = pE2;
+		po1 = &(pE2->structure.rectangle->object);
 	    }
 	}
+
+      /* See if it is dynamic */
+	if(dynamicOnly) {
+	    UpdateTask *pT = getUpdateTaskFromElement(pE1);
+	    if(!pT || !pT->getRecord) {
+		pE = pE->next;
+		continue;
+	    }
+	}
+	
+      /* See if it is smallest element */
+	area=(double)(po1->width)*(double)(po1->height);
+	
+      /* Keep the last one (the one on top) */
+	if(area <= minArea) {
+	    pSmallest = pE1;
+	    minArea = area;
+	}
+#if DEBUG_PVINFO
+	print("  minArea (so far): %g"
+	  " Smallest element: %s\n", minArea,
+	  pSmallest?elementType(pSmallest->type):"");
+#endif
 	pE = pE->next;
     }
 
-  /* Use the display as the fallback (Assume we'll always find one) */
+  /* Use the display as the fallback if it was found */
     if(pSmallest == NULL) pSmallest = pDisplay;
-
-  /* If in EXECUTE mode decompose a composite element */
-    if(globalDisplayListTraversalMode == DL_EXECUTE &&
-      pSmallest->type == DL_Composite) {
-      /* Find the particular component that was picked */
-	pSmallest = lookupCompositeChild(pSmallest,x0,y0);
-    }
 
   /* Return the element */
     return (pSmallest);
 }
 
-/*
- * Find the smallest element at the given coordinates when in EXECUTE mode
- */
-DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
-  DisplayInfo *displayInfo, Position *x, Position *y, Boolean top)
+/* Find the smallest element at the given coordinates when in EXECUTE
+ * mode */
+DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
+  Position *x, Position *y, Boolean dynamicOnly)
 {
     Widget child;
     Position x0, y0;
@@ -410,7 +511,7 @@ DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
     }
 		
   /* Try to find element from child since execute sizes are different
-   *   from edit sizes */
+     from edit sizes */
     pE = NULL;
     if(child) {
 	pE1 = FirstDlElement(displayInfo->dlElementList);
@@ -426,63 +527,98 @@ DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
   /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
     if(!pE) {
 	pE = findSmallestTouchedElement(displayInfo->dlElementList,
-	  *x, *y, top);
+	  *x, *y, dynamicOnly);
     }
 
   /* Return */
      return pE;
 }
 
-  /*
- * Starting at head of composite (specified element), lookup picked object
- */
-DlElement *lookupCompositeChild(DlElement *pEC, Position x0, Position y0)
+
+/* Used in findSmallestTouchedElement for recursing into composites */
+static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
+  Position x0, Position y0, Boolean dynamicOnly)
 {
-    DlElement *pE, *pESave;
-    int minWidth, minHeight;
+    DlElement *pE, *pE1, *pE2, *pSmallest, *pDisplay;
+    DlObject *po, *po1;
+    double area, minArea;
+    
+#if DEBUG_PVINFO
+    print("findSmallestTouchedCompositeElement: dynamicOnly=%s "
+      "x0=%3d y0=%3d\n",
+      dynamicOnly?"True ":"False", x0,y0);
+#endif
 
-    if(!pEC || pEC->type != DL_Composite) return pEC;
-
-    minWidth = INT_MAX;		/* according to XPG2's values.h */
-    minHeight = INT_MAX;
-    pESave = NULL;
-
-  /* Single element lookup  */
-
+    if(!pEC || pEC->type != DL_Composite) return NULL;
+    
+  /* Traverse the display list */
+    pSmallest = pDisplay = NULL;
+    minArea = (double)(INT_MAX)*(double)(INT_MAX);
     pE = FirstDlElement(pEC->structure.composite->dlElementList);
     while(pE) {
-	DlObject *po = &(pE->structure.rectangle->object);
-	if(!pE->hidden &&
-	  x0 >= po->x && x0 <= po->x + (int)po->width &&
-	  y0 >= po->y && y0 <= po->y + (int)po->height) {
-	  /* eligible element, now see if smallest element so far */
-	    if((int)po->width < minWidth && (int)po->height < minHeight) {
-		minWidth = (int)(pE->structure.rectangle)->object.width;
-		minHeight = (int)(pE->structure.rectangle)->object.height;
-		pESave = pE;
+      /* Don't look at hidden elements */
+	if(pE->hidden) {
+	    pE = pE->next;
+	    continue;
+	}
+
+      /* See if the point falls inside the element */
+	po = &(pE->structure.rectangle->object);
+	if(((x0 < po->x) || (x0 > po->x + (int)po->width)) ||
+	  ((y0 < po->y) || (y0 > po->y + (int)po->height))) {
+	    pE = pE->next;
+	    continue;
+	}
+	    
+      /* If in EXECUTE mode recurse into a composite element */
+	pE1 = pE;
+	po1 = po;
+	if(globalDisplayListTraversalMode == DL_EXECUTE &&
+	  pE->type == DL_Composite) {
+	    DlElement *pE2;
+	    
+	    pE2 = findSmallestTouchedCompositeElement(pE, x0, y0,
+	      dynamicOnly);
+	    if(pE2) {
+		pE1 = pE2;
+		po1 = &(pE2->structure.rectangle->object);
 	    }
 	}
+
+      /* See if it is dynamic */
+	if(dynamicOnly) {
+	    UpdateTask *pT = getUpdateTaskFromElement(pE1);
+	    if(!pT || !pT->getRecord) {
+		pE = pE->next;
+		continue;
+	    }
+	}
+	
+      /* See if it is smallest element */
+	area=(double)(po1->width)*(double)(po1->height);
+	
+      /* Keep the last one (the one on top) */
+	if(area <= minArea) {
+	    pSmallest = pE1;
+	    minArea = area;
+	}
+#if DEBUG_PVINFO
+	print("  minArea (so far): %g"
+	  " Smallest element: %s\n", minArea,
+	  pSmallest?elementType(pSmallest->type):NULL);
+#endif
 	pE = pE->next;
     }
-    if(pESave) {
-      /* Found a new element
-       *   If it is composite, recurse, otherwise return it */
-	if(pESave->type == DL_Composite) {
-	    return(lookupCompositeChild(pESave,x0,y0));
-	} else {
-	    return(pESave);
-	}
-    } else {
-      /* Didn't find anything, return old composite */
-	return(pEC);
-    }
+
+  /* Return the element */
+    return (pSmallest);
 }
 
 /*
  * Finds elements in list 1 and puts them into list 2 according to
  *   the mode mask specification AND whether the points are close or not
  */
-void findSelectedElements(DlList *pList1, Position x0, Position y0,
+void findSelectedEditElements(DlList *pList1, Position x0, Position y0,
   Position x1, Position y1, DlList *pList2, unsigned int mode)
 {
   /* Number of pixels to consider to be the same as no motion */
@@ -495,7 +631,11 @@ void findSelectedElements(DlList *pList1, Position x0, Position y0,
 	    Position x = (x0 + x1)/2, y = (y0 + y1)/2;
 	    DlElement *pE;
 
-	    pE = findSmallestTouchedElement(pList1,x,y,True);
+	    pE = findSmallestTouchedElement(pList1, x, y, False);
+#if DEBUG_PVINFO
+	    print("findSelectedEditElements x=%3d y=%3d pE=%x [%s]\n",
+	      x,y,pE,pE?elementType(pE->type):"");
+#endif
 	    if(pE) {
 		DlElement *pENew = createDlElement(DL_Element,(XtPointer)pE,NULL);
 		if(pENew) {

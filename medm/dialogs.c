@@ -217,7 +217,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
   /* Find the element corresponding to the button press */
     x = event.xbutton.x;
     y = event.xbutton.y;
-    *ppE = pE = findSmallestTouchedExecuteElementFromWidget(widget, displayInfo,
+    *ppE = pE = findSmallestTouchedExecuteElement(widget, displayInfo,
       &x, &y, True);
 #if DEBUG_PVINFO
     print("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
@@ -242,10 +242,13 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 	  "No process variable associated with object\n");
 	return NULL;
     }
+#if 0
+  /* KE: Shouldn't happen now */
   /* Refine the return element.  The former one may have been composite */
     medmElement = (MedmElement *)(pT->clientData);
     if(medmElement) *ppE = medmElement->dlElement;
-		
+#endif
+    
   /* Run the element's updateTask's getRecord procedure */
     pT->getRecord(pT->clientData, records, count);
     (*count)%=100;

@@ -247,20 +247,13 @@ void StartDrag(Widget w, XEvent *event)
     if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
       && strcmp(XtName(searchWidget),stripChartWidgetName)) {
       /* Search starts from a DrawingArea which is not a StripChart,
-	 that is the DL_Display.  So we want to find a graphic
+	 that is, the DL_Display.  So we want to find a graphic
 	 (non-widget) element.  Get the data from the position. */
 	displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
 	xbutton = (XButtonEvent *)event;
-#if 1
-      /* KE: Is more what getting PvInfo does */
 	pE = findSmallestTouchedElement(displayInfo->dlElementList,
 	  (Position)xbutton->x, (Position)xbutton->y, True);
 	pT = getUpdateTaskFromElement(pE);
-#else
-      /* KE: This doesn't recurse into a composite */
-	pT = getUpdateTaskFromPosition(displayInfo,
-	  xbutton->x,xbutton->y);
-#endif
     } else {
       /* Traverse up to the drawing area */
       /* KE: Probably necessary only for the Scale when in the trough */

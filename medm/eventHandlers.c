@@ -148,8 +148,8 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       /* Lookup to see if Btn3 occured in an object that cares */
 	x = xEvent->x;
 	y = xEvent->y;
-	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
-	  &x, &y, True);
+	pE = findSmallestTouchedExecuteElement(w, displayInfo,
+	  &x, &y, False);
 	if (pE) {
 #if DEBUG_PVINFO
 	    print("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
@@ -246,39 +246,29 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       /* Button 1 */
 	x = xEvent->x;
 	y = xEvent->y;
-      /* Find the bottommost of equal-sized elements */
-	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
-	  &x, &y, False);
-	if (pE) {
+      /* Look for a hidden related display */
+	pE = findHiddenRelatedDisplay(displayInfo, x, y);
+	if(pE) {
+	    DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
+	    Boolean replace = False;
+	    int i;
+	    
+	  /* Check the display array to find the first non-empty one */
+	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
 #if DEBUG_RELATED_DISPLAY		    
-	    print("\nhandleExecuteButtonPress: type=%s\n",
-	      elementType(pE->type));
-	    print("  x=%d y=%d xEvent: x=%d y=%d window=%x subwindow=%x\n",
-	      x, y, xEvent->x, xEvent->y, xEvent->window, xEvent->subwindow);
+		print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
+		  i, pRD->display[i].name);
 #endif		    
-	    if (pE->type == DL_RelatedDisplay &&
-	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
-		DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
-		Boolean replace = False;
-		int i;
-		
-	      /* Check the display array to find the first non-empty one */
-		for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
-#if DEBUG_RELATED_DISPLAY		    
-		    print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
-		      i, pRD->display[i].name);
-#endif		    
-		    if(*(pRD->display[i].name)) {
-		      /* See if it was a ctrl-click indicating replace */
-			if(xEvent->state & ControlMask) replace = True;
-
-		      /* Create the related display */
-			relatedDisplayCreateNewDisplay(displayInfo,
-			  &(pRD->display[i]),
-			  replace);
-
-			break;
-		    }
+		if(*(pRD->display[i].name)) {
+		  /* See if it was a ctrl-click indicating replace */
+		    if(xEvent->state & ControlMask) replace = True;
+		    
+		  /* Create the related display */
+		    relatedDisplayCreateNewDisplay(displayInfo,
+		      &(pRD->display[i]),
+		      replace);
+		    
+		    break;
 		}
 	    }
 	}
@@ -394,7 +384,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		  False);
-		findSelectedElements(cdi->dlElementList,
+		findSelectedEditElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,AllTouched|AllEnclosed);
 		if (!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
@@ -496,7 +486,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      /* Toggle and append selections */
 		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		  False);
-		findSelectedElements(cdi->dlElementList,
+		findSelectedEditElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
 		if (!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
@@ -560,7 +550,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if (!foundVertex) {
 		    doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		      False);
-		    findSelectedElements(cdi->dlElementList,
+		    findSelectedEditElements(cdi->dlElementList,
 		      x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
 		    if (!IsEmpty(tmpDlElementList)) {
 			unhighlightSelectedElements();
@@ -637,7 +627,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		XBell(display,50);
 		break;
 	    }
-	    findSelectedElements(cdi->dlElementList,
+	    findSelectedEditElements(cdi->dlElementList,
 	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
 	    if (IsEmpty(tmpDlElementList)) break;
 	    

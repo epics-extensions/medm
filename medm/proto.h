@@ -530,16 +530,16 @@ void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
   char        *cancelBtnLabel,
   char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
+DlElement *findHiddenRelatedDisplay(DisplayInfo *displayInfo,
+  Position x0, Position y0);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
-  Boolean top);
-DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
-  DisplayInfo *displayInfo, Position *x, Position *y, Boolean top);
-void findSelectedElements(DlList *pList1, Position x0, Position y0,
+  Boolean dynamicOnly);
+DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
+  Position *x, Position *y, Boolean dynamicOnly);
+void findSelectedEditElements(DlList *pList1, Position x0, Position y0,
   Position x1, Position y1, DlList *pList2, unsigned int mode);
 void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
   Position x1, Position y1, DlList *pList2, unsigned int mode);
-DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0);
-DlElement *lookupCompositeElement(DlElement *elementPtr);
 DlElement *lookupDynamicAttributeElement(DlElement *elementPtr);
 DlElement *lookupBasicAttributeElement(DlElement *elementPtr);
 Boolean dmResizeDisplayList(DisplayInfo *displayInfo, Dimension newWidth,
