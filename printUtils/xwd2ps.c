@@ -523,9 +523,16 @@ xwd2ps(argc, argv,fo)
 			outputcount += 2;
 		    }
 		    runlen = 0;
+		  /* KE: Changed the following because it wasn't working right for 24-bit */
+#if 0
 		    rr = line[j];
 		    gg = line[j+1];
 		    bb = line[j+2];
+#else
+		    rr = line[j+2];
+		    gg = line[j+1];
+		    bb = line[j];
+#endif		    
 		}
 	      /* check to make sure the output lines are not too long */
 		if (outputcount >= MAXPERLINE) {

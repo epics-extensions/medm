@@ -4,6 +4,8 @@
  *** MDA - 28 June 1990
  ***/
 
+#define DEBUG_PRINT 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -40,8 +42,11 @@ void utilPrint(display,window,fileName)
 
     xwd(display, window, newFileName);
 
+#if 0
+  /* KE: Not necessary */
     newFileName = (char *) calloc(1,256);
     sprintf(newFileName,"%s%d",fileName,seconds);
+#endif    
     psFileName = (char *) calloc(1,256);
     sprintf(psFileName,"%s%s",newFileName,".ps");
 
@@ -64,15 +69,23 @@ void utilPrint(display,window,fileName)
 	fclose(fo);
 
     }
+#if 1
+  /* KE: Need to free these */
+    free(newFileName);
+    free(psFileName);
+#endif   
 
+#if DEBUG_PRINT == 0
     strcpy(commandBuffer,"lp -d$PSPRINTER ");
     strcat(commandBuffer, psFileName);
     system(commandBuffer);
+  /* Delete files */
     strcpy(commandBuffer,"rm ");
     strcat(commandBuffer,newFileName);
     system(commandBuffer);
     strcpy(commandBuffer,"rm ");
     strcat(commandBuffer,psFileName);
     system(commandBuffer);
+#endif    
 
 }
