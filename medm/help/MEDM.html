@@ -10,7 +10,7 @@
 <P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>June 2002</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>January 2003</P>
 </B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
@@ -156,7 +156,7 @@
 <P>&#9;MEDM is developed and tested in an environment using the Solaris operating system and the TED desktop environment as distributed by TriTeal Corporation.  TED is a desktop environment conforming to the </FONT><A HREF="#CED"><FONT SIZE=2>Common Desktop Environment</FONT></A><FONT SIZE=2> (CED) standards and uses Motif Version 3.  At this time MEDM has no special enhancements to support CDE features apart from Motif or features that are special to Motif Version 3.  The main parts of the program build with no compiler warnings even with CMPILR=STRICT on this system.  The program should run with versions of Motif 1.2 or higher, but it may need modifications to run on other operating systems.  We will try to incorporate changes necessary to support other systems if you let us know.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="CommandLine"></A>Command Line</P>
 </B></FONT><FONT SIZE=2><P>&#9;MEDM can be executed from the command line in the general form:</P>
-</FONT><PRE>&#9;medm [options] [&amp;]</PRE>
+</FONT><PRE>&#9;medm [options] [<I>display-files</I>] [&amp;]</PRE>
 <FONT SIZE=2><P>&#9;Options are:</P>
 </FONT><PRE>&#9;[X options]
 &#9;[-help | -h | -?]
@@ -169,9 +169,8 @@
 &#9;[-displayFont <I>font-spec</I>]
 &#9;[-macro "<I>xxx</I>=<I>aaa</I>,<I>yyy</I>=<I>bbb</I>, ..."]
 &#9;[-dg [<I>xpos</I>[x<I>ypos</I>]][+<I>xoffset</I>[+<I>yoffset</I>]]
-&#9;[<I>display-files</I>]
 &#9;[&amp;]</PRE>
-<FONT SIZE=2><P>&#9;Parameters in square brackets [] are optional.  Italicized parameters are to be replaced by user-specified terms.  The other parameters should be typed literally.  The command-line options are described below.  The &quot;&amp;&quot; causes the process to be run in the background, usually a good idea for a graphical program.</P>
+<FONT SIZE=2><P>&#9;Parameters in square brackets [] are optional.  Italicized parameters are to be replaced by user-specified terms.  The other parameters should be typed literally.  The command-line options are described below.  The </FONT><I><FONT FACE="Courier New" SIZE=2>display-files</I></FONT><FONT SIZE=2> are a list of one or more </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL files</FONT></A><FONT SIZE=2> and should be after all the options, except that the </FONT><FONT FACE="Courier New" SIZE=2>–dg</FONT><FONT SIZE=2> option can appear within the </FONT><I><FONT FACE="Courier New" SIZE=2>display-files</I></FONT><FONT SIZE=2>.  The &quot;&amp;&quot; causes the process to be run in the background on UNIX, usually a good idea for a graphical program.</P>
 </FONT><B><P>Command-Line Options</P></B>
 <TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
 <TR><TD WIDTH="24%" VALIGN="TOP">
@@ -243,11 +242,6 @@
 <FONT SIZE=2><DFN><P>-dg geometry</FONT></DFN></TD>
 <TD WIDTH="76%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Specify the geometry (location and size) of the display window.  The geometry syntax is similar to the X Windows -geometry option.  (Note that -geometry specifies the location of the MEDM main window, and -dg specifies the location of the display windows.)  The -dg option affects the ADL filenames following it.</FONT></DFN></TD>
-</TR>
-<TR><TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>display-files</FONT></DFN></TD>
-<TD WIDTH="76%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>Specify list of display (ADL) files to use in EXECUTE mode.  (This option requires -x also.)</FONT></DFN></TD>
 </TR>
 </TABLE>
 
@@ -737,6 +731,7 @@
 <P>&#9;The Erase Channel is a process variable that causes erasing of the plot.  If there is an Erase Channel, the plot erases when the process variable turns either zero or non-zero, depending on the </FONT><A HREF="#EraseMode"><FONT SIZE=2>Erase Mode</FONT></A><FONT SIZE=2>.  The Erase Mode is only relevant if there is an erase channel.</P>
 </FONT><B><P><A NAME="ChoiceButton"></A>Choice Button</P>
 </B><FONT SIZE=2><P>&#9;The Choice Button has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Stacking"><FONT SIZE=2>Stacking</FONT></A><FONT SIZE=2> attributes.  The Choice Button is used for ENUM process variables and is a means for picking the ENUM choices via buttons.</P>
+<P>&#9;No more than 16 ENUM strings can be obtained from Channel Access.  It is possible for an ENUM  process variable to have more than 16 states, however.  The .STAT field that exists for most process variables is an example.  MEDM will print an error message if a Choice Button receives a value for an ENUM process variable that is beyond the range known by MEDM, even though that value may be valid otherwise.  This is a limit of Channel Access, not MEDM.</P>
 </FONT><B><P><A NAME="Display"></A>Display</P>
 </B><FONT SIZE=2><P>&#9;The Display is a special object.  It has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) and Grid attributes.  In addition there are Foreground and Background colors, and a Colormap, which is the name of a display colormap file.  See </FONT><A HREF="#Grid"><FONT SIZE=2>Grid</FONT></A><FONT SIZE=2> for a description of the parameters in the Grid attribute, and see </FONT><A HREF="#DisplayColors"><FONT SIZE=2>Display Colors</FONT></A><FONT SIZE=2> for a description of display colormaps and colormap files.  The Background color is the color of the display background, and the Foreground color is the color of the grid.</P>
 <P>&#9;The X and Y positions are saved in the ADL file.  The display should appear at the coordinates specified in the ADL file when the display is first brought up.  These coordinates are the coordinates of the area inside the title bar and borders.  The title bar and borders are managed by the Window manager and may vary in size from system to system.  The coordinates are updated in the Display object only when the Display is selected in the resource palette by clicking on the display background or using the Select Display item in the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit Menu</FONT></A><FONT SIZE=2> in EDIT mode.  They are not updated when you drag the display to new positions.  If you want to have the display come up at a specified position, be sure the X and Y positions are what you want when the file is saved.  The screen should come up in the position it was in when saved if you click on the display object just before saving.</P>
@@ -756,6 +751,7 @@
 </B><FONT SIZE=2><P>&#9;The Meter has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Limits"><FONT SIZE=2>Limits</FONT></A><FONT SIZE=2> (Low Limit, High Limit, Precision), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  It displays the value of the process variable on a meter with a dial.</P>
 </FONT><B><P><A NAME="Menu"></A>Menu</P>
 </B><FONT SIZE=2><P>&#9;The Menu has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Menu is used for ENUM process variables and is a means for picking the ENUM choices via a menu.  Note that if the Color Mode is alarm, the foreground color, not the background color, is set to the alarm colors.  The background color should be choosen to contrast with all the alarm colors.</P>
+<P>&#9;No more than 16 ENUM strings can be obtained from Channel Access.  It is possible for an ENUM  process variable to have more than 16 states, however.  The .STAT field that exists for most process variables is an example.  MEDM will print an error message if a Menu receives a value for an ENUM process variable that is beyond the range known by MEDM, even though that value may be valid otherwise.  This is a limit of Channel Access, not MEDM.</P>
 </FONT><B><P><A NAME="MessageButton"></A>Message Button</P>
 </B><FONT SIZE=2><P>&#9;The Message Button has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2>, attributes.  In addition, there are a Message Label, a Press Message, and a Release Message.  The Message Label is the label on the Message Button.  The Press Message and the Release Message are the values to which to set the process variable when the button is pressed or released, respectively.  These values should be commensurate with the type of the process variable.  (It is not wise to send a non-numeric string to a DOUBLE process variable, for example.)  The label and message strings can be up to 255 characters.</P>
 </FONT><B><P><A NAME="Oval"></A>Oval</P>
@@ -2282,6 +2278,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.*</P>
-<P><ADDRESS>Modified June 10, 2002<P>
+<P><ADDRESS>Modified January 13, 2003<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
