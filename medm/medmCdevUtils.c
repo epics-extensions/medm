@@ -1,11 +1,14 @@
+/*************************************************************************\
+* Copyright (c) 1994,1995 Southeastern Universities Research Association,
+*                         Continuous Electron Beam Accelerator Facility
+* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
+* National Laboratory.
+* Copyright (c) 2002 The Regents of the University of California, as
+* Operator of Los Alamos National Laboratory.
+* This file is distributed subject to a Software License Agreement found
+* in the file LICENSE that is included with this distribution. 
+\*************************************************************************/
 /*-----------------------------------------------------------------------------
- * Copyright (c) 1994,1995 Southeastern Universities Research Association,
- *                         Continuous Electron Beam Accelerator Facility
- *
- * This software was developed under a United States Government license
- * described in the NOTICE file included as part of this distribution.
- *
- *-----------------------------------------------------------------------------
  *
  * Description:
  *      Simple Copy of EPICS/base/src/cvtFast.c to avoid to compile
@@ -17,6 +20,9 @@
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.2  2002/08/02 15:39:36  jba
+ *   Added license information.
+ *
  *   Revision 1.1  1998/08/25 18:39:06  evans
  *   Incorporated changes from Jie Chen for CDEV.  Not tested with
  *   MEDM_CDEV defined.
