@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_CHANNEL_CB 0
 #define DEBUG_ADD 0
 #define DEBUG_INPUT_ID 0
+#define DEBUG_ERASE 0
 
 #define DO_RTYP 1
 
@@ -772,6 +773,11 @@ void medmUpdateChannelCb(struct event_handler_args args) {
   /* Set the new value into the record */
     pr->value = value;
     
+#if DEBUG_ERASE
+    print("medmUpdateChannelCb: [%x]%s %g\n",
+      pr, pr->name, pr->value);
+#endif    
+
   /* Call the update value callback if there is a monitored change */
     if(pCh->pr->updateValueCb) {
 	if(pr->monitorValueChanged) {

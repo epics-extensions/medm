@@ -60,6 +60,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_TIME 0
 #define DEBUG_XRT 0
 #define DEBUG_HISTOGRAM 0
+#define DEBUG_ERASE 0
+
 #ifndef VMS
 #define CHECK_NAN
 #endif
@@ -93,6 +95,8 @@ extern int isnan(double);     /* Because it is not in math.h as it should be */
 #include "medmXrtGraph.h"
 #elif defined(SCIPLOT)
 #include "medmSciPlot.h"
+#elif defined(JPT)
+#include "medmJpt.h"
 #else
 #error No plot package to implement the Cartesian Plot has been defined.
 #endif
@@ -115,6 +119,9 @@ static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
+
+static void dumpCartesianPlotData(const char *title,
+  MedmCartesianPlot *pcp);
 
 Widget cpMatrix = NULL, cpForm = NULL;
 
@@ -441,7 +448,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
       /* Set as uninitialized (Used for incrementing last point to
          distinguish between no points and one point) */
-	 t->init=0;
+	 t->init = 0;
 
       /* Determine data type (based on type (scalar or vector) of data) */
 	if(t->recordX && t->recordY) {
@@ -682,9 +689,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 void cartesianPlotUpdateTrace(XtPointer cd) {
-    Record *pr = (Record *) cd;
-
-    XYTrace *pt = (XYTrace *) pr->clientData;
+    Record *pr = (Record *)cd;
+    XYTrace *pt = (XYTrace *)pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     int nextPoint, j;
@@ -697,7 +703,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
       /* x,y channels specified - scalars, up to dlCartesianPlot->count pairs */
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
-	else pt->init=1;
+	else pt->init = 1;
 	if(nextPoint < dlCartesianPlot->count) {
 	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
@@ -722,7 +728,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		  SAFEFLOAT(pt->recordY->value));
 	    }
 	}
-#if 0     /* Use with cpCP_XYScalar.adl or delete these lines */
+#if 0
+      /* Use with cpCP_XYScalar.adl or delete these lines */
 	printf("nextPoint=%d dlCartesianPlot->count=%d x=%g y=%g\n",
 	  nextPoint,dlCartesianPlot->count,
 	  pt->recordX->value,pt->recordY->value);
@@ -741,7 +748,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
       /* x channel scalar, up to dlCartesianPlot->count pairs */
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
-	else pt->init=1;
+	else pt->init = 1;
 	if(nextPoint < dlCartesianPlot->count) {
 	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
@@ -839,7 +846,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
       /* y channel scalar, up to dlCartesianPlot->count pairs */
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
-	else pt->init=1;
+	else pt->init = 1;
 #if DEBUG_CARTESIAN_PLOT_UPDATE  && defined(XRTGRAPH)
 	printf("  nextPoint=%d dlCartesianPlot->count=%d\n  XRT_HUGE_VAL=%f\n",
 	  nextPoint,
@@ -1349,19 +1356,17 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	  || ((pr->value != 0.0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))) {
 	    for(i = 0; i < pcp->nTraces; i++) {
 		XYTrace *t = &(pcp->xyTrace[i]);
-		if((t->recordX) || (t->recordY)) {
-		    int n = CpDataGetLastPoint(t->hcp,t->trace);
-		    if(n > 0) {
-			if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-			    CpEraseData(widget, CP_Y, t->hcp);
-			    clearDataSet1 = False;
-			} else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-			    CpEraseData(widget, CP_Y2, t->hcp);
-			    clearDataSet2 = False;
-			}
-			t->init = 0;
-			CpDataSetLastPoint(t->hcp,t->trace,0);
+		if((t->recordX || t->recordY) && t->init) {
+		  /* Initialized, Erase by setting to uninitialized state */
+		    if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
+			CpEraseData(widget, CP_Y, t->hcp);
+			clearDataSet1 = False;
+		    } else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
+			CpEraseData(widget, CP_Y2, t->hcp);
+			clearDataSet2 = False;
 		    }
+		    t->init = 0;
+		    CpDataSetLastPoint(t->hcp,t->trace,0);
 		} 
 	    }
 	}
@@ -1393,8 +1398,8 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 
 
 static void cartesianPlotUpdateValueCb(XtPointer cd) {
-    Record *pr = (Record *) cd;
-    XYTrace *pt = (XYTrace *) pr->clientData;
+    Record *pr = (Record *)cd;
+    XYTrace *pt = (XYTrace *)pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     int i;
@@ -1407,34 +1412,35 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	Boolean clearDataSet1 = True;
 	Boolean clearDataSet2 = True;
 
-      /* not the right value, return */
+      /* Not the right value, return */
 	if(((pr->value == 0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))
 	  ||((pr->value != 0) && (pcp->eraseMode == ERASE_IF_ZERO))) {
 	    return;
 	}
 
-      /* erase */
+      /* Erase */
 	for(i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
-	    if((t->recordX) || (t->recordY)) {
-		int n = CpDataGetLastPoint(t->hcp,t->trace);
-		if(n > 0) {
-		    if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-			CpEraseData(widget, CP_Y, t->hcp);
-			clearDataSet1 = False;
-			pcp->dirty1 = False;
-		    } else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-			CpEraseData(widget, CP_Y2, t->hcp);
-			clearDataSet2 = False;
-			pcp->dirty2 = False;
-		    }
-		    t->init = 0;
-		    CpDataSetLastPoint(t->hcp,t->trace,0);
+	    if((t->recordX || t->recordY) && t->init) {
+	      /* Initialized, Erase by setting to uninitialized state */
+		if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
+		    CpEraseData(widget, CP_Y, t->hcp);
+		    clearDataSet1 = False;
+		    pcp->dirty1 = False;
+		} else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
+		    CpEraseData(widget, CP_Y2, t->hcp);
+		    clearDataSet2 = False;
+		    pcp->dirty2 = False;
 		}
+		t->init = 0;
+		CpDataSetLastPoint(t->hcp,t->trace,0);
 	    }
 	}
 	CpUpdateWidget(widget, CP_FULL);
 	updateTaskMarkUpdate(pcp->updateTask);
+#if DEBUG_ERASE
+	dumpCartesianPlotData("Erase Channel",pcp);
+#endif	
 	return;
     }
 
@@ -1467,6 +1473,9 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 		  pcp->dirty2 = True;
 	    }
 	}
+#if DEBUG_ERASE
+	dumpCartesianPlotData("Trigger Channel",pcp);
+#endif	
     } else {
       /* No trigger channel, proceed as normal */
 	cartesianPlotUpdateTrace((XtPointer)pr);
@@ -1478,6 +1487,9 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: "
 	      "Illegal cpDataSet specified\n");
 	}
+#if DEBUG_ERASE
+	dumpCartesianPlotData("Normal Channel",pcp);
+#endif	
     }
     updateTaskMarkUpdate(pcp->updateTask);
 }
@@ -3068,3 +3080,63 @@ void updateCartesianPlotDataDialog()
     if(cpMatrix)
       XtVaSetValues(cpMatrix,XmNcells,cpCells,NULL);
 }
+
+#if DEBUG_ERASE
+static void dumpCartesianPlotData(const char *title,
+  MedmCartesianPlot *pcp)
+{
+    int i,j;
+    
+    if(!pcp) return;
+
+  /* Heading */
+    if(title) {
+	print("\nCartesian Plot Dump [%s]\n",title);
+    } else {
+	print("\nCartesian Plot Dump\n");
+    }
+
+  /* Loop over traces */
+    for(i = 0; i < pcp->nTraces; i++) {
+	XYTrace *t = &(pcp->xyTrace[i]);
+	if((t->recordX) || (t->recordY)) {
+	    int n = CpDataGetLastPoint(t->hcp,t->trace);
+
+	    print("Trace %d lastPoint=%d init=%s:\n",i,n,t->init?"Yes":"No");
+	    if(t->recordX) {
+		print("  x=[%x]%s\n",
+		  t->recordX, t->recordX->name);
+	    }
+	    if(t->recordX) {
+		print("  y=[%x]%s\n",
+		  t->recordY, t->recordY->name);
+	    }
+	    if(t->init) {
+		for(j=0; j <= n; j++) {
+		    print("  %2d %15g %15g\n",j,
+		      CpDataGetXElement(t->hcp,t->trace,j),
+		      CpDataGetYElement(t->hcp,t->trace,j));
+		}
+	    }
+	}
+    }
+
+  /* Erase Channel */
+    if(pcp->eraseCh.recordX) {
+	print("Erase Channel:   [%x] %34s %15g\n",
+	  pcp->eraseCh.recordX,
+	  pcp->eraseCh.recordX->name,
+	  pcp->eraseCh.recordX->value);
+    }
+
+  /* Trigger Channel */
+    if(pcp->triggerCh.recordX) {
+	print("Trigger Channel: [%x] %34s %15g\n",
+	  pcp->triggerCh.recordX,
+	  pcp->triggerCh.recordX->name,
+	  pcp->triggerCh.recordX->value);
+    }
+
+    print("\n");
+}
+#endif
