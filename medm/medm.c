@@ -1595,7 +1595,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 
  
     if (strLen1 >= MAX_FILE_CHARS) {
-	medmPrintf("Path too Long %s\n:",filename);
+	medmPrintf("\nPath too Long: %s\n",filename);
 	return False;
     }
 
@@ -1658,12 +1658,12 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	}
 	status = stat(f1,&statBuf);
 	if (status) {
-	    medmPrintf("Failed to read status of file %s\n",filename);
+	    medmPrintf("\nFailed to read status of file %s\n",filename);
 	    return False;
 	}
 	status = rename(f1,f2);
 	if (status) {
-	    medmPrintf("Cannot rename file %s\n",filename);
+	    medmPrintf("\nCannot rename file %s\n",filename);
 	    return False;
 	}
     }
@@ -1702,7 +1702,7 @@ void medmExit() {
 	      /* strip off the path */
 		while (*tmp != '\0') {
 		    if (*tmp == '/') 
-		      filename = tmp + 1;
+		      filename = tmp+1;
 		    tmp++;
 		}
 		sprintf(str,"Save display \"%s\" before exit?",filename);
@@ -2700,10 +2700,10 @@ main(int argc, char *argv[])
 		dmWriteDisplayList(displayInfo,filePtr);
 		fclose(filePtr);
 	    } else {
-		medmPrintf("Cannot create display file: \"%s\"",argv[3]);
+		medmPrintf("\nCannot create display file: \"%s\"\n",argv[3]);
 	    }
 	} else {
-	    medmPrintf("Cannot open display file: \"%s\"",argv[2]);
+	    medmPrintf("\nCannot open display file: \"%s\"\n",argv[2]);
 	}
 	return 0;
     }
@@ -2715,8 +2715,8 @@ main(int argc, char *argv[])
     request = parseCommandLine(argc,argv);
 
     if (request->macroString != NULL && request->opMode != EXECUTE) {
-	medmPrintf("\nmedm: %s %s","-macro command line option only valid",
-	  "for execute (-x) mode operation");
+	medmPrintf("\nIgnored -macro command line option\n"
+	  "  (Only valid for Execute (-x) mode operation)\n");
 	free(request->macroString);
 	request->macroString = NULL;
     }
@@ -2745,7 +2745,7 @@ main(int argc, char *argv[])
       /* Open display */
 	display = XOpenDisplay(request->displayName);
 	if (display == NULL) {
-	    medmPrintf("\nCould not open Display!");
+	    medmPrintf("\nCould not open Display\n");
 	    exit(1);
 	}
 	screenNum = DefaultScreen(display);
@@ -2786,29 +2786,42 @@ main(int argc, char *argv[])
        *   Note that we only know there is a property
        *   We do not know if there actually is an MEDM running */	
 	if (attachToExistingMedm) {
+	    XWindowAttributes attr;
 	    char *fileStr;
-	    int i;
-	    
-	  /* Check if there were valid display files specified */
-	    if (request->fileCnt > 0) {
-		printf("\nAttaching to existing MEDM\n");
-		for (i=0; i<request->fileCnt; i++) {
-		    if (fileStr = request->fileList[i]) {
-			sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-			  request->macroString,request->displayGeometry,windowPropertyAtom);
-			XFlush(display);
-			printf("  Dispatched: %s\n",fileStr);
-		    }
-		}
-	    } else {
-		printf("\nAborting: No valid display specified and already a remote MEDM running.\n");
-	    }
-	    printf("  (Use -local to not use existing MEDM\n"
-	      "     or -cleanup to set this MEDM as the existing one)\n");
+	    int i, status;
 
-	  /* Leave this MEDM */
-	    XCloseDisplay(display);
-	    exit(0);
+	  /* Check if the medmHostWindow is valid */
+	    XSetErrorHandler(xErrorHandler);     /* Otherwise exits */
+	    status=XGetWindowAttributes(display,medmHostWindow,&attr);
+	    if(!status) {
+	      /* Window doesn't exist */
+		printf("\nCannot connect to existing MEDM because it is invalid\n"
+		  "  Continuing with this one as if -cleanup were specified\n");
+		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		  "  or -cleanup to set this MEDM as the existing one)\n");
+	    } else {
+	      /* Window does exist */
+	      /* Check if there were valid display files specified */
+		if (request->fileCnt > 0) {
+		    printf("\nAttaching to existing MEDM\n");
+		    for (i=0; i<request->fileCnt; i++) {
+			if (fileStr = request->fileList[i]) {
+			    sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
+			      request->macroString,request->displayGeometry,windowPropertyAtom);
+			    XFlush(display);
+			    printf("  Dispatched: %s\n",fileStr);
+			}
+		    }
+		} else {
+		    printf("\nAborting: No valid display specified and already a remote MEDM running.\n");
+		}
+		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		  "  or -cleanup to set this MEDM as the existing one)\n");
+		
+	      /* Leave this MEDM */
+		XCloseDisplay(display);
+		exit(0);
+	    }
 	}  
 
       /* Close the display that was opened (Will start over later) */
@@ -2984,8 +2997,9 @@ main(int argc, char *argv[])
    *   Store mainShell window as the property if the atom is defined
    *     (Will be stored if CLEANUP or first MEDM, won't be stored if LOCAL)  */
     targetWindow = XtWindow(mainShell);
-    XChangeProperty(display,rootWindow,windowPropertyAtom,
-		XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
+    if(windowPropertyAtom)
+      XChangeProperty(display,rootWindow,windowPropertyAtom,
+	XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
 
   /* Start any command-line specified displays */
     for (i=0; i < request->fileCnt; i++) {
@@ -2996,7 +3010,7 @@ main(int argc, char *argv[])
 		  request->displayGeometry,(Boolean)False);
 		fclose(filePtr);
 	    } else {
-		medmPrintf("\nmedm: can't open display file: \"%s\"",fileStr);
+		medmPrintf("\nCannot open display file: \"%s\"\n",fileStr);
 	    }
 	}
     }
@@ -3081,15 +3095,13 @@ main(int argc, char *argv[])
 			if (globalDisplayListTraversalMode == DL_EDIT) {
 			    enableEditFunctions();
 			}
-			medmPostTime();
-			medmPrintf("File Dispatch Request:\n");
+			medmPostMsg("File Dispatch Request:\n");
 			if (fullPathName[0] != '\0')
-			  medmPrintf("    filename = %s\n",fullPathName);
+			  medmPrintf("  filename = %s\n",fullPathName);
 			if (name[0] != '\0')
-			  medmPrintf("    macro = %s\n",name);
+			  medmPrintf("  macro = %s\n",name);
 			if (geometryString[0] != '\0')
-			  medmPrintf("    geometry = %s\n\n",geometryString);
-			medmPrintf("\n");
+			  medmPrintf("  geometry = %s\n",geometryString);
 			fclose(filePtr);
 		    } else {
 			medmPrintf(
