@@ -55,7 +55,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_STATISTICS 0
-#define DEBUG_SRICAT 0
 
 #define MAX_ERRORS 25
 
@@ -897,10 +896,6 @@ void medmCreateCAStudyDlg() {
     Widget modeButton;
     XmString str;
 
-#if DEBUG_SRICAT
-    xErrorHandler(display,NULL);
-#endif
-
     if(!caStudyS) {
 	if(mainShell == NULL) return;
 	
@@ -1167,35 +1162,18 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
     } else {
 	sprintf(buf,"[Event associated with error is NULL]");
     }
-#if 0    
+#if POST_X_ERRORS_TO_MESSAGE_WINDOW
+  /* Post to the message window (and also print to stderr there) */
+    medmPostMsg(1,"xErrorHandler:\n%s\n", buf);
+#else
+  /* Just print to stderr */
 # ifdef WIN32
     lprintf("\n%s\n", buf);
 # else
     fprintf(stderr,"\n%s\n", buf);
 # endif
-#else
-    medmPostMsg(1,"xErrorHandler:\n%s\n", buf);
 #endif
 
-#if DEBUG_SRICAT
-    {
-	char msg[256];
-	sprintf(msg,
-	  "An X error has occurred\n"
-	  "This is an opportunity to check the call stack\n"
-	  "The MEDM PID is %d\n"
-	  "Please contact the system administrator before continuing",
-	  getpid());
-	dmSetAndPopupQuestionDialog(currentDisplayInfo,msg,
-	  "Continue",NULL,NULL);
-	switch (currentDisplayInfo->questionDialogAnswer) {
-	case 1:     /* Continue */
-	default:
-	    break;
-	}
-    }    
-#endif
-    
   /* Return value is ignored */
     return 0;
 }

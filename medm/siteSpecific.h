@@ -260,3 +260,15 @@ other programs anyway.  It is not recommended.  The colors will be
 freed when MEDM exits in any event.  */
 
 #define MANAGE_IMAGE_COLOR_ALLOCATION 0
+
+/* Define this to be 1 if you want X errors to go to the MEDM Message
+Window.  It is recommended.  X errors should be uncommon.  If they do
+occur, however, MEDM may generate further errors trying to print to
+the Message Window.  The errors should be always be printed to the
+console.  If the console is always readily available, you may want to
+set this to 0 to avoid these problems. If you want a visual
+notification that seems to work in most cases, you can set it to 1.
+In the event you are getting X errors, you can alternatively modify
+the xErrorHandler routine in help.c to help debug the situation.  */
+
+#define POST_X_ERRORS_TO_MESSAGE_WINDOW 1
