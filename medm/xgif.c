@@ -241,12 +241,14 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     print("initializeGIF: DisplayCells=%d\n",gif->displayCells);
 #endif    
     
+#if 0
     if(gif->displayCells < 255) {
 	medmPrintf(1,"\ninitializeGIF: Need at least 256 color cells, got %d\n",
 	  gif->displayCells);
 	freeGIF(dlImage);
 	return(False);
     }
+#endif    
 
     gif->nFrames=0;
     gif->curFrame=0;
@@ -495,115 +497,62 @@ void resizeGIF(DlImage *dlImage)
 	  /* Very special case (size=actual GIF size) */
 	    if(CUREXPIMAGE(gif) != CURIMAGE(gif)) {
 		if(CUREXPIMAGE(gif) != NULL) {
-#if 0
-		      /* XDestroyImage destroys the data */
-		    free(CUREXPIMAGE(gif)->data);
-		    CUREXPIMAGE(gif)->data=NULL;
-#endif		    
 		    XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
 		}
 		CUREXPIMAGE(gif)=CURIMAGE(gif);
 		gif->eWIDE=gif->iWIDE;
 		gif->eHIGH=gif->iHIGH;
 	    }
-	} else {				/* have to do some work */
-	  /* if it's a big image, this'll take a while.  mention it */
-	    if(w*h>(400*400)) {
-	      /* (MDA) - could change cursor to stopwatch...*/
-	    }
+	} else {
+	  /* Resize */
+	    int sx, sy, dx, dy, count;
+	    int sh, dh, sw, dw;
+	    Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
+	    int bytesPerPixel;
 	    
-	  /* first, kill the old CUREXPIMAGE(gif), if one exists */
+	  /* First, kill the old CUREXPIMAGE(gif), if one exists */
 	    if(CUREXPIMAGE(gif) && CUREXPIMAGE(gif) != CURIMAGE(gif)) {
-#if 0
-	      /* XDestroyImage destroys the data */
-		free(CUREXPIMAGE(gif)->data);
-		CUREXPIMAGE(gif)->data=NULL;
-#endif		
 		XDestroyImage((XImage *)(CUREXPIMAGE(gif)));
 	    }
 	    
-	  /* create CUREXPIMAGE(gif) of the appropriate size */
+	  /* Create CUREXPIMAGE(gif) of the appropriate size */
 	    gif->eWIDE=w;  gif->eHIGH=h;
+	    bytesPerPixel=CURIMAGE(gif)->bits_per_pixel/8;
+	    ximag=(Byte *)malloc(w*h*bytesPerPixel);
+	    CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
+	      DefaultDepth(display,screenNum),ZPixmap,
+	      0,(char *)ximag,gif->eWIDE,gif->eHIGH,8,0);
 	    
-	    switch (DefaultDepth(display,screenNum)) {
-	    case 8: {
-		int  ix,iy,ex,ey;
-		Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
-		
-		ximag=(Byte *)malloc(w*h);
-		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
-		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,8,0);
-		
-		if(!ximag || !CUREXPIMAGE(gif)) {
-		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
-		      w,h);
-		    return;
-		}
-	      /* Make the byte order be the same as that for theImage */
-		CUREXPIMAGE(gif)->byte_order=CURIMAGE(gif)->byte_order;
-		
-		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
-		
-		for(ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
-		    iy=(gif->iHIGH * ey) / gif->eHIGH;
-		    epptr=elptr;
-		    ilptr=(Byte *)CURIMAGE(gif)->data + (iy * gif->iWIDE);
-		    for(ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
-			ix=(gif->iWIDE * ex) / gif->eWIDE;
-			ipptr=ilptr + ix;
-			*epptr=*ipptr;
+	    if(!ximag || !CUREXPIMAGE(gif)) {
+		medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
+		  w,h);
+		medmPrintf(0,"  %d-bit: ximag=%08x, expImage=%08x\n",
+		  DefaultDepth(display,screenNum),ximag,CUREXPIMAGE(gif));
+		return;
+	    }
+	  /* Make the byte order be the same as that for theImage */
+	    CUREXPIMAGE(gif)->byte_order=CURIMAGE(gif)->byte_order;
+	    
+	  /* Copy and scale the bytes */
+	    sw=CURIMAGE(gif)->width;
+	    sh=CURIMAGE(gif)->height;
+	    dw=CUREXPIMAGE(gif)->width;
+	    dh=CUREXPIMAGE(gif)->height;
+	    elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
+	    for(dy=0; dy < dh; dy++) {
+		sy=(sh * dy)/dh;
+		epptr=elptr;
+		ilptr=(Byte *)CURIMAGE(gif)->data +
+		  (sy * CURIMAGE(gif)->bytes_per_line);
+		for(dx=0; dx < dw;  dx++) {
+		    sx=(sw * dx)/dw;
+		    ipptr=ilptr + sx*bytesPerPixel;
+		  /* Copy bytesPerPixel bytes */
+		    for(count=0; count < bytesPerPixel; count++) {
+			*epptr++=*ipptr++;
 		    }
 		}
-		break;
-	    }
-	    case 24: {
-		int sx, sy, dx, dy;
-		int sh, dh, sw, dw;
-		Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
-		int bytesPerPixel=CURIMAGE(gif)->bits_per_pixel/8;
-		
-		ximag=(Byte *)malloc(w*h*bytesPerPixel);
-		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
-		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,8,0);
-		
-		if(!ximag || !CUREXPIMAGE(gif)) {
-		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
-		      w,h);
-		    medmPrintf(0,"  24 bit: ximag=%08x, expImage=%08x\n",ximag,
-		      CUREXPIMAGE(gif));
-		    return;
-		}
-	      /* Make the byte order be the same as that for theImage */
-		CUREXPIMAGE(gif)->byte_order=CURIMAGE(gif)->byte_order;
-		
-#if 1
-		sw=CURIMAGE(gif)->width;
-		sh=CURIMAGE(gif)->height;
-		dw=CUREXPIMAGE(gif)->width;
-		dh=CUREXPIMAGE(gif)->height;
-		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
-		for(dy=0;  dy<dh; dy++) {
-		    sy=(sh * dy) / dh;
-		    epptr=elptr;
-		    ilptr=(Byte *)CURIMAGE(gif)->data +
-		      (sy * CURIMAGE(gif)->bytes_per_line);
-		    for(dx=0;  dx <dw;  dx++) {
-			sx=(sw * dx) / dw;
-			ipptr=ilptr + sx*bytesPerPixel;
-			*epptr++=*ipptr++;
-			*epptr++=*ipptr++;
-			*epptr++=*ipptr++;
-			if(bytesPerPixel == 4) {
-			    *epptr++=*ipptr++;
-			}
-		    }
-		    elptr += CUREXPIMAGE(gif)->bytes_per_line;
-		}
-#endif
-		break;
-	    }
+		elptr += CUREXPIMAGE(gif)->bytes_per_line;
 	    }
 	}
 #if DEBUG_DISPOSAL
@@ -777,8 +726,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #endif
     }
 
-  /* If not found and the name starts with / or . then we can do no more */
-    if(fp == NULL && (fname[0] == MEDM_DIR_DELIMITER_CHAR || fname[0] == '.')) {
+  /* If not found and the name is a full path then can do no more */
+    if(fp == NULL && isPath(fname)) {
 	medmPrintf(1,"\nloadGIF: Cannot open file:\n"
 	  "  %s\n",fname);
 	goto CLEANUP;
@@ -1207,6 +1156,12 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     }
 
+  /* Check for error */
+    if(error) {
+	medmPrintf(1,"\nloadGIF: Error parsing GIF file for:\n  %s\n",fname);
+	goto CLEANUP;
+    }
+
 #if DEBUG_GIF
     print("loadGIF: Enlarging images\n");
 #endif	
@@ -1446,7 +1401,7 @@ static int countImages(void)
 #if DEBUG_GIF > 1
 		print("  UNKNOWN [%2x]\n",ch);
 #endif	    
-		medmPrintf(0,"\ncountImages: Unknown extension [0x%x] for %s\n",
+		medmPrintf(0,"\ncountImages: Unknown extension [0x%x] for:\n  %s\n",
 		  ch,fname);
 		nFrames=-1;
 		done=True;
@@ -1462,7 +1417,7 @@ static int countImages(void)
 #if DEBUG_GIF > 1
 	    print("UNKNOWN [%2x]\n",ch);
 #endif	    
-	    medmPrintf(0,"\ncountImages: Unknown data separator [0x%x] for %s\n",
+	    medmPrintf(0,"\ncountImages: Unknown data separator [0x%x] for:\n  %s\n",
 	      ch,fname);
 	    nFrames=-1;
 	    done=True;
@@ -1472,7 +1427,7 @@ static int countImages(void)
 
   /* Return */
     if(!done) {
-	medmPrintf(0,"\nloadGIF: Terminator not found for %s\n",fname);
+	medmPrintf(0,"\nloadGIF: Terminator not found for:\n  %s\n",fname);
     }
     return nFrames;
 }
@@ -1562,7 +1517,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	while(ch--) *ptr1++=NEXTBYTE;
 	if((Raster - ptr1) > filesize){
 	    medmPrintf(1,"\nparseGIFImage: "
-	      "Trying to read past end of file for %s\n",fname);
+	      "Trying to read past end of file for:\n  %s\n",fname);
 	    return(False);
 	}
     } while(ch1);     /* Continue until block terminator */
@@ -1575,45 +1530,30 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
   * of the bitmap_pad.  Use 8.  This should work with what we are
   * doing for depths of 8, 16, 24, 32, etc.  The bytes_per_line (last
   * argument) may be zero, indicating that X will calculate it for
-  * you.  Otherwise it is probably width*bits_per_pixel/8. */
-    switch (ScreenDepth) {
-    case 8:
-        BytesOffsetPerPixel=1;
-	ImageDataSize=Width*Height;
-        Image=(Byte *)malloc(ImageDataSize);
-        if(!Image) {
-	    medmPrintf(1,"\nparseGIFImage: Not enough memory for XImage"
-	      " for %s\n",fname);
-	    return(False);
-        }
-        CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
-	  ScreenDepth,ZPixmap,
-	  0,(char*)Image,Width,Height,8,0);
-        break;
-    case 24:
-	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
-        BytesOffsetPerPixel=bits_per_pixel/8;
-	ImageDataSize=BytesOffsetPerPixel*Width*Height;
+  * you.  Otherwise it is probably width*bits_per_pixel/8. (Used to be
+  * a switch statement here.) */
+    bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
+    BytesOffsetPerPixel=bits_per_pixel/8;
+    ImageDataSize=BytesOffsetPerPixel*Width*Height;
 #if DEBUG_GIF	
-        print("parseGIFImage: %s (24-bit display, %d bits per pixel)\n"
-	  "  BytesOffsetPerPixel=%d ImageSize=%d\n",
-	  fname, bits_per_pixel, BytesOffsetPerPixel,
-	  BytesOffsetPerPixel*Width*Height);
+    print("parseGIFImage: %s (24-bit display, %d bits per pixel)\n"
+      "  BytesOffsetPerPixel=%d ImageSize=%d\n",
+      fname, bits_per_pixel, BytesOffsetPerPixel,
+      BytesOffsetPerPixel*Width*Height);
 #endif	
-        Image=(Byte *)malloc(ImageDataSize);
-        if(!Image) {
-	    medmPrintf(1,"\nparseGIFImage: "
-	      "Not enough memory for XImage for %s\n",
-	      fname);
-	    return(False);
-        }
-        CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
-	  ScreenDepth,ZPixmap,
-	  0,(char*)Image,Width,Height,8,0);
-        break;
+    Image=(Byte *)malloc(ImageDataSize);
+    if(!Image) {
+	medmPrintf(1,"\nparseGIFImage: "
+	  "Not enough memory for XImage for:\n  %s\n",
+	  fname);
+	return(False);
     }
+    CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
+      ScreenDepth,ZPixmap,
+      0,(char*)Image,Width,Height,8,0);
     if(!CURIMAGE(gif)) {
-	medmPrintf(1,"\nparseGIFImage: Unable to create XImage for %s\n",fname);
+	medmPrintf(1,"\nparseGIFImage: Unable to create XImage for:\n  %s\n",
+	  fname);
 	return(False);
     }
     BytesPerScanline=CURIMAGE(gif)->bytes_per_line;
@@ -2001,31 +1941,31 @@ static void addToPixel(GIFData *gif, Byte Index)
     if(offset < ImageDataSize) {
 	Byte *p=(Byte *)Image+offset;
 	
-	switch (ScreenDepth) {
-	case 8:
-	  /* Check for transparent color */
-	    if(TransparentColorFlag && (Index&(gif->numcols-1)) ==
-	      TransparentIndex) {
-		*p=(Byte)gif->bcol;
-	    } else {
-		*p=(Byte)gif->cols[Index&(gif->numcols-1)];
-	    }
+      /* Check for transparent color */
+	if(TransparentColorFlag && (Index&(gif->numcols-1)) ==
+	  TransparentIndex) {
+	    clr=gif->bcol;
+	} else {
+	    clr=gif->cols[Index&(gif->numcols-1)];
+	}
+	
+
+      /* Copy the appropriate part of the pixel */
+	switch(BytesOffsetPerPixel) {
+	case 1:
+	    *p=(Byte)((clr & 0x000000ff));
 	    break;
-	case 24:
-	  /* Check for transparent color */
-	    if(TransparentColorFlag && (Index&(gif->numcols-1)) ==
-	      TransparentIndex) {
-		clr=gif->bcol;
-	    } else {
-		clr=gif->cols[Index&(gif->numcols-1)];
-	    }
-	    if(BytesOffsetPerPixel == 4) {
-		*((Pixel *)p)=clr;
-	    } else {
-		*p++=(Byte)((clr & 0x00ff0000) >> 16);
-		*p++=(Byte)((clr & 0x0000ff00) >> 8);
-		*p=(Byte)((clr & 0x000000ff));
-	    }
+	case 2:
+	    *p++=(Byte)((clr & 0x0000ff00) >> 8);
+	    *p=(Byte)((clr & 0x000000ff));
+	    break;
+	case 3:
+	    *p++=(Byte)((clr & 0x00ff0000) >> 16);
+	    *p++=(Byte)((clr & 0x0000ff00) >> 8);
+	    *p=(Byte)((clr & 0x000000ff));
+	    break;
+	case 4:
+	    *((Pixel *)p)=clr;
 	    break;
 	}
     }
