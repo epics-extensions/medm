@@ -480,6 +480,10 @@ UpdateTask *getUpdateTaskFromElement(DlElement *dlElement);
 /* updateMonitors.c */
 void localCvtDoubleToString( double, char *, unsigned short);
 void localCvtDoubleToExpNotationString(double, char *, unsigned short);
+int localCvtLongToHexString(long source, char *pdest);
+void medmLocalCvtDoubleToSexaStr(double value,  char *string,
+  unsigned short prec, double hopr, double lopr, int *status);
+double strtos(char *string, double hopr, double lopr, char **rptr, int *status);
 
 void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
   int regionX, int regionY, unsigned int regionWidth,
@@ -517,7 +521,6 @@ void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 /* utils.c */
 long longFval(double f);
 Pixel alarmColor(int type);
-int localCvtLongToHexString(long source, char *pdest);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
 int isPath(const char *fileString);

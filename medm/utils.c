@@ -3664,43 +3664,6 @@ void GetWorkSpaceList(Widget w) {
 }
 #endif
 
-/* Convert hex digits to ascii */
-static char hex_digit_to_ascii[16]={'0','1','2','3','4','5','6','7','8','9',
-				    'a','b','c','d','e','f'};
- 
-int localCvtLongToHexString(
-  long source,
-  char  *pdest)
-{
-    long  val,temp;
-    char  digit[10];
-    int   i,j;
-    char  *startAddr = pdest;
- 
-    *pdest++ = '0';
-    *pdest++ = 'x';
-    if(source==0) {
-	*pdest++ = '0';
-    } else {
-	val = source;
-	temp = 0xf & val;
-	val = val >> 4;
-	digit[0] = hex_digit_to_ascii[temp];
-	if(val < 0) val = val & 0xfffffff;
-	for(i=1; val!=0; i++) {
-	    temp = 0xf & val;
-	    val = val >> 4;
-	    digit[i] = hex_digit_to_ascii[temp];
-	}
-	for(j=i-1; j>=0; j--) {
-	    *pdest++ = digit[j];
-	}
-
-    }
-    *pdest = 0;
-    return((int)(pdest-startAddr));
-}
-
 /*** DlList routines ***/
 
 /* Makes a new, empty list */

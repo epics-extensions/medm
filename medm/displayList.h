@@ -173,7 +173,7 @@ extern const FillStyle FIRST_FILL_STYLE;
 #endif
 
 
-#define NUM_TEXT_FORMATS        8
+#define NUM_TEXT_FORMATS        9
 typedef enum {
     MEDM_DECIMAL  = 22,
     EXPONENTIAL   = 23,
@@ -181,8 +181,9 @@ typedef enum {
     COMPACT       = 25,
     TRUNCATED     = 26,
     HEXADECIMAL   = 27,
-    OCTAL         = 28,
-    STRING        = 29
+    SEXAGESIMAL   = 28,
+    OCTAL         = 29,
+    STRING        = 30
 } TextFormat;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextFormat FIRST_TEXT_FORMAT = MEDM_DECIMAL;
@@ -192,9 +193,9 @@ extern const TextFormat FIRST_TEXT_FORMAT;
 
 #define NUM_TEXT_ALIGNS         3
 typedef enum {
-    HORIZ_LEFT   = 30,
-    HORIZ_CENTER = 31,
-    HORIZ_RIGHT  = 32
+    HORIZ_LEFT   = 31,
+    HORIZ_CENTER = 32,
+    HORIZ_RIGHT  = 33
 } TextAlign;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TextAlign FIRST_TEXT_ALIGN = HORIZ_LEFT;
@@ -204,9 +205,9 @@ extern const TextAlign FIRST_TEXT_ALIGN;
 
 #define NUM_STACKINGS           3
 typedef enum {
-    COLUMN      = 33,
-    ROW         = 34,
-    ROW_COLUMN  = 35
+    COLUMN      = 34,
+    ROW         = 35,
+    ROW_COLUMN  = 36
 } Stacking;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Stacking FIRST_STACKING = COLUMN;
@@ -216,8 +217,8 @@ extern const Stacking FIRST_STACKING;
 
 #define NUM_FILL_MODES          2
 typedef enum {
-    FROM_EDGE   = 36,
-    FROM_CENTER = 37 
+    FROM_EDGE   = 37,
+    FROM_CENTER = 38 
 } FillMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
@@ -227,9 +228,9 @@ extern const FillMode FIRST_FILL_MODE;
 
 #define NUM_TIME_UNITS          3
 typedef enum {
-    MILLISECONDS = 38,
-    SECONDS      = 39,
-    MINUTES      = 40
+    MILLISECONDS = 39,
+    SECONDS      = 40,
+    MINUTES      = 41
 } TimeUnits;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const TimeUnits FIRST_TIME_UNIT = MILLISECONDS;
@@ -239,9 +240,9 @@ extern const TimeUnits FIRST_TIME_UNIT;
 
 #define NUM_CARTESIAN_PLOT_STYLES       3
 typedef enum {
-    POINT_PLOT      = 41,
-    LINE_PLOT       = 42,
-    FILL_UNDER_PLOT = 43
+    POINT_PLOT      = 42,
+    LINE_PLOT       = 43,
+    FILL_UNDER_PLOT = 44
 } CartesianPlotStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE = POINT_PLOT;
@@ -251,8 +252,8 @@ extern const CartesianPlotStyle FIRST_CARTESIAN_PLOT_STYLE;
 
 #define NUM_ERASE_OLDESTS       2
 typedef enum {
-    ERASE_OLDEST_OFF = 44,
-    ERASE_OLDEST_ON  = 45
+    ERASE_OLDEST_OFF = 45,
+    ERASE_OLDEST_ON  = 46
 } EraseOldest;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const EraseOldest FIRST_ERASE_OLDEST = ERASE_OLDEST_OFF;
@@ -262,9 +263,9 @@ extern const EraseOldest FIRST_ERASE_OLDEST;
 
 #define NUM_IMAGE_TYPES 3
 typedef enum {
-    NO_IMAGE   = 46,
-    GIF_IMAGE  = 47,
-    TIFF_IMAGE = 48
+    NO_IMAGE   = 47,
+    GIF_IMAGE  = 48,
+    TIFF_IMAGE = 49
 } ImageType;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
@@ -274,9 +275,9 @@ extern const ImageType FIRST_IMAGE_TYPE;
 
 #define NUM_CARTESIAN_PLOT_AXIS_STYLES 3
 typedef enum {
-    LINEAR_AXIS = 49,
-    LOG10_AXIS  = 50,
-    TIME_AXIS   = 51
+    LINEAR_AXIS = 50,
+    LOG10_AXIS  = 51,
+    TIME_AXIS   = 52
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -286,9 +287,9 @@ extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
 
 #define NUM_CARTESIAN_PLOT_RANGE_STYLES 3
 typedef enum {
-    CHANNEL_RANGE        = 52,
-    USER_SPECIFIED_RANGE = 53,
-    AUTO_SCALE_RANGE     = 54
+    CHANNEL_RANGE        = 53,
+    USER_SPECIFIED_RANGE = 54,
+    AUTO_SCALE_RANGE     = 55
 } CartesianPlotRangeStyle;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -299,8 +300,8 @@ extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 
 #define NUM_ERASE_MODES 2
 typedef enum {
-    ERASE_IF_NOT_ZERO = 55,
-    ERASE_IF_ZERO     = 56
+    ERASE_IF_NOT_ZERO = 56,
+    ERASE_IF_ZERO     = 57
 } eraseMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
@@ -310,8 +311,8 @@ extern const eraseMode_t FIRST_ERASE_MODE;
 
 #define NUM_RD_MODES 2
 typedef enum {
-    ADD_NEW_DISPLAY = 57,
-    REPLACE_DISPLAY = 58
+    ADD_NEW_DISPLAY = 58,
+    REPLACE_DISPLAY = 59
 } relatedDisplayMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayMode_t FIRST_RD_MODE = ADD_NEW_DISPLAY;
@@ -321,10 +322,10 @@ extern const relatedDisplayMode_t FIRST_RD_MODE;
 
 #define NUM_RD_VISUAL 4
 typedef enum {
-    RD_MENU       = 59,
-    RD_ROW_OF_BTN = 60,
-    RD_COL_OF_BTN = 61,
-    RD_HIDDEN_BTN = 62
+    RD_MENU       = 60,
+    RD_ROW_OF_BTN = 61,
+    RD_COL_OF_BTN = 62,
+    RD_HIDDEN_BTN = 63
 } relatedDisplayVisual_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const relatedDisplayVisual_t FIRST_RD_VISUAL = RD_MENU;
@@ -334,13 +335,13 @@ extern const relatedDisplayVisual_t FIRST_RD_VISUAL;
 
 #define NUM_CP_TIME_FORMAT 7
 typedef enum {
-    HHMMSS    = 63,
-    HHMM      = 64,
-    HH00      = 65,
-    MMMDDYYYY = 66,
-    MMMDD     = 67,
-    MMDDHH00  = 68,
-    WDHH00    = 69
+    HHMMSS    = 64,
+    HHMM      = 65,
+    HH00      = 66,
+    MMMDDYYYY = 67,
+    MMMDD     = 68,
+    MMDDHH00  = 69,
+    WDHH00    = 70
 } CartesianPlotTimeFormat_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;
@@ -350,8 +351,8 @@ extern const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT;
 
 #define NUM_BOOLEAN 2
 typedef enum {
-    BOOLEAN_FALSE = 70,
-    BOOLEAN_TRUE  = 71
+    BOOLEAN_FALSE = 71,
+    BOOLEAN_TRUE  = 72
 } Boolean_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
@@ -361,10 +362,10 @@ extern const Boolean_t FIRST_BOOLEAN;
 
 #define NUM_PV_LIMITS_SRC 4
 typedef enum {
-    PV_LIMITS_CHANNEL = 72,
-    PV_LIMITS_DEFAULT = 73,
-    PV_LIMITS_USER    = 74,
-    PV_LIMITS_UNUSED  = 75
+    PV_LIMITS_CHANNEL = 73,
+    PV_LIMITS_DEFAULT = 74,
+    PV_LIMITS_USER    = 75,
+    PV_LIMITS_UNUSED  = 76
 } PvLimitsSrc_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
@@ -372,8 +373,8 @@ const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
 extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 #endif
 
-#define MAX_OPTIONS             8     /* NUM_TEXT_FORMATS */
-#define NUMBER_STRING_VALUES    (76)  /* COLOR_RULE_1 */
+#define MAX_OPTIONS             9     /* NUM_TEXT_FORMATS */
+#define NUMBER_STRING_VALUES    (77)  /* COLOR_RULE_1 */
 
 /*********************************************************************
  * stringValueTable for string-valued tokens - position sensitive!   *
@@ -393,7 +394,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "solid", "dash",
     "solid", "outline",
     "decimal", "exponential", "engr. notation", "compact", "truncated",
-    "hexadecimal", "octal", "string",
+    "hexadecimal", "sexagesimal", "octal", "string",
     "horiz. left", "horiz. centered", "horiz. right",
     "column", "row", "row column",
     "from edge", "from center",

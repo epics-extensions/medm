@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_MENU 0
 #define DEBUG_FONT 0
 
+#define FIX_SOLARIS_COLOR_PROBLEM
+
 #define OPTION_MENU_ADJUST_WIDTH 22
 #define OPTION_MENU_ADJUST_HEIGHT 4
 #define SETSIZE 1
@@ -426,6 +428,10 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
     XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
     XtSetArg(args[nargs], XmNhighlightThickness, 0); nargs++;
+#ifdef FIX_SOLARIS_COLOR_PROBLEM
+    XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
+    XtSetArg(args[nargs], XmNbackground, background); nargs++;
+#endif
     XtSetValues(optionButtonGadget, args, nargs);
 #if SETSIZE
     XtResizeWidget(optionButtonGadget,

@@ -11,7 +11,7 @@ USE_MOTIF12=NO
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 # Browser options
@@ -25,7 +25,7 @@ endif
 
 #STATIC_BUILD = YES
 CMPLR = STRICT
-#PURIFY = YES
+#URIFY = YES
 
 PURIFY_FLAGS = -first-only -chain-length=26
 
@@ -253,6 +253,8 @@ xxxx:
 	@echo XRTGRAPH_EXTENSIONS: $(XRTGRAPH_EXTENSIONS)
 	@echo XRTGRAPH: $(XRTGRAPH)
 	@echo JPT: $(JPT)
+	@echo PURIFY: $(PURIFY)
+	@echo PURIFYCMD: $(PURIFYCMD)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

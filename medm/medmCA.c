@@ -61,6 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_INPUT_ID 0
 #define DEBUG_ERASE 0
 #define DEBUG_CONNECTION 0
+#define DEBUG_TIMESTAMP 0
 
 #define DO_RTYP 1
 
@@ -1438,7 +1439,7 @@ static void pvInfoWriteInfo(void)
     time(&now);
     tblock = localtime(&now);
     strftime(timeStampStr, TIME_STRING_MAX, STRFTIME_FORMAT"\n", tblock);
-    timeStampStr[TIME_STRING_MAX-1]='0';
+    timeStampStr[TIME_STRING_MAX-1]='\0';
 
   /* Get element type */
     pE = pvInfoElement;
@@ -1494,6 +1495,8 @@ static void pvInfoWriteInfo(void)
 	  ca_read_access(chId)?"R":"", ca_write_access(chId)?"W":"");
 	sprintf(string, "%sIOC: %s\n", string, ca_host_name(chId));
 	if(timeVal.value) {
+	    char fracPart[10];
+	    
 	  /* Do the value */
 	    if(ca_element_count(chId) == 1) {
 		sprintf(string, "%sVALUE: %s\n", string,
@@ -1507,10 +1510,24 @@ static void pvInfoWriteInfo(void)
 	    tblock = localtime(&now);
 	    strftime(timeStampStr, TIME_STRING_MAX, "%a %b %d, %Y %H:%M:%S",
 	      tblock);
-	    sprintf(timeStampStr,"%s%.3f",timeStampStr,
-	      .000000001*timeVal.stamp.nsec);
-	    timeStampStr[TIME_STRING_MAX-1]='0';
+	    timeStampStr[TIME_STRING_MAX-1]='\0';
+	  /* Get the fractional part.  This assumes strftime truncates
+             seconds rather than rounding them, which seems to be the
+             case. */
+	    sprintf(fracPart, "%09d",timeVal.stamp.nsec);
+	  /* Truncate to 3 figures */
+	    fracPart[3]='\0';
+	    sprintf(timeStampStr,"%s.%s", timeStampStr, fracPart);
+	    timeStampStr[TIME_STRING_MAX-1]='\0';
 	    sprintf(string, "%sSTAMP: %s\n", string, timeStampStr);
+#if DEBUG_TIMESTAMP
+	  /* This prints 9 significant figures and requires 3.13 base */
+	    {
+		char tsTxt[32];
+		sprintf(string,"%sSTAMP: %s\n",string,
+		  tsStampToText(&timeVal.stamp,TS_TEXT_MONDDYYYY,tsTxt));
+	    }
+#endif
 	} else {
 	    sprintf(string, "%sVALUE: %s\n", string, NOT_AVAILABLE);
 	    sprintf(string, "%sSTAMP: %s\n", string, NOT_AVAILABLE);

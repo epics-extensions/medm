@@ -3679,7 +3679,7 @@ main(int argc, char *argv[])
      fontListTable[4],
       -1, -1, 5);
 #else
-    sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,EPICS_VERSION_STRING);
+    sprintf(versionString,"%s  (%s)",MEDM_VERSION_STRING,BASE_VERSION_STRING);
     productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
       mainShell,
       "MEDM", fontListTable[8],

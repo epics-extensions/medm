@@ -270,6 +270,7 @@ static void textUpdateDraw(XtPointer cd)
     short precision = 0;
     int textWidth = 0;
     int strLen = 0;
+    int status;
 
 #if DEBUG_UPDATE
     print("textUpdateDraw:\n");
@@ -366,6 +367,10 @@ static void textUpdateDraw(XtPointer cd)
 		    break;
 		case HEXADECIMAL:
 		    localCvtLongToHexString((long)value, textField);
+		    break;
+		case SEXAGESIMAL:
+		    medmLocalCvtDoubleToSexaStr(value,textField,
+		      precision,pR->hopr,pR->lopr,&status);
 		    break;
 		case OCTAL:
 		    cvtLongToOctalString((long)value, textField);
@@ -613,12 +618,16 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 			dlTextUpdate->format = COMPACT;
 		    } else if(!strcmp(token,"decimal- truncated")) {
 			dlTextUpdate->format = TRUNCATED;
-		      /* (MDA) allow for LANL spelling errors {like above, but with trailing space} */
+		      /* (MDA) allow for LANL spelling errors {like
+                         above, but with trailing space} */
 		    } else if(!strcmp(token,"decimal- truncated ")) {
 			dlTextUpdate->format = TRUNCATED;
-		      /* (MDA) allow for LANL spelling errors {hexidecimal vs. hexadecimal} */
+		      /* (MDA) allow for LANL spelling errors
+                         {hexidecimal vs. hexadecimal} */
 		    } else if(!strcmp(token,"hexidecimal")) {
 			dlTextUpdate->format = HEXADECIMAL;
+		    } else if(!strcmp(token,"sexigesimal")) {
+			dlTextUpdate->format = SEXAGESIMAL;
 		    }
 		}
 	    } else if(!strcmp(token,"align")) {

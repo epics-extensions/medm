@@ -129,6 +129,7 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
     static char textField[MAX_TOKEN_LENGTH];
     double value;
     short precision = 0;
+    int status;
 
     textField[0] = '\0';
     switch(pr->dataType) {
@@ -214,6 +215,10 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
 	print("valueToString: %s %.1f\n",
 	  textField, value);
 #endif		
+	break;
+    case SEXAGESIMAL:
+	medmLocalCvtDoubleToSexaStr(value,textField,precision,
+	  pr->hopr,pr->lopr,&status);
 	break;
     case OCTAL:
 	cvtLongToOctalString((long)value, textField);
@@ -536,6 +541,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
     Record *pr = pte->record;
     Boolean match;
     int i;
+    int status;
 
     UNREFERENCED(callData);
 
@@ -661,6 +667,8 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		print("textEntryValueChanged: %s %.1f\n",
 		  textValue, value);
 #endif		
+	    } else if(dlTextEntry->format == SEXAGESIMAL) {
+		value = strtos(textValue,pr->hopr,pr->lopr,&end,&status);
 	    } else {
 		if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
 		  && (textValue[1] == 'x' || textValue[1] == 'X')) {
