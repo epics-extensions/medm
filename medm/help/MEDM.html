@@ -9,164 +9,184 @@
 <B><FONT FACE="Arial" SIZE=7><P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2><P>&nbsp;</P>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-<P>May 1997                        </P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>October 1997</P>
 </B></FONT><FONT SIZE=2><P>&nbsp;</P>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory                                   </P>
 <P>9700 South Cass Avenue, Argonne, Illinois 60439</P>
-<P><HR><BLINK>This document is under construction.</BLINK><BR><HR>
+<P><HR><IMG SRC=construct.gif ALIGN=bottom>This document is under construction.  The document has been prepared in Microsoft Word and tends to display properly in Internet Explorer.  It has formatting errors when viewed in Netscape.  The HTML appears to be valid, indicating these are Netscape bugs.<BR><HR>
 <A NAME="Contents"></A>Contents
 </FONT><FONT SIZE=2><P></FONT><A HREF="#Overview"><FONT SIZE=2>Overview</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#NewFeatures"><FONT SIZE=2>New Features</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#History"><FONT SIZE=2>History</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#CommandLine"><FONT SIZE=2>Command Line</FONT></A></P>
-<FONT SIZE=2><P></FONT><A HREF="#InitialLocations"><FONT SIZE=2>Initial Window Locations</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL Files</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Fonts"><FONT SIZE=2>Fonts</FONT></A></P>
-<FONT SIZE=2><P></FONT><A HREF="#Palettes"><FONT SIZE=2>MEDM Palettes</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#InitialLocations"><FONT SIZE=2>Initial Window Locations</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#Palettes"><FONT SIZE=2>Palettes</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#MEDMObjects"><FONT SIZE=2>MEDM Objects</FONT></A></P><DIR>
 <DIR>
 
-<FONT SIZE=2><P></FONT><A HREF="#ObjectIndex"><FONT SIZE=2>Object Index</FONT></A></P></DIR>
+<FONT SIZE=2><P></FONT><A HREF="#ObjectIndex"><FONT SIZE=2>Object Index</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#AttributeIndex"><FONT SIZE=2>Attribute Index</FONT></A></P></DIR>
 </DIR>
 
 <FONT SIZE=2><P></FONT><A HREF="#Composite"><FONT SIZE=2>Composite Objects</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Grid"><FONT SIZE=2>Grid</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#MacroSubstitution"><FONT SIZE=2>Macro Substitution</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#DragAndDrop"><FONT SIZE=2>Drag-And-Drop</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#DialogBoxes"><FONT SIZE=2>Dialog Boxes</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#SmartStartup"><FONT SIZE=2>Smart Startup</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Editing"><FONT SIZE=2>Editing</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#Printing"><FONT SIZE=2>Printing</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#ColorConventions"><FONT SIZE=2>Color Conventions</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#EnvironmentVariables"><FONT SIZE=2>Environment Variables</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Glossary"><FONT SIZE=2>Glossary</FONT></A></P>
+<FONT SIZE=2><P></FONT><A HREF="#TechSupport"><FONT SIZE=2>Technical Support</FONT></A></P>
 <B><FONT SIZE=4><P><A NAME="Overview"></A>Overview</P>
-</B></FONT><FONT SIZE=2><P>MEDM stands for <U>M</U>otif <U>E</U>ditor and <U>D</U>isplay <U>M</U>anager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>.</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM stands for <U>M</U>otif <U>E</U>ditor and <U>D</U>isplay <U>M</U>anager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="NewFeatures"></A>New Features</P>
-</FONT><FONT SIZE=2><P>Version 2.3.2</P>
+</FONT><P>Version 2.3.2</P>
 
 <UL>
-</B><LI>There is now an </FONT><A HREF="#Undo"><FONT SIZE=2>Undo</FONT></A><FONT SIZE=2>.</LI>
-<LI></FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2> is now functional.  Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  Bubble help has been added to the Object Palette to identify the objects.</LI>
+<LI></B><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2> is now functional.  Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  Bubble help has been added to the Object Palette to identify the objects.</LI>
 <LI>There is a greatly expanded MEDM reference manual in both hardcopy and HTML versions.  You are probably looking at one or the other of them now.</LI>
+<LI>There is now an </FONT><A HREF="#Undo"><FONT SIZE=2>Undo</FONT></A><FONT SIZE=2>.</LI>
 <LI>New editing operations through both the </FONT><A HREF="#MouseEdit"><FONT SIZE=2>mouse</FONT></A><FONT SIZE=2> and the </FONT><A HREF="#KeyboardEdit"><FONT SIZE=2>keyboard</FONT></A><FONT SIZE=2> have been added.  You can now select objects that are under other objects and can resize with Ctrl-Arrow keys.</LI>
+<LI>An optional </FONT><A HREF="#Grid"><FONT SIZE=2>grid</FONT></A><FONT SIZE=2> has been added for editing.  It can be toggled on and off for each display, and the spacing is adjustable.  Snap to grid has been implemented.</LI>
+<LI>&quot;Undo&quot;, &quot;Align&quot;, &quot;Space Evenly&quot;, &quot;Center&quot;, &quot;Size&quot;,  &quot;Grid&quot;, &quot;Find Outliers&quot;, &quot;Refresh&quot;, and &quot;Edit Summary&quot; have been added to the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.</LI>
 <LI>You can now change the foreground and background colors simultaneously for all </FONT><A HREF="#Composite"><FONT SIZE=2>grouped elements</FONT></A><FONT SIZE=2>.</LI>
-<LI>An optional </FONT><A HREF="#Grid"><FONT SIZE=2>grid</FONT></A><FONT SIZE=2> has been added for editing.  It can be toggled on and off for each display, and the spacing is adjustable.</LI>
-<LI>&quot;Align To Grid&quot;, &quot;Same Size&quot;, &quot;Refresh&quot;, and &quot;Edit Summary&quot; have been added to the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.</LI>
-<LI>&quot;Space Horizontally, Space Vertically, and Space 2-D&quot; have been added to the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.  These options provide ways to uniformly space groups of objects.  The 2-D option allows lining up regularly spaced arrays of elements in one step.  The spacing between objects is the current grid spacing and can be changed easily.</LI>
+<LI>There is a new </FONT><A HREF="#PVInfoDialogBox"><FONT SIZE=2>PV Info</FONT></A><FONT SIZE=2> feature.</LI>
+<LI>There is a new </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2> item on the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A><FONT SIZE=2>. </LI>
+<LI>The </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> has a </FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>time format</FONT></A><FONT SIZE=2> for the x axis, and there are are several new </FONT><A HREF="#XRTGraphInteractions"><FONT SIZE=2>user interactions</FONT></A><FONT SIZE=2>, such as zoom, in EXECUTE mode.</LI>
+<LI></FONT><A HREF="#ShellCommand"><FONT SIZE=2>Shell commands</FONT></A><FONT SIZE=2>, as well as commands on the </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2>, now accept special characters to include a process variable, include the name of the ADL file, or to prompt for user input.</LI>
 <LI>The MEDM main window, object palette, resource palette, and color palette now have fixed, default locations.  You can change these locations with resources.  See </FONT><A HREF="#InitialLocations"><FONT SIZE=2>Initial Window Locations</FONT></A><FONT SIZE=2>.</LI>
 <LI>You no longer have to respond to the &quot;Do you really want to Exit?&quot; dialog box.  MEDM will still prompt you to save any unsaved files, however.</LI>
-<LI>Much of the coding has been rewritten to be clearer and better organized.</LI></UL>
+<LI>Much of the coding has been rewritten to be clearer and better organized, and many bugs have been fixed.</LI></UL>
 
 </FONT><B><FONT SIZE=4><P><A NAME="History"></A>History</P>
-</B></FONT><FONT SIZE=2><P>MEDM was started by Mark Anderson at Argonne in 1990.  It was originally partially based on the two programs, DM (<U>D</U>isplay <U>M</U>anager) and EDD (), which had been developed at Los Alamos.  These programs used the </FONT><A HREF="#XWindows"><FONT SIZE=2>X</FONT></A><FONT SIZE=2> library directly.  MEDM handles both the construction and running of displays and has a </FONT><A HREF="#Motif"><FONT SIZE=2>Motif</FONT></A><FONT SIZE=2> interface.  Los Alamos has continued to develop DM and EDD, and today they have similar features to MEDM, but a different look and feel.  The basic design and most of the development MEDM was done by Mark.  Mark was a strong supporter of Motif in the days before it was as much of a standard as it is today.</P>
-<P>Fred Vong took over MEDM in the fall of 1994, starting with Version 1.4.6.  He made the program more responsive under heavy load and added a new </FONT><A HREF="#ADL"><FONT SIZE=2>ADL</FONT></A><FONT SIZE=2> file format that used less space.  Among other things, he added Channel Access security, rewrote the Strip Chart, added features to the Cartesian Plot, and added to the functionality of the Related Display.  Fred was rewriting a large part of the coding to make it cleaner and improve the logic when he left Argonne in late 1996.</P>
-<P>Ken Evans took over when Fred left starting with Version 2.3.0.  He merged Fred’s development version with the distributed version, and finished debugging what Fred had started, at the same time adding several new editing features.  He wrote this reference manual and implemented bubble help and help through Netscape.</P>
-</FONT><B><FONT SIZE=4><P>Command Line</P>
-</B></FONT><FONT SIZE=2><P>MEDM may be executed from the command line in the general form:</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM was started by Mark Anderson at Argonne in 1990.  It was originally partially based on the two programs, DM (<U>D</U>isplay <U>M</U>anager) and EDD (<U>Ed</U>it <U>D</U>isplay), which had been developed at Los Alamos.  These programs used the </FONT><A HREF="#XWindows"><FONT SIZE=2>X</FONT></A><FONT SIZE=2> library directly.  MEDM handles both the construction and running of displays and has a </FONT><A HREF="#Motif"><FONT SIZE=2>Motif</FONT></A><FONT SIZE=2> interface.  Los Alamos has continued to develop DM and EDD, and today they have similar features to MEDM, but a different look and feel.  The basic design and most of the development MEDM was done by Mark.  Mark was a strong supporter of Motif in the days before it was as much of a standard as it is today.</P>
+<P>&#9;Fred Vong took over MEDM in the fall of 1994, starting with Version 1.4.6.  He made the program more responsive under heavy load and added a new </FONT><A HREF="#ADL"><FONT SIZE=2>ADL</FONT></A><FONT SIZE=2> file format that used less space.  Among other things, he added Channel Access security, rewrote the Strip Chart, added features to the Cartesian Plot, and added to the functionality of the Related Display.  Fred was rewriting a large part of the coding to make it cleaner and improve the logic when he left Argonne in late 1996.</P>
+<P>&#9;Ken Evans took over when Fred left starting with Version 2.3.0.  He merged Fred’s development version with the distributed version, and finished debugging what Fred had started, at the same time adding several new editing features.  He wrote this reference manual and implemented bubble help and help through Netscape.</P>
+<P>&nbsp;</P>
+</FONT><B><FONT SIZE=4><P>Requirements</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM requires </FONT><A HREF="#XWindows"><FONT SIZE=2>X Windows</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Motif"><FONT SIZE=2>Motif</FONT></A><FONT SIZE=2> and </FONT><A HREF="#EPICS"><FONT SIZE=2>EPICS</FONT></A><FONT SIZE=2>.  Motif Version 1.2 or above is supported.  MEDM atempts to conform to the Motif Style Guide. Hence standard mnemonics and accelerators are available for interface navigation.  Also help is available in standard forms, including context-sensitive help. Netscape is required for most of the </FONT><A HREF="#Help"><FONT SIZE=2>MEDM help</FONT></A><FONT SIZE=2>.</P>
+<P>&#9;MEDM is developed and tested in an environment using the Solaris operating system and the TED desktop environment as distributed by TriTeal Corporation.  TED is a desktop environment conforming to the </FONT><A HREF="#CED"><FONT SIZE=2>Common Desktop Environment</FONT></A><FONT SIZE=2> (CED) standards and uses Motif Version 3.  At this time MEDM has no special enhancements to support CDE features apart from Motif or features that are special to Motif Version 3.  The main parts of the program build with no compiler warnings even with CMPILR=STRICT on this system.  The program should run with versions of Motif 1.2 or higher, but it may need modifications to run on other operating systems.  We will try to incorporate changes necessary to support other systems if you let us know.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="CommandLine"></A>Command Line</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM can be executed from the command line in the general form:</P>
 <P>&#9;medm [X options]</P>
-</FONT><PRE>&#9;  [-help | -?]
-&#9;  [-x | -e]
-&#9;  [-local | -cleanup]
-&#9;  [-cmap]
-&#9;  [-bigMousePointer]
-&#9;  [-displayFont <I>font-spec</I>]
-&#9;  [-macro "<I>xxx</I>=<I>aaa</I>,<I>yyy</I>=<I>bbb</I>, ..."]
-&#9;  [-dg [<I>xpos</I>[x<I>ypos</I>]][+<I>xoffset</I>[+<I>yoffset</I>]]
-&#9;  [<I>display-files</I>]
-&#9;  [&amp;]</PRE>
-<FONT SIZE=2><P>Parameters in square brackets [] are optional.  Italicized parameters are to be replaced by user-specified terms.  The other parameters should be typed literally.  The command-line options are described below.  The &quot;&amp;&quot; causes the process to be run in the background, usually a good idea for a graphical program.</P>
-</FONT><B><P><A NAME="InitialLocations"></A>Initial Window Locations</P>
-</B><FONT SIZE=2><P>The MEDM main window, the object palette, the resource palette, and the color palette are located at the right edge of the screen by default.  The spacing between them depends on the window manager title bar and may not be correct for all window managers.  They may be changed using the standard format for X Windows geometry by the following resources (shown with typical values):</P>
-</FONT><PRE>Medm.mainMW.geometry: -5+5
-Medm.objectS.geometry: -5+137
-Medm.resourceS.geometry: -5+304
-Medm.colorS.geometry: -5-5</PRE>
-<CODE><P>You could put these lines in your .Xdefaults file, for example.</P>
-</CODE><B><P>Command-Line Options</P></B>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
-<TR><TD WIDTH="21%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>X options</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>The usual X command-line arguments, such as -display and -geometry.</FONT></DFN></TD>
+</FONT><PRE>&#9;[-help | -?]
+&#9;[-version]
+&#9;[-x | -e]
+&#9;[-local | -cleanup]
+&#9;[-cmap]
+&#9;[-bigMousePointer]
+&#9;[-displayFont <I>font-spec</I>]
+&#9;[-macro "<I>xxx</I>=<I>aaa</I>,<I>yyy</I>=<I>bbb</I>, ..."]
+&#9;[-dg [<I>xpos</I>[x<I>ypos</I>]][+<I>xoffset</I>[+<I>yoffset</I>]]
+&#9;[<I>display-files</I>]
+&#9;[&amp;]</PRE>
+<FONT SIZE=2><P>&#9;Parameters in square brackets [] are optional.  Italicized parameters are to be replaced by user-specified terms.  The other parameters should be typed literally.  The command-line options are described below.  The &quot;&amp;&quot; causes the process to be run in the background, usually a good idea for a graphical program.</P>
+</FONT><B><P>Command-Line Options</P></B>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7>
+<TR><TD WIDTH=469 VALIGN="TOP" COLSPAN=2></TD>
+<TD></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>-help | -?</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
+<FONT SIZE=2><DFN><P>X options-help or -?</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Print usage.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
+<FONT SIZE=2><DFN><P>-version</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<FONT SIZE=2><DFN><P>Print the version.</FONT></DFN></TD>
+</TR>
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-x</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Startup MEDM in EXECUTE mode.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-e</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Startup MEDM in EDIT mode.  (This is the default.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-local</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>Don't participate in remote display protocol  (The default is to transfer operation to an already-running MEDM if possible.)</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<FONT SIZE=2><DFN><P>Don't participate in remote display protocol: Do not transfer operation to an already-running MEDM, and do not allow transfer of operation from any other MEDM.  (The default is to transfer operation if there is an existing MEDM accepting transfers, or to assume responsibility for accepting transfers if there is not one already.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-cleanup</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>Support remote display protocol, but ignore existing MEDM and take over remote display responsibilities.</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<FONT SIZE=2><DFN><P>Participate in remote display protocol, but ignore existing MEDM and take over responsibility for accepting remote transfers.  (The default is to transfer operation if there is an existing MEDM accepting transfers, or to assume responsibility for accepting transfers if there is not one already.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-cmap</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Use a private colormap to circumvent the problem of not having enough colors available in the colormap.  (This option may cause colormap flashing.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-bigMousePointer</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Use big mouse cursor.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-displayFont font-spec</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>Select aliased or scalable fonts.  (See </FONT></DFN><A HREF="#Fonts"><FONT SIZE=2>Fonts</FONT></A><FONT SIZE=2><DFN> below.)  The font-spec parameter may be &quot;alias&quot;, &quot;scalable&quot;, or an X font specification.</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<FONT SIZE=2><DFN><P>Select aliased or scalable fonts.  (See </FONT></DFN><A HREF="#Fonts"><FONT SIZE=2>Fonts</FONT></A><FONT SIZE=2><DFN> below.)  The font-spec parameter can be &quot;alias&quot;, &quot;scalable&quot;, or an X font specification.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-macro name=value</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Apply macro substitution to replace occurrences of $(name) with value in all command-line specified display list files.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-dg geometry</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><DFN><P>Specify the geometry (location and size) of the display window.  The geometry syntax is similar to the X Windows -geometry option.  (Note that -geometry specifies the location of the MEDM main window, not the display windows.)  The -dg option can also be inserted in the list of display file names, in which case it applies to the names following it</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH="21%" VALIGN="TOP">
+<TR><TD WIDTH=121 VALIGN="TOP">
 <FONT SIZE=2><DFN><P>display-files</FONT></DFN></TD>
-<TD WIDTH="79%" VALIGN="TOP">
-<FONT SIZE=2><DFN><P>Specify list of display (.adl) files to use in EXECUTE mode.  (This option requires -x also.)</FONT></DFN></TD>
+<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<FONT SIZE=2><DFN><P>Specify list of display (ADL) files to use in EXECUTE mode.  (This option requires -x also.)</FONT></DFN></TD>
 </TR>
 </TABLE>
 
 <B><P>Examples</P>
-</B><FONT SIZE=2><P>Start up in default EDIT mode:</P>
+</B><FONT SIZE=2><P>&#9;Start up in default EDIT mode:</P>
 </FONT><PRE>&#9;medm &amp;</PRE>
-<FONT SIZE=2><P>Start up executing two displays:</P>
+<FONT SIZE=2><P>&#9;Start up executing two displays:</P>
 </FONT><PRE>&#9;medm -x abc.adl def.adl &amp;</PRE>
-<FONT SIZE=2><P>Start up in EDIT mode with a new, local executable:</P>
+<FONT SIZE=2><P>&#9;Start up in EDIT mode with a new, local executable:</P>
 </FONT><PRE>&#9;medm –local &amp;</PRE>
-<FONT SIZE=2><P>Start up using default scalable fonts:</P>
+<FONT SIZE=2><P>&#9;Start up using default scalable fonts:</P>
 </FONT><PRE>&#9;medm -displayFont scalable &amp;</PRE>
-<FONT SIZE=2><P>Start up in execute mode, performing macro substitution of all occurrences of $(a) and $(c) in the display file, xyz.adl:</P>
+<FONT SIZE=2><P>&#9;Start up in execute mode, performing macro substitution of all occurrences of $(a) and $(c) in the display file, xyz.adl:</P>
 </FONT><PRE>&#9;medm -x -macro "a=b,c=d" xyz.adl &amp;</PRE>
-<FONT SIZE=2><P>Start up in execute mode; resize the display window corresponding to abc.adl to 100 by 100 pixels and move it to the location, x = 100 and y = 100; and move the display window corresponding to def.adl to x = 400 and y = 150:</P>
+<FONT SIZE=2><P>&#9;Start up in execute mode; resize the display window corresponding to abc.adl to 100 by 100 pixels and move it to the location, x = 100 and y = 100; and move the display window corresponding to def.adl to x = 400 and y = 150:</P>
 </FONT><PRE>&#9;medm -x –dg 100x100+100+100 abc.adl –dg +400+150def.adl &amp;</PRE>
-<B><FONT SIZE=4><P>Motif Conformance</P>
-</B></FONT><FONT SIZE=2><P>MEDM conforms to the Motif Style Guide. Hence standard mnemonics and accelerators are available for interface navigation.  Also HELP is available in standard forms, including context-sensitive help.</P>
+<B><FONT SIZE=4><P><A NAME="ADLFiles"></A>ADL Files</P>
+</B></FONT><FONT SIZE=2><P>&#9;The files that contain the information for each display are called ASCII Display List (ADL) files and should have an extension of .adl.  These files are created or modified when you save a display that you have edited.  The files are readable and can also be edited by hand if you understand the file format.  The file format is not described here, but it should not be difficult to make many types of changes without knowing it precisely.  MEDM should be able to read files that were written in earlier formats, and files can be saved with the file format in use for Versions 2.1.x as well as the default format, which was initiated with Version 2.2.0.</P>
+<P>&#9;The following logic is used to open ADL files from the command line and from Related-Display execution:</P>
+<OL>
+
+<LI>Try to open the file with the name as given.  If the name is not an absolute pathname, then this means to try to open the file relative to the current working directory (the directory where MEDM was started).</LI>
+<LI>If the file is being opened as a result of a related-display button, then try to open the file with the name prepended with the pathname of the display that contained the button.</LI>
+<LI>Try to open the file with the name prepended by each pathname in the EPICS_DISPLAY_LIST.</LI></OL>
+
 </FONT><B><FONT SIZE=4><P><A NAME="Fonts"></A>Fonts</P>
-</B></FONT><FONT SIZE=2><P>MEDM uses several methods for font specification, invoked on the command line by the option: </P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM uses several methods for font specification, invoked on the command line by the option: </P>
 </FONT><PRE>&#9;-displayFont <I>font-spec</PRE>
 </I><FONT SIZE=2><P>where <I>font-spec</I> is one of {&quot;</FONT><A HREF="#AliasedFixedFonts"><FONT SIZE=2>alias</FONT></A><FONT SIZE=2>&quot;, &quot;</FONT><A HREF="#DefaultScalableFonts"><FONT SIZE=2>scalable</FONT></A><FONT SIZE=2>&quot;, or an </FONT><A HREF="#UserSpecifiedScalableFonts"><FONT SIZE=2>X font specification</FONT></A><FONT SIZE=2>, such as -bitstream-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1}.  The default is -displayFont alias.</P>
 </FONT><B><P><A NAME="AliasedFixedFonts"></A>Aliased Fixed Fonts</P>
-</B><FONT SIZE=2><P>For default, fixed fonts, MEDM uses font aliases internally.  This makes it possible to deal with server font variations. The aliased fonts are not in the default X database.  To make these fonts available you need to do the following:</P>
+</B><FONT SIZE=2><P>&#9;For default, fixed fonts, MEDM uses font aliases internally.  This makes it possible to deal with server font variations. The aliased fonts are not in the default X database.  To make these fonts available you need to do the following:</P>
 <B><P>Aliased Fonts in X Windows</P>
-</B><P>Copy the following lines into your miscellaneous fonts.alias file.  The standard place is /usr/libX11/fonts/misc/fonts.alias.  You can get your own particular font path from "xset q". Note that these specifications are the standard MEDM font specifications, but you are free to define another set of font specifications that gives better results for your machine or your own preferences.  Keep in mind that displays may not look good if the fonts used are significantly different from those used by the designer of the display.</P>
+</B><P>&#9;Copy the following lines into your miscellaneous fonts.alias file.  The standard place is /usr/lib/X11/fonts/misc/fonts.alias.  You can get your own particular font path from &quot;xset q&quot;. Note that these specifications are the standard MEDM font specifications as used at the Avdanced Photon Source, but you are free to define another set of font specifications that gives better results for your machine or your own preferences.  Keep in mind that displays may not look good if the fonts used are significantly different from those used by the designer of the display.</P>
 </FONT><FONT FACE="Courier New" SIZE=1><P>widgetDM_4   -misc-fixed-medium-r-normal--8-60-100-100-c-50-iso8859-1</P>
 <P>widgetDM_6   -misc-fixed-medium-r-normal--8-60-100-100-c-50-iso8859-1</P>
 <P>widgetDM_8   -misc-fixed-medium-r-normal--9-80-100-100-c-60-iso8859-1</P>
@@ -183,384 +203,1460 @@ Medm.colorS.geometry: -5-5</PRE>
 <P>widgetDM_40  -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1</P>
 <P>widgetDM_48  -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1</P>
 <P>widgetDM_60  -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1</P>
-</FONT><FONT SIZE=2><P>Then run "xset fp rehash" to install them.  You can see if the fonts are there with "xlsfonts" or &quot;xlsfonts | grep widgetDM&quot;.  You can get more information from any of the general-purpose books on X Windows.</P>
+</FONT><FONT SIZE=2><P>Then run &quot;xset fp rehash&quot; to install them.  You can see if the fonts are there with &quot;xlsfonts&quot; or &quot;xlsfonts | grep widgetDM&quot;.  You can get more information from any of the general-purpose books on X Windows.</P>
 <B><P>Aliased Fonts in Exceed (An X Server for Microsoft Windows)</P>
 <OL>
 
+</B><LI>Copy the same lines to c:\Exceed\user\misc.ali.  (Assuming Exceed is installed in c:\Exceed.)  I t is probably necessary to have 100 dpi fonts installed, which may not be the default (depends on screen size).  Otherwise the larger font sizes may not be available.</LI>
+<LI>In the Xconfig program pick <B>Fonts</B>, then <B>Font Database...</B>.  Then push <B>Rebuild Database</B>.  (In Windows 95 you get Xconfig from the <B>Start/Programs/Exceed</B> menu or by right clicking on <B>Exceed</B> when it is on the task bar and choosing <B>Tools/Configuration</B>.)</LI>
+<LI>You may be able to right click on Exceed if it is on the task bar and choose<B> File, Reload Database, Font</B>.  Otherwise restart Exceed.</LI></OL>
+
+<P>Alternatively, you can add a font server that is known to have the fonts:</P>
 <OL>
 
-</B><LI>Copy the same lines to c:\Exceed\user\misc.ali.</LI>
-<LI>In the Xconfig program pick <B>Fonts</B>, then Font <B>Database..</B>..  Then push <B>Rebuild Database</B>.  (In Windows 95 you get Xconfig from the <B>Start/Programs/Exceed</B> menu or by right clicking on <B>Exceed</B> when it is on the task bar and choosing <B>Tools/Configuration</B>.)</LI>
-<LI>Restart Exceed by doing a server reset.  It should prompt you to do this.</LI></OL>
-</OL>
+<LI>In the Xconfig program pick <B>Fonts</B>, then <B>Font Database...</B>.  Then push <B>Add; </B>select<B> Server</B>; and configure the server by filling in the dialog box.  See your system manager for the parameters, which may be something like tcp/phoebus:7100.</LI>
+<LI>You may be able to right click on Exceed if it is on the task bar and choose<B> File, Reload Database, Font</B>.  Otherwise restart Exceed.</LI></OL>
 
 <B><P>Aliased Fonts in XONNET (An X Server for Microsoft Windows)</P>
-</B><P>Copy the lines to XONNET32\FONTS\MISC\FONTS.ALI.  Further information on fonts is described in the program's help.</P>
+</B><P>&#9;Copy the lines to XONNET32\FONTS\MISC\FONTS.ALI.  Further information on fonts is described in the program's help.</P>
 </FONT><B><P><A NAME="DefaultScalableFonts"></A>Default Scalable Fonts</P>
-</B><FONT SIZE=2><P>The user can invoke MEDM with the -displayFont scalable option. MEDM then uses the default Speedo outline font (bitstream) supplied by the X11R5 font server. Users should add a font server to their font path via:</P>
+</B><FONT SIZE=2><P>&#9;The user can invoke MEDM with the -displayFont scalable option. MEDM then uses the default Speedo outline font (bitstream) supplied by the X11R5 font server. Users should add a font server to their font path via:</P>
 </FONT><PRE>&#9;% xset +fp tcp/:</PRE>
 <FONT SIZE=2><P>for example:</P>
-</FONT><PRE>&#9;% xset +fp tcp/phebos:7000
+</FONT><PRE>&#9;% xset +fp tcp/phebos:7100
 &#9;% medm -displayFont scalable</PRE>
-<B><P><A NAME="UserSpecifiedScalableFonts"></A>User-Specified Scalable Fonts</P>
-</B><FONT SIZE=2><P>The user can invoke MEDM with the -displayFont option.  MEDM then uses the specified font supplied by the X11R5 fontserver.  This font should be an XLFD name (all 14 hyphens, other fields can be wildcarded though) and scalable (i.e., point and pixel size = 0).  Users should add a font server to their font path as above.</P>
-<P>for example:</P>
+<FONT SIZE=2><P>You can get the name of the font server by running &quot;fsinfo&quot; on the machine that has the server.</P>
+</FONT><B><P><A NAME="UserSpecifiedScalableFonts"></A>User-Specified Scalable Fonts</P>
+</B><FONT SIZE=2><P>&#9;The user can invoke MEDM with the -displayFont option.  MEDM then uses the specified font supplied by the X11R5 fontserver.  This font should be an XLFD name (all 14 hyphens, other fields can be wildcarded though) and scalable (i.e., point and pixel size = 0).  Users should add a font server to their font path as above.</P>
+<P>For example:</P>
 </FONT><PRE>% medm –displayFont -bitstream-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1</PRE>
-<B><FONT SIZE=4><P><A NAME="Palettes"></A>Palettes</P>
+<B><FONT SIZE=4><P><A NAME="InitialLocations"></A>Initial Window Locations</P>
+</B></FONT><FONT SIZE=2><P>&#9;The MEDM main window, the object palette, the resource palette, and the color palette are located at the right edge of the screen by default.  The spacing between them depends on the window manager title bar and may not be correct for all window managers.  They can be changed using the standard format for X Windows geometry by the following resources (shown with typical values):</P>
+</FONT><PRE>&#9;Medm.mainMW.geometry: -5+5
+&#9;Medm.objectS.geometry: -5+137
+&#9;Medm.resourceS.geometry: -5+304
+&#9;Medm.colorS.geometry: -5-5</PRE>
+<CODE><P>&#9;You could put these lines in your .Xdefaults file, for example.</P>
+</CODE><B><FONT SIZE=4><P><A NAME="Palettes"></A>Palettes</P>
 </FONT><P><A NAME="ObjectPalette"></A>Object Palette</P>
 <P><A NAME="ResourcePalette"></A>Resource Palette</P>
 <P><A NAME="ColorPalette"></A>Color Palette</P>
 <FONT SIZE=4><P><A NAME="MEDMObjects"></A>MEDM Objects</P>
-</B></FONT><FONT SIZE=2><P>The objects that can be used in MEDM fall into four categories, Graphics, Monitors, Controllers, and Miscellaneous.  Graphics are items such as text, lines, and images.  Monitors are objects that monitor the state or values of process variables.  Controllers are objects that change the values of process variables.  There is only one miscellaneous object, the Select Arrow, which is not really an object but an editing mode.</P>
-<P>In EDIT mode, all of these objects are displayed on the Object Palette, and this palette can be used to create new instances of the objects on the display.</P>
+</B></FONT><FONT SIZE=2><P>&#9;The objects that can be used in MEDM fall into four categories, Graphics, Monitors, Controllers, and Miscellaneous.  Graphics are items such as text, lines, and images.  Monitors are objects that monitor the state or values of process variables.  Controllers are objects that change the values of process variables.  There is only one miscellaneous object, the Select Arrow, which is not really an object but an editing mode.</P>
+<P>&#9;Some objects are </FONT><A HREF="#Widget"><FONT SIZE=2>widgets</FONT></A><FONT SIZE=2>.  This means they have their own X window, which is a child of the drawing area of the display.  The Graphics onjects, such as the Rectangle, Oval, Image, <I>etc.</I> are drawn on the drawing area.  Every object with a widget lies above the drawing area and hence above all drawn objects.</P>
+<P>&#9;In EDIT mode, all of these objects are represented on the </FONT><A HREF="#ObjectPalette"><FONT SIZE=2>Object Palette</FONT></A><FONT SIZE=2>, and this palette can be used to create new instances of the objects on the display.</P>
 </FONT><B><P><A NAME="ObjectIndex"></A>Object Index</P></B>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=493>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=486>
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Graphics</B></FONT></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Monitors</B></FONT></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Controllers</B></FONT></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Arc"><FONT SIZE=2>Arc</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
-<FONT SIZE=2><P></FONT><A HREF="#BarIndicator"><FONT SIZE=2>Bar Monitor</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A></TD>
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#ChoiceButton"><FONT SIZE=2>Choice Button</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Image"><FONT SIZE=2>Image</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
-<FONT SIZE=2><P></FONT><A HREF="#ByteIndicator"><FONT SIZE=2>Byte Monitor</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ByteMonitor"><FONT SIZE=2>Byte Monitor</FONT></A></TD>
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Menu"><FONT SIZE=2>Menu</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Line"><FONT SIZE=2>Line</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#MessageButton"><FONT SIZE=2>Message Button</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Oval"><FONT SIZE=2>Oval</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Polygon"><FONT SIZE=2>Polygon</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#ShellCommand"><FONT SIZE=2>Shell Command</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Rectangle"><FONT SIZE=2>Rectangle</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">
+<TD WIDTH="34%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="33%" VALIGN="TOP">
+<TR><TD WIDTH="32%" VALIGN="TOP">
 <FONT SIZE=2><P></FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A></TD>
-<TD WIDTH="33%" VALIGN="TOP">&nbsp;</TD>
-<TD WIDTH="33%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="34%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="34%" VALIGN="TOP">&nbsp;</TD>
 </TR>
 </TABLE>
 
-<B><P><A NAME="Arc"></A>Arc</P>
-<P><A NAME="BarIndicator"></A>Bar</P>
-<P><A NAME="ByteIndicator"></A>Byte Monitor</P>
-<P><A NAME="CartesianPlot"></A>Cartesian Plot</P>
-</B><FONT SIZE=2><P>Cartesian plot data will utilize up to 2 Y axes for display.  Trace 0 will use the left Y axis, traces 1-7 (if applicable)will use the right Y axis.  Hence, to plot power vs. thermocouple values, trace 0 could be power, and traces 1-7 could be the thermocouples.  (Since these will probably all have the same scale, sharing the Y axis is preferable).</P>
-<P>Cartesian Plots can be made of scalars, scalar vs.  scalar, vector, vector vs. scalar, and vector vs. vector.  For "incomplete" data such as vector (vs. nothing) the other independent variable will be filled in with an index (element position number).  Vector vs. scalar allows users to simulate display of error bars by displaying a set (vector) of data at a point (similarly, scalar vs. scalar with one scalar value fixed and the other varying, with a count greater than 1 and erase oldest ON can show "history" of values at a point).Vector vs. vector supports "ordered pair plots" where users can supply an X vector of data and a Y vector of data, with the resultant plot being (x[0],y[0]), (x[1],y[1]), etc.</P>
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="AttributeIndex"></A>Attribute Index</P></B>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=552>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<B><FONT SIZE=2><P>Compound</B></FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP" COLSPAN=3>
+<B><FONT SIZE=2><P>Simple</B></FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#CartesianPlotAxisStyle"><FONT SIZE=2>Cartesian Plot Axis Style</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#EdgeStyle"><FONT SIZE=2>Edge Style</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#RelatedDisplayMode"><FONT SIZE=2>Related Display Mode</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#CartesianPlotRangeStyle"><FONT SIZE=2>Cartesian Plot Range Style</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#EraseMode"><FONT SIZE=2>Erase Mode</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Related Display Visual</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#CartesianPlotStyle"><FONT SIZE=2>Cartesian Plot Style</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#FillMode"><FONT SIZE=2>Fill Mode</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#Stacking"><FONT SIZE=2>Stacking</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>Cartesian Plot Time Format</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#FillStyle"><FONT SIZE=2>Fill Style</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#TextAlign"><FONT SIZE=2>Text Align</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ImageType"><FONT SIZE=2>Image Type</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#TextFormat"><FONT SIZE=2>Text Format</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#PlotAxisAttribute"><FONT SIZE=2>Plot Axis</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#ColorRule"><FONT SIZE=2>Color Rule</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#TimeUnits"><FONT SIZE=2>Time Units</FONT></A></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#PlotAttribute"><FONT SIZE=2>Plot</FONT></A></TD>
+<TD WIDTH="35%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#PlotMode"><FONT SIZE=2>Plot Mode</FONT></A></TD>
+<TD WIDTH="30%" VALIGN="TOP">
+<FONT SIZE=2><P></FONT><A HREF="#VisibilityMode"><FONT SIZE=2>Visibility Mode</FONT></A></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><FONT SIZE=4><P>Objects</P>
+</FONT><P><A NAME="Arc"></A>Arc</P>
+</B><FONT SIZE=2><P>&#9;The Arc has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  In addition, there is a Begin Angle and a Path Angle.  The Arc is drawn on the display and is not a widget.  The Begin Angle is the start of the arc.  The Path Angle is the length of the arc.</P>
+</FONT><B><P><A NAME="BarMonitor"></A>Bar Monitor</P>
+</B><FONT SIZE=2><P>&#9;The Bar Monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, </FONT><A HREF="#FillMode"><FONT SIZE=2>Fill Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.</P>
+</FONT><B><P><A NAME="ByteMonitor"></A>Byte Monitor</P>
+</B><FONT SIZE=2><P>&#9;The Byte Monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  It also has a Start Bit and End Bit.</P>
+<P>&#9;The Byte Monitor is designed to monitor mbbiDirect and mbboDirect records.  It was developed at the Thomas Jefferson National Accelerator Facility (formerly CEBAF) by David M. Wetherholt.</P>
+<P>&#9;The Start Bit and End Bit are integers in the range 0-15, specifying the starting and ending bits to be displayed.  The End Bit can be smaller than the Start Bit.</P>
+</FONT><B><P><A NAME="CartesianPlot"></A>Cartesian Plot</P>
+</B><FONT SIZE=2><P>&#9;The Cartesian Plot has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#PlotAttribute"><FONT SIZE=2>Plot</FONT></A><FONT SIZE=2> (Title, X Label, Y Label, Foreground, Background), </FONT><A HREF="#CartesianPlotStyle"><FONT SIZE=2>Plot Style</FONT></A><FONT SIZE=2>, </FONT><A HREF="#PlotMode"><FONT SIZE=2>Plot Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#EraseMode"><FONT SIZE=2>Erase Mode</FONT></A><FONT SIZE=2> attributes.  In addition, there is a Count, X/Y/Trace Data, Axis Data, a Trigger Channel, and an Erase Channel, which are described in this section.</P>
+<P>&#9;The Cartesian Plot is implemented by the commercial plot package, XRT/graph by the KL Group.  As with most plotting packages there are a large number of options, with an attendant difficulty in deciding on and specifing the particular ones you want to use.  The Cartesian Plot only utilizes some of the XRT/graph options, but is still the most complicated MEDM object.  With the Cartesian Plot it is almost always possible to achieve an attractive plot that effectively presents the required information.  It is often not possible to specify the plot <I>exactly</I> as you would like it, however.  This is a tradeoff between simplicity and functionality.</P>
+<P>&#9;The XRT/graph package must be purchased to build MEDM with Cartesian Plot capability.  (Otherwise, MEDM works but has no Cartesian Plot.)  After the usual compile and link, the executable must be patched to enable the Cartesian Plot.  To do this, the proper, licensed XRT patch files must be available.  If these files exist on the computer on which MEDM is built, the MEDM Makefile will do the patch as part of the build.  The patch can also be done later on a computer with the proper files.</P>
+<P><A NAME="XRTGraphInteractions"></A>&#9;The following user interactions are available in EXECUTE mode for the Cartesian Plot when built with XRT/graph 3.0 and when XRT_EXTENSIONS is defined in the Makefile:</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Ctrl-Btn1</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Graphics zoom.  Drag to select the area of the graph and release to zoom.  This action blows up the graph to only show the area in the rubberband rectangle.</FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Shift-Btn1</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Axis zoom.  Drag to select the range of the axes and release to zoom.  This action changes the ranges of the axes and repositions the axes so they are visible.</FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Ctrl-Btn2</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Scaling.  Move up or down to increase or decrease the size. </FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Shift-Btn2</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Translation.  Move to shift the graph. </FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>r</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Press r to reset the graph from changes made with Btn1 and Btn2.</FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Btn3</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Bring up the Cartesian Plot Axis Data dialog box to change axis parameters.</FONT></TD>
+</TR>
+<TR><TD WIDTH="15%" VALIGN="TOP">
+<FONT SIZE=2><P>Ctrl-Btn3</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Bring up the XRT Property Editor dialog box.  The property editor allows you to change most of the graph properties.  The editor is complex, but the operation is intuitive.  Select the upper tab that corresponds to the element of the graph you want to edit.  If there is a tree control on the left, select the specific object to edit, then find and edit the property on the lower tabs. Keep in mind that it is possible to confuse MEDM by changing the properties this way, since the changes are internal and not necessarily known to MEDM.  Consequently, the use of this feature is not supported.  It can be useful if used sensibly, however.  The graph can be restored by closing and reopening the display.  For more information about the property editor and the various graph properties, see <I>the XRT/graph Programmer's Guide and Reference Manual, Version 3.0</I>.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+<P>&#9;The large number of options for the Cartesian Plot can be confusing.  The descriptions presented here are intended as a reference, not as a tutorial.  A good approach is to change the various options and see what happens.   It is usually a good design choice to keep the plot as simple as possible.</P>
+<P>&#9;An MEDM Cartesian Plot consists of an X and one or two Y axes on which data can be plotted.  The sets of data are called traces and consist of a set of (x, y) pairs and a color.  Currently there can be up to eight traces on a plot.  The first trace is plotted on the Y1 axis, and the remaining traces (if any) are all plotted on the Y2 axis.  The X and Y1 axes amy have a label, but the Y2 axis does not.  Each trace can (or may not) have a process variable from which to get the x values and another from which to get the y values.  These process variables can be array process variables, such as Waveforms, with more than one value or scalar process variables with only a single value.</P>
+<P>&#9;There are eight possible kinds of traces as seen in the following table.  The traces for a given plot do not all have to be of the same kind – they can be mixed.  (In the table Nx is the number of elements in the process variable specified for x, and Ny is the the number of elements in the process variable specified for y.  The letter n denotes a number greater than 1, and a blank indicates no process variable is specified.  The axis limits LOPR and HOPR denote the limits obtained from Channel Access for the process variable.  Typically, these are the fields LOPR and HOPR in the associated record.  Count is the specified Count for the Cartesian Plot, which is described in more detail below.)</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=624>
+<TR><TD VALIGN="TOP" COLSPAN=8>
+<B><FONT SIZE=2><P>Kinds of XY Traces </B></FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Nx</B></FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Ny</B></FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Type</B></FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Xmin</B></FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Xmax</B></FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Ymin</B></FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Ymax</B></FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">N Points</B></FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>X,Y Vector</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Min(Nx, Ny)</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>X Vector, Y Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Nx</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>Y Vector, X Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Ny</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>X,Y Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Count</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>X Vector</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>0</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>Count - 1</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Nx</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>X Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>0</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>Count - 1</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Count</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>n</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>Y Vector</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>0</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>Count - 1</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Ny</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P>1</FONT></TD>
+<TD WIDTH="24%" VALIGN="TOP">
+<FONT SIZE=2><P>Y Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>0</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>Count - 1</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>LOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P>HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P>Count</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+<P>&#9;If one of the process variables is an array with more than one element, then the specified Count is ignored.  Otherwise, Count corresponds to a history of the process variable.  Each time the process variable changes (either one, in the case of  X, Y Scalar) a new point is plotted until there are Count points.  When the Plot Mode is &quot;plot n pts &amp; stop,&quot; no more points are plotted.  When the Plot Mode is &quot;plot last n pts,&quot; the earliest point is discarded, the others are moved down, and the latest is plotted at the end.  In the cases where one of the process variables is not specified, the history is plotted on that axis with values from 0 to Count –1.</P>
+<P>&#9;The X/Y/Trace Data are entered via the Cartesian Plot Data dialog box with entries for the process variables associated with x and y and an entry for the color.  The color is picked by clicking on the color entry and using the color palette.  The process variable names can both be left blank on a given row, in which case the row is ignored.  The first trace (the one that uses the Y1 axis) is the first valid one, and does not have to be in the first row.  The data entry is different from that for entry boxes in the resource palette.  Typing is not lost, for example, when the entry box loses focus, and it is not necessary (or useful) to type a carriage return to retain the data.  The data are retained only when the apply button is pressed.</P>
+<P>&#9;The Axis Data are entered via the Cartesian Plot Axis Data dialog box.  This same dialog box is available in EXECUTE mode by clicking Btn 3 on the Cartesian Plot.  The dialog box consists of an area for each of the three axes (X, Y1, and Y2).  For each axis there is a </FONT><A HREF="#PlotAxisAttribute"><FONT SIZE=2>Plot Axis</FONT></A><FONT SIZE=2> (</FONT><A HREF="#CartesianPlotAxisStyle"><FONT SIZE=2>Axis Style</FONT></A><FONT SIZE=2>, </FONT><A HREF="#CartesianPlotRangeStyle"><FONT SIZE=2>Axis Range</FONT></A><FONT SIZE=2>, Minimum Value, Maximum Value, </FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>Time Format</FONT></A><FONT SIZE=2>) attribute.  The maximum and minimum values are only relevant if the Axis Range is &quot;user-specified&quot;, and the time format is only relevant for the X axis when the Axis Style is &quot;time&quot;.  The values for the maximum and minimum values are only retained if a carriage return is typed in the box, although typing is not lost when the entry box loses focus.</P>
+<P>&#9;In order to use the time format meaningfully, the process variable data must be in suitable time units.  The basic time unit is a second.  The EPICS time base, corresponding to zero seconds, is 00:00:00 January 1, 1990, Coordinated Universal Time (UTC), formerly known as Greenwich Mean Time (GMT).  This is the time base used in EPICS timestamps, and it is <I>assumed</I> to be the time base for any process variable data.  Note that it is not the same as local time.  The time base in MEDM is set to 00:00:00 January 1, 1990, local time.  By setting the time base as local time in MEDM, the effect is to make the EPICS UTC time numbers appear as local time, rather than the less intuitive UTC.  For times less than one day and for time formats that do not include the day or year, the data could just as well be seconds since midnight UTC, since the plotted points on this type of axis would be indistinguishable from those plotted with the actual base.  </P>
+<P>&#9;It should be noted that there is an error introduced in converting the number of seconds into a floating point number for plotting.  This error corresponds to about 2 minutes per year, amounting to 20 min. by the year 2000.</P>
+<P>&#9;The Trigger Channel is a process variable that causes the entire plot to be updated.  If there is a trigger channel, the plot is updated whenever the value of that process variable changes.  Otherwise, each individual trace is updated whenever any of the data for that trace changes.</P>
+<P>&#9;The Erase Channel is a process variable that causes erasing of the plot.  If there is an Erase Channel, the plot erases when the process variable turns either zero or non-zero, depending on the </FONT><A HREF="#EraseMode"><FONT SIZE=2>Erase Mode</FONT></A><FONT SIZE=2>.  The Erase Mode is only relevant if there is an erase channel.</P>
 </FONT><B><P><A NAME="ChoiceButton"></A>Choice Button</P>
-<P><A NAME="Image"></A>Image</P>
-</B><FONT SIZE=2><P>Images can be imported for inclusion in a display.  The image icon (camera) can be selected, and the location and size of the desired image then selected by depressing and dragging MB1in the display.  A file selection box then prompts the user for the display file to be incorporated.  At the present time, GIF is the only supported format, and files must have the ".gif" suffix.</P>
+</B><FONT SIZE=2><P>&#9;The Choice Button has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Stacking"><FONT SIZE=2>Stacking</FONT></A><FONT SIZE=2> attributes.  The Choice Button is used for ENUM process variables and is a means for picking the ENUM choices via buttons.</P>
+</FONT><B><P><A NAME="Image"></A>Image</P>
+</B><FONT SIZE=2><P>&#9;Images can be imported for inclusion in a display.  The image icon (camera) can be selected, and the location and size of the desired image then selected by depressing and dragging MB1in the display.  A file selection box then prompts the user for the display file to be incorporated.  At the present time, GIF is the only supported format, and files must have the &quot;.gif&quot; suffix.</P>
 </FONT><B><P><A NAME="Line"></A>Line</P>
-</B><FONT SIZE=2><P>A Line is a Polyline with just two points.  See </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>.</P>
+</B><FONT SIZE=2><P>&#9;A Line is a Polyline with just two points.  See </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><P><A NAME="Meter"></A>Meter</P>
-<P><A NAME="Menu"></A>Menu</P>
-<P><A NAME="MessageButton"></A>Message Button</P>
-<P><A NAME="Oval"></A>Oval</P>
-<P><A NAME="Polygon"></A>Polygon</P>
-<P><A NAME="Polyline"></A>Polyline</P>
-</B><FONT SIZE=2><P>Polylines and polygons are available from the object palette, in both "constrained" and "unconstrained" form.  Unconstrained drawing allows the user to click (Btn1) and generate vertices for a polyline or polygon arbitrarily.  Shift-Btn1 allows the user to generate vertices which are multiples of 45 degrees from the previous point (this allows easy horizontal or vertical line generation, for instance).</P>
-<P>Note that polygons in fill mode "outline" are similar to polylines, except that polygons will close the figure and polylines do not.</P>
-<P>Also note that Vertex editing is now available for Line, Polyline and Polygon objects.  Selection of vertices of selected objects via Btn1-press and subsequent drag until Btn1-release allows vertices to be moved.</P>
+</B><FONT SIZE=2><P>&#9;The Meter has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  It displays the value of the process variable on a meter with a dial.</P>
+</FONT><B><P><A NAME="Menu"></A>Menu</P>
+</B><FONT SIZE=2><P>&#9;The Menu has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Menu is used for ENUM process variables and is a means for picking the ENUM choices via a menu.</P>
+</FONT><B><P><A NAME="MessageButton"></A>Message Button</P>
+</B><FONT SIZE=2><P>&#9;The Message Button has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2>, attributes.  In addition, there are a Message Label, a Press Message, and a Release Message.  The Message Label is the label on the Message Button.  The Press Message and the Release Message are the values to which to set the process variable when the button is pressed or released, respectively.  These values should be commensurate with the type of the process variable.  (It is not wise to send a non-numeric string to a DOUBLE process variable, for example.)  The label and message strings can be up to 255 characters.</P>
+</FONT><B><P><A NAME="Oval"></A>Oval</P>
+</B><FONT SIZE=2><P>&#9;The Oval has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  The Oval is drawn on the display and is not a widget.</P>
+</FONT><B><P><A NAME="Polygon"></A>Polygon</P>
+</B><FONT SIZE=2><P>&#9;The Polygon has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  The Polygon is drawn on the display and is not a widget.</P>
+<P>&#9;Polygons are drawn by pressing Btn1 to generate vertices or Shift-Btn1 to generate vertices which are multiples of 45 degrees from the previous point.  This allows easy horizontal or vertical line generation, for instance.  Button releases are ignored.  The Polygon is finished when there is a second click at the same location.  The Polygon is always displayed as closed while it is being drawn. </P>
+<P>&#9;Polygons can be edited by selecting them, then pressing Btn1 on a vertex and dragging the vertex.</P>
+<P>&#9;Note that Polygons in outline fill mode are similar to Polylines, except that Polygons close the figure and Polylines do not.</P>
+</FONT><B><P><A NAME="Polyline"></A>Polyline</P>
+</B><FONT SIZE=2><P>&#9;The Polyline has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  The Polyline is drawn on the display and is not a widget.</P>
+<P>&#9;Polylines are drawn by pressing Btn1 to generate vertices or Shift-Btn1 to generate vertices which are multiples of 45 degrees from the previous point.  This allows easy horizontal or vertical line generation, for instance.  Button releases are ignored.  The Polyline is finished when there is a second click at the same location.</P>
+<P>&#9;Polylines can be edited by selecting them, then pressing Btn1 on a vertex and dragging the vertex.</P>
 </FONT><B><P><A NAME="Rectangle"></A>Rectangle</P>
-<P><A NAME="RelatedDisplay"></A>Related Display</P>
-</B><FONT SIZE=2><P>As in the Xlib-based display manager, the environment variable EPICS_DISPLAY_PATH should contain the directory where related displays (for a given display) can be located.</P>
-</FONT><B><P><A NAME="ScaleIndicator"></A>Scale</P>
-</B><FONT SIZE=2><P>The valuator/scale has several modes of operation, which implement fine/coarse sensitivity, as well as direct value selection.</P>
-<P>Dragging the valuator/scale with MB1 depressed moves and transmits values proportional to the range of the valuator scaled into the width of the valuator (usually &gt;= 1% for this application, depending upon the selected width of the valuator).  Clicking MB1 on either side of the valuator selector moves and transmits a value increment or decrement of specified precision (for this application) of the valuator object.  Clicking Control-MB1 on either side of the valuator selector moves and transmits a value increment or decrement of10x specified precision of the valuator object.</P>
-<P>In addition to the normal mouse-activated mode of usage for the valuator/scale, the arrow keys and shift key take on functions as well.  Fine-grained Increment and Decrement are accomplished with the up/down or left/right arrow keys, depending upon the orientation of the valuator/scale.  The slider will move in the direction "pointed to" by the arrow key being pressed (as expected), when input focus is set to that widget.  For instance, will move the slider by +1precision unit when the orientation is HORIZONTAL and the processing direction is MAX_ON_RIGHT.</P>
-<P>In conjunction with increment/decrement, the key can be used to specify a coarse-grained increment/decrement.  Hence, , for instance, will move the slider by +10 precision units when the orientation is VERTICAL and processing direction is MAX_ON_TOP.</P>
-<P>The specified precision for motion of the valuator is specified in a dialog box which is popped up by depressing MB3in the valuator/scale.  A series of toggle buttons with values of log10 (precision) are selectable, with the current precision indicated by the depressed toggle.</P>
-<P>Also, for the highest precision modification of associated process variables, the keyboard entry dialog box can be used to specify a direct-entry value to be written to the valuator and channel.</P>
+</B><FONT SIZE=2><P>&#9;The Rectangle has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  The Rectangle is drawn on the display and is not a widget.</P>
+</FONT><B><P><A NAME="RelatedDisplay"></A>Related Display</P>
+</B><FONT SIZE=2><P>&#9;The Related Display has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) and </FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Related Display Visual</FONT></A><FONT SIZE=2> attributes.  In addition, there are Foreground, Background, Label, and Label/Name/Args attributes.  The Foreground and Background colors are changed by clicking to bring up the Color Palette.  The Label is the label that appears on the button.  If there is no label, then two overlapping squares are used to denote a Related Display control.  The Display Label, Display Files, Arguments, and Policy are specified for each related display in the Label/Name/Args dialog box.  There currently can be up to eight related displays for each button.</P>
+<P>&#9;The Display Label is the label on the menu item in the menu that is brought up when the Related Display button is pressed.  The Display File is the name of the ADL file that will be displayed when the menu item with that label is selected.  The Arguments are macro substitutions that will be used as if the file were specified on the </FONT><A HREF="#CommandLine"><FONT SIZE=2>command line</FONT></A><FONT SIZE=2> with a -macro argument.  For example, the string:</P>
+</FONT><CODE><P>&#9;  SECTOR = S10, BPM=P2</P>
+</CODE><FONT SIZE=2><P>will cause all occurences of  $(SECTOR) in the file to be replaced with S10 and all occurences of $(BPM) with P2.  The Policy specifies whether to remove the parent display or not when the new one is activated.  (The parent display is the one that contains the Related Display button.)</P>
+<P>&#9;In EXECUTE mode if there is only one related display specified, then the label or the two overlapping squares denoting a Related Display appear in the middle of the button, and the related display is activated immediately without bringing up a menu.  If there is more than one item on the menu, the label or squares are at the left of the button.</P>
+<P>&#9;The logic that is used to locate the specified files is described uner </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL Files</FONT></A><FONT SIZE=2>.</P>
+</FONT><B><P><A NAME="ScaleIndicator"></A>Scale Monitor</P>
+</B><FONT SIZE=2><P>&#9;Also known as an Indicator.  The scale monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Scale Monitor displays the value of the process variable on a scale.  The limits of the scale are the HOPR and LOPR values for the record associated with the process variable.</P>
 </FONT><B><P><A NAME="ShellCommand"></A>Shell Command</P>
-</B><FONT SIZE=2><P>Shell commands can be incorporated into a display by selection of the "!" icon, followed by MB1 depression and dragging in the display.  The labels and commands (and optional arguments) are then specifiable in the "Label/Cmd/Args" dialog box.  Note: for prompted input, a question mark "?" in the command or args field instructs the program to popup a dialog to allow the user to complete the command string before execution.  Also note: the shell command blocks by default upon execution.  To support asynchronous behavior, the command or argument should be followed by the ampersand "&amp;" to instruct the system to run the command in the background.  All stdout/stderr output, at this time, is still tied to the controller terminal window.  Also note that shell command and argument strings can be macro-substituted via the $(name) construct (see related display description in this document).</P>
+</B><FONT SIZE=2><P>&#9;The Shell Command has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) attributes.  In addition, there are Foreground, Background, and Label/Cmd/Args attributes.  The Foreground and Background colors are changed by clicking to bring up the Color Palette.  The Command Label, Command, and Arguments are specified for each related command in the Label/Cmd/Args dialog box.  There currently can be up to eight commands for each button.</P>
+<P>&#9;The Command Label is the label on the menu item in the menu that is brought up when the Shell Command button is pressed.  The string in Command will be concatenated with the string in Arguments with a space in between, and the resulting string will be executed as a system command when the menu item with that label is selected.  (The Arguments are actually superfluous, since any command arguments can just as well be included in Command.)  MEDM will block until the command is executed, so it is almost always wise to include an &quot;&amp;&quot; at the end of the Command (or the Arguments if they re used) so that it will execute in the background.</P>
+<P>&#9;If the command contains a &quot;?&quot;, then the rest of the command will be ignored, and a dialog will prompt the user to complete (or otherwise edit) the command.</P>
+<P>&#9;The command can also contain any of the special characters that are available for the </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2>, however, it is suggested that &quot;?&quot; rather than &quot;&amp;?&quot; be used.</P>
 </FONT><B><P><A NAME="Slider"></A>Slider</P>
-</B><FONT SIZE=2><P>Also known as Valuator.</P>
+</B><FONT SIZE=2><P>&#9;Also known as Valuator.  The Slider has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  There is also a Precision attribute.  The Precision specifies by how many units the slider moves when using Btn1 or the arrow keys as described below.  It does not determine the precision for the value or limits numbers when these are shown on the slider.  These are determined by the PREC field for the record associated with the process variable.</P>
+<P>&#9;Dragging the Slider button with Btn1 transmits values.  The sensitivity with which values can be selected this way depends on the range of the slider and not on the Precision.  Clicking Btn1 in the space on either side of the slider button increments or decrements the value by an amount equal to the Precision.  Clicking Ctrl-Btn1 in the space on either side increments or decrements the value by an amount equal to 10 times the Precision</P>
+<P>&#9;In addition, the arrow keys increment or decrement the value by an amount equal to the Precision, and the Ctrl-Arrow keys increment or decrement the value by an amount equal to 10 times the Precision.  The left and right arrow keys are operational when the </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2> is right, and the up and down arrow keys are operational when the Direction is up.  The arrow keys only function when the focus is on the slider button or the space on either side of it.</P>
+<P>&#9;In EXECUTE mode the specified precision for motion of the valuator can be changed via a dialog box which is popped up by depressing Btn3 on the Slider object.  A row of toggle buttons at the top sets the Precision as powers of 10 of the numbers on the buttons.  The Precision can also be set in the entry box below the buttons.  In addition, the value can be set directly in the lower entry box, providing an alternative to using Btn1 and the arrow keys.</P>
 </FONT><B><P><A NAME="StripChart"></A>Strip Chart</P>
-<P><A NAME="Text"></A>Text</P>
-<P><A NAME="TextIndicator"></A>Text Monitor</P>
-</B><FONT SIZE=2><P>Also known as Text Update.</P>
+</B><FONT SIZE=2><P>&#9;The Strip Chart has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#PlotAttribute"><FONT SIZE=2>Plot</FONT></A><FONT SIZE=2> (Title, X Label, Y Label, Foreground, Background), and </FONT><A HREF="#TimeUnits"><FONT SIZE=2>Units</FONT></A><FONT SIZE=2> attributes.  In addition, there are Period and Units attributes.  The period is the time between updates.  The Units attributes are set in a dialog box.  For each pen in the Strip Chart there is a Channel (process variable name) and a Color which can be specified in the entry boxes in the dialog.  There currently can be up to 8 pens.</P>
+</FONT><B><P><A NAME="Text"></A>Text</P>
+</B><FONT SIZE=2><P>&#9;The Text object has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel), and </FONT><A HREF="#TextAlign"><FONT SIZE=2>Alignment</FONT></A><FONT SIZE=2> attributes.  In addition, there is a Text attribute, which is the text to be displayed.  This text can have up to 255 characters.  The Text object is drawn on the display and is not a widget.</P>
+<P>&#9;The Text object may be created in two ways.  You can drag a rectangle to the desired size, the same as for most other objects, or you can click and release Btn1 on the display drawing area.  If you click and release Btn1, then the cursor changes to an I-beam and you can type the text directly onto the display rather than entering it in the Resource Palette.  The text is finished when one of the following happens: (1) A button is pressed; (2) Return is typed; or (3) The pointer leaves the drawing area (either leaves the display or goes on top of a widget in the drawing area).  The size of the text depends on the size of the previous object (not necessarily a Text object) in the Resource Palette.  If the height is larger than 40, then 40 is used.  The color is the same as the color of the previous object.  You can control the size and color by first selecting an object (most usefully a Text object) with the desired size and color, then creating the new Text object by clicking and releasing Btn1.</P>
+<P>&#9;The font used depends on the height of the Text object using an algorithm that is internal to MEDM.  This algorithm may not be the most sensible, but it has been kept to avoid changing the layout of old displays.  You adjust the font by adjusting the height, usually by experimentation.</P>
+</FONT><B><P><A NAME="TextIndicator"></A>Text Monitor</P>
+</B><FONT SIZE=2><P>&#9;Also known as Text Update.  The Text Update has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#TextAlign"><FONT SIZE=2>Alignment</FONT></A><FONT SIZE=2>, </FONT><A HREF="#TextFormat"><FONT SIZE=2>Format</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Text Update is drawn on the display and is not a widget.  It displays the value of the process variable in the chosen format.</P>
 </FONT><B><P><A NAME="TextEntry"></A>Text Entry</P>
-</B><FONT SIZE=2><P>Several edit modes are supported for the text entry or text field widget.  In addition to point-click positioning, the left and right arrow keys allow the cursor to be positioned anywhere in the field.  Similarly, backspace and delete allow characters to be removed from the string/field.  Carriage Return () sends the value; additionally, leaving the widget also transmits the current value back to the application.</P>
+</B><FONT SIZE=2><P>&#9;The Text Entry has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#TextFormat"><FONT SIZE=2>Format</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Text Entry provides a means of dispaying the value of a process variable in an entry box, where it can be edited and changed.  The value is not changed until Return is pressed with the focus in the entry box.  If the focus leaves the entry box, the value of the process variable is not changed and the current value is restored into the entry box.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Composite"></A>Composite Objects</P>
-<P><A NAME="Grid"></A>Grid</P>
-</B></FONT><FONT SIZE=2><P>There is a grid in EDIT mode that can be toggled on and off.  Each display has its own grid and grid properties, which are initialized to the defaults when the display is first displayed for the session.  The toggling and the grid spacing for the current display are set via the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.  You can cause selected objects to align to the grid by using the Align To Grid option on the Edit menu.  The grid is drawn in the foreground color of the display.  This color can be changed by selecting the display, then clicking on the foreground color box.  The spacing options on the Edit menu use the current grid spacing, so that the spacing of elements can be changed easily by changing the grid spacing.</P>
+<P><A NAME="Attributes"></A>Attributes</P>
+</B></FONT><FONT SIZE=2><P>&#9;Attributes are sets of properties.  These sets of properties may be common to several, or even most, objects.  Simple attributes have one property that can take on one of several values.  Compound attributes have more than one property.  To prevent repetition, the sets of attributes are described here, rather than with the objects that possesses them.  The compound attributes are listed first, then the simple objects in alphabetical order.</P>
+</FONT><B><P><A NAME="ObjectAttribute"></A>Object</P>
+</B><FONT SIZE=2><P>&#9;All objects have Object attributes.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>X Position</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>x coordinate of the top left corner of the object relative to the display.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Y Position</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>y coordinate of the top left corner of the object relative to the display.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Width</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Width of the object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Height</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Height of the object.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="BasicAttribute"></A>Basic</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Arc"><FONT SIZE=2>Arc</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Oval"><FONT SIZE=2>Oval</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polygon"><FONT SIZE=2>Polygon</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Rectangle"><FONT SIZE=2>Rectangle</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Style</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Edge style for the object.  See Edge Style.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Fill</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Fill style for the object.  See Fill Style.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Line Width</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Line width in pixels.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="DynamicAttribute"></A>Dynamic</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Arc"><FONT SIZE=2>Arc</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Oval"><FONT SIZE=2>Oval</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polygon"><FONT SIZE=2>Polygon</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Rectangle"><FONT SIZE=2>Rectangle</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Color Mode</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Color mode for the object.  See the </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attribute.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Visibility</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Visibility mode for the object.  See the </FONT><A HREF="#VisibilityMode"><FONT SIZE=2>Visibility Mode</FONT></A><FONT SIZE=2> attribute.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Color Rule</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The color rule number for the object. (Integer number) if color rules are implemented. See </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Channel</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Name of the process variable associated with the object.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="MonitorAttribute"></A>Monitor</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ByteMonitor"><FONT SIZE=2>Byte</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Readback Channel</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Name of the process variable to be read by the object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Background</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Background color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="ControlAttribute"></A>Control</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#ChoiceButton"><FONT SIZE=2>Choice Button</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Menu"><FONT SIZE=2>Menu</FONT></A><FONT SIZE=2>, </FONT><A HREF="#MessageButton"><FONT SIZE=2>Message Button</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Control Channel</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Name of the process variable to be controlled by the object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Background</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Background color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="PlotAttribute"></A>Plot</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> and </FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Title</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Title for the plot object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>X Label</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>X-axis label for the plot object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Y Label</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Y-axis label for the plot object.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Foreground plot color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Background</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Background plot color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Package</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>(Not Implemented.)</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="PlotAxisAttribute"></A>Plot Axis</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Axis Style</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Axis style for the plot axis.  See Cartesian Plot Axis Style.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Axis Range</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Source of the range for the plot axis.  See Cartesian Plot Range Style.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Minimum Value</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Minimum value shown on the plot axis.  (Floating point number.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Maximum Value</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Maximum value shown on the plot axis.  (Floating point number.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Time Format</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Time format for the axis.  See Time Format.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="CartesianPlotAxisStyle"></A>Cartesian Plot Axis Style</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>linear</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a linear axis.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>log10</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a log axis.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>time</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a  time axis.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="CartesianPlotRangeStyle"></A>Cartesian Plot Range Style</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>from channel</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Get the axis range from the process variable.  (Usually LOPR and HOPR fields.)  The range returned by the record support may not be appropriate for all fields of the record, may not be appropriate for the current values of the process variable, or LOPR and HOPR may not have been set to the best values.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>user-specified</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Specifically specify the minimum and maximum values for the axis.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>auto-scale</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Let the graph routine decide on the axis range depending on the data.  This usually gives an attractive graph, but may cause the graph to flash if the range changes frequently.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="CartesianPlotStyle"></A>Cartesian Plot Style</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>point</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Plot the data as points.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>line</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Plot the datra as lines.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>fill-under</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Plot the data as lines which are filled under (or over) from the line to the axis.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="CartesianPlotTimeFormat"></A>Cartesian Plot Time Format</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> when there is a time axis.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>hh:mm:ss</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> 22:05:10, 05:43:35</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>hh:mm</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> 22:05, 05:44</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>hh:00</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> 22:00, 06:00</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>MMM DD YYY</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> Jun 27, 1997</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>MMM DD</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> Jun 27</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>MMM DD hh:00</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> Jun 27 22:00</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>wd hh: 00</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<I><FONT SIZE=2><P>E.g.</I> Tue 22:00</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="ColorMode"></A>Color Mode</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ByteMonitor"><FONT SIZE=2>Byte</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ChoiceButton"><FONT SIZE=2>Choice Button</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Menu"><FONT SIZE=2>Menu</FONT></A><FONT SIZE=2>, </FONT><A HREF="#MessageButton"><FONT SIZE=2>Message Button</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2>, </FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A><FONT SIZE=2>, </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2>, and all objects with a </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic attribute</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>static</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Show the object in its normal colors.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>alarm</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Show the object in alarm colors based on the severity of the associated process variable. The alarm colors are Green for NO_ALARM, Yellow for MINOR_ALARM, Red for MAJOR_ALARM, and White for INVALID_ALARM.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>discrete</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>If color rules are implemented and the object has a Dynamic attribute, use the color rules.  See </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.  Otherwise the same as static.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="ColorRule"></A>Color Rule</P>
+</B><FONT SIZE=2><P>&#9;This is part of the </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic attribute</FONT></A><FONT SIZE=2> that is used if color rules are implemented. See </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>set #1</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use color rules defined by set #1.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>set #2</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use color rules defined by set #2.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>set #3</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use color rules defined by set #3.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>set #4</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use color rules defined by set #4.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="Direction"></A>Direction</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ByteMonitor"><FONT SIZE=2>Byte Monitor</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>up</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Direction for the object is up or up/down.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>right</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Direction for the object is right or left/right.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>down</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same up for backward compatibility.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>left</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same right for backward compatibility.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="EdgeStyle"></A>Edge Style</P>
+</B><FONT SIZE=2><P>&#9;This is part of the </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic attribute</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>solid</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use solid lines.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>dash</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use dashed lines.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P></P>
+</FONT><B><P><A NAME="EraseMode"></A>Erase Mode</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> with an erase channel.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>if not zero</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Erase the plot if the erase-channel process variable is not zero.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>if zero</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Erase the plot if the erase-channel process variable is zero.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="FillMode"></A>Fill Mode</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>from edge</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Fill from the lower end to the current value.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>from center</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Fill from zero to the current value.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="FillStyle"></A>Fill Style</P>
+</B><FONT SIZE=2><P>&#9;This is part of the </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic attribute</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>solid</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Fill the whole shape with color.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>outline</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Only color the outline.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="ImageType"></A>Image Type</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Image"><FONT SIZE=2>Image</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>no image</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Do not display the image.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>gif</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The image is GIF.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>tiff</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The image is TIFF.  (Not implemented.)</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="Label"></A>Label</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A><FONT SIZE=2>, </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>none</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No extra features (except the limits are shown for the meter).</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>outline</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Show limits.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>limits</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Show limits and a box for the value (except there is no box for the Slider).</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>channel</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Show limits, a box for the value, and the process variable name (except there is no box for the Slider).</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="PlotMode"></A>Plot Mode</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> with a scalar process variable.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>plot n pts &amp; stop</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Plot n points corresponding to the first n changes of the process variable, then do not plot any more points.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>plot last n pts</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Plot n points corresponding to the last n changes of the process variable, overwriting previous points.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="RelatedDisplayMode"></A>Related Display Mode</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>create new display</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Create a new display and leave the current one.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>replace display</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Create a new display that replaces the current one.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="RelatedDisplayVisual"></A>Related Display Visual</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>menu</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a pull down menu for the choices.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>a row of buttons</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a row of buttons for the choices.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>a column of buttons</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Use a column of buttons for the choices.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>invisible</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Do not show anything for the choices.  Possibly use a graphic under the area occupied by the related display, so the user clicks on the graphic.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="Stacking"></A>Stacking</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#ChoiceButton"><FONT SIZE=2>Choice Button</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>column</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The buttons are arranged in a row.  (This appears to be a mistake, which will not be corrected because of existing screens.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>row</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The buttons are arranged in a column.  (This appears to be a mistake, which will not be corrected because of existing screens.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>row column</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The buttons are automatically arranged in rows and columns.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="TextAlign"></A>Text Align</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A><FONT SIZE=2> and </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>horiz. left</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Align the text at the top left of the object.  (Capital letters will line up with the top of the object, and the text will start at the left of the object.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>horiz. centered</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Align the text at the top center of the object.  (Capital letters will line up with the top of the object, and the text will be horizontally centered in the object.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>horiz. right</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Align the text at the top right of the object.  (Capital letters will line up with the top of the object, and the text will end at the right of the object.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>vert. top</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same as horiz. left  (as it used to) for backward compatibility.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>vert. centered</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same as horiz. center  (as it used to) for backward compatibility.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>vert. bottom</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>No longer used. In ADL files MEDM treats this the same as horiz. right  (as it used to) for backward compatibility.</FONT></TD>
+</TR>
+</TABLE>
+
+<B><P><A NAME="TextFormat"></A>Text Format</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A><FONT SIZE=2> and </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2>.  For all of the formats, the result depends on the number itself and the precision as returned from channel access for the process variable.  The precision  is typically the PREC field for the associated record.  The precision is only determined when the process variable is connected, so subsequent changes to the precision do not affect the format until MEDM is restarted.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>decimal</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is a number with or without a decimal point, but not in exponential notation. <I>E.g.</I>10000.00 or 10000.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>exponential</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is in exponential notation.  <I>E.g.</I> 1.00e+04.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>eng. notation</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is in engineering notation. <I>E.g.</I> 10.00e+03.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>compact</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is supposedly in the most compact form of decimal or exponential.  (Similar to the %g format in C.)  The form may not be the most compact, however.  It is what is returned by the EPICS routine cvtDoubleToCompactString().</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>truncated</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is truncated to the largest integer. <I>E.g.</I> 10000.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>hexidecimal</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is truncated to the nearest integer and shown in hexidecimal.<I> E.g.</I> 0x3e8.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>octal</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The text is truncated to the nearest integer and shown in hexidecimal.<I> E.g.</I> 1750.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>string</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>This is the same as decimal except that for large numbers or precision, it can be in exponential format.  It is what is returned by the EPICS routine cvtDoubleToString().</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="TimeUnits"></A>Time Units</P>
+</B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>milli-second</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The update period is in milli-seconds.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>second</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The update period is in seconds.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>minute</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The update period is in minutes.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="VisibilityMode"></A>Visibility Mode</P>
+</B><FONT SIZE=2><P>&#9;This is part of the </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic attribute</FONT></A><FONT SIZE=2>.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>static</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The object is displayed always.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>if not zero</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The object is displayed if the process variable is not zero.</FONT></TD>
+</TR>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>if zero</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>The object is displayed if the object is zero.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P></P>
+</FONT><B><FONT SIZE=4><P><A NAME="Grid"></A>Grid</P>
+</B></FONT><FONT SIZE=2><P>&#9;There is a grid in EDIT mode that can be toggled on and off.  Each display has its own grid and grid properties.  These are saved in the ADL file.  The grid properties (the grid spacing, whether the grid shows, and whether snap to grid is in effect) for the current display can be set via the Grid options on the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2> or on the Resource Palette for the display.  The grid is drawn in the foreground color of the display.  This color can be changed in the Resource Palette.  The Space Evenly options on the Edit menu use the current grid spacing, which can be changed to allow different spacing when using these options.</P>
+<P>&#9;When snap to grid is enabled, moving with Btn2 (but not the arrow keys), pasting, and object creation constrain the upper left corner of the (group of) selected objects to be at a grid point.  For object creation all corners are constrained to be at grid points.  These operations do not change the locations of selected objects relative to each other.  Objects can also be aligned to the grid via the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.  The Edit-menu align options align each selected object, and may change the locations of selected objects relative to each other.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="MacroSubstitution"></A>Macro Substitution</P>
-</B></FONT><FONT SIZE=2><P>MEDM now supports macro substitution (including nested or parent-to-child substitution) for related displays.</P>
-<P>Related displays can be called with an arguments string of the form "name=value [,name=value]…".  The related display then substitutes in its space all occurrences of "$(name)" with "value".</P>
-<P>A parent related display can pass to it's child related display a value in its space by passing an argument string of the form "name=$(name)XYZ", etc.</P>
-<P>Shell command and argument strings are also substituted in related displays, and referenced similarly via the $(name) construct.</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM now supports macro substitution (including nested or parent-to-child substitution) for related displays.</P>
+<P>&#9;Related displays can be called with an arguments string of the form &quot;name=value [,name=value]…&quot;.  The related display then substitutes in its space all occurrences of &quot;$(name)&quot; with &quot;value&quot;.</P>
+<P>&#9;A parent related display can pass to it's child related display a value in its space by passing an argument string of the form &quot;name=$(name)XYZ&quot;, etc.</P>
+<P>&#9;Shell command and argument strings are also substituted in related displays, and referenced similarly via the $(name) construct.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="DragAndDrop"></A>Drag-And-Drop</P>
-</B></FONT><FONT SIZE=2><P>MEDM has a drag-and-drop mechanism in EXECUTE mode, using mouse button 2.  This allows dragging the process variable name(s) associated with an MEDM object to another place. The place must be a valid Motif drag-and-drop site.  Such places include most Motif text fields.  Programs like the knob manager </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>, KM, have been designed to have valid Motif drop sites, and it is easy to drag a process variable name from an MEDM display to KM and have it be attached to a knob.  The valid places unfortunately do not include Xterm’s, and the Motif Btn2 drag-and-drop is not the same as the common Btn2 paste associated with the clipboard.</P>
-<P>The EPICS extension, Namecapture, is a program designed to help with transferring names obtained by Motif drag-and-drop to other programs.  It automatically converts a dropped name to an X selection so the common Btn2 paste works.  There are also ways in Namecapture to add the dropped names to a file, even to generate lines in a BURT request file.</P>
-<P>It is not necessary to drop the name in a valid place.  After it is picked up by pressing Btn2 on an MEDM object, it can be read and discarded.</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM has a drag-and-drop mechanism in EXECUTE mode, using Btn2.  This allows dragging the process variable name(s) associated with an MEDM object to another place. The place must be a valid Motif drag-and-drop site.  Such places include most Motif text fields.  Programs like the knob manager, KM, which is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>, have been designed to have valid Motif drop sites, and it is easy to drag a process variable name from an MEDM display to KM and have it be attached to a knob.</P>
+<P>&#9;The valid drop places unfortunately do not include XTerm’s, and the Motif Btn2 drag-and-drop is not the same as the common Btn2 paste associated with the clipboard.  To help overcome this problem, the EPICS extension, Namecapture, is a program designed to help with transferring names obtained by Motif drag-and-drop to other programs.  It automatically converts a dropped name to an X selection so the common Btn2 paste works.  There are also ways in Namecapture to add the dropped names to a file, even to generate lines in a BURT request file.  Both Namecapture and KM are described in the online </FONT><A HREF="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html"><FONT SIZE=2>EPICS documentation</FONT></A><FONT SIZE=2>.</P>
+<P>&#9;It is not necessary to drop the name in a valid place; it can be read and discarded.</P>
+<P>&#9;The color of the names depends on the alarm severity.  Green is NO_ALARM; Yellow is MINOR_ALARM; Red is MAJOR_ALARM; and White is INVALID_ALARM.</P>
+<P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>, the names are in columns corresponding to the traces.  The last row corresponds to the trigger and erase channels, whether they are defined or not.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="DialogBoxes"></A>Dialog Boxes</P>
+</FONT><P><A NAME="MessageWindow"></A>Message Window Dialog Box</P>
+</B><FONT SIZE=2><P>&#9;MEDM prints most error and information messages to both stderr and the MEDM Message Window.  This window will be created and raised when the first message is written.  There are buttons to Close, Clear, Print, Mail, and get Help.  If the window is closed, the messages will still be written to the window, but the window will not appear.  The window can be brought up via the View menu on the MEDM main window.</P>
+<P>&#9;If part of the text in the window is selected, both Print and Mail will only use the selection.  Otherwise, the whole window is used.  Print uses the environment variable PSPRINTER, which must be set.  You can change (or set) the name of the printer via the Printer Setup item in the </FONT><A HREF="#FileMenu"><FONT SIZE=2>File Menu</FONT></A><FONT SIZE=2>.</P>
+</FONT><B><P><A NAME="PVInfoDialogBox"></A>PV Info Dialog Box</P>
+</B><FONT SIZE=2><P>&#9;The PV Info dialog box is invoked from the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Menu</FONT></A><FONT SIZE=2>.  You are prompted with a PV cursor to pick an object on the display.  The dialog box then shows information about all the process variables associated with that object.  For each process variable the information includes the name, the type, the count (length of the array  or 1 if not an array), the access rights, the IOC, the current value with associated timestamp, and its alarm status, as well as other information depending on the type. Only the value of the first element of an array is shown.  The information shown is that stored by MEDM, except for the current value and the associated time stamp, which are obtained when you pick the object.  Items such as HOPR and LOPR are the startup values and are not updated automatically except when the connection changes.  It should be possible to get some of this information if the process variable has lost its connection; that is, when the object is white but was previously not white.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Help"></A>Help</P>
-</B></FONT><FONT SIZE=2><P>Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  The Netscape window raises so as to be visible whenever help is called.  There is a dialog box for Help on Help (in case Netscape is not working) describing the Netscape help and what is necessary to make it work.  </P>
-<P>There is bubble help to identify the objects in the Object Palette, and there is a summary of EDIT operations on the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>, which appears on the main window and as a popup menu when editing a display.</P>
-</FONT><B><FONT SIZE=4><P>Medm Smart Startup</P>
-</B></FONT><FONT SIZE=2><P>In order to amortize the cost of Xt Intrinsics and Motif initialization over many displays, and to offer an efficient way to start up MEDM displays "after-the-fact", a remote MEDM request protocol has been established.</P>
-<P>MEDM by default now looks for other MEDM's running (on ANY machine) which have the same display device as the requested display.  If one is found, the display request is forwarded to the remote MEDM for processing.  This saves startup time of several MEDM processes which are all going to the </P>
-<P>To override this behavior, use the "-local" parameter on the command line.  MEDM invoked with -local (in either edit or execute mode) will not participate in the "smart-startup" protocol and act independently of other MEDM’s.  (The default is not -local, i.e., DO participate in smart-startup protocol).</P>
-<P>N.B. This request protocol does not work when the two machines running MEDM do not share a file namespace.  Also note that this obviates the MEDM startup library and application messaging scheme which has been discussed.</P>
-<P>MEDM should always be stopped via the File | Exit menu selection.  If MEDM is killed via a SIGKILL or SIGSTOP signal, some X window property cleanup may be required.  If MEDM is invoked, makes a remote display request and returns (very quickly) but no display is ever created, then do the following:</P>
-<P>See if an MEDM property is stored:</P>
+</B></FONT><FONT SIZE=2><P>&#9;Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  The Netscape window raises so as to be visible whenever help is called.  There is a dialog box for Help on Help (in case Netscape is not working) describing the Netscape help and what is necessary to make it work.  The name for the Netscape executable can be specified in the environment variable NETSCAPEPATH.</P>
+<P>&#9;There is bubble help to identify the objects in the Object Palette, and there is a summary of EDIT operations on the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>, which appears on the main window and as a popup menu when editing a display.</P>
+<P>&#9;Each display has a provision for help on the display.  This help is implemented via the Help option on the window menu botton (the button with a short bar on it located at the left of the title bar for the display).  This button does not exist unless the environment variable MEDM_HELP is defined.  In that case when this option is selected from the window menu, MEDM makes a system call of the form &quot;$MEDM_HELP full-adl-pathname &amp;&quot;.  The value of MEDM_HELP should be the name of a program that uses the full pathname of the ADL file for the display to provide help, for example, by bring up Netscape with an appropriate page based on the filename.  What the program does or how it is written is independent of MEDM.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="SmartStartup"></A>Medm Smart Startup</P>
+</B></FONT><FONT SIZE=2><P>&#9;In order to amortize the cost of Xt Intrinsics and Motif initialization over many displays, and to offer an efficient way to start up MEDM displays &quot;after the fact&quot;, an MEDM remote request protocol has been established.</P>
+<P>&#9;MEDM by default looks for other MEDM's running (on any host machine) which have the same X Windows display as the requested display.  If one is found, the MEDM display request is forwarded to the remote MEDM for processing.  (Note that the X Windows display refers to the environment variable DISPLAY or a display specified on the command line as <I>e.g.</I> &quot;-display phoebus:0&quot;, which is different from an MEDM display as specified by an ADL file.)</P>
+<P>&#9;To override this behavior, use the &quot;-local&quot; parameter on the </FONT><A HREF="#CommandLine"><FONT SIZE=2>command line</FONT></A><FONT SIZE=2>.  MEDM invoked with -local (in either EDIT or EXECUTE mode) will not participate in the smart-startup protocol and will act independently of other MEDM’s.  Also, you can use the &quot;-cleanup&quot; parameter on the command line to ignore any existing MEDM's and to use this MEDM as the remote MEDM for future remote requests.</P>
+<P>&#9;MEDM implements the smart startup by setting a property on the root window of the display.  This property stores the </FONT><A HREF="#XWindows"><FONT SIZE=2>X</FONT></A><FONT SIZE=2> window id of the MEDM which is available for remote requests.  If MEDM crashes badly or is killed with a SIGKILL, which cannot be trapped, this property may still be left on the root window.  This should not cause a problem as the next MEDM will find out that the window id is not valid and start itself as if &quot;-cleanup&quot; had been specified.  However, you can look at and remove the property yourself.</P>
+<P>&#9;See if an MEDM property is stored:</P>
 </FONT><PRE>&#9;% xprop -root | grep MEDM</PRE>
-<FONT SIZE=2><P>If there is one, then do the following:</P>
-</FONT><PRE>&#9;% xprop -root -remove MEDM_EDIT_REQUEST</PRE>
-<FONT SIZE=2><P>or:</P>
-</FONT><PRE>&#9;% xprop -root -remove MEDM_EXEC_REQUEST</PRE>
-<FONT SIZE=2><P>depending on which mode MEDM you are requesting (medm or medm -x).  Alternatively, MEDM can also be started up in "cleanup mode", via:</P>
-</FONT><PRE>&#9;% medm -cleanup ...</PRE>
-<FONT SIZE=2><P>This starts up MEDM in a mode that ignores remote MEDM’s, and does the property X property cleanup on exit.</P>
+<FONT SIZE=2><P>&#9;If there is one, then do the following:</P>
+</FONT><PRE>&#9;% xprop -root -remove &lt;property-name&gt;</PRE>
+<FONT SIZE=2><P>where &lt;property-name&gt; is the name of the property found.  (The property name will have the MEDM version and have _EDIT_ or _EXEC_ in the name, depending on how the remote MEDM was started.)  Most times, MEDM will clean up properly when it exits, even if it was stopped abnormally.</P>
 </FONT><B><FONT SIZE=4><P>Aspect Ratio-Preserving Resize</P>
-</B></FONT><FONT SIZE=2><P>MEDM in execute mode allows run-time resizing of displays.  Since the user is totally free to pick sizes to his liking, the aspect ratio of the original display can be severely distorted.  Users wishing to preserve the aspect ratio of a display at run-time can do a SHIFT-modified resize.  To do this, the user invokes the resize of the display (window) as appropriate for the window manager in use, with the Shift key depressed at the time of completion of the resize operation.  Note that the resizing is not constrained at the time of resize, but upon completion the display will be resized to ("snap to") the appropriate sizes of the width and height dimensions.  Both reducing and enlarging of the display is supported.</P>
-</FONT><B><FONT SIZE=4><P><A NAME="Editing"></A>Editing<A NAME="CommandLine"></A></P>
-</B></FONT><FONT SIZE=2><P>When MEDM is in EDIT mode, editing operations are initiated through mouse or pointer input, keyboard input, or menu selection.</P><DIR>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM in execute mode allows run-time resizing of displays.  Since the user is totally free to pick sizes to his liking, the aspect ratio of the original display can be severely distorted.  Users wishing to preserve the aspect ratio of a display at run-time can do a SHIFT-modified resize.  To do this, the user invokes the resize of the display (window) as appropriate for the window manager in use, with the Shift key depressed at the time of completion of the resize operation.  Note that the resizing is not constrained at the time of resize, but upon completion the display will be resized to (&quot;snap to&quot;) the appropriate sizes of the width and height dimensions.  Both reducing and enlarging of the display is supported.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="Editing"></A>Editing</P>
+</B></FONT><FONT SIZE=2><P>&#9;When MEDM is in EDIT mode, editing operations are initiated through mouse or pointer input, keyboard input, or menu selection.</P><DIR>
 <DIR>
 
 <P></FONT><A HREF="#MouseEdit"><FONT SIZE=2>Mouse Editing Operations</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#KeyboardEdit"><FONT SIZE=2>Keyboard Editing Operations</FONT></A></P>
-<FONT SIZE=2><P></FONT><A HREF="#MenuEdit"><FONT SIZE=2>Menu Editing Operations</FONT></A></P></DIR>
+<FONT SIZE=2><P></FONT><A HREF="#MenuEdit"><FONT SIZE=2>Menu Editing Operations (Edit Menu)</FONT></A></P></DIR>
 </DIR>
 
 <B><P><A NAME="MouseEdit"></A>Mouse Editing Operations</P>
-</B><FONT SIZE=2><P>Several editing operations using the mouse are initiated by choosing one or more objects with the mouse.  If the mouse is clicked, the object under the cursor is chosen.  If the mouse is dragged, a rubberband box appears, and all of the objects included within the box when the button is released are chosen.  Chosen objects should be distinguished from selected objects.  Chosen objects are those chosen for the current operation.  Selected objects are those that are highlighted.  Chosen objects may be added to, removed from, or replace the selected objects, depending on the operation.</P></FONT>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
-<TR><TD WIDTH="16%" VALIGN="TOP">&nbsp;</TD>
-<TD WIDTH="84%" VALIGN="TOP">
+</B><FONT SIZE=2><P>&#9;Several editing operations using the mouse are initiated by choosing one or more objects with the mouse.  If the mouse is clicked, the object under the cursor is chosen.  If the mouse is dragged, a rubberband box appears, and all of the objects included within the box when the button is released are chosen.  Chosen objects should be distinguished from selected objects.  Chosen objects are those chosen for the current operation.  Selected objects are those that are highlighted.  Chosen objects can be added to, removed from, or replace the selected objects, depending on the operation.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="15%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="85%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Select Mode (Pointing Hand Cursor)</B></FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn1</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Vertex Edit.  If a Line, Polyline, or Polygon was previously the only object selected, and if the button is pressed near a vertex, dragging moves the vertex.  During dragging, when the Shift key is depressed, the dragging is constrained to be in a direction that is a multiple of 45 degrees.  (The Shift key must be pressed after the button is pressed or the operation will be treated as a Shft-Btn1 operation.)</P>
-<P>Select objects.  If the conditions for a vertex edit are not satisfied, then choose objects by dragging or clicking.  These become the new selected objects.  If only one object was previously selected, however, then additional clicking on that element toggles its selection.  Clicking on the background toggles selection of the display.  In the case of completely overlapping objects, only the top one may be selected in this way. </FONT></TD>
+<P>Select objects.  If the conditions for a vertex edit are not satisfied, then choose objects by dragging or clicking.  These become the new selected objects.  If only one object was previously selected, however, then additional clicking on that element toggles its selection.  Clicking on the background toggles selection of the display.  In the case of completely overlapping objects, only the top one can be selected in this way. </FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Shift-Btn1</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Add or remove objects from the selected objects.  Choose objects by dragging or clicking.  The chosen objects are removed from or added to the selected objects, depending on whether they were included or not before. </FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Ctrl-Btn1</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
-<FONT SIZE=2><P>Select an object that may be under another object.  Choose objects by clicking.  Successive clicks will cycle the choice through any overlapped objects.  The chosen object will be the new selected object.  Only one object may be selected this way.</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Select an object that may be under another object.  Choose objects by clicking.  Successive clicks will cycle the choice through any overlapped objects.  The chosen object will be the new selected object.  Only one object can be selected this way.</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn2</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
-<FONT SIZE=2><P>Move objects. Choose an object by pressing the button on it, then drag the object to a new position.  If more than one object was previously selected, then dragging any one of the selected objects will move all of them.  In the case of completely overlapping objects, only the top one may be moved in this way.  An object cannot be moved off the visible part of the display in this way.  (The comparable keystroke operation does allow moving off the visible part of the display.)</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Move objects. Choose an object by pressing the button on it, then drag the object to a new position.  If more than one object was previously selected, then dragging any one of the selected objects will move all of them.  In the case of completely overlapping objects, only the top one can be moved in this way.  An object cannot be moved off the visible part of the display in this way.  (The comparable keystroke operation does allow moving off the visible part of the display.)  Btn2 supports </FONT><A HREF="#Grid"><FONT SIZE=2>snap to grid</FONT></A><FONT SIZE=2>.  The Motif Cancel key (usually Esc or Escape) cancels the move as long as the button has not been released.</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Shift-Btn2</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Not used.</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Ctrl-Btn2</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
-<FONT SIZE=2><P>Resize objects. Choose an object by pressing the button on it, then drag the object to resize it.  If more than one object was previously selected, then clicking and dragging any one of the selected objects will resize all of them.  The top left corner is held fixed during resizing.  In the case of completely overlapping objects, only the top one may be resized in this way.</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Resize objects. Choose an object by pressing the button on it, then drag the object to resize it.  If more than one object was previously selected, then clicking and dragging any one of the selected objects will resize all of them.  The top left corner is held fixed during resizing.  In the case of completely overlapping objects, only the top one can be resized in this way. .  The Motif Cancel key (usually Esc or Escape) cancels the resize as long as the button has not been released.  (You can release the Crtl key before pressing Cancel, though.)</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn3</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Popup the editing menu.</FONT></TD>
 </TR>
 </TABLE>
 
 <FONT SIZE=2><P>&nbsp;</P></FONT>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
-<TR><TD WIDTH="16%" VALIGN="TOP">&nbsp;</TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="15%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="85%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Create Mode (Crosshair Cursor)</B></FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn1</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
-<FONT SIZE=2><P>Create the object in the method appropriate for the object, usually by dragging to the desired size.  The mode will then change to Select Mode.</FONT></TD>
+<TD WIDTH="85%" VALIGN="TOP">
+<FONT SIZE=2><P>Create the object in the method appropriate for the object, usually by dragging to the desired size.  (The </FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Polygon"><FONT SIZE=2>Polygon</FONT></A><FONT SIZE=2> objects have special create methods.)  The object must start on the visible part of the display and not on top of an object that is a widget, but it may extend past the visible part if the button is released outside the display or it may end on a widget.  (It is not suggested to do this, however.)  The mode will then change to Select Mode.  Create supports </FONT><A HREF="#Grid"><FONT SIZE=2>snap to grid</FONT></A><FONT SIZE=2> and aligns all corners to the grid, not just the upper left corner.  The Motif Cancel key (usually Esc or Escape) cancels the create as long as the button has not been released.</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn2</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Not used.</FONT></TD>
 </TR>
-<TR><TD WIDTH="16%" VALIGN="TOP">
+<TR><TD WIDTH="15%" VALIGN="TOP">
 <FONT SIZE=2><P>Btn3</FONT></TD>
-<TD WIDTH="84%" VALIGN="TOP">
+<TD WIDTH="85%" VALIGN="TOP">
 <FONT SIZE=2><P>Popup the editing menu.</FONT></TD>
 </TR>
 </TABLE>
 
-<B><P><A NAME="KeyboardEdit"></A>Keyboard Editing Operations</P>
-</B><FONT SIZE=2><P>The keyboard editing operations duplicate actions that can be done by mouse operations.  There is much finer control, however, with the keyboard operations</P></FONT>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
-<TR><TD WIDTH="20%" VALIGN="TOP">
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="KeyboardEdit"></A>Keyboard Editing Operations</P>
+</B><FONT SIZE=2><P>&#9;The keyboard editing operations duplicate actions that can be done by mouse operations.  There is much finer control, however, with the keyboard operations</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Arrow Key</FONT></TD>
-<TD WIDTH="80%" VALIGN="TOP">
-<FONT SIZE=2><P>Move selected objects.  Objects may be moved off the visible part of the display.</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
+<FONT SIZE=2><P>Move selected objects.  Objects can be moved off the visible part of the display.</FONT></TD>
 </TR>
-<TR><TD WIDTH="20%" VALIGN="TOP">
+<TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Shift-Arrow Key</FONT></TD>
-<TD WIDTH="80%" VALIGN="TOP">
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Same as  for Arrow Key.</FONT></TD>
 </TR>
-<TR><TD WIDTH="20%" VALIGN="TOP">
+<TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Ctrl-Arrow Key</FONT></TD>
-<TD WIDTH="80%" VALIGN="TOP">
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Resize selected objects.  The top left corner remains fixed during resizing.</FONT></TD>
 </TR>
 </TABLE>
 
-<B><P><A NAME="MenuEdit"></A>Menu Editing Operations</P>
-</B><FONT SIZE=2><P>Clicking Btn3 anywhere on the display brings up an editing menu.  This menu has the following items.  Except for the Object option, these are the same items as for the Edit menu on the main MEDM window.</P></FONT>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><P><A NAME="MenuEdit"></A>Menu Editing Operations</P>
+</B><FONT SIZE=2><P>&#9;In EDIT mode clicking Btn3 anywhere on the display brings up an editing menu.  This menu has the following items.  Except for the Object option, these are the same items as for the Edit menu on the main MEDM window.</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P><A NAME="Undo"></A>Undo</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Reverts to the last saved state of the display.  The state is saved before most operations that would seriously change the display and also when Undo is choosen.  It is not saved on keyboard editing operations.  Repeated Undo’s toggle between the current state and the last state, so you can pick the one you like best.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Object</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>This is another way to select an object to create besides using the </FONT><A HREF="#ObjectPalette"><FONT SIZE=2>Object Palette</FONT></A><FONT SIZE=2>.  There are three pull-right submenus that group the objects into Graphics, Monitors, and Controllers.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Cut</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Deletes the selected objects and saves them in an internal clipboard.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Copy</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Copies the selected objects to the internal clipboard.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Paste</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Pastes the objects in the internal clipboard into the display at the position of the cursor.  They are selected and may be moved with the mouse until a mouse button is pressed.</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Pastes the objects in the internal clipboard into the display at the position of the cursor.  They are selected and can be moved with the mouse until a mouse button is released.  Objects are constrained to remain in the visible part of the display.  The Motif Cancel key (usually Esc or Escape) cancels the paste.  Paste supports </FONT><A HREF="#Grid"><FONT SIZE=2>snap to grid</FONT></A><FONT SIZE=2>.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Raise</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Raises the selected objects in the display list.  Note that graphics objects are drawn on the background of the display window and will always be below the other types of objects.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Lower</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Lowers the selected objects in the display list.  Note that graphics objects are drawn on the background of the display window and will always be below the other types of objects.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Group</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Makes a composite object of the selected objects.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Ungroup</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Decomposes the selected composite object into its components.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Align</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Horizontal: Left: Align the left edges of all selected objects.</P>
-<P>Horizontal: Center: Align the centers horizontally of all selected objects.</P>
-<P>Horizontal: Right: Align the right edges of all selected objects.</P>
-<P>Vertical: Top: Align the top edges of all selected objects.</P>
-<P>Vertical: Center: Align the centers vertically edges of all selected objects. </P>
-<P>Vertical: Bottom: Align the bottom edges of all selected objects.</P>
-<P>&nbsp;</P>
-<P>To Grid: Align the edges of all selected objects to the grid.  This may both move and resize the objects.</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Left: Align the left edges of all selected objects.</P>
+<P>Horizontal Center: Align the centers horizontally of all selected objects.</P>
+<P>Right: Align the right edges of all selected objects.</P>
+<P>Top: Align the top edges of all selected objects.</P>
+<P>Vertical Center: Align the centers vertically edges of all selected objects. </P>
+<P>Bottom: Align the bottom edges of all selected objects.</P>
+<P>Position to Grid: Align the upper left corner of all selected objects to the grid</P>
+<P>Edges to Grid: Align the edges of all selected objects to the grid.  This may both move and resize the objects.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
-<FONT SIZE=2><P>Set Spacing</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Space Evenly</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Horizontal: Make the horizontal spacing between the selected objects equal to the grid spacing.  The leftmost object will not move.  Best applied to a row of objects.  Does not affect object size.</P>
-<P>&nbsp;</P>
 <P>Vertical: Make the vertical spacing between the selected objects equal to the grid spacing.  The topmost object will not move.  Best applied to a column of objects.  Does not affect object size.</P>
-<P>&nbsp;</P>
 <P>2-D: Line up an array of objects.  Best applied to objects already somewhat lined up in rows and columns.  The objects will be aligned as well as spaced.  The top left object will be at the upper left corner of the former bounding box of all the objects. The objects will be vertically spaced according to the grid spacing and the average height, and horizontally spaced according to the grid spacing.  Does not affect object size.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
-<FONT SIZE=2><P>Toggle Grid</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Turn the grid on and off.  The grid only appears in edit mode.</FONT></TD>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Center</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Horizontally in Display: Center the selected objects horizontally with respect to the display.  If there is more than one object selected, the group is centered.  Use Align in combination with Center to center each selected object.</P>
+<P>Vertically in Display: Center the selected objects vertically with respect to the display.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
-<FONT SIZE=2><P>Grid…</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Brings up a dialog box to specify the grid spacing.  The current spacing is shown.</FONT></TD>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Size</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Same Size: Make the height and width of all the selected objects the same and equal to the average height and width of the selected objects.</P>
+<P>Text to Contents: Make the sizes of selected text objects be just large enough to fit their contents.  Only the horizontal position and the width of the enclosing box are changed.  The appearance and position of the text itself should not change.  Other types of selected objects are ignored, so this can be done for all text objects in the display by selecting everything first.  Resizing the text objects should make alignment and spacing easier.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
-<FONT SIZE=2><P>Same Size</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Make the height and width of all the selected objects the same and equal to the average height and width of the selected objects.</FONT></TD>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Grid</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Toggle Show Grid: Toggle whether the grid is displayed or not.  (This can also be done in the Resource Palette for the Display.)</P>
+<P>Toggle Snap to Grid: Toggle whether the Snap to Grid is in effect or not.  (This can also be done in the Resource Palette for the Display.)  When Snap to Grid is in effect,  objects created or moved with the mouse will align their upper left corners to the grid.</P>
+<P>Grid Spacing: Brings up a dialog box to specify the grid spacing.  The current spacing is shown.  (This can also be done in the Resource Palette for the Display.)</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Unselect</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Unselects all objects.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Select All</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Selects all the objects in the display.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Find Outliers</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Find objects that are totally or partially off the visible part of the display.  (This can happen, for example, if the display is resized.)  The number of such objects will be presented in a dialog box.  If there are any objects, they will be selected, and there will be a button on the dialog box to list them on the MEDM Message Window.  They can subsequently be moved or deleted if desired.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Refresh</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Redraw the display.  This will cause widgets that have been moved to be back in the correct stacking order.</FONT></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="TOP">
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Edit Summary…</FONT></TD>
-<TD WIDTH="82%" VALIGN="TOP">
+<TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Pops up a summary of pointer and key edit operations.</FONT></TD>
 </TR>
 </TABLE>
 
-<B><FONT SIZE=4><P><A NAME="ColorConventions"></A>Color Conventions</P>
-</B></FONT><FONT SIZE=2><P>The following color conventions should be used when creating displays: </P>
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><FONT SIZE=4><P><A NAME="ExecuteModePopupMenu"></A>Execute-Mode Popup Menu</P>
+</B></FONT><FONT SIZE=2><P>&#9;In EXECUTE mode there is a popup menu on each display that is invoked by pressing Btn3 anywhere on the background or on any object (<I>e.g.</I> the Cartesian Plot or Slider) that does not respond to Btn3 itself.  This menu contains the following items:</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Print</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Prints the display.  See </FONT><A HREF="#Printing"><FONT SIZE=2>Printing</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Close</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Closes the display.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>PV Info</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Prompts you with a PV cursor to choose an object, then displays information about any process variables associated with that object.  See </FONT><A HREF="#PVInfoDialogBox"><FONT SIZE=2>PV Info</FONT></A><FONT SIZE=2> under </FONT><A HREF="#DialogBoxes"><FONT SIZE=2>Dialog Boxes</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Execute</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Brings up a sub menu with options that are determined by the MEDM_EXECUTE_LIST environment variable.  See </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><B><FONT SIZE=4><P><A NAME="Printing"></A>Printing</P>
+</B></FONT><FONT SIZE=2><P>&#9;In EXECUTE mode the display can be printed by using the popup menu invoked by Btn3 or with the Print item on the main </FONT><A HREF="#FileMenu"><FONT SIZE=2>File Menu</FONT></A><FONT SIZE=2>.  For this to work the environment variable PSPRINTER must be set to a printer that accepts Postscript.  You can change (or set) the name of the printer via the Printer Setup item on the File Menu.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="ExecuteMenu"></A>Execute Menu</P>
+</B></FONT><FONT SIZE=2><P>&#9;The Execute Menu, accessed by pressing Btn3 in EXECUTE mode, is a configurable menu.  The configuration is specified in the MEDM_EXEC_LIST environment variable.  This variable is of the form:</P>
+</FONT><PRE>&#9;name1; program1[[:name2; program2]…].</PRE>
+<FONT SIZE=2><P>The items between colons represent each menu item.  All of the characters up to the first semi-colon in each item are the text that appears on the menu.  The remaining characters represent the system command that will be executed when the item is selected.  Note that if the command is not run in the background (using &amp; at the end), it will hold up MEDM until it finishes.  The system command can include the following special characters:</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>&amp;P</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>The name(s) of the process variable(s).  A PV cursor will appear to choose the object for which the process variable(s) are wanted.  If there is more than one name, the names are space delimited.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>&amp;A</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>The full path name of the ADL file associated with the display.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>&amp;T</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>The short name of the file.  (This should be the same as the title of the display.)</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>&amp;?</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Truncate the command at this point and prompt the user to finish or otherwise edit the command.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+<P>Examples are:</P>
+</FONT><PRE>&#9;setenv MEDM_EXEC_LIST 'Probe;probe &amp;P &amp;:PV Name(s);echo &amp;P'
+&#9;setenv MEDM_EXEC_LIST 'Full Name;echo &amp;A:Short Name;echo &amp;T'
+&#9;setenv MEDM_EXEC_LIST 'XTerm;xterm -fg black -bg white &amp;' 
+&#9;setenv MEDM_EXEC_LIST 'XTerm;xterm &amp;?' </PRE>
+<B><FONT SIZE=4><P><A NAME="ColorRules"></A>Color Rules</P>
+</B></FONT><FONT SIZE=2><P>&#9;Color Rules are a means of changing the color of an object based on a calculation.  They are not currently supported.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="ColorConventions"></A>Color Conventions</P>
+</B></FONT><FONT SIZE=2><P>&#9;The following color conventions should be used when creating displays: </P>
 <B><P>Controls</P>
-</B><P>Any control button, slider, menu, related display, text entry etc that makes something happen should be BLUE (second row blue in the MEDM default color palette).  This is useful because operators can quickly observe "hot spots" on a display where they can make something happen (change a value, call up another display, etc).  The context or icon of "the blue thing" should adequately convey WHAT will happen if they click on it.</P>
+</B><P>&#9;Any control button, slider, menu, related display, text entry, <I>etc.</I> that makes something happen should be BLUE (second row blue in the MEDM default color palette).  This is useful because operators can quickly observe &quot;hot spots&quot; on a display where they can make something happen (change a value, call up another display, etc).  The context or icon of &quot;the blue thing&quot; should adequately convey WHAT will happen if they click on it.</P>
 <B><P>Text</P>
-</B><P>All text updates should be displayed on a background that allows all alarm colors to be visible (if the alarm dynamic is set).  We usually use light grey or dark grey (almost black).  Another "RULE OF THUMB" that we tell the operators is "If the text is WHITE, don't believe the reading.  The computer cannot communicate to it".  Therefore, white static text is discouraged.</P>
-<P>Likewise, since RED, GREEN, and YELLOW reflect alarm conditions, these colors should not be used for static text or text updates.</P>
-<P>No colors are "disallowed" from being used for graphical images (magnets, waveguides, etc) because it is usually very obvious that these are pictures and NOT dynamic objects.</P>
+</B><P>&#9;All text updates should be displayed on a background that allows all alarm colors to be visible (if the alarm dynamic is set).  We usually use light grey or dark grey (almost black).  Another &quot;RULE OF THUMB&quot; that we tell the operators is &quot;If the text is WHITE, don't believe the reading.  The computer cannot communicate to the process variable&quot;.  Therefore, white static text is discouraged.</P>
+<P>&#9;Likewise, since RED, GREEN, and YELLOW reflect alarm conditions, these colors should not be used for static text or text updates.</P>
+<P>&#9;No colors are &quot;disallowed&quot; from being used for graphical images (magnets, waveguides, etc) because it is usually very obvious that these are pictures and NOT dynamic objects.</P>
 <B><P>Colors in General</P>
 
 <UL>
@@ -573,6 +1669,43 @@ Medm.colorS.geometry: -5-5</PRE>
 <LI>Blue is used for giving directions, advice, signs, etc.</LI></UL>
 </UL>
 
+</FONT><B><FONT SIZE=4><P><A NAME="EnvironmentVariables"></A>Environment Variables</P>
+</B></FONT><FONT SIZE=2><P>&#9;MEDM uses the following environment variables:</P></FONT>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>EPICS_DISPLAY_PATH</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>A colon-separated list of directories in which to look for display files that do not have absolute path names or names that begin with &quot;./&quot; or &quot;../&quot;.  Only looks in the current working directory if not specified.  See </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL Files</FONT></A><FONT SIZE=2> and </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>MEDM_EXEC_LIST</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>A list of commands for the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A><FONT SIZE=2>.  See the </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2> for the format.</FONT></TD>
+</TR>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>MEDM_HELP</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>Name of the command used for the </FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2> item in the Window Manager Menu Button for a display.  This menu item does not appear if MEDM_HELP is not defined.</FONT></TD>
+</TR>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>MEDM_MAIL_CMD</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>Name of the command used to send mail from dialog boxes that support it.  The default is &quot;mail&quot;.</FONT></TD>
+</TR>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>NETSCAPEPATH</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>The name of the desired Netscape executable used for </FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2>.  It can be a full path name.  The default is &quot;netscape&quot;.</FONT></TD>
+</TR>
+<TR><TD WIDTH="33%" VALIGN="TOP">
+<FONT SIZE=2><P>PSPRINTER</FONT></TD>
+<TD WIDTH="67%" VALIGN="TOP">
+<FONT SIZE=2><P>The default value for the printer in the </FONT><A HREF="#Printing"><FONT SIZE=2>Printer Setup</FONT></A><FONT SIZE=2> dialog box.  The default is &quot;&quot;.</FONT></TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+<P>&nbsp;</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Glossary"></A>Glossary</P></B></FONT>
 <TABLE CELLSPACING=0 BORDER=0 CELLPADDING=7 WIDTH=590>
 <TR><TD WIDTH="18%" VALIGN="TOP">
@@ -584,6 +1717,11 @@ Medm.colorS.geometry: -5-5</PRE>
 <B><FONT SIZE=2><P>Channel Access</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
 <FONT SIZE=2><P>A set of routines to provide network-independent access to </FONT><A HREF="#ProcessVariable"><FONT SIZE=2>process variables</FONT></A><FONT SIZE=2>.</FONT></TD>
+</TR>
+<TR><TD WIDTH="18%" VALIGN="TOP">
+<B><FONT SIZE=2><P><A NAME="CED"></A>CDE</B></FONT></TD>
+<TD WIDTH="82%" VALIGN="TOP">
+<FONT SIZE=2><P>The Common Desktop Environment.  A technology specification developed jointly by Hewlett-Packard Company, IBM Corporation, Novell, Inc., and SunSoft, Inc.  It defines a consistent set of application programming interfaces (API) that can be implemented on operating environments that support </FONT><A HREF="#XWindows"><FONT SIZE=2>X Windows</FONT></A><FONT SIZE=2> desktop computers and </FONT><A HREF="#Motif"><FONT SIZE=2>OSF Motif</FONT></A><FONT SIZE=2>.  Its intent is to provide users with a consistent graphical user interface across workstations, X-Terminals, and PC’s.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P>display</B></FONT></TD>
@@ -598,7 +1736,7 @@ Medm.colorS.geometry: -5-5</PRE>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="EPICSExtension"></A>EPICS Extension</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>One of a number of programs that are not part of EPICS base but which have been designed to work intimately with EPICS.  MEDM is an example.</FONT></TD>
+<FONT SIZE=2><P>One of a number of programs that are not part of EPICS base but which have been designed to work intimately with EPICS.  MEDM is an example.  Most of the extensions are described in the online </FONT><A HREF="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html"><FONT SIZE=2>EPICS documentation</FONT></A><FONT SIZE=2>.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="IOC"></A>IOC</B></FONT></TD>
@@ -608,7 +1746,7 @@ Medm.colorS.geometry: -5-5</PRE>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="Motif"></A>Motif</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>Motif is a complete set of </FONT><A HREF="#Widget"><FONT SIZE=2>widgets</FONT></A><FONT SIZE=2> designed to implement the application look and feel specified in the <I>Motif Style Guide</I> and <I>Motif Application Environment Specification</I>. The routines are based on the </FONT><A HREF="#XtIntrinsics"><FONT SIZE=2><DFN>Xt Intrinsics</FONT></DFN></A><FONT SIZE=2>.</FONT></TD>
+<FONT SIZE=2><P>Motif is a complete set of </FONT><A HREF="#Widget"><FONT SIZE=2>widgets</FONT></A><FONT SIZE=2> supplied by the Open Software Foundation (OSF) designed to implement the application look and feel specified in the <I>Motif Style Guide</I> and <I>Motif Application Environment Specification</I>. The routines are based on the </FONT><A HREF="#XtIntrinsics"><FONT SIZE=2>Xt Intrinsics</FONT></A><FONT SIZE=2>.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="ProcessVariable"></A>process variable</B></FONT></TD>
@@ -618,12 +1756,12 @@ Medm.colorS.geometry: -5-5</PRE>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P>object</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>An MEDM object is one of the entities, such as a meter, scale, Cartesian plot, etc., which can appear on an MEDM display.</FONT></TD>
+<FONT SIZE=2><P>An MEDM object is one of </FONT><A HREF="#ObjectIndex"><FONT SIZE=2>several entities</FONT></A><FONT SIZE=2>, such as a Meter, Related Display, Cartesian plot, etc., which can appear on an MEDM display.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
-<B><FONT SIZE=2><P><A NAME="widget"></A>widget</B></FONT></TD>
+<B><FONT SIZE=2><P><A NAME="Widget"></A>widget</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>An interface component, such as a scroll bar, menu, or button on a user interface.</FONT></TD>
+<FONT SIZE=2><P>An interface component, such as a scroll bar, menu, or button on a user interface.  Most MEDM objects are widgets and are children of the drawing area of the display.  The others are drawn on the drawing area of the display.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="XtIntrinsics"></A>Xt Intrinsics</B></FONT></TD>
@@ -631,13 +1769,15 @@ Medm.colorS.geometry: -5-5</PRE>
 <FONT SIZE=2><P>A basic set of routines for building and using </FONT><A HREF="#Widget"><FONT SIZE=2>widgets</FONT></A><FONT SIZE=2>.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
-<B><FONT SIZE=2><P>X Windows</B></FONT></TD>
+<B><FONT SIZE=2><P><A NAME="XWindows"></A>X Windows</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
 <FONT SIZE=2><P>A network-based, graphics windowing system for workstations. It was developed by MIT and has become an industry standard.</FONT></TD>
 </TR>
 </TABLE>
 
 <FONT SIZE=2><P>&nbsp;</P>
-<P><ADDRESS>Modified May 9, 1997<P>
+</FONT><B><FONT SIZE=4><P><A NAME="TechSupport"></A>Technical Support</P>
+</B></FONT><FONT SIZE=2><P>&#9;If you have problems, comments, or questions about MEDM you can send them to </FONT><A HREF="mailto:evans@aps.anl.gov"><FONT SIZE=2>evans@aps.anl.gov</FONT></A><FONT SIZE=2>.  If you wish to report a bug, it is essential that you send enough information for the bug to be reproduced.  It would be helpful to include the MEDM version number, how MEDM was started, the circumstances in which the problem occurs, and a list of steps to duplicate the problem.  A copy of the ADL file or how it can be found is usually helpful.</P>
+<P><ADDRESS>Modified October 2, 1997<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
