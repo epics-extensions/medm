@@ -369,14 +369,19 @@ static void textUpdateDraw(XtPointer cd)
 		    localCvtLongToHexString((long)value, textField);
 		    break;
 		case SEXAGESIMAL:
-  		    medmLocalCvtDoubleToSexaStr(value,textField, precision,0.0, 0.0, &status);   
+  		    medmLocalCvtDoubleToSexaStr(value,textField,precision,
+		      0.0, 0.0, &status);
 		    break;
+#if 0
                 case SEXAGESIMAL_HMS:
-                    medmLocalCvtDoubleToSexaStr(value*12.0/M_PI,textField,precision,0.0,0.0,&status);
+                    medmLocalCvtDoubleToSexaStr(value*12.0/M_PI,textField,precision,
+		      0.0,0.0,&status);
                     break;
                 case SEXAGESIMAL_DMS:
-                    medmLocalCvtDoubleToSexaStr(value*180.0/M_PI,textField,precision,0.0,0.0,&status);
+                    medmLocalCvtDoubleToSexaStr(value*180.0/M_PI,textField,precision,
+		      0.0,0.0,&status);
                     break;
+#endif
 		case OCTAL:
 		    cvtLongToOctalString((long)value, textField);
 		    break;
