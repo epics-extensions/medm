@@ -164,7 +164,8 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	break;
     default :
 	medmPostMsg(1,"valueToString:\n");
-	medmPrintf(0,"  Name: %s\n",pte->dlElement->structure.textEntry->control.ctrl);
+	medmPrintf(0,"  Name: %s\n",
+	  pte->dlElement->structure.textEntry->control.ctrl);
 	medmPrintf(0,"  Unknown Data Type\n");
 	return "Error!";
     }
@@ -177,10 +178,13 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	break;
     case MEDM_DECIMAL:
 	cvtDoubleToString(value,textField,precision);
+#if 0
+      /* KE: Don't do this, it can overflow the stack for large numbers */
       /* Could be an exponential */
 	if(strchr(textField,'e')) {
 	    localCvtDoubleToString(value,textField,precision);
 	}
+#endif	
 	break;
     case EXPONENTIAL:
 	cvtDoubleToExpString(value,textField,precision);

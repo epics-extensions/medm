@@ -303,10 +303,13 @@ static void textUpdateDraw(XtPointer cd)
 		    break;
 		case MEDM_DECIMAL:
 		    cvtDoubleToString(value,textField,precision);
+#if 0
+		  /* KE: Don't do this, it can overflow the stack for large numbers */
 		  /* Could be an exponential */
 		    if(strchr(textField,'e')) {
 			localCvtDoubleToString((double)value,textField,precision);
 		    }
+#endif		    
 		    break;
 		case EXPONENTIAL:
 #if 0
