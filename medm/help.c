@@ -262,6 +262,7 @@ void errMsgDlgCreateDlg(Boolean raise)
 	return;
     }
 
+    if (mainShell == NULL) return;
     errMsgS = XtVaCreatePopupShell("errorMsgS",
 #if 0
     /* KE: Gets iconized this way */
