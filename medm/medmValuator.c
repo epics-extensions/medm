@@ -1012,7 +1012,7 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 	break;
 
     case XmCR_HELP:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#Slider");
+	callBrowser(MEDM_HELP_PATH"#Slider");
 	break;
     }
 }

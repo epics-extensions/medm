@@ -2918,7 +2918,7 @@ static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     switch(buttonNumber) {
     case HELP_RESOURCE_PALETTE_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ResourcePalette");
+	callBrowser(MEDM_HELP_PATH"#ResourcePalette");
 	break;
     }
 }

@@ -121,7 +121,7 @@ void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     switch (helpIndex) {
     case HELP_MAIN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#InitialLocations");
+	callBrowser(MEDM_HELP_PATH"#InitialLocations");
 	break;
     }
 }
@@ -251,7 +251,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	}
 	break;
     case ERR_MSG_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#MessageWindow");
+	callBrowser(MEDM_HELP_PATH"#MessageWindow");
 	break;
     }
 }

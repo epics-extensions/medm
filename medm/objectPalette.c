@@ -480,10 +480,10 @@ static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     switch(buttonNumber) {
     case HELP_OBJECT_PALETTE_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectPalette");
+	callBrowser(MEDM_HELP_PATH"#ObjectPalette");
 	break;
     case HELP_OBJECT_OBJECTS_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectIndex");
+	callBrowser(MEDM_HELP_PATH"#ObjectIndex");
 	break;
     }
 }

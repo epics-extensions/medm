@@ -1,5 +1,8 @@
 # Makefile.Unix for MEDM
 
+# MEDM now uses Host-type builds (Makefile.Host).  This file remains
+# for backward compatibility, but may be out of date.
+
 EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
@@ -129,13 +132,6 @@ else
   USR_LDLIBS +=  -lca -lCom -lXm -lXt -lX11 -lXext -lXmu
   SRCS.c += ../medmCA.c
   OBJS += medmCA.o
-endif
-
-# Define the URL that implements help
-ifdef MEDM_HELP_PATH
-   USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
-else
-   USR_CFLAGS += -DMEDM_HELP_PATH="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM\""
 endif
 
 DEPLIBS += $(INSTALL_LIB)/libPrintUtils.a

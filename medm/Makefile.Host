@@ -110,13 +110,6 @@ ifdef WIN32
   USR_LDFLAGS += /SUBSYSTEM:WINDOWS
 endif
 
-# Define the URL that implements help
-ifdef MEDM_HELP_PATH
-  USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
-else
-  USR_CFLAGS += -DMEDM_HELP_PATH="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM\""
-endif
-
 PROD = medm
 
 USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)

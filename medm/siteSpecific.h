@@ -57,6 +57,18 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 #define BAR_DOUBLE_BUFFER
 #endif
 
+/*** Help path ***/
+
+/* MEDM help uses Netscape to display MEDM.html.  If you want to use a
+  local URL for MEDM help, define it here.  The default points to the
+  APS web site.  The version there is updated regularly to reflect the
+  latest changes in MEDM.  Some of these changes may not be in this
+  version.  The MEDM.html that goes with this version is in the help
+  subdirectory to this directory. */
+
+#define MEDM_HELP_PATH \
+"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM/MEDM.html"
+
 /*** Colormap specifications ***/
 
 /* The RGB values in the default display colormap should be

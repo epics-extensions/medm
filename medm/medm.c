@@ -1185,7 +1185,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	XtUnmanageChild(w);
 	break;
     case GRID_HELP:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#Grid");
+	callBrowser(MEDM_HELP_PATH"#Grid");
 	break;
     }
 }
@@ -2337,22 +2337,22 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 /* 	} */
 /* 	break; */
     case HELP_OVERVIEW_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#Overview");
+	callBrowser(MEDM_HELP_PATH"#Overview");
 	break;
     case HELP_CONTENTS_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#Contents");
+	callBrowser(MEDM_HELP_PATH"#Contents");
 	break;
     case HELP_OBJECTS_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectIndex");
+	callBrowser(MEDM_HELP_PATH"#ObjectIndex");
 	break;
     case HELP_EDIT_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#Editing");
+	callBrowser(MEDM_HELP_PATH"#Editing");
 	break;
     case HELP_NEW_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#NewFeatures");
+	callBrowser(MEDM_HELP_PATH"#NewFeatures");
 	break;
     case HELP_TECH_SUPPORT_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#TechSupport");
+	callBrowser(MEDM_HELP_PATH"#TechSupport");
 	break;
     case HELP_ON_HELP_BTN:
     {

@@ -4058,7 +4058,7 @@ static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	XtPopdown(pvInfoS);
 	break;
     case  PV_INFO_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#PVInfoDialogBox");
+	callBrowser(MEDM_HELP_PATH"#PVInfoDialogBox");
 	break;
     }
 }
@@ -4808,7 +4808,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	XtPopdown(pvLimitsS);
 	return;
     case  PV_LIMITS_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#PVLimitsDialogBox");
+	callBrowser(MEDM_HELP_PATH"#PVLimitsDialogBox");
 	return;
     }
 
@@ -5165,7 +5165,7 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 	refreshDisplayListDlg();
 	break;
     case DISPLAY_LIST_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#DisplayListDialogBox");
+	callBrowser(MEDM_HELP_PATH"#DisplayListDialogBox");
 	break;
     }
 }

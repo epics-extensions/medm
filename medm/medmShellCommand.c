@@ -488,7 +488,7 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 	XtUnmanageChild(displayInfo->shellCommandPromptD);
 	break;
     case XmCR_HELP:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ShellCommand");
+	callBrowser(MEDM_HELP_PATH"#ShellCommand");
 	break;
     }
 }
