@@ -213,6 +213,9 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_REFRESH_ID:
 	refreshDisplay(displayInfo);
 	break;
+    case EXECUTE_POPUP_MENU_RETRY_ID:
+	retryConnections();
+	break;
 #if DEBUG_EXECUTE_MENU
     case EXECUTE_POPUP_MENU_EXECUTE_ID:
     {

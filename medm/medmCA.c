@@ -23,6 +23,11 @@
 #define DEBUG_ERASE 0
 #define DEBUG_CONNECTION 0
 #define DEBUG_TIMESTAMP 0
+#define DEBUG_RETRY 0
+
+/* Keep in mind the interface does not respond for this time and that
+   most of the search requests are at the beginning of the sequence */
+#define RETRY_TIMEOUT 1.0
 
 #define NOT_AVAILABLE "Not available"
 #define PVINFO_TIMEOUT 60000     /* ms */
@@ -103,50 +108,6 @@ void caTaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount)
     return;
 }
 
-static void medmCAExceptionHandlerCb(struct exception_handler_args args)
-{
-#define MAX_EXCEPTIONS 25    
-    static int nexceptions=0;
-    static int ended=0;
-
-    if(ended) return;
-    if(nexceptions++ > MAX_EXCEPTIONS) {
-	ended=1;
-	medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
-	  "Too many exceptions [%d]\n"
-	  "No more will be handled\n"
-	  "Please fix the problem and restart MEDM\n",
-	  MAX_EXCEPTIONS);
-	ca_add_exception_event(NULL, NULL);
-	return;
-    }
-    
-    medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
-      "  Channel Name: %s\n"
-      "  Native Type: %s\n"
-      "  Native Count: %hu\n"
-      "  Access: %s%s\n"
-      "  IOC: %s\n"
-      "  Message: %s\n"
-      "  Context: %s\n"
-      "  Requested Type: %s\n"
-      "  Requested Count: %ld\n"
-      "  Source File: %s\n"
-      "  Line number: %u\n",
-      args.chid?ca_name(args.chid):"Unavailable",
-      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
-      args.chid?ca_element_count(args.chid):0,
-      args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
-      args.chid?(ca_write_access(args.chid)?"W":""):"",
-      args.chid?ca_host_name(args.chid):"Unavailable",
-      ca_message(args.stat)?ca_message(args.stat):"Unavailable",
-      args.ctx?args.ctx:"Unavailable",
-      dbf_type_to_text(args.type),
-      args.count,
-      args.pFile?args.pFile:"Unavailable",
-      args.pFile?args.lineNo:0);
-}
-
 static int caTaskInit()
 {
     caTask.freeListSize = CA_PAGE_SIZE;
@@ -206,7 +167,134 @@ static Channel *getChannelFromRecord(Record *pRecord)
       [pRecord->caId % CA_PAGE_SIZE]);
     return pCh;
 }
-  
+
+/* Find an unconnected PV and attempt to connect to it.  That should
+ * restart the searches for all other unresolved PVs. */
+void retryConnections(void)
+{
+    int i,j;
+    const char *pvname=NULL;
+    chid retryChid;
+    int status;
+    
+#if DEBUG_RETRY
+    print("retryConnections:\n");
+    print(" freeListSize=%d freeListCount=%d\n",
+      caTask.freeListSize,caTask.freeListCount);
+    print(" pageSize=%d pageCount=%d\n",
+      caTask.pageSize,caTask.pageCount);
+    print(" nextpage=%d nextFree=%d\n",
+      caTask.nextPage,caTask.nextFree);
+    print(" channelCount=%d channelConnected=%d\n",
+      caTask.channelCount,caTask.channelConnected);
+    if(caTask.nextPage != caTask.pageCount-1) {
+	print(" caTask.nextPage != caTask.pageCount-1\n");
+    }
+#else
+  // Check if all channels are connected */
+    if(caTask.channelCount == caTask.channelConnected) {
+	medmPostMsg(1,"retryConnections: All channels are connected\n");
+	XBell(display, 50);
+	return;
+    }
+#endif
+
+  /* Find an unconnected PV */
+    for(i=0; i < caTask.pageCount; i++) {
+	int jmax=(i == caTask.nextPage)?caTask.nextFree:CA_PAGE_SIZE;
+	for(j=0; j < jmax; j++) {
+	    Channel *pCh=&caTask.pages[i][j];
+	    if(pCh->chid && ca_state(pCh->chid) != cs_conn) {
+		pvname=ca_name(pCh->chid);
+		break;
+	    }
+	}
+	if(pvname) break;
+    }
+#if DEBUG_RETRY
+    print(" Found %s\n",pvname?pvname:"Not found");
+    if(!pvname) return;
+#else
+    if(!pvname) {
+	medmPostMsg(1,"retryConnections: Failed to find unconnected PV\n");
+	return;
+    }
+#endif
+
+  /* Search */
+    status=ca_search_and_connect(pvname,&retryChid,NULL,NULL);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"retryConnections: ca_search failed for %s: %s\n",
+	  pvname, ca_message(status));
+    }
+    
+  /* Wait.  The searches will only continue for this time.  Keep the
+   * time short as the interface is frozen, and most of the searches
+   * occur at the start of the sequence.  Testing indicated:
+   *
+   * RETRY_TIMEOUT Searches
+   *      30          15
+   *       5          10
+   *       3           9
+   *       2           9
+   *       1           8
+   *
+   * but this may vary owing to tuning and may change with new releases.
+   */
+    ca_pend_io(RETRY_TIMEOUT);
+    
+  /* Clear the channel */
+    status = ca_clear_channel(retryChid);
+    if(status != ECA_NORMAL) {
+	medmPostMsg(1,"retryConnections: ca_clear_channel failed for %s: %s\n",
+	  pvname, ca_message(status));
+    }
+}
+
+static void medmCAExceptionHandlerCb(struct exception_handler_args args)
+{
+#define MAX_EXCEPTIONS 25    
+    static int nexceptions=0;
+    static int ended=0;
+
+    if(ended) return;
+    if(nexceptions++ > MAX_EXCEPTIONS) {
+	ended=1;
+	medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
+	  "Too many exceptions [%d]\n"
+	  "No more will be handled\n"
+	  "Please fix the problem and restart MEDM\n",
+	  MAX_EXCEPTIONS);
+	ca_add_exception_event(NULL, NULL);
+	return;
+    }
+    
+    medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
+      "  Channel Name: %s\n"
+      "  Native Type: %s\n"
+      "  Native Count: %hu\n"
+      "  Access: %s%s\n"
+      "  IOC: %s\n"
+      "  Message: %s\n"
+      "  Context: %s\n"
+      "  Requested Type: %s\n"
+      "  Requested Count: %ld\n"
+      "  Source File: %s\n"
+      "  Line number: %u\n",
+      args.chid?ca_name(args.chid):"Unavailable",
+      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+      args.chid?ca_element_count(args.chid):0,
+      args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
+      args.chid?(ca_write_access(args.chid)?"W":""):"",
+      args.chid?ca_host_name(args.chid):"Unavailable",
+      ca_message(args.stat)?ca_message(args.stat):"Unavailable",
+      args.ctx?args.ctx:"Unavailable",
+      dbf_type_to_text(args.type),
+      args.count,
+      args.pFile?args.pFile:"Unavailable",
+      args.pFile?args.lineNo:0);
+}
+
 int medmCAInitialize()
 {
     int status;
@@ -245,7 +333,7 @@ void medmCATerminate()
 	ca_pend_event(20.0*CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    printf("medmCATerminate: time used by ca_pend_event = %8.1f\n",t);
+	    print("medmCATerminate: time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -363,12 +451,12 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
     }
 
 #if DEBUG_FD_REGISTRATION
-    printf("\ndmRegisterCA: fd=%d opened=%d ConnectionNumber=%d "
+    print("\ndmRegisterCA: fd=%d opened=%d ConnectionNumber=%d "
       "numInps = %d\n\t",
       fd,opened,ConnectionNumber(display),numInps);
     for (i = 0; i < maxInps; i++)
-      printf("%d ",inp[i].fd);
-    printf("\n");
+      print("%d ",inp[i].fd);
+    print("\n");
 #endif
 }
 
@@ -385,7 +473,7 @@ static void medmProcessCA(XtPointer cd, int *source , XtInputId *id)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    printf("medmProcessCA: time used by ca_pend_event = %8.1f\n",t);
+	    print("medmProcessCA: time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -482,7 +570,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
                  want to use it or clear it later. */
 #if DEBUG_CONNECTION
 		if(!pCh->evid) {
-		    printf("medmConnectEventCb: ca_add_array_event: \n"
+		    print("medmConnectEventCb: ca_add_array_event: \n"
 		      "  status[%d] != ECA_NORMAL and pCh->evid != NULL\n",
 		      status);
 		}
@@ -1209,11 +1297,18 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	if(ca_state(chId) != cs_conn || !ca_read_access(chId))
 	  continue;
 	
-      /* Search for the DESC */
+      /* Construct the DESC name */
 	strcpy(descName,ca_name(chId));
 	pDot = strchr(descName,'.');
-	if(pDot) strcpy(pDot,".DESC");
-	else strcat(descName,".DESC");
+	if(pDot) {
+	  /* Assume it is a name with a field and replace the field
+	   * with DESC */
+	    strcpy(pDot,".DESC");
+	} else {
+	  /* Append .DESC */
+	    strcat(descName,".DESC");
+	}
+      /* Search for the DESC */
 	status = ca_search(descName, &pvInfo[i].descChid);
 	if(status == ECA_NORMAL) {
 	    pvInfo[i].descOk = True;
@@ -1230,7 +1325,8 @@ void popupPvInfo(DisplayInfo *displayInfo)
     status=ca_pend_io(CA_PEND_IO_TIME);
     if(status != ECA_NORMAL) {
 	medmPostMsg(1,"popupPvInfo: Waited %g seconds.  "
-	  "Did not find the DESC information.\n", CA_PEND_IO_TIME);
+	  "Did not find the DESC information (%s).\n",
+	  CA_PEND_IO_TIME, descName);
     }
     
   /* Loop over the records and do the gets */

@@ -280,7 +280,8 @@ void medmDestoryRecord(Record *pr);
 void medmSendDouble(Record *pr, double data);
 void medmSendLong(Record *pr, long data);
 void medmSendString(Record *pr, char *data);
-void medmSendCharacterArray(Record *pr, char *dtat, unsigned long size);
+void medmSendCharacterArray(Record *pr, char *data, unsigned long size);
+void retryConnections(void);
 
 /* medmCartesianPlot.c */
 void cpEnterCellCallback(Widget w, XtPointer, XtPointer);

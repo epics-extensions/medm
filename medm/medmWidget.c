@@ -258,9 +258,13 @@ void medmInit(char *displayFont)
     executePopupMenuButtons[7] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_REFRESH);
 
-  /* Note that the Execute Menu is a cascade button */
-    executePopupMenuButtonType[8] = XmCASCADEBUTTON;
+    executePopupMenuButtonType[8] = XmPUSHBUTTON;
     executePopupMenuButtons[8] =
+      XmStringCreateLocalized(EXECUTE_POPUP_MENU_RETRY);
+
+  /* Note that the Execute Menu is a cascade button */
+    executePopupMenuButtonType[9] = XmCASCADEBUTTON;
+    executePopupMenuButtons[9] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
   /* Load font and fontList tables (but only once) */
@@ -362,11 +366,14 @@ int initMedmWidget() {
  *   It would need to do dmRemoveDisplayInfo if it did
  *   It probably is not necessary */
 int destroyMedmWidget() {
+    int i;
+    
     if(displayInfoListHead) free((char *)displayInfoListHead);
     if(displayInfoSaveListHead) free((char *)displayInfoSaveListHead);
     if(dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
-    if(executePopupMenuButtons[0]) XmStringFree(executePopupMenuButtons[0]);
-    if(executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
+    for(i=0; i < NUM_EXECUTE_POPUP_ENTRIES; i++) {
+	if(executePopupMenuButtons[i]) XmStringFree(executePopupMenuButtons[i]);
+    }
     if(highlightGC) XFreeGC(display,highlightGC);
     if(clipboard) {
 	clearDlDisplayList(NULL, clipboard);

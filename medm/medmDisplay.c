@@ -449,7 +449,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
     char *execPath = NULL;
     
   /* Get MEDM_EXECUTE_LIST only the first time to speed up creating
-   *   successive displays) */
+   * successive displays) */
     if(first) {
 	first = 0;
 	execPath = getenv("MEDM_EXEC_LIST");
