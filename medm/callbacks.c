@@ -102,16 +102,12 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
-    char *cmd, *name, *title;
-    char command[1024];     /* Danger: Fixed length */
-    Record **records;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
+    char *cmd;
     int nargs;
     Arg args[1];
     XtPointer data;
     DisplayInfo *displayInfo;
-    char *pamp;
-    int i, j, ic, len, clen, count;
 
   /* Button's parent (menuPane) has the displayInfo pointer */
     nargs=0;
@@ -119,87 +115,9 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     XtGetValues(XtParent(w),args,nargs);
     displayInfo = (DisplayInfo *)data;
 
-  /* Parse command */
+  /* Parse and execute command */
     cmd = execMenuCommandList[buttonNumber];
-    clen = strlen(cmd);
-    for(i=0, ic=0; i < clen; i++) {
-	if(ic >= 1024) {
-	    medmPostMsg("executeMenuCallback: Command is too long\n");
-	    return;
-	}
-	if(cmd[i] != '&') {
-	    *(command+ic) = *(cmd+i); ic++;
-	} else {
-	    switch(cmd[i+1]) {
-	    case 'P':
-	      /* Get the names */
-		records = getPvInfoFromDisplay(displayInfo, &count);
-		if(!records) return;   /* (Error messages have been sent) */
-		
-	      /* Insert the names */
-		for(j=0; j < count; j++) {
-		    name = records[j]->name;
-		    if(name) {
-#if DEBUG_EXEC_MENU		
-			printf("%2d |%s|\n",j,name);
-#endif			
-			len = strlen(name);
-			if(ic + len >= 1024) {
-			    medmPostMsg("executeMenuCallback: Command is too long\n");
-			    free(records);
-			    return;
-			}
-			strcpy(command+ic,name);
-			ic+=len;
-		      /* Put in a space if required */
-			if(j < count-1) {
-			    if(ic + 1 >= 1024) {
-				medmPostMsg("executeMenuCallback: Command is too long\n");
-				free(records);
-				return;
-			    }
-			    strcpy(command+ic," ");
-			    ic++;
-			}
-		    }
-		}
-		free(records);
-		i++;
-		break;
-	    case 'A':
-		name = displayInfo->dlFile->name;
-		len = strlen(name);
-		if(ic + len >= 1024) {
-		    medmPostMsg("executeMenuCallback: Command is too long\n");
-		    return;
-		}
-		strcpy(command+ic,name);
-		i++; ic+=len;
-		break;
-	    case 'T':
-		title = name = displayInfo->dlFile->name;
-		while (*name != '\0')
-		  if (*name++ == '/') title = name;
-		len = strlen(title);
-		if(ic + len >= 1024) {
-		    medmPostMsg("executeMenuCallback: Command is too long\n");
-		    return;
-		}
-		strcpy(command+ic,title);
-		i++; ic+=len;
-		break;
-	    default:
-		*(command+ic) = *(cmd+i); ic++;
-		break;
-	    }
-	}
-    }
-    command[ic]='\0';
-#if DEBUG_EXEC_MENU		
-    if(command && *command) printf("%s\n",command);
-#endif    
-    if(command && *command) system(command);
-    XBell(display,50);
+    parseAndExecCommand(displayInfo,cmd);
 }
 
 void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)

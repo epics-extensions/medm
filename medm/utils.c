@@ -61,6 +61,7 @@ y*/
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
 #define DEBUG_PVINFO 0
+#define DEBUG_COMMAND 0
 
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
@@ -4355,6 +4356,118 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     }
     return retRecords;
 #undef MAX_COUNT
+}
+
+void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
+{
+    char *name, *title;
+    char command[1024];     /* Danger: Fixed length */
+    Record **records;
+    char *pamp;
+    int i, j, ic, len, clen, count;
+
+  /* Parse the command */
+    clen = strlen(cmd);
+    for(i=0, ic=0; i < clen; i++) {
+	if(ic >= 1024) {
+	    medmPostMsg("parseAndExecCommand: Command is too long\n");
+	    return;
+	}
+	if(cmd[i] != '&') {
+	    *(command+ic) = *(cmd+i); ic++;
+	} else {
+	    switch(cmd[i+1]) {
+	    case 'P':
+	      /* Get the names */
+		records = getPvInfoFromDisplay(displayInfo, &count);
+		if(!records) return;   /* (Error messages have been sent) */
+		
+	      /* Insert the names */
+		for(j=0; j < count; j++) {
+		    name = records[j]->name;
+		    if(name) {
+#if DEBUG_COMMAND
+			printf("%2d |%s|\n",j,name);
+#endif			
+			len = strlen(name);
+			if(ic + len >= 1024) {
+			    medmPostMsg("executeMenuCallback: Command is too long\n");
+			    free(records);
+			    return;
+			}
+			strcpy(command+ic,name);
+			ic+=len;
+		      /* Put in a space if required */
+			if(j < count-1) {
+			    if(ic + 1 >= 1024) {
+				medmPostMsg("executeMenuCallback: Command is too long\n");
+				free(records);
+				return;
+			    }
+			    strcpy(command+ic," ");
+			    ic++;
+			}
+		    }
+		}
+		free(records);
+		i++;
+		break;
+	    case 'A':
+		name = displayInfo->dlFile->name;
+		len = strlen(name);
+		if(ic + len >= 1024) {
+		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    return;
+		}
+		strcpy(command+ic,name);
+		i++; ic+=len;
+		break;
+	    case 'T':
+		title = name = displayInfo->dlFile->name;
+		while (*name != '\0')
+		  if (*name++ == '/') title = name;
+		len = strlen(title);
+		if(ic + len >= 1024) {
+		    medmPostMsg("executeMenuCallback: Command is too long\n");
+		    return;
+		}
+		strcpy(command+ic,title);
+		i++; ic+=len;
+		break;
+	    case '?':
+	      /* Create shell command prompt dialog if necessary */
+		if (displayInfo->shellCommandPromptD == (Widget)NULL) {
+		    displayInfo->shellCommandPromptD = createShellCommandPromptD(
+		      displayInfo->shell);
+		}
+		strcpy(command+ic,"&");
+	      /* Set the command in the dialog */
+		{
+		    XmString xmString;
+
+		    xmString = XmStringCreateSimple(command);
+		    XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
+		      xmString,NULL);
+		    XmStringFree(xmString);
+		    
+		  /* Popup the prompt dialog, callback will do the rest */
+		    XtManageChild(displayInfo->shellCommandPromptD);
+		    return;
+		}
+	    default:
+		*(command+ic) = *(cmd+i); ic++;
+		break;
+	    }
+	}
+    }
+    command[ic]='\0';
+#if DEBUG_COMMAND
+    if(command && *command) printf("\nparseAndExecCommand: %s\n",command);
+#endif    
+    if(command && *command) system(command);
+#if 0    
+    XBell(display,50);
+#endif    
 }
 
 /* Debugging routines */

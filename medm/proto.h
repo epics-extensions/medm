@@ -499,6 +499,7 @@ void setTimeValues(void);
 void popupPvInfo(DisplayInfo *displayInfo);
 void createPvInfoDlg(void);
 Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
+void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 /* Debugging */
 void dumpCartesianPlot(void);
 void printEventMasks(Display *display, Window win, char *string);
@@ -614,5 +615,8 @@ void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);
 void plotcomAttributeInit(DlPlotcom *plotcom);
 void penAttributeInit(DlPen *pen);
 void traceAttributeInit(DlTrace *trace);
+
+/* medmShellCommand.c */
+Widget createShellCommandPromptD(Widget parent);
 
 #endif  /* __PROTO_H__ */

@@ -417,14 +417,10 @@ void writeDlShellCommand(
 }
 
 #ifdef __cplusplus
-static void shellCommandCallback(
-  Widget,
-  XtPointer client_data,
+static void shellCommandCallback(Widget, XtPointer client_data,
   XtPointer cbs)
 #else
-static void shellCommandCallback(
-  Widget w,
-  XtPointer client_data,
+static void shellCommandCallback(Widget w, XtPointer client_data,
   XtPointer cbs)
 #endif
 
@@ -432,37 +428,41 @@ static void shellCommandCallback(
     char *command;
     DisplayInfo *displayInfo;
     char processedCommand[2*MAX_TOKEN_LENGTH];
-    XmSelectionBoxCallbackStruct *call_data = (XmSelectionBoxCallbackStruct *) cbs
-      ;
+    XmSelectionBoxCallbackStruct *call_data =
+      (XmSelectionBoxCallbackStruct *) cbs;
 
     Widget realParent = (Widget)client_data;
-
     displayInfo = dmGetDisplayInfoFromWidget(realParent);
 
-/* CANCEL */
-    if (call_data->reason == XmCR_CANCEL) {
+    switch(call_data->reason) {
+    case XmCR_CANCEL:
 	XtUnmanageChild(displayInfo->shellCommandPromptD);
-	return;
+	break;
+    case XmCR_OK:
+	XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&command);
+      /* (MDA) NB: system() blocks! need to background (&) to not block */
+      /* KE: User has to do this as it is coded */
+	if (command && *command) {
+#if 0
+	  /* KE: Isn't necessary */
+	    performMacroSubstitutions(displayInfo,command,processedCommand,
+	      2*MAX_TOKEN_LENGTH);
+	    if (strlen(processedCommand) > (size_t) 0)
+	      parseAndExecCommand(displayInfo,processedCommand);
+#else
+	    parseAndExecCommand(displayInfo,command);
+#endif	    
+	    XtFree(command);
+	}
+	XtUnmanageChild(displayInfo->shellCommandPromptD);
+	break;
+    case XmCR_HELP:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#ShellCommand");
+	break;
     }
-
-/* OK */
-    XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&command);
-
-  /* (MDA) NB: system() blocks! need to background (&) to not block */
-
-    if (command != NULL) {
-	performMacroSubstitutions(displayInfo,command,processedCommand,
-          2*MAX_TOKEN_LENGTH);
-	if (strlen(processedCommand) > (size_t) 0) system(processedCommand);
-
-	XtFree(command);
-    }
-    XtUnmanageChild(displayInfo->shellCommandPromptD);
-
 }
 
-static Widget createShellCommandPromptD(
-  Widget parent)
+Widget createShellCommandPromptD(Widget parent)
 {
     Arg args[6];
     int n;
@@ -482,6 +482,7 @@ static Widget createShellCommandPromptD(
 
     XtAddCallback(prompt, XmNcancelCallback,shellCommandCallback,parent);
     XtAddCallback(prompt,XmNokCallback,shellCommandCallback,parent);
+    XtAddCallback(prompt,XmNhelpCallback,shellCommandCallback,parent);
     return (prompt);
 }
 
@@ -497,105 +498,71 @@ void dmExecuteShellCommand(
   XmPushButtonCallbackStruct *call_data)
 #endif
 {
-    char *promptPosition;
-    int cmdLength, argsLength;
-    int shellCommandStringPosition;
-    char shellCommand[2*MAX_TOKEN_LENGTH],
-      processedShellCommand[2*MAX_TOKEN_LENGTH];
     XmString xmString;
-#if 0
-    extern char *strchr();
-#endif
     DisplayInfo *displayInfo;
     XtPointer userData;
-    Arg args[4];
+    int cmdLength, argsLength;
+    char shellCommand[2*MAX_TOKEN_LENGTH];
+    char processedShellCommand[2*MAX_TOKEN_LENGTH];
+    char *promptPosition;
 
-
-/* the displayInfo has been registered as userData on each shell command
- *    push button */
+  /* Return if command is empty */
+    cmdLength = strlen(commandEntry->command);
+    if(cmdLength < 0) return;
+    argsLength = strlen(commandEntry->args);
+    
+  /* Get the displayInfo from the userData */
     XtVaGetValues(w,XmNuserData,&userData,NULL);
     displayInfo = (DisplayInfo *)userData;
-
     currentDisplayInfo = displayInfo;
+    
+  /* Copy the command to shellCommand */
+    strcpy(shellCommand,commandEntry->command);
 
-/*
- * this is really an ugly bit of code which will have to be cleaned
- *  up when the requirements are better defined!!
- */
-    cmdLength = strlen(commandEntry->command);
-    argsLength = strlen(commandEntry->args);
-    promptPosition = NULL;
-    shellCommandStringPosition = 0;
-    shellCommand[0] = '\0';
-
-
-/* create shell command prompt dialog */
-    if (displayInfo->shellCommandPromptD == (Widget)NULL) {
-	displayInfo->shellCommandPromptD = createShellCommandPromptD(
-	  displayInfo->shell);
+  /* Concatenate the arguments */
+    if(argsLength > 0) {
+	strcat(shellCommand," ");
+	strcat(shellCommand,commandEntry->args);
     }
-
-
-  /* command */
-    if (cmdLength > 0) {
-	strcpy(shellCommand,commandEntry->command);
-	shellCommandStringPosition = cmdLength;
-	shellCommand[shellCommandStringPosition++] = ' ';
-	shellCommand[shellCommandStringPosition] = '\0';
-      /* also support ? as first char. in command field for arbitrary cmd. */
-	if (commandEntry->command[0] == '?') {
-	    xmString = XmStringCreateSimple("");
-	    XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,xmString,
-	      NULL);
-	    XmStringFree(xmString);
-	    XtManageChild(displayInfo->shellCommandPromptD);
-	    return;
-	}
-    }
-
-
-  /* also have some command arguments, see if ? for prompted input */
-    if (cmdLength > 0 && argsLength > 0) {
-
-	promptPosition = strchr(commandEntry->args,SHELL_CMD_PROMPT_CHAR);
-
-	if (promptPosition == NULL) {
-
-	  /* no  prompt character found */
-	    strcpy(&(shellCommand[shellCommandStringPosition]),commandEntry->args);
-	  /* (MDA) NB: system() blocks! need to background (&) to not block */
-	    performMacroSubstitutions(displayInfo,
-	      shellCommand,processedShellCommand,
-	      2*MAX_TOKEN_LENGTH);
-	    if (strlen(processedShellCommand) > (size_t) 0) system(processedShellCommand);
-	    shellCommand[0] = '\0';
-
-	} else {
-
-	  /* a prompt character found - handle it by replacing with NULL and copying */
-	    strcpy(&(shellCommand[shellCommandStringPosition]),commandEntry->args);
-	    promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
-	    if (promptPosition != NULL) *promptPosition = '\0';
-
-	  /* now popup the prompt dialog and wait for input */
-	    xmString = XmStringCreateSimple(shellCommand);
-	    XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,xmString,
-	      NULL);
-	    XmStringFree(xmString);
-	    XtManageChild(displayInfo->shellCommandPromptD);
-	}
-
-    } else if (cmdLength > 0 && argsLength == 0) {
+    
+  /* Check for a prompt char */
+    promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
+    if (promptPosition == NULL) {
+      /* No  prompt character found */
       /* (MDA) NB: system() blocks! need to background (&) to not block */
+      /* KE: User has to do this as it is coded */
+#if 0	
+      /* KE: Isn't necessary */
 	performMacroSubstitutions(displayInfo,
-	  shellCommand,processedShellCommand,
-	  2*MAX_TOKEN_LENGTH);
-	if (strlen(processedShellCommand) > (size_t) 0) system(processedShellCommand
-	    );
-	shellCommand[0] = '\0';
+	  shellCommand,processedShellCommand,2*MAX_TOKEN_LENGTH);
+	if (strlen(processedShellCommand) > (size_t) 0)
+	  parseAndExecCommand(displayInfo,processedShellCommand);
+#else	
+	  parseAndExecCommand(displayInfo,shellCommand);
+#endif	
+    } else {
+      /* A prompt character found, replace it with NULL */
+	promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
+	*promptPosition = '\0';
 
+      /* Add & to remind to run in background */
+	strcat(shellCommand,"&");
+
+      /* Create shell command prompt dialog if necessary */
+	if (displayInfo->shellCommandPromptD == (Widget)NULL) {
+	    displayInfo->shellCommandPromptD = createShellCommandPromptD(
+	      displayInfo->shell);
+	}
+	
+      /* Set the command in the dialog */
+	xmString = XmStringCreateSimple(shellCommand);
+	XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
+	  xmString,NULL);
+	XmStringFree(xmString);
+
+      /* Popup the prompt dialog, callback will do the rest */
+	XtManageChild(displayInfo->shellCommandPromptD);
     }
-
 }
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p) {
