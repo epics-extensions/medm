@@ -776,7 +776,9 @@ xwd2ps(argc, argv,fo)
 	exit(3);
     }
   
-    switch (win.bits_per_pixel) {  /* TEMP I don't know why this needs to be done - CAM */
+  /* KE: Changed the following because it wasn't working right for 24-bit */
+/*     switch (win.bits_per_pixel) { */  /* TEMP I don't know why this needs to be done - CAM */
+    switch (win.pixmap_depth) {     /* Necessary to get back to original CTM scaling */
     case 8:
 	fprintf(fo,"\npop pop setmatrix\n");
 	break;
