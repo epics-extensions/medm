@@ -666,7 +666,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     free((char *)RawGIF);	/* We're done with the raw data now... */
 
     if (verbose)
-      printf(stderr, "\nloadGIF: Done\n  Decompressing...");
+      printf("\nloadGIF: Done\n  Decompressing...");
 
 
 /* Allocate the X Image */
