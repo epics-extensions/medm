@@ -54,16 +54,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-/*
- * haul  MEDM bitmaps into program address space
- */
 #include "medm.h"
 
-#ifdef VMS
 #include "medmPix25.xpm"
-#else
-#include "medmPix25"
-#endif
 
 static XImage arc25, bar25, byte25, bezierCurve25, cartesianPlot25, choiceButton25,
   image25, indicator25, line25, menu25, messageButton25, meter25,

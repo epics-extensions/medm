@@ -101,13 +101,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <sys/stat.h>
 #include <errno.h>
 
-#ifdef VMS
-void vmsTrimVersionNumber (char *fileName);
-#include "icon25.xpm"
-#else
-#include "icon25"
-#endif
-
 #include <Xm/MwmUtil.h>
 #include <X11/IntrinsicP.h>
 
@@ -120,6 +113,8 @@ void vmsTrimVersionNumber (char *fileName);
 #endif
 #endif
 #endif
+
+#include "icon25.xpm"
 
 #define HOT_SPOT_WIDTH 24
 
@@ -230,6 +225,7 @@ void vmsTrimVersionNumber (char *fileName);
 /* KE: Why is it not OK to include this? */
 extern int putenv(const char *);    /* May not be defined for strict ANSI */
 #endif
+
 static void createCursors(void);
 static void createMain(void);
 static Boolean medmInitWorkProc(XtPointer cd);
@@ -250,6 +246,10 @@ Widget mainFilePDM, mainHelpPDM, mainMB;
 static Widget printerSetupDlg = 0;
 static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
+
+#ifdef VMS
+void vmsTrimVersionNumber (char *fileName);
+#endif
 
 
 #ifdef __TED__
