@@ -419,7 +419,7 @@ void errMsgDlgCreateDlg(int raise)
     XtManageChild(optionArea);
     XtManageChild(actionArea);
     XtManageChild(pane);
-    XtManageChild(errMsgS);
+    if(raise) XtManageChild(errMsgS);
 
   /* Initialize */
     if(errMsgS) {
@@ -652,7 +652,7 @@ void medmPostMsg(int priority, char *format, ...) {
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority > 1);
+    errMsgDlgCreateDlg(raiseMessageWindow && priority);
 
   /* Do timestamp */
     time(&now);
@@ -694,7 +694,7 @@ void medmPrintf(int priority, char *format, ...)
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority > 1);
+    errMsgDlgCreateDlg(raiseMessageWindow && priority);
 
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
@@ -712,12 +712,6 @@ void medmPrintf(int priority, char *format, ...)
 /* Also print to stderr */
     fprintf(stderr, medmPrintfStr);
     va_end(args);
-
-  /* Raise window */
-    if(raiseMessageWindow && priority > 0) {
-	if(errMsgS && XtIsRealized(errMsgS))
-	  XRaiseWindow(display,XtWindow(errMsgS));
-    }
 }
 
 static int saveEarlyMessage(char *msg)
