@@ -181,25 +181,25 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
 	XtSetArg(args[n],XcNbyteForeground,(Pixel)
 	  displayInfo->colormap[dlByte->monitor.clr]); n++;
-	  XtSetArg(args[n],XcNbyteBackground,(Pixel)
-	    displayInfo->colormap[dlByte->monitor.bclr]); n++;
-	    XtSetArg(args[n],XtNbackground,(Pixel)
-	      displayInfo->colormap[dlByte->monitor.bclr]); n++;
-	      XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-		displayInfo->colormap[dlByte->monitor.bclr]); n++;
-
-	      /****** Add the pointer to the ChannelAccessMonitorData structure as
-		userData to widget */
-		XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
-		localWidget = XtCreateWidget("byte",
-		  xcByteWidgetClass, displayInfo->drawingArea, args, n);
-		dlElement->widget = localWidget;
-
-	      /****** Record the widget that this structure belongs to */
-		if(displayInfo->traversalMode == DL_EDIT) {
-		    addCommonHandlers(localWidget, displayInfo);
-		    XtManageChild(localWidget);
-		}
+	XtSetArg(args[n],XcNbyteBackground,(Pixel)
+	  displayInfo->colormap[dlByte->monitor.bclr]); n++;
+	XtSetArg(args[n],XtNbackground,(Pixel)
+	  displayInfo->colormap[dlByte->monitor.bclr]); n++;
+	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
+	  displayInfo->colormap[dlByte->monitor.bclr]); n++;
+	
+      /****** Add the pointer to the ChannelAccessMonitorData structure as
+	      userData to widget */
+	XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
+	localWidget = XtCreateWidget("byte",
+	  xcByteWidgetClass, displayInfo->drawingArea, args, n);
+	dlElement->widget = localWidget;
+	
+      /****** Record the widget that this structure belongs to */
+	if(displayInfo->traversalMode == DL_EDIT) {
+	    addCommonHandlers(localWidget, displayInfo);
+	    XtManageChild(localWidget);
+	}
     } else {
 	DlObject *po = &(dlElement->structure.byte->object);
 	XtVaSetValues(dlElement->widget,
@@ -238,7 +238,6 @@ static void byteDraw(XtPointer cd) {
 	return;
     }
     
-    
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -247,7 +246,15 @@ static void byteDraw(XtPointer cd) {
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pr->value;
+#if 0
+	    val.fval = (float)pr->value;
+#else
+	  /* KE: New way */
+	  /* Use the low order 32 bits as unsigned long.  The double
+             cast does nothing but is pedantically there to show what
+             we intend.  */
+	    val.lval = (long)(unsigned long)pr->value;
+#endif	    
 	    XcBYUpdateValue(widget,&val);
 	    switch (dlByte->clrmod) {
 	    case STATIC :

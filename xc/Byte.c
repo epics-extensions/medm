@@ -482,7 +482,16 @@ static void Draw_display(Widget w, Display *display,
     segn = wb->byte.ebit - wb->byte.sbit;
     if (segn < 0) back_fg = 1;
     segn = abs(segn) + 1;
+#if 0
     dec_val = (int)wb->value.val.fval;
+#else
+  /* KE: New way */
+    if ((wb->value.datatype == XcLval) || (wb->value.datatype == XcHval)) {
+	dec_val = wb->value.val.lval;
+    } else if (wb->value.datatype == XcFval) {
+	dec_val = (int)wb->value.val.fval;
+    }
+#endif    
     XSetForeground(display, gc, XBlackPixel(display, 0));
     
   /****** Hi->Low Byte */
@@ -492,7 +501,7 @@ static void Draw_display(Widget w, Display *display,
 	    seg = ((float)wb->byte.face.height / segn);
 	    for (i=wb->byte.ebit; i < wb->byte.sbit+1; i++) {
 		j = (int)(seg * (float)(wb->byte.sbit - i));
-		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
+		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
 		    XSetForeground(display, gc, wb->byte.byte_foreground); 
 		    XFillRectangle(display, drawable, gc, wb->byte.face.x, j,
 		      wb->byte.face.x + wb->byte.face.width, ((int)seg));
@@ -508,7 +517,7 @@ static void Draw_display(Widget w, Display *display,
 	    for (i=wb->byte.ebit; i < wb->byte.sbit+1; i++) {
 		j = wb->byte.face.width - (int)(seg * (float)(i - wb->byte.ebit)) 
 		  - (int)(seg + 1.0);
-		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
+		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
 		    XSetForeground(display, gc, wb->byte.byte_foreground); 
 		    XFillRectangle(display, drawable, gc, j+1, wb->byte.face.y, 
 		      (int)seg, wb->byte.face.height);
@@ -526,7 +535,7 @@ static void Draw_display(Widget w, Display *display,
 	    seg = ((float)wb->byte.face.height / segn);
 	    for (i=wb->byte.sbit; i < wb->byte.ebit+1; i++) {
 		j = (int)(seg * (float)(i - wb->byte.sbit));
-		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
+		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
 		    XSetForeground(display, gc, wb->byte.byte_foreground);
 		    XFillRectangle(display, drawable, gc, wb->byte.face.x, j,
 		      wb->byte.face.x + wb->byte.face.width, (int)seg);
@@ -540,7 +549,7 @@ static void Draw_display(Widget w, Display *display,
 	    seg = ((float)(wb->byte.face.width + 2) / segn);
 	    for (i=wb->byte.sbit; i < wb->byte.ebit+1; i++) {
 		j = (int)(seg * (float)(i - wb->byte.sbit));
-		if ((dec_val) & ((int)(pow(2.0, (float)i)))) {
+		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
 		    XSetForeground(display, gc, wb->byte.byte_foreground); 
 		    XFillRectangle(display, drawable, gc, j, wb->byte.face.y, 
 		      (int)seg, wb->byte.face.height);

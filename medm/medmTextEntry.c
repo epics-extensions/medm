@@ -595,15 +595,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		}
 	    }
 	    break;
-	case DBF_CHAR:
-	    if(pte->dlElement->structure.textEntry->format == STRING) {
-		unsigned long len =
-		  MIN((unsigned long)pr->elementCount,
-		    (unsigned long)(strlen(textValue)+1));
-		textValue[len-1] = '\0';
-		medmSendCharacterArray(pte->record,textValue,len);
-		break;
-	    }
+	case DBF_INT:
 	case DBF_LONG:
 	  /* We assume all hex input is meant to be unsigned
 	     long even though there is no DBF_ULONG.
@@ -625,11 +617,14 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		  textValue, longValue);
 #endif		
 	    } else {
-		if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
+		if((strlen(textValue) > (size_t)2) && (textValue[0] == '0')
 		  && (textValue[1] == 'x' || textValue[1] == 'X')) {
 		    longValue = (long)strtoul(textValue,&end,16);
 		} else {
-		    value = (double)strtod(textValue,&end);
+		  /* Do not use a base of zero.  We want to prevent
+                     octal interpretation because of ambiguity
+                     problems */
+		    longValue = (long)strtoul(textValue,&end,10);
 		}
 	    }
 	    if(*end == '\0' && end != textValue) {
@@ -644,6 +639,16 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		  "OK",NULL,NULL);
 	    }
 	    break;
+	case DBF_CHAR:
+	    if(pte->dlElement->structure.textEntry->format == STRING) {
+		unsigned long len =
+		  MIN((unsigned long)pr->elementCount,
+		    (unsigned long)(strlen(textValue)+1));
+		textValue[len-1] = '\0';
+		medmSendCharacterArray(pte->record,textValue,len);
+		break;
+	    }
+	  /* Fall through */
 	default:
 	  /* Treat as a double */
 	    if(dlTextEntry->format == OCTAL) {
