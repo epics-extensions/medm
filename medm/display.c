@@ -19,6 +19,7 @@
 #define DEBUG_POSITION 0
 #define DEBUG_REPOSITION 0
 #define DEBUG_OPEN 0
+#define DEBUG_PARSE 0
 
 #include "medm.h"
 
@@ -540,6 +541,19 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 		}
 	    }
 	    if(pe) {
+#if DEBUG_PARSE
+		{
+		    static int i=0;
+		    
+		    print("%3d Element: %s x=%d y=%d width=%d height=%d\n",
+		      ++i,
+		      elementType(pe->type),
+		      (int)pe->structure.display->object.x,
+		      (int)pe->structure.display->object.y,
+		      (int)pe->structure.display->object.width,
+		      (int)pe->structure.display->object.height);
+		}
+#endif    
 		appendDlElement(dlList,pe);
 	    }
 	    break;

@@ -197,9 +197,9 @@ int localCvtLongToHexString(long source, char *pdest)
 void medmLocalCvtDoubleToSexaStr(double value,  char *string,
   unsigned short prec, double hopr, double lopr, int *status)
 {
-    const double prec_tab[MAXPREC+1] ={1.0,       1.0/6.0,   1.0/60.0,  1.0/360.0,
-                                       1.0/3.6E3, 1.0/3.6E4, 1.0/3.6E5, 1.0/3.6E6,
-                                       1.0/3.6E7 };
+    static const double prec_tab[MAXPREC+1] ={1.0, 1.0/6.0, 1.0/60.0, 1.0/360.0,
+                                     1.0/3.6E3, 1.0/3.6E4, 1.0/3.6E5, 1.0/3.6E6,
+                                     1.0/3.6E7 };
     double prec_frac, range, hrs, frac;
     char *ptr;
     int i, min, sec;

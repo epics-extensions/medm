@@ -697,7 +697,7 @@ Name of file in which to save display:",
     "Medm*cartesianPlot.drawMinor:          False",
 #endif
 
-#if 1
+#if 0
   /* Keep CDE from recoloring. (Medm* doesn't work here) This fix is
      for Solaris with CDE and may no longer be needed, but shouldn't
      hurt.  */

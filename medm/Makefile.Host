@@ -49,6 +49,7 @@ PURIFY_FLAGS = -first-only -chain-length=26
 
 # Put the cache files in the appropriate bin directory
 PURIFY_FLAGS += -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
+PURIFY_FLAGS += -force-rebuild=no
 endif
 
 # Web browser options
