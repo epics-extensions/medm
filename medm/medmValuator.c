@@ -446,7 +446,7 @@ static void valuatorDraw(XtPointer cd) {
 	return;
     }
     
-    if(pr->connected) {
+    if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
 		addCommonHandlers(widget, pv->updateTask->displayInfo);

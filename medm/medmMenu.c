@@ -509,7 +509,7 @@ static void menuDraw(XtPointer cd)
 	return;
     }
     
-    if(pr->connected) {
+    if(pr && pr->connected) {
 	if(!widget) return;
 	if(pr->readAccess) {
 	    if(!XtIsManaged(widget)) {

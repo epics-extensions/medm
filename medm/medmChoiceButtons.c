@@ -375,7 +375,7 @@ static void choiceButtonDraw(XtPointer cd) {
 	return;
     }
     
-    if (pr->connected) {
+    if(pr && pr->connected) {
 	if(!widget) return;
 	if (pr->readAccess) {
 	    if (widget && !XtIsManaged(widget)) {
@@ -470,7 +470,7 @@ static void choiceButtonDraw(XtPointer cd) {
 	    draw3DQuestionMark(pcb->updateTask);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pcb->updateTask);
     }
 }

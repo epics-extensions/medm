@@ -251,27 +251,27 @@ void hideDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pd = (Record *) cd;
-    MedmMessageButton *pmb = (MedmMessageButton *) pd->clientData;
+    Record *pr = (Record *) cd;
+    MedmMessageButton *pmb = (MedmMessageButton *) pr->clientData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
     int i;
     Boolean match;
     char *end;
 
 #ifdef MEDM_CDEV
-    pd->useMsgWhenWrite[0] = False;
-    pd->useMsgWhenWrite[1] = False;
+    pr->useMsgWhenWrite[0] = False;
+    pr->useMsgWhenWrite[1] = False;
 #endif
 
-    switch (pd->dataType) {
+    switch (pr->dataType) {
     case DBF_STRING:
 	break;
     case DBF_ENUM :
 	if(dlMessageButton->press_msg[0] != '\0') {
 	    match = False;
-	    for(i = 0; i < pd->hopr+1; i++) {
-		if(pd->stateStrings[i]) {
-		    if(!strcmp(dlMessageButton->press_msg,pd->stateStrings[i])) {
+	    for(i = 0; i < pr->hopr+1; i++) {
+		if(pr->stateStrings[i]) {
+		    if(!strcmp(dlMessageButton->press_msg,pr->stateStrings[i])) {
 			pmb->pressValue = (double) i;
 			match = True;
 			break;
@@ -285,16 +285,16 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		      "Invalid press value:\n"
 		      "  Name: %s\n"
 		      "  Value: \"%s\"\n",
-		      pd->name?pd->name:"NULL",
+		      pr->name?pr->name:"NULL",
 		      dlMessageButton->press_msg);
 		}
 	    }
 	}
 	if(dlMessageButton->release_msg[0] != '\0') {
 	    match = False;
-	    for(i = 0; i < pd->hopr+1; i++) {
-		if(pd->stateStrings[i]) {
-		    if(!strcmp(dlMessageButton->release_msg,pd->stateStrings[i])) {
+	    for(i = 0; i < pr->hopr+1; i++) {
+		if(pr->stateStrings[i]) {
+		    if(!strcmp(dlMessageButton->release_msg,pr->stateStrings[i])) {
 			pmb->releaseValue = (double) i;
 			match = True;
 			break;
@@ -308,7 +308,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		      "Invalid release value:\n"
 		      "  Name: %s\n"
 		      "  Value: \"%s\"\n",
-		      pd->name?pd->name:"NULL",
+		      pr->name?pr->name:"NULL",
 		      dlMessageButton->release_msg);
 		}
 	    }
@@ -322,10 +322,10 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		  "Invalid press value:\n"
 		  "  Name: %s\n"
 		  "  Value: \"%s\"\n",
-		  pd->name?pd->name:"NULL",
+		  pr->name?pr->name:"NULL",
 		  dlMessageButton->press_msg);
 #ifdef MEDM_CDEV
-		pd->useMsgWhenWrite[0] = True;
+		pr->useMsgWhenWrite[0] = True;
 #endif
 	    }
 	}
@@ -336,10 +336,10 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		  "Invalid release value:\n"
 		  "  Name: %s\n"
 		  "  Value: \"%s\"\n",
-		  pd->name?pd->name:"NULL",
+		  pr->name?pr->name:"NULL",
 		  dlMessageButton->release_msg);
 #ifdef MEDM_CDEV
-		pd->useMsgWhenWrite[1] = True;
+		pr->useMsgWhenWrite[1] = True;
 #endif
 	    }
 	}
@@ -356,7 +356,7 @@ static void messageButtonUpdateValueCb(XtPointer cd)
 static void messageButtonDraw(XtPointer cd)
 {
     MedmMessageButton *pmb = (MedmMessageButton *) cd;
-    Record *pd = pmb->record;
+    Record *pr = pmb->record;
     DlElement *dlElement = pmb->dlElement;
     Widget widget = dlElement->widget;
     DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
@@ -369,8 +369,8 @@ static void messageButtonDraw(XtPointer cd)
 	return;
     }
     
-    if(pd->connected) {
-	if(pd->readAccess) {
+    if(pr && pr->connected) {
+	if(pr->readAccess) {
 	    if(widget) {
 		addCommonHandlers(widget, pmb->updateTask->displayInfo);
 		XtManageChild(widget);
@@ -382,12 +382,12 @@ static void messageButtonDraw(XtPointer cd)
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
+		XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		break;
 	    default :
 		break;
 	    }
-	    if(pd->writeAccess)
+	    if(pr->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
@@ -418,30 +418,30 @@ static void messageButtonValueChangedCb(Widget w, XtPointer clientData,
   XtPointer callbackData)
 {
     MedmMessageButton *pmb = (MedmMessageButton *) clientData;
-    Record *pd = pmb->record;
+    Record *pr = pmb->record;
     XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
 
     UNREFERENCED(w);
 
-    if(pd->connected) {
-	if(pd->writeAccess) {
+    if(pr->connected) {
+	if(pr->writeAccess) {
 	    if(pushCallData->reason == XmCR_ARM) {
 	      /* message button can only put strings */
 		if(dlMessageButton->press_msg[0] != '\0') {
-		    switch (pd->dataType) {
+		    switch (pr->dataType) {
 		    case DBF_STRING:
 		        medmSendString(pmb->record,dlMessageButton->press_msg);
 			break;
 #ifdef MEDM_CDEV
 		    case DBF_ENUM:
 		        medmSendString(pmb->record,
-				       pd->stateStrings[(int)pmb->pressValue]);
+				       pr->stateStrings[(int)pmb->pressValue]);
 			break;
 #endif
 		    default:
 #ifdef MEDM_CDEV
-		        if(pd->useMsgWhenWrite[0])
+		        if(pr->useMsgWhenWrite[0])
 			  medmSendMsg (pmb->record, dlMessageButton->press_msg);
 			else
 			  medmSendDouble(pmb->record,pmb->pressValue);
@@ -454,19 +454,19 @@ static void messageButtonValueChangedCb(Widget w, XtPointer clientData,
 	    } else
 	      if(pushCallData->reason == XmCR_DISARM) {
 		  if(dlMessageButton->release_msg[0] != '\0') {
-		      switch (pd->dataType) {
+		      switch (pr->dataType) {
 		      case DBF_STRING:
 			  medmSendString(pmb->record,dlMessageButton->release_msg);
 			  break;
 #ifdef MEDM_CDEV
 		      case DBF_ENUM:
 			  medmSendString(pmb->record,
-					 pd->stateStrings[(int)pmb->releaseValue]);
+					 pr->stateStrings[(int)pmb->releaseValue]);
 			  break;
 #endif
 		      default:
 #ifdef MEDM_CDEV
-		        if(pd->useMsgWhenWrite[1])
+		        if(pr->useMsgWhenWrite[1])
 			  medmSendMsg (pmb->record, dlMessageButton->release_msg);
 			else
 			  medmSendDouble(pmb->record,pmb->releaseValue);

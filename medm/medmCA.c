@@ -273,7 +273,7 @@ void medmCATerminate()
 	ca_pend_event(20.0*CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    printf("medmCATerminate : time used by ca_pend_event = %8.1f\n",t);
+	    printf("medmCATerminate: time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -394,7 +394,7 @@ static void medmProcessCA(XtPointer cd, int *source , XtInputId *id)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    printf("medmProcessCA : time used by ca_pend_event = %8.1f\n",t);
+	    printf("medmProcessCA: time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -529,13 +529,13 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 
   /* Handle hopr, lopr, and precision */
     switch (ca_field_type(args.chid)) {
-    case DBF_STRING :
+    case DBF_STRING:
 	pr->value = 0.0;
 	pr->hopr = 0.0;
 	pr->lopr = 0.0;
 	pr->precision = 0;
 	break;
-    case DBF_ENUM :
+    case DBF_ENUM:
 	pr->value = (double) pCh->info.e.value;
 	pr->hopr = (double) pCh->info.e.no_str - 1.0;
 	pr->lopr = 0.0;
@@ -544,37 +544,37 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	    pr->stateStrings[i] = pCh->info.e.strs[i];
 	}
 	break;
-    case DBF_CHAR :
+    case DBF_CHAR:
 	pr->value = (double) pCh->info.c.value;
 	pr->hopr = (double) pCh->info.c.upper_disp_limit;
 	pr->lopr = (double) pCh->info.c.lower_disp_limit;
 	pr->precision = 0;
 	break;
-    case DBF_INT :
+    case DBF_INT:
 	pr->value = (double) pCh->info.i.value;
 	pr->hopr = (double) pCh->info.i.upper_disp_limit;
 	pr->lopr = (double) pCh->info.i.lower_disp_limit;
 	pr->precision = 0;
 	break;
-    case DBF_LONG :
+    case DBF_LONG:
 	pr->value = (double) pCh->info.l.value;
 	pr->hopr = (double) pCh->info.l.upper_disp_limit;
 	pr->lopr = (double) pCh->info.l.lower_disp_limit;
 	pr->precision = 0;
 	break;
-    case DBF_FLOAT :
+    case DBF_FLOAT:
 	pr->value = (double) pCh->info.f.value;
 	pr->hopr = (double) pCh->info.f.upper_disp_limit;
 	pr->lopr = (double) pCh->info.f.lower_disp_limit;
 	pr->precision = pCh->info.f.precision;
 	break;
-    case DBF_DOUBLE :
+    case DBF_DOUBLE:
 	pr->value = (double) pCh->info.d.value;
 	pr->hopr = (double) pCh->info.d.upper_disp_limit;
 	pr->lopr = (double) pCh->info.d.lower_disp_limit;
 	pr->precision = pCh->info.f.precision;
 	break;
-    default :
+    default:
 	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Unknown data type\n");
 	return;
     }
@@ -676,28 +676,28 @@ void medmUpdateChannelCb(struct event_handler_args args) {
    *   appropriate struct stored in the Channel
    * (The returned data is not stored there yet) */
     switch (ca_field_type(args.chid)) {
-    case DBF_STRING :
+    case DBF_STRING:
 	pr->array = (XtPointer)pCh->data->s.value;
 	break;
-    case DBF_ENUM :
+    case DBF_ENUM:
 	pr->array = (XtPointer)&(pCh->data->e.value);
 	break;
-    case DBF_CHAR :
+    case DBF_CHAR:
 	pr->array = (XtPointer)&(pCh->data->c.value);
 	break;
-    case DBF_INT :
+    case DBF_INT:
 	pr->array = (XtPointer)&(pCh->data->i.value);
 	break;
-    case DBF_LONG :
+    case DBF_LONG:
 	pr->array = (XtPointer)&(pCh->data->l.value);
 	break;
-    case DBF_FLOAT :
+    case DBF_FLOAT:
 	pr->array = (XtPointer)&(pCh->data->f.value);
 	break;
-    case DBF_DOUBLE :
+    case DBF_DOUBLE:
 	pr->array = (XtPointer)&(pCh->data->d.value);
 	break;
-    default :
+    default:
 	break;
     }
     
@@ -710,28 +710,28 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 
   /* Copy the value from the returned data to the Record */
     switch (ca_field_type(args.chid)) {
-    case DBF_STRING :
+    case DBF_STRING:
 	value = 0.0;
 	break;
-    case DBF_ENUM :
+    case DBF_ENUM:
 	value = (double)((dataBuf *)(args.dbr))->e.value;
 	break;
-    case DBF_CHAR :
+    case DBF_CHAR:
 	value = (double)((dataBuf *)(args.dbr))->c.value;
 	break;
-    case DBF_INT :
+    case DBF_INT:
 	value = (double)((dataBuf *)(args.dbr))->i.value;
 	break;
-    case DBF_LONG :
+    case DBF_LONG:
 	value = (double)((dataBuf *)(args.dbr))->l.value;
 	break;
-    case DBF_FLOAT :
+    case DBF_FLOAT:
 	value = (double)((dataBuf *)(args.dbr))->f.value;
 	break;
-    case DBF_DOUBLE :
+    case DBF_DOUBLE:
 	value = ((dataBuf *)(args.dbr))->d.value;
 	break;
-    default :
+    default:
 	value = 0.0;
 	break;
     }
@@ -836,16 +836,11 @@ int caAdd(char *name, Record *pr) {
     pCh->pr = pr;
     pCh->previouslyConnected = False;
 
-    if(strlen(name) > (size_t)0) {
-	status = ca_search_and_connect(name, &(pCh->chid), medmConnectEventCb,
-	  pCh);
-    } else {
-	status = ca_search_and_connect(" ", &(pCh->chid), medmConnectEventCb,
-	  pCh);
-    }
-
+  /* Do the search */
+    status = ca_search_and_connect(name, &(pCh->chid), medmConnectEventCb,
+      pCh);
     if(status != ECA_NORMAL) {
-	SEVCHK(status,"caAdd : ca_search_and_connect failed\n");
+	SEVCHK(status,"caAdd: ca_search_and_connect failed\n");
     } else {
       /* Cast to avoid warning from READONLY */
 	pCh->pr->name = (char *)ca_name(pCh->chid);
@@ -873,13 +868,13 @@ void caDelete(Record *pr) {
 #endif
     if(pCh->evid) {
 	status = ca_clear_event(pCh->evid);
-	SEVCHK(status,"caDelete : ca_clear_event() failed!");
+	SEVCHK(status,"caDelete: ca_clear_event() failed!");
 	if(status != ECA_NORMAL) return;
     }
     pCh->evid = NULL;
     if(pCh->chid) {
 	status = ca_clear_channel(pCh->chid);
-	SEVCHK(status,"vCA::vCA() : ca_clear_channel failed!");
+	SEVCHK(status,"cadelete: ca_clear_channel failed!");
 	if(status != ECA_NORMAL) return;
     }
     pCh->chid = NULL;
@@ -925,6 +920,11 @@ Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)
 {
     Record *record;
+
+  /* Don't allocate a record if the name is blank */
+    if(strlen(name) <= (size_t)0) {
+	return NULL;
+    }
     
     record = (Record *)malloc(sizeof(Record));
     if(record) {
@@ -1402,7 +1402,7 @@ static void pvInfoWriteInfo(void)
 	    sprintf(string, "%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr, pR->lopr);
 	    break;
-        default         : 
+        default: 
 	    break;
 	}
 	sprintf(string, "%s\n", string);

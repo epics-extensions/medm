@@ -231,7 +231,7 @@ static void byteDraw(XtPointer cd) {
     }
     
     
-    if(pr->connected) {
+    if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
 		addCommonHandlers(widget, pb->updateTask->displayInfo);
