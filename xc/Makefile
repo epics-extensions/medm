@@ -1,29 +1,18 @@
-ADD_ON = ../../..
+#
+# $Id$
+#
+# $Log$
+# Revision 1.4  1994/11/01 22:43:26  vong
+# Overwritten the 1.4.6 makefile
+#
+# Revision 1.2  1994/10/05  18:56:55  jba
+# Initial versions
+#
+#
 
-include $(ADD_ON)/src/config/CONFIG
+EPICS=../../../..
 
-USR_CFLAGS = $(MOTIF_CFLAGS) $(X11_CFLAGS)
+include $(EPICS)/config/CONFIG_EXTENSIONS
 
-USR_LDFLAGS = $(STATICLD) $(LIBNAME) $(MOTIF_LDFLAGS) $(X11_LDFLAGS) -lm
-
-
-SRCS = BarGraph.c Caption.c Clip.c Control.c Indicator.c Matrix.c \
-	Meter.c Value.c bae.c bar1.c indicator1.c meter1.c utils.c version.c
-
-OBJS = BarGraph.o Caption.o Clip.o Control.o Indicator.o Matrix.o \
-	Meter.o Value.o utils.o version.o
-
-LIBNAME = libANLwidgets.a
-
-include $(ADD_ON)/src/config/RULES
-
-
-meter1: $(OBJS) $(DEP_LIBS) meter1.c
-	$(CC) -o $@ $@.c $(LDFLAGS)
-
-indicator1 : $(OBJS) $(DEP_LIBS) indicator1.c
-	$(CC) -o $@ $@.c $(LDFLAGS)
-
-bar1: $(OBJS) $(DEP_LIBS) bar1.c
-	$(CC) -o $@ $@.c $(LDFLAGS)
+include $(EPICS)/config/RULES_ARCHS
 
