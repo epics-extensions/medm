@@ -137,13 +137,13 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	if(file) {
 	    fprintf(file,"Initializing PID: %d\n",pid);
 	} else {
-	    fprintf(stderr,"Cannot open /tmp/medmLog\n");
+	    print("Cannot open /tmp/medmLog\n");
 	}
     }
 #if DEBUG_FILE > 1
-    fprintf(stderr,"[%d] dmOpenUsableFile: %s\n",pid,filename);
-    fprintf(stderr,"  [1] Converted to: %s\n",name);
-    if(filePtr) fprintf(stderr,"    Found as: %s\n",name);
+    print("[%d] dmOpenUsableFile: %s\n",pid,filename);
+    print("  [1] Converted to: %s\n",name);
+    if(filePtr) print("    Found as: %s\n",name);
 #endif	
     if(file) {
 	fprintf(file,"[%d] dmOpenUsableFile: %s\n",pid,filename);
@@ -173,8 +173,8 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 		filePtr = fopen(fullPathName, "r");
 #if DEBUG_FILE
 #if DEBUG_FILE > 1
-		fprintf(stderr,"  [2] Converted to: %s\n",fullPathName);
-		if(filePtr) fprintf(stderr,"    Found as: %s\n",fullPathName);
+		print("  [2] Converted to: %s\n",fullPathName);
+		if(filePtr) print("    Found as: %s\n",fullPathName);
 #endif		
 		if(file) {
 		    fprintf(file,"  [2] Converted to: %s\n",fullPathName);
@@ -203,8 +203,8 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	    filePtr = fopen(fullPathName, "r");
 #if DEBUG_FILE
 #if DEBUG_FILE > 1
-	    fprintf(stderr,"  [3] Converted to: %s\n",fullPathName);
-	    if(filePtr) fprintf(stderr,"    Found as: %s\n",fullPathName);
+	    print("  [3] Converted to: %s\n",fullPathName);
+	    if(filePtr) print("    Found as: %s\n",fullPathName);
 #endif		
 	    if(file) {
 		fprintf(file,"  [3] Converted to: %s\n",fullPathName);
@@ -349,7 +349,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    fprintf(stderr,"dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
+	    print("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -482,7 +482,7 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
 
   /* Traverse the display list */
 #if DEBUG_TRAVERSAL
-    fprintf(stderr,"\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
+    print("\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
     dumpDlElementList(displayInfo->dlElementList);
 #endif
     element = FirstDlElement(displayInfo->dlElementList);
@@ -505,7 +505,7 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    fprintf(stderr,"dmTraverseDisplayList : time used by ca_pend_event = %8.1f\n",t);
+	    print("dmTraverseDisplayList : time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -531,7 +531,7 @@ void dmTraverseAllDisplayLists()
 
       /* Traverse the display list for this displayInfo */
 #if DEBUG_TRAVERSAL
-	fprintf(stderr,"\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
+	print("\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
 	dumpDlElementList(displayInfo->dlElementList);
 #endif
 	element = FirstDlElement(displayInfo->dlElementList);
@@ -558,7 +558,7 @@ void dmTraverseAllDisplayLists()
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if(t > 0.5) {
-	    fprintf(stderr,"dmTraverseAllDisplayLists : time used by ca_pend_event = %8.1f\n",t);
+	    print("dmTraverseAllDisplayLists : time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -593,8 +593,8 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
      drawGrid(displayInfo);
 
   /* Traverse the display list */
-  /* Point to element after the display */
-    element = FirstDlElement(displayInfo->dlElementList)->next;
+  /* Loop over elements not including the display */
+    element = SecondDlElement(displayInfo->dlElementList);
     while (element) {
 	if(!element->widget) {
 	    (element->run->execute)(displayInfo, element);
@@ -667,7 +667,7 @@ int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
 	if( *usedH > h || *usedW > w)
 	  if(errorOnI != i) {
 	      errorOnI = i;
-	      fprintf(stderr,
+	      print(
 		"\ndmGetBestFontWithInfo: need another font near pixel height = %d",
 		h);
 	  }
@@ -769,29 +769,30 @@ void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
 }
 
 /*
- * Starting at tail of display list, look for smallest object which contains
- *   the specified position 
- */
-DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
+ * Look for smallest object which contains the specified position.  With top
+ *   finds the topmost of two equal-sized elements.  Otherwise finds the
+ *   bottommost (for Related Display hidden button). */
+DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
+  Boolean top)
 {
     DlElement *pE, *pSmallest, *pDisplay;
     double area, minArea;
 
 #if DEBUG_PVINFO
-    fprintf(stderr,"findSmallestTouchedElement: x0: %d   y0: %d\n", x0, y0);
+    print("findSmallestTouchedElement: top=%s x0: %d   y0: %d\n",
+      top?"True":"False",x0,y0);
 #endif
     
   /* Traverse the display list */
-  /* Do in reverse order so topmost of two equal-sized objects is selected */
     pSmallest = pDisplay = NULL;
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
-    pE = LastDlElement(pList);
-    while (pE->prev) {
+    pE = FirstDlElement(pList);
+    while (pE) {
 	DlObject *po = &(pE->structure.rectangle->object);
 	
 #if DEBUG_PVINFO > 1
-	fprintf(stderr,"  Element: %s\n",elementType(pE->type));
-	fprintf(stderr,"    x1: %3d  x2: %3d   y1: %3d  y2: %3d\n",
+	print("  Element: %s\n",elementType(pE->type));
+	print("    x1: %3d  x2: %3d   y1: %3d  y2: %3d\n",
 	  po->x, po->x + (int)po->width, po->y, po->y + (int)po->height);
 #endif
       /* Don't use the display but save it as a fallback */
@@ -801,19 +802,21 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 	  /* See if the point falls inside the element */
 	    if(((x0 >= po->x) && (x0 <= po->x + (int)po->width))	&&
 	      ((y0 >= po->y) && (y0 <= po->y + (int)po->height))) {
-	      /* See if smallest element so far */
+	      /* See if it is smallest element */
 		area=(double)(po->width)*(double)(po->height);
-		if(area < minArea) {
+	      /* Keep the last one for top, otherwise the first */
+		if(top?area <= minArea:area < minArea) {
 		    pSmallest = pE;
 		    minArea = area;
 		}
 #if DEBUG_PVINFO
-		fprintf(stderr,"  minArea (so far): %g Smallest element: %s\n", minArea,
+		print("  minArea (so far): %g"
+		  " Smallest element: %s\n", minArea,
 		  pSmallest?elementType(pSmallest->type):NULL);
 #endif
 	    }
 	}
-	pE = pE->prev;
+	pE = pE->next;
     }
 
   /* Use the display as the fallback (Assume we'll always find one) */
@@ -877,7 +880,7 @@ DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
   /* Fall back to findSmallestTouchedElement, which uses EDIT sizes */
     if(!pE) {
 	pE = findSmallestTouchedElement(displayInfo->dlElementList,
-	  *x, *y);
+	  *x, *y, True);
     }
 
   /* Return */
@@ -946,7 +949,7 @@ void findSelectedElements(DlList *pList1, Position x0, Position y0,
 	    Position x = (x0 + x1)/2, y = (y0 + y1)/2;
 	    DlElement *pE;
 
-	    pE = findSmallestTouchedElement(pList1,x,y);
+	    pE = findSmallestTouchedElement(pList1,x,y,True);
 	    if(pE) {
 		DlElement *pENew = createDlElement(DL_Element,(XtPointer)pE,NULL);
 		if(pENew) {
@@ -1195,7 +1198,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
    *   BadValue (integer parameter out of range for operation)
    *   but it seems to work OK without it ??? */
 #if DEBUG_EVENTS
-    fprintf(stderr,"In doRubberbanding before XGrabPointer\n");
+    print("In doRubberbanding before XGrabPointer\n");
 #endif
     XGrabPointer(display,window,FALSE,
       (unsigned int)(ButtonMotionMask|ButtonReleaseMask),
@@ -1217,7 +1220,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
-	    fprintf(stderr,"doRubberbanding: Type: %d Keysym: %x (osfXK_Cancel=%x) "
+	    print("doRubberbanding: Type: %d Keysym: %x (osfXK_Cancel=%x) "
 	      "Shift: %d Ctrl: %d\n"
 	      "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
 	      kevent->type,keysym,osfXK_Cancel,
@@ -1231,7 +1234,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 
 	case ButtonRelease:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	  /* Undraw old one */
@@ -1262,7 +1265,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 
 	case MotionNotify:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	  /* Undraw old one */
@@ -1316,7 +1319,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
   /* If no selected elements, return */
     if(IsEmpty(cdi->selectedDlElementList)) return False;
 #if DEBUG_EVENTS > 1
-    fprintf(stderr,"\n[doDragging] selectedDlElement list :\n");
+    print("\n[doDragging] selectedDlElement list :\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif    
 
@@ -1327,7 +1330,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     yOffset = 0;
 
 #if DEBUG_EVENTS
-    fprintf(stderr,"In doDragging before XGrabPointer\n");
+    print("In doDragging before XGrabPointer\n");
 #endif
 
   /* Have all interesting events go to window
@@ -1361,9 +1364,9 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    minY = MIN(minY, po->y);
 	    maxY = MAX(maxY, po->y + (int)po->height);
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr," minX=%d maxX=%d minY=%d maxY=%d\n\n",
+	    print(" minX=%d maxX=%d minY=%d maxY=%d\n\n",
 	      minX,maxX,minY,maxY);
-	    fprintf(stderr," po->x=%d po->width=%d po->y=%d po->height =%d\n",
+	    print(" po->x=%d po->width=%d po->y=%d po->height =%d\n",
 	      po->x,po->width,po->y,po->height);
 #endif	    
 	}
@@ -1388,7 +1391,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
   /* How many pixels is the cursor position from the bottom edge of all objects */
     groupDeltaY1 = groupHeight - groupDeltaY0;
 #if DEBUG_EVENTS > 1
-    fprintf(stderr," groupWidth=%d groupHeight=%d groupDeltaX0=%d\n"
+    print(" groupWidth=%d groupHeight=%d groupDeltaX0=%d\n"
       " groupDeltaY0=%d groupDeltaX1=%d groupDeltaY1=%d\n\n",
       groupWidth,groupHeight,groupDeltaX0,
       groupDeltaY0,groupDeltaX1,groupDeltaY1);
@@ -1412,7 +1415,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
-	    fprintf(stderr,"doDragging: Type: %d Keysym: %x (osfXK_Cancel=%x) "
+	    print("doDragging: Type: %d Keysym: %x (osfXK_Cancel=%x) "
 	      "Shift: %d Ctrl: %d\n"
 	      "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
 	      kevent->type,keysym,osfXK_Cancel,
@@ -1425,7 +1428,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	}
 	case ButtonRelease:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	  /* Undraw old ones */
@@ -1447,7 +1450,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    return (returnVal);	/* return from while(TRUE) */
 	case MotionNotify:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	  /* Undraw old ones */
@@ -1511,7 +1514,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    break;
 	default:
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"  Default: %s\n",getEventName(event.type));
+	    print("  Default: %s\n",getEventName(event.type));
 	    fflush(stdout);
 #endif	    
 	    XtDispatchEvent(&event);
@@ -1604,7 +1607,7 @@ static int doPasting(int *offsetX, int *offsetY)
    *   but it seems to work OK without it ??? */
 
 #if 0
-    fprintf(stderr,"\ndoPasting: Before XGrabPointer: window=%x "
+    print("\ndoPasting: Before XGrabPointer: window=%x "
       "XtWindow(cdi->drawingArea)=%x\n"
       "  PointerMotionMask=%d ButtonReleaseMask=%d KeyPressMask=%d\n",
       window, XtWindow(cdi->drawingArea),
@@ -1614,7 +1617,7 @@ static int doPasting(int *offsetX, int *offsetY)
       (unsigned int)(PointerMotionMask|ButtonReleaseMask),
       GrabModeAsync, GrabModeAsync, GRAB_WINDOW, dragCursor, CurrentTime);
 #if 0    
-    fprintf(stderr,"\ndoPasting: Status=%d (GrabSuccess=%d GrabNotViewable=%d "
+    print("\ndoPasting: Status=%d (GrabSuccess=%d GrabNotViewable=%d "
       "AlreadyGrabbed=%d GrabFrozen=%d GrabInvalidTime=%d\n",
       status,GrabSuccess,GrabNotViewable,AlreadyGrabbed,GrabFrozen,GrabInvalidTime);
 #endif    
@@ -1650,7 +1653,7 @@ static int doPasting(int *offsetX, int *offsetY)
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
-	    fprintf(stderr,"doPasting: Type: %d Keysym: %x (osfXK_Cancel=%x) "
+	    print("doPasting: Type: %d Keysym: %x (osfXK_Cancel=%x) "
 	      "Shift: %d Ctrl: %d\n"
 	      "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
 	      kevent->type,keysym,osfXK_Cancel,
@@ -1698,7 +1701,7 @@ static int doPasting(int *offsetX, int *offsetY)
 	    winX = event.xmotion.x;
 	    winY = event.xmotion.y;
 #if 0
-	    fprintf(stderr,"MotionNotify: winX=%d winY=%d\n",winX,winY);
+	    print("MotionNotify: winX=%d winY=%d\n",winX,winY);
 #endif
 	  /* Branch depending on snap to grid */
 	    if(snap) {
@@ -1717,7 +1720,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		while(winY < daTop) winY += gridSpacing;
 		while(winY > daBottom) winY -= gridSpacing;
 #if 0
-		fprintf(stderr,"x=%d winX=%d daLeft=%d daRight=%d x0=%d x1=%d x0New=%d y0New=%d dx=%d daWidth=%d\n",
+		print("x=%d winX=%d daLeft=%d daRight=%d x0=%d x1=%d x0New=%d y0New=%d dx=%d daWidth=%d\n",
 		  event.xbutton.x,winX,daLeft,daRight,x0,x1,x0New,y0New,dx,(int)daWidth);
 #endif	   
 	    } else {
@@ -1734,7 +1737,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		if(dlElement->type != DL_Display) {
 		    DlObject *po = &(dlElement->structure.rectangle->object);
 #if 0
-		    fprintf(stderr," type=%s x=%d y=%d width=%d height=%d\n",
+		    print(" type=%s x=%d y=%d width=%d height=%d\n",
 		      elementType(dlElement->type),
 		      winX + po->x - dx,
 		      winY + po->y - dy,
@@ -1783,7 +1786,7 @@ void toggleHighlightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffse
     DlObject *po;
     int width, height;
 #if DEBUG_EVENTS > 1
-    fprintf(stderr,"\n[toggleHighlightRectangles] selectedDlElement list :\n");
+    print("\n[toggleHighlightRectangles] selectedDlElement list :\n");
     dumpDlElementList(displayInfo->selectedDlElementList);
 #endif
   /* Traverse the elements */
@@ -1800,7 +1803,7 @@ void toggleHighlightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffse
 	height = ((int)po->height + yOffset);
 	height = MAX(1,height);
 #if DEBUG_EVENTS > 1
-	fprintf(stderr,"  %s (%s): x: %d y: %d width: %u height: %u\n"
+	print("  %s (%s): x: %d y: %d width: %u height: %u\n"
 	  "    xOffset: %d yOffset: %d Used-width: %d Used-height %d\n",
 	  elementType(dlElement->type),
 	  elementType(type),
@@ -1838,7 +1841,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
     yOffset = 0;
 
 #if DEBUG_EVENTS
-    fprintf(stderr,"In doResizing before XGrabPointer\n");
+    print("In doResizing before XGrabPointer\n");
 #endif
    /* Have all interesting events go to window
    *  Note: ButtonPress and ButtonRelease do not need to be specified
@@ -1867,7 +1870,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
-	    fprintf(stderr,"doResizing: Type: %d Keysym: %x (osfXK_Cancel=%x) "
+	    print("doResizing: Type: %d Keysym: %x (osfXK_Cancel=%x) "
 	      "Shift: %d Ctrl: %d\n"
 	      "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
 	      kevent->type,keysym,osfXK_Cancel,
@@ -1881,7 +1884,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	case ButtonRelease:
 	  /* Undraw old ones (XOR again) */
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
@@ -1899,7 +1902,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    yOffset = event.xbutton.y - initialY;
 	  /* Draw new ones (XOR the outline) */
 #if DEBUG_EVENTS > 1
-	    fprintf(stderr,"MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
+	    print("MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
 #endif	    
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
@@ -2189,9 +2192,9 @@ void lowerSelectedElements()
     DlElement *pTemp;
     
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n[lowerSelectedElements:1]dlElementList :\n");
+    print("\n[lowerSelectedElements:1]dlElementList :\n");
     dumpDlElementList(cdi->dlElementList);
-    fprintf(stderr,"\n[lowerSelectedElements:1]selectedDlElementList :\n");
+    print("\n[lowerSelectedElements:1]selectedDlElementList :\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif
     if(IsEmpty(cdi->selectedDlElementList)) return;
@@ -2211,15 +2214,15 @@ void lowerSelectedElements()
     pFirst = FirstDlElement(cdi->dlElementList);
     pE = LastDlElement(cdi->selectedDlElementList);
 #if DEBUG_EVENTS > 1
-    fprintf(stderr,"\n[lowerSelectedElements] selectedDlElement list :\n");
+    print("\n[lowerSelectedElements] selectedDlElement list :\n");
     dumpDlElementList(cdi->selectedDlElementList);
-    fprintf(stderr,"\n[lowerSelectedElements] tmpDlElement list :\n");
+    print("\n[lowerSelectedElements] tmpDlElement list :\n");
     dumpDlElementList(tmpDlElementList);
 #endif
     while (pE && (pE != cdi->selectedDlElementList->head)) {
 	DlElement *pX = pE->structure.element;
 #if DEBUG_EVENTS > 1
-	fprintf(stderr,"   (%s) x=%d y=%d width=%u height=%u\n",
+	print("   (%s) x=%d y=%d width=%u height=%u\n",
 	  elementType(pE->structure.element->type),
 	  pE->structure.element->structure.composite->object.x,
 	  pE->structure.element->structure.composite->object.y,
@@ -2249,9 +2252,9 @@ void lowerSelectedElements()
   /* Cleanup temporary list */
     clearDlDisplayList(tmpDlElementList);
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n[lowerSelectedElements:2]dlElement list :\n");
+    print("\n[lowerSelectedElements:2]dlElement list :\n");
     dumpDlElementList(cdi->dlElementList);
-    fprintf(stderr,"\n[lowerSelectedElements:2]selectedDlElementList :\n");
+    print("\n[lowerSelectedElements:2]selectedDlElementList :\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif
 }
@@ -2267,9 +2270,9 @@ void raiseSelectedElements()
     DlElement *pTemp;
     
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n[raiseSelectedElements:1]dlElementList :\n");
+    print("\n[raiseSelectedElements:1]dlElementList :\n");
     dumpDlElementList(cdi->dlElementList);
-    fprintf(stderr,"\n[raiseSelectedElements:1]selectedDlElementList :\n");
+    print("\n[raiseSelectedElements:1]selectedDlElementList :\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif
     if(IsEmpty(cdi->selectedDlElementList)) return;
@@ -2312,9 +2315,9 @@ void raiseSelectedElements()
   /* Cleanup temporary list */
     clearDlDisplayList(tmpDlElementList);
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n[raiseSelectedElements:2]dlElement list :\n");
+    print("\n[raiseSelectedElements:2]dlElement list :\n");
     dumpDlElementList(cdi->dlElementList);
-    fprintf(stderr,"\n[raiseSelectedElements:2]selectedDlElementList :\n");
+    print("\n[raiseSelectedElements:2]selectedDlElementList :\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif
 }
@@ -2574,17 +2577,17 @@ void spaceSelectedElements(int plane)
     }
 
 #if 0
-    fprintf(stderr,"\nnele=%d\n",nele);
+    print("\nnele=%d\n",nele);
     for(i=0; i < nele; i++) {
-	fprintf(stderr,"array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
+	print("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
     }
 #endif    
   /* Sort elements by position */
     hsort(array,indx,nele);
 #if 0
-    fprintf(stderr,"nele=%d\n",nele);
+    print("nele=%d\n",nele);
     for(i=0; i < nele; i++) {
-	fprintf(stderr,"array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
+	print("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
     }
 #endif    
 
@@ -3229,7 +3232,7 @@ void refreshDisplay(void)
 
 /* Loop and recreate widgets */
 #if DEBUG_TRAVERSAL
-	fprintf(stderr,"\n[refreshDisplay: cdi->dlElementList:\n");
+	print("\n[refreshDisplay: cdi->dlElementList:\n");
 	dumpDlElementList(cdi->dlElementList);
 #endif
   /* Loop over elements not including the display */
@@ -3823,7 +3826,7 @@ void GetWorkSpaceList(Widget w) {
 		  &pWsInfo);
 		pchWs = (char *) XmGetAtomName (XtDisplay(w),
 		  pWsInfo->workspace);
-		printf ("workspace %d : %s\n",pchWs);
+		print ("workspace %d : %s\n",pchWs);
 	    }
 	}
 }
@@ -3974,18 +3977,18 @@ void dumpDlElementList(DlList *l)
 {
     DlElement *p = 0;
     int i = 0;
-    fprintf(stderr,"Number of Elements = %d\n",l->count);
+    print("Number of Elements = %d\n",l->count);
     p = FirstDlElement(l);
     while (p) {
 	if(p->type == DL_Element) {
-	    fprintf(stderr,"%03d (%s) x=%d y=%d width=%u height=%u\n",i++,
+	    print("%03d (%s) x=%d y=%d width=%u height=%u\n",i++,
 	      elementType(p->structure.element->type),
 	      p->structure.element->structure.composite->object.x,
 	      p->structure.element->structure.composite->object.y,
 	      (int)p->structure.element->structure.composite->object.width,
 	      (int)p->structure.element->structure.composite->object.height);
 	} else {
-	    fprintf(stderr,"%03d %s x=%d y=%d width=%u height=%u\n",i++,
+	    print("%03d %s x=%d y=%d width=%u height=%u\n",i++,
 	      elementType(p->type),
 	      p->structure.composite->object.x,
 	      p->structure.composite->object.y,
@@ -4132,10 +4135,10 @@ void saveUndoInfo(DisplayInfo *displayInfo)
     if(!undoInfo) return;
 
 #if DEBUG_UNDO
-    fprintf(stderr,"\nSAVE\n");
-    fprintf(stderr,"\n[saveUndoInfo: displayInfo->dlElementList(Before):\n");
+    print("\nSAVE\n");
+    print("\n[saveUndoInfo: displayInfo->dlElementList(Before):\n");
     dumpDlElementList(displayInfo->dlElementList);
-    fprintf(stderr,"\n[saveUndoInfo: undoInfo->dlElementList(Before):\n");
+    print("\n[saveUndoInfo: undoInfo->dlElementList(Before):\n");
     dumpDlElementList(undoInfo->dlElementList);
 #endif
 
@@ -4155,11 +4158,11 @@ void saveUndoInfo(DisplayInfo *displayInfo)
     }
 
 #if DEBUG_UNDO
-    fprintf(stderr,"\n[saveUndoInfo: displayInfo->dlElementList(After):\n");
+    print("\n[saveUndoInfo: displayInfo->dlElementList(After):\n");
     dumpDlElementList(displayInfo->dlElementList);
-    fprintf(stderr,"\n[saveUndoInfo: undoInfo->dlElementList(After):\n");
+    print("\n[saveUndoInfo: undoInfo->dlElementList(After):\n");
     dumpDlElementList(undoInfo->dlElementList);
-    fprintf(stderr,"\n");
+    print("\n");
 #endif
 
     undoInfo->grid.gridSpacing = displayInfo->grid->gridSpacing;
@@ -4201,12 +4204,12 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     unselectElementsInDisplay();
     
 #if DEBUG_UNDO
-    fprintf(stderr,"\nRESTORE\n");
-    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(Before):\n");
+    print("\nRESTORE\n");
+    print("\n[restoreUndoInfo: displayInfo->dlElementList(Before):\n");
     dumpDlElementList(displayInfo->dlElementList);
-    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(Before):\n");
+    print("\n[restoreUndoInfo: undoInfo->dlElementList(Before):\n");
     dumpDlElementList(undoInfo->dlElementList);
-    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(Before):\n");
+    print("\n[restoreUndoInfo: tmpDlElementList(Before):\n");
     dumpDlElementList(tmpDlElementList);
 #endif
 
@@ -4226,7 +4229,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	}
     }
 #if DEBUG_UNDO
-    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(1):\n");
+    print("\n[restoreUndoInfo: tmpDlElementList(1):\n");
     dumpDlElementList(tmpDlElementList);
 #endif
 
@@ -4249,7 +4252,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	}
     }
 #if DEBUG_UNDO
-    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(2):\n");
+    print("\n[restoreUndoInfo: displayInfo->dlElementList(2):\n");
     dumpDlElementList(displayInfo->dlElementList);
 #endif
 
@@ -4269,16 +4272,16 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	}
     }
 #if DEBUG_UNDO
-    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(3):\n");
+    print("\n[restoreUndoInfo: undoInfo->dlElementList(3):\n");
     dumpDlElementList(undoInfo->dlElementList);
 #endif
 	
 #if DEBUG_UNDO
-    fprintf(stderr,"\n[restoreUndoInfo: displayInfo->dlElementList(After):\n");
+    print("\n[restoreUndoInfo: displayInfo->dlElementList(After):\n");
     dumpDlElementList(displayInfo->dlElementList);
-    fprintf(stderr,"\n[restoreUndoInfo: undoInfo->dlElementList(After):\n");
+    print("\n[restoreUndoInfo: undoInfo->dlElementList(After):\n");
     dumpDlElementList(undoInfo->dlElementList);
-    fprintf(stderr,"\n[restoreUndoInfo: tmpDlElementList(After):\n");
+    print("\n[restoreUndoInfo: tmpDlElementList(After):\n");
     dumpDlElementList(tmpDlElementList);
 #endif
 
@@ -4682,9 +4685,9 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count)
     pE = findSmallestTouchedExecuteElementFromWidget(widget, displayInfo,
       &x, &y);
 #if DEBUG_PVINFO
-    fprintf(stderr,"getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
-    fprintf(stderr,"  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
-    fprintf(stderr,"  y: %4d  event.xbutton.y: %4d\n",y,event.xbutton.y);
+    print("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
+    print("  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
+    print("  y: %4d  event.xbutton.y: %4d\n",y,event.xbutton.y);
 #endif    
     if(!pE) {
 	medmPostMsg(1,"executeMenuCallback: Not on an object\n");
@@ -5045,7 +5048,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		    name = records[j]->name;
 		    if(name) {
 #if DEBUG_COMMAND
-			fprintf(stderr,"%2d |%s|\n",j,name);
+			print("%2d |%s|\n",j,name);
 #endif			
 			len = strlen(name);
 			if(ic + len >= 1024) {
@@ -5120,7 +5123,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     }
     command[ic]='\0';
 #if DEBUG_COMMAND
-    if(command && *command) fprintf(stderr,"\nparseAndExecCommand: %s\n",command);
+    if(command && *command) print("\nparseAndExecCommand: %s\n",command);
 #endif    
     if(command && *command) system(command);
 #if 0    
@@ -5136,6 +5139,30 @@ Pixel alarmColor(int type)
     } else {
       /* In case it is not defined properly */
 	return alarmColorPixel[ALARM_MAX-1];
+    }
+}
+
+/* General purpose output routine
+ * Works with both UNIX and WIN32
+ * Uses sprintf to avoid problem with lprint not handling %f, etc.
+ *   (Exceed 5 only)
+ * Use for debugging */
+
+void print(const char *fmt, ...)
+{
+    va_list vargs;
+    static char lstring[1024];  /* DANGER: Fixed buffer size */
+    
+    va_start(vargs,fmt);
+    vsprintf(lstring,fmt,vargs);
+    va_end(vargs);
+    
+    if(lstring[0] != '\0') {
+#ifdef WIN32
+	lprintf("%s",lstring);
+#else
+	printf("%s",lstring);
+#endif
     }
 }
 
@@ -5191,26 +5218,26 @@ void dumpCartesianPlot(void)
     XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
     XtGetValues(widget,args,n);
 			      
-    fprintf(stderr,"width: %d\n",width);
-    fprintf(stderr,"height: %d\n",height);
-    fprintf(stderr,"highlightThickness: %d\n",highlightThickness);
-    fprintf(stderr,"shadowThickness: %d\n",shadowThickness);
-    fprintf(stderr,"borderWidth: %d\n",borderWidth);
-    fprintf(stderr,"graphBorderWidth: %d\n",graphBorderWidth);
-    fprintf(stderr,"graphWidth: %d\n",graphWidth);
-    fprintf(stderr,"graphHeight: %d\n",graphHeight);
-    fprintf(stderr,"headerBorderWidth: %d\n",headerBorderWidth);
-    fprintf(stderr,"headerWidth: %d\n",headerWidth);
-    fprintf(stderr,"headerHeight: %d\n",headerHeight);
-    fprintf(stderr,"footerWidth: %d\n",footerBorderWidth);
-    fprintf(stderr,"footerWidth: %d\n",footerWidth);
-    fprintf(stderr,"footerHeight: %d\n",footerHeight);
-    fprintf(stderr,"legendBorderWidth: %d\n",legendBorderWidth);
-    fprintf(stderr,"legendWidth: %d\n",legendWidth);
-    fprintf(stderr,"legendHeight: %d\n",legendHeight);
-    fprintf(stderr,"unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
+    print(,"width: %d\n",width);
+    print(,"height: %d\n",height);
+    print(,"highlightThickness: %d\n",highlightThickness);
+    print(,"shadowThickness: %d\n",shadowThickness);
+    print(,"borderWidth: %d\n",borderWidth);
+    print(,"graphBorderWidth: %d\n",graphBorderWidth);
+    print(,"graphWidth: %d\n",graphWidth);
+    print(,"graphHeight: %d\n",graphHeight);
+    print(,"headerBorderWidth: %d\n",headerBorderWidth);
+    print(,"headerWidth: %d\n",headerWidth);
+    print(,"headerHeight: %d\n",headerHeight);
+    print(,"footerWidth: %d\n",footerBorderWidth);
+    print(,"footerWidth: %d\n",footerWidth);
+    print(,"footerHeight: %d\n",footerHeight);
+    print(,"legendBorderWidth: %d\n",legendBorderWidth);
+    print(,"legendWidth: %d\n",legendWidth);
+    print(,"legendHeight: %d\n",legendHeight);
+    print(,"unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
       XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
-    fprintf(stderr,"timeBase: %d\n",timeBase);
+    print(,"timeBase: %d\n",timeBase);
 }
 #endif
 
@@ -5251,24 +5278,67 @@ void printEventMasks(Display *display, Window win, char *string)
 
   /* Get the attributes */
     if(win) {
-	fprintf(stderr,"%sMasks for window %x:\n", string, win);
+	print("%sMasks for window %x:\n", string, win);
 	XGetWindowAttributes(display, win, &attr);
     } else {
-	fprintf(stderr,"%sWindow is NULL (Masks are undefined)\n", string);
+	print("%sWindow is NULL (Masks are undefined)\n", string);
 	return;
     }
     
-    fprintf(stderr,"%-27s %-10s %-10s %-10s\n",
+    print("%-27s %-10s %-10s %-10s\n",
       "Mask","all_event","your_event","do_not_propagate");
 /*     for(i=0; i < nmasks; i++) { */
     for(i=2; i < 4; i++) {
 	
 	mask=1<<i;
-	fprintf(stderr,"%-27s %-10s %-10s %-10s\n",
+	print("%-27s %-10s %-10s %-10s\n",
 	  maskNames[i],
 	  (attr.all_event_masks&mask)?"X":" ",
 	  (attr.your_event_mask&mask)?"X":" ",
 	  (attr.do_not_propagate_mask&mask)?"X":" ");
+    }
+}
+
+void printWindowAttributes(Display *display, Window win, char *string)
+{
+    XWindowAttributes attr;
+    static char *mapNames[]={
+	"IsUnmapped",
+	"IsUnviewable",
+	"IsViewable",
+    };
+    int screen=DefaultScreen(display);
+    Window root,parent,next,*children=(Window *)0;
+    Window rootWindow=RootWindow(display,screen);
+    unsigned int nchildren;
+
+  /* Get the attributes */
+    if(win) {
+	print("%sAttributes for window %x:\n", string, win);
+	XGetWindowAttributes(display, win, &attr);
+    } else {
+	print("%sWindow is NULL (Attributes are undefined)\n", string);
+	return;
+    }
+    print("  x=%d y=%d width=%d height=%d\n",attr.x,attr.y,attr.width,attr.height);
+    if(attr.map_state >= 0 && attr.map_state < 3) {
+	print("  map_state=%s\n",mapNames[attr.map_state]);
+    } else {
+	print("  map_state=Invalid Value\n");
+    }
+
+  /* Get the tree */
+    print("  Window tree:\n");
+    parent=(Window)0;
+    next=win;
+    while(parent != rootWindow) {
+	if(!XQueryTree(display,next,&root,&parent,&children,&nchildren)) {
+	    print("    [Could not get tree for %x]\n",next);
+	} else {
+	    print("    window=%8x parent=%8x root=%8x\n",next,parent,root);
+	}
+	if(children) XFree((void *)children);
+	next=parent;
     }
 }
 
@@ -5330,9 +5400,9 @@ void dumpDisplayInfoList(DisplayInfo *head, char *string)
     DisplayInfo *displayInfo = head->next;
     int i=0;
 
-    fprintf(stderr,"\nDisplayList: %s\n",string);
+    print("\nDisplayList: %s\n",string);
     while(displayInfo) {
-	fprintf(stderr,"%2d %s\n",++i,displayInfo->dlFile->name);
+	print("%2d %s\n",++i,displayInfo->dlFile->name);
 	displayInfo = displayInfo->next;
     }
 }

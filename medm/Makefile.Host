@@ -181,3 +181,7 @@ xrtAuth: medm
 		echo "Patch successful";\
 		echo "**************************************************************";\
 	fi
+
+xxxx:
+	@echo ca_DIR: $(ca_DIR)
+	@echo Unix_DIR: $(Unix_DIR)

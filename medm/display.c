@@ -5,7 +5,7 @@
 
 THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
 AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
-AND IN ALL SOURCE LISTINGS OF THE CODE.
+AND IN ALL SOURCE LISTINGS OF THE CODE
 
 (C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
 
@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_EVENTS 0
+#define DEBUG_RELATED_DISPLAY 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -243,8 +244,11 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	   *    the MIT and other X servers for SUNOS machines
 	   *    This is completely unnecessary for HP, DEC, NCD, ...
 	   */
+#if 0
+	  /* KE: This was useless in any event since there was no XtSetValues */
 	    XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
 	    XmDropSiteRegister(displayInfo->drawingArea,args,1);
+#endif	    
 
 	  /* Create the execute-mode popup menu */
 	    createExecuteModeMenu(displayInfo);	    
@@ -256,31 +260,63 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
 	}
-	
     } else  {     /* else for if (displayInfo->drawingArea == NULL) */
+      /* Just set the values, drawing area is already created with these values
+       * KE: Should be unnecessary except for object.x,y */
+	nargs=2;
 	XtSetValues(displayInfo->drawingArea,args,nargs);
     }
 
-  /* Wait to realize the shell... */
-    nargs = 0;
-#if 0    
-    if (!XtIsRealized(displayInfo->shell)) {  /* only position first time */
-	XtSetArg(args[nargs],XmNx,(Position)dlDisplay->object.x); nargs++;
-	XtSetArg(args[nargs],XmNy,(Position)dlDisplay->object.y); nargs++;
-    }
-#else    
+  /* Do the shell */
+    nargs=0;
     XtSetArg(args[nargs],XmNx,(Position)dlDisplay->object.x); nargs++;
     XtSetArg(args[nargs],XmNy,(Position)dlDisplay->object.y); nargs++;
-#endif   
-    XtSetArg(args[nargs],XmNallowShellResize,(Boolean)TRUE); nargs++;
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlDisplay->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlDisplay->object.height); nargs++;
     XtSetArg(args[nargs],XmNiconName,displayInfo->dlFile->name); nargs++;
-    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
     XtSetValues(displayInfo->shell,args,nargs);
     medmSetDisplayTitle(displayInfo);
     XtRealizeWidget(displayInfo->shell);
 
+  /* KE: Move it to be consistent with its object values
+   * XtSetValues (here or above) or XtMoveWidget (here) do not work
+   * Is necessary in part because WM adds borders and title bar,
+       moving the shell down when first created */
+    XMoveWindow(display,XtWindow(displayInfo->shell),
+      dlDisplay->object.x,dlDisplay->object.y);
+
+#if DEBUG_RELATED_DISPLAY
+    print("executeDlDisplay: dlDisplay->object=%x\n"
+      "  dlDisplay->object.x=%d dlDisplay->object.y=%d\n",
+      dlDisplay->object,
+      dlDisplay->object.x,dlDisplay->object.y);
+#if 0
+    print("mainShell: XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(mainShell)?"True":"False",
+      XtIsManaged(mainShell)?"True":"False");
+    printWindowAttributes(display,XtWindow(mainShell),"MainShell: ");
+
+    print("shell: XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(displayInfo->shell)?"True":"False",
+      XtIsManaged(displayInfo->shell)?"True":"False");
+    printWindowAttributes(display,XtWindow(displayInfo->shell),"Shell: ");
+    
+    print("DA: XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(displayInfo->drawingArea)?"True":"False",
+      XtIsManaged(displayInfo->drawingArea)?"True":"False");
+    printWindowAttributes(display,XtWindow(displayInfo->drawingArea),"DA: ");
+#endif    
+    {
+	Position xpos,ypos;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
+	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
+	XtGetValues(displayInfo->shell,args,nargs);
+	print("executeDlDisplay: xpos=%d ypos=%d\n",xpos,ypos);
+    }
+#endif
+    
 #if DEBUG_EVENTS     
     printEventMasks(display, XtWindow(displayInfo->shell),
       "\n[displayInfo->shell] ");

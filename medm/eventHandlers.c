@@ -64,6 +64,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PVINFO 0
 #define DEBUG_SEND_EVENT 0
 #define DEBUG_UNGROUP 0
+#define DEBUG_RELATED_DISPLAY 0
+
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
@@ -117,10 +119,10 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
     Position x, y;
 
 #if DEBUG_POPUP
-    printf("\nhandleExecuteButtonPress: Entered\n");
-    printf("  Window: %x SubWindow: %x\n",
+    print("\nhandleExecuteButtonPress: Entered\n");
+    print("  Window: %x SubWindow: %x\n",
       xEvent->window,xEvent->subwindow);
-    printf("  shell Window: %x drawingArea Window: %x\n",
+    print("  shell Window: %x drawingArea Window: %x\n",
       XtWindow(displayInfo->shell),XtWindow(displayInfo->drawingArea));
 #endif    
 
@@ -146,9 +148,9 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	  &x, &y);
 	if (pE) {
 #if DEBUG_PVINFO
-	    printf("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
-	    printf("  xEvent->x: %4d\n",xEvent->x);
-	    printf("  xEvent->y: %4d\n",xEvent->y);
+	    print("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
+	    print("  xEvent->x: %4d\n",xEvent->x);
+	    print("  xEvent->y: %4d\n",xEvent->y);
 #endif    
 	    switch(pE->type) {
 	    case DL_Valuator:
@@ -226,9 +228,14 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
       /* Button 1 */
 	x = xEvent->x;
 	y = xEvent->y;
-	pE = findSmallestTouchedExecuteElementFromWidget(w, displayInfo,
-	  &x, &y);
+      /* Find the bottommost of equal-sized elements */
+	pE = findSmallestTouchedElement(displayInfo->dlElementList,
+	  x, y, False);
 	if (pE) {
+#if DEBUG_RELATED_DISPLAY		    
+	    print("\nhandleExecuteButtonPress: type=%s\n",
+	      elementType(pE->type));
+#endif		    
 	    if (pE->type == DL_RelatedDisplay &&
 	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
 		DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
@@ -237,8 +244,10 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		
 	      /* Check the display array to find the first non-empty one */
 		for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
-		    printf("\nhandleExecuteButtonPress: name[%d] = \"%s\"\n",
+#if DEBUG_RELATED_DISPLAY		    
+		    print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
 		      i, pRD->display[i].name);
+#endif		    
 		    if(*(pRD->display[i].name)) {
 		      /* See if it was a ctrl-click indicating replace */
 			if(xEvent->state & ControlMask) replace = True;
@@ -273,7 +282,7 @@ void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
     XButtonEvent *xEvent = (XButtonEvent *)event;
 
 #if DEBUG_POPUP
-    printf("\npopdownMenu: Entered\n");
+    print("\npopdownMenu: Entered\n");
 #endif    
 
   /* Button 3 */
@@ -318,10 +327,10 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     DisplayInfo *di, *cdi;
 
 #if DEBUG_POPUP
-    printf("\nhandleEditButtonPress: Entered\n");
+    print("\nhandleEditButtonPress: Entered\n");
 #endif    
 #if DEBUG_EVENTS
-    fprintf(stderr,"\n>>> handleEditButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
+    print("\n>>> handleEditButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
       currentActionType == SELECT_ACTION?"SELECT":"CREATE",xEvent->button,
       xEvent->state&ShiftMask,xEvent->state&ControlMask);
 #endif    
@@ -389,7 +398,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      /* SELECT_ACTION Ctrl-Btn1 */
 	      /* Cycle through selections */
 #if DEBUG_EVENTS
-		fprintf(stderr,"SELECT_ACTION Ctrl-Btn1\n");
+		print("SELECT_ACTION Ctrl-Btn1\n");
 #endif
 		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
 		  False);
@@ -400,11 +409,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    int found = False;
 		    
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
+		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
 		    dumpDlElementList(tmpDlElementList);
-		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] cdi->selectedDlElementList:\n");
+		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1] cdi->selectedDlElementList:\n");
 		    dumpDlElementList(cdi->selectedDlElementList);
-		    fprintf(stderr,"\n");
+		    print("\n");
 #endif
 		    unhighlightSelectedElements();
 		    while (pT) {
@@ -413,10 +422,10 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		      /* Traverse the selected list */
 			while (pE) {
 #if DEBUG_EVENTS > 1
-			    printf("Temp: Type=%s (%s) %x\n",
+			    print("Temp: Type=%s (%s) %x\n",
 			      elementType(pT->type),elementType(pT->structure.element->type),
 			      pT->structure.element);
-			    printf("Sel:  Type=%s (%s) %x\n",
+			    print("Sel:  Type=%s (%s) %x\n",
 			      elementType(pE->type),elementType(pE->structure.element->type),
 			      pE->structure.element);
 #endif
@@ -442,7 +451,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 				}
 				found=True;
 #if DEBUG_EVENTS > 1
-				printf("Found: found=%d\n",found);
+				print("Found: found=%d\n",found);
 #endif
 				break;
 			    }
@@ -457,7 +466,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			DlElement *pEFirst = FirstDlElement(tmpDlElementList);
 			
 #if DEBUG_EVENTS > 1
-			printf("Not found: found=%d\n",found);
+			print("Not found: found=%d\n",found);
 #endif
 			clearDlDisplayList(cdi->selectedDlElementList);
 			pENew = createDlElement(DL_Element,
@@ -479,7 +488,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    }
 		}
 #if DEBUG_EVENTS > 1
-		fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] cdi->selectedDlElementList :\n");
+		print("\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] cdi->selectedDlElementList :\n");
 		dumpDlElementList(cdi->selectedDlElementList);
 #endif
 	    } else if (xEvent->state & ShiftMask) {
@@ -565,12 +574,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    DlElement *pES = FirstDlElement(cdi->selectedDlElementList);
 
 #if DEBUG_EVENTS > 1
-			    printf("\nhandleEditButtonPress: Btn1\n");
-			    printf("Selected: count=%d first=%x struct=%x\n",
+			    print("\nhandleEditButtonPress: Btn1\n");
+			    print("Selected: count=%d first=%x struct=%x\n",
 			      cdi->selectedDlElementList->count,
 			      FirstDlElement(cdi->selectedDlElementList),
 			      pES->structure.element);
-			    printf("Temp: count=%d first=%x struct=%x\n",
+			    print("Temp: count=%d first=%x struct=%x\n",
 			      tmpDlElementList->count,
 			      FirstDlElement(tmpDlElementList),
 			      pET->structure.element);
@@ -616,7 +625,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		status = XSendEvent(display, XtWindow(cdi->drawingArea), True,
 		  ButtonPressMask, (XEvent *)bEvent);
 		if(status != Success) {
-		    printf("\nhandleEditButtonPress: XSendEvent failed\n");
+		    print("\nhandleEditButtonPress: XSendEvent failed\n");
 		}
 		free(bEvent);
 #endif
@@ -630,11 +639,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    if (xEvent->state & ControlMask) {
 	      /* SELECT_ACTION Ctrl-Btn2 */
 #if DEBUG_EVENTS
-		fprintf(stderr,"SELECT_ACTION Ctrl-Btn2\n");
+		print("SELECT_ACTION Ctrl-Btn2\n");
 #endif
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
 #if DEBUG_EVENTS
-		    fprintf(stderr,"Already selected\n");
+		    print("Already selected\n");
 #endif
 		  /* Element already selected - resize it and any others */
 		  /* (MDA) ?? separate resize of display here? */
@@ -644,8 +653,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    validResize = doResizing(XtWindow(cdi->drawingArea),
 		      x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"validResize=%d\n",validResize);
-		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+		    print("validResize=%d\n",validResize);
+		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		    if (validResize) {
 			saveUndoInfo(cdi);
@@ -665,7 +674,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* This element not already selected, deselect others and resize it */
 		  /* Unhighlight currently selected elements */
 #if DEBUG_EVENTS
-		    fprintf(stderr,"Not already selected\n");
+		    print("Not already selected\n");
 #endif
 		    unhighlightSelectedElements();
 		    clearDlDisplayList(cdi->selectedDlElementList);
@@ -674,8 +683,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    validResize = doResizing(XtWindow(cdi->drawingArea),
 		      x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"validResize=%d\n",validResize);
-		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+		    print("validResize=%d\n",validResize);
+		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		    if (validResize) {
 			saveUndoInfo(cdi);
@@ -701,7 +710,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  XmNheight,&daHeight,
 		  NULL);
 #if DEBUG_EVENTS
-		fprintf(stderr,"\n[handleEditButtonPress: SELECT Btn2] tmpDlElementList :\n");
+		print("\n[handleEditButtonPress: SELECT Btn2] tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
@@ -709,14 +718,14 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		   * Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
 #if DEBUG_EVENTS
-		    fprintf(stderr,"Already selected\n");
+		    print("Already selected\n");
 #endif
 		  /* This element already selected: move all selected elements */
 		    validDrag = doDragging(XtWindow(cdi->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"validDrag=%d\n",validDrag);
-		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+		    print("validDrag=%d\n",validDrag);
+		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		    if (validDrag) {
 			saveUndoInfo(cdi);
@@ -736,7 +745,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* This element not already selected,deselect others and move it */
 		  /* Unhighlight currently selected elements */
 #if DEBUG_EVENTS
-		    fprintf(stderr,"Not already selected\n");
+		    print("Not already selected\n");
 #endif
 		    unhighlightSelectedElements();
 		    clearDlDisplayList(cdi->selectedDlElementList);
@@ -745,8 +754,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    validDrag = doDragging(XtWindow(cdi->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
-		    fprintf(stderr,"validDrag=%d\n",validDrag);
-		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+		    print("validDrag=%d\n",validDrag);
+		    print("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		  /* Move this element */
 		    if (validDrag) {
@@ -773,7 +782,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	case Button3:
 	  /* SELECT_ACTION Btn3 */
 #if DEBUG_EVENTS
-	    fprintf(stderr,"SELECT_ACTION Btn3\n");
+	    print("SELECT_ACTION Btn3\n");
 #endif
 	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
 	    lastEvent = *((XButtonPressedEvent *)event);
@@ -798,7 +807,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  XmNchildren,&children,
 		  XmNnumChildren,&numChildren,
 		  NULL);
-		printf("\ncdi->editPopupMenu: "
+		print("\ncdi->editPopupMenu: "
 		  "height: %d   width: %d  children: %d\n"
 		  "  resizeHeight: %d   resizeWidth: %d   adjustLast: %d\n",
 		  height, width, (int)numChildren,
@@ -810,7 +819,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		      XmNx, &x,
 		      XmNy, &y,
 		      NULL);
-		    printf("  %2d  %x  height: %2d   width: %3d   x: %d   y: %3d (%3d)\n",
+		    print("  %2d  %x  height: %2d   width: %3d   x: %d   y: %3d (%3d)\n",
 		      i, children[i], height, width, x, y, y-9);
 		}
 	    }
@@ -818,7 +827,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    break;
 	}
 #if DEBUG_EVENTS
-	fprintf(stderr,"\n[handleEditButtonPress: SELECT done] selectedDlElement list :\n");
+	print("\n[handleEditButtonPress: SELECT done] selectedDlElement list :\n");
 	dumpDlElementList(cdi->selectedDlElementList);
 #endif
     } else if (currentActionType == CREATE_ACTION) {
@@ -835,27 +844,27 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	  /* CREATE_ACTION Btn1 */
 	  /* Wait for next event and look at it */
 #if DEBUG_CREATE
-	    printf("\nhandleButtonPress EVENT: Type: %-13s  Button: %d  Window %x  SubWindow: %x\n"
+	    print("\nhandleButtonPress EVENT: Type: %-13s  Button: %d  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
 	      (xEvent->type == ButtonPress)?"ButtonPress":"ButtonRelease",
 	      xEvent->button, xEvent->window, xEvent->subwindow,
 	      xEvent->state&ShiftMask?"Yes":"No",
 	      xEvent->state&ControlMask?"Yes":"No");
-	    printf("  Send_event: %s  State: %x\n",
+	    print("  Send_event: %s  State: %x\n",
 	      xEvent->send_event?"True":"False",xEvent->state);
-	    printf("  ButtonPress=%d ButtonRelease=%d MotionNotify=%d\n",
+	    print("  ButtonPress=%d ButtonRelease=%d MotionNotify=%d\n",
 	      ButtonPress, ButtonRelease, MotionNotify);
 	    {
 		XEvent newEvent;
 		
 		XPeekEvent(display,&newEvent);
-		printf("              peekEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		print("              peekEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
 		  "  Shift: %s  Ctrl: %s\n",
 		  newEvent.xbutton.type,
 		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
 		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
 		  newEvent.xbutton.state&ControlMask?"Yes":"No");
-		printf("  Send_event: %s  State: %x\n",
+		print("  Send_event: %s  State: %x\n",
 		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
 	    }
 #endif
@@ -875,13 +884,13 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if(newEvent.type == ButtonRelease) doTextByTyping = 1;
 		XPutBackEvent(display,&newEvent);
 #if DEBUG_CREATE
-		printf("               newEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		print("               newEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
 		  "  Shift: %s  Ctrl: %s\n",
 		  newEvent.xbutton.type,
 		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
 		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
 		  newEvent.xbutton.state&ControlMask?"Yes":"No");
-		printf("  Send_event: %s  State: %x\n",
+		print("  Send_event: %s  State: %x\n",
 		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
 #endif
 	    }
@@ -972,7 +981,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    break;
 	}
 #if DEBUG_EVENTS
-	fprintf(stderr,"\n[handleEditButtonPress: CREATE done] selectedDLElement list :\n");
+	print("\n[handleEditButtonPress: CREATE done] selectedDLElement list :\n");
 	dumpDlElementList(cdi->selectedDlElementList);
 #endif
       /* Clean up */
@@ -995,18 +1004,18 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *
     KeySym keysym;
 
 #if DEBUG_EVENTS || DEBUG_KEYS
-    fprintf(stderr,"\n>>> handleEditKeyPress: %s Type: %d "
+    print("\n>>> handleEditKeyPress: %s Type: %d "
       "Shift: %d Ctrl: %d\n"
       "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
       currentActionType == SELECT_ACTION?"SELECT":"CREATE",key->type,
       key->state&ShiftMask,key->state&ControlMask,
       KeyPress,KeyRelease,ButtonPress,ButtonRelease);     /* In X.h */
-    fprintf(stderr,"\n[handleEditKeyPress] displayInfo->selectedDlElementList:\n");
+    print("\n[handleEditKeyPress] displayInfo->selectedDlElementList:\n");
     dumpDlElementList(displayInfo->selectedDlElementList);
-/*     fprintf(stderr,"\n[handleEditKeyPress] " */
+/*     print("\n[handleEditKeyPress] " */
 /*       "currentDisplayInfo->selectedDlElementList:\n"); */
 /*     dumpDlElementList(currentDisplayInfo->selectedDlElementList); */
-    fprintf(stderr,"\n");
+    print("\n");
 
 #endif
   /* Explicitly set continue to dispatch to avoid warnings */
@@ -1025,7 +1034,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *
 	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
 	      &modifiers,&keysym);
 #if DEBUG_EVENTS || DEBUG_KEYS
-	    fprintf(stderr,"handleEditKeyPress: keycode=%d keysym=%d ctrl=%d\n",
+	    print("handleEditKeyPress: keycode=%d keysym=%d ctrl=%d\n",
 	      key->keycode,keysym,ctrl);
 #endif
 	    switch (keysym) {
@@ -1070,14 +1079,14 @@ void highlightSelectedElements()
     DlElement *pE;
 
 #if DEBUG_HIGHLIGHTS
-    printf("In highlightSelectedElements\n");
+    print("In highlightSelectedElements\n");
 #endif
     
     if (!cdi) return;
     if (IsEmpty(cdi->selectedDlElementList)) return;
     if (cdi->selectedElementsAreHighlighted) return;
 #if DEBUG_UNGROUP
-    fprintf(stderr,"\nhighlightSelectedElements: cdi->selectedDlElementList:\n");
+    print("\nhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif    
     cdi->selectedElementsAreHighlighted = True;
@@ -1097,7 +1106,7 @@ void unhighlightSelectedElements()
     DlElement *pE;
 
 #if DEBUG_HIGHLIGHTS
-    printf("In unhighlightSelectedElements\n");
+    print("In unhighlightSelectedElements\n");
 #endif
     
     if (!cdi) return;
@@ -1105,7 +1114,7 @@ void unhighlightSelectedElements()
     if (!cdi->selectedElementsAreHighlighted) return;
     cdi->selectedElementsAreHighlighted = False;
 #if DEBUG_UNGROUP
-    fprintf(stderr,"\nunhighlightSelectedElements: cdi->selectedDlElementList:\n");
+    print("\nunhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
 #endif    
     pE = FirstDlElement(cdi->selectedDlElementList);
@@ -1138,10 +1147,10 @@ static void updateDraggedElements(Position x0, Position y0,
     while (pElement) {
 	DlElement *pE = pElement->structure.element;
 #if DEBUG_EVENTS > 1
-	fprintf(stderr,"\nupdateDraggedElements: x0=%d y0=%d x1=%d y1=%d"
+	print("\nupdateDraggedElements: x0=%d y0=%d x1=%d y1=%d"
 	  " xOffset=%d yOffset=%d\n",
 	  x0,y0,x1,y1,xOffset,yOffset);
-	fprintf(stderr, "  %s (%s) pE->run->move=%x\n",
+	print( "  %s (%s) pE->run->move=%x\n",
 	  elementType(pElement->type),
 	  elementType(pE->type),
 	  pE->run->move);
@@ -1215,11 +1224,11 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 		XtSetArg(args[n],XmNheight,&height); n++;
 		XtGetValues(pE->widget,args,n);
 		
-		fprintf(stderr,"\nupdateResizedElements\n");
-		fprintf(stderr,"Widget:  %s: x=%d y=%d width=%u height=%u\n",
+		print("\nupdateResizedElements\n");
+		print("Widget:  %s: x=%d y=%d width=%u height=%u\n",
 		  elementType(pE->type),
 		  x,y,width,height);
-		fprintf(stderr,"Element: %s: x=%d y=%d width=%u height=%u\n",
+		print("Element: %s: x=%d y=%d width=%u height=%u\n",
 		  elementType(pE->type),
 		  po->x,po->y,(int)po->width,(int)po->height);
 	    }
@@ -1305,7 +1314,7 @@ DlElement *handleRectangularCreates(DlElementType type,
 	pE = createDlText(NULL);
 	break;
     default:
-	fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d\n",
+	print("handleRectangularCreates: CREATE - invalid type %d\n",
 	  type);
 	break;
     }
@@ -1337,7 +1346,7 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
 	height = (int)po->height + 2*HIGHLIGHT_LINE_THICKNESS;
     }
 #if DEBUG_UNGROUP
-    fprintf(stderr,"toggleSelectedElementHighlight: dlElement->type=%d\n"
+    print("toggleSelectedElementHighlight: dlElement->type=%d\n"
       "x=%d y=%d width=%d height=%d\n",dlElement->type,x,y,width,height);
 #endif    
 #if 0

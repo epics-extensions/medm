@@ -1853,10 +1853,10 @@ void printStat(char *filename, char *comment)
     
     status = stat(filename,&statBuf);
     if(status) {
-	printf("stat failed [%s]: %s\n",comment,filename);
+	print("stat failed [%s]: %s\n",comment,filename);
 	return;
     }
-    printf("%s: %c%c%c\n",
+    print("%s: %c%c%c\n",
       comment,
       statBuf.st_mode&S_IREAD?'r':'-',
       statBuf.st_mode&S_IWRITE?'w':'-',
@@ -1867,10 +1867,10 @@ void printStat(char *filename, char *comment)
     
     status = stat(filename,&statBuf);
     if(status) {
-	printf("stat failed [%s]: %s\n",comment,filename);
+	print("stat failed [%s]: %s\n",comment,filename);
 	return;
     }
-    printf("%s: %c%c%c%c%c%c%c%c%c\n",
+    print("%s: %c%c%c%c%c%c%c%c%c\n",
       comment,
       statBuf.st_mode&S_IRUSR?'r':'-',
       statBuf.st_mode&S_IWUSR?'w':'-',
@@ -1939,10 +1939,10 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     strcat(f2,DISPLAY_FILE_BACKUP_SUFFIX);
     strcat(f2,DISPLAY_FILE_ASCII_SUFFIX);
 #if DEBUG_FILE_RENAME
-    printf("medmSaveDisplay: \n");
-    printf("  filename=|%s|\n",filename);
-    printf("  f1=|%s|\n",f1);
-    printf("  f2=|%s|\n",f2);
+    print("medmSaveDisplay: \n");
+    print("  filename=|%s|\n",filename);
+    print("  f1=|%s|\n",f1);
+    print("  f2=|%s|\n",f2);
 #endif    
     
   /* Check for the special case .template */
@@ -2321,15 +2321,15 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    nargs=0;
 	    XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
 	    XtGetValues(modeRB,args,nargs);
-	    printf("\nEdit/Execute: globalDisplayListTraversalMode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
+	    print("\nEdit/Execute: globalDisplayListTraversalMode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
 	      globalDisplayListTraversalMode,DL_EXECUTE,DL_EDIT);
-	    printf("modeRB(%x): XmNradioBehavior=%d \n",modeRB,(int)radioBehavior);
+	    print("modeRB(%x): XmNradioBehavior=%d \n",modeRB,(int)radioBehavior);
 	    
 	    nargs=0;
 	    XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
 	    XtSetArg(args[nargs],XmNset,&set); nargs++;
 	    XtGetValues(modeEditTB,args,nargs);
-	    printf("modeEditTB(%x): XmNset=%d  XmNindicatorType=%d "
+	    print("modeEditTB(%x): XmNset=%d  XmNindicatorType=%d "
 	      "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
 	      modeEditTB,(int)set,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
 
@@ -2337,7 +2337,7 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
 	    XtSetArg(args[nargs],XmNset,&set); nargs++;
 	    XtGetValues(modeExecTB,args,nargs);
-	    printf("modeExecTB(%x): XmNset=%d  XmNindicatorType=%d "
+	    print("modeExecTB(%x): XmNset=%d  XmNindicatorType=%d "
 	      "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
 	      modeExecTB,(int)set,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
 	}
@@ -2394,19 +2394,19 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	nargs=0;
 	XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
 	XtGetValues(XtParent(w),args,nargs);
-	printf("\nmodeCallback: mode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
+	print("\nmodeCallback: mode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
 	  mode,DL_EXECUTE,DL_EDIT);
-	printf("\nParent(%x): XmNradioBehavior=%d \n",XtParent(w),(int)radioBehavior);
+	print("\nParent(%x): XmNradioBehavior=%d \n",XtParent(w),(int)radioBehavior);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
 	XtSetArg(args[nargs],XmNset,&set); nargs++;
 	XtGetValues(w,args,nargs);
-	printf("Widget(%x): XmNindicatorType=%d "
+	print("Widget(%x): XmNindicatorType=%d "
 	  "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
 	  w,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
-	printf("Widget(%x): XmNset=%d\n",w,(int)set);
-	printf("If both the Edit and the Execute buttons are down,"
+	print("Widget(%x): XmNset=%d\n",w,(int)set);
+	print("If both the Edit and the Execute buttons are down,"
 	  " select \"On Version\"\n  on the Help menu to get more information."
 	  "  Send to evans@aps.anl.gov.\n");
     }
@@ -2542,7 +2542,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if (t > 0.5) {
-	    printf("modecallback : time used by ca_pend_event = %8.1f\n",t);
+	    print("modecallback : time used by ca_pend_event = %8.1f\n",t);
 	}
     }
 #else
@@ -2878,11 +2878,11 @@ Widget buildMenu(Widget parent,
  */
 static void handleSignals(int sig)
 {
-    if (sig==SIGQUIT)      fprintf(stderr,"\nSIGQUIT\n");
-    else if (sig==SIGINT)  fprintf(stderr,"\nSIGINT\n");
-    else if (sig==SIGTERM) fprintf(stderr,"\nSIGTERM\n");
-    else if (sig==SIGSEGV) fprintf(stderr,"\nSIGSEGV\n");
-    else if (sig==SIGBUS)  fprintf(stderr,"\nSIGBUS\n");
+    if (sig==SIGQUIT)      print("\nSIGQUIT\n");
+    else if (sig==SIGINT)  print("\nSIGINT\n");
+    else if (sig==SIGTERM) print("\nSIGTERM\n");
+    else if (sig==SIGSEGV) print("\nSIGSEGV\n");
+    else if (sig==SIGBUS)  print("\nSIGBUS\n");
 
   /* Remove the property on the root window (if not LOCAL) */
     if (windowPropertyAtom != (Atom)NULL)
@@ -3112,41 +3112,41 @@ main(int argc, char *argv[])
     
 #if DEBUG_DEFINITIONS
 
-    printf("\n");
+    print("\n");
 #ifdef __EXTENSIONS__
-    printf("__EXTENSIONS__= % d\n",__EXTENSIONS__);
+    print("__EXTENSIONS__= % d\n",__EXTENSIONS__);
 #else      
-    printf("__EXTENSIONS__ is undefined\n");
+    print("__EXTENSIONS__ is undefined\n");
 #endif
 #ifdef __STDC__
-    printf("__STDC__ = %d\n",__STDC__);
-    printf("__STDC__ - 0 = %d\n",__STDC__ - 0);
+    print("__STDC__ = %d\n",__STDC__);
+    print("__STDC__ - 0 = %d\n",__STDC__ - 0);
 #else      
-    printf("__STDC__ is undefined\n");
-    printf("__STDC__ - 0 = %d\n",__STDC__ - 0);
+    print("__STDC__ is undefined\n");
+    print("__STDC__ - 0 = %d\n",__STDC__ - 0);
 #endif
 #ifdef _POSIX_C_SOURCE
-    printf("_POSIX_C_SOURCE = %d\n",_POSIX_C_SOURCE);
+    print("_POSIX_C_SOURCE = %d\n",_POSIX_C_SOURCE);
 #else      
-    printf("_POSIX_C_SOURCE is undefined\n");
+    print("_POSIX_C_SOURCE is undefined\n");
 #endif
 #ifdef _XOPEN_SOURCE
-    printf("_XOPEN_SOURCE = %d\n",_XOPEN_SOURCE);
+    print("_XOPEN_SOURCE = %d\n",_XOPEN_SOURCE);
 #else      
-    printf("_XOPEN_SOURCE is undefined\n");
+    print("_XOPEN_SOURCE is undefined\n");
 #endif
 #ifdef _NO_LONGLONG
-    printf("_NO_LONGLONG = %d\n",_NO_LONGLONG);
+    print("_NO_LONGLONG = %d\n",_NO_LONGLONG);
 #else      
-    printf("_NO_LONGLONG is undefined\n");
+    print("_NO_LONGLONG is undefined\n");
 #endif
 #ifdef NeedFunctionPrototypes
-    printf("NeedFunctionPrototypes = %d\n",NeedFunctionPrototypes);
+    print("NeedFunctionPrototypes = %d\n",NeedFunctionPrototypes);
 #else      
-    printf("NeedFunctionPrototypes is undefined\n");
+    print("NeedFunctionPrototypes is undefined\n");
 #endif
-    printf("sizeof(1 && 2)=%d\n",sizeof(1 && 2));
-    printf("sizeof(Boolean)=%d\n",sizeof(Boolean));
+    print("sizeof(1 && 2)=%d\n",sizeof(1 && 2));
+    print("sizeof(Boolean)=%d\n",sizeof(Boolean));
     printf("This came from printf\n");
     fprintf(stdout,"This came from fprintf to stdout\n");
 
@@ -3205,8 +3205,8 @@ main(int argc, char *argv[])
 
   /* Usage and error exit */
     if (request->opMode == HELP) {
-	printf("\n%s\n",MEDM_VERSION_STRING);
-	printf("Usage:\n"
+	print("\n%s\n",MEDM_VERSION_STRING);
+	print("Usage:\n"
 	  "  medm [X options]\n"
 	  "  [-help | -?]\n"
 	  "  [-version]\n"
@@ -3222,7 +3222,7 @@ main(int argc, char *argv[])
 	  "\n");
 	exit(0);
     } else if (request->opMode == VERSION) {
-	printf("\n%s\n",MEDM_VERSION_STRING);
+	print("\n%s\n",MEDM_VERSION_STRING);
 	exit(0);
     }
 
@@ -3281,28 +3281,28 @@ main(int argc, char *argv[])
 	    status=XGetWindowAttributes(display,medmHostWindow,&attr);
 	    if(!status) {
 	      /* Window doesn't exist */
-		printf("\nCannot connect to existing MEDM because it is invalid\n"
+		print("\nCannot connect to existing MEDM because it is invalid\n"
  		  "  (An accompanying Bad Window error can be ignored)\n"
 		  "  Continuing with this one as if -cleanup were specified\n");
-		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		print("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 	    } else {
 	      /* Window does exist */
 	      /* Check if there were valid display files specified */
 		if (request->fileCnt > 0) {
-		    printf("\nAttaching to existing MEDM\n");
+		    print("\nAttaching to existing MEDM\n");
 		    for (i=0; i<request->fileCnt; i++) {
 			if (fileStr = request->fileList[i]) {
 			    sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
 			      request->macroString,request->displayGeometry,windowPropertyAtom);
 			    XFlush(display);
-			    printf("  Dispatched: %s\n",fileStr);
+			    print("  Dispatched: %s\n",fileStr);
 			}
 		    }
 		} else {
-		    printf("\nAborting: No valid display specified and already a remote MEDM running.\n");
+		    print("\nAborting: No valid display specified and already a remote MEDM running.\n");
 		}
-		printf("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		print("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 		
 	      /* Leave this MEDM */
@@ -3560,13 +3560,13 @@ main(int argc, char *argv[])
 	case ButtonRelease: {
 	    XButtonEvent bEvent = event.xbutton;
 	    
-	    printf("\nXLIB EVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
+	    print("\nXLIB EVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
 	      (bEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
 	      bEvent.button, bEvent.window, bEvent.subwindow,
 	      bEvent.state&ShiftMask?"Yes":"No",
 	      bEvent.state&ControlMask?"Yes":"No");
-	    printf("  Send_event: %s  State: %x\n",
+	    print("  Send_event: %s  State: %x\n",
 	      bEvent.send_event?"True":"False",bEvent.state);
 	    
 	    break;
@@ -3652,14 +3652,14 @@ main(int argc, char *argv[])
 	    nbytes = XLookupString(&xEvent, buffer, 10,
 	      &keysym, NULL);
 
-	    printf("\nEVENT: Type: %-7s  Keycode: %d  Window %x  SubWindow: %x\n"
+	    print("\nEVENT: Type: %-7s  Keycode: %d  Window %x  SubWindow: %x\n"
 	      "  Key: %s Shift: %s  Ctrl: %s\n",
 	      (xEvent.type == KeyPress)?"KeyPress":"KeyRelease",
 	      xEvent.keycode, xEvent.window, xEvent.subwindow,
 	      buffer,
 	      xEvent.state&ShiftMask?"Yes":"No",
 	      xEvent.state&ControlMask?"Yes":"No");
-	    printf("  Send_event: %s  State: %x\n",
+	    print("  Send_event: %s  State: %x\n",
 	      xEvent.send_event?"True":"False",xEvent.state);
 
 	    XtTranslateKeycode(display, xEvent.keycode, (Modifiers)NULL,
@@ -3667,19 +3667,19 @@ main(int argc, char *argv[])
 
 	    switch (keysym) {
 	    case osfXK_Left:
-		printf("  Keysym: %s\n","osfXK_Left");
+		print("  Keysym: %s\n","osfXK_Left");
 		break;
 	    case osfXK_Right:
-		printf("  Keysym: %s\n","osfXK_Right");
+		print("  Keysym: %s\n","osfXK_Right");
 		break;
 	    case osfXK_Up:
-		printf("  Keysym: %s\n","osfXK_Up");
+		print("  Keysym: %s\n","osfXK_Up");
 		break;
 	    case osfXK_Down:
-		printf("  Keysym: %s\n","osfXK_Down");
+		print("  Keysym: %s\n","osfXK_Down");
 		break;
 	    default:
-		printf("  Keysym: %s\n","Undetermined");
+		print("  Keysym: %s\n","Undetermined");
 		break;
 	    }
 
@@ -3694,31 +3694,31 @@ main(int argc, char *argv[])
 	    Window win;
 	    int i = 0;
 
-	    printf("\nEVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
+	    print("\nEVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
 	      (xEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
 	      xEvent.button, xEvent.window, xEvent.subwindow,
 	      xEvent.state&ShiftMask?"Yes":"No",
 	      xEvent.state&ControlMask?"Yes":"No");
-	    printf("  Send_event: %s  State: %x\n",
+	    print("  Send_event: %s  State: %x\n",
 	      xEvent.send_event?"True":"False",xEvent.state);
 
 #if 1
 	    if(xEvent.subwindow) win=xEvent.subwindow;
 	    else win=xEvent.window;
 	    w=XtWindowToWidget(display,win);
-	    printf("\nHierarchy:\n");
+	    print("\nHierarchy:\n");
 	    while(1) {
-		printf("%4d %x",i++,win);
+		print("%4d %x",i++,win);
 		if(w == mainShell) {
-		    printf(" (mainShell)\n");
+		    print(" (mainShell)\n");
 		    break;
 		} else if(win == xEvent.window) {
-		    printf(" (window)\n");
+		    print(" (window)\n");
 		} else if(win == xEvent.subwindow) {
-		    printf(" (subwindow)\n");
+		    print(" (subwindow)\n");
 		} else {
-		    printf("\n");
+		    print("\n");
 		}
 		w=XtParent(w);
 		win=XtWindow(w);

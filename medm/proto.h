@@ -393,7 +393,8 @@ XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
 void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
-DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0);
+DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
+  Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
   DisplayInfo *displayInfo, Position *x, Position *y);
 void findSelectedElements(DlList *pList1, Position x0, Position y0,
@@ -501,9 +502,11 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count);
 void popupDisplayListDlg(void);
 void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
+void print(const char *fmt, ...);
 /* Debugging */
 void dumpCartesianPlot(void);
 void printEventMasks(Display *display, Window win, char *string);
+void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);
 void dumpDisplayInfoList(DisplayInfo *head, char *string);
 

@@ -739,24 +739,23 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
 #endif
 {
     XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
-    int i,j,len,abort;
-    char *curString;
+    int i,abort;
 
 #if DEBUG_TEXT_VERIFY
     {
 	int i;
 	
-	printf("\ntextFieldNumericVerifyCallback: Entered\n");
-	printf("  event: %x  cbs->text->ptr: %x\n"
+	print("\ntextFieldNumericVerifyCallback: Entered\n");
+	print("  event: %x  cbs->text->ptr: %x\n"
 	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
 	  cbs->event,cbs->text->ptr,
 	  cbs->startPos,cbs->endPos,cbs->currInsert,cbs->newInsert);
 	if(cbs->text->length) {
-	    printf("  length=%d: \"",cbs->text->length);
-	    for(i=0; i < cbs->text->length; i++) printf("%c",cbs->text->ptr[i]);
-	    printf("\"\n");
+	    print("  length=%d: \"",cbs->text->length);
+	    for(i=0; i < cbs->text->length; i++) print("%c",cbs->text->ptr[i]);
+	    print("\"\n");
 	} else {
-	    printf("  length=0\n");
+	    print("  length=0\n");
 	}
     }
 #endif    
@@ -791,12 +790,12 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
     }
     if(abort) cbs->doit=False;
 #if DEBUG_TEXT_VERIFY
-    printf("  doit: %d",cbs->doit);
-    if(!abort) printf("\n");
-    else if(abort == 1) printf("  +/- not in first position\n");
-    else if(abort == 2) printf("  More than one new dot\n");
-    else if(abort == 3) printf("  Already have a dot\n");
-    else if(abort == 4) printf("  Invalid character\n");
+    print("  doit: %d",cbs->doit);
+    if(!abort) print("\n");
+    else if(abort == 1) print("  +/- not in first position\n");
+    else if(abort == 2) print("  More than one new dot\n");
+    else if(abort == 3) print("  Already have a dot\n");
+    else if(abort == 4) print("  Invalid character\n");
 #endif
 }
 
@@ -821,17 +820,17 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
     {
 	int i;
 	
-	printf("\ntextFieldFloatVerifyCallback: Entered\n");
-	printf("  event: %x  cbs->text->ptr: %x\n"
+	print("\ntextFieldFloatVerifyCallback: Entered\n");
+	print("  event: %x  cbs->text->ptr: %x\n"
 	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
 	  cbs->event,cbs->text->ptr,
 	  cbs->startPos,cbs->endPos,cbs->currInsert,cbs->newInsert);
 	if(cbs->text->length) {
-	    printf("  length=%d: \"",cbs->text->length);
-	    for(i=0; i < cbs->text->length; i++) printf("%c",cbs->text->ptr[i]);
-	    printf("\"\n");
+	    print("  length=%d: \"",cbs->text->length);
+	    for(i=0; i < cbs->text->length; i++) print("%c",cbs->text->ptr[i]);
+	    print("\"\n");
 	} else {
-	    printf("  length=0\n");
+	    print("  length=0\n");
 	}
     }
 #endif    
@@ -891,12 +890,12 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
     }
     if(abort) cbs->doit=False;
 #if DEBUG_TEXT_VERIFY
-    printf("  doit: %d",cbs->doit);
-    if(!abort) printf("\n");
-    else if(abort == 1) printf("  +/- not in first position\n");
-    else if(abort == 2) printf("  More than one new dot\n");
-    else if(abort == 3) printf("  Already have a dot\n");
-    else if(abort == 4) printf("  Invalid character\n");
+    print("  doit: %d",cbs->doit);
+    if(!abort) print("\n");
+    else if(abort == 1) print("  +/- not in first position\n");
+    else if(abort == 2) print("  More than one new dot\n");
+    else if(abort == 3) print("  Already have a dot\n");
+    else if(abort == 4) print("  Invalid character\n");
 #endif
 }
 
@@ -1130,7 +1129,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     String resourceName;
 
 #if DEBUG_XRT
-    printf("\ncpAxisTextFieldActivateCallback: Entered\n");
+    print("\ncpAxisTextFieldActivateCallback: Entered\n");
 #endif    
     stringValue = XmTextFieldGetString(w);
 
@@ -1156,7 +1155,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
 #if DEBUG_XRT
-	    printf("\ncpAxisTextFieldActivateCallback [MIN]: "
+	    print("\ncpAxisTextFieldActivateCallback [MIN]: "
 	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
 	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
 #endif    
@@ -1179,7 +1178,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
 #if DEBUG_XRT
-	    printf("\ncpAxisTextFieldActivateCallback [MAX]: "
+	    print("\ncpAxisTextFieldActivateCallback [MAX]: "
 	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
 	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
 #endif    
@@ -1197,13 +1196,13 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
     tickF.fval = (maxF.fval - minF.fval)/4.0;
 #if DEBUG_XRT
-    printf("cpAxisTextFieldActivateCallback: "
+    print("cpAxisTextFieldActivateCallback: "
       "minF.fval =%g minF.lval=%ld Converted: %d\n",
       minF.fval,minF.lval,XrtFloatToArgVal(minF.fval));
-    printf("cpAxisTextFieldActivateCallback: "
+    print("cpAxisTextFieldActivateCallback: "
       "maxF.fval =%g maxF.lval=%ld Converted: %d\n",
       maxF.fval,maxF.lval,XrtFloatToArgVal(maxF.fval));
-    printf("cpAxisTextFieldActivateCallback: "
+    print("cpAxisTextFieldActivateCallback: "
       "tickF.fval =%g tickF.lval=%ld Converted: %d\n",
       tickF.fval,tickF.lval,XrtFloatToArgVal(tickF.fval));
 #endif    
@@ -1405,11 +1404,11 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     XcVType minF[3], maxF[3];
 
 #if DEBUG_XRT
-    printf("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
-    printf("  executeTimeCartesianPlotWidget: %d\n",
+    print("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
+    print("  executeTimeCartesianPlotWidget: %d\n",
       executeTimeCartesianPlotWidget);
-    printf("  rcType: %d  rcType%%3: %d\n",rcType,rcType%3);
-    printf("  axisRangeMin[rcType%%3]: %d  axisRangeMax[rcType%%3]: %d  "
+    print("  rcType: %d  rcType%%3: %d\n",rcType,rcType%3);
+    print("  axisRangeMin[rcType%%3]: %d  axisRangeMax[rcType%%3]: %d  "
       "w: %d\n",axisRangeMin[rcType%3],axisRangeMax[rcType%3],w);
 #endif    
   /* Losing focus - make sure that the text field remains accurate wrt 
@@ -1607,7 +1606,7 @@ static void initializeXmStringValueTables() {
  ****************************************************************************/
 void createResource() {
     DisplayInfo *cdi=currentDisplayInfo;
-    Widget entriesSW, bundlesSW, resourceMB, messageF, resourceHelpPDM;
+    Widget entriesSW, resourceMB, messageF, resourceHelpPDM;
     XmString buttons[N_MAX_MENU_ELES];
     KeySym keySyms[N_MAX_MENU_ELES];
     XmButtonType buttonType[N_MAX_MENU_ELES];
@@ -2262,7 +2261,8 @@ static void createEntryRC( Widget parent, int rcType) {
 	break;
 
     default:
-	printf("\n------MISSED TYPE  %d  IN createEntryRC()!!--------",rcType);
+	medmPrintf(1,"\ncreateEntryRC(): Unknown rcType (%d)\n",
+	  rcType);
 
     }
 
@@ -4204,13 +4204,13 @@ void updateResourcePaletteMonitorAttribute() {
 void clearResourcePaletteEntries()
 {
 #if DEBUG_RESOURCE
-    printf("In clearResourcePaletteEntries\n");
+    print("In clearResourcePaletteEntries\n");
     if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
-	printf("  currentElementType: %s (%d)\n",
+	print("  currentElementType: %s (%d)\n",
 	  elementType(currentElementType),currentElementType);
     } else {
-	printf("  currentElementType: (%d) Valid Types [%d-%d]\n",
+	print("  currentElementType: (%d) Valid Types [%d-%d]\n",
 	  currentElementType,MIN_DL_ELEMENT_TYPE,MAX_DL_ELEMENT_TYPE);
     }
 #endif
@@ -4249,13 +4249,13 @@ void setResourcePaletteEntries()
     DlElementType displayType;
 
 #if DEBUG_RESOURCE
-    printf("In setResourcePaletteEntries\n");
+    print("In setResourcePaletteEntries\n");
     if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
-	printf("  currentElementType: %s (%d)\n",
+	print("  currentElementType: %s (%d)\n",
 	  elementType(currentElementType),currentElementType);
     } else {
-	printf("  currentElementType: (%d) Valid Types [%d-%d]\n",
+	print("  currentElementType: (%d) Valid Types [%d-%d]\n",
 	  currentElementType,MIN_DL_ELEMENT_TYPE,MAX_DL_ELEMENT_TYPE);
     }
 #endif
@@ -4329,7 +4329,7 @@ void updateElementFromGlobalResourceBundle(DlElement *element)
     DisplayInfo *cdi = currentDisplayInfo;
 
 #if DEBUG_RESOURCE
-    printf("In updateElementFromGlobalResourceBundle\n");
+    print("In updateElementFromGlobalResourceBundle\n");
 #endif
     
   /* Simply return if not valid to update */
@@ -4356,7 +4356,7 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
     DisplayInfo *cdi = currentDisplayInfo;
     
 #if DEBUG_RESOURCE
-    printf("In updateElementBackgroundColorFromGlobalResourceBundle\n");
+    print("In updateElementBackgroundColorFromGlobalResourceBundle\n");
 #endif
     
   /* Simply return if not valid to update */
@@ -4410,7 +4410,7 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
     DisplayInfo *cdi = currentDisplayInfo;
     
 #if DEBUG_RESOURCE
-    printf("In updateElementForegroundColorFromGlobalResourceBundle\n");
+    print("In updateElementForegroundColorFromGlobalResourceBundle\n");
 #endif
     
   /* Simply return if not valid to update */
@@ -4464,7 +4464,7 @@ void updateGlobalResourceBundleFromElement(DlElement *element) {
     int i;
 
 #if DEBUG_RESOURCE
-    printf("In updateGlobalResourceBundleFromElement\n");
+    print("In updateGlobalResourceBundleFromElement\n");
 #endif
 
     if (!element || (element->type != DL_CartesianPlot)) return;
@@ -4494,7 +4494,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
     int i, tail;
 
 #if DEBUG_RESOURCE
-    printf("In updateGlobalResourceBundleAndResourcePaletteo\n");
+    print("In updateGlobalResourceBundleAndResourcePaletteo\n");
 #endif
 
   /* Simply return if not valid to update */
@@ -4894,7 +4894,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	DlText *p = elementPtr->structure.text;
 
 #if DEBUG_RESOURCE
-        printf("\n[updateGlobalResourceBundleAndResourcePalette] selectedDlElementList:\n");
+        print("\n[updateGlobalResourceBundleAndResourcePalette] selectedDlElementList:\n");
         dumpDlElementList(cdi->selectedDlElementList);
 #endif
 
@@ -5063,7 +5063,7 @@ void resetGlobalResourceBundleAndResourcePalette()
 
 
 #if DEBUG_RESOURCE
-    printf("In resetGlobalResourceBundleAndResourcePalette\n");
+    print("In resetGlobalResourceBundleAndResourcePalette\n");
 #endif
     
     if (ELEMENT_IS_RENDERABLE(currentElementType) ) {

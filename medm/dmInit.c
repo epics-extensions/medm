@@ -59,14 +59,18 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 #include <X11/keysym.h>
+#include <Xm/MwmUtil.h>
 
 extern Widget mainShell;
 
 static Position x = 0, y = 0;
 static Widget lastShell;
 
-#define DISPLAY_DEFAULT_X 10
-#define DISPLAY_DEFAULT_Y 10
+/* KE: Used to move the display if its x and y are zero
+ * The following account for the borders and title bar with the TED WM
+ *   Were formerly both 10 (not very aesthetic) */
+#define DISPLAY_DEFAULT_X 5
+#define DISPLAY_DEFAULT_Y 24
 
 #define MEDM_EXEC_LIST_MAX 1024
 
@@ -178,7 +182,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 DisplayInfo *allocateDisplayInfo()
 {
     DisplayInfo *displayInfo;
-    int n;
+    int nargs;
     Arg args[8];
 
 /* Allocate a DisplayInfo structure and shell for this display file/list */
@@ -241,19 +245,33 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->dlColormap = NULL;
 
   /* Create the shell and add callbacks */
-    n = 0;
-    XtSetArg(args[n],XmNiconName,"display"); n++;
-    XtSetArg(args[n],XmNtitle,"display"); n++;
-    XtSetArg(args[n],XmNallowShellResize,TRUE); n++;
-  /* For highlightOnEnter on pointer motion, this must be set for shells */
-    XtSetArg(args[n],XmNkeyboardFocusPolicy,XmPOINTER); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
+    XtSetArg(args[nargs],XmNiconName,"display"); nargs++;
+    XtSetArg(args[nargs],XmNtitle,"display"); nargs++;
+    XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
+  /* Turn resize handles off
+   * KE: Is is really good to do this? */
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
+    nargs++;
+  /* KE: The following is necessary for Exceed, which turns off the resize
+   *   function with the handles.  It should not be necessary */
+    XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
+#if 1
+  /* For highlightOnEnter on pointer motion, this must be set for shells
+   * KE: It seems like the user should set this
+   *   highlightOnEnter is set for MessageButton, RelatedDisplay, Shell Command,
+   *     TextEntry, Valuator
+   *   Seems like it only does something for the Slider and Text Entry */
+    XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmPOINTER); nargs++;
+#endif    
   /* Map window manager menu Close function to nothing for now */
-    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
     if (privateCmap) {
-	XtSetArg(args[n],XmNcolormap,cmap); n++;
+	XtSetArg(args[nargs],XmNcolormap,cmap); nargs++;
     }
     displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
-      mainShell,args,n);
+      mainShell,args,nargs);
     XtAddCallback(displayInfo->shell, XmNpopupCallback,
       displayShellPopupCallback, (XtPointer)displayInfo);
     XtAddCallback(displayInfo->shell,XmNpopdownCallback,
@@ -380,6 +398,8 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
     TOKEN tokenType;
     int numPairs;
     Position x, y;
+    int xg, yg;
+    unsigned int width, height;
     int mask;
     int reuse=0;
     DlElement *pE;
@@ -388,7 +408,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	
     
 #if DEBUG_RELATED_DISPLAY
-    printf("dmDisplayListParse: displayInfo=%x\n"
+    print("\ndmDisplayListParse: displayInfo=%x\n"
       "  argsString=%s\n"
       "  filename=%s\n"
       "  geometryString=%s\n"
@@ -410,14 +430,18 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	cdi->newDisplay = False;
     } else {
       /* Came from a display that is to be replaced */
+      /* Get the current values of x and y */
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&x); nargs++;
+	XtSetArg(args[nargs],XmNy,&y); nargs++;
+	XtGetValues(displayInfo->shell,args,nargs);
+#if DEBUG_RELATED_DISPLAY
+	print("dmDisplayListParse: Old values: x=%d y=%d\n",x,y);
+#endif      
+      /* See if we want to reuse it or save it */
 	if(displayInfo->fromRelatedDisplayExecution == True) {
 	  /* Not an original, don't save it, reuse it */
 	    reuse=1;
-	  /* Get the current values of x and y */
-	    nargs=0;
-	    XtSetArg(args[nargs],XmNx,&x); nargs++;
-	    XtSetArg(args[nargs],XmNy,&y); nargs++;
-	    XtGetValues(displayInfo->shell,args,nargs);
 	  /* Clear out old display */
 	    dmCleanupDisplayInfo(displayInfo,False);
 	    clearDlDisplayList(displayInfo->dlElementList);
@@ -427,13 +451,13 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	} else {
 	  /* This is an original, pop it down */
 	    XtPopdown(displayInfo->shell);
-#if DEBUG_RELATED_DISPLAY
+#if DEBUG_RELATED_DISPLAY > 1
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [1]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [1]: displayInfoSaveList");
 #endif
 	  /* Save it if not already saved */
 	    moveDisplayInfoToDisplayInfoSave(displayInfo);
-#if DEBUG_RELATED_DISPLAY
+#if DEBUG_RELATED_DISPLAY > 1
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [2]: displayInfoSaveList");
 #endif	    
@@ -443,15 +467,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	}
     }
   
-    if (fromRelatedDisplayExecution)
-      cdi->fromRelatedDisplayExecution = True;
-    else
-      cdi->fromRelatedDisplayExecution = False;
-    
-#if 0
-  /* KE: Doesn't make sense.  This just sets an argument which is not a pointer */
-    fromRelatedDisplayExecution = cdi->fromRelatedDisplayExecution;
-#endif  
+    cdi->fromRelatedDisplayExecution = fromRelatedDisplayExecution;
     
   /* Generate the name-value table for macro substitutions (related display) */
     if (argsString) {
@@ -487,13 +503,12 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	return;
     }
 
-  /* DEBUG */
 #if DEBUG_RELATED_DISPLAY
-    printf("  File: %s\n",cdi->dlFile->name);
+    print("  File: %s\n",cdi->dlFile->name);
 #if 0    
     if(strstr(cdi->dlFile->name,"sMain.adl")) {
 	debugDisplayInfo=displayInfo;
-	printf("Set debugDisplayInfo for sMain.adl\n");
+	print("Set debugDisplayInfo for sMain.adl\n");
     }
 #endif
 #endif
@@ -521,61 +536,123 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
       cdi->dlElementList) != T_EOF );
     cdi->filePtr = NULL;
 
-  /* Do moving and resizing as necessary */
-    if(reuse) {
-      /* Change DlObject values for x and y to be the same as the original */
-	pE = FirstDlElement(displayInfo->dlElementList);
+  /* The display is the first element */
+    pE = FirstDlElement(cdi->dlElementList);
+
+  /* Change DlObject values for x and y to be the same as the original */
+    if(displayInfo) {
+      /* Note that cdi is not necessarily the same as displayInfo */
 #if DEBUG_RELATED_DISPLAY
-	printf("  x=%d pE->structure.display->object.x=%d\n"
+	print("  Set replaced values: XtIsRealized=%s XtIsManaged=%s\n",
+	  XtIsRealized(cdi->shell)?"True":"False",
+	  XtIsManaged(cdi->shell)?"True":"False");
+	print("  x=%d pE->structure.display->object.x=%d\n"
 	  "  y=%d pE->structure.display->object.y=%d\n",
 	  x,pE->structure.display->object.x,
 	  y,pE->structure.display->object.y);
 #endif	
 	pE->structure.display->object.x = x;
 	pE->structure.display->object.y = y;
+    }
 
+  /* Do resizing */
+    if(reuse) {
       /* Resize the display to the new size now
        *   (There should be no resize callback yet so it will not try
        *     to resize all the elements) */
 	nargs=0;
-	XtSetArg(args[nargs],XmNwidth,pE->structure.display->object.width); nargs++;
-	XtSetArg(args[nargs],XmNheight,pE->structure.display->object.height); nargs++;
+	XtSetArg(args[nargs],XmNwidth,pE->structure.display->object.width);
+	nargs++;
+	XtSetArg(args[nargs],XmNheight,pE->structure.display->object.height);
+	nargs++;
 	XtSetValues(displayInfo->shell,args,nargs);
     } else if(geometryString && *geometryString) {
-	int x, y;
-	unsigned int width, height;
-	
       /* Handle geometry string */
       /* Parse the geometry string (mask indicates what was found) */
-	mask = XParseGeometry(geometryString,&x,&y,&width,&height);
+	mask = XParseGeometry(geometryString,&xg,&yg,&width,&height);
+#if DEBUG_RELATED_DISPLAY
+	print("dmDisplayListParse: Geometry values: xg=%d yg=%d\n",xg,yg);
+#endif      
 	
-      /* Change width and height object values */
+      /* Change width and height object values now, x and y later */
 	if ((mask & WidthValue) && (mask & HeightValue)) {
 	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
 	}
-	
-      /* Move it */
-	if ((mask & XValue) && (mask & YValue)) {
-	    XMoveWindow(XtDisplay(cdi->shell),
-	      XtWindow(cdi->shell),x,y);
-	}
     }
 
-#if DEBUG_RELATED_DISPLAY
-    printf("dmDisplayListParse: Before dmTraverseDisplayList\n");
-#endif
   /* Execute all the elements including the display */
     dmTraverseDisplayList(cdi);
     
   /* Pop it up */
     XtPopup(cdi->shell,XtGrabNone);
+#if DEBUG_RELATED_DISPLAY
+    print("  After XtPopup: XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(cdi->shell)?"True":"False",
+      XtIsManaged(cdi->shell)?"True":"False");
+    print("  Current values:\n"
+      "    pE->structure.display->object.x=%d\n"
+      "    pE->structure.display->object.y=%d\n",
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
+    {
+	Position xpos,ypos;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
+	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
+	XtGetValues(cdi->shell,args,nargs);
+	print("dmDisplayListParse: After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+    }
+#endif      
+    
+  /* Do moving after it is realized */
+    if(displayInfo && !reuse) {
+#if DEBUG_RELATED_DISPLAY
+	print("  Move(1)\n");
+	pE->structure.display->object.x=x;
+	pE->structure.display->object.y=y;
+#endif	
+    } else if(geometryString && *geometryString) {
+#if DEBUG_RELATED_DISPLAY
+	print("  Move(2)\n");
+#endif	
+	if ((mask & XValue) && (mask & YValue)) {
+	    pE->structure.display->object.x=xg;
+	    pE->structure.display->object.y=yg;
+	}
+#if DEBUG_RELATED_DISPLAY
+    } else {
+	print("  Move(0)\n");
+#endif
+    }
+
+  /* KE: Move it to be consistent with its object values
+   * XtSetValues or XtMoveWidget do not work here
+   * Is necessary in part because WM adds borders and title bar,
+       moving the shell down when first created */
+    XMoveWindow(display,XtWindow(cdi->shell),
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
+
+#if DEBUG_RELATED_DISPLAY
+    print("  Final values:\n"
+      "    pE->structure.display->object.x=%d\n"
+      "    pE->structure.display->object.y=%d\n",
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
+    {
+	Position xpos,ypos;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
+	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
+	XtGetValues(cdi->shell,args,nargs);
+	print("dmDisplayListParse: At end: xpos=%d ypos=%d\n",xpos,ypos);
+    }
+#endif
     
   /* Refresh the display list dialog box */
     refreshDisplayListDlg();
-    
-#if DEBUG_RELATED_DISPLAY
-    printf("dmDisplayListParse: Leaving\n");
-#endif    
 }
 
 DlElement *parseDisplay(

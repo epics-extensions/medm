@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_SHORT 0
+
 #include "medm.h"
 
 #ifdef __cplusplus
@@ -341,6 +343,20 @@ static void textUpdateDraw(XtPointer cd)
 		    break;
 		}
 	    }
+
+#if DEBUG_SHORT
+	    {
+	      /* Use to overcome lprint not supporting %f */
+		char string[512];
+		
+		sprintf(string,"textUpdateDraw: pd->name=%s pd->dataType=%d(%s)\n"
+		  "  pd->value=%g  textField=|%s|\n",
+		  pd->name,pd->dataType,dbf_type_to_text(pd->dataType),
+		  pd->value,textField);
+		print(string);
+		print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),sizeof(long));
+	    }
+#endif		
 
 	    XSetForeground(display,displayInfo->gc, displayInfo->colormap[dlTextUpdate->monitor.bclr]);
 	    XFillRectangle(display, XtWindow(displayInfo->drawingArea),
