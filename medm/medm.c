@@ -1154,7 +1154,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         Arg args[10];
         XmString buttons[NUM_IMAGE_TYPES-1];
         XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-        Widget radioBox, rowColumn, frame, typeLabel;
+        Widget rowColumn, frame, typeLabel;
         int i, n;
 
         XmString label = XmStringCreateSimple("*.adl");

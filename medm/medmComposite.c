@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *****************************************************************************
 */
 
-#include "../medm/medm.h"
+#include "medm.h"
 
 void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
         Boolean forcedDisplayToWindow)

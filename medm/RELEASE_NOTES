@@ -1,3 +1,8 @@
+Version 2.2.7
+=============
+- Fix the bug introduced by 2.2.6.
+  - it crashes medm when bring up the "SAVE AS" dialog.
+
 Version 2.2.6
 =============
 - Fix two bugs.
