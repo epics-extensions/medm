@@ -10,7 +10,7 @@
 <P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>May 2000</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>June 2000</P>
 </B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
@@ -67,6 +67,7 @@
 </B><FONT SIZE=2><P>2.3.6</P>
 
 <UL>
+<LI>The Cut-Copy-Paste keys (Shift-Del, Ctrl-Ins, and Shift-Ins, respectively) should work, and the position of pasted objects can be adjusted with the arrow keys as well as the mouse.  See </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Menu Editing Operations</FONT></A><FONT SIZE=2> for more details.</LI>
 <LI>MEDM no longer tries to connect to process variables for </FONT><A HREF="#MEDMObjects"><FONT SIZE=2>graphics objects</FONT></A><FONT SIZE=2> and </FONT><A HREF="#Composite"><FONT SIZE=2>composite objects</FONT></A><FONT SIZE=2> that have an otherwise unneeded PV associated with them that is there for the sole purpose of making them appear in the correct stacking order.  That is, both the Visibility and Color Mode, if relevant, are static.  A side effect is that these objects will not appear white if the PV is invalid.  See </FONT><A HREF="#MEDMObjects"><FONT SIZE=2>MEDM Objects</FONT></A><FONT SIZE=2> for more information.</LI>
 <LI> There is no longer a requirement that a hidden </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2> be the same size as the associated graphic, or that it be under all graphics, or even that there be a graphic.  This makes it easier to use hidden Related Displays with and in Composites.</LI>
 <LI>The axes in the </FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A><FONT SIZE=2> can now be changed by the user, and defaults may be specified by the screen designer via the </FONT><A HREF="#StripChartDataDialog"><FONT SIZE=2>Strip Chart Data Dialog</FONT></A><FONT SIZE=2>.  In EXECUTE mode, the dialog box is brought up by the PV Limits item in the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute Mode Menu</FONT></A><FONT SIZE=2>.</LI>
@@ -738,11 +739,13 @@
 </B><FONT SIZE=2><P>&#9;The Polygon has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Visibility Calc, Channels A-D) attributes.  The Polygon is drawn on the display drawing area and is not a widget.</P>
 <P>&#9;Polygons are drawn by pressing Btn1 to generate vertices or Shift-Btn1 to generate vertices which are multiples of 45 degrees from the previous point.  This allows easy horizontal or vertical line generation, for instance.  Button releases are ignored.  The Polygon is finished when there is a second click at the same location.  The Polygon is always displayed as closed while it is being drawn. </P>
 <P>&#9;Polygons can be edited by selecting them, then pressing Btn1 on a vertex and dragging the vertex.</P>
+<P>The </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object Attributes</FONT></A><FONT SIZE=2> for a Polygon represent the bounding box of the polygon.  Accordingly, editing the vertices or changing the </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Line Width</FONT></A><FONT SIZE=2> for the Polygon may change the object size and location.</P>
 <P>&#9;Note that Polygons in outline fill mode are similar to Polylines, except that Polygons close the figure and Polylines do not.</P>
 </FONT><B><P><A NAME="Polyline"></A>Polyline</P>
 </B><FONT SIZE=2><P>&#9;The Polyline has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Visibility Calc, Channels A-D) attributes.  The Polyline is drawn on the display drawing area and is not a widget.</P>
 <P>&#9;Polylines are drawn by pressing Btn1 to generate vertices or Shift-Btn1 to generate vertices which are multiples of 45 degrees from the previous point.  This allows easy horizontal or vertical line generation, for instance.  Button releases are ignored.  The Polyline is finished when there is a second click at the same location.</P>
 <P>&#9;Polylines can be edited by selecting them, then pressing Btn1 on a vertex and dragging the vertex.</P>
+<P>The </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object Attributes</FONT></A><FONT SIZE=2> for a Polyline represent the bounding box of the lines.  Accordingly, editing the vertices or changing the </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Line Width</FONT></A><FONT SIZE=2> for the Polyline may change the object size and location.</P>
 </FONT><B><P><A NAME="Rectangle"></A>Rectangle</P>
 </B><FONT SIZE=2><P>&#9;The Rectangle has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Visibility Calc, Channels A-D) attributes.  The Rectangle is drawn on the display drawing area and is not a widget.</P>
 </FONT><B><P><A NAME="RelatedDisplay"></A>Related Display</P>
@@ -836,7 +839,7 @@
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Line Width</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>Line width in pixels.</FONT></TD>
+<FONT SIZE=2><P>Line width in pixels.  A line width of 0 is allowed.  By X Windows convention, it may be drawn with a faster algorithm, but the look is X server dependent, and it may not update properly.  For the Polygon and Polyline, changing the Line Width changes the object size and location accordingly.  For the other graphics objects, the object size remains constant.</FONT></TD>
 </TR>
 </TABLE>
 
@@ -1701,7 +1704,8 @@
 </B><P>In EXECUTE mode specifying Default means the values used are those specified by the designer of the MEDM screen or the MEDM defaults if none were specified.  The MEDM defaults are 0.0 for the High Limit, 1.0 for the Low Limit, and 0 for the precision.  The default value cannot be changed in EXECUTE mode.  Use User Specified instead.  In EDIT mode the screen designer specifies the default values via the text entry box and by picking this source option specifies that these values will be used unless the user specifies something different.  The screen designer can thus override what the database designer specified (or failed to specify).</P>
 <B><P>User Specified</P>
 </B><P>&#9;This option is only available in EXECUTE mode.  The user of the screen can set the values to whatever he or she wants.  It may be appropriate, for example, to set a reduced range for an object when doing fine-tuning.  The user can override both the screen designer and the database designer by using this option and entering new values.  He can revert to either of the other sources by choosing those options.</P>
-<P>Note that the screen designer can set the source to be Channel or Default and can set the default value.  The user can set the source to be any of the three and can set the user-specified value.  If the source is Default, he will get the default specified by the designer, and if it is Channel, he will get the value from LOPR or HOPR.  The value for the channel cannot be set at any time.  It comes from the process variable.  The dialog box will not respond to attempts to set items that are not meaningful or allowed.</P>
+<P>Note that the screen designer (in EDIT mode) can set the source to be Channel or Default and can set the default value.  The user (in EXECUTE mode) can set the source to be any of the three and can set the user-specified value.  If the source is Default, he will get the default specified by the designer, and if it is Channel, he will get the value from LOPR or HOPR.  The value for the channel cannot be set at any time.  It comes from the process variable.  The dialog box will not respond to attempts to set items that are not meaningful or allowed.</P>
+<P>Note also that the operation of setting limits is different from that for the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>, where there is no default option and the screen designer sets the user-specified value instead, and that value is what the user gets until he changes it.  In this case the user cannot go back to the default unless he remembers it and sets it explicitly.</P>
 <P>&#9;Both limits and precision are relevant and may be specified for the </FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A><FONT SIZE=2>, </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar Monitor</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2>.  Only the precision is relevant and may be set for the </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2> and </FONT><A HREF="#TextEntry"><FONT SIZE=2>Text Entry</FONT></A><FONT SIZE=2>.  None of these is relevant for other MEDM objects and the dialog box should not be available, nor should there be </FONT><A HREF="#Limits"><FONT SIZE=2>limits attributes</FONT></A><FONT SIZE=2> stored in the ADL file.  The </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> has other ways to set its limits.  The limits for the </FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A><FONT SIZE=2> are set in the </FONT><A HREF="#StripChartDataDialog"><FONT SIZE=2>Strip Chart Data Dialog</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><P><A NAME="StripChartDataDialog"></A>Strip Chart Data Dialog Box</P>
 </B><FONT SIZE=2><P>You may invoke the Strip Chart data dialog box from the PV Limits item in the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Menu</FONT></A><FONT SIZE=2> in EXECUTE mode and from the Channel/Color button for the </FONT><A HREF="#StripChart"><FONT SIZE=2>Strip Chart</FONT></A><FONT SIZE=2> in the Resource Palette in EDIT mode.  When invoked from the Execute-Mode Menu, you are prompted with a PV cursor to pick an object on the display, the same as for the </FONT><A HREF="#PVLimitsDialogBox"><FONT SIZE=2>PV Limits Dialog Box</FONT></A><FONT SIZE=2>.  In EDIT mode you can specify the channel, the color of the line for that channel, the source for the Low Limit, the Low Limit, the source for the High Limit, and the High Limit.  There is more information about limits under the PV Limits Dialog Box.  The precision cannot be specified although it will affect the number of figures after the decimal point displayed for the Low and High Limits in the dialog box.  It is the higher of the value for the PREC field or 2.  In EXECUTE mode you can specify all except the channel, which is fixed.  This includes the color.</P>
@@ -1851,17 +1855,17 @@
 <TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Cut</FONT></TD>
 <TD WIDTH="83%" VALIGN="TOP">
-<FONT SIZE=2><P>Deletes the selected objects and saves them in an internal clipboard.</FONT></TD>
+<FONT SIZE=2><P>Deletes the selected objects and saves them in an internal clipboard.  This operation can also be invoked by Shift-Del.</FONT></TD>
 </TR>
 <TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Copy</FONT></TD>
 <TD WIDTH="83%" VALIGN="TOP">
-<FONT SIZE=2><P>Copies the selected objects to the internal clipboard.</FONT></TD>
+<FONT SIZE=2><P>Copies the selected objects to the internal clipboard.  This operation can also be invoked by Ctrl-Insert.</FONT></TD>
 </TR>
 <TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Paste</FONT></TD>
 <TD WIDTH="83%" VALIGN="TOP">
-<FONT SIZE=2><P>Pastes the objects in the internal clipboard into the display at the position of the cursor.  They are selected and can be moved with the mouse until a mouse button is released.  Objects are constrained to remain in the visible part of the display.  The Motif Cancel key (usually Esc or Escape) cancels the paste.  Paste supports </FONT><A HREF="#Grid"><FONT SIZE=2>snap to grid</FONT></A><FONT SIZE=2>.</FONT></TD>
+<FONT SIZE=2><P>Pastes the objects in the internal clipboard into the display.  They are selected and can be moved with the mouse or arrow keys until a mouse button is released or the Enter key is pressed.  Afterwards they remain selected and can be moved using the means described above for moving selected objects.  During the paste operation the objects are constrained to remain in the visible part of the display.  The Motif Cancel key (usually Esc or Escape) cancels the paste.  Paste supports </FONT><A HREF="#Grid"><FONT SIZE=2>snap to grid</FONT></A><FONT SIZE=2>.  If snap-to-grid is enabled, the arrow keys move the objects by one grid spacing.  Otherwise, they move them by one pixel. Ctrl with the arrow keys moves the objects faster, and Shift with the arrow keys, faster yet. With the mouse they will snap to the nearest grid point.  The paste operation can also be invoked by Shift-Insert.</FONT></TD>
 </TR>
 <TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Raise</FONT></TD>
@@ -2231,6 +2235,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.*</P>
-<P><ADDRESS>Modified May 25, 2000<P>
+<P><ADDRESS>Modified June 16, 2000<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
