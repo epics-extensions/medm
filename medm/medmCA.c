@@ -96,10 +96,11 @@ void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) 
 static void medmCAExceptionHandlerCb(struct exception_handler_args args) {
     if (args.chid == NULL) {
 	medmPostMsg(1,"medmCAExceptionHandlerCb:\n"
-	  "message: %s\n",ca_message(args.stat));
+	  "channel name: Unknown\nmessage: %s\n",
+	  ca_message(args.stat));
     } else {
 	medmPostMsg(1,"medmCAExceptionHandlerCb:\n"
-	  "channel name: %s\nmessage: %s\n\n",
+	  "channel name: %s\nmessage: %s\n",
           ca_name(args.chid),ca_message(args.stat));
     }
     return;
