@@ -509,6 +509,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
     double value;
     char *end;
     MedmTextEntry *pte = (MedmTextEntry *)clientData;
+    DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
     Record *pr = pte->record;
     Boolean match;
     int i;
@@ -565,11 +566,17 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		break;
 	    }
 	default:
-	    if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
-	      && (textValue[1] == 'x' || textValue[1] == 'X')) {
+	    if(dlTextEntry->format == OCTAL) {
+		value = (double)strtoul(textValue,&end,8);
+	    } else if(dlTextEntry->format == HEXADECIMAL) {
 		value = (double)strtoul(textValue,&end,16);
 	    } else {
-		value = (double)strtod(textValue,&end);
+		if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
+		  && (textValue[1] == 'x' || textValue[1] == 'X')) {
+		    value = (double)strtoul(textValue,&end,16);
+		} else {
+		    value = (double)strtod(textValue,&end);
+		}
 	    }
 	    if(*end == '\0' && end != textValue) {
 		medmSendDouble(pte->record,value);
