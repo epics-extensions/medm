@@ -107,7 +107,9 @@ without express or implied warranty.
 
 */
 
-#define DEBUG_FORMAT 1
+#define DEBUG_FORMAT 0
+#define DEBUG_SWAP 0
+
 
 /* KE: Commented this out.  Not found on WIN32 and apparently not needed */
 #if 0
@@ -167,7 +169,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 #endif    
 
     extern int optind;
-    FILE *incfile;
+    FILE *incfile = NULL;
+    FILE *file = NULL;
   
     XWDFileHeader win;
 
@@ -205,7 +208,6 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     char s_matrix[80];            /* PostScript code for image matrix */
 
     int retCode = 1;
-    FILE *file;
 
   /* initializations */
     colors = NULL;
@@ -222,6 +224,14 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     my_image.height_frac    = 1.0;
     my_image.width_frac     = 1.0;
     my_image.orientation    = PORTRAIT;
+
+#if DEBUG_SWAP
+    if (*(char *) &swaptest) {
+	print("LSBFirst\n");
+    } else {
+	print("MSBFirst\n");
+    }
+#endif    
 
   /* get the command-line flags and options */
     parseArgs(argc, argv, &options, &my_image, &page);   
@@ -279,7 +289,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
    */
     if(argc > optind) {
 	options.input_file.name = argv[optind];
+#ifdef WIN32
+      /* WIN32 opens files in text mode by default and then mangles CRLF */
+	file = fopen(options.input_file.name, "rb");
+#else
 	file = fopen(options.input_file.name, "r");
+#endif
 	if(file == NULL) {
 	    errMsg("%s: could not open input file %s\n", 
 	      progname, options.input_file.name);
@@ -338,12 +353,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
     my_image.ps_width = abs( (int) (intwidth * my_image.width_frac));
     if(my_image.width_frac < 0.0 )
-      col_skip = intwidth -my_image.ps_width;
+      col_skip = intwidth - my_image.ps_width;
     else 
       col_skip = 0;
   
     col_start = col_skip + 1;
-    col_end   = col_skip +my_image.ps_width;
+    col_end   = col_skip + my_image.ps_width;
   
   /* process height factor */
     if(my_image.height_frac == 0 || my_image.height_frac > 1.0) {
@@ -359,9 +374,9 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     else 
       line_skip = 0;
   
-    line_end = line_skip +my_image.ps_height;
+    line_end = line_skip + my_image.ps_height;
   
-    my_image.pixels_width =my_image.ps_width;   /* TEMP - this might have to be fixed later */
+    my_image.pixels_width = my_image.ps_width;   /* TEMP - this might have to be fixed later */
 
     if(flag.w == FALSE && flag.h == TRUE)
       my_image.width = (my_image.height*my_image.pixels_width)/my_image.ps_height;
@@ -561,14 +576,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 			runlen = -1;
 		    }
 		    runlen++;
-		}
-	      /* if the color changed, then output the last run and reset counter */
-		else {
+		} else {
+		  /* if the color changed, then output the last run and reset counter */
 		    if(flag.mono == FALSE) {
 			fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 			outputcount += 4;
-		    }
-		    else {
+		    }  else {
 			intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
 			fprintf(fo,"%02x%02x", runlen, intens);
 			outputcount += 2;
@@ -594,8 +607,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    if(flag.mono == FALSE) {
 		fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 		outputcount += 4;
-	    }
-	    else {
+	    } else {
 		intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
 		fprintf(fo,"%02x%02x", runlen, intens);
 		outputcount += 2;
@@ -887,6 +899,9 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     fprintf(fo,"showpage grestore\n%%%%Trailer\n");
 
   CLEAN:
+  /* Close the input file */
+    if(file) fclose(file);
+    
   /* Clean up everything that may have been allocated */
     if(buffer) {
 	free(buffer);
@@ -1002,9 +1017,9 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
   /* read in window header */
     fread((char *)win, sizeof( *win ), 1, file);
 
+  /* KE: This just undoes what xwd did for the header */
     if(*(char *) & swaptest)  /* am I running on a byte swapped machine? */
-      xwd2ps_swaplong((char *)win, (long)sizeof(*win)); /* swap all the bytes
-							   in the header */
+      xwd2ps_swaplong((char *)win, (long)sizeof(*win));
 
     if(win->file_version != XWD_FILE_VERSION) {
 	errMsg("%s: File format version missmatch\n"
@@ -1045,6 +1060,7 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 	    w_name = NULL;
 	}
     }
+
     if(win->ncolors) {
 	colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)));
 	if(colors ==  NULL) {
@@ -1055,14 +1071,27 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
       /*
        * Scale the values received from the colormap to 8 bits
        */
+#if DEBUG_SWAP
+	print("get_raster_header: swap=%d win->byte_order=%d\n",
+	  *(char *)&swaptest,win->byte_order);
+#endif
 
-	if((!*(char *) & swaptest) || (win->byte_order))
-	  for(i = 0; i < (int)win->ncolors; i++) {
-	      colors[i].red   = colors[i].red   >> 8;
-	      colors[i].green = colors[i].green >> 8;
-	      colors[i].blue  = colors[i].blue  >> 8;
-	  }
-    }
+	if((!*(char *)&swaptest) || win->byte_order) {
+	    for(i = 0; i < (int)win->ncolors; i++) {
+#if DEBUG_SWAP
+		print("Before: %3d %4hx %4hx %4hx %6x\n",
+		  i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
+#endif
+		colors[i].red   = colors[i].red   >> 8;
+		colors[i].green = colors[i].green >> 8;
+		colors[i].blue  = colors[i].blue  >> 8;
+#if DEBUG_SWAP
+		print("After:  %3d %4hx %4hx %4hx %6x\n",
+		  i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
+#endif
+	    }
+	}
+    }     /* if(win->ncolors) */
     
     return 1;
 }
@@ -1176,7 +1205,13 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
 	  strcpy(page->type, optarg);
 	  break;
       case 'f':
+#ifdef WIN32
+	/* KE: This isn't used and opening with "rb" hasn't been tested */
+	/* WIN32 opens files in text mode by default and then mangles CRLF */
+	  option->inc_file.pointer = fopen(optarg, "rb");
+#else
 	  option->inc_file.pointer = fopen(optarg, "r");
+#endif	  
 	  if(option->inc_file.pointer == NULL) {
 	      errMsg("%s: f option error -- cannot open %s for include file.\n",
 		progname, optarg);

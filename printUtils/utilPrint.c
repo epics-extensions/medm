@@ -1,7 +1,7 @@
 /* Print Utilities (currently supporting only PostScript) */
 
 #define DEBUG_PRINT 0
-#define DEBUG_PARAMS 1
+#define DEBUG_PARAMS 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     psFileName = (char *)calloc(1,PRINT_BUF_SIZE);
     if(!psFileName) {
 	errMsg("utilPrint: "
-	  "Unable to allocate space for the postscript file name\n");
+	  "Unable to allocate space for the Postscript file name\n");
 	retCode = 0;
 	goto CLEAN;
     }
@@ -136,15 +136,32 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	myArgv[myArgc++] = heightString;
     }
 
-    if(printTitle && *title) {
-	sprintf(titleString,"-s%s", title);
-	myArgv[myArgc++] = titleString;
+  /* Choose whether to print the argument or the global title */
+    switch(printTitle) {
+    case PRINT_TITLE_SHORT_NAME:
+    case PRINT_TITLE_LONG_NAME:
+	if(title && *title) {
+	    sprintf(titleString,"-s%s", title);
+	    myArgv[myArgc++] = titleString;
+	}
+	break;
+    case PRINT_TITLE_SPECIFIED:
+	if(printTitleString && *printTitleString) {
+	    sprintf(titleString,"-s%s", printTitleString);
+	    myArgv[myArgc++] = titleString;
+	}
+	break;
     }
     
     myArgv[myArgc++] = newFileName;
     
   /* Open the output file */
+#ifdef WIN32
+  /* WIN32 opens files in text mode by default and then mangles CRLF */
+    fo = fopen(psFileName,"wb+");
+#else    
     fo = fopen(psFileName,"w+");
+#endif
     if(fo == NULL) {
 	errMsg("utilPrint: Unable to open file: %s\n",psFileName);
 	retCode = 0;
@@ -158,46 +175,26 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	errMsg("utilPrint: Could not convert window dump to Postscript\n");
 	goto CLEAN;
     }
-
+#if DEBUG_PRINT == 0    /* (When not debugging) */
+    if(printRemoveTempFiles) remove(newFileName);
+#endif
+    
   /* All done if print to file, otherwise print */
     if(printToFile) {
 	goto CLEAN;
     } else {
-      /* Print the file to the printer */
-#if DEBUG_PRINT == 0
-      /* Don't do this when debugging so you can look at the files */
-#ifndef VMS     /* UNIX code */
+      /* Print the file to the printer, unless you are debugging, in
+         which case you can look at the files instead */
 	sprintf(commandBuffer, "%s %s", printCommand, psFileName);
 	status=system(commandBuffer);
 	if(status) {
 	    errMsg("utilPrint: Print command [%s] failed\n",
 	      commandBuffer);
 	} else {
-	  /* Delete files */
-	    strcpy(commandBuffer,"rm ");
-	    strcat(commandBuffer,newFileName);
-	    system(commandBuffer);
-	    strcpy(commandBuffer,"rm ");
-	    strcat(commandBuffer,psFileName);
-	    system(commandBuffer);
+#if DEBUG_PRINT == 0    /* (When not debugging) */
+	    if(printRemoveTempFiles) remove(psFileName);
+#endif
 	}
-#else     /* VMS code */
-	sprintf(commandBuffer,"print /queue=%s/delete \0",printer);
-	strcat(commandBuffer, psFileName);
-	printf("system command %s\n",commandBuffer);
-	status=system(commandBuffer);
-	if(status) {
-	    errMsg("utilPrint: Print command [%s] failed\n",
-	      commandBuffer);
-	} else {
-	    strcpy(commandBuffer,"delete\noconfirm\nolog ");
-	    strcat(commandBuffer,newFileName);
-	    strcat(commandBuffer,";*");
-	    print("system command %s\n",commandBuffer);
-	    system(commandBuffer);
-	}
-#endif     /* #ifndef VMS */
-#endif     /* #if DEBUG_PRINT == 0 */
     }
 
   CLEAN:

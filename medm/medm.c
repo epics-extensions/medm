@@ -3237,6 +3237,7 @@ main(int argc, char *argv[])
     printTime = DEFAULT_PRINT_TIME;
     printDate = DEFAULT_PRINT_DATE;
     printWidth = printHeight = 0.0;
+    printRemoveTempFiles = DEFAULT_PRINT_REMOVE_TEMP_FILES;
     strcpy(printCommand, DEFAULT_PRINT_CMD);
     strcpy(printFile, DEFAULT_PRINT_FILENAME);
     strcpy(printTitleString, DEFAULT_PRINT_TITLE_STRING);

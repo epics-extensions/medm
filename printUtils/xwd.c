@@ -64,6 +64,8 @@
  *%  color can be supported.
 %*/
 
+#define DEBUG_SWAP 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -130,71 +132,58 @@ static long parse_long (char *s)
  * the xwd() routine (used to be a main()...with extra stuff)
  */
 
-int xwd(Display *display, Window window, char *file)
+int xwd(Display *display, Window window, char *filename)
 {
-    Window target_win;
-    FILE *out_file = stdout;
+    Window target_win = window;
+    FILE *file;
     Bool frame_only = False;
     int status;
 
-    target_win = window;
+#if DEBUG_SWAP
+    {
+	char a[5]="abcd";
+	char b[3]="ab";
+	char c[21]="abcdefghijklmnopqrst";
 
-    if (!(out_file = fopen(file, "w"))) {
-	errMsg("xwd: Can't open output file: %s\n",file);
+	print("xwd:\n  a=%s b=%s c=%s\n",a,b,c);
+	_swapshort(a,4);
+	_swapshort(b,2);
+	print("  After _swapshort: a=%s b=%s\n",a,b);
+	_swaplong(c,20);
+	print("  After _swaplong: c=%s\n",c);
+    }
+#endif
+
+#ifdef WIN32
+  /* WIN32 opens files in text mode by default and then mangles CRLF */
+    file = fopen(filename, "wb");
+#else    
+    file = fopen(filename, "w");
+#endif
+    if(!file) {
+	errMsg("xwd: Can't open output file: %s\n",filename);
 	return 0;
     }
     standard_out = False;
 
-  /* for color displays only */
-  /****
-    if (!strcmp(argv[i], "-xy")) {
-    format = XYPixmap;
-    continue;
-    }
-    ****/
-  /* to include the window manager frame */
-  /****
-    if (!strcmp(argv[i], "-frame")) {
-    frame_only = True;
-    continue;
-    }
-    ****/
+  /* Dump it! */
+    status = Window_Dump(display, target_win, file);
+
+  /* Close the file */
+    fclose(file);
     
-  /**** don't believe you need this since you're not asking the window mgr.
-    for any help....
-
-    if (window != None && !frame_only) {
-    Window root;
-    int dummyi;
-    unsigned int dummy;
-
-    target_win = window;
-
-    if (XGetGeometry (dpy, target_win, &root, &dummyi, &dummyi,
-    &dummy, &dummy, &dummy, &dummy) &&
-    target_win != root)
-    target_win = XmuClientWindow (dpy, target_win);
-    }
-    ****/
-
-
-  /*
-   * Dump it!
-   */
-    status = Window_Dump(display, target_win, out_file);
-    fclose(out_file);
     return status;
 }
 
 
 /*
  * Window_Dump: dump a window to a file which must already be open for
- *              writting.
+ *              writing.
  */
 
 #include "X11/XWDFile.h"
 
-static int Window_Dump(Display *display, Window window, FILE *out)
+static int Window_Dump(Display *display, Window window, FILE *file)
 {
     unsigned long swaptest = 1;
     XColor *colors;
@@ -337,23 +326,63 @@ static int Window_Dump(Display *display, Window window, FILE *out)
     header.window_y = absy;
     header.window_bdrwidth = (CARD32) win_info.border_width;
     
-    if (*(char *) &swaptest) {
+#if DEBUG_SWAP
+    print("header.header_size=%d\n",header.header_size);
+    print("header.file_version=%d\n",header.file_version);
+    print("header.pixmap_format=%d\n",header.pixmap_format);
+    print("header.pixmap_depth=%d\n",header.pixmap_depth);
+    print("header.pixmap_width=%d\n",header.pixmap_width);
+    print("header.pixmap_height=%d\n",header.pixmap_height);
+    print("header.xoffset=%d\n",header.xoffset);
+    print("header.byte_order=%d\n",header.byte_order);
+    print("header.bitmap_unit=%d\n",header.bitmap_unit);
+    print("header.bitmap_bit_order=%d\n",header.bitmap_bit_order);
+    print("header.bitmap_pad=%d\n",header.bitmap_pad);
+    print("header.bits_per_pixel=%d\n",header.bits_per_pixel);
+    print("header.bytes_per_line=%d\n",header.bytes_per_line);
+    print("header.visual_class=%d\n",header.visual_class);
+    print("header.red_mask=%d\n",header.red_mask);
+    print("header.green_mask=%d\n",header.green_mask);
+    print("header.blue_mask=%d\n",header.blue_mask);
+    print("header.bits_per_rgb=%d\n",header.bits_per_rgb);
+    print("header.colormap_entries=%d\n",header.colormap_entries);
+    print("header.ncolors=%d\n",header.ncolors);
+    print("header.window_width=%d\n",header.window_width);
+    print("header.window_height=%d\n",header.window_height);
+    print("header.window_x=%d\n",header.window_x);
+    print("header.window_y=%d\n",header.window_y);
+    print("header.window_bdrwidth=%d\n",header.window_bdrwidth);
+#endif    
+    
+  /* Swap bytes and words to make the standard file.  This doesn't do
+     anything for UNIX systems. Swapped systems will have to reverse
+     the swap when they process the file.  */
+    if(*(char *) &swaptest) {
 	_swaplong((char *) &header, sizeof(header));
 	for (i = 0; i < ncolors; i++) {
+#if DEBUG_SWAP
+	    print("Before: %3d %4hx %4hx %4hx %6x\n",
+	      i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
+#endif
 	    _swaplong((char *) &colors[i].pixel, sizeof(long));
 	    _swapshort((char *) &colors[i].red, 3 * sizeof(short));
+#if DEBUG_SWAP
+	    print("After:  %3d %4hx %4hx %4hx %6x\n",
+	      i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
+#endif
 	}
     }
-    
-    (void) fwrite((char *)&header, sizeof(header), 1, out);
-    (void) fwrite(win_name, win_name_size, 1, out);
+
+    (void) fwrite((char *)&header, sizeof(header), 1, file);
+    (void) fwrite(win_name, win_name_size, 1, file);
+
     
   /*
    * Write out the color maps, if any
    */
     
     if (debug) print("xwd: Dumping %d colors.\n", ncolors);
-    (void) fwrite((char *) colors, sizeof(XColor), ncolors, out);
+    (void) fwrite((char *) colors, sizeof(XColor), ncolors, file);
     
   /*
    * Write out the buffer.
@@ -366,7 +395,7 @@ static int Window_Dump(Display *display, Window window, FILE *out)
    *  what other functions of xwd will be taken over by this (as yet)
    *  non-existant X function.
    */
-    (void) fwrite(image->data, (int) buffer_size, 1, out);
+    (void) fwrite(image->data, (int) buffer_size, 1, file);
     
   /*
    * free the color buffer.
@@ -452,6 +481,7 @@ static int Get_XColors(Display *display, XWindowAttributes *win_info,
     return(ncolors);
 }
 
+/* KE: Swaps an array of shorts abcd -> badc.  n = bytes in array */
 static void _swapshort (register char *bp, register unsigned n)
 {
     register char c;
@@ -465,6 +495,8 @@ static void _swapshort (register char *bp, register unsigned n)
     }
 }
 
+/* KE: Swaps an array of CARD32's (4 bytes).  dcbahgfelkjiponmtsrq ->
+   dcbahgfelkjiponmtsrq.  n = bytes in array */
 static void _swaplong (register char *bp, register unsigned n)
 {
     register char c;

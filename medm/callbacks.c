@@ -321,7 +321,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #if DEBUG_EVENTS > 1
     print("\ndrawingAreaCallback(Entered):\n");
 #endif
-    if (cbs->reason == XmCR_EXPOSE) {
+    if(cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE):\n");
@@ -331,7 +331,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	uiw = cbs->event->xexpose.width;
 	uih = cbs->event->xexpose.height;
 	
-	if (displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
+	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
 	  displayInfo->pixmapGC != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
 	    
@@ -340,7 +340,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	      w,displayInfo->drawingArea,x,y,uiw,uih);
 #endif
 #if DEBUG_EXPOSE > 1
-	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	      /* Use this in debugging to show the drawing area pixmap */
 		int c,i,n,nE,indent;
 		Arg args[2];
@@ -388,7 +388,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #endif
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
 	      displayInfo->pixmapGC,x,y,uiw,uih,x,y);
-	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 		Display *display = XtDisplay(displayInfo->drawingArea);
 		GC gc = displayInfo->gc;
 		
@@ -405,7 +405,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		points[3].x = x;
 		points[3].y = y + uih;
 		region = XPolygonRegion(points,4,EvenOddRule);
-		if (region == NULL) {
+		if(region == NULL) {
 		    medmPostMsg(0,"drawingAreaCallback: XPolygonRegion is NULL\n");
 		    return;
 		}
@@ -422,14 +422,14 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	      /* Release the clipping region */
 		XSetClipOrigin(display,gc,0,0);
 		XSetClipMask(display,gc,None);
-		if (region) XDestroyRegion(region);
+		if(region) XDestroyRegion(region);
 	    }
 	}
 #if DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE): END\n\n");
 #endif
 	return;
-    } else if (cbs->reason == XmCR_RESIZE) {
+    } else if(cbs->reason == XmCR_RESIZE) {
       /* RESIZE */
 #if DEBUG_EVENTS > 1 || DEBUG_FONTS
 	printf("drawingAreaCallback(XmCR_RESIZE):\n");
@@ -440,11 +440,11 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	XtSetArg(args[nargs],XmNuserData,&userData); nargs++;
 	XtGetValues(w,args,nargs);
 
-	if (globalDisplayListTraversalMode == DL_EDIT) {
+	if(globalDisplayListTraversalMode == DL_EDIT) {
 	  /* In EDIT mode - resize selected elements */
 	    unhighlightSelectedElements();
 	    resized = dmResizeSelectedElements(displayInfo,width,height);
-	    if (displayInfo->hasBeenEditedButNotSaved == False)
+	    if( resized && displayInfo->hasBeenEditedButNotSaved == False)
 	      medmMarkDisplayBeingEdited(displayInfo);
 	} else {
 	  /* In EXECUTE mode - resize all elements
@@ -456,7 +456,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	    XQueryPointer(display,RootWindow(display,screenNum),&root,&child,
 	      &rootX,&rootY,&winX,&winY,&mask);
 
-	    if (userData != NULL || !(mask & ShiftMask) ) {
+	    if(userData != NULL || !(mask & ShiftMask) ) {
 	      /* Either not Shift-Click or second time through */
 
 #if DEBUG_FONTS
@@ -487,7 +487,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		oldHeight = pE->structure.display->object.height;
 		aspectRatio = (float)oldWidth/(float)oldHeight;
 		newAspectRatio = (float)width/(float)height;
-		if (newAspectRatio > aspectRatio) {
+		if(newAspectRatio > aspectRatio) {
 		  /* w too big; derive w=f(h) */
 		    goodWidth = (unsigned short) (aspectRatio*(float)height);
 		    goodHeight = height;
@@ -526,7 +526,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	pE->structure.display->object.y = oldy;
 
       /* Implement resized values */
-	if (resized) {
+	if(resized) {
 	  /* Clear any selected entries */
 	    unselectElementsInDisplay();
 	    clearResourcePaletteEntries();
@@ -554,31 +554,31 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case OTHER_SHELL:
       /* it's one of the permanent shells */
-	if (w == mainShell) {
+	if(w == mainShell) {
 	    medmExit();
-	} else if (w == objectS) {
+	} else if(w == objectS) {
 	    XtPopdown(objectS);
-	} else if (w == resourceS) {
+	} else if(w == resourceS) {
 	    XtPopdown(resourceS);
-	} else if (w == colorS) {
+	} else if(w == colorS) {
 	    XtPopdown(colorS);
-	} else if (w == channelS) {
+	} else if(w == channelS) {
 	    XtPopdown(channelS);
-	} else if (w == helpS) {
+	} else if(w == helpS) {
 	    XtPopdown(helpS);
-	} else if (w == editHelpS) {
+	} else if(w == editHelpS) {
 	    XtPopdown(editHelpS);
-	} else if (w == pvInfoS) {
+	} else if(w == pvInfoS) {
 	    XtPopdown(pvInfoS);
-	} else if (w == printSetupS) {
+	} else if(w == printSetupS) {
 	    XtPopdown(printSetupS);
-	} else if (w == errMsgS) {
+	} else if(w == errMsgS) {
 	    XtPopdown(errMsgS);
-	} else if (w == errMsgSendS) {
+	} else if(w == errMsgSendS) {
 	    XtPopdown(errMsgSendS);
-	} else if (w == caStudyS) {
+	} else if(w == caStudyS) {
 	    XtPopdown(caStudyS);
-	} else if (w == displayListS) {
+	} else if(w == displayListS) {
 	    XtPopdown(displayListS);
 	} else {
 	  /* KE: Cpould use this for all of them */

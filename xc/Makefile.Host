@@ -3,11 +3,6 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-ifdef WIN32
-# The proper import/export declarations are not included for DLLs
-SHARED_LIBRARIES = NO
-endif
-
 # Needs work to handle CMPLR=STRICT
 #CMPLR = STRICT
 HOST_OPT = NO
