@@ -148,7 +148,7 @@ int initEventHandlers(void);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
 void handleExecuteButtonPress(Widget, XtPointer, XEvent *, Boolean *);
 void handleEditButtonPress(Widget, XtPointer, XEvent *, Boolean *);
-void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
+void handleEditEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
 void handleEditKeyPress(Widget, XtPointer, XEvent *, Boolean *);
 void highlightSelectedElements(void);
 void unhighlightSelectedElements(void);

@@ -184,7 +184,10 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtVaGetValues(localWidget,XmNsubMenuId,&menu,NULL);
 	XtVaGetValues(menu,XmNnumChildren,&numChildren,XmNchildren,&children,NULL);
 	for (i = 0; i < numChildren; i++) {
+#if 0
+	  /* KE: Should not be necessary */
 	    XtUninstallTranslations(children[i]);
+#endif	    
 	    XtVaSetValues(children[i], XmNfontList, fontList,
 	      XmNwidth, (Dimension) useableWidth,
 	      XmNheight, (Dimension)dlMenu->object.height,

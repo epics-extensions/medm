@@ -217,7 +217,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 
 	  /* Handle enter windows */
 	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
-	      handleEnterWindow,(XtPointer)displayInfo);
+	      handleEditEnterWindow,(XtPointer)displayInfo);
  
 	} else if (displayInfo->traversalMode == DL_EXECUTE) {
 	  /*

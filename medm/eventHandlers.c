@@ -248,9 +248,9 @@ void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 
 #ifdef __cplusplus
-void handleEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
+void handleEditEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
 #else
-void handleEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
+void handleEditEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
     pointerInDisplayInfo = (DisplayInfo *) cd;
@@ -1230,7 +1230,9 @@ void addCommonHandlers(Widget w, DisplayInfo *displayInfo)
   /* Switch depending on mode */
     switch (displayInfo->traversalMode) {
     case DL_EDIT :
-	XtUninstallTranslations(w);
+#if 0	
+	XtUninstallTranslations(w);     /* KE: Unnecessary ? */
+#endif	
 	XtAddEventHandler(w, KeyPressMask, False, handleEditKeyPress,
 	  (XtPointer)displayInfo);
 	XtAddEventHandler(w, ButtonPressMask, False, handleEditButtonPress,
