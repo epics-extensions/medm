@@ -54,14 +54,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_SCHEDULER 0
-#define DEBUG_UPDATE 0
-#define DEBUG_COMPOSITE 0
-#define DEBUG_DELETE 0
-#define DEBUG_HIDE 0
-#define DEBUG_EXPOSE 0
-#define DEBUG_TASK_COUNT 0
-
 #include "medm.h"
 
 /* Include this after medm.h to avoid problems with Exceed 6 */
@@ -71,42 +63,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #else
 #include <sys/time.h>
 #endif
-
-#if DEBUG_UPDATE
-#define DEFAULT_TIME 1
-#define ANIMATE_TIME(gif) \
-  ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
-  ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
-
-typedef struct _MedmImage {
-    DlElement *dlElement;     /* Must be first */
-    Record **records;
-    UpdateTask *updateTask;
-    DisplayInfo *displayInfo;
-    Boolean validCalc;
-    Boolean animate;
-    char post[MAX_TOKEN_LENGTH];
-} MedmImage;
-#endif		    
-
-#if DEBUG_COMPOSITE
-typedef struct _MedmMeter {
-    DlElement   *dlElement;     /* Must be first */
-    UpdateTask  *updateTask;
-    Record      *record;
-} MedmMeter;
-typedef struct _MedmRectangle {
-    DlElement        *dlElement;     /* Must be first */
-    UpdateTask       *updateTask;
-    Record           **records;
-} MedmRectangle;
-typedef struct _MedmTextUpdate {
-    DlElement     *dlElement;     /* Must be first */
-    UpdateTask    *updateTask;
-    Record        *record;
-    int           fontIndex;
-} MedmTextUpdate;
-#endif		    
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05
@@ -204,9 +160,6 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 
     UNREFERENCED(id);
 
-#if DEBUG_UPDATE
-    print("medmScheduler: time=%.3f\n",medmElapsedTime());
-#endif    
 
   /* Poll channel access  */
 #ifdef __MONITOR_CA_PEND_EVENT__
@@ -228,62 +181,14 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     if(updateTaskStatus.periodicTaskCount > 0) { 
 	DisplayInfo *di = displayInfoListHead->next;
 	while(di) {
-#if DEBUG_UPDATE
-	    print("  di=%x head->nextExecuteTime=%.3f head->timeInterval=%.3f\n",
-	      di,di->updateTaskListHead.nextExecuteTime-medmStartTime,
-	      di->updateTaskListHead.timeInterval);
-	    {
-		UpdateTask *tmp = di->updateTaskListHead.next;
-		int i=0;
-		
-		while(tmp) {
-		    print("    %d nextExecuteTime=%.3f timeInterval=%.3f\n",
-		      i++,tmp->nextExecuteTime-medmStartTime,
-		      tmp->timeInterval);
-		    tmp = tmp->next;
-		}
-		
-	    }
-#endif		    
 	    if(di->periodicTaskCount > 0) {
-#if 0
-	      /* KE: Doesn't make sense */
-		UpdateTask *pt = di->updateTaskListHead.next;
-#else		
 	      /* Check the head, which should have the soonest
                  nextExecuteTime of any of the update tasks for this
                  display */
 		UpdateTask *pt = &di->updateTaskListHead;
-#endif
 		
-#if DEBUG_SCHEDULER
-		if(strstr(di->dlFile->name,"sMain.adl")) {
-		    fprintf(stderr,"medmScheduler:\n");
-		    fprintf(stderr,"  di->updateTaskListHead.next is %d\n",
-		      di->updateTaskListHead.next);
-		    fprintf(stderr,"  di->periodicTaskCount: %d\n",
-		      di->periodicTaskCount);
-		    fprintf(stderr,"  di->dlFile->name: |%s|\n",
-		      di->dlFile->name);
-		}
-		if(!pt) {
-		    fprintf(stderr,"medmScheduler:\n");
-		    fprintf(stderr,"  di->updateTaskListHead.next is NULL\n");
-		    fprintf(stderr,"  di->periodicTaskCount: %d\n",
-		      di->periodicTaskCount);
-		    fprintf(stderr,"  di->dlFile->name: |%s|\n",
-		      di->dlFile->name);
-		    fprintf(stderr,"Aborting\n");
-		    abort();
-		}
-#endif
 		if(pt->nextExecuteTime < currentTime) {
 		    updateTaskMarkTimeout(pt,currentTime);
-#if DEBUG_UPDATE
-		    print("  nextExecuteTime=%.3f timeInterval=%.3f\n",
-		      pt->nextExecuteTime-medmStartTime,
-		     pt->timeInterval);
-#endif		    
 		}
 	    }
 	    di = di->next;
@@ -379,10 +284,6 @@ void medmInitializeUpdateTasks(void)
     updateTaskStatus.updateRequestQueued = 0;
     updateTaskStatus.updateExecuted      = 0;
     updateTaskStatus.since = medmTime();
-#if DEBUG_TASK_COUNT
-    print("medmInitializeUpdateTasks: updateTaskStatus.taskCount = %d\n",
-      updateTaskStatus.taskCount);
-#endif
 
   /* Initialize the periodic task */
     periodicTask.systemTime = medmStartTime = medmTime();
@@ -427,16 +328,6 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	displayInfo->updateTaskListTail->next = pT;
 	displayInfo->updateTaskListTail = pT;
 
-#if DEBUG_COMPOSITE || DEBUG_DELETE || DEBUG_TASK_COUNT
-	{
-	    MedmElement *pElement=(MedmElement *)pT->clientData;
-	    DlElement *pET = pElement->dlElement;
-	    
-	    print("updateTaskAddTask: Added pT=%x pE=%x[%x] pE->type=%s\n",
-	      pT,pET,pET->structure.element,elementType(pET->type));
-	}
-#endif			
-	
       /* KE: Should never execute this branch since pT->timeInterval=0.0 */
 	if(pT->timeInterval > 0.0) {
 	    displayInfo->periodicTaskCount++;
@@ -448,10 +339,6 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	    }
 	}
 	updateTaskStatus.taskCount++;
-#if DEBUG_TASK_COUNT
-	print("updateTaskAddTask: updateTaskStatus.taskCount = %d\n",
-	  updateTaskStatus.taskCount);
-#endif
 	return pT;
     } else {
 	return NULL;
@@ -480,10 +367,6 @@ void updateTaskDeleteAllTask(UpdateTask *pT)
 	    updateTaskStatus.periodicTaskCount--;
 	}
 	updateTaskStatus.taskCount--;
-#if DEBUG_TASK_COUNT
-	print("updateTaskDeleteAllTask: updateTaskStatus.taskCount = %d\n",
-	  updateTaskStatus.taskCount);
-#endif
 	if(tmp1->executeRequestsPendingCount > 0) {
 	    updateTaskStatus.updateRequestQueued--;
 	}
@@ -517,103 +400,6 @@ void updateTaskDeleteAllTask(UpdateTask *pT)
 #endif
 }
 
-#if 0
-/* KE: If we delete tasks under the current (original) scheme and then
- * add them back later, the stacking order will not be correct.  Keep
- * these debugged routines around in case we change our mind */
-
-/* Delete all update tasks for a given element  */
-void updateTaskDeleteElementTasks(DisplayInfo *displayInfo, DlElement *pE)
-{
-    UpdateTask *pT,*pTNext;
-    int found=1;
-
-#if DEBUG_COMPOSITE
-    int i=0;
-    print("updateTaskDeleteElementTasks: dlElement=%x[%s] dlComposite=%x\n",
-      pE,elementType(pE->type),pE->structure.composite);
-#if 0    
-    pT = displayInfo->updateTaskListHead.next; 
-    while(pT) {
-	MedmElement *pElement=(MedmElement *)pT->clientData;
-	DlElement *pET = pElement->dlElement;
-	
-	print("  %2d pT=%x pTNext=%x pET=%x",
-	  ++i,pT,pTNext,pET);
-	fflush(stdout);
-	print("[%s] pE=%x[%s] pE->structure.composite=%x\n",
-	  elementType(pET->type),
-	  pE,elementType(pE->type),
-	  pE->structure.composite);
-	pT = pT->next;
-    }
-#endif
-#endif
-
-    pT = displayInfo->updateTaskListHead.next; 
-    while(pT) {
-	MedmElement *pElement=(MedmElement *)pT->clientData;
-	DlElement *pET = pElement->dlElement;
-	
-	pTNext=pT->next;
-	if(pET == pE) {
-#if DEBUG_COMPOSITE
-	    print("  Deleted pT=%x pE=%x"
-	      " pE->type=%s\n",pT,pE,elementType(pE->type));
-#endif			
-	    updateTaskDeleteTask(displayInfo, pT);
-	}
-	pT = pTNext;
-    }
-}
-  
-/* Delete a single update task */
-void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pT)
-{
-    if(pT == NULL) return;
-  /* Adjust the next pointers */
-    if(pT == displayInfo->updateTaskListTail) {
-	displayInfo->updateTaskListTail = pT->prev;
-	displayInfo->updateTaskListTail->next = NULL;
-    } else {
-	pT->prev->next = pT->next;
-	pT->next->prev = pT->prev;
-    }
-  /* Run the destroy callback */
-    if(pT->destroyTask) {
-	pT->destroyTask(pT->clientData);
-    }
-  /* Reset status counters */
-    if(pT->timeInterval > 0.0) {
-	updateTaskStatus.periodicTaskCount--;
-    }
-    updateTaskStatus.taskCount--;
-#if DEBUG_TASK_COUNT
-    print("updateTaskDeleteTask: updateTaskStatus.taskCount = %d\n",
-      updateTaskStatus.taskCount);
-#endif
-    if(pT->executeRequestsPendingCount > 0) {
-	updateTaskStatus.updateRequestQueued--;
-    }
-  /* Reset next to serve */
-    if(updateTaskStatus.nextToServe == pT) {
-	updateTaskStatus.nextToServe = NULL;
-    } 
-#if DEBUG_COMPOSITE || DEBUG_DELETE
-	{
-	    MedmElement *pElement=(MedmElement *)pT->clientData;
-	    DlElement *pET = pElement->dlElement;
-	    
-	    print("updateTaskDeleteTask: Deleted pT=%x pE=%x"
-	      " pE->type=%s\n",
-	      pT,pET,elementType(pET->type));
-	}
-#endif			
-  /* Zero the task before freeing it to help with pointer errors */
-   *pT = nullTask;
-    free((char *)pT);
-}
-#endif
 
 /* Disable an update task */
 void updateTaskDisableTask(DlElement *dlElement)
@@ -643,10 +429,6 @@ int updateTaskMarkTimeout(UpdateTask *pT, double currentTime)
     UpdateTask *tmp = head->next;
     int count = 0;
     
-#if 0
-  /* Reset the nextExecuteTime for the display */
-    head->nextExecuteTime = currentTime + head->timeInterval;
-#endif
   /* Loop over the update task list and check for timeouts */
     while(tmp) {
       /* Check if periodic task */
@@ -682,17 +464,6 @@ void updateTaskMarkUpdate(UpdateTask *pT)
 	updateTaskStatus.updateRequestQueued++;
     }
     pT->executeRequestsPendingCount++;
-#if DEBUG_COMPOSITE || DEBUG_DELETE
-	{
-	    MedmElement *pElement=(MedmElement *)pT->clientData;
-	    DlElement *pET = pElement->dlElement;
-	    
-	    print("updateTaskMarkUpdate: [%d queued] Marked pT=%x pE=%x"
-	      " pE->type=%s\n",
-	      updateTaskStatus.updateRequestQueued,pT,pET,
-	      elementType(pET->type));
-	}
-#endif			
 }
 
 void updateTaskSetScanRate(UpdateTask *pT, double timeInterval)
@@ -744,60 +515,22 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     UpdateTask *t1;
     double endTime;
    
-#if DEBUG_UPDATE || DEBUG_DELETE
-    print("\nupdateTaskWorkProc: time=%.3f\n",medmElapsedTime());
-#if 1
-    {
-	UpdateTask *pT;
-	int i=0;
-	
-	displayInfo = currentDisplayInfo;
-#if 0
-	dumpDlElementList(displayInfo->dlElementList);
-#endif	
-	
-	pT = displayInfo->updateTaskListHead.next; 
-	while(pT) {
-	    MedmElement *pElement=(MedmElement *)pT->clientData;
-	    DlElement *pET = pElement->dlElement;
-	    
-	    print("  %2d pT=%x pE=%x pE->type=%s [%d pending]\n",
-	      ++i,pT,pET,elementType(pET->type),
-	      pT->executeRequestsPendingCount);
-
-	    pT = pT->next;
-	}
-    }
-#endif
-#endif    
     endTime = medmTime() + WORKINTERVAL; 
  
   /* Do for WORKINTERVAL sec */
     do {
-#if DEBUG_DELETE
-	print("  Top of loop: t=%x ts->nextToServe=%x [pending %d]\n",
-	      t,ts->nextToServe,ts->updateRequestQueued);
-#endif    
       /* If no requests queued, remove work proc */
 	if(ts->updateRequestQueued <= 0) {
 	    ts->workProcId = 0; 
-#if DEBUG_UPDATE || DEBUG_DELETE
-	    print("updateTaskWorkProc Return 1 (True) [pending %d]\n",
-	      ts->updateRequestQueued);
-#endif    
 	    return True;
 	} 
       /* If no valid update task, find one */
 	if(t == NULL) {
 	    displayInfo = displayInfoListHead->next;
-
+	    
 	  /* If no display, remove work proc */
 	    if(displayInfo == NULL) {
 		ts->workProcId = 0;
-#if DEBUG_UPDATE || DEBUG_DELETE
-		print("updateTaskWorkProc Return 2 (True) [pending %d]\n",
-		  ts->updateRequestQueued);
-#endif    
 		return True;
 	    }
 	  /* Loop over displays to find an update task */
@@ -808,19 +541,11 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	  /* If no update task found, remove work proc */
 	    if(t == NULL) {
 		ts->workProcId = 0;
-#if DEBUG_UPDATE || DEBUG_DELETE
-	    print("updateTaskWorkProc Return 3 (True) [pending %d]\n",
-	      ts->updateRequestQueued);
-#endif    
 		return True;
 	    }
 	    ts->nextToServe = t;
 	}
-
-#if DEBUG_DELETE > 1
-	print("  Position 1: t=%x ts->nextToServe=%x\n",
-	      t,ts->nextToServe);
-#endif    
+	
       /* At least one update task has been found.  Find one which has
 	 is enabled and has executeRequestsPendingCount > 0 */
 	while(t->executeRequestsPendingCount <= 0 || t->disabled) {
@@ -840,10 +565,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	     displays and there is nothing to do.  Remove work proc */
 	    if(t == ts->nextToServe) {
 		ts->workProcId = 0;
-#if DEBUG_UPDATE || DEBUG_DELETE
-		print("updateTaskWorkProc Return 4 (True) [pending %d]\n",
-		  ts->updateRequestQueued);
-#endif    
 		return True;
 	    }
 	}
@@ -852,7 +573,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	ts->nextToServe = t;
       /* Get the displayInfo */
 	displayInfo = t->displayInfo;
-
+	
       /* Repaint the selected region */
 	if(t->overlapped) {
 	    Display *display = XtDisplay(displayInfo->drawingArea);
@@ -861,7 +582,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	    Region region;
 	    int isComposite = 0;
 	    DlElement *pE = getElementFromUpdateTask(t);
-
+	    
 	    points[0].x = t->rectangle.x;
 	    points[0].y = t->rectangle.y;
 	    points[1].x = t->rectangle.x + t->rectangle.width;
@@ -871,36 +592,29 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	    points[3].x = t->rectangle.x;
 	    points[3].y = t->rectangle.y + t->rectangle.height;
 	    region = XPolygonRegion(points,4,EvenOddRule);
-
+	    
 	    if(region == NULL) {
 		medmPrintf(0,"\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
 	      /* Kill the work proc */
 		ts->workProcId = 0;
-#if DEBUG_UPDATE || DEBUG_DELETE
-		print("updateTaskWorkProc Return 5 (True) [pending %d]\n",
-		  ts->updateRequestQueued);
-#endif    
 		return True;
 	    }
-
+	    
 	  /* Check if this task is for a composite.  Composites need
              to be handled differently. */
 	    if(pE && pE->type == DL_Composite) {
 		isComposite = 1;
 	    }
-
+	    
 	  /* Set the clip rectangle.  Since there is only one, whether
              it is XYBanded or the alternatives isn't important. */
 	    XSetClipRectangles(display,gc,0,0,&t->rectangle,1,YXBanded);
 	    if(!t->opaque)
 	    /* For a composite we need to redo the pixmap in case
-	      elements are hidden or unhidden when the composite is
-	      executed. This will be inefficient if the Composite gets
-	      a lot of updates that don't change its visibility */
+	       elements are hidden or unhidden when the composite is
+	       executed. This will be inefficient if the Composite gets
+	       a lot of updates that don't change its visibility */
 	      if(isComposite) {
-#if DEBUG_HIDE
-		  print("Is Composite\n");
-#endif	      
 		/* Set the pixmap clipping region */
 		  XSetClipRectangles(display, displayInfo->pixmapGC,
 		    0, 0, &t->rectangle, 1, YXBanded);
@@ -912,28 +626,17 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	      }
 	    
 	  /* Copy the pixmap to the (clipped) drawingArea */
-	      XCopyArea(display,displayInfo->drawingAreaPixmap,
-		XtWindow(displayInfo->drawingArea),gc,
-		t->rectangle.x, t->rectangle.y,
-		t->rectangle.width, t->rectangle.height,
-		t->rectangle.x, t->rectangle.y);
-
-	    /* Set overlapped to false.  This will override the
-	       default of True.  It will be reset to True in the loop
-	       below if it truly is overlapped. */
-	      t->overlapped = False;
-
-#if DEBUG_DELETE  || DEBUG_HIDE
-	    {
-		MedmElement *pElement=(MedmElement *)t->clientData;
-		DlElement *pET = pElement->dlElement;
-		
-		print("> Doing overlapped for pT=%x pE=%x"
-		  " pE->type=%s x=%d y=%d\n",
-		  t,pET,elementType(pET->type),
-		  t->rectangle.x,t->rectangle.y);
-	    }
-#endif
+	    XCopyArea(display,displayInfo->drawingAreaPixmap,
+	      XtWindow(displayInfo->drawingArea),gc,
+	      t->rectangle.x, t->rectangle.y,
+	      t->rectangle.width, t->rectangle.height,
+	      t->rectangle.x, t->rectangle.y);
+	    
+	  /* Set overlapped to false.  This will override the
+	     default of True.  It will be reset to True in the loop
+	     below if it truly is overlapped. */
+	    t->overlapped = False;
+	    
 	    t1 = t->displayInfo->updateTaskListHead.next;
 	    while(t1) {
 		if(!t1->disabled && XRectInRegion(region,
@@ -946,14 +649,11 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		}
 		t1 = t1->next;
 	    }
-
+	    
 	  /* Release the drawingArea clipping region */
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
 	    if(region) XDestroyRegion(region);
-#if DEBUG_DELETE  || DEBUG_HIDE
-	    print("< Done with overlapped for pT=%x\n",t);
-#endif
 	} else {
 	  /* Not overlapped */
 	    if(!t->opaque) 
@@ -964,63 +664,14 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t->rectangle.width, t->rectangle.height,
 		t->rectangle.x, t->rectangle.y);
 	    if(!t->disabled && t->executeTask) {
-#if DEBUG_COMPOSITE
-		print("updateTaskWorkProc (not overlapped): "
-		  "clientData=%x x=%d y=%d\n",
-		  t->clientData,t->rectangle.x,t->rectangle.y);
-#endif			
-#if DEBUG_DELETE  || DEBUG_HIDE
-		{
-		    MedmElement *pElement=(MedmElement *)t->clientData;
-		    DlElement *pET = pElement->dlElement;
-		    
-		    print("  Executed (not overlapped) pT=%x pE=%x"
-		      " pE->type=%s [%d,%d]\n",
-		      t,pET,elementType(pET->type),
-		      t->rectangle.x,t->rectangle.y);
-		}
-#endif			
 		t->executeTask(t->clientData);
 	    }
 	}
-
-#if DEBUG_DELETE
-	print(" Pending %d\n",ts->updateRequestQueued);
-	if(t != ts->nextToServe) {
-	    print("  t != ts->nextToServe:  t=%x ts->nextToServe=%x !!!!!\n",
-	      t,ts->nextToServe);
-	}
-#endif
-
+	
       /* Update ts->updateExecuted since we executed it, but not
          executeRequestsPendingCount, since if the task was deleted,
          this will have been done in updateTaskDeleteTask. */
 	ts->updateExecuted++;
-
-#if 0
-      /* Check if *t got deleted by the executeTask's.  If so, t is an
-         invalid pointer and cannot be used anymore, so start over at
-         the top.  Also, we should not decrement the
-         executeRequestsPendingCount */
-	t1 = displayInfo->updateTaskListHead.next;
-	found = 0;
-	while(t1) {
-	    if(t1 == t) {
-		found = 1;
-		break;
-	    }
-	    t1 = t1->next;
-	}
-	if(!found) {
-	  /* The next to serve is also invalid */
-#if DEBUG_DELETE
-	    print("  Invalid t: t=%x ts->nextToServe=%x\n",
-	      t,ts->nextToServe);
-#endif    
-	    ts->nextToServe = t = NULL;	    
-	    continue;
-	}
-#endif
 	
       /* Reset the executeRequestsPendingCount only if t is still valid */
 	t->executeRequestsPendingCount = 0;
@@ -1043,10 +694,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	     there is nothing to do.  Remove work proc */
 	    if(t == ts->nextToServe) {
 		ts->workProcId = 0;
-#if DEBUG_UPDATE || DEBUG_DELETE
-		print("updateTaskWorkProc Return 6 (True) [pending %d]\n",
-		  ts->updateRequestQueued);
-#endif    
 		return True;
 	    }
 	}
@@ -1054,10 +701,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     } while(endTime > medmTime());
     
   /* Keep the work proc active */
-#if DEBUG_UPDATE || DEBUG_DELETE
-    print("updateTaskWorkProc Return Bottom (False) [pending %d]\n",
-      ts->updateRequestQueued);
-#endif    
     return False;
 }
 
@@ -1071,63 +714,7 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
 	  t->rectangle.x, t->rectangle.y,
 	  t->rectangle.width, t->rectangle.height) != RectangleOut) {
 	    if(t->executeTask) {
-#if 0     /* !!!!! */
-		DlElement *pE = getElementFromUpdateTask(t);
-		
-		
-	      /* done later in the loop. */
-		if(pE->type != DL_Composite) {
-#if DEBUG_COMPOSITE
-		    print("updateTaskRepaintRegion: "
-		      "clientData=%x x=%d y=%d\n",
-		      t->clientData,t->rectangle.x,t->rectangle.y);
-#endif			
-		    t->executeTask(t->clientData);
-		}
-#else
-#if DEBUG_EXPOSE
-		{
-		    MedmElement *pElement=(MedmElement *)t->clientData;
-		    DlElement *pET = pElement->dlElement;
-		    
-		    print("updateTaskRepaintRegion: "
-		      "pE->type=%s[%d,%d,%d,%d]\n",
-		      elementType(pET->type),
-		      t->rectangle.x,t->rectangle.y,
-		      t->rectangle.width,t->rectangle.height);		       
-		}
-#endif			
 		t->executeTask(t->clientData);
-#if DEBUG_EXPOSE > 1
-		{
-		    MedmElement *pElement=(MedmElement *)t->clientData;
-		    DlElement *pET = pElement->dlElement;
-		    char title[80];
-		    Pixmap debugPixmap;
-		    DlElement *pE=FirstDlElement(displayInfo->dlElementList);
-		    DlDisplay *pD = pE->structure.display;
-		    DlObject *pO = &(pD->object);
-		    GC gc = XCreateGC(display,rootWindow,0,NULL);
-		    
-		    debugPixmap=XCreatePixmap(display,
-		      RootWindow(display,screenNum),
-		      pO->width,pO->height,XDefaultDepth(display,screenNum));
-		    XCopyArea(display,XtWindow(displayInfo->drawingArea),
-		      debugPixmap,gc,0,0,pO->width,pO->height,0,0);
-		    XSetForeground(display,displayInfo->gc,
-		      WhitePixel(display,screenNum));
-		    XFillRectangle(display,debugPixmap,displayInfo->gc,0,0,
-		      pO->width,pO->height);
-		    sprintf(title,"pE->type=%s[%d,%d,%d,%d]",
-		      elementType(pET->type),
-		      t->rectangle.x,t->rectangle.y,
-		      t->rectangle.width,t->rectangle.height);		       
-		    dumpPixmap(debugPixmap,pO->width,pO->height,title);
-		    XFreePixmap(display,debugPixmap);
-		    XFreeGC(display,gc);
-		}
-#endif
-#endif		 
 	    }
 	}
 	t = t->next;
