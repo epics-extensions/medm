@@ -123,7 +123,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Get the image */
     switch(dlImage->imageType) {
     case GIF_IMAGE:
-	if (dlImage->privateData == NULL) {
+	if(dlImage->privateData == NULL) {
 	  /* Not initialized */
 	    if(!initializeGIF(displayInfo,dlImage)) {
 	      /* Something failed - bail out! */
@@ -154,7 +154,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 
   /* Allocate and fill in MedmImage struct */
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	MedmImage *pi;
 	char upstring[MAX_TOKEN_LENGTH];
@@ -169,7 +169,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	pi->validCalc = False;
 	pi->animate = False;
 	pi->post[0] = '\0';
-	if (pi->updateTask == NULL) {
+	if(pi->updateTask == NULL) {
 	    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
@@ -182,6 +182,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    short errnum;
 	    
 	  /* A channel is defined */
+	    if(pi->updateTask) {
+		updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+	    }
 	    pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
 	      imageUpdateValueCb,
 	      imageUpdateGraphicalInfoCb,
@@ -238,9 +241,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
     } else {
       /* EDIT mode */
-	if (gif != NULL) {
+	if(gif != NULL) {
 	    gif->curFrame=0;
-	    if (dlImage->object.width == gif->currentWidth &&
+	    if(dlImage->object.width == gif->currentWidth &&
 	      dlImage->object.height == gif->currentHeight) {
 		drawGIF(displayInfo,dlImage);
 	    } else {
@@ -273,8 +276,8 @@ static void imageDraw(XtPointer cd)
       /* A channel is defined */
 	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(!pr) return;
-	if (pr->connected) {
-	    if (pr->readAccess) {
+	if(pr->connected) {
+	    if(pr->readAccess) {
 		double result;
 		long status;
 
@@ -343,8 +346,8 @@ static void imageDraw(XtPointer cd)
 		    drawColoredRectangle(pi->updateTask,
 		      BlackPixel(display,screenNum));
 		}
-		if (pr->readAccess) {
-		    if (!pi->updateTask->overlapped &&
+		if(pr->readAccess) {
+		    if(!pi->updateTask->overlapped &&
 		      dlImage->dynAttr.vis == V_STATIC) {
 			pi->updateTask->opaque = True;
 		    }
@@ -395,7 +398,7 @@ static void drawImage(MedmImage *pi)
 static void imageDestroyCb(XtPointer cd) {
     MedmImage *pi = (MedmImage *)cd;
 
-    if (pi) {
+    if(pi) {
 	Record **records = pi->records;
 	
 	updateTaskSetScanRate(pi->updateTask, 0.0);
@@ -417,7 +420,8 @@ static void destroyDlImage(DisplayInfo *displayInfo, DlElement *pE)
     genericDestroy(displayInfo, pE);
 }
 
-static void imageGetRecord(XtPointer cd, Record **record, int *count) {
+static void imageGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmImage *pi = (MedmImage *)cd;
     int i;
     
@@ -560,8 +564,8 @@ DlElement *createDlImage(DlElement *p)
     DlElement *dlElement;
 
     dlImage = (DlImage *)malloc(sizeof(DlImage));
-    if (!dlImage) return 0;
-    if (p) {
+    if(!dlImage) return 0;
+    if(p) {
 	*dlImage = *p->structure.image;
       /* Make copies of the data pointed to by privateData */
 	copyGIF(dlImage,dlImage);
@@ -575,7 +579,7 @@ DlElement *createDlImage(DlElement *p)
 	dlImage->privateData = NULL;
     }
 
-    if (!(dlElement = createDlElement(DL_Image, (XtPointer)dlImage,
+    if(!(dlElement = createDlElement(DL_Image, (XtPointer)dlImage,
       &imageDlDispatchTable))) {
 	free(dlImage);
     }
@@ -591,23 +595,23 @@ DlElement *parseImage(DisplayInfo *displayInfo)
     DlImage *dlImage = 0;
     DlElement *dlElement = createDlImage(NULL);
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlImage = dlElement->structure.image;
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlImage->object));
-	    } else if (!strcmp(token,"dynamic attribute")) {
+	    } else if(!strcmp(token,"dynamic attribute")) {
 		parseDynamicAttribute(displayInfo,&(dlImage->dynAttr));
-	    } else if (!strcmp(token,"type")) {
+	    } else if(!strcmp(token,"type")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"none"))
+		if(!strcmp(token,"none"))
 		  dlImage->imageType = NO_IMAGE;
-		else if (!strcmp(token,"gif"))
+		else if(!strcmp(token,"gif"))
 		  dlImage->imageType = GIF_IMAGE;
-		else if (!strcmp(token,"tiff"))
+		else if(!strcmp(token,"tiff"))
 		/* KE: There is no TIFF capability */
 		  dlImage->imageType = TIFF_IMAGE;
 	    } else if(!strcmp(token,"image name")) {

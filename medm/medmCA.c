@@ -1090,7 +1090,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	if(!pvInfo[i].pvOk) continue;
 	
       /* Don't try the others unless the PV is connected */
-	chId = pvInfo[i].pvChid = pCh->chid;
+	chId = pvInfo[i].pvChid;
 	if(ca_state(chId) != cs_conn || !ca_read_access(chId))
 	  continue;
 	

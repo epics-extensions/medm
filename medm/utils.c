@@ -4022,7 +4022,6 @@ void popupPvLimits(DisplayInfo *displayInfo)
     DlLimits *pL;
     char *pvName;
     int count;
-    
 
   /* Create the dialog box if it has not been created */
     if(!pvLimitsS) {
