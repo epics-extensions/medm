@@ -782,10 +782,11 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 #endif
     
   /* Traverse the display list */
+  /* Do in reverse order so topmost of two equal-sized objects is selected */
     pSmallest = pDisplay = NULL;
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
-    pE = FirstDlElement(pList);
-    while (pE) {
+    pE = LastDlElement(pList);
+    while (pE->prev) {
 	DlObject *po = &(pE->structure.rectangle->object);
 	
 #if DEBUG_PVINFO > 1
@@ -812,7 +813,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0)
 #endif
 	    }
 	}
-	pE = pE->next;
+	pE = pE->prev;
     }
 
   /* Use the display as the fallback (Assume we'll always find one) */
