@@ -163,8 +163,9 @@ extern void StartDrag(Widget w, XEvent *event);
 extern char *dragTranslations;
 extern XtActionsRec *dragActions;
 #else
-static char dragTranslations[] = "#override <Btn2Down>:StartDrag()";
+static char dragTranslations[] = "#override None<Btn2Down>:StartDrag()";
 static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
 #endif
 
 #endif  /* __XTPARAMS_H__ */
+
