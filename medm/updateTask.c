@@ -322,7 +322,7 @@ double medmResetElapsedTime()
 
 /* Called when initializing a DisplayInfo for
  *   DisplayInfo->updateTaskListHead only */
-void updateTaskInit(DisplayInfo *displayInfo)
+void updateTaskInitHead(DisplayInfo *displayInfo)
 {
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
     
