@@ -219,9 +219,11 @@ static void Realize(Widget gw, XtValueMask *valueMask,
     Resize(gw);
   /* Call the timer proc with a zero timeout.  It will reinstall
      itself with the blinkTime timeout.  */
-    w->marquee.interval_id =
-	XtAppAddTimeOut(XtWidgetToApplicationContext(gw),
-	  0, drawMarquee, (XtPointer)gw);
+    if(w->marquee.blink_time > 0) {
+	w->marquee.interval_id =
+	  XtAppAddTimeOut(XtWidgetToApplicationContext(gw),
+	    0, drawMarquee, (XtPointer)gw);
+    }
 }
 
 static void Destroy(Widget gw)
@@ -273,11 +275,15 @@ static Boolean SetValues(Widget gcur, Widget greq,
 
   /* blinkTime */
     if(wcur->marquee.blink_time != wnew->marquee.blink_time) {
-	if(wcur->marquee.interval_id)
-	  XtRemoveTimeOut(wcur->marquee.interval_id);
-	wnew->marquee.interval_id =
-	  XtAppAddTimeOut(XtWidgetToApplicationContext(gnew),
-	    wnew->marquee.blink_time, drawMarquee, (XtPointer)gnew);
+	if(wcur->marquee.interval_id) {
+	    XtRemoveTimeOut(wcur->marquee.interval_id);
+	    wnew->marquee.interval_id = 0;
+	}
+	if(wnew->marquee.blink_time > 0) {
+	    wnew->marquee.interval_id =
+	      XtAppAddTimeOut(XtWidgetToApplicationContext(gnew),
+		wnew->marquee.blink_time, drawMarquee, (XtPointer)gnew);
+	}
     }
     
   /* transparent */
@@ -387,7 +393,9 @@ static void drawMarquee(XtPointer clientData, XtIntervalId *id)
     }
 
   /* Call the timer proc again */
-    w->marquee.interval_id =
-      XtAppAddTimeOut(XtWidgetToApplicationContext((Widget) w),
-	w->marquee.blink_time, drawMarquee, (XtPointer)w);
+    if(w->marquee.blink_time > 0) {
+	w->marquee.interval_id =
+	  XtAppAddTimeOut(XtWidgetToApplicationContext((Widget) w),
+	    w->marquee.blink_time, drawMarquee, (XtPointer)w);
+    }
 }
