@@ -15,7 +15,7 @@
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
 <P>9700 South Cass Avenue, Argonne, Illinois 60439</FONT><FONT SIZE=2>   </P>
-<P><P><HR><IMG SRC=construct.gif ALIGN=bottom>This document is under construction.  The document has been prepared in Microsoft Word and tends to display properly in Internet Explorer.  It has formatting errors when viewed in Netscape.  The HTML appears to be valid, indicating these are Netscape bugs.</P><HR>
+<P><P><HR><IMG HEIGHT=40 WIDTH=40 SRC=construct.gif ALIGN=bottom>This document is always under construction in order to incorporate new features in MEDM as they are added.  Sometimes these features may not yet be available in the currently-released version of MEDM.</P><HR>
 </FONT><B><FONT SIZE=4><P><A NAME="Contents"></A>Contents</P>
 </B></FONT><FONT SIZE=2><P></FONT><A HREF="#Copyright"><FONT SIZE=2>Copyright</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Overview"><FONT SIZE=2>Overview</FONT></A></P>
@@ -71,6 +71,7 @@
 
 <UL>
 <LI>There is a "Save All" option on the File menu.</LI>
+<LI>There is a </FONT><A HREF="#CommandLine"><FONT SIZE=2>command-line</FONT></A><FONT SIZE=2> option </FONT><FONT FACE="Courier New" SIZE=2>(–noMsg</FONT><FONT SIZE=2>) to prevent the </FONT><A HREF="#MessageWindow"><FONT SIZE=2>Message Window</FONT></A><FONT SIZE=2> from popping up.</LI>
 <LI>The shadows on all items with shadows are now consistent.  Highlights have been removed from all objects.  Sizes are consistent in EDIT and EXECUTE mode and are what is specified in the ADL file except for minimum size requirements.</LI>
 <LI>MEDM is supported for </FONT><A HREF="#CDEVSupport"><FONT SIZE=2>CDEV</FONT></A><FONT SIZE=2>.</LI>
 <LI>MEDM can be </FONT><A HREF="#Building"><FONT SIZE=2>built</FONT></A><FONT SIZE=2> with either Host or Unix type builds. </LI></UL>
@@ -121,6 +122,7 @@
 &#9;[-local | -cleanup | -attach]
 &#9;[-cmap]
 &#9;[-bigMousePointer]
+&#9;[-noMsg]
 &#9;[-displayFont <I>font-spec</I>]
 &#9;[-macro "<I>xxx</I>=<I>aaa</I>,<I>yyy</I>=<I>bbb</I>, ..."]
 &#9;[-dg [<I>xpos</I>[x<I>ypos</I>]][+<I>xoffset</I>[+<I>yoffset</I>]]
@@ -178,6 +180,11 @@
 <FONT SIZE=2><DFN><P>-bigMousePointer</FONT></DFN></TD>
 <TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Use big mouse cursor.</FONT></DFN></TD>
+</TR>
+<TR><TD WIDTH="21%" VALIGN="TOP">
+<FONT SIZE=2><DFN><P>-noMsg</FONT></DFN></TD>
+<TD WIDTH="79%" VALIGN="TOP">
+<FONT SIZE=2><DFN><P>Set the </FONT></DFN><A HREF="#MessageWindow"><FONT SIZE=2>Message Window</FONT></A><FONT SIZE=2><DFN> to not pop up when messages are received.  (</DFN>It can be brought up via the View menu on the MEDM main window if you need to see it.)</FONT></TD>
 </TR>
 <TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-displayFont font-spec</FONT></DFN></TD>
@@ -773,30 +780,25 @@
 <FONT SIZE=2><P>&nbsp;</P>
 </FONT><B><P><A NAME="DynamicAttribute"></A>Dynamic</P>
 </B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#Arc"><FONT SIZE=2>Arc</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Oval"><FONT SIZE=2>Oval</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polygon"><FONT SIZE=2>Polygon</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Rectangle"><FONT SIZE=2>Rectangle</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Text"><FONT SIZE=2>Text</FONT></A><FONT SIZE=2>.</P></FONT>
-
 <TABLE BORDER CELLSPACING=1 CELLPADDING=9 WIDTH=742>
-
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Mode</FONT></TD>
-<TD WIDTH="81%" VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Color Mode for the object.  See the </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attribute.</FONT></TD>
 </TR>
-
-<TR><TD WIDTH="19% VALIGN="TOP">
-<FONT SIZE=2><P>ModeVisibility</FONT></TD>
-<TD WIDTH="81%" VALIGN="TOP" COLSPAN=2>
+<TR><TD WIDTH="19%" VALIGN="TOP">
+<FONT SIZE=2><P>Visibility</FONT></TD>
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Visibility mode for the object.  See the </FONT><A HREF="#VisibilityMode"><FONT SIZE=2>Visibility</FONT></A><FONT SIZE=2> attribute.</FONT></TD>
 </TR>
-
-<TR><TD WIDTH="19% VALIGN="TOP">
+<TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Color Rule</FONT></TD>
-<TD WIDTH="81%" VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>The color rule number for the object.  (Integer number.)  See </FONT><A HREF="#ColorRules"><FONT SIZE=2>Color Rules</FONT></A><FONT SIZE=2>.  </FONT></TD>
 </TR>
-
-<TR><TD WIDTH="19% VALIGN="TOP">
+<TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Channel</FONT></TD>
-<TD WIDTH="89%" VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Name of the process variable associated with the object.</FONT></TD>
 </TR>
 </TABLE>
@@ -804,21 +806,17 @@
 <B><P>&nbsp;</P>
 <P><A NAME="MonitorAttribute"></A>Monitor</P>
 </B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#BarMonitor"><FONT SIZE=2>Bar</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ByteMonitor"><FONT SIZE=2>Byte</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Meter"><FONT SIZE=2>Meter</FONT></A><FONT SIZE=2>, </FONT><A HREF="#ScaleIndicator"><FONT SIZE=2>Scale Monitor</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#TextIndicator"><FONT SIZE=2>Text Monitor</FONT></A><FONT SIZE=2>.</P></FONT>
-
 <TABLE BORDER CELLSPACING=1 CELLPADDING=9 WIDTH=742>
-
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Readback Channel</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Name of the process variable to be read by the object.</FONT></TD>
 </TR>
-
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Foreground</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
 <FONT SIZE=2><P>Foreground color.  Click to bring up the Color Palette to choose the color.</FONT></TD>
 </TR>
-
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>Background</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
@@ -1911,12 +1909,12 @@
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="ADL"></A>ADL</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P><U>A</U>SCII <U>D</U>isplay <U>L</U>ist. The file format or the file that describes a display. The filename ends in .adl.</FONT></TD>
+<FONT SIZE=2><P>Stands for <U>A</U>SCII <U>D</U>isplay <U>L</U>ist. The file format or the file that describes a display. The filename ends in .adl.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="CDEV"></A>CDEV</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P><U>C</U>ontrol <U>D</U>evice <U>I</U>nterface.  CDEV is a set of object-oriented software tools providing an interface to underlying systems, typically control system interfaces, such as </FONT><A HREF="#ChannelAccess"><FONT SIZE=2>Channel Access</FONT></A><FONT SIZE=2>.  CDEV has primarily been developed at the Thomas Jefferson National Accelerator Facility in collaboration with the </FONT><A HREF="#EPICS"><FONT SIZE=2>EPICS</FONT></A><FONT SIZE=2> community.  The CDEV home page is </FONT><A HREF="http://www.jlab.org/cdev"><FONT SIZE=2>http://www.jlab.org/cdev</FONT></A><FONT SIZE=2>.</FONT></TD>
+<FONT SIZE=2><P>Stands for <U>C</U>ontrol <U>D</U>evice <U>I</U>nterface.  CDEV is a set of object-oriented software tools providing an interface to underlying systems, typically control system interfaces, such as </FONT><A HREF="#ChannelAccess"><FONT SIZE=2>Channel Access</FONT></A><FONT SIZE=2>.  CDEV has primarily been developed at the Thomas Jefferson National Accelerator Facility in collaboration with the </FONT><A HREF="#EPICS"><FONT SIZE=2>EPICS</FONT></A><FONT SIZE=2> community.  The CDEV home page is </FONT><A HREF="http://www.jlab.org/cdev"><FONT SIZE=2>http://www.jlab.org/cdev</FONT></A><FONT SIZE=2>.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="ChannelAccess"></A>Channel Access</B></FONT></TD>
@@ -1926,7 +1924,7 @@
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="CED"></A>CDE</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P>The Common Desktop Environment.  A technology specification developed jointly by Hewlett-Packard Company, IBM Corporation, Novell, Inc., and SunSoft, Inc.  It defines a consistent set of application programming interfaces (API) that can be implemented on operating environments that support </FONT><A HREF="#XWindows"><FONT SIZE=2>X Windows</FONT></A><FONT SIZE=2> desktop computers and </FONT><A HREF="#Motif"><FONT SIZE=2>OSF Motif</FONT></A><FONT SIZE=2>.  Its intent is to provide users with a consistent graphical user interface across workstations, X-Terminals, and PC’s.</FONT></TD>
+<FONT SIZE=2><P>Stands for the <U>C</U>ommon <U>D</U>esktop <U>E</U>nvironment.  A technology specification developed jointly by Hewlett-Packard Company, IBM Corporation, Novell, Inc., and SunSoft, Inc.  It defines a consistent set of application programming interfaces (API) that can be implemented on operating environments that support </FONT><A HREF="#XWindows"><FONT SIZE=2>X Windows</FONT></A><FONT SIZE=2> desktop computers and </FONT><A HREF="#Motif"><FONT SIZE=2>OSF Motif</FONT></A><FONT SIZE=2>.  Its intent is to provide users with a consistent graphical user interface across workstations, X-Terminals, and PC’s.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P>Display</B></FONT></TD>
@@ -1936,7 +1934,7 @@
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="EPICS"></A>EPICS</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P><U>E</U>xperimental <U>P</U>hysics and <U>I</U>ndustrial <U>C</U>ontrol <U>S</U>ystem. EPICS is a set of software tools and applications originally developed by Argonne National Laboratory and Los Alamos National Laboratory for the purpose of building distributed control systems to operate devices such as Particle Accelerators, Large Experiments, and Telescopes.</FONT></TD>
+<FONT SIZE=2><P>Stands for <U>E</U>xperimental <U>P</U>hysics and <U>I</U>ndustrial <U>C</U>ontrol <U>S</U>ystem. EPICS is a set of software tools and applications originally developed by Argonne National Laboratory and Los Alamos National Laboratory for the purpose of building distributed control systems to operate devices such as Particle Accelerators, Large Experiments, and Telescopes.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="EPICSExtension"></A>EPICS Extension</B></FONT></TD>
@@ -1946,7 +1944,7 @@
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="IOC"></A>IOC</B></FONT></TD>
 <TD WIDTH="82%" VALIGN="TOP">
-<FONT SIZE=2><P><U>I</U>nput/<U>O</U>utput <U>C</U>ontroller. A VME/VXI based chassis containing a Motorola 68xxx processor, various I/O modules, and VME modules that provide access to other I/O busses. It contains a memory-resident database of control records.</FONT></TD>
+<FONT SIZE=2><P>Stands for <U>I</U>nput/<U>O</U>utput <U>C</U>ontroller. A VME/VXI based chassis containing a Motorola 68xxx processor, various I/O modules, and VME modules that provide access to other I/O busses. It contains a memory-resident database of control records.</FONT></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P><A NAME="Motif"></A>Motif</B></FONT></TD>
@@ -1993,6 +1991,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly. Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five year periods. Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.</P>
-<P><ADDRESS>Modified December 17, 1998<P>
+<P><ADDRESS>Modified December 19, 1998<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
