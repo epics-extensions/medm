@@ -4549,6 +4549,7 @@ int calcUsesStatus(char *calc)
 	}
 	cur++;
     }
+    return 0;
 }
 
 /* Determines if a calc expression uses severity (J) */
@@ -4573,6 +4574,7 @@ int calcUsesSeverity(char *calc)
 	}
 	cur++;
     }
+    return 0;
 }
 
 /* Returns a pointer to the short part of the ADL file name */
