@@ -897,10 +897,6 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	}
     }
     
-  /* Make sure fullPathName is a terminated with '\0' string */
-  /* KE: Not necessary, is set to a null string below */
-    fullPathName[PATH_MAX] = '\0';
-
   /* Parse the display name */
     for(i = argsUsed+1; i < argc; i++) {
 	Boolean canAccess;
