@@ -253,15 +253,15 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       valuatorValueChanged,(XtPointer)pv);
     XtAddCallback(pv->dlElement->widget, XmNdragCallback,
       valuatorValueChanged,(XtPointer)pv);
-
-/* add event handler for expose - forcing display of min/max and value
- *	in own format
- */
+    
+  /* add event handler for expose - forcing display of min/max and value
+   *	in own format
+   */
     XtAddEventHandler(pv->dlElement->widget,ExposureMask,
       False,handleValuatorExpose,
       (XtPointer)pv);
-
-/* add event handler for Key/ButtonRelease which enables updates */
+    
+  /* add event handler for Key/ButtonRelease which enables updates */
     XtAddEventHandler(pv->dlElement->widget,KeyReleaseMask|ButtonReleaseMask,
       False,handleValuatorRelease,
       (XtPointer)pv);
@@ -624,11 +624,11 @@ void valuatorSetValue(Valuator *pv, double forcedValue,
 	else
 	  dValue = pd->value;
 #if 0
-/* to make reworked event handling for Valuator work */
+      /* to make reworked event handling for Valuator work */
 	pd->value = dValue;
 #endif
-
-/* update scale widget */
+	
+      /* update scale widget */
 	iValue = (int) (VALUATOR_MIN + ((dValue - pd->lopr)
 	  /(pd->hopr - pd->lopr))
 	  *((double)(VALUATOR_MAX - VALUATOR_MIN)));
@@ -660,14 +660,14 @@ void valuatorRedrawValue(Valuator *pv,
     XGCValues gcValues;
     int precision;
     int x, y, height, width;
-
-/* return if no window for widget yet, or if displayInfo == NULL, or ... */
+    
+  /* return if no window for widget yet, or if displayInfo == NULL, or ... */
     if (XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
       dlValuator == (DlValuator *)NULL) return;
-
-/* simply return if no value to render */
+    
+  /* simply return if no value to render */
     if (!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
-
+    
     foreground = displayInfo->colormap[dlValuator->control.clr];
     background = displayInfo->colormap[dlValuator->control.bclr];
     if (pv && (pv->record->precision >= 0)) {
@@ -766,16 +766,6 @@ void handleValuatorRelease(
     }
 }
 
-#ifdef __cplusplus
-static void destroyDialog(Widget  w, XtPointer, XtPointer)
-#else
-static void destroyDialog(Widget  w, XtPointer cd, XtPointer cbs)
-#endif
-{
-    XtDestroyWidget(XtParent(w));
-}
-
-
 static void precisionToggleChangedCallback(
   Widget w,
   XtPointer clientData,
@@ -785,27 +775,27 @@ static void precisionToggleChangedCallback(
     long value;
     Valuator *pv;
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
-
-/* only respond to the button actually set */
+    
+  /* only respond to the button actually set */
     if (call_data->event && call_data->set) {
 	value = (long)clientData;
 	XtVaGetValues(w,XmNuserData,&pv,NULL);
-/*
- * now set the prec field in the valuator data structure, and update
- * the valuator (scale) resources
- */
+      /*
+       * now set the prec field in the valuator data structure, and update
+       * the valuator (scale) resources
+       */
 	if (pv) {
 	    pv->dlElement->structure.valuator->dPrecision = pow(10.,(double)value);
 	}
-/* hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
+      /* hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
 	widget = w;
 	while (XtClass(widget) != xmDialogShellWidgetClass) {
 	    widget = XtParent(widget);
 	}
-
+	
 	XtDestroyWidget(widget);
     }
-
+    
 }
 
 /*
@@ -839,8 +829,6 @@ static void precTextFieldActivateCallback(
     XtDestroyWidget(widget);
 }
 
-
-
 /*
  * text field losing focus callback
  */
@@ -860,10 +848,10 @@ static void precTextFieldLosingFocusCallback(
     char string[MAX_TOKEN_LENGTH];
     int tail;
 
-/*
- * losing focus - make sure that the text field remains accurate
- *      wrt dlValuator
- */
+  /*
+   * losing focus - make sure that the text field remains accurate
+   *      wrt dlValuator
+   */
     sprintf(string,"%f",dlValuator->dPrecision);
   /* strip trailing zeroes */
     tail = strlen(string);
@@ -871,33 +859,44 @@ static void precTextFieldLosingFocusCallback(
     XmTextFieldSetString(w,string);
 }
 
-static void sendKeyboardValue(
-  Widget w,
-  XtPointer clientData,
+static void keyboardDialogCallback(Widget w, XtPointer clientData,
   XtPointer callbackStruct)
 {
-    Valuator *pv = (Valuator *) clientData;
-    Record *pd = pv->record;
-    XmSelectionBoxCallbackStruct *call_data = (XmSelectionBoxCallbackStruct *) callbackStruct;
-    double value;
-    char *stringValue;
+    XmSelectionBoxCallbackStruct *call_data =
+      (XmSelectionBoxCallbackStruct *)callbackStruct;
 
-    if (pv == NULL) return;
-
-    XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &stringValue);
-
-    if (stringValue != NULL) {
-	value = atof(stringValue);
-
-      /* move/redraw valuator & value, but force use of user-selected value */
-	if ((pd->connected) && pd->writeAccess) {
-	    medmSendDouble(pv->record,value);
-	    valuatorSetValue(pv,value,True);
+    switch(call_data->reason) {
+    case XmCR_OK: {
+	Valuator *pv = (Valuator *)clientData;
+	Record *pd = pv->record;
+	double value;
+	char *stringValue;
+	
+	if (pv == NULL) return;
+	
+	XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&stringValue);
+	if (stringValue != NULL) {
+	    value = atof(stringValue);
+	    
+	  /* Move/redraw valuator & value, force use of user-selected value */
+	    if ((pd->connected) && pd->writeAccess) {
+		medmSendDouble(pv->record,value);
+		valuatorSetValue(pv,value,True);
+	    }
+	    XtFree(stringValue);
 	}
-	XtFree(stringValue);
+	XtDestroyWidget(XtParent(w));
+	break;
     }
-    XtDestroyWidget(XtParent(w));
 
+    case XmCR_CANCEL:
+	XtDestroyWidget(XtParent(w));
+	break;
+
+    case XmCR_HELP:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#Slider");
+	break;
+    }
 }
 
 #ifdef __cplusplus
@@ -969,8 +968,9 @@ void popupValuatorKeyboardEntry(
                     XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
                     NULL);
 
-		  XtAddCallback(keyboardDialog,XmNokCallback,sendKeyboardValue, pv);
-		  XtAddCallback(keyboardDialog,XmNcancelCallback,destroyDialog,NULL);
+		  XtAddCallback(keyboardDialog,XmNokCallback,keyboardDialogCallback,pv);
+		  XtAddCallback(keyboardDialog,XmNhelpCallback,keyboardDialogCallback,NULL);
+		  XtAddCallback(keyboardDialog,XmNcancelCallback,keyboardDialogCallback,NULL);
 
 		/* create frame/radiobox/toggles for precision selection */
 		  hoprLoprAbs = fabs(pd->hopr);
