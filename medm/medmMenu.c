@@ -218,17 +218,17 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     switch (displayInfo->traversalMode) {
-    case DL_EXECUTE :
+    case DL_EXECUTE:
 	menuCreateRunTimeInstance(displayInfo,dlElement);
 	break;
-    case DL_EDIT :
+    case DL_EDIT:
 	if (dlElement->widget) {
 	    XtDestroyWidget(dlElement->widget);
 	    dlElement->widget = NULL;
 	}
 	menuCreateEditInstance(displayInfo,dlElement);
 	break;
-    default :
+    default:
 	break;
     }
 }
