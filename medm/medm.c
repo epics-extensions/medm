@@ -797,6 +797,9 @@ Name of file in which to save display:",
     "Medm*Indicator.ShadowThickness: 2",
     "Medm*Bar.ShadowThickness: 2",
     "Medm*Meter.ShadowThickness: 2",
+    "Medm*BarGraph.BorderWidth: 0",
+    "Medm*Meter.BorderWidth: 0",
+    "Medm*Indicator.BorderWidth: 0",
 
 #ifdef XRTGRAPH
 #if XRT_VERSION > 2
@@ -3530,7 +3533,7 @@ main(int argc, char *argv[])
   /* Add the initialization work proc */
     XtAppAddWorkProc(appContext,medmInitWorkProc,NULL);
 
-  /* Check if there were early messages  and bring up Message Window */
+  /* Check if there were early messages and bring up Message Window */
     checkEarlyMessages();    
 
 #ifdef __TED__
