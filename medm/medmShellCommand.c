@@ -134,20 +134,24 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     Pixmap shellCommandPixmap;
     unsigned int pixmapSize;
     DlShellCommand *dlShellCommand = dlElement->structure.shellCommand;
-/*
- * these are widget ids, but they are recorded in the otherChild widget list
- *   as well, for destruction when new shells are selected at the top level
- */
+
+
+  /* These are widget ids, but they are recorded in the otherChild
+   *   widget list as well, for destruction when new shells are
+   *   selected at the top level */
     Widget shellCommandPulldownMenu, shellCommandMenuButton;
 #if 1
     Widget widget;
 #endif
 
-/***
-*** from the DlShellCommand structure, we've got specifics
-*** (MDA)  create a pulldown menu with the following related shell menu
-***   entries in it...  --  careful with the XtSetArgs here (special)
-***/
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
+  /***
+   *** from the DlShellCommand structure, we've got specifics
+   *** (MDA)  create a pulldown menu with the following related shell menu
+   ***   entries in it...  --  careful with the XtSetArgs here (special)
+   ***/
     if (dlElement->widget && displayInfo->traversalMode == DL_EDIT) {
 	DlObject *po = &(dlElement->structure.shellCommand->object);
 	XtVaSetValues(dlElement->widget,
@@ -257,7 +261,7 @@ DlElement *createDlShellCommand(DlElement *p)
     DlElement *dlElement;
     int cmdNumber;
 
-    dlShellCommand = (DlShellCommand *) malloc(sizeof(DlShellCommand));
+    dlShellCommand = (DlShellCommand *)malloc(sizeof(DlShellCommand));
     if (!dlShellCommand) return 0;
     if (p) {
 	*dlShellCommand = *p->structure.shellCommand;

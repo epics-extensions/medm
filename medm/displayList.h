@@ -820,7 +820,6 @@ typedef struct _DlComposite {
     char compositeName[MAX_TOKEN_LENGTH];
     char compositeFile[MAX_TOKEN_LENGTH];
     struct _DlList *dlElementList;
-    int hidden;
 } DlComposite;
 
 /* (if MEDM ever leaves the X environment, a DlPoint should be defined and
@@ -911,9 +910,10 @@ typedef struct _DlElement {
     DlStructurePtr structure;
     DlDispatchTable *run;
     Widget widget;
-    void * data;
-    struct _DlElement *next;       /* next element in display list   */
-    struct _DlElement *prev;       /* previous element ...           */
+    int hidden;
+    void * data;                   /* KE: Not used anywhere */
+    struct _DlElement *next;       /* Next element in display list */
+    struct _DlElement *prev;       /* Previous element ... */
 } DlElement;
 
 typedef struct _DlList {

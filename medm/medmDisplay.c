@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_EVENTS 0
 #define DEBUG_RELATED_DISPLAY 0
 #define DEBUG_CMAP 0
+#define DEBUG_GRID 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -215,7 +216,7 @@ DlElement *createDlDisplay(DlElement *p)
     DlElement *dlElement;
  
  
-    dlDisplay = (DlDisplay *) malloc(sizeof(DlDisplay));
+    dlDisplay = (DlDisplay *)malloc(sizeof(DlDisplay));
     if (!dlDisplay) return 0;
     if (p) {
 	*dlDisplay = *p->structure.display; 
@@ -251,10 +252,39 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Arg args[12];
     int nargs;
     DlDisplay *dlDisplay = dlElement->structure.display;
+    int new = 0;
 
 #if DEBUG_CMAP
     print("executeDlDisplay: %s\n",displayInfo->dlFile->name);
-#endif    
+#endif
+#if DEBUG_GRID
+    {
+	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
+	DlDisplay *dlDisplay = dlElement->structure.display;
+
+	if(displayInfo->colormap) {
+	    print("executeDlDisplay:\n"
+	      "  displayInfo: fg=%06x[%d] bg=%06x[%d] dlDisplay: "
+	      "fg=%06x[%d] bg=%06x[%d]\n",
+	      displayInfo->colormap[displayInfo->drawingAreaForegroundColor],
+	      displayInfo->drawingAreaForegroundColor,
+	      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor],
+	      displayInfo->drawingAreaBackgroundColor,
+	      displayInfo->colormap[dlDisplay->clr],
+	      dlDisplay->clr,
+	      displayInfo->colormap[dlDisplay->bclr],
+	      dlDisplay->bclr);
+	} else {
+	    print("executeDlDisplay:\n"
+	      "  displayInfo: fg=UNK[%d] bg=UNK[%d] dlDisplay: "
+	      "fg=UNK[%d] bg=UNK[%d]\n",
+	      displayInfo->drawingAreaForegroundColor,
+	      displayInfo->drawingAreaBackgroundColor,
+	      dlDisplay->clr,
+	      dlDisplay->bclr);
+	}
+    }
+#endif
     
   /* Set the display's foreground and background colors */
     displayInfo->drawingAreaBackgroundColor = dlDisplay->bclr;
@@ -276,7 +306,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
    *   ratio-preserving resizes */
  
     if(displayInfo->drawingArea == NULL) {
- 
+	new = 1;
 	displayInfo->drawingArea = XmCreateDrawingArea(displayInfo->shell,
 	  "displayDA",args,nargs);
       /* Add expose & resize  & input callbacks for drawingArea */
@@ -419,10 +449,16 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
       /* If there is still no colormap defined, use the default */
 	if(!displayInfo->dlColormap) {
+	  /* Write a message unless it is the first time for a new
+             display (so that this situation is normal and expected) */
+	    print("executeDlDisplay: new=%d filename: %s\n",
+	      new,displayInfo->dlFile->name);
+	    if(!new || strcmp(displayInfo->dlFile->name,DEFAULT_FILE_NAME)) {
+		medmPostMsg(1,"executeDlDisplay: No colormap defined\n"
+		  "  Using the default.\n"
+		  "  File=%s\n",displayInfo->dlFile->name);
+	    }
 	  /* Use the default */
-	    medmPostMsg(1,"executeDlDisplay: No colormap defined\n"
-	      "  Using the default.\n"
-	      "  File=%s\n",displayInfo->dlFile->name);
 	    displayInfo->dlColormap = createDlColormap(displayInfo);
 	    if(!displayInfo->dlColormap) {
 	      /* Cannot malloc it */
@@ -667,9 +703,9 @@ static void displayGetValues(ResourceBundle *pRCB, DlElement *p) {
       GRID_SNAP_RC,    &(dlDisplay->grid.snapToGrid),
       -1);
     currentDisplayInfo->drawingAreaBackgroundColor =
-      currentColormap[globalResourceBundle.bclr];
+      globalResourceBundle.bclr;
     currentDisplayInfo->drawingAreaForegroundColor =
-      currentColormap[globalResourceBundle.clr];
+      globalResourceBundle.clr;
   /* Resize the shell */
     XtVaSetValues(currentDisplayInfo->shell,
       XmNx,dlDisplay->object.x,
@@ -686,7 +722,7 @@ static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
       BCLR_RC,       &(dlDisplay->bclr),
       -1);
     currentDisplayInfo->drawingAreaBackgroundColor =
-      currentColormap[globalResourceBundle.bclr];
+      globalResourceBundle.bclr;
 }
 
 static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
@@ -697,5 +733,5 @@ static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
       CLR_RC,        &(dlDisplay->clr),
       -1);
     currentDisplayInfo->drawingAreaForegroundColor =
-      currentColormap[globalResourceBundle.clr];
+      globalResourceBundle.clr;
 }

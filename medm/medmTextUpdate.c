@@ -67,12 +67,12 @@ extern "C" {
 	   }
 #endif
 
-typedef struct _TextUpdate {
+typedef struct _MedmTextUpdate {
     DlElement     *dlElement;     /* Must be first */
     Record        *record;
     UpdateTask    *updateTask;
     int           fontIndex;
-} TextUpdate;
+} MedmTextUpdate;
 
 static void textUpdateUpdateValueCb(XtPointer cd);
 static void textUpdateDraw(XtPointer cd);
@@ -110,37 +110,44 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
     size_t nChars;
     DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
   /* Update the limits to reflect current src's */
     updatePvLimits(&dlTextUpdate->limits);
 
     if (displayInfo->traversalMode == DL_EXECUTE) {
-	TextUpdate *ptu;
+	MedmTextUpdate *ptu;
 	
-	ptu = (TextUpdate *) malloc(sizeof(TextUpdate));
-	ptu->dlElement = dlElement;
-	ptu->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlTextUpdate->object),
-	  textUpdateDraw,
-	  (XtPointer)ptu);
-
-	if (ptu->updateTask == NULL) {
-	    medmPrintf(1,"\ntextUpdateCreateRunTimeInstance: Memory allocation error\n");
+	if(dlElement->data) {
+	    ptu = (MedmTextUpdate *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(ptu->updateTask,textUpdateDestroyCb);
-	    updateTaskAddNameCb(ptu->updateTask,textUpdateGetRecord);
+	    ptu = (MedmTextUpdate *)malloc(sizeof(MedmTextUpdate));
+	    dlElement->data = (void *)ptu;
+	    ptu->dlElement = dlElement;
+	    ptu->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlTextUpdate->object),
+	      textUpdateDraw,
+	      (XtPointer)ptu);
+	    
+	    if (ptu->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlTextUpdate: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(ptu->updateTask,textUpdateDestroyCb);
+		updateTaskAddNameCb(ptu->updateTask,textUpdateGetRecord);
+	    }
+	    ptu->record = medmAllocateRecord(dlTextUpdate->monitor.rdbk,
+	      textUpdateUpdateValueCb,
+	      textUpdateUpdateGraphicalInfoCb,
+	      (XtPointer) ptu);
+	    
+	    ptu->fontIndex = dmGetBestFontWithInfo(fontTable,
+	      MAX_FONTS,DUMMY_TEXT_FIELD,
+	      dlTextUpdate->object.height, dlTextUpdate->object.width,
+	      &usedHeight, &usedWidth, FALSE);        /* don't use width */
+	    
+	    drawWhiteRectangle(ptu->updateTask);
 	}
-	ptu->record = medmAllocateRecord(dlTextUpdate->monitor.rdbk,
-	  textUpdateUpdateValueCb,
-	  textUpdateUpdateGraphicalInfoCb,
-	  (XtPointer) ptu);
-
-	ptu->fontIndex = dmGetBestFontWithInfo(fontTable,
-	  MAX_FONTS,DUMMY_TEXT_FIELD,
-	  dlTextUpdate->object.height, dlTextUpdate->object.width,
-	  &usedHeight, &usedWidth, FALSE);        /* don't use width */
-
-	drawWhiteRectangle(ptu->updateTask);
-
     } else {
       /* Since no ca callbacks to put up text, put up dummy region */
 	XSetForeground(display,displayInfo->gc,
@@ -220,12 +227,12 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  /* Use generic hide for an element with a widget */
-    hideWidgetElement(displayInfo, dlElement);
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void textUpdateDestroyCb(XtPointer cd) {
-    TextUpdate *ptu = (TextUpdate *) cd;
+    MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
     if (ptu) {
 	medmDestroyRecord(ptu->record);
 	free((char *)ptu);
@@ -235,14 +242,14 @@ static void textUpdateDestroyCb(XtPointer cd) {
 
 static void textUpdateUpdateValueCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    TextUpdate *ptu = (TextUpdate *) pr->clientData;
+    MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
     
     updateTaskMarkUpdate(ptu->updateTask);
 }
 
 static void textUpdateDraw(XtPointer cd)
 {
-    TextUpdate *ptu = (TextUpdate *) cd;
+    MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
     Record *pr = (Record *) ptu->record;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
     DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
@@ -462,9 +469,8 @@ static void textUpdateDraw(XtPointer cd)
 
 static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    TextUpdate *ptu = (TextUpdate *) pr->clientData;
+    MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
-    Widget widget = ptu->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;
 
@@ -498,7 +504,7 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void textUpdateGetRecord(XtPointer cd, Record **record, int *count) {
-    TextUpdate *pa = (TextUpdate *) cd;
+    MedmTextUpdate *pa = (MedmTextUpdate *) cd;
     *count = 1;
     record[0] = pa->record;
 }

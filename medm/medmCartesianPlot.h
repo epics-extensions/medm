@@ -90,7 +90,7 @@ typedef enum {
 } XYChannelTypeEnum;
 
 typedef struct {
-    struct _CartesianPlot *cartesianPlot;
+    struct _MedmCartesianPlot *cartesianPlot;
     CpDataHandle          hcp;
     int                   trace;
     Record                *recordX;
@@ -99,7 +99,7 @@ typedef struct {
     int                   init;
 } XYTrace;
 
-typedef struct _CartesianPlot {
+typedef struct _MedmCartesianPlot {
     DlElement      *dlElement;            /* Must be first */
     XYTrace         xyTrace[MAX_TRACES];
     XYTrace         eraseCh;
@@ -114,7 +114,7 @@ typedef struct _CartesianPlot {
     Boolean         dirty2;               /* cpData2 needs screen update */
     TS_STAMP        startTime;
     Boolean         timeScale;
-} CartesianPlot;
+} MedmCartesianPlot;
 
 
 /* Function prototypes for generic plotting routines
@@ -156,7 +156,7 @@ void CpSetTimeBase(Widget w, time_t base);
 void CpSetTimeFormat(Widget w, char *format);
 void CpUpdateWidget(Widget w, int full);
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
-  DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp);
+  DlCartesianPlot *dlCartesianPlot, MedmCartesianPlot *pcp);
 
 #define CP_X_AXIS_STYLE   0
 #define CP_Y_AXIS_STYLE   1

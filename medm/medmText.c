@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <ctype.h>
 #include "medm.h"
 
-typedef struct _Text {
+typedef struct _MedmText {
     DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
@@ -165,7 +165,7 @@ static void drawText(Display *display,
 	      GCForeground|GCClipXOrigin|GCClipYOrigin,
 	      &values);
 	    print("  drawable=%x\n",drawable);
-	    print("  %s GCForeground=%6x "
+	    print("  %s GCForeground=%06x "
 	      "GCClipXOrigin=%d GCClipYOrigin=%d\n",
 	      status?"":"(Failed)",values.foreground,
 	      values.clip_x_origin,values.clip_y_origin);
@@ -205,28 +205,39 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif	
 #if DEBUG_FONTS > 1
 	dumpDlElementList(displayInfo->dlElementList);
-#endif	
+#endif
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
+
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlText->dynAttr.chan[0]) {
 	MedmText *pt;
-	pt = (MedmText *)malloc(sizeof(MedmText));
-	pt->dlElement = dlElement;
-	pt->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlText->object),
-	  textDraw,
-	  (XtPointer)pt);
-
-	if (pt->updateTask == NULL) {
-	    medmPrintf(1,"\ntextCreateRunTimeInstance: Memory allocation error\n");
+	
+	if(dlElement->data) {
+	    pt = (MedmText *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
-	    updateTaskAddNameCb(pt->updateTask,textGetRecord);
-	    pt->updateTask->opaque = False;
+	    pt = (MedmText *)malloc(sizeof(MedmText));
+	    dlElement->data = (void *)pt;
+	    pt->dlElement = dlElement;
+	    pt->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlText->object),
+	      textDraw,
+	      (XtPointer)pt);
+	    
+	    if (pt->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlText: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
+		updateTaskAddNameCb(pt->updateTask,textGetRecord);
+		pt->updateTask->opaque = False;
+	    }
+	    pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
+	      textUpdateValueCb, NULL,(XtPointer) pt);
+	    calcPostfix(&dlText->dynAttr);
+	    setMonitorChanged(&dlText->dynAttr, pt->records);
 	}
-	pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
-	  textUpdateValueCb, NULL,(XtPointer) pt);
-	calcPostfix(&dlText->dynAttr);
-	setMonitorChanged(&dlText->dynAttr, pt->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
 #if DEBUG_FONTS > 1 || DEBUG_HIDE
@@ -244,7 +255,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-#if 0
+#if 1
   /* Use generic hide for an element drawn on the display drawingArea */
     hideDrawnElement(displayInfo, dlElement);
 #else    
@@ -398,7 +409,7 @@ DlElement *createDlText(DlElement *p)
     DlText *dlText;
     DlElement *dlElement;
  
-    dlText = (DlText *) malloc(sizeof(DlText));
+    dlText = (DlText *)malloc(sizeof(DlText));
     if (!dlText) return 0;
     if (p) { 
 	*dlText = *p->structure.text;

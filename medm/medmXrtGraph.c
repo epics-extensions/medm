@@ -500,7 +500,7 @@ void CpUpdateWidget(Widget w, int full)
 }
 
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
-  DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp)
+  DlCartesianPlot *dlCartesianPlot, MedmCartesianPlot *pcp)
 {
     Arg args[47];
     int nargs;
@@ -615,7 +615,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     }
     break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X axis style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown X axis style\n");
 	break;
     }
 
@@ -644,7 +644,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNxrtXPrecision,iPrec); nargs++;
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X range style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown X range style\n");
 	break;
     }
 
@@ -656,7 +656,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNxrtYAxisLogarithmic,True); nargs++;
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 axis style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 axis style\n");
 	break;
     }
 
@@ -685,7 +685,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNxrtYPrecision,iPrec); nargs++;
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 range style\n");
 	break;
     }
 
@@ -698,7 +698,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	break;
     default:
 	medmPrintf(1,
-	  "\nCpCreateRunTimeCartesianPlot: Unknown Y2 axis style\n");
+	  "\nCpCreateCartesianPlot: Unknown Y2 axis style\n");
 	break;
     }
 
@@ -728,7 +728,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	break;
     default:
 	medmPrintf(1,
-	  "\nCpCreateRunTimeCartesianPlot: Unknown Y2 range style\n");
+	  "\nCpCreateCartesianPlot: Unknown Y2 range style\n");
 	break;
     }
 
@@ -739,7 +739,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNtraversalOn,False); nargs++;
     XtSetArg(args[nargs], XtNxrtDoubleBuffer, True); nargs++;
 
-  /* Add pointer to CartesianPlot struct as userData to widget */
+  /* Add pointer to MedmCartesianPlot struct as userData to widget */
     XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
 
   /* Create the widget */

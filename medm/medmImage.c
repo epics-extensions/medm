@@ -120,6 +120,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     GIFData *gif;
     DlImage *dlImage = dlElement->structure.image;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
   /* Get the image */
     switch(dlImage->imageType) {
     case GIF_IMAGE:
@@ -160,82 +163,87 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	char upstring[MAX_TOKEN_LENGTH];
 	int i;
 	
-	pi = (MedmImage *)malloc(sizeof(MedmImage));
-	pi->displayInfo = displayInfo;
-	pi->dlElement = dlElement;
-	pi->records = NULL;
-	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
-	  imageDraw, (XtPointer)pi);
-	pi->validCalc = False;
-	pi->animate = False;
-	pi->post[0] = '\0';
-	if(pi->updateTask == NULL) {
-	    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
+	if(dlElement->data) {
+	    pi = (MedmImage *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
-	    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
-	    pi->updateTask->opaque = False;
-	}
-	pi->records = NULL;
-	if(*dlImage->dynAttr.chan[0]) {
-	    long status;
-	    short errnum;
-	    
-	  /* A channel is defined */
-	    if(pi->updateTask) {
-		updateTaskAddNameCb(pi->updateTask,imageGetRecord);
-	    }
-	    pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
-	      imageUpdateValueCb,
-	      imageUpdateGraphicalInfoCb,
-	      (XtPointer)pi);
-	    
-	  /* Calculate the postfix for visbilitiy calc */
-	    calcPostfix(&dlImage->dynAttr);
-	    setMonitorChanged(&dlImage->dynAttr, pi->records);
-	  /* Calculate the postfix for the image calc */
-	  /* First, check for ANIMATE in the string */
-	    for(i=0; i < 4; i++) {
-		upstring[i] = toupper(dlImage->calc[i]);
-	    }
-	    if(!strncmp(upstring,"ANIM",4)) {
-	      /* Calc is set to animate */
-		pi->animate = True;
-		pi->validCalc = False;
+	    pi = (MedmImage *)malloc(sizeof(MedmImage));
+	    dlElement->data = (void *)pi;
+	    pi->displayInfo = displayInfo;
+	    pi->dlElement = dlElement;
+	    pi->records = NULL;
+	    pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
+	      imageDraw, (XtPointer)pi);
+	    pi->validCalc = False;
+	    pi->animate = False;
+	    pi->post[0] = '\0';
+	    if(pi->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
 	    } else {
-		pi->animate = False;
-		status=postfix(dlImage->calc, pi->post, &errnum);
-		if(status) {
-		    medmPostMsg(1,"executeDlImage:\n"
-		      "  Invalid calc expression [error %d]: %s\n  for %s\n",
-		      errnum, dlImage->calc, dlImage->dynAttr.chan);
+		updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
+		updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+		pi->updateTask->opaque = False;
+	    }
+	    pi->records = NULL;
+	    if(*dlImage->dynAttr.chan[0]) {
+		long status;
+		short errnum;
+		
+	      /* A channel is defined */
+		if(pi->updateTask) {
+		    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+		}
+		pi->records = medmAllocateDynamicRecords(&dlImage->dynAttr,
+		  imageUpdateValueCb,
+		  imageUpdateGraphicalInfoCb,
+		  (XtPointer)pi);
+		
+	      /* Calculate the postfix for visbilitiy calc */
+		calcPostfix(&dlImage->dynAttr);
+		setMonitorChanged(&dlImage->dynAttr, pi->records);
+	      /* Calculate the postfix for the image calc */
+	      /* First, check for ANIMATE in the string */
+		for(i=0; i < 4; i++) {
+		    upstring[i] = toupper(dlImage->calc[i]);
+		}
+		if(!strncmp(upstring,"ANIM",4)) {
+		  /* Calc is set to animate */
+		    pi->animate = True;
 		    pi->validCalc = False;
 		} else {
-		    pi->validCalc = True;
-		}
-	    }
-	  /* Override the visibility monitorChanged paramaters if
-             there is a valid image calc */
-	    if(pi->validCalc) {
-		for(i=0; i < MAX_CALC_RECORDS; i++) {
-		    pi->records[i]->monitorValueChanged = True;
-		}
-	    }
-#if 0	    
-	  /* Draw initial white rectangle */
-	  /* KE: Check if this is necessary */
-	    drawWhiteRectangle(pi->updateTask);
-#endif	    
-	} else {
-	  /* No channel */
-	    if(gif) {
-		if(gif->nFrames > 1) {
-		    pi->animate = True;
-		    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
-		} else {
 		    pi->animate = False;
-		  /* Draw the first frame */
-		    drawGIF(displayInfo,dlImage);
+		    status=postfix(dlImage->calc, pi->post, &errnum);
+		    if(status) {
+			medmPostMsg(1,"executeDlImage:\n"
+			  "  Invalid calc expression [error %d]: %s\n  for %s\n",
+			  errnum, dlImage->calc, dlImage->dynAttr.chan);
+			pi->validCalc = False;
+		    } else {
+			pi->validCalc = True;
+		    }
+		}
+	      /* Override the visibility monitorChanged paramaters if
+		 there is a valid image calc */
+		if(pi->validCalc) {
+		    for(i=0; i < MAX_CALC_RECORDS; i++) {
+			pi->records[i]->monitorValueChanged = True;
+		    }
+		}
+#if 0	    
+	      /* Draw initial white rectangle */
+	      /* KE: Check if this is necessary */
+		drawWhiteRectangle(pi->updateTask);
+#endif	    
+	    } else {
+	      /* No channel */
+		if(gif) {
+		    if(gif->nFrames > 1) {
+			pi->animate = True;
+			updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
+		    } else {
+			pi->animate = False;
+		      /* Draw the first frame */
+			drawGIF(displayInfo,dlImage);
+		    }
 		}
 	    }
 	}
@@ -360,7 +368,7 @@ static void imageDraw(XtPointer cd)
 	    drawWhiteRectangle(pi->updateTask);
 	}
       /* Update the drawing objects above */
-	redrawElementsAbove(displayInfo, pi->dlElement);
+	redrawElementsAbove(displayInfo, (DlElement *)dlImage);
     } else {
       /* No channel */
 #if DEBUG_ANIMATE

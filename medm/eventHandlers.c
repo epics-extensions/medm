@@ -1405,10 +1405,6 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
     print("toggleSelectedElementHighlight: dlElement->type=%d\n"
       "x=%d y=%d width=%d height=%d\n",dlElement->type,x,y,width,height);
 #endif    
-#if 0
-    XSetForeground(display,highlightGC,cdi->drawingAreaBackgroundColor);
-    XSetBackground(display,highlightGC,cdi->drawingAreaForegroundColor);
-#endif
     XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
       x, y, width, height);
     XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,

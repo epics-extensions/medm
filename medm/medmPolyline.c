@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define INITIAL_NUM_POINTS 16
 
-typedef struct _Polyline {
+typedef struct _MedmPolyline {
     DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
@@ -137,6 +137,10 @@ static void drawPolyline(MedmPolyline *pp) {
 void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlPolyline *dlPolyline = dlElement->structure.polyline;
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+    
     if (dlPolyline->isFallingOrRisingLine) {
       /* convert the falling line and rising line into polyline format */
 	if (dlPolyline->attr.width > 0) {
@@ -163,29 +167,35 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
       *dlPolyline->dynAttr.chan[0]) {
 	MedmPolyline *pp;
 	DlObject object;
-	pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
-	pp->dlElement = dlElement;
-#if 1
-	object = dlPolyline->object;
-	object.width++;
-	object.height++;
-#endif
-	pp->updateTask = updateTaskAddTask(displayInfo,
-	  &object,
-	  polylineDraw,
-	  (XtPointer)pp);
 
-	if (pp->updateTask == NULL) {
-	    medmPrintf(1,"\npolylineCreateRunTimeInstance: Memory allocation error\n");
+	if(dlElement->data) {
+	    pp = (MedmPolyline *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
-	    updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
-	    pp->updateTask->opaque = False;
+	    pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
+	    dlElement->data = (void *)pp;
+	    pp->dlElement = dlElement;
+#if 1
+	    object = dlPolyline->object;
+	    object.width++;
+	    object.height++;
+#endif
+	    pp->updateTask = updateTaskAddTask(displayInfo,
+	      &object,
+	      polylineDraw,
+	      (XtPointer)pp);
+	    
+	    if (pp->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlPolyline: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
+		updateTaskAddNameCb(pp->updateTask,polylineGetRecord);
+		pp->updateTask->opaque = False;
+	    }
+	    pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
+	      polylineUpdateValueCb, NULL, (XtPointer) pp);
+	    calcPostfix(&dlPolyline->dynAttr);
+	    setMonitorChanged(&dlPolyline->dynAttr, pp->records);
 	}
-	pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
-	  polylineUpdateValueCb, NULL, (XtPointer) pp);
-	calcPostfix(&dlPolyline->dynAttr);
-	setMonitorChanged(&dlPolyline->dynAttr, pp->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlPolyline->attr));
 	XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
@@ -304,7 +314,7 @@ DlElement *createDlPolyline(DlElement *p)
     DlElement *dlElement;
  
  
-    dlPolyline = (DlPolyline *) malloc(sizeof(DlPolyline));
+    dlPolyline = (DlPolyline *)malloc(sizeof(DlPolyline));
     if (!dlPolyline) return 0;
     if (p) {
 	int i;

@@ -468,7 +468,7 @@ void CpSetTimeFormat(Widget w, char *format)
 }
 
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
-  DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp)
+  DlCartesianPlot *dlCartesianPlot, MedmCartesianPlot *pcp)
 {
     Arg args[75];     /* Count later */
     int nargs;
@@ -581,7 +581,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     }
     break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X axis style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown X axis style\n");
 	break;
     }
 
@@ -594,7 +594,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNyLog,True); nargs++;
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 axis style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 axis style\n");
 	break;
     }
 
@@ -609,12 +609,12 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	XtSetArg(args[nargs],XtNyLog,True); nargs++;
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 axis style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 axis style\n");
 	break;
     }
 #endif    
 
-  /* Add pointer to CartesianPlot struct as userData to widget */
+  /* Add pointer to MedmCartesianPlot struct as userData to widget */
     XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
 
   /* Set miscellaneous  args */
@@ -651,7 +651,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	SciPlotSetXUserScale(w, minF.fval, maxF.fval);
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X range style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown X range style\n");
 	break;
     }
 
@@ -667,7 +667,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	SciPlotSetYUserScale(w, minF.fval, maxF.fval);
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 range style\n");
 	break;
     }
 
@@ -685,7 +685,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	SciPlotSetYUserScale(w, minF.fval, max.fval);
 	break;
     default:
-	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
+	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 range style\n");
 	break;
     }
 #endif    

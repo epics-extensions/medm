@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_EVENTS 0
 #define DEBUG_FONTS 0
+#define DEBUG_PIXMAP 1
 
 #include "medm.h"
 
@@ -104,8 +105,53 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	popupPvLimits(displayInfo);
 	break;
     case EXECUTE_POPUP_MENU_DISPLAY_LIST_ID:
-	popupDisplayListDlg();
+    {
+#if DEBUG_PIXMAP
+      /* Use this in debugging to show the drawing area pixmap */
+	int c,i,n;
+	Arg args[2];
+	Dimension width, height;
+	Pixmap pixmap;
+
+	n=0;
+	XtSetArg(args[n],XmNwidth,&width); n++;
+	XtSetArg(args[n],XmNheight,&height); n++;
+	XtGetValues(displayInfo->drawingArea,args,n);
+	
+	pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+	  width,height,
+	  DefaultDepth(display,screenNum));
+	XCopyArea(display,XtWindow(displayInfo->drawingArea),
+	  pixmap,
+	  displayInfo->pixmapGC,0,0,width,height,0,0);
+	XFlush(display);
+	
+	for(i=0; i < 1; i++) {
+	    print("%d Background is window\n",i+1);
+	    print("Hit CR to draw pixmap\n");
+	    c=getc(stdin);
+	    
+	    XCopyArea(display,displayInfo->drawingAreaPixmap,
+	      XtWindow(displayInfo->drawingArea),
+	      displayInfo->pixmapGC,0,0,width,height,0,0);
+	    XFlush(display);
+	    
+	    print("%d Background is pixmap\n",i+1);
+	    print("Hit CR to draw window\n");
+	    c=getc(stdin);
+	    
+	    XCopyArea(display,pixmap,
+	      XtWindow(displayInfo->drawingArea),
+	      displayInfo->pixmapGC,0,0,width,height,0,0);
+	    XFlush(display);
+	}
+	print("Done: Background is window\n");
+	XFreePixmap(display,pixmap);
+#else
+        popupDisplayListDlg();
+#endif    
 	break;
+    }
 #if 0	
     case EXECUTE_POPUP_MENU_EXECUTE_ID:
 	break;
@@ -229,7 +275,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	      medmMarkDisplayBeingEdited(displayInfo);
 	} else {
 	  /* In EXECUTE mode - resize all elements
-	   * If user resized with Shift-ClicK
+	   * If user resized with Shift-Click
 	   *     Redefine values to maintain aspect ratio
 	   *     Use userData to make this happen only once */
 

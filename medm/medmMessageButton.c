@@ -56,13 +56,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _MessageButton {
+typedef struct _MedmMessageButton {
     DlElement          *dlElement;     /* Must be first */
     Record             *record;
     UpdateTask         *updateTask;
     double             pressValue;
     double             releaseValue;
-} MessageButton;
+} MedmMessageButton;
 
 void messageButtonCreateRunTimeInstance(DisplayInfo *, DlElement *);
 void messageButtonCreateEditInstance(DisplayInfo *, DlElement *);
@@ -170,46 +170,54 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
 
 void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
-    MessageButton *pmb;
+    MedmMessageButton *pmb;
     DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
 
-    pmb = (MessageButton *) malloc(sizeof(MessageButton));
-    pmb->dlElement = dlElement;
-
-    pmb->updateTask = updateTaskAddTask(displayInfo,
-      &(dlMessageButton->object),
-      messageButtonDraw,
-      (XtPointer)pmb);
-
-    if (!pmb->updateTask) {
-	medmPrintf(1,"\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
+    if(dlElement->data) {
+	pmb = (MedmMessageButton *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
-	updateTaskAddNameCb(pmb->updateTask,messageButtonGetRecord);
-    }
-    pmb->record = medmAllocateRecord(dlMessageButton->control.ctrl,
-      messageButtonUpdateValueCb,
-      messageButtonUpdateGraphicalInfoCb,
-      (XtPointer) pmb);
-    drawWhiteRectangle(pmb->updateTask);
+	pmb = (MedmMessageButton *)malloc(sizeof(MedmMessageButton));
+	dlElement->data = (void *)pmb;
+	pmb->dlElement = dlElement;
+	
+	pmb->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlMessageButton->object),
+	  messageButtonDraw,
+	  (XtPointer)pmb);
+	
+	if (!pmb->updateTask) {
+	    medmPrintf(1,"\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
+	    updateTaskAddNameCb(pmb->updateTask,messageButtonGetRecord);
+	}
+	pmb->record = medmAllocateRecord(dlMessageButton->control.ctrl,
+	  messageButtonUpdateValueCb,
+	  messageButtonUpdateGraphicalInfoCb,
+	  (XtPointer) pmb);
+	drawWhiteRectangle(pmb->updateTask);
  
-    dlElement->widget = createPushButton(displayInfo->drawingArea,
-      &(dlMessageButton->object),
-      displayInfo->colormap[dlMessageButton->control.clr],
-      displayInfo->colormap[dlMessageButton->control.bclr],
-      (Pixmap)0,
-      dlMessageButton->label,
-      (XtPointer) displayInfo);
-
-  /* Add the callbacks for update */
-    XtAddCallback(dlElement->widget,XmNarmCallback,messageButtonValueChangedCb,
-      (XtPointer)pmb);
-    XtAddCallback(dlElement->widget,XmNdisarmCallback,messageButtonValueChangedCb,
-      (XtPointer)pmb);
+	dlElement->widget = createPushButton(displayInfo->drawingArea,
+	  &(dlMessageButton->object),
+	  displayInfo->colormap[dlMessageButton->control.clr],
+	  displayInfo->colormap[dlMessageButton->control.bclr],
+	  (Pixmap)0,
+	  dlMessageButton->label,
+	  (XtPointer) displayInfo);
+	
+      /* Add the callbacks for update */
+	XtAddCallback(dlElement->widget,XmNarmCallback,messageButtonValueChangedCb,
+	  (XtPointer)pmb);
+	XtAddCallback(dlElement->widget,XmNdisarmCallback,messageButtonValueChangedCb,
+	  (XtPointer)pmb);
+    }
 }
 
 void executeDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (displayInfo->traversalMode == DL_EXECUTE) {
 	messageButtonCreateRunTimeInstance(displayInfo,dlElement);
     } else
@@ -242,7 +250,7 @@ void hideDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pd = (Record *) cd;
-    MessageButton *pmb = (MessageButton *) pd->clientData;
+    MedmMessageButton *pmb = (MedmMessageButton *) pd->clientData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
     int i;
     Boolean match;
@@ -339,13 +347,13 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 
 static void messageButtonUpdateValueCb(XtPointer cd)
 {
-    MessageButton *pmb = (MessageButton *) ((Record *) cd)->clientData;
+    MedmMessageButton *pmb = (MedmMessageButton *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pmb->updateTask);
 }
 
 static void messageButtonDraw(XtPointer cd)
 {
-    MessageButton *pmb = (MessageButton *) cd;
+    MedmMessageButton *pmb = (MedmMessageButton *) cd;
     Record *pd = pmb->record;
     Widget widget = pmb->dlElement->widget;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
@@ -386,7 +394,7 @@ static void messageButtonDraw(XtPointer cd)
 
 static void messageButtonDestroyCb(XtPointer cd)
 {
-    MessageButton *pmb = (MessageButton *) cd;
+    MedmMessageButton *pmb = (MedmMessageButton *) cd;
     if (pmb) {
 	medmDestroyRecord(pmb->record);
 	free((char *)pmb);
@@ -403,7 +411,7 @@ static void messageButtonValueChangedCb(Widget w,
   XtPointer callbackData)
 #endif
 {
-    MessageButton *pmb = (MessageButton *) clientData;
+    MedmMessageButton *pmb = (MedmMessageButton *) clientData;
     Record *pd = pmb->record;
     XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
@@ -468,7 +476,7 @@ static void messageButtonValueChangedCb(Widget w,
 }
 
 static void messageButtonGetRecord(XtPointer cd, Record **record, int *count) {
-    MessageButton *pmb = (MessageButton *) cd;
+    MedmMessageButton *pmb = (MedmMessageButton *) cd;
     *count = 1;
     record[0] = pmb->record;
 }
@@ -482,7 +490,7 @@ DlElement *createDlMessageButton(DlElement *p)
     DlMessageButton *dlMessageButton;
     DlElement *dlElement;
  
-    dlMessageButton = (DlMessageButton *) malloc(sizeof(DlMessageButton));
+    dlMessageButton = (DlMessageButton *)malloc(sizeof(DlMessageButton));
     if (p) {
 	*dlMessageButton = *(p->structure.messageButton);
     } else {

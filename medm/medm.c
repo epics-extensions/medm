@@ -901,7 +901,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
     char currentDirectoryName[FULLPATHNAME_SIZE+1];
     char fullPathName[FULLPATHNAME_SIZE+1];
 
-    request = (request_t *) malloc(sizeof(request_t));
+    request = (request_t *)malloc(sizeof(request_t));
     if (request == NULL) return request;
     request->opMode = EDIT;
     request->medmMode = LOCAL;
@@ -1126,7 +1126,7 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	XtVaGetValues(w,XmNtextString,&xmString,NULL);
       /* Use XmStringGetLtoR because it handles multiple lines */
 	XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&printerName);
-	variable = (char*) malloc(
+	variable = (char*)malloc(
 	  sizeof(char)*(strlen(printerName) + strlen(prefix) + 1));
 	if (variable) {
 	    strcpy(variable,prefix);

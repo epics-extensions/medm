@@ -184,12 +184,12 @@ int CATaskInit()
 {
     caTask.freeListSize = CA_PAGE_SIZE;
     caTask.freeListCount = 0;
-    caTask.freeList = (int *) malloc(sizeof(int) * CA_PAGE_SIZE);
+    caTask.freeList = (int *)malloc(sizeof(int) * CA_PAGE_SIZE);
     if(caTask.freeList == NULL) {
 	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
 	return -1;
     }
-    caTask.pages = (Channel **) malloc(sizeof(Channel *) * CA_PAGE_COUNT);
+    caTask.pages = (Channel **)malloc(sizeof(Channel *) * CA_PAGE_COUNT);
     if(caTask.pages == NULL) {
 	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
 	return -1;
@@ -197,7 +197,7 @@ int CATaskInit()
     caTask.pageCount = 1;
     caTask.pageSize = CA_PAGE_COUNT;
   /* allocate the page */
-    caTask.pages[0] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
+    caTask.pages[0] = (Channel *)malloc(sizeof(Channel) * CA_PAGE_SIZE);
     if(caTask.pages[0] == NULL) {
 	medmPostMsg(1,"CATaskInit: Memory allocation error\n");
 	return -1;

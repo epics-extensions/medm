@@ -171,9 +171,11 @@ float safeFloat(double x) {
 	if(print) {
 	    if( nerrs < 25) {
 		nerrs++;
-		medmPostMsg(0,"CartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
+		medmPostMsg(0,"CartesianPlot: "
+		  "Value is NaN, using %g\n",NAN_SUBSTITUTE);
 		if(nerrs >= 25) {
-		    medmPrintf(0,"\nCartesianPlot: Suppressing further NaN error messages\n");
+		    medmPrintf(0,"\nCartesianPlot: "
+		      "Suppressing further NaN error messages\n");
 		    print = 0;
 		}
 	    }
@@ -188,7 +190,7 @@ float safeFloat(double x) {
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
-    CartesianPlot *pcp;
+    MedmCartesianPlot *pcp;
     int i, validTraces;
     Widget localWidget;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
@@ -202,112 +204,119 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	CpDataSetYElement(hcpNullData,0,0,0.0);
     }
 
-  /* Allocate a CartesianPlot and fill part of it in */
-    pcp = (CartesianPlot *) malloc(sizeof(CartesianPlot));
-    pcp->hcp1 = pcp->hcp2 = NULL;
-    pcp->dirty1 = pcp->dirty2 = False;
-    pcp->timeScale = False;
-    pcp->startTime.secPastEpoch = 0;
-    pcp->startTime.nsec = 0;
-    pcp->eraseMode = dlCartesianPlot->eraseMode;
-    pcp->dlElement = dlElement;
-    pcp->updateTask = updateTaskAddTask(displayInfo,
-      &(dlCartesianPlot->object),
-      cartesianPlotDraw,
-      (XtPointer)pcp);
-    if (pcp->updateTask == NULL) {
-	medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: Memory allocation error\n");
+  /* Allocate a MedmCartesianPlot and fill part of it in */
+    if(dlElement->data) {
+	pcp=(MedmCartesianPlot *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pcp->updateTask,cartesianPlotDestroyCb);
-	updateTaskAddNameCb(pcp->updateTask,cartesianPlotGetRecord);
-    }
-
-  /* Allocate (or set to NULL) the Records in the xyTrace's XYTraces */
-  /*   Note: Set the updateValueCb for the time being to
-   *     cartesianPlotUpdateScreenFirstTime(), which will change it
-   *     to cartesianPlotUpdateValueCb() when it is finished */
-    validTraces = 0;
-    for (i = 0; i < MAX_TRACES; i++) {
-	Boolean validTrace = False;
-      /* X data */
-	if (dlCartesianPlot->trace[i].xdata[0] != '\0') {
-	    pcp->xyTrace[validTraces].recordX =
-              medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
-                cartesianPlotUpdateScreenFirstTime,
-                cartesianPlotUpdateGraphicalInfoCb,
-                (XtPointer) &(pcp->xyTrace[validTraces]));
-	    validTrace = True;
+	pcp = (MedmCartesianPlot *)malloc(sizeof(MedmCartesianPlot));
+	dlElement->data = pcp;
+	pcp->hcp1 = pcp->hcp2 = NULL;
+	pcp->dirty1 = pcp->dirty2 = False;
+	pcp->timeScale = False;
+	pcp->startTime.secPastEpoch = 0;
+	pcp->startTime.nsec = 0;
+	pcp->eraseMode = dlCartesianPlot->eraseMode;
+	pcp->dlElement = dlElement;
+	pcp->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlCartesianPlot->object),
+	  cartesianPlotDraw,
+	  (XtPointer)pcp);
+	if (pcp->updateTask == NULL) {
+	    medmPrintf(1,"\ncartesianPlotCreateRunTimeInstance: "
+	      "Memory allocation error\n");
 	} else {
-	    pcp->xyTrace[validTraces].recordX = NULL;
+	    updateTaskAddDestroyCb(pcp->updateTask,cartesianPlotDestroyCb);
+	    updateTaskAddNameCb(pcp->updateTask,cartesianPlotGetRecord);
 	}
-      /* Y data */
-	if (dlCartesianPlot->trace[i].ydata[0] != '\0') {
-	    pcp->xyTrace[validTraces].recordY =
-              medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
-                cartesianPlotUpdateScreenFirstTime,
-                cartesianPlotUpdateGraphicalInfoCb,
-                (XtPointer) &(pcp->xyTrace[validTraces]));
-	    validTrace = True;
+	
+      /* Allocate (or set to NULL) the Records in the xyTrace's XYTraces */
+      /*   Note: Set the updateValueCb for the time being to
+       *     cartesianPlotUpdateScreenFirstTime(), which will change it
+       *     to cartesianPlotUpdateValueCb() when it is finished */
+	validTraces = 0;
+	for (i = 0; i < MAX_TRACES; i++) {
+	    Boolean validTrace = False;
+	  /* X data */
+	    if (dlCartesianPlot->trace[i].xdata[0] != '\0') {
+		pcp->xyTrace[validTraces].recordX =
+		  medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
+		    cartesianPlotUpdateScreenFirstTime,
+		    cartesianPlotUpdateGraphicalInfoCb,
+		    (XtPointer) &(pcp->xyTrace[validTraces]));
+		validTrace = True;
+	    } else {
+		pcp->xyTrace[validTraces].recordX = NULL;
+	    }
+	  /* Y data */
+	    if (dlCartesianPlot->trace[i].ydata[0] != '\0') {
+		pcp->xyTrace[validTraces].recordY =
+		  medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
+		    cartesianPlotUpdateScreenFirstTime,
+		    cartesianPlotUpdateGraphicalInfoCb,
+		    (XtPointer) &(pcp->xyTrace[validTraces]));
+		validTrace = True;
+	    } else {
+		pcp->xyTrace[validTraces].recordY = NULL;
+	    }
+	    if (validTrace) {
+		pcp->xyTrace[validTraces].cartesianPlot = pcp;
+		validTraces++;
+	    }
+	}
+	
+      /* If no xyTraces, create one fake one */
+	if (validTraces == 0) {
+	    validTraces = 1;
+	    pcp->xyTrace[0].recordX = medmAllocateRecord(" ",
+	      cartesianPlotUpdateScreenFirstTime,
+	      cartesianPlotUpdateGraphicalInfoCb,
+	      (XtPointer) &(pcp->xyTrace[0]));
+	    pcp->xyTrace[0].recordY = NULL;
+	}
+	
+      /* Record the number of traces in the cartesian plot */
+	pcp->nTraces = validTraces;
+	
+      /* Allocate (or set to NULL) the X Record in the eraseCh XYTrace */
+	if ((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
+	    pcp->eraseCh.recordX =
+	      medmAllocateRecord(dlCartesianPlot->erase,
+		cartesianPlotUpdateScreenFirstTime,
+		cartesianPlotUpdateGraphicalInfoCb,
+		(XtPointer) &(pcp->eraseCh));
+	    pcp->eraseCh.cartesianPlot = pcp;
 	} else {
-	    pcp->xyTrace[validTraces].recordY = NULL;
+	    pcp->eraseCh.recordX = NULL;
 	}
-	if (validTrace) {
-	    pcp->xyTrace[validTraces].cartesianPlot = pcp;
-	    validTraces++;
+	
+      /* Allocate (or set to NULL) the X Record in the triggerCh XYTrace */
+	if ((dlCartesianPlot->trigger[0] != '\0') && (validTraces > 0)) {
+	    pcp->triggerCh.recordX = 
+	      medmAllocateRecord(dlCartesianPlot->trigger,
+		cartesianPlotUpdateScreenFirstTime,
+		cartesianPlotUpdateGraphicalInfoCb,
+		(XtPointer) &(pcp->triggerCh));
+	    pcp->triggerCh.cartesianPlot = pcp;
+	} else {
+	    pcp->triggerCh.recordX = NULL;
 	}
+	
+      /* Note: Only the Record and MedmCartesianPlot parts of the
+       *   XYTrace's are filled in now, the rest is filled in in
+       *   cartesianPlotUpdateGraphicalInfoCb() */
+	
+	drawWhiteRectangle(pcp->updateTask);
+
+	localWidget = CpCreateCartesianPlot(displayInfo,
+	  dlCartesianPlot, pcp);
+	dlElement->widget = localWidget;
     }
-
-  /* If no xyTraces, create one fake one */
-    if (validTraces == 0) {
-	validTraces = 1;
-	pcp->xyTrace[0].recordX = medmAllocateRecord(" ",
-	  cartesianPlotUpdateScreenFirstTime,
-	  cartesianPlotUpdateGraphicalInfoCb,
-	  (XtPointer) &(pcp->xyTrace[0]));
-	pcp->xyTrace[0].recordY = NULL;
-    }
-
-  /* Record the number of traces in the cartesian plot */
-    pcp->nTraces = validTraces;
-
-  /* Allocate (or set to NULL) the X Record in the eraseCh XYTrace */
-    if ((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
-	pcp->eraseCh.recordX =
-	  medmAllocateRecord(dlCartesianPlot->erase,
-	    cartesianPlotUpdateScreenFirstTime,
-	    cartesianPlotUpdateGraphicalInfoCb,
-	    (XtPointer) &(pcp->eraseCh));
-	pcp->eraseCh.cartesianPlot = pcp;
-    } else {
-	pcp->eraseCh.recordX = NULL;
-    }
-
-  /* Allocate (or set to NULL) the X Record in the triggerCh XYTrace */
-    if ((dlCartesianPlot->trigger[0] != '\0') && (validTraces > 0)) {
-	pcp->triggerCh.recordX = 
-	  medmAllocateRecord(dlCartesianPlot->trigger,
-	    cartesianPlotUpdateScreenFirstTime,
-	    cartesianPlotUpdateGraphicalInfoCb,
-	    (XtPointer) &(pcp->triggerCh));
-	pcp->triggerCh.cartesianPlot = pcp;
-    } else {
-	pcp->triggerCh.recordX = NULL;
-    }
-
-  /* Note: Only the Record and CartesianPlot parts of the XYTrace's are filled
-   *   in now, rest is filled in in cartesianPlotUpdateGraphicalInfoCb() */
-
-    drawWhiteRectangle(pcp->updateTask);
-
-    localWidget = CpCreateCartesianPlot(displayInfo,
-      dlCartesianPlot, pcp);
-    dlElement->widget = localWidget;
 }
 
 void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
-    CartesianPlot *pcp;
+    MedmCartesianPlot *pcp;
     Widget localWidget;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
 
@@ -325,6 +334,9 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
 
 void executeDlCartesianPlot(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (dlElement->widget) {
 	DlObject *po = &(dlElement->structure.cartesianPlot->object);
 	XtVaSetValues(dlElement->widget,
@@ -336,7 +348,7 @@ void executeDlCartesianPlot(DisplayInfo *displayInfo, DlElement *dlElement)
     } else if (displayInfo->traversalMode == DL_EXECUTE) {
 	cartesianPlotCreateRunTimeInstance(displayInfo, dlElement);
     } else if (displayInfo->traversalMode == DL_EDIT) {
-	    cartesianPlotCreateEditInstance(displayInfo, dlElement);
+	cartesianPlotCreateEditInstance(displayInfo, dlElement);
     }
 }
 
@@ -349,7 +361,7 @@ void hideDlCartesianPlot(DisplayInfo *displayInfo, DlElement *dlElement)
 static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *)cd;
     XYTrace *pt = (XYTrace *)pr->clientData;
-    CartesianPlot *pcp = pt->cartesianPlot;
+    MedmCartesianPlot *pcp = pt->cartesianPlot;
     DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     Widget widget = pcp->dlElement->widget;
@@ -393,7 +405,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
   /* Get the colors for all the possible traces */
     for (i = 0; i < pcp->nTraces; i++)
-      xColors[i].pixel = displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
+      xColors[i].pixel =
+	displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
     XQueryColors(XtDisplay(widget),cmap,xColors,pcp->nTraces);
 
   /* Set the maximum count (for allocating data structures) to be the
@@ -428,11 +441,14 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	if (t->recordX && t->recordY) {
 	    if ( t->recordX->elementCount > 1 && t->recordY->elementCount > 1 ) {
 		t->type = CP_XYVector;
-	    } else if ( t->recordX->elementCount > 1 && t->recordY->elementCount <= 1 ) {
+	    } else if ( t->recordX->elementCount > 1 &&
+	      t->recordY->elementCount <= 1 ) {
 		t->type = CP_XVectorYScalar;
-	    } else if ( t->recordY->elementCount > 1 && t->recordX->elementCount <= 1 ) {
+	    } else if ( t->recordY->elementCount > 1 &&
+	      t->recordX->elementCount <= 1 ) {
 		t->type = CP_YVectorXScalar;
-	    } else if ( t->recordX->elementCount <= 1 && t->recordY->elementCount <= 1 ) {
+	    } else if ( t->recordX->elementCount <= 1 &&
+	      t->recordY->elementCount <= 1 ) {
 		t->type = CP_XYScalar;
 	    }
 	  /* Put initial data in */
@@ -456,7 +472,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		    for (j = 0; j < (int)t->recordX->elementCount; j++)
 		      CpDataSetYElement(hcp1,i,j,(float)j);
 		    minY = (float)MIN(minY,0.);
-		    maxY = (float)MAX(maxY,(float)((int)t->recordX->elementCount-1));
+		    maxY = (float)MAX(maxY,
+		      (float)((int)t->recordX->elementCount-1));
 		} else {
 		    for(j = 0; j < (int)t->recordX->elementCount; j++)
 		     CpDataSetYElement(hcp2,i-1,j,(float)j);
@@ -539,7 +556,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	}
     }
 
-  /* Set the data pointers in the CartesianPlot */
+  /* Set the data pointers in the MedmCartesianPlot */
     pcp->hcp1 = hcp1;
     pcp->hcp2 = hcp2;
 
@@ -662,7 +679,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     Record *pr = (Record *) cd;
 
     XYTrace *pt = (XYTrace *) pr->clientData;
-    CartesianPlot *pcp = pt->cartesianPlot;
+    MedmCartesianPlot *pcp = pt->cartesianPlot;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     int nextPoint, j;
 
@@ -1143,9 +1160,11 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		dbr_long_t offset = (dbr_long_t) pcp->startTime.secPastEpoch;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      CpDataSetXElement(pt->hcp,pt->trace,j,(float)(pLong[j] - offset));
+		      CpDataSetXElement(pt->hcp,pt->trace,j,
+			(float)(pLong[j] - offset));
 		    else
-		      CpDataSetYElement(pt->hcp,pt->trace,j,(float)(pLong[j] - offset));
+		      CpDataSetYElement(pt->hcp,pt->trace,j,
+			(float)(pLong[j] - offset));
 		}
 		break;
 	    }
@@ -1155,9 +1174,11 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		double offset = (double) pcp->startTime.secPastEpoch;
 		for (j = 0; j < count; j++) {
 		    if(dox)
-		      CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
+		      CpDataSetXElement(pt->hcp,pt->trace,j,
+			SAFEFLOAT(pDouble[j] - offset));
 		    else
-		      CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j] - offset));
+		      CpDataSetYElement(pt->hcp,pt->trace,j,
+			SAFEFLOAT(pDouble[j] - offset));
 		}
 		break;
 	    }
@@ -1256,7 +1277,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
-    CartesianPlot *pcp = pt->cartesianPlot;
+    MedmCartesianPlot *pcp = pt->cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     int i;
     Boolean clearDataSet1 = True;
@@ -1343,17 +1364,21 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 	if (t->recordX) {
-	    medmRecordAddUpdateValueCb(t->recordX,cartesianPlotUpdateValueCb);
+	    medmRecordAddUpdateValueCb(t->recordX,
+	      cartesianPlotUpdateValueCb);
 	}
 	if (t->recordY) {
-	    medmRecordAddUpdateValueCb(t->recordY,cartesianPlotUpdateValueCb);
+	    medmRecordAddUpdateValueCb(t->recordY,
+	      cartesianPlotUpdateValueCb);
 	}
     }
     if (pcp->eraseCh.recordX) {
-	medmRecordAddUpdateValueCb(pcp->eraseCh.recordX,cartesianPlotUpdateValueCb);
+	medmRecordAddUpdateValueCb(pcp->eraseCh.recordX,
+	  cartesianPlotUpdateValueCb);
     }
     if (pcp->triggerCh.recordX) {
-	medmRecordAddUpdateValueCb(pcp->triggerCh.recordX,cartesianPlotUpdateValueCb);
+	medmRecordAddUpdateValueCb(pcp->triggerCh.recordX,
+	  cartesianPlotUpdateValueCb);
     }
     CpUpdateWidget(widget, CP_FULL);
     updateTaskMarkUpdate(pcp->updateTask);
@@ -1363,7 +1388,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 void cartesianPlotUpdateValueCb(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
-    CartesianPlot *pcp = pt->cartesianPlot;
+    MedmCartesianPlot *pcp = pt->cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     int i;
 
@@ -1442,14 +1467,15 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	} else if (pt->hcp == pcp->hcp2) {
 	    pcp->dirty2 = True;
 	} else {
-	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal cpDataSet specified\n");
+	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: "
+	      "Illegal cpDataSet specified\n");
 	}
     }
     updateTaskMarkUpdate(pcp->updateTask);
 }
 
 void cartesianPlotDestroyCb(XtPointer cd) {
-    CartesianPlot *pcp = (CartesianPlot *) cd;
+    MedmCartesianPlot *pcp = (MedmCartesianPlot *) cd;
     if (executeTimeCartesianPlotWidget == pcp->dlElement->widget) {
 	executeTimeCartesianPlotWidget = NULL;
 	XtSetSensitive(cartesianPlotAxisS,False);
@@ -1477,7 +1503,7 @@ void cartesianPlotDestroyCb(XtPointer cd) {
 }
 
 void cartesianPlotDraw(XtPointer cd) {
-    CartesianPlot *pcp = (CartesianPlot *) cd;
+    MedmCartesianPlot *pcp = (MedmCartesianPlot *) cd;
     Widget widget = pcp->dlElement->widget;
     int i;
     Boolean connected = True;
@@ -1553,7 +1579,7 @@ void cartesianPlotDraw(XtPointer cd) {
 
 static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)
 {
-    CartesianPlot *pcp = (CartesianPlot *)cd;
+    MedmCartesianPlot *pcp = (MedmCartesianPlot *)cd;
     int i, j;
 
     j = 0;
@@ -1583,7 +1609,7 @@ DlElement *createDlCartesianPlot(DlElement *p)
     DlElement *dlElement;
     int traceNumber;
 
-    dlCartesianPlot = (DlCartesianPlot *) malloc(sizeof(DlCartesianPlot));
+    dlCartesianPlot = (DlCartesianPlot *)malloc(sizeof(DlCartesianPlot));
     if (!dlCartesianPlot) return 0;
     if (p) {
 	*dlCartesianPlot = *p->structure.cartesianPlot;
@@ -1730,12 +1756,12 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	for (i = 0; i < MAX_TRACES; i++) {
 	    writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
 	}
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[X_AXIS_ELEMENT]),
-	  X_AXIS_ELEMENT,level+1);
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),
-	  Y1_AXIS_ELEMENT,level+1);
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),
-	  Y2_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[X_AXIS_ELEMENT]),X_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),Y1_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),Y2_AXIS_ELEMENT,level+1);
 	if (dlCartesianPlot->trigger[0] != '\0')
 	  fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
 	if (dlCartesianPlot->erase[0] != '\0')
@@ -1753,12 +1779,12 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	for (i = 0; i < MAX_TRACES; i++) {
 	    writeDlTrace(stream,&(dlCartesianPlot->trace[i]),i,level+1);
 	}
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[X_AXIS_ELEMENT]),
-	  X_AXIS_ELEMENT,level+1);
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),
-	  Y1_AXIS_ELEMENT,level+1);
-	writeDlPlotAxisDefinition(stream,&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),
-	  Y2_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[X_AXIS_ELEMENT]),X_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]),Y1_AXIS_ELEMENT,level+1);
+	writeDlPlotAxisDefinition(stream,
+	  &(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),Y2_AXIS_ELEMENT,level+1);
 	fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
 	fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
 	fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
@@ -1832,7 +1858,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
     char *stringMinValue, *stringMaxValue;
     XcVType minF, maxF, tickF;
     XtPointer userData;
-    CartesianPlot *pcp = NULL;
+    MedmCartesianPlot *pcp = NULL;
     DlCartesianPlot *dlCartesianPlot = NULL;
 
   /* Get current cartesian plot */
@@ -1840,11 +1866,12 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	if (executeTimeCartesianPlotWidget) {
 	    XtVaGetValues(executeTimeCartesianPlotWidget,
 	      XmNuserData, &userData, NULL);
-	    if (pcp = (CartesianPlot *) userData)
+	    if (pcp = (MedmCartesianPlot *) userData)
 	      dlCartesianPlot = (DlCartesianPlot *) 
 		pcp->dlElement->structure.cartesianPlot;
 	} else {
-	    medmPostMsg(1,"cpAxisOptionMenuSimpleCallback: Element is no longer valid\n");
+	    medmPostMsg(1,"cpAxisOptionMenuSimpleCallback: "
+	      "Element is no longer valid\n");
 	    XtPopdown(cartesianPlotAxisS);
 	    return;
 	}
@@ -2032,7 +2059,8 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	}
 	break;
     default:
-	medmPrintf(1,"\ncpAxisOptionMenuSimpleCallback: Unknown rcType = %d\n",rcType/3);
+	medmPrintf(1,"\ncpAxisOptionMenuSimpleCallback: "
+	  "Unknown rcType = %d\n",rcType/3);
 	break;
     }
     
@@ -2165,7 +2193,8 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
 	    while (dlElement) {
-		updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		updateElementFromGlobalResourceBundle(
+		  dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
 	    dmTraverseNonWidgetsInDisplayList(cdi);
@@ -2192,7 +2221,8 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
 #else
 void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
-  /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS, too */
+  /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS,
+     too */
 {
     int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
@@ -2207,8 +2237,9 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     print("  axisRangeMin[rcType%%3]: %d  axisRangeMax[rcType%%3]: %d  "
       "w: %d\n",axisRangeMin[rcType%3],axisRangeMax[rcType%3],w);
 #endif    
-  /* Losing focus - make sure that the text field remains accurate wrt 
-   *   values stored in widget (not necessarily what is in globalResourceBundle) */
+  /* Losing focus - make sure that the text field remains accurate wrt
+   *   values stored in widget (not necessarily what is in the
+   *   globalResourceBundle) */
     if (executeTimeCartesianPlotWidget != NULL) {
 	CpGetAxisMaxMin(executeTimeCartesianPlotWidget, CP_X,
 	  &maxF[X_AXIS_ELEMENT], &minF[X_AXIS_ELEMENT]);
@@ -2300,7 +2331,7 @@ void createCartesianPlotAxisDialogTextEntry(
 {
     Arg args[10];
     int n = 0;
-  /* Create a row column widget to hold the label and textfield widget */
+  /* Create a row column widget to hold the label and text field widget */
     XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
     XtSetArg(args[n],XmNpacking,XmPACK_NONE); n++;
     *rowColumn = XmCreateRowColumn(parentRC,"entryRC",args,n);
@@ -2316,12 +2347,12 @@ void createCartesianPlotAxisDialogTextEntry(
     n = 0;
     XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
     *text = XmCreateTextField(*rowColumn,"localElement",args,n);
-    XtAddCallback(*text,XmNactivateCallback,cpAxisTextFieldActivateCallback,
-      clientData);
-    XtAddCallback(*text,XmNlosingFocusCallback,cpAxisTextFieldLosingFocusCallback,
-      clientData);
-    XtAddCallback(*text,XmNmodifyVerifyCallback,textFieldFloatVerifyCallback,
-      NULL);
+    XtAddCallback(*text,XmNactivateCallback,
+      cpAxisTextFieldActivateCallback,clientData);
+    XtAddCallback(*text,XmNlosingFocusCallback,
+      cpAxisTextFieldLosingFocusCallback,clientData);
+    XtAddCallback(*text,XmNmodifyVerifyCallback,
+      textFieldFloatVerifyCallback,NULL);
     XtManageChild(*rowColumn);
 }
      
@@ -2414,7 +2445,8 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	XtSetArg(args[n],XmNmarginHeight,0); n++;
 	XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
       /* (Use font calculation for textField (which uses ~90% of height)) */
-	XtSetArg(args[n],XmNfontList,fontListTable[textFieldFontListIndex(24)]);n++;
+	XtSetArg(args[n],XmNfontList,fontListTable[textFieldFontListIndex(24)]);
+	n++;
 	localLabel = XmCreateLabel(frame,"label",args,n);
 	XtManageChild(localLabel);
 	XmStringFree(frameLabelXmString);
@@ -2616,7 +2648,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 {
     int i, tail, buttonId;
     char string[MAX_TOKEN_LENGTH];
-    CartesianPlot *pcp;
+    MedmCartesianPlot *pcp;
     XtPointer userData;
     Boolean xAxisIsLog, y1AxisIsLog, y2AxisIsLog, xAxisIsTime,
       xAxisIsAuto, y1AxisIsAuto, y2AxisIsAuto,
@@ -2632,9 +2664,10 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       &xMaxF, &y1MaxF, &y2MaxF,
       &xMinF, &y1MinF, &y2MinF);
 
-    /* Determine range by first checking if from channel using the CartesianPlot
-     *   If not from channel, determine whether auto or user from AxisIsAuto */
-      if (pcp = (CartesianPlot *)userData) {
+    /* Determine range by first checking if from channel using the
+     *   MedmCartesianPlot.  If not from channel, determine whether
+     *   auto or user from AxisIsAuto. */
+      if (pcp = (MedmCartesianPlot *)userData) {
 	xIsCurrentlyFromChannel =
 	  pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
 	y1IsCurrentlyFromChannel =

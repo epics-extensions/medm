@@ -70,7 +70,7 @@ static double okRadiansTable[24] = { 0.,
 				     7.*M_PI/4., 7.*M_PI/4.,
 				     0.};
 
-typedef struct _Polygon {
+typedef struct _MedmPolygon {
     DlElement       *dlElement;     /* Must be first */
     Record          **records;
     UpdateTask      *updateTask;
@@ -148,32 +148,41 @@ static void calculateTheBoundingBox(DlPolygon *dlPolygon) {
 void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlPolygon *dlPolygon = dlElement->structure.polygon;
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+    
     if(displayInfo->traversalMode == DL_EXECUTE  &&
       *dlPolygon->dynAttr.chan[0]) {
 	MedmPolygon *pp;
 	DlObject object;
 
-	pp = (MedmPolygon *) malloc(sizeof(MedmPolygon));
-	pp->dlElement = dlElement;
-#if 1
-	object = dlPolygon->object;
-	object.width++;
-	object.height++;
-#endif
-	pp->updateTask = updateTaskAddTask(displayInfo,
-	  &object,
-	  polygonDraw,
-	  (XtPointer)pp);
-
-	if (pp->updateTask == NULL) {
-	    medmPrintf(1,"\npolygonCreateRunTimeInstance: Memory allocation error\n");
+	if(dlElement->data) {
+	    pp = (MedmPolygon *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pp->updateTask,polygonDestroyCb);
-	    updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
-	    pp->updateTask->opaque = False;
+	    pp = (MedmPolygon *)malloc(sizeof(MedmPolygon));
+	    dlElement->data = (void *)pp;
+	    pp->dlElement = dlElement;
+#if 1
+	    object = dlPolygon->object;
+	    object.width++;
+	    object.height++;
+#endif
+	    pp->updateTask = updateTaskAddTask(displayInfo,
+	      &object,
+	      polygonDraw,
+	      (XtPointer)pp);
+	    
+	    if (pp->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlPolygon: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pp->updateTask,polygonDestroyCb);
+		updateTaskAddNameCb(pp->updateTask,polygonGetRecord);
+		pp->updateTask->opaque = False;
+	    }
+	    pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
+	      polygonUpdateValueCb, NULL, (XtPointer) pp);
 	}
-	pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
-	  polygonUpdateValueCb, NULL, (XtPointer) pp);
 	calcPostfix(&dlPolygon->dynAttr);
 	setMonitorChanged(&dlPolygon->dynAttr, pp->records);
     } else {
@@ -301,7 +310,7 @@ DlElement *createDlPolygon(DlElement *p)
     DlPolygon *dlPolygon;
     DlElement *dlElement;
  
-    dlPolygon = (DlPolygon *) malloc(sizeof(DlPolygon));
+    dlPolygon = (DlPolygon *)malloc(sizeof(DlPolygon));
     if (!dlPolygon) return 0;
     if (p) {
 	int i;

@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _Oval {
+typedef struct _MedmOval {
     DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
@@ -115,26 +115,35 @@ static void drawOval(MedmOval *po) {
 void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlOval *dlOval = dlElement->structure.oval;
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlOval->dynAttr.chan[0]) {
 	MedmOval *po;
 	
-	po = (MedmOval *) malloc(sizeof(MedmOval));
-	po->dlElement = dlElement;
-	po->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlOval->object),
-	  ovalDraw,
-	  (XtPointer)po);
-
-	if (po->updateTask == NULL) {
-	    medmPrintf(1,"\novalCreateRunTimeInstance: Memory allocation error\n");
+	if(dlElement->data) {
+	    po = (MedmOval *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
-	    updateTaskAddNameCb(po->updateTask,ovalGetRecord);
-	    po->updateTask->opaque = False;
+	    po = (MedmOval *)malloc(sizeof(MedmOval));
+	    dlElement->data = (void *)po;
+	    po->dlElement = dlElement;
+	    po->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlOval->object),
+	      ovalDraw,
+	      (XtPointer)po);
+	    
+	    if (po->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlOval: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
+		updateTaskAddNameCb(po->updateTask,ovalGetRecord);
+		po->updateTask->opaque = False;
+	    }
+	    po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
+	      ovalUpdateValueCb, NULL, (XtPointer)po);
 	}
-	po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
-	  ovalUpdateValueCb, NULL, (XtPointer)po);
 	calcPostfix(&dlOval->dynAttr);
 	setMonitorChanged(&dlOval->dynAttr, po->records);
     } else {

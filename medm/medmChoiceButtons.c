@@ -58,11 +58,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _ChoiceButtons {
+typedef struct _MedmChoiceButtons {
     DlElement      *dlElement;     /* Must be first */
     Record         *record;
     UpdateTask     *updateTask;
-} ChoiceButtons;
+} MedmChoiceButtons;
 
 void choiceButtonCreateRunTimeInstance(DisplayInfo *,DlElement *);
 void choiceButtonCreateEditInstance(DisplayInfo *, DlElement *);
@@ -227,7 +227,7 @@ Widget createToggleButtons(Widget parent,
 void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
 {
-    ChoiceButtons *pcb;
+    MedmChoiceButtons *pcb;
     int btnNumber = (int)clientData;
     XmToggleButtonCallbackStruct *call_data =
       (XmToggleButtonCallbackStruct *)callbackStruct;
@@ -289,7 +289,7 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
 static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pr = (Record *) cd;
-    ChoiceButtons *cb = (ChoiceButtons *) pr->clientData;
+    MedmChoiceButtons *cb = (MedmChoiceButtons *) pr->clientData;
     DlElement *dlElement = cb->dlElement;
     DlChoiceButton *pCB = dlElement->structure.choiceButton;
     int i;
@@ -352,7 +352,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 }
 
 static void choiceButtonUpdateValueCb(XtPointer cd) {
-    ChoiceButtons *pcb = (ChoiceButtons *)((Record *) cd)->clientData;
+    MedmChoiceButtons *pcb = (MedmChoiceButtons *)((Record *) cd)->clientData;
 
 #if DEBUG_TOGGLE_BUTTONS
     printf("\nchoiceButtonUpdateValueCb:\n");
@@ -361,7 +361,7 @@ static void choiceButtonUpdateValueCb(XtPointer cd) {
 }
 
 static void choiceButtonDraw(XtPointer cd) {
-    ChoiceButtons *pcb = (ChoiceButtons *) cd;
+    MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     Record *pr = pcb->record;
     Widget widget = pcb->dlElement->widget;
     DlChoiceButton *dlChoiceButton = pcb->dlElement->structure.choiceButton;
@@ -468,29 +468,33 @@ static void choiceButtonDraw(XtPointer cd) {
 void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
 
-    ChoiceButtons *pcb;
+    MedmChoiceButtons *pcb;
     DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
-    pcb = (ChoiceButtons *) malloc(sizeof(ChoiceButtons));
-    pcb->dlElement = dlElement;
-    pcb->updateTask = updateTaskAddTask(displayInfo,
-      &(dlChoiceButton->object),
-      choiceButtonDraw,
-      (XtPointer) pcb);
-    if (pcb->updateTask == NULL) {
-	medmPrintf(1,"\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
+
+    if(dlElement->data) {
+	pcb = (MedmChoiceButtons *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
-	updateTaskAddNameCb(pcb->updateTask,choiceButtonGetRecord);
+	pcb = (MedmChoiceButtons *)malloc(sizeof(MedmChoiceButtons));
+	dlElement->data = (void *)pcb;
+	pcb->dlElement = dlElement;
+	pcb->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlChoiceButton->object),
+	  choiceButtonDraw,
+	  (XtPointer) pcb);
+	if (pcb->updateTask == NULL) {
+	    medmPrintf(1,"\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
+	    updateTaskAddNameCb(pcb->updateTask,choiceButtonGetRecord);
+	}
+	
+	pcb->record = medmAllocateRecord(dlChoiceButton->control.ctrl,
+	  choiceButtonUpdateValueCb,
+	  choiceButtonUpdateGraphicalInfoCb,
+	  (XtPointer) pcb);
+      /* Put up white rectangle so that unconnected channels are obvious */
+	drawWhiteRectangle(pcb->updateTask);
     }
-
-    pcb->record = medmAllocateRecord(dlChoiceButton->control.ctrl,
-      choiceButtonUpdateValueCb,
-      choiceButtonUpdateGraphicalInfoCb,
-      (XtPointer) pcb);
-  /* Put up white rectangle so that unconnected channels are obvious */
-    drawWhiteRectangle(pcb->updateTask);
-
-    return;
 }
 
 void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -524,6 +528,9 @@ void executeDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (displayInfo->traversalMode == DL_EXECUTE) {
 	choiceButtonCreateRunTimeInstance(displayInfo, dlElement);
     } else if (displayInfo->traversalMode == DL_EDIT) {
@@ -544,7 +551,7 @@ void hideDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void choiceButtonDestroyCb(XtPointer cd) {
-    ChoiceButtons *pcb = (ChoiceButtons *) cd;
+    MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     if (pcb) {
 	medmDestroyRecord(pcb->record);
 	free((char *)pcb);
@@ -552,7 +559,7 @@ static void choiceButtonDestroyCb(XtPointer cd) {
 }
 
 static void choiceButtonGetRecord(XtPointer cd, Record **record, int *count) {
-    ChoiceButtons *pcb = (ChoiceButtons *) cd;
+    MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     *count = 1;
     record[0] = pcb->record;
 }
@@ -562,7 +569,7 @@ DlElement *createDlChoiceButton(DlElement *p)
     DlChoiceButton *dlChoiceButton;
     DlElement *dlElement;
  
-    dlChoiceButton = (DlChoiceButton *) malloc(sizeof(DlChoiceButton));
+    dlChoiceButton = (DlChoiceButton *)malloc(sizeof(DlChoiceButton));
     if (!dlChoiceButton) return 0;
     if (p) {
 	*dlChoiceButton = *(p->structure.choiceButton);

@@ -260,6 +260,9 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
     Widget widget;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (dlElement->widget) {
 	XtDestroyWidget(dlElement->widget);
 	dlElement->widget = NULL;
@@ -624,7 +627,7 @@ DlElement *createDlRelatedDisplay(DlElement *p)
     DlElement *dlElement;
     int displayNumber;
 
-    dlRelatedDisplay = (DlRelatedDisplay *) malloc(sizeof(DlRelatedDisplay));
+    dlRelatedDisplay = (DlRelatedDisplay *)malloc(sizeof(DlRelatedDisplay));
     if (!dlRelatedDisplay) return 0;
     if (p) {
 	*dlRelatedDisplay = *p->structure.relatedDisplay;

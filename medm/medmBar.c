@@ -56,11 +56,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _Bar {
+typedef struct _MedmBar {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
-} Bar;
+} MedmBar;
 
 /* Function Prototypes */
 
@@ -101,33 +101,41 @@ static DlDispatchTable barDlDispatchTable = {
 
 void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Bar *pb;
+    MedmBar *pb;
     Arg args[33];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
     DlBar *dlBar = dlElement->structure.bar;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (!dlElement->widget) {
 	if (displayInfo->traversalMode == DL_EXECUTE) {
-	    pb = (Bar *) malloc(sizeof(Bar));
-	    pb->dlElement = dlElement;
-	    pb->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlBar->object),
-	      barDraw,
-	      (XtPointer)pb);
-
-	    if (pb->updateTask == NULL) {
-		medmPrintf(1,"\nbarCreateRunTimeInstance: Memory allocation error\n");
+	    if(dlElement->data) {
+		pb = (MedmBar *)dlElement->data;
 	    } else {
-		updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
-		updateTaskAddNameCb(pb->updateTask,barGetRecord);
+		pb = (MedmBar *)malloc(sizeof(MedmBar));
+		dlElement->data = (void *)pb;
+		pb->dlElement = dlElement;
+		pb->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlBar->object),
+		  barDraw,
+		  (XtPointer)pb);
+		
+		if (pb->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlBar: Memory allocation error\n");
+		} else {
+		    updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
+		    updateTaskAddNameCb(pb->updateTask,barGetRecord);
+		}
+		pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
+		  barUpdateValueCb,
+		  barUpdateGraphicalInfoCb,
+		  (XtPointer) pb);
+		drawWhiteRectangle(pb->updateTask);
 	    }
-	    pb->record = medmAllocateRecord(dlBar->monitor.rdbk,
-	      barUpdateValueCb,
-	      barUpdateGraphicalInfoCb,
-	      (XtPointer) pb);
-	    drawWhiteRectangle(pb->updateTask);
 	}
 
       /* Update the limits to reflect current src's */
@@ -251,12 +259,12 @@ void hideDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void barUpdateValueCb(XtPointer cd) {
-    Bar *pb = (Bar *) ((Record *) cd)->clientData;
+    MedmBar *pb = (MedmBar *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pb->updateTask);
 }
 
 static void barDraw(XtPointer cd) {
-    Bar *pb = (Bar *) cd;
+    MedmBar *pb = (MedmBar *) cd;
     Record *pr = pb->record;
     Widget widget = pb->dlElement->widget;
     DlBar *dlBar = pb->dlElement->structure.bar;
@@ -294,7 +302,7 @@ static void barDraw(XtPointer cd) {
 
 static void barUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    Bar *pb = (Bar *) pr->clientData;
+    MedmBar *pb = (MedmBar *) pr->clientData;
     DlBar *dlBar = pb->dlElement->structure.bar;
     Pixel pixel;
     Widget widget = pb->dlElement->widget;
@@ -373,7 +381,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void barDestroyCb(XtPointer cd) {
-    Bar *pb = (Bar *) cd;
+    MedmBar *pb = (MedmBar *) cd;
     if (pb) {
 	medmDestroyRecord(pb->record);
 	free((char *)pb);
@@ -382,7 +390,7 @@ static void barDestroyCb(XtPointer cd) {
 }
 
 static void barGetRecord(XtPointer cd, Record **record, int *count) {
-    Bar *pb = (Bar *) cd;
+    MedmBar *pb = (MedmBar *) cd;
     *count = 1;
     record[0] = pb->record;
 }
@@ -392,7 +400,7 @@ DlElement *createDlBar(DlElement *p)
     DlBar *dlBar;
     DlElement *dlElement;
 
-    dlBar = (DlBar *) malloc(sizeof(DlBar));
+    dlBar = (DlBar *)malloc(sizeof(DlBar));
     if (!dlBar) return 0;
     if (p) {
 	*dlBar = *p->structure.bar;

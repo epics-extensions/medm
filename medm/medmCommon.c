@@ -122,7 +122,7 @@ DlFile *createDlFile(DisplayInfo *displayInfo)
 {
     DlFile *dlFile;
 
-    dlFile = (DlFile *) malloc(sizeof(DlFile));
+    dlFile = (DlFile *)malloc(sizeof(DlFile));
     if(!dlFile) return 0;
     strcpy(dlFile->name,"newDisplay.adl");
     dlFile->versionNumber =
@@ -213,7 +213,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 
   /* Only do the colormap the first time */
     if(!displayInfo->colormap) {
-	displayInfo->colormap = (Pixel *) malloc(dlColormap->ncolors *
+	displayInfo->colormap = (Pixel *)malloc(dlColormap->ncolors *
 	  sizeof(Pixel));
 	displayInfo->dlColormapSize = dlColormap->ncolors;
 	
@@ -242,7 +242,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	}
     }
     
-  /* Set the foreground and background of the display  */
+  /* Set the background of the display  */
     XtVaSetValues(displayInfo->drawingArea,
       XmNbackground,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor],
@@ -272,6 +272,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     }
     displayInfo->pixmapGC = XCreateGC(display,
       XtWindow(displayInfo->drawingArea),valueMask,&values); 
+
   /* (MDA) don't generate GraphicsExpose events on XCopyArea() */
     XSetGraphicsExposures(display,displayInfo->pixmapGC,FALSE);
 
@@ -279,9 +280,11 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
       displayInfo->pixmapGC,0,0,width,height);
     XSetForeground(display,displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
+
   /* Draw grid */
     if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
       drawGrid(displayInfo);
+
   /* Create the initial display GC */
     valueMask = GCForeground | GCBackground ;
     values.foreground = 
@@ -300,7 +303,7 @@ DlColormap *createDlColormap(DisplayInfo *displayInfo)
 {
     DlColormap *dlColormap;
 
-    dlColormap = (DlColormap *) malloc(sizeof(DlColormap));
+    dlColormap = (DlColormap *)malloc(sizeof(DlColormap));
     if(!dlColormap) return 0;
   /* structure copy */
     *dlColormap = defaultDlColormap;
@@ -838,7 +841,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
 #endif
     } else {
       /* Allocate it */
-	dlElement = (DlElement *) malloc(sizeof(DlElement));
+	dlElement = (DlElement *)malloc(sizeof(DlElement));
     }
   /* If unsuccessful, return */
     if(!dlElement) return dlElement;
@@ -859,6 +862,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
 	dlElement->run = &elementDlDispatchTable;
     }
     dlElement->widget = 0;
+    dlElement->hidden = 0;
     dlElement->data = 0;
     dlElement->next = 0;
     dlElement->prev = 0;
@@ -1012,7 +1016,7 @@ DlElement *parseFallingLine(DisplayInfo *displayInfo)
     dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width; 
     dlPolyline->points[1].y = dlPolyline->object.y + dlPolyline->object.height;
 
-    dlElement = (DlElement *) malloc(sizeof(DlElement));
+    dlElement = (DlElement *)malloc(sizeof(DlElement));
     dlElement->type = DL_Polyline;
     dlElement->structure.polyline = dlPolyline;
     dlElement->next = NULL;
@@ -1060,7 +1064,7 @@ DlElement *parseRisingLine(DisplayInfo *displayInfo)
     dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width;
     dlPolyline->points[1].y = dlPolyline->object.y;
   
-    dlElement = (DlElement *) malloc(sizeof(DlElement));
+    dlElement = (DlElement *)malloc(sizeof(DlElement));
     dlElement->type = DL_Polyline;
     dlElement->structure.polyline = dlPolyline;
     dlElement->next = NULL;
@@ -1653,6 +1657,7 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
      record(s) and private structure */
     updateTaskDeleteElementTasks(displayInfo,dlElement);
     
+#if 1
   /* Draw the display background where the element would go on both
    *   the window and the pixmap */
 
@@ -1678,7 +1683,8 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Update the drawing objects above this one */
 #if 0
     redrawElementsAbove(displayInfo, dlElement);
-#endif    
+#endif
+#endif
 }
 
 void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)

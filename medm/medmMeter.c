@@ -59,11 +59,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _Meter {
+typedef struct _MedmMeter {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
-} Meter;
+} MedmMeter;
 
 static void meterUpdateValueCb(XtPointer cd);
 static void meterDraw(XtPointer cd);
@@ -95,7 +95,7 @@ static DlDispatchTable meterDlDispatchTable = {
 
 void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Meter *pm;
+    MedmMeter *pm;
     Arg args[27];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
@@ -105,26 +105,34 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 #if DEBUG_COMPOSITE
     print("executeDlMeter: dlMeter=%x\n",dlMeter);
 #endif
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (!dlElement->widget) {
 	if (displayInfo->traversalMode == DL_EXECUTE) {
-	    pm = (Meter *) malloc(sizeof(Meter));
-	    pm->dlElement = dlElement;
-	    pm->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlMeter->object),
-	      meterDraw,
-	      (XtPointer)pm);
-	    
-	    if (pm->updateTask == NULL) {
-		medmPrintf(1,"\nmeterCreateRunTimeInstance: Memory allocation error\n");
+	    if(dlElement->data) {
+		pm = (MedmMeter *)dlElement->data;
 	    } else {
-		updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
-		updateTaskAddNameCb(pm->updateTask,meterGetRecord);
+		pm = (MedmMeter *)malloc(sizeof(MedmMeter));
+		dlElement->data = (void *)pm;
+		pm->dlElement = dlElement;
+		pm->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlMeter->object),
+		  meterDraw,
+		  (XtPointer)pm);
+		
+		if (pm->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlMeter: Memory allocation error\n");
+		} else {
+		    updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
+		    updateTaskAddNameCb(pm->updateTask,meterGetRecord);
+		}
+		pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
+		  meterUpdateValueCb,
+		  meterUpdateGraphicalInfoCb,
+		  (XtPointer)pm);
+		drawWhiteRectangle(pm->updateTask);
 	    }
-	    pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
-	      meterUpdateValueCb,
-	      meterUpdateGraphicalInfoCb,
-	      (XtPointer)pm);
-	    drawWhiteRectangle(pm->updateTask);
 #if DEBUG_COMPOSITE
 	    print("  pm=%x\n",pm);
 #endif
@@ -223,12 +231,12 @@ void hideDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void meterUpdateValueCb(XtPointer cd) {
-    Meter *pm = (Meter *) ((Record *) cd)->clientData;
+    MedmMeter *pm = (MedmMeter *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pm->updateTask);
 }
 
 static void meterDraw(XtPointer cd) {
-    Meter *pm = (Meter *) cd;
+    MedmMeter *pm = (MedmMeter *) cd;
     Record *pr = pm->record;
     Widget widget = pm->dlElement->widget;
     DlMeter *dlMeter = pm->dlElement->structure.meter;
@@ -271,7 +279,7 @@ static void meterDraw(XtPointer cd) {
 
 static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    Meter *pm = (Meter *) pr->clientData;
+    MedmMeter *pm = (MedmMeter *) pr->clientData;
     DlMeter *dlMeter = pm->dlElement->structure.meter;
     Pixel pixel;
     Widget widget = pm->dlElement->widget;
@@ -348,7 +356,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void meterDestroyCb(XtPointer cd) {
-    Meter *pm = (Meter *)cd;
+    MedmMeter *pm = (MedmMeter *)cd;
     if(pm) {
 	medmDestroyRecord(pm->record);
 	free((char *)pm);
@@ -357,7 +365,7 @@ static void meterDestroyCb(XtPointer cd) {
 }
 
 static void meterGetRecord(XtPointer cd, Record **record, int *count) {
-    Meter *pm = (Meter *)cd;
+    MedmMeter *pm = (MedmMeter *)cd;
     *count = 1;
     record[0] = pm->record;
 }

@@ -54,11 +54,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 0
+#define DEBUG_COMPOSITE 1
 
 #include "medm.h"
 
-typedef struct _Rectangle {
+typedef struct _MedmRectangle {
     DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
@@ -118,27 +118,37 @@ static void drawRectangle(MedmRectangle *pr)
 void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+    
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlRectangle->dynAttr.chan[0]) {
 	MedmRectangle *pr;
-	pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
-	pr->dlElement = dlElement;
-	pr->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlRectangle->object),
-	  rectangleDraw,
-	  (XtPointer)pr);
 
-	if (pr->updateTask == NULL) {
-	    medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
+	if(dlElement->data) {
+	    pr = (MedmRectangle *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
-	    updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
-	    pr->updateTask->opaque = False;
+	    pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
+	    dlElement->data = (void *)pr;
+	    pr->dlElement = dlElement;
+	    pr->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlRectangle->object),
+	      rectangleDraw,
+	      (XtPointer)pr);
+	    
+	    if (pr->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
+		updateTaskAddNameCb(pr->updateTask,rectangleGetRecord);
+		pr->updateTask->opaque = False;
+	    }
+	    pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
+	      rectangleUpdateValueCb,NULL,(XtPointer)pr);
+	    calcPostfix(&dlRectangle->dynAttr);
+	    setMonitorChanged(&dlRectangle->dynAttr, pr->records);
 	}
-	pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
-	  rectangleUpdateValueCb,NULL,(XtPointer)pr);
-	calcPostfix(&dlRectangle->dynAttr);
-	setMonitorChanged(&dlRectangle->dynAttr, pr->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
 
@@ -282,7 +292,7 @@ DlElement *createDlRectangle(DlElement *p)
     DlRectangle *dlRectangle;
     DlElement *dlElement;
 
-    dlRectangle = (DlRectangle *) malloc(sizeof(DlRectangle));
+    dlRectangle = (DlRectangle *)malloc(sizeof(DlRectangle));
     if (!dlRectangle) return 0;
     if (p) {
 	*dlRectangle = *p->structure.rectangle;

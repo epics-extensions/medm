@@ -74,11 +74,11 @@ static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 
-typedef struct _Byte {
+typedef struct _MedmByte {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
-} Bits;
+} MedmByte;
 
 static DlDispatchTable byteDlDispatchTable = {
     createDlByte,
@@ -106,29 +106,37 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
-    Bits *pb;
+    MedmByte *pb;
     DlByte *dlByte = dlElement->structure.byte;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+    
     if (!dlElement->widget) {
 	if (displayInfo->traversalMode == DL_EXECUTE) {
-	    pb = (Bits *) malloc(sizeof(Bits));
-	    pb->dlElement = dlElement;
-	    pb->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlByte->object),
-	      byteDraw,
-	      (XtPointer)pb);
-
-	    if (pb->updateTask == NULL) {
-		medmPrintf(1,"\nbyteCreateRunTimeInstance: Memory allocation error\n");
+	    if(dlElement->data) {
+		pb = (MedmByte *)dlElement->data;
 	    } else {
-		updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
-		updateTaskAddNameCb(pb->updateTask,byteGetRecord);
+		pb = (MedmByte *)malloc(sizeof(MedmByte));
+		dlElement->data = (void *)pb;
+		pb->dlElement = dlElement;
+		pb->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlByte->object),
+		  byteDraw,
+		  (XtPointer)pb);
+		
+		if (pb->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlByte: Memory allocation error\n");
+		} else {
+		    updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
+		    updateTaskAddNameCb(pb->updateTask,byteGetRecord);
+		}
+		pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
+		  byteUpdateValueCb,
+		  NULL,
+		  (XtPointer) pb);
+		drawWhiteRectangle(pb->updateTask);
 	    }
-	    pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
-	      byteUpdateValueCb,
-	      NULL,
-	      (XtPointer) pb);
-	    drawWhiteRectangle(pb->updateTask);
 	}
 
       /****** from the DlByte structure, we've got Byte's specifics */
@@ -193,12 +201,12 @@ void hideDlByte(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void byteUpdateValueCb(XtPointer cd) {
-    Bits *pb = (Bits *) ((Record *) cd)->clientData;
+    MedmByte *pb = (MedmByte *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pb->updateTask);
 }
 
 static void byteDraw(XtPointer cd) {
-    Bits *pb = (Bits *) cd;
+    MedmByte *pb = (MedmByte *) cd;
     Record *pr = pb->record;
     Widget widget = pb->dlElement->widget;
     DlByte *dlByte = pb->dlElement->structure.byte;
@@ -234,7 +242,7 @@ static void byteDraw(XtPointer cd) {
 }
 
 static void byteDestroyCb(XtPointer cd) {
-    Bits *pb = (Bits *) cd;
+    MedmByte *pb = (MedmByte *) cd;
     if (pb) {
 	medmDestroyRecord(pb->record);
 	free((char *)pb);
@@ -242,7 +250,7 @@ static void byteDestroyCb(XtPointer cd) {
 }
 
 static void byteGetRecord(XtPointer cd, Record **record, int *count) {
-    Bits *pb = (Bits *) cd;
+    MedmByte *pb = (MedmByte *) cd;
     *count = 1;
     record[0] = pb->record;
 }
@@ -251,7 +259,7 @@ DlElement *createDlByte(DlElement *p) {
     DlByte *dlByte;
     DlElement *dlElement;
 
-    dlByte = (DlByte *) malloc(sizeof(DlByte));
+    dlByte = (DlByte *)malloc(sizeof(DlByte));
     if (!dlByte) return 0;
     if (p) {
 	*dlByte = *p->structure.byte;

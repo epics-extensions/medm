@@ -56,7 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _Arc {
+typedef struct _MedmArc {
     DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
@@ -114,27 +114,37 @@ static void drawArc(MedmArc *pa) {
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
+    
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+    
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlArc->dynAttr.chan[0]) {
 	MedmArc *pa;
-	pa = (MedmArc *) malloc(sizeof(MedmArc));
-	pa->dlElement = dlElement;
-	pa->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlArc->object),
-	  arcDraw,
-	  (XtPointer)pa);
 
-	if (pa->updateTask == NULL) {
-	    medmPrintf(1,"\narcCreateRunTimeInstance: Memory allocation error\n");
+	if(dlElement->data) {
+	    pa = (MedmArc *)dlElement->data;
 	} else {
-	    updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
-	    updateTaskAddNameCb(pa->updateTask,arcGetRecord);
-	    pa->updateTask->opaque = False;
+	    pa = (MedmArc *)malloc(sizeof(MedmArc));
+	    dlElement->data = (void *)pa;
+	    pa->dlElement = dlElement;
+	    pa->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlArc->object),
+	      arcDraw,
+	      (XtPointer)pa);
+	    
+	    if (pa->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlArc: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
+		updateTaskAddNameCb(pa->updateTask,arcGetRecord);
+		pa->updateTask->opaque = False;
+	    }
+	    pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,arcUpdateValueCb,
+	      NULL,(XtPointer) pa);
+	    calcPostfix(&dlArc->dynAttr);
+	    setMonitorChanged(&dlArc->dynAttr, pa->records);
 	}
-	pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,arcUpdateValueCb,
-	  NULL,(XtPointer) pa);
-	calcPostfix(&dlArc->dynAttr);
-	setMonitorChanged(&dlArc->dynAttr, pa->records);
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
 	if (dlArc->attr.fill == F_SOLID) {
@@ -281,7 +291,7 @@ DlElement *createDlArc(DlElement *p)
     DlArc *dlArc;
     DlElement *dlElement;
  
-    dlArc = (DlArc*) malloc(sizeof(DlArc));
+    dlArc = (DlArc*)malloc(sizeof(DlArc));
     if (!dlArc) return 0;
     if (p) {
 	*dlArc = *p->structure.arc;

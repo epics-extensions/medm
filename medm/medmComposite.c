@@ -54,12 +54,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 0
+#define DEBUG_COMPOSITE 1
 #define DEBUG_DELETE 0
 
 #include "medm.h"
 
-typedef struct _Rectangle {
+typedef struct _MedmComposite {
     DlElement  *dlElement;     /* Must be first */
     Record     **records;
     UpdateTask *updateTask;
@@ -113,10 +113,13 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
     DlComposite *dlComposite = dlElement->structure.composite;
 
 #if DEBUG_COMPOSITE
-    print("executeDlComposite: dlComposite=%x\n",dlComposite);
+    print("executeDlComposite: dlComposite=%x x=%d y=%d\n",
+      dlComposite,dlComposite->object.x,dlComposite->object.y);
 #endif    
 
-    dlComposite->hidden = 0;
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	if(*dlComposite->dynAttr.chan[0]) {
@@ -124,36 +127,41 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	    MedmComposite *pc;
 	    
 	  /* Allocate and fill in MedmComposite struct */
-	    pc = (MedmComposite *)malloc(sizeof(MedmComposite));
-	    pc->displayInfo = displayInfo;
-	    pc->dlElement = dlElement;
-	    pc->records = NULL;
-	    pc->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlComposite->object), compositeDraw, (XtPointer)pc);
-	    pc->childrenExecuted = False;
-	    if(pc->updateTask == NULL) {
-		medmPrintf(1,"\nexecuteDlComposite: Memory allocation error\n");
+	    if(dlElement->data) {
+		pc = (MedmComposite *)dlElement->data;
 	    } else {
-		updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
-		updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
-		pc->updateTask->opaque = False;
-	    }
-	    pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
-	      compositeUpdateValueCb,
-	      compositeUpdateGraphicalInfoCb,
-	      (XtPointer)pc);
+		pc = (MedmComposite *)malloc(sizeof(MedmComposite));
+		dlElement->data = (void *)pc;
+		pc->displayInfo = displayInfo;
+		pc->dlElement = dlElement;
+		pc->records = NULL;
+		pc->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlComposite->object), compositeDraw, (XtPointer)pc);
+		pc->childrenExecuted = False;
+		if(pc->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlComposite: Memory allocation error\n");
+		} else {
+		    updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
+		    updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
+		    pc->updateTask->opaque = False;
+		}
+		pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
+		  compositeUpdateValueCb,
+		  compositeUpdateGraphicalInfoCb,
+		  (XtPointer)pc);
 #if DEBUG_COMPOSITE > 1
-	    print("  pc=%x\n",pc);
+		print("  pc=%x\n",pc);
 #endif    
-
-	  /* Calculate the postfix for visbilitiy calc */
-	    calcPostfix(&dlComposite->dynAttr);
-	    setMonitorChanged(&dlComposite->dynAttr, pc->records);
+		
+	      /* Calculate the postfix for visbilitiy calc */
+		calcPostfix(&dlComposite->dynAttr);
+		setMonitorChanged(&dlComposite->dynAttr, pc->records);
 #if 0	    
-	  /* Draw initial white rectangle */
-	  /* KE: Check if this is necessary */
-	    drawWhiteRectangle(pc->updateTask);
+	      /* Draw initial white rectangle */
+	      /* KE: Check if this is necessary */
+		drawWhiteRectangle(pc->updateTask);
 #endif	    
+	    }
 	} else {
 	  /* No channel */
 	    executeCompositeChildren(displayInfo, dlElement);
@@ -209,7 +217,7 @@ static void compositeDraw(XtPointer cd)
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
 #if DEBUG_COMPOSITE
-    print("\ncompositeDraw: pc=%x\n",pc);
+    print("compositeDraw: pc=%x\n",pc);
 #endif    
 #if DEBUG_DELETE
     print("compositeDraw: connected=%s readAccess=%s value=%g\n",
@@ -288,7 +296,7 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
     DlComposite *dlComposite = dlElement->structure.composite;
     
 #if DEBUG_COMPOSITE
-    print("executeCompositeChildren:\n");
+    print("executeCompositeChildren: dlElement=%x\n",dlElement);
 /*      print("dlComposite->dlElementList:\n"); */
 /*      dumpDlElementList(dlComposite->dlElementList); */
 /*      print("displayInfo->dlElementList:\n"); */
@@ -296,15 +304,26 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 #endif    
     pE = FirstDlElement(dlComposite->dlElementList);
     while (pE) {
-	if(pE->run->execute) pE->run->execute(displayInfo, pE);
+	pE->hidden = 0;
+	if(pE->run->execute) {
+#if DEBUG_COMPOSITE
+	    print("  executed: pE=%x[%s] x=%d y=%d\n",
+	      pE,elementType(pE->type),
+	      pE->structure.composite->object.x,
+	      pE->structure.composite->object.y);
+#endif
+	    pE->run->execute(displayInfo, pE);
+	}
 	pE = pE->next;
     }
 
+#if 0
   /* Redraw the display background */
-    if(dlComposite->hidden)
-      redrawDrawnElements(displayInfo, dlElement);
-
-    dlComposite->hidden = 0;
+    redrawDrawnElements(displayInfo, dlElement);
+#endif    
+#if DEBUG_COMPOSITE
+    print("END executeCompositeChildren: dlElement=%x\n",dlElement);
+#endif    
 }
 
 static void hideComposite(MedmComposite *pc)
@@ -323,6 +342,10 @@ static void hideComposite(MedmComposite *pc)
 	hideCompositeChildren(displayInfo, pc->dlElement);
 	pc->childrenExecuted = False;
     }
+#if DEBUG_COMPOSITE
+    print("END hideComposite: childrenExecuted=%s\n",
+      pc->childrenExecuted?"True !!!":"False");
+#endif      
 }
 
 /* The routine that does the actual hiding.  Called from
@@ -334,7 +357,7 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
     DlComposite *dlComposite = dlElement->structure.composite;
     
 #if DEBUG_COMPOSITE
-    print("hideCompositeChildren:\n");
+    print("hideCompositeChildren: dlElement=%x\n",dlElement);
 /*      print("dlComposite->dlElementList:\n"); */
 /*      dumpDlElementList(dlComposite->dlElementList); */
 /*      print("displayInfo->dlElementList:\n"); */
@@ -342,16 +365,24 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 #endif    
     pE = FirstDlElement(dlComposite->dlElementList);
     while (pE) {
+	pE->hidden = 1;
 	if(pE->run->hide) {
+#if DEBUG_COMPOSITE
+	    print("  hid: pE=%x[%s] x=%d y=%d\n",
+	      pE,elementType(pE->type),
+	      pE->structure.composite->object.x,
+	      pE->structure.composite->object.y);
+#endif
 	    pE->run->hide(displayInfo, pE);
 	}
 	pE = pE->next;
     }
 
-    dlComposite->hidden = 1;
-
   /* Redraw the display background */
     redrawDrawnElements(displayInfo, dlElement);
+#if DEBUG_COMPOSITE
+    print("END hideCompositeChildren: dlElement=%x\n",dlElement);
+#endif    
   }
 
 /* The hide routine in the dispatch table */
@@ -359,6 +390,9 @@ void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlComposite *dlComposite;
 
+#if DEBUG_COMPOSITE
+    print("hideDlComposite:\n");
+#endif    
     if(!displayInfo || !dlElement) return;
     
   /* Delete any update tasks.  The destroyCb will free the
@@ -410,7 +444,7 @@ DlElement *createDlComposite(DlElement *p) {
 #if DEBUG_COMPOSITE
     print("createDlComposite:\n");
 #endif    
-    dlComposite = (DlComposite *) malloc(sizeof(DlComposite));
+    dlComposite = (DlComposite *)malloc(sizeof(DlComposite));
     if(!dlComposite) return 0;
     if(p) {
 	DlElement *child;
@@ -435,7 +469,6 @@ DlElement *createDlComposite(DlElement *p) {
 	dynamicAttributeInit(&(dlComposite->dynAttr));
 	dlComposite->compositeName[0] = '\0';
 	dlComposite->compositeFile[0] = '\0';
-	dlComposite->hidden = 0;
 	dlComposite->dlElementList = createDlList();
 	if(!dlComposite->dlElementList) {
 	    free(dlComposite);

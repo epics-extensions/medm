@@ -64,12 +64,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
-typedef struct _Menu {
+typedef struct _MedmMenu {
     DlElement   *dlElement;     /* Must be first */
     Record      *record; 
     UpdateTask  *updateTask;
     Pixel       color;
-} Menu;
+} MedmMenu;
 
 static void menuCreateRunTimeInstance(DisplayInfo *, DlElement *);
 static void menuCreateEditInstance(DisplayInfo *, DlElement *);
@@ -167,6 +167,9 @@ int menuFontListIndex(int height)
 
 void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     switch (displayInfo->traversalMode) {
     case DL_EXECUTE:
 	menuCreateRunTimeInstance(displayInfo,dlElement);
@@ -190,28 +193,33 @@ void hideDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
-    Menu *pm;
+    MedmMenu *pm;
     DlMenu *dlMenu = dlElement->structure.menu;
-    pm = (Menu *) malloc(sizeof(Menu));
-    pm->dlElement = dlElement;
-    pm->updateTask = updateTaskAddTask(displayInfo,
-      &(dlMenu->object),
-      menuDraw,
-      (XtPointer)pm);
 
-    if (pm->updateTask == NULL) {
-	medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
+    if(dlElement->data) {
+	pm = (MedmMenu *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
-	updateTaskAddNameCb(pm->updateTask,menuGetRecord);
+	pm = (MedmMenu *)malloc(sizeof(MedmMenu));
+	dlElement->data = (void *)pm;
+	pm->dlElement = dlElement;
+	pm->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlMenu->object),
+	  menuDraw,
+	  (XtPointer)pm);
+	
+	if (pm->updateTask == NULL) {
+	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
+	    updateTaskAddNameCb(pm->updateTask,menuGetRecord);
+	}
+	pm->record = medmAllocateRecord(dlMenu->control.ctrl,
+	  menuUpdateValueCb,
+	  menuUpdateGraphicalInfoCb,
+	  (XtPointer) pm);
+	drawWhiteRectangle(pm->updateTask);
+	pm->color = displayInfo->colormap[dlMenu->control.bclr];
     }
-    pm->record = medmAllocateRecord(dlMenu->control.ctrl,
-      menuUpdateValueCb,
-      menuUpdateGraphicalInfoCb,
-      (XtPointer) pm);
-    drawWhiteRectangle(pm->updateTask);
-    pm->color = displayInfo->colormap[dlMenu->control.bclr];
-    return;
 }
 
 void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
@@ -232,7 +240,7 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 
 void menuUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    Menu *pm = (Menu *) pr->clientData;
+    MedmMenu *pm = (MedmMenu *) pr->clientData;
     DlElement *dlElement = pm->dlElement;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
     XmStringTable labels;
@@ -302,7 +310,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
   XmStringTable labels, int nbuttons)
 {
     Widget w, menu, pushbutton;
-    Menu *pm;
+    MedmMenu *pm;
     Arg args[25];
     int i, nargs, nargs0;
     Widget optionButtonGadget;
@@ -315,7 +323,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     
   /* Set the foreground and background colors depending on mode */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	pm = (Menu *)pr->clientData;
+	pm = (MedmMenu *)pr->clientData;
 	foreground = (dlMenu->clrmod == ALARM)?
 	  alarmColor(pr->severity) :
 	  pm->updateTask->displayInfo->colormap[dlMenu->control.clr];
@@ -470,12 +478,12 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 }
 
 static void menuUpdateValueCb(XtPointer cd) {
-    Menu *pm = (Menu *) ((Record *) cd)->clientData;
+    MedmMenu *pm = (MedmMenu *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pm->updateTask);
 }
 
 static void menuDraw(XtPointer cd) {
-    Menu *pm = (Menu *) cd;
+    MedmMenu *pm = (MedmMenu *) cd;
     Record *pr = pm->record;
     Widget widget = pm->dlElement->widget;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
@@ -546,7 +554,7 @@ static void menuDraw(XtPointer cd) {
 }
 
 static void menuDestroyCb(XtPointer cd) {
-    Menu *pm = (Menu *) cd;
+    MedmMenu *pm = (MedmMenu *) cd;
     if (pm) {
 	medmDestroyRecord(pm->record); 
 	free((char *)pm);
@@ -558,7 +566,7 @@ static void menuValueChangedCb(
   XtPointer clientData,
   XtPointer callbackStruct)
 {
-    Menu *pm;
+    MedmMenu *pm;
     Record *pr;
     int btnNumber = (int) clientData;
     XmPushButtonCallbackStruct *call_data =
@@ -591,7 +599,7 @@ static void menuValueChangedCb(
 }
 
 static void menuGetRecord(XtPointer cd, Record **record, int *count) {
-    Menu *pm = (Menu *) cd;
+    MedmMenu *pm = (MedmMenu *) cd;
     *count = 1;
     record[0] = pm->record;
 }
@@ -601,7 +609,7 @@ DlElement *createDlMenu(DlElement *p)
     DlMenu *dlMenu;
     DlElement *dlElement;
  
-    dlMenu = (DlMenu *) malloc(sizeof(DlMenu));
+    dlMenu = (DlMenu *)malloc(sizeof(DlMenu));
     if (!dlMenu) return 0;
     if (p) {
 	*dlMenu = *(p->structure.menu);

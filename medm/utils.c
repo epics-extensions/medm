@@ -63,8 +63,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_PVINFO 0
 #define DEBUG_PVLIMITS 0
 #define DEBUG_COMMAND 0
-#define DEBUG_REDRAW 0
+#define DEBUG_REDRAW 1
 #define DEBUG_VISIBILITY 0
+#define DEBUG_GRID 0
 
 #define PV_INFO_CLOSE_BTN 0
 #define PV_INFO_HELP_BTN  1
@@ -1539,11 +1540,39 @@ void deleteWidgetsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 void drawGrid(DisplayInfo *displayInfo)
 {
     Drawable draw = displayInfo->drawingAreaPixmap;
-    int xmax, ymax;
     int gridSpacing;
     Dimension width, height;
     int i, j, n;
     Arg args[2];
+
+#if DEBUG_GRID
+    {
+	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
+	DlDisplay *dlDisplay = dlElement->structure.display;
+
+	if(displayInfo->colormap) {
+	    print("drawGrid:\n"
+	      "  displayInfo: fg=%06x[%d] bg=%06x[%d] dlDisplay: "
+	      "fg=%06x[%d] bg=%06x[%d]\n",
+	      displayInfo->colormap[displayInfo->drawingAreaForegroundColor],
+	      displayInfo->drawingAreaForegroundColor,
+	      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor],
+	      displayInfo->drawingAreaBackgroundColor,
+	      displayInfo->colormap[dlDisplay->clr],
+	      dlDisplay->clr,
+	      displayInfo->colormap[dlDisplay->bclr],
+	      dlDisplay->bclr);
+	} else {
+	    print("drawGrid:\n"
+	      "  displayInfo: fg=UNK[%d] bg=UNK[%d] dlDisplay: "
+	      "fg=UNK[%d] bg=UNK[%d]\n",
+	      displayInfo->drawingAreaForegroundColor,
+	      displayInfo->drawingAreaBackgroundColor,
+	      dlDisplay->clr,
+	      dlDisplay->bclr);
+	}
+    }
+#endif
 
   /* Return if displayInfo is invalid */
     if(!displayInfo || !displayInfo->drawingArea || !draw) return;
@@ -1554,14 +1583,12 @@ void drawGrid(DisplayInfo *displayInfo)
     XtSetArg(args[n],XmNwidth,&width); n++;
     XtSetArg(args[n],XmNheight,&height); n++;
     XtGetValues(displayInfo->drawingArea,args,n);
-    xmax = width-1;
-    ymax = height-1;
 
   /* Set the GC */
     XSetForeground(display,displayInfo->pixmapGC,
-      displayInfo->drawingAreaForegroundColor);
+      displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
     XSetBackground(display,displayInfo->pixmapGC,
-      displayInfo->drawingAreaBackgroundColor);
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
 
   /* Draw grid */
     for(i=0; i < width; i+=gridSpacing) {
@@ -2829,68 +2856,67 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
 }
 
-/* Routine to redraw all drawing objects */
+/* Routine to redraw all drawing objects in the display */
 void redrawDrawnElements(DisplayInfo *displayInfo, DlElement *dlElement)
 {
 #if 0
-    XPoint points[4];
-    Region region = NULL;
     DlElement *pE;
     DlObject *po;
+    unsigned int width,height;
 
-    if(!displayInfo || !dlElement) return;
+#if DEBUG_REDRAW
+    print("redrawDrawnElements: dlElement=%x[%s] structure.element=%x\n",
+      dlElement,elementType(dlElement->type),dlElement->structure.element);
+#endif    
 
-  /* Define the region covered by the element */
-    po = &(dlElement->structure.composite->object);
-    points[0].x = po->x;
-    points[0].y = po->y;
-    points[1].x = po->x + (int)po->width;
-    points[1].y = po->y;
-    points[2].x = po->x + (int)po->width;
-    points[2].y = po->y + (int)po->height;
-    points[3].x = po->x;
-    points[3].y = po->y + (int)po->height;
-    region = XPolygonRegion(points,4,EvenOddRule);
-    if (region == NULL) {
-	medmPrintf(0,"\redrawDrawnElements: XPolygonRegion is NULL\n");
-	return;
-    }
-    
+    if(displayInfo == NULL) return;
+
+  /* Get the dimensions of the display */
+    pE = FirstDlElement(displayInfo->dlElementList);
+    po = &(pE->structure.composite->object);
+    width = po->width;
+    height = po->height;
+
+  /* Fill the background with the background color */
+    XSetForeground(display,displayInfo->pixmapGC,
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
+    XFillRectangle(display, displayInfo->drawingAreaPixmap,
+      displayInfo->pixmapGC,
+      0, 0, (unsigned int)width, (unsigned int)height);
+
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
-	if(pE->type == DL_Arc ||
-	  pE->type == DL_Composite ||
-	  pE->type == DL_Image ||
-	  pE->type == DL_Oval ||
-	  pE->type == DL_Polyline ||
-	  pE->type == DL_Polygon ||
-	  pE->type == DL_Rectangle ||
-	  pE->type == DL_Text) {
-	  /* Element is a drawing object */
-	    po = &(pE->structure.composite->object);
-	  /* Check if it is overlapped */
-	    if(XRectInRegion(region, po->x, po->y,
-	      (int)po->width, (int)po->height) != RectangleOut) {
-
-	      /* Execute the element */
-		if(pE->type == DL_Composite) {
-		  /* Only do execute for composite if it is not hidden */
-		    if(!pE->structure.composite->hidden &&
-		      pE->run->execute) {
-			pE->run->execute(displayInfo, pE);
-		    }
-		} else {
-		    if(pE->run->execute) pE->run->execute(displayInfo, pE);
+	if(pE != dlElement) {
+	    if(pE->type == DL_Arc ||
+	      pE->type == DL_Composite ||
+	      pE->type == DL_Image ||
+	      pE->type == DL_Oval ||
+	      pE->type == DL_Polyline ||
+	      pE->type == DL_Polygon ||
+	      pE->type == DL_Rectangle ||
+	      pE->type == DL_Text) {
+	      /* Element is a drawing object */
+		if(!pE->hidden && pE->run->execute) {
+#if DEBUG_REDRAW
+		    print("  executed: pE=%x[%s] x=%d y=%d\n",
+		      pE,elementType(pE->type),
+		      pE->structure.composite->object.x,
+		      pE->structure.composite->object.y);
+#endif    
+		    pE->run->execute(displayInfo, pE);
 		}
 	    }
 	}
 	pE = pE->next;
     }
 
-  /* Free the region */
-    if(region) XDestroyRegion(region);
-#endif
+  /* Udpate the window from the pixmap */
+    XCopyArea(display,displayInfo->drawingAreaPixmap,
+      XtWindow(displayInfo->drawingArea),
+      displayInfo->pixmapGC, 0, 0, (unsigned int)width,
+      (unsigned int)height, 0, 0);
+#endif    
 }
 
 /*

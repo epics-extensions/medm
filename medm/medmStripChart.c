@@ -66,7 +66,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Structures */
 
-typedef struct _StripChart {
+typedef struct _MedmStripChart {
     DlElement     *dlElement;              /* Must be first */
     Record        *record[MAX_PENS];       /* array of data */
     UpdateTask    *updateTask;
@@ -96,7 +96,7 @@ typedef struct _StripChart {
     double          minVal[MAX_PENS];
     int             nextSlot;
     XtIntervalId    timerid;
-} StripChart;
+} MedmStripChart;
 
 typedef struct {
     double hi;
@@ -140,7 +140,7 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd);
 static void stripChartDestroyCb(XtPointer cd);
 static void redisplayStrip(Widget, XtPointer, XtPointer);
 static void stripChartUpdateGraph(XtPointer);
-static StripChart *stripChartAlloc(DisplayInfo *,DlElement *);
+static MedmStripChart *stripChartAlloc(DisplayInfo *,DlElement *);
 static void freeStripChart(XtPointer);
 static void stripChartGetRecord(XtPointer, Record **, int *);
 static void configStripChart(XtPointer, XtIntervalId *);
@@ -174,7 +174,7 @@ static Range range[MAX_PENS];
 static Range nullRange = {0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0};
 static StripChartConfigData sccd;
 
-static int calcLabelFontSize(StripChart *psc) {
+static int calcLabelFontSize(MedmStripChart *psc) {
     int width;
     int fontHeight;
     int i;
@@ -202,7 +202,7 @@ static int calcLabelFontSize(StripChart *psc) {
     return i;
 }
 
-static int calcTitleFontSize(StripChart *psc) {
+static int calcTitleFontSize(MedmStripChart *psc) {
     int width;
     int fontHeight;
     int i;
@@ -281,7 +281,7 @@ static void calcFormat(double value, char *format, int *decimal, int *width)
     }
 }
 
-static int calcMargin(StripChart *psc) {
+static int calcMargin(MedmStripChart *psc) {
     int width;
     int margin;
     width = (psc->h < psc->w) ? psc->h : psc->w;
@@ -303,7 +303,7 @@ static int calcMargin(StripChart *psc) {
     return margin;
 }
 
-static int calcMarkerHeight(StripChart *psc) {
+static int calcMarkerHeight(MedmStripChart *psc) {
     int width;
     int markerHeight;
     width = (psc->h < psc->w) ? psc->h : psc->w;
@@ -323,7 +323,7 @@ static int calcMarkerHeight(StripChart *psc) {
     return markerHeight;
 }
 
-static void calcYAxisLabelWidth(StripChart *psc) {
+static void calcYAxisLabelWidth(MedmStripChart *psc) {
     int i;
     int cnt;
     int maxWidth = 0;
@@ -395,13 +395,13 @@ static void calcYAxisLabelWidth(StripChart *psc) {
     sccd.yAxisLabelTextWidth = maxWidth;
 }
 
-static void calcTitleHeight(StripChart *psc) {
+static void calcTitleHeight(MedmStripChart *psc) {
     sccd.titleFont = calcTitleFontSize(psc);
     sccd.titleFontHeight = fontTable[sccd.titleFont]->ascent +
       fontTable[sccd.titleFont]->descent;
 }
 
-static void calcXAxisLabelWidth(StripChart *psc) {
+static void calcXAxisLabelWidth(MedmStripChart *psc) {
     char format;
     int decimal;
     int width;
@@ -413,17 +413,17 @@ static void calcXAxisLabelWidth(StripChart *psc) {
       "-0.0000000",width) + psc->dataWidth;
 }
 
-static void calcYAxisLabelHeight(StripChart *psc) {
+static void calcYAxisLabelHeight(MedmStripChart *psc) {
     sccd.yAxisLabelHeight = sccd.axisLabelFontHeight * sccd.numYAxisLabel
       + psc->dataHeight;
 }
 
-static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
+static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
   DlElement *dlElement) {
-    StripChart *psc;
+    MedmStripChart *psc;
     DlStripChart *dlStripChart = dlElement->structure.stripChart;
 
-    psc = (StripChart *) calloc(1,sizeof(StripChart));
+    psc = (MedmStripChart *) calloc(1,sizeof(MedmStripChart));
     if (psc == NULL) return psc;
     psc->w = dlStripChart->object.width;
     psc->h = dlStripChart->object.height;
@@ -471,7 +471,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 }
 
 static void freeStripChart(XtPointer cd) {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     int i;
 
 #if(DEBUG_STRIP_CHART)
@@ -498,7 +498,7 @@ static void freeStripChart(XtPointer cd) {
 }
 
 
-static void stripChartConfig(StripChart *psc) {
+static void stripChartConfig(MedmStripChart *psc) {
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     Display *display = XtDisplay(psc->dlElement->widget);
@@ -1026,6 +1026,9 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget localWidget;
     DlStripChart *dlStripChart = dlElement->structure.stripChart;
     
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (!dlElement->widget) {
       /* create the drawing widget for the strip chart */
 	n = 0;
@@ -1048,36 +1051,41 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
       /* if execute mode, create stripChart and setup all the channels */
 	if (displayInfo->traversalMode == DL_EXECUTE) {
 	    int i,j;
-	    StripChart *psc;
+	    MedmStripChart *psc;
 	    
-	    psc = stripChartAlloc(displayInfo,dlElement);
-	    if (psc == NULL) {
-		medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
-		return;
-	    }
-	    
-	  /* connect channels */
-	    j = 0;
-	    for (i = 0; i < MAX_PENS; i++) {
-		if (dlStripChart->pen[i].chan[0] != '\0') {
-		    psc->record[j] =
-		      medmAllocateRecord(dlStripChart->pen[i].chan,
-		      stripChartUpdateValueCb,
+	    if(dlElement->data) {
+		psc = (MedmStripChart *)dlElement->data;
+	    } else {
+		psc = stripChartAlloc(displayInfo,dlElement);
+		dlElement->data = (void *)psc;
+		if(psc == NULL) {
+		    medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
+		    return;
+		}
+		
+	      /* connect channels */
+		j = 0;
+		for (i = 0; i < MAX_PENS; i++) {
+		    if (dlStripChart->pen[i].chan[0] != '\0') {
+			psc->record[j] =
+			  medmAllocateRecord(dlStripChart->pen[i].chan,
+			    stripChartUpdateValueCb,
+			    stripChartUpdateGraphicalInfoCb,
+			    (XtPointer) psc);
+			j++;
+		    }
+		}
+	      /* record the number of channels in the strip chart */
+		psc->nChannels = j;
+		
+		if (psc->nChannels == 0) {
+		  /* if no channel, create a fake channel */
+		    psc->nChannels = 1;
+		    psc->record[0] = medmAllocateRecord(" ",
+		      NULL,
 		      stripChartUpdateGraphicalInfoCb,
 		      (XtPointer) psc);
-		    j++;
 		}
-	    }
-	  /* record the number of channels in the strip chart */
-	    psc->nChannels = j;
-	    
-	    if (psc->nChannels == 0) {
-	      /* if no channel, create a fake channel */
-		psc->nChannels = 1;
-		psc->record[0] = medmAllocateRecord(" ",
-		  NULL,
-		  stripChartUpdateGraphicalInfoCb,
-		  (XtPointer) psc);
 	    }
 	    
 	    XtVaSetValues(localWidget, XmNuserData, (XtPointer) psc, NULL);
@@ -1114,7 +1122,7 @@ void hideDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pd = (Record *) cd;
-    StripChart *psc = (StripChart *) pd->clientData;
+    MedmStripChart *psc = (MedmStripChart *) pd->clientData;
     Widget widget = psc->dlElement->widget;
     int i;
 
@@ -1169,7 +1177,7 @@ static void configStripChart(XtPointer cd, XtIntervalId *)
 static void configStripChart(XtPointer cd, XtIntervalId *id)
 #endif
 {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     Widget widget = psc->dlElement->widget;
 
 #if(DEBUG_STRIP_CHART)
@@ -1202,7 +1210,7 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer)
 static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 #endif
 {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     GC gc = psc->gc;
@@ -1272,7 +1280,7 @@ static void stripChartDestroyCb(XtPointer cd)
 
 static void stripChartUpdateValueCb(XtPointer cd) {
     Record *pd = (Record *) cd;
-    StripChart *psc = (StripChart *) pd->clientData;
+    MedmStripChart *psc = (MedmStripChart *) pd->clientData;
     Boolean connected = True;
     Boolean readAccess = True;
     int i;
@@ -1326,7 +1334,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 }
 
 static void stripChartUpdateTaskCb(XtPointer cd) {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     Boolean connected = True;
     Boolean readAccess = True;
     Widget widget = psc->dlElement->widget;
@@ -1381,7 +1389,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 
 static void stripChartUpdateGraph(XtPointer cd) {
     Record *pd = (Record *) cd;
-    StripChart *psc = (StripChart *) pd->clientData;
+    MedmStripChart *psc = (MedmStripChart *) pd->clientData;
     double currentTime;
     int n = 0;
 
@@ -1506,7 +1514,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 }
 
 static void stripChartDraw(XtPointer cd) {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     Display *display = XtDisplay(psc->dlElement->widget);
     Window  window = XtWindow(psc->dlElement->widget);
     GC      gc = psc->gc;
@@ -1540,7 +1548,7 @@ static void stripChartDraw(XtPointer cd) {
 
 static void stripChartGetRecord(XtPointer cd, Record **record, int *count)
 {
-    StripChart *psc = (StripChart *) cd;
+    MedmStripChart *psc = (MedmStripChart *) cd;
     int i;
 
     *count = psc->nChannels;
@@ -1556,7 +1564,7 @@ DlElement *createDlStripChart(DlElement *p)
     int penNumber;
 
 
-    dlStripChart = (DlStripChart *) malloc(sizeof(DlStripChart));
+    dlStripChart = (DlStripChart *)malloc(sizeof(DlStripChart));
     if (!dlStripChart) return 0;
     if (p) {
 	*dlStripChart = *p->structure.stripChart;

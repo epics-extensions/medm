@@ -146,16 +146,16 @@ DisplayInfo *allocateDisplayInfo()
 
 /* Allocate a DisplayInfo structure and shell for this display file/list */
     displayInfo = (DisplayInfo *)malloc(sizeof(DisplayInfo));
-    if (!displayInfo) return NULL;
+    if(!displayInfo) return NULL;
 
     displayInfo->dlElementList = createDlList();
-    if (!displayInfo->dlElementList) {
+    if(!displayInfo->dlElementList) {
 	free(displayInfo);
 	return NULL;
     }
 
     displayInfo->selectedDlElementList = createDlList();
-    if (!displayInfo->selectedDlElementList) {
+    if(!displayInfo->selectedDlElementList) {
 	free(displayInfo->dlElementList);
 	free(displayInfo);
 	return NULL;
@@ -226,7 +226,7 @@ DisplayInfo *allocateDisplayInfo()
 #endif    
   /* Map window manager menu Close function to nothing for now */
     XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
-    if (privateCmap) {
+    if(privateCmap) {
 	XtSetArg(args[nargs],XmNcolormap,cmap); nargs++;
     }
     displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
@@ -290,7 +290,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     }
 
   /* force a wait for all outstanding CA event completion */
-  /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
+  /* (wanted to do   while(ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
    */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
@@ -322,12 +322,13 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
     } else {
 	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
-	while (dlElement) {
+	while(dlElement) {
 	    if(dlElement->run->cleanup) {
 		dlElement->run->cleanup(dlElement);
 	    } else {
 		dlElement->widget = NULL;
 	    }
+	    dlElement->data = NULL;
 	    dlElement = dlElement->next;
 	}
     }
@@ -419,7 +420,7 @@ void dmRemoveAllDisplayInfo()
     DisplayInfo *nextDisplay, *displayInfo;
 
     displayInfo = displayInfoListHead->next;
-    while (displayInfo != NULL) {
+    while(displayInfo != NULL) {
 	nextDisplay = displayInfo->next;
 	dmRemoveDisplayInfo(displayInfo);
 	displayInfo = nextDisplay;
@@ -457,12 +458,12 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
     Arg args[2];
     char *env = getenv("MEDM_HELP");
 
-    if (shell == lastShell) {
+    if(shell == lastShell) {
 	XtSetArg(args[0],XmNx,x);
 	XtSetArg(args[1],XmNy,y);
 	XtSetValues(shell,args,2);
     }
-    if (env != NULL) addDisplayHelpProtocol(displayInfo);
+    if(env != NULL) addDisplayHelpProtocol(displayInfo);
 }
 
 /***  Parsing routines ***/
@@ -470,7 +471,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     int i;
     for (i=0; i<parseFuncTableSize; i++) {
-	if (!strcmp(token,parseFuncTable[i].name)) {
+	if(!strcmp(token,parseFuncTable[i].name)) {
 	    return parseFuncTable[i].func(pDI);
 	}
     }
@@ -489,7 +490,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
     int first = 1;
     
   /* Initialize attributes to defaults for old format */
-    if (init && displayInfo->versionNumber < 20200) {
+    if(init && displayInfo->versionNumber < 20200) {
 	basicAttributeInit(&attr);
 	dynamicAttributeInit(&dynAttr);
 	init = False;
@@ -507,9 +508,9 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 	switch(tokenType) {
 	case T_WORD : {
 	    DlElement *pe = 0;
-	    if (pe = getNextElement(displayInfo,token)) {
+	    if(pe = getNextElement(displayInfo,token)) {
 	      /* Found an element via the parseFuncTable */
-		if (displayInfo->versionNumber < 20200) {
+		if(displayInfo->versionNumber < 20200) {
 		    switch (pe->type) {
 		    case DL_Rectangle :
 		    case DL_Oval      :
@@ -528,7 +529,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 			dynamicAttributeInit(&dynAttr);
 #else
 		      /* KE: This was what was done in MEDM 2.2.9 */
-			if (dynAttr.chan[0][0] != '\0') {
+			if(dynAttr.chan[0][0] != '\0') {
 			    pe->structure.rectangle->dynAttr = dynAttr;
 			    dynAttr.chan[0][0] = '\0';
 			}
@@ -536,19 +537,19 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 			break;
 		    }
 		}
-	    } else if (displayInfo->versionNumber < 20200) {
+	    } else if(displayInfo->versionNumber < 20200) {
 	      /* Did not find an element and old file version
 	       *   Must be an attribute, which appear before the object does */
-		if (!strcmp(token,"<<basic atribute>>") ||
+		if(!strcmp(token,"<<basic atribute>>") ||
 		  !strcmp(token,"basic attribute") ||
 		  !strcmp(token,"<<basic attribute>>")) {
 		    parseOldBasicAttribute(displayInfo,&attr);
-		} else if (!strcmp(token,"dynamic attribute") ||
+		} else if(!strcmp(token,"dynamic attribute") ||
 		  !strcmp(token,"<<dynamic attribute>>")) {
 		    parseOldDynamicAttribute(displayInfo,&dynAttr);
 		}
 	    }
-	    if (pe) {
+	    if(pe) {
 		appendDlElement(dlList,pe);
 	    }
 	}
@@ -561,11 +562,11 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 	default :
 	    break;
 	}
-    } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
 
   /* Reset the init flag */
-    if (tokenType == T_EOF) init = True;
+    if(tokenType == T_EOF) init = True;
     return tokenType;
 }
 
@@ -608,7 +609,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 
     initializeGlobalResourceBundle();
 
-    if (!displayInfo) {
+    if(!displayInfo) {
       /* Did not come from a display that is to be replaced
        *   Allocate a DisplayInfo structure */
 	cdi = currentDisplayInfo = allocateDisplayInfo();
@@ -660,7 +661,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
     cdi->fromRelatedDisplayExecution = fromRelatedDisplayExecution;
     
   /* Generate the name-value table for macro substitutions (related display) */
-    if (argsString) {
+    if(argsString) {
 	cdi->nameValueTable = generateNameValueTable(argsString,&numPairs);
 	cdi->numNameValues = numPairs;
     } else {
@@ -671,9 +672,9 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
   /* Read the file block (Must be there) */
   /* If first token isn't "file" then bail out */
     tokenType=getToken(cdi,token);
-    if (tokenType == T_WORD && !strcmp(token,"file")) {
+    if(tokenType == T_WORD && !strcmp(token,"file")) {
 	cdi->dlFile = parseFile(cdi);
-	if (cdi->dlFile) {
+	if(cdi->dlFile) {
 	    cdi->versionNumber = cdi->dlFile->versionNumber;
 	    strcpy(cdi->dlFile->name,filename);
 	} else {
@@ -706,7 +707,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 
   /* Read the display block (Must be there) */
     tokenType=getToken(cdi,token);
-    if (tokenType == T_WORD && !strcmp(token,"display")) {
+    if(tokenType == T_WORD && !strcmp(token,"display")) {
 	parseDisplay(cdi);
     } else {
 	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file "
@@ -720,7 +721,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 
   /* Read the colormap if there.  Will also create cdi->dlColormap. */
     tokenType=getToken(cdi,token);
-    if (tokenType == T_WORD && 
+    if(tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
       /* This is a colormap block, parse it */
@@ -808,7 +809,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 #endif      
 	
       /* Change width and height object values now, x and y later */
-	if ((mask & WidthValue) && (mask & HeightValue)) {
+	if((mask & WidthValue) && (mask & HeightValue)) {
 	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
 	}
     }
@@ -849,7 +850,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 #if DEBUG_RELATED_DISPLAY
 	print("  Move(2)\n");
 #endif	
-	if ((mask & XValue) && (mask & YValue)) {
+	if((mask & XValue) && (mask & YValue)) {
 	    dlDisplay->object.x=xg;
 	    dlDisplay->object.y=yg;
 	}
@@ -975,7 +976,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     dir = getenv("EPICS_DISPLAY_PATH");
     if(dir != NULL) {
 	startPos = 0;
-	while (filePtr == NULL &&
+	while(filePtr == NULL &&
 	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
 	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
 	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
@@ -1015,7 +1016,7 @@ void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list)
     
     if(list->count == 0) return;
     dlElement = FirstDlElement(list);
-    while (dlElement) {
+    while(dlElement) {
 	pE = dlElement;
 	dlElement = dlElement->next;
 	if(pE->run->destroy) {
@@ -1039,7 +1040,7 @@ void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
     
     if(list->count == 0) return;
     dlElement = FirstDlElement(list);
-    while (dlElement) {
+    while(dlElement) {
 	pE = dlElement;
 	if(dlElement->type != DL_Display) {
 	    dlElement = dlElement->next;
@@ -1075,7 +1076,7 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
     dumpDlElementList(displayInfo->dlElementList);
 #endif
     element = FirstDlElement(displayInfo->dlElementList);
-    while (element) {
+    while(element) {
 	(element->run->execute)(displayInfo,element);
 	element = element->next;
     }
@@ -1116,7 +1117,7 @@ void dmTraverseAllDisplayLists()
     displayInfo = displayInfoListHead->next;
 
   /* Traverse the displayInfo list */
-    while (displayInfo != NULL) {
+    while(displayInfo != NULL) {
 
       /* Traverse the display list for this displayInfo */
 #if DEBUG_TRAVERSAL
@@ -1124,7 +1125,7 @@ void dmTraverseAllDisplayLists()
 	dumpDlElementList(displayInfo->dlElementList);
 #endif
 	element = FirstDlElement(displayInfo->dlElementList);
-	while (element) {
+	while(element) {
 	    (element->run->execute)(displayInfo,element);
 	    element = element->next;
 	}
@@ -1160,7 +1161,7 @@ void dmTraverseAllDisplayLists()
  * elements.  Should only be called in EDIT mode. */
 void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 {
-    DlElement *element;
+    DlElement *pE;
     Dimension width,height;
 
     if(displayInfo == NULL) return;
@@ -1169,12 +1170,12 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
     unhighlightSelectedElements();
     
   /* Fill the background with the background color */
-    XSetForeground(display,displayInfo->pixmapGC,
+    XSetForeground(display, displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
     XtVaGetValues(displayInfo->drawingArea,
-      XmNwidth,&width,XmNheight,&height,NULL);
-    XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
-      0, 0, (unsigned int)width,(unsigned int)height);
+      XmNwidth, &width, XmNheight, &height, NULL);
+    XFillRectangle(display, displayInfo->drawingAreaPixmap,
+      displayInfo->pixmapGC, 0, 0, (unsigned int)width, (unsigned int)height);
 
   /* Draw grid */
     if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
@@ -1182,12 +1183,13 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 
   /* Traverse the display list */
   /* Loop over elements not including the display */
-    element = SecondDlElement(displayInfo->dlElementList);
-    while (element) {
-	if(!element->widget) {
-	    (element->run->execute)(displayInfo, element);
+    pE = SecondDlElement(displayInfo->dlElementList);
+    while(pE) {
+	pE->hidden = 0;
+	if(!pE->widget) {
+	    (pE->run->execute)(displayInfo, pE);
 	}
-	element = element->next;
+	pE = pE->next;
     }
 
   /* Since the execute traversal copies to the pixmap, now udpate the window */
@@ -1203,7 +1205,6 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ?
 	rubberbandCursor : crosshairCursor));
-
 }
 
 /*
@@ -1216,13 +1217,13 @@ DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
     DisplayInfo *displayInfo = NULL;
 
     w = widget;
-    while (w && (XtClass(w) != topLevelShellWidgetClass)) {
+    while(w && (XtClass(w) != topLevelShellWidgetClass)) {
 	w = XtParent(w);
     }
 
     if(w) {
 	displayInfo = displayInfoListHead->next;
-	while (displayInfo && (displayInfo->shell != w)) {
+	while(displayInfo && (displayInfo->shell != w)) {
 	    displayInfo = displayInfo->next;
 	}
     }
@@ -1234,14 +1235,14 @@ DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
  */
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
 {
-    DlElement *element;
+    DlElement *pE;
     DlDisplay *dlDisplay = NULL;
 
     writeDlFile(stream,displayInfo->dlFile,0);
-    if(element = FirstDlElement(displayInfo->dlElementList)) {
+    if(pE = FirstDlElement(displayInfo->dlElementList)) {
       /* This must be DL_DISPLAY */
-	(element->run->write)(stream,element,0);
-	dlDisplay=element->structure.display;
+	(pE->run->write)(stream,pE,0);
+	dlDisplay=pE->structure.display;
     }
 
   /* Write the colormap unless there is a cmap defined for the display */
@@ -1249,10 +1250,10 @@ void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
       writeDlColormap(stream,displayInfo->dlColormap,0);
 
   /* Traverse the display list */
-    element = element->next;
-    while (element) {
-	(element->run->write)(stream,element,0);
-	element = element->next;
+    pE = pE->next;
+    while(pE) {
+	(pE->run->write)(stream,pE,0);
+	pE = pE->next;
     }
     fprintf(stream,"\n");
 }
@@ -1264,7 +1265,7 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
     if(displayInfo->dlFile) {
 	char *tmp, *tmp1;
 	tmp = tmp1 = displayInfo->dlFile->name;
-	while (*tmp != '\0')
+	while(*tmp != '\0')
 	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
 	if(displayInfo->hasBeenEditedButNotSaved) {
 	    strcpy(str,tmp1);

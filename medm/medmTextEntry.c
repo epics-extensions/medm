@@ -64,12 +64,12 @@ extern "C" {
 	   }
 #endif
 
-typedef struct _TextEntry {
+typedef struct _MedmTextEntry {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
     Boolean     updateAllowed;
-} TextEntry;
+} MedmTextEntry;
 
 void textEntryCreateRunTimeInstance(DisplayInfo *, DlElement *);
 void textEntryCreateEditInstance(DisplayInfo *,DlElement *);
@@ -80,7 +80,7 @@ static void textEntryUpdateValueCb(XtPointer cd);
 static void textEntryDestroyCb(XtPointer cd);
 static void textEntryValueChanged(Widget, XtPointer, XtPointer);
 static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
-static char *valueToString(TextEntry *, TextFormat format);
+static char *valueToString(MedmTextEntry *, TextFormat format);
 static void textEntryGetRecord(XtPointer, Record **, int *);
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textEntrySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -120,7 +120,7 @@ int textFieldFontListIndex(int height)
     return (0);
 }
 
-char *valueToString(TextEntry *pte, TextFormat format) {
+char *valueToString(MedmTextEntry *pte, TextFormat format) {
     Record *pr = pte->record;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
     static char textField[MAX_TOKEN_LENGTH];
@@ -225,31 +225,36 @@ char *valueToString(TextEntry *pte, TextFormat format) {
  ***/
 void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
-    TextEntry *pte;
+    MedmTextEntry *pte;
     Arg args[20];
     int n;
     DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
-    pte = (TextEntry *) malloc(sizeof(TextEntry));
-    pte->dlElement = dlElement;
-    pte->updateTask = updateTaskAddTask(displayInfo,
-      &(dlTextEntry->object),
-      textEntryDraw,
-      (XtPointer)pte);
-
-    if (pte->updateTask == NULL) {
-	medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
+    if(dlElement->data) {
+	pte = (MedmTextEntry *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
-	updateTaskAddNameCb(pte->updateTask,textEntryGetRecord);
+	pte = (MedmTextEntry *)malloc(sizeof(MedmTextEntry));
+	dlElement->data = (void *)pte;
+	pte->dlElement = dlElement;
+	pte->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlTextEntry->object),
+	  textEntryDraw,
+	  (XtPointer)pte);
+	
+	if (pte->updateTask == NULL) {
+	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
+	    updateTaskAddNameCb(pte->updateTask,textEntryGetRecord);
+	}
+	pte->record = medmAllocateRecord(dlTextEntry->control.ctrl,
+	  textEntryUpdateValueCb,
+	  textEntryUpdateGraphicalInfoCb,
+	  (XtPointer) pte);
+	pte->updateAllowed = True;
+	drawWhiteRectangle(pte->updateTask);
     }
-    pte->record = medmAllocateRecord(dlTextEntry->control.ctrl,
-      textEntryUpdateValueCb,
-      textEntryUpdateGraphicalInfoCb,
-      (XtPointer) pte);
-    pte->updateAllowed = True;
-    drawWhiteRectangle(pte->updateTask);
-
+    
   /* from the text entry structure, we've got TextEntry's specifics */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlTextEntry->object.x); n++;
@@ -278,7 +283,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
   /* Add the callbacks for update */
     XtAddCallback(dlElement->widget,XmNactivateCallback,
       (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
-
+    
   /* Unregister it as a drop site unless it is explicitly a string
    *   (Btn2 drag and drop tends to trash it) */
     if(dlTextEntry->format != STRING) {
@@ -341,6 +346,9 @@ void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
   /* Update the limits to reflect current src's */
     updatePvLimits(&dlTextEntry->limits);
 
@@ -369,12 +377,12 @@ void hideDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 void textEntryUpdateValueCb(XtPointer cd) {
-    TextEntry *pte = (TextEntry *) ((Record *) cd)->clientData;
+    MedmTextEntry *pte = (MedmTextEntry *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pte->updateTask);
 }
 
 void textEntryDraw(XtPointer cd) {
-    TextEntry *pte = (TextEntry *) cd;
+    MedmTextEntry *pte = (MedmTextEntry *) cd;
     Record *pr = pte->record;
     Widget widget = pte->dlElement->widget;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
@@ -419,7 +427,7 @@ void textEntryDraw(XtPointer cd) {
 }
 
 void textEntryDestroyCb(XtPointer cd) {
-    TextEntry *pte = (TextEntry *) cd;
+    MedmTextEntry *pte = (MedmTextEntry *) cd;
     if (pte) {
 	medmDestroyRecord(pte->record);
 	free((char *)pte);
@@ -446,7 +454,7 @@ static void textEntryLosingFocusCallback(
   XtPointer cbs)
 #endif
 {
-    TextEntry *pte = (TextEntry *) cd;
+    MedmTextEntry *pte = (MedmTextEntry *) cd;
     XtRemoveCallback(w,XmNlosingFocusCallback,
       (XtCallbackProc)textEntryLosingFocusCallback,pte);
     pte->updateAllowed = True;
@@ -462,7 +470,7 @@ void textEntryModifyVerifyCallback(
   XtPointer clientData,
   XtPointer pCallbackData)
 {
-    TextEntry *pte = (TextEntry *) clientData;
+    MedmTextEntry *pte = (MedmTextEntry *) clientData;
     XmTextVerifyCallbackStruct *pcbs = (XmTextVerifyCallbackStruct *) pCallbackData;
 
   /* NULL event means value changed programmatically; hence don't process */
@@ -493,7 +501,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     char *textValue;
     double value;
     char *end;
-    TextEntry *pte = (TextEntry *)clientData;
+    MedmTextEntry *pte = (MedmTextEntry *)clientData;
     Record *pr = pte->record;
     Boolean match;
     int i;
@@ -574,7 +582,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 
 static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    TextEntry *pte = (TextEntry *) pr->clientData;
+    MedmTextEntry *pte = (MedmTextEntry *) pr->clientData;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
     Widget widget = pte->dlElement->widget;
     XcVType hopr, lopr, val;
@@ -610,7 +618,7 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void textEntryGetRecord(XtPointer cd, Record **record, int *count) {
-    TextEntry *pte = (TextEntry *) cd;
+    MedmTextEntry *pte = (MedmTextEntry *) cd;
     *count = 1;
     record[0] = pte->record;
 }
@@ -620,7 +628,7 @@ DlElement *createDlTextEntry(DlElement *p)
     DlTextEntry *dlTextEntry;
     DlElement *dlElement;
 
-    dlTextEntry = (DlTextEntry *) malloc(sizeof(DlTextEntry));
+    dlTextEntry = (DlTextEntry *)malloc(sizeof(DlTextEntry));
     if (!dlTextEntry) return 0;
     if (p) {
 	*dlTextEntry = *(p->structure.textEntry);

@@ -67,20 +67,20 @@ extern "C" {
 	   }
 #endif
 
-typedef struct _Valuator {
+typedef struct _MedmValuator {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
     int         oldIntegerValue;
     int         fontIndex;
-} Valuator;
+} MedmValuator;
 
 static void valuatorDraw(XtPointer);
 static void valuatorUpdateGraphicalInfoCb(XtPointer cd);
 static void valuatorUpdateValueCb(XtPointer);
 static void valuatorDestroyCb(XtPointer);
-static void valuatorSetValue(Valuator *, double, Boolean force);
-static void valuatorRedrawValue(Valuator *, DisplayInfo *, Widget, DlValuator *, double);
+static void valuatorSetValue(MedmValuator *, double, Boolean force);
+static void valuatorRedrawValue(MedmValuator *, DisplayInfo *, Widget, DlValuator *, double);
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 static void valuatorGetRecord(XtPointer, Record **, int *);
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
@@ -158,38 +158,43 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 
 void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
-    Valuator *pv;
+    MedmValuator *pv;
     Arg args[25];
     int i, n, heightDivisor, scalePopupBorder;
     WidgetList children;
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
 
-    pv = (Valuator *) malloc(sizeof(Valuator));
-    if (pv == NULL) {
-	medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
-	return;
-    }
-    pv->dlElement = dlElement;
-    pv->updateTask = updateTaskAddTask(displayInfo,
-      &(dlValuator->object),
-      valuatorDraw,
-      (XtPointer)pv);
-
-    if (pv->updateTask == NULL) {
-	medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
-	free((char *)pv);
-	return;
+    if(dlElement->data) {
+	pv = (MedmValuator *)dlElement->data;
     } else {
-	updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
-	updateTaskAddNameCb(pv->updateTask,valuatorGetRecord);
+	pv = (MedmValuator *)malloc(sizeof(MedmValuator));
+	dlElement->data = (void *)pv;
+	if (pv == NULL) {
+	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
+	    return;
+	}
+	pv->dlElement = dlElement;
+	pv->updateTask = updateTaskAddTask(displayInfo,
+	  &(dlValuator->object),
+	  valuatorDraw,
+	  (XtPointer)pv);
+	
+	if (pv->updateTask == NULL) {
+	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
+	    free((char *)pv);
+	    return;
+	} else {
+	    updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
+	    updateTaskAddNameCb(pv->updateTask,valuatorGetRecord);
+	}
+	pv->record = medmAllocateRecord(dlValuator->control.ctrl,
+	  valuatorUpdateValueCb,
+	  valuatorUpdateGraphicalInfoCb,
+	  (XtPointer) pv);
+	pv->fontIndex = valuatorFontListIndex(dlValuator);
+	drawWhiteRectangle(pv->updateTask);
     }
-    pv->record = medmAllocateRecord(dlValuator->control.ctrl,
-      valuatorUpdateValueCb,
-      valuatorUpdateGraphicalInfoCb,
-      (XtPointer) pv);
-    pv->fontIndex = valuatorFontListIndex(dlValuator);
-    drawWhiteRectangle(pv->updateTask);
 
   /* From the valuator structure, we've got Valuator's specifics */
     n = 0;
@@ -369,6 +374,9 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
 
 void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
+
     if (displayInfo->traversalMode == DL_EXECUTE) {
 	createValuatorRunTimeInstance(displayInfo, dlElement);
     } else if (displayInfo->traversalMode == DL_EDIT) {
@@ -387,12 +395,12 @@ void hideDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void valuatorUpdateValueCb(XtPointer cd) {
-    Valuator *pv = (Valuator *) ((Record *) cd)->clientData;
+    MedmValuator *pv = (MedmValuator *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pv->updateTask);
 }
 
 static void valuatorDraw(XtPointer cd) {
-    Valuator *pv = (Valuator *) cd;
+    MedmValuator *pv = (MedmValuator *) cd;
     Record *pr = pv->record;
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
     Boolean dummy;
@@ -440,7 +448,7 @@ static void valuatorDraw(XtPointer cd) {
 
 static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    Valuator *pv = (Valuator *) pr->clientData;
+    MedmValuator *pv = (MedmValuator *) pr->clientData;
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
     Widget widget = pv->dlElement->widget;
     XcVType hopr, lopr, val;
@@ -509,7 +517,7 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void valuatorDestroyCb(XtPointer cd) {
-    Valuator *pv = (Valuator *) cd;
+    MedmValuator *pv = (MedmValuator *) cd;
     if (pv) {
 	medmDestroyRecord(pv->record);
 	free((char *)pv);
@@ -532,7 +540,7 @@ void handleValuatorExpose(
 #endif
 {
     XExposeEvent *event = (XExposeEvent *) pEvent;
-    Valuator *pv;
+    MedmValuator *pv;
     DlValuator *dlValuator;
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
@@ -553,7 +561,7 @@ void handleValuatorExpose(
       /* Then valid controllerData exists */
 	Record *pr;
 
-	pv = (Valuator *) clientData;
+	pv = (MedmValuator *) clientData;
 	pr = pv->record;
 	displayInfo = pv->updateTask->displayInfo;
 	dlValuator = pv->dlElement->structure.valuator;
@@ -722,7 +730,7 @@ void handleValuatorExpose(
 /*
  * Set value (with implicit redraw of value) for valuator
  */
-void valuatorSetValue(Valuator *pv, double forcedValue,
+void valuatorSetValue(MedmValuator *pv, double forcedValue,
   Boolean force)
 {
     int iValue;
@@ -755,7 +763,7 @@ void valuatorSetValue(Valuator *pv, double forcedValue,
 /*
  * Redraw value for valuator
  */
-void valuatorRedrawValue(Valuator *pv,
+void valuatorRedrawValue(MedmValuator *pv,
   DisplayInfo *displayInfo,
   Widget w,
   DlValuator *dlValuator,
@@ -859,7 +867,7 @@ void handleValuatorRelease(Widget w, XtPointer passedData, XEvent *event,
   Boolean *continueToDispatch)
 #endif
 {
-    Valuator *pv = (Valuator *) passedData;
+    MedmValuator *pv = (MedmValuator *) passedData;
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
 
     switch(event->type) {
@@ -879,7 +887,7 @@ static void precisionToggleChangedCallback(
 {
     Widget widget;
     long value;
-    Valuator *pv;
+    MedmValuator *pv;
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
     
   /* Only respond to the button actually set */
@@ -963,7 +971,7 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 
     switch(call_data->reason) {
     case XmCR_OK: {
-	Valuator *pv = (Valuator *)clientData;
+	MedmValuator *pv = (MedmValuator *)clientData;
 	Record *pr = pv->record;
 	double value;
 	char *stringValue;
@@ -1009,7 +1017,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     char *channel;
     Arg args[10];
     int n;
-    Valuator *pv;
+    MedmValuator *pv;
     Record   *pr;
 
     Widget frame, frameLabel, radioBox, toggles[MAX_TOGGLES];
@@ -1198,7 +1206,7 @@ void valuatorValueChanged(
   XtPointer callbackStruct)
 #endif
 {
-    Valuator *pv = (Valuator *) clientData;
+    MedmValuator *pv = (MedmValuator *) clientData;
     Record *pr = pv->record;
     XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *) callbackStruct;
     DlValuator *dlValuator = (DlValuator *) pv->dlElement->structure.valuator;
@@ -1308,7 +1316,7 @@ void valuatorValueChanged(
 
 static void valuatorGetRecord(XtPointer cd, Record **record, int *count)
 {
-    Valuator *pv = (Valuator *) cd;
+    MedmValuator *pv = (MedmValuator *) cd;
     *count = 1;
     record[0] = pv->record;
 }
@@ -1318,7 +1326,7 @@ DlElement *createDlValuator(DlElement *p)
     DlValuator *dlValuator;
     DlElement *dlElement;
  
-    dlValuator = (DlValuator *) malloc(sizeof(DlValuator));
+    dlValuator = (DlValuator *)malloc(sizeof(DlValuator));
     if (!dlValuator) return 0;
     if (p) {
 	*dlValuator = *(p->structure.valuator);

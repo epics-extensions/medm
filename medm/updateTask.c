@@ -57,7 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_SCHEDULER 0
 #define DEBUG_UPDATE 0
 #define DEBUG_COMPOSITE 0
-#define DEBUG_DELETE 0
+#define DEBUG_DELETE 1
 #define DEBUG_HIDE 0
 
 #include "medm.h"
@@ -449,7 +449,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	displayInfo->updateTaskListTail->next = pT;
 	displayInfo->updateTaskListTail = pT;
 
-#if DEBUG_COMPOSITE || DEBUG_DELETE
+#if DEBUG_COMPOSITE || DEBUG_DELETE || DEBUG_HIDE
 	{
 	    Element *pElement=(Element *)pT->clientData;
 	    DlElement *pET = pElement->dlElement;
@@ -604,7 +604,7 @@ void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pT)
     if (updateTaskStatus.nextToServe == pT) {
 	updateTaskStatus.nextToServe = NULL;
     } 
-#if DEBUG_COMPOSITE || DEBUG_DELETE
+#if DEBUG_COMPOSITE || DEBUG_DELETE || DEBUG_HIDE
 	{
 	    Element *pElement=(Element *)pT->clientData;
 	    DlElement *pET = pElement->dlElement;
@@ -908,8 +908,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	} else {
 	  /* Not overlapped */
 	    if (!t->opaque) 
-	      XCopyArea(XtDisplay(t->displayInfo->drawingArea),
-		t->displayInfo->drawingAreaPixmap,
+	      XCopyArea(display,t->displayInfo->drawingAreaPixmap,
 		XtWindow(t->displayInfo->drawingArea),
 		t->displayInfo->gc,
 		t->rectangle.x, t->rectangle.y,

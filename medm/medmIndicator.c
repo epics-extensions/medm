@@ -56,11 +56,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-typedef struct _Indicator {
+typedef struct _MedmIndicator {
     DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
-} Indicator;
+} MedmIndicator;
 
 static void indicatorUpdateValueCb(XtPointer cd);
 static void indicatorDraw(XtPointer cd);
@@ -96,35 +96,43 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
-    Indicator *pi;
+    MedmIndicator *pi;
     DlIndicator *dlIndicator = dlElement->structure.indicator;
+
+  /* Don't do anyting if the element is hidden */
+    if(dlElement->hidden) return;
 
     if (!dlElement->widget) {
 	if (displayInfo->traversalMode == DL_EXECUTE) {
-	    pi = (Indicator *) malloc(sizeof(Indicator));
-	    pi->dlElement = dlElement;
-	    pi->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlIndicator->object),
-	      indicatorDraw,
-	      (XtPointer)pi);
-
-	    if (pi->updateTask == NULL) {
-		medmPrintf(1,"\nindicatorCreateRunTimeInstance: Memory allocation error\n");
+	    if(dlElement->data) {
+		pi = (MedmIndicator *)dlElement->data;
 	    } else {
-		updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
-		updateTaskAddNameCb(pi->updateTask,indicatorGetRecord);
+		pi = (MedmIndicator *)malloc(sizeof(MedmIndicator));
+		dlElement->data = (void *)pi;
+		pi->dlElement = dlElement;
+		pi->updateTask = updateTaskAddTask(displayInfo,
+		  &(dlIndicator->object),
+		  indicatorDraw,
+		  (XtPointer)pi);
+		
+		if (pi->updateTask == NULL) {
+		    medmPrintf(1,"\nexecuteDlIndicator: Memory allocation error\n");
+		} else {
+		    updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
+		    updateTaskAddNameCb(pi->updateTask,indicatorGetRecord);
+		}
+		pi->record = medmAllocateRecord(dlIndicator->monitor.rdbk,
+		  indicatorUpdateValueCb,
+		  indicatorUpdateGraphicalInfoCb,
+		  (XtPointer) pi);
+		drawWhiteRectangle(pi->updateTask);
 	    }
-	    pi->record = medmAllocateRecord(dlIndicator->monitor.rdbk,
-	      indicatorUpdateValueCb,
-	      indicatorUpdateGraphicalInfoCb,
-	      (XtPointer) pi);
-	    drawWhiteRectangle(pi->updateTask);
 	}
   
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlIndicator->limits);
 
-      /* from the indicator structure, we've got Indicator's specifics */
+      /* From the indicator structure, we've got Indicator's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlIndicator->object.x); n++;
 	XtSetArg(args[n],XtNy,(Position)dlIndicator->object.y); n++;
@@ -231,7 +239,7 @@ void hideDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 }
 
 static void indicatorDraw(XtPointer cd) {
-    Indicator *pi = (Indicator *) cd;
+    MedmIndicator *pi = (MedmIndicator *) cd;
     Record *pr = pi->record;
     Widget widget= pi->dlElement->widget;
     DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
@@ -268,13 +276,13 @@ static void indicatorDraw(XtPointer cd) {
 }
 
 static void indicatorUpdateValueCb(XtPointer cd) {
-    Indicator *pi = (Indicator *) ((Record *) cd)->clientData;
+    MedmIndicator *pi = (MedmIndicator *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pi->updateTask);
 }
 
 static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *) cd;
-    Indicator *pi = (Indicator *) pr->clientData;
+    MedmIndicator *pi = (MedmIndicator *) pr->clientData;
     DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
     Widget widget = pi->dlElement->widget;
     Pixel pixel;
@@ -354,7 +362,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 static void indicatorDestroyCb(XtPointer cd) {
-    Indicator *pi = (Indicator *) cd;
+    MedmIndicator *pi = (MedmIndicator *) cd;
     if (pi) {
 	medmDestroyRecord(pi->record);
 	free((char *)pi);
@@ -363,7 +371,7 @@ static void indicatorDestroyCb(XtPointer cd) {
 }
 
 static void indicatorGetRecord(XtPointer cd, Record **record, int *count) {
-    Indicator *pi = (Indicator *) cd;
+    MedmIndicator *pi = (MedmIndicator *) cd;
     *count = 1;
     record[0] = pi->record;
 }
@@ -373,7 +381,7 @@ DlElement *createDlIndicator(DlElement *p)
     DlIndicator *dlIndicator;
     DlElement *dlElement;
 
-    dlIndicator = (DlIndicator *) malloc(sizeof(DlIndicator));
+    dlIndicator = (DlIndicator *)malloc(sizeof(DlIndicator));
     if (!dlIndicator) return 0;
     if (p) {
 	*dlIndicator = *p->structure.indicator;
