@@ -362,7 +362,7 @@ void resizeGIF(DlImage *dlImage)
 		ximag=(Byte *)malloc(w*h);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,gif->eWIDE);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,8,0);
 		
 		if(!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -393,7 +393,7 @@ void resizeGIF(DlImage *dlImage)
 		ximag=(Byte *)malloc(w*h*bytesPerPixel);
 		CUREXPIMAGE(gif)=XCreateImage(display,gif->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,32,gif->eWIDE);
+		  0,(char *)ximag,gif->eWIDE,gif->eHIGH,8,0);
 		
 		if(!ximag || !CUREXPIMAGE(gif)) {
 		    medmPrintf(1,"\nresizeGIF: Unable to create a %dx%d image\n",
@@ -1160,7 +1160,12 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
     if(verbose)
       print("parseGIFImage: %s decompressing...\n",fname);
 
-/* Allocate the X Image */
+/* Allocate the X Image.  The bitmap pad (next-to-last argument) may
+  * be 8, 16, or 32.  The scanlines are padded out to an even number
+  * of the bitmap_pad.  Use 8.  This should work with what we are
+  * doing for depths of 8, 16, 24, 32, etc.  The bytes_per_line (last
+  * argument) may be zero, indicating that X will calculate it for
+  * you.  Otherwise it is probably width*bits_per_pixel/8. */
     switch (ScreenDepth) {
     case 8:
         BytesOffsetPerPixel=1;
@@ -1173,7 +1178,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
 	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,32,Width);
+	  (char*)Image,Width,Height,8,0);
         break;
     case 24:
 	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
@@ -1194,7 +1199,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
         }
         CURIMAGE(gif)=XCreateImage(display,gif->theVisual,
 	  ScreenDepth,ZPixmap,0,
-	  (char*)Image,Width,Height,32,Width);
+	  (char*)Image,Width,Height,8,0);
         break;
     }
     if(!CURIMAGE(gif)) {
@@ -1478,7 +1483,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 		memcpy(ximag,CURIMAGE(gif1)->data,imageDataSize);
 		CURIMAGE(gif2)=XCreateImage(display,gif1->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif1->iWIDE,gif1->iHIGH,32,0);
+		  0,(char *)ximag,gif1->iWIDE,gif1->iHIGH,8,0);
 	    } else {
 		CURIMAGE(gif2)=NULL;
 	    }
@@ -1489,7 +1494,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 		memcpy(ximag,CUREXPIMAGE(gif1)->data,imageDataSize);
 		CUREXPIMAGE(gif2)=XCreateImage(display,gif1->theVisual,
 		  DefaultDepth(display,screenNum),ZPixmap,
-		  0,(char *)ximag,gif1->eWIDE,gif1->eHIGH,32,0);
+		  0,(char *)ximag,gif1->eWIDE,gif1->eHIGH,8,0);
 	    } else {
 		CUREXPIMAGE(gif2)=NULL;
 	    }
