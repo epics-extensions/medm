@@ -89,7 +89,11 @@ typedef unsigned long Pixel;
 int format = ZPixmap;
 Bool nobdrs = False;
 Bool standard_out = True;
-Bool debug = False;
+#if DEBUG
+  Bool debug = True;
+#else
+  Bool debug = True;
+#endif
 long add_pixel_value = 0;
 
 extern int (*_XErrorFunction)();
@@ -438,14 +442,12 @@ int Get_XColors(win_info, colors)
     if (!win_info->colormap)
 	return(0);
 
-    if (win_info->visual->class == TrueColor)
-	return(0);    /* colormap is not needed */
-
     ncolors = win_info->visual->map_entries;
     if (!(*colors = (XColor *) malloc (sizeof(XColor) * ncolors)))
       Fatal_Error("Out of memory!"," ");
 
-    if (win_info->visual->class == DirectColor) {
+    if (win_info->visual->class == DirectColor ||
+        win_info->visual->class == TrueColor) {
 	Pixel red, green, blue, red1, green1, blue1;
 
 	red = green = blue = 0;
