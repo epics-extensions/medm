@@ -194,16 +194,14 @@ void updateTaskStatusGetInfo(int *taskCount,
 /* Timer proc for update tasks.  Is called every TIMERINTERVAL sec.
    Calls updateTaskMarkTimeout, which sets executeRequestsPendingCount
    > 0 for timed out tasks.  Also polls CA.  */
-#ifdef __cplusplus
-static void medmScheduler(XtPointer cd, XtIntervalId *)
-#else
 static void medmScheduler(XtPointer cd, XtIntervalId *id)
-#endif
 {
   /* KE: the cd is set to the static global periodicTask.  Could just
      as well directly use the global here. */
     PeriodicTask *t = (PeriodicTask *)cd;
     double currentTime = medmTime();
+
+    UNREFERENCED(id);
 
 #if DEBUG_UPDATE
     print("medmScheduler: time=%.3f\n",medmElapsedTime());

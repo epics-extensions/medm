@@ -3252,14 +3252,14 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
     }
 }
 
-#ifdef __cplusplus
-void questionDialogCb(Widget, XtPointer clientData, XtPointer callbackStruct)
-#else
-void questionDialogCb(Widget widget, XtPointer clientData, XtPointer callbackStruct)
-#endif
+void questionDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
 {
     DisplayInfo *displayInfo = (DisplayInfo *) clientData;
     XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
+
+    UNREFERENCED(w);
+
+    
     switch (cbs->reason) {
     case XmCR_OK:
 	displayInfo->questionDialogAnswer = 1;
@@ -3341,18 +3341,13 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
     XtRemoveGrab(XtParent(displayInfo->questionDialog));
 }
 
-#ifdef __cplusplus
-void warningDialogCb(Widget,
-  XtPointer clientData,
-  XtPointer callbackStruct)
-#else
-void warningDialogCb(Widget widget,
-  XtPointer clientData,
-  XtPointer callbackStruct)
-#endif
+void warningDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
 {
     DisplayInfo *displayInfo = (DisplayInfo *) clientData;
     XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
+
+    UNREFERENCED(w);
+    
     switch (cbs->reason) {
     case XmCR_OK:
 	displayInfo->warningDialogAnswer = 1;

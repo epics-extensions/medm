@@ -164,14 +164,13 @@ extern XButtonPressedEvent lastEvent;
 /*
  * object palette's state transition callback - updates resource palette
  */
-#ifdef __cplusplus
-void objectMenuCallback(Widget, XtPointer clientData, XtPointer)
-#else
-void objectMenuCallback(Widget w, XtPointer clientData, XtPointer callbackStruct)
-#endif
+void objectMenuCallback(Widget w, XtPointer clientData, XtPointer cbs)
 {
     DlElementType type = (DlElementType) clientData;
     DisplayInfo *di;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
   /* Move the pointer back the original location */
     di = currentDisplayInfo;
@@ -269,19 +268,14 @@ static void objectToggleCallback(Widget w, XtPointer clientData,
     return;
 }
 
-#ifdef __cplusplus
-static void fileMenuSimpleCallback(
-  Widget,
-  XtPointer clientData,
-  XtPointer)
-#else
-static void fileMenuSimpleCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackStruct)
-#endif
+static void fileMenuSimpleCallback(Widget w, XtPointer clientData,
+  XtPointer cbs)
 {
     int buttonNumber = (int) clientData;
+    
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
     case FILE_CLOSE_BTN:
 	XtPopdown(objectS);
@@ -477,15 +471,13 @@ void createObject()
     XtManageChild(objectMW);
 }
 
-#ifdef __cplusplus
-static void helpObjectCallback(Widget, XtPointer cd, XtPointer cbs)
-#else
 static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
+    UNREFERENCED(w);
+
     switch(buttonNumber) {
     case HELP_OBJECT_PALETTE_BTN:
 	callBrowser(MEDM_HELP_PATH"/MEDM.html#ObjectPalette");

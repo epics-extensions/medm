@@ -108,18 +108,17 @@ int initEventHandlers(void)
  * event handlers
  */
 
-#ifdef __cplusplus
-void handleExecuteButtonPress(Widget, XtPointer cd, XEvent *event, Boolean *)
-#else
 void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
   Boolean *ctd)
-#endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *) cd;
     XButtonEvent *xEvent = (XButtonEvent *)event;
     Widget widget;
     DlElement *pE;
     Position x, y;
+
+    UNREFERENCED(w);
+    UNREFERENCED(ctd);
 
 #if DEBUG_POPUP
     print("\nhandleExecuteButtonPress: Entered\n");
@@ -290,52 +289,18 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
     }
 }
 
-#if 0
-#ifdef __cplusplus
-void popdownMenu(Widget, XtPointer cd, XEvent *event, Boolean *)
-#else
-void popdownMenu(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
-#endif
-{
-    DisplayInfo *displayInfo = (DisplayInfo *) cd;
-    XButtonEvent *xEvent = (XButtonEvent *)event;
-
-#if DEBUG_POPUP
-    print("\npopdownMenu: Entered\n");
-#endif    
-
-  /* Button 3 */
-    if (xEvent->button == Button3) {
-	if (globalDisplayListTraversalMode == DL_EDIT) {
-	  /* Edit menu doesn't have valid/unique displayInfo ptr,
-             hence use current */
-	    XtUnmanageChild(currentDisplayInfo->editPopupMenu);
-	} else {
-	  /* Execute menu does have valid/unique displayInfo ptr,
-             hence use it */
-	    XtUnmanageChild(displayInfo->executePopupMenu);
-	}
-    }
-}
-#endif
-
-#ifdef __cplusplus
-void handleEditEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
-#else
 void handleEditEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
-#endif
 {
+    UNREFERENCED(w);
+    UNREFERENCED(event);
+    UNREFERENCED(ctd);
+
     pointerInDisplayInfo = (DisplayInfo *)cd;
 }
 
 
-#ifdef __cplusplus
 void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
-  Boolean *)
-#else
-void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
-  Boolean *continueToDispatch)
-#endif
+  Boolean *ctd)
 {
     DisplayInfo *displayInfo = (DisplayInfo *)clientData;
     XButtonEvent *xEvent = (XButtonEvent *)event;
@@ -346,6 +311,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     Boolean objectDataOnly, foundVertex = False, foundPoly = False;
     int doTextByTyping;
     DisplayInfo *di, *cdi;
+
+    UNREFERENCED(ctd);
 
 #if DEBUG_POPUP
     print("\nhandleEditButtonPress: Entered\n");

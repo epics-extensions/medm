@@ -285,11 +285,7 @@ void medmCATerminate()
     caTaskDelete();
 }
 
-#ifdef __cplusplus
-static void medmCAFdRegistrationCb( void *, int fd, int condition)
-#else
-static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
-#endif
+static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 {
     int currentNumInps;
 
@@ -308,6 +304,8 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
     static int maxInps = 0, numInps = 0;
     int i, j, k;
     
+    UNREFERENCED(user);
+    
     if(inp == NULL && maxInps == 0) {
       /* First time through */
 	inp = (InputIdAndFd *) calloc(1,NUM_INITIAL_FDS*sizeof(InputIdAndFd));
@@ -315,7 +313,7 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 	numInps = 0;
     }
     
-    if(condition) {
+    if(opened) {
       /* Add new fd */
 	if(numInps < maxInps-1) {
 	    
@@ -373,21 +371,21 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
     }
 
 #if DEBUG_FD_REGISTRATION
-    printf("\ndmRegisterCA: fd=%d condition=%d ConnectionNumber=%d "
+    printf("\ndmRegisterCA: fd=%d opened=%d ConnectionNumber=%d "
       "numInps = %d\n\t",
-      fd,condition,ConnectionNumber(display),numInps);
+      fd,opened,ConnectionNumber(display),numInps);
     for (i = 0; i < maxInps; i++)
       printf("%d ",inp[i].fd);
     printf("\n");
 #endif
 }
 
-#ifdef __cplusplus
-static void medmProcessCA(XtPointer, int *, XtInputId *)
-#else
-static void medmProcessCA(XtPointer dummy1, int *dummy2, XtInputId *dummy3)
-#endif
+static void medmProcessCA(XtPointer cd, int *source , XtInputId *id)
 {
+    UNREFERENCED(cd);
+    UNREFERENCED(source);
+    UNREFERENCED(id);
+
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -790,6 +788,7 @@ static void medmReplaceAccessRightsEventCb(
 int caAdd(char *name, Record *pr) {
     Channel *pCh;
     int status;
+    
     if((caTask.freeListCount < 1) && (caTask.nextFree >= CA_PAGE_SIZE)) {
       /* if not enough pages, increase number of pages */
 	if(caTask.pageCount >= caTask.pageSize) {

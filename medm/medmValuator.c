@@ -561,13 +561,8 @@ static void valuatorDestroyCb(XtPointer cd) {
     return;
 }
 
-#ifdef __cplusplus
-static void handleValuatorExpose(Widget w, XtPointer clientData,
-  XEvent *pEvent, Boolean *)
-#else
 static void handleValuatorExpose(Widget w, XtPointer clientData,
   XEvent *pEvent, Boolean *continueToDispatch)
-#endif
 {
     XExposeEvent *event = (XExposeEvent *) pEvent;
     MedmValuator *pv;
@@ -584,6 +579,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     double localLopr, localHopr;
     char *localTitle;
     short precision;
+
+    UNREFERENCED(continueToDispatch);
 
     if(event->count > 0) return;
 
@@ -890,16 +887,13 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
  * Thanks to complicated valuator interactions, need to rely on
  *    Key/ButtonRelease events to re-enable updates for dlValuator display
  */
-#ifdef __cplusplus
-static void handleValuatorRelease(Widget, XtPointer passedData, XEvent *event,
-  Boolean *)
-#else
 static void handleValuatorRelease(Widget w, XtPointer passedData, XEvent *event,
   Boolean *continueToDispatch)
-#endif
 {
     MedmValuator *pv = (MedmValuator *) passedData;
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
+
+    UNREFERENCED(continueToDispatch);
 
     switch(event->type) {
     case ButtonRelease:
@@ -941,15 +935,13 @@ static void precisionToggleChangedCallback(Widget w, XtPointer clientData,
 /*
  * Text field processing callback
  */
-#ifdef __cplusplus
-static void precTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void precTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DlValuator *dlValuator = (DlValuator *) cd;
     char *stringValue;
     Widget widget;
+
+    UNREFERENCED(cbs);
 
     stringValue = XmTextFieldGetString(w);
     dlValuator->dPrecision = atof(stringValue);
@@ -967,21 +959,14 @@ static void precTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 /*
  * Text field losing focus callback
  */
-#ifdef __cplusplus
-static void precTextFieldLosingFocusCallback(
-  Widget w,
-  XtPointer cd,
-  XtPointer)
-#else
-static void precTextFieldLosingFocusCallback(
-  Widget w,
-  XtPointer cd,
+static void precTextFieldLosingFocusCallback(Widget w, XtPointer cd,
   XtPointer cbs)
-#endif
 {
     DlValuator *dlValuator = (DlValuator *) cd;
     char string[MAX_TOKEN_LENGTH];
     int tail;
+
+    UNREFERENCED(cbs);
 
   /* Losing focus - make sure that the text field remains accurate
    *   wrt dlValuator */
@@ -1032,11 +1017,7 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
     }
 }
 
-#ifdef __cplusplus
-void popupValuatorKeyboardEntry(Widget w, DisplayInfo *, XEvent *event)
-#else
 void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *event)
-#endif
 {
 #define MAX_TOGGLES 20
     Widget keyboardDialog;
@@ -1060,6 +1041,8 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     DlValuator *dlValuator;
 
     XButtonEvent *xEvent = (XButtonEvent *)event;
+
+    UNREFERENCED(displayInfo);
 
     if(globalDisplayListTraversalMode == DL_EDIT) return;
     if(xEvent->button != Button3) return;
@@ -1223,13 +1206,8 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
  * Valuatorvaluechanged - drag and value changed callback for valuator
  */
 
-#ifdef __cplusplus
-void valuatorValueChanged(Widget, XtPointer clientData,
-  XtPointer callbackStruct)
-#else
 void valuatorValueChanged(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
-#endif
 {
     MedmValuator *pv = (MedmValuator *) clientData;
     Record *pr = pv->record;
@@ -1238,6 +1216,8 @@ void valuatorValueChanged(Widget  w, XtPointer clientData,
     XButtonEvent *buttonEvent;
     XKeyEvent *keyEvent;
     double value;
+
+    UNREFERENCED(w);
 
     if(pr->connected) {
 

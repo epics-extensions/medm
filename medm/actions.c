@@ -70,19 +70,6 @@ static char *channelName;
 /* Used to cleanup damage to Choice Button */
 static Widget dragDropWidget = (Widget)0;
 
-#ifdef __cplusplus
-static Boolean DragConvertProc(
-  Widget,
-  Atom *,
-  Atom *target,
-  Atom *typeRtn,
-  XtPointer *valueRtn,
-  unsigned long *lengthRtn,
-  int *formatRtn,
-  unsigned long *,
-  XtPointer,
-  XtRequestId *)
-#else
 static Boolean DragConvertProc(
   Widget w,
   Atom *selection,
@@ -94,10 +81,15 @@ static Boolean DragConvertProc(
   unsigned long *max_lengthRtn,
   XtPointer client_data,
   XtRequestId *request_id)
-#endif
 {
     XmString cString;
     char *cText, *passText;
+
+    UNREFERENCED(w);
+    UNREFERENCED(selection);
+    UNREFERENCED(max_lengthRtn);
+    UNREFERENCED(client_data);
+    UNREFERENCED(request_id);
 
     if (channelName != NULL) {
 	if (*target != COMPOUND_TEXT) return(False);
@@ -124,15 +116,14 @@ static Boolean DragConvertProc(
 /*
  * Cleanup after drag/drop
  */
-#ifdef __cplusplus
-static void dragDropFinish(Widget w, XtPointer, XtPointer)
-#else
-static void dragDropFinish(Widget w, XtPointer client, XtPointer call)
-#endif
+static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 {
     Widget sourceIcon;
     Pixmap pixmap;
     Arg args[2];
+
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
 
   /* KE: The following is a kludge to repair Btn2 drag and drop leaving toggle
    *   buttons down in the Choice Menu.  The buttons only appear to be down.

@@ -3,7 +3,7 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-#
+# Optimization
 ifdef WIN32
 HOST_OPT = YES
 else

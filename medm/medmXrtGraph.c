@@ -64,12 +64,11 @@ int CpDataSetYElement(CpDataHandle hData, int set, int point, double y) {
 
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
-#ifdef __cplusplus
-static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer)
-#else
 static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
+    UNREFERENCED(cd);
+    UNREFERENCED(cbs);
+
   /* False means do not destroy the dialog */
     XrtPopdownPropertyEditor(w,False);
 }

@@ -86,6 +86,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 #ifdef __cplusplus
+#define UNREFERENCED(x) (x)
+#else
+#define UNREFERENCED(x)
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -156,11 +162,11 @@ extern "C" {
 	XtPointer       callbackData;
 	struct menuEntry *subItems;
     } menuEntry_t;
-
+    
     typedef void(*medmExecProc)(DisplayInfo *,DlElement *);
     typedef void(*medmWriteProc)(FILE *,DlElement *,int);
     typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
-
+    
 #include "proto.h"
 #include "medmInitTask.h"
     

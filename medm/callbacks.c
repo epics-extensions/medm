@@ -474,13 +474,12 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     }
 }
 
-#ifdef __cplusplus 
-void wmCloseCallback(Widget w, XtPointer cd, XtPointer)
-#else
 void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     ShellType shellType = (ShellType) cd;
+
+    UNREFERENCED(cbs);
+    
   /*
    * handle WM Close functions like all the separate dialog close functions,
    *   dispatch based upon widget value that the callback is called with

@@ -1859,11 +1859,7 @@ static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
  * Set Cartesian Plot Axis attributes
  * (complex - has to handle both EDIT and EXECUTE time interactions)
  */
-#ifdef __cplusplus
-static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {     
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonId = (int) cd;
@@ -1874,6 +1870,8 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
     XtPointer userData;
     MedmCartesianPlot *pcp = NULL;
     DlCartesianPlot *dlCartesianPlot = NULL;
+
+    UNREFERENCED(cbs);
 
   /* Get current cartesian plot */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
@@ -2096,11 +2094,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
     }
 }
 
-#ifdef __cplusplus
-void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
-#else
 void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int)cd;
@@ -2108,6 +2102,8 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     int k, n, iPrec;
     XcVType valF, minF, maxF, tickF;
     int axis, isMax;
+
+    UNREFERENCED(cbs);
 
 #if DEBUG_XRT
     print("\ncpAxisTextFieldActivateCallback: Entered\n");
@@ -2230,11 +2226,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
-#else
 void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
   /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS,
      too */
 {
@@ -2242,6 +2234,8 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
     XcVType minF[3], maxF[3];
+
+    UNREFERENCED(cbs);
 
 #if DEBUG_XRT
     print("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
@@ -2374,11 +2368,7 @@ void createCartesianPlotAxisDialogTextEntry(
 /*
  * Create Cartesian Plot axis dialog box
  */
-#ifdef __cplusplus
-Widget createCartesianPlotAxisDialog(Widget)
-#else
 Widget createCartesianPlotAxisDialog(Widget parent)
-#endif
 {
     Widget shell, closeButton;
     Arg args[12];
@@ -2393,9 +2383,10 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     Widget entryLabel[MAX_CP_AXIS_ELEMENTS], entryElement[MAX_CP_AXIS_ELEMENTS];
     Dimension width, height;
     static int maxWidth = 0, maxHeight = 0;
-
   /* Indexed like dlCartesianPlot->axis[]: X_ELEMENT_AXIS, Y1_ELEMENT_AXIS... */
     static char *frameLabelString[3] = {"X Axis", "Y1 Axis", "Y2 Axis",};
+
+    UNREFERENCED(parent);
 
   /* Initialize XmString value tables (since this can be edit or execute time) */
     initializeXmStringValueTables();
@@ -2795,16 +2786,15 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     }
 }
 
-#ifdef __cplusplus
-static void cartesianPlotActivate(Widget, XtPointer cd, XtPointer)
-#else
 static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonType = (int) cd;
     String **newCells;
     int i;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch (buttonType) {
     case CP_APPLY_BTN:
@@ -2846,16 +2836,14 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 
-#ifdef __cplusplus
-static void cartesianPlotAxisActivate(Widget, XtPointer cd, XtPointer)
-#else
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonType = (int) cd;
 
-    switch (buttonType) {
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
+    switch (buttonType) {
     case CP_CLOSE_BTN:
 	XtPopdown(cartesianPlotAxisS);
       /* Since done with CP Axis dialog, reset the selected widget */
@@ -2869,14 +2857,14 @@ static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
  *	mostly it passes through for the text field entry
  *	but pops up the color editor for the color field selection
  */
-#ifdef __cplusplus
-void cpEnterCellCallback(Widget, XtPointer, XtPointer cbs)
-#else
 void cpEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
     int row;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
+    
     if(call_data->column == CP_COLOR_COLUMN) {
       /* set this cell non-editable */
 	call_data->doit = False;

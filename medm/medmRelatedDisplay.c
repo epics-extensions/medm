@@ -117,13 +117,11 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     NULL,
     NULL};
 
-#ifdef __cplusplus
-static void freePixmapCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     Pixmap pixmap = (Pixmap) cd;
+
+    UNREFERENCED(cbs);
 
 /*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
     if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
@@ -217,20 +215,13 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     XFreeGC(display,gc);
 }
 
-#ifdef __cplusplus
-int relatedDisplayFontListIndex(
-  DlRelatedDisplay *dlRelatedDisplay,
-  int numButtons,
-  int)
-#else
-int relatedDisplayFontListIndex(
-  DlRelatedDisplay *dlRelatedDisplay,
-  int numButtons,
-  int maxChars)
-#endif
+int relatedDisplayFontListIndex(DlRelatedDisplay *dlRelatedDisplay,
+  int numButtons, int maxChars)
 {
     int i;
  
+    UNREFERENCED(maxChars);
+
 #define SHADOWS_SIZE 4    /* each Toggle Button has 2 shadows...*/
  
 /* more complicated calculation based on orientation, etc */
@@ -628,17 +619,10 @@ void hideDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     hideWidgetElement(displayInfo, dlElement);
 }
 
-#ifdef __cplusplus
-static void createDlRelatedDisplayEntry(
-  DlRelatedDisplayEntry *relatedDisplay,
+static void createDlRelatedDisplayEntry(DlRelatedDisplayEntry *relatedDisplay,
   int displayNumber)
-#else
-static void createDlRelatedDisplayEntry(
-  DlRelatedDisplayEntry *relatedDisplay,
-  int displayNumber)
-#endif
 {
-/* structure copy */
+  /* Structure copy */
     *relatedDisplay = globalResourceBundle.rdData[displayNumber];
 }
 
@@ -934,18 +918,16 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     }
 }
 
-#ifdef __cplusplus
-static void relatedDisplayActivate(Widget, XtPointer cd, XtPointer)
-#else
 static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonType = (int)cd;
     int i;
 
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
+
     switch(buttonType) {
- 
-    case RD_APPLY_BTN:
+     case RD_APPLY_BTN:
       /* commit changes in matrix to global matrix array data */
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    char *tmp = NULL;

@@ -84,12 +84,10 @@ static Widget channelFilePDM, openFSD;
 /********************************************
  **************** Callbacks *****************
  ********************************************/
-#ifdef __cplusplus
-static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
-#else
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
+    UNREFERENCED(cd);
+    
     switch(((XmAnyCallbackStruct *) cbs)->reason){
     case XmCR_CANCEL:
 	XtUnmanageChild(w);
@@ -100,17 +98,15 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int) cd;
     XmString label;
     int n;
     Arg args[10];
     Widget textField;
+
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
     case FILE_OPEN_BTN:

@@ -56,23 +56,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
-#if 0
-#ifdef __cplusplus
-static void createDlControl(
-  DisplayInfo *,
-  DlControl *control)
-#else
-static void createDlControl(
-  DisplayInfo *displayInfo,
-  DlControl *control)
-#endif
-{
-    strcpy(control->ctrl,globalResourceBundle.ctrl);
-    control->clr = globalResourceBundle.clr;
-    control->bclr = globalResourceBundle.bclr;
-}
-#endif
-
 void controlAttributeInit(DlControl *control) {
     control->ctrl[0] = '\0';
     control->clr = 14;

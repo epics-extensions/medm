@@ -71,7 +71,8 @@ static void messageButtonDraw(XtPointer cd);
 static void messageButtonUpdateValueCb(XtPointer cd);
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd);
 static void messageButtonDestroyCb(XtPointer);
-static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
+static void messageButtonValueChangedCb(Widget w, XtPointer clientData,
+  XtPointer callbackData);
 static void messageButtonGetRecord(XtPointer, Record **, int *);
 static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void messageButtonSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -413,20 +414,15 @@ static void messageButtonDestroyCb(XtPointer cd)
     }
 }
 
-#ifdef __cplusplus
-static void messageButtonValueChangedCb(Widget,
-  XtPointer clientData,
+static void messageButtonValueChangedCb(Widget w, XtPointer clientData,
   XtPointer callbackData)
-#else
-static void messageButtonValueChangedCb(Widget w,
-  XtPointer clientData,
-  XtPointer callbackData)
-#endif
 {
     MedmMessageButton *pmb = (MedmMessageButton *) clientData;
     Record *pd = pmb->record;
     XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
+
+    UNREFERENCED(w);
 
     if(pd->connected) {
 	if(pd->writeAccess) {

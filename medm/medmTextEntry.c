@@ -461,13 +461,12 @@ static void textEntryDestroyCb(XtPointer cd)
  * This callback is added by the textEntryModifyVerifyCallback when
  *   User input starts.
  */
-#ifdef __cplusplus
-static void textEntryLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void textEntryLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     MedmTextEntry *pte = (MedmTextEntry *) cd;
+
+    UNREFERENCED(cbs);
+    
     XtRemoveCallback(w,XmNlosingFocusCallback,
       (XtCallbackProc)textEntryLosingFocusCallback,pte);
     pte->updateAllowed = True;
@@ -503,12 +502,8 @@ static void textEntryModifyVerifyCallback(Widget w, XtPointer clientData,
     }
 }
 
-#ifdef __cplusplus
-static void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer)
-#else
 static void textEntryValueChanged(Widget  w, XtPointer clientData,
-  XtPointer dummy)
-#endif
+  XtPointer callData)
 {
     char *textValue;
     double value;
@@ -518,6 +513,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
     Boolean match;
     int i;
 
+    UNREFERENCED(callData);
 
     if((pr->connected) && pr->writeAccess) {
 	if(!(textValue = XmTextFieldGetString(w))) return;

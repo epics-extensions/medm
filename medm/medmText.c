@@ -496,18 +496,13 @@ void writeDlText(
 XtIntervalId intervalId;
 int cursorX, cursorY;
 
-#ifdef __cplusplus
-static void blinkCursor(
-  XtPointer,
-  XtIntervalId *)
-#else
-static void blinkCursor(
-  XtPointer client_data,
-  XtIntervalId *id)
-#endif
+static void blinkCursor(XtPointer client_data, XtIntervalId *id)
 {
     static Boolean state = FALSE;
  
+    UNREFERENCED(cd);
+    UNREFERENCED(id);
+
     if(state == TRUE) {
         XDrawLine(display,XtWindow(currentDisplayInfo->drawingArea),
 	  currentDisplayInfo->gc,

@@ -104,22 +104,20 @@ static Widget errMsgSendText = NULL;
 static XtIntervalId errMsgDlgTimeOutId = 0;
 
 void errMsgSendDlgCreateDlg();
-void errMsgSendDlgSendButtonCb(Widget,XtPointer,XtPointer);
-void errMsgSendDlgCloseButtonCb(Widget,XtPointer,XtPointer);
-void errMsgDlgCb(Widget,XtPointer,XtPointer);
+void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callData);
+void errMsgSendDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callData);
+void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData);
 static void medmUpdateCAStudyDlg(XtPointer data, XtIntervalId *id);
 
 /* Global variables */
 
 static Widget raiseMessageWindowTB;
 
-#ifdef __cplusplus
-void globalHelpCallback(Widget, XtPointer cd, XtPointer)
-#else
 void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int helpIndex = (int) cd;
+
+    UNREFERENCED(cbs);
 
     switch (helpIndex) {
     case HELP_MAIN:
@@ -128,13 +126,11 @@ void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-void errMsgDlgCb(Widget, XtPointer clientData, XtPointer)
-#else
 void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
-#endif
 {
     int button = (int)clientData;
+
+    UNREFERENCED(callData);
 
     switch(button) {
     case ERR_MSG_RAISE_BTN:
@@ -443,17 +439,16 @@ void errMsgDlgCreateDlg(int raise)
     }
 }
 
-#ifdef __cplusplus  
-void errMsgSendDlgSendButtonCb(Widget, XtPointer, XtPointer)
-#else
-void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
-#endif
+void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callData)
 {
     char *text, *subject, *to, cmd[1024], *p;
     FILE *pp;
 #ifndef WIN32    
     int status;
-#endif    
+#endif
+
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
 
     if (errMsgSendS == NULL) return;
     subject = XmTextFieldGetString(errMsgSendSubjectText);
@@ -517,12 +512,11 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     return;
 }
 
-#ifdef __cplusplus
-void errMsgSendDlgCloseButtonCb(Widget, XtPointer, XtPointer)
-#else
-void errMsgSendDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
-#endif
+void errMsgSendDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callData)
 {
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
+
     if (errMsgSendS != NULL)
       XtUnmanageChild(errMsgSendS);
 }
@@ -820,12 +814,11 @@ static double aveUpdateRequested = 0;
 static double aveUpdateRequestDiscarded = 0;
 static Boolean caStudyAverageMode = False;
 
-#ifdef __cplusplus
-void caStudyDlgCloseButtonCb(Widget, XtPointer, XtPointer)
-#else
-void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
-#endif
+void caStudyDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callData)
 {
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
+
     if (caStudyS != NULL) {
 	XtUnmanageChild(caStudyS);
 	caUpdateStudyDlg = False;
@@ -833,12 +826,11 @@ void caStudyDlgCloseButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     return;
 }
 
-#ifdef __cplusplus
-void caStudyDlgResetButtonCb(Widget, XtPointer, XtPointer)
-#else
-void caStudyDlgResetButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
-#endif
+void caStudyDlgResetButtonCb(Widget w, XtPointer clientData, XtPointer callData)
 {
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
+
     totalTimeElapsed = 0.0;
     aveCAEventCount = 0.0;
     aveUpdateExecuted = 0.0;
@@ -847,12 +839,11 @@ void caStudyDlgResetButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     return;
 }
 
-#ifdef __cplusplus
-void caStudyDlgModeButtonCb(Widget, XtPointer, XtPointer)
-#else
-void caStudyDlgModeButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
-#endif
+void caStudyDlgModeButtonCb(Widget w, XtPointer clientData, XtPointer callData)
 {
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
+
     caStudyAverageMode = !(caStudyAverageMode);
     return;
 }
@@ -945,12 +936,11 @@ void medmCreateCAStudyDlg() {
     }
 }
 
-#ifdef __cplusplus
-static void medmUpdateCAStudyDlg(XtPointer, XtIntervalId *id)
-#else
-static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
-#endif
+static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
 {
+    UNREFERENCED(clientData);
+    UNREFERENCED(callData);
+
     if (caUpdateStudyDlg) {
 	XmString str;
 	int taskCount;

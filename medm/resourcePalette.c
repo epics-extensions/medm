@@ -212,14 +212,12 @@ static void createBundleButtons( Widget messageF) {
     XtManageChild(separator);
 }
 
-#ifdef __cplusplus
-static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;
+
+    UNREFERENCED(cbs);
 
     switch(rcType) {
     case RDDATA_RC:
@@ -278,16 +276,14 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonId = (int)cd;
     int rcType;
     DlElement *elementPtr;
+
+    UNREFERENCED(cbs);
 
   /****** rcType (which option menu) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
@@ -386,13 +382,12 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void colorSelectCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void colorSelectCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {     
     int rcType = (int) cd;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     if(colorMW != NULL) {
 	setCurrentDisplayColorsInColorPalette(rcType,0);
@@ -418,13 +413,12 @@ static void fileOpenCallback(Widget w, int btn, XmAnyCallbackStruct *call_data)
 }
 #endif
 
-#ifdef __cplusplus
-static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int) cd;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
@@ -485,14 +479,12 @@ static void bundleMenuSimpleCallback(Widget w, int buttonNumber,
  *    +,-      First Position only
  * (Same as textFieldFloatVerifyCallback below except for .)
  */
-#ifdef __cplusplus
-void textFieldNumericVerifyCallback(Widget w, XtPointer, XtPointer callData)
-#else
 void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer callData)
-#endif
 {
     XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
     int i,abort;
+
+    UNREFERENCED(clientData);
 
 #if DEBUG_TEXT_VERIFY
     {
@@ -559,15 +551,13 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
  *    .        Anywhere, but only one
  * (Same as textFieldNumericVerifyCallback above except for .)
  */
-#ifdef __cplusplus
-void textFieldFloatVerifyCallback(Widget w, XtPointer, XtPointer callData)
-#else
 void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer callData)
-#endif
 {
     XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
     int i,j,len,newDot,replace,abort;
     char *curString;
+
+    UNREFERENCED(clientData);
 
 #if DEBUG_TEXT_VERIFY
     {
@@ -652,25 +642,23 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 #endif
 }
 
-#ifdef __cplusplus
-void scaleCallback(Widget, XtPointer cd, XtPointer pcbs)
-#else
-void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs)
-#endif
+void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;  /* the resource element type */
-    XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *) pcbs;
+    XmScaleCallbackStruct *scbs = (XmScaleCallbackStruct *)cbs;
+
+    UNREFERENCED(w);
 
   /****** Show users degrees, but internally use degrees*64 as Xlib requires */
     switch(rcType) {
     case BEGIN_RC:
-	globalResourceBundle.begin = 64*cbs->value;
+	globalResourceBundle.begin = 64*scbs->value;
 	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case PATH_RC:
-	globalResourceBundle.path = 64*cbs->value;
+	globalResourceBundle.path = 64*scbs->value;
 	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -692,17 +680,15 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs)
     }
 }
 
-#ifdef __cplusplus
-void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
-#else
 void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int)cd;
     char *stringValue;
     int redoDisplay=0;
     int clearComposite=0;
+
+    UNREFERENCED(cbs);
 
     stringValue = XmTextFieldGetString(w);
     switch(rcType) {
@@ -921,16 +907,15 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-void textFieldLosingFocusCallback(Widget, XtPointer cd, XtPointer)
-#else
 void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *newString;
     int tail;
   
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
+
     newString = string;
   /** losing focus - make sure that the text field remains accurate
       wrt globalResourceBundle */
@@ -2107,16 +2092,15 @@ static void createBundleTB(Widget bundlesRB, char *name)
 }
 #endif
 
-#ifdef __cplusplus
-static void shellCommandActivate(Widget, XtPointer cd, XtPointer)
-#else
 static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonType = (int) cd;
     String **newCells;
     int i;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cb);
 
     switch(buttonType) {
     case CMD_APPLY_BTN:
@@ -2298,16 +2282,15 @@ void updateShellCommandDataDialog()
   
 }
 
-#ifdef __cplusplus
-static void stripChartActivate(Widget, XtPointer cd, XtPointer) 
-#else
 static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs) 
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonType = (int) cd;
     String **newCells;
     int i;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
 
     switch(buttonType) {
 
@@ -2353,14 +2336,14 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
  *	mostly it passes through for the text field entry
  *	but pops up the color editor for the color field selection
  */
-#ifdef __cplusplus
-void scEnterCellCallback(Widget, XtPointer, XtPointer cbs)
-#else
 void scEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
     int row;
+    
+    UNREFERENCED(w);
+    UNREFERENCED(cbs);
+
     if(call_data->column == SC_COLOR_COLUMN) {
       /* set this cell non-editable */
 	call_data->doit = False;
@@ -2926,15 +2909,13 @@ void medmGetValues(ResourceBundle *pRB, ...)
     return;
 }
 
-#ifdef __cplusplus
-static void helpResourceCallback(Widget, XtPointer cd, XtPointer cbs)
-#else
 static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
+    UNREFERENCED(w);
+
     switch(buttonNumber) {
     case HELP_RESOURCE_PALETTE_BTN:
 	callBrowser(MEDM_HELP_PATH"/MEDM.html#ResourcePalette");

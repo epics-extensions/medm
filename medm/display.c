@@ -443,29 +443,28 @@ void dmRemoveAllDisplayInfo()
 
 /*** Callbck routines ***/
 
-#ifdef __cplusplus
-static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
-#else
 static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
-#endif
 {
     Arg args[2];
+
+    UNREFERENCED(cd);
+    UNREFERENCED(cbs);
+    
     XtSetArg(args[0],XmNx,&x);
     XtSetArg(args[1],XmNy,&y);
     XtGetValues(shell,args,2);
     lastShell = shell;
 }
 
-#ifdef __cplusplus
-static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
-#else
 static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *displayInfo = (DisplayInfo *)cd;
     Arg args[2];
     char *env = getenv("MEDM_HELP");
 
+    UNREFERENCED(cd);
+    UNREFERENCED(cbs);
+    
     if(shell == lastShell) {
 	XtSetArg(args[0],XmNx,x);
 	XtSetArg(args[1],XmNy,y);

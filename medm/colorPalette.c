@@ -106,13 +106,12 @@ static Widget colorFilePDM = NULL;
 #endif
 
 
-#ifdef __cplusplus
-static void fileOpenCallback(Widget w, XtPointer, XtPointer cbs)
-#else
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
-    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) cbs;
+    XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
+
+    UNREFERENCED(cd);
+
     switch(call_data->reason){
     case XmCR_CANCEL:
 	XtUnmanageChild(w);
@@ -123,11 +122,7 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int) cd;
 #ifdef EXTENDED_INTERFACE
@@ -136,6 +131,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     Widget textField;
 #endif
 
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
@@ -175,16 +171,15 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 
-#ifdef __cplusplus
-static void colorPaletteActivateCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
-    int colorIndex = (int) cd;
+    int colorIndex = (int)cd;
     DisplayInfo *cdi;
     Widget widget;
     DlElement *dlElement;
+
+    UNREFERENCED(cbs);
+    
 
 /* (MDA) requests to leave color palette up
    XtPopdown(colorS);
@@ -457,14 +452,13 @@ void setCurrentDisplayColorsInColorPalette(
     elementTypeWhoseColorIsBeingEditedIndex = index;
 }
 
-#ifdef __cplusplus
-static void helpColorCallback(Widget, XtPointer cd, XtPointer cbs)
-#else
 static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
+
+    UNREFERENCED(w);
+
     
     switch(buttonNumber) {
     case HELP_COLOR_PALETTE_BTN:

@@ -762,12 +762,11 @@ void limitsAttributeInit(DlLimits *limits)
       limits->precUser = PREC_DEFAULT;
 }
   
-#ifdef __cplusplus
-void createDlObject(DisplayInfo *, DlObject *object)
-#else
 void createDlObject(DisplayInfo *displayInfo, DlObject *object)
-#endif
 {
+
+    UNREFERENCED(displayInfo);
+
     object->x = globalResourceBundle.x;
     object->y = globalResourceBundle.y;
     object->width = globalResourceBundle.width;

@@ -958,17 +958,15 @@ static void stripChartConfig(MedmStripChart *psc) {
     psc->updateEnable = True;
 }
 
-#ifdef __cplusplus
-static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer)
-#else
 static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
-#endif
 {
 
     DlStripChart *dlStripChart = (DlStripChart *) cd;
     int usedWidth, usedHeight;
     int i;
     DisplayInfo *displayInfo;
+
+    UNREFERENCED(cbs);
 
     if(!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
       return;
@@ -1166,14 +1164,12 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     }
 }
 
-#ifdef __cplusplus
-static void configStripChart(XtPointer cd, XtIntervalId *)
-#else
 static void configStripChart(XtPointer cd, XtIntervalId *id)
-#endif
 {
     MedmStripChart *psc = (MedmStripChart *) cd;
     Widget widget = psc->dlElement->widget;
+
+    UNREFERENCED(id);
 
 #if(DEBUG_STRIP_CHART)
     fprintf(stderr,"configStripChart: "
@@ -1199,11 +1195,7 @@ static void configStripChart(XtPointer cd, XtIntervalId *id)
     }
 }
 
-#ifdef __cplusplus
-static void redisplayStrip(Widget widget, XtPointer cd, XtPointer)
-#else
 static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
-#endif
 {
     MedmStripChart *psc = (MedmStripChart *) cd;
     DlElement *dlElement = psc->dlElement;
@@ -1211,6 +1203,8 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     GC gc = psc->gc;
     
+    UNREFERENCED(cbs);
+
   /*                    STRIP CHART GEOMETRY
 			
 			(0,0)
@@ -1270,16 +1264,6 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	if(psc->updateEnable)
 	  stripChartDraw((XtPointer)psc);
     }
-}
-
-/* KE: This is not used */
-#ifdef __cplusplus
-static void stripChartDestroyCb(XtPointer)
-#else
-static void stripChartDestroyCb(XtPointer cd)
-#endif
-{
-    return;
 }
 
 static void stripChartUpdateValueCb(XtPointer cd) {

@@ -79,14 +79,12 @@ static DlDispatchTable shellCommandDlDispatchTable = {
     NULL,
     NULL};
 
-#ifdef __cplusplus
-static void freePixmapCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     Pixmap pixmap = (Pixmap) cd;
     
+    UNREFERENCED(cbs);
+
 /*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
     if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
     pixmap=(Pixmap)0;
@@ -271,17 +269,10 @@ void hideDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
 }
 
-#ifdef __cplusplus
-static void createDlShellCommandEntry(
-  DlShellCommandEntry *shellCommand,
+static void createDlShellCommandEntry(DlShellCommandEntry *shellCommand,
   int cmdNumber)
-#else
-static void createDlShellCommandEntry(
-  DlShellCommandEntry *shellCommand,
-  int cmdNumber)
-#endif
 {
-/* structure copy */
+  /* Structure copy */
     *shellCommand = globalResourceBundle.cmdData[cmdNumber];
 
 }
@@ -462,22 +453,17 @@ void writeDlShellCommand(
     fprintf(stream,"\n%s}",indent);
 }
 
-#ifdef __cplusplus
-static void shellCommandCallback(Widget, XtPointer client_data,
-  XtPointer cbs)
-#else
 static void shellCommandCallback(Widget w, XtPointer client_data,
   XtPointer cbs)
-#endif
-
 {
     char *command;
     DisplayInfo *displayInfo;
     XmSelectionBoxCallbackStruct *call_data =
       (XmSelectionBoxCallbackStruct *) cbs;
-
     Widget realParent = (Widget)client_data;
     displayInfo = dmGetDisplayInfoFromWidget(realParent);
+
+    UNREFERENCED(w);
 
     switch(call_data->reason) {
     case XmCR_CANCEL:
@@ -531,17 +517,8 @@ Widget createShellCommandPromptD(Widget parent)
     return (prompt);
 }
 
-#ifdef __cplusplus
-void dmExecuteShellCommand(
-  Widget  w,
-  DlShellCommandEntry *commandEntry,
-  XmPushButtonCallbackStruct *)
-#else
-void dmExecuteShellCommand(
-  Widget  w,
-  DlShellCommandEntry *commandEntry,
-  XmPushButtonCallbackStruct *call_data)
-#endif
+void dmExecuteShellCommand(Widget  w, DlShellCommandEntry *commandEntry,
+  XmPushButtonCallbackStruct *cbs)
 {
     XmString xmString;
     DisplayInfo *displayInfo;
@@ -549,6 +526,8 @@ void dmExecuteShellCommand(
     int cmdLength, argsLength;
     char shellCommand[2*MAX_TOKEN_LENGTH];
     char *promptPosition;
+
+    UNREFERENCED(cbs);
 
   /* Return if command is empty */
     cmdLength = strlen(commandEntry->command);

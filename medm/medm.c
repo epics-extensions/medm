@@ -1109,17 +1109,15 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 /********************************************
  **************** Callbacks *****************
  ********************************************/
-#ifdef __cplusplus
-static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer)
-#else
 static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     Position X, Y;
     XmString xmString;
     char *printerName;
     char *variable;
     char *prefix = "PSPRINTER=";
+
+    UNREFERENCED(cbs);
 
     switch ((int)cd) {
     case PRINTER_SETUP_OK :
@@ -1158,13 +1156,11 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void gridDlgCb(Widget w, XtPointer cd, XtPointer)
-#else
 static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
+
+    UNREFERENCED(cbs);
 
     switch ((int)cd) {
     case GRID_OK:
@@ -1194,13 +1190,11 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void viewMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int) cd;
+
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
     case VIEW_MESSAGE_WINDOW_BTN:
@@ -1214,16 +1208,14 @@ static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
-#else
 static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int)cd;
     int fromMain;
     Widget parent;
+
+    UNREFERENCED(cbs);
 
   /* simply return if no current display */
     if(cdi == NULL) return;
@@ -1365,15 +1357,13 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
     
-#ifdef __cplusplus
-static void alignMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
     case ALIGN_HORIZ_LEFT_BTN:
 	alignSelectedElements(ALIGN_HORIZ_LEFT);
@@ -1418,15 +1408,13 @@ static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void sizeMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
     case SIZE_SAME_BTN:
 	equalSizeSelectedElements();
@@ -1442,15 +1430,13 @@ static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void centerMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
     case CENTER_HORIZ_BTN:
 	centerSelectedElements(ALIGN_HORIZ_CENTER);
@@ -1471,15 +1457,13 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void orientMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
     case ORIENT_HORIZ_BTN:
 	orientSelectedElements(ORIENT_HORIZ);
@@ -1504,14 +1488,12 @@ static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void spaceMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
+
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
       /* reuse the TextAlign values here */
@@ -1533,14 +1515,12 @@ static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void gridMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
+
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
       /* reuse the TextAlign values here */
@@ -1598,14 +1578,12 @@ static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void mapCallback(Widget w, XtPointer , XtPointer)
-#else
 static void mapCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     Position X, Y;
     XmString xmString;
+
+    UNREFERENCED(cbs);
 
     XtTranslateCoords(currentDisplayInfo->shell,0,0,&X,&Y);
   /* Try to force correct popup the first time */
@@ -1633,11 +1611,7 @@ static void fileTypeCallback(
     }
 }
 
-#ifdef __cplusplus
-static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DisplayInfo *displayInfo;
     int buttonNumber = (int) cd;
@@ -1645,6 +1619,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     static Widget radioBox = 0;
     XEvent event;
     Boolean saveAll = False;
+
+    UNREFERENCED(cbs);
 
     switch(buttonNumber) {
     case FILE_NEW_BTN:
@@ -2305,14 +2281,12 @@ static void fileMenuDialogCallback(
     }
 }
 
-#ifdef __cplusplus
-static void palettesMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
 static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int) cd;
   
+    UNREFERENCED(cbs);
+
     switch(buttonNumber) {
 
     case PALETTES_OBJECT_BTN:
@@ -2346,15 +2320,13 @@ static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 }
 
-#ifdef __cplusplus
-static void helpMenuSimpleCallback(Widget, XtPointer cd, XtPointer cbs)
-#else
 static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     
+    UNREFERENCED(w);
+
     switch(buttonNumber) {
       /* implement context sensitive help */
 /*     case HELP_OVERVIEW_BTN: */
@@ -2456,12 +2428,11 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void helpDialogCallback(Widget, XtPointer, XtPointer cbs)
-#else
 static void helpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
+    UNREFERENCED(w);
+    UNREFERENCED(cd);
+
     switch(((XmAnyCallbackStruct *) cbs)->reason){
     case XmCR_OK:
     case XmCR_CANCEL:
@@ -2470,12 +2441,10 @@ static void helpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void editHelpDialogCallback(Widget, XtPointer, XtPointer cbs)
-#else
 static void editHelpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
+    UNREFERENCED(w);
+
     switch(((XmAnyCallbackStruct *) cbs)->reason){
     case XmCR_OK:
     case XmCR_CANCEL:
@@ -2484,15 +2453,13 @@ static void editHelpDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-#ifdef __cplusplus
-static void modeCallback(Widget, XtPointer cd, XtPointer cbs)
-#else
 static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
 {
     DlTraversalMode mode = (DlTraversalMode)cd;
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *)cbs;
     DisplayInfo *displayInfo;
+
+    UNREFERENCED(w);
 
 #if DEBUG_RADIO_BUTTONS
     {
@@ -4154,13 +4121,12 @@ static void createMain()
     XtRealizeWidget(mainShell);
 }
 
-#ifdef __cplusplus
-static Boolean medmInitWorkProc(XtPointer)
-#else
 static Boolean medmInitWorkProc(XtPointer cd)
-#endif
 {
     int i;
+
+    UNREFERENCED(cd);
+
     for(i=0; i<LAST_INIT_C; i++) {
 	if(medmInitTask[i].init == False) {
 	    medmInitTask[i].init = medmInitTask[i].initTask();
