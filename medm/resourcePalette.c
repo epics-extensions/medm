@@ -2501,8 +2501,8 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 	}
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
+	XtPopdown(shellCommandS);
 	break;
-
     case CMD_CLOSE_BTN:
 	XtPopdown(shellCommandS);
 	break;
@@ -2571,7 +2571,7 @@ Widget createShellCommandDataDialog(
       xbaeMatrixWidgetClass,cmdForm,args,n);
 
 
-    xmString = XmStringCreateLocalized("Close");
+    xmString = XmStringCreateLocalized("Cancel");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(cmdForm,"closeButton",args,n);
@@ -2693,8 +2693,8 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
+	XtPopdown(cartesianPlotS);
 	break;
-
     case CP_CLOSE_BTN:
 	XtPopdown(cartesianPlotS);
 	break;
@@ -2831,7 +2831,7 @@ Widget createCartesianPlotDataDialog(Widget parent)
       cpEnterCellCallback,(XtPointer)NULL);
 
 
-    xmString = XmStringCreateLocalized("Close");
+    xmString = XmStringCreateLocalized("Cancel");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(cpForm,"closeButton",args,n);
@@ -2956,6 +2956,7 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
+	XtPopdown(stripChartS);
 	break;
     case SC_CLOSE_BTN:
 	XtPopdown(stripChartS);
@@ -3081,7 +3082,7 @@ Widget createStripChartDataDialog(Widget parent)
     XtAddCallback(scMatrix,XmNenterCellCallback,
       scEnterCellCallback,(XtPointer)NULL);
 
-    xmString = XmStringCreateLocalized("Close");
+    xmString = XmStringCreateLocalized("Cancel");
     n = 0;
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     closeButton = XmCreatePushButton(scForm,"closeButton",args,n);

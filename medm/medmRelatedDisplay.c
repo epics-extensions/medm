@@ -892,8 +892,8 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	if (currentDisplayInfo->hasBeenEditedButNotSaved == False)
 	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	XtPopdown(relatedDisplayS);
 	break;
- 
     case RD_CLOSE_BTN:
 	if (XtClass(w) == xmPushButtonWidgetClass) {
 	    XtPopdown(relatedDisplayS);
@@ -1001,7 +1001,7 @@ Widget createRelatedDisplayDataDialog (Widget parent)
 	  NULL);
     }
 
-    closeButton = XtVaCreateWidget("Close",
+    closeButton = XtVaCreateWidget("Cancel",
       xmPushButtonWidgetClass, rdForm,
       NULL);
     XtAddCallback(closeButton,XmNactivateCallback,
