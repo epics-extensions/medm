@@ -64,6 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_REPAINT 0
 #define DEBUG_UPDATE_STATE 0
 #define DEBUG_MEM 0
+#define DEBUG_REDRAW 0
 
 #include "medm.h"
 
@@ -1216,11 +1217,29 @@ static void updateTaskRedrawPixmap(DisplayInfo *displayInfo,
     DlObject *po;
     XRectangle clipBox;
     
+#if DEBUG_REDRAW
+    static int count=0;
+    print("\nupdateTaskRedrawPixmap\n");
+    {
+	char string[80];
+	DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+	DlObject *po = &(pE->structure.display->object);
+	sprintf(string,"DrawingArea Pixmap Before %d",++count);
+	dumpPixmap(displayInfo->drawingAreaPixmap,
+	  po->width,po->height,string);
+    }
+#endif		
+
     if(displayInfo == NULL || region == NULL) return;
 
   /* Determine the bounding rectangle */
     XClipBox(region, &clipBox);
     
+#if DEBUG_REDRAW
+    print("clipBox: x=%hd y=%hd width=%hu height=%hu\n",
+      clipBox.x,clipBox.y,clipBox.width,clipBox.height);
+#endif		
+
   /* Fill the (clipped) background with the background color inside
      the bounding rectangle */
     XSetForeground(display, displayInfo->gc,
@@ -1245,23 +1264,52 @@ static void updateTaskRedrawPixmap(DisplayInfo *displayInfo,
 	    pE = pE->next;
 	    continue;
 	}
+#if DEBUG_REDRAW
+	print("  %s: x=%d y=%d width=%d height=%d %s\n",
+	  elementType(pE->type),
+	  po->x,po->y,po->width,po->height,
+	  pE->hidden?"hidden":"");
+	
+#endif		
 	if(pE->type == DL_Composite) {
 	  /* Element is composite */
 	    updateTaskCompositeRedrawPixmap(displayInfo, pE->structure.composite,
 	      region);
-#if 1
 	} else if(pE->updateType == STATIC_GRAPHIC) {
-	  /* Element is a static drawing object */
-#else
-	} else {
-	  /* Element is not composite */
-#endif
+	  /* Element is a non-composite, static drawing object */
+#if DEBUG_REDRAW
+	    print("    STATIC_GRAPHIC\n");
+#endif	    
 	    if(!pE->hidden && pE->run->execute) {
+#if DEBUG_REDRAW
+		print("    execute\n");
+#endif	    
 		pE->run->execute(displayInfo, pE);
+#if DEBUG_REDRAW
+    print("Dumping pixmap\n");
+    {
+	char string[80];
+	DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+	DlObject *po = &(pE->structure.display->object);
+	sprintf(string,"DrawingArea Pixmap After Execute %d",count);
+	dumpPixmap(displayInfo->drawingAreaPixmap,
+	  po->width,po->height,string);
+    }
+#endif		
 	    }
 	}
 	pE = pE->next;
     }
+#if DEBUG_REDRAW
+    {
+	char string[80];
+	DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+	DlObject *po = &(pE->structure.display->object);
+	sprintf(string,"DrawingArea Pixmap After %d",count);
+	dumpPixmap(displayInfo->drawingAreaPixmap,
+	  po->width,po->height,string);
+    }
+#endif		
 }
 
 /* Called by updateTaskRedrawPixmap */
@@ -1287,19 +1335,27 @@ static void updateTaskCompositeRedrawPixmap(DisplayInfo *displayInfo,
 	    pE = pE->next;
 	    continue;
 	}
+#if DEBUG_REDRAW
+	print("    %s: x=%d y=%d width=%d height=%d %s\n",
+	  elementType(pE->type),
+	  po->x,po->y,po->width,po->height,
+	  pE->hidden?"hidden":"");
+	
+#endif		
 	if(pE->type == DL_Composite) {
 	  /* Element is composite */
 	    updateTaskCompositeRedrawPixmap(displayInfo,
 	      pE->structure.composite, region);
-#if 1	    
 	} else if(pE->updateType == STATIC_GRAPHIC) {
-	  /* Element is a static drawing object */
-#else
-	} else {
-	  /* Element is not composite */
-#endif
+	  /* Element is a non-composite, static drawing object */
+#if DEBUG_REDRAW
+	    print("      STATIC_GRAPHIC\n");
+#endif	    
 	    if(!pE->hidden && pE->run->execute) {
 		pE->run->execute(displayInfo, pE);
+#if DEBUG_REDRAW
+		print("      execute\n");
+#endif	    
 	    }
 	}
 	pE = pE->next;

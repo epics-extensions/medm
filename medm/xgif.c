@@ -398,8 +398,15 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Drawable drawable)
 	}
 #endif	
       /* Draw  */
+#if 0
+      /* Use internal GC */
 	XPutImage(display,drawable,gif->theGC,CUREXPIMAGE(gif),
 	  0,0,x,y,w,h);
+#else
+      /* Use the displayInfo GC so it will clip properly */
+	XPutImage(display,drawable,displayInfo->gc,CUREXPIMAGE(gif),
+	  0,0,x,y,w,h);
+#endif	
     }
 }
 
