@@ -92,7 +92,7 @@ Bool standard_out = True;
 #if DEBUG
   Bool debug = True;
 #else
-  Bool debug = True;
+  Bool debug = False;
 #endif
 long add_pixel_value = 0;
 
