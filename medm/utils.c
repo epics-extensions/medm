@@ -2654,7 +2654,7 @@ void spaceSelectedElements2D(void)
 		pE = dlElement1->structure.element;
 		if(pE->type != DL_Display) {
 		    DlObject *po =  &(pE->structure.rectangle->object);
-		    xcen1 = po->x + .5*(double)po->width +.5;
+		    xcen1 = (int)(po->x + .5*(double)po->width +.5);
 		    if(xcen1 >= xleft && xcen1 <= xright) nrows1++;
 		}
 		dlElement1 = dlElement1->next;
@@ -2664,8 +2664,8 @@ void spaceSelectedElements2D(void)
 	dlElement = dlElement->next;
     }
     if(n < 1) return;
-    avgH = (double)(avgH)/(double)(n)+.5;
-    deltaY = (double)(maxY - minY)/(double)nrows + .99999;
+    avgH = (int)((double)(avgH)/(double)(n)+.5);
+    deltaY = (int)((double)(maxY - minY)/(double)nrows + .99999);
     maxY = minY + nrows * deltaY;     /* (Adjust maxY) */
 
   /* Allocate array to hold the number of elements for each row */
@@ -2683,7 +2683,7 @@ void spaceSelectedElements2D(void)
 	if(pE->type != DL_Display) {
 	    DlObject *po =  &(pE->structure.rectangle->object);
 	    ytop = po->y;
-	    ycen = po->y + .5*(double)po->height +.5;
+	    ycen = (int)(po->y + .5*(double)po->height +.5);
 	    irow = (ycen - minY) / deltaY;
 	    if(irow < 0) irow = 0;
 	    else if(irow >= nrows) irow = nrows-1;
@@ -2726,7 +2726,7 @@ void spaceSelectedElements2D(void)
 	    if(pE->type != DL_Display) {
 		DlObject *po =  &(pE->structure.rectangle->object);
 		ytop = po->y;
-		ycen = po->y + .5*(double)po->height +.5;
+		ycen = (int)(po->y + .5*(double)po->height +.5);
 		irow = (ycen - minY) / deltaY;
 		if(irow < 0) irow = 0;
 		else if(irow >= nrows) irow = nrows-1;
@@ -3142,8 +3142,8 @@ void equalSizeSelectedElements(void)
 	dlElement = dlElement->next;
     }
     if(n < 1) return;
-    avgW = (double)(avgW)/(double)(n)+.5;
-    avgH = (double)(avgH)/(double)(n)+.5;
+    avgW = (int)((double)(avgW)/(double)(n)+.5);
+    avgH = (int)((double)(avgH)/(double)(n)+.5);
 
 /* Loop and set width and height values to average */
     dlElement = LastDlElement(cdi->selectedDlElementList);

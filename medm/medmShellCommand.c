@@ -95,10 +95,10 @@ static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
 {
     typedef struct { float x; float y;} XY;
 /* icon is based on the 25 pixel (w & h) bitmap shellCommand25 */
-    static float rectangleX = 12./25., rectangleY = 4./25.,
-      rectangleWidth = 3./25., rectangleHeight = 14./25.;
-    static float dotX = 12./25., dotY = 20./25.,
-      dotWidth = 3./25., dotHeight = 3./25.;
+    static float rectangleX = (float)(12./25.), rectangleY = (float)(4./25.),
+      rectangleWidth = (float)(3./25.), rectangleHeight = (float)(14./25.);
+    static float dotX = (float)(12./25.), dotY = (float)(20./25.),
+      dotWidth = (float)(3./25.), dotHeight = (float)(3./25.);
     GC gc;
 
     gc = XCreateGC(display,pixmap,0,NULL);

@@ -105,14 +105,14 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
 {
     typedef struct { float x; float y;} XY;
 /* Icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
-    static float rectangleX = 4./25., rectangleY = 4./25.,
-      rectangleWidth = 13./25., rectangleHeight = 14./25.;
+    static float rectangleX = (float)(4./25.), rectangleY = (float)(4./25.),
+      rectangleWidth = (float)(13./25.), rectangleHeight = (float)(14./25.);
     static XY segmentData[] = {
-        {16./25.,9./25.},
-        {22./25.,9./25.},
-        {22./25.,22./25.},
-        {10./25.,22./25.},
-        {10./25.,18./25.},
+        {(float)(16./25.),(float)(9./25.)},
+        {(float)(22./25.),(float)(9./25.)},
+        {(float)(22./25.),(float)(22./25.)},
+        {(float)(10./25.),(float)(22./25.)},
+        {(float)(10./25.),(float)(18./25.)},
     };
     GC gc;
     XSegment segments[4];
