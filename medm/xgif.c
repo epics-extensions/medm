@@ -70,6 +70,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_GIF 0
 
 /* include files */
+#include <string.h>
 #include "medm.h"
 #include "xgif.h"
 #include <X11/Xlib.h>
@@ -496,12 +497,18 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 		strcpy(fullPathName,dirName);
 		strcat(fullPathName,"/");
 		strcat(fullPathName,fname);
+#ifdef WIN32
+	      /* WIN32 opens files in text mode by default and then throws out CRLF */
+		fp = fopen(fullPathName,"rb");
+#else
 		fp = fopen(fullPathName,"r");
+#endif
 	    }
 	}
     }
     if (fp == NULL) {
-	medmPrintf(1,"\nloadGIF: File not found:\n  %s\n",fname);
+	medmPrintf(1,"\nloadGIF: Cannot open file:\n"
+	  "  %s\n",fname);
 	return(False);
     }
 
@@ -511,18 +518,23 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     fseek(fp, 0L, SEEK_SET);
     success = True;
 
-    if (!(ptr = RawGIF = (Byte *) malloc(filesize))) {
-	medmPrintf(1,"\nloadGIF: Not enough memory to read GIF file\n");
+    if (!(ptr = RawGIF = (Byte *)malloc(filesize))) {
+	medmPrintf(1,"\nloadGIF: Not enough memory to store GIF file:\n"
+	  "  %s\n",fname);
 	success = False;
     }
-
-    if (!(Raster = (Byte *) malloc(filesize))) {
-	medmPrintf(1,"\nloadGIF: Not enough memory to read GIF file\n");
+    
+    if (!(Raster = (Byte *)malloc(filesize))) {
+	medmPrintf(1,"\nloadGIF: Not enough memory to store GIF file [2]:\n"
+	  "  %s\n",fname);
 	success = False;
     }
 
     if (fread((char *)ptr, filesize, 1, fp) != 1) {
-	medmPrintf(1,"\nloadGIF: GIF data read failed\n");
+	char *errstring=strerror(ferror(fp));
+
+	medmPrintf(1,"\nloadGIF: Cannot read file:\n"
+	  "  %s\n  %s\n",fname,errstring);
 	success = False;
     }
 
