@@ -59,7 +59,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_TIME 0
 
 #ifdef CHECK_NAN
-#include <ieeefp.h>
+/* Note that for Solaris isnand and isnanf are defined in ieeefp.h.
+ *  isnan is the same as isnand and is supposed to be defined in math.h
+ *    but it isn't.
+ * For Sun4 there is no isnand or isnanf and isnan is defined in math.h.
+ * Consequently we use isnan and prototype it explicitly.
+ * This should work on all systems and be safe.
+ */
+#include <math.h>
+extern int isnan(double);     /* Because it is not in math.h as it should be */
 #define NAN_SUBSTITUTE 0.0
 #define SAFEFLOAT(x) (safeFloat(x))
 #else
@@ -169,7 +177,7 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
 float safeFloat(double x) {
     static int nerrs=0;
     
-    if (isnand(x)) {
+    if (isnan(x)) {
 	if(nerrs < 50) {
 	    nerrs++;
 	    medmPrintf("\nCartesianPlot: Value is NaN, using %g\n",NAN_SUBSTITUTE);
