@@ -857,7 +857,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 
 		XWindowEvent(display,XtWindow(cdi->drawingArea),
 		  ButtonReleaseMask|Button1MotionMask,&newEvent);
-		doTextByTyping = 1;
+		if(newEvent.type == ButtonRelease) doTextByTyping = 1;
 		XPutBackEvent(display,&newEvent);
 #if DEBUG_CREATE
 		printf("               newEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
