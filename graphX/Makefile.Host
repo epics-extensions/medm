@@ -1,0 +1,53 @@
+# Makefile.Host for medm/graphX
+
+TOP = ../../../..
+include $(TOP)/config/CONFIG_EXTENSIONS
+
+# Needs work to handle CMPLR=STRICT
+#CMPLR = STRICT
+#HOST_OPT = NO
+#CC += -g
+
+ifdef WIN32
+USR_CFLAGS += /DWIN32 /D_WINDOWS
+endif
+
+USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
+
+# The default should be SHARED_LIBRARIES=NO
+# The following has not been tested well
+ifeq ($(SHARED_LIBRARIES),YES)
+
+PROD_LIBS = ca Com
+USR_LIBS_DEFAULT = Xm Xt X11
+ifeq ($(EXCEED),Exceed5)
+USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib
+else
+USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib
+endif
+
+ca_DIR = $(EPICS_BASE_LIB)
+Com_DIR = $(EPICS_BASE_LIB)
+HCLXt_DIR = $(X11_LIB)
+X11_DIR = $(X11_LIB)
+XlibGUI_DIR = $(X11_LIB)
+Xlib_DIR = $(X11_LIB)
+Xt_DIR = $(X11_LIB)
+XmStatic_DIR = $(MOTIF_LIB)
+
+endif     #ifeq ($(SHARED_LIBRARIES),YES)
+
+LIBSRCS += algorithms.c
+LIBSRCS += graph.c
+LIBSRCS += graph3d.c
+LIBSRCS += graphInteraction.c
+LIBSRCS += seql.c 
+LIBSRCS += seqlInteraction.c
+#LIBSRCS += strip.c 
+LIBSRCS += surface.c
+LIBSRCS += surfaceInternals.c
+LIBSRCS += utils.c
+
+LIBRARY = GraphX
+
+include $(TOP)/config/RULES.Host
