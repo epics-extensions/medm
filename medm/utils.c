@@ -1995,6 +1995,7 @@ int copyElementsIntoDisplay()
     }
     XRaiseWindow(display,XtWindow(cdi->shell));
     XSetInputFocus(display,XtWindow(cdi->shell),RevertToParent,CurrentTime);
+    unhighlightSelectedElements();
 
   /* Let user drag to paste */
     if(!doPasting(&deltaX, &deltaY)) return 0;
