@@ -227,7 +227,7 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
     gif->currentWidth = w;
     gif->currentHeight= h;
 
-    if (w==gif->iWIDE && h==gif->iHIGH) {		/* very special case */
+    if ((int)w==gif->iWIDE && (int)h==gif->iHIGH) {		/* very special case */
         if (gif->expImage != gif->theImage) {
             if (gif->expImage != NULL)
 	      XDestroyImage((XImage *)(gif->expImage));

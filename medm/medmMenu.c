@@ -184,7 +184,7 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
       /* resize children */
 	XtVaGetValues(localWidget,XmNsubMenuId,&menu,NULL);
 	XtVaGetValues(menu,XmNnumChildren,&numChildren,XmNchildren,&children,NULL);
-	for (i = 0; i < numChildren; i++) {
+	for (i = 0; i < (int)numChildren; i++) {
 #if 0
 	  /* KE: Should not be necessary */
 	    XtUninstallTranslations(children[i]);
@@ -405,7 +405,6 @@ static void menuValueChangedCb(
   XtPointer clientData,
   XtPointer callbackStruct)
 {
-    Arg args[3];
     Menu *pm;
     Record *pd;
     int btnNumber = (int) clientData;

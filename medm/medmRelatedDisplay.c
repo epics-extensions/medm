@@ -188,8 +188,7 @@ int relatedDisplayFontListIndex(
   int maxChars)
 #endif
 {
-    int i, useNumButtons;
-    short sqrtNumButtons;
+    int i;
  
 #define SHADOWS_SIZE 4    /* each Toggle Button has 2 shadows...*/
  
@@ -218,8 +217,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Arg args[30];
     int n;
     int i, displayNumber=0, index;
-    char *name, *argsString, *label;
-    char **nameArgs;
+    char *label;
     XmString xmString;
     Pixmap pixmap;
     Dimension pixmapH, pixmapW;
@@ -415,8 +413,6 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
 	Arg wargs[20];
 	int i, n, maxChars, usedWidth, usedHeight;
-	short sqrtEntries;
-	double dSqrt;
 	XmFontList fontList;
 	Pixel fg, bg;
 	Widget widget;
@@ -789,10 +785,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay)
 { 
     FILE *filePtr;
-    int suffixLength, prefixLength;
     char *argsString, token[MAX_TOKEN_LENGTH];
     char filename[MAX_TOKEN_LENGTH];
-    char *adlPtr;
     char processedArgs[2*MAX_TOKEN_LENGTH];
 
     strncpy(filename, pEntry->name, MAX_TOKEN_LENGTH);
@@ -839,7 +833,6 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     int buttonType = (int) cd;
-    String **newCells;
     int i;
 
     switch (buttonType) {
@@ -895,11 +888,10 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
  */
 Widget createRelatedDisplayDataDialog (Widget parent)
 {
-    Widget form, shell, applyButton, closeButton;
+    Widget shell, applyButton, closeButton;
     Dimension cWidth, cHeight, aWidth, aHeight;
     Arg args[12];
-    XmString xmString;
-    int i, j, n;
+    int i, n;
     
 /*
  * now create the interface

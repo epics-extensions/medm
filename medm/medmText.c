@@ -469,7 +469,6 @@ DlElement *handleTextCreate(int x0, int y0)
     int stringIndex;
     int usedWidth, usedHeight;
     size_t length;
-    DlElement **array;
     int fontIndex;
  
     stringIndex = 0;

@@ -280,15 +280,13 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
     }
 }
 
-static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
+static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
+{
     Record *pd = (Record *) cd;
     ChoiceButtons *cb = (ChoiceButtons *) pd->clientData;
     DlElement *dlElement = cb->dlElement;
     DlChoiceButton *pCB = dlElement->structure.choiceButton;
     int i;
-    short sqrtEntries;
-    double dSqrt;
-    XmFontList fontList;
     Pixel fg, bg;
     char *labels[16];
     Widget buttons[16];
@@ -481,8 +479,6 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 
 void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Arg args[24];
-    int n;
     Widget buttons[2];
     DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
     char *labels[] = {"0...","1..."};

@@ -91,7 +91,6 @@ static DlDispatchTable imageDlDispatchTable = {
 
 void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Arg args[10];
     GIFData *gif;
     DlImage *dlImage = dlElement->structure.image;
 
@@ -167,7 +166,6 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
     case XmCR_OK:
 	if (call_data->value != NULL && call_data->dir != NULL) {
 	    DlElement *dlElement = *((DlElement **) cd);
-	    DlElement **array;
 	    DlImage *dlImage;
 	    if (!dlElement) return;
 	    dlImage = dlElement->structure.image;
@@ -196,7 +194,6 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
 DlElement* handleImageCreate()
 {
     XmString buttons[NUM_IMAGE_TYPES-1];
-    XmButtonType buttonType[NUM_IMAGE_TYPES-1];
     Widget radioBox, form, frame, typeLabel;
     int i, n;
     Arg args[10];

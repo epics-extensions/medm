@@ -1120,8 +1120,6 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    Position X, Y;
-    XmString xmString;
 
     switch ((int)cd) {
     case GRID_OK:
@@ -1578,9 +1576,6 @@ static void fileTypeCallback(
   int buttonNumber,
   XmToggleButtonCallbackStruct *call_data)
 {
-    Widget fsb;
-    Arg args[4];
- 
     if (call_data->set == False) return;
     switch(buttonNumber) {
     case 0:
@@ -1601,7 +1596,6 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     int buttonNumber = (int) cd;
     Widget widget;
     static Widget radioBox = 0;
-    XmString dirMask;
     XEvent event;
 
     switch(buttonNumber) {
@@ -1660,8 +1654,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (!saveAsPD) {
 	    Arg args[10];
 	    XmString buttons[NUM_IMAGE_TYPES-1];
-	    XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-	    Widget rowColumn, frame, typeLabel;
+	    Widget rowColumn, typeLabel;
 	    int i, n;
 
 	    XmString label = XmStringCreateLocalized("*.adl");
@@ -1977,10 +1970,10 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     return True;
 }
 
-void medmExit() {
+void medmExit()
+{
     char *filename, *tmp;
     char str[2*MAX_FILE_CHARS];
-    Arg args[2];
     Boolean saveAll = False;
     Boolean saveThis = False;
 
@@ -2067,8 +2060,6 @@ static void fileMenuDialogCallback(
     XmSelectionBoxCallbackStruct *select;
     char *filename, warningString[2*MAX_FILE_CHARS];
     XmString warningXmstring;
-
-    char backupFilename[MAX_FILE_CHARS];
 
     switch(call_data->reason){
     case XmCR_CANCEL:
@@ -2178,8 +2169,6 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-    Widget widget;
-    XEvent event;
     
     switch(buttonNumber) {
       /* implement context sensitive help */
@@ -2992,8 +2981,7 @@ main(int argc, char *argv[])
     Window targetWindow;
 
     Boolean attachToExistingMedm, completeClientMessage;
-    char fullPathName[FULLPATHNAME_SIZE+1],
-      currentDirectoryName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
+    char fullPathName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
     unsigned char *propertyData;
     int status, format;
     unsigned long nitems, left;
@@ -3675,15 +3663,8 @@ void createEditModeMenu(DisplayInfo *displayInfo)
 
 static void createMain()
 {
-
-    XmString buttons[N_MAX_MENU_ELES];
-    KeySym keySyms[N_MAX_MENU_ELES];
-    String accelerators[N_MAX_MENU_ELES];
-    XmString acceleratorText[N_MAX_MENU_ELES];
     XmString label;
-    XmButtonType buttonType[N_MAX_MENU_ELES];
     Widget mainBB, frame, frameLabel;
-    char name[12];
     int n;
     Arg args[20];
 

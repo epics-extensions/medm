@@ -380,7 +380,7 @@ static void calcYAxisLabelWidth(StripChart *psc) {
 	width = XTextWidth(fontTable[sccd.axisLabelFont],text,range[i].width);
 	if (width > maxWidth)
 	  maxWidth = width;
-	if (range[i].numDot > maxDot) maxDot = range[i].numDot;
+	if ((int)range[i].numDot > maxDot) maxDot = range[i].numDot;
     }
     sccd.yAxisLabelWidth = maxWidth + (maxDot) * sccd.lineSpace;
     sccd.yAxisLabelTextWidth = maxWidth;
@@ -521,24 +521,25 @@ static void stripChartConfig(StripChart *psc) {
 
   /* calc the height of the bottom margin, expands if necessary */
     height = sccd.shadowThickness + sccd.axisLabelFontHeight * 2 + sccd.margin * 3 + sccd.markerHeight + 2;
-    if ((psc->h - psc->dataY1 - 1) < height) {
+    if ((int)(psc->h - psc->dataY1 - 1) < height) {
 	psc->dataY1 = psc->h - height - 1;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
-    if ((psc->w - psc->dataX1 - 1) < height) {
+    if ((int)(psc->w - psc->dataX1 - 1) < height) {
 	psc->dataX1 = psc->w - height - 1;
 	psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
     }
 
     calcYAxisLabelHeight(psc);
 
-  /* make sure the height of y-axis label won't bigger than the height of the graph allowed */
+  /* make sure the height of y-axis label won't bigger than the allowed height
+   *   of the graph */
     heightExt = (sccd.yAxisLabelHeight - psc->dataHeight + 1) / 2;
-    if (heightExt + sccd.shadowThickness > psc->dataY0) {
+    if (heightExt + sccd.shadowThickness > (int)psc->dataY0) {
 	psc->dataY0 = heightExt + sccd.shadowThickness;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
-    if (heightExt + sccd.shadowThickness > (psc->h - psc->dataY1)) {
+    if (heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
 	psc->dataY1 = psc->h - heightExt - sccd.shadowThickness - 1;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
@@ -556,15 +557,16 @@ static void stripChartConfig(StripChart *psc) {
 	psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
     }
 
-  /* make sure the width of x-axis label won't bigger than the widht of the graph allowed */
-    if (widthExt + sccd.shadowThickness > (psc->w - psc->dataX1 - 1)) {
+  /* make sure the width of x-axis label won't bigger than the allowed width
+   *   of the graph */
+    if (widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
 	psc->dataX1 = psc->w - widthExt - sccd.shadowThickness - 1;
 	psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
     }
 
   /* do the second pass */
   /* if the graph is too small do somethings */
-    if (psc->dataHeight < psc->h / 2) {
+    if (psc->dataHeight < psc->h/2U) {
 	squeezeSpace = True;
 	if ((dlStripChart->plotcom.title == NULL) 
 	  || (strlen(dlStripChart->plotcom.title) == 0)) {
@@ -596,17 +598,19 @@ static void stripChartConfig(StripChart *psc) {
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
-      /* make sure the height of y-axis label won't bigger than the height of the graph allowed */
-	if (heightExt + sccd.shadowThickness > psc->dataY0) {
+      /* make sure the height of y-axis label won't be bigger than the allowed
+       *   height of the graph */
+	if (heightExt + sccd.shadowThickness > (int)psc->dataY0) {
 	    psc->dataY0 = heightExt + sccd.shadowThickness;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	}
-	if (heightExt + sccd.shadowThickness> (psc->h - psc->dataY1)) {
+	if (heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
 	    psc->dataY1 = psc->h - heightExt- sccd.shadowThickness - 1;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	}
-      /* make sure the width of x-axis label won't bigger than the widht of the graph allowed */
-	if (widthExt + sccd.shadowThickness > (psc->w - psc->dataX1 - 1)) {
+      /* make sure the width of x-axis label won't be bigger than the allowed
+       *   width of the graph */
+	if (widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
 	    psc->dataX1 = psc->w - widthExt - sccd.shadowThickness - 1;
 	    psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	}
@@ -1395,7 +1399,8 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
 	    psc->nextSlot += totalPixel;
-	    if (psc->nextSlot >= psc->dataWidth) psc->nextSlot -= psc->dataWidth;
+	    if (psc->nextSlot >= (int)psc->dataWidth)
+	      psc->nextSlot -= psc->dataWidth;
 	}
     }
   /* remember the min and max and current pen position */
@@ -1419,7 +1424,7 @@ static void stripChartDraw(XtPointer cd) {
   /* make sure the plot is up to date */
     stripChartUpdateValueCb((XtPointer)psc->record[0]);
     startPos = psc->nextSlot;
-    if (startPos > psc->dataWidth) {
+    if (startPos > (int)psc->dataWidth) {
 	startPos = 0;
     }
     if (startPos) {
@@ -1651,9 +1656,10 @@ static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlStripChart *dlStripChart = p->structure.stripChart;
-    int i;
+
     medmGetValues(pRCB,
       X_RC,          &(dlStripChart->object.x),
       Y_RC,          &(dlStripChart->object.y),

@@ -138,9 +138,6 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     unsigned int uiw, uih;
     Dimension width, height, goodWidth, goodHeight, oldWidth, oldHeight;
     Boolean resized;
-    XKeyEvent *key;
-    Modifiers modifiers;
-    KeySym keysym;
     Arg args[4];
     XtPointer userData;
     DlElement *elementPtr;

@@ -662,7 +662,6 @@ DlElement *handlePolygonCreate(int x0, int y0)
     DlElement *dlElement;
 #define INITIAL_NUM_POINTS 16
     int pointsArraySize = INITIAL_NUM_POINTS;
-    int i;
     int x01, y01;
 
     int deltaX, deltaY, okIndex;

@@ -286,7 +286,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonId = (int)cd;
-    int i, rcType;
+    int rcType;
     DlElement *elementPtr;
 
   /****** rcType (which option menu) is stored in userData */
@@ -672,7 +672,6 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     int buttonNumber = (int) cd;
-    Arg args[10];
 
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
@@ -883,7 +882,6 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;  /* the resource element type */
     XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *) pcbs;
-    int i;
 
   /****** Show users degrees, but internally use degrees*64 as Xlib requires */
     switch(rcType) {
@@ -924,8 +922,6 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;
     char *stringValue;
-    DlElement *dyn;
-    int i;
 
     stringValue = XmTextFieldGetString(w);
     switch(rcType) {
@@ -1584,13 +1580,11 @@ static void initializeXmStringValueTables() {
  ****************************************************************************/
 void createResource() {
     DisplayInfo *cdi=currentDisplayInfo;
-    Widget entriesSW, bundlesSW, resourceMB, messageF, resourceHelpPDM,
-      menuHelpWidget;
+    Widget entriesSW, bundlesSW, resourceMB, messageF, resourceHelpPDM;
     XmString buttons[N_MAX_MENU_ELES];
     KeySym keySyms[N_MAX_MENU_ELES];
     XmButtonType buttonType[N_MAX_MENU_ELES];
     int i, n;
-    char name[20];
     Arg args[10];
 
   /****** If resource palette has already been created, simply return */
@@ -4014,8 +4008,6 @@ static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-    Widget widget;
-    XEvent event;
     
     switch(buttonNumber) {
     case HELP_RESOURCE_PALETTE_BTN:
@@ -4217,9 +4209,6 @@ void setResourcePaletteEntries()
 {
     DisplayInfo *cdi=currentDisplayInfo;
   /* Must normalize back to 0 as index into array for element type */
-    XmString buttons[NUM_IMAGE_TYPES-1];
-    XmButtonType buttonType[NUM_IMAGE_TYPES-1];
-    Arg args[10];
     Boolean objectDataOnly;
     DlElementType displayType;
 
@@ -4301,7 +4290,6 @@ void setResourcePaletteEntries()
 
 void updateElementFromGlobalResourceBundle(DlElement *element)
 {
-    DlElement *childE;
     DisplayInfo *cdi = currentDisplayInfo;
 
 #if DEBUG_RESOURCE

@@ -630,9 +630,8 @@ DlElement *handlePolylineCreate(
     int newEventType;
     Window window;
     DlPolyline *dlPolyline;
-    DlElement *element, **array;
+    DlElement *element;
     int pointsArraySize = INITIAL_NUM_POINTS;
-    int i;
     int x01, y01;
 
     int deltaX, deltaY, okIndex;

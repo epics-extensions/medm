@@ -226,7 +226,8 @@ static void textUpdateUpdateValueCb(XtPointer cd) {
     updateTaskMarkUpdate(ptu->updateTask);
 }
 
-static void textUpdateDraw(XtPointer cd) {
+static void textUpdateDraw(XtPointer cd)
+{
     TextUpdate *ptu = (TextUpdate *) cd;
     Record *pd = (Record *) ptu->record;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
@@ -234,7 +235,6 @@ static void textUpdateDraw(XtPointer cd) {
     Display *display = XtDisplay(displayInfo->drawingArea);
     char textField[MAX_TOKEN_LENGTH];
     int i;
-    XRectangle clipRect[1];
     XGCValues gcValues;
     unsigned long gcValueMask;
     Boolean isNumber;
@@ -368,14 +368,14 @@ static void textUpdateDraw(XtPointer cd) {
 	  /* for compatibility reason, only the HORIZ_CENTER and
 	   * HORIZ_RIGHT will recalculate the font size if the number does
 	   * not fit. */
-	    if (dlTextUpdate->object.width  < textWidth) {
+	    if ((int)dlTextUpdate->object.width  < textWidth) {
 		switch(dlTextUpdate->align) {
 		case HORIZ_CENTER:
 		case HORIZ_RIGHT:
 		    while (i > 0) {
 			i--;
 			textWidth = XTextWidth(fontTable[i],textField,strLen);
-			if (dlTextUpdate->object.width > textWidth) break;
+			if ((int)dlTextUpdate->object.width > textWidth) break;
 		    }
 		    break;
 		default :
@@ -551,7 +551,6 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 }
 
 void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
-    int i;
     char indent[16];
     DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 

@@ -241,7 +241,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       XmNchildren,&children,NULL);
 
   /* Change translations for scrollbar child of valuator */
-    for (i = 0; i < numChildren; i++) {
+    for (i = 0; i < (int)numChildren; i++) {
 	if (XtClass(children[i]) == xmScrollBarWidgetClass) {
 	    XtOverrideTranslations(children[i],parsedTranslations);
 	  /* Add event handler for Key/ButtonRelease which enables updates */
@@ -331,7 +331,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
       XmNchildren,&children,NULL);
     
   /* If in EDIT mode remove translations for children of valuator */
-    for (i = 0; i < numChildren; i++)
+    for (i = 0; i < (int)numChildren; i++)
       XtUninstallTranslations(children[i]);
 
   /* If in EDIT mode add dlValuator as userData, and pass NULL in expose */
@@ -438,7 +438,6 @@ void handleValuatorExpose(
     Dimension scaleWidth, scaleHeight;
     int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
     int nChars;
-    Arg args[4];
     XFontStruct *font;
     char stringValue[40];
     unsigned long gcValueMask;
@@ -620,7 +619,6 @@ void valuatorSetValue(Valuator *pv, double forcedValue,
 {
     int iValue;
     double dValue;
-    Arg args[1];
     Record *pd = pv->record;
 
     if (pd->hopr != pd->lopr) {
@@ -658,7 +656,6 @@ void valuatorRedrawValue(Valuator *pv,
     Dimension scaleWidth, scaleHeight;
     int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
     int nChars;
-    Arg args[4];
     XFontStruct *font;
     char stringValue[40];
     unsigned long gcValueMask;
@@ -1101,7 +1098,6 @@ void valuatorValueChanged(
     Record *pd = pv->record;
     XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *) callbackStruct;
     DlValuator *dlValuator = (DlValuator *) pv->dlElement->structure.valuator;
-    Arg args[3];
     XButtonEvent *buttonEvent;
     XKeyEvent *keyEvent;
     double value;

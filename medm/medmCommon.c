@@ -185,8 +185,7 @@ void writeDlFile(FILE *stream, DlFile *dlFile, int level)
  */
 void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 {
-    Arg args[10];
-    int i, n;
+    int i;
     Dimension width, height;
     XtGCMask valueMask;
     XGCValues values;

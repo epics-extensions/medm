@@ -90,7 +90,6 @@ DisplayInfo *createDisplay()
 {
     DisplayInfo *displayInfo;
     DlElement *dlElement;
-    Arg args[10];
 
   /* Clear currentDisplayInfo - not really one yet */
     currentDisplayInfo = NULL;

@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #ifdef WIN32
 #include <winsock.h>
+int gettimeofday(struct timeval *tp, void * );
 #else
 #include <sys/time.h>
 #endif
@@ -217,7 +218,7 @@ void optionMenuSet(Widget menu, int buttonId)
     XtVaGetValues(menu,XmNsubMenuId,&subMenu,NULL);
     if (subMenu != NULL) {
 	XtVaGetValues(subMenu,XmNchildren,&buttons,XmNnumChildren,&numButtons,NULL);
-	if (buttonId < numButtons && buttonId >= 0) {
+	if (buttonId < (int)numButtons && buttonId >= 0) {
 	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
 	}
     } else {

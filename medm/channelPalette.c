@@ -166,14 +166,8 @@ void createChannel()
     Widget channelMB;
     Widget channelHelpPDM;
     Widget menuHelpWidget;
-
-
     int i, n;
-
-    char name[20];
     Arg args[10];
-
-
 
     openFSD = NULL;
 
@@ -282,5 +276,3 @@ void createChannel()
     XtManageChild(channelMW);
 
 }
-
-

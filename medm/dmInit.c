@@ -176,7 +176,6 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 DisplayInfo *allocateDisplayInfo()
 {
     DisplayInfo *displayInfo;
-    Widget w;
     int n;
     Arg args[8];
 
@@ -381,8 +380,6 @@ void dmDisplayListParse(
     DisplayInfo *cdi;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
-    Arg args[7];
-    DlElement *dlElement;
     int numPairs;
 
     initializeGlobalResourceBundle();

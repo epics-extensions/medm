@@ -258,6 +258,7 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
 #include <stdio.h>
 #include <stdlib.h>
 #include <process.h>
+#include <string.h>
 
 int callBrowser(char *url);
 

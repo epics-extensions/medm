@@ -153,7 +153,7 @@ DlElement *groupObjects()
     DisplayInfo *cdi = currentDisplayInfo;
     DlComposite *dlComposite;
     DlElement *dlElement, *pE;
-    int i, minX, minY, maxX, maxY;
+    int minX, minY, maxX, maxY;
 
   /* if there is no element selected, return */
     if (IsEmpty(cdi->selectedDlElementList)) return (DlElement *)0;
@@ -382,9 +382,9 @@ void compositeOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
     genericOrient(dlElement, type, xCenter, yCenter);
 }
 
-static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlComposite *dlComposite = p->structure.composite;
-    DlElement *childE;
     int x, y;
     unsigned int width, height;
     int xOffset, yOffset;

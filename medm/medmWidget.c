@@ -197,11 +197,9 @@ unsigned long getPixelFromColormapByString(
 void medmInit(char *displayFont)
 {
     XmFontListEntry entry;
-    Arg args[10];
     int i;
     char dashList[2];
     Boolean useDefaultFont;
-    char warningString[2*MAX_FILE_CHARS];
     char *sizePosition;
     
     XmRegisterConverters();

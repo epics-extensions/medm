@@ -215,11 +215,11 @@ void parsePlotAxisDefinition(
 	    } else if (!strcmp(token,"minRange")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		dlPlotAxisDefinition->minRange = atof(token);
+		dlPlotAxisDefinition->minRange = (float)atof(token);
 	    } else if (!strcmp(token,"maxRange")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		dlPlotAxisDefinition->maxRange = atof(token);
+		dlPlotAxisDefinition->maxRange = (float)atof(token);
 	    } else if (!strcmp(token,"timeFormat")) {
 		int i;
 		getToken(displayInfo,token);

@@ -76,6 +76,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include <Xm/Protocols.h>
 
+#ifdef WIN32
+#include <process.h>
+#else
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 /* Function prototypes */
 
 static void displayHelpCallback(Widget shell, XtPointer client_data,
@@ -443,7 +450,9 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 {
     char *text, *subject, *to, cmd[1024], *p;
     FILE *pp;
+#ifndef WIN32    
     int status;
+#endif    
 
     if (errMsgSendS == NULL) return;
     subject = XmTextFieldGetString(errMsgSendSubjectText);

@@ -308,7 +308,6 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 {
     DisplayInfo *displayInfo = (DisplayInfo *)clientData;
     XButtonEvent *xEvent = (XButtonEvent *)event;
-    int j, k;
     Position x0, y0, x1, y1;
     Dimension daWidth, daHeight;
     Boolean validDrag, validResize;
@@ -316,7 +315,6 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     Boolean objectDataOnly, foundVertex = False, foundPoly = False;
     int doTextByTyping;
     DisplayInfo *di, *cdi;
-    DlElement *dlElement;
 
 #if DEBUG_POPUP
     printf("\nhandleEditButtonPress: Entered\n");
@@ -1118,9 +1116,8 @@ void unhighlightSelectedElements()
 static void updateDraggedElements(Position x0, Position y0,
   Position x1, Position y1)
 {
-    int i, j, xOffset, yOffset;
+    int xOffset, yOffset;
     DisplayInfo *cdi = currentDisplayInfo;    
-    Widget widget;
     DlElement *pElement;
 
   /* If no current display or selected elements array, simply return */
@@ -1164,9 +1161,8 @@ static void updateDraggedElements(Position x0, Position y0,
  */
 void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 {
-    int i, j, xOffset, yOffset;
+    int xOffset, yOffset;
     DisplayInfo *cdi = currentDisplayInfo;
-    Widget widget;
     DlElement *pElement;
 
 /* If no current display or selected elements array, simply return */

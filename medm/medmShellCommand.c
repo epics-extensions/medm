@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#include <medm.h>
+#include "medm.h"
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void shellCommandSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -428,7 +428,6 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 {
     char *command;
     DisplayInfo *displayInfo;
-    char processedCommand[2*MAX_TOKEN_LENGTH];
     XmSelectionBoxCallbackStruct *call_data =
       (XmSelectionBoxCallbackStruct *) cbs;
 
@@ -504,7 +503,6 @@ void dmExecuteShellCommand(
     XtPointer userData;
     int cmdLength, argsLength;
     char shellCommand[2*MAX_TOKEN_LENGTH];
-    char processedShellCommand[2*MAX_TOKEN_LENGTH];
     char *promptPosition;
 
   /* Return if command is empty */

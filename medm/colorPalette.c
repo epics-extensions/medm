@@ -184,9 +184,6 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     int colorIndex = (int) cd;
     DisplayInfo *cdi;
     Widget widget;
-    int i;
-    Arg args[4];
-    Dimension width,height;
     DlElement *dlElement;
 
 /* (MDA) requests to leave color palette up
@@ -277,13 +274,9 @@ void createColor()
     XmButtonType buttonType[N_MAX_MENU_ELES];
     Widget colorMB;
     Widget colorHelpPDM;
-    Widget menuHelpWidget;
-
     Pixel fg, bg;
     int i, n, childCount;
     Arg args[10];
-
-
 #ifdef EXTENDED_INTERFACE
     openFSD = NULL;
 #endif
@@ -470,8 +463,6 @@ static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-    Widget widget;
-    XEvent event;
     
     switch(buttonNumber) {
     case HELP_COLOR_PALETTE_BTN:

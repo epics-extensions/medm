@@ -415,9 +415,6 @@ void createObject()
     Widget objectMB;
     Widget objectHelpPDM;
 
-    char name[20];
-    Arg args[10];
-
 /*
  * initialize local static globals
  */
@@ -509,8 +506,6 @@ static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-    Widget widget;
-    XEvent event;
     
     switch(buttonNumber) {
     case HELP_OBJECT_PALETTE_BTN:

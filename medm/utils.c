@@ -724,7 +724,7 @@ DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
  */
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
 {
-    DlElement *element, *cmapElement;
+    DlElement *element;
 
     writeDlFile(stream,displayInfo->dlFile,0);
     if(element = FirstDlElement(displayInfo->dlElementList)) {
@@ -762,8 +762,6 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
 
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
 {
-    char str[MAX_FILE_CHARS+10];
-
     if(globalDisplayListTraversalMode == DL_EXECUTE) return;
     if(displayInfo->hasBeenEditedButNotSaved) return;
     displayInfo->hasBeenEditedButNotSaved = True;
@@ -1002,8 +1000,6 @@ void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
 	    if(pENew) {
 		insertDlElement(pList2, pENew);
 	    } else {
-		char string[48];
-		
 		medmPostMsg(1,"findAllMatchingElements: Could not create element\n");
 		return;
 	    }
@@ -1019,8 +1015,6 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
     DlElement *elementPtr;
     float sX, sY;
     Dimension oldWidth, oldHeight;
-    Boolean moveWidgets;
-    int j, newX, newY;
 
     elementPtr = FirstDlElement(displayInfo->dlElementList);
     oldWidth = (int)elementPtr->structure.display->object.width;
@@ -1054,10 +1048,7 @@ Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
 {
     DlElement *elementPtr;
     float sX, sY;
-    Position newX, newY;
     Dimension oldWidth, oldHeight;
-    int i, j;
-    Boolean moveWidgets;
 
     elementPtr = FirstDlElement(displayInfo->dlElementList);
     oldWidth = (int)elementPtr->structure.display->object.width;
@@ -1252,8 +1243,8 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 		y = ((y + gridSpacing/2)/gridSpacing)*gridSpacing;
 		w = ((w + gridSpacing/2)/gridSpacing)*gridSpacing;
 		h = ((h + gridSpacing/2)/gridSpacing)*gridSpacing;
-		if(w < gridSpacing) w = gridSpacing;
-		if(h < gridSpacing) h = gridSpacing;
+		if((int)w < gridSpacing) w = gridSpacing;
+		if((int)h < gridSpacing) h = gridSpacing;
 	    }
 	    *initialX =  x;
 	    *initialY =  y;
@@ -1276,8 +1267,8 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 		y = ((y + gridSpacing/2)/gridSpacing)*gridSpacing;
 		w = ((w + gridSpacing/2)/gridSpacing)*gridSpacing;
 		h = ((h + gridSpacing/2)/gridSpacing)*gridSpacing;
-		if(w < gridSpacing) w = gridSpacing;
-		if(h < gridSpacing) h = gridSpacing;
+		if((int)w < gridSpacing) w = gridSpacing;
+		if((int)h < gridSpacing) h = gridSpacing;
 	    }
 	  /* Draw new one */
 #if DEBUG_EVENTS > 1
@@ -1306,7 +1297,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     Boolean returnVal = True;
     int x, y, xOffset, yOffset;
     int snap, gridSpacing;
-    int i, minX, maxX, minY, maxY, groupWidth, groupHeight,
+    int minX, maxX, minY, maxY, groupWidth, groupHeight,
       groupDeltaX0, groupDeltaY0, groupDeltaX1, groupDeltaY1;
 
   /* If no current display, simply return */
@@ -1474,14 +1465,13 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 static int doPasting(int *offsetX, int *offsetY)
 {
     XEvent event;
-    Window window, childWindow, root, child;
+    Window window, root, child;
     Dimension daWidth, daHeight;
     DisplayInfo *cdi;
     DlElement *dlElement = NULL;
     Boolean returnVal = True;
     int daLeft, daRight, daTop, daBottom;
     int rootX, rootY, winX, winY;
-    int i;
     int dx, dy, x0, y0, x1, y1;
     int snap, gridSpacing;
     unsigned int mask;
@@ -1776,12 +1766,9 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
   Position *finalX, Position *finalY)
 {
     XEvent event;
-    Boolean inWindow;
     Boolean returnVal = True;
     DisplayInfo *cdi;
-    DlElement *dlElement;
-    int width, height;
-    int i, xOffset, yOffset;
+    int xOffset, yOffset;
 
     if(!currentDisplayInfo) return False;
     cdi = currentDisplayInfo;
@@ -1930,7 +1917,7 @@ void deleteWidgetsInComposite(DisplayInfo *displayInfo, DlElement *ele)
 void drawGrid(DisplayInfo *displayInfo)
 {
     Drawable draw = displayInfo->drawingAreaPixmap;
-    int x, y, xmax, ymax;
+    int xmax, ymax;
     int gridSpacing;
     Dimension width, height;
     int i, j, n;
@@ -1987,15 +1974,8 @@ void copySelectedElementsIntoClipboard()
 
 int copyElementsIntoDisplay()
 {
-    Position displayX, displayY;
-    Boolean moveWidgets;
     DisplayInfo *cdi;
-    DlElement *elementPtr, *newElementsListHead;
-    DlStructurePtr structurePtr;
     int deltaX, deltaY;
-
-    DlElement *element;
-    DisplayInfo *displayInfo;
     DlElement *dlElement;
 
   /* If no clipboard elements, simply return */
@@ -2050,7 +2030,6 @@ int copyElementsIntoDisplay()
 
 void deleteElementsInDisplay()
 {
-    int i;
     DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
 
@@ -2112,8 +2091,6 @@ void unselectElementsInDisplay()
 void selectAllElementsInDisplay()
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    Position x, y;
-    Dimension width, height;
     DlElement *dlElement;
 
     if(!cdi) return;
@@ -2288,8 +2265,7 @@ void raiseSelectedElements()
 void ungroupSelectedElements()
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    DlElement *ele, *child, *dlElement;
-    int i;
+    DlElement *ele, *dlElement;
 
     if(!cdi) return;
     saveUndoInfo(cdi);
@@ -2320,7 +2296,7 @@ void ungroupSelectedElements()
  */
 void alignSelectedElements(int alignment)
 {
-    int i, j, minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
+    int minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
     DisplayInfo *cdi;
     DlElement *ele;
     DlElement *dlElement;
@@ -2415,7 +2391,7 @@ void alignSelectedElements(int alignment)
  */
 void orientSelectedElements(int alignment)
 {
-    int i, j, minX, minY, maxX, maxY, centerX, centerY, x0, y0;
+    int minX, minY, maxX, maxY, centerX, centerY, x0, y0;
     DisplayInfo *cdi;
     DlElement *ele;
     DlElement *dlElement;
@@ -2606,7 +2582,7 @@ void spaceSelectedElements(int plane)
  */
 void spaceSelectedElements2D(void)
 {
-    int y, y1, height, deltay, x, width, deltax, gridSpacing;
+    int y, height, deltay, x, width, deltax, gridSpacing;
     int n, maxY, minY, deltaY, avgH, minX;
     int nrows, nrows1, xcen1, xleft, xright, ytop, ybottom, ycen;
     int i, irow, iarr;
@@ -2899,7 +2875,7 @@ void findOutliers(void)
     DisplayInfo *cdi;
     DlElement *dlElement, *pE;
     DlObject *pO;
-    int sides, partial = 0, total = 0;
+    int partial=0, total=0;
     char string[240];
 
     if(!currentDisplayInfo) return;
@@ -2970,7 +2946,7 @@ void findOutliers(void)
  */
 void centerSelectedElements(int alignment)
 {
-    int i, j, minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
+    int minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
     Position displayH, displayW;
     DisplayInfo *cdi;
     DlElement *pE;
@@ -3050,7 +3026,7 @@ void centerSelectedElements(int alignment)
  */
 void sizeSelectedTextElements(void)
 {
-    int i = 0, usedWidth, usedHeight, x, xOffset, dWidth;
+    int i = 0, usedWidth, usedHeight, xOffset, dWidth;
     DisplayInfo *cdi;
     DlElement *dlElement, *pE;
     DlText *dlText;
@@ -3115,7 +3091,7 @@ void sizeSelectedTextElements(void)
  */
 void equalSizeSelectedElements(void)
 {
-    int i, j, n, avgW, avgH, xOffset, yOffset;
+    int n, avgW, avgH;
     DisplayInfo *cdi;
     DlElement *pE;
     DlElement *dlElement;
@@ -3244,7 +3220,6 @@ void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail)
 void  moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
   DlElement *afterThisElement)
 {
-    int i;
     DisplayInfo *cdi;
     DlElement *afterElement;
     DlElement *dlElement;
@@ -3523,7 +3498,7 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
     XtSetArg(args[3],XmNbottomShadowColor,bottom);
     XtSetValues(widget,args,4);
 
-    for (i = 0; i < numChildren; i++) {
+    for (i = 0; i < (int)numChildren; i++) {
 	XtSetValues(children[i],args,2);
     }
 }
@@ -4335,8 +4310,6 @@ void popupPvInfo(DisplayInfo *displayInfo)
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
-    Arg args[1];
-    int nargs;
     Record **records;
     chid *chids, chId;
     struct dbr_time_string *timeVals, timeVal;
@@ -4511,7 +4484,7 @@ void createPvInfoDlg(void)
 {
     Widget pane;
     Widget actionArea;
-    Widget closeButton, sendButton, clearButton, printButton, helpButton;
+    Widget closeButton, helpButton;
     Arg args[10];
     int n;
 
@@ -4985,7 +4958,6 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     char *name, *title;
     char command[1024];     /* Danger: Fixed length */
     Record **records;
-    char *pamp;
     int i, j, ic, len, clen, count;
 
   /* Parse the command */

@@ -170,9 +170,6 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
 void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
     MessageButton *pmb;
-    XmString xmString;
-    int n;
-    Arg args[20];
     DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
 
     pmb = (MessageButton *) malloc(sizeof(MessageButton));
