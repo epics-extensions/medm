@@ -48,6 +48,7 @@ LIBSRCS += Clip.c
 LIBSRCS += Control.c
 LIBSRCS += Indicator.c
 LIBSRCS += Matrix.c
+LIBSRCS += Marquee.c
 LIBSRCS += Meter.c
 LIBSRCS += Value.c
 LIBSRCS += bae.c
