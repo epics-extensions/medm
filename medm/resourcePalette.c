@@ -726,52 +726,78 @@ static void bundleMenuSimpleCallback(
 }
 #endif
 
-/****** Text field verify callback  (verify numeric input) */
-void textFieldNumericVerifyCallback(
-  Widget w,
-  XtPointer clientData,
-  XtPointer callbackData)
+/* Used to verify int input as it happens
+ *  Allowed characters:
+ *    digits   Anywhere
+ *    +,-      First Position only
+ * (Same as textFieldFloatVerifyCallback below except for .)
+ */
+#ifdef __cplusplus
+void textFieldNumericVerifyCallback(Widget w, XtPointer, XtPointer callData)
+#else
+void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer callData)
+#endif
 {
-    int rcType = (int) clientData;
-    XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *) callbackData;
-    int len;
+    XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
+    int i,j,len,abort;
+    char *curString;
 
-    len = 0;
-    if (cbs->startPos < cbs->currInsert) return;
-
-    len = (int) XmTextFieldGetLastPosition(w);
-
-  /****** If no (new) data {e.g., setting to NULL string}, simply return */
-    if (cbs->text->ptr == NULL) return;
-
-  /****** Check for leading sign (+/-) */
-    if (len == 0) {	/* nothing there yet... therefore can add sign */
-	if ((!isdigit(cbs->text->ptr[0]) && cbs->text->ptr[0] != '+'
-	  && cbs->text->ptr[0] != '-') ||
-	/****** Not a digit or +/-, move all chars down one and decrement length */
-	  (!isdigit(cbs->text->ptr[0]) && ((rcType == X_RC || rcType == Y_RC)
-	    && cbs->text->ptr[0] == '-')) ) {
-	    int i;
-	    for (i = len; (i+1) < cbs->text->length; i++)
-	      cbs->text->ptr[i] = cbs->text->ptr[i+1];
-	    cbs->text->length--;
-	    len--;
+#if DEBUG_TEXT_VERIFY
+    {
+	int i;
+	
+	printf("\ntextFieldNumericVerifyCallback: Entered\n");
+	printf("  event: %x  cbs->text->ptr: %x\n"
+	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
+	  cbs->event,cbs->text->ptr,
+	  cbs->startPos,cbs->endPos,cbs->currInsert,cbs->newInsert);
+	if(cbs->text->length) {
+	    printf("  length=%d: \"",cbs->text->length);
+	    for(i=0; i < cbs->text->length; i++) printf("%c",cbs->text->ptr[i]);
+	    printf("\"\n");
+	} else {
+	    printf("  length=0\n");
 	}
-    } else {
-      /****** Already a first character, therefore only digits allowed */
-	for (len = 0; len < cbs->text->length; len++) {
-	  /****** Not a digit - move all chars down one and decrement length */
-	    if (!isdigit(cbs->text->ptr[len])) {
-		int i;
-		for (i = len; (i+1) < cbs->text->length; i++)
-		  cbs->text->ptr[i] = cbs->text->ptr[i+1];
-		cbs->text->length--;
-		len--;
+    }
+#endif    
+  /* Is a deletion */
+    if (!cbs->text->length) return;
+
+  /* Check the new characters, character by character */
+    abort=0;
+    for (i = 0; i < cbs->text->length && !abort; i++) {
+      /* Digits are OK, check non-digits */
+	if(!isdigit(cbs->text->ptr[i])) {
+	    switch(cbs->text->ptr[i]) {
+	    case '+':
+	    case '-':
+	      /* Abort if this is not the first new char */
+		if(i) {
+		    abort=1;
+		    break;
+		}
+	      /* OK if insertion point is at 0 */
+		if(!cbs->currInsert) break;
+	      /* OK if insertion point is after a replacement starting at 0 */
+		if(cbs->startPos ==0 && cbs->startPos != cbs->endPos &&
+		  cbs->endPos == cbs->currInsert) break;
+	      /* Else abort */
+		abort=1;
+		break;
+	    default:
+		abort=4;
 	    }
 	}
     }
-    if (cbs->text->length <= 0)
-      cbs->doit = False;
+    if(abort) cbs->doit=False;
+#if DEBUG_TEXT_VERIFY
+    printf("  doit: %d",cbs->doit);
+    if(!abort) printf("\n");
+    else if(abort == 1) printf("  +/- not in first position\n");
+    else if(abort == 2) printf("  More than one new dot\n");
+    else if(abort == 3) printf("  Already have a dot\n");
+    else if(abort == 4) printf("  Invalid character\n");
+#endif
 }
 
 /* Used to verify float input as it happens
@@ -779,6 +805,7 @@ void textFieldNumericVerifyCallback(
  *    digits   Anywhere
  *    +,-      First Position only
  *    .        Anywhere, but only one
+ * (Same as textFieldNumericVerifyCallback above except for .)
  */
 #ifdef __cplusplus
 void textFieldFloatVerifyCallback(Widget w, XtPointer, XtPointer callData)

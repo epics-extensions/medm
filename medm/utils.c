@@ -2952,17 +2952,19 @@ void findOutliers(void)
 
       /* Omit the display */
 	if(dlElement->type != DL_Display) {
-	    if((pO->x > (int)displayW && (pO->x +
-	      (int)pO->width) > (int)displayW) ||
-	      (pO->y > (int)displayH && (pO->y +
-		(int)pO->height) > (int)displayH)) {
+	    if((pO->x) > (int)displayW ||
+	      (pO->x + (int)pO->width) < 0 ||
+	      (pO->y) > (int)displayH ||
+	      (pO->y + (int)pO->height) < 0) {
 		total++;
 		pE = createDlElement(DL_Element, (XtPointer)dlElement, NULL);
 		if(pE) {
 		    appendDlElement(cdi->selectedDlElementList, pE);
 		}
-	    } else if((pO->x + (int)pO->width) > (int)displayW ||
-	       (pO->y + (int)pO->height) > (int)displayH) {
+	    } else if((pO->x) < 0 ||
+	      (pO->x + (int)pO->width) > displayW ||
+	      (pO->y) < 0 ||
+	      (pO->y + (int)pO->height) > displayH) {
 		partial++;
 		pE = createDlElement(DL_Element, (XtPointer)dlElement, NULL);
 		if(pE) {
