@@ -114,6 +114,7 @@ FILE *fp;
 
 int BitOffset;                    /* Bit Offset of next code */
 int XC, YC;                       /* Output X and Y coords of current pixel */
+int ImageDataSize;                /* The size of the XImage data */
 int Pass;                         /* Used by output routine if interlaced pic */
 int OutCount;                     /* Decompressor output 'stack count' */
 int LogicalScreenWidth;           /* Logical screen width */
@@ -194,6 +195,7 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	medmPrintf(1,"\ninitializeGIF: Memory allocation error\n");
 	return(False);
     }
+    dlImage->privateData=gif;
 
   /* (MDA) programmatically set nostrip to false - see what happens */
     gif->nostrip=False;
@@ -210,17 +212,19 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     gif->theGC=DefaultGC(display,screenNum);
     gif->theVisual=DefaultVisual(display,screenNum);
     gif->numcols=0;
+    gif->frames=NULL;
+    *gif->imageName='\0';
 
-    gif->displayCells=DisplayCells(display, screenNum);
+    gif->displayCells=DisplayCells(display,screenNum);
     if (gif->displayCells < 255) {
 	medmPrintf(1,"\ninitializeGIF: At least an 8-plane display is required");
+	freeGIF(dlImage);
 	return(False);
     }
 
     gif->nFrames=0;
     gif->curFrame=0;
-    
-    dlImage->privateData=gif;
+    strcpy(gif->imageName,dlImage->imageName);
     
   /* Open and read the file  */
     success=loadGIF(displayInfo,dlImage);
@@ -921,11 +925,18 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
   /* Clean up */
   CLEANUP:
+    if(fp && fp != stdin) fclose(fp);
+    if(Raster) {
+	free((char *)Raster);
+	Raster=NULL;
+    }
+    if(RawGIF) {
+	free((char *)RawGIF);
+	Raster=NULL;
+    }
     if(tempPixmap) XFreePixmap(display,tempPixmap);
-    if(Raster) free((char *)Raster);
-    if (fp && fp != stdin) fclose(fp);
     if(error) freeGIF(dlImage);
-    if (verbose) print("loadGIF: %s done (%s)\n",
+    if(verbose) print("loadGIF: %s done (%s)\n",
       fname, error?"Failure":"Success");
     return(!error);
 }
@@ -1143,7 +1154,8 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
     switch (ScreenDepth) {
     case 8 :
         BytesOffsetPerPixel=1;
-        Image=(Byte *)malloc(Width*Height);
+	ImageDataSize=Width*Height;
+        Image=(Byte *)malloc(ImageDataSize);
         if (!Image) {
 	    medmPrintf(1,"\nparseGIFImage: Not enough memory for XImage"
 	      " for %s\n",fname);
@@ -1156,13 +1168,14 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
     case 24 :
 	bits_per_pixel=_XGetBitsPerPixel(display, ScreenDepth);
         BytesOffsetPerPixel=bits_per_pixel/8;
+	ImageDataSize=BytesOffsetPerPixel*Width*Height;
 #if DEBUG_GIF	
         print("parseGIFImage: %s (24-bit display, %d bits per pixel)\n"
 	  "  BytesOffsetPerPixel=%d ImageSize=%d\n",
 	  fname, bits_per_pixel, BytesOffsetPerPixel,
 	  BytesOffsetPerPixel*Width*Height);
 #endif	
-        Image=(Byte *)malloc(BytesOffsetPerPixel*Width*Height);
+        Image=(Byte *)malloc(ImageDataSize);
         if (!Image) {
 	    medmPrintf(1,"\nparseGIFImage: "
 	      "Not enough memory for XImage for %s\n",
@@ -1410,15 +1423,23 @@ static int getClientByteOrder()
  */
 static int readCode()
 {
-    int RawCode, ByteOffset;
+    int RawCode,ByteOffset;
 
-    ByteOffset=BitOffset / 8;
-    RawCode=Raster[ByteOffset] + (0x100 * Raster[ByteOffset + 1]);
+    ByteOffset=BitOffset/8;
+    RawCode=Raster[ByteOffset]+(0x100*Raster[ByteOffset+1]);
     if (CodeSize >= 8)
-      RawCode += (0x10000 * Raster[ByteOffset + 2]);
-    RawCode >>= (BitOffset % 8);
-    BitOffset += CodeSize;
-    return(RawCode & ReadMask);
+      RawCode+=(0x10000*Raster[ByteOffset+2]);
+#if 1
+    print("readCode: XC=%d YC=%d BitOffset=%d ByteOffset=%d Rawcode=%x",
+      XC,YC,BitOffset,ByteOffset,RawCode);
+#endif    
+    RawCode>>=(BitOffset%8);
+#if 1
+    print("->%x ReadMask=%x RawCode&ReadMask=%x\n",
+      RawCode,ReadMask,RawCode&ReadMask);
+#endif    
+    BitOffset+=CodeSize;
+    return(RawCode&ReadMask);
 }
 
 static void dumpGIF(GIFData *gif)
@@ -1428,52 +1449,50 @@ static void dumpGIF(GIFData *gif)
 	if (i && ((i>>4)<<4) == i) {
 	    print("\n");
 	}
-	print("%02x ",(unsigned char) CURIMAGE(gif)->data[i]);
+	print("%02x ",(Byte)CURIMAGE(gif)->data[i]);
     }
     print("\n");
 }
 
 static void addToPixel(GIFData *gif, Byte Index)
 {
-    switch (ScreenDepth) {
-    case 8 :
-      /* Check for transparent color */
-	if(TransparentColorFlag && (Index&(gif->numcols-1)) == TransparentIndex) {
-	    *(Image + YC * BytesPerScanline + XC) =
-	      (unsigned char)gif->bcol;
-	} else {
-	    *(Image + YC * BytesPerScanline + XC) =
-	      (unsigned char)gif->cols[Index&(gif->numcols-1)];
+    Pixel clr;
+    int offset=YC*BytesPerScanline+XC;
+	
+  /* Check that we are in bounds and write to the XImage data */
+    if(offset < ImageDataSize) {
+	Byte *p=(Byte *)Image+offset;
+	
+	switch (ScreenDepth) {
+	case 8:
+	  /* Check for transparent color */
+	    if(TransparentColorFlag && (Index&(gif->numcols-1)) ==
+	      TransparentIndex) {
+		*p=(Byte)gif->bcol;
+	    } else {
+		*p=(Byte)gif->cols[Index&(gif->numcols-1)];
+	    }
+	    break;
+	case 24:
+	  /* Check for transparent color */
+	    if(TransparentColorFlag && (Index&(gif->numcols-1)) ==
+	      TransparentIndex) {
+		clr=gif->bcol;
+	    } else {
+		clr=gif->cols[Index&(gif->numcols-1)];
+	    }
+	    if (BytesOffsetPerPixel == 4) {
+		*((Pixel *)p)=clr;
+	    } else {
+		*p++=(Byte)((clr & 0x00ff0000) >> 16);
+		*p++=(Byte)((clr & 0x0000ff00) >> 8);
+		*p=(Byte)((clr & 0x000000ff));
+	    }
+	    break;
 	}
-	break;
-    case 24 : {
-	Pixel clr;
-	unsigned char *p=(unsigned char *)Image+YC*BytesPerScanline+XC;
-      /* Check for transparent color */
-	if(TransparentColorFlag && (Index&(gif->numcols-1)) == TransparentIndex) {
-	    clr=gif->bcol;
-	} else {
-	    clr=gif->cols[Index&(gif->numcols-1)];
-	}
-#if DEBUG_GIF > 2
-	if(TransparentColorFlag && (Index&(gif->numcols-1)) == TransparentIndex) {
-	    print("  XC=%4d  YC=%4d  clr=%6x off=%d Index=%3d TIndex=%3d\n",
-	      XC,YC,clr,YC*BytesPerScanline+XC,Index,TransparentIndex);
-	}
-#endif	
-	if (BytesOffsetPerPixel == 4) {
-	    *((Pixel *)p)=clr;
-	} else {
-	    *p++=(unsigned char)((clr & 0x00ff0000) >> 16);
-	    *p++=(unsigned char)((clr & 0x0000ff00) >> 8);
-	    *p=(unsigned char)((clr & 0x000000ff));
-	}
-    }
-    break;
     }
 
   /* Update the X-coordinate, and if it overflows, update the Y-coordinate */
-
     XC=XC+BytesOffsetPerPixel;
     if(XC+BytesOffsetPerPixel > BytesPerScanline) {
       /* If a non-interlaced picture, just increment YC to the next scan line. 

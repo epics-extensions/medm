@@ -145,12 +145,9 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     case GIF_IMAGE:
 	if (dlImage->privateData == NULL) {
 	  /* Not initialized */
-	    if (!initializeGIF(displayInfo,dlImage)) {
+	    if(!initializeGIF(displayInfo,dlImage)) {
 	      /* Something failed - bail out! */
-		if(dlImage->privateData != NULL) {
-		    free((char *)dlImage->privateData);
-		    dlImage->privateData = NULL;
-		}
+		if(dlImage->privateData != NULL) freeGIF(dlImage);
 	    }
 	    gif = (GIFData *)dlImage->privateData;
 #if DEBUG_ANIMATE
@@ -160,24 +157,19 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	  /* Already initialized */
 	    gif = (GIFData *)dlImage->privateData;
-	    if (gif != NULL) {
-		gif->curFrame=0;
-		if (dlImage->object.width == gif->currentWidth &&
-		  dlImage->object.height == gif->currentHeight) {
-		    drawGIF(displayInfo,dlImage);
-		} else {
-		    resizeGIF(dlImage);
-		    drawGIF(displayInfo,dlImage);
+	  /* Check if filename has changed */
+	    if(strcmp(gif->imageName,dlImage->imageName)) {
+		if(!initializeGIF(displayInfo,dlImage)) {
+		  /* Something failed - bail out! */
+		    if(dlImage->privateData != NULL) freeGIF(dlImage);
 		}
-#if DEBUG_ANIMATE
-		fprintf(stderr,"executeDlImage (2): dlImage=%x gif=%x nFrames=%d\n",
-		  dlImage,gif,gif?gif->nFrames:-1);
-#endif
+		gif = (GIFData *)dlImage->privateData;
 	    }
 	}
 	break;
     case NO_IMAGE:
     case TIFF_IMAGE:
+	if(dlImage->privateData != NULL) freeGIF(dlImage);
 	gif = NULL;
     }
 
@@ -210,16 +202,20 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    drawWhiteRectangle(pi->updateTask);
 	} else {
 	  /* No channel */
-	    if(gif && gif->nFrames > 1) {
+	    if(gif) {
+		if(gif->nFrames > 1) {
 #if DEBUG_ANIMATE
-		print("executeDlImage (3): pi=%x dlElement=%x "
-		  "gif=%x nFrames=%d pi->timerid=%x\n",
-		  &pi,pi->dlElement,gif,gif->nFrames,pi->timerid);
-		print("  sizeof(GIFData)=%d sizeof(DlImage)=%d\n",
-		  sizeof(GIFData),sizeof(DlImage));
+		    print("executeDlImage (3): pi=%x dlElement=%x "
+		      "gif=%x nFrames=%d pi->timerid=%x\n",
+		      &pi,pi->dlElement,gif,gif->nFrames,pi->timerid);
+		    print("  sizeof(GIFData)=%d sizeof(DlImage)=%d\n",
+		      sizeof(GIFData),sizeof(DlImage));
 #endif
-		pi->timerid=XtAppAddTimeOut(appContext,
-		  ANIMATE_TIME(gif), animateImage, (XtPointer)pi);
+		    pi->timerid=XtAppAddTimeOut(appContext,
+		      ANIMATE_TIME(gif), animateImage, (XtPointer)pi);
+		}
+	      /* Draw the first frame */
+		drawGIF(displayInfo,dlImage);
 	    }
 	}
     } else {

@@ -85,6 +85,7 @@ typedef struct {
 } FrameData;
 
 typedef struct {
+    char          imageName[MAX_TOKEN_LENGTH];
     int           displayCells;
     Colormap      theCmap;
     GC            theGC;
