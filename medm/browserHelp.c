@@ -287,7 +287,7 @@ int callBrowser(char *url)
     if (!ComSpec) return(0);     /* Abort with no message like the UNIX version*/
   /* Spawn the process that handles a url */
     sprintf(command,"start \"%s\"",url);
-    status = _spawnl(_P_WAIT, ComSpec, "command", "/C", command, NULL);
+    status = _spawnl(_P_WAIT, ComSpec, ComSpec, "/C", command, NULL);
     if(status == -1) {
 	perror("callBrowser:");
 	return(0);
