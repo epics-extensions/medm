@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define MAX_ERRORS 25
+
 #define TIME_STRING_MAX 81
 #define EARLY_MESSAGE_SIZE 2048
 
@@ -1082,27 +1084,59 @@ void medmStartUpdateCAStudyDlg() {
 int xErrorHandler(Display *dpy, XErrorEvent *event)
 {
     char buf[1024];     /* Warning: Fixed Size */
+    static int nerrors=0;
+    static int ended=0;
+    
+  /* Prevent error storms and recursive errors */
+    if(ended) return 0;
+    if(nerrors++ > MAX_ERRORS) {
+	ended=1;
+	medmPostMsg(1,"xErrorHandler:"
+	  "Too many X errors [%d]\n"
+	  "No more will be handled\n"
+	  "Please fix the problem and restart MEDM\n",
+	  MAX_ERRORS);
+	return 0;
+    }
+    
     XGetErrorText(dpy,event->error_code,buf,1024);
 #if 0    
-#ifdef WIN32
+# ifdef WIN32
     lprintf("\n%s\n", buf);
-#else
+# else
     fprintf(stderr,"\n%s\n", buf);
-#endif
+# endif
 #else
     medmPostMsg(1,"xErrorHandler:\n%s\n", buf);
 #endif    
+
+  /* Return value is ignored */
     return 0;
 }
 
 void xtErrorHandler(char *message)
 {
+    static int nerrors=0;
+    static int ended=0;
+    
+  /* Prevent error storms and recursive errors */
+    if(ended) return;
+    if(nerrors++ > MAX_ERRORS) {
+	ended=1;
+	medmPostMsg(1,"xtErrorHandler:"
+	  "Too many Xt errors [%d]\n"
+	  "No more will be handled\n"
+	  "Please fix the problem and restart MEDM\n",
+	  MAX_ERRORS);
+	return;
+    }
+    
 #if 0
-#ifdef WIN32
+# ifdef WIN32
     lprintf("\n%s\n",message);
-#else
+# else
     fprintf(stderr,"\n%s\n",message);
-#endif
+# endif
 #else
     medmPostMsg(1,"xtErrorHandler:\n%s\n", message);
 #endif    
