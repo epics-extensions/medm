@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_RELATED_DISPLAY 0
+
 #include "medm.h"
 
 #include <X11/keysym.h>
@@ -369,18 +371,34 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
  *  N.B.  this function must be kept in sync with parseCompositeChildren
  *  which follows...
  */
-void dmDisplayListParse(
-  DisplayInfo *displayInfo,
-  FILE *filePtr,
-  char *argsString,
-  char *filename,
-  char *geometryString,
+void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
+  char *argsString, char *filename,  char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
     DisplayInfo *cdi;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int numPairs;
+    Position x, y;
+    int mask;
+    int reuse=0;
+    DlElement *pE;
+    Arg args[2];
+    int nargs;
+	
+    
+#if DEBUG_RELATED_DISPLAY
+    printf("dmDisplayListParse: displayInfo=%x\n"
+      "  argsString=%s\n"
+      "  filename=%s\n"
+      "  geometryString=%s\n"
+      "  fromRelatedDisplayExecution=%s\n",
+      displayInfo,
+      argsString?argsString:"NULL",
+      filename?filename:"NULL",
+      geometryString?geometryString:"NULL",
+      fromRelatedDisplayExecution?"True":"False");
+#endif    
 
     initializeGlobalResourceBundle();
 
@@ -394,10 +412,13 @@ void dmDisplayListParse(
       /* Came from a display that is to be replaced */
 	if(displayInfo->fromRelatedDisplayExecution == True) {
 	  /* Not an original, don't save it, reuse it */
-#if 0	    
-	    printf("  True: displayInfo->fromRelatedDisplayExecution=%d\n",
-	      displayInfo->fromRelatedDisplayExecution);
-#endif	    
+	    reuse=1;
+	  /* Get the current values of x and y */
+	    nargs=0;
+	    XtSetArg(args[nargs],XmNx,&x); nargs++;
+	    XtSetArg(args[nargs],XmNy,&y); nargs++;
+	    XtGetValues(displayInfo->shell,args,nargs);
+	  /* Clear out old display */
 	    dmCleanupDisplayInfo(displayInfo,False);
 	    clearDlDisplayList(displayInfo->dlElementList);
 	    displayInfo->filePtr = filePtr;
@@ -405,18 +426,14 @@ void dmDisplayListParse(
 	    cdi->newDisplay = False;
 	} else {
 	  /* This is an original, pop it down */
-#if 0	    
-	    printf("  False: displayInfo->fromRelatedDisplayExecution=%d\n",
-	      displayInfo->fromRelatedDisplayExecution);
-#endif	    
 	    XtPopdown(displayInfo->shell);
-#if 0	    
+#if DEBUG_RELATED_DISPLAY
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [1]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [1]: displayInfoSaveList");
 #endif
 	  /* Save it if not already saved */
 	    moveDisplayInfoToDisplayInfoSave(displayInfo);
-#if 0	    
+#if DEBUG_RELATED_DISPLAY
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [2]: displayInfoSaveList");
 #endif	    
@@ -470,14 +487,15 @@ void dmDisplayListParse(
 	return;
     }
 
-#if 0    
   /* DEBUG */
-    printf("File: %s\n",cdi->dlFile->name);
+#if DEBUG_RELATED_DISPLAY
+    printf("  File: %s\n",cdi->dlFile->name);
+#if 0    
     if(strstr(cdi->dlFile->name,"sMain.adl")) {
 	debugDisplayInfo=displayInfo;
 	printf("Set debugDisplayInfo for sMain.adl\n");
     }
-  /* End DEBUG */
+#endif
 #endif
 
     tokenType=getToken(cdi,token);
@@ -501,36 +519,63 @@ void dmDisplayListParse(
   /* Proceed with parsing */
     while (parseAndAppendDisplayList(cdi,
       cdi->dlElementList) != T_EOF );
-
     cdi->filePtr = NULL;
 
-  /* Do what is needed to bring it up */
-    {
+  /* Do moving and resizing as necessary */
+    if(reuse) {
+      /* Change DlObject values for x and y to be the same as the original */
+	pE = FirstDlElement(displayInfo->dlElementList);
+#if DEBUG_RELATED_DISPLAY
+	printf("  x=%d pE->structure.display->object.x=%d\n"
+	  "  y=%d pE->structure.display->object.y=%d\n",
+	  x,pE->structure.display->object.x,
+	  y,pE->structure.display->object.y);
+#endif	
+	pE->structure.display->object.x = x;
+	pE->structure.display->object.y = y;
+
+      /* Resize the display to the new size now
+       *   (There should be no resize callback yet so it will not try
+       *     to resize all the elements) */
+	nargs=0;
+	XtSetArg(args[nargs],XmNwidth,pE->structure.display->object.width); nargs++;
+	XtSetArg(args[nargs],XmNheight,pE->structure.display->object.height); nargs++;
+	XtSetValues(displayInfo->shell,args,nargs);
+    } else if(geometryString && *geometryString) {
 	int x, y;
-	unsigned int w, h;
-	int mask;
-
-      /* Parse the geometry string */
-	mask = XParseGeometry(geometryString,&x,&y,&w,&h);
-
-      /* Resize it and its contents if specified in geometry */
+	unsigned int width, height;
+	
+      /* Handle geometry string */
+      /* Parse the geometry string (mask indicates what was found) */
+	mask = XParseGeometry(geometryString,&x,&y,&width,&height);
+	
+      /* Change width and height object values */
 	if ((mask & WidthValue) && (mask & HeightValue)) {
-	    dmResizeDisplayList(cdi,(Dimension)w,(Dimension)h);
+	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
 	}
-	dmTraverseDisplayList(cdi);
-
-      /* Pop it up */
-	XtPopup(cdi->shell,XtGrabNone);
-
-      /* Refresh the display list dialog box */
-	refreshDisplayListDlg();
-
-      /* Move it if specified in geometry */
+	
+      /* Move it */
 	if ((mask & XValue) && (mask & YValue)) {
 	    XMoveWindow(XtDisplay(cdi->shell),
 	      XtWindow(cdi->shell),x,y);
 	}
     }
+
+#if DEBUG_RELATED_DISPLAY
+    printf("dmDisplayListParse: Before dmTraverseDisplayList\n");
+#endif
+  /* Execute all the elements including the display */
+    dmTraverseDisplayList(cdi);
+    
+  /* Pop it up */
+    XtPopup(cdi->shell,XtGrabNone);
+    
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
+    
+#if DEBUG_RELATED_DISPLAY
+    printf("dmDisplayListParse: Leaving\n");
+#endif    
 }
 
 DlElement *parseDisplay(

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_EVENTS 0
+#define DEBUG_FONTS 0
 
 #include "medm.h"
 
@@ -137,10 +138,12 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     int x, y;
     unsigned int uiw, uih;
     Dimension width, height, goodWidth, goodHeight, oldWidth, oldHeight;
+    Position oldx, oldy;
     Boolean resized;
     Arg args[4];
+    int nargs;
     XtPointer userData;
-    DlElement *elementPtr;
+    DlElement *pE;
     float aspectRatio, newAspectRatio;
 
     Window root, child;
@@ -206,44 +209,60 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	return;
     } else if (cbs->reason == XmCR_RESIZE) {
       /* RESIZE */
-#if DEBUG_EVENTS > 1
-	fprintf(stderr,"drawingAreaCallback(XmCR_RESIZE): \n");
+#if DEBUG_EVENTS > 1 || DEBUG_FONTS
+	printf("drawingAreaCallback(XmCR_RESIZE):\n");
 #endif
-	XtSetArg(args[0],XmNwidth,&width);
-	XtSetArg(args[1],XmNheight,&height);
-	XtSetArg(args[2],XmNuserData,&userData);
-	XtGetValues(w,args,3);
+	nargs=0;
+ 	XtSetArg(args[nargs],XmNwidth,&width); nargs++;
+	XtSetArg(args[nargs],XmNheight,&height); nargs++;
+	XtSetArg(args[nargs],XmNuserData,&userData); nargs++;
+	XtGetValues(w,args,nargs);
 
 	if (globalDisplayListTraversalMode == DL_EDIT) {
+	  /* In EDIT mode - resize selected elements */
 	    unhighlightSelectedElements();
 	    resized = dmResizeSelectedElements(displayInfo,width,height);
 	    if (displayInfo->hasBeenEditedButNotSaved == False)
 	      medmMarkDisplayBeingEdited(displayInfo);
-
 	} else {
+	  /* In EXECUTE mode - resize all elements
+	   * If user resized with Shift-ClicK
+	   *     Redefine values to maintain aspect ratio
+	   *     Use userData to make this happen only once */
 
-	  /* in EXECUTE mode - resize all elements
-	   * Since calling for resize in resize handler - use this flag to ignore
-	   *   derived resize */
+	  /* Check for Shift-Click */
 	    XQueryPointer(display,RootWindow(display,screenNum),&root,&child,
 	      &rootX,&rootY,&winX,&winY,&mask);
 
 	    if (userData != NULL || !(mask & ShiftMask) ) {
+	      /* Either not Shift-Click or second time through */
 
-		XtSetArg(args[0],XmNuserData,(XtPointer)NULL);
-		XtSetValues(w,args,1);
+#if DEBUG_FONTS
+		printf(" Upper branch: userData =%d (mask & ShiftMask)=%d\n",
+		  userData,mask & ShiftMask);
+		printf(" width=%d height=%d userData=%d\n",
+		  (int)width,(int)height,(int)userData);
+#endif
+	      /* Reset userData */
+		nargs=0;
+		XtSetArg(args[nargs],XmNuserData,(XtPointer)NULL); nargs++;
+		XtSetValues(w,args,nargs);
+	      /* Use current width */
 		goodWidth = width;
 		goodHeight = height;
-
 	    } else {
-
-	      /* Constrain resizes to original aspect ratio, call for resize, then return */
-
-		elementPtr = FirstDlElement(displayInfo->dlElementList);
-	      /* get to DL_Display type which has old x,y,width,height */
-		while (elementPtr->type != DL_Display) {elementPtr = elementPtr->next;}
-		oldWidth = elementPtr->structure.display->object.width;
-		oldHeight = elementPtr->structure.display->object.height;
+	      /* Shift-Click, first time through
+	       *   Redefine height and/or width */
+#if DEBUG_FONTS
+		printf(" Lower branch: userData =%d (mask & ShiftMask)=%d\n",
+		  userData,mask & ShiftMask);
+		printf(" width=%d height=%d userData=%d\n",
+		  (int)width,(int)height,(int)userData);
+#endif
+	      /* Look at the display, which is the first element */
+		pE = FirstDlElement(displayInfo->dlElementList);
+		oldWidth = pE->structure.display->object.width;
+		oldHeight = pE->structure.display->object.height;
 		aspectRatio = (float)oldWidth/(float)oldHeight;
 		newAspectRatio = (float)width/(float)height;
 		if (newAspectRatio > aspectRatio) {
@@ -255,60 +274,44 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		    goodWidth = width;
 		    goodHeight = (Dimension)((float)width/aspectRatio);
 		}
-	      /* Change width/height of DA */
-	      /* Use DA's userData to signify a "forced" resize which can be ignored */
-		XtSetArg(args[0],XmNwidth,goodWidth);
-		XtSetArg(args[1],XmNheight,goodHeight);
-		XtSetArg(args[2],XmNuserData,(XtPointer)1);
-		XtSetValues(w,args,3);
-
+	      /* Change the width and/or height and set userData */
+		nargs=0;
+		XtSetArg(args[nargs],XmNwidth,goodWidth); nargs++;
+		XtSetArg(args[nargs],XmNheight,goodHeight); nargs++;
+		XtSetArg(args[nargs],XmNuserData,(XtPointer)1); nargs++;
+		XtSetValues(w,args,nargs);
+	      /* Return -- Display will be resized next time */		
 		return;
 	    }
-
+	    
+	  /* Set width and height in all DLObject's including display */
 	    resized = dmResizeDisplayList(displayInfo,goodWidth,goodHeight);
+#if DEBUG_EVENTS > 1 || DEBUG_FONTS
+	    printf(" width=%d goodWidth=%d height=%d goodHeight=%d resized=%s\n",
+	      (int)width,(int)goodWidth,(int)height,(int)goodHeight,resized?"True":"False");
+#endif
 	}
 
-      /* (MDA) should always cleanup before traversing!! */
+      /* Get the current values of x and y */
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&oldx); nargs++;
+	XtSetArg(args[nargs],XmNy,&oldy); nargs++;
+	XtGetValues(displayInfo->shell,args,nargs);
+
+      /* Change DlObject values for x and y to be the same as the original */
+	pE = FirstDlElement(displayInfo->dlElementList);
+	pE->structure.display->object.x = oldx;
+	pE->structure.display->object.y = oldy;
+
+      /* Implement resized values */
 	if (resized) {
-	    clearResourcePaletteEntries();	/* Clear any selected entries */
+	  /* Clear any selected entries */
+	    unselectElementsInDisplay();
+	    clearResourcePaletteEntries();
+	  /* Clean up the displayInfo */
 	    dmCleanupDisplayInfo(displayInfo,FALSE);
-#if 0
-	    XtAppAddTimeOut(appContext,1000,traverseDisplayLater,displayInfo); 
-#else
+	  /* Execute the elements except the display */
 	    dmTraverseDisplayList(displayInfo);
-#endif
 	}
     }
-#if 0    
-    else if (cbs->reason == XmCR_INPUT) {
-      /* INPUT */
-	XEvent *xEvent = (XEvent *)cbs->event;
-	Boolean ctd = True;
-	
-#if DEBUG_EVENTS
-	fprintf(stderr,"\ndrawingAreaCallback(XmCR_INPUT): \n");
-	switch(xEvent->xany.type) {
-	case ButtonPress:
-	    printf("  ButtonPress\n");
-	    break;
-	case ButtonRelease:
-	    printf("  ButtonRelease\n");
-	    break;
-	case KeyPress:
-	    printf("  KeyPress\n");
-	    break;
-	case KeyRelease:
-	    printf("  KeyRelease\n");
-	    break;
-	}
-#endif
-	switch(xEvent->xany.type) {
-	case KeyPress:
-	  /* Call the keypress handler */
-	    handleEditKeyPress(w,(XtPointer)displayInfo,
-	      (XEvent *)&cbs->event->xkey,&ctd);
-	    break;
-	}
-    }
-#endif    
 }

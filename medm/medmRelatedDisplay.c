@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_COMPOSITE 0
+#define DEBUG_FONTS 0
 
 #if 0     /* Not using _NTSDK anymore */
 #ifdef WIN32
@@ -260,6 +261,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     } 
   /* 1 display, not hidden */
     if (iNumberOfDisplays == 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
+      /* Case 1 0f 4 */
+      /* One item, any type but hidden */
       /* Get size for graphic part of pixmap */
 	pixmapH = MIN(dlRelatedDisplay->object.width,
 	  dlRelatedDisplay->object.height);
@@ -317,6 +320,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
     } else if (dlRelatedDisplay->visual == RD_MENU) {
+      /* Case 2 of 4 */
+      /* Single column menu, more than 1 item */
 	n = 0;
 	XtSetArg(args[n],XmNbackground,(Pixel)
 	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
@@ -428,6 +433,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
     } else if (dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
+      /* Case 3 of 4 */
+      /* Rows or columns of buttons */
 	Arg wargs[20];
 	int i, n, maxChars, usedWidth, usedHeight;
 	XmFontList fontList;
@@ -519,6 +526,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
     } else if (dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
+      /* Case 4 of 4 */
+      /* Hidden button:
+       *  No widget, No callbacks, Just draw a rectangle
+       *  Handle in executeModeButtonPress, not relatedDisplayButtonPressedCb */
 	unsigned long gcValueMask;
 	XGCValues gcValues;
 	Display *display = XtDisplay(displayInfo->drawingArea);
@@ -796,6 +807,11 @@ static void relatedDisplayButtonPressedCb(Widget w,
 	replace = True;
     }
     
+#if DEBUG_FONTS
+    printf("\nrelatedDisplayButtonPressedCb: displayInfo=%x replace=%s\n",
+      displayInfo,replace?"True":"False");
+#endif    
+
   /* Create the new display */
     XtVaGetValues(w, XmNuserData, &displayInfo, NULL);
     relatedDisplayCreateNewDisplay(displayInfo, pEntry, replace);
@@ -813,6 +829,12 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     filename[MAX_TOKEN_LENGTH-1] = '\0';
     argsString = pEntry->args;
     
+#if DEBUG_FONTS
+    printf("relatedDisplayCreateNewDisplay: displayInfo=%x replaceDisplay=%s\n"
+      "  filename=%s\n",
+      displayInfo,replaceDisplay?"True":"False",filename);
+#endif    
+
   /*
    * if we want to be able to have RD's inherit their parent's
    *   macro-substitutions, then we must perform any macro substitution on

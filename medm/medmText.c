@@ -108,10 +108,11 @@ static void drawText(Display *display,
     usedWidth = XTextWidth(fontTable[i],dlText->textix,nChars);
 
 #if DEBUG_FONTS
-    {
+     {
 	static int ifirst=1;
 	int j;
 
+#if DEBUG_FONTS > 1
 	if(ifirst) {
 	    ifirst=0;
 	    printf("\nFonts\n");
@@ -121,6 +122,7 @@ static void drawText(Display *display,
 	    }
 	    printf("\n");
 	}
+#endif	
 	printf("drawText: h=%d %s%d %s\n",dlText->object.height,
 	  ALIAS_FONT_PREFIX,fontSizeTable[i],dlText->textix);
     }
@@ -146,8 +148,15 @@ static void drawText(Display *display,
 void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlText *dlText = dlElement->structure.text;
+    
+#if DEBUG_FONTS
+	printf("executeDlText: displayInfo=%x dlElement=%x\n",
+	  displayInfo,dlElement);
+#endif	
+#if DEBUG_FONTS > 1
+	dumpDlElementList(displayInfo->dlElementList);
+#endif	
     if (displayInfo->traversalMode == DL_EXECUTE && *dlText->dynAttr.chan) {
-	
 	Text *pt;
 	pt = (Text *) malloc(sizeof(Text));
 	pt->dlElement = dlElement;
@@ -193,8 +202,14 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
     } else {
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
+#if DEBUG_FONTS > 1
+	printf("executeDlText: Calling drawText DA\n");
+#endif	
 	drawText(display,XtWindow(displayInfo->drawingArea),
 	  displayInfo->gc,dlText);
+#if DEBUG_FONTS > 1
+	printf("executeDlText: Calling drawText PM\n");
+#endif
 	drawText(display,displayInfo->drawingAreaPixmap,
 	  displayInfo->gc,dlText);
     }
@@ -247,18 +262,29 @@ static void textDraw(XtPointer cd) {
 
 	switch (dlText->dynAttr.vis) {
 	case V_STATIC:
+#if DEBUG_FONTS
+	    printf("textUpdateValueCb [V_STATIC]: Calling drawText\n");
+#endif	
 	    drawText(display,XtWindow(displayInfo->drawingArea),
 	      displayInfo->gc,dlText);
 	    break;
 	case IF_NOT_ZERO:
-	    if (pd->value != 0.0)
-	      drawText(display,XtWindow(displayInfo->drawingArea),
-		displayInfo->gc,dlText);
+	    if (pd->value != 0.0) {
+#if DEBUG_FONTS
+		printf("textUpdateValueCb [IF_NOT_ZERO]: Calling drawText\n");
+#endif	
+		drawText(display,XtWindow(displayInfo->drawingArea),
+		  displayInfo->gc,dlText);
+	    }
 	    break;
 	case IF_ZERO:
-	    if (pd->value == 0.0)
-	      drawText(display,XtWindow(displayInfo->drawingArea),
-		displayInfo->gc,dlText);
+	    if (pd->value == 0.0) {
+#if DEBUG_FONTS
+		printf("textUpdateValueCb [IF_ZERO]: Calling drawText\n");
+#endif	
+		drawText(display,XtWindow(displayInfo->drawingArea),
+		  displayInfo->gc,dlText);
+	    }
 	    break;
 	default :
 	    medmPrintf(1,"\ntextUpdateValueCb: Unknown visibility\n");
@@ -618,6 +644,9 @@ DlElement *handleTextCreate(int x0, int y0)
 	      (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
 	      (int)cursorX, (int)cursorY);
 	    executeDlBasicAttribute(currentDisplayInfo,&(dlText->attr));
+#if DEBUG_FONTS
+	    printf("handleTextCreate: Calling drawText\n");
+#endif	
 	    drawText(display,XtWindow(currentDisplayInfo->drawingArea),
 	      currentDisplayInfo->gc,dlText);
  
