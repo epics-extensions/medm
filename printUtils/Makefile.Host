@@ -3,6 +3,13 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
+# Optimization
+ifdef WIN32
+HOST_OPT = NO
+else
+HOST_OPT = NO
+endif
+
 #USR_CFLAGS += -H
 
 ifdef WIN32
@@ -20,7 +27,12 @@ endif
 
 HOST_OPT = NO
 
-LIBSRCS = dsimple.c pUtils.c ps_utils.c utilPrint.c xwd.c xwd2ps.c
+LIBSRCS += getopt.c
+LIBSRCS += pUtils.c
+LIBSRCS += ps_utils.c
+LIBSRCS += utilPrint.c
+LIBSRCS += xwd.c
+LIBSRCS += xwd2ps.c
 
 USR_INCLUDES = -I$(X11_INC)
 

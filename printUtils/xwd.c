@@ -81,18 +81,15 @@ typedef unsigned long Pixel;
 
 #define FEEP_VOLUME 0
 
-/* Include routines to do parsing */
-#include "dsimple.h"
-
 /* KE: Added for function prototypes */
-#include "xwd2ps.h"
+#include "printUtils.h"
 
 /* Function prototypes */
 static long parse_long (char *s);
-void Error(char *string);
-void Window_Dump(Window window, FILE *out);
-int Image_Size(XImage *image);
-int Get_XColors(XWindowAttributes *win_info, XColor **colors);
+static int Window_Dump(Display *display, Window window, FILE *out);
+static int Image_Size(XImage *image);
+static int Get_XColors(Display *display, XWindowAttributes *win_info,
+  XColor **colors);
 static void _swaplong (register char *bp, register unsigned n);
 static void _swapshort (register char *bp, register unsigned n);
 
@@ -133,19 +130,19 @@ static long parse_long (char *s)
  * the xwd() routine (used to be a main()...with extra stuff)
  */
 
-void xwd(Display *display, Window window, char *file)
+int xwd(Display *display, Window window, char *file)
 {
     Window target_win;
     FILE *out_file = stdout;
     Bool frame_only = False;
+    int status;
 
-
-    dpy = display;
     target_win = window;
 
-    if (!(out_file = fopen(file, "w")))
-      Error("Can't open output file as specified.");
-
+    if (!(out_file = fopen(file, "w"))) {
+	errMsg("xwd: Can't open output file: %s\n",file);
+	return 0;
+    }
     standard_out = False;
 
   /* for color displays only */
@@ -184,9 +181,9 @@ void xwd(Display *display, Window window, char *file)
   /*
    * Dump it!
    */
-    Window_Dump(target_win, out_file);
-
+    status = Window_Dump(display, target_win, out_file);
     fclose(out_file);
+    return status;
 }
 
 
@@ -195,14 +192,9 @@ void xwd(Display *display, Window window, char *file)
  *              writting.
  */
 
-/* KE: Wrong prototype for calloc */
-#if 0
-char *calloc();
-#endif
-
 #include "X11/XWDFile.h"
 
-void Window_Dump(Window window, FILE *out)
+static int Window_Dump(Display *display, Window window, FILE *out)
 {
     unsigned long swaptest = 1;
     XColor *colors;
@@ -220,27 +212,29 @@ void Window_Dump(Window window, FILE *out)
     int bw;
     Window dummywin;
     XWDFileHeader header;
-
+    int screen;
     
   /*
    * Inform the user not to alter the screen.
    */
-    xwdBeep();
+    XBell(display, 50);
 
   /*
    * Get the parameters of the window being dumped.
    */
-    if (debug) outl("xwd: Getting target window information.\n");
-    if(!XGetWindowAttributes(dpy, window, &win_info)) 
-      Fatal_Error("Can't get target window attributes."," ");
+    if (debug) print("xwd: Error getting target window information\n");
+    if(!XGetWindowAttributes(display, window, &win_info)) {
+	errMsg("xwd: Can't get target window attributes\n");
+	return 0;
+    }
+    screen = DefaultScreen(display);
 
   /* handle any frame window */
-    if (!XTranslateCoordinates (dpy, window, DefaultRootWindow(dpy), 0, 0,
+    if (!XTranslateCoordinates (display, window, DefaultRootWindow(display), 0, 0,
       &absx, &absy, &dummywin)) {
-	fprintf (stderr, 
-	  "%s:  unable to translate window coordinates (%d,%d)\n",
-	  program_name, absx, absy);
-	exit (1);
+	errMsg("xwd: Unable to translate window coordinates (%d,%d)\n",
+	  absx, absy);
+	return 0;
     }
     win_info.x = absx;
     win_info.y = absy;
@@ -255,68 +249,68 @@ void Window_Dump(Window window, FILE *out)
 	width += (2 * bw);
 	height += (2 * bw);
     }
-    dwidth = DisplayWidth (dpy, screen);
-    dheight = DisplayHeight (dpy, screen);
-
-
+    dwidth = DisplayWidth (display, screen);
+    dheight = DisplayHeight (display, screen);
+    
+    
   /* clip to window */
     if (absx < 0) width += absx, absx = 0;
     if (absy < 0) height += absy, absy = 0;
     if (absx + (int)width > dwidth) width = dwidth - absx;
     if (absy + (int)height > dheight) height = dheight - absy;
-
-    XFetchName(dpy, window, &win_name);
+    
+    XFetchName(display, window, &win_name);
     if (!win_name || !win_name[0]) {
 	win_name = "xwdump";
 	got_win_name = False;
     } else {
 	got_win_name = True;
     }
-
+    
   /* sizeof(char) is included for the null string terminator. */
     win_name_size = strlen(win_name) + sizeof(char);
-
+    
   /*
    * Snarf the pixmap with XGetImage.
    */
-
+    
     x = absx - win_info.x;
     y = absy - win_info.y;
-    image = XGetImage (dpy, window, x, y, width, height, AllPlanes, format);
+    image = XGetImage (display, window, x, y, width, height, AllPlanes, format);
     if (!image) {
-	fprintf (stderr, "%s:  unable to get image at %dx%d+%d+%d\n",
-	  program_name, width, height, x, y);
-	exit (1);
+	errMsg("xwd: Unable to get image at %dx%d+%d+%d\n",
+	  width, height, x, y);
+	return 0;
     }
-
+    
     if (add_pixel_value != 0) XAddPixel((XImage *)image, add_pixel_value);
-
+    
   /*
    * Determine the pixmap size.
    */
     buffer_size = Image_Size(image);
-
-    if (debug) outl("xwd: Getting Colors.\n");
-
-    ncolors = Get_XColors(&win_info, &colors);
-
+    
+    if (debug) print("xwd: Getting Colors.\n");
+    
+    ncolors = Get_XColors(display, &win_info, &colors);
+    
   /*
    * Inform the user that the image has been retrieved.
    */
-    XBell(dpy, FEEP_VOLUME);
-    XBell(dpy, FEEP_VOLUME);
-    XFlush(dpy);
-
+    XBell(display, FEEP_VOLUME);
+    XBell(display, FEEP_VOLUME);
+    XFlush(display);
+    
   /*
    * Calculate header size.
    */
-    if (debug) outl("xwd: Calculating header size.\n");
+    if (debug) print("xwd: Calculating header size.\n");
     header_size = sizeof(header) + win_name_size;
-
+    
   /*
    * Write out header information.
    */
-    if (debug) outl("xwd: Constructing and dumping file header.\n");
+    if (debug) print("xwd: Constructing and dumping file header.\n");
     header.header_size = (CARD32) header_size;
     header.file_version = (CARD32) XWD_FILE_VERSION;
     header.pixmap_format = (CARD32) format;
@@ -342,7 +336,7 @@ void Window_Dump(Window window, FILE *out)
     header.window_x = absx;
     header.window_y = absy;
     header.window_bdrwidth = (CARD32) win_info.border_width;
-
+    
     if (*(char *) &swaptest) {
 	_swaplong((char *) &header, sizeof(header));
 	for (i = 0; i < ncolors; i++) {
@@ -350,22 +344,22 @@ void Window_Dump(Window window, FILE *out)
 	    _swapshort((char *) &colors[i].red, 3 * sizeof(short));
 	}
     }
-
+    
     (void) fwrite((char *)&header, sizeof(header), 1, out);
     (void) fwrite(win_name, win_name_size, 1, out);
-
+    
   /*
    * Write out the color maps, if any
    */
-
-    if (debug) outl("xwd: Dumping %d colors.\n", ncolors);
+    
+    if (debug) print("xwd: Dumping %d colors.\n", ncolors);
     (void) fwrite((char *) colors, sizeof(XColor), ncolors, out);
-
+    
   /*
    * Write out the buffer.
    */
-    if (debug) outl("xwd: Dumping pixmap.  bufsize=%d\n",buffer_size);
-
+    if (debug) print("xwd: Dumping pixmap.  bufsize=%d\n",buffer_size);
+    
   /*
    *    This copying of the bit stream (data) to a file is to be replaced
    *  by an Xlib call which hasn't been written yet.  It is not clear
@@ -373,64 +367,32 @@ void Window_Dump(Window window, FILE *out)
    *  non-existant X function.
    */
     (void) fwrite(image->data, (int) buffer_size, 1, out);
-
+    
   /*
    * free the color buffer.
    */
-
-    if(debug && ncolors > 0) outl("xwd: Freeing colors.\n");
+    
+    if(debug && ncolors > 0) print("xwd: Freeing colors.\n");
     if(ncolors > 0) free(colors);
-
+    
   /*
    * Free window name string.
    */
-    if (debug) outl("xwd: Freeing window name string.\n");
+    if (debug) print("xwd: Freeing window name string.\n");
     if (got_win_name) XFree(win_name);
-
+    
   /*
    * Free image
    */
     XDestroyImage((XImage *)image);
+
+    return 1;
 }
-
-/*
- * Report the syntax for calling xwd.
- */
-void usage()
-{
-    fprintf (stderr,
-      "usage: %s [-display host:dpy] [-debug] [-help] %s [-nobdrs] [-out <file>]",
-      program_name, SELECT_USAGE);
-    fprintf (stderr, " [-xy] [-add value] [-frame]\n");
-    exit(1);
-}
-
-
-/*
- * Error - Fatal xwd error.
- */
-#if 0
-/* KE: Replaced with #include <errno.h> */
-extern int errno;
-#endif
-
-void Error(char *string)
-{
-    outl("\nxwd: Error => %s\n", string);
-    if (errno != 0) {
-	perror("xwd");
-	outl("\n");
-    }
-
-    exit(1);
-}
-
 
 /*
  * Determine the pixmap size.
  */
-
-int Image_Size(XImage *image)
+static int Image_Size(XImage *image)
 {
     if (format != ZPixmap)
       return(image->bytes_per_line * image->height * image->depth);
@@ -443,7 +405,8 @@ int Image_Size(XImage *image)
 /*
  * Get the XColors of all pixels in image - returns # of colors
  */
-int Get_XColors(XWindowAttributes *win_info, XColor **colors)
+static int Get_XColors(Display *display, XWindowAttributes *win_info,
+  XColor **colors)
 {
     int i, ncolors;
 
@@ -451,8 +414,10 @@ int Get_XColors(XWindowAttributes *win_info, XColor **colors)
       return(0);
 
     ncolors = win_info->visual->map_entries;
-    if (!(*colors = (XColor *) malloc (sizeof(XColor) * ncolors)))
-      Fatal_Error("Out of memory!"," ");
+    if (!(*colors = (XColor *) malloc (sizeof(XColor) * ncolors))) {
+      errMsg("xwd: Error allocating memory for colors/n");
+      return(0);
+    }
 
     if (win_info->visual->class == DirectColor ||
       win_info->visual->class == TrueColor) {
@@ -482,7 +447,7 @@ int Get_XColors(XWindowAttributes *win_info, XColor **colors)
 	}
     }
 
-    XQueryColors(dpy, win_info->colormap, *colors, ncolors);
+    XQueryColors(display, win_info->colormap, *colors, ncolors);
     
     return(ncolors);
 }

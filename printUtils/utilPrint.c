@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 /* KE: Formerly #include <sys/time.h> */
 #include <time.h>
 #include <string.h>
@@ -16,7 +17,7 @@
 #include <X11/XlibXtra.h>
 #endif
 
-#include "xwd2ps.h"
+#include "printUtils.h"
 #include "utilPrint.h"
 
 int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
@@ -38,6 +39,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
   /* Return if not enough information around */
     if(display == (Display *)NULL || window == (Window)NULL
       || xwdFileName == (char *)NULL) {
+	errMsg("utilPrint: Invalid display or window\n");
 	retCode = 0;
 	goto CLEAN;
     }
@@ -46,21 +48,30 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     seconds = time(NULL);
     newFileName = (char *)calloc(1,PRINT_BUF_SIZE);
     if(!newFileName) {
-	fprintf(stderr,"\nutilPrint:  "
-	  "Unable to allocate space for the window dump file name/n");
+	errMsg("utilPrint: "
+	  "Unable to allocate space for the window dump file name\n");
 	retCode = 0;
 	goto CLEAN;
     }
     sprintf(newFileName,"%s%d",xwdFileName,seconds);
 
+#if DEBUG_PARAMS
+    print("utilPrint: newFilename=%s\n",newFileName);
+#endif
+
   /* Dump the window */
-    xwd(display, window, newFileName);
+    status = xwd(display, window, newFileName);
+    if(!status) {
+	errMsg("utilPrint: Cannot dump window\n");
+	retCode=0;
+	goto CLEAN;
+    }
 
   /* Allocate a PS file name */
     psFileName = (char *)calloc(1,PRINT_BUF_SIZE);
     if(!psFileName) {
-	fprintf(stderr,"\nutilPrint:  "
-	  "Unable to allocate space for the postscript file name/n");
+	errMsg("utilPrint: "
+	  "Unable to allocate space for the postscript file name\n");
 	retCode = 0;
 	goto CLEAN;
     }
@@ -69,7 +80,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     if(printToFile) {
       /* Use the specified file name */
 	if(strlen(printFile) >= PRINT_BUF_SIZE) {
-	    fprintf(stderr,"\nutilPrint:  File name is too long: \n%s\n",
+	    errMsg("utilPrint: File name is too long: \n%s\n",
 	      printFile);
 	    retCode = 0;
 	    goto CLEAN;
@@ -86,11 +97,15 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 #endif
     }
 
+#if DEBUG_PARAMS
+    print("utilPrint: psFilename=%s\n",psFileName);
+#endif
+
   /* Allocate a buffer for system commands */
     commandBuffer = (char *)calloc(1,PRINT_BUF_SIZE);
     if(!commandBuffer) {
-	fprintf(stderr,"\nutilPrint:  "
-	  "Unable to allocate space for a command buffer/n");
+	errMsg("utilPrint: "
+	  "Unable to allocate space for a command buffer\n");
 	retCode = 0;
 	goto CLEAN;
     }
@@ -131,7 +146,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
   /* Open the output file */
     fo = fopen(psFileName,"w+");
     if(fo == NULL) {
-	fprintf(stderr,"\nutilPrint:  Unable to open file: %s\n",psFileName);
+	errMsg("utilPrint: Unable to open file: %s\n",psFileName);
 	retCode = 0;
 	goto CLEAN;
     }
@@ -139,20 +154,23 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
   /* Call xwd2ps */
     retCode = xwd2ps(myArgc,myArgv,fo);
     fclose(fo);
-    if(!retCode) goto CLEAN;
+    if(!retCode) {
+	errMsg("utilPrint: Could not convert window dump to Postscript\n");
+	goto CLEAN;
+    }
 
   /* All done if print to file, otherwise print */
     if(printToFile) {
 	goto CLEAN;
     } else {
-      /* Print the file */
+      /* Print the file to the printer */
 #if DEBUG_PRINT == 0
       /* Don't do this when debugging so you can look at the files */
 #ifndef VMS     /* UNIX code */
 	sprintf(commandBuffer, "%s %s", printCommand, psFileName);
 	status=system(commandBuffer);
 	if(status) {
-	    fprintf(stderr,"\nutilPrint:  Print command [%s] failed\n",
+	    errMsg("utilPrint: Print command [%s] failed\n",
 	      commandBuffer);
 	} else {
 	  /* Delete files */
@@ -169,13 +187,13 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	printf("system command %s\n",commandBuffer);
 	status=system(commandBuffer);
 	if(status) {
-	    fprintf(stderr,"\nutilPrint:  Print command [%s] failed\n",
+	    errMsg("utilPrint: Print command [%s] failed\n",
 	      commandBuffer);
 	} else {
-	    strcpy(commandBuffer,"delete/noconfirm/nolog ");
+	    strcpy(commandBuffer,"delete\noconfirm\nolog ");
 	    strcat(commandBuffer,newFileName);
 	    strcat(commandBuffer,";*");
-	    printf("system command %s\n",commandBuffer);
+	    print("system command %s\n",commandBuffer);
 	    system(commandBuffer);
 	}
 #endif     /* #ifndef VMS */
@@ -187,14 +205,14 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     {
 	int i;
 	
-	printf("utilPrint:\n");
-	printf("  printCommand: %s\n",printCommand?printCommand:"NULL");
-	printf("  printFile:    %s\n",printFile?printFile:"NULL");
-	printf("  xwdFileName:  %s\n",xwdFileName?xwdFileName:"NULL");
-	printf("  newFileName:  %s\n",newFileName?newFileName:NULL);
-	printf("  psFileName:   %s\n",psFileName?psFileName:"NULL");
+	print("utilPrint:\n");
+	print("  printCommand: %s\n",printCommand?printCommand:"NULL");
+	print("  printFile:    %s\n",printFile?printFile:"NULL");
+	print("  xwdFileName:  %s\n",xwdFileName?xwdFileName:"NULL");
+	print("  newFileName:  %s\n",newFileName?newFileName:NULL);
+	print("  psFileName:   %s\n",psFileName?psFileName:"NULL");
 	for(i=0; i < myArgc; i++) {
-	    printf("  myArgv[%d]:    %s\n",i,myArgv[i]);
+	    print("  myArgv[%d]:    %s\n",i,myArgv[i]);
 	}
     }
 #endif
@@ -206,4 +224,26 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     if(psFileName) free(psFileName);
 
     return retCode;
+}
+
+int errMsg(const char *fmt, ...)
+{
+    va_list vargs;
+    static char lstring[LPRINTF_SIZE];
+    
+    va_start(vargs,fmt);
+    (void)vsprintf(lstring,fmt,vargs);
+    va_end(vargs);
+    
+    if(lstring[0] != '\0') {
+#ifdef WIN32
+	lprintf("%s\n",lstring);
+	fflush(stdout);
+#else
+	fprintf(stderr,"%s\n",lstring);
+	fflush(stderr);
+#endif
+    }
+    
+    return 0;
 }

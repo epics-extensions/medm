@@ -107,6 +107,8 @@ without express or implied warranty.
 
 */
 
+#define DEBUG_FORMAT 1
+
 /* KE: Commented this out.  Not found on WIN32 and apparently not needed */
 #if 0
 #ifndef SCO
@@ -125,17 +127,17 @@ without express or implied warranty.
 #include <X11/Xlib.h>
 #include <X11/XWDFile.h>
 
-#include "xwd2ps.h"
+#include "printUtils.h"
 
 /* Function prototypes */
-static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
-  unsigned char *buffer);
-static void skipLines(XWDFileHeader *winP, unsigned char *line,
+static int get_next_raster_line(FILE *file, XWDFileHeader *win,
+  unsigned char *linec,  unsigned char *buffer);
+static void skipLines(FILE *file, XWDFileHeader *winP, unsigned char *line,
   unsigned char *buffer, int line_skip);
 static void parseArgs(int argc, char **argv, Options *option, Image *image,
     Page *page);
 static int get_page_info(Page *the_page);
-static int get_raster_header(XWDFileHeader *win, char *w_name);
+static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name);
 static int getDumpType(XWDFileHeader *header);
 static int getOrientation(Page pg, Image im);
 
@@ -152,9 +154,10 @@ char   progname[128];
 
 /* this is a structure containg the values of all command line options
    initially, we assume no options are set */
-Flag flag = { FALSE, FALSE, FALSE, FALSE, FALSE, 
+Flag nullFlag = { FALSE, FALSE, FALSE, FALSE, FALSE, 
 	      FALSE, FALSE, FALSE, FALSE, FALSE, 
 	      FALSE, FALSE, FALSE, FALSE, FALSE };
+Flag flag;
 
 int xwd2ps(int argc, char **argv, FILE *fo)
 {
@@ -202,6 +205,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     char s_matrix[80];            /* PostScript code for image matrix */
 
     int retCode = 1;
+    FILE *file;
 
   /* initializations */
     colors = NULL;
@@ -226,7 +230,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
      otherwise orientation is determined by the image shape later on */
 
     if(flag.portrait == TRUE && flag.landscape == TRUE) {
-	fprintf(stderr, "%s: cannot use L and P options together.\n",progname);
+	errMsg( "%s: cannot use L and P options together.\n",progname);
 	flag.error++;
     }
     else if(flag.portrait == TRUE)
@@ -242,13 +246,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
   /* Get page size information */
 
     if(get_page_info(&page)) {
-	fprintf(stderr, "%s: p option error -- page type: %s undefined\n", 
+	errMsg( "%s: p option error -- page type: %s undefined\n", 
 	  progname, page.type);
 	flag.error++;
     }
 
     if(flag.error) {
-	usage();
 	retCode = 0;
 	goto CLEAN;
     }
@@ -276,13 +279,14 @@ int xwd2ps(int argc, char **argv, FILE *fo)
    */
     if(argc > optind) {
 	options.input_file.name = argv[optind];
-	options.input_file.pointer = freopen(options.input_file.name, "r",stdin);
-	if(options.input_file.pointer == NULL) {
-	    fprintf(stderr,"%s: could not open input file %s\n", 
+	file = fopen(options.input_file.name, "r");
+	if(file == NULL) {
+	    errMsg("%s: could not open input file %s\n", 
 	      progname, options.input_file.name);
 	    retCode = 0;
 	    goto CLEAN;
 	}
+	options.input_file.pointer = file;
     }
 
   /* 
@@ -297,7 +301,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     properly. */
 
     w_name=NULL;
-    retCode = get_raster_header(&win, w_name);
+    retCode = get_raster_header(file, &win, w_name);
     if(!retCode) goto CLEAN;
 
     dump_type = getDumpType(&win); /* TEMP result not used yet */
@@ -319,7 +323,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
    * process width factor
    */
     if(my_image.width_frac == 0 || my_image.width_frac > 1.0) {
-	fprintf(stderr,
+	errMsg(
 	  "%s: W option argument error -- %f is not between 0 and 1.\n",
 	  progname, my_image.width_frac);
 	retCode = 0;
@@ -343,7 +347,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
   
   /* process height factor */
     if(my_image.height_frac == 0 || my_image.height_frac > 1.0) {
-	fprintf(stderr,
+	errMsg(
 	  "%s: H option argument error -- %f is not between 0 and 1.\n",
 	  progname, my_image.height_frac);
 	retCode = 0;
@@ -416,7 +420,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     sprintf(s_scale, "%f inch %f inch scale", my_image.width, my_image.height);
 
     if(my_image.width <= 0.0 || my_image.width > maxwcheck) {
-	fprintf(stderr,
+	errMsg(
 	  "%s: w option error -- width (%f) is outside range for standard 8.5 x 11 in. page.\n", 
 	  progname, my_image.width);
 	retCode = 0;
@@ -424,7 +428,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     }
   
     if(my_image.height <= 0.0 || my_image.height > maxhcheck) {
-	fprintf(stderr,
+	errMsg(
 	  "%s: h option error -- height (%f) is outside range for standard 8.5 x 11 in. page.\n", 
 	  progname, my_image.height);
 	retCode = 0;
@@ -520,12 +524,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);    
 	    fprintf(fo,"\ndrawimage\n");
 	}
-	skipLines(&win, &line[0], buffer, line_skip);
+	skipLines(file, &win, &line[0], buffer, line_skip);
 
       /* start outputting the image */
 	outputcount = 0;
 	for (i = 0; i <my_image.ps_height; i++)  {
-	    retCode = get_next_raster_line(&win, line, buffer);
+	    retCode = get_next_raster_line(file, &win, line, buffer);
 	    if(!retCode) goto CLEAN;
 	    rr = line[3*col_skip];
 	    gg = line[3*col_skip];
@@ -646,11 +650,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"\n");
 	fprintf(fo,"\ndrawcolorimage\n");
   
-	skipLines(&win, &line[0], buffer, line_skip);    
+	skipLines(file, &win, &line[0], buffer, line_skip);    
       /* run thru each row of pixels and run-len length encode it */
 	outputcount = 0;
 	for (i = 0; i <my_image.ps_height; i++)  {
-	    get_next_raster_line(&win, line, buffer);
+	    get_next_raster_line(file, &win, line, buffer);
 	    runlen = 0;
 	    color = line[col_skip];
 	    for(j = col_start; j < col_end; j++) {
@@ -726,14 +730,14 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"\ndrawcolorimage\n");
 	}
 
-	skipLines(&win, &line[0], buffer, line_skip);    
+	skipLines(file, &win, &line[0], buffer, line_skip);    
       /* run thru each row of pixels and run-len length encode it */
 	outputcount = 0;
 
 	for (i = 0; i <my_image.ps_height; i++)  {
-	    get_next_raster_line(&win, line, buffer);
+	    get_next_raster_line(file, &win, line, buffer);
 	  /* unpack the 4 bit images into a byte */
-	    if(*(char *) &swaptest)
+	    if(*(char *) & swaptest)
 	      for (j = 0; j < (int)win.bytes_per_line; j++) {
 		  line4bits[2*j]   = line[j] & 0x0f;
 		  line4bits[2*j+1] = line[j] >> 4;
@@ -805,11 +809,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);    
 	fprintf(fo,"\ndrawbinaryimage\n");
 
-	skipLines(&win, &line[0], buffer, line_skip);    
+	skipLines(file, &win, &line[0], buffer, line_skip);    
       /* run through each row of pixels (8 per byte) and copy it  */
 	outputcount = 0;
 	for (i = 0; i < my_image.ps_height; i++)  {
-	    get_next_raster_line(&win, line, buffer);
+	    get_next_raster_line(file, &win, line, buffer);
 	    for(j=col_skip; j < col_end; j++) {
 		fprintf(fo,"%02x", 255 - line[j]);       /* invert data for PostScript */
 		outputcount++;
@@ -825,8 +829,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	break;
 
     default:
-	fprintf(stderr,"%s: Sorry! cannot handle input file of this format.\n", progname);
-	fprintf(stderr,"    (See program author.) \n");
+	errMsg("%s: Sorry! cannot handle input file of this format.\n", progname);
+	errMsg("    (See program author.) \n");
 	retCode = 0;
 	goto CLEAN;
     }
@@ -923,7 +927,7 @@ static int getDumpType(XWDFileHeader *header)
     case 2:
     case 1:
     default:
-	fprintf(stderr, "can't handle %u bits_per_pixel\n", header->bits_per_pixel);
+	errMsg( "can't handle %u bits_per_pixel\n", header->bits_per_pixel);
 	return UNKNOWN; /* TEMP */
     }
 }
@@ -986,29 +990,36 @@ static int get_page_info(Page *the_page)
  ** get_raster_header() - read in the xwd header, including the colormap 
  **                       and the window title
  */
-static int get_raster_header(XWDFileHeader *win, char *w_name)
+static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 {
     unsigned long swaptest = 1;
     int i, zflg, idifsize;
 
-  /* read in window header */
-    fullread(0, (char *)win, sizeof( *win ));
+#if DEBUG_FORMAT
+    print("get_raster_header: stdin->_file=%d\n",stdin->_file);
+#endif    
 
-    if(*(char *) &swaptest)  /* am I running on a byte swapped machine? */
+  /* read in window header */
+    fread((char *)win, sizeof( *win ), 1, file);
+
+    if(*(char *) & swaptest)  /* am I running on a byte swapped machine? */
       xwd2ps_swaplong((char *)win, (long)sizeof(*win)); /* swap all the bytes
 							   in the header */
+
     if(win->file_version != XWD_FILE_VERSION) {
-	fprintf(stderr,"%s: file format version missmatch.\n", progname);
+	errMsg("%s: File format version missmatch\n"
+	  "  Need %d     Got %d",
+	  progname, XWD_FILE_VERSION, win->file_version);
 	return 0;
     }
 
     if(win->header_size < sizeof(*win)) {
-	fprintf(stderr,"%s: header size is too small.\n", progname);
+	errMsg("%s: Header size is too small.\n", progname);
 	return 0;
     }
 
     if(win->pixmap_depth != 1 && win->pixmap_format != ZPixmap) {
-	fprintf(stderr,"%s: image is not in Z format\n", progname);
+	errMsg("%s: Image is not in Z format\n", progname);
 	return 0;
     }
 
@@ -1019,15 +1030,15 @@ static int get_raster_header(XWDFileHeader *win, char *w_name)
     else
       zflg=0; /* TEMP - as far as I can tell, zflg is never used ! */
   
-    if(win->byte_order != win->bitmap_bit_order) {
-	fprintf(stderr, "%s: image will be incorrect,", progname);
-	fprintf(stderr, " byte swapping required but not performed.\n");
+   if(win->byte_order != win->bitmap_bit_order) {
+	errMsg( "%s: Image will be incorrect\n"
+	  "  Byte swapping required but not performed.\n", progname);
     }
 
   /* TEMP - put in large image warning here! */
     if(idifsize = (unsigned)(win->header_size - sizeof *win)) {
 	w_name = (char *)malloc(idifsize);
-	fullread(0, w_name, idifsize);
+	fread(w_name, idifsize, 1, file);
       /* KE: Freed w_name to avoid MLK (Doesn't appear to be used anyway) */
 	if(w_name) {
 	    free(w_name);
@@ -1035,16 +1046,17 @@ static int get_raster_header(XWDFileHeader *win, char *w_name)
 	}
     }
     if(win->ncolors) {
-	if( (colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)))) == NULL) {
-	    fprintf(stderr, "%s: can't get memory for color map\n", progname);
+	colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)));
+	if(colors ==  NULL) {
+	    errMsg( "%s: Cannot allocate memory for color map\n", progname);
 	    return 0;
 	}
-	fullread(0, (char *)colors, win->ncolors * sizeof(XColor));
+	fread((char *)colors, win->ncolors, sizeof(XColor), file);
       /*
        * Scale the values received from the colormap to 8 bits
        */
 
-	if((!*(char *) &swaptest) || (win->byte_order))
+	if((!*(char *) & swaptest) || (win->byte_order))
 	  for(i = 0; i < (int)win->ncolors; i++) {
 	      colors[i].red   = colors[i].red   >> 8;
 	      colors[i].green = colors[i].green >> 8;
@@ -1059,8 +1071,8 @@ static int get_raster_header(XWDFileHeader *win, char *w_name)
  ** get_next_raster_line() -  returns the next raster line in the image.
  * written 2-12-89 by R.C.Tatar
  */
-static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
-  unsigned char *buffer)
+static int get_next_raster_line(FILE *file, XWDFileHeader *win,
+  unsigned char *linec,  unsigned char *buffer)
 {
     unsigned char *bufptr, *bufptr1;
     int iwbytes =  win->bytes_per_line;
@@ -1069,7 +1081,7 @@ static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
 
     switch(iwbits) {
     case 32:
-	fullread(0, (char *)buffer, iwbytes);
+	fread((char *)buffer, iwbytes, 1, file);
       /* For this case, copy byte triplets into line */
 	bufptr1 = linec;
 	bufptr = buffer;
@@ -1082,17 +1094,16 @@ static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
 	return 1;
 
     case 8:
-	fullread(0, (char *)linec, iwbytes);
+	fread((char *)linec, iwbytes, 1, file);
 	return 1;
 
     case 4:
-	fullread(0, (char *)linec, iwbytes);
+	fread((char *)linec, iwbytes, 1, file);
 	return 1;
 
     default:
       /* error message if no case selected  */
-	fprintf(stderr, 
-	  "%s: Do not know how to handle %u bits per pixel.\n", 
+	errMsg("%s: Do not know how to handle %u bits per pixel.\n", 
 	  progname, iwbits);
 	return 0;
     }
@@ -1101,13 +1112,13 @@ static int get_next_raster_line(XWDFileHeader *win, unsigned char *linec,
 /* 
  ** skipLines() - skip over unprinted parts of the image 
  */
-static void skipLines(XWDFileHeader *winP, unsigned char *line,
+static void skipLines(FILE *file, XWDFileHeader *winP, unsigned char *line,
   unsigned char *buffer, int line_skip)
 {
     int i;
 
     for (i = 0; i < line_skip; i++)
-      get_next_raster_line(winP, line, buffer);
+      get_next_raster_line(file, winP, line, buffer);
 }
 
 /*
@@ -1124,8 +1135,9 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
   /* KE: getopt wasn't intended for subroutine usage.  It internally
      sets optind to 1 before the first call.  If we want to use it
      again on the next call, we must set optind ourselves.  This
-     wasn't being done so defualt arguments were being used after the
+     wasn't being done so default arguments were being used after the
      first time. */
+    flag = nullFlag;
     optind = 1;
     while((c = getopt(argc, argv, "tdlLPc:s:f:h:w:H:W:mS:p:bg:I")) != EOF)
       switch (c) {
@@ -1166,8 +1178,7 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
       case 'f':
 	  option->inc_file.pointer = fopen(optarg, "r");
 	  if(option->inc_file.pointer == NULL) {
-	      fprintf(stderr, 
-		"%s: f option error -- cannot open %s for include file.\n",
+	      errMsg("%s: f option error -- cannot open %s for include file.\n",
 		progname, optarg);
 	      flag.error++;
 	  }
@@ -1176,43 +1187,43 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
       case 'g':
 	  flag.gamma = TRUE;
 	  if( sscanf(optarg, "%f", &(image->gamma)) == 0 ) {
-	      fprintf(stderr, "%s: g option argument error\n", progname);
+	      errMsg("%s: g option argument error\n", progname);
 	      flag.error++;
 	  }
 	  if( image->gamma < 0.0 || image->gamma > 1.0 ) {
-	      fprintf(stderr, "%s: gamma value out of range: %d\n", progname, image->gamma);
+	      errMsg("%s: Gamma value out of range: %d\n", progname, image->gamma);
 	      flag.error++;
 	  }
 	  break;
       case 'h':
 	  flag.h = TRUE;
 	  if( sscanf(optarg, "%f", &(image->height)) == 0 ) {
-	      fprintf(stderr, "%s: h option argument error\n", progname);
+	      errMsg("%s: h option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'w':
 	  flag.w = TRUE;
 	  if( sscanf(optarg, "%f", &(image->width)) == 0 ) {
-	      fprintf(stderr, "%s: w option argument error\n", progname);
+	      errMsg("%s: w option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'H':
 	  if( sscanf(optarg, "%f", &(image->height_frac)) == 0) {
-	      fprintf(stderr, "%s: H option argument error\n", progname);
+	      errMsg("%s: H option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'W':
 	  if( sscanf(optarg, "%f", &(image->width_frac)) == 0 ) {
-	      fprintf(stderr, "%s: W option argument error\n", progname);
+	      errMsg("%s: W option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;
       case 'S':
 	  if( sscanf(optarg, "%d", &(option->title.font_size)) == 0 ) {
-	      fprintf(stderr, "%s: S option argument error\n", progname);
+	      errMsg("%s: S option argument error\n", progname);
 	      flag.error++;
 	  }
 	  break;

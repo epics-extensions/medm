@@ -18,7 +18,7 @@ extern char *printerOrientationTable[2];
 #else
 #define EXTERN
 char *printerSizeTable[4] = { 
-    "A [Letter]", "B", "A3", "A4"};
+    "A (Letter)", "B", "A3", "A4"};
 char *printerOrientationTable[2] = { 
     "Portrait", "Landscape"};
 #endif

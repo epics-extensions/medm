@@ -1,8 +1,5 @@
 /* xwd2ps.h - defines for xwd2ps */
 
-/* KE: The function prototypes have been added to this file for all
-   the programs in the directory. */
-
 /*
  * define the various types of dumps we might print
  */
@@ -109,36 +106,3 @@ typedef struct _Options {
     File  input_file;
     File  inc_file;
 } Options;
-
-/* KE: Function prototypes */
-
-/* xwd2ps.h */
-
-int xwd2ps(int argc, char **argv, FILE *fo);
-
-/* xwd.c */
-void usage();
-void xwd(Display *display, Window window, char *file);
-
-/* pUtils */
-void get_time_and_date(char mytime[], char mydate[]);
-void fullread(int file, char *data, int nbytes);
-void xwd2ps_swapshort(register char *bp, register long n);
-void xwd2ps_swaplong(register char *bp, register long n);
-void xwd2ps_usage(void);
-float fmax(float a, float b);
-
-/* ps_utils.c */
-void outputBorder(FILE *fo, Image the_image);
-void outputDate(FILE *fo, Image the_image);
-void outputTitle(FILE *fo, Image the_image, Options the_options);
-void outputTime(FILE *fo, Image the_image);
-void outputColorImage(FILE *fo);
-void outputLogo(FILE *fo, Image the_image);
-void printPS(FILE *fo, char **p);
-void printEPSF(FILE *fo, Image image, Page  page, char  *file_name);
-
-
-
-
-
