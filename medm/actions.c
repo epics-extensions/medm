@@ -1,3 +1,62 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
+
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -9,153 +68,6 @@ extern char *stripChartWidgetName;
 /*
  * action routines (XtActionProc) and some associated callbacks
  */
-
-
-static XtCallbackProc sendKeyboardValue(
-  Widget  w,
-  ChannelAccessControllerData *channelAccessControllerData,
-  XmSelectionBoxCallbackStruct *call_data)
-{
-  double value;
-  char *stringValue;
-
-  if (channelAccessControllerData == NULL) return;
-
-  XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &stringValue);
-
-  if (stringValue != NULL) {
-     value = atof(stringValue);
-/* update controller data value for book keeping purposes */
-     channelAccessControllerData->value = value;
-
-/* set modifed on monitorData so that at next traversal, the valuator
- * is guaranteed to be visually correct
- */
-     globalModifiedFlag = True;
-     if (channelAccessControllerData->monitorData != NULL)
-	 channelAccessControllerData->monitorData->modified = PRIMARY_MODIFIED;
-
-/* move/redraw valuator & value, but force use of user-selected value */
-     valuatorSetValue(channelAccessControllerData->monitorData,value,True);
-     if (ca_state(channelAccessControllerData->chid) == cs_conn) {
-       SEVCHK(ca_put(DBR_DOUBLE,channelAccessControllerData->chid,&value),
-	"sendKeyboardValue: error in ca_put");
-       ca_flush_io();
-     } else {
-       fprintf(stderr,"\nsendKeyboardValue: %s not connected",
-		ca_name(channelAccessControllerData->chid));
-     }
-     XtFree(stringValue);
-  }
-  XtDestroyWidget(XtParent(w));
-
-}
-
-
-
-static XtCallbackProc destroyDialog(
-  Widget  w,
-  XtPointer client_data,
-  XmSelectionBoxCallbackStruct *call_data)
-{
-  XtDestroyWidget(XtParent(w));
-}
-
-
-static XtCallbackProc precisionToggleChangedCallback(
-  Widget w,
-  XtPointer client_data,
-  XmToggleButtonCallbackStruct *call_data)
-{
-  Widget widget;
-  long longValue;
-  short shortValue;
-  ChannelAccessControllerData *data;
-  XtPointer userData;
-  DlValuator *valuator;
-  Arg args[2];
-
-/* only respond to the button actually set */
-  if (call_data->event != NULL && call_data->set == True) {
-
-    longValue = (long)client_data;
-    shortValue = (short)longValue;
-
-    XtSetArg(args[0],XmNuserData,&userData);
-    XtGetValues(w,args,1);
-    data = (ChannelAccessControllerData *)userData;
-/*
- * now set the prec field in the valuator data structure, and update
- * the valuator (scale) resources
- */
-    if (data != NULL) {
-      valuator = (DlValuator *)data->monitorData->specifics;
-      valuator->dPrecision = pow(10.,(double)shortValue);
-    }
-
-/* hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
-    widget = w;
-    while (XtClass(widget) != xmDialogShellWidgetClass) {
-      widget = XtParent(widget);
-    }
-
-    XtDestroyWidget(widget);
-  }
-
-}
-
-
-
-/*
- * text field processing callback
- */
-static XtCallbackProc precTextFieldActivateCallback(
-  Widget w,
-  DlValuator *dlValuator,
-  XmTextVerifyCallbackStruct *cbs)
-{
-  char *stringValue;
-  int i;
-  Widget widget;
-
-  stringValue = XmTextFieldGetString(w);
-  dlValuator->dPrecision = atof(stringValue);
-  XtFree(stringValue);
-
-/* hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
-    widget = w;
-    while (XtClass(widget) != xmDialogShellWidgetClass) {
-      widget = XtParent(widget);
-    }
-    XtDestroyWidget(widget);
-}
-
-
-
-/*
- * text field losing focus callback
- */
-static XtCallbackProc precTextFieldLosingFocusCallback(
-  Widget w,
-  DlValuator *dlValuator,
-  XmTextVerifyCallbackStruct *cbs)
-{
-  char string[MAX_TOKEN_LENGTH];
-  int tail;
-
-/*
- * losing focus - make sure that the text field remains accurate
- *	wrt dlValuator
- */
-  sprintf(string,"%f",dlValuator->dPrecision);
-  /* strip trailing zeroes */
-  tail = strlen(string);
-  while (string[--tail] == '0') string[tail] = '\0';
-  XmTextFieldSetString(w,string);
-
-}
-
-
 
 /* since passing client_data didn't seem to work... */
 static char *channelName;
@@ -239,7 +151,7 @@ void StartDrag(
   Cardinal n;
   Atom exportList[1];
   Widget sourceIcon;
-  ChannelAccessMonitorData *mData, *md, *mdArray[MAX(MAX_PENS,MAX_TRACES)][2];
+  Channel *mData, *md, *mdArray[MAX(MAX_PENS,MAX_TRACES)][2];
   int dir, asc, desc, maxWidth, maxHeight, maxAsc, maxDesc, maxTextWidth;
   int nominalY, i, j, liveChannels, liveTraces;
   XCharStruct overall;
@@ -281,13 +193,13 @@ void StartDrag(
      */
     displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
     xbutton = (XButtonEvent *)event;
-    mData = dmGetChannelAccessMonitorDataFromPosition(displayInfo,
+    mData = dmGetChannelFromPosition(displayInfo,
 		xbutton->x,xbutton->y);
   } else {
    /* ---get data from widget */
     while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
 	searchWidget = XtParent(searchWidget);
-    mData = dmGetChannelAccessMonitorDataFromWidget(searchWidget);
+    mData = dmGetChannelFromWidget(searchWidget);
   }
 
 
@@ -315,7 +227,7 @@ void StartDrag(
 		stripChartData = (StripChartData *)userData;
 		for (i = 0; i < stripChartData->nChannels; i++) {
 		  if (stripChartData->monitors[i] != NULL){
-		    md = (ChannelAccessMonitorData *)
+		    md = (Channel *)
 				stripChartData->monitors[i];
 		    mdArray[liveChannels][0] = md;
 		    if ( md->chid != NULL) {
@@ -379,7 +291,7 @@ void StartDrag(
 		  newTrace = False;
 		  for (j = 0; j <= 1; j++) {
 		    if (cartesianPlotData->monitors[i][j] != NULL){
-		      md = (ChannelAccessMonitorData *)
+		      md = (Channel *)
 				cartesianPlotData->monitors[i][j];
 		      newTrace = True;
 		      mdArray[liveTraces][j] = md;
@@ -504,217 +416,6 @@ void StartDrag(
     XtSetArg(args[n],XmNdragDropFinishCallback,dragDropFinishCB); n++;
     XmDragStart(searchWidget,event,args,n);
 
-  }
-}
-
-
-
-
-
-
-
-void popupValuatorKeyboardEntry(
-  Widget w,
-  DisplayInfo *displayInfo,
-  XEvent *event)
-{
-#define MAX_TOGGLES 20
-  Widget keyboardDialog;
-  char valueLabel[MAX_TOKEN_LENGTH + 8];
-  XmString xmTitle, xmValueLabel, valueXmString;
-  char valueString[40];
-  char *channel;
-  Arg args[8];
-  int n;
-  ChannelAccessControllerData *channelAccessControllerData;
-  ChannelAccessMonitorData *channelAccessMonitorData;
-
-  Widget frame, frameLabel, radioBox, toggles[MAX_TOGGLES];
-  Widget form, textField;
-  XmString frameXmString, toggleXmString;
-  double hoprLoprAbs;
-  short numColumns, numPlusColumns, numMinusColumns, shortValue;
-  char toggleString[4];
-  int i, count, tail;
-  long longValue;
-  DlValuator *dlValuator;
-
-  XButtonEvent *xEvent = (XButtonEvent *)event;
-
-  if (globalDisplayListTraversalMode == DL_EDIT) {
-  /* do nothing */
-  } else {
-
-    if (xEvent->button != Button3) return;
-
-    XtSetArg(args[0],XmNuserData,&channelAccessControllerData);
-    XtGetValues(w,args,1);
-    if (channelAccessControllerData != NULL) {
-      if (channelAccessControllerData->chid != NULL) {
-	channel = ca_name(channelAccessControllerData->chid);
-	if (channelAccessControllerData->connected == TRUE &&
-				strlen(channel) > 0) {
-/* create selection box/prompt dialog */
-	  strcpy(valueLabel,"VALUE: ");
-	  strcat(valueLabel,channel);
-	  xmValueLabel = XmStringCreateSimple(valueLabel);
-	  xmTitle = XmStringCreateSimple(channel);
-	  channelAccessMonitorData = channelAccessControllerData->monitorData;
-	  dlValuator = (DlValuator *)channelAccessMonitorData->specifics;
-	  cvtDoubleToString(channelAccessMonitorData->value,valueString,
-			channelAccessMonitorData->precision);
-	  valueXmString = XmStringCreateSimple(valueString);
-	  n = 0;
-	  XtSetArg(args[n],XmNdialogStyle,
-				XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-	  XtSetArg(args[n],XmNselectionLabelString,xmValueLabel); n++;
-	  XtSetArg(args[n],XmNdialogTitle,xmTitle); n++;
-	  XtSetArg(args[n],XmNtextString,valueXmString); n++;
-	  keyboardDialog = XmCreatePromptDialog(w,channel,args,n);
-
-/* remove resize handles from shell */
-	  XtSetArg(args[0],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
-	  XtSetValues(XtParent(keyboardDialog),args,1);
-
-
-	  XtAddCallback(keyboardDialog,XmNokCallback,
-		(XtCallbackProc)sendKeyboardValue, channelAccessControllerData);
-	  XtAddCallback(keyboardDialog,XmNcancelCallback,
-		(XtCallbackProc)destroyDialog,NULL);
-
-/* create frame/radiobox/toggles for precision selection */
-	  hoprLoprAbs = fabs(channelAccessMonitorData->hopr);
-	  hoprLoprAbs = MAX(hoprLoprAbs,fabs(channelAccessMonitorData->lopr));
-	/* log10 + 1 */
-	  numPlusColumns =  (short)log10(hoprLoprAbs) + 1;
-	  numMinusColumns = (short)channelAccessMonitorData->precision;
-	/* leave room for decimal point */
-	  numColumns = numPlusColumns + 1 + numMinusColumns;
-	  if (numColumns > MAX_TOGGLES) {
-		fprintf(stderr,
-		"\npopupValuatorKeyboardEntry: maximum # of toggles exceeded");
-		numColumns = MAX_TOGGLES;
-	  }
-	  n = 0;
-	  frame = XmCreateFrame(keyboardDialog,"frame",args,n);
-	  frameXmString = XmStringCreateSimple("VALUATOR PRECISION (10^X)");
-	  XtSetArg(args[n],XmNlabelString,frameXmString); n++;
-	  XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
-	  frameLabel = XmCreateLabel(frame,"frameLabel",args,n);
-	  XtManageChild(frameLabel);
-
-	  n = 0;
-	  XtSetArg(args[n],XmNchildType,XmFRAME_WORKAREA_CHILD); n++;
-	  XtSetArg(args[n],XmNshadowThickness,0); n++;
-	  form = XmCreateForm(frame,"form",args,n);
-
-/* radio box */
-	  n = 0;
-	  XtSetArg(args[n],XmNnumColumns,numColumns); n++;
-	  XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	  XtSetArg(args[n],XmNadjustLast,False); n++;
-	  XtSetArg(args[n],XmNspacing,0); n++;
-	  radioBox = XmCreateRadioBox(form,"radioBox",args,n);
-
-	  toggleXmString = (XmString)NULL;
-	  XtSetArg(args[0],XmNindicatorOn,False);
-/* digits to the left of the decimal point */
-	  count = 0;
-	  for (i = numPlusColumns - 1; i >= 0; i--) {
-	     if (toggleXmString != NULL) XmStringFree(toggleXmString);
-	     shortValue = (short)i;
-	     cvtShortToString(shortValue,toggleString);
-	     toggleXmString = XmStringCreateSimple(toggleString);
-	     XtSetArg(args[1],XmNlabelString,toggleXmString);
-	     XtSetArg(args[2],XmNuserData,(XtPointer)
-					channelAccessControllerData);
-	     if (log10(dlValuator->dPrecision) == (double)i) {
-		XtSetArg(args[3],XmNset,True);
-	     }
-	     toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,
-			(log10(dlValuator->dPrecision) == (double)i ? 4 : 3));
-	     longValue = (long)shortValue;
-	     XtAddCallback(toggles[count-1],XmNvalueChangedCallback,
-			(XtCallbackProc)precisionToggleChangedCallback,
-			(XtPointer)longValue);
-	  }
-/* the decimal point */
-	  if (toggleXmString != NULL) XmStringFree(toggleXmString);
-	  toggleString[0] = '.'; toggleString[1] = '\0';
-	  toggleXmString = XmStringCreateSimple(toggleString);
-	  XtSetArg(args[1],XmNlabelString,toggleXmString);
-	  XtSetArg(args[2],XmNshadowThickness,0);
-	  toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,3);
-	  XtSetSensitive(toggles[count-1],False);
-
-/* digits to the right of the decimal point */
-	  for (i = 1; i <= numMinusColumns; i++) {
-	     if (toggleXmString != NULL) XmStringFree(toggleXmString);
-	     shortValue = (short)-i;
-	     cvtShortToString(shortValue,toggleString);
-	     toggleXmString = XmStringCreateSimple(toggleString);
-	     XtSetArg(args[1],XmNlabelString,toggleXmString);
-	     XtSetArg(args[2],XmNuserData,(XtPointer)
-					channelAccessControllerData);
-	     if (log10(dlValuator->dPrecision) == (double)-i) {
-		XtSetArg(args[3],XmNset,True);
-	     }
-	     toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,
-			(log10(dlValuator->dPrecision) == (double)-i ? 4 : 3));
-	     longValue = (long)shortValue;
-	     XtAddCallback(toggles[count-1],XmNvalueChangedCallback,
-			(XtCallbackProc)precisionToggleChangedCallback,
-			(XtPointer)longValue);
-	  }
-
-/* text field */
-	  n = 0;
-	  textField = XmCreateTextField(form,"textField",args,n);
-	  XtAddCallback(textField,XmNactivateCallback,
-			(XtCallbackProc)precTextFieldActivateCallback,
-			(XtPointer)dlValuator);
-	  XtAddCallback(textField,XmNlosingFocusCallback,
-			(XtCallbackProc)precTextFieldLosingFocusCallback,
-			(XtPointer)dlValuator);
-	  XtAddCallback(textField,XmNmodifyVerifyCallback,
-			(XtCallbackProc)textFieldFloatVerifyCallback,
-			(XtPointer)NULL);
-	  sprintf(valueString,"%f",dlValuator->dPrecision);
-	  /* strip trailing zeroes */
-	  tail = strlen(valueString);
-	  while (valueString[--tail] == '0') valueString[tail] = '\0';
-	  XmTextFieldSetString(textField,valueString);
-
-
-/* now specify attatchments of radio box and text field in form */
-	  n = 0;
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-	  XtSetValues(radioBox,args,n);
-	  n = 0;
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n],XmNtopWidget,radioBox); n++;
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-	  XtSetValues(textField,args,n);
-
-
-	  XtManageChildren(toggles,numColumns);
-	  XtManageChild(radioBox);
-	  XtManageChild(textField);
-	  XtManageChild(form);
-	  XtManageChild(frame);
-	  if (toggleXmString != NULL) XmStringFree(toggleXmString);
-	  XmStringFree(frameXmString);
-
-	  XtManageChild(keyboardDialog);
-	  XmStringFree(xmValueLabel);
-	  XmStringFree(xmTitle);
-	  XmStringFree(valueXmString);
-	} else {
-	  fprintf(stderr,
-		"\npopupValuatorKeyboardEntry: illegal/unconnected channel");
-	}
-      }
-    }
   }
 }
 

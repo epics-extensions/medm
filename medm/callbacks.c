@@ -1,3 +1,61 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
@@ -17,14 +75,15 @@ extern char *stripChartWidgetName;
  * callbacks
  */
 
-static XtCallbackProc shellCommandCallback(
+static void shellCommandCallback(
   Widget w,
   XtPointer client_data,
-  XmSelectionBoxCallbackStruct *call_data)
+  XtPointer cbs)
 {
   char *command;
   DisplayInfo *displayInfo;
   char processedCommand[2*MAX_TOKEN_LENGTH];
+  XmSelectionBoxCallbackStruct *call_data = (XmSelectionBoxCallbackStruct *) cbs;
 
   Widget realParent = (Widget)client_data;
 
@@ -76,10 +135,8 @@ static Widget createShellCommandPromptD(
 		"shellCommandPromptD",args,n);
   XmStringFree(title);
  
-  XtAddCallback(prompt,
-	XmNcancelCallback,(XtCallbackProc)shellCommandCallback,parent);
-  XtAddCallback(prompt,XmNokCallback,
-	(XtCallbackProc)shellCommandCallback,parent);
+  XtAddCallback(prompt, XmNcancelCallback,shellCommandCallback,parent);
+  XtAddCallback(prompt,XmNokCallback,shellCommandCallback,parent);
   return (prompt);
 }
 
@@ -91,7 +148,7 @@ static Widget createShellCommandPromptD(
  ***/
 
 
-XtCallbackProc dmDisplayListOk(
+void dmDisplayListOk(
   Widget  w,
   XtPointer client_data,
   XmSelectionBoxCallbackStruct *call_data)
@@ -181,7 +238,7 @@ XtCallbackProc popdownDisplayFileDialog(
   XtPointer client_data,
   XmSelectionBoxCallbackStruct *call_data)
 {
-  dmTerminateCA();
+  medmCATerminate();
   dmTerminateX();
   exit(-1);
 }
@@ -235,8 +292,7 @@ XtCallbackProc dmCreateRelatedDisplay(
          "Can't open related display:\n\n        %s%s\n\n%s",
           newFilename, DISPLAY_FILE_ASCII_SUFFIX,
           "--> check EPICS_DISPLAY_PATH ");
-    dmSetAndPopupWarningDialog(displayInfo,token,
-            (XtCallbackProc)warnCallback, (XtCallbackProc)warnCallback);
+    dmSetAndPopupWarningDialog(displayInfo,token,"Ok",NULL,NULL);
     fprintf(stderr,"\n%s",token);
     free(newFilename);
   } else {
@@ -250,7 +306,7 @@ XtCallbackProc dmCreateRelatedDisplay(
 
 
 
-XtCallbackProc dmExecuteShellCommand(
+void dmExecuteShellCommand(
   Widget  w,
   DlShellCommandEntry *commandEntry,
   XmPushButtonCallbackStruct *call_data)
@@ -357,7 +413,7 @@ XtCallbackProc dmExecuteShellCommand(
 
 
 
-XtCallbackProc drawingAreaCallback(
+void drawingAreaCallback(
   Widget  w,
   DisplayInfo *displayInfo,
   XmDrawingAreaCallbackStruct *call_data)
@@ -390,23 +446,60 @@ XtCallbackProc drawingAreaCallback(
     uih = call_data->event->xexpose.height;
 
     if (displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
-	displayInfo->pixmapGC != (GC)NULL && 
-	displayInfo->drawingArea != (Widget)NULL) {
+      displayInfo->pixmapGC != (GC)NULL && 
+      displayInfo->drawingArea != (Widget)NULL) {
 
-	XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
+      XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
 	   displayInfo->pixmapGC,x,y,uiw,uih,x,y);
+      if (globalDisplayListTraversalMode == DL_EXECUTE) {
+        Display *display = XtDisplay(displayInfo->drawingArea);
+	GC gc = displayInfo->gc;
 
-/*
- * do a forced traversal of the monitor list to guarantee proper display
- *  this is especially necessary for dynamic elements which may overlay
- *  static elements
- */
-	if (globalDisplayListTraversalMode == DL_EXECUTE)
-		traverseMonitorList(TRUE,displayInfo,x,y,uiw,uih);
+	XPoint points[4];
+        Region region;
+        Channel *pTmp;
+	XRectangle clipRect;
 
+	points[0].x = x;
+        points[0].y = y;
+        points[1].x = x + uiw;
+        points[1].y = y;
+        points[2].x = x + uiw;
+        points[2].y = y + uih;
+        points[3].x = x;
+        points[3].y = y + uih;
+        region = XPolygonRegion(points,4,EvenOddRule);
+
+        /* clip the region */
+        clipRect.x = x;
+        clipRect.y = y;
+        clipRect.width = uiw;
+        clipRect.height = uih;
+
+
+        XSetClipRectangles(display,gc,0,0,&clipRect,1,YXBanded);
+
+        pTmp = channelAccessMonitorListHead->next;
+        while (pTmp != NULL) {
+          if (pTmp->displayInfo == displayInfo) {
+            if (XRectInRegion(region,
+                ((DlRectangle *)pTmp->specifics)->object.x,
+                ((DlRectangle *)pTmp->specifics)->object.y,
+                ((DlRectangle *)pTmp->specifics)->object.width,
+                ((DlRectangle *)pTmp->specifics)->object.height)!=RectangleOut) {
+              if (pTmp->updateChannelCb) {
+                pTmp->updateChannelCb(pTmp);
+              }
+            }
+          }
+          pTmp = pTmp->next;
+        }
+        /* release the clipping region */
+        XSetClipOrigin(display,gc,0,0);
+        XSetClipMask(display,gc,None);
+      }
     }
-
-
+    return;
   } else if (call_data->reason == XmCR_RESIZE) {
 
 /* RESIZE */
@@ -423,6 +516,8 @@ XtCallbackProc drawingAreaCallback(
       resized = dmResizeSelectedElements(displayInfo,width,height);
       unhighlightSelectedElements();
       unselectSelectedElements();
+      if (displayInfo->hasBeenEditedButNotSaved == False)
+	medmMarkDisplayBeingEdited(displayInfo);
 
     } else {
 
@@ -530,6 +625,8 @@ XtCallbackProc drawingAreaCallback(
 	    objectDataOnly = True;
 	    updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
 	  }
+	  if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
+	    medmMarkDisplayBeingEdited(currentDisplayInfo);
 
 	}
 
@@ -561,46 +658,7 @@ XtCallbackProc relatedDisplayMenuButtonDestroy(
     }
 }
 
-
-
-XtCallbackProc controllerDestroy(
-  Widget  w,
-  ChannelAccessControllerData *data,
-  XmAnyCallbackStruct *call_data)
-{
-  Arg args[2];
-  XtPointer userData;
-  XmString xmString;
-  OptionMenuData *optionMenuData;
-  int i;
-
-  XtSetArg(args[0],XmNuserData,&userData);
-  XtGetValues(w,args,1);
-  
-/*
- * free any userData attached to the widget (okay as long as default=NULL)
- */
-     if (userData != NULL) {
-	switch (data->controllerType) {
-	    case DL_Menu:
-	    case DL_ChoiceButton:
-		optionMenuData = (OptionMenuData *) userData;
-		for (i = 0; i < optionMenuData->nButtons; i++)
-		    XmStringFree(optionMenuData->buttons[i]);
-		free ( (char *) optionMenuData->buttonType);
-		free ( (char *) optionMenuData->buttons);
-		free ( (char *) optionMenuData);
-		break;
-	}
-     }
-
-  /* free up the memory associated with the controller object */
-     free( (char *) data );
-}
-
-
-
-XtCallbackProc monitorDestroy(
+void monitorDestroy(
   Widget  w,
   XtPointer data,
   XmAnyCallbackStruct *call_data)
@@ -609,7 +667,7 @@ XtCallbackProc monitorDestroy(
   XtPointer userData;
   CartesianPlotData *cpData;
   StripChartData *scData;
-  ChannelAccessMonitorData *mData;
+  Channel *mData;
   int i;
 
 
@@ -638,7 +696,7 @@ XtCallbackProc monitorDestroy(
   /* free any userData attached to the widget (okay as long as default=NULL) */
   if (userData != NULL) {
     if (data != NULL) {
-     mData = (ChannelAccessMonitorData *) data;
+     mData = (Channel *) data;
      if (mData->numberStateStrings > 0) {
 	   for (i = 0 ; i < mData->numberStateStrings; i++) {
 		free( (char *) mData->stateStrings[i]);
@@ -692,64 +750,14 @@ XtCallbackProc exitCallback(
 
 }
 
-
-
-
-
-/*
- * option menu callback for Menu type display list object
- */
-
-XtCallbackProc simpleOptionMenuCallback(
-  Widget  w,
-  int buttonNumber,
-  XmPushButtonCallbackStruct *call_data)
-{
-  Arg args[3];
-  OptionMenuData *data;
-  ChannelAccessControllerData *caData;
-  short btnNumber = buttonNumber;
-
-/*
- * only do ca_put if this widget actually initiated the channel change
- */
-  if (call_data->event != NULL && call_data->reason == XmCR_ACTIVATE) {
-
-/* button's parent (menuPane) has the displayInfo pointer */
-     XtSetArg(args[0],XmNuserData,&data);
-     XtGetValues(XtParent(w),args,1);
-     if (data == NULL) return;		/* return if invalid OptionMenuData */
-
-     caData = (ChannelAccessControllerData *) data->controllerData;
-     if (caData == NULL) return;	/* return if invalid caData */
-
-     globalModifiedFlag = True;
-     if (caData->monitorData != NULL)
-	 caData->monitorData->modified = PRIMARY_MODIFIED;
-
-     if (ca_state(caData->chid) == cs_conn) {
-       SEVCHK(ca_put(DBR_SHORT,caData->chid,&(btnNumber)),
-	"simpleOptionMenuCallback: error in ca_put");
-       ca_flush_io();
-     } else {
-       fprintf(stderr,"\nsimpleOptionMenuCallback: %s not connected",
-		ca_name(caData->chid));
-     }
-  }
-
-}
-
-
 /* just like simpleOptionMenu.. above, except for choice button/radio-box */
 /* (don't want multiple ca_put()s when all toggles change */
-XtCallbackProc simpleRadioBoxCallback(
+void simpleRadioBoxCallback(
   Widget  w,
   int buttonNumber,
   XmToggleButtonCallbackStruct *call_data)
 {
-  Arg args[3];
-  OptionMenuData *data;
-  ChannelAccessControllerData *caData;
+  Channel *pCh;
   short btnNumber = buttonNumber;
 
 /*
@@ -757,373 +765,24 @@ XtCallbackProc simpleRadioBoxCallback(
  */
   if (call_data->event != NULL && call_data->set == True) {
 
-/* button's parent (menuPane) has the displayInfo pointer */
-     XtSetArg(args[0],XmNuserData,&data);
-     XtGetValues(XtParent(w),args,1);
-     if (data == NULL) return;		/* return if invalid OptionMenuData */
+     /* button's parent (menuPane) has the displayInfo pointer */
+     XtVaGetValues(XtParent(w),XmNuserData,&pCh,NULL);
 
-     caData = (ChannelAccessControllerData *) data->controllerData;
-     if (caData == NULL) return;	/* return if invalid caData */
-
+     if (pCh == NULL) return;
+     pCh->modified = PRIMARY_MODIFIED;
      globalModifiedFlag = True;
-     if (caData->monitorData != NULL)
-	caData->monitorData->modified = PRIMARY_MODIFIED;
 
-     if (ca_state(caData->chid) == cs_conn) {
-       SEVCHK(ca_put(DBR_SHORT,caData->chid,&(btnNumber)),
+     if (ca_state(pCh->chid) == cs_conn) {
+       SEVCHK(ca_put(DBR_SHORT,pCh->chid,&(btnNumber)),
 	"simpleRadioBoxCallback: error in ca_put");
        ca_flush_io();
      } else {
        fprintf(stderr,"\nsimpleRadioBoxCallback: %s not connected",
-		ca_name(caData->chid));
+		ca_name(pCh->chid));
      }
   }
 
 }
-
-
-/*
- * TextEntry special handling:  if user starts editing text field,
- *  then be sure to update value on losingFocus (since until activate,
- *  the value isn't ca_put()-ed, and the text field can be inconsistent
- *  with the underlying channel
- */
-static XtCallbackProc textEntryLosingFocusCallback(
-  Widget w,
-  ChannelAccessControllerData *data,
-  XmTextVerifyCallbackStruct *call_data)
-{
-  globalModifiedFlag = True;
-  data->monitorData->modified = PRIMARY_MODIFIED;
-  data->monitorData->displayed = False;
-  XtRemoveCallback(w,XmNlosingFocusCallback,
-	(XtCallbackProc)textEntryLosingFocusCallback,data);
-}
-
-
-XtCallbackProc textEntryModifyVerifyCallback(
-  Widget w,
-  ChannelAccessControllerData *data,
-  XmTextVerifyCallbackStruct *call_data)
-{
-
-/* NULL event means value changed programmatically; hence don't process */
-  if (call_data->event != NULL) {
-    switch (XtHasCallbacks(w,XmNlosingFocusCallback)) {
-      case XtCallbackNoList:
-      case XtCallbackHasNone:
-	XtAddCallback(w,XmNlosingFocusCallback,
-		(XtCallbackProc)textEntryLosingFocusCallback,data);
-	break;
-
-      case XtCallbackHasSome:
-	break;
-    }
-    call_data->doit = True;
-  }
-
-}
-
-
-
-/*
- * valueChanged type callbacks for Controller Objects/Widgets
- *	(everybody except valuator which need special handling)
- */
-
-XtCallbackProc controllerValueChanged(
-  Widget  w,
-  ChannelAccessControllerData *data,
-  XmAnyCallbackStruct *call_data)
-{
-  XmToggleButtonCallbackStruct *toggleCallData;
-  XmPushButtonCallbackStruct *pushCallData;
-  DlMessageButton *dlMessageButton;
-  char *textValue;
-
-  Arg args[3];
-
-
-  if (data == NULL) return;
-
-/*
- * only on operator input should this be processed (not monitors doing a set)
- */
-  if (data->chid!=NULL && data->connected==TRUE && call_data->event != NULL) {
-
-     /* set modified flag on monitor data so that next update traversal will
-      * set controller visual state correctly (noting that for controllers
-      * as monitors the ->modified flag alone is used to do updates
-      */
-      globalModifiedFlag = True;
-      if (data->monitorData != NULL) data->monitorData->modified =
-							PRIMARY_MODIFIED;
-
-      switch (data->controllerType) {
-
-	case DL_Valuator:
-	    fprintf(stderr,
-	    "\ncontrollerValueChanged: Valuator shouldn't be processed here!");
-		break;
-
-
-	case DL_MessageButton:
-		pushCallData = (XmPushButtonCallbackStruct *) call_data;
-		dlMessageButton = (DlMessageButton *)
-			data->monitorData->specifics;
-
-		if (pushCallData->reason == XmCR_ARM) {
-/* message button can only put strings */
-		    if (dlMessageButton->press_msg[0] != '\0') {
-			switch (ca_field_type(data->chid)) {
-			  case DBF_STRING:
-			    strncpy(data->stringValue,
-				dlMessageButton->press_msg,
-				MAX_STRING_SIZE-1);
-			    data->stringValue[MAX_STRING_SIZE-1] = '\0';
-			    if (ca_state(data->chid) == cs_conn) {
-			      SEVCHK(ca_put(DBR_STRING,data->chid,
-			   	dlMessageButton->press_msg),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			     }
-			     break;
-			  default:
-			    data->value = (double)
-				atof(dlMessageButton->press_msg);
-			    if (ca_state(data->chid) == cs_conn) {
-			      SEVCHK(ca_put(DBR_DOUBLE,data->chid,&data->value),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			     }
-			   break;
-			}
-		    }
-		} else if (pushCallData->reason == XmCR_DISARM) {
-		    if (dlMessageButton->release_msg[0] != '\0') {
-			switch (ca_field_type(data->chid)) {
-			  case DBF_STRING:
-			    strncpy(data->stringValue,
-				dlMessageButton->release_msg,
-				MAX_STRING_SIZE-1);
-			    data->stringValue[MAX_STRING_SIZE-1] = '\0';
-			    if (ca_state(data->chid) == cs_conn) { 
-			      SEVCHK(ca_put(DBR_STRING,data->chid,
-				dlMessageButton->release_msg),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			     }
-			     break;
-			  default:
-			    data->value = (double)
-				atof(dlMessageButton->release_msg);
-			    if (ca_state(data->chid) == cs_conn) { 
-			      SEVCHK(ca_put(DBR_DOUBLE,data->chid,&data->value),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			     }
-			   break;
-			}
-		    }
-		}
-		break;
-
-
-	case DL_TextEntry:
-		textValue = XmTextFieldGetString(w);
-		switch (ca_field_type(data->chid)) {
-			case DBF_STRING:
-			   strncpy(data->stringValue,textValue,
-				MAX_STRING_SIZE-1);
-			   data->stringValue[MAX_STRING_SIZE-1] = '\0';
-			    if (ca_state(data->chid) == cs_conn) {
-			     SEVCHK(ca_put(DBR_STRING,data->chid,
-				data->stringValue),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			    }
-			   break;
-			default:
-			   data->value = (double) atof(textValue);
-			    if (ca_state(data->chid) == cs_conn) {
-			      SEVCHK(ca_put(DBR_DOUBLE,data->chid,
-				&(data->value)),
-				"controllerValueChanged: error in ca_put");
-			    } else {
-				fprintf(stderr,
-				"\ncontrollerValueChanged: %s not connected",
-					ca_name(data->chid));
-			    }
-			   break;
-		}
-		XtFree(textValue);
-		break;
-      }
-      ca_flush_io();
-  }
-}
-
-
-
-
-/*
- * valuatorValueChanged - drag and value changed callback for valutor
- */
-
-XtCallbackProc valuatorValueChanged(
-  Widget  w,
-  ChannelAccessControllerData *data,
-  XmScaleCallbackStruct *call_data)
-{
-  ChannelAccessMonitorData *mData;
-  DlValuator *dlValuator;
-  Arg args[3];
-  XButtonEvent *buttonEvent;
-  XKeyEvent *keyEvent;
-
-
-  if (data == NULL) return;	/* do nothing if invalid data ptrs */
-
-/*
- * only on operator input should this be processed (not monitors doing a set)
- */
-  if (data->chid != NULL && data->connected == TRUE) {
-
-     mData = data->monitorData;
-     if (mData == NULL) return;
-
-    /* set modified flag on monitor data so that next update traversal will
-     * set controller visual state correctly (noting that for controllers
-     * as monitors the ->modified flag alone is used to do updates
-     */
-     globalModifiedFlag = True;
-     mData->modified = PRIMARY_MODIFIED;
-
-     dlValuator = (DlValuator *)mData->specifics;
-     if (dlValuator == NULL) return;
-
-
-     if (call_data->reason == XmCR_DRAG) {
-
-	dlValuator->dragging = True;		/* mark beginning of drag  */
-	dlValuator->enableUpdates = False;	/* disable updates in drag */
-
-/* drag - set value based on relative position (easy) */
-	mData->oldIntegerValue = call_data->value;
-	data->value = data->lopr
-		+ ((double)(call_data->value - VALUATOR_MIN))
-		/((double)(VALUATOR_MAX - VALUATOR_MIN) )
-		*(data->hopr - data->lopr);
-
-     } else if (call_data->reason = XmCR_VALUE_CHANGED) {
-
-	if (dlValuator->dragging) {
-  /* valueChanged can mark conclusion of drag, hence enable updates */
-	  dlValuator->enableUpdates = True;
-	  dlValuator->dragging = False;
-	} else {
-  /* rely on Button/KeyRelease event handler to re-enable updates */
-	  dlValuator->enableUpdates = False;
-	  dlValuator->dragging = False;
-	}
-
-/* value changed - has to deal with precision, etc (hard) */
-	if (call_data->event != NULL) {
-
-	   if (call_data->event->type == KeyPress) {
-		keyEvent = (XKeyEvent *)call_data->event;
-		if (keyEvent->state & ControlMask) {
-		/* multiple increment (10*precision) */
-		    if (mData->oldIntegerValue > call_data->value) {
-			/* decrease value one 10*precision value */
-			data->value = MAX(data->lopr, data->value -
-			    10.*dlValuator->dPrecision);
-		    } else if (mData->oldIntegerValue < call_data->value) {
-			/* increase value one 10*precision value */
-			data->value = MIN(data->hopr, data->value +
-			    10.*dlValuator->dPrecision);
-		    }
-		} else {
-		/* single increment (precision) */
-		    if (mData->oldIntegerValue > call_data->value) {
-			/* decrease value one precision value */
-			data->value = MAX(data->lopr, data->value -
-			    dlValuator->dPrecision);
-		    } else if (mData->oldIntegerValue < call_data->value) {
-			/* increase value one precision value */
-			data->value = MIN(data->hopr, data->value +
-			    dlValuator->dPrecision);
-		    }
-		}
-
-	   } else if (call_data->event->type == ButtonPress) {
-
-		buttonEvent = (XButtonEvent *)call_data->event;
-		if (buttonEvent->state & ControlMask) {
-/* handle this as multiple increment/decrement */
-		  if (call_data->value - mData->oldIntegerValue < 0) {
-		  /* decrease value one 10*precision value */
-			data->value = MAX(data->lopr, data->value -
-			    10.*dlValuator->dPrecision);
-		  } else if (call_data->value - mData->oldIntegerValue > 0) {
-		  /* increase value one 10*precision value */
-			data->value = MIN(data->hopr, data->value +
-			    10.*dlValuator->dPrecision);
-		  }
-		}
-	   }  /* end if/else (KeyPress/ButtonPress) */
-
-	} else {
-/* handle null events (direct MB1, etc does this)
- * (MDA) modifying valuator to depart somewhat from XmScale, but more
- *   useful for real application (of valuator)
- * NB: modifying - MB1 either side of slider means move one increment only;
- *   even though std. is Multiple (let Ctrl-MB1 mean multiple (not go-to-end))
- */
-	   if (call_data->value - mData->oldIntegerValue < 0) {
-		/* decrease value one precision value */
-			data->value = MAX(data->lopr, data->value -
-			    dlValuator->dPrecision);
-	   } else if (call_data->value - mData->oldIntegerValue > 0) {
-		/* increase value one precision value */
-			data->value = MIN(data->hopr, data->value +
-			    dlValuator->dPrecision);
-	   }
-
-	}  /* end if (call_data->event != NULL) */
-     }
-/* move/redraw valuator & value, but force use of user-selected value */
-     valuatorSetValue(mData,data->value,True);
-
-     if (ca_state(data->chid) == cs_conn) {
-       SEVCHK(ca_put(DBR_DOUBLE,data->chid,&(data->value)),
-			"valuatorValueChanged: error in ca_put");
-       ca_flush_io();
-     } else {
-#ifdef DEBUG
-	fprintf(stderr,
-	"\nvaluatorValueChanged: %s not connected", ca_name(data->chid));
-#endif
-     }
-  }
-}
-
-
 
 /*
  * refresh/redisplay callback for strip charts

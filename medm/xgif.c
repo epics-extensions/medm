@@ -623,7 +623,7 @@ Boolean loadGIF(
 	    while (CurCode > BitMask) {
 		if (OutCount > 1024){
 		    fprintf(stderr,"corrupt GIF file (OutCount)");
-		    return;
+		    return False;
 		}
 		OutCode[OutCount++] = Suffix[CurCode];
 		CurCode = Prefix[CurCode];

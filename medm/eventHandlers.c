@@ -1,9 +1,68 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
 
 extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
+extern XButtonPressedEvent lastEvent;
 
 
 /*
@@ -35,10 +94,11 @@ XtEventHandler popupMenu(
   if (xEvent->button == Button3) {
      if (globalDisplayListTraversalMode == DL_EDIT) {
   /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+	lastEvent = *((XButtonPressedEvent *)event);
 	XmMenuPosition(currentDisplayInfo->editPopupMenu,
 		(XButtonPressedEvent *)event);
 	XtManageChild(currentDisplayInfo->editPopupMenu);
-
+        
      } else {
 
 /*
@@ -66,8 +126,7 @@ XtEventHandler popupMenu(
 			executeTimeCartesianPlotWidget = widget;
 			updateGlobalResourceBundleFromElement(element);
 			if (cartesianPlotAxisS == NULL) {
-			   cartesianPlotAxisS = createCartesianPlotAxisDialog(
-							mainShell);
+			   cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
 			} else {
 			   XtSetSensitive(cartesianPlotAxisS,True);
 			}
@@ -128,11 +187,13 @@ XtEventHandler handleEnterWindow(
 
 
 
-XtEventHandler handleButtonPress(
+void handleButtonPress(
   Widget w,
-  DisplayInfo *displayInfo,
-  XEvent *event)
+  XtPointer clientData,
+  XEvent *event,
+  Boolean *continueToDispatch)
 {
+  DisplayInfo *displayInfo = (DisplayInfo *) clientData;
   XButtonEvent *xEvent = (XButtonEvent *)event;
   int j, k;
   Position x0, y0, x1, y1, initialX0, initialY0;
@@ -359,7 +420,12 @@ XtEventHandler handleButtonPress(
 	  /* this element already selected: resize all selected elements */
 	    validResize = doResizing(XtWindow(displayInfo->drawingArea),
 						x0,y0,&x1,&y1);
-	    if (validResize) updateResizedElements(x0,y0,x1,y1);
+	    if (validResize) {
+	      updateResizedElements(x0,y0,x1,y1);
+	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+		medmMarkDisplayBeingEdited(currentDisplayInfo);
+	      }
+	    }
 	  /* highlight currently selected elements */
 	    numSelected = highlightSelectedElements();
 	  /* if only one selected, use first one (only) in list */
@@ -380,7 +446,12 @@ XtEventHandler handleButtonPress(
 	  unhighlightSelectedElements();
 	  validResize = doResizing(XtWindow(displayInfo->drawingArea),
 						x0,y0,&x1,&y1);
-	  if (validResize) updateResizedElements(x0,y0,x1,y1);
+	  if (validResize) {
+	    updateResizedElements(x0,y0,x1,y1);
+	    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	      medmMarkDisplayBeingEdited(currentDisplayInfo);
+	    }
+	  }
 	/* highlight currently selected elements */
 	  numSelected = highlightSelectedElements();
 	/* if only one selected, use first one (only) in list */
@@ -406,7 +477,12 @@ XtEventHandler handleButtonPress(
 	    /* this element already selected: move all selected elements */
 	    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
 					daWidth,daHeight,x0,y0,&x1,&y1);
-	    if (validDrag) updateDraggedElements(x0,y0,x1,y1);
+	    if (validDrag) {
+	      updateDraggedElements(x0,y0,x1,y1);
+	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	        medmMarkDisplayBeingEdited(currentDisplayInfo);
+	      }
+	    }
 	    /* highlight currently selected elements */
 	    numSelected = highlightSelectedElements();
 	    /* if only one selected, use first one (only) in list */
@@ -426,7 +502,12 @@ XtEventHandler handleButtonPress(
 	    unhighlightSelectedElements();
 	    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
 					daWidth,daHeight,x0,y0,&x1,&y1);
-	    if (validDrag) updateDraggedElements(x0,y0,x1,y1);
+	    if (validDrag) {
+	      updateDraggedElements(x0,y0,x1,y1);
+	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+		medmMarkDisplayBeingEdited(currentDisplayInfo);
+	      }
+	    }
 	    /* highlight currently selected elements */
 	    numSelected = highlightSelectedElements();
 	    /* if only one selected, use first one (only) in list */
@@ -499,6 +580,9 @@ XtEventHandler handleButtonPress(
 	/* actually create elements */
 	  handleRectangularCreates(currentElementType);
 	}
+        if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+          medmMarkDisplayBeingEdited(currentDisplayInfo);
+        }
 	break;
 
       case Button2:
@@ -514,395 +598,14 @@ XtEventHandler handleButtonPress(
 	break;
     }
     /* now toggle back to SELECT_ACTION from CREATE_ACTION */
-    XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
+    if (objectS != NULL) {
+      XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
+    }
+    setActionToSelect();
 
  }
 
 }
-
-
-
-/*
- * set value (with implicit redraw of value) for valuator
- */
-void valuatorSetValue(ChannelAccessMonitorData *monitorData, double forcedValue,
-			Boolean force)
-{
-  int iValue;
-  double dValue;
-  ChannelAccessControllerData *cData;
-  Arg args[1];
-
-/* if we got here "too soon" simply return */
-  if (monitorData->self == NULL) return;
-
-  if (monitorData->hopr != monitorData->lopr) {
-    if (force)
-	dValue = forcedValue;
-    else
-	dValue = monitorData->value;
-
-/* to make reworked event handling for Valuator work */
-    cData = (ChannelAccessControllerData *) monitorData->controllerData;
-    cData->value = dValue;
-
-/* update scale widget */
-    iValue = VALUATOR_MIN + ((dValue - monitorData->lopr)
-		/(monitorData->hopr - monitorData->lopr))
-		*((double)(VALUATOR_MAX - VALUATOR_MIN));
-    monitorData->oldIntegerValue = iValue;
-    XtSetArg(args[0],XmNvalue,iValue);
-    XtSetValues(monitorData->self,args,1);
-
-/* update and render string value, use monitorData (ignore other stuff) */
-    valuatorRedrawValue(monitorData,forcedValue,force,
-	monitorData->displayInfo,monitorData->self,
-	(DlValuator *)monitorData->specifics);
-
-  }
-}
-
-
-
-/*
- * redraw value for valuator
- */
-void valuatorRedrawValue(ChannelAccessMonitorData *monitorData,
-	double forcedValue, Boolean force, DisplayInfo *displayInfo, Widget w,
-	DlValuator *dlValuator)
-{
-  unsigned long foreground, background, valueForeground;
-  Dimension scaleWidth, scaleHeight;
-  int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
-  int n, nChars;
-  Arg args[4];
-  XFontStruct *font;
-  char stringValue[40];
-  unsigned long gcValueMask;
-  XGCValues gcValues;
-
-  int localPrecision;
-  double localValue;
-
-/* return if no window for widget yet, or if displayInfo == NULL, or ... */
-  if (XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
-      dlValuator == (DlValuator *)NULL) return;
-
-/* simply return if no value to render */
-  if (!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
-
-  if (monitorData == NULL) {
-/* faking values */
-    localPrecision = 0;
-    localValue = 0.0;
-  } else {
-/* use real values */
-    localPrecision = monitorData->precision;
-    localValue = monitorData->value;
-  }
-
-  foreground = displayInfo->dlColormap[dlValuator->control.clr];
-  background = displayInfo->dlColormap[dlValuator->control.bclr];
-  font = fontTable[valuatorFontListIndex(dlValuator)];
-  textHeight = font->ascent + font->descent;
-
-  switch (dlValuator->direction) {
-      case UP: case DOWN:
-	n = 0;
-	XtSetArg(args[n],XmNscaleWidth,&scaleWidth); n++;
-	XtSetArg(args[n],XmNforeground,&valueForeground); n++;
-	XtGetValues(w,args,n);
-	useableWidth = dlValuator->object.width - scaleWidth;
-	if (force)
-	    cvtDoubleToString(forcedValue,stringValue,localPrecision);
-	else
-	    cvtDoubleToString(localValue,stringValue, localPrecision);
-	nChars = strlen(stringValue);
-	textWidth = XTextWidth(font,stringValue,nChars);
-	startX = MAX(1,useableWidth - textWidth);
-	startY = dlValuator->object.height/2 - font->ascent/2;
-
-	gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
-	gcValues.function = GXcopy;
-	gcValues.foreground = background;
-	gcValues.background = background;
-	gcValues.font = font->fid;
-	XChangeGC(display, displayInfo->gc, gcValueMask, &gcValues);
-	if (monitorData != NULL) {
-/* reuse monitorData->fontIndex (int) for storing Valuator's max text width */
-	   XFillRectangle(display,XtWindow(w),displayInfo->gc,
-		MAX(1,useableWidth - monitorData->fontIndex),
-		startY - font->ascent,
-		monitorData->fontIndex,font->ascent+font->descent);
-	   monitorData->fontIndex = textWidth;
-	}
-
-
-	if (dlValuator->clrmod == ALARM && monitorData != NULL) {
-	   XSetForeground(display,displayInfo->gc,
-			alarmColorPixel[monitorData->severity]);
-	} else {
-	   XSetForeground(display,displayInfo->gc,foreground);
-	}
-	XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-			stringValue,nChars);
-	break;
-
-
-      case LEFT: case RIGHT:	/* but we know it's really only RIGHT */
-	n = 0;
-	XtSetArg(args[n],XmNscaleHeight,&scaleHeight); n++;
-	XtSetArg(args[n],XmNforeground,&valueForeground); n++;
-	XtGetValues(w,args,n);
-	useableHeight = dlValuator->object.height - scaleHeight;
-	if (force)
-	    cvtDoubleToString(forcedValue,stringValue,localPrecision);
-	else
-	    cvtDoubleToString(localValue,stringValue,localPrecision);
-	nChars = strlen(stringValue);
-	textWidth = XTextWidth(font,stringValue,nChars);
-	startX = dlValuator->object.width/2 - textWidth/2;
-	startY = useableHeight - font->descent;
-
-	gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
-	gcValues.function = GXcopy;
-	gcValues.foreground = background;
-	gcValues.background = background;
-	gcValues.font = font->fid;
-	XChangeGC(display, displayInfo->gc, gcValueMask, &gcValues);
-	if (monitorData != NULL) {
-/* reuse monitorData->fontIndex (int) for storing Valuator's max text width */
-	   XFillRectangle(display,XtWindow(w),displayInfo->gc,
-		dlValuator->object.width/2 - monitorData->fontIndex/2,
-		startY - font->ascent,
-		monitorData->fontIndex,font->ascent+font->descent);
-	   monitorData->fontIndex = textWidth;
-	}
-
-	if (dlValuator->clrmod == ALARM && monitorData != NULL) {
-	   XSetForeground(display,displayInfo->gc,
-			alarmColorPixel[monitorData->severity]);
-	} else {
-	   XSetForeground(display,displayInfo->gc,foreground);
-	}
-	XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-						stringValue,nChars);
-	break;
-  }  /* end switch() */
-
-}
-
-
-/*
- * thanks to complicated valuator interactions, need to rely on
- *  Key/ButtonRelease events to re-enable updates for dlValuator display
- */
-XtEventHandler handleValuatorRelease(
-  Widget w,
-  XtPointer passedData,
-  XEvent *event)
-{
-  ChannelAccessControllerData *cData;
-  DlValuator *dlValuator;
-
-  if (passedData != NULL) {
-/* then valid controllerData exists */
-     cData = (ChannelAccessControllerData *)passedData;
-     if (cData->monitorData != NULL) {
-       dlValuator = (DlValuator *)cData->monitorData->specifics;
-       switch(event->type) {
-	 case ButtonRelease:
-	 case KeyRelease:
-	    dlValuator->enableUpdates = True;
-	/* don't reset ->dragging: let valuatorValueChanged() do that */
-	    break;
-       }
-     }
-  }
-}
-
-
-XtEventHandler handleValuatorExpose(
-  Widget w,
-  XtPointer passedData,
-  XExposeEvent *event)
-{
-  DlValuator *dlValuator;
-  unsigned long foreground, background, valueForeground, alarmColor;
-  Dimension scaleWidth, scaleHeight;
-  int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
-  int n, nChars;
-  Arg args[4];
-  XFontStruct *font;
-  char stringValue[40];
-  unsigned long gcValueMask;
-  XGCValues gcValues;
-  ChannelAccessMonitorData *monitorData;
-  DisplayInfo *displayInfo;
-  ChannelAccessControllerData *controllerData;
-  XtPointer userData;
-  double localLopr, localHopr;
-  char *localTitle;
-  int localPrecision;
-
-
-  if (event->count > 0) return;
-
-  if (passedData != NULL) {
-/* then valid controllerData exists */
-     controllerData = (ChannelAccessControllerData *)passedData;
-     if (controllerData == NULL) return;
-     monitorData = controllerData->monitorData;
-     if (monitorData == NULL) return;
-     displayInfo = monitorData->displayInfo;
-     if (displayInfo == NULL) return;
-     dlValuator = (DlValuator *)monitorData->specifics;
-     if (dlValuator == NULL) return;
-     localLopr = monitorData->lopr;
-     localHopr = monitorData->hopr;
-     localPrecision = monitorData->precision;
-     if (monitorData->chid != NULL)
-	localTitle = ca_name(monitorData->chid);
-     else localTitle = NULL;
-
-  } else {
-/* no controller data, therefore userData = dlValuator */
-     XtSetArg(args[0],XmNuserData,&userData);
-     XtGetValues(w,args,1);
-     dlValuator = (DlValuator *)userData;
-     if (dlValuator == NULL) return;
-     localLopr = 0.0;
-     localHopr = 0.0;
-     localPrecision = 0;
-     localTitle = dlValuator->control.ctrl;
-     displayInfo = dmGetDisplayInfoFromWidget(w);
-     if (displayInfo == NULL) return;
-
-  }
-
-/* since XmScale doesn't really do the right things, we'll do it by hand */
-
-  if (dlValuator->label != LABEL_NONE) {
-
-    foreground = displayInfo->dlColormap[dlValuator->control.clr];
-    background = displayInfo->dlColormap[dlValuator->control.bclr];
-    font = fontTable[valuatorFontListIndex(dlValuator)];
-    textHeight = font->ascent + font->descent;
-
-    gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
-    gcValues.function = GXcopy;
-    gcValues.foreground = foreground;
-    gcValues.background = background;
-    gcValues.font = font->fid;
-    XChangeGC(display, displayInfo->gc, gcValueMask, &gcValues);
-
-    switch (dlValuator->direction) {
-      case UP: case DOWN:	/* but we know it's really only UP */
-	n = 0;
-	XtSetArg(args[n],XmNscaleWidth,&scaleWidth); n++;
-	XtSetArg(args[n],XmNforeground,&valueForeground); n++;
-	XtGetValues(w,args,n);
-	useableWidth = dlValuator->object.width - scaleWidth;
-	if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS 
-					|| dlValuator->label == CHANNEL) {
-/* LOPR */   cvtDoubleToString(localLopr,stringValue,localPrecision);
-	     if (stringValue != NULL) {
-	       nChars = strlen(stringValue);
-	       textWidth = XTextWidth(font,stringValue,nChars);
-	       startX = MAX(1,useableWidth - textWidth);
-	       startY = dlValuator->object.height - font->descent - 3;
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-						stringValue,nChars);
-	     }
-/* HOPR */   cvtDoubleToString(localHopr,stringValue,localPrecision);
-	     if (stringValue != NULL) {
-	       nChars = strlen(stringValue);
-	       textWidth = XTextWidth(font,stringValue,nChars);
-	       startX = MAX(1,useableWidth - textWidth);
-	       if (dlValuator->label == CHANNEL) {
-		/* need room for label above */
-		startY = 1.3*(font->ascent + font->descent)
-				+ font->ascent;
-	       } else {
-		startY = font->ascent + 3;
-	       }
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-						stringValue,nChars);
-	     }
-	}
-	if (dlValuator->label == CHANNEL) {
-/* TITLE */
-	     if (localTitle != NULL) {
-	       nChars = strlen(localTitle);
-	       textWidth = XTextWidth(font,localTitle,nChars);
-	       startX = MAX(1,useableWidth - textWidth);
-	       startY = font->ascent + 2;
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-					localTitle,nChars);
-	     }
-	}
-	break;
-
-
-
-      case LEFT: case RIGHT:	/* but we know it's really only RIGHT */
-	n = 0;
-	XtSetArg(args[n],XmNscaleHeight,&scaleHeight); n++;
-	XtSetArg(args[n],XmNforeground,&valueForeground); n++;
-	XtGetValues(w,args,n);
-	useableHeight = dlValuator->object.height - scaleHeight;
-
-	if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS 
-					|| dlValuator->label == CHANNEL) {
-/* LOPR */   cvtDoubleToString(localLopr,stringValue,localPrecision);
-	     if (stringValue != NULL) {
-	       nChars = strlen(stringValue);
-	       startX = 2;
-	       startY = useableHeight - font->descent;/* NB: descent=0 for #s */
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-						stringValue,nChars);
-	     }
-/* HOPR */   cvtDoubleToString(localHopr,stringValue,localPrecision);
-	     if (stringValue != NULL) {
-	       nChars = strlen(stringValue);
-	       textWidth = XTextWidth(font,stringValue,nChars);
-	       startX = dlValuator->object.width - textWidth - 2;
-	       startY = useableHeight - font->descent;
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-						stringValue,nChars);
-	     }
-	}
-	if (dlValuator->label == CHANNEL) {
-/* TITLE */
-	     if (localTitle != NULL) {
-	       nChars = strlen(localTitle);
-	       textWidth = XTextWidth(font,localTitle,nChars);
-	       startX = 2;
-	       startY = font->ascent + 2;
-	       XDrawString(display,XtWindow(w),displayInfo->gc,startX,startY,
-				localTitle,nChars);
-	     }
-	}
-	break;
-    }
-    if (passedData != NULL) {
-/* real data */
-      valuatorRedrawValue(monitorData,0.0,False,
-	    monitorData->displayInfo,monitorData->self,
-		(DlValuator *)monitorData->specifics);
-	    
-
-    } else {
-/* fake data */
-      valuatorRedrawValue(NULL,0.0,False,currentDisplayInfo,w,dlValuator);
-    }
-  }  /* end --  if (dlValuator->label != LABEL_NONE) */
-
-
-}
-
-
-
 
 /*
  *  function to highlight the currently selected elements
@@ -921,7 +624,7 @@ int highlightSelectedElements()
  */
 
 /* simply return if no selected display */
- if (currentDisplayInfo == NULL) return;
+ if (currentDisplayInfo == NULL) return 0;
  
  cdi = currentDisplayInfo;
 
@@ -1101,7 +804,7 @@ int highlightAndSetSelectedElements(
 
 
 /* if no current display, simply return */
- if (currentDisplayInfo == NULL) return;
+ if (currentDisplayInfo == NULL) return 0;
 
  cdi = currentDisplayInfo;
 
@@ -1181,7 +884,7 @@ int highlightAndAugmentSelectedElements(
 
 
 /* if no current display, simply return */
- if (currentDisplayInfo == NULL) return;
+ if (currentDisplayInfo == NULL) return 0;
 
  cdi = currentDisplayInfo;
 
@@ -1280,7 +983,7 @@ Boolean unhighlightAndUnselectElement(
  */
 
 /* simply return if no current display */
- if (currentDisplayInfo == NULL) return;
+ if (currentDisplayInfo == NULL) return False;
 
  cdi = currentDisplayInfo;
  elementIndex = -1;
@@ -1833,6 +1536,11 @@ void handleRectangularCreates(
 	    (*element->dmExecute)(currentDisplayInfo,
 			element->structure.indicator,FALSE);
 	    break;
+          case DL_Byte:
+            element = createDlByte(currentDisplayInfo);
+            (*element->dmExecute)(currentDisplayInfo,
+              element->structure.byte,FALSE);
+            break;
 	  case DL_StripChart:
 	    element = createDlStripChart(currentDisplayInfo);
 	    (*element->dmExecute)(currentDisplayInfo,

@@ -1,3 +1,61 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 /****************************************************************************
  ***                             proto.h                                  ***
@@ -12,19 +70,8 @@ void StartDrag(Widget w, XEvent *event);
 void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
 	XEvent *event);
 
-/* caDM.c */
-void dmInitializeCA(void);
-void dmTerminateCA(void);
-void dmRegisterCA(void *dummy, int fd, int condition);
-XtInputCallbackProc dmProcessCA(void);
-void processMonitorConnectionEvent(struct connection_handler_args args);
-void processMonitorGrGetCallback(struct event_handler_args args);
-void processMonitorEvent(struct event_handler_args args);
-void processControllerConnectionEvent(struct connection_handler_args args);
-void processControllerGrGetCallback(struct event_handler_args args);
-
 /* callbacks.c */
-XtCallbackProc dmDisplayListOk(Widget w, XtPointer client_data,
+void dmDisplayListOk(Widget w, XtPointer client_data,
 	XmSelectionBoxCallbackStruct *call_data);
 XtCallbackProc popdownDialog(Widget w, XtPointer client_data,
 	XmSelectionBoxCallbackStruct *call_data);
@@ -34,16 +81,14 @@ XtCallbackProc popdownDisplayFileDialog(Widget w, XtPointer client_data,
 	XmSelectionBoxCallbackStruct *call_data);
 XtCallbackProc dmCreateRelatedDisplay(Widget w, DisplayInfo *displayInfo,
 	XmPushButtonCallbackStruct *call_data);
-XtCallbackProc dmExecuteShellCommand(Widget w,
+void dmExecuteShellCommand(Widget w,
 	DlShellCommandEntry *commandEntry,
 	XmPushButtonCallbackStruct *call_data);
-XtCallbackProc drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
+void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 	XmDrawingAreaCallbackStruct *call_data);
 XtCallbackProc relatedDisplayMenuButtonDestroy(Widget w, char *data,
 	XmPushButtonCallbackStruct *call_data);
-XtCallbackProc controllerDestroy(Widget w, ChannelAccessControllerData *data,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc monitorDestroy(Widget w, XtPointer data,
+void monitorDestroy(Widget w, XtPointer data,
 	XmAnyCallbackStruct *call_data);
 XtCallbackProc warnCallback(Widget w, DisplayInfo *displayInfo,
 	XmAnyCallbackStruct *call_data);
@@ -51,16 +96,9 @@ XtCallbackProc exitCallback(Widget w, DisplayInfo *displayInfo,
 	XmAnyCallbackStruct *call_data);
 XtCallbackProc simpleOptionMenuCallback(Widget w, int buttonNumber,
 	XmPushButtonCallbackStruct *call_data);
-XtCallbackProc simpleRadioBoxCallback(Widget w, int buttonNumber,
+void simpleRadioBoxCallback(Widget w, int buttonNumber,
 	XmToggleButtonCallbackStruct *call_data);
-XtCallbackProc textEntryModifyVerifyCallback(Widget w,
-	ChannelAccessControllerData *data,
-	XmTextVerifyCallbackStruct *call_data);
-XtCallbackProc controllerValueChanged(Widget w,
-	ChannelAccessControllerData *data,
-	XmAnyCallbackStruct *call_data);
-XtCallbackProc valuatorValueChanged(Widget w, ChannelAccessControllerData *data,
-	XmScaleCallbackStruct *call_data);
+void valuatorValueChanged(Widget, XtPointer, XtPointer);
 XtCallbackProc redisplayStrip(Widget w, Strip **strip,
 	XmAnyCallbackStruct *call_data);
 
@@ -75,6 +113,7 @@ void setCurrentDisplayColorsInColorPalette(int rcType, int index);
 DlElement *createDlChoiceButton(DisplayInfo *displayInfo);
 DlElement *createDlMessageButton(DisplayInfo *displayInfo);
 DlElement *createDlValuator(DisplayInfo *displayInfo);
+
 DlElement *createDlTextEntry(DisplayInfo *displayInfo);
 DlElement *createDlMenu(DisplayInfo *displayInfo);
 
@@ -92,6 +131,7 @@ void handlePolygonVertexManipulation(DlPolygon *dlPolygon, int pointIndex);
 /* createMonitors.c */
 DlElement *createDlMeter(DisplayInfo *displayInfo);
 DlElement *createDlBar(DisplayInfo *displayInfo);
+DlElement *createDlByte(DisplayInfo *displayInfo);
 DlElement *createDlIndicator(DisplayInfo *displayInfo);
 DlElement *createDlTextUpdate(DisplayInfo *displayInfo);
 DlElement *createDlStripChart(DisplayInfo *displayInfo);
@@ -120,8 +160,7 @@ DisplayInfo *createDisplay(void);
 
 /* dmInit.c */
 DisplayInfo *allocateDisplayInfo(void);
-void dmDisplayListParse(FILE *filePtr, char *argsString, char *fullPathName,
-	char *macroString, Boolean fromRelatedDisplayExecution);
+void dmDisplayListParse(FILE *, char *, char *, char*, Boolean);
 void parseCompositeChildren(DisplayInfo *displayInfo, DlComposite *dlComposite);
 
 /* eventHandlers.c */
@@ -129,15 +168,13 @@ XtEventHandler popupMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
 XtEventHandler popdownMenu(Widget w, DisplayInfo *displayInfo, XEvent *event);
 XtEventHandler handleEnterWindow(Widget w, DisplayInfo *displayInfo,
 	XEvent *event);
-XtEventHandler handleButtonPress(Widget w, DisplayInfo *displayInfo,
-	XEvent *event);
-void valuatorSetValue(ChannelAccessMonitorData *monitorData, double forcedValue,
+void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
+void valuatorSetValue(Channel *monitorData, double forcedValue,
 	Boolean force);
-void valuatorRedrawValue(ChannelAccessMonitorData *monitorData,
+void valuatorRedrawValue(Channel *monitorData,
 	double forcedValue, Boolean force, DisplayInfo *displayInfo, Widget w,
 	DlValuator *dlValuator);
-XtEventHandler handleValuatorExpose(Widget w, XtPointer passedData,
-	XExposeEvent *event);
+void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 int highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
 void unselectSelectedElements(void);
@@ -165,11 +202,13 @@ void executeDlChoiceButton(DisplayInfo *displayInfo,
 	DlChoiceButton *dlChoiceButton, Boolean dummy);
 void executeDlMessageButton(DisplayInfo *displayInfo,
 	DlMessageButton *dlMessageButton, Boolean dummy);
+void createChoiceButtonButtonsInstance(Channel *);
 void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
 	Boolean dummy);
 void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
 	Boolean dummy);
-void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy);
+void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean);
+void createMenuMenuInstance(Channel *);
 
 /* executeExtensions.c */
 void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean dummy);
@@ -179,10 +218,11 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
 	Boolean dummy);
 
 /* executeMonitors.c */
-ChannelAccessMonitorData *allocateChannelAccessMonitorData(
+Channel *allocateChannel(
 	DisplayInfo *displayInfo);
 void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy);
 void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy);
+void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy);
 void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
 	Boolean dummy);
 void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
@@ -226,11 +266,23 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
 /* help.c */
 XtCallbackProc globalHelpCallback(Widget w, int helpIndex,
 	XmAnyCallbackStruct *call_data);
+void medmPostMsg(char *);
+void medmPostTime();
+void memdPrintf(char*,...);
 
 /* medm.c */
 int main(int argc, char *argv[]);
-Widget createEditMenu(unsigned int menuType, Widget parent, char *name,
-	int postFromButton, DisplayInfo *displayInfo);
+Widget createDisplayMenu(Widget widget);
+Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
+Widget createMessageDialog(Widget,char *,char *);
+
+/* medmCA.c */
+int medmCAInitialize(void);
+void medmCATerminate(void);
+void updateListCreate(Channel *);
+void updateListDestroy(Channel *);
+void medmConnectEventCb(struct connection_handler_args);
+void medmDisconnectChannel(Channel *pCh);
 
 /* medmPixmap.c */
 void medmInitializeImageCache(void);
@@ -239,6 +291,8 @@ void medmClearImageCache(void);
 /* objectPalette.c */
 void createObject(void);
 void clearResourcePaletteEntries(void);
+void objectMenuCallback(Widget,XtPointer,XtPointer);
+void objectPaletteSetSensitivity(Boolean);
 void setResourcePaletteEntries(void);
 void updateGlobalResourceBundleFromElement(DlElement *element);
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
@@ -308,10 +362,8 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word);
 /* resourcePalette.c */
 void initializeGlobalResourceBundle(void);
 void createResource(void);
-XtCallbackProc textFieldNumericVerifyCallback(Widget w, int rcType,
-	XmTextVerifyCallbackStruct *cbs);
-XtCallbackProc textFieldFloatVerifyCallback(Widget w, XtPointer client_data,
-	XmTextVerifyCallbackStruct *cbs);
+void textFieldNumericVerifyCallback(Widget, XtPointer, XtPointer);
+void textFieldFloatVerifyCallback(Widget, XtPointer, XtPointer);
 XtCallbackProc textFieldActivateCallback(Widget w, int rcType,
 	XmTextVerifyCallbackStruct *cbs);
 XtCallbackProc textFieldLosingFocusCallback(Widget w, int rcType,
@@ -335,7 +387,7 @@ Widget createStripChartDataDialog(Widget parent);
 void updateStripChartDataDialog(void);
 
 /* shared.c */
-XtCallbackProc wmCloseCallback(Widget w, ShellType shellType,
+void wmCloseCallback(Widget w, ShellType shellType,
 	XmAnyCallbackStruct *call_data);
 XtCallbackProc wmTakeFocusCallback(Widget w, ShellType shellType,
 	XmAnyCallbackStruct *call_data);
@@ -343,16 +395,21 @@ void updateStatusFields(void);
 void optionMenuSet(Widget menu, int buttonId);
 
 /* updateMonitors.c */
+int localCvtDoubleToString( double, char *, unsigned short);
+
 void traverseMonitorList(Boolean forcedTraversal, DisplayInfo *displayInfo,
 	int regionX, int regionY, unsigned int regionWidth,
 	unsigned int regionHeight);
+void updateTextUpdate(Channel *data);
+void drawReadOnlySymbol(Channel *data);
+char *valueToString(Channel *, TextFormat);
 
 /* utils.c */
 FILE *dmOpenUseableFile(char *filename);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
 	int  *endPos);
 void dmRemoveMonitorStructureFromMonitorList(
-	ChannelAccessMonitorData *monitorData);
+	Channel *monitorData);
 void dmRemoveDisplayList(DisplayInfo *displayInfo);
 void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList);
 void dmRemoveDisplayInfo(DisplayInfo *displayInfo);
@@ -362,8 +419,16 @@ void dmTraverseAllDisplayLists(void);
 void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo);
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
 	int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
-void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo, char *message,
-	XtCallbackProc cancelCallback, XtCallbackProc okCallback);
+void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo,
+                                 char        *message,
+                                 char        *okBtnLabel,
+                                 char        *cancelBtnLabel,
+                                 char        *helpBtnLabel);
+void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
+                                 char        *message,
+                                 char        *okBtnLabel,
+                                 char        *cancelBtnLabel,
+                                 char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
@@ -410,10 +475,8 @@ void moveElementAfter(DisplayInfo *cdi, DlComposite *dlComposite,
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
 	DlElement *afterThisElement);
 void deleteAndFreeElementAndStructure(DisplayInfo *displayInfo, DlElement *ele);
-ChannelAccessMonitorData *dmGetChannelAccessMonitorDataFromWidget(
-	Widget sourceWidget);
-ChannelAccessMonitorData *dmGetChannelAccessMonitorDataFromPosition(
-	DisplayInfo *displayInfo, int x, int y);
+Channel *dmGetChannelFromWidget(Widget sourceWidget);
+Channel *dmGetChannelFromPosition(DisplayInfo *displayInfo, int x, int y);
 NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
 	char *name);
@@ -421,9 +484,11 @@ void freeNameValueTable(NameValueTable *nameValueTable, int numEntries);
 void performMacroSubstitutions(DisplayInfo *displayInfo,
         char *inputString, char *outputString, int sizeOfOutputString);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
+void medmSetDisplayTitle(DisplayInfo *displayInfo);
+void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 
 
-/* widgetDM.c */
+/* medmWidget.c */
 void medmInit(char *displayFontName);
 void dmTerminateX(void);
 unsigned long getPixelFromColormapByString(Display *display, int screen,
@@ -450,6 +515,7 @@ void writeDlPolygon(FILE *stream, DlPolygon *dlPolygon, int level);
 /* writeMonitors.c */
 void writeDlMeter(FILE *stream, DlMeter *dlMeter, int level);
 void writeDlBar(FILE *stream, DlBar *dlBar, int level);
+void writeDlByte(FILE *stream, DlByte *dlByte, int level);
 void writeDlIndicator(FILE *stream, DlIndicator *dlIndicator, int level);
 void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level);
 void writeDlStripChart(FILE *stream, DlStripChart *dlStripChart, int level);

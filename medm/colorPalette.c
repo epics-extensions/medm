@@ -114,7 +114,7 @@ static XtCallbackProc fileMenuSimpleCallback(
 
 
 
-static XtCallbackProc colorPaletteActivateCallback(
+static void colorPaletteActivateCallback(
   Widget w,
   int colorIndex,
   XmAnyCallbackStruct *call_data)
@@ -149,9 +149,15 @@ static XtCallbackProc colorPaletteActivateCallback(
  switch (elementTypeWhoseColorIsBeingEditted) {
     case CLR_RC:
 	globalResourceBundle.clr = colorIndex;
+	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	}
 	break;
     case BCLR_RC:
 	globalResourceBundle.bclr = colorIndex;
+	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	}
 	break;
     case DATA_CLR_RC:
 	globalResourceBundle.data_clr = colorIndex;
@@ -168,9 +174,13 @@ static XtCallbackProc colorPaletteActivateCallback(
 	break;
   }
   /* update color bar in resource palette */
-  if (resourceMW) 
+  /* 9-19-94  vong
+   * makesure the resource palette is create before doing XtVaSetValues
+   */
+  if (resourceMW) {
     XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEditted],
 		XmNbackground,currentColormap[colorIndex], NULL);
+  }
 
 
 /* return if no currentDisplayInfo */

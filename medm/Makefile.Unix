@@ -2,7 +2,75 @@
 # $Id$
 #
 # $Log$
-# Revision 1.6  1994/11/09 21:03:59  jba
+# Revision 1.7  1995/02/28 17:19:47  vong
+# MEDM Version 2.0.0
+# ------------------
+# - Handle Security Access of Channel Access.
+#   - Any object which does not have a read access will be indicated ba a question
+#     mark symbol.
+#   - Any object which does not have a write access will change its cursor to
+#     a prohibit symbol
+#
+# - The screen update mechanism has been rewritten, it should solve two following
+#   problems :
+#   - some objects stop updating itself.
+#   - some objects are in a wrong state when the screen first come up,
+#     but a refresh will correct the problem.
+#
+# - For consistence, the textupdate object draws a white rectangle instead of a
+#   white zero if the channel is not connected.
+#
+# - Message button sends the press message string and release string as a string
+#   if the connected process variable type is STRING or ENUM(e.g. BO, MBBO, etc.).
+#
+# - Add a convenience object palette submenu on the screen menu at 'edit' mode.
+#
+# - MEDM will ask for a confirmation if you want to exit with some files are
+#   being edited but not saved.
+#
+# - If a screen is being edited, the title of the screen will be appended with
+#   the word 'edited'.
+#
+# - News and Changes in Cartesian Plot
+#   - 'Erase' field is replaced with the 'Plot mode' field for clarify.
+#      The two choices "On" and "Off" are replaced by "plot n pts & stop"
+#      and "plot last n pts".
+#      "plot n pts & stop" - plot n points of data and then stop
+#      "plot last n pts"   - plot last n points of data
+#      where n is determineted by the value of the 'Count' field.
+#
+#   - 'Trigger Channel'
+#      If the trigger channel is assigned with a process variable,
+#      the plot won't update until a monitor is posted on that
+#      process variable.  This can be used as a sychronization.
+#
+#   - 'Erase Channel' and 'Erase Mode'
+#      The 'erase channel' allows the user dynamically to erase the
+#      graph with changing the value of the process variable assigned
+#      to the 'erase channel'. The value to erase the graph is defined
+#      by the 'erase mode' which is either 'if zero" or 'if not zero".
+#
+#   -  The undesirable first point of the plot is eliminated.
+#
+#   -  Fix the bug which medm will crash if you try to modify the
+#      fields of the 'Cartesian Plot Axis Data Dialog' after the
+#      the which contains the cartesina plot is closed.
+#
+# - If a macro substitution fails, the macro string won't be removed.  It
+#   helps to identify the failure of substituting the macro string.
+#
+# - a message window is added, now most of the MEDM message will go to
+#   the message window.
+#
+# - Incorporate the icons for the object palette from CEBAF.
+#
+# - Incorporate the byte widget from CEFAF.  The Byte widget only handles
+#   up to 16 bits.  The most significant bit and the least significant bit
+#   are defined by the start bit and end bit entries at the resource palette.
+#
+# - The Bar Graph supports the center fill option.
+#
+# Revision 1.6  1994/11/09  21:03:59  jba
 # Motif references changed to $(MOTIF_INC) and $(MOTIF_LIB)
 #
 # Revision 1.5  1994/11/02  18:40:15  vong
@@ -31,45 +99,66 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
 				-I$(MOTIF_INC) -I$(X11_INC)
 
 USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = -lANLwidgets -lPrintUtils -lGraphX -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
+USR_LDLIBS = ../../xc/O.sun4/libANLwidgets.a -lPrintUtils -lGraphX \
+	     -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
 
-SRCS.c = ../actions.c ../caDM.c ../callbacks.c \
+SRCS.c = ../actions.c ../callbacks.c \
 	../channelPalette.c ../colorPalette.c \
 	../createControllers.c ../createExtensions.c ../createMonitors.c \
 	../createStatics.c ../display.c ../dmInit.c ../dummy.c \
-	../eventHandlers.c ../executeControllers.c ../executeExtensions.c \
-	../executeMonitors.c ../executeStatics.c ../help.c ../medm.c \
+	../eventHandlers.c ../executeExtensions.c \
+	../executeStatics.c ../help.c ../medm.c ../medmCA.c \
 	../medmPixmap.c  ../libMedmInit.c \
+	../medmChoiceButtons.c ../medmMenu.c ../medmMessageButton.c \
+	../medmTextEntry.c ../medmValuator.c \
+	../medmMeter.c ../medmIndicator.c ../medmTextUpdate.c ../medmBar.c \
+	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c ../medmSurfacePlot.c \
+        ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
+        ../medmFallingLine.c ../medmRisingLine.c ../medmPolyline.c ../medmPolygon.c \
 	../objectPalette.c ../parseControllers.c ../parseExtensions.c \
 	../parseMonitors.c \
 	../parseStatics.c ../resourcePalette.c ../shared.c \
-	../updateMonitors.c ../utils.c ../widgetDM.c ../writeControllers.c \
+	../updateMonitors.c ../utils.c ../medmWidget.c ../writeControllers.c \
 	../writeExtensions.c ../writeMonitors.c ../writeStatics.c ../xgif.c
 
-OBJS =	actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
+OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
 	createControllers.o createExtensions.o createMonitors.o \
 	createStatics.o display.o dmInit.o dummy.o \
-	eventHandlers.o executeControllers.o executeExtensions.o \
-	executeMonitors.o executeStatics.o help.o medm.o medmPixmap.o \
+	eventHandlers.o executeExtensions.o \
+	executeStatics.o help.o medm.o medmPixmap.o medmCA.o \
+	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
+	medmTextEntry.o medmValuator.o \
+	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
+	medmStripChart.o medmByte.o medmCartesianPlot.o medmSurfacePlot.o \
+        medmArc.o medmOval.o medmRectangle.o medmText.o \
+        medmFallingLine.o medmRisingLine.o medmPolyline.o medmPolygon.o \
 	objectPalette.o parseControllers.o \
 	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
-	shared.o updateMonitors.o utils.o widgetDM.o writeControllers.o \
+	shared.o updateMonitors.o utils.o medmWidget.o writeControllers.o \
 	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
 
-LIBOBJS = actions.o caDM.o callbacks.o channelPalette.o colorPalette.o \
-	createControllers.o createExtensions.o createMonitors.o \
-	createStatics.o display.o dmInit.o dummy.o \
-	eventHandlers.o executeControllers.o executeExtensions.o \
-	executeMonitors.o executeStatics.o help.o medmPixmap.o \
-	libMedmInit.o objectPalette.o parseControllers.o \
-	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
-	shared.o updateMonitors.o utils.o widgetDM.o writeControllers.o \
-	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
+#LIBOBJS = actions.o callbacks.o channelPalette.o colorPalette.o \
+#	createControllers.o createExtensions.o createMonitors.o \
+#	createStatics.o display.o dmInit.o dummy.o \
+#	eventHandlers.o executeExtensions.o \
+#	executeStatics.o help.o medmPixmap.o medmCA.o \
+#	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
+#	medmTextEntry.o medmValuator.o \
+#	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
+#	medmStripChart.o medmByte.o medmCartesianPlot.o medmSurfacePlot.o \
+#       medmArc.o medmOval.o medmRectangle.o medmText.o \
+#       medmFallingLine.o medmRisingLine.o medmPolyline.o medmPolygon.o \
+#	libMedmInit.o objectPalette.o parseControllers.o \
+#	parseExtensions.o parseMonitors.o parseStatics.o resourcePalette.o \
+#	shared.o updateMonitors.o utils.o medmWidget.o writeControllers.o \
+#	writeExtensions.o writeMonitors.o writeStatics.o xgif.o
 
 LIBNAME = libMedm.a
 PROD = medm
 
 include $(EPICS)/config/RULES.Unix
+
+#CC = acc -g
 
 medm: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)

@@ -1,3 +1,63 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
+
+
 /***************************************************************************
  ****                        executeExtensions.c                        ****
  ***************************************************************************/
@@ -94,150 +154,23 @@ void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
       if (dlComposite->chan[0] != '\0' && dlComposite->vis != V_STATIC) {
 
 
-	ChannelAccessMonitorData *channelAccessMonitorData =
-                        allocateChannelAccessMonitorData(displayInfo);
+	Channel *channelAccessMonitorData =
+                        allocateChannel(displayInfo);
 	channelAccessMonitorData->monitorType = DL_Composite;
 	channelAccessMonitorData->specifics = (XtPointer) dlComposite;
 	channelAccessMonitorData->dlAttr = NULL;
-	channelAccessMonitorData->dlDyn  = NULL;
-
+/*
 	SEVCHK(CA_BUILD_AND_CONNECT(dlComposite->chan,TYPENOTCONN,0,
           &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
           NULL),
           "executeDlComposite: error in CA_BUILD_AND_CONNECT");
 	if (channelAccessMonitorData->chid != NULL)
 	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-
+*/
 	dlComposite->monitorAlreadyAdded = True;
 
       }
     }
   }
 
-}
-
-
-
-
-
-void executeDlPolyline(DisplayInfo *displayInfo, DlPolyline *dlPolyline,
-				Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-
-
-  if (displayInfo->useDynamicAttribute == FALSE ||
-			displayInfo->traversalMode == DL_EDIT) {
-
-/* from the dlPolyline structure, we've got polyline's dimensions */
-  /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    XDrawLines(display,drawable,displayInfo->gc,
-	  dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
-
-    if (!forcedDisplayToWindow) {
-  /* also render to pixmap if not part of the dynamics stuff and not
-   * member of composite */
-      drawable = displayInfo->drawingAreaPixmap;
-      XDrawLines(display,drawable,displayInfo->gc,
-	  dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Polyline;
-      channelAccessMonitorData->specifics = (XtPointer) dlPolyline;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlPolyline: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-}
-
-
-
-
-void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
-				Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  FillStyle fillStyle;
-  unsigned int lineWidth;
-
-  fillStyle = displayInfo->attribute.fill;
-  lineWidth = displayInfo->attribute.width;
-
-
-  if (displayInfo->useDynamicAttribute == FALSE ||
-			displayInfo->traversalMode == DL_EDIT) {
-
-/* from the dlPolygon structure, we've got polygon's dimensions */
-  /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    if (fillStyle == F_SOLID)
-      XFillPolygon(display,drawable,displayInfo->gc,
-	  dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
-    else if (fillStyle == F_OUTLINE)
-      XDrawLines(display,drawable,displayInfo->gc,
-	  dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
-
-    if (!forcedDisplayToWindow) {
-  /* also render to pixmap if not part of the dynamics stuff and not
-   * member of composite */
-      drawable = displayInfo->drawingAreaPixmap;
-      if (fillStyle == F_SOLID)
-        XFillPolygon(display,drawable,displayInfo->gc,
-	  dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
-      else if (fillStyle == F_OUTLINE)
-        XDrawLines(display,drawable,displayInfo->gc,
-	  dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Polygon;
-      channelAccessMonitorData->specifics = (XtPointer) dlPolygon;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlPolygon: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
 }

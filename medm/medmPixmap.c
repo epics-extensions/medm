@@ -1,34 +1,70 @@
 /*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
+
+/*
  * haul  MEDM bitmaps into program address space
  */
 #include "medm.h"
 
-#include "arc25"
-#include "bar25"
-#include "bezierCurve25"
-#include "cartesianPlot25"
-#include "choiceButton25"
-#include "image25"
-#include "indicator25"
-#include "line25"
-#include "menu25"
-#include "messageButton25"
-#include "meter25"
-#include "oval25"
-#include "polygon25"
-#include "polyline25"
-#include "rectangle25"
-#include "relatedDisplay25"
-#include "select25"
-#include "shellCommand25"
-#include "stripChart25"
-#include "surfacePlot25"
-#include "text25"
-#include "textEntry25"
-#include "textUpdate25"
-#include "valuator25"
+#include "medmPix25"
 
-static XImage arc25, bar25, bezierCurve25, cartesianPlot25, choiceButton25,
+static XImage arc25, bar25, byte25, bezierCurve25, cartesianPlot25, choiceButton25,
 	image25, indicator25, line25, menu25, messageButton25, meter25,
 	oval25, polygon25, polyline25, rectangle25, relatedDisplay25,
 	select25, shellCommand25, stripChart25, surfacePlot25, text25,
@@ -72,6 +108,21 @@ void medmInitializeImageCache()
   bar25.bytes_per_line = 4;
   bar25.obdata = NULL;
   XmInstallImage(&bar25,"bar25");
+
+
+  byte25.width = byte25_width;
+  byte25.height = byte25_height;
+  byte25.data = (char *)byte25_bits;
+  byte25.xoffset = 0;
+  byte25.format = XYBitmap;
+  byte25.byte_order = MSBFirst;
+  byte25.bitmap_pad = 8;
+  byte25.bitmap_bit_order = LSBFirst;
+  byte25.bitmap_unit = 8;
+  byte25.depth = 1;
+  byte25.bytes_per_line = 4;
+  byte25.obdata = NULL;
+  XmInstallImage(&byte25,"byte25");
 
 
   bezierCurve25.width = bezierCurve25_width;
@@ -388,7 +439,6 @@ void medmInitializeImageCache()
   textUpdate25.obdata = NULL;
   XmInstallImage(&textUpdate25,"textUpdate25");
 
-
   valuator25.width = valuator25_width;
   valuator25.height = valuator25_height;
   valuator25.data = (char *)valuator25_bits;
@@ -403,7 +453,6 @@ void medmInitializeImageCache()
   valuator25.obdata = NULL;
   XmInstallImage(&valuator25,"valuator25");
 
-
 }
 
 /*
@@ -413,6 +462,7 @@ void medmClearImageCache()
 {
   XmUninstallImage(&arc25);
   XmUninstallImage(&bar25);
+  XmUninstallImage(&byte25);
   XmUninstallImage(&bezierCurve25);
   XmUninstallImage(&choiceButton25);
   XmUninstallImage(&cartesianPlot25);

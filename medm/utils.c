@@ -151,9 +151,9 @@ Boolean extractStringBetweenColons(
  * function to determine if the specified monitorData is in the current
  *	monitor list
  */
-Boolean isCurrentMonitor(ChannelAccessMonitorData *monitorData)
+Boolean isCurrentMonitor(Channel *monitorData)
 {
-  ChannelAccessMonitorData *data;
+  Channel *data;
 
   data = channelAccessMonitorListHead->next;
   while (data != NULL) {
@@ -172,92 +172,37 @@ Boolean isCurrentMonitor(ChannelAccessMonitorData *monitorData)
  *   dlBar, dlMeter... pointer which we want to keep around
  */
 void dmRemoveMonitorStructureFromMonitorList(
-  ChannelAccessMonitorData *monitorData)
+  Channel *pCh)
 {
   int i;
-  ChannelAccessMonitorData *data, *saveData;
-  ChannelAccessControllerData *ctlrData;
-  DisplayInfo *displayInfo = monitorData->displayInfo;
+  DisplayInfo *displayInfo = pCh->displayInfo;
 
-/*
- * close monitored channels, and free elements from the monitor list
- *	if this is the monitorData being cleared
- */
-   data = channelAccessMonitorListHead->next;
+  if (pCh->destroyChannel)
+    pCh->destroyChannel(pCh);
 
-   while (data != NULL) {
-     if (data->displayInfo == displayInfo && data == monitorData) {
-	/* this channel belongs to this display and is selected monitor */
+  medmDisconnectChannel(pCh);
 
-	/* close the channel */
-         if (data->chid != NULL) {
-	  /* due to the asynchronous nature of all this, be sure to set chid's
-	   * puser field to NULL since we are freeing the memory to which
-	   * it points in this routine 
-	   */
-	     ca_puser(data->chid) = NULL;	/* reset chid->puser to NULL */
-	     ca_clear_channel(data->chid);
-	 }
-	/* close the channel for the controller too */
-	 if (data->controllerData != NULL) {
-	     ctlrData = (ChannelAccessControllerData *)data->controllerData;
-	     ctlrData->monitorData = NULL;
-	     if (ctlrData->chid != NULL) {
-		/* due to the asynchronous nature of all this, be sure to set
-	 	* chid's puser field to NULL since we are freeing the memory
-	 	* to whhich it points in this routine 
-	 	*/
-	       ca_puser(ctlrData->chid) = NULL;	/* reset chid->puser to NULL */
-	       ca_clear_channel(ctlrData->chid);
-	     }
-	     if (!(ctlrData->controllerType == DL_Menu)
-	       && !(ctlrData->controllerType == DL_ChoiceButton)) {
-	       /* for the DL_Menu and DL_ChoiceButton
-		* the ctlrData is free in the controllerDestory function.
-		* This is just a quick fix.
-		*                                vong 9-22-94
-		*/
-	       free( (char *)data->controllerData);
-	       data->controllerData = NULL;
-	     }
-	 }
+  if (pCh->dlAttr != NULL) {
+    free ((char *) pCh->dlAttr);
+    pCh->dlAttr = NULL;
+  }
 
-         if (data->dlAttr != NULL) free( (char *) data->dlAttr);
-         if (data->dlDyn  != NULL) free( (char *) data->dlDyn);
-	 if (data->numberStateStrings > 0) {
-	    for (i = 0; i < data->numberStateStrings; i++) {
-	      if (data->stateStrings != NULL) {
-		if (data->stateStrings[i] != NULL)
-			free( (char *)data->stateStrings[i]);
-	      }
-	      if (data->stateStrings != NULL) {
-		if (data->xmStateStrings[i] != NULL)
-			XmStringFree(data->xmStateStrings[i]);
-	      }
-	    }
-	    if (data->stateStrings != NULL)
-	       free ( (char *) data->stateStrings);
-	    if (data->xmStateStrings != NULL)
-	       free ( (char *) data->xmStateStrings);
-	 }
-	/* update forward and backward pointers */
-	 data->prev->next = data->next;
-	 if (data->next != NULL) data->next->prev = data->prev;
-	 saveData = data->next;
-	 if (channelAccessMonitorListTail == data) 
-	     channelAccessMonitorListTail = channelAccessMonitorListTail->prev;
-	 if (channelAccessMonitorListTail == channelAccessMonitorListHead)
-	     channelAccessMonitorListHead->next = NULL;
-         free( (char *) data);
+  /* disable all callbacks */
+  pCh->updateChannelCb = NULL;
+  pCh->updateGraphicalInfoCb = NULL;
+  pCh->destroyChannel = NULL;
 
-	 ca_pend_event(CA_PEND_EVENT_TIME);
+  /* remove the this node from the double link list */
+  /* and free the memory */
+  pCh->prev->next = pCh->next;
+  if (pCh->next != NULL) pCh->next->prev = pCh->prev;
+  if (channelAccessMonitorListTail == pCh) 
+    channelAccessMonitorListTail = channelAccessMonitorListTail->prev;
+  if (channelAccessMonitorListTail == channelAccessMonitorListHead)
+    channelAccessMonitorListHead->next = NULL;
+  free( (char *) pCh);
 
-	/* since monitorData is unique, only one to find */
-	 return;
-     } else {
-	 data = data->next;
-     }
-   }
+  return;
 }
 
 
@@ -330,7 +275,7 @@ void dmCleanupDisplayInfo(
   Boolean cleanupDisplayList)
 {
   int i;
-  ChannelAccessMonitorData *data, *saveData;
+  Channel *data, *saveData;
   StripChartList *stripElement, *oldStrip;
   Boolean alreadyFreedUnphysical;
   Widget DA;
@@ -370,33 +315,33 @@ void dmCleanupDisplayInfo(
  */
   data = channelAccessMonitorListHead->next;
   while (data != NULL) {
-     if (data->displayInfo == displayInfo) {
-	/* this monitorData belongs to this display */
-	 saveData = data->next;
-	 dmRemoveMonitorStructureFromMonitorList(data);
-	 data = saveData;
-     } else {
-	 data = data->next;
-     }
-   }
+    if (data->displayInfo == displayInfo) {
+      /* this monitorData belongs to this display */
+      saveData = data->next;
+      dmRemoveMonitorStructureFromMonitorList(data);
+      data = saveData;
+    } else {
+      data = data->next;
+    }
+  }
 
 
 
 /* force a wait for all outstanding CA event completion */
 /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
  */
-   ca_pend_event(CA_PEND_EVENT_TIME);
+  ca_pend_event(CA_PEND_EVENT_TIME);
 
 /*
  * if cleanupDisplayList == TRUE
  *   then global cleanup ==> delete shell, free memory/structures, etc
  */
 
- if (cleanupDisplayList) {
-	XtDestroyWidget(displayInfo->shell);
-	displayInfo->shell = NULL;
-/* remove display list here */
-	dmRemoveDisplayList(displayInfo);
+  if (cleanupDisplayList) {
+    XtDestroyWidget(displayInfo->shell);
+    displayInfo->shell = NULL;
+    /* remove display list here */
+    dmRemoveDisplayList(displayInfo);
   }
 
 
@@ -709,77 +654,6 @@ int dmGetBestFontWithInfo(
 }
 
 
-
-/*
- * function to create (if necessary), set and popup a display's warning dialog
- */
-void dmSetAndPopupWarningDialog(
-  DisplayInfo *displayInfo,
-  char *message,
-  XtCallbackProc cancelCallback, 
-  XtCallbackProc okCallback)
-{
-  Arg args[5];
-  XtCallbackProc cancel, ok;
-  XmString xmString;
-  XEvent event;
-
-/* create the dialog if necessary */
-
-  if (displayInfo->warningDialog == NULL) {
-
-	xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
-	XtSetArg(args[0], XmNmessageString, xmString);
-/* this doesn't seem to be working (and should check if MWM is running) */
-	XtSetArg(args[1], XmNdialogStyle, XmDIALOG_APPLICATION_MODAL);
-	displayInfo->warningDialog = XmCreateWarningDialog(displayInfo->shell,
-		"warningDialog", args, 2);
-	XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,
-		XmDIALOG_HELP_BUTTON));
-	XtAddCallback(displayInfo->warningDialog,XmNokCallback,okCallback,
-		displayInfo);
-	XtAddCallback(displayInfo->warningDialog,XmNcancelCallback,
-		cancelCallback, displayInfo);
-
-  } else {
-
-  /* remove old callbacks */
-	XtSetArg(args[0], XmNokCallback, &ok);
-	XtSetArg(args[1], XmNcancelCallback, &cancel);
-	XtSetArg(args[2], XmNmessageString, &xmString);
-	XtGetValues(displayInfo->warningDialog,args,3);
-	XtRemoveCallback(displayInfo->warningDialog,XmNokCallback,ok,
-		displayInfo);
-	XtRemoveCallback(displayInfo->warningDialog,XmNcancelCallback,
-		cancel, displayInfo);
-	XmStringFree(xmString);
-
-  /* change message and register new callbacks */
-	xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
-	XtSetArg(args[0], XmNmessageString, xmString);
-	XtSetValues(displayInfo->warningDialog,args,1);
-	XtAddCallback(displayInfo->warningDialog,XmNokCallback,okCallback,
-		displayInfo);
-	XtAddCallback(displayInfo->warningDialog,XmNcancelCallback,
-		cancelCallback, displayInfo);
-	XmStringFree(xmString);
-  }
-
-  XtManageChild(displayInfo->warningDialog);
-  XSync(display,FALSE);
-/* force Modal (blocking dialog) */
-  modalGrab = TRUE;
-  XtAddGrab(XtParent(displayInfo->warningDialog),True,False);
-  XmUpdateDisplay(XtParent(displayInfo->warningDialog));
-  while (modalGrab || XtAppPending(appContext)) {
-    XtAppNextEvent(appContext,&event);
-    XtDispatchEvent(&event);
-  }
-
-}
-
-
-
 XtErrorHandler trapExtraneousWarningsHandler(String message)
 {
   if (message && *message) {
@@ -932,6 +806,46 @@ char *dmGetDisplayFileName(
   }
 }
 
+
+void medmSetDisplayTitle(DisplayInfo *displayInfo)
+{
+  DlElement *element;
+  DlFile *dlFile;
+  char str[MAX_FILE_CHARS+10];
+
+  /* look for the DlFile element in the display list */
+  element = ((DlElement *)displayInfo->dlElementListHead)->next;
+  while (element != NULL) {
+    if (element->type == DL_File) {
+      char *tmp, *tmp1;
+      tmp = tmp1 = element->structure.file->name;
+      while (*tmp != '\0')
+        if (*tmp++ == '/') tmp1 = tmp;
+      if (displayInfo->hasBeenEditedButNotSaved) {
+        strcpy(str,tmp1);
+        strcat(str," (edited)");
+        XtVaSetValues(displayInfo->shell,XmNtitle,str,NULL);
+      } else {
+        XtVaSetValues(displayInfo->shell,XmNtitle,tmp1,NULL);
+      }
+      return;
+    } else {
+      element = element->next;
+    }
+  }
+}
+
+void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
+{
+  DlElement *element;
+  DlFile *dlFile;
+  char str[MAX_FILE_CHARS+10];
+
+  if (globalDisplayListTraversalMode == DL_EXECUTE) return;
+  if (displayInfo->hasBeenEditedButNotSaved) return;
+  displayInfo->hasBeenEditedButNotSaved = True;
+  medmSetDisplayTitle(displayInfo);
+}
 
 /*
  * starting at tail of display list, look for smallest object which bounds
@@ -1206,9 +1120,7 @@ DlElement **selectedElementsLookup(
 		   *arraySize = (*arraySize)*10;
 		} else {
 		   sprintf(string,"\nselectedElementsLookup: realloc failed!");
-		   dmSetAndPopupWarningDialog(currentDisplayInfo,string,
-			(XtCallbackProc)warnCallback,
-			(XtCallbackProc)warnCallback);
+		   dmSetAndPopupWarningDialog(currentDisplayInfo,string,"Ok",NULL,NULL);
 		   fprintf(stderr,"%s",string);
 
 		   return (array);
@@ -1988,7 +1900,7 @@ Boolean doResizing(
   int width, height;
 
 
-  if (currentDisplayInfo == NULL) return;
+  if (currentDisplayInfo == NULL) return False;
   cdi = currentDisplayInfo;
 
 /* just have different names for globals (less typing, more clarity) */
@@ -2574,11 +2486,17 @@ DlStructurePtr createCopyOfElementType(
 	new.meter = (DlMeter *)malloc(sizeof(DlMeter));
 	*new.meter = *ptr.meter;
 	break;
-	
+
+      case DL_Byte:
+        new.byte = (DlByte *)malloc(sizeof(DlByte));
+        *new.byte = *ptr.byte;
+        break;
+      
       case DL_Bar:
 	new.bar = (DlBar *)malloc(sizeof(DlBar));
 	*new.bar = *ptr.bar;
 	break;
+      
 	
       case DL_SurfacePlot:
 	new.surfacePlot = (DlSurfacePlot *)malloc(sizeof(DlSurfacePlot));
@@ -3457,14 +3375,14 @@ void deleteAndFreeElementAndStructure(
 
 
 /*
- * return ChannelAccessMonitorData ptr given a widget id
+ * return Channel ptr given a widget id
  */
-ChannelAccessMonitorData *dmGetChannelAccessMonitorDataFromWidget(
+Channel *dmGetChannelFromWidget(
   Widget sourceWidget)
 {
   DisplayInfo *displayInfo;
   DlElement *ele, *targetEle;
-  ChannelAccessMonitorData *mData;
+  Channel *mData;
  
   mData = channelAccessMonitorListHead->next;
   while (mData != NULL) {
@@ -3473,24 +3391,24 @@ ChannelAccessMonitorData *dmGetChannelAccessMonitorDataFromWidget(
      }
      mData = mData->next;
   }
-  return ((ChannelAccessMonitorData *)NULL);
+  return ((Channel *)NULL);
 
 }
 
 
 /*
- * return ChannelAccessMonitorData ptr given a DisplayInfo* and x,y positions
+ * return Channel ptr given a DisplayInfo* and x,y positions
  */
-ChannelAccessMonitorData *dmGetChannelAccessMonitorDataFromPosition(
+Channel *dmGetChannelFromPosition(
   DisplayInfo *displayInfo,
   int x,
   int y)
 {
-  ChannelAccessMonitorData *mData, *saveMonitorData;
+  Channel *mData, *saveMonitorData;
   DlRectangle *dlRectangle;
   int minWidth, minHeight;
   
-  saveMonitorData = (ChannelAccessMonitorData *)NULL;
+  saveMonitorData = (Channel *)NULL;
   if (displayInfo == (DisplayInfo *)NULL) return(saveMonitorData);
 
   minWidth = INT_MAX;	 	/* according to XPG2's values.h */
@@ -3735,5 +3653,181 @@ void colorMenuBar(
   for (i = 0; i < numChildren; i++) {
     XtSetValues(children[i],args,2);
   }
+}
+
+
+void questionDialogCb(Widget widget, 
+  XtPointer clientData,
+  XtPointer callbackStruct)
+{
+  DisplayInfo *displayInfo = (DisplayInfo *) clientData;
+  XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
+  switch (cbs->reason) {
+    case XmCR_OK:
+      displayInfo->questionDialogAnswer = 1;
+      break;
+    case XmCR_CANCEL:
+      displayInfo->questionDialogAnswer = 2;
+      break;
+    case XmCR_HELP:
+      displayInfo->questionDialogAnswer = 3;
+      break;
+    default :
+      displayInfo->questionDialogAnswer = -1;
+      break;
+  }
+}
+
+/*
+ * function to create (if necessary), set and popup a display's question dialog
+ */
+void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
+                               char           *message,
+                               char           *okBtnLabel,
+                               char           *cancelBtnLabel,
+                               char           *helpBtnLabel)
+{
+  XtCallbackProc cancel, ok, help;
+  XmString xmString;
+  XEvent event;
+
+/* create the dialog if necessary */
+
+  if (displayInfo->questionDialog == NULL) {
+    /* this doesn't seem to be working (and should check if MWM is running) */
+    displayInfo->questionDialog = XmCreateQuestionDialog(displayInfo->shell,"questionDialog",NULL,0);
+    XtVaSetValues(displayInfo->questionDialog, XmNdialogStyle,XmDIALOG_APPLICATION_MODAL, NULL);
+    XtVaSetValues(XtParent(displayInfo->questionDialog),XmNtitle,"Question ?",NULL);
+    XtAddCallback(displayInfo->questionDialog,XmNokCallback,questionDialogCb,displayInfo);
+    XtAddCallback(displayInfo->questionDialog,XmNcancelCallback,questionDialogCb,displayInfo);
+    XtAddCallback(displayInfo->questionDialog,XmNhelpCallback,questionDialogCb,displayInfo);
+  }
+  if (message == NULL) return;
+  xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(displayInfo->questionDialog,XmNmessageString,xmString,NULL);
+  XmStringFree(xmString);
+  if (okBtnLabel) {
+    xmString = XmStringCreateLtoR(okBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->questionDialog,XmNokLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_OK_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_OK_BUTTON));
+  }
+  if (cancelBtnLabel) {
+    xmString = XmStringCreateLtoR(cancelBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->questionDialog,XmNcancelLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_CANCEL_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_CANCEL_BUTTON));
+  }
+  if (helpBtnLabel) {
+    xmString = XmStringCreateLtoR(helpBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->questionDialog,XmNhelpLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_HELP_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->questionDialog,XmDIALOG_HELP_BUTTON));
+  }
+  displayInfo->questionDialogAnswer = 0;
+  XtManageChild(displayInfo->questionDialog);
+  XSync(display,FALSE);
+  /* force Modal (blocking dialog) */
+  XtAddGrab(XtParent(displayInfo->questionDialog),True,False);
+  XmUpdateDisplay(XtParent(displayInfo->questionDialog));
+  while (!displayInfo->questionDialogAnswer || XtAppPending(appContext)) {
+    XtAppNextEvent(appContext,&event);
+    XtDispatchEvent(&event);
+  }
+  XtUnmanageChild(displayInfo->questionDialog);
+}
+
+void warningDialogCb(Widget widget,
+                     XtPointer clientData,
+                     XtPointer callbackStruct)
+{
+  DisplayInfo *displayInfo = (DisplayInfo *) clientData;
+  XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
+  switch (cbs->reason) {
+    case XmCR_OK:
+      displayInfo->warningDialogAnswer = 1;
+      break;
+    case XmCR_CANCEL:
+      displayInfo->warningDialogAnswer = 2;
+      break;
+    case XmCR_HELP:
+      displayInfo->warningDialogAnswer = 3;
+      break;
+    default :
+      displayInfo->warningDialogAnswer = -1;
+      break;
+  }
+}
+
+/*
+ * function to create (if necessary), set and popup a display's warning dialog
+ */
+void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
+                               char           *message,
+                               char           *okBtnLabel,
+                               char           *cancelBtnLabel,
+                               char           *helpBtnLabel)
+{
+  XtCallbackProc cancel, ok, help;
+  XmString xmString;
+  XEvent event;
+
+/* create the dialog if necessary */
+
+  if (displayInfo->warningDialog == NULL) {
+    /* this doesn't seem to be working (and should check if MWM is running) */
+    displayInfo->warningDialog =
+        XmCreateWarningDialog(displayInfo->shell,"warningDialog",NULL,0);
+    XtVaSetValues(displayInfo->warningDialog,XmNdialogStyle,XmDIALOG_APPLICATION_MODAL,NULL);
+    XtVaSetValues(XtParent(displayInfo->warningDialog),XmNtitle,"Warning !",NULL);
+    XtAddCallback(displayInfo->warningDialog,XmNokCallback,warningDialogCb,displayInfo);
+    XtAddCallback(displayInfo->warningDialog,XmNcancelCallback,warningDialogCb,displayInfo);
+    XtAddCallback(displayInfo->warningDialog,XmNhelpCallback,warningDialogCb,displayInfo);
+  }
+  if (message == NULL) return;
+  xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(displayInfo->warningDialog,XmNmessageString,xmString,NULL);
+  XmStringFree(xmString);
+  if (okBtnLabel) {
+    xmString = XmStringCreateLtoR(okBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->warningDialog,XmNokLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_OK_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_OK_BUTTON));
+  }
+  if (cancelBtnLabel) {
+    xmString = XmStringCreateLtoR(cancelBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->warningDialog,XmNcancelLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_CANCEL_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_CANCEL_BUTTON));
+  }
+  if (helpBtnLabel) {
+    xmString = XmStringCreateLtoR(helpBtnLabel,XmFONTLIST_DEFAULT_TAG);
+    XtVaSetValues(displayInfo->warningDialog,XmNhelpLabelString,xmString,NULL);
+    XmStringFree(xmString);
+    XtManageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_HELP_BUTTON));
+  } else {
+    XtUnmanageChild(XmMessageBoxGetChild(displayInfo->warningDialog,XmDIALOG_HELP_BUTTON));
+  }
+  displayInfo->warningDialogAnswer = 0;
+  XtManageChild(displayInfo->warningDialog);
+  XSync(display,FALSE);
+  /* force Modal (blocking dialog) */
+  XtAddGrab(XtParent(displayInfo->warningDialog),True,False);
+  XmUpdateDisplay(XtParent(displayInfo->warningDialog));
+  while (!displayInfo->warningDialogAnswer || XtAppPending(appContext)) {
+    XtAppNextEvent(appContext,&event);
+    XtDispatchEvent(&event);
+  }
+  XtUnmanageChild(displayInfo->warningDialog);
 }
 

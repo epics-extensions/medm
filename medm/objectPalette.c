@@ -1,26 +1,67 @@
 /*
- *	Mark Anderson, Argonne National Laboratory:
- *		U.S. DOE, University of Chicago
- */
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
 
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
 #include <Xm/ToggleBG.h>
 #include <Xm/MwmUtil.h>
 
-
-#define N_MAX_MENU_ELES 10
-
-/* should be even number of buttons here! */
-#define N_GRAPHICS_BTNS 10
-#define N_MONITOR_BTNS 8
-#define N_CONTROLLER_BTNS 8
-#define N_MISC_BTNS 2
-/* total number of buttons (allowing 2 dummies per "separation") */
-#define N_BTNS  \
-  (N_GRAPHICS_BTNS + 2 + N_MONITOR_BTNS + 2 + N_CONTROLLER_BTNS \
-		   + 2 + N_MISC_BTNS)
 
 #ifdef EXTENDED_INTERFACE
 # define N_MAIN_MENU_ELES 3
@@ -40,13 +81,71 @@
 
 
 
+typedef struct {
+  char *         pixmapName;
+  Widget         widget;
+  XtCallbackProc callback;
+  XtPointer      clientData;
+} buttons_t;
 
+static void objectToggleCallback(Widget, XtPointer, XtPointer);
+
+static XtCallbackProc objectToggleSelectCallback(
+	   Widget, XtPointer, XmToggleButtonCallbackStruct *);
+
+buttons_t paletteGraphicsButton[] = {
+  {"rectangle25",NULL,objectToggleCallback,(XtPointer) DL_Rectangle},
+  {"oval25",NULL,objectToggleCallback,(XtPointer) DL_Oval},
+  {"arc25",NULL,objectToggleCallback,(XtPointer) DL_Arc},
+  {"text25",NULL,objectToggleCallback,(XtPointer) DL_Text},
+  {"polyline25",NULL,objectToggleCallback,(XtPointer) DL_Polyline},
+  {"line25",NULL,objectToggleCallback,(XtPointer) DL_Line},
+  {"polygon25",NULL,objectToggleCallback,(XtPointer) DL_Polygon},
+  {"image25",NULL,objectToggleCallback,(XtPointer) DL_Image},
+  NULL};
+/* not implement
+  {"bezierCurve25",NULL,objectToggleCallback,(XtPointer) DL_BezierCurve},
+*/
+buttons_t paletteMonitorButton[] = {
+  {"meter25",NULL,objectToggleCallback,(XtPointer) DL_Meter},
+  {"bar25",NULL,objectToggleCallback,(XtPointer) DL_Bar},
+  {"stripChart25",NULL,objectToggleCallback,(XtPointer) DL_StripChart},
+  {"textUpdate25",NULL,objectToggleCallback,(XtPointer) DL_TextUpdate},
+  {"indicator25",NULL,objectToggleCallback,(XtPointer) DL_Indicator},
+  {"cartesianPlot25",NULL,objectToggleCallback,(XtPointer) DL_CartesianPlot},
+  {"surfacePlot25",NULL,objectToggleCallback,(XtPointer) DL_SurfacePlot},
+  {"byte25",NULL,objectToggleCallback,(XtPointer) DL_Byte},
+  NULL};
+
+buttons_t paletteControllerButton[] = {
+  {"choiceButton25",NULL, objectToggleCallback,(XtPointer) DL_ChoiceButton},
+  {"textEntry25",NULL, objectToggleCallback,(XtPointer) DL_TextEntry},
+  {"messageButton25",NULL, objectToggleCallback,(XtPointer) DL_MessageButton},
+  {"menu25",NULL, objectToggleCallback,(XtPointer) DL_Menu},
+  {"valuator25",NULL, objectToggleCallback,(XtPointer) DL_Valuator},
+  {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer) DL_RelatedDisplay},
+  {"shellCommand25",NULL, objectToggleCallback,(XtPointer) DL_ShellCommand},
+  NULL};
+
+buttons_t paletteMiscButton[] = {
+  {"select25",NULL, objectToggleCallback,NULL},
+  NULL};
+
+buttons_t *buttonList[] = {
+  paletteGraphicsButton,
+  paletteMonitorButton,
+  paletteControllerButton,
+  NULL};
+
+static Widget lastButton = NULL;
 
 Widget objectFilePDM;
 extern Widget importFSD;
-extern XmString gifDirMask, tifDirMask;
 
 extern XmString xmstringSelect;
+
+/* last mouse position of the display before popup the menu */
+extern XButtonPressedEvent lastEvent;
 
 
 /*
@@ -55,7 +154,6 @@ extern XmString xmstringSelect;
  */
 Widget objectPaletteSelectToggleButton;
 
-
 /********************************************
  **************** Callbacks *****************
  ********************************************/
@@ -63,27 +161,120 @@ Widget objectPaletteSelectToggleButton;
 
 /*
  * object palette's state transition callback - updates resource palette
-  */
-static XtCallbackProc objectToggleCallback(
+ */
+ void objectMenuCallback(
   Widget w,
-  DlElementType elementType,
-  XmToggleButtonCallbackStruct *call_data)
+  XtPointer clientData,
+  XtPointer callbackStruct)
 {
+  DlElementType elementType = (DlElementType) clientData;
   DisplayInfo *di;
 
-/* pushing one of these toggles implies create object of this type,
- *      and MB in a display now takes on CREATE semantics
- */
-  if (call_data->set == False) {
-
-  } else {
+  /* move the pointer back the original location */
+  di = currentDisplayInfo;
+  XWarpPointer(display,None,XtWindow(di->drawingArea),None,None,
+    None,None,lastEvent.x, lastEvent.y);
 
 /* unhighlight and unselect any selected elements */
+  unhighlightSelectedElements();
+  unselectSelectedElements();
+  clearResourcePaletteEntries();
+
+/* set global action (from object palette) to CREATE, & global element type */
+  currentActionType = CREATE_ACTION;
+  currentElementType = elementType;
+  setResourcePaletteEntries();
+  di = displayInfoListHead->next;
+  while(di != NULL) {
+    XDefineCursor(display,XtWindow(di->drawingArea),crosshairCursor);
+    di = di->next;
+  }
+
+  if (objectS) {
+    int i,j;
+
+    /* allow only one button pressed at a time */
+    if (lastButton)
+      XmToggleButtonGadgetSetState(lastButton,False,False);
+    for (i = 0; buttonList[i] != NULL; i++) {
+      for (j = 0; buttonList[i][j].pixmapName != NULL; j++) {
+        if (buttonList[i][j].clientData == (XtPointer) elementType) {
+	  lastButton = buttonList[i][j].widget;
+  	  XmToggleButtonGadgetSetState(lastButton,True,False);
+	  return;
+        }
+      }
+    }
+  }
+
+  return;
+}
+
+void setActionToSelect() {
+
+  DisplayInfo *di;
+/* set global action (from object palette) to SELECT, not CREATE... */
+  currentActionType = SELECT_ACTION;
+
+/* since currentElementType is not really reset yet (don't know what is
+ *	selected yet), clearResourcePaletteEntries() may not popdown
+ *	these associated shells  - therefore use brute force */
+  if (relatedDisplayS != NULL) XtPopdown(relatedDisplayS);
+  if (cartesianPlotS != NULL) XtPopdown(cartesianPlotS);
+  if (cartesianPlotAxisS != NULL) XtPopdown(cartesianPlotAxisS);
+  if (stripChartS != NULL) XtPopdown(stripChartS);
+
+/* clear out the resource palette to reflect empty/unselected object */
+  if (currentDisplayInfo == NULL) {
+    clearResourcePaletteEntries();
+  } else {
+    if (currentDisplayInfo->numSelectedElements != 1)
+      clearResourcePaletteEntries();
+  }
+
+  if (objectS) 
+    XDefineCursor(display,XtWindow(objectS),rubberbandCursor);
+  di = displayInfoListHead->next;
+  while(di != NULL) {
+    XDefineCursor(display,XtWindow(di->drawingArea),rubberbandCursor);
+    di = di->next;
+  }
+  return;
+}
+
+/*
+ * object palette's state transition callback - updates resource palette
+ */
+static void objectToggleCallback(
+  Widget w,
+  XtPointer clientData,
+  XtPointer callbackStruct)
+{
+  DisplayInfo *di;
+  DlElementType elementType = (DlElementType) clientData;
+  XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
+
+  /* pushing one of these toggles implies create object of this type,
+   *      and MB in a display now takes on CREATE semantics
+   */
+
+  if (call_data->set == False) return;
+
+  /* allow only one button pressed at a time */
+  if ((lastButton) && (lastButton != w)) {
+    XmToggleButtonGadgetSetState(lastButton,False,False);
+    lastButton = w;
+  }
+
+  if (w == objectPaletteSelectToggleButton) {
+    setActionToSelect();
+  } else {
+    /* unhighlight and unselect any selected elements */
     unhighlightSelectedElements();
     unselectSelectedElements();
     clearResourcePaletteEntries();
 
-/* set global action (from object palette) to CREATE, & global element type */
+    /* set global action (from object palette) to CREATE, & global element type */
     currentActionType = CREATE_ACTION;
     currentElementType = elementType;
     setResourcePaletteEntries();
@@ -94,67 +285,20 @@ static XtCallbackProc objectToggleCallback(
       di = di->next;
     }
   }
+  return;
 }
 
 
-/*
- * object palette's state transition callback - handles SELECT actions
- */
-static XtCallbackProc objectToggleSelectCallback(
+static void fileMenuSimpleCallback(
   Widget w,
-  XtPointer *client_data,
-  XmToggleButtonCallbackStruct *call_data)
+  XtPointer clientData,
+  XtPointer callbackStruct)
 {
-  DisplayInfo *di;
-/* pushing this toggle implies select object,
- *      and MB in a display now takes on SELECT semantics
- */
-  if (call_data->set == False) {
-
-  } else {
-
-/* set global action (from object palette) to SELECT, not CREATE... */
-    currentActionType = SELECT_ACTION;
-
-/* since currentElementType is not really reset yet (don't know what is
- *	selected yet), clearResourcePaletteEntries() may not popdown
- *	these associated shells  - therefore use brute force */
-    if (relatedDisplayS != NULL) XtPopdown(relatedDisplayS);
-    if (cartesianPlotS != NULL) XtPopdown(cartesianPlotS);
-    if (cartesianPlotAxisS != NULL) XtPopdown(cartesianPlotAxisS);
-    if (stripChartS != NULL) XtPopdown(stripChartS);
-
-/* clear out the resource palette to reflect empty/unselected object */
-    if (currentDisplayInfo == NULL) {
-	clearResourcePaletteEntries();
-    } else {
-	if (currentDisplayInfo->numSelectedElements != 1)
-		clearResourcePaletteEntries();
-    }
-
-
-    XDefineCursor(display,XtWindow(objectS),rubberbandCursor);
-    di = displayInfoListHead->next;
-    while(di != NULL) {
-      XDefineCursor(display,XtWindow(di->drawingArea),rubberbandCursor);
-      di = di->next;
-    }
+  int buttonNumber = (int) clientData;
+  switch(buttonNumber) {
+    case FILE_CLOSE_BTN:
+      XtPopdown(objectS);
   }
-}
-
-
-
-
-static XtCallbackProc fileMenuSimpleCallback(
-  Widget w,
-  int buttonNumber,
-  XmAnyCallbackStruct *call_data)
-{
-	switch(buttonNumber) {
-
-	    case FILE_CLOSE_BTN:
-		XtPopdown(objectS);
-    }
 }
 
 
@@ -174,28 +318,100 @@ static XtCallbackProc optionsMenuSimpleCallback(
 #endif
 
 
+Widget createRadioButtonPanel(Widget parent, char* name, buttons_t *b) {
+  Widget background, label, rowCol;
+  Pixel fg, bg;
+  int i, col;
 
+  background = XtVaCreateWidget("background",
+	    xmRowColumnWidgetClass, parent,
+	    XmNpacking, XmPACK_TIGHT,
+	    NULL);
 
+  label = XtVaCreateWidget(name,
+	    xmLabelWidgetClass, background,
+	    NULL);
 
+  rowCol = XtVaCreateWidget("rowCol",
+	    xmRowColumnWidgetClass, background,
+	    XmNorientation, XmVERTICAL,
+	    XmNpacking, XmPACK_COLUMN,
+	    NULL);
 
+  XtVaGetValues(rowCol,
+    XmNforeground, &fg,
+    XmNbackground, &bg,
+    NULL);
+  for (i=0; b[i].pixmapName != NULL; i++) {
+    Pixmap pixmap;
+
+    pixmap = XmGetPixmap(XtScreen(rowCol),
+	       b[i].pixmapName,
+	       fg, bg);
+    b[i].widget = XtVaCreateManagedWidget(b[i].pixmapName,
+	xmToggleButtonGadgetClass, rowCol,
+        XmNlabelType, XmPIXMAP,
+	XmNmarginTop, 0,
+	XmNmarginBottom, 0,
+	XmNmarginLeft, 0,
+	XmNmarginRight, 0,
+	XmNmarginWidth, 0,
+	XmNmarginHeight, 0,
+	XmNwidth, 29,
+	XmNheight, 29,
+	XmNpushButtonEnabled, True,
+	XmNhighlightThickness, 0,
+	XmNalignment, XmALIGNMENT_CENTER,
+	XmNlabelPixmap, pixmap,
+	XmNindicatorOn, False,
+	XmNrecomputeSize, False,
+	NULL);
+    XtAddCallback(b[i].widget,XmNvalueChangedCallback,b[i].callback,b[i].clientData);
+  }
+  if (((i>>1)<<1) == i) { /* check for odd/even */
+    col = i >> 1;
+  } else {
+    col = (i >> 1) + 1;
+  }
+  if (col <= 0) col = 1;
+  XtVaSetValues(rowCol, XmNnumColumns, col, NULL);
+  XtManageChild(rowCol);
+  XtManageChild(background);
+  XtManageChild(label);
+  return rowCol;
+}
+
+static menuEntry_t fileMenu[] = {
+  { "Close",  &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+    fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN,  NULL},
+  NULL,
+};
+
+#ifdef EXTENDED_INTERFACE
+static menuEntry_t optionMenu[] = {
+  { "User Palette...",  &xmPushButtonGadgetClass, 'U', NULL, NULL, NULL,
+    fileMenuSimpleCallback, (XtPointer) OPTION_USER_PALETTE_BTN,  NULL},
+  NULL,
+};
+#endif
+
+static menuEntry_t helpMenu[] = {
+  { "On Object Palette...",  &xmPushButtonGadgetClass, 'O', NULL, NULL, NULL,
+    NULL, NULL, NULL},
+  NULL,
+};
 
 void createObject()
 {
-  Widget objectBB, paletteRC;
-
-  XmString buttons[N_MAX_MENU_ELES];
-  KeySym keySyms[N_MAX_MENU_ELES];
-  XmString label, string;
-  XmButtonType buttonType[N_MAX_MENU_ELES];
+  Widget objectRC, paletteRC;
+  Widget graphicsRC, monitorRC, controllerRC, miscRC;
   Widget objectMB;
   Widget objectEditPDM, objectOptionsPDM, objectHelpPDM;
   Widget menuHelpWidget;
 
   Widget graphicsLabel, monitorLabel, controllerLabel, miscLabel;
   Pixel fg, bg;
-
-/* should be even number of buttons here! */
- Widget rcTB[N_BTNS], subjectWidget;
+  Dimension w, h;
 
 /* static (drawing) object pixmaps */
  Pixmap rectanglePixmap, ovalPixmap, arcPixmap, textPixmap, linePixmap,
@@ -209,7 +425,7 @@ void createObject()
 /* miscellaneous pixmaps */
  Pixmap selectPixmap;
 
- int i, n, pass, childCount;
+ int i, n, pass, childCount, col;
 
  char name[20];
  Arg args[10];
@@ -219,22 +435,21 @@ void createObject()
  * initialize local static globals
  */
  importFSD = NULL;
- gifDirMask = XmStringCreateSimple("*.gif");
- tifDirMask = XmStringCreateSimple("*.tif");
 
 /*
  * create a MainWindow in a shell, and then the palette radio box
  */
- n = 0;
- XtSetArg(args[n],XtNiconName,"Objects"); n++;
- XtSetArg(args[n],XtNtitle,"Object Palette"); n++;
- XtSetArg(args[n],XtNallowShellResize,TRUE); n++;
- XtSetArg(args[n],XmNkeyboardFocusPolicy,XmEXPLICIT); n++;
 /* map window manager menu Close function to application close... */
- XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
- XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
- objectS = XtCreatePopupShell("objectS",topLevelShellWidgetClass,
-				mainShell,args,n);
+
+ objectS = XtVaCreatePopupShell("objectS",
+	     topLevelShellWidgetClass,mainShell,
+	     XtNiconName,"Objects",
+	     XtNtitle,"Object Palette",
+	     XtNallowShellResize,TRUE,
+	     XmNkeyboardFocusPolicy,XmEXPLICIT,
+	     XmNdeleteResponse,XmDO_NOTHING,
+	     XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
+	     NULL);
 
  XmAddWMProtocolCallback(objectS,WM_DELETE_WINDOW,
 		(XtCallbackProc)wmCloseCallback,(XtPointer)OTHER_SHELL);
@@ -245,425 +460,61 @@ void createObject()
 /*
  * create the menu bar
  */
-  buttons[0] = XmStringCreateSimple("File");
-#ifdef EXTENDED_INTERFACE
-  buttons[1] = XmStringCreateSimple("Options");
-  buttons[2] = XmStringCreateSimple("Help");
-  keySyms[0] = 'F';
-  keySyms[1] = 'O';
-  keySyms[2] = 'H';
-#else
-  buttons[1] = XmStringCreateSimple("Help");
-  keySyms[0] = 'F';
-  keySyms[1] = 'H';
-#endif
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_MAIN_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNforeground,defaultForeground); n++;
-  XtSetArg(args[n],XmNbackground,defaultBackground); n++;
-  objectMB = XmCreateSimpleMenuBar(objectMW, "objectMB",args,n);
+  objectMB = XmCreateMenuBar(objectMW, "objectMB",NULL,0);
 
 /* color objectMB properly (force so VUE doesn't interfere) */
   colorMenuBar(objectMB,defaultForeground,defaultBackground);
 
-  /* set the Help cascade button in the menu bar */
-#ifdef EXTENDED_INTERFACE
-  menuHelpWidget = XtNameToWidget(objectMB,"*button_2");
-#else
-  menuHelpWidget = XtNameToWidget(objectMB,"*button_1");
-#endif
-  XtVaSetValues(objectMB,XmNmenuHelpWidget,menuHelpWidget,
-		NULL);
-  for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
-
-
 /*
  * create the file pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("Close");
-  keySyms[0] = 'C';
-  buttonType[0] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_FILE_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,FILE_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)fileMenuSimpleCallback); n++;
-  objectFilePDM = XmCreateSimplePulldownMenu(objectMB,"objectFilePDM",
-	args,n);
-  for (i = 0; i < N_FILE_MENU_ELES; i++) XmStringFree(buttons[i]);
-
+  objectFilePDM = buildMenu(objectMB,XmMENU_PULLDOWN,
+		    "File", 'F', fileMenu);
 
 
 #ifdef EXTENDED_INTERFACE
 /*
  * create the options pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("User Palette...");
-  keySyms[0] = 'U';
-  buttonType[0] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_OPTIONS_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,OPTIONS_BTN_POSN); n++;
-  XtSetArg(args[n],XmNsimpleCallback,
-		(XtCallbackProc)optionsMenuSimpleCallback); n++;
-  objectOptionsPDM = XmCreateSimplePulldownMenu(objectMB,"objectOptionsPDM",
-	args,n);
-  for (i = 0; i < N_OPTIONS_MENU_ELES; i++) XmStringFree(buttons[i]);
+  objectOptionPDM = buildMenu(objectMB,XmMENU_PULLDOWN,
+		    "Option", 'O', optionMenu);
 #endif
 
 
 /*
  * create the help pulldown menu pane
  */
-  buttons[0] = XmStringCreateSimple("On Object Palette...");
-  keySyms[0] = 'O';
-  buttonType[0] = XmPUSHBUTTON;
-  n = 0;
-  XtSetArg(args[n],XmNbuttonCount,N_HELP_MENU_ELES); n++;
-  XtSetArg(args[n],XmNbuttons,buttons); n++;
-  XtSetArg(args[n],XmNbuttonType,buttonType); n++;
-  XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
-  XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
-  objectHelpPDM = XmCreateSimplePulldownMenu(objectMB,
-		"objectHelpPDM",args,n);
-  XmStringFree(buttons[0]);
+  objectHelpPDM = buildMenu(objectMB,XmMENU_PULLDOWN,
+		    "Help", 'H', helpMenu);
+  XtVaSetValues(objectMB, XmNmenuHelpWidget, objectHelpPDM, NULL);
   /* (MDA) for now, disable this menu */
   XtSetSensitive(objectHelpPDM,False);
 
-
-
-
 /*
- * create work area bulletin board
+ * create work area Row Column
  */
- objectBB = XmCreateBulletinBoard(objectMW,"objectBB",NULL,0);
-
-
-/*
- * Add the Palette Radio Box for the drawing element toggle buttons
- *
- * layout:
- *     graphics      monitors     controllers   misc
- *     XX XX XX XX   XX XX XX XX   XX XX XX XX   XX
- *     XX XX XX XX   XX XX XX XX   XX XX XX XX   XX
- *
- * doing 2 passes over the creation to get the top and bottom rows made
- *  correctly
- */
- n = 0;
- XtSetArg(args[n],XmNpacking,XmPACK_COLUMN); n++;
- XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;	/* since horizontal */
- XtSetArg(args[n],XmNnumColumns,2); n++;	/* actually how many rows...*/
- XtSetArg(args[n],XmNradioBehavior,True); n++;
- paletteRC = XmCreateRowColumn(objectBB,"paletteRC",args,n);
+  objectRC = XtVaCreateWidget("objectRC",
+		 xmRowColumnWidgetClass, objectMW,
+		 XmNorientation, XmHORIZONTAL,
+		 NULL);
 
 /* set main window areas */
- XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectBB);
+  XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectRC);
 
+  graphicsRC = createRadioButtonPanel(objectRC,"Graphics",paletteGraphicsButton);
+  monitorRC = createRadioButtonPanel(objectRC,"Monitors",paletteMonitorButton);
+  controllerRC = createRadioButtonPanel(objectRC,"Controllers",paletteControllerButton);
+  miscRC = createRadioButtonPanel(objectRC,"Misc",paletteMiscButton);
 
- XtVaGetValues(paletteRC,XmNforeground,&fg,XmNbackground,&bg,NULL);
- XtSetArg(args[0],XmNbackground,bg);
-
- childCount = 0;
-
- for (pass = 0; pass < 2; pass++) {
-
-/****** (MDA) for whatever reason (bug in Motif1.2.1 ?) ToggleButtons don't
-	redraw their shadows until expose, but ToggleButtonGadgets do...
-	therefore use ToggleButtonGadgets here
- ******/
-/*
- * create half of the graphics buttons
- */
-  graphicsLabel = XmCreateLabel(objectBB,"graphicsLabel",NULL,0);
-  XtManageChild(graphicsLabel);
-  /* names are  graphicsTB_1, graphicsTB_2,.... */
-  for (i = pass*(N_GRAPHICS_BTNS/2); 
-       i < (pass*(N_GRAPHICS_BTNS/2)) + N_GRAPHICS_BTNS/2; i++) {
-    sprintf(name,"%s_%d","graphicsTB",i);
-    rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,name,args,1);
-  }
-  rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,"dummy",args,1);
-
-/*
- * create half of the monitors buttons
- */
-  monitorLabel = XmCreateLabel(objectBB,"monitorLabel",NULL,0);
-  XtManageChild(monitorLabel);
-  /* names are  monitorTB_1, monitorTB_2,.... */
-  for (i = pass*(N_MONITOR_BTNS/2); 
-       i < (pass*(N_MONITOR_BTNS/2)) + N_MONITOR_BTNS/2; i++) {
-    sprintf(name,"%s_%d","monitorTB",i);
-    rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,name,args,1);
-  }
-  rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,"dummy",args,1);
-
-
-/*
- * create half of the controller buttons
- */
-  controllerLabel = XmCreateLabel(objectBB,"controllerLabel",
-	NULL,0);
-  XtManageChild(controllerLabel);
-  /* names are  contollerTB_1, controllerTB_2,.... */
-  for (i = pass*(N_CONTROLLER_BTNS/2); 
-       i < (pass*(N_CONTROLLER_BTNS/2)) + N_CONTROLLER_BTNS/2; i++) {
-    sprintf(name,"%s_%d","controllerTB",i);
-    rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,name,args,1);
-  }
-  rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,"dummy",args,1);
-
-/*
- * create half of the misc buttons
- */
-  miscLabel = XmCreateLabel(objectBB,"miscLabel",NULL,0);
-  XtManageChild(miscLabel);
-  /* names are  miscTB_1, miscTB_2,.... */
-  for (i = pass*(N_MISC_BTNS/2); 
-       i < (pass*(N_MISC_BTNS/2)) + N_MISC_BTNS/2; i++) {
-    sprintf(name,"%s_%d","miscTB",i);
-    rcTB[childCount++] = XmCreateToggleButtonGadget(paletteRC,name,args,1);
-  }
-
- }
-
-
-
-/*
- * create and bind pixmaps to the object toggle buttons
- */
- rectanglePixmap = XmGetPixmap(XtScreen(paletteRC),"rectangle25",fg,bg);
- ovalPixmap = XmGetPixmap(XtScreen(paletteRC),"oval25",fg,bg);
- arcPixmap = XmGetPixmap(XtScreen(paletteRC),"arc25",fg,bg);
- textPixmap = XmGetPixmap(XtScreen(paletteRC),"text25",fg,bg);
- polylinePixmap = XmGetPixmap(XtScreen(paletteRC),"polyline25",fg,bg);
- linePixmap = XmGetPixmap(XtScreen(paletteRC),"line25",fg,bg);
- polygonPixmap = XmGetPixmap(XtScreen(paletteRC),"polygon25",fg,bg);
- bezierCurvePixmap = XmGetPixmap(XtScreen(paletteRC),"bezierCurve25",fg,bg);
- imagePixmap = XmGetPixmap(XtScreen(paletteRC),"image25",fg,bg);
-
- meterPixmap = XmGetPixmap(XtScreen(paletteRC),"meter25",fg,bg);
- barPixmap = XmGetPixmap(XtScreen(paletteRC),"bar25",fg,bg);
- stripChartPixmap = XmGetPixmap(XtScreen(paletteRC),"stripChart25",fg,bg);
- textUpdatePixmap = XmGetPixmap(XtScreen(paletteRC),"textUpdate25",fg,bg);
- indicatorPixmap = XmGetPixmap(XtScreen(paletteRC),"indicator25",fg,bg);
- cartesianPlotPixmap = XmGetPixmap(XtScreen(paletteRC),"cartesianPlot25",fg,bg);
- surfacePlotPixmap = XmGetPixmap(XtScreen(paletteRC),"surfacePlot25",fg,bg);
-
- choiceButtonPixmap = XmGetPixmap(XtScreen(paletteRC),"choiceButton25",fg,bg);
- textEntryPixmap = XmGetPixmap(XtScreen(paletteRC),"textEntry25",fg,bg);
- messageButtonPixmap = XmGetPixmap(XtScreen(paletteRC),"messageButton25",fg,bg);
- menuPixmap = XmGetPixmap(XtScreen(paletteRC),"menu25",fg,bg);
- valuatorPixmap = XmGetPixmap(XtScreen(paletteRC),"valuator25",fg,bg);
- relatedDisplayPixmap = XmGetPixmap(XtScreen(paletteRC),
-	"relatedDisplay25",fg,bg);
- shellCommandPixmap = XmGetPixmap(XtScreen(paletteRC),"shellCommand25",fg,bg);
-
- selectPixmap = XmGetPixmap(XtScreen(paletteRC),"select25",fg,bg);
-
-
-/*
- * static (drawing) objects
- */
-  /* rectangle */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_0");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,rectanglePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Rectangle);
-  /* oval */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_1");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,ovalPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Oval);
-  /* arc */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_2");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,arcPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Arc);
-  /* text */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_3");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,textPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Text);
-  /* line */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_4");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,linePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Line);
-  /* image */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_5");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,imagePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Image);
-
-  /* polygon */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_6");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,polygonPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Polygon);
-
-  /* polyline */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_7");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,polylinePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Polyline);
-
-  /* bezierCurve */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_8");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,bezierCurvePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_BezierCurve);
-/* these are only until fully implemented */
-XtSetSensitive(subjectWidget,FALSE);
-
-  /* UNUSED */
-  subjectWidget = XtNameToWidget(objectBB,"*graphicsTB_9");
-  XtSetSensitive(subjectWidget,False);
-
-/*
- * monitor objects
- */
-  /* meter */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_0");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,meterPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Meter);
-  /* bar */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_1");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,barPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Bar);
-  /* stripChart */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_2");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,stripChartPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_StripChart);
-  /* textUpdate */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_3");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,textUpdatePixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_TextUpdate);
-  /* indicator */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_4");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,indicatorPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Indicator);
-  /* cartesianPlot */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_5");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,cartesianPlotPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_CartesianPlot);
-  /* surfacePlot */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_6");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,surfacePlotPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_SurfacePlot);
-/* these are only until fully implemented */
-XtSetSensitive(subjectWidget,FALSE);
-
-  /* UNUSED */
-  subjectWidget = XtNameToWidget(objectBB,"*monitorTB_7");
-  XtSetSensitive(subjectWidget,False);
-
-/*
- * controller objects
- */
-  /* choiceButton */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_0");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,choiceButtonPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_ChoiceButton);
-  /* menu */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_1");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,menuPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Menu);
-  /* textEntry */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_2");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,textEntryPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_TextEntry);
-  /* valuator */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_3");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,valuatorPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_Valuator);
-  /* messageButton */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_4");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,messageButtonPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_MessageButton);
-  /* relatedDisplay */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_5");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,relatedDisplayPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_RelatedDisplay);
-  /* shellCommand */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_6");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-	XmNmarginBottom,0,XmNlabelPixmap,shellCommandPixmap, NULL);
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-	(XtCallbackProc)objectToggleCallback,(XtPointer)DL_ShellCommand);
-  /* UNUSED */
-  subjectWidget = XtNameToWidget(objectBB,"*controllerTB_7");
-  XtSetSensitive(subjectWidget,False);
-
-/*
- * miscellaneous objects
- */
-
-  /* select -- this is DEFAULT!! */
-  subjectWidget = XtNameToWidget(objectBB,"*miscTB_0");
-  XtVaSetValues(subjectWidget,XmNlabelType,XmPIXMAP,XmNmarginTop,0,
-		XmNmarginBottom,0,XmNlabelPixmap,selectPixmap, 
-		XmNset, True, NULL);
-  objectPaletteSelectToggleButton = subjectWidget;
-/* this one has special callback - sets currentActionType */
-  XtAddCallback(subjectWidget,XmNvalueChangedCallback,
-		(XtCallbackProc)objectToggleSelectCallback,(XtPointer)NULL);
-  /* UNUSED */
-  subjectWidget = XtNameToWidget(objectBB,"*miscTB_1");
-  XtSetSensitive(subjectWidget,False);
-
-/*
- * manage the composites (and everybody else)
- */
+  objectPaletteSelectToggleButton = paletteMiscButton[0].widget;
+  lastButton = objectPaletteSelectToggleButton;
+  XtVaSetValues(objectPaletteSelectToggleButton,
+     XmNset, True,
+     NULL);
+     
   XtManageChild(objectMB);
-  XtManageChild(objectBB);
-  XtManageChild(paletteRC);
-  XtManageChildren(rcTB,childCount);
+  XtManageChild(objectRC);
   XtManageChild(objectMW);
-
 }
 
 
@@ -747,10 +598,9 @@ void setResourcePaletteEntries()
 	currentDisplayInfo->numSelectedElements == 1 &&
 	currentDisplayInfo->selectedElementsArray[0]
 		->structure.polyline->nPoints == 2) displayType = DL_Line;
-    XtSetArg(args[0],XmNlabelString,elementXmStringTable[displayType -
-				MIN_DL_ELEMENT_TYPE]);
-    XtSetValues(resourceElementTypeLabel,args,1);
-
+    XtVaSetValues(resourceElementTypeLabel,
+	XmNlabelString,elementXmStringTable[displayType -MIN_DL_ELEMENT_TYPE],
+	NULL);
 
     if (currentDisplayInfo->selectedElementsArray == NULL) {
 
@@ -776,6 +626,11 @@ void setResourcePaletteEntries()
 	      XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
     }
 
+  /* make these sensitive in case they are managed */
+  if (strlen(globalResourceBundle.erase) == 0)
+    XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],False);
+  else
+    XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
 }
 
 
@@ -860,7 +715,7 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 	break;
 
       case DL_Colormap:
-	fprintf(stderr,
+	medmPrintf(
 	"\nupdateGlobalResourceBundleFromElement:  in DL_Colormap type??");
 	break;
 
@@ -981,7 +836,16 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 	globalResourceBundle.fillmod =
 		elementPtr->structure.bar->fillmod;
 	break;
-
+      case DL_Byte:
+        strcpy(globalResourceBundle.rdbk,
+          elementPtr->structure.byte->monitor.rdbk);
+        globalResourceBundle.clr = elementPtr->structure.byte->monitor.clr;
+        globalResourceBundle.bclr = elementPtr->structure.byte->monitor.bclr;
+        globalResourceBundle.clrmod = elementPtr->structure.byte->clrmod;
+        globalResourceBundle.direction = elementPtr->structure.byte->direction;
+        globalResourceBundle.sbit = elementPtr->structure.byte->sbit;
+        globalResourceBundle.ebit = elementPtr->structure.byte->ebit;
+        break;
       case DL_Indicator:
 	strcpy(globalResourceBundle.rdbk,
 		elementPtr->structure.indicator->monitor.rdbk);
@@ -1057,6 +921,10 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 	}
 	strcpy(globalResourceBundle.trigger,
 		elementPtr->structure.cartesianPlot->trigger);
+	strcpy(globalResourceBundle.erase,
+		elementPtr->structure.cartesianPlot->erase);
+	globalResourceBundle.eraseMode =
+		elementPtr->structure.cartesianPlot->eraseMode;
 	break;
 
       case DL_SurfacePlot:
@@ -1158,7 +1026,7 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
 	break;
 
       default:
-	fprintf(stderr,
+	medmPrintf(   
 	"\n updateGlobalResourceBundleFromElement: unknown element type %d",
 		elementPtr->type);
 	break;
@@ -1301,7 +1169,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	break;
 
       case DL_Colormap:
-	fprintf(stderr,
+	medmPrintf(
   "\nupdateGlobalResourceBundleAndResourcePalette:  in DL_Colormap type??");
 	break;
 
@@ -1517,7 +1385,30 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
         optionMenuSet(resourceEntryElement[FILLMOD_RC],
 		globalResourceBundle.fillmod - FIRST_FILL_MODE);
 	break;
-
+      case DL_Byte:
+        strcpy(globalResourceBundle.rdbk,
+          elementPtr->structure.byte->monitor.rdbk);
+        XmTextFieldSetString(resourceEntryElement[RDBK_RC],
+          globalResourceBundle.rdbk);
+        globalResourceBundle.clr = elementPtr->structure.byte->monitor.clr;
+        XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
+          currentDisplayInfo->dlColormap[globalResourceBundle.clr],NULL);
+        globalResourceBundle.bclr = elementPtr->structure.byte->monitor.bclr;
+        XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
+          currentDisplayInfo->dlColormap[globalResourceBundle.bclr],NULL);
+        globalResourceBundle.clrmod = elementPtr->structure.byte->clrmod;
+        optionMenuSet(resourceEntryElement[CLRMOD_RC],
+          globalResourceBundle.clrmod - FIRST_COLOR_MODE);
+        globalResourceBundle.direction = elementPtr->structure.byte->direction;
+        optionMenuSet(resourceEntryElement[DIRECTION_RC],
+          globalResourceBundle.direction - FIRST_DIRECTION);
+        globalResourceBundle.sbit = elementPtr->structure.byte->sbit;
+        sprintf(string,"%d",globalResourceBundle.sbit);
+        XmTextFieldSetString(resourceEntryElement[SBIT_RC],string);
+        globalResourceBundle.ebit = elementPtr->structure.byte->ebit;
+        sprintf(string,"%d",globalResourceBundle.ebit);
+        XmTextFieldSetString(resourceEntryElement[EBIT_RC],string);
+        break;
       case DL_Indicator:
 	strcpy(globalResourceBundle.rdbk,
 		elementPtr->structure.indicator->monitor.rdbk);
@@ -1637,6 +1528,14 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 		elementPtr->structure.cartesianPlot->trigger);
 	XmTextFieldSetString(resourceEntryElement[TRIGGER_RC],
 		globalResourceBundle.trigger);
+	strcpy(globalResourceBundle.erase,
+		elementPtr->structure.cartesianPlot->erase);
+	XmTextFieldSetString(resourceEntryElement[ERASE_RC],
+		globalResourceBundle.erase);
+	globalResourceBundle.eraseMode = 
+		elementPtr->structure.cartesianPlot->eraseMode;
+	optionMenuSet(resourceEntryElement[ERASE_MODE_RC],
+		globalResourceBundle.eraseMode - FIRST_ERASE_MODE);
 	break;
 
       case DL_SurfacePlot:
@@ -1789,7 +1688,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	break;
 
       default:
-	fprintf(stderr,
+	medmPrintf(    
 "\n updateGlobalResourceBundleAndResourcePalette: unknown element type %d",
 	    elementPtr->type);
 	break;
@@ -2133,7 +2032,16 @@ void updateElementFromGlobalResourceBundle(
 	elementPtr->structure.bar->fillmod =
 		globalResourceBundle.fillmod;
 	break;
-
+      case DL_Byte:
+        strcpy(elementPtr->structure.byte->monitor.rdbk,
+                globalResourceBundle.rdbk);
+        elementPtr->structure.byte->monitor.clr = globalResourceBundle.clr;
+        elementPtr->structure.byte->monitor.bclr = globalResourceBundle.bclr;
+        elementPtr->structure.byte->clrmod = globalResourceBundle.clrmod;
+        elementPtr->structure.byte->direction = globalResourceBundle.direction;
+        elementPtr->structure.byte->sbit = globalResourceBundle.sbit;
+        elementPtr->structure.byte->ebit = globalResourceBundle.ebit;
+        break;
       case DL_Indicator:
 	strcpy(elementPtr->structure.indicator->monitor.rdbk,
 		globalResourceBundle.rdbk);
@@ -2224,6 +2132,10 @@ void updateElementFromGlobalResourceBundle(
 		globalResourceBundle.axis[Y2_AXIS_ELEMENT].maxRange;
 	strcpy(elementPtr->structure.cartesianPlot->trigger,
 		globalResourceBundle.trigger);
+	strcpy(elementPtr->structure.cartesianPlot->erase,
+		globalResourceBundle.erase);
+	elementPtr->structure.cartesianPlot->eraseMode =
+		globalResourceBundle.eraseMode;
 	break;
 
       case DL_SurfacePlot:
@@ -2361,7 +2273,7 @@ void updateElementFromGlobalResourceBundle(
 	break;
 
       default:
-	fprintf(stderr,
+	medmPrintf(
 	   "\n updateElementFromResourceBundle: unknown element type %d",
 	    elementPtr->type);
 	break;

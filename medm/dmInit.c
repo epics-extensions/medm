@@ -1,13 +1,67 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
 #include <X11/keysym.h>
 
-
-
-
 extern Widget mainShell;
-
 
 static Position x = 0, y = 0;
 static Widget lastShell;
@@ -64,16 +118,19 @@ DisplayInfo *allocateDisplayInfo()
  */
   displayInfo = (DisplayInfo *) calloc(1,sizeof(DisplayInfo));
   displayInfo->next = NULL;
+  displayInfo->newDisplay = True;
   displayInfo->filePtr = NULL;
   displayInfo->displayFileName = NULL;
   displayInfo->useDynamicAttribute = FALSE;
-  displayInfo->hasBeenEditedButNotSaved = FALSE;
+  displayInfo->hasBeenEditedButNotSaved = False;
   displayInfo->selectedElementsArray = NULL;
   displayInfo->numSelectedElements = 0;
   displayInfo->selectedElementsAreHighlighted = FALSE;
   displayInfo->fromRelatedDisplayExecution = FALSE;
 
   displayInfo->warningDialog = (Widget)NULL;
+  displayInfo->questionDialog = (Widget)NULL;
+  displayInfo->questionDialogAnswer = 0;
   displayInfo->shellCommandPromptD = (Widget)NULL;
   displayInfo->prev = displayInfoListTail;
   displayInfoListTail->next = displayInfo;
@@ -164,8 +221,11 @@ DisplayInfo *allocateDisplayInfo()
 /* 
  * create the shell's EDIT popup menu
  */
-  displayInfo->editPopupMenu = createEditMenu(XmMENU_POPUP,displayInfo->shell,
-	"editPopupMenu",0,displayInfo);
+  displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
+  XtVaSetValues(displayInfo->editPopupMenu,
+		XmNtearOffModel, XmTEAR_OFF_DISABLED,
+		XmNuserData, displayInfo,
+		NULL);
 
 /*
  * attach event handlers for menu activation
@@ -235,6 +295,7 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
   displayInfo = allocateDisplayInfo();
   displayInfo->filePtr = filePtr;
   currentDisplayInfo = displayInfo;
+  currentDisplayInfo->newDisplay = False;
 
   if (fromRelatedDisplayExecution)
 	displayInfo->fromRelatedDisplayExecution = True;
@@ -331,6 +392,9 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 		} else if (!strcmp(token,"meter")) {
 			dlDynamicAttribute = NULL;
 			parseMeter(displayInfo,dlComposite);
+		} else if (!strcmp(token,"byte")) {
+			dlDynamicAttribute = NULL;
+			parseByte(displayInfo,dlComposite);
 		} else if (!strcmp(token,"strip chart")) {
 			dlDynamicAttribute = NULL;
 			parseStripChart(displayInfo,dlComposite);
@@ -520,6 +584,9 @@ void parseCompositeChildren(
 		} else if (!strcmp(token,"meter")) {
 			dlDynamicAttribute = NULL;
 			parseMeter(displayInfo,dlComposite);
+		} else if (!strcmp(token,"byte")) {
+			dlDynamicAttribute = NULL;
+			parseByte(displayInfo,dlComposite);
 		} else if (!strcmp(token,"strip chart")) {
 			dlDynamicAttribute = NULL;
 			parseStripChart(displayInfo,dlComposite);

@@ -1,3 +1,61 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
@@ -158,6 +216,7 @@ void parseBar(
 			getToken(displayInfo,token);
 			if (!strcmp(token,"from edge")) 
 			    dlBar->fillmod = FROM_EDGE;
+                        else if(!strcmp(token,"from center")) dlBar->fillmod = FROM_CENTER;
 		}
 		break;
 	    case T_EQUAL:
@@ -182,7 +241,74 @@ void parseBar(
 
 }
 
+void parseByte( DisplayInfo *displayInfo, DlComposite *dlComposite) {
+/****************************************************************************
+ * Parse Byte                                                               *
+ ****************************************************************************/
+  char token[MAX_TOKEN_LENGTH];
+  TOKEN tokenType;
+  int nestingLevel = 0;
+  DlByte *dlByte;
+  DlElement *dlElement;
 
+    dlByte = (DlByte *) malloc(sizeof(DlByte));
+
+/****** Initialize some data in structure */
+    dlByte->object = defaultObject;
+    dlByte->monitor= defaultMonitor;
+    dlByte->clrmod = STATIC;
+    dlByte->direction = UP;
+    dlByte->sbit = 0;
+    dlByte->ebit = 15;
+
+    do {
+      switch( (tokenType=getToken(displayInfo,token)) ) {
+        case T_WORD:
+          if (!strcmp(token,"object")) {
+            parseObject(displayInfo,&(dlByte->object));
+          } else if (!strcmp(token,"monitor")) {
+            parseMonitor(displayInfo,&(dlByte->monitor));
+          } else if (!strcmp(token,"clrmod")) {
+            getToken(displayInfo,token);
+            getToken(displayInfo,token);
+            if (!strcmp(token,"static"))       dlByte->clrmod = STATIC;
+            else if (!strcmp(token,"alarm"))   dlByte->clrmod = ALARM;
+            else if (!strcmp(token,"discrete"))dlByte->clrmod = DISCRETE;
+          } else if (!strcmp(token,"direction")) {
+            getToken(displayInfo,token);
+            getToken(displayInfo,token);
+            if (!strcmp(token,"up"))        dlByte->direction = UP;
+            else if (!strcmp(token,"right"))dlByte->direction = RIGHT;
+          } else if (!strcmp(token,"sbit")) {
+            getToken(displayInfo,token);
+            getToken(displayInfo,token);
+            dlByte->sbit = atoi(token);
+          } else if (!strcmp(token,"ebit")) {
+            getToken(displayInfo,token);
+            getToken(displayInfo,token);
+            dlByte->ebit = atoi(token);
+          }
+          break;
+        case T_EQUAL:
+          break;
+        case T_LEFT_BRACE:
+          nestingLevel++; break;
+        case T_RIGHT_BRACE:
+          nestingLevel--; break;
+      }
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+                && (tokenType != T_EOF) );
+
+    dlElement = (DlElement *) malloc(sizeof(DlElement));
+    dlElement->type = DL_Byte;
+    dlElement->structure.byte = dlByte;
+    dlElement->next = NULL;
+
+    POSITION_ELEMENT_ON_LIST();
+
+    dlElement->dmExecute = (void(*)())executeDlByte;
+    dlElement->dmWrite = (void(*)())writeDlByte;
+}
 
 /***
  *** Indicator
@@ -497,6 +623,8 @@ void parseCartesianPlot(
   dlCartesianPlot->axis[Y1_AXIS_ELEMENT] = defaultPlotAxisDefinition;
   dlCartesianPlot->axis[Y2_AXIS_ELEMENT] = defaultPlotAxisDefinition;
   dlCartesianPlot->trigger[0] = '\0';
+  dlCartesianPlot->erase[0] = '\0';
+  dlCartesianPlot->eraseMode = ERASE_IF_NOT_ZERO;
 
   do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -531,6 +659,10 @@ void parseCartesianPlot(
 			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_ON;
 			else if (!strcmp(token,"off")) 
 			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
+			else if (!strcmp(token,"plot last n pts")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_ON;
+			else if (!strcmp(token,"plot n pts & stop")) 
+			    dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
 		} else if (!strncmp(token,"trace",5)) {
 			traceNumber = MIN(token[6] - '0', MAX_TRACES - 1);
 			parseTrace(displayInfo,
@@ -548,7 +680,18 @@ void parseCartesianPlot(
 			getToken(displayInfo,token);
 			getToken(displayInfo,token);
 			strcpy(dlCartesianPlot->trigger,token);
-		}
+		} else if (!strcmp(token,"erase")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			strcpy(dlCartesianPlot->erase,token);
+		} else if (!strcmp(token,"eraseMode")) {
+			getToken(displayInfo,token);
+			getToken(displayInfo,token);
+			if (!strcmp(token,"if not zero"))
+			   dlCartesianPlot->eraseMode = ERASE_IF_NOT_ZERO;
+			else if (!strcmp(token,"if zero"))
+			   dlCartesianPlot->eraseMode = ERASE_IF_ZERO;
+                }
 		break;
 	    case T_EQUAL:
 		break;

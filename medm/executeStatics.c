@@ -1,3 +1,61 @@
+/*
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Mark Andersion
+ *     Current Author  : Frederick Vong
+ *
+ * Modification Log:
+ * -----------------
+ * .01  03-01-95        vong    2.0.0 release
+ *
+ *****************************************************************************
+*/
 
 #include "medm.h"
 
@@ -75,7 +133,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay,
 		(XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
    /* and handle button presses and enter windows */
 	XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-		(XtEventHandler)handleButtonPress,(XtPointer)displayInfo);
+		handleButtonPress,(XtPointer)displayInfo);
 	XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
 		(XtEventHandler)handleEnterWindow,(XtPointer)displayInfo);
 
@@ -112,17 +170,10 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
   XtSetArg(args[n],XmNallowShellResize,(Boolean)TRUE); n++;
   XtSetArg(args[n],XmNwidth,(Dimension)dlDisplay->object.width); n++;
   XtSetArg(args[n],XmNheight,(Dimension)dlDisplay->object.height); n++;
-/* just give filename as title */
-  startPos = 0;
-  for (k = 0; k < strlen(displayInfo->displayFileName); k++) {
-    if (displayInfo->displayFileName[k] == '/') startPos = k;
-  }
-  XtSetArg(args[n],XmNtitle,&(displayInfo->displayFileName[
-	startPos > 0 ? startPos+1 : 0])); n++;
   XtSetArg(args[n],XmNiconName,displayInfo->displayFileName); n++;
   XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
   XtSetValues(displayInfo->shell,args,n);
-
+  medmSetDisplayTitle(displayInfo);
   XtRealizeWidget(displayInfo->shell);
 
 
@@ -140,7 +191,7 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
 	 fprintf(stderr,
 	 "\nexecuteDlDisplay: can't parse and execute external colormap %s",
 	  dlDisplay->cmap);
-	  dmTerminateCA();
+	  medmCATerminate();
 	  dmTerminateX();
 	  exit(-1);
       }
@@ -319,493 +370,12 @@ void executeDlBasicAttribute(DisplayInfo *displayInfo,
 
 }
 
-
-
 void executeDlDynamicAttribute(DisplayInfo *displayInfo,
-			DlDynamicAttribute *dlDynamicAttribute, Boolean dummy)
+                        DlDynamicAttribute *dlDynamicAttribute, Boolean dummy)
 {
 /* structure copy */
   displayInfo->dynamicAttribute = *dlDynamicAttribute;
   displayInfo->useDynamicAttribute = TRUE;
-}
-
-
-
-
-
-void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
-				Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  FillStyle fillStyle;
-  unsigned int lineWidth;
-
-
-  fillStyle = displayInfo->attribute.fill;
-  lineWidth = (displayInfo->attribute.width+1)/2;
-
-  if (displayInfo->useDynamicAttribute == FALSE ||
-			displayInfo->traversalMode == DL_EDIT) {
-
-/* from the dlRectangle structure, we've got rectangles's dimensions */
-  /* always render to window */
-
-    drawable = XtWindow(displayInfo->drawingArea);
-    if (fillStyle == F_SOLID)
-	XFillRectangle(display,drawable,displayInfo->gc,
-	  dlRectangle->object.x,dlRectangle->object.y,
-	  dlRectangle->object.width,dlRectangle->object.height);
-    else if (fillStyle == F_OUTLINE)
-	XDrawRectangle(display,drawable,displayInfo->gc,
-	  dlRectangle->object.x + lineWidth,
-	  dlRectangle->object.y + lineWidth,
-	  dlRectangle->object.width - 2*lineWidth,
-	  dlRectangle->object.height - 2*lineWidth);
-
-
-    if (!forcedDisplayToWindow) {
-
-  /* also render to pixmap if not part of the dynamics stuff and not
-   * member of composite */
-      drawable = displayInfo->drawingAreaPixmap;
-      if (fillStyle == F_SOLID)
-	XFillRectangle(display,drawable,displayInfo->gc,
-	  dlRectangle->object.x,dlRectangle->object.y,
-	  dlRectangle->object.width,dlRectangle->object.height);
-      else if (fillStyle == F_OUTLINE)
-	XDrawRectangle(display,drawable,displayInfo->gc,
-	  dlRectangle->object.x + lineWidth,
-	  dlRectangle->object.y + lineWidth,
-	  dlRectangle->object.width - 2*lineWidth,
-	  dlRectangle->object.height - 2*lineWidth);
-    }
-
-
-  } else {
-
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Rectangle;
-      channelAccessMonitorData->specifics = (XtPointer) dlRectangle;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlRectangle: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-}
-
-
-void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
-			Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  FillStyle fillStyle;
-  unsigned int lineWidth;
-
-  fillStyle = displayInfo->attribute.fill;
-  lineWidth = (displayInfo->attribute.width+1)/2;
-
-  if (displayInfo->useDynamicAttribute == FALSE ||
-			displayInfo->traversalMode == DL_EDIT) {
-
-/* 
- * from the DlOval structure, we've got oval's dimensions
- *  for circle: 0 = start angle,  360*64 = complete circle
- */
-
-  /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    if (fillStyle == F_SOLID) XFillArc(display,drawable,displayInfo->gc,
-	dlOval->object.x,dlOval->object.y,
-	dlOval->object.width,dlOval->object.height,0,360*64);
-    else if (fillStyle == F_OUTLINE) XDrawArc(display,drawable,displayInfo->gc,
-	dlOval->object.x + lineWidth,
-	dlOval->object.y + lineWidth,
-	dlOval->object.width - 2*lineWidth,
-	dlOval->object.height - 2*lineWidth, 0,360*64);
-
-  /* if not part of dynamics,also  render to pixmap */
-    if (!forcedDisplayToWindow) {
-       drawable = displayInfo->drawingAreaPixmap;
-       if (fillStyle == F_SOLID) XFillArc(display,drawable,displayInfo->gc,
-	 dlOval->object.x,dlOval->object.y,
-	 dlOval->object.width,dlOval->object.height,0,360*64);
-       else if (fillStyle == F_OUTLINE) XDrawArc(display,drawable,
-	displayInfo->gc,
-	dlOval->object.x + lineWidth,
-	dlOval->object.y + lineWidth,
-	dlOval->object.width - 2*lineWidth,
-	dlOval->object.height - 2*lineWidth, 0,360*64);
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Oval;
-      channelAccessMonitorData->specifics = (XtPointer) dlOval;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlOval: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-
-}
-
-
-void executeDlArc(DisplayInfo *displayInfo, DlArc*dlArc,
-			Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  FillStyle fillStyle;
-  unsigned int lineWidth;
-
-  fillStyle = displayInfo->attribute.fill;
-  lineWidth = (displayInfo->attribute.width+1)/2;
-
-  if (displayInfo->useDynamicAttribute == FALSE || 
-		displayInfo->traversalMode == DL_EDIT) {
-/* 
- * from the DlArc structure, we've got arc's dimensions
- */
- /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    if (fillStyle == F_SOLID) XFillArc(display,drawable,displayInfo->gc,
-	dlArc->object.x,dlArc->object.y,
-	dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-    else if (fillStyle == F_OUTLINE) XDrawArc(display,drawable,displayInfo->gc,
-	dlArc->object.x + lineWidth,
-	dlArc->object.y + lineWidth,
-	dlArc->object.width - 2*lineWidth,
-	dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-
-  /* if not associated with dynamic stuff, also render to pixmap */
-    if (!forcedDisplayToWindow) {
-      drawable = displayInfo->drawingAreaPixmap;
-      if (fillStyle == F_SOLID) XFillArc(display,drawable,displayInfo->gc,
-	dlArc->object.x,dlArc->object.y,
-	dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-      else if (fillStyle == F_OUTLINE) XDrawArc(display,drawable,
-	displayInfo->gc,
-	dlArc->object.x + lineWidth,
-	dlArc->object.y + lineWidth,
-	dlArc->object.width - 2*lineWidth,
-	dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Arc;
-      channelAccessMonitorData->specifics = (XtPointer) dlArc;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlArc: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-}
-
-
-
-void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
-			Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  int i = 0, usedWidth, usedHeight;
-  size_t nChars;
-
-
-  if (displayInfo->useDynamicAttribute == FALSE || 
-		displayInfo->traversalMode == DL_EDIT) {
-
-    nChars = strlen(dlText->textix);
-    i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
-	dlText->object.height,dlText->object.width,&usedHeight,&usedWidth,
-	FALSE);
-    usedWidth = XTextWidth(fontTable[i],dlText->textix,nChars);
-
-
-    XSetFont(display,displayInfo->gc,fontTable[i]->fid);
-
-  /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    switch (dlText->align) {
-      case HORIZ_LEFT:
-      case VERT_TOP:
-	XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x,dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	break;
-      case HORIZ_CENTER:
-      case VERT_CENTER:
-	XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + (dlText->object.width - usedWidth)/2, 
-		    dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	break;
-      case HORIZ_RIGHT:
-      case VERT_BOTTOM:
-	XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + dlText->object.width - usedWidth,
-		    dlText->object.y + fontTable[i]->ascent, 
-		    dlText->textix,nChars);
-	break;
-    }
-
-  /* if not associated with dynamics, also render to pixmap */
-    if (!forcedDisplayToWindow) {
-
-     drawable = displayInfo->drawingAreaPixmap;
-     switch (dlText->align) {
-       case HORIZ_LEFT:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x,dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	 break;
-       case HORIZ_CENTER:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + (dlText->object.width - usedWidth)/2, 
-		    dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	 break;
-       case HORIZ_RIGHT:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + dlText->object.width - usedWidth,
-		    dlText->object.y + fontTable[i]->ascent, 
-		    dlText->textix,nChars);
-	 break;
-      case VERT_TOP:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x,dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	 break;
-      case VERT_CENTER:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + (dlText->object.width - usedWidth)/2, 
-		    dlText->object.y + fontTable[i]->ascent,
-		    dlText->textix,nChars);
-	 break;
-      case VERT_BOTTOM:
-	 XDrawString(display,drawable,displayInfo->gc,
-		    dlText->object.x + dlText->object.width - usedWidth,
-		    dlText->object.y + fontTable[i]->ascent, 
-		    dlText->textix,nChars);
-	 break;
-     }
-    }
-
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_Text;
-      channelAccessMonitorData->specifics = (XtPointer) dlText;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlText: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-}
-
-
-void executeDlFallingLine(DisplayInfo *displayInfo,
-	DlFallingLine *dlFallingLine, Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  unsigned int lineWidth;
-
-  lineWidth = displayInfo->attribute.width/2;
-
-  if (displayInfo->useDynamicAttribute == FALSE || 
-			displayInfo->traversalMode == DL_EDIT) {
-/* 
- * from the DlFallingLine structure, we've got line's dimensions
- */
-
- /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    XDrawLine(display,drawable,displayInfo->gc,
-	dlFallingLine->object.x + lineWidth,
-	dlFallingLine->object.y + lineWidth,
-	dlFallingLine->object.x + dlFallingLine->object.width - lineWidth,
-	dlFallingLine->object.y + dlFallingLine->object.height - lineWidth);
-
-    if (!forcedDisplayToWindow) {
- /* also render to pixmap */
-      drawable = displayInfo->drawingAreaPixmap;
-      XDrawLine(display,drawable,displayInfo->gc,
-	dlFallingLine->object.x + lineWidth,
-	dlFallingLine->object.y + lineWidth,
-	dlFallingLine->object.x + dlFallingLine->object.width - lineWidth,
-	dlFallingLine->object.y + dlFallingLine->object.height - lineWidth); 
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_FallingLine;
-      channelAccessMonitorData->specifics = (XtPointer) dlFallingLine;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlFallingLine: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
-}
-
-
-void executeDlRisingLine(DisplayInfo *displayInfo,
-		DlRisingLine *dlRisingLine, Boolean forcedDisplayToWindow)
-{
-  Drawable drawable;
-  unsigned int lineWidth;
-
-  lineWidth = displayInfo->attribute.width/2;
-
-  if (displayInfo->useDynamicAttribute == FALSE || 
-			displayInfo->traversalMode == DL_EDIT) {
-
-/* 
- * from the DlRisingLine structure, we've got line's dimensions
- */
- /* always render to window */
-    drawable = XtWindow(displayInfo->drawingArea);
-    XDrawLine(display,drawable,displayInfo->gc,
-	dlRisingLine->object.x + lineWidth,
-	dlRisingLine->object.y + dlRisingLine->object.height 
-		- displayInfo->attribute.width,
-	dlRisingLine->object.x + dlRisingLine->object.width 
-		- displayInfo->attribute.width,
-	dlRisingLine->object.y - lineWidth);
-
-    if (!forcedDisplayToWindow) {
-  /* if not related to dynamics, also render to pixmap */
-      drawable = displayInfo->drawingAreaPixmap;
-      XDrawLine(display,drawable,displayInfo->gc,
-	dlRisingLine->object.x + lineWidth,  
-	dlRisingLine->object.y + dlRisingLine->object.height 
-		- displayInfo->attribute.width,
-	dlRisingLine->object.x + dlRisingLine->object.width 
-		- displayInfo->attribute.width,
-	dlRisingLine->object.y - lineWidth);
-    }
-
-  } else {
-
-/* Dynamic Attribute to be used: setup monitor */
-
-    if (displayInfo->traversalMode == DL_EXECUTE) {
-
-      DlAttribute *dlAttr = (DlAttribute *) malloc(sizeof(DlAttribute));
-      DlDynamicAttribute *dlDyn = (DlDynamicAttribute *)
-	malloc(sizeof(DlDynamicAttribute));
-      ChannelAccessMonitorData *channelAccessMonitorData = 
-			allocateChannelAccessMonitorData(displayInfo);
-      *dlAttr = displayInfo->attribute;
-      *dlDyn = displayInfo->dynamicAttribute;
-      channelAccessMonitorData->monitorType = DL_RisingLine;
-      channelAccessMonitorData->specifics = (XtPointer) dlRisingLine;
-      channelAccessMonitorData->dlAttr = dlAttr;
-      channelAccessMonitorData->dlDyn  = dlDyn;
-
-      SEVCHK(CA_BUILD_AND_CONNECT(dlDyn->attr.param.chan,TYPENOTCONN,0,
-        &(channelAccessMonitorData->chid),NULL,processMonitorConnectionEvent,
-        NULL),
-        "executeDlRisingLine: error in CA_BUILD_AND_CONNECT");
-      if (channelAccessMonitorData->chid != NULL)
-	    ca_puser(channelAccessMonitorData->chid) = channelAccessMonitorData;
-    }
-  }
-
-  displayInfo->useDynamicAttribute = FALSE;
 }
 
 
@@ -1010,7 +580,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
     XtUninstallTranslations(localMenuBar);
 
     XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-		(XtEventHandler)handleButtonPress, (XtPointer)displayInfo);
+		handleButtonPress, (XtPointer)displayInfo);
   }
 
 }
@@ -1159,7 +729,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
     XtUninstallTranslations(localMenuBar);
 
     XtAddEventHandler(localMenuBar,ButtonPressMask,False,
-		(XtEventHandler)handleButtonPress, (XtPointer)displayInfo);
+		handleButtonPress, (XtPointer)displayInfo);
   }
 
 }
