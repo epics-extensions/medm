@@ -682,6 +682,7 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
     DlRelatedDisplay *dlRelatedDisplay = 0;
     DlElement *dlElement = createDlRelatedDisplay(NULL);
     int displayNumber;
+    int rc;
 
     if(!dlElement) return 0;
     dlRelatedDisplay = dlElement->structure.relatedDisplay;
@@ -692,13 +693,13 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlRelatedDisplay->object));
 	    } else if(!strncmp(token,"display",7)) {
-/*
- * compare the first 7 characters to see if a display entry.
- *   if more than one digit is allowed for the display index, then change
- *   the following code to pick up all the digits (can't use atoi() unless
- *   we get a null-terminated string
- */
-		displayNumber = MIN(token[8] - '0', MAX_RELATED_DISPLAYS-1);
+	      /* Get the display number */
+		displayNumber=MAX_RELATED_DISPLAYS-1;
+		rc=sscanf(token,"display[%d]",&displayNumber);
+		if(rc == 0 || rc == EOF || displayNumber < 0 ||
+		  displayNumber > MAX_RELATED_DISPLAYS-1) {
+		    displayNumber=MAX_RELATED_DISPLAYS-1;
+		}
 		parseRelatedDisplayEntry(displayInfo,
 		  &(dlRelatedDisplay->display[displayNumber]) );
 	    } else if(!strcmp(token,"clr")) {

@@ -108,7 +108,6 @@ extern "C" {
 #include "medmVMS.h"      
 #endif				   
 
-#include "displayList.h"
 #include "siteSpecific.h"
 #include "medmWidget.h"
 #include "parse.h"

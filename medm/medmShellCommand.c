@@ -70,7 +70,7 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 /*
- * local function to render the related display icon into a pixmap
+ * local function to render the shell command display icon into a pixmap
  */
 static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
   Pixel fg, Pixel bg, unsigned int width, unsigned int height)
@@ -134,7 +134,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /***
    *** from the DlShellCommand structure, we've got specifics
-   *** (MDA)  create a pulldown menu with the following related shell menu
+   *** (MDA)  create a pulldown menu with the following shell menu
    ***   entries in it...  --  careful with the XtSetArgs here (special)
    ***/
     if(dlElement->widget) {
@@ -275,7 +275,7 @@ DlElement *createDlShellCommand(DlElement *p)
 	*dlShellCommand = *p->structure.shellCommand;
     } else {
 	objectAttributeInit(&(dlShellCommand->object));
-	for(cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS;cmdNumber++)
+	for(cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS; cmdNumber++)
 	  createDlShellCommandEntry(
 	    &(dlShellCommand->command[cmdNumber]),
 	    cmdNumber );
@@ -337,6 +337,7 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
     DlShellCommand *dlShellCommand = 0;
     DlElement *dlElement = createDlShellCommand(NULL);
     int cmdNumber;
+    int rc;
 
     if(!dlElement) return 0;
     dlShellCommand = dlElement->structure.shellCommand;
@@ -346,14 +347,13 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlShellCommand->object));
 	    } else if(!strncmp(token,"command",7)) {
-/*
- * compare the first 7 characters to see if a command entry.
- *   if more than one digit is allowed for the command index, then change
- *   the following code to pick up all the digits (can't use atoi() unless
- *   we get a null-terminated string
- */
-		cmdNumber = MIN(
-		  token[8] - '0', MAX_SHELL_COMMANDS - 1);
+	      /* Get the command number */
+		cmdNumber=MAX_SHELL_COMMANDS-1;
+		rc=sscanf(token,"command[%d]",&cmdNumber);
+		if(rc == 0 || rc == EOF || cmdNumber < 0 ||
+		  cmdNumber > MAX_SHELL_COMMANDS-1) {
+		    cmdNumber=MAX_SHELL_COMMANDS-1;
+		}
 		parseShellCommandEntry(displayInfo,
 		  &(dlShellCommand->command[cmdNumber]) );
 	    } else if(!strcmp(token,"clr")) {
@@ -428,7 +428,7 @@ void writeDlShellCommand(
  
     fprintf(stream,"\n%s\"shell command\" {",indent);
     writeDlObject(stream,&(dlShellCommand->object),level+1);
-    for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+    for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
 #ifdef SUPPORT_0201XX_FILE_FORMAT
   	if(MedmUseNewFileFormat) {
 #endif
@@ -719,7 +719,7 @@ Widget createShellCommandDataDialog(
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
     n = 0;
-    XtSetArg(args[n],XmNrows,MAX_RELATED_DISPLAYS); n++;
+    XtSetArg(args[n],XmNrows,MAX_SHELL_COMMANDS); n++;
     XtSetArg(args[n],XmNcolumns,3); n++;
     XtSetArg(args[n],XmNcolumnMaxLengths,cmdColumnMaxLengths); n++;
     XtSetArg(args[n],XmNcolumnWidths,cmdColumnWidths); n++;

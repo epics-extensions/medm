@@ -3405,7 +3405,6 @@ int main(int argc, char *argv[])
     XtAppSetWarningHandler(appContext,xtErrorHandler);
     XSetErrorHandler(xErrorHandler);
     
-
   /* Enable Editres */
 #ifdef EDITRES    
     XtAddEventHandler(mainShell,(EventMask)NULL,TRUE,

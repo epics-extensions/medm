@@ -139,7 +139,85 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
    open a new copy. */
 #define POPUP_EXISTING_DISPLAY True
 
+/* Define this if you want the displays to raise on a button event.
+   This was the old behavior, but is not suggested, since X controls
+   this via user preference. */
+#if 0
+#define MEDM_AUTO_RAISE 1
+#endif
+
+/* Define these to set the number of menu items in the Related Display
+ * and Shell Command. */
+#define MAX_RELATED_DISPLAYS    16
+#define MAX_SHELL_COMMANDS      16
+
+#if 0
+/* XR5 has a bug in that resource ID's are not reused, even if the
+   resource is freed.  Eventually it runs out of ID's and MEDM doesn't
+   work right.  Define the following to locally handle the resource
+   allocation for pixmaps and graphics contexts.  These are the most
+   created/freed resources */
+/* !!! Do not use this yet.  It doesn't work. */
+#define USE_XR5_RESOURCEID_PATCH
+#endif
+
+/* Define this if you want to use the Btn2 Drag & Drop feature.
+Normally, you do want to use this feature.  This switch was put here
+to turn it off temporarily when an intermittent bug in Xsun for
+Solaris 8 caused it to not work and in addition when Btn2 was clicked
+on a slider, to move the slider instead. */
+
+#define USE_DRAGDROP 1
+
+/* Define this to be 1 if you do not want resize handles on many of
+the toplevel shells.  */
+
+#define OMIT_RESIZE_HANDLES 0
+
+  /* Define this to be 1 if you want to keep track of Image colors and
+be sure they are allocated and freed as needed or not needed.  This
+will allow other programs to use the colors when MEDM does not need
+them.  It will only be useful if Images are both created and destroyed
+in an MEDM session.  It will cause editing to be slow when there are
+many Images, since the color allocation routines (XAllocColor and
+XFreeColors) are slow and are called repeatedly for Undo.  It should
+be unnecessary for static visuals (StaticGray, StaticColor, and
+TrueColor) since the cells are Read-only and can be always used by
+other programs anyway.  It is not recommended.  The colors will be
+freed when MEDM exits in any event.  */
+
+#define MANAGE_IMAGE_COLOR_ALLOCATION 0
+
+/* Define this to be 1 if you want X errors to go to the MEDM Message
+Window.  It is recommended.  X errors should be uncommon.  If they do
+occur, however, MEDM may generate further errors trying to print to
+the Message Window.  The errors should be always be printed to the
+console.  If the console is always readily available, you may want to
+set this to 0 to avoid these problems. If you want a visual
+notification that seems to work in most cases, you can set it to 1.
+In the event you are getting X errors, you can alternatively modify
+the xErrorHandler routine in help.c to help debug the situation.  */
+
+#define POST_X_ERRORS_TO_MESSAGE_WINDOW 1
+
+/* Define this to be 1 to explicitly set the colors and shadows for
+menus and all of their children in order to override any CDE changes.
+It should not be necessary.  The problem has been fixed by specifying
+*useColorObj in the fallback resources, but this switch is being kept
+in case that fix doesn't work. */
+
+#define EXPLICITLY_OVERWRITE_CDE_COLORS 0
+
+/* Define this to include RTYP (DBR_CLASSNAME) in PvInfo.  For IOCs
+with later versions of EPICS base, this is a good idea.  However, if
+RTYP is not defined for the PV, it will take PvInfo a long time to
+determine that and be sure it is not defined.  In that case, defining
+DO_RTYPE to be zero will eliminate the delay before the PvInfo popup
+appears. */
+#define DO_RTYP 1
+
 /*** Colormap specifications ***/
+#include "displayList.h"
 
 /* The RGB values in the default display colormap are changeable.  The
   inten field is for backward compatibility and is not used in the new
@@ -224,75 +302,3 @@ DlColormap defaultDlColormap = {
     }
 };
 #endif
-
-/* Define this if you want the displays to raise on a button event.
-   This was the old behavior, but is not suggested, since X controls
-   this via user preference. */
-#if 0
-#define MEDM_AUTO_RAISE 1
-#endif
-
-#if 0
-/* XR5 has a bug in that resource ID's are not reused, even if the
-   resource is freed.  Eventually it runs out of ID's and MEDM doesn't
-   work right.  Define the following to locally handle the resource
-   allocation for pixmaps and graphics contexts.  These are the most
-   created/freed resources */
-/* !!! Do not use this yet.  It doesn't work. */
-#define USE_XR5_RESOURCEID_PATCH
-#endif
-
-/* Define this if you want to use the Btn2 Drag & Drop feature.
-Normally, you do want to use this feature.  This switch was put here
-to turn it off temporarily when an intermittent bug in Xsun for
-Solaris 8 caused it to not work and in addition when Btn2 was clicked
-on a slider, to move the slider instead. */
-
-#define USE_DRAGDROP 1
-
-/* Define this to be 1 if you do not want resize handles on many of
-the toplevel shells.  */
-
-#define OMIT_RESIZE_HANDLES 0
-
-  /* Define this to be 1 if you want to keep track of Image colors and
-be sure they are allocated and freed as needed or not needed.  This
-will allow other programs to use the colors when MEDM does not need
-them.  It will only be useful if Images are both created and destroyed
-in an MEDM session.  It will cause editing to be slow when there are
-many Images, since the color allocation routines (XAllocColor and
-XFreeColors) are slow and are called repeatedly for Undo.  It should
-be unnecessary for static visuals (StaticGray, StaticColor, and
-TrueColor) since the cells are Read-only and can be always used by
-other programs anyway.  It is not recommended.  The colors will be
-freed when MEDM exits in any event.  */
-
-#define MANAGE_IMAGE_COLOR_ALLOCATION 0
-
-/* Define this to be 1 if you want X errors to go to the MEDM Message
-Window.  It is recommended.  X errors should be uncommon.  If they do
-occur, however, MEDM may generate further errors trying to print to
-the Message Window.  The errors should be always be printed to the
-console.  If the console is always readily available, you may want to
-set this to 0 to avoid these problems. If you want a visual
-notification that seems to work in most cases, you can set it to 1.
-In the event you are getting X errors, you can alternatively modify
-the xErrorHandler routine in help.c to help debug the situation.  */
-
-#define POST_X_ERRORS_TO_MESSAGE_WINDOW 1
-
-/* Define this to be 1 to explicitly set the colors and shadows for
-menus and all of their children in order to override any CDE changes.
-It should not be necessary.  The problem has been fixed by specifying
-*useColorObj in the fallback resources, but this switch is being kept
-in case that fix doesn't work. */
-
-#define EXPLICITLY_OVERWRITE_CDE_COLORS 0
-
-/* Define this to include RTYP (DBR_CLASSNAME) in PvInfo.  For IOCs
-with later versions of EPICS base, this is a good idea.  However, if
-RTYP is not defined for the PV, it will take PvInfo a long time to
-determine that and be sure it is not defined.  In that case, defining
-DO_RTYPE to be zero will eliminate the delay before the PvInfo popup
-appears. */
-#define DO_RTYP 1
