@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_RADIO_BUTTONS 1
+#define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 
 #define ALLOCATE_STORAGE
@@ -1968,7 +1968,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *)cbs;
     DisplayInfo *displayInfo;
 
-#ifdef DEBUG_RADIO_BUTTONS
+#if DEBUG_RADIO_BUTTONS
     {
 	Boolean radioBehavior,set;
 	unsigned char indicatorType;

@@ -281,7 +281,7 @@ void medmInit(char *displayFont)
 /* use the ALIAS fonts if possible */
 	strcpy(displayFont,ALIAS_FONT_PREFIX);
 	sizePosition = strstr(displayFont,"_");
-	fprintf(stderr,"\nMEDM: Loading aliased fonts.");
+	fprintf(stderr,"\n%s: Loading aliased fonts.",MEDM_VERSION_STRING);
 	for (i = 0; i < MAX_FONTS; i++) {
 	    sprintf(sizePosition,"_%d",fontSizeTable[i]);
 	    fontTable[i] = XLoadQueryFont(display,displayFont);
@@ -318,7 +318,7 @@ void medmInit(char *displayFont)
 	      "Invalid scalable display font selected:\n\n  ",
 	      displayFont,"\n\n(requires XLFD format) using fixed!");
 	} else {
-	    fprintf(stderr,"\nMEDM: Loading scalable fonts.");
+	    fprintf(stderr,"\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
 	}
 	for (i = 0; i < MAX_FONTS; i++) {
 	    if (!useDefaultFont) {
