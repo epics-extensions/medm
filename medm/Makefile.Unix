@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.18  1996/12/04 16:23:22  vong
+# Correct the makefile.
+#
 # Revision 1.17  1996/12/03 22:26:46  vong
 # Version 2.2.9
 # =============
@@ -221,7 +224,7 @@ PROD = medm
 #STATIC_BUILD = YES
 include $(EPICS)/config/RULES.Unix
 
-CC = cc -g
+#CC = cc -g
 #CC = gcc
 
 medm: $(OBJS) $(DEPLIBS)
