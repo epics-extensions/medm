@@ -1717,11 +1717,11 @@ void cartesianPlotUpdateScreenFirstTime(Channel *pCh) {
     Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
     Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
     if ((pChX == NULL) && (pChY == NULL)) continue;
-    if ((pChX) && (pChX->xrtData))
+    if ((pChX) && (pChX->xrtData)) {
       cartesianPlotUpdateTrace(pChX);
       if (pChX->xyChannelType == CP_XYVectorX)
         cartesianPlotUpdateTrace(pChY);
-    else
+    } else
     if ((pChY) && (pChY->xrtData))
       cartesianPlotUpdateTrace(pChY);
     if (pChX) {
@@ -1875,11 +1875,11 @@ void cartesianPlotUpdateScreen(Channel *pCh) {
       Channel *pChX = (Channel *) cartesianPlotData->monitors[i][0];
       Channel *pChY = (Channel *) cartesianPlotData->monitors[i][1];
       if ((pChX == NULL) && (pChY == NULL)) continue;
-      if ((pChX) && (pChX->xrtData))
+      if ((pChX) && (pChX->xrtData)) {
         cartesianPlotUpdateTrace(pChX);
         if (pChX->xyChannelType == CP_XYVectorX)
           cartesianPlotUpdateTrace(pChY);
-      else
+      } else
       if ((pChY) && (pChY->xrtData))
         cartesianPlotUpdateTrace(pChY);
       if (pChX) {
