@@ -2064,6 +2064,7 @@ int copyElementsIntoDisplay()
     while (dlElement) {
 	if(dlElement->type != DL_Display) {
 	    DlElement *pE, *pSE;
+	    
 	    pE = dlElement->run->create(dlElement);
 	    if(pE) {
 		appendDlElement(cdi->dlElementList,pE);

@@ -1558,9 +1558,9 @@ DlElement *createDlStripChart(DlElement *p)
 	dlStripChart->delay = -1.0;
 	dlStripChart->oldUnits = SECONDS;
 #endif
+	for (penNumber = 0; penNumber < MAX_PENS; penNumber++)
+	  penAttributeInit(&(dlStripChart->pen[penNumber]));
     }
-    for (penNumber = 0; penNumber < MAX_PENS; penNumber++)
-      penAttributeInit(&(dlStripChart->pen[penNumber]));
 
     if (!(dlElement = createDlElement(DL_StripChart,
       (XtPointer)dlStripChart,
