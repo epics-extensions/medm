@@ -99,6 +99,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Xm/CascadeBG.h>
 #include <Xm/SelectioB.h>
 
+#ifdef linux
+#include <Xm/VirtKeys.h>
+#endif
+
 /* Custom widgets */
 #include "Xc.h"
 #include "Meter.h"

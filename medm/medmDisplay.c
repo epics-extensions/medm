@@ -385,12 +385,14 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     medmSetDisplayTitle(displayInfo);
     XtRealizeWidget(displayInfo->shell);
 
+#if 0
   /* Mark it to be moved to x, y consistent with object.x,y.
    * XtSetValues, XtMoveWidget, or XMoveWindow do not work here.
    * Needs to be done in expose callback when final x,y are correct.
    * Is necessary in part because WM adds borders and title bar,
    * moving the shell down when first created */
     displayInfo->positionDisplay = True;
+#endif    
 
 #if DEBUG_RELATED_DISPLAY
     print("executeDlDisplay: dlDisplay->object=%x\n"

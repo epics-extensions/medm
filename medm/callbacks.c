@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_EXPOSE 0
 #define DEBUG_EXECUTE_MENU 0
 #define DEBUG_RELATED_DISPLAY 0
+#define DEBUG_POSITION 0
 
 #include "medm.h"
 
@@ -348,15 +349,48 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE):\n");
 #endif
-
+	
       /* Move window to be consistent with object.x,y */
 	if(displayInfo->positionDisplay) {
-	    int status = repositionDisplay(displayInfo);
-	  /* Turn switch off if successful */
+	    int status;
+	    
+#if DEBUG_POSITION
+	    {
+		Position x,y;
+		DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+		DlDisplay *dlDisplay = pE->structure.display;
+		
+		XtSetArg(args[0],XmNx,&x);
+		XtSetArg(args[1],XmNy,&y);
+		XtGetValues(displayInfo->shell,args,2);
+		
+		print("drawingAreaCallback:\n"
+		  "  Shell(Before): object.x=%d object.y=%d xShell=%d yShell=%d\n",
+		  dlDisplay->object.x,dlDisplay->object.y,x,y);
+	    }
+#endif
+	    status = repositionDisplay(displayInfo);
+	  /* Turn switch off if successful (Currently always) */
 	    if(!status) displayInfo->positionDisplay = False;
+	    
+#if DEBUG_POSITION
+	    {
+		Position x,y;
+		DlElement *pE = FirstDlElement(displayInfo->dlElementList);
+		DlDisplay *dlDisplay = pE->structure.display;
+		
+		XtSetArg(args[0],XmNx,&x);
+		XtSetArg(args[1],XmNy,&y);
+		XtGetValues(displayInfo->shell,args,2);
+		
+		print("drawingAreaCallback:\n"
+		  "  Shell(After): object.x=%d object.y=%d xShell=%d yShell=%d\n",
+		  dlDisplay->object.x,dlDisplay->object.y,x,y);
+	    }
+#endif
 	}
 	
-      /* Handle exposure */
+    /* Handle exposure */
 	x = cbs->event->xexpose.x;
 	y = cbs->event->xexpose.y;
 	uiw = cbs->event->xexpose.width;

@@ -55,6 +55,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_RELATED_DISPLAY 0
+#define DEBUG_POSITION 0
+#define DEBUG_REPOSITION 0
 
 #include "medm.h"
 
@@ -89,6 +91,7 @@ typedef struct _parseFuncEntryNode {
 /* Function prototypes */
 static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer);
 static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer);
+static void getBorders(int *left, int *right, int *top, int *bottom);
 
 /* Global variables */
 
@@ -569,6 +572,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 	    if(pe) {
 		appendDlElement(dlList,pe);
 	    }
+	    break;
 	}
 	case T_EQUAL:
 	    break;
@@ -603,6 +607,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     int numPairs;
     Position x, y;
     int xg, yg;
+    int left, right, top, bottom;
     unsigned int width, height;
     int mask;
     int reuse=0;
@@ -788,6 +793,46 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	cdi->dlColormap = NULL;
     }
     
+  /* Do resizing */
+    if(reuse) {
+      /* Resize the display to the new size now
+       *   (There should be no resize callback yet so it will not try
+       *     to resize all the elements) */
+	nargs=0;
+	XtSetArg(args[nargs],XmNwidth,dlDisplay->object.width);
+	nargs++;
+	XtSetArg(args[nargs],XmNheight,dlDisplay->object.height);
+	nargs++;
+	XtSetValues(displayInfoIn->shell,args,nargs);
+    } else if(geometryString && *geometryString) {
+      /* Handle geometry string */
+      /* Set defaults */
+	xg=dlDisplay->object.x;
+	yg=dlDisplay->object.y;
+	width=dlDisplay->object.width;
+	height=dlDisplay->object.height;
+      /* Parse the geometry string (mask indicates what was found) */
+	mask = XParseGeometry(geometryString,&xg,&yg,&width,&height);
+#if DEBUG_RELATED_DISPLAY
+	print("dmDisplayListParse: Geometry values: xg=%d yg=%d\n",xg,yg);
+#endif      
+	
+      /* Change width and height object values now, x and y later */
+	if((mask & WidthValue) && (mask & HeightValue)) {
+	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
+	}
+    }
+
+  /* Mark it to be moved to x, y consistent with object.x,y.
+   * XtSetValues, XtMoveWidget, or XMoveWindow do not work here.
+   * Needs to be done in expose callback when final x,y are correct.
+   * Is necessary in part because WM may not place it right,
+   * especially if x = y = 0 */
+    cdi->positionDisplay = True;
+
+  /* Get the window manager borders */
+    getBorders(&left, &right, &top, &bottom);
+    
   /* Change DlObject values for x and y to be the same as the original
      if it is a Related Display */
     if(displayInfoIn) {
@@ -803,30 +848,32 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 #endif	
 	dlDisplay->object.x = x;
 	dlDisplay->object.y = y;
-    }
-
-  /* Do resizing */
-    if(reuse) {
-      /* Resize the display to the new size now
-       *   (There should be no resize callback yet so it will not try
-       *     to resize all the elements) */
-	nargs=0;
-	XtSetArg(args[nargs],XmNwidth,dlDisplay->object.width);
-	nargs++;
-	XtSetArg(args[nargs],XmNheight,dlDisplay->object.height);
-	nargs++;
-	XtSetValues(displayInfoIn->shell,args,nargs);
     } else if(geometryString && *geometryString) {
-      /* Handle geometry string */
-      /* Parse the geometry string (mask indicates what was found) */
-	mask = XParseGeometry(geometryString,&xg,&yg,&width,&height);
-#if DEBUG_RELATED_DISPLAY
-	print("dmDisplayListParse: Geometry values: xg=%d yg=%d\n",xg,yg);
-#endif      
-	
-      /* Change width and height object values now, x and y later */
-	if((mask & WidthValue) && (mask & HeightValue)) {
-	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
+	if((mask & XValue) || (mask & YValue)) {
+	  /* Handle negative offsets */
+	    if(mask & XNegative || mask & YNegative) {
+		if(mask & XNegative) {
+		    int screenWidth=DisplayWidth(display,screenNum);
+		    xg=screenWidth-width-left-right+xg;
+		}
+		if(mask & YNegative) {
+		    int screenHeight=DisplayHeight(display,screenNum);
+		    yg=screenHeight-height-top-bottom+yg;
+		}
+	    }
+	    dlDisplay->object.x=xg+left;
+	    dlDisplay->object.y=yg+top;
+
+#if DEBUG_POSITION
+	    print("  screenWidth=%d screenheight=%d width=%d height=%d\n",
+	      DisplayWidth(display,screenNum),
+	      DisplayHeight(display,screenNum),
+	      width,height);	      
+	    print("  xg=%d dlDisplay->object.x=%d XNegative=%s\n"
+	      "  yg=%d dlDisplay->object.y=%d YNegative=%s\n",
+	      xg,dlDisplay->object.x,(mask&XNegative)?"True":"False",
+	      yg,dlDisplay->object.y,(mask&YNegative)?"True":"False");
+#endif	
 	}
     }
 
@@ -837,17 +884,29 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     dmTraverseDisplayList(cdi);
     cdi->elementsExecuted=True;
     
-  /* Pop it up */
-    XtPopup(cdi->shell,XtGrabNone);
+  /* Set the object x,y values minus the borders */
+    nargs=0;
+    XtSetArg(args[nargs],XmNx,dlDisplay->object.x-left); nargs++;
+    XtSetArg(args[nargs],XmNy,dlDisplay->object.y-top); nargs++;
+    XtSetValues(cdi->shell,args,nargs);
+    
 #if DEBUG_RELATED_DISPLAY
-    print("  After XtPopup: XtIsRealized=%s XtIsManaged=%s\n",
+    print("  Before XtPopup: XtIsRealized=%s XtIsManaged=%s\n",
       XtIsRealized(cdi->shell)?"True":"False",
       XtIsManaged(cdi->shell)?"True":"False");
-    print("  Current values:\n"
-      "    dlDisplay->object.x=%d\n"
-      "    dlDisplay->object.y=%d\n",
-      dlDisplay->object.x,
-      dlDisplay->object.y);
+#endif
+#if DEBUG_POSITION
+    print("  xObj=%d yObj=%d xSet=%d ySet=%d\n",
+      dlDisplay->object.x,dlDisplay->object.y,
+      dlDisplay->object.x-left,dlDisplay->object.y-top);
+#endif      
+
+  /* Pop it up */
+    XtPopup(cdi->shell,XtGrabNone);
+#if DEBUG_RELATED_DISPLAY | DEBUG_POSITION
+    print("  After XtPopup:  XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(cdi->shell)?"True":"False",
+      XtIsManaged(cdi->shell)?"True":"False");
     {
 	Position xpos,ypos;
 	
@@ -855,60 +914,17 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
-	print("dmDisplayListParse(shell): After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+	print("dmDisplayListParse(shell):  After XtPopup:  xpos=%d ypos=%d\n",
+	  xpos,ypos);
 
 	XtGetValues(cdi->drawingArea,args,nargs);
-	print("dmDisplayListParse(drawA): After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+	print("dmDisplayListParse(drawA):  After XtPopup:  xpos=%d ypos=%d\n",
+	  xpos,ypos);
+	print("dmDisplayListParse(object): After XtPopup:  x=%d y=%d\n",
+	  dlDisplay->object.x,
+	  dlDisplay->object.y);
     }
 #endif      
-    
-  /* Do moving after it is realized */
-    if(displayInfoIn && !reuse) {
-#if DEBUG_RELATED_DISPLAY
-	print("  Move(1)\n");
-	dlDisplay->object.x=x;
-	dlDisplay->object.y=y;
-#endif	
-    } else if(geometryString && *geometryString) {
-#if DEBUG_RELATED_DISPLAY
-	print("  Move(2)\n");
-#endif	
-	if((mask & XValue) && (mask & YValue)) {
-	    dlDisplay->object.x=xg;
-	    dlDisplay->object.y=yg;
-	}
-#if DEBUG_RELATED_DISPLAY
-    } else {
-	print("  Move(0)\n");
-#endif
-    }
-
-  /* Mark it to be moved to x, y consistent with object.x,y.
-   * XtSetValues, XtMoveWidget, or XMoveWindow do not work here.
-   * Needs to be done in expose callback when final x,y are correct.
-   * Is necessary in part because WM adds borders and title bar,
-   * moving the shell down when first created */
-    cdi->positionDisplay = True;
-
-#if DEBUG_RELATED_DISPLAY
-    print("  Final values:\n"
-      "    dlDisplay->object.x=%d\n"
-      "    dlDisplay->object.y=%d\n",
-      dlDisplay->object.x,
-      dlDisplay->object.y);
-    {
-	Position xpos,ypos;
-	
-	nargs=0;
-	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
-	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
-	XtGetValues(cdi->shell,args,nargs);
-	print("dmDisplayListParse(shell): At end: xpos=%d ypos=%d\n",xpos,ypos);
-
-	XtGetValues(cdi->drawingArea,args,nargs);
-	print("dmDisplayListParse(drawA): At end: xpos=%d ypos=%d\n",xpos,ypos);
-    }
-#endif
     
   /* Refresh the display list dialog box */
     refreshDisplayListDlg();
@@ -1288,46 +1304,50 @@ void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
     }
 }
 
-/* This function is used to insure the window is placed so the
-   position of its drawing area relative to the root window is the
-   same as its object,x,y.  It is necessary because the window manager
-   may place the window so the title bar is at the object.x,y
-   coordinates.  */
+/* Usually the window will be placed correctly the first time.  This
+   function is a second chance to try to place the window according to
+   its object x,y.  It is necessary because the window manager may not
+   place it where you say.  This currently happens on Solaris when the
+   original coordinates are x = y = 0. */
 int repositionDisplay(DisplayInfo *displayInfo)
 {
     DlElement *pE = FirstDlElement(displayInfo->dlElementList);
     Position oldX, oldY;
+    int left, right, top, bottom;
     int newX, newY;
     Arg args[2];
-    int retVal = 1;
     
     if(pE && XtIsRealized(displayInfo->shell)) {
 	DlDisplay *dlDisplay = pE->structure.display;
 	
       /* Get current x, y according to X */
-	XtSetArg(args[0],XmNx,&oldX);
-	XtSetArg(args[1],XmNy,&oldY);
-	XtGetValues(displayInfo->shell,args,2);
+	XtSetArg(args[0], XmNx, &oldX);
+	XtSetArg(args[1], XmNy, &oldY);
+	XtGetValues(displayInfo->shell, args, 2);
 
-      /* Calculate new ones, assuming the difference is the window
-         manager borders */
-	newX = 2*dlDisplay->object.x -(int)oldX;
-	newY = 2*dlDisplay->object.y -(int)oldY;
-	if(newX < 0) newX = 0;
-	if(newY < 0) newY = 0;
-
-      /* Move the window */
-	if(newX != oldX || newY != oldY) {
-	    XMoveWindow(display,XtWindow(displayInfo->shell),
-	      newX, newY);
+      /* Check to see if they are OK */
+	if(oldX == dlDisplay->object.x && oldY == dlDisplay->object.y) {
+	  /* Are already OK */
+#if DEBUG_REPOSITION
+	    print("repositionDisplay: Unnecessary\n");
+#endif	    
+	    return 0;
 	}
 
-      /* Indicate success */
-	retVal = 0;
-#if DEBUG_RELATED_DISPLAY
+      /* Calculate the window manager borders */
+	getBorders(&left, &right, &top, &bottom);
+
+      /* Move the window to desired position plus the borders */
+	newX = dlDisplay->object.x - left;
+	newY = dlDisplay->object.y - top;
+	if(newX < 0) newX = 0;
+	if(newY < 0) newY = 0;
+	XMoveWindow(display, XtWindow(displayInfo->shell), newX, newY);
+
+#if DEBUG_REPOSITION
 	{
 	    Position finX, finY;
-	    
+
 	    XtSetArg(args[0],XmNx,&finX);
 	    XtSetArg(args[1],XmNy,&finY);
 	    XtGetValues(displayInfo->shell,args,2);
@@ -1342,5 +1362,83 @@ int repositionDisplay(DisplayInfo *displayInfo)
 #endif
     }
 
-    return retVal;
+  /* Indicate success always */
+    return 0;
+}
+
+static void getBorders(int *left, int *right, int *top, int *bottom)
+{
+    XWindowAttributes attr;
+    Window window,root,parent,*children;
+    unsigned int nChildren;
+    int width, height;
+    Status status;
+    static int first = 1;
+    static int left0, right0, top0, bottom0;
+
+#if DEBUG_POSITION
+    root=RootWindow(display,screenNum);
+    print("  Root(%7x)\n",root);
+    window=XtWindow(mainShell);
+    while(True) {
+	XQueryTree(display,window,&root,&parent,&children,&nChildren);
+	XGetWindowAttributes(display,window,&attr);
+	print("    (%7x):        x=%d y=%d width=%d height=%d\n",
+	  window,attr.x,attr.y,attr.width,attr.height);
+	
+	if(window == root) break;
+	
+	window=parent;
+    }
+#endif    
+
+  /* If not the first time, use the values from the first time */
+    if(!first) {
+	*left = left0;
+	*right = right0;
+	*top = top0;
+	*bottom = bottom0;
+	return;	
+    }
+
+  /* Initialize */
+    *left = *right = *top = *bottom = 0;
+
+  /* Get the parent window of the mainShell window */
+    window=XtWindow(mainShell);
+    status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
+    if(!status) return;
+
+  /* Get the left, top, width, and height from the position of the
+     parent to its parent */
+    window=parent;
+    status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
+    if(!status) return;
+    status = XGetWindowAttributes(display,window,&attr);
+    if(!status) return;
+    *left = left0 = attr.x;
+    *top = top0 = attr.y;
+    width = attr.width;
+    height = attr.height;
+
+  /* Get the total width and height from the parent of the parent */
+    window=parent;
+    status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
+    if(!status) return;
+    status = XGetWindowAttributes(display,window,&attr);
+    if(!status) return;
+    *right = attr.width - width - *left;
+    *bottom = attr.height - height - *top;
+
+  /* Save these values for successive calls */
+    left0 = *left;
+    right0 = *right;
+    top0 = *top;
+    bottom0 = *bottom;
+    first = 0;
+
+#if DEBUG_POSITION
+    print("getBorders: left=%d right=%d top=%d bottom=%d\n",
+      *left,*right,*top,*bottom);
+#endif    
 }

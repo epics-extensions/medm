@@ -3386,10 +3386,11 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	  defaultBackground,NULL);
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  defaultBackground,NULL);
-      /* need to add this entry to widgetDM.h and finish this if we want named
-       *  groups
-       strcpy(globalResourceBundle.compositeName,p->compositeName);
-      */
+#if 0	
+      /* Need to add this entry to widgetDM.h and finish this if we
+         want named groups */
+	strcpy(globalResourceBundle.compositeName,p->compositeName);
+#endif	
 	strcpy(globalResourceBundle.compositeFile, p->compositeFile);
 	XmTextFieldSetString(resourceEntryElement[COMPOSITE_FILE_RC],
 	  globalResourceBundle.compositeFile);
