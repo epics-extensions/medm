@@ -19,9 +19,12 @@ endif
 #XRTGRAPH=/opt/local/xrtgraph2.4.0
 #XRTGRAPH_EXTENSIONS =
 
-# Use to test SciPlot
+# Use to test SciPlot, Otherwise should come from CONFIG
 #XRTGRAPH =
 #SCIPLOT = YES
+
+# Use to test CDEV, Otherwise should come from CONFIG
+#MEDM_CDEV = YES
 
 # Set up for Xrt/Graph
 ifdef XRTGRAPH
@@ -78,12 +81,11 @@ endif
 USR_CFLAGS += -DEDITRES
 
 ifdef WIN32
-  #USR_CFLAGS += /D_NTSDK
   USR_CFLAGS += /DWIN32 /D_WINDOWS
   USR_LDFLAGS += /SUBSYSTEM:WINDOWS
 endif
 
-
+# Define the URL that implements help
 ifdef MEDM_HELP_PATH
   USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
 else
@@ -92,9 +94,31 @@ endif
 
 PROD = medm
 
+PROD_LIBS = GraphX ANLwidgets ca Com
+
 USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
-PROD_LIBS = GraphX ANLwidgets ca Com
+# Setup for either CA or CDEV
+ifdef MEDM_CDEV
+  cdev_DIR = $(CDEVLIB)
+  PROD_LIBS += cdev
+  SRCS += medmCdev.cc
+  SRCS += medmCdevUtils.c
+  USR_LDFLAGS += -R$(CDEVLIB) -L$(CDEVLIB)
+
+  USR_INCLUDES += -I. -I.. -I$(CDEV)/include
+#  USR_INCLUDES += -I/usr/user1/chen/local/Xmu/include
+  USR_CFLAGS += -DMEDM_CDEV
+  USR_CCFLAGS += $(USR_CFLAGS)
+  SRCS += medmCdev.cc
+  SRCS += medmCdevUtils.c
+else
+  ca_DIR = $(EPICS_BASE_LIB)
+  Com_DIR = $(EPICS_BASE_LIB)
+  PROD_LIBS += ca Com
+  SRCS += medmCA.c 
+endif
+
 USR_LIBS_DEFAULT = Xm Xt X11
 ifeq ($(EXCEED),Exceed5)
   USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
@@ -104,8 +128,6 @@ endif
 
 GraphX_DIR = $(INSTALL_LIB)
 ANLwidgets_DIR = $(INSTALL_LIB)
-ca_DIR = $(EPICS_BASE_LIB)
-Com_DIR = $(EPICS_BASE_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
@@ -130,7 +152,6 @@ SRCS += medm.c
 SRCS += medmArc.c 
 SRCS += medmBar.c 
 SRCS += medmByte.c 
-SRCS += medmCA.c 
 SRCS += medmChoiceButtons.c 
 SRCS += medmCommon.c 
 SRCS += medmComposite.c 
