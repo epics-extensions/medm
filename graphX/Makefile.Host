@@ -10,8 +10,7 @@ endif
 
 # Needs work to handle CMPLR=STRICT
 #CMPLR = STRICT
-#HOST_OPT = NO
-#CC += -g
+HOST_OPT = NO
 
 ifdef WIN32
 USR_CFLAGS += /DWIN32 /D_WINDOWS
