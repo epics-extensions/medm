@@ -3650,28 +3650,55 @@ main(int argc, char *argv[])
 		    }
 		}
 
+	      /* If the message is complete, then process the request */
 		if(completeClientMessage) {
-		    filePtr = fopen(fullPathName,"r");
-		    if(filePtr) {
-			dmDisplayListParse(NULL,filePtr,name,fullPathName,geometryString,
-			  (Boolean)False);
-			if(globalDisplayListTraversalMode == DL_EDIT) {
-			    enableEditFunctions();
-			}
-			medmPostMsg(0,"File Dispatch Request:\n");
-			if(fullPathName[0] != '\0')
-			  medmPrintf(0,"  filename = %s\n",fullPathName);
-			if(name[0] != '\0')
-			  medmPrintf(0,"  macro = %s\n",name);
-			if(geometryString[0] != '\0')
-			  medmPrintf(0,"  geometry = %s\n",geometryString);
-			fclose(filePtr);
-		    } else {
-			medmPrintf(1,
-			  "\nCould not open requested file\n\t\"%s\"\n  from remote MEDM request\n",
-			  fullPathName);
+		    DisplayInfo *existingDisplayInfo = NULL;
+		    
+		  /* Post a message about the request */
+		    medmPostMsg(0,"File Dispatch Request:\n");
+		    if(fullPathName[0] != '\0')
+		      medmPrintf(0,"  filename = %s\n",fullPathName);
+		    if(name[0] != '\0')
+		      medmPrintf(0,"  macro = %s\n",name);
+		    if(geometryString[0] != '\0')
+		      medmPrintf(0,"  geometry = %s\n",geometryString);
+
+		  /* Check if a display with these parameters exists */
+		    if(popupExistingDisplay) {
+			existingDisplayInfo = findDisplay(fullPathName,
+			  name);
 		    }
-		}
+		    if(existingDisplayInfo) {
+			DisplayInfo *cdi;
+			
+			cdi = currentDisplayInfo = existingDisplayInfo;
+#if 0
+		      /* KE: Doesn't work on WIN32 */
+			XtPopdown(currentDisplayInfo->shell);
+			XtPopup(currentDisplayInfo->shell, XtGrabNone);
+#else
+			if(cdi && cdi->shell && XtIsRealized(cdi->shell)) {
+			    XMapRaised(display, XtWindow(cdi->shell));
+			}
+#endif
+			medmPrintf(0,
+			  "  Found existing display with same parameters\n");
+		    } else {
+		      /* Open the file */
+			filePtr = fopen(fullPathName,"r");
+			if(filePtr) {
+			    dmDisplayListParse(NULL, filePtr, name, fullPathName,
+			      geometryString, (Boolean)False);
+			    if(globalDisplayListTraversalMode == DL_EDIT) {
+				enableEditFunctions();
+			    }
+			    fclose(filePtr);
+			} else {
+			    medmPrintf(1,
+			      "  Could not open requested file\n");
+			}
+		    }
+		}     /* if(completeClientMessage) */
 	    } else {
 	      /* Handle these ClientMessage's the normal way */
 		XtDispatchEvent(&event);
