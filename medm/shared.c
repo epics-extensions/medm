@@ -226,8 +226,22 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
     t->tenthSecond = 0.0;
   }
 #endif
+
   /* poll channel access connection event every one tenth of a second */
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(0.00000001);
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("medmScheduler : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
   ca_pend_event(0.00000001);
+#endif
+
   /* wake up any periodic task which is time out */
   if (updateTaskStatus.periodicTaskCount > 0) { 
     DisplayInfo *d = displayInfoListHead->next;
@@ -385,7 +399,20 @@ void updateTaskDeleteAllTask(UpdateTask *pt) {
   }
   displayInfo->updateTaskListHead.next = NULL;
   displayInfo->updateTaskListTail = &(displayInfo->updateTaskListHead);
-  ca_pend_io(0.1);
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(CA_PEND_EVENT_TIME);
+    t = medmTime() - t;
+    if (t > 0.5) {   
+      printf("updateTaskDeleteAllTask : time used by ca_pend_event = %8.1f\n",t);
+    } 
+  }
+#else
+  ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
+
 }
   
 int updateTaskMarkTimeout(UpdateTask *pt, double currentTime) {

@@ -316,7 +316,19 @@ void dmCleanupDisplayInfo(
 /* force a wait for all outstanding CA event completion */
 /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
  */
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(CA_PEND_EVENT_TIME);
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
   ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
 
 /*
  * if cleanupDisplayList == TRUE
@@ -453,7 +465,20 @@ void dmTraverseDisplayList(
  *	also flush X buffer
  */
   XFlush(display);
+
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(CA_PEND_EVENT_TIME);
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("dmTraverseDisplayList : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
   ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
 
 }
 
@@ -495,7 +520,19 @@ void dmTraverseAllDisplayLists()
  *	also flush X buffer
  */
   XFlush(display);
-  ca_pend_event(CA_PEND_EVENT_TIME);	/* don't allow early returns */
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(CA_PEND_EVENT_TIME);
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("dmTraverseAllDisplayLists : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
+  ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
 
 }
 
@@ -2020,10 +2057,12 @@ Widget lookupElementWidget(
     }
   }
   /* didn't find one yet, see if drawing area (parent is the one) */
-  XtVaGetValues(displayInfo->drawingArea,
+  if (displayInfo->drawingArea) {
+    XtVaGetValues(displayInfo->drawingArea,
 	XmNwidth,&width,XmNheight,&height,NULL);
-  if (width == object->width && height == object->height) {
-      return(displayInfo->drawingArea);
+    if (width == object->width && height == object->height) {
+        return(displayInfo->drawingArea);
+    }
   }
 
   return ((Widget)NULL);
@@ -3851,6 +3890,20 @@ void closeDisplay(Widget w) {
   dmRemoveDisplayInfo(newDisplayInfo);
 
 }
+
+#ifdef __COLOR_RULE_H__
+Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor) {
+  setOfColorRule_t *color = &(setOfColorRule[colorRule]);
+  int i;
+  for (i = 0; i<MAX_COLOR_RULES; i++) {
+    if (value <=color->rule[i].upperBoundary
+        && value >= color->rule[i].lowerBoundary) {
+      return displayInfo->dlColormap[color->rule[i].colorIndex];
+    }
+  }
+  return displayInfo->dlColormap[defaultColor];
+}
+#endif
 
 #ifdef __TED__
 void GetWorkSpaceList(Widget w) {

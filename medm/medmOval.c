@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
  * .03  09-12-95        vong    conform to c++ syntax
+ * .04  09-25-95        vong    add the primitive color rule set
  *
  *****************************************************************************
 */
@@ -132,6 +133,20 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
     drawWhiteRectangle(po->updateTask);
 #endif
 
+#ifdef __COLOR_RULE_H__
+    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+      STATIC :
+        po->record->monitorValueChanged = False;
+        po->record->monitorSeverityChanged = False;
+        break;
+      ALARM :
+        po->record->monitorValueChanged = False;
+        break;
+      DISCRETE :
+        po->record->monitorSeverityChanged = False;
+        break;
+    }
+#else
     po->record->monitorValueChanged = False;
     if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
       po->record->monitorSeverityChanged = False;
@@ -140,6 +155,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
     if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
       po->record->monitorZeroAndNoneZeroTransition = False;
     }
+#endif
 
     po->widget = displayInfo->drawingArea;
     po->attr = displayInfo->attribute;
@@ -187,10 +203,22 @@ static void ovalDraw(XtPointer cd) {
   if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     switch (po->dynAttr.clr) {
+#ifdef __COLOR_RULE_H__
+      case STATIC :
+        gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
+        break;
+      case DISCRETE:
+        gcValues.foreground = extractColor(displayInfo,
+                                  pd->value,
+                                  po->dynAttr.colorRule,
+                                  po->attr.clr);
+        break;
+#else
       case STATIC :
       case DISCRETE:
         gcValues.foreground = displayInfo->dlColormap[po->attr.clr];
         break;
+#endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;

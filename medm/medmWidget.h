@@ -392,6 +392,9 @@ typedef struct _ResourceBundle {
 	LabelType		label;
 	Direction		direction;
 	ColorMode		clrmod;
+#ifdef __COLOR_RULE_H__
+        int                     colorRule;
+#endif
 	FillMode		fillmod;
 	EdgeStyle		style;
 	FillStyle		fill;
@@ -465,6 +468,47 @@ typedef struct _ResourceBundle {
 #define STYLE_RC	18
 #define FILL_RC		19
 #define CLRMOD_RC	20
+#ifdef __COLOR_RULE_H__
+#define COLOR_RULE_RC   21              /* Color Rule Entry Table         */
+#define VIS_RC          22
+#define CHAN_RC         23
+#define DATA_CLR_RC     24
+#define DIS_RC          25
+#define XYANGLE_RC      26
+#define ZANGLE_RC       27
+#define PERIOD_RC       28
+#define UNITS_RC        29
+#define CSTYLE_RC       30
+#define ERASE_OLDEST_RC 31
+#define COUNT_RC        32
+#define STACKING_RC     33
+#define IMAGETYPE_RC    34
+#define TEXTIX_RC       35
+#define MSG_LABEL_RC    36
+#define PRESS_MSG_RC    37
+#define RELEASE_MSG_RC  38
+#define IMAGENAME_RC    39
+#define DATA_RC         40
+#define CMAP_RC         41
+#define NAME_RC         42
+#define LINEWIDTH_RC    43
+#define PRECISION_RC    44
+#define SBIT_RC         45
+#define EBIT_RC         46
+
+/* vectors/matrices of data */
+#define RDDATA_RC       47              /* Related Display data           */
+#define CPDATA_RC       48              /* Cartesian Plot channel data    */
+#define SCDATA_RC       49              /* Strip Chart data               */
+#define SHELLDATA_RC    50              /* Shell Command data             */
+#define CPAXIS_RC       51              /* Cartesian Plot axis data       */
+
+/* other new entry types */
+#define TRIGGER_RC      52              /* Cartesian Plot trigger channel */
+#define ERASE_RC        53              /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   54              /* Cartesian Plot erase mode      */
+
+#else
 #define VIS_RC		21
 #define CHAN_RC		22
 #define DATA_CLR_RC	23
@@ -503,6 +547,7 @@ typedef struct _ResourceBundle {
 #define TRIGGER_RC	51		/* Cartesian Plot trigger channel */
 #define ERASE_RC        52              /* Cartesian Plot erase channel   */
 #define ERASE_MODE_RC   53              /* Cartesian Plot erase mode      */
+#endif
 
 #define MIN_RESOURCE_ENTRY	0
 #define MAX_RESOURCE_ENTRY	(ERASE_MODE_RC + 1)
@@ -526,6 +571,9 @@ typedef struct _ResourceBundle {
 	"Direction",
 	"Fill Mode", "Style", "Fill",
 	"Color Mode",
+#ifdef __COLOR_RULE_H__
+        "Color Rule",
+#endif
 	"Visibility",
 	"Channel",
 	"Data Color", "Distance", "XY Angle", "Z Angle",
@@ -662,6 +710,24 @@ typedef struct _ResourceMap{
   };
 #endif
 
+#ifdef __COLOR_RULE_H__
+/* Color Rule */
+#define MAX_COLOR_RULES 16
+#define MAX_SET_OF_COLOR_RULE 4
+typedef struct {
+        double lowerBoundary;
+        double upperBoundary;
+        int    colorIndex;
+} colorRule_t;
+
+typedef struct {
+  colorRule_t rule[MAX_COLOR_RULES];
+} setOfColorRule_t;
+
+#ifndef ALLOCATE_STORAGE
+  extern setOfColorRule_t setOfColorRule[MAX_SET_OF_COLOR_RULE];
+#endif
+#endif
 
 /*******************************************************************
  ********                 global variables                 *********

@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
  * .03  09-12-95        vong    conform to c++ syntax
+ * .04  09-25-95        vong    add the primitive color rule set
  *
  *****************************************************************************
 */
@@ -129,15 +130,29 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
                   NULL,
                   (XtPointer) pr);
 
+#ifdef __COLOR_RULE_H__
+    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+      STATIC :
+        pr->record->monitorValueChanged = False;
+        pr->record->monitorSeverityChanged = False;
+        break;
+      ALARM :
+        pr->record->monitorValueChanged = False;
+        break;
+      DISCRETE :
+        pr->record->monitorSeverityChanged = False;
+        break;
+    }
+#else
     pr->record->monitorValueChanged = False;
     if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
       pr->record->monitorSeverityChanged = False;
     }
+#endif
 
     if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
       pr->record->monitorZeroAndNoneZeroTransition = False;
     }
-
     pr->widget = displayInfo->drawingArea;
     pr->attr = displayInfo->attribute;
     pr->dynAttr = displayInfo->dynamicAttribute.attr.mod;
@@ -182,6 +197,17 @@ static void rectangleDraw(XtPointer cd) {
   if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     switch (pr->dynAttr.clr) {
+#ifdef __COLOR_RULE_H__
+      case STATIC :
+        gcValues.foreground = displayInfo->dlColormap[pr->attr.clr];
+        break;
+      case DISCRETE:
+        gcValues.foreground = extractColor(displayInfo,
+                                  pd->value,
+                                  pr->dynAttr.colorRule,
+                                  pr->attr.clr);
+        break;
+#else
       case STATIC :
       case DISCRETE:
         gcValues.foreground = displayInfo->dlColormap[pr->attr.clr];
@@ -189,6 +215,7 @@ static void rectangleDraw(XtPointer cd) {
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
+#endif
     }
     gcValues.background = displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
     gcValues.line_width = pr->attr.width;

@@ -62,8 +62,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .04  10-03-95        vong    call dmResizeDisplayList() before
  *                              dmTraverseDisplayList() instead of
  *                              using XResizeWindows()
- * .05  10-26-95        vong    add back the mistakenly deleted
- *                              parseFallingLine and parseRisingLine
  *                              
  *
  *****************************************************************************
@@ -163,6 +161,9 @@ DisplayInfo *allocateDisplayInfo()
 
   displayInfo->dynamicAttribute.attr.mod.clr = globalResourceBundle.clrmod;
   displayInfo->dynamicAttribute.attr.mod.vis = globalResourceBundle.vis;
+#ifdef __COLOR_RULE_H__
+  displayInfo->dynamicAttribute.attr.mod.colorRule = globalResourceBundle.colorRule;
+#endif
   displayInfo->dynamicAttribute.attr.param.chan[0] = '\0';
 
 
@@ -383,6 +384,7 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
                 } else if (!strcmp(token,"rising line")) {
                         APPEND_DYNAMIC_ATTRIBUTE();
                         parseRisingLine(displayInfo,dlComposite);
+
 
 /* not really static/graphic objects, but not really monitors or controllers? */
 		} else if (!strcmp(token,"related display")) {

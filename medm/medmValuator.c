@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  06-01-95        vong    2.1.0 release
  * .03  09-12-95        vong    conform to c++ syntax
+ * .04  11-06-95        vong    fix the valuator increment problem
  *
  *****************************************************************************
 */
@@ -1147,7 +1148,7 @@ void valuatorValueChanged(
                 /((double)(VALUATOR_MAX - VALUATOR_MIN) )*(pd->hopr - pd->lopr);
 
     } else 
-    if (call_data->reason == XmCR_VALUE_CHANGED) {
+    if (call_data->reason == XmCR_VALUE_CHANGED) { 
       if (dlValuator->dragging) {
         /* valueChanged can mark conclusion of drag, hence enable updates */
         dlValuator->enableUpdates = True;
@@ -1195,6 +1196,16 @@ void valuatorValueChanged(
             if (call_data->value - pv->oldIntegerValue > 0) {
               /* increase value one 10*precision value */
               value = MIN(pd->hopr, pd->value + 10.*dlValuator->dPrecision);
+            }
+          } else {
+            /* single increment (precision) */
+            if (pv->oldIntegerValue > call_data->value) {
+              /* decrease value one precision value */
+              value = MAX(pd->lopr, pd->value - dlValuator->dPrecision);
+            } else
+            if (pv->oldIntegerValue < call_data->value) {
+              /* increase value one precision value */
+              value = MIN(pd->hopr, pd->value + dlValuator->dPrecision);
             }
           }
         }  /* end if/else (KeyPress/ButtonPress) */

@@ -406,6 +406,9 @@ void writeDlDynAttrMod(
   fprintf(stream,"\n%smod {",indent);
   fprintf(stream,"\n%s\tclr=\"%s\"",indent,stringValueTable[dynAttr->clr]);
   fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dynAttr->vis]);
+#ifdef __COLOR_RULE_H__
+  fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule + 1);
+#endif
   fprintf(stream,"\n%s}",indent);
 }
 

@@ -310,8 +310,27 @@ const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
 extern const eraseMode_t FIRST_ERASE_MODE;
 #endif
 
+#ifdef __COLOR_RULE_H__
+#define NUM_COLOR_RULE 4
+typedef enum {
+  COLOR_RULE_1        = 56,
+  COLOR_RULE_2        = 57,
+  COLOR_RULE_3        = 58,
+  COLOR_RULE_4        = 59
+} colorRuleMode_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const colorRuleMode_t FIRST_COLOR_RULE = COLOR_RULE_1;
+#else
+extern const colorRuleMode_t FIRST_COLOR_RULE;
+#endif
+#endif
+
 #define MAX_OPTIONS		7	/* NUM_TEXT_FORMATS	*/
-#define NUMBER_STRING_VALUES	(55+1)	/* ERASE_CH_IF_ZERO + 1	*/
+#ifdef __COLOR_RULE_H__
+#define NUMBER_STRING_VALUES	(59+1)	/* COLOR_RULE_4 + 1	*/
+#else
+#define NUMBER_STRING_VALUES    (55+1)  /* ERASE_IF_NOT_ZERO + 1 */
+#endif
 
 /*********************************************************************
  * stringValueTable for string-valued tokens - position sensitive!   *
@@ -343,6 +362,9 @@ extern const eraseMode_t FIRST_ERASE_MODE;
     "linear","log10",
     "from channel", "user-specified", "auto-scale",
     "if not zero", "if zero",
+#ifdef __COLOR_RULE_H__
+    "set #1","set #2","set #3","set #4",
+#endif
   };
  XmString xmStringValueTable[NUMBER_STRING_VALUES];
 
@@ -457,6 +479,9 @@ typedef struct {
 typedef struct {
 	ColorMode clr;
 	VisibilityMode vis;
+#ifdef __COLOR_RULE_H__
+    int colorRule;
+#endif
 } DlDynamicAttrMod;
 
 typedef struct {
@@ -736,7 +761,7 @@ typedef struct {
 	DlObject object;
 	XPoint *points;
 	int nPoints;
-        int isFallingOrRisingLine;
+    int isFallingOrRisingLine;
 } DlPolyline;
 
 typedef struct {

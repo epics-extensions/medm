@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
  * .03  09-12-95        vong    - conform to c++ syntax
+ * .04  09-25-95        vong    add the primitive color rule set
  *
  *****************************************************************************
 */
@@ -133,10 +134,25 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
 #if 0
     drawWhiteRectangle(pp->updateTask);
 #endif
+#ifdef __COLOR_RULE_H__
+    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+      STATIC :
+        pp->record->monitorValueChanged = False;
+        pp->record->monitorSeverityChanged = False;
+        break;
+      ALARM :
+        pp->record->monitorValueChanged = False;
+        break;
+      DISCRETE :
+        pp->record->monitorSeverityChanged = False;
+        break;
+    }
+#else
     pp->record->monitorValueChanged = False;
     if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
       pp->record->monitorSeverityChanged = False;
     }
+#endif
 
     if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
       pp->record->monitorZeroAndNoneZeroTransition = False;
@@ -177,10 +193,22 @@ static void polygonDraw(XtPointer cd) {
   if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     switch (pp->dynAttr.clr) {
+#ifdef __COLOR_RULE_H__
+      case STATIC :
+        gcValues.foreground = displayInfo->dlColormap[pp->attr.clr];
+        break;
+      case DISCRETE:
+        gcValues.foreground = extractColor(displayInfo,
+                                  pd->value,
+                                  pp->dynAttr.colorRule,
+                                  pp->attr.clr);
+        break;
+#else
       case STATIC :
       case DISCRETE:
         gcValues.foreground = displayInfo->dlColormap[pp->attr.clr];
         break;
+#endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;

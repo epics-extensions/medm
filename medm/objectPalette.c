@@ -586,6 +586,9 @@ void setResourcePaletteEntries()
 /* make these sensitive in case they are managed */
   XtSetSensitive(resourceEntryRC[VIS_RC],True);
   XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
+#ifdef __COLOR_RULE_H__
+  XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
+#endif
 
 /* setting the new button: manage new resource entries */
     XtManageChildren(
@@ -628,6 +631,10 @@ void setResourcePaletteEntries()
 	if ( (!ELEMENT_HAS_WIDGET(currentElementType)) &&
 	     (currentElementType != DL_TextUpdate))
 	      XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
+#ifdef __COLOR_RULE_H__
+        if (globalResourceBundle.clrmod != DISCRETE)
+          XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+#endif
     }
 
   /* make these sensitive in case they are managed */
@@ -693,16 +700,25 @@ void updateGlobalResourceBundleFromElement(DlElement *elementPtr)
       globalResourceBundle.clrmod =
 		dyn->structure.dynamicAttribute->attr.mod.clr;
       globalResourceBundle.vis = dyn->structure.dynamicAttribute->attr.mod.vis;
+#ifdef __COLOR_RULE_H__
+      globalResourceBundle.colorRule = dyn->structure.dynamicAttribute->attr.mod.colorRule;
+#endif
       strcpy(globalResourceBundle.chan,
 		dyn->structure.dynamicAttribute->attr.param.chan);
     } else { 	/* reset to defaults for dynamics */
       globalResourceBundle.clrmod = STATIC;
       globalResourceBundle.vis = V_STATIC;
+#ifdef __COLOR_RULE_H__
+      globalResourceBundle.colorRule = 0;
+#endif
       globalResourceBundle.chan[0] = '\0';
 /* insensitize the other dyn fields since don't make sense if no channel
    specified */
       XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
       XtSetSensitive(resourceEntryRC[VIS_RC],False);
+#ifdef __COLOR_RULE_H__
+      XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+#endif
     }
    }
   }
@@ -1129,6 +1145,11 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
       globalResourceBundle.vis = dyn->structure.dynamicAttribute->attr.mod.vis;
       optionMenuSet(resourceEntryElement[VIS_RC],
 		globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
+#ifdef __COLOR_RULE_H__
+      globalResourceBundle.colorRule = dyn->structure.dynamicAttribute->attr.mod.colorRule;
+      optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
+                globalResourceBundle.colorRule);
+#endif
       strcpy(globalResourceBundle.chan,
 		dyn->structure.dynamicAttribute->attr.param.chan);
       XmTextFieldSetString(resourceEntryElement[CHAN_RC],
@@ -1140,6 +1161,11 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
       globalResourceBundle.vis = V_STATIC;
       optionMenuSet(resourceEntryElement[VIS_RC],
 		globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
+#ifdef __COLOR_RULE_H__
+      globalResourceBundle.colorRule = 0;
+      optionMenuSet(resourceEntryElement[COLOR_RULE_RC],
+                globalResourceBundle.colorRule);
+#endif
       globalResourceBundle.chan[0] = '\0';
       XmTextFieldSetString(resourceEntryElement[CHAN_RC],
 		globalResourceBundle.chan);
@@ -1147,6 +1173,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
  * specified */
       XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
       XtSetSensitive(resourceEntryRC[VIS_RC],False);
+#ifdef __COLOR_RULE_H__
+      XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+#endif
     }
    }
   }
@@ -1878,6 +1907,9 @@ void updateElementFromGlobalResourceBundle(
    /* found a dynamic attribute - update it */
        dyn->structure.dynamicAttribute->attr.mod.clr=
 		globalResourceBundle.clrmod;
+#ifdef __COLOR_RULE_H__
+       dyn->structure.dynamicAttribute->attr.mod.colorRule = globalResourceBundle.colorRule;
+#endif
        dyn->structure.dynamicAttribute->attr.mod.vis = globalResourceBundle.vis;
        strcpy(dyn->structure.dynamicAttribute->attr.param.chan,
 		globalResourceBundle.chan);

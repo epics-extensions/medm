@@ -358,9 +358,23 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs) {
     case DIRECTION_RC: 
        globalResourceBundle.direction = (Direction) (FIRST_DIRECTION + buttonId);
        break;
+#ifdef __COLOR_RULE_H__
+    case CLRMOD_RC:
+       globalResourceBundle.clrmod = (ColorMode) (FIRST_COLOR_MODE + buttonId);
+       if (globalResourceBundle.clrmod == DISCRETE) {
+         XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
+       } else {
+         XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+       }
+       break;
+    case COLOR_RULE_RC:
+       globalResourceBundle.colorRule = buttonId;
+       break;
+#else
     case CLRMOD_RC: 
        globalResourceBundle.clrmod = (ColorMode) (FIRST_COLOR_MODE + buttonId);
        break;
+#endif
     case FILLMOD_RC: 
        globalResourceBundle.fillmod = (FillMode) (FIRST_FILL_MODE + buttonId);
        break;
@@ -1028,9 +1042,19 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs) {
 	if (strlen(stringValue) > (size_t) 0) {
           XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
           XtSetSensitive(resourceEntryRC[VIS_RC],True);
+#ifdef __COLOR_RULE_H__
+          if (globalResourceBundle.clrmod == DISCRETE) {
+            XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
+          } else {
+            XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+          }
+#endif
 	} else {
           XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
           XtSetSensitive(resourceEntryRC[VIS_RC],False);
+#ifdef __COLOR_RULE_H__
+          XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
+#endif
           if (currentDisplayInfo != NULL) {
             if (currentDisplayInfo->numSelectedElements == 1) {
               dyn = lookupDynamicAttributeElement(
@@ -1555,6 +1579,9 @@ void initializeGlobalResourceBundle()
  globalResourceBundle.label = LABEL_NONE;
  globalResourceBundle.direction = UP;
  globalResourceBundle.clrmod = STATIC;
+#ifdef __COLOR_RULE_H__
+ globalResourceBundle.colorRule = 0;
+#endif
  globalResourceBundle.fillmod = FROM_EDGE;
  globalResourceBundle.style = SOLID;
  globalResourceBundle.fill = F_SOLID;
@@ -2101,6 +2128,20 @@ static void createEntryRC( Widget parent, int rcType) {
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
 
+#ifdef __COLOR_RULE_H__
+     case COLOR_RULE_RC:
+        n = 0;
+        XtSetArg(args[n],XmNbuttonType,buttonType); n++;
+        XtSetArg(args[n],XmNbuttons,
+                        &(xmStringValueTable[FIRST_COLOR_RULE])); n++;
+        XtSetArg(args[n],XmNbuttonCount,NUM_COLOR_RULE); n++;
+        XtSetArg(args[n],XmNsimpleCallback,
+                        (XtCallbackProc)optionMenuSimpleCallback); n++;
+        XtSetArg(args[n],XmNuserData,rcType); n++;
+        localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
+        break;
+#endif
+
      case FILLMOD_RC:
 	n = 0;
 	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
@@ -2526,6 +2567,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = FILL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2542,6 +2586,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = FILL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2560,6 +2607,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = FILL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2575,6 +2625,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = ALIGN_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLR_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2594,6 +2647,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = BCLR_RC; i++;
 /* MDA - add dynamics to Related Display at some point
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
 */
@@ -2647,6 +2703,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = STYLE_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2662,6 +2721,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = STYLE_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2678,6 +2740,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = FILL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;
@@ -2694,6 +2759,9 @@ static void initializeResourcePaletteElements() {
  resourcePaletteElements[index].childIndexRC[i] = FILL_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = LINEWIDTH_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CLRMOD_RC; i++;
+#ifdef __COLOR_RULE_H__
+ resourcePaletteElements[index].childIndexRC[i] = COLOR_RULE_RC; i++;
+#endif
  resourcePaletteElements[index].childIndexRC[i] = VIS_RC; i++;
  resourcePaletteElements[index].childIndexRC[i] = CHAN_RC; i++;
  resourcePaletteElements[index].numChildren = i;

@@ -101,6 +101,9 @@ static void createDlDynAttrMod(
 {
   dynAttr->clr = globalResourceBundle.clrmod;
   dynAttr->vis = globalResourceBundle.vis;
+#ifdef __COLOR_RULE_H__
+  dynAttr->colorRule = globalResourceBundle.colorRule;
+#endif
 }
 
 #ifdef __cplusplus

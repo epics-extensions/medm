@@ -184,7 +184,20 @@ void medmCATerminate()
   SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
                 "\ndmTerminateCA:  error removing CA's fd from X");
   /* and close channel access */
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("medmCATerminate : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
   ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
+#endif
+
 
 
   SEVCHK(ca_task_exit(),"\ndmTerminateCA: error exiting CA");
@@ -297,7 +310,19 @@ static void medmProcessCA(XtPointer, int *, XtInputId *)
 static void medmProcessCA(XtPointer dummy1, int *dummy2, XtInputId *dummy3)
 #endif
 {
-  ca_pend_event(CA_PEND_EVENT_TIME);    /* don't allow early return */
+#ifdef __MONITOR_CA_PEND_EVENT__
+  {
+    double t;
+    t = medmTime();
+    ca_pend_event(CA_PEND_EVENT_TIME);
+    t = medmTime() - t;
+    if (t > 0.5) {
+      printf("medmProcessCA : time used by ca_pend_event = %8.1f\n",t);
+    }
+  }
+#else
+  ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
 }
 
 static void medmReplaceAccessRightsEventCb(struct access_rights_handler_args args)
@@ -344,10 +369,17 @@ void medmConnectEventCb(struct connection_handler_args args) {
 		   ca_message(status));
       medmPostTime();
     }
+#ifdef __USING_TIME_STAMP__
     status = ca_add_array_event(
                  dbf_type_to_DBR_TIME(ca_field_type(pCh->chid)),
 		 ca_element_count(pCh->chid),pCh->chid,
 		 medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
+#else
+    status = ca_add_array_event(
+                 dbf_type_to_DBR_STS(ca_field_type(pCh->chid)),
+		 ca_element_count(pCh->chid),pCh->chid,
+		 medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
+#endif
     if (status != ECA_NORMAL) {
       medmPrintf("Error : connectionEventCb : ca_add_event : %s\n",
 		   ca_message(status));

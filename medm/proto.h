@@ -486,6 +486,9 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
+#ifdef __COLOR_RULE_H__
+Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
+#endif
 
 
 /* medmWidget.c */

@@ -177,6 +177,7 @@ static int calcLabelFontSize(StripChart *psc) {
       break;
     }
   }
+  if (i<0) i = 0;
   return i;
 }
 
@@ -220,6 +221,7 @@ static int calcTitleFontSize(StripChart *psc) {
       break;
     }
   }
+  if (i<0) i = 0;
   return i;
 }
 

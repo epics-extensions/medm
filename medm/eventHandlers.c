@@ -96,6 +96,7 @@ void popupMenu(
     currentColormapSize = currentDisplayInfo->dlColormapSize;
 
   }
+
 /* and always make sure the window is on top and has input focus */
   XRaiseWindow(display,XtWindow(displayInfo->shell));
   XSetInputFocus(display,XtWindow(displayInfo->shell),
@@ -109,6 +110,8 @@ void popupMenu(
 	XmMenuPosition(currentDisplayInfo->editPopupMenu,
 		(XButtonPressedEvent *)event);
 	XtManageChild(currentDisplayInfo->editPopupMenu);
+        XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
+        XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
         
      } else {
 
@@ -154,6 +157,8 @@ void popupMenu(
 		   XmMenuPosition(displayInfo->executePopupMenu,
 			(XButtonPressedEvent *)event);
 		   XtManageChild(displayInfo->executePopupMenu);
+                   XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
+                   XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
 		   break;
 	   }
 	} else {

@@ -65,6 +65,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #ifndef __MEDMCA_H__
 #define __MEDMCA_H__
 
+#undef __USING_TIME_STAMP__
 
 #ifdef ALLOCATE_STORAGE
 #define EXTERN
@@ -95,6 +96,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *** new data types
  ***/
 
+#ifdef __USING_TIME_STAMP__
 typedef union {
   struct dbr_time_string s;
   struct dbr_time_enum   e;
@@ -104,6 +106,17 @@ typedef union {
   struct dbr_time_float  f;
   struct dbr_time_double d;
 } dataBuf;
+#else
+typedef union {
+  struct dbr_sts_string s;
+  struct dbr_sts_enum   e;
+  struct dbr_sts_char   c;
+  struct dbr_sts_short  i;
+  struct dbr_sts_long   l;
+  struct dbr_sts_float  f;
+  struct dbr_sts_double d;
+} dataBuf;
+#endif
 
 typedef union {
   struct dbr_sts_string  s;

@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - using the new screen update mechanism
  * .03  09-11-95        vong    conform to c++ syntax
+ * .04  09-25-95        vong    add the primitive color rule set
  *
  *****************************************************************************
 */
@@ -131,10 +132,25 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
     drawWhiteRectangle(pa->updateTask);
 #endif
 
+#ifdef __COLOR_RULE_H__
+    switch (displayInfo->dynamicAttribute.attr.mod.clr) {
+      STATIC :
+        pa->record->monitorValueChanged = False;
+        pa->record->monitorSeverityChanged = False;
+        break;
+      ALARM :
+        pa->record->monitorValueChanged = False;
+        break;
+      DISCRETE :
+        pa->record->monitorSeverityChanged = False;
+        break;
+    }
+#else
     pa->record->monitorValueChanged = False;
     if (displayInfo->dynamicAttribute.attr.mod.clr != ALARM ) {
       pa->record->monitorSeverityChanged = False;
     }
+#endif
 
     if (displayInfo->dynamicAttribute.attr.mod.vis == V_STATIC ) {
       pa->record->monitorZeroAndNoneZeroTransition = False;
@@ -185,10 +201,22 @@ static void arcDraw(XtPointer cd) {
   if (pd->connected) {
     gcValueMask = GCForeground|GCBackground|GCLineWidth|GCLineStyle;
     switch (pa->dynAttr.clr) {
+#ifdef __COLOR_RULE_H__
+      case STATIC :
+        gcValues.foreground = displayInfo->dlColormap[pa->attr.clr];
+        break;
+      case DISCRETE:
+        gcValues.foreground = extractColor(displayInfo,
+                                  pd->value,
+                                  pa->dynAttr.colorRule,
+                                  pa->attr.clr);
+        break;
+#else
       case STATIC :
       case DISCRETE:
         gcValues.foreground = displayInfo->dlColormap[pa->attr.clr];
         break;
+#endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;

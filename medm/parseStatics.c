@@ -370,6 +370,9 @@ DlDynamicAttribute *parseDynamicAttribute(
 
 /* initialize some data in structure */
   dlDynamicAttribute->attr.mod.clr = STATIC;	/* ColorMode, actually */
+#ifdef __COLOR_RULE_H__
+  dlDynamicAttribute->attr.mod.colorRule = 0;   /* Color Rule # */
+#endif
   dlDynamicAttribute->attr.mod.vis = V_STATIC;
   dlDynamicAttribute->attr.param.chan[0] = '\0';
 
@@ -1054,7 +1057,11 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttrMod *dynAttr)
 		if (!strcmp(token,"clr")) {
 			getToken(displayInfo,token);
 			getToken(displayInfo,token);
+#ifdef __COLOR_RULE_H__
+                        if (!strcmp(token,"discrete") || !strcmp(token,"color rule"))
+#else
 			if (!strcmp(token,"discrete"))
+#endif
 				dynAttr->clr = DISCRETE;
 			else if (!strcmp(token,"static"))
 				dynAttr->clr = STATIC;
@@ -1069,7 +1076,20 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttrMod *dynAttr)
 				dynAttr->vis = IF_NOT_ZERO;
 			else if (!strcmp(token,"if zero"))
 				dynAttr->vis = IF_ZERO;
-		}
+#ifdef __COLOR_RULE_H__
+                } else if (!strcmp(token,"colorRule")) {
+                        getToken(displayInfo,token);
+                        getToken(displayInfo,token);
+                        if (!strcmp(token,"set#1"))
+                                dynAttr->colorRule = 0;
+                        else if (!strcmp(token,"set#2"))
+                                dynAttr->colorRule = 1;
+                        else if (!strcmp(token,"set#3"))
+                                dynAttr->colorRule = 2;
+                        else if (!strcmp(token,"set#4"))
+                                dynAttr->colorRule = 3;
+#endif
+                }
 		break;
 	    case T_LEFT_BRACE:
 		nestingLevel++; break;
