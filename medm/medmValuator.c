@@ -239,20 +239,22 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       /* Need to handle Direction */
 	switch (dlValuator->direction) {
 	case DOWN:
-	  /* Override */
-	    medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
-	      "Direction=\"down\" is not supported for Slider\n");
-	  /* Fallthrough */
+	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_BOTTOM); n++;
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	      - scalePopupBorder); n++;
+	    break;
 	case UP:
 	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	      - scalePopupBorder); n++;
 	    break;
 	case LEFT:
-	  /* Override */
-	    medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
-	      "Direction=\"left\" is not supported for Slider\n");
-	  /* Fallthrough */
+	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_LEFT); n++;
+	    XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
+	      - scalePopupBorder); n++;
+	    break;
 	case RIGHT:
 	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	    XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
@@ -373,19 +375,22 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     switch (dlValuator->direction) {
     case DOWN:
       /* Override */
-	medmPrintf(1,"\ncreateValuatorEditInstance: "
-	  "Direction=\"down\" is not supported for Slider\n");
-      /* Fallthrough */
+	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_BOTTOM); n++;
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	      - scalePopupBorder); n++;
+	    break;
     case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
 	  - scalePopupBorder); n++;
 	break;
     case LEFT:
-      /* Override */
-	medmPrintf(1,"\ncreateValuatorEditInstance: "
-	  "Direction=\"left\" is not supported for Slider\n");
-      /* Fallthrough */
+	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_LEFT); n++;
+	    XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
+	      - scalePopupBorder); n++;
+	    break;
     case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
 	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
@@ -653,7 +658,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     XGCValues gcValues;
     DisplayInfo *displayInfo;
     GC gc;
-    double localLopr, localHopr;
+    double lower, upper;
     char *localTitle;
     short precision;
 
@@ -669,8 +674,18 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	pr = pv->record;
 	displayInfo = pv->updateTask->displayInfo;
 	dlValuator = pv->dlElement->structure.valuator;
-	localLopr = dlValuator->limits.lopr;
-	localHopr = dlValuator->limits.hopr;
+	switch (dlValuator->direction) {
+	case RIGHT:
+	case UP:
+	    lower = dlValuator->limits.lopr;
+	    upper = dlValuator->limits.hopr;
+	    break;
+	case LEFT:
+	case DOWN:
+	    lower = dlValuator->limits.hopr;
+	    upper = dlValuator->limits.lopr;
+	    break;
+	}
 	precision = MAX(0,dlValuator->limits.prec);
 	localTitle = dlValuator->control.ctrl;
     } else {
@@ -679,8 +694,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
        *   Might be better to branch on that */
 	XtVaGetValues(w,XmNuserData,&dlValuator,NULL);
 	if(dlValuator == NULL) return;
-	localLopr = 0.0;
-	localHopr = 0.0;
+	lower = 0.0;
+	upper = 0.0;
 	precision = 0;
 	localTitle = dlValuator->control.ctrl;
 	displayInfo = dmGetDisplayInfoFromWidget(w);
@@ -727,8 +742,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	    XSetForeground(display,gc,background);
 	    XFillRectangle(display,XtWindow(w),gc,
 	      0,0,useableWidth,dlValuator->object.height);
-	  /* LOPR */
-	    cvtDoubleToString(localLopr,stringValue,precision);
+	  /* Lower */
+	    cvtDoubleToString(lower,stringValue,precision);
 	    if(stringValue != NULL) {
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
@@ -742,8 +757,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
 	    }
-	  /* HOPR */
-	    cvtDoubleToString(localHopr,stringValue,precision);
+	  /* Upper */
+	    cvtDoubleToString(upper,stringValue,precision);
 	    if(stringValue != NULL) {
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
@@ -788,8 +803,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	    XSetForeground(display,gc,background);
 	    XFillRectangle(display,XtWindow(w),gc,
 	      0,0,dlValuator->object.width,useableHeight);
-	  /* LOPR */
-	    cvtDoubleToString(localLopr,stringValue,precision);
+	  /* Lower */
+	    cvtDoubleToString(lower,stringValue,precision);
 	    if(stringValue != NULL) {
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
@@ -804,8 +819,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
 	    }
-	  /* HOPR */
-	    cvtDoubleToString(localHopr,stringValue,precision);
+	  /* Upper */
+	    cvtDoubleToString(upper,stringValue,precision);
 	    if(stringValue != NULL) {
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
