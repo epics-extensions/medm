@@ -79,13 +79,13 @@ USR_LDFLAGS += -L$(MOTIF_LIB) -L$(X11_LIB)
 ifeq ($(PURIFY),YES)
 # The following is a workaround for a Purify bug with Solaris libm.a
   UNIX_LDLIBS = /usr/lib/libm.a
-  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu
+  USR_LDLIBS +=  -lca -lCom -lXm -lXt -lX11 -lXext -lXmu
 else
-# USR_LDLIBS += -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
-# USR_LDLIBS += -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
-# USR_LDLIBS += -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu -lm
-# USR_LDLIBS += -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu
-  USR_LDLIBS += -lca -lCom -lUnix -lXm -lXext -lXmu -lXt -lX11
+# USR_LDLIBS += -lca -lCom -lXm -lXt -lX11 -lXext -lX -lm
+# USR_LDLIBS += -lca -lCom -lXm -lXt -lX11 -lXext -lm
+# USR_LDLIBS += -lca -lCom -lXm -lXt -lX11 -lXext -lXmu -lm
+# USR_LDLIBS += -lca -lCom -lXm -lXt -lX11 -lXext -lXmu
+  USR_LDLIBS += -lca -lCom -lXm -lXext -lXmu -lXt -lX11
 endif
 
 ifdef MEDM_HELP_PATH
@@ -96,7 +96,6 @@ endif
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
           $(EPICS_BASE_LIB)/libCom.a \
-          $(EPICS_EXTENSIONS_LIB)/libUnix.a \
           $(INSTALL_LIB)/libPrintUtils.a \
           $(INSTALL_LIB)/libGraphX.a
 
@@ -142,6 +141,7 @@ SRCS.c += ../medmTextUpdate.c
 SRCS.c += ../medmValuator.c
 SRCS.c += ../medmWidget.c
 SRCS.c += ../objectPalette.c
+SRCS.c += ../productDescriptionShell.c
 SRCS.c += ../resourcePalette.c
 SRCS.c += ../shared.c
 SRCS.c += ../updateMonitors.c
@@ -190,6 +190,7 @@ OBJS += medmTextUpdate.o
 OBJS += medmValuator.o
 OBJS += medmWidget.o
 OBJS += objectPalette.o
+OBJS += productDescriptionShell.o
 OBJS += resourcePalette.o
 OBJS += shared.o
 OBJS += updateMonitors.o
@@ -231,287 +232,6 @@ xrtAuth: medm
 		echo "**************************************************************";\
 	fi
 
-#
-# $Id$
-#
-# $Log$
-# Revision 1.37  1998/06/04 14:02:48  evans
-# Added handling Btn2 in handleExecuteButtonPress by calling
-# XUngrabPointer to avoid workstation hanging when Btn2 is inadvertently
-# pressed on a Related Display after the menu has been opened by a Btn1
-# click.
-#
-# Revision 1.36  1998/03/03 15:16:54  evans
-# Initial changes for WIN32.  These changes allow the medm directory to
-# build on WIN32 without warnings and errors at level 2.  There are
-# still bugs when MEDM runs.  Added Makefile.Host.
-#
-# Revision 1.35  1998/01/27 19:40:57  evans
-# Versions with debugging comments saved before adding Mark Rivers WIN32
-# changes to provide a restore point in case of problems.
-#
-# Revision 1.34  1997/10/02 19:58:43  evans
-# Commented out UNIX_OPT=NO.
-#
-# Revision 1.33  1997/10/02 19:47:11  evans
-# Version 2.3.2
-# =============
-#
-# This version is the first functional release of 2.3.  The code has
-# been significantly modified from the version Fred left.  There has
-# been a lot of cleanup and many bug fixes.  There are still fixes to be
-# made for the Related Display.  The major new features are:
-# - Help is now functional.  Help from the menus and context sensitive
-#   help uses Netscape.  Bubble help has been added to the Object Palette
-#   to identify the objects.
-# - There is a greatly expanded MEDM reference manual in both hardcopy
-#   and HTML versions.
-# - There is an Undo.
-# - New editing operations through both the mouse and the keyboard have
-#   been added.  You can now select objects that are under other objects
-#   and can resize with Ctrl-Arrow keys.
-# - An optional grid has been added for editing.  It can be toggled on
-#   and off for each display, and the spacing is adjustable.  Snap to grid
-#   has been implemented.
-# - Undo, Align, Space Evenly, Center, Size, Grid, Find Outliers,
-#   Refresh, and Edit Summary have been added to the Edit menu.
-# - You can now change the foreground and background colors
-#   simultaneously for all grouped elements.
-# - There is a new PV Info feature.
-# - There is a new Execute Menu item on the Execute-Mode Popup Menu.
-# - The Cartesian Plot has a time format for the x axis, and there are
-#   are several new user interactions, such as zoom, in EXECUTE mode.
-# - Shell commands, as well as commands on the Execute Menu, now accept
-#   special characters to include a process variable, include the name of
-#   the ADL file, or to prompt for user input.
-# - The MEDM main window, object palette, resource palette, and color
-#   palette now have fixed, default locations.  You can change these
-#   locations with resources.
-# - You no longer have to respond to the "Do you really want to Exit?"
-#   dialog box.  MEDM will still prompt you to save any unsaved files,
-#   however.
-#
-# Revision 1.32  1997/10/02 17:26:48  evans
-# Replaced obsolete XmStringCreateSimple with XmStringCreateLocalized.c.
-# Used XmStringCreateLtoR for multiple line output.
-#
-# Revision 1.31  1997/10/02 15:40:46  evans
-# Implemented snap to grid.  Rewote doRubberbanding, doPasting, doDragging,
-# and other related routines.  Fixed these routines to accept Esc as cancel
-#  and to stay within the display.  Modified EDIT menu.  Fixed error in
-# lookupCompositeChild.  Fixed logic for opening ADL files.  Fixed
-# handleTextCreate to accept CR.  Cleaned up calls to saveUndoInfo and added
-# missing ones.  Modified Makefile.Unix and site config files to support XRT
-# with or without XRT_EXTENSIONS.
-#
-# Revision 1.30  1997/09/12 18:15:42  evans
-# Deleted help_protocol.c.  Renamed help_protocol routines.  Changed routines
-# to use full pathname of ADL file instead of title.  Fixed logic for finding
-# ADL files to use directory of source display for related-display execution.
-#
-# Revision 1.29  1997/09/10 17:03:54  evans
-# Changed label for file format buttons.
-#
-# Revision 1.28  1997/09/08 21:20:39  evans
-# Redid most of the ButtonPress event handling.
-#
-# Revision 1.27  1997/08/11 18:15:36  evans
-# Changed logic for getting PV names to getting PV records.
-#
-# Revision 1.26  1997/08/07 17:37:38  evans
-# Added Execute Menu.
-#
-# Revision 1.25  1997/07/31 16:28:22  evans
-# Added routines for XRT/graph 3.0 and changed fontTable[]->fid to fontListTable[].
-#
-# Revision 1.24  1997/07/02 21:02:19  evans
-# Made many changes replated to the Cartesian Plot.
-#
-# Revision 1.23  1997/06/19 17:31:07  evans
-# Now compiles cleanly with CMPLR=STRICT.
-#
-# Revision 1.22  1997/06/10 18:46:49  evans
-# Made changes to browserHelp.c so it can be used in other programs.
-#
-# Revision 1.21  1997/06/06 21:26:04  evans
-# Eliminated string allocation logic for DlDynamicAttribute.  Allows Undo and
-# Copy to Clipboard to work.
-#
-# Revision 1.20  1997/06/06 18:56:35  evans
-# These files are the first commit of changes made since starting 2.3.0.
-# There are many changes.  Most editing capability has been restored,
-# but Undo and Copy to the clipboard are known to not work.
-#
-# Revision 1.19  1996/12/11 15:53:24  evans
-# Version 2.3.0
-# =============
-# This version is a merge of Version 2.2.9 and Fred Vong's development
-# version.  It was made just after Fred left.  The conflicts between the
-# two versions were resolved by best guess.  In addition, two bugs which
-# caused core dumps were fixed.  This version is being stored for
-# archive purposes, has not been extensively tested, and should be
-# considered to be potentially unstable.
-#
-# Revision 1.18  1996/12/04 16:23:22  vong
-# Correct the makefile.
-#
-# Revision 1.17  1996/12/03 22:26:46  vong
-# Version 2.2.9
-# =============
-# - bug fix
-#   MEDM does not read the label field for meter object in the adl file correctly.
-#
-# Revision 1.16  1996/10/10 18:24:26  vong
-# change Makefile.Unix to get medm to build under sun4 because there
-# is no libX in the /usr/lib directory.
-#
-# Revision 1.15  1996/10/10 16:17:55  vong
-# Version 2.2.5
-# =============
-# - Fix another 24 bit color bug.
-# - the image now works correctly on a 24 bit X-Server running on PC.
-# - add a new feature which contributed by desy. An extra entry in
-#   the shell menu to bring up help for that particular screen.  The
-#   help program is specified in the environment variable MEDM_HELP.
-#    Medm make a system() call with the display name as an argument.
-#
-# Revision 1.14  1996/05/14 21:00:18  vong
-# Version 2.2.0
-# =============
-# - Support a new .adl file format.
-#   - reduce the file size up to 70%
-#   - the new file format will compatible with a new Java tool developed by John
-#     Winans.
-#   - eliminate the problem of multiple defined of basic attribute and
-#     dynamic attribute for individual object in .adl file.
-# - Also support the 2.1.x file format.  By default, medm saves display in the
-#   new file format.  However, user can save display in the 2.1.x file format.
-#   To do that, bring up the "save as" file selection dialog from the file
-#   menu and select the 2.1.x file format.
-# - polygon and polyine now have a more consistence inheritence characteristic
-#   with the rest of the graphic objects.
-# - Add '0x' in front of the hexadecimal number. For hexadecimal format,
-#   the number is always treated as a unsigned long.  For example, a -1
-#   will be displayed as 0xffffffff and a 1 will be 0x1.
-# - Add <string> option to textUpdate and textEntry object. if the pv is an
-#   character waveform, MEDM will treat the character waveform as a '\0' ended
-#   character string.  The maximum size of the string is either the size
-#   of character waveform or 256 character minus the '\0' character, whichever
-#   is less.
-# - Select a printer ofter than the default one.  Pull down the file menu,
-#   select the entry <Printer Setup> and enter the printer name into the
-#   setup dialog box and press O.K.
-# - Add a command line switch -bigMousePointer to ask medm to use a bigger mouse
-#   pointer.
-#
-# Revision 1.13  1995/10/02 19:16:58  vong
-# switch it back to r1.11
-#
-# Revision 1.11  1995/09/07  14:02:13  jba
-# Portability changes.
-#
-# Revision 1.10  1995/09/06  21:42:21  vong
-# release 2.1.0
-#
-# Revision 1.9  1995/03/28  18:56:00  jba
-# Added DEPLIBS definition and made USR_LDLIBS portable.
-#
-# Revision 1.8  1995/03/07  23:03:36  vong
-# MEDM version 2.0.2
-# ------------------
-# Fixes the following bugs :
-# - MEDM does not draw the rising line and falling line correctly.
-# - MEDM crashes in execute mode if text entry is assigned to a process
-#   variable which is an ENUM type.
-#
-# Revision 1.7  1995/02/28  17:19:47  vong
-# MEDM Version 2.0.0
-# ------------------
-# - Handle Security Access of Channel Access.
-#   - Any object which does not have a read access will be indicated ba a question
-#     mark symbol.
-#   - Any object which does not have a write access will change its cursor to
-#     a prohibit symbol
-#
-# - The screen update mechanism has been rewritten, it should solve two following
-#   problems :
-#   - some objects stop updating itself.
-#   - some objects are in a wrong state when the screen first come up,
-#     but a refresh will correct the problem.
-#
-# - For consistence, the textupdate object draws a white rectangle instead of a
-#   white zero if the channel is not connected.
-#
-# - Message button sends the press message string and release string as a string
-#   if the connected process variable type is STRING or ENUM(e.g. BO, MBBO, etc.).
-#
-# - Add a convenience object palette submenu on the screen menu at 'edit' mode.
-#
-# - MEDM will ask for a confirmation if you want to exit with some files are
-#   being edited but not saved.
-#
-# - If a screen is being edited, the title of the screen will be appended with
-#   the word 'edited'.
-#
-# - News and Changes in Cartesian Plot
-#   - 'Erase' field is replaced with the 'Plot mode' field for clarify.
-#      The two choices "On" and "Off" are replaced by "plot n pts & stop"
-#      and "plot last n pts".
-#      "plot n pts & stop" - plot n points of data and then stop
-#      "plot last n pts"   - plot last n points of data
-#      where n is determineted by the value of the 'Count' field.
-#
-#   - 'Trigger Channel'
-#      If the trigger channel is assigned with a process variable,
-#      the plot won't update until a monitor is posted on that
-#      process variable.  This can be used as a sychronization.
-#
-#   - 'Erase Channel' and 'Erase Mode'
-#      The 'erase channel' allows the user dynamically to erase the
-#      graph with changing the value of the process variable assigned
-#      to the 'erase channel'. The value to erase the graph is defined
-#      by the 'erase mode' which is either 'if zero" or 'if not zero".
-#
-#   -  The undesirable first point of the plot is eliminated.
-#
-#   -  Fix the bug which medm will crash if you try to modify the
-#      fields of the 'Cartesian Plot Axis Data Dialog' after the
-#      the which contains the cartesina plot is closed.
-#
-# - If a macro substitution fails, the macro string won't be removed.  It
-#   helps to identify the failure of substituting the macro string.
-#
-# - a message window is added, now most of the MEDM message will go to
-#   the message window.
-#
-# - Incorporate the icons for the object palette from CEBAF.
-#
-# - Incorporate the byte widget from CEFAF.  The Byte widget only handles
-#   up to 16 bits.  The most significant bit and the least significant bit
-#   are defined by the start bit and end bit entries at the resource palette.
-#
-# - The Bar Graph supports the center fill option.
-#
-# Revision 1.6  1994/11/09  21:03:59  jba
-# Motif references changed to $(MOTIF_INC) and $(MOTIF_LIB)
-#
-# Revision 1.5  1994/11/02  18:40:15  vong
-# to add the the extension library path
-#
-# Revision 1.4  1994/10/25  15:51:46  winans
-# Changed the SRCS macro to SRCS.c and SRCS.cc
-#
-# Revision 1.3  1994/10/20  15:14:40  mda
-# Add support for "embedded MEDM" via libMedmInit() and libMedmImportDisplay()
-# functions, and rearranged MEDM code.
-#
-# Revision 1.2  1994/10/07  15:00:20  jba
-# Added xrtAuth rule
-#
-# Revision 1.1  1994/10/05  18:56:52  jba
-# Initial versions
-#
-#
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

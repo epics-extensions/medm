@@ -77,7 +77,7 @@ PROD = medm
 
 USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
-PROD_LIBS = GraphX ANLwidgets Unix ca Com
+PROD_LIBS = GraphX ANLwidgets ca Com
 USR_LIBS_DEFAULT = Xm Xt X11
 ifeq ($(EXCEED),Exceed5)
 USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
@@ -85,7 +85,6 @@ else
 USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
 endif
 
-Unix_DIR = $(INSTALL_LIB)
 GraphX_DIR = $(INSTALL_LIB)
 ANLwidgets_DIR = $(INSTALL_LIB)
 ca_DIR = $(EPICS_BASE_LIB)
@@ -142,7 +141,8 @@ SRCS += medmTextUpdate.c
 SRCS += medmValuator.c 
 SRCS += medmWidget.c 
 SRCS += objectPalette.c 
-SRCS += resourcePalette.c 
+SRCS += objectPalette.c 
+SRCS += productDescriptionShell.c
 SRCS += shared.c 
 SRCS += updateMonitors.c 
 SRCS += utils.c 
@@ -184,4 +184,3 @@ xrtAuth: medm
 
 xxxx:
 	@echo ca_DIR: $(ca_DIR)
-	@echo Unix_DIR: $(Unix_DIR)
