@@ -1,5 +1,11 @@
-versions 2.1.14
+Version 2.1.15
+==============
+Fixed the following problem.
+- use "save as" to save a file in a directory with no write permission.
+  Medm crashes with SIGSEGV message.
 
+Version 2.1.14
+==============
 Fixed the following problems on both solaris and SGI platform.
 - bring up MEDM without any display, selecting any object in object
   palette crashes medm.

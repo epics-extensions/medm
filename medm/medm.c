@@ -1236,6 +1236,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
   if (stream == NULL) {
     sprintf(warningString,"Fail to create/write file :\n%s",filename);
     dmSetAndPopupWarningDialog(displayInfo,warningString,"Ok",NULL,NULL);
+    return False;
   }
   dmSetDisplayFileName(displayInfo,f1);
   dmWriteDisplayList(displayInfo,stream);
