@@ -668,7 +668,11 @@ void medmPostMsg(int priority, char *format, ...) {
     }
 
   /* Also print to stderr */
+#ifdef WIN32
+    lprintf(timeStampStr);
+#else
     fprintf(stderr, timeStampStr);
+#endif    
 
   /* Start variable arguments */
     va_start(args,format);
@@ -684,7 +688,11 @@ void medmPostMsg(int priority, char *format, ...) {
     }
 
   /* Also print to stderr */
+#ifdef WIN32
+    lprintf(medmPrintfStr);
+#else
     fprintf(stderr, medmPrintfStr);
+#endif    
     va_end(args);
 }
 
@@ -710,7 +718,11 @@ void medmPrintf(int priority, char *format, ...)
     }
 
 /* Also print to stderr */
+#ifdef WIN32
+    lprintf(medmPrintfStr);
+#else
     fprintf(stderr, medmPrintfStr);
+#endif    
     va_end(args);
 }
 
@@ -1028,13 +1040,21 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
     char buf[4096];     /* Warning: Fixed Size */
     
     XGetErrorText(dpy,event->error_code,buf,BUFSIZ);
+#ifdef WIN32
+    lprintf("\n%s\n",buf);
+#else
     fprintf(stderr,"\n%s\n",buf);
+#endif    
     return 0;
 }
 
 void xtErrorHandler(char *message)
 {
+#ifdef WIN32
+    lprintf("\n%s\n",message);
+#else
     fprintf(stderr,"\n%s\n",message);
+#endif    
 }
 
 /*****************************************************************************
