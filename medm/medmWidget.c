@@ -190,31 +190,25 @@ unsigned long getPixelFromColormapByString(
 
 void medmInit(char *displayFont)
 {
+    XmFontListEntry entry;
     Arg args[10];
     int i;
     char dashList[2];
     Boolean useDefaultFont;
     char warningString[2*MAX_FILE_CHARS];
     char *sizePosition;
-
-
+    
     XmRegisterConverters();
-
-/*
- * register action table
- */
+    
 #if 0
+  /* Register action table */
     XtAppAddActions(appContext,actions,XtNumber(actions));
 #endif
-
-/*
- * register a warning handler (catch extraneous warning msgs.)
- */
+    
+  /* Register a warning handler */
     XtSetWarningHandler((XtErrorHandler)trapExtraneousWarningsHandler);
-
-/*
- * initialize alarm color array
- */
+    
+  /* Initialize alarm color array */
     alarmColorPixel[NO_ALARM]=getPixelFromColormapByString(display,screenNum,
       cmap,alarmColorString[NO_ALARM]);
     alarmColorPixel[MINOR_ALARM]=getPixelFromColormapByString(display,screenNum,
@@ -224,28 +218,18 @@ void medmInit(char *displayFont)
     alarmColorPixel[INVALID_ALARM]=getPixelFromColormapByString(display,screenNum,
       cmap,alarmColorString[INVALID_ALARM]);
 
-/*
- * initialize Channel Access 
- */
+  /* Initialize Channel Access */
     medmCAInitialize();
-
-/*
- * likewise for DisplayInfo structures list
- */
+    
+  /* Initialize DisplayInfo structures list */
     displayInfoListHead = (DisplayInfo *)malloc(sizeof(DisplayInfo));
     displayInfoListHead->next = NULL;
     displayInfoListTail = displayInfoListHead;
-
-/* this routine should be called just once, so do some initialization here */
-
-/*
- * initialize common XmStrings
- */
+    
+  /* Initialize common XmStrings */
     dlXmStringMoreToComeSymbol = XmStringCreateLocalized(MORE_TO_COME_SYMBOL);
-
-/*
- * create the highlight GC
- */
+    
+  /* Create the highlight GC */
     highlightGC = XCreateGC(display,rootWindow,0,NULL);
     XSetFunction(display,highlightGC,GXinvert);
   /* Pick a color which XOR-ing with makes reasonable sense for most colors */
@@ -260,10 +244,8 @@ void medmInit(char *displayFont)
     dashList[0] = 3;
     dashList[1] = 3;
     XSetDashes(display,highlightGC,0,dashList,2);
-
-/*
- * initialize the execute popup menu stuff for all shells
- */
+    
+/* Initialize the execute popup menu stuff for all shells */
     executePopupMenuButtonType[0] = XmPUSHBUTTON;
     executePopupMenuButtonType[1] = XmPUSHBUTTON;
     executePopupMenuButtonType[2] = XmPUSHBUTTON;
@@ -273,12 +255,10 @@ void medmInit(char *displayFont)
     executePopupMenuButtons[2] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVINFO);
     executePopupMenuButtons[3] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
-/*
- * now load font and fontList tables (but only once)
- */
+  /* Load font and fontList tables (but only once) */
     if (!strcmp(displayFont,FONT_ALIASES_STRING)) {
 
-/* use the ALIAS fonts if possible */
+      /* Use the ALIAS fonts if possible */
 	strcpy(displayFont,ALIAS_FONT_PREFIX);
 	sizePosition = strstr(displayFont,"_");
 	printf("\n%s: Loading aliased fonts.",MEDM_VERSION_STRING);
@@ -297,25 +277,25 @@ void medmInit(char *displayFont)
 		    exit(-1);
 		}
 	    }
-	  /* now load the XmFontList table for Motif font sizing */
-	    fontListTable[i] = XmFontListCreate(fontTable[i],
-	      XmSTRING_DEFAULT_CHARSET);
+	  /* Load the XmFontList table for Motif font sizing */
+	    entry = XmFontListEntryCreate(XmFONTLIST_DEFAULT_TAG, XmFONT_IS_FONT,
+	      (XtPointer)fontTable[i]);
+	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);	
+	    XmFontListEntryFree(&entry);
 	}
 
     } else {
-
-/* try using scalable font - either default or passed in one */
-
-      /* user requested default scalable, copy that name into string and proceed */
+      /* Try using scalable font - either default or passed in one */
+      /* User requested default scalable, copy that name into string and proceed */
 	if(!strcmp(displayFont,DEFAULT_SCALABLE_STRING))
 	  strcpy(displayFont,DEFAULT_SCALABLE_DISPLAY_FONT);
 
 	useDefaultFont = !isScalableFont(displayFont);
 	if (useDefaultFont) {
-	  /* this name wasn't in XLFD format */
+	  /* This name wasn't in XLFD format */
 	    medmPrintf("\nmedmInit: Invalid scalable display font selected  (Not in XLFD format)\n"
-	    "  font: %s\n"
-	    "  Using fixed font\n",displayFont);
+	      "  font: %s\n"
+	      "  Using fixed font\n",displayFont);
 	} else {
 	    printf("\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
 	}
@@ -332,12 +312,13 @@ void medmInit(char *displayFont)
 		dmTerminateX();
 		exit(-1);
 	    }
-	  /* now load the XmFontList table for Motif font sizing */
-	    fontListTable[i] = XmFontListCreate(fontTable[i],
-	      XmSTRING_DEFAULT_CHARSET);
+	  /* Load the XmFontList table for Motif font sizing */
+	    entry = XmFontListEntryCreate(XmFONTLIST_DEFAULT_TAG, XmFONT_IS_FONT,
+	      (XtPointer)fontTable[i]);
+	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);	
+	    XmFontListEntryFree(&entry);
 	}
     }
-
     printf("\n");
 }
 
