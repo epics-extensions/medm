@@ -1,3 +1,9 @@
+Version 2.2.3
+=============
+- Fix the following bug :
+	If you move or resize a composite widget by modifing the x, y, height and
+  width in the resource palette, the object will be size to zero.
+
 Version 2.2.2
 =============
 - Fix a bug which cause warning dialog box failing to release the mouse

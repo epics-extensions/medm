@@ -326,3 +326,112 @@ void writeDlComposite(
   writeDlCompositeChildren(stream,dlComposite,level+1);
   fprintf(stream,"\n%s}",indent);
 }
+
+/*
+ * recursive function to resize Composite objects (and all children, which
+ *  may be Composite objects)
+ *  N.B.  this is relative to outermost composite, not parent composite
+ */
+void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
+  DlElement *composite, float scaleX, float scaleY)
+{
+  DlElement *ele;
+  Widget widget = NULL, childWidget = NULL;
+  int deltaX, deltaY, dX, dY;
+  int j, minX, maxX, minY, maxY;
+
+
+  if (composite->type != DL_Composite) return;
+
+  ele = composite->structure.composite->dlElementListHead->next;
+  while (ele) {
+    if (ELEMENT_IS_RENDERABLE(ele->type)) {
+      /* lookup widget now, before resized */
+      if (ELEMENT_HAS_WIDGET(ele->type)) {
+        widget = lookupElementWidget(cdi,&(ele->structure.rectangle->object));
+     }
+      /* since relative resize within larger composite,
+         x/y resize is relative... */
+      if (ele->type == DL_Composite) {
+        resizeCompositeChildren(cdi, outerComposite, ele, scaleX, scaleY);
+      } else {
+        deltaX = (int) (scaleX*(ele->structure.rectangle->object.x -
+                 outerComposite->structure.composite->object.x));
+        deltaY = (int) (scaleY*(ele->structure.rectangle->object.y -
+                 outerComposite->structure.composite->object.y));
+        /* extra work for polyline/polygon - resize/rescale
+           constituent points */
+        if (ele->type == DL_Polyline ) {
+          for (j = 0; j < ele->structure.polyline->nPoints; j++) {
+            dX = (int) (scaleX*(ele->structure.polyline->points[j].x
+                 - outerComposite->structure.composite->object.x));
+            dY = (int) (scaleY*(ele->structure.polyline->points[j].y
+                 - outerComposite->structure.composite->object.y));
+            ele->structure.polyline->points[j].x = dX
+                 + outerComposite->structure.composite->object.x;
+            ele->structure.polyline->points[j].y =  dY
+                 + outerComposite->structure.composite->object.y;
+          }
+        } else
+        if (ele->type == DL_Polygon ) {
+          for (j = 0; j < ele->structure.polygon->nPoints; j++) {
+            dX = (int) (scaleX*(ele->structure.polygon->points[j].x
+                 - outerComposite->structure.composite->object.x));
+            dY = (int) (scaleY*(ele->structure.polygon->points[j].y
+                 - outerComposite->structure.composite->object.y));
+            ele->structure.polygon->points[j].x = dX
+                 + outerComposite->structure.composite->object.x;
+            ele->structure.polygon->points[j].y =  dY
+                 + outerComposite->structure.composite->object.y;
+          }
+        }
+        ele->structure.rectangle->object.x = (Position)
+          (deltaX + outerComposite->structure.composite->object.x);
+        ele->structure.rectangle->object.y = (Position)
+          (deltaY + outerComposite->structure.composite->object.y);
+        ele->structure.rectangle->object.width = (Dimension)
+          (scaleX*ele->structure.rectangle->object.width+0.5);
+        ele->structure.rectangle->object.height = (Dimension)
+          (scaleY*ele->structure.rectangle->object.height+0.5);
+      }
+
+/*
+ * Use expensive but reliable destroy-update-recreate sequence to get
+ *  resizing right.  (XtResizeWidget mostly worked here, except for
+ *  aggregate types like menu which had children which really defined
+ *  it's parent's size.)
+ * One additional advantage - this method guarantees WYSIWYG wrt fonts, etc
+ *  but only do this if in EDIT mode - for execute mode this is handled
+ *  by full re-traversal elsewhere
+ */
+      if (widget && globalDisplayListTraversalMode == DL_EDIT) {
+        /* destroy old widget */
+        destroyElementWidget(cdi,widget);
+        /* create new widget */
+        (*ele->dmExecute)(cdi,(XtPointer)ele->structure.file,FALSE);
+      }
+
+    }
+    ele = ele->next;
+  }
+
+ /* recalculate composite's dimensions/position */
+  minX = INT_MAX; minY = INT_MAX;
+  maxX = INT_MIN; maxY = INT_MIN;
+  ele =((DlElement *)composite->structure.composite->dlElementListHead)->next;
+  while (ele != NULL) {
+    if (ELEMENT_IS_RENDERABLE(ele->type)) {
+      minX = MIN(minX,ele->structure.rectangle->object.x);
+      maxX = MAX(maxX,ele->structure.rectangle->object.x +
+                (int)ele->structure.rectangle->object.width);
+      minY = MIN(minY,ele->structure.rectangle->object.y);
+      maxY = MAX(maxY,ele->structure.rectangle->object.y +
+                (int)ele->structure.rectangle->object.height);
+    }
+    ele = ele->next;
+  }
+  composite->structure.composite->object.x = minX;
+  composite->structure.composite->object.y = minY;
+  composite->structure.composite->object.width = maxX - minX;
+  composite->structure.composite->object.height = maxY - minY;
+}

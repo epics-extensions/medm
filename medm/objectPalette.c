@@ -1340,8 +1340,6 @@ void updateElementFromGlobalResourceBundle(
   DlElement *basic, *newBasic, *dyn;
   int i, j;
   int xOffset = 0, yOffset = 0, deltaWidth = 0, deltaHeight = 0;
-  float sX, sY;
-  Boolean moveWidgets;
   int minX, minY, maxX, maxY;
 
   /* simply return if not valid to update */
@@ -1599,23 +1597,22 @@ void updateElementFromGlobalResourceBundle(
       float xScale, yScale;
 
       updateElementObjectAttribute(&(p->object));
-      if (memcmp(&(p->object),&obj,sizeof(DlObject))) {
+      if (p->object.x != obj.x ||
+          p->object.y != obj.y) {
         xOffset = p->object.x - obj.x; 
         yOffset = p->object.y - obj.y;
-        xScale = (obj.width > 0) ?
+        moveCompositeChildren(currentDisplayInfo,elementPtr,
+                                xOffset,yOffset,True);
+      }
+      if (p->object.width != obj.width ||
+          p->object.height != obj.height) {
+        float sX, sY;
+        sX = (obj.width > 0) ?
                ((float)p->object.width / (float)obj.width) : 1;
-        yScale = (obj.height > 0) ?
+        sY = (obj.height > 0) ?
                ((float)p->object.height / (float)obj.height) : 1;
-
-        moveWidgets = True;
-        if (xOffset != 0 || yOffset != 0) {
-	   moveCompositeChildren(currentDisplayInfo,elementPtr,
-              xOffset,yOffset,moveWidgets);
-        }
-        if (xScale != 1.0 || deltaHeight != 1.0) {
-	 resizeCompositeChildren(currentDisplayInfo,elementPtr,
-			elementPtr,sX,sY);
-        }
+        resizeCompositeChildren(currentDisplayInfo,elementPtr,
+                                  elementPtr,sX,sY);
       }
       p->vis = globalResourceBundle.vis;
       strcpy(p->chan,globalResourceBundle.chan);
