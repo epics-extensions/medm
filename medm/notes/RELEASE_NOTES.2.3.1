@@ -1,0 +1,141 @@
+MEDM Release Notes
+
+Version 2.3.1
+=============
+- The same as Version 2.3.0 except:
+-   The .c and .h files have been reformatted.
+-   The copyright header has been updated.
+-   Old, out-of-date, modification data has been removed.
+- Fixed prototypes to eliminate compiler warnings in medmCommon.c.
+
+Version 2.3.0
+=============
+- Fred Vong's development version when he left merged with 2.2.9
+- Fix the following bugs :
+  - clipboard does not delete composite object correctly.
+  - parse rising line and falling line broke.
+  - composite object fails to free points array of polyline and polygon.
+  - time unit for cartesian plot
+    - assume all the time values come in order.
+  
+Version 2.2.9
+=============
+- bug fix
+  MEDM does not read the label field for meter object in the adl file correctly.
+
+Version 2.2.8
+=============
+- the arc graphic object will display the correct color.
+
+Version 2.2.7
+=============
+- Fix the bug introduced by 2.2.6.
+  - it crashes medm when bring up the "SAVE AS" dialog.
+
+Version 2.2.6
+=============
+- Fix two bugs.
+  - After using "save as" to save file, the file won't appear in the
+    file selection list in the file dialog box.
+  - The 2.2.x and 2.1.x buttons does not indicate the current selected file
+    format correctly.
+
+Version 2.2.5
+=============
+- Fix another 24 bit color bug.
+- the image now works correctly on a 24 bit X-Server running on PC.
+- add a new feature which contributed by desy. An extra entry in
+  the shell menu to bring up help for that particular screen.  The 
+  help program is specified in the environment variable MEDM_HELP.
+   Medm make a system() call with the display name as an argument.
+
+Version 2.2.4
+=============
+- Fix the following bugs :
+  Loading the second or any additional displays causes MEDM to add extra
+  entries on relatedDisplay, shellCommand, strip chart and cartesian Plot.
+
+>>>>>>> 1.14
+Version 2.2.3
+=============
+- Fix the following bug :
+  If you move or resize a composite widget by modifing the x, y, height and
+  width in the resource palette, the object will be size to zero.
+
+Version 2.2.2
+=============
+- Fix a bug which cause warning dialog box failing to release the mouse
+  after being closed by user.  This only happens under Open Window Manager.
+
+Version 2.2.1
+=============
+- Fix a bug which causes MEDM to crash. The problem is related to an 
+  uninitialized pointer of composite widget.
+
+Version 2.2.0
+=============
+- Support a new .adl file format.
+  - reduce the file size up to 70%
+  - the new file format will compatible with a new Java tool developed by John
+    Winans.
+  - eliminate the problem of multiple defined of basic attribute and
+    dynamic attribute for individual object in .adl file.
+- Also support the 2.1.x file format.  By default, medm saves display in the
+  new file format.  However, user can save display in the 2.1.x file format.
+  To do that, bring up the "save as" file selection dialog from the file
+  menu and select the 2.1.x file format.
+- polygon and polyine now have a more consistence inheritence characteristic
+  with the rest of the graphic objects.
+- Add '0x' in front of the hexadecimal number. For hexadecimal format,
+  the number is always treated as a unsigned long.  For example, a -1
+  will be displayed as 0xffffffff and a 1 will be 0x1.
+- Add <string> option to textUpdate and textEntry object. if the pv is an
+  character waveform, MEDM will treat the character waveform as a '\0' ended
+  character string.  The maximum size of the string is either the size
+  of character waveform or 256 character minus the '\0' character, whichever
+  is less.
+- Select a printer ofter than the default one.  Pull down the file menu,
+  select the entry <Printer Setup> and enter the printer name into the
+  setup dialog box and press O.K.
+- Add a command line switch -bigMousePointer to ask medm to use a bigger mouse
+  pointer.
+
+
+Version 2.1.17
+==============
+Fixed the following problem.
+- Remove one of the two limits of how many related display buttons you can
+  create. However, there is still a limit of how many controllers and monitors
+  (except text update) you can create.  The limit is 1000. If the limit
+  is execeeded, the medm eventually crashes itself.  This will be fixed
+  in 2.2.x and the number of objects will be constrainted by how much
+  memory is available.
+
+Version 2.1.16
+==============
+Fixed the following problem.
+- Passing a macro substitution string from one related display to
+  another related display with unresolved variable(s) crashes medm.
+
+  e.g.
+
+    1. 33id.adl calls f1.adl with parameters P=id,In=inputCard0
+    2. f1.adl calls f1_calib.adl with parameters P=$(P),In=$(In),Out=$(Out)
+    3. medm quits with a core dump since $(Out) is not defined in f1.adl
+
+
+Version 2.1.15
+==============
+Fixed the following problem.
+- use "save as" to save a file in a directory with no write permission.
+  Medm crashes with SIGSEGV message.
+
+Version 2.1.14
+==============
+Fixed the following problems on both solaris and SGI platform.
+- bring up MEDM without any display, selecting any object in object
+  palette crashes medm.
+- toggle back to edit mode, selecting any object in object palette
+  crashes medm.
+- close all displays, selecting any object in object palette crashes
+  medm.
