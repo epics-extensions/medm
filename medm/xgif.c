@@ -9,6 +9,7 @@
  *		MAJOR MODIFICATIONS to make this sensible.
  *		be careful about running on non-32-bit machines
  *   09-13-95   vong  conform to c++ syntax
+ *   02-29-96   vong  support 16 and 32 bits graphics machine
  */
 
 
@@ -98,12 +99,21 @@ Boolean initializeGIF(
        XSetForeground(display,gif->theGC,gif->bcol);
        XFillRectangle(display,XtWindow(displayInfo->drawingArea),
 			gif->theGC,x,y,w,h);
+#if 1
        XPutImage(display,XtWindow(displayInfo->drawingArea),
 			gif->theGC,gif->expImage,
 			0,0,x,y,w,h);
        XPutImage(display,displayInfo->drawingAreaPixmap,
 			gif->theGC,gif->expImage,
 			0,0,x,y,w,h);
+#else
+       XPutImage(display,XtWindow(displayInfo->drawingArea),
+			gif->theGC,gif->theImage,
+			0,0,x,y,w,h);
+       XPutImage(display,displayInfo->drawingAreaPixmap,
+			gif->theGC,gif->theImage,
+			0,0,x,y,w,h);
+#endif
        XSetForeground(display,gif->theGC,gif->fcol);
     }
     return(True);
@@ -147,8 +157,6 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
   GIFData *gif;
   unsigned int w,h;
 
-  int  ix,iy,ex,ey;
-  Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
   static char *rstr = "Resizing Image.  Please wait...";
 
     /* warning:  this code'll only run machines where int=32-bits */
@@ -189,38 +197,100 @@ void resizeGIF(DisplayInfo *displayInfo,DlImage *dlImage)
         /* create gif->expImage of the appropriate size */
         
         gif->eWIDE = w;  gif->eHIGH = h;
-        ximag = (Byte *) malloc(w*h);
-        gif->expImage = XCreateImage(display,gif->theVisual,8,ZPixmap,
+
+       switch (DefaultDepth(display,screenNum)) {
+         case 8 : {
+           int  ix,iy,ex,ey;
+           Byte *ximag,*ilptr,*ipptr,*elptr,*epptr;
+
+           ximag = (Byte *) malloc(w*h);
+           gif->expImage = XCreateImage(display,gif->theVisual,
+                        DefaultDepth(display,screenNum),ZPixmap,
 			0,(char *)ximag, gif->eWIDE,gif->eHIGH,8,gif->eWIDE);
 
-        if (!ximag || !gif->expImage) {
-            fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",w,h);
-            exit(-1);
-            }
+           if (!ximag || !gif->expImage) {
+             fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",
+                     w,h);
+             exit(-1);
+           }
 
-        elptr = epptr = (Byte *) gif->expImage->data;
+           elptr = epptr = (Byte *) gif->expImage->data;
 
-        for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
-            iy = (gif->iHIGH * ey) / gif->eHIGH;
-            epptr = elptr;
-            ilptr = (Byte *) gif->theImage->data + (iy * gif->iWIDE);
-            for (ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
-                ix = (gif->iWIDE * ex) / gif->eWIDE;
-                ipptr = ilptr + ix;
-                *epptr = *ipptr;
-                }
-            }
-        }
+           for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
+             iy = (gif->iHIGH * ey) / gif->eHIGH;
+             epptr = elptr;
+             ilptr = (Byte *) gif->theImage->data + (iy * gif->iWIDE);
+             for (ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
+               ix = (gif->iWIDE * ex) / gif->eWIDE;
+               ipptr = ilptr + ix;
+               *epptr = *ipptr;
+             }
+           }
+           break;
+         }
+         case 16 : {
+           int  ix,iy,ex,ey;
+           unsigned short *ximag,*ilptr,*ipptr,*elptr,*epptr;
+
+           ximag = (unsigned short *) malloc(w*h*2);
+           gif->expImage = XCreateImage(display,gif->theVisual,
+                        DefaultDepth(display,screenNum),ZPixmap,
+			0,(char *)ximag, gif->eWIDE,gif->eHIGH,16,
+                        gif->eWIDE*2);
+
+           if (!ximag || !gif->expImage) {
+             fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",
+                     w,h);
+             exit(-1);
+           }
+
+           elptr = epptr = (unsigned short *) gif->expImage->data;
+
+           for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
+             iy = (gif->iHIGH * ey) / gif->eHIGH;
+             epptr = elptr;
+             ilptr = (unsigned short *) gif->theImage->data + (iy * gif->iWIDE);
+             for (ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
+               ix = (gif->iWIDE * ex) / gif->eWIDE;
+               ipptr = ilptr + ix;
+               *epptr = *ipptr;
+             }
+           }
+           break;
+         }
+         case 24 : {
+           int ix,iy,ex,ey;
+           Pixel *ximag,*ilptr,*ipptr,*elptr,*epptr;
+
+           ximag = (Pixel *) malloc(w*h*4);
+           gif->expImage = XCreateImage(display,gif->theVisual,
+                        DefaultDepth(display,screenNum),ZPixmap,
+			0,(char *)ximag, gif->eWIDE,gif->eHIGH,24,
+                        gif->eWIDE*4);
+
+           if (!ximag || !gif->expImage) {
+             fprintf(stderr,"\nresizeGIF: unable to create a %dx%d image\n",
+                     w,h);
+             exit(-1);
+           }
+
+           elptr = epptr = (Pixel *) gif->expImage->data;
+           for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
+             iy = (gif->iHIGH * ey) / gif->eHIGH;
+             epptr = elptr;
+             ilptr = (Pixel *) gif->theImage->data + (iy * gif->iWIDE);
+             for (ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
+               ix = (gif->iWIDE * ex) / gif->eWIDE;
+               ipptr = ilptr + ix;
+               *epptr = *ipptr;
+             }
+           }
+           break;
+         }
+       }
+   }
 }
                 
-
-
-
-
-
-
-
-
 /*
  *  xgifload.c contents
  */
@@ -255,7 +325,9 @@ int BitOffset,			/* Bit Offset of next code */
     FreeCode,			/* Decompressor, next free slot in hash table */
     FinChar,			/* Decompressor variable */
     BitMask,			/* AND mask for data size */
-    ReadMask;			/* Code AND mask for current code size */
+    ReadMask,			/* Code AND mask for current code size */
+    BytesOffsetPerPixel,        /* Bytes offset per pixel */   
+    ScreenDepth;                /* Bits per Pixel */
 
 Boolean Interlace, HasColormap;
 Boolean verbose = False;
@@ -309,6 +381,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     YC = 0;
     Pass = 0;
     OutCount = 0;
+    ScreenDepth = DefaultDepth(display,screenNum);
 
 
     if (strcmp(fname,"-")==0) {
@@ -337,9 +410,9 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     }
 
     /* find the size of the file */
-    fseek(fp, 0L, 2);
+    fseek(fp, 0L, SEEK_END);
     filesize = (int) ftell(fp);
-    fseek(fp, 0L, 0);
+    fseek(fp, 0L, SEEK_SET);
     success = True;
 
     if (!(ptr = RawGIF = (Byte *) malloc(filesize))) {
@@ -569,20 +642,48 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
 
 /* Allocate the X Image */
-    Image = (Byte *) malloc(Width*Height);
-    if (!Image) {
-	fprintf(stderr,"loadGIF: not enough memory for XImage");
-	return(False);
-    }
-
-    gif->theImage = XCreateImage(display,gif->theVisual,8,ZPixmap,0,
+    switch (ScreenDepth) {
+      case 8 :
+        Image = (Byte *) malloc(Width*Height);
+        if (!Image) {
+	  fprintf(stderr,"loadGIF: not enough memory for XImage");
+	  return(False);
+        }
+        gif->theImage = XCreateImage(display,gif->theVisual,
+                        ScreenDepth,ZPixmap,0,
 			(char*)Image,Width,Height,8,Width);
+        BytesOffsetPerPixel = 1;
+        break;
+      case 16 :
+        Image = (Byte *) malloc(sizeof(char)*2*Width*Height);
+        if (!Image) {
+	  fprintf(stderr,"loadGIF: not enough memory for XImage");
+	  return(False);
+        }
+        gif->theImage = XCreateImage(display,gif->theVisual,
+                        ScreenDepth,ZPixmap,0,
+			(char*)Image,Width,Height,16,Width*2);
+        BytesOffsetPerPixel = 2;
+        break;
+      case 24 :
+        Image = (Byte *) malloc(sizeof(char)*4*Width*Height);
+        if (!Image) {
+	  fprintf(stderr,"loadGIF: not enough memory for XImage");
+	  return(False);
+        }
+        gif->theImage = XCreateImage(display,gif->theVisual,
+                        ScreenDepth,ZPixmap,0,
+			(char*)Image,Width,Height,32,Width*4);
+        BytesOffsetPerPixel = 4;
+        break;
+    }
+    BytesPerScanline = Width*BytesOffsetPerPixel;
+
     if (!gif->theImage) {
 	fprintf(stderr,"loadGIF: unable to create XImage");
 	return(False);
     }
 
-    BytesPerScanline = Width;
 
 
 /* Decompress the file, continuing until you see the GIF EOF code.
@@ -705,11 +806,25 @@ int RawCode, ByteOffset;
 
 void AddToPixel(GIFData *gif, Byte Index)
 {
-    *(Image + YC * BytesPerScanline + XC) = (unsigned char)gif->cols[Index&(gif->numcols-1)];
+  switch (ScreenDepth) {
+    case 8 :
+       *(Image + YC * BytesPerScanline + XC) =
+                (unsigned char)gif->cols[Index&(gif->numcols-1)];
+       break;
+    case 16 :
+       *((unsigned short *)(Image + YC * BytesPerScanline + XC)) =
+                (unsigned short)gif->cols[Index&(gif->numcols-1)];
+       break;
+    case 24 :
+       *((Pixel *)(Image + YC * BytesPerScanline + XC)) =
+                                gif->cols[Index&(gif->numcols-1)];
+       break;
+  }
 
 /* Update the X-coordinate, and if it overflows, update the Y-coordinate */
 
-    if (++XC == Width) {
+    XC = XC + BytesOffsetPerPixel;
+    if (XC >= BytesPerScanline) {
 
 /* If a non-interlaced picture, just increment YC to the next scan line. 
  * If it's interlaced, deal with the interlace as described in the GIF
