@@ -46,7 +46,7 @@ endif     #ifdef XRTGRAPH
 
 # Set up for SciPLot
 ifdef SCIPLOT
-  USR_CFLAGS += -DSCIPLOT
+  USR_CFLAGS += -DSCIPLOT -DMOTIF
   SRCS += medmCartesianPlot.c 
   SRCS += medmSciPlot.c 
   SRCS += SciPlot.c 

@@ -656,6 +656,7 @@ void dumpCartesianPlot(Widget w)
     Dimension height;
     Dimension width;
     Dimension borderWidth;
+    Dimension shadowThickness;
     int defaultMarkerSize;
     int margin;
     int titleMargin;
@@ -684,6 +685,7 @@ void dumpCartesianPlot(Widget w)
     XtSetArg(args[n],XtNheight,&height); n++;
     XtSetArg(args[n],XtNdefaultMarkerSize,&defaultMarkerSize); n++;
     XtSetArg(args[n],XtNborderWidth,&borderWidth); n++;
+    XtSetArg(args[n],XmNshadowThickness,&shadowThickness); n++;
     XtSetArg(args[n],XtNtitleMargin,&titleMargin); n++;
     XtSetArg(args[n],XtNmargin,&margin); n++;
     XtSetArg(args[n],XtNdrawMajor,&drawMajor); n++;
@@ -713,6 +715,7 @@ void dumpCartesianPlot(Widget w)
     print("  height: %d\n",height);
     print("  defaultMarkerSize: %d\n",defaultMarkerSize);
     print("  borderWidth: %d\n",borderWidth);
+    print("  shadowThickness: %d\n",shadowThickness);
     print("  margin: %d\n",margin);
     print("  titleMargin: %d\n",titleMargin);
     print("  drawMajor: %s\n",drawMajor?"True":"False");

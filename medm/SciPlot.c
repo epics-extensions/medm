@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
+#ifdef MOTIF
+#include <Xm/Xm.h>
+#endif
 
 #include <stdio.h>
 
@@ -179,14 +182,17 @@ static int FontnumReplace (SciPlotWidget w, int fontnum, int flag);
 
 /* translation manager routines */
 static void sciPlotMotionAP (SciPlotWidget w, 
-			     XEvent *event, char *args, int n_args);
+  XEvent *event, char *args, int n_args);
 static void sciPlotBtnUpAP (SciPlotWidget w, 
-			    XEvent *event, char *args, int n_args);
+  XEvent *event, char *args, int n_args);
 static void sciPlotClick (SciPlotWidget w, 
-			  XEvent *event, char *args, int n_args);
+  XEvent *event, char *args, int n_args);
 static void sciPlotTrackPointer (SciPlotWidget w, 
-				 XEvent *event, char *args, int n_args);
+  XEvent *event, char *args, int n_args);
 
+/* KE: */
+static void DrawShadows (SciPlotWidget w, Boolean raised, real x, real y,
+  real width, real height);
 
 static char sciPlotTranslations[] = 
 #ifndef _MEDM
@@ -261,7 +267,7 @@ SciPlotClassRec sciplotClassRec =
     /* border_highlight         */ (XtWidgetProc) _XtInherit,
     /* border_unhighligh        */ (XtWidgetProc) _XtInherit,
     /* translations             */ XtInheritTranslations,
-    /* arm_and_activate         */ (XtWidgetProc) _XtInherit,
+    /* arm_and_activate         */ (XtActionProc) _XtInherit,
     /* syn_resources            */ NULL,
     /* num_syn_resources        */ 0,
     /* extension                */ NULL
@@ -319,7 +325,7 @@ Initialize(Widget treq, Widget tnew, ArgList args, Cardinal *num)
   new->plot.labelFont = FontStore(new, new->plot.LabelFont);
   new->plot.axisFont = FontStore(new, new->plot.AxisFont);
 
-  /* set initial drag state to darg_none */
+  /* set initial drag state to drag_none */
   new->plot.drag_state = NOT_DRAGGING;
   new->plot.drag_start.x = 0.0;
   new->plot.drag_start.y = 0.0;
@@ -345,6 +351,14 @@ GCInitialize(SciPlotWidget new)
   new->plot.BackgroundColor = ColorStore(new, values.background);
 #ifdef MOTIF
   new->core.background_pixel = values.background;
+  {
+    Pixel fg, select, shade1, shade2;
+    
+    XmGetColors(XtScreen(new), new->core.colormap,
+      new->core.background_pixel, &fg, &shade1, &shade2, &select);
+    new->plot.ShadowColor1 = ColorStore(new, shade1);
+    new->plot.ShadowColor2 = ColorStore(new, shade2);
+  }
 #endif
   values.foreground = colorsave = BlackPixelOfScreen(XtScreen(new));
   new->plot.ForegroundColor = ColorStore(new, values.foreground);
@@ -4320,6 +4334,11 @@ DrawPolarPlot (SciPlotWidget w)
 static void 
 DrawAll (SciPlotWidget w)
 {
+#ifdef MOTIF
+  if(w->primitive.shadow_thickness > 0) {
+    DrawShadows(w, True, 0, 0, w->core.width, w->core.height);
+  }
+#endif  
   if (w->plot.ChartType == XtCARTESIAN) {
     DrawCartesianAxes(w, DRAW_ALL);
     DrawLegend(w);
@@ -4425,6 +4444,17 @@ SciPlotSetBackgroundColor (Widget wi, int color)
     w->plot.BackgroundColor = color;
     w->core.background_pixel = w->plot.colors[color];
     XSetWindowBackground( XtDisplay(w), XtWindow(w), w->core.background_pixel);
+#ifdef MOTIF
+  /* Redefine the shadow colors */
+    {
+      Pixel fg, select, shade1, shade2;
+      
+      XmGetColors(XtScreen(w), w->core.colormap,
+	w->core.background_pixel, &fg, &shade1, &shade2, &select);
+      w->plot.ShadowColor1 = ColorStore(w, shade1);
+      w->plot.ShadowColor2 = ColorStore(w, shade2);
+    }
+#endif
   }
 }
 
@@ -5795,44 +5825,80 @@ SciPlotXDrawingRange (Widget wi, float xmin, float xmax,
 
 /* KE: Added routines */
 
-void SciPlotGetXAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+void
+SciPlotGetXAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
   Boolean *isAuto)
 {
-    SciPlotWidget w;
-    
-    if (!XtIsSciPlot(wi))
-      return;
-    
-    w = (SciPlotWidget)wi;
-    *isLog = w->plot.XLog;
-    if (w->plot.XAutoScale) {
-	*min = w->plot.Min.x;
-	*max = w->plot.Max.x;
-	*isAuto = True;
-    } else {
-	*min = w->plot.UserMin.x;
-	*max = w->plot.UserMax.x;
-	*isAuto = False;
-    }
+  SciPlotWidget w;
+  
+  if (!XtIsSciPlot(wi))
+    return;
+  
+  w = (SciPlotWidget)wi;
+  *isLog = w->plot.XLog;
+  if (w->plot.XAutoScale) {
+    *min = w->plot.Min.x;
+    *max = w->plot.Max.x;
+    *isAuto = True;
+  } else {
+    *min = w->plot.UserMin.x;
+    *max = w->plot.UserMax.x;
+    *isAuto = False;
+  }
 }
 
-void SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+void
+SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
   Boolean *isAuto)
 {
-    SciPlotWidget w;
-    
-    if (!XtIsSciPlot(wi))
-      return;
-    
-    w = (SciPlotWidget)wi;
-    *isLog = w->plot.YLog;
-    if (w->plot.YAutoScale) {
-	*min = w->plot.Min.y;
-	*max = w->plot.Max.y;
-	*isAuto = True;
-    } else {
-	*min = w->plot.UserMin.y;
-	*max = w->plot.UserMax.y;
-	*isAuto = False;
-    }
+  SciPlotWidget w;
+  
+  if (!XtIsSciPlot(wi))
+    return;
+  
+  w = (SciPlotWidget)wi;
+  *isLog = w->plot.YLog;
+  if (w->plot.YAutoScale) {
+    *min = w->plot.Min.y;
+    *max = w->plot.Max.y;
+    *isAuto = True;
+  } else {
+    *min = w->plot.UserMin.y;
+    *max = w->plot.UserMax.y;
+    *isAuto = False;
+  }
 }
+
+#ifdef MOTIF
+static void 
+DrawShadows (SciPlotWidget w, Boolean raised, real x, real y,
+  real width, real height)
+{
+  int i, color1, color2, color;
+  
+  if(w->primitive.shadow_thickness <= 0) return;
+  
+  w->plot.current_id = SciPlotDrawingShadows;
+  
+/* Reduce the height and width by 1 for the algorithm */
+  if(height > 0) height--;
+  if(width > 0) width--;
+  
+  color1 = w->plot.ShadowColor1;
+  color2 = w->plot.ShadowColor2;
+  
+  for (i = 0; i < w->primitive.shadow_thickness; i++) {
+    color = raised ? color1 : color2;
+    LineSet(w, x+i, y+i, x+i, y+height-i, color, XtLINE_SOLID);
+    LineSet(w, x+i, y+i, x+width-i, y+i, color, XtLINE_SOLID);
+    
+    color = raised ? color2 : color1;
+    LineSet(w, x+i, y+height-i, x+width-i, y+height-i, color, XtLINE_SOLID);
+    LineSet(w, x+width-i, y+i, x+width-i, y+height-i,color, XtLINE_SOLID);
+  }
+}
+#endif
+/* **************************** Emacs Editing Sequences ***************** */
+/* Local Variables: */
+/* c-basic-offset: 2 */
+/* End: */

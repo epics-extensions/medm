@@ -90,6 +90,7 @@ typedef enum {
 
 typedef enum {
   SciPlotDrawingAny,
+  SciPlotDrawingShadows,
   SciPlotDrawingPAxis,
   SciPlotDrawingXAxis,
   SciPlotDrawingXMajorMinor,
@@ -242,6 +243,11 @@ typedef struct {
   int BackgroundColor;
   int ForegroundColor;
 
+#ifdef MOTIF  
+  int ShadowColor1;
+  int ShadowColor2;
+#endif  
+
   /*   Fixed X left & right space */
   Boolean XFixedLR;
   int     XLeftSpace;
@@ -290,7 +296,7 @@ typedef struct {
   /* KE: */
   XtPointer UserData;            /* user data */
 } SciPlotPart;
-
+  
 typedef struct _SciPlotRec {
   CorePart core;
 #ifdef MOTIF
@@ -304,3 +310,9 @@ typedef struct _SciPlotRec {
 #endif
 
 #endif /* _SCIPLOTP_H */
+
+/* **************************** Emacs Editing Sequences ***************** */
+/* Local Variables: */
+/* c-basic-offset: 2 */
+/* End: */
+

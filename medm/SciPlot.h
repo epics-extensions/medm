@@ -299,3 +299,8 @@ void SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
 #endif
 
 #endif /* _SCIPLOT_H */
+
+/* **************************** Emacs Editing Sequences ***************** */
+/* Local Variables: */
+/* c-basic-offset: 2 */
+/* End: */

@@ -3,11 +3,6 @@
 #ifndef __MEDMSCIPLOT_H__
 #define __MEDMSCIPLOT_H__
 
-/* SciPlot needs MOTIF defined */
-#ifndef MOTIF
-#define MOTIF
-#endif
-
 #include <SciPlot.h>
 
 #define CP_GENERAL 0
