@@ -2729,7 +2729,7 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
 	}
 	return;
     case SC_HELP_BTN:
-	callBrowser(medmHelpPath,"#StripChartDialogBox");
+	callBrowser(medmHelpPath,"#StripChartDataDialog");
 	return;
     }
     

@@ -71,6 +71,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_DISPOSAL 0
 #define DEBUG_DISPOSAL_FILE 0
 #define DEBUG_CODES 0
+#define DEBUG_OPEN 0
 
 /* include files */
 #include <string.h>
@@ -760,13 +761,47 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #ifdef WIN32
       /* WIN32 opens files in text mode by default and then throws out CRLF */
 	fp=fopen(fname,"rb");
+#if DEBUG_OPEN
+	print("loadGIF: fopen(1): fp=%x |%s|\n",fp,fname);
+#endif	
 #else
 	fp=fopen(fname,"r");
 #endif
     }
 
-  /* Try to get a valid GIF file somewhere. If not in the current
-   * directory, look in EPICS_DISPLAY_PATH directories */
+  /* If not found and the name starts with / or . then we can do no more */
+    if(fp == NULL && (fname[0] == MEDM_DIR_DELIMITER_CHAR || fname[0] == '.')) {
+	medmPrintf(1,"\nloadGIF: Cannot open file:\n"
+	  "  %s\n",fname);
+	goto CLEANUP;
+    }
+
+  /* If not found yet, use path of ADL file */
+    if(fp == NULL && displayInfo && displayInfo->dlFile &&
+      displayInfo->dlFile->name) {
+	char *stringPtr;
+	
+	strncpy(fullPathName, displayInfo->dlFile->name, MAX_DIR_LENGTH);
+	fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	if(fullPathName && fullPathName[0]) {
+	    stringPtr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
+	    if(stringPtr) {
+		*(++stringPtr) = '\0';
+		strcat(fullPathName, fname);
+#ifdef WIN32
+	      /* WIN32 opens files in text mode by default and then throws out CRLF */
+		fp=fopen(fullPathName,"rb");
+#if DEBUG_OPEN
+		print("loadGIF: fopen(2): fp=%x |%s|\n",fp,fullPathName);
+#endif	
+#else
+		fp=fopen(fullPathName,"r");
+#endif
+	    }
+	}
+    }
+
+  /* If not found yet, look in EPICS_DISPLAY_PATH directories */
     if(fp == NULL) {
 	dir=getenv("EPICS_DISPLAY_PATH");
 	if(dir != NULL) {
@@ -779,6 +814,9 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 #ifdef WIN32
 	      /* WIN32 opens files in text mode by default and then throws out CRLF */
 		fp=fopen(fullPathName,"rb");
+#if DEBUG_OPEN
+	print("loadGIF: fopen(3): fp=%x |%s|\n",fp,fullPathName);
+#endif	
 #else
 		fp=fopen(fullPathName,"r");
 #endif

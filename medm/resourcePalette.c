@@ -1411,15 +1411,16 @@ static void createResourceEntries(Widget entriesSW)
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
 	      XmNmaxLength,(int)MAX_TOKEN_LENGTH-1,NULL);
-	} else if(i == i == VIS_CALC_RC || IMAGE_CALC_RC) {
+	} else if(i == VIS_CALC_RC || i == IMAGE_CALC_RC) {
 	  /* calc in calcRecord is limited to 40 characters including NULL */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
 	      XmNmaxLength,(int)39,NULL);
 	} else if(i == MSG_LABEL_RC || i == PRESS_MSG_RC
 	  || i == RELEASE_MSG_RC || i == TEXTIX_RC
-	  || i == TITLE_RC || i == XLABEL_RC || i == YLABEL_RC) {
-	  /* Use size of CA PV name entry for other text-oriented fields */
+	  || i == TITLE_RC || i == XLABEL_RC || i == YLABEL_RC
+	  || i == IMAGE_NAME_RC) {
+	  /* Use size of CA PV name entry for these text-oriented fields */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),NULL);
 	}
