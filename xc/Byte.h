@@ -28,7 +28,7 @@ typedef struct _ByteRec *ByteWidget;
 
 /****** Widget functions */
 extern void XcBYUpdateValue();
-extern void XcBYUpdateBarForeground();
+extern void XcBYUpdateByteForeground();
 
 #endif
 
