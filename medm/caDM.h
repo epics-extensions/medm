@@ -27,7 +27,7 @@
 	
 
 
-#define CA_PEND_EVENT_TIME	0.01			/* formerly 0.0001    */
+#define CA_PEND_EVENT_TIME	1e-6			/* formerly 0.0001    */
 #define MAX_STATE_STRING_SIZE	(db_state_text_dim+1)	/* from db_access.h   */
 				/* also have MAX_STRING_SIZE from db_access.h */
 

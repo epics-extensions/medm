@@ -726,7 +726,7 @@ static XtTimerCallbackProc caHeartBeat(XtPointer dummy)
   ca_pend_event(CA_PEND_EVENT_TIME);	/* need this rather than ca_pend_io */
 
 /* reregister 2 second TimeOut function to handle lost connections, etc */
-  XtAppAddTimeOut(appContext,2000,(XtTimerCallbackProc)caHeartBeat,NULL);
+  XtAppAddTimeOut(appContext,100,(XtTimerCallbackProc)caHeartBeat,NULL);
 }
 
 

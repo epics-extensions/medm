@@ -265,8 +265,7 @@ void processMonitorConnectionEvent(struct connection_handler_args args)
 	  data->modified = PRIMARY_MODIFIED;
   } else {
   /* connection up */
-      if (data->previouslyConnected &&
-		(ELEMENT_IS_STATIC(data->monitorType))) {
+      if (ELEMENT_IS_STATIC(data->monitorType)) {
 	if (data->dlDyn != NULL)
 	   if (data->dlDyn->attr.mod.vis != V_STATIC) {
 	/* as usual, as long as OBJECT is the first part of any structure, then
@@ -307,7 +306,8 @@ void processMonitorConnectionEvent(struct connection_handler_args args)
 
   if (args.op != CA_OP_CONN_UP || data->previouslyConnected) return;
 
-  data->previouslyConnected = True;
+  if (!ELEMENT_IS_CONTROLLER(data->monitorType))
+    data->previouslyConnected = True;
 
   switch(ca_field_type(args.chid)) {
 	case DBF_STRING:

@@ -171,7 +171,7 @@ void executeDlChoiceButton(DisplayInfo *displayInfo,
     channelAccessControllerData->self = NULL;
     channelAccessControllerData->chid = NULL;
     channelAccessControllerData->controllerType = DL_ChoiceButton;
-    SEVCHK(CA_BUILD_AND_CONNECT(dlChoiceButton->control.ctrl,TYPENOTCONN,0,
+    SEVCHK(ca_build_and_connect(dlChoiceButton->control.ctrl,TYPENOTCONN,0,
 	&(channelAccessControllerData->chid),NULL,
 	processControllerConnectionEvent,NULL),
        "executeDlChoiceButton: error in CA_BUILD_AND_CONNECT for Controller");
