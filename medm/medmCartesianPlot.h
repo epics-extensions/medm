@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#include "XrtGraph.h"
+
 #ifndef CARTESIAN_PLOT_H
 #define CARTESIAN_PLOT_H
 

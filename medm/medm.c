@@ -718,6 +718,48 @@ Name of file in which to save display:",
     "Medm*Indicator.ShadowThickness: 2",
     "Medm*Bar.ShadowThickness: 2",
     "Medm*Meter.ShadowThickness: 2",
+
+#ifdef XRTGRAPH3    
+  /* XRTGraph 3.0 */
+#if 0    
+    "builderForm*.background:                              White",
+    "Builder*.menubar*background:                          MidnightBlue",
+    "Builder*.print_graph_shell*.background:               Grey76",
+    "Builder*.print_graph_shell*.foreground:               Black",
+    "Builder*.background:                                  MidnightBlue",
+    "Builder*.foreground:                                  White",
+    "Builder*.XmPushButton.background:                     MidnightBlue",
+    "Builder*.XtXrtGraph.highlightThickness:               0",
+    "Builder*.XtXrtGraph*.xrtHeaderFont:                   *-helvetica-bold-r-normal-*-*-120-*-*-*-*-*-*",
+    
+    "Builder*.File_cascade.mnemonic:                       F",
+    "Builder*.Print_button.mnemonic:                       P",
+    "Builder*.Print_button.accelerator:                    Ctrl<Key>P",
+    "Builder*.Print_button.acceleratorText:                Ctrl+P",
+    "Builder*.Exit_button.mnemonic:                        X",
+    "Builder*.Exit_button.mnemonic:                        X",
+    "Builder*.Exit_button.accelerator:                     Ctrl<Key>X",
+    "Builder*.Exit_button.acceleratorText:                 Ctrl+X",
+    							   
+    "Builder*.Help_cascade.mnemonic:                       H",
+#endif
+    "Medm*.PropEdit_shell*.background:                  White",
+    "Medm*.PropEdit_shell*.foreground:                  Black",
+    "Medm*.PropEdit_shell.width:                        630",
+    "Medm*.PropEdit_shell.height:                       390",
+    "Medm*.PropEdit_shell*.XmXrtOutliner*.background:   White",
+    "Medm*.PropEdit_shell*.XmXrtOutliner*.foreground:   Black",
+    "Medm*.PropEdit_shell*.XmXrtIntField.background:    White",
+    "Medm*.PropEdit_shell*.XmXrtIntField.foreground:    Black",
+    "Medm*.PropEdit_shell*.XmXrtStringField.background: White",
+    "Medm*.PropEdit_shell*.XmXrtStringField.foreground: Black",
+    "Medm*.PropEdit_shell*.XmXrtFloatField.background:  White",
+    "Medm*.PropEdit_shell*.XmXrtFloatField.foreground:  Black",
+    "Medm*.PropEdit_shell*.XmXrtDateField.background:   White",
+    "Medm*.PropEdit_shell*.XmXrtDateField.foreground:   Black",
+    
+#endif
+    
     NULL,
 };
 

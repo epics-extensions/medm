@@ -29,11 +29,19 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 
+XRTGRAPH3 = /opt/local/xrtgraph3.0.0
+XRTGRAPH = $(XRTGRAPH3)
+
 ifdef XRTGRAPH
 # USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
+endif
+
+ifeq ($(XRTGRAPH),$(XRTGRAPH3))
+  USR_CFLAGS += -DXRTGRAPH3
+  USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
 endif
 
 ifeq ($(PURIFY),YES)
@@ -71,7 +79,6 @@ SRCS.c = \
   ../eventHandlers.c \
   ../help.c \
   ../help_protocol.c \
-  ../libMedmInit.c \
   ../medm.c \
   ../medmArc.c \
   ../medmBar.c \
@@ -103,7 +110,6 @@ SRCS.c = \
   ../medmWidget.c \
   ../objectPalette.c \
   ../resourcePalette.c \
-  ../productDescriptionShell.c \
   ../shared.c \
   ../updateMonitors.c \
   ../utils.c \
@@ -151,7 +157,6 @@ OBJS = \
   medmValuator.o \
   medmWidget.o \
   objectPalette.o \
-  productDescriptionShell.o \
   resourcePalette.o \
   shared.o \
   updateMonitors.o \
@@ -171,6 +176,10 @@ ifdef XRTGRAPH
 		echo "*********************************";\
 		echo "ERROR in running XRT_AUTH on MEDM";\
 		echo "*********************************";\
+	else\
+		echo "**************************************************************";\
+		echo "License warnings for XRT field, table, and gear may be ignored";\
+		echo "**************************************************************";\
 	fi
 endif
 
@@ -181,12 +190,19 @@ xrtAuth: medm
 		echo "*********************************";\
 		echo "ERROR in running XRT_AUTH on MEDM";\
 		echo "*********************************";\
+	else\
+		echo "**************************************************************";\
+		echo "License warnings for XRT field, table, and gear may be ignored";\
+		echo "**************************************************************";\
 	fi
 
 #
 # $Id$
 #
 # $Log$
+# Revision 1.25  1997/07/31 16:28:22  evans
+# Added routines for XRT/graph 3.0 and changed fontTable[]->fid to fontListTable[].
+#
 # Revision 1.24  1997/07/02 21:02:19  evans
 # Made many changes replated to the Cartesian Plot.
 #

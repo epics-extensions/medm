@@ -275,7 +275,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       dlCartesianPlot->object.height)/TITLE_SCALE_FACTOR;
     bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
       preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-    XtSetArg(args[n],XtNxrtHeaderFont,fontTable[bestSize]->fid); n++;
+    XtSetArg(args[n],XtNxrtHeaderFont,fontListTable[bestSize]); n++;
     if (strlen(dlCartesianPlot->plotcom.title) > 0) {
 	headerStrings[0] = dlCartesianPlot->plotcom.title;
     } else {
@@ -297,7 +297,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       dlCartesianPlot->object.height)/AXES_SCALE_FACTOR;
     bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
       preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-    XtSetArg(args[n],XtNxrtAxisFont,fontTable[bestSize]->fid); n++;
+    XtSetArg(args[n],XtNxrtAxisFont,fontListTable[bestSize]); n++;
     switch (dlCartesianPlot->style) {
     case POINT_PLOT:
     case LINE_PLOT:
@@ -517,7 +517,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
       dlCartesianPlot->object.height)/TITLE_SCALE_FACTOR;
     bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
       preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-    XtSetArg(args[n],XtNxrtHeaderFont,fontTable[bestSize]->fid); n++;
+    XtSetArg(args[n],XtNxrtHeaderFont,fontListTable[bestSize]); n++;
     if (strlen(dlCartesianPlot->plotcom.title) > 0) {
 	headerStrings[0] = dlCartesianPlot->plotcom.title;
     } else {
@@ -539,7 +539,7 @@ void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
       dlCartesianPlot->object.height)/AXES_SCALE_FACTOR;
     bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
       preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-    XtSetArg(args[n],XtNxrtAxisFont,fontTable[bestSize]->fid); n++;
+    XtSetArg(args[n],XtNxrtAxisFont,fontListTable[bestSize]); n++;
     switch (dlCartesianPlot->style) {
     case POINT_PLOT:
     case LINE_PLOT:

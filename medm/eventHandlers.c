@@ -62,6 +62,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/IntrinsicP.h>
 
 #ifdef XRTGRAPH3
+#include <XrtGraph.h>
 #include <XrtGraphProp.h>
 #endif
 

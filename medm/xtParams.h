@@ -124,11 +124,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 #include "Graph.h"
 
-/*
- * commercial widgets
- */
-#include "XrtGraph.h"
-
 extern char *graphXGetBestFont();
 
 #define NAME	"medm"
