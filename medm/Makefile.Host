@@ -4,7 +4,12 @@ TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 #
+ifdef WIN32
 #HOST_OPT = NO
+else
+HOST_OPT = NO
+endif
+
 #STATIC_BUILD = YES 
 CMPLR = STRICT
 #PURIFY = YES

@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_STDC 0
 #define DEBUG_WIN32_LEAKS 0
 #define DEBUG_FILE_RENAME 0
+#define DEBUG_SAVE_ALL 1
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -124,14 +125,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define N_FILE_MENU_ELES 8
 #define FILE_BTN_POSN 0
 
-#define FILE_NEW_BTN 0
-#define FILE_OPEN_BTN 1
-#define FILE_SAVE_BTN 2
-#define FILE_SAVE_AS_BTN 3
-#define FILE_CLOSE_BTN 4
-#define FILE_PRINT_SETUP_BTN 5
-#define FILE_PRINT_BTN 6
-#define FILE_EXIT_BTN 7
+#define FILE_NEW_BTN         0
+#define FILE_OPEN_BTN        1
+#define FILE_SAVE_BTN        2
+#define FILE_SAVE_ALL_BTN    3
+#define FILE_SAVE_AS_BTN     4
+#define FILE_CLOSE_BTN       5
+#define FILE_PRINT_SETUP_BTN 6
+#define FILE_PRINT_BTN       7
+#define FILE_EXIT_BTN        8
 
 #define PRINTER_SETUP_OK     0
 #define PRINTER_SETUP_CANCEL 1
@@ -508,19 +510,21 @@ static menuEntry_t fileMenu[] = {
       fileMenuSimpleCallback, (XtPointer) FILE_OPEN_BTN, NULL},
     { "Save",      &xmPushButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S", NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_SAVE_BTN, NULL},
+    { "Save All",  &xmPushButtonGadgetClass, 'l', "Ctrl<Key>L", NULL, NULL,
+      fileMenuSimpleCallback, (XtPointer) FILE_SAVE_ALL_BTN, NULL},
     { "Save As...",&xmPushButtonGadgetClass, 'A', NULL,         NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_SAVE_AS_BTN, NULL},
     { "Close",     &xmPushButtonGadgetClass, 'C', NULL,         NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_CLOSE_BTN, NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,         NULL, NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,        NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Printer Setup...",  &xmPushButtonGadgetClass, 'u', NULL,      NULL, NULL,
+    { "Printer Setup...",  &xmPushButtonGadgetClass, 'u', NULL, NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_PRINT_SETUP_BTN, NULL},
-    { "Print",  &xmPushButtonGadgetClass, 'P', NULL,         NULL, NULL,
+    { "Print",  &xmPushButtonGadgetClass, 'P', NULL,            NULL, NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_PRINT_BTN, NULL},
-    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,         NULL, NULL,
+    { "Separator", &xmSeparatorGadgetClass,  '\0', NULL,        NULL, NULL,
       NULL,        NULL,                     NULL},
-    { "Exit",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>x", "Ctrl+x", NULL,
+    { "Exit",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>X", "Ctrl+X", NULL,
       fileMenuSimpleCallback, (XtPointer) FILE_EXIT_BTN, NULL},
     NULL,
 };
@@ -1619,10 +1623,12 @@ static void fileMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
+    DisplayInfo *displayInfo;
     int buttonNumber = (int) cd;
     Widget widget;
     static Widget radioBox = 0;
     XEvent event;
+    Boolean saveAll = False;
 
     switch(buttonNumber) {
     case FILE_NEW_BTN:
@@ -1673,10 +1679,9 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case FILE_SAVE_BTN:
     case FILE_SAVE_AS_BTN:
-
-      /*
-       * create the Open... file selection dialog
-       */
+      /* No display, do nothing */
+	if (!displayInfoListHead->next) break;
+      /* Create the Open... file selection dialog */
 	if (!saveAsPD) {
 	    Arg args[10];
 	    XmString buttons[NUM_IMAGE_TYPES-1];
@@ -1725,9 +1730,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtManageChild(rowColumn);
 	    for (i = 0; i < 2; i++) XmStringFree(buttons[i]);
 	}
-
-	if (!displayInfoListHead->next) break;
-      /* no display, do nothing */
+      /* Check if more than one display */
 	if (displayInfoListHead->next != displayInfoListTail) {
 	  /* more than one display, query user */
 	    widget = XmTrackingEvent(mainShell,saveCursor,False,&event);
@@ -1739,10 +1742,10 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    currentDisplayInfo = displayInfoListHead->next;
 	}
 	if (!currentDisplayInfo) break;
-      /* for some reason, currentDisplay is not valid, break */
+      /* For some reason, currentDisplay is not valid, break */
 	if ((currentDisplayInfo->newDisplay)
 	  || (buttonNumber == FILE_SAVE_AS_BTN)) {
-	  /* new display or user wants to save as a different name */
+	  /* New display or user wants to save as a different name */
 	    WidgetList children;
 	    XmListDeselectAllItems(
 	      XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_LIST));
@@ -1753,12 +1756,61 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    MedmUseNewFileFormat = True;
 	    XtManageChild(saveAsPD);
 	} else {
-	  /* save the file */
+	  /* Save the file */
 	    medmSaveDisplay(currentDisplayInfo,
 	      currentDisplayInfo->dlFile->name,True);
 	}
 	break;
 
+    case FILE_SAVE_ALL_BTN:
+      /* Loop over displays */
+	displayInfo = displayInfoListHead->next;
+	while (displayInfo) {
+#if DEBUG_SAVE_ALL
+	    printf("fileMenuSimpleCallback: %s %s %s\n",
+	      displayInfo->newDisplay?"New":"Old",
+	      displayInfo->hasBeenEditedButNotSaved?"Edited    ":"Not Edited",
+	      displayInfo->dlFile->name);
+#endif	    
+	  /* Only do ones that have been edited */
+	    if (displayInfo->hasBeenEditedButNotSaved) {
+		char str[2*MAX_FILE_CHARS];
+		Boolean saveThis = True;
+		
+	      /* Prompt if All has not been choosen */
+		if(!saveAll) {
+		    sprintf(str,"Save \"%s\" ?",displayInfo->dlFile->name);
+		    dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No",
+		      "All Remaining");
+		    switch (displayInfo->questionDialogAnswer) {
+		    case 1:
+		      /* Yes, save this file */
+			saveThis = True;
+			break;
+		    case 2:     /* No */
+		    default:
+		      /* No, check next file */
+			saveThis = False;
+			break;
+		    case 3:
+			saveThis = True;
+			saveAll = True;
+			break;
+		    }
+		}
+#if DEBUG_SAVE_ALL
+		printf("  saveThis=%s\n",
+		  saveThis?"True":"False");
+#endif	    
+		if (saveThis)
+		/* Overwrite unless it is new display */
+		  medmSaveDisplay(displayInfo, displayInfo->dlFile->name,
+		    displayInfo->newDisplay?False:True);
+	    }
+	    displayInfo = displayInfo->next;
+	}
+	break;
+	
     case FILE_CLOSE_BTN:
 	if (displayInfoListHead->next == displayInfoListTail) {
 	  /* only one display; no need to query user */
