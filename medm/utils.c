@@ -347,7 +347,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     int i;
     Boolean alreadyFreedUnphysical;
     Widget drawingArea;
-    UpdateTask *ut = &(displayInfo->updateTaskListHead);
+    UpdateTask *pt = &(displayInfo->updateTaskListHead);
 
   /* save off current drawingArea */
     drawingArea = displayInfo->drawingArea;
@@ -359,7 +359,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
   /*
    * remove all update tasks in this display 
    */
-    updateTaskDeleteAllTask(ut);
+    updateTaskDeleteAllTask(pt);
  
   /* 
    * as a composite widget, drawingArea is responsible for destroying
@@ -4041,15 +4041,17 @@ void dumpDlElementList(DlList *l)
     p = FirstDlElement(l);
     while (p) {
 	if(p->type == DL_Element) {
-	    print("%03d (%s) x=%d y=%d width=%u height=%u\n",i++,
+	    print("%03d (%s) [%x] x=%d y=%d width=%u height=%u\n",i++,
 	      elementType(p->structure.element->type),
+	      p->structure.element->structure.composite,
 	      p->structure.element->structure.composite->object.x,
 	      p->structure.element->structure.composite->object.y,
 	      (int)p->structure.element->structure.composite->object.width,
 	      (int)p->structure.element->structure.composite->object.height);
 	} else {
-	    print("%03d %s x=%d y=%d width=%u height=%u\n",i++,
+	    print("%03d %s [%x] x=%d y=%d width=%u height=%u\n",i++,
 	      elementType(p->type),
+	      p->structure.composite,
 	      p->structure.composite->object.x,
 	      p->structure.composite->object.y,
 	      (int)p->structure.composite->object.width,
@@ -4557,9 +4559,9 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
       pvCursor, True, &event);
     XFlush(display);    /* For debugger */
     if(!widget) {
-	medmPostMsg(1,"executeMenuCallback: Choosing object failed\n");
+	medmPostMsg(1,"getPvInfoFromDisplay: Choosing object failed\n");
 	dmSetAndPopupWarningDialog(displayInfo,
-	  "executeMenuCallback: "
+	  "getPvInfoFromDispla: "
 	  "Did not find object","OK",NULL,NULL);
 	return NULL;
     }
@@ -4578,9 +4580,9 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     print("\ngetPvInfoFromDisplay: pE = %x\n",pE);
 #endif    
     if(!pE) {
-	medmPostMsg(1,"executeMenuCallback: Not on an object\n");
+	medmPostMsg(1,"getPvInfoFromDisplay: Not on an object\n");
 	dmSetAndPopupWarningDialog(displayInfo,
-	  "executeMenuCallback: "
+	  "getPvInfoFromDisplay: "
 	  "Not on an object","OK",NULL,NULL);
 	return NULL;
     }
@@ -4592,7 +4594,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 	pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
     }
     if(!pT || !pT->getRecord) {
-	medmPostMsg(1,"executeMenuCallback: "
+	medmPostMsg(1,"getPvInfoFromDisplay: "
 	  "No process variable associated with object\n");
 	return NULL;
     }
@@ -5669,7 +5671,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 #endif			
 			len = strlen(name);
 			if(ic + len >= 1024) {
-			    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
+			    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 			    free(records);
 			    return;
 			}
@@ -5678,7 +5680,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		      /* Put in a space if required */
 			if(j < count-1) {
 			    if(ic + 1 >= 1024) {
-				medmPostMsg(1,"executeMenuCallback: Command is too long\n");
+				medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 				free(records);
 				return;
 			    }
@@ -5694,7 +5696,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		name = displayInfo->dlFile->name;
 		len = strlen(name);
 		if(ic + len >= 1024) {
-		    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
+		    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 		    return;
 		}
 		strcpy(command+ic,name);
@@ -5706,7 +5708,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		  if(*name++ == MEDM_DIR_DELIMITER_CHAR) title = name;
 		len = strlen(title);
 		if(ic + len >= 1024) {
-		    medmPostMsg(1,"executeMenuCallback: Command is too long\n");
+		    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 		    return;
 		}
 		strcpy(command+ic,title);
@@ -5796,11 +5798,11 @@ Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
     case V_STATIC:
 	return True;	
     case IF_NOT_ZERO:
-	return (records[0]->value != 0.0);
+	return (records[0]->value != 0.0?True:False);
     case IF_ZERO:
-	return (records[0]->value == 0.0);
+	return (records[0]->value == 0.0?True:False);
     case V_CALC:
-#if DEBUG_VISIBILITY > 1
+#if DEBUG_VISIBILITY
 	printf("calcVisibility: validCalc: %s\n",
 	  attr->validCalc?"True":"False");
 #endif
@@ -5842,7 +5844,7 @@ Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
 #endif
 	    if(!status) {
 	      /* Result is valid */
-		return result;
+		return (result?True:False);
 	    } else {
 	      /* Result is invalid */
 		return False;

@@ -11,14 +11,17 @@ HOST_OPT = NO
 endif
 
 # Compiler options
+ifndef WIN32
 USR_CFLAGS += -xsb
+endif
 
 #STATIC_BUILD = YES 
 CMPLR = STRICT
-PURIFY = YES
+#PURIFY = YES
 
 ifeq ($(PURIFY),YES)
   CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))
+  CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
   #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
   #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
 endif
@@ -47,11 +50,15 @@ ifdef XRTGRAPH
   ifdef XRTGRAPH_EXTENSIONS
     ifeq ($(XRTGRAPH_EXTENSIONS),YES)
       USR_CFLAGS += -DXRT_EXTENSIONS
-      USR_LIBS += xrtmprop xrtfield xrttable xrtgear Xpm Xext
+#      USR_LIBS += xrtmprop xrtfield xrttable xrtgear Xpm Xext
+# XRT 4.0
+      USR_LIBS += xrtmprop xrtfield xrttable xrtgear pdsutil Xpm Xext
       xrtmprop_DIR = $(XRTGRAPH)/lib
       xrtfield_DIR = $(XRTGRAPH)/lib 
       xrttable_DIR = $(XRTGRAPH)/lib 
       xrtgear_DIR = $(XRTGRAPH)/lib 
+# XRT 4.0
+      pdsutil_DIR = $(XRTGRAPH)/lib 
       Xpm = $(X11)/lib 
       Xext = $(X11)/lib 
     endif

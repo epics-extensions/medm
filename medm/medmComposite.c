@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_COMPOSITE 1
+
 #include "medm.h"
 
 typedef struct _Rectangle {
@@ -61,7 +63,7 @@ typedef struct _Rectangle {
     Record     **records;
     UpdateTask *updateTask;
     DisplayInfo *displayInfo;
-    Boolean    executed;
+    Boolean    childrenExecuted;
 } MedmComposite;
 
 /* Function prototypes */
@@ -106,34 +108,44 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlComposite *dlComposite = dlElement->structure.composite;
 
+#if DEBUG_COMPOSITE
+    print("executeDlComposite:\n");
+#endif    
+
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
-	MedmComposite *pc;
-	char *pC, upstring[MAX_TOKEN_LENGTH];
-	int i;
-
-      /* Allocate and fill in MedmComposite struct */
-	pc = (MedmComposite *)malloc(sizeof(MedmComposite));
-	pc->displayInfo = displayInfo;
-	pc->dlElement = dlElement;
-	pc->records = NULL;
-	pc->updateTask = updateTaskAddTask(displayInfo, &(dlComposite->object),
-	  compositeDraw, (XtPointer)pc);
-	pc->executed = False;
-	if (pc->updateTask == NULL) {
-	    medmPrintf(1,"\nexecuteDlComposite: Memory allocation error\n");
-	} else {
-	    updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
-	    updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
-	    pc->updateTask->opaque = False;
-	}
-	pc->records = NULL;
 	if(*dlComposite->dynAttr.chan[0]) {
 	  /* A channel is defined */
+	    MedmComposite *pc;
+	    char *pC, upstring[MAX_TOKEN_LENGTH];
+	    int i;
+	    
+	  /* Allocate and fill in MedmComposite struct */
+	    pc = (MedmComposite *)malloc(sizeof(MedmComposite));
+	    pc->displayInfo = displayInfo;
+	    pc->dlElement = dlElement;
+	    pc->records = NULL;
+	    pc->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlComposite->object), compositeDraw, (XtPointer)pc);
+	    pc->childrenExecuted = False;
+	    if (pc->updateTask == NULL) {
+		medmPrintf(1,"\nexecuteDlComposite: Memory allocation error\n");
+	    } else {
+		updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
+		updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
+		pc->updateTask->opaque = False;
+	    }
 	    pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
 	      compositeUpdateValueCb,
 	      compositeUpdateGraphicalInfoCb,
 	      (XtPointer)pc);
+#if DEBUG_COMPOSITE
+	    print("  pc=%x\n",pc);
+#endif    
+
+	  /* Calculate the postfix for visbilitiy calc */
+	    calcPostfix(&dlComposite->dynAttr);
+	    setMonitorChanged(&dlComposite->dynAttr, pc->records);
 #if 0	    
 	  /* Draw initial white rectangle */
 	  /* KE: Check if this is necessary */
@@ -142,7 +154,6 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	  /* No channel */
 	    executeCompositeChildren(displayInfo, dlComposite);
-	    pc->executed = True;
 	}
     } else {
       /* EDIT mode */
@@ -154,6 +165,11 @@ static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pr = (Record *)cd;
     MedmComposite *pc = (MedmComposite *)pr->clientData;
+
+#if DEBUG_COMPOSITE
+    print("compositeUpdateGraphicalInfoCb: record=%x[%s] value=%g\n",
+      pr,pr->name,pr->value);
+#endif    
 #if 0    
     updateTaskMarkUpdate(pc->updateTask);
 #endif    
@@ -161,13 +177,19 @@ static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 
 static void compositeUpdateValueCb(XtPointer cd)
 {
-    MedmComposite *pc = (MedmComposite *)((Record *)cd)->clientData;
+    Record *pr = (Record *)cd;
+    MedmComposite *pc = (MedmComposite *)pr->clientData;
+
+#if DEBUG_COMPOSITE
+    print("compositeUpdateValueCb: record=%x[%s] value=%g\n",
+      pr,pr->name,pr->value);
+#endif    
     updateTaskMarkUpdate(pc->updateTask);
 }
 
 static void compositeDraw(XtPointer cd)
 {
-  MedmComposite *pc = (MedmComposite *)cd;
+    MedmComposite *pc = (MedmComposite *)cd;
     Record *pr = pc->records?pc->records[0]:NULL;
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     XGCValues gcValues;
@@ -175,19 +197,37 @@ static void compositeDraw(XtPointer cd)
     Display *display = XtDisplay(pc->updateTask->displayInfo->drawingArea);
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
+#if DEBUG_COMPOSITE
+    print("\ncompositeDraw: pc=%x\n",pc);
+#endif    
   /* Branch on whether there is a channel or not */
     if(*dlComposite->dynAttr.chan[0]) {
       /* A channel is defined */
 	if(!pr) return;
 	if (pr->connected) {
 	    if (pr->readAccess) {
+#if DEBUG_COMPOSITE
+		print("  vis=%s\n",stringValueTable[dlComposite->dynAttr.vis]);
+		print("  calc=%s\n",dlComposite->dynAttr.calc);
+		if(*dlComposite->dynAttr.chan[0])
+		  print("  chan[0]=%s val=%g\n",dlComposite->dynAttr.chan[0],
+		    pc->records[0]->value);
+		if(*dlComposite->dynAttr.chan[1])
+		  print("  chan[1]=%s val=%g\n",dlComposite->dynAttr.chan[1],
+		    pc->records[1]->value);
+		if(*dlComposite->dynAttr.chan[2])
+		  print("  chan[2]=%s val=%g\n",dlComposite->dynAttr.chan[2],
+		    pc->records[2]->value);
+		if(*dlComposite->dynAttr.chan[3])
+		  print("  chan[3]=%s val=%g\n",dlComposite->dynAttr.chan[3],
+		    pc->records[3]->value);
+		print("  calcVisibility=%s\n",
+		  calcVisibility(&dlComposite->dynAttr,
+		    pc->records)?"True":"False");
+#endif    
 	      /* Draw depending on visibility */
 		if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
-		    if(pr->readAccess) {
-			drawComposite(pc);
-		    } else {
-			eraseComposite(pc);
-		    }
+		    drawComposite(pc);
 		} else {
 		    eraseComposite(pc);
 		}
@@ -209,7 +249,6 @@ static void compositeDraw(XtPointer cd)
     } else {
       /* No channel */
 	executeCompositeChildren(displayInfo, dlComposite);
-	pc->executed = True;
     }
     
   /* Update the drawing objects above */
@@ -221,9 +260,17 @@ static void drawComposite(MedmComposite *pc)
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
     
-    if(!pc->executed) {
+#if DEBUG_COMPOSITE
+    print("drawComposite: childrenExecuted=%s\n",
+      pc->childrenExecuted?"True":"False !!!");
+    print(" dlComposite=%x x=%d y=%d\n",
+      dlComposite,
+      dlComposite->object.x,
+      dlComposite->object.y);
+#endif    
+    if(!pc->childrenExecuted) {
 	executeCompositeChildren(displayInfo, dlComposite);
-	pc->executed= True;
+	pc->childrenExecuted= True;
     }
 }
 
@@ -232,9 +279,59 @@ static void eraseComposite(MedmComposite *pc)
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
-    if(pc->executed) {
+#if DEBUG_COMPOSITE
+    print("eraseComposite: childrenExecuted=%s\n",
+      pc->childrenExecuted?"True !!!":"False");
+    print(" dlComposite=%x x=%d y=%d\n",
+      dlComposite,dlComposite->object.x,
+      dlComposite,dlComposite->object.y);
+#endif    
+    if(pc->childrenExecuted) {
 	destroyCompositeChildren(displayInfo, dlComposite);
-	pc->executed= False;
+	pc->childrenExecuted = False;
+    }
+}
+
+static void executeCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+    DlElement *pE;
+    
+#if DEBUG_COMPOSITE
+    print("executeCompositeChildren:\n");
+    print("dlComposite->dlElementList:\n");
+    dumpDlElementList(dlComposite->dlElementList);
+/*      print("displayInfo->dlElementList:\n"); */
+/*      dumpDlElementList(displayInfo->dlElementList); */
+#endif    
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while (pE) {
+	if(pE->run->execute) pE->run->execute(displayInfo, pE);
+	pE = pE->next;
+    }
+}
+
+static void destroyCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+    DlElement *pE;
+    
+#if DEBUG_COMPOSITE
+    print("destroyCompositeChildren:\n");
+    print("dlComposite->dlElementList:\n");
+    dumpDlElementList(dlComposite->dlElementList);
+/*      print("displayInfo->dlElementList:\n"); */
+/*      dumpDlElementList(displayInfo->dlElementList); */
+#endif    
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while (pE) {
+	destroyElementWidgets(pE);
+	if(pE->run->destroy) {
+	    pE->run->destroy(displayInfo, pE);
+	} else {
+	    genericDestroy(displayInfo, pE);
+	}
+	pE = pE->next;
     }
 }
 
@@ -242,6 +339,9 @@ static void compositeDestroyCb(XtPointer cd)
 {
     MedmComposite *pc = (MedmComposite *)cd;
 
+#if DEBUG_COMPOSITE
+    print("compositeDestroyCb:\n");
+#endif    
     if (pc) {
 	Record **records = pc->records;
 	
@@ -272,6 +372,9 @@ DlElement *createDlComposite(DlElement *p) {
     DlComposite *dlComposite;
     DlElement *dlElement;
 
+#if DEBUG_COMPOSITE
+    print("createDlComposite:\n");
+#endif    
     dlComposite = (DlComposite *) malloc(sizeof(DlComposite));
     if(!dlComposite) return 0;
     if(p) {
@@ -284,7 +387,7 @@ DlElement *createDlComposite(DlElement *p) {
 	    free(dlComposite);
 	    return NULL;
 	}
-      /* Copy all childrern */
+      /* Copy all children to the composite element list */
 	child = FirstDlElement(p->structure.composite->dlElementList);
 	while (child) {
 	    DlElement *copy = child->run->create(child);
@@ -500,9 +603,11 @@ void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
     height = MAX(1,((int)dlElement->structure.composite->object.height
       + yOffset));
     if(dlElement->structure.composite->object.width)
-      scaleX = (float)width/(float)dlElement->structure.composite->object.width;
+      scaleX =
+	(float)width/(float)dlElement->structure.composite->object.width;
     if(dlElement->structure.composite->object.height)
-      scaleY = (float)height/(float)dlElement->structure.composite->object.height;
+      scaleY =
+	(float)height/(float)dlElement->structure.composite->object.height;
     resizeDlElementList(dlElement->structure.composite->dlElementList,
       dlElement->structure.composite->object.x,
       dlElement->structure.composite->object.y,
@@ -514,6 +619,9 @@ void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
 
 static void destroyDlComposite(DisplayInfo *displayInfo, DlElement *pE)
 {
+#if DEBUG_COMPOSITE
+    print("destroyDlComposite:\n");
+#endif    
     clearDlDisplayList(displayInfo, pE->structure.composite->dlElementList);
     free((char *)pE->structure.composite->dlElementList);
     free((char *)pE->structure.composite);
@@ -638,40 +746,17 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
 
 static void compositeCleanup(DlElement *dlElement)
 {
-    DlElement *pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+    DlElement *pE =
+      FirstDlElement(dlElement->structure.composite->dlElementList);
+
+#if DEBUG_COMPOSITE
+    print("compositeCleanup:\n");
+#endif    
     while (pE) {
 	if(pE->run->cleanup) {
 	    pE->run->cleanup(pE);
 	} else {
 	    pE->widget = NULL;
-	}
-	pE = pE->next;
-    }
-}
-
-static void executeCompositeChildren(DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
-{
-    DlElement *pE;
-    
-    pE = FirstDlElement(dlComposite->dlElementList);
-    while (pE) {
-	if(pE->run->execute) pE->run->execute(displayInfo, pE);
-	pE = pE->next;
-    }
-}
-
-static void destroyCompositeChildren(DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
-{
-    DlElement *pE;
-    
-    pE = FirstDlElement(dlComposite->dlElementList);
-    while (pE) {
-	if(pE->run->destroy) {
-	    pE->run->destroy(displayInfo, pE);
-	} else {
-	    genericDestroy(displayInfo, pE);
 	}
 	pE = pE->next;
     }

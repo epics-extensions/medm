@@ -397,7 +397,7 @@ void updateStatusFields(void);
 double medmTime();
 double medmElapsedTime();
 double medmResetElapsedTime();
-void updateTaskInit(DisplayInfo *displayInfo);
+void updateTaskInitHead(DisplayInfo *displayInfo);
 UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer),
   XtPointer);
 void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt);

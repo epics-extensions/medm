@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_SCHEDULER 0
 #define DEBUG_UPDATE 0
+#define DEBUG_COMPOSITE 1
 
 #include "medm.h"
 
@@ -716,8 +717,14 @@ Boolean updateTaskWorkProc(XtPointer cd)
 		  t->rectangle.x, t->rectangle.y,
 		  t->rectangle.width, t->rectangle.height) != RectangleOut) {
 		    t->overlapped = True;
-		    if (t->executeTask)
-		      t->executeTask(t->clientData);
+		    if (t->executeTask) {
+#if DEBUG_COMPOSITE
+			print("updateTaskWorkProc (overlapped): "
+			  "clientData=%x x=%d y=%d\n",
+			  t->clientData,t->rectangle.x,t->rectangle.y);
+#endif			
+			t->executeTask(t->clientData);
+		    }
 		}
 		t = t->next;
 	    }
@@ -726,6 +733,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	    XSetClipMask(display,gc,None);
 	    if (region) XDestroyRegion(region);
 	} else {
+	  /* Not overlapped */
 	    if (!t->opaque) 
 	      XCopyArea(XtDisplay(t->displayInfo->drawingArea),
 		t->displayInfo->drawingAreaPixmap,
@@ -734,8 +742,14 @@ Boolean updateTaskWorkProc(XtPointer cd)
 		t->rectangle.x, t->rectangle.y,
 		t->rectangle.width, t->rectangle.height,
 		t->rectangle.x, t->rectangle.y);
-	    if (t->executeTask) 
-	      t->executeTask(t->clientData);
+	    if (t->executeTask) {
+#if DEBUG_COMPOSITE
+		print("updateTaskWorkProc (not overlapped): "
+		  "clientData=%x x=%d y=%d\n",
+		  t->clientData,t->rectangle.x,t->rectangle.y);
+#endif			
+		t->executeTask(t->clientData);
+	    }
 	}     
 	ts->updateExecuted++;
 	ts->updateRequestQueued--;
@@ -778,8 +792,14 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
     while (t) {
 	if (XRectInRegion(*region, t->rectangle.x, t->rectangle.y,
 	  t->rectangle.width, t->rectangle.height) != RectangleOut) {
-	    if (t->executeTask)
-	      t->executeTask(t->clientData);
+	    if (t->executeTask) {
+#if DEBUG_COMPOSITE
+		print("updateTaskRepaintRegion: "
+		  "clientData=%x x=%d y=%d\n",
+		  t->clientData,t->rectangle.x,t->rectangle.y);
+#endif			
+		t->executeTask(t->clientData);
+	    }
 	}
 	t = t->next;
     }

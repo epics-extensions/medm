@@ -884,11 +884,11 @@ typedef struct {
     void (*execute)(struct _DisplayInfo *, struct _DlElement *);
   /* Write (to file) method */
     void (*write)(FILE *, struct _DlElement *, int);
-  /* Get limits from DlLimits attribute */
+  /* Get limits (from DlLimits attribute) method */
     void (*getLimits)(struct _DlElement *, DlLimits **, char **);
-  /* Get values from the resource bundle method */
+  /* Get values (from the resource bundle) method */
     void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
-  /* Inherit (some of the) values from the resource bundle method
+  /* Inherit ((some of the) values from the resource bundle) method
    *   Used during rectangular creates */
     void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
     void (*setBackgroundColor)(struct _ResourceBundle *, struct _DlElement *);
@@ -897,6 +897,7 @@ typedef struct {
     void (*scale)(struct _DlElement *, int, int);
     void (*orient)(struct _DlElement *, int, int, int);
     int  (*editVertex)(struct _DlElement *, int, int);
+  /* Cleanup method (only exists for Composite and sets widgets to NULL) */
     void (*cleanup)(struct _DlElement *);
 } DlDispatchTable; 
 

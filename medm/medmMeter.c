@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_COMPOSITE 1
+
 #include "medm.h"
 
 typedef struct _Meter {
@@ -98,6 +100,9 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget localWidget;
     DlMeter *dlMeter = dlElement->structure.meter;
 
+#if DEBUG_COMPOSITE
+    print("executeDlMeter: dlMeter=%x\n",dlMeter);
+#endif
     if (!dlElement->widget) {
 	if (displayInfo->traversalMode == DL_EXECUTE) {
 	    pm = (Meter *) malloc(sizeof(Meter));
@@ -118,12 +123,15 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	      meterUpdateGraphicalInfoCb,
 	      (XtPointer)pm);
 	    drawWhiteRectangle(pm->updateTask);
+#if DEBUG_COMPOSITE
+	    print("  pm=%x\n",pm);
+#endif
 	}
 	
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlMeter->limits);
 
-      /* from the meter structure, we've got Meter's specifics */
+      /* From the meter structure, we've got Meter's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlMeter->object.x); n++;
 	XtSetArg(args[n],XtNy,(Position)dlMeter->object.y); n++;

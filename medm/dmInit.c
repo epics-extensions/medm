@@ -220,7 +220,7 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->grid = NULL;
     displayInfo->undoInfo = NULL;
 
-    updateTaskInit(displayInfo);
+    updateTaskInitHead(displayInfo);
 
 #if 0
     displayInfo->childCount = 0;
