@@ -28,7 +28,7 @@ void get_time_and_date(char mytime[], char mydate[]);
 void xwd2ps_swapshort(register char *bp, register long n);
 void xwd2ps_swaplong(register char *bp, register long n);
 void xwd2ps_usage(void);
-float fmax(float a, float b);
+float fMax(float a, float b);
 
 /* ps_utils.c */
 void outputBorder(FILE *fo, Image the_image);

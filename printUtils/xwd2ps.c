@@ -287,8 +287,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     if(flag.title == TRUE)
       options.title.height = (float)(options.title.font_size/72. + .1);
 
-    page.height_adjust += fmax(page.time_date_height, options.title.height); 
-    page.yoffset       -= fmax(page.time_date_height, options.title.height); 
+    page.height_adjust += fMax(page.time_date_height, options.title.height); 
+    page.yoffset       -= fMax(page.time_date_height, options.title.height); 
 
 
   /* 
@@ -1438,9 +1438,9 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
  *** getOrientation() - get the orientation of the image
  */
 /* KE: Not sure what this is doing but it isn't right.  k1 and k2 are
-almost always small positive numbers less than 1.  Previously fmax
+almost always small positive numbers less than 1.  Previously fMax
 returned an int, so both were 0 and PORTRAIT was always chosen.  With
-fmax defined as an float, the result is the reverse of what you want.
+fMax defined as an float, the result is the reverse of what you want.
 The problem has been fixed by passing the -P (portrait) option.  This
 routine will have to be fixed if something else is wanted.  */
 static int getOrientation(Page pg, Image im)
@@ -1449,11 +1449,11 @@ static int getOrientation(Page pg, Image im)
 
     k1 = (pg.default_height - pg.height_adjust)/im.ps_height;
     k  = pg.default_width/im.pixels_width;
-    k1 = fmax(k1, k);
+    k1 = fMax(k1, k);
   
     k2 = (pg.default_width - pg.height_adjust)/im.ps_height;
     k  = pg.default_height/im.pixels_width;
-    k2 = fmax(k2, k);
+    k2 = fMax(k2, k);
 
     if(k1 >= k2)
       return(PORTRAIT);

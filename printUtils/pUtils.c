@@ -227,11 +227,11 @@ static void _swapbits(register unsigned char *b, register long n)
 
 
 /*
- *** fmax() - return the larger of two floating point numbers
+ *** fMax() - return the larger of two floating point numbers
  */
 /* KE: This had no return type before and so was int by default.
    Changed it to float. */
-float fmax(float a, float b)
+float fMax(float a, float b)
 {
     if(a >= b)
       return(a);
