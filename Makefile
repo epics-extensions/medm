@@ -1,24 +1,28 @@
 # Makefile for medm top level
 
-ifeq ($(HOST_ARCH),WIN32)
+TOP = ../..
+ifneq ($(wildcard $(TOP)/config)x,x)
+  # New Makefile.Host config file location
+  include $(TOP)/config/CONFIG_EXTENSIONS
 
-TOP=../..
+  ifeq ($(HOST_ARCH),WIN32)
+   DIRS = graphX xc medm
+  else
+   DIRS = graphX graphX/printUtils xc medm
+  endif
 
-include $(TOP)/config/CONFIG_EXTENSIONS
-
-#DIRS = graphX graphX/printUtils xc medm
-DIRS = graphX xc medm
-
-include $(TOP)/config/RULES_DIRS
-
+  include $(TOP)/config/RULES_DIRS
 else
+  # Old Makefile.Unix config file location
+  EPICS=../../..
+  include $(EPICS)/config/CONFIG_EXTENSIONS
 
-EPICS=../../..
+  ifeq ($(HOST_ARCH),WIN32)
+   DIRS = graphX xc medm
+  else
+   DIRS = graphX graphX/printUtils xc medm
+  endif
 
-include $(EPICS)/config/CONFIG_EXTENSIONS
-
-DIRS = graphX graphX/printUtils xc medm
-
-include $(EPICS)/config/RULES_DIRS
-
+  include $(EPICS)/config/RULES_DIRS
 endif
+

@@ -58,7 +58,6 @@ LIBRARY = GraphX
 include $(TOP)/config/RULES.Host
 
 xxxx:
-	@echo WIN32_DLLFLAGS: $(WIN32_DLLFLAGS)
 	@echo LINK.shrlib: $(LINK.shrlib)
 	@echo LINK.c: $(LINK.c)
 	@echo USR_LIBS: $(USR_LIBS)

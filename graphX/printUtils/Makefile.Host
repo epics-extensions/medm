@@ -1,0 +1,20 @@
+# Makefile for printUtils
+
+TOP = ../../../../..
+include $(TOP)/config/CONFIG_EXTENSIONS
+
+#UNIX_OPT = NO
+#CC += -g
+
+LIBSRCS = dsimple.c pUtils.c ps_utils.c utilPrint.c xwd.c xwd2ps.c
+
+USR_INCLUDES = -I$(X11_INC)
+
+LIBRARY = PrintUtils
+
+include $(TOP)/config/RULES.Host
+
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:

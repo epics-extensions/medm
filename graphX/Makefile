@@ -1,19 +1,14 @@
 # Makefile for medm/graphX
 
-ifeq ($(HOST_ARCH),WIN32)
-
-TOP=../../..
-
-include $(TOP)/config/CONFIG_EXTENSIONS
-
-include $(TOP)/config/RULES_ARCHS
-
+TOP = ../../..
+ifneq ($(wildcard $(TOP)/config)x,x)
+  # New Makefile.Host config file location
+  include $(TOP)/config/CONFIG_EXTENSIONS
+  include $(TOP)/config/RULES_ARCHS
 else
-
-EPICS=../../../..
-
-include $(EPICS)/config/CONFIG_EXTENSIONS
-
-include $(EPICS)/config/RULES_ARCHS
-
+  # Old Makefile.Unix config file location
+  EPICS=../../../..
+  include $(EPICS)/config/CONFIG_EXTENSIONS
+  include $(EPICS)/config/RULES_ARCHS
 endif
+

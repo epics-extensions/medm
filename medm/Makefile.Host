@@ -32,16 +32,23 @@ ifdef XRTGRAPH
   #USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -DXRTGRAPH
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
-  USR_LDFLAGS += -L$(XRTGRAPH)/lib
-  USR_LDLIBS += -lxrtm
+  USR_LIBS += xrtm
+  xrtm_DIR = $(XRTGRAPH)/lib
 
 #  The following sets up for the XRT/graph 3.0 extensions
   ifdef XRTGRAPH_EXTENSIONS
-  ifeq ($(XRTGRAPH_EXTENSIONS),YES)
-    USR_CFLAGS += -DXRT_EXTENSIONS
-    USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
+    ifeq ($(XRTGRAPH_EXTENSIONS),YES)
+      USR_CFLAGS += -DXRT_EXTENSIONS
+      USR_LIBS += xrtmprop xrtfield xrttable xrtgear Xpm Xext
+      xrtmprop_DIR = $(XRTGRAPH)/lib
+      xrtfield_DIR = $(XRTGRAPH)/lib 
+      xrttable_DIR = $(XRTGRAPH)/lib 
+      xrtgear_DIR = $(XRTGRAPH)/lib 
+      Xpm = $(X11)/lib 
+      Xext = $(X11)/lib 
+    endif
   endif
-  endif
+
 
   SRCS += medmCartesianPlot.c 
   SRCS += medmXrtGraph.c 
@@ -94,9 +101,13 @@ endif
 
 PROD = medm
 
-PROD_LIBS = GraphX ANLwidgets ca Com
-
 USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
+
+ifeq ($(HOST_ARCH),WIN32)
+PROD_LIBS = GraphX ANLwidgets
+else
+PROD_LIBS = GraphX ANLwidgets PrintUtils
+endif
 
 # Setup for either CA or CDEV
 ifdef MEDM_CDEV
@@ -119,7 +130,9 @@ else
   SRCS += medmCA.c 
 endif
 
-USR_LIBS_DEFAULT = Xm Xt X11
+USR_LIBS_DEFAULT = Xm Xt Xmu X11
+USR_LIBS_Linux = Xm Xt Xp Xmu X11
+
 ifeq ($(EXCEED),Exceed5)
   USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
 else
@@ -127,6 +140,7 @@ else
 endif
 
 GraphX_DIR = $(INSTALL_LIB)
+PrintUtils_DIR = $(INSTALL_LIB)
 ANLwidgets_DIR = $(INSTALL_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
@@ -189,18 +203,7 @@ medm.res:../medm.ico
 include $(TOP)/config/RULES.Host
 
 ifdef XRTGRAPH
-	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
-	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
-	if [ $$? -ne 0 ]; then\
-		echo "*********************************";\
-		echo "ERROR in running XRT_AUTH on MEDM";\
-		echo "*********************************";\
-	else\
-		echo "**************************************************************";\
-		echo "License warnings for XRT field, table, and gear may be ignored";\
-		echo "Patch successful";\
-		echo "**************************************************************";\
-	fi
+buildInstall:: xrtAuth
 endif
 
 xrtAuth: medm
