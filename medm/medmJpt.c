@@ -526,7 +526,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     char rgb[2][16], string[24];
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     char *headerStrings[2];
-    int i, k, iPrec;
+    int k, iPrec;
     XcVType minF, maxF, tickF;
     Widget w;
     int validTraces = pcp ? pcp->nTraces : 0;
@@ -636,7 +636,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     case USER_SPECIFIED_RANGE:
 	minF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
-	tickF.fval = (maxF.fval - minF.fval)/4.0;
+	tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 	XtSetArg(args[nargs],XtNplotXMin,minF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotXMax,maxF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotXTick,tickF.lval); nargs++;
@@ -677,7 +677,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     case USER_SPECIFIED_RANGE:
 	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
-	tickF.fval = (maxF.fval - minF.fval)/4.0;
+	tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 	XtSetArg(args[nargs],XtNplotYMin,minF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotYMax,maxF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotYTick,tickF.lval); nargs++;
@@ -719,7 +719,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     case USER_SPECIFIED_RANGE:
 	minF.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange;
-	tickF.fval = (maxF.fval - minF.fval)/4.0;
+	tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 	XtSetArg(args[nargs],XtNplotY2Min,minF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotY2Max,maxF.lval); nargs++;
 	XtSetArg(args[nargs],XtNplotY2Tick,tickF.lval); nargs++;
@@ -762,9 +762,6 @@ void dumpCartesianPlot(Widget w)
     Arg args[20];
     int n=0;
 			    
-    Dimension footerHeight;
-    Dimension footerWidth;
-    Dimension footerBorderWidth;
     Dimension borderWidth;
     Dimension shadowThickness;
     Dimension highlightThickness;
@@ -772,14 +769,10 @@ void dumpCartesianPlot(Widget w)
     int headerHeight;
     int headerWidth;
     int graphBorderWidth;
-    Dimension graphWidth;
-    Dimension graphHeight;
     Dimension height;
     Dimension width;
     int legendBorderWidth;
-    Dimension legendHeight;
     Dimension legendWidth;
-    unsigned char unitType;
     time_t timeBase;
 
     XtSetArg(args[n],XtNplotLegendWidth,&legendWidth); n++;
