@@ -54,13 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-/*
- * X/Xt/Xm includes, NAME and CLASS for Xt contexts and shells....
- */
-
 #ifndef __XTPARAMS_H__
 #define __XTPARAMS_H__
-
 
 #include <sys/types.h>
 
@@ -104,9 +99,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Xm/CascadeBG.h>
 #include <Xm/SelectioB.h>
 
-/*
- * custom widgets
- */
+/* Custom widgets */
 #include "Xc.h"
 #include "Meter.h"
 #include "Indicator.h"
@@ -114,24 +107,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "Matrix.h"
 #include "Byte.h"
 
-/*
- * graphX graphics includes
- */
-#include "GraphXMacros.h"
-#include "Seql.h"
-/*
-#include "Strip.h"
-*/
-#include "Graph.h"
-
-extern char *graphXGetBestFont();
-
 #define NAME	"medm"
 #define CLASS	"Medm"
 
-/*
- * global X/Xt/Motif parameters
-  */
+/* Global X/Xt/Motif parameters */
 EXTERN Display *display;
 EXTERN XtAppContext appContext;
 EXTERN Window rootWindow;

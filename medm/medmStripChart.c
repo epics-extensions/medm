@@ -127,9 +127,6 @@ typedef struct {
 
 /* Function prototypes */
 
-extern void linear_scale(double xmin, double xmax, int n,
-  double *xminp, double *xmaxp, double *dist);
-
 static void stripChartDraw(XtPointer cd);
 static void stripChartUpdateTaskCb(XtPointer cd);
 static void stripChartUpdateValueCb(XtPointer cd);
@@ -145,6 +142,8 @@ static void stripChartInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void stripChartSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void stripChartSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p);
+static void linear_scale(double xmin, double xmax, int n,
+  double *xminp, double *xmaxp, double *dist);
 
 static DlDispatchTable stripChartDlDispatchTable = {
     createDlStripChart,
@@ -1803,4 +1802,69 @@ static void stripChartSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
     medmGetValues(pRCB,
       CLR_RC,        &(dlStripChart->plotcom.clr),
       -1);
+}
+
+/* KE: Formerly in graphX/algorithms.c */
+static void linear_scale(double xmin, double xmax, int n,
+  double *xminp, double *xmaxp, double *dist)
+{
+    static double vint[4] = { 1.0, 2.0, 5.0, 10.0, };
+    static double sqr[3]  = { 1.414214, 3.162278, 7.071068, };
+    double del = 0.0000002;		/* account for round-off errors */
+    int nal, i, m1, m2;
+    double fn, a, al, b, fm1, fm2;
+    
+  /* Check whether proper input values were supplied */
+    if(!(xmin <= xmax && n > 0)) {
+	fprintf(stderr,"\nlinear_scale: improper input values supplied!");
+	return;
+    }
+    
+  /* Provide 10% spread if graph is parallel to an axis */
+    if(xmax == xmin) {
+	xmax *= 1.05;
+	xmin *= 0.95;
+    }
+    fn = n;
+
+  /* Find approximate interval size */
+    a = (xmax - xmin)/(double)fn;
+    al = log10(a);
+    nal = (int) al;
+    
+    if(a < 1.0) nal -= 1;
+    
+  /* a is scaled into variable named b betwen 1 and 10 */
+    b = a / ((double)pow(10.0, (double) nal));
+    
+  /* The closest permissible value for b is found */
+    for(i = 1; i < 4; i++) {
+	if (b < sqr[i-1]) goto label30;
+    }
+    i = 4;
+    
+  /* The interval size is computed */
+  label30:
+    *dist = vint[i-1]*((double)pow(10.0, (double)nal));
+    fm1 = xmin/(*dist);
+    m1 = (int)fm1;
+    if(fm1 < 0.0) m1 -= 1;
+    if(fabs(((double) m1) + 1.0 - ((double) fm1)) < ((double)del)) 
+      m1 += 1;
+
+  /* The new min and max limits are found */
+    *xminp = (*dist) * ((double) m1);
+    fm2 = xmax/(*dist);
+    m2 = ((int)fm2) + 1;
+    if(fm2 < -1.0) m2 -= 1;
+    if( fabs((((double)fm2) + 1.0 - ((double)m2))) < del) 
+      m2 -= 1;
+    *xmaxp = (*dist)*((double)m2);
+
+  /* Adjust limits to account for round-off if necessary */
+    if((double)(*xminp) > xmin) 
+      *xminp = xmin;
+    if((double)(*xmaxp) < xmax) 
+      *xmaxp = xmax;
+
 }

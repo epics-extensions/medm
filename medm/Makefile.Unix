@@ -62,10 +62,10 @@ CC += -g
 # Use cc -flags (on Solaris) to find what these mean
 #CXX += +a1
 
-USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
+USR_CFLAGS = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 
 USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB)
-USR_LDLIBS = -lANLwidgets -lPrintUtils -lGraphX
+USR_LDLIBS = -lANLwidgets -lPrintUtils
 
 # Set up for Xrt/Graph
 ifdef XRTGRAPH
@@ -139,7 +139,6 @@ else
 endif
 
 DEPLIBS += $(INSTALL_LIB)/libPrintUtils.a
-DEPLIBS += $(INSTALL_LIB)/libGraphX.a
 
 SRCS.c += ../actions.c
 SRCS.c += ../bubbleHelp.c

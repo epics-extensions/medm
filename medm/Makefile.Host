@@ -119,15 +119,14 @@ endif
 
 PROD = medm
 
-USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
+USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 ifeq ($(HOST_ARCH),WIN32)
 # Use Obj for object libraries and no Obj for import libraries
- PROD_LIBS = GraphXObj ANLwidgetsObj
- GraphXObj_DIR = $(INSTALL_LIB)
+ PROD_LIBS = ANLwidgetsObj
  ANLwidgetsObj_DIR = $(INSTALL_LIB)
 else
-PROD_LIBS = GraphX ANLwidgets PrintUtils
+PROD_LIBS = ANLwidgets PrintUtils
 endif
 
 # Setup for either CA or CDEV
@@ -160,7 +159,6 @@ else
   USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
 endif
 
-GraphX_DIR = $(INSTALL_LIB)
 PrintUtils_DIR = $(INSTALL_LIB)
 ANLwidgets_DIR = $(INSTALL_LIB)
 Xm_DIR = $(MOTIF_LIB)

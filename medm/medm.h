@@ -130,6 +130,7 @@ extern "C" {
 #include "medmVMS.h"      
 #endif				   
 
+#include "utilPrint.h"
 #include "siteSpecific.h"
 #include "medmWidget.h"
 #include "parse.h"
@@ -231,7 +232,6 @@ extern "C" {
   /* Resource bundle stuff */
 #define SELECTION_BUNDLE 0
     EXTERN int resourceBundleCounter;
-    extern utilPrint(Display *, Window, char *);
 
     EXTERN XtWorkProcId medmWorkProcId;
     EXTERN long medmUpdateRequestCount;

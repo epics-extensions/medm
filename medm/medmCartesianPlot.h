@@ -54,6 +54,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+/* KE: Formerly defined in GraphXMacros.h */
+#define TITLE_SCALE_FACTOR	20
+#define AXES_SCALE_FACTOR	27
+
 #ifndef CARTESIAN_PLOT_H
 #define CARTESIAN_PLOT_H
 
