@@ -431,7 +431,7 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
       XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
     } else
     if ((mask & WidthValue) && (mask & HeightValue)) {
-      XtResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),w,h);
+      XResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),w,h);
     }
   }
 }
