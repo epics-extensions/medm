@@ -680,8 +680,7 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 		dlElement = dlElement->next;
 	    }
 	}
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	XtPopdown(shellCommandS);
 	break;
     case CMD_CLOSE_BTN:

@@ -1297,9 +1297,9 @@ void medmSetDisplayTitle(DisplayInfo *displayInfo)
 
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
 {
-    if(globalDisplayListTraversalMode == DL_EXECUTE) return;
-    if(displayInfo->hasBeenEditedButNotSaved) return;
-    displayInfo->hasBeenEditedButNotSaved = True;
-    medmSetDisplayTitle(displayInfo);
+    if(globalDisplayListTraversalMode == DL_EDIT) {
+	displayInfo->hasBeenEditedButNotSaved = True;
+	medmSetDisplayTitle(displayInfo);
+    }
 }
 

@@ -681,9 +681,7 @@ None<Key>osfDelete:     delete-previous-character() \n\
 None<Key>osfBackSpace:  delete-next-character()",
 
     "Medm*XmTextField.verifyBell: False",
-  /***
-  *** main window
-  ***/
+  /* Main window */
     "Medm.geometry: -5+5",
     "Medm.mainMW.mainMB*fontList: 8x13",
     "Medm.mainMW*frameLabel*fontList: 8x13",
@@ -707,21 +705,15 @@ Name of file in which to save display:",
     "Medm.mainMW*exitQD.cancelLabelString: No",
 #endif    
     "Medm.mainMW*XmRowColumn.tearOffModel: XmTEAR_OFF_ENABLED",
-  /***
-  *** objectPalette
-  ***/
+  /* Object palette */
     "Medm.objectS.geometry: -5+137",
     "Medm*objectMW.objectMB*fontList: 8x13",
     "Medm*objectMW*XmLabel.marginWidth: 0",
-  /***
-  *** bubbleHelp
-  ***/
+  /* Bubble help */
     "Medm*bubbleHelpD*background: #f9da3c",
     "Medm*bubbleHelpD*borderColor: black",
     "Medm*bubbleHelpD*borderWidth: 1",
-  /***
-  *** display area
-  ***/
+  /* Display area */
     "Medm*displayDA*XmRowColumn.tearOffModel: XmTEAR_OFF_ENABLED",
   /* override some normal functions in displays for operational safety reasons */
     "Medm*displayDA*XmPushButton.translations: #override  <Key>space: ",
@@ -729,17 +721,13 @@ Name of file in which to save display:",
     "Medm*displayDA*XmToggleButton.translations: #override  <Key>space: ",
     "Medm*displayDA*XmToggleButtonGadget.translations: #override <Key>space: ",
     "Medm*displayDA*radioBox*translations: #override <Key>space: ",
-  /***
-  *** colorPalette
-  ***/
+  /* Color palette */
     "Medm.colorS.geometry: -5-5",
     "Medm*colorMW.colorMB*fontList: 8x13",
     "Medm*colorMW*XmLabel.marginWidth: 0",
     "Medm*colorMW*colorPB.width: 20",
     "Medm*colorMW*colorPB.height: 20",
-  /***
-  *** resourcePalette
-  ***/
+  /* Resource palette */
     "Medm.resourceS.geometry: -5+304",
     "Medm*resourceMW.width: 360",
     "Medm*resourceMW.height: 515",
@@ -776,21 +764,23 @@ Name of file in which to save display:",
     "Medm*resourceMW*imageNameFSD*XmToggleButton.labelType: XmString",
 #endif    
 #ifdef EXTENDED_INTERFACE
-  /***
-  *** channelPalette
-  ***/
+  /* Channel palette */
     "Medm*channelMW.width: 140",
     "Medm*channelMW.channelMB*fontList: 8x13",
     "Medm*channelMW*XmLabel.marginWidth: 0",
 #endif
-  /***
-  *** message window
-  ***/
+  /* Message window */
     "Medm.errorMsgS.x: 10",
     "Medm.errorMsgS.y: 10",
-  /***
-  *** medmWidget resource specifications
-  ***/
+  /* Strip chart dialog */
+    "Medm*scForm.marginWidth: 10",
+    "Medm*scForm.marginHeight: 10",
+    "Medm*scForm.scActionArea.marginHeight: 5",
+#if 0    
+    "Medm*scForm.scMatrix.marginHeight: 0",
+    "Medm*scForm.scMatrix.columnRC.marginHeight: 5",
+#endif    
+  /* Medm widget resource specifications */
     "Medm*warningDialog.foreground: white",
     "Medm*warningDialog.background: red",
     "Medm*warningDialog.dialogTitle: Warning",
@@ -1171,8 +1161,7 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case EDIT_CUT_BTN:
 	copySelectedElementsIntoClipboard();
 	deleteElementsInDisplay(cdi);
-	if(cdi->hasBeenEditedButNotSaved == False)
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_COPY_BTN:
@@ -1210,32 +1199,27 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    }
 	}
 	copyElementsIntoDisplay();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_RAISE_BTN:
 	raiseSelectedElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_LOWER_BTN:
 	lowerSelectedElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_GROUP_BTN:
 	groupObjects();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_UNGROUP_BTN:
 	ungroupSelectedElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case EDIT_UNSELECT_BTN:
@@ -1305,43 +1289,35 @@ static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
     case ALIGN_HORIZ_LEFT_BTN:
 	alignSelectedElements(ALIGN_HORIZ_LEFT);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_CENTER_BTN:
 	alignSelectedElements(ALIGN_HORIZ_CENTER);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_HORIZ_RIGHT_BTN:
 	alignSelectedElements(ALIGN_HORIZ_RIGHT);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_TOP_BTN:
 	alignSelectedElements(ALIGN_VERT_TOP);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_CENTER_BTN:
 	alignSelectedElements(ALIGN_VERT_CENTER);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_VERT_BOTTOM_BTN:
 	alignSelectedElements(ALIGN_VERT_BOTTOM);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_POS_TO_GRID_BTN:
 	alignSelectedElementsToGrid(False);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ALIGN_EDGE_TO_GRID_BTN:
 	alignSelectedElementsToGrid(True);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -1356,14 +1332,12 @@ static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
     case SIZE_SAME_BTN:
 	equalSizeSelectedElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
 
     case SIZE_TEXT_BTN:
 	sizeSelectedTextElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -1378,19 +1352,16 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
     case CENTER_HORIZ_BTN:
 	centerSelectedElements(ALIGN_HORIZ_CENTER);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case CENTER_VERT_BTN:
 	centerSelectedElements(ALIGN_VERT_CENTER);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case CENTER_BOTH_BTN:
 	centerSelectedElements(ALIGN_HORIZ_CENTER);
 	centerSelectedElements(ALIGN_VERT_CENTER);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -1405,23 +1376,19 @@ static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
     case ORIENT_HORIZ_BTN:
 	orientSelectedElements(ORIENT_HORIZ);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ORIENT_VERT_BTN:
 	orientSelectedElements(ORIENT_VERT);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ORIENT_CW_BTN:
 	orientSelectedElements(ORIENT_CW);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case ORIENT_CCW_BTN:
 	orientSelectedElements(ORIENT_CCW);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -1437,18 +1404,15 @@ static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
       /* reuse the TextAlign values here */
     case SPACE_HORIZ_BTN:
 	spaceSelectedElements(SPACE_HORIZ);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case SPACE_VERT_BTN:
 	spaceSelectedElements(SPACE_VERT);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case SPACE_2D_BTN:
 	spaceSelectedElements2D();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     }
 }
@@ -2497,6 +2461,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	if(stripChartS) {
 	    XtSetSensitive(stripChartS,True);
+	    executeTimeStripChartElement = NULL;
 	    XtPopdown(stripChartS);
 	}
 	if(pvInfoS) {
@@ -2546,6 +2511,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	if(stripChartS) {
 	    XtSetSensitive(stripChartS,False);
+	    executeTimeStripChartElement = NULL;
 	    XtPopdown(stripChartS);
 	}
 	if(pvLimitsS) {
@@ -2567,6 +2533,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     executeTimeCartesianPlotWidget = NULL;
     executeTimePvLimitsElement = NULL;
+    executeTimeStripChartElement = NULL;
     currentDisplayInfo = (DisplayInfo *)NULL;
 
   /* Go through the whole display list, if any display is brought up
@@ -3232,6 +3199,7 @@ main(int argc, char *argv[])
     medmUpdateMissedCount = 0;
     MedmUseNewFileFormat = True;
     medmRaiseMessageWindow = 1;
+    popupExistingDisplay = POPUP_EXISTING_DISPLAY;
     setTimeValues();
     printOrientation = DEFAULT_PRINT_ORIENTATION;
     printSize =  DEFAULT_PRINT_SIZE;
@@ -3531,10 +3499,10 @@ main(int argc, char *argv[])
     cartesianPlotS = NULL;
     cartesianPlotAxisS = NULL;
     stripChartS = NULL;
-    scForm = NULL;
     cpAxisForm = NULL;
     executeTimeCartesianPlotWidget = NULL;
     executeTimePvLimitsElement = NULL;
+    executeTimeStripChartElement = NULL;
     currentDisplayInfo = NULL;
     pointerInDisplayInfo = NULL;
     resourceBundleCounter = 0;

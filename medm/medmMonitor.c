@@ -88,6 +88,7 @@ void penAttributeInit(DlPen *pen)
 {
     pen->chan[0] = '\0';
     pen->clr = DEFAULT_CLR;
+    limitsAttributeInit(&(pen->limits));
 }
 
 void traceAttributeInit(DlTrace *trace)
@@ -97,9 +98,7 @@ void traceAttributeInit(DlTrace *trace)
     trace->data_clr = DEFAULT_CLR;
 }
 
-void parseMonitor(
-  DisplayInfo *displayInfo,
-  DlMonitor *monitor)
+void parseMonitor(DisplayInfo *displayInfo, DlMonitor *monitor)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -132,9 +131,7 @@ void parseMonitor(
       && (tokenType != T_EOF) );
 }
 
-void parsePlotcom(
-  DisplayInfo *displayInfo,
-  DlPlotcom *plotcom)
+void parsePlotcom(DisplayInfo *displayInfo, DlPlotcom *plotcom)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -184,9 +181,7 @@ void parsePlotcom(
  ***/
 
 
-void parsePlotAxisDefinition(
-  DisplayInfo *displayInfo,
-  DlPlotAxisDefinition *dlPlotAxisDefinition)
+void parsePlotAxisDefinition(DisplayInfo *displayInfo, DlPlotAxisDefinition *dlPlotAxisDefinition)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -250,9 +245,7 @@ void parsePlotAxisDefinition(
  ***/
 
 
-void parsePen(
-  DisplayInfo *displayInfo,
-  DlPen *pen)
+void parsePen(DisplayInfo *displayInfo, DlPen *pen)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -269,6 +262,8 @@ void parsePen(
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		pen->clr = atoi(token) % DL_MAX_COLORS;
+	    } else if (!strcmp(token,"limits")) {
+		parseLimits(displayInfo,&pen->limits);
 	    }
 	    break;
 	case T_LEFT_BRACE:
@@ -284,9 +279,7 @@ void parsePen(
  *** trace element in each cartesian plot
  ***/
 
-void parseTrace(
-  DisplayInfo *displayInfo,
-  DlTrace *trace)
+void parseTrace(DisplayInfo *displayInfo, DlTrace *trace)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -318,10 +311,7 @@ void parseTrace(
       && (tokenType != T_EOF) );
 }
 
-void writeDlMonitor(
-  FILE *stream,
-  DlMonitor *dlMonitor,
-  int level)
+void writeDlMonitor(FILE *stream, DlMonitor *dlMonitor, int level)
 {
     int i;
     char indent[16];
@@ -351,10 +341,7 @@ void writeDlMonitor(
 }
 
 
-void writeDlPlotcom(
-  FILE *stream,
-  DlPlotcom *dlPlotcom,
-  int level)
+void writeDlPlotcom(FILE *stream, DlPlotcom *dlPlotcom, int level)
 {
     int i;
     char indent[16];
@@ -390,11 +377,7 @@ void writeDlPlotcom(
 }
 
 
-void writeDlPen(
-  FILE *stream,
-  DlPen *dlPen,
-  int index,
-  int level)
+void writeDlPen(FILE *stream, DlPen *dlPen, int index, int level)
 {
     int i;
     char indent[16];
@@ -413,15 +396,12 @@ void writeDlPen(
     fprintf(stream,"\n%spen[%d] {",indent,index);
     fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlPen->chan);
     fprintf(stream,"\n%s\tclr=%d",indent,dlPen->clr);
+    writeDlLimits(stream,&dlPen->limits,level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
 
-void writeDlTrace(
-  FILE *stream,
-  DlTrace *dlTrace,
-  int index,
-  int level)
+void writeDlTrace(FILE *stream, DlTrace *dlTrace, int index, int level)
 {
     int i;
     char indent[16];
@@ -458,11 +438,8 @@ void writeDlTrace(
 
 
 
-void writeDlPlotAxisDefinition(
-  FILE *stream,
-  DlPlotAxisDefinition *dlPlotAxisDefinition,
-  int axisNumber,
-  int level)
+void writeDlPlotAxisDefinition(FILE *stream, DlPlotAxisDefinition *dlPlotAxisDefinition,
+  int axisNumber, int level)
 {
     int i;
     char indent[16];

@@ -270,6 +270,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 
 /*** PV Limits routines ***/
 
+/* Creates the dialog if needed, fills in the values, and pops it up */
 void popupPvLimits(DisplayInfo *displayInfo)
 {
     Record **records = NULL;
@@ -307,6 +308,12 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	    resetPvLimitsDlg(NULL, NULL, True);
 	    return;   /* (Error messages have been sent) */
 	}
+      /* Do the Strip Chart differently */
+	if(pE->type == DL_StripChart) {
+	    executeTimeStripChartElement = pE;
+	    popupStripChartDataDialog();
+	    return;
+	}
       /* Check if element is valid or if there is a getLimits method */
 	executeTimePvLimitsElement = pE;
 	pvName = NULL;
@@ -322,6 +329,8 @@ void popupPvLimits(DisplayInfo *displayInfo)
     XtPopup(pvLimitsS, XtGrabNone);
 }
 
+/* Resets members of the limits struct argument.  Only affects the
+   limits struct. */
 void updatePvLimits(DlLimits *limits)
 {
   /* LOPR */
@@ -371,6 +380,7 @@ void updatePvLimits(DlLimits *limits)
     }
 }
 
+/* Fills in the dialog from values in limits and pvName arguments */
 static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 {
     char string[1024];     /* Danger: Fixed length */
@@ -533,6 +543,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
     }
 }
 
+/* Creates pvLimitsS */
 static void createPvLimitsDlg(void)
 {
     Widget pane, w, wparent, wsave;
@@ -764,6 +775,9 @@ static void createPvLimitsDlg(void)
     XtManageChild(pane);
 }
 
+/* Sets the values in the globalResourceBundle or the
+   executeTimePvLimitsElement when controls in the dialog are
+   activated */
 static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
     int type = (int)cd;
@@ -805,7 +819,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
    *   Find the real type from the userData of the RC parent of the button */
     if(type < 3) {
 	button=type;
-	XtVaGetValues(XtParent(w),XmNuserData,&type,NULL);
+	XtVaGetValues(XtParent(w), XmNuserData, &type,NULL);
 #if DEBUG_PVLIMITS
 	print("  Type is really %d, button is %d\n",type,button);
 #endif
@@ -964,6 +978,8 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
     }
 }
 
+/* Resets the text entries from the globalResourceBundle or the
+   executeTimePvLimitsElement */
 static void pvLimitsLosingFocusCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
     char string[1024];     /* Danger: Fixed length */

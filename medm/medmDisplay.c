@@ -178,7 +178,8 @@ void closeDisplay(Widget w) {
 	}
     }
   /* Remove shells if their executeTime elements are in this display */
-    if(executeTimeCartesianPlotWidget || executeTimePvLimitsElement) {
+    if(executeTimeCartesianPlotWidget || executeTimePvLimitsElement ||
+      executeTimeStripChartElement) {
 	pE = FirstDlElement(newDisplayInfo->dlElementList);
 	while(pE) {
 	    if(executeTimeCartesianPlotWidget  &&
@@ -186,15 +187,22 @@ void closeDisplay(Widget w) {
 	      cartesianPlotAxisS) {
 		executeTimeCartesianPlotWidget = NULL;
 		XtPopdown(cartesianPlotAxisS);
-		if(!executeTimePvLimitsElement) break;
 	    }
 	    if(executeTimePvLimitsElement  &&
 	      pE == executeTimePvLimitsElement &&
 	      pvLimitsS) {
 		executeTimePvLimitsElement = NULL;
 		XtPopdown(pvLimitsS);
-		if(!executeTimeCartesianPlotWidget) break;
 	    }
+	    if(executeTimeStripChartElement  &&
+	      pE == executeTimeStripChartElement &&
+	      stripChartS) {
+		executeTimeStripChartElement = NULL;
+		XtPopdown(stripChartS);
+	    }
+	    if(!executeTimeCartesianPlotWidget &&
+	      !executeTimePvLimitsElement &&
+	      !executeTimeStripChartElement) break;
 	    pE = pE->next;
 	}
     }

@@ -2840,8 +2840,7 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 		dlElement = dlElement->next;
 	    }
 	}
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	XtPopdown(cartesianPlotS);
 	break;
     case CP_CLOSE_BTN:

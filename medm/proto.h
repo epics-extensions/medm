@@ -358,6 +358,8 @@ void markHiddenButtons(DisplayInfo *displayInfo);
 
 /* medmShellCommand.c */
 Widget createShellCommandPromptD(Widget parent);
+Widget createShellCommandDataDialog(Widget parent);
+void updateShellCommandDataDialog(void);
 
 /* medmValuator.c */
 void popupValuatorKeyboardEntry(Widget, DisplayInfo *, XEvent *);
@@ -408,16 +410,17 @@ void parseTrace(DisplayInfo *displayInfo, DlTrace *trace);
 void parsePlotAxisDefinition(DisplayInfo *displayInfo,
   DlPlotAxisDefinition *axisDefinition);
 
+/* medmStripChart.c */
+void popupStripChartDataDialog(void);
+void resetStripChartDataDialog(void);
+void stripChartUpdateMatrixColors(int clr, int row);
+
 /* resourcePalette.c */
 void clearResourcePaletteEntries(void);
 void createResource(void);
-Widget createShellCommandDataDialog(Widget parent);
-Widget createStripChartDataDialog(Widget parent);
 void initializeGlobalResourceBundle(void);
 void medmGetValues(ResourceBundle *pRB, ...);
 void resetGlobalResourceBundleAndResourcePalette(void);
-void scEnterCellCallback(Widget w, XtPointer, XtPointer);
-void scUpdateMatrixColors(void);
 void setResourcePaletteEntries(void);
 void textFieldActivateCallback(Widget w, XtPointer, XtPointer);
 void textFieldFloatVerifyCallback(Widget, XtPointer, XtPointer);
@@ -429,8 +432,6 @@ void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
 void updateGlobalResourceBundleFromElement(DlElement *element);
 void updateRelatedDisplayDataDialog(void);
-void updateShellCommandDataDialog(void);
-void updateStripChartDataDialog(void);
 void initializeXmStringValueTables();
 
 /* updateTask.c */
@@ -579,9 +580,11 @@ NameValueTable *generateNameValueTable(char *argsString, int *numNameValues);
 char *lookupNameValue(NameValueTable *nameValueTable, int numEntries,
   char *name);
 void freeNameValueTable(NameValueTable *nameValueTable, int numEntries);
+DisplayInfo *findDisplay(char * filename, char *argsString);
 void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString);
 void optionMenuSet(Widget menu, int buttonId);
+void optionMenuRemoveLabel(Widget menu);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);

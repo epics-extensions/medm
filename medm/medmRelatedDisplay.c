@@ -869,7 +869,8 @@ static void relatedDisplayButtonPressedCb(Widget w,
 
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay)
-{ 
+{
+    DisplayInfo *existingDisplayInfo = NULL;
     FILE *filePtr;
     char *argsString, token[MAX_TOKEN_LENGTH];
     char filename[MAX_TOKEN_LENGTH];
@@ -904,14 +905,31 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	    medmPostMsg(1,token);
 	} else {
 	    if(replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
-		dmDisplayListParse(displayInfo,filePtr,processedArgs,
-		  filename,NULL,(Boolean)True);
-		fclose(filePtr);
+		if(popupExistingDisplay) {
+		    existingDisplayInfo = findDisplay(filename, processedArgs);
+		}
+		if(existingDisplayInfo) {
+		    closeDisplay(displayInfo->shell);		    
+		    currentDisplayInfo = existingDisplayInfo;
+		    XtPopup(currentDisplayInfo->shell, XtGrabNone);
+		} else {
+		    dmDisplayListParse(displayInfo,filePtr,processedArgs,
+		      filename,NULL,(Boolean)True);
+		}
 	    } else {
-		dmDisplayListParse(NULL,filePtr,processedArgs,
-		  filename,NULL,(Boolean)True);
-		fclose(filePtr);
+		if(popupExistingDisplay) {
+		    existingDisplayInfo = findDisplay(filename, processedArgs);
+		}
+		if(existingDisplayInfo) {
+		    currentDisplayInfo = existingDisplayInfo;
+		    XtPopup(currentDisplayInfo->shell, XtGrabNone);
+		} else {
+		    dmDisplayListParse(NULL,filePtr,processedArgs,
+		      filename,NULL,(Boolean)True);
+		}
 	    }
+	    fclose(filePtr);
+
 	  /* Refresh the display list dialog box */
 	    refreshDisplayListDlg();
 	}
@@ -927,8 +945,8 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
     UNREFERENCED(cbs);
 
     switch(buttonType) {
-     case RD_APPLY_BTN:
-      /* commit changes in matrix to global matrix array data */
+    case RD_APPLY_BTN:
+      /* Commit changes in matrix to global matrix array data */
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    char *tmp = NULL;
 	    if(tmp = XmTextFieldGetString(table[i][0])) {
@@ -960,8 +978,7 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 		dlElement = dlElement->next;
 	    }
 	}
-	if(currentDisplayInfo->hasBeenEditedButNotSaved == False)
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
+	medmMarkDisplayBeingEdited(currentDisplayInfo);
 	XtPopdown(relatedDisplayS);
 	break;
     case RD_CLOSE_BTN:
@@ -972,9 +989,7 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
  
-/*
- * create related display data dialog
- */
+/* Create related display data dialog */
 Widget createRelatedDisplayDataDialog(Widget parent)
 {
     Widget shell, applyButton, closeButton;
@@ -994,13 +1009,25 @@ Widget createRelatedDisplayDataDialog(Widget parent)
  *     OK     CANCEL
  */
  
+  /* Create form dialog (rdForm) */
     n = 0;
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
     XtSetArg(args[n],XmNmarginHeight,8); n++;
     XtSetArg(args[n],XmNmarginWidth,8); n++;
-/*     rdForm = XmCreateFormDialog(mainShell,"relatedDisplayDataF",args,n); */
+    XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
     rdForm = XmCreateFormDialog(parent,"relatedDisplayDataF",args,n);
+    
+  /* Set values for the shell parent of the form */
     shell = XtParent(rdForm);
+    XtVaSetValues(shell,
+      XmNtitle,"Related Display Data",
+      XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
+    /* KE: The following is necessary for Exceed, which turns off the
+       resize function with the handles.  It should not be necessary */
+      XmNmwmFunctions, MWM_FUNC_ALL,
+      NULL);
+    XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
+      relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
 #if DEBUG_COMPOSITE
     {
 	Widget w=rdForm;
@@ -1027,16 +1054,8 @@ Widget createRelatedDisplayDataDialog(Widget parent)
 	}
     }
 #endif
-    XtVaSetValues(shell,
-      XmNtitle,"Related Display Data",
-      XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
-    /* KE: The following is necessary for Exceed, which turns off the
-       resize function with the handles.  It should not be necessary */
-      XmNmwmFunctions, MWM_FUNC_ALL,
-      NULL);
- 
-    XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-      relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
+
+  /* rdMatrix */
     n = 0;
     rdMatrix = XtVaCreateManagedWidget("rdMatrix",
       xmRowColumnWidgetClass,rdForm,
@@ -1074,6 +1093,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
 	  NULL);
     }
 
+  /* Close Button */
     closeButton = XtVaCreateWidget("Cancel",
       xmPushButtonWidgetClass, rdForm,
       NULL);
@@ -1081,6 +1101,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
       relatedDisplayActivate,(XtPointer)RD_CLOSE_BTN);
     XtManageChild(closeButton);
 
+  /* Apply Button */
     applyButton = XtVaCreateWidget("Apply",
       xmPushButtonWidgetClass, rdForm,
       NULL); 
@@ -1088,23 +1109,25 @@ Widget createRelatedDisplayDataDialog(Widget parent)
       relatedDisplayActivate,(XtPointer)RD_APPLY_BTN);
     XtManageChild(applyButton);
  
-/* make APPLY and CLOSE buttons same size */
+  /* Make APPLY and CLOSE buttons same size */
     XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
     XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
     XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
       XmNheight,MAX(cHeight,aHeight),NULL);
  
-/*
- * now do form layout
- */
+  /* Make the APPLY button the default for the form */
+    XtVaSetValues(rdForm,XmNdefaultButton,applyButton,NULL);
+
+  /* Do form layout */
  
-/* rdMatrix */
+  /* rdMatrix */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
     XtSetValues(rdMatrix,args,n);
-/* apply */
+
+  /* Apply */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
     XtSetArg(args[n],XmNtopWidget,rdMatrix); n++;
@@ -1114,7 +1137,8 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNbottomOffset,12); n++;
     XtSetValues(applyButton,args,n);
-/* close */
+
+  /* Close */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
     XtSetArg(args[n],XmNtopWidget,rdMatrix); n++;

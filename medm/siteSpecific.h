@@ -123,6 +123,14 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 # endif
 #endif
 
+/*** Related display options ***/
+
+/* If POPUP_EXISTING_DISPLAY is True and a display is invoked through
+   the Related Display, then MEDM will pop up an existing display if
+   it has the same name and macro arguments.  Otherwise, MEDM will
+   open a new copy. */
+#define POPUP_EXISTING_DISPLAY True
+
 /*** Colormap specifications ***/
 
 /* The RGB values in the default display colormap are changeable.  The

@@ -547,9 +547,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		      ->structure.element;
 		    if (dlElement->run->editVertex) {
 			saveUndoInfo(cdi);
-			if (cdi->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(cdi);
-			}
+			medmMarkDisplayBeingEdited(cdi);
 			unhighlightSelectedElements();
 		      /* Do vertex edit */
 			if (dlElement->run->editVertex(dlElement,x0,y0)) {
@@ -666,9 +664,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 		    if (validResize) {
 			saveUndoInfo(cdi);
-			if (cdi->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(cdi);
-			}
+			medmMarkDisplayBeingEdited(cdi);
 			updateResizedElements(x0,y0,x1,y1);
 		    }
 		  /* Re-highlight currently selected elements */
@@ -698,9 +694,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 		    if (validResize) {
 			saveUndoInfo(cdi);
-			if (cdi->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(cdi);
-			}
+			medmMarkDisplayBeingEdited(cdi);
 			updateResizedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
@@ -741,9 +735,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 		    if (validDrag) {
 			saveUndoInfo(cdi);
-			if (cdi->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(cdi);
-			}
+			medmMarkDisplayBeingEdited(cdi);
 			updateDraggedElements(x0,y0,x1,y1);
 		    }
 		  /* Re-highlight currently selected elements */
@@ -774,9 +766,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Move this element */
 		    if (validDrag) {
 			saveUndoInfo(cdi);
-			if (cdi->hasBeenEditedButNotSaved == False) {
-			    medmMarkDisplayBeingEdited(cdi);
-			}
+			medmMarkDisplayBeingEdited(cdi);
 			updateDraggedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
@@ -921,27 +911,19 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	  /* Create the element according to its method */
 	    if (currentElementType == DL_Text && doTextByTyping) {
 		saveUndoInfo(cdi);
-		if (cdi->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(cdi);
-		}
+		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handleTextCreate(x0,y0);
 	    } else if (currentElementType == DL_Polyline) {
 		saveUndoInfo(cdi);
-		if (cdi->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(cdi);
-		}
+		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
 	    } else if (currentElementType == DL_Line) {
 		saveUndoInfo(cdi);
-		if (cdi->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(cdi);
-		}
+		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
 	    } else if (currentElementType == DL_Polygon) {
 		saveUndoInfo(cdi);
-		if (cdi->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(cdi);
-		}
+		medmMarkDisplayBeingEdited(cdi);
 		dlElement = handlePolygonCreate(x0,y0);
 	    } else {
 	      /* Do rubber banding for initial size */
@@ -971,9 +953,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 
 	      /* Mark display as not saved */
 		saveUndoInfo(cdi);
-		if (cdi->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(cdi);
-		}
+		medmMarkDisplayBeingEdited(cdi);
 	      /* Add it to cdi */
 		appendDlElement(cdi->dlElementList,dlElement);
 	      /* Run its execute method */
@@ -1090,9 +1070,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
 		if (displayInfo->selectedDlElementList->count == 1) {
 		    setResourcePaletteEntries();
 		}
-		if (displayInfo->hasBeenEditedButNotSaved == False) {
-		    medmMarkDisplayBeingEdited(displayInfo);
-		}
+		medmMarkDisplayBeingEdited(displayInfo);
 	    }
 	}
     }

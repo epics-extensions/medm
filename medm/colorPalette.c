@@ -177,6 +177,7 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi;
     Widget widget;
     DlElement *dlElement;
+    int recolor = TRUE;
 
     UNREFERENCED(cbs);
     
@@ -195,23 +196,23 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch (elementTypeWhoseColorIsBeingEdited) {
     case CLR_RC:
 	globalResourceBundle.clr = colorIndex;
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	    medmMarkDisplayBeingEdited(currentDisplayInfo);
-	}
+	medmMarkDisplayBeingEdited(currentDisplayInfo);
 	break;
     case BCLR_RC:
 	globalResourceBundle.bclr = colorIndex;
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	    medmMarkDisplayBeingEdited(currentDisplayInfo);
-	}
+	medmMarkDisplayBeingEdited(currentDisplayInfo);
 	break;
     case DATA_CLR_RC:
 	globalResourceBundle.data_clr = colorIndex;
 	break;
     case SCDATA_RC:
+#if 0	
 	globalResourceBundle.scData[
 	  elementTypeWhoseColorIsBeingEditedIndex].clr = colorIndex;
-	scUpdateMatrixColors();
+#endif	
+	stripChartUpdateMatrixColors(colorIndex,
+	  elementTypeWhoseColorIsBeingEditedIndex);
+	recolor = FALSE;
 	break;
     case CPDATA_RC:
 	globalResourceBundle.cpData[
@@ -219,6 +220,7 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #ifdef CARTESIAN_PLOT	
 	cpUpdateMatrixColors();
 #endif	
+	recolor = FALSE;
 	break;
     default :
 	return;
@@ -228,11 +230,11 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* 9-19-94  vong
    * Make sure the resource palette is created before doing XtVaSetValues
    */
-    if (resourceMW) {
+    if (resourceMW && recolor) {
 	XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEdited],
 	  XmNbackground,currentColormap[colorIndex], NULL);
     }
-
+    
   /* Update appropriate color property */
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
@@ -424,9 +426,8 @@ void createColor()
  *	and define the rcType (element type) being modified by any
  *	color palette selections
  */
-void setCurrentDisplayColorsInColorPalette(
-  int rcType,
-  int index)	/* for types with color vectors, also specify element */
+void setCurrentDisplayColorsInColorPalette(int rcType, int index)
+  /* for types with color vectors, also specify element */
 {
     Arg args[2];
     int i, n = 0;

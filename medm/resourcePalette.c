@@ -205,13 +205,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
     case SCDATA_RC:
-	if(!stripChartS) {
-	    stripChartS = createStripChartDataDialog(w);
-	}
-      /* update strip chart data from globalResourceBundle */
-	updateStripChartDataDialog();
-	XtManageChild(scForm);
-	XtPopup(stripChartS,XtGrabNone);
+	popupStripChartDataDialog();
 	break;
     case CPAXIS_RC:
 #ifdef CARTESIAN_PLOT
@@ -220,15 +214,13 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
       /* update cartesian plot axis data from globalResourceBundle */
 	updateCartesianPlotAxisDialog();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	XtManageChild(cpAxisForm);
 	XtPopup(cartesianPlotAxisS,XtGrabNone);
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
     case LIMITS_RC:
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	popupPvLimits(cdi);
 	break;
     default:
@@ -337,8 +329,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 
 	dmTraverseNonWidgetsInDisplayList(cdi);
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	highlightSelectedElements();
     }
 }
@@ -615,13 +606,11 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(rcType) {
     case BEGIN_RC:
 	globalResourceBundle.begin = 64*scbs->value;
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     case PATH_RC:
 	globalResourceBundle.path = 64*scbs->value;
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
 	break;
     default:
 	break;
@@ -856,8 +845,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	dmTraverseNonWidgetsInDisplayList(cdi);
 	highlightSelectedElements();
-	if(cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
+	medmMarkDisplayBeingEdited(cdi);
     }
     
   /* Redo the display if indicated.  Is necessary after a colormap
@@ -1110,6 +1098,7 @@ void initializeGlobalResourceBundle()
     for (i = 0; i < MAX_PENS; i++) {
 	globalResourceBundle.scData[i].chan[0] = '\0';
 	globalResourceBundle.scData[i].clr = 0;
+	limitsAttributeInit(&globalResourceBundle.scData[i].limits);
     }
     plotAxisDefinitionInit(&(globalResourceBundle.axis[X_AXIS_ELEMENT]));
   /* structure copy for other two axis definitions */
@@ -1801,6 +1790,7 @@ static void createEntryRC( Widget parent, int rcType)
 	      WhitePixel(display,screenNum) :
 	      cdi->colormap[cdi->drawingAreaBackgroundColor]); n++;
 	}
+	XtSetArg(args[n],XmNshadowType,XmSHADOW_IN); n++;
 	localElement = XmCreateDrawnButton(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
 	  colorSelectCallback,(XtPointer)rcType);
@@ -2375,6 +2365,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    for (i = 0; i < MAX_PENS; i++){
 		strcpy(pPen[i].chan,pRB->scData[i].chan);
 		pPen[i].clr = pRB->scData[i].clr;
+		pPen[i].limits = pRB->scData[i].limits;
 	    }
 	    break;
 	}
@@ -2654,9 +2645,18 @@ void clearResourcePaletteEntries()
     if(relatedDisplayS)    XtPopdown(relatedDisplayS);
     if(shellCommandS)      XtPopdown(shellCommandS);
     if(cartesianPlotS)     XtPopdown(cartesianPlotS);
-    if(cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
-    if(pvLimitsS)          XtPopdown(pvLimitsS);
-    if(stripChartS)        XtPopdown(stripChartS);
+    if(cartesianPlotAxisS) {
+	executeTimeCartesianPlotWidget = NULL;
+	  XtPopdown(cartesianPlotAxisS);
+    }
+    if(pvLimitsS) {
+	executeTimePvLimitsElement = NULL;
+	XtPopdown(pvLimitsS);
+    }
+    if(stripChartS) {
+	executeTimeStripChartElement = NULL;
+	XtPopdown(stripChartS);
+    }
  
   /* Unset the current button and set label in resourceMW to Select... */
     XtVaSetValues(resourceElementTypeLabel,XmNlabelString,xmstringSelect,NULL);
@@ -3223,6 +3223,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	for (i = 0; i < MAX_PENS; i++){
 	    strcpy(globalResourceBundle.scData[i].chan,p->pen[i].chan);  
 	    globalResourceBundle.scData[i].clr = p->pen[i].clr;
+	    globalResourceBundle.scData[i].limits = p->pen[i].limits;
 	}
 	break;
     }

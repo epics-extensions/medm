@@ -277,6 +277,27 @@ void optionMenuSet(Widget menu, int buttonId)
     }
 }
 
+void optionMenuRemoveLabel(Widget menu)
+{
+    WidgetList children;
+    Cardinal numChildren;
+    Cardinal n;
+    
+  /* Get the children */
+    XtVaGetValues(menu,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+
+  /* Look for the label, which has name OptionLabel */
+    for(n=0; n < numChildren; n++) {
+	if(!strcmp(XtName(children[n]),"OptionLabel")) {
+	    XtUnmanageChild(children[n]);
+	    break;
+	}
+    }
+}
+
 XtErrorHandler trapExtraneousWarningsHandler(String message)
 {
     if(message && *message) {
@@ -3095,6 +3116,60 @@ void freeNameValueTable(NameValueTable *nameValueTable, int numEntries)
 
 }
 
+DisplayInfo *findDisplay(char * filename, char *argsString)
+{
+    DisplayInfo *retVal = NULL;
+    DisplayInfo *di;
+    NameValueTable *nameTable;
+    int numNameValues;
+    int i, matched;
+
+  /* Generate the name-value table for these args */
+    if(argsString) {
+	nameTable = generateNameValueTable(argsString, &numNameValues);
+    } else {
+	nameTable = NULL;
+	numNameValues = 0;
+    }
+
+  /* Loop over displays */
+    di = displayInfoListHead->next;
+    while(di) {
+      /* Continue if the filename does not match */
+	if(strcmp(di->dlFile->name,filename)) {
+	    di = di->next;
+	    continue;
+	}
+      /* Continue if the number of name-values does not match */
+	if(di->numNameValues != numNameValues) {
+	    di = di->next;
+	    continue;
+	}
+      /* Check each name and value for a match */
+	matched = 1;
+	for(i=0; i < di->numNameValues; i++) {
+	    if(strcmp(di->nameValueTable[i].name, nameTable[i].name)) {
+		matched = 0;
+		break;
+	    }
+	    if(strcmp(di->nameValueTable[i].value, nameTable[i].value)) {
+		matched = 0;
+		break;
+	    }
+	}
+      /* Return if everything matched */
+	if(matched) {
+	    retVal = di;
+	    break;	    
+	}
+	di = di->next;
+    }	
+
+  /* Free the nameTable */
+    if(nameTable) freeNameValueTable(nameTable, numNameValues);
+    
+    return retVal;
+}
 
 /*
  * Utility function to perform macro substitutions on input string, putting

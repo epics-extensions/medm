@@ -444,8 +444,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	  /* In EDIT mode - resize selected elements */
 	    unhighlightSelectedElements();
 	    resized = dmResizeSelectedElements(displayInfo,width,height);
-	    if( resized && displayInfo->hasBeenEditedButNotSaved == False)
-	      medmMarkDisplayBeingEdited(displayInfo);
+	    if(resized) medmMarkDisplayBeingEdited(displayInfo);
 	} else {
 	  /* In EXECUTE mode - resize all elements
 	   * If user resized with Shift-Click

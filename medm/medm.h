@@ -233,13 +233,14 @@ extern "C" {
    * Cartesian plot and strip chart data vectors */
     EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
       cartesianPlotAxisS, stripChartS;
-    EXTERN Widget scForm, cmdForm, cpAxisForm;
-    EXTERN Widget scForm, cm;
+    EXTERN Widget cmdForm, cpAxisForm;
     EXTERN Widget executeTimeCartesianPlotWidget;
     EXTERN DlElement *executeTimePvLimitsElement;
+    EXTERN DlElement *executeTimeStripChartElement;
 
     EXTERN Widget exitQD, saveAsPD;
     EXTERN Boolean saveReplacedDisplays;
+    EXTERN Boolean popupExistingDisplay;
 
   /* Help information dialogs */
     EXTERN Widget helpS, helpMessageBox;

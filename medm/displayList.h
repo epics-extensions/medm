@@ -604,6 +604,7 @@ typedef struct {
 typedef struct {
     char chan[MAX_TOKEN_LENGTH];
     int clr;
+    DlLimits limits;
 } DlPen;
 
 typedef struct {
