@@ -132,8 +132,17 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	    } else {
 		pc = (MedmComposite *)malloc(sizeof(MedmComposite));
 		dlElement->data = (void *)pc;
-		pc->displayInfo = displayInfo;
+		if(pc == NULL) {
+		    medmPrintf(1,"\nexecuteDlArcComposite:"
+		      " Memory allocation error\n");
+		    return;
+		}
+	      /* Pre-initialize */
+		pc->updateTask = NULL;
+		pc->records = NULL;
 		pc->dlElement = dlElement;
+
+		pc->displayInfo = displayInfo;
 		pc->records = NULL;
 		pc->updateTask = updateTaskAddTask(displayInfo,
 		  &(dlComposite->object), compositeDraw, (XtPointer)pc);
