@@ -74,11 +74,6 @@ void utilPrint(display,window,fileName)
 	fclose(fo);
 
     }
-#if 1
-  /* KE: Need to free these */
-    free(newFileName);
-    free(psFileName);
-#endif   
 
 #if DEBUG_PRINT == 0
 #ifndef VMS     /* UNIX code */
@@ -88,15 +83,15 @@ void utilPrint(display,window,fileName)
     if(status) {
 	fprintf(stderr,"\nutilPrint:  print command [%s] failed",
 	  commandBuffer);
-	return;
+    } else {
+      /* Delete files */
+	strcpy(commandBuffer,"rm ");
+	strcat(commandBuffer,newFileName);
+	system(commandBuffer);
+	strcpy(commandBuffer,"rm ");
+	strcat(commandBuffer,psFileName);
+	system(commandBuffer);
     }
-  /* Delete files */
-    strcpy(commandBuffer,"rm ");
-    strcat(commandBuffer,newFileName);
-    system(commandBuffer);
-    strcpy(commandBuffer,"rm ");
-    strcat(commandBuffer,psFileName);
-    system(commandBuffer);
 #else     /* VMS code */
     sprintf(commandBuffer,"print /queue=%s/delete \0",printer);
     strcat(commandBuffer, psFileName);
@@ -110,4 +105,7 @@ void utilPrint(display,window,fileName)
 #endif     /* #ifndef VMS */
 #endif     /* #if DEBUG_PRINT == 0 */
 
+  /* KE: Need to free these */
+    free(newFileName);
+    free(psFileName);
 }
