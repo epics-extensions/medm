@@ -120,7 +120,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pr);
 
 	if (pr->updateTask == NULL) {
-	    medmPrintf("rectangleCreateRunTimeInstance : memory allocation error\n");
+	    medmPrintf("\nrectangleCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
 	    updateTaskAddNameCb(pr->updateTask,rectangleName);
@@ -238,7 +238,7 @@ static void rectangleDraw(XtPointer cd) {
 	      drawRectangle(pr);
 	    break;
 	default :
-	    medmPrintf("internal error : rectangleUpdateValueCb\n");
+	    medmPrintf("\nrectangleUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {

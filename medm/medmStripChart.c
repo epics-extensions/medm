@@ -442,7 +442,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf("\nexecuteDlStripChart : unknown time unit\n");
+	medmPrintf("\nexecuteDlStripChart: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
@@ -451,7 +451,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	stripChartUpdateTaskCb,
 	(XtPointer)psc);
     if (psc->updateTask == NULL) {
-	medmPrintf("memory allocation error at executeDlStripChart\n");
+	medmPrintf("\nexecuteDlStripChart: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(psc->updateTask,freeStripChart);
 	updateTaskAddNameCb(psc->updateTask,stripChartName);
@@ -782,7 +782,7 @@ static void stripChartConfig(StripChart *psc) {
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf("\nexecuteDlStripChart : unknown time unit\n");
+	medmPrintf("\nexecuteDlStripChart: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
@@ -1003,7 +1003,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	    
 	    psc = stripChartAlloc(displayInfo,dlElement);
 	    if (psc == NULL) {
-		medmPrintf("memory allocation error at executeDlStripChart\n");
+		medmPrintf("\nexecuteDlStripChart: Memory allocation error\n");
 		return;
 	    }
 	    

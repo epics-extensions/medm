@@ -161,7 +161,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 
     pv = (Valuator *) malloc(sizeof(Valuator));
     if (pv == NULL) {
-	medmPrintf("valuatorCreateRunTimeInstance : memory allocation error\n");
+	medmPrintf("\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
 	return;
     }
     pv->dlElement = dlElement;
@@ -171,7 +171,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       (XtPointer)pv);
 
     if (pv->updateTask == NULL) {
-	medmPrintf("valuatorCreateRunTimeInstance : memory allocation error\n");
+	medmPrintf("\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
 	free((char *)pv);
 	return;
     } else {

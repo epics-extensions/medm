@@ -213,9 +213,9 @@ void executeDlShellCommand(DisplayInfo *, DlElement *);
 /* help.c */
 void errMsgDlgCreateDlg();
 void globalHelpCallback(Widget, XtPointer, XtPointer);
-void medmPostMsg(char *);
+void medmPostMsg(char *format, ...);
 void medmPostTime();
-void medmPrintf(char*,...);
+void medmPrintf(char *format, ...);
 void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
 int xErrorHandler(Display *dpy, XErrorEvent *event);

@@ -261,7 +261,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
     Pixel fg, bg;
     char *labels[16];
     Widget buttons[16];
-
+    
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temporary work around !!!!! */
   /* !!!!! for the reconnection.           !!!!! */
@@ -273,10 +273,10 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
     if (pd->dataType != DBF_ENUM) {
-	medmPrintf("choiceButtonUpdateGraphicalInfoCb :\n    %s\n    \"%s\" %s\n\n",
-	  "Cannot create Choice Button,",
-	  pCB->control.ctrl,"is not an ENUM type!");
-	medmPostTime();
+	medmPostMsg("choiceButtonUpdateGraphicalInfoCb:\n"
+	  "  %s is not an ENUM type\n"
+	  "  Cannot create Choice Buttom\n",
+	  pCB->control.ctrl);
 	return;
     }
     for (i = 0; i <= pd->hopr; i++) {
@@ -340,24 +340,24 @@ static void choiceButtonDraw(XtPointer cd) {
 		    XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
 		    break;
 		default :
-		    medmPrintf("Message: Unknown color modifier!\n");
-		    medmPrintf("Channel Name : %s\n",dlChoiceButton->control.ctrl);
-		    medmPostMsg("Error: choiceButtonUpdateValueCb\n");
+		    medmPostMsg("choiceButtonUpdateValueCb:\n");
+		    medmPrintf("  Channel Name : %s\n",dlChoiceButton->control.ctrl);
+		    medmPrintf("  Message: Unknown color modifier\n");
 		    return;
 		}
 		i = (int) pd->value;
 		if ((i >= 0) && (i < (int) numChildren)) {
 		    XmToggleButtonGadgetSetState(children[i],True,True);
 		} else {
-		    medmPrintf("Message: Value out of range!\n");
-		    medmPrintf("Channel Name : %s\n",dlChoiceButton->control.ctrl);
-		    medmPostMsg("Error: choiceButtonUpdateValueCb\n");
+		    medmPostMsg("choiceButtonUpdateValueCb:\n");
+		    medmPrintf("  Channel Name: %s\n",dlChoiceButton->control.ctrl);
+		    medmPrintf("  Message: Value out of range\n");
 		    return;
 		}
 	    } else {
-		medmPrintf("Message: Data type must be enum!\n");
-		medmPrintf("Channel Name : %s\n",dlChoiceButton->control.ctrl);
-		medmPostMsg("Error: choiceButtonUpdateValueCb\n");
+		medmPostMsg("choiceButtonUpdateValueCb:\n");
+		medmPrintf("  Channel Name: %s\n",dlChoiceButton->control.ctrl);
+		medmPrintf("  Message: Data type must be enum\n");
 		return;
 	    }
 	    if (pd->writeAccess) 
@@ -388,7 +388,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
       choiceButtonDraw,
       (XtPointer) pcb);
     if (pcb->updateTask == NULL) {
-	medmPrintf("choiceButtonCreateRunTimeInstance : memory allocation error\n");
+	medmPrintf("\nchoiceButtonCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
 	updateTaskAddNameCb(pcb->updateTask,choiceButtonName);

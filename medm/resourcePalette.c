@@ -268,7 +268,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer)
 	XtPopup(cartesianPlotAxisS,XtGrabNone);
 	break;
     default:
-	medmPrintf("\npushButtonActivate...: invalid type = %d",rcType);
+	medmPrintf("\npushButtonActivate: Invalid type = %d\n",rcType);
 	break;
     }
 }
@@ -351,7 +351,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     default:
-	medmPrintf("\noptionMenuSimpleCallback: unknown rcType = %d",rcType);
+	medmPrintf("\noptionMenuSimpleCallback: Unknown rcType = %d\n",rcType);
 	break;
     }
 
@@ -595,7 +595,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	    FIRST_CP_TIME_FORMAT]); n++;
 	break;
     default:
-	medmPrintf("\ncpAxisptionMenuSimpleCallback: unknown rcType = %d",rcType/3);
+	medmPrintf("\ncpAxisptionMenuSimpleCallback: Unknown rcType = %d\n",rcType/3);
 	break;
     }
     
@@ -1102,7 +1102,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Min; break;
 	    default:
 		medmPrintf("\ncpAxisTextFieldActivateCallback (MIN): "
-		  "unknown rcType%%3 = %d",rcType%3);
+		  "Unknown rcType%%3 = %d\n",rcType%3);
 		return;
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
@@ -1125,7 +1125,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Max; break;
 	    default:
 		medmPrintf("\ncpAxisTextFieldActivateCallback (MAX): "
-		  "unknown rcType%%3 = %d",rcType%3);
+		  "Unknown rcType%%3 = %d\n",rcType%3);
 		return;
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
@@ -1138,7 +1138,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     default:
 	medmPrintf("\ncpAxisTextFieldActivateCallback: "
-	  "unknown rcType = %d",rcType);
+	  "Unknown rcType = %d\n",rcType);
 	return;
     }
     XtFree(stringValue);
@@ -1166,7 +1166,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Tick; break;
     default:
 	medmPrintf("\ncpAxisTextFieldActivateCallback (Tick): "
-	  "unknown rcType%%3 = %d",rcType%3);
+	  "Unknown rcType%%3 = %d\n",rcType%3);
 	return;
     }
     XtSetArg(args[n],resourceName,tickF.lval); n++;
@@ -1178,7 +1178,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Num; break;
     default:
 	medmPrintf("\ncpAxisTextFieldActivateCallback (Num): "
-	  "unknown rcType%%3 = %d",rcType%3);
+	  "Unknown rcType%%3 = %d\n",rcType%3);
 	return;
     }
 
@@ -1190,7 +1190,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Precision; break;
     default:
 	medmPrintf("\ncpAxisTextFieldActivateCallback (Precision): "
-	  "unknown rcType%%3 = %d",rcType%3);
+	  "Unknown rcType%%3 = %d\n",rcType%3);
 	return;
     }
 #if 0
@@ -4928,8 +4928,8 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 	break;
     }
     default:
-	medmPrintf(    
-	  "\n updateGlobalResourceBundleAndResourcePalette: unknown element type %d",
+	medmPrintf("\nupdateGlobalResourceBundleAndResourcePalette: "
+	  "Unknown element type %d\n",
 	  elementPtr->type);
 	break;
 

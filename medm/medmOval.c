@@ -122,7 +122,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)po);
 
 	if (po->updateTask == NULL) {
-	    medmPrintf("ovalCreateRunTimeInstance : memory allocation error\n");
+	    medmPrintf("\novalCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
 	    updateTaskAddNameCb(po->updateTask,ovalName);
@@ -241,7 +241,7 @@ static void ovalDraw(XtPointer cd) {
 	      drawOval(po);
 	    break;
 	default :
-	    medmPrintf("internal error : ovalUpdateValueCb\n");
+	    medmPrintf("\novalUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {

@@ -162,9 +162,9 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	value = pd->value;
 	break;
     default :
-	medmPrintf("Name  : %s\n",pte->dlElement->structure.textEntry->control.ctrl);
-	medmPrintf("Error : valueToString\n");
-	medmPostMsg("Msg   : Unknown Data Type!\n");
+	medmPostMsg("valueToString:\n");
+	medmPrintf("  Name: %s\n",pte->dlElement->structure.textEntry->control.ctrl);
+	medmPrintf("  Unknown Data Type\n");
 	return "Error!";
     }
 
@@ -202,9 +202,9 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	cvtLongToOctalString((long)value, textField);
 	break;
     default :
-	medmPrintf("Name  : %s\n",pte->dlElement->structure.textEntry->control.ctrl);
-	medmPrintf("Error : valueToString\n");
-	medmPostMsg("Msg   : Unknown Format Type!\n");
+	medmPostMsg("valueToString:\n");
+	medmPrintf("  Name: %s\n",pte->dlElement->structure.textEntry->control.ctrl);
+	medmPrintf("  Unknown Format Type\n");
 	return "Error!";
     }
     return textField;
@@ -228,7 +228,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
       (XtPointer)pte);
 
     if (pte->updateTask == NULL) {
-	medmPrintf("menuCreateRunTimeInstance : memory allocation error\n");
+	medmPrintf("\nmenuCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
 	updateTaskAddNameCb(pte->updateTask,textEntryName);

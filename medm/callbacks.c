@@ -148,7 +148,7 @@ void drawingAreaCallback(Widget w, DisplayInfo *displayInfo,
 		points[3].y = y + uih;
 		region = XPolygonRegion(points,4,EvenOddRule);
 		if (region == NULL) {
-		    medmPrintf("medmRepaintRegion : XPolygonRegion() return NULL\n");
+		    medmPrintf("\nmedmRepaintRegion: XPolygonRegion is NULL\n");
 		    return;
 		}
 

@@ -106,7 +106,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)pi);
 
 	    if (pi->updateTask == NULL) {
-		medmPrintf("indicatorCreateRunTimeInstance : memory allocation error\n");
+		medmPrintf("\nindicatorCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
 		updateTaskAddNameCb(pi->updateTask,indicatorName);
@@ -149,8 +149,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	   * note that this is  "direction of increase"
 	   */
 	case DOWN:
-	    medmPrintf(
-	      "\nexecuteDlIndicator: DOWN direction INDICATORS not supported");
+	    medmPrintf("\nexecuteDlIndicator: DOWN direction not supported\n");
 	case UP:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.width >INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -162,7 +161,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 
 	case LEFT:
 	    medmPrintf(
-	      "\nexecuteDlIndicator: LEFT direction INDICATORS not supported");
+	      "\nexecuteDlIndicator: LEFT direction not supported\n");
 	case RIGHT:
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
@@ -272,9 +271,10 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     switch (pd->dataType) {
     case DBF_STRING :
     case DBF_ENUM :
-	medmPrintf("indicatorUpdateGraphicalInfoCb : %s %s %s\n",
-	  "illegal channel type for",dlIndicator->monitor.rdbk, ": cannot attach Indicator");
-	medmPostTime();
+	medmPostMsg("indicatorUpdateGraphicalInfoCb:\n"
+	  "  Illegal channel type for %s\n"
+	  "  Cannot attach Indicator\n",
+	  dlIndicator->monitor.rdbk);
 	return;
     case DBF_CHAR :
     case DBF_INT :
@@ -287,9 +287,10 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	precision = pd->precision;
 	break;
     default :
-	medmPrintf("indicatorUpdateGraphicalInfoCb: %s %s %s\n",
-	  "unknown channel type for",dlIndicator->monitor.rdbk, ": cannot attach Indicator");
-	medmPostTime();
+	medmPostMsg("indicatorUpdateGraphicalInfoCb:\n"
+	  "  Unknown channel type for %s\n"
+	  "  Cannot attach Indicator\n",
+	  dlIndicator->monitor.rdbk);
 	break;
     }
     if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {

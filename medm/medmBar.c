@@ -115,7 +115,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	      (XtPointer)pb);
 
 	    if (pb->updateTask == NULL) {
-		medmPrintf("barCreateRunTimeInstance : memory allocation error\n");
+		medmPrintf("\nbarCreateRunTimeInstance: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
 		updateTaskAddNameCb(pb->updateTask,barName);
@@ -157,7 +157,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	   * note that this is  "direction of increase" for Bar
 	   */
 	case LEFT:
-	    medmPrintf("\nexecuteDlBar: LEFT direction BARS not supported");
+	    medmPrintf("\nexecuteDlBar: LEFT direction BARS not supported\n");
 	case RIGHT:
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	    XtSetArg(args[n],XcNscaleSegments,
@@ -168,7 +168,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	      break;
 
 	case DOWN:
-	    medmPrintf("\nexecuteDlBar: DOWN direction BARS not supported");
+	    medmPrintf("\nexecuteDlBar: DOWN direction BARS not supported\n");
 	case UP:
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
 	    XtSetArg(args[n],XcNscaleSegments,
@@ -286,9 +286,10 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     switch (pd->dataType) {
     case DBF_STRING :
     case DBF_ENUM :
-	medmPrintf("barUpdateGraphicalInfoCb : %s %s %s\n",
-	  "illegal channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
-	medmPostTime();
+	medmPostMsg("barUpdateGraphicalInfoCb:\n"
+	  "  Illegal channel type for %s\n"
+	  "  Cannot attach bar\n",
+	  dlBar->monitor.rdbk);
 	return;
     case DBF_CHAR :
     case DBF_INT :
@@ -301,10 +302,11 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 	precision = pd->precision;
 	break;
     default :
-	medmPrintf("barUpdateGraphicalInfoCb: %s %s %s\n",
-	  "unknown channel type for",dlBar->monitor.rdbk, ": cannot attach Bar");
-	medmPostTime();
-	break;
+	medmPostMsg("barUpdateGraphicalInfoCb:\n"
+	  "  Unknown channel type for %s\n"
+	  "  Cannot attach bar\n",
+	  dlBar->monitor.rdbk);
+	return;
     }
     if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;

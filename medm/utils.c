@@ -1806,7 +1806,7 @@ void lowerSelectedElements()
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("lowerSelectedElements: Cannot create temporary element list\n");
+	    medmPrintf("\nlowerSelectedElements: Cannot create temporary element list\n");
 	    return;
 	}
     }
@@ -1884,7 +1884,7 @@ void raiseSelectedElements()
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("raiseSelectedElements: Cannot create temporary element list\n");
+	    medmPrintf("\nraiseSelectedElements: Cannot create temporary element list\n");
 	    return;
 	}
     }
@@ -2078,13 +2078,13 @@ void spaceSelectedElements(int plane)
     if (!earray) return;
     array = (double *)calloc(nele,sizeof(double));
     if (!array) {
-	medmPrintf("Memory allocation error in spaceSelectedElements\n");
+	medmPrintf("\nspaceSelectedElements: Memory allocation error\n");
 	free((char *)earray);
 	return;
     }
     indx = (int *)calloc(nele,sizeof(int));
     if (!indx) {
-	medmPrintf("Memory allocation error in spaceSelectedElements\n");
+	medmPrintf("\nspaceSelectedElements: Memory allocation error\n");
 	free((char *)earray);
 	free((char *)array);
 	return;
@@ -2245,7 +2245,7 @@ void spaceSelectedElements2D(void)
   /* Allocate array to hold the number of elements for each row */
     nele=(int *)calloc(nrows,sizeof(int));
     if(!nele) {
-	medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
+	medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
 	return;
     }
 
@@ -2271,9 +2271,9 @@ void spaceSelectedElements2D(void)
     array = (double **)calloc(nrows,sizeof(double *));
     indx = (int **)calloc(nrows,sizeof(int *));
     if (!earray || !array || !indx) {
-	    medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
-	    highlightSelectedElements();
-	    return;
+	medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
+	highlightSelectedElements();
+	return;
     }
     for(i=0; i < nrows; i++) {
 	if(nele[i] <= 0)  continue;
@@ -2281,7 +2281,7 @@ void spaceSelectedElements2D(void)
 	array[i] = (double *)calloc(nele[i],sizeof(double));
 	indx[i] = (int *)calloc(nele[i],sizeof(int));
 	if (!earray[i] || !array[i] || !indx[i]) {
-	    medmPrintf("Memory allocation error in spaceSelectedElements2D\n");
+	    medmPrintf("\nspaceSelectedElements2D: Memory allocation error\n");
 	    highlightSelectedElements();
 	    return;
 	}
@@ -3370,7 +3370,7 @@ void createUndoInfo(DisplayInfo *displayInfo)
 
     undoInfo->dlElementList = createDlList();
     if (!undoInfo->dlElementList) {
-	medmPrintf("createUndoInfo: Cannot create element list\n");
+	medmPrintf("\ncreateUndoInfo: Cannot create element list\n");
 	free(undoInfo);
 	displayInfo->undoInfo = NULL;
     }
@@ -3473,7 +3473,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     if(!tmpDlElementList) {
 	tmpDlElementList=createDlList();
 	if(!tmpDlElementList) {
-	    medmPrintf("restoreUndoInfo: Cannot create temporary element list\n");
+	    medmPrintf("\nrestoreUndoInfo: Cannot create temporary element list\n");
 	    XBell(display,50);
 	    return;
 	}

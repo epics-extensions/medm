@@ -119,7 +119,7 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
       (XtPointer)pm);
 
     if (pm->updateTask == NULL) {
-	medmPrintf("menuCreateRunTimeInstance : memory allocation error\n");
+	medmPrintf("\nmenuCreateRunTimeInstance: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
 	updateTaskAddNameCb(pm->updateTask,menuName);
@@ -258,10 +258,10 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   /* buildMenu function needs an extra entry to work */
 
     if (pd->dataType != DBF_ENUM) {
-	medmPrintf("menuUpdateGraphicalInfoCb :\n    %s\n    \"%s\" %s\n\n",
-	  "Cannot create Choice Button,",
-	  dlMenu->control.ctrl,"is not an ENUM type!");
-	medmPostTime();
+	medmPostMsg("menuUpdateGraphicalInfoCb:\n"
+	  "  Cannot create Choice Button for %s\n",
+	  "  Is not an ENUM type\n",
+	  dlMenu->control.ctrl);
 	return;
     }
 
@@ -348,8 +348,7 @@ static void menuDraw(XtPointer cd) {
 		if ((i >=0) && (i < (int) numChildren)) {
 		    XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
 		} else {
-		    medmPrintf("menuUpdateValueCb: invalid menuHistory child\n");
-		    medmPostTime();
+		    medmPostMsg("menuUpdateValueCb: Invalid menuHistory child\n");
 		    return;
 		}
 		switch (dlMenu->clrmod) {
@@ -361,15 +360,15 @@ static void menuDraw(XtPointer cd) {
 		    XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pd->severity],NULL);
 		    break;
 		default :
-		    medmPrintf("Message: Unknown color modifier!\n");
-		    medmPrintf("Channel Name : %s\n",dlMenu->control.ctrl);
-		    medmPostMsg("Error: menuUpdateValueCb\n");
+		    medmPostMsg("menuUpdateValueCb:\n");
+		    medmPrintf("  Channel Name: %s\n",dlMenu->control.ctrl);
+		    medmPrintf("  Message: Unknown color modifier\n");
 		    return;
 		}
 	    } else {
-		medmPrintf("Message: Data type must be enum!\n");
-		medmPrintf("Channel Name : %s\n",dlMenu->control.ctrl);
-		medmPostMsg("Error: menuUpdateValueCb\n");
+		medmPostMsg("menuUpdateValueCb:\n");
+		medmPrintf("  Channel Name: %s\n",dlMenu->control.ctrl);
+		medmPrintf("  Message: Data type must be enum\n");
 		return;
 	    }
 	    if (pd->writeAccess)
@@ -424,7 +423,7 @@ static void menuValueChangedCb(
 		menuUpdateValueCb((XtPointer)pm->record);
 	    } 
 	} else {
-	    medmPrintf("menuValueChangedCb : %s not connected",
+	    medmPrintf("\nmenuValueChangedCb: %s not connected\n",
 	      pm->dlElement->structure.menu->control.ctrl);
 	}
     }

@@ -120,7 +120,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pa);
 
 	if (pa->updateTask == NULL) {
-	    medmPrintf("arcCreateRunTimeInstance : memory allocation error\n");
+	    medmPrintf("\narcCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
 	    updateTaskAddNameCb(pa->updateTask,arcName);
@@ -225,7 +225,7 @@ static void arcDraw(XtPointer cd) {
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
-	    medmPrintf("internal error : arcUpdatevalueCb : unknown attribute\n");
+	    medmPrintf("\narcUpdatevalueCb: Unknown attribute\n");
 	    break;
 	}
 	gcValues.line_width = dlArc->attr.width;
@@ -245,7 +245,7 @@ static void arcDraw(XtPointer cd) {
 	      drawArc(pa);
 	    break;
 	default :
-	    medmPrintf("arcUpdateValueCb : internal error\n");
+	    medmPrintf("\narcUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {

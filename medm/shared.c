@@ -617,7 +617,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	    region = XPolygonRegion(points,4,EvenOddRule);
 
 	    if (region == NULL) {
-		medmPrintf("updateTaskWorkProc: XPolygonRegion() returned NULL\n");
+		medmPrintf("\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
 		/* kill the work proc */
 		ts->workProcId = 0;
 		return True;

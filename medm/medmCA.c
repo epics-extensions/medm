@@ -93,12 +93,13 @@ void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) 
 
 static void medmCAExceptionHandlerCb(struct exception_handler_args args) {
     if (args.chid == NULL) {
-	medmPrintf("message : %s\n",ca_message(args.stat));
+	medmPostMsg("medmCAExceptionHandlerCb:\n"
+	  "message: %s\n",ca_message(args.stat));
     } else {
-	medmPrintf("channel name : %s\nmessage : %s\n\n",
+	medmPostMsg("medmCAExceptionHandlerCb:\n"
+	  "channel name: %s\nmessage: %s\n\n",
           ca_name(args.chid),ca_message(args.stat));
     }
-    medmPostTime();
     return;
 }
 
@@ -107,12 +108,12 @@ int CATaskInit() {
     caTask.freeListCount = 0;
     caTask.freeList = (int *) malloc(sizeof(int) * CA_PAGE_SIZE);
     if (caTask.freeList == NULL) {
-	medmPrintf("CATaskInit : memory allocation error!\n");
+	medmPrintf("\nCATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pages = (Channel **) malloc(sizeof(Channel *) * CA_PAGE_COUNT);
     if (caTask.pages == NULL) {
-	medmPrintf("CATaskInit : memory allocation error!\n");
+	medmPrintf("\nCATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.pageCount = 1;
@@ -120,7 +121,7 @@ int CATaskInit() {
   /* allocate the page */
     caTask.pages[0] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
     if (caTask.pages[0] == NULL) {
-	medmPrintf("CATaskInit : memory allocation error!\n");
+	medmPrintf("\nCATaskInit: Memory allocation error\n");
 	return -1;
     }
     caTask.nextFree = 0;
@@ -349,17 +350,15 @@ void medmConnectEventCb(struct connection_handler_args args) {
 	status = ca_array_get_callback(dbf_type_to_DBR_CTRL(ca_field_type(args.chid)),
 	  1, args.chid, medmUpdateGraphicalInfoCb, NULL);
 	if (status != ECA_NORMAL) {
-	    medmPrintf("Error : connectionEventCb : ca_get_callback : %s\n",
+	    medmPostMsg("medmConnectEventCb: ca_array_get_callback: %s\n",
 	      ca_message(status));
-	    medmPostTime();
 	}
     }
     if ((args.op == CA_OP_CONN_UP) && (pCh->previouslyConnected == False)) {
 	status = ca_replace_access_rights_event(pCh->chid,medmReplaceAccessRightsEventCb);
 	if (status != ECA_NORMAL) {
-	    medmPrintf("Error : connectionEventCb : ca_replace_access_rights_event : %s\n",
+	    medmPostMsg("medmConnectEventCb: ca_replace_access_rights_event: %s\n",
 	      ca_message(status));
-	    medmPostTime();
 	}
 #ifdef __USING_TIME_STAMP__
 	status = ca_add_array_event(
@@ -373,9 +372,8 @@ void medmConnectEventCb(struct connection_handler_args args) {
 	  medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
 #endif
 	if (status != ECA_NORMAL) {
-	    medmPrintf("Error : connectionEventCb : ca_add_event : %s\n",
+	    medmPostMsg("medmConnectEventCb: ca_add_array_event: %s\n",
 	      ca_message(status));
-	    medmPostTime();
 	}
 	pCh->previouslyConnected = True;
 	pCh->pr->elementCount = ca_element_count(pCh->chid);
@@ -462,12 +460,12 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	return;
     }
     if (pr->precision < 0) {
-	medmPrintf("medmUpdateGraphicalInfoCb : pv \"%s\" precision = %d\n",
+	medmPrintf("\nmedmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	  ca_name(pCh->chid), pr->precision);
 	pr->precision = 0;
     } else
       if (pr->precision > 16) {
-	  medmPrintf("medmUpdateGraphicalInfoCb : pv \"%s\" precision = %d\n",
+	  medmPrintf("\nmedmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	    ca_name(pCh->chid), pr->precision);
 	  pr->precision = 16;
       }
@@ -498,7 +496,7 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	    pCh->data = (dataBuf *) malloc(nBytes);
 	    pCh->size = nBytes;
 	    if (!pCh->data) {
-		medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
+		medmPrintf("\nmedmUpdateChannelCb: Memory allocation error\n");
 		return;
 	    }
 	} else 
@@ -507,7 +505,7 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	      pCh->data = (dataBuf *) malloc(nBytes);
 	      pCh->size = nBytes;
 	      if (pCh->data == NULL) {
-		  medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
+		  medmPrintf("\nmedmUpdateChannelCb: Memory allocation error\n");
 		  return;
 	      }
 	  }
@@ -602,14 +600,14 @@ int caAdd(char *name, Record *pr) {
 	    caTask.pages = (Channel **) realloc(caTask.pages,sizeof(Channel *)*caTask.pageSize);
 #endif
 	    if (caTask.pages == NULL) {
-		medmPrintf("\ncaAdd : memory allocation error\n");
+		medmPrintf("\ncaAdd: Memory allocation error\n");
 		return -1;
 	    }
 	}
       /* add one more page */
 	caTask.pages[caTask.pageCount] = (Channel *) malloc(sizeof(Channel) * CA_PAGE_SIZE);
 	if (caTask.pages[caTask.pageCount] == NULL) {
-	    medmPrintf("\ncaAdd : memory allocation error\n");
+	    medmPrintf("\ncaAdd: Memory allocation error\n");
 	    return -1;
 	}
 	caTask.pageCount++;
@@ -683,7 +681,7 @@ void caDelete(Record *pr) {
 	caTask.freeList = (int *) realloc(caTask.freeList,sizeof(int)*caTask.freeListSize);
 #endif
 	if (caTask.freeList == NULL) {
-	    medmPrintf("\ncaDelete : memory allocation error\n");
+	    medmPrintf("\ncaDelete: Memory allocation error\n");
 	    return;
 	}
     }

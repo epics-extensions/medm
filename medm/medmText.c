@@ -157,7 +157,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pt);
 
 	if (pt->updateTask == NULL) {
-	    medmPrintf("textCreateRunTimeInstance : memory allocation error\n");
+	    medmPrintf("\ntextCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
 	    updateTaskAddNameCb(pt->updateTask,textName);
@@ -261,7 +261,7 @@ static void textDraw(XtPointer cd) {
 		displayInfo->gc,dlText);
 	    break;
 	default :
-	    medmPrintf("internal error : textUpdateValueCb\n");
+	    medmPrintf("\ntextUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {

@@ -172,7 +172,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)pp);
 
 	if (pp->updateTask == NULL) {
-	    medmPrintf("polylineCreateRunTimeInstance : memory allocation error\n");
+	    medmPrintf("\npolylineCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pp->updateTask,polylineDestroyCb);
 	    updateTaskAddNameCb(pp->updateTask,polylineName);
@@ -278,7 +278,7 @@ static void polylineDraw(XtPointer cd) {
 	      drawPolyline(pp);
 	    break;
 	default :
-	    medmPrintf("internal error : polylineUpdateValueCb : unknown visibility modifier\n");
+	    medmPrintf("\npolylineUpdateValueCb: Unknown visibility\n");
 	    break;
 	}
 	if (pd->readAccess) {
