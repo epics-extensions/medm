@@ -492,8 +492,8 @@ DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
     Arg args[2];
     DlElement *pE, *pE1;
     
-  /* Get the position relative to the drawing area
-   *   Follow parents upward to the display */
+  /* Get the position relative to the drawing area. Follow parents
+     upward to the display */
     child = NULL;
     while(w != displayInfo->drawingArea) {
 	nargs=0;
@@ -505,9 +505,7 @@ DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
 	
 	child = w;
 	w = XtParent(w);
-	if(w == mainShell) {
-	    return NULL;
-	}
+	if(w == mainShell) return NULL;
     }
 		
   /* Try to find element from child since execute sizes are different
@@ -4270,17 +4268,17 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
     int i;
     
     for(i=0; i < MAX_CALC_RECORDS; i++) {
-	Record *pr = records[i];
+	Record *pR = records[i];
 	
       /* Skip over NULL records */
-	if(!pr) continue;
+	if(!pR) continue;
 	
 	if(i == 0) {
 	  /* The main record */
 	  /* Set all requirements to zero */
-	    pr->monitorValueChanged = False;
-	    pr->monitorSeverityChanged = False;
-	    pr->monitorZeroAndNoneZeroTransition = False;
+	    pR->monitorValueChanged = False;
+	    pR->monitorSeverityChanged = False;
+	    pR->monitorZeroAndNoneZeroTransition = False;
 	  /* Set the minimum requirement for ColorMode */
 	    switch (attr->clr) {
 	    case STATIC:
@@ -4288,15 +4286,15 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	      /* Even though it is static, we need to monitor the
                  value change to be able to redraw it when hiding and
                  unhiding */
-		pr->monitorValueChanged = True;
+		pR->monitorValueChanged = True;
 #endif		
 		break;
 	    case ALARM:
-		pr->monitorSeverityChanged = True;
+		pR->monitorSeverityChanged = True;
 		break;
 	    case DISCRETE:
 #ifdef __COLOR_RULE_H__
-		pr->monitorValueChanged = True;
+		pR->monitorValueChanged = True;
 #endif
 		break;
 	    }
@@ -4307,26 +4305,26 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	      /* Even though it is static, we need to monitor the
                  value change to be able to redraw it when hiding and
                  unhiding */
-		pr->monitorValueChanged = True;
+		pR->monitorValueChanged = True;
 #endif		
 		break;
 	    case IF_NOT_ZERO:
 	    case IF_ZERO:
-		pr->monitorZeroAndNoneZeroTransition = True;
+		pR->monitorZeroAndNoneZeroTransition = True;
 		break;
 	    case V_CALC:
-		pr->monitorValueChanged = True;
+		pR->monitorValueChanged = True;
 		break;
 	    }
 	} else {
 	  /* Not the main record */
 	  /* Set all requirements to zero */
-	    pr->monitorValueChanged = False;
-	    pr->monitorSeverityChanged = False;
-	    pr->monitorZeroAndNoneZeroTransition = False;
+	    pR->monitorValueChanged = False;
+	    pR->monitorSeverityChanged = False;
+	    pR->monitorZeroAndNoneZeroTransition = False;
 	  /* Set the minimum requirement for each VisibilityMode */
 	    if(attr->vis == V_CALC) {
-		pr->monitorValueChanged = True;
+		pR->monitorValueChanged = True;
 	    }
 	}
     }

@@ -440,7 +440,7 @@ void dmRemoveAllDisplayInfo()
     currentDisplayInfo = NULL;
 }
 
-/*** Callbck routines ***/
+/*** Callback routines ***/
 
 static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
 {

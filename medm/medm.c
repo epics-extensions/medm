@@ -2432,6 +2432,10 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Disable EDIT functions */
     disableEditFunctions();
 
+  /* Remove any extraneous clipping (Shouldn't be any)  */
+    XSetClipOrigin(display, displayInfo->gc, 0, 0);
+    XSetClipMask(display, displayInfo->gc, None);
+
   /* Mode is the mode to which we are going */
     switch(mode) {
     case DL_EDIT:

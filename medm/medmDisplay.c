@@ -70,6 +70,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo);
 static void displayGetValues(ResourceBundle *pRCB, DlElement *p);
 static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+static void refreshComposite(DlComposite *dlComposite);
 
 static DlDispatchTable displayDlDispatchTable = {
     createDlDisplay,
@@ -632,10 +633,26 @@ void refreshDisplay(DisplayInfo *displayInfo)
 {
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
+	DlElement *pE;
+
+      /* Map and unmap widgets so they will be sure to redraw */
+	pE = SecondDlElement(displayInfo->dlElementList);
+	while(pE) {
+	    if(pE->type == DL_Composite) {
+		refreshComposite(pE->structure.composite);
+	    } else {
+		if(pE->widget && !pE->hidden) {
+		    XUnmapWindow(display, XtWindow(pE->widget));
+		    XMapWindow(display, XtWindow(pE->widget));
+		}
+	    }
+	    pE = pE->next;
+	}
+
+      /* Repaint the region without clipping */
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
 	  displayInfo->gc != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
-	  /* Repaint the region without clipping */
 	    updateTaskRepaintRect(displayInfo, NULL, True);
 	}
     } else {
@@ -649,8 +666,7 @@ void refreshDisplay(DisplayInfo *displayInfo)
 	
 	unhighlightSelectedElements();
 	
-      /* Recreate widgets.  Loop over elements not including the
-       * display */
+      /* Recreate widgets, not including the display */
 	pE = SecondDlElement(displayInfo->dlElementList);
 	while(pE) {
 	    if(pE->widget) {
@@ -665,6 +681,25 @@ void refreshDisplay(DisplayInfo *displayInfo)
 	dmTraverseNonWidgetsInDisplayList(displayInfo);
 	
 	highlightSelectedElements();
+    }
+}
+
+/* Used to recurse into Composites in EXECUTE mode */
+static void refreshComposite(DlComposite *dlComposite)
+{
+    DlElement *pE;
+    
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while(pE) {
+	if(pE->type == DL_Composite) {
+	    refreshComposite(pE->structure.composite);
+	} else {
+	    if(pE->widget && !pE->hidden) {
+		XUnmapWindow(display, XtWindow(pE->widget));
+		XMapWindow(display, XtWindow(pE->widget));
+	    }
+	}
+	pE = pE->next;
     }
 }
 

@@ -1652,14 +1652,15 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
     updateTaskDisableTask(dlElement);
 
   /* Add the region to the exposed region */
-    po = &(dlElement->structure.rectangle->object);
-    rect.x = po->x;
-    rect.y = po->y;
-    rect.width = po->width;
-    rect.height = po->height;
-    
-    XUnionRectWithRegion(&rect, updateTaskExposedRegion,
-      updateTaskExposedRegion);    
+    if(dlElement->updateType == STATIC_GRAPHIC) {
+	po = &(dlElement->structure.rectangle->object);
+	rect.x = po->x;
+	rect.y = po->y;
+	rect.width = po->width;
+	rect.height = po->height;
+	XUnionRectWithRegion(&rect, updateTaskExposedRegion,
+	  updateTaskExposedRegion);
+    }
 }
 
 void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
