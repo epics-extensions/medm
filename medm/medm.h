@@ -239,6 +239,7 @@ extern "C" {
 #endif
     EXTERN long medmUpdateRequestCount;
     EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
+    EXTERN int medmRaiseMessageWindow;
     EXTERN Widget caStudyLabel;
     EXTERN XtIntervalId medmStatusIntervalId;
     EXTERN Boolean MedmUseNewFileFormat;

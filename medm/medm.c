@@ -987,6 +987,10 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    medmUseBigCursor = 1;
 
 	    argsUsed = i;
+	} else if (!strcmp(argv[i],"-noMsg")) {
+	    medmRaiseMessageWindow = 0;
+
+	    argsUsed = i;
 	}
     }
     
@@ -3263,6 +3267,7 @@ main(int argc, char *argv[])
     medmScreenUpdateCount = 0;
     medmUpdateMissedCount = 0;
     MedmUseNewFileFormat = True;
+    medmRaiseMessageWindow = 1;
     setTimeValues();
 
   /* Handle file conversions */

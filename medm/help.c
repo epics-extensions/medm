@@ -111,7 +111,6 @@ static void medmUpdateCAStudyDlg(XtPointer data, XtIntervalId *id);
 
 /* Global variables */
 
-static int raiseMessageWindow = 1;
 static Widget raiseMessageWindowTB;
 
 #ifdef __cplusplus
@@ -139,7 +138,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 
     switch(button) {
     case ERR_MSG_RAISE_BTN:
-	raiseMessageWindow = XmToggleButtonGetState(raiseMessageWindowTB);
+	medmRaiseMessageWindow = XmToggleButtonGetState(raiseMessageWindowTB);
 	break;
     case ERR_MSG_CLOSE_BTN:
 	if (errMsgS != NULL) {
@@ -325,7 +324,7 @@ void errMsgDlgCreateDlg(int raise)
     raiseMessageWindowTB =  XtVaCreateManagedWidget("toggleButton",
       xmToggleButtonWidgetClass, optionArea,
       XmNlabelString, label,
-      XmNset, (Boolean)raiseMessageWindow,
+      XmNset, (Boolean)medmRaiseMessageWindow,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
       XmNleftAttachment,   XmATTACH_POSITION,
@@ -658,7 +657,7 @@ void medmPostMsg(int priority, char *format, ...) {
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority);
+    errMsgDlgCreateDlg(medmRaiseMessageWindow && priority);
 
   /* Do timestamp */
     time(&now);
@@ -709,7 +708,7 @@ void medmPrintf(int priority, char *format, ...)
     XmTextPosition curpos;
 
   /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority);
+    errMsgDlgCreateDlg(medmRaiseMessageWindow && priority);
 
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
