@@ -1650,6 +1650,7 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
 
     if(!displayInfo || !dlElement) return;
+    dlElement->hidden = True;
     
   /* Disable any update tasks */
     updateTaskDisableTask(dlElement);
@@ -1686,6 +1687,7 @@ void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget widget;
 
     if(!displayInfo || !dlElement) return;
+    dlElement->hidden = True;
 
   /* Disable any update tasks */
     updateTaskDisableTask(dlElement);

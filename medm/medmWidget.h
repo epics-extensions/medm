@@ -233,6 +233,7 @@ typedef struct _UpdateTask {
     Boolean    overlapped;                   /* Indicates overlapped by others */
     Boolean    opaque;                       /* Indicates whether to redraw under */
     Boolean    disabled;                     /* Indicates not to update */
+    Boolean    overlappedDone;               /* Indicates not to update again */
     struct     _UpdateTask *prev;
     struct     _UpdateTask *next;
 } UpdateTask;

@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_ANIMATE 0
 #define DEBUG_CALC 0
+#define DEBUG_VISIBILITY 0
 
 #define DEFAULT_TIME 1
 #define ANIMATE_TIME(gif) \
@@ -246,7 +247,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		    } else {
 			pi->animate = False;
 		      /* Draw the first frame */
-			drawGIF(displayInfo,dlImage);
+			drawGIF(displayInfo,dlImage,True);
 		    }
 		}
 	    }
@@ -257,10 +258,10 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    gif->curFrame=0;
 	    if(dlImage->object.width == gif->currentWidth &&
 	      dlImage->object.height == gif->currentHeight) {
-		drawGIF(displayInfo,dlImage);
+		drawGIF(displayInfo,dlImage,True);
 	    } else {
 		resizeGIF(dlImage);
-		drawGIF(displayInfo,dlImage);
+		drawGIF(displayInfo,dlImage,True);
 	    }
 	}
     }
@@ -283,6 +284,11 @@ static void imageDraw(XtPointer cd)
     GIFData *gif = (GIFData *)dlImage->privateData;
     int i;
 
+#if DEBUG_VISIBILITY
+    DlObject *po = &(dlImage->object);
+
+    if(po->y == 481) print("imageDraw: [%d,%d]\n",po->x,po->y);
+#endif    
   /* Branch on whether there is a channel or not */
     if(*dlImage->dynAttr.chan[0]) {
       /* A channel is defined */
@@ -347,8 +353,14 @@ static void imageDraw(XtPointer cd)
 	      /* Draw depending on visibility */
 		if(status == 0) {
 		    if(calcVisibility(&dlImage->dynAttr, pi->records)) {
+#if DEBUG_VISIBILITY
+			if(po->y == 481) print("  Called drawImage\n");
+#endif
 			drawImage(pi);
 		    } else {
+#if DEBUG_VISIBILITY
+			if(po->y == 481) print("  Drew colored rectangle\n");
+#endif
 			drawColoredRectangle(pi->updateTask,
 			  displayInfo->colormap[
 			    displayInfo->drawingAreaBackgroundColor]);
@@ -395,12 +407,12 @@ static void drawImage(MedmImage *pi)
 	if(pi->animate) {
 	  /* Draw the next image */
 	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
-	    drawGIF(displayInfo, dlImage);
+	    drawGIF(displayInfo, dlImage, False);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
 	} else {
 	  /* Draw the image */
-	    drawGIF(displayInfo, dlImage);
+	    drawGIF(displayInfo, dlImage, False);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, 0.0);
 	}

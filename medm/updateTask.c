@@ -134,6 +134,8 @@ typedef struct {
 Boolean medmInitSharedDotC();
 static void medmScheduler(XtPointer, XtIntervalId *);
 static Boolean updateTaskWorkProc(XtPointer);
+static DlElement *getElementFromUpdateTask(UpdateTask *t);
+static void updateTaskMarkOverlappedDone(DisplayInfo *displayInfo, Boolean val);
 
 /* Global variables */
 static UpdateTaskStatus updateTaskStatus;
@@ -151,6 +153,7 @@ static UpdateTask nullTask = {
     (struct _DisplayInfo *)0,
     0,
     {0,0,0,0},     /* Rectangle */
+    False,
     False,
     False,
     False,
@@ -442,6 +445,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	pT->overlapped = True;  /* Default is assumed to be overlapped */
 	pT->opaque = True;      /* Default is don't draw the background */
 	pT->disabled = False;   /* Default is not disabled */
+	pT->overlappedDone = False;   /* Flag to avoid repeat updates */
 
 	displayInfo->updateTaskListTail->next = pT;
 	displayInfo->updateTaskListTail = pT;
@@ -696,10 +700,23 @@ void updateTaskMarkUpdate(UpdateTask *pT)
 	    
 	    print("updateTaskMarkUpdate: [%d queued] Marked pT=%x pE=%x"
 	      " pE->type=%s\n",
-	      updateTaskStatus.updateRequestQueued,pT,pET,elementType(pET->type));
+	      updateTaskStatus.updateRequestQueued,pT,pET,
+	      elementType(pET->type));
 	}
 #endif			
 }
+
+static void updateTaskMarkOverlappedDone(DisplayInfo *displayInfo, Boolean val)
+{
+    UpdateTask *t;
+    
+    t = displayInfo->updateTaskListHead.next;
+    while(t) {
+	t->overlappedDone = val;
+	t = t->next;
+    }
+}
+
 
 void updateTaskSetScanRate(UpdateTask *pT, double timeInterval)
 {
@@ -861,10 +878,14 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 
       /* Repaint the selected region */
 	if(t->overlapped) {
+	  /* KE: Everything is overlapped so this is the branch that
+             is executed. */
 	    Display *display = XtDisplay(displayInfo->drawingArea);
 	    GC gc = displayInfo->gc;
 	    XPoint points[4];
 	    Region region;
+	    int isComposite = 0;
+	    DlElement *pE = getElementFromUpdateTask(t);
 
 	    points[0].x = t->rectangle.x;
 	    points[0].y = t->rectangle.y;
@@ -887,8 +908,47 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		return True;
 	    }
 
+	  /* Check if this task is for a composite.  Composites need
+             to be handled differently. */
+	    if(pE && pE->type == DL_Composite) {
+		isComposite = 1;
+	    }
+
+	  /* Set the clip rectangle.  Since there is only one, whether
+             it is XYBanded or the alternatives isn't important. */
 	    XSetClipRectangles(display,gc,0,0,&t->rectangle,1,YXBanded);
 	    if(!t->opaque)
+	    /* For a composite we need to redo the pixmap in case
+	      elements are hidden or unhidden when the composite is
+	      executed. This will be inefficient if the Composite gets
+	      a lot of updates that don't change its visibility */
+	      if(isComposite) {
+#if DEBUG_HIDE
+		  print("Is Composite\n");
+#endif	      
+		/* Set the pixmap clipping region */
+		  XSetClipRectangles(display, displayInfo->pixmapGC,
+		    0, 0, &t->rectangle, 1, YXBanded);
+		/* Redraw all the static elements on the pixmap */
+		  redrawStaticElements(displayInfo, pE);
+		/* Release the pixmap clipping region */
+		  XSetClipOrigin(display, gc, 0, 0);
+		  XSetClipMask(display, gc, None);
+		/* Make sure the elements get executed in the loop so
+                   the displayArea will be correctly repainted. */
+		  markCompositeChildrenNotExecuted(pE);
+#if 0     /* !!!!! */		  
+		/* Reset the overlappedDone */
+		  updateTaskMarkOverlappedDone(displayInfo, False);
+#endif		  
+	      }
+
+#if 0     /* !!!!! */
+	  /* Reset the overlappedDone */
+	    updateTaskMarkOverlappedDone(displayInfo, False);
+#endif	    
+	    
+	  /* Copy the pixmap to the (clipped) drawingArea */
 	      XCopyArea(display,displayInfo->drawingAreaPixmap,
 		XtWindow(displayInfo->drawingArea),gc,
 		t->rectangle.x, t->rectangle.y,
@@ -902,12 +962,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
              executed. */
 	    t->overlapped = False;     
 
-	  /* Do the update tasks for overlapped objects.  Equivalent
-             to calling updateTaskRepaintRegion except that it sets
-             overlapped. */
-#if 0
-	    updateTaskRepaintRegion(t->displayInfo, &region);
-#else
 #if DEBUG_DELETE  || DEBUG_HIDE
 	    {
 		MedmElement *pElement=(MedmElement *)t->clientData;
@@ -926,24 +980,57 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		  t1->rectangle.width, t1->rectangle.height) != RectangleOut) {
 		    t1->overlapped = True;
 		    if(t1->executeTask) {
-#if DEBUG_DELETE  || DEBUG_HIDE
-			{
-			    MedmElement *pElement=(MedmElement *)t1->clientData;
-			    DlElement *pET = pElement->dlElement;
-			    
-			    print("  Executed (overlapped) pT=%x pE=%x"
-			      " pE->type=%s [%d,%d]\n",
-			      t1,pET,elementType(pET->type),
-			      t1->rectangle.x,t1->rectangle.y);
+			DlElement *pE1 = getElementFromUpdateTask(t1);
+			
+#if 0			
+		      /* Don't do composites unless they are the main
+                         element.  That is, don't worry whether their
+                         visibility has changed.  Their composite
+                         children will be done later in the loop. The
+                         composite visibility change will be taken
+                         care of when that composite is the main
+                         element. */
+			if(isComposite) {
+			  /* Main element is composite */
+			    if(pE1 == pE) {
+			      /* Do the main composite */
+				t1->executeTask(t1->clientData);
+			    } else if(pE1->type != DL_Composite &&
+			      !t->overlappedDone) {
+			      /* Do if not composite and not done for
+				 the main one */
+				t1->executeTask(t1->clientData);
+				/* Reset it.  The flag is not needed
+                                   any more for this loop. */
+				t1->overlappedDone = False;
+			    }
+			} else {
+			  /* Do unless it is composite */
+			    if(pE->type != DL_Composite) {
+				t1->executeTask(t1->clientData);
+			    }
 			}
-#endif			
+#elif 1
 			t1->executeTask(t1->clientData);
+#else			
+			if(!t1->overlappedDone) {
+			    t1->executeTask(t1->clientData);
+			}
+#endif			    
 		    }
 		}
 		t1 = t1->next;
 	    }
-#endif
-	  /* Release the clipping region */
+
+#if 0     /* !!!!! */
+	  /* Reset the overlappedDone */
+	    if(isComposite) {
+		updateTaskMarkOverlappedDone(displayInfo, False);
+	    }
+#elif 0
+	    updateTaskMarkOverlappedDone(displayInfo, False);
+#endif	    
+	  /* Release the drawingArea clipping region */
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
 	    if(region) XDestroyRegion(region);
@@ -952,6 +1039,7 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 #endif
 	} else {
 	  /* Not overlapped */
+	  /* KE: This branch is not ever done */
 	    if(!t->opaque) 
 	      XCopyArea(display,t->displayInfo->drawingAreaPixmap,
 		XtWindow(t->displayInfo->drawingArea),
@@ -1067,12 +1155,22 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
 	  t->rectangle.x, t->rectangle.y,
 	  t->rectangle.width, t->rectangle.height) != RectangleOut) {
 	    if(t->executeTask) {
+#if 0     /* !!!!! */
+		DlElement *pE = getElementFromUpdateTask(t);
+
+
+                 done later in the loop. */
+		if(pE->type != DL_Composite) {
 #if DEBUG_COMPOSITE
-		print("updateTaskRepaintRegion: "
-		  "clientData=%x x=%d y=%d\n",
-		  t->clientData,t->rectangle.x,t->rectangle.y);
+		    print("updateTaskRepaintRegion: "
+		      "clientData=%x x=%d y=%d\n",
+		      t->clientData,t->rectangle.x,t->rectangle.y);
 #endif			
-		t->executeTask(t->clientData);
+		    t->executeTask(t->clientData);
+		}
+#else
+		 t->executeTask(t->clientData);
+#endif		 
 	    }
 	}
 	t = t->next;
@@ -1143,6 +1241,25 @@ UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
 	ptu = ptu->next;
     }
     return ptuSaved;
+}
+
+UpdateTask *getUpdateTaskFromElement(DlElement *dlElement)
+{
+    MedmElement *element;
+
+    if(!dlElement || !dlElement->data) return NULL;
+    element = (MedmElement *)dlElement->data;
+    return(element->updateTask);
+}
+
+static DlElement *getElementFromUpdateTask(UpdateTask *t)
+{
+    if(t && t->clientData) {
+	MedmElement *element = (MedmElement *)t->clientData;
+	
+	return element->dlElement;
+    }
+    return NULL;
 }
 
 void dumpUpdatetaskList(DisplayInfo *displayInfo)

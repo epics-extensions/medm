@@ -276,7 +276,7 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
 }
 
-void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage)
+void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean pixmap)
 {
     GIFData *gif;
     int x, y;
@@ -298,9 +298,11 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  gif->theGC,CUREXPIMAGE(gif),
 	  0,0,x,y,w,h);
       /* Draw to pixmap */
-	XPutImage(display,displayInfo->drawingAreaPixmap,
-	  gif->theGC,CUREXPIMAGE(gif),
-	  0,0,x,y,w,h);
+	if(pixmap) {
+	    XPutImage(display,displayInfo->drawingAreaPixmap,
+	      gif->theGC,CUREXPIMAGE(gif),
+	      0,0,x,y,w,h);
+	}
     }
 }
 

@@ -2859,13 +2859,13 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
 }
 
-/* Routine to redraw all drawing objects in the display */
+/* Routine to redraw all the static drawing objects onto the
+   displayInfo pixmap */
 void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-#if 1 /* CHECK */
     DlElement *pE;
+    DlObject *po;
     GC gcSave;
-    Dimension width,height;
 
 #if DEBUG_REDRAW
     int n=0;
@@ -2874,23 +2874,21 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
       dlElement,elementType(dlElement->type),dlElement->structure.element);
 #endif    
 
-    if(displayInfo == NULL) return;
+    if(displayInfo == NULL || dlElement == NULL) return;
+    po = &(dlElement->structure.rectangle->object);
 
-  /* Fill the background with the background color */
+  /* Fill the (clipped) background with the background color */
+#if 1     /* !!!!! */
     XSetForeground(display, displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-    XtVaGetValues(displayInfo->drawingArea,
-      XmNwidth, &width, XmNheight, &height, NULL);
-    XFillRectangle(display, displayInfo->drawingAreaPixmap,
-      displayInfo->pixmapGC, 0, 0, (unsigned int)width, (unsigned int)height);
-
-  /* In case the drawing area gc has a clip mask set, change it to the
-     pixmapGC, which should not be clipped */
-#if 0     
-    gcSave=displayInfo->gc;
-    displayInfo->gc = displayInfo->pixmapGC;
+#else
+    XSetForeground(display, displayInfo->pixmapGC,
+      WhitePixel(display,screenNum));
 #endif    
+    XFillRectangle(display, displayInfo->drawingAreaPixmap,
+      displayInfo->pixmapGC, po->x, po->y, po->width, po->height);
 
+#if 0     /* !!!!! */
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
@@ -2900,12 +2898,10 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(pE != dlElement) {
 	    if(pE->type == DL_Composite) {
 	      /* Element is composite */
-		redrawStaticCompositeElements(displayInfo, pE);
-#if 0
-	    } else if(ELEMENT_IS_GRAPHICS(pE->type)) {
-#else
+		 if(pE->staticGraphic) {
+		     redrawStaticCompositeElements(displayInfo, pE);
+		 }
 	    } else if(pE->staticGraphic) {
-#endif	    
 	      /* Element is a static drawing object */
 		if(!pE->hidden && pE->run->execute) {
 #if DEBUG_REDRAW
@@ -2918,18 +2914,7 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	pE = pE->next;
     }
-    
-#if 0
-  /* Restore the drawing area gc */
-    displayInfo->gc = gcSave;
 #endif    
-
-  /* Uppate the window from the pixmap */
-    XCopyArea(display,displayInfo->drawingAreaPixmap,
-      XtWindow(displayInfo->drawingArea),
-      displayInfo->pixmapGC, 0, 0, (unsigned int)width,
-      (unsigned int)height, 0, 0);
-#endif
 }
 
 static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
@@ -2947,14 +2932,12 @@ static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
 #endif    
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
-	if(pE->type == DL_Composite) {
+	if(pE->type == DL_Composite && pE->staticGraphic) {
 	  /* Element is composite */
-	    redrawStaticCompositeElements(displayInfo, pE);
-#if 0
-	} else if(ELEMENT_IS_GRAPHICS(pE->type)) {
-#else
+	    if(pE->staticGraphic) {
+		redrawStaticCompositeElements(displayInfo, pE);
+	    }
 	} else if(pE->staticGraphic) {
-#endif	    
 	  /* Element is a drawing object */
 	    if(!pE->hidden && pE->run->execute) {
 #if DEBUG_REDRAW

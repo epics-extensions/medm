@@ -320,6 +320,7 @@ void updateCartesianPlotDataDialog(void);
 /* medmComposite.c */
 DlElement *groupObjects();
 void ungroupSelectedElements(void);
+void markCompositeChildrenNotExecuted(DlElement *dlElement);
 
 /* medmDisplay.c */
 DlElement *parseDisplay(DisplayInfo *displayInfo);
@@ -455,6 +456,7 @@ void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
 void startMedmScheduler(void);
 void stopMedmScheduler(void);
 void dumpUpdatetaskList(DisplayInfo *displayInfo);
+UpdateTask *getUpdateTaskFromElement(DlElement *dlElement);
 
 /* updateMonitors.c */
 void localCvtDoubleToString( double, char *, unsigned short);
@@ -623,7 +625,7 @@ void dumpDisplayInfoList(DisplayInfo *head, char *string);
 
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
-void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
+void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean pixmap);
 void resizeGIF(DlImage *dlImage);
 void freeGIF(DlImage *dlImage);
 void copyGIF(DlImage *dlImage1, DlImage *dlImage2);

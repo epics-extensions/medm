@@ -7,7 +7,7 @@
 
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_XRT 0
-#define DEBUG_XRT1 0
+#define DEBUG_AXIS 0
 
 #define MAX(a,b)  ((a)>(b)?(a):(b))
 
@@ -88,7 +88,7 @@ void CpGetAxisInfo(Widget w,
     Arg args[15];
     int nargs;
 
-#if DEBUG_XRT1
+#if DEBUG_AXIS
     print("CpGetAxisInfo: Before XtGetValues\n");
 #endif    
     nargs=0;
@@ -109,7 +109,7 @@ void CpGetAxisInfo(Widget w,
     XtSetArg(args[nargs],XtNxrtY2MinUseDefault, y2AxisIsAuto); nargs++;
     XtSetArg(args[nargs],XtNxrtTimeFormat, timeFormat); nargs++;
     XtGetValues(w,args,nargs);
-#if DEBUG_XRT1
+#if DEBUG_AXIS
     print("CpGetAxisInfo: After XtGetValues nargs=%d\n",nargs);
 #endif    
 

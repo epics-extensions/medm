@@ -57,6 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_EVENTS 0
 #define DEBUG_FONTS 0
 #define DEBUG_PIXMAP 1
+#define DEBUG_EXPOSE 1
 
 #include "medm.h"
 
@@ -251,12 +252,12 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     unsigned int mask;
 
 #if DEBUG_EVENTS > 1
-	fprintf(stderr,"\ndrawingAreaCallback(Entered): \n");
+	print("\ndrawingAreaCallback(Entered):\n");
 #endif
     if (cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
-#if DEBUG_EVENTS > 1
-	fprintf(stderr,"drawingAreaCallback(XmCR_EXPOSE): \n");
+#if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
+	print("drawingAreaCallback(XmCR_EXPOSE):\n");
 #endif
 	x = cbs->event->xexpose.x;
 	y = cbs->event->xexpose.y;
@@ -267,6 +268,10 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	  displayInfo->pixmapGC != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
 	    
+#if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
+	    print("  w=%x DA=%x x=%d y=%d width=%d height=%d\n",
+	      w,displayInfo->drawingArea,x,y,uiw,uih);
+#endif
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
 	      displayInfo->pixmapGC,x,y,uiw,uih,x,y);
 	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
