@@ -83,6 +83,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  * .28  12-03-96        vong    2.2.9 release
  * .29  12-11-96        evans   2.3.0 release
  * .30  12-12-96        evans   2.3.1 release
+ * .31  10-02-97        evans   2.3.2 release
  *
  *****************************************************************************
 */
@@ -95,8 +96,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define MEDM_UPDATE_LEVEL	2
 
 #ifdef __COLOR_RULE_H__
-#define MEDM_VERSION_STRING	"MEDM Version 2.3.2aBeta12"
+#define MEDM_VERSION_STRING	"MEDM Version 2.3.2a"
 #else
-#define MEDM_VERSION_STRING	"MEDM Version 2.3.2Beta12"
+#define MEDM_VERSION_STRING	"MEDM Version 2.3.2"
 #endif
-#define MEDM_VERSION_DIGITS	"MEDM020302Beta12"
+#define MEDM_VERSION_DIGITS	"MEDM020302"

@@ -44,7 +44,7 @@ OWNED RIGHTS.
 *****************************************************************
 LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
 DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
-y*/
+*/
 /*****************************************************************************
  *
  *     Original Author : Mark Anderson
@@ -56,7 +56,7 @@ y*/
 
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_EVENTS 0
-#define DEBUG_FILE 2
+#define DEBUG_FILE 0
 #define DEBUG_STRING_LIST 0
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0

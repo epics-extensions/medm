@@ -77,6 +77,13 @@ extern int isnan(double);     /* Because it is not in math.h as it should be */
 #include "medm.h"
 #include "medmCartesianPlot.h"
 
+#include <XrtGraph.h>
+#if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
+#include <XrtGraphProp.h>
+#endif
+#endif
+
 void cartesianPlotCreateRunTimeInstance(DisplayInfo *, DlElement *);
 void cartesianPlotCreateEditInstance(DisplayInfo *, DlElement *);
 static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd);
