@@ -1657,7 +1657,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    int n = 0;
 	    XmString label = XmStringCreateLocalized("*.adl");
 	  /* for some odd reason can't get PATH_MAX reliably defined between systems */
-#define LOCAL_PATH_MAX  1023
+#define LOCAL_PATH_MAX 1023
 	    char *cwd = getcwd(NULL,LOCAL_PATH_MAX+1);
 	    XmString cwdXmString = XmStringCreateLocalized(cwd);
 

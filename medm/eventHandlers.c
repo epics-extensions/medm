@@ -80,6 +80,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 /* Function prototypes */
+
 static void updateDraggedElements(Position x0, Position y0,
   Position x1, Position y1);
 static void updateResizedElements(Position x0, Position y0,

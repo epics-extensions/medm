@@ -4168,8 +4168,13 @@ void clearUndoInfo(DisplayInfo *displayInfo)
     if(!displayInfo) return;
     undoInfo = displayInfo->undoInfo;
     if(!undoInfo) return;
-  /*    clearDlDisplayList(undoInfo->dlElementList); */
-    free ((char *) undoInfo->dlElementList);
+    if(!IsEmpty(undoInfo->dlElementList)) {
+	clearDlDisplayList(undoInfo->dlElementList);
+    }
+    if(undoInfo->dlElementList) {
+	free((char *)undoInfo->dlElementList);
+	undoInfo->dlElementList = NULL;
+    }
 }
 
 /* Save Undo information */
