@@ -57,8 +57,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 /* "Green3", "Yellow", "Red", "White", "Gray80" */
+/* The following do not work in Exceed 5 */
+/* "#00C000","#FFFF00","#FF0000","#FFFFFF","#CCCCCC" */
 static  char *alarmColorString[ALARM_MAX] = {
-    "#00C000","#FFFF00","#FF0000","#FFFFFF","#CCCCCC"
+ "Green3", "Yellow", "Red", "White", "Gray80"
 };
 
 /* From the O'Reilly books - this scalable font handling code:
