@@ -954,6 +954,7 @@ static void caDelete(Record *pr)
     if(ca_state(pCh->chid) == cs_conn)
       caTask.channelConnected--;
 #if 0
+  /* KE: This is not necessary according to Jeff */
     ca_change_connection_event(pCh->chid,NULL);
     ca_replace_access_rights_event(pCh->chid,NULL);
 #endif
@@ -1311,15 +1312,17 @@ static void pvInfoDescGetCb(struct event_handler_args args)
 
 #if DEBUG_PVINFO    
     print("pvInfoDescGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
+    print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
+      pvInfo,info,info->descChid,args.dbr);
 #endif    
-    if(!pvInfo || !info || !info->descChid || !args.dbr) return;
-
-    if(args.status == ECA_NORMAL) {
-	strcpy(info->descVal, (char *)args.dbr);
-    } else {
-	strcpy(info->descVal, NOT_AVAILABLE);
+    if(pvInfo && info && info->descChid && args.dbr) {
+	if(args.status == ECA_NORMAL) {
+	    strcpy(info->descVal, (char *)args.dbr);
+	} else {
+	    strcpy(info->descVal, NOT_AVAILABLE);
+	}
+	info->descOk = True;
     }
-    info->descOk = True;
 
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
@@ -1336,16 +1339,18 @@ static void pvInfoRtypGetCb(struct event_handler_args args)
 
 #if DEBUG_PVINFO    
     print("pvInfoRtypGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
+    print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
+      pvInfo,info,info->descChid,args.dbr);
 #endif
-  /* KE: Checking infi->descChid not necessary */
-    if(!pvInfo || !info || !info->descChid || !args.dbr) return;
-
-    if(args.status == ECA_NORMAL) {
-	strcpy(info->rtypVal, (char *)args.dbr);
-    } else {
-	strcpy(info->rtypVal, NOT_AVAILABLE);
+  /* KE: Checking info->descChid not necessary */
+    if(pvInfo && info && info->descChid && args.dbr) {
+	if(args.status == ECA_NORMAL) {
+	    strcpy(info->rtypVal, (char *)args.dbr);
+	} else {
+	    strcpy(info->rtypVal, NOT_AVAILABLE);
+	}
+	info->rtypOk = True;
     }
-    info->rtypOk = True;
 
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
@@ -1362,11 +1367,13 @@ static void pvInfoTimeGetCb(struct event_handler_args args)
 
 #if DEBUG_PVINFO    
     print("pvInfoTimeGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
+    print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
+      pvInfo,info,info->descChid,args.dbr);
 #endif    
-    if(!pvInfo || !info || !info->descChid || !args.dbr) return;
-
-    info->timeVal = *(struct dbr_time_string *)args.dbr;
-    info->timeOk = True;
+    if(pvInfo && info && info->descChid && args.dbr) {
+	info->timeVal = *(struct dbr_time_string *)args.dbr;
+	info->timeOk = True;
+    }
 
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;

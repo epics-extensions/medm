@@ -603,7 +603,7 @@ Name of file in which to save display:",
     "Medm*colorMW*colorPB.height: 20",
   /* Resource palette */
     "Medm.resourceS.geometry: -5+304",
-    "Medm*resourceMW.width: 360",
+    "Medm*resourceMW.width: 375",
     "Medm*resourceMW.height: 515",
     "Medm*resourceMW.shadowThickness: 0",
     "Medm*resourceMW.resourceMB*fontList: 8x13",

@@ -72,6 +72,7 @@ typedef struct _MedmCartesianPlot {
     XYTrace          triggerCh;
     XYTrace          countCh;
     int              nTraces;       /* number of traces (<=MAX_TRACES) */
+    int              nPoints;       /* number of points in a trace */
     CpDataHandle     hcp1, hcp2;    /* CpData handles */
   /* Used for channel-based range determination (filled in at connect) */
     CartesianPlotAxisRange  axisRange[3]; /* X, Y, Y2 _AXIS_ELEMENT          */
@@ -84,7 +85,7 @@ typedef struct _MedmCartesianPlot {
 
 
 /* Function prototypes for generic plotting routines
- *   These should be the same for any plot package */
+ * These should be the same for any plot package */
 
 CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints);
 int CpDataGetLastPoint(CpDataHandle hData, int set);

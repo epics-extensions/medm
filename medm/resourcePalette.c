@@ -1370,7 +1370,8 @@ static void createResourceEntries(Widget entriesSW)
       /* KE: Why not do this in createEntryRC */
       /* Restrict size of CA PV name entry */
 	if(i == CHAN_A_RC || i == CHAN_B_RC || i == CHAN_C_RC || i == CHAN_D_RC
-	  || i == RDBK_RC || i == CTRL_RC) {
+	  || i == RDBK_RC || i == CTRL_RC
+	  || i == TRIGGER_RC || i == ERASE_RC || i == COUNT_RC) {
 	  /* Since can have macro-substituted strings, need longer length */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,maxCols,
@@ -3354,7 +3355,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  defaultBackground,NULL);
 #if 0	
-      /* Need to add this entry to widgetDM.h and finish this if we
+      /* Need to add this entry to medmWidget.h and finish this if we
          want named groups */
 	strcpy(globalResourceBundle.compositeName,p->compositeName);
 #endif	

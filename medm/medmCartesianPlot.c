@@ -15,6 +15,7 @@
  *****************************************************************************
 */
 
+#define DEBUG_COUNT 0
 #define DEBUG_LOSING_FOCUS 0
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
@@ -23,6 +24,10 @@
 #define DEBUG_HISTOGRAM 0
 #define DEBUG_ERASE 0
 #define DEBUG_ACCESS 0
+
+/* Determines if the count from the PV is used. Does not determine if
+ * the PV is implemented. It is implemented in any event. */
+#define USECOUNTPV 1
 
 #ifndef VMS
 #define CHECK_NAN
@@ -178,6 +183,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	}
       /* Pre-initialize */
 	pcp->updateTask = NULL;
+	pcp->nTraces=0;
+	pcp->nPoints=0;
 	pcp->hcp1 = pcp->hcp2 = NULL;
 	pcp->dirty1 = pcp->dirty2 = False;
 	pcp->timeScale = False;
@@ -274,7 +281,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    pcp->triggerCh.recordX = NULL;
 	}
 	
-#ifndef DONE
       /* Allocate (or set to NULL) the X Record in the countCh XYTrace */
 	if((dlCartesianPlot->count == 0)
 	  && (dlCartesianPlot->countPvName[0] != '\0')
@@ -290,7 +296,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	} else {
 	    pcp->countCh.recordX = NULL;
 	}
-#endif
 	
       /* Note: Only the Record and MedmCartesianPlot parts of the
        *   XYTrace's are filled in now, the rest is filled in in
@@ -410,8 +415,15 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
   /* Set the maximum count (for allocating data structures) to be the
    * largest of any of the Channel Access counts and the specified
-   * count (from the DlCartesianPlot) */
+   * count (from the DlCartesianPlot or the countCh if it exists) */
     maxElements = dlCartesianPlot->count;
+#if USECOUNTPV
+    if(pcp->countCh.recordX != 0) {
+	int chCount = (int)(pcp->countCh.recordX->value +.5);
+	if(chCount > 0) maxElements = chCount;
+	else maxElements = 0;
+    }
+#endif
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 	if(t->recordX)
@@ -423,6 +435,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
   /* Allocate the CP data structures with size maxElements */
     hcp1 = hcp2 = NULL;
     hcp1 = CpDataCreate(widget,CP_GENERAL,1,maxElements);
+    pcp->nPoints=maxElements;
     if(pcp->nTraces > 1) {
 	hcp2 = CpDataCreate(widget,CP_GENERAL,pcp->nTraces-1,maxElements);
     }
@@ -681,6 +694,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     MedmCartesianPlot *pcp = pt->cartesianPlot;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     int nextPoint, j;
+    int count;
 
 #if DEBUG_CARTESIAN_PLOT_UPDATE
     printf("cartesianPlotUpdateTrace:\n");
@@ -688,10 +702,31 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     switch(pt->type) {
     case CP_XYScalar:
       /* x,y channels specified - scalars, up to dlCartesianPlot->count pairs */
+	count=dlCartesianPlot->count;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    if(chCount > 0) count = chCount;
+	    else count = 0;
+	}
+#endif
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
+#if DEBUG_COUNT
+	print("CP_XYScalar: CP: %d PV: %d Used: %d\n"
+	  " Before: init: %d nextPoint: %d\n",
+	  dlCartesianPlot->count,
+	  pcp->countCh.recordX != 0?(int)(pcp->countCh.recordX->value +.5):-1,
+	  count,
+	  pt->init,nextPoint);
+#endif
 	if(pt->init) nextPoint++;
 	else pt->init = 1;
-	if(nextPoint < dlCartesianPlot->count) {
+#if DEBUG_COUNT
+	print(" After: init: %d nextPoint: %d\n",
+	  pt->init,nextPoint);
+#endif
+	if(nextPoint < count) {
 	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
 	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,
@@ -703,7 +738,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    } else if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
 	      /* Shift everybody down one, add at end */
 		int j;
-		for(j = 1; j < dlCartesianPlot->count; j++) {
+		for(j = 1; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j-1,
 		      CpDataGetXElement(pt->hcp,pt->trace,j));
 		    CpDataSetYElement(pt->hcp,pt->trace,j-1,
@@ -717,8 +752,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	}
 #if 0
       /* Use with cpCP_XYScalar.adl or delete these lines */
-	printf("nextPoint=%d dlCartesianPlot->count=%d x=%g y=%g\n",
-	  nextPoint,dlCartesianPlot->count,
+	printf("nextPoint=%d count=%d x=%g y=%g\n",
+	  nextPoint,count,
 	  pt->recordX->value,pt->recordY->value);
 	printf("x1=%g x2=%g x3=%g\n",
 	  CpDataGetXElement(pt->hcp,pt->trace,0),
@@ -732,11 +767,20 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
 
     case CP_XScalar:
-      /* x channel scalar, up to dlCartesianPlot->count pairs */
+      /* x channel scalar, up to count pairs */
+	count=dlCartesianPlot->count;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    if(chCount > 0) count = chCount;
+	    else count = 0;
+	}
+#endif
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
 	else pt->init = 1;
-	if(nextPoint < dlCartesianPlot->count) {
+	if(nextPoint < count) {
 	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
 	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,(float)nextPoint);
@@ -747,7 +791,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    } else if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
 	      /* Shift everybody down one, add at end */
 		int j;
-		for(j = 1; j < dlCartesianPlot->count; j++) {
+		for(j = 1; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j-1,
 		      CpDataGetXElement(pt->hcp,pt->trace,j));
 		    CpDataSetYElement(pt->hcp,pt->trace,j-1,(float)(j-1));
@@ -762,11 +806,21 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_XVector:
       /* x channel vector, ca_element_count(chid) elements */
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordX->elementCount-1,0));
+	count=pt->recordX->elementCount;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    
+	  /* Must be greater than 0 and less than the native count */
+	    if(chCount > 0 && chCount < count) count = chCount;
+	}
+#endif
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
 	switch(pt->recordX->dataType) {
 	case DBF_STRING:
 	{
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,0.0);
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -775,7 +829,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_INT:
 	{
 	    short *pShort = (short *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -784,7 +838,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_FLOAT:
 	{
 	    float *pFloat = (float *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -793,7 +847,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_ENUM:
 	{
 	    unsigned short *pUShort = (unsigned short *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -802,7 +856,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_CHAR:
 	{
 	    unsigned char *pUChar = (unsigned char *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -811,7 +865,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_LONG:
 	{
 	    dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -820,7 +874,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_DOUBLE:
 	{
 	    double *pDouble = (double *) pt->recordX->array;
-	    for(j = 0; j < pt->recordX->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j]));
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -830,17 +884,26 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
 
     case CP_YScalar:
-      /* y channel scalar, up to dlCartesianPlot->count pairs */
+      /* y channel scalar, up to count pairs */
+	count=dlCartesianPlot->count;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    if(chCount > 0) count = chCount;
+	    else count = 0;
+	}
+#endif
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 	if(pt->init) nextPoint++;
 	else pt->init = 1;
 #if DEBUG_CARTESIAN_PLOT_UPDATE  && defined(XRTGRAPH)
-	printf("  nextPoint=%d dlCartesianPlot->count=%d\n  XRT_HUGE_VAL=%f\n",
+	printf("  nextPoint=%d count=%d\n  XRT_HUGE_VAL=%f\n",
 	  nextPoint,
-	  dlCartesianPlot->count,
+	  count,
 	  XRT_HUGE_VAL);
 #endif    
-	if(nextPoint < dlCartesianPlot->count) {
+	if(nextPoint < count) {
 	    if(!nextPoint && pcp->timeScale) {
 		CpSetTimeBase(pcp->dlElement->widget,
 		  timeOffset + (time_t)pt->recordY->time.secPastEpoch);
@@ -867,7 +930,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		printf("  Shifting\n");
 #endif    
 		if(pcp->timeScale) {
-		    for(j = 1; j < dlCartesianPlot->count; j++) {
+		    for(j = 1; j < count; j++) {
 			CpDataSetXElement(pt->hcp,pt->trace,j-1,
 			  CpDataGetXElement(pt->hcp,pt->trace,j));
 			CpDataSetYElement(pt->hcp,pt->trace,j-1,
@@ -879,7 +942,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j-1,
 		      (float)pt->recordY->value);
 		} else {
-		    for(j = 1; j < dlCartesianPlot->count; j++) {
+		    for(j = 1; j < count; j++) {
 			CpDataSetYElement(pt->hcp,pt->trace,j-1,
 			  CpDataGetYElement(pt->hcp,pt->trace,j));
 		    }
@@ -890,7 +953,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	}
 #if DEBUG_CARTESIAN_PLOT_UPDATE && defined(XRTGRAPH)
 	{
-	    int nextPoint1=(nextPoint < dlCartesianPlot->count)?nextPoint:
+	    int nextPoint1=(nextPoint < count)?nextPoint:
 	      dlCartesianPlot->count-1;
 	    static char filename[]="xrtdata.data";
 
@@ -916,11 +979,21 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_YVector:
       /* plot first "count" elements of vector per dlCartesianPlot */
-	CpDataSetLastPoint(pt->hcp,pt->trace,pt->recordY->elementCount-1);
+	count=pt->recordY->elementCount;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    
+	  /* Must be greater than 0 and less than the native count */
+	    if(chCount > 0 && chCount < count) count = chCount;
+	}
+#endif
+	CpDataSetLastPoint(pt->hcp,pt->trace,count-1);
 	switch(pt->recordY->dataType) {
 	case DBF_STRING:
 	{
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,0.0);
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -929,7 +1002,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_INT:
 	{
 	    short *pShort = (short *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -938,7 +1011,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_FLOAT:
 	{
 	    float *pFloat = (float *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -947,7 +1020,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_ENUM:
 	{
 	    unsigned short *pUShort = (unsigned short *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -956,7 +1029,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_CHAR:
 	{
 	    unsigned char *pUChar = (unsigned char *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -965,7 +1038,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_LONG:
 	{
 	    dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -974,7 +1047,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	case DBF_DOUBLE:
 	{
 	    double *pDouble = (double *) pt->recordY->array;
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetYElement(pt->hcp,pt->trace,j,SAFEFLOAT(pDouble[j]));
 		CpDataSetXElement(pt->hcp,pt->trace,j,(float)j);
 	    }
@@ -985,13 +1058,23 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
 
     case CP_XVectorYScalar:
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordX->elementCount-1,0));
+	count=pt->recordX->elementCount;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    
+	  /* Must be greater than 0 and less than the native count */
+	    if(chCount > 0 && chCount < count) count = chCount;
+	}
+#endif
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
 	if(pr == pt->recordX) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordX->dataType) {
 	    case DBF_STRING:
 	    {
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,0.0);
 		}
 		break;
@@ -999,7 +1082,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_INT:
 	    {
 		short *pShort = (short *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		}
 		break;
@@ -1007,7 +1090,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_FLOAT:
 	    {
 		float *pFloat = (float *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,SAFEFLOAT(pFloat[j]));
 		}
 		break;
@@ -1015,7 +1098,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_ENUM:
 	    {
 		unsigned short *pUShort = (unsigned short *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		}
 		break;
@@ -1023,7 +1106,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_CHAR:
 	    {
 		unsigned char *pUChar = (unsigned char *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		}
 		break;
@@ -1031,7 +1114,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_LONG:
 	    {
 		dbr_long_t *pLong = (dbr_long_t *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		}
 		break;
@@ -1039,7 +1122,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_DOUBLE:
 	    {
 		double *pDouble = (double *) pt->recordX->array;
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetXElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pDouble[j]));
 		}
@@ -1048,7 +1131,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	} else {
 	    if(pr == pt->recordY) {
-		for(j = 0; j < pt->recordX->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pt->recordY->value));
 		}
@@ -1057,13 +1140,23 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
 
     case CP_YVectorXScalar:
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(pt->recordY->elementCount-1,0));
+	count=pt->recordY->elementCount;
+#if USECOUNTPV
+      /* Use count from the PV */
+	if(pcp->countCh.recordX != 0) {
+	    int chCount = (int)(pcp->countCh.recordX->value +.5);
+	    
+	  /* Must be greater than 0 and less than the native count */
+	    if(chCount > 0 && chCount < count) count = chCount;
+	}
+#endif
+	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
 	if(pr == pt->recordY) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordY->dataType) {
 	    case DBF_STRING:
 	    {
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,0.0);
 		}
 		break;
@@ -1071,7 +1164,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_INT:
 	    {
 		short *pShort = (short *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pShort[j]);
 		}
 		break;
@@ -1079,7 +1172,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_FLOAT:
 	    {
 		float *pFloat = (float *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pFloat[j]));
 		}
@@ -1088,7 +1181,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_ENUM:
 	    {
 		unsigned short *pUShort = (unsigned short *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUShort[j]);
 		}
 		break;
@@ -1096,7 +1189,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_CHAR:
 	    {
 		unsigned char *pUChar = (unsigned char *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pUChar[j]);
 		}
 		break;
@@ -1104,7 +1197,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_LONG:
 	    {
 		dbr_long_t *pLong = (dbr_long_t *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,(float)pLong[j]);
 		}
 		break;
@@ -1112,7 +1205,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    case DBF_DOUBLE:
 	    {
 		double *pDouble = (double *) pt->recordY->array;
-		for(j = 0; j < pt->recordY->elementCount; j++) {
+		for(j = 0; j < count; j++) {
 		    CpDataSetYElement(pt->hcp,pt->trace,j,
 		      SAFEFLOAT(pDouble[j]));
 		}
@@ -1120,7 +1213,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    }
 	    }
 	} else  if(pr == pt->recordX) {
-	    for(j = 0; j < pt->recordY->elementCount; j++) {
+	    for(j = 0; j < count; j++) {
 		CpDataSetXElement(pt->hcp,pt->trace,j,
 		  SAFEFLOAT(pt->recordX->value));
 	    }
@@ -1129,14 +1222,13 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_XYVector: {
 	int dox;
-	int count;
 
 	count = MIN(pt->recordX->elementCount, pt->recordY->elementCount);
-#ifndef DONE
+#if USECOUNTPV
       /* Use count from the PV */
 	if(pcp->countCh.recordX != 0) {
 	    int chCount = (int)(pcp->countCh.recordX->value +.5);
-
+	    
 	  /* Must be greater than 0 and less than the native count */
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
@@ -1283,6 +1375,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     }
 }
 
+
 static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
@@ -1374,6 +1467,7 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	    CpSetData(widget, CP_Y2, t->hcp );
 	}
     }
+
   /* Erase the plot */
     if(pcp->eraseCh.recordX) {
 	Record *pr = pcp->eraseCh.recordX;
@@ -1465,23 +1559,50 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	    }
 	}
 	CpUpdateWidget(widget, CP_FULL);
-	updateTaskMarkUpdate(pcp->updateTask);
 #if DEBUG_ERASE
 	dumpCartesianPlotData("Erase Channel",pcp);
 #endif	
+	updateTaskMarkUpdate(pcp->updateTask);
 	return;
-    }
-
-  /* If there is a trigger channel, but this is not the one, return
-       and do not update */
-    if(pcp->triggerCh.recordX) {
-	if(pr != pcp->triggerCh.recordX)
-	  return;
     }
 
   /* Check if there is a trigger channel */
     if(pcp->triggerCh.recordX) {
-  /* There is a trigger channel, update appropriate plots */
+	if(pr != pcp->triggerCh.recordX) {
+	  /* There is a trigger channel but this is not it, return
+	   * and do not update */
+	    return;
+	} else {
+	  /* This is the trigger channel, update appropriate plots */
+	    for(i = 0; i < pcp->nTraces; i++) {
+		XYTrace *t = &(pcp->xyTrace[i]);
+		if((t->recordX == NULL) && (t->recordY == NULL)) continue;
+		if((t->recordX) && (t->hcp)) {
+		    cartesianPlotUpdateTrace((XtPointer)t->recordX);
+		    if(t->type == CP_XYVector)
+		      cartesianPlotUpdateTrace((XtPointer)t->recordY);
+		    if(t->hcp == pcp->hcp1)
+		      pcp->dirty1 = True;
+		    else if(t->hcp == pcp->hcp2)
+		      pcp->dirty2 = True;
+		} else if((t->recordY) && (t->hcp)) {
+		    cartesianPlotUpdateTrace((XtPointer)t->recordY);
+		    if(t->hcp == pcp->hcp1)
+		      pcp->dirty1 = True;
+		    else if(t->hcp == pcp->hcp2)
+		      pcp->dirty2 = True;
+		}
+	    }
+#if DEBUG_ERASE
+	    dumpCartesianPlotData("Trigger Channel",pcp);
+#endif	
+	    updateTaskMarkUpdate(pcp->updateTask);
+	    return;
+	}
+    }
+
+  /* If this is the count channel, update the plot */
+    if(pcp->countCh.recordX && pr == pcp->countCh.recordX) {
 	for(i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
 	    if((t->recordX == NULL) && (t->recordY == NULL)) continue;
@@ -1502,23 +1623,25 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	    }
 	}
 #if DEBUG_ERASE
-	dumpCartesianPlotData("Trigger Channel",pcp);
+	dumpCartesianPlotData("Count Channel",pcp);
 #endif	
-    } else {
-      /* No trigger channel, proceed as normal */
-	cartesianPlotUpdateTrace((XtPointer)pr);
-	if(pt->hcp == pcp->hcp1) {
-	    pcp->dirty1 = True;
-	} else if(pt->hcp == pcp->hcp2) {
-	    pcp->dirty2 = True;
-	} else {
-	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: "
-	      "Illegal cpDataSet specified\n");
-	}
-#if DEBUG_ERASE
-	dumpCartesianPlotData("Normal Channel",pcp);
-#endif	
+	updateTaskMarkUpdate(pcp->updateTask);
+	return;
     }
+    
+  /* This is a trace, update it */
+    cartesianPlotUpdateTrace((XtPointer)pr);
+    if(pt->hcp == pcp->hcp1) {
+	pcp->dirty1 = True;
+    } else if(pt->hcp == pcp->hcp2) {
+	pcp->dirty2 = True;
+    } else {
+	medmPrintf(1,"\ncartesianPlotUpdateValueCb: "
+	  "Illegal cpDataSet specified\n");
+    }
+#if DEBUG_ERASE
+    dumpCartesianPlotData("Normal Channel",pcp);
+#endif	
     updateTaskMarkUpdate(pcp->updateTask);
 }
 

@@ -481,34 +481,34 @@ typedef struct _ResourceBundle {
 #define UNITS_RC          33
 #define CSTYLE_RC         34
 #define ERASE_OLDEST_RC   35
-#define COUNT_RC          36
-#define STACKING_RC       37
-#define IMAGE_TYPE_RC     38
-#define TEXTIX_RC         39
-#define MSG_LABEL_RC      40
-#define PRESS_MSG_RC      41
-#define RELEASE_MSG_RC    42
-#define IMAGE_NAME_RC     43
-#define IMAGE_CALC_RC     44
-#define DATA_RC           45
-#define CMAP_RC           46
-#define NAME_RC           47
-#define COMPOSITE_FILE_RC 48
-#define LINEWIDTH_RC      49
-#define PRECISION_RC      50
-#define SBIT_RC           51
-#define EBIT_RC           52
-#define RD_LABEL_RC       53
-#define RD_VISUAL_RC      54
+#define STACKING_RC       36
+#define IMAGE_TYPE_RC     37
+#define TEXTIX_RC         38
+#define MSG_LABEL_RC      39
+#define PRESS_MSG_RC      40
+#define RELEASE_MSG_RC    41
+#define IMAGE_NAME_RC     42
+#define IMAGE_CALC_RC     43
+#define DATA_RC           44
+#define CMAP_RC           45
+#define NAME_RC           46
+#define COMPOSITE_FILE_RC 47
+#define LINEWIDTH_RC      48
+#define PRECISION_RC      49
+#define SBIT_RC           50
+#define EBIT_RC           51
+#define RD_LABEL_RC       52
+#define RD_VISUAL_RC      53
 
 /* Vectors/matrices of data */
-#define RDDATA_RC         55  /* Related Display data           */
-#define CPDATA_RC         56  /* Cartesian Plot channel data    */
-#define SCDATA_RC         57  /* Strip Chart data               */
-#define SHELLDATA_RC      58  /* Shell Command data             */
-#define CPAXIS_RC         59  /* Cartesian Plot axis data       */
+#define RDDATA_RC         54  /* Related Display data           */
+#define CPDATA_RC         55  /* Cartesian Plot channel data    */
+#define SCDATA_RC         56  /* Strip Chart data               */
+#define SHELLDATA_RC      57  /* Shell Command data             */
+#define CPAXIS_RC         58  /* Cartesian Plot axis data       */
                             
-/* Other new entry types */ 
+/* Cartesian Plot entry types */ 
+#define COUNT_RC          59  /* Cartesian Plot count           */
 #define TRIGGER_RC        60  /* Cartesian Plot trigger channel */
 #define ERASE_RC          61  /* Cartesian Plot erase channel   */
 #define ERASE_MODE_RC     62  /* Cartesian Plot erase mode      */
@@ -553,7 +553,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Channel D",
     "Data Color", "Distance", "XY Angle", "Z Angle",
     "Period", "Units",
-    "Plot Style", "Plot Mode", "Count",
+    "Plot Style", "Plot Mode",
     "Stacking",
     "Image Type",
     "Text",
@@ -575,9 +575,11 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Label/Cmd/Args",       /* Shell Command data             */
     "Axis Data",            /* Cartesian Plot axis data       */
 #ifndef MEDM_CDEV
+    "Count Num or Channel", /* Cartesian Plot count           */
     "Trigger Channel",      /* Cartesian Plot trigger channel */
     "Erase Channel",        /* Cartesian Plot erase channel   */
 #else
+    "Count Num or Dev/Attr",/* Cartesian Plot count           */
     "Trigger Dev/Attr",     /* Cartesian Plot trigger device  */
     "Erase Dev/Attr",       /* Cartesian Plot erase device    */
 #endif
