@@ -793,8 +793,11 @@ typedef struct {
 /****** Extensions */
 typedef struct {
     DlObject object;
+    DlBasicAttribute attr;
+    DlDynamicAttribute dynAttr;
     ImageType imageType;
     char imageName[MAX_TOKEN_LENGTH];
+    XtIntervalId timerid;
     XtPointer privateData;
 } DlImage;
 

@@ -575,9 +575,7 @@ void dumpDisplayInfoList(DisplayInfo *head, char *string);
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
-void resizeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
-Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage);
-int ReadCode(void);
+void resizeGIF(DlImage *dlImage);
 void freeGIF(DlImage *dlImage);
 
 /* medmCommon.c */

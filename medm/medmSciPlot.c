@@ -454,11 +454,11 @@ void CpSetTimeBase(Widget w, time_t base)
 void CpUpdateWidget(Widget w, int full)
 {
     if(full) {
-	SciPlotUpdate (w);
+	SciPlotUpdate(w);
     } else {
       /* Try data only, do full if data out of bounds */
-	if (SciPlotQuickUpdate (w))
-	  SciPlotUpdate (w);
+	if (SciPlotQuickUpdate(w))
+	  SciPlotUpdate(w);
     }
 }
 

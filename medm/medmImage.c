@@ -54,11 +54,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_ANIMATE 0
 
-/***************************************************************************
- ****                        executeExtensions.c                        ****
- ***************************************************************************/
-
+#define DEFAULT_TIME 100
+#define ANIMATE_TIME(gif) \
+  ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
+  ((gif)->frames[CURFRAME(gif)]->DelayTime)*10 : DEFAULT_TIME)
 
 #include "medm.h"
 
@@ -66,16 +67,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include <X11/keysym.h>
 
-#define GIF_BTN  0
-#define TIFF_BTN 1
+typedef struct _Image {
+    DisplayInfo   *displayInfo;
+    DlElement     *dlElement;
+    Record        *record;
+    UpdateTask    *updateTask;
+    XtIntervalId  timerid;
+} MedmImage;
 
 Widget importFSD;
-XmString gifDirMask, tifDirMask;
+XmString gifDirMask;
 static void destroyDlImage(DlElement *);
 static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
 static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
-    destroyDlImage,
+    NULL,
     executeDlImage,
     writeDlImage,
     NULL,
@@ -89,67 +95,275 @@ static DlDispatchTable imageDlDispatchTable = {
     NULL,
     NULL};
 
+/* Function prototypes */
+
+static void animateImage(XtPointer cd, XtIntervalId *id);
+static void destroyDlImage(DlElement *dlElement);
+static void drawImage(MedmImage *pi);
+static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
+static void imageUpdateValueCb(XtPointer cd);
+static void imageUpdateValueCb(XtPointer cd);
+static void importCallback(Widget w, XtPointer cd, XtPointer cbs);
+static void imageDraw(XtPointer cd);
+static void imageDestroyCb(XtPointer cd);
+static void imageGetRecord(XtPointer cd, Record **record, int *count);
+
+static void drawImage(MedmImage *pi)
+{
+    unsigned int lineWidth;
+    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
+    Widget widget = pi->updateTask->displayInfo->drawingArea;
+    Display *display = XtDisplay(widget);
+    DlImage *dlImage = pi->dlElement->structure.image;
+
+#if 0
+    lineWidth = (dlImage->attr.width+1)/2;
+    if (dlImage->attr.fill == F_SOLID) {
+	XFillImage(display,XtWindow(widget),displayInfo->gc,
+          dlImage->object.x,dlImage->object.y,
+          dlImage->object.width,dlImage->object.height);
+    } else if (dlImage->attr.fill == F_OUTLINE) {
+	XDrawImage(display,XtWindow(widget),displayInfo->gc,
+	  dlImage->object.x + lineWidth,
+	  dlImage->object.y + lineWidth,
+	  dlImage->object.width - 2*lineWidth,
+	  dlImage->object.height - 2*lineWidth);
+    }
+#endif    
+}
+
 void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     GIFData *gif;
     DlImage *dlImage = dlElement->structure.image;
 
-/* from the DlImage structure, we've got the image's dimensions */
+  /* From the DlImage structure, we've got the image's dimensions */
     switch (dlImage->imageType) {
     case GIF_IMAGE:
+      /* KE: GIF is the only type */
 	if (dlImage->privateData == NULL) {
 	    if (!initializeGIF(displayInfo,dlImage)) {
-	      /* something failed in there - bail out! */
-		if (dlImage->privateData != NULL) {
+	      /* Something failed - bail out! */
+		if(dlImage->privateData != NULL) {
 		    free((char *)dlImage->privateData);
 		    dlImage->privateData = NULL;
 		}
 	    }
+	    gif = (GIFData *)dlImage->privateData;
+#if DEBUG_ANIMATE
+	    fprintf(stderr,"executeDlImage (1): dlImage=%x gif=%x nFrames=%d\n",
+	      dlImage,gif,gif?gif->nFrames:-1);
+#endif
 	} else {
-	    gif = (GIFData *) dlImage->privateData;
+	    gif = (GIFData *)dlImage->privateData;
 	    if (gif != NULL) {
+		gif->curFrame=0;
 		if (dlImage->object.width == gif->currentWidth &&
 		  dlImage->object.height == gif->currentHeight) {
 		    drawGIF(displayInfo,dlImage);
 		} else {
-		    resizeGIF(displayInfo,dlImage);
+		    resizeGIF(dlImage);
 		    drawGIF(displayInfo,dlImage);
 		}
+#if DEBUG_ANIMATE
+		fprintf(stderr,"executeDlImage (2): dlImage=%x gif=%x nFrames=%d\n",
+		  dlImage,gif,gif?gif->nFrames:-1);
+#endif
 	    }
 	}
 	break;
     }
 
+  /* Allocate and fill in MedmImage struct */
+    if (displayInfo->traversalMode == DL_EXECUTE) {
+	MedmImage *pi;
+	pi = (MedmImage *)malloc(sizeof(MedmImage));
+	pi->displayInfo = displayInfo;
+	pi->dlElement = dlElement;
+	pi->record = NULL;
+	pi->timerid = (XtIntervalId)0;
+	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
+	  imageDraw, (XtPointer)pi);
+	if (pi->updateTask == NULL) {
+	    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pi->updateTask,imageDestroyCb);
+	    updateTaskAddNameCb(pi->updateTask,imageGetRecord);
+	    pi->updateTask->opaque = False;
+	}
+	if(*dlImage->dynAttr.chan) {
+	    pi->record = medmAllocateRecord(dlImage->dynAttr.chan,
+	      imageUpdateValueCb,NULL,(XtPointer) pi);
+	    pi->record->monitorValueChanged = False;
 
-}
-
-static void imageTypeCallback(
-  Widget w,
-  int buttonNumber,
-  XmToggleButtonCallbackStruct *call_data)
-{
-    Widget fsb;
-    Arg args[4];
-
-/* since both on & off will invoke this callback, only care about the
-   transition of one to ON */
-    if (call_data->set == False) return;
-
-    fsb = XtParent(XtParent(XtParent(XtParent(w))));
-    switch(buttonNumber) {
-    case GIF_BTN:
-	XtSetArg(args[0],XmNdirMask,gifDirMask);
-	XtSetValues(fsb,args,1);
-	globalResourceBundle.imageType = GIF_IMAGE;
-	break;
-    case TIFF_BTN:
-	XtSetArg(args[0],XmNdirMask,tifDirMask);
-	XtSetValues(fsb,args,1);
-	globalResourceBundle.imageType = TIFF_IMAGE;
-	break;
+#ifdef __COLOR_RULE_H__
+	    switch (dlImage->dynAttr.clr) {
+	    case STATIC:
+		pi->record->monitorValueChanged = False;
+		pi->record->monitorSeverityChanged = False;
+		break;
+	    case ALARM:
+		pi->record->monitorValueChanged = False;
+		break;
+	    case DISCRETE:
+		pi->record->monitorSeverityChanged = False;
+		break;
+	    }
+#else
+	    pi->record->monitorValueChanged = False;
+	    if (dlImage->dynAttr.clr != ALARM ) {
+		pi->record->monitorSeverityChanged = False;
+	    }
+#endif
+	    if (dlImage->dynAttr.vis == V_STATIC ) {
+		pi->record->monitorZeroAndNoneZeroTransition = False;
+	    }
+	} else {
+	  /* No channel */
+	    if(gif && gif->nFrames > 1) {
+#if DEBUG_ANIMATE
+		fprintf(stderr,"executeDlImage (3): pi=%x dlElement=%x "
+		  "gif=%x nFrames=%d pi->timerid=%x\n",
+		  &pi,pi->dlElement,gif,gif->nFrames,pi->timerid);
+#endif
+		pi->timerid=XtAppAddTimeOut(appContext,
+		  ANIMATE_TIME(gif), animateImage, (XtPointer)pi);
+	    }
+	}
+    } else {
+#if DEBUG_ANIMATE
+	fprintf(stderr,"executeDlImage: dlElement=%x dlImage=%x clr=%d "
+	  "width=%d\n",
+	  dlElement,dlImage,dlImage->attr.clr,dlImage->attr.width);
+#endif
+	executeDlBasicAttribute(displayInfo,&(dlImage->attr));
     }
 }
 
+static void animateImage(XtPointer cd, XtIntervalId *id)
+{
+    MedmImage *pi = (MedmImage *)cd;
+    GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
+
+#if DEBUG_ANIMATE
+    fprintf(stderr,"animateImage: pi=%x dlElement=%x "
+      "gif=%x nFrames=%d curFrame=%d pi->timerid=%x\n",
+      &pi,pi->dlElement,gif,gif->nFrames,gif->nFrames,pi->timerid);
+#endif
+  /* Display the next image */
+    if(++gif->curFrame >= gif->nFrames) gif->curFrame=0;
+    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+
+  /* Reinstall the timeout */
+    pi->timerid=XtAppAddTimeOut(appContext, ANIMATE_TIME(gif),
+      animateImage, (XtPointer)pi);
+}
+
+static void imageDraw(XtPointer cd)
+{
+    MedmImage *pi = (MedmImage *)cd;
+    Record *pr = pi->record;
+    DisplayInfo *displayInfo = pi->updateTask->displayInfo;
+    XGCValues gcValues;
+    unsigned long gcValueMask;
+    Display *display = XtDisplay(pi->updateTask->displayInfo->drawingArea);
+    DlImage *dlImage = pi->dlElement->structure.image;
+    
+    if(!pr) return;
+    if (pr->connected) {
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	switch (dlImage->dynAttr.clr) {
+#ifdef __COLOR_RULE_H__
+	case STATIC :
+	    gcValues.foreground = displayInfo->colormap[dlImage->attr.clr];
+	    break;
+	case DISCRETE:
+	    gcValues.foreground = extractColor(displayInfo,
+	      pr->value,
+	      dlImage->dynAttr.colorRule,
+	      dlImage->attr.clr);
+	    break;
+#else
+	case STATIC :
+	case DISCRETE:
+	    gcValues.foreground = displayInfo->colormap[dlImage->attr.clr];
+	    break;
+	case ALARM :
+	    gcValues.foreground = alarmColor(pr->severity);
+	    break;
+#endif
+	}
+	gcValues.line_width = dlImage->attr.width;
+	gcValues.line_style = ( (dlImage->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+
+	switch (dlImage->dynAttr.vis) {
+	case V_STATIC:
+	    drawImage(pi);
+	    break;
+	case IF_NOT_ZERO:
+	    if (pr->value != 0.0)
+	      drawImage(pi);
+	    break;
+	case IF_ZERO:
+	    if (pr->value == 0.0)
+	      drawImage(pi);
+	    break;
+	default :
+	    medmPrintf(1,"\nimageUpdateValueCb: Unknown visibility\n");
+	    break;
+	}
+	if (pr->readAccess) {
+	    if (!pi->updateTask->overlapped && dlImage->dynAttr.vis == V_STATIC) {
+		pi->updateTask->opaque = True;
+	    }
+	} else {
+	    pi->updateTask->opaque = False;
+	    draw3DQuestionMark(pi->updateTask);
+	}
+    } else {
+	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
+	gcValues.foreground = WhitePixel(display,DefaultScreen(display));
+	gcValues.line_width = dlImage->attr.width;
+	gcValues.line_style = ((dlImage->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
+	drawImage(pi);
+    }
+}
+
+static void imageDestroyCb(XtPointer cd)
+{
+    MedmImage *pi = (MedmImage *)cd;
+    if (pi) {
+	if(pi->timerid) {
+	    XtRemoveTimeOut(pi->timerid);
+	    pi->timerid=0;
+	}
+	medmDestroyRecord(pi->record);
+	free((char *)pi);
+    }
+    return;
+}
+
+static void destroyDlImage(DlElement *dlElement)
+{
+    freeGIF(dlElement->structure.image);
+    free((char*)dlElement->structure.composite);
+    destroyDlElement(dlElement);
+}
+
+static void imageGetRecord(XtPointer cd, Record **record, int *count)
+{
+    MedmImage *pi = (MedmImage *)cd;
+    *count = 1;
+    record[0] = pi->record;
+}
+
+static void imageUpdateValueCb(XtPointer cd)
+{
+    MedmImage *pi = (MedmImage *)((Record *) cd)->clientData;
+    updateTaskMarkUpdate(pi->updateTask);
+}
 
 static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
@@ -192,22 +406,16 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-/*
- * function which handles creation (and initial display) of images
- */
+/* Function which handles creation (and initial display) of images */
 DlElement* handleImageCreate()
 {
-    XmString buttons[NUM_IMAGE_TYPES-1];
-    Widget radioBox, form, frame, typeLabel;
-    int i, n;
+    int n;
     Arg args[10];
     static DlElement *dlElement = 0;
     if (!(dlElement = createDlImage(NULL))) return 0;
 
     if (importFSD == NULL) {
-/* since GIF is the default, need dirMask to match */
 	gifDirMask = XmStringCreateLocalized("*.gif");
-	tifDirMask = XmStringCreateLocalized("*.tif");
 	globalResourceBundle.imageType = GIF_IMAGE;
 	n = 0;
 	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
@@ -215,33 +423,6 @@ DlElement* handleImageCreate()
 	importFSD = XmCreateFileSelectionDialog(resourceMW,"importFSD",args,n);
 	XtAddCallback(importFSD,XmNokCallback,importCallback,&dlElement);
 	XtAddCallback(importFSD,XmNcancelCallback,importCallback,NULL);
-	form = XmCreateForm(importFSD,"form",NULL,0);
-	XtManageChild(form);
-	n = 0;
-	XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-	XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-	typeLabel = XmCreateLabel(form,"typeLabel",args,n);
-	XtManageChild(typeLabel);
-	n = 0;
-	XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-	XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-	XtSetArg(args[n],XmNleftWidget,typeLabel); n++;
-	frame = XmCreateFrame(form,"frame",args,n);
-	XtManageChild(frame);
-
-	buttons[0] = XmStringCreateLocalized("GIF");
-	buttons[1] = XmStringCreateLocalized("TIFF");
-	n = 0;
-/* MDA this will be 2 when TIFF is implemented
-   XtSetArg(args[n],XmNbuttonCount,2); n++;
-   */
-	XtSetArg(args[n],XmNbuttonCount,1); n++;
-	XtSetArg(args[n],XmNbuttons,buttons); n++;
-	XtSetArg(args[n],XmNbuttonSet,GIF_BTN); n++;
-	XtSetArg(args[n],XmNsimpleCallback,imageTypeCallback); n++;
-	radioBox = XmCreateSimpleRadioBox(frame,"radioBox",args,n);
-	XtManageChild(radioBox);
-	for (i = 0; i < 2; i++) XmStringFree(buttons[i]);
 	XtManageChild(importFSD);
     } else {
 	XtManageChild(importFSD);
@@ -254,18 +435,18 @@ DlElement *createDlImage(DlElement *p)
     DlImage *dlImage;
     DlElement *dlElement;
 
-    dlImage = (DlImage *) malloc(sizeof(DlImage));
+    dlImage = (DlImage *)malloc(sizeof(DlImage));
     if (!dlImage) return 0;
     if (p) {
 	*dlImage = *p->structure.image;
-	dlImage->privateData = NULL;
     } else {
 	objectAttributeInit(&(dlImage->object));
+	basicAttributeInit(&(dlImage->attr));
+	dynamicAttributeInit(&(dlImage->dynAttr));
 	dlImage->imageType = NO_IMAGE;
 	dlImage->imageName[0] = '\0';
-	dlImage->privateData = 0;
+	dlImage->privateData = NULL;
     }
-
 
     if (!(dlElement = createDlElement(DL_Image,
       (XtPointer)      dlImage,
@@ -273,6 +454,11 @@ DlElement *createDlImage(DlElement *p)
 	free(dlImage);
     }
 
+#if DEBUG_ANIMATE
+    fprintf(stderr,"createDlImage: dlElement=%x dlImage=%x clr=%d width=%d\n",
+      dlElement,dlImage,dlImage->attr.clr,dlImage->attr.width);
+#endif
+    
     return(dlElement);
 }
 
@@ -289,8 +475,12 @@ DlElement *parseImage(DisplayInfo *displayInfo)
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlImage->object));
+	    } else if (!strcmp(token,"basic attribute")) {
+		parseBasicAttribute(displayInfo,&(dlImage->attr));
+	    } else if(!strcmp(token,"dynamic attribute")) {
+		parseDynamicAttribute(displayInfo,&(dlImage->dynAttr));
 	    } else if (!strcmp(token,"type")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -299,6 +489,7 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 		else if (!strcmp(token,"gif"))
 		  dlImage->imageType = GIF_IMAGE;
 		else if (!strcmp(token,"tiff"))
+		/* KE: There is no TIFF capability */
 		  dlImage->imageType = TIFF_IMAGE;
 	    } else if (!strcmp(token,"image name")) {
 		getToken(displayInfo,token);
@@ -315,8 +506,8 @@ DlElement *parseImage(DisplayInfo *displayInfo)
         }
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-
-  /* just to be safe, initialize privateData member separately */
+    
+  /* Just to be safe, initialize the privateData member separately */
     dlImage->privateData = NULL;
 
     return dlElement;
@@ -330,19 +521,22 @@ void writeDlImage(
     int i;
     char indent[16];
     DlImage *dlImage = dlElement->structure.image;
-
+    
     for (i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
-
+    
     fprintf(stream,"\n%simage {",indent);
     writeDlObject(stream,&(dlImage->object),level+1);
+    writeDlBasicAttribute(stream,&(dlImage->attr),level+1);
+    writeDlDynamicAttribute(stream,&(dlImage->dynAttr),level+1);
     fprintf(stream,"\n%s\ttype=\"%s\"",indent,
       stringValueTable[dlImage->imageType]);
     fprintf(stream,"\n%s\t\"image name\"=\"%s\"",indent,dlImage->imageName);
     fprintf(stream,"\n%s}",indent);
 }
 
-static void imageGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlImage *dlImage = p->structure.image;
     medmGetValues(pRCB,
       X_RC,          &(dlImage->object.x),
@@ -352,10 +546,4 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p) {
       IMAGETYPE_RC,  &(dlImage->imageType),
       IMAGENAME_RC,  &(dlImage->imageName),
       -1);
-}
-
-static void destroyDlImage(DlElement *dlElement) {
-    freeGIF(dlElement->structure.image);
-    free((char*)dlElement->structure.composite);
-    destroyDlElement(dlElement);
 }

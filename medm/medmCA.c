@@ -856,7 +856,10 @@ int caAdd(char *name, Record *pr) {
 
 void caDelete(Record *pr) {
     int status;
-    Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
+    Channel *pCh;
+
+    if(!pr) return;
+    pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
     if(ca_state(pCh->chid) == cs_conn)
       caTask.channelConnected--;
@@ -929,9 +932,11 @@ Record *medmAllocateRecord(char *name,
 }
 
 void medmDestroyRecord(Record *pr) {
-    caDelete(pr);
-    *pr = nullRecord;
-    free((char *)pr);
+    if(pr) {
+	caDelete(pr);
+	*pr = nullRecord;
+	free((char *)pr);
+    }
 }
 
 void medmSendDouble(Record *pr, double data) {

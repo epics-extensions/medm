@@ -61,28 +61,46 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #ifndef __XGIF_H__
 #define __XGIF_H__
 
+#define CURFRAME(gif) \
+  (((gif)->curFrame >= 0 && (gif)->curFrame < (gif)->nFrames) ? \
+  (gif)->curFrame : 0)
+#define CURIMAGE(gif) \
+  (gif->frames[CURFRAME(gif)]->theImage)
+#define CUREXPIMAGE(gif) \
+  (gif->frames[CURFRAME(gif)]->expImage)
+
 typedef unsigned char Byte;
 
 typedef struct {
-
     XImage        *theImage;
     XImage        *expImage;
+    Byte          TransparentColorFlag;
+    int           DelayTime;
+    Byte          TransparentIndex;
+} FrameData;
 
-    int           dispcells;
+typedef struct {
+    int           displayCells;
     Colormap      theCmap;
     GC            theGC;
     Pixel         fcol,bcol;
     Font          mfont;
     XFontStruct   *mfinfo;
     Visual        *theVisual;
-
-    int           iWIDE,iHIGH,eWIDE,eHIGH,numcols,strip,nostrip;
+    int           iWIDE;
+    int           iHIGH;
+    int           eWIDE;
+    int           eHIGH;
+    int           numcols;
+    int           strip;
+    int           nostrip;
     unsigned long cols[256];
     XColor        defs[256];
-
     unsigned int  currentWidth;
     unsigned int  currentHeight;
-
+    int           nFrames;
+    int           curFrame;
+    FrameData     **frames;
 } GIFData;
 
 #endif  /* __XGIF_H__ */

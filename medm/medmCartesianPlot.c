@@ -1438,7 +1438,6 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal cpDataSet specified\n");
 	}
     }
-    CpUpdateWidget(widget, CP_FAST);
     updateTaskMarkUpdate(pcp->updateTask);
 }
 
@@ -1540,6 +1539,9 @@ void cartesianPlotDraw(XtPointer cd) {
 	}
 	drawWhiteRectangle(pcp->updateTask);
     }
+  /* KE: Used to use CP_FAST here.  SciPlot autoscales to larger, but
+     not to smaller then. */
+    CpUpdateWidget(widget, CP_FULL);
 }
 
 static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)

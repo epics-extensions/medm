@@ -64,10 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define STRIP_MARGIN 0.18
 
-/* Function prototypes */
-
-extern void linear_scale(double xmin, double xmax, int n,
-  double *xminp, double *xmaxp, double *dist);
+/* Structures */
 
 typedef struct _StripChart {
     DlElement     *dlElement;              /* strip chart data */
@@ -99,7 +96,6 @@ typedef struct _StripChart {
     double          minVal[MAX_PENS];
     int             nextSlot;
     XtIntervalId    timerid;
-
 } StripChart;
 
 typedef struct {
@@ -132,7 +128,11 @@ typedef struct {
     int shadowThickness;
 } StripChartConfigData;
 
-char *stripChartWidgetName = "stripChart";
+/* Function prototypes */
+
+extern void linear_scale(double xmin, double xmax, int n,
+  double *xminp, double *xmaxp, double *dist);
+
 static void stripChartDraw(XtPointer cd);
 static void stripChartUpdateTaskCb(XtPointer cd);
 static void stripChartUpdateValueCb(XtPointer cd);
@@ -149,11 +149,6 @@ static void stripChartSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void stripChartSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void stripChartGetValues(ResourceBundle *pRCB, DlElement *p);
 
-static char* titleStr = "Strip Chart";
-static Range range[MAX_PENS];
-static Range nullRange = {0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0};
-static StripChartConfigData sccd;
-
 static DlDispatchTable stripChartDlDispatchTable = {
     createDlStripChart,
     NULL,
@@ -169,6 +164,14 @@ static DlDispatchTable stripChartDlDispatchTable = {
     genericOrient,
     NULL,
     NULL};
+
+/* Global variables */
+
+char *stripChartWidgetName = "stripChart";
+static char* titleStr = "Strip Chart";
+static Range range[MAX_PENS];
+static Range nullRange = {0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0};
+static StripChartConfigData sccd;
 
 static int calcLabelFontSize(StripChart *psc) {
     int width;
@@ -449,7 +452,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf(1,"\nexecuteDlStripChart: Unknown time unit\n");
+	medmPrintf(1,"\nstripChartAlloc: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
@@ -458,7 +461,7 @@ static StripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	stripChartUpdateTaskCb,
 	(XtPointer)psc);
     if (psc->updateTask == NULL) {
-	medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
+	medmPrintf(1,"\nstripChartAlloc: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(psc->updateTask,freeStripChart);
 	updateTaskAddNameCb(psc->updateTask,stripChartGetRecord);
@@ -475,11 +478,11 @@ static void freeStripChart(XtPointer cd) {
       psc->timerid);
 #endif
 
+    if(psc == NULL) return;
     if(psc->timerid) {
 	XtRemoveTimeOut(psc->timerid);
 	psc->timerid=0;
     }
-    if (psc == NULL) return;
     for (i = 0; i < psc->nChannels; i++) {
 	medmDestroyRecord(psc->record[i]);
     }
@@ -819,7 +822,7 @@ static void stripChartConfig(StripChart *psc) {
 	  dlStripChart->period * 60 / (double) psc->dataWidth;
 	break;
     default:
-	medmPrintf(1,"\nexecuteDlStripChart: Unknown time unit\n");
+	medmPrintf(1,"\nstripChartAlloc: Unknown time unit\n");
 	psc->timeInterval = 60/ (double) psc->dataWidth;
 	break;
     }
