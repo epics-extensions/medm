@@ -2398,7 +2398,7 @@ Widget buildMenu(Widget parent,
     int i;
     XmString str;
     if (menuType == XmMENU_PULLDOWN) {
-	menu = XmCreatePulldownMenu(parent, "_pulldown",NULL,0);
+	menu = XmCreatePulldownMenu(parent, "pulldownMenu",NULL,0);
 	str = XmStringCreateSimple(menuTitle);
 	cascade = XtVaCreateManagedWidget(menuTitle,
 	  xmCascadeButtonGadgetClass, parent,
@@ -2408,7 +2408,7 @@ Widget buildMenu(Widget parent,
 	  NULL);
 	XmStringFree(str);
     } else {
-	menu = XmCreatePopupMenu(parent, "_popup", NULL, 0);
+	menu = XmCreatePopupMenu(parent, "popupMenu", NULL, 0);
     }
 
   /* now add the menu items */

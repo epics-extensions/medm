@@ -801,7 +801,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		  filename,NULL,(Boolean)True);
 		fclose(filePtr);
 	    } else {
-		dmDisplayListParse(NULL,filePtr,processedArgs,filename,NULL,(Boolean)True);
+		dmDisplayListParse(NULL,filePtr,processedArgs,
+		  filename,NULL,(Boolean)True);
 		fclose(filePtr);
 	    }
 	}

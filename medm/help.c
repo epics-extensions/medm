@@ -259,7 +259,7 @@ void errMsgDlgCreateDlg() {
 
     if (mainShell == NULL) return;
 
-    errMsgDlg = XtVaCreatePopupShell("ErrorMessage",
+    errMsgDlg = XtVaCreatePopupShell("errorMsgS",
 #if 0
     /* KE: Gets iconized this way */
       xmDialogShellWidgetClass, mainShell,
@@ -459,7 +459,7 @@ void errMsgSendDlgCreateDlg() {
 
     if (errMsgDlg == NULL) return;
     if (errMsgSendDlg == NULL) {
-	errMsgSendDlg = XtVaCreatePopupShell("ErrorMessage",
+	errMsgSendDlg = XtVaCreatePopupShell("errorMsgSendS",
 	  xmDialogShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Mail Message Window",
 	  XmNdeleteResponse, XmDO_NOTHING,

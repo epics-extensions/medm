@@ -513,7 +513,15 @@ void dmDisplayListParse(
 	currentDisplayInfo->newDisplay = False;
     }
   
-    fromRelatedDisplayExecution = displayInfo->fromRelatedDisplayExecution;
+  if (fromRelatedDisplayExecution)
+	displayInfo->fromRelatedDisplayExecution = True;
+  else
+	displayInfo->fromRelatedDisplayExecution = False;
+
+#if 0
+/* KE: Doesn't make sense.  This just sets an argument which is not a pointer */
+  fromRelatedDisplayExecution = displayInfo->fromRelatedDisplayExecution;
+#endif  
 
   /*
    * generate the name-value table for macro substitutions (related display)

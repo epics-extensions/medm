@@ -3864,7 +3864,7 @@ void createPvInfoDlg(void)
 
     if (mainShell == NULL) return;
 
-    pvInfoS = XtVaCreatePopupShell("PvInfo",
+    pvInfoS = XtVaCreatePopupShell("pvInfoS",
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "PV Info",
       XmNdeleteResponse, XmDO_NOTHING,
