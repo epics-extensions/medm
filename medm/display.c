@@ -1372,10 +1372,12 @@ int repositionDisplay(DisplayInfo *displayInfo)
     return 0;
 }
 
+/* Get the window manager borders by comparing the client window to
+   its parent for the MEDM Main Window */
 static void getBorders(int *left, int *right, int *top, int *bottom)
 {
-    XWindowAttributes attr;
-    Window window,root,parent,*children;
+    XWindowAttributes attr,wmattr;
+    Window window,root,wmwindow,parent,*children;
     unsigned int nChildren;
     int width, height;
     Status status;
@@ -1410,31 +1412,43 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
   /* Initialize */
     *left = *right = *top = *bottom = 0;
 
-  /* Get the parent window of the mainShell window */
+  /* Determine the client window.  Different Motif implementations
+     have a different hierarchy of windows between the window of the
+     mainShell and the root.  [For UNIX the client window appears to
+     be the parent of the mainShell window and for WIN32, it appears
+     to be the mainShell window itself.]  Assume the client window is
+     the window which is a child of the window whose parent is the
+     root.  Then compare the geometry of this window and its parent,
+     presumed to be the window manager window for the mainShell.  */
+    root=RootWindow(display,screenNum);
     window=XtWindow(mainShell);
-    status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
-    if(!status) return;
-
-  /* Get the left, top, width, and height from the position of the
-     parent to its parent */
-    window=parent;
     status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
     if(!status) return;
     status = XGetWindowAttributes(display,window,&attr);
     if(!status) return;
+  /* Be sure the parent is not the root.  (It should not be.) */
+    if(parent == root) return;
+    while(True) {
+	wmwindow=parent;
+	status = XQueryTree(display,wmwindow,&root,&parent,&children,&nChildren);
+	if(!status) return;
+	XGetWindowAttributes(display,wmwindow,&wmattr);
+	if(!status) return;
+	if(parent == root) break;
+	window=wmwindow;
+	attr=wmattr;
+    }
+
+  /* Get the left and top from the position of the window to the
+     wmwindow */
     *left = left0 = attr.x;
     *top = top0 = attr.y;
     width = attr.width;
     height = attr.height;
 
-  /* Get the total width and height from the parent of the parent */
-    window=parent;
-    status = XQueryTree(display,window,&root,&parent,&children,&nChildren);
-    if(!status) return;
-    status = XGetWindowAttributes(display,window,&attr);
-    if(!status) return;
-    *right = attr.width - width - *left;
-    *bottom = attr.height - height - *top;
+  /* Get the right and bottom using the width and height differences */
+    *right = wmattr.width - width - *left;
+    *bottom = wmattr.height - height - *top;
 
   /* Save these values for successive calls */
     left0 = *left;
