@@ -85,7 +85,8 @@ typedef struct _CATask {
 
 CATask caTask;
 
-void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) {
+void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount)
+{
     *channelCount = caTask.channelCount;
     *channelConnected = caTask.channelConnected;
     *caEventCount = caTask.caEventCount;
@@ -93,20 +94,36 @@ void CATaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount) 
     return;
 }
 
-static void medmCAExceptionHandlerCb(struct exception_handler_args args) {
-    if (args.chid == NULL) {
-	medmPostMsg(1,"medmCAExceptionHandlerCb:\n"
-	  "channel name: Unknown\nmessage: %s\n",
-	  ca_message(args.stat));
-    } else {
-	medmPostMsg(1,"medmCAExceptionHandlerCb:\n"
-	  "channel name: %s\nmessage: %s\n",
-          ca_name(args.chid),ca_message(args.stat));
-    }
-    return;
+static void medmCAExceptionHandlerCb(struct exception_handler_args args)
+{
+    medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
+      "  Channel Name: %s\n"
+      "  Native Type: %s\n"
+      "  Native Count: %hu\n"
+      "  Access: %s%s\n"
+      "  IOC: %s\n"
+      "  Message: %s\n"
+      "  Context: %s\n"
+      "  Requested Type: %s\n"
+      "  Requested Count: %ld\n"
+      "  Source File: %s\n"
+      "  Line number: %u\n",
+      args.chid?ca_name(args.chid):"Unavailable",
+      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+      args.chid?ca_element_count(args.chid):0,
+      args.chid?(ca_read_access(args.chid)?"R":""):"Unavailable",
+      args.chid?(ca_write_access(args.chid)?"W":""):"",
+      args.chid?ca_host_name(args.chid):"Unavailable",
+      ca_message(args.stat)?ca_message(args.stat):"Unavailable",
+      args.ctx?args.ctx:"Unavailable",
+      dbf_type_to_text(args.type),
+      args.count,
+      args.pFile?args.pFile:"Unavailable",
+      args.pFile?args.lineNo:0);
 }
 
-int CATaskInit() {
+int CATaskInit()
+{
     caTask.freeListSize = CA_PAGE_SIZE;
     caTask.freeListCount = 0;
     caTask.freeList = (int *) malloc(sizeof(int) * CA_PAGE_SIZE);
