@@ -452,8 +452,13 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	      hData->data[i].xp, hData->data[i].yp, "");
 	}
       /* Update with lastPoint */
+#if 0
 	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint+1,
 	  hData->data[i].xp, hData->data[i].yp);
+#else
+	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint,
+	  hData->data[i].xp, hData->data[i].yp);
+#endif
     }
   /* Don't do SciPlotUpdate here for efficiency */
 }

@@ -2864,8 +2864,14 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 #endif
 	
       /* Set the a and y attributes in case they haven't been set */
-	p->object.x = x;
-	p->object.y = y;
+	if(p->object.x != x) {
+	    p->object.x = x;
+	    medmMarkDisplayBeingEdited(cdi);
+	}
+	if(p->object.y != y) {
+	    p->object.y = y;
+	    medmMarkDisplayBeingEdited(cdi);
+	}
 
 	updateGlobalResourceBundleObjectAttribute(
 	  &(elementPtr->structure.display->object));

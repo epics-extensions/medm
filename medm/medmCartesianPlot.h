@@ -47,8 +47,10 @@ typedef struct {
 
 typedef enum {
     CP_XYScalar,
-    CP_XScalar,         CP_YScalar,
-    CP_XVector,         CP_YVector,
+    CP_XScalar,
+    CP_YScalar,
+    CP_XVector,
+    CP_YVector,
     CP_XVectorYScalar,
     CP_YVectorXScalar,
     CP_XYVector

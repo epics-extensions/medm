@@ -15,7 +15,8 @@
  *****************************************************************************
 */
 
-#define DEBUG_COUNT 0
+#define DEBUG_COUNT 1
+#define DEBUG_RESET 1
 #define DEBUG_LOSING_FOCUS 0
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
@@ -85,6 +86,7 @@ static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
+static void cartesianPlotResetPlot(MedmCartesianPlot *pcp);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 
@@ -360,17 +362,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pr = (Record *)cd;
     XYTrace *pt = (XYTrace *)pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
-    DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
-    DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
-    Widget widget = pcp->dlElement->widget;
-    XColor xColors[MAX_TRACES];
-    CpDataHandle hcp, hcp1, hcp2;
-    float minX, maxX, minY, maxY, minY2, maxY2;
-    XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
-    char string[24];
-    int iPrec, kk, pointSize;
-    int maxElements = 0;
-    int i, j, n;
+    int i;
 
 #if DEBUG_HISTOGRAM
     print("\ncartesianPlotUpdateGraphicalInfoCb: name=%s lopr=%g hopr=%g \n",
@@ -407,276 +399,8 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	}
     }
 
-  /* Get the colors for all the possible traces */
-    for(i = 0; i < pcp->nTraces; i++)
-      xColors[i].pixel =
-	displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
-    XQueryColors(XtDisplay(widget),cmap,xColors,pcp->nTraces);
-
-  /* Set the maximum count (for allocating data structures) to be the
-   * largest of any of the Channel Access counts and the specified
-   * count (from the DlCartesianPlot or the countCh if it exists) */
-    maxElements = dlCartesianPlot->count;
-#if USECOUNTPV
-    if(pcp->countCh.recordX != 0) {
-	int chCount = (int)(pcp->countCh.recordX->value +.5);
-	if(chCount > 0) maxElements = chCount;
-	else maxElements = 0;
-    }
-#endif
-    for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-	if(t->recordX)
-	  maxElements = MAX(maxElements,(int)t->recordX->elementCount);
-	if(t->recordY)
-	  maxElements = MAX(maxElements,(int)t->recordY->elementCount);
-    }
-
-  /* Allocate the CP data structures with size maxElements */
-    hcp1 = hcp2 = NULL;
-    hcp1 = CpDataCreate(widget,CP_GENERAL,1,maxElements);
-    pcp->nPoints=maxElements;
-    if(pcp->nTraces > 1) {
-	hcp2 = CpDataCreate(widget,CP_GENERAL,pcp->nTraces-1,maxElements);
-    }
-
-  /* Loop over all the traces */
-    minX = minY = minY2 = FLT_MAX;
-    maxX = maxY = maxY2 = (float)(-0.99*FLT_MAX);
-    for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-
-      /* Set as uninitialized (Used for incrementing last point to
-         distinguish between no points and one point) */
-	 t->init = 0;
-
-      /* Determine data type (based on type (scalar or vector) of data) */
-	if(t->recordX && t->recordY) {
-	    if( t->recordX->elementCount > 1 && t->recordY->elementCount > 1 ) {
-		t->type = CP_XYVector;
-	    } else if( t->recordX->elementCount > 1 &&
-	      t->recordY->elementCount <= 1 ) {
-		t->type = CP_XVectorYScalar;
-	    } else if( t->recordY->elementCount > 1 &&
-	      t->recordX->elementCount <= 1 ) {
-		t->type = CP_YVectorXScalar;
-	    } else if( t->recordX->elementCount <= 1 &&
-	      t->recordY->elementCount <= 1 ) {
-		t->type = CP_XYScalar;
-	    }
-	  /* Put initial data in */
-	    if(i <= 0) {
-		CpDataSetLastPoint(hcp1,i,0);
-		minY = (float)MIN(minY,t->recordY->lopr);
-		maxY = (float)MAX(maxY,t->recordY->hopr);
-	    } else {
-		CpDataSetLastPoint(hcp2,i-1,0);
-		minY2 = (float)MIN(minY2,t->recordY->lopr);
-		maxY2 = (float)MAX(maxY2,t->recordY->hopr);
-	    }
-	    minX = (float)MIN(minX,t->recordX->lopr);
-	    maxX = (float)MAX(maxX,t->recordX->hopr);
-	} else if(t->recordX) {
-	  /* X channel - supporting scalar or waveform */
-	    if(t->recordX->elementCount > 1) {
-	      /* Vector/waveform */
-		t->type = CP_XVector;
-		if(i <= 0) {
-		    for(j = 0; j < (int)t->recordX->elementCount; j++)
-		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    minY = (float)MIN(minY,0.);
-		    maxY = (float)MAX(maxY,
-		      (float)((int)t->recordX->elementCount-1));
-		} else {
-		    for(j = 0; j < (int)t->recordX->elementCount; j++)
-		     CpDataSetYElement(hcp2,i-1,j,(float)j);
-		    minY2 = (float)MIN(minY2,0.);
-		    maxY2 = (float)MAX(maxY2,(float)t->recordX->elementCount-1);
-		}
-		minX = (float)MIN(minX,t->recordX->lopr);
-		maxX = (float)MAX(maxX,t->recordX->hopr);
-	    } else {
-	      /* Scalar */
-		t->type = CP_XScalar;
-		if(i <= 0) {
-		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    CpDataSetXElement(hcp1,i,0,(float)t->recordX->value);
-		    minY = (float)MIN(minY,0.);
-		    maxY = (float)MAX(maxY,(float)dlCartesianPlot->count);
-		} else {
-		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      CpDataSetYElement(hcp2,i-1,j,(float)j);
-		    CpDataSetXElement(hcp2,i-1,0,(float)t->recordX->value);
-		    minY2 = (float)MIN(minY2,0.);
-		    maxY2 = (float)MAX(maxY2,(float)dlCartesianPlot->count);
-		}
-		minX = (float)MIN(minX,t->recordX->lopr);
-		maxX = (float)MAX(maxX,t->recordX->hopr);
-	    }
-	} else if(t->recordY) {
-	  /* Y channel - supporting scalar or waveform */
-	    if(t->recordY->elementCount > 1) {
-	      /* Vector/waveform */
-		t->type = CP_YVector;
-		if(i <= 0) {
-		    for(j = 0; j < t->recordY->elementCount; j++)
-		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    minY = (float)MIN(minY,t->recordY->lopr);
-		    maxY = (float)MAX(maxY,t->recordY->hopr);
-		} else {
-		    for(j = 0; j < t->recordY->elementCount; j++)
-		      CpDataSetXElement(hcp2,i-1,j,(float)j);
-		    minY2 = (float)MIN(minY2,t->recordY->lopr);
-		    maxY2 = (float)MAX(maxY2,t->recordY->hopr);
-		}
-		minX = (float)MIN(minX,0.);
-		maxX = (float)MAX(maxX,(float)(t->recordY->elementCount-1));
-	    } else {
-	      /* Scalar */
-		t->type = CP_YScalar;
-		if(i <= 0) {
-		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      CpDataSetXElement(hcp1,0,j,(float)j);
-		    CpDataSetYElement(hcp1,0,0,(float)t->recordY->value);
-		    CpDataSetLastPoint(hcp1,0,0);
-		    minY = (float)MIN(minY,t->recordY->lopr);
-		    maxY = (float)MAX(maxY,t->recordY->hopr);
-		} else {
-		    for(j = 0; j < dlCartesianPlot->count; j++)
-		      CpDataSetXElement(hcp2,0,j,(float)j);
-		    CpDataSetYElement(hcp2,0,0,(float)t->recordY->value);
-		    CpDataSetLastPoint(hcp2,0,0);
-		    minY2 = (float)MIN(minY2,t->recordY->lopr);
-		    maxY2 = (float)MAX(maxY2,t->recordY->hopr);
-		}
-		minX = (float)MIN(minX,0.);
-		maxX = (float)MAX(maxX,(float)dlCartesianPlot->count);
-	    }
-	}
-    }     /* End for loop over traces */
-    
-  /* Record the trace number and set the data pointers in the XYTrace */
-    for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-
-	if( i <= 0) {
-	    t->hcp = hcp1;
-	    t->trace = i;
-	} else {
-	    t->hcp = hcp2;
-	    t->trace = i-1;
-	}
-    }
-
-  /* Set the data pointers in the MedmCartesianPlot */
-    pcp->hcp1 = hcp1;
-    pcp->hcp2 = hcp2;
-
-  /* Loop over traces and set CpDataStyle array */
-    pointSize = MAX(2, dlCartesianPlot->object.height/70);
-    for(i = 0; i < pcp->nTraces; i++) {
-	hcp=i?hcp2:hcp1;
-	switch(dlCartesianPlot->style) {
-	case POINT_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
-	      xColors[i], pointSize);
-	    break;
-	case LINE_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
-	      xColors[i], pointSize);
-	    break;
-	case FILL_UNDER_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
-	      xColors[i], pointSize);
-	    break;
-	}
-    }
-
-  /* Fill in connect-time channel-based range specifications
-   *   This is different than the min/max stored in the display element */
-    pcp->axisRange[X_AXIS_ELEMENT].axisMin = minX;
-    pcp->axisRange[X_AXIS_ELEMENT].axisMax = maxX;
-    pcp->axisRange[Y1_AXIS_ELEMENT].axisMin = minY;
-    pcp->axisRange[Y1_AXIS_ELEMENT].axisMax = maxY;
-    pcp->axisRange[Y2_AXIS_ELEMENT].axisMin = minY2;
-    pcp->axisRange[Y2_AXIS_ELEMENT].axisMax = maxY2;
-    for(kk = X_AXIS_ELEMENT; kk <= Y2_AXIS_ELEMENT; kk++) {
-	if(dlCartesianPlot->axis[kk].rangeStyle == CHANNEL_RANGE) {
-	    pcp->axisRange[kk].isCurrentlyFromChannel= True;
-	} else {
-	    pcp->axisRange[kk].isCurrentlyFromChannel = False;
-	}
-    }
-    minXF.fval = minX;
-    maxXF.fval = maxX;
-    minYF.fval = minY;
-    maxYF.fval = maxY;
-    minY2F.fval = minY2;
-    maxY2F.fval = maxY2;
-    n = 0;
-    if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
-      == CHANNEL_RANGE) {
-	CpSetAxisMaxMin(widget, CP_X, maxXF, minXF);
-    } else if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
-      == USER_SPECIFIED_RANGE) {
-	int k;
-
-	minXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
-	maxXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
-	tickF.fval = (float)((maxXF.fval - minXF.fval)/4.0);
-	sprintf(string,"%f",tickF.fval);
-	k = strlen(string)-1;
-	while(string[k] == '0') k--; /* strip off trailing zeroes */
-	iPrec = k;
-	while(string[k] != '.' && k >= 0) k--;
-	iPrec = iPrec - k;
-	CpSetAxisAll(widget, CP_X, maxXF, minXF, tickF,
-	  tickF, iPrec);
-    }
-
-  /* Set axis parameters for Y1 */
-     if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
-       == CHANNEL_RANGE) {
-	 CpSetAxisMaxMin(widget, CP_Y, maxYF, minYF);
-     } else if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
-       == USER_SPECIFIED_RANGE) {
-	 int k;
-
-	 minYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
-	 maxYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
-	 tickF.fval = (float)((maxYF.fval - minYF.fval)/4.0);
-	 sprintf(string,"%f",tickF.fval);
-	 k = strlen(string)-1;
-	 while(string[k] == '0') k--; /* strip off trailing zeroes */
-	 iPrec = k;
-	 while(string[k] != '.' && k >= 0) k--;
-	 iPrec = iPrec - k;
-	 CpSetAxisAll(widget, CP_Y, maxYF, minYF, tickF,
-	   tickF, iPrec);
-     }
-
-  /* Set axis parameters for Y2 */
-    if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
-      == CHANNEL_RANGE) {
-	CpSetAxisMaxMin(widget, CP_Y2, maxY2F, minY2F);
-
-    } else if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
-      == USER_SPECIFIED_RANGE) {
-	int k;
-
-	minY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].minRange;
-	maxY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange;
-	tickF.fval = (float)((maxY2F.fval - minY2F.fval)/4.0);
-	sprintf(string,"%f",tickF.fval);
-	k = strlen(string)-1;
-	while(string[k] == '0') k--; /* strip off trailing zeroes */
-	iPrec = k;
-	while(string[k] != '.' && k >= 0) k--;
-	iPrec = iPrec - k;
-	CpSetAxisAll(widget, CP_Y2, maxY2F, minY2F, tickF,
-	  tickF, iPrec);
-    }
+  /* Set up the plot */
+    cartesianPlotResetPlot(pcp);
     
 #if 0
   /* Add destroy callback */
@@ -711,6 +435,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
+	if(count <= 0) break;
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
 #if DEBUG_COUNT
 	print("CP_XYScalar: CP: %d PV: %d Used: %d\n"
@@ -720,7 +445,16 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	  count,
 	  pt->init,nextPoint);
 #endif
-	if(pt->init) nextPoint++;
+      /* Decide what to do with the next point depending on init
+         -2: Skip and set init back to 0
+         -1: Skip and set init back to 1
+	  0: Should be zero, use it and set init to 1
+	  1: Increment it */
+	if(pt->init < 0) {
+	    pt->init+=2;
+	    break;
+	}
+	if(pt->init == 1) nextPoint++;
 	else pt->init = 1;
 #if DEBUG_COUNT
 	print(" After: init: %d nextPoint: %d\n",
@@ -777,8 +511,18 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
+	if(count <= 0) break;
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
-	if(pt->init) nextPoint++;
+      /* Decide what to do with the next point depending on init
+         -2: Skip and set init back to 0
+         -1: Skip and set init back to 1
+	  0: Should be zero, use it and set init to 1
+	  1: Increment it */
+	if(pt->init < 0) {
+	    pt->init+=2;
+	    break;
+	}
+	if(pt->init == 1) nextPoint++;
 	else pt->init = 1;
 	if(nextPoint < count) {
 	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
@@ -894,8 +638,18 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
+	if(count <= 0) break;
 	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
-	if(pt->init) nextPoint++;
+      /* Decide what to do with the next point depending on init
+         -2: Skip and set init back to 0
+         -1: Skip and set init back to 1
+	  0: Should be zero, use it and set init to 1
+	  1: Increment it */
+	if(pt->init < 0) {
+	    pt->init+=2;
+	    break;
+	}
+	if(pt->init == 1) nextPoint++;
 	else pt->init = 1;
 #if DEBUG_CARTESIAN_PLOT_UPDATE  && defined(XRTGRAPH)
 	printf("  nextPoint=%d count=%d\n  XRT_HUGE_VAL=%f\n",
@@ -1601,8 +1355,11 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	}
     }
 
-  /* If this is the count channel, update the plot */
+  /* If this is the count channel, resize and update the plot */
     if(pcp->countCh.recordX && pr == pcp->countCh.recordX) {
+      /* Resize */
+	cartesianPlotResetPlot(pcp);
+      /* Update */
 	for(i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
 	    if((t->recordX == NULL) && (t->recordY == NULL)) continue;
@@ -1643,6 +1400,432 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
     dumpCartesianPlotData("Normal Channel",pcp);
 #endif	
     updateTaskMarkUpdate(pcp->updateTask);
+}
+
+/* Set the plot initiallly and reset the plot when the number of
+ * points changes */
+static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
+{
+    XColor xColors[MAX_TRACES];
+    CpDataHandle hcp, hcpold, hcp1=NULL, hcp2=NULL, hcpold1=NULL, hcpold2=NULL;
+    DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
+    DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
+    Widget widget = pcp->dlElement->widget;
+    float minX, maxX, minY, maxY, minY2, maxY2;
+    XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
+    char string[24];
+    int firstTime=1, count=0, nPoints=0, nPointsOld=0;
+    int iPrec, kk, pointSize;
+    int i, j, n;
+
+#if DEBUG_RESET
+    print("cartesianPlotResetPlot: \n");
+#endif
+
+    if(!pcp) {
+	medmPostMsg(1,"cartesianPlotResetPlot: Invalid plot");
+	return;
+    }
+
+  /* Check if this is the first time or not */
+    if(pcp->hcp1) firstTime=0;
+
+  /* Calculate the number of points (for allocating data structures)
+   * to be the largest of any of the Channel Access counts and the
+   * specified count (from the DlCartesianPlot or the countCh if it
+   * exists) */
+    count = dlCartesianPlot->count;
+#if USECOUNTPV
+    if(pcp->countCh.recordX != 0) {
+	int chCount = (int)(pcp->countCh.recordX->value +.5);
+	if(chCount > 0) count = chCount;
+	else count = 0;
+    }
+#endif
+    nPoints=count;
+    for(i = 0; i < pcp->nTraces; i++) {
+	XYTrace *pt = &(pcp->xyTrace[i]);
+	if(pt->recordX)
+	  nPoints = MAX(nPoints,(int)pt->recordX->elementCount);
+	if(pt->recordY)
+	  nPoints = MAX(nPoints,(int)pt->recordY->elementCount);
+    }
+
+    if(!firstTime) {
+      /* Check if nPoints has changed */
+	if(nPoints == nPointsOld) {
+	  /* Nothing needs to be done */
+	    return;
+	} else {
+	  /* Retain pointers to old values */
+	    nPointsOld=pcp->nPoints;
+	    hcpold1=pcp->hcp1;
+	    hcpold2=pcp->hcp2;
+	}
+    }
+
+  /* Allocate the CP data structures with size nPoints */
+    pcp->nPoints=nPoints;
+    hcp1 = hcp2 = NULL;
+    hcp1 = CpDataCreate(widget,CP_GENERAL,1,nPoints);
+    if(pcp->nTraces > 1) {
+	hcp2 = CpDataCreate(widget,CP_GENERAL,pcp->nTraces-1,nPoints);
+    }
+    
+  /* Set the data pointers in the MedmCartesianPlot */
+    pcp->hcp1 = hcp1;
+    pcp->hcp2 = hcp2;
+
+#if DEBUG_RESET
+    print("  firstTime=%d hcp1=%p hcp2=%p hcpold1=%p hcpold2=%p\n",
+      firstTime,hcp1,hcp2,hcpold1,hcpold2);
+    print("  nPoints=%d nPointsOld=%d count=%d\n",
+      nPoints,nPointsOld,count);
+#endif
+
+    if(firstTime) goto FIRSTTIME;
+    
+  /* Data have previously been allocated.  Loop over all the traces
+   * and copy the old data */
+    for(i = 0; i < pcp->nTraces; i++) {
+	XYTrace *pt = &(pcp->xyTrace[i]);
+	int lastPoint;
+
+      /* Decide which handle to use */
+#if DEBUG_RESET
+	print("  Before: Trace %d pt->hcp=%p pt->type=%d\n",
+	  i,pt->hcp,pt->type);
+#endif
+	if(pt->hcp == hcpold1) {
+	   hcp=pt->hcp=hcp1;
+	   hcpold=hcpold1;
+	} else if(pt->hcp == hcpold2) {
+	   hcp=pt->hcp=hcp2;
+	   hcpold=hcpold2;
+	} else {
+	    medmPrintf(1,"\ncartesianPlotResetPlot: "
+	      "Invalid handle for trace %d\n",pt->trace);
+	}
+	if(!hcp || !hcpold) {
+	    if(!hcp) {
+		medmPrintf(1,"\ncartesianPlotResetPlot: "
+		  "Null new handle for trace %d\n",pt->trace);
+	    }
+	    if(!hcpold) {
+		medmPrintf(1,"\ncartesianPlotResetPlot: "
+		  "Null old handle for trace %d\n",pt->trace);
+	    }
+	    continue;
+	}
+
+      /* Fix init (Used for incrementing last point to
+       * distinguish between no points and one point).
+       * -1: Redo
+       *  0: No points
+          1: One or more points */
+	if(pt->type == CP_XYScalar || pt->type == CP_XScalar ||
+	  pt->type == CP_YScalar) {
+	  /* Set it so the the next update reuses the last point,
+	   * since it will be owing to the reset, not a change in the
+	   * value */
+	    if(pt->init >= 0) pt->init-=2;
+	}
+	
+      /* Fix last point */
+	lastPoint = CpDataGetLastPoint(hcpold,pt->trace);
+#if DEBUG_RESET
+	print("  After:  Trace %d lastPoint=%d\n",
+	  i,lastPoint);
+#endif
+	if(lastPoint <= 0) {
+	    CpDataSetLastPoint(hcp,pt->trace,0);
+	} else if(lastPoint < nPoints) {
+	    CpDataSetLastPoint(hcp,pt->trace,lastPoint);
+	} else {
+	    CpDataSetLastPoint(hcp,pt->trace,
+	      (nPoints <= 0)?0:nPoints-1);
+	}
+
+      /* Copy the data */
+	for(j = 0; j < nPoints; j++) {
+	    if(j < nPointsOld) {
+		CpDataSetXElement(hcp,pt->trace,j,
+		  CpDataGetXElement(hcpold,pt->trace,j));
+		CpDataSetYElement(hcp,pt->trace,j,
+		  CpDataGetYElement(hcpold,pt->trace,j));
+	    } else {
+		CpDataSetXElement(hcp,pt->trace,j,0.0);
+		CpDataSetYElement(hcp,pt->trace,j,0.0);
+	    }
+	}
+	
+	/* Add additional index data if necessary */	
+	if(pt->type == CP_XVector || pt->type == CP_XScalar) {
+	    for(j = nPointsOld; j < nPoints; j++) {
+		CpDataSetYElement(hcp,pt->trace,j,(float)j);
+	    }
+	} else if(pt->type == CP_YVector || pt->type == CP_YScalar) {
+	    for(j = nPointsOld; j < nPoints; j++) {
+		CpDataSetXElement(hcp,pt->trace,j,(float)j);
+	    }
+	}
+    }     /* End loop over traces */
+
+  /* Free old values */
+    if(hcpold1) CpDataDestroy(hcpold1);
+    if(hcpold2) CpDataDestroy(hcpold2);
+
+    return;
+
+  FIRSTTIME:
+
+  /* This is the first time.  Loop over all the traces and initialize
+   * them */
+    minX = minY = minY2 = FLT_MAX;
+    maxX = maxY = maxY2 = (float)(-0.99*FLT_MAX);
+    for(i = 0; i < pcp->nTraces; i++) {
+	XYTrace *pt = &(pcp->xyTrace[i]);
+
+      /* Set as uninitialized (Used for incrementing last point to
+       * distinguish between no points and one point).
+       * -1: Redo
+       *  0: No points
+          1: One or more points */
+	pt->init = 0;
+
+      /* Set the last point to 0 */
+	if(i <= 0) {
+	    CpDataSetLastPoint(hcp1,i,0);
+	} else {
+	    CpDataSetLastPoint(hcp2,i-1,0);
+	}
+	
+      /* Determine data type (based on type (scalar or vector) of data) */
+	if(pt->recordX && pt->recordY) {
+	  /* X and Y channels */
+	    if( pt->recordX->elementCount > 1 && pt->recordY->elementCount > 1 ) {
+		pt->type = CP_XYVector;
+	    } else if( pt->recordX->elementCount > 1 &&
+	      pt->recordY->elementCount <= 1 ) {
+		pt->type = CP_XVectorYScalar;
+	    } else if( pt->recordY->elementCount > 1 &&
+	      pt->recordX->elementCount <= 1 ) {
+		pt->type = CP_YVectorXScalar;
+	    } else if( pt->recordX->elementCount <= 1 &&
+	      pt->recordY->elementCount <= 1 ) {
+		pt->type = CP_XYScalar;
+	    }
+
+	  //* Get bounds */
+	    if(i <= 0) {
+		minY = (float)MIN(minY,pt->recordY->lopr);
+		maxY = (float)MAX(maxY,pt->recordY->hopr);
+	    } else {
+		minY2 = (float)MIN(minY2,pt->recordY->lopr);
+		maxY2 = (float)MAX(maxY2,pt->recordY->hopr);
+	    }
+	    minX = (float)MIN(minX,pt->recordX->lopr);
+	    maxX = (float)MAX(maxX,pt->recordX->hopr);
+	} else if(pt->recordX) {
+	  /* X channel - supporting scalar or waveform */
+	    if(pt->recordX->elementCount > 1) {
+	      /* Vector/waveform */
+		pt->type = CP_XVector;
+		if(i <= 0) {
+		    for(j = 0; j < (int)pt->recordX->elementCount; j++)
+		      CpDataSetYElement(hcp1,i,j,(float)j);
+		    minY = (float)MIN(minY,0.);
+		    maxY = (float)MAX(maxY,
+		      (float)((int)pt->recordX->elementCount-1));
+		} else {
+		    for(j = 0; j < (int)pt->recordX->elementCount; j++)
+		     CpDataSetYElement(hcp2,i-1,j,(float)j);
+		    minY2 = (float)MIN(minY2,0.);
+		    maxY2 = (float)MAX(maxY2,(float)pt->recordX->elementCount-1);
+		}
+		minX = (float)MIN(minX,pt->recordX->lopr);
+		maxX = (float)MAX(maxX,pt->recordX->hopr);
+	    } else {
+	      /* Scalar */
+		pt->type = CP_XScalar;
+		if(i <= 0) {
+		    for(j = 0; j < count; j++)
+		      CpDataSetYElement(hcp1,i,j,(float)j);
+		    CpDataSetXElement(hcp1,i,0,(float)pt->recordX->value);
+		    minY = (float)MIN(minY,0.);
+		    maxY = (float)MAX(maxY,(float)count);
+		} else {
+		    for(j = 0; j < count; j++)
+		      CpDataSetYElement(hcp2,i-1,j,(float)j);
+		    CpDataSetXElement(hcp2,i-1,0,(float)pt->recordX->value);
+		    minY2 = (float)MIN(minY2,0.);
+		    maxY2 = (float)MAX(maxY2,(float)count);
+		}
+		minX = (float)MIN(minX,pt->recordX->lopr);
+		maxX = (float)MAX(maxX,pt->recordX->hopr);
+	    }
+	} else if(pt->recordY) {
+	  /* Y channel - supporting scalar or waveform */
+	    if(pt->recordY->elementCount > 1) {
+	      /* Vector/waveform */
+		pt->type = CP_YVector;
+		if(i <= 0) {
+		    for(j = 0; j < pt->recordY->elementCount; j++)
+		      CpDataSetXElement(hcp1,i,j,(float)j);
+		    minY = (float)MIN(minY,pt->recordY->lopr);
+		    maxY = (float)MAX(maxY,pt->recordY->hopr);
+		} else {
+		    for(j = 0; j < pt->recordY->elementCount; j++)
+		      CpDataSetXElement(hcp2,i-1,j,(float)j);
+		    minY2 = (float)MIN(minY2,pt->recordY->lopr);
+		    maxY2 = (float)MAX(maxY2,pt->recordY->hopr);
+		}
+		minX = (float)MIN(minX,0.);
+		maxX = (float)MAX(maxX,(float)(pt->recordY->elementCount-1));
+	    } else {
+	      /* Scalar */
+		pt->type = CP_YScalar;
+		if(i <= 0) {
+		    for(j = 0; j < count; j++)
+		      CpDataSetXElement(hcp1,0,j,(float)j);
+		    CpDataSetYElement(hcp1,0,0,(float)pt->recordY->value);
+		    minY = (float)MIN(minY,pt->recordY->lopr);
+		    maxY = (float)MAX(maxY,pt->recordY->hopr);
+		} else {
+		    for(j = 0; j < count; j++)
+		      CpDataSetXElement(hcp2,0,j,(float)j);
+		    CpDataSetYElement(hcp2,0,0,(float)pt->recordY->value);
+		    minY2 = (float)MIN(minY2,pt->recordY->lopr);
+		    maxY2 = (float)MAX(maxY2,pt->recordY->hopr);
+		}
+		minX = (float)MIN(minX,0.);
+		maxX = (float)MAX(maxX,(float)count);
+	    }
+	}
+    }     /* End for loop over traces */
+    
+  /* Record the trace number and set the data pointers in the XYTrace */
+    for(i = 0; i < pcp->nTraces; i++) {
+	XYTrace *pt = &(pcp->xyTrace[i]);
+
+	if( i <= 0) {
+	    pt->hcp = hcp1;
+	    pt->trace = i;
+	} else {
+	    pt->hcp = hcp2;
+	    pt->trace = i-1;
+	}
+    }
+
+  /* Get the colors for all the possible traces */
+    for(i = 0; i < pcp->nTraces; i++)
+      xColors[i].pixel =
+	displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
+    XQueryColors(XtDisplay(widget),cmap,xColors,pcp->nTraces);
+
+  /* Loop over traces and set CpDataStyle array */
+    pointSize = MAX(2, dlCartesianPlot->object.height/70);
+    for(i = 0; i < pcp->nTraces; i++) {
+	hcp=i?hcp2:hcp1;
+	switch(dlCartesianPlot->style) {
+	case POINT_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case LINE_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case FILL_UNDER_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
+	      xColors[i], pointSize);
+	    break;
+	}
+    }
+
+  /* Fill in connect-time channel-based range specifications
+   * This is different than the min/max stored in the display element */
+    pcp->axisRange[X_AXIS_ELEMENT].axisMin = minX;
+    pcp->axisRange[X_AXIS_ELEMENT].axisMax = maxX;
+    pcp->axisRange[Y1_AXIS_ELEMENT].axisMin = minY;
+    pcp->axisRange[Y1_AXIS_ELEMENT].axisMax = maxY;
+    pcp->axisRange[Y2_AXIS_ELEMENT].axisMin = minY2;
+    pcp->axisRange[Y2_AXIS_ELEMENT].axisMax = maxY2;
+    for(kk = X_AXIS_ELEMENT; kk <= Y2_AXIS_ELEMENT; kk++) {
+	if(dlCartesianPlot->axis[kk].rangeStyle == CHANNEL_RANGE) {
+	    pcp->axisRange[kk].isCurrentlyFromChannel= True;
+	} else {
+	    pcp->axisRange[kk].isCurrentlyFromChannel = False;
+	}
+    }
+    minXF.fval = minX;
+    maxXF.fval = maxX;
+    minYF.fval = minY;
+    maxYF.fval = maxY;
+    minY2F.fval = minY2;
+    maxY2F.fval = maxY2;
+    n = 0;
+    if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
+      == CHANNEL_RANGE) {
+	CpSetAxisMaxMin(widget, CP_X, maxXF, minXF);
+    } else if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
+      == USER_SPECIFIED_RANGE) {
+	int k;
+
+	minXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
+	maxXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
+	tickF.fval = (float)((maxXF.fval - minXF.fval)/4.0);
+	sprintf(string,"%f",tickF.fval);
+	k = strlen(string)-1;
+	while(string[k] == '0') k--; /* strip off trailing zeroes */
+	iPrec = k;
+	while(string[k] != '.' && k >= 0) k--;
+	iPrec = iPrec - k;
+	CpSetAxisAll(widget, CP_X, maxXF, minXF, tickF,
+	  tickF, iPrec);
+    }
+
+  /* Set axis parameters for Y1 */
+     if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
+       == CHANNEL_RANGE) {
+	 CpSetAxisMaxMin(widget, CP_Y, maxYF, minYF);
+     } else if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
+       == USER_SPECIFIED_RANGE) {
+	 int k;
+
+	 minYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
+	 maxYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
+	 tickF.fval = (float)((maxYF.fval - minYF.fval)/4.0);
+	 sprintf(string,"%f",tickF.fval);
+	 k = strlen(string)-1;
+	 while(string[k] == '0') k--; /* strip off trailing zeroes */
+	 iPrec = k;
+	 while(string[k] != '.' && k >= 0) k--;
+	 iPrec = iPrec - k;
+	 CpSetAxisAll(widget, CP_Y, maxYF, minYF, tickF,
+	   tickF, iPrec);
+     }
+
+  /* Set axis parameters for Y2 */
+    if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
+      == CHANNEL_RANGE) {
+	CpSetAxisMaxMin(widget, CP_Y2, maxY2F, minY2F);
+    } else if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
+      == USER_SPECIFIED_RANGE) {
+	int k;
+
+	minY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].minRange;
+	maxY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange;
+	tickF.fval = (float)((maxY2F.fval - minY2F.fval)/4.0);
+	sprintf(string,"%f",tickF.fval);
+	k = strlen(string)-1;
+	while(string[k] == '0') k--; /* strip off trailing zeroes */
+	iPrec = k;
+	while(string[k] != '.' && k >= 0) k--;
+	iPrec = iPrec - k;
+	CpSetAxisAll(widget, CP_Y2, maxY2F, minY2F, tickF,
+	  tickF, iPrec);
+    }
 }
 
 static void cartesianPlotDestroyCb(XtPointer cd) {

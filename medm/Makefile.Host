@@ -37,17 +37,19 @@ endif
 
 #STATIC_BUILD = YES
 CMPLR = STRICT
-#PURIFY = YES
 
+# Purify
+ifeq ($(OS_CLASS),solaris)
+PURIFY=YES
 PURIFY_FLAGS = -first-only -chain-length=26
+#PURIFY_FLAGS = -first-only -chain-length=26 -max_threads=256
+#PURIFY_FLAGS = -first-only -chain-length=26 -always-use-cache-dir -cache-dir=/tmp/purifycache
+#PURIFY_FLAGS = -first-only -chain-length=26 -enable-new-cache-scheme
+#PURIFY_FLAGS = -first-only -chain-length=26 -enable-new-cache-scheme -always-use-cache-dir -cache-dir=/tmp/purifycache
 
-# Remove this when new config stuff is working
-#ifeq ($(PURIFY),YES)
-#  CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))
-#  CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
-#  #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
-#  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
-#endif
+# Put the cache files in the appropriate bin directory
+PURIFY_FLAGS += -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
+endif
 
 # Web browser options
 #USR_CFLAGS += -DNETSCAPEPATH="\"mozilla\""
@@ -58,8 +60,8 @@ PURIFY_FLAGS = -first-only -chain-length=26
 
 # Use to test SciPlot or JPT, otherwise should come from CONFIG
 # Set the one you want and reset any that come from CONFIG
-#XRTGRAPH =
-#SCIPLOT = YES
+XRTGRAPH =
+SCIPLOT = YES
 #JPT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG
@@ -114,11 +116,6 @@ ifdef JPT
   SRCS += medmCartesianPlot.c 
   SRCS += medmJpt.c 
 endif
-
-#ifeq ($(PURIFY),YES)
-  # The following is a workaround for a Purify bug with Solaris libm.a
-#else
-#endif
 
 USR_CFLAGS += -DEDITRES
 
