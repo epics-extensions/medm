@@ -57,6 +57,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_COMPOSITE 0
 #define DEBUG_FONTS 0
 
+/* KE: May need to set this to 0 for WIN32 to improve performance */
+#define USE_MARQUEE 1
+
 #if 0     /* Not using _NTSDK anymore */
 #ifdef WIN32
   /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
@@ -1260,6 +1263,11 @@ void markHiddenButtons(DisplayInfo *displayInfo)
 	}
 	
       /* Create the marker widgets */
+#ifdef WIN32
+      /* Seems to take a long time on WIN32 */
+	XDefineCursor(display,XtWindow(displayInfo->drawingArea),watchCursor);
+	XFlush(display);
+#endif    
 	displayInfo->nMarkerWidgets = 0;
 	pE = FirstDlElement(displayInfo->dlElementList);
 	while(pE) {
@@ -1267,6 +1275,9 @@ void markHiddenButtons(DisplayInfo *displayInfo)
 	    
 	    pE = pE->next;
 	}
+#ifdef WIN32
+	XUndefineCursor(display,XtWindow(displayInfo->drawingArea));
+#endif    
     }
 }
 
@@ -1336,46 +1347,14 @@ static void createMarkerWidget(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[nargs], XmNheight, height); nargs++;
     XtSetArg(args[nargs], XmNforeground, WhitePixel(display,screenNum)); nargs++;
     XtSetArg(args[nargs], XmNbackground, BlackPixel(display,screenNum)); nargs++;
-    XtSetArg(args[nargs], XtNblinkTime, 1000); nargs++;
     XtSetArg(args[nargs], XtNborderWidth, 0); nargs++;
-#if 0
-	XtSetArg(args[nargs], XtNtransparent, False); nargs++;
+#if !USE_MARQUEE    
+    XtSetArg(args[nargs], XtNblinkTime, 0); nargs++;
+    XtSetArg(args[nargs], XtNtransparent, False); nargs++;
 #endif	
-	w=XtCreateManagedWidget("marquee", marqueeWidgetClass,
-	  displayInfo->drawingArea, args, nargs);
-	displayInfo->markerWidgetList[displayInfo->nMarkerWidgets++] = w;
-	
-#if 0
-    Dimension bw, daX, daY;
-
-  /* Get the drawing area origin */
-    nargs = 0;
-    XtSetArg(args[nargs], XtNx, &daX); nargs++;
-    XtSetArg(args[nargs], XtNy, &daY); nargs++;
-    XtGetValues(displayInfo->drawingArea, args, nargs);
-    
-  /* Create a shell */
-    nargs = 0;
-    XtSetArg(args[nargs], XtNx, pO->x + daX); nargs++;
-    XtSetArg(args[nargs], XtNy, pO->y + daY); nargs++;
-    XtSetArg(args[nargs], XtNbackground, displayInfo->
-      colormap[displayInfo->drawingAreaForegroundColor]); nargs++;
-    w = XtCreatePopupShell("marker", overrideShellWidgetClass,
+    w=XtCreateManagedWidget("marquee", marqueeWidgetClass,
       displayInfo->drawingArea, args, nargs);
-    markerWidgetList[nMarkerWidgets++] = w;
-
-  /* Find the borderwidth */
-    nargs = 0;
-    XtSetArg(args[nargs], XtNborderWidth, &bw); nargs++;
-    XtGetValues(w, args, nargs);
-    bw*=2;
-
-  /* Set the width and height */
-    nargs = 0;
-    XtSetArg(args[nargs], XtNwidth, pO->width - bw); nargs++;
-    XtSetArg(args[nargs], XtNheight, pO->height - bw); nargs++;
-    XtSetValues(w, args, nargs);
-#endif    
+    displayInfo->markerWidgetList[displayInfo->nMarkerWidgets++] = w;
 }
 
 static void markerWidgetsDestroy(DisplayInfo *displayInfo)
@@ -1384,6 +1363,11 @@ static void markerWidgetsDestroy(DisplayInfo *displayInfo)
     int nWidgets = displayInfo->nMarkerWidgets;
     Widget *widgets = displayInfo->markerWidgetList;
 
+#ifdef WIN32
+      /* Seems to take a long time on WIN32 */
+	XDefineCursor(display,XtWindow(displayInfo->drawingArea),watchCursor);
+	XFlush(display);
+#endif    
   /* Unmap them to be sure */
     for(i=0; i < nWidgets; i++) {
 	XtUnmapWidget(widgets[i]);
@@ -1399,4 +1383,7 @@ static void markerWidgetsDestroy(DisplayInfo *displayInfo)
 	displayInfo->markerWidgetList = NULL;
     }
     displayInfo->nMarkerWidgets = 0;
+#ifdef WIN32
+	XUndefineCursor(display,XtWindow(displayInfo->drawingArea));
+#endif    
 }

@@ -1560,6 +1560,7 @@ static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case GRID_SPACING_BTN:
 	XDefineCursor(display,XtWindow(mainShell),watchCursor);
+	XFlush(display);
 	if(!gridDlg) {
 	    int n;
 	    Arg args[4];
@@ -1663,6 +1664,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
        * create the Open... file selection dialog
        */
 	XDefineCursor(display,XtWindow(mainShell),watchCursor);
+	XFlush(display);
 	if(openFSD == NULL) {
 	    Arg args[4];
 	    int n = 0;
@@ -1844,6 +1846,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case FILE_PRINT_SETUP_BTN:
 	XDefineCursor(display,XtWindow(mainShell),watchCursor);
+	XFlush(display);
 	if(!printerSetupDlg) {
 	    int n = 0;
 	    Arg args[4];
