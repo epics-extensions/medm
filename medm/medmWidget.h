@@ -347,11 +347,11 @@ extern char *elementStringTable[NUM_DL_ELEMENT_TYPES];
 extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #else
 char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
-    "Element","Composite", "Display",
+    "Element", "Composite", "Display",
     "Choice Button", "Menu", "Message Button", "Related Display",
     "Shell Command", "Text Entry", "Slider",
-    "Bar", "Byte", "Cartesian Plot", "Scale Indicator", "Meter",
-    "Strip Chart", "Text Indicator",
+    "Bar Monitor", "Byte Monitor", "Cartesian Plot", "Scale Monitor", "Meter",
+    "Strip Chart", "Text Monitor",
     "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
 };
 XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
