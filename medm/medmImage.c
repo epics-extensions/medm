@@ -56,10 +56,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_ANIMATE 0
 
-#define DEFAULT_TIME 100
+#define DEFAULT_TIME 1
 #define ANIMATE_TIME(gif) \
   ((gif)->frames[CURFRAME(gif)]->DelayTime ? \
-  ((gif)->frames[CURFRAME(gif)]->DelayTime)*10 : DEFAULT_TIME)
+  ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
 
 #include "medm.h"
 
@@ -72,14 +72,13 @@ typedef struct _Image {
     DlElement     *dlElement;
     Record        *record;
     UpdateTask    *updateTask;
-    XtIntervalId  timerid;
 } MedmImage;
 
 Widget importFSD;
 XmString gifDirMask;
 
 /* Function prototypes */
-static void animateImage(XtPointer cd, XtIntervalId *id);
+static void animateImage(MedmImage *pi);
 static void destroyDlImage(DlElement *);
 static void destroyDlImage(DlElement *dlElement);
 static void drawImage(MedmImage *pi);
@@ -151,8 +150,8 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    }
 	    gif = (GIFData *)dlImage->privateData;
 #if DEBUG_ANIMATE
-	    fprintf(stderr,"executeDlImage (1): dlImage=%x gif=%x nFrames=%d\n",
-	      dlImage,gif,gif?gif->nFrames:-1);
+	    print("executeDlImage: %s dlImage=%x gif=%x nFrames=%d\n",
+	      gif->imageName,dlImage,gif,gif?gif->nFrames:-1);
 #endif
 	} else {
 	  /* Already initialized */
@@ -182,7 +181,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	pi->displayInfo = displayInfo;
 	pi->dlElement = dlElement;
 	pi->record = NULL;
-	pi->timerid = (XtIntervalId)0;
 	pi->updateTask = updateTaskAddTask(displayInfo, &(dlImage->object),
 	  imageDraw, (XtPointer)pi);
 	if (pi->updateTask == NULL) {
@@ -204,18 +202,11 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* No channel */
 	    if(gif) {
 		if(gif->nFrames > 1) {
-#if DEBUG_ANIMATE
-		    print("executeDlImage (3): pi=%x dlElement=%x "
-		      "gif=%x nFrames=%d pi->timerid=%x\n",
-		      &pi,pi->dlElement,gif,gif->nFrames,pi->timerid);
-		    print("  sizeof(GIFData)=%d sizeof(DlImage)=%d\n",
-		      sizeof(GIFData),sizeof(DlImage));
-#endif
-		    pi->timerid=XtAppAddTimeOut(appContext,
-		      ANIMATE_TIME(gif), animateImage, (XtPointer)pi);
+		    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
+		} else {
+		  /* Draw the first frame */
+		    drawGIF(displayInfo,dlImage);
 		}
-	      /* Draw the first frame */
-		drawGIF(displayInfo,dlImage);
 	    }
 	}
     } else {
@@ -229,10 +220,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 		resizeGIF(dlImage);
 		drawGIF(displayInfo,dlImage);
 	    }
-#if DEBUG_ANIMATE
-	    fprintf(stderr,"executeDlImage (2): dlImage=%x gif=%x nFrames=%d\n",
-	      dlImage,gif,gif?gif->nFrames:-1);
-#endif
 	}
     }
 
@@ -241,41 +228,65 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     
 }
 
-static void animateImage(XtPointer cd, XtIntervalId *id)
+#if 0
+static void animateImage(MedmImage *pi)
 {
-    MedmImage *pi = (MedmImage *)cd;
     GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
 
-#if DEBUG_ANIMATE > 1
-    fprintf(stderr,"animateImage: pi=%x dlElement=%x "
-      "gif=%x nFrames=%d curFrame=%d pi->timerid=%x\n",
-      &pi,pi->dlElement,gif,gif->nFrames,gif->nFrames,pi->timerid);
-#endif
+#if DEBUG_ANIMATE
+	print("animateImage: time=%.3f interval=%.3f name=%s\n",
+	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
+#endif    
   /* Display the next image */
     if(++gif->curFrame >= gif->nFrames) gif->curFrame=0;
     drawGIF(pi->displayInfo, pi->dlElement->structure.image);
 
-  /* Reinstall the timeout */
-    pi->timerid=XtAppAddTimeOut(appContext, ANIMATE_TIME(gif),
-      animateImage, (XtPointer)pi);
+  /* Reset the time */
+    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
 }
+#endif
 
+/* This routine is the update task.  It is called for updates and for
+   drawing area exposures */
 static void imageDraw(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
     Record *pr = pi->record;
     DlImage *dlImage = pi->dlElement->structure.image;
 
-    if(!pr) return;
-    if (pr->connected) {
-	if (pr->readAccess) {
+  /* Branch on whether there is a channel or not */
+    if(*dlImage->monitor.rdbk) {
+      /* A channel is defined */
+	if(!pr) return;
+	if (pr->connected) {
+	    if (pr->readAccess) {
+	    } else {
+		draw3DPane(pi->updateTask,
+		  pi->updateTask->displayInfo->colormap[dlImage->monitor.bclr]);
+		draw3DQuestionMark(pi->updateTask);
+	    }
 	} else {
-	    draw3DPane(pi->updateTask,
-	      pi->updateTask->displayInfo->colormap[dlImage->monitor.bclr]);
-	    draw3DQuestionMark(pi->updateTask);
+	    drawWhiteRectangle(pi->updateTask);
 	}
     } else {
-	drawWhiteRectangle(pi->updateTask);
+      /* No channel */
+	GIFData *gif = (GIFData *)pi->dlElement->structure.image->privateData;
+	
+#if DEBUG_ANIMATE
+	print("imageDraw: time=%.3f interval=%.3f name=%s\n",
+	  medmElapsedTime(),ANIMATE_TIME(gif),gif->imageName);
+#endif
+	if(gif->nFrames > 1) {
+	  /* Draw the next image */
+	    if(++gif->curFrame >= gif->nFrames) gif->curFrame=0;
+	    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+	    
+	  /* Reset the time */
+	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
+	} else {
+	  /* Draw the image */
+	    drawGIF(pi->displayInfo, pi->dlElement->structure.image);
+	}
     }
 }
 
@@ -283,10 +294,7 @@ static void imageDestroyCb(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
     if (pi) {
-	if(pi->timerid) {
-	    XtRemoveTimeOut(pi->timerid);
-	    pi->timerid=0;
-	}
+	updateTaskSetScanRate(pi->updateTask, 0.0);
 	medmDestroyRecord(pi->record);
 	free((char *)pi);
     }
@@ -482,11 +490,6 @@ DlElement *createDlImage(DlElement *p)
 	free(dlImage);
     }
 
-#if DEBUG_ANIMATE
-    fprintf(stderr,"createDlImage: dlElement=%x dlImage=%x clr=%d width=%d\n",
-      dlElement,dlImage,dlImage->attr.clr,dlImage->attr.width);
-#endif
-    
     return(dlElement);
 }
 
@@ -600,3 +603,4 @@ static void imageGetValues(ResourceBundle *pRCB, DlElement *p)
       LIMITS_RC,     &(dlImage->limits),
       -1);
 }
+

@@ -1429,12 +1429,12 @@ static int readCode()
     RawCode=Raster[ByteOffset]+(0x100*Raster[ByteOffset+1]);
     if (CodeSize >= 8)
       RawCode+=(0x10000*Raster[ByteOffset+2]);
-#if 1
+#if 0
     print("readCode: XC=%d YC=%d BitOffset=%d ByteOffset=%d Rawcode=%x",
       XC,YC,BitOffset,ByteOffset,RawCode);
 #endif    
     RawCode>>=(BitOffset%8);
-#if 1
+#if 0
     print("->%x ReadMask=%x RawCode&ReadMask=%x\n",
       RawCode,ReadMask,RawCode&ReadMask);
 #endif    

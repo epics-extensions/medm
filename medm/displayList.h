@@ -797,7 +797,6 @@ typedef struct {
     DlLimits limits;
     ImageType imageType;
     char imageName[MAX_TOKEN_LENGTH];
-    XtIntervalId timerid;
     XtPointer privateData;
 } DlImage;
 
