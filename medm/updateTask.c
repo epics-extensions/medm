@@ -320,6 +320,8 @@ double medmResetElapsedTime()
  *  ---------------------------
  */
 
+/* Called when initializing a DisplayInfo for
+ *   DisplayInfo->updateTaskListHead only */
 void updateTaskInit(DisplayInfo *displayInfo)
 {
     UpdateTask *pt = &(displayInfo->updateTaskListHead);
@@ -330,6 +332,7 @@ void updateTaskInit(DisplayInfo *displayInfo)
     pt->timeInterval = EXECINTERVAL;
     pt->nextExecuteTime = medmTime() + pt->timeInterval;
     pt->displayInfo = displayInfo;
+    pt->prev = NULL;
     pt->next = NULL;
     pt->executeRequestsPendingCount = 0;
     displayInfo->updateTaskListTail = pt;
@@ -381,6 +384,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	pt->timeInterval = 0.0;
 	pt->nextExecuteTime = medmTime() + pt->timeInterval;
 	pt->displayInfo = displayInfo;
+	pt->prev = displayInfo->updateTaskListTail;
 	pt->next = NULL;
 	pt->executeRequestsPendingCount = 0;
 	if (rectangle) {
@@ -416,7 +420,9 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
     }
 }  
 
-/* Delete all update tasks on the display associated with a given task */
+/* Delete all update tasks on the display associated with a given
+   task. More efficient that deleting them one by one using
+   updateTaskDeleteTask. */
 void updateTaskDeleteAllTask(UpdateTask *pt)
 {
     UpdateTask *tmp;
@@ -489,10 +495,12 @@ void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt)
 {
     if (pt == NULL) return;
   /* Adjust the next pointers */
-    if
-    displayInfo->updateTaskListTail->next = pt;
-    displayInfo->updateTaskListTail = pt;
-    
+    if(pt == displayInfo->updateTaskListTail) {
+	displayInfo->updateTaskListTail = pt->prev;
+	displayInfo->updateTaskListTail->next = NULL;
+    } else {
+	pt->prev->next = pt->next;
+    }
   /* Run the destroy callback */
     if (pt->destroyTask) {
 	pt->destroyTask(pt->clientData);
