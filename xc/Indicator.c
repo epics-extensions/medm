@@ -288,8 +288,11 @@ static void Redisplay(Widget w, XEvent *event, Region region)
    * draw into a window that is not mapped.  Realizing a widget doesn't 
    * mean its mapped, but this call will work for most Window Managers.
    */
-    if (!XtIsRealized((Widget)w) || !wi->core.visible)
-      return;
+#ifdef USE_CORE_VISIBLE
+    if (!XtIsRealized((Widget)w) || !wi->core.visible) return;
+#else    
+    if (!XtIsRealized((Widget)w)) return;
+#endif
     
     DPRINTF(("Indicator: executing Redisplay\n"));
     
@@ -759,7 +762,9 @@ void XcIndUpdateValue(Widget w, XcVType *value)
 {
     IndicatorWidget wi = (IndicatorWidget)w;
     
+#ifdef USE_CORE_VISIBLE
     if (!wi->core.visible) return;
+#endif
     
   /* Update the new value, then update the Indicator display. */
     if (value != NULL) {
@@ -788,7 +793,9 @@ void XcIndUpdateIndicatorForeground(Widget w, Pixel pixel)
 {
     IndicatorWidget wi = (IndicatorWidget)w;
     
+#ifdef USE_CORE_VISIBLE
     if (!wi->core.visible) return;
+#endif
     
   /* Update the new value, then update the Indicator display. */
     if (wi->indicator.indicator_foreground != pixel) {

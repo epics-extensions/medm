@@ -241,7 +241,11 @@ static void Redisplay(Widget w, XEvent *event, Region region)
     ByteWidget wb = (ByteWidget)w;
     
   /****** Check to see whether or not the widget's window is mapped */
+#ifdef USE_CORE_VISIBLE
     if (!XtIsRealized((Widget)w) || !wb->core.visible) return;
+#else
+    if (!XtIsRealized((Widget)w)) return;
+#endif    
     DPRINTF(("Byte: executing Redisplay\n"));
   /* printf("BY: executing Redisplay1\n"); */
     
@@ -419,7 +423,9 @@ void XcBYUpdateValue(Widget w, XcVType *value)
 {
     ByteWidget wb = (ByteWidget)w;
     
+#ifdef USE_CORE_VISIBLE
     if (!wb->core.visible) return;
+#endif
     
   /****** Update the new value, then update the Byte display. */
     if (value != NULL) {
@@ -444,7 +450,9 @@ void XcBYUpdateByteForeground(Widget w, Pixel pixel)
     ByteWidget wb = (ByteWidget)w;
     
   /* Local variables */
+#ifdef USE_CORE_VISIBLE
     if (!wb->core.visible) return;
+#endif
     
   /* Update the new value, then update the Byte display. */
     if (wb->byte.byte_foreground != pixel) {

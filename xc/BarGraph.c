@@ -296,7 +296,11 @@ static void Redisplay(Widget w, XEvent *event, Region region)
 #endif	
     
   /* Check to see whether or not the widget's window is mapped */
+#ifdef USE_CORE_VISIBLE
     if(!XtIsRealized(w) || !wb->core.visible) return;
+#else
+    if(!XtIsRealized(w)) return;
+#endif
     DPRINTF(("BarGraph: executing Redisplay\n"));
     
 #if 1
@@ -826,7 +830,9 @@ void XcBGUpdateBarForeground(Widget w, Pixel pixel)
 {
     BarGraphWidget wb = (BarGraphWidget)w;
     
+#ifdef USE_CORE_VISIBLE
     if(!wb->core.visible) return;
+#endif
     
   /* Update the new value, then update the BarGraph display. */
     if(wb->barGraph.bar_foreground != pixel) {

@@ -5,6 +5,8 @@
  AUTHOR:	Mark Anderson, derived from Paul D. Johnston's BarGraf widget
 ********************************************************************/
 
+#define DEBUG_REDRAW 0
+
 #include <stdio.h>
 #include <math.h>
 
@@ -265,8 +267,15 @@ static void Redisplay(Widget w, XEvent *event, Region region)
    * draw into a window that is not mapped.  Realizing a widget doesn't 
    * mean its mapped, but this call will work for most Window Managers.
    */
-    if (!XtIsRealized((Widget)w) || !wm->core.visible)
-      return;
+#if DEBUG_REDRAW
+    printf("Redisplay: w=%x Realized=%s core.visible=%d\n",
+      w,XtIsRealized(w)?"Yes":"No",wm->core.visible);
+#endif
+#ifdef USE_CORE_VISIBLE
+    if (!XtIsRealized((Widget)w) || !wm->core.visible) return;
+#else
+    if (!XtIsRealized((Widget)w)) return;
+#endif    
     
     DPRINTF(("Meter: executing Redisplay\n"));
     
@@ -667,7 +676,9 @@ void XcMeterUpdateMeterForeground(Widget w, Pixel pixel)
 {
     MeterWidget wm = (MeterWidget)w;
     
+#ifdef USE_CORE_VISIBLE
     if (!wm->core.visible) return;
+#endif    
     
   /* Update the new value, then update the Meter display. */
     if (wm->meter.meter_foreground != pixel) {
@@ -695,7 +706,9 @@ static void Draw_display(Widget w, Display *display,
     XPoint point, triangle[3];
     XRectangle clipRect[1];
     
+#ifdef USE_CORE_VISIBLE
     if (!wm->core.visible) return;
+#endif    
   /* Clear meter */
   /* Fill the interior of the Meter with its background color */
     XSetForeground(XtDisplay(w), wm->control.gc, wm->meter.meter_background); 
