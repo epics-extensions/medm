@@ -239,7 +239,7 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 #else
     int medmInputMask=XtInputReadMask;
 #endif
-
+    
     typedef struct {
         XtInputId inputId;
         int fd;
@@ -247,32 +247,26 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
     static InputIdAndFd *inp = NULL;
     static int maxInps = 0, numInps = 0;
     int i, j, k;
-
-
-
+    
     if (inp == NULL && maxInps == 0) {
-/* first time through */
+      /* First time through */
 	inp = (InputIdAndFd *) calloc(1,NUM_INITIAL_FDS*sizeof(InputIdAndFd));
 	maxInps = NUM_INITIAL_FDS;
 	numInps = 0;
     }
-
+    
     if (condition) {
-/*
- * add new fd
- */
+      /* Add new fd */
 	if (numInps < maxInps-1) {
-
+	    
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
 	      (XtPointer)medmInputMask,
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
-
 	} else {
-
 	    medmPostMsg(0,"dmRegisterCA: info: realloc-ing input fd's array");
-
+	    
 	    maxInps = 2*maxInps;
 #if defined(__cplusplus) && !defined(__GNUG__)
 	    inp = (InputIdAndFd *) realloc((malloc_t)inp,maxInps*sizeof(InputIdAndFd));
@@ -285,14 +279,10 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
 	}
-
     } else {
-
 	currentNumInps = numInps;
-
-/*
- * remove old fd/inputId
- */
+	
+      /* Remove old fd */
 	for (i = 0; i < numInps; i++) {
 	    if (inp[i].fd == fd) {
 		XtRemoveInput(inp[i].inputId);
@@ -301,8 +291,8 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 		currentNumInps--;
 	    }
 	}
-
-/* now remove holes in the array */
+	
+      /* Remove holes in the array */
 	i = 0;
 	while (i < numInps) {
 	    if (inp[i].inputId == (XtInputId)NULL) {
@@ -319,14 +309,15 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
 	    i++;
 	}
 	numInps = currentNumInps;
-
     }
 
 #if DEBUG_FD_REGISTRATION
-    fprintf(stderr,"\ndmRegisterCA: numInps = %d\n\t",numInps);
+    printf("\ndmRegisterCA: fd=%d condition=%d ConnectionNumber=%d "
+      "numInps = %d\n\t",
+      fd,condition,ConnectionNumber(display),numInps);
     for (i = 0; i < maxInps; i++)
-      fprintf(stderr,"%d ",inp[i].fd);
-    fprintf(stderr,"\n");
+      printf("%d ",inp[i].fd);
+    printf("\n");
 #endif
 }
 
