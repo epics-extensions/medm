@@ -113,7 +113,7 @@ XtCallbackProc dmDisplayListOk(
     filePtr = fopen(filename,"r");
     if (filePtr != NULL) {
 	XtUnmanageChild(dialog);
-	dmDisplayListParse(filePtr,NULL,filename,(Boolean)False);
+	dmDisplayListParse(filePtr,NULL,filename,NULL,(Boolean)False);
 	if (filePtr != NULL) fclose(filePtr);
     };
     XtFree(filename);
@@ -240,7 +240,7 @@ XtCallbackProc dmCreateRelatedDisplay(
     fprintf(stderr,"\n%s",token);
     free(newFilename);
   } else {
-    dmDisplayListParse(filePtr,processedArgs,filename,(Boolean)True);
+    dmDisplayListParse(filePtr,processedArgs,filename,NULL,(Boolean)True);
     fclose(filePtr);
   }
 
