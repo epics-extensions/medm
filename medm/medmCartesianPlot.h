@@ -57,18 +57,19 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #ifndef CARTESIAN_PLOT_H
 #define CARTESIAN_PLOT_H
 
-#ifdef XRTGRAPH
-#include "medmXrtGraph.h"
-#else
-#error No plot package to implement the Cartesian Plot has been defined.
-#endif
-
 #define CP_XDATA_COLUMN         0
 #define CP_YDATA_COLUMN         1
 #define CP_COLOR_COLUMN         2
  
 #define CP_APPLY_BTN    0
 #define CP_CLOSE_BTN    1
+
+#define CP_X   0
+#define CP_Y   1
+#define CP_Y2  2
+
+#define CP_LINE_SOLID 0
+#define CP_LINE_NONE  1
  
 typedef struct {
     float axisMin;
@@ -112,7 +113,55 @@ typedef struct _CartesianPlot {
     Boolean         timeScale;
 } CartesianPlot;
 
+
+/* Function prototypes for generic plotting routines
+ *   These should be the same for any plot package */
+
+CpDataHandle CpDataCreate(CpDataType hData, int nsets, int npoints);
+int CpDataGetLastPoint(CpDataHandle hData, int set);
+double CpDataGetXElement(CpDataHandle hData, int set, int point);
+double CpDataGetYElement(CpDataHandle hData, int set, int point);
+void CpDataDestroy(CpDataHandle hData);
+int CpDataSetHole(CpDataHandle hData, double hole);
+int CpDataSetLastPoint(CpDataHandle hData, int set, int npoints);
+int CpDataSetXElement(CpDataHandle hData, int set, int point, double x);
+int CpDataSetYElement(CpDataHandle hData, int set, int point, double y);
+
+void CpGetAxisInfo(Widget w,
+  XtPointer *userData, Boolean *xAxisIsTime,
+  Boolean *xAxisIsLog, Boolean *yAxisIsLog, Boolean *y2AxisIsLog,
+  XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
+  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF,
+  Boolean *xMinUseDef, Boolean *yMinUseDef, Boolean *y2MinUseDef,
+  char **timeFormat);
+#if 0
+void CpGetAxisAll(Widget w,
+  XcVType &xMax, XcVType &xMin, XcVType &xTick, XcVType &xNum, int &xPrecision,
+  XcVType &yMax, XcVType &yMin, XcVType &yTick, XcVType &yNum, int &yPrecision,
+  XcVType &y2Max, XcVType &yMin, XcVType &y2Tick, XcVType &y2Num, int &y2Precision);
 #endif
+void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
+  XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF);
+void CpSetAxisStyle(Widget w, int trace, int lineType, int fillType,
+  XColor color, int pointSize);
+void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
+  XcVType tick, XcVType num, int precision);
+void CpSetAxisMax(Widget w, int axis, XcVType max, XcVType tick,
+  XcVType num, int precision);
+void CpSetAxisMin(Widget w, int axis, XcVType min, XcVType tick,
+  XcVType num, int precision);
+void CpSetAxisAuto(Widget w, int axis);
+void CpSetAxisChannel(Widget w, int axis, XcVType max, XcVType min);
+void CpSetAxisLinear(Widget w, int axis);
+void CpSetAxisLog(Widget w, int axis);
+void CpSetAxisMaxMin(Widget w, int axis, XcVType max, XcVType min);
+void CpSetAxisTime(Widget w, int axis, time_t base, char * format);
+void CpSetData(Widget w, int axis, CpDataHandle hData);
+void CpSetTimeBase(Widget w, time_t base);
+void CpSetTimeFormat(Widget w, char *format);
+
+Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
+  DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp);
 
 /****************************************************************************
  * CARTESIAN PLOT DATA
@@ -120,9 +169,9 @@ typedef struct _CartesianPlot {
 static String cpColumnLabels[] = {"X Data","Y Data","Color",};
 static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
 static short cpColumnWidths[] = {36,36,6,};
-static unsigned char cpColumnLabelAlignments[] = {XmALIGNMENT_CENTER,
-
-						  XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
+static unsigned char cpColumnLabelAlignments[] = {
+    XmALIGNMENT_CENTER,
+    XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
 /* and the cpCells array of strings (filled in from globalResourceBundle...)
 */
 static String cpRows[MAX_TRACES][3];
@@ -168,3 +217,5 @@ static Widget axisTimeFormat;
 /* The following should be the largest of NUM_CP_TIME_FORMAT,
  *   NUM_CARTESIAN_PLOT_RANGE_STYLES, NUM_CARTESIAN_PLOT_AXIS_STYLES */
 #define MAX_CP_AXIS_BUTTONS  NUM_CP_TIME_FORMAT
+
+#endif     /* #ifndef CARTESIAN_PLOT_H */

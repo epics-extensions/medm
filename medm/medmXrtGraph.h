@@ -13,14 +13,8 @@
 #define CpDataType XrtDataType
 #define CpDataHandle XrtDataHandle
 #define CpData XrtData
-#define CpDataStyle XrtDataStyle
 
 #define CP_GENERAL XRT_GENERAL
-
-#define CpSetNthDataStyle(graph, index, ds) \
-  XrtSetNthDataStyle(graph, index, ds)
-#define CpSetNthDataStyle2(graph, index, ds) \
-  XrtSetNthDataStyle2(graph, index, ds)
 
 #if XRT_VERSION > 2
 
