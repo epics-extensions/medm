@@ -3308,7 +3308,7 @@ QueryGeometry(Widget w, XtWidgetGeometry *proposed,
 static void
 ScrollVertCB(Widget w, XtPointer client, XtPointer call)
 {
-    XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);    /* Note: not w */
     XmScrollBarCallbackStruct *call_data = (XmScrollBarCallbackStruct *)call;
     int src_y, dest_y, height;
 
@@ -3352,7 +3352,7 @@ ScrollVertCB(Widget w, XtPointer client, XtPointer call)
    */
     VERT_ORIGIN(mw) = call_data->value;
 
-    if (!XtIsRealized(mw))
+    if (!XtIsRealized((Widget)mw))
       return;
 
   /*
@@ -3485,7 +3485,7 @@ ScrollVertCB(Widget w, XtPointer client, XtPointer call)
 static void
 ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
 {
-    XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);
+    XbaeMatrixWidget mw = (XbaeMatrixWidget)XtParent(w);     /* Note: not w */
     XmScrollBarCallbackStruct *call_data = (XmScrollBarCallbackStruct *)call;
     int src_x, dest_x, width;
 
@@ -3529,7 +3529,7 @@ ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
    */
     HORIZ_ORIGIN(mw) = call_data->value;
 
-    if (!XtIsRealized(mw))
+    if (!XtIsRealized((Widget)mw))
       return;
 
   /*
@@ -5942,7 +5942,7 @@ AddRows(Widget w, int position, String *rows, String *labels, Pixel *colors,
     (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.cancel_edit)
       ((Widget)mw, True);
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Generate expose events on Matrix and Clip to force the
        * new rows to be drawn.
@@ -6031,7 +6031,7 @@ DeleteRows(Widget w, int position, int num_rows)
     (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.cancel_edit)
       ((Widget)mw, True);
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Generate expose events on Matrix and Clip to force the
        * rows to be redrawn.
@@ -6118,7 +6118,7 @@ AddColumns(Widget w, int position, String *columns, String *labels,
     (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.cancel_edit)
       ((Widget)mw, True);
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Generate expose events on Matrix and Clip to force the
        * new columns to be drawn.
@@ -6212,7 +6212,7 @@ DeleteColumns(Widget w, int position, int num_columns)
     (*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.cancel_edit)
       ((Widget)mw, True);
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Generate expose events on Matrix and Clip to force the
        * columns to be redrawn.
@@ -6290,7 +6290,7 @@ SetRowColors(Widget w, int position, Pixel *colors, int num_colors)
       for (j = 0; j < mw->matrix.columns; j++)
 	mw->matrix.colors[i + position][j] = colors[i];
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Redraw all the visible non-fixed cells. We don't need to clear first
        * since only the color changed.
@@ -6377,7 +6377,7 @@ SetColumnColors(Widget w, int position, Pixel *colors, int num_colors)
       for (j = 0; j < num_colors; j++)
 	mw->matrix.colors[i][j + position] = colors[j];
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Redraw all the visible non-fixed cells. We don't need to clear first
        * since only the color changed.
@@ -6456,7 +6456,7 @@ SetCellColor(Widget w, int row, int column, Pixel color)
    */
     mw->matrix.colors[row][column] = color;
 
-    if (XtIsRealized(mw)) {
+    if (XtIsRealized(w)) {
       /*
        * Redraw the cell if it is visible
        */

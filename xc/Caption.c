@@ -248,8 +248,8 @@ Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
    * it will use our name as it's label.
    */
     (void)
-      XtVaCreateManagedWidget(XtName(new),
-	xmLabelWidgetClass, (Widget)new,
+      XtVaCreateManagedWidget(XtName(gnew),
+	xmLabelWidgetClass, gnew,
 	XmNbackground,	new->core.background_pixel,
 	XmNforeground,	new->manager.foreground,
 	XmNfontList,	new->caption.font_list,
@@ -621,9 +621,9 @@ Layout(XbaeCaptionWidget cw, Boolean configure)
        * resize method)
        */
 	_XmConfigureObject((Widget)UserChild(cw),
-	  (int)user_x, (int)user_y,
-	  (int)user_width, (int)user_height,
-	  (int)UserChild(cw)->core.border_width);
+	  user_x, user_y,
+	  user_width, user_height,
+	  UserChild(cw)->core.border_width);
     }
 }
 

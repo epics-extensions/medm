@@ -172,15 +172,13 @@ Redisplay(Widget w, XEvent *event, Region region)
 static void
 Redraw(Widget w)
 {
-    XbaeClipWidget cw = (XbaeClipWidget)w;
-
   /*
    * Clear the window generating Expose events.
    * XXX It might be more efficient to fake up an Expose event
    * and call Redisplay directly
    */
-    if (XtIsRealized(cw))
-      XClearArea(XtDisplay(cw), XtWindow(cw),
+    if (XtIsRealized(w))
+      XClearArea(XtDisplay(w), XtWindow(w),
 	0, 0,
 	0 /*Full Width*/, 0 /*Full Height*/,
 	True);
