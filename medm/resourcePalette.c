@@ -385,7 +385,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #ifdef __cplusplus
 static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 #else
-    static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {     
     int buttonId = (int) cd;
@@ -429,13 +429,13 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
 		XtSetArg(args[n],XtNxrtXAxisLogarithmic,False); n++;
 		XtSetSensitive(axisTimeFormat,False);
-		pcp->timeScale = False;
+		if(pcp) pcp->timeScale = False;
 		break;
 	    case LOG10_AXIS:
 		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
 		XtSetArg(args[n],XtNxrtXAxisLogarithmic,True); n++;
 		XtSetSensitive(axisTimeFormat,False);
-		pcp->timeScale = False;
+		if(pcp) pcp->timeScale = False;
 		break;
 	    case TIME_AXIS:
 		XtSetSensitive(axisTimeFormat,True);
@@ -447,7 +447,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 		XtSetArg(args[n],XtNxrtTimeFormat,
 		  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
 		      FIRST_CP_TIME_FORMAT]); n++;
-		pcp->timeScale = True;
+		if(pcp) pcp->timeScale = True;
 	    }
 	    break;
 	case CP_Y_AXIS_STYLE:
