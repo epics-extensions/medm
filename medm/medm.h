@@ -274,6 +274,14 @@ extern "C" {
   /* Time data */
     EXTERN time_t time900101, time700101, timeOffset;
 
+/* XR5 Resource ID patch */
+#ifdef USE_XR5_RESOURCEID_PATCH
+#  define XCreatePixmap XPatchCreatePixmap
+#  define XFreePixmap XPatchFreePixmap
+#  define XCreateGC XPatchCreateGC
+#  define XFreeGC XPatchFreeGC
+#endif
+
 #ifdef __cplusplus
 	   }  /* Close scope of 'extern "C"' declaration which encloses file. */
 #endif

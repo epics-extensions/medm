@@ -1076,20 +1076,28 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
 {
     char buf[1024];     /* Warning: Fixed Size */
     XGetErrorText(dpy,event->error_code,buf,1024);
+#if 0    
 #ifdef WIN32
-    lprintf("\n%s\n",buf);
+    lprintf("\n%s\n", buf);
 #else
-    fprintf(stderr,"\n%s\n",buf);
+    fprintf(stderr,"\n%s\n", buf);
+#endif
+#else
+    medmPostMsg(1,"xErrorHandler:\n%s\n", buf);
 #endif    
     return 0;
 }
 
 void xtErrorHandler(char *message)
 {
+#if 0
 #ifdef WIN32
     lprintf("\n%s\n",message);
 #else
     fprintf(stderr,"\n%s\n",message);
+#endif
+#else
+    medmPostMsg(1,"xtErrorHandler:\n%s\n", message);
 #endif    
 }
 

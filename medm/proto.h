@@ -633,6 +633,15 @@ void printWindowAttributes(Display *display, Window win, char *string);
 char *getEventName(int type);
 void dumpDisplayInfoList(DisplayInfo *head, char *string);
 void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title);
+/* XR5 Resource ID patch */
+#ifdef USE_XR5_RESOURCEID_PATCH
+Pixmap XPatchCreatePixmap(Display *dpy, Drawable drawable, unsigned int width,
+  unsigned int height, unsigned int depth);
+GC XPatchCreateGC(Display *dpy, Drawable drawable, unsigned long valueMask,
+  XGCValues *gcValues);
+int XPatchFreeGC(Display *dpy,  GC gc);
+int XPatchFreePixmap(Display *dpy, Pixmap pixmap);
+#endif
 
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_SYNC 0
 #define DEBUG_RADIO_BUTTONS 0
 #define DEBUG_DEFINITIONS 0
 #define DEBUG_EVENTS 0
@@ -61,6 +62,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_WIN32_LEAKS 0
 #define DEBUG_FILE_RENAME 0
 #define DEBUG_SAVE_ALL 0
+#define DEBUG_VERSION 0
+#define DEBUG_PROP 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -3044,7 +3047,6 @@ main(int argc, char *argv[])
     XEvent event;
     char versionString[60];
     Window targetWindow;
-
     Boolean attachToExistingMedm, completeClientMessage;
     char fullPathName[FULLPATHNAME_SIZE+1], name[FULLPATHNAME_SIZE+1];
     unsigned char *propertyData;
@@ -3065,6 +3067,10 @@ main(int argc, char *argv[])
   /* Hummingbird Exceed XDK initialization for WIN32 */
     HCLXmInit();
 #endif
+
+#if DEBUG_PROP
+    print("Starting MEDM\n");
+#endif    
 
 #if DEBUG_WIN32_LEAKS
 #ifdef WIN32
@@ -3261,31 +3267,53 @@ main(int argc, char *argv[])
 	screenNum = DefaultScreen(display);
 	rootWindow = RootWindow(display,screenNum);
 
-      /*   Intern the appropriate atom if it doesn't exist (False implies this) */
+      /* Intern the appropriate atom if it doesn't exist (i.e. use
+           False). */
 	if(request->fontStyle == FIXED_FONT) {
 	    if(request->opMode == EXECUTE) {
-		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
 	    } else {
-		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
 	    }
 	} else if(request->fontStyle == SCALABLE_FONT) {
 	    if(request->opMode == EXECUTE) {
-		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
 	    } else {
-		windowPropertyAtom = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
+		windowPropertyAtom = XInternAtom(display,
+		  MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
 	    }
 	} 
 
-      /*   Get the property  (Should a the mainShell window number)
-       *     type:          Actual type of the property (None if it doesn't exist)
-       *     propertyData:  The value of the property */
+      /* Get the property  (Should a the mainShell window number)
+       *  type:          Actual type of the property
+       *                 None if it doesn't exist
+       *  propertyData:  The value of the property */
 	status = XGetWindowProperty(display,rootWindow,windowPropertyAtom,
 	  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 	  &format,&nitems,&left,&propertyData);
 
+#if DEBUG_PROP
+	{
+	    char *atomName;
+
+	    atomName = XGetAtomName(display, windowPropertyAtom);
+	    print("\nAfter XInternAtom and XGetWindowProperty\n");
+	    print("atomName(1)=|%s| atom=%d\n",atomName?atomName:"NULL",
+	      windowPropertyAtom);
+	}
+	print("\nXGetWindowProperty(1): "
+	  "status=%d type=%ld format=%d nitems=%ld left=%ld"
+	  "  windowPropertyAtom=%d propertyData=%x\n",
+	  status,type,format,nitems,left,windowPropertyAtom,
+	  propertyData?*(long *)propertyData:0);
+#endif	
+
       /* Decide whether to attach to existing MEDM */
 	if(type != None) {
-	    medmHostWindow = *((Window *)propertyData);
+	    medmHostWindow = *(Window *)propertyData;
 	    attachToExistingMedm = (request->medmMode == CLEANUP) ? False : True;
 	    XFree(propertyData);
 	} else {
@@ -3308,7 +3336,8 @@ main(int argc, char *argv[])
 		print("\nCannot connect to existing MEDM because it is invalid\n"
  		  "  (An accompanying Bad Window error can be ignored)\n"
 		  "  Continuing with this one as if -cleanup were specified\n");
-		print("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		print("(Use -local to not use existing MEDM "
+		  "or be available as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 	    } else {
 	      /* Window does exist */
@@ -3317,16 +3346,20 @@ main(int argc, char *argv[])
 		    print("\nAttaching to existing MEDM\n");
 		    for(i=0; i<request->fileCnt; i++) {
 			if(fileStr = request->fileList[i]) {
-			    sendFullPathNameAndMacroAsClientMessages(medmHostWindow,fileStr,
-			      request->macroString,request->displayGeometry,windowPropertyAtom);
+			    sendFullPathNameAndMacroAsClientMessages(
+			      medmHostWindow,fileStr,
+			      request->macroString,request->displayGeometry,
+			      windowPropertyAtom);
 			    XFlush(display);
 			    print("  Dispatched: %s\n",fileStr);
 			}
 		    }
 		} else {
-		    print("\nAborting: No valid display specified and already a remote MEDM running.\n");
+		    print("\nAborting: No valid display specified and already "
+		      "a remote MEDM running.\n");
 		}
-		print("(Use -local to not use existing MEDM or be available as an existing MEDM\n"
+		print("(Use -local to not use existing MEDM or be available "
+		  "as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
 		
 	      /* Leave this MEDM */
@@ -3334,6 +3367,17 @@ main(int argc, char *argv[])
 		exit(0);
 	    }
 	}  
+
+#if DEBUG_PROP
+	{
+	    char *atomName;
+
+	    atomName = XGetAtomName(display, windowPropertyAtom);
+	    print("\nBefore XCloseDisplay\n");
+	    print("atomName(2)=|%s| atom=%d\n",atomName?atomName:"NULL",
+	      windowPropertyAtom);
+	}
+#endif	
 
       /* Close the display that was opened (Will start over later) */
 	XCloseDisplay(display);
@@ -3343,6 +3387,16 @@ main(int argc, char *argv[])
    *   Create mainShell
    *   Map window manager menu Close function to do nothing
    *     (Will handle this ourselves) */
+#if DEBUG_PROP
+	{
+	    char *atomName;
+
+	    atomName = XGetAtomName(display, windowPropertyAtom);
+	    print("\nBefore XtAppInitailize\n");
+	    print("atomName(3)=|%s| atom=%d\n",atomName?atomName:"NULL",
+	      windowPropertyAtom);
+	}
+#endif	
     n = 0;
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
@@ -3380,12 +3434,22 @@ main(int argc, char *argv[])
 	XtWarning("Cannot open display");
 	exit(-1);
     }
+#if DEBUG_PROP
+	{
+	    char *atomName;
+
+	    atomName = XGetAtomName(display, windowPropertyAtom);
+	    print("\nAfter XtDisplay\n");
+	    print("atomName(4)=|%s| atom=%d\n",atomName?atomName:"NULL",
+	      windowPropertyAtom);
+	}
+#endif	
     screenNum = DefaultScreen(display);
     rootWindow = RootWindow(display,screenNum);
     cmap = DefaultColormap(display,screenNum);	/* X default colormap */
-
-  /* Set XSynchronize for debugging */
-#ifdef XSYNC
+    
+      /* Set XSynchronize for debugging */
+#if DEBUG_SYNC
     XSynchronize(display,TRUE);
     medmPrintf(0,"\nRunning in SYNCHRONOUS mode\n");
 #endif
@@ -3500,13 +3564,13 @@ main(int argc, char *argv[])
     }
     currentColormap = defaultColormap;
     currentColormapSize = DL_MAX_COLORS;
-
+    
   /* Initialize the global resource bundle */
     initializeGlobalResourceBundle();
     globalResourceBundle.next = NULL;
     globalResourceBundle.prev = NULL;
-
-
+    
+    
   /* Intialize MEDM stuff */
     medmInit(request->displayFont);
     medmInitializeImageCache();
@@ -3517,15 +3581,72 @@ main(int argc, char *argv[])
     initMedmCommon();
     initEventHandlers();
     initMedmWidget();
-
-  /* We're the first MEDM around in this mode - proceed with full execution
-   *   Store mainShell window as the property if the atom is defined
-   *     (Will be stored if CLEANUP or first MEDM, won't be stored if LOCAL)  */
+    
+#if DEBUG_VERSION
+    print("ServerVendor=%s\n", ServerVendor(display));
+    print("VendorRelease=%d\n", VendorRelease(display));
+    print("ProtocolVersion=%d\n", ProtocolVersion(display));
+    print("ProtocolRevision=%d\n", ProtocolRevision(display));
+#endif
+    
+  /* We're the first MEDM around in this mode - proceed with full
+    execution.  Store mainShell window as the property associated with
+    the windowPropertyAtom.  (Will be stored if CLEANUP or first MEDM.
+    Won't be stored if LOCAL.)  We need to reintern the atom as it may
+    have been lost when we closed the display above if we are the only
+    X connection (likely on WIN32).  (Nothing changes unless it was
+    lost, since we use False.) */
+    if(request->fontStyle == FIXED_FONT) {
+	if(request->opMode == EXECUTE) {
+	    windowPropertyAtom = XInternAtom(display,
+	      MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
+	} else {
+	    windowPropertyAtom = XInternAtom(display,
+	      MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
+	}
+    } else if(request->fontStyle == SCALABLE_FONT) {
+	if(request->opMode == EXECUTE) {
+	    windowPropertyAtom = XInternAtom(display,
+	      MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
+	} else {
+	    windowPropertyAtom = XInternAtom(display,
+	      MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
+	}
+    } 
     targetWindow = XtWindow(mainShell);
-    if(windowPropertyAtom)
-      XChangeProperty(display,rootWindow,windowPropertyAtom,
-	XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
-
+    if(windowPropertyAtom) {
+#if DEBUG_PROP
+	{
+	    char *atomName;
+	    
+	    atomName = XGetAtomName(display, windowPropertyAtom);
+	    print("\nBefore XChangeProperty\n");
+	    print("atomName(5)=|%s| atom=%d\n",atomName?atomName:"NULL",
+	      windowPropertyAtom);
+	}
+	status = XGetWindowProperty(display,rootWindow,windowPropertyAtom,
+	  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
+	  &format,&nitems,&left,&propertyData);
+	print("\nXGetWindowProperty(2): status=%d type=%ld format=%d nitems=%ld left=%ld"
+	  "  windowPropertyAtom=%d propertyData=%x\n",
+	  status,type,format,nitems,left,windowPropertyAtom,
+	  	  propertyData?*(long *)propertyData:0);
+	print("\nChanged window property: windowPropertyAtom=%d targetWindow=%x\n",
+	  windowPropertyAtom,targetWindow);
+#endif	
+	XChangeProperty(display,rootWindow,windowPropertyAtom,
+	  XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
+#if DEBUG_PROP
+	status = XGetWindowProperty(display,rootWindow,windowPropertyAtom,
+	  0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
+	  &format,&nitems,&left,&propertyData);
+	print("\nXGetWindowProperty(3): status=%d type=%ld format=%d nitems=%ld left=%ld"
+	  "  windowPropertyAtom=%d propertyData=%x\n",
+	  status,type,format,nitems,left,windowPropertyAtom,
+	  propertyData?*(long *)propertyData:0);
+#endif	
+    }
+    
   /* Start any command-line specified displays */
     for(i=0; i < request->fileCnt; i++) {
 	char *fileStr;

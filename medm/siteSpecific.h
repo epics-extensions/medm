@@ -223,3 +223,13 @@ DlColormap defaultDlColormap = {
 #if 0
 #define MEDM_AUTO_RAISE 1
 #endif
+
+/* XR5 has a bug in that resource ID's are not reused, even if the
+   resource is freed.  Eventually it runs out of ID's and MEDM doesn't
+   work right.  Define the following to locally handle the resource
+   allocation for pixmaps and graphics contexts.  These are the most
+   created/freed resources */
+/* !!! Do not use this yet.  It doesn't work. */
+#if 0
+#define USE_XR5_RESOURCEID_PATCH
+#endif

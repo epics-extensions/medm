@@ -66,6 +66,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_REDRAW 0
 #define DEBUG_VISIBILITY 0
 #define DEBUG_GRID 0
+#define DEBUG_RESID 1
 
 #define UNDO
 
@@ -4688,3 +4689,151 @@ static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
 	XtPopdown(w);
     }
 }
+
+/* XR5 Resource ID patch */
+#ifdef USE_XR5_RESOURCEID_PATCH
+#undef XCreatePixmap
+#undef XFreePixmap
+#undef XCreateGC
+#undef XFreeGC
+
+/* 
+     This set of routines enable an X11 program to maintain its own 
+     list of reusable resource ids.  It uses an undocumented and unsupported 
+     feature of Xlib, the resource_alloc field of the display structure.  This 
+     field contains a pointer to the resource_id allocator function to be used. 
+
+     The reusable resource id list is implemented as a linked list.
+
+     Ideally, for each resource id which the application frees (pixmaps, GCs, 
+     windows), it will put the resource id back on the reusable list.  In some 
+     cases this will be difficult, or impossible.  In the case of deleting a 
+     window which has subwindows, the application would have to know the window 
+     id of each subwindow to put them back on the reusable list.  Either that, 
+     or just accept that in this case there will be a slow leak of the number 
+     of resource ids available to the program. 
+ */ 
+
+typedef struct _reusable_id_entry { 
+     struct _reusable_id_entry  *next; 
+     XID                id; 
+} reusable_id_entry; 
+
+static reusable_id_entry *reusable_id_list_head = NULL; 
+static reusable_id_entry *id_entry; 
+
+/*  Application defined resource ID allocator */ 
+
+static XID xPatchResourceIDAllocator(register Display *dpy) 
+{ 
+    XID return_id; 
+    reusable_id_entry *entry_ptr; 
+
+#define resource_base  (((_XPrivDisplay)dpy)->private3)
+#define resource_mask (((_XPrivDisplay)dpy)->private4)
+#define resource_id  (((_XPrivDisplay)dpy)->private5) 
+#define resource_shift  (((_XPrivDisplay)dpy)->private6)
+
+    /* First, are there any IDs available for re-use? */ 
+    if(reusable_id_list_head) { 
+       /* Yes, remove one from the list */ 
+       return_id = reusable_id_list_head->id; 
+       entry_ptr = reusable_id_list_head->next; 
+       free(reusable_id_list_head); 
+       reusable_id_list_head = entry_ptr; 
+       return return_id; 
+    }      
+    /* Else use conventional resource id allocation (from _XAllocID) */ 
+    if(resource_id <= resource_mask) 
+      return (resource_base + (resource_id++ << resource_shift)); 
+    if(resource_id != 0x10000000) { 
+        medmPrintf(1,"\nxPatchResourceIDAllocator: "
+	  "Resource ID allocation space exhausted!\n"); 
+        resource_id = 0x10000000; 
+    }
+#if DEBUG_RESID
+    print("xPatchResourceIDAllocator: resID=%x\n",resource_id);
+#endif    
+    return resource_id; 
+} 
+
+static void XPatchAddEntryForReuse(XID id)
+{
+       id_entry = malloc(sizeof(reusable_id_entry));
+       id_entry->next = reusable_id_list_head;
+       id_entry->id = id;
+       reusable_id_list_head = id_entry;
+}
+
+Pixmap XPatchCreatePixmap(Display *dpy, Drawable drawable, unsigned int width,
+  unsigned int height, unsigned int depth)
+{
+    XID (*oldAllocator)(Display *) =
+      (((_XPrivDisplay)display)->resource_alloc);
+    Pixmap pixmap;
+    
+  /* Replace the allocator */
+    (((_XPrivDisplay)display)->resource_alloc) = xPatchResourceIDAllocator;
+
+  /* Run the real routine */
+    pixmap = XCreatePixmap(dpy, drawable, width, height, depth);
+
+  /* Restore the allocator */
+    (((_XPrivDisplay)display)->resource_alloc) = oldAllocator;
+    
+#if DEBUG_RESID
+    print("XPatchCreatePixmap: pixmap=%x\n",pixmap);
+#endif    
+    return pixmap;
+}
+
+GC XPatchCreateGC(Display *dpy, Drawable drawable, unsigned long valueMask,
+    XGCValues *gcValues)
+{
+    XID (*oldAllocator)(Display *) =
+      (((_XPrivDisplay)display)->resource_alloc);
+    GC gc;
+    
+  /* Replace the allocator */
+    (((_XPrivDisplay)display)->resource_alloc) = xPatchResourceIDAllocator;
+
+  /* Run the real routine */
+    gc = XCreateGC(dpy, drawable, valueMask, gcValues);
+
+  /* Restore the allocator */
+    (((_XPrivDisplay)display)->resource_alloc) = oldAllocator;
+    
+#if DEBUG_RESID
+    print("XPatchCreateGC: gc=%x\n",gc);
+#endif    
+    return gc;
+}
+
+int XPatchFreePixmap(Display *dpy, Pixmap pixmap)
+{
+    int retVal = BadPixmap;
+    
+    if(pixmap) {
+	retVal = XFreePixmap(display, pixmap);
+	XPatchAddEntryForReuse((XID)pixmap);
+    }
+#if DEBUG_RESID
+    print("XPatchFreePixmap: pixmap=%x\n",pixmap);
+#endif    
+    return retVal;
+}
+int XPatchFreeGC(Display *dpy,  GC gc)
+{
+    int retVal = BadPixmap;
+    
+    if(gc) {
+	retVal = XFreeGC(display, gc);
+	XPatchAddEntryForReuse((XID)gc);
+    }
+#if DEBUG_RESID
+    print("XPatchFreeGC: gc=%x\n",gc);
+#endif    
+    return retVal;
+}
+
+#endif     /* #ifdef USE_XR5_RESOURCEID_PATCH */
