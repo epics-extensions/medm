@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_RADIO_BUTTONS 0
+#define DEBUG_RADIO_BUTTONS 1
 #define DEBUG_DEFINITIONS 0
 
 #define ALLOCATE_STORAGE
@@ -737,6 +737,9 @@ typedef struct {
     int  fileCnt;
     char **fileList;
 } request_t;
+
+/* Global Variables */
+Widget modeRB, modeEditTB, modeExecTB;
 
 void requestDestroy(request_t *request) {
     if (request) {
@@ -1926,6 +1929,37 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
     case HELP_ON_VERSION_BTN:
 	XtPopup(productDescriptionShell,XtGrabNone);
+#if DEBUG_RADIO_BUTTONS
+	{
+	    Boolean radioBehavior,set;
+	    unsigned char indicatorType;
+	    Arg args[20];
+	    int nargs;
+	    
+	    nargs=0;
+	    XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
+	    XtGetValues(modeRB,args,nargs);
+	    printf("\nEdit/Execute: globalDisplayListTraversalMode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
+	      globalDisplayListTraversalMode,DL_EXECUTE,DL_EDIT);
+	    printf("modeRB(%x): XmNradioBehavior=%d \n",modeRB,(int)radioBehavior);
+	    
+	    nargs=0;
+	    XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
+	    XtSetArg(args[nargs],XmNset,&set); nargs++;
+	    XtGetValues(modeEditTB,args,nargs);
+	    printf("modeEditTB(%x): XmNset=%d  XmNindicatorType=%d "
+	      "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
+	      modeEditTB,(int)set,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
+
+	    nargs=0;
+	    XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
+	    XtSetArg(args[nargs],XmNset,&set); nargs++;
+	    XtGetValues(modeExecTB,args,nargs);
+	    printf("modeExecTB(%x): XmNset=%d  XmNindicatorType=%d "
+	      "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
+	      modeExecTB,(int)set,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
+	}
+#endif
 	break;
     }
 }
@@ -1980,16 +2014,19 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtGetValues(XtParent(w),args,nargs);
 	printf("\nmodeCallback: mode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
 	  mode,DL_EXECUTE,DL_EDIT);
-	printf("\nParent(%d): XmNradioBehavior=%d \n",XtParent(w),(int)radioBehavior);
+	printf("\nParent(%x): XmNradioBehavior=%d \n",XtParent(w),(int)radioBehavior);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
 	XtSetArg(args[nargs],XmNset,&set); nargs++;
 	XtGetValues(w,args,nargs);
-	printf("Widget(%d): XmNindicatorType=%d "
+	printf("Widget(%x): XmNindicatorType=%d "
 	  "[XmN_OF_MANY=%d XmONE_OF_MANY=%d]\n",
 	  w,(int)indicatorType,(int)XmN_OF_MANY,(int)XmONE_OF_MANY);
-	printf("Widget(%d): XmNset=%d\n",w,(int)set);
+	printf("Widget(%x): XmNset=%d\n",w,(int)set);
+	printf("If both the Edit and the Execute buttons are down,"
+	  " select \"On Version\"\n  on the Help menu to get more information."
+	  "  Send to evans@aps.anl.gov.\n");
     }
 #endif
 
@@ -3153,7 +3190,6 @@ static void createMain()
     XmString label;
     XmButtonType buttonType[N_MAX_MENU_ELES];
     Widget mainMB, mainBB, frame, frameLabel;
-    Widget modeRB, modeEditTB, modeExecTB;
     char name[12];
     int n;
     Arg args[20];
@@ -3284,7 +3320,6 @@ static void createMain()
 	XtManageChild(modeExecTB);
 
     } else {
-
       /* if started in execute mode, then no editing allowed, therefore
        * the modeRB widget is really a frame with a label indicating
        * execute-only mode
@@ -3298,7 +3333,6 @@ static void createMain()
 	modeRB = XmCreateLabel(frame,"modeRB",args,n);
 	XmStringFree(label);
 	XtManageChild(modeRB);
-
     }
 
   /*
