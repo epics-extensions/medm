@@ -267,7 +267,6 @@ void medmCATerminate(void);
 void updateListCreate(Channel *);
 void updateListDestroy(Channel *);
 void medmDisconnectChannel(Channel *pCh);
-void medmConnectEventCb(struct connection_handler_args);
 void CATaskGetInfo(int *, int *, int *);
 Channel *getChannelFromRecord(Record *pRecord);
 #endif

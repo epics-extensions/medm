@@ -219,7 +219,8 @@ void optionMenuSet(Widget menu, int buttonId)
    */
     XtVaGetValues(menu,XmNsubMenuId,&subMenu,NULL);
     if (subMenu != NULL) {
-	XtVaGetValues(subMenu,XmNchildren,&buttons,XmNnumChildren,&numButtons,NULL);
+	XtVaGetValues(subMenu, XmNchildren,&buttons, XmNnumChildren,
+	  &numButtons, NULL);
 	if (buttonId < (int)numButtons && buttonId >= 0) {
 	    XtVaSetValues(menu,XmNmenuHistory,buttons[buttonId],NULL);
 	}
@@ -254,7 +255,8 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 	ca_pend_event(0.00000001);
 	t = medmTime() - t;
 	if (t > 0.5) {
-	    fprintf(stderr,"medmScheduler : time used by ca_pend_event = %8.1f\n",t);
+	    fprintf(stderr,"medmScheduler : time used by ca_pend_event ="
+	      " %8.1f\n", t);
 	}
     }
 #else
@@ -272,15 +274,20 @@ static void medmScheduler(XtPointer cd, XtIntervalId *id)
 #if 0
 		if(strstr(d->dlFile->name,"sMain.adl")) {
 		    fprintf(stderr,"medmScheduler:\n");
-		    fprintf(stderr,"  d->updateTaskListHead.next is %d\n",d->updateTaskListHead.next);
-		    fprintf(stderr,"  d->periodicTaskCount: %d\n",d->periodicTaskCount);
-		    fprintf(stderr,"  d->dlFile->name: |%s|\n",d->dlFile->name);
+		    fprintf(stderr,"  d->updateTaskListHead.next is %d\n",
+		      d->updateTaskListHead.next);
+		    fprintf(stderr,"  d->periodicTaskCount: %d\n",
+		      d->periodicTaskCount);
+		    fprintf(stderr,"  d->dlFile->name: |%s|\n",
+		      d->dlFile->name);
 		}
 		if(!pt) {
 		    fprintf(stderr,"medmScheduler:\n");
 		    fprintf(stderr,"  d->updateTaskListHead.next is NULL\n");
-		    fprintf(stderr,"  d->periodicTaskCount: %d\n",d->periodicTaskCount);
-		    fprintf(stderr,"  d->dlFile->name: |%s|\n",d->dlFile->name);
+		    fprintf(stderr,"  d->periodicTaskCount: %d\n",
+		      d->periodicTaskCount);
+		    fprintf(stderr,"  d->dlFile->name: |%s|\n",
+		      d->dlFile->name);
 		    fprintf(stderr,"Aborting\n");
 		    abort();
 		} else
@@ -387,8 +394,10 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
 	if (pt->timeInterval > 0.0) {
 	    displayInfo->periodicTaskCount++;
 	    updateTaskStatus.periodicTaskCount++;
-	    if (pt->nextExecuteTime < displayInfo->updateTaskListHead.nextExecuteTime) {
-		displayInfo->updateTaskListHead.nextExecuteTime = pt->nextExecuteTime;
+	    if (pt->nextExecuteTime <
+	      displayInfo->updateTaskListHead.nextExecuteTime) {
+		displayInfo->updateTaskListHead.nextExecuteTime =
+		  pt->nextExecuteTime;
 	    }
 	}
 	updateTaskStatus.taskCount++;
@@ -398,6 +407,8 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
     }
 }  
 
+#if 0
+/* KE: Not used */
 void updateTaskDeleteTask(UpdateTask *pt)
 {
     UpdateTask *tmp;
@@ -423,6 +434,7 @@ void updateTaskDeleteTask(UpdateTask *pt)
 	}
     }
 }
+#endif
 
 void updateTaskDeleteAllTask(UpdateTask *pt)
 {
@@ -466,7 +478,8 @@ void updateTaskDeleteAllTask(UpdateTask *pt)
 	ca_pend_event(CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
 	if (t > 0.5) {   
-	    fprintf(stderr,"updateTaskDeleteAllTask : time used by ca_pend_event = %8.1f\n",t);
+	    fprintf(stderr, "updateTaskDeleteAllTask : time used by "
+	      "ca_pend_event = %8.1f\n",t);
 	} 
     }
 #else
@@ -648,7 +661,8 @@ Boolean updateTaskWorkProc(XtPointer cd)
 
 	    XSetClipRectangles(display,gc,0,0,&t->rectangle,1,YXBanded);
 	    if (!t->opaque)
-	      XCopyArea(display,pDI->drawingAreaPixmap, XtWindow(pDI->drawingArea),gc,
+	      XCopyArea(display,pDI->drawingAreaPixmap,
+		XtWindow(pDI->drawingArea),gc,
 		t->rectangle.x, t->rectangle.y,
 		t->rectangle.width, t->rectangle.height,
 		t->rectangle.x, t->rectangle.y);
@@ -727,7 +741,9 @@ void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region *region)
     }
 }
 
-void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer, Record **, int *))
+void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer,
+  Record **, int *))
 {
     pt->getRecord = nameCb;
 }
+

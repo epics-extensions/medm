@@ -953,7 +953,7 @@ static void stripChartConfig(StripChart *psc) {
 
     psc->nextAdvanceTime = medmTime() + psc->timeInterval;
 
-  /* specified the time interval */
+  /* specify the time interval */
     updateTaskSetScanRate(psc->updateTask,psc->timeInterval);
     psc->updateEnable = True;
 }

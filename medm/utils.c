@@ -4447,7 +4447,7 @@ void createPvInfoDlg(void)
       XmNsashHeight, 1,
       NULL);
     n = 0;
-    XtSetArg(args[n], XmNrows,  26); n++;
+    XtSetArg(args[n], XmNrows,  27); n++;
     XtSetArg(args[n], XmNcolumns, 38); n++;
     XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
     XtSetArg(args[n], XmNeditable, False); n++;

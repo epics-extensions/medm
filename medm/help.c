@@ -93,8 +93,9 @@ static void copyEarlyMessages(void);
 static char *earlyMessages = NULL;
 static int earlyMessagesDone = 0;
 
-extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
-extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
+/* popen, pclose  may not be defined for strict ANSI */
+extern FILE *popen(const char *, const char *);
+extern int	pclose(FILE *);
 
 static Widget errMsgText = NULL;
 static Widget errMsgSendSubjectText = NULL;
@@ -180,7 +181,8 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    if (errMsgText == NULL) return;
 	    if (getenv("PSPRINTER") == (char *)NULL) {
 		medmPrintf(1,
-		  "\nerrMsgDlgPrintButtonCb: PSPRINTER environment variable not set,"
+		  "\nerrMsgDlgPrintButtonCb: "
+		  "PSPRINTER environment variable not set,"
 		  " printing disallowed\n");
 		return;
 	    }
@@ -190,7 +192,8 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    tblock = localtime(&now);
 	    tmp = XmTextGetSelection(errMsgText);
 	    strftime(timeStampStr,TIME_STRING_MAX,
-	      "MEDM Message Window Selection at "STRFTIME_FORMAT":\n\n",tblock);
+	      "MEDM Message Window Selection at "STRFTIME_FORMAT":\n\n",
+	      tblock);
 	    if (tmp == NULL) {
 		tmp = XmTextGetString(errMsgText);
 		strftime(timeStampStr,TIME_STRING_MAX,
@@ -205,7 +208,8 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	  /* Write file */
 	    file = fopen(psFileName,"w+");
 	    if (file == NULL) {
-		medmPrintf(1,"\nerrMsgDlgPrintButtonCb:  Unable to open file: %s",
+		medmPrintf(1,"\nerrMsgDlgPrintButtonCb:  "
+		  "Unable to open file: %s",
 		  psFileName);
 		XtFree(tmp);
 		free(psFileName);
@@ -240,7 +244,8 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 		errMsgSendDlgCreateDlg();
 	    }
 	    XmTextSetString(errMsgSendToText,"");
-	    XmTextSetString(errMsgSendSubjectText,"MEDM Message Window Contents");
+	    XmTextSetString(errMsgSendSubjectText,
+	      "MEDM Message Window Contents");
 	    tmp = XmTextGetSelection(errMsgText);
 	    if (tmp == NULL) {
 		tmp = XmTextGetString(errMsgText);
@@ -470,7 +475,8 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     if (to && *to) {
 	sprintf(p, "%s", to);
     } else {
-	medmPostMsg(1,"errMsgSendDlgSendButtonCb: No recipient specified for mail\n");
+	medmPostMsg(1,"errMsgSendDlgSendButtonCb: "
+	  "No recipient specified for mail\n");
 	if (to) XtFree(to);
 	if (subject) XtFree(subject);
 	if (text) XtFree(text);
@@ -484,7 +490,8 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     pp = popen(cmd, "w");
 #endif
     if (!pp) {
-	medmPostMsg(1,"errMsgSendDlgSendButtonCb: Cannot execute mail command\n");
+	medmPostMsg(1,"errMsgSendDlgSendButtonCb: "
+	  "Cannot execute mail command\n");
 	if (to) XtFree(to);
 	if (subject) XtFree(subject);
 	if (text) XtFree(text);
@@ -618,7 +625,8 @@ void errMsgSendDlgCreateDlg()
   XmNdefaultButtonShadowThickness, 1,
   */
 	  NULL);
-	XtAddCallback(closeButton,XmNactivateCallback,errMsgSendDlgCloseButtonCb, NULL);
+	XtAddCallback(closeButton, XmNactivateCallback,
+	  errMsgSendDlgCloseButtonCb, NULL);
 	sendButton = XtVaCreateManagedWidget("Send",
 	  xmPushButtonWidgetClass, actionArea,
 	  XmNtopAttachment,    XmATTACH_FORM,
@@ -631,7 +639,8 @@ void errMsgSendDlgCreateDlg()
 #ifdef WIN32
 	XtSetSensitive(sendButton,False);
 #else
-	XtAddCallback(sendButton,XmNactivateCallback,errMsgSendDlgSendButtonCb, NULL);
+	XtAddCallback(sendButton, XmNactivateCallback,
+	  errMsgSendDlgSendButtonCb, NULL);
 #endif	
     }
     XtManageChild(actionArea);
@@ -767,7 +776,8 @@ static void copyEarlyMessages(void)
 
   /* Insert the messages */
     curpos = XmTextGetLastPosition(errMsgText);
-    strcpy(string,"\n*** Messages received before Message Window was started:\n");
+    strcpy(string,"\n*** Messages received before Message Window was "
+      "started:\n");
     XmTextInsert(errMsgText, curpos, string);
     curpos+=strlen(string);
     XmTextInsert(errMsgText, curpos, earlyMessages);
@@ -794,11 +804,11 @@ static char caStudyMsg[512];
 static Boolean caUpdateStudyDlg = False;
 static char *caStatusDummyString =
 "Time Interval (sec)       =         \n"
-"CA connection(s)          =         \n"
-"CA connected              =         \n"
-"CA incoming event(s)      =         \n"
-"Active Objects            =         \n"
-"Object(s) Updated         =         \n"
+"CA Channels               =         \n"
+"CA Channels Connected     =         \n"
+"CA Incoming Events        =         \n"
+"MEDM Objects Updating     =         \n"
+"MEDM Objects Updated      =         \n"
 "Update Requests           =         \n"
 "Update Requests Discarded =         \n"
 "Update Requests Queued    =         \n";
@@ -862,7 +872,7 @@ void medmCreateCAStudyDlg() {
 
 	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
-	  XmNtitle, "MEDM Message Window",
+	  XmNtitle, "MEDM Status Window",
 	  XmNdeleteResponse, XmDO_NOTHING,
 	  NULL);
 
@@ -915,9 +925,12 @@ void medmCreateCAStudyDlg() {
 	  XmNrightAttachment,  XmATTACH_POSITION,
 	  XmNrightPosition,    6,
 	  NULL);
-	XtAddCallback(closeButton,XmNactivateCallback,caStudyDlgCloseButtonCb, NULL);
-	XtAddCallback(resetButton,XmNactivateCallback,caStudyDlgResetButtonCb, NULL);
-	XtAddCallback(modeButton,XmNactivateCallback,caStudyDlgModeButtonCb, NULL);
+	XtAddCallback(closeButton, XmNactivateCallback,
+	  caStudyDlgCloseButtonCb, NULL);
+	XtAddCallback(resetButton,XmNactivateCallback,
+	  caStudyDlgResetButtonCb, NULL);
+	XtAddCallback(modeButton,XmNactivateCallback,
+	  caStudyDlgModeButtonCb, NULL);
 	XtManageChild(actionArea);
 	XtManageChild(pane);
     }
@@ -926,7 +939,8 @@ void medmCreateCAStudyDlg() {
     caUpdateStudyDlg = True;
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (errMsgDlgTimeOutId == 0)
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudyDlg,NULL);
+	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
+	    medmUpdateCAStudyDlg,NULL);
     } else {
 	errMsgDlgTimeOutId = 0;
     }
@@ -969,24 +983,31 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
       /* No channels connected or CA events for CDEV */
 	channelConnected = caEventCount = 0;
 #else
-	CATaskGetInfo(&channelCount,&channelConnected,&caEventCount);
+	CATaskGetInfo(&channelCount, &channelConnected, &caEventCount);
 #endif
-	totalUpdateDiscarded = updateDiscardCount+periodicUpdateDiscardCount;
-	totalUpdateRequested = updateRequestCount+periodicUpdateRequestCount + totalUpdateDiscarded;
+	totalUpdateDiscarded = updateDiscardCount + periodicUpdateDiscardCount;
+	totalUpdateRequested = updateRequestCount + periodicUpdateRequestCount +
+	  totalUpdateDiscarded;
 	totalTaskCount = taskCount + periodicTaskCount;
 	if (caStudyAverageMode) {
 	    double elapseTime = totalTimeElapsed;
 	    totalTimeElapsed += timeInterval;
-	    aveCAEventCount = (aveCAEventCount * elapseTime + caEventCount) / totalTimeElapsed;
-	    aveUpdateExecuted = (aveUpdateExecuted * elapseTime + updateExecuted) / totalTimeElapsed;
-	    aveUpdateRequested = (aveUpdateRequested * elapseTime + totalUpdateRequested) / totalTimeElapsed;
+	    aveCAEventCount = (aveCAEventCount * elapseTime + caEventCount) /
+	      totalTimeElapsed;
+	    aveUpdateExecuted =
+	      (aveUpdateExecuted * elapseTime + updateExecuted) /
+	      totalTimeElapsed;
+	    aveUpdateRequested =
+	      (aveUpdateRequested * elapseTime + totalUpdateRequested) /
+	      totalTimeElapsed;
 	    aveUpdateRequestDiscarded =
-	      (aveUpdateRequestDiscarded * elapseTime + totalUpdateDiscarded) / totalTimeElapsed;
+	      (aveUpdateRequestDiscarded * elapseTime + totalUpdateDiscarded) /
+	      totalTimeElapsed;
 	    sprintf(caStudyMsg,
 	      "AVERAGE :\n"
 	      "Total Time Elapsed        = %8.1f\n"
-	      "CA Incoming Event(s)      = %8.1f\n"
-	      "Object(s) Updated         = %8.1f\n"
+	      "CA Incoming Events        = %8.1f\n"
+	      "Objects Updated           = %8.1f\n"
 	      "Update Requests           = %8.1f\n"
 	      "Update Requests Discarded = %8.1f\n",
 	      totalTimeElapsed,
@@ -997,11 +1018,11 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 	} else { 
 	    sprintf(caStudyMsg,  
 	      "Time Interval (sec)       = %8.2f\n"
-	      "CA connection(s)          = %8d\n"
-	      "CA connected              = %8d\n"
-	      "CA incoming event(s)      = %8d\n"
-	      "Active Objects            = %8d\n"
-	      "Object(s) Updated         = %8d\n"
+	      "CA Channels               = %8d\n"
+	      "CA Channels Connected     = %8d\n"
+	      "CA Incoming Events        = %8d\n"
+	      "MEDM Objects Updating     = %8d\n"
+	      "MEDM Objects Updated      = %8d\n"
 	      "Update Requests           = %8d\n"
 	      "Update Requests Discarded = %8d\n"
 	      "Update Requests Queued    = %8d\n",
@@ -1022,7 +1043,8 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 	XmUpdateDisplay(caStudyS);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    if (errMsgDlgTimeOutId == *id)
-	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,1000,medmUpdateCAStudyDlg,NULL);
+	      errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 1000,
+		medmUpdateCAStudyDlg, NULL);
 	} else {
 	    errMsgDlgTimeOutId = 0;
 	}
@@ -1034,7 +1056,8 @@ static void medmUpdateCAStudyDlg(XtPointer cd, XtIntervalId *id)
 void medmStartUpdateCAStudyDlg() {
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (errMsgDlgTimeOutId == 0) 
-	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext,3000,medmUpdateCAStudyDlg,NULL);
+	  errMsgDlgTimeOutId = XtAppAddTimeOut(appContext, 3000,
+	    medmUpdateCAStudyDlg, NULL);
     } else {
 	errMsgDlgTimeOutId = 0;
     }
@@ -1093,7 +1116,8 @@ static void displayHelpCallback(Widget shell, XtPointer client_data,
     } else {
       /* KE: Should no longer get here */
       /* Print error message */
-	medmPostMsg(1,"displayHelpCallback: The environment variable MEDM_HELP is not set\n"
+	medmPostMsg(1,"displayHelpCallback: "
+	  "The environment variable MEDM_HELP is not set\n"
 	  "  Cannot implement help for %s\n", name);
     }
 }
@@ -1107,11 +1131,14 @@ void addDisplayHelpProtocol(DisplayInfo *displayInfo)
     Atom message, protocol;
     char buf[80];
 
-    message = XmInternAtom (XtDisplay(displayInfo->shell), "_MOTIF_WM_MESSAGES", FALSE);
-    protocol = XmInternAtom (XtDisplay(displayInfo->shell), "_MEDM_DISPLAY_HELP", FALSE);
+    message = XmInternAtom (XtDisplay(displayInfo->shell),
+      "_MOTIF_WM_MESSAGES", FALSE);
+    protocol = XmInternAtom (XtDisplay(displayInfo->shell),
+      "_MEDM_DISPLAY_HELP", FALSE);
 
     XmAddProtocols(displayInfo->shell, message, &protocol, 1);
-    XmAddProtocolCallback(displayInfo->shell, message, protocol, displayHelpCallback, (XtPointer)displayInfo);
+    XmAddProtocolCallback(displayInfo->shell, message, protocol,
+      displayHelpCallback, (XtPointer)displayInfo);
 
     sprintf (buf, "Help _H Ctrl<Key>h f.send_msg %d", protocol);
     XtVaSetValues (displayInfo->shell, XmNmwmMenu, buf, NULL);
