@@ -1,0 +1,734 @@
+/* Routines used to implement the Cartesian Plot using SciPlot */
+
+/* KE: Note that MEDM uses the union XcVType (of a float and a long) to convert
+ *   float values to the values needed for XRT float resources.  This is not
+ *   needed for SciPlot, but the mechanism is still used */
+
+#define DEBUG_CARTESIAN_PLOT 0
+#define DEBUG_USER_DATA 0
+
+#define MAX(a,b)  ((a)>(b)?(a):(b))
+#define MIN_FONT_HEIGHT 8
+
+#include "medm.h"
+#include "medmSciPlot.h"
+#include "medmCartesianPlot.h"
+
+/* Static Function prototypes */
+
+/* Implementations */
+
+CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
+{
+    CpDataHandle hData;
+    CpDataSet *ds;
+    int i;
+    
+  /* Allocate structure  */
+    hData = (CpDataHandle)calloc(1,sizeof(CpData));
+    if(!hData) return NULL;
+
+  /* Initialize */
+    hData->nsets = nsets;
+    hData->data = NULL;
+    if(nsets <= 0) return hData;
+    
+  /* Allocate data sets */
+    hData->data = (CpDataSet *)calloc(nsets, sizeof(CpDataSet));
+    if(!hData) {
+	CpDataDestroy(hData);
+	return NULL;
+    }
+
+  /* Initialize data sets */
+    for(i=0; i < nsets; i++) {
+	ds = hData->data+i;
+	ds->npoints = npoints;
+	ds->lastPoint = MAX(npoints-1,0);
+	ds->listid = INVALID_LISTID;
+	ds->xp = NULL;
+	ds->yp = NULL;
+      /* Allocate x and y arrays */
+	if(npoints > 0) {
+	    ds->xp = (float *)calloc(npoints,sizeof(float));
+	    ds->yp = (float *)calloc(npoints,sizeof(float));
+	    if(!ds->xp || !ds->yp) {	
+		CpDataDestroy(hData);
+		return NULL;
+	    }
+	}
+      /* Determine a listid now to allow setting axis parameters, etc.  */
+	if(w) {
+	    ds->listid = SciPlotListCreateFloat(w, ds->npoints,
+	      ds->xp, ds->yp, "");
+	}
+    }
+
+    return hData;
+}
+
+int CpDataGetLastPoint(CpDataHandle hData, int set) {
+    return hData->data[set].lastPoint;
+}
+
+double CpDataGetXElement(CpDataHandle hData, int set, int point) {
+    return hData->data[set].xp[point];
+}
+
+double CpDataGetYElement(CpDataHandle hData, int set, int point) {
+    return hData->data[set].yp[point];
+}
+
+void CpDataDestroy(CpDataHandle hData)
+{
+    int i;
+    
+    if(hData) {
+	int nsets = hData->nsets;
+	
+	if(hData->data) {
+	    for(i=0; i < nsets; i++) {
+		if (hData->data->xp) free((char *)hData->data->xp);
+		if (hData->data->yp) free((char *)hData->data->yp);
+	    }
+	    free((char *)hData->data);
+	}
+	free(hData);
+	hData = NULL;
+    }
+}
+
+int CpDataSetHole(CpDataHandle hData, double hole) {
+  /* Do nothing, hole is always SCIPLOT_SKIP_VAL */
+    return 1;
+}
+
+int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
+    hData->data[set].lastPoint = MAX(point,0);
+    return 1;
+}
+
+int CpDataSetXElement(CpDataHandle hData, int set, int point, double x) {
+    hData->data[set].xp[point] = x;
+    return 1;
+}
+
+int CpDataSetYElement(CpDataHandle hData, int set, int point, double y) {
+    hData->data[set].yp[point] = y;
+    return 1;
+}
+
+void CpGetAxisInfo(Widget w,
+  XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
+  Boolean *xAxisIsLog, Boolean *yAxisIsLog, Boolean *y2AxisIsLog,
+  Boolean *xAxisIsAuto, Boolean *yAxisIsAuto, Boolean *y2AxisIsAuto,
+  XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
+  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF)
+{
+    float xMin, yMin, y2Min, xMax, yMax, y2Max;
+
+  /* Get available information from SciPlot */
+    SciPlotGetXAxisInfo(w, &xMin, &xMax, xAxisIsLog, xAxisIsAuto);
+    SciPlotGetXAxisInfo(w, &yMin, &yMax, yAxisIsLog, yAxisIsAuto);
+
+  /* Convert */
+    xMinF->fval = xMin;
+    yMinF->fval = yMin;
+    y2MinF->fval = 0;         /* Not implemented */
+    xMaxF->fval = xMax;
+    yMaxF->fval = yMax;
+    y2MaxF->fval = 0;         /* Not implemented */
+
+  /* Get userData */
+    XtVaGetValues(w, XtNuserData, userData, NULL);
+    
+  /* Define the rest */
+    *xAxisIsTime = False;     /* Not implemented */
+    **timeFormat = '\0';      /* Not implemented */
+    *y2AxisIsLog = False;      /* Not implemented */
+    *y2AxisIsAuto = True;      /* Not implemented */
+}
+
+void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
+  XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF)
+{
+    float xMin, yMin, y2Min, xMax, yMax, y2Max;
+
+  /* Get available information from SciPlot */
+    SciPlotGetXScale(w, &xMin, &xMax);
+    SciPlotGetYScale(w, &yMin, &yMax);
+
+  /* Convert */
+    xMinF->fval = xMin;
+    yMinF->fval = yMin;
+    y2MinF->fval = 0;         /* Not implemented */
+    xMaxF->fval = xMax;
+    yMaxF->fval = yMax;
+    y2MaxF->fval = 0;         /* Not implemented */
+}
+
+void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
+  int fillType, XColor color, int pointSize)
+  /* Fill type is not supported */
+{
+    int listid, colorid, pointStyle, lineStyle, set;
+
+  /* Return if handle is NULL */
+    if(!hData) return;
+
+  /* Determine which dataset (First trace is y1 axis, others are y2 axis))*/
+    set = (trace)?trace-1:0;
+    if(set >= hData->nsets) return;
+    
+  /* Return if an invalid id (list not defined yet) */
+    listid = hData->data[set].listid;
+    if(listid == INVALID_LISTID) return;
+    
+  /* Convert color to an index */
+    colorid = SciPlotStoreAllocatedColor(w, color.pixel);
+
+  /* Line style */
+    if(lineType == CP_LINE_NONE) lineStyle = XtLINE_NONE;
+    else lineType = XtLINE_SOLID;
+
+  /* Point style (depends on trace not data set) */
+    if(trace == 0) {
+	pointStyle = XtMARKER_FCIRCLE;
+    } else {
+	switch(trace%8) {
+	case 0:
+	    pointStyle = XtMARKER_FCIRCLE;
+	    break;	 
+	case 1:		 
+	    pointStyle = XtMARKER_FSQUARE;
+	    pointSize = pointSize*3/4;
+	    break;	 
+	case 2:		 
+	    pointStyle = XtMARKER_FUTRIANGLE;
+	    break;	 
+	case 3:		 
+	    pointStyle = XtMARKER_FDIAMOND;
+	    break;	 
+	case 4:		 
+	    pointStyle = XtMARKER_FDTRIANGLE;
+	    break;	 
+	case 5:		 
+	    pointStyle = XtMARKER_FRTRIANGLE;;
+	    break;	 
+	case 6:		 
+	    pointStyle = XtMARKER_FLTRIANGLE;;
+	    break;	 
+	case 7:		 
+	    pointStyle = XtMARKER_FBOWTIE;
+	    break;	 
+	default:	 
+	    pointStyle = XtMARKER_NONE;
+	    break;
+	}
+    }
+
+  /* Set the styles */
+    SciPlotListSetStyle(w, listid, colorid, pointStyle, colorid, lineStyle);
+    SciPlotListSetMarkerSize(w, listid, pointSize*2/3);
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
+  XcVType tick, XcVType num, int precision)
+  /* Ticks parameters cannot be changed */
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y:
+	SciPlotSetYUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisAuto(Widget w, int axis)
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXAutoScale(w);
+	break;
+    case CP_Y:
+	SciPlotSetYAutoScale(w);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisChannel(Widget w, int axis, XcVType max, XcVType min)
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y:
+	SciPlotSetYUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisLinear(Widget w, int axis)
+{
+    Arg args[1];
+    int nargs;
+
+    nargs=0;
+    switch(axis) {
+    case CP_X:
+	XtSetArg(args[nargs],XtNxLog,False); nargs++;
+	break;
+    case CP_Y:
+	XtSetArg(args[nargs],XtNyLog,False); nargs++;
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    XtSetValues(w,args,nargs);
+
+  /* Not supposed to be necessary */
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisLog(Widget w, int axis)
+{
+    Arg args[1];
+    int nargs;
+
+    nargs=0;
+    switch(axis) {
+    case CP_X:
+	XtSetArg(args[nargs],XtNxLog,True); nargs++;
+	break;
+    case CP_Y:
+	XtSetArg(args[nargs],XtNyLog,True); nargs++;
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    XtSetValues(w,args,nargs);
+
+  /* Not supposed to be necessary */
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisMaxMin(Widget w, int axis, XcVType max, XcVType min)
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y:
+	SciPlotSetYUserScale(w, min.fval, max.fval);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisMax(Widget w, int axis, XcVType max, XcVType tick,
+  XcVType num, int precision)
+  /* Ticks parameters cannot be changed */
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXUserMax(w, max.fval);
+	break;
+    case CP_Y:
+	SciPlotSetYUserMax(w, max.fval);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisMin(Widget w, int axis, XcVType min, XcVType tick,
+  XcVType num, int precision)
+  /* Ticks parameters cannot be changed */
+{
+    switch(axis) {
+    case CP_X:
+	SciPlotSetXUserMin(w, min.fval);
+	break;
+    case CP_Y:
+	SciPlotSetYUserMin(w, min.fval);
+	break;
+    case CP_Y2:
+      /* Not supported */
+	break;
+    }
+    SciPlotUpdate(w);
+}
+
+void CpSetAxisTime(Widget w, int axis, time_t base, char * format)
+  /* Not supported */
+{
+}
+
+void CpSetData(Widget w, int axis, CpDataHandle hData)
+  /* Axis (CP_X, CP_Y, CP_Y2) doesn't matter */
+{
+    int i, listid, npoints, nsets;
+
+  /* Return if handle is NULL */
+    if(!hData) return;
+
+  /* Loop over sets */
+    nsets = hData->nsets;
+    for(i=0; i < nsets; i++) {
+	listid = hData->data[i].listid;
+	npoints = hData->data[i].npoints;
+	if(npoints <= 0) continue;
+	if(listid == INVALID_LISTID) {
+	  /* Not set yet */
+	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
+	      hData->data[i].xp, hData->data[i].yp, "");
+	} else {
+	  /* Has already been set */
+	    SciPlotListUpdateFloat(w, listid, hData->data[i].npoints,
+	      hData->data[i].xp, hData->data[i].yp);
+	}
+    }
+  /* Don't do SciPlotUpdate here for efficiency */
+
+}
+
+void CpSetTimeBase(Widget w, time_t base)
+  /* Not supported */
+{
+}
+
+void CpUpdateWidget(Widget w, int full)
+{
+    if(full) {
+	SciPlotUpdate (w);
+    } else {
+      /* Try data only, do full if data out of bounds */
+	if (SciPlotQuickUpdate (w))
+	  SciPlotUpdate (w);
+    }
+}
+
+void CpSetTimeFormat(Widget w, char *format)
+  /* Not supported */
+{
+}
+
+Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
+  DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp)
+{
+    Arg args[75];     /* Count later */
+    int nargs;
+    int fgcolorid, bgcolorid;
+    char rgb[2][16], string[24];
+    int usedHeight, usedCharWidth, bestSize, preferredHeight;
+    int i, k, iPrec;
+    XcVType minF, maxF, tickF;
+    Widget w;
+    int validTraces = pcp ? pcp->nTraces : 0;
+
+  /* Set widget args from the dlCartesianPlot structure */
+    nargs = 0;
+    XtSetArg(args[nargs],XmNx,(Position)dlCartesianPlot->object.x); nargs++;
+    XtSetArg(args[nargs],XmNy,(Position)dlCartesianPlot->object.y); nargs++;
+    XtSetArg(args[nargs],XmNwidth,(Dimension)dlCartesianPlot->object.width); nargs++;
+    XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
+    XtSetArg(args[nargs],XmNborderWidth,0); nargs++;
+#if 0
+  /* Not a valid resource for SciPlot */
+    XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+#endif    
+    preferredHeight = MIN(dlCartesianPlot->object.width,
+      dlCartesianPlot->object.height)/TITLE_SCALE_FACTOR;
+#if 1
+    XtSetArg(args[nargs],XtNtitleFont,XtFONT_HELVETICA|
+      MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
+#endif    
+    if (strlen(dlCartesianPlot->plotcom.title) > 0) {
+	XtSetArg(args[nargs],XtNplotTitle,dlCartesianPlot->plotcom.title); nargs++;
+	XtSetArg(args[nargs],XtNshowTitle,True); nargs++;
+    } else {
+	XtSetArg(args[nargs],XtNshowTitle,False); nargs++;
+    }
+    if (strlen(dlCartesianPlot->plotcom.xlabel) > 0) {
+	XtSetArg(args[nargs],XtNxLabel,dlCartesianPlot->plotcom.xlabel); nargs++;
+	XtSetArg(args[nargs],XtNshowXLabel,True); nargs++;
+    } else {
+	XtSetArg(args[nargs],XtNshowXLabel,False); nargs++;
+    }
+    if (strlen(dlCartesianPlot->plotcom.ylabel) > 0) {
+	XtSetArg(args[nargs],XtNyLabel,dlCartesianPlot->plotcom.ylabel); nargs++;
+	XtSetArg(args[nargs],XtNshowYLabel,True); nargs++;
+    } else {
+	XtSetArg(args[nargs],XtNshowYLabel,False); nargs++;
+    }
+    preferredHeight = MIN(dlCartesianPlot->object.width,
+      dlCartesianPlot->object.height)/AXES_SCALE_FACTOR;
+#if 1
+    XtSetArg(args[nargs],XtNaxisFont,XtFONT_HELVETICA|
+      MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
+    XtSetArg(args[nargs],XtNlabelFont,XtFONT_HELVETICA|
+      MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
+#endif
+
+  /* SciPlot-specific */
+    XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
+    XtSetArg(args[nargs],XtNdrawMajor,False); nargs++;
+    XtSetArg(args[nargs],XtNdrawMinor,False); nargs++;
+    XtSetArg(args[nargs],XtNdragX,True); nargs++;
+    XtSetArg(args[nargs],XtNdragY,True); nargs++;
+#if 0
+  /* KE: These extend the origin to include zero
+   *   They don't make the axes cross at zero */
+    XtSetArg(args[nargs],XtNxOrigin,True); nargs++;
+    XtSetArg(args[nargs],XtNyOrigin,True); nargs++;
+#endif    
+
+#if 0
+  /* Set the plot type */
+  /* (Use the default of Cartesian) */
+    switch (dlCartesianPlot->style) {
+    case POINT_PLOT:
+    case LINE_PLOT:
+    case FILL_UNDER_PLOT:
+	XtSetArg(args[nargs],XtchartType,XtCartesian); nargs++;
+	break;
+    }
+  /* Second y axis is not supported */
+    if (validTraces > 1) {
+	XtSetArg(args[nargs],XtNxrtY2AxisShow,TRUE); nargs++;
+    }
+#endif
+
+  /* X Axis Style */
+    switch (dlCartesianPlot->axis[X_AXIS_ELEMENT].axisStyle) {
+    case LINEAR_AXIS:
+	XtSetArg(args[nargs],XtNxLog,False); nargs++;
+	break;
+    case LOG10_AXIS:
+	XtSetArg(args[nargs],XtNxLog,True); nargs++;
+	break;
+    case TIME_AXIS: {
+      /* Not supported */
+	if(pcp) pcp->timeScale = True;
+    }
+    break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X axis style\n");
+	break;
+    }
+
+  /* Y1 Axis Style */
+    switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].axisStyle) {
+    case LINEAR_AXIS:
+	XtSetArg(args[nargs],XtNyLog,False); nargs++;
+	break;
+    case LOG10_AXIS:
+	XtSetArg(args[nargs],XtNyLog,True); nargs++;
+	break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 axis style\n");
+	break;
+    }
+
+#if 0
+  /* Y2 Axis Style */
+    switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].axisStyle) {
+    case LINEAR_AXIS:
+	XtSetArg(args[nargs],XtNyLog,False); nargs++;
+	break;
+    case LOG10_AXIS:
+	XtSetArg(args[nargs],XtNyLog,True); nargs++;
+	break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 axis style\n");
+	break;
+    }
+#endif    
+
+  /* Add pointer to CartesianPlot struct as userData to widget */
+    XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
+
+  /* Set miscellaneous  args */
+    XtSetArg(args[nargs],XmNtraversalOn,False); nargs++;
+
+  /* Create the widget */
+    w = XtCreateWidget("cartesianPlot", sciplotWidgetClass,
+      displayInfo->drawingArea, args, nargs);
+
+  /* Have to realize the widget before setting the rest */
+    XtRealizeWidget(w);
+
+#if DEBUG_USER_DATA
+    print("CpCreateCartesianPlot: widget=%x pcp=%x\n",w,pcp);
+#endif    
+
+  /* Set foreground and background */
+    fgcolorid = SciPlotStoreAllocatedColor(w,
+      displayInfo->colormap[dlCartesianPlot->plotcom.clr]);
+    bgcolorid = SciPlotStoreAllocatedColor(w,
+      displayInfo->colormap[dlCartesianPlot->plotcom.bclr]);
+    SciPlotSetForegroundColor(w, fgcolorid);
+    SciPlotSetBackgroundColor(w, bgcolorid);
+
+  /* Set X Axis Range */
+    switch (dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle) {
+    case CHANNEL_RANGE:		/* handle as default until connected */
+    case AUTO_SCALE_RANGE:
+	SciPlotSetXAutoScale(w);
+	break;
+    case USER_SPECIFIED_RANGE:
+	minF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
+	maxF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
+	SciPlotSetXUserScale(w, minF.fval, maxF.fval);
+	break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown X range style\n");
+	break;
+    }
+
+  /* Set Y1 Axis Range */
+    switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
+    case CHANNEL_RANGE:		/* handle as default until connected */
+    case AUTO_SCALE_RANGE:
+	SciPlotSetYAutoScale(w);
+	break;
+    case USER_SPECIFIED_RANGE:
+	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
+	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
+	SciPlotSetXUserScale(w, minF.fval, maxF.fval);
+	break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
+	break;
+    }
+
+#if 0    
+  /* Set Y2 Axis Range (Unsupported) */
+    switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
+    case CHANNEL_RANGE:		/* handle as default until connected */
+    case AUTO_SCALE_RANGE:
+	SciPlotSetYAutoScale(w);
+	break;
+    case USER_SPECIFIED_RANGE:
+	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
+	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
+	SciPlotSetXUserScale(w, minF.fval, max.fval);
+	break;
+    default:
+	medmPrintf(1,"\nCpCreateRunTimeCartesianPlot: Unknown Y1 range style\n");
+	break;
+    }
+#endif    
+
+    SciPlotUpdate(w);
+    return w;
+}
+
+#if 1
+/* Set DEBUG_CARTESIAN_PLOT in eventHandlers.c to do this with Btn3 */
+void dumpCartesianPlot(Widget w)
+{
+    Arg args[30];
+    int n=0;
+			    
+    Dimension height;
+    Dimension width;
+    Dimension borderWidth;
+    int defaultMarkerSize;
+    int margin;
+    int titleMargin;
+    Boolean drawMajor;
+    Boolean drawMinor;
+    Boolean drawMajorTics;
+    Boolean drawMinorTics;
+    Boolean showLegend;
+    Boolean showTitle;
+    Boolean showXLabel;
+    Boolean showYLabel;
+    Boolean xLog;
+    Boolean yLog;
+    Boolean xOrigin;
+    Boolean yOrigin;
+    Boolean xAxisNumbers;
+    Boolean yAxisNumbers;
+    String plotTitle;
+    String xLabel;
+    String yLabel;
+    XtPointer userData;
+
+    print("\nSciPlot Widget (%x)\n");
+
+    XtSetArg(args[n],XtNwidth,&width); n++;
+    XtSetArg(args[n],XtNheight,&height); n++;
+    XtSetArg(args[n],XtNdefaultMarkerSize,&defaultMarkerSize); n++;
+    XtSetArg(args[n],XtNborderWidth,&borderWidth); n++;
+    XtSetArg(args[n],XtNtitleMargin,&titleMargin); n++;
+    XtSetArg(args[n],XtNmargin,&margin); n++;
+    XtSetArg(args[n],XtNdrawMajor,&drawMajor); n++;
+    XtSetArg(args[n],XtNdrawMinor,&drawMinor); n++;
+    XtSetArg(args[n],XtNdrawMajorTics,&drawMajorTics); n++;
+    XtSetArg(args[n],XtNdrawMinorTics,&drawMinorTics); n++;
+    XtSetArg(args[n],XtNshowLegend,&showLegend); n++;
+    XtSetArg(args[n],XtNshowTitle,&showTitle); n++;
+    XtSetArg(args[n],XtNshowXLabel,&showXLabel); n++;
+    XtSetArg(args[n],XtNshowYLabel,&showYLabel); n++;
+    XtSetArg(args[n],XtNxLog,&xLog); n++;
+    XtSetArg(args[n],XtNyLog,&yLog); n++;
+    XtSetArg(args[n],XtNxOrigin,&xOrigin); n++;
+    XtSetArg(args[n],XtNyOrigin,&yOrigin); n++;
+    XtSetArg(args[n],XtNxAxisNumbers,&xAxisNumbers); n++;
+    XtSetArg(args[n],XtNyAxisNumbers,&yAxisNumbers); n++;
+    XtSetArg(args[n],XtNplotTitle,&plotTitle); n++;
+    XtSetArg(args[n],XtNxLabel,&xLabel); n++;
+    XtSetArg(args[n],XtNyLabel,&yLabel); n++;
+    XtSetArg(args[n],XmNuserData,&userData); n++;
+    XtGetValues(w,args,n);
+    
+    print("  plotTitle: %s\n",plotTitle);
+    print("  xLabel: %s\n",xLabel);
+    print("  yLabel: %s\n",yLabel);
+    print("  width: %d\n",width);
+    print("  height: %d\n",height);
+    print("  defaultMarkerSize: %d\n",defaultMarkerSize);
+    print("  borderWidth: %d\n",borderWidth);
+    print("  margin: %d\n",margin);
+    print("  titleMargin: %d\n",titleMargin);
+    print("  drawMajor: %s\n",drawMajor?"True":"False");
+    print("  drawMinor: %s\n",drawMinor?"True":"False");
+    print("  drawMajorTics: %s\n",drawMajorTics?"True":"False");
+    print("  drawMinorTics: %s\n",drawMinorTics?"True":"False");
+    print("  showLegend: %s\n",showLegend?"True":"False");
+    print("  showTitle: %s\n",showTitle?"True":"False");
+    print("  showXLabel: %s\n",showXLabel?"True":"False");
+    print("  showYLabel: %s\n",showYLabel?"True":"False");
+    print("  xLog: %s\n",xLog?"True":"False");
+    print("  yLog: %s\n",yLog?"True":"False");
+    print("  xOrigin: %s\n",xOrigin?"True":"False");
+    print("  yOrigin: %s\n",yOrigin?"True":"False");
+    print("  xAxisNumbers: %s\n",xAxisNumbers?"True":"False");
+    print("  yAxisNumbers: %s\n",yAxisNumbers?"True":"False");
+    print("  userData: %x\n",userData);
+}
+#endif

@@ -624,7 +624,7 @@ void cpUpdateMatrixColors(void);
 Widget createCartesianPlotAxisDialog(Widget parent);
 Widget createCartesianPlotDataDialog(Widget parent);
 Widget createRelatedDisplayDataDialog(Widget parent);
-void dumpCartesianPlot(void);
+void dumpCartesianPlot(Widget w);
 void updateCartesianPlotAxisDialog(void);
 void updateCartesianPlotAxisDialogFromWidget(Widget cp);
 void updateCartesianPlotDataDialog(void);

@@ -22,8 +22,8 @@
 static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
 #endif
 
-#define CpDataCreate(hData, nsets, npoints) \
-  XrtDataCreate(hData, nsets, npoints)
+#define CpDataCreate(widget, type, nsets, npoints) \
+  XrtDataCreate(type, nsets, npoints)
 #define CpDataGetLastPoint(hData, set) \
   XrtDataGetLastPoint(hData, set)
 #define CpDataGetXElement(hData, set, point) \

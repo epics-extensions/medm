@@ -116,15 +116,6 @@ static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 static CpDataHandle hcpNullData = (CpDataHandle)0;
 Widget cpMatrix = NULL, cpForm = NULL;
 
-static char *timeFormatString[NUM_CP_TIME_FORMAT] = {     /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-    "%H:%M:%S",
-    "%H:%M",
-    "%H:00",
-    "%b %d, %Y",
-    "%b %d",
-    "%b %d %H:00",
-    "%a %H:00"};
-
 static DlDispatchTable cartesianPlotDlDispatchTable = {
     createDlCartesianPlot,
     NULL,
@@ -174,7 +165,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
   /* Initialize hcpNullData if not done */
     if(!hcpNullData) {
-	hcpNullData = CpDataCreate(CP_GENERAL,1,1);
+	hcpNullData = CpDataCreate((Widget)0,CP_GENERAL,1,1);
 	CpDataSetHole(hcpNullData,0.0);
 	CpDataSetLastPoint(hcpNullData,0,0);
 	CpDataSetXElement(hcpNullData,0,0,0.0);
@@ -327,7 +318,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     XColor xColors[MAX_TRACES];
-    CpDataHandle hcp1, hcp2;
+    CpDataHandle hcp, hcp1, hcp2;
     float minX, maxX, minY, maxY, minY2, maxY2;
     XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
     char string[24];
@@ -378,9 +369,9 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
   /* Allocate the CP data structures with size maxElements */
     hcp1 = hcp2 = NULL;
-    hcp1 = CpDataCreate(CP_GENERAL,1,maxElements);
+    hcp1 = CpDataCreate(widget,CP_GENERAL,1,maxElements);
     if (pcp->nTraces > 1) {
-	hcp2 = CpDataCreate(CP_GENERAL,pcp->nTraces-1,maxElements);
+	hcp2 = CpDataCreate(widget,CP_GENERAL,pcp->nTraces-1,maxElements);
     }
 
   /* Loop over all the traces */
@@ -494,25 +485,6 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	}
     }     /* End for loop over traces */
     
-  /* Loop over traces and set CpDataStyle array */
-    pointSize = MAX(2, dlCartesianPlot->object.height/70);
-    for (i = 0; i < pcp->nTraces; i++) {
-	switch(dlCartesianPlot->style) {
-	case POINT_PLOT:
-	    CpSetAxisStyle(widget, i, CP_LINE_NONE, CP_LINE_NONE, xColors[i],
-	      pointSize);
-	    break;
-	case LINE_PLOT:
-	    CpSetAxisStyle(widget, i, CP_LINE_SOLID, CP_LINE_NONE, xColors[i],
-	      pointSize);
-	    break;
-	case FILL_UNDER_PLOT:
-	    CpSetAxisStyle(widget, i, CP_LINE_SOLID, CP_LINE_SOLID, xColors[i],
-	      pointSize);
-	    break;
-	}
-    }
-
   /* Record the trace number and set the data pointers in the XYTrace */
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
@@ -529,6 +501,26 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
   /* Set the data pointers in the CartesianPlot */
     pcp->hcp1 = hcp1;
     pcp->hcp2 = hcp2;
+
+  /* Loop over traces and set CpDataStyle array */
+    pointSize = MAX(2, dlCartesianPlot->object.height/70);
+    for (i = 0; i < pcp->nTraces; i++) {
+	hcp=i?hcp2:hcp1;
+	switch(dlCartesianPlot->style) {
+	case POINT_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case LINE_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case FILL_UNDER_PLOT:
+	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
+	      xColors[i], pointSize);
+	    break;
+	}
+    }
 
   /* Fill in connect-time channel-based range specifications
    *   This is different than the min/max stored in the display element */
@@ -1324,6 +1316,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     if (pcp->triggerCh.recordX) {
 	medmRecordAddUpdateValueCb(pcp->triggerCh.recordX,cartesianPlotUpdateValueCb);
     }
+    CpUpdateWidget(widget, CP_FULL);
     updateTaskMarkUpdate(pcp->updateTask);
 }
 
@@ -1369,6 +1362,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 		}
 	    }
 	}
+	CpUpdateWidget(widget, CP_FULL);
 	updateTaskMarkUpdate(pcp->updateTask);
 	return;
     }
@@ -1413,6 +1407,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	    medmPrintf(1,"\ncartesianPlotUpdateValueCb: Illegal cpDataSet specified\n");
 	}
     }
+    CpUpdateWidget(widget, CP_FAST);
     updateTaskMarkUpdate(pcp->updateTask);
 }
 
@@ -2175,9 +2170,10 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  rcType/3);
 	return;
     }
-  /* strip trailing zeroes */
+  /* Strip trailing zeroes */
     tail = strlen(string);
     while (string[--tail] == '0') string[tail] = '\0';
+  /* Set the new value if it is different */
     currentString = XmTextFieldGetString(w);
     if (strcmp(string,currentString))
       XmTextFieldSetString(w,string);
@@ -2557,7 +2553,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     CartesianPlot *pcp;
     XtPointer userData;
     Boolean xAxisIsLog, y1AxisIsLog, y2AxisIsLog, xAxisIsTime,
-      xMinUseDef, y1MinUseDef, y2MinUseDef,
+      xAxisIsAuto, y1AxisIsAuto, y2AxisIsAuto,
       xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
       y2IsCurrentlyFromChannel;
     XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
@@ -2566,12 +2562,15 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 
     if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 
-    CpGetAxisInfo(cp, &userData, &xAxisIsTime, &xAxisIsLog,
-      &y1AxisIsLog, &y2AxisIsLog, &xMaxF, &y1MaxF,
-      &y2MaxF, &xMinF, &y1MinF, &y2MinF,
-      &xMinUseDef, &y1MinUseDef, &y2MinUseDef, &timeFormat);
+    CpGetAxisInfo(cp, &userData, &xAxisIsTime, &timeFormat,
+      &xAxisIsLog, &y1AxisIsLog, &y2AxisIsLog,
+      &xAxisIsAuto, &y1AxisIsAuto, &y2AxisIsAuto,
+      &xMaxF, &y1MaxF, &y2MaxF,
+      &xMinF, &y1MinF, &y2MinF);
 
-    if (pcp = (CartesianPlot *)userData) {
+    /* Determine range by first checking if from channel using the CartesianPlot
+     *   If not from channel, determine whether auto or user from AxisIsAuto */
+      if (pcp = (CartesianPlot *)userData) {
 	xIsCurrentlyFromChannel =
 	  pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
 	y1IsCurrentlyFromChannel =
@@ -2580,8 +2579,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	  pcp->axisRange[Y2_AXIS_ELEMENT].isCurrentlyFromChannel;
     }
 
-  /* X Axis */
-    if (xAxisIsTime)  {
+  /* X Axis Style */
+    if(xAxisIsTime) {
       /* Style */
 	optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
 	  TIME_AXIS - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
@@ -2602,9 +2601,9 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	  - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
 	XtSetSensitive(axisTimeFormat, False);
     }
-  /* Range */
+  /* X Axis Range */
     buttonId = (xIsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (xMinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      (xAxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
       - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
@@ -2619,7 +2618,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	while (string[--tail] == '0') string[tail] = '\0';
 	XmTextFieldSetString(axisRangeMax[X_AXIS_ELEMENT],string);
     }
-    if (!xMinUseDef && !xIsCurrentlyFromChannel) { 
+    if (!xAxisIsAuto && !xIsCurrentlyFromChannel) { 
 	XtSetSensitive(axisRangeMinRC[X_AXIS_ELEMENT],True);
 	XtSetSensitive(axisRangeMaxRC[X_AXIS_ELEMENT],True);
     } else {
@@ -2627,13 +2626,12 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	XtSetSensitive(axisRangeMaxRC[X_AXIS_ELEMENT],False);
     }
 
-
-  /* Y1 Axis */
+  /* Y1 Axis both */
     optionMenuSet(axisStyleMenu[Y1_AXIS_ELEMENT],
       (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (y1IsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (y1MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      (y1AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
       - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y1_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
@@ -2648,7 +2646,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	while (string[--tail] == '0') string[tail] = '\0';
 	XmTextFieldSetString(axisRangeMax[Y1_AXIS_ELEMENT],string);
     }
-    if (!y1MinUseDef && !y1IsCurrentlyFromChannel) {
+    if (!y1AxisIsAuto && !y1IsCurrentlyFromChannel) {
 	XtSetSensitive(axisRangeMinRC[Y1_AXIS_ELEMENT],True);
 	XtSetSensitive(axisRangeMaxRC[Y1_AXIS_ELEMENT],True);
     } else {
@@ -2657,12 +2655,12 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     }
 
 
-  /* Y2 Axis */
+  /* Y2 Axis both */
     optionMenuSet(axisStyleMenu[Y2_AXIS_ELEMENT],
       (y2AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
     buttonId = (y2IsCurrentlyFromChannel ? CHANNEL_RANGE :
-      (y2MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      (y2AxisIsAuto ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
       - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y2_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
@@ -2677,7 +2675,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 	while (string[--tail] == '0') string[tail] = '\0';
 	XmTextFieldSetString(axisRangeMax[Y2_AXIS_ELEMENT],string);
     }
-    if (!y2MinUseDef && !y2IsCurrentlyFromChannel) {
+    if (!y2AxisIsAuto && !y2IsCurrentlyFromChannel) {
 	XtSetSensitive(axisRangeMinRC[Y2_AXIS_ELEMENT],True);
 	XtSetSensitive(axisRangeMaxRC[Y2_AXIS_ELEMENT],True);
     } else {

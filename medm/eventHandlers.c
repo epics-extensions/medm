@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_CARTESIAN_PLOT 0
+#define DEBUG_CARTESIAN_PLOT 1
 #define DEBUG_CREATE 0
 #define DEBUG_EDIT_POPUP 0
 #define DEBUG_EVENTS 0
@@ -157,6 +157,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	    case DL_Valuator:
 		if (widget = pE->widget) {
 		    popupValuatorKeyboardEntry(widget,displayInfo,event);
+		  /* KE: Is this just for debugging ? */
 		    XUngrabPointer(display,CurrentTime);
 		    XFlush(display);
 		}
@@ -186,6 +187,10 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 #endif			    
 #endif			    
 		    } else {
+#if DEBUG_CARTESIAN_PLOT
+			XUngrabPointer(display,CurrentTime);
+			XFlush(display);
+#endif		    
 		      /* Bring up plot axis data dialog */
 		      /* update globalResourceBundle with this element's info */
 			executeTimeCartesianPlotWidget = widget;
@@ -202,16 +207,15 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			
 			XtManageChild(cpAxisForm);
 			XtPopup(cartesianPlotAxisS,XtGrabNone);
+		      /* KE: Is this just for debugging ? */
+			XUngrabPointer(display,CurrentTime);
+			XFlush(display);
 		    }
 #if DEBUG_CARTESIAN_PLOT
-		    dumpCartesianPlot();
+		    dumpCartesianPlot(widget);
 #endif			
-		  /* End DEBUG */
-		    
-		    XUngrabPointer(display,CurrentTime);
-		    XFlush(display);
 		}
-#endif     /* #ifdef CARTESIAN_PLOT */
+#endif     /* #ifdef DEBUG_CARTESIAN_PLOT */
 		break;
 	    default:
 	      /* Popup execute-mode popup menu */
@@ -268,7 +272,6 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
       /* The following solves the problem of the pointer hanging when
        *   clicking Btn2 on a Related Display after bringing up the
        *   menu with a Btn 1 click */
-	XUngrabPointer(display,CurrentTime);
 	XBell(display,50);
     }
 }

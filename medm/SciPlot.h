@@ -98,6 +98,10 @@ typedef struct {
 #define XtNtrackPointer           "trackPointer"       /* track pointer pos  */
 #define XtNpointerValCallback     "pointerValCallback" /* track pointer cbk  */
 #define XtNbtn1ClickCallback      "btn1ClickCallback"  /* button 1 click cbk */
+  /* KE: */
+#define XtNuserData               "userData"           /* user data          */
+#define XtCUserData               "UserData"           /* user data class    */
+    
 
 /* the following are for the fixed left and right or top and bottom space    */
 /* It is very useful for multiple drawings to align in the windows           */
@@ -278,6 +282,17 @@ extern int  SciPlotZoomIn                     (Widget wi);
 extern int  SciPlotZoomOut                    (Widget wi);
 extern int  SciPlotZoomInX                    (Widget wi);
 extern int  SciPlotZoomOutX                   (Widget wi);
+
+/* KE: Missing prototypes */
+
+int SciPlotStoreAllocatedColor(Widget wi, Pixel p);
+
+/* KE: Prototypes for additional SciPlot functions */
+
+void SciPlotGetXAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+  Boolean *isAuto);
+void SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+  Boolean *isAuto);
 
 #ifdef __cplusplus
 };

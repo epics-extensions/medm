@@ -70,6 +70,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define CP_LINE_SOLID 0
 #define CP_LINE_NONE  1
+
+#define CP_FAST 0
+#define CP_FULL 1
  
 typedef struct {
     float axisMin;
@@ -117,7 +120,7 @@ typedef struct _CartesianPlot {
 /* Function prototypes for generic plotting routines
  *   These should be the same for any plot package */
 
-CpDataHandle CpDataCreate(CpDataType hData, int nsets, int npoints);
+CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints);
 int CpDataGetLastPoint(CpDataHandle hData, int set);
 double CpDataGetXElement(CpDataHandle hData, int set, int point);
 double CpDataGetYElement(CpDataHandle hData, int set, int point);
@@ -128,12 +131,11 @@ int CpDataSetXElement(CpDataHandle hData, int set, int point, double x);
 int CpDataSetYElement(CpDataHandle hData, int set, int point, double y);
 
 void CpGetAxisInfo(Widget w,
-  XtPointer *userData, Boolean *xAxisIsTime,
+  XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
   Boolean *xAxisIsLog, Boolean *yAxisIsLog, Boolean *y2AxisIsLog,
+  Boolean *xAxisIsAuto, Boolean *yAxisIsAuto, Boolean *y2AxisIsAuto,
   XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
-  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF,
-  Boolean *xMinUseDef, Boolean *yMinUseDef, Boolean *y2MinUseDef,
-  char **timeFormat);
+  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF);
 #if 0
 void CpGetAxisAll(Widget w,
   XcVType &xMax, XcVType &xMin, XcVType &xTick, XcVType &xNum, int &xPrecision,
@@ -142,8 +144,8 @@ void CpGetAxisAll(Widget w,
 #endif
 void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
   XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF);
-void CpSetAxisStyle(Widget w, int trace, int lineType, int fillType,
-  XColor color, int pointSize);
+void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
+  int fillType, XColor color, int pointSize);
 void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
   XcVType tick, XcVType num, int precision);
 void CpSetAxisMax(Widget w, int axis, XcVType max, XcVType tick,
@@ -159,7 +161,7 @@ void CpSetAxisTime(Widget w, int axis, time_t base, char * format);
 void CpSetData(Widget w, int axis, CpDataHandle hData);
 void CpSetTimeBase(Widget w, time_t base);
 void CpSetTimeFormat(Widget w, char *format);
-
+void CpUpdateWidget(Widget w, int full);
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
   DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp);
 
@@ -198,7 +200,15 @@ static Widget axisStyleMenu[3];                 /* Y1_AXIS_ELEMENT=1 */
 static Widget axisRangeMin[3], axisRangeMax[3]; /* Y2_AXIS_ELEMENT=2 */
 static Widget axisRangeMinRC[3], axisRangeMaxRC[3];
 static Widget axisTimeFormat;
- 
+static char *timeFormatString[NUM_CP_TIME_FORMAT] = {
+    "%H:%M:%S",
+    "%H:%M",
+    "%H:00",
+    "%b %d, %Y",
+    "%b %d",
+    "%b %d %H:00",
+    "%a %H:00"};
+
 #define CP_X_AXIS_STYLE   0
 #define CP_Y_AXIS_STYLE   1
 #define CP_Y2_AXIS_STYLE  2

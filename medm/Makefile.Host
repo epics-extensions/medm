@@ -10,67 +10,84 @@ CMPLR = STRICT
 #PURIFY = YES
 
 ifeq ($(PURIFY),YES)
-CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
-#CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPLR))
-#CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPLR))
+  CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
+  #CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPLR))
+  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPLR))
 endif
 
-#USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB)
-#USR_LDLIBS = -lANLwidgets.a -lPrintUtils -lGraphX
+# Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
+#XRTGRAPH=/opt/local/xrtgraph2.4.0
+#XRTGRAPH_EXTENSIONS =
 
+# Use to test SciPlot
+#XRTGRAPH =
+#SCIPLOT = YES
 
+# Set up for Xrt/Graph
 ifdef XRTGRAPH
-# USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
+  SCIPLOT =     # Don't allow more than one plot package
+  #USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -DXRTGRAPH
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
 
 #  The following sets up for the XRT/graph 3.0 extensions
-ifdef XRTGRAPH_EXTENSIONS
-ifeq ($(XRTGRAPH_EXTENSIONS),YES)
-  USR_CFLAGS += -DXRT_EXTENSIONS
-  USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
-endif
-endif
+  ifdef XRTGRAPH_EXTENSIONS
+  ifeq ($(XRTGRAPH_EXTENSIONS),YES)
+    USR_CFLAGS += -DXRT_EXTENSIONS
+    USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
+  endif
+  endif
+
+  SRCS += medmCartesianPlot.c 
+  SRCS += medmXrtGraph.c 
 endif     #ifdef XRTGRAPH
 
+# Set up for SciPLot
+ifdef SCIPLOT
+  USR_CFLAGS += -DSCIPLOT
+  SRCS += medmCartesianPlot.c 
+  SRCS += medmSciPlot.c 
+  SRCS += SciPlot.c 
+endif
+
 #ifeq ($(PURIFY),YES)
-# The following is a workaround for a Purify bug with Solaris libm.a
+  # The following is a workaround for a Purify bug with Solaris libm.a
 #else
 #endif
 
 ifdef WIN32
-# If objects were compiled with different default runtime libraries
-#   (not a good idea), specify which one you want to use by making it
-#   the default and the others nodefault.
-# Currently Exceed is -MD and EPICS is -MDd
-ifeq ($(HOST_OPT),NO)
-USR_LDFLAGS += /defaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-USR_LDFLAGS += /nodefaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-else
-USR_LDFLAGS += /defaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-USR_LDFLAGS += /nodefaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-endif
-USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
-USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
-USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
-USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
+  # If objects were compiled with different default runtime libraries
+  #   (not a good idea), specify which one you want to use by making it
+  #   the default and the others nodefault.
+  # Currently Exceed is -MD and EPICS is -MDd
+  ifeq ($(HOST_OPT),NO)
+    USR_LDFLAGS += /defaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
+    USR_LDFLAGS += /nodefaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
+  else
+    USR_LDFLAGS += /defaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
+    USR_LDFLAGS += /nodefaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
+  endif
+  USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
+  USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
+  USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
+  USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
 endif
 
 USR_CFLAGS += -DEDITRES
 
 ifdef WIN32
-#USR_CFLAGS += /D_NTSDK
-USR_CFLAGS += /DWIN32 /D_WINDOWS
-USR_LDFLAGS += /SUBSYSTEM:WINDOWS
+  #USR_CFLAGS += /D_NTSDK
+  USR_CFLAGS += /DWIN32 /D_WINDOWS
+  USR_LDFLAGS += /SUBSYSTEM:WINDOWS
 endif
 
 
 ifdef MEDM_HELP_PATH
-   USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
+  USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
 else
-   USR_CFLAGS += -DMEDM_HELP_PATH="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM\""
+  USR_CFLAGS += -DMEDM_HELP_PATH="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM\""
 endif
 
 PROD = medm
@@ -80,9 +97,9 @@ USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 PROD_LIBS = GraphX ANLwidgets ca Com
 USR_LIBS_DEFAULT = Xm Xt X11
 ifeq ($(EXCEED),Exceed5)
-USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
+  USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
 else
-USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
+  USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
 endif
 
 GraphX_DIR = $(INSTALL_LIB)
@@ -114,10 +131,6 @@ SRCS += medmArc.c
 SRCS += medmBar.c 
 SRCS += medmByte.c 
 SRCS += medmCA.c 
-ifdef XRTGRAPH
-SRCS += medmCartesianPlot.c 
-SRCS += medmXrtGraph.c 
-endif
 SRCS += medmChoiceButtons.c 
 SRCS += medmCommon.c 
 SRCS += medmComposite.c 
@@ -185,3 +198,8 @@ xrtAuth: medm
 
 xxxx:
 	@echo ca_DIR: $(ca_DIR)
+
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:

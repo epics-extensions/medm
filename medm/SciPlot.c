@@ -22,6 +22,7 @@
  *         http://www.ae.utexas.edu/~rwmcm
  */
 
+#include <stdlib.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 
@@ -33,11 +34,12 @@ enum sci_drag_states {NOT_DRAGGING,
 		      DRAGGING_NOTHING, 
 		      DRAGGING_TOP, DRAGGING_BOTTOM,
 		      DRAGGING_BOTTOM_AND_LEFT, 
-		      DRAGGING_LEFT, DRAGGING_RIGHT, DRAGGING_DATA};
+		      DRAGGING_LEFT, DRAGGING_RIGHT, DRAGGING_DATA
+};
 
 enum sci_draw_axis_type {DRAW_ALL,
 			 DRAW_AXIS_ONLY,
-			 DRAW_NO_LABELS,
+			 DRAW_NO_LABELS
 };
 
 #define SCIPLOT_ZOOM_FACTOR 0.25
@@ -131,6 +133,9 @@ static XtResource resources[] =
    offset(XLeftSpace), XtRImmediate, (XtPointer) (100)},
   {XtNxRightSpace,  XtCMargin, XtRInt, sizeof(int),
    offset(XRightSpace), XtRImmediate, (XtPointer) (100)},
+/* KE: */
+  {XtNuserData,  XtCUserData, XtRPointer, sizeof(XtPointer),
+   offset(UserData), XtRPointer, NULL},
 };
 
 static SciPlotFontDesc font_desc_table[] =
@@ -148,18 +153,18 @@ static SciPlotFontDesc font_desc_table[] =
 /*
  * Private function declarations
  */
-static void Redisplay (SciPlotWidget w);
-static void Resize    (SciPlotWidget w);
-static Boolean SetValues (SciPlotWidget current, 
-			  SciPlotWidget request, SciPlotWidget new,
-			  ArgList args, Cardinal nargs);
-static void GetValuesHook (SciPlotWidget w, ArgList args,
+static void Redisplay (Widget w, XEvent *event, Region region);
+static void Resize (Widget w);
+static Boolean SetValues (Widget current, 
+			  Widget request, Widget new,
+			  ArgList args, Cardinal *nargs);
+static void GetValuesHook (Widget w, ArgList args,
 			   Cardinal *num_args);
 static void Initialize (Widget treq, Widget tnew, 
 			ArgList args, Cardinal *num);
 static void Realize (Widget aw, XtValueMask * value_mask, 
 		     XSetWindowAttributes * attributes);
-static void Destroy (SciPlotWidget w);
+static void Destroy (Widget w);
 
 static void ComputeAll (SciPlotWidget w, int type);
 static void ComputeAllDimensions (SciPlotWidget w, int type);
@@ -365,8 +370,9 @@ Realize(Widget aw, XtValueMask * value_mask, XSetWindowAttributes * attributes)
 }
 
 static void
-Destroy(SciPlotWidget w)
+Destroy(Widget ws)
 {
+  SciPlotWidget w = (SciPlotWidget)ws;
   int i, j;
   SciPlotFont *pf;
   SciPlotList *p;
@@ -406,9 +412,12 @@ Destroy(SciPlotWidget w)
 }
 
 static Boolean
-SetValues(SciPlotWidget current, SciPlotWidget request, SciPlotWidget new,
-	  ArgList args, Cardinal nargs)
+SetValues(Widget currents, Widget requests, Widget news,
+	  ArgList args, Cardinal *nargs)
+  /* KE: requests, args, nargs are not used */
 {
+  SciPlotWidget current = (SciPlotWidget)currents;
+  SciPlotWidget new = (SciPlotWidget)news;
   Boolean redisplay = FALSE;
 
   if (current->plot.XLog != new->plot.XLog)
@@ -505,8 +514,9 @@ SetValues(SciPlotWidget current, SciPlotWidget request, SciPlotWidget new,
 }
 
 static void
-GetValuesHook(SciPlotWidget w, ArgList args, Cardinal *num_args)
+GetValuesHook(Widget ws, ArgList args, Cardinal *num_args)
 {
+  SciPlotWidget w = (SciPlotWidget)ws;
   int i;
   char **loc;
 
@@ -524,13 +534,15 @@ GetValuesHook(SciPlotWidget w, ArgList args, Cardinal *num_args)
 
 
 static void
-Redisplay(SciPlotWidget w)
+Redisplay(Widget ws, XEvent *event, Region region)
+  /* KE: event, region not used */
 {
+  SciPlotWidget w = (SciPlotWidget)ws;
   if (!XtIsRealized((Widget)w))
     return;
 
   if (w->plot.update) {
-    Resize(w);
+    Resize(ws);
     w->plot.update = FALSE;
   }
   else {
@@ -540,8 +552,9 @@ Redisplay(SciPlotWidget w)
 }
 
 static void
-Resize(SciPlotWidget w)
+Resize(Widget ws)
 {
+  SciPlotWidget w = (SciPlotWidget)ws;
   if (!XtIsRealized((Widget)w))
     return;
   
@@ -562,11 +575,19 @@ Resize(SciPlotWidget w)
 static int 
 ColorStore (SciPlotWidget w, Pixel color)
 {
-  w->plot.num_colors++;
-  w->plot.colors = (Pixel *) XtRealloc((char *) w->plot.colors,
-    sizeof(Pixel) * w->plot.num_colors);
-  w->plot.colors[w->plot.num_colors - 1] = color;
-  return w->plot.num_colors - 1;
+    int i;
+
+  /* Check if it is there */
+    for(i=0; i < w->plot.num_colors; i++) {
+	if(w->plot.colors[i] == color) return i;
+    }
+
+  /* Not found, add it */
+    w->plot.num_colors++;
+    w->plot.colors = (Pixel *) XtRealloc((char *) w->plot.colors,
+      sizeof(Pixel) * w->plot.num_colors);
+    w->plot.colors[w->plot.num_colors - 1] = color;
+    return w->plot.num_colors - 1;
 }
 
 static void 
@@ -1244,7 +1265,6 @@ ItemGetGC (SciPlotWidget w, SciPlotItem *item)
     break;
   default:
     return NULL;
-    break;
   }
   if (w->plot.Monochrome)
     if (item->kind.any.color > 0)
@@ -5771,4 +5791,48 @@ SciPlotXDrawingRange (Widget wi, float xmin, float xmax,
   
   /* calculate real drawing range */
   ComputeXDrawingRange_i (w, xmin, xmax, rxmin, rxmax);
+}
+
+/* KE: Added routines */
+
+void SciPlotGetXAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+  Boolean *isAuto)
+{
+    SciPlotWidget w;
+    
+    if (!XtIsSciPlot(wi))
+      return;
+    
+    w = (SciPlotWidget)wi;
+    *isLog = w->plot.XLog;
+    if (w->plot.XAutoScale) {
+	*min = w->plot.Min.x;
+	*max = w->plot.Max.x;
+	*isAuto = True;
+    } else {
+	*min = w->plot.UserMin.x;
+	*max = w->plot.UserMax.x;
+	*isAuto = False;
+    }
+}
+
+void SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
+  Boolean *isAuto)
+{
+    SciPlotWidget w;
+    
+    if (!XtIsSciPlot(wi))
+      return;
+    
+    w = (SciPlotWidget)wi;
+    *isLog = w->plot.YLog;
+    if (w->plot.YAutoScale) {
+	*min = w->plot.Min.y;
+	*max = w->plot.Max.y;
+	*isAuto = True;
+    } else {
+	*min = w->plot.UserMin.y;
+	*max = w->plot.UserMax.y;
+	*isAuto = False;
+    }
 }

@@ -18,19 +18,10 @@
 /* Function prototypes */
 static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs);
 
-static char *timeFormatString[NUM_CP_TIME_FORMAT] = {
-    "%H:%M:%S",
-    "%H:%M",
-    "%H:00",
-    "%b %d, %Y",
-    "%b %d",
-    "%b %d %H:00",
-    "%a %H:00"};
-
 #if XRT_VERSION < 3
 /* Routines to make XRT/graph backward compatible from Version 3.0 */
 
-CpDataHandle CpDataCreate(CpDataType type, int nsets, int npoints) {
+CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints) {
     return XrtMakeData(type,nsets,npoints,True);
 }
 
@@ -56,7 +47,7 @@ int CpDataSetHole(CpDataHandle hData, double hole) {
 }
 
 int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
-    hData->g.data[0].npoints = point+1;
+    hData->g.data[set].npoints = point+1;
     return 1;
 }
 
@@ -86,12 +77,11 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
 #endif    
 
 void CpGetAxisInfo(Widget w,
-  XtPointer *userData, Boolean *xAxisIsTime,
+  XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
   Boolean *xAxisIsLog, Boolean *yAxisIsLog, Boolean *y2AxisIsLog,
+  Boolean *xAxisIsAuto, Boolean *yAxisIsAuto, Boolean *y2AxisIsAuto,
   XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
-  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF,
-  Boolean *xMinUseDef, Boolean *yMinUseDef, Boolean *y2MinUseDef,
-  char **timeFormat)
+  XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF)
 {
     XrtAnnoMethod xAnnoMethod;
     int xMin, yMin, y2Min, xMax, yMax, y2Max;
@@ -113,9 +103,10 @@ void CpGetAxisInfo(Widget w,
     XtSetArg(args[nargs],XtNxrtXMax, &xMax); nargs++;
     XtSetArg(args[nargs],XtNxrtYMax, &yMax); nargs++;
     XtSetArg(args[nargs],XtNxrtY2Max, &y2Max); nargs++;
-    XtSetArg(args[nargs],XtNxrtXMinUseDefault, xMinUseDef); nargs++;
-    XtSetArg(args[nargs],XtNxrtYMinUseDefault, yMinUseDef); nargs++;
-    XtSetArg(args[nargs],XtNxrtY2MinUseDefault, y2MinUseDef); nargs++;
+  /* Axis is auto if using default for (min and max) */
+    XtSetArg(args[nargs],XtNxrtXMinUseDefault, xAxisIsAuto); nargs++;
+    XtSetArg(args[nargs],XtNxrtYMinUseDefault, yAxisIsAuto); nargs++;
+    XtSetArg(args[nargs],XtNxrtY2MinUseDefault, y2AxisIsAuto); nargs++;
     XtSetArg(args[nargs],XtNxrtTimeFormat, timeFormat); nargs++;
     XtGetValues(w,args,nargs);
 #if DEBUG_XRT1
@@ -155,8 +146,9 @@ void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
     y2MaxF->lval = y2Max;
 }
 
-void CpSetAxisStyle(Widget w, int trace, int lineType, int fillType,
-  XColor color, int pointSize)
+void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
+  int fillType, XColor color, int pointSize)
+  /* hData is unused */
 {
     char rgb[16];
     XrtDataStyle myds;
@@ -171,7 +163,7 @@ void CpSetAxisStyle(Widget w, int trace, int lineType, int fillType,
   /* Fill in the XrtDataStyle struct */
     if(lineType == CP_LINE_NONE) myds.lpat = XRT_LPAT_NONE;
     else myds.lpat = XRT_LPAT_SOLID;
-    if(lineType == CP_LINE_NONE) myds.fpat = XRT_FPAT_NONE;
+    if(fillType == CP_LINE_NONE) myds.fpat = XRT_FPAT_NONE;
     else myds.fpat = XRT_FPAT_SOLID;
     myds.color = rgb;
     myds.width = 1;
@@ -191,7 +183,35 @@ void CpSetAxisStyle(Widget w, int trace, int lineType, int fillType,
 	myds.point = XRT_POINT_DOT;
 	XrtSetNthDataStyle(w, trace, &myds);
     } else {
-	myds.point = (XrtPoint)(XRT_POINT_BOX+trace-1);
+	switch(trace%8) {
+	case 0:
+	    myds.point = (XrtPoint)(XRT_POINT_DOT);
+	    break;
+	case 1:
+	    myds.point = (XrtPoint)(XRT_POINT_BOX);
+	    break;
+	case 2:
+	    myds.point = (XrtPoint)(XRT_POINT_TRI);
+	    break;
+	case 3:
+	    myds.point = (XrtPoint)(XRT_POINT_DIAMOND);
+	    break;
+	case 4:
+	    myds.point = (XrtPoint)(XRT_POINT_STAR);
+	    break;
+	case 5:
+	    myds.point = (XrtPoint)(XRT_POINT_CROSS);
+	    break;
+	case 6:
+	    myds.point = (XrtPoint)(XRT_POINT_CIRCLE);
+	    break;
+	case 7:
+	    myds.point = (XrtPoint)(XRT_POINT_SQUARE);
+	    break;
+	default:
+	    myds.point = (XrtPoint)(XRT_POINT_NONE);
+	    break;
+	}
 	XrtSetNthDataStyle2(w, trace-1, &myds);
     }
 }
@@ -471,6 +491,11 @@ void CpSetTimeFormat(Widget w, char *format)
     XtSetValues(w,args,nargs);
 }
 
+void CpUpdateWidget(Widget w, int full)
+  /* Not necessary */
+{
+}
+
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
   DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp)
 {
@@ -712,7 +737,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs], XtNxrtDoubleBuffer, True); nargs++;
 
   /* Create the widget */
-    w = XtCreateWidget("cartesianPlot",xtXrtGraphWidgetClass,
+    w = XtCreateWidget("cartesianPlot", xtXrtGraphWidgetClass,
       displayInfo->drawingArea, args, nargs);
 
   /* Add destroy callback for property editor */
@@ -727,7 +752,8 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 }
 
 #if DEBUG_CARTESIAN_PLOT
-void dumpCartesianPlot(void)
+/* Set DEBUG_CARTESIAN_PLOT in eventHandlers.c to do this with Btn3 */
+void dumpCartesianPlot(Widget w)
 {
     Arg args[20];
     int n=0;
@@ -752,7 +778,6 @@ void dumpCartesianPlot(void)
     unsigned char unitType;
     time_t timeBase;
 
-
     XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
     XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
     XtSetArg(args[n],XtNxrtLegendBorderWidth,&legendBorderWidth); n++;
@@ -773,27 +798,28 @@ void dumpCartesianPlot(void)
     XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
     XtSetArg(args[n],XmNunitType,&unitType); n++;
     XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
-    XtGetValues(widget,args,n);
+    XtGetValues(w,args,n);
 			      
-    print(,"width: %d\n",width);
-    print(,"height: %d\n",height);
-    print(,"highlightThickness: %d\n",highlightThickness);
-    print(,"shadowThickness: %d\n",shadowThickness);
-    print(,"borderWidth: %d\n",borderWidth);
-    print(,"graphBorderWidth: %d\n",graphBorderWidth);
-    print(,"graphWidth: %d\n",graphWidth);
-    print(,"graphHeight: %d\n",graphHeight);
-    print(,"headerBorderWidth: %d\n",headerBorderWidth);
-    print(,"headerWidth: %d\n",headerWidth);
-    print(,"headerHeight: %d\n",headerHeight);
-    print(,"footerWidth: %d\n",footerBorderWidth);
-    print(,"footerWidth: %d\n",footerWidth);
-    print(,"footerHeight: %d\n",footerHeight);
-    print(,"legendBorderWidth: %d\n",legendBorderWidth);
-    print(,"legendWidth: %d\n",legendWidth);
-    print(,"legendHeight: %d\n",legendHeight);
-    print(,"unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
+    print("\nXRT/Graph Widget (%x)\n");
+    print("  width: %d\n",width);
+    print("  height: %d\n",height);
+    print("  highlightThickness: %d\n",highlightThickness);
+    print("  shadowThickness: %d\n",shadowThickness);
+    print("  borderWidth: %d\n",borderWidth);
+    print("  graphBorderWidth: %d\n",graphBorderWidth);
+    print("  graphWidth: %d\n",graphWidth);
+    print("  graphHeight: %d\n",graphHeight);
+    print("  headerBorderWidth: %d\n",headerBorderWidth);
+    print("  headerWidth: %d\n",headerWidth);
+    print("  headerHeight: %d\n",headerHeight);
+    print("  footerWidth: %d\n",footerBorderWidth);
+    print("  footerWidth: %d\n",footerWidth);
+    print("  footerHeight: %d\n",footerHeight);
+    print("  legendBorderWidth: %d\n",legendBorderWidth);
+    print("  legendWidth: %d\n",legendWidth);
+    print("  legendHeight: %d\n",legendHeight);
+    print("  unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
       XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
-    print(,"timeBase: %d\n",timeBase);
+    print("timeBase: %d\n",timeBase);
 }
 #endif
