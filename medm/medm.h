@@ -116,7 +116,6 @@ extern "C" {
 #endif /* #ifdef WIN32 */
     
 #ifdef MEDM_CDEV
-#include "medmVersion.h"
 #include "medmCdev.h"
 #else
 #include "epicsVersion.h"
@@ -130,19 +129,11 @@ extern "C" {
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
-
-#ifndef VMS /* ACM already include, see above */
-#include "medmCA.h"
-#endif
-
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
 
-#ifndef VMS /* ACM already include, see above */
-#include "epicsVersion.h"
 #include "medmVersion.h"
-#endif
 
 #define MAIN_NAME "Medm"
 #define OBJECT_PALETTE_NAME "Object "
