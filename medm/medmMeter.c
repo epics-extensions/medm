@@ -225,6 +225,12 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XcNupperBound, longFval(dlMeter->limits.hopr),
 	      XcNdecimals, (int)dlMeter->limits.prec,
 	      NULL);
+#if 0
+	} else {
+	    if(dlElement->data) {
+		meterDraw((XtPointer)dlElement->data);
+	    }
+#endif	    
 	}
     }
 }

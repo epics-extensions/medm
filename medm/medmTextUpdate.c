@@ -104,7 +104,6 @@ static DlDispatchTable textUpdateDlDispatchTable = {
 
 void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    XRectangle clipRect[1];
     int usedHeight, usedWidth;
     int localFontIndex;
     size_t nChars;
@@ -126,6 +125,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	    ptu = (MedmTextUpdate *)dlElement->data;
 	} else {
 	    ptu = (MedmTextUpdate *)malloc(sizeof(MedmTextUpdate));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)ptu;
 	    if(ptu == NULL) {
 		medmPrintf(1,"\nexecuteDlTextUpdate: Memory allocation error\n");
@@ -160,21 +160,30 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	    drawWhiteRectangle(ptu->updateTask);
 	}
     } else {
-      /* Since no ca callbacks to put up text, put up dummy region */
-	XSetForeground(display,displayInfo->gc,
-	  displayInfo->colormap[ dlTextUpdate->monitor.bclr]);
-	XFillRectangle(display, XtWindow(displayInfo->drawingArea),
-	  displayInfo->gc,
-	  dlTextUpdate->object.x,dlTextUpdate->object.y,
-	  dlTextUpdate->object.width, dlTextUpdate->object.height);
-	XFillRectangle(display,displayInfo->drawingAreaPixmap,
-	  displayInfo->gc,
-	  dlTextUpdate->object.x,dlTextUpdate->object.y,
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+	Pixmap pixmap;
+	GC gc;
+
+	dlElement->updateType = STATIC_GRAPHIC;
+
+      /* Create a GC and pixmap to take care of clipping to the
+	 size of the text update */
+	gc = XCreateGC(display, rootWindow, 0, NULL);
+	pixmap = XCreatePixmap(display, RootWindow(display,screenNum),
+	  dlTextUpdate->object.width, dlTextUpdate->object.height,
+	  DefaultDepth(display,screenNum));
+
+      /* Fill it with the background color */
+	XSetForeground(display, gc,
+	  displayInfo->colormap[dlTextUpdate->monitor.bclr]);
+	XFillRectangle(display, pixmap, gc, 0, 0,
 	  dlTextUpdate->object.width, dlTextUpdate->object.height);
 
-	XSetForeground(display,displayInfo->gc,
+	XSetForeground(display,gc,
 	  displayInfo->colormap[dlTextUpdate->monitor.clr]);
-	XSetBackground(display,displayInfo->gc,
+	XSetBackground(display,gc,
 	  displayInfo->colormap[dlTextUpdate->monitor.bclr]);
 	nChars = strlen(dlTextUpdate->monitor.rdbk);
 	localFontIndex = dmGetBestFontWithInfo(fontTable,
@@ -184,55 +193,35 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	usedWidth = XTextWidth(fontTable[localFontIndex],dlTextUpdate->monitor.rdbk,
 	  nChars);
 
-      /* Clip to bounding box (especially for text) */
-	clipRect[0].x = dlTextUpdate->object.x;
-	clipRect[0].y = dlTextUpdate->object.y;
-	clipRect[0].width  = dlTextUpdate->object.width;
-	clipRect[0].height =  dlTextUpdate->object.height;
-	XSetClipRectangles(display,displayInfo->gc,0,0,clipRect,1,YXBanded);
-
-	XSetFont(display,displayInfo->gc,fontTable[localFontIndex]->fid);
+	XSetFont(display,gc,fontTable[localFontIndex]->fid);
 	switch(dlTextUpdate->align) {
 	case HORIZ_LEFT:
-	    XDrawString(display,displayInfo->drawingAreaPixmap,
-	      displayInfo->gc,
-	      dlTextUpdate->object.x,dlTextUpdate->object.y +
-	      fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
-	    XDrawString(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlTextUpdate->object.x,dlTextUpdate->object.y +
-	      fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
+	    XDrawString(display, pixmap, gc,
+	      0,
+	      fontTable[localFontIndex]->ascent, dlTextUpdate->monitor.rdbk,
+	      strlen(dlTextUpdate->monitor.rdbk));
 	    break;
 	case HORIZ_CENTER:
-	    XDrawString(display,displayInfo->drawingAreaPixmap,
-	      displayInfo->gc,
-	      dlTextUpdate->object.x + (dlTextUpdate->object.width - usedWidth)/2,
-	      dlTextUpdate->object.y + fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
-	    XDrawString(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlTextUpdate->object.x + (dlTextUpdate->object.width - usedWidth)/2,
-	      dlTextUpdate->object.y + fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
+	    XDrawString(display, pixmap, gc,
+	      (dlTextUpdate->object.width - usedWidth)/2,
+	      fontTable[localFontIndex]->ascent, dlTextUpdate->monitor.rdbk,
+	      strlen(dlTextUpdate->monitor.rdbk));
 	    break;
 	case HORIZ_RIGHT:
-	    XDrawString(display,displayInfo->drawingAreaPixmap,
-	      displayInfo->gc,
-	      dlTextUpdate->object.x + dlTextUpdate->object.width - usedWidth,
-	      dlTextUpdate->object.y + fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
-	    XDrawString(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlTextUpdate->object.x + dlTextUpdate->object.width - usedWidth,
-	      dlTextUpdate->object.y + fontTable[localFontIndex]->ascent,
-	      dlTextUpdate->monitor.rdbk,strlen(dlTextUpdate->monitor.rdbk));
+	    XDrawString(display, pixmap, gc,
+	      dlTextUpdate->object.width - usedWidth,
+	      fontTable[localFontIndex]->ascent, dlTextUpdate->monitor.rdbk,
+	      strlen(dlTextUpdate->monitor.rdbk));
 	    break;
 	}
 
-      /* Turn off clipping on exit */
-	XSetClipMask(display,displayInfo->gc,None);
+      /* Copy the pixmap to the drawing area and the
+         drawingAreaPixmap, utilizing any clipping. */
+	XCopyArea(display, pixmap, drawable, displayInfo->gc,
+	  0, 0, dlTextUpdate->object.width, dlTextUpdate->object.height,
+	  dlTextUpdate->object.x, dlTextUpdate->object.y);
+	XFreePixmap(display, pixmap);
+	XFreeGC(display, gc);
     }
 }
 
@@ -404,10 +393,8 @@ static void textUpdateDraw(XtPointer cd)
 	  /* Fill it with the background color */
 	    XSetForeground(display, gc,
 	      displayInfo->colormap[dlTextUpdate->monitor.bclr]);
-	    XFillRectangle(display, pixmap, gc,
-	      0,0,
-	      dlTextUpdate->object.width,
-	      dlTextUpdate->object.height);
+	    XFillRectangle(display, pixmap, gc, 0, 0,
+	      dlTextUpdate->object.width, dlTextUpdate->object.height);
 
 	  /* Calculate the foreground color */
 	    switch (dlTextUpdate->clrmod) {
@@ -466,24 +453,20 @@ static void textUpdateDraw(XtPointer cd)
 		    y = fontTable[i]->ascent;
 		    break;
 		}
+
 	      /* Draw the string */
 		XDrawString(display, pixmap, gc, x, y,
 		  textField, strLen);
+
 	      /* Copy the pixmap to the drawing area and the
                  drawingAreaPixmap, utilizing any clipping. */
 		XCopyArea(display, pixmap,
-		  XtWindow(displayInfo->drawingArea),
+		  displayInfo->updatePixmap,
 		  displayInfo->gc, 0, 0,
-		  dlTextUpdate->object.width, dlTextUpdate->object.height,
-		  dlTextUpdate->object.x, dlTextUpdate->object.y);
-		XCopyArea(display, pixmap,
-		  displayInfo->drawingAreaPixmap,
-		  displayInfo->pixmapGC, 0, 0,
 		  dlTextUpdate->object.width, dlTextUpdate->object.height,
 		  dlTextUpdate->object.x, dlTextUpdate->object.y);
 		XFreePixmap(display, pixmap);
 		XFreeGC(display, gc);
-
 	    }
 	} else {
 	  /* No read access */

@@ -154,41 +154,43 @@ void localCvtDoubleToString(
     sprintf(pstr_value,"%.*f",(int)precision,flt_value);
 }
 
+/* Used for dynamic objects only */
 void drawWhiteRectangle(UpdateTask *pt)
 {
-    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
-    GC      gc        = pt->displayInfo->pixmapGC;
-    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
-    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+    GC gc = pt->displayInfo->pixmapGC;
+    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = pt->displayInfo->updatePixmap;
 
-    XSetForeground(display,gc,WhitePixel(display,DefaultScreen(display)));
-    XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
-      pt->rectangle.width,pt->rectangle.height);
+    XSetForeground(display, gc, WhitePixel(display,DefaultScreen(display)));
+    XFillRectangle(display, drawable, gc, pt->rectangle.x, pt->rectangle.y,
+      pt->rectangle.width, pt->rectangle.height);
     return;
 }
 
+/* Used for dynamic objects only */
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel)
 {
-    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
-    GC      gc        = pt->displayInfo->pixmapGC;
-    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
-    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+    GC gc = pt->displayInfo->pixmapGC;
+    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = pt->displayInfo->updatePixmap;
 
-    XSetForeground(display,gc,pixel);
-    XFillRectangle(display,drawable,gc,pt->rectangle.x,pt->rectangle.y,
-      pt->rectangle.width,pt->rectangle.height);
+    XSetForeground(display, gc, pixel);
+    XFillRectangle(display, drawable, gc, pt->rectangle.x, pt->rectangle.y,
+      pt->rectangle.width, pt->rectangle.height);
     return;
 }
 
+/* Used for dynamic objects only */
 void draw3DPane(UpdateTask *pt, Pixel bgc)
 {
 
-    Pixel   tsc, bsc, fgc, slc;
+    Pixel tsc, bsc, fgc, slc;
     DisplayInfo *displayInfo = pt->displayInfo;
     Display *display = XtDisplay(displayInfo->drawingArea);
-    GC      gc        = displayInfo->gc;
-    Pixmap  pixmap    = displayInfo->drawingAreaPixmap;
-    Drawable drawable = XtWindow(displayInfo->drawingArea);
+    GC gc = displayInfo->gc;
+    Pixmap pixmap = displayInfo->drawingAreaPixmap;
+    Drawable drawable = displayInfo->updatePixmap;
+
     int x = pt->rectangle.x;
     int y = pt->rectangle.y;
     int w = pt->rectangle.width;
@@ -228,17 +230,19 @@ void draw3DPane(UpdateTask *pt, Pixel bgc)
     points[n].x = x + w;                   points[n].y = y + h;      n++;
     points[n].x = x;                       points[n].y = y + h;      n++;
     points[n].x = x + shadowThickness;     points[n].y = y + h - shadowThickness; n++;
-    XSetForeground(display,gc,bsc);
+    XSetForeground(display, gc, bsc);
     XFillPolygon(display, drawable, gc, points, XtNumber(points),Nonconvex,CoordModeOrigin); 
 }
 
+/* Used for dynamic objects only */
 void draw3DQuestionMark(UpdateTask *pt)
 {
-    Pixel   tsc, bsc, bgc, fgc, slc;
-    Display *display  = XtDisplay(pt->displayInfo->drawingArea);
-    GC      gc        = pt->displayInfo->pixmapGC;
-    Pixmap  pixmap    = pt->displayInfo->drawingAreaPixmap;
-    Drawable drawable = XtWindow(pt->displayInfo->drawingArea);
+    Pixel tsc, bsc, bgc, fgc, slc;
+    Display *display = XtDisplay(pt->displayInfo->drawingArea);
+    GC gc = pt->displayInfo->pixmapGC;
+    Pixmap pixmap = pt->displayInfo->drawingAreaPixmap;
+    Drawable drawable = pt->displayInfo->updatePixmap;
+
     int x = pt->rectangle.x;
     int y = pt->rectangle.y;
     int w = pt->rectangle.width;

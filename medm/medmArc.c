@@ -98,17 +98,16 @@ static void drawArc(MedmArc *pa) {
 
     lineWidth = (dlArc->attr.width+1)/2;
     if(dlArc->attr.fill == F_SOLID) {
-	XFillArc(display,XtWindow(widget),displayInfo->gc,
+	XFillArc(display,displayInfo->updatePixmap,displayInfo->gc,
 	  dlArc->object.x,dlArc->object.y,
 	  dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-    } else
-      if(dlArc->attr.fill == F_OUTLINE) {
-	  XDrawArc(display,XtWindow(widget),displayInfo->gc,
-	    dlArc->object.x + lineWidth,
-	    dlArc->object.y + lineWidth,
-	    dlArc->object.width - 2*lineWidth,
-	    dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-      }
+    } else if(dlArc->attr.fill == F_OUTLINE) {
+	XDrawArc(display, displayInfo->updatePixmap, displayInfo->gc,
+	  dlArc->object.x + lineWidth,
+	  dlArc->object.y + lineWidth,
+	  dlArc->object.width - 2*lineWidth,
+	  dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
+    }
 }
 
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -127,6 +126,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	} else {
 	    pa = (MedmArc *)malloc(sizeof(MedmArc));
 	    dlElement->data = (void *)pa;
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    if(pa == NULL) {
 		medmPrintf(1,"\nexecuteDlArc: Memory allocation error\n");
 		return;
@@ -154,27 +154,23 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlArc->dynAttr, pa->records);
 	}
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
 	if(dlArc->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
-	    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+	    
+	    XFillArc(display,drawable,displayInfo->gc,
 	      dlArc->object.x,dlArc->object.y,
 	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-	    XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-	      dlArc->object.x,dlArc->object.y,
-	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
-
 	} else
 	  if(dlArc->attr.fill == F_OUTLINE) {
 	      unsigned int lineWidth = (dlArc->attr.width+1)/2;
-	      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-		dlArc->object.x + lineWidth,
-		dlArc->object.y + lineWidth,
-		dlArc->object.width - 2*lineWidth,
-		dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
-	      XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	      
+	      XDrawArc(display,drawable,displayInfo->gc,
 		dlArc->object.x + lineWidth,
 		dlArc->object.y + lineWidth,
 		dlArc->object.width - 2*lineWidth,
@@ -244,9 +240,11 @@ static void arcDraw(XtPointer cd)
 	if(calcVisibility(&dlArc->dynAttr, pa->records))
 	  drawArc(pa);
 	if(pd->readAccess) {
+#ifdef OPAQUE	    
 	    if(!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
 		pa->updateTask->opaque = True;
 	    }
+#endif	    
 	} else {
 	    pa->updateTask->opaque = False;
 	    draw3DQuestionMark(pa->updateTask);
@@ -261,9 +259,6 @@ static void arcDraw(XtPointer cd)
 	drawArc(pa);
 
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pa->dlElement);
 }
 
 static void arcDestroyCb(XtPointer cd)

@@ -92,8 +92,6 @@ static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
 static void toggleHighlightRectangles(DisplayInfo *displayInfo,
   int xOffset, int yOffset);
-static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
-  DlElement *dlElement);
 static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData);
 
 /* Global variables */
@@ -1667,6 +1665,10 @@ int copyElementsIntoDisplay()
 	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
+
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
     return 1;
 }
 
@@ -2797,195 +2799,6 @@ void equalSizeSelectedElements(void)
 
     highlightSelectedElements();
 }
-
-/* Routine to redraw drawing objects above a given drawing object to
- * keep the stacking correct. */
-void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
-{
-#if 0
-  /* KE: This routine currently does nothing but is left in in case a
-     need to use it is seen later. */
-    int found = 0;
-    XPoint points[4];
-    Region region = NULL;
-    DlElement *pE;
-    
-#if DEBUG_REDRAW
-    print("redrawElementsAbove: dlElement=%x[%s] structure.element=%x\n",
-      dlElement,elementType(dlElement->type),dlElement->structure.element);
-#endif    
-
-  /* Loop over elements not including the display */
-    pE = SecondDlElement(displayInfo->dlElementList);
-    while(pE) {
-	if(pE->type == DL_Arc ||
-	  pE->type == DL_Composite ||
-	  pE->type == DL_Image ||
-	  pE->type == DL_Oval ||
-	  pE->type == DL_Polyline ||
-	  pE->type == DL_Polygon ||
-	  pE->type == DL_Rectangle ||
-	  pE->type == DL_Text) {
-	  /* Element is a drawing object */
-#if DEBUG_REDRAW
-	    print("  pE=%x[%s] pE->structure.element=%x\n",
-	      pE,elementType(pE->type),pE->structure.element);
-#endif    
-	    if(!found) {
-	      /* Keep looking until we find the given element */
-		if(pE == dlElement) {
-		    DlObject *po = &(pE->structure.composite->object);
-		    
-#if DEBUG_REDRAW
-		    print("    found: type=%s\n",elementType(pE->type));
-#endif    
-		    found = 1;
-		    points[0].x = po->x;
-		    points[0].y = po->y;
-		    points[1].x = po->x + (int)po->width;
-		    points[1].y = po->y;
-		    points[2].x = po->x + (int)po->width;
-		    points[2].y = po->y + (int)po->height;
-		    points[3].x = po->x;
-		    points[3].y = po->y + (int)po->height;
-		    region = XPolygonRegion(points,4,EvenOddRule);
-		    if(region == NULL) {
-			medmPrintf(0,"\redrawElementsAbove: "
-			  "XPolygonRegion is NULL\n");
-			return;
-		    }
-		}
-	    } else {
-	      /* Element is above the given one in the stacking order */
-		DlObject *po = &(pE->structure.composite->object);
-		
-	      /* Check if it is overlapped */
-		if(XRectInRegion(region, po->x, po->y,
-		  (int)po->width, (int)po->height) != RectangleOut) {
-#if DEBUG_REDRAW
-		    print("    execute: type=%s\n",elementType(pE->type));
-#endif
-		  /* Execute the element */
-		    if(pE->type == DL_Composite) {
-		      /* Only do execute for composite if it is not hidden */
-			if(!pE->structure.composite->hidden &&
-			  pE->run->execute) {
-#if DEBUG_REDRAW
-			    print("      (executed) x=%d y=%d\n",
-			      po->x, po->y);
-#endif
-			    pE->run->execute(displayInfo, pE);
-			}
-		    } else {
-			if(pE->run->execute) pE->run->execute(displayInfo, pE);
-		    }
-		}
-	    }
-	}
-	pE = pE->next;
-    }
-
-  /* Free the region */
-    if(region) XDestroyRegion(region);
-#endif    /* The entire routine is commented out */
-}
-
-/* Routine to redraw all the static drawing objects onto the
-   displayInfo pixmap. */
-/* KE: Needs to be fixed */
-void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
-{
-#if 0     /* Check */   
-    GC gcSave;
-    DlElement *pE;
-#endif    
-    DlObject *po;
-
-#if DEBUG_REDRAW
-    int n=0;
-    
-    print("redrawStaticElements: dlElement=%x[%s] structure.element=%x\n",
-      dlElement,elementType(dlElement->type),dlElement->structure.element);
-#endif    
-
-    if(displayInfo == NULL || dlElement == NULL) return;
-    po = &(dlElement->structure.rectangle->object);
-
-  /* Fill the (clipped) background with the background color */
-    XSetForeground(display, displayInfo->pixmapGC,
-      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-    XFillRectangle(display, displayInfo->drawingAreaPixmap,
-      displayInfo->pixmapGC, po->x, po->y, po->width, po->height);
-
-#if 0     /* Check */
-  /* KE: This part of the routine is currently commented out */
-  /* Loop over elements not including the display */
-    pE = SecondDlElement(displayInfo->dlElementList);
-    while(pE) {
-#if DEBUG_REDRAW
-	n++;
-#endif	
-	if(pE != dlElement) {
-	    if(pE->type == DL_Composite) {
-	      /* Element is composite */
-		 if(pE->staticGraphic) {
-		     redrawStaticCompositeElements(displayInfo, pE);
-		 }
-	    } else if(pE->staticGraphic) {
-	      /* Element is a static drawing object */
-		if(!pE->hidden && pE->run->execute) {
-#if DEBUG_REDRAW
-		    print("  Executed: %3d pE=%x[%s]\n",
-		      n,pE,elementType(pE->type));
-#endif
-		    pE->run->execute(displayInfo, pE);
-		}
-	    }
-	}
-	pE = pE->next;
-    }
-#endif    
-}
-
-/* Called by redrawStaticElements */
-#if 0     /* Check */   
-/* KE: Currently not called */
-static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
-  DlElement *dlElement)
-{
-    DlElement *pE;
-    DlComposite *dlComposite = dlElement->structure.composite;
-
-#if DEBUG_REDRAW
-    int n=1;
-    
-    print("redrawStaticCompositeElements: "
-      "dlElement=%x[%s] structure.element=%x\n",
-      dlElement,elementType(dlElement->type),dlElement->structure.element);
-#endif    
-    pE = FirstDlElement(dlComposite->dlElementList);
-    while(pE) {
-	if(pE->type == DL_Composite && pE->staticGraphic) {
-	  /* Element is composite */
-	    if(pE->staticGraphic) {
-		redrawStaticCompositeElements(displayInfo, pE);
-	    }
-	} else if(pE->staticGraphic) {
-	  /* Element is a drawing object */
-	    if(!pE->hidden && pE->run->execute) {
-#if DEBUG_REDRAW
-		print("  Executed composite: %3d pE=%x[%s]\n",
-		  n,pE,elementType(pE->type));
-#endif
-		pE->run->execute(displayInfo, pE);
-	    }
-	} else if(pE->type == DL_Composite) {
-	    redrawStaticCompositeElements(displayInfo, pE);
-	}
-	pE = pE->next;
-    }
-}
-#endif
 
 /* Moves specified <src> element to position just after specified
  <dst> element.  */

@@ -261,7 +261,7 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
 }
 
-void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean doPixmap)
+void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Drawable drawable)
 {
     GIFData *gif;
     int x, y;
@@ -392,16 +392,9 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean doPixmap)
 	    }
 	}
 #endif	
-      /* Copy to the drawing area */
-	XPutImage(display,XtWindow(displayInfo->drawingArea),
-	  gif->theGC,CUREXPIMAGE(gif),
+      /* Draw  */
+	XPutImage(display,drawable,gif->theGC,CUREXPIMAGE(gif),
 	  0,0,x,y,w,h);
-      /* Draw to pixmap */
-	if(doPixmap) {
-	    XPutImage(display,displayInfo->drawingAreaPixmap,
-	      gif->theGC,CUREXPIMAGE(gif),
-	      0,0,x,y,w,h);
-	} 
     }
 }
 

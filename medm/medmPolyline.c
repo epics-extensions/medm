@@ -132,7 +132,7 @@ static void drawPolyline(MedmPolyline *pp)
     Display *display = XtDisplay(widget);
     DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
 
-    XDrawLines(display,XtWindow(widget),displayInfo->gc,
+    XDrawLines(display,displayInfo->updatePixmap,displayInfo->gc,
       dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
 }
 
@@ -174,6 +174,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pp = (MedmPolyline *)dlElement->data;
 	} else {
 	    pp = (MedmPolyline *)malloc(sizeof(MedmPolyline));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)pp;
 	    if(pp == NULL) {
 		medmPrintf(1,"\nexecuteDlPolyline: Memory allocation error\n");
@@ -207,12 +208,13 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlPolyline->dynAttr, pp->records);
 	}
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlPolyline->attr));
-	XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-          dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
-	XDrawLines(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	XDrawLines(display,drawable,displayInfo->gc,
           dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
     }
 }
@@ -274,9 +276,11 @@ static void polylineDraw(XtPointer cd)
 	if(calcVisibility(&dlPolyline->dynAttr, pp->records))
 	  drawPolyline(pp);
 	if(pd->readAccess) {
+#ifdef OPAQUE	    
 	    if(!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
 		pp->updateTask->opaque = True;
 	    }
+#endif
 	} else {
 	    pp->updateTask->opaque = False;
 	    draw3DQuestionMark(pp->updateTask);
@@ -289,9 +293,6 @@ static void polylineDraw(XtPointer cd)
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolyline(pp);
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
 static void polylineDestroyCb(XtPointer cd)

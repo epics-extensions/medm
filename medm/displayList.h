@@ -907,14 +907,19 @@ typedef struct {
     void (*cleanup)(struct _DlElement *);
 } DlDispatchTable; 
 
+typedef enum {
+    WIDGET,
+    STATIC_GRAPHIC,
+    DYNAMIC_GRAPHIC
+} UpdateType;
+
 typedef struct _DlElement {
     DlElementType type;
     DlStructurePtr structure;
     DlDispatchTable *run;
     Widget widget;
     Boolean hidden;
-  /* KE: The following is not currently used */
-    Boolean staticGraphic;   /* Graphic not attached to a PV */
+    UpdateType updateType;
     void *data;              /* Pointer to MedmXxx */
     struct _DlElement *next; /* Next element in display list */
     struct _DlElement *prev; /* Previous element ... */

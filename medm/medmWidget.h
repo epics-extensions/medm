@@ -73,11 +73,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #else
 #include <time.h>
 #endif
-#include "xtParams.h"
 
-#include "displayList.h"
-
-/* this is ugly, but we need it for the action table */
+/* This is ugly, but we need it for the action table */
 #if 0
 extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #endif
@@ -231,23 +228,32 @@ typedef enum {DISPLAY_SHELL, OTHER_SHELL} ShellType;
 /* Action types for MB in display (based on object palette state */
 typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 
+/* Overlap types for update logic */
+typedef enum {NO_OVERLAP=0, CONTAINED=1, EXTENDED=2} OverlapType;
+
+/* Composite update states for update logic */
+typedef enum {COMPOSITE_NEW=0,
+	      COMPOSITE_VISIBLE, COMPOSITE_VISIBLE_UPDATED, 
+	      COMPOSITE_HIDDEN, COMPOSITE_HIDDEN_UPDATED
+} CompositeUpdateState;
+
 /* Update tasks */
 typedef struct _UpdateTask {
-    void       (*executeTask)(XtPointer);    /* update routine */
-    void       (*destroyTask)(XtPointer);
-    void       (*getRecord)(XtPointer, Record **, int *);
-    Widget     (*widget)(XtPointer);
-    XtPointer  clientData;
-    double     timeInterval;                 /* if not 0.0, periodic task */
-    double     nextExecuteTime;               
-    struct     _DisplayInfo *displayInfo;
-    int        executeRequestsPendingCount;  /* How many update requests are pending */
-    XRectangle rectangle;                    /* Geometry of the object */
-    Boolean    overlapped;                   /* Indicates overlapped by others */
-    Boolean    opaque;                       /* Indicates whether to redraw under */
-    Boolean    disabled;                     /* Indicates not to update */
-    struct     _UpdateTask *prev;
-    struct     _UpdateTask *next;
+    void        (*executeTask)(XtPointer);    /* update routine */
+    void        (*destroyTask)(XtPointer);
+    void        (*getRecord)(XtPointer, Record **, int *);
+    Widget      (*widget)(XtPointer);
+    XtPointer   clientData;
+    double      timeInterval;                 /* if not 0.0, periodic task */
+    double      nextExecuteTime;               
+    struct      _DisplayInfo *displayInfo;
+    int         executeRequestsPendingCount;  /* How many update requests are pending */
+    XRectangle  rectangle;                    /* Geometry of the object */
+    OverlapType overlapType;                  /* Indicates how overlapped by others */
+    Boolean     opaque;                       /* Indicates whether to redraw under */
+    Boolean     disabled;                     /* Indicates not to update */
+    struct      _UpdateTask *prev;
+    struct      _UpdateTask *next;
 } UpdateTask;
 
 /* General private data structure */
@@ -287,6 +293,7 @@ typedef struct _DisplayInfo {
     Widget shell;
     Widget drawingArea;
     Pixmap drawingAreaPixmap;
+    Pixmap updatePixmap;
     Widget editPopupMenu;
     Widget executePopupMenu;
     Widget cartesianPlotPopupMenu;
@@ -711,6 +718,8 @@ EXTERN Widget resourceEntryElement[MAX_RESOURCE_ENTRY];
 EXTERN Widget resourceElementTypeLabel;
 
 EXTERN DlTraversalMode globalDisplayListTraversalMode;
+EXTERN Boolean updateInProgress;
+EXTERN Region updateTaskExposedRegion;
 
 /* Flag which says to traverse monitor list */
 EXTERN Boolean globalModifiedFlag;

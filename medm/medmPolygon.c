@@ -115,11 +115,11 @@ static void drawPolygon(MedmPolygon *pp)
     DlPolygon *dlPolygon = pp->dlElement->structure.polygon;
 
     if(dlPolygon->attr.fill == F_SOLID) {
-	XFillPolygon(display,XtWindow(widget),displayInfo->gc,
+	XFillPolygon(display,displayInfo->updatePixmap,displayInfo->gc,
 	  dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
     } else
       if(dlPolygon->attr.fill == F_OUTLINE) {
-	  XDrawLines(display,XtWindow(widget),displayInfo->gc,
+	  XDrawLines(display,displayInfo->updatePixmap,displayInfo->gc,
 	    dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
       }
 }
@@ -163,6 +163,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pp = (MedmPolygon *)dlElement->data;
 	} else {
 	    pp = (MedmPolygon *)malloc(sizeof(MedmPolygon));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)pp;
 	    if(pp == NULL) {
 		medmPrintf(1,"\nexecuteDlPolygon: Memory allocation error\n");
@@ -196,21 +197,19 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	calcPostfix(&dlPolygon->dynAttr);
 	setMonitorChanged(&dlPolygon->dynAttr, pp->records);
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlPolygon->attr));
 	if(dlPolygon->attr.fill == F_SOLID) {
-	    XFillPolygon(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
+	    XFillPolygon(display,drawable,displayInfo->gc,
 	      dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
-	    XFillPolygon(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-	      dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
-	} else
-	  if(dlPolygon->attr.fill == F_OUTLINE) {
-	      XDrawLines(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-		dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
-	      XDrawLines(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
-		dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
-	  }
+	} else if(dlPolygon->attr.fill == F_OUTLINE) {
+	    XDrawLines(display,drawable,displayInfo->gc,
+	      dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
+	}
     }
 }
 
@@ -270,9 +269,11 @@ static void polygonDraw(XtPointer cd)
 	if(calcVisibility(&dlPolygon->dynAttr, pp->records))
 	  drawPolygon(pp);
 	if(pd->readAccess) {
+#ifdef OPAQUE	    
 	    if(!pp->updateTask->overlapped && dlPolygon->dynAttr.vis == V_STATIC) {
 		pp->updateTask->opaque = True;
 	    }
+#endif
 	} else {
 	    pp->updateTask->opaque = False;
 	    draw3DQuestionMark(pp->updateTask);
@@ -285,9 +286,6 @@ static void polygonDraw(XtPointer cd)
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawPolygon(pp);
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
 static void polygonDestroyCb(XtPointer cd)

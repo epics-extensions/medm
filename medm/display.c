@@ -169,6 +169,7 @@ DisplayInfo *allocateDisplayInfo()
 
     displayInfo->drawingArea = 0;
     displayInfo->drawingAreaPixmap = 0;
+    displayInfo->updatePixmap = 0;
     displayInfo->cartesianPlotPopupMenu = 0;
     displayInfo->selectedCartesianPlot = 0;
     displayInfo->warningDialog = NULL;
@@ -344,6 +345,10 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     if(displayInfo->drawingAreaPixmap != (Pixmap)NULL) {
 	XFreePixmap(display,displayInfo->drawingAreaPixmap);
 	displayInfo->drawingAreaPixmap = (Pixmap)NULL;
+    }
+    if(displayInfo->updatePixmap != (Pixmap)NULL) {
+	XFreePixmap(display,displayInfo->updatePixmap);
+	displayInfo->updatePixmap = (Pixmap)NULL;
     }
     if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
 	alreadyFreedUnphysical = False;
@@ -1084,6 +1089,7 @@ void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
 void dmTraverseDisplayList(DisplayInfo *displayInfo)
 {
     DlElement *pE;
+    Dimension width, height;
 
   /* Traverse the display list */
 #if DEBUG_TRAVERSAL
@@ -1091,11 +1097,18 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
     dumpDlElementList(displayInfo->dlElementList);
 #endif
     pE = FirstDlElement(displayInfo->dlElementList);
+    width = pE->structure.display->object.width;
+    height = pE->structure.display->object.height;
     while(pE) {
 	if(pE->run->execute) (pE->run->execute)(displayInfo,pE);
 	pE = pE->next;
     }
 
+  /* Update the window */
+    XCopyArea(display,displayInfo->drawingAreaPixmap,
+      XtWindow(displayInfo->drawingArea), displayInfo->gc,
+      0, 0, width, height, 0, 0);
+    
   /* Change the cursor for the drawing area */
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
@@ -1128,6 +1141,7 @@ void dmTraverseAllDisplayLists()
 {
     DisplayInfo *displayInfo;
     DlElement *pE;
+    Dimension width, height;
 
     displayInfo = displayInfoListHead->next;
 
@@ -1143,9 +1157,11 @@ void dmTraverseAllDisplayLists()
        *  for this display. */
 	displayInfo->elementsExecuted = False;
 	pE = FirstDlElement(displayInfo->dlElementList);
+	width = pE->structure.display->object.width;
+	height = pE->structure.display->object.height;
 	while(pE) {
 	    
-	    pE->staticGraphic = False;
+	    pE->updateType = WIDGET;
 	    pE->hidden = False;
 	    pE->data = NULL;
 	    if(pE->run->execute) (pE->run->execute)(displayInfo,pE);
@@ -1153,6 +1169,11 @@ void dmTraverseAllDisplayLists()
 	}
       /* Set elementsExecuted to True since first time is done */
 	displayInfo->elementsExecuted = True;
+
+      /* Update the window */
+	XCopyArea(display,displayInfo->drawingAreaPixmap,
+	  XtWindow(displayInfo->drawingArea), displayInfo->gc,
+	  0, 0, width, height, 0, 0);
 
       /* Change the cursor for the drawing area for this displayInfo */
 	XDefineCursor(display,XtWindow(displayInfo->drawingArea),
@@ -1192,14 +1213,17 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 
   /* Unhighlight any selected elements */
     unhighlightSelectedElements();
+
+  /* Get width and height */
+    pE = FirstDlElement(displayInfo->dlElementList);
+    width = pE->structure.display->object.width;
+    height = pE->structure.display->object.height;
     
   /* Fill the background with the background color */
-    XSetForeground(display, displayInfo->pixmapGC,
+    XSetForeground(display, displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-    XtVaGetValues(displayInfo->drawingArea,
-      XmNwidth, &width, XmNheight, &height, NULL);
     XFillRectangle(display, displayInfo->drawingAreaPixmap,
-      displayInfo->pixmapGC, 0, 0, (unsigned int)width, (unsigned int)height);
+      displayInfo->gc, 0, 0, (unsigned int)width, (unsigned int)height);
 
   /* Draw grid */
     if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
@@ -1215,11 +1239,10 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 	pE = pE->next;
     }
 
-  /* Since the execute traversal copies to the pixmap, now udpate the window */
+  /* Update the window */
     XCopyArea(display,displayInfo->drawingAreaPixmap,
-      XtWindow(displayInfo->drawingArea),
-      displayInfo->pixmapGC, 0, 0, (unsigned int)width,
-      (unsigned int)height, 0, 0);
+      XtWindow(displayInfo->drawingArea), displayInfo->gc,
+      0, 0, width, height, 0, 0);
 
   /* Highlight any selected elements */
     highlightSelectedElements();

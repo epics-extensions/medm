@@ -234,7 +234,12 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 
   /* If the widget is already created just return.  The update task
      will handle it. */
-    if(dlElement->widget) return;
+    if(dlElement->widget) {
+	if(dlElement->data) {
+	    textEntryDraw((XtPointer)dlElement->data);
+	}
+	return;
+    }
 
     if(dlElement->data) {
 	pte = (MedmTextEntry *)dlElement->data;

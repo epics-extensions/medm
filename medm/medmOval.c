@@ -99,17 +99,16 @@ static void drawOval(MedmOval *po) {
 
     lineWidth = (dlOval->attr.width+1)/2;
     if(dlOval->attr.fill == F_SOLID) {
-	XFillArc(display,XtWindow(widget),displayInfo->gc,
+	XFillArc(display,displayInfo->updatePixmap,displayInfo->gc,
 	  dlOval->object.x,dlOval->object.y,
 	  dlOval->object.width,dlOval->object.height,0,360*64);
-    } else
-      if(dlOval->attr.fill == F_OUTLINE) {
-	  XDrawArc(display,XtWindow(widget),displayInfo->gc,
-	    dlOval->object.x + lineWidth,
-	    dlOval->object.y + lineWidth,
-	    dlOval->object.width - 2*lineWidth,
-	    dlOval->object.height - 2*lineWidth,0,360*64);
-      }
+    } else if(dlOval->attr.fill == F_OUTLINE) {
+	XDrawArc(display,displayInfo->updatePixmap,displayInfo->gc,
+	  dlOval->object.x + lineWidth,
+	  dlOval->object.y + lineWidth,
+	  dlOval->object.width - 2*lineWidth,
+	  dlOval->object.height - 2*lineWidth,0,360*64);
+    }
 }
 
 void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -127,6 +126,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    po = (MedmOval *)dlElement->data;
 	} else {
 	    po = (MedmOval *)malloc(sizeof(MedmOval));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)po;
 	    if(po == NULL) {
 		medmPrintf(1,"\nexecuteDlOval: Memory allocation error\n");
@@ -155,27 +155,24 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	calcPostfix(&dlOval->dynAttr);
 	setMonitorChanged(&dlOval->dynAttr, po->records);
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlOval->attr));
 	if(dlOval->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlOval->attr.width+1)/2;
-	    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-	      dlOval->object.x,dlOval->object.y,
-	      dlOval->object.width,dlOval->object.height,0,360*64);
-	    XFillArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	    
+	    XFillArc(display,drawable,displayInfo->gc,
 	      dlOval->object.x,dlOval->object.y,
 	      dlOval->object.width,dlOval->object.height,0,360*64);
 
 	} else
 	  if(dlOval->attr.fill == F_OUTLINE) {
 	      unsigned int lineWidth = (dlOval->attr.width+1)/2;
-	      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
-		dlOval->object.x + lineWidth,
-		dlOval->object.y + lineWidth,
-		dlOval->object.width - 2*lineWidth,
-		dlOval->object.height - 2*lineWidth,0,360*64);
-	      XDrawArc(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
+	      
+	      XDrawArc(display,drawable,displayInfo->gc,
 		dlOval->object.x + lineWidth,
 		dlOval->object.y + lineWidth,
 		dlOval->object.width - 2*lineWidth,
@@ -241,9 +238,11 @@ static void ovalDraw(XtPointer cd) {
 	if(calcVisibility(&dlOval->dynAttr, po->records))
 	  drawOval(po);
 	if(pd->readAccess) {
+#ifdef OPAQUE	    
 	    if(!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
 		po->updateTask->opaque = True;
 	    }
+#endif
 	} else {
 	    po->updateTask->opaque = False;
 	    draw3DQuestionMark(po->updateTask);
@@ -256,9 +255,6 @@ static void ovalDraw(XtPointer cd) {
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawOval(po);
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, po->dlElement);
 }
 
 static void ovalDestroyCb(XtPointer cd) {

@@ -3200,6 +3200,7 @@ main(int argc, char *argv[])
 
   /* Initialize global variables */
     medmInitializeUpdateTasks();
+    updateTaskExposedRegion =  XCreateRegion();
     windowPropertyAtom = (Atom)NULL;
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;

@@ -135,7 +135,7 @@ DlFile *parseFile(DisplayInfo *displayInfo)
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     int nestingLevel = 0;
-    DlFile *dlFile = createDlFile(displayInfo);;
+    DlFile *dlFile = createDlFile(displayInfo);
 
     if(!dlFile) return 0;
     dlFile->versionNumber = 0;
@@ -257,7 +257,14 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     if(displayInfo->drawingAreaPixmap) {
 	XFreePixmap(display,displayInfo->drawingAreaPixmap);
     }
+    if(displayInfo->updatePixmap) {
+	XFreePixmap(display,displayInfo->updatePixmap);
+    }
     displayInfo->drawingAreaPixmap =
+      XCreatePixmap(display, RootWindow(display,screenNum),
+	MAX(1,width),MAX(1,height),
+	DefaultDepth(display,screenNum));
+    displayInfo->updatePixmap =
       XCreatePixmap(display, RootWindow(display,screenNum),
 	MAX(1,width),MAX(1,height),
 	DefaultDepth(display,screenNum));
@@ -278,6 +285,8 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     XSetGraphicsExposures(display,displayInfo->pixmapGC,FALSE);
 
     XFillRectangle(display,displayInfo->drawingAreaPixmap,
+      displayInfo->pixmapGC,0,0,width,height);
+    XFillRectangle(display,displayInfo->updatePixmap,
       displayInfo->pixmapGC,0,0,width,height);
     XSetForeground(display,displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
@@ -1647,16 +1656,24 @@ void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
 
 void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-#if 0
-    Window drawable;
     DlObject *po;
-#endif    
+    XRectangle rect;
 
     if(!displayInfo || !dlElement) return;
     dlElement->hidden = True;
     
   /* Disable any update tasks */
     updateTaskDisableTask(dlElement);
+
+  /* Add the region to the exposed region */
+    po = &(dlElement->structure.rectangle->object);
+    rect.x = po->x;
+    rect.y = po->y;
+    rect.width = po->width;
+    rect.height = po->height;
+    
+    XUnionRectWithRegion(&rect, updateTaskExposedRegion,
+      updateTaskExposedRegion);    
 }
 
 void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -1682,6 +1699,8 @@ void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
    prototype for the dispatch table.  */
 void destroyDlElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+    UNREFERENCED(displayInfo);
+    
     dlElement->type = DL_Element;
     dlElement->widget = (Widget)0;
     dlElement->structure.composite = NULL;

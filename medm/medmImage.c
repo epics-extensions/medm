@@ -163,19 +163,20 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(gif && gif->nFrames <= 1 && !*dlImage->dynAttr.chan[0]) {
 	  /* Is an unanimated, non-dynamic image.  Don't update. Just
              draw it.  */
-	    dlElement->staticGraphic = True;
-	    drawGIF(displayInfo, dlImage, True);
+	    Drawable drawable=updateInProgress?
+	      displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+	    
+	    dlElement->updateType = STATIC_GRAPHIC;
+	    drawGIF(displayInfo, dlImage, drawable);
 	} else {
 	    MedmImage *pi;
 	    int i;
 	    
 	    if(dlElement->data) {
 		pi = (MedmImage *)dlElement->data;
-#if 0
-		if(dlElement->staticGraphic) drawImage(pi);
-#endif	    
 	    } else {
 		pi = (MedmImage *)malloc(sizeof(MedmImage));
+		dlElement->updateType = DYNAMIC_GRAPHIC;
 		dlElement->data = (void *)pi;
 		if(pi == NULL) {
 		    medmPrintf(1,"\nexecuteDlImage: Memory allocation error\n");
@@ -250,13 +251,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			    pi->animate = True;
 			    updateTaskSetScanRate(pi->updateTask,
 			      ANIMATE_TIME(gif));
-#if 0     /* Check */
-			  /* KE: Shouldn't get here now */
-			} else {
-			    pi->animate = False;
-			  /* Draw the first frame */
-			    drawGIF(displayInfo, dlImage, True);
-#endif
 			}
 		    }
 		}
@@ -268,10 +262,10 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	    gif->curFrame=0;
 	    if(dlImage->object.width == gif->currentWidth &&
 	      dlImage->object.height == gif->currentHeight) {
-		drawGIF(displayInfo, dlImage, True);
+		drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
 	    } else {
 		resizeGIF(dlImage);
-		drawGIF(displayInfo, dlImage, True);
+		drawGIF(displayInfo, dlImage, displayInfo->drawingAreaPixmap);
 	    }
 	}
     }
@@ -381,10 +375,12 @@ static void imageDraw(XtPointer cd)
 		      BlackPixel(display,screenNum));
 		}
 		if(pr->readAccess) {
+#ifdef OPAQUE	    
 		    if(!pi->updateTask->overlapped &&
 		      dlImage->dynAttr.vis == V_STATIC) {
 			pi->updateTask->opaque = True;
 		    }
+#endif
 		} else {
 		    pi->updateTask->opaque = False;
 		    draw3DQuestionMark(pi->updateTask);
@@ -393,8 +389,6 @@ static void imageDraw(XtPointer cd)
 	} else {
 	    drawWhiteRectangle(pi->updateTask);
 	}
-      /* Update the drawing objects above */
-	redrawElementsAbove(displayInfo, (DlElement *)dlImage);
     } else {
       /* No channel */
 #if DEBUG_ANIMATE
@@ -417,12 +411,12 @@ static void drawImage(MedmImage *pi)
 	if(pi->animate) {
 	  /* Draw the next image */
 	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
-	    drawGIF(displayInfo, dlImage, True);
+	    drawGIF(displayInfo, dlImage, displayInfo->updatePixmap);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
 	} else {
 	  /* Draw the image */
-	    drawGIF(displayInfo, dlImage, True);
+	    drawGIF(displayInfo, dlImage, displayInfo->updatePixmap);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, 0.0);
 	}

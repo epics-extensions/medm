@@ -105,11 +105,11 @@ static void drawRectangle(MedmRectangle *pr)
 
     lineWidth = (dlRectangle->attr.width+1)/2;
     if(dlRectangle->attr.fill == F_SOLID) {
-	XFillRectangle(display,XtWindow(widget),displayInfo->gc,
+	XFillRectangle(display,displayInfo->updatePixmap,displayInfo->gc,
           dlRectangle->object.x,dlRectangle->object.y,
           dlRectangle->object.width,dlRectangle->object.height);
     } else if(dlRectangle->attr.fill == F_OUTLINE) {
-	XDrawRectangle(display,XtWindow(widget),displayInfo->gc,
+	XDrawRectangle(display,displayInfo->updatePixmap,displayInfo->gc,
 	  dlRectangle->object.x + lineWidth,
 	  dlRectangle->object.y + lineWidth,
 	  dlRectangle->object.width - 2*lineWidth,
@@ -124,8 +124,11 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 #if DEBUG_COMPOSITE
     DlObject *po = &(dlElement->structure.composite->object);
 
-    print("executeDlRectangle: [%d,%d] data=%x staticGraphic=%s\n",
-      po->x,po->y,dlElement->data,dlElement->staticGraphic?"True":"False");
+    print("executeDlRectangle: {%3d,%3d}{%3d,%3d} data=%x "
+      "STATIC_GRAPHIC=%s hidden=%s\n",
+      po->x,po->y,po->x+po->width,po->y+po->height,dlElement->data,
+      dlElement->updateType == STATIC_GRAPHIC?"True":"False",
+      dlElement->hidden?"True":"False");
 #endif
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
@@ -138,6 +141,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pr = (MedmRectangle *)dlElement->data;
 	} else {
 	    pr = (MedmRectangle *)malloc(sizeof(MedmRectangle));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)pr;
 	    if(pr == NULL) {
 		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
@@ -164,30 +168,23 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlRectangle->dynAttr, pr->records);
 	}
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
-	
-	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
 
+	dlElement->updateType = STATIC_GRAPHIC;
+	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
 	if(dlRectangle->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
-	    XFillRectangle(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlRectangle->object.x,dlRectangle->object.y,
-	      dlRectangle->object.width,dlRectangle->object.height);
-	    XFillRectangle(display,displayInfo->drawingAreaPixmap,
+	    
+	    XFillRectangle(display,drawable,
 	      displayInfo->gc,
 	      dlRectangle->object.x,dlRectangle->object.y,
 	      dlRectangle->object.width,dlRectangle->object.height);
 	} else if(dlRectangle->attr.fill == F_OUTLINE) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
-	    XDrawRectangle(display,XtWindow(displayInfo->drawingArea),
-	      displayInfo->gc,
-	      dlRectangle->object.x + lineWidth,
-	      dlRectangle->object.y + lineWidth,
-	      dlRectangle->object.width - 2*lineWidth,
-	      dlRectangle->object.height - 2*lineWidth);
-	    XDrawRectangle(display,displayInfo->drawingAreaPixmap,
+	    
+	    XDrawRectangle(display,drawable,
 	      displayInfo->gc,
 	      dlRectangle->object.x + lineWidth,
 	      dlRectangle->object.y + lineWidth,
@@ -262,9 +259,11 @@ static void rectangleDraw(XtPointer cd)
 	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
 	  drawRectangle(pr);
 	if(pRec->readAccess) {
+#ifdef OPAQUE	    
 	    if(!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
 		pr->updateTask->opaque = True;
 	    }
+#endif
 	} else {
 	    pr->updateTask->opaque = False;
 	    draw3DQuestionMark(pr->updateTask);
@@ -277,9 +276,6 @@ static void rectangleDraw(XtPointer cd)
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 	drawRectangle(pr);
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pr->dlElement);
 }
 
 static void rectangleDestroyCb(XtPointer cd)

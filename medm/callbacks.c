@@ -56,7 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_EVENTS 0
 #define DEBUG_FONTS 0
-#define DEBUG_PIXMAP 0
+#define DEBUG_PIXMAP 1
 #define DEBUG_EXPOSE 0
 #define DEBUG_EXECUTE_MENU 0
 
@@ -221,9 +221,15 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	for(i=0; i < (int)numChildren; i++) {
 	    print("  %2d %x %s\n",i+1,children[i],XtName(children[i]));
 	}
+#if 0
+	XSetForeground(display, displayInfo->gc,
+	  displayInfo->colormap[20]);
+	XFillRectangle(display, XtWindow(displayInfo->drawingArea),
+	  displayInfo->gc, 0, 0, width, height);
+#endif	
 #else
         popupDisplayListDlg();
-#endif    
+#endif
 	break;
     }
     case EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID:
@@ -386,49 +392,22 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		print("Done: Background is window\n");
 	    }
 #endif
-	    XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
-	      displayInfo->pixmapGC,x,y,uiw,uih,x,y);
 	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
-		Display *display = XtDisplay(displayInfo->drawingArea);
-		GC gc = displayInfo->gc;
-		
-		XPoint points[4];
-		Region region;
+	      /* EXECUTE mode */
 		XRectangle clipRect;
 
-		points[0].x = x;
-		points[0].y = y;
-		points[1].x = x + uiw;
-		points[1].y = y;
-		points[2].x = x + uiw;
-		points[2].y = y + uih;
-		points[3].x = x;
-		points[3].y = y + uih;
-		region = XPolygonRegion(points,4,EvenOddRule);
-		if(region == NULL) {
-		    medmPostMsg(0,"drawingAreaCallback: XPolygonRegion is NULL\n");
-		    return;
-		}
-
-	      /* Clip the region */
+	      /* Define the clip rectangle */
 		clipRect.x = x;
 		clipRect.y = y;
 		clipRect.width = uiw;
 		clipRect.height = uih;
-		XSetClipRectangles(display, gc,
-		  0, 0, &clipRect, 1, YXBanded);
-		XSetClipRectangles(display, displayInfo->pixmapGC,
-		  0, 0, &clipRect, 1, YXBanded);
 		
 	      /* Repaint the region */
-		updateTaskRepaintRegion(displayInfo,&region);
-		
-	      /* Release the clipping region */
-		XSetClipOrigin(display, gc, 0, 0);
-		XSetClipMask(display, gc, None);
-		XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
-		XSetClipMask(display, displayInfo->pixmapGC, None);
-		if(region) XDestroyRegion(region);
+		updateTaskRepaintRect(displayInfo, &clipRect, False);
+	    } else {
+	      /* EDIT mode */
+		XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
+		  displayInfo->pixmapGC,x,y,uiw,uih,x,y);
 	    }
 	}
 #if DEBUG_EXPOSE

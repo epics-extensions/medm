@@ -284,7 +284,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    iNumberOfDisplays++;
 	}
     } 
-  /* 1 display, not hidden */
+  /* One display, not hidden */
     if(iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
       /* Case 1 0f 4 */
       /* One item, any type but hidden */
@@ -578,12 +578,16 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtManageChild(dlElement->widget);
     } else if(dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
       /* Case 4 of 4 */
-      /* Hidden button:
-       *  No widget, No callbacks, Just draw a rectangle
-       *  Handle in executeModeButtonPress, not relatedDisplayButtonPressedCb */
+      /* Hidden button: No widget. No callbacks. Just draw a stippled
+       *  rectangle.  Handle in executeModeButtonPress, not
+       *  relatedDisplayButtonPressedCb */
 	unsigned long gcValueMask;
 	XGCValues gcValues;
-	Display *display = XtDisplay(displayInfo->drawingArea);
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
+
 	gcValueMask = GCForeground | GCBackground | GCFillStyle | GCStipple;
 	gcValues.foreground = displayInfo->colormap[dlRelatedDisplay->clr];
 	gcValues.background = displayInfo->colormap[dlRelatedDisplay->bclr];
@@ -596,26 +600,20 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      stipple_bitmap, 4, 4);
 	}
 	gcValues.stipple = stipple;
-	XChangeGC(XtDisplay(displayInfo->drawingArea),
-	  displayInfo->gc,
-	  gcValueMask, &gcValues);
-	XFillRectangle(XtDisplay(displayInfo->drawingArea),
-	  XtWindow(displayInfo->drawingArea),displayInfo->gc,
-	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
-	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
-      /* KE: Why do twice */
-	XFillRectangle(XtDisplay(displayInfo->drawingArea),
-	  displayInfo->drawingAreaPixmap,displayInfo->gc,
-	  dlRelatedDisplay->object.x,dlRelatedDisplay->object.y,
-	  dlRelatedDisplay->object.width,dlRelatedDisplay->object.height);
+	XChangeGC(display, displayInfo->gc, gcValueMask, &gcValues);
+	XFillRectangle(display, drawable, displayInfo->gc,
+	  dlRelatedDisplay->object.x, dlRelatedDisplay->object.y,
+	  dlRelatedDisplay->object.width, dlRelatedDisplay->object.height);
+
       /* Restore GC */
-	XSetFillStyle(display,displayInfo->gc,FillSolid);
+	XSetFillStyle(display, displayInfo->gc, FillSolid);
     }
 }
 
 void hideDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-  /* Use generic hide for an element with a widget */
+  /* Use generic hide for an element with a widget */	dlElement->updateType = STATIC_GRAPHIC;
+
     hideWidgetElement(displayInfo, dlElement);
 }
 

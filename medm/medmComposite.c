@@ -66,6 +66,7 @@ typedef struct _MedmComposite {
     UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
     DisplayInfo      *displayInfo;
+    CompositeUpdateState updateState;
 } MedmComposite;
 
 /* Function prototypes */
@@ -132,6 +133,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		pc = (MedmComposite *)dlElement->data;
 	    } else {
 		pc = (MedmComposite *)malloc(sizeof(MedmComposite));
+		dlElement->updateType = DYNAMIC_GRAPHIC;
 		dlElement->data = (void *)pc;
 		if(pc == NULL) {
 		    medmPrintf(1,"\nexecuteDlArcComposite:"
@@ -142,6 +144,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		pc->updateTask = NULL;
 		pc->records = NULL;
 		pc->dlElement = dlElement;
+		pc->updateState = COMPOSITE_NEW;
 
 		pc->displayInfo = displayInfo;
 		pc->records = NULL;
@@ -167,8 +170,8 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		setMonitorChanged(&dlComposite->dynAttr, pc->records);
 	    }
 	} else {
-	  /* No channel */
-	    dlElement->staticGraphic = True;
+	  /* Static */
+	    dlElement->updateType = STATIC_GRAPHIC;
 	    executeCompositeChildren(displayInfo, dlElement);
 	}
     } else {
@@ -211,6 +214,10 @@ static void compositeUpdateValueCb(XtPointer cd)
       pr,pr->name,pr->value);
 #endif    
     updateTaskMarkUpdate(pc->updateTask);
+#if DEBUG_COMPOSITE
+    print("  executePendingRequestsCount=%d\n",
+      pc->updateTask->executeRequestsPendingCount);
+#endif    
 }
 
 static void compositeDraw(XtPointer cd)
@@ -260,10 +267,12 @@ static void compositeDraw(XtPointer cd)
 		hideComposite(pc);
 	    }
 	    if(pr->readAccess) {
+#ifdef OPAQUE	    
 		if(!pc->updateTask->overlapped &&
 		  dlComposite->dynAttr.vis == V_STATIC) {
 		    pc->updateTask->opaque = True;
 		}
+#endif		
 	    } else {
 		pc->updateTask->opaque = False;
 		draw3DQuestionMark(pc->updateTask);
@@ -277,9 +286,6 @@ static void compositeDraw(XtPointer cd)
       /* No channel */
 	executeCompositeChildren(displayInfo, pc->dlElement);
     }
-    
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pc->dlElement);
 }
 
 /* The routine that draws as opposed to hide.  Currently just calls
@@ -297,55 +303,41 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 {
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
-#if 0    
-    GC gcSave;
-#endif    
     
-#if DEBUG_COMPOSITE || DEBUG_REDRAW
+#if DEBUG_COMPOSITE
     print("executeCompositeChildren: dlElement=%x\n",dlElement);
-/*      print("dlComposite->dlElementList:\n"); */
-/*      dumpDlElementList(dlComposite->dlElementList); */
-/*      print("displayInfo->dlElementList:\n"); */
-/*      dumpDlElementList(displayInfo->dlElementList); */
 #endif
-
-#if 0     /* Check */
-  /* In case the drawing area gc has a clip mask set, change it to the
-     pixmapGC, which should not be clipped */
-    gcSave=displayInfo->gc;
-    displayInfo->gc = displayInfo->pixmapGC;
-#endif
-    
   /* Loop over children */    
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
+#if 0	
 	UpdateTask *t = getUpdateTaskFromElement(pE);
-
+#endif
 	pE->hidden = False;
 	if(!displayInfo->elementsExecuted) {
 	    pE->data = NULL;
 	}
-	updateTaskEnableTask(pE);
+	if(pE->data) updateTaskEnableTask(pE);
 	if(pE->run->execute) {
 #if DEBUG_COMPOSITE || DEBUG_REDRAW
-	    print("  executed: pE=%x[%s] x=%d y=%d\n",
+	    print("  executed: pE=%x[%s] x=%d y=%d hidden=%s\n",
 	      pE,elementType(pE->type),
 	      pE->structure.composite->object.x,
-	      pE->structure.composite->object.y);
+	      pE->structure.composite->object.y,
+	      pE->hidden?"True":"False");
 #endif
 	    pE->run->execute(displayInfo, pE);
 	}
 	pE = pE->next;
     }
 
-#if 0
-  /* Restore the drawing area gc */
-    displayInfo->gc = gcSave;
-#endif
-    
-#if DEBUG_COMPOSITE || DEBUG_REDRAW
-    print("END executeCompositeChildren: dlElement=%x\n",dlElement);
-#endif    
+  /* Change updateState */
+    if(dlElement->data) {
+	MedmComposite *pc = (MedmComposite *)dlElement->data;
+	if(pc->updateState != COMPOSITE_VISIBLE_UPDATED) {
+	    pc->updateState = COMPOSITE_VISIBLE;
+	}
+    }
 }
 
 /* The routine that hides as opposed to draw.  Currently just calls
@@ -354,6 +346,9 @@ static void hideComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
+
+  /* Don't do anything if already hidden and updated */
+    if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
 
     hideCompositeChildren(displayInfo, pc->dlElement);
 }
@@ -365,6 +360,7 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 {
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
+    MedmComposite *pc = (MedmComposite *)dlElement->data;
     
 #if DEBUG_COMPOSITE
     print("hideCompositeChildren: dlElement=%x\n",dlElement);
@@ -374,12 +370,15 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 /*      dumpDlElementList(displayInfo->dlElementList); */
 #endif
   /* If we are doing this the first time, we need to execute all the
-     elements to insure their update tasks are in the right (stacking)
+     elements to insure their update tasks are in the right stacking
      order */
     if(!displayInfo->elementsExecuted) {
 	executeCompositeChildren(displayInfo, dlElement);
     }
     
+  /* Don't do anything if already hidden and updated */
+    if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
+
   /* Hide them */
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
@@ -397,6 +396,14 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 	pE = pE->next;
     }
     
+  /* Change updateState */
+    if(dlElement->data) {
+	MedmComposite *pc = (MedmComposite *)dlElement->data;
+	
+	if(pc->updateState != COMPOSITE_HIDDEN_UPDATED) {
+	    pc->updateState = COMPOSITE_HIDDEN;
+	}
+    }
 #if DEBUG_COMPOSITE
     print("END hideCompositeChildren: dlElement=%x\n",dlElement);
 #endif    
@@ -405,13 +412,19 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 /* The hide routine in the dispatch table */
 void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+
+    MedmComposite *pc;
 #if DEBUG_COMPOSITE
     print("hideDlComposite:\n");
 #endif    
     if(!displayInfo || !dlElement) return;
     
+  /* Don't do anything if already hidden and updated */
+    pc = (MedmComposite *)dlElement->data;
+    if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
+
   /* Disable the update task */
-    updateTaskDisableTask(dlElement);
+    if(dlElement->data) updateTaskDisableTask(dlElement);
     
   /* The same code as in hideComposite */
     hideCompositeChildren(displayInfo, dlElement);
@@ -990,5 +1003,25 @@ static void compositeCleanup(DlElement *dlElement)
 	    pE->widget = NULL;
 	}
 	pE = pE->next;
+    }
+}
+
+CompositeUpdateState getCompositeUpdateState(DlElement *dlElement)
+{
+    if(dlElement && dlElement->data) {
+	MedmComposite *pc = (MedmComposite *)dlElement->data;
+	
+	return pc->updateState;
+    } else {
+	return COMPOSITE_NEW;
+    }
+}
+
+void setCompositeUpdateState(DlElement *dlElement, CompositeUpdateState state)
+{
+    if(dlElement && dlElement->data) {
+	MedmComposite *pc = (MedmComposite *)dlElement->data;
+	
+	pc->updateState = state;
     }
 }

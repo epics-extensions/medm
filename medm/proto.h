@@ -332,7 +332,8 @@ void updateCartesianPlotDataDialog(void);
 /* medmComposite.c */
 DlElement *groupObjects();
 void ungroupSelectedElements(void);
-void markCompositeChildrenNotExecuted(DlElement *dlElement);
+CompositeUpdateState getCompositeUpdateState(DlElement *dlElement);
+void setCompositeUpdateState(DlElement *dlElement, CompositeUpdateState state);
 
 /* medmDisplay.c */
 DlElement *parseDisplay(DisplayInfo *displayInfo);
@@ -456,7 +457,9 @@ void updateTaskSetScanRate(UpdateTask *, double);
 void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
 void updateTaskAddDestroyCb(UpdateTask *, void (*)(XtPointer));
 void updateTaskMarkUpdate(UpdateTask *pt);
-void updateTaskRepaintRegion(DisplayInfo *, Region *);
+void updateTaskRepaintRect(DisplayInfo *displayInfo, XRectangle *clipRect,
+  Boolean redrawPixmap);
+void updateTaskRepaintRegion(DisplayInfo *displayInfo, Region region);
 void medmInitializeUpdateTasks(void);
 void updateTaskStatusGetInfo(int *taskCount,
   int *periodicTaskCount,
@@ -527,8 +530,6 @@ void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
   char        *cancelBtnLabel,
   char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
-void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement);
-void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,
@@ -637,7 +638,7 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title);
 
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
-void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Boolean pixmap);
+void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Drawable drawable);
 void resizeGIF(DlImage *dlImage);
 void freeGIF(DlImage *dlImage);
 void copyGIF(DlImage *dlImage1, DlImage *dlImage2);

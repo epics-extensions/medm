@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_FONTS 0
 #define DEBUG_HIDE 0
+#define DEBUG_BACKGROUND 0
 
 #include <X11/keysym.h>
 #include <ctype.h>
@@ -77,6 +78,8 @@ static void textSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void textSetValues(ResourceBundle *pRCB, DlElement *p);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 
+static void drawText(Drawable drawable,  GC gc, DlText *dlText);
+
 static DlDispatchTable textDlDispatchTable = {
     createDlText,
     NULL,
@@ -94,15 +97,16 @@ static DlDispatchTable textDlDispatchTable = {
     NULL,
     NULL};
 
-static void drawText(Display *display,
-  Drawable drawable,
-  GC gc,
-  DlText *dlText)
+static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 {
     int i = 0, usedWidth, usedHeight;
     int x, y;
     size_t nChars;
     
+#if DEBUG_BACKGROUND
+    printf("drawText:\n");
+#endif	
+
     nChars = strlen(dlText->textix);
     i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
       dlText->object.height,dlText->object.width,
@@ -194,7 +198,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlText *dlText = dlElement->structure.text;
     
-#if DEBUG_FONTS
+#if DEBUG_FONTS  || DEBUG_BACKGROUND
 	printf("executeDlText: displayInfo=%x dlElement=%x\n",
 	  displayInfo,dlElement);
 #endif	
@@ -205,7 +209,6 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlText->dynAttr.chan[0]) {
 	MedmText *pt;
@@ -214,6 +217,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pt = (MedmText *)dlElement->data;
 	} else {
 	    pt = (MedmText *)malloc(sizeof(MedmText));
+	    dlElement->updateType = DYNAMIC_GRAPHIC;
 	    dlElement->data = (void *)pt;
 	    if(pt == NULL) {
 		medmPrintf(1,"\nexecuteDlText: Memory allocation error\n");
@@ -225,10 +229,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pt->dlElement = dlElement;
 
 	    pt->updateTask = updateTaskAddTask(displayInfo,
-	      &(dlText->object),
-	      textDraw,
-	      (XtPointer)pt);
-	    
+	      &(dlText->object), textDraw, (XtPointer)pt);
 	    if(pt->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlText: Memory allocation error\n");
 	    } else {
@@ -242,19 +243,16 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlText->dynAttr, pt->records);
 	}
     } else {
-	if(displayInfo->traversalMode == DL_EXECUTE)
-	  dlElement->staticGraphic = True;
+      /* Static */
+	Drawable drawable=updateInProgress?
+	  displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
+
+	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
-#if DEBUG_FONTS > 1 || DEBUG_HIDE
-	printf("executeDlText: Calling drawText DA\n");
-#endif	
-	drawText(display,XtWindow(displayInfo->drawingArea),
-	  displayInfo->gc,dlText);
 #if DEBUG_FONTS > 1 || DEBUG_HIDE
 	printf("executeDlText: Calling drawText PM\n");
 #endif
-	drawText(display,displayInfo->drawingAreaPixmap,
-	  displayInfo->gc,dlText);
+	drawText(drawable, displayInfo->gc, dlText);
     }
 }
 
@@ -279,7 +277,7 @@ static void textDraw(XtPointer cd) {
     Display *display = XtDisplay(widget);
     DlText *dlText = pt->dlElement->structure.text;
 
-#if DEBUG_HIDE
+#if DEBUG_HIDE || DEBUG_BACKGROUND
     printf("textDraw: displayInfo=%x dlElement=%x\n",
       displayInfo,pt->dlElement);
 #endif	
@@ -311,28 +309,31 @@ static void textDraw(XtPointer cd) {
 	    break;
 	}
 	gcValues.line_width = dlText->attr.width;
-	gcValues.line_style = ((dlText->attr.style == SOLID) ? LineSolid : LineOnOffDash);
+	gcValues.line_style = ((dlText->attr.style == SOLID) ?
+	  LineSolid : LineOnOffDash);
 	XChangeGC(display,displayInfo->gc,gcValueMask,&gcValues);
 
       /* Draw depending on visibility */
 	if(calcVisibility(&dlText->dynAttr, pt->records))
 	/* KE: Different drawXXX from other drawing objects */
-	  drawText(display,XtWindow(displayInfo->drawingArea),
-	    displayInfo->gc,dlText);
+	  drawText(displayInfo->updatePixmap, displayInfo->gc,
+	    dlText);
 	if(pr->readAccess) {
+#ifdef OPAQUE	    
 	    if(!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
 		pt->updateTask->opaque = True;
 	    }
+#endif
 	} else {
 	    pt->updateTask->opaque = False;
 	    draw3DQuestionMark(pt->updateTask);
 	}
     } else {
+#if DEBUG_BACKGROUND
+	print("  drawWhiteRectangle\n");
+#endif	
 	drawWhiteRectangle(pt->updateTask);
     }
-
-  /* Update the drawing objects above */
-    redrawElementsAbove(displayInfo, pt->dlElement);
 }
 
 static void textDestroyCb(XtPointer cd) {
@@ -692,7 +693,9 @@ DlElement *handleTextCreate(int x0, int y0)
 #if DEBUG_FONTS
 	    printf("handleTextCreate: Calling drawText\n");
 #endif	
-	    drawText(display,XtWindow(currentDisplayInfo->drawingArea),
+	    drawText(XtWindow(currentDisplayInfo->drawingArea),
+	      currentDisplayInfo->gc,dlText);
+	    drawText(currentDisplayInfo->drawingAreaPixmap,
 	      currentDisplayInfo->gc,dlText);
  
 	  /* Update these globals for blinking to work */
