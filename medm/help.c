@@ -122,8 +122,9 @@ void errMsgDlgClearButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
     if (errMsgText == NULL) return;
-  /* clear the buffer */
+  /* Clear the buffer */
     XmTextSetString(errMsgText,"");
+    XmTextSetInsertionPosition(errMsgText, 0);
     return;
 }
 
@@ -395,6 +396,7 @@ void medmPostMsg(char *msg) {
     long now; 
     struct tm *tblock;
     char timeStampStr[60];
+    XmTextPosition curpos;
 
     if (errMsgDlg == NULL) {
 	errMsgDlgCreateDlg();
@@ -403,24 +405,45 @@ void medmPostMsg(char *msg) {
     time(&now);
     tblock = localtime(&now);
     strftime(timeStampStr,60,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
-    XmTextInsert(errMsgText, 0, "\n");
-    XmTextInsert(errMsgText, 0, msg);
-    XmTextInsert(errMsgText, 0, timeStampStr);
+    if(errMsgText) {
+	curpos = XmTextGetInsertionPosition(errMsgText);
+	XmTextInsert(errMsgText, curpos, timeStampStr);
+	curpos+=strlen(timeStampStr);
+	XmTextInsert(errMsgText, curpos, msg);
+	curpos+=strlen(msg);
+	XmTextInsert(errMsgText, curpos, "\n");
+	curpos+=strlen("\n");
+	XmTextSetInsertionPosition(errMsgText, curpos);
+	XmTextShowPosition(errMsgText, curpos);
+	XFlush(display);
+    }
+  /* Also print to stderr */
+    fprintf(stderr, timeStampStr);
+    fprintf(stderr, msg);
+    fprintf(stderr, "\n");
 }
 
 static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
 void medmPrintf(char *format,...)
 {
     va_list args;
+    XmTextPosition curpos;
 
     if (errMsgDlg == NULL) {
 	errMsgDlgCreateDlg();
     }
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
-    if(errMsgText) XmTextInsert(errMsgText, 0, medmPrintfStr);
+    if(errMsgText) {
+	curpos = XmTextGetInsertionPosition(errMsgText);
+	XmTextInsert(errMsgText, curpos, medmPrintfStr);
+	curpos+=strlen(medmPrintfStr);
+	XmTextSetInsertionPosition(errMsgText, curpos);
+	XmTextShowPosition(errMsgText, curpos);
+	XFlush(display);
+    }
   /* Also print to stderr */
-    fprintf(stderr,medmPrintfStr);
+    fprintf(stderr, medmPrintfStr);
     va_end(args);
 }
 
@@ -428,6 +451,7 @@ void medmPostTime() {
     long now; 
     struct tm *tblock;
     char timeStampStr[60];
+    XmTextPosition curpos;
 
     if (errMsgDlg == NULL) {
 	errMsgDlgCreateDlg();
@@ -435,7 +459,16 @@ void medmPostTime() {
     time(&now);
     tblock = localtime(&now);
     strftime(timeStampStr,60,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
-    XmTextInsert(errMsgText, 0, timeStampStr);
+    if(errMsgText) {
+	curpos = XmTextGetInsertionPosition(errMsgText);
+	XmTextInsert(errMsgText, curpos, timeStampStr);
+	curpos+=strlen(timeStampStr);
+	XmTextSetInsertionPosition(errMsgText, curpos);
+	XmTextShowPosition(errMsgText, curpos);
+	XFlush(display);
+    }
+  /* Also print to stderr */
+    fprintf(stderr, timeStampStr);
 }
 
 static char caStudyMsg[512];
