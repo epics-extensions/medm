@@ -496,11 +496,11 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	pr->precision = pCh->info.f.precision;
 	break;
     default :
-	medmPostMsg(1,"medmUpdateGraphicalInfoCb: Unknown data type\n");
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Unknown data type\n");
 	return;
     }
     if (pr->precision < 0) {
-	medmPostMsg(1,"medmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: pv = \"%s\" precision = %d\n",
 	  ca_name(pCh->chid), pr->precision);
 	pr->precision = 0;
     } else
@@ -748,7 +748,8 @@ static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
 Record *medmAllocateRecord(char *name,
   void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer),
-  XtPointer clientData) {
+  XtPointer clientData)
+{
     Record *record;
     record = (Record *) malloc(sizeof(Record));
     if (record) {

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_SHORT 0
+#define DEBUG_TEXT 0
 
 #include "medm.h"
 
@@ -159,7 +160,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	usedWidth = XTextWidth(fontTable[localFontIndex],dlTextUpdate->monitor.rdbk,
 	  nChars);
 
-/* clip to bounding box (especially for text) */
+      /* Clip to bounding box (especially for text) */
 	clipRect[0].x = dlTextUpdate->object.x;
 	clipRect[0].y = dlTextUpdate->object.y;
 	clipRect[0].width  = dlTextUpdate->object.width;
@@ -206,7 +207,6 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 
-
 /* and turn off clipping on exit */
 	XSetClipMask(display,displayInfo->gc,None);
     }
@@ -246,6 +246,7 @@ static void textUpdateDraw(XtPointer cd)
     int strLen = 0;
 
     if (pd->connected) {
+      /* KE: Can be connected without graphical info or value yet */
 	if (pd->readAccess) {
 	    textField[0] = '\0';
 	    switch (pd->dataType) {
@@ -296,8 +297,11 @@ static void textUpdateDraw(XtPointer cd)
 		  dlTextUpdate->monitor.rdbk);
 		break;
 	    }
+	  /* KE: Value can be received before the graphical info
+	   *   Set precision to 0 if it is still -1 from initialization */
+	    if (precision < 0) precision = 0;
 	  /* Convert bad values of precision to high precision */
-	    if(precision < 0 || precision > 17) precision=17;
+	    if(precision > 17) precision = 17;
 	    if(isNumber) {
 		switch (dlTextUpdate->format) {
 		case STRING:
@@ -345,17 +349,11 @@ static void textUpdateDraw(XtPointer cd)
 	    }
 
 #if DEBUG_SHORT
-	    {
-	      /* Use to overcome lprint not supporting %f */
-		char string[512];
-		
-		sprintf(string,"textUpdateDraw: pd->name=%s pd->dataType=%d(%s)\n"
-		  "  pd->value=%g  textField=|%s|\n",
-		  pd->name,pd->dataType,dbf_type_to_text(pd->dataType),
-		  pd->value,textField);
-		print(string);
-		print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),sizeof(long));
-	    }
+	    print("textUpdateDraw: pd->name=%s pd->dataType=%d(%s)\n"
+	      "  pd->value=%g  textField=|%s|\n",
+	      pd->name,pd->dataType,dbf_type_to_text(pd->dataType),
+	      pd->value,textField);
+	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),sizeof(long));
 #endif		
 
 	    XSetForeground(display,displayInfo->gc, displayInfo->colormap[dlTextUpdate->monitor.bclr]);
@@ -406,6 +404,8 @@ static void textUpdateDraw(XtPointer cd)
 	    {
 	      /* KE: y is the same for all and there are only three distinct cases */
 		int x, y;
+		XRectangle clipRect[1];
+		
 		XSetFont(display,displayInfo->gc,fontTable[i]->fid);
 		switch (dlTextUpdate->align) {
 		case HORIZ_LEFT:
@@ -421,12 +421,21 @@ static void textUpdateDraw(XtPointer cd)
 		    y =dlTextUpdate->object.y + fontTable[i]->ascent;
 		    break;
 		}
+	      /* Set clipping region */
+		clipRect[0].x = dlTextUpdate->object.x;
+		clipRect[0].y = dlTextUpdate->object.y;
+		clipRect[0].width  = dlTextUpdate->object.width;
+		clipRect[0].height =  dlTextUpdate->object.height;
+		XSetClipRectangles(display,displayInfo->gc,0,0,clipRect,1,YXBanded);
+	      /* Draw the string */
 		XDrawString(display,XtWindow(displayInfo->drawingArea),
                   displayInfo->gc, x, y,
 		  textField,strLen);
+	      /* Remove clipping region */
+		XSetClipMask(display,displayInfo->gc,None);
 	    }
 	} else {
-	  /* no read access */
+	  /* No read access */
 	    draw3DPane(ptu->updateTask,
 	      ptu->updateTask->displayInfo->colormap[dlTextUpdate->monitor.bclr]);
 	    draw3DQuestionMark(ptu->updateTask);

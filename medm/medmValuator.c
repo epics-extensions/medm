@@ -451,7 +451,7 @@ void handleValuatorExpose(
     DisplayInfo *displayInfo;
     double localLopr, localHopr;
     char *localTitle;
-    short localPrecision;
+    short precision;
 
     if (event->count > 0) return;
 
@@ -464,7 +464,7 @@ void handleValuatorExpose(
 	dlValuator = pv->dlElement->structure.valuator;
 	localLopr = pd->lopr;
 	localHopr = pd->hopr;
-	localPrecision = MAX(0,pd->precision);
+	precision = MAX(0,pd->precision);
 	localTitle = dlValuator->control.ctrl;
 
     } else {
@@ -473,7 +473,7 @@ void handleValuatorExpose(
 	if (dlValuator == NULL) return;
 	localLopr = 0.0;
 	localHopr = 0.0;
-	localPrecision = 0;
+	precision = 0;
 	localTitle = dlValuator->control.ctrl;
 	displayInfo = dmGetDisplayInfoFromWidget(w);
 	if (displayInfo == NULL) return;
@@ -497,8 +497,11 @@ void handleValuatorExpose(
 	XSetClipOrigin(display,displayInfo->pixmapGC,0,0);
 	XSetClipMask(display,displayInfo->pixmapGC,None);
 
+      /* KE: Value can be received before the graphical info
+       *   Set precision to 0 if it is still -1 from initialization */
+	if (precision < 0) precision = 0;
       /* Convert bad values of precision to high precision */
-	if(localPrecision < 0 || localPrecision > 17) localPrecision=17;
+	if(precision > 17) precision = 17;
 	switch (dlValuator->direction) {
 	case UP:
 	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
@@ -506,7 +509,7 @@ void handleValuatorExpose(
 	    if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS
 	      || dlValuator->label == CHANNEL) {
 	      /* LOPR */
-		cvtDoubleToString(localLopr,stringValue,localPrecision);
+		cvtDoubleToString(localLopr,stringValue,precision);
 		if (stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
@@ -521,7 +524,7 @@ void handleValuatorExpose(
 		      stringValue,nChars);
 		}
 	      /* HOPR */
-		cvtDoubleToString(localHopr,stringValue,localPrecision);
+		cvtDoubleToString(localHopr,stringValue,precision);
 		if (stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
@@ -562,7 +565,7 @@ void handleValuatorExpose(
 	    if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS
 	      || dlValuator->label == CHANNEL) {
 	      /* LOPR */
-		cvtDoubleToString(localLopr,stringValue,localPrecision);
+		cvtDoubleToString(localLopr,stringValue,precision);
 		if (stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
@@ -577,7 +580,7 @@ void handleValuatorExpose(
 		      stringValue,nChars);
 		}
 	      /* HOPR */
-		cvtDoubleToString(localHopr,stringValue,localPrecision);
+		cvtDoubleToString(localHopr,stringValue,precision);
 		if (stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);

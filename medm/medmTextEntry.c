@@ -125,13 +125,13 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 
     textField[0] = '\0';
     switch(pd->dataType) {
-    case DBF_STRING :
+    case DBF_STRING:
 	if (pd->array) {
 	    strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
 	    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 	}
 	return textField;
-    case DBF_ENUM :
+    case DBF_ENUM:
 	if ((pd->precision >= 0) && (pd->hopr+1 > 0)) {
 	    int i = (int) pd->value;
 	  /* getting values of -1 for data->value for invalid connections */
@@ -146,7 +146,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	    value = pd->value;
 	}
 	break;
-    case DBF_CHAR :
+    case DBF_CHAR:
 	if (format == STRING) {
 	    if (pd->array) {
 		strncpy(textField,pd->array,
@@ -155,14 +155,14 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	    }
 	    return textField;
 	}
-    case DBF_INT :
-    case DBF_LONG :
-    case DBF_FLOAT :
-    case DBF_DOUBLE :
+    case DBF_INT:
+    case DBF_LONG:
+    case DBF_FLOAT:
+    case DBF_DOUBLE:
 	precision = pd->precision;
 	value = pd->value;
 	break;
-    default :
+    default:
 	medmPostMsg(1,"valueToString:\n");
 	medmPrintf(0,"  Name: %s\n",
 	  pte->dlElement->structure.textEntry->control.ctrl);
@@ -170,8 +170,11 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	return "Error!";
     }
     
+  /* KE: Value can be received before the graphical info
+   *   Set precision to 0 if it is still -1 from initialization */
+    if (precision < 0) precision = 0;
   /* Convert bad values of precision to high precision */
-    if(precision < 0 || precision > 17) precision=17;
+    if(precision > 17) precision = 17;
     switch (format) {
     case STRING:
 	cvtDoubleToString(value,textField,precision);
@@ -204,7 +207,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
     case OCTAL:
 	cvtLongToOctalString((long)value, textField);
 	break;
-    default :
+    default:
 	medmPostMsg(1,"valueToString:\n");
 	medmPrintf(0,"  Name: %s\n",pte->dlElement->structure.textEntry->control.ctrl);
 	medmPrintf(0,"  Unknown Format Type\n");
@@ -375,7 +378,7 @@ void textEntryDraw(XtPointer cd) {
 	    if (pte->updateAllowed) {
 		XmTextFieldSetString(widget,valueToString(pte,dlTextEntry->format));
 		switch (dlTextEntry->clrmod) {
-		case STATIC :
+		case STATIC:
 		case DISCRETE:
 		    break;
 		case ALARM:
