@@ -1045,6 +1045,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    char *dir = NULL;
 	    char name[FULLPATHNAME_SIZE];
 	    int startPos;
+	    
 	    dir = getenv("EPICS_DISPLAY_PATH");
 	    if(dir != NULL) {
 		startPos = 0;
@@ -3146,7 +3147,8 @@ main(int argc, char *argv[])
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
     msgClass_t msgClass;
     Window medmHostWindow = (Window)0;
-    char *tempDir=NULL;
+    char *tempDir = NULL;
+    char *envPrintCommand = NULL;
 
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
@@ -3238,9 +3240,14 @@ main(int argc, char *argv[])
     printDate = DEFAULT_PRINT_DATE;
     printWidth = printHeight = 0.0;
     printRemoveTempFiles = PRINT_REMOVE_TEMP_FILES;
-    strcpy(printCommand, DEFAULT_PRINT_CMD);
     strcpy(printFile, DEFAULT_PRINT_FILENAME);
     strcpy(printTitleString, DEFAULT_PRINT_TITLE_STRING);
+    envPrintCommand = getenv("MEDM_PRINT_CMD");
+    if(envPrintCommand != NULL) {
+	strcpy(printCommand, envPrintCommand);
+    } else {
+	strcpy(printCommand, DEFAULT_PRINT_CMD);
+    }
 
   /* XWD file name */
 #ifdef WIN32
