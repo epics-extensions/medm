@@ -86,6 +86,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  * .31  10-02-97        evans   2.3.2 release
  * .32  11-05-97        evans   2.3.3 release
  * .33  07-15-98        evans   2.3.4 release
+ * .34  12-18-98        evans   2.3.5 release
  *
  *****************************************************************************
 */
@@ -98,8 +99,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define MEDM_UPDATE_LEVEL	5
 
 #ifdef __COLOR_RULE_H__
-#define MEDM_VERSION_STRING	"MEDM(ColorRule) Version 2.3.5Beta4"
+#define MEDM_VERSION_STRING	"MEDM(ColorRule) Version 2.3.5"
 #else
-#define MEDM_VERSION_STRING	"MEDM Version 2.3.5Beta4"
+#define MEDM_VERSION_STRING	"MEDM Version 2.3.5"
 #endif
-#define MEDM_VERSION_DIGITS	"MEDM020305Beta4"
+#define MEDM_VERSION_DIGITS	"MEDM020305"
