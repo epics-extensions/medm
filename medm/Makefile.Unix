@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.1  1994/10/05 18:56:52  jba
+# Revision 1.2  1994/10/07 15:00:20  jba
+# Added xrtAuth rule
+#
+# Revision 1.1  1994/10/05  18:56:52  jba
 # Initial versions
 #
 #
@@ -43,6 +46,15 @@ include $(EPICS)/config/RULES.Unix
 
 medm: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
+	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
+	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
+	if [ $$? -ne 0 ]; then\
+		echo "*********************************";\
+		echo "ERROR in running XRT_AUTH on MEDM";\
+		echo "*********************************";\
+	fi
+
+xrtAuth: medm
 	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
 	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
 	if [ $$? -ne 0 ]; then\
