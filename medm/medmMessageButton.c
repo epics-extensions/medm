@@ -234,7 +234,8 @@ void executeDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
       }
 }
 
-static void messageButtonUpdateGraphicalInfoCb(XtPointer cd) {
+static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
+{
     Record *pd = (Record *) cd;
     MessageButton *pmb = (MessageButton *) pd->clientData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
@@ -286,12 +287,14 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd) {
 }
 
 
-static void messageButtonUpdateValueCb(XtPointer cd) {
+static void messageButtonUpdateValueCb(XtPointer cd)
+{
     MessageButton *pmb = (MessageButton *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pmb->updateTask);
 }
 
-static void messageButtonDraw(XtPointer cd) {
+static void messageButtonDraw(XtPointer cd)
+{
     MessageButton *pmb = (MessageButton *) cd;
     Record *pd = pmb->record;
     Widget widget = pmb->dlElement->widget;
@@ -330,7 +333,8 @@ static void messageButtonDraw(XtPointer cd) {
     }
 }
 
-static void messageButtonDestroyCb(XtPointer cd) {
+static void messageButtonDestroyCb(XtPointer cd)
+{
     MessageButton *pmb = (MessageButton *) cd;
     if (pmb) {
 	medmDestroyRecord(pmb->record);

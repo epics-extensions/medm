@@ -275,7 +275,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
     if (pd->dataType != DBF_ENUM) {
 	medmPostMsg("choiceButtonUpdateGraphicalInfoCb:\n"
 	  "  %s is not an ENUM type\n"
-	  "  Cannot create Choice Buttom\n",
+	  "  Cannot create Choice Button\n",
 	  pCB->control.ctrl);
 	return;
     }
