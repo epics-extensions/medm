@@ -54,7 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_MENU 1
+#define DEBUG_MENU 0
+#define DEBUG_FONT 0
 
 #define OPTION_MENU_ADJUST_WIDTH 22
 #define OPTION_MENU_ADJUST_HEIGHT 4
@@ -110,14 +111,56 @@ static DlDispatchTable menuDlDispatchTable = {
 int menuFontListIndex(int height)
 {
     int i;
-/* don't allow height of font to exceed 90% - 4 pixels of menu widget
- *	(includes nominal 2*shadowThickness=2 shadow)
- */
+
+#if DEBUG_FONT
+    {
+	int j, h, h1, h2, indx1, indx2;
+	
+	print("\n h   h1  i1    h2  i2\n");
+	for(j=0; j < 80; j++) {
+	    h = j + 1;
+	    h1 = (int)(.90*h) - 4;
+	    indx1 = 0;
+	    for (i = MAX_FONTS-1; i >=  0; i--) {
+		if ( ((int)(.90*h) - 4) >= 
+		  (fontTable[i]->ascent + fontTable[i]->descent)) {
+		    indx1 = i;
+		    break;
+		}
+	    }
+	    h2 = (int)(h) - 8;
+	    indx2 = 0;
+	    for (i = MAX_FONTS-1; i >=  0; i--) {
+		if ( ((int)(h) - 8) >= 
+		  (fontTable[i]->ascent + fontTable[i]->descent)) {
+		    indx2 = i;
+		    break;
+		}
+	    }
+	    print("%2d   %2d  %2d    %2d  %2d\n",
+	      h, h1, indx1, h2, indx2);
+	}
+    }
+#endif    
+
+#if 0
+  /* Don't allow height of font to exceed 90% - 4 pixels of menu
+   *   widget.  Includes nominal 2*shadowThickness = 4 */
     for (i = MAX_FONTS-1; i >=  0; i--) {
 	if ( ((int)(.90*height) - 4) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
+#else
+  /* Allow for shadowThickness + marginHeight 2*(2+2)=8.  Allow full
+   *   ascent + descent.  Gives better spacing of the menu items for
+   *   small Menu's */
+    for (i = MAX_FONTS-1; i >=  0; i--) {
+	if ( ((int)(height) - 8) >= 
+	  (fontTable[i]->ascent + fontTable[i]->descent))
+	  return(i);
+    }
+#endif
     return (0);
 }
 
