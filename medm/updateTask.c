@@ -56,7 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_SCHEDULER 0
 #define DEBUG_UPDATE 0
-#define DEBUG_COMPOSITE 1
+#define DEBUG_COMPOSITE 0
 
 #include "medm.h"
 
@@ -75,16 +75,43 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
   ((gif)->frames[CURFRAME(gif)]->DelayTime)/100. : DEFAULT_TIME)
 
 typedef struct _Image {
-    DisplayInfo   *displayInfo;
-    DlElement     *dlElement;
+    DlElement *dlElement;     /* Must be first */
+    Record **records;
+    UpdateTask *updateTask;
+    DisplayInfo *displayInfo;
+    Boolean validCalc;
+    Boolean animate;
+    char post[MAX_TOKEN_LENGTH];
+} MedmImage;
+#endif		    
+
+#if DEBUG_COMPOSITE
+typedef struct _Meter {
+    DlElement   *dlElement;     /* Must be first */
+    Record      *record;
+    UpdateTask  *updateTask;
+} Meter;
+typedef struct _Rectangle {
+    DlElement        *dlElement;     /* Must be first */
+    Record           **records;
+    UpdateTask       *updateTask;
+} MedmRectangle;
+typedef struct _TextUpdate {
+    DlElement     *dlElement;     /* Must be first */
     Record        *record;
     UpdateTask    *updateTask;
-} MedmImage;
+    int           fontIndex;
+} TextUpdate;
 #endif		    
 
 #define TIMERINTERVAL 100 /* ms */
 #define WORKINTERVAL .05
 #define EXECINTERVAL 3600.
+
+/* Dummy private data structure */
+typedef struct _Element {
+    DlElement *dlElement;     /* Must be first */
+} Element;
 
 typedef struct _UpdateTaskStatus {
     XtWorkProcId workProcId;
@@ -422,7 +449,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 }  
 
 /* Delete all update tasks on the display associated with a given
-   task. More efficient that deleting them one by one using
+   task. More efficient than deleting them one by one using
    updateTaskDeleteTask. */
 void updateTaskDeleteAllTask(UpdateTask *pt)
 {
@@ -452,6 +479,7 @@ void updateTaskDeleteAllTask(UpdateTask *pt)
       /* ??? Why is this necessary, the space is going to be freed */
 	tmp1->executeTask = NULL;
 	free((char *)tmp1);
+	tmp1=NULL;
     }
     if ((updateTaskStatus.taskCount <=0) && (updateTaskStatus.workProcId)) {
 	XtRemoveWorkProc(updateTaskStatus.workProcId);
@@ -478,16 +506,44 @@ void updateTaskDeleteAllTask(UpdateTask *pt)
 /* Delete all update tasks for a given element */
 void updateTaskDeleteElementTasks(DisplayInfo *displayInfo, DlElement *pE)
 {
-    UpdateTask *pT;
+    UpdateTask *pT,*pTNext;
+    int found=1;
+
+#if DEBUG_COMPOSITE
+    int i=0;
+    print("updateTaskDeleteElementTasks: dlElement=%x[%s] dlComposite=%x\n",
+      pE,elementType(pE->type),pE->structure.composite);
+    pT = displayInfo->updateTaskListHead.next; 
+    while (pT) {
+	Element *pElement=(Element *)pT->clientData;
+	DlElement *pET = pElement->dlElement;
+	
+	pTNext=pT->next;
+	print("  %2d pT=%x pTNext=%x pET=%x",
+	  ++i,pT,pTNext,pET);
+	fflush(stdout);
+	print("[%s] pE=%x[%s] pE->structure.composite=%x\n",
+	  elementType(pET->type),
+	  pE,elementType(pE->type),
+	  pE->structure.composite);
+	pT = pTNext;
+    }
+#endif
 
     pT = displayInfo->updateTaskListHead.next; 
     while (pT) {
-      /* The clientData is the first element in the MedmXxx structure
-         pointed to by the clientData */
-	if((DlElement *)pT->clientData == pE) {
+	Element *pElement=(Element *)pT->clientData;
+	DlElement *pET = pElement->dlElement;
+	
+	pTNext=pT->next;
+	if(pET == pE) {
+#if DEBUG_COMPOSITE
+	    print("  Deleted pT=%x pE=%x"
+	      " pE->type=%s\n",pT,pE,elementType(pE->type));
+#endif			
 	    updateTaskDeleteTask(displayInfo, pT);
 	}
-	pT = pT->next;
+	pT = pTNext;
     }
 }
   
@@ -501,6 +557,7 @@ void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt)
 	displayInfo->updateTaskListTail->next = NULL;
     } else {
 	pt->prev->next = pt->next;
+	pt->next->prev = pt->prev;
     }
   /* Run the destroy callback */
     if (pt->destroyTask) {
@@ -521,6 +578,7 @@ void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt)
   /* ??? Why is this necessary, the space is going to be freed */
     pt->executeTask = NULL;
     free((char *)pt);
+    pt=NULL;
 }
 
 int updateTaskMarkTimeout(UpdateTask *pt, double currentTime)
@@ -615,6 +673,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 {
     UpdateTaskStatus *ts = (UpdateTaskStatus *)cd;
     UpdateTask *t = ts->nextToServe;
+    UpdateTask *t1;
     double endTime;
    
 #if DEBUG_UPDATE
@@ -632,6 +691,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
       /* If no valid update task, find one */
 	if (t == NULL) {
 	    DisplayInfo *di = displayInfoListHead->next;
+
 	  /* If no display, remove work proc */
 	    if (di == NULL) {
 		ts->workProcId = 0;
@@ -665,8 +725,8 @@ Boolean updateTaskWorkProc(XtPointer cd)
 		}
 		t = di->updateTaskListHead.next;
 	    }      
-	  /* If found same t again, have now checked all displays and
-	     there is nothing to do.  Remove work proc */
+	  /* If t is NULL or found same t again, have checked all
+	     displays and there is nothing to do.  Remove work proc */
 	    if (t == ts->nextToServe) {
 		ts->workProcId = 0;
 		return True;
@@ -676,7 +736,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
          found.  Set it to be the next to serve.  */
 	ts->nextToServe = t;
 
-      /* Execute it */
+      /* Repaint the selected region */
 	if (t->overlapped) {
 	    DisplayInfo *pDI = t->displayInfo;
 	    Display *display = XtDisplay(pDI->drawingArea);
@@ -696,7 +756,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 
 	    if (region == NULL) {
 		medmPrintf(0,"\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
-		/* kill the work proc */
+	      /* Kill the work proc */
 		ts->workProcId = 0;
 		return True;
 	    }
@@ -711,22 +771,23 @@ Boolean updateTaskWorkProc(XtPointer cd)
 
 	    t->overlapped = False;     
 
-	    t = t->displayInfo->updateTaskListHead.next;
-	    while (t) {
+	  /* Do the update tasks for overlapped objects */
+	    t1 = t->displayInfo->updateTaskListHead.next;
+	    while (t1) {
 		if (XRectInRegion(region,
-		  t->rectangle.x, t->rectangle.y,
-		  t->rectangle.width, t->rectangle.height) != RectangleOut) {
-		    t->overlapped = True;
-		    if (t->executeTask) {
+		  t1->rectangle.x, t1->rectangle.y,
+		  t1->rectangle.width, t1->rectangle.height) != RectangleOut) {
+		    t1->overlapped = True;
+		    if (t1->executeTask) {
 #if DEBUG_COMPOSITE
 			print("updateTaskWorkProc (overlapped): "
 			  "clientData=%x x=%d y=%d\n",
-			  t->clientData,t->rectangle.x,t->rectangle.y);
+			  t1->clientData,t1->rectangle.x,t1->rectangle.y);
 #endif			
-			t->executeTask(t->clientData);
+			t1->executeTask(t1->clientData);
 		    }
 		}
-		t = t->next;
+		t1 = t1->next;
 	    }
 	  /* Release the clipping region */
 	    XSetClipOrigin(display,gc,0,0);
@@ -753,8 +814,12 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	}     
 	ts->updateExecuted++;
 	ts->updateRequestQueued--;
+
+      /* Check if t got deleted by the executeTasks.  If so, start
+         over at the top */
+	if(!t) continue;
+
       /* Reset the executeRequestsPendingCount */
-	t = ts->nextToServe;
 	t->executeRequestsPendingCount = 0;
 	
       /* Find the next one */
@@ -779,7 +844,7 @@ Boolean updateTaskWorkProc(XtPointer cd)
 	}
 	ts->nextToServe = t;
     } while(endTime > medmTime());
-
+    
   /* Keep the work proc active */
     return False;
 }

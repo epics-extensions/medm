@@ -522,6 +522,9 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
     if (tokenType == T_WORD && 
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
+
+	DlElement *pE;
+	
 	cdi->dlColormap=parseColormap(cdi,cdi->filePtr);
 	if (!cdi->dlColormap) {
 	  /* error - do total bail out */
@@ -529,6 +532,14 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	    dmRemoveDisplayInfo(cdi);
 	    return;
 	}
+#if 0	
+      /* Since a valid colormap element has been brought into the
+         display list, remove the external cmap reference in the
+         dlDisplay element */
+	if(pE = FirstDlElement(displayInfo->dlElementList)) {
+	    pE->structure.display->cmap[0] = '\0';
+	}
+#endif	
     }
 
   /* Proceed with parsing */

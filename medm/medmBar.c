@@ -86,6 +86,7 @@ static DlDispatchTable barDlDispatchTable = {
     createDlBar,
     NULL,
     executeDlBar,
+    hideDlBar,
     writeDlBar,
     barGetLimits,
     barGetValues,
@@ -241,6 +242,12 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XcNdecimals, (int)dlBar->limits.prec,
 	  NULL);
     }
+}
+
+void hideDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void barUpdateValueCb(XtPointer cd) {

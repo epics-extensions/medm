@@ -153,6 +153,7 @@ static DlDispatchTable stripChartDlDispatchTable = {
     createDlStripChart,
     NULL,
     executeDlStripChart,
+    hideDlStripChart,
     writeDlStripChart,
     NULL,
     stripChartGetValues,
@@ -1103,6 +1104,12 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XmNheight, (Dimension) po->height,
 	  NULL);
     }
+}
+
+void hideDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {

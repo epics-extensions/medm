@@ -78,6 +78,7 @@ static DlDispatchTable elementDlDispatchTable = {
     createDlElement,
     destroyDlElement,
     executeDlElement,
+    NULL,
     writeDlElement,
     NULL,
     NULL,
@@ -449,13 +450,6 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
     } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
       (tokenType != T_EOF));
     
-  /*
-   *  now since a valid colormap element has been brought into display list,
-   *  remove the external cmap reference in the dlDisplay element
-   */
-    if(dlTarget = FirstDlElement(displayInfo->dlElementList)) {
-	dlTarget->structure.display->cmap[0] = '\0';
-    }
   /* restore the previous filePtr */
     displayInfo->filePtr = savedFilePtr;
     return (dlColormap);
@@ -1288,6 +1282,9 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
       && (tokenType != T_EOF) );
 }
 
+/* KE: Not sure that this function is called since DisplayInfo.cmap is
+   initialized to "" and is never parsed.  There was no return value
+   at the end, so it should not have worked. */
 DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *filename)
 {
     DlColormap *dlColormap;
@@ -1296,7 +1293,6 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
     char msg[512];		/* since common longest filename is 255... */
     TOKEN tokenType;
     int nestingLevel = 0;
-
 
     dlColormap = NULL;
     externalFilePtr = dmOpenUsableFile(filename, NULL);
@@ -1314,7 +1310,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 	medmCATerminate();
 	dmTerminateX();
 	exit(-1);
-
+	  
     } else {
 
 	savedFilePtr = displayInfo->filePtr;
@@ -1327,7 +1323,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 		    dlColormap = 
 		      parseColormap(displayInfo,externalFilePtr);
 		  /* don't want to needlessly parse, so we'll return here */
-		    return (dlColormap);
+		    return(dlColormap);
 		}
 		break;
 	    case T_EQUAL:
@@ -1344,6 +1340,8 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
       /* restore old filePtr */
 	displayInfo->filePtr = savedFilePtr;
     }
+  /* KE: There was no return for this branch */
+    return(dlColormap);
 }
 
 /***
@@ -1374,9 +1372,9 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	switch (state) {
 	case NEUTRAL:
 	    switch(c) {
-	    case '=' : return (T_EQUAL);
-	    case '{' : return (T_LEFT_BRACE);
-	    case '}' : return (T_RIGHT_BRACE);
+	    case '=' : return(T_EQUAL);
+	    case '{' : return(T_LEFT_BRACE);
+	    case '}' : return(T_RIGHT_BRACE);
 	    case '"' : state = INQUOTE; 
 		break;
 	    case '$' : c=getc(filePtr);
@@ -1397,7 +1395,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	      /* for constructs of the form (a,b) */
 	    case '(' :
 	    case ',' :
-	    case ')' : *w++ = c; *w = '\0'; return (T_WORD);
+	    case ')' : *w++ = c; *w = '\0'; return(T_WORD);
 
 	    default  : state = INWORD;
 		*w++ = c;
@@ -1406,7 +1404,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    break;
 	case INQUOTE:
 	    switch(c) {
-	    case '"' : *w = '\0'; return (T_WORD);
+	    case '"' : *w = '\0'; return(T_WORD);
 	    case '$' : c=getc(filePtr);
 	      /* only do macro substitution if in execute mode */
 		if(globalDisplayListTraversalMode == DL_EXECUTE
@@ -1457,14 +1455,14 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    case '(' :
 	    case ',' :
 	    case ')' :
-	    case '"' : ungetc(c,filePtr); *w = '\0'; return (T_WORD);
+	    case '"' : ungetc(c,filePtr); *w = '\0'; return(T_WORD);
 	    default  : *w++ = c;
 		break;
 	    }
 	    break;
 	}
     }
-    return (T_EOF);
+    return(T_EOF);
 }
 
 
@@ -1630,8 +1628,59 @@ void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
     destroyDlElement(NULL, pE);
 }
 
+void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    Window drawable;
+    DlObject *po;
+    GC gc;
+
+    if(!displayInfo || !dlElement) return;
+    
+  /* Delete any update tasks.  The destroyCb will free the
+     record(s) and private structure */
+    updateTaskDeleteElementTasks(displayInfo,dlElement);
+    
+  /* Draw the display background where the element would go on both
+   *   the window and the pixmap */
+    po = &(dlElement->structure.composite->object);
+    gc = displayInfo->gc;
+    XSetForeground(display,gc,
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
+    drawable = XtWindow(displayInfo->drawingArea);
+    XFillRectangle(display, drawable, displayInfo->gc,
+      po->x, po->y, po->width, po->height);
+    drawable = displayInfo->drawingAreaPixmap;
+    XFillRectangle(display, drawable, displayInfo->gc,
+      po->x, po->y, po->width, po->height);
+
+  /* Update the drawing objects above this one */
+    redrawElementsAbove(displayInfo, dlElement);
+}
+
+void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    Widget widget;
+
+    if(!displayInfo || !dlElement) return;
+
+  /* Delete any update tasks.  The destroyCb will free the
+     record(s) and private structure */
+    updateTaskDeleteElementTasks(displayInfo,dlElement);
+    
+  /* Destroy the widget */
+    widget = dlElement->widget;
+    if(widget) {
+	XtDestroyWidget(widget);
+	dlElement->widget = NULL;
+    }
+}
+
 void destroyDlElement(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+    dlElement->type = DL_Element;
+    dlElement->widget = (Widget)0;
+    dlElement->structure.composite = NULL;
+    dlElement->run = (DlDispatchTable *)0;
     appendDlElement(dlElementFreeList,dlElement);
 }
   

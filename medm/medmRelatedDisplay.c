@@ -92,6 +92,7 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     createDlRelatedDisplay,
     NULL,
     executeDlRelatedDisplay,
+    hideDlRelatedDisplay,
     writeDlRelatedDisplay,
     NULL,
     relatedDisplayGetValues,
@@ -595,6 +596,12 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Restore GC */
 	XSetFillStyle(display,displayInfo->gc,FillSolid);
     }
+}
+
+void hideDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 #ifdef __cplusplus

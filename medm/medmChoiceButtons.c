@@ -81,6 +81,7 @@ static DlDispatchTable choiceButtonDlDispatchTable = {
     createDlChoiceButton,
     NULL,
     executeDlChoiceButton,
+    hideDlChoiceButton,
     writeDlChoiceButton,
     NULL,
     choiceButtonGetValues,
@@ -534,6 +535,12 @@ void executeDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	choiceButtonCreateEditInstance(displayInfo, dlElement);
     }
+}
+
+void hideDlChoiceButton(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void choiceButtonDestroyCb(XtPointer cd) {

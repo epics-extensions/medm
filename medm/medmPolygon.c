@@ -94,6 +94,7 @@ static DlDispatchTable polygonDlDispatchTable = {
     createDlPolygon,
     destroyDlPolygon,
     executeDlPolygon,
+    hideDlPolygon,
     writeDlPolygon,
     NULL,
     polygonGetValues,
@@ -190,6 +191,12 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 		dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
 	  }
     }
+}
+
+void hideDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void polygonUpdateValueCb(XtPointer cd) {

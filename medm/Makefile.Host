@@ -19,12 +19,15 @@ endif
 CMPLR = STRICT
 #PURIFY = YES
 
-ifeq ($(PURIFY),YES)
-  CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))
-  CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
-  #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
-  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
-endif
+PURIFY_FLAGS = -first-only -chain-length=26
+
+# Remove this when new config stuff is working
+#ifeq ($(PURIFY),YES)
+#  CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))
+#  CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
+#  #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
+#  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
+#endif
 
 # Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
 #XRTGRAPH=/opt/local/xrtgraph2.4.0

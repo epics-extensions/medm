@@ -80,6 +80,7 @@ static DlDispatchTable textDlDispatchTable = {
     createDlText,
     NULL,
     executeDlText,
+    hideDlText,
     writeDlText,
     NULL,
     textGetValues,
@@ -190,6 +191,12 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	drawText(display,displayInfo->drawingAreaPixmap,
 	  displayInfo->gc,dlText);
     }
+}
+
+void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void textUpdateValueCb(XtPointer cd) {

@@ -96,6 +96,7 @@ static DlDispatchTable polylineDlDispatchTable = {
     createDlPolyline,
     destroyDlPolyline,
     executeDlPolyline,
+    hideDlPolyline,
     writeDlPolyline,
     NULL,
     polylineGetValues,
@@ -192,6 +193,12 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	XDrawLines(display,displayInfo->drawingAreaPixmap,displayInfo->gc,
           dlPolyline->points,dlPolyline->nPoints,CoordModeOrigin);
     }
+}
+
+void hideDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void polylineUpdateValueCb(XtPointer cd) {

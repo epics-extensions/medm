@@ -882,6 +882,8 @@ typedef struct {
     void (*destroy)(struct _DisplayInfo *, struct _DlElement *);
   /* Execute (Make it appear on the display) method */
     void (*execute)(struct _DisplayInfo *, struct _DlElement *);
+  /* Hide (Make it not appear on the display) method */
+    void (*hide)(struct _DisplayInfo *, struct _DlElement *);
   /* Write (to file) method */
     void (*write)(FILE *, struct _DlElement *, int);
   /* Get limits (from DlLimits attribute) method */

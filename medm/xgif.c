@@ -447,7 +447,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     char *dir;
     int startPos;
     int nFrames;
-    Pixmap tempPixmap=NULL;
+    Pixmap tempPixmap=(Pixmap)0;
     int prevFrame;
 
     gif=dlImage->privateData;

@@ -99,6 +99,7 @@ static DlDispatchTable imageDlDispatchTable = {
     createDlImage,
     destroyDlImage,
     executeDlImage,
+    hideDlImage,
     writeDlImage,
     NULL,
     imageGetValues,
@@ -156,7 +157,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     if (displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	MedmImage *pi;
-	char *pC, upstring[MAX_TOKEN_LENGTH];
+	char upstring[MAX_TOKEN_LENGTH];
 	int i;
 	
 	pi = (MedmImage *)malloc(sizeof(MedmImage));
@@ -250,6 +251,12 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
+void hideDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
+}
+
 /* This routine is the update task.  It is called for updates and for
    drawing area exposures */
 static void imageDraw(XtPointer cd)
@@ -310,7 +317,7 @@ static void imageDraw(XtPointer cd)
 				if(result < 0.0) gif->curFrame = 0;
 				else if(result > gif->nFrames-1)
 				  gif->curFrame=gif->nFrames-1;
-				else gif->curFrame = result +.5;
+				else gif->curFrame = (int)(result +.5);
 			    }
 			}
 		    }

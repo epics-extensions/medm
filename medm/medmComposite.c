@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 1
+#define DEBUG_COMPOSITE 0
 
 #include "medm.h"
 
@@ -83,15 +83,16 @@ static void compositeDestroyCb(XtPointer cd);
 static void compositeGetRecord(XtPointer cd, Record **record, int *count);
 static void executeCompositeChildren(DisplayInfo *displayInfo,
   DlComposite *dlComposite);
-static void destroyCompositeChildren(DisplayInfo *displayInfo,
+static void hideCompositeChildren(DisplayInfo *displayInfo,
   DlComposite *dlComposite);
 static void drawComposite(MedmComposite *pc);
-static void eraseComposite(MedmComposite *pc);
+static void hideComposite(MedmComposite *pc);
 
 static DlDispatchTable compositeDlDispatchTable = {
     createDlComposite,
     destroyDlComposite,
     executeDlComposite,
+    hideDlComposite,
     writeDlComposite,
     NULL,
     compositeGetValues,
@@ -117,8 +118,6 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(*dlComposite->dynAttr.chan[0]) {
 	  /* A channel is defined */
 	    MedmComposite *pc;
-	    char *pC, upstring[MAX_TOKEN_LENGTH];
-	    int i;
 	    
 	  /* Allocate and fill in MedmComposite struct */
 	    pc = (MedmComposite *)malloc(sizeof(MedmComposite));
@@ -161,6 +160,14 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
+void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    DlComposite *dlComposite = dlElement->structure.composite;
+
+  /* The same code as in hideComposite */
+    hideCompositeChildren(displayInfo, dlComposite);
+}
+
 static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pr = (Record *)cd;
@@ -192,8 +199,6 @@ static void compositeDraw(XtPointer cd)
     MedmComposite *pc = (MedmComposite *)cd;
     Record *pr = pc->records?pc->records[0]:NULL;
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
-    XGCValues gcValues;
-    unsigned long gcValueMask;
     Display *display = XtDisplay(pc->updateTask->displayInfo->drawingArea);
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
@@ -229,7 +234,7 @@ static void compositeDraw(XtPointer cd)
 		if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
 		    drawComposite(pc);
 		} else {
-		    eraseComposite(pc);
+		    hideComposite(pc);
 		}
 		if(pr->readAccess) {
 		    if (!pc->updateTask->overlapped &&
@@ -241,7 +246,7 @@ static void compositeDraw(XtPointer cd)
 		    draw3DQuestionMark(pc->updateTask);
 		}
 	    } else {
-		eraseComposite(pc);
+		hideComposite(pc);
 		pc->updateTask->opaque = False;
 		drawWhiteRectangle(pc->updateTask);
 	    }
@@ -274,20 +279,21 @@ static void drawComposite(MedmComposite *pc)
     }
 }
 
-static void eraseComposite(MedmComposite *pc)
+static void hideComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
 #if DEBUG_COMPOSITE
-    print("eraseComposite: childrenExecuted=%s\n",
+    print("hideComposite: childrenExecuted=%s\n",
       pc->childrenExecuted?"True !!!":"False");
     print(" dlComposite=%x x=%d y=%d\n",
       dlComposite,dlComposite->object.x,
       dlComposite,dlComposite->object.y);
 #endif    
+  /* The same code as in hideDlComposite */
     if(pc->childrenExecuted) {
-	destroyCompositeChildren(displayInfo, dlComposite);
+	hideCompositeChildren(displayInfo, dlComposite);
 	pc->childrenExecuted = False;
     }
 }
@@ -311,13 +317,13 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
     }
 }
 
-static void destroyCompositeChildren(DisplayInfo *displayInfo,
+static void hideCompositeChildren(DisplayInfo *displayInfo,
   DlComposite *dlComposite)
 {
     DlElement *pE;
     
 #if DEBUG_COMPOSITE
-    print("destroyCompositeChildren:\n");
+    print("hideCompositeChildren:\n");
     print("dlComposite->dlElementList:\n");
     dumpDlElementList(dlComposite->dlElementList);
 /*      print("displayInfo->dlElementList:\n"); */
@@ -325,11 +331,8 @@ static void destroyCompositeChildren(DisplayInfo *displayInfo,
 #endif    
     pE = FirstDlElement(dlComposite->dlElementList);
     while (pE) {
-	destroyElementWidgets(pE);
-	if(pE->run->destroy) {
-	    pE->run->destroy(displayInfo, pE);
-	} else {
-	    genericDestroy(displayInfo, pE);
+	if(pE->run->hide) {
+	    pE->run->hide(displayInfo, pE);
 	}
 	pE = pE->next;
     }

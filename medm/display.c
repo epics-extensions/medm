@@ -72,6 +72,7 @@ static DlDispatchTable displayDlDispatchTable = {
     createDlDisplay,
     NULL,
     executeDlDisplay,
+    NULL,
     writeDlDisplay,
     NULL,
     displayGetValues,

@@ -89,6 +89,7 @@ static DlDispatchTable textUpdateDlDispatchTable = {
     createDlTextUpdate,
     NULL,
     executeDlTextUpdate,
+    hideDlTextUpdate,
     writeDlTextUpdate,
     textUpdateGetLimits,
     textUpdateGetValues,
@@ -217,6 +218,11 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
+void hideDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
+}
 
 static void textUpdateDestroyCb(XtPointer cd) {
     TextUpdate *ptu = (TextUpdate *) cd;

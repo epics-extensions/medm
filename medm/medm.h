@@ -234,9 +234,6 @@ extern "C" {
     extern utilPrint(Display *, Window, char *);
 
     EXTERN XtWorkProcId medmWorkProcId;
-#ifndef MEDM_CDEV
-    EXTERN Channel *nextToServe;
-#endif
     EXTERN long medmUpdateRequestCount;
     EXTERN long medmCAEventCount, medmScreenUpdateCount, medmUpdateMissedCount;
     EXTERN int medmRaiseMessageWindow;

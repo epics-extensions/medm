@@ -65,6 +65,7 @@ static DlDispatchTable shellCommandDlDispatchTable = {
     createDlShellCommand,
     NULL,
     executeDlShellCommand,
+    hideDlShellCommand,
     writeDlShellCommand,
     NULL,
     shellCommandGetValues,
@@ -226,6 +227,12 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XmStringFree(xmString);
 	}
     }
+}
+
+void hideDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 #ifdef __cplusplus

@@ -92,6 +92,7 @@ static DlDispatchTable textEntryDlDispatchTable = {
     createDlTextEntry,
     NULL,
     executeDlTextEntry,
+    hideDlTextEntry,
     writeDlTextEntry,
     textEntryGetLimits,
     textEntryGetValues,
@@ -359,6 +360,12 @@ void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
 	      textEntryCreateEditInstance(displayInfo,dlElement);
 	  }
       }
+}
+
+void hideDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 void textEntryUpdateValueCb(XtPointer cd) {

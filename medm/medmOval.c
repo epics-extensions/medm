@@ -77,6 +77,7 @@ static DlDispatchTable ovalDlDispatchTable = {
     createDlOval,
     NULL,
     executeDlOval,
+    hideDlOval,
     writeDlOval,
     NULL,
     ovalGetValues,
@@ -162,6 +163,12 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 		dlOval->object.height - 2*lineWidth,0,360*64);
 	  }
     }
+}
+
+void hideDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void ovalUpdateValueCb(XtPointer cd) {

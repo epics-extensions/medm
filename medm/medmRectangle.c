@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_COMPOSITE 0
+
 #include "medm.h"
 
 typedef struct _Rectangle {
@@ -74,6 +76,7 @@ static DlDispatchTable rectangleDlDispatchTable = {
     createDlRectangle,
     NULL,
     executeDlRectangle,
+    hideDlRectangle,
     writeDlRectangle,
     NULL,
     rectangleGetValues,
@@ -93,6 +96,10 @@ static void drawRectangle(MedmRectangle *pr)
     Widget widget = pr->updateTask->displayInfo->drawingArea;
     Display *display = XtDisplay(widget);
     DlRectangle *dlRectangle = pr->dlElement->structure.rectangle;
+
+#if DEBUG_COMPOSITE
+    print("drawRectangle:\n");
+#endif
 
     lineWidth = (dlRectangle->attr.width+1)/2;
     if (dlRectangle->attr.fill == F_SOLID) {
@@ -163,6 +170,12 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
     }
 }
 
+void hideDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
+}
+
 static void rectangleUpdateValueCb(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)((Record *)cd)->clientData;
@@ -179,6 +192,10 @@ static void rectangleDraw(XtPointer cd)
     Display *display = XtDisplay(pr->updateTask->displayInfo->drawingArea);
     DlRectangle *dlRectangle = pr->dlElement->structure.rectangle;
 
+#if DEBUG_COMPOSITE
+    print("rectangleDraw:\n");
+#endif
+    
     if (pd->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {

@@ -121,6 +121,35 @@ void executeDlTextEntry(DisplayInfo *, DlElement *);
 void executeDlTextUpdate(DisplayInfo *, DlElement *);
 void executeDlValuator(DisplayInfo *, DlElement *);
 
+/* Hide methods */
+void hideDlArc(DisplayInfo *, DlElement *);
+void hideDlBar(DisplayInfo *, DlElement *);
+void hideDlBasicAttribute(DisplayInfo *, DlBasicAttribute *);
+void hideDlByte(DisplayInfo *, DlElement *);
+void hideDlCartesianPlot(DisplayInfo *, DlElement *);
+void hideDlChoiceButton(DisplayInfo *, DlElement *);
+void hideDlColormap(DisplayInfo *, DlColormap *);
+void hideDlComposite(DisplayInfo *, DlElement *);
+void hideDlDisplay(DisplayInfo *, DlElement *);
+void hideDlDynamicAttribute(DisplayInfo *, DlElement *);
+void hideDlImage(DisplayInfo *, DlElement *);
+void hideDlIndicator(DisplayInfo *, DlElement *);
+void hideDlMenu(DisplayInfo *, DlElement *);
+void hideDlMessageButton(DisplayInfo *, DlElement *);
+void hideDlMeter(DisplayInfo *, DlElement *);
+void hideDlOval(DisplayInfo *, DlElement *);
+void hideDlPolygon(DisplayInfo *, DlElement *);
+void hideDlPolyline(DisplayInfo *, DlElement *);
+void hideDlRectangle(DisplayInfo *, DlElement *);
+void hideDlRelatedDisplay(DisplayInfo *, DlElement *);
+void hideDlShellCommand(DisplayInfo *, DlElement *);
+void hideDlStripChart(DisplayInfo *, DlElement *);
+void hideDlSurfacePlot(DisplayInfo *, DlElement *);
+void hideDlText(DisplayInfo *, DlElement *);
+void hideDlTextEntry(DisplayInfo *, DlElement *);
+void hideDlTextUpdate(DisplayInfo *, DlElement *);
+void hideDlValuator(DisplayInfo *, DlElement *);
+
 /* Write methods */
 void writeDlArc(FILE *, DlElement *, int);
 void writeDlBar(FILE *, DlElement *, int);
@@ -600,6 +629,8 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr);
 void limitsAttributeInit(DlLimits *limits);
 int initMedmCommon();
 void destroyDlElement(DisplayInfo *, DlElement *);
+void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement);
+void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
   unsigned int height);
 DlFile *parseFile(DisplayInfo *displayInfo);

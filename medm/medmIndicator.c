@@ -77,6 +77,7 @@ static DlDispatchTable indicatorDlDispatchTable = {
     createDlIndicator,
     NULL,
     executeDlIndicator,
+    hideDlIndicator,
     writeDlIndicator,
     indicatorGetLimits,
     indicatorGetValues,
@@ -221,6 +222,12 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XcNdecimals, (int)dlIndicator->limits.prec,
 	  NULL);
     }
+}
+
+void hideDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void indicatorDraw(XtPointer cd) {

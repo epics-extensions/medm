@@ -95,6 +95,7 @@ static DlDispatchTable menuDlDispatchTable = {
     createDlMenu,
     NULL,
     executeDlMenu,
+    hideDlMenu,
     writeDlMenu,
     NULL,
     menuGetValues,
@@ -180,6 +181,12 @@ void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
     default:
 	break;
     }
+}
+
+void hideDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {

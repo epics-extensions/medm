@@ -794,7 +794,8 @@ void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
       /* This must be DL_DISPLAY */
 	(element->run->write)(stream,element,0);
     }
-    writeDlColormap(stream,displayInfo->dlColormap,0);
+    if(displayInfo->dlColormap)
+      writeDlColormap(stream,displayInfo->dlColormap,0);
     element = element->next;
   /* traverse the display list */
     while (element) {
@@ -5876,7 +5877,7 @@ void calcPostfix(DlDynamicAttribute *attr)
 	    medmPostMsg(1,"calcPostFix:\n"
 	      "  Invalid calc expression [error %d]: %s\n",
 	      errnum, attr->calc);
-	    *attr->post == '\0';
+	    *attr->post = '\0';
 	    attr->validCalc = False;
 	} else {
 	    attr->validCalc = True;
@@ -5895,7 +5896,7 @@ void calcPostfix(DlDynamicAttribute *attr)
 		  'A'+i, *attr->chan[i]?attr->chan[i]:"None");
 	    }
 	}
-	*attr->post == '\0';
+	*attr->post = '\0';
 	attr->validCalc = False;
     }
 }

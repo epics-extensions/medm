@@ -84,6 +84,7 @@ static DlDispatchTable byteDlDispatchTable = {
     createDlByte,
     NULL,
     executeDlByte,
+    hideDlByte,
     writeDlByte,
     NULL,
     byteGetValues,
@@ -183,6 +184,12 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	  XmNheight, (Dimension) po->height,
 	  NULL);
     }
+}
+
+void hideDlByte(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void byteUpdateValueCb(XtPointer cd) {

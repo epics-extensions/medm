@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 1
+#define DEBUG_COMPOSITE 0
 
 #include "medm.h"
 
@@ -79,6 +79,7 @@ static DlDispatchTable meterDlDispatchTable = {
     createDlMeter,
     NULL,
     executeDlMeter,
+    hideDlMeter,
     writeDlMeter,
     meterGetLimits,
     meterGetValues,
@@ -207,6 +208,17 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XcNdecimals, (int)dlMeter->limits.prec,
 	  NULL);
     }
+}
+
+void hideDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+#if DEBUG_COMPOSITE
+    print("hideDlMeter: dlElement=%x dlMeter=%x \n",
+      dlElement,dlElement->structure.composite);
+#endif
+
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void meterUpdateValueCb(XtPointer cd) {

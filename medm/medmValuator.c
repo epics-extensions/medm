@@ -92,6 +92,7 @@ static DlDispatchTable valuatorDlDispatchTable = {
     createDlValuator,
     NULL,
     executeDlValuator,
+    hideDlValuator,
     writeDlValuator,
     valuatorGetLimits,
     valuatorGetValues,
@@ -375,6 +376,12 @@ void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	createValuatorEditInstance(displayInfo, dlElement);
     }
+}
+
+void hideDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void valuatorUpdateValueCb(XtPointer cd) {

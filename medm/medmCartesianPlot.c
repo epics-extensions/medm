@@ -122,6 +122,7 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
     createDlCartesianPlot,
     NULL,
     executeDlCartesianPlot,
+    hideDlCartesianPlot,
     writeDlCartesianPlot,
     NULL,
     cartesianPlotGetValues,
@@ -337,6 +338,12 @@ void executeDlCartesianPlot(DisplayInfo *displayInfo, DlElement *dlElement)
     } else if (displayInfo->traversalMode == DL_EDIT) {
 	    cartesianPlotCreateEditInstance(displayInfo, dlElement);
     }
+}
+
+void hideDlCartesianPlot(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {

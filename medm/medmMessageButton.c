@@ -82,6 +82,7 @@ static DlDispatchTable messageButtonDlDispatchTable = {
     createDlMessageButton,
     NULL,
     executeDlMessageButton,
+    hideDlMessageButton,
     writeDlMessageButton,
     NULL,
     messageButtonGetValues,
@@ -230,6 +231,12 @@ void executeDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
 	      messageButtonCreateEditInstance(displayInfo,dlElement);
 	  }
       }
+}
+
+void hideDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element with a widget */
+    hideWidgetElement(displayInfo, dlElement);
 }
 
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)

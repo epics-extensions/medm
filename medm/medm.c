@@ -1124,7 +1124,8 @@ static void printerSetupDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	    putenv(variable);
 	  /* Warning!!!! : Do not free the variable */
 	}
-	free(printerName);
+      /* Need to use XtFree here to avoid FMM error */
+	XtFree(printerName);
 	XmStringFree(xmString);
 	XtUnmanageChild(w);
 	break;
@@ -3262,9 +3263,6 @@ main(int argc, char *argv[])
     windowPropertyAtom = (Atom)NULL;
     medmWorkProcId = 0;
     medmUpdateRequestCount = 0;
-#ifndef MEDM_CDEV
-    nextToServe = NULL;
-#endif
     medmCAEventCount = 0;
     medmScreenUpdateCount = 0;
     medmUpdateMissedCount = 0;
@@ -3711,15 +3709,18 @@ main(int argc, char *argv[])
 
 	      /* Concatenate ClientMessage events to get full name from form: (xyz) */
 		completeClientMessage = False;
+		ptr = NULL;     /* Initialize it to avoid warnings */
 		for (i = 0; i < MAX_CHARS_IN_CLIENT_MESSAGE; i++) {
 		    switch (event.xclient.data.b[i]) {
 		      /* Start with filename */
-		    case '(':  index = 0;
+		    case '(':
+			index = 0;
 			ptr = fullPathName;
 			msgClass = FILENAME_MSG;
 			break;
 		      /* Keep filling in until ';', then start macro string if any */
-		    case ';':  ptr[index++] = '\0';
+		    case ';':
+			ptr[index++] = '\0';
 			if (msgClass == FILENAME_MSG) {
 			    msgClass = MACROSTR_MSG;
 			    ptr = name;
@@ -3730,10 +3731,12 @@ main(int argc, char *argv[])
 			index = 0;
 			break;
 		      /* Terminate whatever string is being filled in */
-		    case ')':  completeClientMessage = True;
+		    case ')':
+			completeClientMessage = True;
 			ptr[index++] = '\0';
 			break;
-		    default:   ptr[index++] = event.xclient.data.b[i];
+		    default:
+			ptr[index++] = event.xclient.data.b[i];
 			break;
 		    }
 		}

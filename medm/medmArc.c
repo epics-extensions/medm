@@ -76,6 +76,7 @@ static DlDispatchTable arcDlDispatchTable = {
     createDlArc,
     NULL,
     executeDlArc,
+    hideDlArc,
     writeDlArc,
     NULL,
     arcGetValues,
@@ -160,6 +161,12 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 		dlArc->object.height - 2*lineWidth,dlArc->begin,dlArc->path);
 	  }
     }
+}
+
+void hideDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+  /* Use generic hide for an element drawn on the display drawingArea */
+    hideDrawnElement(displayInfo, dlElement);
 }
 
 static void arcUpdateValueCb(XtPointer cd) {
