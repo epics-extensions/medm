@@ -701,7 +701,10 @@ Name of file in which to save display:",
   /* Keep CDE from recoloring. (Medm* doesn't work here) This fix is
      for Solaris with CDE and may no longer be needed, but shouldn't
      hurt.  */
+#ifndef WIN32
+  /* This makes Drag and Drop not work for Exceed */
     "*useColorObj: False",
+#endif
 #endif
     
     NULL,
