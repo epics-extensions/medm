@@ -10,7 +10,7 @@
 <P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
 </B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>November 2003</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>May 2004</P>
 </B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory</P>
@@ -61,7 +61,13 @@
 </B></FONT><FONT SIZE=2><P>&#9;MEDM stands for <U>M</U>otif <U>E</U>ditor and <U>D</U>isplay <U>M</U>anager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS Extension</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="NewFeatures"></A>New Features</P>
 </FONT><P>Version 3.0</P>
-</B><FONT SIZE=2><P>3.0.2</P>
+</B><FONT SIZE=2><P>3.0.4</P>
+
+<UL>
+<LI>The maximum number of items in the </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2> and </FONT><A HREF="#ShellCommand"><FONT SIZE=2>Shell Command</FONT></A><FONT SIZE=2> has been changed from 8 to 16.  If, however, you use more than 8 items, the ADL file may not work correctly in previous versions of MEDM.</LI>
+<LI>Count for the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> may come from a process variable.</LI></UL>
+
+<P>3.0.2</P>
 
 <UL>
 <LI>The </FONT><A HREF="#Slider"><FONT SIZE=2>Slider</FONT></A><FONT SIZE=2> now goes left and down as well as right and up.</LI></UL>
@@ -265,7 +271,7 @@
 
 <LI>Try to open the file with the name as given.  If the name is not an absolute pathname, then this means to try to open the file relative to the current working directory (the directory where MEDM was started).</LI>
 <LI>If the file is being opened as a result of a related-display button, then try to open the file with the name prepended with the pathname of the display that contained the button.</LI>
-<LI>Try to open the file with the name prepended by each pathname in the </FONT><A HREF="#EPICS_DISPLAY_LIST"><FONT SIZE=2>EPICS_DISPLAY_LIST</FONT></A><FONT SIZE=2>.</LI></OL>
+<LI>Try to open the file with the name prepended by each pathname in the </FONT><A HREF="#EPICS_DISPLAY_LIST"><FONT SIZE=2>EPICS_DISPLAY_PATH</FONT></A><FONT SIZE=2>.</LI></OL>
 
 <P>&nbsp;</P>
 </FONT><B><FONT SIZE=4><P><A NAME="SiteSpecific"></A>Site-Specific Customization</P>
@@ -568,162 +574,182 @@
 <P>&#9;There are eight possible kinds of traces as seen in the following table.  The traces for a given plot do not all have to be of the same kind – they can be mixed.  (In the table Nx is the number of elements in the process variable specified for x, and Ny is the number of elements in the process variable specified for y.  The letter n denotes a number greater than one, and a blank indicates no process variable is specified.  The axis limits LOPR and HOPR denote the limits obtained from Channel Access for the process variable.  Typically, these are the fields LOPR and HOPR in the associated record.  Count is the specified Count for the Cartesian Plot, which is described in more detail below.)</P>
 </FONT>
 <TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=624>
-<TR><TD VALIGN="TOP" COLSPAN=8>
+<TR><TD VALIGN="TOP" COLSPAN=9>
 <B><FONT SIZE=2><P>Kinds of XY Traces </B></FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Nx</B></FONT></TD>
 <TD WIDTH="6%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Ny</B></FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
+<TD WIDTH="18%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Type</B></FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
+<B><FONT SIZE=2><P ALIGN="CENTER">Points</B></FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Xmin</B></FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
+<TD WIDTH="11%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Xmax</B></FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Ymin</B></FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
+<TD WIDTH="11%" VALIGN="TOP">
 <B><FONT SIZE=2><P ALIGN="CENTER">Ymax</B></FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<B><FONT SIZE=2><P ALIGN="CENTER">N Points</B></FONT></TD>
+<B><FONT SIZE=2><P ALIGN="CENTER">NPoints</B></FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>n</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
 <TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>n</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>X,Y Vector</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">X,Y Vector</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">x(i), y(i)</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Min(Nx, Ny)</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Min(Nx, Ny)</FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>n</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
 <TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>X Vector, Y Scalar</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">X Vector, Y Scalar</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">x(i), y</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Nx</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Nx</FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
 <TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>n</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>Y Vector, X Scalar</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Y Vector, X Scalar</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">x, y(i)</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Ny</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Ny</FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
-<TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>X,Y Scalar</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Count</FONT></TD>
-</TR>
-<TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>n</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
 <TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>X Vector</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">X Vector</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">x(i), i</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>0</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>Count - 1</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">0</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count - 1</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Nx</FONT></TD>
-</TR>
-<TR><TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
-<TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>X Scalar</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>0</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>Count - 1</FONT></TD>
-<TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Count</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Nx</FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
 <TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>N</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>Y Vector</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">n</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Y Vector</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>0</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">i, y(i)</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">0</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count - 1</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>Count - 1</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Ny</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Ny</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">X,Y Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">x(i), y(i)</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count</FONT></TD>
+</TR>
+<TR><TD WIDTH="6%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
+<TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">X Scalar</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">x(i), i</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
+<TD WIDTH="12%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">0</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count - 1</FONT></TD>
+<TD WIDTH="16%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count</FONT></TD>
 </TR>
 <TR><TD WIDTH="6%" VALIGN="TOP">&nbsp;</TD>
 <TD WIDTH="6%" VALIGN="TOP">
-<FONT SIZE=2><P>1</FONT></TD>
-<TD WIDTH="24%" VALIGN="TOP">
-<FONT SIZE=2><P>Y Scalar</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">1</FONT></TD>
+<TD WIDTH="18%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Y Scalar</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>0</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">i, y(i)</FONT></TD>
+<TD WIDTH="10%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">0</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">Count - 1</FONT></TD>
 <TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>Count - 1</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>LOPR</FONT></TD>
-<TD WIDTH="12%" VALIGN="TOP">
-<FONT SIZE=2><P>HOPR</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">LOPR</FONT></TD>
+<TD WIDTH="11%" VALIGN="TOP">
+<FONT SIZE=2><P ALIGN="CENTER">HOPR</FONT></TD>
 <TD WIDTH="16%" VALIGN="TOP">
-<FONT SIZE=2><P>Count</FONT></TD>
+<FONT SIZE=2><P ALIGN="CENTER">Count</FONT></TD>
 </TR>
 </TABLE>
 
 <FONT SIZE=2>
-<P>&#9;If one of the process variables is an array with more than one element, then the specified Count is ignored.  Otherwise, Count corresponds to a history of the process variable.  Each time the process variable changes (either one, in the case of  X, Y Scalar) a new point is plotted until there are Count points.  When the Plot Mode is &quot;plot n pts &amp; stop,&quot; no more points are plotted.  When the Plot Mode is &quot;plot last n pts,&quot; the earliest point is discarded, the others are moved down, and the latest is plotted at the end.  In the cases where one of the process variables is not specified, the history is plotted on that axis with values from 0 to Count –1.</P>
+<P>&#9;The specified Count for the Cartesian Plot may be an integer or the name of a process variable.  If the value starts with a non-digit, then it is considered to be a process variable name, and the value of Count will come from the process variable.  If the process variable is not found or its value is less than 1, Count will be assumed to be zero.</P>
+<P>&#9;If one of the process variables is an array with more than one element and if Count is a number, then the specified Count is ignored and the value shown in the last column of the table is used.  Under the same circumstances, if Count is a name, then it is used only if it is greater than 0 and less than what would be used if it were a number.  That is, Count from a process variable can only restrict NPoints to a lower number than it would be otherwise.  The points are plotted from i = 0 to NPoints - 1 and update as the values change.  In the cases where one of the process variables is not specified, the history is plotted on that axis against values from 0 to NPoints – 1 on the other axis.</P>
+<P>&#9;In the remaining cases, where neither pocess variable is an array with more than one element, Count corresponds to a history of the process variable.  (These are the cases where NPoints is shown as Count in the table.)  Each time the process variable changes (or when either one changes, in the case of  X, Y Scalar) a new point is plotted until there are Count points.  The points are plotted from i = 0 to  the lesser of Count -1 and the number of updates.  When the Plot Mode is &quot;plot n pts &amp; stop,&quot; no more points are plotted.  When the Plot Mode is &quot;plot last n pts,&quot; the earliest point is discarded, the others are moved down, and the latest is plotted at the end.  In the cases where one of the process variables is not specified, the history is plotted on that axis against values from 0 to Count – 1 on the other axis.</P>
 <P>&#9;The X/Y/Trace Data are entered via the Cartesian Plot Data dialog box with entries for the process variables associated with x and y and an entry for the color.  The color is picked by clicking on the color entry and using the color palette.  The process variable names can both be left blank on a given row, in which case the row is ignored.  The first trace (the one that uses the Y1 axis) is the first valid one, and does not have to be in the first row.  The data entry is different from that for entry boxes in the resource palette.  Typing is not lost, for example, when the entry box loses focus, and it is not necessary (or useful) to type a carriage return to retain the data.  The data are retained only when the apply button is pressed.</P>
 <P>&#9;The Axis Data are entered via the Cartesian Plot Axis Data dialog box.  This same dialog box is available in EXECUTE mode by clicking Btn 3 on the Cartesian Plot.  The dialog box consists of an area for each of the three axes (X, Y1, and Y2).  For each axis there is a </FONT><A HREF="#PlotAxisAttribute"><FONT SIZE=2>Plot Axis</FONT></A><FONT SIZE=2> (</FONT><A HREF="#CartesianPlotAxisStyle"><FONT SIZE=2>Axis Style</FONT></A><FONT SIZE=2>, </FONT><A HREF="#CartesianPlotRangeStyle"><FONT SIZE=2>Axis Range</FONT></A><FONT SIZE=2>, Minimum Value, Maximum Value, </FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>Time Format</FONT></A><FONT SIZE=2>) attribute.  The maximum and minimum values are only relevant if the Axis Range is &quot;user-specified&quot;, and the time format is only relevant for the X axis when the Axis Style is &quot;time&quot;.  The values for the maximum and minimum values are only retained if a carriage return is typed in the box, although typing is not lost when the entry box loses focus.</P>
 <P>&#9;In order to use the time format meaningfully, the process variable data must be in suitable time units.  The basic time unit is a second.  The EPICS time base, corresponding to zero seconds, is 00:00:00 January 1, 1990, Coordinated Universal Time (UTC), formerly known as Greenwich Mean Time (GMT).  This is the time base used in EPICS timestamps, and it is <I>assumed</I> to be the time base for any process variable data.  Note that it is not the same as local time.  The time base in MEDM is set to 00:00:00 January 1, 1990, local time.  By setting the time base as local time in MEDM, the effect is to make the EPICS UTC time numbers appear as local time, rather than the less intuitive UTC.  For times less than one day and for time formats that do not include the day or year, the data could just as well be seconds since midnight UTC, since the plotted points on this type of axis would be indistinguishable from those plotted with the actual base.  </P>
@@ -739,7 +765,7 @@
 </FONT><B><P><A NAME="Image"></A>Image</P>
 </B><FONT SIZE=2><P>&#9;The Image has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Visibility Calc, Channels A-D) attributes.  Color Mode in the Dynamic Attribute is not relevant and is not used.  There are also </FONT><A HREF="#ImageType"><FONT SIZE=2>Image Type</FONT></A><FONT SIZE=2>, Image Name, and </FONT><A HREF="#CalcExpression"><FONT SIZE=2>Image Calc</FONT></A><FONT SIZE=2> attributes.  The Image is drawn on the display drawing area and is not a widget.</P>
 <P>&#9;MEDM only supports Graphics Interchange Format (GIF) image files, both the older GIF87a and the newer GIF89a formats.  The GIF image files may include multiple frames, transparency, and most other features supported by the GIF format except local color maps.  Transparency only substitutes the display background color for the transparent color.  The image will be transparent when on the background color, but objects stacked under the image do not show through.  The Image Name attribute is the name of the GIF file.  When an Image is inserted in EDIT mode, a file selection box prompts the user for the image file to be incorporated.</P>
-<P>&#9;MEDM will look for this file with the specified name, then with the path of the display prepended, then with each of the paths in the </FONT><A HREF="#EPICS_DISPLAY_LIST"><FONT SIZE=2>EPICS_DISPLAY_LIST</FONT></A><FONT SIZE=2> prepended. </P>
+<P>&#9;MEDM will look for this file with the specified name, then with the path of the display prepended, then with each of the paths in the </FONT><A HREF="#EPICS_DISPLAY_LIST"><FONT SIZE=2>EPICS_DISPLAY_PATH</FONT></A><FONT SIZE=2> prepended. </P>
 <P>&#9;If the GIF image file has multiple frames, the designer can choose to animate the images or to display a specified frame.  The default is to animate if there is more than one frame.  To display a specific frame, enter an expression for the Image Calc that returns a frame number.  The </FONT><A HREF="#CalcExpression"><FONT SIZE=2>syntax</FONT></A><FONT SIZE=2> for the Image Calc expression is the same as that for the Dynamic Attribute, and it uses channels A-D in the Dynamic Attribute.  The only difference is that the CALC expression should return a frame number, not True or False.  The value will be rounded to the nearest integer.  Frame numbers that are too high will use the last frame, and frame numbers that are too small will use the first frame.  The Image will be black in EXECUTE mode if the Image Calc expression is invalid.</P>
 <P>&#9;The visibility of the Image is determined in the usual way by the </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> if there is a channel specified.  The visibility is independent of whether the image is animating or not.</P>
 <P>&#9;A single-frame Image with no process variables specified for the Dynamic Attribute is treated the same as other Graphics Objects.  It is drawn on the display background and will be under any objects that are updating.  A multiple-frame Image even with no process variables specified for the Dynamic Attribute does update and so will appear among the updating objects in the stacking order and hence over non-updating objects.  This is a concern only for overlapping objects.  See the introduction to </FONT><A HREF="#MEDMObjects"><FONT SIZE=2>MEDM Objects</FONT></A><FONT SIZE=2> for more information on stacking order.</P>
@@ -776,7 +802,7 @@
 <P>&#9;In the EDIT-mode dialog box for specifying the menu items there are four columns.  The first column, the Display Label, is the label on the menu item in the menu that is brought up when the Related Display button is pressed.  The second column, the Display File, is the name of the ADL file that will be displayed when the menu item with that label is selected.  The third column, the Arguments, is macro substitutions that will be used as if the file were specified on the </FONT><A HREF="#CommandLine"><FONT SIZE=2>command line</FONT></A><FONT SIZE=2> with a -macro argument.  For example, the string:</P>
 </FONT><CODE><P>&#9;  SECTOR=S10, BPM=P2</P>
 </CODE><FONT SIZE=2><P>will cause all occurrences of  $(SECTOR) in the file to be replaced with S10 and all occurrences of $(BPM) with P2.  Finally, the fourth column, the Policy, specifies whether to remove the parent display or not when the new one is activated.  (The parent display is the one that contains the Related Display button.)  The parent display will be replaced independently of the Policy if Ctrl-Btn1 is used instead of Btn1.  Rows in the dialog box with blanks are ignored, even if they are before or between non-blank rows.</P>
-<P>&#9;Neither labels or display labels cannot contain double quotes (").</P>
+<P>&#9;Neither labels or display labels can contain double quotes (").</P>
 <P>&#9;When the parent display is replaced by the new display, its upper-left corner should be at the former position of the parent, unless the new display was already in existence.  In that case the existing display is popped up, and its position is not changed.</P>
 <P>&#9;Hidden buttons are implemented by setting the </FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Visual</FONT></A><FONT SIZE=2> attribute of the Related Display to invisible and placing a graphic over the related display.  In this case there should only be one item in the list of displays.  The graphic should make the operation of the related display clear.  When the user clicks on the graphic, the Related Display will be executed.  The Related Display is drawn as a stippled pattern to identify it.  If the graphic is smaller, the stipple will show.  If the graphic is larger, it will be possible to click on parts of the graphic without executing the Related Display.  Note that when two objects of the same size are on top of each other, then the outlines shown when doing dragging, pasting, <I>etc.</I> in EDIT mode will cancel, making the objects appear to not be included.  Also in EDIT mode clicking on the two objects in the proper relative positions will select the graphic.  To select the hidden Related Display, you can use Ctrl-Btn1.  (See </FONT><A HREF="#MouseEdit"><FONT SIZE=2>Mouse Editing Operations</FONT></A><FONT SIZE=2>.)  Since users are used to seeing the overlapping rectangles represent a related display, some thought should be used before implementing graphics to replace them.</P>
 <P>&#9;The logic that is used to locate the specified files in the file system is described under </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL Files</FONT></A><FONT SIZE=2>.</P>
@@ -2279,6 +2305,6 @@
 <P>Copyright, 1995, The University of California, The University of Chicago</P>
 <P>Portions of this material resulted from work developed under a U.S. Government contract and are subject to the following license: For a period of five years from March 30, 1993, the Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, and perform publicly and display publicly.  Upon request of Licensee, and with DOE and Licensors approval, this period may be renewed for two additional five-year periods.  Following the expiration of this period or periods, the Government is granted for itself and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in this computer software to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.</P>
 <P>NEITHER THE UNITED STATES NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.*</P>
-<P><ADDRESS>Modified November 14, 2003<P>
+<P><ADDRESS>Modified May 27, 2004<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
