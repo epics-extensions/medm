@@ -59,6 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .03  09-11-95        vong    conform to c++ syntax
  * .04  09-12-95        vong    temperory fix for callbacks after
  *                              ca_clear_event and ca_clear_channel
+ * .05  09-28-95        vong    check for channel access return args.dbr as NULL.
  *
  *****************************************************************************
 */
