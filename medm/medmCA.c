@@ -985,7 +985,8 @@ Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
     return records;
 }
 
-void medmDestroyRecord(Record *pr) {
+void medmDestroyRecord(Record *pr)
+{
     if(pr) {
 	caDelete(pr);
 	*pr = nullRecord;
@@ -994,7 +995,8 @@ void medmDestroyRecord(Record *pr) {
     }
 }
 
-void medmSendDouble(Record *pr, double data) {
+void medmSendDouble(Record *pr, double data)
+{
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
     SEVCHK(ca_put(DBR_DOUBLE,pCh->chid,&data),
@@ -1002,7 +1004,17 @@ void medmSendDouble(Record *pr, double data) {
     ca_flush_io();
 }  
 
-void medmSendCharacterArray(Record *pr, char *data, unsigned long size) {
+void medmSendLong(Record *pr, long data)
+{
+    Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
+      [pr->caId % CA_PAGE_SIZE]);
+    SEVCHK(ca_put(DBR_LONG,pCh->chid,&data),
+      "medmSendLong: error in ca_put");
+    ca_flush_io();
+}  
+
+void medmSendCharacterArray(Record *pr, char *data, unsigned long size)
+{
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
     SEVCHK(ca_array_put(DBR_CHAR,size,pCh->chid,data),
@@ -1010,7 +1022,8 @@ void medmSendCharacterArray(Record *pr, char *data, unsigned long size) {
     ca_flush_io();
 }
 
-void medmSendString(Record *pr, char *data) {
+void medmSendString(Record *pr, char *data)
+{
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
     SEVCHK(ca_put(DBR_STRING,pCh->chid,data),
@@ -1018,12 +1031,14 @@ void medmSendString(Record *pr, char *data) {
     ca_flush_io();
 }
 
-void medmRecordAddUpdateValueCb(Record *pr, void (*updateValueCb)(XtPointer)) {
+void medmRecordAddUpdateValueCb(Record *pr, void (*updateValueCb)(XtPointer))
+{
     pr->updateValueCb = updateValueCb;
 }
 
 void medmRecordAddGraphicalInfoCb(Record *pr,
-  void (*updateGraphicalInfoCb)(XtPointer)) {
+  void (*updateGraphicalInfoCb)(XtPointer))
+{
     pr->updateGraphicalInfoCb = updateGraphicalInfoCb;
 }
 

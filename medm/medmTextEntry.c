@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_STRTOUL 0
+
 #include "medm.h"
 #include <stdlib.h>
 #ifdef __cplusplus
@@ -208,6 +210,10 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
 	break;
     case HEXADECIMAL:
 	localCvtLongToHexString((long)value, textField);
+#if DEBUG_STRTOUL
+	print("valueToString: %s %.1f\n",
+	  textField, value);
+#endif		
 	break;
     case OCTAL:
 	cvtLongToOctalString((long)value, textField);
@@ -521,6 +527,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 {
     char *textValue;
     double value;
+    long longValue;
     char *end;
     MedmTextEntry *pte = (MedmTextEntry *)clientData;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
@@ -554,11 +561,15 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 	    }
 	    if(match == False) {
 	      /* Assume it is a number */
-		long longValue;
-		
 		if(dlTextEntry->format == OCTAL) {
+		  /* Want to use strtoul, not strtol, because we
+                     assume hex and octal entries are unsigned long.
+                     It doesn't matter whether the return value is
+                     converted to long or unsigned long as the bits
+                     are the same for both.  */
 		    longValue = strtoul(textValue,&end,8);
 		} else if(dlTextEntry->format == HEXADECIMAL) {
+		  /* Same comment as above */
 		    longValue = strtoul(textValue,&end,16);
 		} else {
 		    if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
@@ -570,9 +581,10 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		}
 		if(*end == 0 && end != textValue &&
 		  longValue >= 0 && longValue <= pr->hopr) {
-		    medmSendDouble(pte->record,(double)longValue);
+		    medmSendLong(pte->record,longValue);
 		} else {
 		    char string[BUFSIZ];
+		    
 		    sprintf(string,"textEntryValueChanged: Invalid value:\n"
 		      "  Name: %s\n  Value: \"%s\"\n"
 		      " [Use PV Info to determine valid values]\n",
@@ -592,11 +604,56 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		medmSendCharacterArray(pte->record,textValue,len);
 		break;
 	    }
+	case DBF_LONG:
+	  /* We assume all hex input is meant to be unsigned
+	     long even though there is no DBF_ULONG.
+	     Distinguish between long and double because a
+	     double converted to a long gives a different
+	     result (always 0x7fffffff) than an unsigned long
+	     converted to a long when the sign bit is set.  In
+	     the unsigned long <-> long conversion, the bits
+	     are not changed so either can be used.  What we
+	     do insures that for a DBR_LONG record, the result
+	     is the same whether the value is entered as hex
+	     or not. */
+	    if(dlTextEntry->format == OCTAL) {
+		longValue = (long)strtoul(textValue,&end,8);
+	    } else if(dlTextEntry->format == HEXADECIMAL) {
+		longValue = (long)strtoul(textValue,&end,16);
+#if DEBUG_STRTOUL
+		print("textEntryValueChanged (DBF_LONG): %s %ld\n",
+		  textValue, longValue);
+#endif		
+	    } else {
+		if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
+		  && (textValue[1] == 'x' || textValue[1] == 'X')) {
+		    longValue = (long)strtoul(textValue,&end,16);
+		} else {
+		    value = (double)strtod(textValue,&end);
+		}
+	    }
+	    if(*end == '\0' && end != textValue) {
+		medmSendLong(pte->record,longValue);
+	    } else {
+		char string[BUFSIZ];
+		sprintf(string,"textEntryValueChanged: Invalid value:\n"
+		  "  Name: %s\n  Value: \"%s\"\n",
+		  pr->name?pr->name:"NULL",textValue);
+		medmPostMsg(1,string);
+		dmSetAndPopupWarningDialog(currentDisplayInfo,string,
+		  "OK",NULL,NULL);
+	    }
+	    break;
 	default:
+	  /* Treat as a double */
 	    if(dlTextEntry->format == OCTAL) {
 		value = (double)strtoul(textValue,&end,8);
 	    } else if(dlTextEntry->format == HEXADECIMAL) {
 		value = (double)strtoul(textValue,&end,16);
+#if DEBUG_STRTOUL
+		print("textEntryValueChanged: %s %.1f\n",
+		  textValue, value);
+#endif		
 	    } else {
 		if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
 		  && (textValue[1] == 'x' || textValue[1] == 'X')) {

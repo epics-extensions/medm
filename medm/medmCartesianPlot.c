@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_LOSING_FOCUS 0
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
 #define DEBUG_TIME 0
@@ -1150,7 +1151,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	if(pcp->timeScale && pr == pt->recordX) {
 	    if(pcp->startTime.nsec) {
 	    } else {
-		pcp->startTime.secPastEpoch = (int) pr->value;
+		pcp->startTime.secPastEpoch = (int)pr->value;
 		pcp->startTime.nsec = 1;
 		CpSetTimeBase(pcp->dlElement->widget,
 		  timeOffset + pcp->startTime.secPastEpoch);
@@ -1867,7 +1868,7 @@ static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
 static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {     
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonId = (int) cd;
+    int buttonId = (int)cd;
     int k, n, rcType, iPrec;
     char string[24];
     char *stringMinValue, *stringMaxValue;
@@ -2235,13 +2236,16 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS,
      too */
 {
-    int rcType = (int) cd;
+    int rcType = (int)cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
     XcVType minF[3], maxF[3];
 
     UNREFERENCED(cbs);
 
+#if DEBUG_LOSING_FOCUS
+    print("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
+#endif
 #if DEBUG_XRT
     print("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
     print("  executeTimeCartesianPlotWidget: %d\n",
@@ -2264,6 +2268,9 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	return;
     }
 
+#if DEBUG_LOSING_FOCUS
+    print("  switch(rcType)\n");
+#endif
     switch(rcType) {
     case CP_X_RANGE_MIN:
     case CP_Y_RANGE_MIN:
@@ -2280,13 +2287,20 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  rcType/3);
 	return;
     }
-  /* Strip trailing zeroes */
+#if DEBUG_LOSING_FOCUS
+    print("  Strip trailing zeros\n");
+#endif
+  /* Strip trailing zeros */
     tail = strlen(string);
     while(string[--tail] == '0') string[tail] = '\0';
   /* Set the new value if it is different */
     currentString = XmTextFieldGetString(w);
-    if(strcmp(string,currentString))
-      XmTextFieldSetString(w,string);
+    if(strcmp(string,currentString)) {
+	XmTextFieldSetString(w,string);
+#if DEBUG_LOSING_FOCUS
+	print("  XmTextFieldSetString\n");
+#endif
+    }
     XtFree(currentString);
 }
 
@@ -2331,9 +2345,7 @@ void createCartesianPlotAxisDialogMenuEntry(
     XtManageChild(rowColumn);
 }
 
-/*
- * Text entry support routine for the Cartesian Plot Axis Dialog...
- */
+/* Text entry support routine for the Cartesian Plot Axis Dialog...  */
 void createCartesianPlotAxisDialogTextEntry(
   Widget parentRC,
   XmString axisLabelXmString,
@@ -2797,7 +2809,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonType = (int) cd;
+    int buttonType = (int)cd;
     String **newCells;
     int i;
 
@@ -2816,7 +2828,7 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 	    strcpy(globalResourceBundle.cpData[i].ydata,
 	      newCells[i][CP_YDATA_COLUMN]);
 	    globalResourceBundle.cpData[i].data_clr = 
-	      (int) cpColorRows[i][CP_COLOR_COLUMN];
+	      (int)cpColorRows[i][CP_COLOR_COLUMN];
 	}
       /* and update the elements (since this level of "Apply" is analogous
        *	to changing text in a text field in the resource palette
@@ -2845,7 +2857,7 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonType = (int) cd;
+    int buttonType = (int)cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);

@@ -312,10 +312,11 @@ Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
 Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
   void (*updateValueCb)(XtPointer), void (*updateGraphicalInfoCb)(XtPointer),
   XtPointer clientData);
-void medmDestoryRecord(Record *);
-void medmSendDouble(Record *, double);
-void medmSendString(Record *, char *);
-void medmSendCharacterArray(Record *, char *, unsigned long);
+void medmDestoryRecord(Record *pr);
+void medmSendDouble(Record *pr, double data);
+void medmSendLong(Record *pr, long data);
+void medmSendString(Record *pr, char *data);
+void medmSendCharacterArray(Record *pr, char *dtat, unsigned long size);
 
 /* medmCartesianPlot.c */
 void cpEnterCellCallback(Widget w, XtPointer, XtPointer);

@@ -62,6 +62,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_RESOURCE 0
 #define DEBUG_TEXT_VERIFY 0
+#define DEBUG_LOSING_FOCUS 0
 
 #include <ctype.h>
 #include "medm.h"
@@ -856,6 +857,13 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
   
     UNREFERENCED(w);
     UNREFERENCED(cbs);
+
+#if DEBUG_LOSING_FOCUS
+    print("\ntextFieldLosingFocusCallback: rcType=%d[%s]\n",
+      rcType,
+      (rcType >= 0 && rcType < MAX_RESOURCE_ENTRY)?
+      resourceEntryStringTable[rcType]:"Unknown");
+#endif
 
     newString = string;
   /** losing focus - make sure that the text field remains accurate
