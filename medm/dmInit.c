@@ -62,6 +62,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .04  10-03-95        vong    call dmResizeDisplayList() before
  *                              dmTraverseDisplayList() instead of
  *                              using XResizeWindows()
+ * .05  10-26-95        vong    add back the mistakenly deleted
+ *                              parseFallingLine and parseRisingLine
  *                              
  *
  *****************************************************************************
@@ -375,6 +377,12 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 		} else if (!strcmp(token,"text")) {
 			APPEND_DYNAMIC_ATTRIBUTE();
 			parseText(displayInfo,dlComposite);
+                } else if (!strcmp(token,"falling line")) {
+                        APPEND_DYNAMIC_ATTRIBUTE();
+                        parseFallingLine(displayInfo,dlComposite);
+                } else if (!strcmp(token,"rising line")) {
+                        APPEND_DYNAMIC_ATTRIBUTE();
+                        parseRisingLine(displayInfo,dlComposite);
 
 /* not really static/graphic objects, but not really monitors or controllers? */
 		} else if (!strcmp(token,"related display")) {
