@@ -59,6 +59,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *                              - a updateTaskList is added to the 
  *                                displayInfo structure.
  * .03  09-08-95        vong    conform to c++ syntax
+ * .04  10-03-95        vong    call dmResizeDisplayList() before
+ *                              dmTraverseDisplayList() instead of
+ *                              using XResizeWindows()
+ *                              
  *
  *****************************************************************************
 */
@@ -479,6 +483,7 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 /*
  * traverse (execute) this displayInfo and associated display list
  */
+#if 0
   dmTraverseDisplayList(displayInfo);
 
   XtPopup(displayInfo->shell,XtGrabNone);
@@ -499,6 +504,26 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
       XResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),w,h);
     }
   }
+#else
+  {
+    int x, y;
+    unsigned int w, h;
+    int mask;
+
+    mask = XParseGeometry(geometryString,&x,&y,&w,&h);
+
+    if ((mask & WidthValue) && (mask & HeightValue)) {
+      dmResizeDisplayList(displayInfo,w,h);
+    }
+    dmTraverseDisplayList(displayInfo);
+
+    XtPopup(displayInfo->shell,XtGrabNone);
+
+    if ((mask & XValue) && (mask & YValue)) {
+      XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
+    }
+  }
+#endif
 }
 
 
