@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_SC 0
 #define DEBUG_DIALOG 0
 #define DEBUG_RECORDS 0
-#define DEBUG_COLOR 1
+#define DEBUG_COLOR 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
