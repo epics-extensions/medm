@@ -7,7 +7,7 @@
 
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_XRT 0
-#define DEBUG_XRT1 1
+#define DEBUG_XRT1 0
 
 #define MAX(a,b)  ((a)>(b)?(a):(b))
 
