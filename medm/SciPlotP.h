@@ -292,9 +292,6 @@ typedef struct {
   XtCallbackList drag_y_callback;/* callback list for dragging y           */
   XtCallbackList pointer_val_callback; /* callback list for tracking pointer*/
   XtCallbackList btn1_callback;  /* callback assciated with btn1 click     */
-
-  /* KE: */
-  XtPointer UserData;            /* user data */
 } SciPlotPart;
   
 typedef struct _SciPlotRec {

@@ -140,7 +140,7 @@ void CpGetAxisInfo(Widget w,
     y2MaxF->fval = 0;         /* Not implemented */
 
   /* Get userData */
-    XtVaGetValues(w, XtNuserData, userData, NULL);
+    XtVaGetValues(w, XmNuserData, userData, NULL);
     
   /* Define the rest */
     *xAxisIsTime = False;     /* Not implemented */

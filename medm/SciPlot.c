@@ -136,9 +136,6 @@ static XtResource resources[] =
    offset(XLeftSpace), XtRImmediate, (XtPointer) (100)},
   {XtNxRightSpace,  XtCMargin, XtRInt, sizeof(int),
    offset(XRightSpace), XtRImmediate, (XtPointer) (100)},
-/* KE: */
-  {XtNuserData,  XtCUserData, XtRPointer, sizeof(XtPointer),
-   offset(UserData), XtRPointer, NULL},
 };
 
 static SciPlotFontDesc font_desc_table[] =
