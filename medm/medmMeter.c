@@ -71,6 +71,7 @@ static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void meterSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void meterSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 
+static void meterGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void meterGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable meterDlDispatchTable = {
@@ -78,7 +79,7 @@ static DlDispatchTable meterDlDispatchTable = {
     NULL,
     executeDlMeter,
     writeDlMeter,
-    NULL,
+    meterGetLimits,
     meterGetValues,
     meterInheritValues,
     meterSetBackgroundColor,
@@ -131,10 +132,13 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
        *  because the widget is an XcLval by default and the default
        *  initializations are into XcVType.lval, possibly giving meaningless
        *  numbers in XcVType.fval, which is what will be used for our XcFval
-       *  widget. */
-	XtSetArg(args[n],XcNincrement,1.0); n++;
-	XtSetArg(args[n],XcNlowerBound,0.0); n++;
-	XtSetArg(args[n],XcNupperBound,100.0); n++;
+       *  widget.  They still need to be set from the lval, however, because
+       *  they are XtArgVal's, which Xt typedef's as long (exc. Cray?)
+       *  See Intrinsic.h */
+	adjustPvLimits(&dlMeter->limits);
+	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
+	XtSetArg(args[n],XcNlowerBound,longFval(dlMeter->limits.lopr)); n++;
+	XtSetArg(args[n],XcNupperBound,longFval(dlMeter->limits.lopr)); n++;
 	XtSetArg(args[n],XcNscaleSegments,
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
 	switch (dlMeter->label) {
@@ -189,6 +193,9 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XmNy, (Position)po->y,
 	  XmNwidth, (Dimension)po->width,
 	  XmNheight, (Dimension)po->height,
+	  XcNlowerBound,longFval(dlMeter->limits.lopr),
+	  XcNupperBound,longFval(dlMeter->limits.hopr),
+	  XcNdecimals, (int)dlMeter->limits.prec,
 	  NULL);
     }
 }
@@ -272,16 +279,49 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     }
     if (widget != NULL) {
 	Pixel pixel;
+
+      /* Set foreground pixel according to alarm */
 	pixel = (dlMeter->clrmod == ALARM) ?
 	  alarmColor(pd->severity) :
 	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
 	XtVaSetValues(widget,
-	  XcNlowerBound,lopr.lval,
-	  XcNupperBound,hopr.lval,
 	  XcNmeterForeground,pixel,
-	  XcNdecimals, (int)precision,
 	  NULL);
 	XcMeterUpdateValue(widget,&val);
+
+      /* Set Channel and User limits (if apparently not set yet) */
+	dlMeter->limits.loprChannel = lopr.fval;
+	if(dlMeter->limits.loprSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.loprUser == LOPR_DEFAULT) {
+	    dlMeter->limits.loprUser = lopr.fval;
+	}
+	dlMeter->limits.hoprChannel = hopr.fval;
+	if(dlMeter->limits.hoprSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.hoprUser == HOPR_DEFAULT) {
+	    dlMeter->limits.hoprUser = hopr.fval;
+	}
+	dlMeter->limits.precChannel = precision;
+	if(dlMeter->limits.precSrc != PV_LIMITS_USER &&
+	  dlMeter->limits.precUser == PREC_DEFAULT) {
+	    dlMeter->limits.precUser = precision;
+	}
+
+      /* Set values in the widget if src is Channel */
+	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    XtVaSetValues(widget,
+	      XcNlowerBound,lopr.lval,
+	      NULL);
+	}
+	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    XtVaSetValues(widget,
+	      XcNupperBound,hopr.lval,
+	      NULL);
+	}
+	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    XtVaSetValues(widget,
+	      XcNdecimals, (int)precision,
+	      NULL);
+	}
     }
 }
 
@@ -421,6 +461,14 @@ static void meterInheritValues(ResourceBundle *pRCB, DlElement *p) {
       CLRMOD_RC,     &(dlMeter->clrmod),
       LIMITS_RC,     &(dlMeter->limits),
       -1);
+}
+
+static void meterGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlMeter *dlMeter = pE->structure.meter;
+
+    *(ppL) = &(dlMeter->limits);
+    *(pN) = dlMeter->monitor.rdbk;
 }
 
 static void meterGetValues(ResourceBundle *pRCB, DlElement *p) {

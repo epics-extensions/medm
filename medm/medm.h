@@ -129,10 +129,6 @@ extern "C" {
 #include "medmWidget.h"
 #include "parse.h"
 #include "xgif.h"
-#include "medmWidget.h"
-#include "parse.h"
-#include "xgif.h"
-
 #include "medmVersion.h"
 
 #define MAIN_NAME "Medm"
@@ -210,6 +206,7 @@ extern "C" {
     EXTERN Widget relatedDisplayS, shellCommandS, cartesianPlotS,
       cartesianPlotAxisS, stripChartS;
     EXTERN Widget cpAxisForm, executeTimeCartesianPlotWidget;
+    EXTERN DlElement *executeTimePvLimitsElement;
 
     EXTERN Widget exitQD, saveAsPD;
     EXTERN Boolean saveReplacedDisplays;

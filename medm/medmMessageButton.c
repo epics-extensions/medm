@@ -330,7 +330,6 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
     }
 }
 
-
 static void messageButtonUpdateValueCb(XtPointer cd)
 {
     MessageButton *pmb = (MessageButton *) ((Record *) cd)->clientData;
@@ -366,13 +365,14 @@ static void messageButtonDraw(XtPointer cd)
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
+	    if (widget) XtUnmanageChild(widget);
 	    draw3DPane(pmb->updateTask,
 	      pmb->updateTask->displayInfo->colormap[dlMessageButton->control.bclr]);
 	    draw3DQuestionMark(pmb->updateTask);
-	    if (widget) XtUnmanageChild(widget);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if ((widget) && XtIsManaged(widget))
+	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pmb->updateTask);
     }
 }

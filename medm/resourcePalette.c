@@ -268,12 +268,9 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
     case LIMITS_RC:
-	if (!pvLimitsS) createPvLimitsDlg();
-      /* Update limits data from globalResourceBundle */
-	updatePvLimitsDlg();
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
-	XtPopup(pvLimitsS,XtGrabNone);
+	popupPvLimits(cdi);
 	break;
     default:
 	medmPrintf(1,"\npushButtonActivate: Invalid type = %d\n",rcType);
@@ -2976,6 +2973,7 @@ void clearResourcePaletteEntries()
     if (shellCommandS)      XtPopdown(shellCommandS);
     if (cartesianPlotS)     XtPopdown(cartesianPlotS);
     if (cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
+    if (pvLimitsS)          XtPopdown(pvLimitsS);
     if (stripChartS)        XtPopdown(stripChartS);
  
   /* Unset the current button and set label in resourceMW to Select... */

@@ -2022,14 +2022,16 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	break;
     }
     
-  /* Update for EDIT mode, EXECUTE mode already done */
+  /* Update from globalResourceBundle for EDIT mode
+   *   EXECUTE mode already done */
     if(globalDisplayListTraversalMode == DL_EDIT) {
 	if (cdi) {
 	    DlElement *dlElement = FirstDlElement(
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
 	    while (dlElement) {
-		updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		updateElementFromGlobalResourceBundle(
+		  dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
 	    dmTraverseNonWidgetsInDisplayList(cdi);

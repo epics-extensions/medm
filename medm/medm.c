@@ -1932,7 +1932,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     }
 
 #ifdef VMS
-    medmTrimVersionNumber(filename);
+    vmsTrimVersionNumber(filename);
     strcpy(f1,filename);
     tolower(f1,filename);
 #endif
@@ -2502,7 +2502,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtPopdown(pvInfoS);
 	}
 	if (pvLimitsS) {
-	    XtSetSensitive(pvLimitsS,False);
+	    XtSetSensitive(pvLimitsS,True);
 	    XtPopdown(pvLimitsS);
 	}
 	if (displayListS) {
@@ -2551,7 +2551,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
 
     executeTimeCartesianPlotWidget = NULL;
-  /* No display is current */
+    executeTimePvLimitsElement = NULL;
     currentDisplayInfo = (DisplayInfo *)NULL;
 
   /* Go through the whole display list, if any display is
@@ -3470,6 +3470,7 @@ main(int argc, char *argv[])
     stripChartS = NULL;
     cpAxisForm = NULL;
     executeTimeCartesianPlotWidget = NULL;
+    executeTimePvLimitsElement = NULL;
     currentDisplayInfo = NULL;
     pointerInDisplayInfo = NULL;
     resourceBundleCounter = 0;

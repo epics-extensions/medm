@@ -628,25 +628,25 @@ void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level)
     
     memset(indent,'\t',level);
     indent[level] = '\0';
-    
+
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if (MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%slimits {",indent);
-	if (dlLimits->loprSrc != PV_LIMITS_CHANNEL)
+	if (dlLimits->loprSrc == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
-	    stringValueTable[dlLimits->loprSrc]);
-	if (dlLimits->loprDefault != 0.)
+	    stringValueTable[PV_LIMITS_DEFAULT]);
+	if (dlLimits->loprDefault != LOPR_DEFAULT)
 	  fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
-	if (dlLimits->hoprSrc != PV_LIMITS_CHANNEL)
+	if (dlLimits->hoprSrc == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
-	    stringValueTable[dlLimits->hoprSrc]);
-	if (dlLimits->hoprDefault != 1.)
+	    stringValueTable[PV_LIMITS_DEFAULT]);
+	if (dlLimits->hoprDefault != HOPR_DEFAULT)
 	  fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
-	if (dlLimits->precSrc != PV_LIMITS_CHANNEL)
+	if (dlLimits->precSrc == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
-	    stringValueTable[dlLimits->precSrc]);
-	if (dlLimits->precDefault != 0)
+	    stringValueTable[PV_LIMITS_DEFAULT]);
+	if (dlLimits->precDefault != PREC_DEFAULT)
 	  fprintf(stream,"\n%s\tprecDefault=%d",indent,dlLimits->precDefault);
 	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -731,14 +731,14 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 void limitsAttributeInit(DlLimits *limits)
 {
     limits->loprSrc = PV_LIMITS_CHANNEL;
-    limits->lopr = 0.;
-    limits->loprDefault = 0.;
+    limits->lopr = limits->loprChannel = limits->loprDefault =
+      limits->loprUser = LOPR_DEFAULT;
     limits->hoprSrc = PV_LIMITS_CHANNEL;
-    limits->hopr = 1.;
-    limits->hoprDefault = 1.;
+    limits->hopr = limits->hoprChannel = limits->hoprDefault =
+      limits->hoprUser = HOPR_DEFAULT;
     limits->precSrc = PV_LIMITS_CHANNEL;
-    limits->prec = 0;
-    limits->precDefault = 0;
+    limits->prec = limits->precChannel = limits->precDefault =
+      limits->precUser = PREC_DEFAULT;
 }
   
 #ifdef __cplusplus

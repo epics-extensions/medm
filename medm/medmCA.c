@@ -817,7 +817,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
     if(!pvInfoS) createPvInfoDlg();
 
   /* Get the records */
-    records = getPvInfoFromDisplay(displayInfo, &count, pE);
+    records = getPvInfoFromDisplay(displayInfo, &count, &pE);
     if(!records) return;   /* (Error messages have been sent) */
 
   /* Get timestamp */

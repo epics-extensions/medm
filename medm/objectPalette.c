@@ -216,28 +216,7 @@ void setActionToSelect() {
   /* set global action (from object palette) to SELECT, not CREATE... */
     currentActionType = SELECT_ACTION;
 
-#if 0    
-  /* since currentElementType is not really reset yet (don't know what is
-   *	selected yet), clearResourcePaletteEntries() may not popdown
-   *	these associated shells  - therefore use brute force */
-
-    if (relatedDisplayS)    XtPopdown(relatedDisplayS);
-    if (cartesianPlotS)     XtPopdown(cartesianPlotS);
-    if (cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
-    if (stripChartS)        XtPopdown(stripChartS);
-
-/* clear out the resource palette to reflect empty/unselected object */
-    if (!currentDisplayInfo) {
-	clearResourcePaletteEntries();
-    } else {
-	if (currentDisplayInfo->selectedDlElementList->count == 1) {
-	    clearResourcePaletteEntries();
-	}
-    }
-#else
-  /* KE: This should work and do the above */
     clearResourcePaletteEntries();
-#endif
 
     if (objectS) 
       XDefineCursor(display,XtWindow(objectS),rubberbandCursor);

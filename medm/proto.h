@@ -428,6 +428,7 @@ void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
+long longFval(float f);
 Pixel alarmColor(int type);
 int localCvtLongToHexString(long source, char *pdest);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
@@ -559,11 +560,10 @@ void updateAllDisplayPositions();
 void setTimeValues(void);
 void createPvInfoDlg(void);
 Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
-  DlElement *pE);
+  DlElement **pE);
 void popupDisplayListDlg(void);
 void popupPvLimits(DisplayInfo *displayInfo);
-void createPvLimitsDlg(void);
-void updatePvLimitsDlg();
+void adjustPvLimits(DlLimits *limits);
 void refreshDisplayListDlg(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);

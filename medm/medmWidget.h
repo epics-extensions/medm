@@ -95,7 +95,12 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define STRDUP(a) (strcpy( (char *)malloc(strlen(a)+1),a))
 #endif
 
-/* file suffix definitions (as dir/file masks for file selection boxes) */
+/* Limits definitions */
+#define LOPR_DEFAULT 0.0
+#define HOPR_DEFAULT 1.0
+#define PREC_DEFAULT   0
+
+/* File suffix definitions (as dir/file masks for file selection boxes) */
 #define DISPLAY_DIALOG_MASK	"*.adl"	/* ascii display files */
 #define RESOURCE_DIALOG_MASK	"*.rsc"	/* resource files */
 #define COLOR_DIALOG_MASK	"*.clr"	/* colormap/color editor files */
@@ -135,12 +140,12 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define MAX_TEXT_UPDATE_WIDTH	64	/* max length of text update       */
 #define BORDER_WIDTH		5	/* border for valuator (for MB2)   */
 
-/* for argument passing in related displays */
+/* Argument passing in related displays */
 #define RELATED_DISPLAY_FILENAME_INDEX 0
 #define RELATED_DISPLAY_ARGS_INDEX 1
 #define RELATED_DISPLAY_FILENAME_AND_ARGS_SIZE	(RELATED_DISPLAY_ARGS_INDEX+1)
 
-/* display object or widget specific parameters */
+/* Display object or widget specific parameters */
 #define METER_OKAY_SIZE		80	/* (meter>80) ? 11 : 5 markers     */
 #define METER_MARKER_DIVISOR	9	/* height/9 = marker length        */
 #define METER_FONT_DIVISOR	8	/* height/8 = height of font       */
@@ -159,7 +164,7 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define SECS_PER_HOUR		(60.0 * SECS_PER_MIN)
 #define SECS_PER_DAY		(24.0 * SECS_PER_HOUR)
 
-/* default display name, widths, heights for newly created displays */
+/* Default display name, widths, heights for newly created displays */
 #define DEFAULT_FILE_NAME	"newDisplay.adl"
 #define DEFAULT_DISPLAY_WIDTH	400
 #define DEFAULT_DISPLAY_HEIGHT	400
@@ -187,10 +192,10 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define ORIENT_CW    2
 #define ORIENT_CCW   3
 
-/* highlight line thickness */
+/* Highlight line thickness */
 #define HIGHLIGHT_LINE_THICKNESS 2
 
-/* valuator-specific parameters */
+/* Valuator-specific parameters */
 #define VALUATOR_MIN		0
 #define VALUATOR_MAX 		1000000
 #define VALUATOR_INCREMENT 	1

@@ -350,11 +350,12 @@ const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
 extern const Boolean_t FIRST_BOOLEAN;
 #endif
 
-#define NUM_PV_LIMITS_SRC 3
+#define NUM_PV_LIMITS_SRC 4
 typedef enum {
     PV_LIMITS_CHANNEL = 69,
     PV_LIMITS_DEFAULT = 70,
-    PV_LIMITS_USER    = 71
+    PV_LIMITS_USER    = 71,
+    PV_LIMITS_UNUSED  = 72
 } PvLimitsSrc_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
@@ -365,10 +366,10 @@ extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-    COLOR_RULE_1 = 72,
-    COLOR_RULE_2 = 73,
-    COLOR_RULE_3 = 74,
-    COLOR_RULE_4 = 75
+    COLOR_RULE_1 = 73,
+    COLOR_RULE_2 = 74,
+    COLOR_RULE_3 = 75,
+    COLOR_RULE_4 = 76
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -378,11 +379,11 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 #endif
 #endif
 
-#define MAX_OPTIONS             8       /* NUM_TEXT_FORMATS */
-#ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (76)  /* COLOR_RULE_4 + 1 */
+#define MAX_OPTIONS             8     /* NUM_TEXT_FORMATS */
+#ifndef __COLOR_RULE_H__
+#define NUMBER_STRING_VALUES    (73)  /* COLOR_RULE_1 */
 #else
-#define NUMBER_STRING_VALUES    (72)  /* PV_LIMITS_USER + 1 */
+#define NUMBER_STRING_VALUES    (77)  /* COLOR_RULE_1 + NUM_COLOR_RULE */
 #endif
 
 /*********************************************************************
@@ -419,7 +420,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "hh:mm:ss", "hh:mm", "hh:00", "MMM DD YYYY", "MMM DD", "MMM DD hh:00",
     "wd hh:00",
     "false", "true",
-    "channel", "default", "user",
+    "channel", "default", "user", "unused",
 #ifdef __COLOR_RULE_H__
     "set #1", "set #2", "set #3", "set #4",
 #endif
@@ -535,14 +536,20 @@ typedef struct {
 
 typedef struct {
     int loprSrc;
-    double loprDefault;
     double lopr;
+    double loprChannel;
+    double loprDefault;
+    double loprUser;
     int hoprSrc;
-    double hoprDefault;
     double hopr;
+    double hoprChannel;
+    double hoprDefault;
+    double hoprUser;
     int precSrc;
-    short precDefault;
     short prec;
+    short precChannel;
+    short precDefault;
+    short precUser;
 } DlLimits;
 
 typedef struct {
@@ -858,8 +865,8 @@ typedef struct {
     void (*execute)(struct _DisplayInfo *, struct _DlElement *);
   /* Write (to file) method */
     void (*write)(FILE *, struct _DlElement *, int);
-  /* KE: The following is not used in any dispatch table */
-    void (*setValues)(struct _ResourceBundle *, struct _DlElement *);
+  /* Get limits from DlLimits attribute */
+    void (*getLimits)(struct _DlElement *, DlLimits **, char **);
   /* Get values from the resource bundle method */
     void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
   /* Inherit (some of the) values from the resource bundle method

@@ -337,7 +337,7 @@ static void menuDraw(XtPointer cd) {
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pd->precision < 0) return;
+	    if (pd->precision < 0) return;    /* Wait for pd->value */
 	    if (pd->dataType == DBF_ENUM) {
 		Widget menuWidget;
 		WidgetList children;

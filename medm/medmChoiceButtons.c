@@ -361,7 +361,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pd->precision < 0) return;
+	    if (pd->precision < 0) return;    /* Wait for pd->value */
 	    if (pd->dataType == DBF_ENUM) {
 		WidgetList children;
 		Cardinal numChildren;
