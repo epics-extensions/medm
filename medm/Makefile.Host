@@ -11,7 +11,7 @@ USE_MOTIF12=YES
 ifdef WIN32
 #HOST_OPT = NO
 else
-HOST_OPT = NO
+#HOST_OPT = NO
 endif
 
 # Browser options
