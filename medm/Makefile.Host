@@ -141,15 +141,15 @@ SRCS += medmTextUpdate.c
 SRCS += medmValuator.c 
 SRCS += medmWidget.c 
 SRCS += objectPalette.c 
-SRCS += objectPalette.c 
 SRCS += productDescriptionShell.c
+SRCS += resourcePalette.c 
 SRCS += shared.c 
 SRCS += updateMonitors.c 
 SRCS += utils.c 
 SRCS += xgif.c
 
 RCS_WIN32 += medm.rc
-alh.res:../medm.ico
+medm.res:../medm.ico
 
 include $(TOP)/config/RULES.Host
 
