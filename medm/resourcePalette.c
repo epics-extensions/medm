@@ -679,7 +679,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case EBIT_RC:
     {
 	int value = atoi(stringValue);
-	if(value >= 0 && value <= 15) {
+	if(value >= 0 && value <= 31) {
 	    globalResourceBundle.ebit = value;
 	} else {
 	    char tmp[32];
