@@ -163,7 +163,7 @@ char *valueToString(Channel *pCh, TextFormat format) {
 	int i = (int) pCh->value;
         /* getting values of -1 for data->value for invalid connections */
         if ( i >= 0 && i < (int) pCh->info->e.no_str) {
-	  return pCh->info->e.strs[pCh->data->e.value];
+	  return pCh->info->e.strs[(int)pCh->value];
         } else {
 	  return " ";
         }

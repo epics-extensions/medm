@@ -113,7 +113,9 @@ buttons_t paletteMonitorButton[] = {
   {"textUpdate25",NULL,objectToggleCallback,(XtPointer) DL_TextUpdate},
   {"indicator25",NULL,objectToggleCallback,(XtPointer) DL_Indicator},
   {"cartesianPlot25",NULL,objectToggleCallback,(XtPointer) DL_CartesianPlot},
+/* not implement
   {"surfacePlot25",NULL,objectToggleCallback,(XtPointer) DL_SurfacePlot},
+*/
   {"byte25",NULL,objectToggleCallback,(XtPointer) DL_Byte},
   NULL};
 

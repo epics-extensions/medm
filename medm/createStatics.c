@@ -626,56 +626,6 @@ DlElement *createDlText(
 
 
 
-DlElement *createDlFallingLine(
-  DisplayInfo *displayInfo)
-{
-  DlFallingLine *dlFallingLine;
-  DlElement *dlElement;
-
-  dlFallingLine = (DlFallingLine *) malloc(sizeof(DlFallingLine));
-  createDlObject(displayInfo,&(dlFallingLine->object));
-
-  dlElement = (DlElement *) malloc(sizeof(DlElement));
-  dlElement->type = DL_FallingLine;
-  dlElement->structure.fallingLine = dlFallingLine;
-  dlElement->next = NULL;
-  dlElement->prev = displayInfo->dlElementListTail;
-  displayInfo->dlElementListTail->next = dlElement;
-  displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlFallingLine;
-  dlElement->dmWrite = (void(*)())writeDlFallingLine;
-
-  return(dlElement);
-}
-
-
-
-DlElement *createDlRisingLine(
-  DisplayInfo *displayInfo)
-{
-  DlRisingLine *dlRisingLine;
-  DlElement *dlElement;
-
-  dlRisingLine = (DlRisingLine*) malloc(sizeof(DlRisingLine));
-  createDlObject(displayInfo,&(dlRisingLine->object));
-
-  dlElement = (DlElement *) malloc(sizeof(DlElement));
-  dlElement->type = DL_RisingLine;
-  dlElement->structure.risingLine = dlRisingLine;
-  dlElement->next = NULL;
-  dlElement->prev = displayInfo->dlElementListTail;
-  displayInfo->dlElementListTail->next = dlElement;
-  displayInfo->dlElementListTail = dlElement;
-  dlElement->dmExecute = (void(*)())executeDlRisingLine;
-  dlElement->dmWrite = (void(*)())writeDlRisingLine;
-
-  return(dlElement);
-}
-
-
-
-
-
 DlElement *createDlRelatedDisplay(
   DisplayInfo *displayInfo)
 {

@@ -295,6 +295,9 @@ static void textUpdateUpdateValueCb(Channel *pCh) {
       /* do the text alignment */
       switch (pTU->align) {
         case HORIZ_LEFT:
+          i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,textField,
+		pTU->object.height,pTU->object.width,
+		&usedHeight,&usedWidth,TRUE);
           XSetFont(display,pDI->gc,fontTable[i]->fid);
           XDrawString(display,XtWindow(pDI->drawingArea), pDI->gc,
 	    pTU->object.x,

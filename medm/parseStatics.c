@@ -619,42 +619,50 @@ void parseFallingLine(
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
-  DlFallingLine *dlFallingLine;
+  DlPolyline *dlPolyline;
   DlElement *dlElement;
 
-  dlFallingLine = (DlFallingLine *) malloc(sizeof(DlFallingLine));
-/* initialize some data in structure */
-  dlFallingLine->object = defaultObject;
+  /* Rising Line is replaced by PolyLine */
+  dlPolyline = (DlPolyline *) calloc(1,sizeof(DlPolyline));
+  /* initialize some data in structure */
+  dlPolyline->object = defaultObject;
+  dlPolyline->nPoints = 0;
+  dlPolyline->points = (XPoint *)NULL;
 
   do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
-	    case T_WORD:
-		if (!strcmp(token,"object"))
-			parseObject(displayInfo,&(dlFallingLine->object));
-		break;
-	    case T_EQUAL:
-		break;
-	    case T_LEFT_BRACE:
-		nestingLevel++; break;
-	    case T_RIGHT_BRACE:
-		nestingLevel--; break;
-	}
+        switch( (tokenType=getToken(displayInfo,token)) ) {
+            case T_WORD:
+                if (!strcmp(token,"object"))
+                        parseObject(displayInfo,&(dlPolyline->object));
+                break;
+            case T_EQUAL:
+                break;
+            case T_LEFT_BRACE:
+                nestingLevel++; break;
+            case T_RIGHT_BRACE:
+                nestingLevel--; break;
+        }
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-		&& (tokenType != T_EOF) );
+                && (tokenType != T_EOF) );
+
+#define INITIAL_NUM_POINTS 16
+  dlPolyline->points = (XPoint *)malloc(16*sizeof(XPoint));
+  dlPolyline->nPoints = 2;
+  dlPolyline->points[0].x = dlPolyline->object.x;
+  dlPolyline->points[0].y = dlPolyline->object.y;
+  dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width;
+  dlPolyline->points[1].y = dlPolyline->object.y + dlPolyline->object.height;
 
   dlElement = (DlElement *) malloc(sizeof(DlElement));
-  dlElement->type = DL_FallingLine;
-  dlElement->structure.fallingLine = dlFallingLine;
+  dlElement->type = DL_Polyline;
+  dlElement->structure.polyline = dlPolyline;
   dlElement->next = NULL;
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlFallingLine;
-  dlElement->dmWrite =  (void(*)())writeDlFallingLine;
-
+  dlElement->dmExecute =  (void(*)())executeDlPolyline;
+  dlElement->dmWrite =  (void(*)())writeDlPolyline;
 }
-
-
 
 void parseRisingLine(
   DisplayInfo *displayInfo,
@@ -663,18 +671,21 @@ void parseRisingLine(
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
-  DlRisingLine *dlRisingLine;
+  DlPolyline *dlPolyline;
   DlElement *dlElement;
 
-  dlRisingLine = (DlRisingLine*) malloc(sizeof(DlRisingLine));
-/* initialize some data in structure */
-  dlRisingLine->object = defaultObject;
+  /* Rising Line is replaced by PolyLine */
+  dlPolyline = (DlPolyline *) calloc(1,sizeof(DlPolyline));
+  /* initialize some data in structure */
+  dlPolyline->object = defaultObject;
+  dlPolyline->nPoints = 0;
+  dlPolyline->points = (XPoint *)NULL;
 
   do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	    case T_WORD:
 		if (!strcmp(token,"object"))
-			parseObject(displayInfo,&(dlRisingLine->object));
+			parseObject(displayInfo,&(dlPolyline->object));
 		break;
 	    case T_EQUAL:
 		break;
@@ -686,16 +697,23 @@ void parseRisingLine(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
 		&& (tokenType != T_EOF) );
 
+#define INITIAL_NUM_POINTS 16 
+  dlPolyline->points = (XPoint *)malloc(16*sizeof(XPoint)); 
+  dlPolyline->nPoints = 2;
+  dlPolyline->points[0].x = dlPolyline->object.x;
+  dlPolyline->points[0].y = dlPolyline->object.y + dlPolyline->object.height;
+  dlPolyline->points[1].x = dlPolyline->object.x + dlPolyline->object.width;
+  dlPolyline->points[1].y = dlPolyline->object.y;
+  
   dlElement = (DlElement *) malloc(sizeof(DlElement));
-  dlElement->type = DL_RisingLine;
-  dlElement->structure.risingLine = dlRisingLine;
+  dlElement->type = DL_Polyline;
+  dlElement->structure.polyline = dlPolyline;
   dlElement->next = NULL;
 
   POSITION_ELEMENT_ON_LIST();
 
-  dlElement->dmExecute =  (void(*)())executeDlRisingLine;
-  dlElement->dmWrite =  (void(*)())writeDlRisingLine;
-
+  dlElement->dmExecute =  (void(*)())executeDlPolyline;
+  dlElement->dmWrite =  (void(*)())writeDlPolyline;
 }
 
 
