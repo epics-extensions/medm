@@ -295,8 +295,6 @@ static void textUpdateDraw(XtPointer cd)
 		break;
 	    }
 	    if(isNumber) {
-	      /* Convert bad values of precision to high precision */
-		if(precision < 0 || precision > 17) precision=17;
 		switch (dlTextUpdate->format) {
 		case STRING:
 		    cvtDoubleToString(value,textField,precision);
