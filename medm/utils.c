@@ -67,6 +67,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_VISIBILITY 0
 #define DEBUG_GRID 0
 #define DEBUG_RESID 0
+#define DEBUG_RELATED_DISPLAY 0
 
 #define UNDO
 
@@ -422,10 +423,24 @@ DlElement *findHiddenRelatedDisplay(DisplayInfo *displayInfo,
       /* Check for hidden related display */
 	if(pE->type == DL_RelatedDisplay &&
 	  pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+#if DEBUG_RELATED_DISPLAY
+	    print("findHiddenRelatedDisplay: Related Display\n"
+	      "  x0=%d y0=%d x=%d w=%d x1=%d y=%d h=%d y1=%d\n",
+		  x0,y0,po->x,po->width,po->x + (int)po->width,
+		  po->y,po->height,po->y + (int)po->height);
+#endif	    
 	    return(pE);
 	} else if(pE->type == DL_Composite) {
 	    pE1 = findHiddenRelatedDisplayInComposite(pE, x0, y0);
-	    if(pE1) return pE1;
+	    if(pE1) {
+#if DEBUG_RELATED_DISPLAY
+		print("findHiddenRelatedDisplay: Composite\n"
+		  "  x0=%d y0=%d x=%d x1=%d y=%d y1=%d\n",
+		  x0,y0,po->x,po->x + (int)po->width,
+		  po->y,po->y + (int)po->height);
+#endif
+		return pE1;
+	    }
 	}
 	pE = pE->next;
     }

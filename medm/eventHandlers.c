@@ -246,29 +246,37 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       /* Button 1 */
 	x = xEvent->x;
 	y = xEvent->y;
-      /* Look for a hidden related display */
-	pE = findHiddenRelatedDisplay(displayInfo, x, y);
-	if(pE) {
-	    DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
-	    Boolean replace = False;
-	    int i;
-	    
-	  /* Check the display array to find the first non-empty one */
-	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
-#if DEBUG_RELATED_DISPLAY		    
-		print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
-		  i, pRD->display[i].name);
+#if DEBUG_RELATED_DISPLAY
+	print("handleExecuteButtonPress:\n");
+	print("  window=%x drawingAreaWindow=%x\n",
+	  xEvent->window, XtWindow(displayInfo->drawingArea));
+#endif
+      /* See if this is an event in the drawing area */
+	if(xEvent->window == XtWindow(displayInfo->drawingArea)) {
+	  /* It is.  Look for a hidden related display */
+	    pE = findHiddenRelatedDisplay(displayInfo, x, y);
+	    if(pE) {
+		DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
+		Boolean replace = False;
+		int i;
+		
+	      /* Check the display array to find the first non-empty one */
+		for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
+#if DEBUG_RELATED_DISPLAY
+		    print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
+		      i, pRD->display[i].name);
 #endif		    
-		if(*(pRD->display[i].name)) {
-		  /* See if it was a ctrl-click indicating replace */
-		    if(xEvent->state & ControlMask) replace = True;
-		    
-		  /* Create the related display */
-		    relatedDisplayCreateNewDisplay(displayInfo,
-		      &(pRD->display[i]),
-		      replace);
-		    
-		    break;
+		    if(*(pRD->display[i].name)) {
+		      /* See if it was a ctrl-click indicating replace */
+			if(xEvent->state & ControlMask) replace = True;
+			
+		      /* Create the related display */
+			relatedDisplayCreateNewDisplay(displayInfo,
+			  &(pRD->display[i]),
+			  replace);
+			
+			break;
+		    }
 		}
 	    }
 	}
