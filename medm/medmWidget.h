@@ -104,7 +104,7 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define COLOR_DIALOG_MASK	"*.clr"	/* colormap/color editor files */
 #define CHANNEL_DIALOG_MASK	"*.chn"	/* channel list files */
 
-#define DISPLAY_DIALOG_TITLE	"EPICS Display Manager"
+#define DISPLAY_DIALOG_TITLE	        "EPICS Display Manager"
 #define DISPLAY_DIALOG_CANCEL_STRING	"Exit DM"
 #define DISPLAY_FILE_BACKUP_SUFFIX	"_BAK"
 #define DISPLAY_FILE_ASCII_SUFFIX	".adl"
@@ -118,22 +118,26 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
-#define NUM_EXECUTE_POPUP_ENTRIES       7         /* items in exec. popup menu  */
-#define EXECUTE_POPUP_MENU_PRINT        "Print"   /* if this changes, change    */
-#define EXECUTE_POPUP_MENU_CLOSE        "Close"   /* executePopupMenuCallback() */
-#define EXECUTE_POPUP_MENU_PVINFO       "PV Info"
-#define EXECUTE_POPUP_MENU_PVLIMITS     "PV Limits"
-#define EXECUTE_POPUP_MENU_DISPLAY_LIST "Display List"
-#define EXECUTE_POPUP_MENU_FLASH_HIDDEN "Toggle Hidden Button Markers"
-#define EXECUTE_POPUP_MENU_EXECUTE      "Execute"
+/* If the folloowing change, change executePopupMenuCallback() and
+ medmInit() */
+#define EXECUTE_POPUP_MENU_PRINT          "Print"
+#define EXECUTE_POPUP_MENU_CLOSE          "Close"
+#define EXECUTE_POPUP_MENU_PVINFO         "PV Info"
+#define EXECUTE_POPUP_MENU_PVLIMITS       "PV Limits"
+#define EXECUTE_POPUP_MENU_DISPLAY_LIST   "Display List"
+#define EXECUTE_POPUP_MENU_FLASH_HIDDEN   "Toggle Hidden Button Markers"
+#define EXECUTE_POPUP_MENU_REFRESH        "Refresh"
+#define EXECUTE_POPUP_MENU_EXECUTE        "Execute"
 #define EXECUTE_POPUP_MENU_PRINT_ID        0
 #define EXECUTE_POPUP_MENU_CLOSE_ID        1
 #define EXECUTE_POPUP_MENU_PVINFO_ID       2
 #define EXECUTE_POPUP_MENU_PVLIMITS_ID     3
 #define EXECUTE_POPUP_MENU_DISPLAY_LIST_ID 4
 #define EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID 5
+#define EXECUTE_POPUP_MENU_REFRESH_ID      6
 /* The following must be the last item */
-#define EXECUTE_POPUP_MENU_EXECUTE_ID      6
+#define EXECUTE_POPUP_MENU_EXECUTE_ID      7
+#define NUM_EXECUTE_POPUP_ENTRIES          8
 
 #define COLOR_SCALE		(65535.0/255.0)
 #define MAX_CHILDREN		1000	/* max # of child widgets...       */
@@ -143,20 +147,20 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 /* Argument passing in related displays */
 #define RELATED_DISPLAY_FILENAME_INDEX 0
 #define RELATED_DISPLAY_ARGS_INDEX 1
-#define RELATED_DISPLAY_FILENAME_AND_ARGS_SIZE	(RELATED_DISPLAY_ARGS_INDEX+1)
+#define RELATED_DISPLAY_FILENAME_AND_ARGS_SIZE (RELATED_DISPLAY_ARGS_INDEX+1)
 
 /* Display object or widget specific parameters */
-#define METER_OKAY_SIZE		80	/* (meter>80) ? 11 : 5 markers     */
-#define METER_MARKER_DIVISOR	9	/* height/9 = marker length        */
-#define METER_FONT_DIVISOR	8	/* height/8 = height of font       */
-#define METER_VALUE_FONT_DIVISOR 10	/* height/10 = height of value font*/
-#define INDICATOR_MARKER_WIDTH	4	/* good "average" width            */
-#define INDICATOR_MARKER_DIVISOR 20	/* height/20 = marker length (pair)*/
-#define INDICATOR_OKAY_SIZE	80	/* (meter>80) ? 11 : 5 markers     */
-#define INDICATOR_FONT_DIVISOR	8	/* height/8 = height of font       */
-#define INDICATOR_VALUE_FONT_DIVISOR 10	/* height/10 = height of value font*/
-#define GOOD_MARGIN_DIVISOR	10	/* height/10 = marginHeight/Width  */
-#define BAR_TOO_SMALL_SIZE	30	/* bar is too small for extra data */
+#define METER_OKAY_SIZE              80 /* (meter>80) ? 11 : 5 markers     */
+#define METER_MARKER_DIVISOR          9 /* height/9 = marker length        */
+#define METER_FONT_DIVISOR            8 /* height/8 = height of font       */
+#define METER_VALUE_FONT_DIVISOR     10 /* height/10 = height of value font*/
+#define INDICATOR_MARKER_WIDTH        4 /* good "average" width            */
+#define INDICATOR_MARKER_DIVISOR     20 /* height/20 = marker length (pair)*/
+#define INDICATOR_OKAY_SIZE          80 /* (meter>80) ? 11 : 5 markers     */
+#define INDICATOR_FONT_DIVISOR        8 /* height/8 = height of font       */
+#define INDICATOR_VALUE_FONT_DIVISOR 10 /* height/10 = height of value font*/
+#define GOOD_MARGIN_DIVISOR          10 /* height/10 = marginHeight/Width  */
+#define BAR_TOO_SMALL_SIZE           30 /* bar is too small for extra data */
 
 #define STRIP_NSAMPLES		60	/* number of samples to save       */
 

@@ -100,7 +100,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
-    Arg args[1];
+    Arg args[2];
     XtPointer data;
     DisplayInfo *displayInfo;
     int status;
@@ -218,6 +218,65 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_FLASH_HIDDEN_ID:
 	markHiddenButtons(displayInfo);
 	break;
+    case EXECUTE_POPUP_MENU_REFRESH_ID:
+    {
+	Dimension width, height;
+	Position x,y;
+	int n;
+
+      /* Get the drawingArea width and height */
+	n=0;
+	XtSetArg(args[n],XmNwidth,&width); n++;
+	XtSetArg(args[n],XmNheight,&height); n++;
+	XtGetValues(displayInfo->drawingArea,args,n);
+	x = y = 0;
+	
+	if (displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
+	  displayInfo->pixmapGC != (GC)NULL && 
+	  displayInfo->drawingArea != (Widget)NULL) {
+	    
+	    XCopyArea(display,displayInfo->drawingAreaPixmap,
+	      XtWindow(displayInfo->drawingArea),
+	      displayInfo->pixmapGC,x,y,width,height,x,y);
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+		Display *display = XtDisplay(displayInfo->drawingArea);
+		GC gc = displayInfo->gc;
+		
+		XPoint points[4];
+		Region region;
+		XRectangle clipRect;
+		
+		points[0].x = x;
+		points[0].y = y;
+		points[1].x = x + width;
+		points[1].y = y;
+		points[2].x = x + width;
+		points[2].y = y + height;
+		points[3].x = x;
+		points[3].y = y + height;
+		region = XPolygonRegion(points,4,EvenOddRule);
+		if (region == NULL) {
+		    medmPostMsg(0,"executePopupMenu: XPolygonRegion is NULL\n");
+		    return;
+		}
+		
+	      /* Clip the region */
+		clipRect.x = x;
+		clipRect.y = y;
+		clipRect.width = width;
+		clipRect.height = height;
+		
+		XSetClipRectangles(display,gc,0,0,&clipRect,1,YXBanded);
+		updateTaskRepaintRegion(displayInfo,&region);
+		
+	      /* Release the clipping region */
+		XSetClipOrigin(display,gc,0,0);
+		XSetClipMask(display,gc,None);
+		if(region) XDestroyRegion(region);
+	    }
+	}
+	break;
+    }
     }
 }
 
