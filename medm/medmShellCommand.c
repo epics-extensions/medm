@@ -85,7 +85,8 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     Pixmap pixmap = (Pixmap) cd;
     
-    if (pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap);
+/*     if (pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
+    if (pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
     pixmap=(Pixmap)0;
 }
 
