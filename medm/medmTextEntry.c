@@ -240,7 +240,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     pte->updateAllowed = True;
     drawWhiteRectangle(pte->updateTask);
 
-/* from the text entry structure, we've got TextEntry's specifics */
+  /* from the text entry structure, we've got TextEntry's specifics */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlTextEntry->object.x); n++;
     XtSetArg(args[n],XmNy,(Position)dlTextEntry->object.y); n++;
@@ -248,33 +248,36 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNheight,(Dimension)dlTextEntry->object.height); n++;
     XtSetArg(args[n],XmNforeground,(Pixel)
       displayInfo->colormap[dlTextEntry->control.clr]); n++;
-      XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->colormap[dlTextEntry->control.bclr]); n++;
-	XtSetArg(args[n],XmNhighlightThickness,1); n++;
-	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-	XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNmarginWidth,
-	  ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
-	    ?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
-	    XtSetArg(args[n],XmNmarginHeight,
-	      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR) 
-		?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
-		XtSetArg(args[n],XmNfontList,fontListTable[
-		  textFieldFontListIndex(dlTextEntry->object.height)]); n++;
-		  dlElement->widget = XtCreateWidget("textField",
-		    xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
+    XtSetArg(args[n],XmNbackground,(Pixel)
+      displayInfo->colormap[dlTextEntry->control.bclr]); n++;
+    XtSetArg(args[n],XmNhighlightThickness,1); n++;
+    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+    XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
+    XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
+    XtSetArg(args[n],XmNmarginWidth,
+      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
+	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
+    XtSetArg(args[n],XmNmarginHeight,
+      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR) 
+	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
+    XtSetArg(args[n],XmNfontList,fontListTable[
+      textFieldFontListIndex(dlTextEntry->object.height)]); n++;
+    dlElement->widget = XtCreateWidget("textField",
+      xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
+    
+  /* Add the callbacks for update */
+    XtAddCallback(dlElement->widget,XmNactivateCallback,
+      (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
 
-		/* Add the callbacks for update */
-		  XtAddCallback(dlElement->widget,XmNactivateCallback,
-		    (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
-
-		/* special stuff: if user started entering new data into text field, but
-	*  doesn't do the actual Activate <CR>, then restore old value on
-	*  losing focus...
-	*/
-		  XtAddCallback(dlElement->widget,XmNmodifyVerifyCallback,
-		    (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pte);
+  /* Unregister it as a drop site (Btn2 drag and drop tends to trash it) */
+    XmDropSiteUnregister(dlElement->widget);
+    
+  /* special stuff: if user started entering new data into text field, but
+   *  doesn't do the actual Activate <CR>, then restore old value on
+   *  losing focus...
+   */
+    XtAddCallback(dlElement->widget,XmNmodifyVerifyCallback,
+      (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pte);
 }
 
 void textEntryCreateEditInstance(DisplayInfo *displayInfo,
