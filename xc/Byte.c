@@ -6,6 +6,7 @@
  * Mods    : 1.0 Original                                                *
  *************************************************************************/
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/StringDefs.h>

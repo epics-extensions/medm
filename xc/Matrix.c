@@ -27,6 +27,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <X11/Xos.h>
 #include <X11/StringDefs.h>

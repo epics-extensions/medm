@@ -6,6 +6,7 @@
 ********************************************************************/
 
 #include <stdio.h>
+#include <math.h>
 
 /* Xlib includes */
 #include <X11/Xlib.h>
