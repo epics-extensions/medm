@@ -462,16 +462,49 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     char *end;
     TextEntry *pte = (TextEntry *)clientData;
     Record *pd = pte->record;
+    Boolean match;
+    int i;
 
 
     if ((pd->connected) && pd->writeAccess) {
 	if (!(textValue = XmTextFieldGetString(w))) return;
 	switch (pd->dataType) {
 	case DBF_STRING:
-	case DBF_ENUM:
 	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	    medmSendString(pte->record,textValue);
+	    break;
+	case DBF_ENUM:
+	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
+	      textValue[MAX_STRING_SIZE-1] = '\0';
+	  /* Check for a match */
+	    match = False;
+	    for (i = 0; i < pd->hopr+1; i++) {
+		if (pd->stateStrings[i]) {
+		    if (!strcmp(textValue,pd->stateStrings[i])) {
+			medmSendString(pte->record,textValue);
+			match = True;
+			break;
+		    }
+		}
+	    }
+	    if (match == False) {
+	      /* Assume it is a number */
+		long longValue=strtol(textValue,&end,10);
+		if(*end == 0 && end != textValue &&
+		  longValue >= 0 && longValue <= pd->hopr) {
+		    medmSendString(pte->record,textValue);
+		} else {
+		    char string[BUFSIZ];
+		    sprintf(string,"textEntryValueChanged: Invalid value:\n"
+		      "  Name: %s\n  Value: \"%s\"\n"
+		      " [Use PV Info to determine valid values]\n",
+		      pd->name?pd->name:"NULL",textValue);
+		    medmPostMsg(1,string);
+		    dmSetAndPopupWarningDialog(currentDisplayInfo,string,
+		      "OK",NULL,NULL);
+		}
+	    }
 	    break;
 	case DBF_CHAR:
 	    if (pte->dlElement->structure.textEntry->format == STRING) {
