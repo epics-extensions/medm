@@ -7,10 +7,10 @@
 <BODY LINK="#0000ff" VLINK="#800080">
 
 <B><FONT FACE="Arial" SIZE=7><P>MEDM</FONT><FONT FACE="Arial" SIZE=7> Reference Manual</P>
-</B></FONT><FONT SIZE=2><P>&nbsp;</P>
+</B></FONT><FONT SIZE=2>
 </FONT><B><FONT FACE="Arial" SIZE=4><P>Kenneth Evans, Jr.</P>
-</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>October 1997</P>
-</B></FONT><FONT SIZE=2><P>&nbsp;</P>
+</B></FONT><FONT SIZE=2><P></FONT><B><FONT FACE="Arial" SIZE=4>November 1997</P>
+</B></FONT><FONT SIZE=2>
 </FONT><FONT FACE="Arial" SIZE=4><P>Advanced Photon Source</P>
 <P>Argonne National Laboratory                                   </P>
 <P>9700 South Cass Avenue, Argonne, Illinois 60439</P>
@@ -36,6 +36,9 @@
 <FONT SIZE=2><P></FONT><A HREF="#MacroSubstitution"><FONT SIZE=2>Macro Substitution</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#DragAndDrop"><FONT SIZE=2>Drag-And-Drop</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#DialogBoxes"><FONT SIZE=2>Dialog Boxes</FONT></A></P>
+<FONT SIZE=2><P>&#9;</FONT><A HREF="#DisplayListDialogBox"><FONT SIZE=2>Display List</FONT></A></P>
+<FONT SIZE=2><P>&#9;</FONT><A HREF="#MessageWindow"><FONT SIZE=2>Message Window</FONT></A></P>
+<FONT SIZE=2><P>&#9;</FONT><A HREF="#PVInfoDialogBox"><FONT SIZE=2>PV Info</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#SmartStartup"><FONT SIZE=2>Smart Startup</FONT></A></P>
 <FONT SIZE=2><P></FONT><A HREF="#Editing"><FONT SIZE=2>Editing</FONT></A></P>
@@ -49,7 +52,7 @@
 <B><FONT SIZE=4><P><A NAME="Overview"></A>Overview</P>
 </B></FONT><FONT SIZE=2><P>&#9;MEDM stands for <U>M</U>otif <U>E</U>ditor and <U>D</U>isplay <U>M</U>anager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="NewFeatures"></A>New Features</P>
-</FONT><P>Version 2.3.2</P>
+</FONT><P>Version 2.3</P>
 
 <UL>
 <LI></B><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2> is now functional.  Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  Bubble help has been added to the Object Palette to identify the objects.</LI>
@@ -57,13 +60,15 @@
 <LI>There is now an </FONT><A HREF="#Undo"><FONT SIZE=2>Undo</FONT></A><FONT SIZE=2>.</LI>
 <LI>New editing operations through both the </FONT><A HREF="#MouseEdit"><FONT SIZE=2>mouse</FONT></A><FONT SIZE=2> and the </FONT><A HREF="#KeyboardEdit"><FONT SIZE=2>keyboard</FONT></A><FONT SIZE=2> have been added.  You can now select objects that are under other objects and can resize with Ctrl-Arrow keys.</LI>
 <LI>An optional </FONT><A HREF="#Grid"><FONT SIZE=2>grid</FONT></A><FONT SIZE=2> has been added for editing.  It can be toggled on and off for each display, and the spacing is adjustable.  Snap to grid has been implemented.</LI>
-<LI>&quot;Undo&quot;, &quot;Align&quot;, &quot;Space Evenly&quot;, &quot;Center&quot;, &quot;Size&quot;,  &quot;Grid&quot;, &quot;Find Outliers&quot;, &quot;Refresh&quot;, and &quot;Edit Summary&quot; have been added to the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.</LI>
+<LI>&quot;Undo&quot;, &quot;Align&quot;, &quot;Space Evenly&quot;, &quot;Center&quot;, &quot;Orient&quot;, &quot;Size&quot;,  &quot;Grid&quot;, &quot;Find Outliers&quot;, &quot;Refresh&quot;, and &quot;Edit Summary&quot; have been added to the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.</LI>
 <LI>You can now change the foreground and background colors simultaneously for all </FONT><A HREF="#Composite"><FONT SIZE=2>grouped elements</FONT></A><FONT SIZE=2>.</LI>
 <LI>There is a new </FONT><A HREF="#PVInfoDialogBox"><FONT SIZE=2>PV Info</FONT></A><FONT SIZE=2> feature.</LI>
 <LI>There is a new </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2> item on the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Popup Menu</FONT></A><FONT SIZE=2>. </LI>
+<LI>A number of modifications have been made to the </FONT><A HREF="#RelatedDisplay"><FONT SIZE=2>Related Display</FONT></A><FONT SIZE=2> including executing it without showing the menu if there is only one item, the ability to replace the parent display, the ability to have labels rather than the overlapping squares on the menu button, and the ability to have a hidden button.</LI>
 <LI>The </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> has a </FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>time format</FONT></A><FONT SIZE=2> for the x axis, and there are are several new </FONT><A HREF="#XRTGraphInteractions"><FONT SIZE=2>user interactions</FONT></A><FONT SIZE=2>, such as zoom, in EXECUTE mode.</LI>
 <LI></FONT><A HREF="#ShellCommand"><FONT SIZE=2>Shell commands</FONT></A><FONT SIZE=2>, as well as commands on the </FONT><A HREF="#ExecuteMenu"><FONT SIZE=2>Execute Menu</FONT></A><FONT SIZE=2>, now accept special characters to include a process variable, include the name of the ADL file, or to prompt for user input.</LI>
 <LI>The MEDM main window, object palette, resource palette, and color palette now have fixed, default locations.  You can change these locations with resources.  See </FONT><A HREF="#InitialLocations"><FONT SIZE=2>Initial Window Locations</FONT></A><FONT SIZE=2>.</LI>
+<LI>The way in which MEDM </FONT><A HREF="#SmartStartup"><FONT SIZE=2>starts up and connects</FONT></A><FONT SIZE=2> to an existing MEDM has been made more robust.  There should be minimal need to use -cleanup.</LI>
 <LI>You no longer have to respond to the &quot;Do you really want to Exit?&quot; dialog box.  MEDM will still prompt you to save any unsaved files, however.</LI>
 <LI>Much of the coding has been rewritten to be clearer and better organized, and many bugs have been fixed.</LI></UL>
 
@@ -91,68 +96,70 @@
 &#9;[&amp;]</PRE>
 <FONT SIZE=2><P>&#9;Parameters in square brackets [] are optional.  Italicized parameters are to be replaced by user-specified terms.  The other parameters should be typed literally.  The command-line options are described below.  The &quot;&amp;&quot; causes the process to be run in the background, usually a good idea for a graphical program.</P>
 </FONT><B><P>Command-Line Options</P></B>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7>
-<TR><TD WIDTH=469 VALIGN="TOP" COLSPAN=2></TD>
-<TD></TD>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=590>
+<TR><TD WIDTH="21%" VALIGN="TOP">
+<FONT SIZE=2><DFN><P>X options</FONT></DFN></TD>
+<TD WIDTH="79%" VALIGN="TOP">
+<FONT SIZE=2><DFN><P>The usual X command-line arguments, such as -display and -geometry.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
-<FONT SIZE=2><DFN><P>X options-help or -?</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TR><TD WIDTH="21%" VALIGN="TOP">
+<FONT SIZE=2><DFN><P>-help or -?</FONT></DFN></TD>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Print usage.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-version</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Print the version.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-x</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Startup MEDM in EXECUTE mode.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-e</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Startup MEDM in EDIT mode.  (This is the default.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-local</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Don't participate in remote display protocol: Do not transfer operation to an already-running MEDM, and do not allow transfer of operation from any other MEDM.  (The default is to transfer operation if there is an existing MEDM accepting transfers, or to assume responsibility for accepting transfers if there is not one already.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-cleanup</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Participate in remote display protocol, but ignore existing MEDM and take over responsibility for accepting remote transfers.  (The default is to transfer operation if there is an existing MEDM accepting transfers, or to assume responsibility for accepting transfers if there is not one already.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-cmap</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Use a private colormap to circumvent the problem of not having enough colors available in the colormap.  (This option may cause colormap flashing.)</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-bigMousePointer</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Use big mouse cursor.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-displayFont font-spec</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Select aliased or scalable fonts.  (See </FONT></DFN><A HREF="#Fonts"><FONT SIZE=2>Fonts</FONT></A><FONT SIZE=2><DFN> below.)  The font-spec parameter can be &quot;alias&quot;, &quot;scalable&quot;, or an X font specification.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-macro name=value</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Apply macro substitution to replace occurrences of $(name) with value in all command-line specified display list files.</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>-dg geometry</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Specify the geometry (location and size) of the display window.  The geometry syntax is similar to the X Windows -geometry option.  (Note that -geometry specifies the location of the MEDM main window, not the display windows.)  The -dg option can also be inserted in the list of display file names, in which case it applies to the names following it</FONT></DFN></TD>
 </TR>
-<TR><TD WIDTH=121 VALIGN="TOP">
+<TR><TD WIDTH="21%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>display-files</FONT></DFN></TD>
-<TD WIDTH=817 VALIGN="TOP" COLSPAN=2>
+<TD WIDTH="79%" VALIGN="TOP">
 <FONT SIZE=2><DFN><P>Specify list of display (ADL) files to use in EXECUTE mode.  (This option requires -x also.)</FONT></DFN></TD>
 </TR>
 </TABLE>
@@ -386,7 +393,7 @@
 <FONT SIZE=2><P>&nbsp;</P>
 </FONT><B><FONT SIZE=4><P>Objects</P>
 </FONT><P><A NAME="Arc"></A>Arc</P>
-</B><FONT SIZE=2><P>&#9;The Arc has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  In addition, there is a Begin Angle and a Path Angle.  The Arc is drawn on the display and is not a widget.  The Begin Angle is the start of the arc.  The Path Angle is the length of the arc.</P>
+</B><FONT SIZE=2><P>&#9;The Arc has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  In addition, there is a Begin Angle and a Path Angle.  The Arc is drawn on the display and is not a widget.  The Begin Angle is the start of the arc in degrees.  The Path Angle is the length of the arc in degrees.  (Internally the angles are specified in integer 1/64 degree units.)</P>
 </FONT><B><P><A NAME="BarMonitor"></A>Bar Monitor</P>
 </B><FONT SIZE=2><P>&#9;The Bar Monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, </FONT><A HREF="#FillMode"><FONT SIZE=2>Fill Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.</P>
 </FONT><B><P><A NAME="ByteMonitor"></A>Byte Monitor</P>
@@ -436,7 +443,7 @@
 </TR>
 </TABLE>
 
-<FONT SIZE=2><P>&nbsp;</P>
+<FONT SIZE=2>
 <P>&#9;The large number of options for the Cartesian Plot can be confusing.  The descriptions presented here are intended as a reference, not as a tutorial.  A good approach is to change the various options and see what happens.   It is usually a good design choice to keep the plot as simple as possible.</P>
 <P>&#9;An MEDM Cartesian Plot consists of an X and one or two Y axes on which data can be plotted.  The sets of data are called traces and consist of a set of (x, y) pairs and a color.  Currently there can be up to eight traces on a plot.  The first trace is plotted on the Y1 axis, and the remaining traces (if any) are all plotted on the Y2 axis.  The X and Y1 axes amy have a label, but the Y2 axis does not.  Each trace can (or may not) have a process variable from which to get the x values and another from which to get the y values.  These process variables can be array process variables, such as Waveforms, with more than one value or scalar process variables with only a single value.</P>
 <P>&#9;There are eight possible kinds of traces as seen in the following table.  The traces for a given plot do not all have to be of the same kind – they can be mixed.  (In the table Nx is the number of elements in the process variable specified for x, and Ny is the the number of elements in the process variable specified for y.  The letter n denotes a number greater than 1, and a blank indicates no process variable is specified.  The axis limits LOPR and HOPR denote the limits obtained from Channel Access for the process variable.  Typically, these are the fields LOPR and HOPR in the associated record.  Count is the specified Count for the Cartesian Plot, which is described in more detail below.)</P></FONT>
@@ -595,7 +602,7 @@
 </TR>
 </TABLE>
 
-<FONT SIZE=2><P>&nbsp;</P>
+<FONT SIZE=2>
 <P>&#9;If one of the process variables is an array with more than one element, then the specified Count is ignored.  Otherwise, Count corresponds to a history of the process variable.  Each time the process variable changes (either one, in the case of  X, Y Scalar) a new point is plotted until there are Count points.  When the Plot Mode is &quot;plot n pts &amp; stop,&quot; no more points are plotted.  When the Plot Mode is &quot;plot last n pts,&quot; the earliest point is discarded, the others are moved down, and the latest is plotted at the end.  In the cases where one of the process variables is not specified, the history is plotted on that axis with values from 0 to Count –1.</P>
 <P>&#9;The X/Y/Trace Data are entered via the Cartesian Plot Data dialog box with entries for the process variables associated with x and y and an entry for the color.  The color is picked by clicking on the color entry and using the color palette.  The process variable names can both be left blank on a given row, in which case the row is ignored.  The first trace (the one that uses the Y1 axis) is the first valid one, and does not have to be in the first row.  The data entry is different from that for entry boxes in the resource palette.  Typing is not lost, for example, when the entry box loses focus, and it is not necessary (or useful) to type a carriage return to retain the data.  The data are retained only when the apply button is pressed.</P>
 <P>&#9;The Axis Data are entered via the Cartesian Plot Axis Data dialog box.  This same dialog box is available in EXECUTE mode by clicking Btn 3 on the Cartesian Plot.  The dialog box consists of an area for each of the three axes (X, Y1, and Y2).  For each axis there is a </FONT><A HREF="#PlotAxisAttribute"><FONT SIZE=2>Plot Axis</FONT></A><FONT SIZE=2> (</FONT><A HREF="#CartesianPlotAxisStyle"><FONT SIZE=2>Axis Style</FONT></A><FONT SIZE=2>, </FONT><A HREF="#CartesianPlotRangeStyle"><FONT SIZE=2>Axis Range</FONT></A><FONT SIZE=2>, Minimum Value, Maximum Value, </FONT><A HREF="#CartesianPlotTimeFormat"><FONT SIZE=2>Time Format</FONT></A><FONT SIZE=2>) attribute.  The maximum and minimum values are only relevant if the Axis Range is &quot;user-specified&quot;, and the time format is only relevant for the X axis when the Axis Style is &quot;time&quot;.  The values for the maximum and minimum values are only retained if a carriage return is typed in the box, although typing is not lost when the entry box loses focus.</P>
@@ -606,7 +613,7 @@
 </FONT><B><P><A NAME="ChoiceButton"></A>Choice Button</P>
 </B><FONT SIZE=2><P>&#9;The Choice Button has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#Stacking"><FONT SIZE=2>Stacking</FONT></A><FONT SIZE=2> attributes.  The Choice Button is used for ENUM process variables and is a means for picking the ENUM choices via buttons.</P>
 </FONT><B><P><A NAME="Image"></A>Image</P>
-</B><FONT SIZE=2><P>&#9;Images can be imported for inclusion in a display.  The image icon (camera) can be selected, and the location and size of the desired image then selected by depressing and dragging MB1in the display.  A file selection box then prompts the user for the display file to be incorporated.  At the present time, GIF is the only supported format, and files must have the &quot;.gif&quot; suffix.</P>
+</B><FONT SIZE=2><P>&#9;Images can be imported for inclusion in a display.  The image icon (camera) can be selected, and the location and size of the desired image then selected by depressing and dragging Btn1 in the display.  A file selection box then prompts the user for the display file to be incorporated.  At the present time, GIF is the only supported format, and files must have the &quot;.gif&quot; suffix. The GIF87a format is supported, but not GIF89a at this time.  Transparent backgrounds and animated GIF’s are not supported.</P>
 </FONT><B><P><A NAME="Line"></A>Line</P>
 </B><FONT SIZE=2><P>&#9;A Line is a Polyline with just two points.  See </FONT><A HREF="#Polyline"><FONT SIZE=2>Polyline</FONT></A><FONT SIZE=2>.</P>
 </FONT><B><P><A NAME="Meter"></A>Meter</P>
@@ -629,12 +636,13 @@
 </FONT><B><P><A NAME="Rectangle"></A>Rectangle</P>
 </B><FONT SIZE=2><P>&#9;The Rectangle has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#BasicAttribute"><FONT SIZE=2>Basic Attribute</FONT></A><FONT SIZE=2> (Foreground, Style, Fill, Line Width), and </FONT><A HREF="#DynamicAttribute"><FONT SIZE=2>Dynamic Attribute</FONT></A><FONT SIZE=2> (Color Mode, Visibility, Color Rule, Channel) attributes.  The Rectangle is drawn on the display and is not a widget.</P>
 </FONT><B><P><A NAME="RelatedDisplay"></A>Related Display</P>
-</B><FONT SIZE=2><P>&#9;The Related Display has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) and </FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Related Display Visual</FONT></A><FONT SIZE=2> attributes.  In addition, there are Foreground, Background, Label, and Label/Name/Args attributes.  The Foreground and Background colors are changed by clicking to bring up the Color Palette.  The Label is the label that appears on the button.  If there is no label, then two overlapping squares are used to denote a Related Display control.  The Display Label, Display Files, Arguments, and Policy are specified for each related display in the Label/Name/Args dialog box.  There currently can be up to eight related displays for each button.</P>
-<P>&#9;The Display Label is the label on the menu item in the menu that is brought up when the Related Display button is pressed.  The Display File is the name of the ADL file that will be displayed when the menu item with that label is selected.  The Arguments are macro substitutions that will be used as if the file were specified on the </FONT><A HREF="#CommandLine"><FONT SIZE=2>command line</FONT></A><FONT SIZE=2> with a -macro argument.  For example, the string:</P>
+</B><FONT SIZE=2><P>&#9;The Related Display has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height) and </FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Visual</FONT></A><FONT SIZE=2> attributes.  In addition, there are Foreground, Background, Label, and Label/Name/Args attributes.  The Foreground and Background colors are changed by clicking to bring up the Color Palette.  The Label is the label that appears on the button.  Whether there is a label or not, there are two overlapping squares on the button to denote a Related Display control.  The Display Label, Display Files, Arguments, and Policy are specified for each related display in the Label/Name/Args dialog box.  There currently can be up to eight related displays for each button.</P>
+<P>&#9;The Related Display provides a means of bringing up more displays.  It is a menu button with a graphic consisting of two overlapping squares and optionally a label.  The menu items denote the related displays that can be displayed.  If there is only one related display specified in the menu, then the two overlapping squares plus the optional label appear in the middle of the button, and the related display is activated immediately without bringing up a menu.  If there is more than one item on the menu, the squares and optional label are at the left of the button.  If Ctrl-Btn1 is used in place of Btn1 to select the new display, then the parent display goes away and is replaced by the new display.  The new display can also be configured to always replace the parent.</P>
+<P>&#9;In the EDIT-mode dialog box for specifying the menu items there are four columns.  The first column, the Display Label, is the label on the menu item in the menu that is brought up when the Related Display button is pressed.  The second column, the Display File, is the name of the ADL file that will be displayed when the menu item with that label is selected.  The third column, the Arguments, is macro substitutions that will be used as if the file were specified on the </FONT><A HREF="#CommandLine"><FONT SIZE=2>command line</FONT></A><FONT SIZE=2> with a -macro argument.  For example, the string:</P>
 </FONT><CODE><P>&#9;  SECTOR = S10, BPM=P2</P>
-</CODE><FONT SIZE=2><P>will cause all occurences of  $(SECTOR) in the file to be replaced with S10 and all occurences of $(BPM) with P2.  The Policy specifies whether to remove the parent display or not when the new one is activated.  (The parent display is the one that contains the Related Display button.)</P>
-<P>&#9;In EXECUTE mode if there is only one related display specified, then the label or the two overlapping squares denoting a Related Display appear in the middle of the button, and the related display is activated immediately without bringing up a menu.  If there is more than one item on the menu, the label or squares are at the left of the button.</P>
+</CODE><FONT SIZE=2><P>will cause all occurences of  $(SECTOR) in the file to be replaced with S10 and all occurences of $(BPM) with P2.  Finally, the fourth column, the Policy, specifies whether to remove the parent display or not when the new one is activated.  (The parent display is the one that contains the Related Display button.)  The parent display will be replaced independently of the Policy if Ctrl-Btn1 is used instead of Btn1.  Rows in the dialog box with blanks are ignored, even if they are before or between non-blank rows.</P>
 <P>&#9;The logic that is used to locate the specified files is described uner </FONT><A HREF="#ADLFiles"><FONT SIZE=2>ADL Files</FONT></A><FONT SIZE=2>.</P>
+<P>&#9;Hidden buttons are implemented by setting the </FONT><A HREF="#RelatedDisplayVisual"><FONT SIZE=2>Visual</FONT></A><FONT SIZE=2> attribute of the Related Display to invisible and placing a graphic over the related display.  In this case there should only be one item in the list of displays.  The graphic should make the operation of the related display clear.  It should be placed above the Related Display in the stacking order and be the same size as the related display.  In this case when the user clicks on the graphic, the Related Display will be executed.  The Related Display is drawn as a stippled pattern to identify it.  If the graphic is smaller, the stipple will show and clicking on the graphic will execute the graphic rather than the related display.  If the graphic is larger, it will be possible to click on parts of the graphic without executing the Related display.  Note that when two objects of the same size are on top of each other, then the outlines shown when doing dragging, pasting, <I>etc.</I> in EDIT mode will cancel, making the objects appear to not be included.  Also in EDIT mode clicking on the two objects in the proper relative positions will select the Related Display.  To select the graphic, you can use Ctrl-Btn1.  (See </FONT><A HREF="#MouseEdit"><FONT SIZE=2>Mouse Editing Operations</FONT></A><FONT SIZE=2>.)  Since users are used to seeing the overlapping rectangles represent a related display, some thought should be used before implementing graphics to replace them.</P>
 </FONT><B><P><A NAME="ScaleIndicator"></A>Scale Monitor</P>
 </B><FONT SIZE=2><P>&#9;Also known as an Indicator.  The scale monitor has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#Label"><FONT SIZE=2>Label</FONT></A><FONT SIZE=2>, </FONT><A HREF="#Direction"><FONT SIZE=2>Direction</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Scale Monitor displays the value of the process variable on a scale.  The limits of the scale are the HOPR and LOPR values for the record associated with the process variable.</P>
 </FONT><B><P><A NAME="ShellCommand"></A>Shell Command</P>
@@ -657,8 +665,10 @@
 </B><FONT SIZE=2><P>&#9;Also known as Text Update.  The Text Update has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#MonitorAttribute"><FONT SIZE=2>Monitor</FONT></A><FONT SIZE=2> (Readback Channel, Foreground, Background), </FONT><A HREF="#TextAlign"><FONT SIZE=2>Alignment</FONT></A><FONT SIZE=2>, </FONT><A HREF="#TextFormat"><FONT SIZE=2>Format</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Text Update is drawn on the display and is not a widget.  It displays the value of the process variable in the chosen format.</P>
 </FONT><B><P><A NAME="TextEntry"></A>Text Entry</P>
 </B><FONT SIZE=2><P>&#9;The Text Entry has </FONT><A HREF="#ObjectAttribute"><FONT SIZE=2>Object</FONT></A><FONT SIZE=2> (X Position, Y Position, Width, Height), </FONT><A HREF="#ControlAttribute"><FONT SIZE=2>Control</FONT></A><FONT SIZE=2> (Control Channel, Foreground, Background), </FONT><A HREF="#TextFormat"><FONT SIZE=2>Format</FONT></A><FONT SIZE=2>, and </FONT><A HREF="#ColorMode"><FONT SIZE=2>Color Mode</FONT></A><FONT SIZE=2> attributes.  The Text Entry provides a means of dispaying the value of a process variable in an entry box, where it can be edited and changed.  The value is not changed until Return is pressed with the focus in the entry box.  If the focus leaves the entry box, the value of the process variable is not changed and the current value is restored into the entry box.</P>
+<P>&#9;The Text Entry in MEDM is a valid drop site only if its Format is a string.  The reason is to prevent trashing the value when the process variable name for the entry is inadvertently dropped on the entry.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Composite"></A>Composite Objects</P>
-<P><A NAME="Attributes"></A>Attributes</P>
+</B></FONT><FONT SIZE=2><P>&#9;Composite objects are those that have been grouped via commands on the </FONT><A HREF="#MenuEdit"><FONT SIZE=2>Edit menu</FONT></A><FONT SIZE=2>.  For many operations they are treated as one object.  The properties you can change for them as a group are those shown in the Resource Palette.  If you want to change the color of many objects simultaneously, it is only necessary to group them first and then change the color via the Resource Palette.</P>
+</FONT><B><FONT SIZE=4><P><A NAME="Attributes"></A>Attributes</P>
 </B></FONT><FONT SIZE=2><P>&#9;Attributes are sets of properties.  These sets of properties may be common to several, or even most, objects.  Simple attributes have one property that can take on one of several values.  Compound attributes have more than one property.  To prevent repetition, the sets of attributes are described here, rather than with the objects that possesses them.  The compound attributes are listed first, then the simple objects in alphabetical order.</P>
 </FONT><B><P><A NAME="ObjectAttribute"></A>Object</P>
 </B><FONT SIZE=2><P>&#9;All objects have Object attributes.</P></FONT>
@@ -1042,15 +1052,13 @@
 <FONT SIZE=2><P></P>
 </FONT><B><P><A NAME="EraseMode"></A>Erase Mode</P>
 </B><FONT SIZE=2><P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2> with an erase channel.</P></FONT>
-<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=594>
-<TR><TD WIDTH="19%" VALIGN="TOP">
-<FONT SIZE=2><P>if not zero</FONT></TD>
-<TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>Erase the plot if the erase-channel process variable is not zero.</FONT></TD>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7>
+<TR><TD WIDTH=480 VALIGN="TOP" COLSPAN=2></TD>
+<TD></TD>
 </TR>
-<TR><TD WIDTH="19%" VALIGN="TOP">
-<FONT SIZE=2><P>if zero</FONT></TD>
-<TD WIDTH="81%" VALIGN="TOP">
+<TR><TD WIDTH=114 VALIGN="TOP">
+<FONT SIZE=2><P>if not zeroif zero</FONT></TD>
+<TD WIDTH=846 VALIGN="TOP" COLSPAN=2>
 <FONT SIZE=2><P>Erase the plot if the erase-channel process variable is zero.</FONT></TD>
 </TR>
 </TABLE>
@@ -1188,7 +1196,7 @@
 <TR><TD WIDTH="19%" VALIGN="TOP">
 <FONT SIZE=2><P>invisible</FONT></TD>
 <TD WIDTH="81%" VALIGN="TOP">
-<FONT SIZE=2><P>Do not show anything for the choices.  Possibly use a graphic under the area occupied by the related display, so the user clicks on the graphic.</FONT></TD>
+<FONT SIZE=2><P>Do not show anything for the choices.  This mode is intended to be used with a graphic on top of the related display.  The graphic should make the operation of the Related Display clear.</FONT></TD>
 </TR>
 </TABLE>
 
@@ -1347,15 +1355,23 @@
 <P>&#9;Shell command and argument strings are also substituted in related displays, and referenced similarly via the $(name) construct.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="DragAndDrop"></A>Drag-And-Drop</P>
 </B></FONT><FONT SIZE=2><P>&#9;MEDM has a drag-and-drop mechanism in EXECUTE mode, using Btn2.  This allows dragging the process variable name(s) associated with an MEDM object to another place. The place must be a valid Motif drag-and-drop site.  Such places include most Motif text fields.  Programs like the knob manager, KM, which is an </FONT><A HREF="#EPICSExtension"><FONT SIZE=2>EPICS extension</FONT></A><FONT SIZE=2>, have been designed to have valid Motif drop sites, and it is easy to drag a process variable name from an MEDM display to KM and have it be attached to a knob.</P>
-<P>&#9;The valid drop places unfortunately do not include XTerm’s, and the Motif Btn2 drag-and-drop is not the same as the common Btn2 paste associated with the clipboard.  To help overcome this problem, the EPICS extension, Namecapture, is a program designed to help with transferring names obtained by Motif drag-and-drop to other programs.  It automatically converts a dropped name to an X selection so the common Btn2 paste works.  There are also ways in Namecapture to add the dropped names to a file, even to generate lines in a BURT request file.  Both Namecapture and KM are described in the online </FONT><A HREF="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html"><FONT SIZE=2>EPICS documentation</FONT></A><FONT SIZE=2>.</P>
-<P>&#9;It is not necessary to drop the name in a valid place; it can be read and discarded.</P>
+<P>&#9;Pressing the Escape key will abort the drag and drop.  There will be a do-not-enter symbol (circle with a bar across it) when the drag is over an invalid drop site and an arrow when the drop site is valid.  There is also always a symbol composed of two overlapping sheets of paper that indicate this is a copy operation (the only type available in MEDM).  When dropping the process variable names, they will appear to go back to where they originated if the drop site is invalid and will appear to be absorbed by the drop site otherwise.</P>
 <P>&#9;The color of the names depends on the alarm severity.  Green is NO_ALARM; Yellow is MINOR_ALARM; Red is MAJOR_ALARM; and White is INVALID_ALARM.</P>
+<P>&#9;The valid drop places unfortunately do not include XTerm’s, and the Motif Btn2 drag-and-drop is not the same as the common Btn2 paste associated with the clipboard.  To help overcome this problem, the EPICS extension, Namecapture, is a program designed to help with transferring names obtained by Motif drag-and-drop to other programs.  It automatically converts a dropped name to an X selection so the common Btn2 paste works.  There are also ways in Namecapture to add the dropped names to a file, even to generate lines in a BURT request file.  Both Namecapture and KM are described in the online </FONT><A HREF="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html"><FONT SIZE=2>EPICS documentation</FONT></A><FONT SIZE=2>.</P>
+<P>&#9;It is not necessary to drop the name in a valid place; it can be read and discarded.  Consider using the </FONT><A HREF="#PVInfoDialogBox"><FONT SIZE=2>PV Info</FONT></A><FONT SIZE=2> feature to look at (as opposed to dragging and dropping) process variable names.&#9;</P>
+<P>&#9;The Text Entry in MEDM is a valid drop site only if its </FONT><A HREF="#TextFormat"><FONT SIZE=2>Format</FONT></A><FONT SIZE=2> is a string.  The reason is to prevent trashing the value when the process variable name for the entry is inadvertently dropped on the entry.</P>
 <P>&#9;For the </FONT><A HREF="#CartesianPlot"><FONT SIZE=2>Cartesian Plot</FONT></A><FONT SIZE=2>, the names are in columns corresponding to the traces.  The last row corresponds to the trigger and erase channels, whether they are defined or not.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="DialogBoxes"></A>Dialog Boxes</P>
-</FONT><P><A NAME="MessageWindow"></A>Message Window Dialog Box</P>
-</B><FONT SIZE=2><P>&#9;MEDM prints most error and information messages to both stderr and the MEDM Message Window.  This window will be created and raised when the first message is written.  There are buttons to Close, Clear, Print, Mail, and get Help.  If the window is closed, the messages will still be written to the window, but the window will not appear.  The window can be brought up via the View menu on the MEDM main window.</P>
-<P>&#9;If part of the text in the window is selected, both Print and Mail will only use the selection.  Otherwise, the whole window is used.  Print uses the environment variable PSPRINTER, which must be set.  You can change (or set) the name of the printer via the Printer Setup item in the </FONT><A HREF="#FileMenu"><FONT SIZE=2>File Menu</FONT></A><FONT SIZE=2>.</P>
-</FONT><B><P><A NAME="PVInfoDialogBox"></A>PV Info Dialog Box</P>
+</FONT><P><A NAME="DisplayListDialogBox"></A>Display List Dialog Box</P>
+</B><FONT SIZE=2><P>&#9;The Display List Dialog Box box is invoked from the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Menu</FONT></A><FONT SIZE=2>.  It has a list of the current displays.  You can select one or more displays.  There are buttons to Raise or Close the selected displays and to Close, Refresh, or get Help for the dialog box itself.  Displays that are raised should appear on the current Workspace.  Displays that are closed, whether from this dialog box or from the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Exeute-Mode Popup Menu</FONT></A><FONT SIZE=2>, must be reopened from the File menu.  The dialog box should automatically refresh without using the Refresh button.</P>
+</FONT><B><P><A NAME="MessageWindow"></A>Message Window Dialog Box</P>
+</B><FONT SIZE=2><P>&#9;MEDM prints most error and information messages to both stderr and the MEDM Message Window.  This window will be created when the first message is written.  By default it will be raised when each important new message is posted.  (Some messages are for logging purposes only and will not cause the window to raise.)  When it is raised the window should appear in the current workspace of a multi-workspace window manager, no matter whether it previously was in another workspace or previously was minimized.  It should be at its last former position, so you can place it where you find convenient.  The window can be set to not automatically raise by setting the toggle button labeled &quot;Raise Message Window When Important Message is Posted&quot; at the bottom of the window to off.  If the window is closed or otherwise not visible, it can be brought up via the View menu on the MEDM main window.</P>
+<P>&#9;There are buttons to Close, Clear, Print, Mail, and get </FONT><A HREF="#Help"><FONT SIZE=2>Help</FONT></A><FONT SIZE=2>.  If part of the text in the window is selected, both Print and Mail will only use the selection.  Otherwise, the whole window is used.  Print uses the environment variable PSPRINTER, which must be set.  You can change (or set) the name of the printer via the Printer Setup item in the </FONT><A HREF="#FileMenu"><FONT SIZE=2>File Menu</FONT></A><FONT SIZE=2>.  You can also select all or part of the window and use the usual X-windows cut and paste to move the text to another program or file.</P>
+<P>&#9;The initial position of the Message Window can be changed by the following resources (shown with typical values):</P>
+</FONT><PRE>&#9;Medm.errorMsgS.x: 10
+&#9;Medm.errorMsgS.y: 10</PRE>
+<CODE><P>You could put these lines in your .Xdefaults file, for example.</P>
+</CODE><B><P><A NAME="PVInfoDialogBox"></A>PV Info Dialog Box</P>
 </B><FONT SIZE=2><P>&#9;The PV Info dialog box is invoked from the </FONT><A HREF="#ExecuteModePopupMenu"><FONT SIZE=2>Execute-Mode Menu</FONT></A><FONT SIZE=2>.  You are prompted with a PV cursor to pick an object on the display.  The dialog box then shows information about all the process variables associated with that object.  For each process variable the information includes the name, the type, the count (length of the array  or 1 if not an array), the access rights, the IOC, the current value with associated timestamp, and its alarm status, as well as other information depending on the type. Only the value of the first element of an array is shown.  The information shown is that stored by MEDM, except for the current value and the associated time stamp, which are obtained when you pick the object.  Items such as HOPR and LOPR are the startup values and are not updated automatically except when the connection changes.  It should be possible to get some of this information if the process variable has lost its connection; that is, when the object is white but was previously not white.</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Help"></A>Help</P>
 </B></FONT><FONT SIZE=2><P>&#9;Help from the menus and context sensitive help uses Netscape.  If Netscape is not up, it takes a little while for it to come up after the first help request; however, once it is up, new help topics appear quickly inside the existing Netscape.  The Netscape window raises so as to be visible whenever help is called.  There is a dialog box for Help on Help (in case Netscape is not working) describing the Netscape help and what is necessary to make it work.  The name for the Netscape executable can be specified in the environment variable NETSCAPEPATH.</P>
@@ -1427,7 +1443,7 @@
 </TR>
 </TABLE>
 
-<FONT SIZE=2><P>&nbsp;</P></FONT>
+<FONT SIZE=2></FONT>
 <TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=583>
 <TR><TD WIDTH="15%" VALIGN="TOP">&nbsp;</TD>
 <TD WIDTH="85%" VALIGN="TOP">
@@ -1546,6 +1562,15 @@
 <P>Vertically in Display: Center the selected objects vertically with respect to the display.</FONT></TD>
 </TR>
 <TR><TD WIDTH="17%" VALIGN="TOP">
+<FONT SIZE=2><P>Orient</FONT></TD>
+<TD WIDTH="83%" VALIGN="TOP">
+<FONT SIZE=2><P>Flip Horizontally: Flip the selected objects horizontally about the midpoint.</P>
+<P>Flip Vertically: Flip the selected objects vertically about the midpoint.</P>
+<P>Rotate Clockwise: Rotate the selected objects clockwise about the midpoint.</P>
+<P>Rotate Counterclockwise: Rotate the selected objects counterclockwise about the midpoint.</P>
+<P>These operations in most cases change only the location of the objects.  They do not change the orientation of what is in the objects.  For example, text still reads from left to right and meters are never upside down.  The internal orientation of Polylines, Polygons, and Arcs does change.  Note that because of roundoff, the objects may creep if these operations are replied repeatedly.  This tends to happen if the height or width is not an even number of pixels.  In addition, objects are constrained to have coordinates greater than or equal to zero.</FONT></TD>
+</TR>
+<TR><TD WIDTH="17%" VALIGN="TOP">
 <FONT SIZE=2><P>Size</FONT></TD>
 <TD WIDTH="83%" VALIGN="TOP">
 <FONT SIZE=2><P>Same Size: Make the height and width of all the selected objects the same and equal to the average height and width of the selected objects.</P>
@@ -1641,7 +1666,7 @@
 </TR>
 </TABLE>
 
-<FONT SIZE=2><P>&nbsp;</P>
+<FONT SIZE=2>
 <P>Examples are:</P>
 </FONT><PRE>&#9;setenv MEDM_EXEC_LIST 'Probe;probe &amp;P &amp;:PV Name(s);echo &amp;P'
 &#9;setenv MEDM_EXEC_LIST 'Full Name;echo &amp;A:Short Name;echo &amp;T'
@@ -1704,7 +1729,7 @@
 </TR>
 </TABLE>
 
-<FONT SIZE=2><P>&nbsp;</P>
+<FONT SIZE=2>
 <P>&nbsp;</P>
 </FONT><B><FONT SIZE=4><P><A NAME="Glossary"></A>Glossary</P></B></FONT>
 <TABLE CELLSPACING=0 BORDER=0 CELLPADDING=7 WIDTH=590>
@@ -1778,6 +1803,6 @@
 <FONT SIZE=2><P>&nbsp;</P>
 </FONT><B><FONT SIZE=4><P><A NAME="TechSupport"></A>Technical Support</P>
 </B></FONT><FONT SIZE=2><P>&#9;If you have problems, comments, or questions about MEDM you can send them to </FONT><A HREF="mailto:evans@aps.anl.gov"><FONT SIZE=2>evans@aps.anl.gov</FONT></A><FONT SIZE=2>.  If you wish to report a bug, it is essential that you send enough information for the bug to be reproduced.  It would be helpful to include the MEDM version number, how MEDM was started, the circumstances in which the problem occurs, and a list of steps to duplicate the problem.  A copy of the ADL file or how it can be found is usually helpful.</P>
-<P><ADDRESS>Modified October 2, 1997<P>
+<P><ADDRESS>Modified November 5, 1997<P>
 Maintained by Ken Evans </FONT><A HREF="mailto:evans@aps.anl.gov">(evans@aps.anl.gov)</A></ADDRESS></BODY>
 </HTML>
