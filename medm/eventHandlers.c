@@ -153,13 +153,18 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		    if (xEvent->state & ControlMask) {
 #if XRT_VERSION > 2
 		      /* Bring up XRT Property Editor */
-#if 0			    
-		      /* KE: Doesn't seem to help */
-			XrtPopdownPropertyEditor(widget,True);
-#endif			    
-			XrtUpdatePropertyEditor(widget);
-			XrtPopupPropertyEditor(widget,
-			  "XRT Property Editor",True);
+			dmSetAndPopupWarningDialog(displayInfo,
+			  "The XRT/graph Property Editor is known to cause memory leaks.\n"
+			  "XRT has been notified of the problem.  Until it is fixed, the\n"
+			  "Property Editor should be used sparingly and with care.", "OK",
+			  "Cancel", "Help");
+			if(displayInfo->warningDialogAnswer == 1) {
+			    XrtUpdatePropertyEditor(widget);
+			    XrtPopupPropertyEditor(widget,
+			      "XRT Property Editor",True);
+			} else if(displayInfo->warningDialogAnswer == 3) {
+			    callBrowser(MEDM_HELP_PATH"/MEDM.html#XRTGraphInteractions");
+			}
 #endif			    
 		    } else {
 		      /* Bring up plot axis data dialog */
