@@ -245,8 +245,15 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 
     if (pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
-	  "  Cannot create Choice Button for %s\n",
+	  "  Cannot create Menu for %s\n",
 	  "  Is not an ENUM type\n",
+	  dlMenu->control.ctrl);
+	return;
+    }
+    if (pr->hopr <= 0.0) {
+	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
+	  "  Cannot create Menu for %s\n",
+	  "  There are no states to assign to menu items\n",
 	  dlMenu->control.ctrl);
 	return;
     }
@@ -255,10 +262,8 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
    *   XmStringTable is a typedef for (XmString *) */
     labels = NULL;
     nbuttons = 0;
-    if(pr->hopr >= 0.0) {
-	nbuttons = (int)(pr->hopr + 1.5);
-	labels = (XmStringTable)calloc(nbuttons, sizeof(XmString));
-    }
+    nbuttons = (int)(pr->hopr + 1.5);
+    labels = (XmStringTable)calloc(nbuttons, sizeof(XmString));
     if(!labels) {
 	nbuttons = 0;
 	medmPrintf(1,"\nmenuUpdateGraphicalInfoCb: Memory allocation error\n");
@@ -467,14 +472,14 @@ static void menuDraw(XtPointer cd) {
     Record *pr = pm->record;
     Widget widget = pm->dlElement->widget;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
+#if DEBUG_MENU
+    printf("\nmenuDraw: pr->connected=%s widget=%x\n",
+      pr->connected?"Yes":"No",widget);
+#endif    
     if (pr->connected) {
 	if(!widget) return;
 	if (pr->readAccess) {
 	    if (!XtIsManaged(widget)) {
-#if 0		
-		printf("\nmenuDraw: pm->dlElement->widget=%x\n",
-		  pm->dlElement->widget);
-#endif		
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }

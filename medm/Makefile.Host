@@ -5,9 +5,9 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 #
 ifdef WIN32
-#HOST_OPT = NO
+HOST_OPT = YES
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 #STATIC_BUILD = YES 

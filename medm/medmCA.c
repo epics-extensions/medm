@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_PVINFO 0
 #define DEBUG_FD_REGISTRATION 0
+#define DEBUG_CHANNEL_CB 0
 
 #define DO_RTYP 1
 
@@ -256,12 +257,13 @@ int medmCAInitialize()
 
 void medmCATerminate()
 {
-
-    caTaskDelete();
-  /* cancel registration of the CA file descriptors */
+  /* Cancel registration of the CA file descriptors */
+  /* KE: Doesn't cancel it.  The first argument should be NULL for cancel */
+  /* And why do we want to cancel it ? */
     SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
       "\ndmTerminateCA:  error removing CA's fd from X");
-  /* and close channel access */
+  /* Do a pend_event */
+  /* KE: Why? */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
@@ -276,11 +278,11 @@ void medmCATerminate()
 #else
     ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
 #endif
-
-
-
+  /* Close down channel access */
     SEVCHK(ca_task_exit(),"\ndmTerminateCA: error exiting CA");
-
+  /* Clean up the  memory allocated for Channel's */
+  /* KE: Used to be done first */
+    caTaskDelete();
 }
 
 #ifdef __cplusplus
@@ -496,17 +498,28 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
   /* Increment the event counter */
     caTask.caEventCount++;
 
-  /* Check for valid values
-   * Don't need to check for read access, checking ECA_NORMAL is enough */
+  /* Check for valid values */
+  /* Same as for updateChannelCb */
+  /* Don't need to check for read access, checking ECA_NORMAL is enough */
     if(globalDisplayListTraversalMode != DL_EXECUTE) return;
     if(args.status != ECA_NORMAL) return;
     if(!args.dbr) {
-	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Invalid data\n");
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Invalid data [%]s\n",
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
     if(!pCh || !pCh->chid || !pCh->pr) {
-	medmPostMsg(0,"medmUpdateGraphicalInfoCb: "
-	  "Invalid channel information\n");
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: Invalid channel information [%s]\n",
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
+	return;
+    }
+    if(pCh->chid != args.chid) {
+	medmPostMsg(0,"medmUpdateGraphicalInfoCb: chid from args [%x] "
+	  "does not match chid from channel [%x]\n"
+	  "  [%s]\n",
+	  args.chid,
+	  pCh->chid,
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
     pr = pCh->pr;
@@ -596,19 +609,35 @@ void medmUpdateChannelCb(struct event_handler_args args) {
     double value;
     int nBytes;
 
+#if DEBUG_CHANNEL_CB
+    const char *pvname=ca_name(args.chid);
+#endif    
+
   /* Increment the event counter */
     caTask.caEventCount++;
 
-  /* Check for valid values
-   * Don't need to check for read access, checking ECA_NORMAL is enough */
+  /* Check for valid values */
+  /* Same as for updateGraphicalInfoCb */
+  /* Don't need to check for read access, checking ECA_NORMAL is enough */
     if(globalDisplayListTraversalMode != DL_EXECUTE) return;
     if(args.status != ECA_NORMAL) return;
     if(!args.dbr) {
-	medmPostMsg(0,"medmUpdateChannelCb: Invalid data\n");
+	medmPostMsg(0,"medmUpdateChannelCb: Invalid data [%]s\n",
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
     if(!pCh || !pCh->chid || !pCh->pr) {
-	medmPostMsg(0,"medmUpdateChannelCb: Invalid channel information\n");
+	medmPostMsg(0,"medmUpdateChannelCb: Invalid channel information [%s]\n",
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
+	return;
+    }
+    if(pCh->chid != args.chid) {
+	medmPostMsg(0,"medmUpdateChannelCb: chid from args [%x] "
+	  "does not match chid from channel [%x]\n"
+	  "  [%s]\n",
+	  args.chid,
+	  pCh->chid,
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
     pr = pCh->pr;
@@ -620,7 +649,8 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	pCh->data = (dataBuf *)malloc(nBytes);
 	pCh->size = nBytes;
 	if(!pCh->data) {
-	    medmPostMsg(1,"medmUpdateChannelCb: Memory allocation error\n");
+	    medmPostMsg(1,"medmUpdateChannelCb: Memory allocation error [%s]\n",
+	      ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	    return;
 	}
     } else if(pCh->size < nBytes) {
@@ -630,7 +660,9 @@ void medmUpdateChannelCb(struct event_handler_args args) {
 	pCh->data = (dataBuf *)malloc(nBytes);
 	pCh->size = nBytes;
 	if(pCh->data == NULL) {
-	    medmPostMsg(1,"medmUpdateChannelCb: Memory reallocation error\n");
+	    medmPostMsg(1,"medmUpdateChannelCb: Memory reallocation error"
+	      " [%s]\n",
+	      ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	    return;
 	}
     }
@@ -840,7 +872,7 @@ void caDelete(Record *pr) {
     pCh->evid = NULL;
     if(pCh->chid) {
 	status = ca_clear_channel(pCh->chid);
-	SEVCHK(status,"vCA::vCA() : ca_add_exception_event failed!");
+	SEVCHK(status,"vCA::vCA() : ca_clear_channel failed!");
 	if(status != ECA_NORMAL) return;
     }
     pCh->chid = NULL;
@@ -1026,7 +1058,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
     status=ca_pend_io(CA_PEND_IO_TIME);
     if(status != ECA_NORMAL) {
 	medmPostMsg(1,"popupPvInfo: Waited %g seconds.  "
-	  "Did not get all the DESC information.\n", CA_PEND_IO_TIME);
+	  "Did not find the DESC information.\n", CA_PEND_IO_TIME);
     }
     
   /* Loop over the records and do the gets */
@@ -1295,9 +1327,11 @@ static void pvInfoWriteInfo(void)
 	    sprintf(string, "%sSTATES: %d\n",
 	      string, (int)(pR->hopr+1.1));
 	  /* KE: Bad way to use a double */
-	    for (j=0; j <= pR->hopr; j++) {
-		sprintf(string, "%sSTATE %2d: %s\n",
-		  string, j, pR->stateStrings[j]);
+	    if(pR->hopr) {
+		for (j=0; j <= pR->hopr; j++) {
+		    sprintf(string, "%sSTATE %2d: %s\n",
+		      string, j, pR->stateStrings[j]);
+		}
 	    }
 	    break;
         case DBF_CHAR:  

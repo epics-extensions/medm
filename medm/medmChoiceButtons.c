@@ -287,8 +287,8 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
 
 static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pd = (Record *) cd;
-    ChoiceButtons *cb = (ChoiceButtons *) pd->clientData;
+    Record *pr = (Record *) cd;
+    ChoiceButtons *cb = (ChoiceButtons *) pr->clientData;
     DlElement *dlElement = cb->dlElement;
     DlChoiceButton *pCB = dlElement->structure.choiceButton;
     int i;
@@ -308,17 +308,25 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
   /* !!!!! End work around                 !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-    if (pd->dataType != DBF_ENUM) {
+    if (pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"choiceButtonUpdateGraphicalInfoCb:\n"
 	  "  %s is not an ENUM type\n"
 	  "  Cannot create Choice Button\n",
 	  pCB->control.ctrl);
 	return;
     }
-    for (i = 0; i <= pd->hopr; i++) {
-	labels[i] = pd->stateStrings[i];
+    if (pr->hopr <= 0.0) {
+	medmPostMsg(1,"choiceButtonUpdateGraphicalInfoCb:\n"
+	  "  Cannot create Choice Button for %s\n",
+	  "  There are no states to assign to buttons\n",
+	  pCB->control.ctrl);
+	return;
     }
-    fg = (pCB->clrmod == ALARM ? alarmColor(pd->severity) :
+
+    for (i = 0; i <= pr->hopr; i++) {
+	labels[i] = pr->stateStrings[i];
+    }
+    fg = (pCB->clrmod == ALARM ? alarmColor(pr->severity) :
       cb->updateTask->displayInfo->colormap[pCB->control.clr]);
     bg = cb->updateTask->displayInfo->colormap[pCB->control.bclr];
     dlElement->widget = createToggleButtons(
@@ -326,14 +334,14 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
       &(pCB->object),
       fg,
       bg,
-      (int)(pd->hopr+1.5),     /* Record->hopr is a double */
+      (int)(pr->hopr+1.5),     /* Record->hopr is a double */
       labels,
       (XtPointer) cb,
       buttons,
       pCB->stacking);
 
-    for (i = 0; i <= pd->hopr; i++) {
-	if (i==(int)pd->value)
+    for (i = 0; i <= pr->hopr; i++) {
+	if (i==(int)pr->value)
 	  XmToggleButtonGadgetSetState(buttons[i],True,True);
 	XtAddCallback(buttons[i],XmNvalueChangedCallback,
 	  (XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)i);
@@ -353,18 +361,18 @@ static void choiceButtonUpdateValueCb(XtPointer cd) {
 
 static void choiceButtonDraw(XtPointer cd) {
     ChoiceButtons *pcb = (ChoiceButtons *) cd;
-    Record *pd = pcb->record;
+    Record *pr = pcb->record;
     Widget widget = pcb->dlElement->widget;
     DlChoiceButton *dlChoiceButton = pcb->dlElement->structure.choiceButton;
-    if (pd->connected) {
+    if (pr->connected) {
 	if(!widget) return;
-	if (pd->readAccess) {
+	if (pr->readAccess) {
 	    if (widget && !XtIsManaged(widget)) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pd->precision < 0) return;    /* Wait for pd->value */
-	    if (pd->dataType == DBF_ENUM) {
+	    if (pr->precision < 0) return;    /* Wait for pr->value */
+	    if (pr->dataType == DBF_ENUM) {
 		WidgetList children;
 		Cardinal numChildren;
 		int i;
@@ -378,7 +386,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		    break;
 		case ALARM :
 		  /* set alarm color */
-		    XtVaSetValues(widget,XmNforeground,alarmColor(pd->severity),NULL);
+		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
 		default :
 		    medmPostMsg(1,"choiceButtonUpdateValueCb:\n");
@@ -386,7 +394,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		    medmPrintf(0,"  Message: Unknown color modifier\n");
 		    return;
 		}
-		i = (int) pd->value;
+		i = (int) pr->value;
 		if ((i >= 0) && (i < (int)numChildren)) {
 #if DEBUG_TOGGLE_BUTTONS
 		    {
@@ -440,7 +448,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		medmPrintf(1,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if (pd->writeAccess) 
+	    if (pr->writeAccess) 
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
