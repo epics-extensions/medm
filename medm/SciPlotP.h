@@ -246,6 +246,7 @@ typedef struct {
 #ifdef MOTIF  
   int ShadowColor1;
   int ShadowColor2;
+  unsigned char ShadowType;
 #endif  
 
   /*   Fixed X left & right space */

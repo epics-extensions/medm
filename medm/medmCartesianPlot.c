@@ -159,7 +159,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
     CartesianPlot *pcp;
-    int i, k, validTraces, iPrec;
+    int i, validTraces;
     Widget localWidget;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
 
@@ -376,7 +376,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
   /* Loop over all the traces */
     minX = minY = minY2 = FLT_MAX;
-    maxX = maxY = maxY2 = -0.99*FLT_MAX;
+    maxX = maxY = maxY2 = (float)(-0.99*FLT_MAX);
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 
@@ -397,15 +397,15 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	  /* Put initial data in */
 	    if (i <= 0) {
 		CpDataSetLastPoint(hcp1,i,0);
-		minY = MIN(minY,t->recordY->lopr);
-		maxY = MAX(maxY,t->recordY->hopr);
+		minY = (float)MIN(minY,t->recordY->lopr);
+		maxY = (float)MAX(maxY,t->recordY->hopr);
 	    } else {
 		CpDataSetLastPoint(hcp2,i-1,0);
-		minY2 = MIN(minY2,t->recordY->lopr);
-		maxY2 = MAX(maxY2,t->recordY->hopr);
+		minY2 = (float)MIN(minY2,t->recordY->lopr);
+		maxY2 = (float)MAX(maxY2,t->recordY->hopr);
 	    }
-	    minX = MIN(minX,t->recordX->lopr);
-	    maxX = MAX(maxX,t->recordX->hopr);
+	    minX = (float)MIN(minX,t->recordX->lopr);
+	    maxX = (float)MAX(maxX,t->recordX->hopr);
 	} else if (t->recordX) {
 	  /* X channel - supporting scalar or waveform */
 	    if (t->recordX->elementCount > 1) {
@@ -414,16 +414,16 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		if (i <= 0) {
 		    for (j = 0; j < (int)t->recordX->elementCount; j++)
 		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    minY = MIN(minY,0.);
-		    maxY = MAX(maxY,(float)((int)t->recordX->elementCount-1));
+		    minY = (float)MIN(minY,0.);
+		    maxY = (float)MAX(maxY,(float)((int)t->recordX->elementCount-1));
 		} else {
 		    for(j = 0; j < (int)t->recordX->elementCount; j++)
 		     CpDataSetYElement(hcp2,i-1,j,(float)j);
-		    minY2 = MIN(minY2,0.);
-		    maxY2 = MAX(maxY2,(float)t->recordX->elementCount-1);
+		    minY2 = (float)MIN(minY2,0.);
+		    maxY2 = (float)MAX(maxY2,(float)t->recordX->elementCount-1);
 		}
-		minX = MIN(minX,t->recordX->lopr);
-		maxX = MAX(maxX,t->recordX->hopr);
+		minX = (float)MIN(minX,t->recordX->lopr);
+		maxX = (float)MAX(maxX,t->recordX->hopr);
 	    } else {
 	      /* Scalar */
 		t->type = CP_XScalar;
@@ -431,17 +431,17 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
 		      CpDataSetYElement(hcp1,i,j,(float)j);
 		    CpDataSetXElement(hcp1,i,0,(float)t->recordX->value);
-		    minY = MIN(minY,0.);
-		    maxY = MAX(maxY,(float)dlCartesianPlot->count);
+		    minY = (float)MIN(minY,0.);
+		    maxY = (float)MAX(maxY,(float)dlCartesianPlot->count);
 		} else {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
 		      CpDataSetYElement(hcp2,i-1,j,(float)j);
 		    CpDataSetXElement(hcp2,i-1,0,(float)t->recordX->value);
-		    minY2 = MIN(minY2,0.);
-		    maxY2 = MAX(maxY2,(float)dlCartesianPlot->count);
+		    minY2 = (float)MIN(minY2,0.);
+		    maxY2 = (float)MAX(maxY2,(float)dlCartesianPlot->count);
 		}
-		minX = MIN(minX,t->recordX->lopr);
-		maxX = MAX(maxX,t->recordX->hopr);
+		minX = (float)MIN(minX,t->recordX->lopr);
+		maxX = (float)MAX(maxX,t->recordX->hopr);
 	    }
 	} else if (t->recordY) {
 	  /* Y channel - supporting scalar or waveform */
@@ -451,16 +451,16 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		if (i <= 0) {
 		    for(j = 0; j < t->recordY->elementCount; j++)
 		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    minY = MIN(minY,t->recordY->lopr);
-		    maxY = MAX(maxY,t->recordY->hopr);
+		    minY = (float)MIN(minY,t->recordY->lopr);
+		    maxY = (float)MAX(maxY,t->recordY->hopr);
 		} else {
 		    for(j = 0; j < t->recordY->elementCount; j++)
 		      CpDataSetXElement(hcp2,i-1,j,(float)j);
-		    minY2 = MIN(minY2,t->recordY->lopr);
-		    maxY2 = MAX(maxY2,t->recordY->hopr);
+		    minY2 = (float)MIN(minY2,t->recordY->lopr);
+		    maxY2 = (float)MAX(maxY2,t->recordY->hopr);
 		}
-		minX = MIN(minX,0.);
-		maxX = MAX(maxX,(float)(t->recordY->elementCount-1));
+		minX = (float)MIN(minX,0.);
+		maxX = (float)MAX(maxX,(float)(t->recordY->elementCount-1));
 	    } else {
 	      /* Scalar */
 		t->type = CP_YScalar;
@@ -469,18 +469,18 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		      CpDataSetXElement(hcp1,0,j,(float)j);
 		    CpDataSetYElement(hcp1,0,0,(float)t->recordY->value);
 		    CpDataSetLastPoint(hcp1,0,0);
-		    minY = MIN(minY,t->recordY->lopr);
-		    maxY = MAX(maxY,t->recordY->hopr);
+		    minY = (float)MIN(minY,t->recordY->lopr);
+		    maxY = (float)MAX(maxY,t->recordY->hopr);
 		} else {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
 		      CpDataSetXElement(hcp2,0,j,(float)j);
 		    CpDataSetYElement(hcp2,0,0,(float)t->recordY->value);
 		    CpDataSetLastPoint(hcp2,0,0);
-		    minY2 = MIN(minY2,t->recordY->lopr);
-		    maxY2 = MAX(maxY2,t->recordY->hopr);
+		    minY2 = (float)MIN(minY2,t->recordY->lopr);
+		    maxY2 = (float)MAX(maxY2,t->recordY->hopr);
 		}
-		minX = MIN(minX,0.);
-		maxX = MAX(maxX,(float)dlCartesianPlot->count);
+		minX = (float)MIN(minX,0.);
+		maxX = (float)MAX(maxX,(float)dlCartesianPlot->count);
 	    }
 	}
     }     /* End for loop over traces */
@@ -553,7 +553,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
 	minXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
 	maxXF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
-	tickF.fval = (maxXF.fval - minXF.fval)/4.0;
+	tickF.fval = (float)((maxXF.fval - minXF.fval)/4.0);
 	sprintf(string,"%f",tickF.fval);
 	k = strlen(string)-1;
 	while (string[k] == '0') k--; /* strip off trailing zeroes */
@@ -574,7 +574,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
 	 minYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
 	 maxYF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
-	 tickF.fval = (maxYF.fval - minYF.fval)/4.0;
+	 tickF.fval = (float)((maxYF.fval - minYF.fval)/4.0);
 	 sprintf(string,"%f",tickF.fval);
 	 k = strlen(string)-1;
 	 while (string[k] == '0') k--; /* strip off trailing zeroes */
@@ -596,7 +596,7 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
 	minY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].minRange;
 	maxY2F.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange;
-	tickF.fval = (maxY2F.fval - minY2F.fval)/4.0;
+	tickF.fval = (float)((maxY2F.fval - minY2F.fval)/4.0);
 	sprintf(string,"%f",tickF.fval);
 	k = strlen(string)-1;
 	while (string[k] == '0') k--; /* strip off trailing zeroes */
@@ -624,7 +624,6 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     CartesianPlot *pcp = pt->cartesianPlot;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     int nextPoint, j;
-    Arg args[20];
 
 #if DEBUG_CARTESIAN_PLOT_UPDATE
     printf("cartesianPlotUpdateTrace:\n");
@@ -1219,7 +1218,6 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     CartesianPlot *pcp = pt->cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     int i;
-    Arg args[20];
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
 
@@ -1327,7 +1325,6 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
     CartesianPlot *pcp = pt->cartesianPlot;
     Widget widget = pcp->dlElement->widget;
     int i;
-    Arg args[20];
 
 #if DEBUG_CARTESIAN_PLOT_UPDATE
     printf("cartesianPlotUpdateValueCb:\n");
@@ -1787,11 +1784,8 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 {     
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonId = (int) cd;
-    int i, k, n, rcType, iPrec;
+    int k, n, rcType, iPrec;
     char string[24];
-    DlElement *elementPtr;
-    Arg args[10];
-    String resourceName;
     XcVType minF, maxF, tickF;
     XtPointer userData;
     CartesianPlot *pcp = NULL;
@@ -1880,7 +1874,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 		  maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
 		sprintf(string,"%f",maxF.fval);
 		XmTextFieldSetString(axisRangeMax[rcType%3],string);
-		tickF.fval = (maxF.fval - minF.fval)/4.0;
+		tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 		sprintf(string,"%f",tickF.fval);
 		k = strlen(string)-1;
 		while (string[k] == '0') k--;	/* strip off trailing zeroes */
@@ -1994,8 +1988,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int)cd;
     char *stringValue, string[24];
-    int i, k, n, iPrec;
-    Arg args[10];
+    int k, n, iPrec;
     XcVType valF, minF, maxF, tickF;
     int axis, isMax;
 
@@ -2012,7 +2005,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CP_X_RANGE_MIN:
     case CP_Y_RANGE_MIN:
     case CP_Y2_RANGE_MIN:
-	globalResourceBundle.axis[rcType%3].minRange= atof(stringValue);
+	globalResourceBundle.axis[rcType%3].minRange= (float)atof(stringValue);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    valF.fval = globalResourceBundle.axis[rcType%3].minRange;
 	    switch(rcType%3) {
@@ -2034,7 +2027,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CP_X_RANGE_MAX:
     case CP_Y_RANGE_MAX:
     case CP_Y2_RANGE_MAX:
-	globalResourceBundle.axis[rcType%3].maxRange= atof(stringValue);
+	globalResourceBundle.axis[rcType%3].maxRange= (float)atof(stringValue);
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    valF.fval = globalResourceBundle.axis[rcType%3].maxRange;
 	    switch(rcType%3) {
@@ -2064,7 +2057,7 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	minF.fval = globalResourceBundle.axis[rcType%3].minRange;
 	maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
-	tickF.fval = (maxF.fval - minF.fval)/4.0;
+	tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 #if DEBUG_XRT
 	print("cpAxisTextFieldActivateCallback: "
 	  "minF.fval =%g minF.lval=%ld Converted: %d\n",
@@ -2277,7 +2270,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     int i, n;
     static Boolean first = True;
     XmButtonType buttonType[MAX_CP_AXIS_BUTTONS];
-    Widget entriesRC, frame, localRC, localLabel, localElement, parentRC;
+    Widget entriesRC, frame, localLabel, parentRC;
   /* For keeping list of widgets around */
     Widget entryLabel[MAX_CP_AXIS_ELEMENTS], entryElement[MAX_CP_AXIS_ELEMENTS];
     Dimension width, height;
@@ -2557,9 +2550,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
       y2IsCurrentlyFromChannel;
     XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
-    Arg args[2];
-    char *timeFormat;
-
+    char *timeFormat = NULL;
     if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 
     CpGetAxisInfo(cp, &userData, &xAxisIsTime, &timeFormat,
@@ -2587,7 +2578,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       /* Time format */
 	buttonId = 0;     /* Use for  default */
 	for(i = 0; i < NUM_CP_TIME_FORMAT; i++) {
-	    if(!strcmp(timeFormatString[i],timeFormat)) {
+	    if(timeFormat && !strcmp(timeFormatString[i],timeFormat)) {
 		buttonId = i;
 		break;
 	    }

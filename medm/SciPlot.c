@@ -22,16 +22,43 @@
  *         http://www.ae.utexas.edu/~rwmcm
  */
 
+#define DEBUG_SCIPLOT 0
+#define DEBUG_SCIPLOT_VTEXT 0
+#define DEBUG_SCIPLOT_TEXT 0
+#define DEBUG_SCIPLOT_LINE 0
+
 #include <stdlib.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
+
 #ifdef MOTIF
 #include <Xm/Xm.h>
 #endif
 
+#ifdef _MSC_VER
+/* Eliminate Microsoft C++ warnings about converting to float */
+#pragma warning (disable: 4244 4305)
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 #include "SciPlotP.h"
+
+#ifdef WIN32
+  /* Hummingbird extra functions including lprintf
+   *   Needs to be included after Intrinsic.h for Exceed 5 */
+# include <X11/XlibXtra.h>
+  /* The following is done in Exceed 6 but not in Exceed 5
+   *   Need it to define printf as lprintf for Windows
+   *   (as opposed to Console) apps */
+# ifdef _WINDOWS
+#  ifndef printf
+#   define printf lprintf
+#  endif    
+# endif
+#endif /* #ifdef WIN32 */
 
 enum sci_drag_states {NOT_DRAGGING, 
 		      DRAGGING_NOTHING, 
@@ -136,6 +163,9 @@ static XtResource resources[] =
    offset(XLeftSpace), XtRImmediate, (XtPointer) (100)},
   {XtNxRightSpace,  XtCMargin, XtRInt, sizeof(int),
    offset(XRightSpace), XtRImmediate, (XtPointer) (100)},
+/* KE: (From XmFrame.c) */
+  {XmNshadowType, XmCShadowType, XmRShadowType, sizeof(unsigned char),
+   offset(ShadowType), XmRImmediate, (XtPointer)XmINVALID_DIMENSION},
 };
 
 static SciPlotFontDesc font_desc_table[] =
@@ -176,6 +206,7 @@ static void FontInit (SciPlotWidget w, SciPlotFont *pf);
 static int ColorStore (SciPlotWidget w, Pixel color);
 static int FontStore (SciPlotWidget w, int flag);
 static int FontnumReplace (SciPlotWidget w, int fontnum, int flag);
+static void SciPlotPrintf(const char *fmt, ...);
 
 /* translation manager routines */
 static void sciPlotMotionAP (SciPlotWidget w, 
@@ -188,7 +219,7 @@ static void sciPlotTrackPointer (SciPlotWidget w,
   XEvent *event, char *args, int n_args);
 
 /* KE: */
-static void DrawShadows (SciPlotWidget w, Boolean raised, real x, real y,
+static void DrawShadow (SciPlotWidget w, Boolean raised, real x, real y,
   real width, real height);
 
 static char sciPlotTranslations[] = 
@@ -355,6 +386,8 @@ GCInitialize(SciPlotWidget new)
       new->core.background_pixel, &fg, &shade1, &shade2, &select);
     new->plot.ShadowColor1 = ColorStore(new, shade1);
     new->plot.ShadowColor2 = ColorStore(new, shade2);
+    new->primitive.top_shadow_color = shade1;
+    new->primitive.bottom_shadow_color = shade2;
   }
 #endif
   values.foreground = colorsave = BlackPixelOfScreen(XtScreen(new));
@@ -531,7 +564,7 @@ GetValuesHook(Widget ws, ArgList args, Cardinal *num_args)
   int i;
   char **loc;
 
-  for (i=0; i<*num_args; i++) {
+  for (i=0; i < (int)*num_args; i++) {
     loc=(char **)args[i].value;
     if (strcmp(args[i].name,XtNplotTitle)==0)
       *loc=w->plot.plotTitle;
@@ -677,8 +710,8 @@ FontDescLookup (int flag)
 
   pfd = font_desc_table;
   while (pfd->flag >= 0) {
-#ifdef DEBUG_SCIPLOT
-    printf("checking if %d == %d (font %s)\n",
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("FontDescLookup: checking if %d == %d (font %s)\n",
       flag & XtFONT_NAME_MASK, pfd->flag, pfd->PostScript);
 #endif
     if ((flag & XtFONT_NAME_MASK) == pfd->flag)
@@ -742,8 +775,8 @@ FontX11String (int flag, char *str)
   }
   else
     sprintf(str, "fixed");
-#ifdef DEBUG_SCIPLOT
-  printf("font string=%s\n", str);
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("FontX11String: font string=%s\n", str);
 #endif
 }
 
@@ -755,13 +788,13 @@ FontInit (SciPlotWidget w, SciPlotFont *pf)
 
   FontX11String(pf->id, str);
   list = XListFonts(XtDisplay(w), str, 100, &num);
-#ifdef DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT
   if (1) {
     int i;
 
     i = 0;
     while (i < num) {
-      printf("Found font: %s\n", list[i]);
+      SciPlotPrintf("FontInit: Found font: %s\n", list[i]);
       i++;
     }
   }
@@ -771,13 +804,13 @@ FontInit (SciPlotWidget w, SciPlotFont *pf)
     pf->id |= XtFONT_ATTRIBUTE_DEFAULT;
     FontX11String(pf->id, str);
     list = XListFonts(XtDisplay(w), str, 100, &num);
-#ifdef DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT
     if (1) {
       int i;
 
       i = 0;
       while (i < num) {
-	printf("Attr reset: found: %s\n", list[i]);
+	SciPlotPrintf("FontInit: Attr reset: found: %s\n", list[i]);
 	i++;
       }
     }
@@ -788,13 +821,13 @@ FontInit (SciPlotWidget w, SciPlotFont *pf)
     pf->id |= XtFONT_NAME_DEFAULT;
     FontX11String(pf->id, str);
     list = XListFonts(XtDisplay(w), str, 100, &num);
-#ifdef DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT
     if (1) {
       int i;
 
       i = 0;
       while (i < num) {
-	printf("Name reset: found: %s\n", list[i]);
+	SciPlotPrintf("FontInit: Name reset: found: %s\n", list[i]);
 	i++;
       }
     }
@@ -805,23 +838,45 @@ FontInit (SciPlotWidget w, SciPlotFont *pf)
     pf->id |= XtFONT_SIZE_DEFAULT;
     FontX11String(pf->id, str);
     list = XListFonts(XtDisplay(w), str, 100, &num);
-#ifdef DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT
     if (1) {
       int i;
 
       i = 0;
       while (i < num) {
-	printf("Size reset: found: %s\n", list[i]);
+	SciPlotPrintf("FontInit: Size reset: found: %s\n", list[i]);
 	i++;
       }
     }
 #endif
   }
+#if DEBUG_SCIPLOT
+  if (1) {
+    XFontStruct *f;
+    int i;
+    
+    i = 0;
+    while (i < num) {
+      SciPlotPrintf("FontInit: Properties for: %s\n", list[i]);
+      f = XLoadQueryFont(XtDisplay(w), list[i]);
+      SciPlotPrintf("  Height: %3d   Ascent: %d   Descent: %d\n",
+	f->max_bounds.ascent + f->max_bounds.descent,
+	f->max_bounds.ascent, f->max_bounds.descent);
+      i++;
+    }
+  }
+#endif  
   if (num <= 0)
     strcpy(str, "fixed");
   else
     XFreeFontNames(list);
   pf->font = XLoadQueryFont(XtDisplay(w), str);
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("FontInit: Finally ran XLoadQueryFont using: %s\n", str);
+  SciPlotPrintf("  Height: %3d   Ascent: %d   Descent: %d\n",
+    pf->font->max_bounds.ascent + pf->font->max_bounds.descent,
+    pf->font->max_bounds.ascent, pf->font->max_bounds.descent);
+#endif  
 }
 
 static XFontStruct *
@@ -924,7 +979,7 @@ _ListNew (SciPlotWidget w)
       w->plot.alloc_plotlist = NUMPLOTLINEALLOC;
       w->plot.plotlist = (SciPlotList *) XtCalloc(w->plot.alloc_plotlist, sizeof(SciPlotList));
       if (!w->plot.plotlist) {
-	printf("Can't calloc memory for SciPlotList\n");
+	SciPlotPrintf("Can't calloc memory for SciPlotList\n");
 	exit(1);
       }
       w->plot.alloc_plotlist = NUMPLOTLINEALLOC;
@@ -934,7 +989,7 @@ _ListNew (SciPlotWidget w)
       w->plot.plotlist = (SciPlotList *) XtRealloc((char *) w->plot.plotlist,
 	w->plot.alloc_plotlist * sizeof(SciPlotList));
       if (!w->plot.plotlist) {
-	printf("Can't realloc memory for SciPlotList\n");
+	SciPlotPrintf("Can't realloc memory for SciPlotList\n");
 	exit(1);
       }
     }
@@ -1184,7 +1239,7 @@ XDrawVString (Display *display, Window win, GC gc, int x, int y, char *str, int 
     }
   }
 
-#ifdef DEBUG_SCIPLOT_VTEXT
+#if DEBUG_SCIPLOT_VTEXT
   if (1) {
     char sourcebit;
 
@@ -1342,6 +1397,11 @@ ItemDraw (SciPlotWidget w, SciPlotItem *item)
     gc = ItemGetGC(w, item);
   if (!gc)
     return;
+#if DEBUG_SCIPLOT_LINE
+    SciPlotPrintf("ItemDraw: item->type=%d\n"
+      "  SciPlotFALSE=%d SciPlotPoint=%d  SciPlotLine=%d \n",
+      item->type,SciPlotFALSE,SciPlotPoint,SciPlotLine);
+#endif  
   switch (item->type) {
   case SciPlotLine:
     seg.x1 = (short) item->kind.line.x1;
@@ -1438,6 +1498,9 @@ ItemDraw (SciPlotWidget w, SciPlotItem *item)
     XSetClipMask(XtDisplay(w), w->plot.defaultGC, None);
     break;
   default:
+#if DEBUG_SCIPLOT_LINE
+    SciPlotPrintf("ItemDraw: default case\n");
+#endif  
     break;
   }
 }
@@ -1549,9 +1612,24 @@ ItemPSDrawAll (SciPlotWidget w, FILE *fd, float yflip, int usecolor)
         
           /* Get Pixel index */
         currentcolor.pixel = w->plot.colors[item->kind.any.color];
+#ifdef WIN32
+      /* Exceed 5 does not have Xcms routines
+       *   Only want to get colors as XcmsFloat=double in range [0.0,1.0]
+       *   So use  XQueryColors and convert */
+       {
+	 XColor xcolor;
+
+	 XQueryColor( XtDisplay(w), w->plot.cmap, &xcolor);
+	 currentcolor.spec.RGBi.red = (double)xcolor.red/65535.;
+	 currentcolor.spec.RGBi.green = (double)xcolor.green/65535.;
+	 currentcolor.spec.RGBi.blue = (double)xcolor.blue/65535.;
+	 currentcolor.format = XcmsRGBiFormat;
+       }
+#else	
           /* Get RGBi components [0.0,1.0] */
         XcmsQueryColor( XtDisplay(w), w->plot.cmap, &currentcolor,
           XcmsRGBiFormat );
+#endif	
           /* output PostScript command */
         fprintf(fd, "%f %f %f %s ", currentcolor.spec.RGBi.red,
           currentcolor.spec.RGBi.green, currentcolor.spec.RGBi.blue,
@@ -1988,11 +2066,11 @@ ItemGetNew (SciPlotWidget w)
     w->plot.drawlist = (SciPlotItem *) XtRealloc((char *) w->plot.drawlist,
       w->plot.alloc_drawlist * sizeof(SciPlotItem));
     if (!w->plot.drawlist) {
-      printf("Can't realloc memory for SciPlotItem list\n");
+      SciPlotPrintf("Can't realloc memory for SciPlotItem list\n");
       exit(1);
     }
-#ifdef DEBUG_SCIPLOT
-    printf("Alloced #%d for drawlist\n", w->plot.alloc_drawlist);
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("Alloced #%d for drawlist\n", w->plot.alloc_drawlist);
 #endif
   }
   item = w->plot.drawlist + (w->plot.num_drawlist - 1);
@@ -2198,7 +2276,7 @@ TextSet (SciPlotWidget w, real x, real y, char *text, int color, int font)
   strcpy(item->kind.text.text, text);
   item->type = SciPlotText;
   ItemDraw(w, item);
-#ifdef DEBUG_SCIPLOT_TEXT
+#if DEBUG_SCIPLOT_TEXT
   if (1) {
     real x1, y1;
 
@@ -2234,7 +2312,7 @@ VTextSet (SciPlotWidget w, real x, real y, char *text, int color, int font)
   strcpy(item->kind.text.text, text);
   item->type = SciPlotVText;
   ItemDraw(w, item);
-#ifdef DEBUG_SCIPLOT_TEXT
+#if DEBUG_SCIPLOT_TEXT
   if (1) {
     real x1, y1;
 
@@ -2267,8 +2345,8 @@ ClipSet (SciPlotWidget w)
     item->kind.line.x2 = w->plot.x.Size;
     item->kind.line.y1 = w->plot.y.Origin;
     item->kind.line.y2 = w->plot.y.Size;
-#ifdef DEBUG_SCIPLOT
-    printf("clipping region: x=%f y=%f w=%f h=%f\n",
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("clipping region: x=%f y=%f w=%f h=%f\n",
       item->kind.line.x1,
       item->kind.line.y1,
       item->kind.line.x2,
@@ -2343,7 +2421,7 @@ PlotRTRadians (SciPlotWidget w, real r, real t, real *xout, real *yout)
 static void 
 PlotRTDegrees (SciPlotWidget w, real r, real t, real *xout, real *yout)
 {
-  t *= DEG2RAD;
+  t *= (float)DEG2RAD;
   PlotRTRadians(w, r, t, xout, yout);
 }
 
@@ -2351,7 +2429,7 @@ static void
 PlotRT (SciPlotWidget w, real r, real t, real *xout, real *yout)
 {
   if (w->plot.Degrees)
-    t *= DEG2RAD;
+    t *= (float)DEG2RAD;
   PlotRTRadians(w, r, t, xout, yout);
 }
 
@@ -2387,7 +2465,7 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
     }
 
     /*    
-    printf("calcmin=%e min=%e   calcmax=%e max=%e\n",calcmin,min, 
+    SciPlotPrintf("calcmin=%e min=%e   calcmax=%e max=%e\n",calcmin,min, 
 	   calcmax,max); */
     
     delta = 10.0;
@@ -2414,8 +2492,8 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
     axis->MajorNum = (int) (log10(calcmax) - log10(calcmin)) + 1;
     axis->MinorNum = 10;
     axis->Precision = -(int) (log10(calcmin) * 1.0001);
-#ifdef DEBUG_SCIPLOT
-    printf("calcmin=%e log=%e (int)log=%d  Precision=%d\n",
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("calcmin=%e log=%e (int)log=%d  Precision=%d\n",
       calcmin, log10(calcmin), (int) (log10(calcmin) * 1.0001), axis->Precision);
 #endif
     if (axis->Precision < 0)
@@ -2434,8 +2512,8 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
 	break;
     }
     delta *= powi(10.0, nexp);
-#ifdef DEBUG_SCIPLOT
-    printf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
 #endif
 
     if (min < 0.0)
@@ -2484,15 +2562,15 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
       decimals = (int) ceil(-delta) + majordecimals;
     if (decimals < 0)
       decimals = 0;
-#ifdef DEBUG_SCIPLOT
-    printf("delta=%f majordecimals=%d decimals=%d\n",
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("delta=%f majordecimals=%d decimals=%d\n",
       delta, majordecimals, decimals);
 #endif
     axis->Precision = decimals;
   }
 
-#ifdef DEBUG_SCIPLOT
-  printf("Tics: min=%f max=%f size=%f  major inc=%f #major=%d #minor=%d decimals=%d\n",
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("Tics: min=%f max=%f size=%f  major inc=%f #major=%d #minor=%d decimals=%d\n",
     axis->DrawOrigin, axis->DrawMax, axis->DrawSize,
     axis->MajorInc, axis->MajorNum, axis->MinorNum, axis->Precision);
 #endif
@@ -2501,8 +2579,8 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
 static void 
 ComputeDrawingRange (SciPlotWidget w, int type)
 {
-  /* when we dragging along one direction, we do not need to caculate the drawing */
-  /* range of the other axis                                                        */
+  /* when we are dragging along one direction, we do not need to caculate the drawing */
+  /* range of the other axis                                                          */
   if (w->plot.ChartType == XtCARTESIAN) {
     if (w->plot.drag_state == NOT_DRAGGING || w->plot.drag_state == DRAGGING_NOTHING) {
       if (type == NO_COMPUTE_MIN_MAX_X) {
@@ -2932,8 +3010,8 @@ ComputeMinMax (SciPlotWidget w, int type)
   }
   
 
-#ifdef DEBUG_SCIPLOT
-  printf("Min: (%f,%f)\tMax: (%f,%f)\n",
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("Min: (%f,%f)\tMax: (%f,%f)\n",
     w->plot.Min.x, w->plot.Min.y,
     w->plot.Max.x, w->plot.Max.y);
 #endif
@@ -3164,8 +3242,8 @@ AdjustDimensionsCartesian (SciPlotWidget w)
     y = PlotY(w, val);
     sprintf(numberformat, "%%.%df", precision);
     sprintf(label, numberformat, val);
-#ifdef DEBUG_SCIPLOT
-    printf("ylabel=%s\n", label);
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("ylabel=%s\n", label);
 #endif
     if (w->plot.YNumHorz) {
       yextra=FontnumHeight(w, w->plot.axisFont)/2.0;
@@ -3379,18 +3457,18 @@ AdjustDimensionsCartesian (SciPlotWidget w)
     w->plot.x.TitlePos = (real) w->plot.Margin;
   }
 
-#ifdef DEBUG_SCIPLOT
-  printf("y.Origin:		%f\n", w->plot.y.Origin);
-  printf("y.Size:			%f\n", w->plot.y.Size);
-  printf("axisnumbersize:		%f\n", axisnumbersize);
-  printf("y.axisLabelSize:	%f\n", axisYlabelsize);
-  printf("y.TitleSize:		%f\n",
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("y.Origin:             %f\n", w->plot.y.Origin);
+  SciPlotPrintf("y.Size:               %f\n", w->plot.y.Size);
+  SciPlotPrintf("axisnumbersize:       %f\n", axisnumbersize);
+  SciPlotPrintf("y.axisLabelSize:      %f\n", axisYlabelsize);
+  SciPlotPrintf("y.TitleSize:          %f\n",
     (real) w->plot.TitleMargin + FontnumHeight(w, w->plot.titleFont));
-  printf("y.Margin:		%f\n", (real) w->plot.Margin);
-  printf("total-------------------%f\n", w->plot.y.Origin + w->plot.y.Size +
+  SciPlotPrintf("y.Margin:             %f\n", (real) w->plot.Margin);
+  SciPlotPrintf("total-----------------%f\n", w->plot.y.Origin + w->plot.y.Size +
     axisnumbersize + axisYlabelsize + (real) w->plot.Margin +
     (real) w->plot.TitleMargin + FontnumHeight(w, w->plot.titleFont));
-  printf("total should be---------%f\n", (real) w->core.height);
+  SciPlotPrintf("total should be-------%f\n", (real) w->core.height);
 #endif
 }
 
@@ -3469,7 +3547,7 @@ AdjustDimensionsPolar (SciPlotWidget w)
     y = (w->plot.y.LegendPos + w->plot.y.LegendSize) - w->plot.y.Center;
     
     dist = sqrt(x * x + y * y);
-    /*       printf("rad=%f dist=%f: legend=(%f,%f) center=(%f,%f)\n", */
+    /*       SciPlotPrintf("rad=%f dist=%f: legend=(%f,%f) center=(%f,%f)\n", */
     /*              radius,dist,w->plot.x.LegendPos,w->plot.y.LegendPos, */
     /*              w->plot.x.Center,w->plot.y.Center); */
       
@@ -3749,9 +3827,8 @@ DrawCartesianYLabelAndTitle  (SciPlotWidget w)
 static void 
 DrawCartesianXMajorAndMinor (SciPlotWidget w)
 {
-  real x, y, x1, y1, x2, y2, tic, val, height, majorval;
-  int j, precision;
-  char numberformat[16], label[16];
+  real x, x1, y1, x2, y2, tic, val, majorval;
+  int j;
 
   if (!w->plot.DrawMajor && !w->plot.DrawMinor)
     return;
@@ -3764,8 +3841,6 @@ DrawCartesianXMajorAndMinor (SciPlotWidget w)
 
   if (w->plot.XLog) {
     val = w->plot.x.DrawOrigin;
-    if (precision > 0)
-      precision--;
   }
   else {
     val = w->plot.x.DrawOrigin;
@@ -3830,9 +3905,8 @@ DrawCartesianXMajorAndMinor (SciPlotWidget w)
 static void 
 DrawCartesianYMajorAndMinor (SciPlotWidget w)
 {
-  real x, y, x1, y1, x2, y2, tic, val, height, majorval;
-  int j, precision;
-  char numberformat[16], label[16];
+  real y, x1, y1, x2, y2, tic, val, majorval;
+  int j;
 
   if (!w->plot.DrawMajor && !w->plot.DrawMinor)
     return;
@@ -3846,8 +3920,6 @@ DrawCartesianYMajorAndMinor (SciPlotWidget w)
   /* draw y direction */
   if (w->plot.YLog) {
     val = w->plot.y.DrawOrigin;
-    if (precision > 0)
-      precision--;
   }
   else 
     val = w->plot.y.DrawOrigin;
@@ -3913,7 +3985,7 @@ DrawCartesianYMajorAndMinor (SciPlotWidget w)
 static void 
 DrawCartesianXAxis (SciPlotWidget w, int type)
 {
-  real x, y, x1, y1, x2, y2, tic, val, height, majorval;
+  real x, x1, y1, x2, y2, tic, val, height, majorval;
   int j, precision;
   char numberformat[16], label[16];
 
@@ -4012,7 +4084,7 @@ DrawCartesianXAxis (SciPlotWidget w, int type)
 static void 
 DrawCartesianYAxis (SciPlotWidget w, int type)
 {  
-  real x, y, x1, y1, x2, y2, tic, val, height, majorval;
+  real y, x1, y1, x2, y2, tic, val, height, majorval;
   int j, precision;
   char numberformat[16], label[16];
 
@@ -4333,7 +4405,12 @@ DrawAll (SciPlotWidget w)
 {
 #ifdef MOTIF
   if(w->primitive.shadow_thickness > 0) {
-    DrawShadows(w, True, 0, 0, w->core.width, w->core.height);
+  /* Just support shadow in, out or none (not etched in or out) */
+    if(w->plot.ShadowType == XmSHADOW_OUT) {
+      DrawShadow(w, True, 0, 0, w->core.width, w->core.height);
+    } else if (w->plot.ShadowType == XmSHADOW_IN) {
+      DrawShadow(w, False, 0, 0, w->core.width, w->core.height);
+    }
   }
 #endif  
   if (w->plot.ChartType == XtCARTESIAN) {
@@ -4450,6 +4527,8 @@ SciPlotSetBackgroundColor (Widget wi, int color)
 	w->core.background_pixel, &fg, &shade1, &shade2, &select);
       w->plot.ShadowColor1 = ColorStore(w, shade1);
       w->plot.ShadowColor2 = ColorStore(w, shade2);
+      w->primitive.top_shadow_color = shade1;
+      w->primitive.bottom_shadow_color = shade2;
     }
 #endif
   }
@@ -4668,6 +4747,9 @@ SciPlotListSetMarkerSize (Widget wi, int idnum, float size)
     p->markersize=size;
 }
 
+#if 0
+/* KE: p is not initialized in this routine
+ *   The routine needs to be done properly if it is to be used */
 void
 SciPlotListSetMarkerText (Widget wi, int idnum, char** text, int num,
 			  int style)
@@ -4726,7 +4808,7 @@ SciPlotListSetMarkerText (Widget wi, int idnum, char** text, int num,
     p->PointStyle = style;
   }
 }
-
+#endif
 
 void 
 SciPlotSetXAutoScale (Widget wi)
@@ -4888,22 +4970,22 @@ SciPlotPrintStatistics (Widget wi)
 
   w = (SciPlotWidget) wi;
 
-  printf("Title=%s\nxlabel=%s\tylabel=%s\n",
+  SciPlotPrintf("Title=%s\nxlabel=%s\tylabel=%s\n",
     w->plot.plotTitle, w->plot.xlabel, w->plot.ylabel);
-  printf("ChartType=%d\n", w->plot.ChartType);
-  printf("Degrees=%d\n", w->plot.Degrees);
-  printf("XLog=%d\tYLog=%d\n", w->plot.XLog, w->plot.YLog);
-  printf("XAutoScale=%d\tYAutoScale=%d\n",
+  SciPlotPrintf("ChartType=%d\n", w->plot.ChartType);
+  SciPlotPrintf("Degrees=%d\n", w->plot.Degrees);
+  SciPlotPrintf("XLog=%d\tYLog=%d\n", w->plot.XLog, w->plot.YLog);
+  SciPlotPrintf("XAutoScale=%d\tYAutoScale=%d\n",
     w->plot.XAutoScale, w->plot.YAutoScale);
   for (i = 0; i < w->plot.num_plotlist; i++) {
     p = w->plot.plotlist + i;
     if (p->draw) {
-      printf("\nLegend=%s\n", p->legend);
-      printf("Styles: point=%d line=%d  Color: point=%d line=%d\n",
+      SciPlotPrintf("\nLegend=%s\n", p->legend);
+      SciPlotPrintf("Styles: point=%d line=%d  Color: point=%d line=%d\n",
 	p->PointStyle, p->LineStyle, p->PointColor, p->LineColor);
       for (j = 0; j < p->number; j++)
-	printf("%f\t%f\n", p->data[j].x, p->data[j].y);
-      printf("\n");
+	SciPlotPrintf("%f\t%f\n", p->data[j].x, p->data[j].y);
+      SciPlotPrintf("\n");
     }
   }
 }
@@ -4958,8 +5040,8 @@ SciPlotUpdate (Widget wi)
   w = (SciPlotWidget) wi;
   EraseAll(w);
 
-#ifdef DEBUG_SCIPLOT
-  SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+  SciPlotPrintStatistics(wi);
 #endif
   if (w->plot.XNoCompMinMax) {
     ComputeAll(w, NO_COMPUTE_MIN_MAX_X);
@@ -4980,8 +5062,8 @@ SciPlotUpdateSimple (Widget wi, int type)
 
   w = (SciPlotWidget) wi;
   EraseAll(w);
-#ifdef DEBUG_SCIPLOT
-  SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+  SciPlotPrintStatistics(wi);
 #endif
   ComputeAll(w, type);
   DrawAll(w);
@@ -5122,7 +5204,7 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
 	       real* drawOrigin, real* drawMax)
 {
   real range, rnorm, delta, calcmin, calcmax;
-  int nexp, majornum, minornum, majordecimals, decimals, i;
+  int nexp, majornum, minornum, majordecimals, i;
 
   range = max - min;
   if (log) {
@@ -5136,7 +5218,7 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
     }
 
     /*    
-    printf("calcmin=%e min=%e   calcmax=%e max=%e\n",calcmin,min, 
+    SciPlotPrintf("calcmin=%e min=%e   calcmax=%e max=%e\n",calcmin,min, 
 	   calcmax,max); */
     
     delta = 10.0;
@@ -5157,8 +5239,8 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
 	break;
     }
     delta *= powi(10.0, nexp);
-#ifdef DEBUG_SCIPLOT
-    printf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
 #endif
 
     if (min < 0.0)
@@ -5221,7 +5303,7 @@ sciPlotMotionAP (SciPlotWidget w,
   real newlim;
   real txmin, txmax;
   real tymin, tymax;
-  real xoffset, yoffset;
+  real xoffset;
   real newlim0, newlim1;
 
 #ifdef MOTIF
@@ -5661,8 +5743,8 @@ SciPlotZoomIn (Widget wi)
 
   /* redraw everything */
   EraseAll(w);
-#ifdef DEBUG_SCIPLOT
-  SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+  SciPlotPrintStatistics(wi);
 #endif
   ComputeAll(w, NO_COMPUTE_MIN_MAX);
   /* ComputeAll(w, COMPUTE_MIN_MAX);*/
@@ -5675,7 +5757,7 @@ int
 SciPlotZoomInX (Widget wi)
 {
   SciPlotWidget w = (SciPlotWidget)wi;
-  real xoffset, yoffset;
+  real xoffset;
   real xmin, xmax;
 
   xmin = w->plot.x.DrawOrigin;
@@ -5695,8 +5777,8 @@ SciPlotZoomInX (Widget wi)
 
   /* redraw everything */
   EraseAll(w);
-#ifdef DEBUG_SCIPLOT
-  SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+  SciPlotPrintStatistics(wi);
 #endif
   ComputeAll(w, NO_COMPUTE_MIN_MAX);
   /* ComputeAll(w, COMPUTE_MIN_MAX);*/
@@ -5753,8 +5835,8 @@ SciPlotZoomOut (Widget wi)
 
     /* redraw everything */
     EraseAll(w);
-#ifdef DEBUG_SCIPLOT
-    SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+    SciPlotPrintStatistics(wi);
 #endif
     /* ComputeAll(w, COMPUTE_MIN_MAX);*/
     ComputeAll(w, NO_COMPUTE_MIN_MAX);
@@ -5798,8 +5880,8 @@ SciPlotZoomOutX (Widget wi)
 
     /* redraw everything */
     EraseAll(w);
-#ifdef DEBUG_SCIPLOT
-    SciPlotPrintStatistics(w);
+#if DEBUG_SCIPLOT
+    SciPlotPrintStatistics(wi);
 #endif
     /* ComputeAll(w, COMPUTE_MIN_MAX);*/
     ComputeAll(w, NO_COMPUTE_MIN_MAX);
@@ -5868,7 +5950,7 @@ SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
 
 #ifdef MOTIF
 static void 
-DrawShadows (SciPlotWidget w, Boolean raised, real x, real y,
+DrawShadow (SciPlotWidget w, Boolean raised, real x, real y,
   real width, real height)
 {
   int i, color1, color2, color;
@@ -5895,6 +5977,28 @@ DrawShadows (SciPlotWidget w, Boolean raised, real x, real y,
   }
 }
 #endif
+
+/* This function handles various problems with printing under Windows
+ *   using Exceed */
+static void
+SciPlotPrintf(const char *fmt, ...)
+{
+    va_list vargs;
+    static char lstring[1024];  /* DANGER: Fixed buffer size */
+    
+    va_start(vargs,fmt);
+    vsprintf(lstring,fmt,vargs);
+    va_end(vargs);
+    
+    if(lstring[0] != '\0') {
+#ifdef WIN32
+	lprintf("%s",lstring);
+#else
+	printf("%s",lstring);
+#endif
+    }
+}
+  
 /* **************************** Emacs Editing Sequences ***************** */
 /* Local Variables: */
 /* c-basic-offset: 2 */

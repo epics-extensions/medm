@@ -221,7 +221,9 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CPDATA_RC:
 	globalResourceBundle.cpData[
 	  elementTypeWhoseColorIsBeingEditedIndex].data_clr = colorIndex;
+#ifdef CARTESIAN_PLOT	
 	cpUpdateMatrixColors();
+#endif	
 	break;
     default :
 	return;

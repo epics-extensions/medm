@@ -194,7 +194,7 @@ static Pixel *cpColorCells[MAX_TRACES];
  
 /* Widget cpAxisForm defined in medm.h since execute-time needs it too */
  
-/* define array of widgets (for X, Y1, Y2) */
+/* Define array of widgets (for X, Y1, Y2) */
 static Widget axisRangeMenu[3];                 /* X_AXIS_ELEMENT =0 */
 static Widget axisStyleMenu[3];                 /* Y1_AXIS_ELEMENT=1 */
 static Widget axisRangeMin[3], axisRangeMax[3]; /* Y2_AXIS_ELEMENT=2 */

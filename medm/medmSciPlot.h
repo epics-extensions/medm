@@ -3,7 +3,7 @@
 #ifndef __MEDMSCIPLOT_H__
 #define __MEDMSCIPLOT_H__
 
-#include <SciPlot.h>
+#include "SciPlot.h"
 
 #define CP_GENERAL 0
 

@@ -499,7 +499,7 @@ void CpUpdateWidget(Widget w, int full)
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
   DlCartesianPlot *dlCartesianPlot, CartesianPlot *pcp)
 {
-    Arg args[46];
+    Arg args[47];
     int nargs;
     XColor xColors[2];
     char rgb[2][16], string[24];
@@ -729,12 +729,15 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	break;
     }
 
-  /* Add pointer to CartesianPlot struct as userData to widget */
-    XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
+  /* Don't show outlines in filled plots */
+    XtSetArg(args[nargs], XtNxrtGraphShowOutlines, False); nargs++;
 
-  /* Set miscellaneous  args */
+  /* Set miscellaneous args */
     XtSetArg(args[nargs],XmNtraversalOn,False); nargs++;
     XtSetArg(args[nargs], XtNxrtDoubleBuffer, True); nargs++;
+
+  /* Add pointer to CartesianPlot struct as userData to widget */
+    XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
 
   /* Create the widget */
     w = XtCreateWidget("cartesianPlot", xtXrtGraphWidgetClass,

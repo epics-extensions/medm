@@ -6,9 +6,10 @@
 
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_USER_DATA 0
+#define DEBUG_FONTS 0
 
 #define MAX(a,b)  ((a)>(b)?(a):(b))
-#define MIN_FONT_HEIGHT 8
+#define MIN_FONT_HEIGHT 0
 
 #include "medm.h"
 #include "medmSciPlot.h"
@@ -109,12 +110,12 @@ int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
 }
 
 int CpDataSetXElement(CpDataHandle hData, int set, int point, double x) {
-    hData->data[set].xp[point] = x;
+    hData->data[set].xp[point] = (float)x;
     return 1;
 }
 
 int CpDataSetYElement(CpDataHandle hData, int set, int point, double y) {
-    hData->data[set].yp[point] = y;
+    hData->data[set].yp[point] = (float)y;
     return 1;
 }
 
@@ -125,7 +126,7 @@ void CpGetAxisInfo(Widget w,
   XcVType *xMaxF, XcVType *yMaxF, XcVType *y2MaxF,
   XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF)
 {
-    float xMin, yMin, y2Min, xMax, yMax, y2Max;
+    float xMin, yMin, xMax, yMax;
 
   /* Get available information from SciPlot */
     SciPlotGetXAxisInfo(w, &xMin, &xMax, xAxisIsLog, xAxisIsAuto);
@@ -143,8 +144,8 @@ void CpGetAxisInfo(Widget w,
     XtVaGetValues(w, XmNuserData, userData, NULL);
     
   /* Define the rest */
-    *xAxisIsTime = False;     /* Not implemented */
-    **timeFormat = '\0';      /* Not implemented */
+    *xAxisIsTime = False;      /* Not implemented */
+    *timeFormat = NULL;        /* Not implemented */
     *y2AxisIsLog = False;      /* Not implemented */
     *y2AxisIsAuto = True;      /* Not implemented */
 }
@@ -152,7 +153,7 @@ void CpGetAxisInfo(Widget w,
 void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
   XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF)
 {
-    float xMin, yMin, y2Min, xMax, yMax, y2Max;
+    float xMin, yMin, xMax, yMax;
 
   /* Get available information from SciPlot */
     SciPlotGetXScale(w, &xMin, &xMax);
@@ -189,7 +190,7 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 
   /* Line style */
     if(lineType == CP_LINE_NONE) lineStyle = XtLINE_NONE;
-    else lineType = XtLINE_SOLID;
+    else lineStyle = XtLINE_SOLID;
 
   /* Point style (depends on trace not data set) */
     if(trace == 0) {
@@ -229,7 +230,7 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 
   /* Set the styles */
     SciPlotListSetStyle(w, listid, colorid, pointStyle, colorid, lineStyle);
-    SciPlotListSetMarkerSize(w, listid, pointSize*2/3);
+    SciPlotListSetMarkerSize(w, listid, (float)(pointSize*2./3.));
     SciPlotUpdate(w);
 }
 
@@ -441,10 +442,8 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     Arg args[75];     /* Count later */
     int nargs;
     int fgcolorid, bgcolorid;
-    char rgb[2][16], string[24];
-    int usedHeight, usedCharWidth, bestSize, preferredHeight;
-    int i, k, iPrec;
-    XcVType minF, maxF, tickF;
+    int preferredHeight;
+    XcVType minF, maxF;
     Widget w;
     int validTraces = pcp ? pcp->nTraces : 0;
 
@@ -455,16 +454,22 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlCartesianPlot->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
     XtSetArg(args[nargs],XmNborderWidth,0); nargs++;
-#if 0
-  /* Not a valid resource for SciPlot */
+    XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
-#endif    
     preferredHeight = MIN(dlCartesianPlot->object.width,
       dlCartesianPlot->object.height)/TITLE_SCALE_FACTOR;
-#if 1
+#if DEBUG_FONTS
+    print("CpCreateCartesianPlot: Axis and Label Font\n"
+      "  dlCartesianPlot->object.width=%d\n"
+      "  dlCartesianPlot->object.height=%d\n"
+      "  TITLE_SCALE_FACTOR=%d\n"
+      "  preferredHeight=%d\n",
+      dlCartesianPlot->object.width,dlCartesianPlot->object.height,
+      TITLE_SCALE_FACTOR,preferredHeight); 
+      
+#endif    
     XtSetArg(args[nargs],XtNtitleFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
-#endif    
     if (strlen(dlCartesianPlot->plotcom.title) > 0) {
 	XtSetArg(args[nargs],XtNplotTitle,dlCartesianPlot->plotcom.title); nargs++;
 	XtSetArg(args[nargs],XtNshowTitle,True); nargs++;
@@ -485,12 +490,20 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     }
     preferredHeight = MIN(dlCartesianPlot->object.width,
       dlCartesianPlot->object.height)/AXES_SCALE_FACTOR;
-#if 1
+#if DEBUG_FONTS
+    print("CpCreateCartesianPlot: Axis and Label Font\n"
+      "  dlCartesianPlot->object.width=%d\n"
+      "  dlCartesianPlot->object.height=%d\n"
+      "  AXES_SCALE_FACTOR=%d\n"
+      "  preferredHeight=%d\n",
+      dlCartesianPlot->object.width,dlCartesianPlot->object.height,
+      AXES_SCALE_FACTOR,preferredHeight); 
+      
+#endif    
     XtSetArg(args[nargs],XtNaxisFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
     XtSetArg(args[nargs],XtNlabelFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
-#endif
 
   /* SciPlot-specific */
     XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
@@ -506,6 +519,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 #endif    
 
 #if 0
+  /* Not implemented or not implemented this way */
   /* Set the plot type */
   /* (Use the default of Cartesian) */
     switch (dlCartesianPlot->style) {
@@ -553,6 +567,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     }
 
 #if 0
+  /* Not implemented */
   /* Y2 Axis Style */
     switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].axisStyle) {
     case LINEAR_AXIS:
@@ -625,6 +640,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     }
 
 #if 0    
+  /* Not implemented  */
   /* Set Y2 Axis Range (Unsupported) */
     switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
     case CHANNEL_RANGE:		/* handle as default until connected */
@@ -678,6 +694,9 @@ void dumpCartesianPlot(Widget w)
     String xLabel;
     String yLabel;
     XtPointer userData;
+    int titleFont;
+    int axisFont;
+    int labelFont;
 
     print("\nSciPlot Widget (%x)\n");
 
@@ -705,6 +724,9 @@ void dumpCartesianPlot(Widget w)
     XtSetArg(args[n],XtNplotTitle,&plotTitle); n++;
     XtSetArg(args[n],XtNxLabel,&xLabel); n++;
     XtSetArg(args[n],XtNyLabel,&yLabel); n++;
+    XtSetArg(args[n],XtNtitleFont,&titleFont); n++;
+    XtSetArg(args[n],XtNaxisFont,&axisFont); n++;
+    XtSetArg(args[n],XtNlabelFont,&labelFont); n++;
     XtSetArg(args[n],XmNuserData,&userData); n++;
     XtGetValues(w,args,n);
     
@@ -718,6 +740,18 @@ void dumpCartesianPlot(Widget w)
     print("  shadowThickness: %d\n",shadowThickness);
     print("  margin: %d\n",margin);
     print("  titleMargin: %d\n",titleMargin);
+    print("  titleFont: %x Size: %d Name: %x Attribute: %x\n",
+      titleFont,titleFont&XtFONT_SIZE_MASK,titleFont&XtFONT_NAME_MASK,
+      titleFont&XtFONT_ATTRIBUTE_MASK);
+    print("  axisFont: %x Size: %d Name: %x Attribute: %x\n",
+      axisFont,axisFont&XtFONT_SIZE_MASK,axisFont&XtFONT_NAME_MASK,
+      axisFont&XtFONT_ATTRIBUTE_MASK);
+    print("  labelFont: %x Size: %d Name: %x Attribute: %x\n",
+      labelFont,labelFont&XtFONT_SIZE_MASK,labelFont&XtFONT_NAME_MASK,
+      labelFont&XtFONT_ATTRIBUTE_MASK);
+    print("    Times=%x Helvetica=%x\n",XtFONT_TIMES,XtFONT_HELVETICA);
+    print("    Bold=%x Italic=%x BoldItalic=%x\n",XtFONT_BOLD,
+       XtFONT_ITALIC,XtFONT_BOLD_ITALIC);
     print("  drawMajor: %s\n",drawMajor?"True":"False");
     print("  drawMinor: %s\n",drawMinor?"True":"False");
     print("  drawMajorTics: %s\n",drawMajorTics?"True":"False");
