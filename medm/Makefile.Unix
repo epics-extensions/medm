@@ -47,6 +47,7 @@ CC += -xsb
 #CC += -H
 #CC += -DXSYNC
 #CC += -Wl,-m -Wl,-xildoff
+#CC += -Wl,-m -xildoff
 #CC += -y_XpmFreeXpmImage -t
 # Use cc -flags (on Solaris) to find what these mean
 
@@ -234,6 +235,12 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.37  1998/06/04 14:02:48  evans
+# Added handling Btn2 in handleExecuteButtonPress by calling
+# XUngrabPointer to avoid workstation hanging when Btn2 is inadvertently
+# pressed on a Related Display after the menu has been opened by a Btn1
+# click.
+#
 # Revision 1.36  1998/03/03 15:16:54  evans
 # Initial changes for WIN32.  These changes allow the medm directory to
 # build on WIN32 without warnings and errors at level 2.  There are

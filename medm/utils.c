@@ -1187,7 +1187,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
    * KE: If include KeyPressMask get:
    *   BadValue (integer parameter out of range for operation)
    *   but it seems to work OK without it ??? */
-#if DEBUG_EVENTS > 1
+#if DEBUG_EVENTS
     fprintf(stderr,"In doRubberbanding before XGrabPointer\n");
 #endif
     XGrabPointer(display,window,FALSE,
@@ -1319,7 +1319,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     xOffset = 0;
     yOffset = 0;
 
-#if DEBUG_EVENTS > 1
+#if DEBUG_EVENTS
     fprintf(stderr,"In doDragging before XGrabPointer\n");
 #endif
 

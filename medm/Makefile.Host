@@ -1,7 +1,5 @@
 # Makefile.Host for medm/medm
 
-TEMPORARY=YES
-
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
@@ -42,7 +40,6 @@ endif     #ifdef XRTGRAPH
 #else
 #endif
 
-ifdef TEMPORARY
 ifdef WIN32
 # If objects were compiled with different default runtime libraries
 #   (not a good idea), specify which one you want to use by making it
@@ -59,7 +56,6 @@ USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
 USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
 USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
 USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
-endif
 endif
 
 USR_CFLAGS += -DEDITRES
@@ -152,9 +148,8 @@ SRCS += updateMonitors.c
 SRCS += utils.c 
 SRCS += xgif.c
 
-ifdef WIN32
 RCS_WIN32 += medm.rc
-endif
+alh.res:../medm.ico
 
 include $(TOP)/config/RULES.Host
 
