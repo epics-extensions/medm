@@ -380,6 +380,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 #if 1
   if ((pCh == NULL) || (pCh->chid == NULL)) return;
+  if (args.dbr == NULL) return;
 #endif
 
   caTask.caEventCount++;
@@ -454,6 +455,7 @@ void medmUpdateChannelCb(struct event_handler_args args) {
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 #if 1
   if ((pCh == NULL) || (pCh->chid == NULL)) return;
+  if (args.dbr == NULL) return;
 #endif
   caTask.caEventCount++;
   if (ca_read_access(args.chid)) {
