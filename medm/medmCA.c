@@ -267,7 +267,7 @@ void medmCATerminate()
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
-	t = medmTime();Terminate
+	t = medmTime();
       /* Don't allow early returns */
 	ca_pend_event(20.0*CA_PEND_EVENT_TIME);
 	t = medmTime() - t;

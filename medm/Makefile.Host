@@ -234,6 +234,7 @@ xxxx:
 	@echo RCS_WIN32: $(RCS_WIN32)
 	@echo RES: $(RES)
 	@echo PROD_RESS: $(PROD_RESS)
+	@echo XRTGRAPH_EXTENSIONS: $(XRTGRAPH_EXTENSIONS)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

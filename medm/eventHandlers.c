@@ -71,9 +71,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
+#include <XrtGraph.h>
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
-#include <XrtGraph.h>
 #include <XrtGraphProp.h>
 #endif
 #endif
@@ -150,6 +150,12 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	if (pE) {
 #if DEBUG_PVINFO
 	    print("handleExecuteButtonPress: Element: %s\n",elementType(pE->type));
+	    print("  xEvent->button: %4d\n",xEvent->button);
+	    print("  Shift=%s Ctrl=%s\n",
+	      (xEvent->state & ShiftMask)?"Yes":"No",
+	      (xEvent->state & ControlMask)?"Yes":"No");
+	    print("  w=%x pE->widget=%x\n",
+	      w, pE->widget);
 	    print("  xEvent->x: %4d\n",xEvent->x);
 	    print("  xEvent->y: %4d\n",xEvent->y);
 #endif    
@@ -168,8 +174,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	      /* Implement Xrt/Graph property editor */
 		if (widget = pE->widget) {
 		    if (xEvent->state & ControlMask) {
-#if XRT_VERSION > 2
-#ifdef XRT_EXTENSIONS
+#if XRT_VERSION > 2 && defined(XRT_EXTENSIONS)
 		      /* Bring up XRT Property Editor */
 			dmSetAndPopupWarningDialog(displayInfo,
 			  "The XRT/graph Property Editor is known to cause memory leaks.\n"
@@ -184,7 +189,6 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			} else if(displayInfo->warningDialogAnswer == 3) {
 			    callBrowser(MEDM_HELP_PATH"/MEDM.html#XRTGraphInteractions");
 			}
-#endif			    
 #endif			    
 		    } else {
 #if DEBUG_CARTESIAN_PLOT
