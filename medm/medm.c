@@ -702,8 +702,8 @@ Name of file in which to save display:",
     "Medm*scForm.scMatrix.columnRC.marginHeight: 5",
 #endif    
   /* Medm widget resource specifications */
-    "Medm*warningDialog.foreground: white",
-    "Medm*warningDialog.background: red",
+    "Medm*warningDialog*foreground: white",
+    "Medm*warningDialog*background: red",
     "Medm*warningDialog.dialogTitle: Warning",
     "Medm*Indicator.AxisWidth: 3",
     "Medm*Bar.AxisWidth: 3",
