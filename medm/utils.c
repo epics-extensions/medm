@@ -380,9 +380,9 @@ void dmCleanupDisplayInfo(
   displayInfo->drawingAreaBackgroundColor = 0;
   displayInfo->drawingAreaForegroundColor = 0;
   displayInfo->childCount = 0;
+#if 0
   displayInfo->otherChildCount = 0;
-
-
+#endif
 }
 
 

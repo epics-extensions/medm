@@ -1,3 +1,13 @@
+Version 2.1.17
+==============
+Fixed the following problem.
+- Remove one of the two limits of how many related display buttons you can
+  create. However, there is still a limit of how many controllers and monitors
+  (except text update) you can create.  The limit is 1000. If the limit
+  is execeeded, the medm eventually crashes itself.  This will be fixed
+  in 2.2.x and the number of objects will be constrainted by how much
+  memory is available.
+
 Version 2.1.16
 ==============
 Fixed the following problem.

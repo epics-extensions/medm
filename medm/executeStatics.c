@@ -495,6 +495,9 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
  *   as well, for destruction when new displays are selected at the top level
  */
   Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
+#if 1
+  Widget widget;
+#endif
 
 
   displayInfo->useDynamicAttribute = FALSE;
@@ -533,8 +536,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
   relatedDisplayPulldownMenu = XmCreatePulldownMenu(
 	displayInfo->child[displayInfo->childCount-1],
 		"relatedDisplayPulldownMenu",args,2);
+#if 0
   displayInfo->otherChild[displayInfo->otherChildCount++] = 
 	relatedDisplayPulldownMenu;
+#endif
 
   tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
   if (tearOff) {
@@ -575,13 +580,21 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
   XtSetArg(args[17],XmNmarginWidth,0);
   XtSetArg(args[18],XmNmarginHeight,0);
 
+#if 1
+  widget = 
+#else
   displayInfo->otherChild[displayInfo->otherChildCount++] = 
+#endif
 	XtCreateManagedWidget("relatedDisplayMenuLabel",
 		xmCascadeButtonGadgetClass, 
 		displayInfo->child[displayInfo->childCount-1], args, 19);
 
 /* add destroy callback to free pixmap from pixmap cache */
+#if 1
+  XtAddCallback(widget,
+#else
   XtAddCallback(displayInfo->otherChild[displayInfo->otherChildCount-1],
+#endif
 	XmNdestroyCallback,freePixmapCallback,
 	(XtPointer)relatedDisplayPixmap);
 
@@ -598,8 +611,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo,
 	XtSetArg(args[4], XmNuserData, nameArgs);
         relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
 		xmPushButtonWidgetClass, relatedDisplayPulldownMenu, args, 5);
+#if 0
 	displayInfo->otherChild[displayInfo->otherChildCount++] = 
 		relatedDisplayMenuButton;
+#endif
 	XtAddCallback(relatedDisplayMenuButton,XmNactivateCallback,
 		(XtCallbackProc)dmCreateRelatedDisplay,(XtPointer)displayInfo);
 	XtAddCallback(relatedDisplayMenuButton,XmNdestroyCallback,
@@ -678,6 +693,9 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
  *   as well, for destruction when new shells are selected at the top level
  */
   Widget shellCommandPulldownMenu, shellCommandMenuButton;
+#if 1
+  Widget widget;
+#endif
 
 
   displayInfo->useDynamicAttribute = FALSE;
@@ -714,8 +732,10 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   shellCommandPulldownMenu = XmCreatePulldownMenu(
 	displayInfo->child[displayInfo->childCount-1],
 		"shellCommandPulldownMenu",args,2);
+#if 0
   displayInfo->otherChild[displayInfo->otherChildCount++] = 
 	shellCommandPulldownMenu;
+#endif
 
   pixmapSize = MIN(dlShellCommand->object.width,dlShellCommand->object.height);
 /* allowing for shadows etc */
@@ -734,13 +754,21 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   XtSetArg(args[9],XmNlabelType,XmPIXMAP); 
   XtSetArg(args[10],XmNsubMenuId,shellCommandPulldownMenu);
   XtSetArg(args[11],XmNhighlightOnEnter,TRUE);
+#if 1
+  widget =
+#else
   displayInfo->otherChild[displayInfo->otherChildCount++] = 
+#endif
 	XtCreateManagedWidget("shellCommandMenuLabel",
 		xmCascadeButtonGadgetClass, 
 		displayInfo->child[displayInfo->childCount-1], args, 12);
 
 /* add destroy callback to free pixmap from pixmap cache */
+#if 1
+  XtAddCallback(widget,
+#else
   XtAddCallback(displayInfo->otherChild[displayInfo->otherChildCount-1],
+#endif
 	XmNdestroyCallback,freePixmapCallback,
 	(XtPointer)shellCommandPixmap);
 
@@ -752,8 +780,10 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
         XtSetArg(args[4], XmNuserData,(XtPointer)displayInfo);
         shellCommandMenuButton = XtCreateManagedWidget("relatedButton",
 		xmPushButtonWidgetClass, shellCommandPulldownMenu, args, 5);
+#if 0
 	displayInfo->otherChild[displayInfo->otherChildCount++] = 
 		shellCommandMenuButton;
+#endif
 	XtAddCallback(shellCommandMenuButton,XmNactivateCallback,
 		(XtCallbackProc)dmExecuteShellCommand,
 		(XtPointer)&(dlShellCommand->command[i]));

@@ -69,7 +69,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .15  03-06-96        vong    2.1.14 release
  * .16  03-19-96        vong    2.1.15 release
  * .17  03-22-96        vong    2.1.16 release
- * .17  mm-dd-yy        vong    2.1.17 release
+ * .18  04-11-96        vong    2.1.17 release
+ * .19  mm-dd-yy        vong    2.1.18 release
  *
  *****************************************************************************
 */
@@ -79,10 +80,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  */
 #define MEDM_VERSION		2
 #define MEDM_REVISION		1
-#define MEDM_UPDATE_LEVEL	16
+#define MEDM_UPDATE_LEVEL	17
 
 #ifdef __COLOR_RULE_H__
-#define MEDM_VERSION_STRING	"MEDM Version 2.1.16a"
+#define MEDM_VERSION_STRING	"MEDM Version 2.1.17a"
 #else
-#define MEDM_VERSION_STRING	"MEDM Version 2.1.16"
+#define MEDM_VERSION_STRING	"MEDM Version 2.1.17"
 #endif

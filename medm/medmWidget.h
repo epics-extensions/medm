@@ -273,9 +273,13 @@ typedef struct _DisplayInfo {
 	Widget		shellCommandPromptD;
 /* widget instance data */
 	Widget		child[MAX_CHILDREN];	  /* children of drawing area */
+#if 0
 	Widget		otherChild[MAX_CHILDREN]; /* misc. other children     */
+#endif
 	int		childCount;
+#if 0
 	int		otherChildCount;
+#endif
 /* periodic tasks */
         UpdateTask      updateTaskListHead;
         UpdateTask      *updateTaskListTail;
