@@ -292,9 +292,9 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 
 #define NUM_INITIAL_FDS 100
 #ifdef WIN32
-    int medmInputMask=XtInputReadWinsock;
+    int inputReadMask=XtInputReadWinsock;
 #else
-    int medmInputMask=XtInputReadMask;
+    int inputReadMask=XtInputReadMask;
 #endif
     
     typedef struct {
@@ -320,7 +320,7 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 	    
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
-	      (XtPointer)medmInputMask,
+	      (XtPointer)inputReadMask,
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
 	} else {
@@ -335,7 +335,7 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 #endif
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
-	      (XtPointer)medmInputMask,
+	      (XtPointer)inputReadMask,
 	      medmProcessCA,(XtPointer)NULL);
 	    numInps++;
 	}
