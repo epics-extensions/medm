@@ -196,7 +196,7 @@ static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
 
-Widget mainFilePDM, mainHelpPDM;
+Widget mainFilePDM, mainHelpPDM, mainMB;
 static Widget printerSetupDlg = 0;
 static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
@@ -1092,13 +1092,15 @@ static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 #ifdef __cplusplus
-static void editMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 #else
 static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (int)cd;
+    int fromMain;
+    Widget parent;
 
   /* simply return if no current display */
     if (cdi == NULL) return;
@@ -1125,6 +1127,35 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case EDIT_PASTE_BTN:
+      /* See if this came from the main window edit menu
+       *   (either attached or torn off) */
+	parent = w;
+	fromMain = 1;
+	while(parent != mainShell) {
+	    parent = XtParent(parent);
+	    if(parent == mainMB) {
+	      /* Definitely from main window */
+		break;
+	    } else if(parent == cdi->drawingArea) {
+	      /* Definitely not from main window */
+		fromMain = 0;
+		break;
+	    }
+	}
+	if(fromMain) {
+	  /* Pushed on main edit menu, need to determine which display */
+	    Widget widget;
+	    XEvent event;
+	    
+	    if (displayInfoListHead->next != displayInfoListTail) {
+	      /* More than one display, query user */
+		widget = XmTrackingEvent(mainShell,pasteCursor,False,&event);
+		if (widget) {
+		    cdi = currentDisplayInfo =
+		      dmGetDisplayInfoFromWidget(widget);
+		}  
+	    }
+	}
 	copyElementsIntoDisplay();
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
@@ -2339,6 +2370,50 @@ static void createCursors()
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
+  /* PASTE cursor */
+    XTextExtents(fontTable[6],"Paste",5,&dir,&asc,&desc,&overall);
+    sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
+      overall.width+hotSpotWidth,asc+desc,1);
+    maskPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
+      overall.width+hotSpotWidth,asc+desc,1);
+    XSetForeground(display,gc,0);
+    XFillRectangle(display,sourcePixmap,gc,0,0,overall.width+hotSpotWidth,
+      asc+desc);
+    XFillRectangle(display,maskPixmap,gc,0,0,overall.width+hotSpotWidth,
+      asc+desc);
+    radius = MIN(hotSpotWidth,(Dimension)((asc+desc)/2));
+    XSetForeground(display,gc,1);
+    XFillArc(display,maskPixmap,gc,hotSpotWidth/2 - radius/2,
+      (asc+desc)/2 - radius/2,radius,radius,0,360*64);
+    XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"Paste",5);
+    XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"Paste",5);
+    pasteCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
+      &colors[0],&colors[1],0,(asc+desc)/2);
+    XFreePixmap(display,sourcePixmap);
+    XFreePixmap(display,maskPixmap);
+
+  /* PV cursor */
+    XTextExtents(fontTable[6],"PV",2,&dir,&asc,&desc,&overall);
+    sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
+      overall.width+hotSpotWidth,asc+desc,1);
+    maskPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
+      overall.width+hotSpotWidth,asc+desc,1);
+    XSetForeground(display,gc,0);
+    XFillRectangle(display,sourcePixmap,gc,0,0,overall.width+hotSpotWidth,
+      asc+desc);
+    XFillRectangle(display,maskPixmap,gc,0,0,overall.width+hotSpotWidth,
+      asc+desc);
+    radius = MIN(hotSpotWidth,(Dimension)((asc+desc)/2));
+    XSetForeground(display,gc,1);
+    XFillArc(display,maskPixmap,gc,hotSpotWidth/2 - radius/2,
+      (asc+desc)/2 - radius/2,radius,radius,0,360*64);
+    XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"PV",2);
+    XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"PV",2);
+    pvCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
+      &colors[0],&colors[1],0,(asc+desc)/2);
+    XFreePixmap(display,sourcePixmap);
+    XFreePixmap(display,maskPixmap);
+
   /* PRINT cursor */
     XTextExtents(fontTable[6],"Print",5,&dir,&asc,&desc,&overall);
     sourcePixmap = XCreatePixmap(display,RootWindow(display,screenNum),
@@ -3402,7 +3477,7 @@ static void createMain()
     XmString acceleratorText[N_MAX_MENU_ELES];
     XmString label;
     XmButtonType buttonType[N_MAX_MENU_ELES];
-    Widget mainMB, mainBB, frame, frameLabel;
+    Widget mainBB, frame, frameLabel;
     char name[12];
     int n;
     Arg args[20];

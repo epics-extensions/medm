@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_FONTS 0
 
+#include <X11/keysym.h>
 #include <ctype.h>
 #include "medm.h"
 
@@ -461,7 +462,7 @@ DlElement *handleTextCreate(int x0, int y0)
     DlText *dlText = 0;
     Modifiers modifiers;
     KeySym keysym;
-/* buffer size for X-keycode lookups */
+  /* Buffer size for X-keycode lookups */
 #define BUFFER_SIZE     16
     char buffer[BUFFER_SIZE];
     int stringIndex;
@@ -480,9 +481,11 @@ DlElement *handleTextCreate(int x0, int y0)
     textGetValues(&globalResourceBundle,dlElement);
     dlText->object.x = x0; 
     dlText->object.y = y0;
-    dlText->object.width = 10;     /* this is arbitrary in this case */
+     /* This following are arbitrary  */
+    dlText->object.width = 10;
+    if(dlText->object.height > 40) dlText->object.height=40;
 
-  /* start with dummy string: really just based on character height */
+  /* Start with dummy string: really just based on character height */
     fontIndex = dmGetBestFontWithInfo(fontTable,MAX_FONTS,"Ag",
       dlText->object.height,dlText->object.width,
       &usedHeight,&usedWidth,FALSE); /* FALSE - don't use width */
@@ -490,6 +493,7 @@ DlElement *handleTextCreate(int x0, int y0)
     globalResourceBundle.x = x0;
     globalResourceBundle.y = y0;
     globalResourceBundle.width = dlText->object.width;
+    globalResourceBundle.height = dlText->object.height;
     cursorX = x0;
     cursorY = y0 + usedHeight;
  
@@ -502,13 +506,10 @@ DlElement *handleTextCreate(int x0, int y0)
     XGrabKeyboard(display,window,FALSE,
       GrabModeAsync,GrabModeAsync,CurrentTime);
  
-  /* now loop until button is again pressed and released */
+  /* Now loop until button is again pressed or CR is typed */
     while (TRUE) {
- 
 	XtAppNextEvent(appContext,&event);
- 
 	switch(event.type) {
- 
         case ButtonPress:
         case LeaveNotify:
 	    XUngrabPointer(display,CurrentTime);
@@ -521,11 +522,11 @@ DlElement *handleTextCreate(int x0, int y0)
 	      XtWindow(currentDisplayInfo->drawingArea),
 	      currentDisplayInfo->pixmapGC,
 	      (int)cursorX, (int)cursorY,
-	      (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
+	      (unsigned int) CURSOR_WIDTH + 1, (unsigned int)1,
 	      (int)cursorX, (int)cursorY);
-	    XBell(display,50);
-	    XBell(display,50);
-
+	    if(event.type == LeaveNotify) {
+		XBell(display,50); XBell(display,50);
+	    }
 	    return (dlElement);
  
         case KeyPress:
@@ -552,14 +553,29 @@ DlElement *handleTextCreate(int x0, int y0)
 		      (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
 		      (int)cursorX, (int)cursorY);
 		} else {
-		  /* no more characters  to remove therefore wait for next */
+		  /* No more characters to remove therefore wait for next */
 		    XBell(display,50);
 		    break;
 		}
+	      /* If Enter, then all done */
+	    } else if(keysym == XK_Return) {
+		XUngrabPointer(display,CurrentTime);
+		XUngrabKeyboard(display,CurrentTime);
+		XFlush(display);
+		dlText->object.width = XTextWidth(fontTable[fontIndex],
+		  dlText->textix,strlen(dlText->textix));
+		XtRemoveTimeOut(intervalId);
+		XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
+		  XtWindow(currentDisplayInfo->drawingArea),
+		  currentDisplayInfo->pixmapGC,
+		  (int)cursorX, (int)cursorY,
+		  (unsigned int) CURSOR_WIDTH + 1, (unsigned int) 1,
+		  (int)cursorX, (int)cursorY);
+		return (dlElement);
 	    } else {
 		length = XLookupString(key,buffer,BUFFER_SIZE,NULL,NULL);
 		if (!isprint(buffer[0]) || length == 0) break;
-	      /* ring bell and don't accept input if going to overflow string */
+	      /* Ring bell and don't accept input if going to overflow string */
 		if (stringIndex + length < MAX_TOKEN_LENGTH) {
 		    strncpy(&(dlText->textix[stringIndex]),buffer,length);
 		    stringIndex += length;
@@ -605,7 +621,7 @@ DlElement *handleTextCreate(int x0, int y0)
 	    drawText(display,XtWindow(currentDisplayInfo->drawingArea),
 	      currentDisplayInfo->gc,dlText);
  
-	  /* update these globals for blinking to work */
+	  /* Update these globals for blinking to work */
 	    cursorX = dlText->object.x + dlText->object.width;
  
 	    break;

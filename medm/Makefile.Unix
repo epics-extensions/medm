@@ -46,18 +46,15 @@ CC += -xsb
 #CC += -xP
 #CC += -H
 #CC += -DXSYNC
-#CC += -Wl,-m
+#CC += -Wl,-m -Wl,-xildoff
+#CC += -y_XpmFreeXpmImage -t
 # Use cc -flags (on Solaris) to find what these mean
 
 USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 
-USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
+USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB)
+USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX
 
-XRTGRAPH3 = /opt/local/xrtgraph3.0.0
-ifeq ($(HOST_ARCH),solaris)
-XRTGRAPH = $(XRTGRAPH3)
-endif
 
 ifdef XRTGRAPH
 # USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
@@ -66,9 +63,15 @@ ifdef XRTGRAPH
   USR_LDLIBS += -lxrtm
 endif
 
-ifeq ($(XRTGRAPH),$(XRTGRAPH3))
+#  The following sets up for the XRT/graph 3.0 extensions
+ifdef XRTGRAPH_EXTENSIONS
+ifeq ($(XRTGRAPH_EXTENSIONS),YES)
+  USR_CFLAGS += -DXRT_EXTENSIONS
   USR_LDLIBS += -lxrtmprop -lxrtfield -lxrttable -lxrtgear -lXpm
 endif
+endif
+
+USR_LDFLAGS += -L$(MOTIF_LIB) -L$(X11_LIB)
 
 ifeq ($(PURIFY),YES)
 # The following is a workaround for a Purify bug with Solaris libm.a
@@ -226,6 +229,15 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.31  1997/10/02 15:40:46  evans
+# Implemented snap to grid.  Rewote doRubberbanding, doPasting, doDragging,
+# and other related routines.  Fixed these routines to accept Esc as cancel
+#  and to stay within the display.  Modified EDIT menu.  Fixed error in
+# lookupCompositeChild.  Fixed logic for opening ADL files.  Fixed
+# handleTextCreate to accept CR.  Cleaned up calls to saveUndoInfo and added
+# missing ones.  Modified Makefile.Unix and site config files to support XRT
+# with or without XRT_EXTENSIONS.
+#
 # Revision 1.30  1997/09/12 18:15:42  evans
 # Deleted help_protocol.c.  Renamed help_protocol routines.  Changed routines
 # to use full pathname of ADL file instead of title.  Fixed logic for finding

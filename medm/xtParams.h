@@ -137,7 +137,7 @@ EXTERN XtAppContext appContext;
 EXTERN Window rootWindow;
 EXTERN int screenNum;
 EXTERN Cursor helpCursor, closeCursor, printCursor, 
-  saveCursor, crosshairCursor, watchCursor,
+  saveCursor, pasteCursor, pvCursor, crosshairCursor, watchCursor,
   rubberbandCursor, dragCursor, resizeCursor, xtermCursor,
   noWriteAccessCursor;
 EXTERN Colormap cmap;

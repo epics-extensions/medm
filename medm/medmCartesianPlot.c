@@ -90,7 +90,11 @@ static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
 
+#if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
 static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
+#endif
+#endif
 
 #if XRT_VERSION < 3
 /* Routines to make XRT/graph backward compatible from Version 3.0 */
@@ -544,9 +548,11 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
   /* Add destroy callback */
 #if XRT_VERSION > 2    
+#ifdef XRT_EXTENSIONS
     XtAddCallback(localWidget,XmNdestroyCallback,
       (XtCallbackProc)destroyXrtPropertyEditor, NULL);
-#endif    
+#endif
+#endif
 }
 
 void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
@@ -2279,14 +2285,16 @@ static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
       -1);
 }
 
+#if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
 #ifdef __cplusplus
 static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer)
 #else
 static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-#if XRT_VERSION > 2
-  /* False menas do not destroy the dialog */
+  /* False means do not destroy the dialog */
     XrtPopdownPropertyEditor(w,False);
-#endif    
 }
+#endif			    
+#endif    

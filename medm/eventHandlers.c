@@ -54,22 +54,31 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_EVENTS 0
-#define DEBUG_SEND_EVENT 0
 #define DEBUG_CARTESIAN_PLOT 0
-#define DEBUG_HIGHLIGHTS 0
-#define DEBUG_POPUP 0
+#define DEBUG_CREATE 0
 #define DEBUG_EDIT_POPUP 0
-#define DEBUG_PVINFO 0
+#define DEBUG_EVENTS 0
+#define DEBUG_HIGHLIGHTS 0
 #define DEBUG_KEYS 0
+#define DEBUG_POPUP 0
+#define DEBUG_PVINFO 0
+#define DEBUG_SEND_EVENT 0
 
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
 #include <XrtGraph.h>
 #if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
 #include <XrtGraphProp.h>
 #endif
+#endif
+
+/* Function prototypes */
+static void updateDraggedElements(Position x0, Position y0,
+  Position x1, Position y1);
+static void updateResizedElements(Position x0, Position y0,
+  Position x1, Position y1);
 
 extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
@@ -152,6 +161,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 		if (widget = pE->widget) {
 		    if (xEvent->state & ControlMask) {
 #if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
 		      /* Bring up XRT Property Editor */
 			dmSetAndPopupWarningDialog(displayInfo,
 			  "The XRT/graph Property Editor is known to cause memory leaks.\n"
@@ -166,6 +176,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			} else if(displayInfo->warningDialogAnswer == 3) {
 			    callBrowser(MEDM_HELP_PATH"/MEDM.html#XRTGraphInteractions");
 			}
+#endif			    
 #endif			    
 		    } else {
 		      /* Bring up plot axis data dialog */
@@ -280,9 +291,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     Dimension daWidth, daHeight;
     Boolean validDrag, validResize;
     int minSize;
-    XEvent newEvent;
     Boolean objectDataOnly, foundVertex = False, foundPoly = False;
-    int newEventType;
+    int doTextByTyping;
     DisplayInfo *di, *cdi;
     DlElement *dlElement;
 
@@ -318,15 +328,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     currentColormapSize = cdi->dlColormapSize;
     
   /* Make sure the window is on top and has input focus */
-    XRaiseWindow(display,XtWindow(displayInfo->shell));
-    XSetInputFocus(display,XtWindow(displayInfo->shell),
+    XRaiseWindow(display,XtWindow(cdi->shell));
+    XSetInputFocus(display,XtWindow(cdi->shell),
       RevertToParent,CurrentTime);
     
   /* Get button coordinates */
     x0 = event->xbutton.x;
     y0 = event->xbutton.y;
   /* Add offsets if the ButtonPress was in another window */
-    if (w != displayInfo->drawingArea) {
+    if (w != cdi->drawingArea) {
 	Dimension dx0, dy0;
 	
 	XtVaGetValues(w,XmNx,&dx0,XmNy,&dy0,NULL);
@@ -360,8 +370,9 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS
 		fprintf(stderr,"SELECT_ACTION Ctrl-Btn1\n");
 #endif
-		doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-		findSelectedElements(displayInfo->dlElementList,
+		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
+		  False);
+		findSelectedElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,AllTouched|AllEnclosed);
 		if (!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
@@ -370,14 +381,14 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS > 1
 		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] tmpDlElementList:\n");
 		    dumpDlElementList(tmpDlElementList);
-		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] displayInfo->selectedDlElementList:\n");
-		    dumpDlElementList(displayInfo->selectedDlElementList);
+		    fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1] cdi->selectedDlElementList:\n");
+		    dumpDlElementList(cdi->selectedDlElementList);
 		    fprintf(stderr,"\n");
 #endif
 		    unhighlightSelectedElements();
 		    while (pT) {
 			DlElement *pE =
-			  FirstDlElement(displayInfo->selectedDlElementList);
+			  FirstDlElement(cdi->selectedDlElementList);
 		      /* Traverse the selected list */
 			while (pE) {
 #if DEBUG_EVENTS > 1
@@ -391,7 +402,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    if (pE->structure.element == pT->structure.element) {
 				DlElement *pENew;
 				
-				clearDlDisplayList(displayInfo->selectedDlElementList);
+				clearDlDisplayList(cdi->selectedDlElementList);
 				if (pT->next) {
 				  /* Use the next one */
 				    pENew = createDlElement(DL_Element,
@@ -405,7 +416,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 				      NULL);
 				}
 				if (pENew) {
-				    appendDlElement(displayInfo->selectedDlElementList,
+				    appendDlElement(cdi->selectedDlElementList,
 				      pENew);
 				}
 				found=True;
@@ -427,12 +438,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS > 1
 			printf("Not found: found=%d\n",found);
 #endif
-			clearDlDisplayList(displayInfo->selectedDlElementList);
+			clearDlDisplayList(cdi->selectedDlElementList);
 			pENew = createDlElement(DL_Element,
 			  (XtPointer)pEFirst->structure.rectangle,
 			  NULL);
 			if (pENew) {
-			    appendDlElement(displayInfo->selectedDlElementList,
+			    appendDlElement(cdi->selectedDlElementList,
 			      pENew);
 			}
 		    }
@@ -447,14 +458,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    }
 		}
 #if DEBUG_EVENTS > 1
-		fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] displayInfo->selectedDlElementList :\n");
-		dumpDlElementList(displayInfo->selectedDlElementList);
+		fprintf(stderr,"\n[handleEditButtonPress: SELECT Ctrl-Btn1 Done] cdi->selectedDlElementList :\n");
+		dumpDlElementList(cdi->selectedDlElementList);
 #endif
 	    } else if (xEvent->state & ShiftMask) {
 	      /* SELECT_ACTION Shift-Btn1 */
 	      /* Toggle and append selections */
-		doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-		findSelectedElements(displayInfo->dlElementList,
+		doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
+		  False);
+		findSelectedElements(cdi->dlElementList,
 		  x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
 		if (!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
@@ -462,12 +474,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    unhighlightSelectedElements();
 		    while (pT) {
 			DlElement *pE =
-			  FirstDlElement(displayInfo->selectedDlElementList);
+			  FirstDlElement(cdi->selectedDlElementList);
 			int found = False;
 		      /* If found, remove it from the selected list */
 			while (pE) {
 			    if (pE->structure.element == pT->structure.element) {
-				removeDlElement(displayInfo->selectedDlElementList,pE);
+				removeDlElement(cdi->selectedDlElementList,pE);
 				destroyDlElement(pE);
 				found = True;
 				break;
@@ -479,7 +491,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    DlElement *pF = pT;
 			    pT = pT->next;
 			    removeDlElement(tmpDlElementList,pF);
-			    appendDlElement(displayInfo->selectedDlElementList,pF);
+			    appendDlElement(cdi->selectedDlElementList,pF);
 			} else {
 			    pT = pT->next;
 			}
@@ -499,12 +511,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      /* See whether this is a vertex edit (1 already selected element
 	       *   that has an editVertex function defined) and do the vertex
 	       *   edit if so */
-		if (NumberOfDlElement(displayInfo->selectedDlElementList) == 1) {
+		if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
 		    DlElement *dlElement =
-		      FirstDlElement(displayInfo->selectedDlElementList)
+		      FirstDlElement(cdi->selectedDlElementList)
 		      ->structure.element;
 		    if (dlElement->run->editVertex) {
 			saveUndoInfo(cdi);
+			if (cdi->hasBeenEditedButNotSaved == False) {
+			    medmMarkDisplayBeingEdited(cdi);
+			}
 			unhighlightSelectedElements();
 		      /* Do vertex edit */
 			if (dlElement->run->editVertex(dlElement,x0,y0)) {
@@ -515,23 +530,24 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		}
 	      /* If this was not a vertex edit then do rubberbanding, etc. */
 		if (!foundVertex) {
-		    doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-		    findSelectedElements(displayInfo->dlElementList,
+		    doRubberbanding(XtWindow(cdi->drawingArea),&x0,&y0,&x1,&y1,
+		      False);
+		    findSelectedElements(cdi->dlElementList,
 		      x0,y0,x1,y1,tmpDlElementList,SmallestTouched|AllEnclosed);
 		    if (!IsEmpty(tmpDlElementList)) {
 			unhighlightSelectedElements();
 		      /* If this is the only element and is the same as before
 		       *   then unselect it */
 			if (tmpDlElementList->count == 1 &&
-			  displayInfo->selectedDlElementList->count == 1) {
+			  cdi->selectedDlElementList->count == 1) {
 			    DlElement *pET = FirstDlElement(tmpDlElementList);
-			    DlElement *pES = FirstDlElement(displayInfo->selectedDlElementList);
+			    DlElement *pES = FirstDlElement(cdi->selectedDlElementList);
 
 #if DEBUG_EVENTS > 1
 			    printf("\nhandleEditButtonPress: Btn1\n");
 			    printf("Selected: count=%d first=%x struct=%x\n",
-			      displayInfo->selectedDlElementList->count,
-			      FirstDlElement(displayInfo->selectedDlElementList),
+			      cdi->selectedDlElementList->count,
+			      FirstDlElement(cdi->selectedDlElementList),
 			      pES->structure.element);
 			    printf("Temp: count=%d first=%x struct=%x\n",
 			      tmpDlElementList->count,
@@ -539,14 +555,14 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			      pET->structure.element);
 #endif
 			    if (pET->structure.element == pES->structure.element) {
-				clearDlDisplayList(displayInfo->selectedDlElementList);
+				clearDlDisplayList(cdi->selectedDlElementList);
 			    } else {
-				clearDlDisplayList(displayInfo->selectedDlElementList);
-				appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
+				clearDlDisplayList(cdi->selectedDlElementList);
+				appendDlList(cdi->selectedDlElementList,tmpDlElementList);
 			    }
 			} else {
-			    clearDlDisplayList(displayInfo->selectedDlElementList);
-			    appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
+			    clearDlDisplayList(cdi->selectedDlElementList);
+			    appendDlList(cdi->selectedDlElementList,tmpDlElementList);
 			}
 			highlightSelectedElements();
 			clearDlDisplayList(tmpDlElementList);
@@ -586,7 +602,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		XBell(display,50);
 		break;
 	    }
-	    findSelectedElements(displayInfo->dlElementList,
+	    findSelectedElements(cdi->dlElementList,
 	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
 	    if (IsEmpty(tmpDlElementList)) break;
 	    
@@ -595,7 +611,6 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS
 		fprintf(stderr,"SELECT_ACTION Ctrl-Btn2\n");
 #endif
-		saveUndoInfo(cdi);
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
 #if DEBUG_EVENTS
 		    fprintf(stderr,"Already selected\n");
@@ -605,17 +620,18 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  /* Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
 		  /* This element already selected: resize all selected elements */
-		    validResize = doResizing(XtWindow(displayInfo->drawingArea),
+		    validResize = doResizing(XtWindow(cdi->drawingArea),
 		      x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
 		    fprintf(stderr,"validResize=%d\n",validResize);
 		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
-		    if (validResize) {     /* (It is always valid) */
-			updateResizedElements(x0,y0,x1,y1);
+		    if (validResize) {
+			saveUndoInfo(cdi);
 			if (cdi->hasBeenEditedButNotSaved == False) {
 			    medmMarkDisplayBeingEdited(cdi);
 			}
+			updateResizedElements(x0,y0,x1,y1);
 		    }
 		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
@@ -634,17 +650,18 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    clearDlDisplayList(cdi->selectedDlElementList);
 		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
-		    validResize = doResizing(XtWindow(displayInfo->drawingArea),
+		    validResize = doResizing(XtWindow(cdi->drawingArea),
 		      x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
 		    fprintf(stderr,"validResize=%d\n",validResize);
 		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
-		    if (validResize) {     /* (It is always valid) */
-			updateResizedElements(x0,y0,x1,y1);
+		    if (validResize) {
+			saveUndoInfo(cdi);
 			if (cdi->hasBeenEditedButNotSaved == False) {
 			    medmMarkDisplayBeingEdited(cdi);
 			}
+			updateResizedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
 		    clearDlDisplayList(tmpDlElementList);
@@ -658,7 +675,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		}
 	    } else {
 	      /* SELECT_ACTION Btn2, not Shift or Crtl) */
-		XtVaGetValues(displayInfo->drawingArea,
+		XtVaGetValues(cdi->drawingArea,
 		  XmNwidth,&daWidth,
 		  XmNheight,&daHeight,
 		  NULL);
@@ -666,7 +683,6 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		fprintf(stderr,"\n[handleEditButtonPress: SELECT Btn2] tmpDlElementList :\n");
 		dumpDlElementList(tmpDlElementList);
 #endif
-		saveUndoInfo(cdi);
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
 		  /* Element already selected - move it and any others
 		   * Unhighlight currently selected elements */
@@ -675,17 +691,18 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    fprintf(stderr,"Already selected\n");
 #endif
 		  /* This element already selected: move all selected elements */
-		    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
+		    validDrag = doDragging(XtWindow(cdi->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
 		    fprintf(stderr,"validDrag=%d\n",validDrag);
 		    fprintf(stderr,"x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
 #endif
 		    if (validDrag) {
-			updateDraggedElements(x0,y0,x1,y1);
+			saveUndoInfo(cdi);
 			if (cdi->hasBeenEditedButNotSaved == False) {
 			    medmMarkDisplayBeingEdited(cdi);
 			}
+			updateDraggedElements(x0,y0,x1,y1);
 		    }
 		  /* Re-highlight currently selected elements */
 		    highlightSelectedElements();
@@ -704,7 +721,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    clearDlDisplayList(cdi->selectedDlElementList);
 		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
-		    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
+		    validDrag = doDragging(XtWindow(cdi->drawingArea),
 		      daWidth,daHeight,x0,y0,&x1,&y1);
 #if DEBUG_EVENTS > 1
 		    fprintf(stderr,"validDrag=%d\n",validDrag);
@@ -712,10 +729,11 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 		  /* Move this element */
 		    if (validDrag) {
-			updateDraggedElements(x0,y0,x1,y1);
+			saveUndoInfo(cdi);
 			if (cdi->hasBeenEditedButNotSaved == False) {
 			    medmMarkDisplayBeingEdited(cdi);
 			}
+			updateDraggedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
 		    clearDlDisplayList(tmpDlElementList);
@@ -738,9 +756,9 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 	  /* Edit menu doesn't have valid/unique displayInfo ptr, hence use current */
 	    lastEvent = *((XButtonPressedEvent *)event);
-	    XmMenuPosition(currentDisplayInfo->editPopupMenu,
+	    XmMenuPosition(cdi->editPopupMenu,
 	      (XButtonPressedEvent *)event);
-	    XtManageChild(currentDisplayInfo->editPopupMenu);
+	    XtManageChild(cdi->editPopupMenu);
 #if DEBUG_EDIT_POPUP
 	    {
 		Dimension height, width;
@@ -750,7 +768,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		Boolean resizeHeight, resizeWidth, adjustLast;
 		int i;
 		
-		XtVaGetValues(currentDisplayInfo->editPopupMenu,
+		XtVaGetValues(cdi->editPopupMenu,
 		  XmNheight,&height,
 		  XmNwidth,&width,
 		  XmNresizeHeight,&resizeHeight,
@@ -759,7 +777,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  XmNchildren,&children,
 		  XmNnumChildren,&numChildren,
 		  NULL);
-		printf("\ncurrentDisplayInfo->editPopupMenu: "
+		printf("\ncdi->editPopupMenu: "
 		  "height: %d   width: %d  children: %d\n"
 		  "  resizeHeight: %d   resizeWidth: %d   adjustLast: %d\n",
 		  height, width, (int)numChildren,
@@ -778,15 +796,15 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif	    
 #if 0	    
 	  /* KE: Are these necessary ? */
-	    XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
-	    XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
+	    XtPopup(XtParent(cdi->editPopupMenu),XtGrabNone);
+	    XRaiseWindow(display,XtWindow(cdi->editPopupMenu));
 #endif	    
 	    
 	    break;
 	}
 #if DEBUG_EVENTS
 	fprintf(stderr,"\n[handleEditButtonPress: SELECT done] selectedDlElement list :\n");
-	dumpDlElementList(displayInfo->selectedDlElementList);
+	dumpDlElementList(cdi->selectedDlElementList);
 #endif
     } else if (currentActionType == CREATE_ACTION) {
       /* CREATE_ACTION
@@ -800,42 +818,111 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	switch (xEvent->button) {
 	case Button1:
 	  /* CREATE_ACTION Btn1 */
-	  /* Destroy any undo information (for now anyway) */
-	    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
 	  /* Wait for next event and look at it */
-	    XWindowEvent(display,XtWindow(displayInfo->drawingArea),
-	      ButtonReleaseMask|Button1MotionMask,&newEvent);
-	    newEventType = newEvent.type;
-	    XPutBackEvent(display,&newEvent);
-	    
+#if DEBUG_CREATE
+	    printf("\nhandleButtonPress EVENT: Type: %-13s  Button: %d  Window %x  SubWindow: %x\n"
+	      "  Shift: %s  Ctrl: %s\n",
+	      (xEvent->type == ButtonPress)?"ButtonPress":"ButtonRelease",
+	      xEvent->button, xEvent->window, xEvent->subwindow,
+	      xEvent->state&ShiftMask?"Yes":"No",
+	      xEvent->state&ControlMask?"Yes":"No");
+	    printf("  Send_event: %s  State: %x\n",
+	      xEvent->send_event?"True":"False",xEvent->state);
+	    printf("  ButtonPress=%d ButtonRelease=%d MotionNotify=%d\n",
+	      ButtonPress, ButtonRelease, MotionNotify);
+	    {
+		XEvent newEvent;
+		
+		XPeekEvent(display,&newEvent);
+		printf("              peekEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		  "  Shift: %s  Ctrl: %s\n",
+		  newEvent.xbutton.type,
+		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
+		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
+		  newEvent.xbutton.state&ControlMask?"Yes":"No");
+		printf("  Send_event: %s  State: %x\n",
+		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
+	    }
+#endif
+	  /* Don't allow starting on a widget */
+	    if(xEvent->window != XtWindow(cdi->drawingArea)) {
+		XBell(display,50);
+		return;
+	    }
+	  /* For DL_Text check if a ButtonRelease comes before a MotionNotify
+	   *   (Indicating create text by typing) */
+	    doTextByTyping = 0;
+	    if(currentElementType == DL_Text) {
+		XEvent newEvent;
+
+		XWindowEvent(display,XtWindow(cdi->drawingArea),
+		  ButtonReleaseMask|Button1MotionMask,&newEvent);
+		doTextByTyping = 1;
+		XPutBackEvent(display,&newEvent);
+#if DEBUG_CREATE
+		printf("               newEVENT: Type: %d  Button: %d  Window %x  SubWindow: %x\n"
+		  "  Shift: %s  Ctrl: %s\n",
+		  newEvent.xbutton.type,
+		  newEvent.xbutton.button, newEvent.xbutton.window, newEvent.xbutton.subwindow,
+		  newEvent.xbutton.state&ShiftMask?"Yes":"No",
+		  newEvent.xbutton.state&ControlMask?"Yes":"No");
+		printf("  Send_event: %s  State: %x\n",
+		  newEvent.xbutton.send_event?"True":"False",newEvent.xbutton.state);
+#endif
+	    }
 	  /* Create the element according to its method */
-	    if (currentElementType == DL_Text &&
-	      newEventType == ButtonRelease) {
+	    if (currentElementType == DL_Text && doTextByTyping) {
+		saveUndoInfo(cdi);
+		if (cdi->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(cdi);
+		}
 		dlElement = handleTextCreate(x0,y0);
 	    } else if (currentElementType == DL_Polyline) {
+		saveUndoInfo(cdi);
+		if (cdi->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(cdi);
+		}
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
 	    } else if (currentElementType == DL_Line) {
+		saveUndoInfo(cdi);
+		if (cdi->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(cdi);
+		}
 		dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
 	    } else if (currentElementType == DL_Polygon) {
+		saveUndoInfo(cdi);
+		if (cdi->hasBeenEditedButNotSaved == False) {
+		    medmMarkDisplayBeingEdited(cdi);
+		}
 		dlElement = handlePolygonCreate(x0,y0);
 	    } else {
+	      /* Do rubber banding for initial size */
+		if(!doRubberbanding(XtWindow(cdi->drawingArea),
+		  &x0,&y0,&x1,&y1,True)) break;
 	      /* Set minimum initial size */
 		if (ELEMENT_HAS_WIDGET(currentElementType)) {
 		    minSize = 12;
 		} else {
 		    minSize = 2;
 		}
-	      /* Do rubber banding for initial size */
-		doRubberbanding(XtWindow(displayInfo->drawingArea),
-		  &x0,&y0,&x1,&y1);
-	      /* Actually create elements */
+		if(cdi->grid->snapToGrid) {
+		    int gridSpacing = cdi->grid->gridSpacing;
+		    int minSize0 = minSize;
+		    
+		    minSize = ((minSize + gridSpacing/2)/gridSpacing)*
+		      gridSpacing;
+		    if(minSize < minSize0) minSize+=gridSpacing;
+		}
+	      /* Create elements */
 		dlElement = handleRectangularCreates(currentElementType, x0, y0,
 		  MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
 	    }
 	  /* Element defined, do bookkeeping */
 	    if (dlElement) {
 		DlElement *pSE = 0;
+
 	      /* Mark display as not saved */
+		saveUndoInfo(cdi);
 		if (cdi->hasBeenEditedButNotSaved == False) {
 		    medmMarkDisplayBeingEdited(cdi);
 		}
@@ -844,14 +931,14 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		(*dlElement->run->execute)(cdi,dlElement);
 	      /* Unselect any selected elements */
 		unhighlightSelectedElements();
-		clearDlDisplayList(displayInfo->selectedDlElementList);
+		clearDlDisplayList(cdi->selectedDlElementList);
 	      /* Create a DL_Element */
 		pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
 	      /* Add it to selectedDlElementList */
 		if (pSE) {
-		    appendDlElement(displayInfo->selectedDlElementList,pSE);
+		    appendDlElement(cdi->selectedDlElementList,pSE);
 		}
-	      /* Set currentElementTypey */
+	      /* Set currentElementType */
 		currentElementType =
 		  FirstDlElement(cdi->selectedDlElementList)
 		  ->structure.element->type;
@@ -871,7 +958,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	}
 #if DEBUG_EVENTS
 	fprintf(stderr,"\n[handleEditButtonPress: CREATE done] selectedDLElement list :\n");
-	dumpDlElementList(displayInfo->selectedDlElementList);
+	dumpDlElementList(cdi->selectedDlElementList);
 #endif
       /* Clean up */
       /* Toggle CREATE_ACTION to SELECT_ACTION */
@@ -1006,7 +1093,8 @@ void unhighlightSelectedElements()
 /*
  * Update (move) all currently selected elements and rerender
  */
-void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
+static void updateDraggedElements(Position x0, Position y0,
+  Position x1, Position y1)
 {
     int i, j, xOffset, yOffset;
     DisplayInfo *cdi = currentDisplayInfo;    
@@ -1029,13 +1117,13 @@ void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
 	fprintf(stderr,"\nupdateDraggedElements: x0=%d y0=%d x1=%d y1=%d"
 	  " xOffset=%d yOffset=%d\n",
 	  x0,y0,x1,y1,xOffset,yOffset);
-	fprintf(stderr,"  %s (%s) pE->run->move=%x\n",
+	fprintf(stderr, "  %s (%s) pE->run->move=%x\n",
 	  elementType(pElement->type),
 	  elementType(pE->type),
 	  pE->run->move);
 #endif
 	if (pE->run->move) {
-	    pE->run->move(pE,xOffset,yOffset);
+	    pE->run->move(pE, xOffset, yOffset);
 	}
 	if (pE->widget) {
 	  /* Destroy the widgets */
@@ -1110,7 +1198,7 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 		  x,y,width,height);
 		fprintf(stderr,"Element: %s: x=%d y=%d width=%u height=%u\n",
 		  elementType(pE->type),
-		  po->x,po->y,po->width,po->height);
+		  po->x,po->y,(int)po->width,(int)po->height);
 	    }
 #endif
 	}
@@ -1215,13 +1303,13 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
     if (dlElement->type == DL_Display) {
 	x = HIGHLIGHT_LINE_THICKNESS;
 	y = HIGHLIGHT_LINE_THICKNESS;
-	width = po->width - 2*HIGHLIGHT_LINE_THICKNESS;
-	height = po->height - 2*HIGHLIGHT_LINE_THICKNESS;
+	width = (int)po->width - 2*HIGHLIGHT_LINE_THICKNESS;
+	height = (int)po->height - 2*HIGHLIGHT_LINE_THICKNESS;
     } else {
 	x = po->x-HIGHLIGHT_LINE_THICKNESS;
 	y = po->y-HIGHLIGHT_LINE_THICKNESS;
-	width = po->width + 2*HIGHLIGHT_LINE_THICKNESS;
-	height = po->height + 2*HIGHLIGHT_LINE_THICKNESS;
+	width = (int)po->width + 2*HIGHLIGHT_LINE_THICKNESS;
+	height = (int)po->height + 2*HIGHLIGHT_LINE_THICKNESS;
     }
 #if 0
     XSetForeground(display,highlightGC,cdi->drawingAreaBackgroundColor);

@@ -59,9 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "XrtGraph.h"
 
-#if XRT_VERSION > 2
-#include <XrtGraphProp.h>
-#else
+#if XRT_VERSION <= 2
 typedef XrtData * XrtDataHandle;
 #endif
 

@@ -735,12 +735,15 @@ static void relatedDisplayButtonPressedCb(Widget w,
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry)
 { 
-    char *filename, *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
     FILE *filePtr;
+    int suffixLength, prefixLength;
+    char *argsString, *newFilename, token[MAX_TOKEN_LENGTH];
+    char filename[MAX_TOKEN_LENGTH];
     char *adlPtr;
     char processedArgs[2*MAX_TOKEN_LENGTH];
-    int suffixLength, prefixLength;
-    filename = pEntry->name;
+
+    strncpy(filename, pEntry->name, MAX_TOKEN_LENGTH);
+    filename[MAX_TOKEN_LENGTH-1] = '\0';
     argsString = pEntry->args;
     
   /*
@@ -752,7 +755,8 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	performMacroSubstitutions(displayInfo, argsString, processedArgs,
           2*MAX_TOKEN_LENGTH);
-	filePtr = dmOpenUsableFile(filename, displayInfo);
+      /* Will also try to find file with parent's path */
+	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
 	if (filePtr == NULL) {
 	    newFilename = STRDUP(filename);
 	    adlPtr = strstr(filename,DISPLAY_FILE_ASCII_SUFFIX);

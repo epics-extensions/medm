@@ -156,8 +156,6 @@ void highlightAndAppendSelectedElements(DlList *);
 Boolean unhighlightAndUnselectElement(DlElement *element, int *numSelected);
 void moveCompositeChildren(DisplayInfo *cdi, DlElement *element,
   int xOffset, int yOffset, Boolean moveWidgets);
-void updateDraggedElements(Position x0, Position y0, Position x1, Position y1);
-void updateResizedElements(Position x0, Position y0, Position x1, Position y1);
 DlElement *handleRectangularCreates(DlElementType, int, int, unsigned int, unsigned
   int);
 void addCommonHandlers(Widget w, DisplayInfo *displayInfo);
@@ -366,7 +364,7 @@ void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
 int localCvtLongToHexString(long source, char *pdest);
-FILE *dmOpenUsableFile(char *filename, DisplayInfo *displayInfo);
+FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
 void dmRemoveMonitorStructureFromMonitorList(
@@ -410,12 +408,10 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo, Dimension newWidth,
 Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
   Dimension newHeight);
 void initializeRubberbanding(void);
-void doRubberbanding(Window window, Position *initialX, Position *initialY,
-  Position *finalX, Position *finalY);
+int doRubberbanding(Window window, Position *initialX, Position *initialY,
+  Position *finalX,  Position *finalY, int doSnap);
 Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
   Position initialX,Position initialY,Position *finalX,Position *finalY);
-DisplayInfo *doPasting(Position *displayX, Position *displayY, int *offsetX,
-  int *offsetY);
 Boolean alreadySelected(DlElement *element);
 Boolean doResizing(Window window, Position initialX, Position initialY, 
   Position *finalX, Position *finalY);
@@ -423,7 +419,7 @@ void destroyElementWidgets(DlElement *element);
 void drawGrid(DisplayInfo *displayInfo);
 void copySelectedElementsIntoClipboard(void);
 DlStructurePtr createCopyOfElementType(DlElementType type, DlStructurePtr ptr);
-void copyElementsIntoDisplay(void);
+int copyElementsIntoDisplay(void);
 void deleteElementsInDisplay(void);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);

@@ -154,6 +154,7 @@ DlElement *groupObjects()
 
   /* if there is no element selected, return */
     if (IsEmpty(cdi->selectedDlElementList)) return 0;
+    saveUndoInfo(cdi);
 
     if (!(dlElement = createDlComposite(NULL))) return 0;
     appendDlElement(cdi->dlElementList,dlElement);
