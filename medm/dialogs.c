@@ -1281,8 +1281,15 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 			switch(button) {
 			case DISPLAY_LIST_RAISE_BTN:
 			  /* Make sure it changes workspaces, too */
+#if 1
+			    if(di && di->shell && XtIsRealized(di->shell)) {
+				XMapRaised(display, XtWindow(di->shell));
+			    }
+#else
+			  /* KE: Doesn't work on WIN32 */
 			    XtPopdown(di->shell);
 			    XtPopup(di->shell, XtGrabNone);
+#endif
 			    break;
 			case DISPLAY_LIST_CLOSE1_BTN:
 			  /* KE: Use closeDisplay instead of

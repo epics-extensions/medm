@@ -911,9 +911,18 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		    existingDisplayInfo = findDisplay(filename,processedArgs);
 		}
 		if(existingDisplayInfo) {
-		    currentDisplayInfo = existingDisplayInfo;
+		    DisplayInfo *cdi;
+		    
+		    cdi = currentDisplayInfo = existingDisplayInfo;
+#if 0
+		  /* KE: Doesn't work on WIN32 */
 		    XtPopdown(currentDisplayInfo->shell);
 		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
+#else
+		    if(cdi && cdi->shell && XtIsRealized(cdi->shell)) {
+			XMapRaised(display, XtWindow(cdi->shell));
+		    }
+#endif
 		} else {
 		    dmDisplayListParse(NULL,filePtr,processedArgs,
 		      filename,NULL,(Boolean)True);

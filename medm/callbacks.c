@@ -149,14 +149,15 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	popupPvLimits(displayInfo);
 	break;
     case EXECUTE_POPUP_MENU_MAIN_ID:
-#if 1
+      /* KE: This appears to work and deiconify if iconic */
+#if 1	
 	XMapRaised(display, XtWindow(mainShell));
 #else
-      /* May be more reliable.  Requires <X11/Xmu/WinUtil.h> */
+      /* May be more general.  Requires <X11/Xmu/WinUtil.h> */
 	if(XtIsRealized(mainShell)) {
 	    Window client = XmuClientWindow(display, XtWindow(mainShell));
-
-	      XMapRaised(display, client);
+	    
+	    XMapRaised(display, client);
 	}
 #endif	
 	break;

@@ -2120,9 +2120,14 @@ void medmExit()
     }
 #ifdef PROMPT_TO_EXIT
   /* Prompt to exit */
+#if 0    
+  /* KE: This appears to work and deiconify if iconic */
+    XMapRaised(display, XtWindow(mainShell));
+#else
   /* KE: This can only be set before realization */
     XtVaSetValues(mainShell, XmNiconic, False, NULL);
     XtPopup(mainShell,XtGrabNone);
+#endif
     XtManageChild(exitQD);
     XtPopup(XtParent(exitQD),XtGrabNone);
 #else
