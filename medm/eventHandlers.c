@@ -962,7 +962,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  FirstDlElement(cdi->selectedDlElementList)
 		  ->structure.element->type;
 	      /* Hightlight it */
+#if 0		
 		highlightSelectedElements();
+#else		
+	      /* Cleanup possible damage to non-widgets */
+		dmTraverseNonWidgetsInDisplayList(cdi);
+#endif		
 	    }
 	    break;
 	case Button2:
@@ -1313,8 +1318,8 @@ DlElement *handleRectangularCreates(DlElementType type,
 	break;
     }
 
-    if (pE) {
-	if (pE->run->inheritValues) {
+    if(pE) {
+	if(pE->run->inheritValues) {
 	    pE->run->inheritValues(&globalResourceBundle,pE);
 	}
 	objectAttributeSet(&(pE->structure.rectangle->object),x,y,width,height);

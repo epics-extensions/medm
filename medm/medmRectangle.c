@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_COMPOSITE 0
+#define DEBUG_CREATE 1
 
 #include "medm.h"
 
@@ -175,6 +176,18 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 
 	dlElement->updateType = STATIC_GRAPHIC;
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
+#if DEBUG_CREATE
+	{
+	    XGCValues gcValues;
+
+	    XGetGCValues(display, displayInfo->gc,
+	      GCForeground|GCClipXOrigin|GCClipYOrigin, &gcValues);
+	    print("executeDlRectangle: fg=%x x_origin=%d y_origin=%d\n",
+	      gcValues.foreground,
+	      gcValues.clip_x_origin,
+	      gcValues.clip_y_origin);
+	}
+#endif
 	if(dlRectangle->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
 	    
@@ -322,7 +335,7 @@ DlElement *createDlRectangle(DlElement *p)
     }
  
     if(!(dlElement = createDlElement(DL_Rectangle,
-      (XtPointer)      dlRectangle,
+      (XtPointer)dlRectangle,
       &rectangleDlDispatchTable))) {
 	free(dlRectangle);
     }
