@@ -228,14 +228,14 @@ static void polygonUpdateValueCb(XtPointer cd)
 static void polygonDraw(XtPointer cd)
 {
     MedmPolygon *pp = (MedmPolygon *)cd;
-    Record *pd = pp->records[0];
+    Record *pR = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
     Display *display = XtDisplay(pp->updateTask->displayInfo->drawingArea);
     DlPolygon *dlPolygon = pp->dlElement->structure.polygon;
 
-    if(pd->connected) {
+    if(isConnected(pp->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlPolygon->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -244,7 +244,7 @@ static void polygonDraw(XtPointer cd)
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pR->value,
 	      dlPolygon->dynAttr.colorRule,
 	      dlPolygon->attr.clr);
 	    break;
@@ -255,7 +255,7 @@ static void polygonDraw(XtPointer cd)
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
@@ -268,7 +268,7 @@ static void polygonDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlPolygon->dynAttr, pp->records))
 	  drawPolygon(pp);
-	if(pd->readAccess) {
+	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!pp->updateTask->overlapped && dlPolygon->dynAttr.vis == V_STATIC) {
 		pp->updateTask->opaque = True;

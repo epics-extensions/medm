@@ -3988,6 +3988,24 @@ void print(const char *fmt, ...)
     }
 }
 
+/* Returns False if any valid record is not connected.  Otherwise
+   returns True.  Doesn't check for the case that all records are
+   NULL, which should not be the case. */
+Boolean isConnected(Record **records)
+{
+    int i;
+    Boolean connected = True;
+    
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	if(records[i] && !records[i]->connected) {
+	    connected = False;
+	    break;
+	}
+    }
+
+    return connected;
+}
+
 /*** CALC routines ***/
 
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)

@@ -269,7 +269,7 @@ static void textUpdateValueCb(XtPointer cd) {
 
 static void textDraw(XtPointer cd) {
     MedmText *pt = (MedmText *)cd;
-    Record *pr = pt->records[0];
+    Record *pR = pt->records[0];
     DisplayInfo *displayInfo = pt->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -282,7 +282,7 @@ static void textDraw(XtPointer cd) {
       displayInfo,pt->dlElement);
 #endif	
     
-    if(pr->connected) {
+    if(isConnected(pt->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -291,7 +291,7 @@ static void textDraw(XtPointer cd) {
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pr->value,
+	      pR->value,
 	      dlText->dynAttr.colorRule,
 	      dlText->attr.clr);
 	    break;
@@ -302,7 +302,7 @@ static void textDraw(XtPointer cd) {
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pr->severity);
+	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
@@ -318,7 +318,7 @@ static void textDraw(XtPointer cd) {
 	/* KE: Different drawXXX from other drawing objects */
 	  drawText(displayInfo->updatePixmap, displayInfo->gc,
 	    dlText);
-	if(pr->readAccess) {
+	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
 		pt->updateTask->opaque = True;

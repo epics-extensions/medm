@@ -283,7 +283,7 @@ static void imageDraw(XtPointer cd)
 {
     MedmImage *pi = (MedmImage *)cd;
     DisplayInfo *displayInfo = pi->updateTask->displayInfo;
-    Record *pr = pi->records?pi->records[0]:NULL;
+    Record *pR = pi->records?pi->records[0]:NULL;
     DlImage *dlImage = pi->dlElement->structure.image;
     GIFData *gif = (GIFData *)dlImage->privateData;
     int i;
@@ -297,9 +297,9 @@ static void imageDraw(XtPointer cd)
     if(*dlImage->dynAttr.chan[0]) {
       /* A channel is defined */
 	updateTaskSetScanRate(pi->updateTask, 0.0);
-	if(!pr) return;
-	if(pr->connected) {
-	    if(pr->readAccess) {
+	if(!pR) return;
+	if(isConnected(pi->records)) {
+	    if(pR->readAccess) {
 		double result;
 		long status;
 
@@ -307,7 +307,7 @@ static void imageDraw(XtPointer cd)
 		  /* Determine the result of the calculation */
 		    if(!*dlImage->calc) {
 		      /* calc string is empty */
-			result=pr->value;
+			result=pR->value;
 			status = 0;
 		    } else if(!pi->validCalc) {
 		      /* calc string is invalid */
@@ -327,12 +327,12 @@ static void imageDraw(XtPointer cd)
 			}
 			valueArray[4] = 0.0;              /* E: Reserved */
 			valueArray[5] = 0.0;              /* F: Reserved */
-			valueArray[6] = pr->elementCount; /* G: count */
-			valueArray[7] = pr->hopr;         /* H: hopr */
-			valueArray[8] = pr->status;       /* I: status */
-			valueArray[9] = pr->severity;     /* J: severity */
-			valueArray[10] = pr->precision;   /* K: precision */
-			valueArray[11] = pr->lopr;        /* L: lopr */
+			valueArray[6] = pR->elementCount; /* G: count */
+			valueArray[7] = pR->hopr;         /* H: hopr */
+			valueArray[8] = pR->status;       /* I: status */
+			valueArray[9] = pR->severity;     /* J: severity */
+			valueArray[10] = pR->precision;   /* K: precision */
+			valueArray[11] = pR->lopr;        /* L: lopr */
 			
 		      /* Perform the calculation */
 			status = calcPerform(valueArray, &result, pi->post);
@@ -348,7 +348,7 @@ static void imageDraw(XtPointer cd)
 		    }
 #if DEBUG_CALC
 		    print("imageDraw: calc=%s result=%g sevr=%d animate=%d\n",
-		      dlImage->calc,result,pr->severity,pi->animate);
+		      dlImage->calc,result,pR->severity,pi->animate);
 #endif		    
 		} else {
 		  /* Result is always valid for animate */
@@ -374,7 +374,7 @@ static void imageDraw(XtPointer cd)
 		    drawColoredRectangle(pi->updateTask,
 		      BlackPixel(display,screenNum));
 		}
-		if(pr->readAccess) {
+		if(pR->readAccess) {
 #ifdef OPAQUE	    
 		    if(!pi->updateTask->overlapped &&
 		      dlImage->dynAttr.vis == V_STATIC) {
@@ -568,8 +568,8 @@ static void imageFileSelectionCb(Widget w, XtPointer clientData,
 
 static void imageUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pr = (Record *)cd;
-    MedmImage *pi = (MedmImage *)pr->clientData;
+    Record *pR = (Record *)cd;
+    MedmImage *pi = (MedmImage *)pR->clientData;
 #if 0    
     updateTaskMarkUpdate(pi->updateTask);
 #endif    

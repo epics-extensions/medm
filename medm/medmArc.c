@@ -194,14 +194,14 @@ static void arcUpdateValueCb(XtPointer cd)
 static void arcDraw(XtPointer cd)
 {
     MedmArc *pa = (MedmArc *)cd;
-    Record *pd = pa->records[0];
+    Record *pR = pa->records[0];
     DisplayInfo *displayInfo = pa->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
     Display *display = XtDisplay(pa->updateTask->displayInfo->drawingArea);
     DlArc *dlArc = pa->dlElement->structure.arc;
 
-    if(pd->connected) {
+    if(isConnected(pa->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -214,7 +214,7 @@ static void arcDraw(XtPointer cd)
 				break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pR->value,
 	      dlArc->dynAttr.colorRule,
 	      dlArc->attr.clr);
 	    break;
@@ -225,7 +225,7 @@ static void arcDraw(XtPointer cd)
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
@@ -239,7 +239,7 @@ static void arcDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlArc->dynAttr, pa->records))
 	  drawArc(pa);
-	if(pd->readAccess) {
+	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
 		pa->updateTask->opaque = True;

@@ -192,12 +192,12 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pr = (Record *)cd;
-    MedmComposite *pc = (MedmComposite *)pr->clientData;
+    Record *pR = (Record *)cd;
+    MedmComposite *pc = (MedmComposite *)pR->clientData;
 
 #if DEBUG_COMPOSITE
     print("compositeUpdateGraphicalInfoCb: record=%x[%s] value=%g\n",
-      pr,pr->name,pr->value);
+      pR,pR->name,pR->value);
 #endif    
 #if 0    
     updateTaskMarkUpdate(pc->updateTask);
@@ -206,12 +206,12 @@ static void compositeUpdateGraphicalInfoCb(XtPointer cd)
 
 static void compositeUpdateValueCb(XtPointer cd)
 {
-    Record *pr = (Record *)cd;
-    MedmComposite *pc = (MedmComposite *)pr->clientData;
+    Record *pR = (Record *)cd;
+    MedmComposite *pc = (MedmComposite *)pR->clientData;
 
 #if DEBUG_COMPOSITE
     print("compositeUpdateValueCb: record=%x[%s] value=%g\n",
-      pr,pr->name,pr->value);
+      pR,pR->name,pR->value);
 #endif    
     updateTaskMarkUpdate(pc->updateTask);
 #if DEBUG_COMPOSITE
@@ -223,7 +223,7 @@ static void compositeUpdateValueCb(XtPointer cd)
 static void compositeDraw(XtPointer cd)
 {
     MedmComposite *pc = (MedmComposite *)cd;
-    Record *pr = pc->records?pc->records[0]:NULL;
+    Record *pR = pc->records?pc->records[0]:NULL;
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     Display *display = XtDisplay(pc->updateTask->displayInfo->drawingArea);
     DlComposite *dlComposite = pc->dlElement->structure.composite;
@@ -234,13 +234,13 @@ static void compositeDraw(XtPointer cd)
 #endif    
 #if DEBUG_DELETE
     print("compositeDraw: connected=%s readAccess=%s value=%g\n",
-      pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
+      pR->connected?"Yes":"No",pR->readAccess?"Yes":"No",pR->value);
 #endif    
   /* Branch on whether there is a channel or not */
     if(*dlComposite->dynAttr.chan[0]) {
       /* A channel is defined */
-	if(!pr) return;
-	if(pr->connected) {
+	if(!pR) return;
+	if(isConnected(pc->records)) {
 #if DEBUG_COMPOSITE > 1
 	    print("  vis=%s\n",stringValueTable[dlComposite->dynAttr.vis]);
 	    print("  calc=%s\n",dlComposite->dynAttr.calc);
@@ -266,7 +266,7 @@ static void compositeDraw(XtPointer cd)
 	    } else {
 		hideComposite(pc);
 	    }
-	    if(pr->readAccess) {
+	    if(pR->readAccess) {
 #ifdef OPAQUE	    
 		if(!pc->updateTask->overlapped &&
 		  dlComposite->dynAttr.vis == V_STATIC) {

@@ -197,7 +197,7 @@ static void ovalUpdateValueCb(XtPointer cd) {
 
 static void ovalDraw(XtPointer cd) {
     MedmOval *po = (MedmOval *)cd;
-    Record *pd = po->records[0];
+    Record *pR = po->records[0];
     DisplayInfo *displayInfo = po->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -207,7 +207,7 @@ static void ovalDraw(XtPointer cd) {
 #if DEBUG_VISIBILITY
     print("ovalDraw: \n");
 #endif    
-    if(pd->connected) {
+    if(isConnected(po->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlOval->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -216,7 +216,7 @@ static void ovalDraw(XtPointer cd) {
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pR->value,
 	      dlOval->dynAttr.colorRule,
 	      dlOval->attr.clr);
 	    break;
@@ -227,7 +227,7 @@ static void ovalDraw(XtPointer cd) {
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
 	}
 	gcValues.line_width = dlOval->attr.width;
@@ -237,7 +237,7 @@ static void ovalDraw(XtPointer cd) {
       /* Draw depending on visibility */
 	if(calcVisibility(&dlOval->dynAttr, po->records))
 	  drawOval(po);
-	if(pd->readAccess) {
+	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
 		po->updateTask->opaque = True;

@@ -228,7 +228,7 @@ static void rectangleDraw(XtPointer cd)
     print("rectangleDraw: [%d,%d] value=%g\n",po->x,po->y,pRec->value);
 #endif
     
-    if(pRec->connected) {
+    if(isConnected(pr->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__

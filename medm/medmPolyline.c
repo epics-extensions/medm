@@ -234,7 +234,7 @@ static void polylineUpdateValueCb(XtPointer cd)
 static void polylineDraw(XtPointer cd)
 {
     MedmPolyline *pp = (MedmPolyline *)cd;
-    Record *pd = pp->records[0];
+    Record *pR = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     XGCValues gcValues;
     unsigned long gcValueMask;
@@ -242,7 +242,7 @@ static void polylineDraw(XtPointer cd)
     Display *display = XtDisplay(widget);
     DlPolyline *dlPolyline = pp->dlElement->structure.polyline;
 
-    if(pd->connected) {
+    if(isConnected(pp->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlPolyline->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -251,7 +251,7 @@ static void polylineDraw(XtPointer cd)
 	    break;
 	case DISCRETE:
 	    gcValues.foreground = extractColor(displayInfo,
-	      pd->value,
+	      pR->value,
 	      dlPolyline->dynAttr.colorRule,
 	      dlPolyline->attr.clr);
 	    break;
@@ -262,7 +262,7 @@ static void polylineDraw(XtPointer cd)
 	    break;
 #endif
 	case ALARM :
-	    gcValues.foreground = alarmColor(pd->severity);
+	    gcValues.foreground = alarmColor(pR->severity);
 	    break;
 	default :
 	    gcValues.foreground = displayInfo->colormap[dlPolyline->attr.clr];
@@ -275,7 +275,7 @@ static void polylineDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlPolyline->dynAttr, pp->records))
 	  drawPolyline(pp);
-	if(pd->readAccess) {
+	if(pR->readAccess) {
 #ifdef OPAQUE	    
 	    if(!pp->updateTask->overlapped && dlPolyline->dynAttr.vis == V_STATIC) {
 		pp->updateTask->opaque = True;

@@ -625,6 +625,7 @@ void updateAllDisplayPositions();
 void setTimeValues(void);
 void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd);
 void print(const char *fmt, ...);
+Boolean isConnected(Record **records);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
 void calcPostfix(DlDynamicAttribute *attr);
 void setMonitorChanged(DlDynamicAttribute *attr, Record **records);

@@ -244,8 +244,8 @@ static void textUpdateDestroyCb(XtPointer cd)
 
 static void textUpdateUpdateValueCb(XtPointer cd)
 {
-    Record *pr = (Record *) cd;
-    MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
+    Record *pR = (Record *)cd;
+    MedmTextUpdate *ptu = (MedmTextUpdate *)pR->clientData;
     
     updateTaskMarkUpdate(ptu->updateTask);
 }
@@ -253,7 +253,7 @@ static void textUpdateUpdateValueCb(XtPointer cd)
 static void textUpdateDraw(XtPointer cd)
 {
     MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
-    Record *pr = (Record *) ptu->record;
+    Record *pR = (Record *)ptu->record;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
     DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
     Display *display = XtDisplay(displayInfo->drawingArea);
@@ -270,38 +270,38 @@ static void textUpdateDraw(XtPointer cd)
 #if DEBUG_UPDATE
     print("textUpdateDraw:\n");
 #endif
-    if(pr && pr->connected) {
+    if(pR->connected) {
       /* KE: Can be connected without graphical info or value yet */
-	if(pr->readAccess) {
+	if(pR->readAccess) {
 	    textField[0] = '\0';
-	    switch (pr->dataType) {
+	    switch (pR->dataType) {
 	    case DBF_STRING :
-		if(pr->array) {
-		    strncpy(textField,(char *)pr->array, MAX_TEXT_UPDATE_WIDTH-1);
+		if(pR->array) {
+		    strncpy(textField,(char *)pR->array, MAX_TEXT_UPDATE_WIDTH-1);
 		    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		}
 		isNumber = False;
 		break;
 	    case DBF_ENUM :
-		if(pr->precision >= 0 && pr->hopr+1 > 0) {
-		    i = (int) pr->value;
-		    if(i >= 0 && i < (int) pr->hopr+1){
-			strncpy(textField,pr->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
+		if(pR->precision >= 0 && pR->hopr+1 > 0) {
+		    i = (int) pR->value;
+		    if(i >= 0 && i < (int) pR->hopr+1){
+			strncpy(textField,pR->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
 			textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		    } else {
 			textField[0] = ' '; textField[1] = '\0';
 		    }
 		    isNumber = False;
 		} else {
-		    value = pr->value;
+		    value = pR->value;
 		    isNumber = True;
 		}
 		break;
 	    case DBF_CHAR :
 		if(dlTextUpdate->format == STRING) {
-		    if(pr->array) {
-			strncpy(textField,pr->array,
-			  MIN(pr->elementCount,(MAX_TOKEN_LENGTH-1)));
+		    if(pR->array) {
+			strncpy(textField,pR->array,
+			  MIN(pR->elementCount,(MAX_TOKEN_LENGTH-1)));
 			textField[MAX_TOKEN_LENGTH-1] = '\0';
 		    }
 		    isNumber = False;
@@ -311,7 +311,7 @@ static void textUpdateDraw(XtPointer cd)
 	    case DBF_LONG :
 	    case DBF_FLOAT :
 	    case DBF_DOUBLE :
-		value = pr->value;
+		value = pR->value;
 		precision = dlTextUpdate->limits.prec;
 		isNumber = True;
 		break;
@@ -376,10 +376,10 @@ static void textUpdateDraw(XtPointer cd)
 	    }
 
 #if DEBUG_SHORT
-	    print("textUpdateDraw: pr->name=%s pr->dataType=%d(%s)\n"
-	      "  pr->value=%g  textField=|%s|\n",
-	      pr->name,pr->dataType,dbf_type_to_text(pr->dataType),
-	      pr->value,textField);
+	    print("textUpdateDraw: pR->name=%s pR->dataType=%d(%s)\n"
+	      "  pR->value=%g  textField=|%s|\n",
+	      pR->name,pR->dataType,dbf_type_to_text(pR->dataType),
+	      pR->value,textField);
 	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),
 	      sizeof(long));
 #endif
@@ -404,7 +404,7 @@ static void textUpdateDraw(XtPointer cd)
 		  displayInfo->colormap[dlTextUpdate->monitor.clr]);
 		break;
 	    case ALARM :
-		XSetForeground(display, gc, alarmColor(pr->severity));
+		XSetForeground(display, gc, alarmColor(pR->severity));
 		break;
 	    }
 	    XSetBackground(display, gc,
@@ -482,21 +482,21 @@ static void textUpdateDraw(XtPointer cd)
 
 static void textUpdateUpdateGraphicalInfoCb(XtPointer cd)
 {
-    Record *pr = (Record *) cd;
-    MedmTextUpdate *ptu = (MedmTextUpdate *) pr->clientData;
+    Record *pR = (Record *) cd;
+    MedmTextUpdate *ptu = (MedmTextUpdate *) pR->clientData;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
     XcVType hopr, lopr, val;
     short precision;
 
 
   /* Get values from the record  and adjust them */
-    hopr.fval = (float) pr->hopr;
-    lopr.fval = (float) pr->lopr;
-    val.fval = (float) pr->value;
+    hopr.fval = (float) pR->hopr;
+    lopr.fval = (float) pR->lopr;
+    val.fval = (float) pR->value;
     if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
-    precision = pr->precision;
+    precision = pR->precision;
     if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
     
