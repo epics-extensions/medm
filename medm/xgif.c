@@ -441,7 +441,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	}
     }
     if (fp == NULL) {
-	medmPrintf("\nloadGIF: Filke not found:\n  %s\n",fname);
+	medmPrintf("\nloadGIF: File not found:\n  %s\n",fname);
 	return(False);
     }
 

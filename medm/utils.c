@@ -97,37 +97,22 @@ static DlList *tmpDlElementList = NULL;
  *	working directory
  */
 
-FILE *dmOpenUseableFile(char *filename)
+FILE *dmOpenUsableFile(char *filename, DisplayInfo *displayInfo)
 {
     FILE *filePtr;
+    int startPos;
     char name[MAX_TOKEN_LENGTH], fullPathName[MAX_DIR_LENGTH],
       dirName[MAX_DIR_LENGTH];
-    char *dir, *adlPtr;
-    int suffixLength, usedLength, startPos;
+    char *dir, *ptr;
 #if DEBUG_FILE
     static FILE *file=NULL;
     static pid_t pid=0;
 #endif
 
-  /*
-   * try to open the file as a ".adl"  rather than ".dl" which the
-   *    editor generates
-   */
-    
-  /* look in current directory first */
-    adlPtr = strstr(filename,DISPLAY_FILE_ASCII_SUFFIX);
-    if (adlPtr != NULL) {
-      /* ascii name */
-	suffixLength = strlen(DISPLAY_FILE_ASCII_SUFFIX);
-    } else {
-      /* binary name */
-	suffixLength = strlen(DISPLAY_FILE_BINARY_SUFFIX);
-    }
-
-    usedLength = strlen(filename);
-    strcpy(name,filename);
-    name[usedLength-suffixLength] = '\0';
-    strcat(name,DISPLAY_FILE_ASCII_SUFFIX);
+  /* Try to open with the given name first
+   *   (Will be in cwd if not an absolute pathname) */
+    strncpy(name, filename, MAX_TOKEN_LENGTH);
+    name[MAX_TOKEN_LENGTH-1] = '\0';
     filePtr = fopen(name,"r");
 #if DEBUG_FILE
     if(!file) {
@@ -140,24 +125,31 @@ FILE *dmOpenUseableFile(char *filename)
 	}
     }
     if(file) {
-	fprintf(file,"[%d] dmOpenUseableFile: %s\n",pid,filename);
+	fprintf(file,"[%d] dmOpenUsableFile: %s\n",pid,filename);
 	fprintf(file,"  Converted to: %s\n",name);
 	if(filePtr) fprintf(file,"    Found as: %s\n",name);
 	fflush(file);
     }
 #endif
+    if(filePtr) return (filePtr);
 
-  /* If not in current directory, look in EPICS_DISPLAY_PATH directory */
-    if (filePtr == NULL) {
-	dir = getenv("EPICS_DISPLAY_PATH");
-	if (dir != NULL) {
-	    startPos = 0;
-	    while (filePtr == NULL &&
-	      extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
-		strcpy(fullPathName,dirName);
-		strcat(fullPathName,"/");
-		strcat(fullPathName,name);
-		filePtr = fopen(fullPathName,"r");
+  /* If the name starts with / or . then we can do no more */
+    if(name[0] == '/' || name[0] == '.') return (NULL);
+
+  /* If the name comes from a related display,
+   *   then try the directory of the related display */
+    if(displayInfo  && displayInfo->fromRelatedDisplayExecution) {
+	strncpy(fullPathName, displayInfo->dlFile->name, MAX_DIR_LENGTH);
+	fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	if(fullPathName && fullPathName[0]) {
+	    ptr = strrchr(fullPathName, '/');
+	    if(ptr) {
+		*(++ptr) = '\0';
+		strcat(fullPathName, name);
+#if 0		
+		printf("fullPathName = %s\n", fullPathName);
+#endif		
+		filePtr = fopen(fullPathName, "r");
 #if DEBUG_FILE
 		if(file) {
 		    fprintf(file,"  Converted to: %s\n",fullPathName);
@@ -165,7 +157,30 @@ FILE *dmOpenUseableFile(char *filename)
 		    fflush(file);
 		}
 #endif
+		if(filePtr) return (filePtr);
 	    }
+
+	}
+    }
+
+  /* Look in EPICS_DISPLAY_PATH directories */
+    dir = getenv("EPICS_DISPLAY_PATH");
+    if (dir != NULL) {
+	startPos = 0;
+	while (filePtr == NULL &&
+	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
+	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
+	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	    strcat(fullPathName, "/");
+	    strcat(fullPathName, name);
+	    filePtr = fopen(fullPathName, "r");
+#if DEBUG_FILE
+	    if(file) {
+		fprintf(file,"  Converted to: %s\n",fullPathName);
+		if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
+		fflush(file);
+	    }
+#endif
 	}
     }
 
@@ -2873,9 +2888,9 @@ void freeNameValueTable(NameValueTable *nameValueTable, int numEntries)
 
 
 /*
- * utility function to perform macro substitutions on input string, putting
- *	substituted string in specified output string (up to sizeOfOutputString
- *	bytes)
+ * Utility function to perform macro substitutions on input string, putting
+ *   substituted string in specified output string (up to sizeOfOutputString
+ *   bytes)
  */
 void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString)

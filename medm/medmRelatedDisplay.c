@@ -724,13 +724,12 @@ void writeDlRelatedDisplay(
 }
 
 static void relatedDisplayButtonPressedCb(Widget w,
-  XtPointer clientData,
-  XtPointer callbackData)
+  XtPointer clientData, XtPointer callbackData)
 {
-    DlRelatedDisplayEntry *pEntry = (DlRelatedDisplayEntry *) clientData;
+    DlRelatedDisplayEntry *pEntry = (DlRelatedDisplayEntry *)clientData;
     DisplayInfo *displayInfo = 0;
-    XtVaGetValues(w,XmNuserData,&displayInfo,NULL);
-    relatedDisplayCreateNewDisplay(displayInfo,pEntry);
+    XtVaGetValues(w, XmNuserData, &displayInfo, NULL);
+    relatedDisplayCreateNewDisplay(displayInfo, pEntry);
 }
 
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
@@ -751,9 +750,9 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
    *   it to the created child display
    */
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
-	performMacroSubstitutions(displayInfo,argsString,processedArgs,
+	performMacroSubstitutions(displayInfo, argsString, processedArgs,
           2*MAX_TOKEN_LENGTH);
-	filePtr = dmOpenUseableFile(filename);
+	filePtr = dmOpenUsableFile(filename, displayInfo);
 	if (filePtr == NULL) {
 	    newFilename = STRDUP(filename);
 	    adlPtr = strstr(filename,DISPLAY_FILE_ASCII_SUFFIX);

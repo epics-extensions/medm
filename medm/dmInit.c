@@ -148,17 +148,19 @@ static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cb
 #ifdef __cplusplus
 static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
 #else
-    static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
+static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 #endif
 {
+    DisplayInfo *displayInfo = (DisplayInfo *)cd;
     Arg args[2];
+    char *env = getenv("MEDM_HELP");
 
     if (shell == lastShell) {
 	XtSetArg(args[0],XmNx,x);
 	XtSetArg(args[1],XmNy,y);
 	XtSetValues(shell,args,2);
     }
-    help_protocol(shell);
+    if (env != NULL) addDisplayHelpProtocol(displayInfo);
 }
 
 /***
@@ -250,10 +252,10 @@ DisplayInfo *allocateDisplayInfo()
     }
     displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
       mainShell,args,n);
-    XtAddCallback(displayInfo->shell,XmNpopupCallback,
-      displayShellPopupCallback,NULL);
+    XtAddCallback(displayInfo->shell, XmNpopupCallback,
+      displayShellPopupCallback, (XtPointer)displayInfo);
     XtAddCallback(displayInfo->shell,XmNpopdownCallback,
-      displayShellPopdownCallback,NULL);
+      displayShellPopdownCallback, NULL);
 
   /* Register interest in these protocols */
     { Atom atoms[2];

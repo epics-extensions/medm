@@ -207,9 +207,13 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Create the edit-mode popup menu */
 	    createEditModeMenu(displayInfo);
 	    
-	  /* Handle input (arrow keys) */
+	  /* Handle input */
 	    XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
 	      drawingAreaCallback,(XtPointer)displayInfo);
+
+	  /* Handle key presses */
+	    XtAddEventHandler(displayInfo->drawingArea,KeyPressMask,False,
+	      handleEditKeyPress,(XtPointer)displayInfo);
 
 	  /* Handle button presses */
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,

@@ -1114,7 +1114,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 
 
     dlColormap = NULL;
-    externalFilePtr = dmOpenUseableFile(filename);
+    externalFilePtr = dmOpenUsableFile(filename, NULL);
     if (externalFilePtr == NULL) {
 	sprintf(msg,
 	  "Can't open \n\n        \"%s\" (.adl)\n\n%s",filename,

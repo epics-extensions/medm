@@ -220,6 +220,7 @@ void medmCreateCAStudyDlg();
 void medmStartUpdateCAStudyDlg();
 int xErrorHandler(Display *dpy, XErrorEvent *event);
 void xtErrorHandler(char *message);
+void addDisplayHelpProtocol(DisplayInfo *displayInfo);
 
 /* medm.c */
 int main(int argc, char *argv[]);
@@ -392,7 +393,7 @@ void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
 int localCvtLongToHexString(long source, char *pdest);
-FILE *dmOpenUseableFile(char *filename);
+FILE *dmOpenUsableFile(char *filename, DisplayInfo *displayInfo);
 Boolean extractStringBetweenColons(char *input, char *output, int startPos,
   int  *endPos);
 void dmRemoveMonitorStructureFromMonitorList(
@@ -611,7 +612,5 @@ void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);
 void plotcomAttributeInit(DlPlotcom *plotcom);
 void penAttributeInit(DlPen *pen);
 void traceAttributeInit(DlTrace *trace);
-/* help_protocol.c */
-void help_protocol (Widget shell);
 
 #endif  /* __PROTO_H__ */

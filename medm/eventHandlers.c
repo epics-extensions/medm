@@ -61,6 +61,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_POPUP 0
 #define DEBUG_EDIT_POPUP 0
 #define DEBUG_PVINFO 0
+#define DEBUG_KEYS 0
+
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
@@ -884,7 +886,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *
     Modifiers modifiers;
     KeySym keysym;
 
-#if DEBUG_EVENTS
+#if DEBUG_EVENTS || DEBUG_KEYS
     fprintf(stderr,"\n>>> handleEditKeyPress: %s Type: %d "
       "Shift: %d Ctrl: %d\n"
       "  [KeyPress=%d, KeyRelease=%d ButtonPress=%d, ButtonRelease=%d]\n",
@@ -914,7 +916,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *
 	  /* Branch depending on keysym */
 	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
 	      &modifiers,&keysym);
-#if DEBUG_EVENTS
+#if DEBUG_EVENTS || DEBUG_KEYS
 	    fprintf(stderr,"handleEditKeyPress: keycode=%d keysym=%d ctrl=%d\n",
 	      key->keycode,keysym,ctrl);
 #endif

@@ -912,7 +912,8 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
 	    } else {
 	      /* Insert the path before the file name */
-		if (strlen(currentDirectoryName)+strlen(fileStr)+1 < (size_t) FULLPATHNAME_SIZE) {
+		if (strlen(currentDirectoryName)+strlen(fileStr)+1 <
+		  (size_t) FULLPATHNAME_SIZE) {
 		    strcpy(fullPathName,currentDirectoryName);
 		    strcat(fullPathName,"/");
 		    strcat(fullPathName,fileStr);
@@ -929,7 +930,8 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    if (dir != NULL) {
 		startPos = 0;
 		while (extractStringBetweenColons(dir,name,startPos,&startPos)) {
-		    if (strlen(name)+strlen(fileStr)+1 < (size_t) FULLPATHNAME_SIZE) {
+		    if (strlen(name)+strlen(fileStr)+1 <
+		      (size_t) FULLPATHNAME_SIZE) {
 			strcpy(fullPathName,name);
 			strcat(fullPathName,"/");
 			strcat(fullPathName,fileStr);
@@ -942,14 +944,18 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	  /* build the request */
 	    if (fileEntryTableSize == 0) {
 		fileEntryTableSize =  10;
-		request->fileList = (char **) malloc(fileEntryTableSize*sizeof(char *));
+		request->fileList =
+		  (char **)malloc(fileEntryTableSize*sizeof(char *));
 	    }
 	    if (fileEntryTableSize > request->fileCnt) {
 		fileEntryTableSize *= 2;
 #if defined(__cplusplus) && !defined(__GNUG__)
-		request->fileList = (char **) realloc((malloc_t)request->fileList,fileEntryTableSize);
+		request->fileList =
+		  (char **)realloc((malloc_t)request->fileList,
+		    fileEntryTableSize);
 #else
-		request->fileList = (char **) realloc(request->fileList,fileEntryTableSize);
+		request->fileList =
+		  (char **)realloc(request->fileList,fileEntryTableSize);
 #endif
 	    }
 	    if (request->fileList) {
@@ -1696,7 +1702,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 
     stream = fopen(f1,"w");
     if (stream == NULL) {
-	sprintf(warningString,"Fail to create/write file :\n%s",filename);
+	sprintf(warningString,"Failed to create/write file :\n%s",filename);
 	dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	return False;
     }
@@ -1829,9 +1835,10 @@ static void fileMenuDialogCallback(
 		filePtr = fopen(filename,"r");
 		if (filePtr) {
 		    XtUnmanageChild(w);
-		    dmDisplayListParse(NULL,filePtr,NULL,filename,NULL,(Boolean)False);
+		    dmDisplayListParse(NULL, filePtr, NULL, filename, NULL,
+		      (Boolean)False);
 		    enableEditFunctions();
-		    if (filePtr) fclose(filePtr);
+		    fclose(filePtr);
 		}
 		XtFree(filename);
 	    }
@@ -3181,24 +3188,75 @@ main(int argc, char *argv[])
 	    }
 	    break;
 #if DEBUG_EVENTS
+	case KeyPress:
+	case KeyRelease: {
+	    XKeyEvent xEvent = event.xkey;
+	    Modifiers modifiers;
+	    KeySym keysym;
+	    char buffer[10];
+	    int nbytes;
+	    Widget w;
+	    Window win;
+	    int i = 0;
+
+	    for(i=0; i < 10; i++) buffer[i] = '\0';
+	    nbytes = XLookupString(&xEvent, buffer, 10,
+	      &keysym, NULL);
+
+	    printf("\nEVENT: Type: %-7s  Keycode: %d  Window %x  SubWindow: %x\n"
+	      "  Key: %s Shift: %s  Ctrl: %s\n",
+	      (xEvent.type == KeyPress)?"KeyPress":"KeyRelease",
+	      xEvent.keycode, xEvent.window, xEvent.subwindow,
+	      buffer,
+	      xEvent.state&ShiftMask?"Yes":"No",
+	      xEvent.state&ControlMask?"Yes":"No");
+	    printf("  Send_event: %s  State: %x\n",
+	      xEvent.send_event?"True":"False",xEvent.state);
+
+	    XtTranslateKeycode(display, xEvent.keycode, (Modifiers)NULL,
+	      &modifiers, &keysym);
+
+	    switch (keysym) {
+	    case osfXK_Left:
+		printf("  Keysym: %s\n","osfXK_Left");
+		break;
+	    case osfXK_Right:
+		printf("  Keysym: %s\n","osfXK_Right");
+		break;
+	    case osfXK_Up:
+		printf("  Keysym: %s\n","osfXK_Up");
+		break;
+	    case osfXK_Down:
+		printf("  Keysym: %s\n","osfXK_Down");
+		break;
+	    default:
+		printf("  Keysym: %s\n","Undetermined");
+		break;
+	    }
+
+	    XtDispatchEvent(&event);
+	    break;
+	}
+
 	case ButtonPress:
 	case ButtonRelease: {
-	    XButtonEvent bEvent = event.xbutton;
+	    XButtonEvent xEvent = event.xbutton;
 	    Widget w;
 	    Window win;
 	    int i = 0;
 
 	    printf("\nEVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
-	      (bEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
-	      bEvent.button, bEvent.window, bEvent.subwindow,
-	      bEvent.state&ShiftMask?"Yes":"No",
-	      bEvent.state&ControlMask?"Yes":"No");
+	      (xEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
+	      xEvent.button, xEvent.window, xEvent.subwindow,
+	      xEvent.state&ShiftMask?"Yes":"No",
+	      xEvent.state&ControlMask?"Yes":"No");
 	    printf("  Send_event: %s  State: %x\n",
-	      bEvent.send_event?"True":"False",bEvent.state);
+	      xEvent.send_event?"True":"False",xEvent.state);
 
-	    if(bEvent.subwindow) win=bEvent.subwindow;
-	    else win=bEvent.window;
+#if 0
+	    if(xEvent.subwindow) win=xEvent.subwindow;
+	    else win=xEvent.window;
 	    w=XtWindowToWidget(display,win);
 	    printf("\nHierarchy:\n");
 	    while(1) {
@@ -3206,9 +3264,9 @@ main(int argc, char *argv[])
 		if(w == mainShell) {
 		    printf(" (mainShell)\n");
 		    break;
-		} else if(win == bEvent.window) {
+		} else if(win == xEvent.window) {
 		    printf(" (window)\n");
-		} else if(win == bEvent.subwindow) {
+		} else if(win == xEvent.subwindow) {
 		    printf(" (subwindow)\n");
 		} else {
 		    printf("\n");
@@ -3217,9 +3275,8 @@ main(int argc, char *argv[])
 		win=XtWindow(w);
 	    }
 
-#if 1
-	    printEventMasks(display, bEvent.window, "\n[window] ");
-	    printEventMasks(display, bEvent.subwindow, "\n[subwindow] ");
+	    printEventMasks(display, xEvent.window, "\n[window] ");
+	    printEventMasks(display, xEvent.subwindow, "\n[subwindow] ");
 #endif	    
 	    
 	    XtDispatchEvent(&event);

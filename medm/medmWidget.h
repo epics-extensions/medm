@@ -382,72 +382,71 @@ typedef struct _ResourceBundle {
 
   /* the aggregate types have been decomposed into scalar/atomic types to
      support the set intersection necessary */
-    Position		x;
-    Position		y;
-    Dimension		width;
-    Dimension		height;
-    char			title[MAX_TOKEN_LENGTH];
-    char			xlabel[MAX_TOKEN_LENGTH];
-    char			ylabel[MAX_TOKEN_LENGTH];
-    int			clr;
-    int			bclr;
-    int			begin;
-    int			path;
-    TextAlign		align;
-    TextFormat		format;
-    LabelType		label;
-    Direction		direction;
-    ColorMode		clrmod;
+    Position x;
+    Position y;
+    Dimension width;
+    Dimension height;
+    char title[MAX_TOKEN_LENGTH];
+    char xlabel[MAX_TOKEN_LENGTH];
+    char ylabel[MAX_TOKEN_LENGTH];
+    int clr;
+    int bclr;
+    int begin;
+    int path;
+    TextAlign align;
+    TextFormat format;
+    LabelType label;
+    Direction direction;
+    ColorMode clrmod;
 #ifdef __COLOR_RULE_H__
-    int                     colorRule;
+    int colorRule;
 #endif
-    FillMode		fillmod;
-    EdgeStyle		style;
-    FillStyle		fill;
-    VisibilityMode		vis;
-    char			chan[MAX_TOKEN_LENGTH];
-    int			data_clr;
-    int			dis;
-    int			xyangle;
-    int			zangle;
-    double                  period;
-    TimeUnits		units;
-    CartesianPlotStyle	cStyle;
-    EraseOldest		erase_oldest;
-    int			count;
-    Stacking		stacking;
-    ImageType		imageType;
-    char			textix[MAX_TOKEN_LENGTH];
-    char			messageLabel[MAX_TOKEN_LENGTH];
-    char			press_msg[MAX_TOKEN_LENGTH];
-    char			release_msg[MAX_TOKEN_LENGTH];
-    char			imageName[MAX_TOKEN_LENGTH];
-    char			compositeName[MAX_TOKEN_LENGTH];
-    char			data[MAX_TOKEN_LENGTH];
-    char			cmap[MAX_TOKEN_LENGTH];
-    char			name[MAX_TOKEN_LENGTH];
-    int			lineWidth;
-    double			dPrecision;
-    int                     sbit, ebit;
-    char      rdLabel[MAX_TOKEN_LENGTH];
-    DlTrace			cpData[MAX_TRACES];
-    DlPen			scData[MAX_PENS];
-    DlRelatedDisplayEntry	rdData[MAX_RELATED_DISPLAYS];
-    DlShellCommandEntry	cmdData[MAX_SHELL_COMMANDS];
+    FillMode fillmod;
+    EdgeStyle style;
+    FillStyle fill;
+    VisibilityMode vis;
+    char chan[MAX_TOKEN_LENGTH];
+    int data_clr;
+    int dis;
+    int xyangle;
+    int zangle;
+    double period;
+    TimeUnits units;
+    CartesianPlotStyle cStyle;
+    EraseOldest erase_oldest;
+    int count;
+    Stacking stacking;
+    ImageType imageType;
+    char textix[MAX_TOKEN_LENGTH];
+    char messageLabel[MAX_TOKEN_LENGTH];
+    char press_msg[MAX_TOKEN_LENGTH];
+    char release_msg[MAX_TOKEN_LENGTH];
+    char imageName[MAX_TOKEN_LENGTH];
+    char compositeName[MAX_TOKEN_LENGTH];
+    char data[MAX_TOKEN_LENGTH];
+    char cmap[MAX_TOKEN_LENGTH];
+    char name[MAX_TOKEN_LENGTH];
+    int lineWidth;
+    double dPrecision;
+    int sbit, ebit;
+    char rdLabel[MAX_TOKEN_LENGTH];
+    DlTrace cpData[MAX_TRACES];
+    DlPen scData[MAX_PENS];
+    DlRelatedDisplayEntry rdData[MAX_RELATED_DISPLAYS];
+    DlShellCommandEntry cmdData[MAX_SHELL_COMMANDS];
 
   /* X_AXIS_ELEMENT, Y1_AXIS_ELEMENT, Y2_AXIS_ELEMENT */
-    DlPlotAxisDefinition	axis[3];
+    DlPlotAxisDefinition axis[3];
 
-    char			trigger[MAX_TOKEN_LENGTH];
-    char                    erase[MAX_TOKEN_LENGTH];
-    eraseMode_t             eraseMode;
+    char trigger[MAX_TOKEN_LENGTH];
+    char erase[MAX_TOKEN_LENGTH];
+    eraseMode_t eraseMode;
 
   /* related display specific */
     relatedDisplayVisual_t rdVisual;
 
-    struct _ResourceBundle	*next;	/* linked list of resourceBundle's   */
-    struct _ResourceBundle	*prev;
-
+    struct _ResourceBundle *next;	/* linked list of resourceBundle's   */
+    struct _ResourceBundle *prev;
 } ResourceBundle, *ResourceBundlePtr;
 
 

@@ -60,8 +60,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <time.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>         /* system() */
+
+#include <Xm/Protocols.h>
 
 /* Function prototypes */
+
+static void displayHelpCallback(Widget shell, XtPointer client_data,
+  XtPointer call_data);
 
 extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
 extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
@@ -913,4 +920,60 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
 void xtErrorHandler(char *message)
 {
     fprintf(stderr,"\n%s\n",message);
+}
+
+/*****************************************************************************
+ *
+ * Display Help
+ *  
+ * Original Author: Vladimir T. Romanovski  (romsky@x4u2.desy.de)
+ * Organization: KRYK/@DESY 1996
+ *
+ *****************************************************************************
+*/
+
+/*         
+ * This routine reads the MEDM_HELP environment variable and makes a system
+ *   call to provide help for the display
+ */
+static void displayHelpCallback(Widget shell, XtPointer client_data,
+  XtPointer call_data)
+{
+    DisplayInfo *displayInfo = (DisplayInfo *)client_data;
+    char *env = getenv("MEDM_HELP");
+    char *name = displayInfo->dlFile->name;
+
+    if (env != NULL) {
+      /* Run the help command */
+	char *command;
+	
+	command = (char*)malloc(strlen(env) + strlen(name) + 5);
+	sprintf(command, "%s %s &", env, name);
+	(void)system(command);
+	free(command);
+    } else {
+      /* KE: Should no longer get here */
+      /* Print error message */
+	medmPostMsg("displayHelpCallback: The environment variable MEDM_HELP is not set\n"
+	  "  Cannot implement help for %s\n", name);
+    }
+}
+
+/*
+ * This routine installs a customized Motif window manager protocol for
+ *   the shell widget of the display
+ */
+void addDisplayHelpProtocol(DisplayInfo *displayInfo)
+{
+    Atom message, protocol;
+    char buf[80];
+
+    message = XmInternAtom (XtDisplay(displayInfo->shell), "_MOTIF_WM_MESSAGES", FALSE);
+    protocol = XmInternAtom (XtDisplay(displayInfo->shell), "_MEDM_DISPLAY_HELP", FALSE);
+
+    XmAddProtocols(displayInfo->shell, message, &protocol, 1);
+    XmAddProtocolCallback(displayInfo->shell, message, protocol, displayHelpCallback, (XtPointer)displayInfo);
+
+    sprintf (buf, "Help _H Ctrl<Key>h f.send_msg %d", protocol);
+    XtVaSetValues (displayInfo->shell, XmNmwmMenu, buf, NULL);
 }

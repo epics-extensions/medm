@@ -41,7 +41,7 @@ CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
 endif
 
 CC += -g
-#CC += -xsb
+CC += -xsb
 #CC += -P
 #CC += -xP
 #CC += -H
@@ -55,7 +55,10 @@ USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 
 XRTGRAPH3 = /opt/local/xrtgraph3.0.0
+ifeq ($(HOST_ARCH),solaris)
 XRTGRAPH = $(XRTGRAPH3)
+endif
+
 ifdef XRTGRAPH
 # USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
@@ -101,7 +104,6 @@ SRCS.c = \
   ../dmInit.c \
   ../eventHandlers.c \
   ../help.c \
-  ../help_protocol.c \
   ../medm.c \
   ../medmArc.c \
   ../medmBar.c \
@@ -149,7 +151,6 @@ OBJS = \
   dmInit.o \
   eventHandlers.o \
   help.o \
-  help_protocol.o \
   medm.o \
   medmArc.o \
   medmBar.o \
@@ -225,6 +226,11 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.30  1997/09/12 18:15:42  evans
+# Deleted help_protocol.c.  Renamed help_protocol routines.  Changed routines
+# to use full pathname of ADL file instead of title.  Fixed logic for finding
+# ADL files to use directory of source display for related-display execution.
+#
 # Revision 1.29  1997/09/10 17:03:54  evans
 # Changed label for file format buttons.
 #
