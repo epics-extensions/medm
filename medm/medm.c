@@ -1744,7 +1744,6 @@ void medmExit() {
   /* Exit without prompt */
     medmClearImageCache();
     medmCATerminate();
-    destroyFreeStringList();
     destroyMedmWidget();
     dmTerminateX();
     exit(0);
@@ -1813,7 +1812,6 @@ static void fileMenuDialogCallback(
         case FILE_EXIT_BTN:
 	    medmClearImageCache();
 	    medmCATerminate();
-	    destroyFreeStringList();
 	    destroyMedmWidget();
 	    dmTerminateX();
 	    exit(0);

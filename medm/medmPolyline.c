@@ -156,7 +156,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	dlPolyline->isFallingOrRisingLine = False;
     }
     if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlPolyline->dynAttr.name)){
+      && (dlPolyline->dynAttr.chan)){
 
 	Polyline *pp;
 	DlObject object;
@@ -180,7 +180,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pp->updateTask->opaque = False;
 	}
 	pp->record = medmAllocateRecord(
-	  dlPolyline->dynAttr.name,
+	  dlPolyline->dynAttr.chan,
 	  polylineUpdateValueCb,
 	  NULL,
 	  (XtPointer) pp);
@@ -851,15 +851,11 @@ static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolyline->dynAttr.name),
+      CHAN_RC,       &(dlPolyline->dynAttr.chan),
       -1);
 }
 
 static void destroyDlPolyline(DlElement *dlElement) {
-    if (dlElement->structure.polyline->dynAttr.name) {
-	freeString(dlElement->structure.polyline->dynAttr.name);
-	dlElement->structure.polyline->dynAttr.name = NULL;
-    }
     free ((char *)dlElement->structure.polyline->points);
     free ((char *)dlElement->structure.polyline);
     free ((char *)dlElement);
@@ -885,7 +881,7 @@ static void polylineGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolyline->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolyline->dynAttr.name),
+      CHAN_RC,       &(dlPolyline->dynAttr.chan),
       -1);
     xOffset = (int) width - (int) dlPolyline->object.width;
     yOffset = (int) height - (int) dlPolyline->object.height;

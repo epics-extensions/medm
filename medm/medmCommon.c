@@ -669,7 +669,7 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     dynAttr->colorRule = 0;
 #endif
-    dynAttr->name = 0;
+    *(dynAttr->chan) = '\0';
 }
 
 /* Function prototypes */
@@ -806,9 +806,7 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		if ((strlen(token) > (size_t)0)) {
-		    if (!dynAttr->name) dynAttr->name = allocateString();
-		    if (dynAttr->name)
-		      strcpy(dynAttr->name,token);
+		    strcpy(dynAttr->chan,token);
 		}
 	    }
 	    break;
@@ -834,7 +832,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
     dynAttr->colorRule = 0;   /* Color Rule # */
 #endif
     dynAttr->vis = V_STATIC;
-    if (dynAttr->name) dynAttr->name[0] = '\0';
+    *(dynAttr->chan) = '\0';
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -1129,10 +1127,7 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		if (token[0]) {
-		    if (!dynAttr->name)
-		      dynAttr->name = allocateString();
-		    if (dynAttr->name)
-		      strcpy(dynAttr->name,token);
+		    strcpy(dynAttr->chan,token);
 		}
 	    }
 	    break;
@@ -1332,7 +1327,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 {
     char indent[16];
 
-    if (!dynAttr->name) return;
+    if (!*(dynAttr->chan)) return;
 
     memset(indent,'\t',level);
     indent[level] = '\0';
@@ -1349,7 +1344,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
   	if (dynAttr->colorRule != 0)
 	  fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
 #endif
-  	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->name);
+  	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->chan);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
@@ -1363,7 +1358,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 #endif
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t\tparam {",indent);
-  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->name);
+  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->chan);
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t}",indent);
   	fprintf(stream,"\n%s}",indent);
@@ -1412,10 +1407,6 @@ void genericScale(DlElement *dlElement, int xOffset, int yOffset) {
 }
 
 void destroyElementWithDynamicAttribute(DlElement *dlElement) {
-    if (dlElement->structure.rectangle->dynAttr.name) {
-	freeString(dlElement->structure.rectangle->dynAttr.name);
-	dlElement->structure.rectangle->dynAttr.name = NULL;
-    }
     free( (char *) dlElement->structure.composite);
     destroyDlElement(dlElement);
 }

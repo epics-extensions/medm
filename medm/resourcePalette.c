@@ -3602,17 +3602,8 @@ void medmGetValues(ResourceBundle *pRB, ...) {
 	    break;
 	}
 	case CHAN_RC : {
-	    char **pvalue = va_arg(ap,char **);
-	    if (pRB->chan[0]) {
-		if (!(*pvalue)) *pvalue = allocateString();
-		if (*pvalue) 
-		  strcpy(*pvalue,pRB->chan);
-	    } else {
-		if (*pvalue) {
-		    freeString(*pvalue);
-		    *pvalue = 0;
-		}
-	    }
+	    char *pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->chan);
 	    break;
 	}
 	case DATA_CLR_RC : {
@@ -3891,8 +3882,8 @@ void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     globalResourceBundle.colorRule = dynAttr->colorRule;
 #endif
-    if (dynAttr->name) {
-	strcpy(globalResourceBundle.chan,dynAttr->name);
+    if (dynAttr->chan) {
+	strcpy(globalResourceBundle.chan,dynAttr->chan);
     } else {
 	globalResourceBundle.chan[0] = '\0';
     }
@@ -3904,16 +3895,7 @@ void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
     dynAttr->colorRule = globalResourceBundle.colorRule;
 #endif
-    if (globalResourceBundle.chan[0] == '\0') {
-	if (dynAttr->name) {
-	    freeString(dynAttr->name);
-	    dynAttr->name = NULL;
-	}
-    } else {
-	if (!dynAttr->name) dynAttr->name = allocateString();
-	if (dynAttr->name) 
-	  strcpy(dynAttr->name,globalResourceBundle.chan);
-    }
+    strcpy(dynAttr->chan,globalResourceBundle.chan);
 }
 
 void updateResourcePaletteDynamicAttribute() {

@@ -502,9 +502,11 @@ void resizeDlElementReferenceList(
   int y,
   float scaleX,
   float scaleY);
+#if 0
 char *allocateString();
 void freeString(char *string);
 void destroyFreeStringList();
+#endif
 void createUndoInfo(DisplayInfo *displayInfo);
 void destroyUndoInfo(DisplayInfo *displayInfo);
 void clearUndoInfo(DisplayInfo *displayInfo);

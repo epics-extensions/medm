@@ -56,7 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_EVENTS 0
 #define DEBUG_FILE 1
-#define DEBUG_STRING_LIST 1
+#define DEBUG_STRING_LIST 0
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
 #define UNDO
@@ -3298,89 +3298,6 @@ void dumpDlElementList(DlList *l)
 	p = p->next;
     }
     return;
-}
-
-/*
- * String allocation
- *   Keep an array of ARRAY_SIZE string pointers to unused strings
- *     and a count of how many are available
- *   When allocating strings, use an available one if possible
- *     otherwise allocate space for a string of MAX_TOKEN_LENGTH chars
- *   When freeing strings, put them in the unused list if it isn't full
- *     otherwise delete them
- *   Should help keep memory unfragmented, at least
- */
-
-#define ARRAY_SIZE 256
-typedef struct {
-    char* array[ARRAY_SIZE];
-    int   count;
-} nameList_t;
-
-static nameList_t freeStringList = {
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    0};
-
-#if DEBUG_STRING_LIST
-static int allocateStringCount = 0;
-static int freeStringCount = 0;
-#endif
-
-char *allocateString() {
-    char *string;
-    if (freeStringList.count) {
-      /* Use a free one */
-	freeStringList.count--;
-	string = freeStringList.array[freeStringList.count];
-    } else {
-      /* Allocate one */
-	string = malloc(MAX_TOKEN_LENGTH);
-#if DEBUG_STRING_LIST
-	allocateStringCount++;
-#endif	
-    }
-#if DEBUG_STRING_LIST
-    printf("allocateString: Count: %d  Malloc's: %d  Free's: %d\n",
-      freeStringList.count,allocateStringCount,freeStringCount);
-#endif	
-    return string;
-}
-
-void freeString(char *string) {
-    if (freeStringList.count < ARRAY_SIZE) {
-      /* Save it in the free list */
-	freeStringList.array[freeStringList.count] = string;
-	freeStringList.count++;
-    } else {
-      /* Free it */
-	free(string);
-#if DEBUG_STRING_LIST
-	freeStringCount++;
-#endif	
-    }
-#if DEBUG_STRING_LIST
-    printf("freeString: Count: %d  Malloc's: %d  Free's: %d\n",
-      freeStringList.count,allocateStringCount,freeStringCount);
-#endif	
-}
-
-void destroyFreeStringList() {
-    int i;
-#if DEBUG_STRING_LIST    
-    printf("destroyFreeStringList: Count: %d  Malloc's: %d  Free's: %d\n",
-      freeStringList.count,allocateStringCount,freeStringCount);
-#endif    
-    for (i=0; i<freeStringList.count; i++) {
-	free(freeStringList.array[i]);
-    }
-    freeStringList.count = 0;
 }
 
 /*

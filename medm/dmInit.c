@@ -331,10 +331,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 		    case DL_Polyline  :
 		    case DL_Polygon   :
 			pe->structure.rectangle->attr = attr;
-			if (dynAttr.name && dynAttr.name[0] != '\0') {
-			    pe->structure.rectangle->dynAttr = dynAttr;
-			    dynAttr.name = 0;
-			}
+			pe->structure.rectangle->dynAttr = dynAttr;
 			break;
 		    }
 		}
@@ -363,14 +360,8 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 	}
     } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF));
-  /* reset the intit flag */
+  /* Reset the init flag */
     if (tokenType == T_EOF) init = True;
-#if 0
-    if (dynAttr.name) {
-	freeString(dynAttr.name);
-	dynAttr.name = NULL;
-    }
-#endif
     return tokenType;
 }
 

@@ -112,9 +112,7 @@ static void drawOval(Oval *po) {
 void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlOval *dlOval = dlElement->structure.oval;
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlOval->dynAttr.name)){
-
+    if (displayInfo->traversalMode == DL_EXECUTE) {
 	Oval *po;
 	po = (Oval *) malloc(sizeof(Oval));
 	po->dlElement = dlElement;
@@ -130,11 +128,8 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(po->updateTask,ovalName);
 	    po->updateTask->opaque = False;
 	}
-	po->record = medmAllocateRecord(
-	  dlOval->dynAttr.name,
-	  ovalUpdateValueCb,
-	  NULL,
-	  (XtPointer) po);
+	po->record = medmAllocateRecord(dlOval->dynAttr.chan,ovalUpdateValueCb,
+	  NULL,(XtPointer) po);
 #if 0
 	drawWhiteRectangle(po->updateTask);
 #endif
@@ -386,7 +381,7 @@ static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlOval->dynAttr.name),
+      CHAN_RC,       &(dlOval->dynAttr.chan),
       -1);
 }
 
@@ -410,7 +405,7 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlOval->dynAttr.name),
+      CHAN_RC,       &(dlOval->dynAttr.chan),
       -1);
 }
 

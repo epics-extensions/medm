@@ -124,8 +124,7 @@ static void drawText(Display *display,
 void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlText *dlText = dlElement->structure.text;
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlText->dynAttr.name)){
+    if (displayInfo->traversalMode == DL_EXECUTE) {
 
 	Text *pt;
 	pt = (Text *) malloc(sizeof(Text));
@@ -142,11 +141,8 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pt->updateTask,textName);
 	    pt->updateTask->opaque = False;
 	}
-	pt->record = medmAllocateRecord(
-	  dlText->dynAttr.name,
-	  textUpdateValueCb,
-	  NULL,
-	  (XtPointer) pt);
+	pt->record = medmAllocateRecord(dlText->dynAttr.chan,textUpdateValueCb,
+	  NULL,(XtPointer) pt);
 	drawWhiteRectangle(pt->updateTask);
 
 #ifdef __COLOR_RULE_H__
@@ -605,7 +601,7 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlText->dynAttr.name),
+      CHAN_RC,       &(dlText->dynAttr.chan),
       ALIGN_RC,      &(dlText->align),
       -1);
 }
@@ -644,7 +640,7 @@ static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlText->dynAttr.name),
+      CHAN_RC,       &(dlText->dynAttr.chan),
       ALIGN_RC,      &(dlText->align),
       TEXTIX_RC,       dlText->textix,
       -1);

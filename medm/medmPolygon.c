@@ -145,7 +145,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlPolygon *dlPolygon = dlElement->structure.polygon;
     if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlPolygon->dynAttr.name)) {
+      && (dlPolygon->dynAttr.chan)) {
 
 	Polygon *pp;
 	DlObject object;
@@ -170,7 +170,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pp->updateTask->opaque = False;
 	}
 	pp->record = medmAllocateRecord(
-	  dlPolygon->dynAttr.name,
+	  dlPolygon->dynAttr.chan,
 	  polygonUpdateValueCb,
 	  NULL,
 	  (XtPointer) pp);
@@ -886,15 +886,11 @@ static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolygon->dynAttr.name),
+      CHAN_RC,       &(dlPolygon->dynAttr.chan),
       -1);
 }
 
 static void destroyDlPolygon(DlElement *dlElement) {
-    if (dlElement->structure.polygon->dynAttr.name) {
-	freeString(dlElement->structure.polygon->dynAttr.name);
-	dlElement->structure.polygon->dynAttr.name = NULL;
-    }
     free ((char *)dlElement->structure.polygon->points);
     free ((char *)dlElement->structure.polygon);
     free ((char *)dlElement);
@@ -919,7 +915,7 @@ static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlPolygon->dynAttr.name),
+      CHAN_RC,       &(dlPolygon->dynAttr.chan),
       -1);
     xOffset = (int) width - (int) dlPolygon->object.width;
     yOffset = (int) height - (int) dlPolygon->object.height;

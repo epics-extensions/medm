@@ -110,8 +110,7 @@ static void drawArc(Arc *pa) {
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlArc->dynAttr.name)) {
+    if (displayInfo->traversalMode == DL_EXECUTE) {
 	Arc *pa;
 	pa = (Arc *) malloc(sizeof(Arc));
 	pa->dlElement = dlElement;
@@ -127,11 +126,8 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pa->updateTask,arcName);
 	    pa->updateTask->opaque = False;
 	}
-	pa->record = medmAllocateRecord(
-	  dlArc->dynAttr.name,
-	  arcUpdateValueCb,
-	  NULL,
-	  (XtPointer) pa);
+	pa->record = medmAllocateRecord(dlArc->dynAttr.chan,arcUpdateValueCb,
+	  NULL,(XtPointer) pa);
 #if 0
 	drawWhiteRectangle(pa->updateTask);
 #endif
@@ -410,7 +406,7 @@ static void arcGetValues(ResourceBundle *pRCB, DlElement *p)
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlArc->dynAttr.name),
+      CHAN_RC,       &(dlArc->dynAttr.chan),
       BEGIN_RC,      &(dlArc->begin),
       PATH_RC,       &(dlArc->path),
       -1);
@@ -429,7 +425,7 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p)
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlArc->dynAttr.name),
+      CHAN_RC,       &(dlArc->dynAttr.chan),
       BEGIN_RC,      &(dlArc->begin),
       PATH_RC,       &(dlArc->path),
       -1);

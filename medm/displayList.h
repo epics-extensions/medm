@@ -495,7 +495,7 @@ typedef struct {
 #ifdef __COLOR_RULE_H__
     int colorRule;
 #endif
-    char* name;
+    char chan[MAX_TOKEN_LENGTH];
 } DlDynamicAttribute;
 	
 typedef struct {

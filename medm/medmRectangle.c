@@ -110,8 +110,7 @@ static void drawRectangle(Rectangle *pr) {
 void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
-    if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlRectangle->dynAttr.name)){
+    if (displayInfo->traversalMode == DL_EXECUTE) {
 	Rectangle *pr;
 	pr = (Rectangle *) malloc(sizeof(Rectangle));
 	pr->dlElement = dlElement;
@@ -127,11 +126,8 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    updateTaskAddNameCb(pr->updateTask,rectangleName);
 	    pr->updateTask->opaque = False;
 	}
-	pr->record = medmAllocateRecord(
-	  dlRectangle->dynAttr.name,
-	  rectangleUpdateValueCb,
-	  NULL,
-	  (XtPointer) pr);
+	pr->record = medmAllocateRecord(dlRectangle->dynAttr.chan,
+	  rectangleUpdateValueCb,NULL,(XtPointer) pr);
 
 #ifdef __COLOR_RULE_H__
 	switch (dlRectangle->dynAttr.clr) {
@@ -382,7 +378,7 @@ static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlRectangle->dynAttr.name),
+      CHAN_RC,       &(dlRectangle->dynAttr.chan),
       -1);
 }
 
@@ -403,7 +399,7 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
       COLOR_RULE_RC, &(dlRectangle->dynAttr.colorRule),
 #endif
-      CHAN_RC,       &(dlRectangle->dynAttr.name),
+      CHAN_RC,       &(dlRectangle->dynAttr.chan),
       -1);
 }
  
