@@ -157,6 +157,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
 	XtSetArg(args[n],XcNlowerBound,longFval(dlIndicator->limits.lopr)); n++;
 	XtSetArg(args[n],XcNupperBound,longFval(dlIndicator->limits.hopr)); n++;
+	XtSetArg(args[n],XcNdecimals,(int)dlIndicator->limits.prec); n++;
 	switch (dlIndicator->label) {
 	case LABEL_NONE:
 	case NO_DECORATIONS:
@@ -252,10 +253,14 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	DlObject *po = &(dlElement->structure.indicator->object);
 	XtVaSetValues(dlElement->widget,
+#if 1
+	/* KE: This is probably not necessary, but not sure */
 	  XmNx, (Position)po->x,
 	  XmNy, (Position)po->y,
 	  XmNwidth, (Dimension)po->width,
 	  XmNheight, (Dimension)po->height,
+#endif
+	/* This is necessary for PV Limits */
 	  XcNlowerBound, longFval(dlIndicator->limits.lopr),
 	  XcNupperBound, longFval(dlIndicator->limits.hopr),
 	  XcNdecimals, (int)dlIndicator->limits.prec,

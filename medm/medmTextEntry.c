@@ -242,6 +242,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
      will handle it. */
     if(dlElement->widget) {
 	if(dlElement->data) {
+	  /* This is necessary for PV Limits */
 	    textEntryDraw((XtPointer)dlElement->data);
 	}
 	return;
@@ -706,7 +707,7 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd)
     if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
     
-  /* Set lopr and hopr to channel - they are aren't used by the TextEntry */
+  /* Set lopr and hopr to channel - they aren't used by the TextEntry */
     dlTextEntry->limits.lopr = lopr.fval;
     dlTextEntry->limits.loprChannel = lopr.fval;
     dlTextEntry->limits.hopr = hopr.fval;

@@ -166,6 +166,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[nargs],XcNincrement,longFval(0.)); nargs++;     /* Not used */
 	XtSetArg(args[nargs],XcNlowerBound,longFval(dlMeter->limits.lopr)); nargs++;
 	XtSetArg(args[nargs],XcNupperBound,longFval(dlMeter->limits.hopr)); nargs++;
+	XtSetArg(args[nargs],XcNdecimals,(int)dlMeter->limits.prec); nargs++;
 	XtSetArg(args[nargs],XcNscaleSegments,
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); nargs++;
 	switch (dlMeter->label) {
@@ -214,24 +215,21 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtManageChild(localWidget);
 	}
     } else {
-	if(displayInfo->traversalMode == DL_EDIT) {
-	    DlObject *po = &(dlElement->structure.meter->object);
-	    XtVaSetValues(dlElement->widget,
-	      XmNx, (Position)po->x,
-	      XmNy, (Position)po->y,
-	      XmNwidth, (Dimension)po->width,
-	      XmNheight, (Dimension)po->height,
-	      XcNlowerBound, longFval(dlMeter->limits.lopr),
-	      XcNupperBound, longFval(dlMeter->limits.hopr),
-	      XcNdecimals, (int)dlMeter->limits.prec,
-	      NULL);
-#if 0
-	} else {
-	    if(dlElement->data) {
-		meterDraw((XtPointer)dlElement->data);
-	    }
-#endif	    
-	}
+      /* There is a widget */
+	DlObject *po = &(dlElement->structure.meter->object);
+	XtVaSetValues(dlElement->widget,
+#if 1
+	/* KE: This is probably not necessary, but not sure */
+	  XmNx, (Position)po->x,
+	  XmNy, (Position)po->y,
+	  XmNwidth, (Dimension)po->width,
+	  XmNheight, (Dimension)po->height,
+#endif
+	/* This is necessary for PV Limits */
+	  XcNlowerBound, longFval(dlMeter->limits.lopr),
+	  XcNupperBound, longFval(dlMeter->limits.hopr),
+	  XcNdecimals, (int)dlMeter->limits.prec,
+	  NULL);
     }
 }
 

@@ -168,149 +168,161 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
 
-  /* If the widget is already created just return.  The update task
-     will handle it. */
-    if(dlElement->widget) return;
-
-    if(dlElement->data) {
-	pv = (MedmValuator *)dlElement->data;
-    } else {
-	pv = (MedmValuator *)malloc(sizeof(MedmValuator));
-	dlElement->data = (void *)pv;
-	if(pv == NULL) {
-	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
-	      "Memory allocation error\n");
-	    return;
+    if(!dlElement->widget) {
+	if(dlElement->data) {
+	    pv = (MedmValuator *)dlElement->data;
+	} else {
+	    pv = (MedmValuator *)malloc(sizeof(MedmValuator));
+	    dlElement->data = (void *)pv;
+	    if(pv == NULL) {
+		medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
+		  "Memory allocation error\n");
+		return;
+	    }
+	  /* Pre-initialize */
+	    pv->updateTask = NULL;
+	    pv->record = NULL;
+	    pv->dlElement = dlElement;
+	    
+	    pv->updateTask = updateTaskAddTask(displayInfo,
+	      &(dlValuator->object),
+	      valuatorDraw,
+	      (XtPointer)pv);
+	    
+	    if(pv->updateTask == NULL) {
+		medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
+		  "Memory allocation error\n");
+		free((char *)pv);
+		return;
+	    } else {
+		updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
+		updateTaskAddNameCb(pv->updateTask,valuatorGetRecord);
+	    }
+	    pv->record = medmAllocateRecord(dlValuator->control.ctrl,
+	      valuatorUpdateValueCb,
+	      valuatorUpdateGraphicalInfoCb,
+	      (XtPointer) pv);
+	    pv->fontIndex = valuatorFontListIndex(dlValuator);
+	    drawWhiteRectangle(pv->updateTask);
 	}
-      /* Pre-initialize */
-	pv->updateTask = NULL;
-	pv->record = NULL;
-	pv->dlElement = dlElement;
-
-	pv->updateTask = updateTaskAddTask(displayInfo,
-	  &(dlValuator->object),
-	  valuatorDraw,
+	
+      /* From the valuator structure, we've got Valuator's specifics */
+	n = 0;
+	XtSetArg(args[n],XmNx,(Position)dlValuator->object.x); n++;
+	XtSetArg(args[n],XmNy,(Position)dlValuator->object.y); n++;
+	XtSetArg(args[n],XmNwidth,(Dimension)dlValuator->object.width); n++;
+	XtSetArg(args[n],XmNheight,(Dimension)dlValuator->object.height); n++;
+	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+	XtSetArg(args[n],XmNforeground,
+	  displayInfo->colormap[dlValuator->control.clr]); n++;
+	XtSetArg(args[n],XmNbackground,
+	  displayInfo->colormap[dlValuator->control.bclr]); n++;
+	XtSetArg(args[n],XmNhighlightThickness,1); n++;
+	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+	switch(dlValuator->label) {
+	case LABEL_NONE: 		/* add in border for keyboard popup */
+	case NO_DECORATIONS:
+	    scalePopupBorder = BORDER_WIDTH;
+	    heightDivisor = 1;
+	    break;
+	case OUTLINE:
+	case LIMITS: 
+	    scalePopupBorder = 0;
+	    heightDivisor = 2;
+	    break;
+	case CHANNEL:
+	    scalePopupBorder = 0;
+	    heightDivisor = 3;
+	    break;
+	}
+      /* Need to handle Direction */
+	switch (dlValuator->direction) {
+	case DOWN:
+	  /* Override */
+	    medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
+	      "Direction=\"down\" is not supported for Slider\n");
+	  /* Fallthrough */
+	case UP:
+	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	      - scalePopupBorder); n++;
+	    break;
+	case LEFT:
+	  /* Override */
+	    medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
+	      "Direction=\"left\" is not supported for Slider\n");
+	  /* Fallthrough */
+	case RIGHT:
+	    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+	    XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
+	      - scalePopupBorder); n++;
+	    break;
+	}
+	
+      /* Add in Valuator as userData for valuator keyboard entry handling */
+	XtSetArg(args[n],XmNuserData,(XtPointer)pv); n++;
+	XtSetArg(args[n],XmNfontList,fontListTable[pv->fontIndex]); n++;
+	pv->dlElement->widget =  XtCreateWidget("valuator",
+	  xmScaleWidgetClass, displayInfo->drawingArea, args, n);
+	
+      /* Update the limits to reflect current src's */
+	updatePvLimits(&dlValuator->limits);
+	
+      /* Set virtual range */
+	n = 0;
+      /* The Valuator works with fixed values of these three parameters
+       * Only the labels are changed to reflect the actual numbers */
+	XtSetArg(args[n],XmNminimum,VALUATOR_MIN); n++;
+	XtSetArg(args[n],XmNmaximum,VALUATOR_MAX); n++;
+	XtSetArg(args[n],XmNscaleMultiple,VALUATOR_MULTIPLE_INCREMENT); n++;
+	XtSetValues(pv->dlElement->widget,args,n);
+	
+      /* Get children of scale */
+	XtVaGetValues(pv->dlElement->widget,XmNnumChildren,&numChildren,
+	  XmNchildren,&children,NULL);
+	
+      /* Change translations for scrollbar child of valuator */
+	for(i = 0; i < (int)numChildren; i++) {
+	    if(XtClass(children[i]) == xmScrollBarWidgetClass) {
+		XtOverrideTranslations(children[i],parsedTranslations);
+	      /* Add event handler for Key/ButtonRelease which enables updates */
+		XtAddEventHandler(children[i],KeyReleaseMask|ButtonReleaseMask,
+		  False,handleValuatorRelease,
+		  (XtPointer)pv);
+	    }
+	}
+	
+      /* Add the callbacks for update */
+	XtAddCallback(pv->dlElement->widget, XmNvalueChangedCallback,
+	  valuatorValueChanged,(XtPointer)pv);
+	XtAddCallback(pv->dlElement->widget, XmNdragCallback,
+	  valuatorValueChanged,(XtPointer)pv);
+	
+      /* Add event handler for expose - forcing display of min/max and value
+       *   in own format */
+	XtAddEventHandler(pv->dlElement->widget,ExposureMask,
+	  False,handleValuatorExpose,
 	  (XtPointer)pv);
 	
-	if(pv->updateTask == NULL) {
-	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
-	      "Memory allocation error\n");
-	    free((char *)pv);
-	    return;
-	} else {
-	    updateTaskAddDestroyCb(pv->updateTask,valuatorDestroyCb);
-	    updateTaskAddNameCb(pv->updateTask,valuatorGetRecord);
-	}
-	pv->record = medmAllocateRecord(dlValuator->control.ctrl,
-	  valuatorUpdateValueCb,
-	  valuatorUpdateGraphicalInfoCb,
-	  (XtPointer) pv);
-	pv->fontIndex = valuatorFontListIndex(dlValuator);
-	drawWhiteRectangle(pv->updateTask);
+      /* Add event handler for Key/ButtonRelease which enables updates */
+	XtAddEventHandler(pv->dlElement->widget,KeyReleaseMask|ButtonReleaseMask,
+	  False,handleValuatorRelease,
+	  (XtPointer)pv);
+    } else {
+      /* There is a widget */
+#if 1
+      /* KE: This is probably not necessary, but not sure */
+	DlObject *po = &(dlElement->structure.valuator->object);
+	XtVaSetValues(dlElement->widget,
+	  XmNx, (Position)po->x,
+	  XmNy, (Position)po->y,
+	  XmNwidth, (Dimension)po->width,
+	  XmNheight, (Dimension)po->height,
+	  NULL);
+#endif
+      /* This is necessary for PV Limits */
+	valuatorDraw((XtPointer)dlElement->data);
     }
-
-  /* From the valuator structure, we've got Valuator's specifics */
-    n = 0;
-    XtSetArg(args[n],XmNx,(Position)dlValuator->object.x); n++;
-    XtSetArg(args[n],XmNy,(Position)dlValuator->object.y); n++;
-    XtSetArg(args[n],XmNwidth,(Dimension)dlValuator->object.width); n++;
-    XtSetArg(args[n],XmNheight,(Dimension)dlValuator->object.height); n++;
-    XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-    XtSetArg(args[n],XmNforeground,
-      displayInfo->colormap[dlValuator->control.clr]); n++;
-    XtSetArg(args[n],XmNbackground,
-      displayInfo->colormap[dlValuator->control.bclr]); n++;
-    XtSetArg(args[n],XmNhighlightThickness,1); n++;
-    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-    switch(dlValuator->label) {
-    case LABEL_NONE: 		/* add in border for keyboard popup */
-    case NO_DECORATIONS:
-	scalePopupBorder = BORDER_WIDTH;
-	heightDivisor = 1;
-	break;
-    case OUTLINE:
-    case LIMITS: 
-	scalePopupBorder = 0;
-	heightDivisor = 2;
-	break;
-    case CHANNEL:
-	scalePopupBorder = 0;
-	heightDivisor = 3;
-	break;
-    }
-  /* Need to handle Direction */
-    switch (dlValuator->direction) {
-    case DOWN:
-      /* Override */
-	medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
-	  "Direction=\"down\" is not supported for Slider\n");
-      /* Fallthrough */
-    case UP:
-	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
-	  - scalePopupBorder); n++;
-	break;
-    case LEFT:
-      /* Override */
-	medmPrintf(1,"\ncreateValuatorRunTimeInstance: "
-	  "Direction=\"left\" is not supported for Slider\n");
-      /* Fallthrough */
-    case RIGHT:
-	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-	XtSetArg(args[n],XmNscaleHeight,dlValuator->object.height/heightDivisor
-	  - scalePopupBorder); n++;
-	break;
-    }
-
-  /* Add in Valuator as userData for valuator keyboard entry handling */
-    XtSetArg(args[n],XmNuserData,(XtPointer)pv); n++;
-    XtSetArg(args[n],XmNfontList,fontListTable[pv->fontIndex]); n++;
-    pv->dlElement->widget =  XtCreateWidget("valuator",
-      xmScaleWidgetClass, displayInfo->drawingArea, args, n);
-
-  /* Update the limits to reflect current src's */
-    updatePvLimits(&dlValuator->limits);
-
-  /* Set virtual range */
-    n = 0;
-  /* The Valuator works with fixed values of these three parameters
-   * Only the labels are changed to reflect the actual numbers */
-    XtSetArg(args[n],XmNminimum,VALUATOR_MIN); n++;
-    XtSetArg(args[n],XmNmaximum,VALUATOR_MAX); n++;
-    XtSetArg(args[n],XmNscaleMultiple,VALUATOR_MULTIPLE_INCREMENT); n++;
-    XtSetValues(pv->dlElement->widget,args,n);
-
-  /* Get children of scale */
-    XtVaGetValues(pv->dlElement->widget,XmNnumChildren,&numChildren,
-      XmNchildren,&children,NULL);
-
-  /* Change translations for scrollbar child of valuator */
-    for(i = 0; i < (int)numChildren; i++) {
-	if(XtClass(children[i]) == xmScrollBarWidgetClass) {
-	    XtOverrideTranslations(children[i],parsedTranslations);
-	  /* Add event handler for Key/ButtonRelease which enables updates */
-	    XtAddEventHandler(children[i],KeyReleaseMask|ButtonReleaseMask,
-	      False,handleValuatorRelease,
-	      (XtPointer)pv);
-	}
-    }
-
-  /* Add the callbacks for update */
-    XtAddCallback(pv->dlElement->widget, XmNvalueChangedCallback,
-      valuatorValueChanged,(XtPointer)pv);
-    XtAddCallback(pv->dlElement->widget, XmNdragCallback,
-      valuatorValueChanged,(XtPointer)pv);
-    
-  /* Add event handler for expose - forcing display of min/max and value
-   *   in own format */
-    XtAddEventHandler(pv->dlElement->widget,ExposureMask,
-      False,handleValuatorExpose,
-      (XtPointer)pv);
-    
-  /* Add event handler for Key/ButtonRelease which enables updates */
-    XtAddEventHandler(pv->dlElement->widget,KeyReleaseMask|ButtonReleaseMask,
-      False,handleValuatorRelease,
-      (XtPointer)pv);
 }
 
 void createValuatorEditInstance(DisplayInfo *displayInfo,
@@ -359,7 +371,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     case DOWN:
       /* Override */
 	medmPrintf(1,"\ncreateValuatorEditInstance: "
-	  "Direction=\"down\" is not supported\n");
+	  "Direction=\"down\" is not supported for Slider\n");
       /* Fallthrough */
     case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
@@ -369,7 +381,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     case LEFT:
       /* Override */
 	medmPrintf(1,"\ncreateValuatorEditInstance: "
-	  "Direction=\"left\" is not supported\n");
+	  "Direction=\"left\" is not supported for Slider\n");
       /* Fallthrough */
     case RIGHT:
 	XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
@@ -574,7 +586,7 @@ static void valuatorDestroyCb(XtPointer cd) {
 static void handleValuatorExpose(Widget w, XtPointer clientData,
   XEvent *pEvent, Boolean *continueToDispatch)
 {
-    XExposeEvent *event = (XExposeEvent *) pEvent;
+    XExposeEvent *event = (XExposeEvent *)pEvent;
     MedmValuator *pv;
     DlValuator *dlValuator;
     unsigned long foreground, background;
@@ -599,7 +611,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
       /* Then valid controllerData exists */
 	Record *pr;
 
-	pv = (MedmValuator *) clientData;
+	pv = (MedmValuator *)clientData;
 	pr = pv->record;
 	displayInfo = pv->updateTask->displayInfo;
 	dlValuator = pv->dlElement->structure.valuator;
@@ -623,152 +635,161 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     gc = displayInfo->gc;
     
   /* Since XmScale doesn't really do the right things, we'll do it by hand */
-    if(dlValuator->label != LABEL_NONE && dlValuator->label != NO_DECORATIONS) {
-
-	foreground = displayInfo->colormap[dlValuator->control.clr];
-	background = displayInfo->colormap[dlValuator->control.bclr];
-	font = fontTable[valuatorFontListIndex(dlValuator)];
-	textHeight = font->ascent + font->descent;
-
-	gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
-	gcValues.function = GXcopy;
-	gcValues.foreground = foreground;
-	gcValues.background = background;
-	gcValues.font = font->fid;
-	XChangeGC(display, gc, gcValueMask, &gcValues);
+    if(dlValuator->label == LABEL_NONE || dlValuator->label == NO_DECORATIONS) {
+	return;
+    }
+    
+    foreground = displayInfo->colormap[dlValuator->control.clr];
+    background = displayInfo->colormap[dlValuator->control.bclr];
+    font = fontTable[valuatorFontListIndex(dlValuator)];
+    textHeight = font->ascent + font->descent;
+    
+    gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
+    gcValues.function = GXcopy;
+    gcValues.foreground = foreground;
+    gcValues.background = background;
+    gcValues.font = font->fid;
+    XChangeGC(display, gc, gcValueMask, &gcValues);
 #if 0
-      /* KE: This interferes with updates.  If it is necessary, it
-         needs to be done right. */
-	XSetClipOrigin(display,gc,0,0);
-	XSetClipMask(display,gc,None);
+  /* KE: This interferes with updates.  If it is necessary, it
+     needs to be done right. */
+    XSetClipOrigin(display,gc,0,0);
+    XSetClipMask(display,gc,None);
 #endif	
-
-      /* KE: Value can be received before the graphical info
-       *   Set precision to 0 if it is still -1 from initialization */
-	if(precision < 0) precision = 0;
-      /* Convert bad values of precision to high precision */
-	if(precision > 17) precision = 17;
-	switch (dlValuator->direction) {
-	case DOWN:
-	case UP:
-	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
-	    useableWidth = dlValuator->object.width - scaleWidth;
-	    if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
-	      || dlValuator->label == CHANNEL) {
-	      /* LOPR */
-		cvtDoubleToString(localLopr,stringValue,precision);
-		if(stringValue != NULL) {
-		    nChars = strlen(stringValue);
-		    textWidth = XTextWidth(font,stringValue,nChars);
-		    startX = MAX(1,useableWidth - textWidth);
-		    startY = dlValuator->object.height - font->descent - 3;
-		    XSetForeground(display,gc,background);
-		    XFillRectangle(display,XtWindow(w),gc,
-		      startX,MAX(1,startY-font->ascent),
-		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,gc,foreground);
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      stringValue,nChars);
-		}
-	      /* HOPR */
-		cvtDoubleToString(localHopr,stringValue,precision);
-		if(stringValue != NULL) {
-		    nChars = strlen(stringValue);
-		    textWidth = XTextWidth(font,stringValue,nChars);
-		    startX = MAX(1,useableWidth - textWidth);
-		    if(dlValuator->label == CHANNEL) {
-		      /* need room for label above */
-			startY = (int) (1.3*(font->ascent + font->descent)
-			  + font->ascent);
-		    } else {
-			startY = font->ascent + 3;
-		    }
-		    XSetForeground(display,gc,background);
-		    XFillRectangle(display,XtWindow(w),gc,
-		      startX,MAX(1,startY-font->ascent),
-		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,gc,foreground);
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      stringValue,nChars);
-		}
+    
+  /* KE: Value can be received before the graphical info
+   *   Set precision to 0 if it is still -1 from initialization */
+    if(precision < 0) precision = 0;
+  /* Convert bad values of precision to high precision */
+    if(precision > 17) precision = 17;
+    switch (dlValuator->direction) {
+    case DOWN:
+    case UP:
+	XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
+	useableWidth = dlValuator->object.width - scaleWidth;
+	if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
+	  || dlValuator->label == CHANNEL) {
+	  /* Erase all of the background */
+	    XSetForeground(display,gc,background);
+	    XFillRectangle(display,XtWindow(w),gc,
+	      0,0,useableWidth,dlValuator->object.height);
+	  /* LOPR */
+	    cvtDoubleToString(localLopr,stringValue,precision);
+	    if(stringValue != NULL) {
+		nChars = strlen(stringValue);
+		textWidth = XTextWidth(font,stringValue,nChars);
+		startX = MAX(1,useableWidth - textWidth);
+		startY = dlValuator->object.height - font->descent - 3;
+		XSetForeground(display,gc,background);
+		XFillRectangle(display,XtWindow(w),gc,
+		  startX,MAX(1,startY-font->ascent),
+		  textWidth,font->ascent+font->descent);
+		XSetForeground(display,gc,foreground);
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  stringValue,nChars);
 	    }
-	    if(dlValuator->label == CHANNEL) {
-	      /* TITLE */
-		if(localTitle != NULL) {
-		    nChars = strlen(localTitle);
-		    textWidth = XTextWidth(font,localTitle,nChars);
-		    startX = MAX(1,useableWidth - textWidth);
-		    startY = font->ascent + 2;
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      localTitle,nChars);
+	  /* HOPR */
+	    cvtDoubleToString(localHopr,stringValue,precision);
+	    if(stringValue != NULL) {
+		nChars = strlen(stringValue);
+		textWidth = XTextWidth(font,stringValue,nChars);
+		startX = MAX(1,useableWidth - textWidth);
+		if(dlValuator->label == CHANNEL) {
+		  /* need room for label above */
+		    startY = (int) (1.3*(font->ascent + font->descent)
+		      + font->ascent);
+		} else {
+		    startY = font->ascent + 3;
 		}
+		XSetForeground(display,gc,background);
+		XFillRectangle(display,XtWindow(w),gc,
+		  startX,MAX(1,startY-font->ascent),
+		  textWidth,font->ascent+font->descent);
+		XSetForeground(display,gc,foreground);
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  stringValue,nChars);
 	    }
-	    break;
-	    
-	case LEFT:
-	case RIGHT:
-	    XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
-	    useableHeight = dlValuator->object.height - scaleHeight;
-	    
-	    if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
-	      || dlValuator->label == CHANNEL) {
-	      /* LOPR */
-		cvtDoubleToString(localLopr,stringValue,precision);
-		if(stringValue != NULL) {
-		    nChars = strlen(stringValue);
-		    textWidth = XTextWidth(font,stringValue,nChars);
-		    startX = 2;
-		  /* NB: descent=0 for #s */
-		    startY = useableHeight - font->descent;
-		    XSetForeground(display,gc,background);
-		    XFillRectangle(display,XtWindow(w),gc,
-		      startX,MAX(1,startY-font->ascent),
-		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,gc,foreground);
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      stringValue,nChars);
-		}
-	      /* HOPR */
-		cvtDoubleToString(localHopr,stringValue,precision);
-		if(stringValue != NULL) {
-		    nChars = strlen(stringValue);
-		    textWidth = XTextWidth(font,stringValue,nChars);
-		    startX = dlValuator->object.width - textWidth - 2;
-		    startY = useableHeight - font->descent;
-		    XSetForeground(display,gc,background);
-		    XFillRectangle(display,XtWindow(w),gc,
-		      startX,MAX(1,startY-font->ascent),
-		      textWidth,font->ascent+font->descent);
-		    XSetForeground(display,gc,foreground);
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      stringValue,nChars);
-		}
-	    }
-	    if(dlValuator->label == CHANNEL) {
-	      /* TITLE */
-		if(localTitle != NULL) {
-		    nChars = strlen(localTitle);
-		    textWidth = XTextWidth(font,localTitle,nChars);
-		    startX = 2;
-		    startY = font->ascent + 2;
-		    XDrawString(display,XtWindow(w),gc,startX,startY,
-		      localTitle,nChars);
-		}
-	    }
-	    break;
 	}
-	if(clientData != NULL) {
-	  /* Real data */
-	    valuatorRedrawValue(pv,
-	      pv->updateTask->displayInfo,pv->dlElement->widget,
-	      pv->dlElement->structure.valuator, pv->record->value);
-	    
-	    
-	} else {
-	  /* Fake data */
-	    valuatorRedrawValue(NULL,displayInfo,w,dlValuator,0.0);
+	if(dlValuator->label == CHANNEL) {
+	  /* TITLE */
+	    if(localTitle != NULL) {
+		nChars = strlen(localTitle);
+		textWidth = XTextWidth(font,localTitle,nChars);
+		startX = MAX(1,useableWidth - textWidth);
+		startY = font->ascent + 2;
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  localTitle,nChars);
+	    }
 	}
-    }     /* End of if(dlValuator->label != LABEL_NONE) */
+	break;
+	
+    case LEFT:
+    case RIGHT:
+	XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
+	useableHeight = dlValuator->object.height - scaleHeight;
+	
+	if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
+	  || dlValuator->label == CHANNEL) {
+	  /* Erase all of the background */
+	    XSetForeground(display,gc,background);
+	    XFillRectangle(display,XtWindow(w),gc,
+	      0,0,dlValuator->object.width,useableHeight);
+	  /* LOPR */
+	    cvtDoubleToString(localLopr,stringValue,precision);
+	    if(stringValue != NULL) {
+		nChars = strlen(stringValue);
+		textWidth = XTextWidth(font,stringValue,nChars);
+		startX = 2;
+	      /* NB: descent=0 for #s */
+		startY = useableHeight - font->descent;
+		XSetForeground(display,gc,background);
+		XFillRectangle(display,XtWindow(w),gc,
+		  startX,MAX(1,startY-font->ascent),
+		  textWidth,font->ascent+font->descent);
+		XSetForeground(display,gc,foreground);
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  stringValue,nChars);
+	    }
+	  /* HOPR */
+	    cvtDoubleToString(localHopr,stringValue,precision);
+	    if(stringValue != NULL) {
+		nChars = strlen(stringValue);
+		textWidth = XTextWidth(font,stringValue,nChars);
+		startX = dlValuator->object.width - textWidth - 2;
+		startY = useableHeight - font->descent;
+		XSetForeground(display,gc,background);
+		XFillRectangle(display,XtWindow(w),gc,
+		  startX,MAX(1,startY-font->ascent),
+		  textWidth,font->ascent+font->descent);
+		XSetForeground(display,gc,foreground);
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  stringValue,nChars);
+	    }
+	}
+	if(dlValuator->label == CHANNEL) {
+	  /* TITLE */
+	    if(localTitle != NULL) {
+		nChars = strlen(localTitle);
+		textWidth = XTextWidth(font,localTitle,nChars);
+		startX = 2;
+		startY = font->ascent + 2;
+		XDrawString(display,XtWindow(w),gc,startX,startY,
+		  localTitle,nChars);
+	    }
+	}
+	break;
+    }
+    if(clientData != NULL) {
+      /* Real data */
+	valuatorRedrawValue(pv,
+	  pv->updateTask->displayInfo,pv->dlElement->widget,
+	  pv->dlElement->structure.valuator, pv->record->value);
+	
+	
+    } else {
+      /* Fake data */
+	valuatorRedrawValue(NULL,displayInfo,w,dlValuator,0.0);
+    }
 }
 
 /*

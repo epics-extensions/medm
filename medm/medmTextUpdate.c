@@ -122,7 +122,10 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	MedmTextUpdate *ptu;
 	
 	if(dlElement->data) {
+	  /* Necessary for PV Limits, Cannot use textUpdateDraw since
+             it is drawn on the pixmap, unlike widgets */
 	    ptu = (MedmTextUpdate *)dlElement->data;
+	    if(ptu) updateTaskMarkUpdate(ptu->updateTask);
 	} else {
 	    ptu = (MedmTextUpdate *)malloc(sizeof(MedmTextUpdate));
 	    dlElement->updateType = DYNAMIC_GRAPHIC;
@@ -498,7 +501,7 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd)
     if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
     
-  /* Set lopr and hopr to channel - they are aren't used by the TextUpdate */
+  /* Set lopr and hopr to channel - they aren't used by the TextUpdate */
     dlTextUpdate->limits.lopr = lopr.fval;
     dlTextUpdate->limits.loprChannel = lopr.fval;
     dlTextUpdate->limits.hopr = hopr.fval;

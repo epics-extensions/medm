@@ -166,6 +166,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
 	XtSetArg(args[n],XcNlowerBound,longFval(dlBar->limits.lopr)); n++;
 	XtSetArg(args[n],XcNupperBound,longFval(dlBar->limits.hopr)); n++;
+	XtSetArg(args[n],XcNdecimals,(int)dlBar->limits.prec); n++;
 	switch (dlBar->label) {
 	case LABEL_NONE:
 	    XtSetArg(args[n],XcNvalueVisible,False); n++;
@@ -282,10 +283,14 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	DlObject *po = &(dlElement->structure.bar->object);
 	XtVaSetValues(dlElement->widget,
+#if 1
+	/* KE: This is probably not necessary, but not sure */
 	  XmNx, (Position)po->x,
 	  XmNy, (Position)po->y,
 	  XmNwidth, (Dimension)po->width,
 	  XmNheight, (Dimension)po->height,
+#endif
+	/* This is necessary for PV Limits */
 	  XcNlowerBound, longFval(dlBar->limits.lopr),
 	  XcNupperBound, longFval(dlBar->limits.hopr),
 	  XcNdecimals, (int)dlBar->limits.prec,
