@@ -116,6 +116,7 @@ SRCS += medmByte.c
 SRCS += medmCA.c 
 ifdef XRTGRAPH
 SRCS += medmCartesianPlot.c 
+SRCS += medmXrtGraph.c 
 endif
 SRCS += medmChoiceButtons.c 
 SRCS += medmCommon.c 
