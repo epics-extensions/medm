@@ -476,7 +476,7 @@ static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
  NAME:		CvtStringToVType.		
  DESCRIPTION:
    This function converts resource settings in string form to the
- XtRVType representation type.
+ XcRVType representation type.
 *******************************************************************/
 
 static void CvtStringToVType(XrmValue *args, Cardinal *nargs,

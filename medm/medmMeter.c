@@ -92,7 +92,7 @@ static DlDispatchTable meterDlDispatchTable = {
 void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     Meter *pm;
-    Arg args[24];
+    Arg args[27];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
@@ -127,6 +127,14 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XtNwidth,(Dimension)dlMeter->object.width); n++;
 	XtSetArg(args[n],XtNheight,(Dimension)dlMeter->object.height); n++;
 	XtSetArg(args[n],XcNdataType,XcFval); n++;
+      /* KE: Need to set these 3 values explicitly and not use the defaults
+       *  because the widget is an XcLval by default and the default
+       *  initializations are into XcVType.lval, possibly giving meaningless
+       *  numbers in XcVType.fval, which is what will be used for our XcFval
+       *  widget. */
+	XtSetArg(args[n],XcNincrement,1.0); n++;
+	XtSetArg(args[n],XcNlowerBound,0.0); n++;
+	XtSetArg(args[n],XcNupperBound,100.0); n++;
 	XtSetArg(args[n],XcNscaleSegments,
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
 	switch (dlMeter->label) {

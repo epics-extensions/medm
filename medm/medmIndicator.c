@@ -90,7 +90,7 @@ static DlDispatchTable indicatorDlDispatchTable = {
 
 void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Arg args[30];
+    Arg args[33];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
@@ -126,6 +126,14 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XtNwidth,(Dimension)dlIndicator->object.width); n++;
 	XtSetArg(args[n],XtNheight,(Dimension)dlIndicator->object.height); n++;
 	XtSetArg(args[n],XcNdataType,XcFval); n++;
+      /* KE: Need to set these 3 values explicitly and not use the defaults
+       *  because the widget is an XcLval by default and the default
+       *  initializations are into XcVType.lval, possibly giving meaningless
+       *  numbers in XcVType.fval, which is what will be used for our XcFval
+       *  widget. */
+	XtSetArg(args[n],XcNincrement,1.0); n++;
+	XtSetArg(args[n],XcNlowerBound,0.0); n++;
+	XtSetArg(args[n],XcNupperBound,100.0); n++;
 	switch (dlIndicator->label) {
 	case LABEL_NONE:
 	case NO_DECORATIONS:
