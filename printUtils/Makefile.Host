@@ -9,7 +9,7 @@ CMPLR = STRICT
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 USR_INCLUDES = -I$(X11_INC)
