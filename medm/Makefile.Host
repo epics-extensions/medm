@@ -25,7 +25,7 @@ endif
 
 #STATIC_BUILD = YES
 CMPLR = STRICT
-#URIFY = YES
+#PURIFY = YES
 
 PURIFY_FLAGS = -first-only -chain-length=26
 
