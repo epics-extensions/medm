@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_DRAG 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -213,8 +214,10 @@ void StartDrag(
 	pt = getUpdateTaskFromWidget(searchWidget);
     }
 
-
+#if DEBUG_DRAG
     printf("start drag : 0x%08x\n",pt);
+#endif
+    
     if (pt) {
 #define MAX_COL 4
 	char *name[MAX_PENS*MAX_COL];

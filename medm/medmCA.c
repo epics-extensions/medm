@@ -593,7 +593,7 @@ int caAdd(char *name, Record *pr) {
     Channel *pCh;
     int status;
     if ((caTask.freeListCount < 1) && (caTask.nextFree >= CA_PAGE_SIZE)) {
-      /* if not enought pages, increase number of pages */
+      /* if not enough pages, increase number of pages */
 	if (caTask.pageCount >= caTask.pageSize) {
 	    caTask.pageSize += CA_PAGE_COUNT;
 #if defined(__cplusplus) && !defined(__GNUG__)

@@ -214,6 +214,9 @@ extern "C" {
     EXTERN XtIntervalId medmStatusIntervalId;
     EXTERN Boolean MedmUseNewFileFormat;
 
+  /* Time data */
+    EXTERN time_t time900101, time700101, timeOffset;
+
 #ifdef __cplusplus
 	   }  /* Close scope of 'extern "C"' declaration which encloses file. */
 #endif

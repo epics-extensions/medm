@@ -61,12 +61,19 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  ***************************************************************************/
 
 #define DEBUG_RESOURCE 0
+#define DEBUG_TEXT_VERIFY 0
+#define DEBUG_XRT 0
 
 #include <ctype.h>
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 #include "dbDefs.h"
 #include "medmCartesianPlot.h"
+
+/* KE: Note that MEDM uses the union XcVType (of a float and a long) to convert
+ *   float values to the values needed for XRT float resources.  This currently
+ *   gives the same results as using the XRT recommended XrtFloatToArg(), but
+ *   probably isn't guaranteed */
 
 #ifdef __cplusplus
 extern "C" {
@@ -127,6 +134,8 @@ static menuEntry_t helpMenu[] = {
       helpResourceCallback, (XtPointer)HELP_RESOURCE_PALETTE_BTN, NULL},
     NULL,
 };
+
+EXTERN char *timeFormatString[NUM_CP_TIME_FORMAT];
 
 #ifdef EXTENDED_INTERFACE
 static Widget resourceFilePDM;
@@ -267,7 +276,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer)
 #ifdef __cplusplus
 static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 #else
-    static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     int buttonId = (int) cd;
@@ -336,7 +345,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
     case ERASE_MODE_RC:
 	globalResourceBundle.eraseMode = (eraseMode_t) (FIRST_ERASE_MODE + buttonId);
 	break;
-    case RD_VISUAL_RC :
+    case RD_VISUAL_RC:
 	globalResourceBundle.rdVisual = 
 	  (relatedDisplayVisual_t) (FIRST_RD_VISUAL + buttonId);
 	break;
@@ -369,7 +378,8 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 }
 
 
-/** set Cartesian Plot Axis attributes
+/*
+ * Set Cartesian Plot Axis attributes
  * (complex - has to handle both EDIT and EXECUTE time interactions)
  */
 #ifdef __cplusplus
@@ -389,7 +399,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
     CartesianPlot *pcp = NULL;
     DlCartesianPlot *dlCartesianPlot = NULL;
 
-  /****** Get current cartesian plot */
+  /* Get current cartesian plot */
     if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	if (executeTimeCartesianPlotWidget) {
 	    XtVaGetValues(executeTimeCartesianPlotWidget,
@@ -406,25 +416,45 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
     switch (rcType) {
     case CP_X_AXIS_STYLE: 
     case CP_Y_AXIS_STYLE: 
-    case CP_Y2_AXIS_STYLE: {
+    case CP_Y2_AXIS_STYLE:
+    {
 	CartesianPlotAxisStyle style 
-	  = (CartesianPlotAxisStyle) (FIRST_CARTESIAN_PLOT_AXIS_STYLE+buttonId);
+	  = (CartesianPlotAxisStyle)(FIRST_CARTESIAN_PLOT_AXIS_STYLE+buttonId);
+	
 	globalResourceBundle.axis[rcType - CP_X_AXIS_STYLE].axisStyle = style;
 	switch (rcType) {
-	case CP_X_AXIS_STYLE :
-	    if (style == TIME_AXIS) {
-		XtSetSensitive(axisTimeFormat,True);
-	    } else {
-		XtSetArg(args[n],XtNxrtXAxisLogarithmic,
-		  (style == LOG10_AXIS) ? True : False); n++;
+	case CP_X_AXIS_STYLE:
+	    switch (style) {
+	    case LINEAR_AXIS:
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,False); n++;
 		XtSetSensitive(axisTimeFormat,False);
+		pcp->timeScale = False;
+		break;
+	    case LOG10_AXIS:
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_VALUES); n++;
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,True); n++;
+		XtSetSensitive(axisTimeFormat,False);
+		pcp->timeScale = False;
+		break;
+	    case TIME_AXIS:
+		XtSetSensitive(axisTimeFormat,True);
+		XtSetArg(args[n],XtNxrtXAxisLogarithmic,False); n++;
+		XtSetArg(args[n],XtNxrtXAnnotationMethod,XRT_ANNO_TIME_LABELS); n++;
+		XtSetArg(args[n],XtNxrtTimeBase,time900101); n++;
+		XtSetArg(args[n],XtNxrtTimeUnit,XRT_TMUNIT_SECONDS); n++;
+		XtSetArg(args[n],XtNxrtTimeFormatUseDefault,False); n++;
+		XtSetArg(args[n],XtNxrtTimeFormat,
+		  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+		      FIRST_CP_TIME_FORMAT]); n++;
+		pcp->timeScale = True;
 	    }
 	    break;
-	case CP_Y_AXIS_STYLE :
+	case CP_Y_AXIS_STYLE:
 	    XtSetArg(args[n],XtNxrtYAxisLogarithmic,
 	      (style == LOG10_AXIS) ? True : False); n++;
 	    break;
-	case CP_Y2_AXIS_STYLE :
+	case CP_Y2_AXIS_STYLE:
 	    XtSetArg(args[n],XtNxrtY2AxisLogarithmic,
 	      (style == LOG10_AXIS) ? True : False); n++;
 	    break;
@@ -435,11 +465,11 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
     case CP_Y_RANGE_STYLE:
     case CP_Y2_RANGE_STYLE:
 	globalResourceBundle.axis[rcType-CP_X_RANGE_STYLE].rangeStyle
-	  = (CartesianPlotRangeStyle) (FIRST_CARTESIAN_PLOT_RANGE_STYLE
+	  = (CartesianPlotRangeStyle)(FIRST_CARTESIAN_PLOT_RANGE_STYLE
 	    + buttonId);
 	switch(globalResourceBundle.axis[rcType%3].rangeStyle) {
-	    USER_SPECIFIED_RANGE :
-	      XtSetSensitive(axisRangeMinRC[rcType%3],True);
+	case USER_SPECIFIED_RANGE:
+	    XtSetSensitive(axisRangeMinRC[rcType%3],True);
 	    XtSetSensitive(axisRangeMaxRC[rcType%3],True);
 	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
 		if (dlCartesianPlot) /* get min from element if possible */
@@ -487,9 +517,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 	    }
 	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
 	    break;
-	  CHANNEL_X_RANGE: 
-	  CHANNEL_Y_RANGE: 
-	  CHANNEL_Y2_RANGE: 
+	case CHANNEL_RANGE: 
 	    XtSetSensitive(axisRangeMinRC[rcType%3],False);
 	    XtSetSensitive(axisRangeMaxRC[rcType%3],False);
 	    if (pcp) {
@@ -525,8 +553,8 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 	    }
 	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = True;
 	    break;
-	    AUTO_SCALE_RANGE :
-	      XtSetSensitive(axisRangeMinRC[rcType%3],False);
+	case AUTO_SCALE_RANGE:
+	    XtSetSensitive(axisRangeMinRC[rcType%3],False);
 	    XtSetSensitive(axisRangeMaxRC[rcType%3],False);
 	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
 		switch(rcType%3) {
@@ -555,20 +583,23 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer)
 	    }
 	    if (pcp) pcp->axisRange[rcType%3].isCurrentlyFromChannel = False;
 	    break;
-	    DEFAULT :
-	      break;
+	default:
+	    break;
 	}
 	break;
-    case CP_X_TIME_FORMAT :
+    case CP_X_TIME_FORMAT:
 	globalResourceBundle.axis[0].timeFormat =
 	  (CartesianPlotTimeFormat_t) (FIRST_CP_TIME_FORMAT + buttonId);
+	XtSetArg(args[n],XtNxrtTimeFormat,
+	  timeFormatString[(int)globalResourceBundle.axis[0].timeFormat -
+	    FIRST_CP_TIME_FORMAT]); n++;
 	break;
     default:
 	medmPrintf("\ncpAxisptionMenuSimpleCallback: unknown rcType = %d",rcType/3);
 	break;
     }
-
-  /****** Update for EDIT or EXECUTE mode */
+    
+  /* Update for EDIT or EXECUTE mode */
     switch(globalDisplayListTraversalMode) {
     case DL_EDIT:
 	if (currentDisplayInfo) {
@@ -732,77 +763,103 @@ void textFieldNumericVerifyCallback(
       cbs->doit = False;
 }
 
+/* Used to verify float input as it happens
+ *  Allowed characters:
+ *    digits   Anywhere
+ *    +,-      First Position only
+ *    .        Anywhere, but only one
+ */
 #ifdef __cplusplus
-void textFieldFloatVerifyCallback(Widget w, XtPointer, XtPointer pcbs)
+void textFieldFloatVerifyCallback(Widget w, XtPointer, XtPointer callData)
 #else
-void textFieldFloatVerifyCallback(Widget w, XtPointer cd, XtPointer pcbs)
+void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer callData)
 #endif
 {
-    XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *) pcbs;
-    
-    int len;
-    Boolean haveDecimalPoint;
-    char *textString;
+    XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
+    int i,j,len,newDot,replace,abort;
+    char *curString;
 
-    len = 0;
-    if (cbs->startPos < cbs->currInsert) return;
-
-    len = (int) XmTextFieldGetLastPosition(w);
-
-  /* see if there is already a decimal point in the string */
-    textString = XmTextFieldGetString(w);
-    if (strchr(textString,(int)'.'))
-      haveDecimalPoint = True;
-    else
-      haveDecimalPoint = False;
-    XtFree(textString);
-
-  /* odd behavior for programmatic reset - if NULL event, then programmatic
-     and bypass previous determinations regarding decimal point, etc */
-    if (cbs->event == NULL) {
-	len = 0;
-	haveDecimalPoint = False;
-    }
-
-  /* if no (new) data {e.g., setting to NULL string, simply return */
-    if (cbs->text->ptr == NULL) return;
-
-  /* check for leading sign (+/-) */
-    if (len == 0) {	/* nothing there yet... therefore can add sign */
-	if (!isdigit(cbs->text->ptr[0]) && cbs->text->ptr[0] != '+'
-	  && cbs->text->ptr[0] != '-' && cbs->text->ptr[0] != '.') {
-	  /* not a digit or +/-/.,  move all chars down one and decrement length */
-	    int i;
-	    for (i = len; (i+1) < cbs->text->length; i++)
-	      cbs->text->ptr[i] = cbs->text->ptr[i+1];
-	    cbs->text->length--;
-	    len--;
-	} else if (cbs->text->ptr[0] != '.') {
-	    haveDecimalPoint = True;
+#if DEBUG_TEXT_VERIFY
+    {
+	int i;
+	
+	printf("\ntextFieldFloatVerifyCallback: Entered\n");
+	printf("  event: %x  cbs->text->ptr: %x\n"
+	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
+	  cbs->event,cbs->text->ptr,
+	  cbs->startPos,cbs->endPos,cbs->currInsert,cbs->newInsert);
+	if(cbs->text->length) {
+	    printf("  length=%d: \"",cbs->text->length);
+	    for(i=0; i < cbs->text->length; i++) printf("%c",cbs->text->ptr[i]);
+	    printf("\"\n");
+	} else {
+	    printf("  length=0\n");
 	}
-    } else {
-      /* already a first character, therefore only digits or potential
-       * decimal point allowed */
+    }
+#endif    
+  /* Is a deletion */
+    if (!cbs->text->length) return;
 
-	for (len = 0; len < cbs->text->length; len++) {
-	  /* make sure all additions are digits (or the first decimal point) */
-	    if (!isdigit(cbs->text->ptr[len])) {
-		if (cbs->text->ptr[len] == '.' && !haveDecimalPoint) {
-		    haveDecimalPoint = True;
-		} else {
-		  /* not a digit (or is another decimal point)  
-		     - move all chars down one and decrement length */
-		    int i;
-		    for (i = len; (i+1) < cbs->text->length; i++)
-		      cbs->text->ptr[i] = cbs->text->ptr[i+1];
-		    cbs->text->length--;
-		    len--;
+  /* Check the new characters, character by character */
+    newDot=replace=abort=0;
+    for (i = 0; i < cbs->text->length && !abort; i++) {
+      /* Digits are OK, check non-digits */
+	if(!isdigit(cbs->text->ptr[i])) {
+	    switch(cbs->text->ptr[i]) {
+	    case '+':
+	    case '-':
+	      /* Abort if this is not the first new char */
+		if(i) {
+		    abort=1;
+		    break;
 		}
+	      /* OK if insertion point is at 0 */
+		if(!cbs->currInsert) break;
+	      /* OK if insertion point is after a replacement starting at 0 */
+		if(cbs->startPos ==0 && cbs->startPos != cbs->endPos &&
+		  cbs->endPos == cbs->currInsert) break;
+	      /* Else abort */
+		abort=1;
+		break;
+	    case '.':
+	      /* Abort if already have a new dot */
+		if(newDot) {
+		    abort=2;
+		    break;
+		}
+		newDot=1;
+	      /* Get the current string */
+		curString = XmTextFieldGetString(w);
+		len=strlen(curString);
+	      /* Check if this is a replacement */
+		if(cbs->startPos != cbs->endPos) replace=1;
+	      /* Check character by character outside the replacement */
+		for (j = 0; j < len; j++) {
+		    if(replace && j >= cbs->startPos && j < cbs->endPos) {
+			continue;
+		    }
+		  /* Abort if there is already a . */
+		    if(curString[j] == '.') {
+			abort=3;
+			break;
+		    }
+		}
+		XtFree(curString);
+		break;
+	    default:
+		abort=4;
 	    }
 	}
     }
-    if (cbs->text->length <= 0)
-      cbs->doit = False;
+    if(abort) cbs->doit=False;
+#if DEBUG_TEXT_VERIFY
+    printf("  doit: %d",cbs->doit);
+    if(!abort) printf("\n");
+    else if(abort == 1) printf("  +/- not in first position\n");
+    else if(abort == 2) printf("  More than one new dot\n");
+    else if(abort == 3) printf("  Already have a dot\n");
+    else if(abort == 4) printf("  Invalid character\n");
+#endif
 }
 
 #ifdef __cplusplus
@@ -1016,17 +1073,21 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer)
 void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
-    int rcType = (int) cd;
+    int rcType = (int)cd;
     char *stringValue, string[24];
     int i, k, n, iPrec;
-    Arg args[6];
+    Arg args[10];
     XcVType valF, minF, maxF, tickF;
     String resourceName;
 
+#if DEBUG_XRT
+    printf("\ncpAxisTextFieldActivateCallback: Entered\n");
+#endif    
     stringValue = XmTextFieldGetString(w);
 
-  /****** For the strcpy() calls, note that the textField has a maxLength 
-	  resource set such that the strcpy always succeeds */
+  /* Determine axis max or min
+   *   Note: For the strcpy() calls, note that the textField has a maxLength 
+	  resource set such that the strcpy always succeeds) */
     n = 0;
     switch(rcType) {
     case CP_X_RANGE_MIN:
@@ -1036,11 +1097,20 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    valF.fval = globalResourceBundle.axis[rcType%3].minRange;
 	    switch(rcType%3) {
-	    case CP_X_RANGE_MIN: resourceName = XtNxrtXMin; break;
-	    case CP_Y_RANGE_MIN: resourceName = XtNxrtYMin; break;
-	    case CP_Y2_RANGE_MIN: resourceName = XtNxrtY2Min; break;
+	    case X_AXIS_ELEMENT: resourceName = XtNxrtXMin; break;
+	    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYMin; break;
+	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Min; break;
+	    default:
+		medmPrintf("\ncpAxisTextFieldActivateCallback (MIN): "
+		  "unknown rcType%%3 = %d",rcType%3);
+		return;
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
+#if DEBUG_XRT
+	    printf("\ncpAxisTextFieldActivateCallback [MIN]: "
+	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
+	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
+#endif    
 	}
 	break;
     case CP_X_RANGE_MAX:
@@ -1050,39 +1120,83 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if (globalDisplayListTraversalMode == DL_EXECUTE) {
 	    valF.fval = globalResourceBundle.axis[rcType%3].maxRange;
 	    switch(rcType%3) {
-	    case CP_X_RANGE_MAX: resourceName = XtNxrtXMax; break;
-	    case CP_Y_RANGE_MAX: resourceName = XtNxrtYMax; break;
-	    case CP_Y2_RANGE_MAX: resourceName = XtNxrtY2Max; break;
+	    case X_AXIS_ELEMENT: resourceName = XtNxrtXMax; break;
+	    case Y1_AXIS_ELEMENT: resourceName = XtNxrtYMax; break;
+	    case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Max; break;
+	    default:
+		medmPrintf("\ncpAxisTextFieldActivateCallback (MAX): "
+		  "unknown rcType%%3 = %d",rcType%3);
+		return;
 	    }
 	    XtSetArg(args[n],resourceName,valF.lval); n++;
+#if DEBUG_XRT
+	    printf("\ncpAxisTextFieldActivateCallback [MAX]: "
+	      "valF.fval =%g valF.lval=%ld Converted: %d\n",
+	      valF.fval,valF.lval,XrtFloatToArgVal(valF.fval));
+#endif    
 	}
 	break;
     default:
-	medmPrintf("\ncpAxisTextFieldActivateCallback: unknown rcType = %d",rcType/3);
-	break;
-
+	medmPrintf("\ncpAxisTextFieldActivateCallback: "
+	  "unknown rcType = %d",rcType);
+	return;
     }
+    XtFree(stringValue);
+
+  /* Recalculate ticks */
     minF.fval = globalResourceBundle.axis[rcType%3].minRange;
     maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
     tickF.fval = (maxF.fval - minF.fval)/4.0;
+#if DEBUG_XRT
+    printf("cpAxisTextFieldActivateCallback: "
+      "minF.fval =%g minF.lval=%ld Converted: %d\n",
+      minF.fval,minF.lval,XrtFloatToArgVal(minF.fval));
+    printf("cpAxisTextFieldActivateCallback: "
+      "maxF.fval =%g maxF.lval=%ld Converted: %d\n",
+      maxF.fval,maxF.lval,XrtFloatToArgVal(maxF.fval));
+    printf("cpAxisTextFieldActivateCallback: "
+      "tickF.fval =%g tickF.lval=%ld Converted: %d\n",
+      tickF.fval,tickF.lval,XrtFloatToArgVal(tickF.fval));
+#endif    
+
+  /* Increment between axis ticks */
     switch(rcType%3) {
     case X_AXIS_ELEMENT: resourceName = XtNxrtXTick; break;
     case Y1_AXIS_ELEMENT: resourceName = XtNxrtYTick; break;
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Tick; break;
+    default:
+	medmPrintf("\ncpAxisTextFieldActivateCallback (Tick): "
+	  "unknown rcType%%3 = %d",rcType%3);
+	return;
     }
     XtSetArg(args[n],resourceName,tickF.lval); n++;
+
+  /* Increment between axis numbering (set to tick value) */
     switch(rcType%3) {
     case X_AXIS_ELEMENT: resourceName = XtNxrtXNum; break;
     case Y1_AXIS_ELEMENT: resourceName = XtNxrtYNum; break;
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Num; break;
+    default:
+	medmPrintf("\ncpAxisTextFieldActivateCallback (Num): "
+	  "unknown rcType%%3 = %d",rcType%3);
+	return;
     }
+
+  /* Digits after the decimal point */
     XtSetArg(args[n],resourceName,tickF.lval); n++;
     switch(rcType%3) {
     case X_AXIS_ELEMENT: resourceName = XtNxrtXPrecision; break;
     case Y1_AXIS_ELEMENT: resourceName = XtNxrtYPrecision; break;
     case Y2_AXIS_ELEMENT: resourceName = XtNxrtY2Precision; break;
+    default:
+	medmPrintf("\ncpAxisTextFieldActivateCallback (Precision): "
+	  "unknown rcType%%3 = %d",rcType%3);
+	return;
     }
+#if 0
+  /* KE: Doesn't make sense and is redone below */
     XtSetArg(args[n],resourceName,tickF.lval); n++;
+#endif    
     sprintf(string,"%f",tickF.fval);
     k = strlen(string)-1;
     while (string[k] == '0') k--;	/* strip off trailing zeroes */
@@ -1090,15 +1204,9 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     while (string[k] != '.' && k >= 0) k--;
     iPrec = iPrec - k;
     XtSetArg(args[n],resourceName,iPrec); n++;
-
-    XtFree(stringValue);
-
-  /*
-   *  update for EDIT or EXECUTE mode
-   */
-
+    
+  /* Update for EDIT or EXECUTE mode  */
     switch(globalDisplayListTraversalMode) {
-
     case DL_EDIT:
       /*
        * update elements (this is overkill, but okay for now)
@@ -1223,7 +1331,7 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     case TRIGGER_RC:
 	newString= globalResourceBundle.trigger;
 	break;
-    case ERASE_RC :
+    case ERASE_RC:
 	newString= globalResourceBundle.erase;
 	break;
     }
@@ -1231,20 +1339,27 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 #ifdef __cplusplus
-void cpAxisTextFieldLosingFocusCallback(Widget, XtPointer cd, XtPointer)
+void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
 #else
 void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
+  /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS, too */
 {
     int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
     XcVType minF[3], maxF[3];
-    Widget cp = NULL;
 
-  /****** Losing focus - make sure that the text field remains accurate wrt 
-	  values stored in widget (not necessarily what is in 
-  globalResourceBundle) */
+#if DEBUG_XRT
+    printf("\ncpAxisTextFieldLosingFocusCallback: Entered\n");
+    printf("  executeTimeCartesianPlotWidget: %d\n",
+      executeTimeCartesianPlotWidget);
+    printf("  rcType: %d  rcType%%3: %d\n",rcType,rcType%3);
+    printf("  axisRangeMin[rcType%%3]: %d  axisRangeMax[rcType%%3]: %d  "
+      "w: %d\n",axisRangeMin[rcType%3],axisRangeMax[rcType%3],w);
+#endif    
+  /* Losing focus - make sure that the text field remains accurate wrt 
+   *   values stored in widget (not necessarily what is in globalResourceBundle) */
     if (executeTimeCartesianPlotWidget != NULL)
       XtVaGetValues(executeTimeCartesianPlotWidget,
 	XtNxrtXMin,&minF[X_AXIS_ELEMENT].lval,
@@ -1281,9 +1396,9 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* strip trailing zeroes */
     tail = strlen(string);
     while (string[--tail] == '0') string[tail] = '\0';
-    currentString = XmTextFieldGetString(axisRangeMin[rcType%3]);
+    currentString = XmTextFieldGetString(w);
     if (strcmp(string,currentString))
-      XmTextFieldSetString(axisRangeMin[rcType%3],string);
+      XmTextFieldSetString(w,string);
     XtFree(currentString);
 }
 
@@ -2575,8 +2690,7 @@ void cpUpdateMatrixColors()
 /*
  * create data dialog
  */
-Widget createCartesianPlotDataDialog(
-  Widget parent)
+Widget createCartesianPlotDataDialog(Widget parent)
 {
     Widget shell, applyButton, closeButton;
     Dimension cWidth, cHeight, aWidth, aHeight;
@@ -2586,7 +2700,7 @@ Widget createCartesianPlotDataDialog(
     static Boolean first = True;
 
 
-  /* initialize those file-scoped globals */
+  /* Initialize file-scoped globals */
     if (first) {
 	first = False;
 	for (i = 0; i < MAX_TRACES; i++) {
@@ -2598,7 +2712,7 @@ Widget createCartesianPlotDataDialog(
     }
 
   /*
-   * now create the interface
+   * Create the interface
    *
    *	       xdata | ydata | color
    *	       ---------------------
@@ -2657,17 +2771,17 @@ Widget createCartesianPlotDataDialog(
     XtManageChild(applyButton);
     XmStringFree(xmString);
 
-  /* make APPLY and CLOSE buttons same size */
+  /* Make APPLY and CLOSE buttons same size */
     XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
     XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
     XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
       XmNheight,MAX(cHeight,aHeight),NULL);
 
-  /* and make the APPLY button the default for the form */
+  /* Make the APPLY button the default for the form */
     XtVaSetValues(cpForm,XmNdefaultButton,applyButton,NULL);
 
   /*
-   * now do form layout 
+   * Do form layout 
    */
 
   /* cpMatrix */
@@ -2972,18 +3086,19 @@ void updateStripChartDataDialog()
   
 }
 
-/*****************
- * for the Cartesian Plot Axis Dialog...
- *****************/
+/*
+ * Menu entry support routine for the Cartesian Plot Axis Dialog...
+ */
 void createCartesianPlotAxisDialogMenuEntry(
-  Widget         parentRC,
-  XmString       axisLabelXmString,
-  Widget *       label,
-  Widget *       menu,
-  XmString *     menuLabelXmStrings,
-  XmButtonType * buttonType,
-  int            numberOfLabels,
-  XtPointer      clientData) {
+  Widget parentRC,
+  XmString axisLabelXmString,
+  Widget *label,
+  Widget *menu,
+  XmString *menuLabelXmStrings,
+  XmButtonType *buttonType,
+  int numberOfLabels,
+  XtPointer clientData)
+{
     Arg args[10];
     int n = 0;
     Widget rowColumn;
@@ -3012,6 +3127,9 @@ void createCartesianPlotAxisDialogMenuEntry(
     XtManageChild(rowColumn);
 }
 
+/*
+ * Text entry support routine for the Cartesian Plot Axis Dialog...
+ */
 void createCartesianPlotAxisDialogTextEntry(
   Widget parentRC,
   XmString axisLabelXmString,
@@ -3022,19 +3140,19 @@ void createCartesianPlotAxisDialogTextEntry(
 {
     Arg args[10];
     int n = 0;
-  /* create a row column widget to hold the label and textfield widget */
+  /* Create a row column widget to hold the label and textfield widget */
     XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
     XtSetArg(args[n],XmNpacking,XmPACK_NONE); n++;
     *rowColumn = XmCreateRowColumn(parentRC,"entryRC",args,n);
  
-  /* create the label */
+  /* Create the label */
     n = 0;
     XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;
     XtSetArg(args[n],XmNlabelString,axisLabelXmString); n++;
     XtSetArg(args[n],XmNrecomputeSize,False); n++;
     *label = XmCreateLabel(*rowColumn,"localLabel",args,n);
  
-  /* create the text field */
+  /* Create the text field */
     n = 0;
     XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
     *text = XmCreateTextField(*rowColumn,"localElement",args,n);
@@ -3042,14 +3160,14 @@ void createCartesianPlotAxisDialogTextEntry(
       clientData);
     XtAddCallback(*text,XmNlosingFocusCallback,cpAxisTextFieldLosingFocusCallback,
       clientData);
-    XtAddCallback(*text,XmNmodifyVerifyCallback, textFieldFloatVerifyCallback,
+    XtAddCallback(*text,XmNmodifyVerifyCallback,textFieldFloatVerifyCallback,
       NULL);
     XtManageChild(*rowColumn);
 }
      
 
 /*
- * create axis dialog
+ * Create Cartesian Plot axis dialog box
  */
 #ifdef __cplusplus
 Widget createCartesianPlotAxisDialog(Widget)
@@ -3066,26 +3184,27 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     static Boolean first = True;
     XmButtonType buttonType[MAX_CP_AXIS_BUTTONS];
     Widget entriesRC, frame, localRC, localLabel, localElement, parentRC;
-  /* for keeping list of widgets around */
+  /* For keeping list of widgets around */
     Widget entryLabel[MAX_CP_AXIS_ELEMENTS], entryElement[MAX_CP_AXIS_ELEMENTS];
-
     Dimension width, height;
     static int maxWidth = 0, maxHeight = 0;
 
-  /* indexed like dlCartesianPlot->axis[]: X_ELEMENT_AXIS, Y1_ELEMENT_AXIS... */
+  /* Indexed like dlCartesianPlot->axis[]: X_ELEMENT_AXIS, Y1_ELEMENT_AXIS... */
     static char *frameLabelString[3] = {"X Axis", "Y1 Axis", "Y2 Axis",};
 
-  /* initialize XmString value tables (since this can be edit or execute time) */
+  /* Initialize XmString value tables (since this can be edit or execute time) */
     initializeXmStringValueTables();
 
+  /* Set buttons to be push button */
     for (i = 0; i < MAX_CP_AXIS_BUTTONS; i++) buttonType[i] = XmPUSHBUTTON;
 
   /*
-   * now create the interface
+   * Create the interface
    *		     ...
    *		 OK     CANCEL
    */
     
+  /* Shell */
     n = 0;
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
     XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
@@ -3097,6 +3216,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
       cartesianPlotAxisActivate,
       (XtPointer)CP_CLOSE_BTN);
 
+  /* Form */
     n = 0;
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
     XtSetArg(args[n],XmNmarginHeight,8); n++;
@@ -3104,6 +3224,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
     cpAxisForm = XmCreateForm(shell,"cartesianPlotAxisF",args,n);
 
+  /* RowColumn */
     n = 0;
     XtSetArg(args[n],XmNnumColumns,1); n++;
     XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
@@ -3116,28 +3237,29 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     axisMaxXmString = XmStringCreateSimple("Maximum Value");
     axisTimeFmtXmString = XmStringCreateSimple("Time format");
 
+  /* Loop over major elements */
     counter = 0;
-  /* ---------------------------------------------------------------- */
     for (i = X_AXIS_ELEMENT /* 0 */; i <= Y2_AXIS_ELEMENT /* 2 */; i++) {
-
+      /* Frame */
 	n = 0;
 	XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
 	frame = XmCreateFrame(entriesRC,"frame",args,n);
 	XtManageChild(frame);
 
-	frameLabelXmString = XmStringCreateSimple(frameLabelString[i]);
+      /* Label */
 	n = 0;
+	frameLabelXmString = XmStringCreateSimple(frameLabelString[i]);
 	XtSetArg(args[n],XmNlabelString,frameLabelXmString); n++;
 	XtSetArg(args[n],XmNmarginWidth,0); n++;
 	XtSetArg(args[n],XmNmarginHeight,0); n++;
 	XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
-      /* use font calculation for textField (which uses ~90% of height) */
+      /* (Use font calculation for textField (which uses ~90% of height)) */
 	XtSetArg(args[n],XmNfontList,fontListTable[textFieldFontListIndex(24)]);n++;
 	localLabel = XmCreateLabel(frame,"label",args,n);
 	XtManageChild(localLabel);
 	XmStringFree(frameLabelXmString);
 
-      /* parent RC within frame */
+      /* RC within frame */
 	n = 0;
 	XtSetArg(args[n],XmNnumColumns,1); n++;
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
@@ -3159,8 +3281,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	counter++;
 
       /* Create Range Style Entry */
-	createCartesianPlotAxisDialogMenuEntry(
-	  parentRC,
+	createCartesianPlotAxisDialogMenuEntry(parentRC,
 	  axisRangeXmString,
 	  &(entryLabel[counter]),
 	  &(entryElement[counter]),
@@ -3171,7 +3292,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	axisRangeMenu[i] =  entryElement[counter];
 	counter++;
 
-      /* create Min text field entry */
+      /* Create Min text field entry */
 	createCartesianPlotAxisDialogTextEntry(
 	  parentRC, axisMinXmString,
 	  &(axisRangeMinRC[i]), &(entryLabel[counter]),
@@ -3183,13 +3304,12 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	createCartesianPlotAxisDialogTextEntry(
 	  parentRC, axisMaxXmString,
 	  &(axisRangeMaxRC[i]), &(entryLabel[counter]),
-	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MIN+i));
+	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MAX+i));
 	axisRangeMax[i] = entryElement[counter];
 	counter++;
 
+      /* Create time format menu entry for X axis only */
 	if (i == X_AXIS_ELEMENT) {
-	  /* create time format menu entry */
-
 	    createCartesianPlotAxisDialogMenuEntry(
 	      parentRC,
 	      axisTimeFmtXmString,
@@ -3199,11 +3319,12 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	      buttonType,
 	      NUM_CP_TIME_FORMAT,
 	      (XtPointer)(CP_X_TIME_FORMAT));
-	    axisTimeFormat =  entryElement[counter];
+	    axisTimeFormat = entryElement[counter];
 	    counter++;
 	}
     }
 
+  /* Get max sizes and manage */
     for (i = 0; i < counter; i++) {
 	XtVaGetValues(entryLabel[i],XmNwidth,&width,XmNheight,&height,NULL);
 	maxLabelWidth = MAX(maxLabelWidth,width);
@@ -3211,22 +3332,21 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	XtVaGetValues(entryElement[i],XmNwidth,&width,XmNheight,&height,NULL);
 	maxLabelWidth = MAX(maxLabelWidth,width);
 	maxLabelHeight = MAX(maxLabelHeight,height);
+#if 0
+      /* Is done below */
 	XtManageChild(entryLabel[i]);
 	XtManageChild(entryElement[i]);
+#endif	
     }
 
-  /*
-   * now resize the labels and elements (to maximum's width)
-   *      for uniform appearance
-   */
+   /* Resize the labels and elements (to max width) for uniform appearance */
     for (i = 0; i < counter; i++) {
-
-      /* set label */
+      /* Set label */
 	XtVaSetValues(entryLabel[i],XmNwidth,maxLabelWidth,
 	  XmNheight,maxLabelHeight,XmNrecomputeSize,False,
 	  XmNalignment,XmALIGNMENT_END,NULL);
 
-      /* set element */
+      /* Set element */
 	if (XtClass(entryElement[i]) == xmRowColumnWidgetClass) {
 	  /* must be option menu - unmanage label widget */
 	    XtVaSetValues(XmOptionButtonGadget(entryElement[i]),
@@ -3236,7 +3356,6 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	      XmNmarginWidth,0,
 	      NULL);
 	}
-
 	XtVaSetValues(entryElement[i],
 	  XmNx,(Position)maxLabelWidth, XmNwidth,maxLabelWidth,
 	  XmNheight,maxLabelHeight,
@@ -3246,38 +3365,27 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	XtManageChild(entryLabel[i]);
 	XtManageChild(entryElement[i]);
     }
-    XtManageChild(entriesRC);
 
-  /* ---------------------------------------------------------------- */
+  /* Free strings */
     XmStringFree(axisStyleXmString);
     XmStringFree(axisRangeXmString);
     XmStringFree(axisMinXmString);
     XmStringFree(axisMaxXmString);
-
-
-    xmString = XmStringCreateSimple("Close");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,xmString); n++;
-    closeButton = XmCreatePushButton(cpAxisForm,"closeButton",args,n);
-    XtAddCallback(closeButton,XmNactivateCallback,
-      cartesianPlotAxisActivate, (XtPointer)CP_CLOSE_BTN);
-    XtManageChild(closeButton);
-    XmStringFree(xmString);
-
-  /*
-   * now do form layout 
-   */
     
-  /* entriesRC */
+  /* Set values for entriesRC (After resizing) */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
     XtSetValues(entriesRC,args,n);
 
-  /* close */
-
+  /* Manage the RC */
+    XtManageChild(entriesRC);
+    
+  /* Close button */
     n = 0;
+    xmString = XmStringCreateSimple("Close");
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
     XtSetArg(args[n],XmNtopWidget,entriesRC); n++;
     XtSetArg(args[n],XmNtopOffset,12); n++;
@@ -3286,9 +3394,13 @@ Widget createCartesianPlotAxisDialog(Widget parent)
     XtSetArg(args[n],XmNbottomOffset,12); n++;
   /* HACK - approximate centering button by putting at 43% of form width */
     XtSetArg(args[n],XmNleftPosition,(Position)43); n++;
-    XtSetValues(closeButton,args,n);
+    closeButton = XmCreatePushButton(cpAxisForm,"closeButton",args,n);
+    XtAddCallback(closeButton,XmNactivateCallback,
+      cartesianPlotAxisActivate, (XtPointer)CP_CLOSE_BTN);
+    XtManageChild(closeButton);
+    XmStringFree(xmString);
 
-
+  /* Return the shell */
     return (shell);
 }
 
@@ -3341,7 +3453,7 @@ void updateCartesianPlotAxisDialog()
  */
 void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 {
-    int tail, buttonId;
+    int i, tail, buttonId;
     char string[MAX_TOKEN_LENGTH];
     CartesianPlot *pcp;
     XtPointer userData;
@@ -3352,8 +3464,10 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     XrtAnnoMethod xAnnoMethod;
     XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
     Arg args[2];
+    char *timeFormat;
 
     if (globalDisplayListTraversalMode != DL_EXECUTE) return;
+
     XtVaGetValues(cp,
       XmNuserData,&userData,
       XtNxrtXAnnotationMethod, &xAnnoMethod,
@@ -3369,9 +3483,10 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
       XtNxrtXMinUseDefault,&xMinUseDef,
       XtNxrtYMinUseDefault,&y1MinUseDef,
       XtNxrtY2MinUseDefault,&y2MinUseDef,
+      XtNxrtTimeFormat,&timeFormat,
       NULL);
 
-    if (pcp = (CartesianPlot *) userData ) {
+    if (pcp = (CartesianPlot *)userData ) {
 	xIsCurrentlyFromChannel =
 	  pcp->axisRange[X_AXIS_ELEMENT].isCurrentlyFromChannel;
 	y1IsCurrentlyFromChannel =
@@ -3382,35 +3497,44 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 
   /* X Axis */
     if (xAnnoMethod == XRT_ANNO_TIME_LABELS)  {
+      /* Style */
 	optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
 	  TIME_AXIS - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-	optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT],
-	  AUTO_SCALE_RANGE - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-	XtSetSensitive(axisTimeFormat,True);
+      /* Time format */
+	buttonId = 0;     /* Use for  default */
+	for(i = 0; i < NUM_CP_TIME_FORMAT; i++) {
+	    if(!strcmp(timeFormatString[i],timeFormat)) {
+		buttonId = i;
+		break;
+	    }
+	}
+	optionMenuSet(axisTimeFormat, buttonId);
+	XtSetSensitive(axisTimeFormat, True);
     } else {
+      /* Style */
 	optionMenuSet(axisStyleMenu[X_AXIS_ELEMENT],
 	  (xAxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
 	  - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-	buttonId = (xMinUseDef ? AUTO_SCALE_RANGE :
-	  (xIsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
-	  - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
-	optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
-	if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
-	    sprintf(string,"%f",xMinF.fval);
-	  /* strip trailing zeroes */
-	    tail = strlen(string);
-	    while (string[--tail] == '0') string[tail] = '\0';
-	    XmTextFieldSetString(axisRangeMin[X_AXIS_ELEMENT],string);
-	    sprintf(string,"%f",xMaxF.fval);
-	  /* strip trailing zeroes */
-	    tail = strlen(string);
-	    while (string[--tail] == '0') string[tail] = '\0';
-	    XmTextFieldSetString(axisRangeMax[X_AXIS_ELEMENT],string);
-	}
-	XtSetSensitive(axisTimeFormat,False);
+	XtSetSensitive(axisTimeFormat, False);
     }
-    if ((!xMinUseDef && !xIsCurrentlyFromChannel) ||
-      (xAnnoMethod == XRT_ANNO_TIME_LABELS)) {
+  /* Range */
+    buttonId = (xIsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (xMinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
+      - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
+    optionMenuSet(axisRangeMenu[X_AXIS_ELEMENT], buttonId);
+    if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
+	sprintf(string,"%f",xMinF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMin[X_AXIS_ELEMENT],string);
+	sprintf(string,"%f",xMaxF.fval);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while (string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(axisRangeMax[X_AXIS_ELEMENT],string);
+    }
+    if (!xMinUseDef && !xIsCurrentlyFromChannel) { 
 	XtSetSensitive(axisRangeMinRC[X_AXIS_ELEMENT],True);
 	XtSetSensitive(axisRangeMaxRC[X_AXIS_ELEMENT],True);
     } else {
@@ -3423,8 +3547,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     optionMenuSet(axisStyleMenu[Y1_AXIS_ELEMENT],
       (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-    buttonId =  (y1MinUseDef ? AUTO_SCALE_RANGE :
-      (y1IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
+    buttonId = (y1IsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (y1MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
       - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y1_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
@@ -3450,10 +3574,10 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 
   /* Y2 Axis */
     optionMenuSet(axisStyleMenu[Y2_AXIS_ELEMENT],
-      (y1AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
+      (y2AxisIsLog ? LOG10_AXIS : LINEAR_AXIS)
       - FIRST_CARTESIAN_PLOT_AXIS_STYLE);
-    buttonId = (y2MinUseDef ? AUTO_SCALE_RANGE :
-      (y2IsCurrentlyFromChannel ? CHANNEL_RANGE : USER_SPECIFIED_RANGE)
+    buttonId = (y2IsCurrentlyFromChannel ? CHANNEL_RANGE :
+      (y2MinUseDef ? AUTO_SCALE_RANGE : USER_SPECIFIED_RANGE)
       - FIRST_CARTESIAN_PLOT_RANGE_STYLE);
     optionMenuSet(axisRangeMenu[Y2_AXIS_ELEMENT], buttonId);
     if (buttonId == USER_SPECIFIED_RANGE - FIRST_CARTESIAN_PLOT_RANGE_STYLE) {
@@ -3485,254 +3609,254 @@ void medmGetValues(ResourceBundle *pRB, ...)
     arg = va_arg(ap,int);
     while (arg >= 0) {
 	switch (arg) {
-	case X_RC : {
+	case X_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->x;
 	    break;
 	}
-	case Y_RC : {
+	case Y_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->y;
 	    break;
 	}
-	case WIDTH_RC : {
+	case WIDTH_RC: {
 	    unsigned int *pvalue = va_arg(ap,unsigned int *);
 	    *pvalue = pRB->width;
 	    break;
 	}
-	case HEIGHT_RC : {
+	case HEIGHT_RC: {
 	    unsigned int *pvalue = va_arg(ap,unsigned int *);
 	    *pvalue = pRB->height;
 	    break;
 	}
-	case RDBK_RC : {
+	case RDBK_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->chan);
 	    break;
 	}
-	case CTRL_RC : {
+	case CTRL_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->chan);
 	    break;
 	}
-	case TITLE_RC : {
+	case TITLE_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->title);
 	    break;
 	}
-	case XLABEL_RC : {
+	case XLABEL_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->xlabel);
 	    break;
 	}
-	case YLABEL_RC : {
+	case YLABEL_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->ylabel);
 	    break;
 	}
-	case CLR_RC : {
+	case CLR_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->clr;
 	    break;
 	}
-	case BCLR_RC : {
+	case BCLR_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->bclr;
 	    break;
 	}
-	case BEGIN_RC : {
+	case BEGIN_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->begin;
 	    break;
 	}
-	case PATH_RC : {
+	case PATH_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->path;
 	    break;
 	}
-	case ALIGN_RC : {
+	case ALIGN_RC: {
 	    TextAlign *pvalue = va_arg(ap,TextAlign *);
 	    *pvalue = pRB->align;
 	    break;
 	}
-	case FORMAT_RC : {
+	case FORMAT_RC: {
 	    TextFormat *pvalue = va_arg(ap,TextFormat *);
 	    *pvalue = pRB->format;
 	    break;
 	}
-	case LABEL_RC : {
+	case LABEL_RC: {
 	    LabelType *pvalue = va_arg(ap,LabelType *);
 	    *pvalue = pRB->label;
 	    break;
 	}
-	case DIRECTION_RC : {
+	case DIRECTION_RC: {
 	    Direction *pvalue = va_arg(ap,Direction *);
 	    *pvalue = pRB->direction;
 	    break;
 	}
-	case FILLMOD_RC : {
+	case FILLMOD_RC: {
 	    FillMode *pvalue = va_arg(ap,FillMode *);
 	    *pvalue = pRB->fillmod;
 	    break;
 	}
-	case STYLE_RC : {
+	case STYLE_RC: {
 	    EdgeStyle *pvalue = va_arg(ap,EdgeStyle *);
 	    *pvalue = pRB->style;
 	    break;
 	}
-	case FILL_RC : {
+	case FILL_RC: {
 	    FillStyle *pvalue = va_arg(ap,FillStyle *);
 	    *pvalue = pRB->fill;
 	    break;
 	}
-	case CLRMOD_RC : {
+	case CLRMOD_RC: {
 	    ColorMode *pvalue = va_arg(ap,ColorMode *);
 	    *pvalue = pRB->clrmod;
 	    break;
 	}
 #ifdef __COLOR_RULE_H__
-	case COLOR_RULE_RC : {
+	case COLOR_RULE_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->colorRule;
 	    break;
 	}
 #endif
-	case VIS_RC : {
+	case VIS_RC: {
 	    VisibilityMode *pvalue = va_arg(ap,VisibilityMode *);
 	    *pvalue = pRB->vis;
 	    break;
 	}
-	case CHAN_RC : {
+	case CHAN_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->chan);
 	    break;
 	}
-	case DATA_CLR_RC : {
+	case DATA_CLR_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->data_clr;
 	    break;
 	}
-	case DIS_RC : {
+	case DIS_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->dis;
 	    break;
 	}
-	case XYANGLE_RC : {
+	case XYANGLE_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->xyangle;
 	    break;
 	}
-	case ZANGLE_RC : {
+	case ZANGLE_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->zangle;
 	    break;
 	}
-	case PERIOD_RC : {
+	case PERIOD_RC: {
 	    double *pvalue = va_arg(ap,double *);
 	    *pvalue = pRB->period;
 	    break;
 	}
-	case UNITS_RC : {
+	case UNITS_RC: {
 	    TimeUnits *pvalue = va_arg(ap,TimeUnits *);
 	    *pvalue = pRB->units;
 	    break;
 	}
-	case CSTYLE_RC : {
+	case CSTYLE_RC: {
 	    CartesianPlotStyle *pvalue = va_arg(ap,CartesianPlotStyle *);
 	    *pvalue = pRB->cStyle;
 	    break;
 	}
-	case ERASE_OLDEST_RC : {
+	case ERASE_OLDEST_RC: {
 	    EraseOldest *pvalue = va_arg(ap,EraseOldest *);
 	    *pvalue = pRB->erase_oldest;
 	    break;
 	}
-	case COUNT_RC : {
+	case COUNT_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->count;
 	    break;
 	}
-	case STACKING_RC : {
+	case STACKING_RC: {
 	    Stacking *pvalue = va_arg(ap,Stacking *);
 	    *pvalue = pRB->stacking;
 	    break;
 	}
-	case IMAGETYPE_RC : {
+	case IMAGETYPE_RC: {
 	    ImageType *pvalue = va_arg(ap,ImageType *);
 	    *pvalue = pRB->imageType;
 	    break;
 	}
-	case TEXTIX_RC : {
+	case TEXTIX_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->textix);
 	    break;
 	}
-	case MSG_LABEL_RC : {
+	case MSG_LABEL_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->messageLabel);
 	    break;
 	}
-	case PRESS_MSG_RC : {
+	case PRESS_MSG_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->press_msg);
 	    break;
 	}
-	case RELEASE_MSG_RC : {
+	case RELEASE_MSG_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->release_msg);
 	    break;
 	}
-	case IMAGENAME_RC : {
+	case IMAGENAME_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->imageName);
 	    break;
 	}
-	case DATA_RC : {
+	case DATA_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->data);
 	    break;
 	}
-	case CMAP_RC : {
+	case CMAP_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->cmap);
 	    break;
 	}
-	case NAME_RC : {
+	case NAME_RC: {
 	    char *pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,pRB->name);
 	    break;
 	}
-	case LINEWIDTH_RC : {
+	case LINEWIDTH_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->lineWidth;
 	    break;
 	}
-	case PRECISION_RC : {
+	case PRECISION_RC: {
 	    double *pvalue = va_arg(ap,double *);
 	    *pvalue = pRB->dPrecision;
 	    break;
 	}
-	case SBIT_RC : {
+	case SBIT_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->sbit;
 	    break;
 	}
-	case EBIT_RC : {
+	case EBIT_RC: {
 	    int *pvalue = va_arg(ap,int *);
 	    *pvalue = pRB->ebit;
 	    break;
 	}
-	case RD_LABEL_RC : {
+	case RD_LABEL_RC: {
 	    char* pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,globalResourceBundle.rdLabel);
 	    break;
 	}
-	case RD_VISUAL_RC : {
+	case RD_VISUAL_RC: {
 	    relatedDisplayVisual_t *pvalue = va_arg(ap,relatedDisplayVisual_t *);
 	    *pvalue = globalResourceBundle.rdVisual;
 	    break;
 	}
-	case RDDATA_RC : {
+	case RDDATA_RC: {
 	    DlRelatedDisplayEntry *pDisplay = va_arg(ap,DlRelatedDisplayEntry *);
 	    int i;
 	    for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
@@ -3743,7 +3867,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    }
 	    break;
 	}
-	case CPDATA_RC : {
+	case CPDATA_RC: {
 	    DlTrace* ptrace = va_arg(ap,DlTrace *);
 	    int i;
 	    for (i = 0; i < MAX_TRACES; i++){
@@ -3753,7 +3877,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    }
 	    break;
 	}
-	case SCDATA_RC : {
+	case SCDATA_RC: {
 	    DlPen *pPen = va_arg(ap, DlPen *);
 	    int i;
 	    for (i = 0; i < MAX_PENS; i++){
@@ -3762,7 +3886,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    }
 	    break;
 	}
-	case SHELLDATA_RC : {
+	case SHELLDATA_RC: {
 	    DlShellCommandEntry *pCommand = va_arg(ap, DlShellCommandEntry *);
 	    int i;
 	    for (i = 0; i < MAX_SHELL_COMMANDS; i++){
@@ -3772,29 +3896,29 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	    }
 	    break;
 	}
-	case CPAXIS_RC : {
+	case CPAXIS_RC: {
 	    DlPlotAxisDefinition *paxis = va_arg(ap,DlPlotAxisDefinition *);
 	    paxis[X_AXIS_ELEMENT] = globalResourceBundle.axis[X_AXIS_ELEMENT];
 	    paxis[Y1_AXIS_ELEMENT] = globalResourceBundle.axis[Y1_AXIS_ELEMENT];
 	    paxis[Y2_AXIS_ELEMENT] = globalResourceBundle.axis[Y2_AXIS_ELEMENT];
 	    break;
 	}
-	case TRIGGER_RC : {
+	case TRIGGER_RC: {
 	    char* pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,globalResourceBundle.trigger);
 	    break;
 	}
-	case ERASE_RC : {
+	case ERASE_RC: {
 	    char* pvalue = va_arg(ap,char *);
 	    strcpy(pvalue,globalResourceBundle.erase);
 	    break;
 	}
-	case ERASE_MODE_RC : {
+	case ERASE_MODE_RC: {
 	    eraseMode_t *pvalue = va_arg(ap,eraseMode_t *);
 	    *pvalue = globalResourceBundle.eraseMode;
 	    break;
 	}
-	default :
+	default:
 	    break;
 	}
 	arg = va_arg(ap,int);
@@ -4240,6 +4364,9 @@ void updateGlobalResourceBundleFromElement(DlElement *element) {
 	globalResourceBundle.axis[i].rangeStyle = p->axis[i].rangeStyle;
 	globalResourceBundle.axis[i].minRange = p->axis[i].minRange;
 	globalResourceBundle.axis[i].maxRange = p->axis[i].maxRange;
+	if(i == X_AXIS_ELEMENT) {
+	    globalResourceBundle.axis[i].timeFormat = p->axis[i].timeFormat;
+	}
     }
 }
 

@@ -94,13 +94,13 @@ typedef struct _CartesianPlot {
     XYTrace         eraseCh;
     XYTrace         triggerCh;
     UpdateTask      *updateTask;
-    int             nTraces;        /* number of traces ( <= MAX_TRACES) */
-    XrtData         *xrtData1, *xrtData2;    /* XrtData                  */
-  /* used for channel-based range determination - filled in at connect */
-    CartesianPlotAxisRange  axisRange[3];    /* X, Y, Y2 _AXIS_ELEMENT   */
-    eraseMode_t     eraseMode;               /* erase mode               */
-    Boolean         dirty1;                  /* xrtData1 needs screen update */
-    Boolean         dirty2;                  /* xrtData2 needs screen update */
+    int             nTraces;              /* number of traces (<=MAX_TRACES) */
+    XrtData         *xrtData1, *xrtData2; /* XrtData */
+  /* Used for channel-based range determination (filled in at connect) */
+    CartesianPlotAxisRange  axisRange[3]; /* X, Y, Y2 _AXIS_ELEMENT          */
+    eraseMode_t     eraseMode;            /* erase mode */
+    Boolean         dirty1;               /* xrtData1 needs screen update */
+    Boolean         dirty2;               /* xrtData2 needs screen update */
     TS_STAMP        startTime;
     Boolean         timeScale;
 } CartesianPlot;
@@ -160,5 +160,7 @@ static Widget axisTimeFormat;
 #define CP_X_TIME_FORMAT  12
  
 #define MAX_CP_AXIS_ELEMENTS    20
-#define MAX_CP_AXIS_BUTTONS     MAX(NUM_CARTESIAN_PLOT_RANGE_STYLES,\
-  NUM_CARTESIAN_PLOT_AXIS_STYLES)
+/* The following should be the largest of NUM_CP_TIME_FORMAT,
+ *   NUM_CARTESIAN_PLOT_RANGE_STYLES, NUM_CARTESIAN_PLOT_AXIS_STYLES */
+#define MAX_CP_AXIS_BUTTONS  NUM_CP_TIME_FORMAT
+  

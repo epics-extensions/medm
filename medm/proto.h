@@ -514,6 +514,8 @@ void destroyUndoInfo(DisplayInfo *displayInfo);
 void clearUndoInfo(DisplayInfo *displayInfo);
 void saveUndoInfo(DisplayInfo *displayInfo);
 void restoreUndoInfo(DisplayInfo *displayInfo);
+void updateAllDisplayPositions();
+void setTimeValues(void);
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);

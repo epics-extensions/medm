@@ -2008,11 +2008,16 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Disable EDIT functions */
     disableEditFunctions();
 
+  /* Mode is the mode to which we are going */
     switch(mode) {
     case DL_EDIT:
+	updateAllDisplayPositions();
 	if (relatedDisplayS) XtSetSensitive(relatedDisplayS,True);
 	if (cartesianPlotS) XtSetSensitive(cartesianPlotS,True);
-	if (cartesianPlotAxisS) XtSetSensitive(cartesianPlotAxisS,True);
+	if (cartesianPlotAxisS) {
+	    XtSetSensitive(cartesianPlotAxisS,True);
+	    XtPopdown(cartesianPlotAxisS);
+	}
 	if (stripChartS) XtSetSensitive(stripChartS,True);
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
@@ -2024,6 +2029,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case DL_EXECUTE:
+	updateAllDisplayPositions();
 	if (relatedDisplayS) {
 	    XtSetSensitive(relatedDisplayS,False);
 	    XtPopdown(relatedDisplayS);
@@ -2638,6 +2644,7 @@ main(int argc, char *argv[])
     medmScreenUpdateCount = 0;
     medmUpdateMissedCount = 0;
     MedmUseNewFileFormat = True;
+    setTimeValues();
 
     if (argc == 4 && (!strcmp(argv[1],"-c21x") ||
       !strcmp(argv[1],"-c22x"))) {
@@ -2690,7 +2697,8 @@ main(int argc, char *argv[])
 	request->macroString = NULL;
     }
     if (request->opMode == ERROR) {
-	fprintf(stderr,"\nUsage:\n"
+	fprintf(stderr,"\n%s\n",MEDM_VERSION_STRING);
+	fprintf(stderr,"Usage:\n"
 	  "  medm [X options]\n"
 	  "  [-help | -?]\n"
 	  "  [-x | -e]\n"

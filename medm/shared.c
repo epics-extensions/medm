@@ -186,6 +186,7 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
 /*
  * optionMenuSet:  routine to set option menu to specified button index
  *		(0 - (# buttons - 1))
+ *   Sets the XmNmenuHistory, which causes the button to be set
  */
 void optionMenuSet(Widget menu, int buttonId)
 {

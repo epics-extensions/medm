@@ -120,7 +120,11 @@ FILE *dmOpenUseableFile(char *filename)
     if(!file) {
 	file=fopen("/tmp/medmLog","a");
 	pid=getpid();
-	fprintf(file,"Initializing PID: %d\n",pid);
+	if(file) {
+	    fprintf(file,"Initializing PID: %d\n",pid);
+	} else {
+	    printf("Cannot open /tmp/medmLog\n");
+	}
     }
     if(file) {
 	fprintf(file,"[%d] dmOpenUseableFile: %s\n",pid,filename);
@@ -3572,4 +3576,70 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     currentDisplayInfo = displayInfo;     /* Shouldn't be necessary */
     refreshDisplay();
 #endif    
+}
+
+/* Updates the display object values from the current positions of the display
+ *   shell windows since that isn't done when the user moves them */
+void updateAllDisplayPositions()
+{
+    DisplayInfo *displayInfo;
+    DlElement *element;
+    Position x, y;
+    Arg args[2];
+    int nargs;
+
+    displayInfo = displayInfoListHead->next;
+
+  /* Traverse the displayInfo list */
+    while (displayInfo != NULL) {
+      /* Get the current shell coordinates */
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&x); nargs++;
+	XtSetArg(args[nargs],XmNy,&y); nargs++;
+	XtGetValues(displayInfo->shell,args,nargs);
+	
+      /* Traverse the element list list to find the Dl_Display */
+	element = FirstDlElement(displayInfo->dlElementList);
+	while (element) {
+	    if (element->type == DL_Display) {
+		DlDisplay *p = element->structure.display;
+	      /* Set the object values from the shell */
+		p->object.x = x;
+		p->object.y = y;
+		break;     /* Don't need any more elements */
+	    }
+	}
+	displayInfo = displayInfo->next;
+    }
+}
+
+/* Set time base values
+ * Note that the time base in MEDM is set as Jan. 1, 1990, 00:00:00, local time
+ *   whereas the EPICS time base is Jan. 1, 1990, 00:00:00 GMT.  This has the
+ *   effect of making EPICS values appear as local time rather than the non-
+ *   intuitive GMT.  Note that UNIX time is relative to Jan. 1, 1970,
+ *   00:00:00 GMT.
+ */
+void setTimeValues(void)
+{
+	struct tm ltime;
+
+	ltime.tm_year = 70;  /* year */
+	ltime.tm_mon = 0;    /* January */
+	ltime.tm_mday = 1;   /* day */
+	ltime.tm_hour = 0;   /* day */
+	ltime.tm_min  = 0;   /* day */
+	ltime.tm_sec  = 0;   /* day */
+	ltime.tm_isdst = -1; /* mktime figures out TZ effect */
+	time700101 = mktime(&ltime);
+
+	ltime.tm_year = 90;  /* year */
+	ltime.tm_mon = 0;    /* January */
+	ltime.tm_mday = 1;   /* day */
+	ltime.tm_hour = 0;   /* day */
+	ltime.tm_min  = 0;   /* day */
+	ltime.tm_sec  = 0;   /* day */
+	ltime.tm_isdst = -1; /* mktime figures out TZ effect */
+	time900101 = mktime(&ltime);
+	timeOffset = time900101 - time700101;
 }

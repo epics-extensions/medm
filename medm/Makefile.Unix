@@ -7,6 +7,14 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 UNIX_OPT = NO
 STATIC_BUILD = NO
 CMPLR = STRICT
+#PURIFY = YES
+
+ifeq ($(PURIFY),YES)
+CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
+#CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPLR))
+#CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPLR))
+endif
+
 CC += -g
 #CC += -xsb
 #CC += -P
@@ -16,24 +24,28 @@ CC += -g
 #CC += -Wl,-m
 # Use cc -flags (on Solaris) to find what these mean
 
-#CC = purify -first-only -chain-length=25 $(C_$(CMPILR))
-#CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPILR))
-#CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPILR))
-
 USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 
 USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
 
 ifdef XRTGRAPH
-#  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
+# USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
   USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
   USR_LDFLAGS += -L$(XRTGRAPH)/lib
   USR_LDLIBS += -lxrtm
 endif
-#  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
-#  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
-  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu -lm
+
+ifeq ($(PURIFY),YES)
+# The following is a workaround for a Purify bug with Solaris libm.a
+  UNIX_LDLIBS = /usr/lib/libm.a
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu
+else
+# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
+# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
+# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu -lm
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lXmu
+endif
 
 ifdef MEDM_HELP_PATH
    USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
@@ -175,6 +187,9 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.24  1997/07/02 21:02:19  evans
+# Made many changes replated to the Cartesian Plot.
+#
 # Revision 1.23  1997/06/19 17:31:07  evans
 # Now compiles cleanly with CMPLR=STRICT.
 #

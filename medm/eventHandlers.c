@@ -148,12 +148,14 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 			} else {
 			    XtSetSensitive(cartesianPlotAxisS,True);
 			}
+
 		      /* update cartesian plot axis data from globalResourceBundle */
+		      /* KE:  Actually from XtGetValues */
 			updateCartesianPlotAxisDialogFromWidget(widget);
+
 			XtManageChild(cpAxisForm);
 			XtPopup(cartesianPlotAxisS,XtGrabNone);
 
-		      /* DEBUG */
 #if DEBUG_CARTESIAN_PLOT
 		      /* Also requires #include "medmCartesianPlot.h" */
 			{
@@ -178,6 +180,8 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 			    Dimension legendHeight;
 			    Dimension legendWidth;
 			    unsigned char unitType;
+			    time_t timeBase;
+
 
 			    XtSetArg(args[n],XtNxrtLegendWidth,&legendWidth); n++;
 			    XtSetArg(args[n],XtNxrtLegendHeight,&legendHeight); n++;
@@ -198,6 +202,7 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 			    XtSetArg(args[n],XtNxrtFooterWidth,&footerWidth); n++;
 			    XtSetArg(args[n],XtNxrtFooterBorderWidth,&footerBorderWidth); n++;
 			    XtSetArg(args[n],XmNunitType,&unitType); n++;
+			    XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
 			    XtGetValues(widget,args,n);
 			      
 			    printf("width: %d\n",width);
@@ -219,6 +224,7 @@ void popupMenu( Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 			    printf("legendHeight: %d\n",legendHeight);
 			    printf("unitType: %d (PIXELS %d, MM %d, IN %d, PTS %d, FONT %d)\n",unitType,
 			      XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
+			    printf("timeBase: %d\n",timeBase);
 			}
 #endif			
 		      /* End DEBUG */
