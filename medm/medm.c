@@ -820,7 +820,7 @@ Name of file in which to save display:",
 };
 
 typedef enum {EDIT,EXECUTE,HELP,VERSION} opMode_t;
-typedef enum {NORMAL,CLEANUP,LOCAL} medmMode_t;
+typedef enum {ATTACH,CLEANUP,LOCAL} medmMode_t;
 typedef enum {FIXED_FONT,SCALABLE_FONT} fontStyle_t;
 
 typedef struct {
@@ -882,7 +882,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
     request = (request_t *) malloc(sizeof(request_t));
     if (request == NULL) return request;
     request->opMode = EDIT;
-    request->medmMode = NORMAL;
+    request->medmMode = LOCAL;
     request->fontStyle = FIXED_FONT;
     request->privateCmap = False;
     request->macroString = NULL;
@@ -905,6 +905,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    argsUsed = i;
 	} else if (!strcmp(argv[i],"-local")) {
 	    request->medmMode = LOCAL;
+	    argsUsed = i;
+	} else if (!strcmp(argv[i],"-attach")) {
+	    request->medmMode = ATTACH;
 	    argsUsed = i;
 	} else if (!strcmp(argv[i],"-cleanup")) {
 	    request->medmMode = CLEANUP;
@@ -3129,7 +3132,7 @@ main(int argc, char *argv[])
 	  "  [-help | -?]\n"
 	  "  [-version]\n"
 	  "  [-x | -e]\n"
-	  "  [-local | -cleanup]\n"
+	  "  [-local | -attach | -cleanup]\n"
 	  "  [-cmap]\n"
 	  "  [-bigMousePointer]\n"
 	  "  [-displayFont font-spec]\n"
