@@ -92,7 +92,8 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
  * determines how these files are disposed of:
  *   0 Don't remove either temporary file
  *   1 Remove PRINT_XWD_FILE file from XWD
- *   2 Remove PRINT_XWD_FILE and the Postscript file */
+ *   2 Remove PRINT_XWD_FILE and the Postscript file
+ * Keep in mind the user can change the print command. */
 #if defined(WIN32)
 # define DEFAULT_PRINT_CMD "gsview32.exe"
 /* We don't know where the temp directory is on WIN32.  For WIN32

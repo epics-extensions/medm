@@ -143,7 +143,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	break;
     case ERR_MSG_CLEAR_BTN:
 	{
-	    long now; 
+	    time_t now; 
 	    struct tm *tblock;
 	    char timeStampStr[TIME_STRING_MAX];
 	    XmTextPosition curpos = 0;
@@ -167,7 +167,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	break;
     case ERR_MSG_PRINT_BTN:
 	{
-	    long now; 
+	    time_t now; 
 	    struct tm *tblock;
 	    FILE *file;
 	    char timeStampStr[TIME_STRING_MAX];
@@ -442,7 +442,7 @@ void errMsgDlgCreateDlg(int raise)
 
   /* Initialize */
     if(errMsgS) {
-	long now; 
+	time_t now; 
 	struct tm *tblock;
 	char timeStampStr[TIME_STRING_MAX];
 	XmTextPosition curpos = 0;
@@ -667,7 +667,7 @@ static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
 
 void medmPostMsg(int priority, char *format, ...) {
     va_list args;
-    long now; 
+    time_t now; 
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;

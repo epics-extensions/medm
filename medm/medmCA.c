@@ -1243,7 +1243,7 @@ static void pvInfoTimeGetCb(struct event_handler_args args)
 
 static void pvInfoWriteInfo(void)
 {
-    long now; 
+    time_t now; 
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
