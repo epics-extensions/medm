@@ -418,7 +418,9 @@ void medmPrintf(char *format,...)
     }
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
-    XmTextInsert(errMsgText, 0, medmPrintfStr);
+    if(errMsgText) XmTextInsert(errMsgText, 0, medmPrintfStr);
+  /* Also print to stderr */
+    fprintf(stderr,medmPrintfStr);
     va_end(args);
 }
 
