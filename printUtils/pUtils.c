@@ -89,7 +89,6 @@ void get_time_and_date(char mytime[], char mydate[])
     mytime[8] = '\0';
 }
 
-#if 0
 /*
  ** xwd2ps_swapshort() - swap the bytes in the next n shorts
  */
@@ -107,7 +106,6 @@ void xwd2ps_swapshort(register char *bp, register long n)
 	bp++;
     }  while (bp < ep);
 }
-#endif
 
 /*
  ** xwd2ps_swaplong() - swap the bytes in the shorts, then swap the shorts

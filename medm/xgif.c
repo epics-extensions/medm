@@ -73,6 +73,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_CODES 0
 #define DEBUG_OPEN 0
 #define DEBUG_EXODUS 0
+#define DEBUG_BYTEORDER 0
 
 /* include files */
 #include <string.h>
@@ -98,6 +99,7 @@ static Boolean parseGIFExtension(void);
 static void addToPixel(GIFData *gif, Byte Index);
 static void dumpGIF(GIFData *gif);
 static int getClientByteOrder();
+static int getCorrectedByteOrder();
 static int readCode(void);
 
 #define NEXTBYTE (*ptr++)
@@ -299,23 +301,7 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage, Drawable drawable)
       /* KE: Should be the same as gif->eWIDE, gif->eHIGH */
 	w=dlImage->object.width;
 	h=dlImage->object.height;
-	
-#if DEBUG_DISPOSAL
-	print("drawGIF: Before getClientByteOrder(): byte-Order=%d\n",
-	  CUREXPIMAGE(gif)->byte_order);
-#endif
-
-#if 0
-      /* KE: Don't do this here, some (from data) need it, some (from
-         XGetImage) don't */
-      /* Set the order of the pixels */
-	CUREXPIMAGE(gif)->byte_order=getClientByteOrder();
-#if DEBUG_DISPOSAL > 1
-	print("drawGIF: After getClientByteOrder(): byte-Order=%d\n",
-	  CUREXPIMAGE(gif)->byte_order);
-#endif
-#endif	
-	
+		
 #if DEBUG_DISPOSAL
 	{
 	    char title[80];
@@ -842,7 +828,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     ch=NEXTBYTE;
     LogicalScreenHeight=ch + 0x100 * NEXTBYTE;
 
-#if DEBUG_GIF
+#if DEBUG_GIF || DEBUG_BYTEORDER
+
     {
 	static int ifirst=1;
 	
@@ -865,8 +852,88 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
 	      byte_order,LSBFirst,MSBFirst);
 	    print("  bits_per_pixel=%d\n",bits_per_pixel);
-	    print("\n  getClientByteOrder=%d [LSBFirst=%d MSBFirst=%d]\n",
+	    print("\n  getClientByteOrder=%d [LSBFirst=%d MSBFirst=%d]",
 	      getClientByteOrder(),LSBFirst,MSBFirst);
+	    print("\n  getCorrectedByteOrder=%d"
+	      " [LSBFirst=%d MSBFirst=%d]\n",
+	      getCorrectedByteOrder(),LSBFirst,MSBFirst);
+	}
+    }
+#endif    
+
+#if DEBUG_BYTEORDER
+    {
+	static int ifirst=1;
+	
+	if(ifirst) {
+	    XImage *xImage;
+	    Pixmap pixmap;
+	    GC gc;
+	    XColor color;
+	    
+	    int depth;
+	    int bitmap_bit_order;
+	    int bitmap_pad;
+	    int bitmap_unit;
+	    int byte_order;
+	    int bits_per_pixel;
+	    unsigned long red_mask;
+	    unsigned long green_mask;
+	    unsigned long blue_mask;
+	    
+	    ifirst=0;
+
+	  /* Create a pixmap and draw a point */
+	    pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+	      1,1,XDefaultDepth(display,screenNum));
+
+	  /* Create a GC */
+	    gc=XCreateGC(display,pixmap,0,NULL);
+
+	  /* Allocate a color */
+	    color.red=0x1111;
+	    color.green=0x2222;
+	    color.blue=0x3333;
+	    color.flags=DoRed|DoGreen|DoBlue;
+	    XAllocColor(display,cmap,&color);	    
+
+	  /* Draw a point */
+	    XSetForeground(display,gc,color.pixel);
+	    XDrawPoint(display,pixmap,gc,0,0);
+
+	  /* Get a XImage of the pixmap */
+	    xImage=XGetImage(display,pixmap,0,0,1,1,AllPlanes,ZPixmap);
+	    depth=xImage->depth;
+	    bitmap_bit_order=xImage->bitmap_bit_order;
+	    bitmap_pad=xImage->bitmap_pad;
+	    bitmap_unit=xImage->bitmap_unit;
+	    byte_order=ImageByteOrder(display);
+	    bits_per_pixel=xImage->bits_per_pixel;
+	    red_mask=xImage->red_mask;
+	    green_mask=xImage->green_mask;
+	    blue_mask=xImage->blue_mask;
+	    
+	    
+	    print("\nX Server Default XImage:\n");
+	    print("  depth=%d [%d colors (0-%x)]\n",depth,1<<depth,
+	      (int)(1<<depth)-1);
+	    print("  bitmap_bit_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+	      bitmap_bit_order,LSBFirst,MSBFirst);
+	    print("  bitmap_pad=%d\n",bitmap_pad);
+	    print("  bitmap_unit=%d\n",bitmap_unit);
+	    print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
+	      byte_order,LSBFirst,MSBFirst);
+	    print("  bits_per_pixel=%d\n",bits_per_pixel);
+	    print("  red_mask=%08x\n",red_mask);
+	    print("  green_mask=%08x\n",green_mask);
+	    print("  blue_mask=%08x\n",blue_mask);
+	    print("  pixel=%08x\n",color.pixel);
+	    print("  data[0][0]=%08x\n",*(Pixel *)xImage->data);
+
+	  /* Cleanup */
+	    if(gc) XFreeGC(display,gc);
+	    if(pixmap) XFreePixmap(display,pixmap);
+	    if(xImage) XDestroyImage(xImage);
 	}
     }
 #endif    
@@ -1208,7 +1275,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	if(frames[i]->Height == LogicalScreenHeight &&
 	  frames[i]->Width == LogicalScreenWidth) {
 	  /* Set the byte order since this came from our data */
-	    frames[i]->theImage->byte_order=getClientByteOrder();
+	    frames[i]->theImage->byte_order=getCorrectedByteOrder();
 	    continue;
 	}
 
@@ -1265,7 +1332,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
       /* Copy in the reduced image */
 	if(frames[i]->theImage) {
 	  /* Set the byte order since this came from our data */
-	    frames[i]->theImage->byte_order=getClientByteOrder();
+	    frames[i]->theImage->byte_order=getCorrectedByteOrder();
 	    XPutImage(display,tempPixmap,
 	      gif->theGC,frames[i]->theImage,
 	      0,0,frames[i]->LeftOffset,frames[i]->TopOffset,
@@ -1914,17 +1981,40 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
 
 /* Static utility functions */
 
-/* Function to determine byte order on the client  */
+/* Function to determine the byte order on the client  */
 static int getClientByteOrder()
 {
-#ifndef VMS    
     short i=1;
-#else
-  /* Kludge that apparently works for VMS */
-    short i=0;
-#endif
     
     return (*(char*)&i == 1) ? LSBFirst : MSBFirst;
+}
+
+/* Function to determine the byte order to be used on the server */
+static int getCorrectedByteOrder()
+{
+#if 1
+  /* We wrote the bytes in MSBFirst, tell the server to use MSBFirst */
+    return MSBFirst;
+#else
+#ifndef VMS
+    int clientByteOrder=getClientByteOrder();
+
+  /* The following empirically seems to work for Solaris, WIN32, and
+     Linux.  Possible explanation: We are writing MSBFirst on a
+     LSBFirst machine, so we need to reverse what the server would
+     ordinarily do.  */
+    if(clientByteOrder == MSBFirst) {
+	return MSBFirst;
+    } else {
+	int byte_order=ImageByteOrder(display);
+	return (byte_order == LSBFirst)?MSBFirst:LSBFirst;
+    }
+#else
+  /* From ACM.  The above algorithm would probably work, but no way to
+     check */
+    return MSBFirst;
+#endif
+#endif
 }
 
 /* Fetch the next code from the raster data stream.  The codes can be
@@ -1985,22 +2075,19 @@ static void addToPixel(GIFData *gif, Byte Index)
 	}
 	
 
-      /* Copy the appropriate part of the pixel */
+      /* Copy the appropriate part of the pixel in MSBFirst order */
 	switch(BytesOffsetPerPixel) {
-	case 1:
-	    *p=(Byte)((clr & 0x000000ff));
-	    break;
-	case 2:
-	    *p++=(Byte)((clr & 0x0000ff00) >> 8);
-	    *p=(Byte)((clr & 0x000000ff));
-	    break;
+	case 4:
+	    *p++=(Byte)((clr & 0xff000000) >> 24);
+	  /* Fall through */
 	case 3:
 	    *p++=(Byte)((clr & 0x00ff0000) >> 16);
+	  /* Fall through */
+	case 2:
 	    *p++=(Byte)((clr & 0x0000ff00) >> 8);
+	  /* Fall through */
+	case 1:
 	    *p=(Byte)((clr & 0x000000ff));
-	    break;
-	case 4:
-	    *((Pixel *)p)=clr;
 	    break;
 	}
     }

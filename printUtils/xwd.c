@@ -345,9 +345,11 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     print("header.bits_per_pixel=%d\n",header.bits_per_pixel);
     print("header.bytes_per_line=%d\n",header.bytes_per_line);
     print("header.visual_class=%d\n",header.visual_class);
-    print("header.red_mask=%d\n",header.red_mask);
-    print("header.green_mask=%d\n",header.green_mask);
-    print("header.blue_mask=%d\n",header.blue_mask);
+    print("  StaticColor=%d PseudoColor=%d TrueColor=%d DirectColor=%d\n",
+      StaticColor,PseudoColor,TrueColor,DirectColor);
+    print("header.red_mask=0x%08x\n",header.red_mask);
+    print("header.green_mask=0x%08x\n",header.green_mask);
+    print("header.blue_mask=0x%08x\n",header.blue_mask);
     print("header.bits_per_rgb=%d\n",header.bits_per_rgb);
     print("header.colormap_entries=%d\n",header.colormap_entries);
     print("header.ncolors=%d\n",header.ncolors);
@@ -364,13 +366,13 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     if(*(char *) &swaptest) {
 	_swaplong((char *) &header, sizeof(header));
 	for (i = 0; i < ncolors; i++) {
-#if DEBUG_SWAP
+#if DEBUG_SWAP > 1
 	    print("Before: %3d %4hx %4hx %4hx %6x\n",
 	      i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
 #endif
 	    _swaplong((char *) &colors[i].pixel, sizeof(long));
 	    _swapshort((char *) &colors[i].red, 3 * sizeof(short));
-#if DEBUG_SWAP
+#if DEBUG_SWAP > 1
 	    print("After:  %3d %4hx %4hx %4hx %6x\n",
 	      i,colors[i].red,colors[i].green,colors[i].blue,colors[i].pixel);
 #endif

@@ -109,7 +109,7 @@ without express or implied warranty.
 
 #define DEBUG_FORMAT 0
 #define DEBUG_SWAP 0
-
+#define DEBUG_DATA 0
 
 /* KE: Commented this out.  Not found on WIN32 and apparently not needed */
 #if 0
@@ -149,6 +149,10 @@ unsigned char line[1280*3]; /* raster line buffer, max size */
 unsigned char line4bits[1280];   /* raster line buffer for unpacking 4 bit images */
 XColor *colors;             /* the color map, allocated with "malloc" */
 char   progname[128];
+
+int redshift,greenshift,blueshift;
+int redadjust,greenadjust,blueadjust;
+int swapData;
 
 /* this is a structure containg the values of all command line options
    initially, we assume no options are set */
@@ -208,6 +212,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     char s_scale[80];             /* PostScript code to scale image */
     char s_matrix[80];            /* PostScript code for image matrix */
 
+    int redbits,greenbits,bluebits;
+    
     int retCode = 1;
 
   /* initializations */
@@ -371,7 +377,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     }
     my_image.ps_height = abs ( (int) (win.pixmap_height * my_image.height_frac) );
     if(my_image.height_frac < 0.0 ) 
-      line_skip =  win.pixmap_height -my_image.ps_height;
+      line_skip =  win.pixmap_height - my_image.ps_height;
     else 
       line_skip = 0;
   
@@ -494,9 +500,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
   /* get a buffer to hold each line of the image */
     buffer = (unsigned char *) malloc( win.bytes_per_line );
 
-    switch (win.pixmap_depth) {   /* what type of image do we have ? */
-
+  /* switch based on image depth */
+    switch (win.pixmap_depth) {
+    case 32:   /* 32 bit image */
     case 24:   /* 24 bit image */
+    case 16:   /* 16 bit image */
 	if(flag.mono == FALSE) {   /* print as color image */
 	    fprintf(fo,"/buffer 4 string def\n");
 	    fprintf(fo,"/rgb 3 string def\n");
@@ -542,14 +550,81 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	}
 	skipLines(file, &win, &line[0], buffer, line_skip);
 
+      /* determine if the image data order is the same as the hardware
+         order, and set up to swap the data if not */
+	if((!(*(char *)&swaptest)) ^ win.byte_order) swapData=1;
+	else swapData=0;	
+  
+      /* determine shifts and number of bits used in the masks */
+	redshift=greenshift=blueshift=-1;
+	redbits=greenbits=bluebits=0;
+	for(i=0; i < 32; i++) {
+	    if((win.red_mask>>i)&1) {
+		if(redshift < 0) redshift=i;
+		redbits++;
+	    }
+	    if((win.green_mask>>i)&1) {
+		if(greenshift < 0) greenshift=i;
+		greenbits++;
+	    }
+	    if((win.blue_mask>>i)&1) {
+		if(blueshift < 0) blueshift=i;
+		bluebits++;
+	    }
+	}
+
+      /* determine shift to put most significant bit in position 7 */
+	redadjust=8-redbits;
+	greenadjust=8-greenbits;
+	blueadjust=8-bluebits;
+
+#if DEBUG_DATA
+	print("\nred_mask=%08x green_mask=%08x blue_mask=%08x\n",
+	  win.red_mask,win.green_mask,win.blue_mask);
+	print("redshift=%d greenshift=%d blueshift=%d\n",
+	  redshift,greenshift,blueshift);
+	print("redadjust=%d greenadjust=%d blueadjust=%d\n",
+	  redadjust,greenadjust,blueadjust);
+	print("line_skip=%d line_end=%d col_skip=%d col_start=%d col_end=%d\n",
+	  line_skip,line_end,col_skip,col_start,col_end);
+	printf("width=%d height=%d depth=%d\n",
+	  (int)win.pixmap_width,(int)win.pixmap_height,(int)win.pixmap_depth);
+#endif	    
+
+      /* check validity*/
+	if(redshift < 0 || greenshift < 0 || blueshift < 0 ||
+	    redadjust < 0 || greenadjust < 0 || blueadjust < 0) {
+	    errMsg(
+	      "%s: red, green, or blue mask not specified or invalid.\n",
+	      progname);
+	    retCode = 0;
+	    goto CLEAN;
+	}
+	if(win.bits_per_pixel > 32 || win.bits_per_pixel/8 <= 0) {
+	    errMsg(
+	      "%s: Invalid bits_per_pixel.\n", progname);
+	    retCode = 0;
+	    goto CLEAN;
+	}
+
       /* start outputting the image */
 	outputcount = 0;
 	for (i = 0; i <my_image.ps_height; i++)  {
 	    retCode = get_next_raster_line(file, &win, line, buffer);
 	    if(!retCode) goto CLEAN;
+	  /* Fix next 3 lines per Brian McAllister */
 	    rr = line[3*col_skip];
-	    gg = line[3*col_skip];
-	    bb = line[3*col_skip];
+	    gg = line[3*col_skip+1];
+	    bb = line[3*col_skip+2];
+#if DEBUG_DATA
+	    if(i == 0) {
+		print("\nBuffer start: %02x %02x %02x %02x 0x%08lx\n",
+		  (int)buffer[0],(int)buffer[1],(int)buffer[2],
+		  (int)buffer[3],*(unsigned long *)buffer);
+		print("              rr=%02x gg=%02x bb=%02x\n",
+		  (int)line[0],(int)line[1],(int)line[2]);
+	    }
+#endif	    
 	    runlen = 0;
 	    for(j = 3*col_start; j < 3*col_end; j += 3) {
 		if(flag.black2white == TRUE &&
@@ -558,11 +633,10 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    line[j+1] = 255;
 		    line[j+2] = 255;
 		}
-	      /*
-	       * If the colors are the same, just keep counting, but make sure that
-	       * the run length will fit in a byte (256 max, i.e. 0 means length 1,
-	       * 1 means length 2, etc.)
-	       */
+	      /* If the colors are the same, just keep counting, but
+	       * make sure that the run length will fit in a byte (256
+	       * max, i.e. 0 means length 1, 1 means length 2, etc.)
+	       * */
 		if(line[j] == rr && line[j+1] == gg && line[j+2] == bb) {
 		    if(runlen == 0xff) {
 			if(flag.mono == FALSE) {
@@ -570,7 +644,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 			    outputcount += 4;
 			}
 			else {
-			    intens = (unsigned char)(0.299*rr + 0.587*gg + 0.114*bb);
+			    intens = (unsigned char)(0.299*rr + 0.587*gg +
+			      0.114*bb);
 			    fprintf(fo,"%02x%02x", runlen, intens);
 			    outputcount += 2;
 			}
@@ -578,7 +653,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    }
 		    runlen++;
 		} else {
-		  /* if the color changed, then output the last run and reset counter */
+		  /* if the color changed, then output the last run
+                     and reset counter */
 		    if(flag.mono == FALSE) {
 			fprintf(fo,"%02x%02x%02x%02x", runlen, rr, gg, bb);
 			outputcount += 4;
@@ -588,16 +664,10 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 			outputcount += 2;
 		    }
 		    runlen = 0;
-		  /* KE: Changed the following because it wasn't working right for 24-bit */
-#if 0
+		  /* colors are stored as r,g,b */
 		    rr = line[j];
 		    gg = line[j+1];
 		    bb = line[j+2];
-#else
-		    rr = line[j+2];
-		    gg = line[j+1];
-		    bb = line[j];
-#endif		    
 		}
 	      /* check to make sure the output lines are not too long */
 		if(outputcount >= MAXPERLINE) {
@@ -866,19 +936,20 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	break;
 
     default:
-	errMsg("%s: Sorry! cannot handle input file of this format.\n", progname);
-	errMsg("    (See program author.) \n");
+	errMsg("%s: Sorry! cannot handle input file of this depth [%d]",
+	  progname,win.pixmap_depth);
 	retCode = 0;
 	goto CLEAN;
     }
 
-  /* KE: Changed the following because it wasn't working right for 24-bit */
-/*     switch (win.bits_per_pixel) { */  /* TEMP I don't know why this needs to be done - CAM */
-    switch (win.pixmap_depth) {     /* Necessary to get back to original CTM scaling */
+  /* Necessary to get back to original CTM scaling */
+    switch (win.pixmap_depth) {
     case 8:
 	fprintf(fo,"\npop pop setmatrix\n");
 	break;
+    case 32:
     case 24:
+    case 16:
 	fprintf(fo,"\nsetmatrix\n");
 	break;
     }
@@ -1137,39 +1208,90 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
     unsigned char *bufptr, *bufptr1;
     int iwbytes =  win->bytes_per_line;
     int iwbits  =  win->bits_per_pixel;
-    int j;
+    int bytes_per_pixel=iwbits/8;
+    int j,jmax;
+
+#if DEBUG_DATA
+    {
+	static int first=1;
+	
+	if(first) {
+	    first=0;
+	    jmax=iwbytes/bytes_per_pixel;
+	    print("\nget_next_raster_line");
+	    print("iwbytes=%d iwbits=%d bytes_per_pixel=%d jmax=%d\n",
+	      iwbytes,iwbits,bytes_per_pixel,jmax);
+	}
+    }
+#endif
 
     switch(iwbits) {
     case 32:
 	fread((char *)buffer, iwbytes, 1, file);
-      /* For this case, copy byte triplets into line */
 	bufptr1 = linec;
 	bufptr = buffer;
-	for( j = 0; j < iwbytes/4; j++) {
-	    bufptr++;                      /* skip unused byte */
-	    *bufptr1++ = *bufptr++;
-	    *bufptr1++ = *bufptr++;
-	    *bufptr1++ = *bufptr++;
+	jmax=iwbytes/bytes_per_pixel;
+	for(j = 0; j < jmax; j++) {
+	    unsigned long pixel,red,green,blue;
+
+	    pixel=*(unsigned long *)bufptr;
+	  /* swap the data if it is the wrong order for the hardware */
+	    if(swapData) {
+		xwd2ps_swaplong((char *)&pixel,(long)sizeof(unsigned long));
+	    }
+	    red = ((pixel&win->red_mask)>>redshift)<<redadjust;
+	    green = ((pixel&win->green_mask)>>greenshift)<<greenadjust;
+	    blue = ((pixel&win->blue_mask)>>blueshift)<<blueadjust;
+	    *bufptr1++ = (unsigned char)red;
+	    *bufptr1++ = (unsigned char)green;
+	    *bufptr1++ = (unsigned char)blue;
+	    bufptr += bytes_per_pixel;
 	}
 	return 1;
-
-    case 24:
-      /* Submitted by Bob Soliday 12-00.  Apparently used by Linux. */
+	
+    case 16:
 	fread((char *)buffer, iwbytes, 1, file);
-      /* For this case, copy byte triplets into line */
 	bufptr1 = linec;
 	bufptr = buffer;
-	for( j = 0; j < iwbytes/3; j++) {
-	    *bufptr1++ = *bufptr++;
-	    *bufptr1++ = *bufptr++;
-	    *bufptr1++ = *bufptr++;
+	jmax=iwbytes/bytes_per_pixel;
+	for(j = 0; j < jmax; j++) {
+	    unsigned long pixel,red,green,blue;
+	    unsigned short data;
+	 
+	    data=*(unsigned short *)bufptr;
+	  /* swap the data if it is the wrong order for the hardware */
+	    if(swapData) {
+		xwd2ps_swapshort((char *)&data,(long)sizeof(unsigned short));
+	    }
+	    pixel=data;
+#if DEBUG_DATA
+	    {
+		static int first=1;
+
+		if(first) {
+		    first=0;
+		    print("\ndata=%04hx\n",data);
+		    print("pixel=%08lx\n",pixel);
+		    print("win->red_mask=%08lx\n",win->red_mask);
+		    print("pixel&win->red_mask=%08lx\n",pixel&win->red_mask);
+		    print("(pixel&win->red_mask)>>redshift=%08lx\n",
+		      (pixel&win->red_mask)>>redshift);
+		    print("((pixel&win->red_mask)>>redshift)<<redadjust=%08lx\n",
+		      ((pixel&win->red_mask)>>redshift)<<redadjust);
+		}
+	    }
+#endif
+	    red = ((pixel&win->red_mask)>>redshift)<<redadjust;
+	    green = ((pixel&win->green_mask)>>greenshift)<<greenadjust;
+	    blue = ((pixel&win->blue_mask)>>blueshift)<<blueadjust;
+	    *bufptr1++ = (unsigned char)red;
+	    *bufptr1++ = (unsigned char)green;
+	    *bufptr1++ = (unsigned char)blue;
+	    bufptr += bytes_per_pixel;
 	}
 	return 1;
-
+	
     case 8:
-	fread((char *)linec, iwbytes, 1, file);
-	return 1;
-
     case 4:
 	fread((char *)linec, iwbytes, 1, file);
 	return 1;

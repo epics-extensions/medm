@@ -11,13 +11,13 @@ USE_MOTIF12=NO
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 # Browser options
 ifeq ($(HOST_OPT),NO)
   ifeq ($(ANSI),ACC)
-    ifeq ($(HOST_ARCH),solaris)
+    ifeq ($(OS_CLASS),solaris)
       USR_CFLAGS += -xsb
     endif
   endif
@@ -112,7 +112,7 @@ PROD = medm
 
 USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
-ifeq ($(HOST_ARCH),WIN32)
+ifeq ($(OS_CLASS),WIN32)
 # Use Obj for object libraries and no Obj for import libraries
   PROD_LIBS = ANLwidgetsObj PrintUtilsObj
   ANLwidgetsObj_DIR = $(INSTALL_LIB)
@@ -258,6 +258,3 @@ xxxx:
 # Local Variables:
 # mode: makefile
 # End:
-
-
-
