@@ -911,6 +911,7 @@ typedef struct _DlElement {
     DlDispatchTable *run;
     Widget widget;
     Boolean hidden;
+  /* KE: The following is not currently used */
     Boolean staticGraphic;   /* Graphic not attached to a PV */
     void *data;              /* Pointer to MedmXxx */
     struct _DlElement *next; /* Next element in display list */

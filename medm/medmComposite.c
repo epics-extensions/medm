@@ -65,7 +65,6 @@ typedef struct _MedmComposite {
     UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
     DisplayInfo      *displayInfo;
-    Boolean          childrenExecuted;
 } MedmComposite;
 
 /* Function prototypes */
@@ -156,16 +155,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	      /* Calculate the postfix for visbilitiy calc */
 		calcPostfix(&dlComposite->dynAttr);
 		setMonitorChanged(&dlComposite->dynAttr, pc->records);
-#if 0	    
-	      /* Draw initial white rectangle */
-	      /* KE: Check if this is necessary */
-		drawWhiteRectangle(pc->updateTask);
-#endif	    
 	    }
-	  /* Set children executed to False.  When this routine is
-             called, we expect the composite to always draw the next
-             time compositeDraw is called.  */
-	    pc->childrenExecuted = False; /* CHECK */
 	} else {
 	  /* No channel */
 	    dlElement->staticGraphic = True;
@@ -234,46 +224,44 @@ static void compositeDraw(XtPointer cd)
       /* A channel is defined */
 	if(!pr) return;
 	if(pr->connected) {
-	    if(pr->readAccess) {
 #if DEBUG_COMPOSITE > 1
-		print("  vis=%s\n",stringValueTable[dlComposite->dynAttr.vis]);
-		print("  calc=%s\n",dlComposite->dynAttr.calc);
-		if(*dlComposite->dynAttr.chan[0])
-		  print("  chan[0]=%s val=%g\n",dlComposite->dynAttr.chan[0],
-		    pc->records[0]->value);
-		if(*dlComposite->dynAttr.chan[1])
-		  print("  chan[1]=%s val=%g\n",dlComposite->dynAttr.chan[1],
-		    pc->records[1]->value);
-		if(*dlComposite->dynAttr.chan[2])
-		  print("  chan[2]=%s val=%g\n",dlComposite->dynAttr.chan[2],
-		    pc->records[2]->value);
-		if(*dlComposite->dynAttr.chan[3])
-		  print("  chan[3]=%s val=%g\n",dlComposite->dynAttr.chan[3],
-		    pc->records[3]->value);
-		print("  calcVisibility=%s\n",
-		  calcVisibility(&dlComposite->dynAttr,
-		    pc->records)?"True":"False");
+	    print("  vis=%s\n",stringValueTable[dlComposite->dynAttr.vis]);
+	    print("  calc=%s\n",dlComposite->dynAttr.calc);
+	    if(*dlComposite->dynAttr.chan[0])
+	      print("  chan[0]=%s val=%g\n",dlComposite->dynAttr.chan[0],
+		pc->records[0]->value);
+	    if(*dlComposite->dynAttr.chan[1])
+	      print("  chan[1]=%s val=%g\n",dlComposite->dynAttr.chan[1],
+		pc->records[1]->value);
+	    if(*dlComposite->dynAttr.chan[2])
+	      print("  chan[2]=%s val=%g\n",dlComposite->dynAttr.chan[2],
+		pc->records[2]->value);
+	    if(*dlComposite->dynAttr.chan[3])
+	      print("  chan[3]=%s val=%g\n",dlComposite->dynAttr.chan[3],
+		pc->records[3]->value);
+	    print("  calcVisibility=%s\n",
+	      calcVisibility(&dlComposite->dynAttr,
+		pc->records)?"True":"False");
 #endif    
-	      /* Draw depending on visibility */
-		if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
-		    drawComposite(pc);
-		} else {
-		    hideComposite(pc);
-		}
-		if(pr->readAccess) {
-		    if(!pc->updateTask->overlapped &&
-		      dlComposite->dynAttr.vis == V_STATIC) {
-			pc->updateTask->opaque = True;
-		    }
-		} else {
-		    pc->updateTask->opaque = False;
-		    draw3DQuestionMark(pc->updateTask);
-		}
+	  /* Draw depending on visibility */
+	    if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
+		drawComposite(pc);
 	    } else {
 		hideComposite(pc);
-		pc->updateTask->opaque = False;
-		drawWhiteRectangle(pc->updateTask);
 	    }
+	    if(pr->readAccess) {
+		if(!pc->updateTask->overlapped &&
+		  dlComposite->dynAttr.vis == V_STATIC) {
+		    pc->updateTask->opaque = True;
+		}
+	    } else {
+		pc->updateTask->opaque = False;
+		draw3DQuestionMark(pc->updateTask);
+	    }
+	} else {
+	    hideComposite(pc);
+	    pc->updateTask->opaque = False;
+	    drawWhiteRectangle(pc->updateTask);
 	}
     } else {
       /* No channel */
@@ -284,20 +272,14 @@ static void compositeDraw(XtPointer cd)
     redrawElementsAbove(displayInfo, pc->dlElement);
 }
 
+/* The routine that draws as opposed to hide.  Currently just calls
+   executeCompositeChildren.  Called from compositeDraw */
 static void drawComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
     
-#if 0     /* !!!!! */
-    if(!pc->childrenExecuted) {
-	executeCompositeChildren(displayInfo, pc->dlElement);
-	pc->childrenExecuted= True;
-    }
-#else
     executeCompositeChildren(displayInfo, pc->dlElement);
-    pc->childrenExecuted= True;
-#endif    
 }
 
 static void executeCompositeChildren(DisplayInfo *displayInfo,
@@ -305,7 +287,9 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 {
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
+#if 0    
     GC gcSave;
+#endif    
     
 #if DEBUG_COMPOSITE || DEBUG_REDRAW
     print("executeCompositeChildren: dlElement=%x\n",dlElement);
@@ -315,17 +299,18 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 /*      dumpDlElementList(displayInfo->dlElementList); */
 #endif
 
+#if 0     /* Check */
   /* In case the drawing area gc has a clip mask set, change it to the
      pixmapGC, which should not be clipped */
     gcSave=displayInfo->gc;
     displayInfo->gc = displayInfo->pixmapGC;
-
+#endif
+    
   /* Loop over children */    
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
 	UpdateTask *t = getUpdateTaskFromElement(pE);
 
-	if(t) t->overlappedDone = True;
 	pE->hidden = False;
 	if(!displayInfo->elementsExecuted) {
 	    pE->data = NULL;
@@ -343,39 +328,24 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 	pE = pE->next;
     }
 
+#if 0
   /* Restore the drawing area gc */
     displayInfo->gc = gcSave;
-
+#endif
+    
 #if DEBUG_COMPOSITE || DEBUG_REDRAW
     print("END executeCompositeChildren: dlElement=%x\n",dlElement);
 #endif    
 }
 
+/* The routine that hides as opposed to draw.  Currently just calls
+   hideCompositeChildren.  Called from compositeDraw */
 static void hideComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
-#if DEBUG_COMPOSITE
-    print("hideComposite: childrenExecuted=%s\n",
-      pc->childrenExecuted?"True !!!":"False");
-    print(" dlComposite=%x x=%d y=%d\n",
-      dlComposite,dlComposite->object.x,dlComposite->object.y);
-#endif    
-  /* The same code as in hideDlComposite */
-#if 0     /* !!!!! */
-    if(pc->childrenExecuted) {
-	hideCompositeChildren(displayInfo, pc->dlElement);
-	pc->childrenExecuted = False;
-    }
-#else
     hideCompositeChildren(displayInfo, pc->dlElement);
-    pc->childrenExecuted = False;
-#endif    
-#if DEBUG_COMPOSITE
-    print("END hideComposite: childrenExecuted=%s\n",
-      pc->childrenExecuted?"True !!!":"False");
-#endif      
 }
 
 /* The routine that does the actual hiding.  Called from
@@ -405,7 +375,6 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
     while(pE) {
 	UpdateTask *t = getUpdateTaskFromElement(pE);
 
-	if(t) t->overlappedDone = True;
 	if(pE->run->hide) {
 #if DEBUG_COMPOSITE
 	    print("  hid: pE=%x[%s] x=%d y=%d\n",
@@ -436,34 +405,6 @@ void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
     
   /* The same code as in hideComposite */
     hideCompositeChildren(displayInfo, dlElement);
-}
-
-/* This routine marks a Composite and all its children as
-   childrenExecuted = False so they will be sure to update when
-   compositeDraw is called. */
-void markCompositeChildrenNotExecuted(DlElement *dlElement)
-{
-    DlElement *pE;
-    DlComposite *dlComposite;
-    MedmComposite *pc;
-
-    if(!dlElement || !dlElement->structure.composite ||
-	!dlElement->data) return;
-    
-    dlComposite = dlElement->structure.composite;
-    pc = (MedmComposite *)dlElement->data;
-
-  /* Mark this one */
-    pc->childrenExecuted = False;
-
-  /* Mark the children recursively */
-    pE = FirstDlElement(dlComposite->dlElementList);
-    while(pE) {
-	if(pE->type == DL_Composite) {
-	    markCompositeChildrenNotExecuted(pE);	    
-	}
-	pE = pE->next;
-    }
 }
 
 static void compositeDestroyCb(XtPointer cd)

@@ -454,8 +454,7 @@ DlElement *lookupCompositeChild(DlElement *pEC, Position x0, Position y0)
     DlElement *pE, *pESave;
     int minWidth, minHeight;
 
-    if(!pEC || (pEC->type != DL_Element))
-      return pEC;
+    if(!pEC || pEC->type != DL_Composite) return pEC;
 
     minWidth = INT_MAX;		/* according to XPG2's values.h */
     minHeight = INT_MAX;
@@ -2773,7 +2772,9 @@ void equalSizeSelectedElements(void)
  * keep the stacking correct. */
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-#if 0  /* CHECK */
+#if 0
+  /* KE: This routine currently does nothing but is left in in case a
+     need to use it is seen later. */
     int found = 0;
     XPoint points[4];
     Region region = NULL;
@@ -2856,16 +2857,19 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /* Free the region */
     if(region) XDestroyRegion(region);
-#endif    
+#endif    /* The entire routine is commented out */
 }
 
 /* Routine to redraw all the static drawing objects onto the
-   displayInfo pixmap */
+   displayInfo pixmap. */
+/* KE: Needs to be fixed */
 void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    DlElement *pE;
-    DlObject *po;
+#if 0     /* Check */   
     GC gcSave;
+    DlElement *pE;
+#endif    
+    DlObject *po;
 
 #if DEBUG_REDRAW
     int n=0;
@@ -2878,17 +2882,13 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
     po = &(dlElement->structure.rectangle->object);
 
   /* Fill the (clipped) background with the background color */
-#if 1     /* !!!!! */
     XSetForeground(display, displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-#else
-    XSetForeground(display, displayInfo->pixmapGC,
-      WhitePixel(display,screenNum));
-#endif    
     XFillRectangle(display, displayInfo->drawingAreaPixmap,
       displayInfo->pixmapGC, po->x, po->y, po->width, po->height);
 
-#if 0     /* !!!!! */
+#if 0     /* Check */
+  /* KE: This part of the routine is currently commented out */
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
@@ -2917,6 +2917,8 @@ void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
 }
 
+/* Called by redrawStaticElements */
+/* KE: Currently not called */
 static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
@@ -2953,11 +2955,9 @@ static void redrawStaticCompositeElements(DisplayInfo *displayInfo,
     }
 }
 
-/*
- * Refresh display
- *  Redraw to get all widgets in proper stacking order
- *  (Uses dlElementList, not selectedDlElementList)
- */
+/* Refresh the display.  Redraw to get all widgets in proper stacking
+   order (Uses dlElementList, not selectedDlElementList).  Use in EDIT
+   mode only. */
 void refreshDisplay(void)
 {
     DisplayInfo *cdi;
@@ -2991,9 +2991,8 @@ void refreshDisplay(void)
     highlightSelectedElements();
 }
 
-/*
- * moves specified <src> element to position just after specified <dst> element
- */
+/* Moves specified <src> element to position just after specified
+ <dst> element.  */
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail)
 {
     if(dst == src) return;
@@ -4124,11 +4123,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     }
 		
   /* Get the update task */
-    if(pE->widget) {
-	pT = getUpdateTaskFromWidget(pE->widget);
-    } else {
-	pT = getUpdateTaskFromPosition(displayInfo, x, y);		    
-    }
+    pT = getUpdateTaskFromElement(pE);
     if(!pT || !pT->getRecord) {
 	medmPostMsg(1,"getPvInfoFromDisplay: "
 	  "No process variable associated with object\n");

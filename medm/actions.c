@@ -212,15 +212,13 @@ static XtCallbackRec dragDropFinishCB[] = {
     {NULL,NULL}
 };
 
-
-
 void StartDrag(Widget w, XEvent *event)
 {
     Arg args[8];
     Cardinal n;
     Atom exportList[1];
     Widget sourceIcon;
-    UpdateTask *pt;
+    UpdateTask *pT;
     int textWidth, maxWidth, maxHeight, fontHeight, ascent;
     unsigned long fg, bg;
     Widget searchWidget;
@@ -228,6 +226,7 @@ void StartDrag(Widget w, XEvent *event)
     XGCValues gcValues;
     unsigned long gcValueMask;
     DisplayInfo *displayInfo;
+    DlElement *pE;
 
 #if USE_SOURCE_PIXMAP_MASK
     int doMask = 0;
@@ -256,27 +255,34 @@ void StartDrag(Widget w, XEvent *event)
     searchWidget = w;
     if (XtClass(searchWidget) == xmDrawingAreaWidgetClass
       && strcmp(XtName(searchWidget),stripChartWidgetName)) {
-      /* starting search from a DrawingArea which is not a StripChart 
-       *  (i.e., DL_Display) therefore lookup "graphic" (non-widget) elements 
-       *  ---get data from position
-       */
+      /* Search starts from a DrawingArea which is not a StripChart,
+	 that is the DL_Display.  So we want to find a graphic
+	 (non-widget) element.  Get the data from the position. */
 	displayInfo = dmGetDisplayInfoFromWidget(searchWidget);
 	xbutton = (XButtonEvent *)event;
-	pt = getUpdateTaskFromPosition(displayInfo,
+#if 1
+      /* KE: Is more what getting PvInfo does */
+	pE = findSmallestTouchedElement(displayInfo->dlElementList,
+	  (Position)xbutton->x, (Position)xbutton->y, True);
+	pT = getUpdateTaskFromElement(pE);
+#else
+      /* KE: This doesn't recurse into a composite */
+	pT = getUpdateTaskFromPosition(displayInfo,
 	  xbutton->x,xbutton->y);
+#endif
     } else {
       /* Traverse up to the drawing area */
       /* KE: Probably necessary only for the Scale when in the trough */
 	while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
 	  searchWidget = XtParent(searchWidget);
-	pt = getUpdateTaskFromWidget(searchWidget);
+	pT = getUpdateTaskFromWidget(searchWidget);
     }
 
 #if DEBUG_DRAG
-    printf("start drag : 0x%08x\n",pt);
+    printf("start drag : 0x%08x\n",pT);
 #endif
     
-    if (pt) {
+    if (pT) {
 #if ((2*MAX_TRACES)+2) > MAX_PENS
 #define MAX_COUNT 2*MAX_TRACES+2
 #define MAX_COL 2
@@ -290,8 +296,8 @@ void StartDrag(Widget w, XEvent *event)
 	int row;
 
       /* Call the getRecord procedure, if there is one */
-	if (pt->getRecord == NULL) return;
-	pt->getRecord(pt->clientData, record, &count);
+	if (pT->getRecord == NULL) return;
+	pT->getRecord(pT->clientData, record, &count);
 	
 	column = count / 100;
 	if (column == 0) column = 1;

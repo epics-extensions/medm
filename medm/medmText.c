@@ -257,54 +257,8 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-#if 1
   /* Use generic hide for an element drawn on the display drawingArea */
     hideDrawnElement(displayInfo, dlElement);
-#else    
-    Window drawable;
-    DlObject *po;
-    DlText *dlText;
-
-#if DEBUG_HIDE
-    printf("hideDlText: displayInfo=%x dlElement=%x\n",
-      displayInfo,dlElement);
-#endif	
-    
-    if(!displayInfo || !dlElement) return;
-    
-  /* Delete any update tasks.  The destroyCb will free the
-     record(s) and private structure */
-    updateTaskDeleteElementTasks(displayInfo,dlElement);
-    
-  /* Draw using the display background where the element would go */
-    XSetForeground(display,displayInfo->gc,
-      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-
-  /* Remove any clipping */
-    XSetClipOrigin(display,displayInfo->gc,0,0);
-    XSetClipMask(display,displayInfo->gc,None);
-    
-  /* Draw on the window */
-#if DEBUG_HIDE
-    printf("hideDlText: Calling drawText DA\n");
-#endif	
-    dlText = dlElement->structure.text;
-    po = &(dlElement->structure.composite->object);
-    drawable = XtWindow(displayInfo->drawingArea);
-    drawText(display,drawable,displayInfo->gc,dlText);
-
-  /* Draw on the pixmap */
-#if DEBUG_HIDE
-    printf("hideDlText: Calling drawText PM\n");
-#endif	
-    drawable = displayInfo->drawingAreaPixmap;
-    drawText(display,drawable,displayInfo->gc,dlText);
-
-  /* Update the drawing objects above this one */
-#if 0
-    redrawElementsAbove(displayInfo, dlElement);
-#endif    
-#endif    
 }
 
 static void textUpdateValueCb(XtPointer cd) {
@@ -759,10 +713,8 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
 
     medmGetValues(pRCB,
 #if 0
-    /* KE: Inheriting thse values for Text is more a nuisance than a
-     help */
-      HEIGHT_RC,     &(dlText->object.height),
-      CLR_RC,        &(dlText->attr.clr),
+    /* KE: Inheriting these dynamic attribute values for Text is more
+     a nuisance than a help */
       CLRMOD_RC,     &(dlText->dynAttr.clr),
       VIS_RC,        &(dlText->dynAttr.vis),
 #ifdef __COLOR_RULE_H__
@@ -773,7 +725,10 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
       CHAN_B_RC,     &(dlText->dynAttr.chan[1]),
       CHAN_C_RC,     &(dlText->dynAttr.chan[2]),
       CHAN_D_RC,     &(dlText->dynAttr.chan[3]),
-#endif    
+#endif
+    /* HEIGHT_RC is for creating text with a click rather than a drag */
+      HEIGHT_RC,     &(dlText->object.height),
+      CLR_RC,        &(dlText->attr.clr),
       ALIGN_RC,      &(dlText->align),
       -1);
 }

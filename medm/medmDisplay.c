@@ -448,8 +448,6 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(!displayInfo->dlColormap) {
 	  /* Write a message unless it is the first time for a new
              display (so that this situation is normal and expected) */
-	    print("executeDlDisplay: new=%d filename: %s\n",
-	      new,displayInfo->dlFile->name);
 	    if(!new || strcmp(displayInfo->dlFile->name,DEFAULT_FILE_NAME)) {
 		medmPostMsg(1,"executeDlDisplay: No colormap defined\n"
 		  "  Using the default.\n"

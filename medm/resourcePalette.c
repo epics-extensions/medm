@@ -221,12 +221,12 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int) cd;
 
-    switch (rcType) {
+    switch(rcType) {
     case RDDATA_RC:
 	relatedDisplayDataDialogPopup(w);
 	break;
     case SHELLDATA_RC:
-	if (!shellCommandS) {
+	if(!shellCommandS) {
 	    shellCommandS = createShellCommandDataDialog(w);
 	}
       /* update shell command data from globalResourceBundle */
@@ -236,7 +236,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case CPDATA_RC:
 #ifdef CARTESIAN_PLOT	
-	if (!cartesianPlotS) {
+	if(!cartesianPlotS) {
 	    cartesianPlotS = createCartesianPlotDataDialog(w);
 	}
       /* update cartesian plot data from globalResourceBundle */
@@ -246,7 +246,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
     case SCDATA_RC:
-	if (!stripChartS) {
+	if(!stripChartS) {
 	    stripChartS = createStripChartDataDialog(w);
 	}
       /* update strip chart data from globalResourceBundle */
@@ -256,19 +256,19 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case CPAXIS_RC:
 #ifdef CARTESIAN_PLOT
-	if (!cartesianPlotAxisS) {
+	if(!cartesianPlotAxisS) {
 	    cartesianPlotAxisS = createCartesianPlotAxisDialog(w);
 	}
       /* update cartesian plot axis data from globalResourceBundle */
 	updateCartesianPlotAxisDialog();
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	XtManageChild(cpAxisForm);
 	XtPopup(cartesianPlotAxisS,XtGrabNone);
 #endif     /* #ifdef CARTESIAN_PLOT */
 	break;
     case LIMITS_RC:
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	popupPvLimits(cdi);
 	break;
@@ -291,7 +291,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
   /****** rcType (which option menu) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
-    switch (rcType) {
+    switch(rcType) {
     case ALIGN_RC: 
 	globalResourceBundle.align = (TextAlign)(FIRST_TEXT_ALIGN + buttonId);
 	break;
@@ -307,7 +307,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #ifdef __COLOR_RULE_H__
     case CLRMOD_RC:
 	globalResourceBundle.clrmod = (ColorMode)(FIRST_COLOR_MODE + buttonId);
-	if (globalResourceBundle.clrmod == DISCRETE) {
+	if(globalResourceBundle.clrmod == DISCRETE) {
 	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
 	} else {
 	    XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
@@ -369,18 +369,18 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
   /****** Update elements (this is overkill, but okay for now)
 	*	-- not as efficient as it should be (don't update EVERYTHING if only
 	*	   one item changed!) */
-    if (cdi) {
+    if(cdi) {
 	DlElement *dlElement = FirstDlElement(cdi->selectedDlElementList);
 
 	unhighlightSelectedElements();
-	while (dlElement) {
+	while(dlElement) {
 	    elementPtr = dlElement->structure.element;
 	    updateElementFromGlobalResourceBundle(elementPtr);
 	    dlElement = dlElement->next;
 	}
 
 	dmTraverseNonWidgetsInDisplayList(cdi);
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	highlightSelectedElements();
     }
@@ -394,7 +394,7 @@ static void colorSelectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {     
     int rcType = (int) cd;
 
-    if (colorMW != NULL) {
+    if(colorMW != NULL) {
 	setCurrentDisplayColorsInColorPalette(rcType,0);
 	XtPopup(colorS,XtGrabNone);
     } else {
@@ -429,7 +429,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     switch(buttonNumber) {
 #ifdef EXTENDED_INTERFACE
     case FILE_OPEN_BTN:
-	if (openFSD == NULL) {
+	if(openFSD == NULL) {
 	    n = 0;
 	    label = XmStringCreateLocalized(RESOURCE_DIALOG_MASK);
 	    XtSetArg(args[n],XmNdirMask,label); n++;
@@ -513,7 +513,7 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
     }
 #endif    
   /* Is a deletion */
-    if (!cbs->text->length) return;
+    if(!cbs->text->length) return;
 
   /* Check the new characters, character by character */
     abort=0;
@@ -588,7 +588,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
     }
 #endif    
   /* Is a deletion */
-    if (!cbs->text->length) return;
+    if(!cbs->text->length) return;
 
   /* Check the new characters, character by character */
     newDot=replace=abort=0;
@@ -666,12 +666,12 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs)
     switch(rcType) {
     case BEGIN_RC:
 	globalResourceBundle.begin = 64*cbs->value;
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     case PATH_RC:
 	globalResourceBundle.path = 64*cbs->value;
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
     default:
@@ -679,11 +679,11 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer pcbs)
     }
 
   /****** Update elements (this is overkill, but okay for now) */
-    if (cdi != NULL) {
+    if(cdi != NULL) {
 	DlElement *dlElement = FirstDlElement(
 	  cdi->selectedDlElementList);
 	unhighlightSelectedElements();
-	while (dlElement) {
+	while(dlElement) {
 	    updateElementFromGlobalResourceBundle(dlElement->structure.element);
 	    dlElement = dlElement->next;
 	}
@@ -739,7 +739,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case SBIT_RC: 
     {
 	int value = atoi(stringValue);
-	if (value >= 0 && value <= 15) {
+	if(value >= 0 && value <= 15) {
 	    globalResourceBundle.sbit = value;
 	} else {
 	    char tmp[32];
@@ -751,7 +751,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case EBIT_RC:
     {
 	int value = atoi(stringValue);
-	if (value >= 0 && value <= 15) {
+	if(value >= 0 && value <= 15) {
 	    globalResourceBundle.ebit = value;
 	} else {
 	    char tmp[32];
@@ -765,7 +765,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	int value = atoi(stringValue);
 	char tmp[32];
 
-	if (value < 2) value = 2;
+	if(value < 2) value = 2;
 	globalResourceBundle.gridSpacing = value;
 	sprintf(tmp,"%d",globalResourceBundle.gridSpacing);
 	XmTextFieldSetString(w,tmp);
@@ -779,12 +779,12 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	strcpy(globalResourceBundle.chan[0],stringValue);
       /* A non-NULL string value for the dynamics channel means that VIS
        * and CLRMOD must be visible */
-	if (*stringValue != '\0') {
+	if(*stringValue != '\0') {
 	    XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	    XtSetSensitive(resourceEntryRC[VIS_RC],True);
 	    XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
 #ifdef __COLOR_RULE_H__
-	    if (globalResourceBundle.clrmod == DISCRETE) {
+	    if(globalResourceBundle.clrmod == DISCRETE) {
 		XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],True);
 	    } else {
 		XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
@@ -871,7 +871,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case ERASE_RC:
 	strcpy(globalResourceBundle.erase,stringValue);
-	if (strlen(stringValue) > (size_t) 0) {
+	if(strlen(stringValue) > (size_t) 0) {
 	    XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
 	} else {
 	    XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],False);
@@ -886,11 +886,11 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Update elements (this is overkill, but okay for now) */
   /* KE: Supposedly only one element is selected when this routine is
      called */
-    if (cdi != NULL) {
+    if(cdi != NULL) {
 	DlElement *dlElement = FirstDlElement(cdi->selectedDlElementList);
 
 	unhighlightSelectedElements();
-	while (dlElement) {
+	while(dlElement) {
 	    DlElement *pE = dlElement->structure.element;
 	    
 	    if(clearComposite && pE->type == DL_Composite) {
@@ -909,7 +909,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	dmTraverseNonWidgetsInDisplayList(cdi);
 	highlightSelectedElements();
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
     }
     
@@ -1026,7 +1026,7 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 	sprintf(string,"%f",globalResourceBundle.dPrecision);
       /* strip trailing zeroes */
 	tail = strlen(string);
-	while (string[--tail] == '0') string[tail] = '\0';
+	while(string[--tail] == '0') string[tail] = '\0';
 	break;
     case SBIT_RC:
 	sprintf(string,"%d",globalResourceBundle.sbit);
@@ -1059,7 +1059,7 @@ static void bundleCallback(Widget w, int bundleId,
    * of one to ON
    */
 
-    if (call_data->set == False) return;
+    if(call_data->set == False) return;
 
 }
 #endif
@@ -1087,7 +1087,7 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.title[0] = '\0';
     globalResourceBundle.xlabel[0] = '\0';
     globalResourceBundle.ylabel[0] = '\0';
-    if (cdi) {
+    if(cdi) {
       /*
        * (MDA) hopefully this will work in the general case (with displays being
        *	made current and un-current)
@@ -1186,7 +1186,7 @@ void initializeXmStringValueTables()
     static Boolean initialized = False;
 
   /****** Initialize XmString table for element types */
-    if (!initialized) {
+    if(!initialized) {
 	initialized = True;
 	for (i = 0; i <NUM_DL_ELEMENT_TYPES; i++) {
 	    elementXmStringTable[i] = XmStringCreateLocalized(elementStringTable[i]);
@@ -1214,10 +1214,10 @@ void createResource()
     Arg args[10];
 
   /****** If resource palette has already been created, simply return */
-    if (resourceMW != NULL) return;
+    if(resourceMW != NULL) return;
 
   /****** This make take a second... give user some indication */
-    if (cdi != NULL) XDefineCursor(display,
+    if(cdi != NULL) XDefineCursor(display,
       XtWindow(cdi->drawingArea), watchCursor);
 
   /****** Initialize XmString tables */
@@ -1411,7 +1411,7 @@ void createResource()
     XtPopup(resourceS,XtGrabNone);
 
   /* Change drawingArea's cursor back to the appropriate cursor */
-    if (cdi != NULL)
+    if(cdi != NULL)
       XDefineCursor(display,XtWindow(cdi->drawingArea),
 	(currentActionType == SELECT_ACTION ? rubberbandCursor: crosshairCursor));
 }
@@ -1458,7 +1458,7 @@ static void createResourceEntries(Widget entriesSW)
 	XtSetValues(resourceEntryLabel[i],args,4);
 
       /* Set element */
-	if (XtClass(resourceEntryElement[i]) == xmRowColumnWidgetClass) {
+	if(XtClass(resourceEntryElement[i]) == xmRowColumnWidgetClass) {
 	  /* must be option menu - unmanage label widget */
 	    XtUnmanageChild(XmOptionLabelGadget(resourceEntryElement[i]));
 	    XtSetValues(XmOptionButtonGadget(resourceEntryElement[i]),
@@ -1467,18 +1467,18 @@ static void createResourceEntries(Widget entriesSW)
 	XtSetValues(resourceEntryElement[i],&(args[4]),6);
       /* KE: Why not do this in createEntryRC */
       /* Restrict size of CA PV name entry */
-	if (i == CHAN_A_RC || i == CHAN_B_RC || i == CHAN_C_RC || i == CHAN_D_RC
+	if(i == CHAN_A_RC || i == CHAN_B_RC || i == CHAN_C_RC || i == CHAN_D_RC
 	  || i == RDBK_RC || i == CTRL_RC) {
 	  /* Since can have macro-substituted strings, need longer length */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
 	      XmNmaxLength,(int)MAX_TOKEN_LENGTH-1,NULL);
-	} else if (i == i == VIS_CALC_RC || IMAGE_CALC_RC) {
+	} else if(i == i == VIS_CALC_RC || IMAGE_CALC_RC) {
 	  /* calc in calcRecord is limited to 40 characters including NULL */
 	    XtVaSetValues(resourceEntryElement[i],
 	      XmNcolumns,(short)(PVNAME_STRINGSZ + FLDNAME_SZ+1),
 	      XmNmaxLength,(int)39,NULL);
-	} else if (i == MSG_LABEL_RC || i == PRESS_MSG_RC
+	} else if(i == MSG_LABEL_RC || i == PRESS_MSG_RC
 	  || i == RELEASE_MSG_RC || i == TEXTIX_RC
 	  || i == TITLE_RC || i == XLABEL_RC || i == YLABEL_RC) {
 	  /* Use size of CA PV name entry for other text-oriented fields */
@@ -1505,7 +1505,7 @@ static void createEntryRC( Widget parent, int rcType)
     static Boolean first = True;
     static XmButtonType buttonType[MAX_OPTIONS];
 
-    if (first) {
+    if(first) {
 	first = False;
 	for (n = 0; n < MAX_OPTIONS; n++) {
 	    buttonType[n] = XmPUSHBUTTON;
@@ -1836,23 +1836,21 @@ static void createEntryRC( Widget parent, int rcType)
 	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);
 	break;
 
-      /* color types */
+      /* Color types */
     case CLR_RC:
     case BCLR_RC:
     case DATA_CLR_RC:
 	n = 0;
-	if (rcType == CLR_RC) {
+	if(rcType == CLR_RC) {
 	    XtSetArg(args[n],XmNbackground,
 	      (cdi == NULL) ?
 	      BlackPixel(display,screenNum) :
-	      cdi->colormap[
-		cdi->drawingAreaForegroundColor]); n++;
+	      cdi->colormap[cdi->drawingAreaForegroundColor]); n++;
 	} else {
 	    XtSetArg(args[n],XmNbackground,
 	      (cdi == NULL) ?
 	      WhitePixel(display,screenNum) :
-	      cdi->colormap[
-		cdi->drawingAreaBackgroundColor]); n++;
+	      cdi->colormap[cdi->drawingAreaBackgroundColor]); n++;
 	}
 	localElement = XmCreateDrawnButton(localRC,"localElement",args,n);
 	XtAddCallback(localElement,XmNactivateCallback,
@@ -2037,12 +2035,12 @@ static void initializeResourcePaletteElements()
 
     index = -1;
     for (i=0; i<tableSize; i++) {
-	if (index < 0) {
+	if(index < 0) {
 	  /* Start a new element, get the new index */
 	    index = resourceTable[i] - MIN_DL_ELEMENT_TYPE;
 	    j = 0;
 	} else {
-	    if (resourceTable[i] >= 0) {
+	    if(resourceTable[i] >= 0) {
 	      /* Copy RC resource from resourceTable until it reaches -1 */
 		resourcePaletteElements[index].childIndexRC[j] = resourceTable[i];
 		resourcePaletteElements[index].children[j] =
@@ -2092,7 +2090,7 @@ static void createBundleTB(Widget bundlesRB, char *name)
     n = 0;
     xmString = XmStringCreateLocalized(name);
     XtSetArg(args[n],XmNlabelString,xmString); n++;
-    if (resourceBundleCounter == SELECTION_BUNDLE) {
+    if(resourceBundleCounter == SELECTION_BUNDLE) {
 	XtSetArg(args[n],XmNset,True); n++; 
     }
     bundlesTB = XmCreateToggleButton(bundlesRB,"bundlesTB",args,n);
@@ -2120,7 +2118,7 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
     String **newCells;
     int i;
 
-    switch (buttonType) {
+    switch(buttonType) {
     case CMD_APPLY_BTN:
       /* Commit changes in matrix to global matrix array data */
 	XbaeMatrixCommitEdit(cmdMatrix,False);
@@ -2136,18 +2134,18 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
        *	(don't need to traverse the display list since these changes
        *	 aren't visible at the first level)
        */
-	if (cdi) {
+	if(cdi) {
 	    DlElement *dlElement = FirstDlElement(
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
-	    while (dlElement) {
+	    while(dlElement) {
 	      /* KE: Changed = to == here */
-		if (dlElement->structure.element->type == DL_ShellCommand)
+		if(dlElement->structure.element->type == DL_ShellCommand)
 		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
 	}
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	XtPopdown(shellCommandS);
 	break;
@@ -2172,7 +2170,7 @@ Widget createShellCommandDataDialog(
 
 
   /* initialize those file-scoped globals */
-    if (first) {
+    if(first) {
 	first = False;
 	for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	    for (j = 0; j < 3; j++) cmdRows[i][j] = NULL;
@@ -2296,7 +2294,7 @@ void updateShellCommandDataDialog()
 	cmdRows[i][1] = globalResourceBundle.cmdData[i].command;
 	cmdRows[i][2] = globalResourceBundle.cmdData[i].args;
     }
-    if (cmdMatrix != NULL) XtVaSetValues(cmdMatrix,XmNcells,cmdCells,NULL);
+    if(cmdMatrix != NULL) XtVaSetValues(cmdMatrix,XmNcells,cmdCells,NULL);
   
 }
 
@@ -2311,7 +2309,7 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
     String **newCells;
     int i;
 
-    switch (buttonType) {
+    switch(buttonType) {
 
     case SC_APPLY_BTN:
       /* commit changes in matrix to global matrix array data */
@@ -2329,18 +2327,18 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
        *	(don't need to traverse the display list since these changes
        *	 aren't visible at the first level)
        */
-	if (cdi != NULL) {
+	if(cdi != NULL) {
 	    DlElement *dlElement = FirstDlElement(
 	      cdi->selectedDlElementList);
 	    unhighlightSelectedElements();
-	    while (dlElement) {
+	    while(dlElement) {
 	      /* KE: Changed = to == here */
-		if (dlElement->structure.element->type == DL_StripChart)
+		if(dlElement->structure.element->type == DL_StripChart)
 		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
 	}
-	if (cdi->hasBeenEditedButNotSaved == False) 
+	if(cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	XtPopdown(stripChartS);
 	break;
@@ -2363,7 +2361,7 @@ void scEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
     int row;
-    if (call_data->column == SC_COLOR_COLUMN) {
+    if(call_data->column == SC_COLOR_COLUMN) {
       /* set this cell non-editable */
 	call_data->doit = False;
       /* update the color palette, set index of the color vector element to set */
@@ -2386,7 +2384,7 @@ void scUpdateMatrixColors()
 	scColorRows[i][SC_COLOR_COLUMN] =
 	  currentColormap[globalResourceBundle.scData[i].clr];
     }
-    if (scMatrix != NULL) XtVaSetValues(scMatrix,XmNcolors,scColorCells,NULL);
+    if(scMatrix != NULL) XtVaSetValues(scMatrix,XmNcolors,scColorCells,NULL);
 
   /* but for resource editing scData should contain indexes into colormap */
   /* this resource is copied, hence this is okay to do */
@@ -2412,7 +2410,7 @@ Widget createStripChartDataDialog(Widget parent)
     XtVaGetValues(parent,XmNforeground,&foreground,NULL);
 
   /* initialize those file-scoped globals */
-    if (first) {
+    if(first) {
 	first = False;
 	for (i = 0; i < MAX_PENS; i++) {
 	    scRows[i][0] = NULL;
@@ -2546,7 +2544,7 @@ void updateStripChartDataDialog()
     }
   /* handle clr in here */
     scUpdateMatrixColors();
-    if (scMatrix != NULL) XtVaSetValues(scMatrix,XmNcells,scCells,NULL);
+    if(scMatrix != NULL) XtVaSetValues(scMatrix,XmNcells,scCells,NULL);
   
 }
 
@@ -2556,8 +2554,8 @@ void medmGetValues(ResourceBundle *pRB, ...)
     int arg;
     va_start(ap, pRB);
     arg = va_arg(ap,int);
-    while (arg >= 0) {
-	switch (arg) {
+    while(arg >= 0) {
+	switch(arg) {
 	case X_RC: {
 	  /* KE: Position, not int ??? */
 	  /*   (Check others ? */
@@ -3059,7 +3057,7 @@ void updateResourcePaletteDynamicAttribute()
       globalResourceBundle.chan[2]);
     XmTextFieldSetString(resourceEntryElement[CHAN_D_RC],
       globalResourceBundle.chan[3]);
-    if (globalResourceBundle.chan[0][0] != '\0') {
+    if(globalResourceBundle.chan[0][0] != '\0') {
 	XtSetSensitive(resourceEntryRC[CLRMOD_RC],True);
 	XtSetSensitive(resourceEntryRC[VIS_RC],True);
 	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],True);
@@ -3133,7 +3131,7 @@ void clearResourcePaletteEntries()
 {
 #if DEBUG_RESOURCE
     print("In clearResourcePaletteEntries\n");
-    if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
+    if(currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
 	print("  currentElementType: %s (%d)\n",
 	  elementType(currentElementType),currentElementType);
@@ -3144,21 +3142,21 @@ void clearResourcePaletteEntries()
 #endif
     
   /* If no resource palette yet, simply return */
-    if (!resourceMW) return;
+    if(!resourceMW) return;
  
   /* Popdown any of the associated shells */
-    if (relatedDisplayS)    XtPopdown(relatedDisplayS);
-    if (shellCommandS)      XtPopdown(shellCommandS);
-    if (cartesianPlotS)     XtPopdown(cartesianPlotS);
-    if (cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
-    if (pvLimitsS)          XtPopdown(pvLimitsS);
-    if (stripChartS)        XtPopdown(stripChartS);
+    if(relatedDisplayS)    XtPopdown(relatedDisplayS);
+    if(shellCommandS)      XtPopdown(shellCommandS);
+    if(cartesianPlotS)     XtPopdown(cartesianPlotS);
+    if(cartesianPlotAxisS) XtPopdown(cartesianPlotAxisS);
+    if(pvLimitsS)          XtPopdown(pvLimitsS);
+    if(stripChartS)        XtPopdown(stripChartS);
  
   /* Unset the current button and set label in resourceMW to Select... */
     XtVaSetValues(resourceElementTypeLabel,XmNlabelString,xmstringSelect,NULL);
  
   /* Unmanage items in resource palette */
-    if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
+    if(currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
 	int i = currentElementType-MIN_DL_ELEMENT_TYPE;
 	XtUnmanageChildren(
@@ -3176,7 +3174,7 @@ void setResourcePaletteEntries()
 
 #if DEBUG_RESOURCE
     print("In setResourcePaletteEntries\n");
-    if (currentElementType >= MIN_DL_ELEMENT_TYPE &&
+    if(currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
 	print("  currentElementType: %s (%d)\n",
 	  elementType(currentElementType),currentElementType);
@@ -3187,13 +3185,13 @@ void setResourcePaletteEntries()
 #endif
     
   /* If no resource palette yet, create it */
-    if (!resourceMW) createResource();
+    if(!resourceMW) createResource();
     
   /* Make sure the resource palette shell is popped-up */
     XtPopup(resourceS,XtGrabNone);
 
   /* Check if this is a valid element type */
-    if (currentElementType < MIN_DL_ELEMENT_TYPE ||
+    if(currentElementType < MIN_DL_ELEMENT_TYPE ||
       currentElementType > MAX_DL_ELEMENT_TYPE ||
       IsEmpty(cdi->selectedDlElementList)) {
 	clearResourcePaletteEntries();
@@ -3218,7 +3216,7 @@ void setResourcePaletteEntries()
 
   /* If polyline with 2 points display Line as label, not Polyline */
     displayType = currentElementType;
-    if ((cdi->selectedDlElementList->count == 1) &&
+    if((cdi->selectedDlElementList->count == 1) &&
       (currentElementType == DL_Polyline) &&
       (FirstDlElement(cdi->selectedDlElementList)->
 	structure.element->structure.polyline->nPoints == 2))
@@ -3233,20 +3231,20 @@ void setResourcePaletteEntries()
 
   /* If not a monitor, controller, or dynamic attribute channel, then
    * insensitize the related entries */
-    if (globalResourceBundle.chan[0][0] == '\0') {
+    if(globalResourceBundle.chan[0][0] == '\0') {
 	XtSetSensitive(resourceEntryRC[VIS_RC],False);
 	XtSetSensitive(resourceEntryRC[VIS_CALC_RC],False);
 #ifdef __COLOR_RULE_H__
-	if (globalResourceBundle.clrmod != DISCRETE)
+	if(globalResourceBundle.clrmod != DISCRETE)
 	  XtSetSensitive(resourceEntryRC[COLOR_RULE_RC],False);
 #endif
-	if ((!ELEMENT_HAS_WIDGET(currentElementType)) &&
+	if((!ELEMENT_HAS_WIDGET(currentElementType)) &&
 	  (currentElementType != DL_TextUpdate))
 	  XtSetSensitive(resourceEntryRC[CLRMOD_RC],False);
     }
 
   /* Make these sensitive in case they are managed */
-    if (strlen(globalResourceBundle.erase) == 0)
+    if(strlen(globalResourceBundle.erase) == 0)
       XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],False);
     else
       XtSetSensitive(resourceEntryRC[ERASE_MODE_RC],True);
@@ -3261,17 +3259,17 @@ void updateElementFromGlobalResourceBundle(DlElement *element)
 #endif
     
   /* Simply return if not valid to update */
-    if (!element || !cdi) return;
+    if(!element || !cdi) return;
     
   /* Copy (all) values from resource palette to element */
-    if (element->run->getValues) {
+    if(element->run->getValues) {
 	element->run->getValues(&globalResourceBundle,element);
     }
-    if (element->widget) {
+    if(element->widget) {
       /* Need to destroy, then create to get it right */
 	destroyElementWidgets(element);
 	(element->run->execute)(cdi,element);
-    } else if (element->type == DL_Display) {
+    } else if(element->type == DL_Display) {
       /* Need to execute the display though it doesn't have a widget
        *   (Is at least necessary to resize the Pixmap) */
 	(element->run->execute)(cdi,element);
@@ -3288,7 +3286,7 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
 #endif
     
   /* Simply return if not valid to update */
-    if (!element || !cdi) return;
+    if(!element || !cdi) return;
     
   /* Check if composite */
     if(element->type == DL_Composite) {
@@ -3296,11 +3294,11 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
 	DlComposite *compE = element->structure.composite;
 	
 	childE = FirstDlElement(compE->dlElementList);
-	while (childE) {
-	    if (childE->run->setBackgroundColor) {
+	while(childE) {
+	    if(childE->run->setBackgroundColor) {
 		childE->run->setBackgroundColor(&globalResourceBundle,childE);
 	    }
-	    if (childE->widget) {
+	    if(childE->widget) {
 		XtVaSetValues(childE->widget,XmNbackground,
 		  currentColormap[globalResourceBundle.bclr],NULL);
 	      /* Need to destroy, then create to get it right */
@@ -3308,17 +3306,17 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
 		(childE->run->execute)(cdi,childE);
 	    }
 	  /* If drawingArea: update drawingAreaForegroundColor */
-	    if (childE->type == DL_Display) {
+	    if(childE->type == DL_Display) {
 		cdi->drawingAreaBackgroundColor = globalResourceBundle.bclr;
 	    }
 	    childE = childE->next;
 	}
     } else {
       /* Not composite */
-	if (element->run->setBackgroundColor) {
+	if(element->run->setBackgroundColor) {
 	    element->run->setBackgroundColor(&globalResourceBundle,element);
 	}
-	if (element->widget) {
+	if(element->widget) {
 	    XtVaSetValues(element->widget,XmNbackground,
 	      currentColormap[globalResourceBundle.bclr],NULL);
 	  /* Need to destroy, then create to get it right */
@@ -3326,7 +3324,7 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
 	    (element->run->execute)(cdi,element);
 	}
       /* If drawingArea: update drawingAreaForegroundColor */
-	if (element->type == DL_Display) {
+	if(element->type == DL_Display) {
 	    cdi->drawingAreaBackgroundColor = globalResourceBundle.bclr;
 	}
     }
@@ -3342,7 +3340,7 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
 #endif
     
   /* Simply return if not valid to update */
-    if (!element || !cdi) return;
+    if(!element || !cdi) return;
     
   /* Check if composite */
     if(element->type == DL_Composite) {
@@ -3350,11 +3348,11 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
 	DlComposite *compE = element->structure.composite;
 	
 	childE = FirstDlElement(compE->dlElementList);
-	while (childE) {
-	    if (childE->run->setForegroundColor) {
+	while(childE) {
+	    if(childE->run->setForegroundColor) {
 		childE->run->setForegroundColor(&globalResourceBundle,childE);
 	    }
-	    if (childE->widget) {
+	    if(childE->widget) {
 		XtVaSetValues(childE->widget,XmNforeground,
 		  currentColormap[globalResourceBundle.clr],NULL);
 	      /* Need to destroy, then create to get it right */
@@ -3362,24 +3360,24 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
 		(childE->run->execute)(cdi,childE);
 	    }
 	  /* If drawingArea: update drawingAreaForegroundColor */
-	    if (childE->type == DL_Display) {
+	    if(childE->type == DL_Display) {
 		cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
 	    }
 	    childE = childE->next;
 	}
     } else {
       /* Not composite */
-	if (element->run->setForegroundColor) {
+	if(element->run->setForegroundColor) {
 	    element->run->setForegroundColor(&globalResourceBundle,element);
 	}
-	if (element->widget) {
+	if(element->widget) {
 	    XtVaSetValues(element->widget,XmNforeground,
 	      currentColormap[globalResourceBundle.clr],NULL);
 	  /* Need to destroy, then create to get it right */
 	    destroyElementWidgets(element);
 	    (element->run->execute)(cdi,element);
 	  /* If drawingArea: update drawingAreaForegroundColor */
-	    if (element->type == DL_Display) {
+	    if(element->type == DL_Display) {
 		cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
 	    }
 	}
@@ -3396,7 +3394,7 @@ void updateGlobalResourceBundleFromElement(DlElement *element)
     print("In updateGlobalResourceBundleFromElement\n");
 #endif
 
-    if (!element || (element->type != DL_CartesianPlot)) return;
+    if(!element || (element->type != DL_CartesianPlot)) return;
     p = element->structure.cartesianPlot;
 
     for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
@@ -3415,7 +3413,6 @@ void updateGlobalResourceBundleFromElement(DlElement *element)
  *	and to put those resource values into the resourcePalette
  *	elements (for the specified element type)
  */
-
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 {
     DisplayInfo *cdi=currentDisplayInfo;
@@ -3428,19 +3425,19 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 #endif
 
   /* Simply return if not valid to update */
-    if (cdi->selectedDlElementList->count != 1) return;
+    if(cdi->selectedDlElementList->count != 1) return;
 
     elementPtr = FirstDlElement(cdi->selectedDlElementList);
     elementPtr = elementPtr->structure.element;
 
   /* If no resource palette yet, create it */
-    if (!resourceMW) {
+    if(!resourceMW) {
 	currentElementType = elementPtr->type;
 	setResourcePaletteEntries();
 	return;
     }
 
-    switch (elementPtr->type) {
+    switch(elementPtr->type) {
     case DL_Display: {
 	DlDisplay *p = elementPtr->structure.display;
 	Arg args[2];
@@ -3460,7 +3457,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	updateGlobalResourceBundleObjectAttribute(
 	  &(elementPtr->structure.display->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 	globalResourceBundle.clr = elementPtr->structure.display->clr;
 	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 	  cdi->colormap[globalResourceBundle.clr],NULL);
@@ -3486,7 +3483,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
@@ -3504,7 +3501,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	sprintf(string,"%f",globalResourceBundle.dPrecision);
       /* strip trailing zeroes */
 	tail = strlen(string);
-	while (string[--tail] == '0') string[tail] = '\0';
+	while(string[--tail] == '0') string[tail] = '\0';
 	XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
 	break;
     }
@@ -3513,7 +3510,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
@@ -3530,7 +3527,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
@@ -3553,7 +3550,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
@@ -3571,7 +3568,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
@@ -3586,7 +3583,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
@@ -3604,7 +3601,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
@@ -3625,7 +3622,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
@@ -3649,7 +3646,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
@@ -3673,7 +3670,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
@@ -3694,7 +3691,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	strcpy(globalResourceBundle.title, p->plotcom.title);
 	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
@@ -3728,7 +3725,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	strcpy(globalResourceBundle.title, p->plotcom.title);
 	XmTextFieldSetString(resourceEntryElement[TITLE_RC],
@@ -3778,7 +3775,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3791,7 +3788,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3804,7 +3801,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3831,7 +3828,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 #endif
 
 #if 0
-	if (objectDataOnly) {
+	if(objectDataOnly) {
 	    updateGlobalResourceBundleObjectAttribute(&(p->object));
 	    updateResourcePaletteObjectAttribute();
 	} else {
@@ -3841,7 +3838,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 #else
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3862,7 +3859,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	globalResourceBundle.clr = p->clr;
 	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
@@ -3891,7 +3888,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	globalResourceBundle.clr = p->clr;
 	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
@@ -3913,7 +3910,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
 	updateResourcePaletteDynamicAttribute();
@@ -3933,7 +3930,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
 	updateResourcePaletteDynamicAttribute();
@@ -3957,7 +3954,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3970,7 +3967,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 
 	updateGlobalResourceBundleObjectAttribute(&(p->object));
 	updateResourcePaletteObjectAttribute();
-	if (objectDataOnly) return;
+	if(objectDataOnly) return;
 
 	updateGlobalResourceBundleBasicAttribute(&(p->attr));
 	updateResourcePaletteBasicAttribute();
@@ -3991,22 +3988,20 @@ void resetGlobalResourceBundleAndResourcePalette()
 {
     char string[MAX_TOKEN_LENGTH];
 
-
 #if DEBUG_RESOURCE
     print("In resetGlobalResourceBundleAndResourcePalette\n");
 #endif
     
-    if (ELEMENT_IS_RENDERABLE(currentElementType) ) {
+    if(ELEMENT_IS_RENDERABLE(currentElementType) ) {
 
-      /* get object data: must have object entry  - use rectangle type (arbitrary) */
+      /* Get object data: must have object entry - use rectangle type
+         (arbitrary) */
 	globalResourceBundle.x = 0;
 	globalResourceBundle.y = 0;
 
-      /*
-       * special case for text -
-       *   since can type to input, want to inherit width/height
-       */
-	if (currentElementType != DL_Text) {
+      /* Special case for text - since can type to input, want to
+          inherit width/height */
+	if(currentElementType != DL_Text) {
 	    globalResourceBundle.width = 10;
 	    globalResourceBundle.height = 10;
 	}
@@ -4019,6 +4014,5 @@ void resetGlobalResourceBundleAndResourcePalette()
 	XmTextFieldSetString(resourceEntryElement[WIDTH_RC],string);
 	sprintf(string,"%d",globalResourceBundle.height);
 	XmTextFieldSetString(resourceEntryElement[HEIGHT_RC],string);
-
     }
 }

@@ -1654,32 +1654,6 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
     
   /* Disable any update tasks */
     updateTaskDisableTask(dlElement);
-
-
-#if 0  /* CHECK */
-  /* Draw the display background where the element would go on both
-   *   the window and the pixmap */
-
-  /* Set the foreground to the display background */
-    XSetForeground(display,displayInfo->gc,
-      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-    
-  /* Draw on the window */
-    po = &(dlElement->structure.composite->object);
-    drawable = XtWindow(displayInfo->drawingArea);
-    XFillRectangle(display, drawable, displayInfo->pixmapGC,
-      po->x, po->y, po->width, po->height);
-
-  /* Draw on the pixmap */
-    drawable = displayInfo->drawingAreaPixmap;
-    XFillRectangle(display, drawable, displayInfo->pixmapGC,
-      po->x, po->y, po->width, po->height);
-
-  /* Update the drawing objects above this one */
-#if 0
-    redrawElementsAbove(displayInfo, dlElement);
-#endif
-#endif
 }
 
 void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)

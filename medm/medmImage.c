@@ -232,11 +232,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			}
 		    }
 		}
-#if 0	    
-	      /* Draw initial white rectangle */
-	      /* KE: Check if this is necessary */
-		drawWhiteRectangle(pi->updateTask);
-#endif	    
 	    } else {
 	      /* No channel */
 		dlElement->staticGraphic = True;

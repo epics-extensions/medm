@@ -105,7 +105,6 @@ static void medmCAFdRegistrationCb( void *dummy, int fd, int condition);
 static void medmProcessCA(XtPointer, int *, XtInputId *);
 static void medmAddUpdateRequest(Channel *);
 Boolean medmWorkProc(XtPointer);
-static void medmRepaintRegion(Channel *);
 
 #define CA_PAGE_SIZE 100
 #define CA_PAGE_COUNT 10

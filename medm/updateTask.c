@@ -135,7 +135,6 @@ Boolean medmInitSharedDotC();
 static void medmScheduler(XtPointer, XtIntervalId *);
 static Boolean updateTaskWorkProc(XtPointer);
 static DlElement *getElementFromUpdateTask(UpdateTask *t);
-static void updateTaskMarkOverlappedDone(DisplayInfo *displayInfo, Boolean val);
 
 /* Global variables */
 static UpdateTaskStatus updateTaskStatus;
@@ -153,7 +152,6 @@ static UpdateTask nullTask = {
     (struct _DisplayInfo *)0,
     0,
     {0,0,0,0},     /* Rectangle */
-    False,
     False,
     False,
     False,
@@ -445,7 +443,6 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
 	pT->overlapped = True;  /* Default is assumed to be overlapped */
 	pT->opaque = True;      /* Default is don't draw the background */
 	pT->disabled = False;   /* Default is not disabled */
-	pT->overlappedDone = False;   /* Flag to avoid repeat updates */
 
 	displayInfo->updateTaskListTail->next = pT;
 	displayInfo->updateTaskListTail = pT;
@@ -706,18 +703,6 @@ void updateTaskMarkUpdate(UpdateTask *pT)
 #endif			
 }
 
-static void updateTaskMarkOverlappedDone(DisplayInfo *displayInfo, Boolean val)
-{
-    UpdateTask *t;
-    
-    t = displayInfo->updateTaskListHead.next;
-    while(t) {
-	t->overlappedDone = val;
-	t = t->next;
-    }
-}
-
-
 void updateTaskSetScanRate(UpdateTask *pT, double timeInterval)
 {
     UpdateTask *head = &(pT->displayInfo->updateTaskListHead);
@@ -878,8 +863,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 
       /* Repaint the selected region */
 	if(t->overlapped) {
-	  /* KE: Everything is overlapped so this is the branch that
-             is executed. */
 	    Display *display = XtDisplay(displayInfo->drawingArea);
 	    GC gc = displayInfo->gc;
 	    XPoint points[4];
@@ -932,21 +915,9 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		/* Redraw all the static elements on the pixmap */
 		  redrawStaticElements(displayInfo, pE);
 		/* Release the pixmap clipping region */
-		  XSetClipOrigin(display, gc, 0, 0);
-		  XSetClipMask(display, gc, None);
-		/* Make sure the elements get executed in the loop so
-                   the displayArea will be correctly repainted. */
-		  markCompositeChildrenNotExecuted(pE);
-#if 0     /* !!!!! */		  
-		/* Reset the overlappedDone */
-		  updateTaskMarkOverlappedDone(displayInfo, False);
-#endif		  
+		  XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
+		  XSetClipMask(display, displayInfo->pixmapGC, None);
 	      }
-
-#if 0     /* !!!!! */
-	  /* Reset the overlappedDone */
-	    updateTaskMarkOverlappedDone(displayInfo, False);
-#endif	    
 	    
 	  /* Copy the pixmap to the (clipped) drawingArea */
 	      XCopyArea(display,displayInfo->drawingAreaPixmap,
@@ -955,12 +926,10 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t->rectangle.width, t->rectangle.height,
 		t->rectangle.x, t->rectangle.y);
 
-	  /* KE: This does no good.  Each task is set to overlapped
-             when it is created.  This particular task will be one of
-             the ones executed in the loop below, where overlapped
-             will be set back. The non-overlapped branch will never be
-             executed. */
-	    t->overlapped = False;     
+	    /* Set overlapped to false.  This will override the
+	       default of True.  It will be reset to True in the loop
+	       below if it truly is overlapped. */
+	      t->overlapped = False;
 
 #if DEBUG_DELETE  || DEBUG_HIDE
 	    {
@@ -980,56 +949,12 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		  t1->rectangle.width, t1->rectangle.height) != RectangleOut) {
 		    t1->overlapped = True;
 		    if(t1->executeTask) {
-			DlElement *pE1 = getElementFromUpdateTask(t1);
-			
-#if 0			
-		      /* Don't do composites unless they are the main
-                         element.  That is, don't worry whether their
-                         visibility has changed.  Their composite
-                         children will be done later in the loop. The
-                         composite visibility change will be taken
-                         care of when that composite is the main
-                         element. */
-			if(isComposite) {
-			  /* Main element is composite */
-			    if(pE1 == pE) {
-			      /* Do the main composite */
-				t1->executeTask(t1->clientData);
-			    } else if(pE1->type != DL_Composite &&
-			      !t->overlappedDone) {
-			      /* Do if not composite and not done for
-				 the main one */
-				t1->executeTask(t1->clientData);
-				/* Reset it.  The flag is not needed
-                                   any more for this loop. */
-				t1->overlappedDone = False;
-			    }
-			} else {
-			  /* Do unless it is composite */
-			    if(pE->type != DL_Composite) {
-				t1->executeTask(t1->clientData);
-			    }
-			}
-#elif 1
 			t1->executeTask(t1->clientData);
-#else			
-			if(!t1->overlappedDone) {
-			    t1->executeTask(t1->clientData);
-			}
-#endif			    
 		    }
 		}
 		t1 = t1->next;
 	    }
 
-#if 0     /* !!!!! */
-	  /* Reset the overlappedDone */
-	    if(isComposite) {
-		updateTaskMarkOverlappedDone(displayInfo, False);
-	    }
-#elif 0
-	    updateTaskMarkOverlappedDone(displayInfo, False);
-#endif	    
 	  /* Release the drawingArea clipping region */
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
@@ -1039,7 +964,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 #endif
 	} else {
 	  /* Not overlapped */
-	  /* KE: This branch is not ever done */
 	    if(!t->opaque) 
 	      XCopyArea(display,t->displayInfo->drawingAreaPixmap,
 		XtWindow(t->displayInfo->drawingArea),
@@ -1211,9 +1135,7 @@ UpdateTask *getUpdateTaskFromWidget(Widget widget)
     return NULL;
 }
 
-/*
- * return UpdateTask ptr given a DisplayInfo* and x,y positions
- */
+/* Return pointer to UpdateTask given a DisplayInfo* and x,y positions */
 UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
 {
     UpdateTask *ptu, *ptuSaved = NULL;
@@ -1230,7 +1152,7 @@ UpdateTask *getUpdateTaskFromPosition(DisplayInfo *displayInfo, int x, int y)
 	  x <= (int)ptu->rectangle.x + (int)ptu->rectangle.width &&
 	  y >= (int)ptu->rectangle.y &&
 	  y <= (int)ptu->rectangle.y + (int)ptu->rectangle.height) {
-	  /* eligible element, see if smallest so far */
+	  /* Eligible element, see if smallest so far */
 	    if((int)ptu->rectangle.width < minWidth &&
 	      (int)ptu->rectangle.height < minHeight) {
 		minWidth = (int)ptu->rectangle.width;

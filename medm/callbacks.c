@@ -56,8 +56,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_EVENTS 0
 #define DEBUG_FONTS 0
-#define DEBUG_PIXMAP 1
-#define DEBUG_EXPOSE 1
+#define DEBUG_PIXMAP 0
+#define DEBUG_EXPOSE 0
 
 #include "medm.h"
 
@@ -252,7 +252,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     unsigned int mask;
 
 #if DEBUG_EVENTS > 1
-	print("\ndrawingAreaCallback(Entered):\n");
+    print("\ndrawingAreaCallback(Entered):\n");
 #endif
     if (cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
@@ -263,7 +263,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	y = cbs->event->xexpose.y;
 	uiw = cbs->event->xexpose.width;
 	uih = cbs->event->xexpose.height;
-
+	
 	if (displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
 	  displayInfo->pixmapGC != (GC)NULL && 
 	  displayInfo->drawingArea != (Widget)NULL) {
@@ -271,6 +271,53 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	    print("  w=%x DA=%x x=%d y=%d width=%d height=%d\n",
 	      w,displayInfo->drawingArea,x,y,uiw,uih);
+#endif
+#if DEBUG_EXPOSE > 1
+	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	      /* Use this in debugging to show the drawing area pixmap */
+		int c,i,n,nE,indent;
+		Arg args[2];
+		Dimension width, height;
+		Pixmap pixmap;
+		WidgetList children;
+		Cardinal numChildren;
+		DlElement *pE;
+		
+		n=0;
+		XtSetArg(args[n],XmNwidth,&width); n++;
+		XtSetArg(args[n],XmNheight,&height); n++;
+		XtGetValues(displayInfo->drawingArea,args,n);
+		
+		pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
+		  width,height,
+		  DefaultDepth(display,screenNum));
+		XCopyArea(display,XtWindow(displayInfo->drawingArea),
+		  pixmap,
+		  displayInfo->pixmapGC,0,0,width,height,0,0);
+		XFlush(display);
+		
+		for(i=0; i < 1; i++) {
+		    print("%d Background is window\n",i+1);
+		    print("Hit CR to draw pixmap\n");
+		    c=getc(stdin);
+		    
+		    XCopyArea(display,displayInfo->drawingAreaPixmap,
+		      XtWindow(displayInfo->drawingArea),
+		      displayInfo->pixmapGC,0,0,width,height,0,0);
+		    XFlush(display);
+		    
+		    print("%d Background is pixmap\n",i+1);
+		    print("Hit CR to draw window\n");
+		    c=getc(stdin);
+		    
+		    XCopyArea(display,pixmap,
+		      XtWindow(displayInfo->drawingArea),
+		      displayInfo->pixmapGC,0,0,width,height,0,0);
+		    XFlush(display);
+		}
+		XFreePixmap(display,pixmap);
+		print("Done: Background is window\n");
+	    }
 #endif
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,XtWindow(w),
 	      displayInfo->pixmapGC,x,y,uiw,uih,x,y);
