@@ -271,7 +271,7 @@ extern const ImageType FIRST_IMAGE_TYPE;
 typedef enum {
     LINEAR_AXIS		= 50,
     LOG10_AXIS		= 51,
-    TIME_AXIS             = 52,
+    TIME_AXIS           = 52
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -335,7 +335,7 @@ typedef enum {
     MMMDDYYYY           = 67,
     MMMDD               = 68,
     MMDDHH00            = 69,
-    WDHH00              = 70,
+    WDHH00              = 70
 } CartesianPlotTimeFormat_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;

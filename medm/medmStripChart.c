@@ -62,6 +62,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define STRIP_MARGIN 0.18
 
+/* Function prototypes */
+
+extern void linear_scale(double xmin, double xmax, int n,
+  double *xminp, double *xmaxp, double *dist);
+
 typedef struct _StripChart {
     DlElement     *dlElement;              /* strip chart data */
     Record        *record[MAX_PENS];       /* array of data */
@@ -1454,13 +1459,6 @@ static void stripChartName(XtPointer cd, char **name, short *severity, int *coun
 	severity[i] = psc->record[i]->severity;
     }
 }
-
-#ifdef __cplusplus
-extern "C" {
-    void linear_scale(double xmin, double xmax, int n,
-      double *xminp, double *xmaxp, double *dist);
-	   }
-#endif
 
 DlElement *createDlStripChart(DlElement *p)
 {

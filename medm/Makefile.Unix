@@ -4,19 +4,21 @@ EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-UNIX_OPT=NO
+UNIX_OPT = NO
 STATIC_BUILD = NO
-CC = cc -g
-#CC = purify -first-only -chain-length=25 cc -g
+CMPLR = STRICT
+CC += -g
+#CC += -xsb
+#CC += -P
+#CC += -xP
+#CC += -H
+#CC += -DXSYNC
+#CC += -Wl,-m
+# Use cc -flags (on Solaris) to find what these mean
 
-#CC = purify -first-only -chain-length=25  -log-file=purelog cc -g
-#CC = purify -first-only -chain-length=25  -mail-to-user=evans cc -g
-
-#CC = cc -g -xsb
-#CC = cc -g -DXSYNC
-#CC = purify cc -g
-#CC = gcc
-
+#CC = purify -first-only -chain-length=25 $(C_$(CMPILR))
+#CC = purify -first-only -chain-length=25 -log-file=purelog $(C_$(CMPILR))
+#CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPILR))
 
 USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
 
@@ -173,6 +175,9 @@ xrtAuth: medm
 # $Id$
 #
 # $Log$
+# Revision 1.23  1997/06/19 17:31:07  evans
+# Now compiles cleanly with CMPLR=STRICT.
+#
 # Revision 1.22  1997/06/10 18:46:49  evans
 # Made changes to browserHelp.c so it can be used in other programs.
 #

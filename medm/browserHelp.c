@@ -60,19 +60,25 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <sys/types.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xmu/WinUtil.h>
 
 #ifndef NETSCAPEPATH
 #define NETSCAPEPATH "netscape"
 #endif
 
 /* Function prototypes */
+
+extern int kill(pid_t, int);     /* May not be defined for strict ANSI */
+
 int callBrowser(char *url);
 static Window checkNetscapeWindow(Window w);
-static int eexecute(char *s);
+static int execute(char *s);
 static Window findNetscapeWindow(void);
 static int ignoreXError(Display *display, XErrorEvent *xev);
 
@@ -120,11 +126,11 @@ int callBrowser(char *url)
 		sprintf(command,"%s -install '%s' &",envstring);
 	    }
 #if DEBUG
-	    printf("eexecute(before): cmd=%s\n",command);
+	    printf("execute(before): cmd=%s\n",command);
 #endif	    
-	    status=eexecute(command);
+	    status=execute(command);
 #if DEBUG
-	    printf("eexecute(after): cmd=%s status=%d\n",command,status);
+	    printf("execute(after): cmd=%s status=%d\n",command,status);
 #endif	    
 	    return 1;
 	}
@@ -141,11 +147,11 @@ int callBrowser(char *url)
 	  envstring,netscapew,url);
     }
 #if DEBUG
-    printf("eexecute(before): cmd=%s\n",command);
+    printf("execute(before): cmd=%s\n",command);
 #endif    
-    status=eexecute(command);
+    status=execute(command);
 #if DEBUG
-    printf("eexecute(after): cmd=%s status=%d\n",command,status);
+    printf("execute(after): cmd=%s status=%d\n",command,status);
 #endif    
     return 2;
 }
@@ -178,8 +184,8 @@ static Window checkNetscapeWindow(Window w)
     if(version) XFree((void *)version);
     return wfound;
 }
-/**************************** eexecute ************************************/
-static int eexecute(char *s)
+/**************************** execute ************************************/
+static int execute(char *s)
 /* From O'Reilly, Vol. 1, p. 438 */
 {
     int status,pid,w;

@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_RADIO_BUTTONS 1
+#define DEBUG_DEFINITIONS 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -175,6 +176,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define HELP_ON_HELP_BTN    5
 #define HELP_ON_VERSION_BTN 6
 
+/* Function prototypes */
+
+extern int putenv(const char *);     /* May not be defined for strict ANSI */
+static void createCursors(void);
+static void createMain(void);
+static Boolean medmInitWorkProc(XtPointer cd);
 static void fileMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void fileMenuDialogCallback(Widget,XtPointer,XtPointer);
 static void editMenuSimpleCallback(Widget,XtPointer,XtPointer);
@@ -190,8 +197,6 @@ static Widget printerSetupDlg = 0;
 static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
 
-void medmExit();
-Boolean medmInitWorkProc(XtPointer cd);
 
 #ifdef __TED__
 void GetWorkSpaceList(Widget w);
@@ -580,8 +585,6 @@ extern "C" {
 #ifdef __cplusplus
 	   }
 #endif
-
-static void createMain();
 
 /*
  * globals for use by all routines in this file
@@ -1716,11 +1719,11 @@ void medmExit() {
 		  /* Save all files */
 		    saveAll = True;
 		    saveThis = True;
+		    break;
 #else
 		  /* Cancel */
 		    return;
 #endif
-		    break;
 		default :
 		    saveThis = False;
 		    break;
@@ -2595,6 +2598,37 @@ main(int argc, char *argv[])
     msgClass_t msgClass;
 
     Window medmHostWindow = (Window)0;
+
+#if DEBUG_DEFINITIONS
+    printf("\n");
+#ifdef __EXTENSIONS__
+    printf("__EXTENSIONS__= % d\n",__EXTENSIONS__);
+#else      
+    printf("__EXTENSIONS__ is undefined\n");
+#endif
+#ifdef __STDC__
+    printf("__STDC__ = %d\n",__STDC__);
+    printf("__STDC__ - 0 = %d\n",__STDC__ - 0);
+#else      
+    printf("__STDC__ is undefined\n");
+    printf("__STDC__ - 0 = %d\n",__STDC__ - 0);
+#endif
+#ifdef _POSIX_C_SOURCE
+    printf("_POSIX_C_SOURCE = %d\n",_POSIX_C_SOURCE);
+#else      
+    printf("_POSIX_C_SOURCE is undefined\n");
+#endif
+#ifdef _XOPEN_SOURCE
+    printf("_XOPEN_SOURCE = %d\n",_XOPEN_SOURCE);
+#else      
+    printf("_XOPEN_SOURCE is undefined\n");
+#endif
+#ifdef _NO_LONGLONG
+    printf("_NO_LONGLONG = %d\n",_NO_LONGLONG);
+#else      
+    printf("_NO_LONGLONG is undefined\n");
+#endif
+#endif
 
   /*  Initialize global variables */
     medmWorkProcId = 0;

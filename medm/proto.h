@@ -144,6 +144,7 @@ void dmDisplayListParse(DisplayInfo *, FILE *, char *, char *, char*, Boolean);
 TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
 
 /* eventHandlers.c */
+int initEventHandlers(void);
 void popupMenu(Widget, XtPointer, XEvent *, Boolean *);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
 void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
@@ -342,6 +343,7 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element);
 void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
 void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly);
 void resetGlobalResourceBundleAndResourcePalette(void);
+void medmGetValues(ResourceBundle *pRB, ...);
 
 /* shared.c */
 void wmCloseCallback(Widget, XtPointer, XtPointer);
@@ -581,5 +583,24 @@ void freeGIF(DlImage *dlImage);
 
 /* medmComposite.c */
 DlElement *groupObjects();
+
+/* medmCommon.c */
+int initMedmCommon();
+void destroyDlElement(DlElement *);
+void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
+  unsigned int height);
+
+/* medmRelatedDisplay.c */
+void relatedDisplayDataDialogPopup(Widget w);
+void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
+  DlRelatedDisplayEntry *pEntry);
+
+/* medmMonitor.c */
+void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition);
+void plotcomAttributeInit(DlPlotcom *plotcom);
+void penAttributeInit(DlPen *pen);
+void traceAttributeInit(DlTrace *trace);
+/* help_protocol.c */
+void help_protocol (Widget shell);
 
 #endif  /* __PROTO_H__ */

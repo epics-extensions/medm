@@ -60,15 +60,36 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
 
+/* KE: The following is included for XtMoveWidget.  However, it shouldn't be
+ * necessary to include P (private) header files in applications.) */
+#include <X11/IntrinsicP.h>
+
 void parseAttr(DisplayInfo *displayInfo, DlBasicAttribute *attr);
 void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr);
 void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr);
 void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr);
 void parseOldDlColor( DisplayInfo *, FILE *, DlColormapEntry *);
+static void writeDlElement(FILE *stream, DlElement *DlElement, int level);
+static void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement);
 
 static DlList *dlElementFreeList = 0;
 
-int initMedmCommon() {
+static DlDispatchTable elementDlDispatchTable = {
+    createDlElement,
+    destroyDlElement,
+    executeDlElement,
+    writeDlElement,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL};
+
+int initMedmCommon()
+{
     if (dlElementFreeList) return 0;
     if (dlElementFreeList = createDlList()) {
 	return 0;
@@ -77,8 +98,7 @@ int initMedmCommon() {
     }
 }
 
-DlFile *createDlFile(
-  DisplayInfo *displayInfo)
+DlFile *createDlFile(DisplayInfo *displayInfo)
 {
     DlFile *dlFile;
 
@@ -90,8 +110,7 @@ DlFile *createDlFile(
     return(dlFile);
 }
 
-DlFile *parseFile(
-  DisplayInfo *displayInfo)
+DlFile *parseFile(DisplayInfo *displayInfo)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -128,10 +147,7 @@ DlFile *parseFile(
     return dlFile;
 }
 
-void writeDlFile(
-  FILE *stream,
-  DlFile *dlFile,
-  int level)
+void writeDlFile(FILE *stream, DlFile *dlFile, int level)
 {
     int i;
     char indent[16];
@@ -272,9 +288,7 @@ DlColormap *createDlColormap(DisplayInfo *displayInfo)
 }
 
 
-void parseDlColor(
-  DisplayInfo *displayInfo,
-  FILE *filePtr,
+void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
   DlColormapEntry *dlColor)
 {
     char token[MAX_TOKEN_LENGTH];
@@ -485,8 +499,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
     fprintf(stream,"\n%s}",indent);
 }
 
-void executeDlBasicAttribute(DisplayInfo *displayInfo,
-  DlBasicAttribute *attr)
+void executeDlBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 {
     unsigned long gcValueMask;
     XGCValues gcValues;
@@ -629,8 +642,8 @@ void objectAttributeInit(DlObject *object)
     object->height = 10;
 }
 
-void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
-  unsigned int height)
+void objectAttributeSet(DlObject *object, int x, int y,
+  unsigned int width, unsigned int height)
 {
     object->x = x;
     object->y = y;
@@ -656,11 +669,6 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
     *(dynAttr->chan) = '\0';
 }
 
-/* Function prototypes */
-
-static void writeDlElement(FILE *stream, DlElement *DlElement, int level);
-static void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement);
-
 void writeDlElement(FILE *stream, DlElement *DlElement, int level)
 {
     return;
@@ -669,20 +677,6 @@ void writeDlElement(FILE *stream, DlElement *DlElement, int level)
 void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement) {
     return;
 }
-
-static DlDispatchTable elementDlDispatchTable = {
-    createDlElement,
-    destroyDlElement,
-    executeDlElement,
-    writeDlElement,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL};
 
 DlElement* createDlElement(DlElementType type, XtPointer structure,
   DlDispatchTable *dlDispatchTable)
@@ -1028,8 +1022,6 @@ void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
       && (tokenType != T_EOF) );
 }
 
-
-
 void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 {
     char token[MAX_TOKEN_LENGTH];
@@ -1085,8 +1077,6 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
       && (tokenType != T_EOF) );
 }
 
-
-
 void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 {
     char token[MAX_TOKEN_LENGTH];
@@ -1112,7 +1102,6 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
     } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
-
 
 DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *filename)
 {
@@ -1183,9 +1172,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
  * understands macros of the form $(xyz), and substitutes the value in
  *	displayInfo's nameValueTable..name with nameValueTable..value
  */
-TOKEN getToken(	/* get and classify token */
-  DisplayInfo *displayInfo,
-  char *word)
+TOKEN getToken(DisplayInfo *displayInfo, char *word)
 {
     FILE *filePtr;
     enum {NEUTRAL,INQUOTE,INWORD,INMACRO} state = NEUTRAL, savedState = NEUTRAL;
@@ -1209,7 +1196,7 @@ TOKEN getToken(	/* get and classify token */
 	    case '"' : state = INQUOTE; 
 		break;
 	    case '$' : c=getc(filePtr);
-/* only do macro substitution if in execute mode */
+	      /* only do macro substitution if in execute mode */
 		if (globalDisplayListTraversalMode == DL_EXECUTE
 		  && c == '(' ) {
 		    state = INMACRO;
@@ -1222,7 +1209,7 @@ TOKEN getToken(	/* get and classify token */
 	    case '\t':
 	    case '\n': break;
 
-/* for constructs of the form (a,b) */
+	      /* for constructs of the form (a,b) */
 	    case '(' :
 	    case ',' :
 	    case ')' : *w++ = c; *w = '\0'; return (T_WORD);
@@ -1236,7 +1223,7 @@ TOKEN getToken(	/* get and classify token */
 	    switch(c) {
 	    case '"' : *w = '\0'; return (T_WORD);
 	    case '$' : c=getc(filePtr);
-/* only do macro substitution if in execute mode */
+	      /* only do macro substitution if in execute mode */
 		if (globalDisplayListTraversalMode == DL_EXECUTE
 		  && c == '(' ) {
 		    savedState = INQUOTE;
@@ -1339,10 +1326,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 #endif
 }
 
-void writeDlObject(
-  FILE *stream,
-  DlObject *dlObject,
-  int level)
+void writeDlObject(FILE *stream, DlObject *dlObject, int level)
 {
     char indent[16];
 
@@ -1357,12 +1341,14 @@ void writeDlObject(
     fprintf(stream,"\n%s}",indent);
 }
 
-void genericMove(DlElement *dlElement, int xOffset, int yOffset) {
+void genericMove(DlElement *dlElement, int xOffset, int yOffset)
+{
     dlElement->structure.rectangle->object.x += xOffset;
     dlElement->structure.rectangle->object.y += yOffset;
 }
 
-void widgetMove(DlElement *dlElement, int xOffset, int yOffset) {
+void widgetMove(DlElement *dlElement, int xOffset, int yOffset)
+{
     dlElement->structure.rectangle->object.x += xOffset;
     dlElement->structure.rectangle->object.y += yOffset;
     if (dlElement->widget)
@@ -1371,7 +1357,8 @@ void widgetMove(DlElement *dlElement, int xOffset, int yOffset) {
 	dlElement->structure.rectangle->object.y);
 }
 
-void genericScale(DlElement *dlElement, int xOffset, int yOffset) {
+void genericScale(DlElement *dlElement, int xOffset, int yOffset)
+{
     int width, height;
     width = (dlElement->structure.rectangle->object.width + xOffset);
     dlElement->structure.rectangle->object.width = MAX(1,width);
@@ -1379,7 +1366,8 @@ void genericScale(DlElement *dlElement, int xOffset, int yOffset) {
     dlElement->structure.rectangle->object.height = MAX(1,height);
 }
 
-void destroyElementWithDynamicAttribute(DlElement *dlElement) {
+void destroyElementWithDynamicAttribute(DlElement *dlElement)
+{
     free( (char *) dlElement->structure.composite);
     destroyDlElement(dlElement);
 }

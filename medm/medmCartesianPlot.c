@@ -1,4 +1,5 @@
-/******************************************************************
+/*
+*****************************************************************
                           COPYRIGHT NOTIFICATION
 *****************************************************************
 
@@ -62,6 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define SAFEFLOAT(x) ((float)(x))
 #endif
 
+#include <ieeefp.h>
 #include "medm.h"
 #include "medmCartesianPlot.h"
 
@@ -110,7 +112,7 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
 float safeFloat(double x) {
     static int nerrs=0;
     
-    if (isnan(x)) {
+    if (isnand(x)) {
 	if(nerrs < 50) {
 	    nerrs++;
 	    medmPrintf("CartesianPlot : value is NaN, using %g\n",NAN_SUBSTITUTE);

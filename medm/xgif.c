@@ -75,6 +75,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define MAXEXPAND 16
 
+/* Function prototypes */
+
+/* KE: The following is the prototype for _XGetBitsPerPixel, which is a
+ *   convenience function found in the MIT distribution in
+ *   /opt/local/share/src/R5/mit/lib/X/XImUtil.c (at the APS)
+ */
+int _XGetBitsPerPixel(Display *dpy, int depth);
+
 void AddToPixel(GIFData *gif, Byte Index);
 
 /*

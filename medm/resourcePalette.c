@@ -3477,7 +3477,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     }
 }
 
-void medmGetValues(ResourceBundle *pRB, ...) {
+void medmGetValues(ResourceBundle *pRB, ...)
+{
     va_list ap;
     int arg;
     va_start(ap, pRB);

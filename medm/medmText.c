@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define DEBUG_FONTS 0
 
+#include <ctype.h>
 #include "medm.h"
 
 typedef struct _Text {

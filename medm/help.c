@@ -59,6 +59,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <ctype.h>
 #include <stdarg.h>
 
+/* Function prototypes */
+
+extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
+extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
+
 static Widget errMsgDlg = NULL;
 static Widget errMsgText = NULL;
 static Widget errMsgSendDlg = NULL;
@@ -249,14 +254,16 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     if (to && *to) {
 	sprintf(p, "%s", to);
     }
-    if (!(pp = popen(cmd, "w"))) {
+    
+    pp = popen(cmd, "w");
+    if (!pp) {
 	medmPostMsg("Can't execute mail tool\n");
 	if (to) XtFree(to);
 	if (subject) XtFree(subject);
 	if (text) XtFree(text);
     }
     fputs(text, pp);
-    fputc('\n', pp); /* make sure there's a terminating newline */
+    fputc('\n', pp);      /* make sure there's a terminating newline */
     status = pclose(pp);  /* close mail program */
     if (to) XtFree(to);
     if (subject) XtFree(subject);
@@ -677,10 +684,11 @@ void medmStartUpdateCAStudyDlg() {
 
 int xErrorHandler(Display *dpy, XErrorEvent *event)
 {
-    char * buf[4096];     /* Warning: Fixed Size */
+    char buf[4096];     /* Warning: Fixed Size */
     
     XGetErrorText(dpy,event->error_code,buf,BUFSIZ);
     fprintf(stderr,"%s\n",buf);
+    return 0;
 }
 
 void xtErrorHandler(char *message)

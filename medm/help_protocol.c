@@ -63,14 +63,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include <stdio.h>
 #include <stdlib.h>         /* system() */
-#include <X11/IntrinsicP.h>
-#include <X11/StringDefs.h>
-#include <X11/Shell.h>
-#include <Xm/Xm.h>
-#include <Xm/XmP.h>
+
 #include <Xm/Protocols.h>
-#include <Xm/AtomMgr.h>
-  
 
 /******************************************************************************
  *
@@ -82,9 +76,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *
 
   *****************************************************************************/
-static XtCallbackProc medm_help_callback (Widget shell, 
-  caddr_t closure,
-  caddr_t call_data)
+static void medm_help_callback(Widget shell, XtPointer client_data,
+  XtPointer call_data)
 {
     char * title = NULL;
     char * env = getenv("MEDM_HELP");
@@ -130,5 +123,5 @@ void help_protocol (Widget shell)
     XmAddProtocolCallback (shell, message, protocol, medm_help_callback, NULL);
 
     sprintf (buf, "Medm_Help _l Ctrl<Key>l f.send_msg %d", protocol);
-    XtVaSetValues (shell, XmNmwmMenu, buf, NULL);
+    XtVaSetValues (shell, XmNmwmMenu, buf, (XtPointer)NULL);
 }

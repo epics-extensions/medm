@@ -56,6 +56,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #include "medm.h"
 
+/* Function Prototypes */
+
+/* KE: Note that the following function is really defined in xc/Byte.c as:
+ * void XcBYUpdateByteForeground(ByteWidget w, unsigned long pixel);
+ * but this is how it is being used and what avoids warnings.
+ */
+void XcBYUpdateByteForeground(Widget w, unsigned long pixel);
+
 typedef struct _Byte {
     DlElement   *dlElement;
     Record      *record;

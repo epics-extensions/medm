@@ -58,13 +58,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEFAULT_CLR 14
 #define DEFAULT_BCLR 3
 
-void monitorAttributeInit(DlMonitor *monitor) {
+void monitorAttributeInit(DlMonitor *monitor)
+{
     monitor->rdbk[0] = '\0';
     monitor->clr = DEFAULT_CLR;
     monitor->bclr = DEFAULT_BCLR;
 }
   
-void plotcomAttributeInit(DlPlotcom *plotcom) {
+void plotcomAttributeInit(DlPlotcom *plotcom)
+{
     plotcom->title[0] = '\0';
     plotcom->xlabel[0] = '\0';
     plotcom->ylabel[0] = '\0';
@@ -72,7 +74,8 @@ void plotcomAttributeInit(DlPlotcom *plotcom) {
     plotcom->bclr = DEFAULT_BCLR;
 }
 
-void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition) {
+void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition)
+{
     axisDefinition->axisStyle = LINEAR_AXIS;
     axisDefinition->rangeStyle = CHANNEL_RANGE;
     axisDefinition->minRange = 0.0;
@@ -80,12 +83,14 @@ void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition) {
     axisDefinition->timeFormat = HHMMSS;
 }
 
-void penAttributeInit(DlPen *pen) {
+void penAttributeInit(DlPen *pen)
+{
     pen->chan[0] = '\0';
     pen->clr = DEFAULT_CLR;
 }
 
-void traceAttributeInit(DlTrace *trace) {
+void traceAttributeInit(DlTrace *trace)
+{
     trace->xdata[0] = '\0';
     trace->ydata[0] = '\0';
     trace->data_clr = DEFAULT_CLR;

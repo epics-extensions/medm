@@ -64,9 +64,6 @@ static Widget rdMatrix = NULL, rdForm = NULL;
 static Widget table[MAX_RELATED_DISPLAYS][4];
 static Pixmap stipple = NULL;
 
-void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *pEntry);
-
 static void relatedDisplayInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);

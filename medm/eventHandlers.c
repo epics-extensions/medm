@@ -75,7 +75,8 @@ void toggleSelectedElementHighlight(DlElement *element);
 
 static DlList *tmpDlElementList = NULL;
 
-int initEventHandlers() {
+int initEventHandlers(void)
+{
     if (tmpDlElementList) return 0;
     if (tmpDlElementList = createDlList()) {
 	return 0;
@@ -668,7 +669,7 @@ void handleButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		saveUndoInfo(cdi);
 		if (alreadySelected(FirstDlElement(tmpDlElementList))) {
 		  /* Element already selected - move it and any others
-		  /* Unhighlight currently selected elements */
+		   * Unhighlight currently selected elements */
 		    unhighlightSelectedElements();
 #if DEBUG_EVENTS
 		    fprintf(stderr,"Already selected\n");
