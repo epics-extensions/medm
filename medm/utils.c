@@ -106,8 +106,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <Dt/Wsm.h>
 #endif
 
-#define MAX_DIR_LENGTH 512     /* Maximum length of directory name */
-
 /* #define GRAB_WINDOW window */
 #define GRAB_WINDOW None
 
@@ -121,6 +119,8 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 static void medmPrintfDlElementList(DlList *l, char *text);
 static int doPasting(int *offsetX, int *offsetY);
 static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName);
+static void toggleHighlightRectangles(DisplayInfo *displayInfo,
+  int xOffset, int yOffset);
 
 /* Global variables */
 
@@ -140,119 +140,50 @@ long longFval(double f)
 }
 
 /*
- * Function to open a specified file (as .adl if specified as .dl),
- *   looking in EPICS_DISPLAY_PATH directory if unavailable in the
- *   working directory
+ * Heap sort routine
+ *  Sorts an array of length n into ascending order and puts the sorted
+ *    indices in indx
  */
-
-FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
+void hsort(double array[], int indx[], int n)
 {
-    FILE *filePtr;
-    int startPos;
-    char name[MAX_TOKEN_LENGTH], fullPathName[MAX_DIR_LENGTH],
-      dirName[MAX_DIR_LENGTH];
-    char *dir, *ptr;
-#if DEBUG_FILE
-    static FILE *file=NULL;
-    static pid_t pid=0;
-#endif
+    int l,j,ir,indxt,i;
+    double q;
 
-  /* Try to open with the given name first
-   *   (Will be in cwd if not an absolute pathname) */
-    strncpy(name, filename, MAX_TOKEN_LENGTH);
-    name[MAX_TOKEN_LENGTH-1] = '\0';
-    filePtr = fopen(name,"r");
-#if DEBUG_FILE
-    if(!file) {
-	file=fopen("/tmp/medmLog","a");
-	pid=getpid();
-	if(file) {
-	    fprintf(file,"Initializing PID: %d\n",pid);
-	} else {
-	    print("Cannot open /tmp/medmLog\n");
-	}
+  /* All done if none or one element */
+    if(n == 0) return;
+    if(n == 1) {
+	indx[0]=0;
+	return;
     }
-#if DEBUG_FILE > 1
-    print("[%d] dmOpenUsableFile: %s\n",pid,filename);
-    print("  [1] Converted to: %s\n",name);
-    if(filePtr) print("    Found as: %s\n",name);
-#endif	
-    if(file) {
-	fprintf(file,"[%d] dmOpenUsableFile: %s\n",pid,filename);
-	fprintf(file,"  [1] Converted to: %s\n",name);
-	if(filePtr) fprintf(file,"    Found as: %s\n",name);
-	fflush(file);
-    }
-#endif
-    if(filePtr) {
-	strcpy(filename, name);
-	return (filePtr);
-    }
-
-  /* If the name starts with / or . then we can do no more */
-    if(name[0] == MEDM_DIR_DELIMITER_CHAR || name[0] == '.') return (NULL);
-
-  /* If the name comes from a related display,
-   *   then try the directory of the related display */
-    if(relatedDisplayFilename && *relatedDisplayFilename) {
-	strncpy(fullPathName, relatedDisplayFilename, MAX_DIR_LENGTH);
-	fullPathName[MAX_DIR_LENGTH-1] = '\0';
-	if(fullPathName && fullPathName[0]) {
-	    ptr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
-	    if(ptr) {
-		*(++ptr) = '\0';
-		strcat(fullPathName, name);
-		filePtr = fopen(fullPathName, "r");
-#if DEBUG_FILE
-#if DEBUG_FILE > 1
-		print("  [2] Converted to: %s\n",fullPathName);
-		if(filePtr) print("    Found as: %s\n",fullPathName);
-#endif		
-		if(file) {
-		    fprintf(file,"  [2] Converted to: %s\n",fullPathName);
-		    if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
-		    fflush(file);
-		}
-#endif
-		if(filePtr) {
-		    strcpy(filename, fullPathName);
-		    return (filePtr);
-		}
+    
+  /* Initialize indx array */
+    for(j=0; j < n; j++) indx[j]=j;
+  /* Loop over elements */
+    l=(n>>1);
+    ir=n-1;
+    for(;;) {
+	if(l > 0) q=array[(indxt=indx[--l])];
+	else {
+	    q=array[(indxt=indx[ir])];
+	    indx[ir]=indx[0];
+	    if(--ir == 0) {
+		indx[0]=indxt;
+		return;
 	    }
 	}
-    }
-
-  /* Look in EPICS_DISPLAY_PATH directories */
-    dir = getenv("EPICS_DISPLAY_PATH");
-    if(dir != NULL) {
-	startPos = 0;
-	while (filePtr == NULL &&
-	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
-	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
-	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
-	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
-	    strcat(fullPathName, name);
-	    filePtr = fopen(fullPathName, "r");
-#if DEBUG_FILE
-#if DEBUG_FILE > 1
-	    print("  [3] Converted to: %s\n",fullPathName);
-	    if(filePtr) print("    Found as: %s\n",fullPathName);
-#endif		
-	    if(file) {
-		fprintf(file,"  [3] Converted to: %s\n",fullPathName);
-		if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
-		fflush(file);
+	i=l;
+	j=(l<<1)+1;
+	while(j <= ir) {
+	    if(j < ir && array[indx[j]] < array[indx[j+1]]) j++;
+	    if(q < array[indx[j]]) {
+		indx[i]=indx[j];
+		j+=((i=j)+1);
+		
 	    }
-#endif
-	    if(filePtr) {
-		strcpy(filename, fullPathName);
-		return (filePtr);
-	    }
+	    else break;
 	}
+	indx[i]=indxt;
     }
-
-  /* Not found */
-    return (NULL);
 }
 
 /*
@@ -280,372 +211,6 @@ Boolean extractStringBetweenColons(char *input, char *output,
       return(False);
     else
       return(True);
-}
-
-/*
- * clean up the memory-resident display list (if there is one)
- */
-void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list)
-{
-    DlElement *dlElement, *pE;
-    
-    if(list->count == 0) return;
-    dlElement = FirstDlElement(list);
-    while (dlElement) {
-	pE = dlElement;
-	dlElement = dlElement->next;
-	if(pE->run->destroy) {
-	    pE->run->destroy(displayInfo, pE);
-	} else {
-	    genericDestroy(displayInfo, pE);
-	}
-    }
-    emptyDlList(list);
-}
-
-/*
- * Same as clearDlDisplayList except that it does not clear the display
- * and it destroys any widgets
- */
-void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
-  DlList *list)
-{
-    DlElement *dlElement, *pE;
-    DlElement *psave = NULL;
-    
-    if(list->count == 0) return;
-    dlElement = FirstDlElement(list);
-    while (dlElement) {
-	pE = dlElement;
-	if(dlElement->type != DL_Display) {
-	    dlElement = dlElement->next;
-	    destroyElementWidgets(pE);
-	    if(pE->run->destroy) {
-		pE->run->destroy(displayInfo, pE);
-	    } else {
-		genericDestroy(displayInfo, pE);
-	    }
-	} else {
-	    psave = pE;
-	    dlElement = dlElement->next;
-	}
-    }
-    emptyDlList(list);
-
-  /* Put the display back if there was one */
-    if(psave) {
-	appendDlElement(list, psave);
-    }
-}
-
-/*
- * function which cleans up a given displayInfo in the displayInfoList
- * (including the displayInfo's display list if specified)
- */
-void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
-{
-    int i;
-    Boolean alreadyFreedUnphysical;
-    Widget drawingArea;
-    UpdateTask *pt = &(displayInfo->updateTaskListHead);
-
-  /* save off current drawingArea */
-    drawingArea = displayInfo->drawingArea;
-  /* now set to NULL in displayInfo to signify "in cleanup" */
-    displayInfo->drawingArea = NULL;
-    displayInfo->editPopupMenu = (Widget)0;
-    displayInfo->executePopupMenu = (Widget)0;
-
-  /*
-   * remove all update tasks in this display 
-   */
-    updateTaskDeleteAllTask(pt);
- 
-  /* 
-   * as a composite widget, drawingArea is responsible for destroying
-   *  it's children
-   */
-    if(drawingArea != NULL) {
-	XtDestroyWidget(drawingArea);
-	drawingArea = NULL;
-    }
-
-  /* force a wait for all outstanding CA event completion */
-  /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
-   */
-#ifdef __MONITOR_CA_PEND_EVENT__
-    {
-	double t;
-	t = medmTime();
-	ca_pend_event(CA_PEND_EVENT_TIME);
-	t = medmTime() - t;
-	if(t > 0.5) {
-	    print("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
-	}
-    }
-#else
-    ca_pend_event(CA_PEND_EVENT_TIME);
-#endif
-
-  /*
-   * if cleanupDisplayList == TRUE
-   *   then global cleanup ==> delete shell, free memory/structures, etc
-   */
-
-  /* Destroy undo information */
-    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
-    
-  /* Branch depending on cleanup mode */
-    if(cleanupDisplayList) {
-	XtDestroyWidget(displayInfo->shell);
-	displayInfo->shell = NULL;
-      /* remove display list here */
-	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
-    } else {
-	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
-	while (dlElement) {
-	    if(dlElement->run->cleanup) {
-		dlElement->run->cleanup(dlElement);
-	    } else {
-		dlElement->widget = NULL;
-	    }
-	    dlElement = dlElement->next;
-	}
-    }
-
-  /*
-   * free other X resources
-   */
-    if(displayInfo->drawingAreaPixmap != (Pixmap)NULL) {
-	XFreePixmap(display,displayInfo->drawingAreaPixmap);
-	displayInfo->drawingAreaPixmap = (Pixmap)NULL;
-    }
-    if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
-	alreadyFreedUnphysical = False;
-	for (i = 0; i < displayInfo->dlColormapCounter; i++) {
-	    if(displayInfo->colormap[i] != unphysicalPixel) {
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-	    } else if(!alreadyFreedUnphysical) {
-	      /* only free "unphysical" pixel once */
-		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
-		alreadyFreedUnphysical = True;
-	    }
-	}
-	free( (char *) displayInfo->colormap);
-	displayInfo->colormap = NULL;
-	displayInfo->dlColormapCounter = 0;
-	displayInfo->dlColormapSize = 0;
-    }
-    if(displayInfo->gc) {
-	XFreeGC(display,displayInfo->gc);
-	displayInfo->gc = NULL;
-    }
-    if(displayInfo->pixmapGC != NULL) {
-	XFreeGC(display,displayInfo->pixmapGC);
-	displayInfo->pixmapGC = NULL;
-    }
-    displayInfo->drawingAreaBackgroundColor = 0;
-    displayInfo->drawingAreaForegroundColor = 0;
-}
-
-
-void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
-{
-    displayInfo->prev->next = displayInfo->next;
-    if(displayInfo->next != NULL)
-      displayInfo->next->prev = displayInfo->prev;
-    if(displayInfoListTail == displayInfo)
-      displayInfoListTail = displayInfoListTail->prev;
-    if(displayInfoListTail == displayInfoListHead )
-      displayInfoListHead->next = NULL;
-/* Cleanup resources and free display list */
-    dmCleanupDisplayInfo(displayInfo,True);
-    freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
-    if(displayInfo->dlElementList) {
-	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
-	free ( (char *) displayInfo->dlElementList);
-    }
-    if(displayInfo->selectedDlElementList) {
-	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
-	free ( (char *) displayInfo->selectedDlElementList);
-    }
-    free ( (char *) displayInfo->dlFile);
-    free ( (char *) displayInfo->dlColormap);
-    free ( (char *) displayInfo);
-
-    if(displayInfoListHead == displayInfoListTail) {
-	currentColormap = defaultColormap;
-	currentColormapSize = DL_MAX_COLORS;
-	currentDisplayInfo = NULL;
-    }
-  /* Refresh the display list dialog box */
-    refreshDisplayListDlg();
-}
-
-/*
- * function to remove ALL displayInfo's
- *   this includes a full cleanup of associated resources and displayList
- */
-void dmRemoveAllDisplayInfo()
-{
-    DisplayInfo *nextDisplay, *displayInfo;
-
-    displayInfo = displayInfoListHead->next;
-    while (displayInfo != NULL) {
-	nextDisplay = displayInfo->next;
-	dmRemoveDisplayInfo(displayInfo);
-	displayInfo = nextDisplay;
-    }
-    displayInfoListHead->next = NULL;
-    displayInfoListTail = displayInfoListHead;
-
-    currentColormap = defaultColormap;
-    currentColormapSize = DL_MAX_COLORS;
-    currentDisplayInfo = NULL;
-}
-
-/*
- * Traverse (execute) specified displayInfo's display list
- */
-void dmTraverseDisplayList(DisplayInfo *displayInfo)
-{
-    DlElement *element;
-
-  /* Traverse the display list */
-#if DEBUG_TRAVERSAL
-    print("\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
-    dumpDlElementList(displayInfo->dlElementList);
-#endif
-    element = FirstDlElement(displayInfo->dlElementList);
-    while (element) {
-	(element->run->execute)(displayInfo,element);
-	element = element->next;
-    }
-
-  /* Change the cursor for the drawing area */
-    XDefineCursor(display,XtWindow(displayInfo->drawingArea),
-      (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
-  /* Flush the display to implement the cursor change */
-    XFlush(display);
-
-  /* Poll CA */
-#ifdef __MONITOR_CA_PEND_EVENT__
-    {
-	double t;
-	t = medmTime();
-	ca_pend_event(CA_PEND_EVENT_TIME);
-	t = medmTime() - t;
-	if(t > 0.5) {
-	    print("dmTraverseDisplayList : time used by ca_pend_event = %8.1f\n",t);
-	}
-    }
-#else
-    ca_pend_event(CA_PEND_EVENT_TIME);
-#endif
-}
-
-
-/*
- * Traverse (execute) all displayInfos and display lists
- * (Could call dmTraverseDisplayList inside the displayInfo traversal,
- *    but only need one XFlush and one ca_pend_event)
- */
-void dmTraverseAllDisplayLists()
-{
-    DisplayInfo *displayInfo;
-    DlElement *element;
-
-    displayInfo = displayInfoListHead->next;
-
-  /* Traverse the displayInfo list */
-    while (displayInfo != NULL) {
-
-      /* Traverse the display list for this displayInfo */
-#if DEBUG_TRAVERSAL
-	print("\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
-	dumpDlElementList(displayInfo->dlElementList);
-#endif
-	element = FirstDlElement(displayInfo->dlElementList);
-	while (element) {
-	    (element->run->execute)(displayInfo,element);
-	    element = element->next;
-	}
-
-      /* Change the cursor for the drawing area for this displayInfo */
-	XDefineCursor(display,XtWindow(displayInfo->drawingArea),
-	  (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
-      /* Flush the display to implement cursor changes */
-      /* Also necessary to keep the stacking order rendered correctly */
-	XFlush(display);
-
-	displayInfo = displayInfo->next;
-    }
-
-  /* Poll CA */
-#ifdef __MONITOR_CA_PEND_EVENT__
-    {
-	double t;
-	t = medmTime();
-	ca_pend_event(CA_PEND_EVENT_TIME);
-	t = medmTime() - t;
-	if(t > 0.5) {
-	    print("dmTraverseAllDisplayLists : time used by ca_pend_event = %8.1f\n",t);
-	}
-    }
-#else
-    ca_pend_event(CA_PEND_EVENT_TIME);
-#endif
-
-}
-
-/* Traverse (execute) specified displayInfo's display list non-widget
- * elements.  Should only be called in EDIT mode. */
-void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
-{
-    DlElement *element;
-    Dimension width,height;
-
-    if(displayInfo == NULL) return;
-
-  /* Unhighlight any selected elements */
-    unhighlightSelectedElements();
-    
-  /* Fill the background with the background color */
-    XSetForeground(display,displayInfo->pixmapGC,
-      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
-    XtVaGetValues(displayInfo->drawingArea,
-      XmNwidth,&width,XmNheight,&height,NULL);
-    XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
-      0, 0, (unsigned int)width,(unsigned int)height);
-
-  /* Draw grid */
-    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
-     drawGrid(displayInfo);
-
-  /* Traverse the display list */
-  /* Loop over elements not including the display */
-    element = SecondDlElement(displayInfo->dlElementList);
-    while (element) {
-	if(!element->widget) {
-	    (element->run->execute)(displayInfo, element);
-	}
-	element = element->next;
-    }
-
-  /* Since the execute traversal copies to the pixmap, now udpate the window */
-    XCopyArea(display,displayInfo->drawingAreaPixmap,
-      XtWindow(displayInfo->drawingArea),
-      displayInfo->pixmapGC, 0, 0, (unsigned int)width,
-      (unsigned int)height, 0, 0);
-
-  /* Highlight any selected elements */
-    highlightSelectedElements();
-    
-  /* Change drawingArea's cursor to the appropriate cursor */
-    XDefineCursor(display,XtWindow(displayInfo->drawingArea),
-      (currentActionType == SELECT_ACTION ?
-	rubberbandCursor : crosshairCursor));
-
 }
 
 /*
@@ -758,79 +323,6 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
     return(0);
 }
 
-
-/*
- * function to march up widget hierarchy to retrieve top shell, and
- *  then run over displayInfoList and return the corresponding DisplayInfo *
- */
-DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
-{
-    Widget w;
-    DisplayInfo *displayInfo = NULL;
-
-    w = widget;
-    while (w && (XtClass(w) != topLevelShellWidgetClass)) {
-	w = XtParent(w);
-    }
-
-    if(w) {
-	displayInfo = displayInfoListHead->next;
-	while (displayInfo && (displayInfo->shell != w)) {
-	    displayInfo = displayInfo->next;
-	}
-    }
-    return displayInfo;
-}
-
-/*
- * write specified displayInfo's display list
- */
-void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
-{
-    DlElement *element;
-
-    writeDlFile(stream,displayInfo->dlFile,0);
-    if(element = FirstDlElement(displayInfo->dlElementList)) {
-      /* This must be DL_DISPLAY */
-	(element->run->write)(stream,element,0);
-    }
-    if(displayInfo->dlColormap)
-      writeDlColormap(stream,displayInfo->dlColormap,0);
-    element = element->next;
-  /* traverse the display list */
-    while (element) {
-	(element->run->write)(stream,element,0);
-	element = element->next;
-    }
-    fprintf(stream,"\n");
-}
-
-void medmSetDisplayTitle(DisplayInfo *displayInfo)
-{
-    char str[MAX_FILE_CHARS+10];
-
-    if(displayInfo->dlFile) {
-	char *tmp, *tmp1;
-	tmp = tmp1 = displayInfo->dlFile->name;
-	while (*tmp != '\0')
-	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
-	if(displayInfo->hasBeenEditedButNotSaved) {
-	    strcpy(str,tmp1);
-	    strcat(str," (edited)");
-	    XtVaSetValues(displayInfo->shell,XmNtitle,str,NULL);
-	} else {
-	    XtVaSetValues(displayInfo->shell,XmNtitle,tmp1,NULL);
-	}
-    }
-}
-
-void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
-{
-    if(globalDisplayListTraversalMode == DL_EXECUTE) return;
-    if(displayInfo->hasBeenEditedButNotSaved) return;
-    displayInfo->hasBeenEditedButNotSaved = True;
-    medmSetDisplayTitle(displayInfo);
-}
 
 /*
  * Look for smallest object which contains the specified position.  With top
@@ -1201,9 +693,7 @@ void resizeDlElementList(DlList *dlElementList, int x, int y,
     }
 }
 
-/******************************************
- ************ rubberbanding, etc.
- ******************************************/
+/*** Server grabbing routines ****/
 
 GC xorGC;
 
@@ -1826,67 +1316,6 @@ static int doPasting(int *offsetX, int *offsetY)
 }
 
 /*
- * function to see if specified element is already in the global
- *	selectedElementsArray and return True or False based on that evaluation
- */
-Boolean alreadySelected(DlElement *element)
-{
-    DlElement *dlElement;
-
-    if(!currentDisplayInfo) return (False);
-    if(IsEmpty(currentDisplayInfo->selectedDlElementList)) return False;
-    dlElement = FirstDlElement(currentDisplayInfo->selectedDlElementList);
-    while (dlElement) {
-	DlElement *pE = element->structure.element;
-	if((pE->type != DL_Display) && (dlElement->structure.element == pE))
-	  return True;
-	dlElement = dlElement->next;
-    }
-    return (False);
-}
-
-void toggleHighlightRectangles(DisplayInfo *displayInfo, int xOffset, int yOffset)
-{
-    DlElement *dlElement = FirstDlElement(displayInfo->selectedDlElementList);
-    DlElementType type;
-    DlObject *po;
-    int width, height;
-#if DEBUG_EVENTS > 1
-    print("\n[toggleHighlightRectangles] selectedDlElement list :\n");
-    dumpDlElementList(displayInfo->selectedDlElementList);
-#endif
-  /* Traverse the elements */
-    while (dlElement) {
-	if(dlElement->type == DL_Element) {
-	    type = dlElement->structure.element->type;
-	    po = &dlElement->structure.element->structure.composite->object;
-	} else {     /* Should not be using this branch */
-	    type = dlElement->type;
-	    po = &dlElement->structure.composite->object;
-	}
-	width = ((int)po->width + xOffset);
-	width = MAX(1,width);
-	height = ((int)po->height + yOffset);
-	height = MAX(1,height);
-#if DEBUG_EVENTS > 1
-	print("  %s (%s): x: %d y: %d width: %u height: %u\n"
-	  "    xOffset: %d yOffset: %d Used-width: %d Used-height %d\n",
-	  elementType(dlElement->type),
-	  elementType(type),
-	  po->x,po->y,po->width,po->height,xOffset,yOffset,width,height);
-#endif
-      /* If not the display, draw a rectangle */
-	if(type != DL_Display) {
-	    XDrawRectangle(XtDisplay(displayInfo->drawingArea),
-	      XtWindow(displayInfo->drawingArea),xorGC,
-	      po->x,po->y,(Dimension)width,(Dimension)height);
-	}
-      /* Set next element */
-	dlElement = dlElement->next;
-    }
-}
-
-/*
  * do (multiple) resizing of all elements in global selectedElementsArray
  *	RETURNS: boolean indicating whether resize ended in the window
  *	(and hence was valid)
@@ -1976,6 +1405,69 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	default:
 	    XtDispatchEvent(&event);
 	}
+    }
+}
+
+/*** Editing routines ***/
+
+/* Function to see if specified element is already in the global *
+ * selectedElementsArray and return True or False based on that
+ * evaluation */
+Boolean alreadySelected(DlElement *element)
+{
+    DlElement *dlElement;
+
+    if(!currentDisplayInfo) return (False);
+    if(IsEmpty(currentDisplayInfo->selectedDlElementList)) return False;
+    dlElement = FirstDlElement(currentDisplayInfo->selectedDlElementList);
+    while (dlElement) {
+	DlElement *pE = element->structure.element;
+	if((pE->type != DL_Display) && (dlElement->structure.element == pE))
+	  return True;
+	dlElement = dlElement->next;
+    }
+    return (False);
+}
+
+static void toggleHighlightRectangles(DisplayInfo *displayInfo,
+  int xOffset, int yOffset)
+{
+    DlElement *dlElement = FirstDlElement(displayInfo->selectedDlElementList);
+    DlElementType type;
+    DlObject *po;
+    int width, height;
+#if DEBUG_EVENTS > 1
+    print("\n[toggleHighlightRectangles] selectedDlElement list :\n");
+    dumpDlElementList(displayInfo->selectedDlElementList);
+#endif
+  /* Traverse the elements */
+    while (dlElement) {
+	if(dlElement->type == DL_Element) {
+	    type = dlElement->structure.element->type;
+	    po = &dlElement->structure.element->structure.composite->object;
+	} else {     /* Should not be using this branch */
+	    type = dlElement->type;
+	    po = &dlElement->structure.composite->object;
+	}
+	width = ((int)po->width + xOffset);
+	width = MAX(1,width);
+	height = ((int)po->height + yOffset);
+	height = MAX(1,height);
+#if DEBUG_EVENTS > 1
+	print("  %s (%s): x: %d y: %d width: %u height: %u\n"
+	  "    xOffset: %d yOffset: %d Used-width: %d Used-height %d\n",
+	  elementType(dlElement->type),
+	  elementType(type),
+	  po->x,po->y,po->width,po->height,xOffset,yOffset,width,height);
+#endif
+      /* If not the display, draw a rectangle */
+	if(type != DL_Display) {
+	    XDrawRectangle(XtDisplay(displayInfo->drawingArea),
+	      XtWindow(displayInfo->drawingArea),xorGC,
+	      po->x,po->y,(Dimension)width,(Dimension)height);
+	}
+      /* Set next element */
+	dlElement = dlElement->next;
     }
 }
 
@@ -3408,6 +2900,8 @@ void  moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
     }
 }
 
+/*** Name value table routines ***/
+
 /*
  * generate a name-value table from the passed-in argument string
  *	returns a pointer to a NameValueTable as the function value,
@@ -3791,69 +3285,6 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     XtUnmanageChild(displayInfo->warningDialog);
 }
 
-void closeDisplay(Widget w) {
-    DisplayInfo *newDisplayInfo;
-    DlElement *pE;
-    newDisplayInfo = dmGetDisplayInfoFromWidget(w);
-    if(newDisplayInfo == currentDisplayInfo) {
-      /* Unselect any selected elements */
-	unselectElementsInDisplay();
-	currentDisplayInfo = NULL;
-    }
-    if(newDisplayInfo->hasBeenEditedButNotSaved) {
-	char warningString[2*MAX_FILE_CHARS];
-	char *tmp, *tmp1;
-
-	strcpy(warningString,"Save before closing display :\n");
-	tmp = tmp1 = newDisplayInfo->dlFile->name;
-	while (*tmp != '\0')
-	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
-	strcat(warningString,tmp1);
-	dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
-	switch (newDisplayInfo->questionDialogAnswer) {
-	case 1 :
-	  /* Yes, save display */
-	    if(medmSaveDisplay(newDisplayInfo,
-	      newDisplayInfo->dlFile->name,True) == False) return;
-	    break;
-	case 2 :
-	  /* No, return */
-	    break;
-	case 3 :
-	  /* Don't close display */
-	    return;
-	default :
-	    return;
-	}
-    }
-  /* Remove shells if their executeTime elements are in this display */
-    if(executeTimeCartesianPlotWidget || executeTimePvLimitsElement) {
-	pE = FirstDlElement(newDisplayInfo->dlElementList);
-	while (pE) {
-	    if(executeTimeCartesianPlotWidget  &&
-	      pE->widget == executeTimeCartesianPlotWidget &&
-	      cartesianPlotAxisS) {
-		executeTimeCartesianPlotWidget = NULL;
-		XtPopdown(cartesianPlotAxisS);
-		if(!executeTimePvLimitsElement) break;
-	    }
-	    if(executeTimePvLimitsElement  &&
-	      pE == executeTimePvLimitsElement &&
-	      pvLimitsS) {
-		executeTimePvLimitsElement = NULL;
-		XtPopdown(pvLimitsS);
-		if(!executeTimeCartesianPlotWidget) break;
-	    }
-	    pE = pE->next;
-	}
-    }
-  /* Remove newDisplayInfo from displayInfoList and cleanup */
-    dmRemoveDisplayInfo(newDisplayInfo);
-    if(displayInfoListHead->next == NULL) {
-	disableEditFunctions();
-    }
-}
-
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor) {
     setOfColorRule_t *color = &(setOfColorRule[colorRule]);
@@ -3929,6 +3360,8 @@ int localCvtLongToHexString(
     *pdest = 0;
     return((int)(pdest-startAddr));
 }
+
+/*** DlList routines ***/
 
 /* Makes a new, empty list */
 DlList *createDlList() {
@@ -4090,54 +3523,7 @@ static void medmPrintfDlElementList(DlList *l, char *text)
     return;
 }
 
-/*
- * Heap sort routine
- *  Sorts an array of length n into ascending order and puts the sorted
- *    indices in indx
- */
-void hsort(double array[], int indx[], int n)
-{
-    int l,j,ir,indxt,i;
-    double q;
-
-  /* All done if none or one element */
-    if(n == 0) return;
-    if(n == 1) {
-	indx[0]=0;
-	return;
-    }
-    
-  /* Initialize indx array */
-    for(j=0; j < n; j++) indx[j]=j;
-  /* Loop over elements */
-    l=(n>>1);
-    ir=n-1;
-    for(;;) {
-	if(l > 0) q=array[(indxt=indx[--l])];
-	else {
-	    q=array[(indxt=indx[ir])];
-	    indx[ir]=indx[0];
-	    if(--ir == 0) {
-		indx[0]=indxt;
-		return;
-	    }
-	}
-	i=l;
-	j=(l<<1)+1;
-	while(j <= ir) {
-	    if(j < ir && array[indx[j]] < array[indx[j+1]]) j++;
-	    if(q < array[indx[j]]) {
-		indx[i]=indx[j];
-		j+=((i=j)+1);
-		
-	    }
-	    else break;
-	}
-	indx[i]=indxt;
-    }
-}
-
-/* Undo Routines */
+/*** Undo Routines ***/
 
 /* Allocate UndoInfo struct (if necessary) and element list inside it */
 void createUndoInfo(DisplayInfo *displayInfo)
@@ -4431,7 +3817,7 @@ void setTimeValues(void)
 	timeOffset = time900101 - time700101;
 }
 
-/* PV Info routines */
+/*** PV Info routines ***/
 
 void createPvInfoDlg(void)
 {
@@ -4622,7 +4008,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 #undef MAX_COUNT
 }
 
-/* PV Limits routines */
+/*** PV Limits routines ***/
 
 void popupPvLimits(DisplayInfo *displayInfo)
 {
@@ -5351,7 +4737,7 @@ static void pvLimitsLosingFocusCallback(Widget w, XtPointer cd , XtPointer cbs)
     }
 }
 
-/* Display list dialog routines */
+/*** Display list dialog routines ***/
 
 void createDisplayListDlg(void)
 {
@@ -5786,6 +5172,8 @@ void print(const char *fmt, ...)
     }
 }
 
+/*** CALC routines ***/
+
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
 {
     int i;
@@ -5955,7 +5343,7 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
     }
 }
 
-/* Debugging routines */
+/*** Debugging routines ***/
 
 void printEventMasks(Display *display, Window win, char *string)
 {

@@ -230,11 +230,6 @@ void setCurrentDisplayColorsInColorPalette(int rcType, int index);
 /* control.c */
 void controlAttributeInit(DlControl *control);
 
-/* dmInit.c */
-DisplayInfo *allocateDisplayInfo(void);
-void dmDisplayListParse(DisplayInfo *, FILE *, char *, char *, char*, Boolean);
-TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
-
 /* eventHandlers.c */
 int initEventHandlers(void);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
@@ -325,6 +320,10 @@ void updateCartesianPlotDataDialog(void);
 /* medmComposite.c */
 DlElement *groupObjects();
 void ungroupSelectedElements(void);
+
+/* medmDisplay.c */
+DlElement *parseDisplay(DisplayInfo *displayInfo);
+void closeDisplay(Widget);
 
 /* medmMonitor.c */
 void monitorAttributeInit(DlMonitor *monitor);
@@ -466,23 +465,32 @@ void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
 void drawColoredRectangle(UpdateTask *pt, Pixel pixel);
 
-/* utils.c */
-long longFval(double f);
-Pixel alarmColor(int type);
-int localCvtLongToHexString(long source, char *pdest);
+/* display.c */
+DisplayInfo *allocateDisplayInfo(void);
+void dmDisplayListParse(DisplayInfo *, FILE *, char *, char *, char*, Boolean);
+TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);
-Boolean extractStringBetweenColons(char *input, char *output, int startPos,
-  int  *endPos);
-#ifndef MEDM_CDEV
-void dmRemoveMonitorStructureFromMonitorList(Channel *monitorData);
-#endif
-void dmRemoveDisplayList(DisplayInfo *displayInfo);
+void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list);
+void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
+  DlList *list);
 void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList);
 void dmRemoveDisplayInfo(DisplayInfo *displayInfo);
 void dmRemoveAllDisplayInfo(void);
 void dmTraverseDisplayList(DisplayInfo *displayInfo);
 void dmTraverseAllDisplayLists(void);
 void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo);
+DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
+void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
+void medmSetDisplayTitle(DisplayInfo *displayInfo);
+void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
+
+
+/* utils.c */
+long longFval(double f);
+Pixel alarmColor(int type);
+int localCvtLongToHexString(long source, char *pdest);
+Boolean extractStringBetweenColons(char *input, char *output, int startPos,
+  int  *endPos);
 int dmGetBestFontWithInfo(XFontStruct **fontTable, int nFonts, char *text,
   int h, int w, int *usedH, int *usedW, Boolean textWidthFlag);
 void dmSetAndPopupWarningDialog(DisplayInfo *displayInfo,
@@ -496,9 +504,6 @@ void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
   char        *cancelBtnLabel,
   char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
-DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
-void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
-void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
@@ -556,12 +561,6 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
   char *inputString, char *outputString, int sizeOfOutputString);
 void optionMenuSet(Widget menu, int buttonId);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
-void medmSetDisplayTitle(DisplayInfo *displayInfo);
-void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
-void closeDisplay(Widget);
-void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list);
-void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
-  DlList *list);
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
 #endif
@@ -634,7 +633,6 @@ void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
   unsigned int height);
 DlFile *parseFile(DisplayInfo *displayInfo);
-DlElement *parseDisplay(DisplayInfo *displayInfo);
 DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr);
 void parseBasicAttribute(DisplayInfo *, DlBasicAttribute *);
 void parseDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);

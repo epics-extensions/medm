@@ -5,7 +5,7 @@
 
 THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
 AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
-AND IN ALL SOURCE LISTINGS OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
 
 (C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
 
@@ -54,481 +54,1170 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_EVENTS 0
 #define DEBUG_RELATED_DISPLAY 0
 
 #include "medm.h"
+
+#include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
+
+extern Widget mainShell;
+
+static Position x = 0, y = 0;
+static Widget lastShell;
+
+/* KE: Used to move the display if its x and y are zero
+ * The following account for the borders and title bar with the TED WM
+ *   Were formerly both 10 (not very aesthetic) */
+#define DISPLAY_DEFAULT_X 5
+#define DISPLAY_DEFAULT_Y 24
+
+#define MEDM_EXEC_LIST_MAX 1024
+
+typedef DlElement *(*medmParseFunc)(DisplayInfo *);
+typedef struct {
+    char *name;
+    medmParseFunc func;
+} ParseFuncEntry;
+
+typedef struct _parseFuncEntryNode {
+    ParseFuncEntry *entry;
+    struct _parseFuncEntryNode *next;
+    struct _parseFuncEntryNode *prev;
+} ParseFuncEntryNode;
 
 /* Function prototypes */
 
-static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath);
-static void createExecuteModeMenu(DisplayInfo *displayInfo);
-static void displayGetValues(ResourceBundle *pRCB, DlElement *p);
-static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
-static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+/* Global variables */
 
-static DlDispatchTable displayDlDispatchTable = {
-    createDlDisplay,
-    NULL,
-    executeDlDisplay,
-    NULL,
-    writeDlDisplay,
-    NULL,
-    displayGetValues,
-    NULL,
-    displaySetBackgroundColor,
-    displaySetForegroundColor,
-    NULL,
-    NULL,
-    NULL,
-    NULL};
+ParseFuncEntry parseFuncTable[] = {
+    {"rectangle",            parseRectangle},
+    {"oval",                 parseOval},
+    {"arc",                  parseArc},
+    {"text",                 parseText},
+/*     {"falling line",         parseFallingLine}, */
+/*     {"rising line",          parseRisingLine}, */
+    {"falling line",         parsePolyline},
+    {"rising line",          parsePolyline},
+    {"related display",      parseRelatedDisplay},
+    {"shell command",        parseShellCommand},
+    {"bar",                  parseBar},
+    {"indicator",            parseIndicator},
+    {"meter",                parseMeter},
+    {"byte",                 parseByte},
+    {"strip chart",          parseStripChart},
+#ifdef CARTESIAN_PLOT
+    {"cartesian plot",       parseCartesianPlot},
+#endif     /* #ifdef CARTESIAN_PLOT */
+    {"text update",          parseTextUpdate},
+    {"choice button",        parseChoiceButton},
+    {"button",               parseChoiceButton},
+    {"message button",       parseMessageButton},
+    {"menu",                 parseMenu},
+    {"text entry",           parseTextEntry},
+    {"valuator",             parseValuator},
+    {"image",                parseImage},
+    {"composite",            parseComposite},
+    {"polyline",             parsePolyline},
+    {"polygon",              parsePolygon},
+};
+
+static int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
+
+/* DEBUG */
+#if 0
+DisplayInfo *debugDisplayInfo=NULL;
+#endif
+/* End DEBUG */
+
+DlElement *getNextElement(DisplayInfo *pDI, char *token) {
+    int i;
+    for (i=0; i<parseFuncTableSize; i++) {
+	if (!strcmp(token,parseFuncTable[i].name)) {
+	    return parseFuncTable[i].func(pDI);
+	}
+    }
+    return 0;
+}
+
+#ifdef __cplusplus
+static void displayShellPopdownCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
+{
+    Arg args[2];
+    XtSetArg(args[0],XmNx,&x);
+    XtSetArg(args[1],XmNy,&y);
+    XtGetValues(shell,args,2);
+    lastShell = shell;
+}
+
+#ifdef __cplusplus
+static void displayShellPopupCallback(Widget shell, XtPointer, XtPointer)
+#else
+static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *displayInfo = (DisplayInfo *)cd;
+    Arg args[2];
+    char *env = getenv("MEDM_HELP");
+
+    if (shell == lastShell) {
+	XtSetArg(args[0],XmNx,x);
+	XtSetArg(args[1],XmNy,y);
+	XtSetValues(shell,args,2);
+    }
+    if (env != NULL) addDisplayHelpProtocol(displayInfo);
+}
+
+/***
+ ***  displayInfo creation
+ ***/
 
 /*
- * Create and fill in widgets for display
+ * create and return a DisplayInfo structure pointer on tail of displayInfoList
+ *  this includes a shell (with it's dialogs and event handlers)
  */
-
-DisplayInfo *createDisplay()
+DisplayInfo *allocateDisplayInfo()
 {
     DisplayInfo *displayInfo;
-    DlElement *dlElement;
+    int nargs;
+    Arg args[8];
 
-  /* Clear currentDisplayInfo - not really one yet */
-    currentDisplayInfo = NULL;
-    initializeGlobalResourceBundle();
+/* Allocate a DisplayInfo structure and shell for this display file/list */
+    displayInfo = (DisplayInfo *)malloc(sizeof(DisplayInfo));
+    if (!displayInfo) return NULL;
 
-    if (!(displayInfo = allocateDisplayInfo())) return NULL;
-
-  /* General scheme: update  globalResourceBundle, then do creates */
-    globalResourceBundle.x = 0;
-    globalResourceBundle.y = 0;
-    globalResourceBundle.width = DEFAULT_DISPLAY_WIDTH;
-    globalResourceBundle.height = DEFAULT_DISPLAY_HEIGHT;
-    globalResourceBundle.gridSpacing = DEFAULT_GRID_SPACING;
-    globalResourceBundle.gridOn = DEFAULT_GRID_ON;
-    globalResourceBundle.snapToGrid = DEFAULT_GRID_SNAP;
-    strcpy(globalResourceBundle.name,DEFAULT_FILE_NAME);
-    displayInfo->dlFile = createDlFile(displayInfo);
-    dlElement = createDlDisplay(NULL);
-    if (dlElement) {
-	DlDisplay *dlDisplay = dlElement->structure.display;
-	dlDisplay->object.x = globalResourceBundle.x;
-	dlDisplay->object.y = globalResourceBundle.y;
-	dlDisplay->object.width = globalResourceBundle.width;
-	dlDisplay->object.height = globalResourceBundle.height;
-	dlDisplay->clr = globalResourceBundle.clr;
-	dlDisplay->bclr = globalResourceBundle.bclr;
-	dlDisplay->grid.gridSpacing = globalResourceBundle.gridSpacing;
-	dlDisplay->grid.gridOn = globalResourceBundle.gridOn;
-	dlDisplay->grid.snapToGrid = globalResourceBundle.snapToGrid;
-	appendDlElement(displayInfo->dlElementList,dlElement);
-    } else {
-      /* Cleanup up displayInfo */
+    displayInfo->dlElementList = createDlList();
+    if (!displayInfo->dlElementList) {
+	free(displayInfo);
 	return NULL;
     }
-  /* Create the colormap, also the pixmap and gc */
-    displayInfo->dlColormap = createDlColormap(displayInfo);
-  /* Execute all the elements including the display */
-    dmTraverseDisplayList(displayInfo);
-  /* Pop it up */
-    XtPopup(displayInfo->shell,XtGrabNone);
-  /* Make it be the current displayInfo */
-    currentDisplayInfo = displayInfo;
-  /* Refresh the display list dialog box */
-    refreshDisplayListDlg();
 
+    displayInfo->selectedDlElementList = createDlList();
+    if (!displayInfo->selectedDlElementList) {
+	free(displayInfo->dlElementList);
+	free(displayInfo);
+	return NULL;
+    }
+    displayInfo->selectedElementsAreHighlighted = False;
+
+    displayInfo->filePtr = NULL;
+    displayInfo->newDisplay = True;
+    displayInfo->versionNumber = 0;
+
+    displayInfo->drawingArea = 0;
+    displayInfo->drawingAreaPixmap = 0;
+    displayInfo->cartesianPlotPopupMenu = 0;
+    displayInfo->selectedCartesianPlot = 0;
+    displayInfo->warningDialog = NULL;
+    displayInfo->warningDialogAnswer = 0;
+    displayInfo->questionDialog = NULL;
+    displayInfo->questionDialogAnswer = 0;
+    displayInfo->shellCommandPromptD = NULL;
+
+    displayInfo->grid = NULL;
+    displayInfo->undoInfo = NULL;
+
+    updateTaskInitHead(displayInfo);
+
+#if 0
+    displayInfo->childCount = 0;
+#endif
+
+    displayInfo->colormap = 0;
+    displayInfo->dlColormapCounter = 0;
+    displayInfo->dlColormapSize = 0;
+    displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
+    displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
+    displayInfo->gc = 0;
+    displayInfo->pixmapGC = 0;
+
+    displayInfo->traversalMode = globalDisplayListTraversalMode;
+    displayInfo->hasBeenEditedButNotSaved = False;
+    displayInfo->fromRelatedDisplayExecution = FALSE;
+
+    displayInfo->nameValueTable = NULL;
+    displayInfo->numNameValues = 0;
+
+    displayInfo->dlFile = NULL;
+    displayInfo->dlColormap = NULL;
+
+  /* Create the shell and add callbacks */
+    nargs = 0;
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
+    XtSetArg(args[nargs],XmNiconName,"display"); nargs++;
+    XtSetArg(args[nargs],XmNtitle,"display"); nargs++;
+    XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
+  /* Turn resize handles off
+   * KE: Is is really good to do this? */
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
+    nargs++;
+  /* KE: The following is necessary for Exceed, which turns off the resize
+   *   function with the handles.  It should not be necessary */
+    XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
+#if 1
+  /* For highlightOnEnter on pointer motion, this must be set for shells
+   * KE: It seems like the user should set this
+   *   highlightOnEnter is set for MessageButton, RelatedDisplay, Shell Command,
+   *     TextEntry, Valuator
+   *   Seems like it only does something for the Slider and Text Entry */
+    XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmPOINTER); nargs++;
+#endif    
+  /* Map window manager menu Close function to nothing for now */
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
+    if (privateCmap) {
+	XtSetArg(args[nargs],XmNcolormap,cmap); nargs++;
+    }
+    displayInfo->shell = XtCreatePopupShell("display",topLevelShellWidgetClass,
+      mainShell,args,nargs);
+    XtAddCallback(displayInfo->shell, XmNpopupCallback,
+      displayShellPopupCallback, (XtPointer)displayInfo);
+    XtAddCallback(displayInfo->shell,XmNpopdownCallback,
+      displayShellPopdownCallback, NULL);
+
+  /* Register interest in these protocols */
+    { Atom atoms[2];
+    atoms[0] = WM_DELETE_WINDOW;
+    atoms[1] = WM_TAKE_FOCUS;
+    XmAddWMProtocols(displayInfo->shell,atoms,2);
+    }
+
+  /* Register the window manager close callbacks */
+    XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
+      (XtCallbackProc)wmCloseCallback,
+      (XtPointer)DISPLAY_SHELL);
+    
+  /* Append to end of the list */
+    displayInfo->next = NULL;
+    displayInfo->prev = displayInfoListTail;
+    displayInfoListTail->next = displayInfo;
+    displayInfoListTail = displayInfo;
+    
     return(displayInfo);
 }
 
-#define DISPLAY_DEFAULT_X 10
-#define DISPLAY_DEFAULT_Y 10
+TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
+    TOKEN tokenType;
+    char token[MAX_TOKEN_LENGTH];
+    int nestingLevel = 0;
+    static DlBasicAttribute attr;
+    static DlDynamicAttribute dynAttr;
+    static Boolean init = True;
  
-DlElement *createDlDisplay(DlElement *p)
-{
-    DlDisplay *dlDisplay;
-    DlElement *dlElement;
- 
- 
-    dlDisplay = (DlDisplay *) malloc(sizeof(DlDisplay));
-    if (!dlDisplay) return 0;
-    if (p) {
-	*dlDisplay = *p->structure.display; 
-    } else {
-	objectAttributeInit(&(dlDisplay->object));
-	dlDisplay->object.x = DISPLAY_DEFAULT_X;
-	dlDisplay->object.y = DISPLAY_DEFAULT_Y;
-	dlDisplay->clr = 0;
-	dlDisplay->bclr = 1;
-	dlDisplay->cmap[0] = '\0';
-	dlDisplay->grid.gridSpacing = DEFAULT_GRID_SPACING;
-	dlDisplay->grid.gridOn = DEFAULT_GRID_ON;
-	dlDisplay->grid.snapToGrid = DEFAULT_GRID_SNAP;
+  /* Initialize attributes to defaults for old format */
+    if (init && displayInfo->versionNumber < 20200) {
+	basicAttributeInit(&attr);
+	dynamicAttributeInit(&dynAttr);
+	init = False;
     }
  
-    if (!(dlElement = createDlElement(DL_Display,(XtPointer)dlDisplay,
-      &displayDlDispatchTable))) {
-	free(dlDisplay);
-    }
- 
-    return(dlElement);
+  /* Loop over tokens until T_EOF */
+    do {
+	switch (tokenType=getToken(displayInfo,token)) {
+	case T_WORD : {
+	    DlElement *pe = 0;
+	    if (pe = getNextElement(displayInfo,token)) {
+	      /* Found an element via the parseFuncTable */
+		if (displayInfo->versionNumber < 20200) {
+		    switch (pe->type) {
+		    case DL_Rectangle :
+		    case DL_Oval      :
+		    case DL_Arc       :
+		    case DL_Text      :
+		    case DL_Polyline  :
+		    case DL_Polygon   :
+		      /* Use the last found attributes */
+			pe->structure.rectangle->attr = attr;
+#if 0
+			pe->structure.rectangle->dynAttr = dynAttr;
+		      /* KE: Don't want to do this.  The old format
+		       *  relies on them not being reset */
+		      /* Reset the attributes to defaults */
+			basicAttributeInit(&attr);
+			dynamicAttributeInit(&dynAttr);
+#else
+		      /* KE: This was what was done in MEDM 2.2.9 */
+			if (dynAttr.chan[0][0] != '\0') {
+			    pe->structure.rectangle->dynAttr = dynAttr;
+			    dynAttr.chan[0][0] = '\0';
+			}
+#endif			
+			break;
+		    }
+		}
+	    } else if (displayInfo->versionNumber < 20200) {
+	      /* Did not find an element and old file version
+	       *   Must be an attribute, which appear before the object does */
+		if (!strcmp(token,"<<basic atribute>>") ||
+		  !strcmp(token,"basic attribute") ||
+		  !strcmp(token,"<<basic attribute>>")) {
+		    parseOldBasicAttribute(displayInfo,&attr);
+		} else if (!strcmp(token,"dynamic attribute") ||
+		  !strcmp(token,"<<dynamic attribute>>")) {
+		    parseOldDynamicAttribute(displayInfo,&dynAttr);
+		}
+	    }
+	    if (pe) {
+		appendDlElement(dlList,pe);
+	    }
+	}
+	case T_EQUAL:
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	default :
+	    break;
+	}
+    } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF));
+
+  /* Reset the init flag */
+    if (tokenType == T_EOF) init = True;
+    return tokenType;
 }
 
+/***
+ ***  parsing and drawing/widget creation routines
+ ***/
+
 /*
- * this execute... function is a bit unique in that it can properly handle
- *  being called on extant widgets (drawingArea's/shells) - all other
- *  execute... functions want to always create new widgets (since there
- *  is no direct record of the widget attached to the object/element)
- *  {this can be fixed to save on widget create/destroy cycles later}
+ * routine which actually parses the display list in the opened file
+ *  N.B.  this function must be kept in sync with parseCompositeChildren
+ *  which follows...
  */
-void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
+void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
+  char *argsString, char *filename,  char *geometryString,
+  Boolean fromRelatedDisplayExecution)
 {
-    DlColormap *dlColormap;
-    Arg args[12];
+    DisplayInfo *cdi;
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int numPairs;
+    Position x, y;
+    int xg, yg;
+    unsigned int width, height;
+    int mask;
+    int reuse=0;
+    DlElement *pE;
+    Arg args[2];
     int nargs;
-    DlDisplay *dlDisplay = dlElement->structure.display;
-    
-  /* Set the display's foreground and background colors */
-    displayInfo->drawingAreaBackgroundColor = dlDisplay->bclr;
-    displayInfo->drawingAreaForegroundColor = dlDisplay->clr;
-
-  /* Set the display's grid information */
-    displayInfo->grid = &dlDisplay->grid;
- 
-  /* From the DlDisplay structure, we've got drawingArea's dimensions */
-    nargs = 0;
-    XtSetArg(args[nargs],XmNwidth,(Dimension)dlDisplay->object.width); nargs++;
-    XtSetArg(args[nargs],XmNheight,(Dimension)dlDisplay->object.height); nargs++;
-    XtSetArg(args[nargs],XmNborderWidth,(Dimension)0); nargs++;
-    XtSetArg(args[nargs],XmNmarginWidth,(Dimension)0); nargs++;
-    XtSetArg(args[nargs],XmNmarginHeight,(Dimension)0); nargs++;
-    XtSetArg(args[nargs],XmNshadowThickness,(Dimension)0); nargs++;
-    XtSetArg(args[nargs],XmNresizePolicy,XmRESIZE_NONE); nargs++;
-  /* N.B.: don't use userData resource since it is used later on for aspect
-   *   ratio-preserving resizes */
- 
-    if (displayInfo->drawingArea == NULL) {
- 
-	displayInfo->drawingArea = XmCreateDrawingArea(displayInfo->shell,
-	  "displayDA",args,nargs);
-      /* Add expose & resize  & input callbacks for drawingArea */
-	XtAddCallback(displayInfo->drawingArea,XmNexposeCallback,
-	  drawingAreaCallback,(XtPointer)displayInfo);
-	XtAddCallback(displayInfo->drawingArea,XmNresizeCallback,
-	  drawingAreaCallback,(XtPointer)displayInfo);
-	XtManageChild(displayInfo->drawingArea);
 	
-      /* Branch depending on the mode */
-	if (displayInfo->traversalMode == DL_EDIT) {
-	  /* Create the edit-mode popup menu */
-	    createEditModeMenu(displayInfo);
-	    
-	  /* Handle input */
-	    XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
-	      drawingAreaCallback,(XtPointer)displayInfo);
+    
+#if DEBUG_RELATED_DISPLAY
+    print("\ndmDisplayListParse: displayInfo=%x\n"
+      "  argsString=%s\n"
+      "  filename=%s\n"
+      "  geometryString=%s\n"
+      "  fromRelatedDisplayExecution=%s\n",
+      displayInfo,
+      argsString?argsString:"NULL",
+      filename?filename:"NULL",
+      geometryString?geometryString:"NULL",
+      fromRelatedDisplayExecution?"True":"False");
+#endif    
 
-	  /* Handle key presses */
-	    XtAddEventHandler(displayInfo->drawingArea,KeyPressMask,False,
-	      handleEditKeyPress,(XtPointer)displayInfo);
+    initializeGlobalResourceBundle();
 
-	  /* Handle button presses */
-	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-	      handleEditButtonPress,(XtPointer)displayInfo);
-
-	  /* Handle enter windows */
-	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
-	      handleEditEnterWindow,(XtPointer)displayInfo);
- 
-	} else if (displayInfo->traversalMode == DL_EXECUTE) {
-	  /*
-	   *  MDA --- HACK to fix DND visuals problem with SUN server
-	   *    Note: This call is in here strictly to satisfy some defect in
-	   *    the MIT and other X servers for SUNOS machines
-	   *    This is completely unnecessary for HP, DEC, NCD, ...
-	   */
-#if 0
-	  /* KE: This was useless in any event since there was no XtSetValues */
-	    XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
-	    XmDropSiteRegister(displayInfo->drawingArea,args,1);
+    if (!displayInfo) {
+      /* Did not come from a display that is to be replaced
+       *   Allocate a DisplayInfo structure */
+	cdi = currentDisplayInfo = allocateDisplayInfo();
+	cdi->filePtr = filePtr;
+	cdi->newDisplay = False;
+    } else {
+      /* Came from a display that is to be replaced */
+      /* Get the current values of x and y */
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&x); nargs++;
+	XtSetArg(args[nargs],XmNy,&y); nargs++;
+	XtGetValues(displayInfo->shell,args,nargs);
+#if DEBUG_RELATED_DISPLAY
+	print("dmDisplayListParse: Old values: x=%d y=%d\n",x,y);
+#endif      
+      /* See if we want to reuse it or save it */
+	if(displayInfo->fromRelatedDisplayExecution == True) {
+	  /* Not an original, don't save it, reuse it */
+	    reuse=1;
+	  /* Clear out old display */
+	    dmCleanupDisplayInfo(displayInfo,False);
+	    clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+	    displayInfo->filePtr = filePtr;
+	    cdi = currentDisplayInfo = displayInfo;
+	    cdi->newDisplay = False;
+	} else {
+	  /* This is an original, pop it down */
+	    XtPopdown(displayInfo->shell);
+#if DEBUG_RELATED_DISPLAY > 1
+	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [1]: displayInfoList");
+	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [1]: displayInfoSaveList");
+#endif
+	  /* Save it if not already saved */
+	    moveDisplayInfoToDisplayInfoSave(displayInfo);
+#if DEBUG_RELATED_DISPLAY > 1
+	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
+	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [2]: displayInfoSaveList");
 #endif	    
-
-	  /* Create the execute-mode popup menu */
-	    createExecuteModeMenu(displayInfo);	    
-
-	  /* Handle button presses */
-	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-	      handleExecuteButtonPress,(XtPointer)displayInfo);
-	    
-	  /* Add in drag/drop translations */
-	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
+	    cdi = currentDisplayInfo = allocateDisplayInfo();
+	    cdi->filePtr = filePtr;
+	    cdi->newDisplay = False;
 	}
-    } else  {     /* else for if (displayInfo->drawingArea == NULL) */
-      /* Just set the values, drawing area is already created with these values
-       * KE: Should be unnecessary except for object.x,y */
-	nargs=2;
-	XtSetValues(displayInfo->drawingArea,args,nargs);
+    }
+  
+    cdi->fromRelatedDisplayExecution = fromRelatedDisplayExecution;
+    
+  /* Generate the name-value table for macro substitutions (related display) */
+    if (argsString) {
+	cdi->nameValueTable = generateNameValueTable(argsString,&numPairs);
+	cdi->numNameValues = numPairs;
+    } else {
+	cdi->nameValueTable = NULL;
+	cdi->numNameValues = 0;
     }
 
-  /* Do the shell */
-    nargs=0;
-    XtSetArg(args[nargs],XmNx,(Position)dlDisplay->object.x); nargs++;
-    XtSetArg(args[nargs],XmNy,(Position)dlDisplay->object.y); nargs++;
-    XtSetArg(args[nargs],XmNwidth,(Dimension)dlDisplay->object.width); nargs++;
-    XtSetArg(args[nargs],XmNheight,(Dimension)dlDisplay->object.height); nargs++;
-    XtSetArg(args[nargs],XmNiconName,displayInfo->dlFile->name); nargs++;
-    XtSetValues(displayInfo->shell,args,nargs);
-    medmSetDisplayTitle(displayInfo);
-    XtRealizeWidget(displayInfo->shell);
 
-  /* KE: Move it to be consistent with its object values
-   * XtSetValues (here or above) or XtMoveWidget (here) do not work
-   * Is necessary in part because WM adds borders and title bar,
-       moving the shell down when first created */
-    XMoveWindow(display,XtWindow(displayInfo->shell),
-      dlDisplay->object.x,dlDisplay->object.y);
+  /* If first token isn't "file" then bail out */
+    tokenType=getToken(cdi,token);
+    if (tokenType == T_WORD && !strcmp(token,"file")) {
+	cdi->dlFile = parseFile(cdi);
+	if (cdi->dlFile) {
+	    cdi->versionNumber = cdi->dlFile->versionNumber;
+	    strcpy(cdi->dlFile->name,filename);
+	} else {
+	    medmPostMsg(1,"dmDisplayListParse: Out of memory\n"
+	      "  file: %s\n",filename);
+	    cdi->filePtr = NULL;
+	    dmRemoveDisplayInfo(cdi);
+	    cdi = NULL;
+	    return;
+	}
+    } else {
+	medmPostMsg(1,"dmDisplayListParse: Invalid .adl file (Bad first token)\n"
+	  "  file: %s\n",filename);
+	cdi->filePtr = NULL;
+	dmRemoveDisplayInfo(cdi);
+	cdi = NULL;
+	return;
+    }
 
 #if DEBUG_RELATED_DISPLAY
-    print("executeDlDisplay: dlDisplay->object=%x\n"
-      "  dlDisplay->object.x=%d dlDisplay->object.y=%d\n",
-      dlDisplay->object,
-      dlDisplay->object.x,dlDisplay->object.y);
-#if 0
-    print("mainShell: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(mainShell)?"True":"False",
-      XtIsManaged(mainShell)?"True":"False");
-    printWindowAttributes(display,XtWindow(mainShell),"MainShell: ");
+    print("  File: %s\n",cdi->dlFile->name);
+#if 0    
+    if(strstr(cdi->dlFile->name,"sMain.adl")) {
+	debugDisplayInfo=displayInfo;
+	print("Set debugDisplayInfo for sMain.adl\n");
+    }
+#endif
+#endif
 
-    print("shell: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(displayInfo->shell)?"True":"False",
-      XtIsManaged(displayInfo->shell)?"True":"False");
-    printWindowAttributes(display,XtWindow(displayInfo->shell),"Shell: ");
+    tokenType=getToken(cdi,token);
+    if (tokenType ==T_WORD && !strcmp(token,"display")) {
+	parseDisplay(cdi);
+    }
+
+    tokenType=getToken(cdi,token);
+    if (tokenType == T_WORD && 
+      (!strcmp(token,"color map") ||
+	!strcmp(token,"<<color map>>"))) {
+
+	DlElement *pE;
+	
+	cdi->dlColormap=parseColormap(cdi,cdi->filePtr);
+	if (!cdi->dlColormap) {
+	  /* error - do total bail out */
+	    fclose(cdi->filePtr);
+	    dmRemoveDisplayInfo(cdi);
+	    return;
+	}
+#if 0	
+      /* Since a valid colormap element has been brought into the
+         display list, remove the external cmap reference in the
+         dlDisplay element */
+	if(pE = FirstDlElement(displayInfo->dlElementList)) {
+	    pE->structure.display->cmap[0] = '\0';
+	}
+#endif	
+    }
+
+  /* Proceed with parsing */
+    while (parseAndAppendDisplayList(cdi,
+      cdi->dlElementList) != T_EOF );
+    cdi->filePtr = NULL;
+
+  /* The display is the first element */
+    pE = FirstDlElement(cdi->dlElementList);
+
+  /* Change DlObject values for x and y to be the same as the original */
+    if(displayInfo) {
+      /* Note that cdi is not necessarily the same as displayInfo */
+#if DEBUG_RELATED_DISPLAY
+	print("  Set replaced values: XtIsRealized=%s XtIsManaged=%s\n",
+	  XtIsRealized(cdi->shell)?"True":"False",
+	  XtIsManaged(cdi->shell)?"True":"False");
+	print("  x=%d pE->structure.display->object.x=%d\n"
+	  "  y=%d pE->structure.display->object.y=%d\n",
+	  x,pE->structure.display->object.x,
+	  y,pE->structure.display->object.y);
+#endif	
+	pE->structure.display->object.x = x;
+	pE->structure.display->object.y = y;
+    }
+
+  /* Do resizing */
+    if(reuse) {
+      /* Resize the display to the new size now
+       *   (There should be no resize callback yet so it will not try
+       *     to resize all the elements) */
+	nargs=0;
+	XtSetArg(args[nargs],XmNwidth,pE->structure.display->object.width);
+	nargs++;
+	XtSetArg(args[nargs],XmNheight,pE->structure.display->object.height);
+	nargs++;
+	XtSetValues(displayInfo->shell,args,nargs);
+    } else if(geometryString && *geometryString) {
+      /* Handle geometry string */
+      /* Parse the geometry string (mask indicates what was found) */
+	mask = XParseGeometry(geometryString,&xg,&yg,&width,&height);
+#if DEBUG_RELATED_DISPLAY
+	print("dmDisplayListParse: Geometry values: xg=%d yg=%d\n",xg,yg);
+#endif      
+	
+      /* Change width and height object values now, x and y later */
+	if ((mask & WidthValue) && (mask & HeightValue)) {
+	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
+	}
+    }
+
+  /* Execute all the elements including the display */
+    dmTraverseDisplayList(cdi);
     
-    print("DA: XtIsRealized=%s XtIsManaged=%s\n",
-      XtIsRealized(displayInfo->drawingArea)?"True":"False",
-      XtIsManaged(displayInfo->drawingArea)?"True":"False");
-    printWindowAttributes(display,XtWindow(displayInfo->drawingArea),"DA: ");
-#endif    
+  /* Pop it up */
+    XtPopup(cdi->shell,XtGrabNone);
+#if DEBUG_RELATED_DISPLAY
+    print("  After XtPopup: XtIsRealized=%s XtIsManaged=%s\n",
+      XtIsRealized(cdi->shell)?"True":"False",
+      XtIsManaged(cdi->shell)?"True":"False");
+    print("  Current values:\n"
+      "    pE->structure.display->object.x=%d\n"
+      "    pE->structure.display->object.y=%d\n",
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
     {
 	Position xpos,ypos;
 	
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
-	XtGetValues(displayInfo->shell,args,nargs);
-	print("executeDlDisplay: xpos=%d ypos=%d\n",xpos,ypos);
+	XtGetValues(cdi->shell,args,nargs);
+	print("dmDisplayListParse: After XtPopup: xpos=%d ypos=%d\n",xpos,ypos);
+    }
+#endif      
+    
+  /* Do moving after it is realized */
+    if(displayInfo && !reuse) {
+#if DEBUG_RELATED_DISPLAY
+	print("  Move(1)\n");
+	pE->structure.display->object.x=x;
+	pE->structure.display->object.y=y;
+#endif	
+    } else if(geometryString && *geometryString) {
+#if DEBUG_RELATED_DISPLAY
+	print("  Move(2)\n");
+#endif	
+	if ((mask & XValue) && (mask & YValue)) {
+	    pE->structure.display->object.x=xg;
+	    pE->structure.display->object.y=yg;
+	}
+#if DEBUG_RELATED_DISPLAY
+    } else {
+	print("  Move(0)\n");
+#endif
+    }
+
+  /* KE: Move it to be consistent with its object values
+   * XtSetValues or XtMoveWidget do not work here
+   * Is necessary in part because WM adds borders and title bar,
+       moving the shell down when first created */
+    XMoveWindow(display,XtWindow(cdi->shell),
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
+
+#if DEBUG_RELATED_DISPLAY
+    print("  Final values:\n"
+      "    pE->structure.display->object.x=%d\n"
+      "    pE->structure.display->object.y=%d\n",
+      pE->structure.display->object.x,
+      pE->structure.display->object.y);
+    {
+	Position xpos,ypos;
+	
+	nargs=0;
+	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
+	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
+	XtGetValues(cdi->shell,args,nargs);
+	print("dmDisplayListParse: At end: xpos=%d ypos=%d\n",xpos,ypos);
     }
 #endif
     
-#if DEBUG_EVENTS     
-    printEventMasks(display, XtWindow(displayInfo->shell),
-      "\n[displayInfo->shell] ");
-    printEventMasks(display, XtWindow(displayInfo->drawingArea),
-      "\n[displayInfo->drawingArea] ");
-#endif    
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
+}
 
-  /* If there is an external colormap file specification, parse/execute it now */
-  /*   (Note that executeDlColormap also defines the drawingAreaPixmap) */
-     if (strlen(dlDisplay->cmap) > (size_t)1)  {
- 	if (dlColormap = parseAndExtractExternalColormap(displayInfo,
-	  dlDisplay->cmap)) {
-	    executeDlColormap(displayInfo,dlColormap);
+/*
+ * Function to open a specified file (as .adl if specified as .dl),
+ *   looking in EPICS_DISPLAY_PATH directory if unavailable in the
+ *   working directory
+ */
+
+FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
+{
+    FILE *filePtr;
+    int startPos;
+    char name[MAX_TOKEN_LENGTH], fullPathName[MAX_DIR_LENGTH],
+      dirName[MAX_DIR_LENGTH];
+    char *dir, *ptr;
+#if DEBUG_FILE
+    static FILE *file=NULL;
+    static pid_t pid=0;
+#endif
+
+  /* Try to open with the given name first
+   *   (Will be in cwd if not an absolute pathname) */
+    strncpy(name, filename, MAX_TOKEN_LENGTH);
+    name[MAX_TOKEN_LENGTH-1] = '\0';
+    filePtr = fopen(name,"r");
+#if DEBUG_FILE
+    if(!file) {
+	file=fopen("/tmp/medmLog","a");
+	pid=getpid();
+	if(file) {
+	    fprintf(file,"Initializing PID: %d\n",pid);
 	} else {
-	    medmPostMsg(1,"executeDlDisplay: Cannnot parse and execute external"
-	      " colormap %s\n",dlDisplay->cmap);
-	    medmCATerminate();
-	    dmTerminateX();
-	    exit(-1);
+	    print("Cannot open /tmp/medmLog\n");
 	}
-    } else {
-	executeDlColormap(displayInfo,displayInfo->dlColormap);
     }
-}
-
-static void createExecuteModeMenu(DisplayInfo *displayInfo)
-{
-    Widget w;
-    int nargs;
-    Arg args[8];
-    static int first = 1, doExec = 0;
-    char *execPath = NULL;
-    
-  /* Get MEDM_EXECUTE_LIST only the first time to speed up creating
-   *   successive displays) */
-    if(first) {
-	first = 0;
-	execPath = getenv("MEDM_EXEC_LIST");
-	if(execPath && execPath[0]) doExec = 1;
+#if DEBUG_FILE > 1
+    print("[%d] dmOpenUsableFile: %s\n",pid,filename);
+    print("  [1] Converted to: %s\n",name);
+    if(filePtr) print("    Found as: %s\n",name);
+#endif	
+    if(file) {
+	fprintf(file,"[%d] dmOpenUsableFile: %s\n",pid,filename);
+	fprintf(file,"  [1] Converted to: %s\n",name);
+	if(filePtr) fprintf(file,"    Found as: %s\n",name);
+	fflush(file);
+    }
+#endif
+    if(filePtr) {
+	strcpy(filename, name);
+	return (filePtr);
     }
 
-  /* Create the execute-mode popup menu */
-    nargs = 0;
-    if (doExec) {
-      /* Include the Execute item */
-	XtSetArg(args[nargs], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); nargs++;
-    } else {
-      /* Don't include the Execute item */
-	XtSetArg(args[nargs], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES - 1); nargs++;
-    }
-    XtSetArg(args[nargs], XmNbuttonType, executePopupMenuButtonType); nargs++;
-    XtSetArg(args[nargs], XmNbuttons, executePopupMenuButtons); nargs++;
-    XtSetArg(args[nargs], XmNsimpleCallback, executePopupMenuCallback); nargs++;
-    XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
-    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
-    displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->drawingArea,
-      "executePopupMenu", args, nargs);
-    
-  /* Create the execute menu */
-    if (doExec) {
-	w = createExecuteMenu(displayInfo, execPath);
-    }
-}
+  /* If the name starts with / or . then we can do no more */
+    if(name[0] == MEDM_DIR_DELIMITER_CHAR || name[0] == '.') return (NULL);
 
-static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
-{
-    Widget w;
-    static int first = 1;
-    static XmButtonType *types = (XmButtonType *)0;
-    static XmString *buttons = (XmString *)0;
-    static int nbuttons = 0;
-    int i, len;    
-    int nargs;
-    Arg args[8];
-    char *string, *pitem, *pcolon, *psemi;
-
-  /* Return if we've already tried unsuccessfully */
-    if(!first && !nbuttons) return (Widget)0;
-
-  /* Parse MEDM_EXEC_LIST, allocate space, and fill arrays first time */
-    if(first) {
-	first = 0;
-
-      /* Copy the environment string */
-	len = strlen(execPath);
-	string = (char *)calloc(len+1,sizeof(char));
-	strcpy(string,execPath);
-	
-      /* Count the colons to get the number of buttons */
-	pcolon = string;
-	nbuttons = 1;
-	while(pcolon = strchr(pcolon,':'))
-	  nbuttons++, pcolon++;
-	
-      /* Allocate memory */
-	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
-	buttons = (XmString *)calloc(nbuttons,sizeof(XmString));
-	execMenuCommandList = (char **)calloc(nbuttons,sizeof(char *));
-	  
-      /* Parse the items */
-	pitem = string;
-	for(i=0; i < nbuttons; i++) {
-	    pcolon = strchr(pitem,':');
-	    if(pcolon) *pcolon='\0';
-	  /* Text */
-	    psemi = strchr(pitem,';');
-	    if(!psemi) {
-		medmPrintf(1,"\ncreateExecuteMenu: "
-		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
-		  "  %s\n",pitem);
-		free(types);
-		free(buttons);
-		free(string);
-		return (Widget)0;
-	    } else {
-		*psemi='\0';
-		buttons[i] = XmStringCreateLocalized(pitem);
-		types[i] = XmPUSHBUTTON;
-		pitem = psemi+1;
-		len = strlen(pitem);
-		execMenuCommandList[i]=(char *)calloc(len + 1,sizeof(char));
-		strcpy(execMenuCommandList[i],pitem);
+  /* If the name comes from a related display,
+   *   then try the directory of the related display */
+    if(relatedDisplayFilename && *relatedDisplayFilename) {
+	strncpy(fullPathName, relatedDisplayFilename, MAX_DIR_LENGTH);
+	fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	if(fullPathName && fullPathName[0]) {
+	    ptr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
+	    if(ptr) {
+		*(++ptr) = '\0';
+		strcat(fullPathName, name);
+		filePtr = fopen(fullPathName, "r");
+#if DEBUG_FILE
+#if DEBUG_FILE > 1
+		print("  [2] Converted to: %s\n",fullPathName);
+		if(filePtr) print("    Found as: %s\n",fullPathName);
+#endif		
+		if(file) {
+		    fprintf(file,"  [2] Converted to: %s\n",fullPathName);
+		    if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
+		    fflush(file);
+		}
+#endif
+		if(filePtr) {
+		    strcpy(filename, fullPathName);
+		    return (filePtr);
+		}
 	    }
-	    pitem = pcolon+1;
 	}
-	free(string);
     }
 
-  /* Create the menu */
-    nargs = 0;
-    XtSetArg(args[nargs], XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); nargs++;
-    XtSetArg(args[nargs], XmNbuttonCount, nbuttons); nargs++;
-    XtSetArg(args[nargs], XmNbuttonType, types); nargs++;
-    XtSetArg(args[nargs], XmNbuttons, buttons); nargs++;
-    XtSetArg(args[nargs], XmNsimpleCallback, executeMenuCallback); nargs++;
-    XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
-    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
-    w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
-      "executePopupMenu", args, nargs);
+  /* Look in EPICS_DISPLAY_PATH directories */
+    dir = getenv("EPICS_DISPLAY_PATH");
+    if(dir != NULL) {
+	startPos = 0;
+	while (filePtr == NULL &&
+	  extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
+	    strncpy(fullPathName, dirName, MAX_DIR_LENGTH);
+	    fullPathName[MAX_DIR_LENGTH-1] = '\0';
+	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
+	    strcat(fullPathName, name);
+	    filePtr = fopen(fullPathName, "r");
+#if DEBUG_FILE
+#if DEBUG_FILE > 1
+	    print("  [3] Converted to: %s\n",fullPathName);
+	    if(filePtr) print("    Found as: %s\n",fullPathName);
+#endif		
+	    if(file) {
+		fprintf(file,"  [3] Converted to: %s\n",fullPathName);
+		if(filePtr) fprintf(file,"    Found as: %s\n",fullPathName);
+		fflush(file);
+	    }
+#endif
+	    if(filePtr) {
+		strcpy(filename, fullPathName);
+		return (filePtr);
+	    }
+	}
+    }
 
-  /* Return */
-    return(w);
+  /* Not found */
+    return (NULL);
 }
 
-void writeDlDisplay(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+/*
+ * clean up the memory-resident display list (if there is one)
+ */
+void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list)
+{
+    DlElement *dlElement, *pE;
+    
+    if(list->count == 0) return;
+    dlElement = FirstDlElement(list);
+    while (dlElement) {
+	pE = dlElement;
+	dlElement = dlElement->next;
+	if(pE->run->destroy) {
+	    pE->run->destroy(displayInfo, pE);
+	} else {
+	    genericDestroy(displayInfo, pE);
+	}
+    }
+    emptyDlList(list);
+}
+
+/*
+ * Same as clearDlDisplayList except that it does not clear the display
+ * and it destroys any widgets
+ */
+void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
+  DlList *list)
+{
+    DlElement *dlElement, *pE;
+    DlElement *psave = NULL;
+    
+    if(list->count == 0) return;
+    dlElement = FirstDlElement(list);
+    while (dlElement) {
+	pE = dlElement;
+	if(dlElement->type != DL_Display) {
+	    dlElement = dlElement->next;
+	    destroyElementWidgets(pE);
+	    if(pE->run->destroy) {
+		pE->run->destroy(displayInfo, pE);
+	    } else {
+		genericDestroy(displayInfo, pE);
+	    }
+	} else {
+	    psave = pE;
+	    dlElement = dlElement->next;
+	}
+    }
+    emptyDlList(list);
+
+  /* Put the display back if there was one */
+    if(psave) {
+	appendDlElement(list, psave);
+    }
+}
+
+/*
+ * function which cleans up a given displayInfo in the displayInfoList
+ * (including the displayInfo's display list if specified)
+ */
+void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 {
     int i;
-    char indent[16];
-    DlDisplay *dlDisplay = dlElement->structure.display;
+    Boolean alreadyFreedUnphysical;
+    Widget drawingArea;
+    UpdateTask *pt = &(displayInfo->updateTaskListHead);
+
+  /* save off current drawingArea */
+    drawingArea = displayInfo->drawingArea;
+  /* now set to NULL in displayInfo to signify "in cleanup" */
+    displayInfo->drawingArea = NULL;
+    displayInfo->editPopupMenu = (Widget)0;
+    displayInfo->executePopupMenu = (Widget)0;
+
+  /*
+   * remove all update tasks in this display 
+   */
+    updateTaskDeleteAllTask(pt);
  
-    for (i = 0; i < level; i++) indent[i] = '\t';
-    indent[i] = '\0';
- 
-    fprintf(stream,"\n%sdisplay {",indent);
-    writeDlObject(stream,&(dlDisplay->object),level+1);
-    fprintf(stream,"\n%s\tclr=%d",indent,dlDisplay->clr);
-    fprintf(stream,"\n%s\tbclr=%d",indent,dlDisplay->bclr);
-    fprintf(stream,"\n%s\tcmap=\"%s\"",indent,dlDisplay->cmap);
-    fprintf(stream,"\n%s\tgridSpacing=%d",indent,dlDisplay->grid.gridSpacing);
-    fprintf(stream,"\n%s\tgridOn=%d",indent,dlDisplay->grid.gridOn);
-    fprintf(stream,"\n%s\tsnapToGrid=%d",indent,dlDisplay->grid.snapToGrid);
-    fprintf(stream,"\n%s}",indent);
+  /* 
+   * as a composite widget, drawingArea is responsible for destroying
+   *  it's children
+   */
+    if(drawingArea != NULL) {
+	XtDestroyWidget(drawingArea);
+	drawingArea = NULL;
+    }
+
+  /* force a wait for all outstanding CA event completion */
+  /* (wanted to do   while (ca_pend_event() != ECA_NORMAL);  but that sits there     forever)
+   */
+#ifdef __MONITOR_CA_PEND_EVENT__
+    {
+	double t;
+	t = medmTime();
+	ca_pend_event(CA_PEND_EVENT_TIME);
+	t = medmTime() - t;
+	if(t > 0.5) {
+	    print("dmCleanupDisplayInfo : time used by ca_pend_event = %8.1f\n",t);
+	}
+    }
+#else
+    ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
+
+  /*
+   * if cleanupDisplayList == TRUE
+   *   then global cleanup ==> delete shell, free memory/structures, etc
+   */
+
+  /* Destroy undo information */
+    if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
+    
+  /* Branch depending on cleanup mode */
+    if(cleanupDisplayList) {
+	XtDestroyWidget(displayInfo->shell);
+	displayInfo->shell = NULL;
+      /* remove display list here */
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+    } else {
+	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
+	while (dlElement) {
+	    if(dlElement->run->cleanup) {
+		dlElement->run->cleanup(dlElement);
+	    } else {
+		dlElement->widget = NULL;
+	    }
+	    dlElement = dlElement->next;
+	}
+    }
+
+  /*
+   * free other X resources
+   */
+    if(displayInfo->drawingAreaPixmap != (Pixmap)NULL) {
+	XFreePixmap(display,displayInfo->drawingAreaPixmap);
+	displayInfo->drawingAreaPixmap = (Pixmap)NULL;
+    }
+    if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
+	alreadyFreedUnphysical = False;
+	for (i = 0; i < displayInfo->dlColormapCounter; i++) {
+	    if(displayInfo->colormap[i] != unphysicalPixel) {
+		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
+	    } else if(!alreadyFreedUnphysical) {
+	      /* only free "unphysical" pixel once */
+		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
+		alreadyFreedUnphysical = True;
+	    }
+	}
+	free( (char *) displayInfo->colormap);
+	displayInfo->colormap = NULL;
+	displayInfo->dlColormapCounter = 0;
+	displayInfo->dlColormapSize = 0;
+    }
+    if(displayInfo->gc) {
+	XFreeGC(display,displayInfo->gc);
+	displayInfo->gc = NULL;
+    }
+    if(displayInfo->pixmapGC != NULL) {
+	XFreeGC(display,displayInfo->pixmapGC);
+	displayInfo->pixmapGC = NULL;
+    }
+    displayInfo->drawingAreaBackgroundColor = 0;
+    displayInfo->drawingAreaForegroundColor = 0;
 }
 
-static void displayGetValues(ResourceBundle *pRCB, DlElement *p) {
-    DlDisplay *dlDisplay = p->structure.display;
-    medmGetValues(pRCB,
-      X_RC,            &(dlDisplay->object.x),
-      Y_RC,            &(dlDisplay->object.y),
-      WIDTH_RC,        &(dlDisplay->object.width),
-      HEIGHT_RC,       &(dlDisplay->object.height),
-      CLR_RC,          &(dlDisplay->clr),
-      BCLR_RC,         &(dlDisplay->bclr),
-      CMAP_RC,         &(dlDisplay->cmap),
-      GRID_SPACING_RC, &(dlDisplay->grid.gridSpacing),
-      GRID_ON_RC,      &(dlDisplay->grid.gridOn),
-      GRID_SNAP_RC,    &(dlDisplay->grid.snapToGrid),
-      -1);
-    currentDisplayInfo->drawingAreaBackgroundColor =
-      currentColormap[globalResourceBundle.bclr];
-    currentDisplayInfo->drawingAreaForegroundColor =
-      currentColormap[globalResourceBundle.clr];
-  /* Resize the shell */
-    XtVaSetValues(currentDisplayInfo->shell,
-      XmNx,dlDisplay->object.x,
-      XmNy,dlDisplay->object.y,
-      XmNwidth,dlDisplay->object.width,
-      XmNheight,dlDisplay->object.height,NULL);
-}
 
-static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
+void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
 {
-    DlDisplay *dlDisplay = p->structure.display;
+    displayInfo->prev->next = displayInfo->next;
+    if(displayInfo->next != NULL)
+      displayInfo->next->prev = displayInfo->prev;
+    if(displayInfoListTail == displayInfo)
+      displayInfoListTail = displayInfoListTail->prev;
+    if(displayInfoListTail == displayInfoListHead )
+      displayInfoListHead->next = NULL;
+/* Cleanup resources and free display list */
+    dmCleanupDisplayInfo(displayInfo,True);
+    freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
+    if(displayInfo->dlElementList) {
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
+	free ( (char *) displayInfo->dlElementList);
+    }
+    if(displayInfo->selectedDlElementList) {
+	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
+	free ( (char *) displayInfo->selectedDlElementList);
+    }
+    free ( (char *) displayInfo->dlFile);
+    free ( (char *) displayInfo->dlColormap);
+    free ( (char *) displayInfo);
 
-    medmGetValues(pRCB,
-      BCLR_RC,       &(dlDisplay->bclr),
-      -1);
-    currentDisplayInfo->drawingAreaBackgroundColor =
-      currentColormap[globalResourceBundle.bclr];
+    if(displayInfoListHead == displayInfoListTail) {
+	currentColormap = defaultColormap;
+	currentColormapSize = DL_MAX_COLORS;
+	currentDisplayInfo = NULL;
+    }
+  /* Refresh the display list dialog box */
+    refreshDisplayListDlg();
 }
 
-static void displaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
+/*
+ * function to remove ALL displayInfo's
+ *   this includes a full cleanup of associated resources and displayList
+ */
+void dmRemoveAllDisplayInfo()
 {
-    DlDisplay *dlDisplay = p->structure.display;
+    DisplayInfo *nextDisplay, *displayInfo;
 
-    medmGetValues(pRCB,
-      CLR_RC,        &(dlDisplay->clr),
-      -1);
-    currentDisplayInfo->drawingAreaForegroundColor =
-      currentColormap[globalResourceBundle.clr];
+    displayInfo = displayInfoListHead->next;
+    while (displayInfo != NULL) {
+	nextDisplay = displayInfo->next;
+	dmRemoveDisplayInfo(displayInfo);
+	displayInfo = nextDisplay;
+    }
+    displayInfoListHead->next = NULL;
+    displayInfoListTail = displayInfoListHead;
+
+    currentColormap = defaultColormap;
+    currentColormapSize = DL_MAX_COLORS;
+    currentDisplayInfo = NULL;
 }
+
+/*
+ * Traverse (execute) specified displayInfo's display list
+ */
+void dmTraverseDisplayList(DisplayInfo *displayInfo)
+{
+    DlElement *element;
+
+  /* Traverse the display list */
+#if DEBUG_TRAVERSAL
+    print("\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
+    dumpDlElementList(displayInfo->dlElementList);
+#endif
+    element = FirstDlElement(displayInfo->dlElementList);
+    while (element) {
+	(element->run->execute)(displayInfo,element);
+	element = element->next;
+    }
+
+  /* Change the cursor for the drawing area */
+    XDefineCursor(display,XtWindow(displayInfo->drawingArea),
+      (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
+  /* Flush the display to implement the cursor change */
+    XFlush(display);
+
+  /* Poll CA */
+#ifdef __MONITOR_CA_PEND_EVENT__
+    {
+	double t;
+	t = medmTime();
+	ca_pend_event(CA_PEND_EVENT_TIME);
+	t = medmTime() - t;
+	if(t > 0.5) {
+	    print("dmTraverseDisplayList : time used by ca_pend_event = %8.1f\n",t);
+	}
+    }
+#else
+    ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
+}
+
+
+/*
+ * Traverse (execute) all displayInfos and display lists
+ * (Could call dmTraverseDisplayList inside the displayInfo traversal,
+ *    but only need one XFlush and one ca_pend_event)
+ */
+void dmTraverseAllDisplayLists()
+{
+    DisplayInfo *displayInfo;
+    DlElement *element;
+
+    displayInfo = displayInfoListHead->next;
+
+  /* Traverse the displayInfo list */
+    while (displayInfo != NULL) {
+
+      /* Traverse the display list for this displayInfo */
+#if DEBUG_TRAVERSAL
+	print("\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
+	dumpDlElementList(displayInfo->dlElementList);
+#endif
+	element = FirstDlElement(displayInfo->dlElementList);
+	while (element) {
+	    (element->run->execute)(displayInfo,element);
+	    element = element->next;
+	}
+
+      /* Change the cursor for the drawing area for this displayInfo */
+	XDefineCursor(display,XtWindow(displayInfo->drawingArea),
+	  (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
+      /* Flush the display to implement cursor changes */
+      /* Also necessary to keep the stacking order rendered correctly */
+	XFlush(display);
+
+	displayInfo = displayInfo->next;
+    }
+
+  /* Poll CA */
+#ifdef __MONITOR_CA_PEND_EVENT__
+    {
+	double t;
+	t = medmTime();
+	ca_pend_event(CA_PEND_EVENT_TIME);
+	t = medmTime() - t;
+	if(t > 0.5) {
+	    print("dmTraverseAllDisplayLists : time used by ca_pend_event = %8.1f\n",t);
+	}
+    }
+#else
+    ca_pend_event(CA_PEND_EVENT_TIME);
+#endif
+
+}
+
+/* Traverse (execute) specified displayInfo's display list non-widget
+ * elements.  Should only be called in EDIT mode. */
+void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
+{
+    DlElement *element;
+    Dimension width,height;
+
+    if(displayInfo == NULL) return;
+
+  /* Unhighlight any selected elements */
+    unhighlightSelectedElements();
+    
+  /* Fill the background with the background color */
+    XSetForeground(display,displayInfo->pixmapGC,
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
+    XtVaGetValues(displayInfo->drawingArea,
+      XmNwidth,&width,XmNheight,&height,NULL);
+    XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
+      0, 0, (unsigned int)width,(unsigned int)height);
+
+  /* Draw grid */
+    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+     drawGrid(displayInfo);
+
+  /* Traverse the display list */
+  /* Loop over elements not including the display */
+    element = SecondDlElement(displayInfo->dlElementList);
+    while (element) {
+	if(!element->widget) {
+	    (element->run->execute)(displayInfo, element);
+	}
+	element = element->next;
+    }
+
+  /* Since the execute traversal copies to the pixmap, now udpate the window */
+    XCopyArea(display,displayInfo->drawingAreaPixmap,
+      XtWindow(displayInfo->drawingArea),
+      displayInfo->pixmapGC, 0, 0, (unsigned int)width,
+      (unsigned int)height, 0, 0);
+
+  /* Highlight any selected elements */
+    highlightSelectedElements();
+    
+  /* Change drawingArea's cursor to the appropriate cursor */
+    XDefineCursor(display,XtWindow(displayInfo->drawingArea),
+      (currentActionType == SELECT_ACTION ?
+	rubberbandCursor : crosshairCursor));
+
+}
+
+/*
+ * function to march up widget hierarchy to retrieve top shell, and
+ *  then run over displayInfoList and return the corresponding DisplayInfo *
+ */
+DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget)
+{
+    Widget w;
+    DisplayInfo *displayInfo = NULL;
+
+    w = widget;
+    while (w && (XtClass(w) != topLevelShellWidgetClass)) {
+	w = XtParent(w);
+    }
+
+    if(w) {
+	displayInfo = displayInfoListHead->next;
+	while (displayInfo && (displayInfo->shell != w)) {
+	    displayInfo = displayInfo->next;
+	}
+    }
+    return displayInfo;
+}
+
+/*
+ * write specified displayInfo's display list
+ */
+void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream)
+{
+    DlElement *element;
+
+    writeDlFile(stream,displayInfo->dlFile,0);
+    if(element = FirstDlElement(displayInfo->dlElementList)) {
+      /* This must be DL_DISPLAY */
+	(element->run->write)(stream,element,0);
+    }
+    if(displayInfo->dlColormap)
+      writeDlColormap(stream,displayInfo->dlColormap,0);
+    element = element->next;
+  /* traverse the display list */
+    while (element) {
+	(element->run->write)(stream,element,0);
+	element = element->next;
+    }
+    fprintf(stream,"\n");
+}
+
+void medmSetDisplayTitle(DisplayInfo *displayInfo)
+{
+    char str[MAX_FILE_CHARS+10];
+
+    if(displayInfo->dlFile) {
+	char *tmp, *tmp1;
+	tmp = tmp1 = displayInfo->dlFile->name;
+	while (*tmp != '\0')
+	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
+	if(displayInfo->hasBeenEditedButNotSaved) {
+	    strcpy(str,tmp1);
+	    strcat(str," (edited)");
+	    XtVaSetValues(displayInfo->shell,XmNtitle,str,NULL);
+	} else {
+	    XtVaSetValues(displayInfo->shell,XmNtitle,tmp1,NULL);
+	}
+    }
+}
+
+void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo)
+{
+    if(globalDisplayListTraversalMode == DL_EXECUTE) return;
+    if(displayInfo->hasBeenEditedButNotSaved) return;
+    displayInfo->hasBeenEditedButNotSaved = True;
+    medmSetDisplayTitle(displayInfo);
+}
+
