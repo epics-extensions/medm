@@ -57,6 +57,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *                              - using new screen update dispatch mechanism
  * .03  09-12-95        vong    conform to c++ syntax
  * .04  09-22-95        vong    accept hexidecimal input
+ * .05  12-01-95        vong    fixes the precision = -1 in the valueToString
+ *                              function
  *
  *****************************************************************************
 */
@@ -109,16 +111,24 @@ char *valueToString(TextEntry *pte, TextFormat format) {
   Record *pd = pte->record;
   static char textField[MAX_TEXT_UPDATE_WIDTH];
   double value;
-  unsigned short precision = 0;
+  short precision = 0;
   switch(pd->dataType) {
     case DBF_STRING :
-      return (char *) pd->array;
+      if (pd->array) {
+        strncpy(textField,(char *)pd->array, MAX_TEXT_UPDATE_WIDTH-1);
+        textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
+      } else {
+        textField[0] = '\0';
+      }
+      return textField;
     case DBF_ENUM :
-      if ((pd->hopr+1 > 0)) {
+      if ((pd->precision >= 0) && (pd->hopr+1 > 0)) {
         int i = (int) pd->value;
         /* getting values of -1 for data->value for invalid connections */
         if ( i >= 0 && i < (int) pd->hopr+1) {
-          return pd->stateStrings[(int)pd->value];
+          strncpy(textField,pd->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
+          textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
+          return textField;
         } else {
           return " ";
         }
@@ -129,12 +139,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
     case DBF_CHAR :
     case DBF_INT :
     case DBF_LONG :
-      value = pd->value;
-      break;
     case DBF_FLOAT :
-      precision = pd->precision;
-      value = (double) pd->value;
-      break;
     case DBF_DOUBLE :
       precision = pd->precision;
       value = pd->value;
@@ -144,6 +149,9 @@ char *valueToString(TextEntry *pte, TextFormat format) {
       medmPrintf("Error : valueToString\n");
       medmPostMsg("Msg   : Unknown Data Type!\n");
       return "Error!";
+  }
+  if (precision < 0) {
+    precision = 0;
   }
   switch (format) {
     case DECIMAL:

@@ -226,12 +226,14 @@ static int calcTitleFontSize(StripChart *psc) {
 }
 
 static void calcFormat(double value, char *format, int *decimal, int *width) {
-  double order = log10(fabs(value));
+  double order = 0.0;
   if (value == 0.0) {
     *format = 'f';
     *decimal = 1;
     *width = 3;
     return;
+  } else {
+    order = log10(fabs(value));
   }
   if (order > 5.0 || order < -4.0) {
     *format = 'e';

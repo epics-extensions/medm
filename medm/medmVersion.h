@@ -63,6 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .09  10-27-95        vong    2.1.8 release
  * .10  11-06-95        vong    2.1.9 release
  * .11  11-14-95        vong    2.1.10 release 
+ * .12  12-05-95        vong    2.1.11 release
  *
  *****************************************************************************
 */

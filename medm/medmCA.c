@@ -60,6 +60,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .04  09-12-95        vong    temperory fix for callbacks after
  *                              ca_clear_event and ca_clear_channel
  * .05  09-28-95        vong    check for channel access return args.dbr as NULL.
+ * .06  12-01-95        vong    limit the precision between 0 to 16
  *
  *****************************************************************************
 */
@@ -469,11 +470,21 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
     medmPostMsg("medmUpdateGraphicalInfoCb : unknown data type\n");
     return;
   }
-  if (pCh->pr->updateGraphicalInfoCb) {
-    pCh->pr->updateGraphicalInfoCb((XtPointer)pCh->pr);
+  if (pr->precision < 0) {
+    medmPrintf("medmUpdateGraphicalInfoCb : pv \"%s\" precision = %d\n",
+                ca_name(pCh->chid), pr->precision);
+    pr->precision = 0;
   } else
-  if (pCh->pr->updateValueCb) {
-    pCh->pr->updateValueCb((XtPointer)pCh->pr);
+  if (pr->precision > 16) {
+    medmPrintf("medmUpdateGraphicalInfoCb : pv \"%s\" precision = %d\n",
+                ca_name(pCh->chid), pr->precision);
+    pr->precision = 16;
+  }
+  if (pr->updateGraphicalInfoCb) {
+    pr->updateGraphicalInfoCb((XtPointer)pr);
+  } else
+  if (pr->updateValueCb) {
+    pr->updateValueCb((XtPointer)pr);
   }
 }
 
@@ -601,14 +612,14 @@ void medmUpdateChannelCb(struct event_handler_args args) {
       severityChanged = True;
     }
     if (pr->monitorValueChanged && pCh->pr->updateValueCb) {
-        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+        pr->updateValueCb((XtPointer)pr);
     } else
-    if (pr->monitorSeverityChanged && severityChanged && pCh->pr->updateValueCb) {
-        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+    if (pr->monitorSeverityChanged && severityChanged && pr->updateValueCb) {
+        pr->updateValueCb((XtPointer)pr);
     } else
     if (pr->monitorZeroAndNoneZeroTransition 
-        && zeroAndNoneZeroTransition && pCh->pr->updateValueCb) {
-        pCh->pr->updateValueCb((XtPointer)pCh->pr);
+        && zeroAndNoneZeroTransition && pr->updateValueCb) {
+        pr->updateValueCb((XtPointer)pr);
     }
   }
 }

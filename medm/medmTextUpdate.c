@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
  * .03  09-12-95        vong    conform to c++ syntax
+ * .04  12-01-95        vong    clean up the textUpdateDraw routine
  *
  *****************************************************************************
 */
@@ -251,17 +252,17 @@ static void textUpdateDraw(XtPointer cd) {
           isNumber = False;
           break;
         case DBF_ENUM :
-          if (pd->hopr+1 > 0) {
+          if (pd->precision >= 0 && pd->hopr+1 > 0) {
             i = (int) pd->value;
-            if ((i >= 0 && i < pd->hopr+1) && (pd->precision >= 0)){
-              strcpy(textField,pd->stateStrings[i]);
+            if (i >= 0 && i < (int) pd->hopr+1){
+              strncpy(textField,pd->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
+              textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
             } else {
               textField[0] = ' '; textField[1] = '\0';
             }
             isNumber = False;
           } else {
-            value = (double) pd->value;
-	    precision = 0;
+            value = pd->value;
             isNumber = True;
           }
           break;
