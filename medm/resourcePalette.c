@@ -2472,7 +2472,6 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 		dlElement = dlElement->next;
 	    }
 	}
-	XtPopdown(shellCommandS);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -2522,6 +2521,7 @@ Widget createShellCommandDataDialog(
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
     XtSetArg(args[n],XmNmarginHeight,8); n++;
     XtSetArg(args[n],XmNmarginWidth,8); n++;
+/*     cmdForm = XmCreateFormDialog(mainShell,"shellCommandDataF",args,n); */
     cmdForm = XmCreateFormDialog(parent,"shellCommandDataF",args,n);
     shell = XtParent(cmdForm);
     n = 0;
@@ -2664,7 +2664,6 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 		dlElement = dlElement->next;
 	    }
 	}
-	XtPopdown(cartesianPlotS);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -2928,7 +2927,6 @@ static void stripChartActivate(Widget w, XtPointer cd, XtPointer cbs)
 		dlElement = dlElement->next;
 	    }
 	}
-	XtPopdown(stripChartS);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;

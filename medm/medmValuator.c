@@ -491,6 +491,8 @@ void handleValuatorExpose(
 	XSetClipOrigin(display,displayInfo->pixmapGC,0,0);
 	XSetClipMask(display,displayInfo->pixmapGC,None);
 
+      /* Convert bad values of precision to high precision */
+	if(localPrecision < 0 || localPrecision > 17) localPrecision=17;
 	switch (dlValuator->direction) {
 	case UP:
 	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
@@ -684,6 +686,8 @@ void valuatorRedrawValue(Valuator *pv,
     }
 
     textHeight = font->ascent + font->descent;
+  /* Convert bad values of precision to high precision */
+    if(precision < 0 || precision > 17) precision=17;
     cvtDoubleToString(value,stringValue,precision);
     nChars = strlen(stringValue);
 

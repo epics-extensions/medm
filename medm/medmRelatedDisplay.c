@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_COMPOSITE 0
+
 #ifdef WIN32
   /* math.h for WIN32 with _NTSDK defined defines y1 as _y1, also y0
    *  as _y0 for Bessel functions.  This screws up XSegment
@@ -103,7 +105,9 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     Pixmap pixmap = (Pixmap) cd;
-    if (pixmap != (Pixmap)NULL) XmDestroyPixmap(XtScreen(w),pixmap);
+
+    if (pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap);
+    pixmap=(Pixmap)0;
 }
 
 /*
@@ -887,7 +891,6 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
     case RD_CLOSE_BTN:
 	if (XtClass(w) == xmPushButtonWidgetClass) {
 	    XtPopdown(relatedDisplayS);
-	    XtUnmanageChild(relatedDisplayS);
 	}
 	break;
     }
@@ -919,8 +922,35 @@ Widget createRelatedDisplayDataDialog (Widget parent)
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
     XtSetArg(args[n],XmNmarginHeight,8); n++;
     XtSetArg(args[n],XmNmarginWidth,8); n++;
+/*     rdForm = XmCreateFormDialog(mainShell,"relatedDisplayDataF",args,n); */
     rdForm = XmCreateFormDialog(parent,"relatedDisplayDataF",args,n);
     shell = XtParent(rdForm);
+#if DEBUG_COMPOSITE
+    {
+	Widget w=rdForm;
+	Window win=XtWindow(w);
+
+	int i=0;
+	
+	while(1) {
+	    printf("%4d w=%x win=%x",i++,w,win);
+	    if(w == mainShell) {
+		printf(" (mainShell)\n");
+		break;
+	    } else if(w == shell) {
+		printf(" (shell)\n");
+	    } else if(w == rdForm) {
+		printf(" (rdForm)\n");
+	    } else if(w == parent) {
+		printf(" (parent)\n");
+	    } else {
+		printf("\n");
+	    }
+	    w=XtParent(w);
+	    win=XtWindow(w);
+	}
+    }
+#endif
     XtVaSetValues(shell,
       XmNtitle,"Related Display Data",
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,

@@ -157,6 +157,7 @@ DlElement *groupObjects()
 
   /* if there is no element selected, return */
     if (IsEmpty(cdi->selectedDlElementList)) return (DlElement *)0;
+    unhighlightSelectedElements();
     saveUndoInfo(cdi);
 
     if (!(dlElement = createDlComposite(NULL))) return (DlElement *)0;
@@ -172,15 +173,15 @@ DlElement *groupObjects()
 
     pE = FirstDlElement(cdi->selectedDlElementList);
     while (pE) { 
-	DlElement *pE = pE->structure.element;
-	if (pE->type != DL_Display) {
-	    DlObject *po = &(pE->structure.rectangle->object);
+	DlElement *pE1 = pE->structure.element;
+	if (pE1->type != DL_Display) {
+	    DlObject *po = &(pE1->structure.rectangle->object);
 	    minX = MIN(minX,po->x);
 	    maxX = MAX(maxX,(int)(po->x+po->width));
 	    minY = MIN(minY,po->y);
 	    maxY = MAX(maxY,(int)(po->y+po->height));
-	    removeDlElement(cdi->dlElementList,pE);
-	    appendDlElement(dlComposite->dlElementList,pE);
+	    removeDlElement(cdi->dlElementList,pE1);
+	    appendDlElement(dlComposite->dlElementList,pE1);
 	}
 	pE = pE->next;
     }
@@ -191,7 +192,6 @@ DlElement *groupObjects()
     dlComposite->object.height = maxY - minY;
 
     clearResourcePaletteEntries();
-    unhighlightSelectedElements();
     clearDlDisplayList(cdi->selectedDlElementList);
     if (!(pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL))) {
 	return (DlElement *)0;

@@ -259,6 +259,9 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
 #include <stdlib.h>
 #include <process.h>
 #include <string.h>
+#include <errno.h>
+
+void medmPrintf(int priority, char *format, ...);
 
 int callBrowser(char *url);
 
@@ -286,10 +289,42 @@ int callBrowser(char *url)
     }
     if (!ComSpec) return(0);     /* Abort with no message like the UNIX version*/
   /* Spawn the process that handles a url */
+#if 0
+  /* Works, command window that goes away */
     sprintf(command,"start \"%s\"",url);
     status = _spawnl(_P_WAIT, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"\"%s\"",url);
+    status = _spawnl(_P_NOWAIT, "c:\\windows\\command\\start.exe",
+      "c:\\windows\\command\\start.exe", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"\"%s\"",url);
+    status = _spawnl(_P_WAIT, ComSpec, "start", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_NOWAIT, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Doesn't work on 95 (No such file or directory), works on NT */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_NOWAIT, ComSpec, "/C", command, NULL);
+#else    
+    sprintf(command,"\"%s\"",url);
+    status = _spawnlp(_P_DETACH, "start", "start", command, NULL);
+#endif    
     if(status == -1) {
-	perror("callBrowser:");
+	char *errstring=strerror(errno);
+
+	medmPrintf(1,"\ncallBrowser: Cannot start browser:\n"
+	  "start %s\n"
+	  "  %s\n",command,errstring);
+/* 	perror("callBrowser:"); */
 	return(0);
     }
     return(1);

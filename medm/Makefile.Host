@@ -17,8 +17,6 @@ CC = purify -first-only -chain-length=25 $(C_$(CMPLR))
 #CC = purify -first-only -chain-length=25 -mail-to-user=evans $(C_$(CMPLR))
 endif
 
-USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC) -DEDITRES
-
 #USR_LDFLAGS = -L$(INSTALL_LIB) -L$(EPICS_EXTENSIONS_LIB)
 #USR_LDLIBS = -lANLwidgets.a -lPrintUtils -lGraphX
 
@@ -64,9 +62,14 @@ USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
 endif
 endif
 
+USR_CFLAGS += -DEDITRES
+
 ifdef WIN32
-USR_CFLAGS += -D_NTSDK
+USR_CFLAGS += /D_NTSDK
+USR_CFLAGS += /DWIN32 /D_WINDOWS
+USR_LDFLAGS += /SUBSYSTEM:WINDOWS
 endif
+
 
 ifdef MEDM_HELP_PATH
    USR_CFLAGS += -DMEDM_HELP_PATH="\"$(MEDM_HELP_PATH)\""
@@ -76,11 +79,15 @@ endif
 
 PROD = medm
 
-USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
+USR_INCLUDES = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 PROD_LIBS = GraphX ANLwidgets Unix ca Com
 USR_LIBS_DEFAULT = Xm Xt X11
+ifeq ($(EXCEED),Exceed5)
+USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
+else
 USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
+endif
 
 Unix_DIR = $(INSTALL_LIB)
 GraphX_DIR = $(INSTALL_LIB)
@@ -90,6 +97,7 @@ Com_DIR = $(EPICS_BASE_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
+Xmu_DIR = $(X11_LIB)
 XlibGUI_DIR = $(X11_LIB)
 XmStatic_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
@@ -143,7 +151,10 @@ SRCS += shared.c
 SRCS += updateMonitors.c 
 SRCS += utils.c 
 SRCS += xgif.c
-#SRCS += win32_functions.c
+
+ifdef WIN32
+RCS_WIN32 += medm.rc
+endif
 
 include $(TOP)/config/RULES.Host
 

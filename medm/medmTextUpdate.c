@@ -294,6 +294,8 @@ static void textUpdateDraw(XtPointer cd)
 		  dlTextUpdate->monitor.rdbk);
 		break;
 	    }
+	  /* Convert bad values of precision to high precision */
+	    if(precision < 0 || precision > 17) precision=17;
 	    if(isNumber) {
 		switch (dlTextUpdate->format) {
 		case STRING:

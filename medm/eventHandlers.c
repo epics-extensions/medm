@@ -63,7 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_POPUP 0
 #define DEBUG_PVINFO 0
 #define DEBUG_SEND_EVENT 0
-
+#define DEBUG_UNGROUP 0
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
@@ -86,7 +86,7 @@ extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
 extern XButtonPressedEvent lastEvent;
 
-void toggleSelectedElementHighlight(DlElement *element);
+void toggleSelectedElementHighlight(DlElement *dlElement);
 
 static DlList *tmpDlElementList = NULL;
 
@@ -1066,10 +1066,13 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event, Boolean *
     }
 }
 
+/*
+ *  Function to highlight the currently selected elements
+ */
 void highlightSelectedElements()
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    DlElement *dlElement;
+    DlElement *pE;
 
 #if DEBUG_HIGHLIGHTS
     printf("In highlightSelectedElements\n");
@@ -1078,22 +1081,25 @@ void highlightSelectedElements()
     if (!cdi) return;
     if (IsEmpty(cdi->selectedDlElementList)) return;
     if (cdi->selectedElementsAreHighlighted) return;
+#if DEBUG_UNGROUP
+    fprintf(stderr,"\nhighlightSelectedElements: cdi->selectedDlElementList:\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif    
     cdi->selectedElementsAreHighlighted = True;
-    dlElement = FirstDlElement(cdi->selectedDlElementList);
-    while (dlElement) {
-	toggleSelectedElementHighlight(dlElement->structure.element);
-	dlElement = dlElement->next;
+    pE = FirstDlElement(cdi->selectedDlElementList);
+    while (pE) {
+	toggleSelectedElementHighlight(pE->structure.element);
+	pE = pE->next;
     }
 }
 
 /*
- *  Function to unhighlight the currently highlighted (and therefore
- *    selected) elements
+ *  Function to unhighlight the currently selected elements
  */
 void unhighlightSelectedElements()
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    DlElement *dlElement;
+    DlElement *pE;
 
 #if DEBUG_HIGHLIGHTS
     printf("In unhighlightSelectedElements\n");
@@ -1103,10 +1109,14 @@ void unhighlightSelectedElements()
     if (IsEmpty(cdi->selectedDlElementList)) return;
     if (!cdi->selectedElementsAreHighlighted) return;
     cdi->selectedElementsAreHighlighted = False;
-    dlElement = FirstDlElement(cdi->selectedDlElementList);
-    while (dlElement) {
-	toggleSelectedElementHighlight(dlElement->structure.element);
-	dlElement = dlElement->next;
+#if DEBUG_UNGROUP
+    fprintf(stderr,"\nunhighlightSelectedElements: cdi->selectedDlElementList:\n");
+    dumpDlElementList(cdi->selectedDlElementList);
+#endif    
+    pE = FirstDlElement(cdi->selectedDlElementList);
+    while (pE) {
+	toggleSelectedElementHighlight(pE->structure.element);
+	pE = pE->next;
     }
 }
 
@@ -1331,6 +1341,10 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
 	width = (int)po->width + 2*HIGHLIGHT_LINE_THICKNESS;
 	height = (int)po->height + 2*HIGHLIGHT_LINE_THICKNESS;
     }
+#if DEBUG_UNGROUP
+    fprintf(stderr,"toggleSelectedElementHighlight: dlElement->type=%d\n"
+      "x=%d y=%d width=%d height=%d\n",dlElement->type,x,y,width,height);
+#endif    
 #if 0
     XSetForeground(display,highlightGC,cdi->drawingAreaBackgroundColor);
     XSetBackground(display,highlightGC,cdi->drawingAreaForegroundColor);
