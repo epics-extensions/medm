@@ -30,10 +30,6 @@
 #include <Xm/XmP.h>
 #include "ClipP.h"
 
-#ifndef SABER
-static char sccsid[] = "@(#)Clip.c	3.4 5/13/92";
-#endif
-
 static char defaultTranslations[] =
 "<FocusIn>:			FocusIn()";
 

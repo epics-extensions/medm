@@ -87,7 +87,6 @@ typedef unsigned long Pixel;
 #include "printUtils.h"
 
 /* Function prototypes */
-static long parse_long (char *s);
 static int Window_Dump(Display *display, Window window, FILE *out);
 static int Image_Size(XImage *image);
 static int Get_XColors(Display *display, XWindowAttributes *win_info,

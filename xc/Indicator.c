@@ -217,7 +217,6 @@ static void Initialize(Widget request, Widget new,
    *   O'Reilly Vol. 4, p. 494 */
 {
     IndicatorWidget wnew = (IndicatorWidget)new;
-    Display *display = XtDisplay(new);
 
     DPRINTF(("Indicator: executing Initialize...\n"));
     

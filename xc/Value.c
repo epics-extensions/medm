@@ -492,7 +492,7 @@ static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
     
   /* If it contains any hexadecimal characters, convert it to a long hex int */
     if (sscanf(temp, "%[ABCDEFabcdef]", temp2) != (int)NULL) {
-	sscanf(temp, "%lX", &value.lval); 
+	sscanf(temp, "%lX", (unsigned long *)&value.lval); 
 	CvtDone(XcVType, &value.lval);
     }
 

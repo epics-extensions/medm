@@ -47,7 +47,6 @@
 /* Data for the bitmap used for the 3D shading effect. */
 #define shade_width 2
 #define shade_height 2
-static char shade_bits[] = { 0x02, 0x01};
 
 /* Function prototypes for internal widget methods */
 static void Initialize(Widget request, Widget new,
@@ -173,7 +172,6 @@ static void Initialize(Widget request, Widget new,
 {
     ControlWidget wnew = (ControlWidget)new;
     Display *display = XtDisplay(new);
-    int scr = DefaultScreen(XtDisplay(new));
     XGCValues values;
     XtGCMask mask; 
     static char dash_list[2] = { 1, 1 };
@@ -508,7 +506,7 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
   XRectangle *bounds, ArrowType orientation,Type3d type)
 {
     ControlWidget wc = (ControlWidget)w;
-    int j, adjustment = wc->control.shade_depth+1;
+    int j;
     XPoint points[4];
     unsigned long shade1, shade2;
     

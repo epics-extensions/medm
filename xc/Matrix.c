@@ -2847,8 +2847,6 @@ static void
 SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
   XtWidgetGeometry *reply)
 {
-    XbaeMatrixWidget old = (XbaeMatrixWidget)gold;
-    XbaeMatrixWidget new = (XbaeMatrixWidget)gnew;
   /*
    * If XtGeometryAlmost, accept compromize - Resize will take care of it
    */

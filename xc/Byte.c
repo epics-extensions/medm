@@ -44,7 +44,9 @@ static void Destroy(Widget w);
 static void Get_value(XtPointer client_data, XtIntervalId *id);
 static void Draw_display(Widget w, Display *display,
   Drawable drawable, GC gc);
+#if 0
 static void Print_bounds(Widget w, char *upper, char *lower);
+#endif
 
 /* Define the widget's resource list */
 static XtResource resources[] = {
@@ -171,7 +173,6 @@ static void Initialize(Widget request, Widget new,
    *************************************************************************/
 {
     ByteWidget wnew = (ByteWidget)new;
-    Display *display = XtDisplay(new);
     DPRINTF(("Byte: executing Initialize...\n"));
   /* printf("BY: executing Initialize1\n"); */
     
@@ -563,6 +564,8 @@ static void Draw_display(Widget w, Display *display,
     }
 }
 
+#if 0
+/* Not used */
 static void Print_bounds(Widget w, char *upper, char *lower)
   /*************************************************************************
    * Print Bounds: This is a utility function used by the Redisplay and    *
@@ -587,3 +590,4 @@ static void Print_bounds(Widget w, char *upper, char *lower)
 	  (unsigned short)wb->value.decimals);
     }
 }
+#endif

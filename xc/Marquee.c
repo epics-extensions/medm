@@ -26,14 +26,12 @@ static XtResource resources[] = {
 
 /* Function prototypes */
 
-static void ClassInitialize();
 static void Initialize(Widget greq, Widget gnew,
   ArgList args, Cardinal *nargs);
 static void Resize(Widget gw);
 static void Realize(Widget gw, XtValueMask *valueMask,
   XSetWindowAttributes *attrs);
 static void Destroy(Widget gw);
-static void Redisplay(Widget gw, XEvent event, Region region);
 static Boolean SetValues(Widget gcur, Widget greq,
   Widget gnew, ArgList args, Cardinal *nargs);
 

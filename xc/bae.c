@@ -34,12 +34,12 @@ int main(int argc, char *argv[]);
 
 
 static String rows[ROWS][COLUMNS] = {
-    "Orange", "12", "Rough", "Inches", "Large",
-    "Blue", "323", "Smooth", "Feet", "Medium",
-    "Yellow", "456", "Bristly", "Meters", "Large",
-    "Green", "1", "Knobby", "Miles", "Small",
-    "Pink", "33", "Hairy", "Quarts", "Small",
-    "Black", "7", "Silky", "Gallons", "Small",
+    {"Orange", "12", "Rough", "Inches", "Large"},
+    {"Blue", "323", "Smooth", "Feet", "Medium"},
+    {"Yellow", "456", "Bristly", "Meters", "Large"},
+    {"Green", "1", "Knobby", "Miles", "Small"},
+    {"Pink", "33", "Hairy", "Quarts", "Small"},
+    {"Black", "7", "Silky", "Gallons", "Small"},
 };
 String *cells[ROWS];
 

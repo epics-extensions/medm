@@ -33,11 +33,6 @@
 #include <Xm/Label.h>
 #include "CaptionP.h"
 
-#ifndef SABER
-static char sccsid[] = "@(#)Caption.c	1.8 7/8/92";
-#endif
-
-
 #define OffsetOf(field)	XtOffsetOf(XbaeCaptionRec, field)
 
 static XtResource resources[] = {
@@ -205,7 +200,6 @@ ClassInitialize(void)
 static void
 Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
-    XbaeCaptionWidget request = (XbaeCaptionWidget)greq;
     XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
     
   /*
@@ -300,7 +294,6 @@ SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
   Cardinal *num_args)
 {
     XbaeCaptionWidget current = (XbaeCaptionWidget)gcur;
-    XbaeCaptionWidget request = (XbaeCaptionWidget)greq;
     XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
     
     Dimension old_label_width, old_label_height;
@@ -447,7 +440,6 @@ static void
 SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
   XtWidgetGeometry *reply)
 {
-    XbaeCaptionWidget old = (XbaeCaptionWidget)gold;
     XbaeCaptionWidget new =  (XbaeCaptionWidget)gnew;
 
   /*
@@ -1002,6 +994,8 @@ QueryGeometry(Widget gcw, XtWidgetGeometry *proposed, XtWidgetGeometry *desired)
 	    childWidth = UserChild(cw)->core.width;
 	    childHeight = UserChild(cw)->core.height;
 	    childBorderWidth = UserChild(cw)->core.border_width;
+	    break;
+	default:
 	    break;
 	}
 
