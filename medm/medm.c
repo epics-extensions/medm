@@ -58,7 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_DEFINITIONS 0
 #define DEBUG_EVENTS 0
 #define DEBUG_STDC 0
-#define DEBUG_WIN32_LEAKS 1
+#define DEBUG_WIN32_LEAKS 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -2503,7 +2503,7 @@ static void createCursors()
     XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"Close",5);
     XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"Close",5);
     closeCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
-      &colors[0],&colors[1],0,(asc+desc)/2);
+      &colors[0],&colors[1],hotSpotWidth/2,(asc+desc)/2);
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
@@ -2525,7 +2525,7 @@ static void createCursors()
     XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"Save",4);
     XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"Save",4);
     saveCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
-      &colors[0],&colors[1],0,(asc+desc)/2);
+      &colors[0],&colors[1],hotSpotWidth/2,(asc+desc)/2);
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
@@ -2547,7 +2547,7 @@ static void createCursors()
     XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"Paste",5);
     XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"Paste",5);
     pasteCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
-      &colors[0],&colors[1],0,(asc+desc)/2);
+      &colors[0],&colors[1],hotSpotWidth/2,(asc+desc)/2);
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
@@ -2569,7 +2569,7 @@ static void createCursors()
     XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"PV",2);
     XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"PV",2);
     pvCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
-      &colors[0],&colors[1],0,(asc+desc)/2);
+      &colors[0],&colors[1],hotSpotWidth/2,(asc+desc)/2);
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
@@ -2591,7 +2591,7 @@ static void createCursors()
     XDrawString(display,sourcePixmap,gc,hotSpotWidth,asc,"Print",5);
     XDrawString(display,maskPixmap,gc,hotSpotWidth,asc,"Print",5);
     printCursor = XCreatePixmapCursor(display,sourcePixmap,maskPixmap,
-      &colors[0],&colors[1],0,(asc+desc)/2);
+      &colors[0],&colors[1],hotSpotWidth/2,(asc+desc)/2);
     XFreePixmap(display,sourcePixmap);
     XFreePixmap(display,maskPixmap);
 
