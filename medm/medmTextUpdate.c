@@ -68,7 +68,7 @@ extern "C" {
 #endif
 
 typedef struct _TextUpdate {
-    DlElement     *dlElement;
+    DlElement     *dlElement;     /* Must be first */
     Record        *record;
     UpdateTask    *updateTask;
     int           fontIndex;
@@ -230,6 +230,7 @@ static void textUpdateDestroyCb(XtPointer cd) {
 static void textUpdateUpdateValueCb(XtPointer cd) {
     Record *pr = (Record *) cd;
     TextUpdate *ptu = (TextUpdate *) pr->clientData;
+    
     updateTaskMarkUpdate(ptu->updateTask);
 }
 

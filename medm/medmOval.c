@@ -59,7 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Oval {
-    DlElement        *dlElement;
+    DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
 } MedmOval;
@@ -75,7 +75,7 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable ovalDlDispatchTable = {
     createDlOval,
-    destroyElementWithDynamicAttribute,
+    NULL,
     executeDlOval,
     writeDlOval,
     NULL,

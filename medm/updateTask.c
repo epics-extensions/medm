@@ -366,8 +366,8 @@ Boolean medmInitSharedDotC()
     return True;
 }
 
-UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
-  void (*executeTask)(XtPointer),XtPointer clientData)
+UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo, DlObject *rectangle,
+  void (*executeTask)(XtPointer), XtPointer clientData)
 {
     UpdateTask *pt;
     
@@ -416,35 +416,7 @@ UpdateTask *updateTaskAddTask(DisplayInfo *displayInfo,DlObject *rectangle,
     }
 }  
 
-#if 0
-/* KE: Not used */
-void updateTaskDeleteTask(UpdateTask *pt)
-{
-    UpdateTask *tmp;
-    
-    if (pt == NULL) return;
-    tmp = &(pt->displayInfo->updateTaskListHead);
-    while (tmp->next) {
-	if (tmp->next == pt) {
-	    tmp->next = pt->next;
-	  /* If it is the tail, reset the tail */
-	    if (pt == pt->displayInfo->updateTaskListTail) {
-		pt->displayInfo->updateTaskListTail = tmp;
-	    }
-	  /* If it is periodic, take it out of periodicTaskCount */
-	    if (pt->timeInterval > 0.0) {
-		pt->displayInfo->periodicTaskCount--;
-		updateTaskStatus.periodicTaskCount--;
-	    }
-	  /* Take it out of taskCount */
-	    updateTaskStatus.taskCount--;
-	    free((char *)pt);
-	    break;
-	}
-    }
-}
-#endif
-
+/* Delete all update tasks on the display associated with a given task */
 void updateTaskDeleteAllTask(UpdateTask *pt)
 {
     UpdateTask *tmp;
@@ -495,7 +467,53 @@ void updateTaskDeleteAllTask(UpdateTask *pt)
     ca_pend_event(CA_PEND_EVENT_TIME);
 #endif
 }
+
+/* Delete all update tasks for a given element */
+void updateTaskDeleteElementTasks(DisplayInfo *displayInfo, DlElement *pE)
+{
+    UpdateTask *pT;
+
+    pT = displayInfo->updateTaskListHead.next; 
+    while (pT) {
+      /* The clientData is the first element in the MedmXxx structure
+         pointed to by the clientData */
+	if((DlElement *)pT->clientData == pE) {
+	    updateTaskDeleteTask(displayInfo, pT);
+	}
+	pT = pT->next;
+    }
+}
   
+/* Delete a single update task */
+void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt)
+{
+    if (pt == NULL) return;
+  /* Adjust the next pointers */
+    if
+    displayInfo->updateTaskListTail->next = pt;
+    displayInfo->updateTaskListTail = pt;
+    
+  /* Run the destroy callback */
+    if (pt->destroyTask) {
+	pt->destroyTask(pt->clientData);
+    }
+  /* Reset status counters */
+    if (pt->timeInterval > 0.0) {
+	updateTaskStatus.periodicTaskCount--;
+    }
+    updateTaskStatus.taskCount--;
+    if (pt->executeRequestsPendingCount > 0) {
+	updateTaskStatus.updateRequestQueued--;
+    }
+  /* Reset next to serve */
+    if (updateTaskStatus.nextToServe == pt) {
+	updateTaskStatus.nextToServe = NULL;
+    }
+  /* ??? Why is this necessary, the space is going to be freed */
+    pt->executeTask = NULL;
+    free((char *)pt);
+}
+
 int updateTaskMarkTimeout(UpdateTask *pt, double currentTime)
 {
     UpdateTask *head = &(pt->displayInfo->updateTaskListHead);
@@ -771,24 +789,24 @@ void updateTaskAddNameCb(UpdateTask *pt, void (*nameCb)(XtPointer,
 UpdateTask *getUpdateTaskFromWidget(Widget widget)
 {
     DisplayInfo *displayInfo;
-    UpdateTask *pt;
+    UpdateTask *pT;
 
     if(!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
       return NULL; 
 
-    pt = displayInfo->updateTaskListHead.next; 
-    while (pt) {
+    pT = displayInfo->updateTaskListHead.next; 
+    while (pT) {
       /* Note : vong
        * Below it is a very ugly way to dereference the widget pointer.
        * It assumes that the first element in the clientData is a pointer
        * to a DlElement structure.  However, if a SIGSEG or SIGBUS occurs,
-       * please recheck the structure which pt->clientData points
+       * please recheck the structure which pT->clientData points
        * at.
        */
-	if((*(((DlElement **) pt->clientData)))->widget == widget) {
-	    return pt;
+	if((*(((DlElement **)pT->clientData)))->widget == widget) {
+	    return pT;
 	}
-	pt = pt->next;
+	pT = pT->next;
     }
     return NULL;
 }

@@ -100,7 +100,7 @@ typedef struct {
 } XYTrace;
 
 typedef struct _CartesianPlot {
-    DlElement      *dlElement;
+    DlElement      *dlElement;            /* Must be first */
     XYTrace         xyTrace[MAX_TRACES];
     XYTrace         eraseCh;
     XYTrace         triggerCh;

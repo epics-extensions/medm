@@ -57,7 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Indicator {
-    DlElement   *dlElement;
+    DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
 } Indicator;

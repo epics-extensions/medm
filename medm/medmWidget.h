@@ -253,12 +253,13 @@ typedef struct _UpdateTask {
     double     timeInterval;                 /* if not 0.0, periodic task */
     double     nextExecuteTime;               
     struct     _DisplayInfo *displayInfo;
-    struct     _UpdateTask *next;
     int        executeRequestsPendingCount;  /* how many update requests are pending */
     XRectangle rectangle;                    /* geometry of the Object */
     Boolean    overlapped;                   /* tell whether this object is overlapped
 					      * by other objects */
     Boolean    opaque;
+    struct     _UpdateTask *prev;
+    struct     _UpdateTask *next;
 } UpdateTask;
 
 typedef struct _InitTask {

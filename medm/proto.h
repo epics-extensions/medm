@@ -400,8 +400,9 @@ double medmResetElapsedTime();
 void updateTaskInit(DisplayInfo *displayInfo);
 UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer),
   XtPointer);
-void updateTaskDeleteTask(UpdateTask *);
+void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt);
 void updateTaskDeleteAllTask(UpdateTask *);
+void updateTaskDeleteElementTasks(DisplayInfo *displayInfo, DlElement *pE);
 int updateTaskMarkTimeout(UpdateTask *, double);
 void updateTaskSetScanRate(UpdateTask *, double);
 void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
@@ -499,7 +500,7 @@ void drawGrid(DisplayInfo *displayInfo);
 void copySelectedElementsIntoClipboard(void);
 DlStructurePtr createCopyOfElementType(DlElementType type, DlStructurePtr ptr);
 int copyElementsIntoDisplay(void);
-void deleteElementsInDisplay(void);
+void deleteElementsInDisplay(DisplayInfo * displayInfo);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);
 void lowerSelectedElements(void);
@@ -529,8 +530,9 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
-void clearDlDisplayList(DlList *);
-void removeDlDisplayListElementsExceptDisplay(DlList *list);
+void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list);
+void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
+  DlList *list);
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
 #endif
@@ -546,7 +548,7 @@ void dumpDlElementList(DlList *l);
 void genericMove(DlElement *, int, int);
 void genericScale(DlElement *, int, int);
 void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter);
-void destroyElementWithDynamicAttribute(DlElement *dlElement);
+void genericDestroy(DisplayInfo *displayInfo, DlElement *pE);
 void resizeDlElementList(
   DlList *dlElementList,
   int x,
@@ -597,7 +599,7 @@ void basicAttributeInit(DlBasicAttribute *attr);
 void dynamicAttributeInit(DlDynamicAttribute *dynAttr);
 void limitsAttributeInit(DlLimits *limits);
 int initMedmCommon();
-void destroyDlElement(DlElement *);
+void destroyDlElement(DisplayInfo *, DlElement *);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
   unsigned int height);
 DlFile *parseFile(DisplayInfo *displayInfo);

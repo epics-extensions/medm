@@ -71,11 +71,12 @@ static double okRadiansTable[24] = { 0.,
 				     0.};
 
 typedef struct _Polygon {
-    DlElement       *dlElement;
+    DlElement       *dlElement;     /* Must be first */
     Record          **records;
     UpdateTask      *updateTask;
 } MedmPolygon;
 
+static void destroyDlPolygon(DisplayInfo *displayInfo, DlElement *pE);
 static void polygonDraw(XtPointer cd);
 static void polygonUpdateValueCb(XtPointer cd);
 static void polygonDestroyCb(XtPointer cd);
@@ -87,7 +88,6 @@ static void polygonMove(DlElement *, int, int);
 static void polygonScale(DlElement *, int, int);
 static void polygonOrient(DlElement *dlElement, int type, int xCenter,
   int yCenter);
-static void destroyDlPolygon(DlElement *);
 static int handlePolygonVertexManipulation(DlElement *, int, int);
 
 static DlDispatchTable polygonDlDispatchTable = {
@@ -905,10 +905,10 @@ static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void destroyDlPolygon(DlElement *dlElement) {
-    free ((char *)dlElement->structure.polygon->points);
-    free ((char *)dlElement->structure.polygon);
-    free ((char *)dlElement);
+static void destroyDlPolygon(DisplayInfo *displayInfo, DlElement *pE)
+{
+    free((char *)pE->structure.polygon->points);
+    genericDestroy(displayInfo, pE);
 }
 
 static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {

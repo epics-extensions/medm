@@ -65,7 +65,7 @@ extern "C" {
 #endif
 
 typedef struct _TextEntry {
-    DlElement   *dlElement;
+    DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
     Boolean     updateAllowed;

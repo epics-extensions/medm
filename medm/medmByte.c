@@ -75,7 +75,7 @@ static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 
 typedef struct _Byte {
-    DlElement   *dlElement;
+    DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
 } Bits;

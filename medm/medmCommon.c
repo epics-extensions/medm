@@ -846,14 +846,6 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
     return dlElement;
 }
 
-void destroyDlElement(DlElement *dlElement)
-{
-    appendDlElement(dlElementFreeList,dlElement);
-#if 0
-    printf("destroyDlElement, %d\n",dlElementFreeList->count);
-#endif
-}
-  
 static DlObject defaultObject = {0,0,5,5};
 
 
@@ -1627,8 +1619,19 @@ void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
 	dlElement->structure.rectangle->object.y);
 }
 
-void destroyElementWithDynamicAttribute(DlElement *dlElement)
+void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
 {
-    free( (char *) dlElement->structure.composite);
-    destroyDlElement(dlElement);
+  /* Delete all update tasks associated with the element */
+    if(globalDisplayListTraversalMode == DL_EXECUTE && displayInfo != NULL) {
+	updateTaskDeleteElementTasks(displayInfo, pE);
+    }
+
+    free((char *)pE->structure.composite);
+    destroyDlElement(NULL, pE);
 }
+
+void destroyDlElement(DisplayInfo *displayInfo, DlElement *dlElement)
+{
+    appendDlElement(dlElementFreeList,dlElement);
+}
+  

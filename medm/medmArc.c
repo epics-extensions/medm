@@ -57,7 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Arc {
-    DlElement        *dlElement;
+    DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
 } MedmArc;
@@ -74,7 +74,7 @@ static void arcOrient(DlElement *dlElement, int type, int xCenter,
 
 static DlDispatchTable arcDlDispatchTable = {
     createDlArc,
-    destroyElementWithDynamicAttribute,
+    NULL,
     executeDlArc,
     writeDlArc,
     NULL,

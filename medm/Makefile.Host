@@ -15,7 +15,7 @@ USR_CFLAGS += -xsb
 
 #STATIC_BUILD = YES 
 CMPLR = STRICT
-#PURIFY = YES
+PURIFY = YES
 
 ifeq ($(PURIFY),YES)
   CC = purify -first-only -chain-length=25 $($(ANSI)_$(CMPLR))

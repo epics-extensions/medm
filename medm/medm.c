@@ -1229,7 +1229,7 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_CUT_BTN:
 	copySelectedElementsIntoClipboard();
-	deleteElementsInDisplay();
+	deleteElementsInDisplay(cdi);
 	if (cdi->hasBeenEditedButNotSaved == False)
 	  medmMarkDisplayBeingEdited(cdi);
 	break;

@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Text {
-    DlElement        *dlElement;
+    DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
 } MedmText;
@@ -78,7 +78,7 @@ static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable textDlDispatchTable = {
     createDlText,
-    destroyElementWithDynamicAttribute,
+    NULL,
     executeDlText,
     writeDlText,
     NULL,

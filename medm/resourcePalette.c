@@ -1961,6 +1961,7 @@ static int resourceTable[] = {
     -1,
     DL_Composite,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
+    VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
     -1,
     DL_Line,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, LINEWIDTH_RC,
@@ -3883,27 +3884,14 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	updateResourcePaletteObjectAttribute();
 	if (objectDataOnly) return;
 
+	updateGlobalResourceBundleDynamicAttribute(&(p->dynAttr));
+	updateResourcePaletteDynamicAttribute();
+
       /* Set colors explicitly */
-#if 0	  
-	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
-	  BlackPixel(display,screenNum),NULL);
-	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
-	  WhitePixel(display,screenNum),NULL);
-#else	
 	XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
 	  defaultBackground,NULL);
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  defaultBackground,NULL);
-#endif	
-	globalResourceBundle.vis = p->vis;
-#if 0	
-      /* KE: Need to fix this */
-	optionMenuSet(resourceEntryElement[VIS_RC],
-	  globalResourceBundle.vis - FIRST_VISIBILITY_MODE);
-	strcpy(globalResourceBundle.chan[0],p->chan);
-	XmTextFieldSetString(resourceEntryElement[CHAN_RC],
-	  globalResourceBundle.chan[0]);
-#endif	
       /* need to add this entry to widgetDM.h and finish this if we want named
        *  groups
        strcpy(globalResourceBundle.compositeName,p->compositeName);

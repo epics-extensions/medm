@@ -285,7 +285,7 @@ Boolean extractStringBetweenColons(char *input, char *output,
 /*
  * clean up the memory-resident display list (if there is one)
  */
-void clearDlDisplayList(DlList *list)
+void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list)
 {
     DlElement *dlElement, *pE;
     
@@ -295,10 +295,9 @@ void clearDlDisplayList(DlList *list)
 	pE = dlElement;
 	dlElement = dlElement->next;
 	if(pE->run->destroy) {
-	    pE->run->destroy(pE);
+	    pE->run->destroy(displayInfo, pE);
 	} else {
-	    free((char *)pE->structure.composite);
-	    destroyDlElement(pE);
+	    genericDestroy(displayInfo, pE);
 	}
     }
     emptyDlList(list);
@@ -308,7 +307,8 @@ void clearDlDisplayList(DlList *list)
  * Same as clearDlDisplayList except that it does not clear the display
  * and it destroys any widgets
  */
-void removeDlDisplayListElementsExceptDisplay(DlList *list)
+void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
+  DlList *list)
 {
     DlElement *dlElement, *pE;
     DlElement *psave = NULL;
@@ -321,10 +321,9 @@ void removeDlDisplayListElementsExceptDisplay(DlList *list)
 	    dlElement = dlElement->next;
 	    destroyElementWidgets(pE);
 	    if(pE->run->destroy) {
-		pE->run->destroy(pE);
+		pE->run->destroy(displayInfo, pE);
 	    } else {
-		free((char *)pE->structure.composite);
-		destroyDlElement(pE);
+		genericDestroy(displayInfo, pE);
 	    }
 	} else {
 	    psave = pE;
@@ -401,7 +400,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 	XtDestroyWidget(displayInfo->shell);
 	displayInfo->shell = NULL;
       /* remove display list here */
-	clearDlDisplayList(displayInfo->dlElementList);
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
     } else {
 	DlElement *dlElement = FirstDlElement(displayInfo->dlElementList);
 	while (dlElement) {
@@ -463,11 +462,11 @@ void dmRemoveDisplayInfo(DisplayInfo *displayInfo)
     dmCleanupDisplayInfo(displayInfo,True);
     freeNameValueTable(displayInfo->nameValueTable,displayInfo->numNameValues);
     if(displayInfo->dlElementList) {
-	clearDlDisplayList(displayInfo->dlElementList);
+	clearDlDisplayList(displayInfo, displayInfo->dlElementList);
 	free ( (char *) displayInfo->dlElementList);
     }
     if(displayInfo->selectedDlElementList) {
-	clearDlDisplayList(displayInfo->selectedDlElementList);
+	clearDlDisplayList(displayInfo, displayInfo->selectedDlElementList);
 	free ( (char *) displayInfo->selectedDlElementList);
     }
     free ( (char *) displayInfo->dlFile);
@@ -2088,7 +2087,7 @@ void copySelectedElementsIntoClipboard()
     if(IsEmpty(cdi->selectedDlElementList)) return;
 
     if(!IsEmpty(clipboard)) {
-	clearDlDisplayList(clipboard);
+	clearDlDisplayList(NULL, clipboard);
     }
   
     dlElement = FirstDlElement(cdi->selectedDlElementList);
@@ -2128,7 +2127,7 @@ int copyElementsIntoDisplay()
    *   Since elements are stored in clipboard in front-to-back order
    *   they can be pasted/copied into display in clipboard index order */
     saveUndoInfo(cdi);
-    clearDlDisplayList(cdi->selectedDlElementList);
+    clearDlDisplayList(cdi, cdi->selectedDlElementList);
     dlElement = FirstDlElement(clipboard);
     while (dlElement) {
 	if(dlElement->type != DL_Display) {
@@ -2141,9 +2140,7 @@ int copyElementsIntoDisplay()
 		if(pE->run->move) {
 		    pE->run->move(pE, deltaX, deltaY);
 		}
-		if(pE->run->execute) {
-		    (pE->run->execute)(cdi, pE);
-		}
+		if(pE->run->execute) (pE->run->execute)(cdi, pE);
 		pSE = createDlElement(DL_Element,(XtPointer)pE,NULL);
 		if(pSE) {
 		    appendDlElement(cdi->selectedDlElementList,pSE);
@@ -2159,15 +2156,15 @@ int copyElementsIntoDisplay()
     return 1;
 }
 
-void deleteElementsInDisplay()
+void deleteElementsInDisplay(DisplayInfo *displayInfo)
 {
     DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
-
+    
     if(!cdi) return;
     if(IsEmpty(cdi->selectedDlElementList)) return;
     saveUndoInfo(cdi);
-
+    
   /* Unhighlight selected elements */
     unhighlightSelectedElements();
   /* Traverse the elements in the selected element list */
@@ -2181,7 +2178,11 @@ void deleteElementsInDisplay()
 	  /* Remove it from the list */
 	    removeDlElement(cdi->dlElementList,pE);
 	  /* Destroy it with its destroy method if there is one */
-	    if(pE->run->destroy) pE->run->destroy(pE);
+	    if(pE->run->destroy) {
+		pE->run->destroy(displayInfo, pE);
+	    } else {
+		genericDestroy(displayInfo, pE);
+	    }
 	}
 	dlElement = dlElement->next;
     }
@@ -2213,7 +2214,7 @@ void unselectElementsInDisplay()
     if(IsEmpty(cdi->selectedDlElementList)) return;
   /* Unhighlight and unselect */
     unhighlightSelectedElements();
-    clearDlDisplayList(cdi->selectedDlElementList);
+    clearDlDisplayList(cdi, cdi->selectedDlElementList);
 }
 
 /*
@@ -2272,7 +2273,7 @@ void lowerSelectedElements()
 	    return;
 	}
     }
-    clearDlDisplayList(tmpDlElementList);
+    clearDlDisplayList(NULL, tmpDlElementList);
     saveUndoInfo(cdi);
 
     unhighlightSelectedElements();
@@ -2316,7 +2317,7 @@ void lowerSelectedElements()
 	setResourcePaletteEntries();
     }
   /* Cleanup temporary list */
-    clearDlDisplayList(tmpDlElementList);
+    clearDlDisplayList(NULL, tmpDlElementList);
 #if DEBUG_EVENTS
     print("\n[lowerSelectedElements:2]dlElement list :\n");
     dumpDlElementList(cdi->dlElementList);
@@ -2350,7 +2351,7 @@ void raiseSelectedElements()
 	    return;
 	}
     }
-    clearDlDisplayList(tmpDlElementList);
+    clearDlDisplayList(NULL, tmpDlElementList);
     saveUndoInfo(cdi);
 
     unhighlightSelectedElements();
@@ -2379,7 +2380,7 @@ void raiseSelectedElements()
 	setResourcePaletteEntries();
     }
   /* Cleanup temporary list */
-    clearDlDisplayList(tmpDlElementList);
+    clearDlDisplayList(NULL, tmpDlElementList);
 #if DEBUG_EVENTS
     print("\n[raiseSelectedElements:2]dlElement list :\n");
     dumpDlElementList(cdi->dlElementList);
@@ -2942,7 +2943,7 @@ void alignSelectedElementsToGrid(Boolean edges)
 		  /* Destroy the widget */
 		    destroyElementWidgets(pE);
 		  /* Recreate it */
-		    pE->run->execute(cdi,pE);
+		    if(pE->run->execute) pE->run->execute(cdi,pE);
 		}
 	    }
 	}
@@ -3234,7 +3235,7 @@ void equalSizeSelectedElements(void)
 	      /* Destroy the widget */
 		destroyElementWidgets(pE);
 	      /* Recreate it */
-		pE->run->execute(cdi,pE);
+		if(pE->run->execute) pE->run->execute(cdi,pE);
 	    }
 	}
 	dlElement = dlElement->prev;
@@ -3300,7 +3301,7 @@ void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement)
 # if DEBUG_REDRAW
 		    print("    execute: type=%s\n",elementType(pE->type));
 #endif    
-		    pE->run->execute(displayInfo,pE);
+		    if(pE->run->execute) pE->run->execute(displayInfo, pE);
 		}
 	    }
 	}
@@ -3339,7 +3340,7 @@ void refreshDisplay(void)
 	  /* Destroy the widget */
 	    destroyElementWidgets(pE);
 	  /* Recreate it */
-	    pE->run->execute(cdi,pE);
+	    if(pE->run->execute) pE->run->execute(cdi,pE);
 	}
 	pE = pE->next;
     }
@@ -4175,7 +4176,7 @@ void clearUndoInfo(DisplayInfo *displayInfo)
     undoInfo = displayInfo->undoInfo;
     if(!undoInfo) return;
     if(!IsEmpty(undoInfo->dlElementList)) {
-	clearDlDisplayList(undoInfo->dlElementList);
+	clearDlDisplayList(displayInfo, undoInfo->dlElementList);
     }
     if(undoInfo->dlElementList) {
 	free((char *)undoInfo->dlElementList);
@@ -4207,7 +4208,7 @@ void saveUndoInfo(DisplayInfo *displayInfo)
 #endif
 
     if(!IsEmpty(undoInfo->dlElementList)) {
-	clearDlDisplayList(undoInfo->dlElementList);
+	clearDlDisplayList(displayInfo, undoInfo->dlElementList);
     }
     if(IsEmpty(displayInfo->dlElementList)) return;
   
@@ -4279,7 +4280,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 
   /* Save current list in temporary list */
     if(!IsEmpty(tmpDlElementList)) {
-	clearDlDisplayList(tmpDlElementList);
+	clearDlDisplayList(NULL, tmpDlElementList);
     }
     if(!IsEmpty(displayInfo->dlElementList)) {
 	dlElement = FirstDlElement(displayInfo->dlElementList);
@@ -4299,7 +4300,8 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 
   /* Copy undo list to current list */
     if(!IsEmpty(displayInfo->dlElementList)) {
-	removeDlDisplayListElementsExceptDisplay(displayInfo->dlElementList);
+	removeDlDisplayListElementsExceptDisplay(displayInfo,
+	  displayInfo->dlElementList);
     }
     if(!IsEmpty(undoInfo->dlElementList)) {  
 	dlElement = FirstDlElement(undoInfo->dlElementList);
@@ -4307,9 +4309,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	    DlElement *element = dlElement;
 	    if(element->type != DL_Display) {
 		DlElement *pE = element->run->create(element);
-		if(pE->run->execute) {
-		    (pE->run->execute)(displayInfo, pE);
-		}
+		if(pE->run->execute) (pE->run->execute)(displayInfo, pE);
 		appendDlElement(displayInfo->dlElementList,pE);
 	    }
 	    dlElement = dlElement->next;
@@ -4322,7 +4322,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 
   /* Copy temporary list to undo list */
     if(!IsEmpty(undoInfo->dlElementList)) {
-	clearDlDisplayList(undoInfo->dlElementList);
+	clearDlDisplayList(displayInfo, undoInfo->dlElementList);
     }
     if(!IsEmpty(tmpDlElementList)) {
 	dlElement = FirstDlElement(tmpDlElementList);
@@ -4350,7 +4350,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 #endif
 
   /* Clear the temporary element list to be neat */
-    clearDlDisplayList(tmpDlElementList);
+    clearDlDisplayList(NULL, tmpDlElementList);
 
   /* Do direct copies */
     displayInfo->grid->gridSpacing = undoInfo->grid.gridSpacing;

@@ -815,11 +815,9 @@ struct  _DlElement;
 struct  _DlList;
 typedef struct _DlComposite {
     DlObject object;
+    DlDynamicAttribute dynAttr;
     char compositeName[MAX_TOKEN_LENGTH];
-    VisibilityMode vis;
-    char chan[MAX_TOKEN_LENGTH];
     struct _DlList *dlElementList;
-    Boolean visible;    /* run-time visibility */
 } DlComposite;
 
 /* (if MEDM ever leaves the X environment, a DlPoint should be defined and
@@ -881,7 +879,7 @@ typedef struct {
   /* Create (Allocate structures) method */
     struct _DlElement *(*create)();     /* note: 3 args in createDlElement, 1 in createDlxxx */
   /* Destroy (Free structures) method */
-    void (*destroy)(struct _DlElement *);
+    void (*destroy)(struct _DisplayInfo *, struct _DlElement *);
   /* Execute (Make it appear on the display) method */
     void (*execute)(struct _DisplayInfo *, struct _DlElement *);
   /* Write (to file) method */

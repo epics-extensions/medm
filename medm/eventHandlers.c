@@ -368,7 +368,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	if (di != displayInfo) {
 	    currentDisplayInfo = di;
 	    unhighlightSelectedElements();
-	    clearDlDisplayList(currentDisplayInfo->selectedDlElementList);
+	    clearDlDisplayList(currentDisplayInfo,
+	      currentDisplayInfo->selectedDlElementList);
 	}
 	di = di->next;
     }
@@ -457,7 +458,8 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			    if (pE->structure.element == pT->structure.element) {
 				DlElement *pENew;
 				
-				clearDlDisplayList(cdi->selectedDlElementList);
+				clearDlDisplayList(cdi,
+				  cdi->selectedDlElementList);
 				if (pT->next) {
 				  /* Use the next one */
 				    pENew = createDlElement(DL_Element,
@@ -495,7 +497,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_EVENTS > 1
 			print("Not found: found=%d\n",found);
 #endif
-			clearDlDisplayList(cdi->selectedDlElementList);
+			clearDlDisplayList(cdi, cdi->selectedDlElementList);
 			pENew = createDlElement(DL_Element,
 			  (XtPointer)pEFirst->structure.rectangle,
 			  NULL);
@@ -505,7 +507,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			}
 		    }
 		    highlightSelectedElements();
-		    clearDlDisplayList(tmpDlElementList);
+		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
 		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
@@ -538,7 +540,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			while (pE) {
 			    if (pE->structure.element == pT->structure.element) {
 				removeDlElement(cdi->selectedDlElementList,pE);
-				destroyDlElement(pE);
+				genericDestroy(cdi, pE);
 				found = True;
 				break;
 			    }
@@ -555,7 +557,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			}
 		    }
 		    highlightSelectedElements();
-		    clearDlDisplayList(tmpDlElementList);
+		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
 		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
@@ -615,19 +617,22 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 			    if (pET->structure.element ==
 			      pES->structure.element) {
-				clearDlDisplayList(cdi->selectedDlElementList);
+				clearDlDisplayList(cdi,
+				  cdi->selectedDlElementList);
 			    } else {
-				clearDlDisplayList(cdi->selectedDlElementList);
+				clearDlDisplayList(cdi,
+				  cdi->selectedDlElementList);
 				appendDlList(cdi->selectedDlElementList,
 				  tmpDlElementList);
 			    }
 			} else {
-			    clearDlDisplayList(cdi->selectedDlElementList);
+			    clearDlDisplayList(cdi,
+			      cdi->selectedDlElementList);
 			    appendDlList(cdi->selectedDlElementList,
 			      tmpDlElementList);
 			}
 			highlightSelectedElements();
-			clearDlDisplayList(tmpDlElementList);
+			clearDlDisplayList(NULL, tmpDlElementList);
 			clearResourcePaletteEntries();
 			if (NumberOfDlElement(cdi->selectedDlElementList) == 1) {
 			    currentElementType =
@@ -712,7 +717,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("Not already selected\n");
 #endif
 		    unhighlightSelectedElements();
-		    clearDlDisplayList(cdi->selectedDlElementList);
+		    clearDlDisplayList(cdi, cdi->selectedDlElementList);
 		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
 		    validResize = doResizing(XtWindow(cdi->drawingArea),
@@ -729,7 +734,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			updateResizedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
-		    clearDlDisplayList(tmpDlElementList);
+		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
 		    if (NumberOfDlElement(cdi->selectedDlElementList)==1){
 			currentElementType =
@@ -787,7 +792,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    print("Not already selected\n");
 #endif
 		    unhighlightSelectedElements();
-		    clearDlDisplayList(cdi->selectedDlElementList);
+		    clearDlDisplayList(cdi, cdi->selectedDlElementList);
 		    appendDlList(cdi->selectedDlElementList,
 		      tmpDlElementList);
 		    validDrag = doDragging(XtWindow(cdi->drawingArea),
@@ -805,7 +810,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 			updateDraggedElements(x0,y0,x1,y1);
 		    }
 		    highlightSelectedElements();
-		    clearDlDisplayList(tmpDlElementList);
+		    clearDlDisplayList(NULL, tmpDlElementList);
 		    clearResourcePaletteEntries();
 		    if (NumberOfDlElement(cdi->selectedDlElementList)==1) {
 			currentElementType =
@@ -815,7 +820,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    }
 		}
 	    }
-	    clearDlDisplayList(tmpDlElementList);
+	    clearDlDisplayList(NULL, tmpDlElementList);
 	    break;
 	    
 	case Button3:
@@ -1005,7 +1010,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		(*dlElement->run->execute)(cdi,dlElement);
 	      /* Unselect any selected elements */
 		unhighlightSelectedElements();
-		clearDlDisplayList(cdi->selectedDlElementList);
+		clearDlDisplayList(cdi, cdi->selectedDlElementList);
 	      /* Create a DL_Element */
 		pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
 	      /* Add it to selectedDlElementList */
@@ -1208,14 +1213,12 @@ static void updateDraggedElements(Position x0, Position y0,
 	  elementType(pE->type),
 	  pE->run->move);
 #endif
-	if (pE->run->move) {
-	    pE->run->move(pE, xOffset, yOffset);
-	}
+	if (pE->run->move) pE->run->move(pE, xOffset, yOffset);
 	if (pE->widget) {
 	  /* Destroy the widgets */
 	    destroyElementWidgets(pE);
 	  /* Recreate them */
-	    pE->run->execute(cdi,pE);
+	    if(pE->run->execute) pE->run->execute(cdi,pE);
 	}
 	pElement = pElement->next;
     }
@@ -1261,7 +1264,7 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 	  /* Destroy the widget */
 	    destroyElementWidgets(pE);
 	  /* Recreate it */
-	    pE->run->execute(cdi,pE);
+	    if(pE->run->execute) pE->run->execute(cdi,pE);
 #if DEBUG_EVENTS > 1
 	    {
 		DlObject *po = &pE->structure.composite->object;

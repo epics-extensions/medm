@@ -67,7 +67,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* Structures */
 
 typedef struct _StripChart {
-    DlElement     *dlElement;              /* strip chart data */
+    DlElement     *dlElement;              /* Must be first */
     Record        *record[MAX_PENS];       /* array of data */
     UpdateTask    *updateTask;
     int           nChannels;               /* number of channels ( <= MAX_PENS) */

@@ -59,7 +59,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define INITIAL_NUM_POINTS 16
 
 typedef struct _Polyline {
-    DlElement        *dlElement;
+    DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
 } MedmPolyline;
@@ -85,7 +85,7 @@ static void polylineGetRecord(XtPointer, Record **, int *);
 static void polylineGetValues(ResourceBundle *pRCB, DlElement *p);
 static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void polylineSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
-static void destroyDlPolyline(DlElement *);
+static void destroyDlPolyline(DisplayInfo *displayInfo, DlElement *pE);
 static void polylineMove(DlElement *dlElement, int xOffset, int yOffset);
 static void polylineScale(DlElement *dlElement, int xOffset, int yOffset);
 static void polylineOrient(DlElement *dlElement, int type, int xCenter,
@@ -869,11 +869,12 @@ static void polylineInheritValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void destroyDlPolyline(DlElement *dlElement) {
-    free ((char *)dlElement->structure.polyline->points);
-    free ((char *)dlElement->structure.polyline);
-    free ((char *)dlElement);
+static void destroyDlPolyline(DisplayInfo *displayInfo, DlElement *pE)
+{
+    free((char *)pE->structure.polygon->points);
+    genericDestroy(displayInfo, pE);
 }
+
 
 static void polylineGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlPolyline *dlPolyline = p->structure.polyline;

@@ -65,7 +65,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/IntrinsicP.h>
 
 typedef struct _Menu {
-    DlElement   *dlElement;
+    DlElement   *dlElement;     /* Must be first */
     Record      *record; 
     UpdateTask  *updateTask;
     Pixel       color;

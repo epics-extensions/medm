@@ -57,7 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Rectangle {
-    DlElement        *dlElement;
+    DlElement        *dlElement;     /* Must be first */
     Record           **records;
     UpdateTask       *updateTask;
 } MedmRectangle;
@@ -72,7 +72,7 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable rectangleDlDispatchTable = {
     createDlRectangle,
-    destroyElementWithDynamicAttribute,
+    NULL,
     executeDlRectangle,
     writeDlRectangle,
     NULL,
@@ -230,7 +230,8 @@ static void rectangleDraw(XtPointer cd)
     redrawElementsAbove(displayInfo, (DlElement *)dlRectangle);
 }
 
-static void rectangleDestroyCb(XtPointer cd) {
+static void rectangleDestroyCb(XtPointer cd)
+{
     MedmRectangle *pr = (MedmRectangle *)cd;
 
     if (pr) {
@@ -248,7 +249,8 @@ static void rectangleDestroyCb(XtPointer cd) {
     return;
 }
 
-static void rectangleGetRecord(XtPointer cd, Record **record, int *count) {
+static void rectangleGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmRectangle *pr = (MedmRectangle *)cd;
     int i;
     
@@ -347,7 +349,8 @@ void writeDlRectangle(
 #endif
 }
 
-static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlRectangle *dlRectangle = p->structure.rectangle;
     medmGetValues(pRCB,
       CLR_RC,        &(dlRectangle->attr.clr),
@@ -367,7 +370,8 @@ static void rectangleInheritValues(ResourceBundle *pRCB, DlElement *p) {
       -1);
 }
 
-static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlRectangle *dlRectangle = p->structure.rectangle;
     medmGetValues(pRCB,
       X_RC,          &(dlRectangle->object.x),

@@ -55,13 +55,36 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #include "medm.h"
-static void destroyDlComposite(DlElement *dlElement);
+
+typedef struct _Rectangle {
+    DlElement  *dlElement;     /* Must be first */
+    Record     **records;
+    UpdateTask *updateTask;
+    DisplayInfo *displayInfo;
+    Boolean    executed;
+} MedmComposite;
+
+/* Function prototypes */
+
+static void destroyDlComposite(DisplayInfo *displayInfo, DlElement *pE);
 static void compositeMove(DlElement *element, int xOffset, int yOffset);
 static void compositeScale(DlElement *element, int xOffset, int yOffset);
 static void compositeOrient(DlElement *dlElement, int type, int xCenter,
   int yCenter);
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p);
 static void compositeCleanup(DlElement *element);
+static void compositeUpdateGraphicalInfoCb(XtPointer cd);
+static void compositeUpdateValueCb(XtPointer cd);
+static void compositeUpdateValueCb(XtPointer cd);
+static void compositeDraw(XtPointer cd);
+static void compositeDestroyCb(XtPointer cd);
+static void compositeGetRecord(XtPointer cd, Record **record, int *count);
+static void executeCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite);
+static void destroyCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite);
+static void drawComposite(MedmComposite *pc);
+static void eraseComposite(MedmComposite *pc);
 
 static DlDispatchTable compositeDlDispatchTable = {
     createDlComposite,
@@ -82,22 +105,166 @@ static DlDispatchTable compositeDlDispatchTable = {
 void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlComposite *dlComposite = dlElement->structure.composite;
-    DlElement *element;
 
-    if(displayInfo->traversalMode == DL_EDIT) {
-	element = FirstDlElement(dlComposite->dlElementList);
-	while (element) {
-	    (element->run->execute)(displayInfo, element);
-	    element = element->next;
+    if(displayInfo->traversalMode == DL_EXECUTE) {
+      /* EXECUTE mode */
+	MedmComposite *pc;
+	char *pC, upstring[MAX_TOKEN_LENGTH];
+	int i;
+
+      /* Allocate and fill in MedmComposite struct */
+	pc = (MedmComposite *)malloc(sizeof(MedmComposite));
+	pc->displayInfo = displayInfo;
+	pc->dlElement = dlElement;
+	pc->records = NULL;
+	pc->updateTask = updateTaskAddTask(displayInfo, &(dlComposite->object),
+	  compositeDraw, (XtPointer)pc);
+	pc->executed = False;
+	if (pc->updateTask == NULL) {
+	    medmPrintf(1,"\nexecuteDlComposite: Memory allocation error\n");
+	} else {
+	    updateTaskAddDestroyCb(pc->updateTask,compositeDestroyCb);
+	    updateTaskAddNameCb(pc->updateTask,compositeGetRecord);
+	    pc->updateTask->opaque = False;
 	}
-    } else if(displayInfo->traversalMode == DL_EXECUTE) {
-	if(dlComposite->visible) {
-	    element = FirstDlElement(dlComposite->dlElementList);
-	    while (element) {
-		(element->run->execute)(displayInfo, element);
-		element = element->next;
+	pc->records = NULL;
+	if(*dlComposite->dynAttr.chan[0]) {
+	  /* A channel is defined */
+	    pc->records = medmAllocateDynamicRecords(&dlComposite->dynAttr,
+	      compositeUpdateValueCb,
+	      compositeUpdateGraphicalInfoCb,
+	      (XtPointer)pc);
+#if 0	    
+	  /* Draw initial white rectangle */
+	  /* KE: Check if this is necessary */
+	    drawWhiteRectangle(pc->updateTask);
+#endif	    
+	} else {
+	  /* No channel */
+	    executeCompositeChildren(displayInfo, dlComposite);
+	    pc->executed = True;
+	}
+    } else {
+      /* EDIT mode */
+	executeCompositeChildren(displayInfo, dlComposite);
+    }
+}
+
+static void compositeUpdateGraphicalInfoCb(XtPointer cd)
+{
+    Record *pr = (Record *)cd;
+    MedmComposite *pc = (MedmComposite *)pr->clientData;
+#if 0    
+    updateTaskMarkUpdate(pc->updateTask);
+#endif    
+}
+
+static void compositeUpdateValueCb(XtPointer cd)
+{
+    MedmComposite *pc = (MedmComposite *)((Record *)cd)->clientData;
+    updateTaskMarkUpdate(pc->updateTask);
+}
+
+static void compositeDraw(XtPointer cd)
+{
+  MedmComposite *pc = (MedmComposite *)cd;
+    Record *pr = pc->records?pc->records[0]:NULL;
+    DisplayInfo *displayInfo = pc->updateTask->displayInfo;
+    XGCValues gcValues;
+    unsigned long gcValueMask;
+    Display *display = XtDisplay(pc->updateTask->displayInfo->drawingArea);
+    DlComposite *dlComposite = pc->dlElement->structure.composite;
+
+  /* Branch on whether there is a channel or not */
+    if(*dlComposite->dynAttr.chan[0]) {
+      /* A channel is defined */
+	if(!pr) return;
+	if (pr->connected) {
+	    if (pr->readAccess) {
+	      /* Draw depending on visibility */
+		if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
+		    if(pr->readAccess) {
+			drawComposite(pc);
+		    } else {
+			eraseComposite(pc);
+		    }
+		} else {
+		    eraseComposite(pc);
+		}
+		if(pr->readAccess) {
+		    if (!pc->updateTask->overlapped &&
+		      dlComposite->dynAttr.vis == V_STATIC) {
+			pc->updateTask->opaque = True;
+		    }
+		} else {
+		    pc->updateTask->opaque = False;
+		    draw3DQuestionMark(pc->updateTask);
+		}
+	    } else {
+		eraseComposite(pc);
+		pc->updateTask->opaque = False;
+		drawWhiteRectangle(pc->updateTask);
 	    }
 	}
+    } else {
+      /* No channel */
+	executeCompositeChildren(displayInfo, dlComposite);
+	pc->executed = True;
+    }
+    
+  /* Update the drawing objects above */
+    redrawElementsAbove(displayInfo, (DlElement *)dlComposite);
+}
+
+static void drawComposite(MedmComposite *pc)
+{
+    DisplayInfo *displayInfo = pc->updateTask->displayInfo;
+    DlComposite *dlComposite = pc->dlElement->structure.composite;
+    
+    if(!pc->executed) {
+	executeCompositeChildren(displayInfo, dlComposite);
+	pc->executed= True;
+    }
+}
+
+static void eraseComposite(MedmComposite *pc)
+{
+    DisplayInfo *displayInfo = pc->updateTask->displayInfo;
+    DlComposite *dlComposite = pc->dlElement->structure.composite;
+
+    if(pc->executed) {
+	destroyCompositeChildren(displayInfo, dlComposite);
+	pc->executed= False;
+    }
+}
+
+static void compositeDestroyCb(XtPointer cd)
+{
+    MedmComposite *pc = (MedmComposite *)cd;
+
+    if (pc) {
+	Record **records = pc->records;
+	
+	if(records) {
+	    int i;
+	    for(i=0; i < MAX_CALC_RECORDS; i++) {
+		if(records[i]) medmDestroyRecord(records[i]);
+	    }
+	    free((char *)records);
+	}
+	free((char *)pc);
+    }
+    return;
+}
+
+static void compositeGetRecord(XtPointer cd, Record **record, int *count)
+{
+    MedmComposite *pc = (MedmComposite *)cd;
+    int i;
+    
+    *count = MAX_CALC_RECORDS;
+    for(i=0; i < MAX_CALC_RECORDS; i++) {
+	record[i] = pc->records[i];
     }
 }
 
@@ -111,13 +278,13 @@ DlElement *createDlComposite(DlElement *p) {
 	DlElement *child;
 	*dlComposite = *p->structure.composite;
 
-      /* create the first node */
+      /* Create the first node */
 	dlComposite->dlElementList = createDlList();
 	if(!dlComposite->dlElementList) {
 	    free(dlComposite);
 	    return NULL;
 	}
-      /* copy all childrern */
+      /* Copy all childrern */
 	child = FirstDlElement(p->structure.composite->dlElementList);
 	while (child) {
 	    DlElement *copy = child->run->create(child);
@@ -127,15 +294,13 @@ DlElement *createDlComposite(DlElement *p) {
 	}
     } else {
 	objectAttributeInit(&(dlComposite->object));
+	dynamicAttributeInit(&(dlComposite->dynAttr));
 	dlComposite->compositeName[0] = '\0';
-	dlComposite->vis = V_STATIC;
-	dlComposite->chan[0] = '\0';
 	dlComposite->dlElementList = createDlList();
 	if(!dlComposite->dlElementList) {
 	    free(dlComposite);
 	    return NULL;
 	}
-	dlComposite->visible = True;
     }
 
     if(!(dlElement = createDlElement(DL_Composite,
@@ -174,7 +339,7 @@ DlElement *groupObjects()
     while (pE) { 
 	DlElement *pE1 = pE->structure.element;
 	if(pE1->type != DL_Display) {
-	    DlObject *po = &(pE1->structure.rectangle->object);
+	    DlObject *po = &(pE1->structure.composite->object);
 	    minX = MIN(minX,po->x);
 	    maxX = MAX(maxX,(int)(po->x+po->width));
 	    minY = MIN(minY,po->y);
@@ -191,7 +356,7 @@ DlElement *groupObjects()
     dlComposite->object.height = maxY - minY;
 
     clearResourcePaletteEntries();
-    clearDlDisplayList(cdi->selectedDlElementList);
+    clearDlDisplayList(cdi, cdi->selectedDlElementList);
     if(!(pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL))) {
 	return (DlElement *)0;
     }
@@ -253,23 +418,12 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 	case T_WORD:
 	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(newDlComposite->object));
+	    } else if (!strcmp(token,"dynamic attribute")) {
+		parseDynamicAttribute(displayInfo,&(newDlComposite->dynAttr));
 	    } else if(!strcmp(token,"composite name")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(newDlComposite->compositeName,token);
-	    } else if(!strcmp(token,"vis")) {
-		getToken(displayInfo,token);
-		getToken(displayInfo,token);
-		if(!strcmp(token,"static"))
-		  newDlComposite->vis = V_STATIC;
-		else if(!strcmp(token,"if not zero"))
-		  newDlComposite->vis = IF_NOT_ZERO;
-		else if(!strcmp(token,"if zero"))
-		  newDlComposite->vis = IF_ZERO;
-	    } else if(!strcmp(token,"chan")) {
-		getToken(displayInfo,token);
-		getToken(displayInfo,token);
-		strcpy(newDlComposite->chan,token);
 	    } else if(!strcmp(token,"children")) {
 		parseAndAppendDisplayList(displayInfo,
 		  newDlComposite->dlElementList);
@@ -286,7 +440,6 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
       && (tokenType != T_EOF) );
 
     return dlElement;
-
 }
 
 void writeDlCompositeChildren(FILE *stream, DlElement *dlElement,
@@ -326,9 +479,8 @@ void writeDlComposite(FILE *stream, DlElement *dlElement,
     writeDlObject(stream,&(dlComposite->object),level+1);
     fprintf(stream,"\n%s\t\"composite name\"=\"%s\"",indent,
       dlComposite->compositeName);
-    fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dlComposite->vis]);
-    fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlComposite->chan);
     writeDlCompositeChildren(stream,dlElement,level+1);
+    writeDlDynamicAttribute(stream,&(dlComposite->dynAttr),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
@@ -360,11 +512,12 @@ void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
     dlElement->structure.composite->object.height = height;
 }
 
-static void destroyDlComposite(DlElement *dlElement) {
-    clearDlDisplayList(dlElement->structure.composite->dlElementList);
-    free((char *)dlElement->structure.composite->dlElementList);
-    free((char *)dlElement->structure.composite);
-    free((char *)dlElement);
+static void destroyDlComposite(DisplayInfo *displayInfo, DlElement *pE)
+{
+    clearDlDisplayList(displayInfo, pE->structure.composite->dlElementList);
+    free((char *)pE->structure.composite->dlElementList);
+    free((char *)pE->structure.composite);
+    free((char *)pE);
 }
 
 /*
@@ -382,8 +535,8 @@ void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 #if 0
 	    if(ele->widget) {
 		XtMoveWidget(widget,
-		  (Position) (ele->structure.rectangle->object.x + xOffset),
-		  (Position) (ele->structure.rectangle->object.y + yOffset));
+		  (Position) (ele->structure.composite->object.x + xOffset),
+		  (Position) (ele->structure.composite->object.y + yOffset));
 	    }
 #endif
 	    if(ele->run->move)
@@ -411,6 +564,24 @@ void compositeOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
     genericOrient(dlElement, type, xCenter, yCenter);
 }
 
+#if 0
+static void compositeInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
+    DlComposite *dlComposite = p->structure.composite;
+    medmGetValues(pRCB,
+      VIS_RC,        &(dlComposite->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlComposite->dynAttr.colorRule),
+#endif
+      VIS_CALC_RC,   &(dlComposite->dynAttr.calc),
+      CHAN_A_RC,     &(dlComposite->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlComposite->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlComposite->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlComposite->dynAttr.chan[3]),
+      -1);
+}
+#endif
+
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
 {
     DlComposite *dlComposite = p->structure.composite;
@@ -430,6 +601,15 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
       CLR_RC,        &(clr),
       BCLR_RC,       &(bclr),
 #endif      
+      VIS_RC,        &(dlComposite->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+      COLOR_RULE_RC, &(dlComposite->dynAttr.colorRule),
+#endif
+      VIS_CALC_RC,   &(dlComposite->dynAttr.calc),
+      CHAN_A_RC,     &(dlComposite->dynAttr.chan[0]),
+      CHAN_B_RC,     &(dlComposite->dynAttr.chan[1]),
+      CHAN_C_RC,     &(dlComposite->dynAttr.chan[2]),
+      CHAN_D_RC,     &(dlComposite->dynAttr.chan[3]),
       -1);
     xOffset = (int) width - (int) dlComposite->object.width;
     yOffset = (int) height - (int) dlComposite->object.height;
@@ -456,13 +636,42 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
 #endif    
 }
 
-static void compositeCleanup(DlElement *dlElement) {
+static void compositeCleanup(DlElement *dlElement)
+{
     DlElement *pE = FirstDlElement(dlElement->structure.composite->dlElementList);
     while (pE) {
 	if(pE->run->cleanup) {
 	    pE->run->cleanup(pE);
 	} else {
 	    pE->widget = NULL;
+	}
+	pE = pE->next;
+    }
+}
+
+static void executeCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+    DlElement *pE;
+    
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while (pE) {
+	if(pE->run->execute) pE->run->execute(displayInfo, pE);
+	pE = pE->next;
+    }
+}
+
+static void destroyCompositeChildren(DisplayInfo *displayInfo,
+  DlComposite *dlComposite)
+{
+    DlElement *pE;
+    
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while (pE) {
+	if(pE->run->destroy) {
+	    pE->run->destroy(displayInfo, pE);
+	} else {
+	    genericDestroy(displayInfo, pE);
 	}
 	pE = pE->next;
     }

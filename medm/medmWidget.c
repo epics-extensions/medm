@@ -373,7 +373,7 @@ int destroyMedmWidget() {
     if (executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
     if (highlightGC) XFreeGC(display,highlightGC);
     if (clipboard) {
-	clearDlDisplayList(clipboard);
+	clearDlDisplayList(NULL, clipboard);
 	free(clipboard);
     }
     return 0;

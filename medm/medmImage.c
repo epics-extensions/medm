@@ -55,7 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_ANIMATE 0
-#define DEBUG_CALC 1
+#define DEBUG_CALC 0
 
 #define DEFAULT_TIME 1
 #define ANIMATE_TIME(gif) \
@@ -70,10 +70,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/keysym.h>
 
 typedef struct _Image {
-    DisplayInfo *displayInfo;
-    DlElement *dlElement;
+    DlElement *dlElement;     /* Must be first */
     Record **records;
     UpdateTask *updateTask;
+    DisplayInfo *displayInfo;
     Boolean validCalc;
     Boolean animate;
     char post[MAX_TOKEN_LENGTH];
@@ -81,7 +81,7 @@ typedef struct _Image {
 
 /* Function prototypes */
 
-static void destroyDlImage(DlElement *dlElement);
+static void destroyDlImage(DisplayInfo *displayInfo, DlElement *pE);
 static void drawImage(MedmImage *pi);
 static void imageDestroyCb(XtPointer cd);
 static void imageDraw(XtPointer cd);
@@ -404,11 +404,10 @@ static void imageDestroyCb(XtPointer cd) {
     return;
 }
 
-static void destroyDlImage(DlElement *dlElement)
+static void destroyDlImage(DisplayInfo *displayInfo, DlElement *pE)
 {
-    freeGIF(dlElement->structure.image);
-    free((char*)dlElement->structure.composite);
-    destroyDlElement(dlElement);
+    freeGIF(pE->structure.image);
+    genericDestroy(displayInfo, pE);
 }
 
 static void imageGetRecord(XtPointer cd, Record **record, int *count) {
@@ -467,7 +466,7 @@ DlElement* handleImageCreate()
   /* Check response */
     if(response == 2) {
       /* Cancel */
-	destroyDlImage(dlElement);
+	destroyDlImage(currentDisplayInfo, dlElement);
 	dlElement = NULL;
     } else {
       /* OK */
@@ -527,29 +526,6 @@ static void imageUpdateGraphicalInfoCb(XtPointer cd)
 {
     Record *pr = (Record *)cd;
     MedmImage *pi = (MedmImage *)pr->clientData;
-    DlImage *dlImage = pi->dlElement->structure.image;
-
-    switch (pr->dataType) {
-    case DBF_STRING :
-	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
-	  "  Illegal channel type for %s\n"
-	  "  Cannot attach image\n",
-	  dlImage->dynAttr.chan);
-	return;
-    case DBF_ENUM :
-    case DBF_CHAR :
-    case DBF_INT :
-    case DBF_LONG :
-    case DBF_FLOAT :
-    case DBF_DOUBLE :
-	break;
-    default :
-	medmPostMsg(1,"imageUpdateGraphicalInfoCb:\n"
-	  "  Unknown channel type for %s\n"
-	  "  Cannot attach image\n",
-	  dlImage->dynAttr.chan);
-	break;
-    }
 #if 0    
     updateTaskMarkUpdate(pi->updateTask);
 #endif    

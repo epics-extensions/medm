@@ -57,7 +57,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _Meter {
-    DlElement   *dlElement;
+    DlElement   *dlElement;     /* Must be first */
     Record      *record;
     UpdateTask  *updateTask;
 } Meter;
@@ -264,9 +264,9 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pr->hopr;
-	lopr.fval = (float) pr->lopr;
-	val.fval = (float) pr->value;
+	hopr.fval = (float)pr->hopr;
+	lopr.fval = (float)pr->lopr;
+	val.fval = (float)pr->value;
 	precision = pr->precision;
 	break;
     default :
@@ -330,7 +330,7 @@ static void meterDestroyCb(XtPointer cd) {
 }
 
 static void meterGetRecord(XtPointer cd, Record **record, int *count) {
-    Meter *pm = (Meter *) cd;
+    Meter *pm = (Meter *)cd;
     *count = 1;
     record[0] = pm->record;
 }
@@ -340,7 +340,7 @@ DlElement *createDlMeter(DlElement *p)
     DlMeter *dlMeter;
     DlElement *dlElement;
 
-    dlMeter = (DlMeter *) malloc(sizeof(DlMeter));
+    dlMeter = (DlMeter *)malloc(sizeof(DlMeter));
     if (!dlMeter) return 0;
     if (p) {
 	*dlMeter = *p->structure.meter;

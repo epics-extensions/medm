@@ -444,7 +444,7 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	    reuse=1;
 	  /* Clear out old display */
 	    dmCleanupDisplayInfo(displayInfo,False);
-	    clearDlDisplayList(displayInfo->dlElementList);
+	    clearDlDisplayList(displayInfo, displayInfo->dlElementList);
 	    displayInfo->filePtr = filePtr;
 	    cdi = currentDisplayInfo = displayInfo;
 	    cdi->newDisplay = False;
