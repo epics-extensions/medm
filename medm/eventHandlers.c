@@ -69,11 +69,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 #include <X11/IntrinsicP.h>
 
-/* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
+#include <XrtGraph.h>
 #if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
-#include <XrtGraph.h>
 #include <XrtGraphProp.h>
 #endif
 #endif
@@ -157,15 +156,13 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 	    case DL_Valuator:
 		if (widget = pE->widget) {
 		    popupValuatorKeyboardEntry(widget,displayInfo,event);
-		  /* KE: Is this just for debugging ? */
 		    XUngrabPointer(display,CurrentTime);
 		    XFlush(display);
 		}
 		break;
 		
 	    case DL_CartesianPlot:
-#ifdef CARTESIAN_PLOT
-	      /* Implement Xrt/Graph property editor */
+#ifdef XRTGRAPH
 		if (widget = pE->widget) {
 		    if (xEvent->state & ControlMask) {
 #if XRT_VERSION > 2
@@ -187,10 +184,6 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 #endif			    
 #endif			    
 		    } else {
-#if DEBUG_CARTESIAN_PLOT
-			XUngrabPointer(display,CurrentTime);
-			XFlush(display);
-#endif		    
 		      /* Bring up plot axis data dialog */
 		      /* update globalResourceBundle with this element's info */
 			executeTimeCartesianPlotWidget = widget;
@@ -207,15 +200,16 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
 			
 			XtManageChild(cpAxisForm);
 			XtPopup(cartesianPlotAxisS,XtGrabNone);
-		      /* KE: Is this just for debugging ? */
-			XUngrabPointer(display,CurrentTime);
-			XFlush(display);
 		    }
 #if DEBUG_CARTESIAN_PLOT
-		    dumpCartesianPlot(widget);
+		    dumpCartesianPlot();
 #endif			
+		  /* End DEBUG */
+		    
+		    XUngrabPointer(display,CurrentTime);
+		    XFlush(display);
 		}
-#endif     /* #ifdef DEBUG_CARTESIAN_PLOT */
+#endif     /* #ifdef XRTGRAPH */
 		break;
 	    default:
 	      /* Popup execute-mode popup menu */
@@ -272,7 +266,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event, Boolean *ct
       /* The following solves the problem of the pointer hanging when
        *   clicking Btn2 on a Related Display after bringing up the
        *   menu with a Btn 1 click */
-	XBell(display,50);
+	XUngrabPointer(display,CurrentTime);
     }
 }
 
@@ -1295,11 +1289,11 @@ DlElement *handleRectangularCreates(DlElementType type,
     case DL_StripChart:
 	pE = createDlStripChart(NULL);
 	break;
-#ifdef CARTESIAN_PLOT
+#ifdef XRTGRAPH
     case DL_CartesianPlot:
 	pE = createDlCartesianPlot(NULL);
 	break;
-#endif     /* #ifdef CARTESIAN_PLOT */
+#endif     /* #ifdef XRTGRAPH */
     case DL_Rectangle:
 	pE = createDlRectangle(NULL);
 	break;
