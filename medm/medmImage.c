@@ -85,6 +85,7 @@ static DlDispatchTable imageDlDispatchTable = {
     NULL,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

@@ -73,6 +73,7 @@ static DlDispatchTable shellCommandDlDispatchTable = {
     shellCommandSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

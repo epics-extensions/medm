@@ -82,6 +82,7 @@ static DlDispatchTable rectangleDlDispatchTable = {
     rectangleSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

@@ -181,6 +181,7 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
     cartesianPlotSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

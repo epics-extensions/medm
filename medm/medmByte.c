@@ -92,6 +92,7 @@ static DlDispatchTable byteDlDispatchTable = {
     byteSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

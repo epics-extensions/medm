@@ -84,6 +84,7 @@ static DlDispatchTable ovalDlDispatchTable = {
     ovalSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

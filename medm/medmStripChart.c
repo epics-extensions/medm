@@ -162,6 +162,7 @@ static DlDispatchTable stripChartDlDispatchTable = {
     stripChartSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

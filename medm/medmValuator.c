@@ -98,6 +98,7 @@ static DlDispatchTable valuatorDlDispatchTable = {
     valuatorSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

@@ -79,6 +79,7 @@ static DlDispatchTable displayDlDispatchTable = {
     displaySetForegroundColor,
     NULL,
     NULL,
+    NULL,
     NULL};
 
 /*

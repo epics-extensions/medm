@@ -2411,6 +2411,75 @@ void alignSelectedElements(int alignment)
 }
 
 /*
+ * Orient selected elements (flip and rotate)
+ */
+void orientSelectedElements(int alignment)
+{
+    int i, j, minX, minY, maxX, maxY, centerX, centerY, x0, y0;
+    DisplayInfo *cdi;
+    DlElement *ele;
+    DlElement *dlElement;
+
+    if(!currentDisplayInfo) return;
+    cdi = currentDisplayInfo;
+    if(IsEmpty(cdi->selectedDlElementList)) return;
+    saveUndoInfo(cdi);
+
+    minX = INT_MAX; minY = INT_MAX;
+    maxX = INT_MIN; maxY = INT_MIN;
+
+    unhighlightSelectedElements();
+
+  /* Loop and get min/max (x,y) values */
+    dlElement = FirstDlElement(cdi->selectedDlElementList);
+    while (dlElement) {
+	DlObject *po =
+	  &(dlElement->structure.element->structure.rectangle->object);
+	minX = MIN(minX, po->x);
+	minY = MIN(minY, po->y);
+	x0 = (po->x + (int)po->width);
+	maxX = MAX(maxX,x0);
+	y0 = (po->y + (int)po->height);
+	maxY = MAX(maxY,y0);
+	dlElement = dlElement->next;
+    }
+    centerX = (minX + maxX)/2;
+    centerY = (minY + maxY)/2;
+    
+  /* Loop and set x,y values, and move if widgets */
+    dlElement = LastDlElement(cdi->selectedDlElementList);
+    while (dlElement != cdi->selectedDlElementList->head) {
+	ele = dlElement->structure.element;
+	
+      /* Can't move the display (but there isn't any orient method anyway) */
+	if(ele->type != DL_Display) {
+	    if(ele->run->orient) {
+		ele->run->orient(ele,alignment,centerX,centerY);
+		if(ele->widget) {
+		  /* Destroy the widget */
+		    destroyElementWidgets(ele);
+		  /* Recreate it */
+		    ele->run->execute(cdi,ele);
+		}
+	    }
+	}
+	dlElement = dlElement->prev;
+    }
+  /* Cleanup possible damage to non-widgets */
+    dmTraverseNonWidgetsInDisplayList(cdi);
+
+  /* Update resource palette if there is only one element */
+    if(NumberOfDlElement(cdi->selectedDlElementList) == 1) {
+	currentElementType =
+	  FirstDlElement(cdi->selectedDlElementList)
+	  ->structure.element->type;
+	setResourcePaletteEntries();
+    }
+
+    highlightSelectedElements();
+}
+
+/*
  * Space selected elements horizontally
  */
 void spaceSelectedElements(int plane)

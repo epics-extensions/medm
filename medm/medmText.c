@@ -88,6 +88,7 @@ static DlDispatchTable textDlDispatchTable = {
     textSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

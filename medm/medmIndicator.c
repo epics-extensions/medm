@@ -84,6 +84,7 @@ static DlDispatchTable indicatorDlDispatchTable = {
     indicatorSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

@@ -429,6 +429,7 @@ void raiseSelectedElements(void);
 void alignSelectedElements(int alignment);
 void findOutliers(void);
 void centerSelectedElements(int alignment);
+void orientSelectedElements(int alignment);
 void sizeSelectedTextElements(void);
 void equalSizeSelectedElements(void);
 void refreshDisplay(void);
@@ -467,6 +468,7 @@ void removeDlElement(DlList *,DlElement *);
 void dumpDlElementList(DlList *l);
 void genericMove(DlElement *, int, int);
 void genericScale(DlElement *, int, int);
+void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter);
 void destroyElementWithDynamicAttribute(DlElement *dlElement);
 void resizeDlElementList(
   DlList *dlElementList,

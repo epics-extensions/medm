@@ -136,6 +136,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define CENTER_VERT_BTN  1
 #define CENTER_BOTH_BTN  2
 
+#define ORIENT_HORIZ_BTN 0
+#define ORIENT_VERT_BTN  1
+#define ORIENT_CW_BTN    2
+#define ORIENT_CCW_BTN   3
+
 #define SIZE_SAME_BTN 0
 #define SIZE_TEXT_BTN 1
 
@@ -191,6 +196,7 @@ static void palettesMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void helpMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void alignMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void centerMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void orientMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void sizeMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
@@ -299,6 +305,18 @@ static menuEntry_t editCenterMenu[] = {
     NULL,
 };
   
+static menuEntry_t editOrientMenu[] = {
+    { "Flip Horizontally", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
+      orientMenuSimpleCallback, (XtPointer) ORIENT_HORIZ_BTN,  NULL},
+    { "Flip Vertically",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+      orientMenuSimpleCallback, (XtPointer) ORIENT_VERT_BTN,  NULL},
+    { "Rotate Clockwise", &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
+      orientMenuSimpleCallback, (XtPointer) ORIENT_CW_BTN,  NULL},
+    { "Rotate Counterclockwise",   &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+      orientMenuSimpleCallback, (XtPointer) ORIENT_CCW_BTN,  NULL},
+    NULL,
+};
+  
 static menuEntry_t editSpaceMenu[] = {
     { "Horizontal", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_HORIZ_BTN,  NULL},
@@ -360,6 +378,8 @@ static menuEntry_t editMenu[] = {
       NULL,        NULL,                     editSpaceMenu},
     { "Center",    &xmCascadeButtonGadgetClass, 'e', NULL, NULL, NULL,
       NULL,        NULL,                     editCenterMenu},
+    { "Orient",    &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+      NULL,        NULL,                     editOrientMenu},
     { "Size", &xmPushButtonGadgetClass, 'z', NULL, NULL, NULL,
       NULL,        NULL,                     editSizeMenu},
     { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
@@ -414,6 +434,8 @@ static menuEntry_t editModeMenu[] = {
       NULL,        NULL,                     editSpaceMenu},
     { "Center",    &xmCascadeButtonGadgetClass, 'e', NULL, NULL, NULL,
       NULL,        NULL,                     editCenterMenu},
+    { "Orient",    &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
+      NULL,        NULL,                     editOrientMenu},
     { "Size", &xmPushButtonGadgetClass, 'z', NULL, NULL, NULL,
       NULL,        NULL,                     editSizeMenu},
     { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
@@ -781,6 +803,7 @@ typedef struct {
     char **fileList;
 } request_t;
 
+/* KE: Not used */
 void requestDestroy(request_t *request) {
     if (request) {
 	if (request->macroString) free(request->macroString);
@@ -1349,6 +1372,39 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CENTER_BOTH_BTN:
 	centerSelectedElements(ALIGN_HORIZ_CENTER);
 	centerSelectedElements(ALIGN_VERT_CENTER);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+static void orientMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonNumber = (int) cd;
+  
+    switch(buttonNumber) {
+    case ORIENT_HORIZ_BTN:
+	orientSelectedElements(ORIENT_HORIZ);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ORIENT_VERT_BTN:
+	orientSelectedElements(ORIENT_VERT);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ORIENT_CW_BTN:
+	orientSelectedElements(ORIENT_CW);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ORIENT_CCW_BTN:
+	orientSelectedElements(ORIENT_CCW);
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;

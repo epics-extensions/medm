@@ -85,6 +85,8 @@ static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void polygonSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void polygonMove(DlElement *, int, int);
 static void polygonScale(DlElement *, int, int);
+static void polygonOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter);
 static void destroyDlPolygon(DlElement *);
 static int handlePolygonVertexManipulation(DlElement *, int, int);
 
@@ -100,6 +102,7 @@ static DlDispatchTable polygonDlDispatchTable = {
     polygonSetForegroundColor,
     polygonMove,
     polygonScale,
+    polygonOrient,
     handlePolygonVertexManipulation,
     NULL};
 
@@ -872,6 +875,41 @@ void polygonScale(DlElement *dlElement, int xOffset, int yOffset) {
     }
     dlPolygon->object.width = width;
     dlPolygon->object.height = height;
+}
+
+void polygonOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+{
+    int i;
+    DlPolygon *dlPolygon =  dlElement->structure.polygon;
+    XPoint *pts = dlPolygon->points;
+    int nPoints = dlPolygon->nPoints;
+    int x, y;
+
+    for (i = 0; i < nPoints; i++) {
+	switch(type) {
+	case ORIENT_HORIZ:
+	    x = 2*xCenter - pts[i].x;
+	    pts[i].x = MAX(0,x);
+	    break;
+	case ORIENT_VERT:
+	    y = 2*yCenter - pts[i].y;
+	    pts[i].y = MAX(0,y);
+	    break;
+	case ORIENT_CW:
+	    x = xCenter - pts[i].y + yCenter;
+	    y = yCenter + pts[i].x - xCenter;
+	    pts[i].x = MAX(0,x);
+	    pts[i].y = MAX(0,y);
+	    break;
+	case ORIENT_CCW:
+	    x = xCenter +pts[i].y - yCenter;
+	    y = yCenter -pts[i].x + xCenter;
+	    pts[i].x = MAX(0,x);
+	    pts[i].y = MAX(0,y);
+	    break;
+	}
+    }
+    calculateTheBoundingBox(dlPolygon);
 }
 
 static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {

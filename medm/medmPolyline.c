@@ -88,6 +88,8 @@ static void polylineSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void destroyDlPolyline(DlElement *);
 static void polylineMove(DlElement *dlElement, int xOffset, int yOffset);
 static void polylineScale(DlElement *dlElement, int xOffset, int yOffset);
+static void polylineOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter);
 static int handlePolylineVertexManipulation(DlElement *, int, int);
 
 static DlDispatchTable polylineDlDispatchTable = {
@@ -102,6 +104,7 @@ static DlDispatchTable polylineDlDispatchTable = {
     polylineSetForegroundColor,
     polylineMove,
     polylineScale,
+    polylineOrient,
     handlePolylineVertexManipulation,
     NULL};
 
@@ -835,6 +838,41 @@ void polylineScale(DlElement *dlElement, int xOffset, int yOffset) {
 	  sX*(dlPolyline->points[i].x - dlPolyline->object.x));
 	dlPolyline->points[i].y = (short) (dlPolyline->object.y +
 	  sY*(dlPolyline->points[i].y - dlPolyline->object.y));
+    }
+    calculateTheBoundingBox(dlPolyline);
+}
+
+void polylineOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+{
+    int i;
+    DlPolyline *dlPolyline =  dlElement->structure.polyline;
+    XPoint *pts = dlPolyline->points;
+    int nPoints = dlPolyline->nPoints;
+    int x, y;
+
+    for (i = 0; i < nPoints; i++) {
+	switch(type) {
+	case ORIENT_HORIZ:
+	    x = 2*xCenter - pts[i].x;
+	    pts[i].x = MAX(0,x);
+	    break;
+	case ORIENT_VERT:
+	    y = 2*yCenter - pts[i].y;
+	    pts[i].y = MAX(0,y);
+	    break;
+	case ORIENT_CW:
+	    x = xCenter - pts[i].y + yCenter;
+	    y = yCenter + pts[i].x - xCenter;
+	    pts[i].x = MAX(0,x);
+	    pts[i].y = MAX(0,y);
+	    break;
+	case ORIENT_CCW:
+	    x = xCenter +pts[i].y - yCenter;
+	    y = yCenter -pts[i].x + xCenter;
+	    pts[i].x = MAX(0,x);
+	    pts[i].y = MAX(0,y);
+	    break;
+	}
     }
     calculateTheBoundingBox(dlPolyline);
 }

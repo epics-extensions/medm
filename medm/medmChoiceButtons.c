@@ -89,6 +89,7 @@ static DlDispatchTable choiceButtonDlDispatchTable = {
     choiceButtonSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

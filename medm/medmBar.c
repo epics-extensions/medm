@@ -93,6 +93,7 @@ static DlDispatchTable barDlDispatchTable = {
     barSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

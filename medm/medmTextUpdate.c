@@ -92,6 +92,7 @@ static DlDispatchTable textUpdateDlDispatchTable = {
     textUpdateSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

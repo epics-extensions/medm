@@ -69,6 +69,8 @@ static void arcGetRecord(XtPointer, Record **, int *);
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void arcSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p);
+static void arcOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter);
 
 static DlDispatchTable arcDlDispatchTable = {
     createDlArc,
@@ -82,6 +84,7 @@ static DlDispatchTable arcDlDispatchTable = {
     arcSetForegroundColor,
     genericMove,
     genericScale,
+    arcOrient,
     NULL,
     NULL};
 
@@ -386,6 +389,32 @@ void writeDlArc(
   	fprintf(stream,"\n%s}",indent);
     }
 #endif
+}
+
+void arcOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+{
+    DlArc *dlArc = dlElement->structure.arc;
+
+   /* Units are 1/64 degrees */
+    switch(type) {
+    case ORIENT_HORIZ:
+	dlArc->begin = 11520 - dlArc->begin;
+	dlArc->begin -= dlArc->path;
+	break;
+    case ORIENT_VERT:
+	dlArc->begin = -dlArc->begin;
+	dlArc->begin -= dlArc->path;
+	break;
+    case ORIENT_CW:
+	dlArc->begin -= 5760;
+	break;
+    case ORIENT_CCW:
+	dlArc->begin += 5760;
+	break;
+    }
+    while(dlArc->begin >= 23040) dlArc->begin -= 23040;
+    while(dlArc->begin < 0) dlArc->begin += 23040;
+    genericOrient(dlElement, type, xCenter, yCenter);
 }
 
 static void arcGetValues(ResourceBundle *pRCB, DlElement *p)

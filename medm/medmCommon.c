@@ -86,6 +86,7 @@ static DlDispatchTable elementDlDispatchTable = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL};
 
 int initMedmCommon()
@@ -1391,10 +1392,56 @@ void widgetMove(DlElement *dlElement, int xOffset, int yOffset)
 void genericScale(DlElement *dlElement, int xOffset, int yOffset)
 {
     int width, height;
+
     width = (dlElement->structure.rectangle->object.width + xOffset);
     dlElement->structure.rectangle->object.width = MAX(1,width);
     height = (dlElement->structure.rectangle->object.height + yOffset);
     dlElement->structure.rectangle->object.height = MAX(1,height);
+}
+
+void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+{
+    int x, y;
+    unsigned int width, height;
+
+    switch(type) {
+    case ORIENT_HORIZ:
+	x = 2*xCenter - dlElement->structure.rectangle->object.x -
+	  (int)dlElement->structure.rectangle->object.width;
+	dlElement->structure.rectangle->object.x = MAX(0,x);
+	break;
+    case ORIENT_VERT:
+	y = 2*yCenter - dlElement->structure.rectangle->object.y -
+	  (int)dlElement->structure.rectangle->object.height;
+	dlElement->structure.rectangle->object.y = MAX(0,y);
+	break;
+    case ORIENT_CW:
+	x = xCenter - dlElement->structure.rectangle->object.y + yCenter -
+	  (int)dlElement->structure.rectangle->object.height;
+	y = yCenter + dlElement->structure.rectangle->object.x - xCenter;
+	width = dlElement->structure.rectangle->object.height;
+	height = dlElement->structure.rectangle->object.width;
+	dlElement->structure.rectangle->object.x = MAX(0,x);
+	dlElement->structure.rectangle->object.y = MAX(0,y);
+	dlElement->structure.rectangle->object.width = MAX(1,width);
+	dlElement->structure.rectangle->object.height = MAX(1,height);
+	break;
+    case ORIENT_CCW:
+	x = xCenter + dlElement->structure.rectangle->object.y - yCenter;
+	y = yCenter - dlElement->structure.rectangle->object.x + xCenter -
+	  (int)dlElement->structure.rectangle->object.width;
+	width = dlElement->structure.rectangle->object.height;
+	height = dlElement->structure.rectangle->object.width;
+	dlElement->structure.rectangle->object.x = MAX(0,x);
+	dlElement->structure.rectangle->object.y = MAX(0,y);
+	dlElement->structure.rectangle->object.width = MAX(1,width);
+	dlElement->structure.rectangle->object.height = MAX(1,height);
+	break;
+    }
+    if(dlElement->widget)
+      XtMoveWidget(dlElement->widget,
+	dlElement->structure.rectangle->object.x,
+	dlElement->structure.rectangle->object.y);
 }
 
 void destroyElementWithDynamicAttribute(DlElement *dlElement)

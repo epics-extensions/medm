@@ -82,6 +82,7 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     relatedDisplaySetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

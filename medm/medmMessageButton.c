@@ -90,6 +90,7 @@ static DlDispatchTable messageButtonDlDispatchTable = {
     messageButtonSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

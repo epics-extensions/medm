@@ -85,6 +85,7 @@ static DlDispatchTable meterDlDispatchTable = {
     meterSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

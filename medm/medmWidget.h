@@ -175,6 +175,12 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define ALIGN_VERT_CENTER  4
 #define ALIGN_VERT_BOTTOM  5
 
+/* Orient parameters */
+#define ORIENT_HORIZ 0
+#define ORIENT_VERT  1
+#define ORIENT_CW    2
+#define ORIENT_CCW   3
+
 /* highlight line thickness */
 #define HIGHLIGHT_LINE_THICKNESS 2
 

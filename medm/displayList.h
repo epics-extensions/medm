@@ -841,6 +841,7 @@ typedef struct {
     void (*setForegroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*move)(struct _DlElement *, int, int);
     void (*scale)(struct _DlElement *, int, int);
+    void (*orient)(struct _DlElement *, int, int, int);
     int  (*editVertex)(struct _DlElement *, int, int);
     void (*cleanup)(struct _DlElement *);
 } DlDispatchTable; 

@@ -90,6 +90,7 @@ static DlDispatchTable menuDlDispatchTable = {
     menuSetForegroundColor,
     genericMove,
     genericScale,
+    genericOrient,
     NULL,
     NULL};
 

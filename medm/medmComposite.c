@@ -58,6 +58,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 static void destroyDlComposite(DlElement *dlElement);
 static void compositeMove(DlElement *element, int xOffset, int yOffset);
 static void compositeScale(DlElement *element, int xOffset, int yOffset);
+static void compositeOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter);
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p);
 static void compositeCleanup(DlElement *element);
 
@@ -73,6 +75,7 @@ static DlDispatchTable compositeDlDispatchTable = {
     NULL,
     compositeMove,
     compositeScale,
+    compositeOrient,
     NULL,
     compositeCleanup};
 
@@ -362,6 +365,22 @@ void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
     }
     dlElement->structure.composite->object.x += xOffset;
     dlElement->structure.composite->object.y += yOffset;
+}
+
+void compositeOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+{
+    DlElement *ele;
+
+    if (dlElement->type != DL_Composite) return; 
+    ele = FirstDlElement(dlElement->structure.composite->dlElementList);
+    while (ele != NULL) {
+	if (ele->type != DL_Display) {
+	    if (ele->run->orient)
+	      ele->run->orient(ele, type, xCenter, yCenter);
+	}
+	ele = ele->next;
+    }
+    genericOrient(dlElement, type, xCenter, yCenter);
 }
 
 static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
