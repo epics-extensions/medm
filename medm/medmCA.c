@@ -56,6 +56,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  *                              - decouple the graphic object from
  *                                channel access.
+ * .03  09-11-95        vong    conform to c++ syntax
+ * .04  09-12-95        vong    temperory fix for callbacks after
+ *                              ca_clear_event and ca_clear_channel
  *
  *****************************************************************************
 */
@@ -139,7 +142,7 @@ int CATaskInit() {
 
 void caTaskDelete() {
   if (caTask.freeList) {
-    free(caTask.freeList);
+    free((char *)caTask.freeList);
     caTask.freeList = NULL;
     caTask.freeListCount = 0;
     caTask.freeListSize = 0;
@@ -148,9 +151,9 @@ void caTaskDelete() {
     int i;
     for (i=0; i < caTask.pageCount; i++) {
       if (caTask.pages[i])
-        free(caTask.pages[i]);
+        free((char *)caTask.pages[i]);
     }
-    free(caTask.pages);
+    free((char *)caTask.pages);
     caTask.pages = NULL;
     caTask.pageCount = 0;
   } 
@@ -159,7 +162,6 @@ void caTaskDelete() {
 int medmCAInitialize()
 {
   int status;
-  int i;
   /*
    * add CA's fd to X
    */
@@ -188,7 +190,11 @@ void medmCATerminate()
 
 }
 
+#ifdef __cplusplus
+static void medmCAFdRegistrationCb( void *, int fd, int condition)
+#else
 static void medmCAFdRegistrationCb( void *dummy, int fd, int condition)
+#endif
 {
   int currentNumInps;
 
@@ -227,7 +233,11 @@ typedef struct {
 fprintf(stderr,"\ndmRegisterCA: info: realloc-ing input fd's array");
 
         maxInps = 2*maxInps;
+#if defined(__cplusplus) && !defined(__GNUG__)
+        inp = (InputIdAndFd *) realloc((malloc_t)inp,maxInps*sizeof(InputIdAndFd));
+#else
         inp = (InputIdAndFd *) realloc(inp,maxInps*sizeof(InputIdAndFd));
+#endif
         inp[numInps].fd = fd;
         inp[numInps].inputId  = XtAppAddInput(appContext,fd,
                         (XtPointer)XtInputReadMask,
@@ -280,7 +290,11 @@ fprintf(stderr,"\n");
 
 }
 
+#ifdef __cplusplus
+static void medmProcessCA(XtPointer, int *, XtInputId *)
+#else
 static void medmProcessCA(XtPointer dummy1, int *dummy2, XtInputId *dummy3)
+#endif
 {
   ca_pend_event(CA_PEND_EVENT_TIME);    /* don't allow early return */
 }
@@ -291,7 +305,10 @@ static void medmReplaceAccessRightsEventCb(struct access_rights_handler_args arg
 
   caTask.caEventCount++;
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
-  if (pCh == NULL) return;
+#if 1
+  if ((pCh == NULL) || (pCh->chid == NULL)) return;
+#endif
+
   pCh->pr->readAccess = ca_read_access(pCh->chid);
   pCh->pr->writeAccess = ca_write_access(pCh->chid);
   if (pCh->pr->updateValueCb) 
@@ -304,7 +321,9 @@ void medmConnectEventCb(struct connection_handler_args args) {
 
   caTask.caEventCount++;
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
-  if (pCh == NULL) return;
+#if 1
+  if ((pCh == NULL) || (pCh->chid == NULL)) return;
+#endif
 
   if ((args.op == CA_OP_CONN_UP) && (ca_read_access(pCh->chid))) {
     /* get the graphical information every time a channel is connected
@@ -357,6 +376,11 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
   int i;
   Channel *pCh = (Channel *) ca_puser(args.chid);
   Record *pr = pCh->pr;
+
+  if (globalDisplayListTraversalMode != DL_EXECUTE) return;
+#if 1
+  if ((pCh == NULL) || (pCh->chid == NULL)) return;
+#endif
 
   caTask.caEventCount++;
   nBytes = dbr_size_n(args.type, args.count);
@@ -425,9 +449,12 @@ void medmUpdateChannelCb(struct event_handler_args args) {
   Boolean severityChanged = False;
   Boolean zeroAndNoneZeroTransition = False;
   double value;
-  short severity;
   Record *pr = pCh->pr;
 
+  if (globalDisplayListTraversalMode != DL_EXECUTE) return;
+#if 1
+  if ((pCh == NULL) || (pCh->chid == NULL)) return;
+#endif
   caTask.caEventCount++;
   if (ca_read_access(args.chid)) {
     /* if we have the read access */
@@ -558,7 +585,11 @@ int caAdd(char *name, Record *pr) {
     /* if not enought pages, increase number of pages */
     if (caTask.pageCount >= caTask.pageSize) {
       caTask.pageSize += CA_PAGE_COUNT;
+#if defined(__cplusplus) && !defined(__GNUG__)
+      caTask.pages = (Channel **) realloc((malloc_t)caTask.pages,sizeof(Channel *)*caTask.pageSize);
+#else
       caTask.pages = (Channel **) realloc(caTask.pages,sizeof(Channel *)*caTask.pageSize);
+#endif
       if (caTask.pages == NULL) {
         medmPrintf("\ncaAdd : memory allocation error\n");
         return -1;
@@ -613,6 +644,10 @@ void caDelete(Record *pr) {
   Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])[pr->caId % CA_PAGE_SIZE]);
   if (ca_state(pCh->chid) == cs_conn)
     caTask.channelConnected--;
+#if 0
+  ca_change_connection_event(pCh->chid,NULL);
+  ca_replace_access_rights_event(pCh->chid,NULL);
+#endif
   if (pCh->evid) {
     status = ca_clear_event(pCh->evid);
     SEVCHK(status,"caDelete : ca_clear_event() failed!");
@@ -626,12 +661,16 @@ void caDelete(Record *pr) {
   }
   pCh->chid = NULL;
   if (pCh->data) {
-    free(pCh->data);
+    free((char *)pCh->data);
     pCh->data = NULL;
   }
   if (caTask.freeListCount >= caTask.freeListSize) {
     caTask.freeListSize += CA_PAGE_SIZE;
+#if defined(__cplusplus) && !defined(__GNUG__)
+    caTask.freeList = (int *) realloc((malloc_t)caTask.freeList,sizeof(int)*caTask.freeListSize);
+#else
     caTask.freeList = (int *) realloc(caTask.freeList,sizeof(int)*caTask.freeListSize);
+#endif
     if (caTask.freeList == NULL) {
       medmPrintf("\ncaDelete : memory allocation error\n");
       return;
@@ -669,7 +708,8 @@ Record *medmAllocateRecord(char *name,
 
 void medmDestroyRecord(Record *pr) {
   caDelete(pr);
-  free(pr);
+  *pr = nullRecord;
+  free((char *)pr);
 }
 
 void medmSendDouble(Record *pr, double data) {
