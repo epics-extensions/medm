@@ -1123,7 +1123,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	XtUnmanageChild(w);
 	break;
     case GRID_HELP:
-	callBrowser(MEDM_HELP_PATH"#Grid");
+	callBrowser(medmHelpPath,"#Grid");
 	break;
     }
 }
@@ -2289,22 +2289,22 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 /* 	} */
 /* 	break; */
     case HELP_OVERVIEW_BTN:
-	callBrowser(MEDM_HELP_PATH"#Overview");
+	callBrowser(medmHelpPath,"#Overview");
 	break;
     case HELP_CONTENTS_BTN:
-	callBrowser(MEDM_HELP_PATH"#Contents");
+	callBrowser(medmHelpPath,"#Contents");
 	break;
     case HELP_OBJECTS_BTN:
-	callBrowser(MEDM_HELP_PATH"#ObjectIndex");
+	callBrowser(medmHelpPath,"#ObjectIndex");
 	break;
     case HELP_EDIT_BTN:
-	callBrowser(MEDM_HELP_PATH"#Editing");
+	callBrowser(medmHelpPath,"#Editing");
 	break;
     case HELP_NEW_BTN:
-	callBrowser(MEDM_HELP_PATH"#NewFeatures");
+	callBrowser(medmHelpPath,"#NewFeatures");
 	break;
     case HELP_TECH_SUPPORT_BTN:
-	callBrowser(MEDM_HELP_PATH"#TechSupport");
+	callBrowser(medmHelpPath,"#TechSupport");
 	break;
     case HELP_ON_HELP_BTN:
     {
@@ -3149,6 +3149,7 @@ main(int argc, char *argv[])
     Window medmHostWindow = (Window)0;
     char *tempDir = NULL;
     char *envPrintCommand = NULL;
+    char *envHelpPath = NULL;
 
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
@@ -3247,6 +3248,14 @@ main(int argc, char *argv[])
 	strcpy(printCommand, envPrintCommand);
     } else {
 	strcpy(printCommand, DEFAULT_PRINT_CMD);
+    }
+
+  /* Help URL */
+    envHelpPath = getenv("MEDM_HELP_PATH");
+    if(envHelpPath != NULL) {
+	strcpy(medmHelpPath, envHelpPath);
+    } else {
+	strcpy(medmHelpPath, MEDM_HELP_PATH);
     }
 
   /* XWD file name */

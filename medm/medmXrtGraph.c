@@ -501,7 +501,7 @@ void CpUpdateWidget(Widget w, int full)
 Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
   DlCartesianPlot *dlCartesianPlot, MedmCartesianPlot *pcp)
 {
-    Arg args[47];
+    Arg args[50];
     int nargs;
     XColor xColors[2];
     char rgb[2][16], string[24];
@@ -519,12 +519,31 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlCartesianPlot->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+    XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
 
 #if DEBUG_CARTESIAN_PLOT_BORDER    
     printf("dlCartesianPlot->object.width: %d\n",dlCartesianPlot->object.width);
     printf("dlCartesianPlot->object.height: %d\n",dlCartesianPlot->object.height);
-#endif    
+#endif
 
+#if 1
+    {
+	Pixel topShadow;
+	Pixel bottomShadow;
+	Pixel foreground;
+	Pixel select;
+	
+	XmGetColors(XtScreen(displayInfo->drawingArea),cmap,
+	  displayInfo->colormap[dlCartesianPlot->plotcom.bclr],
+	    &foreground,&topShadow,&bottomShadow,&select);
+	
+/*  	    XtSetArg(args[nargs],XmNtopShadowColor,topShadow); nargs++; */
+	    XtSetArg(args[nargs],XmNtopShadowColor,BlackPixel(display,screenNum)); nargs++;
+	    XtSetArg(args[nargs],XmNbottomShadowColor,bottomShadow); nargs++;
+	    XtSetArg(args[nargs],XmNselectColor,select); nargs++;
+    }
+#endif
+    
   /* long way around for color handling... but XRT/Graph insists on strings! */
     xColors[0].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.clr];
     xColors[1].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.bclr];

@@ -464,10 +464,10 @@ static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
     
     switch(buttonNumber) {
     case HELP_COLOR_PALETTE_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ColorPalette");
+	callBrowser(medmHelpPath,"#ColorPalette");
 	break;
     case HELP_COLOR_CONVENTIONS_BTN:
-	callBrowser(MEDM_HELP_PATH"/MEDM.html#ColorConventions");
+	callBrowser(medmHelpPath,"#ColorConventions");
 	break;
     }
 }

@@ -173,7 +173,7 @@ static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	XtPopdown(pvInfoS);
 	break;
     case  PV_INFO_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"#PVInfoDialogBox");
+	callBrowser(medmHelpPath,"#PVInfoDialogBox");
 	break;
     }
 }
@@ -934,7 +934,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	XtPopdown(pvLimitsS);
 	return;
     case  PV_LIMITS_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"#PVLimitsDialogBox");
+	callBrowser(medmHelpPath,"#PVLimitsDialogBox");
 	return;
     }
 
@@ -1291,7 +1291,7 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 	refreshDisplayListDlg();
 	break;
     case DISPLAY_LIST_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"#DisplayListDialogBox");
+	callBrowser(medmHelpPath,"#DisplayListDialogBox");
 	break;
     }
 }
@@ -1942,7 +1942,7 @@ static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtPopup(printSetupS, XtGrabNone);
 	break;
     case PRINT_SETUP_HELP_BTN:
-	callBrowser(MEDM_HELP_PATH"#PrintSetupDialogBox");
+	callBrowser(medmHelpPath,"#PrintSetupDialogBox");
 	break;
     case PRINT_SETUP_CMD_FIELD:
     case PRINT_SETUP_ORIENT_BTN:

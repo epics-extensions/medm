@@ -201,7 +201,7 @@ void handleBubbleHelp(Widget w, XtPointer clientData, XEvent *event,
   Boolean *ctd);
 
 /* browserHelp.c */
-int callBrowser(char *url);
+int callBrowser(char *url, char *bookmark);
 
 /* callbacks.c */
 void wmCloseCallback(Widget, XtPointer, XtPointer);

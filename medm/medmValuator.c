@@ -1016,7 +1016,7 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 	break;
 
     case XmCR_HELP:
-	callBrowser(MEDM_HELP_PATH"#Slider");
+	callBrowser(medmHelpPath,"#Slider");
 	break;
     }
 }

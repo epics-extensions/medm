@@ -92,7 +92,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 extern int kill(pid_t, int);     /* May not be defined for strict ANSI */
 
-int callBrowser(char *url);
+int callBrowser(char *url, char *bookmark);
 static Window checkNetscapeWindow(Window w);
 static int execute(char *s);
 static Window findNetscapeWindow(void);
@@ -102,7 +102,7 @@ static int ignoreXError(Display *display, XErrorEvent *xev);
 extern Display *display;
 
 /**************************** callBrowser ********************************/
-int callBrowser(char *url)
+int callBrowser(char *url, char *bookmark)
   /* Returns non-zero on success, 0 on failure      */
   /* url is the URL that the browser is to display  */
   /*   or "quit" to terminate the browser           */
@@ -137,13 +137,13 @@ int callBrowser(char *url)
 	    envstring=getenv("NETSCAPEPATH");
 	    if(!envstring) {
 #ifndef VMS
-		sprintf(command,"%s -install '%s' &",NETSCAPEPATH,url);
+		sprintf(command,"%s -install '%s%s' &",NETSCAPEPATH,url,bookmark);
 #else
-		sprintf(command,"%s -install \"%s\"",NETSCAPEPATH,url);
+		sprintf(command,"%s -install \"%s%s\"",NETSCAPEPATH,url,bookmark);
 #endif
 	    }
 	    else {
-		sprintf(command,"%s -install '%s' &",envstring);
+		sprintf(command,"%s -install '%s%s' &",envstring,url,bookmark);
 	    }
 #if DEBUG
 	    printf("execute(before): cmd=%s\n",command);
@@ -160,20 +160,20 @@ int callBrowser(char *url)
     envstring=getenv("NETSCAPEPATH");
     if(!envstring) {
 #ifndef VMS
-	sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
-	  NETSCAPEPATH,netscapew,url);
+	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
+	  NETSCAPEPATH,netscapew,url,bookmark);
 #else
-        sprintf(command,"%s -id 0x%x -remote \"openURL(%s)\"",
-	  NETSCAPEPATH,netscapew,url);
+        sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\"",
+	  NETSCAPEPATH,netscapew,url,bookmark);
 #endif
     }
     else {
 #ifndef VMS
-	sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
-	  envstring,netscapew,url);
+	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
+	  envstring,netscapew,url,bookmark);
 #else
-	sprintf(command,"%s -id 0x%x -remote \"openURL(%s)\" &",
-	  envstring,netscapew,url);
+	sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\" &",
+	  envstring,netscapew,url,bookmark);
 #endif
     }
 #if DEBUG
@@ -297,11 +297,10 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
 #include <errno.h>
 
 void medmPrintf(int priority, char *format, ...);
-
-int callBrowser(char *url);
+int callBrowser(char *url, char *bookmark);
 
 /**************************** callBrowser (WIN32) ************************/
-int callBrowser(char *url)
+int callBrowser(char *url, char *bookmark)
   /* Returns non-zero on success, 0 on failure */
   /* Should use the default browser            */
   /* Does nothing with "quit"                  */
@@ -326,42 +325,42 @@ int callBrowser(char *url)
   /* Spawn the process that handles a url */
 #if 0
   /* Works, command window that goes away */
-    sprintf(command,"start \"%s\"",url);
+    sprintf(command,"start \"%s%s\"",url,bookmark);
     status = _spawnl(_P_WAIT, ComSpec, ComSpec, "/C", command, NULL);
 
   /* Works, command window that goes away */
-    sprintf(command,"start \"%s\"",url);
+    sprintf(command,"start \"%s%s\"",url,bookmark);
     status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
 
   /* Works, command window that goes away */
-    sprintf(command,"\"%s\"",url);
+    sprintf(command,"\"%s%s\"",url,bookmark);
     status = _spawnl(_P_NOWAIT, "c:\\windows\\command\\start.exe",
       "c:\\windows\\command\\start.exe", command, NULL);
 
   /* Works, command window that goes away */
-    sprintf(command,"\"%s\"",url);
+    sprintf(command,"\"%s%s\"",url,bookmark);
     status = _spawnl(_P_WAIT, ComSpec, "start", command, NULL);
 
   /* Works, command window that goes away */
-    sprintf(command,"start \"%s\"",url);
+    sprintf(command,"start \"%s%s\"",url,bookmark);
     status = _spawnl(_P_NOWAIT, ComSpec, ComSpec, "/C", command, NULL);
 
   /* Doesn't work on 95 (No such file or directory), works on NT */
-    sprintf(command,"start \"%s\"",url);
+    sprintf(command,"start \"%s%s\"",url,bookmark);
     status = _spawnl(_P_NOWAIT, ComSpec, "/C", command, NULL);
 
   /* Works on 95, not NT, no command window
    *   No start.exe for NT */
-    sprintf(command,"\"%s\"",url);
+    sprintf(command,"\"%s%s\"",url,bookmark);
     status = _spawnlp(_P_DETACH, "start", "start", command, NULL);
 
   /* Doesn't work on 95 */
-    sprintf(command,"\"start %s\"",url);
+    sprintf(command,"\"start %s%s\"",url,bookmark);
     status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
 #else
   /* This seems to work on 95 and NT, with a command box on 95
    *   It may have trouble if the URL has spaces */
-    sprintf(command,"start %s",url);
+    sprintf(command,"start %s%s",url,bookmark);
     status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
 #endif    
     if(status == -1) {

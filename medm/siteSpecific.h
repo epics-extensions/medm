@@ -62,7 +62,9 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
    APS web site.  The version there is updated regularly to reflect
    the latest changes in MEDM.  Some of these changes may not be in
    this version.  The MEDM.html that goes with this version is in the
-   help subdirectory to this directory. */
+   help subdirectory to this directory. This value will be overwritten
+   if MEDM_HELP_PATH is defined in the environment. This is another
+   way to customize the location.  */
 
 #define MEDM_HELP_PATH \
 "http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM/MEDM.html"

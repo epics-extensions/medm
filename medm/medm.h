@@ -212,6 +212,9 @@ extern "C" {
     
   /* Global variables */
 
+  /* Help URL */
+    EXTERN char medmHelpPath[PATH_MAX];
+
   /* XWD file */
     EXTERN char xwdFile[PATH_MAX];
     

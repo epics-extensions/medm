@@ -191,8 +191,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 			    XrtPopupPropertyEditor(widget,
 			      "XRT Property Editor",True);
 			} else if(displayInfo->warningDialogAnswer == 3) {
-			    callBrowser(MEDM_HELP_PATH"/MEDM.html"
-			      "#XRTGraphInteractions");
+			    callBrowser(medmHelpPath,"#XRTGraphInteractions");
 			}
 #endif			    
 		    } else {
