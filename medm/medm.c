@@ -70,11 +70,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 #if DEBUG_WIN32_LEAKS
-#ifdef WIN32
-#ifdef _DEBUG
-#include <crtdbg.h>
-#endif
-#endif
+# ifdef WIN32
+#  ifdef _DEBUG
+#   include <crtdbg.h>
+#  endif
+# endif
 #endif
 
 #ifdef WIN32
@@ -1952,9 +1952,8 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	} else {
 	    char *errstring=strerror(errno);
 	    
-	    sprintf(warningString,"Error accessing file:\n%s\n%s",
+	    medmPostMsg(1,"Error accessing file:\n%s\n%s\n",
 	      f1,errstring);
-	    dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	    return False;
 	}
     } else {
@@ -1977,9 +1976,8 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    if (errno != ENOENT) {
 		char *errstring=strerror(errno);
 	    
-		sprintf(warningString,"Cannot write backup file:\n%s\n%s",
+		medmPostMsg(1,"Cannot write backup file:\n%s\n%s\n",
 		  filename,errstring);
-		dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 		return False;
 	    }
 	} else {
@@ -2018,9 +2016,8 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     if (stream == NULL) {
 	char *errstring=strerror(errno);
 	
-	sprintf(warningString,"Failed to create/write file:\n%s\n%s",
+	medmPostMsg(1,"Failed to create/write file:\n%s\n%s\n",
 	  filename,errstring);
-	dmSetAndPopupWarningDialog(displayInfo,warningString,"OK",NULL,NULL);
 	return False;
     }
     strcpy(displayInfo->dlFile->name,f1);
