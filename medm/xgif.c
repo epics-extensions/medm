@@ -87,6 +87,18 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 int _XGetBitsPerPixel(Display *dpy, int depth);
 
 void AddToPixel(GIFData *gif, Byte Index);
+int getClientByteOrder();
+
+
+/*
+ * determine byte order on the client
+ */
+int getClientByteOrder()
+{
+    short i=1;
+    
+    return (*(char*)&i == 1) ? LSBFirst : MSBFirst;
+}
 
 /*
  * initialize for GIF processing
@@ -178,10 +190,8 @@ Boolean initializeGIF(
 	XFillRectangle(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,x,y,w,h);
 #if 1
-#ifdef WIN32
-      /* Exceed has the byte_order wrong for 24-bit */
-	gif->expImage->byte_order=LSBFirst;
-#endif	
+      /* Determine the order of the pixels */
+	gif->expImage->byte_order=getClientByteOrder();
 
 	XPutImage(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,gif->expImage,
@@ -190,10 +200,8 @@ Boolean initializeGIF(
 	  gif->theGC,gif->expImage,
 	  0,0,x,y,w,h);
 #else
-#ifdef WIN32
-      /* Exceed has the byte_order wrong for 24-bit */
-	gif->theImage->byte_order=LSBFirst;
-#endif	
+      /* Determine the order of the pixels */
+	gif->theImage->byte_order=getClientByteOrder();
 
 	XPutImage(display,XtWindow(displayInfo->drawingArea),
 	  gif->theGC,gif->theImage,
@@ -226,19 +234,15 @@ void drawGIF(
 
       /* draw to pixmap, since traversal will copy pixmap to window..*/
 #if 1
-#ifdef WIN32
-      /* Exceed has the byte_order wrong for 24-bit */
-	gif->expImage->byte_order=LSBFirst;
-#endif	
+      /* Determine the order of the pixels */
+	gif->expImage->byte_order=getClientByteOrder();
 
 	XPutImage(display,displayInfo->drawingAreaPixmap,
 	  gif->theGC,gif->expImage,
 	  0,0,x,y,w,h);
 #else
-#ifdef WIN32
-      /* Exceed has the byte_order wrong for 24-bit */
-	gif->theImage->byte_order=LSBFirst;
-#endif	
+      /* Determine the order of the pixels */
+	gif->theImage->byte_order=getClientByteOrder();
 
 	XPutImage(display,displayInfo->drawingAreaPixmap,
 	  gif->theGC,gif->theImage,
