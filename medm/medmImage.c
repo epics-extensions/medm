@@ -161,7 +161,6 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
 	MedmImage *pi;
-	char ucString[MAX_TOKEN_LENGTH];
 	int i;
 	
 	if(dlElement->data) {
@@ -202,16 +201,13 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	      /* Calculate the postfix for visbilitiy calc */
 		calcPostfix(&dlImage->dynAttr);
 		setMonitorChanged(&dlImage->dynAttr, pi->records);
-	      /* Calculate the postfix for the image calc */
-	      /* First, check for ANIMATE in the string */
-		for(i=0; i < 4; i++) {
-		    ucString[i] = toupper(dlImage->calc[i]);
-		}
-		if(!strncmp(ucString,"ANIM",4)) {
-		  /* Calc is set to animate */
+	      /* Check if the image calc is blank */
+		if(!*dlImage->calc) {
+		  /* Animate */
 		    pi->animate = True;
 		    pi->validCalc = False;
 		} else {
+		  /* Calculate the postfix for the image calc */
 		    pi->animate = False;
 		    status=postfix(dlImage->calc, pi->post, &errnum);
 		    if(status) {
@@ -223,7 +219,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			pi->validCalc = True;
 		    }
 		}
-	      /* Override the visibility monitorChanged paramaters if
+	      /* Override the visibility monitorChanged parameters if
 		 there is a valid image calc */
 		if(pi->validCalc) {
 		    for(i=0; i < MAX_CALC_RECORDS; i++) {
