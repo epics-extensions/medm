@@ -55,11 +55,21 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .01  03-01-95        vong    2.0.0 release
  * .02  09-05-95        vong    2.1.0 release
  *                              - using new screen update dispatch mechanism
+ * .03  09-12-95        vong    conform to c++ syntax
+ * .04  09-22-95        vong    accept hexidecimal input
  *
  *****************************************************************************
 */
 
 #include "medm.h"
+#include <stdlib.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <cvtFast.h>
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct _TextEntry {
   Widget      widget;
@@ -83,7 +93,7 @@ static void textEntryName(XtPointer, char **, short *, int *);
 
 int textFieldFontListIndex(int height)
 {
-  int i, index;
+  int i;
 /* don't allow height of font to exceed 90% - 4 pixels of textField widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
@@ -279,8 +289,13 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
   XtManageChild(localWidget);
 }
 
+#ifdef __cplusplus
+void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
+				Boolean)
+#else
 void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
 				Boolean dummy)
+#endif
 {
   if (displayInfo->traversalMode == DL_EXECUTE) {
 	 textEntryCreateRunTimeInstance(displayInfo,dlTextEntry);
@@ -340,7 +355,7 @@ void textEntryDestroyCb(XtPointer cd) {
   TextEntry *pte = (TextEntry *) cd;
   if (pte) {
     medmDestroyRecord(pte->record);
-    free(pte);
+    free((char *)pte);
   }
   return;
 }
@@ -351,10 +366,17 @@ void textEntryDestroyCb(XtPointer cd) {
  *  the value isn't ca_put()-ed, and the text field can be inconsistent
  *  with the underlying channel
  */
+#ifdef __cplusplus
+static void textEntryLosingFocusCallback(
+  Widget w,
+  XtPointer cd,
+  XtPointer)
+#else
 static void textEntryLosingFocusCallback(
   Widget w,
   XtPointer cd,
   XtPointer cbs)
+#endif
 {
   TextEntry *pte = (TextEntry *) cd;
   XtRemoveCallback(w,XmNlosingFocusCallback,
@@ -389,7 +411,11 @@ void textEntryModifyVerifyCallback(
 
 }
 
+#ifdef __cplusplus
+void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer)
+#else
 void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
+#endif
 {
   char *textValue;
   double value;
@@ -407,7 +433,14 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
         medmSendString(pte->record,textValue);
         break;
       default:
-        value = (double) atof(textValue);
+        if ((strlen(textValue) > 2) && (textValue[0] == '0')
+          && (textValue[1] == 'x' || textValue[1] == 'X')) {
+          long longValue;
+          longValue = strtol(textValue,NULL,16);
+          value = (double) longValue;
+        } else {
+          value = (double) atof(textValue);
+        }
         medmSendDouble(pte->record,value);
         break;
     }
