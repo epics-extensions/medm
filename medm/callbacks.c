@@ -99,7 +99,7 @@ int getNumberOfCompositeElements(DlElement *dlElement, int indent, int n)
 
 void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (int)cd;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *)cbs;
     Arg args[2];
     XtPointer data;

@@ -55,7 +55,12 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_REDRAW 0
+
 #include "medm.h"
+#include <Xm/MwmUtil.h>
+
+#define CMD_APPLY_BTN	0
+#define CMD_CLOSE_BTN	1
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void shellCommandSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
@@ -78,6 +83,19 @@ static DlDispatchTable shellCommandDlDispatchTable = {
     genericOrient,
     NULL,
     NULL};
+
+/* Global variables */
+
+static Widget cmdMatrix = NULL;
+static String cmdColumnLabels[] = {"Command Label","Command","Arguments",};
+static int cmdColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,
+				    MAX_TOKEN_LENGTH-1,};
+static short cmdColumnWidths[] = {36,36,36,};
+static unsigned char cmdColumnLabelAlignments[] = {
+    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER, XmALIGNMENT_CENTER,};
+/* and the cmdCells array of strings (filled in from globalResourceBundle...) */
+static String cmdRows[MAX_SHELL_COMMANDS][3];
+static String *cmdCells[MAX_SHELL_COMMANDS];
 
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
@@ -623,4 +641,197 @@ static void shellCommandSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
     medmGetValues(pRCB,
       CLR_RC,        &(dlShellCommand->clr),
       -1);
+}
+
+static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonType = (int) cd;
+    String **newCells;
+    int i;
+
+    UNREFERENCED(w);
+    UNREFERENCED(cb);
+
+    switch(buttonType) {
+    case CMD_APPLY_BTN:
+      /* Commit changes in matrix to global matrix array data */
+	XbaeMatrixCommitEdit(cmdMatrix,False);
+	XtVaGetValues(cmdMatrix,XmNcells,&newCells,NULL);
+      /* Now update globalResourceBundle...*/
+	for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	    strcpy(globalResourceBundle.cmdData[i].label, newCells[i][0]);
+	    strcpy(globalResourceBundle.cmdData[i].command, newCells[i][1]);
+	    strcpy(globalResourceBundle.cmdData[i].args, newCells[i][2]);
+	}
+      /* and update the elements (since this level of "OK" is analogous
+       *	to changing text in a text field in the resource palette
+       *	(don't need to traverse the display list since these changes
+       *	 aren't visible at the first level)
+       */
+	if(cdi) {
+	    DlElement *dlElement = FirstDlElement(
+	      cdi->selectedDlElementList);
+	    unhighlightSelectedElements();
+	    while(dlElement) {
+	      /* KE: Changed = to == here */
+		if(dlElement->structure.element->type == DL_ShellCommand)
+		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		dlElement = dlElement->next;
+	    }
+	}
+	if(cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	XtPopdown(shellCommandS);
+	break;
+    case CMD_CLOSE_BTN:
+	XtPopdown(shellCommandS);
+	break;
+    }
+}
+
+/*
+ * create shell command data dialog
+ */
+Widget createShellCommandDataDialog(
+  Widget parent)
+{
+    Widget shell, applyButton, closeButton;
+    Dimension cWidth, cHeight, aWidth, aHeight;
+    Arg args[12];
+    XmString xmString;
+    int i, j, n;
+    static Boolean first = True;
+
+
+  /* initialize those file-scoped globals */
+    if(first) {
+	first = False;
+	for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	    for (j = 0; j < 3; j++) cmdRows[i][j] = NULL;
+	    cmdCells[i] = &cmdRows[i][0];
+	}
+    }
+
+  /*
+   * now create the interface
+   *
+   *	       label | cmd | args
+   *	       -------------------
+   *	    1 |  A      B      C
+   *	    2 | 
+   *	    3 | 
+   *		     ...
+   *		 OK     CANCEL
+   */
+
+    n = 0;
+    XtSetArg(args[n],XmNautoUnmanage,False); n++;
+    XtSetArg(args[n],XmNmarginHeight,8); n++;
+    XtSetArg(args[n],XmNmarginWidth,8); n++;
+/*     cmdForm = XmCreateFormDialog(mainShell,"shellCommandDataF",args,n); */
+    cmdForm = XmCreateFormDialog(parent,"shellCommandDataF",args,n);
+    shell = XtParent(cmdForm);
+    n = 0;
+    XtSetArg(args[n],XmNtitle,"Shell Command Data"); n++;
+    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  /* KE: The following is necessary for Exceed, which turns off the
+     resize function with the handles.  It should not be necessary */
+    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
+    XtSetValues(shell,args,n);
+    XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
+      shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
+    n = 0;
+    XtSetArg(args[n],XmNrows,MAX_RELATED_DISPLAYS); n++;
+    XtSetArg(args[n],XmNcolumns,3); n++;
+    XtSetArg(args[n],XmNcolumnMaxLengths,cmdColumnMaxLengths); n++;
+    XtSetArg(args[n],XmNcolumnWidths,cmdColumnWidths); n++;
+    XtSetArg(args[n],XmNcolumnLabels,cmdColumnLabels); n++;
+    XtSetArg(args[n],XmNcolumnMaxLengths,cmdColumnMaxLengths); n++;
+    XtSetArg(args[n],XmNcolumnWidths,cmdColumnWidths); n++;
+    XtSetArg(args[n],XmNcolumnLabelAlignments,cmdColumnLabelAlignments); n++;
+    XtSetArg(args[n],XmNboldLabels,False); n++;
+    cmdMatrix = XtCreateManagedWidget("cmdMatrix",
+      xbaeMatrixWidgetClass,cmdForm,args,n);
+
+
+    xmString = XmStringCreateLocalized("Cancel");
+    n = 0;
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
+    closeButton = XmCreatePushButton(cmdForm,"closeButton",args,n);
+    XtAddCallback(closeButton,XmNactivateCallback,
+      shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
+    XtManageChild(closeButton);
+    XmStringFree(xmString);
+
+    xmString = XmStringCreateLocalized("Apply");
+    n = 0;
+    XtSetArg(args[n],XmNlabelString,xmString); n++;
+    applyButton = XmCreatePushButton(cmdForm,"applyButton",args,n);
+    XtAddCallback(applyButton,XmNactivateCallback,
+      shellCommandActivate,(XtPointer)CMD_APPLY_BTN);
+    XtManageChild(applyButton);
+    XmStringFree(xmString);
+
+  /* make APPLY and CLOSE buttons same size */
+    XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
+    XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
+    XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
+      XmNheight,MAX(cHeight,aHeight),NULL);
+
+  /* and make the APPLY button the default for the form */
+    XtVaSetValues(cmdForm,XmNdefaultButton,applyButton,NULL);
+
+  /*
+   * now do form layout 
+   */
+
+  /* cmdMatrix */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+    XtSetValues(cmdMatrix,args,n);
+  /* apply */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+    XtSetArg(args[n],XmNtopWidget,cmdMatrix); n++;
+    XtSetArg(args[n],XmNtopOffset,12); n++;
+    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
+    XtSetArg(args[n],XmNleftPosition,30); n++;
+    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNbottomOffset,12); n++;
+    XtSetValues(applyButton,args,n);
+  /* close */
+    n = 0;
+    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+    XtSetArg(args[n],XmNtopWidget,cmdMatrix); n++;
+    XtSetArg(args[n],XmNtopOffset,12); n++;
+    XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
+    XtSetArg(args[n],XmNrightPosition,70); n++;
+    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+    XtSetArg(args[n],XmNbottomOffset,12); n++;
+    XtSetValues(closeButton,args,n);
+
+    XtManageChild(cmdForm);
+
+    return shell;
+}
+
+/*
+ * access function (for file-scoped globals, etc) to udpate the
+ *	shell command data dialog with the values currently in
+ *	globalResourceBundle
+ */
+void updateShellCommandDataDialog()
+{
+    int i;
+
+    for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	cmdRows[i][0] = globalResourceBundle.cmdData[i].label;
+	cmdRows[i][1] = globalResourceBundle.cmdData[i].command;
+	cmdRows[i][2] = globalResourceBundle.cmdData[i].args;
+    }
+    if(cmdMatrix != NULL) XtVaSetValues(cmdMatrix,XmNcells,cmdCells,NULL);
+  
 }

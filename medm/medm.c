@@ -3527,9 +3527,11 @@ main(int argc, char *argv[])
     channelMW = NULL;
     relatedDisplayS = NULL;
     shellCommandS = NULL;
+    cmdForm = NULL;
     cartesianPlotS = NULL;
     cartesianPlotAxisS = NULL;
     stripChartS = NULL;
+    scForm = NULL;
     cpAxisForm = NULL;
     executeTimeCartesianPlotWidget = NULL;
     executeTimePvLimitsElement = NULL;
