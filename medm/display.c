@@ -21,7 +21,7 @@ DisplayInfo *createDisplay()
   currentDisplayInfo = NULL;
   initializeGlobalResourceBundle();
 
-  displayInfo = allocateDisplayInfo((Widget)NULL);
+  displayInfo = allocateDisplayInfo();
 
 /* general scheme: update  globalResourceBundle, then do creates */
   globalResourceBundle.x = 0;

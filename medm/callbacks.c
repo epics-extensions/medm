@@ -113,7 +113,7 @@ XtCallbackProc dmDisplayListOk(
     filePtr = fopen(filename,"r");
     if (filePtr != NULL) {
 	XtUnmanageChild(dialog);
-	dmDisplayListParse(filePtr,NULL,filename,(Widget)NULL,(Boolean)False);
+	dmDisplayListParse(filePtr,NULL,filename,(Boolean)False);
 	if (filePtr != NULL) fclose(filePtr);
     };
     XtFree(filename);
@@ -236,12 +236,11 @@ XtCallbackProc dmCreateRelatedDisplay(
           newFilename, DISPLAY_FILE_ASCII_SUFFIX,
           "--> check EPICS_DISPLAY_PATH ");
     dmSetAndPopupWarningDialog(displayInfo,token,
-          (XtCallbackProc)warnCallback, (XtCallbackProc)warnCallback);
+            (XtCallbackProc)warnCallback, (XtCallbackProc)warnCallback);
     fprintf(stderr,"\n%s",token);
     free(newFilename);
   } else {
-    dmDisplayListParse(filePtr,processedArgs,filename,(Widget)NULL,
-	  (Boolean)True);
+    dmDisplayListParse(filePtr,processedArgs,filename,(Boolean)True);
     fclose(filePtr);
   }
 

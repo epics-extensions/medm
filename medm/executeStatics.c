@@ -65,7 +65,6 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay,
 		(XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
      XtManageChild(displayInfo->drawingArea);
 
-
    /*
     * and if in EDIT mode...
     */
@@ -104,37 +103,28 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
 
 
 
-  if (XtIsShell(displayInfo->shell)) {
-  /***
-   *** if parent ("shell") is not a shell, then doing embedded MEDM,
-   ***  and most of this is inappropriate
-   ***
-   *** otherwise, a real shell, and do normal MEDM
-   ***/
-
 /* wait to realize the shell... */
-    n = 0;
-    if (!XtIsRealized(displayInfo->shell)) {	/* only position first time */
-      XtSetArg(args[n],XmNx,(Position)dlDisplay->object.x); n++;
-      XtSetArg(args[n],XmNy,(Position)dlDisplay->object.y); n++;
-    }
-    XtSetArg(args[n],XmNallowShellResize,(Boolean)TRUE); n++;
-    XtSetArg(args[n],XmNwidth,(Dimension)dlDisplay->object.width); n++;
-    XtSetArg(args[n],XmNheight,(Dimension)dlDisplay->object.height); n++;
-/* just give filename as title */
-    startPos = 0;
-    for (k = 0; k < strlen(displayInfo->displayFileName); k++) {
-      if (displayInfo->displayFileName[k] == '/') startPos = k;
-    }
-    XtSetArg(args[n],XmNtitle,&(displayInfo->displayFileName[
-	startPos > 0 ? startPos+1 : 0])); n++;
-    XtSetArg(args[n],XmNiconName,displayInfo->displayFileName); n++;
-    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
-    XtSetValues(displayInfo->shell,args,n);
-
-    XtRealizeWidget(displayInfo->shell);
-
+  n = 0;
+  if (!XtIsRealized(displayInfo->shell)) {	/* only position first time */
+    XtSetArg(args[n],XmNx,(Position)dlDisplay->object.x); n++;
+    XtSetArg(args[n],XmNy,(Position)dlDisplay->object.y); n++;
   }
+  XtSetArg(args[n],XmNallowShellResize,(Boolean)TRUE); n++;
+  XtSetArg(args[n],XmNwidth,(Dimension)dlDisplay->object.width); n++;
+  XtSetArg(args[n],XmNheight,(Dimension)dlDisplay->object.height); n++;
+/* just give filename as title */
+  startPos = 0;
+  for (k = 0; k < strlen(displayInfo->displayFileName); k++) {
+    if (displayInfo->displayFileName[k] == '/') startPos = k;
+  }
+  XtSetArg(args[n],XmNtitle,&(displayInfo->displayFileName[
+	startPos > 0 ? startPos+1 : 0])); n++;
+  XtSetArg(args[n],XmNiconName,displayInfo->displayFileName); n++;
+  XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+  XtSetValues(displayInfo->shell,args,n);
+
+  XtRealizeWidget(displayInfo->shell);
+
 
 
 /* if there is an external colormap file specification, parse/execute it now */
@@ -157,7 +147,6 @@ XmDropSiteRegister(displayInfo->drawingArea,args,1);
   }
 
 }
-
 
 
 /*
