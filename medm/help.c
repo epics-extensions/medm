@@ -55,6 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define TIME_STRING_MAX 81
+#define EARLY_MESSAGE_SIZE 2048
 
 #define ERR_MSG_RAISE_BTN 0
 #define ERR_MSG_CLOSE_BTN 1
@@ -62,6 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define ERR_MSG_PRINT_BTN 3
 #define ERR_MSG_SEND_BTN 4
 #define ERR_MSG_HELP_BTN 5
+
 
 #include "medm.h"
 #include <time.h>
@@ -76,6 +78,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 static void displayHelpCallback(Widget shell, XtPointer client_data,
   XtPointer call_data);
+static int saveEarlyMessage(char *msg);
+static void copyEarlyMessages(void);
+
+/* Global variables */
+
+static char *earlyMessages = NULL;
+static int earlyMessagesDone = 0;
 
 extern FILE *popen(const char *, const char *);     /* May not be defined for strict ANSI */
 extern int	pclose(FILE *);     /* May not be defined for strict ANSI */
@@ -408,6 +417,9 @@ void errMsgDlgCreateDlg(Boolean raise)
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
+
+      /* Copy early messages */
+	if(earlyMessages) copyEarlyMessages();
     }
 }
 
@@ -618,7 +630,10 @@ void medmPostMsg(int priority, char *format, ...) {
 	curpos = XmTextGetLastPosition(errMsgText);
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);
+    } else {
+	saveEarlyMessage(timeStampStr);
     }
+
   /* Also print to stderr */
     fprintf(stderr, timeStampStr);
 
@@ -631,6 +646,8 @@ void medmPostMsg(int priority, char *format, ...) {
 	XmTextSetInsertionPosition(errMsgText, curpos);
 	XmTextShowPosition(errMsgText, curpos);
 	XFlush(display);
+    } else {
+	saveEarlyMessage(medmPrintfStr);
     }
 
   /* Also print to stderr */
@@ -655,8 +672,11 @@ void medmPrintf(int priority, char *format, ...)
 	XmTextSetInsertionPosition(errMsgText, curpos);
 	XmTextShowPosition(errMsgText, curpos);
 	XFlush(display);
+    } else {
+	saveEarlyMessage(medmPrintfStr);
     }
-  /* Also print to stderr */
+
+/* Also print to stderr */
     fprintf(stderr, medmPrintfStr);
     va_end(args);
 
@@ -667,37 +687,69 @@ void medmPrintf(int priority, char *format, ...)
     }
 }
 
-#if 0
-/* KE: No longer used */
-void medmPostTime() {
-    long now; 
-    struct tm *tblock;
-    char timeStampStr[TIME_STRING_MAX];
-    XmTextPosition curpos;
+static int saveEarlyMessage(char *msg)
+{
+    int len, newLen;
+    int full = 0;
+    
+  /* Don't do it again */
+    if(earlyMessagesDone) return 0;
 
-  /* Create (or manage) the error dialog */
-    errMsgDlgCreateDlg(raiseMessageWindow && priority > 0);
-
-    time(&now);
-    tblock = localtime(&now);
-    strftime(timeStampStr,TIME_STRING_MAX,"\n%a %h %e %k:%M:%S %Z %Y\n",tblock);
-    timeStampStr[TIME_STRING_MAX-1]='0';
-    if(errMsgText) {
-	curpos = XmTextGetLastPosition(errMsgText);
-	XmTextInsert(errMsgText, curpos, timeStampStr);
-	curpos+=strlen(timeStampStr);
-	XmTextSetInsertionPosition(errMsgText, curpos);
-	XmTextShowPosition(errMsgText, curpos);
-	XFlush(display);
+  /* Allocate space */
+    if(!earlyMessages) {
+	earlyMessages = (char *)calloc(EARLY_MESSAGE_SIZE, sizeof(char));
+	if(!earlyMessages) return 0;
     }
-  /* Also print to stderr */
-    fprintf(stderr, timeStampStr);
 
-  /* Raise window */
-    if(errMsgS && XtIsRealized(errMsgS))
-      XRaiseWindow(display,XtWindow(errMsgS));
+  /* Concatenate the message */
+    if(!full) {
+	len = strlen(earlyMessages);
+	newLen = strlen(msg);
+	if(len + newLen < EARLY_MESSAGE_SIZE - 14) {
+	    strcat(earlyMessages, msg);
+	    return 1;
+	} else {
+	    strcat(earlyMessages, "\n[BufferFull]");
+	    full = 1;
+	    return 0;
+	}
+    } else {
+	return 0;
+    }
 }
-#endif
+
+static void copyEarlyMessages(void)
+{
+    XmTextPosition curpos;
+    char string[80];
+
+    earlyMessagesDone = 1;
+    if(!earlyMessages || !*earlyMessages) return;
+
+  /* Insert the messages */
+    curpos = XmTextGetLastPosition(errMsgText);
+    strcpy(string,"\n*** Messages received before Message Window was started:\n");
+    XmTextInsert(errMsgText, curpos, string);
+    curpos+=strlen(string);
+    XmTextInsert(errMsgText, curpos, earlyMessages);
+    curpos+=strlen(earlyMessages);
+    strcpy(string,"\n*** End of early messages\n");
+    XmTextInsert(errMsgText, curpos, string);
+    curpos+=strlen(string);
+
+  /* Free the space */
+    free(earlyMessages);
+}
+
+int checkEarlyMessages(void)
+{
+    if(earlyMessages && !earlyMessagesDone) {
+	medmPrintf(1, "");
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 static char caStudyMsg[512];
 static Widget caStudyDlg = NULL;
