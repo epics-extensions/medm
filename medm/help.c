@@ -665,6 +665,7 @@ void errMsgSendDlgCreateDlg()
 
 static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
 
+/* Priority = 1 means raise the message window */
 void medmPostMsg(int priority, char *format, ...) {
     va_list args;
     time_t now; 
@@ -858,6 +859,11 @@ void caStudyDlgResetButtonCb(Widget w, XtPointer clientData, XtPointer callData)
     aveUpdateExecuted = 0.0;
     aveUpdateRequested = 0.0;
     aveUpdateRequestDiscarded = 0.0;
+
+  /* Remove the timeout and update */
+    if(errMsgDlgTimeOutId) XtRemoveTimeOut(errMsgDlgTimeOutId);
+    else errMsgDlgTimeOutId = 0;
+    medmUpdateCAStudyDlg(NULL,&errMsgDlgTimeOutId);
     return;
 }
 
@@ -963,6 +969,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientdata, XtIntervalId *id)
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
 
+    if(!caStudyS) return;
     if(caUpdateStudyDlg) {
 	XmString str;
 	int taskCount;
