@@ -4045,7 +4045,7 @@ static void createMain()
       (XtPointer)FILE_EXIT_BTN);
 #endif
     
-  /* Create the Help information shell */
+  /* Create the Help information shell (Help on Help) */
     n = 0;
     XtSetArg(args[n],XtNiconName,"Help"); n++;
     XtSetArg(args[n],XtNtitle,"Medm Help System"); n++;
@@ -4070,7 +4070,7 @@ static void createMain()
 
     XtManageChild(helpMessageBox);
 
-  /* Create the EditHelp information shell */
+  /* Create the EditHelp information shell (Edit Summary in Edit-Mode menu) */
     n = 0;
     XtSetArg(args[n],XtNiconName,"EditHelp"); n++;
     XtSetArg(args[n],XtNtitle,"Edit Help"); n++;
@@ -4098,10 +4098,8 @@ static void createMain()
   /* Initialize other shells */
     caStudyS = (Widget)0;
     displayListS = (Widget)0;
-    editHelpS = (Widget)0;
     errMsgS = (Widget)0;
     errMsgSendS = (Widget)0;
-    helpS = (Widget)0;
     pvInfoS = (Widget)0;
     pvLimitsS = (Widget)0;
 

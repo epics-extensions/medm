@@ -205,9 +205,10 @@ SRCS += updateMonitors.c
 SRCS += utils.c 
 SRCS += xgif.c
 
+RCS_WIN32 += medm.rc
+
 include $(TOP)/config/RULES.Host
 
-RCS_WIN32 += medm.rc
 medm.res:../medm.ico
 
 ifdef XRTGRAPH
@@ -230,6 +231,9 @@ xrtAuth: medm
 
 xxxx:
 	@echo ca_DIR: $(ca_DIR)
+	@echo RCS_WIN32: $(RCS_WIN32)
+	@echo RES: $(RES)
+	@echo PROD_RESS: $(PROD_RESS)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

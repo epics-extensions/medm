@@ -261,13 +261,13 @@ void medmCATerminate()
   /* KE: Doesn't cancel it.  The first argument should be NULL for cancel */
   /* And why do we want to cancel it ? */
     SEVCHK(ca_add_fd_registration(medmCAFdRegistrationCb,NULL),
-      "\ndmTerminateCA:  error removing CA's fd from X");
+      "\nmedmCATerminate:  error removing CA's fd from X");
   /* Do a pend_event */
   /* KE: Why? */
 #ifdef __MONITOR_CA_PEND_EVENT__
     {
 	double t;
-	t = medmTime();
+	t = medmTime();Terminate
       /* Don't allow early returns */
 	ca_pend_event(20.0*CA_PEND_EVENT_TIME);
 	t = medmTime() - t;
@@ -279,7 +279,7 @@ void medmCATerminate()
     ca_pend_event(20.0*CA_PEND_EVENT_TIME);   /* don't allow early returns */
 #endif
   /* Close down channel access */
-    SEVCHK(ca_task_exit(),"\ndmTerminateCA: error exiting CA");
+    SEVCHK(ca_task_exit(),"\nmedmCATerminate: error exiting CA");
   /* Clean up the  memory allocated for Channel's */
   /* KE: Used to be done first */
     caTaskDelete();
