@@ -2207,7 +2207,7 @@ static void createEntryRC( Widget parent, int rcType) {
 
 }
 
-static int table[] = {
+static int resourceTable[] = {
     DL_Display,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CMAP_RC, -1,
     DL_ChoiceButton,
@@ -2274,12 +2274,21 @@ static int table[] = {
 #else
     CLRMOD_RC, VIS_RC, CHAN_RC, -1,
 #endif
+  /* KE: Related display shouldn't have CLR_MOD_RC, VIS_RC, CHAN_RC
+   *   ((Dynamic Attributes) */
+/*     DL_RelatedDisplay, */
+/*     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CLRMOD_RC, */
+/* #ifdef __COLOR_RULE_H__ */
+/*     COLOR_RULE_RC, VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1, */
+/* #else */
+/*     VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1, */
+/* #endif */
     DL_RelatedDisplay,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1,
 #else
-    VIS_RC, CHAN_RC, RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1,
+    RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC, -1,
 #endif
     DL_ShellCommand,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC, -1,
@@ -2312,20 +2321,20 @@ static int table[] = {
 
 static void initializeResourcePaletteElements() {
     int i, j, index;
-    int tableSize = sizeof(table)/sizeof(int);
+    int tableSize = sizeof(resourceTable)/sizeof(int);
 
     index = -1;
     for (i=0; i<tableSize; i++) {
 	if (index < 0) {
 	  /* start a new element, get the new index */
-	    index = table[i] - MIN_DL_ELEMENT_TYPE;
+	    index = resourceTable[i] - MIN_DL_ELEMENT_TYPE;
 	    j = 0;
 	} else {
-	    if (table[i] >= 0) {
-	      /* copy RC resource from table until it meet -1 */
-		resourcePaletteElements[index].childIndexRC[j] = table[i];
+	    if (resourceTable[i] >= 0) {
+	      /* copy RC resource from resourceTable until it meet -1 */
+		resourcePaletteElements[index].childIndexRC[j] = resourceTable[i];
 		resourcePaletteElements[index].children[j] =
-		  resourceEntryRC[table[i]];
+		  resourceEntryRC[resourceTable[i]];
 		j++;
 	    } else {
 		int k;
@@ -4384,13 +4393,13 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
     printf("In updateGlobalResourceBundleAndResourcePaletteo\n");
 #endif
 
-  /* simply return if not valid to update */
+  /* Simply return if not valid to update */
     if (currentDisplayInfo->selectedDlElementList->count != 1) return;
 
     elementPtr = FirstDlElement(currentDisplayInfo->selectedDlElementList);
     elementPtr = elementPtr->structure.element;
 
-  /* if no resource palette yet, create it */
+  /* If no resource palette yet, create it */
     if (!resourceMW) {
 	currentElementType = elementPtr->type;
 	setResourcePaletteEntries();

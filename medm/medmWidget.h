@@ -598,7 +598,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Line Width",
     "Precision",
     "Start Bit", "End Bit",
-    "Label","visual",
+    "Label", "Visual",
     "Label/Name/Args",      /* Related Display data           */
     "X/Y/Trace Data",       /* Cartesian Plot data            */
     "Channel/Color",        /* Strip Chart data               */
