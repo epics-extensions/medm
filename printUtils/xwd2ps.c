@@ -1153,6 +1153,19 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	}
 	return 1;
 
+    case 24:
+      /* Submitted by Bob Soliday 12-00.  Apparently used by Linux. */
+	fread((char *)buffer, iwbytes, 1, file);
+      /* For this case, copy byte triplets into line */
+	bufptr1 = linec;
+	bufptr = buffer;
+	for( j = 0; j < iwbytes/3; j++) {
+	    *bufptr1++ = *bufptr++;
+	    *bufptr1++ = *bufptr++;
+	    *bufptr1++ = *bufptr++;
+	}
+	return 1;
+
     case 8:
 	fread((char *)linec, iwbytes, 1, file);
 	return 1;
