@@ -248,7 +248,7 @@ void printPS(FILE *fo, char **p)
  */
 void printEPSF(FILE *fo, Image image, Page  page, char  *file_name)
 {
-    long clock;
+    time_t clock;
 
     fprintf(fo,"%%!PS-Adobe-2.0 EPSF-1.2\n");    /* standard PS header */
     if(image.orientation == PORTRAIT)
