@@ -1161,7 +1161,7 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
     if(event) {
 	XGetErrorText(dpy,event->error_code,buf,1024);
     } else {
-	sprintf(buf,"Event is NULL");
+	sprintf(buf,"[Event associated with error is NULL]");
     }
 #if 0    
 # ifdef WIN32
@@ -1222,6 +1222,26 @@ void xtErrorHandler(char *message)
 #else
     medmPostMsg(1,"xtErrorHandler:\n%s\n", message);
 #endif    
+
+#if DEBUG_SRICAT
+    {
+	char msg[256];
+	sprintf(msg,
+	  "An Xt error has occurred\n"
+	  "This is an opportunity to check the call stack\n"
+	  "The MEDM PID is %d\n"
+	  "Please contact the system administrator before continuing",
+	  getpid());
+	dmSetAndPopupQuestionDialog(currentDisplayInfo,msg,
+	  "Continue",NULL,NULL);
+	switch (currentDisplayInfo->questionDialogAnswer) {
+	case 1:     /* Continue */
+	default:
+	    break;
+	}
+    }    
+#endif
+    
 }
 
 int xInfoMsg(Widget parent, const char *fmt, ...)
