@@ -1,0 +1,3828 @@
+% MDA X graphics and support routines
+%
+%    histogram, xy plot, strip chart, surface plot...
+%    10 June 1990
+%
+\input{psfig.tex}
+\documentstyle [11pt,makeidx] {report}
+\makeindex
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\title{
+\centerline{\psfig{figure=logo.ps,width=2.3in,height=1.0in}}
+{\Large X graphics and plotting utilities}\\
+\vspace{18pt}
+{\Huge Low Level Plot Routines}}
+\author{Mark D. Anderson\\
+Argonne National Laboratory}
+
+% end of preamble
+
+\begin{document}
+\maketitle
+
+\begin{abstract}  
+Basic graphic and plotting functionality under 
+the X Window System\footnote
+{{\it X Window System} is a trademark of MIT,\\ Copyright \copyright 
+1987, 1988, 1989 Massachusetts Institute of Technology.} 
+is being provided at the XLib layer (with some use of the Intrinsics\index{Intrinsics}
+layer by one graphic).  Presently supported graphics include: 
+bar charts\index{bar chart}, xy plots\index{plots!xy plots} (using point, line, and filled polygon data representation
+styles), surface plots\index{plots!surface plot}, contour plots\index{plots!contour plot} (utilizing color\index{color}), and strip charts\index{plots!strip chart}.  
+The graphics are presented and the calling interface to these described.
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Introduction}
+
+This note describes a set of plot objects of general use in
+an X environment.  Although not {\em objects} in a true object-oriented\index{object-oriented}
+sense, these plots/graphics are data structures and an associated set of
+actions or functions, embodying where possible such desirable qualities as
+data abstraction, information hiding, and a sense of {\em state}-ness.
+\footnote{In the future, I hope to be able to produce a true Object-Oriented 
+version of this package.  The potential for code reuse and inheritance
+in this sort of package is very high; a C$^{++}$\index{C$^{++}$} version of this software
+would be able to clean up both the internal and external software associated
+with it.  Even the nomenclature adopted indicates I really wanted to
+say, for example,  `send a {\em print} message to an instance of class 
+{\em graph}'. - MDA}
+
+This software package is written almost exclusively at the {\bf Xlib}\index{Xlib} level. 
+That is, no use of Widgets or Widget properties is utilized.  The Intrinsics\index{Intrinsics}
+layer is utilized in only one graphic for background
+processing and timeouts/alarms.  The decision to not {\em widget-ize}\index{widget} these
+entities was based on several considerations.
+One primary concern was the desire for relative simplicity and generality;
+a plot package under X which would be usable with any of the available
+widget\index{widget} sets would be most beneficial. Another concern was performance\index{performance} and
+homogeneity; since most or all of the actual graphics operations would have to 
+be done at the Xlib\index{Xlib} layer (where the drawing primitives, graphics contexts,
+et cetera are), a core set of actions coded in Xlib\index{Xlib} would be necessary
+regardless of implementation as widgets\index{widget} or not.  Also, portability\index{portability} and
+performance\index{performance} would be improved if the code avoided dependencies on Widget
+super-classes (although software complexity probably increases
+by not making a widget-based\index{widget-based} implementation).  
+
+This software package presupposes an initialized X Connection (typically
+via either an {\bf XOpenDisplay()}\index{XOpenDisplay} or {\bf XtInitialize()}\index{XtInitialize} call), and valid
+Display\index{Display}, Screen and Window variables.  The basic philosophy of this package
+is `pass me a window\index{window} to draw in, and I'll draw in it'.  This frees the
+caller of the routines from worrying about window\index{window} sizes and other properties.
+The graphic inquires about window\index{window} conditions and records these internally
+so that actions requested of the graphic can be specified without unnecessary
+burdening of the programmer.
+
+This plot package is admittedly rather low level, and
+presupposes some dexterity with respect to X.  As such,
+it is useful in the widest variety of potential areas, including
+control, data acquisition, and monitoring systems (it's intended area
+of application).  Production-quality graphics is not a goal of this
+package (there are several that do this very well and it would be
+foolish to try to tackle that functionality); however, quick, efficient
+graphics are provided.
+
+
+
+\chapter{Plot Types}
+
+The plot types supported include 1-D\index{plots!1-D}, 2-D\index{plots!2-D} and 3-D\index{plots!3-D} plots. Both color\index{color} and
+monochrome devices are supported, however this package is targetted for
+color\index{color} devices since color\index{color} allows greater visualization and data
+density within a plot.
+
+The explicit use
+of color\index{color} on monochrome devices is discouraged; behavior under this state is 
+server dependent, as some monochrome servers have been known to lie about 
+supporting color\index{color} (by mapping requested colors\index{color} to black and white).
+
+\section{Plot Families}
+
+Several plot families exist which support 1, 2 and 3-D
+graphical data display.  These family groupings are based upon the
+input data format which the plot accepts.  Within a plot family,
+one or more display types are available.  The plot families within
+the plot (dimension) types are:
+\begin{itemize}
+\item 1-D Data  \& Plots\index{plots!1-D}
+\begin{itemize}
+\item {\em seql}\index{plots!seql}
+\end{itemize}
+\item 2-D Data \& Plots\index{plots!2-D}
+\begin{itemize}
+\item {\em graph}\index{plots!graph}
+\item {\em strip}\index{plots!strip}
+\end{itemize}
+\item 3-D Data \& Plots\index{plots!3-D}
+\begin{itemize}
+\item {\em graph3d}\index{plots!graph3d}
+\item {\em surface}\index{plots!surface}
+\end{itemize}
+\end{itemize}
+
+\section{1-D plots}\index{plots!1-D}
+
+\subsection{Seql plot family}\index{plots!seql}
+
+The {\bf seql} plot family accepts and operates on `sequential' data: an array 
+of values with no implied interval or ratio metric between instances of values. 
+Data at regular or irregular sampling intervals have an implicit ordering 
+and position in the set, and can be displayed on the basis of this ordering.  
+
+Simplest of the data types, this graphic accepts and displays an array 
+of values.
+
+\section{2-D plots}\index{plots!2-D}
+
+\subsection{Graph plot family}\index{plots!graph}
+
+The {\bf graph} plot family accepts XY data: an array of structures with
+X and Y components (X,Y pairs). 
+
+Points in the XY plane are passed as data and displayed in some 
+`normal' 2-D style.
+
+\subsection{Strip Chart family}\index{plots!strip}
+
+The {\bf strip chart}\index{plots!strip chart} family differs from the other plot families in
+that actual static data is not passed in for plotting.  Rather, an array of
+pointers to functions returning the data of interest (doubles) is passed in.  
+These functions are then called at some specified sampling interval and
+the returned values and corresponding time of that sample are plotted in
+a `rolling paper' sort of display. 
+
+This plot utilizes a mechanical strip chart\index{strip chart}
+metaphor, and takes a functional approach to data handling.
+
+\section{3-D plots}\index{plots!3-D}
+
+\subsection{Graph3d plot family}\index{plots!graph3d}
+
+The {\bf Graph3d} plot family uses XYZ data: an array of structures with
+X, Y and Z components (X,Y,Z pairs).  
+
+Points in the XY plane are displayed with color\index{color} representing the 3rd or 
+Z dimension.
+
+\subsection{Surface plot family}\index{plots!surface}
+
+The {\bf Surface} plot family utilizes XYZ data as a mesh. An array of values 
+defining the X and Y axes, and the data on that grid created by the X and Y 
+arrays are supplied and displayed as a 
+surface plot\index{plots!surface plot} with hidden line/surface removal or
+shaded surface rendering modes.
+
+
+\newpage
+
+%%%%% (MDA)
+
+\section{Display Styles}
+
+Several display styles\index{display styles} recur throughout the plot families.  These styles
+are the common plot types found in most graphics or plotting packages
+and include bar charts\index{bar chart}, area-under-curve (filled polygon), line and 
+point plots, surface plots\index{plots!surface plot}, and contour plots\index{plots!contour plot}.  
+
+The 3D contour plots\index{plots!contour plot} are not included as figures in this document at present, 
+primarily because of the poor showing that color\index{color} displays make in black
+and white documents.  The reader is asked to use his imagination\ldots when
+reading the description of this plot type.
+
+\vspace{1.3in}
+%\par
+\centerline{\psfig{figure=graphPoint.ps,height=2.2in,width=3.0in}}
+\vspace{-0.9in}
+\par
+One common plot type is the Point style plot.
+This display type
+simply represents each (X,Y) data point as a dot or pixel on the plot.  
+This display type is available for the {\bf seql}\index{plots!seql}
+and {\bf graph}\index{plots!graph} plot families.  For sparse data this display type is not
+recommended (especially on high-resolution displays). A set of markers may
+be implemented in the future for higher-resolution point plots.
+\vspace{0.2in}
+
+\hbox{
+\parbox[b]{2.2in}{
+The Bar Chart is one of the display types for the {\bf graph}\index{plots!graph}
+family of plots.  The X axis uses a `binning' concept to divide the values on
+that axis into a completely covered range.  The height of the bar indicates the
+Y value of the greatest Y data point for all X data points falling in that
+`bin'.   For well-behaved data, choosing the proper binning results in
+single bar per value displays.
+
+%% (MDA) Since this is a display type and not a plot family, the input
+%%data is identical for this type, the Point and Line style plots.
+%%Any of the plots can be produced by passing the appropriate display type
+%%parameter to the {\em Set} or {\em SetDisplayType} functions.
+}
+\hspace{.15in}
+\psfig{figure=graphBar.ps,height=2.2in,width=2.2in}
+}
+\vspace{.2in}
+
+\par
+\hbox{ 
+\psfig{figure=seqlLine.ps,height=2.2in,width=2.2in}
+\hspace{.15in}
+\parbox[b]{2.2in} {
+The Line style plot utilizes a connected line sequence through the data
+points to represent the data. This plot type is available for the {\bf seql}\index{plots!seql},
+{\bf graph}\index{plots!graph} and {\bf strip}\index{plots!strip}\index{plots!strip chart}  plot families.  
+For this plot to produce
+the usual (or anticipated) plot (i.e., the Y as a function of X style plot), 
+the XY data for the {\bf graph}\index{plots!graph} should
+be stored via increasing X values in the data array. 
+}
+}
+\vspace{0.2in}
+
+\par
+\hbox{
+\parbox[b]{2.2in}{
+The `area-under-curve' or filled polygon style plot is available as a 
+display type
+in the {\bf seql}\index{plots!seql} family of plots. A closed filled polygon is utilized
+to bound or define the data points.  This plot type may be introduced
+for the {\bf graph}\index{plots!graph} family if there is interest.
+}
+\hspace{.15in}
+\psfig{figure=seqlPolygon.ps,height=2.2in,width=2.2in}
+}
+\vspace{.2in}
+
+\par
+\hbox{
+\psfig{figure=surface.ps,height=2.2in,width=2.2in}
+\hspace{.15in}
+\parbox[b]{2.2in}{
+The Surface Plot\index{plots!surface} is used for the representation of 3D data and is accessible
+only from the {\bf surface}\index{plots!surface}\index{plots!surface plot} 
+family of routines.  
+}
+}
+\vspace{.2in}
+
+One plot type visually resembling (at least in a static sense) the
+Line plot style but very different in semantics is the Strip Chart\index{plots!strip}\index{plots!strip chart}.
+This is a dynamic plot with a scrolling picture effect, useful for
+the sampling and display of dynamic data.  The strip chart\index{plots!strip chart} metaphor is
+reasonably faithfully followed by supporting pause/resume and `paper speed'
+adjust functionality. Multiple channels can be sampled and displayed
+on a single strip chart\index{plots!strip chart}.
+\vspace{0.8in}
+
+\centerline{\hbox{
+\psfig{figure=strip1.ps,height=2.0in,width=2.0in} 
+\psfig{figure=strip2.ps,height=2.0in,width=2.0in} 
+}}
+
+
+\chapter{Calling Sequences}\index{calling sequences}
+
+\section{Nomenclature}
+
+A basic set of functions exist for all the graphics or plot types.  
+The nomenclature\index{nomenclature} adopted prepends a plot family name to the following
+function or activity name:
+\begin{itemize}
+\item {\bf Init}\index{Init}
+\item {\bf Set\ldots}\index{Set\ldots} 
+\item {\bf Draw\ldots}\index{Draw\ldots} 
+\item {\bf Resize}\index{Resize}
+\item {\bf Refresh}\index{Refresh} 
+\item {\bf Print}\index{Print} 
+\item {\bf Term}\index{Term} 
+\end{itemize}
+
+\subsection{Init}\index{Init}
+
+Allocate and initialize the data structures
+for the plot. Some {\bf X} resources are allocated at this time.
+
+\subsection{Set\ldots}\index{Set\ldots}
+
+Record or register passed-in state information for the 
+graphic, such as data buffer locations, plot type parameters, colors\index{color}, fonts\index{font}, 
+and labels. {\bf X} server resources are requested and utilized. 
+Typically there are several Set\ldots routines for a plot family.
+
+
+\subsection{Draw\ldots}\index{Draw\ldots}
+
+Perform data to device transformations and execute 
+the Xlib\index{Xlib} graphics operations with the state information of the graphic.
+
+Window resizes are not handled by the draw routine; the Resize function
+should be called prior to Draw when a resize condition is encountered
+and signalled (typically in a resize\index{callback!resize} callback).
+
+\subsection{Resize}\index{Resize}
+
+Window resizes require notification and update of the graphics data
+structures; this routine performs the window\index{window} attribute querying, 
+updates the plot structure with the new window\index{window} information, and performs
+X specific actions associated with the resize.
+
+The Resize and Draw functions together (Resize followed immediately by Draw)
+properly address resize events for the plot, and usually are the
+only content of a resize callback\index{callback!resize} for a parent drawing area type widget\index{widget}.
+
+
+\subsection{Refresh}\index{Refresh}
+
+Refresh the window\index{window} with the current display data (the current window\index{window} in 
+it\'s entirety).  Note that this does not do a Draw, rather, it remaps
+the current plot/window\index{window} contents to the screen.
+
+This routine is appropriate for handling Expose events, and is usually
+all that is necessary for the contents of an expose callback\index{callback!expose} for
+a parent drawing area type widget\index{widget}.
+
+\subsection{Print}\index{Print}
+
+Direct hardcopy of the plot to a printer.  At present
+PostScript\index{PostScript} is the only hardcopy format supported; 
+the PostScript\index{PostScript} printer 
+destination is specified by the environment 
+variable\index{environment variable} PSPRINTER\index{environment 
+variable!PSPRINTER}. Note that color PostScript support is now included, 
+with color plots printing both on black-and-white and color printers.
+
+PostScript output is supported by internalizing two common X applications:
+{\bf xwd} and {\bf xwd2ps}. These two programs have been integrated into
+this library as callable routines;  no reliance upon external programs
+exists.  At this time I would like to acknowledge the authors of
+{\bf xwd} (Tony Della Fera, of DEC and MIT Project Athena, with revisions
+by Bill Wyatt of the Smithsonian Astrophysical Observatory, and David Krikorian of MIT Project Athena), and {\bf xwd2ps} (Craig McGowan, Robert Tatar, and
+Gerald White of General Electric Corporate Research and Development) for 
+their (unwitting) contribution to this software package.  (These
+utilities have been incorporated, largely unchanged, with copyrights
+intact!)
+
+\subsection{Term}\index{Term}
+
+Destroy the plot data structure and deallocate the 
+memory used by the graphic. {\bf X} server resources are also freed at
+this time.
+
+\newpage
+
+\section{Include Files}
+
+All users of the {\bf graphX} library are required to include the
+file `GraphX.h'\index{include files!GraphX.h} as the include file defining 
+the interface to the package.
+This file internally includes all the plot type definition files and
+also defines utility macros and functions for use.
+To properly utilize the {\bf graphX} layer, the `GraphX.h' file must be 
+included in the prologue of code which references those {\bf graphX} objects.
+This file can be included from the current directory (using the double-quote
+version of the \#include), letting the compile command (or Makefile)
+take care of where that file is actually found. 
+
+Hence, a typical prologue
+to code that references the {\bf graphX} package would be:
+
+\begin{verbatim}
+
+    #include "GraphX.h"
+
+    main(argc,argv)
+         ....
+
+\end{verbatim}
+
+\vspace{11pt}
+INTERNALS: regarding internal structure, each of the plot types has an 
+include\index{include files} file which defines the relevant
+data structures and routines available for that plot type.  
+These files are simply capitalized versions of the plot type,
+with the requisite `.h' suffix.  More explicitly, these lower level 
+includes\index{include files} are:
+\begin{itemize}
+\item Seql.h\index{include files!Seql.h}
+\item Graph.h\index{include files!Graph.h}
+\item Strip.h\index{include files!Strip.h}
+\item Graph3d.h\index{include files!Graph3d.h}
+\item Surface.h\index{include files!Surface.h}
+\end{itemize}
+
+
+
+\newpage
+
+\section{1-D Plots}\index{plots!1-D}
+
+The {\em sequential data plot} type is the only 1-D plot\index{plots!1-D} type.  This
+graphic type accepts an array of values and plots them as sequential or
+consecutive data. 
+
+\subsection{Seql plot}\index{plots!seql}
+
+The {\bf display types} defined for use with the {\em Seql} plot are:
+\begin{itemize}
+\item {\em SeqlPolygon} - filled polygon style display
+\item {\em SeqlLine} - connected line sequence style display
+\item {\em SeqlPoint} - point style display
+\end{itemize}
+{\em SeqlType type $\in$ \{ SeqlPolygon, SeqlLine, SeqlPoint \}   }
+\vspace{11pt}
+
+The {\bf storage mode types} defined for use with the {\em Seql} plot are:
+\begin{itemize}
+\item {\em SeqlInternal} - make and use private copies of all data 
+inside the {\em Seql} data structure
+\item {\em SeqlExternal} - use the passed-in storage for all data (just
+copy pointers
+\end{itemize}
+{\em SeqlStorageMode storageMode $\in$ \{ SeqlInternal, SeqlExternal \}   }
+\vspace{11pt}
+
+The {\bf data type} utilized by the {\em Seql} plot is an 
+array of {\em doubles}.
+
+
+\newpage
+
+% SEQL
+
+\subsubsection{seqlInit()}\index{routines!seql!seqlInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll} 
+Seql *seqlInit ( & Display *display, \\
+& int screen,  \\
+& Window window ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - pointer to Display structure
+\item {\em screen} - integer screen number
+\item {\em window} - Window to output graphics into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em Seql *} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Allocate and initialize the {\bf Seql} data structure. This routine allocates
+storage for the data structure, initializes basic {\bf X} and {\bf Seql}
+related elements, and returns a pointer to the structure.
+
+\newpage
+
+\subsubsection{seqlSet()}\index{routines!seql!seqlSet()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSet ( & Seql *seql, \\
+& int nBuffers, \\
+& int bufferSize, \\
+& double *dataPoints[], \\
+& int *nValues, \\
+& SeqlType type, \\
+& char *title, \\
+& char *titleFont, \\
+& char *xAxisLabel, \\
+& char *yAxisLabel, \\
+& char *axesFont, \\
+& char *foreColor, \\
+& char *backColor, \\
+& char *dataColor[], \\
+& SeqlStorageMode storageMode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em nBuffers} - number of data buffers (`plots' to be made in same 
+frame)
+\item {\em bufferSize} - size of buffers
+\item {\em dataPoints} - array (size nBuffers) of arrays (size bufferSize) of 
+doubles (arrays of sequences of data to be plotted)
+\item {\em nValues} - array (size nBuffers) containing the number of points 
+per buffer
+\item {\em type} - sequential data plot type (SeqlType): SeqlPolygon, 
+SeqlPoint, SeqlLine
+\item {\em title} - character string (ptr) for title
+\item {\em titleFont} - character string (ptr) for font to use for title
+\item {\em xAxisLabel} - character string (ptr) for X axis label
+\item {\em yAxisLabel} - character string (ptr) for Y axis label
+\item {\em axesFont}  - character string (ptr) for font to use for axes labels
+\item {\em foreColor} - character string (ptr) for color to use for foreground
+\item {\em backColor} - character string (ptr) for color to use for background
+\item {\em dataColor} - array (size nBuffers) of character strings (ptrs) for 
+color to use for data; if NULL then do internal color allocation
+\item {\em storageMode} -  sequential data plot data storage mode:
+\{{\em SeqlInternal, SeqlExternal}\} If SeqlInternal, make a copy of the data;
+otherwise (SeqlExternal), just copy the pointers.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the plot-specific attributes of the {\bf Seql} structure.
+Basic plot parameters are specified with this function call.  Numerous
+other plot attributes can be set or changed later with the {\bf Set} family
+of routines.
+
+\newpage
+
+\subsubsection{seqlSetRange()}\index{routines!seql!seqlSetRange()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSetRange (& Seql *seql, \\
+& int curveNum, \\
+& char axis, \\
+& double minVal,\\
+& double maxVal ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\item {\em minVal} - minimum display value
+\item {\em maxVal} - maximum display value
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the region of interest to be displayed for the specified specified
+curve and axis (X or Y).
+
+\newpage
+
+\subsubsection{seqlSetRangeDefault()}\index{routines!seql!seqlSetRangeDefault()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSetRangeDefault (& Seql *seql, \\
+& int curveNum, \\
+& char axis ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Restore the region of interest to the Default region (the entire curve range,
+with autoscaling being performed).
+
+\newpage
+
+
+\subsubsection{seqlSetDataColor()}\index{routines!seql!seqlSetDataColor()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSetDataColor(& Seql *seql, \\
+& int bufferNumber, \\
+& char *colorString ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em bufferNumber} - buffer number [0-(nBuffers-1)] whose
+color is to be set/reset
+\item {\em colorString} - character string color to be used for the
+specified curve/buffer.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Change the color for the specified curve/buffer in the Seql plot. This
+routine allows the user to alter the color for a given data set any time
+after the plot has been created.
+
+\newpage
+
+\subsubsection{seqlSetDisplayType()}\index{routines!seql!seqlSetDisplayType()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSetDisplayType ( &Seql *seql,\\
+& SeqlType type ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em type} - sequential data plot type (SeqlType): SeqlPolygon, 
+SeqlPoint, SeqlLine
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the display type for the specified {\em Seql} structure, such that
+the next invocation of {\em seqlDraw(\ldots)} will display the data
+as the specified type.
+
+\newpage
+
+\subsubsection{seqlDraw()}\index{routines!seql!seqlDraw()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlDraw( Seql *seql )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the plot based on the {\bf Seql} structure
+information.
+
+\newpage
+
+\subsubsection{seqlSetLegend()}\index{routines!seql!seqlSetLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void seqlSetLegend ( &Seql *seql,\\
+& char *legendTitle, \\
+& char **legendArray) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\item {\em legendTitle} - title String for the legend
+\item {\em legendArray} - pointer to array of legend entry strings
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the legend attributes for the specified {\em Seql} structure, such that
+the next invocation of {\em seqlDrawLegend(\ldots)} will display the legend
+data (each legend entry is colored in accord with the data for that entry).
+
+This routine allows users to attach arbitrary text to a plot, keyed to
+the data (data buffers).
+
+\newpage
+
+\subsubsection{seqlDrawLegend()}\index{routines!seql!seqlDrawLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlDrawLegend( Seql *seql )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the legend for the plot based on the 
+{\bf Seql} structure information.
+
+\newpage
+
+\subsubsection{seqlResize()}\index{routines!seql!seqlResize()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlResize( Seql *seql )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resize the plot to the new window dimensions.  Note that for this
+update to be visualized, this call should be followed by a seqlDraw()
+call.
+
+\newpage
+
+\subsubsection{seqlRefresh()}\index{routines!seql!seqlRefresh()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlRefresh( Seql *seql )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Refresh the display of the {\bf Seql} plot. Note that this does not
+recalculate the display; it remaps the current pixmap version of the
+plot to the window.
+
+\newpage
+
+
+\subsubsection{seqlPrint()}\index{routines!seql!seqlPrint()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlPrint( Seql *seql )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Print the plot to a hardcopy device. Currently only PostScript printers
+are supported.
+
+Output the current plot (in it's window form) to a PostScript printer
+identified by the environment variable PSPRINTER. If that environment
+variable is not set, an error message will be printed on stderr and
+the Print operation will be refused and cancelled.
+
+
+\newpage
+
+\subsubsection{seqlTerm()}\index{routines!seql!seqlTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void seqlTerm( Seql *seql )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em seql} - pointer to Seql structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Deallocate the {\bf Seql} data structure. This routine frees the
+storage used by the data structure and the {\bf X} resources utilized
+on the server (including Pixmaps, Fonts and Graphics Contexts).
+
+\newpage
+
+\section{2-D Plots}\index{plots!2-D}
+
+The {\em graph} and {\em strip chart}\index{plots!strip chart} data plot types 
+comprise the 2-D\index{plots!2-D} plot family. The plot format and data
+they accept differ.
+
+The {\em graph} plot accept arrays of XY data as the input data; the 
+{\em strip chart}\index{plots!strip chart} accepts an array of pointers to 
+functions returning doubles as `input data'.  The {\em strip chart}, in
+essence, generates or samples data, while the graph plots gathered data.
+
+\subsection{Graph plot}
+
+The {\bf display types} defined for use with the {\em Graph} plot are:
+\begin{itemize}
+\item {\em GraphBar} - bar chart\index{bar chart} style display
+\item {\em GraphLine} - connected line sequence style display
+\item {\em GraphPoint} - point style display
+\end{itemize}
+{\em GraphType type $\in$ \{ GraphBar, GraphLine, GraphPoint \}   }
+\vspace{11pt}
+
+The {\bf storage mode types} defined for use with the {\em Graph} plot are:
+\begin{itemize}
+\item {\em GraphInternal} - make and use private copies of all data 
+inside the {\em Graph} data structure
+\item {\em GraphExternal} - use the passed-in storage for all data (just
+copy pointers
+\end{itemize}
+{\em GraphStorageMode storageMode $\in$ \{ GraphInternal, GraphExternal \}   }
+\vspace{11pt}
+
+The {\bf data type} utilized by the {\em Graph} plot is an 
+array of {\em XYdataPoint}.
+\begin{verbatim}
+        typedef struct {
+                double x;
+                double y;
+        } XYdataPoint;
+\end{verbatim}\index{XYdataPoint}\index{structures!XYdatPoint}
+
+
+% GRAPH 
+
+\newpage
+
+\subsubsection{graphInit()}\index{routines!graph!graphInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll} 
+Graph *graphInit ( & Display *display, \\
+& int screen,  \\
+& Window window ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - pointer to Display structure
+\item {\em screen} - integer screen number
+\item {\em window} - Window to output graphics into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em Graph *} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Allocate and initialize the {\bf Graph} data structure. This routine allocates
+storage for the data structure, initializes basic {\bf X} and {\bf Graph}
+related elements, and returns a pointer to the structure.
+
+\newpage
+
+\subsubsection{graphSet()}\index{routines!graph!graphSet()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSet ( & Graph *graph, \\
+& int nBuffers, \\
+& int bufferSize, \\
+& XYdataPoint *dataPoints[], \\
+& int *nValues, \\
+& GraphType type, \\
+& char *title, \\
+& char *titleFont, \\
+& char *xAxisLabel, \\
+& char *yAxisLabel, \\
+& char *axesFont, \\
+& char *foreColor, \\
+& char *backColor, \\
+& char *dataColor[], \\
+& GraphStorageMode storageMode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em nBuffers} - number of data buffers (`plots' to be made in same 
+frame)
+\item {\em bufferSize} - size of buffers
+\item {\em dataPoints} - array (size nBuffers) of arrays (size bufferSize) of 
+XYdataPoint-s (array of array of structures: double precision floating 
+point x,y pairs)
+\item {\em nValues} - array (size nBuffers) containing the number of points 
+per buffer
+\item {\em type} - graph plot type (GraphType): GraphBar, 
+GraphPoint, GraphLine
+\item {\em title} - character string (ptr) for title
+\item {\em titleFont} - character string (ptr) for font to use for title
+\item {\em xAxisLabel} - character string (ptr) for X axis label
+\item {\em yAxisLabel} - character string (ptr) for Y axis label
+\item {\em axesFont}  - character string (ptr) for font to use for axes labels
+\item {\em foreColor} - character string (ptr) for color to use for foreground
+\item {\em backColor} - character string (ptr) for color to use for background
+\item {\em dataColor} - array (size nBuffers) of character strings (ptrs) for 
+color to use for data; if NULL then do internal color allocation
+\item {\em storageMode} -  graph plot data storage mode:
+\{{\em GraphInternal, GraphExternal}\} If GraphInternal, make a copy of 
+the data; otherwise (GraphExternal), just copy the pointers.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the plot-specific attributes of the {\bf Graph} structure.
+Basic plot parameters are specified with this function call.  Numerous
+other plot attributes can be set or changed later with the {\bf Set} family
+of routines.
+
+\newpage
+
+\subsubsection{graphSetRange()}\index{routines!graph!graphSetRange()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSetRange (& Graph *graph, \\
+& int curveNum, \\
+& char axis, \\
+& double minVal,\\
+& double maxVal ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\item {\em minVal} - minimum display value
+\item {\em maxVal} - maximum display value
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the region of interest for the specified curve for the specified axis (X or Y).
+
+\newpage
+
+\subsubsection{graphSetRangeDefault()}\index{routines!graph!graphSetRangeDefault()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSetRangeDefault (& Graph *graph, \\
+& int curveNum, \\
+& char axis ) \\ 
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Restore the region of interest for the specified curve and axis, to the Default 
+region (the entire plot, with autoscaling being performed).
+
+\newpage
+
+\subsubsection{graphSetBins()}\index{routines!graph!graphSetBins()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll}
+void graphSetBins( & Graph *graph,\\
+& int curveNum, \\
+& int nBins ) \\
+\end{tabular}
+}} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em nBins} - number of bins to divide previously specified
+(X axis) range into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Define the  X axis binning parameter for the specified curve. This determines 
+how many bins to divide the X axis into; a larger number of bins
+implies a higher resolution but also more empty bins.
+
+\newpage
+
+
+\subsubsection{graphSetDataColor()}\index{routines!graph!graphSetDataColor()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSetDataColor(& Graph *graph, \\
+& int bufferNumber, \\
+& char *colorString ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em bufferNumber} - buffer number [0-(nBuffers-1)] whose
+color is to be set/reset
+\item {\em colorString} - character string color to be used for the
+specified curve/buffer.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Change the color for the specified curve/buffer in the Graph plot. This
+routine allows the user to alter the color for a given data set any time
+after the plot has been created.
+
+\newpage
+
+\subsubsection{graphSetDisplayType()}\index{routines!graph!graphSetDisplayType()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSetDisplayType ( &Graph *graph,\\
+& GraphType type ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em type} - graph plot type (GraphType): GraphBar, GraphLine,
+GraphPoint
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the display type for the specified {\em Graph} structure, such that
+the next invocation of {\em graphDraw(\ldots)} will display the data
+as the specified type.
+
+\newpage
+
+\subsubsection{graphDraw()}\index{routines!graph!graphDraw()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphDraw( Graph *graph )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the plot based on the {\bf Graph} structure
+information.
+
+\newpage
+
+
+\subsubsection{graphSetLegend()}\index{routines!graph!graphSetLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graphSetLegend ( &Graph *graph,\\
+& char *legendTitle, \\
+& char **legendArray) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\item {\em legendTitle} - title String for the legend
+\item {\em legendArray} - pointer to array of legend entry strings
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the legend attributes for the specified {\em Graph} structure, such that
+the next invocation of {\em graphDrawLegend(\ldots)} will display the legend
+data (each legend entry is colored in accord with the data for that entry).
+
+This routine allows users to attach arbitrary text to a plot, keyed to
+the data (data buffers).
+
+\newpage
+
+\subsubsection{graphDrawLegend()}\index{routines!graph!graphDrawLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphDrawLegend( Graph *graph )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the legend for the plot based on the 
+{\bf Graph} structure information.
+
+\newpage
+
+\subsubsection{graphResize()}\index{routines!graph!graphResize()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphResize( Graph *graph )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resize the plot to the new window dimensions.  Note that for this
+update to be visualized, this call should be followed by a graphDraw()
+call.
+
+\newpage
+
+\subsubsection{graphRefresh()}\index{routines!graph!graphRefresh()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphRefresh( Graph *graph )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Refresh the display of the {\bf Graph} plot. Note that this does not
+recalculate the display; it remaps the current pixmap version of the
+plot to the window.
+
+\newpage
+
+
+\subsubsection{graphPrint()}\index{routines!graph!graphPrint()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphPrint( Graph *graph )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Print the plot to a hardcopy device. Currently only PostScript printers
+are supported.
+
+Output the current plot (in it's window form) to a PostScript printer
+identified by the environment variable PSPRINTER. If that environment
+variable is not set, an error message will be printed on stderr and
+the Print operation will be refused and cancelled.
+
+
+\newpage
+
+\subsubsection{graphTerm()}\index{routines!graph!graphTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphTerm( Graph *graph )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph} - pointer to Graph structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Deallocate the {\bf Graph} data structure. This routine frees the
+storage used by the data structure and the {\bf X} resources utilized
+on the server (including Pixmaps, Fonts and Graphics Contexts).
+
+\newpage
+
+\subsection{Strip chart}
+
+No enumerated {\bf display types} are as yet defined for use with the 
+{\em Strip Chart.} Only the basic connected line sequence is
+supported and that is the implicit display type.
+
+The {\bf storage mode types} defined for use with the {\em Strip} plot are:
+\begin{itemize}
+\item {\em StripInternal} - make and use private copies of all data 
+inside the {\em Strip} data structure
+\item {\em StripExternal} - use the passed-in storage for all data (just
+copy pointers
+\end{itemize}
+{\em StripStorageMode storageMode $\in$ \{ StripInternal, StripExternal \}   }
+\vspace{11pt}
+
+The {\bf range specifier} utilized by the {\em Strip} chart is an array
+of {\em StripRange} structures:
+\begin{verbatim}
+        typedef struct {
+                double minVal;
+                double maxVal;
+        } StripRange;
+\end{verbatim}\index{StripRange}\index{structures!StripRange}
+\vspace{11pt}
+
+The {\bf data type} for the {\em strip chart}\index{plots!strip chart} is
+an array of pointers to functions returning doubles, one function pointer
+for each channel to be charted.
+
+For all functions, {\bf channel numbers} are in the range 
+[0, nChannels-1], (i.e., C style array and array element indexing is used).
+
+% STRIP
+
+\newpage
+
+\subsubsection{stripInit()}\index{routines!strip!stripInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll} 
+Strip *stripInit ( & Display *display, \\
+& int screen,  \\
+& Window window ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - pointer to Display structure
+\item {\em screen} - integer screen number
+\item {\em window} - Window to output graphics into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em Strip *} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Allocate and initialize the {\bf Strip} data structure. This routine allocates
+storage for the data structure, initializes basic {\bf X} and {\bf Strip}
+related elements, and returns a pointer to the structure.
+
+\newpage
+
+\subsubsection{stripSet()}\index{routines!strip!stripSet()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void stripSet ( & Strip *strip, \\
+& int nChannels, \\
+& int bufferSize, \\
+& double *dataBuffer[], \\
+& StripRange *valueRange, \\
+& double samplingInterval, \\
+& double (*getValue[])(),\\
+& char *title, \\
+& char *titleFont, \\
+& char *xAxisLabel, \\
+& char *yAxisLabel, \\
+& char *axesFont, \\
+& char *foreColor, \\
+& char *backColor, \\
+& char *dataColor[], \\
+& StripStorageMode storageMode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\item {\em nChannels} - number of channels to be plotted (number of
+dataBuffers, number of functions in getValue array\ldots)
+\item {\em bufferSize} - size of dataBuffers - this represents the number of
+points being recorded.  Note: if this {\em bufferSize} parameter is larger
+than the usable pixel width of the strip chart, erroneous behavior will be 
+observed (this being the result of trying to `split pixels' for the display).
+\item {\em dataBuffer} - array (size nBuffers) of arrays (size bufferSize) of
+doubles; (2-D array of doubles: dataBuffer[nChannels][bufferSize])
+\item {\em valueRange} -  array of StripRange structures (.minVal and .maxVal)
+specifying minimum and maximum values for each curve; see the type definitions
+at the beginning of this section.
+\item {\em samplingInterval} - sampling interval in seconds: how long to
+wait between updates (secs).  Note that if the graphX library is
+compiled with the -DTIMED switch (the default is to do so), the sampling 
+interval is adjusted
+by the time of the set of getValue function calls, resulting in
+a reasonably accurate timing.
+\item {\em getValue} - array of pointers to functions returning doubles,
+(this function/set of functions is called every samplingInterval
+period of time); these functions are called with two parameters which 
+may or may  not be used in the function:
+\begin{enumerate}
+\item the integer buffer or channel number
+\item the strip chart's {\em userData}\index{structure fields!userData}
+field
+\end{enumerate}
+hence a single function call be registered for all buffers or channels, with
+that function looking at it's integer parameter for identification of the
+current channel. Additional data for the strip chart can be used by
+the programmer by utilizing the {\em userData} field found in all the graph
+types.  Since the {\em
+userData} field is a {caddr\_t}\index{caddr\_t} type, a pointer to anything 
+can be registered for the strip chart via an explicit  
+{\em strip$->$userData = (caddr\_t) xxx;} the user is then responsible for
+the proper casting to usable types.
+\item {\em title} - character string (ptr) for title
+\item {\em titleFont} - character string (ptr) for font to use for title
+\item {\em xAxisLabel} - character string (ptr) for X axis label
+\item {\em yAxisLabel} - character string (ptr) for Y axis label
+\item {\em axesFont}  - character string (ptr) for font to use for axes labels
+\item {\em foreColor} - character string (ptr) for color to use for foreground
+\item {\em backColor} - character string (ptr) for color to use for background
+\item {\em dataColor} - array of character strings (ptrs) for color to 
+use for data: the $i^{th}$ channel value, returned by the $i^{th}$ 
+function in the getValue array is drawn in the $i^{th}$ color of 
+this array;  NULL passed as this argument results in internal color
+allocation
+\item {\em storageMode} -  strip chart data plot data storage mode:
+\{{\em StripInternal, StripExternal}\} If StripInternal, make a copy of the data;
+otherwise (StripExternal), just copy the pointers.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the plot-specific attributes of the {\bf Strip} structure.
+Basic plot parameters are specified with this function call.  Numerous
+other plot attributes can be set or changed later with other members of
+the {\bf Set\ldots} class of routines.
+
+Note that the i$^{th}$ {\em dataBuffer} holds the sample data for the i$^{th}$
+channel, that data being returned from the i$^{th}$ function registered
+in the {\em getValue} array.  Instead of registering different functions
+for each channel, users may write a single function which accepts as its
+argument the channel number (this function probably then doing a switch on
+channel number, and then returning a double).  This function can then be
+registered as the function to call for all channels by placing it's address
+in all positions of the {\em getValue} array.
+
+Channel numbers are in the range [0, nChannels-1]. 
+
+\newpage
+
+\subsubsection{stripSetRange()}\index{routines!strip!stripSetRange()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void stripSetRange (& Strip *strip, \\
+& int curveNum, \\
+& double minVal,\\
+& double maxVal ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\item {\em curveNum} - integer id of curve whose range is to be set
+\item {\em minVal} - minimum display value
+\item {\em maxVal} - maximum display value
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the region of interest to be displayed for the specified curve/trace/channel
+for the Value axis.
+
+\newpage
+
+\subsubsection{stripSetDataColor()}\index{routines!strip!stripSetDataColor()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void stripSetDataColor(& Strip *strip, \\
+& int channelNumber, \\
+& char *colorString ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\item {\em channelNumber} - channel number [0-(nChannels-1)] whose
+color is to be set/reset
+\item {\em colorString} - character string color to be used for the
+specified channel
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Change the color for the specified curve/buffer in the Strip chart. 
+This routine allows the user to alter the color for a given data set any time
+after the plot has been created.
+
+\newpage
+
+\subsubsection{stripSetInterval()}\index{routines!strip!stripSetInterval()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void stripSetInterval(& Strip *strip, \\
+& double samplingInterval ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\item {\em samplingInterval} - sampling interval in Seconds 
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Set the sampling interval for the Strip Chart.
+
+\newpage
+
+
+\subsubsection{stripDraw()}\index{routines!strip!stripDraw()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripDraw( Strip *strip )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the plot based on the {\bf Strip} structure
+information.
+
+\newpage
+
+
+\subsubsection{stripSetLegend()}\index{routines!strip!stripSetLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void stripSetLegend ( &Strip *strip,\\
+& char *legendTitle, \\
+& char **legendArray) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\item {\em legendTitle} - title String for the legend
+\item {\em legendArray} - pointer to array of legend entry strings
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the legend attributes for the specified {\em Strip} structure, such that
+the next invocation of {\em stripDrawLegend(\ldots)} will display the legend
+data (each legend entry is colored in accord with the data for that entry).
+
+This routine allows users to attach arbitrary text to a plot, keyed to
+the data (data buffers).
+
+\newpage
+
+\subsubsection{stripDrawLegend()}\index{routines!strip!stripDrawLegend()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripDrawLegend( Strip *strip )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the legend for the plot based on the 
+{\bf Strip} structure information.
+
+\newpage
+
+
+\subsubsection{stripResize()}\index{routines!strip!stripResize()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripResize( Strip *strip )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resize the plot to the new window dimensions.  Note that for this
+update to be visualized, this call should be followed by a stripDraw()
+call.
+
+\newpage
+
+\subsubsection{stripRefresh()}\index{routines!strip!stripRefresh()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripRefresh( Strip *strip )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Refresh the display of the {\bf Strip} plot. Note that this does not
+recalculate the display; it remaps the current pixmap version of the
+plot to the window.
+
+\newpage
+
+
+\subsubsection{stripPrint()}\index{routines!strip!stripPrint()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripPrint( Strip *strip )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Print the plot to a hardcopy device. Currently only PostScript printers
+are supported.
+
+Output the current plot (in it's window form) to a PostScript printer
+identified by the environment variable PSPRINTER. If that environment
+variable is not set, an error message will be printed on stderr and
+the Print operation will be refused and cancelled.
+
+
+\newpage
+
+\subsubsection{stripPause()}\index{routines!strip!stripPause()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripPause( Strip *strip )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Pause the sampling and display of the Strip Chart.  This routine
+allows the user to stop the sampling and drawing activities
+of the strip chart functions.
+
+\newpage
+
+\subsubsection{stripResume()}\index{routines!strip!stripResume()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripResume( Strip *strip )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resume the sampling and display updating activities of the Strip
+Chart.  The sampling interval is restored to the most recent one
+specified by the {\em stripSet()} or {\em stripSetInterval()} function
+call.
+
+\newpage
+
+\subsubsection{stripTerm()}\index{routines!strip!stripTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void stripTerm( Strip *strip )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em strip} - pointer to Strip structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Deallocate the {\bf Strip} data structure. This routine frees the
+storage used by the data structure and the {\bf X} resources utilized
+on the server (including Pixmaps, Fonts and Graphics Contexts).
+
+\newpage
+
+\section{3-D Plots}
+
+The {\em graph3d} and {\em surface}\index{plots!surface plot} data plot types comprise the
+3-D plot family. 
+
+The {\em graph3d} plot type accepts an array of XYZ data as input.  The
+{\em surface}\index{plots!surface plot} plot type accepts an array of doubles defining X, Y
+and XY values.
+
+\subsection{Graph3d plot}
+
+The {\bf display types} defined for use with the {\em Graph3d} plot are:
+\begin{itemize}
+\item {\em Graph3dGrid} - colored grid style display
+\item {\em Graph3dPoint} - colored point style display
+\end{itemize}
+{\em Graph3dType type $\in$ \{ Graph3dGrid, Graph3dPoint \}   }
+\vspace{11pt}
+
+The {\bf storage mode types} defined for use with the {\em Graph3d} plot are:
+\begin{itemize}
+\item {\em Graph3dInternal} - make and use private copies of all data 
+inside the {\em Graph3d} data structure
+\item {\em Graph3dExternal} - use the passed-in storage for all data (just
+copy pointers
+\end{itemize}
+{\em Graph3dStorageMode storageMode $\in$ \{Graph3dInternal, Graph3dExternal\} }
+\vspace{11pt}
+
+The {\bf data type} utilized by the {\em Graph3d} plot is an 
+array of {\em XYZdataPoint}.
+\begin{verbatim}
+        typedef struct {
+                double x;
+                double y;
+                double z;
+        } XYZdataPoint;
+\end{verbatim}\index{XYZdataPoint}\index{structures!XYZdataPoint}
+
+
+\newpage
+
+% GRAPH3D
+
+\subsubsection{graph3dInit()}\index{routines!graph3d!graph3dInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll} 
+Graph3d *graph3dInit ( & Display *display, \\
+& int screen,  \\
+& Window window ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - pointer to Display structure
+\item {\em screen} - integer screen number
+\item {\em window} - Window to output graphics into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em Graph3d *} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Allocate and initialize the {\bf Graph3d} data structure. This routine allocates
+storage for the data structure, initializes basic {\bf X} and {\bf Graph3d}
+related elements, and returns a pointer to the structure.
+
+\newpage
+
+\subsubsection{graph3dSet()}\index{routines!graph3d!graph3dSet()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graph3dSet ( & Graph3d *graph3d, \\
+& XYZdataPoint *dataPoints, \\
+& int nPoints, \\
+& Graph3dType type, \\
+& char *title, \\
+& char *titleFont, \\
+& char *xAxisLabel, \\
+& char *yAxisLabel, \\
+& char *axesFont, \\
+& char *foreColor, \\
+& char *backColor, \\
+& char *dataColor, \\
+& Graph3dStorageMode storageMode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em dataPoints} - array of XYZdataPoints (double precision
+floating point x,y,z pairs)
+\item {\em nPoints} - number of points
+\item {\em type} - sequential data plot type (Graph3dType): Graph3dGrid, 
+Graph3dPoint
+\item {\em title} - character string (ptr) for title
+\item {\em titleFont} - character string (ptr) for font to use for title
+\item {\em xAxisLabel} - character string (ptr) for X axis label
+\item {\em yAxisLabel} - character string (ptr) for Y axis label
+\item {\em axesFont}  - character string (ptr) for font to use for axes labels
+\item {\em foreColor} - character string (ptr) for color to use for foreground
+\item {\em backColor} - character string (ptr) for color to use for background
+\item {\em dataColor} - character string (ptr) for color to use for data
+\item {\em storageMode} -  sequential data plot data storage mode:
+\{{\em Graph3dInternal, Graph3dExternal}\} If Graph3dInternal, make a copy of the data;
+otherwise (Graph3dExternal), just copy the pointers.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the plot-specific attributes of the {\bf Graph3d} structure.
+Basic plot parameters are specified with this function call.  Numerous
+other plot attributes can be set or changed later with other members of
+the {\bf Set\ldots} class of routines.
+
+\newpage
+
+\subsubsection{graph3dSetRange()}\index{routines!graph3d!graph3dSetRange()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graph3dSetRange (& Graph3d *graph3d, \\
+& char axis, \\
+& double minVal,\\
+& double maxVal ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\item {\em minVal} - minimum display value
+\item {\em maxVal} - maximum display value
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the region of interest to be displayed for the specified axis (X or Y).
+
+\newpage
+
+\subsubsection{graph3dSetRangeDefault()}\index{routines!graph3d!graph3dSetRangeDefault()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll}
+void graph3dSetRangeDefault (& Graph3d *graph3d, \\
+& char axis ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Restore the region of interest to the Default region (the entire plot,
+with autoscaling being performed).
+
+\newpage
+
+\subsubsection{graph3dSetBins()}\index{routines!graph3d!graph3dSetBins()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll}
+void graph3dSetBins( & Graph3d *graph3d,\\
+& char axis, \\
+& int nBins ) \\
+\end{tabular}
+}} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em axis} - character (`x',`X' or `y',`Y') specifying X or Y axis
+\item {\em nBins} - number of bins to divide previously specified
+range into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Define the `grid' imposed on the X or Y axis.  This defines how
+many rectangles to divide the axis into; a larger number of bins
+implies a higher resolution but also more `holes'.  The color of
+the bin or rectangle is reflected by the {\em largest Z value}
+found in that bin (XY position).
+
+\newpage
+
+\subsubsection{graph3dSetZBins()}\index{routines!graph3d!graph3dSetZBins()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll}
+void graph3dSetZBins( & Graph3d *graph3d,\\
+& int nBins, \\
+& char **colorArray ) \\
+\end{tabular}
+}} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em nBins} - number of bins to divide previously specified
+\item {\em colorArray} - an array of strings (colors) for the ranges
+specified by nBins such that array element 0 color is for background
+Z values, \ldots the last element is for the maximum intensity or
+Z value.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Define the `binning' and color definition for the Z dimension
+values.
+
+\newpage
+
+\subsubsection{graph3dSetDisplayType()}\index{routines!graph3d!graph3dSetDisplayType()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void graph3dSetDisplayType ( &Graph3d *graph3d,\\
+& Graph3dType type ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\item {\em type} - sequential data plot type (Graph3dType): Graph3dGrid,
+Graph3dPoint
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the display type for the specified {\em Graph3d} structure, such that
+the next invocation of {\em graph3dDraw(\ldots)} will display the data
+as the specified type.
+
+\newpage
+
+\subsubsection{graph3dDraw()}\index{routines!graph3d!graph3dDraw()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graph3dDraw( Graph3d *graph3d )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the plot based on the {\bf Graph3d} structure
+information.
+
+
+\newpage
+
+\subsubsection{graph3dResize()}\index{routines!graph3d!graph3dResize()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graph3dResize( Graph3d *graph3d )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resize the plot to the new window dimensions.  Note that for this
+update to be visualized, this call should be followed by a graph3dDraw()
+call.
+
+\newpage
+
+\subsubsection{graph3dRefresh()}\index{routines!graph3d!graph3dRefresh()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graph3dRefresh( Graph3d *graph3d )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Refresh the display of the {\bf Graph3d} plot. Note that this does not
+recalculate the display; it remaps the current pixmap version of the
+plot to the window.
+
+\newpage
+
+
+\subsubsection{graph3dPrint()}\index{routines!graph3d!graph3dPrint()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graph3dPrint( Graph3d *graph3d )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Print the plot to a hardcopy device. Currently only PostScript printers
+are supported.
+
+Output the current plot (in it's window form) to a PostScript printer
+identified by the environment variable PSPRINTER. If that environment
+variable is not set, an error message will be printed on stderr and
+the Print operation will be refused and cancelled.
+
+
+\newpage
+
+\subsubsection{graph3dTerm()}\index{routines!graph3d!graph3dTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graph3dTerm( Graph3d *graph3d )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graph3d} - pointer to Graph3d structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Deallocate the {\bf Graph3d} data structure. This routine frees the
+storage used by the data structure and the {\bf X} resources utilized
+on the server (including Pixmaps, Fonts and Graphics Contexts).
+
+\newpage
+
+\subsection{Surface plot}
+
+The {\bf storage mode types} defined for use with the {\em Surface} plot are
+(as for all the plot types):
+\begin{itemize}
+\item {\em SurfaceInternal} - make and use private copies of all data 
+inside the {\em Surface} data structure
+\item {\em SurfaceExternal} - use the passed-in storage for all data (just
+copy pointers
+\end{itemize}
+{\em SurfaceStorageMode storageMode $\in$ \{ SurfaceInternal, 
+SurfaceExternal \}   }
+\vspace{11pt}
+
+\noindent The {\bf rendering mode types} defined for use with the 
+{\em Surface} plot are:
+\begin{itemize}
+\item {\em SurfaceSolid} - draw as hidden-line-removed solid
+\item {\em SurfaceShaded} - draw as shaded solid
+\end{itemize}
+{\em SurfaceStorageMode storageMode $\in$ \{ SurfaceInternal, 
+SurfaceExternal \}   }
+\vspace{11pt}
+
+The {\bf data types} utilized by the {\em Surface} plot 
+include arrays of {\em doubles} for the mesh, x and y arrays. Example:
+
+\begin{verbatim}
+        #define X_SIZE 30
+        #define Y_SIZE 30
+
+        double mesh[X_SIZE*Y_SIZE], x[X_SIZE], y[Y_SIZE];
+\end{verbatim}
+
+
+Acknowledgments must include the {\bf Graphics Gems} text by Andrew Glassner, 
+editor, and the second edition of {\bf Computer Graphics - Principles and 
+Practice} by Foley, vanDam, Feiner and Hughes.  Also, the visible surface 
+and shading algorithms currently used have been adapted from work done 
+by Nick Williams, IED/Reading, of Digital Equipment Corporation.  This has 
+largely replaced earlier code and algorithms for visible surface determination
+and shading done for the Surface Plot.
+
+
+% SURFACE
+
+\newpage
+
+\subsubsection{surfaceInit()}\index{routines!surface!surfaceInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf
+\begin{tabular}{ll} 
+Surface *surfaceInit ( & Display *display, \\
+& int screen,  \\
+& Window window ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - pointer to Display structure
+\item {\em screen} - integer screen number
+\item {\em window} - Window to output graphics into
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em Surface *} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Allocate and initialize the {\bf Surface} data structure. This routine allocates
+storage for the data structure, initializes basic {\bf X} and {\bf Surface}
+related elements, and returns a pointer to the structure.
+
+\newpage
+
+\subsubsection{surfaceSet()}\index{routines!surface!surfaceSet()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void surfaceSet ( & Surface *surface, \\
+& double *mesh, \\
+& double *x, \\
+& double *y, \\
+& int nX, \\
+& int nY, \\
+& char *title, \\
+& char *titleFont, \\
+& char *foreColor, \\
+& char *backColor, \\
+& char *dataColor,  \\
+& SurfaceStorageMode storageMode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\item {\em mesh} - array of doubles (nX*nY of them)
+\item {\em x} - array of doubles
+\item {\em y} - array of doubles
+\item {\em nX} - number of x values (size of x array)
+\item {\em nY} - number of x values (size of x array)
+\item {\em title} - character string (ptr) for title
+\item {\em titleFont} - character string (ptr) for font to use for title
+\item {\em foreColor} - character string (ptr) for color to use for foreground 
+(i.e., text)
+\item {\em backColor} - character string (ptr) for color to use for background
+\item {\em dataColor} - character string (ptr) for color to use for data
+\item {\em storageMode} -  sequential data plot data storage mode:
+\{{\em SurfaceInternal, SurfaceExternal}\} If SurfaceInternal, make a copy of the data;
+otherwise (SurfaceExternal), just copy the pointers. 
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description: } 
+
+\vspace{11pt} 
+Set the plot-specific attributes of the {\bf Surface} structure.  
+Basic plot parameters are specified with this function call.  
+Numerous other plot attributes can be set or changed later with other 
+members of the {\bf Set\ldots} class of routines.
+
+\newpage
+
+\subsubsection{surfaceSetRenderMode()}\index{routines!surface!surfaceSetRenderMode()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void surfaceSetRenderMode (& Surface *surface, \\
+& SurfaceRenderMode mode ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\item {\em mode} - drawing or rendering mode for the surface 
+(SurfaceRenderMode): SurfaceSolid, SurfaceShaded
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the rendering mode for the surface. {\em SurfaceSolid} specifies a simple
+hidden-line-removed surface;{\em SurfaceShaded} specifies a Lambertian shading
+model.
+
+The default rendering mode is {\em SurfaceSolid}.
+
+\newpage
+
+
+\subsubsection{surfaceSetView()}\index{routines!surface!surfaceSetView()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+void surfaceSetView (& Surface *surface, \\
+& float x, \\
+& float y, \\
+& float z) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\item {\em x} - angle of rotation (in degrees) about X axis
+\item {\em y} - angle of rotation (in degrees) about Y axis
+\item {\em z} - angle of rotation (in degrees) about Z axis
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Set the viewing parameters (define the projection) for the surface. 
+Good initial values are: {\em x = 45.0, y = 0.0, z = 45.0}; these
+are the defaults.
+
+\newpage
+
+\subsubsection{surfaceDraw()}\index{routines!surface!surfaceDraw()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void surfaceDraw( Surface *surface )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Perform the actual drawing of the plot based on the {\bf Surface} structure
+information.
+
+
+\newpage
+
+\subsubsection{surfaceResize()}\index{routines!surface!surfaceResize()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void surfaceResize( Surface *surface )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Resize the plot to the new window dimensions.  Note that for this
+update to be visualized, this call should be followed by a surfaceDraw()
+call.
+
+\newpage
+
+\subsubsection{surfaceRefresh()}\index{routines!surface!surfaceRefresh()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void surfaceRefresh( Surface *surface )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Refresh the display of the {\bf Surface} plot. Note that this does not
+recalculate the display; it remaps the current pixmap version of the
+plot to the window.
+
+\newpage
+
+
+\subsubsection{surfacePrint()}\index{routines!surface!surfacePrint()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void surfacePrint( Surface *surface )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Print the plot to a hardcopy device. Currently only PostScript printers
+are supported.
+
+Output the current plot (in it's window form) to a PostScript printer
+identified by the environment variable PSPRINTER. If that environment
+variable is not set, an error message will be printed on stderr and
+the Print operation will be refused and cancelled.
+
+
+\newpage
+
+\subsubsection{surfaceTerm()}\index{routines!surface!surfaceTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void surfaceTerm( Surface *surface )}
+} 
+
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em surface} - pointer to Surface structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Deallocate the {\bf Surface} data structure. This routine frees the
+storage used by the data structure and the {\bf X} resources utilized
+on the server (including Pixmaps, Fonts and Graphics Contexts).
+
+
+\newpage
+
+\section{Utilities and Macros}
+
+A small number of utilities in the form of macros\index{macros} and functions 
+are defined in this plot package. These are usable in this layer 
+(the {\em graphX} layer), as well as in the higher ({\em GraphApp}) layer.
+
+One `weakness' in the current X functionality appears to be fonts and font
+handling.  Screen resolution and vendor interests often lead to situations
+where useful, common fonts are missing on specific servers.  To reduce the
+concern of application programmers as well as the reliance upon specific
+servers, some functionality is introduced in this section.
+
+
+\subsection{Utility Functions}
+
+\subsubsection{Font Handling}
+
+The unexpected absence of specific size fonts and font families often
+cause applications which are `hard-wired' to those fonts, to fail.  
+For example, a 15 pt
+"times" font might exist on some servers, while being absent on others.
+Meanwhile a 14 or 16 pt font might exist in lieu of the 15 pt font.  
+Applications which rely on the existence of a specific font, are thus
+vulnerable to such server-specific attributes or font environments.
+
+The function {\bf graphXGetBestFont()}\index{routines!utility!graphXGetBestFont()}\index{routines!graphXGetBestFont()} attempts to locate the `nearest' font
+in a specified family and style.
+
+To free users of the {\bf graphX} libraries from having to know appropriate
+font sizes and their availability on specific servers, the 
+{\bf graphXGetBestFont()} function and {\bf GraphX\_TitleFontSize()} and 
+{\bf GraphX\_AxesFontSize()} macros are provided.
+\newpage
+
+\subsubsection{graphXGetBestFont()}\index{routines!utility!graphXGetBestFont()}\index{routines!graphXGetBestFont()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+char *graphXGetBestFont(& Display *display, \\
+& char *family, \\
+& char *face, \\
+& char *type, \\
+& int size ) \\
+\end{tabular}
+}} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em display} - currently open display, via pointer to X Display 
+structure (returned by XtDisplay(widget), for example)
+\item {\em family} - character string (ptr) for font family (e.g., `times',
+`courier', `helvetica', et cetera)
+\item {\em face} - character string (ptr) for style or face for font (e.g.,
+`medium', `bold', \ldots)
+\item {\em type} - character string (ptr) for font type (e.g., `r' - roman,
+`i' - italic, \ldots)
+\item {\em size} - integer number defining requested point size for font
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em char *} - a pointer to a character string (allocated by this routine)
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+
+Query the X server and return the font {\em closest} to the specified
+font using the attributes passed in to this routine.  Wildcards are 
+accepted (`*') for any of the passed in character-based fields.
+
+This routine uses the standard X font naming convention to construct
+a target font string; if the server can locate that font, the full
+string name is returned by this function.  If the specified size is
+not available, a `walking' search is made for a font of the specified
+family and type for the closest available size.  First the next smaller
+point size is tried, then the next larger, then the next smaller\ldots
+until a match is made.  If no match is found, the returned string is one
+of the most prevalent fonts (\"fixed\").
+
+When this routine is used with the normal graphX \ldots Set() routines,
+if no matching fonts are found, then the first available font on the server is 
+used in the worst case.
+
+Example (note that this example utilizes macros defined in the next section):
+
+\begin{verbatim}
+    ...
+#include "GraphX.h"
+     ...
+char *titleFont, *axesFont;
+int titleFontSize, axesFontSize;
+
+     ...
+   seql1 = seqlInit(display,screen,window1);
+
+   titleFontSize = GraphX_TitleFontSize(seql1);
+   axesFontSize = GraphX_AxesFontSize(seql1);
+
+/* could pass in wildcards ("*") for any of these strings */
+   titleFont = graphXGetBestFont(display,"times","bold","r", titleFontSize);
+   axesFont  = graphXGetBestFont(display,"times","medium","r",axesFontSize);
+
+     ...
+
+   seqlSet(seql1, NBUFFERS, NPTS, data, nValues, SeqlPolygon,
+     "A Sequential Data Plot",
+     titleFont,
+     "X Axis", "Y Axis",
+     axesFont,
+     "white", "black", NULL, SeqlExternal);
+
+   ...
+\end{verbatim}
+
+
+\newpage
+
+\subsection{Macros}
+
+A small number of utility macros\index{macros} are defined for all the 
+plot types.
+
+Macros exist for determining `recommended' sizes for title and axes 
+fonts\index{fonts}\index{fonts!sizes} (in normal font {\em pt} units).  
+The following two macros take the plot or graph
+type returned from the appropriate {\em \ldots Init} routine as a
+parameter, and return an integer point size. Note that these macros 
+use a rather simple `heuristic', and that their results are not guaranteed
+to be optimal.
+
+\vspace{11pt}
+\noindent
+To return an integer point size for the Title of a plot:
+
+\noindent
+{\bf GraphX\_TitleFontSize({\em plot})}\index{macros!GraphX\_TitleFontSize}\index{GraphX\_TitleFontSize}
+
+\vspace{11pt}
+\noindent
+To return an integer point size for the Axes labels and scales of a plot:
+
+\noindent
+{\bf GraphX\_AxesFontSize({\em plot})}\index{macros!GraphX\_AxesFontSize}\index{GraphX\_axesFontSize}
+
+\vspace{11pt}
+For example, to use these macros in the context of a created Graph type plot,
+where the point sizes are stored as well as used as part of a font string:
+\newpage
+
+\begin{verbatim}
+...
+#include "Graph.h"             /* include the appropriate Plot defn. */
+#define STRINGSIZE 60          /* size of font string buffers */
+  ...
+  int titleFontSize, axesFontSize;
+  char *titleFont, *axesFont;
+/*
+ * could be Seql, Graph, Strip, Graph3d, or Surface...
+ */
+  Graph *graph;
+  ...
+  graph = graphInit(display,screen,window);
+  ...
+/*
+ * get the "recommended" title and axes font sizes
+ */
+  titleFontSize = GraphX_TitleFontSize(graph);
+  axesFontSize = GraphX_AxesFontSize(graph);
+
+/* 
+ * generate font strings based on "recommendations"
+ */
+  titleFont = graphXGetBestFont(display,"times","bold","r", titleFontSize);
+  axesFont = graphXGetBestFont(display,"times","medium","r",axesFontSize);
+
+  ...
+  graphSet(...,
+           titleFont,...,
+           axesFont,...);
+  ...
+\end{verbatim}
+
+
+\chapter{Advanced Topics}
+
+This plotting package can be used at the level defined here with the
+relatively sufficient set of function calls presented.  More advanced users,
+may however, want direct access to the internals of the data structures
+for their own use, or for interfacing with other programs.  This is easily
+done via direct manipulation of fields in the graph or plot type structure.
+The structures are defined in the appropriate `.h' files, and, with care,
+users can gain access to the structures directly.  This should be done
+in special cases only, with the majority of parameter modifications
+still going through the described functions.
+
+\section{userData}
+One field ({\em resource} in more common X parlance) present in all the
+graph types which has only been alluded to in the stripSet() function
+description is the {\em $->$userData}\index{structure fields!userData} 
+field. This field is a {\em caddr\_t}\index{caddr\_t} type, that is, an opaque 
+pointer to arbitrary memory.  This field can be used to record and retrieve 
+additional information in a graph or plot structure.
+
+The userData field is used in the Strip Chart as the second parameter to 
+the invoked {\em getValue} function, and can be used in that instance to
+pass additional information to the getValue function. This is accomplished
+by setting the userData field via an explicit 
+\framebox{strip$->$userData = (caddr\_t) myPointer;} after getting a pointer
+to a Strip structure via a stripInit() call.  
+
+The Strip Chart sample code makes (rather trivial) use of the {\em userData} 
+field; readers are directed there for an example.
+
+\section{setOwnColors}
+Another field present in all graph or plot type structures (but invisible
+to the user and mostly unused by the internal code) is the 
+{\em setOwnColors}\index{structure fields!setOwnColors} field.  This
+field is a Boolean which determines whether the color strings present in
+the various \ldots Set() functions are actually used in defining colors (via
+an XAllocNamedColor() call).  Some applications have a set of pixel values
+(colormap indices) already in use and do not want to reference colors by
+string.  This field can be set to TRUE after the \ldots Init() call and
+before the \ldots Set() call to notify the plot package that the user will
+take responsibility for filling in the pixel values in the appropriate
+fields of the structure.  
+
+In all cases, the foreground color pixel value
+should be put in the $->$forePixel field, the background color pixel
+value should be put in the $->$backPixel field, and the data colors
+should be put in the $->$dataPixel field.  Note that for non-3d type
+plots, the dataPixel field is a pointer to the base of an array of unsigned
+longs whose dimension is equal to the number of curves per plot. Hence for
+a strip chart with 4 channels being plotted, $->$dataPixel[0] is the
+pixel value for the $0^{th}$ channel \ldots
+
+If {\em setOwnColors} is set to TRUE, the user may then pass in NULL as
+the strings to use for the color.
+
+
+\section{setOwnFonts}
+This field, like the {\em setOwnColors} field, is also present in all graph or 
+plot type structures (but invisible to the user and mostly unused by the 
+internal code). The {\em setOwnFonts}\index{structure fields!setOwnFonts} field
+is a Boolean which determines whether the font strings present in
+the various \ldots Set() functions are actually used in defining fonts (via
+an XLoadQueryFont() call).  Some applications have a set of  fonts
+already in use and do not want to reference fonts by
+string.  This field can be set to TRUE after the \ldots Init() call and
+before the \ldots Set() call to notify the plot package that the user will
+take responsibility for filling in the font values in the appropriate
+fields of the structure.  
+
+In all cases, the title font's font structure pointer
+should be put in the  $->$titleFontStruct field, the title font's height
+should be put in the  $->$titleFontHeight field, and the title font's 
+width should be put the in the  $->$titleFontWidth field.
+
+Likewise, the axes font's font structure pointer should be put in the 
+$->$axesFontStruct field, the axes font's height
+should be put in the  $->$axesFontHeight field, and the axes font's 
+width should be put the in the  $->$axesFontWidth field.
+the background color pixel
+
+If {\em setOwnFonts} is set to TRUE, the user may then pass in NULL as
+the strings to use for the fonts.
+
+
+\section{dontLinearScale\ldots}
+These fields {\em dontLinearScaleX} and {\em dontLinearScaleY} are presently 
+found only in the {\em Seql} and {\em Graph} plot type structures,
+(and largely invisible and unused by the internal code). Given the questionable
+value of this in the other plot types, {\em dontLinearScale} does not 
+exist in the {\em Graph3d, Surface} or {\em Strip} plot types.
+
+The {\em dontLinearScale\ldots}\index{structure fields!dontLinearScaleX}\index{structure fields!dontLinearScaleY} field
+is a Boolean which determines whether linear scaling algorithms are
+applied to the specified axis when a plot is drawn.   
+When a user wishes the plot range to be exactly the minimum to maximum
+values passed in, then these fields can be set.
+
+These fields can be set to TRUE after the \ldots Init() call and
+before the \ldots Set() call to notify the plot package that the user will
+take responsibility for passing appropriate minimum and maximum scale
+values in either of the axis directions.
+
+
+
+
+\chapter{The Future}
+
+This version of the plot package is admittedly rather low level, and
+presupposes some dexterity with respect to X.  As such,
+it is useful in the widest variety of potential areas, including
+control, data acquisition, and monitoring systems (it's intended area
+of application).  Production-quality graphics is not a goal of this
+package (there are several that do this very well and it would be
+foolish to try to tackle that functionality); however, quick, efficient
+graphics are provided, and that will be the underlying goal of all
+future development.
+
+At a relatively low level, new plot types (including true contour plots\index{plots!contour plot}) will 
+be introduced.
+
+Higher level uses of this package are also viable, for users not
+interested in having to think in terms of X.  Thus, the future holds
+several possibilities:
+\begin{itemize}
+\item higher-level shell routines which perform all X related functions
+transparently to the user (this would include opening the X display
+and creation of drawable windows): refer to the {\em graphApp} document
+and software layer for this functionality.
+\item enhanced interactive features, including pick or locator input
+for the retrieval of world or data coordinates from the plot, 
+as well as pan and zoom functions for the plot : this is currently
+being added.
+\item high-level graphical interface to the graphics routines themselves,
+including file-based data, selection and plotting (a non-programmatic
+interface to the plot functionalilty)
+\end{itemize}
+
+Each of the above is a planned extension to this software.  Since it
+is intended to be layered upon the core software, backwards compatibility
+is a major (and realistic) goal.  Also, higher-level graphical versions
+of this software will require the use of a Widget set.  At the time
+of this writing, Motif\index{Motif} is the intended vehicle.
+
+\chapter{Examples}
+
+The example code presented here is the code used to generate some the pictures
+found in the {\bf Display Styles} section of this document.
+
+These code segments make use of the Motif Widget\index{Motif widgets} set for 
+the `canvas' or XmDrawingArea Widgets.
+
+Please note that the code presented makes heavy use of Intrinsics\index{Intrinsics} level
+translations and translation management for user interaction management, as
+well as other `non-essential' aspects of X and the Intrinsics\index{Intrinsics} layer. The
+code is meant to illustrate use of the {\bf graphX} plotting library\index{library}
+in a reasonable shell and is not meant to necessarily represent
+optimal (or even good) X coding standards.
+
+
+\newpage
+\section{Seql plots}
+
+{\bf Seql} plot routines are very closely related to the {\bf Graph} plot
+routines.  Input data is simpler in the {\bf Seql} case, merely
+being an array of doubles as the values of the plot.  For this reason
+{\bf Seql} example code is not included (nor is it (hopefully) necessary).  
+Examining the {\bf Graph} example should suffice.
+
+\section{Graph3d plots}
+
+{\bf Graph3d} plot routines are, like the {\bf Seql} plot, closely 
+related to the {\bf Graph} plot
+routines.  Input data is an array of structures with 3 doubles as members
+(x,y,z) rather than the 2 doubles (x,y) of {\bf Graph}. Hence, the 
+reader is referred to the {\bf Graph} example code for this plot family as well.
+
+\newpage
+\section{Graph plots}
+{\footnotesize
+\input{testGraph.latex}
+}
+
+\newpage
+\section{Strip Charts }
+{\footnotesize
+\input{testStrip.latex}
+}
+
+\newpage
+\section{Surface plots}
+{\footnotesize
+\input{testSurface.latex}
+}
+
+\newpage
+\section{Compiling and Linking with the graphX library}
+
+Two libraries\index{library} are provided by the {\bf graphX} package: {\em graphX.a}\index{libraries!graphX.a} and
+{\em printUtils.a}\index{libraries!printUtils.a}.  Assuming these are installed in usual places, the
+typical compile/link\index{compile}\index{link} command to build executables with this package is
+(also assuming \$LIB is the place where graphX libraries and 
+includes\index{include files} are installed - this could be 
+/usr/local/lib, for instance):
+
+\begin{verbatim}
+
+     cc -O ... -I$LIB -I/usr/include/X11 \
+               ... $LIB/graphX.a \
+               $LIB/printUtils.a  \
+               -lXm -lXt -lX11 -lm
+
+\end{verbatim}
+
+This compile command links with the Motif 
+widget\index{Motif widgets}\index{widget} set (via the {\em -lXm} 
+switch) for the purpose of example.  If another Widget set is used by 
+the application, then {\em -lXm} would be replaced.  Note that
+the {\bf graphX} library\index{library} does not itself need a widget\index{widget} set to operate. It
+is expected, however, that most user applications will be taking advantage
+of one or more widget\index{widget} sets.
+
+\newpage
+\chapter{FYI}
+
+\section{Inclusion of PostScript figures in this document}
+
+% and include a postscript picture
+
+To include an X-Window dump-ed PostScript\index{PostScript} figure into a 
+\TeX\ or \LaTeX\ document, I (artificially) introduce a {\bf \%\%BoundingBox: x0 y0 x1 y1} (`Bounding
+Box comment') to make this work
+with {\bf psfig} (since xwd\index{xwd}/xpr\index{xwd}\index{xpr} -device ps doesn't add the bounding box
+comment itself).  By running {\bf bbfig file1.ps $>$ file2.ps}\index{bbfig} and then
+printing (or viewing via xps) the resultant {\bf file2.ps} file, a copy 
+of the file with
+the bounding box and its coordinates is produced.  These coordinates can
+then be put into the original PS file as the coordinates x0 y0 x1 y1 above.
+
+Note that {\bf xwd2ps} adds the BoundingBox header information automatically.
+
+\newpage
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\end{document}

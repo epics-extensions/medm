@@ -1,0 +1,4 @@
+core
+*.o
+libANLwidgets.a
+.DEPENDS

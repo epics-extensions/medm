@@ -1,0 +1,59 @@
+\indexentry{X}{2}
+\indexentry{graphX}{2}
+\indexentry{X}{2}
+\indexentry{translations}{2}
+\indexentry{graphX}{2}
+\indexentry{callbacks}{2}
+\indexentry{X}{2}
+\indexentry{application context}{2}
+\indexentry{calling sequence}{4}
+\indexentry{application context}{4}
+\indexentry{X}{4}
+\indexentry{X}{4}
+\indexentry{graphX}{4}
+\indexentry{X}{4}
+\indexentry{macros!GraphAppInfo()}{4}
+\indexentry{macros!GraphAppDisplay()}{4}
+\indexentry{X}{5}
+\indexentry{X}{5}
+\indexentry{graphX}{5}
+\indexentry{translations}{5}
+\indexentry{translations!$<$Ctrl$>$p}{5}
+\indexentry{PostScript}{5}
+\indexentry{environment variables!PSPRINTER}{5}
+\indexentry{translations!$<$Ctrl$>$q}{5}
+\indexentry{application context}{5}
+\indexentry{X}{5}
+\indexentry{graphX}{5}
+\indexentry{callbacks}{5}
+\indexentry{X}{5}
+\indexentry{routines}{7}
+\indexentry{calling sequence}{7}
+\indexentry{macros}{7}
+\indexentry{routines}{7}
+\indexentry{macros}{7}
+\indexentry{routines!graphAppInit()}{8}
+\indexentry{X}{8}
+\indexentry{X Toolkit}{8}
+\indexentry{argc}{8}
+\indexentry{argv}{8}
+\indexentry{X}{8}
+\indexentry{application context}{8}
+\indexentry{routines!graphAppInitShell()}{9}
+\indexentry{routines!graphAppRegisterGraphic()}{10}
+\indexentry{callbacks}{10}
+\indexentry{routines!graphAppLoop()}{11}
+\indexentry{routines!graphAppTermShell()}{12}
+\indexentry{routines!graphAppTerm()}{13}
+\indexentry{macros!GraphAppInfo()}{14}
+\indexentry{macros!GraphAppDisplay()}{15}
+\indexentry{graphX!graphXGetBestFont()}{15}
+\indexentry{libraries}{21}
+\indexentry{libraries!graphX.a}{21}
+\indexentry{libraries!graphApp.a}{21}
+\indexentry{libraries!printUtils.a}{21}
+\indexentry{compile}{21}
+\indexentry{link}{21}
+\indexentry{include files}{21}
+\indexentry{Motif}{21}
+\indexentry{widget}{21}

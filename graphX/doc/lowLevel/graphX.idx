@@ -1,0 +1,240 @@
+\indexentry{Intrinsics}{0}
+\indexentry{bar chart}{0}
+\indexentry{plots!xy plots}{0}
+\indexentry{plots!surface plot}{0}
+\indexentry{plots!contour plot}{0}
+\indexentry{color}{0}
+\indexentry{plots!strip chart}{0}
+\indexentry{object-oriented}{5}
+\indexentry{Xlib}{5}
+\indexentry{Intrinsics}{5}
+\indexentry{widget}{5}
+\indexentry{widget}{5}
+\indexentry{performance}{5}
+\indexentry{Xlib}{5}
+\indexentry{Xlib}{5}
+\indexentry{widget}{5}
+\indexentry{portability}{5}
+\indexentry{performance}{5}
+\indexentry{widget-based}{5}
+\indexentry{XOpenDisplay}{5}
+\indexentry{XtInitialize}{5}
+\indexentry{Display}{5}
+\indexentry{C$^{++}$}{5}
+\indexentry{window}{6}
+\indexentry{window}{6}
+\indexentry{window}{6}
+\indexentry{plots!1-D}{7}
+\indexentry{plots!2-D}{7}
+\indexentry{plots!3-D}{7}
+\indexentry{color}{7}
+\indexentry{color}{7}
+\indexentry{color}{7}
+\indexentry{color}{7}
+\indexentry{color}{7}
+\indexentry{color}{7}
+\indexentry{plots!1-D}{7}
+\indexentry{plots!seql}{7}
+\indexentry{plots!2-D}{7}
+\indexentry{plots!graph}{7}
+\indexentry{plots!strip}{7}
+\indexentry{plots!3-D}{7}
+\indexentry{plots!graph3d}{8}
+\indexentry{plots!surface}{8}
+\indexentry{plots!1-D}{8}
+\indexentry{plots!seql}{8}
+\indexentry{plots!2-D}{8}
+\indexentry{plots!graph}{8}
+\indexentry{plots!strip}{8}
+\indexentry{plots!strip chart}{8}
+\indexentry{strip chart}{8}
+\indexentry{plots!3-D}{9}
+\indexentry{plots!graph3d}{9}
+\indexentry{color}{9}
+\indexentry{plots!surface}{9}
+\indexentry{plots!surface plot}{9}
+\indexentry{display styles}{10}
+\indexentry{bar chart}{10}
+\indexentry{plots!surface plot}{10}
+\indexentry{plots!contour plot}{10}
+\indexentry{plots!contour plot}{10}
+\indexentry{color}{10}
+\indexentry{plots!seql}{10}
+\indexentry{plots!graph}{10}
+\indexentry{plots!graph}{11}
+\indexentry{plots!seql}{11}
+\indexentry{plots!graph}{11}
+\indexentry{plots!strip}{11}
+\indexentry{plots!strip chart}{11}
+\indexentry{plots!graph}{11}
+\indexentry{plots!seql}{11}
+\indexentry{plots!graph}{11}
+\indexentry{plots!surface}{12}
+\indexentry{plots!surface}{12}
+\indexentry{plots!surface plot}{12}
+\indexentry{plots!strip}{12}
+\indexentry{plots!strip chart}{12}
+\indexentry{plots!strip chart}{12}
+\indexentry{plots!strip chart}{12}
+\indexentry{calling sequences}{13}
+\indexentry{nomenclature}{13}
+\indexentry{Init}{13}
+\indexentry{Set\ldots}{13}
+\indexentry{Draw\ldots}{13}
+\indexentry{Resize}{13}
+\indexentry{Refresh}{13}
+\indexentry{Print}{13}
+\indexentry{Term}{13}
+\indexentry{Init}{13}
+\indexentry{Set\ldots}{14}
+\indexentry{color}{14}
+\indexentry{font}{14}
+\indexentry{Draw\ldots}{14}
+\indexentry{Xlib}{14}
+\indexentry{callback!resize}{14}
+\indexentry{Resize}{14}
+\indexentry{window}{14}
+\indexentry{window}{14}
+\indexentry{callback!resize}{14}
+\indexentry{widget}{14}
+\indexentry{Refresh}{14}
+\indexentry{window}{14}
+\indexentry{window}{14}
+\indexentry{window}{14}
+\indexentry{callback!expose}{14}
+\indexentry{widget}{14}
+\indexentry{Print}{14}
+\indexentry{PostScript}{14}
+\indexentry{PostScript}{14}
+\indexentry{environment variable}{14}
+\indexentry{environment variable!PSPRINTER}{14}
+\indexentry{Term}{15}
+\indexentry{include files!GraphX.h}{16}
+\indexentry{include files}{16}
+\indexentry{include files}{16}
+\indexentry{include files!Seql.h}{16}
+\indexentry{include files!Graph.h}{16}
+\indexentry{include files!Strip.h}{16}
+\indexentry{include files!Graph3d.h}{16}
+\indexentry{include files!Surface.h}{16}
+\indexentry{plots!1-D}{17}
+\indexentry{plots!1-D}{17}
+\indexentry{plots!seql}{17}
+\indexentry{routines!seql!seqlInit()}{18}
+\indexentry{routines!seql!seqlSet()}{19}
+\indexentry{routines!seql!seqlSetRange()}{21}
+\indexentry{routines!seql!seqlSetRangeDefault()}{22}
+\indexentry{routines!seql!seqlSetDataColor()}{23}
+\indexentry{routines!seql!seqlSetDisplayType()}{24}
+\indexentry{routines!seql!seqlDraw()}{25}
+\indexentry{routines!seql!seqlSetLegend()}{26}
+\indexentry{routines!seql!seqlDrawLegend()}{27}
+\indexentry{routines!seql!seqlResize()}{28}
+\indexentry{routines!seql!seqlRefresh()}{29}
+\indexentry{routines!seql!seqlPrint()}{30}
+\indexentry{routines!seql!seqlTerm()}{31}
+\indexentry{plots!2-D}{32}
+\indexentry{plots!strip chart}{32}
+\indexentry{plots!2-D}{32}
+\indexentry{plots!strip chart}{32}
+\indexentry{bar chart}{32}
+\indexentry{XYdataPoint}{32}
+\indexentry{structures!XYdatPoint}{32}
+\indexentry{routines!graph!graphInit()}{33}
+\indexentry{routines!graph!graphSet()}{34}
+\indexentry{routines!graph!graphSetRange()}{36}
+\indexentry{routines!graph!graphSetRangeDefault()}{37}
+\indexentry{routines!graph!graphSetBins()}{38}
+\indexentry{routines!graph!graphSetDataColor()}{39}
+\indexentry{routines!graph!graphSetDisplayType()}{40}
+\indexentry{routines!graph!graphDraw()}{41}
+\indexentry{routines!graph!graphSetLegend()}{42}
+\indexentry{routines!graph!graphDrawLegend()}{43}
+\indexentry{routines!graph!graphResize()}{44}
+\indexentry{routines!graph!graphRefresh()}{45}
+\indexentry{routines!graph!graphPrint()}{46}
+\indexentry{routines!graph!graphTerm()}{47}
+\indexentry{StripRange}{48}
+\indexentry{structures!StripRange}{48}
+\indexentry{plots!strip chart}{48}
+\indexentry{routines!strip!stripInit()}{49}
+\indexentry{routines!strip!stripSet()}{50}
+\indexentry{structure fields!userData}{51}
+\indexentry{caddr\_t}{51}
+\indexentry{routines!strip!stripSetRange()}{53}
+\indexentry{routines!strip!stripSetDataColor()}{54}
+\indexentry{routines!strip!stripSetInterval()}{55}
+\indexentry{routines!strip!stripDraw()}{56}
+\indexentry{routines!strip!stripSetLegend()}{57}
+\indexentry{routines!strip!stripDrawLegend()}{58}
+\indexentry{routines!strip!stripResize()}{59}
+\indexentry{routines!strip!stripRefresh()}{60}
+\indexentry{routines!strip!stripPrint()}{61}
+\indexentry{routines!strip!stripPause()}{62}
+\indexentry{routines!strip!stripResume()}{63}
+\indexentry{routines!strip!stripTerm()}{64}
+\indexentry{plots!surface plot}{65}
+\indexentry{plots!surface plot}{65}
+\indexentry{XYZdataPoint}{65}
+\indexentry{structures!XYZdataPoint}{65}
+\indexentry{routines!graph3d!graph3dInit()}{66}
+\indexentry{routines!graph3d!graph3dSet()}{67}
+\indexentry{routines!graph3d!graph3dSetRange()}{69}
+\indexentry{routines!graph3d!graph3dSetRangeDefault()}{70}
+\indexentry{routines!graph3d!graph3dSetBins()}{71}
+\indexentry{routines!graph3d!graph3dSetZBins()}{72}
+\indexentry{routines!graph3d!graph3dSetDisplayType()}{73}
+\indexentry{routines!graph3d!graph3dDraw()}{74}
+\indexentry{routines!graph3d!graph3dResize()}{75}
+\indexentry{routines!graph3d!graph3dRefresh()}{76}
+\indexentry{routines!graph3d!graph3dPrint()}{77}
+\indexentry{routines!graph3d!graph3dTerm()}{78}
+\indexentry{routines!surface!surfaceInit()}{80}
+\indexentry{routines!surface!surfaceSet()}{81}
+\indexentry{routines!surface!surfaceSetRenderMode()}{83}
+\indexentry{routines!surface!surfaceSetView()}{84}
+\indexentry{routines!surface!surfaceDraw()}{85}
+\indexentry{routines!surface!surfaceResize()}{86}
+\indexentry{routines!surface!surfaceRefresh()}{87}
+\indexentry{routines!surface!surfacePrint()}{88}
+\indexentry{routines!surface!surfaceTerm()}{89}
+\indexentry{macros}{90}
+\indexentry{routines!utility!graphXGetBestFont()}{90}
+\indexentry{routines!graphXGetBestFont()}{90}
+\indexentry{routines!utility!graphXGetBestFont()}{91}
+\indexentry{routines!graphXGetBestFont()}{91}
+\indexentry{macros}{93}
+\indexentry{fonts}{93}
+\indexentry{fonts!sizes}{93}
+\indexentry{macros!GraphX\_TitleFontSize}{93}
+\indexentry{GraphX\_TitleFontSize}{93}
+\indexentry{macros!GraphX\_AxesFontSize}{93}
+\indexentry{GraphX\_axesFontSize}{93}
+\indexentry{structure fields!userData}{95}
+\indexentry{caddr\_t}{95}
+\indexentry{structure fields!setOwnColors}{96}
+\indexentry{structure fields!setOwnFonts}{96}
+\indexentry{structure fields!dontLinearScaleX}{97}
+\indexentry{structure fields!dontLinearScaleY}{97}
+\indexentry{plots!contour plot}{98}
+\indexentry{Motif}{99}
+\indexentry{Motif widgets}{100}
+\indexentry{Intrinsics}{100}
+\indexentry{Intrinsics}{100}
+\indexentry{library}{100}
+\indexentry{library}{128}
+\indexentry{libraries!graphX.a}{128}
+\indexentry{libraries!printUtils.a}{128}
+\indexentry{compile}{128}
+\indexentry{link}{128}
+\indexentry{include files}{128}
+\indexentry{Motif widgets}{128}
+\indexentry{widget}{128}
+\indexentry{library}{128}
+\indexentry{widget}{128}
+\indexentry{widget}{128}
+\indexentry{PostScript}{129}
+\indexentry{xwd}{129}
+\indexentry{xwd}{129}
+\indexentry{xpr}{129}
+\indexentry{bbfig}{129}

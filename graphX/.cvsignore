@@ -1,0 +1,4 @@
+core
+*.o
+libGraphX.a
+.DEPENDS

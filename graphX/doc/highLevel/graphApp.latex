@@ -1,0 +1,671 @@
+% MDA - graphX high-level (graphApp layer) routines
+%
+%    29 July 1990
+%
+
+\input{psfig.tex}
+
+\documentstyle [11pt,makeidx] {report}
+
+\makeindex
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\title{
+\centerline{\psfig{figure=logo.ps,width=2.3in,height=1.0in}}
+{\Large X graphics and plotting utilities}\\
+\vspace{18pt}
+{\Huge High Level Routines}}
+\author{Mark D. Anderson\\
+Argonne National Laboratory}
+
+
+
+% end of preamble
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}  
+A higher-level layer of software above the {\bf graphX}
+plotting package 
+is provided.  This layer frees the application programmer from
+explicit references to X routines and concepts, and encapsulates
+commonly used X operations in a small number of useful functions.
+
+Reduction of size and simplification of application code wishing
+to utilize the {\bf graphX} functionality is the major objective
+of this layer of routines.  For actual plot creation, the 
+{\bf graphX} plot calls are still utilized.
+
+The functions comprising this layer are presented and the calling interface 
+to these is described.
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\section{Functionality}
+
+This note describes a set of functions which handle many common X\index{X}
+operations,
+and which simplify utilization of the {\bf graphX}\index{graphX} software 
+package. At this level of abstraction, the user is unaware of the underlying 
+graphic/display system.
+
+Routines exist which perform such relatively common (and mundane) operations as:
+\begin{itemize}
+\item initiate an X\index{X} connection and create an application context.
+\item create a top-level shell and canvas/drawing area (which the plot
+routines utilize for their output), as well as define some standard
+translations\index{translations}.
+\item bind the {\bf graphX}\index{graphX} graphic to the shell and 
+canvas/drawing area,
+so that appropriate resize, expose and destroy callbacks\index{callbacks}
+ can be attached.
+\item enter the main loop, waiting for X\index{X} events in the current 
+application context\index{application context}.
+\item terminate shells and plots in the application.
+\item terminate the X connection and application context.
+\end{itemize}
+
+\section{Motif}
+
+This layer of software utilizes the Intrinsics and the Motif widget set.
+
+The library for this layer can be built for other widget sets as well; 
+this would require source code modification (albeit of the relatively
+straight-forward `widget mapping' variety).
+
+
+\chapter{Calling Sequences}\index{calling sequence}
+
+\section{Nomenclature}
+
+The family of routines here being described as `high-level' operate within
+an X {\em application context}\index{application context} and frees the 
+user from the definition and
+creation of relatively standard X\index{X} environments.  The routines in this
+family begin with the prefix {\em graphApp}.
+
+The routine names and functionality supported by this layer include:
+\begin{description}
+\item[{\bf graphAppInit}] initialize the graphApp layer and X\index{X} session
+\item[{\bf graphAppInitShell}] create a drawable shell
+\item[{\bf graphAppRegisterGraphic}] register a {\bf graphX}\index{graphX} 
+graphic in a shell
+\item[{\bf graphAppLoop}] enter the main event processing loop
+\item[{\bf graphAppTermShell}] terminate shell
+\item[{\bf graphAppTerm}] terminate the graphApp context and X\index{X} session
+\end{description}
+
+One convenience `function' defined by this layer, implemented as a macro,
+is the {\bf GraphAppInfo()}\index{macros!GraphAppInfo()} reference.  
+This macro is used for extraction
+of the appropriate Display, Screen \& Window parameters from the current
+{\em GraphApp} structure, and is intended to be used as the argument
+to the {\bf graphX \ldots Init} family of routines.
+
+Another convenience `function', implemented as a macro, is the {\bf
+GraphAppDisplay()}\index{macros!GraphAppDisplay()} reference.
+This macro is used for extraction of the Display parameter from the current
+{\em GraphApp} structure, and is intended to be used as the Display argument
+to the {\bf graphXGetBestFont()} routine, found in the lower level
+GraphX layer.
+
+
+\subsection{Init}
+
+Initiate an X\index{X} connection, create an application context, allocate and 
+initialize some of the data structures for the {\em graphApp} instance.
+Some {\bf X}\index{X} resources are allocated at this time.
+
+\subsection{InitShell}
+
+Create a Drawing Area or Canvas widget as a child of a top-level shell in
+this GraphApp context. This creates the area in which the 
+{\bf graphX}\index{graphX}
+entities will be drawn, and defines two standard 
+translations\index{translations}:
+\begin{itemize}
+\item {\bf $<$Ctrl$>$p}\index{translations!$<$Ctrl$>$p} for printing 
+to the PostScript\index{PostScript} printer defined by the
+environment variable PSPRINTER\index{environment variables!PSPRINTER}.
+\item {\bf $<$Ctrl$>$q}\index{translations!$<$Ctrl$>$q}
+for termination of the application 
+context\index{application context} and X\index{X} connection.
+\end{itemize}
+
+
+
+\subsection{RegisterGraphic}
+
+Register the type and instance of the {\bf graphX}\index{graphX} graphic 
+in a shell. This
+attaches the appropriate Resize, Expose and Destroy callbacks\index{callbacks}
+to the parent widget.
+
+\subsection{Loop}
+
+Enter the main loop for this application context, waiting for and then handling
+or dispatching X events.
+
+
+\subsection{TermShell}
+
+Terminate the current windows, drawing area/canvas widget and shell. Also
+clean up the {\bf graphX} allocated data structures for the plot type.
+
+
+\subsection{Term}
+
+Terminate the current graphics context, free all memory associated with
+this {\em graphApp} instance, and close the X\index{X} connection.  Note that this
+frees both client and server data structures and memory.
+
+
+\newpage
+
+\section{Include Files}
+
+This layer of code utilizes one include file for the maintenance of
+the software parameters and definitions. Thus, users of this layer 
+must include the file {\em GraphApp.h} in the prologue of the code 
+which references this layer.
+
+This file can be included from the current directory (using the double-quote
+version of the \#include), letting the compile command (or Makefile)
+take care of where that file is actually found. Hence, a typical prologue
+to code that references this software is:
+
+\begin{verbatim}
+
+    #include "GraphApp.h"
+
+    main(argc,argv)
+         ....
+
+\end{verbatim}
+
+Note that this include file includes all the {\bf graphX} graphic type
+files as well as all the relevant X includes, hence no explicit inclusion 
+of those files is necessary (or desirable).
+
+\newpage
+
+\section{Routines \& Macros}
+
+The actual calling sequences\index{routines}\index{calling sequence} 
+and descriptions of the {\em graphApp} routines and macros\index{macros}
+are presented below.
+
+All routines\index{routines} begin with the {\em graphApp} prefix.  All 
+macros\index{macros} begin with the {\em GraphApp} (note the 
+capitalization of the {\em G}) prefix.
+
+The routines and their arguments are presented in a pseudo-{ansi C} style
+to succinctly convey the function type, as well as the types of all parameters.
+
+\newpage
+
+\subsection{graphAppInit()}\index{routines!graphAppInit()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+GraphApp *graphAppInit ( & char *displayName, \\
+& int *argc, \\
+& char **argv ) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em displayName} - character string (ptr) for display to be used,
+or NULL if default of \$DISPLAY or command-line `-display xxx:n' is to
+be used
+\item {\em argc} - pointer to {\em main()}'s argc variable, the number 
+of arguments on the command line
+\item {\em argv} - {\em main()}'s argv variable, the command line parameters
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em argc, argv} - the X Toolkit\index{X}\index{X Toolkit}
+automatically parses `massages' the
+command line arguments, locating those standard options which in general
+pertain to it.  argc\index{argc} is decremented and argv\index{argv} 
+is rearranged when pertinent
+options are specified and found (e.g., -display xxx.n on the command line
+is automatically handled).
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item  the address of a GraphApp structure is returned upon 
+successful of this call; NULL otherwise.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+Allocate an instance of GraphApp and return the address of that structure.
+Initiate an X\index{X} connection, create an application 
+context\index{application context}, allocate and 
+initialize some of the data structures for the {\em graphApp} instance.
+
+
+\newpage
+ 
+\subsection{graphAppInitShell()}\index{routines!graphAppInitShell()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+int graphAppInitShell ( & GraphApp *graphApp, \\
+& int height, \\
+& int width, \\
+& char *shellName) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\item {\em height} - height (in pixels) of shell
+\item {\em width} - width (in pixels) of shell
+\item {\em shellName} - character string (ptr) for name of shell; this string
+is printed as the title of the shell with most window managers...
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item  the integer shell number of the created shell. a maximum
+number of shells is allowed; currently this number is 20. on error,
+a negative number is returned.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+Create a DrawingArea ({\em Motif}) widget as a child of 
+a top-level shell in
+this GraphApp context. This creates the area in which the {\bf graphX}
+entities will be drawn, and defines two standard translations:
+\begin{itemize}
+\item {\bf $<$Ctrl$>$p} for printing to the PostScript printer defined by the
+environment variable PSPRINTER.
+\item {\bf $<$Ctrl$>$q} for termination of the application context and 
+X connection.
+\end{itemize}
+
+The integer shell number for this shell is returned as the value of this
+function.  Future reference to this shell is via shell number, in conjuction
+with the GraphApp instance.
+
+
+\newpage 
+  
+\subsection{graphAppRegisterGraphic()}\index{routines!graphAppRegisterGraphic()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+int graphAppRegisterGraphic ( & GraphApp *graphApp, \\
+& int shellNumber, \\
+& GraphXType graphType, \\
+& caddr\_t graphicPtr ) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\item {\em shellNumber} - integer shell number
+\item {\em graphType} - enumerated {\bf graphX} type (e.g., {\em GRAPH\_TYPE})
+\item {\em graphicPtr} - pointer to {\bf graphX} graphic structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None} 
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Register the type of and pointer to a {\bf graphX} graphic structure for
+the specified shell and window.  Based on the specified type, the appropriate
+resize, expose and destroy callbacks\index{callbacks} are registered and 
+`tied' to the parent shell.
+
+\newpage
+\subsection{graphAppLoop()}\index{routines!graphAppLoop()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf void graphAppLoop( GraphApp *graphApp )}
+} 
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+
+\vspace{11pt}
+Execute the application main loop, waiting for X events and handling or
+dispatching those events.  This function never returns.
+
+\newpage
+
+\subsection{graphAppTermShell()}\index{routines!graphAppTermShell()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+int graphAppTermShell ( & GraphApp *graphApp, \\
+& int shellNumber ) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\item {\em shellNumber} - integer shell number
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None} 
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Deallocate the specified shell, window and graphic, freeing both client and
+server resources. 
+
+This removes the plot from the screen and releases all related resources.
+
+\newpage
+
+\subsection{graphAppTerm()}\index{routines!graphAppTerm()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+int graphAppTerm ( & GraphApp *graphApp ) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:}
+\begin{itemize}
+\item {\em None} 
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Terminate the application context, close the X connection and
+free all {\em graphApp} and X-related resources.
+
+
+\newpage 
+
+\subsection{GraphAppInfo()}\index{macros!GraphAppInfo()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\begin{tabular}{ll}
+\ldots GraphAppInfo ( & GraphApp *graphApp, \\
+& int shellNumber ) \\
+\end{tabular}
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\item {\em shellNumber} - integer shell number
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:} 
+\begin{itemize}
+\item  the Display, Screen and Window parameters for the referenced shell.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Extract he Display, Screen and Window parameters for the referenced shell,
+in a format acceptable as input to the {\bf graphX} graphic initialization
+routines (\ldots Init).
+
+For example, after a 
+\begin{verbatim}
+       ...
+   shellNumber = graphAppInitShell(graphApp)}
+       ...
+\end{verbatim}
+the user could initialize an instance of a Strip chart via
+\begin{verbatim}
+       ...
+   strip = stripInit(GraphAppInfo(graphApp,shellNumber));
+       ...
+\end{verbatim}
+
+
+\newpage 
+
+\subsection{GraphAppDisplay()}\index{macros!GraphAppDisplay()}
+
+\vspace{11pt}
+
+\noindent \framebox{
+\noindent {\large \bf 
+\ldots GraphAppDisplay ( GraphApp *graphApp ) 
+}}
+\vspace{11pt}
+
+\vspace{11pt}
+{\bf Input Parameters:}
+\begin{itemize}
+\item {\em graphApp} - pointer to GraphApp structure
+\end{itemize}
+
+\vspace{11pt}
+{\bf Output Parameters:}
+\begin{itemize}
+\item {\em None}
+\end{itemize}
+
+\vspace{11pt}
+{\bf Return Value:} 
+\begin{itemize}
+\item  the  Display parameter for the referenced shell.
+\end{itemize}
+
+\vspace{11pt}
+{\bf Description:}
+Extract the Display parameter for the referenced graphApp
+in a format acceptable as input, for example, to the {\bf graphX}  get-best-font
+routine (graphXGetBestFont()\index{graphX!graphXGetBestFont()}).
+
+For example, after a 
+\begin{verbatim}
+       ...
+   shellNumber = graphAppInitShell(graphApp)}
+       ...
+\end{verbatim}
+the user could initialize an instance of a Strip chart and use the Display
+field of the graphApp in a call to {\bf graphXGetBestFont()}:
+\begin{verbatim}
+       ...
+   char *titleFont, *axesFont;
+   int   titleFontSize;
+       ...
+   strip = stripInit(GraphAppInfo(graphApp,shellNumber));
+
+/* and now do a get-best-font call */
+   titleFontSize = GraphX_TitleFontSize(graph);
+   titleFont = graphXGetBestFont(GraphAppDisplay(graphApp),
+        "times","bold","r", titleFontSize);
+       ...
+\end{verbatim}
+
+
+\newpage
+
+
+\newpage
+
+\chapter{The Future}
+
+This layer of subroutines above the raw {\em graphX} layer is simple
+and easy to use. Explicit knowledge of X is not necessary; indeed
+the fact that X is being used as the vehicle is not apparent at all,
+as demonstrated in the included example.
+
+Further work will continue this philosophy, and will likely include
+\begin{itemize}
+\item enhanced interactive features, including pick or locator input
+for the retrieval of world or data coordinates from the plot, 
+as well as pan and zoom functions for the plot
+\item high-level graphical interface to the graphics routines themselves,
+including file-based data, selection and plotting (a non-programmatic
+interface to the plot functionalilty)
+\end{itemize}
+
+Each of the above is a planned extension to this software.  Since it
+is intended to be layered upon the core software, backwards compatibility
+is a major (and realistic) goal.  
+
+\chapter{Examples}
+
+The example code presented here introduces the proper use of these high-level
+routines.  The user, as shown in this example, can be quite well divorced from
+any knowledge of X.
+
+\newpage
+{\footnotesize
+\input{testGraphApp1.latex}
+}
+
+
+\newpage
+\section{Compiling and Linking with the graphX library}
+
+Three libraries\index{libraries} are provided by the {\bf graphX} 
+package: {\em graphX.a}\index{libraries!graphX.a}, 
+{\em graphApp.a}\index{libraries!graphApp.a} and 
+{\em printUtils.a}\index{libraries!printUtils.a}.  
+Assuming these are installed in usual places, the
+typical compile/link\index{compile}\index{link} command to build 
+executables with this package is 
+(also assuming \$LIB is the place where graphX libraries and
+includes\index{include files} are installed - this could be
+/usr/local/lib, for instance):
+
+\begin{verbatim}
+
+     cc -O ... -I$LIB -I/usr/include/X11 ... \
+                 $LIB/graphApp.a \
+                 $LIB/graphX.a \
+                 $LIB/printUtils.a  \
+                 -lXm -lXt -lX11 -lm
+
+\end{verbatim}
+
+This compile command links with the Motif X widget\index{Motif}\index{widget} 
+set (via the {\em -lXm} switch) for the purpose of example.  
+
+
+
+\newpage
+
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\end{document}

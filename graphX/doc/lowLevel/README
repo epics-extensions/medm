@@ -1,0 +1,27 @@
+
+			-------------------
+			graphX documentation
+			-------------------
+
+
+The documentation for the graphX library is located in this directory
+in TeX/LATeX format, using psfig for incorporation of PostScript, and
+dvi2ps for the generation of the PostScript output document.
+
+Print the file  graphX.ps  out on a suitable PostScript printer.  Rarely
+should there be any need to work with the TeX sources.
+
+
+	- Mark Anderson
+	  Argonne National Laboratory
+
+	  anderson@el3.el.anl.gov
+	  mda@phebos.aps.anl.gov
+	  anderson%luke@LANL.GOV
+
+	  (708) 972-2000
+
+
+
+For small memory printers, explicit font-flushing can be done in the
+output PostScript files.... (I'll figure out what that means later)

@@ -1,0 +1,165 @@
+This is TeX, C Version 3.0 (format=lplain 90.12.6)  22 APR 1991 11:02
+**&latex graphApp.latex
+(graphApp.latex
+LaTeX Version 2.09 <7 Dec 1989>
+(/usr/local/lib/tex/inputs/psfig.tex
+\@unused=\write3
+
+psfig: version 1.1
+\ps@stream=\read0
+) (/usr/local/lib/tex/inputs/report.sty
+Document Style `report' <13 Nov 89>.
+(/usr/local/lib/tex/inputs/rep11.sty)
+\descriptionmargin=\dimen99
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+ (/usr/local/lib/tex/inputs/titlepage.sty)) (/usr/local/lib/tex/inputs/makeidx.
+sty)
+\@indexfile=\write4
+
+Writing index file graphApp.idx 
+(graphApp.aux)
+psfig: searching logo.ps for bounding box
+psfig: including logo.ps 
+[0
+
+] [0] (graphApp.toc)
+\tf@toc=\write5
+ [1
+
+]
+Chapter 1.
+
+Overfull \hbox (2.3542pt too wide) in paragraph at lines 53--58
+\elvrm this level of ab-strac-tion, the user is un-aware of the un-der-ly-ing g
+raphic/display
+
+\hbox(8.2125+2.73749)x360.0, glue set - 1.0
+.\elvrm t
+.\elvrm h
+.\elvrm i
+.\elvrm s
+.\glue 3.65 plus 1.825 minus 1.21666
+.etc.
+
+[2
+
+] [3]
+Chapter 2.
+
+Overfull \hbox (0.52623pt too wide) in paragraph at lines 105--111
+[]\elvrm One con-ve-nience `func-tion' de-fined by this layer, im-ple-mented as
+ a macro,
+
+\hbox(7.60416+2.12917)x360.0, glue set - 1.0
+.\hbox(0.0+0.0)x17.0
+.\elvrm O
+.\elvrm n
+.\elvrm e
+.\glue 3.65 plus 1.825 minus 1.21666
+.etc.
+
+
+Overfull \hbox (10.44926pt too wide) in paragraph at lines 112--118
+[]\elvrm Another con-ve-nience `func-tion', im-ple-mented as a macro, is the \e
+lvbf GraphAp-
+
+\hbox(7.60416+2.12917)x360.0, glue set - 1.0
+.\hbox(0.0+0.0)x17.0
+.\elvrm A
+.\elvrm n
+.\elvrm o
+.\elvrm t
+.etc.
+
+[4
+
+] [5] [6] [7] [8] [9]
+Overfull \hbox (15.06664pt too wide) in paragraph at lines 333--343
+[]
+
+\hbox(34.4+28.4)x360.0
+.\hbox(34.4+28.4)x375.06664
+..\hbox(62.79999+0.0)x375.06664, shifted 28.4
+...\vbox(62.79999+0.0)x375.06664 []
+.\glue(\rightskip) 0.0
+
+[10] [11] [12] [13] [14]
+Overfull \hbox (5.7894pt too wide) in paragraph at lines 571--575
+[]\elvbf Description: \elvrm Ex-tract the Dis-play pa-ram-e-ter for the ref-er-
+enced graphApp
+
+\hbox(7.60416+2.12917)x360.0, glue set - 1.0
+.\hbox(0.0+0.0)x17.0
+.\elvbf D
+.\elvbf e
+.\elvbf s
+.\elvbf c
+.etc.
+
+[15]
+Chapter 3.
+[16
+
+]
+Chapter 4.
+[17
+
+] (testGraphApp1.latex [18]
+Overfull \hbox (13.27066pt too wide) in paragraph at lines 113--113
+[]       \nintt data[i] = (XYdataPoint *) malloc((unsigned) NPTS * sizeof(XYdat
+aPoint));[] 
+
+\hbox(6.25+2.0)x360.0
+.\hbox(0.0+0.0)x0.0
+.\penalty 10000
+.\glue 4.72495
+.\penalty 10000
+.\glue 4.72495
+.etc.
+
+
+Overfull \hbox (3.82077pt too wide) in paragraph at lines 113--113
+[]                                \nintt 0.5 - 0.1*((double) random())/pow(2.0,
+31.0));[] 
+
+\hbox(6.25+2.0)x360.0
+.\hbox(0.0+0.0)x0.0
+.\penalty 10000
+.\glue 4.72495
+.\penalty 10000
+.\glue 4.72495
+.etc.
+
+[19]) [20] [21] (graphApp.ind
+Overfull \hbox (8.07793pt too wide) in paragraph at lines 52--53
+[]|  \elvrm graphAp-pReg-is-ter-Graphic(), 10 
+
+\hbox(8.2125+2.73749)x162.5, glue set - 1.0
+.\hbox(0.0+0.0)x0.0
+.\rule(*+*)x0.0
+.\penalty 10000
+.\glue 20.0
+.\glue 0.0
+.etc.
+
+[22
+
+]) (graphApp.aux) ) 
+Here is how much of TeX's memory you used:
+ 300 strings out of 6963
+ 2931 string characters out of 63241
+ 35480 words of memory out of 262141
+ 2221 multiletter control sequences out of 9500
+ 19612 words of font info for 74 fonts, out of 72000 for 255
+ 14 hyphenation exceptions out of 607
+ 17i,10n,17p,181b,362s stack positions out of 300i,40n,60p,3000b,4000s
+
+Output written on graphApp.dvi (24 pages, 31252 bytes).

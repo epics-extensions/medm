@@ -1,0 +1,16 @@
+#
+##################################################################
+####
+#### X resource specifications
+####
+####################################################################
+
+
+
+###
+### my Motif demo
+###
+testStrip*font:  -adobe-new century schoolbook-bold-r-normal--12-120-75-75-p-77-iso8859-1
+testStrip*borderColor blue
+testStrip*background: slate blue
+

@@ -1,0 +1,695 @@
+% MEDM operators manual
+%
+\documentstyle [12pt] {article}
+\title{
+{\huge MEDM\\{\Large Motif-based Editor/Display Manager}\\
+\vspace{12pt}Operator's Manual}
+\vspace{24pt}
+\author{Mark D. Anderson\\
+mdanderson$@$anl.gov\\
+Argonne National Laboratory}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\bf
+\noindent Some operational hints about the use of the Motif-based
+editor/display manager (medm) are described here for the user.  This is not
+intended to be a full description of the features of MEDM.
+\end{abstract}
+
+\section{Introduction}
+
+MEDM is an interactive display screen creation, editing and execution tool,
+which allows users to create dynamic displays in the EPICS environment.
+Channel Access is used as the communication protocol to objects (channels) in
+the IOC namespace, and channels in that name space can have objects
+`attached' to them such that the channel (process variable) behavior results
+in dynamic visual behaviors.\\
+
+
+\section{X11 requirements}
+
+Motif and other internationalized applications must have proper locale
+and I18N environments setup.  This includes, for X11R5, /usr/lib/X11/nls/
+or the XNLSPATH environment variable set to the appropriate directory
+(usually .../lib/X11/nls under the X11 installed tree).  Failure to do
+this will result in crashes of such applications!\\
+
+\noindent For utilization of all of MEDM's features, it is highly recommended
+that the X server used be X11R5 (or later) based.  Note that SUN's OpenWindows
+XNews server is {\bf not} a supported X server! \footnote{Most MIT X and
+Motif applications rely upon proper X server behavior
+with respect to ordered event delivery, et cetera. SUN's XNews server has known
+bugs in this regard (witness SUN's bug list for the server) and is being
+replaced by an MIT code-base X11R5 server (in OpenWindows 3.3, as well
+as the COSE Common Desktop Environment).  Once CDE is available for SUNs, this
+problem will no longer be an issue.}
+
+
+\section{Command Line}
+
+MEDM is invoked as "medm" on the command line with optional arguments
+for controlling its operational modes.  The standard X resource command
+line options (such as -display xyz:0, etc) are also valid options.
+
+\noindent The structure of the command line is:\\
+
+\begin{tabular}{ll}
+{\bf \% medm} & {\bf [-x $|$ -e] [-local $|$ -cleanup] [-cmap]
+[-displayFont $<font>$]}\\
+	&  {\bf [-macro $"<name>=<value>,<name>=<value>..."$]}\\
+	& {\bf [...X based options...] [display file names]} \\
+\end{tabular}
+
+\vspace{12pt}
+\begin{tabular}{ll}
+{\bf -x}	& startup medm in execute-only (or ``dm'') mode\\
+{\bf -e}	& startup medm in edit/execute (or ``edd/dm'')\\
+		& mode (the default)\\
+{\bf -local}	& don't participate in remote display protocol\\
+		& (the default is to participate and dispatch\\
+		& display requests to a remote MEDM if possible)\\
+{\bf -cleanup}	& (seldom needed) support remote display protocol,\\
+		& but ignore existing MEDM and "take possession" of\\
+		& remote display responsibilities\\
+{\bf -cmap}	& use private colormap to circumvent unallocable\\
+		& colors in default colormap (this may cause colormap\\
+		&  flashing)\\
+{\bf -displayFont $<font>$} & select aliased or scalable fonts (see {\bf Fonts}\\
+		& section below) in default colormap (this may cause\\
+		& colormap flashing)\\
+{\bf -macro $"<n=v>,..."$}    &  apply macro substitution as specified in the\\
+		& name=value (n=v)... string to all command-line\\
+		& specified display list files (this option requires\\
+		& -x also)\\
+{\bf $*$.adl}	& a list of ascii display list files\\
+\\
+\end{tabular}
+
+\vspace{12pt}
+\noindent For example:\\
+
+\begin{tabular}{ll}
+medm			& starts up in default (edit) mode\\
+medm -e xyz.adl		& starts up editing one display \\
+medm -local		& starts up in default (edit) mode\\
+			& starts up new local executable\\
+			& doesn't participate in remote\\
+			& protocols\\
+medm -x abc.adl def.adl	& starts up executing two displays,\\
+			& and does take advantage of or support\\
+			& display protocol\\
+medm -cmap		& starts up using a private colormap;\\
+			& this is useful when run on a display\\
+			& with other color-greedy applications\\
+medm -displayFont scalable & starts up using default scalable\\
+			& fonts (medm default is aliased)\\
+medm -x -macro "a=b,c=d" t1.adl & starts up in execute mode,\\
+			& performing macro substitution on all\\
+			& occurrences of \$(a) and \$(c) in\\
+			& display file t1.adl\\
+ 
+\end{tabular}
+
+\vspace{12pt}
+\noindent N.B. The usual X/Xt oriented command line arguments are supported
+also, by default
+
+
+\section{Composite Product}
+
+{\bf MEDM performs the functions of both dm and edd; i.e., it performs
+both display creation/editing and display execution functions.}\\
+
+\noindent Once medm is running, displays are opened via selecting
+File$\rightarrow$Open...  from the main menu and selecting the desired ADL
+($*$.adl) file from
+the dialog box.  The file is opened in either Edit or Execute mode, based on
+the selected mode in the main window.  These toggle buttons allow the user
+to alternately go between Edit and Execute for all opened displays.
+When in Execute mode, most Edit functions are not available for selection,
+and normal Execute semantics are provided.
+
+\subsection{Normal Motif Operation}
+
+MEDM conforms to the Motif Style Guide.  Hence standard mnemonics and
+accelerators are available for interface navigation. 
+
+
+\subsection{Operational Aspects of the Interface}
+
+\subsubsection{Mode Buttons}
+
+MEDM has two modes of operation, {\bf Edit} and {\bf Execute};
+the edit mode is the mode in which screens are created; execute mode is the
+mode in which screens are activated and attached to underlying channels in IOCs.
+Thus, in execute-mode, screen objects exhibit behavior based on the state of
+their associated channels.  MEDM's mode is reflected and changed by
+interaction with the Edit and Execute buttons (in a Mode radio box) in
+MEDM's main window.
+
+\subsubsection{Menu Bar}
+
+This application has five pulldown menus in the main window:
+File, Edit, View, Palettes, and Help.
+
+\subsubsection{File}
+
+The File pulldown menu controls file-based operations, and overall program
+execution.\\
+
+\begin{tabular}{ll}
+\underline{New} & create a new display\\
+\underline{Open...} & open an existing display\\
+\underline{Save} & save an opened display\\
+\underline{Save As...} & save an opened display as a (potentially new) file\\
+\underline{Close} & close an opened display\\
+\underline{Print...} & print an opened display\\
+\underline{Exit} & exit MEDM\\
+\end{tabular}
+
+
+\subsubsection{Edit}
+
+The Edit pulldown menu controls editing operations.\\
+
+\begin{tabular}{ll}
+\underline{Cut}  & cut selected objects from the display into the clipboard\\
+\underline{Copy}  & copy selected objects from display into clipboard\\
+\underline{Paste}  & copy objects in clipboard into display\\
+\underline{Delete}  & delete selected objects from display \\
+\underline{Raise}  & place selected objects in front of other objects\\
+\underline{Lower}  & place selected objects behind other objects\\
+\underline{Group}  & group selected objects into single composite object\\
+\underline{Ungroup}  & return a group to its constituent objects\\
+\underline{Align$\rightarrow$}  & align selected objects various ways\\
+\underline{Unselect}  & unselect any selected objects\\
+\underline{Select All}  & select all objects in the display\\
+\end{tabular}
+
+\subsubsection{View}
+
+View is currently not implemented.
+
+\subsubsection{Palettes}
+
+There are three palettes which can be popped up, which are described later in
+this document:\\
+
+\begin{tabular}{ll}
+\underline{Object...} & object palette which allows object creation\\
+\underline{Resource...} & resource palette which displays and allows editing of object resources\\
+\underline{Color...} & color palette which allows color assignments to objects\\
+\end{tabular}
+
+\subsubsection{Help}
+
+Help is currently unfinished; `On Version...' is implemented and displays
+the version information about the instance of MEDM running.
+
+\subsection{Object Palette}
+
+The object palette presents the available objects with which a user can 
+construct a display.  These are:\\
+
+\begin{tabular}{ll}
+Graphics: & \underline{Rectangle}, \underline{Oval}, \underline{Arc},
+	  \underline{Text}, \underline{Line},\\
+	  & \underline{Image}, \underline{Polygon}, \underline{Polyline}\\
+\\
+Monitors: & \underline{Meter}, \underline{Bar}, \underline{Indicator},
+\underline{Cartesian Plot}\\
+	  &  \underline{Strip Chart}, \underline{Text Update}\\
+\\
+Controllers: & \underline{Choice Button}, \underline{Menu},
+\underline{Text Controller}, \\
+	 & \underline{Valuator}, \underline{Shell Command},\\
+	 &  \underline{Message Button}, \underline{Related Display}\\
+\\
+Misc: & \underline{Select... (selection mode cursor)}\\
+\end{tabular}
+
+
+\subsection{Resource Palette}
+
+Each of the above objects has a set of resources which are editable
+by the user; these resources describe the appearance and behavior of
+the object.  Some common resources include: X, Y, Width, Height,
+Foreground, etc.  Other less universal resources include Fill Style,
+Color Modes, Visibility, Line Width, Channel, Readback Channel (for
+monitor objects), Control Channel (for controller objects), etc. \\
+
+\noindent See MEDM's resource palette for the resources associated with each
+object type.
+
+\subsection{Color Palette}
+
+The color palette is popped up whenever a color selection for an object
+is required (e.g., when the Foreground or Background button is pressed
+in the resource palette).  The color is assigned by selecting (pressing)
+the desired color in the color palette.  The color palette remains
+visible after the selection for the user to assign and inspect
+many colors in succession if desired.
+
+
+\section{Fonts}
+
+MEDM uses several methods for font specification.  The flag\\
+
+\begin{tabular}{ll}
+$-$displayFont & $<font>$ \\
+	     & with $<font>$ one of \{alias, scalable, $<user-specified>$\}\\
+\end{tabular}
+\vspace{12pt}
+
+\noindent allows users to select the default (aliased names), default scalable,
+or user-specified scalable fonts.  The default is $-$displayFont alias.
+
+\subsection{Default, Fixed Fonts}
+
+For default, fixed fonts, MEDM uses ``logical font names'' internally, to deal
+with server font variations.  Consequently, font aliases are necessary for the
+various servers on which medm will run.  For the SUNs, the file
+fonts.alias.sun should be copied into a common (or user specific) font area
+as fonts.alias, and the font path for the server set to include that
+directory.\\
+
+\noindent The default (no $-$displayFont specified) is the same as:\\
+
+\% medm $-$displayFont alias\\
+
+\noindent For example, a user may create an Medm directory, copy medm and
+fonts.alias.sun into that area, and then move (cd) to that directory.  The
+user may then\\
+
+\% mv fonts.alias.sun fonts.alias\\
+
+\% xset $+$fp \$cwd/  \hspace{24pt}(or other full path specification terminated by /)\\
+
+\noindent To verify that the fonts are included, do a\\
+
+\% xset $-$q\\
+
+\noindent to see that the font path is setup appropriately, and do a\\
+
+\% xlsfonts $|$ grep widgetDM\\
+
+\noindent to verify that the logical font names are resolved.\\
+
+
+\subsection{Default, Scalable Fonts}
+
+The user can invoke MEDM with the   $-$displayFont scalable    option.
+MEDM then uses the default Speedo outline font (bitstream) supplied
+by the X11R5 font server.  Users should add a font server to their
+font path via:\\
+
+\% xset $+$fp tcp/$<hostname>$:$<portnumber>$\\
+
+\noindent For example:\\
+
+\% xset $+$fp tcp/phebos:7000\\
+
+\% medm $-$displayFont scalable\\
+
+
+\subsection{User-Specified, Scalable Fonts}
+
+The user can invoke MEDM with the   $-$displayFont $<font>$    option.
+MEDM then uses the specified font supplied by the X11R5 font server.
+This font should be an XLFD name (all 14 hyphens, other fields can be
+wildcarded though) and scalable (i.e., point and pixel size = 0).
+Users should add a font server to their font path as above.
+
+\noindent For example:\\
+
+\% medm $-$displayFont $-$bitstream-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1\\
+
+
+
+\section{Accelerators and Translations}
+
+There are several built-in accelerators or translations for mouse and
+keyboard events in the Motif interface built with the Motif-based display
+manager.\\
+
+\subsection{Main Display Popup Menu}
+
+The main display popup menu (with Print and Close options for the current
+display) is popped-up by depressing MB3 in nearly any location on the display
+window. One of these options is selected by releasing MB3 when the desired
+item is under the cursor and ``rasied''.
+
+
+\subsection{Valuator/Scale}
+
+The valuator/scale object has several modes of operation, which implement
+fine/coarse sensitivity, as well as direct value selection.\\
+
+\noindent Dragging the valuator/scale with MB1 depressed moves and transmits
+values proportional to the range of the valuator scaled into the width of the
+valuator (usually  $>=$ 1\% for this application, depending upon the selected
+width of the valuator). Clicking MB1 on either side of the valuator selector
+moves and transmits a value increment or decrement of specified precision
+(for this application) of the valuator object.  Clicking $<$Ctrl$>$-MB1 on
+either side of the valuator selector moves and transmits a value increment
+or decrement of 10x specified precision of the valuator object.\\
+
+\noindent In addition to the normal mouse-activated mode of usage for the
+valuator/scale, the arrow keys and shift key take on functions as well.
+Fine-grained Increment 
+and Decrement are accomplished with the up/down or left/right arrow keys, 
+depending upon the orientation of the valuator/scale.  The slider will move 
+in the direction ``pointed to'' by the arrow key being pressed (as expected), 
+when input focus is set to that widget.  For instance, $<$right-arrow$>$ will 
+move the slider by $+$1 precision unit when the orientation is HORIZONTAL and 
+processingDirection is MAX\_ON\_RIGHT.\\
+
+\noindent In conjunction with increment/decrement, the $<$Ctrl$>$ key can be
+used to specify a coarse-grained increment/decrement.  Hence,
+$<$Ctrl$>$$<$up-arrow$>$,
+for instance, will move the slider by $+$10 precision units when the orientation
+is VERTICAL and processingDirection is MAX\_ON\_TOP.\\
+
+\noindent The specified precision for motion of the valuator is specified in a
+dialog box which is popped up by depressing MB3 in the valuator/scale. A series
+of toggle buttons with values of log10(precision) are selectable, with
+the current precision indicated by the depressed toggle.
+Also, for the highest precision modification of associated process variables,
+the keyboard entry dialog box can be used to specify a direct-entry
+value to be written to the valuator and channel.\\
+
+
+
+\subsection{Text Entry/Text Field}
+
+Several edit modes are supported for the text entry or text field widget.
+In addition to point-click positioning, the left and right arrow keys
+allow the cursor to be positioned anywhere in the field. Similarly, backspace
+and delete allow characters to be removed from the string/field.  Carriage
+Return ($<$CR$>$) sends the value;  additionally, leaving the widget also 
+transmits the current value back to the application.\\
+
+\section{Related Displays}
+
+As in the Xlib-based display manager, the environment variable
+EPICS\_DISPLAY\_PATH should contain the directory/directories where
+related displays (for a given display) can be located. This can
+be a single directory name, or a colon-separated list of directories,
+including {\bf .}, {\bf ..}, etc.  For example:
+
+\% setenv EPICS\_DISPLAY\_PATH .:..:/usr/tmp/displays:/usr/tmp/adl\\
+
+
+
+
+\section{Display Editing}
+
+Based on the selected button in the object palette, the editor can be
+in CREATE or SELECT mode.  These modes determine the semantics of
+button presses in an active display.
+
+\newpage
+\noindent When the select button is depressed in the object palette, the
+editor is in SELECT mode and the following semantics apply:\\
+
+\begin{tabular}{ll}
+MB1: & select an object (or objects) on the screen and\\
+     & highlight. the resource palette is updated to\\
+     & reflect the selected item's internal data.\\
+     & a drag operation under MB1 selects a group of\\
+     & objects on the screen (including those objects\\
+     & wholly bounded by the selection rectangle).\\
+\\
+Shift-MB1: & multiple-select.  a set of objects are selected \\
+           & for operations (such as grouping).\\
+\\
+MB2: & selected object(s) are moved while MB2 is depressed \\
+     & and deposited on button release.  if no objects are\\
+     & currently selected, the object under the cursor when\\
+     & MB2 is depressed in made the current object for \\
+     & moving. to cancel the effect of the current move,\\
+     & the cursor may be dragged off the current display\\
+     & window and the button released.  this cancels the\\
+     & effect of the move.\\
+\\
+Ctrl-MB2: & selected object(s) are resized while MB2 is depressed.\\
+	  & if no objects are currently selected, the object under\\
+	  & the cursor when MB2 is depressed in made the current\\
+	  & object for resizing. to cancel the effect of the current\\
+	  & resize, the cursor may be dragged off the current display\\
+	  & window and the button released.  this cancels the\\
+	  & effect of the resize.\\
+	  & N.B. this mechanism performs ABSOLUTE resizing, in which\\
+	  & all objects are extended in width and height by the\\
+	  & magnitude of the x and y mouse motion.  for PROPORTIONAL\\
+	  & resizing in which selected objects resize consistently,\\
+	  & the object must first be grouped.\\
+\\
+MB3: & popup applicable menus.\\
+\end{tabular}
+
+\newpage
+\noindent When an object (e.g. rectangle) button is depressed in the object
+palette, the editor is in CREATE mode and the following semantics apply:\\
+
+\begin{tabular}{ll}
+MB1: & an object of current type is created, starting at\\
+     & the origin of button press, of size determined by\\
+     & button release (a bounding rectangle is rubberbanded).\\
+     & the resource palette is updated to reflect the object's\\
+     & internal data.\\
+\\
+MB2: & (as in SELECT mode above)\\
+     & selected object(s) are moved while MB2 is depressed\\
+     & and deposited on button release.  if no objects are\\
+     & currently selected, the object under the cursor when\\
+     & MB2 is depressed in made the current object for \\
+     & moving. to cancel the effect of the current move,\\
+     & the cursor may be dragged off the current display\\
+     & window and the button released.  this cancels the\\
+     & effect of the move.\\
+\\
+Ctrl-MB2: & (as in SELECT mode above)\\
+	  & selected object(s) are resized while MB2 is depressed.\\
+	  & if no objects are currently selected, the object under\\
+	  & the cursor when MB2 is depressed in made the current\\
+	  & object for resizing. to cancel the effect of the current\\
+	  & resize, the cursor may be dragged off the current display\\
+	  & window and the button released.  this cancels the\\
+	  & effect of the resize.\\
+	  & N.B. this mechanism performs ABSOLUTE resizing, in which\\
+	  & all objects are extended in width and height by the \\
+	  & magnitue of the x and y mouse motion.  for PROPORTIONAL\\
+	  & resizing in which selected objects resize consistently,\\
+	  & the object must first be grouped.\\
+\\
+MB3: & (as in SELECT mode above)\\
+     & popup applicable menus.\\
+\end{tabular}\\
+
+
+\noindent For fine-tuning placement of objects when editing, use the arrow keys
+(up/down/left/right) to move selected objects in the display one pixel
+at a time in the direction of the arrow.  Note that many widgets trap
+input events, therefore  the cursor should not be positioned over a
+widget when this motion is being requested.  Input focus must be
+on the display (or its top level shell) for this mechanism to work.\\
+
+
+\section{New features}
+
+\subsection{Image}
+
+Images can be imported for inclusion in a display.  The image
+icon (camera) can be selected, and the location and size of
+the desired image then selected by depressing and dragging
+MB1 in the display.  A file selection box then prompts the
+user for the display file to be incorporated.  At the present
+time, GIF is the only supported format, and files must have
+the ``.gif'' suffix.\\
+
+\subsection{Shell Command}
+
+Shell commands can be incorporated into a display
+by selection of the ``shell'' (exclamation point) icon,
+followed by MB1 depression
+and dragging in the display.  The labels and commands (and
+optional arguments) are then specifiable in the ``Label/Cmd/Args''
+dialog box.  Note:  for prompted input, a question mark ``?'' in
+the command or args field instructs the program to popup a
+dialog to allow the user to complete the command string before
+execution.  Also note:  the shell command blocks by default
+upon execution.  To support asynchronous behavior, the command
+or argument should be followed by the ampersand ``\&'' to instruct
+the system to run the command in the background.  All stdout/stderr
+output, at this time, is still tied to the controller terminal
+window.  Also note that shell command and argument strings can
+be macro-substituted via the \$(name) construct (see related
+display description in this document).\\
+
+\subsection{Cartesian Plot}
+
+Cartesian plot data will utilize up to 2 Y axes for
+display.  Trace 0 will use the left Y axis, traces 1-7 (if
+applicable) will use the right Y axis.  Hence, to plot power
+vs. thermocouple values, trace 0 could be power, and traces 1-7
+could be the thermocouples (since these will probably all have
+the same scale, sharing the Y axis is preferable).\\
+
+\noindent Cartesian Plots can be made of scalars, scalar vs. scalar,
+vector, vector vs. scalar, and vector vs. vector.  For ``incomplete''
+data such as vector (vs. nothing) the other independent variable
+will be filled in with an index (element position number).
+Vector vs. scalar allows users to simulate display of error bars
+by displaying a set (vector) of data at a point (similarly, scalar
+vs. scalar with one scalar value fixed and the other varying, with
+a count greater than 1 and erase oldest ON can show ``history'' of
+values at a point).  Vector vs. vector supports ``ordered pair plots''
+where users can supply an X vector of data and a Y vector of data,
+with the resultant plot being (x[0],y[0]), (x[1],y[1]), etc.\\
+
+\noindent Cartesian Plots update internal data as any constituent channels
+update;  the visual state of the plots can be updated either as a result
+of any channel updates, or as the result of a {\bf trigger channel} update.
+Users can specify a channel as a trigger channel and tie visual updates
+of the plot to the update rate of the trigger channel.  This throttles
+visual updates to predictable and possibly more optimal/efficient rates.\\
+
+\subsection{Macro Substitution} 
+
+MEDM now supports macro substitution (including nested,
+or parent-to-child substitution) for related displays.  \\
+
+\noindent Related displays can be called with an arguments string of the form
+``name=value [,name=value,...]''.  The related display then substitutes
+in its space all occurrences of ``\$(name)'' with ``value''.\\
+
+\noindent A parent related display can pass to it's child related display a
+value in its space by passing an argument string of the form
+``name=\$(name)XYZ'', etc.\\
+
+\noindent Shell command and argument strings are also substituted in related
+displays, and referenced similarly via the \$(name) construct.\\
+
+\subsection{Polyline and Polygon Support}
+
+Polylines and polygons are available from
+the object palette, in both ``constrained'' and ``unconstrained''
+form.  Unconstrained drawing allows the user to click (MB1) and
+generate vertices for a polyline or polygon arbitrarily.
+SHIFT-MB1 allows the user to generate vertices which are multiples
+of 45 degrees from the previous point (this allows easy horizontal
+or vertical line generation, for instance).\\
+
+\noindent Note that polygons in fill mode ``outline'' are similar to polylines,
+except that polygons will close the figure and polylines do not.
+Also note that Vertex editing is now available for Line, Polyline
+and Polygon objects.  Selection of vertices of selected objects
+via MB1-press and subsequent drag until MB1-release allows vertices
+to be moved.\\
+
+
+
+\section{Drag-And-Drop}
+
+MEDM, in execute mode, allows via the drag-and-drop mechanism (MB2),
+the deposition of object process variable names onto other
+objects or programs.  For example, depressing MB2 on a controller
+(e.g., valuator) will retrieve the underlying channel's name, and allow
+it to be dropped onto other objects (e.g., text fields in the same or other
+Motif applications) or other programs (e.g., KM - the knob manager program,
+which for instance, can then assign that channel to the specified knob
+and initiate physical control).\\
+
+\noindent This DND functionality has been extended to include {\bf all}
+monitor-able objects (i.e., objects which have an associated process
+variable): controllers, monitors, and dynamic graphic objects.  Note
+that for Cartesian Plots and Strip Charts, vectors or matrices of
+channel names are "dragged".  Other DND clients must gain knowledge of
+these vectors of data for the vector DND protocol to be useful to them.
+Note that the channel names are rendered according to the alarm color
+of the underlying channel; thus the DND operation conveys underlying
+channel name and channel alarm severity, in the usual manner (R = major
+alarm, Y = minor alarm, G = no alarm, W = valid/invalid (e.g. connection
+lost) alarm).\\
+
+
+
+\section{``Smart Startup''}
+
+In order to amortize the cost of Xt Intrinsics and Motif initialization
+over many displays, and to offer an efficient way to start up MEDM
+displays ``after-the-fact'', a remote MEDM request protocol has
+been established.  \\
+
+\noindent MEDM by default now looks for other MEDM's running (on ANY machine)
+which have the same display device as the requested display.  If one is found,
+the display request is forwarded to the remote MEDM for processing.  This
+saves startup time of several MEDM processes which are all going to the
+same display.\\
+
+\noindent To override this behavior, use the ``-local'' parameter on the command
+line.  MEDM invoked with -local (in either edit or execute mode) will
+not participate in the ``smart-startup'' protocol and act independently
+of other MEDMs.  (The default is not -local, i.e., DO participate in
+smart-startup protocol).\\
+
+\noindent N.B. - this request protocol does not work when the two machines
+running MEDM do not share a file namespace.  Also note that this obviates the
+MEDM startup library and application messaging scheme which has been 
+discussed.\\
+
+\noindent MEDM should always be stopped via the File$\rightarrow$Exit
+menu selection.
+If MEDM is killed via a SIGKILL or SIGSTOP signal, some X window
+property cleanup may be required.  If MEDM is invoked, makes a remote
+display request and returns (very quickly) but no display is ever
+created, then start MEDM in ``cleanup'' mode:\\
+
+\% medm -cleanup ...\\
+
+\noindent This starts up MEDM in a mode which ignores remote MEDMs, and does
+the proper X property cleanup on exit.\\
+
+\noindent Alternatively, to effect the same ``cleanup'' as above, the
+X properties can be deleted from the X server manually:\\
+
+\% xprop -root $|$ grep MEDM \hspace{24pt} \# see if an MEDM property is stored\\
+
+\noindent If there is one, then do the following:\\
+
+\% xprop -root -remove $<property>$\\
+
+% note this uses \[ \] for "displaymath" env. rather than simple math env.
+\noindent where \[ <property>  \hspace{12pt} \in \left\{ \begin{array}{ll}
+		MEDM\_EDIT\_FIXED, & MEDM\_EDIT\_SCALABLE\\
+		MEDM\_EXEC\_FIXED, & MEDM\_EXEC\_SCALABLE\end{array} \right\}
+\] \\
+
+\noindent depending on which mode MEDM you are requesting (medm -e or -x)
+and whether fixed (aliased) or scalable fonts are used (-displayFont alias
+or scalable).\\
+
+
+\section{Aspect Ratio Preserving Resize}
+
+MEDM in execute mode allows run-time resizing of displays.  Since the user
+is totally free to pick sizes to his liking, the aspect ratio of the
+original display can be severely distorted.  Users wishing to preserve
+the aspect ratio of a display at run-time can do a SHIFT-modified resize.
+To do this, the user invokes the resize of the display (window) as appropriate
+for the window manager in use, with the Shift key depressed at the time of
+completion of the resize operation.\\
+
+\noindent Note that the resizing is not constrained at the time of resize, but
+upon completion the display will be resized to (``snap to'') the appropriate
+sizes of the width and height dimensions.  Both reducing and enlarging of
+the display is supported.\\
+
+
+
+\end{document}

@@ -1,0 +1,86 @@
+
+		    ==============================================
+		    =  Motif-based Display Editor/Manager (MEDM) =
+		    ==============================================
+
+
+INTRODUCTION:
+
+MEDM is a composite display editor and manager tool, which provides users
+the ability to edit and execute displays from within a single program
+context.  This saves system resources such as virtual memory, and
+improves system throughput.
+
+MEDM is implemented as a main control panel and several "palettes".
+
+The main control panel groups functions according to large scale or
+global actions: such as display file selection  (open, close, save, print),
+edit/execute mode toggling, palette management, and global (and context
+sensitive) help.
+
+Three palettes are available:  Object, Resource, and Color.
+
+The Object palette controls the edit functions of the display, including
+a set of buttons which define what edit actions take place in a display.
+These include select (the canonical upper-right-pointing arrow), and
+the full suite of display element types.  
+
+The Resource palette displays (and allows setting of) the current resources
+for a selected object in a display.  This includes status information, such
+as display type, along with the full set of parameters which apply to
+the current object.  This palette is visible whenever an object is
+selected in a display;  when multiple objects are selected, its contents
+are not displayed.  Within the resource palette, "bundles" can be created
+which are aggregations of resource values.  These bundles can be applied
+by being dragged/dropped onto a (set of) selected object(s) to change their
+resource values.
+
+The Color palette displays the current colormap settings.  Color editing
+is not supported at this time (at least partly to constrain color
+selection in display design, to encourage visual consistency of displays).
+
+
+
+
+
+
+Current Functionality Checklist (1 Sept. 1993)
+==============================================
+
+DM/EDD Display element types supported:
+
+ Static/Dynamic types
+ --------------------
+ + rectangle
+ + oval
+ + arc
+ + text
+ + line
+ + image (GIF)
+ + polyline
+ + polygon
+
+ Monitor types
+ -------------
+ + meter
+ + bar
+ + indicator
+ + text update
+ + strip chart
+ + cartesian plot
+
+ Controller types
+ ----------------
+ + choice button
+ + message button
+ + menu
+ + text entry
+ + valuator
+ + related display
+ + shell command
+
+and -
+
+ + Composite (Group) (from Edit menu)
+
+

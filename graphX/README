@@ -1,0 +1,47 @@
+#
+###  BUILD command script for graphX building
+#
+
+ Mark D. Anderson
+ Argonne National Laboratory
+ mda@phebos.aps.anl.gov
+ anderson@el3.el.anl.gov
+ 708/972-5702
+
+ENHANCEMENTS:
+------------
+15 June 1991 - Interactive Pan/Zoom
+
+Interaction (pan and zoom) is now supported for the 1 and 2D plot types
+(seql and graph plots).  Clicking (MB1) and rubber-banding a rectangle
+in the data area of these plots will zoom the plot into the specified
+region of interest.  To unzoom, click (MB1) outside the data area (by the
+title, or outside the axes anywhere, for instance).  This functionality
+is added via  seqlSetInteractive(seql,TRUE) or graphSetInteractive(graph,TRUE)
+calls.  See the testGraphX/testGraph.c or testGraphX/testSeql.c example
+programs...
+
+
+
+INSTALLATION:
+------------
+
+(Note:  all of the below locations are relative to the top (graphX) directory)
+
+To build the base (X11 and Xt only) graphX libraries, enter  "make X11".
+The graphX.a and printUtils.a libraries will be built.
+## for our friends at LANL/GTA and ANL/APS - do a "make epics"
+------------ users of fdmgr should now do a -DEPICS rather than -DGTA
+
+To build the Motif-based graphApp layer and test programs in addition to
+the above, enter "make all".
+
+To clean out objects, executables and libraries, enter "make clean".
+
+
+These Makefiles presume fairly standard placement of includes and libraries.  
+When a make fails, it is probably due to problems related to the location 
+of the widget set and X includes and libraries.  At this point, editing
+the offending Makefile is the only recourse.  These Makefiles are fairly 
+straight-forward and should pose no particular problem in straightening out
+for specific installations.

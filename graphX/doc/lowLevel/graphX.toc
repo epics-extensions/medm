@@ -1,0 +1,113 @@
+\contentsline {chapter}{\numberline {1}Introduction}{5}
+\contentsline {chapter}{\numberline {2}Plot Types}{7}
+\contentsline {section}{\numberline {2.1}Plot Families}{7}
+\contentsline {section}{\numberline {2.2}1-D plots}{8}
+\contentsline {subsection}{\numberline {2.2.1}Seql plot family}{8}
+\contentsline {section}{\numberline {2.3}2-D plots}{8}
+\contentsline {subsection}{\numberline {2.3.1}Graph plot family}{8}
+\contentsline {subsection}{\numberline {2.3.2}Strip Chart family}{8}
+\contentsline {section}{\numberline {2.4}3-D plots}{9}
+\contentsline {subsection}{\numberline {2.4.1}Graph3d plot family}{9}
+\contentsline {subsection}{\numberline {2.4.2}Surface plot family}{9}
+\contentsline {section}{\numberline {2.5}Display Styles}{10}
+\contentsline {chapter}{\numberline {3}Calling Sequences}{13}
+\contentsline {section}{\numberline {3.1}Nomenclature}{13}
+\contentsline {subsection}{\numberline {3.1.1}Init}{13}
+\contentsline {subsection}{\numberline {3.1.2}Set\pldots }{14}
+\contentsline {subsection}{\numberline {3.1.3}Draw\pldots }{14}
+\contentsline {subsection}{\numberline {3.1.4}Resize}{14}
+\contentsline {subsection}{\numberline {3.1.5}Refresh}{14}
+\contentsline {subsection}{\numberline {3.1.6}Print}{14}
+\contentsline {subsection}{\numberline {3.1.7}Term}{15}
+\contentsline {section}{\numberline {3.2}Include Files}{16}
+\contentsline {section}{\numberline {3.3}1-D Plots}{17}
+\contentsline {subsection}{\numberline {3.3.1}Seql plot}{17}
+\contentsline {subsubsection}{\numberline {3.3.1.1}seqlInit()}{18}
+\contentsline {subsubsection}{\numberline {3.3.1.2}seqlSet()}{19}
+\contentsline {subsubsection}{\numberline {3.3.1.3}seqlSetRange()}{21}
+\contentsline {subsubsection}{\numberline {3.3.1.4}seqlSetRangeDefault()}{22}
+\contentsline {subsubsection}{\numberline {3.3.1.5}seqlSetDataColor()}{23}
+\contentsline {subsubsection}{\numberline {3.3.1.6}seqlSetDisplayType()}{24}
+\contentsline {subsubsection}{\numberline {3.3.1.7}seqlDraw()}{25}
+\contentsline {subsubsection}{\numberline {3.3.1.8}seqlSetLegend()}{26}
+\contentsline {subsubsection}{\numberline {3.3.1.9}seqlDrawLegend()}{27}
+\contentsline {subsubsection}{\numberline {3.3.1.10}seqlResize()}{28}
+\contentsline {subsubsection}{\numberline {3.3.1.11}seqlRefresh()}{29}
+\contentsline {subsubsection}{\numberline {3.3.1.12}seqlPrint()}{30}
+\contentsline {subsubsection}{\numberline {3.3.1.13}seqlTerm()}{31}
+\contentsline {section}{\numberline {3.4}2-D Plots}{32}
+\contentsline {subsection}{\numberline {3.4.1}Graph plot}{32}
+\contentsline {subsubsection}{\numberline {3.4.1.1}graphInit()}{33}
+\contentsline {subsubsection}{\numberline {3.4.1.2}graphSet()}{34}
+\contentsline {subsubsection}{\numberline {3.4.1.3}graphSetRange()}{36}
+\contentsline {subsubsection}{\numberline {3.4.1.4}graphSetRangeDefault()}{37}
+\contentsline {subsubsection}{\numberline {3.4.1.5}graphSetBins()}{38}
+\contentsline {subsubsection}{\numberline {3.4.1.6}graphSetDataColor()}{39}
+\contentsline {subsubsection}{\numberline {3.4.1.7}graphSetDisplayType()}{40}
+\contentsline {subsubsection}{\numberline {3.4.1.8}graphDraw()}{41}
+\contentsline {subsubsection}{\numberline {3.4.1.9}graphSetLegend()}{42}
+\contentsline {subsubsection}{\numberline {3.4.1.10}graphDrawLegend()}{43}
+\contentsline {subsubsection}{\numberline {3.4.1.11}graphResize()}{44}
+\contentsline {subsubsection}{\numberline {3.4.1.12}graphRefresh()}{45}
+\contentsline {subsubsection}{\numberline {3.4.1.13}graphPrint()}{46}
+\contentsline {subsubsection}{\numberline {3.4.1.14}graphTerm()}{47}
+\contentsline {subsection}{\numberline {3.4.2}Strip chart}{48}
+\contentsline {subsubsection}{\numberline {3.4.2.1}stripInit()}{49}
+\contentsline {subsubsection}{\numberline {3.4.2.2}stripSet()}{50}
+\contentsline {subsubsection}{\numberline {3.4.2.3}stripSetRange()}{53}
+\contentsline {subsubsection}{\numberline {3.4.2.4}stripSetDataColor()}{54}
+\contentsline {subsubsection}{\numberline {3.4.2.5}stripSetInterval()}{55}
+\contentsline {subsubsection}{\numberline {3.4.2.6}stripDraw()}{56}
+\contentsline {subsubsection}{\numberline {3.4.2.7}stripSetLegend()}{57}
+\contentsline {subsubsection}{\numberline {3.4.2.8}stripDrawLegend()}{58}
+\contentsline {subsubsection}{\numberline {3.4.2.9}stripResize()}{59}
+\contentsline {subsubsection}{\numberline {3.4.2.10}stripRefresh()}{60}
+\contentsline {subsubsection}{\numberline {3.4.2.11}stripPrint()}{61}
+\contentsline {subsubsection}{\numberline {3.4.2.12}stripPause()}{62}
+\contentsline {subsubsection}{\numberline {3.4.2.13}stripResume()}{63}
+\contentsline {subsubsection}{\numberline {3.4.2.14}stripTerm()}{64}
+\contentsline {section}{\numberline {3.5}3-D Plots}{65}
+\contentsline {subsection}{\numberline {3.5.1}Graph3d plot}{65}
+\contentsline {subsubsection}{\numberline {3.5.1.1}graph3dInit()}{66}
+\contentsline {subsubsection}{\numberline {3.5.1.2}graph3dSet()}{67}
+\contentsline {subsubsection}{\numberline {3.5.1.3}graph3dSetRange()}{69}
+\contentsline {subsubsection}{\numberline {3.5.1.4}graph3dSetRangeDefault()}{70}
+\contentsline {subsubsection}{\numberline {3.5.1.5}graph3dSetBins()}{71}
+\contentsline {subsubsection}{\numberline {3.5.1.6}graph3dSetZBins()}{72}
+\contentsline {subsubsection}{\numberline {3.5.1.7}graph3dSetDisplayType()}{73}
+\contentsline {subsubsection}{\numberline {3.5.1.8}graph3dDraw()}{74}
+\contentsline {subsubsection}{\numberline {3.5.1.9}graph3dResize()}{75}
+\contentsline {subsubsection}{\numberline {3.5.1.10}graph3dRefresh()}{76}
+\contentsline {subsubsection}{\numberline {3.5.1.11}graph3dPrint()}{77}
+\contentsline {subsubsection}{\numberline {3.5.1.12}graph3dTerm()}{78}
+\contentsline {subsection}{\numberline {3.5.2}Surface plot}{79}
+\contentsline {subsubsection}{\numberline {3.5.2.1}surfaceInit()}{80}
+\contentsline {subsubsection}{\numberline {3.5.2.2}surfaceSet()}{81}
+\contentsline {subsubsection}{\numberline {3.5.2.3}surfaceSetRenderMode()}{83}
+\contentsline {subsubsection}{\numberline {3.5.2.4}surfaceSetView()}{84}
+\contentsline {subsubsection}{\numberline {3.5.2.5}surfaceDraw()}{85}
+\contentsline {subsubsection}{\numberline {3.5.2.6}surfaceResize()}{86}
+\contentsline {subsubsection}{\numberline {3.5.2.7}surfaceRefresh()}{87}
+\contentsline {subsubsection}{\numberline {3.5.2.8}surfacePrint()}{88}
+\contentsline {subsubsection}{\numberline {3.5.2.9}surfaceTerm()}{89}
+\contentsline {section}{\numberline {3.6}Utilities and Macros}{90}
+\contentsline {subsection}{\numberline {3.6.1}Utility Functions}{90}
+\contentsline {subsubsection}{\numberline {3.6.1.1}Font Handling}{90}
+\contentsline {subsubsection}{\numberline {3.6.1.2}graphXGetBestFont()}{91}
+\contentsline {subsection}{\numberline {3.6.2}Macros}{93}
+\contentsline {chapter}{\numberline {4}Advanced Topics}{95}
+\contentsline {section}{\numberline {4.1}userData}{95}
+\contentsline {section}{\numberline {4.2}setOwnColors}{96}
+\contentsline {section}{\numberline {4.3}setOwnFonts}{96}
+\contentsline {section}{\numberline {4.4}dontLinearScale\pldots }{97}
+\contentsline {chapter}{\numberline {5}The Future}{98}
+\contentsline {chapter}{\numberline {6}Examples}{100}
+\contentsline {section}{\numberline {6.1}Seql plots}{101}
+\contentsline {section}{\numberline {6.2}Graph3d plots}{101}
+\contentsline {section}{\numberline {6.3}Graph plots}{102}
+\contentsline {section}{\numberline {6.4}Strip Charts }{111}
+\contentsline {section}{\numberline {6.5}Surface plots}{120}
+\contentsline {section}{\numberline {6.6}Compiling and Linking with the graphX library}{128}
+\contentsline {chapter}{\numberline {7}FYI}{129}
+\contentsline {section}{\numberline {7.1}Inclusion of PostScript figures in this document}{129}
+\contentsline {chapter}{Index}{130}

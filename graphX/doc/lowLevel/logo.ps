@@ -1,0 +1,17 @@
+%!
+% neat looking text shadowing, as illustrated on p. 68  of
+% PostScript Language - Tutorial and Cookbook
+
+%%BoundingBox: 221.0 377.4 390.0 446.0
+
+/Times-Italic findfont 50 scalefont setfont
+
+/printLabel
+ { 0 0 moveto (graphX) show } def
+
+ 240 390 translate
+
+ .95 -.05 0 {setgray printLabel -1 .5 translate } for
+ 1.0 setgray printLabel
+
+ showpage
