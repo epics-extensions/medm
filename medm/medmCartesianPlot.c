@@ -1832,6 +1832,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	} else {
 	    medmPostMsg(1,"cpAxisOptionMenuSimpleCallback: Element is no longer valid\n");
 	    XtPopdown(cartesianPlotAxisS);
+	    return;
 	}
     }
 
