@@ -1255,6 +1255,7 @@ void sendFullPathNameAndMacroAsClientMessages(
   Window targetWindow,
   char *fullPathName,
   char *macroString,
+  char *geometryString,
   Atom atom)
 {
   XClientMessageEvent clientMessageEvent;
@@ -1271,11 +1272,11 @@ void sendFullPathNameAndMacroAsClientMessages(
   clientMessageEvent.message_type = atom;
   clientMessageEvent.format = 8;
   ptr = fullPathName;
-/* leading "(" */
+  /* leading "(" */
   clientMessageEvent.data.b[0] = '(';
   index = 1;
 
-/* body of full path name string */
+  /* body of full path name string */
   while (ptr[0] != '\0') {
     if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
       XSendEvent(display,targetWindow,True,NoEventMask,
@@ -1286,16 +1287,16 @@ void sendFullPathNameAndMacroAsClientMessages(
     ptr++;
   }
 
-/* body of macro string if one was specified */
-  if (macroString != NULL) {
   /* ; delimiter */
-    if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
-      XSendEvent(display,targetWindow,True,NoEventMask,
-		(XEvent *)&clientMessageEvent);
-      index = 0;
-    }
-    clientMessageEvent.data.b[index++] = ';';
+  if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
+    XSendEvent(display,targetWindow,True,NoEventMask,(XEvent *)&clientMessageEvent);
+    index = 0;
+  }
+  clientMessageEvent.data.b[index++] = ';';
 
+
+  /* body of macro string if one was specified */
+  if (macroString != NULL) {
     ptr = macroString;
     while (ptr[0] != '\0') {
       if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
@@ -1308,6 +1309,27 @@ void sendFullPathNameAndMacroAsClientMessages(
     }
   }
 
+  /* ; delimiter */
+  if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
+    XSendEvent(display,targetWindow,True,NoEventMask,(XEvent *)&clientMessageEvent);
+    index = 0;
+  }
+  clientMessageEvent.data.b[index++] = ';';
+
+
+  /* body of macro string if one was specified */
+  if (geometryString != NULL) {
+    ptr = geometryString;
+    while (ptr[0] != '\0') {
+      if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
+        XSendEvent(display,targetWindow,True,NoEventMask,
+		(XEvent *)&clientMessageEvent);
+        index = 0;
+      }
+      clientMessageEvent.data.b[index++] = ptr[0];
+      ptr++;
+    }
+  }
 
 /* trailing ")" */
   if (index == MAX_CHARS_IN_CLIENT_MESSAGE) {
@@ -1359,7 +1381,11 @@ main(int argc, char *argv[])
   Boolean localMode = False, cleanupMode = False;
   int startPos, quoteIndex;
   char *macroString = NULL, *macroBuffer = NULL, *ptr;
+  char *geometryString = NULL;
   XColor colors[2];
+
+typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
+  msgClass_t msgClass;
 
 typedef enum {EDIT,EXECUTE,ERROR} OpMode;
   OpMode opMode = EDIT;
@@ -1427,6 +1453,8 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	    fontStyle = SCALABLE;
     } else if (!strcmp(argv[i],"-display")) {
 	displayName = ( ((i+1) < argc) ? argv[i+1] : NULL); savedIndex = i+1;
+    } else if ((!strcmp(argv[i],"-dg")) || (!strcmp(argv[i],"-displayGeomtry"))) {
+	geometryString = (((i+1) < argc) ? argv[i+1] : NULL); savedIndex = i+1;
     }
   }
   if (macroBuffer != NULL && opMode != EXECUTE) {
@@ -1459,7 +1487,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
  *  instance of MEDM is already running in proper startup mode (-e or -x) */
     if (opMode == EXECUTE) {
       if (fontStyle == FIXED) {
-        MEDM_EXEC_FIXED = XInternAtom(display,"MEDM_EXEC_FIXED",False);
+        MEDM_EXEC_FIXED = XInternAtom(display,"MEDM010407_EXEC_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -1471,7 +1499,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
         } else
 	  medmAlreadyRunning = False;
       } else if (fontStyle == SCALABLE) {
-        MEDM_EXEC_SCALABLE = XInternAtom(display,"MEDM_EXEC_SCALABLE",False);
+        MEDM_EXEC_SCALABLE = XInternAtom(display,"MEDM010407_EXEC_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -1486,7 +1514,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	
     } else if (opMode == EDIT) {
       if (fontStyle == FIXED) {
-        MEDM_EDIT_FIXED = XInternAtom(display,"MEDM_EDIT_FIXED",False);
+        MEDM_EDIT_FIXED = XInternAtom(display,"MEDM010407_EDIT_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -1498,7 +1526,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
         } else
 	  medmAlreadyRunning = False;
       } else if (fontStyle == SCALABLE) {
-        MEDM_EDIT_SCALABLE = XInternAtom(display,"MEDM_EDIT_SCALABLE",False);
+        MEDM_EDIT_SCALABLE = XInternAtom(display,"MEDM010407_EDIT_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -1563,20 +1591,20 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	      if (opMode == EXECUTE) {
 		if (fontStyle == FIXED)
 		  sendFullPathNameAndMacroAsClientMessages(
-			execFixedTargetWindow,fullPathName,macroBuffer,
+			execFixedTargetWindow,fullPathName,macroBuffer,geometryString,
 			MEDM_EXEC_FIXED);
 		else if (fontStyle == SCALABLE)
 		  sendFullPathNameAndMacroAsClientMessages(
-			execScalableTargetWindow,fullPathName,macroBuffer,
+			execScalableTargetWindow,fullPathName,macroBuffer,geometryString,
 			MEDM_EXEC_SCALABLE);
 	      } else if (opMode == EDIT) {
 		if (fontStyle == FIXED)
 		  sendFullPathNameAndMacroAsClientMessages(
-			editFixedTargetWindow,fullPathName,macroBuffer,
+			editFixedTargetWindow,fullPathName,macroBuffer,geometryString,
 			MEDM_EDIT_FIXED);
 		else if (fontStyle == SCALABLE)
 		  sendFullPathNameAndMacroAsClientMessages(
-			editScalableTargetWindow,fullPathName,macroBuffer,
+			editScalableTargetWindow,fullPathName,macroBuffer,geometryString,
 			MEDM_EDIT_SCALABLE);
 	      }
 	      XFlush(display);
@@ -1810,7 +1838,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 		strcat(fullPathName,"/");
 		strcat(fullPathName,argv[i]);
 	    }
-            dmDisplayListParse(filePtr,macroBuffer,fullPathName,
+            dmDisplayListParse(filePtr,macroBuffer,fullPathName,geometryString,
 					(Boolean)False);
 	    fclose(filePtr);
         }
@@ -1864,19 +1892,27 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	     (event.xclient.message_type == MEDM_EXEC_SCALABLE &&
 		opMode == EXECUTE && fontStyle == SCALABLE) ) {
 
-/* concatenate clientMessage events to get full name from form: (xyz) */
+          /* concatenate clientMessage events to get full name from form: (xyz) */
+	  char geometryString[256];
 	  completeClientMessage = False;
 	  for (i = 0; i < MAX_CHARS_IN_CLIENT_MESSAGE; i++) {
 	    switch (event.xclient.data.b[i]) {
 		/* start with filename */
 		case '(':  index = 0;
 			   ptr = fullPathName;
+			   msgClass = FILENAME_MSG;
 			   break;
 		/* keep filling in until ';', then start macro string if any */
 		case ';':  ptr[index++] = '\0';
-			   ptr = name;
-			   index = 0;
-			   break;
+                           if (msgClass == FILENAME_MSG) {
+                             msgClass = MACROSTR_MSG;
+                             ptr = name;
+                           } else {
+                             msgClass == GEOMETRYSTR_MSG;
+                             ptr = geometryString;
+                           }
+                           index = 0;
+                           break;
 		/* terminate whatever string is being filled in */
 		case ')':  completeClientMessage = True;
 			   ptr[index++] = '\0';
@@ -1889,7 +1925,7 @@ typedef enum {FIXED,SCALABLE} FontStyle;
 	  if (completeClientMessage) {
 	    filePtr = fopen(fullPathName,"r");
 	    if (filePtr != NULL) {
-	      dmDisplayListParse(filePtr,name,fullPathName,
+	      dmDisplayListParse(filePtr,name,fullPathName,geometryString,
 				(Boolean)False);
 	      fclose(filePtr);
 	    } else {

@@ -121,7 +121,7 @@ DisplayInfo *createDisplay(void);
 /* dmInit.c */
 DisplayInfo *allocateDisplayInfo(void);
 void dmDisplayListParse(FILE *filePtr, char *argsString, char *fullPathName,
-	Boolean fromRelatedDisplayExecution);
+	char *macroString, Boolean fromRelatedDisplayExecution);
 void parseCompositeChildren(DisplayInfo *displayInfo, DlComposite *dlComposite);
 
 /* eventHandlers.c */

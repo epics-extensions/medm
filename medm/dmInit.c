@@ -197,6 +197,7 @@ void dmDisplayListParse(
   FILE *filePtr,
   char *argsString,
   char *filename,
+  char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
   DisplayInfo *displayInfo;
@@ -417,7 +418,22 @@ if (dlDynamicAttribute != (DlDynamicAttribute *)NULL) {		\
 
   XtPopup(displayInfo->shell,XtGrabNone);
 
-
+  {
+    int x, y;
+    unsigned int w, h;
+    int mask;
+    mask = XParseGeometry(geometryString,&x,&y,&w,&h);
+    if ((mask & XValue) && (mask & YValue)
+        && (mask & WidthValue) && (mask & HeightValue)) {
+      XMoveResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y,w,h);
+    } else
+    if ((mask & XValue) && (mask & YValue)) {
+      XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
+    } else
+    if ((mask & WidthValue) && (mask & HeightValue)) {
+      XtResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),w,h);
+    }
+  }
 }
 
 
