@@ -1,3 +1,8 @@
+Version 2.2.9
+=============
+- bug fix
+  MEDM does not read the label field for meter object in the adl file correctly.
+
 Version 2.2.8
 =============
 - the arc graphic object will display the correct color.

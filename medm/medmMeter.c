@@ -329,7 +329,7 @@ DlElement *parseMeter(
           getToken(displayInfo,token);
           for (i=FIRST_LABEL_TYPE;i<FIRST_LABEL_TYPE+NUM_LABEL_TYPES;i++) {
             if (!strcmp(token,stringValueTable[i])) {
-              dlMeter->clrmod = i;
+              dlMeter->label = i;
               break;
             }
           }

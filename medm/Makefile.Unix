@@ -2,6 +2,12 @@
 # $Id$
 #
 # $Log$
+# Revision 1.17  1996/12/03 22:26:46  vong
+# Version 2.2.9
+# =============
+# - bug fix
+#   MEDM does not read the label field for meter object in the adl file correctly.
+#
 # Revision 1.16  1996/10/10 18:24:26  vong
 # change Makefile.Unix to get medm to build under sun4 because there
 # is no libX in the /usr/lib directory.
@@ -215,7 +221,7 @@ PROD = medm
 #STATIC_BUILD = YES
 include $(EPICS)/config/RULES.Unix
 
-#CC = cc -g
+CC = cc -g
 #CC = gcc
 
 medm: $(OBJS) $(DEPLIBS)
