@@ -10,6 +10,8 @@
 #define DEBUG_FONTS 0
 #define DEBUG_MEMORY 0
 
+#define SPECIFY_RESOURCES 0
+
 #define MAX(a,b)  ((a)>(b)?(a):(b))
 #define MIN_FONT_HEIGHT 8
 
@@ -515,9 +517,11 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNy,(Position)dlCartesianPlot->object.y); nargs++;
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlCartesianPlot->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
-    XtSetArg(args[nargs],XmNborderWidth,0); nargs++;
     XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
+#if SPECIFY_RESOURCES    
+    XtSetArg(args[nargs],XmNborderWidth,0); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+#endif
     preferredHeight = MIN(dlCartesianPlot->object.width,
       dlCartesianPlot->object.height)/TITLE_SCALE_FACTOR;
 #if DEBUG_FONTS
@@ -568,10 +572,13 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
 
   /* SciPlot-specific */
+#if SPECIFY_RESOURCES    
     XtSetArg(args[nargs],XtNtitleMargin,5); nargs++;
     XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMajor,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMinor,False); nargs++;
+#endif
+  /* Not supported */
     XtSetArg(args[nargs],XtNdragX,False); nargs++;
     XtSetArg(args[nargs],XtNdragY,False); nargs++;
 #if 0
@@ -649,8 +656,10 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
 
   /* Set miscellaneous  args */
+#if SPECIFY_RESOURCES    
     XtSetArg(args[nargs],XmNtraversalOn,False); nargs++;
-
+#endif
+    
   /* Create the widget */
     w = XtCreateWidget("cartesianPlot", sciplotWidgetClass,
       displayInfo->drawingArea, args, nargs);

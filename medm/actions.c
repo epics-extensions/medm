@@ -54,13 +54,19 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_DRAG 0
+#define DEBUG_DRAGDROP 0
 #define USE_SOURCE_PIXMAP_MASK 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 
 #include "cvtFast.h"
+
+#if DEBUG_DRAGDROP
+/* From TMprint.c */
+String _XtPrintXlations(Widget w, XtTranslations xlations,
+  Widget accelWidget, _XtBoolean includeRHS);
+#endif
 
 extern char *stripChartWidgetName;
 
@@ -150,20 +156,25 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 	}
     }
 
-#if DEBUG_DRAG
+#if DEBUG_DRAGDROP && 0
     if(dragDropWidget && !strcmp(XtName(dragDropWidget),"radioBox")) {
 	int i;
 	Boolean set,vis,radioBehavior;
 	unsigned char indicatorType;
+	WidgetList children;
+	Cardinal numChildren;
 	
 	XtVaGetValues(dragDropWidget,
-	  XmNradioBehavior,&radioBehavior,NULL);
+	  XmNchildren,&children, XmNnumChildren,&numChildren,
+	  XmNradioBehavior,&radioBehavior,
+	  NULL);
 	printf("\ndragDropFinish: XmNradioBehavior=%d  XmNindicatorType: [XmONE_OF_MANY=%d]\n",
 	  radioBehavior,XmONE_OF_MANY);
 	for(i=0; i < (int)numChildren; i++) {
 	    Boolean getState;
 
 	    if(!strcmp(XtName(children[i]),"toggleButton")) {
+		getState=XmToggleButtonGetState(children[i]);
 		XtVaGetValues(children[i],
 		  XmNset,&set,
 		  XmNindicatorType,&indicatorType,
@@ -272,8 +283,38 @@ void StartDrag(Widget w, XEvent *event)
     if(pE->widget) searchWidget = pE->widget;
     else searchWidget = displayInfo->drawingArea;
 
-#if DEBUG_DRAG
-    printf("start drag : 0x%08x\n",pT);
+#if DEBUG_DRAGDROP
+    print("start drag : [%s] widget=0x%08x pT=0x%08x\n",
+      elementType(pE->type),searchWidget,pT);
+#if 1
+    {
+	static int first=1;
+	XtTranslations xlations=NULL;
+	String xString=NULL;
+	
+	XtVaGetValues(searchWidget,XtNtranslations,&xlations,NULL);
+	print("  translations=0x%08x parsedTranslations=0x%08x\n",
+	  xlations,parsedTranslations);
+	print("\n");
+
+	if(first) {
+	  /* Note: widget argument is needed, even if the
+             parsedTranslations are independent of it */
+	    xString= _XtPrintXlations(searchWidget,parsedTranslations,NULL,True);
+	    print("parsedTranslations:\n");
+	    print("%s\n",xString);
+	    XtFree(xString);
+#if 0
+       	    first=0;
+#endif
+	}
+
+	xString= _XtPrintXlations(searchWidget,xlations,NULL,True);
+	print("dragDropWidget translations:\n");
+	print("%s\n",xString);
+	XtFree(xString);
+    }
+#endif
 #endif
     
   /* Call the getRecord procedure, if there is one */

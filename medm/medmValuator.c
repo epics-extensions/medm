@@ -284,7 +284,9 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       /* Change translations for scrollbar child of valuator */
 	for(i = 0; i < (int)numChildren; i++) {
 	    if(XtClass(children[i]) == xmScrollBarWidgetClass) {
+#if USE_DRAGDROP
 		XtOverrideTranslations(children[i],parsedTranslations);
+#endif
 	      /* Add event handler for Key/ButtonRelease which enables updates */
 		XtAddEventHandler(children[i],KeyReleaseMask|ButtonReleaseMask,
 		  False,handleValuatorRelease,

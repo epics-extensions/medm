@@ -233,3 +233,11 @@ DlColormap defaultDlColormap = {
 #if 0
 #define USE_XR5_RESOURCEID_PATCH
 #endif
+
+/* Define this if you want to use the Btn2 Drag & Drop feature.
+Normally, you do want to use this feature.  This switch was put here
+to turn it off temporarily when an intermittent bug in Xsun for
+Solaris 8 caused it to not work and in addition when Btn2 was clicked
+on a slider, to move the slider instead. */
+
+#define USE_DRAGDROP 1

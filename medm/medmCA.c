@@ -1512,8 +1512,8 @@ static void pvInfoWriteInfo(void)
 	    timeStampStr[TIME_STRING_MAX-1]='0';
 	    sprintf(string, "%sSTAMP: %s\n", string, timeStampStr);
 	} else {
-		sprintf(string, "%sVALUE: %s\n", NOT_AVAILABLE);
-		sprintf(string, "%sSTAMP: %s\n", NOT_AVAILABLE);
+	    sprintf(string, "%sVALUE: %s\n", string, NOT_AVAILABLE);
+	    sprintf(string, "%sSTAMP: %s\n", string, NOT_AVAILABLE);
 	}
 	XmTextInsert(pvInfoMessageBox, curpos, string);
 	curpos+=strlen(string);

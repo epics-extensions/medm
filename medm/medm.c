@@ -209,9 +209,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 
-#ifndef WIN32
-/* KE: Why is it not OK to include this? */
-extern int putenv(const char *);    /* May not be defined for strict ANSI */
+#if !defined(WIN32) && !defined(linux)
+/* This is here to prevent compiler warnings */
+/* KE: Why is it not OK to include this in WIN32? */
+/* Defined for Solaris in stdlib.h as extern int putenv(char *); */
+/* Defined for WIN32 in stdlib.h as   extern int putenv(const char *); */
+/* May not be defined at all for strict ANSI */
+/* Linux information from Brian McAllister */
+extern int putenv(char *);
 #endif
 
 static void createCursors(void);
@@ -719,8 +724,8 @@ Name of file in which to save display:",
     "Medm*.PropEdit_shell*.foreground:                  Black",
     "Medm*.PropEdit_shell.width:                        630",
     "Medm*.PropEdit_shell.height:                       390",
-    "Medm*.PropEdit_shell*.XmXrtOutliner*.background:   White",
-    "Medm*.PropEdit_shell*.XmXrtOutliner*.foreground:   Black",
+    "Medm*.PropEdit_shell*.XmXrtOutliner*background:    White",
+    "Medm*.PropEdit_shell*.XmXrtOutliner*foreground:    Black",
     "Medm*.PropEdit_shell*.XmXrtIntField.background:    White",
     "Medm*.PropEdit_shell*.XmXrtIntField.foreground:    Black",
     "Medm*.PropEdit_shell*.XmXrtStringField.background: White",
@@ -731,6 +736,17 @@ Name of file in which to save display:",
     "Medm*.PropEdit_shell*.XmXrtDateField.foreground:   Black",
 #endif
 #endif
+#endif
+
+#ifdef SCIPLOT
+  /* Sciplot */
+    "Medm*cartesianPlot.traversalOn:        False",
+    "Medm*cartesianPlot.borderWidth:        0",
+    "Medm*cartesianPlot.highlightThickness: 0",
+    "Medm*cartesianPlot.titleMargin:        5",
+    "Medm*cartesianPlot.showLegend:         False",
+    "Medm*cartesianPlot.drawMajor:          False",
+    "Medm*cartesianPlot.drawMinor:          False",
 #endif
     
     NULL,
@@ -834,9 +850,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	} else if(!strcmp(argv[i],"-macro")) {
 	    char *tmp;
 	    argsUsed = i;
-	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
+	    tmp = (((i+1) < argc) ? argv[++i] : NULL);
 	    if(tmp) {
-		argsUsed = i + 1;
+		argsUsed = i;
 		request->macroString = STRDUP(tmp);
 	      /* since parameter of form   -macro "a=b,c=d,..."  replace '"' with ' ' */
 		if(request->macroString != NULL) {
@@ -849,9 +865,9 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	} else if(!strcmp(argv[i],"-displayFont")) {
 	    char *tmp;
 	    argsUsed = i;
-	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
+	    tmp = (((i+1) < argc) ? argv[++i] : NULL);
 	    if(tmp) {
-		argsUsed = i + 1;
+		argsUsed = i;
 		strcpy(request->displayFont,tmp);
 #if 0		
 	      /* KE: The following code is useless.  We could change
@@ -874,17 +890,17 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	  /* (Not trapped by X because this routine is called first) */
 	    char *tmp;
 	    argsUsed = i;
-	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
+	    tmp = (((i+1) < argc) ? argv[++i] : NULL);
 	    if(tmp) {
-		argsUsed = i + 1;
+		argsUsed = i;
 		request->displayName = STRDUP(tmp);
 	    }
 	} else if((!strcmp(argv[i],"-displayGeometry")) || (!strcmp(argv[i],"-dg"))) {
 	    char *tmp;
 	    argsUsed = i;
-	    tmp = (((i+1) < argc) ? argv[i+1] : NULL);
+	    tmp = (((i+1) < argc) ? argv[++i] : NULL);
 	    if(tmp) {
-		argsUsed = i + 1;
+		argsUsed = i;
 		request->displayGeometry = STRDUP(tmp);
 	    }
 	} else if(!strcmp(argv[i],"-bigMousePointer")) {
@@ -3454,10 +3470,12 @@ main(int argc, char *argv[])
     signal(SIGBUS, handleSignals);
 #endif
 
+#if USE_DRAGDROP
   /* Add translations/actions for drag-and-drop */
     parsedTranslations = XtParseTranslationTable(dragTranslations);
     XtAppAddActions(appContext,dragActions,XtNumber(dragActions));
-
+#endif
+    
     if(request->opMode == EDIT) {
 	globalDisplayListTraversalMode = DL_EDIT;
     } else if(request->opMode == EXECUTE) {

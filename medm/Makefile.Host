@@ -4,14 +4,14 @@ TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Motif
-#USE_MOTIF12=NO
-USE_MOTIF12=YES
+USE_MOTIF12=NO
+#USE_MOTIF12=YES
 
 # Optimization
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
 
 # Browser options
@@ -244,6 +244,7 @@ xrtAuth: medm
 	fi
 
 xxxx:
+	@echo PROD: $(PROD)
 	@echo ca_DIR: $(ca_DIR)
 	@echo RCS_WIN32: $(RCS_WIN32)
 	@echo RES: $(RES)
@@ -256,3 +257,6 @@ xxxx:
 # Local Variables:
 # mode: makefile
 # End:
+
+
+

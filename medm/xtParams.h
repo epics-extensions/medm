@@ -136,14 +136,5 @@ extern unsigned long getPixelFromStringW(Widget w, char *colorString);
 
 extern void StartDrag(Widget w, XEvent *event);
 
-
-#ifndef ALLOCATE_STORAGE
-extern char *dragTranslations;
-extern XtActionsRec *dragActions;
-#else
-static char dragTranslations[] = "#override None<Btn2Down>:StartDrag()";
-static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
-#endif
-
 #endif  /* __XTPARAMS_H__ */
 

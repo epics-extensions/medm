@@ -364,8 +364,10 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
 	      handleExecuteButtonPress,(XtPointer)displayInfo);
 	    
+#if USE_DRAGDROP
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
+#endif
 	}
     } else  {     /* else for if(displayInfo->drawingArea == NULL) */
       /* Just set the values, drawing area is already created with these values

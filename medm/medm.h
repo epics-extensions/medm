@@ -274,7 +274,21 @@ extern "C" {
   /* Time data */
     EXTERN time_t time900101, time700101, timeOffset;
 
-/* XR5 Resource ID patch */
+  /* Drag & Drop */
+#if USE_DRAGDROP
+#ifndef ALLOCATE_STORAGE
+    extern char *dragTranslations;
+    extern XtActionsRec *dragActions;
+#else
+  /* KE: This used to be None<Btn2Down> but NumLock became a modifier
+     key on Solaris 8 and it didn't work (and in addition caused a
+     slider to move to the cursor) */
+    static char dragTranslations[] = "#override <Btn2Down>:StartDrag()";
+    static XtActionsRec dragActions[] = {{"StartDrag",(XtActionProc)StartDrag}};
+#endif
+#endif
+
+  /* XR5 Resource ID patch */
 #ifdef USE_XR5_RESOURCEID_PATCH
 #  define XCreatePixmap XPatchCreatePixmap
 #  define XFreePixmap XPatchFreePixmap

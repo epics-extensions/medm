@@ -65,9 +65,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_SEND_EVENT 0
 #define DEBUG_UNGROUP 0
 #define DEBUG_RELATED_DISPLAY 0
+#define DEBUG_DRAGDROP 0
 
 #include "medm.h"
 #include <X11/IntrinsicP.h>
+
+#if DEBUG_DRAGDROP
+/* From TMprint.c */
+String _XtPrintXlations(Widget w, XtTranslations xlations,
+  Widget accelWidget, _XtBoolean includeRHS);
+#endif
 
 /* For Xrt/Graph property editor */
 #ifdef XRTGRAPH
@@ -285,6 +292,56 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
        *   clicking Btn2 on a Related Display after bringing up the
        *   menu with a Btn 1 click */
 	XUngrabPointer(display,CurrentTime);
+#if DEBUG_DRAGDROP
+	print("handleExecuteButtonPress: Btn2 pressed\n");
+	
+      /* Lookup to see if Btn2 occured in an object that cares */
+	x = xEvent->x;
+	y = xEvent->y;
+	pE = findSmallestTouchedExecuteElement(w, displayInfo,
+	  &x, &y, False);
+	if (pE) {
+	    static int first=1;
+	    XtTranslations xlations=NULL;
+	    String xString=NULL;
+	    Widget hitWidget;
+	    char *widgetName=NULL;
+	    
+	    if(pE->widget) {
+		hitWidget = pE->widget;
+		widgetName="widget";
+	    } else {
+		hitWidget = displayInfo->drawingArea;
+		widgetName="[display]widget";
+	    }
+	    print("  [%s] %s=0x%08x\n",elementType(pE->type),
+	      widgetName,hitWidget);
+#if 1
+	    XtVaGetValues(hitWidget,XtNtranslations,&xlations,NULL);
+	    print("  translations=0x%08x parsedTranslations=0x%08x\n",
+	      xlations,parsedTranslations);
+	    print("\n");
+	    
+	    if(first) {
+	      /* Note: widget argument is needed, even if the
+		 parsedTranslations are independent of it */
+		xString= _XtPrintXlations(hitWidget,parsedTranslations,
+		  NULL,True);
+		print("parsedTranslations:\n");
+		print("%s\n",xString);
+		XtFree(xString);
+#if 0
+		first=0;
+#endif
+	    }
+	    
+	    xString= _XtPrintXlations(hitWidget,xlations,NULL,True);
+	    print("hitWidget translations:\n");
+	    print("%s\n",xString);
+	    XtFree(xString);
+	}
+#endif
+#endif
     }
 }
 
@@ -1374,7 +1431,9 @@ void addCommonHandlers(Widget w, DisplayInfo *displayInfo)
 	  (XtPointer)displayInfo);
 	break;
     case DL_EXECUTE :
+#if USE_DRAGDROP
 	XtOverrideTranslations(w, parsedTranslations);
+#endif
 	XtAddEventHandler(w, ButtonPressMask, False, handleExecuteButtonPress,
 	  (XtPointer)displayInfo);
 	break;
