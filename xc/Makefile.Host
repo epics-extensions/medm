@@ -3,6 +3,14 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
+ifdef WIN32
+# The proper import/export declarations are not included for DLLs
+SHARED_LIBRARIES = NO
+# We need to reverse the EPICS_DLL_NO definitions
+VISC_EPICS_DLL_NO =
+VISC_EPICS_DLL_YES = -DEPICS_DLL_NO
+endif
+
 # Needs work to handle CMPLR=STRICT
 CMPLR = STRICT
 #HOST_OPT = NO
@@ -62,3 +70,10 @@ indicator1 : $(OBJS) $(DEPLIBS) indicator1.c
 
 bar1: $(OBJS) $(DEPLIBS) bar1.c
 	$(LINK.c) -o $@ $@.c $(LDLIBS)
+
+xxxx:
+	@echo WIN32_DLLFLAGS: $(WIN32_DLLFLAGS)
+	@echo LINK.shrlib: $(LINK.shrlib)
+	@echo LINK.c: $(LINK.c)
+	@echo USR_LIBS: $(USR_LIBS)
+	@echo Xt_DIR: $(Xt_DIR)
