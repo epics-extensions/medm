@@ -1786,6 +1786,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
     int buttonId = (int) cd;
     int k, n, rcType, iPrec;
     char string[24];
+    char *stringMinValue, *stringMaxValue;
     XcVType minF, maxF, tickF;
     XtPointer userData;
     CartesianPlot *pcp = NULL;
@@ -1862,18 +1863,32 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	    XtSetSensitive(axisRangeMinRC[rcType%3],True);
 	    XtSetSensitive(axisRangeMaxRC[rcType%3],True);
 	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
-		if (dlCartesianPlot) /* get min from element if possible */
-		  minF.fval = dlCartesianPlot->axis[rcType%3].minRange;
-		else
-		  minF.fval = globalResourceBundle.axis[rcType%3].minRange;
+	      /* Determine max and min values */
+		stringMinValue = XmTextFieldGetString(axisRangeMin[rcType%3]);
+		stringMaxValue = XmTextFieldGetString(axisRangeMax[rcType%3]);
+		if(*stringMinValue && *stringMaxValue) {
+		  /* Values have been entered */
+		    minF.fval = (float)atof(stringMinValue);
+		    maxF.fval = (float)atof(stringMaxValue);
+		} else if(executeTimeCartesianPlotWidget) {
+		  /* Get values from the widget */
+		    CpGetAxisMaxMin(executeTimeCartesianPlotWidget,
+		      CP_X + rcType%3, &maxF, &minF);
+		} else {
+		  /* Get values from the resource palette */
+		    minF.fval = globalResourceBundle.axis[rcType%3].minRange;
+		    maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
+		}
+		XtFree(stringMinValue);
+		XtFree(stringMaxValue);
+
+	      /* Set values in the text fields */
 		sprintf(string,"%f",minF.fval);
 		XmTextFieldSetString(axisRangeMin[rcType%3],string);
-		if (dlCartesianPlot) /* get max from element if possible */
-		  maxF.fval = dlCartesianPlot->axis[rcType%3].maxRange;
-		else
-		  maxF.fval = globalResourceBundle.axis[rcType%3].maxRange;
 		sprintf(string,"%f",maxF.fval);
 		XmTextFieldSetString(axisRangeMax[rcType%3],string);
+
+	      /* Set the values in the widget */
 		tickF.fval = (float)((maxF.fval - minF.fval)/4.0);
 		sprintf(string,"%f",tickF.fval);
 		k = strlen(string)-1;
@@ -2134,18 +2149,16 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif    
   /* Losing focus - make sure that the text field remains accurate wrt 
    *   values stored in widget (not necessarily what is in globalResourceBundle) */
-    if (executeTimeCartesianPlotWidget != NULL)
-      CpGetAxisMaxMin(executeTimeCartesianPlotWidget,
-	&maxF[X_AXIS_ELEMENT], &minF[X_AXIS_ELEMENT],
-	&maxF[Y1_AXIS_ELEMENT], &minF[Y1_AXIS_ELEMENT],
-	&maxF[Y2_AXIS_ELEMENT], &minF[Y2_AXIS_ELEMENT]);
-    else
-      return;
-  /*
-   * losing focus - make sure that the text field remains accurate
-   *	wrt values stored in widget (not necessarily what is in
-   *	globalResourceBundle)
-   */
+    if (executeTimeCartesianPlotWidget != NULL) {
+	CpGetAxisMaxMin(executeTimeCartesianPlotWidget, CP_X,
+	  &maxF[X_AXIS_ELEMENT], &minF[X_AXIS_ELEMENT]);
+	CpGetAxisMaxMin(executeTimeCartesianPlotWidget, CP_Y,
+	  &maxF[Y1_AXIS_ELEMENT], &minF[Y1_AXIS_ELEMENT]);
+	CpGetAxisMaxMin(executeTimeCartesianPlotWidget, CP_Y2,
+	  &maxF[Y2_AXIS_ELEMENT], &minF[Y2_AXIS_ELEMENT]);
+    }  else {
+	return;
+    }
 
     switch(rcType) {
     case CP_X_RANGE_MIN:

@@ -122,28 +122,31 @@ void CpGetAxisInfo(Widget w,
     y2MaxF->lval = y2Max;
 }
 
-void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
-  XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF)
+void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 {
-    Arg args[6];
+    Arg args[2];
     int nargs;
-    int xMin, yMin, y2Min, xMax, yMax, y2Max;
+    int min, max;
 
     nargs=0;
-    XtSetArg(args[nargs],XtNxrtXMax,&xMax); nargs++;
-    XtSetArg(args[nargs],XtNxrtXMin,&xMin); nargs++;
-    XtSetArg(args[nargs],XtNxrtYMax,&yMax); nargs++;
-    XtSetArg(args[nargs],XtNxrtYMin,&yMin); nargs++;
-    XtSetArg(args[nargs],XtNxrtY2Max,&y2Max); nargs++;
-    XtSetArg(args[nargs],XtNxrtY2Min,&y2Min); nargs++;
+    switch(axis) {
+    case CP_X:
+	XtSetArg(args[nargs],XtNxrtXMax,&xMax); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,&xMin); nargs++;
+	break;
+    case CP_Y:
+	XtSetArg(args[nargs],XtNxrtYMax,&yMax); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,&yMin); nargs++;
+	break;
+    case CP_Y2:
+	XtSetArg(args[nargs],XtNxrtY2Max,&y2Max); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,&y2Min); nargs++;
+	break;
+    }
     XtGetValues(w,args,nargs);
 
-    xMinF->lval = xMin;
-    xMaxF->lval = xMax;
-    yMinF->lval = yMin;
-    yMaxF->lval = yMax;
-    y2MinF->lval = y2Min;
-    y2MaxF->lval = y2Max;
+    minF->lval = min;
+    maxF->lval = max;
 }
 
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,

@@ -142,8 +142,7 @@ void CpGetAxisAll(Widget w,
   XcVType &yMax, XcVType &yMin, XcVType &yTick, XcVType &yNum, int &yPrecision,
   XcVType &y2Max, XcVType &yMin, XcVType &y2Tick, XcVType &y2Num, int &y2Precision);
 #endif
-void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
-  XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF);
+void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF);
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
   int fillType, XColor color, int pointSize);
 void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,

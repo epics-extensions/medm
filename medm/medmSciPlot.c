@@ -150,22 +150,27 @@ void CpGetAxisInfo(Widget w,
     *y2AxisIsAuto = True;      /* Not implemented */
 }
 
-void CpGetAxisMaxMin(Widget w, XcVType *xMaxF, XcVType *xMinF, XcVType *yMaxF,
-  XcVType *yMinF, XcVType *y2MaxF, XcVType *y2MinF)
+void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 {
-    float xMin, yMin, xMax, yMax;
+    float min, max;
 
-  /* Get available information from SciPlot */
-    SciPlotGetXScale(w, &xMin, &xMax);
-    SciPlotGetYScale(w, &yMin, &yMax);
+    switch(axis) {
+    case CP_X:
+	SciPlotGetXScale(w, &min, &max);
+	break;
+    case CP_Y:
+	SciPlotGetYScale(w, &min, &max);
+	break;
+    case CP_Y2:
+      /* Not implemented */
+	min=0.0;
+	max=0.0;
+	break;
+    }
 
   /* Convert */
-    xMinF->fval = xMin;
-    yMinF->fval = yMin;
-    y2MinF->fval = 0;         /* Not implemented */
-    xMaxF->fval = xMax;
-    yMaxF->fval = yMax;
-    y2MaxF->fval = 0;         /* Not implemented */
+    minF->fval = min;
+    maxF->fval = max;
 }
 
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
