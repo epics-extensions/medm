@@ -760,6 +760,8 @@ static void stripChartConfig(MedmStripChart *psc)
     if(!psc->gc) {
 	psc->gc = XCreateGC(display, XtWindow(widget),
 	  (unsigned long)NULL, NULL);
+      /* Eliminate events that we do not handle anyway */
+	XSetGraphicsExposures(display, psc->gc, False);
     }
     gc = psc->gc;
 

@@ -403,10 +403,14 @@ GCInitialize(SciPlotWidget new)
 
   mask = GCLineStyle | GCLineWidth | GCFillStyle | GCForeground | GCBackground;
   new->plot.defaultGC = XCreateGC(XtDisplay(new),XtWindow(new), mask, &values);
+/* Eliminate events that we do not handle anyway */
+  XSetGraphicsExposures(XtDisplay(new), new->plot.defaultGC, False);
 
   values.foreground = colorsave;
   values.line_style = LineOnOffDash;
   new->plot.dashGC = XCreateGC(XtDisplay(new),XtWindow(new), mask, &values);
+/* Eliminate events that we do not handle anyway */
+  XSetGraphicsExposures(XtDisplay(new), new->plot.dashGC, False);
 }
 
 static void
@@ -1247,6 +1251,8 @@ XDrawVString (Display *display, Window win, GC gc, int x, int y, char *str, int 
   XFillRectangle(display, pix, drawGC, 0, 0, width, height);
   XFillRectangle(display, rotpix, drawGC, 0, 0, height, width);
   XSetForeground(display, drawGC, 1);
+/* Eliminate events that we do not handle anyway */
+  XSetGraphicsExposures(display, drawGC, False);
 
   XDrawImageString(display, pix, drawGC, 0, (int) FontAscent(f),
     str, strlen(str));

@@ -2528,7 +2528,9 @@ static void createCursors()
       overall.width+hotSpotWidth,asc+desc,1);
     maskPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
       overall.width+hotSpotWidth,asc+desc,1);
-    gc =  XCreateGC(display,sourcePixmap,0,NULL);
+    gc = XCreateGC(display,sourcePixmap,0,NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display,gc,False);
     XSetBackground(display,gc,0);
     XSetFunction(display,gc,GXcopy);
   /* an arbitrary modest-sized font from the font table */

@@ -173,6 +173,8 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Create a GC and pixmap to take care of clipping to the
 	 size of the text update */
 	gc = XCreateGC(display, rootWindow, 0, NULL);
+      /* Eliminate events that we do not handle anyway */
+	XSetGraphicsExposures(display, gc, False);
 	pixmap = XCreatePixmap(display, RootWindow(display,screenNum),
 	  dlTextUpdate->object.width, dlTextUpdate->object.height,
 	  DefaultDepth(display,screenNum));
@@ -389,6 +391,8 @@ static void textUpdateDraw(XtPointer cd)
 	  /* Create a GC and pixmap to take care of clipping to the
              size of the text update */
 	    gc = XCreateGC(display, rootWindow, 0, NULL);
+	  /* Eliminate events that we do not handle anyway */
+	    XSetGraphicsExposures(display, gc, False);
 	    pixmap = XCreatePixmap(display, RootWindow(display,screenNum),
 	      dlTextUpdate->object.width, dlTextUpdate->object.height,
 	      DefaultDepth(display,screenNum));

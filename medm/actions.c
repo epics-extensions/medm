@@ -455,6 +455,8 @@ void StartDrag(Widget w, XEvent *event)
 	gcValues.function = GXcopy;
 	gcValues.font = fontTable[FONT_TABLE_INDEX]->fid;
 	XChangeGC(display,gc,gcValueMask,&gcValues);
+      /* Eliminate events that we do not handle anyway */
+	XSetGraphicsExposures(display,gc,False);
 	XFillRectangle(display,sourcePixmap,gc,0,0,maxWidth,maxHeight);
 	i = 0; j = 0;
 	x = X_SHIFT;

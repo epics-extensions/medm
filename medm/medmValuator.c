@@ -905,6 +905,8 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     gcValues.foreground = background;
     gcValues.font = font->fid;
     gc = XCreateGC(display, XtWindow(w), gcValueMask, &gcValues);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display, gc, False);
   /* Fill the background */
     XFillRectangle(display, XtWindow(w), gc, x, y, width, height);
   /* Draw the string */

@@ -148,6 +148,8 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     };
     XSegment segments[4];
     GC gc = XCreateGC(display,pixmap,0,NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display,gc,False);
 
 #if 0
     print("renderRelatedDisplayPixmap: width=%d height=%d label=|%s|\n",

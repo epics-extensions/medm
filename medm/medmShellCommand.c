@@ -123,6 +123,8 @@ static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
     GC gc;
 
     gc = XCreateGC(display,pixmap,0,NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display,gc,False);
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);

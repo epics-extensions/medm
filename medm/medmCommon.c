@@ -286,6 +286,9 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     }
     displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
       valueMask,&values);
+  /* Eliminate events that we do not handle anyway */
+  /* Pointed out by Chris Larrieu.  This one is the important one. */
+    XSetGraphicsExposures(display,displayInfo->gc,False);
 
     XFillRectangle(display,displayInfo->drawingAreaPixmap,
       displayInfo->gc,0,0,width,height);

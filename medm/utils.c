@@ -920,6 +920,8 @@ void initializeRubberbanding()
 {
 /* Create the xorGC and rubberbandCursor for drawing while dragging */
     xorGC = XCreateGC(display,rootWindow,0,NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display,xorGC,False);
     XSetSubwindowMode(display,xorGC,IncludeInferiors);
     XSetFunction(display,xorGC,GXxor);
     XSetForeground(display,xorGC,~0);
@@ -4734,6 +4736,8 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
     
   /* Save the pixmap for redraws */
     gc = XCreateGC(display, rootWindow, 0, NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display, gc, False);
     savePixmap = XCreatePixmap(display, RootWindow(display,screenNum),
       width, height, DefaultDepth(display,screenNum));
     XCopyArea(display, pixmap, savePixmap,
@@ -4769,6 +4773,9 @@ static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
 	GC gc = XCreateGC(display,rootWindow,0,NULL);
 	Pixmap pixmap = (Pixmap)clientData;
 	Dimension width, height;
+
+      /* Eliminate events that we do not handle anyway */
+	XSetGraphicsExposures(display, gc, False);
 
 	XtVaGetValues(w,
 	  XmNwidth, &width,

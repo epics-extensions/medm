@@ -245,6 +245,9 @@ void medmInit(char *displayFont)
     
   /* Create the highlight GC */
     highlightGC = XCreateGC(display,rootWindow,0,NULL);
+  /* Eliminate events that we do not handle anyway */
+    XSetGraphicsExposures(display,highlightGC,False);
+  /* Set the function to invert */
     XSetFunction(display,highlightGC,GXinvert);
   /* Pick a color which XOR-ing with makes reasonable sense for most
      colors */
