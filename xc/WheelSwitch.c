@@ -12,7 +12,9 @@
 /* Modified by Jean-Michel Nonglaton */
 /* Mofified extensively for MEDM     */
 
-#define DEBUG_ASSERT 1
+#define DEBUG_ASSERT 0
+#define DEBUG_EXPOSE 0
+#define DEBUG_SETVALUE 0
 #define DEBUG_DESTRUCTOR 0
 #define DEBUG_CONVERTER 0
 #define DEBUG_FONTS 0
@@ -22,7 +24,7 @@
 #define DEBUG_FONTLEAK 0
 #define DEBUG_KEYSYM 0
 #define DEBUG_POINTER 0
-#define DEBUG_FLOW 1
+#define DEBUG_FLOW 0
 
 #define MAX_FONTS 100
 #define FORMAT_SIZE 255
@@ -31,6 +33,8 @@
 #define DEFAULT_FORMAT "% 6.2f"
 #define DEFAULT_FORMAT_WIDTH 6
 #define DEFAULT_FORMAT_PRECISION 2
+#define DEFAULT_CHAR_WIDTH 8;
+#define DEFAULT_CHAR_HEIGHT 16;
 
 /* Use a complete name so another routine is unlikely to add a
  * converter  for the same things */
@@ -112,16 +116,17 @@ static Boolean AcceptFocus(Widget w, Time *time);
 #endif
 
 /* Utlilties */
-static void post_format_warning(WswWidget new, char *format);
-static void free_buttons(WswWidget wsw);
-static void compute_format_size(WswWidget new);
-static void compute_format(WswWidget new);
+static void post_format_warning(WswWidget wsw, char *format);
+static void free_buttons(WswWidget wsw, Boolean destroy);
+static void compute_format_size(WswWidget wsw);
+static void compute_format(WswWidget wsw);
 static Widget create_button(WswWidget wsw, Boolean up_flag, int digit);
 static void create_buttons(WswWidget wsw);
-static void compute_inner_geo( WswWidget new);
-static void compute_geometry(WswWidget new);
-static void create_increments(WswWidget new);
-static void compute_format_min_max(WswWidget new);
+static void compute_inner_geo( WswWidget wsw);
+static void compute_geometry(WswWidget wsw);
+static void set_increments(WswWidget wsw);
+static void truncate_value(WswWidget wsw);
+static void compute_format_min_max(WswWidget wsw);
 static void draw(XtPointer clientdata, XtIntervalId *id);
 static void set_button_visibility(WswWidget wsw);
 static void select_digit(WswWidget wsw, int digit);
@@ -130,12 +135,16 @@ static void unhighlight_digit(WswWidget wsw, int digit);
 static void clear_all_buttons(WswWidget wsw);
 static void arm_execute_timer(WswWidget wsw,  XEvent *event);
 static void allocstr(char **str);
-static void myfree(XtPointer *ptr);
-static XFontStruct *queryFontBySize(Display *display,
+static void wsFree(XtPointer *ptr);
+static XFontStruct *getFontFromPattern(Display *display,
   char *font_pattern, Dimension width, Dimension height,
+  Dimension *width_return, Dimension *height_return);
+static XFontStruct *getFontFromList(Display *display,
+  XmFontList font_list, Dimension width, Dimension height,
   Dimension *width_return, Dimension *height_return);
 static Boolean kbdIsEntering(WswWidget wsw);
 static void kbdReset(WswWidget wsw);
+static void freeFont(WswWidget wsw);
 
 /* Callbacks, timer procs, and event handlers */
 static void upButtonArmCallback(Widget button, XtPointer userdata,
@@ -187,35 +196,13 @@ WidgetClass wheelSwitchWidgetClass = (WidgetClass)&wswClassRec;
 /* Resources  */
 
 static XtResource resources[] = {
+  /* Geometry related */
+    {XmNconformToContent, XmCRecomputeSize, XmRBoolean, sizeof(Boolean),
+     XtOffset(WswWidget,wsw.conform_to_content), XmRImmediate, (XtPointer)True},
     {XmNmarginWidth, XmCMarginWidth, XmRShort, sizeof(short),
      XtOffset(WswWidget, wsw.margin_width), XmRImmediate, (XtPointer)0},
     {XmNmarginHeight, XmCMarginHeight, XmRShort, sizeof(short),
      XtOffset(WswWidget, wsw.margin_height), XmRImmediate, (XtPointer)0},
-    {XmNfontList, XmCFontList, XmRFontList, sizeof(XmFontList),
-     XtOffset(WswWidget,wsw.font_list), XmRString, (XtPointer)NULL},
-    {XmNconformToContent, XmCRecomputeSize, XmRBoolean, sizeof(Boolean),
-     XtOffset(WswWidget,wsw.conform_to_content), XmRImmediate, (XtPointer)True},
-    {XmNformat, XmCformat, XmRPointer, sizeof(char *),
-     XtOffset(WswWidget,wsw.format), XmRImmediate, (XtPointer)defaultFormat},
-    {XmNfontPattern, XmCfontPattern, XmRPointer, sizeof(char *),
-     XtOffset(WswWidget,wsw.font_pattern), XmRImmediate,
-     (XtPointer)defaultFontPattern},
-    {XmNvalueChangedCallback, XmCCallback, XmRCallback,
-     sizeof(XtCallbackList),
-     XtOffset(WswWidget, wsw.value_changed_callback),
-     XmRCallback,(XtPointer)NULL},
-    {XmNrepeatInterval, XmCRepeatInterval, XmRInt, sizeof(int),
-     XtOffset(WswWidget, wsw.repeat_interval), XmRImmediate, (XtPointer)30},
-    {XmNcallbackDelay, XmCCallbackDelay, XmRInt, sizeof(int),
-     XtOffset(WswWidget, wsw.callback_delay), XmRImmediate, (XtPointer)0},
-
-  /* These are non-standard */
-    {XmNcurrentValue, XmCCurrentValue, XmRDoublePointer, sizeof(double *),
-     XtOffset(WswWidget, wsw.value), XmRString, "0.0"},
-    {XmNminValue, XmCMinValue, XmRDoublePointer, sizeof(double *),
-     XtOffset(WswWidget, wsw.min_value), XmRString, "-1.e+10"},
-    {XmNmaxValue, XmCMaxValue, XmRDoublePointer, sizeof(double *),
-     XtOffset(WswWidget, wsw.max_value), XmRString, "1.e+10"},
 
   /* Shadows */
     {XmNshadowThickness, XmCShadowThickness, XmRDimension, sizeof(Dimension),
@@ -223,6 +210,35 @@ static XtResource resources[] = {
     {XmNshadowType, XmCShadowType, XmRShadowType, sizeof(unsigned int),
      XtOffset(WswWidget, wsw.shadow_type), XmRImmediate,
      (XtPointer)XmSHADOW_OUT},
+
+  /* Format and font related */
+    {XmNformat, XmCformat, XmRPointer, sizeof(char *),
+     XtOffset(WswWidget,wsw.format), XmRImmediate, (XtPointer)defaultFormat},
+    {XmNfontPattern, XmCfontPattern, XmRPointer, sizeof(char *),
+     XtOffset(WswWidget,wsw.font_pattern), XmRImmediate,
+     (XtPointer)defaultFontPattern},
+    {XmNfontList, XmCFontList, XmRFontList, sizeof(XmFontList),
+     XtOffset(WswWidget,wsw.font_list), XmRString, (XtPointer)NULL},
+
+  /* These are double * and non-standard */
+    {XmNcurrentValue, XmCCurrentValue, XmRDoublePointer, sizeof(double *),
+     XtOffset(WswWidget, wsw.value), XmRString, "0.0"},
+    {XmNminValue, XmCMinValue, XmRDoublePointer, sizeof(double *),
+     XtOffset(WswWidget, wsw.min_value), XmRString, "-1.e+10"},
+    {XmNmaxValue, XmCMaxValue, XmRDoublePointer, sizeof(double *),
+     XtOffset(WswWidget, wsw.max_value), XmRString, "1.e+10"},
+
+  /* Settings */
+    {XmNrepeatInterval, XmCRepeatInterval, XmRInt, sizeof(int),
+     XtOffset(WswWidget, wsw.repeat_interval), XmRImmediate, (XtPointer)30},
+    {XmNcallbackDelay, XmCCallbackDelay, XmRInt, sizeof(int),
+     XtOffset(WswWidget, wsw.callback_delay), XmRImmediate, (XtPointer)0},
+
+  /* Callback */
+    {XmNvalueChangedCallback, XmCCallback, XmRCallback,
+     sizeof(XtCallbackList),
+     XtOffset(WswWidget, wsw.value_changed_callback),
+     XmRCallback,(XtPointer)NULL},
 };
 
 /* Action table */
@@ -380,7 +396,7 @@ static Boolean CvtStringToDoublePointer(Display *display, XrmValue *args,
   Cardinal *num_args,  XrmValue *fromVal,  XrmValue *toVal, XtPointer *data)
 {
     static double *double_pointer;
-    int nread=0;
+    int nread = 0;
     
 #if DEBUG_CONVERTER
     printf("CvtStringToDoublePointer [before]: from: %p[%s] to: %p size=%u\n",
@@ -389,8 +405,9 @@ static Boolean CvtStringToDoublePointer(Display *display, XrmValue *args,
 
   /* Check arguments */
     if(*num_args != 0) {
+      /* No application context, use XtErrorMsg */
 	XtErrorMsg("wrongParameters","CvtStringToDoublePointer",
-	  "WheelSwitchError",
+	  "XtToolkitError",
 	  "WheelSwitch: String to double conversion takes no arguments", 
 	  (String *)NULL, (Cardinal *)NULL);
 #if DEBUG_CONVERTER
@@ -439,8 +456,8 @@ static void FreeDoublePointer(XtAppContext app, XrmValuePtr toVal,
 
   /* Check arguments */
     if(*num_args != 0) {
-	XtAppWarningMsg(app,
-	  "wrongParameters","FreeDoublePointer","WheelSwitchError",
+	XtAppErrorMsg(app,
+	  "wrongParameters", "FreeDoublePointer", "WheelSwitchError",
 	  "WheelSwitch: FreeDoublePointer takes no arguments", 
 	  (String *)NULL, (Cardinal *)NULL);
 	return;
@@ -502,51 +519,58 @@ static void Initialize(Widget wreq, Widget wnew,
 #endif    
 
   /* Initialize internal fields */
-    new->wsw.current_flag = False;
+    new->wsw.format_min_value = 0.0;
+    new->wsw.format_max_value = 0.0;
+    new->wsw.foreground_GC = NULL;
+    new->wsw.background_GC = NULL;
+    new->wsw.GC_inited = False;
+    new->wsw.nb_digit = 0;
+    new->wsw.user_font = False;
+    new->wsw.font = NULL;
+
+    new->wsw.increments = NULL;
+    new->wsw.digit_number = 0;
+    new->wsw.prefix_size = 0;
+    new->wsw.digit_size = 0;
+    new->wsw.postfix_size = 0;
+    new->wsw.point_position = 0;
+    new->wsw.up_buttons = NULL;
+    new->wsw.down_buttons = NULL;
+    new->wsw.current_flag = False;  /* wsw is selected */
     new->wsw.selected_digit = 0;
     new->wsw.pending_timeout_id = (XtIntervalId)0;
     new->wsw.callback_timeout_id = (XtIntervalId)0;
-    new->wsw.up_buttons = NULL;
-    new->wsw.down_buttons = NULL;
-
+    new->wsw.prefix_x = 0;
+    new->wsw.digit_x = 0;
+    new->wsw.postfix_x = 0;
+    new->wsw.up_button_y = 0;
+    new->wsw.digit_y = 0;
+    new->wsw.string_base_y = 0;
+    new->wsw.down_button_y = 0;
+    new->wsw.digit_width = 0;
+    
     new-> wsw.kbd_format= NULL;
     new-> wsw.kbd_value = NULL;
     new-> wsw.blink_timeout_id = (XtIntervalId)0;
     new-> wsw.to_clear= True;
 
-    new->wsw.foreground_GC = NULL;
-    new->wsw.background_GC = NULL;
-    new->wsw.GC_inited = False;
-
-    if(new->wsw.font_list != NULL) {
-        XmFontContext context;
-        XmStringCharSet charset;
-
-        XmFontListInitFontContext(&context, new->wsw.font_list);
-        XmFontListGetNextFont(context, &charset, &new->wsw.font);
-        XmFontListFreeFontContext(context);
-        new->wsw.user_font = True;
-    } else {
-	new->wsw.font = NULL;
-        new->wsw.user_font = False;
-    }
-    allocstr(&new->wsw.font_pattern);
+  /* Compute format-related quantities */
     compute_format(new);
 
-  /* Set the increments */
-    new->wsw.increments =
-      (double *)XtCalloc(new->wsw.digit_number, sizeof(double));
-    create_increments(new);
-    
-  /* Calculate the geometry */
-    if(new->core.height != 0 && new->core.width != 0 &&
-      new->wsw.conform_to_content) {
-        new->wsw.conform_to_content = False;
-        compute_geometry(new);
-        new->wsw.conform_to_content = True;
-    } else {
-        compute_geometry(new);
+  /* Allocate space for the font pattern */
+    if(new->wsw.font_pattern == NULL) {
+      /* Insure there is always a font pattern */
+	new->wsw.font_pattern = defaultFontPattern;
     }
+    allocstr(&new->wsw.font_pattern);
+    
+  /* Flag if there is a font list specified */
+    if(new->wsw.font_list != NULL) {
+        new->wsw.user_font = True;
+    }
+
+  /* Get the font and compute the geometry */
+    compute_geometry(new);
 
   /* Allocate space for pointers to values, min, and max and set
    * them */
@@ -561,6 +585,7 @@ static void Initialize(Widget wreq, Widget wnew,
   /* Add translations */
     XtOverrideTranslations(wnew,
       XtParseTranslationTable(translations));
+  /* KE: This seems to call SetValues */
     XmAddTabGroup(wnew);
 
   /* Add keyboard event handler */
@@ -570,6 +595,9 @@ static void Initialize(Widget wreq, Widget wnew,
 #endif
 }
 
+/* Note update does different things at different points in this
+ * procedure, but stays True once it is true.  The return value
+ * determines if an expose (Redisplay) is sent */
 static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
   ArgList args, Cardinal *nargs)
 {
@@ -601,86 +629,57 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 #if DEBUG_FLOW
     printf("SetValues: start\n");
 #endif
+  /* Format change */
     if(cur->wsw.format != new->wsw.format) {
-        myfree((XtPointer)&cur->wsw.format);
+        wsFree((XtPointer)&cur->wsw.format);
+	free_buttons(new, False);
         compute_format(new);
         if(new->wsw.conform_to_content == True &&
           cur->core.width == new->core.width &&
           cur->core.height == new->core.height) {
             new->core.width = 0;
             new->core.height = 0;
-        };
-        update = True;
-    };
-    if(cur->wsw.font_pattern != new->wsw.font_pattern) {
-      /* Check this */
-        if(new->wsw.font_pattern == NULL) {
-            if(cur->wsw.font != new->wsw.font
-              && new->wsw.font != NULL) {
-                myfree((XtPointer)&new->wsw.font_pattern);
-                update = True;
-            }
-        } else {
-            myfree((XtPointer)&new->wsw.font_pattern);
-            allocstr(&new->wsw.font_pattern);
-            update = True;
-        };
-    };
-    if(cur->wsw.font_list != new->wsw.font_list &&
-      (new->wsw.font_pattern == NULL ||
-        cur->wsw.font_pattern == new->wsw.font_pattern)) {
-        XmFontContext context;
-        XmStringCharSet charset;
-
-        XmFontListInitFontContext(&context, new->wsw.font_list);
-        XmFontListGetNextFont(context, &charset, &new->wsw.font);
-        new->wsw.user_font = True;
-        XmFontListFreeFontContext(context);
-        update = True;
-    };
-
-    if( cur->wsw.margin_width != new->wsw.margin_width
-      || cur->wsw.margin_height != new->wsw.margin_height) {
-        update = True;
-    };
-
-    if(update) {
-        if(new->wsw.conform_to_content &&
-          (new->core.width != cur->core.width ||
-            new->core.height != cur->core.height)) {
-            new->wsw.conform_to_content = False;
-            compute_geometry(new);
-            new->wsw.conform_to_content = True;
-        } else {
-            compute_geometry(new);
         }
-    };
-
-    if(new->wsw.GC_inited) {
-        if(cur->manager.foreground != new->manager.foreground) {
-            XSetForeground(XtDisplay(new), new->wsw.foreground_GC,
-              new->manager.foreground);
-            XSetForeground(XtDisplay(new), new->wsw.background_GC,
-              new->manager.foreground);
-            update = True;
-        };
-        if(cur->core.background_pixel != new->core.background_pixel) {
-            XSetBackground(XtDisplay(new), new->wsw.foreground_GC,
-              new->core.background_pixel);
-            XSetBackground(XtDisplay(new), new->wsw.background_GC,
-              new->core.background_pixel);
-            update = True;
-        };
-    };
-
-    if((new->wsw.digit_number != cur->wsw.digit_number)
-      || (new->wsw.point_position != cur->wsw.point_position)) {
-        XtFree((char *)cur->wsw.increments);
-        new->wsw.increments =
-          (double *)XtCalloc (new->wsw.digit_number, sizeof(double));
-        create_increments (new);
         update = True;
     }
+
+  /* Font pattern change */
+    if(new->wsw.font_pattern == NULL) {
+      /* Insure there is always a font pattern */
+	new->wsw.font_pattern = defaultFontPattern;
+    }
+    if(cur->wsw.font_pattern != new->wsw.font_pattern) {
+	wsFree((XtPointer)&cur->wsw.font_pattern);
+	allocstr(&new->wsw.font_pattern);
+	update = True;
+    }
+
+  /* Font list change */
+    if(cur->wsw.font_list != new->wsw.font_list) {
+	if(new->wsw.font_list == NULL) {
+	    new->wsw.user_font = False;
+	} else {
+	    new->wsw.user_font = True;
+	}
+        update = True;
+    }
+
+  /* Geometry changes */
+    if(cur->core.width != new->core.width ||
+      cur->core.height != new->core.height ||
+      cur->wsw.margin_width != new->wsw.margin_width ||
+      cur->wsw.margin_height != new->wsw.margin_height ||
+      cur->manager.shadow_thickness != new->manager.shadow_thickness) {
+        update = True;
+    }
+
+  /* Update the geometry */
+    if(update) {
+      /* Free the font (if necessary) so it will be recalculated */
+	freeFont(new);
+	compute_geometry(new);
+    }
+
   /* Update value, min, and max.  Copy the value, use the old pointer
    * (allocated in Initialize and freed in Destroy). The user's
    * pointer is not kept, and he does not have a pointer to the value
@@ -696,6 +695,10 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
         *new->wsw.max_value = *req->wsw.max_value;
         update = True;
     }
+    if(update) {
+        compute_format_min_max(new);
+    }
+
     if(req->wsw.value != cur->wsw.value) {
         new->wsw.value = cur->wsw.value;
       /* Don't change if there is a pending_timeout_id (pending
@@ -719,13 +722,33 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 	  /* Keep the old value */
 #if DEBUG_SETVALUE
 	    printf("!!!SetValue: old value=%g not changed to new value=%g\n",
-	      cur->wsw.value,new->wsw.value);
+	      *cur->wsw.value,*new->wsw.value);
 	    XBell(XtDisplay(cur),50);
 #endif
 	}
     }
-    if(update) {
-        compute_format_min_max(new);
+    
+  /* Foreground or background change */
+    if(new->wsw.GC_inited) {
+        if(cur->manager.foreground != new->manager.foreground) {
+            XSetForeground(XtDisplay(new), new->wsw.foreground_GC,
+              new->manager.foreground);
+            XSetForeground(XtDisplay(new), new->wsw.background_GC,
+              new->manager.foreground);
+	    update = True;
+        }
+        if(cur->core.background_pixel != new->core.background_pixel) {
+            XSetBackground(XtDisplay(new), new->wsw.foreground_GC,
+              new->core.background_pixel);
+            XSetBackground(XtDisplay(new), new->wsw.background_GC,
+              new->core.background_pixel);
+	    update = True;
+        }
+    }
+
+  /* Shadow type change */
+    if(cur->wsw.shadow_type != new->wsw.shadow_type) {
+        update = True;
     }
     
 #if DEBUG_POINTER
@@ -768,7 +791,7 @@ static void Resize(Widget widget)
 	Dimension reqHeight =
 	  (wsw->core.height - 2*wsw->wsw.margin_height -
 	    2*wsw->manager.shadow_thickness) / 2;
-        wsw->wsw.font = queryFontBySize(XtDisplay(wsw),
+        wsw->wsw.font = getFontFromPattern(XtDisplay(wsw),
 	  wsw->wsw.font_pattern, reqWidth, reqHeight, &width, &height);
         compute_inner_geo(wsw);
         if(wsw->wsw.GC_inited) {
@@ -776,8 +799,8 @@ static void Resize(Widget widget)
               wsw->wsw.font->fid);
             XSetFont(XtDisplay(wsw), wsw->wsw.background_GC,
               wsw->wsw.font->fid);
-        };
-    };
+        }
+    }
 #if DEBUG_FLOW
     printf("Resize: end\n");
 #endif
@@ -787,7 +810,7 @@ static void Destroy(Widget widget)
 {
     WswWidget wsw = (WswWidget)widget;
 
-    myfree((XtPointer)&wsw->wsw.format);
+    wsFree((XtPointer)&wsw->wsw.format);
     XmRemoveTabGroup(widget);
     if(wsw->wsw.background_GC != NULL) {
 	XFreeGC(XtDisplay(wsw), wsw->wsw.background_GC);
@@ -797,18 +820,19 @@ static void Destroy(Widget widget)
 	XFreeGC(XtDisplay(wsw), wsw->wsw.foreground_GC);
 	wsw->wsw.foreground_GC = NULL;
     }
-    myfree((XtPointer)&wsw->wsw.font_pattern);
+    wsFree((XtPointer)&wsw->wsw.font_pattern);
     wsw->wsw.font_pattern = NULL;
     if(wsw->wsw.font_list != NULL) {
 	XmFontListFree(wsw->wsw.font_list);
 	wsw->wsw.font_list = NULL;
     }
     if(wsw->wsw.font != NULL) {
-	XFreeFont(XtDisplay(wsw),wsw->wsw.font);
-	wsw->wsw.font=NULL;
+	freeFont(wsw);
     }
     if(XtIsRealized(widget)) {
-	free_buttons(wsw);
+      /* Do not destroy them.  Xt does this and it will cause
+       * problems here */
+	free_buttons(wsw, False);
     }
     if(wsw->wsw.increments != NULL) {
 	XtFree((char *)wsw->wsw.increments);
@@ -826,7 +850,7 @@ static void Destroy(Widget widget)
 	XtFree((char *)wsw->wsw.max_value);
 	wsw->wsw.max_value = NULL;
     }
-    myfree((XtPointer)&wsw->wsw.kbd_format);
+    wsFree((XtPointer)&wsw->wsw.kbd_format);
     wsw->wsw.kbd_format = NULL;
     if(wsw->wsw.kbd_value != NULL) {
 	XtFree(wsw->wsw.kbd_value);
@@ -850,14 +874,26 @@ static void Realize(Widget widget, Mask *valueMask,
 
 }
 
-/* Expose routine.  GCs are created here on the first call.  Manager
- * takes care of shadow GCs and colors. */
+/* Expose routine.  GCs are created here on the first call, and the
+ * font is set on all calls.  Manager takes care of shadow GCs and
+ * colors. The event structure should be XExposeEvent (Expose
+ * events).  */
 static void Redisplay(Widget widget, XEvent *event, Region region)
 {
     WswWidget wsw = (WswWidget)widget;
 
-#if DEBUG_FLOW
+#if DEBUG_FLOW || DEBUG_EXPOSE
     printf("Redisplay: start\n");
+#endif
+#if DEBUG_EXPOSE    
+    printf("  type=%d send_event=%s serial=%lu window=%p\n",
+      ((XAnyEvent *)event)->type,((XAnyEvent *)event)->send_event?"True":"False",
+      ((XAnyEvent *)event)->serial,(void *)((XAnyEvent *)event)->window);
+    if(((XAnyEvent *)event)->type == Expose) {
+	XExposeEvent *eev = (XExposeEvent *)event;
+	printf("  count=%d x=%d y=%d width=%d height=%d\n",
+	  eev->count,eev->x,eev->y,eev->width,eev->height);
+    }
 #endif
 
     if(wsw->wsw.GC_inited == False) {
@@ -882,11 +918,11 @@ static void Redisplay(Widget widget, XEvent *event, Region region)
         XSetForeground(XtDisplay(wsw), wsw->wsw.foreground_GC,
 	  wsw->manager.foreground);
         wsw->wsw.GC_inited = True;
-    };
+    }
     XSetRegion(XtDisplay(wsw), wsw->wsw.background_GC, region);
     XSetRegion(XtDisplay(wsw), wsw->wsw.foreground_GC, region);
     draw((XtPointer)wsw,NULL);
-    _XmRedisplayGadgets(widget, event, region); /* Was previously done before */
+    _XmRedisplayGadgets(widget, event, region);
     XSetClipMask(XtDisplay(wsw), wsw->wsw.background_GC, None);
     XSetClipMask(XtDisplay(wsw), wsw->wsw.foreground_GC, None);
 
@@ -927,8 +963,8 @@ static void post_format_warning(WswWidget wsw, char *format)
   * If this can be resolved, use XtAppWarningMsg.  Note that
   * XtWarningMsg would be easier and equally effective. See
   * CvtStringToDoublePointer. */
-   XtAppWarningMsg(XtWidgetToApplicationContext((Widget)wsw), "badFormat",
-     "XtWswInitialize", "WheelSwitchWarning",
+   XtAppWarningMsg(XtWidgetToApplicationContext((Widget)wsw),
+     "badFormat", "XtWswInitialize", "WheelSwitchWarning",
      "WheelSwitch: Invalid format: \"%s\", use \"%s\" instead",
      params, &num_params);
 #else
@@ -940,8 +976,8 @@ static void post_format_warning(WswWidget wsw, char *format)
   * default for XtAppErrorMsg does. We do it this way so something
   * happens. The MEDM xtErrorhandler does not exit, so this is not a
   * problem for MEDM. */
-   XtAppErrorMsg(XtWidgetToApplicationContext((Widget)wsw), "badFormat",
-     "XtWswInitialize", "WheelSwitchWarning",
+   XtAppErrorMsg(XtWidgetToApplicationContext((Widget)wsw),
+     "badFormat", "XtWswInitialize", "WheelSwitchError",
      "WheelSwitch: Invalid format: \"%s\", use \"%s\" instead",
      params, &num_params);
 #endif   
@@ -950,9 +986,9 @@ static void post_format_warning(WswWidget wsw, char *format)
 /* Computes quantities associated with the format */
 static void compute_format_size(WswWidget wsw)
 {
-    char    zero_string[FORMAT_SIZE];
-    int     format_size;
-    int     i;
+    char zero_string[FORMAT_SIZE];
+    int format_size;
+    int i;
     
 #if DEBUG_FLOW
     printf("compute_format_size: start\n");
@@ -995,14 +1031,15 @@ static void compute_format_size(WswWidget wsw)
 /* Checks format validity and calls compute_format_size */
 static void compute_format(WswWidget wsw)
 {
-    char *percent=NULL,*fpart=NULL,*ad;
+    char *percent = NULL,*fpart = NULL,*ad;
     char format_used[FORMAT_SIZE];
     char kbd_format_buffer[FORMAT_SIZE];
-    char flag_char[2]=" ";
-    int width=DEFAULT_FORMAT_WIDTH;
-    int precision=DEFAULT_FORMAT_PRECISION;
-    int nparsed=0;
-    int  i,j;
+    char flag_char[2] = " ";
+    int nb_digit0 = wsw->wsw.nb_digit;
+    int width = DEFAULT_FORMAT_WIDTH;
+    int precision = DEFAULT_FORMAT_PRECISION;
+    int nparsed = 0;
+    int i,j;
     
 #if DEBUG_FLOW
     printf("compute_format: start\n");
@@ -1082,13 +1119,24 @@ static void compute_format(WswWidget wsw)
       format_used+i);
     wsw->wsw.kbd_format = kbd_format_buffer;
     allocstr(&wsw->wsw.kbd_format);
-  /* Free any old kbd_value */
-    if(wsw->wsw.kbd_value != NULL)
-      XtFree(wsw->wsw.kbd_value);
-  /* Allocate the kbd_value */
+
+  /* Allocate and reset the kbd_value */
+    if(wsw->wsw.kbd_value != NULL) {
+	XtFree(wsw->wsw.kbd_value);
+    }
     wsw->wsw.kbd_value = (char *)XtCalloc(wsw->wsw.digit_size+1, sizeof(char));
-  /* Reset the kbd_value to initialize it */
     kbdReset(wsw);
+
+  /* Allocate the increments and set them */
+    if(wsw->wsw.nb_digit != nb_digit0 || wsw->wsw.increments == NULL) {
+	if(wsw->wsw.increments != NULL) {
+	    XtFree((char *)wsw->wsw.increments);
+	}
+        wsw->wsw.increments =
+          (double *)XtCalloc(wsw->wsw.digit_number, sizeof(double));
+    }
+    set_increments(wsw);
+    
 #if DEBUG_FORMAT
     printf("compute_format: format_used=|%s| kbd_format_buffer=|%s|\n"
       "  kbd_format=|%s| kbd_value=|%s|\n",
@@ -1098,6 +1146,68 @@ static void compute_format(WswWidget wsw)
 #if DEBUG_FLOW
     printf("compute_format: end\n");
 #endif
+}
+
+/* Create the buttons arrays */
+static void create_buttons(WswWidget wsw)
+{
+    int     digit;
+
+#if DEBUG_FLOW
+    printf("create_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
+      wsw->wsw.digit_number,
+      (void *)wsw->wsw.up_buttons,
+      (void *)wsw->wsw.down_buttons);
+#endif
+
+    /* Free them first if they exist */
+    if(wsw->wsw.up_buttons != NULL) {
+      /* Set True to also destroy them */
+        free_buttons(wsw, True);
+    }
+
+  /* Make new ones */
+    wsw->wsw.up_buttons = (Widget *)XtCalloc(wsw->wsw.digit_number,
+      sizeof(Widget));
+    wsw->wsw.down_buttons = (Widget *)XtCalloc(wsw->wsw.digit_number,
+      sizeof(Widget));
+    for(digit = 0; digit < wsw->wsw.digit_number; digit++) {
+        wsw->wsw.up_buttons[digit] = create_button(wsw, True, digit);
+        XtAddCallback(wsw->wsw.up_buttons[digit], XmNarmCallback,
+          upButtonArmCallback, (XtPointer)digit);
+        wsw->wsw.down_buttons[digit] = create_button(wsw, False, digit);
+        XtAddCallback(wsw->wsw.down_buttons[digit], XmNarmCallback,
+          downButtonArmCallback,(XtPointer)digit);
+    }
+
+  /* Set the visibility */
+    set_button_visibility(wsw);
+}
+
+/* Destroy the button if destroy is specified and free the buttons
+ * arrays.  Don't specify destroy when the widget is being
+ * destroyed. */
+static void free_buttons(WswWidget wsw, Boolean destroy)
+{    
+#if DEBUG_FLOW
+    printf("free_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
+      wsw->wsw.digit_number,
+      (void *)wsw->wsw.up_buttons,
+      (void *)wsw->wsw.down_buttons);
+#endif    
+    if(wsw->wsw.up_buttons != NULL) {
+	if(destroy) {
+	    int digit;
+	    for(digit = 0; digit < wsw->wsw.digit_number; digit++) {
+		XtDestroyWidget(wsw->wsw.up_buttons[digit]);
+		XtDestroyWidget(wsw->wsw.down_buttons[digit]);
+	    }
+	}
+        XtFree((char *)wsw->wsw.up_buttons);
+        XtFree((char *)wsw->wsw.down_buttons);
+        wsw->wsw.up_buttons = NULL;
+        wsw->wsw.down_buttons = NULL;
+    }
 }
 
 /* Create a single button */
@@ -1137,76 +1247,95 @@ static Widget create_button(WswWidget wsw, Boolean up_flag, int digit)
 
     button = (Widget)XmCreateArrowButtonGadget((Widget)wsw, name, args,
       num_args);
+#if 0
+    /* KE: Manage them in set_button_visibility */
     XtManageChild(button);
+#endif    
+#if DEBUG_EXPOSE
+    printf("  %2d %s x=%d y=%d\n",
+      digit,up_flag?"Up  ":"Down",x,y);
+#endif    
     return(button);
 }
 
-/* Create the buttons arrays */
-static void create_buttons(WswWidget wsw)
+/* Compute the geometry, first getting a font if there is none. The
+ * font must be set to zero beforehand if a new font is necessary */
+static void compute_geometry(WswWidget wsw)
 {
-    int     digit;
+    Dimension width, height;
+    char zero_string[FORMAT_SIZE];
 
 #if DEBUG_FLOW
-    printf("create_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
-      wsw->wsw.digit_number,
-      (void *)wsw->wsw.up_buttons,
-      (void *)wsw->wsw.down_buttons);
+    printf("compute_geometry: start\n");
 #endif
 
-    /* Free them first if they exist */
-    if(wsw->wsw.up_buttons != NULL) {
-        free_buttons(wsw);
+  /* Get a font if necessary */
+    if(wsw->wsw.font == NULL) {
+	Dimension reqWidth, reqHeight;
+
+      /* Determine requested character width and height */
+	if(wsw->wsw.conform_to_content || wsw->core.width == 0 ||
+	  wsw->core.height == 0) {
+	    reqWidth = DEFAULT_CHAR_WIDTH;
+	    reqHeight = DEFAULT_CHAR_HEIGHT;;
+	} else {
+	    reqWidth = 
+	    (wsw->core.width - 2*wsw->wsw.margin_width -
+	      2*wsw->manager.shadow_thickness) / wsw->wsw.nb_digit;
+	    reqHeight =
+	    (wsw->core.height - 2*wsw->wsw.margin_height -
+	      2*wsw->manager.shadow_thickness) / 2;
+	}
+	
+      /* Get a font */
+	if(wsw->wsw.user_font) {
+	    wsw->wsw.font = getFontFromList(XtDisplay(wsw),
+	      wsw->wsw.font_list, reqWidth, reqHeight, &width, &height);
+	} else {
+	    wsw->wsw.font = getFontFromPattern(XtDisplay(wsw),
+	      wsw->wsw.font_pattern, reqWidth, reqHeight, &width, &height);
+	}
+	
+      /* If there is still no font */
+	if(wsw->wsw.font == NULL) {
+	  /* KE: Check this and implement it */
+	}
     }
 
-  /* Make new ones */
-    wsw->wsw.up_buttons = (Widget *)XtCalloc(wsw->wsw.digit_number,
-      sizeof(Widget));
-    wsw->wsw.down_buttons = (Widget *)XtCalloc(wsw->wsw.digit_number,
-      sizeof(Widget));
-    for(digit = 0; digit < wsw->wsw.digit_number; digit++) {
-        wsw->wsw.up_buttons[digit] = create_button(wsw, True, digit);
-        XtAddCallback(wsw->wsw.up_buttons[digit], XmNarmCallback,
-          upButtonArmCallback, (XtPointer)digit);
-        wsw->wsw.down_buttons[digit] = create_button(wsw, False, digit);
-        XtAddCallback(wsw->wsw.down_buttons[digit], XmNarmCallback,
-          downButtonArmCallback,(XtPointer)digit);
-    }
-
-  /* Set the visibility */
-    set_button_visibility(wsw);
-}
-
-/* Free the buttons arrays */
-static void free_buttons(WswWidget wsw)
-{    
+    /* Make a string using the font with value zero */
+      sprintf(zero_string, wsw->wsw.format, 0.);
+      
+    /* If conformToContent is set, set the core width and height */
+      if(wsw->wsw.conform_to_content) {
+	  wsw->core.width = 2 * wsw->wsw.margin_width +
+	    2 * wsw->manager.shadow_thickness +
+	    + XTextWidth(wsw->wsw.font, zero_string, strlen(zero_string));
+	  wsw->core.height = 2 * wsw->wsw.margin_height +
+	    2 * wsw->manager.shadow_thickness +
+	    2 * wsw->wsw.font-> descent +
+	    2 * XTextWidth(wsw->wsw.font, "0", 1)
+	    + wsw->wsw.font->ascent;
+      }
+      
+    /* Compute the rest of the geometry */
+      compute_inner_geo(wsw);
+      if(wsw->wsw.GC_inited) {
+	  XSetFont(XtDisplay(wsw), wsw->wsw.foreground_GC,
+	    wsw->wsw.font->fid);
+	  XSetFont(XtDisplay(wsw), wsw->wsw.background_GC,
+	    wsw->wsw.font->fid);
+      }
 #if DEBUG_FLOW
-    printf("free_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
-      wsw->wsw.digit_number,
-      (void *)wsw->wsw.up_buttons,
-      (void *)wsw->wsw.down_buttons);
-#endif    
-    if(wsw->wsw.up_buttons != NULL) {
-#if 0
-      /* KE: These are destroyed by Xt.  Redoing it causes
-       * problems. */
-	int digit;
-        for(digit = 0; digit < wsw->wsw.digit_number; digit++) {
-            XtDestroyWidget(wsw->wsw.up_buttons[digit]);
-            XtDestroyWidget(wsw->wsw.down_buttons[digit]);
-        }
+    printf("compute_geometry: end\n");
 #endif
-        XtFree((char *)wsw->wsw.up_buttons);
-        XtFree((char *)wsw->wsw.down_buttons);
-        wsw->wsw.up_buttons = NULL;
-        wsw->wsw.down_buttons = NULL;
-    }
 }
 
 /* Calculates geometry quantities related to placement in the
  * widget and places the buttons accordingly */
-static void compute_inner_geo( WswWidget wsw)
+static void compute_inner_geo(WswWidget wsw)
 {
     char zero_string[FORMAT_SIZE];
+    int xOff, yOff, borderWidth, borderHeight, textWidth, textHeight;
     
 #if DEBUG_FLOW
     printf("compute_inner_geo: start\n");
@@ -1214,77 +1343,67 @@ static void compute_inner_geo( WswWidget wsw)
 
     sprintf(zero_string, wsw->wsw.format, 0.);
     wsw->wsw.digit_width = XTextWidth(wsw->wsw.font, "0", 1);
-    wsw->wsw.prefix_x = wsw->wsw.margin_width + wsw->manager.shadow_thickness;
+    textWidth = XTextWidth(wsw->wsw.font, zero_string, strlen(zero_string));
+    textHeight = 2*(wsw->wsw.digit_width + wsw->wsw.font->descent) +
+      wsw->wsw.font->ascent;
+    borderWidth = wsw->wsw.margin_width + wsw->manager.shadow_thickness;
+    borderHeight = wsw->wsw.margin_height + wsw->manager.shadow_thickness;
+
+  /* Calculate offsets to center the text in the widget */
+    xOff = (wsw->core.width - textWidth)/2 - borderWidth;
+    yOff = (wsw->core.height - textHeight)/2 - borderHeight;
+
+  /* X positions */
+    wsw->wsw.prefix_x = xOff + borderWidth;
     wsw->wsw.digit_x = wsw->wsw.prefix_x
       + XTextWidth(wsw->wsw.font, zero_string, wsw->wsw.prefix_size);
     wsw->wsw.postfix_x = wsw->wsw.digit_x
       + XTextWidth(wsw->wsw.font, zero_string + wsw->wsw.prefix_size,
 	wsw->wsw.digit_size);
-    wsw->wsw.up_button_y = wsw->wsw.margin_height +
-      wsw->manager.shadow_thickness;
+
+  /* Y positions */
+    wsw->wsw.up_button_y = yOff + borderHeight;
     wsw->wsw.digit_y = wsw->wsw.up_button_y + wsw->wsw.digit_width;
     wsw->wsw.string_base_y = wsw->wsw.digit_y
       + wsw->wsw.font->ascent + wsw->wsw.font->descent;
     wsw->wsw.down_button_y = wsw->wsw.string_base_y + wsw->wsw.font->descent;
 
-    /* Recreate buttons at the new positions */
+  /* Keep the arrows in bounds */
+    if(wsw->wsw.up_button_y < borderHeight) {
+	wsw->wsw.up_button_y = borderHeight;
+    }
+    if(wsw->wsw.down_button_y + wsw->wsw.digit_width +borderHeight >
+      wsw->core.height) {
+	wsw->wsw.down_button_y = wsw->core.height - borderHeight -
+	  wsw->wsw.digit_width;
+    }
+    
+#if DEBUG_FLOW
+    printf("  width=%hu borderWidth=%d textWidth=%d xOff=%d\n"
+      "  prefix_x=%hd digit_x=%hd postfix_x=%hd\n",
+      wsw->core.width,borderWidth, textWidth,xOff,
+      wsw->wsw.prefix_x,wsw->wsw.digit_x,wsw->wsw.postfix_x);
+    printf("  height=%hu borderHeight=%d textHeight=%d yOff=%d\n"
+      "  up_button_y=%hd digit_y=%hd down_button_y=%hd\n",
+      wsw->core.height,borderHeight,textHeight,yOff,
+      wsw->wsw.up_button_y,wsw->wsw.digit_y,wsw->wsw.down_button_y);
+#endif 
+
+  /* Recreate buttons at the new positions */
     create_buttons(wsw);
 #if DEBUG_FLOW
     printf("compute_inner_geo: end\n");
 #endif
 }
 
-/* Compute the geometry and call compute_inner_goemetry for part of
- * it */
-static void compute_geometry(WswWidget wsw)
-{
-    Dimension w, h;
-    char zero_string[FORMAT_SIZE];
-
-#if DEBUG_FLOW
-    printf("compute_geometry: start\n");
-#endif
-    if(wsw->wsw.conform_to_content || wsw->core.width == 0 ||
-      wsw->core.height == 0) {
-        if(wsw->wsw.font == NULL) {
-	    wsw->wsw.font =
-	      queryFontBySize(XtDisplay(wsw), wsw->wsw.font_pattern, 8, 16,
-		&w, &h);
-	}
-        sprintf(zero_string, wsw->wsw.format, 0.);
-        wsw->core.width = 2 * wsw->wsw.margin_width +
-	  2 * wsw->manager.shadow_thickness +
-          + XTextWidth(wsw->wsw.font, zero_string, strlen(zero_string));
-        wsw->core.height = 2 * wsw->wsw.margin_height +
-	  2 * wsw->manager.shadow_thickness +
-          2 * wsw->wsw.font-> descent +
-          2 * XTextWidth(wsw->wsw.font, "0", 1)
-          + wsw->wsw.font->ascent;
-        compute_inner_geo(wsw);
-        if(wsw->wsw.GC_inited) {
-            XSetFont(XtDisplay(wsw), wsw->wsw.foreground_GC,
-              wsw->wsw.font->fid);
-            XSetFont(XtDisplay(wsw), wsw->wsw.background_GC,
-              wsw->wsw.font->fid);
-        };
-    } else if(!wsw->wsw.user_font) {
-        Resize((Widget)wsw);
-    } else {
-        compute_inner_geo(wsw);
-    }
-#if DEBUG_FLOW
-    printf("compute_geometry: end\n");
-#endif
-}
-
 /* Calculates the increments array: 10^(i-point_position) */
-static void create_increments(WswWidget wsw)
+static void set_increments(WswWidget wsw)
 {
     int i;
     double inc = 1;
 
 #if DEBUG_FLOW
-    printf("create_increments:\n");
+    printf("set_increments:\n");
 #endif
   /* Set the starting increment, depending on the digits after the
    * decimal point */
@@ -1296,6 +1415,39 @@ static void create_increments(WswWidget wsw)
 	wsw->wsw.increments[i] = inc;
 	inc *= 10;
     }
+}
+
+/* Truncates tha value to what is displayed by the format */
+static void truncate_value(WswWidget wsw)
+{
+    char value_string[FORMAT_SIZE];     /* Danger: Fixed size */
+    char number_format[FORMAT_SIZE];
+
+  /* Use the number part of the format */
+    strcpy(number_format,wsw->wsw.format + wsw->wsw.prefix_size);
+    number_format[wsw->wsw.prefix_size + wsw->wsw.digit_size] = '\0';
+
+    sprintf(value_string, wsw->wsw.format, *(wsw->wsw.value));
+    *(wsw->wsw.value) = atof(value_string);
+
+#if 0    
+    float value = 0.0;
+    int nread = 0;
+    nread=sscanf(value_string, wsw->wsw.format, &value);
+    if(nread != 1) {
+	String params[2];
+	unsigned int num_params = 2;
+	params[0] = value_string;
+	params[1] = wsw->wsw.format;
+	
+	XtAppErrorMsg(XtWidgetToApplicationContext((Widget)wsw),
+	  "wrongParameters", "truncate_value", "WheelSwitchError",
+	  "WheelSwitch: Error truncating value \"%s\" using \"%s\"", 
+	  params, &num_params);
+    } else {
+	*(wsw->wsw.value) = value;
+    }
+#endif    
 }
 
 /* Calculates the min and max allowable by the format and settable by
@@ -1556,10 +1708,10 @@ static void executeTimerProc(XtPointer clientdata, XtIntervalId *id)
     WswCallData *call_ev=(WswCallData *)clientdata;
     XmWheelSwitchCallbackStruct call_data;
     if(call_ev->widget->wsw.callback_timeout_id != 0) {
+      /* KE: Is this necessary */
         XtRemoveTimeOut(call_ev->widget->wsw.callback_timeout_id);
-        call_ev->widget->wsw.callback_timeout_id =0;
+	call_ev->widget->wsw.callback_timeout_id = 0;
     }
-    call_ev->widget->wsw.callback_timeout_id = 0;
     if(XtHasCallbacks((Widget)call_ev->widget, XmNvalueChangedCallback) ==
       XtCallbackHasSome) {
 	call_data.reason = XmCR_VALUE_CHANGED;
@@ -1749,35 +1901,38 @@ static void allocstr(char **str)
     }
 }
 
-static void myfree(XtPointer *ptr)
+static void wsFree(XtPointer *ptr)
 {
   if(ptr == NULL || *ptr == NULL) return;
    XtFree(*ptr);
    *ptr = NULL;
 }
 
-/* Finds the fonts matching font_pattern, sorts them by ascending
- * height, then finds the one that is just less than height, then
- * finds the first one that is less than width if there is one */
-static XFontStruct *queryFontBySize(Display *display,
+/* Returns font determined from font_pattern.  Finds the fonts
+ * matching font_pattern, sorts them by ascending height, then finds
+ * the one that is just less than height, then finds the first one
+ * that is less than width if there is one */
+static XFontStruct *getFontFromPattern(Display *display,
   char *font_pattern, Dimension width, Dimension height,
   Dimension *width_return, Dimension *height_return)
 {
     static char *cur_font_pattern = NULL;
     static char **names = NULL;
-    static XFontStruct  *font_structs = NULL;
+    static XFontStruct  *fonts = NULL;
     static int font_count;
     int i,j;
-    XFontStruct *font_struct;
-    XFontStruct *font_struct_loaded;
+    XFontStruct *font;
+    XFontStruct *font_loaded;
     int font_ind=0;
     
 #if DEBUG_FONTLEAK || DEBUG_FLOW
-    printf("queryFontBySize:\n"
-      "  cur_font_pattern=%p names=%p font_structs=%p font_count=%d\n"
+    printf("getFontFromPattern:\n"
+      "  width=%hd height=%hd\n"
+      "  cur_font_pattern=%p names=%p fonts=%p font_count=%d\n"
       "  |%s|\n",
+      width,height,
       (void *)cur_font_pattern,(void *)names,
-      (void *)font_structs,font_count,
+      (void *)fonts,font_count,
       cur_font_pattern?cur_font_pattern:"NULL");
 #endif    
     /* Free existing info if the name has changed */
@@ -1787,15 +1942,15 @@ static XFontStruct *queryFontBySize(Display *display,
 	  font_pattern?font_pattern:"NULL");
 #endif	
 	XtFree(cur_font_pattern);
-	if(names && font_structs) {
+	if(names && fonts) {
 #if DEBUG_FONTLEAK
 	    printf(" XFreeFontInfo\n");
 #endif
-	    XFreeFontInfo(names, font_structs, font_count);
+	    XFreeFontInfo(names, fonts, font_count);
 	}
 	cur_font_pattern = NULL;
 	names = NULL;
-	font_structs = NULL;
+	fonts = NULL;
 	font_count = 0;
     }
   /* Get new info if necessary */
@@ -1805,38 +1960,46 @@ static XFontStruct *queryFontBySize(Display *display,
 #endif
 	font_count = 0;
 	names = XListFontsWithInfo(display, font_pattern, MAX_FONTS,
-	  &font_count, &font_structs);
+	  &font_count, &fonts);
 	if(names == NULL || font_count == 0) {
-	    fprintf(stderr, "WheelSwitch: font pattern \"%s\" - no match\n",
-	      font_pattern);
+	  /* No application context, use XtErrorMsg */
+	    XtErrorMsg("badPattern", "getFontFromPattern", "WheelSwitchError",
+	      "WheelSwitch: String to double conversion takes no arguments", 
+	      (String *)NULL, (Cardinal *)NULL);
 	    return(NULL);
 	}
 	cur_font_pattern = XtNewString(font_pattern);
 	if(cur_font_pattern == NULL) {
-	    fprintf(stderr, "WheelSwitch: error alocating font pattern \"%s\"\n",
-	      font_pattern);
+	    String params[1];
+	    unsigned int num_params = 1;
+	    params[0] = font_pattern;
+	    
+	  /* No application context, use XtErrorMsg */
+	    XtErrorMsg("badPattern", "getFontFromPattern", "WheelSwitchError",
+	      "WheelSwitch:  error allocating font pattern \"%s\"",
+	      params, &num_params);
 	    return(NULL);
 	}
       /* Sort by increasing ascent */
 	for(i=0; i< font_count; i++) {
 	    for(j=i+1; j < font_count; j++) {
-		if(font_structs[i].ascent > font_structs[j].ascent) {
+		if(fonts[i].ascent > fonts[j].ascent) {
 		    XFontStruct font_buffer;
 		    char *name_buffer;
-		    font_buffer = font_structs[i];
-		    font_structs[i] = font_structs[j];
-		    font_structs[j] = font_buffer;
+		    font_buffer = fonts[i];
+		    fonts[i] = fonts[j];
+		    fonts[j] = font_buffer;
 		    name_buffer = names[i];
 		    names[i] = names[j];
 		    names[j] = name_buffer;
 		}
 	    }
 	}
-#if DEBUG_FONTLEAK
-    printf("  cur_font_pattern=%p names=%p font_structs=%p font_count=%d\n"
+#if DEBUG_FONTLEAK || DEBUG_FLOW
+    printf("  cur_font_pattern=%p names=%p fonts=%p font_count=%d\n"
       "  |%s|\n",
       (void *)cur_font_pattern,(void *)names,
-      (void *)font_structs,font_count,
+      (void *)fonts,font_count,
       cur_font_pattern?cur_font_pattern:"NULL");
 #endif    
     }
@@ -1845,11 +2008,11 @@ static XFontStruct *queryFontBySize(Display *display,
     for(i=0; i < font_count; i++) {
 #if DEBUG_FONTS
 	printf("%2d ascent=%u descent=%u max_bounds.width=%u crit=%u height=%hu\n",
-	  i,font_structs[i].ascent,font_structs[i].descent,
-	  font_structs[i].max_bounds.width,
-	  font_structs[i].ascent + 2*font_structs[i].descent,height);
+	  i,fonts[i].ascent,fonts[i].descent,
+	  fonts[i].max_bounds.width,
+	  fonts[i].ascent + 2*fonts[i].descent,height);
 #endif
-	if((font_structs[i].ascent + 2*font_structs[i].descent) > height) {
+	if((fonts[i].ascent + 2*fonts[i].descent) > height) {
 	    break;
 	} else {
 	    font_ind = i;
@@ -1862,35 +2025,114 @@ static XFontStruct *queryFontBySize(Display *display,
     for(j = font_ind; j > 0; j--) {
 #if DEBUG_FONTS
 	printf("%2d ascent=%u descent=%u max_bounds.width=%u crit=%u width=%hu\n",
-	  j,font_structs[j].ascent,font_structs[j].descent,
-	  font_structs[j].max_bounds.width,
-	  font_structs[j].max_bounds.width,width);
+	  j,fonts[j].ascent,fonts[j].descent,
+	  fonts[j].max_bounds.width,
+	  fonts[j].max_bounds.width,width);
 #endif
-	if(font_structs[j].max_bounds.width <= width) {
+	if(fonts[j].max_bounds.width <= width) {
 	    break;
 	}
     }
 #if DEBUG_FONTS
     printf("j=%d\n",j);
 #endif
+    
     font_ind = j;
-    font_struct = font_structs + font_ind;
-    *height_return = (Dimension)(font_struct->ascent + 2*font_struct->descent);
-    *width_return = font_struct->max_bounds.width;
-    font_struct_loaded = XLoadQueryFont(display, names[font_ind]);
+    font = fonts + font_ind;
+    *height_return = (Dimension)(font->ascent + 2*font->descent);
+    *width_return = font->max_bounds.width;
+    font_loaded = XLoadQueryFont(display, names[font_ind]);
+
 #if DEBUG_FONTS
-    printf("queryFontBySize: font_ind=%d font_count=%d\n  %s\n"
+    printf("getFontFromPattern: font_ind=%d font_count=%d\n  %s\n"
       "  width=%hu->%hu height=%hu->%hu\n",
       font_ind,font_count,cur_font_pattern,
       width,*width_return,height,*height_return);
 #endif    
 #if DEBUG_FONTLEAK
-    printf("Ending queryFontBySize: font_struct_loaded=%p\n",
-      (void *)font_struct_loaded);
+    printf("Ending getFontFromPattern: font_loaded=%p\n",
+      (void *)font_loaded);
 #endif
-      return(font_struct_loaded);
+      return(font_loaded);
 }
 
+/* Returns font determined from font_list.  !!!Finds the fonts
+ * matching font_pattern, sorts them by ascending height, then finds
+ * the one that is just less than height, then finds the first one
+ * that is less than width if there is one */
+static XFontStruct *getFontFromList(Display *display,
+  XmFontList font_list, Dimension width, Dimension height,
+  Dimension *width_return, Dimension *height_return)
+{
+    XFontStruct *font_return = NULL;
+    XFontStruct *font = NULL;
+    XmFontContext context;
+    XmFontListEntry entry;
+#if 0    
+    XmStringCharSet charset;
+#endif    
+    Boolean status;
+    int font_count=0;
+    
+#if DEBUG_FONTLEAK || DEBUG_FLOW
+    printf("getFontFromList:\n"
+      "  width=%hd height=%hd\n",
+      width,height);
+#endif    
+
+    status=XmFontListInitFontContext(&context, font_list);
+#if 0
+    XmFontListGetNextFont(context, &charset, &font);
+#else
+    entry = XmFontListNextEntry(context);
+    while(entry != NULL) {
+	XmFontType type_return;
+
+	font = XmFontListEntryGetFont(entry, &type_return);
+	if(type_return == XmFONT_IS_FONT) {
+#if DEBUG_FONTS
+	    printf("  %2d ascent=%u descent=%u max_bounds.width=%u "
+	      "crit=%u height=%hu\n",
+	      font_count,font->ascent,font->descent,
+	      font->max_bounds.width,
+	      font->ascent + 2*font->descent,height);
+#endif
+
+
+#if DEBUG_FONTS
+	    printf("  font=%p fid=%p\n",
+	      (void *)font,(void *)font->fid);
+#endif    
+	    
+	} else {
+	    XtErrorMsg("wrongParameters","getFontFromList",
+	      "WheelSwitchError",
+	      "WheelSwitch: Cannot handle font lists inside font lists", 
+	      (String *)NULL, (Cardinal *)NULL);
+	}
+
+      /* Get the next entry */
+	font_count++;
+	entry = XmFontListNextEntry(context);
+    }
+    
+#endif
+    XmFontListFreeFontContext(context);
+    
+  /* Use the last one for now */
+    *height_return = (Dimension)(font->ascent + 2*font->descent);
+    *width_return = font->max_bounds.width;
+    font_return = font;
+
+#if DEBUG_FONTS
+    printf("  Returned: font=%p fid=%p\n"
+      "  width=%hu->%hu height=%hu->%hu\n",
+      (void *)font_return,(void *)font_return->fid,
+      width,*width_return,height,*height_return);
+#endif
+
+    return font_return;
+}
 
 /* Callbacks, timer procs, and event handlers */
 
@@ -1911,6 +2153,7 @@ static void upButtonArmCallback(Widget button, XtPointer userdata,
 	}
         select_digit(wsw, digit);
         *wsw->wsw.value += wsw->wsw.increments[digit];
+	truncate_value(wsw);
         if(*wsw->wsw.value >= wsw->wsw.format_max_value) {
 	    arm_execute_timer(wsw, &timer_original_event);
 	}
@@ -1941,6 +2184,7 @@ static void downButtonArmCallback(Widget button, XtPointer userdata,
 	}
         select_digit(wsw, digit);
         *wsw->wsw.value -= wsw->wsw.increments[digit];
+	truncate_value(wsw);
         if(*wsw->wsw.value <= wsw->wsw.format_min_value) {
 	    arm_execute_timer(wsw, &timer_original_event);
 	}
@@ -1961,8 +2205,10 @@ static void upButtonTimerProc(XtPointer userdata, XtIntervalId *id)
     WswWidget wsw = (WswWidget)userdata;
     if(wsw->wsw.pending_timeout_id == *id) {
         *wsw->wsw.value += wsw->wsw.increments[wsw->wsw.selected_digit];
-        if(*wsw->wsw.value >= wsw->wsw.format_max_value)
-          arm_execute_timer(wsw, &timer_original_event);
+	truncate_value(wsw);
+        if(*wsw->wsw.value >= wsw->wsw.format_max_value) {
+	    arm_execute_timer(wsw, &timer_original_event);
+	}
         set_button_visibility(wsw);
         draw((XtPointer)wsw,NULL);
         if(XtIsManaged(wsw->wsw.up_buttons[wsw->wsw.selected_digit])) {
@@ -1983,8 +2229,10 @@ static void downButtonTimerProc(XtPointer userdata,  XtIntervalId *id)
     WswWidget wsw = (WswWidget)userdata;
     if(wsw->wsw.pending_timeout_id == *id) {
         *wsw->wsw.value -= wsw->wsw.increments[wsw->wsw.selected_digit];
-        if(*wsw->wsw.value <= wsw->wsw.format_min_value)
-          arm_execute_timer(wsw, &timer_original_event);
+	truncate_value(wsw);
+        if(*wsw->wsw.value <= wsw->wsw.format_min_value) {
+	    arm_execute_timer(wsw, &timer_original_event);
+	}
         set_button_visibility(wsw);
         draw((XtPointer)wsw,NULL);
         if(XtIsManaged(wsw->wsw.down_buttons[wsw->wsw.selected_digit])) {
@@ -2037,6 +2285,7 @@ static void upArrowkeyProc(Widget widget, XEvent *event, String *params,
   /* Don't do anything if the arrow is not managed */
     if(!XtIsManaged(wsw->wsw.up_buttons[wsw->wsw.selected_digit])) return;
     *wsw->wsw.value += wsw->wsw.increments[wsw->wsw.selected_digit];
+    truncate_value(wsw);
     set_button_visibility(wsw);
     draw((XtPointer)wsw,NULL);
     wsw->wsw.pending_timeout_id =
@@ -2054,6 +2303,7 @@ static void downArrowkeyProc(Widget widget, XEvent *event, String *params,
   /* Don't do anything if the arrow is not managed */
     if(!XtIsManaged(wsw->wsw.down_buttons[wsw->wsw.selected_digit])) return;
     *wsw->wsw.value -= wsw->wsw.increments[wsw->wsw.selected_digit];
+    truncate_value(wsw);
     set_button_visibility(wsw);
     draw((XtPointer)wsw,NULL);
     wsw->wsw.pending_timeout_id =
@@ -2170,4 +2420,20 @@ static void kbdReset(WswWidget wsw)
       wsw->wsw.kbd_value[0] = ' ';
       wsw->wsw.kbd_value[1] = '\0';
     }
+}
+
+/* Frees the font if necessary and set the XFontStruct pointer to
+ * NULL.  XFontStruct's obtained from XLoadQueryFont need to be freed.
+ * XFontStruct's obtained from an XmFontList should not be freed. */
+static void freeFont(WswWidget wsw)
+{
+    if(wsw->wsw.font == NULL) return;
+
+  /* See if it came from XLoadQueryFont */
+    if(!wsw->wsw.user_font) {
+	XFreeFont(XtDisplay(wsw),wsw->wsw.font);
+    }
+
+  /* Set the pointer to zero in both cases */
+    wsw->wsw.font = NULL;
 }

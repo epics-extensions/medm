@@ -826,7 +826,7 @@ static void Draw_display(Widget w, Display *display,
     IndicatorWidget wi = (IndicatorWidget)w;
     XRectangle clipRect[1];
     char *temp;
-    float range, dim;
+    float range, dim = 0.0;
     unsigned int indicator_size;
     XPoint points[4];
     int nPoints = 4;

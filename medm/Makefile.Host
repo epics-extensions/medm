@@ -49,7 +49,9 @@ PURIFY_FLAGS = -first-only -chain-length=26
 
 # Put the cache files in the appropriate bin directory
 PURIFY_FLAGS += -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
-PURIFY_FLAGS += -force-rebuild=no
+#PURIFY_FLAGS += -force-rebuild=no
+# Seems to solve problem with duplicate libc, libdl, libnsl, libsocket
+PURIFY_FLAGS += -follow-terminal-symlinks
 endif
 
 # Web browser options
@@ -61,8 +63,8 @@ endif
 
 # Use to test SciPlot or JPT, otherwise should come from CONFIG
 # Set the one you want and reset any that come from CONFIG
-#XRTGRAPH =
-#SCIPLOT = YES
+XRTGRAPH =
+SCIPLOT = YES
 #JPT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG
@@ -218,6 +220,7 @@ SRCS += medmText.c
 SRCS += medmTextEntry.c 
 SRCS += medmTextUpdate.c 
 SRCS += medmValuator.c 
+SRCS += medmWheelSwitch.c 
 SRCS += medmWidget.c 
 SRCS += objectPalette.c 
 SRCS += productDescriptionShell.c

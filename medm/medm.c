@@ -26,6 +26,7 @@
 #define DEBUG_SAVE_ALL 0
 #define DEBUG_VERSION 0
 #define DEBUG_PROP 0
+#define DEBUG_ERRORHANDLER 0
 
 #define ALLOCATE_STORAGE
 #include "medm.h"
@@ -247,6 +248,8 @@ static menuEntry_t controllersObjectMenu[] = {
       objectMenuCallback, (XtPointer) DL_RelatedDisplay,  NULL},
     { "Shell Command",  &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       objectMenuCallback, (XtPointer) DL_ShellCommand,  NULL},
+    { "Wheel Switch",  &xmPushButtonGadgetClass, 'W', NULL, NULL, NULL,
+      objectMenuCallback, (XtPointer) DL_WheelSwitch,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -3401,8 +3404,27 @@ int main(int argc, char *argv[])
       fallbackResources, args, n);
 
   /* Set error handlers */
+#if DEBUG_ERRORHANDLER
+    {
+	XtErrorHandler errHandler,warnHandler;
+	printf("MEDM: Set error handlers: appContext=%p\n",(void *)appContext);
+	errHandler=XtAppSetErrorHandler(appContext,xtErrorHandler);
+	warnHandler=XtAppSetWarningHandler(appContext,xtErrorHandler);
+	printf(" errHandler=%p xtErrorHandler=%p\n",
+	  (void *)errHandler,(void *)xtErrorHandler);
+	printf(" warnHandler=%p xtErrorHandler=%p\n",
+	  (void *)warnHandler,(void *)xtErrorHandler);
+	errHandler=XtAppSetErrorHandler(appContext,xtErrorHandler);
+	warnHandler=XtAppSetWarningHandler(appContext,xtErrorHandler);
+	printf(" errHandler=%p xtErrorHandler=%p\n",
+	  (void *)errHandler,(void *)xtErrorHandler);
+	printf(" warnHandler=%p xtErrorHandler=%p\n",
+	  (void *)warnHandler,(void *)xtErrorHandler);
+    }
+#else    
     XtAppSetErrorHandler(appContext,xtErrorHandler);
     XtAppSetWarningHandler(appContext,xtErrorHandler);
+#endif
     XSetErrorHandler(xErrorHandler);
     
   /* Enable Editres */

@@ -752,6 +752,9 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case RD_LABEL_RC:
 	strcpy(globalResourceBundle.rdLabel,stringValue);
 	break;
+    case WS_FORMAT_RC:
+	strcpy(globalResourceBundle.wsFormat,stringValue);
+	break;
     }
     XtFree(stringValue);
 
@@ -932,6 +935,9 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     case ERASE_RC:
 	newString= globalResourceBundle.erase;
 	break;
+    case WS_FORMAT_RC:
+	newString= globalResourceBundle.wsFormat;
+	break;
     }
     XmTextFieldSetString(resourceEntryElement[rcType],newString);
 }
@@ -976,6 +982,10 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.title[0] = '\0';
     globalResourceBundle.xlabel[0] = '\0';
     globalResourceBundle.ylabel[0] = '\0';
+    strncpy(globalResourceBundle.wsFormat,WHEEL_SWITCH_DEFAULT_FORMAT,
+      MAX_TOKEN_LENGTH);
+    globalResourceBundle.wsFormat[MAX_TOKEN_LENGTH-1]='\0';
+    
     if(cdi) {
       /*
        * (MDA) hopefully this will work in the general case (with displays being
@@ -1493,6 +1503,7 @@ static void createEntryRC( Widget parent, int rcType)
     case ERASE_RC:
     case COUNT_RC:
     case RD_LABEL_RC:
+    case WS_FORMAT_RC:
 	n = 0;
 	XtSetArg(args[n],XmNmaxLength,MAX_TOKEN_LENGTH-1); n++;
 	localElement = XmCreateTextField(localRC,"localElement",args,n);
@@ -1809,6 +1820,10 @@ static int resourceTable[] = {
     DL_Valuator,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
     LABEL_RC, CLRMOD_RC, DIRECTION_RC, PRECISION_RC,
+    -1,
+    DL_WheelSwitch,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    LABEL_RC, CLRMOD_RC, WS_FORMAT_RC,
     -1,
     DL_TextEntry,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
@@ -2252,6 +2267,11 @@ void medmGetValues(ResourceBundle *pRB, ...)
 	case RD_VISUAL_RC: {
 	    relatedDisplayVisual_t *pvalue = va_arg(ap,relatedDisplayVisual_t *);
 	    *pvalue = pRB->rdVisual;
+	    break;
+	}
+	case WS_FORMAT_RC: {
+	    char* pvalue = va_arg(ap,char *);
+	    strcpy(pvalue,pRB->wsFormat);
 	    break;
 	}
 	case RDDATA_RC: {
@@ -2922,6 +2942,33 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	tail = strlen(string);
 	while(string[--tail] == '0') string[tail] = '\0';
 	XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
+	break;
+    }
+    case DL_WheelSwitch: {
+	DlWheelSwitch *p = elementPtr->structure.wheelSwitch;
+
+	updateGlobalResourceBundleObjectAttribute(&(p->object));
+	updateResourcePaletteObjectAttribute();
+	if(objectDataOnly) return;
+
+	updateGlobalResourceBundleControlAttribute(&(p->control));
+	updateResourcePaletteControlAttribute();
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
+	globalResourceBundle.label = p->label;
+	optionMenuSet(resourceEntryElement[LABEL_RC],
+	  globalResourceBundle.label - FIRST_LABEL_TYPE);
+	globalResourceBundle.clrmod = p->clrmod;
+	optionMenuSet(resourceEntryElement[CLRMOD_RC],
+	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
+	globalResourceBundle.dPrecision = p->dPrecision;
+	sprintf(string,"%f",globalResourceBundle.dPrecision);
+      /* strip trailing zeroes */
+	tail = strlen(string);
+	while(string[--tail] == '0') string[tail] = '\0';
+	XmTextFieldSetString(resourceEntryElement[PRECISION_RC],string);
+	strcpy(globalResourceBundle.wsFormat,p->format);
+	XmTextFieldSetString(resourceEntryElement[WS_FORMAT_RC],
+          globalResourceBundle.wsFormat);
 	break;
     }
     case DL_ChoiceButton: {

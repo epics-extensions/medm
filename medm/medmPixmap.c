@@ -22,7 +22,7 @@
 static XImage arc25, bar25, byte25, bezierCurve25, cartesianPlot25, choiceButton25,
   image25, indicator25, line25, menu25, messageButton25, meter25,
   oval25, polygon25, polyline25, rectangle25, relatedDisplay25,
-  select25, shellCommand25, stripChart25, surfacePlot25, text25,
+  select25, shellCommand25, wheelSwitch25, stripChart25, surfacePlot25, text25,
   textEntry25, textUpdate25, valuator25;
 
 
@@ -61,7 +61,6 @@ void medmInitializeImageCache()
     bar25.obdata = NULL;
     XmInstallImage(&bar25,"bar25");
 
-
     byte25.width = byte25_width;
     byte25.height = byte25_height;
     byte25.data = (char *)byte25_bits;
@@ -75,7 +74,6 @@ void medmInitializeImageCache()
     byte25.bytes_per_line = 4;
     byte25.obdata = NULL;
     XmInstallImage(&byte25,"byte25");
-
 
     bezierCurve25.width = bezierCurve25_width;
     bezierCurve25.height = bezierCurve25_height;
@@ -91,7 +89,6 @@ void medmInitializeImageCache()
     bezierCurve25.obdata = NULL;
     XmInstallImage(&bezierCurve25,"bezierCurve25");
 
-
     choiceButton25.width = choiceButton25_width;
     choiceButton25.height = choiceButton25_height;
     choiceButton25.data = (char *)choiceButton25_bits;
@@ -105,7 +102,6 @@ void medmInitializeImageCache()
     choiceButton25.bytes_per_line = 4;
     choiceButton25.obdata = NULL;
     XmInstallImage(&choiceButton25,"choiceButton25");
-
 
     cartesianPlot25.width = cartesianPlot25_width;
     cartesianPlot25.height = cartesianPlot25_height;
@@ -121,7 +117,6 @@ void medmInitializeImageCache()
     cartesianPlot25.obdata = NULL;
     XmInstallImage(&cartesianPlot25,"cartesianPlot25");
 
-
     image25.width = image25_width;
     image25.height = image25_height;
     image25.data = (char *)image25_bits;
@@ -135,7 +130,6 @@ void medmInitializeImageCache()
     image25.bytes_per_line = 4;
     image25.obdata = NULL;
     XmInstallImage(&image25,"image25");
-
 
     indicator25.width = indicator25_width;
     indicator25.height = indicator25_height;
@@ -151,7 +145,6 @@ void medmInitializeImageCache()
     indicator25.obdata = NULL;
     XmInstallImage(&indicator25,"indicator25");
 
-
     line25.width = line25_width;
     line25.height = line25_height;
     line25.data = (char *)line25_bits;
@@ -165,7 +158,6 @@ void medmInitializeImageCache()
     line25.bytes_per_line = 4;
     line25.obdata = NULL;
     XmInstallImage(&line25,"line25");
-
 
     menu25.width = menu25_width;
     menu25.height = menu25_height;
@@ -181,7 +173,6 @@ void medmInitializeImageCache()
     menu25.obdata = NULL;
     XmInstallImage(&menu25,"menu25");
 
-
     messageButton25.width = messageButton25_width;
     messageButton25.height = messageButton25_height;
     messageButton25.data = (char *)messageButton25_bits;
@@ -195,7 +186,6 @@ void medmInitializeImageCache()
     messageButton25.bytes_per_line = 4;
     messageButton25.obdata = NULL;
     XmInstallImage(&messageButton25,"messageButton25");
-
 
     meter25.width = meter25_width;
     meter25.height = meter25_height;
@@ -211,7 +201,6 @@ void medmInitializeImageCache()
     meter25.obdata = NULL;
     XmInstallImage(&meter25,"meter25");
 
-
     oval25.width = oval25_width;
     oval25.height = oval25_height;
     oval25.data = (char *)oval25_bits;
@@ -225,7 +214,6 @@ void medmInitializeImageCache()
     oval25.bytes_per_line = 4;
     oval25.obdata = NULL;
     XmInstallImage(&oval25,"oval25");
-
 
     polygon25.width = polygon25_width;
     polygon25.height = polygon25_height;
@@ -241,7 +229,6 @@ void medmInitializeImageCache()
     polygon25.obdata = NULL;
     XmInstallImage(&polygon25,"polygon25");
 
-
     polyline25.width = polyline25_width;
     polyline25.height = polyline25_height;
     polyline25.data = (char *)polyline25_bits;
@@ -255,7 +242,6 @@ void medmInitializeImageCache()
     polyline25.bytes_per_line = 4;
     polyline25.obdata = NULL;
     XmInstallImage(&polyline25,"polyline25");
-
 
     rectangle25.width = rectangle25_width;
     rectangle25.height = rectangle25_height;
@@ -271,7 +257,6 @@ void medmInitializeImageCache()
     rectangle25.obdata = NULL;
     XmInstallImage(&rectangle25,"rectangle25");
 
-
     relatedDisplay25.width = relatedDisplay25_width;
     relatedDisplay25.height = relatedDisplay25_height;
     relatedDisplay25.data = (char *)relatedDisplay25_bits;
@@ -285,7 +270,6 @@ void medmInitializeImageCache()
     relatedDisplay25.bytes_per_line = 4;
     relatedDisplay25.obdata = NULL;
     XmInstallImage(&relatedDisplay25,"relatedDisplay25");
-
 
     select25.width = select25_width;
     select25.height = select25_height;
@@ -301,7 +285,6 @@ void medmInitializeImageCache()
     select25.obdata = NULL;
     XmInstallImage(&select25,"select25");
 
-
     shellCommand25.width = shellCommand25_width;
     shellCommand25.height = shellCommand25_height;
     shellCommand25.data = (char *)shellCommand25_bits;
@@ -316,6 +299,19 @@ void medmInitializeImageCache()
     shellCommand25.obdata = NULL;
     XmInstallImage(&shellCommand25,"shellCommand25");
 
+    wheelSwitch25.width = wheelSwitch25_width;
+    wheelSwitch25.height = wheelSwitch25_height;
+    wheelSwitch25.data = (char *)wheelSwitch25_bits;
+    wheelSwitch25.xoffset = 0;
+    wheelSwitch25.format = XYBitmap;
+    wheelSwitch25.byte_order = MSBFirst;
+    wheelSwitch25.bitmap_pad = 8;
+    wheelSwitch25.bitmap_bit_order = LSBFirst;
+    wheelSwitch25.bitmap_unit = 8;
+    wheelSwitch25.depth = 1;
+    wheelSwitch25.bytes_per_line = 4;
+    wheelSwitch25.obdata = NULL;
+    XmInstallImage(&wheelSwitch25,"wheelSwitch25");
 
     stripChart25.width = stripChart25_width;
     stripChart25.height = stripChart25_height;
@@ -331,7 +327,6 @@ void medmInitializeImageCache()
     stripChart25.obdata = NULL;
     XmInstallImage(&stripChart25,"stripChart25");
 
-
     surfacePlot25.width = surfacePlot25_width;
     surfacePlot25.height = surfacePlot25_height;
     surfacePlot25.data = (char *)surfacePlot25_bits;
@@ -345,7 +340,6 @@ void medmInitializeImageCache()
     surfacePlot25.bytes_per_line = 4;
     surfacePlot25.obdata = NULL;
     XmInstallImage(&surfacePlot25,"surfacePlot25");
-
 
     text25.width = text25_width;
     text25.height = text25_height;
@@ -361,7 +355,6 @@ void medmInitializeImageCache()
     text25.obdata = NULL;
     XmInstallImage(&text25,"text25");
 
-
     textEntry25.width = textEntry25_width;
     textEntry25.height = textEntry25_height;
     textEntry25.data = (char *)textEntry25_bits;
@@ -375,7 +368,6 @@ void medmInitializeImageCache()
     textEntry25.bytes_per_line = 4;
     textEntry25.obdata = NULL;
     XmInstallImage(&textEntry25,"textEntry25");
-
 
     textUpdate25.width = textUpdate25_width;
     textUpdate25.height = textUpdate25_height;
@@ -404,7 +396,6 @@ void medmInitializeImageCache()
     valuator25.bytes_per_line = 4;
     valuator25.obdata = NULL;
     XmInstallImage(&valuator25,"valuator25");
-
 }
 
 /*
@@ -431,6 +422,7 @@ void medmClearImageCache()
     XmUninstallImage(&relatedDisplay25);
     XmUninstallImage(&select25);
     XmUninstallImage(&shellCommand25);
+    XmUninstallImage(&wheelSwitch25);
     XmUninstallImage(&stripChart25);
     XmUninstallImage(&surfacePlot25);
     XmUninstallImage(&text25);

@@ -378,19 +378,19 @@ XmString xmStringValueTable[NUMBER_STRING_VALUES];
 
 #endif
 
-/*********************************************************************
- *  controllers are also monitors (controllers are a sub-class of    *
- *  monitors) -> order must be consistent with all of the following: *
- * controllers:                                                      *
- *    DL_Valuator DL_ChoiceButton    DL_MessageButton DL_TextEntry   *
- *    DL_Menu,    DL_RelatedDisplay, DL_ShellCommand                 *
- *  monitors:                                                        *
- *    DL_Meter      DL_TextUpdate    DL_Bar        DL_Indicator      *
- *    DL_StripChart DL_CartesianPlot DL_SurfacePlot                  *
- *  statics acting as monitors (dynamics):                           *
- *    DL_Rectangle    DL_Oval       DL_Arc   DL_Text                 *
- *    DL_Polyline     DL_Polygon                                     *
- *********************************************************************/
+/**********************************************************************
+ * Controllers are also monitors (controllers are a sub-class of      *
+ *  monitors) -> order must be consistent with all of the following:  *
+ * Controllers:                                                       *
+ *    DL_Valuator   DL_ChoiceButton   DL_MessageButton DL_TextEntry   *
+ *    DL_Menu       DL_RelatedDisplay DL_ShellCommand  DL_WheelSwitch *
+ * Monitors:                                                          *
+ *    DL_Meter      DL_TextUpdate     DL_Bar           DL_Indicator   *
+ *    DL_StripChart DL_CartesianPlot  DL_SurfacePlot                  *
+ * Statics acting as monitors (dynamics):                             *
+ *    DL_Rectangle  DL_Oval           DL_Arc           DL_Text        *
+ *    DL_Polyline   DL_Polygon                                        *
+ **********************************************************************/
 
 typedef enum {
   /* Self */
@@ -406,35 +406,36 @@ typedef enum {
     DL_ShellCommand   =107,
     DL_TextEntry      =108,
     DL_Valuator       =109,
+    DL_WheelSwitch    =110,
   /* Monitors */
-    DL_Bar            =110,
-    DL_Byte           =111,
-    DL_CartesianPlot  =112,
-    DL_Indicator      =113,
-    DL_Meter          =114,
-    DL_StripChart     =115,
-    DL_TextUpdate     =116,
+    DL_Bar            =111,
+    DL_Byte           =112,
+    DL_CartesianPlot  =113,
+    DL_Indicator      =114,
+    DL_Meter          =115,
+    DL_StripChart     =116,
+    DL_TextUpdate     =117,
   /* Graphics */
-    DL_Arc            =117,
-    DL_Image          =118,
-    DL_Line           =119,
-    DL_Oval           =120,
-    DL_Polygon        =121,
-    DL_Polyline       =122,
-    DL_Rectangle      =123,
-    DL_Text           =124
+    DL_Arc            =118,
+    DL_Image          =119,
+    DL_Line           =120,
+    DL_Oval           =121,
+    DL_Polygon        =122,
+    DL_Polyline       =123,
+    DL_Rectangle      =124,
+    DL_Text           =125
 } DlElementType;
 
 #define MIN_DL_ELEMENT_TYPE DL_Element
 #define MAX_DL_ELEMENT_TYPE DL_Text
-#define NUM_DL_ELEMENT_TYPES    ((MAX_DL_ELEMENT_TYPE-MIN_DL_ELEMENT_TYPE)+1)
-#define FIRST_RENDERABLE        DL_Composite
+#define NUM_DL_ELEMENT_TYPES ((MAX_DL_ELEMENT_TYPE-MIN_DL_ELEMENT_TYPE)+1)
+#define FIRST_RENDERABLE DL_Composite
 
 #define ELEMENT_IS_GRAPHICS(type) ((type >= DL_Arc && type <= DL_Text))
 
 #define ELEMENT_HAS_WIDGET(type) ((type >= DL_Display && type <= DL_StripChart))
 
-#define ELEMENT_IS_CONTROLLER(type) ((type >= DL_choiceButton && type <= DL_Valuator))
+#define ELEMENT_IS_CONTROLLER(type) ((type >= DL_choiceButton && type <= DL_WheelSwitch))
 
 /* this macro defines those elements which occupy space/position and can
  *  be rendered.  Note: Composite is not strictly renderable because no
@@ -714,6 +715,16 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlControl control;
+    DlLimits limits;
+    LabelType label;
+    ColorMode clrmod;
+    double dPrecision;
+    char format[MAX_TOKEN_LENGTH];
+} DlWheelSwitch;
+
+typedef struct {
+    DlObject object;
+    DlControl control;
     ColorMode clrmod;
     Stacking stacking;
 } DlChoiceButton;
@@ -803,6 +814,7 @@ typedef union {
     DlStripChart *stripChart;
     DlCartesianPlot *cartesianPlot;
     DlValuator *valuator;
+    DlWheelSwitch *wheelSwitch;
     DlChoiceButton *choiceButton;
     DlMessageButton *messageButton;
     DlMenu *menu;

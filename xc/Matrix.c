@@ -40,14 +40,8 @@
 
 #include <Xm/DrawP.h>
 
-/* The following is the prototype for the _XmDrawShadow
- *   from Obsolete.c */
-#if !defined(linux) && !defined(__APPLE__) && !defined(CYGWIN32)
-/* Above platforms define this function and define it differently */
-void _XmDrawShadow (Display *display, Drawable d, 
-  GC top_GC, GC bottom_GC, int size, int x, int y, 
-  int width, int height);
-#endif
+/* Internal Motif functions not defined in header files */
+void _XmDrawShadow();
 
   /*
    * MDA - want to use memmove() instead of bcopy() for portability!
@@ -977,7 +971,6 @@ static XtCallbackRec HSCallback[] =
     {(XtCallbackProc) NULL, NULL}
 };
 
-/* ARGSUSED */
 static void
 Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
@@ -2097,10 +2090,10 @@ RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
     }
 
   /*
-     * Draw a shadow just inside row/column labels and around outer edge
-     * of clip widget.	We can't use height of clip widget because it is
-     * truncated to nearest row.  We use cell_visible_height instead.
-     */
+   * Draw a shadow just inside row/column labels and around outer edge
+   * of clip widget.	We can't use height of clip widget because it is
+   * truncated to nearest row.  We use cell_visible_height instead.
+   */
     if (mw->manager.shadow_thickness)
       _XmDrawShadow(XtDisplay(mw), XtWindow(mw),
 	mw->manager.bottom_shadow_GC,
@@ -2119,7 +2112,6 @@ RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
  * It redraws the row and column labels, the cells in fixed rows and columns
  * and the clip window shadow.
  */
-/* ARGSUSED */
 static void
 Redisplay(Widget w, XEvent * event, Region region)
 {
@@ -2220,7 +2212,6 @@ RedrawCells(XbaeMatrixWidget mw, XbaeRectangle *expose)
  * non-fixed cells which were damaged.
  * It recieves Expose, GraphicsExpose and NoExpose events.
  */
-/* ARGSUSED */
 static void
 ClipRedisplay(Widget w, XEvent *event, Region region)
 {
@@ -2289,7 +2280,6 @@ ClipRedisplay(Widget w, XEvent *event, Region region)
 }
 
 
-/* ARGSUSED */
 static Boolean
 SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
   Cardinal * num_args)
@@ -2844,7 +2834,6 @@ SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
 #undef EQ
 }
 
-/* ARGSUSED */
 static void
 SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
   XtWidgetGeometry *reply)
@@ -3251,7 +3240,6 @@ Resize(Widget w)
 /*
  * Since we totally control our childrens geometry, allow anything.
  */
-/* ARGSUSED */
 static XtGeometryResult
 GeometryManager(Widget w, XtWidgetGeometry *desired,
   XtWidgetGeometry *allowed)
@@ -3307,7 +3295,6 @@ QueryGeometry(Widget w, XtWidgetGeometry *proposed,
 /*
  * Callback for vertical scrollbar
  */
-/* ARGSUSED */
 static void
 ScrollVertCB(Widget w, XtPointer client, XtPointer call)
 {
@@ -3484,7 +3471,6 @@ ScrollVertCB(Widget w, XtPointer client, XtPointer call)
 /*
  * Callback for horizontal scrollbar
  */
-/* ARGSUSED */
 static void
 ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
 {
@@ -3662,7 +3648,6 @@ ScrollHorizCB(Widget w, XtPointer client, XtPointer call)
  * call Matrixs modifyVerifyCallback list with the textField info
  * and the row/col that is changing.
  */
-/* ARGSUSED */
 static void
 ModifyVerifyCB(Widget w, XtPointer client, XtPointer call)
 {
@@ -3687,7 +3672,6 @@ ModifyVerifyCB(Widget w, XtPointer client, XtPointer call)
  * the textField if a cell is being edited.  If no cells are being edited,
  * force an edit on the top left most visible cell.
  */
-/* ARGSUSED */
 static void
 TraverseInCB(Widget w, XtPointer client, XtPointer call)
 {
@@ -4196,7 +4180,7 @@ static void
 ResizeCells(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i, j;
-    int safe_rows;
+    int safe_rows = 0;
 
     if (new->matrix.rows == current->matrix.rows)
       safe_rows = new->matrix.rows;
@@ -4282,7 +4266,7 @@ static void
 ResizeSelectedCells(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i;
-    int safe_rows;
+    int safe_rows = 0;
 
     if (new->matrix.rows == current->matrix.rows)
       safe_rows = new->matrix.rows;
@@ -4351,7 +4335,7 @@ static void
 ResizeColors(XbaeMatrixWidget current, XbaeMatrixWidget new)
 {
     int i, j;
-    int safe_rows;
+    int safe_rows = 0;
 
     if (new->matrix.rows == current->matrix.rows)
       safe_rows = new->matrix.rows;
@@ -6490,7 +6474,6 @@ XbaeMatrixSetCellColor(Widget w, int row, int column, Pixel color)
 /*
  * Action to edit a non-fixed cell.
  */
-/* ARGSUSED */
 static void
 EditCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6692,7 +6675,6 @@ EditCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 /*
  * Action to unmap the textField and discard any edits made
  */
-/* ARGSUSED */
 static void
 CancelEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6750,7 +6732,6 @@ CancelEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 /*
  * Action save any edits made and unmap the textField if params[0] is True
  */
-/* ARGSUSED */
 static void
 CommitEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6808,7 +6789,6 @@ CommitEditACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
  * window or the Matrix window.  Set the cell to indicate which one.
  * Used by some actions.
  */
-/* ARGSUSED */
 static Boolean
 EventToXY(XbaeMatrixWidget mw, XEvent *event, int *x, int *y, CellType *cell)
 {
@@ -6856,7 +6836,6 @@ EventToXY(XbaeMatrixWidget mw, XEvent *event, int *x, int *y, CellType *cell)
     return True;
 }
 
-/* ARGSUSED */
 static void
 SelectCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6915,7 +6894,6 @@ SelectCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 }
 
 
-/* ARGSUSED */
 static void
 TraverseNextACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6946,7 +6924,6 @@ TraverseNextACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
     mw->matrix.traversing = NOT_TRAVERSING;
 }
 
-/* ARGSUSED */
 static void
 TraversePrevACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
 {
@@ -6986,7 +6963,6 @@ TraversePrevACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
  * - A backslash-backslash-comma (\\,) does not terminate a string and is
  *   copied as a backslash-comma (\,)
  */
-/* ARGSUSED */
 Boolean
 CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)
@@ -7161,7 +7137,6 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 /*
  * Free the string array allocated by the String to StringArray converter
  */
-/* ARGSUSED */
 void
 StringArrayDestructor(XtAppContext app, XrmValuePtr to,
   XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
@@ -7182,7 +7157,6 @@ StringArrayDestructor(XtAppContext app, XrmValuePtr to,
  * Convert a comma separated list of short ints to array of widths.
  * The array is terminated with BAD_WIDTH.
  */
-/* ARGSUSED */
 Boolean
 CvtStringToWidthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)
@@ -7250,7 +7224,6 @@ CvtStringToWidthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 /*
  * Free the width array allocated by the String to WidthArray converter
  */
-/* ARGSUSED */
 void
 WidthArrayDestructor(XtAppContext app, XrmValuePtr to,
   XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
@@ -7264,7 +7237,6 @@ WidthArrayDestructor(XtAppContext app, XrmValuePtr to,
  * Convert a comma separated list of ints to array of max lengths.
  * The array is terminated with BAD_MAXLENGTH.
  */
-/* ARGSUSED */
 Boolean
 CvtStringToMaxLengthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)
@@ -7333,7 +7305,6 @@ CvtStringToMaxLengthArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
  * Free the max length array allocated by the String to
  * MaxLengthArray converter
  */
-/* ARGSUSED */
 void
 MaxLengthArrayDestructor(XtAppContext app, XrmValuePtr to,
   XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)
@@ -7380,7 +7351,6 @@ StringsAreEqual(String in, String test, int length)
  * Convert a comma separated list of alignments to array of alignments
  * (unsigned chars).  The array is terminated by BAD_ALIGNMENT.
  */
-/* ARGSUSED */
 Boolean
 CvtStringToAlignmentArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)
@@ -7472,7 +7442,6 @@ CvtStringToAlignmentArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 /*
  * Free the alignment array allocated by the String to AlignmentArray converter
  */
-/* ARGSUSED */
 void
 AlignmentArrayDestructor(XtAppContext app, XrmValuePtr to,
   XtPointer converter_data, XrmValuePtr args, Cardinal *num_args)

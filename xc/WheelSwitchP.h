@@ -30,19 +30,25 @@ typedef struct {
 
 typedef struct {
   /* Settable through resources */
-    double *value;
-    double *min_value;
-    double *max_value;
-    XtCallbackList value_changed_callback;
-    int repeat_interval;
-    int callback_delay;
-    
+    Boolean conform_to_content;
+    short margin_width;   /* Margin around widget inside shadow */
+    short margin_height;
+
+  /* Shadows, in addition to what is in Manager */
+    unsigned int shadow_type;
+
     char *format;
     char *font_pattern;
     XmFontList font_list;
-    short margin_height;   /* margin around widget */
-    short margin_width;
-    Boolean conform_to_content;
+
+    double *value;
+    double *min_value;
+    double *max_value;
+
+    int repeat_interval;
+    int callback_delay;
+    
+    XtCallbackList value_changed_callback;
     
   /* Derived and private */
     double format_min_value;
@@ -79,9 +85,6 @@ typedef struct {
     char *kbd_value;
     XtIntervalId blink_timeout_id;
     Boolean to_clear;
-
-  /* Shadows, in addition to what is in Manager */
-    unsigned int shadow_type;
 } WswPart;
 
 /* New instance declaration */

@@ -71,6 +71,7 @@
 #include "BarGraph.h"
 #include "Matrix.h"
 #include "Byte.h"
+#include "WheelSwitch.h"
 
 #define NAME	"medm"
 #define CLASS	"Medm"

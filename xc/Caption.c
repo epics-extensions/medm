@@ -196,7 +196,6 @@ ClassInitialize(void)
       XtCacheAll, NULL);
 }
 
-/* ARGSUSED */
 static void
 Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
@@ -288,7 +287,6 @@ InsertChild(Widget w)
 }
 
 
-/* ARGSUSED */
 static Boolean
 SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
   Cardinal *num_args)
@@ -435,7 +433,6 @@ Redisplay(Widget w, XEvent *event, Region region)
     _XmRedisplayGadgets(w, event, region);
 }
 
-/* ARGSUSED */
 static void
 SetValuesAlmost(Widget gold, Widget gnew, XtWidgetGeometry *request,
   XtWidgetGeometry *reply)
@@ -488,8 +485,8 @@ GetValuesHook(Widget gcw, ArgList args, Cardinal *num_args)
 static void
 Layout(XbaeCaptionWidget cw, Boolean configure)
 {
-    Position label_x, label_y;
-    Position user_x, user_y;
+    Position label_x = 0, label_y = 0;
+    Position user_x = 0, user_y = 0;
     Dimension user_width, user_height;
 
   /*
@@ -759,7 +756,6 @@ ChangeManaged(Widget gcw)
     Layout(cw, True);
 }
 
-/* ARGSUSED */
 static XtGeometryResult
 GeometryManager(Widget w, XtWidgetGeometry *desired, XtWidgetGeometry *allowed)
 {
@@ -935,7 +931,7 @@ QueryGeometry(Widget gcw, XtWidgetGeometry *proposed, XtWidgetGeometry *desired)
    */
     else {
 	XtWidgetGeometry childProposed, childDesired;
-	Dimension childWidth, childHeight, childBorderWidth;
+	Dimension childWidth, childHeight, childBorderWidth = 0;
 	Dimension cwWidth, cwHeight;
 	XtGeometryResult result;
 
@@ -1066,7 +1062,6 @@ CompareStrings(String in, String test)
       return False;
 }
 
-/* ARGSUSED */
 static Boolean
 CvtStringToLabelPosition(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)
@@ -1113,7 +1108,6 @@ CvtStringToLabelPosition(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     return True;
 }
 
-/* ARGSUSED */
 static Boolean
 CvtStringToLabelAlignment(Display *dpy, XrmValuePtr args, Cardinal *num_args,
   XrmValuePtr from, XrmValuePtr to, XtPointer *data)

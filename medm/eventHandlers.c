@@ -1287,6 +1287,9 @@ DlElement *handleRectangularCreates(DlElementType type,
     case DL_Valuator:
 	pE = createDlValuator(NULL);
 	break;
+    case DL_WheelSwitch:
+	pE = createDlWheelSwitch(NULL);
+	break;
     case DL_ChoiceButton:
 	pE = createDlChoiceButton(NULL);
 	break;

@@ -21,7 +21,16 @@ USE_MOTIF12=NO
 ifdef WIN32
 #HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
+endif
+
+# Source browser options
+ifeq ($(HOST_OPT),NO)
+  ifeq ($(ANSI),ACC)
+    ifeq ($(OS_CLASS),solaris)
+      USR_CFLAGS += -xsb
+    endif
+  endif
 endif
 
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
@@ -52,6 +61,7 @@ LIBSRCS += Meter.c
 LIBSRCS += Value.c
 LIBSRCS += bae.c
 LIBSRCS += utils.c
+LIBSRCS += WheelSwitch.c
 
 LIBRARY = ANLwidgets
 

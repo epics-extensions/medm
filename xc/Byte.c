@@ -481,7 +481,7 @@ static void Draw_display(Widget w, Display *display,
    *************************************************************************/
 {
     ByteWidget wb = (ByteWidget)w;
-    int  back_fg=0, dec_val, i, j, segn;
+    int  back_fg = 0, dec_val = 0, i, j, segn;
     float seg;
     
   /* printf("BY: Draw display2\n"); */

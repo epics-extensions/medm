@@ -859,10 +859,10 @@ static void Draw_display(Widget w, Display *display,
     BarGraphWidget wb = (BarGraphWidget)w;
     Drawable tempDrawable;
     Pixmap pixmap = (Pixmap)0;
-    Position x0, y0, x, y;
-    Dimension width, height;
+    Position x0, y0, x = 0, y = 0;
+    Dimension width = 0, height = 0;
     int  len, mid, d;
-    float dim;
+    float dim = 0.0;
     char *temp;
 
   /* Reset any clip mask */

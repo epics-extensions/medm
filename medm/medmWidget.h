@@ -332,7 +332,7 @@ extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
     "Element", "Composite", "Display",
     "Choice Button", "Menu", "Message Button", "Related Display",
-    "Shell Command", "Text Entry", "Slider",
+    "Shell Command", "Text Entry", "Slider", "Wheel Switch",
     "Bar Monitor", "Byte Monitor", "Cartesian Plot", "Scale Monitor", "Meter",
     "Strip Chart", "Text Monitor",
     "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
@@ -411,6 +411,7 @@ typedef struct _ResourceBundle {
     double dPrecision;
     int sbit, ebit;
     char rdLabel[MAX_TOKEN_LENGTH];
+    char wsFormat[MAX_TOKEN_LENGTH];
     DlTrace cpData[MAX_TRACES];
     DlPen scData[MAX_PENS];
     DlRelatedDisplayEntry rdData[MAX_RELATED_DISPLAYS];
@@ -501,24 +502,25 @@ typedef struct _ResourceBundle {
 #define EBIT_RC           51
 #define RD_LABEL_RC       52
 #define RD_VISUAL_RC      53
+#define WS_FORMAT_RC      54
 
 /* Vectors/matrices of data */
-#define RDDATA_RC         54  /* Related Display data           */
-#define CPDATA_RC         55  /* Cartesian Plot channel data    */
-#define SCDATA_RC         56  /* Strip Chart data               */
-#define SHELLDATA_RC      57  /* Shell Command data             */
-#define CPAXIS_RC         58  /* Cartesian Plot axis data       */
+#define RDDATA_RC         55  /* Related Display data           */
+#define CPDATA_RC         56  /* Cartesian Plot channel data    */
+#define SCDATA_RC         57  /* Strip Chart data               */
+#define SHELLDATA_RC      58  /* Shell Command data             */
+#define CPAXIS_RC         59  /* Cartesian Plot axis data       */
                             
 /* Cartesian Plot entry types */ 
-#define COUNT_RC          59  /* Cartesian Plot count           */
-#define TRIGGER_RC        60  /* Cartesian Plot trigger channel */
-#define ERASE_RC          61  /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC     62  /* Cartesian Plot erase mode      */
+#define COUNT_RC          60  /* Cartesian Plot count           */
+#define TRIGGER_RC        61  /* Cartesian Plot trigger channel */
+#define ERASE_RC          62  /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC     63  /* Cartesian Plot erase mode      */
 
 /* Grid */
-#define GRID_SPACING_RC   63
-#define GRID_ON_RC        64
-#define GRID_SNAP_RC      65
+#define GRID_SPACING_RC   64
+#define GRID_ON_RC        65
+#define GRID_SNAP_RC      66
 
 #define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
 #define MIN_RESOURCE_ENTRY 0
@@ -571,6 +573,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Increment",
     "Start Bit", "End Bit",
     "Label", "Visual",
+    "Format",               /* WheelSwitch format */
     "Label/Name/Args",      /* Related Display data           */
     "X/Y/Trace Data",       /* Cartesian Plot data            */
     "Channel/Color",        /* Strip Chart data               */

@@ -54,7 +54,6 @@ typedef struct {
   int dummy;			/* keep compiler happy with dummy field */
 } SciPlotClassPart;
 
-
 typedef struct _SciPlotClassRec {
   CoreClassPart core_class;
 #ifdef MOTIF

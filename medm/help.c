@@ -16,6 +16,7 @@
 */
 
 #define DEBUG_STATISTICS 0
+#define DEBUG_ERRORHANDLER 1
 
 #define MAX_ERRORS 25
 
@@ -683,11 +684,11 @@ void medmPostMsg(int priority, char *format, ...) {
 	saveEarlyMessage(medmPrintfStr);
     }
 
-  /* Also print to stderr */
+  /* Also print to stderr. Use %s to preserve ", %, etc. */
 #ifdef WIN32
-    lprintf(medmPrintfStr);
+    lprintf("%s",medmPrintfStr);
 #else
-    fprintf(stderr, medmPrintfStr);
+    fprintf(stderr,"%s",medmPrintfStr);
 #endif    
     va_end(args);
 }
@@ -1147,6 +1148,10 @@ void xtErrorHandler(char *message)
 {
     static int nerrors=0;
     static int ended=0;
+
+#if DEBUG_ERRORHANDLER
+    printf("xtErrorHandler: |%s|\n",message);
+#endif
     
   /* Prevent error storms and recursive errors */
     if(ended) return;
@@ -1159,36 +1164,8 @@ void xtErrorHandler(char *message)
 	  MAX_ERRORS);
 	return;
     }
-    
-#if 0
-# ifdef WIN32
-    lprintf("\n%s\n",message);
-# else
-    fprintf(stderr,"\n%s\n",message);
-# endif
-#else
+  /* Post the message */    
     medmPostMsg(1,"xtErrorHandler:\n%s\n", message);
-#endif    
-
-#if DEBUG_SRICAT
-    {
-	char msg[256];
-	sprintf(msg,
-	  "An Xt error has occurred\n"
-	  "This is an opportunity to check the call stack\n"
-	  "The MEDM PID is %d\n"
-	  "Please contact the system administrator before continuing",
-	  getpid());
-	dmSetAndPopupQuestionDialog(currentDisplayInfo,msg,
-	  "Continue",NULL,NULL);
-	switch (currentDisplayInfo->questionDialogAnswer) {
-	case 1:     /* Continue */
-	default:
-	    break;
-	}
-    }    
-#endif
-    
 }
 
 int xInfoMsg(Widget parent, const char *fmt, ...)

@@ -838,11 +838,7 @@ static void valuatorSetValue(MedmValuator *pv, double forcedValue,
 	  dValue = forcedValue;
 	else
 	  dValue = pr->value;
-#if 0
-      /* To make reworked event handling for Valuator work */
-	pr->value = dValue;
-#endif
-	
+
       /* Update scale widget */
 	iValue = (int) (VALUATOR_MIN + ((dValue - dlValuator->limits.lopr)
 	  /(dlValuator->limits.hopr - dlValuator->limits.lopr))
@@ -1277,13 +1273,13 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
  * Valuatorvaluechanged - drag and value changed callback for valuator
  */
 
-void valuatorValueChanged(Widget  w, XtPointer clientData,
+void valuatorValueChanged(Widget w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     MedmValuator *pv = (MedmValuator *) clientData;
     Record *pr = pv->record;
-    XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *) callbackStruct;
-    DlValuator *dlValuator = (DlValuator *) pv->dlElement->structure.valuator;
+    XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *)callbackStruct;
+    DlValuator *dlValuator = (DlValuator *)pv->dlElement->structure.valuator;
     XButtonEvent *buttonEvent;
     XKeyEvent *keyEvent;
     double value;
@@ -1307,10 +1303,9 @@ void valuatorValueChanged(Widget  w, XtPointer clientData,
 	      ((double)(call_data->value - VALUATOR_MIN))
 	      / ((double)(VALUATOR_MAX - VALUATOR_MIN) ) *
 	      (dlValuator->limits.hopr - dlValuator->limits.lopr);
-	    
 	} else if(call_data->reason == XmCR_VALUE_CHANGED) { 
 	    if(dlValuator->dragging) {
-	      /* Valuechanged can mark conclusion of drag, hence
+	      /* Value changed can mark conclusion of drag, hence
                  enable updates */
 		dlValuator->enableUpdates = True;
 		dlValuator->dragging = False;

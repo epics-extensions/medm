@@ -47,6 +47,7 @@ DlElement *createDlText(DlElement *);
 DlElement *createDlTextEntry(DlElement *);
 DlElement *createDlTextUpdate(DlElement *);
 DlElement *createDlValuator(DlElement *);
+DlElement *createDlWheelSwitch(DlElement *);
 DlElement *handleImageCreate();
 DlElement *handlePolygonCreate(int x0, int y0);
 DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine);
@@ -83,6 +84,7 @@ void executeDlText(DisplayInfo *, DlElement *);
 void executeDlTextEntry(DisplayInfo *, DlElement *);
 void executeDlTextUpdate(DisplayInfo *, DlElement *);
 void executeDlValuator(DisplayInfo *, DlElement *);
+void executeDlWheelSwitch(DisplayInfo *, DlElement *);
 
 /* Hide methods */
 void hideDlArc(DisplayInfo *, DlElement *);
@@ -112,6 +114,7 @@ void hideDlText(DisplayInfo *, DlElement *);
 void hideDlTextEntry(DisplayInfo *, DlElement *);
 void hideDlTextUpdate(DisplayInfo *, DlElement *);
 void hideDlValuator(DisplayInfo *, DlElement *);
+void hideDlWheelSwitch(DisplayInfo *, DlElement *);
 
 /* Write methods */
 void writeDlArc(FILE *, DlElement *, int);
@@ -154,6 +157,7 @@ void writeDlTextEntry(FILE *, DlElement *, int);
 void writeDlTextUpdate(FILE *, DlElement *, int);
 void writeDlTrace(FILE *, DlTrace *, int, int);
 void writeDlValuator(FILE *, DlElement *, int);
+void writeDlWheelSwitch(FILE *, DlElement *, int);
 void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level);
 
 /* actions.c */
@@ -182,6 +186,7 @@ void exitCallback(Widget, XtPointer, XtPointer);
 void simpleRadioBoxCallback(Widget w, int buttonNumber,
   XmToggleButtonCallbackStruct *call_data);
 void valuatorValueChanged(Widget, XtPointer, XtPointer);
+void wheelSwitchValueChanged(Widget, XtPointer, XtPointer);
 
 /* channelPalette.c */
 void createChannel(void);
@@ -331,6 +336,8 @@ void updateShellCommandDataDialog(void);
 /* medmValuator.c */
 void popupValuatorKeyboardEntry(Widget, DisplayInfo *, XEvent *);
 
+/* medmWheelSwitch.c */
+
 /* medmWidget.c */
 void medmInit(char *displayFontName);
 void dmTerminateX(void);
@@ -348,21 +355,18 @@ void objectMenuCallback(Widget,XtPointer,XtPointer);
 void objectPaletteSetSensitivity(Boolean);
 void setActionToSelect();
 
-/* parseControllers.c */
+/* Parse methods */
 DlElement *parseChoiceButton(DisplayInfo *); 
 DlElement *parseMessageButton(DisplayInfo *);
 DlElement *parseValuator(DisplayInfo *);
+DlElement *parseWheelSwitch(DisplayInfo *);
 DlElement *parseTextEntry(DisplayInfo *);
 DlElement *parseMenu(DisplayInfo *);
 void parseControl(DisplayInfo *, DlControl *control);
-
-/* parseExtensions.c */
 DlElement *parseImage(DisplayInfo *);
 DlElement *parseComposite(DisplayInfo *);
 DlElement *parsePolyline(DisplayInfo *);
 DlElement *parsePolygon(DisplayInfo *);
-
-/* parseMonitors.c */
 DlElement *parseMeter(DisplayInfo *);
 DlElement *parseBar(DisplayInfo *);
 DlElement *parseByte(DisplayInfo *);

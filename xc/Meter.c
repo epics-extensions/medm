@@ -708,7 +708,7 @@ static void Draw_display(Widget w, Display *display,
 {
     MeterWidget wm = (MeterWidget)w;
     char *temp;
-    float range, dim;
+    float range, dim = 0.0;
     int shift, diameter, radius, center_x, center_y;
     double angle, sine, cosine, base_multiplier;
     XPoint point, triangle[3];

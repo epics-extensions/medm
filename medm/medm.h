@@ -168,6 +168,7 @@ extern "C" {
      
      relatedDisplay25
      shellCommand25
+     wheelSwitch25
   */
     
   /* Global variables */

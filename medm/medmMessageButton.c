@@ -241,7 +241,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 	    for(i = 0; i < pr->hopr+1; i++) {
 		if(pr->stateStrings[i]) {
 		    if(!strcmp(dlMessageButton->press_msg,pr->stateStrings[i])) {
-			pmb->pressValue = (double) i;
+			pmb->pressValue = (double)i;
 			match = True;
 			break;
 		    }

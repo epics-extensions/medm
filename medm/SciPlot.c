@@ -320,7 +320,6 @@ SciPlotClassRec sciplotClassRec =
 
 WidgetClass sciplotWidgetClass = (WidgetClass) & sciplotClassRec;
 
-
 static void
 Initialize(Widget treq, Widget tnew, ArgList args, Cardinal *num)
 {
@@ -392,6 +391,8 @@ GCInitialize(SciPlotWidget new)
   values.foreground = colorsave = BlackPixelOfScreen(XtScreen(new));
   new->plot.ForegroundColor = ColorStore(new, values.foreground);
 #ifdef MOTIF
+/* KE: Primitive should keep track of colors and GC.  We don't need to
+ * do that. */
   new->core.background_pixel = values.background;
   {
     Pixel fg, select, shade1, shade2;
@@ -6171,6 +6172,8 @@ SciPlotPrintAxisInfo(Widget wi)
 }
 
 #ifdef MOTIF
+/* KE: Could use XmeDrawShadows here.  Primitive should keep track of
+ * colors and GCs */
 static void 
 DrawShadow (SciPlotWidget w, Boolean raised, real x, real y,
   real width, real height)

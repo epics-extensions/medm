@@ -86,13 +86,22 @@ buttons_t paletteMonitorButton[] = {
 };
 
 buttons_t paletteControllerButton[] = {
-    {"choiceButton25",NULL, objectToggleCallback,(XtPointer)DL_ChoiceButton,"Choice Button"},
-    {"textEntry25",NULL, objectToggleCallback,(XtPointer)DL_TextEntry,"Text Entry"},
-    {"messageButton25",NULL, objectToggleCallback,(XtPointer)DL_MessageButton,"Message Button"},
-    {"menu25",NULL, objectToggleCallback,(XtPointer)DL_Menu,"Menu"},
-    {"valuator25",NULL, objectToggleCallback,(XtPointer)DL_Valuator,"Slider"},
-    {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer)DL_RelatedDisplay,"Related Display"},
-    {"shellCommand25",NULL, objectToggleCallback,(XtPointer)DL_ShellCommand,"Shell Command"},
+    {"choiceButton25",NULL, objectToggleCallback,(XtPointer)DL_ChoiceButton,
+     "Choice Button"},
+    {"textEntry25", NULL, objectToggleCallback,(XtPointer)DL_TextEntry,
+     "Text Entry"},
+    {"messageButton25", NULL, objectToggleCallback,(XtPointer)DL_MessageButton,
+     "Message Button"},
+    {"menu25",NULL, objectToggleCallback,(XtPointer)DL_Menu,
+     "Menu"},
+    {"valuator25",NULL, objectToggleCallback,(XtPointer)DL_Valuator,
+     "Slider"},
+    {"relatedDisplay25",NULL, objectToggleCallback,(XtPointer)DL_RelatedDisplay,
+     "Related Display"},
+    {"shellCommand25",NULL, objectToggleCallback,(XtPointer)DL_ShellCommand,
+     "Shell Command"},
+    {"wheelSwitch25",NULL, objectToggleCallback,(XtPointer)DL_WheelSwitch,
+     "Wheel Switch"},
     {NULL,NULL,NULL,NULL,NULL},
 };
 
@@ -198,11 +207,12 @@ static void objectToggleCallback(Widget w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     DisplayInfo *di;
-    DlElementType type = (DlElementType) clientData;     /* KE: Not used, Possibly not valid  */
-    XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) callbackStruct;
+    DlElementType type = (DlElementType)clientData; /* KE: Not used, Possibly not valid  */
+    XmToggleButtonCallbackStruct *call_data =
+      (XmToggleButtonCallbackStruct *)callbackStruct;
 
   /* Pushing one of these toggles implies create object of this type,
-   *   and MB in a display now takes on CREATE semantics */
+   * and MB in a display now takes on CREATE semantics */
 
     if (call_data->set == False) return;
 
@@ -412,10 +422,14 @@ void createObject()
   /* Set main window areas */
     XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectRC);
 
-    graphicsRC = createRadioButtonPanel(objectRC,"Graphics",paletteGraphicsButton);
-    monitorRC = createRadioButtonPanel(objectRC,"Monitors",paletteMonitorButton);
-    controllerRC = createRadioButtonPanel(objectRC,"Controllers",paletteControllerButton);
-    miscRC = createRadioButtonPanel(objectRC,"Misc",paletteMiscButton);
+    graphicsRC = createRadioButtonPanel(objectRC,"Graphics",
+      paletteGraphicsButton);
+    monitorRC = createRadioButtonPanel(objectRC,"Monitors",
+      paletteMonitorButton);
+    controllerRC = createRadioButtonPanel(objectRC,"Controllers",
+      paletteControllerButton);
+    miscRC = createRadioButtonPanel(objectRC,"Misc",
+      paletteMiscButton);
 
     objectPaletteSelectToggleButton = paletteMiscButton[0].widget;
     lastButton = objectPaletteSelectToggleButton;

@@ -63,6 +63,10 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 #define BAR_DOUBLE_BUFFER
 #endif
 
+/*** WheelSwitch format  ***/
+/* Set the WheelSwitch default format here */
+#define WHEEL_SWITCH_DEFAULT_FORMAT "% 6.2f"
+
 /*** Help path ***/
 
 /* MEDM help uses Netscape to display MEDM.html.  If you want to use a

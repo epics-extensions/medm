@@ -151,7 +151,6 @@ Realize(Widget w, XtValueMask *valueMask, XSetWindowAttributes *attributes)
       *valueMask, attributes);
 }
 
-/* ARGSUSED */
 static void
 Redisplay(Widget w, XEvent *event, Region region)
 {
@@ -164,7 +163,6 @@ Redisplay(Widget w, XEvent *event, Region region)
 /*
  * Clip redraw method
  */
-/* ARGSUSED */
 static void
 Redraw(Widget w)
 {
@@ -199,7 +197,6 @@ XbaeClipRedraw(Widget w)
 	((Widget)w);
 }
 
-/* ARGSUSED */
 static void
 FocusInACT(Widget w, XEvent * event, String *params, Cardinal *nparams)
 {

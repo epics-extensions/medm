@@ -92,6 +92,7 @@ ParseFuncEntry parseFuncTable[] = {
     {"composite",            parseComposite},
     {"polyline",             parsePolyline},
     {"polygon",              parsePolygon},
+    {"wheel switch",         parseWheelSwitch},
 };
 
 static int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
@@ -459,7 +460,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     int i;
-    for(i=0; i<parseFuncTableSize; i++) {
+    for(i=0; i < parseFuncTableSize; i++) {
 	if(!strcmp(token,parseFuncTable[i].name)) {
 	    return parseFuncTable[i].func(pDI);
 	}
