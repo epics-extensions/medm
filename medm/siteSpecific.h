@@ -73,22 +73,34 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 
 /* The following are 1 for true and 0 for false */
 #define DEFAULT_PRINT_TOFILE   0
-#define DEFAULT_PRINT_TITLE    1
 #define DEFAULT_PRINT_TIME     1
 #define DEFAULT_PRINT_DATE     1
 /* Alternatives are PRINT_PORTRAIT or PRINT_LANDSCAPE */
 #define DEFAULT_PRINT_ORIENTATION PRINT_PORTRAIT
 /* Alternatives are PRINT_A, PRINT_B, PRINT_A3, and PRINT_A4 */
 #define DEFAULT_PRINT_SIZE     PRINT_A
+/* Alternatives are PRINT_TITLE_NONE, PRINT_TITLE_SHORT_NAME,
+ * PRINT_TITLE_LONG_NAME, PRINT_TITLE_SPECIFIED */
+#define DEFAULT_PRINT_TITLE    PRINT_TITLE_SHORT_NAME
+#define DEFAULT_PRINT_TITLE_STRING  ""
 #define DEFAULT_PRINT_FILENAME "medmScreen.ps"
 #ifdef WIN32
-#  define DEFAULT_PRINT_CMD      "gsview32.exe"
+#  define DEFAULT_PRINT_CMD "gsview32.exe"
 #else
-#  define DEFAULT_PRINT_CMD      "lpr -P$PSPRINTER"
+#  define DEFAULT_PRINT_CMD "lpr -P$PSPRINTER"
 #endif
 #if 0
 /* Command used internally before MEDM 2.3.6 */
 #define DEFAULT_PRINT_CMD     "lp -c -d$PSPRINTER"
+#endif
+
+/* Temp file used for screen dumps */
+#if defined(WIN32)
+# define DISPLAY_XWD_FILE		"%TEMP%\\medm.xwd"
+#elif defined(VMS)
+# define DISPLAY_XWD_FILE		"sys$scratch:medm.xwd"
+#else
+# define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
 #endif
 
 /*** Colormap specifications ***/

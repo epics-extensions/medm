@@ -3918,29 +3918,28 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		
 	      /* Insert the names */
 		for(j=0; j < count; j++) {
+		    if(!records[j] || !records[j]->name) continue;
 		    name = records[j]->name;
-		    if(name) {
 #if DEBUG_COMMAND
-			print("%2d |%s|\n",j,name);
+		    print("%2d |%s|\n",j,name);
 #endif			
-			len = strlen(name);
-			if(ic + len >= 1024) {
+		    len = strlen(name);
+		    if(ic + len >= 1024) {
+			medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
+			free(records);
+			return;
+		    }
+		    strcpy(command+ic,name);
+		    ic+=len;
+		  /* Put in a space if required */
+		    if(j < count-1) {
+			if(ic + 1 >= 1024) {
 			    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
 			    free(records);
 			    return;
 			}
-			strcpy(command+ic,name);
-			ic+=len;
-		      /* Put in a space if required */
-			if(j < count-1) {
-			    if(ic + 1 >= 1024) {
-				medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
-				free(records);
-				return;
-			    }
-			    strcpy(command+ic," ");
-			    ic++;
-			}
+			strcpy(command+ic," ");
+			ic++;
 		    }
 		}
 		free(records);
@@ -4223,6 +4222,19 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	    }
 	}
     }
+}
+
+/* Returns a pointer to the short part of the ADL file name */
+char *shortName(char *filename)
+{
+    char *shortName = NULL, *ptr;
+    
+    if(filename) {
+	ptr = shortName = filename;
+	while(*ptr != '\0')
+	  if(*ptr++ == MEDM_DIR_DELIMITER_CHAR) shortName = ptr;
+    }
+    return shortName;
 }
 
 /*** Debugging routines ***/

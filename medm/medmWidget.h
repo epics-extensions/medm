@@ -110,15 +110,6 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define DISPLAY_FILE_ASCII_SUFFIX	".adl"
 #define DISPLAY_FILE_BINARY_SUFFIX	".dl"
 
-/* Temp file used for screen dumps */
-#if defined(WIN32)
-# define DISPLAY_XWD_FILE		"\\medm.xwd"
-#elif defined(VMS)
-# define DISPLAY_XWD_FILE		"sys$scratch:medm.xwd"
-#else
-# define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
-#endif
-
 #define MORE_TO_COME_SYMBOL	"..."	/* string for dialog popups        */
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */

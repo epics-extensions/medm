@@ -1558,6 +1558,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     XEvent event;
     Boolean saveAll = False;
     int status;
+    char *adlName;
 
     UNREFERENCED(cbs);
 
@@ -1785,8 +1786,13 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		refreshDisplay(currentDisplayInfo);
 		XmUpdateDisplay(currentDisplayInfo->shell);
 	      /* Print it */
+		if(printTitle == PRINT_TITLE_SHORT_NAME) {
+		    adlName = shortName(currentDisplayInfo->dlFile->name);
+		} else {
+		    adlName = currentDisplayInfo->dlFile->name;
+		}
 		status = utilPrint(display, currentDisplayInfo->drawingArea,
-		  DISPLAY_XWD_FILE, currentDisplayInfo->dlFile->name);
+		  DISPLAY_XWD_FILE, adlName);
 		if(!status) {
 		    medmPrintf(1,"\nmainFileMenuSimpleCallback: "
 		      "Print was not successful\n");
@@ -1815,9 +1821,13 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		    refreshDisplay(currentDisplayInfo);
 		    XmUpdateDisplay(currentDisplayInfo->shell);
 		  /* Print it */
-		    status = utilPrint(display,
-		      currentDisplayInfo->drawingArea, DISPLAY_XWD_FILE,
-		      currentDisplayInfo->dlFile->name);
+		    if(printTitle == PRINT_TITLE_SHORT_NAME) {
+			adlName = shortName(currentDisplayInfo->dlFile->name);
+		    } else {
+			adlName = currentDisplayInfo->dlFile->name;
+		    }
+		    status = utilPrint(display, currentDisplayInfo->drawingArea,
+		      DISPLAY_XWD_FILE, adlName);
 		    if(!status) {
 			medmPrintf(1,"\nmainFileMenuSimpleCallback: "
 			  "Print was not successful\n");
@@ -3232,6 +3242,7 @@ main(int argc, char *argv[])
     printWidth = printHeight = 0.0;
     strcpy(printCommand, DEFAULT_PRINT_CMD);
     strcpy(printFile, DEFAULT_PRINT_FILENAME);
+    strcpy(printTitleString, DEFAULT_PRINT_TITLE_STRING);
 
   /* Handle file conversions */
     if(argc == 4 && (!strcmp(argv[1],"-c21x") ||

@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_RELATED_DISPLAY 0
 #define DEBUG_CMAP 0
 #define DEBUG_GRID 0
+#define DEBUG_EXECUTE_MENU 0
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>
@@ -564,10 +565,8 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 		medmPrintf(1,"\ncreateExecuteMenu: "
 		  "Missing semi-colon in MEDM_EXEC_LIST item:\n"
 		  "  %s\n",pitem);
-		free(types);
-		free(buttons);
-		free(string);
-		return (Widget)0;
+		nbuttons = i;
+		break;
 	    } else {
 		*psemi='\0';
 		buttons[i] = XmStringCreateLocalized(pitem);
@@ -579,21 +578,38 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	    }
 	    pitem = pcolon+1;
 	}
-	free(string);
+	if(string) free(string);
     }
 
   /* Create the menu */
-    nargs = 0;
-    XtSetArg(args[nargs], XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); nargs++;
-    XtSetArg(args[nargs], XmNbuttonCount, nbuttons); nargs++;
-    XtSetArg(args[nargs], XmNbuttonType, types); nargs++;
-    XtSetArg(args[nargs], XmNbuttons, buttons); nargs++;
-    XtSetArg(args[nargs], XmNsimpleCallback, executeMenuCallback); nargs++;
-    XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
-    XtSetArg(args[nargs],XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
-    w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
-      "executePopupMenu", args, nargs);
+    if(nbuttons) {
+	nargs = 0;
+	XtSetArg(args[nargs],
+	  XmNpostFromButton, EXECUTE_POPUP_MENU_EXECUTE_ID); nargs++;
+	XtSetArg(args[nargs], XmNbuttonCount, nbuttons); nargs++;
+	XtSetArg(args[nargs], XmNbuttonType, types); nargs++;
+	XtSetArg(args[nargs], XmNbuttons, buttons); nargs++;
+	XtSetArg(args[nargs], XmNsimpleCallback, executeMenuCallback); nargs++;
+	XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
+	XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+	w = XmCreateSimplePulldownMenu(displayInfo->executePopupMenu,
+	  "executeMenu", args, nargs);
+    } else {
+	w = NULL;
+    }
 
+  /* Free space */
+    if(types) free((char *)types);
+    for(i=0; i < nbuttons; i++) {
+	XmStringFree(buttons[i]);
+    }
+    if(buttons) free((char *)buttons);
+
+#if DEBUG_EXECUTE_MENU
+    print("createExecuteMenu: w=%x displayInfo=%x executePopupMenu=%x\n",
+      w,displayInfo,displayInfo->executePopupMenu);
+#endif    
+      
   /* Return */
     return(w);
 }

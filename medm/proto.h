@@ -623,6 +623,7 @@ void print(const char *fmt, ...);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
 void calcPostfix(DlDynamicAttribute *attr);
 void setMonitorChanged(DlDynamicAttribute *attr, Record **records);
+char *shortName(char *filename);
 /* Debugging */
 void printEventMasks(Display *display, Window win, char *string);
 void printWindowAttributes(Display *display, Window win, char *string);

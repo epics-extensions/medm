@@ -87,18 +87,18 @@ Boolean isScalableFont(char *name)
 {
     int i, field;
     
-    if ((name == NULL) || (name[0] != '-')) return False;
+    if((name == NULL) || (name[0] != '-')) return False;
     
     for(i = field = 0; name[i] != '\0' && field <= 14; i++) {
-	if (name[i] == '-') {
+	if(name[i] == '-') {
 	    field++;
-	    if ((field == 7) || (field == 8) || (field == 12))
-	      if ((name[i+1] != '0') || (name[i+2] != '-'))
+	    if((field == 7) || (field == 8) || (field == 12))
+	      if((name[i+1] != '0') || (name[i+2] != '-'))
 		return False;
 	}
     }
     
-    if (field != 14) return False;
+    if(field != 14) return False;
     else return True;
 }
 
@@ -126,7 +126,7 @@ XFontStruct *loadQueryScalableFont(
     int res_x, res_y;         /* resolution values for this screen */
     
   /* catch obvious errors */
-    if ((name == NULL) || (name[0] != '-')) return NULL;
+    if((name == NULL) || (name[0] != '-')) return NULL;
     
   /* calculate our screen resolution in dots per inch. 25.4mm = 1 inch */
     res_x = (int) (DisplayWidth(dpy, screen)/(DisplayWidthMM(dpy, screen)/25.4));
@@ -136,21 +136,21 @@ XFontStruct *loadQueryScalableFont(
   /* copy the font name, changing the scalable fields as we do so */
     for(i = j = field = 0; name[i] != '\0' && field <= 14; i++) {
 	newname[j++] = name[i];
-	if (name[i] == '-') {
+	if(name[i] == '-') {
 	    field++;
 	    switch(field) {
 	    case 7:  /* pixel size */
 	      /* change from "-0-" to "-<size>-" */
 		(void)sprintf(&newname[j], "%d", size);
-		while (newname[j] != '\0') j++;
-		if (name[i+1] != '\0') i++;
+		while(newname[j] != '\0') j++;
+		if(name[i+1] != '\0') i++;
 		break;
 	    case 8:  /* point size */
 	    case 12: /* average width */
 	      /* change from "-0-" to "-*-" */
 		newname[j] = '*'; 
 		j++;
-		if (name[i+1] != '\0') i++;
+		if(name[i+1] != '\0') i++;
 		break;
 	    case 9:  /* x resolution */
 	    case 10: /* y resolution */
@@ -165,7 +165,7 @@ XFontStruct *loadQueryScalableFont(
     newname[j] = '\0';
     
   /* if there aren't 14 hyphens, it isn't a well formed name */
-    if (field != 14) return NULL;
+    if(field != 14) return NULL;
     
     return XLoadQueryFont(dpy, newname);
 }
@@ -260,49 +260,59 @@ void medmInit(char *displayFont)
     dashList[1] = 3;
     XSetDashes(display,highlightGC,0,dashList,2);
     
-/* Initialize the execute popup menu stuff for all shells */
+/* Initialize the execute popup menu stuff for all shells.  Must be
+   consistent with medmWidget.h definitions. */
     executePopupMenuButtonType[0] = XmPUSHBUTTON;
-    executePopupMenuButtonType[1] = XmPUSHBUTTON;
-    executePopupMenuButtonType[2] = XmPUSHBUTTON;
-    executePopupMenuButtonType[3] = XmPUSHBUTTON;
-    executePopupMenuButtonType[4] = XmPUSHBUTTON;
-    executePopupMenuButtonType[5] = XmPUSHBUTTON;
-    executePopupMenuButtonType[6] = XmCASCADEBUTTON;
     executePopupMenuButtons[0] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_PRINT);
+
+    executePopupMenuButtonType[1] = XmPUSHBUTTON;
     executePopupMenuButtons[1] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_CLOSE);
+
+    executePopupMenuButtonType[2] = XmPUSHBUTTON;
     executePopupMenuButtons[2] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVINFO);
+
+    executePopupMenuButtonType[3] = XmPUSHBUTTON;
     executePopupMenuButtons[3] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_PVLIMITS);
+
+    executePopupMenuButtonType[4] = XmPUSHBUTTON;
     executePopupMenuButtons[4] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
+
+    executePopupMenuButtonType[5] = XmPUSHBUTTON;
     executePopupMenuButtons[5] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_FLASH_HIDDEN);
+
+    executePopupMenuButtonType[6] = XmPUSHBUTTON;
     executePopupMenuButtons[6] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_REFRESH);
+
+  /* Note that the Execute Menu is a cascade button */
+    executePopupMenuButtonType[7] = XmCASCADEBUTTON;
     executePopupMenuButtons[7] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_EXECUTE);
 
   /* Load font and fontList tables (but only once) */
-    if (!strcmp(displayFont,FONT_ALIASES_STRING)) {
+    if(!strcmp(displayFont,FONT_ALIASES_STRING)) {
 
       /* Use the ALIAS fonts if possible */
 	strcpy(displayFont,ALIAS_FONT_PREFIX);
 	sizePosition = strstr(displayFont,"_");
 	printf("\n%s: Loading aliased fonts.",MEDM_VERSION_STRING);
-	for (i = 0; i < MAX_FONTS; i++) {
+	for(i = 0; i < MAX_FONTS; i++) {
 	    sprintf(sizePosition,"_%d",fontSizeTable[i]);
 	    fontTable[i] = XLoadQueryFont(display,displayFont);
 	    printf(".");
-	    if (fontTable[i] == NULL) {
+	    if(fontTable[i] == NULL) {
 		medmPrintf(1,"\nmedmInit: Unable to load font %s\n"
 		  "  Trying default (fixed) instead\n",
 		  displayFont);
 	      /* one last attempt: try a common default font */
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
-		if (fontTable[i] == NULL) {
+		if(fontTable[i] == NULL) {
 		    medmCATerminate();
 		    dmTerminateX();
 		    exit(-1);
@@ -323,7 +333,7 @@ void medmInit(char *displayFont)
 	  strcpy(displayFont,DEFAULT_SCALABLE_DISPLAY_FONT);
 
 	useDefaultFont = !isScalableFont(displayFont);
-	if (useDefaultFont) {
+	if(useDefaultFont) {
 	  /* This name wasn't in XLFD format */
 	    medmPrintf(1,"\nmedmInit:"
 	      "  Invalid scalable display font selected  (Not in XLFD format)\n"
@@ -332,15 +342,15 @@ void medmInit(char *displayFont)
 	} else {
 	    printf("\n%s: Loading scalable fonts.",MEDM_VERSION_STRING);
 	}
-	for (i = 0; i < MAX_FONTS; i++) {
-	    if (!useDefaultFont) {
+	for(i = 0; i < MAX_FONTS; i++) {
+	    if(!useDefaultFont) {
 		fontTable[i] = loadQueryScalableFont(display, screenNum,
 		  displayFont, fontSizeTable[i]);
 		printf(".");
 	    } else {
 		fontTable[i] = XLoadQueryFont(display,LAST_CHANCE_FONT);
 	    }
-	    if (fontTable[i] == NULL) {
+	    if(fontTable[i] == NULL) {
 		medmCATerminate();
 		dmTerminateX();
 		exit(-1);
@@ -361,7 +371,7 @@ void medmInit(char *displayFont)
 void dmTerminateX()
 {
 /* Remove the properties on the root window */
-    if (windowPropertyAtom != (Atom)NULL)
+    if(windowPropertyAtom != (Atom)NULL)
       XDeleteProperty(display,rootWindow,windowPropertyAtom);
     XFlush(display);
 
@@ -370,8 +380,8 @@ void dmTerminateX()
 }
 
 int initMedmWidget() {
-    if (clipboard) return 0;
-    if (clipboard = createDlList()) {
+    if(clipboard) return 0;
+    if(clipboard = createDlList()) {
 	return 0;
     } else {
 	return -1;
@@ -383,13 +393,13 @@ int initMedmWidget() {
  *   It would need to do dmRemoveDisplayInfo if it did
  *   It probably is not necessary */
 int destroyMedmWidget() {
-    if (displayInfoListHead) free((char *)displayInfoListHead);
-    if (displayInfoSaveListHead) free((char *)displayInfoSaveListHead);
-    if (dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
-    if (executePopupMenuButtons[0]) XmStringFree(executePopupMenuButtons[0]);
-    if (executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
-    if (highlightGC) XFreeGC(display,highlightGC);
-    if (clipboard) {
+    if(displayInfoListHead) free((char *)displayInfoListHead);
+    if(displayInfoSaveListHead) free((char *)displayInfoSaveListHead);
+    if(dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
+    if(executePopupMenuButtons[0]) XmStringFree(executePopupMenuButtons[0]);
+    if(executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
+    if(highlightGC) XFreeGC(display,highlightGC);
+    if(clipboard) {
 	clearDlDisplayList(NULL, clipboard);
 	free(clipboard);
     }
@@ -413,7 +423,7 @@ void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
     
   /* Check if it is already there */
     di = displayInfoSaveListHead->next;
-    while (di) {
+    while(di) {
 	DisplayInfo *pDI = displayInfo->next;
 
 	if(!strcmp(filename, di->dlFile->name)) {

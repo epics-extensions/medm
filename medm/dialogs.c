@@ -32,13 +32,14 @@
 #define PRINT_SETUP_CMD_FIELD      8
 #define PRINT_SETUP_ORIENT_BTN     9
 #define PRINT_SETUP_SIZE_BTN       10
-#define PRINT_SETUP_WIDTH_FIELD    11
-#define PRINT_SETUP_HEIGHT_FIELD   12
-#define PRINT_SETUP_FILENAME_FIELD 13
-#define PRINT_SETUP_TOFILE_BTN     14
-#define PRINT_SETUP_TITLE_BTN      15
-#define PRINT_SETUP_DATE_BTN       16
-#define PRINT_SETUP_TIME_BTN       17
+#define PRINT_SETUP_TITLE_BTN      11
+#define PRINT_SETUP_TITLE_FIELD    12
+#define PRINT_SETUP_WIDTH_FIELD    13
+#define PRINT_SETUP_HEIGHT_FIELD   14
+#define PRINT_SETUP_FILENAME_FIELD 15
+#define PRINT_SETUP_TOFILE_BTN     16
+#define PRINT_SETUP_DATE_BTN       17
+#define PRINT_SETUP_TIME_BTN       18
 
 #include <string.h>
 #include <time.h>
@@ -69,10 +70,11 @@ static Widget displayListBox1 = NULL, displayListBox2 = NULL;
 static Widget pvLimitsName, pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
 static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
 static Widget printSetupCommandTF, printSetupFileTF, printSetupTitleTF;
+static Widget printSetupTitleTF;
 static Widget printSetupWidthTF, printSetupHeightTF, printSetupPrintToFileTB;
 static Widget printSetupPrintToFileTB, printSetupPrintTitleTB;
 static Widget printSetupPrintDateTB, printSetupPrintTimeTB;
-static Widget printSetupOrientationMenu, printSetupSizeMenu;
+static Widget printSetupOrientationMenu, printSetupSizeMenu, printSetupTitleMenu;
 static int printSetupModified;
 
 /*** PV Info routines ***/
@@ -772,6 +774,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
     DlElement *pE;
     DlLimits *pL = NULL;
     char *pvName;
+    char *string;
 
 #if DEBUG_PVLIMITS
     print("\npvLimitsDialogCallback: type=%d\n",type);
@@ -850,7 +853,9 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	pL->precSrc = src;
 	break;
     case PV_LIMITS_LOPR_BTN:
-	val = atof(XmTextFieldGetString(pvLimitsLopr));
+	string = XmTextFieldGetString(pvLimitsLopr);
+	val = atof(string);
+	XtFree(string);
 	src = pL->loprSrc;
 	if(globalDisplayListTraversalMode == DL_EDIT) {
 	    if(src == PV_LIMITS_DEFAULT) {
@@ -871,7 +876,9 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	}
 	break;
     case PV_LIMITS_HOPR_BTN:
-	val = atof(XmTextFieldGetString(pvLimitsHopr));
+	string = XmTextFieldGetString(pvLimitsHopr);
+	val = atof(string);
+	XtFree(string);
 	src = pL->hoprSrc;
 	if(globalDisplayListTraversalMode == DL_EDIT) {
 	    if(src == PV_LIMITS_DEFAULT) {
@@ -892,7 +899,9 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	}
 	break;
     case PV_LIMITS_PREC_BTN:
-	sval = atoi(XmTextFieldGetString(pvLimitsPrec));
+	string =XmTextFieldGetString(pvLimitsPrec); 
+	sval = atoi(string);
+	XtFree(string);
 	if(sval < 0) {
 	    sval = 0;
 	    XBell(display,50);
@@ -1299,9 +1308,8 @@ void popupPrintSetup(void)
 	    medmPostMsg(1,"popupPrintSetup: Cannot create PV Limits dialog box\n");
 	    return;
 	}
-    } else {
-	updatePrintSetupDlg();
     }
+    updatePrintSetupDlg();
 
   /* Pop it up */
     XtSetSensitive(printSetupS, True);
@@ -1312,7 +1320,7 @@ void createPrintSetupDlg(void)
 {
     Widget w, wparent;
     Widget pane, control;
-    Widget actionArea, containerRC0, containerRC1, containerRC2;
+    Widget actionArea, containerRC0, containerRC1;
     Widget okButton, helpButton, cancelButton, printButton;
     XmString label, opt1, opt2, opt3, opt4;
     char string[80];
@@ -1402,9 +1410,31 @@ void createPrintSetupDlg(void)
     XmStringFree(opt3);
     XmStringFree(opt4);
 
+  /* Title */
+    wparent = control;
+    label = XmStringCreateLocalized("Title Option:");
+    opt1 = XmStringCreateLocalized(printerTitleTable[PRINT_TITLE_NONE]);
+    opt2 = XmStringCreateLocalized(printerTitleTable[PRINT_TITLE_SHORT_NAME]);
+    opt3 = XmStringCreateLocalized(printerTitleTable[PRINT_TITLE_LONG_NAME]);
+    opt4 = XmStringCreateLocalized(printerTitleTable[PRINT_TITLE_SPECIFIED]);
+    w = XmVaCreateSimpleOptionMenu(wparent, "optionMenu",
+      label, '\0', printOrientation, printSetupDialogCallback,
+      XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
+      XmVaPUSHBUTTON, opt4, '\0', NULL, NULL,
+      XmNuserData, PRINT_SETUP_TITLE_BTN,
+      NULL);
+    XtManageChild(w);
+    printSetupTitleMenu = w;
+    XmStringFree(label);
+    XmStringFree(opt1);
+    XmStringFree(opt2);
+    XmStringFree(opt3);
+    XmStringFree(opt4);
+
   /* Row column to hold height and width */
-    wparent = control
-;
+    wparent = control;
     containerRC0 = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -1481,20 +1511,6 @@ void createPrintSetupDlg(void)
       (XtPointer)PRINT_SETUP_DATE_BTN);
     printSetupPrintDateTB = w;
 
-  /* Print title */
-    wparent = containerRC1;
-    label = XmStringCreateLocalized(
-      "Print Title");
-    w =  XtVaCreateManagedWidget("toggleButton",
-      xmToggleButtonWidgetClass, wparent,
-      XmNlabelString, label,
-      XmNset, (Boolean)printTitle,
-      NULL);
-    XmStringFree(label);
-    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
-      (XtPointer)PRINT_SETUP_TITLE_BTN);
-    printSetupPrintTitleTB = w;
-
   /* Print time */
     wparent = containerRC1;
     label = XmStringCreateLocalized(
@@ -1508,6 +1524,36 @@ void createPrintSetupDlg(void)
     XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
       (XtPointer)PRINT_SETUP_TIME_BTN);
     printSetupPrintTimeTB = w;
+
+  /* Print to file */
+    wparent = containerRC1;
+    label = XmStringCreateLocalized(
+      "Print to File");
+    w =  XtVaCreateManagedWidget("toggleButton",
+      xmToggleButtonWidgetClass, wparent,
+      XmNlabelString, label,
+      XmNset, (Boolean)printToFile,
+      NULL);
+    XmStringFree(label);
+    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_TOFILE_BTN);
+    printSetupPrintToFileTB = w;
+
+  /* Title string */
+    wparent = control;
+    w = XtVaCreateManagedWidget("Title:",
+      xmLabelWidgetClass, wparent,
+      NULL);
+
+    w = XtVaCreateManagedWidget("textField",
+      xmTextFieldWidgetClass, wparent,
+      XmNvalue, printTitleString,
+      XmNmaxLength, PRINT_BUF_SIZE-1,
+      XmNcolumns, 40,
+      NULL);
+    XtAddCallback(w, XmNactivateCallback, printSetupDialogCallback,
+      (XtPointer)PRINT_SETUP_TITLE_FIELD);
+    printSetupTitleTF = w;
 
   /* File name */
     wparent = control;
@@ -1524,26 +1570,6 @@ void createPrintSetupDlg(void)
     XtAddCallback(w, XmNactivateCallback, printSetupDialogCallback,
       (XtPointer)PRINT_SETUP_FILENAME_FIELD);
     printSetupFileTF = w;
-
-  /* Row column to hold toggle buttons */
-    containerRC2 = XtVaCreateManagedWidget("rowCol",
-      xmRowColumnWidgetClass, control,
-      XmNorientation, XmHORIZONTAL,
-      NULL);
-
-  /* Print to file */
-    wparent = containerRC2;
-    label = XmStringCreateLocalized(
-      "Print to File");
-    w =  XtVaCreateManagedWidget("toggleButton",
-      xmToggleButtonWidgetClass, wparent,
-      XmNlabelString, label,
-      XmNset, (Boolean)printToFile,
-      NULL);
-    XmStringFree(label);
-    XtAddCallback(w, XmNvalueChangedCallback, printSetupDialogCallback,
-      (XtPointer)PRINT_SETUP_TOFILE_BTN);
-    printSetupPrintToFileTB = w;
 
   /* Action area */
     actionArea = XtVaCreateWidget("actionArea",
@@ -1684,25 +1710,62 @@ static void updatePrintSetupDlg()
 	break;
     }
 
+  /* Title */
+    XtVaGetValues(printSetupTitleMenu,
+      XmNsubMenuId,&menuWidget,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    switch(printTitle) {
+    case PRINT_TITLE_NONE:
+	XtVaSetValues(printSetupTitleMenu,
+	  XmNmenuHistory, children[PRINT_TITLE_NONE],
+	  NULL);
+	break;
+    case PRINT_TITLE_SHORT_NAME:
+	XtVaSetValues(printSetupTitleMenu,
+	  XmNmenuHistory, children[PRINT_TITLE_SHORT_NAME],
+	  NULL);
+	break;
+    case PRINT_TITLE_LONG_NAME:
+	XtVaSetValues(printSetupTitleMenu,
+	  XmNmenuHistory, children[PRINT_TITLE_LONG_NAME],
+	  NULL);
+	break;
+    case PRINT_TITLE_SPECIFIED:
+	XtVaSetValues(printSetupTitleMenu,
+	  XmNmenuHistory, children[PRINT_TITLE_SPECIFIED],
+	  NULL);
+	break;
+    default:
+	XtVaSetValues(printSetupTitleMenu,
+	  XmNmenuHistory, children[PRINT_TITLE_LONG_NAME],
+	  NULL);
+	break;
+    }
+
   /* Width */
     sprintf(string, "%.2f", printWidth);
-    XmTextFieldSetString(printSetupWidthTF,string);
+    XmTextFieldSetString(printSetupWidthTF, string);
     XmTextFieldSetCursorPosition(printSetupWidthTF, 0);
 
   /* Height */
     sprintf(string, "%.2f", printHeight);
-    XmTextFieldSetString(printSetupHeightTF,string);
+    XmTextFieldSetString(printSetupHeightTF, string);
     XmTextFieldSetCursorPosition(printSetupHeightTF, 0);
 
+  /* Title string */
+    XmTextFieldSetString(printSetupFileTF, printTitleString);
+    XmTextFieldSetCursorPosition(printSetupTitleTF, 0);
+
   /* Filename */
-    XmTextFieldSetString(printSetupFileTF,printFile);
+    XmTextFieldSetString(printSetupFileTF, printFile);
     XmTextFieldSetCursorPosition(printSetupFileTF, 0);
 
   /* To file */
     XmToggleButtonSetState(printSetupPrintToFileTB,(Boolean)printToFile,False);
-
-  /* Title */
-    XmToggleButtonSetState(printSetupPrintTitleTB,(Boolean)printTitle,False);
 
   /* Date */
     XmToggleButtonSetState(printSetupPrintDateTB,(Boolean)printDate,False);
@@ -1720,9 +1783,12 @@ static void updatePrintSetupFromDialog()
     WidgetList children;
     Cardinal numChildren;
     double fval;
+    char *string;
 
   /* Command */
-    sprintf(printCommand, XmTextFieldGetString(printSetupCommandTF));
+    string = XmTextFieldGetString(printSetupCommandTF);
+    sprintf(printCommand, string);
+    XtFree(string);
     XmTextFieldSetCursorPosition(printSetupCommandTF, 0);
 
   /* Orientation */
@@ -1763,8 +1829,31 @@ static void updatePrintSetupFromDialog()
 	printSize = PRINT_A;
     }
 
+  /* Title */
+    XtVaGetValues(printSetupTitleMenu,
+      XmNsubMenuId,&menuWidget,
+      XmNmenuHistory,&menuHistory,
+      NULL);
+    XtVaGetValues(menuWidget,
+      XmNchildren,&children,
+      XmNnumChildren,&numChildren,
+      NULL);
+    if(menuHistory == children[PRINT_TITLE_NONE]) {
+	printTitle = PRINT_TITLE_NONE;
+    } else if(menuHistory == children[PRINT_TITLE_SHORT_NAME]) {
+	printTitle = PRINT_TITLE_SHORT_NAME;
+    } else if(menuHistory == children[PRINT_TITLE_LONG_NAME]) {
+	printTitle = PRINT_TITLE_LONG_NAME;
+    } else if(menuHistory == children[PRINT_TITLE_SPECIFIED]) {
+	printTitle = PRINT_TITLE_SPECIFIED;
+    } else {
+	printTitle = PRINT_TITLE_LONG_NAME;
+    }
+
   /* Width */
-    fval = atof(XmTextFieldGetString(printSetupWidthTF));
+    string = XmTextFieldGetString(printSetupWidthTF);
+    fval = atof(string);
+    XtFree(string);
     if(fval < 0.0) {
 	fval = 0;
 	XmTextFieldSetString(printSetupWidthTF, "0.00");
@@ -1774,7 +1863,9 @@ static void updatePrintSetupFromDialog()
     printWidth = fval;
 
   /* Height */
-    fval = atof(XmTextFieldGetString(printSetupHeightTF));
+    string = XmTextFieldGetString(printSetupHeightTF);
+    fval = atof(string);
+    XtFree(string);
     if(fval < 0.0) {
 	fval = 0;
 	XmTextFieldSetString(printSetupHeightTF, "0.00");
@@ -1783,15 +1874,20 @@ static void updatePrintSetupFromDialog()
     XmTextFieldSetCursorPosition(printSetupHeightTF, 0);
     printHeight = fval;
 
+  /* Title string */
+    string = XmTextFieldGetString(printSetupTitleTF);
+    sprintf(printTitleString, string);
+    XtFree(string);
+    XmTextFieldSetCursorPosition(printSetupTitleTF, 0);
+
   /* Filename */
-    sprintf(printFile, XmTextFieldGetString(printSetupFileTF));
+    string = XmTextFieldGetString(printSetupFileTF);
+    sprintf(printFile, string);
+    XtFree(string);
     XmTextFieldSetCursorPosition(printSetupFileTF, 0);
 
   /* To file */
     printToFile = XmToggleButtonGetState(printSetupPrintToFileTB)?1:0;
-
-  /* Title */
-    printTitle = XmToggleButtonGetState(printSetupPrintTitleTB)?1:0;
 
   /* Date */
     printDate = XmToggleButtonGetState(printSetupPrintDateTB)?1:0;
@@ -1800,7 +1896,7 @@ static void updatePrintSetupFromDialog()
     printTime = XmToggleButtonGetState(printSetupPrintTimeTB)?1:0;
 }
 
-static void printSetupDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
+static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int type = (int)cd;
     int button;

@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_FONTS 0
 #define DEBUG_PIXMAP 0
 #define DEBUG_EXPOSE 0
+#define DEBUG_EXECUTE_MENU 0
 
 #include "medm.h"
 
@@ -104,8 +105,10 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     XtPointer data;
     DisplayInfo *displayInfo;
     int status;
+    char *adlName;
     
-  /* Button's parent (menuPane) has the displayInfo pointer */
+  /* w is the button pushed.  Its parent is the row column, which has
+     the displayInfo pointer as userData */
     XtSetArg(args[0],XmNuserData,&data);
     XtGetValues(XtParent(w),args,1);
     displayInfo = (DisplayInfo *)data;
@@ -123,8 +126,13 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	break;
 #endif
 #endif
+	if(printTitle == PRINT_TITLE_SHORT_NAME) {
+	    adlName = shortName(displayInfo->dlFile->name);
+	} else {
+	    adlName = displayInfo->dlFile->name;
+	}
 	status = utilPrint(display, displayInfo->drawingArea,
-	  DISPLAY_XWD_FILE, displayInfo->dlFile->name);
+	  DISPLAY_XWD_FILE, adlName);
 	if(!status) {
 	    medmPrintf(1,"\nexecutePopupMenuCallback: "
 	      "Print was not successful for\n  %s\n",
@@ -224,6 +232,49 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     case EXECUTE_POPUP_MENU_REFRESH_ID:
 	refreshDisplay(displayInfo);
 	break;
+#if DEBUG_EXECUTE_MENU
+    case EXECUTE_POPUP_MENU_EXECUTE_ID:
+    {
+	Arg args[10];
+	int nargs;
+	XtPointer userData=NULL;
+	Widget subMenuId=NULL;
+	WidgetList children=NULL;
+	Cardinal numChildren=111;
+	Cardinal postFromCount=111;
+	unsigned char rowColumnType=111;
+	Position x=111,y=111;
+
+	print("executePopupMenuCallback: EXECUTE_POPUP_MENU_EXECUTE_ID=%d\n",
+	  EXECUTE_POPUP_MENU_EXECUTE_ID);
+	nargs = 0;
+	XtSetArg(args[nargs],XmNx,&x); nargs++;
+	XtSetArg(args[nargs],XmNy,&y); nargs++;
+	XtSetArg(args[nargs],XmNuserData,&userData); nargs++;
+	XtSetArg(args[nargs],XmNsubMenuId,&subMenuId); nargs++;
+	XtSetArg(args[nargs],XmNnumChildren,&numChildren); nargs++;
+	XtSetArg(args[nargs],XmNchildren,&children); nargs++;
+	XtSetArg(args[nargs],XmNpostFromCount,&postFromCount); nargs++;
+	XtSetArg(args[nargs],XmNrowColumnType,&rowColumnType); nargs++;
+	XtGetValues(XtParent(w),args,nargs);
+
+	print("  w=%x\n",w);
+	print("  XtParent(w)=%x\n",XtParent(w));
+	print("  displayInfo=%x\n",displayInfo);
+	print("  x=%d\n",x);
+	print("  y=%d\n",y);
+	print("  userData=%x\n",userData);
+	print("  subMenuId=%x\n",subMenuId);
+	print("  numChildren=%d\n",numChildren);
+	print("  postFromCount=%d\n",postFromCount);
+	print("  rowColumnType=%d\n",(int)rowColumnType);
+	print("    XmWORK_AREA=%d XmMENU_BAR=%d\n",
+	  (int)XmWORK_AREA,(int)XmMENU_BAR);
+	print("    XmMENU_POPUP=%d XmMENU_PULLDOWN=%d XmMENU_OPTION=%d\n",
+	  (int)XmMENU_POPUP,(int)XmMENU_PULLDOWN,(int)XmMENU_OPTION);
+	break;
+    }
+#endif    
     }
 }
 
