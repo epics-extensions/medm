@@ -630,8 +630,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	gcValues.background = background;
 	gcValues.font = font->fid;
 	XChangeGC(display, displayInfo->pixmapGC, gcValueMask, &gcValues);
+#if 0
+      /* KE: This interferes with updates.  If it is necessary, it
+         needs to be done right. */
 	XSetClipOrigin(display,displayInfo->pixmapGC,0,0);
 	XSetClipMask(display,displayInfo->pixmapGC,None);
+#endif	
 
       /* KE: Value can be received before the graphical info
        *   Set precision to 0 if it is still -1 from initialization */

@@ -417,12 +417,12 @@ static void drawImage(MedmImage *pi)
 	if(pi->animate) {
 	  /* Draw the next image */
 	    if(++gif->curFrame >= gif->nFrames) gif->curFrame = 0;
-	    drawGIF(displayInfo, dlImage, False);
+	    drawGIF(displayInfo, dlImage, True);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, ANIMATE_TIME(gif));
 	} else {
 	  /* Draw the image */
-	    drawGIF(displayInfo, dlImage, False);
+	    drawGIF(displayInfo, dlImage, True);
 	  /* Reset the time */
 	    updateTaskSetScanRate(pi->updateTask, 0.0);
 	}

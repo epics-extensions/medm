@@ -678,13 +678,19 @@ void refreshDisplay(DisplayInfo *displayInfo)
 		clipRect.y = y;
 		clipRect.width = width;
 		clipRect.height = height;
+		XSetClipRectangles(display, gc,
+		  0, 0, &clipRect, 1, YXBanded);
+		XSetClipRectangles(display, displayInfo->pixmapGC,
+		  0, 0, &clipRect, 1, YXBanded);
 		
-		XSetClipRectangles(display,gc,0,0,&clipRect,1,YXBanded);
+	      /* Repaint the region */
 		updateTaskRepaintRegion(displayInfo,&region);
 		
 	      /* Release the clipping region */
-		XSetClipOrigin(display,gc,0,0);
-		XSetClipMask(display,gc,None);
+		XSetClipOrigin(display, gc, 0, 0);
+		XSetClipMask(display, gc, None);
+		XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
+		XSetClipMask(display, displayInfo->pixmapGC, None);
 		if(region) XDestroyRegion(region);
 	    }
 	}

@@ -514,6 +514,9 @@ static Boolean updateTaskWorkProc(XtPointer cd)
     UpdateTask *t = ts->nextToServe;
     UpdateTask *t1;
     double endTime;
+    XPoint points[4];
+    Region region;
+    DlElement *pE;
    
     endTime = medmTime() + WORKINTERVAL; 
  
@@ -573,32 +576,37 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 	ts->nextToServe = t;
       /* Get the displayInfo */
 	displayInfo = t->displayInfo;
+
+      /* Set the clip region */
+	pE = getElementFromUpdateTask(t);
+	
+	points[0].x = t->rectangle.x;
+	points[0].y = t->rectangle.y;
+	points[1].x = t->rectangle.x + t->rectangle.width;
+	points[1].y = t->rectangle.y;
+	points[2].x = t->rectangle.x + t->rectangle.width;
+	points[2].y = t->rectangle.y + t->rectangle.height;
+	points[3].x = t->rectangle.x;
+	points[3].y = t->rectangle.y + t->rectangle.height;
+	region = XPolygonRegion(points,4,EvenOddRule);
+	
+	if(region == NULL) {
+	    medmPrintf(0,"\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
+	  /* Kill the work proc */
+	    ts->workProcId = 0;
+	    return True;
+	}
+	
+      /* Set the clip rectangle.  Since there is only one, whether
+	 it is XYBanded or the alternatives isn't important. */
+	XSetClipRectangles(display, displayInfo->gc,
+	  0, 0, &t->rectangle, 1, YXBanded);
+	XSetClipRectangles(display, displayInfo->pixmapGC,
+	  0, 0, &t->rectangle, 1, YXBanded);
 	
       /* Repaint the selected region */
 	if(t->overlapped) {
-	    Display *display = XtDisplay(displayInfo->drawingArea);
-	    GC gc = displayInfo->gc;
-	    XPoint points[4];
-	    Region region;
 	    int isComposite = 0;
-	    DlElement *pE = getElementFromUpdateTask(t);
-	    
-	    points[0].x = t->rectangle.x;
-	    points[0].y = t->rectangle.y;
-	    points[1].x = t->rectangle.x + t->rectangle.width;
-	    points[1].y = t->rectangle.y;
-	    points[2].x = t->rectangle.x + t->rectangle.width;
-	    points[2].y = t->rectangle.y + t->rectangle.height;
-	    points[3].x = t->rectangle.x;
-	    points[3].y = t->rectangle.y + t->rectangle.height;
-	    region = XPolygonRegion(points,4,EvenOddRule);
-	    
-	    if(region == NULL) {
-		medmPrintf(0,"\nupdateTaskWorkProc: XPolygonRegion is NULL\n");
-	      /* Kill the work proc */
-		ts->workProcId = 0;
-		return True;
-	    }
 	    
 	  /* Check if this task is for a composite.  Composites need
              to be handled differently. */
@@ -606,28 +614,20 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		isComposite = 1;
 	    }
 	    
-	  /* Set the clip rectangle.  Since there is only one, whether
-             it is XYBanded or the alternatives isn't important. */
-	    XSetClipRectangles(display,gc,0,0,&t->rectangle,1,YXBanded);
+	  /* Branch on if opaque or not */
 	    if(!t->opaque)
 	    /* For a composite we need to redo the pixmap in case
 	       elements are hidden or unhidden when the composite is
 	       executed. This will be inefficient if the Composite gets
 	       a lot of updates that don't change its visibility */
 	      if(isComposite) {
-		/* Set the pixmap clipping region */
-		  XSetClipRectangles(display, displayInfo->pixmapGC,
-		    0, 0, &t->rectangle, 1, YXBanded);
 		/* Redraw all the static elements on the pixmap */
 		  redrawStaticElements(displayInfo, pE);
-		/* Release the pixmap clipping region */
-		  XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
-		  XSetClipMask(display, displayInfo->pixmapGC, None);
 	      }
 	    
 	  /* Copy the pixmap to the (clipped) drawingArea */
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,
-	      XtWindow(displayInfo->drawingArea),gc,
+	      XtWindow(displayInfo->drawingArea), displayInfo->gc,
 	      t->rectangle.x, t->rectangle.y,
 	      t->rectangle.width, t->rectangle.height,
 	      t->rectangle.x, t->rectangle.y);
@@ -650,10 +650,6 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t1 = t1->next;
 	    }
 	    
-	  /* Release the drawingArea clipping region */
-	    XSetClipOrigin(display,gc,0,0);
-	    XSetClipMask(display,gc,None);
-	    if(region) XDestroyRegion(region);
 	} else {
 	  /* Not overlapped */
 	    if(!t->opaque) 
@@ -667,6 +663,13 @@ static Boolean updateTaskWorkProc(XtPointer cd)
 		t->executeTask(t->clientData);
 	    }
 	}
+	
+      /* Release the clipping region */
+	XSetClipOrigin(display, displayInfo->gc, 0, 0);
+	XSetClipMask(display, displayInfo->gc, None);
+	XSetClipOrigin(display, displayInfo->pixmapGC, 0, 0);
+	XSetClipMask(display, displayInfo->pixmapGC, None);
+	XDestroyRegion(region);
 	
       /* Update ts->updateExecuted since we executed it, but not
          executeRequestsPendingCount, since if the task was deleted,

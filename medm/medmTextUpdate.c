@@ -412,20 +412,18 @@ static void textUpdateDraw(XtPointer cd)
 	      dlTextUpdate->object.height);
 
 	  /* Calculate the foreground color */
-	    gcValueMask = GCForeground | GCBackground;
 	    switch (dlTextUpdate->clrmod) {
 	    case STATIC :
 	    case DISCRETE:
-		gcValues.foreground =
-		  displayInfo->colormap[dlTextUpdate->monitor.clr];
+		XSetForeground(display, gc,
+		  displayInfo->colormap[dlTextUpdate->monitor.clr]);
 		break;
 	    case ALARM :
-		gcValues.foreground =  alarmColor(pr->severity);
+		XSetForeground(display, gc, alarmColor(pr->severity));
 		break;
 	    }
-	    gcValues.background =
-	      displayInfo->colormap[dlTextUpdate->monitor.bclr];
-	    XChangeGC(display, gc, gcValueMask, &gcValues);
+	    XSetBackground(display, gc,
+	      displayInfo->colormap[dlTextUpdate->monitor.bclr]);
 
 	    i = ptu->fontIndex;
 	    strLen = strlen(textField);
@@ -473,11 +471,16 @@ static void textUpdateDraw(XtPointer cd)
 	      /* Draw the string */
 		XDrawString(display, pixmap, gc, x, y,
 		  textField, strLen);
-	      /* Copy the pixmap to the drawing area, utilizing any
-                 clipping set into the drawingArea->gc. */
+	      /* Copy the pixmap to the drawing area and the
+                 drawingAreaPixmap, utilizing any clipping. */
 		XCopyArea(display, pixmap,
 		  XtWindow(displayInfo->drawingArea),
 		  displayInfo->gc, 0, 0,
+		  dlTextUpdate->object.width, dlTextUpdate->object.height,
+		  dlTextUpdate->object.x, dlTextUpdate->object.y);
+		XCopyArea(display, pixmap,
+		  displayInfo->drawingAreaPixmap,
+		  displayInfo->pixmapGC, 0, 0,
 		  dlTextUpdate->object.width, dlTextUpdate->object.height,
 		  dlTextUpdate->object.x, dlTextUpdate->object.y);
 		XFreePixmap(display, pixmap);

@@ -144,13 +144,8 @@ static void drawText(Display *display,
 	x = dlText->object.x + dlText->object.width - usedWidth;
 	break;
     }
-
-#if DEBUG_HIDE > 2
-    XSetForeground(display,gc,WhitePixel(display,screenNum));
-    XSetClipOrigin(display,gc,0,0);
-    XSetClipMask(display,gc,None);
-#endif     
     XDrawString(display,drawable,gc,x,y,dlText->textix,nChars);
+
 #if DEBUG_HIDE
   /* Goes here because the values are not set until it needs them */
     {
