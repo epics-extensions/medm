@@ -1,0 +1,122 @@
+			   Resource Palette
+			   ================
+
+medmWidget.h
+============
+
+#define X_RC		0
+#define Y_RC		1
+#define WIDTH_RC	2
+#define HEIGHT_RC 	3
+
+...
+
+#define GRID_SPACING_RC	62
+#define GRID_ON_RC      63
+#define GRID_SNAP_RC    64
+
+#ifndef __COLOR_RULE_H__
+# define MAX_RESOURCE_ENTRY (GRID_SNAP_RC + 1)
+#else
+# define COLOR_RULE_RC  65  /* Color Rule Entry Table         */
+# define MAX_RESOURCE_ENTRY (COLOR_RULE_RC + 1)
+#endif
+
+#define MIN_RESOURCE_ENTRY	0
+
+EXTERN ResourceBundle globalResourceBundle;
+EXTERN Widget resourceEntryRC[MAX_RESOURCE_ENTRY];
+EXTERN Widget resourceEntryLabel[MAX_RESOURCE_ENTRY];
+EXTERN Widget resourceEntryElement[MAX_RESOURCE_ENTRY];
+
+char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
+    "Element", "Composite", "Display",
+    "Choice Button", "Menu", "Message Button", "Related Display",
+    "Shell Command", "Text Entry", "Slider",
+    "Bar Monitor", "Byte Monitor", "Cartesian Plot", "Scale Monitor", "Meter",
+    "Strip Chart", "Text Monitor",
+    "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
+};
+XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
+
+#define elementType(x) (elementStringTable[(x)-DL_Element])
+
+#define MAX_RESOURCES_FOR_DL_ELEMENT 18
+typedef struct _ResourceMap{
+    Cardinal childIndexRC[MAX_RESOURCES_FOR_DL_ELEMENT];
+    Cardinal numChildren;
+    Widget children[MAX_RESOURCES_FOR_DL_ELEMENT];
+} ResourceMap;
+
+ResourceMap resourcePaletteElements[NUM_DL_ELEMENT_TYPES];
+
+displayList.h
+=============
+
+NUM_DL_ELEMENT_TYPES: Dl_Element to Dl_Text
+#define MIN_DL_ELEMENT_TYPE DL_Element
+#define MAX_DL_ELEMENT_TYPE DL_Text
+#define NUM_DL_ELEMENT_TYPES    ((MAX_DL_ELEMENT_TYPE-MIN_DL_ELEMENT_TYPE)+1)
+
+resourcePalette.c
+=================
+
+static void createResourceEntries(Widget entriesSW)
+   Builds all resourceEntryRC widgets.
+   Calls initializeResourcePaletteElements().
+   Calls createEntryRC for each possible entry.
+
+static void initializeResourcePaletteElements()
+   Builds resourcePaletteElements from resourceTable.
+
+static void createEntryRC( Widget parent, int rcType)
+   Builds individual resourceEntryRC widget.
+
+static int resourceTable[] = {
+    DL_Display,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, CMAP_RC,
+    GRID_SPACING_RC, GRID_ON_RC, GRID_SNAP_RC,
+    -1,
+    DL_ChoiceButton,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
+    STACKING_RC,
+
+...
+
+    DL_Polygon,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, STYLE_RC, FILL_RC, LINEWIDTH_RC,
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC,
+#endif
+    CLRMOD_RC, VIS_RC, VIS_CALC_RC, CHAN_A_RC, CHAN_B_RC, CHAN_C_RC, CHAN_D_RC,
+    -1,
+};
+
+Widget hierarchy
+
+resourceS
+  resourceMW
+    resourceMB
+    entriesSW
+      entriesRC  (managed, depending on element)
+        localLabel
+        localElement  (widget type varies, depending on resourceTable index.
+    messageF
+
+Callbacks for entriesRC
+
+	XtAddCallback(localElement,XmNactivateCallback,
+	  textFieldActivateCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNlosingFocusCallback,
+	  textFieldLosingFocusCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNmodifyVerifyCallback,
+	  textFieldNumericVerifyCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNvalueChangedCallback,
+	  scaleCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNdragCallback,
+	  scaleCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNactivateCallback,
+	  colorSelectCallback,(XtPointer)rcType);
+	XtAddCallback(localElement,XmNactivateCallback,
+	  pushButtonActivateCallback,(XtPointer)rcType);
+	localElement = XmCreateSimpleOptionMenu(localRC,"localElement",args,n);

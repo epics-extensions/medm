@@ -1,0 +1,42 @@
+     MEDM has been developed at the Advanced Photon Source (APS) over
+a period of several years.  It was originally written by Mark
+Anderson, and Fred Vong has been in charge of it since Version 2.0.0.
+Fred has recently left the laboratory, and I am now responsible for
+it.
+
+     The latest released version of MEDM is 2.2.9, and that is the
+version that is being used on site at the APS.  This is Fred's final
+version.  Thousands of MEDM screens have been created with this
+version and its predessors and are running successfully at the APS.
+MEDM is very much alive and well, and it is not broken.
+
+     The next release of MEDM will be 2.3.2.  This is a merger of
+2.2.9 and Fred's developmental version.  In addition to adding a
+number of new features, Fred rewrote a large part of the logic in the
+code, so the internal structure of the next version will be somewhat
+different from the current version.  The changes should make the code
+easier to understand and work with, as well as make it easier to add
+new features.  The down side is that Fred did not have it fully
+debugged.
+
+     Since taking over in November I have concentrated on making it
+work correctly in EXECUTE mode, the most important thing for the APS
+and any other operating site.  The current beta version has been
+tested and now appears to be stable in EXECUTE mode.  There are,
+however, problems with EDIT mode.  I am in the process of working on
+much of the mouse and keyboard input and have fixed a lot of it.  In
+addition, I have added some new capablilties in the course of
+debugging.  The code is still in a state of change and is not ready
+for release.  I am not sure how long it will take to get to that
+point, probably a few months.
+
+     After getting to a releasable version, I have a "wish list" of
+three or four pages to work on.  It is my opinion that MEDM is
+somewhat lacking in EDIT mode, particularly with regard to an almost
+complete absence of help and documentation.  It is often awkward to
+use, compared to other drawing programs.  It is my intention to
+improve this situation, but there are still decisions to be made as to
+what to do and how to proceed.
+
+     I am just starting to learn that other sites are making their own
+modifications to MEDM.

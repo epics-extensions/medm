@@ -1,0 +1,94 @@
+
+The following display list objects are being parsed:
+(will put the grammar into EBNF form sometime)
+
+General rules:  order of things in display list
+	+ file
+	+ display
+	+ attributes and static objects ...
+	+ dynamic attributes and static objects...
+	+ monitors
+	+ controllers
+	+ plots
+
+
+TOP LEVEL OBJECTS
+=================
+
+Static Objects:
+---------------
+
+file
+display = {object, cmap, clr, bclr}
+<<color map>> = {ncolors, dl_color}
+<<basic atribute>> = {attr}
+<<dynamic attribute>> = {(dyn)attr}			# not fully implemented
+rectangle = {object}
+oval = {object}
+arc = {object, begin, path}
+text = {object, textix, align, format}
+falling line = {object}
+rising line = {object}
+related display = {object, clr, bclr}
+
+
+Monitor Objects:
+----------------
+
+bar = {object, monitor, label, clrmod, direction, fillmod, pad}
+indicator						# not yet implemented
+meter = {object, monitor, label, clrmod, pad}
+strip chart						# not fully implemented
+text update = {object, monitor, clrmod, format, align, pad}
+
+
+Controller Objects:
+-------------------
+
+choice button = {object, control, label, clrmod, stacking, pad}
+	(button == choice button)
+message button			# not yet implemented
+menu				# not yet implemented
+text entry			# not yet implemented
+valuator = {object, control, label, clrmod, direction, pad}
+
+
+
+NESTED OBJECTS
+==============
+dl_color = {r, g, b, inten}
+object = {x, y, width, height}
+attr = {clr, style, fill, width}
+(dyn)attr = {mod, chan}
+display[i] = {label, name, args}
+monitor = {rdbk, clr, bclr}
+control = {ctrl, clr, bclr}
+plotcom				# not yet implemented
+pen				# not yet implemented
+
+
+
+OTHER KEYWORDS
+==============
+
+clr
+bclr
+
+
+
+
+
+Current State of Affairs
+========================
+========================
+
+clrmod = {static, alarm, discrete}
+   static: color = foreground color
+   alarm:  color = alarm color (based on current channel alarm condition)
+   discrete: implemented as alarm (so does LANL)
+
+label = {none, outline, limits, channel}
+   none: no label
+   outline: no label
+   limits:  include low and high limits in display
+   channel: include low and high limits and channel name

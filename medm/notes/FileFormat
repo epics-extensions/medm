@@ -1,0 +1,2298 @@
+Header
+Object 
+ ...
+ ...
+ ...
+ ...
+Object
+
+The following is header of the medm file :
+====================================================================
+file {
+	name="<display path + display name>"
+	version=<the version of the medm which generated this file>
+}
+display {
+	object {
+		x=<x coordinate of the upper left corner>
+		y=<y coordinate of the upper left corner>
+		width=<width of the display>
+		height=<height of the display>
+	}
+	clr=<forground color : index of the color map followed>
+	bclr=<background color : index of the color map followed>
+	cmap=""
+}
+"color map" {
+	ncolors=65
+	colors {
+		ffffff,
+		ececec,
+		dadada,
+		c8c8c8,
+		bbbbbb,
+		aeaeae,
+		9e9e9e,
+		919191,
+		858585,
+		787878,
+		696969,
+		5a5a5a,
+		464646,
+		2d2d2d,
+		000000,
+		00d800,
+		1ebb00,
+		339900,
+		2d7f00,
+		216c00,
+		fd0000,
+		de1309,
+		be190b,
+		a01207,
+		820400,
+		5893ff,
+		597ee1,
+		4b6ec7,
+		3a5eab,
+		27548d,
+		fbf34a,
+		f9da3c,
+		eeb62b,
+		e19015,
+		cd6100,
+		ffb0ff,
+		d67fe2,
+		ae4ebc,
+		8b1a96,
+		610a75,
+		a4aaff,
+		8793e2,
+		6a73c1,
+		4d52a4,
+		343386,
+		c7bb6d,
+		b79d5c,
+		a47e3c,
+		7d5627,
+		58340f,
+		99ffff,
+		73dfff,
+		4ea5f9,
+		2a63e4,
+		0a00b8,
+		ebf1b5,
+		d4db9d,
+		bbc187,
+		a6a462,
+		8b8239,
+		73ff6b,
+		52da3b,
+		3cb420,
+		289315,
+		1a7309,
+	}
+}
+====================================================================
+
+image {
+	object {
+		x=<X coordinate in display>
+		y=<Y coordinate in display>
+		width=<width of the object>
+		height=<height of the object>
+	}
+	type="gif"
+	"image name"=<filename>
+}
+text {
+	object {
+		x=<X coordiante in display>
+		y=<Y coordiante in display>
+		width=<width of the object>
+		height=<height of the object>
+	}
+	"basic attribute" {
+		clr=<index from the color table>
+	}
+	textix=<text appear>
+}
+"related display" {
+	object {
+		x=263
+		y=319
+		width=40
+		height=15
+	}
+	display[0] {
+		label="PAR/LET Main Screen"
+		name="par-let.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=334
+		y=289
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Linac Main Screen"
+		name="L.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=319
+		y=268
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Linac"
+}
+text {
+	object {
+		x=270
+		y=300
+		width=75
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="PAR"
+}
+"related display" {
+	object {
+		x=228
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Convertor Raw Supplies"
+		name="SrawPSStatus.adl"
+	}
+	display[1] {
+		label="Pulsed Supply Status"
+		name="SKSPPSStatus.adl"
+	}
+	display[2] {
+		label="Pulsed Supply Setpoints"
+		name="SIKSP.adl"
+	}
+	display[3] {
+		label="Main Dipole"
+		name="SBM.adl"
+	}
+	display[4] {
+		label="Quad Status Summary"
+		name="SQuadPSStatus.adl"
+	}
+	display[5] {
+		label="Sext Status Summary"
+		name="SSextPSStatus.adl"
+	}
+	display[6] {
+		label="Corrector Status Summary"
+		name="SCorrPSStatus.adl"
+	}
+	display[7] {
+		label="S:BM Teslameter and External XDCT"
+		name="SBMTM.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=238
+		y=35
+		width=25
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="PS"
+}
+"related display" {
+	object {
+		x=368
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Booster Extract Timing"
+		name="BextractMenu.adl"
+	}
+	display[1] {
+		label="SR Injection Timing"
+		name="SrInjectMenu.adl"
+	}
+	display[2] {
+		label="SR Multibunch Inject"
+		name="SrInjectCont.adl"
+	}
+	display[3] {
+		label="SR Inject Once"
+		name="SrInjectButton.adl"
+	}
+	display[4] {
+		label="Sector Bunch Clocks"
+		name="BunchClkGenTop.adl"
+	}
+	display[5] {
+		label="Iocmtime Fault Status"
+		name="MtFaultDet.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=355
+		y=35
+		width=67
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Timing"
+}
+text {
+	object {
+		x=428
+		y=35
+		width=45
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="MPS"
+}
+"related display" {
+	object {
+		x=427
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Machine Protection System"
+		name="mainMps.adl"
+	}
+	display[1] {
+		label="S36 Surface Temp RTD"
+		name="hp54503a.adl"
+		args="UNIT=Hp54503a"
+	}
+	display[2] {
+		label="S36 Wire Monitor"
+		name="WireMonitor.adl"
+		args="UNIT=S36MPSwm"
+	}
+	display[3] {
+		label="Vacuum and Water Latch"
+		name="MPS-latchMasterPanel.adl"
+	}
+	display[4] {
+		label="S35BM FE Photon Shutter"
+		name="S35photonShutter.adl"
+	}
+	display[5] {
+		label="Beam Position Limits Detector"
+		name="BPLDTop.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=480
+		y=35
+		width=45
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Misc"
+}
+"related display" {
+	object {
+		x=479
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Machine Operations Message"
+		name="operatorMessage.adl"
+	}
+	display[1] {
+		label="Absorbers & Chambers"
+		name="absorberMasterPanel.adl"
+	}
+	display[2] {
+		label="VIDEO/ACTUATOR INFORMATION"
+		name="vid-act-info.adl"
+	}
+	display[3] {
+		label="Background Application Run Control"
+		name="APSRunControl.adl"
+	}
+	display[4] {
+		label="Machine Status Link Transmitter"
+		name="msltMain.adl"
+	}
+	display[5] {
+		label="PS/Vac IOC Status"
+		name="sriocstatus.adl"
+	}
+	display[6] {
+		label="BPM IOC Status"
+		name="srbpmiocstatus.adl"
+	}
+	display[7] {
+		label="RF IOC Status"
+		name="rfiocstats.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=297
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Vacuum Valve Status"
+		name="SRFEvalveStatus.adl"
+	}
+	display[1] {
+		label="Sector 01 - 06"
+		name="srHex01-06.adl"
+	}
+	display[2] {
+		label="Sector 07 - 12"
+		name="srHex07-12.adl"
+	}
+	display[3] {
+		label="Sector 13 - 18"
+		name="srHex13-18.adl"
+	}
+	display[4] {
+		label="Sector 19 - 24"
+		name="srHex19-24.adl"
+	}
+	display[5] {
+		label="Sector 25 - 30 "
+		name="srHex25-30.adl"
+	}
+	display[6] {
+		label="Sector 31 - 36"
+		name="srHex31-36.adl"
+	}
+	display[7] {
+		label="Sector 37 - 40"
+		name="srHex37-40.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=287
+		y=35
+		width=64
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Vacuum"
+}
+"related display" {
+	object {
+		x=258
+		y=120
+		width=40
+		height=15
+	}
+	display[0] {
+		label="BTS PS STATUS"
+		name="btsPSStatus.adl"
+	}
+	display[1] {
+		label="BTS HV CONTROL"
+		name="BTSHV_control.adl"
+	}
+	display[2] {
+		label="BTS CURRENT MONITOR"
+		name="ApsCt1.adl"
+		args="CT=BTS:CM"
+	}
+	display[3] {
+		label="BTS MAIN PS STRIP CHART"
+		name="BTS_PS_strip.adl"
+	}
+	display[4] {
+		label="BTS CORRECTOR PS STRIP CHART"
+		name="BTS_HV_strip.adl"
+	}
+	display[5] {
+		label="BTS Current Totals"
+		name="BTScurrentTotals.adl"
+	}
+	display[6] {
+		label="BTS Screens"
+		name="hetflags.adl"
+	}
+	display[7] {
+		label="BTS BPM Screen"
+		name="btsbpmEng.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=262
+		y=103
+		width=35
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="BTS"
+}
+text {
+	object {
+		x=181
+		y=221
+		width=75
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Booster"
+}
+"related display" {
+	object {
+		x=199
+		y=242
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Booster Main Screen"
+		name="bMain.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=122
+		y=35
+		width=45
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Diag"
+}
+"related display" {
+	object {
+		x=124
+		y=57
+		width=40
+		height=15
+	}
+	display[0] {
+		label="BPM Main Screen"
+		name="SbpmTop.adl"
+	}
+	display[1] {
+		label="Loss Monitors"
+		name="SrLossMTop.adl"
+	}
+	display[2] {
+		label="Current Monitor (ICT)"
+		name="SrApsCt.adl"
+		args="CT=S35:CM"
+	}
+	display[3] {
+		label="Storage ring Video Multiplexer"
+		name="mcrvideomux.adl"
+	}
+	display[4] {
+		label="S39, 40 scrapers"
+		name="s39Scraper.adl"
+	}
+	display[5] {
+		label="Current Monitor (DCCT)"
+		name="S35DCCT.adl"
+	}
+	display[6] {
+		label="S36, 38 scrapers"
+		name="s37Scraper.adl"
+	}
+	display[7] {
+		label="Beam Life Time"
+		name="SrCurrent.adl"
+	}
+	clr=14
+	bclr=51
+}
+composite {
+	object {
+		x=178
+		y=35
+		width=40
+		height=37
+	}
+	"composite name"=""
+	vis="static"
+	chan=""
+	children {
+		text {
+			object {
+				x=189
+				y=35
+				width=25
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="RF"
+		}
+		"related display" {
+			object {
+				x=178
+				y=57
+				width=40
+				height=15
+			}
+			display[0] {
+				label="HVPS"
+				name="S1S2psMainN1.adl"
+			}
+			display[1] {
+				label="Klystron"
+				name="S1S2Klystron.adl"
+			}
+			display[2] {
+				label="Cavities"
+				name="S1S2CavityAdj.adl"
+			}
+			display[3] {
+				label="Meters"
+				name="S1S2Meters.adl"
+			}
+			display[4] {
+				label="Gap Voltage"
+				name="SRcavGapVolt.adl"
+			}
+			clr=14
+			bclr=51
+		}
+	}
+}
+"related display" {
+	object {
+		x=283
+		y=164
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S40 PS Status"
+		name="S40PSStatus.adl"
+	}
+	display[1] {
+		label="S1 PS Status"
+		name="S1PSStatus.adl"
+	}
+	display[2] {
+		label="S40 Corr Strip"
+		name="S40Corr_strip.adl"
+	}
+	display[3] {
+		label="S1 Corr Strip"
+		name="S1Corr_strip.adl"
+	}
+	display[4] {
+		label="S40,1 Quad Strip"
+		name="S4001Quad_strip.adl"
+	}
+	display[5] {
+		label="S40,1 Sext Strip"
+		name="S4001Sext_strip.adl"
+	}
+	display[6] {
+		label="S40 Vacuum"
+		name="srVac40.adl"
+	}
+	display[7] {
+		label="S1 Vacuum"
+		name="srVac01.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=285
+		y=178
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S40,1"
+}
+"related display" {
+	object {
+		x=333
+		y=188
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S2 PS Status"
+		name="S2PSStatus.adl"
+	}
+	display[1] {
+		label="S3 PS Status"
+		name="S3PSStatus.adl"
+	}
+	display[2] {
+		label="S2 Corr Strip"
+		name="S2Corr_strip.adl"
+	}
+	display[3] {
+		label="S3 Corr Strip"
+		name="S3Corr_strip.adl"
+	}
+	display[4] {
+		label="S2,3 Quad Strip"
+		name="S0203Quad_strip.adl"
+	}
+	display[5] {
+		label="S2,3 Sext Strip"
+		name="S0203Sext_strip.adl"
+	}
+	display[6] {
+		label="S2 Vacuum"
+		name="srVac02.adl"
+	}
+	display[7] {
+		label="S3 Vacuum"
+		name="srVac03.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=335
+		y=202
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S2,3"
+}
+"related display" {
+	object {
+		x=371
+		y=221
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S4 PS Status"
+		name="S4PSStatus.adl"
+	}
+	display[1] {
+		label="S5 PS Status"
+		name="S5PSStatus.adl"
+	}
+	display[2] {
+		label="S4 Corr Strip"
+		name="S4Corr_strip.adl"
+	}
+	display[3] {
+		label="S5 Corr Strip"
+		name="S5Corr_strip.adl"
+	}
+	display[4] {
+		label="S4,5 Quad Strip"
+		name="S0405Quad_strip.adl"
+	}
+	display[5] {
+		label="S4,5 Sext Strip"
+		name="S0405Sext_strip.adl"
+	}
+	display[6] {
+		label="S4 Vacuum"
+		name="srVac04.adl"
+	}
+	display[7] {
+		label="S5 Vacuum"
+		name="srVac05.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=373
+		y=235
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S4,5"
+}
+"related display" {
+	object {
+		x=396
+		y=269
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S6 PS Status"
+		name="S6PSStatus.adl"
+	}
+	display[1] {
+		label="S7 PS Status"
+		name="S7PSStatus.adl"
+	}
+	display[2] {
+		label="S6 Corr Strip"
+		name="S6Corr_strip.adl"
+	}
+	display[3] {
+		label="S7 Corr Strip"
+		name="S7Corr_strip.adl"
+	}
+	display[4] {
+		label="S6,7 Quad Strip"
+		name="S0607Quad_strip.adl"
+	}
+	display[5] {
+		label="S6,7 Sext Strip"
+		name="S0607Sext_strip.adl"
+	}
+	display[6] {
+		label="S6 Vacuum"
+		name="srVac06.adl"
+	}
+	display[7] {
+		label="S7 Vacuum"
+		name="srVac07.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=398
+		y=283
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S6,7"
+}
+"related display" {
+	object {
+		x=406
+		y=322
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S8 PS Status"
+		name="S8PSStatus.adl"
+	}
+	display[1] {
+		label="S9 PS Status"
+		name="S9PSStatus.adl"
+	}
+	display[2] {
+		label="S8 Corr Strip"
+		name="S8Corr_strip.adl"
+	}
+	display[3] {
+		label="S9 Corr Strip"
+		name="S9Corr_strip.adl"
+	}
+	display[4] {
+		label="S8,9 Quad Strip"
+		name="S0809Quad_strip.adl"
+	}
+	display[5] {
+		label="S8,9 Sext Strip"
+		name="S0809Sext_strip.adl"
+	}
+	display[6] {
+		label="S8 Vacuum"
+		name="srVac08.adl"
+	}
+	display[7] {
+		label="S9 Vacuum"
+		name="srVac09.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=408
+		y=336
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S8,9"
+}
+"related display" {
+	object {
+		x=400
+		y=373
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S10 PS Status"
+		name="S10PSStatus.adl"
+	}
+	display[1] {
+		label="S11 PS Status"
+		name="S11PSStatus.adl"
+	}
+	display[2] {
+		label="S10 Corr Strip"
+		name="S10Corr_strip.adl"
+	}
+	display[3] {
+		label="S11 Corr Strip"
+		name="S11Corr_strip.adl"
+	}
+	display[4] {
+		label="S10,11 Quad Strip"
+		name="S1011Quad_strip.adl"
+	}
+	display[5] {
+		label="S10,11 Sext Strip"
+		name="S1011Sext_strip.adl"
+	}
+	display[6] {
+		label="S10 Vacuum"
+		name="srVac10.adl"
+	}
+	display[7] {
+		label="S11 Vacuum"
+		name="srVac11.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=398
+		y=388
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S10,11"
+}
+"related display" {
+	object {
+		x=379
+		y=418
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S12 PS Status"
+		name="S12PSStatus.adl"
+	}
+	display[1] {
+		label="S13 PS Status"
+		name="S13PSStatus.adl"
+	}
+	display[2] {
+		label="S12 Corr Strip"
+		name="S12Corr_strip.adl"
+	}
+	display[3] {
+		label="S13 Corr Strip"
+		name="S13Corr_strip.adl"
+	}
+	display[4] {
+		label="S12,13 Quad Strip"
+		name="S1213Quad_strip.adl"
+	}
+	display[5] {
+		label="S12,13 Sext Strip"
+		name="S1213Sext_strip.adl"
+	}
+	display[6] {
+		label="S12 Vacuum"
+		name="srVac12.adl"
+	}
+	display[7] {
+		label="S13 Vacuum"
+		name="srVac13.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=377
+		y=433
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S12,13"
+}
+"related display" {
+	object {
+		x=349
+		y=455
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S14 PS Status"
+		name="S14PSStatus.adl"
+	}
+	display[1] {
+		label="S15 PS Status"
+		name="S15PSStatus.adl"
+	}
+	display[2] {
+		label="S14 Corr Strip"
+		name="S14Corr_strip.adl"
+	}
+	display[3] {
+		label="S15 Corr Strip"
+		name="S15Corr_strip.adl"
+	}
+	display[4] {
+		label="S14,15 Quad Strip"
+		name="S1415Quad_strip.adl"
+	}
+	display[5] {
+		label="S14,15 Sext Strip"
+		name="S1415Sext_strip.adl"
+	}
+	display[6] {
+		label="S14 Vacuum"
+		name="srVac14.adl"
+	}
+	display[7] {
+		label="S15 Vacuum"
+		name="srVac15.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=347
+		y=470
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S14,15"
+}
+"related display" {
+	object {
+		x=310
+		y=487
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S16 PS Status"
+		name="S16PSStatus.adl"
+	}
+	display[1] {
+		label="S17 PS Status"
+		name="S17PSStatus.adl"
+	}
+	display[2] {
+		label="S16 Corr Strip"
+		name="S16Corr_strip.adl"
+	}
+	display[3] {
+		label="S17 Corr Strip"
+		name="S17Corr_strip.adl"
+	}
+	display[4] {
+		label="S16,17 Quad Strip"
+		name="S1617Quad_strip.adl"
+	}
+	display[5] {
+		label="S16,17 Sext Strip"
+		name="S1617Sext_strip.adl"
+	}
+	display[6] {
+		label="S16 Vacuum"
+		name="srVac16.adl"
+	}
+	display[7] {
+		label="S17 Vacuum"
+		name="srVac17.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=308
+		y=502
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S16,17"
+}
+"related display" {
+	object {
+		x=259
+		y=504
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S18 PS Status"
+		name="S18PSStatus.adl"
+	}
+	display[1] {
+		label="S19 PS Status"
+		name="S19PSStatus.adl"
+	}
+	display[2] {
+		label="S18 Corr Strip"
+		name="S18Corr_strip.adl"
+	}
+	display[3] {
+		label="S19 Corr Strip"
+		name="S19Corr_strip.adl"
+	}
+	display[4] {
+		label="S18,19 Quad Strip"
+		name="S1819Quad_strip.adl"
+	}
+	display[5] {
+		label="S18,19 Sext Strip"
+		name="S1819Sext_strip.adl"
+	}
+	display[6] {
+		label="S18 Vacuum"
+		name="srVac18.adl"
+	}
+	display[7] {
+		label="S19 Vacuum"
+		name="srVac19.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=257
+		y=519
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S18,19"
+}
+"related display" {
+	object {
+		x=205
+		y=498
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S20 PS Status"
+		name="S20PSStatus.adl"
+	}
+	display[1] {
+		label="S21 PS Status"
+		name="S21PSStatus.adl"
+	}
+	display[2] {
+		label="S20 Corr Strip"
+		name="S20Corr_strip.adl"
+	}
+	display[3] {
+		label="S21 Corr Strip"
+		name="S21Corr_strip.adl"
+	}
+	display[4] {
+		label="S20,21 Quad Strip"
+		name="S2021Quad_strip.adl"
+	}
+	display[5] {
+		label="S20,21 Sext Strip"
+		name="S2021Sext_strip.adl"
+	}
+	display[6] {
+		label="S20 Vacuum"
+		name="srVac20.adl"
+	}
+	display[7] {
+		label="S21 Vacuum"
+		name="srVac21.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=204
+		y=513
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S20,21"
+}
+"related display" {
+	object {
+		x=157
+		y=476
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S22 PS Status"
+		name="S22PSStatus.adl"
+	}
+	display[1] {
+		label="S23 PS Status"
+		name="S23PSStatus.adl"
+	}
+	display[2] {
+		label="S22 Corr Strip"
+		name="S22Corr_strip.adl"
+	}
+	display[3] {
+		label="S23 Corr Strip"
+		name="S23Corr_strip.adl"
+	}
+	display[4] {
+		label="S22,23 Quad Strip"
+		name="S2223Quad_strip.adl"
+	}
+	display[5] {
+		label="S22,23 Sext Strip"
+		name="S2223Sext_strip.adl"
+	}
+	display[6] {
+		label="S22 Vacuum"
+		name="srVac22.adl"
+	}
+	display[7] {
+		label="S23 Vacuum"
+		name="srVac23.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=155
+		y=491
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S22,23"
+}
+"related display" {
+	object {
+		x=121
+		y=446
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S24 PS Status"
+		name="S24PSStatus.adl"
+	}
+	display[1] {
+		label="S25 PS Status"
+		name="S25PSStatus.adl"
+	}
+	display[2] {
+		label="S24 Corr Strip"
+		name="S24Corr_strip.adl"
+	}
+	display[3] {
+		label="S25 Corr Strip"
+		name="S25Corr_strip.adl"
+	}
+	display[4] {
+		label="S24,25 Quad Strip"
+		name="S2425Quad_strip.adl"
+	}
+	display[5] {
+		label="S24,25 Sext Strip"
+		name="S2425Sext_strip.adl"
+	}
+	display[6] {
+		label="S24 Vacuum"
+		name="srVac24.adl"
+	}
+	display[7] {
+		label="S25 Vacuum"
+		name="srVac25.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=119
+		y=461
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S24,25"
+}
+"related display" {
+	object {
+		x=94
+		y=404
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S26 PS Status"
+		name="S26PSStatus.adl"
+	}
+	display[1] {
+		label="S27 PS Status"
+		name="S27PSStatus.adl"
+	}
+	display[2] {
+		label="S26 Corr Strip"
+		name="S26Corr_strip.adl"
+	}
+	display[3] {
+		label="S27 Corr Strip"
+		name="S27Corr_strip.adl"
+	}
+	display[4] {
+		label="S26,27 Quad Strip"
+		name="S2627Quad_strip.adl"
+	}
+	display[5] {
+		label="S26,27 Sext Strip"
+		name="S2627Sext_strip.adl"
+	}
+	display[6] {
+		label="S26 Vacuum"
+		name="srVac26.adl"
+	}
+	display[7] {
+		label="S27 Vacuum"
+		name="srVac27.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=92
+		y=419
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S26,27"
+}
+"related display" {
+	object {
+		x=77
+		y=354
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S28 PS Status"
+		name="S28PSStatus.adl"
+	}
+	display[1] {
+		label="S29 PS Status"
+		name="S29PSStatus.adl"
+	}
+	display[2] {
+		label="S28 Corr Strip"
+		name="S28Corr_strip.adl"
+	}
+	display[3] {
+		label="S29 Corr Strip"
+		name="S29Corr_strip.adl"
+	}
+	display[4] {
+		label="S28,29 Quad Strip"
+		name="S2829Quad_strip.adl"
+	}
+	display[5] {
+		label="S28,29 Sext Strip"
+		name="S2829Sext_strip.adl"
+	}
+	display[6] {
+		label="S28 Vacuum"
+		name="srVac28.adl"
+	}
+	display[7] {
+		label="S29 Vacuum"
+		name="srVac29.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=75
+		y=369
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S28,29"
+}
+"related display" {
+	object {
+		x=79
+		y=301
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S30 PS Status"
+		name="S30PSStatus.adl"
+	}
+	display[1] {
+		label="S31 PS Status"
+		name="S31PSStatus.adl"
+	}
+	display[2] {
+		label="S30 Corr Strip"
+		name="S30Corr_strip.adl"
+	}
+	display[3] {
+		label="S31 Corr Strip"
+		name="S31Corr_strip.adl"
+	}
+	display[4] {
+		label="S30,31 Quad Strip"
+		name="S3031Quad_strip.adl"
+	}
+	display[5] {
+		label="S30,31 Sext Strip"
+		name="S3031Sext_strip.adl"
+	}
+	display[6] {
+		label="S30 Vacuum"
+		name="srVac30.adl"
+	}
+	display[7] {
+		label="S31 Vacuum"
+		name="srVac31.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=77
+		y=316
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S30,31"
+}
+"related display" {
+	object {
+		x=98
+		y=249
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S32 PS Status"
+		name="S32PSStatus.adl"
+	}
+	display[1] {
+		label="S33 PS Status"
+		name="S33PSStatus.adl"
+	}
+	display[2] {
+		label="S32 Corr Strip"
+		name="S32Corr_strip.adl"
+	}
+	display[3] {
+		label="S33 Corr Strip"
+		name="S33Corr_strip.adl"
+	}
+	display[4] {
+		label="S32,33 Quad Strip"
+		name="S3233Quad_strip.adl"
+	}
+	display[5] {
+		label="S32,33 Sext Strip"
+		name="S3233Sext_strip.adl"
+	}
+	display[6] {
+		label="S32 Vacuum"
+		name="srVac32.adl"
+	}
+	display[7] {
+		label="S33 Vacuum"
+		name="srVac33.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=96
+		y=264
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S32,33"
+}
+"related display" {
+	object {
+		x=124
+		y=209
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S34 PS Status"
+		name="S34PSStatus.adl"
+	}
+	display[1] {
+		label="S35 PS Status"
+		name="S35PSStatus.adl"
+	}
+	display[2] {
+		label="S34 Corr Strip"
+		name="S34Corr_strip.adl"
+	}
+	display[3] {
+		label="S35 Corr Strip"
+		name="S35Corr_strip.adl"
+	}
+	display[4] {
+		label="S34,35 Quad Strip"
+		name="S3435Quad_strip.adl"
+	}
+	display[5] {
+		label="S34,35 Sext Strip"
+		name="S3435Sext_strip.adl"
+	}
+	display[6] {
+		label="S34 Vacuum"
+		name="srVac34.adl"
+	}
+	display[7] {
+		label="S35 Vacuum"
+		name="srVac35.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=122
+		y=224
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S34,35"
+}
+"related display" {
+	object {
+		x=167
+		y=171
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S36 PS Status"
+		name="S36PSStatus.adl"
+	}
+	display[1] {
+		label="S37 PS Status"
+		name="S37PSStatus.adl"
+	}
+	display[2] {
+		label="S36 Corr Strip"
+		name="S36Corr_strip.adl"
+	}
+	display[3] {
+		label="S37 Corr Strip"
+		name="S37Corr_strip.adl"
+	}
+	display[4] {
+		label="S36,37 Quad Strip"
+		name="S3637Quad_strip.adl"
+	}
+	display[5] {
+		label="S36,37 Sext Strip"
+		name="S3637Sext_strip.adl"
+	}
+	display[6] {
+		label="S36 Vacuum"
+		name="srVac36.adl"
+	}
+	display[7] {
+		label="S37 Vacuum"
+		name="srVac37.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=165
+		y=186
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S36,37"
+}
+"related display" {
+	object {
+		x=221
+		y=150
+		width=27
+		height=12
+	}
+	display[0] {
+		label="S38 PS Status"
+		name="S38PSStatus.adl"
+	}
+	display[1] {
+		label="S39 PS Status"
+		name="S39PSStatus.adl"
+	}
+	display[2] {
+		label="S380 Corr Strip"
+		name="S38Corr_strip.adl"
+	}
+	display[3] {
+		label="S39 Corr Strip"
+		name="S39Corr_strip.adl"
+	}
+	display[4] {
+		label="S38,39 Quad Strip"
+		name="S3839Quad_strip.adl"
+	}
+	display[5] {
+		label="S38,39 Sext Strip"
+		name="S3839Sext_strip.adl"
+	}
+	display[6] {
+		label="S38 Vacuum"
+		name="srVac38.adl"
+	}
+	display[7] {
+		label="S39 Vacuum"
+		name="srVac39.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=219
+		y=165
+		width=40
+		height=12
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="S38,39"
+}
+"related display" {
+	object {
+		x=481
+		y=253
+		width=27
+		height=12
+	}
+	display[0] {
+		label="SECTOR 07 FLAG CONTROLS"
+		name="sector-07-flag.adl"
+	}
+	clr=14
+	bclr=51
+}
+polyline {
+	object {
+		x=451
+		y=264
+		width=32
+		height=11
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(452,274)
+		(482,265)
+	}
+}
+text {
+	object {
+		x=482
+		y=245
+		width=25
+		height=9
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="FLAG"
+}
+composite {
+	object {
+		x=426
+		y=500
+		width=27
+		height=20
+	}
+	"composite name"=""
+	vis="static"
+	chan=""
+	children {
+		"related display" {
+			object {
+				x=426
+				y=508
+				width=27
+				height=12
+			}
+			display[0] {
+				label="SECTOR 14 FLAG CONTROLS"
+				name="sector-14-flag.adl"
+			}
+			clr=14
+			bclr=51
+		}
+		text {
+			object {
+				x=427
+				y=500
+				width=25
+				height=9
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="FLAG"
+		}
+	}
+}
+"related display" {
+	object {
+		x=247
+		y=583
+		width=27
+		height=12
+	}
+	display[0] {
+		label="SECTOR 19 FLAG CONTROLS"
+		name="sector-19-flag.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=248
+		y=575
+		width=25
+		height=9
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="FLAG"
+}
+composite {
+	object {
+		x=35
+		y=450
+		width=27
+		height=20
+	}
+	"composite name"=""
+	vis="static"
+	chan=""
+	children {
+		"related display" {
+			object {
+				x=35
+				y=458
+				width=27
+				height=12
+			}
+			display[0] {
+				label="SECTOR 26 FLAG CONTROLS"
+				name="sector-26-flag.adl"
+			}
+			clr=14
+			bclr=51
+		}
+		text {
+			object {
+				x=36
+				y=450
+				width=25
+				height=9
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="FLAG"
+		}
+	}
+}
+"related display" {
+	object {
+		x=32
+		y=225
+		width=27
+		height=12
+	}
+	display[0] {
+		label="SECTOR 31 FLAG CONTROLS"
+		name="sector-31-flag.adl"
+	}
+	display[1] {
+		label="SECTOR 35 FLAG CONTROLS"
+		name="sector-35-flag.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=30
+		y=217
+		width=30
+		height=9
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="FLAGS"
+}
+polyline {
+	object {
+		x=64
+		y=202
+		width=56
+		height=27
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(65,228)
+		(119,203)
+	}
+}
+polyline {
+	object {
+		x=59
+		y=236
+		width=9
+		height=53
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(60,237)
+		(67,288)
+	}
+}
+polyline {
+	object {
+		x=252
+		y=540
+		width=8
+		height=28
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(259,567)
+		(253,541)
+	}
+}
+polyline {
+	object {
+		x=388
+		y=485
+		width=38
+		height=24
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(425,508)
+		(389,486)
+	}
+}
+"related display" {
+	object {
+		x=201
+		y=103
+		width=27
+		height=12
+	}
+	display[0] {
+		label="BTS, SECTORS 40 AND 01 FLAG CONTROLS"
+		name="hetflags.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=198
+		y=96
+		width=30
+		height=9
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="FLAGS"
+}
+polyline {
+	object {
+		x=201
+		y=115
+		width=9
+		height=46
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(209,116)
+		(202,160)
+	}
+}
+polyline {
+	object {
+		x=210
+		y=114
+		width=109
+		height=49
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(211,115)
+		(318,162)
+	}
+}
+text {
+	object {
+		x=469
+		y=581
+		width=50
+		height=9
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="9/13/96"
+}
+"shell command" {
+	object {
+		x=31
+		y=541
+		width=40
+		height=15
+	}
+	command[0] {
+		label="Stip Chart Tool"
+		name="stripTool &"
+	}
+	command[1] {
+		label="Orbit Screen"
+		name="orbitscreen &"
+	}
+	command[2] {
+		label="APS Documentation"
+		name="xmosaic &"
+	}
+	command[3] {
+		label="PV Name Browser"
+		name="pvsearch.tcl &"
+	}
+	command[4] {
+		label="PV Name Capture"
+		name="namecapture &"
+	}
+	command[5] {
+		label="Array Display Tool (ADT)"
+		name="adt -a /usr/local/oag/apps/src/appconfig/adt &"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=27
+		y=519
+		width=45
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Tools"
+}
+polyline {
+	object {
+		x=63
+		y=432
+		width=19
+		height=28
+	}
+	"basic attribute" {
+		clr=52
+		width=2
+	}
+	points {
+		(81,433)
+		(64,459)
+	}
+}
+text {
+	object {
+		x=440
+		y=81
+		width=80
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Beamline"
+}
+text {
+	object {
+		x=440
+		y=97
+		width=80
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Controls"
+}
+"related display" {
+	object {
+		x=455
+		y=113
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Front End Controls"
+		name="beamlineMasterPanel.adl"
+	}
+	display[1] {
+		label="X-Ray BPMs"
+		name="bpmMasterPanel.adl"
+	}
+	display[2] {
+		label="Personnel Safety System (PSS)"
+		name="pssMenu.adl"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=7
+		y=35
+		width=64
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Operations"
+}
+"shell command" {
+	object {
+		x=42
+		y=57
+		width=40
+		height=15
+	}
+	command[0] {
+		label="Emergency Stop Menu"
+		name="run_tcl_select /home/helios2/srsys/op/tcl/e-stop.dat &"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=124
+		y=75
+		width=40
+		height=15
+	}
+	display[0] {
+		label="MCR MV200 Video System"
+		name="srMV200system.adl"
+	}
+	display[1] {
+		label="S34 Scraper"
+		name="s33Scraper.adl"
+	}
+	display[2] {
+		label="SR Amp Hours"
+		name="SRampHours.adl"
+	}
+	display[3] {
+		label="SR Tune Measurement"
+		name="SR-tune-measurement.adl"
+	}
+	display[4] {
+		label="S35 Beam Lines"
+		name="S35BeamLTop.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=258
+		y=137
+		width=40
+		height=15
+	}
+	display[0] {
+		label="BTS Trajectory"
+		name="BtsTrajectory.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=297
+		y=75
+		width=40
+		height=15
+	}
+	display[0] {
+		label="Vacuum Gauge Controllers"
+		name="srIonGauges.adl"
+	}
+	clr=14
+	bclr=51
+}
+"shell command" {
+	object {
+		x=124
+		y=93
+		width=40
+		height=15
+	}
+	command[0] {
+		label="ADT SR BPM's"
+		name="adt -a /usr/local/oag/apps/src/appconfig/adt -f /usr/local/oag/apps/src/appconfig/adt/pv/sr.bpm.pv &"
+	}
+	clr=14
+	bclr=51
+}
+"shell command" {
+	object {
+		x=297
+		y=93
+		width=40
+		height=15
+	}
+	command[0] {
+		label="ADT SR Vacuum"
+		name="adt -a /usr/local/oag/apps/src/appconfig/adt -f /usr/local/oag/apps/src/appconfig/adt/pv/sr.ionpump.pv &"
+	}
+	clr=14
+	bclr=51
+}
+text {
+	object {
+		x=355
+		y=81
+		width=80
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="  ID"
+}
+text {
+	object {
+		x=355
+		y=97
+		width=80
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Controls"
+}
+"related display" {
+	object {
+		x=370
+		y=113
+		width=40
+		height=15
+	}
+	display[0] {
+		label="ID Control Screen"
+		name="IDsystem.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=42
+		y=78
+		width=40
+		height=15
+	}
+	display[0] {
+		label="MACHINE MODE SELECTION"
+		name="machinemode.adl"
+	}
+	display[1] {
+		label="Channel Access Security"
+		name="SaccessSecurity.adl"
+	}
+	clr=14
+	bclr=51
+}
+"related display" {
+	object {
+		x=228
+		y=75
+		width=40
+		height=15
+	}
+	display[0] {
+		label="H1/V1 Corrector Lock Out"
+		name="ScorrectorLockOut.adl"
+	}
+	clr=14
+	bclr=51
+}

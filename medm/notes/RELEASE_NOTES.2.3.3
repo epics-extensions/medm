@@ -1,0 +1,96 @@
+
+     MEDM 2.3.3 is now available.  This version has been in use for
+operations at the Advanced Photon Source for over a month with no
+reported problems.  Version 2.3 has been significantly modified from
+the last publicly released version, which was 2.2.9.  A fair amount of
+the internal logic has been changed to be clearer and more object
+oriented.  This effort was started by Fred Vong and finished by
+myself.  In addition, there are many new features, especially in EDIT
+mode, and a number of bug fixes.  This version should be considerably
+more stable and user-friendly in EDIT mode.  It was already stable in
+EXECUTE mode.  A summary of new features is given below, along with
+the location of the reference manual and how it may be obtained.
+
+Version 2.3
+===========
+
+- Help is now functional.  Help from the menus and context sensitive
+  help uses Netscape.  Bubble help has been added to the Object Palette
+  to identify the objects.
+
+- There is a greatly expanded MEDM reference manual in both hardcopy
+  and HTML versions.
+
+- There is an Undo.
+
+- New editing operations through both the mouse and the keyboard have
+  been added.  You can now select objects that are under other objects
+  and can resize with Ctrl-Arrow keys.
+
+- An optional grid has been added for editing.  It can be toggled on
+  and off for each display, and the spacing is adjustable.  Snap to grid
+  has been implemented.
+
+- Undo, Align, Space Evenly, Center, Orient, Size, Grid, Find Outliers,
+  Refresh, and Edit Summary have been added to the Edit menu.
+
+- You can now change the foreground and background colors
+  simultaneously for all grouped elements.
+
+- There is a new PV Info feature, which has been popular.
+
+- There is a new configurable Execute Menu item on the Execute-Mode
+  Popup Menu.
+
+- A display list is available from the Execute-mode popup menu.
+
+- A number of modifications have been made to the Related Display
+  including executing it without showing the menu if there is only one
+  item, the ability to replace the parent display, the ability to have
+  labels rather than the overlapping squares on the menu button, and the
+  ability to have a hidden button.
+
+- The Cartesian Plot has a time format for the x axis, and there are
+  several new user interactions, such as zoom, in EXECUTE mode.  These
+  require XRT/graph Version 3.
+
+- Shell commands, as well as commands on the Execute Menu, now accept
+  special characters to include a process variable, include the name of
+  the ADL file, or to prompt for user input.
+
+- The MEDM main window, object palette, resource palette, and color
+  palette now have fixed, default locations.  You can change these
+  locations with resources.
+
+- The way in which MEDM starts up and connects to an existing MEDM has
+  been made more robust. There should be minimal need to use -cleanup. 
+
+- You no longer have to respond to the "Do you really want to Exit?"
+  dialog box.  MEDM will still prompt you to save any unsaved files,
+  however.
+
+     See the reference manual for a more detailed description.  It is
+available in HTML and Postscript at:
+
+http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html
+
+
+     Statically-linked versions that have been authorized for
+XRT/graph are available as MEDM2_3_3.gz for both Solaris and Sun4 from
+the EPICS Software Distribution page.  See Bakul Banerjee
+(banerjee@aps.anl.gov) for more information.  The EPICS Software
+Distribution page, which requires a password, is located at:
+
+http://www.aps.anl.gov/xfd/WWW/xfd/SoftDist/Distribution/platform_epics.html
+
+     Finally, there seems to be a popular conception that MEDM is
+slower than DM.  Informal testing, however, has indicated that their
+runtime performance is very similar.  Older versions of MEDM were
+noticeably slower to start up with very large (over 1 MB) ADL files.
+This version has not been tested against DM with those files.  Both
+programs will continue to be developed, and an attempt will be made to
+keep their features consistent.  It should be noted that the version
+of MEDM released by DESY is not part of this MEDM distribution
+sequence.
+
+     -Ken

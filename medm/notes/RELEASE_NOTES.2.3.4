@@ -1,0 +1,75 @@
+     MEDM 2.3.4 is now available.  This version has been in use for
+operations at the Advanced Photon Source for over a month with 1
+reported minor problem, which has been fixed in this release, MEDM
+2.3.4a.  This version is primarily a bug fix release, but there are a
+few new features.
+
+    It should be noted that the version of MEDM released by BESSY as
+2.4.10 is a related but different program.
+
+Version 2.3.4
+=============
+
+1. The default startup option is -local. There is a new option,
+-attach, to either attach to an existing MEDM if there is an eligible
+one, or to make the current one eligible for attachment if there is
+not. You need to use -attach to achieve the former default startup
+behavior. This behavior is primarily applicable for a control room,
+where it is typically set in scripts.  It was confusing and not
+appropriate for individual users.  Note that scripts that start MEDM
+may have to be changed when version 2.3.4 is used if the attach
+feature is desired.
+   
+2. The Meter, Bar Monitor, and Scale Monitor have been fixed to be the
+size specified. Formerly, they were two pixels wider, this space being
+used for the border. There is now no border, and the top and bottom
+shadows are the same as for Motif widgets, rather than being drawn
+with another, simplified algorithm. The Bar Monitor appears raised.
+It is not expected these changes for consistency will significantly
+affect most display screens.
+  
+3. The Bar Monitor has a no-decorations option. This allows making bar
+graphs.
+
+4. Screens should be positioned correctly (according to the x and y
+for the display), and they should not jump when they are resized,
+replaced, or when you go from EDIT<->EXECUTE mode.  Placing screens is
+up to the Window Manager, so this still may not work on all systems.
+
+5. There is no longer a "Current" button on the resource palette.  It
+was intended for features that were never implemented.  Removing it
+makes more options visible without scrolling.
+
+6. The Strip Chart now retains its values after a paste as it should.
+
+7. There should no longer be a "Bad Window" error if MEDM cannot find
+the aliased fonts.
+
+8. The Related Display now writes the labels properly to the ADL file,
+so there is no problem with labels with spaces in them.
+
+9. For the Related Display, if a label starts with "-", the double
+rectangles will not appear.  You no longer have to make Composite,
+Hidden buttons to achieve this functionality.
+
+10. The Text Update should no longer write outside its boundaries.
+
+     See the reference manual for a more detailed description.  It is
+available in HTML and Postscript at:
+
+http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html
+
+     Statically-linked versions that have been authorized for
+XRT/graph are available.  Check Bakul's recent announcement titled
+"New on EPICS Software Distribution" for more information.
+
+     There is a beta testing group for MEDM.  If you are interested in
+having the latest version, can build MEDM (or extract the Solaris
+version from the TAR file), and are willing to help test, let me know
+(evans@aps.anl.gov), and I will put you on the distribution list.  The
+most recent version has a replacement for XRT/Graph and (almost)
+supports CDEV, features to which Jie Chen of TJNAF contributed
+significantly.  Questions about the CDEV support should be related to
+Jie (chen@jlab.org).
+
+     -Ken

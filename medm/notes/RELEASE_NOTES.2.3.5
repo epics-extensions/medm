@@ -1,0 +1,64 @@
+     MEDM 2.3.5 is now available.  This version has been in use for
+operations at the Advanced Photon Source since December with no
+significant problems.
+
+    It should be noted that the version of MEDM released by BESSY as
+2.4.xxx was originally based on the Argonne MEDM, but is now a
+different program.  This notice applies to the original MEDM.
+
+Version 2.3.5
+=============
+
+1.  Allows the limits and the precision for objects such as Meters,
+Sliders, and Text Updates can be specified at design time and changed
+at run time, instead of being set by fields such as HOPR, LOPR, and
+PREC in the associated record.
+
+2. Fixes the Menu and Choice Button so their size is what is specified
+at design time and what is stored in the ADL file. They are now the
+same size in both EDIT and EXECUTE mode and have the same look as
+other MEDM objects. The objects are now a few pixels smaller than they
+used to be. The impact is more noticeable for small versions of these
+objects, and small versions may need to be resized on existing screens
+to look attractive.
+
+3. Entails a rewrite of the PV Info logic.  The DESC and RTYP fields
+of a process variable have been added to the PV Info Dialog Box.
+
+4. Has a "Save All" option on the File menu. 
+
+5. Has consistent shadows on all items with shadows.  Highlights have
+been removed from all objects.  Sizes are consistent in EDIT and
+EXECUTE mode and are what is specified in the ADL file except for
+minimum size requirements.
+
+6. Has several bug fixes.
+
+     See the reference manual for a more detailed description.  It is
+available in HTML and Postscript at:
+
+http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html
+
+     Statically-linked versions that have been authorized for
+XRT/graph are available.  See Bakul Bannerjee (banerjee@aps.anl.gov)
+for information on how to obtain these versions or how to obtain MEDM
+in general.
+
+     There is a beta testing group for MEDM.  If you are interested in
+having the latest version, can build MEDM (or extract the Solaris
+version from the TAR file), and are willing to help test, let me know
+(evans@aps.anl.gov), and I will put you on the distribution list.
+
+     A Windows 95/98/NT version of MEDM is available and is current
+with 2.3.5.  It comes as an Install Shield self-extracting executable.
+It requires the Exceed X Server from Hummingbird.  It uses SciPlot
+(see the MEDM manual) instead of XRT/Graph.  See Bakul (address above)
+for details on how to obtain it.  The current version is build 14,
+EPICSEx14-win32.exe.  If you read the README file and are familiar
+with Windows, you should have no trouble installing it -- it has been
+installed successfully by a number of people and organizations.  It
+can be easily removed and should do no damage to your computer.  If
+you need to access EPICS from a PC over a modem, running MEDM on the
+PC rather than remotely can be much faster.
+
+     -Ken

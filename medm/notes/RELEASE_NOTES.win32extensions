@@ -1,0 +1,50 @@
+     Some of the EPICS Extensions, including MEDM and Probe, are
+available in a beta version for Windows 95 and Windows NT,
+collectively called WIN32.  This version is already being used by a
+number of people and seems to be reasonably stable and functional.
+
+     If you have to connect over a phone line, these programs can be
+much faster, since they are running locally and only the Channel
+Access data has to come over the phone line.  Of course, if you only
+have a PC and not a UNIX box, they give you sophisticated access to
+the control system that is hard to duplicate in other ways.
+
+     In order to use most (but not all) of the applications, you must
+have the PC X-server Exceed installed.  Exceed is distributed by
+Hummingbird Communications, Ltd. (http://www.hummingbird.com) and is
+the leading PC X Server with (according to them) 62% of the world
+market share.  Experience at the APS with 200 or so licenses is that
+it is the best of the several PC X Servers that have been tried here.
+The EPICS WIN32 Extensions currently support either Exceed Version 5
+or Version 6.  In the future only Version 6 may be supported.
+
+     The EPICS WIN32 Extensions are distributed as a self-extracting
+InstallShield installation currently named EPICSExnn-win32.exe, where
+nn is the build number.  It modifies the registry but not any of your
+other files.  (The tradeoff is that you have to do some simple setup
+yourself.)  It should not harm your computer and can be uninstalled in
+the usual way via Add/Remove Programs in the Control Panel.
+
+     Check Bakul's recent tech-talk announcement titled "New on EPICS
+Software Distribution" for more information on how to get it.  There
+is a Readme.txt with further information.  You should read it before
+using the EPICS WIN32 Extensions.  However, you can safely install
+them first and then read it by clicking the icon in the program group
+that is created.  Do read it.  It tells you what you have to do after
+running setup, and it has troubleshoooting information.
+
+     The initial port of MEDM was done by Mark Rivers of the University
+of Chicago, and he has been of significant help in getting it working
+well.
+
+     The WIN32 Extensions would not have been possible without the
+efforts Jeff Hill has put into EPICS base for WIN32.  He has been
+exceeding cooperative and helpful in resolving problems related to
+Channel Access.
+
+     Finally, I am the only person supporting this product, and it is
+not my primary work responsibility.  As with all PC programs, you may
+have problems getting it running.  Please try hard to solve the
+problems yourself before contacting me.  A number of people have
+successfully got it running from just the information in the
+Readme.txt.  However, do let me know about legitimate bugs.

@@ -1,0 +1,70 @@
+     Reading the recent notice of the release of MEDM 2.4.10 by Thomas
+Birke has prompted me to write this note.
+
+     MEDM has been developed at the Advanced Photon Source (APS) over
+a period of several years, starting in the early nineties.  It was
+originally written by Mark Anderson starting from DM.  Fred Vong was
+in charge of it starting with Version 2.0.0 and ending with 2.2.9.  I
+have been responsible for it since December 1996, when Fred left.  I
+have released versions starting with 2.3.0.  Version 2.3.4 is
+currently in use by APS operations, and will shortly be released to
+Tech-talk.  These version numbers are continuous and part of a
+sequence that started a long time ago.  In addition, a WIN32 version
+of MEDM and other EPICS Extensions is available for testing and will
+also soon be released to Tech-talk.  A lot of effort has gone into the
+WIN32 modifications.  In short, a number of man years, mostly at
+Argonne, has gone into MEDM and it is essential for operation of the
+APS.
+
+     The Argonne MEDM is stable and reasonably full featured, although
+it is not and probably can never be "all things to all people".  My
+primary concern at this time is that it remain bug free, be
+maintainable, and be backwardly compatible with the thousands of ADL
+files at the APS and other sites.  New features, though planned, are
+less of a priority.
+
+     Normally when an individual or organization spends this much
+effort on a computer code, it is considered their intellectual
+property.  Since most of us in the community are not in the business
+of making money from code development, intellectual property and
+recognition is all there is.  I am not aware of a situation where
+another individual or organization has taken an existing code and
+issued it with the same name and a higher version number (implying
+bigger and better) with little or no contact with the original
+authors.  It seems impolite at best and is, in my opinion,
+professionally unethical.
+
+     I have no issue with someone's taking MEDM and modifying it for
+their purposes.  The code has been made freely available to the
+community and members of the community have contributed to it.  The
+advantage of having one's own version is that he (or she) can do what
+he wants with it and be more responsive to fixing problems that may
+appear.  This can be much more effective than first having to convince
+someone far away without access to your system that there is a problem
+and then having to wait until it is fixed, keeping in mind that he
+probably has other problems to fix as well as yours and that you are
+probably not his first priority.  The downside of amintaining separate
+versions is that it takes manpower and leads to duplication of effort,
+but if the manpower is available, that tradeoff may be worth while.
+
+     The problem is in releasing your version as the next version of
+the original, when the original organization is continuing to actively
+develop it.
+
+     I have publically asked that the European version (for lack of
+another name) be given its own name to distinguish it from the
+original and to avoid confusion about the version numbers.  I have
+also asked privately.  I repeat that request in this forum.
+
+     This request is made independently of questions about merging the
+two versions and also of merging them with DM.  There is an ongoing
+effort to add features of DM to (the real) MEDM, but I am the only one
+working on this.  There is currently no collaboration with Los Alamos
+to this end, and it not clear that DM users would switch to MEDM in
+any event.  Virtually nothing is being done about merging the two
+versions of MEDM and, in my opinion, the effort would be considerable,
+even if everyone could agree on what features to incorporate.  The
+independent development has been going on too long, and the users of
+both versions appear to be happy with what they have.  However, there
+are advantages to having only one display manager, and this should be
+a topic open to discussion.

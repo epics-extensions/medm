@@ -1,0 +1,46 @@
+    MEDM uses fonts that are not in the default X database.  To make
+these fonts available you need to do the following:
+
+     If you are using X:
+
+1. Copy the following lines into your miscellaneous fonts.alias file.
+The standard place is /usr/libX11/fonts/misc/fonts.alias.  You can get
+your own particular font path from "xset q".
+
+widgetDM_4      -misc-fixed-medium-r-normal--8-60-100-100-c-50-iso8859-1
+widgetDM_6      -misc-fixed-medium-r-normal--8-60-100-100-c-50-iso8859-1
+widgetDM_8      -misc-fixed-medium-r-normal--9-80-100-100-c-60-iso8859-1
+widgetDM_10     -misc-fixed-medium-r-normal--10-100-75-75-c-60-iso8859-1
+widgetDM_12     -misc-fixed-medium-r-normal--13-100-100-100-c-70-iso8859-1
+widgetDM_14     -misc-fixed-medium-r-normal--14-110-100-100-c-70-iso8859-1
+widgetDM_16     -misc-fixed-medium-r-normal--15-120-100-100-c-90-iso8859-1
+widgetDM_18     -sony-fixed-medium-r-normal--16-120-100-100-c-80-iso8859-1
+widgetDM_20     -misc-fixed-medium-r-normal--20-140-100-100-c-100-iso8859-1
+widgetDM_22     -sony-fixed-medium-r-normal--24-170-100-100-c-120-iso8859-1
+widgetDM_24     -sony-fixed-medium-r-normal--24-170-100-100-c-120-iso8859-1
+widgetDM_30     -adobe-times-medium-r-normal--25-180-100-100-p-125-iso8859-1
+widgetDM_36     -adobe-helvetica-medium-r-normal--34-240-100-100-p-176-iso8859-1
+widgetDM_40     -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1
+widgetDM_48     -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1
+widgetDM_60     -adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1
+
+Then run "xset fp rehash" to install them.  You can see if the fonts
+are there with "xlsfonts".  You can get more information from any of
+the general-purpose books on X Windows.
+
+     If you are using Exceed:
+
+1. Copy the same lines to c:\Exceed\user\misc.ali.
+
+2. In Xconfig pick Fonts, then Font Database....  Then push Rebuild
+Database.  (In Windows 95 you get Xconfig from the
+Start/Programs/Exceed menu or by right clicking on Exceed when it is
+on the task bar and choosing Tools/Configuration.)
+
+3.  Restart Exceed by doing a server reset.  I think it prompts you.
+
+     If you are using Xonnet:
+
+1.  Copy the lines to XONNET32\FONTS\MISC\FONTS.ALI.  I don't remember
+if you need to do anything else, but it should be described in the
+program's help.
