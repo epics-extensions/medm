@@ -1031,6 +1031,7 @@ void createDisplayListDlg(void)
 {
     Widget w, pane, actionArea;
     XmString xmString;
+    char string[80];
     Arg args[10];
     int nargs;
 
@@ -1053,7 +1054,9 @@ void createDisplayListDlg(void)
       NULL);
 
   /* Create label 1 */
-    xmString = XmStringCreateLocalized("DISPLAYS");    
+    sprintf(string,"DISPLAYS (MEDM Window ID: 0x%x)",
+      XtWindow(mainShell));
+    xmString = XmStringCreateLocalized(string);    
     w = XtVaCreateManagedWidget("label",
       xmLabelWidgetClass, pane,
       XmNlabelString, xmString,

@@ -132,7 +132,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define GRID_CANCEL 1
 #define GRID_HELP   2
 
-#define EDIT_BTN_POSN 1
 #define EDIT_OBJECT_BTN           0
 #define EDIT_CUT_BTN              1
 #define EDIT_COPY_BTN             2
@@ -151,10 +150,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EDIT_UNDO_BTN            13
 #define EDIT_FIND_BTN            14
 
-#define N_VIEW_MENU_ELES         3
-#define VIEW_BTN_POSN            2
 #define VIEW_MESSAGE_WINDOW_BTN  1
 #define VIEW_STATUS_WINDOW_BTN   2
+#define VIEW_DISPLAY_LIST_BTN    3
 
 #define GRID_SPACING_BTN 0
 #define GRID_ON_BTN      1
@@ -190,7 +188,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #else
 #define N_PALETTES_MENU_ELES 3
 #endif
-#define PALETTES_BTN_POSN    3
 
 #define PALETTES_OBJECT_BTN   0
 #define PALETTES_RESOURCE_BTN 1
@@ -200,7 +197,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #endif
 
 #define N_HELP_MENU_ELES 7
-#define HELP_BTN_POSN    4
 
 #define HELP_OVERVIEW_BTN     0
 #define HELP_CONTENTS_BTN     1
@@ -526,6 +522,8 @@ static menuEntry_t viewMenu[] = {
       viewMenuSimpleCallback, (XtPointer) VIEW_MESSAGE_WINDOW_BTN, NULL},
     { "Statistics Window", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       viewMenuSimpleCallback, (XtPointer) VIEW_STATUS_WINDOW_BTN, NULL},
+    { "Display List", &xmPushButtonGadgetClass, 'D', NULL, NULL, NULL,
+      viewMenuSimpleCallback, (XtPointer) VIEW_DISPLAY_LIST_BTN, NULL},
     NULL,
 };
 
@@ -1032,6 +1030,9 @@ static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case VIEW_STATUS_WINDOW_BTN:
 	medmCreateCAStudyDlg();
+	break;
+    case VIEW_DISPLAY_LIST_BTN:
+        popupDisplayListDlg();
 	break;
     default :
 	break;
@@ -2381,10 +2382,6 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	if(pvLimitsS) {
 	    XtSetSensitive(pvLimitsS,True);
 	    XtPopdown(pvLimitsS);
-	}
-	if(displayListS) {
-	    XtSetSensitive(displayListS,False);
-	    XtPopdown(displayListS);
 	}
 	XtSetSensitive(fileMenu[MAIN_FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_BTN].widget,True);
