@@ -929,12 +929,18 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	fullPathName[0] = '\0';
 
       /* Found string with right suffix - presume it's a valid display name */
-	if(canAccess = !access(fileStr,R_OK|F_OK)) { /* Found the file */
-#ifdef VMS
-            if(strchr (fileStr, '[') != NULL) {
+	if(canAccess = !access(fileStr,R_OK|F_OK)) {
+	  /* Found the file */
+#if defined(VMS)
+	    int pathTest = (strchr(fileStr, '[') != NULL);
+#elif defined(WIN32)
+	  /* A drive specification will also indicate a full path name */
+	    int pathTest = (fileStr[0] == MEDM_DIR_DELIMITER_CHAR ||
+	      fileStr[1] == ':');
 #else
-	    if(fileStr[0] == MEDM_DIR_DELIMITER_CHAR) {
+	    int pathTest = (fileStr[0] == MEDM_DIR_DELIMITER_CHAR);
 #endif
+	    if(pathTest) {
 	      /* Is a full path name */
 		strncpy(fullPathName,fileStr,FULLPATHNAME_SIZE);
 	    } else {
