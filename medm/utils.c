@@ -111,6 +111,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* Function prototypes */
 static void pvInfoDialogCallback(Widget, XtPointer, XtPointer cbs);
 static void pvLimitsDialogCallback(Widget, XtPointer, XtPointer cbs);
+static void pvLimitsLosingFocusCallback(Widget w, XtPointer, XtPointer);
 static void createPvLimitsDlg(void);
 static void displayListDlgCb(Widget w, XtPointer clientData,
   XtPointer callData);
@@ -4642,6 +4643,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	    free(records);
 	    records = NULL;
 	} else {
+	    resetPvLimits(NULL, NULL, True);
 	    return;   /* (Error messages have been sent) */
 	}
       /* Check if element is valid or if there is a getLimits method */
@@ -4707,18 +4709,20 @@ static void resetPvLimits(DlLimits *limits, char *pvName, Boolean doName)
 #if DEBUG_PVLIMITS
     print("\nresetPvLimits: limits=%x  pvName = |%s|\n",
       limits, pvName?pvName:"NULL");
-    print(" loprSrc=    %10s  hoprSrc=    %10s  precSrc=    %10s\n",
-      stringValueTable[limits->loprSrc],
-      stringValueTable[limits->hoprSrc],
-      stringValueTable[limits->precSrc]);
-    print(" lopr=       %10g  hopr=       %10g  prec=       %10hd\n",
-      limits->lopr,limits->hopr,limits->prec);
-    print(" loprChannel=%10g  hoprChannel=%10g  precChannel=%10hd\n",
-      limits->loprChannel,limits->hoprChannel,limits->precChannel);
-    print(" loprDefault=%10g  hoprDefault=%10g  precDefault=%10hd\n",
-      limits->loprDefault,limits->hoprDefault,limits->precDefault);
-    print(" loprUser=   %10g  hoprUser=   %10g  precUser=   %10hd\n",
-      limits->loprUser,limits->hoprUser,limits->precUser);
+    if(limits) {
+	print(" loprSrc=    %10s  hoprSrc=    %10s  precSrc=    %10s\n",
+	  stringValueTable[limits->loprSrc],
+	  stringValueTable[limits->hoprSrc],
+	  stringValueTable[limits->precSrc]);
+	print(" lopr=       %10g  hopr=       %10g  prec=       %10hd\n",
+	  limits->lopr,limits->hopr,limits->prec);
+	print(" loprChannel=%10g  hoprChannel=%10g  precChannel=%10hd\n",
+	  limits->loprChannel,limits->hoprChannel,limits->precChannel);
+	print(" loprDefault=%10g  hoprDefault=%10g  precDefault=%10hd\n",
+	  limits->loprDefault,limits->hoprDefault,limits->precDefault);
+	print(" loprUser=   %10g  hoprUser=   %10g  precUser=   %10hd\n",
+	  limits->loprUser,limits->hoprUser,limits->precUser);
+    }
 #endif
 
   /* Fill in the dialog box parts */
@@ -4936,9 +4940,13 @@ static void createPvLimitsDlg(void)
       xmTextFieldWidgetClass, wparent,
       XmNcolumns, 20,
       NULL);
-    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+    XtAddCallback(w, XmNactivateCallback, pvLimitsDialogCallback,
       (XtPointer) PV_LIMITS_LOPR_BTN);
-    pvLimitsLopr = w;
+    XtAddCallback(w, XmNmodifyVerifyCallback, textFieldFloatVerifyCallback,
+      NULL);
+    XtAddCallback(w, XmNlosingFocusCallback, pvLimitsLosingFocusCallback,
+      NULL);
+      pvLimitsLopr = w;
 
   /* HOPR */
     wparent = XtVaCreateManagedWidget("rowCol",
@@ -4985,8 +4993,12 @@ static void createPvLimitsDlg(void)
       xmTextFieldWidgetClass, wparent,
       XmNcolumns, 20,
       NULL);
-    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+    XtAddCallback(w, XmNactivateCallback, pvLimitsDialogCallback,
       (XtPointer) PV_LIMITS_HOPR_BTN);
+    XtAddCallback(w, XmNmodifyVerifyCallback, textFieldFloatVerifyCallback,
+      NULL);
+    XtAddCallback(w, XmNlosingFocusCallback, pvLimitsLosingFocusCallback,
+      NULL);
     pvLimitsHopr = w;
 
   /* PREC */
@@ -5034,8 +5046,12 @@ static void createPvLimitsDlg(void)
       xmTextFieldWidgetClass, wparent,
       XmNcolumns, 20,
       NULL);
-    XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
+    XtAddCallback(w, XmNactivateCallback, pvLimitsDialogCallback,
       (XtPointer) PV_LIMITS_PREC_BTN);
+    XtAddCallback(w, XmNmodifyVerifyCallback, textFieldFloatVerifyCallback,
+      NULL);
+    XtAddCallback(w, XmNlosingFocusCallback, pvLimitsLosingFocusCallback,
+      NULL);
     pvLimitsPrec = w;
 
   /* Action area */
@@ -5201,6 +5217,13 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	break;
     case PV_LIMITS_PREC_BTN:
 	sval = atoi(XmTextFieldGetString(pvLimitsPrec));
+	if(sval < 0) {
+	    sval = 0;
+	    XBell(display,50);
+	} else if(sval > 17) {
+	    sval = 17;
+	    XBell(display,50);
+	}
 	src = pL->precSrc;
 	if (globalDisplayListTraversalMode == DL_EDIT) {
 	    if(src == PV_LIMITS_DEFAULT) {
@@ -5254,6 +5277,49 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	DisplayInfo *cdi=currentDisplayInfo;
 
 	if(pE && pE->run && pE->run->execute) pE->run->execute(cdi, pE);
+    }
+}
+
+static void pvLimitsLosingFocusCallback(Widget w, XtPointer cd , XtPointer cbs)
+{
+    char string[1024];     /* Danger: Fixed length */
+    DlElement *pE;
+    DlLimits *pL;
+    char *pvName;
+
+#if DEBUG_PVLIMITS
+    print("\npvLimitsLosingFocusCallback: w=%x pvLimitsLopr=%x "
+      "pvLimitsHopr=%x pvLimitsPrec=%x\n",
+      pvLimitsLopr,pvLimitsHopr,pvLimitsPrec);
+#endif
+  /* Get limits pointer */
+    if(globalDisplayListTraversalMode == DL_EDIT) {
+	pL = &globalResourceBundle.limits;
+    } else {
+      /* Check if executeTimePvLimitsElement is still valid
+       *   It should be, but be safe */
+	if(executeTimePvLimitsElement == NULL) {
+	    return;
+	}
+	pE = executeTimePvLimitsElement;
+	if(pE && pE->run && pE->run->getLimits) {
+	    pE->run->getLimits(pE, &pL, &pvName);
+	    if(!pL) {
+		return;
+	    }
+	}
+    }
+
+  /* Reset the text entries */
+    if(w == pvLimitsLopr) {
+	cvtDoubleToString(pL->lopr, string, pL->prec);
+	XmTextFieldSetString(pvLimitsLopr, string);
+    } else if(w == pvLimitsHopr) {
+	cvtDoubleToString(pL->hopr, string, pL->prec);
+	XmTextFieldSetString(pvLimitsHopr, string);
+    } else if(w == pvLimitsPrec) {
+	cvtLongToString((long)pL->prec, string);
+	XmTextFieldSetString(pvLimitsPrec, string);
     }
 }
 

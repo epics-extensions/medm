@@ -138,7 +138,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	adjustPvLimits(&dlMeter->limits);
 	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
 	XtSetArg(args[n],XcNlowerBound,longFval(dlMeter->limits.lopr)); n++;
-	XtSetArg(args[n],XcNupperBound,longFval(dlMeter->limits.lopr)); n++;
+	XtSetArg(args[n],XcNupperBound,longFval(dlMeter->limits.hopr)); n++;
 	XtSetArg(args[n],XcNscaleSegments,
 	  (dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
 	switch (dlMeter->label) {
