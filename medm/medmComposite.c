@@ -54,7 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#include "../medm/medm.h"
+#include "medm.h"
 static void destroyDlComposite(DlElement *dlElement);
 static void compositeMove(DlElement *element, int xOffset, int yOffset);
 static void compositeScale(DlElement *element, int xOffset, int yOffset);
