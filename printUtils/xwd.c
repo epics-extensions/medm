@@ -111,6 +111,7 @@ long add_pixel_value = 0;
 extern int (*_XErrorFunction)();
 extern int _XDefaultError();
 
+#if 0
 static long parse_long (char *s)
 {
     char *fmt = "%lu";
@@ -125,8 +126,7 @@ static long parse_long (char *s)
     }
     return (thesign * retval);
 }
-
-
+#endif
 
 /*
  * the xwd() routine (used to be a main()...with extra stuff)
@@ -136,7 +136,6 @@ int xwd(Display *display, Window window, char *filename)
 {
     Window target_win = window;
     FILE *file;
-    Bool frame_only = False;
     int status;
 
 #if DEBUG_SWAP

@@ -5,14 +5,16 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Optimization
 ifdef WIN32
-HOST_OPT = YES
+#HOST_OPT = NO
 else
 HOST_OPT = NO
 endif
 
-# Compiler options
-ifndef WIN32
-USR_CFLAGS += -xsb
+# Browser options
+ifeq ($(HOST_ARCH),solaris)
+  ifeq ($(HOST_OPT),NO)
+    USR_CFLAGS += -xsb
+  endif
 endif
 
 #STATIC_BUILD = YES 
@@ -85,30 +87,7 @@ endif
 #else
 #endif
 
-ifdef WIN32
-  # If objects were compiled with different default runtime libraries
-  #   (not a good idea), specify which one you want to use by making it
-  #   the default and the others nodefault.
-  # Currently Exceed is -MD and EPICS is -MDd
-  ifeq ($(HOST_OPT),NO)
-    USR_LDFLAGS += /defaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-    USR_LDFLAGS += /nodefaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-  else
-    USR_LDFLAGS += /defaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-    USR_LDFLAGS += /nodefaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-  endif
-  USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
-  USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
-  USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
-  USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
-endif
-
 USR_CFLAGS += -DEDITRES
-
-ifdef WIN32
-  USR_CFLAGS += /DWIN32 /D_WINDOWS
-  USR_LDFLAGS += /SUBSYSTEM:WINDOWS
-endif
 
 PROD = medm
 
@@ -116,11 +95,13 @@ USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
 ifeq ($(HOST_ARCH),WIN32)
 # Use Obj for object libraries and no Obj for import libraries
- PROD_LIBS = ANLwidgetsObj PrintUtilsObj
- ANLwidgetsObj_DIR = $(INSTALL_LIB)
- PrintUtilsObj_DIR = $(INSTALL_LIB)
+  PROD_LIBS = ANLwidgetsObj PrintUtilsObj
+  ANLwidgetsObj_DIR = $(INSTALL_LIB)
+  PrintUtilsObj_DIR = $(INSTALL_LIB)
 else
-PROD_LIBS = ANLwidgets PrintUtils
+  PROD_LIBS = ANLwidgets PrintUtils
+  PrintUtils_DIR = $(INSTALL_LIB)
+  ANLwidgets_DIR = $(INSTALL_LIB)
 endif
 
 # Setup for either CA or CDEV
@@ -147,29 +128,17 @@ endif
 USR_LIBS_DEFAULT = Xm Xt Xmu X11
 USR_LIBS_Linux = Xm Xt Xp Xmu X11
 
-ifeq ($(EXCEED),Exceed5)
-  USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
-endif
-ifeq ($(EXCEED),Exceed6)
-  USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
-endif
-ifeq ($(EXCEED),Exceed6.1)
-  USR_LIBS_WIN32 = XmStatic XmStatXt XlibGUI Xlib HCLXmu
-  USR_CFLAGS_WIN32 += /DXMSTATIC
-endif
+WIN32_RUNTIME=MD
+USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
+USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
+USR_LIBS_WIN32 += $(EXCEED_XLIBS)
+USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
 
-PrintUtils_DIR = $(INSTALL_LIB)
-ANLwidgets_DIR = $(INSTALL_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
 Xmu_DIR = $(X11_LIB)
-XlibGUI_DIR = $(X11_LIB)
-XmStatic_DIR = $(MOTIF_LIB)
-XmStatXt_DIR = $(MOTIF_LIB)
-HCLXt_DIR = $(X11_LIB)
-Xlib_DIR = $(X11_LIB)
-HCLXmu_DIR = $(X11_LIB)
+Xp_DIR = $(X11_LIB)
 
 SRCS += actions.c
 SRCS += bubbleHelp.c 

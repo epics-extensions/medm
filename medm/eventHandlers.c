@@ -136,10 +136,12 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
   /* KE: Shouldn't be called in EDIT mode in the first place */
     if (globalDisplayListTraversalMode == DL_EDIT) return;
 
-/* Make sure the window is on top and has input focus */
+#ifdef MEDM_AUTO_RAISE
+  /* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(displayInfo->shell));
     XSetInputFocus(display,XtWindow(displayInfo->shell),
       RevertToParent,CurrentTime);
+#endif    
 
     if (xEvent->button == Button3) {
       /* Button 3 */
@@ -345,10 +347,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     currentColormap = cdi->colormap;
     currentColormapSize = cdi->dlColormapSize;
     
+#ifdef MEDM_AUTO_RAISE
   /* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(cdi->shell));
     XSetInputFocus(display,XtWindow(cdi->shell),
       RevertToParent,CurrentTime);
+#endif
     
   /* Get button coordinates */
     x0 = event->xbutton.x;

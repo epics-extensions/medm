@@ -130,6 +130,7 @@ without express or implied warranty.
 #include <X11/XWDFile.h>
 
 #include "printUtils.h"
+#include "getopt.h"     /* Use local version */
 
 /* Function prototypes */
 static int get_next_raster_line(FILE *file, XWDFileHeader *win,
@@ -142,11 +143,6 @@ static int get_page_info(Page *the_page);
 static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name);
 static int getDumpType(XWDFileHeader *header);
 static int getOrientation(Page pg, Image im);
-
-/* The following prototype is not included in stdlib.h for Solaris
-   (unless __STDC__ = 0).  It is apparently not ANSI nor POSIX
-   standard */
-extern int getopt(int, char *const *, const char *);
 
 int intensity_map[4096];    /* max size of color map is 4096 (I hope) */
 unsigned char line[1280*3]; /* raster line buffer, max size */
@@ -468,16 +464,16 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     fprintf(fo,"%% by %s:%s (%s)\n",hostname, pswd->pw_name, pswd->pw_gecos);
 #endif    
     fprintf(fo,"%% Information from XWD rasterfile header:\n");
-    fprintf(fo,"%%   width =  %d, height = %d, depth = %d\n",win.pixmap_width, 
-      win.pixmap_height, win.pixmap_depth);
+    fprintf(fo,"%%   width =  %d, height = %d, depth = %d\n",
+      (int)win.pixmap_width, (int)win.pixmap_height, (int)win.pixmap_depth);
     fprintf(fo,"%%   file_version = %d, pixmap_format = %d, byte_order = %d\n",
-      win.file_version, win.pixmap_format, win.byte_order);
+      (int)win.file_version, (int)win.pixmap_format, (int)win.byte_order);
     fprintf(fo,"%%   bitmap_unit = %d, bitmap_bit_order = %d, bitmap_pad = %d\n", 
-      win.bitmap_unit, win.bitmap_bit_order, win.bitmap_pad);
+      (int)win.bitmap_unit, (int)win.bitmap_bit_order, (int)win.bitmap_pad);
     fprintf(fo,"%%   bits_per_pixel = %d, bytes_per_line = %d, visual_class = %d\n",
-      win.bits_per_pixel, win.bytes_per_line, win.visual_class);
+      (int)win.bits_per_pixel, (int)win.bytes_per_line, (int)win.visual_class);
     fprintf(fo,"%%   bits/rgb = %d, colormap entries = %d, ncolors = %d\n",
-      win.bits_per_rgb, win.colormap_entries, win.ncolors);
+      (int)win.bits_per_rgb, (int)win.colormap_entries, (int)win.ncolors);
     fprintf(fo,"%% Portion of raster image in this file:\n");
     fprintf(fo,"%%   starting line = %d\n",line_skip+1);
     fprintf(fo,"%%   ending line = %d\n",line_end);
@@ -618,12 +614,13 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
     case 8:  /* eight bit image */
 	fprintf(fo,"/buffer 2 string def\n");
-	fprintf(fo,"/rgbmap %d string def\n", 3*win.ncolors);
+	fprintf(fo,"/rgbmap %d string def\n", (int)(3*win.ncolors));
 	fprintf(fo,"/rgb (000) def\n");
-	fprintf(fo,"/pixels %d string def\n", 3*win.ncolors);
+	fprintf(fo,"/pixels %d string def\n", (int)(3*win.ncolors));
 	outputColorImage(fo);
 	fprintf(fo,"/drawcolorimage {\n");
-	fprintf(fo,"  %d %d %d\n",my_image.pixels_width,my_image.ps_height, win.pixmap_depth);
+	fprintf(fo,"  %d %d %d\n",my_image.pixels_width,my_image.ps_height,
+	  (int)win.pixmap_depth);
 	fprintf(fo,"%s\n", s_matrix);    
 	fprintf(fo,"  {currentfile buffer readhexstring pop pop  %% get run length & color info\n");
 	fprintf(fo,"    /npixels buffer 0 get 1 add 3 mul store  %% number of pixels (run length)\n");
@@ -714,11 +711,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     case 4:  /* four-bit image */
 	if(flag.mono == FALSE) { /* print as color image */
 	    fprintf(fo,"/buffer 2 string def\n");
-	    fprintf(fo,"/rgbmap %d string def\n", 3*win.ncolors);
+	    fprintf(fo,"/rgbmap %d string def\n", (int)(3*win.ncolors));
 	    fprintf(fo,"/rgb (000) def\n");
 	    outputColorImage(fo);
 	    fprintf(fo,"/drawcolorimage {\n");
-	    fprintf(fo,"  %d %d %d\n",my_image.pixels_width,my_image.ps_height, win.pixmap_depth*2);
+	    fprintf(fo,"  %d %d %d\n",my_image.pixels_width,my_image.ps_height,
+	      (int)win.pixmap_depth*2);
 	    fprintf(fo,"%s\n", s_matrix);
 	    fprintf(fo,"  {currentfile buffer readhexstring pop pop  %% get run length & color info\n");
 	    fprintf(fo,"    /npixels buffer 0 get 1 add 3 mul store  %% number of pixels (run length)\n");
@@ -820,7 +818,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
       /* setup for binary image */
 	fprintf(fo,"/buffer %d string def\n",my_image.ps_width);
 	fprintf(fo,"/drawbinaryimage {\n");
-	fprintf(fo,"  %d %d %2d\n", my_image.pixels_width, my_image.ps_height, win.pixmap_depth);
+	fprintf(fo,"  %d %d %2d\n", my_image.pixels_width, my_image.ps_height,
+	  (int)win.pixmap_depth);
 	fprintf(fo,"%s\n",s_matrix);
 	fprintf(fo,"  { currentfile buffer readhexstring pop pop buffer }\n");
 	fprintf(fo,"  image\n");
@@ -1052,14 +1051,15 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
       zflg= win->bits_per_pixel / 8;
     else
       zflg=0; /* TEMP - as far as I can tell, zflg is never used ! */
-  
-   if(win->byte_order != win->bitmap_bit_order) {
+    
+    if(win->byte_order != win->bitmap_bit_order) {
 	errMsg( "%s: Image will be incorrect\n"
 	  "  Byte swapping required but not performed.\n", progname);
     }
-
+    
   /* TEMP - put in large image warning here! */
-    if(idifsize = (unsigned)(win->header_size - sizeof *win)) {
+    idifsize = (unsigned)(win->header_size - sizeof *win);
+    if(idifsize) {
 	w_name = (char *)malloc(idifsize);
 	fread(w_name, idifsize, 1, file);
       /* KE: Freed w_name to avoid MLK (Doesn't appear to be used anyway) */
@@ -1068,7 +1068,7 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 	    w_name = NULL;
 	}
     }
-
+    
     if(win->ncolors) {
 	colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)));
 	if(colors ==  NULL) {
@@ -1176,7 +1176,7 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
      first time. */
     flag = nullFlag;
     optind = 1;
-    while((c = getopt(argc, argv, "tdlLPc:s:f:h:w:H:W:mS:p:bg:I")) != EOF)
+    while((c = getOpt(argc, argv, "tdlLPc:s:f:h:w:H:W:mS:p:bg:I")) != EOF)
       switch (c) {
       case 't':
 	  flag.time = TRUE;

@@ -34,4 +34,4 @@
 extern char * optarg;
 extern int    optind;
 
-int getopt ( int argc, char **argv, char *optstring);
+int getOpt(int argc, char **argv, char *optstring);

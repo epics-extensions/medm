@@ -861,6 +861,8 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	    print("  byte_order=%d [LSBFirst=%d MSBFirst=%d]\n",
 	      byte_order,LSBFirst,MSBFirst);
 	    print("  bits_per_pixel=%d\n",bits_per_pixel);
+	    print("\n  getClientByteOrder=%d [LSBFirst=%d MSBFirst=%d]\n",
+	      getClientByteOrder(),LSBFirst,MSBFirst);
 	}
     }
 #endif    

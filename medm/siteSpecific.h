@@ -208,3 +208,10 @@ DlColormap defaultDlColormap = {
     }
 };
 #endif
+
+/* Define this if you want the displays to raise on a button event.
+   This was the old behavior, but is not suggested, since X controls
+   this via user preference. */
+#if 0
+#define MEDM_AUTO_RAISE 1
+#endif

@@ -23,7 +23,7 @@
 int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 {
     Window window = XtWindow(w);
-    char *commandBuffer=NULL, *newFileName=NULL, *psFileName=NULL, *printer=NULL;
+    char *commandBuffer=NULL, *newFileName=NULL, *psFileName=NULL;
     time_t seconds;
     FILE *fo;
     char *myArgv[10];
@@ -53,7 +53,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	retCode = 0;
 	goto CLEAN;
     }
-    sprintf(newFileName,"%s%d",xwdFileName,seconds);
+    sprintf(newFileName,"%s%ld",xwdFileName,(long)seconds);
 
 #if DEBUG_PARAMS
     print("utilPrint: newFilename=%s\n",newFileName);
@@ -119,7 +119,8 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 
     sprintf(sizeString,"-p%s", printerSizeTable[printSize]);
   /* Only use up to the first blank */
-    if(ptr = strchr(sizeString, ' ')) *ptr='\0';
+    ptr = strchr(sizeString, ' ');
+    if(ptr) *ptr='\0';
     myArgv[myArgc++] = sizeString;
 
     if(printDate) myArgv[myArgc++] = "-d";

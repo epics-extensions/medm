@@ -82,7 +82,7 @@ int   opterr = 1;       /* non-zero if a question mark should be returned
 /* handle possible future character set concerns by putting this in a macro */
 #define _next_char(string)  (char)(*(string+1))
 
-int getopt(int argc, char *argv[], char *opstring)
+int getOpt(int argc, char *argv[], char *opstring)
 {
     static char *pIndexPosition = NULL; /* place inside current argv string */
     char *pArgString = NULL;        /* where to start from next */

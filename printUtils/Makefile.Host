@@ -7,27 +7,20 @@ CMPLR = STRICT
 
 # Optimization
 ifdef WIN32
-HOST_OPT = NO
+#HOST_OPT = NO
 else
-HOST_OPT = NO
+#HOST_OPT = NO
 endif
 
-#USR_CFLAGS += -H
+USR_INCLUDES = -I$(X11_INC)
 
 ifdef WIN32
-  USR_CFLAGS += /DWIN32 /D_WINDOWS
-  USR_LDFLAGS += /SUBSYSTEM:WINDOWS
-  ifeq ($(EXCEED),Exceed6.1)
-    USR_CFLAGS_WIN32 += /DXMSTATIC
-  endif
-endif
+USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
+USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
 
-ifdef WIN32
 # The proper import/export declarations are not included for DLLs
 SHARED_LIBRARIES = NO
 endif
-
-HOST_OPT = NO
 
 LIBSRCS += getopt.c
 LIBSRCS += pUtils.c
@@ -35,8 +28,6 @@ LIBSRCS += ps_utils.c
 LIBSRCS += utilPrint.c
 LIBSRCS += xwd.c
 LIBSRCS += xwd2ps.c
-
-USR_INCLUDES = -I$(X11_INC)
 
 LIBRARY = PrintUtils
 

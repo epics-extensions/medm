@@ -3,44 +3,24 @@
 TOP = ../../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-# Needs work to handle CMPLR=STRICT
 CMPLR = STRICT
-HOST_OPT = NO
 
+# Optimization
 ifdef WIN32
-USR_CFLAGS += /DWIN32 /D_WINDOWS
+#HOST_OPT = NO
+else
+#HOST_OPT = NO
 endif
 
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
 
 ifdef WIN32
+USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
+USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
+
 # The proper import/export declarations are not included for DLLs
 SHARED_LIBRARIES = NO
 endif
-
-PROD_LIBS = ca Com
-USR_LIBS_DEFAULT = Xm Xt X11
-
-ifeq ($(EXCEED),Exceed5)
-  USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
-endif
-ifeq ($(EXCEED),Exceed6)
-  USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
-endif
-ifeq ($(EXCEED),Exceed6.1)
-  USR_LIBS_WIN32 = XmStatic XmStatXt XlibGUI Xlib HCLXmu
-  USR_CFLAGS_WIN32 += /DXMSTATIC
-endif
-
-ca_DIR = $(EPICS_BASE_LIB)
-Com_DIR = $(EPICS_BASE_LIB)
-HCLXt_DIR = $(X11_LIB)
-X11_DIR = $(X11_LIB)
-XlibGUI_DIR = $(X11_LIB)
-Xlib_DIR = $(X11_LIB)
-Xt_DIR = $(X11_LIB)
-XmStatic_DIR = $(MOTIF_LIB)
-XmStatXt_DIR = $(MOTIF_LIB)
 
 LIBSRCS += BarGraph.c
 LIBSRCS += Byte.c

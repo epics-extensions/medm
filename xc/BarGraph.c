@@ -215,7 +215,6 @@ static void Initialize(Widget request, Widget new,
    *************************************************************************/
 {
     BarGraphWidget wnew = (BarGraphWidget)new;
-    Display *display = XtDisplay(new);
     DPRINTF(("BarGraph: executing Initialize...\n"));
     
     
