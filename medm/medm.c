@@ -999,6 +999,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     case FILE_NEW_BTN:
       currentDisplayInfo = createDisplay();
       XtManageChild(currentDisplayInfo->drawingArea);
+      enableEditFunctions();
       break;
 
     case FILE_OPEN_BTN:
@@ -1465,7 +1466,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
   DlTraversalMode mode = (DlTraversalMode) cd;
   XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
-  DisplayInfo *displayInfo, *nextDisplayInfo;
+  DisplayInfo *displayInfo;
 
 /*
  * since both on & off will invoke this callback, only care about transition
@@ -1484,19 +1485,14 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   highlightAndSetSelectedElements(NULL,0,0);
   clearResourcePaletteEntries();
 
+  disableEditFunctions();
+
   switch(mode) {
       case DL_EDIT:
-	if (objectS != NULL) XtSetSensitive(objectS,True);
-	if (resourceS != NULL) XtSetSensitive(resourceS,True);
-	if (colorS != NULL) XtSetSensitive(colorS,True);
-	if (channelS != NULL) XtSetSensitive(channelS,True);
-	if (relatedDisplayS != NULL) XtSetSensitive(relatedDisplayS,True);
-	if (cartesianPlotS != NULL) XtSetSensitive(cartesianPlotS,True);
-	if (cartesianPlotAxisS != NULL) XtSetSensitive(cartesianPlotAxisS,True);
-	if (stripChartS!= NULL) XtSetSensitive(stripChartS,True);
-	XtSetSensitive(mainEditPDM,True);
-	XtSetSensitive(mainViewPDM,True);
-	XtSetSensitive(mainPalettesPDM,True);
+	if (relatedDisplayS) XtSetSensitive(relatedDisplayS,True);
+	if (cartesianPlotS) XtSetSensitive(cartesianPlotS,True);
+	if (cartesianPlotAxisS) XtSetSensitive(cartesianPlotAxisS,True);
+	if (stripChartS) XtSetSensitive(stripChartS,True);
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,True);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,True);
@@ -1507,29 +1503,22 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
       case DL_EXECUTE:
-	if (objectS != NULL) XtSetSensitive(objectS,False);
-	if (resourceS != NULL) XtSetSensitive(resourceS,False);
-	if (colorS != NULL) XtSetSensitive(colorS,False);
-	if (channelS != NULL) XtSetSensitive(channelS,False);
-	if (relatedDisplayS != NULL) {
+	if (relatedDisplayS) {
 	   XtSetSensitive(relatedDisplayS,False);
 	   XtPopdown(relatedDisplayS);
 	}
-	if (cartesianPlotS != NULL) {
+	if (cartesianPlotS) {
 	   XtSetSensitive(cartesianPlotS,False);
 	   XtPopdown(cartesianPlotS);
 	}
-	if (cartesianPlotAxisS != NULL) {
+	if (cartesianPlotAxisS) {
 	   XtSetSensitive(cartesianPlotAxisS,False);
 	   XtPopdown(cartesianPlotAxisS);
 	}
-	if (stripChartS!= NULL) {
+	if (stripChartS) {
 	   XtSetSensitive(stripChartS,False);
 	   XtPopdown(stripChartS);
 	}
-	XtSetSensitive(mainEditPDM, False);
-	XtSetSensitive(mainViewPDM,True);
-	XtSetSensitive(mainPalettesPDM,False);
 	XtSetSensitive(fileMenu[FILE_NEW_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[FILE_SAVE_AS_BTN].widget,False);
@@ -1545,33 +1534,41 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   currentDisplayInfo = (DisplayInfo *)NULL;
 
   displayInfo = displayInfoListHead->next;
-  if (displayInfo == NULL) return;	/* no displays yet */
 
-/* simply return if there is no memory-resident display list */
-  if (displayInfo->dlElementListHead == displayInfo->dlElementListTail)
-	return;
+  /*
+   * Go through the whole display list, if any display is
+   * brought up as a related display, shut down that display
+   * and remove that display from the display list, otherwise,
+   * just shutdown that display.
+   */
 
-/* cleanup the resources, CA stuff and timeouts for displays/display lists */
-  while (displayInfo != NULL) {
-	displayInfo->traversalMode = mode;
+  while (displayInfo) {
+    DisplayInfo *pDI = displayInfo;
 
-	if (displayInfo->fromRelatedDisplayExecution) {
-	/* free all resources and remove display info completely */
-	  nextDisplayInfo = displayInfo->next;
-	  dmRemoveDisplayInfo(displayInfo);
-	  displayInfo = nextDisplayInfo;
-	} else {
-	/* free resources, but don't free the display list in memory */
-	  dmCleanupDisplayInfo(displayInfo,False);
-	  displayInfo = displayInfo->next;
-	}
+    displayInfo->traversalMode = mode;
+    displayInfo = displayInfo->next;
+    if (pDI->fromRelatedDisplayExecution) {
+      dmRemoveDisplayInfo(pDI);
+    } else {
+      dmCleanupDisplayInfo(pDI,False);
+    }
   }
 
+  /*
+   * See whether there is any display in the display list.
+   * If any, enable resource palette, object palette and
+   * color palette, traverse the whole display list.
+   */
 
-/* and traverse all display lists */
-  dmTraverseAllDisplayLists();
+  if (displayInfoListHead->next) {
+    if (globalDisplayListTraversalMode == DL_EDIT) {
+      enableEditFunctions();
+    }
+    currentDisplayInfo = displayInfoListHead->next;
+    dmTraverseAllDisplayLists();
+    XFlush(display);
+  }
 
-  XFlush(display);
 #ifdef __MONITOR_CA_PEND_EVENT__
   {
     double t;
@@ -2270,6 +2267,7 @@ main(int argc, char *argv[])
   createCursors();
   initializeRubberbanding();
   createMain();
+  disableEditFunctions();
 
 /*
  *  ...we're the first MEDM around in this mode - proceed with full execution
@@ -2313,7 +2311,10 @@ main(int argc, char *argv[])
       }
     }
   }
-
+  if ((displayInfoListHead->next) &&
+      (globalDisplayListTraversalMode == DL_EDIT)) {
+    enableEditFunctions();
+  }
 
 /*
  * create and popup the product description shell
@@ -2391,9 +2392,12 @@ main(int argc, char *argv[])
 
 	  if (completeClientMessage) {
 	    filePtr = fopen(fullPathName,"r");
-	    if (filePtr != NULL) {
+	    if (filePtr) {
 	      dmDisplayListParse(filePtr,name,fullPathName,geometryString,
 				(Boolean)False);
+              if (globalDisplayListTraversalMode == DL_EDIT) {
+                enableEditFunctions();
+              }
 	      if (geometryString[0] != '\0')
                 medmPrintf("    geometry = %s\n\n",geometryString);
 	      if (name[0] != '\0')
@@ -2657,7 +2661,6 @@ static void createMain()
 
   XtManageChild(helpMessageBox);
 
-
 /*
  * and realize the toplevel shell widget
  */
@@ -2678,4 +2681,22 @@ Boolean medmInitWorkProc(XtPointer cd) {
     }
   }
   return True;
+}
+
+void enableEditFunctions() {
+  if (objectS)   XtSetSensitive(objectS,True);
+  if (resourceS) XtSetSensitive(resourceS,True);
+  if (colorS)    XtSetSensitive(colorS,True);
+  if (channelS)  XtSetSensitive(channelS,True);
+  XtSetSensitive(mainEditPDM,True);
+  XtSetSensitive(mainPalettesPDM,True);
+}
+
+void disableEditFunctions() {
+  if (objectS)   XtSetSensitive(objectS,False);
+  if (resourceS) XtSetSensitive(resourceS,False);
+  if (colorS)    XtSetSensitive(colorS,False);
+  if (channelS)  XtSetSensitive(channelS,False);
+  XtSetSensitive(mainEditPDM,False);
+  XtSetSensitive(mainPalettesPDM,False);
 }

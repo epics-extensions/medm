@@ -56,6 +56,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  * .02  09-05-95        vong    2.1.0 release
  * .03  09-07-95        vong    remove all the falling line and rising line stuff
  * .04  09-13-95        vong    conform to c++ syntax
+ * .05  03-06-96        vong    in closeDislay(), disable the edit
+ *                              functions by calling disableEditFunctions()
+ *                              if there is no display left.
  *
  *****************************************************************************
 */
@@ -3888,7 +3891,9 @@ void closeDisplay(Widget w) {
   }
   /* remove newDisplayInfo from displayInfoList and cleanup */
   dmRemoveDisplayInfo(newDisplayInfo);
-
+  if (displayInfoListHead->next == NULL) {
+    disableEditFunctions();
+  }
 }
 
 #ifdef __COLOR_RULE_H__

@@ -176,12 +176,13 @@ void dmDisplayListOk(Widget w, XtPointer cd, XtPointer cbs)
 /* get the filename string from the selection box */
   XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
 
-  if (filename != NULL) {
+  if (filename) {
     filePtr = fopen(filename,"r");
-    if (filePtr != NULL) {
+    if (filePtr) {
 	XtUnmanageChild(dialog);
 	dmDisplayListParse(filePtr,NULL,filename,NULL,(Boolean)False);
-	if (filePtr != NULL) fclose(filePtr);
+        enableEditFunctions();
+	if (filePtr) fclose(filePtr);
     };
     XtFree(filename);
   }

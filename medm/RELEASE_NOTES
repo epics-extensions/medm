@@ -1,0 +1,9 @@
+versions 2.1.14
+
+Fixed the following problems on both solaris and SGI platform.
+- bring up MEDM without any display, selecting any object in object
+  palette crashes medm.
+- toggle back to edit mode, selecting any object in object palette
+  crashes medm.
+- close all displays, selecting any object in object palette crashes
+  medm.

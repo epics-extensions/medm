@@ -244,6 +244,8 @@ Widget createDisplayMenu(Widget widget);
 Widget buildMenu(Widget,int,char*,char,menuEntry_t*);
 void medmExit();
 Boolean medmSaveDisplay(DisplayInfo *, char *, Boolean);
+void enableEditFunctions();
+void disableEditFunctions();
 
 /* medmCA.c */
 int medmCAInitialize(void);
