@@ -865,6 +865,7 @@ typedef struct _DlList {
 } DlList;
 
 #define FirstDlElement(x) (x->head->next)
+#define SecondDlElement(x) (x->head->next?x->head->next->next:NULL)
 #define LastDlElement(x) (x->tail)
 #define IsEmpty(x) (x->count <= 0)
 #define NumberOfDlElement(x) (x->count)

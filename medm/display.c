@@ -126,7 +126,7 @@ DisplayInfo *createDisplay()
     }
   /* Create the colormap, also the pixmap and gc */
     displayInfo->dlColormap = createDlColormap(displayInfo);
-  /* Execute the elements */
+  /* Execute all the elements including the display */
     dmTraverseDisplayList(displayInfo);
   /* Pop it up */
     XtPopup(displayInfo->shell,XtGrabNone);
@@ -163,8 +163,7 @@ DlElement *createDlDisplay(DlElement *p)
 	dlDisplay->grid.snapToGrid = DEFAULT_GRID_SNAP;
     }
  
-    if (!(dlElement = createDlElement(DL_Display,
-      (XtPointer)dlDisplay,
+    if (!(dlElement = createDlElement(DL_Display,(XtPointer)dlDisplay,
       &displayDlDispatchTable))) {
 	free(dlDisplay);
     }
@@ -258,7 +257,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
 	}
 	
-    } else  {
+    } else  {     /* else for if (displayInfo->drawingArea == NULL) */
 	XtSetValues(displayInfo->drawingArea,args,nargs);
     }
 

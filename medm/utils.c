@@ -336,7 +336,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
    */
     if(drawingArea != NULL) {
 	XtDestroyWidget(drawingArea);
-	drawingArea = NULL;     /* KE: Unnecessary ? */
+	drawingArea = NULL;
     }
 
   /* force a wait for all outstanding CA event completion */
@@ -1017,18 +1017,19 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
     float sX, sY;
     Dimension oldWidth, oldHeight;
 
+  /* The first element is the display */
     elementPtr = FirstDlElement(displayInfo->dlElementList);
     oldWidth = (int)elementPtr->structure.display->object.width;
     oldHeight = (int)elementPtr->structure.display->object.height;
 
-  /* simply return (value FALSE) if no real change */
+  /* Simply return (value FALSE) if no real change */
     if(oldWidth == newWidth && oldHeight == newHeight) return (FALSE);
 
-  /* resize the display, then do selected elements */
+  /* Resize the display, then do selected elements */
     elementPtr->structure.display->object.width = newWidth;
     elementPtr->structure.display->object.height = newHeight;
 
-  /* proceed with scaling...*/
+  /* Proceed with scaling...*/
     sX = (float) ((float)newWidth/(float)oldWidth);
     sY = (float) ((float)newHeight/(float)oldHeight);
 
@@ -1055,18 +1056,19 @@ Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
     oldWidth = (int)elementPtr->structure.display->object.width;
     oldHeight = (int)elementPtr->structure.display->object.height;
 
-  /* simply return (value FALSE) if no real change */
+  /* Simply return (value FALSE) if no real change */
     if(oldWidth == newWidth && oldHeight == newHeight) return (FALSE);
 
-  /* resize the display, then do selected elements */
+  /* Resize the display, then do selected elements */
     elementPtr->structure.display->object.width = newWidth;
     elementPtr->structure.display->object.height = newHeight;
 
-  /* proceed with scaling...*/
+  /* Proceed with scaling...*/
     sX = (float) ((float)newWidth/(float)oldWidth);
     sY = (float) ((float)newHeight/(float)oldHeight);
 
     resizeDlElementReferenceList(displayInfo->selectedDlElementList,0,0,sX,sY);
+
     return (TRUE);
 }
 
@@ -1075,23 +1077,26 @@ void resizeDlElementReferenceList(DlList *dlElementList, int x, int y,
 {
     DlElement *dlElement;
     if(dlElementList->count < 1) return;
+  /* Loop over selected elements not including the display */
     dlElement = FirstDlElement(dlElementList);
     while (dlElement) {
-	DlElement *ele = dlElement->structure.element;
-	if(ele->type != DL_Display) {
-	    int w = (int)ele->structure.rectangle->object.width;
-	    int h = (int)ele->structure.rectangle->object.height;
+	DlElement *pE = dlElement->structure.element;
+ 	if(pE->type != DL_Display) {
+	    int w = (int)pE->structure.rectangle->object.width;
+	    int h = (int)pE->structure.rectangle->object.height;
 	    int xOffset = (int) (scaleX * (float) w + 0.5) - w;
 	    int yOffset = (int) (scaleY * (float) h + 0.5) - h;
-	    if(ele->run->scale) {
-		ele->run->scale(ele,xOffset,yOffset);
+	    
+	    if(pE->run->scale) {
+		pE->run->scale(pE,xOffset,yOffset);
 	    }
-	    w = ele->structure.rectangle->object.x - x;
-	    h = ele->structure.rectangle->object.y - y;
+
+	    w = pE->structure.rectangle->object.x - x;
+	    h = pE->structure.rectangle->object.y - y;
 	    xOffset = (int) (scaleX * (float) w + 0.5) - w;
 	    yOffset = (int) (scaleY * (float) h + 0.5) - h;
-	    if(ele->run->move) {
-		ele->run->move(ele,xOffset,yOffset);
+	    if(pE->run->move) {
+		pE->run->move(pE,xOffset,yOffset);
 	    }
 	}
 	dlElement = dlElement->next;
@@ -1101,27 +1106,29 @@ void resizeDlElementReferenceList(DlList *dlElementList, int x, int y,
 void resizeDlElementList(DlList *dlElementList, int x, int y,
   float scaleX, float scaleY)
 {
-    DlElement *ele;
+    DlElement *pE;
     if(dlElementList->count < 1) return;
-    ele = FirstDlElement(dlElementList);
-    while (ele) {
-	if(ele->type != DL_Display) {
-	    int w = (int)ele->structure.rectangle->object.width;
-	    int h = (int)ele->structure.rectangle->object.height;
+  /* Loop over elements */
+    pE = FirstDlElement(dlElementList);
+    while (pE) {
+	if(pE->type != DL_Display) {
+	    int w = (int)pE->structure.rectangle->object.width;
+	    int h = (int)pE->structure.rectangle->object.height;
 	    int xOffset = (int) (scaleX * (float) w + 0.5) - w;
 	    int yOffset = (int) (scaleY * (float) h + 0.5) - h;
-	    if(ele->run->scale) {
-		ele->run->scale(ele,xOffset,yOffset);
+
+	    if(pE->run->scale) {
+		pE->run->scale(pE,xOffset,yOffset);
 	    }
-	    w = ele->structure.rectangle->object.x - x;
-	    h = ele->structure.rectangle->object.y - y;
+	    w = pE->structure.rectangle->object.x - x;
+	    h = pE->structure.rectangle->object.y - y;
 	    xOffset = (int) (scaleX * (float) w + 0.5) - w;
 	    yOffset = (int) (scaleY * (float) h + 0.5) - h;
-	    if(ele->run->move) {
-		ele->run->move(ele,xOffset,yOffset);
+	    if(pE->run->move) {
+		pE->run->move(pE,xOffset,yOffset);
 	    }
 	}
-	ele = ele->next;
+	pE = pE->next;
     }
 }
 
@@ -2152,14 +2159,14 @@ void selectAllElementsInDisplay()
   /* Unselect any selected elements */
     unselectElementsInDisplay();
 
-    dlElement = FirstDlElement(cdi->dlElementList);
+  /* Loop over elements not including the display */
+    dlElement = SecondDlElement(cdi->dlElementList);
     while (dlElement) {
-	if(dlElement->type != DL_Display) {
-	    DlElement *pE;
-	    pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
-	    if(pE) {
-		appendDlElement(cdi->selectedDlElementList,pE);
-	    }
+	DlElement *pE;
+	
+	pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
+	if(pE) {
+	    appendDlElement(cdi->selectedDlElementList,pE);
 	}
 	dlElement = dlElement->next;
     }
@@ -3224,16 +3231,14 @@ void refreshDisplay(void)
 	fprintf(stderr,"\n[refreshDisplay: cdi->dlElementList:\n");
 	dumpDlElementList(cdi->dlElementList);
 #endif
-    pE = FirstDlElement(cdi->dlElementList);
+  /* Loop over elements not including the display */
+    pE = SecondDlElement(cdi->dlElementList);
     while (pE) {
-      /* Don't include the display */
-	if(pE->type != DL_Display) {
-	    if(pE->widget) {
-	      /* Destroy the widget */
-		destroyElementWidgets(pE);
-	      /* Recreate it */
-		pE->run->execute(cdi,pE);
-	    }
+	if(pE->widget) {
+	  /* Destroy the widget */
+	    destroyElementWidgets(pE);
+	  /* Recreate it */
+	    pE->run->execute(cdi,pE);
 	}
 	pE = pE->next;
     }
@@ -4298,7 +4303,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 void updateAllDisplayPositions()
 {
     DisplayInfo *displayInfo;
-    DlElement *element;
+    DlElement *pE;
     Position x, y;
     Arg args[2];
     int nargs;
@@ -4308,22 +4313,18 @@ void updateAllDisplayPositions()
   /* Traverse the displayInfo list */
     while (displayInfo != NULL) {
       /* Get the current shell coordinates */
+	
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
 	XtGetValues(displayInfo->shell,args,nargs);
 	
-      /* Traverse the element list list to find the Dl_Display */
-	element = FirstDlElement(displayInfo->dlElementList);
-	while (element) {
-	    if(element->type == DL_Display) {
-		DlDisplay *p = element->structure.display;
-	      /* Set the object values from the shell */
-		p->object.x = x;
-		p->object.y = y;
-		break;     /* Don't need any more elements */
-	    }
-	}
+      /* The display is the first element */
+	pE = FirstDlElement(displayInfo->dlElementList);
+      /* Set the object values of the display from the shell */
+	pE->structure.display->object.x = x;
+	pE->structure.display->object.y = y;
+
 	displayInfo = displayInfo->next;
     }
 }
