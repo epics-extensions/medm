@@ -215,10 +215,12 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     localMenuBar =
       XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",args,13);
     dlElement->widget = localMenuBar;
+
   /* Add handlers */
     addCommonHandlers(dlElement->widget, displayInfo);
     XtManageChild(dlElement->widget);
 
+  /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(localMenuBar,
       (Pixel)displayInfo->colormap[dlShellCommand->clr],
       (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
@@ -227,10 +229,11 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       localMenuBar,"shellCommandPulldownMenu",args,2);
 
     pixmapSize = MIN(dlShellCommand->object.width,dlShellCommand->object.height);
-/* allowing for shadows etc */
+
+  /* Allow for shadows etc */
     pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
 
-/* create shellCommand icon (render to appropriate size) */
+  /* Create shellCommand icon (render to appropriate size) */
     shellCommandPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
       pixmapSize,pixmapSize,XDefaultDepth(display,screenNum));
     renderShellCommandPixmap(display,shellCommandPixmap,
@@ -258,7 +261,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[3], XmNlabelString,xmString);
 	  /* set the displayInfo as the button's userData */
 	    XtSetArg(args[4], XmNuserData,(XtPointer)displayInfo);
-	    shellCommandMenuButton = XtCreateManagedWidget("relatedButton",
+	    shellCommandMenuButton = XtCreateManagedWidget("shellCommandButton",
 	      xmPushButtonWidgetClass, shellCommandPulldownMenu, args, 5);
 	    XtAddCallback(shellCommandMenuButton,XmNactivateCallback,
 	      (XtCallbackProc)dmExecuteShellCommand,

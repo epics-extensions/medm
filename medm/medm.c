@@ -4043,7 +4043,7 @@ static void createMain()
   /* Create the menu bar */
     mainMB = XmCreateMenuBar(mainMW,"mainMB",NULL,0);
 
-  /* color mainMB properly (force so VUE doesn't interfere) */
+  /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(mainMB,defaultForeground,defaultBackground);
 
   /* Create the file pulldown menu pane */

@@ -393,6 +393,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
 	
+      /* Color menu bar explicitly to avoid CDE interference */
 	colorMenuBar(localMenuBar,
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
@@ -483,7 +484,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 		  dlRelatedDisplay->display[i].label);
 		XtSetArg(args[3], XmNlabelString,xmString);
 		XtSetArg(args[4], XmNuserData, displayInfo);
-		relatedDisplayMenuButton = XtCreateManagedWidget("relatedButton",
+		relatedDisplayMenuButton = XtCreateManagedWidget("relatedDisplayButton",
 		  xmPushButtonWidgetClass, relatedDisplayPulldownMenu, args, 5);
 		XtAddCallback(relatedDisplayMenuButton,XmNactivateCallback,
 		  relatedDisplayButtonPressedCb,&(dlRelatedDisplay->display[i]));

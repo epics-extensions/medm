@@ -391,15 +391,11 @@ void createObject()
     Widget objectMB;
     Widget objectHelpPDM;
 
-/*
- * initialize local static globals
- */
+  /* Initialize local static globals */
     imageNameFSD = NULL;
 
-/*
- * create a MainWindow in a shell, and then the palette radio box
- */
-/* map window manager menu Close function to application close... */
+  /* Create a MainWindow in a shell, and then the palette radio box */
+  /* Map window manager menu Close function to application close... */
 
     objectS = XtVaCreatePopupShell("objectS",
       topLevelShellWidgetClass,mainShell,
@@ -421,46 +417,36 @@ void createObject()
 
     objectMW = XmCreateMainWindow(objectS,"objectMW",NULL,0);
 
-/*
- * create the menu bar
- */
+  /* Create the menu bar  */
     objectMB = XmCreateMenuBar(objectMW, "objectMB",NULL,0);
-
-/* color objectMB properly (force so VUE doesn't interfere) */
+    
+  /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(objectMB,defaultForeground,defaultBackground);
-
-/*
- * create the file pulldown menu pane
- */
+    
+  /* Create the file pulldown menu pane  */
     objectFilePDM = buildMenu(objectMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
 
 #ifdef EXTENDED_INTERFACE
-/*
- * create the options pulldown menu pane
- */
+  /* Create the options pulldown menu pane */
     objectOptionPDM = buildMenu(objectMB,XmMENU_PULLDOWN,
       "Option", 'O', optionMenu);
 #endif
 
-/*
- * create the help pulldown menu pane
- */
+  /* Create the help pulldown menu pane */
     objectHelpPDM = buildMenu(objectMB,XmMENU_PULLDOWN,
       "Help", 'H', helpMenu);
     XtVaSetValues(objectMB, XmNmenuHelpWidget, objectHelpPDM, NULL);
   /* (MDA) for now, disable this menu */
-/*     XtSetSensitive(objectHelpPDM,False); */
-
-/*
- * create work area Row Column
- */
+  /*     XtSetSensitive(objectHelpPDM,False); */
+    
+  /* Create work area Row Column */
     objectRC = XtVaCreateWidget("objectRC",
       xmRowColumnWidgetClass, objectMW,
       XmNorientation, XmHORIZONTAL,
       NULL);
-
-/* set main window areas */
+    
+  /* Set main window areas */
     XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectRC);
 
     graphicsRC = createRadioButtonPanel(objectRC,"Graphics",paletteGraphicsButton);

@@ -601,6 +601,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 void optionMenuSet(Widget menu, int buttonId);
 void optionMenuRemoveLabel(Widget menu);
 void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
+void colorPulldownMenu(Widget widget, Pixel fg, Pixel bg);
 void appendDlElement(DlList *tail, DlElement *p);
 DlList *createDlList();
 void emptyDlList(DlList *);

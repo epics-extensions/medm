@@ -1205,7 +1205,7 @@ void createResource()
       XmVaCASCADEBUTTON, buttons[0], 'F',
       NULL);
 
-  /* Color resourceMB properly (force so VUE doesn't interfere) */
+  /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(resourceMB,defaultForeground,defaultBackground);
 
   /* Free strings */

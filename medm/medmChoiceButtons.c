@@ -190,7 +190,7 @@ Widget createToggleButtons(Widget parent,
 	usedWidth = 10;
 	usedHeight = 10;
     }
-    widget = XmCreateRadioBox(parent,"radioBox",wargs,n);
+    widget = XmCreateRadioBox(parent,"choice",wargs,n);
   /* now make push-in type radio buttons of the correct size */
     fontList = fontListTable[choiceButtonFontListIndex(
       po,numberOfButtons,stacking)];
@@ -215,7 +215,7 @@ Widget createToggleButtons(Widget parent,
 	XtSetArg(wargs[n],XmNlabelString,xmStr);
       /* Use gadgets here so that changing foreground
 	 of radioBox changes buttons */
-	buttons[i] = XmCreateToggleButtonGadget(widget,"toggleButton",
+	buttons[i] = XmCreateToggleButtonGadget(widget,"choiceButton",
 	  wargs,n+1);
       /* MDA - for some reason, need to do this
 	 after the fact for gadgets...  */

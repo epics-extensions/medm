@@ -318,7 +318,7 @@ void createColor()
       NULL);
 
 
-  /* Color colorMB properly (force so VUE doesn't interfere) */
+  /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(colorMB,defaultForeground,defaultBackground);
 
   /* Free strings */

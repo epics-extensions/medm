@@ -57,8 +57,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_MENU 0
 #define DEBUG_FONT 0
 
-#define FIX_SOLARIS_COLOR_PROBLEM
-
 #define OPTION_MENU_ADJUST_WIDTH 22
 #define OPTION_MENU_ADJUST_HEIGHT 4
 #define SETSIZE 1
@@ -376,7 +374,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
     XtSetArg(args[nargs], XmNbackground, background); nargs++;
     XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
-    menu = XmCreatePulldownMenu(displayInfo->drawingArea, "menu", args, nargs);
+    menu = XmCreatePulldownMenu(displayInfo->drawingArea, "menuPulldownMenu", args, nargs);
 
   /* Add the push button gadget children */
     nargs = 0;
@@ -396,7 +394,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     for(i = 0; i < nbuttons; i++) {
 	nargs = nargs0;
 	XtSetArg(args[nargs],XmNlabelString, labels[i]); nargs++;
-	pushbutton = XmCreatePushButtonGadget(menu, "menuButtons", args, nargs);
+	pushbutton = XmCreatePushButtonGadget(menu, "menuButton", args, nargs);
 	XtManageChild(pushbutton);
 
       /* Add callback and userData in execute mode */
@@ -416,7 +414,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
     XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
     XtSetArg(args[nargs], XmNsubMenuId, menu); nargs++;
-    w = XmCreateOptionMenu(displayInfo->drawingArea, "menu", args, nargs);
+    w = XmCreateOptionMenu(displayInfo->drawingArea, "menuOptionMenu", args, nargs);
 
   /* Unmanage the label gadget child */
     XtUnmanageChild(XmOptionLabelGadget(w));
@@ -429,19 +427,14 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
     XtSetArg(args[nargs], XmNmarginHeight ,0); nargs++;
     XtSetArg(args[nargs], XmNhighlightThickness, 0); nargs++;
-#if defined(SOLARIS) && defined(FIX_SOLARIS_COLOR_PROBLEM)
-  /* Solaris 8 changes the color we specify back to the background.
-     This resets the color, but the borders remain commensurate with
-     the background.  It shouldn't hurt to do this when there is no
-     bug. */
-    XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
-    XtSetArg(args[nargs], XmNbackground, background); nargs++;
-#endif
     XtSetValues(optionButtonGadget, args, nargs);
 #if SETSIZE
     XtResizeWidget(optionButtonGadget,
       dlMenu->object.width, dlMenu->object.height, 0);
 #endif
+    
+  /* Color the menu explicitly to avoid CDE interference */
+    colorPulldownMenu(w,foreground,background);
     
 #if DEBUG_MENU
     {
@@ -510,7 +503,7 @@ static void menuUpdateValueCb(XtPointer cd)
 
 static void menuDraw(XtPointer cd)
 {
-    MedmMenu *pm = (MedmMenu *) cd;
+    MedmMenu *pm = (MedmMenu *)cd;
     Record *pr = pm->record;
     DlElement *dlElement = pm->dlElement;
     Widget widget = dlElement->widget;
@@ -544,26 +537,31 @@ static void menuDraw(XtPointer cd)
 		int i;
 
 		XtVaGetValues(widget,XmNsubMenuId,&menuWidget,NULL);
-		XtVaGetValues(menuWidget,
-		  XmNchildren,&children,
-		  XmNnumChildren,&numChildren,
-		  NULL);
-		i = (int) pr->value;
-		if((i >=0) && (i < (int) numChildren)) {
-		    XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
+		if(menuWidget) {
+		    XtVaGetValues(menuWidget,
+		      XmNchildren,&children,
+		      XmNnumChildren,&numChildren,
+		      NULL);
+		    i = (int) pr->value;
+		    if((i >=0) && (i < (int) numChildren)) {
+			XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
+		    } else {
+			medmPostMsg(1,"menuUpdateValueCb: Invalid menuHistory child\n");
+			return;
+		    }
 		} else {
-		    medmPostMsg(1,"menuUpdateValueCb: Invalid menuHistory child\n");
+		    medmPostMsg(1,"menuUpdateValueCb: No subMenuId\n");
 		    return;
 		}
 		switch (dlMenu->clrmod) {
-		case STATIC :
-		case DISCRETE :
+		case STATIC:
+		case DISCRETE:
 		    break;
-		case ALARM :
+		case ALARM:
 		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    XtVaSetValues(menuWidget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
-		default :
+		default:
 		    medmPostMsg(1,"menuUpdateValueCb:\n");
 		    medmPrintf(0,"  Channel Name: %s\n",dlMenu->control.ctrl);
 		    medmPrintf(0,"  Message: Unknown color modifier\n");

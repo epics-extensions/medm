@@ -3439,7 +3439,7 @@ void performMacroSubstitutions(DisplayInfo *displayInfo,
 }
 
 /*
- * colorMenuBar - get VUE and its "ColorSetId" straightened out...
+ * colorMenuBar - get CDE and its "ColorSetId" straightened out...
  *   color the passed in widget (usually menu bar) and its children
  *   to the specified foreground/background colors
  */
@@ -3449,7 +3449,7 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
     WidgetList children;
     Arg args[4];
     int i;
-    Pixel localFg, top, bottom,select;
+    Pixel localFg,top,bottom,select;
 
     XtSetArg(args[0],XmNchildren,&children);
     XtSetArg(args[1],XmNnumChildren,&numChildren);
@@ -3463,6 +3463,48 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg)
     XtSetArg(args[3],XmNbottomShadowColor,bottom);
     XtSetValues(widget,args,4);
 
+    for(i = 0; i < (int)numChildren; i++) {
+	XtSetValues(children[i],args,2);
+    }
+}
+
+/*
+ * colorPulldownMenu - get CDE and its "ColorSetId" straightened out...
+ *   color the passed in widget (which is the menu) and its children
+ *   to the specified foreground/background colors
+ */
+void colorPulldownMenu(Widget widget, Pixel fg, Pixel bg)
+{
+    Widget menu,optionButton;
+    Cardinal numChildren;
+    WidgetList children;
+    Arg args[4];
+    int i;
+    Pixel localFg,top,bottom,select;
+
+  /* Get the menu widget */
+    XtSetArg(args[0],XmNsubMenuId,&menu);
+    XtGetValues(widget,args,1);
+
+  /* Get the option button child of the widget */
+    optionButton=XmOptionButtonGadget(widget);
+
+  /* Get the children of the menu widget */
+    XtSetArg(args[0],XmNchildren,&children);
+    XtSetArg(args[1],XmNnumChildren,&numChildren);
+    XtGetValues(menu,args,2);
+
+  /* Determine the colors */
+    XmGetColors(XtScreen(widget),cmap,bg,&localFg,&top,&bottom,&select);
+
+  /* Set the colors */
+    XtSetArg(args[0],XmNforeground,fg);
+    XtSetArg(args[1],XmNbackground,bg);
+    XtSetArg(args[2],XmNtopShadowColor,top);
+    XtSetArg(args[3],XmNbottomShadowColor,bottom);
+    XtSetValues(widget,args,4);
+    XtSetValues(optionButton,args,4);
+    XtSetValues(menu,args,4);
     for(i = 0; i < (int)numChildren; i++) {
 	XtSetValues(children[i],args,2);
     }
