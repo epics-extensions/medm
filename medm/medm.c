@@ -697,8 +697,10 @@ Name of file in which to save display:",
     "Medm*cartesianPlot.drawMinor:          False",
 #endif
 
+#if 1
   /* Keep CDE from recoloring (Medm* doesn't work here) */
     "*useColorObj: False",
+#endif
     
     NULL,
 };
