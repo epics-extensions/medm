@@ -4139,9 +4139,9 @@ static void createMain()
 }
 
 #ifdef __cplusplus
-Boolean medmInitWorkProc(XtPointer)
+static Boolean medmInitWorkProc(XtPointer)
 #else
-Boolean medmInitWorkProc(XtPointer cd)
+static Boolean medmInitWorkProc(XtPointer cd)
 #endif
 {
     int i;

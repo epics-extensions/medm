@@ -187,7 +187,7 @@ float safeFloat(double x) {
 }
 #endif
 
-void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
+static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
     MedmCartesianPlot *pcp;
@@ -315,7 +315,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     }
 }
 
-void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
+static void cartesianPlotCreateEditInstance(DisplayInfo *displayInfo,
   DlElement *dlElement)
 {
     MedmCartesianPlot *pcp;
@@ -1276,7 +1276,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
     }
 }
 
-void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
+static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
@@ -1387,7 +1387,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 }
 
 
-void cartesianPlotUpdateValueCb(XtPointer cd) {
+static void cartesianPlotUpdateValueCb(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
@@ -1476,7 +1476,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
     updateTaskMarkUpdate(pcp->updateTask);
 }
 
-void cartesianPlotDestroyCb(XtPointer cd) {
+static void cartesianPlotDestroyCb(XtPointer cd) {
     MedmCartesianPlot *pcp = (MedmCartesianPlot *) cd;
     
     if(executeTimeCartesianPlotWidget &&
@@ -1507,7 +1507,7 @@ void cartesianPlotDestroyCb(XtPointer cd) {
     return;
 }
 
-void cartesianPlotDraw(XtPointer cd) {
+static void cartesianPlotDraw(XtPointer cd) {
     MedmCartesianPlot *pcp = (MedmCartesianPlot *) cd;
     DlElement *dlElement = pcp->dlElement;
     Widget widget = dlElement->widget;

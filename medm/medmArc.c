@@ -391,7 +391,7 @@ void writeDlArc(FILE *stream, DlElement *dlElement, int level)
 #endif
 }
 
-void arcOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+static void arcOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
 {
     DlArc *dlArc = dlElement->structure.arc;
 

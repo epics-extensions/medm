@@ -742,7 +742,7 @@ void updateTaskAddDestroyCb(UpdateTask *pT, void (*destroyTaskCb)(XtPointer))
 /* Work proc for updateTask.  Is called when medm is not busy.  Checks
    for enabled update tasks with executeRequestspendingCount > 0 and
    executes them. */
-Boolean updateTaskWorkProc(XtPointer cd)
+static Boolean updateTaskWorkProc(XtPointer cd)
 {
     DisplayInfo *displayInfo;
     UpdateTaskStatus *ts = (UpdateTaskStatus *)cd;

@@ -109,7 +109,8 @@ static DlDispatchTable polylineDlDispatchTable = {
     handlePolylineVertexManipulation,
     NULL};
 
-static void calculateTheBoundingBox(DlPolyline* dlPolyline) {
+static void calculateTheBoundingBox(DlPolyline* dlPolyline)
+{
     int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
     int i;
     for(i = 0; i < dlPolyline->nPoints; i++) {
@@ -124,7 +125,8 @@ static void calculateTheBoundingBox(DlPolyline* dlPolyline) {
     dlPolyline->object.height = maxY - minY + dlPolyline->attr.width;
 }
 
-static void drawPolyline(MedmPolyline *pp) {
+static void drawPolyline(MedmPolyline *pp)
+{
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     Widget widget = pp->updateTask->displayInfo->drawingArea;
     Display *display = XtDisplay(widget);
@@ -213,12 +215,14 @@ void hideDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
     hideDrawnElement(displayInfo, dlElement);
 }
 
-static void polylineUpdateValueCb(XtPointer cd) {
+static void polylineUpdateValueCb(XtPointer cd)
+{
     MedmPolyline *pp = (MedmPolyline *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pp->updateTask);
 }
 
-static void polylineDraw(XtPointer cd) {
+static void polylineDraw(XtPointer cd)
+{
     MedmPolyline *pp = (MedmPolyline *)cd;
     Record *pd = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
@@ -282,7 +286,8 @@ static void polylineDraw(XtPointer cd) {
     redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
-static void polylineDestroyCb(XtPointer cd) {
+static void polylineDestroyCb(XtPointer cd)
+{
     MedmPolyline *pp = (MedmPolyline *)cd;
 
     if(pp) {
@@ -301,7 +306,8 @@ static void polylineDestroyCb(XtPointer cd) {
     return;
 }
 
-static void polylineGetRecord(XtPointer cd, Record **record, int *count) {
+static void polylineGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmPolyline *pp = (MedmPolyline *)cd;
     int i;
     
@@ -344,9 +350,7 @@ DlElement *createDlPolyline(DlElement *p)
     return(dlElement);
 }
 
-void parsePolylinePoints(
-  DisplayInfo *displayInfo,
-  DlPolyline *dlPolyline)
+void parsePolylinePoints(DisplayInfo *displayInfo, DlPolyline *dlPolyline)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -429,10 +433,7 @@ DlElement *parsePolyline(DisplayInfo *displayInfo)
 /*
  * function to write all points of polyline out
  */
-void writeDlPolylinePoints(
-  FILE *stream,
-  DlPolyline *dlPolyline, 
-  int level)
+void writeDlPolylinePoints(FILE *stream, DlPolyline *dlPolyline, int level)
 {
     int i;
     char indent[16];
@@ -483,7 +484,7 @@ void writeDlPolyline(FILE *stream, DlElement *dlElement, int level)
 /*
  * Manipulate a polyline vertex
  */
-int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0)
+static int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0)
 {
     XEvent event;
     Window window;
@@ -616,8 +617,7 @@ int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0)
  *  the user enters a double click
  */
 
-DlElement *handlePolylineCreate(
-  int x0, int y0, Boolean simpleLine)
+DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
 {
     XEvent event, newEvent;
     int newEventType;
@@ -791,7 +791,8 @@ DlElement *handlePolylineCreate(
     }
 }
 
-void polylineMove(DlElement *dlElement, int xOffset, int yOffset) {
+static void polylineMove(DlElement *dlElement, int xOffset, int yOffset)
+{
     int i;
     XPoint *pts;
     if(dlElement->type != DL_Polyline) return;
@@ -804,7 +805,8 @@ void polylineMove(DlElement *dlElement, int xOffset, int yOffset) {
     }
 }
 
-void polylineScale(DlElement *dlElement, int xOffset, int yOffset) {
+static void polylineScale(DlElement *dlElement, int xOffset, int yOffset)
+{
     float sX, sY;
     int i;
     DlPolyline *dlPolyline;
@@ -834,7 +836,8 @@ void polylineScale(DlElement *dlElement, int xOffset, int yOffset) {
     calculateTheBoundingBox(dlPolyline);
 }
 
-void polylineOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+static void polylineOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter)
 {
     int i;
     DlPolyline *dlPolyline =  dlElement->structure.polyline;
@@ -896,7 +899,8 @@ static void destroyDlPolyline(DisplayInfo *displayInfo, DlElement *pE)
 }
 
 
-static void polylineGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void polylineGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlPolyline *dlPolyline = p->structure.polyline;
     int x, y;
     unsigned int width, height;

@@ -787,7 +787,7 @@ void writeDlComposite(FILE *stream, DlElement *dlElement,
  *  may be Composite objects)
  *  N.B.  this is relative to outermost composite, not parent composite
  */
-void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
+static void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
 {
     int width, height;
     float scaleX = 1.0, scaleY = 1.0;
@@ -827,7 +827,7 @@ static void destroyDlComposite(DisplayInfo *displayInfo, DlElement *pE)
  * recursive function to move Composite objects (and all children, which
  *  may be Composite objects)
  */
-void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
+static void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 {
     DlElement *ele;
 
@@ -851,7 +851,8 @@ void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
     dlElement->structure.composite->object.y += yOffset;
 }
 
-void compositeOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+static void compositeOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter)
 {
     DlElement *ele;
 

@@ -192,7 +192,9 @@ void hideDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
     hideWidgetElement(displayInfo, dlElement);
 }
 
-void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
+static void menuCreateRunTimeInstance(DisplayInfo *displayInfo,
+  DlElement *dlElement)
+{
     MedmMenu *pm;
     DlMenu *dlMenu = dlElement->structure.menu;
 
@@ -222,7 +224,9 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
     }
 }
 
-void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
+static void menuCreateEditInstance(DisplayInfo *displayInfo,
+  DlElement *dlElement)
+{
     Widget localWidget;
     XmString labels[1];
     DlMenu *dlMenu = dlElement->structure.menu;
@@ -238,7 +242,8 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
     XtManageChild(localWidget);
 }
 
-void menuUpdateGraphicalInfoCb(XtPointer cd) {
+static void menuUpdateGraphicalInfoCb(XtPointer cd)
+{
     Record *pr = (Record *)cd;
     MedmMenu *pm = (MedmMenu *)pr->clientData;
     DlElement *dlElement = pm->dlElement;
@@ -477,12 +482,14 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     return w;
 }
 
-static void menuUpdateValueCb(XtPointer cd) {
+static void menuUpdateValueCb(XtPointer cd)
+{
     MedmMenu *pm = (MedmMenu *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pm->updateTask);
 }
 
-static void menuDraw(XtPointer cd) {
+static void menuDraw(XtPointer cd)
+{
     MedmMenu *pm = (MedmMenu *) cd;
     Record *pr = pm->record;
     DlElement *dlElement = pm->dlElement;
@@ -564,7 +571,8 @@ static void menuDraw(XtPointer cd) {
     }
 }
 
-static void menuDestroyCb(XtPointer cd) {
+static void menuDestroyCb(XtPointer cd)
+{
     MedmMenu *pm = (MedmMenu *) cd;
     if(pm) {
 	medmDestroyRecord(pm->record); 
@@ -573,9 +581,7 @@ static void menuDestroyCb(XtPointer cd) {
     }
 }
 
-static void menuValueChangedCb(
-  Widget  w,
-  XtPointer clientData,
+static void menuValueChangedCb(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     MedmMenu *pm;
@@ -610,7 +616,8 @@ static void menuValueChangedCb(
     }
 }
 
-static void menuGetRecord(XtPointer cd, Record **record, int *count) {
+static void menuGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmMenu *pm = (MedmMenu *) cd;
     *count = 1;
     record[0] = pm->record;
@@ -680,10 +687,7 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
     return dlElement;
 }
 
-void writeDlMenu(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlMenu(FILE *stream, DlElement *dlElement, int level)
 {
     int i;
     char indent[16];

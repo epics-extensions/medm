@@ -1229,7 +1229,7 @@ static void updateDraggedElements(Position x0, Position y0,
 /*
  * Update (resize) all currently selected elements and rerender
  */
-void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
+static void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
 {
     int xOffset, yOffset;
     DisplayInfo *cdi = currentDisplayInfo;

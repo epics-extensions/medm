@@ -540,17 +540,11 @@ static void valuatorDestroyCb(XtPointer cd) {
 }
 
 #ifdef __cplusplus
-void handleValuatorExpose(
-  Widget w,
-  XtPointer clientData,
-  XEvent *pEvent,
-  Boolean *)
+static void handleValuatorExpose(Widget w, XtPointer clientData,
+  XEvent *pEvent, Boolean *)
 #else
-void handleValuatorExpose(
-  Widget w,
-  XtPointer clientData,
-  XEvent *pEvent,
-  Boolean *continueToDispatch)
+static void handleValuatorExpose(Widget w, XtPointer clientData,
+  XEvent *pEvent, Boolean *continueToDispatch)
 #endif
 {
     XExposeEvent *event = (XExposeEvent *) pEvent;
@@ -744,7 +738,7 @@ void handleValuatorExpose(
 /*
  * Set value (with implicit redraw of value) for valuator
  */
-void valuatorSetValue(MedmValuator *pv, double forcedValue,
+static void valuatorSetValue(MedmValuator *pv, double forcedValue,
   Boolean force)
 {
     int iValue;
@@ -777,11 +771,8 @@ void valuatorSetValue(MedmValuator *pv, double forcedValue,
 /*
  * Redraw value for valuator
  */
-void valuatorRedrawValue(MedmValuator *pv,
-  DisplayInfo *displayInfo,
-  Widget w,
-  DlValuator *dlValuator,
-  double value)
+static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
+  Widget w, DlValuator *dlValuator, double value)
 {
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
@@ -874,10 +865,10 @@ void valuatorRedrawValue(MedmValuator *pv,
  *    Key/ButtonRelease events to re-enable updates for dlValuator display
  */
 #ifdef __cplusplus
-void handleValuatorRelease(Widget, XtPointer passedData, XEvent *event,
+static void handleValuatorRelease(Widget, XtPointer passedData, XEvent *event,
   Boolean *)
 #else
-void handleValuatorRelease(Widget w, XtPointer passedData, XEvent *event,
+static void handleValuatorRelease(Widget w, XtPointer passedData, XEvent *event,
   Boolean *continueToDispatch)
 #endif
 {
@@ -894,9 +885,7 @@ void handleValuatorRelease(Widget w, XtPointer passedData, XEvent *event,
     }
 }
 
-static void precisionToggleChangedCallback(
-  Widget w,
-  XtPointer clientData,
+static void precisionToggleChangedCallback(Widget w, XtPointer clientData,
   XtPointer cbs)
 {
     Widget widget;
@@ -1209,14 +1198,10 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
  */
 
 #ifdef __cplusplus
-void valuatorValueChanged(
-  Widget,
-  XtPointer clientData,
+void valuatorValueChanged(Widget, XtPointer clientData,
   XtPointer callbackStruct)
 #else
-void valuatorValueChanged(
-  Widget  w,
-  XtPointer clientData,
+void valuatorValueChanged(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
 #endif
 {
@@ -1439,10 +1424,7 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
     return dlElement;
 }
 
-void writeDlValuator(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlValuator(FILE *stream, DlElement *dlElement, int level)
 {
     char indent[16];
     DlValuator *dlValuator = dlElement->structure.valuator;
@@ -1487,7 +1469,8 @@ void writeDlValuator(
 #endif
 }
 
-static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlValuator *dlValuator = p->structure.valuator;
     medmGetValues(pRCB,
       CTRL_RC,       &(dlValuator->control.ctrl),
@@ -1509,7 +1492,8 @@ static void valuatorGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
     *(pN) = dlValuator->control.ctrl;
 }
 
-static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlValuator *dlValuator = p->structure.valuator;
     medmGetValues(pRCB,
       X_RC,          &(dlValuator->object.x),

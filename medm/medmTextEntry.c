@@ -120,7 +120,8 @@ int textFieldFontListIndex(int height)
     return (0);
 }
 
-char *valueToString(MedmTextEntry *pte, TextFormat format) {
+static char *valueToString(MedmTextEntry *pte, TextFormat format)
+{
     Record *pr = pte->record;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
     static char textField[MAX_TOKEN_LENGTH];
@@ -224,7 +225,8 @@ char *valueToString(MedmTextEntry *pte, TextFormat format) {
  *** Text Entry
  ***/
 void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
-  DlElement *dlElement) {
+  DlElement *dlElement)
+{
     MedmTextEntry *pte;
     Arg args[20];
     int n;
@@ -308,7 +310,8 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 }
 
 void textEntryCreateEditInstance(DisplayInfo *displayInfo,
-  DlElement *dlElement) {
+  DlElement *dlElement)
+{
     Arg args[20];
     int n;
     Widget localWidget;
@@ -379,12 +382,14 @@ void hideDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
     hideWidgetElement(displayInfo, dlElement);
 }
 
-void textEntryUpdateValueCb(XtPointer cd) {
+static void textEntryUpdateValueCb(XtPointer cd)
+{
     MedmTextEntry *pte = (MedmTextEntry *) ((Record *) cd)->clientData;
     updateTaskMarkUpdate(pte->updateTask);
 }
 
-void textEntryDraw(XtPointer cd) {
+static void textEntryDraw(XtPointer cd)
+{
     MedmTextEntry *pte = (MedmTextEntry *) cd;
     Record *pr = pte->record;
     DlElement *dlElement = pte->dlElement;
@@ -438,7 +443,8 @@ void textEntryDraw(XtPointer cd) {
     }
 }
 
-void textEntryDestroyCb(XtPointer cd) {
+static void textEntryDestroyCb(XtPointer cd)
+{
     MedmTextEntry *pte = (MedmTextEntry *) cd;
     if(pte) {
 	medmDestroyRecord(pte->record);
@@ -456,15 +462,9 @@ void textEntryDestroyCb(XtPointer cd) {
  *   User input starts.
  */
 #ifdef __cplusplus
-static void textEntryLosingFocusCallback(
-  Widget w,
-  XtPointer cd,
-  XtPointer)
+static void textEntryLosingFocusCallback(Widget w, XtPointer cd, XtPointer)
 #else
-static void textEntryLosingFocusCallback(
-  Widget w,
-  XtPointer cd,
-  XtPointer cbs)
+static void textEntryLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     MedmTextEntry *pte = (MedmTextEntry *) cd;
@@ -478,9 +478,7 @@ static void textEntryLosingFocusCallback(
 /* This routine adds the textEntryLosingFocusCallback when user input starts
  *   if it has not already been added.
  */
-void textEntryModifyVerifyCallback(
-  Widget w,
-  XtPointer clientData,
+static void textEntryModifyVerifyCallback(Widget w, XtPointer clientData,
   XtPointer pCallbackData)
 {
     MedmTextEntry *pte = (MedmTextEntry *) clientData;
@@ -506,9 +504,10 @@ void textEntryModifyVerifyCallback(
 }
 
 #ifdef __cplusplus
-void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer)
+static void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer)
 #else
-void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
+static void textEntryValueChanged(Widget  w, XtPointer clientData,
+  XtPointer dummy)
 #endif
 {
     char *textValue;
@@ -593,7 +592,8 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     }
 }
 
-static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
+static void textEntryUpdateGraphicalInfoCb(XtPointer cd)
+{
     Record *pr = (Record *) cd;
     MedmTextEntry *pte = (MedmTextEntry *) pr->clientData;
     DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
@@ -630,7 +630,8 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
     }
 }
 
-static void textEntryGetRecord(XtPointer cd, Record **record, int *count) {
+static void textEntryGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmTextEntry *pte = (MedmTextEntry *) cd;
     *count = 1;
     record[0] = pte->record;
@@ -720,10 +721,7 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 
 }
 
-void writeDlTextEntry(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlTextEntry(FILE *stream, DlElement *dlElement, int level)
 {
     char indent[16];
     DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
@@ -760,7 +758,8 @@ void writeDlTextEntry(
 #endif
 }
 
-static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlTextEntry *dlTextEntry = p->structure.textEntry;
     medmGetValues(pRCB,
       CTRL_RC,       &(dlTextEntry->control.ctrl),
@@ -780,7 +779,8 @@ static void textEntryGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
     *(pN) = dlTextEntry->control.ctrl;
 }
 
-static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlTextEntry *dlTextEntry = p->structure.textEntry;
     medmGetValues(pRCB,
       X_RC,          &(dlTextEntry->object.x),

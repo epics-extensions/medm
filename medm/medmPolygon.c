@@ -107,7 +107,8 @@ static DlDispatchTable polygonDlDispatchTable = {
     handlePolygonVertexManipulation,
     NULL};
 
-static void drawPolygon(MedmPolygon *pp) {
+static void drawPolygon(MedmPolygon *pp)
+{
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
     Widget widget = pp->updateTask->displayInfo->drawingArea;
     Display *display = XtDisplay(widget);
@@ -123,7 +124,8 @@ static void drawPolygon(MedmPolygon *pp) {
       }
 }
 
-static void calculateTheBoundingBox(DlPolygon *dlPolygon) {
+static void calculateTheBoundingBox(DlPolygon *dlPolygon)
+{
     int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
     int i;
     for(i = 0; i < dlPolygon->nPoints; i++) {
@@ -210,12 +212,14 @@ void hideDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
     hideDrawnElement(displayInfo, dlElement);
 }
 
-static void polygonUpdateValueCb(XtPointer cd) {
+static void polygonUpdateValueCb(XtPointer cd)
+{
     MedmPolygon *pp = (MedmPolygon *)((Record *) cd)->clientData;
     updateTaskMarkUpdate(pp->updateTask);
 }
 
-static void polygonDraw(XtPointer cd) {
+static void polygonDraw(XtPointer cd)
+{
     MedmPolygon *pp = (MedmPolygon *)cd;
     Record *pd = pp->records[0];
     DisplayInfo *displayInfo = pp->updateTask->displayInfo;
@@ -278,7 +282,8 @@ static void polygonDraw(XtPointer cd) {
     redrawElementsAbove(displayInfo, pp->dlElement);
 }
 
-static void polygonDestroyCb(XtPointer cd) {
+static void polygonDestroyCb(XtPointer cd)
+{
     MedmPolygon *pp = (MedmPolygon *)cd;
 
     if(pp) {
@@ -297,7 +302,8 @@ static void polygonDestroyCb(XtPointer cd) {
     return;
 }
 
-static void polygonGetRecord(XtPointer cd, Record **record, int *count) {
+static void polygonGetRecord(XtPointer cd, Record **record, int *count)
+{
     MedmPolygon *pp = (MedmPolygon *)cd;
     int i;
     
@@ -339,9 +345,7 @@ DlElement *createDlPolygon(DlElement *p)
     return(dlElement);
 }
 
-void parsePolygonPoints(
-  DisplayInfo *displayInfo,
-  DlPolygon *dlPolygon)
+void parsePolygonPoints(DisplayInfo *displayInfo, DlPolygon *dlPolygon)
 {
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
@@ -437,10 +441,7 @@ DlElement *parsePolygon(DisplayInfo *displayInfo)
 /*
  * function to write all points of polygon out
  */
-void writeDlPolygonPoints(
-  FILE *stream,
-  DlPolygon *dlPolygon,
-  int level)
+void writeDlPolygonPoints(FILE *stream, DlPolygon *dlPolygon, int level)
 {
     int i;
     char indent[16];
@@ -458,10 +459,7 @@ void writeDlPolygonPoints(
 }
 
 
-void writeDlPolygon(
-  FILE *stream,
-  DlElement *dlElement,
-  int level)
+void writeDlPolygon(FILE *stream, DlElement *dlElement, int level)
 {
     char indent[16];
     DlPolygon *dlPolygon = dlElement->structure.polygon;
@@ -833,7 +831,8 @@ DlElement *handlePolygonCreate(int x0, int y0)
     }
 }
 
-void polygonMove(DlElement *dlElement, int xOffset, int yOffset) {
+static void polygonMove(DlElement *dlElement, int xOffset, int yOffset)
+{
     int i;
     XPoint *pts;
     if(dlElement->type != DL_Polygon) return;
@@ -846,7 +845,8 @@ void polygonMove(DlElement *dlElement, int xOffset, int yOffset) {
     }
 }
 
-void polygonScale(DlElement *dlElement, int xOffset, int yOffset) {
+static void polygonScale(DlElement *dlElement, int xOffset, int yOffset)
+{
     float sX, sY;
     int i;
     DlPolygon *dlPolygon;
@@ -869,7 +869,8 @@ void polygonScale(DlElement *dlElement, int xOffset, int yOffset) {
     dlPolygon->object.height = height;
 }
 
-void polygonOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
+static void polygonOrient(DlElement *dlElement, int type, int xCenter,
+  int yCenter)
 {
     int i;
     DlPolygon *dlPolygon =  dlElement->structure.polygon;
@@ -904,7 +905,8 @@ void polygonOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
     calculateTheBoundingBox(dlPolygon);
 }
 
-static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
+static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlPolygon *dlPolygon = p->structure.polygon;
     medmGetValues(pRCB,
       CLR_RC,        &(dlPolygon->attr.clr),
@@ -930,7 +932,8 @@ static void destroyDlPolygon(DisplayInfo *displayInfo, DlElement *pE)
     genericDestroy(displayInfo, pE);
 }
 
-static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {
+static void polygonGetValues(ResourceBundle *pRCB, DlElement *p)
+{
     DlPolygon *dlPolygon = p->structure.polygon;
     int x, y;
     unsigned int width, height;

@@ -817,12 +817,12 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr)
     }
 }
 
-void writeDlElement(FILE *stream, DlElement *DlElement, int level)
+static void writeDlElement(FILE *stream, DlElement *DlElement, int level)
 {
     return;
 }
 
-void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement) {
+static void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement) {
     return;
 }
 
