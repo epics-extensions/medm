@@ -75,9 +75,9 @@ static void byteSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void byteSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 
 typedef struct _MedmByte {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record;
-    UpdateTask  *updateTask;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
 } MedmByte;
 
 static DlDispatchTable byteDlDispatchTable = {
@@ -112,8 +112,8 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
     
-    if (!dlElement->widget) {
-	if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(!dlElement->widget) {
+	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    if(dlElement->data) {
 		pb = (MedmByte *)dlElement->data;
 	    } else {
@@ -125,7 +125,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 		  byteDraw,
 		  (XtPointer)pb);
 		
-		if (pb->updateTask == NULL) {
+		if(pb->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlByte: Memory allocation error\n");
 		} else {
 		    updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
@@ -148,11 +148,11 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtSetArg(args[n],XcNdataType,XcLval); n++;
 
       /****** note that this is orientation for the Byte */
-	if (dlByte->direction == RIGHT) {
+	if(dlByte->direction == RIGHT) {
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	}
 	else {
-	    if (dlByte->direction == UP) XtSetArg(args[n],XcNorient,XcVert); n++;
+	    if(dlByte->direction == UP) XtSetArg(args[n],XcNorient,XcVert); n++;
 	}
 	XtSetArg(args[n],XcNsBit,dlByte->sbit); n++;
 	XtSetArg(args[n],XcNeBit,dlByte->ebit); n++;
@@ -179,7 +179,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 		dlElement->widget = localWidget;
 
 	      /****** Record the widget that this structure belongs to */
-		if (displayInfo->traversalMode == DL_EDIT) {
+		if(displayInfo->traversalMode == DL_EDIT) {
 		    addCommonHandlers(localWidget, displayInfo);
 		    XtManageChild(localWidget);
 		}
@@ -208,12 +208,23 @@ static void byteUpdateValueCb(XtPointer cd) {
 static void byteDraw(XtPointer cd) {
     MedmByte *pb = (MedmByte *) cd;
     Record *pr = pb->record;
-    Widget widget = pb->dlElement->widget;
-    DlByte *dlByte = pb->dlElement->structure.byte;
+    DlElement *dlElement = pb->dlElement;
+    Widget widget = dlElement->widget;
+    DlByte *dlByte = dlElement->structure.byte;
     XcVType val;
-    if (pr->connected) {
-	if (pr->readAccess) {
-	    if (widget) {
+
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    
+    if(pr->connected) {
+	if(pr->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
@@ -230,21 +241,22 @@ static void byteDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	    draw3DPane(pb->updateTask,
 	      pb->updateTask->displayInfo->colormap[dlByte->monitor.bclr]);
 	    draw3DQuestionMark(pb->updateTask);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pb->updateTask);
     }
 }
 
 static void byteDestroyCb(XtPointer cd) {
     MedmByte *pb = (MedmByte *) cd;
-    if (pb) {
+    if(pb) {
 	medmDestroyRecord(pb->record);
+	pb->dlElement->data = 0;
 	free((char *)pb);
     }
 }
@@ -260,8 +272,8 @@ DlElement *createDlByte(DlElement *p) {
     DlElement *dlElement;
 
     dlByte = (DlByte *)malloc(sizeof(DlByte));
-    if (!dlByte) return 0;
-    if (p) {
+    if(!dlByte) return 0;
+    if(p) {
 	*dlByte = *p->structure.byte;
     } else {
 	objectAttributeInit(&(dlByte->object));
@@ -272,7 +284,7 @@ DlElement *createDlByte(DlElement *p) {
 	dlByte->ebit = 0;
     }
 
-    if (!(dlElement = createDlElement(DL_Byte,
+    if(!(dlElement = createDlElement(DL_Byte,
       (XtPointer)      dlByte,
       &byteDlDispatchTable))) {
 	free(dlByte);
@@ -288,32 +300,32 @@ DlElement *parseByte( DisplayInfo *displayInfo) {
     DlByte *dlByte;
     DlElement *dlElement = createDlByte(NULL);
  
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlByte = dlElement->structure.byte;
  
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlByte->object));
-	    } else if (!strcmp(token,"monitor")) {
+	    } else if(!strcmp(token,"monitor")) {
 		parseMonitor(displayInfo,&(dlByte->monitor));
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))       dlByte->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))   dlByte->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))dlByte->clrmod = DISCRETE;
-	    } else if (!strcmp(token,"direction")) {
+		if(!strcmp(token,"static"))       dlByte->clrmod = STATIC;
+		else if(!strcmp(token,"alarm"))   dlByte->clrmod = ALARM;
+		else if(!strcmp(token,"discrete"))dlByte->clrmod = DISCRETE;
+	    } else if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"up"))        dlByte->direction = UP;
-		else if (!strcmp(token,"right"))dlByte->direction = RIGHT;
-	    } else if (!strcmp(token,"sbit")) {
+		if(!strcmp(token,"up"))        dlByte->direction = UP;
+		else if(!strcmp(token,"right"))dlByte->direction = RIGHT;
+	    } else if(!strcmp(token,"sbit")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlByte->sbit = atoi(token);
-	    } else if (!strcmp(token,"ebit")) {
+	    } else if(!strcmp(token,"ebit")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlByte->ebit = atoi(token);
@@ -326,7 +338,7 @@ DlElement *parseByte( DisplayInfo *displayInfo) {
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
  
     return dlElement;
@@ -337,21 +349,21 @@ void writeDlByte(FILE *stream, DlElement *dlElement, int level) {
     char indent[16];
     DlByte *dlByte = dlElement->structure.byte;
 
-    for (i = 0;  i < level; i++) indent[i] = '\t';
+    for(i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%sbyte {",indent);
     writeDlObject(stream,&(dlByte->object),level+1);
     writeDlMonitor(stream,&(dlByte->monitor),level+1);
-    if (dlByte->clrmod != STATIC)
+    if(dlByte->clrmod != STATIC)
       fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
         stringValueTable[dlByte->clrmod]);
-    if (dlByte->direction != RIGHT)
+    if(dlByte->direction != RIGHT)
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlByte->direction]);
-    if (dlByte->sbit != 15)
+    if(dlByte->sbit != 15)
       fprintf(stream,"\n%s\tsbit=%d",indent,dlByte->sbit);
-    if (dlByte->ebit != 0)
+    if(dlByte->ebit != 0)
       fprintf(stream,"\n%s\tebit=%d",indent,dlByte->ebit);
     fprintf(stream,"\n%s}",indent);
 }

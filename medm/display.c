@@ -164,6 +164,7 @@ DisplayInfo *allocateDisplayInfo()
 
     displayInfo->filePtr = NULL;
     displayInfo->newDisplay = True;
+    displayInfo->elementsExecuted = False;
     displayInfo->versionNumber = 0;
 
     displayInfo->drawingArea = 0;
@@ -342,7 +343,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
     }
     if(displayInfo->colormap != NULL && displayInfo->dlColormapCounter > 0) {
 	alreadyFreedUnphysical = False;
-	for (i = 0; i < displayInfo->dlColormapCounter; i++) {
+	for(i = 0; i < displayInfo->dlColormapCounter; i++) {
 	    if(displayInfo->colormap[i] != unphysicalPixel) {
 		XFreeColors(display,cmap,&(displayInfo->colormap[i]),1,0);
 	    } else if(!alreadyFreedUnphysical) {
@@ -470,7 +471,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 
 DlElement *getNextElement(DisplayInfo *pDI, char *token) {
     int i;
-    for (i=0; i<parseFuncTableSize; i++) {
+    for(i=0; i<parseFuncTableSize; i++) {
 	if(!strcmp(token,parseFuncTable[i].name)) {
 	    return parseFuncTable[i].func(pDI);
 	}
@@ -814,8 +815,12 @@ void dmDisplayListParse(DisplayInfo *displayInfo, FILE *filePtr,
 	}
     }
 
-  /* Execute all the elements including the display */
+  /* Execute all the elements including the display.  Set the
+     elementsExecuted flag since this is the first time for this
+     display. */
+    cdi->elementsExecuted=False;
     dmTraverseDisplayList(cdi);
+    cdi->elementsExecuted=True;
     
   /* Pop it up */
     XtPopup(cdi->shell,XtGrabNone);
@@ -1068,17 +1073,17 @@ void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
  */
 void dmTraverseDisplayList(DisplayInfo *displayInfo)
 {
-    DlElement *element;
+    DlElement *pE;
 
   /* Traverse the display list */
 #if DEBUG_TRAVERSAL
     print("\n[dmTraverseDisplayList: displayInfo->dlElementList:\n");
     dumpDlElementList(displayInfo->dlElementList);
 #endif
-    element = FirstDlElement(displayInfo->dlElementList);
-    while(element) {
-	(element->run->execute)(displayInfo,element);
-	element = element->next;
+    pE = FirstDlElement(displayInfo->dlElementList);
+    while(pE) {
+	if(pE->run->execute) (pE->run->execute)(displayInfo,pE);
+	pE = pE->next;
     }
 
   /* Change the cursor for the drawing area */
@@ -1104,15 +1109,15 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
 }
 
 
-/*
- * Traverse (execute) all displayInfos and display lists
- * (Could call dmTraverseDisplayList inside the displayInfo traversal,
- *    but only need one XFlush and one ca_pend_event)
- */
+
+/* Traverse (execute) all displayInfos and display lists.  Could call
+ * dmTraverseDisplayList inside the displayInfo traversal, but only
+ * need one XFlush and one ca_pend_event this way.  This is only
+ * called from modeCallback and is used for initialization. */
 void dmTraverseAllDisplayLists()
 {
     DisplayInfo *displayInfo;
-    DlElement *element;
+    DlElement *pE;
 
     displayInfo = displayInfoListHead->next;
 
@@ -1124,11 +1129,20 @@ void dmTraverseAllDisplayLists()
 	print("\n[dmTraverseAllDisplayLists: displayInfo->dlElementList:\n");
 	dumpDlElementList(displayInfo->dlElementList);
 #endif
-	element = FirstDlElement(displayInfo->dlElementList);
-	while(element) {
-	    (element->run->execute)(displayInfo,element);
-	    element = element->next;
+      /* Set the elementsExecuted flag since this is the first time
+       *  for this display. */
+	displayInfo->elementsExecuted = False;
+	pE = FirstDlElement(displayInfo->dlElementList);
+	while(pE) {
+	    
+	    pE->staticGraphic = False;
+	    pE->hidden = False;
+	    pE->data = NULL;
+	    if(pE->run->execute) (pE->run->execute)(displayInfo,pE);
+	    pE = pE->next;
 	}
+      /* Set elementsExecuted to True since first time is done */
+	displayInfo->elementsExecuted = True;
 
       /* Change the cursor for the drawing area for this displayInfo */
 	XDefineCursor(display,XtWindow(displayInfo->drawingArea),
@@ -1185,7 +1199,6 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
   /* Loop over elements not including the display */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
-	pE->hidden = 0;
 	if(!pE->widget) {
 	    (pE->run->execute)(displayInfo, pE);
 	}

@@ -65,10 +65,10 @@ extern "C" {
 #endif
 
 typedef struct _MedmTextEntry {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record;
-    UpdateTask  *updateTask;
-    Boolean     updateAllowed;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
+    Boolean          updateAllowed;
 } MedmTextEntry;
 
 void textEntryCreateRunTimeInstance(DisplayInfo *, DlElement *);
@@ -112,8 +112,8 @@ int textFieldFontListIndex(int height)
 /* don't allow height of font to exceed 90% - 4 pixels of textField widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
-	if ( ((int)(.90*height) - 4) >=
+    for(i = MAX_FONTS-1; i >=  0; i--) {
+	if( ((int)(.90*height) - 4) >=
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -130,16 +130,16 @@ char *valueToString(MedmTextEntry *pte, TextFormat format) {
     textField[0] = '\0';
     switch(pr->dataType) {
     case DBF_STRING:
-	if (pr->array) {
+	if(pr->array) {
 	    strncpy(textField,(char *)pr->array, MAX_TEXT_UPDATE_WIDTH-1);
 	    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 	}
 	return textField;
     case DBF_ENUM:
-	if ((pr->precision >= 0) && (pr->hopr+1 > 0)) {
+	if((pr->precision >= 0) && (pr->hopr+1 > 0)) {
 	    int i = (int) pr->value;
 	  /* getting values of -1 for data->value for invalid connections */
-	    if ( i >= 0 && i < (int) pr->hopr+1) {
+	    if( i >= 0 && i < (int) pr->hopr+1) {
 		strncpy(textField,pr->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
 		textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		return textField;
@@ -151,8 +151,8 @@ char *valueToString(MedmTextEntry *pte, TextFormat format) {
 	}
 	break;
     case DBF_CHAR:
-	if (format == STRING) {
-	    if (pr->array) {
+	if(format == STRING) {
+	    if(pr->array) {
 		strncpy(textField,pr->array,
 		  MIN(pr->elementCount,(MAX_TOKEN_LENGTH-1)));
 		textField[MAX_TOKEN_LENGTH-1] = '\0';
@@ -176,7 +176,7 @@ char *valueToString(MedmTextEntry *pte, TextFormat format) {
     
   /* KE: Value can be received before the graphical info
    *   Set precision to 0 if it is still -1 from initialization */
-    if (precision < 0) precision = 0;
+    if(precision < 0) precision = 0;
   /* Convert bad values of precision to high precision */
     if(precision > 17) precision = 17;
     switch (format) {
@@ -230,6 +230,10 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
     int n;
     DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
+  /* If the widget is already created just return.  The update task
+     will handle it. */
+    if(dlElement->widget) return;
+
     if(dlElement->data) {
 	pte = (MedmTextEntry *)dlElement->data;
     } else {
@@ -241,7 +245,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  textEntryDraw,
 	  (XtPointer)pte);
 	
-	if (pte->updateTask == NULL) {
+	if(pte->updateTask == NULL) {
 	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pte->updateTask,textEntryDestroyCb);
@@ -255,7 +259,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	drawWhiteRectangle(pte->updateTask);
     }
     
-  /* from the text entry structure, we've got TextEntry's specifics */
+  /* Create the widget */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlTextEntry->object.x); n++;
     XtSetArg(args[n],XmNy,(Position)dlTextEntry->object.y); n++;
@@ -352,22 +356,21 @@ void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Update the limits to reflect current src's */
     updatePvLimits(&dlTextEntry->limits);
 
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
 	textEntryCreateRunTimeInstance(displayInfo,dlElement);
-    } else
-      if (displayInfo->traversalMode == DL_EDIT) {
-	  if (dlElement->widget) {
-	      DlObject *po = &(dlElement->structure.textEntry->object);
-	      XtVaSetValues(dlElement->widget,
-		XmNx, (Position) po->x,
-		XmNy, (Position) po->y,
-		XmNwidth, (Dimension) po->width,
-		XmNheight, (Dimension) po->height,
-		NULL);
-	  } else {
-	      textEntryCreateEditInstance(displayInfo,dlElement);
-	  }
-      }
+    } else if(displayInfo->traversalMode == DL_EDIT) {
+	if(dlElement->widget) {
+	    DlObject *po = &(dlElement->structure.textEntry->object);
+	    XtVaSetValues(dlElement->widget,
+	      XmNx, (Position) po->x,
+	      XmNy, (Position) po->y,
+	      XmNwidth, (Dimension) po->width,
+	      XmNheight, (Dimension) po->height,
+	      NULL);
+	} else {
+	    textEntryCreateEditInstance(displayInfo,dlElement);
+	}
+    }
 }
 
 void hideDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -384,18 +387,27 @@ void textEntryUpdateValueCb(XtPointer cd) {
 void textEntryDraw(XtPointer cd) {
     MedmTextEntry *pte = (MedmTextEntry *) cd;
     Record *pr = pte->record;
-    Widget widget = pte->dlElement->widget;
-    DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
+    DlElement *dlElement = pte->dlElement;
+    Widget widget = dlElement->widget;
+    DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
-    if (pr->connected) {
-	if (pr->readAccess) {
-	    if (widget) {
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pr->connected) {
+	if(pr->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pte->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
 	    else
 	      return;
-	    if (pr->writeAccess) {
+	    if(pr->writeAccess) {
 		XtVaSetValues(widget,XmNeditable,True,NULL);
 		XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    } else {
@@ -403,7 +415,7 @@ void textEntryDraw(XtPointer cd) {
 		XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 		pte->updateAllowed = True;
 	    }
-	    if (pte->updateAllowed) {
+	    if(pte->updateAllowed) {
 		XmTextFieldSetString(widget,valueToString(pte,dlTextEntry->format));
 		switch (dlTextEntry->clrmod) {
 		case STATIC:
@@ -418,18 +430,19 @@ void textEntryDraw(XtPointer cd) {
 	    draw3DPane(pte->updateTask,
 	      pte->updateTask->displayInfo->colormap[dlTextEntry->control.bclr]);
 	    draw3DQuestionMark(pte->updateTask);
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pte->updateTask);
     }
 }
 
 void textEntryDestroyCb(XtPointer cd) {
     MedmTextEntry *pte = (MedmTextEntry *) cd;
-    if (pte) {
+    if(pte) {
 	medmDestroyRecord(pte->record);
+	pte->dlElement->data = 0;
 	free((char *)pte);
     }
     return;
@@ -474,7 +487,7 @@ void textEntryModifyVerifyCallback(
     XmTextVerifyCallbackStruct *pcbs = (XmTextVerifyCallbackStruct *) pCallbackData;
 
   /* NULL event means value changed programmatically; hence don't process */
-    if (pcbs->event != NULL) {
+    if(pcbs->event != NULL) {
 	switch (XtHasCallbacks(w,XmNlosingFocusCallback)) {
 	case XtCallbackNoList:
 	case XtCallbackHasNone:
@@ -507,29 +520,29 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
     int i;
 
 
-    if ((pr->connected) && pr->writeAccess) {
-	if (!(textValue = XmTextFieldGetString(w))) return;
+    if((pr->connected) && pr->writeAccess) {
+	if(!(textValue = XmTextFieldGetString(w))) return;
 	switch (pr->dataType) {
 	case DBF_STRING:
-	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
+	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	    medmSendString(pte->record,textValue);
 	    break;
 	case DBF_ENUM:
-	    if (strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
+	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	  /* Check for a match */
 	    match = False;
-	    for (i = 0; i < pr->hopr+1; i++) {
-		if (pr->stateStrings[i]) {
-		    if (!strcmp(textValue,pr->stateStrings[i])) {
+	    for(i = 0; i < pr->hopr+1; i++) {
+		if(pr->stateStrings[i]) {
+		    if(!strcmp(textValue,pr->stateStrings[i])) {
 			medmSendString(pte->record,textValue);
 			match = True;
 			break;
 		    }
 		}
 	    }
-	    if (match == False) {
+	    if(match == False) {
 	      /* Assume it is a number */
 		long longValue=strtol(textValue,&end,10);
 		if(*end == 0 && end != textValue &&
@@ -548,7 +561,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 	    }
 	    break;
 	case DBF_CHAR:
-	    if (pte->dlElement->structure.textEntry->format == STRING) {
+	    if(pte->dlElement->structure.textEntry->format == STRING) {
 		unsigned long len =
 		  MIN((unsigned long)pr->elementCount,
 		    (unsigned long)(strlen(textValue)+1));
@@ -557,7 +570,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
 		break;
 	    }
 	default:
-	    if ((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
+	    if((strlen(textValue) > (size_t) 2) && (textValue[0] == '0')
 	      && (textValue[1] == 'x' || textValue[1] == 'X')) {
 		value = (double)strtoul(textValue,&end,16);
 	    } else {
@@ -593,11 +606,11 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd) {
     hopr.fval = (float) pr->hopr;
     lopr.fval = (float) pr->lopr;
     val.fval = (float) pr->value;
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+    if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
     precision = pr->precision;
-    if (precision < 0) precision = 0;
+    if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
     
   /* Set lopr and hopr to channel - they are aren't used by the TextEntry */
@@ -629,8 +642,8 @@ DlElement *createDlTextEntry(DlElement *p)
     DlElement *dlElement;
 
     dlTextEntry = (DlTextEntry *)malloc(sizeof(DlTextEntry));
-    if (!dlTextEntry) return 0;
-    if (p) {
+    if(!dlTextEntry) return 0;
+    if(p) {
 	*dlTextEntry = *(p->structure.textEntry);
     } else {
 	objectAttributeInit(&(dlTextEntry->object));
@@ -644,7 +657,7 @@ DlElement *createDlTextEntry(DlElement *p)
 	dlTextEntry->format = MEDM_DECIMAL;
     }
 
-    if (!(dlElement = createDlElement(DL_TextEntry,
+    if(!(dlElement = createDlElement(DL_TextEntry,
       (XtPointer)      dlTextEntry,
       &textEntryDlDispatchTable))) {
 	free(dlTextEntry);
@@ -662,34 +675,34 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlTextEntry(NULL);
     int i = 0;
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlTextEntry = dlElement->structure.textEntry; 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlTextEntry->object));
-	    else if (!strcmp(token,"control"))
+	    else if(!strcmp(token,"control"))
 	      parseControl(displayInfo,&(dlTextEntry->control));
-	    else if (!strcmp(token,"clrmod")) {
+	    else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
-		    if (!strcmp(token,stringValueTable[i])) {
+		for(i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextEntry->clrmod = i;
 			break;
 		    }
 		}
-	    } else if (!strcmp(token,"format")) {
+	    } else if(!strcmp(token,"format")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
-		    if (!strcmp(token,stringValueTable[i])) {
+		for(i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextEntry->format = i;
 			break;
 		    }
 		}
-	    } else if (!strcmp(token,"limits")) {
+	    } else if(!strcmp(token,"limits")) {
 		parseLimits(displayInfo,&(dlTextEntry->limits));
 	    }
 	    break;
@@ -700,7 +713,7 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -719,15 +732,15 @@ void writeDlTextEntry(
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%s\"text entry\" {",indent);
 	writeDlObject(stream,&(dlTextEntry->object),level+1);
 	writeDlControl(stream,&(dlTextEntry->control),level+1);
-	if (dlTextEntry->clrmod != STATIC)
+	if(dlTextEntry->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlTextEntry->clrmod]);
-	if (dlTextEntry->format != MEDM_DECIMAL)
+	if(dlTextEntry->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextEntry->format]);
 	writeDlLimits(stream,&(dlTextEntry->limits),level+1);

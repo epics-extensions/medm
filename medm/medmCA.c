@@ -82,6 +82,7 @@ typedef struct {
 } PvInfo;
 
 static PvInfo *pvInfo = NULL;
+static DlElement *pvInfoElement = NULL;
 static int nPvInfoCbs = 0;
 static int nPvInfoPvs = 0;
 static XtIntervalId pvInfoTimeoutId;
@@ -1023,6 +1024,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
   /* Get the records */
     records = getPvInfoFromDisplay(displayInfo, &nPvInfoPvs, &pE);
     if(!records) return;
+    pvInfoElement = pE;
 
   /* Allocate space */
     pvInfo = (PvInfo *)calloc(nPvInfoPvs, sizeof(PvInfo));
@@ -1238,7 +1240,10 @@ static void pvInfoWriteInfo(void)
     char *descVal;
 #if defined(DBR_CLASS_NAME) && DO_RTYP
     char *rtypVal;
-#endif    
+#endif
+    DlElement *pE;
+    char *elementType;
+    static char noType[]="Unknown";
     struct dbr_time_string timeVal;
     char string[1024];     /* Danger: Fixed length */
     XmTextPosition curpos = 0;
@@ -1260,8 +1265,18 @@ static void pvInfoWriteInfo(void)
     strftime(timeStampStr, TIME_STRING_MAX, STRFTIME_FORMAT"\n", tblock);
     timeStampStr[TIME_STRING_MAX-1]='0';
 
+  /* Get element type */
+    pE = pvInfoElement;
+    if(pE &&
+      pE->type >= MIN_DL_ELEMENT_TYPE && pE->type <= MAX_DL_ELEMENT_TYPE) {
+	elementType=elementType(pE->type);
+    } else {
+	elementType=noType;
+    }
+
   /* Heading */
-    sprintf(string, "           PV Information\n\n%s\n", timeStampStr);
+    sprintf(string, "           PV Information\n\nObject: %s\n%s\n",
+      elementType, timeStampStr);
     XmTextSetInsertionPosition(pvInfoMessageBox, 0);
     XmTextSetString(pvInfoMessageBox, string);
     curpos+=strlen(string);
@@ -1392,6 +1407,7 @@ static void pvInfoWriteInfo(void)
   /* Free space */
     if(pvInfo) free((char *)pvInfo);
     pvInfo = NULL;
+    pvInfoElement = NULL;
 }
 
 static void pvInfoTimeout(XtPointer cd, XtIntervalId *id)

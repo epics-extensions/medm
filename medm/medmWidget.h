@@ -220,22 +220,28 @@ typedef enum {SELECT_ACTION, CREATE_ACTION} ActionType;
 
 /* Update tasks */
 typedef struct _UpdateTask {
-    void       (*executeTask)(XtPointer);    /* update rountine */
+    void       (*executeTask)(XtPointer);    /* update routine */
     void       (*destroyTask)(XtPointer);
     void       (*getRecord)(XtPointer, Record **, int *);
     Widget     (*widget)(XtPointer);
-    XtPointer  clientData;                           
+    XtPointer  clientData;
     double     timeInterval;                 /* if not 0.0, periodic task */
     double     nextExecuteTime;               
     struct     _DisplayInfo *displayInfo;
-    int        executeRequestsPendingCount;  /* how many update requests are pending */
-    XRectangle rectangle;                    /* geometry of the Object */
-    Boolean    overlapped;                   /* tell whether this object is overlapped
-					      * by other objects */
-    Boolean    opaque;
+    int        executeRequestsPendingCount;  /* How many update requests are pending */
+    XRectangle rectangle;                    /* Geometry of the object */
+    Boolean    overlapped;                   /* Indicates overlapped by others */
+    Boolean    opaque;                       /* Indicates whether to redraw under */
+    Boolean    disabled;                     /* Indicates not to update */
     struct     _UpdateTask *prev;
     struct     _UpdateTask *next;
 } UpdateTask;
+
+/* General private data structure */
+typedef struct _MedmElement {
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+} MedmElement;
 
 typedef struct _InitTask {
     Boolean init;
@@ -260,7 +266,8 @@ typedef struct {
    file */
 typedef struct _DisplayInfo {
     FILE *filePtr;
-    Boolean newDisplay;
+    Boolean newDisplay;       /* Comes from File|New and not yet saved */
+    Boolean elementsExecuted; /* All elements have been executed in EXECUTE */
     int versionNumber;
   /* Widgets and main pixmap */
     Widget shell;

@@ -63,8 +63,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _MedmText {
     DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
-    UpdateTask       *updateTask;
 } MedmText;
 
 static void textUpdateValueCb(XtPointer cd);
@@ -226,7 +226,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	      textDraw,
 	      (XtPointer)pt);
 	    
-	    if (pt->updateTask == NULL) {
+	    if(pt->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlText: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pt->updateTask,textDestroyCb);
@@ -239,6 +239,8 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlText->dynAttr, pt->records);
 	}
     } else {
+	if(displayInfo->traversalMode == DL_EXECUTE)
+	  dlElement->staticGraphic = True;
 	executeDlBasicAttribute(displayInfo,&(dlText->attr));
 #if DEBUG_FONTS > 1 || DEBUG_HIDE
 	printf("executeDlText: Calling drawText DA\n");
@@ -360,8 +362,8 @@ static void textDraw(XtPointer cd) {
 	/* KE: Different drawXXX from other drawing objects */
 	  drawText(display,XtWindow(displayInfo->drawingArea),
 	    displayInfo->gc,dlText);
-	if (pr->readAccess) {
-	    if (!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
+	if(pr->readAccess) {
+	    if(!pt->updateTask->overlapped && dlText->dynAttr.vis == V_STATIC) {
 		pt->updateTask->opaque = True;
 	    }
 	} else {
@@ -379,7 +381,7 @@ static void textDraw(XtPointer cd) {
 static void textDestroyCb(XtPointer cd) {
     MedmText *pt = (MedmText *)cd;
 
-    if (pt) {
+    if(pt) {
 	Record **records = pt->records;
 	
 	if(records) {
@@ -389,6 +391,7 @@ static void textDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
+	pt->dlElement->data = 0;
 	free((char *)pt);
     }
     return;
@@ -410,8 +413,8 @@ DlElement *createDlText(DlElement *p)
     DlElement *dlElement;
  
     dlText = (DlText *)malloc(sizeof(DlText));
-    if (!dlText) return 0;
-    if (p) { 
+    if(!dlText) return 0;
+    if(p) { 
 	*dlText = *p->structure.text;
     } else {
 	objectAttributeInit(&(dlText->object));
@@ -421,7 +424,7 @@ DlElement *createDlText(DlElement *p)
 	dlText->align = HORIZ_LEFT;
     }
  
-    if (!(dlElement = createDlElement(DL_Text,
+    if(!(dlElement = createDlElement(DL_Text,
       (XtPointer)      dlText,
       &textDlDispatchTable))) {
 	free(dlText);
@@ -439,7 +442,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlText(NULL);
     int i = 0;
     
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlText = dlElement->structure.text;
     
     do {
@@ -449,7 +452,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 		parseObject(displayInfo,&(dlText->object));
 	    } else if(!strcmp(token,"basic attribute"))
 	      parseBasicAttribute(displayInfo,&(dlText->attr));
-	    else if (!strcmp(token,"dynamic attribute"))
+	    else if(!strcmp(token,"dynamic attribute"))
 	      parseDynamicAttribute(displayInfo,&(dlText->dynAttr));
 	    else if(!strcmp(token,"textix")) {
 		getToken(displayInfo,token);
@@ -461,7 +464,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlText->align = i;
 			found=1;
 			break;
@@ -469,7 +472,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 		}
 	      /* Backward compatibility */
 		if(!found) {
-		    if (!strcmp(token,"vert. top")) {
+		    if(!strcmp(token,"vert. top")) {
 			dlText->align = HORIZ_LEFT;
 		    } else if(!strcmp(token,"vert. centered")) {
 			dlText->align = HORIZ_CENTER;
@@ -486,7 +489,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
  
     return dlElement;
@@ -504,15 +507,15 @@ void writeDlText(
     indent[level] = '\0'; 
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%stext {",indent);
   	writeDlObject(stream,&(dlText->object),level+1);
   	writeDlBasicAttribute(stream,&(dlText->attr),level+1);
   	writeDlDynamicAttribute(stream,&(dlText->dynAttr),level+1);
-  	if (dlText->textix[0] != '\0') 
+  	if(dlText->textix[0] != '\0') 
 	  fprintf(stream,"\n%s\ttextix=\"%s\"",indent,dlText->textix);
-  	if (dlText->align != HORIZ_LEFT) 
+  	if(dlText->align != HORIZ_LEFT) 
 	  fprintf(stream,"\n%s\talign=\"%s\"",indent,stringValueTable[dlText->align]);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -547,7 +550,7 @@ static void blinkCursor(
 {
     static Boolean state = FALSE;
  
-    if (state == TRUE) {
+    if(state == TRUE) {
         XDrawLine(display,XtWindow(currentDisplayInfo->drawingArea),
 	  currentDisplayInfo->gc,
 	  cursorX, cursorY, cursorX + CURSOR_WIDTH, cursorY);
@@ -588,7 +591,7 @@ DlElement *handleTextCreate(int x0, int y0)
  
     window = XtWindow(currentDisplayInfo->drawingArea);
     dlElement = createDlText(NULL);
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlText = dlElement->structure.text;
     textGetValues(&globalResourceBundle,dlElement);
     dlText->object.x = x0; 
@@ -619,7 +622,7 @@ DlElement *handleTextCreate(int x0, int y0)
       GrabModeAsync,GrabModeAsync,CurrentTime);
  
   /* Now loop until button is again pressed or CR is typed */
-    while (TRUE) {
+    while(TRUE) {
 	XtAppNextEvent(appContext,&event);
 	switch(event.type) {
         case ButtonPress:
@@ -646,8 +649,8 @@ DlElement *handleTextCreate(int x0, int y0)
 	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
 	      &modifiers,&keysym);
           /* if BS or DELETE */
-	    if (keysym == osfXK_BackSpace || keysym == osfXK_Delete) {
-		if (stringIndex > 0) {
+	    if(keysym == osfXK_BackSpace || keysym == osfXK_Delete) {
+		if(stringIndex > 0) {
 		  /* remove last character */
 		    stringIndex--;
 		    dlText->textix[stringIndex] = '\0';
@@ -686,9 +689,9 @@ DlElement *handleTextCreate(int x0, int y0)
 		return (dlElement);
 	    } else {
 		length = XLookupString(key,buffer,BUFFER_SIZE,NULL,NULL);
-		if (!isprint(buffer[0]) || length == 0) break;
+		if(!isprint(buffer[0]) || length == 0) break;
 	      /* Ring bell and don't accept input if going to overflow string */
-		if (stringIndex + length < MAX_TOKEN_LENGTH) {
+		if(stringIndex + length < MAX_TOKEN_LENGTH) {
 		    strncpy(&(dlText->textix[stringIndex]),buffer,length);
 		    stringIndex += length;
 		    dlText->textix[stringIndex] = '\0';

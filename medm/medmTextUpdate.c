@@ -55,7 +55,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 */
 
 #define DEBUG_SHORT 0
-#define DEBUG_TEXT 0
+#define DEBUG_UPDATE 0
 
 #include "medm.h"
 
@@ -68,10 +68,10 @@ extern "C" {
 #endif
 
 typedef struct _MedmTextUpdate {
-    DlElement     *dlElement;     /* Must be first */
-    Record        *record;
-    UpdateTask    *updateTask;
-    int           fontIndex;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
+    int              fontIndex;
 } MedmTextUpdate;
 
 static void textUpdateUpdateValueCb(XtPointer cd);
@@ -110,13 +110,16 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
     size_t nChars;
     DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
+#if DEBUG_UPDATE
+    print("executeDlTextUpdate:\n");
+#endif
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
   /* Update the limits to reflect current src's */
     updatePvLimits(&dlTextUpdate->limits);
 
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
 	MedmTextUpdate *ptu;
 	
 	if(dlElement->data) {
@@ -130,7 +133,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	      textUpdateDraw,
 	      (XtPointer)ptu);
 	    
-	    if (ptu->updateTask == NULL) {
+	    if(ptu->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlTextUpdate: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(ptu->updateTask,textUpdateDestroyCb);
@@ -233,8 +236,9 @@ void hideDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void textUpdateDestroyCb(XtPointer cd) {
     MedmTextUpdate *ptu = (MedmTextUpdate *) cd;
-    if (ptu) {
+    if(ptu) {
 	medmDestroyRecord(ptu->record);
+	ptu->dlElement->data = 0;
 	free((char *)ptu);
     }
     return;
@@ -264,22 +268,25 @@ static void textUpdateDraw(XtPointer cd)
     int textWidth = 0;
     int strLen = 0;
 
-    if (pr->connected) {
+#if DEBUG_UPDATE
+    print("textUpdateDraw:\n");
+#endif
+    if(pr->connected) {
       /* KE: Can be connected without graphical info or value yet */
-	if (pr->readAccess) {
+	if(pr->readAccess) {
 	    textField[0] = '\0';
 	    switch (pr->dataType) {
 	    case DBF_STRING :
-		if (pr->array) {
+		if(pr->array) {
 		    strncpy(textField,(char *)pr->array, MAX_TEXT_UPDATE_WIDTH-1);
 		    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		}
 		isNumber = False;
 		break;
 	    case DBF_ENUM :
-		if (pr->precision >= 0 && pr->hopr+1 > 0) {
+		if(pr->precision >= 0 && pr->hopr+1 > 0) {
 		    i = (int) pr->value;
-		    if (i >= 0 && i < (int) pr->hopr+1){
+		    if(i >= 0 && i < (int) pr->hopr+1){
 			strncpy(textField,pr->stateStrings[i], MAX_TEXT_UPDATE_WIDTH-1);
 			textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		    } else {
@@ -292,8 +299,8 @@ static void textUpdateDraw(XtPointer cd)
 		}
 		break;
 	    case DBF_CHAR :
-		if (dlTextUpdate->format == STRING) {
-		    if (pr->array) {
+		if(dlTextUpdate->format == STRING) {
+		    if(pr->array) {
 			strncpy(textField,pr->array,
 			  MIN(pr->elementCount,(MAX_TOKEN_LENGTH-1)));
 			textField[MAX_TOKEN_LENGTH-1] = '\0';
@@ -318,7 +325,7 @@ static void textUpdateDraw(XtPointer cd)
 	    }
 	  /* KE: Value can be received before the graphical info
 	   *   Set precision to 0 if it is still -1 from initialization */
-	    if (precision < 0) precision = 0;
+	    if(precision < 0) precision = 0;
 	  /* Convert bad values of precision to high precision */
 	    if(precision > 17) precision = 17;
 
@@ -406,14 +413,14 @@ static void textUpdateDraw(XtPointer cd)
 	  /* for compatibility reason, only the HORIZ_CENTER and
 	   * HORIZ_RIGHT will recalculate the font size if the number does
 	   * not fit. */
-	    if ((int)dlTextUpdate->object.width  < textWidth) {
+	    if((int)dlTextUpdate->object.width  < textWidth) {
 		switch(dlTextUpdate->align) {
 		case HORIZ_CENTER:
 		case HORIZ_RIGHT:
-		    while (i > 0) {
+		    while(i > 0) {
 			i--;
 			textWidth = XTextWidth(fontTable[i],textField,strLen);
-			if ((int)dlTextUpdate->object.width > textWidth) break;
+			if((int)dlTextUpdate->object.width > textWidth) break;
 		    }
 		    break;
 		default :
@@ -479,11 +486,11 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd) {
     hopr.fval = (float) pr->hopr;
     lopr.fval = (float) pr->lopr;
     val.fval = (float) pr->value;
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+    if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
     precision = pr->precision;
-    if (precision < 0) precision = 0;
+    if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
     
   /* Set lopr and hopr to channel - they are aren't used by the TextUpdate */
@@ -515,8 +522,8 @@ DlElement *createDlTextUpdate(DlElement *p)
     DlElement *dlElement;
 
     dlTextUpdate = (DlTextUpdate *)malloc(sizeof(DlTextUpdate));
-    if (!dlTextUpdate) return 0;
-    if (p) {
+    if(!dlTextUpdate) return 0;
+    if(p) {
 	*dlTextUpdate = *p->structure.textUpdate;
     } else {
 	objectAttributeInit(&(dlTextUpdate->object));
@@ -531,7 +538,7 @@ DlElement *createDlTextUpdate(DlElement *p)
 	dlTextUpdate->format = MEDM_DECIMAL;
     }
 
-    if (!(dlElement = createDlElement(DL_TextUpdate,
+    if(!(dlElement = createDlElement(DL_TextUpdate,
       (XtPointer)      dlTextUpdate,
       &textUpdateDlDispatchTable))) {
 	free(dlTextUpdate);
@@ -549,56 +556,56 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlTextUpdate(NULL);
     int i= 0;
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlTextUpdate = dlElement->structure.textUpdate;
 
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlTextUpdate->object));
-	    } else if (!strcmp(token,"monitor")) {
+	    } else if(!strcmp(token,"monitor")) {
 		parseMonitor(displayInfo,&(dlTextUpdate->monitor));
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		for(i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextUpdate->clrmod = i;
 			break;
 		    }
 		}
-	    } else if (!strcmp(token,"format")) {
+	    } else if(!strcmp(token,"format")) {
 		int found = 0;
 		
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		for(i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextUpdate->format = i;
 			found = 1;
 			break;
 		    }
 		}
 	      /* Backward compatibility */
-		if (!found) {
-		    if (!strcmp(token,"decimal")) {
+		if(!found) {
+		    if(!strcmp(token,"decimal")) {
 			dlTextUpdate->format = MEDM_DECIMAL;
-		    } else if (!strcmp(token,
+		    } else if(!strcmp(token,
 		      "decimal- exponential notation")) {
 			dlTextUpdate->format = EXPONENTIAL;
-		    } else if (!strcmp(token,"engr. notation")) {
+		    } else if(!strcmp(token,"engr. notation")) {
 			dlTextUpdate->format = ENGR_NOTATION;
-		    } else if (!strcmp(token,"decimal- compact")) {
+		    } else if(!strcmp(token,"decimal- compact")) {
 			dlTextUpdate->format = COMPACT;
-		    } else if (!strcmp(token,"decimal- truncated")) {
+		    } else if(!strcmp(token,"decimal- truncated")) {
 			dlTextUpdate->format = TRUNCATED;
 		      /* (MDA) allow for LANL spelling errors {like above, but with trailing space} */
-		    } else if (!strcmp(token,"decimal- truncated ")) {
+		    } else if(!strcmp(token,"decimal- truncated ")) {
 			dlTextUpdate->format = TRUNCATED;
 		      /* (MDA) allow for LANL spelling errors {hexidecimal vs. hexadecimal} */
-		    } else if (!strcmp(token,"hexidecimal")) {
+		    } else if(!strcmp(token,"hexidecimal")) {
 			dlTextUpdate->format = HEXADECIMAL;
 		    }
 		}
@@ -608,7 +615,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextUpdate->align = i;
 			found=1;
 			break;
@@ -616,7 +623,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 		}
 	      /* Backward compatibility */
 		if(!found) {
-		    if (!strcmp(token,"vert. top")) {
+		    if(!strcmp(token,"vert. top")) {
 			dlTextUpdate->align = HORIZ_LEFT;
 		    } else if(!strcmp(token,"vert. centered")) {
 			dlTextUpdate->align = HORIZ_CENTER;
@@ -624,7 +631,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 			dlTextUpdate->align = HORIZ_RIGHT;
 		    }
 		}
-	    } else if (!strcmp(token,"limits")) {
+	    } else if(!strcmp(token,"limits")) {
 		parseLimits(displayInfo,&(dlTextUpdate->limits));
 	    }
 	    break;
@@ -635,7 +642,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -651,18 +658,18 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%s\"text update\" {",indent);
 	writeDlObject(stream,&(dlTextUpdate->object),level+1);
 	writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
-	if (dlTextUpdate->clrmod != STATIC) 
+	if(dlTextUpdate->clrmod != STATIC) 
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->clrmod]);
-	if (dlTextUpdate->align != HORIZ_LEFT)
+	if(dlTextUpdate->align != HORIZ_LEFT)
 	  fprintf(stream,"\n%s\talign=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->align]);
-	if (dlTextUpdate->format != MEDM_DECIMAL)
+	if(dlTextUpdate->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->format]);
 	writeDlLimits(stream,&(dlTextUpdate->limits),level+1);

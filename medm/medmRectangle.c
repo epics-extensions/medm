@@ -54,14 +54,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 1
+#define DEBUG_COMPOSITE 0
 
 #include "medm.h"
 
 typedef struct _MedmRectangle {
     DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
-    UpdateTask       *updateTask;
 } MedmRectangle;
 
 static void rectangleDraw(XtPointer cd);
@@ -102,11 +102,11 @@ static void drawRectangle(MedmRectangle *pr)
 #endif
 
     lineWidth = (dlRectangle->attr.width+1)/2;
-    if (dlRectangle->attr.fill == F_SOLID) {
+    if(dlRectangle->attr.fill == F_SOLID) {
 	XFillRectangle(display,XtWindow(widget),displayInfo->gc,
           dlRectangle->object.x,dlRectangle->object.y,
           dlRectangle->object.width,dlRectangle->object.height);
-    } else if (dlRectangle->attr.fill == F_OUTLINE) {
+    } else if(dlRectangle->attr.fill == F_OUTLINE) {
 	XDrawRectangle(display,XtWindow(widget),displayInfo->gc,
 	  dlRectangle->object.x + lineWidth,
 	  dlRectangle->object.y + lineWidth,
@@ -137,7 +137,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	      rectangleDraw,
 	      (XtPointer)pr);
 	    
-	    if (pr->updateTask == NULL) {
+	    if(pr->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pr->updateTask,rectangleDestroyCb);
@@ -150,9 +150,11 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlRectangle->dynAttr, pr->records);
 	}
     } else {
+	if(displayInfo->traversalMode == DL_EXECUTE)
+	  dlElement->staticGraphic = True;
 	executeDlBasicAttribute(displayInfo,&(dlRectangle->attr));
 
-	if (dlRectangle->attr.fill == F_SOLID) {
+	if(dlRectangle->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
 	    XFillRectangle(display,XtWindow(displayInfo->drawingArea),
 	      displayInfo->gc,
@@ -162,7 +164,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	      displayInfo->gc,
 	      dlRectangle->object.x,dlRectangle->object.y,
 	      dlRectangle->object.width,dlRectangle->object.height);
-	} else if (dlRectangle->attr.fill == F_OUTLINE) {
+	} else if(dlRectangle->attr.fill == F_OUTLINE) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
 	    XDrawRectangle(display,XtWindow(displayInfo->drawingArea),
 	      displayInfo->gc,
@@ -206,7 +208,7 @@ static void rectangleDraw(XtPointer cd)
     print("rectangleDraw:\n");
 #endif
     
-    if (pd->connected) {
+    if(pd->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -236,8 +238,8 @@ static void rectangleDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlRectangle->dynAttr, pr->records))
 	  drawRectangle(pr);
-	if (pd->readAccess) {
-	    if (!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
+	if(pd->readAccess) {
+	    if(!pr->updateTask->overlapped && dlRectangle->dynAttr.vis == V_STATIC) {
 		pr->updateTask->opaque = True;
 	    }
 	} else {
@@ -261,7 +263,7 @@ static void rectangleDestroyCb(XtPointer cd)
 {
     MedmRectangle *pr = (MedmRectangle *)cd;
 
-    if (pr) {
+    if(pr) {
 	Record **records = pr->records;
 	
 	if(records) {
@@ -271,6 +273,7 @@ static void rectangleDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
+	pr->dlElement->data = 0;
 	free((char *)pr);
     }
     return;
@@ -293,8 +296,8 @@ DlElement *createDlRectangle(DlElement *p)
     DlElement *dlElement;
 
     dlRectangle = (DlRectangle *)malloc(sizeof(DlRectangle));
-    if (!dlRectangle) return 0;
-    if (p) {
+    if(!dlRectangle) return 0;
+    if(p) {
 	*dlRectangle = *p->structure.rectangle;
     } else {
 	objectAttributeInit(&(dlRectangle->object)); 
@@ -302,7 +305,7 @@ DlElement *createDlRectangle(DlElement *p)
 	dynamicAttributeInit(&(dlRectangle->dynAttr));
     }
  
-    if (!(dlElement = createDlElement(DL_Rectangle,
+    if(!(dlElement = createDlElement(DL_Rectangle,
       (XtPointer)      dlRectangle,
       &rectangleDlDispatchTable))) {
 	free(dlRectangle);
@@ -319,16 +322,16 @@ DlElement *parseRectangle(DisplayInfo *displayInfo)
     DlRectangle *dlRectangle;
     DlElement *dlElement = createDlRectangle(NULL);
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlRectangle = dlElement->structure.rectangle;
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlRectangle->object));
-	    else if (!strcmp(token,"basic attribute"))
+	    else if(!strcmp(token,"basic attribute"))
 	      parseBasicAttribute(displayInfo,&(dlRectangle->attr));
-	    else if (!strcmp(token,"dynamic attribute"))
+	    else if(!strcmp(token,"dynamic attribute"))
 	      parseDynamicAttribute(displayInfo,&(dlRectangle->dynAttr));
 	    break;
 	case T_EQUAL:
@@ -340,7 +343,7 @@ DlElement *parseRectangle(DisplayInfo *displayInfo)
 	    nestingLevel--;
 	    break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
     
     return dlElement;
@@ -358,7 +361,7 @@ void writeDlRectangle(
     indent[level] = '\0'; 
  
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%srectangle {",indent);
   	writeDlObject(stream,&(dlRectangle->object),level+1);

@@ -54,6 +54,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define DEBUG_REDRAW 0
 #include "medm.h"
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p);
@@ -86,8 +87,8 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     Pixmap pixmap = (Pixmap) cd;
     
-/*     if (pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
-    if (pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
+/*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
+    if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
     pixmap=(Pixmap)0;
 }
 
@@ -134,8 +135,6 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     Pixmap shellCommandPixmap;
     unsigned int pixmapSize;
     DlShellCommand *dlShellCommand = dlElement->structure.shellCommand;
-
-
   /* These are widget ids, but they are recorded in the otherChild
    *   widget list as well, for destruction when new shells are
    *   selected at the top level */
@@ -144,6 +143,13 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget widget;
 #endif
 
+#if DEBUG_REDRAW
+    widget=dlElement->widget;
+    print("executeDlShellCommand: %x hidden=%s widget=%x managed=%s\n",
+      dlElement,dlElement->hidden?"Yes":"No",
+      widget,
+      widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
+#endif    
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
@@ -152,16 +158,27 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
    *** (MDA)  create a pulldown menu with the following related shell menu
    ***   entries in it...  --  careful with the XtSetArgs here (special)
    ***/
-    if (dlElement->widget && displayInfo->traversalMode == DL_EDIT) {
-	DlObject *po = &(dlElement->structure.shellCommand->object);
-	XtVaSetValues(dlElement->widget,
-          XmNx, (Position) po->x,
-          XmNy, (Position) po->y,
-          XmNwidth, (Dimension) po->width,
-          XmNheight, (Dimension) po->height,
-          NULL);
+    if(dlElement->widget) {
+      /* The widget already exists */
+	if(displayInfo->traversalMode == DL_EDIT) {
+	  /* In EDIT mode update its dimensions */
+	    DlObject *po = &(dlElement->structure.shellCommand->object);
+	    XtVaSetValues(dlElement->widget,
+	      XmNx, (Position) po->x,
+	      XmNy, (Position) po->y,
+	      XmNwidth, (Dimension) po->width,
+	      XmNheight, (Dimension) po->height,
+	      NULL);
+	} else {
+	  /* In EXECUTE manage it if necessary */
+	    if(!XtIsManaged(dlElement->widget)) {
+		XtManageChild(dlElement->widget);
+	    }
+	}
 	return;
     }
+
+  /* Make the widget */
     XtSetArg(args[0],XmNforeground,(Pixel)
       displayInfo->colormap[dlShellCommand->clr]);
     XtSetArg(args[1],XmNbackground,(Pixel)
@@ -217,8 +234,8 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       XmNdestroyCallback,freePixmapCallback,
       (XtPointer)shellCommandPixmap);
     
-    for (i = 0; i < MAX_SHELL_COMMANDS; i++) {
-	if (strlen(dlShellCommand->command[i].command) > (size_t)0) {
+    for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	if(strlen(dlShellCommand->command[i].command) > (size_t)0) {
 	    xmString = XmStringCreateLocalized(dlShellCommand->command[i].label);
 	    XtSetArg(args[3], XmNlabelString,xmString);
 	  /* set the displayInfo as the button's userData */
@@ -235,8 +252,23 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 
 void hideDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+#if DEBUG_REDRAW
+    Widget widget = dlElement->widget;
+    
+    print("hideDlShellCommand: %x hidden=%s widget=%x managed=%s\n",
+      dlElement,dlElement->hidden?"Yes":"No",
+      widget,
+      widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
+#endif    
+
   /* Use generic hide for an element with a widget */
     hideWidgetElement(displayInfo, dlElement);
+#if DEBUG_REDRAW
+    print("                    %x hidden=%s widget=%x managed=%s\n",
+      dlElement,dlElement->hidden?"Yes":"No",
+      widget,
+      widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
+#endif    
 }
 
 #ifdef __cplusplus
@@ -254,7 +286,6 @@ static void createDlShellCommandEntry(
 
 }
 
-
 DlElement *createDlShellCommand(DlElement *p)
 {
     DlShellCommand *dlShellCommand;
@@ -262,12 +293,12 @@ DlElement *createDlShellCommand(DlElement *p)
     int cmdNumber;
 
     dlShellCommand = (DlShellCommand *)malloc(sizeof(DlShellCommand));
-    if (!dlShellCommand) return 0;
-    if (p) {
+    if(!dlShellCommand) return 0;
+    if(p) {
 	*dlShellCommand = *p->structure.shellCommand;
     } else {
 	objectAttributeInit(&(dlShellCommand->object));
-	for (cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS;cmdNumber++)
+	for(cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS;cmdNumber++)
 	  createDlShellCommandEntry(
 	    &(dlShellCommand->command[cmdNumber]),
 	    cmdNumber );
@@ -275,7 +306,7 @@ DlElement *createDlShellCommand(DlElement *p)
 	dlShellCommand->bclr = globalResourceBundle.bclr;
     }
 
-    if (!(dlElement = createDlElement(DL_ShellCommand,
+    if(!(dlElement = createDlElement(DL_ShellCommand,
       (XtPointer)      dlShellCommand,
       &shellCommandDlDispatchTable))) {
 	free(dlShellCommand);
@@ -294,15 +325,15 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"label")) {
+	    if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(shellCommand->label,token);
-	    } else if (!strcmp(token,"name")) {
+	    } else if(!strcmp(token,"name")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(shellCommand->command,token);
-	    } else if (!strcmp(token,"args")) {
+	    } else if(!strcmp(token,"args")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(shellCommand->args,token);
@@ -313,7 +344,7 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -326,14 +357,14 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlShellCommand(NULL);
     int cmdNumber;
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlShellCommand = dlElement->structure.shellCommand;
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlShellCommand->object));
-	    } else if (!strncmp(token,"command",7)) {
+	    } else if(!strncmp(token,"command",7)) {
 /*
  * compare the first 7 characters to see if a command entry.
  *   if more than one digit is allowed for the command index, then change
@@ -344,11 +375,11 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
 		  token[8] - '0', MAX_SHELL_COMMANDS - 1);
 		parseShellCommandEntry(displayInfo,
 		  &(dlShellCommand->command[cmdNumber]) );
-	    } else if (!strcmp(token,"clr")) {
+	    } else if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlShellCommand->clr = atoi(token) % DL_MAX_COLORS;
-	    } else if (!strcmp(token,"bclr")) {
+	    } else if(!strcmp(token,"bclr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlShellCommand->bclr = atoi(token) % DL_MAX_COLORS;
@@ -361,7 +392,7 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -380,13 +411,13 @@ void writeDlShellCommandEntry(
  
     fprintf(stream,"\n%scommand[%d] {",indent,index);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
-	if (entry->label[0] != '\0')
+	if(entry->label[0] != '\0')
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,entry->label);
-	if (entry->command[0] != '\0')
+	if(entry->command[0] != '\0')
 	  fprintf(stream,"\n%s\tname=\"%s\"",indent,entry->command);
-	if (entry->args[0] != '\0')
+	if(entry->args[0] != '\0')
 	  fprintf(stream,"\n%s\targs=\"%s\"",indent,entry->args);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
@@ -412,11 +443,11 @@ void writeDlShellCommand(
  
     fprintf(stream,"\n%s\"shell command\" {",indent);
     writeDlObject(stream,&(dlShellCommand->object),level+1);
-    for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+    for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  	if (MedmUseNewFileFormat) {
+  	if(MedmUseNewFileFormat) {
 #endif
-	    if ((dlShellCommand->command[i].label[0] != '\0') ||
+	    if((dlShellCommand->command[i].label[0] != '\0') ||
 	      (dlShellCommand->command[i].command[0] != '\0') ||
 	      (dlShellCommand->command[i].args[0] != '\0'))
 	      writeDlShellCommandEntry(stream,&(dlShellCommand->command[i]),i,level+1);
@@ -456,12 +487,12 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 	XmStringGetLtoR(call_data->value,XmFONTLIST_DEFAULT_TAG,&command);
       /* (MDA) NB: system() blocks! need to background (&) to not block */
       /* KE: User has to do this as it is coded */
-	if (command && *command) {
+	if(command && *command) {
 #if 0
 	  /* KE: Isn't necessary */
 	    performMacroSubstitutions(displayInfo,command,processedCommand,
 	      2*MAX_TOKEN_LENGTH);
-	    if (strlen(processedCommand) > (size_t) 0)
+	    if(strlen(processedCommand) > (size_t) 0)
 	      parseAndExecCommand(displayInfo,processedCommand);
 #else
 	    parseAndExecCommand(displayInfo,command);
@@ -540,7 +571,7 @@ void dmExecuteShellCommand(
     
   /* Check for a prompt char */
     promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
-    if (promptPosition == NULL) {
+    if(promptPosition == NULL) {
       /* No  prompt character found */
       /* (MDA) NB: system() blocks! need to background (&) to not block */
       /* KE: User has to do this as it is coded */
@@ -548,7 +579,7 @@ void dmExecuteShellCommand(
       /* KE: Isn't necessary */
 	performMacroSubstitutions(displayInfo,
 	  shellCommand,processedShellCommand,2*MAX_TOKEN_LENGTH);
-	if (strlen(processedShellCommand) > (size_t) 0)
+	if(strlen(processedShellCommand) > (size_t) 0)
 	  parseAndExecCommand(displayInfo,processedShellCommand);
 #else	
 	  parseAndExecCommand(displayInfo,shellCommand);
@@ -562,7 +593,7 @@ void dmExecuteShellCommand(
 	strcat(shellCommand,"&");
 
       /* Create shell command prompt dialog if necessary */
-	if (displayInfo->shellCommandPromptD == (Widget)NULL) {
+	if(displayInfo->shellCommandPromptD == (Widget)NULL) {
 	    displayInfo->shellCommandPromptD = createShellCommandPromptD(
 	      displayInfo->shell);
 	}

@@ -372,11 +372,11 @@ void resizeGIF(DlImage *dlImage)
 		
 		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
 		
-		for (ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
+		for(ey=0;  ey<gif->eHIGH;  ey++, elptr+=gif->eWIDE) {
 		    iy=(gif->iHIGH * ey) / gif->eHIGH;
 		    epptr=elptr;
 		    ilptr=(Byte *)CURIMAGE(gif)->data + (iy * gif->iWIDE);
-		    for (ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
+		    for(ex=0;  ex<gif->eWIDE;  ex++,epptr++) {
 			ix=(gif->iWIDE * ex) / gif->eWIDE;
 			ipptr=ilptr + ix;
 			*epptr=*ipptr;
@@ -409,11 +409,11 @@ void resizeGIF(DlImage *dlImage)
 		dw=CUREXPIMAGE(gif)->width;
 		dh=CUREXPIMAGE(gif)->height;
 		elptr=epptr=(Byte *)CUREXPIMAGE(gif)->data;
-		for (dy=0;  dy<dh; dy++) {
+		for(dy=0;  dy<dh; dy++) {
 		    sy=(sh * dy) / dh;
 		    epptr=elptr;
 		    ilptr=(Byte *)CURIMAGE(gif)->data + (sy * CURIMAGE(gif)->bytes_per_line);
-		    for (dx=0;  dx <dw;  dx++) {
+		    for(dx=0;  dx <dw;  dx++) {
 			sx=(sw * dx) / dw;
 			ipptr=ilptr + sx*bytesPerPixel;
 			*epptr++=*ipptr++;
@@ -478,7 +478,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	dir=getenv("EPICS_DISPLAY_PATH");
 	if(dir != NULL) {
 	    startPos=0;
-	    while (fp == NULL &&
+	    while(fp == NULL &&
 	      extractStringBetweenColons(dir,dirName,startPos,&startPos)) {
 		strcpy(fullPathName,dirName);
 		strcat(fullPathName,MEDM_DIR_DELIMITER_STRING);
@@ -615,7 +615,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
   /* Parse the Global Color Table if present */
   /* KE: Note that if there is no global table, there may be local tables */
     if(GlobalColorTableFlag) {
-	for (i=0; i < ColorTableEntries; i++) {
+	for(i=0; i < ColorTableEntries; i++) {
 	    Red[i]=NEXTBYTE;
 	    Green[i]=NEXTBYTE;
 	    Blue[i]=NEXTBYTE;
@@ -633,7 +633,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  /* KE: Currently nostrip is False */
             j=0;
             lmask=lmasks[gif->strip];
-            for (i=0; i<gif->numcols; i++) {
+            for(i=0; i<gif->numcols; i++) {
                 gif->defs[i].red  =(Red[i]  &lmask)<<8;
                 gif->defs[i].green=(Green[i]&lmask)<<8;
                 gif->defs[i].blue =(Blue[i] &lmask)<<8;
@@ -653,10 +653,10 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 		  j,gif->numcols);
                 
 	      /* Read in the color table */
-                for (i=0; i<gif->numcols; i++) ctab[i].pixel=i;
+                for(i=0; i<gif->numcols; i++) ctab[i].pixel=i;
                 XQueryColors(display,gif->theCmap,ctab,gif->numcols);
                 
-                for (i=0; i<gif->numcols; i++) {
+                for(i=0; i<gif->numcols; i++) {
 		    if(gif->cols[i] == 0xffff) { /* An unallocated pixel */
 			int d, mdist, close;
 			unsigned long r,g,b;
@@ -665,7 +665,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 			r= Red[i];
 			g= Green[i];
 			b= Blue[i];
-			for (j=0; j<gif->numcols; j++) {
+			for(j=0; j<gif->numcols; j++) {
 			    d=abs((int)(r - (ctab[j].red>>8))) +
 			      abs((int)(g - (ctab[j].green>>8))) +
 			      abs((int)(b - (ctab[j].blue>>8)));
@@ -686,9 +686,9 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
           /* nostrip=False, do the best auto-strip */
 	  /* KE: Currently nostrip is False, and this is the algorithm used */
             j=0;
-            while (gif->strip<8) {
+            while(gif->strip<8) {
                 lmask=lmasks[gif->strip];
-                for (i=0; i<gif->numcols; i++) {
+                for(i=0; i<gif->numcols; i++) {
                     gif->defs[i].red  =(Red[i]  &lmask)<<8;
                     gif->defs[i].green=(Green[i]&lmask)<<8;
                     gif->defs[i].blue =(Blue[i] &lmask)<<8;
@@ -723,7 +723,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
             if(gif->strip==8) {
                 medmPrintf(1,"\nloadGIF: "
 		  "Failed to allocate the desired colors\n");
-                for (i=0; i<gif->numcols; i++) gif->cols[i]=i;
+                for(i=0; i<gif->numcols; i++) gif->cols[i]=i;
 	    }
 	}
     } else {
@@ -731,7 +731,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
         medmPrintf(0,"\nloadGIF:  No global color table in %s."
 	  "  Making one.\n",fname);
         if(!gif->numcols) gif->numcols=256;
-        for (i=0; i < gif->numcols; i++) gif->cols[i]=(unsigned long)i;
+        for(i=0; i < gif->numcols; i++) gif->cols[i]=(unsigned long)i;
     }
     
   /* Set the backgroundcolor index */
@@ -1149,7 +1149,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	print("parseGIFImage: rasterBytes=%d BlockSize=%d ch=%2x position=%d\n",
 	  rasterBytes,ch1,*ptr,ptr-RawGIF+1);
 #endif
-	while (ch--) *ptr1++=NEXTBYTE;
+	while(ch--) *ptr1++=NEXTBYTE;
 	if((Raster - ptr1) > filesize){
 	    medmPrintf(1,"\nparseGIFImage: "
 	      "Trying to read past end of file for %s\n",fname);
@@ -1211,7 +1211,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
   /* Decompress the file, continuing until we see the GIF EOF code or
    * we use up all the bytes in the data */
     Code=readCode();
-    while (Code != EOFCode && BitOffset/8 < rasterBytes) {
+    while(Code != EOFCode && BitOffset/8 < rasterBytes) {
       /* Clear code sets everything back to its initial value, then reads the
        * immediately subsequent code as uncompressed data.
        */
@@ -1239,7 +1239,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	   * through the hash table to its end; each code in the chain puts its
 	   * associated output code on the output queue.
 	   */
-	    while (CurCode > BitMask) {
+	    while(CurCode > BitMask) {
 		if(OutCount > 1024){
 		    medmPrintf(1,"\nparseGIFImage: Corrupt GIF file (OutCount)\n");
 		    XDestroyImage(CURIMAGE(gif));
@@ -1256,7 +1256,7 @@ static Boolean parseGIFImage(DisplayInfo *displayInfo, DlImage *dlImage)
 	  /* Now we put the data out to the Output routine.
 	   * It's been stacked LIFO, so deal with it that way...
 	   */
-	    for (i=OutCount - 1; i >= 0; i--)
+	    for(i=OutCount - 1; i >= 0; i--)
 	      addToPixel(gif,(Byte)OutCode[i]);
 	    OutCount=0;
 	    
@@ -1445,7 +1445,7 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
     *gif2=*gif1;
     
   /* Reallocate the colors, in case they are freed elsewhere */
-    for (i=0; i < gif2->numcols; i++) {
+    for(i=0; i < gif2->numcols; i++) {
 	if(!XAllocColor(display,gif2->theCmap,&gif2->defs[i])) { 
 	    gif2->defs[i].pixel=0xffff;
 	}
@@ -1546,7 +1546,7 @@ static int readCode()
 static void dumpGIF(GIFData *gif)
 {
     int i;
-    for (i=0; i<32; i++) {
+    for(i=0; i<32; i++) {
 	if(i && ((i>>4)<<4) == i) {
 	    print("\n");
 	}

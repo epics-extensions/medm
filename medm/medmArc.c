@@ -58,8 +58,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _MedmArc {
     DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
-    UpdateTask       *updateTask;
 } MedmArc;
 
 static void arcDraw(XtPointer cd);
@@ -97,12 +97,12 @@ static void drawArc(MedmArc *pa) {
     DlArc *dlArc = pa->dlElement->structure.arc;
 
     lineWidth = (dlArc->attr.width+1)/2;
-    if (dlArc->attr.fill == F_SOLID) {
+    if(dlArc->attr.fill == F_SOLID) {
 	XFillArc(display,XtWindow(widget),displayInfo->gc,
 	  dlArc->object.x,dlArc->object.y,
 	  dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
     } else
-      if (dlArc->attr.fill == F_OUTLINE) {
+      if(dlArc->attr.fill == F_OUTLINE) {
 	  XDrawArc(display,XtWindow(widget),displayInfo->gc,
 	    dlArc->object.x + lineWidth,
 	    dlArc->object.y + lineWidth,
@@ -133,7 +133,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	      arcDraw,
 	      (XtPointer)pa);
 	    
-	    if (pa->updateTask == NULL) {
+	    if(pa->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlArc: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(pa->updateTask,arcDestroyCb);
@@ -146,8 +146,10 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	    setMonitorChanged(&dlArc->dynAttr, pa->records);
 	}
     } else {
+	if(displayInfo->traversalMode == DL_EXECUTE)
+	  dlElement->staticGraphic = True;
 	executeDlBasicAttribute(displayInfo,&(dlArc->attr));
-	if (dlArc->attr.fill == F_SOLID) {
+	if(dlArc->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
 	    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
 	      dlArc->object.x,dlArc->object.y,
@@ -157,7 +159,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
 
 	} else
-	  if (dlArc->attr.fill == F_OUTLINE) {
+	  if(dlArc->attr.fill == F_OUTLINE) {
 	      unsigned int lineWidth = (dlArc->attr.width+1)/2;
 	      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
 		dlArc->object.x + lineWidth,
@@ -195,7 +197,7 @@ static void arcDraw(XtPointer cd)
     Display *display = XtDisplay(pa->updateTask->displayInfo->drawingArea);
     DlArc *dlArc = pa->dlElement->structure.arc;
 
-    if (pd->connected) {
+    if(pd->connected) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
@@ -233,8 +235,8 @@ static void arcDraw(XtPointer cd)
       /* Draw depending on visibility */
 	if(calcVisibility(&dlArc->dynAttr, pa->records))
 	  drawArc(pa);
-	if (pd->readAccess) {
-	    if (!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
+	if(pd->readAccess) {
+	    if(!pa->updateTask->overlapped && dlArc->dynAttr.vis == V_STATIC) {
 		pa->updateTask->opaque = True;
 	    }
 	} else {
@@ -260,7 +262,7 @@ static void arcDestroyCb(XtPointer cd)
 {
     MedmArc *pa = (MedmArc *)cd;
 
-    if (pa) {
+    if(pa) {
 	Record **records = pa->records;
 	
 	if(records) {
@@ -270,6 +272,7 @@ static void arcDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
+	pa->dlElement->data = 0;
 	free((char *)pa);
     }
     return;
@@ -351,7 +354,7 @@ DlElement *parseArc(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement; 

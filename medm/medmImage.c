@@ -70,13 +70,13 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/keysym.h>
 
 typedef struct _Image {
-    DlElement *dlElement;     /* Must be first */
-    Record **records;
-    UpdateTask *updateTask;
-    DisplayInfo *displayInfo;
-    Boolean validCalc;
-    Boolean animate;
-    char post[MAX_TOKEN_LENGTH];
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           **records;
+    DisplayInfo      *displayInfo;
+    Boolean          validCalc;
+    Boolean          animate;
+    char             post[MAX_TOKEN_LENGTH];
 } MedmImage;
 
 /* Function prototypes */
@@ -417,6 +417,7 @@ static void imageDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
+	pi->dlElement->data = 0;
 	free((char *)pi);
     }
     return;
@@ -433,9 +434,13 @@ static void imageGetRecord(XtPointer cd, Record **record, int *count)
     MedmImage *pi = (MedmImage *)cd;
     int i;
     
-    *count = MAX_CALC_RECORDS;
-    for(i=0; i < MAX_CALC_RECORDS; i++) {
-	record[i] = pi->records[i];
+    if(pi && pi->records) {
+	*count = MAX_CALC_RECORDS;
+	for(i=0; i < MAX_CALC_RECORDS; i++) {
+	    record[i] = pi->records[i];
+	}
+    } else {
+	*count = 0;
     }
 }
 
@@ -477,7 +482,7 @@ DlElement* handleImageCreate()
   /* This routine is called by handleRectangularCreates. We need to
      stay in this routine until the filename is chosen so the
      succeeding processing will be meaningful */
-    while (!response || XtAppPending(appContext)) {
+    while(!response || XtAppPending(appContext)) {
 	XtAppNextEvent(appContext,&event);
 	XtDispatchEvent(&event);
     }
@@ -639,7 +644,7 @@ DlElement *parseImage(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
     
   /* Just to be safe, initialize the privateData member separately */
@@ -657,7 +662,7 @@ void writeDlImage(
     char indent[16];
     DlImage *dlImage = dlElement->structure.image;
     
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
     
     fprintf(stream,"\n%simage {",indent);

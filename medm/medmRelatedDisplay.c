@@ -113,8 +113,8 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     Pixmap pixmap = (Pixmap) cd;
 
-/*     if (pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
-    if (pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
+/*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
+    if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
     pixmap=(Pixmap)0;
 }
 
@@ -222,16 +222,16 @@ int relatedDisplayFontListIndex(
 #define SHADOWS_SIZE 4    /* each Toggle Button has 2 shadows...*/
  
 /* more complicated calculation based on orientation, etc */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >=  0; i--) {
 	switch (dlRelatedDisplay->visual) {
 	case RD_COL_OF_BTN:
-	    if ( (int)(dlRelatedDisplay->object.height/MAX(1,numButtons)
+	    if( (int)(dlRelatedDisplay->object.height/MAX(1,numButtons)
 	      - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
 	case RD_ROW_OF_BTN:
-	    if ( (int)(dlRelatedDisplay->object.height - SHADOWS_SIZE) >=
+	    if( (int)(dlRelatedDisplay->object.height - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
@@ -263,18 +263,27 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (dlElement->widget) {
-	XtDestroyWidget(dlElement->widget);
-	dlElement->widget = NULL;
+    if(dlElement->widget) {
+	if(displayInfo->traversalMode == DL_EDIT) {
+	  /* In EDIT mode destroy it */
+	    XtDestroyWidget(dlElement->widget);
+	    dlElement->widget = NULL;
+	} else {
+	  /* In EXECUTE manage it if necessary */
+	    if(!XtIsManaged(dlElement->widget)) {
+		XtManageChild(dlElement->widget);
+	    }
+	    return;
+	}
     }
   /* Count number of displays with non-NULL labels */
-    for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-	if (dlRelatedDisplay->display[i].label[0] != '\0') {
+    for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	if(dlRelatedDisplay->display[i].label[0] != '\0') {
 	    iNumberOfDisplays++;
 	}
     } 
   /* 1 display, not hidden */
-    if (iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
+    if(iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
       /* Case 1 0f 4 */
       /* One item, any type but hidden */
       /* Get size for graphic part of pixmap */
@@ -283,7 +292,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Allow for shadows, etc. */
 	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
-	if (dlRelatedDisplay->label[0] == '\0') {
+	if(dlRelatedDisplay->label[0] == '\0') {
 	    label=NULL;
 	    index=0;
 	    icon=1;
@@ -291,7 +300,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
-	} else if (dlRelatedDisplay->label[0] == '-') {
+	} else if(dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
 	    
 	    label=dlRelatedDisplay->label+1;
@@ -330,7 +339,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  NULL,     /* There a pixmap, not a label on the button */
 	  (XtPointer) displayInfo);
       /* Add the callbacks for bringing up the menu */
-	if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	    int i;
 	    
 	  /* Check the display array to find the first non-empty one */
@@ -346,7 +355,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
-    } else if (dlRelatedDisplay->visual == RD_MENU) {
+    } else if(dlRelatedDisplay->visual == RD_MENU) {
       /* Case 2 of 4 */
       /* Single column menu, more than 1 item */
 	n = 0;
@@ -381,7 +390,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	relatedDisplayPulldownMenu = XmCreatePulldownMenu(
 	  localMenuBar,"relatedDisplayPulldownMenu",args,2);
 	tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
-	if (tearOff) {
+	if(tearOff) {
 	    XtVaSetValues(tearOff,
 	      XmNforeground,(Pixel) displayInfo->colormap[dlRelatedDisplay->clr],
 	      XmNbackground,(Pixel) displayInfo->colormap[dlRelatedDisplay->bclr],
@@ -395,7 +404,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Allow for shadows, etc. */
 	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
-	if (dlRelatedDisplay->label[0] == '\0') {
+	if(dlRelatedDisplay->label[0] == '\0') {
 	    label=NULL;
 	    index=0;
 	    icon=1;
@@ -403,7 +412,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
-	} else if (dlRelatedDisplay->label[0] == '-') {
+	} else if(dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
 	    
 	    label=dlRelatedDisplay->label+1;
@@ -458,8 +467,8 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (XtPointer)relatedDisplayPixmap);
 #endif	
 	
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-	    if (strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	    if(strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
 		xmString = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
 		XtSetArg(args[3], XmNlabelString,xmString);
 		XtSetArg(args[4], XmNuserData, displayInfo);
@@ -470,7 +479,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 		XmStringFree(xmString);
 	    }
 	}
-    } else if (dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
+    } else if(dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
       /* Case 3 of 4 */
       /* Rows or columns of buttons */
@@ -481,7 +490,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	Widget widget;
 	
 	maxChars = 0;
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    maxChars = MAX((size_t) maxChars,
 	      strlen(dlRelatedDisplay->display[i].label));
 	}
@@ -541,7 +550,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(wargs[n],XmNbackground,bg); n++;
 	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
 	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
-	for (i = 0; i < iNumberOfDisplays; i++) {
+	for(i = 0; i < iNumberOfDisplays; i++) {
 	    XmString xmStr;
 	    Widget   toggleButton;
 	    xmStr = XmStringCreateLocalized(dlRelatedDisplay->display[i].label);
@@ -550,7 +559,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	   *   radioBox changes buttons */
 	    toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
 	      wargs,n+1);
-	    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 		XtAddCallback(toggleButton,XmNarmCallback,
 		  relatedDisplayButtonPressedCb,
 		  (XtPointer) &(dlRelatedDisplay->display[i]));
@@ -564,7 +573,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
-    } else if (dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
+    } else if(dlRelatedDisplay->visual == RD_HIDDEN_BTN) {
       /* Case 4 of 4 */
       /* Hidden button:
        *  No widget, No callbacks, Just draw a rectangle
@@ -576,7 +585,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	gcValues.foreground = displayInfo->colormap[dlRelatedDisplay->clr];
 	gcValues.background = displayInfo->colormap[dlRelatedDisplay->bclr];
 	gcValues.fill_style = FillStippled;
-	if (!stipple) {
+	if(!stipple) {
 	    static char stipple_bitmap[] = {0x03, 0x03, 0x0c, 0x0c};
 	    
 	    stipple = XCreateBitmapFromData(display,
@@ -628,12 +637,12 @@ DlElement *createDlRelatedDisplay(DlElement *p)
     int displayNumber;
 
     dlRelatedDisplay = (DlRelatedDisplay *)malloc(sizeof(DlRelatedDisplay));
-    if (!dlRelatedDisplay) return 0;
-    if (p) {
+    if(!dlRelatedDisplay) return 0;
+    if(p) {
 	*dlRelatedDisplay = *p->structure.relatedDisplay;
     } else {
 	objectAttributeInit(&(dlRelatedDisplay->object));
-	for (displayNumber = 0; displayNumber < MAX_RELATED_DISPLAYS;
+	for(displayNumber = 0; displayNumber < MAX_RELATED_DISPLAYS;
 	     displayNumber++)
 	  createDlRelatedDisplayEntry(
 	    &(dlRelatedDisplay->display[displayNumber]),
@@ -645,7 +654,7 @@ DlElement *createDlRelatedDisplay(DlElement *p)
 	dlRelatedDisplay->visual = RD_MENU;
     }
 
-    if (!(dlElement = createDlElement(DL_RelatedDisplay,
+    if(!(dlElement = createDlElement(DL_RelatedDisplay,
       (XtPointer)      dlRelatedDisplay,
       &relatedDisplayDlDispatchTable))) {
 	free(dlRelatedDisplay);
@@ -663,22 +672,22 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *r
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"label")) {
+	    if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(relatedDisplay->label,token);
-	    } else if (!strcmp(token,"name")) {
+	    } else if(!strcmp(token,"name")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(relatedDisplay->name,token);
-	    } else if (!strcmp(token,"args")) {
+	    } else if(!strcmp(token,"args")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(relatedDisplay->args,token);
-	    } else if (!strcmp(token,"policy")) {
+	    } else if(!strcmp(token,"policy")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,stringValueTable[REPLACE_DISPLAY]))
+		if(!strcmp(token,stringValueTable[REPLACE_DISPLAY]))
 		  relatedDisplay->mode = REPLACE_DISPLAY;
 	    }
 	    break;
@@ -687,7 +696,7 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo, DlRelatedDisplayEntry *r
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -700,15 +709,15 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlRelatedDisplay(NULL);
     int displayNumber;
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlRelatedDisplay = dlElement->structure.relatedDisplay;
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlRelatedDisplay->object));
-	    } else if (!strncmp(token,"display",7)) {
+	    } else if(!strncmp(token,"display",7)) {
 /*
  * compare the first 7 characters to see if a display entry.
  *   if more than one digit is allowed for the display index, then change
@@ -718,28 +727,28 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 		displayNumber = MIN(token[8] - '0', MAX_RELATED_DISPLAYS-1);
 		parseRelatedDisplayEntry(displayInfo,
 		  &(dlRelatedDisplay->display[displayNumber]) );
-	    } else if (!strcmp(token,"clr")) {
+	    } else if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlRelatedDisplay->clr = atoi(token) % DL_MAX_COLORS;
-	    } else if (!strcmp(token,"bclr")) {
+	    } else if(!strcmp(token,"bclr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlRelatedDisplay->bclr = atoi(token) % DL_MAX_COLORS;
-	    } else if (!strcmp(token,"label")) {
+	    } else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlRelatedDisplay->label,token);
-	    } else if (!strcmp(token,"visual")) {
+	    } else if(!strcmp(token,"visual")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,stringValueTable[FIRST_RD_VISUAL+1])) {
+		if(!strcmp(token,stringValueTable[FIRST_RD_VISUAL+1])) {
 		    dlRelatedDisplay->visual = RD_ROW_OF_BTN;
 		} else
-		  if (!strcmp(token,stringValueTable[FIRST_RD_VISUAL+2])) {
+		  if(!strcmp(token,stringValueTable[FIRST_RD_VISUAL+2])) {
 		      dlRelatedDisplay->visual = RD_COL_OF_BTN;
 		  } else
-		    if (!strcmp(token,stringValueTable[FIRST_RD_VISUAL+3])) {
+		    if(!strcmp(token,stringValueTable[FIRST_RD_VISUAL+3])) {
 			dlRelatedDisplay->visual = RD_HIDDEN_BTN;
 		    }
 	    }
@@ -751,7 +760,7 @@ DlElement *parseRelatedDisplay(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -770,16 +779,16 @@ void writeDlRelatedDisplayEntry(
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%sdisplay[%d] {",indent,index);
-	if (entry->label[0] != '\0')
+	if(entry->label[0] != '\0')
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,entry->label);
-	if (entry->name[0] != '\0')
+	if(entry->name[0] != '\0')
 	  fprintf(stream,"\n%s\tname=\"%s\"",indent,entry->name);
-	if (entry->args[0] != '\0')
+	if(entry->args[0] != '\0')
 	  fprintf(stream,"\n%s\targs=\"%s\"",indent,entry->args);
-	if (entry->mode != ADD_NEW_DISPLAY)
+	if(entry->mode != ADD_NEW_DISPLAY)
 	  fprintf(stream,"\n%s\tpolicy=\"%s\"",
 	    indent,stringValueTable[entry->mode]);
 	fprintf(stream,"\n%s}",indent);
@@ -807,21 +816,21 @@ void writeDlRelatedDisplay(
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%s\"related display\" {",indent);
 	writeDlObject(stream,&(dlRelatedDisplay->object),level+1);
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-	    if ((dlRelatedDisplay->display[i].label[0] != '\0') ||
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	    if((dlRelatedDisplay->display[i].label[0] != '\0') ||
 	      (dlRelatedDisplay->display[i].name[0] != '\0') ||
 	      (dlRelatedDisplay->display[i].args[0] != '\0'))
 	      writeDlRelatedDisplayEntry(stream,&(dlRelatedDisplay->display[i]),i,level+1);
 	}
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
-	if (dlRelatedDisplay->label[0] != '\0') 
+	if(dlRelatedDisplay->label[0] != '\0') 
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlRelatedDisplay->label);
-	if (dlRelatedDisplay->visual != RD_MENU)
+	if(dlRelatedDisplay->visual != RD_MENU)
 	  fprintf(stream,"\n%s\tvisual=\"%s\"",
 	    indent,stringValueTable[dlRelatedDisplay->visual]);
 	fprintf(stream,"\n%s}",indent);
@@ -829,7 +838,7 @@ void writeDlRelatedDisplay(
     } else {
 	fprintf(stream,"\n%s\"related display\" {",indent);
 	writeDlObject(stream,&(dlRelatedDisplay->object),level+1);
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++)
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++)
 	  writeDlRelatedDisplayEntry(stream,&(dlRelatedDisplay->display[i]),i,level+1);
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
@@ -886,19 +895,19 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
    *   this argument string in this displayInfo's context before passing
    *   it to the created child display
    */
-    if (globalDisplayListTraversalMode == DL_EXECUTE) {
+    if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	performMacroSubstitutions(displayInfo, argsString, processedArgs,
           2*MAX_TOKEN_LENGTH);
       /* Try to find file with parent's path */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
-	if (filePtr == NULL) {
+	if(filePtr == NULL) {
 	    sprintf(token,
 	      "Cannot open related display:\n  %s\nCheck %s\n",
 	      filename, "EPICS_DISPLAY_PATH");
 	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);
 	    medmPostMsg(1,token);
 	} else {
-	    if (replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
+	    if(replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
 		dmDisplayListParse(displayInfo,filePtr,processedArgs,
 		  filename,NULL,(Boolean)True);
 		fclose(filePtr);
@@ -926,43 +935,43 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
  
     case RD_APPLY_BTN:
       /* commit changes in matrix to global matrix array data */
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    char *tmp = NULL;
-	    if (tmp = XmTextFieldGetString(table[i][0])) {
+	    if(tmp = XmTextFieldGetString(table[i][0])) {
 		strcpy(globalResourceBundle.rdData[i].label, tmp);
 		XtFree(tmp);
 	    }
-	    if (tmp = XmTextFieldGetString(table[i][1])) {
+	    if(tmp = XmTextFieldGetString(table[i][1])) {
 		strcpy(globalResourceBundle.rdData[i].name, tmp);
 		XtFree(tmp);
 	    }
-	    if (tmp = XmTextFieldGetString(table[i][2])) {
+	    if(tmp = XmTextFieldGetString(table[i][2])) {
 		strcpy(globalResourceBundle.rdData[i].args, tmp);
 		XtFree(tmp);
 	    }
-	    if (XmToggleButtonGetState(table[i][3])) {
+	    if(XmToggleButtonGetState(table[i][3])) {
 		globalResourceBundle.rdData[i].mode = REPLACE_DISPLAY;
 	    } else {
 		globalResourceBundle.rdData[i].mode = ADD_NEW_DISPLAY;
 	    }
 	}
-	if (currentDisplayInfo) {
+	if(currentDisplayInfo) {
 	    DlElement *dlElement =
 	      FirstDlElement(currentDisplayInfo->selectedDlElementList);
-	    while (dlElement) {
-		if (dlElement->structure.element->type == DL_RelatedDisplay) {
+	    while(dlElement) {
+		if(dlElement->structure.element->type == DL_RelatedDisplay) {
 		    updateElementFromGlobalResourceBundle(
 		      dlElement->structure.element);
 		}
 		dlElement = dlElement->next;
 	    }
 	}
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False)
+	if(currentDisplayInfo->hasBeenEditedButNotSaved == False)
 	  medmMarkDisplayBeingEdited(currentDisplayInfo);
 	XtPopdown(relatedDisplayS);
 	break;
     case RD_CLOSE_BTN:
-	if (XtClass(w) == xmPushButtonWidgetClass) {
+	if(XtClass(w) == xmPushButtonWidgetClass) {
 	    XtPopdown(relatedDisplayS);
 	}
 	break;
@@ -1055,7 +1064,7 @@ Widget createRelatedDisplayDataDialog (Widget parent)
       xmLabelWidgetClass, rdMatrix,
       XmNalignment, XmALIGNMENT_CENTER,
       NULL);
-    for (i=0; i<MAX_RELATED_DISPLAYS; i++) {
+    for(i=0; i<MAX_RELATED_DISPLAYS; i++) {
 	table[i][0] = XtVaCreateManagedWidget("label",
 	  xmTextFieldWidgetClass, rdMatrix, NULL);
 	table[i][1] = XtVaCreateManagedWidget("display",
@@ -1133,12 +1142,12 @@ void updateRelatedDisplayDataDialog()
 {
     int i;
 
-    if (rdMatrix) { 
-	for (i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+    if(rdMatrix) { 
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    XmTextFieldSetString(table[i][0],globalResourceBundle.rdData[i].label);
 	    XmTextFieldSetString(table[i][1],globalResourceBundle.rdData[i].name);
 	    XmTextFieldSetString(table[i][2],globalResourceBundle.rdData[i].args);
-	    if (globalResourceBundle.rdData[i].mode == REPLACE_DISPLAY) {
+	    if(globalResourceBundle.rdData[i].mode == REPLACE_DISPLAY) {
 		XmToggleButtonSetState(table[i][3],True,False);
 	    } else {
 		XmToggleButtonSetState(table[i][3],False,False);
@@ -1149,7 +1158,7 @@ void updateRelatedDisplayDataDialog()
 
 void relatedDisplayDataDialogPopup(Widget w)
 {
-    if (relatedDisplayS == NULL) {
+    if(relatedDisplayS == NULL) {
 	relatedDisplayS = createRelatedDisplayDataDialog(w);
     }
   /* update related display data from globalResourceBundle */

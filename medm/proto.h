@@ -428,9 +428,13 @@ double medmResetElapsedTime();
 void updateTaskInitHead(DisplayInfo *displayInfo);
 UpdateTask *updateTaskAddTask(DisplayInfo *, DlObject *, void (*)(XtPointer),
   XtPointer);
-void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt);
 void updateTaskDeleteAllTask(UpdateTask *);
+#if 0
+void updateTaskDeleteTask(DisplayInfo *displayInfo, UpdateTask *pt);
 void updateTaskDeleteElementTasks(DisplayInfo *displayInfo, DlElement *pE);
+#endif
+void updateTaskDisableTask(DlElement *dlElement);
+void updateTaskEnableTask(DlElement *dlElement);
 int updateTaskMarkTimeout(UpdateTask *, double);
 void updateTaskSetScanRate(UpdateTask *, double);
 void updateTaskAddExecuteCb(UpdateTask *, void (*)(XtPointer));
@@ -450,6 +454,7 @@ void updateTaskStatusGetInfo(int *taskCount,
 void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
 void startMedmScheduler(void);
 void stopMedmScheduler(void);
+void dumpUpdatetaskList(DisplayInfo *displayInfo);
 
 /* updateMonitors.c */
 void localCvtDoubleToString( double, char *, unsigned short);
@@ -506,7 +511,7 @@ void dmSetAndPopupQuestionDialog(DisplayInfo *displayInfo,
   char        *helpBtnLabel);
 XtErrorHandler trapExtraneousWarningsHandler(String message);
 void redrawElementsAbove(DisplayInfo *displayInfo, DlElement *dlElement);
-void redrawDrawnElements(DisplayInfo *displayInfo, DlElement *dlElement);
+void redrawStaticElements(DisplayInfo *displayInfo, DlElement *dlElement);
 DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
   Boolean top);
 DlElement *findSmallestTouchedExecuteElementFromWidget(Widget w,

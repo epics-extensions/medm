@@ -54,17 +54,18 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
-#define DEBUG_COMPOSITE 1
+#define DEBUG_COMPOSITE 0
 #define DEBUG_DELETE 0
+#define DEBUG_REDRAW 0
 
 #include "medm.h"
 
 typedef struct _MedmComposite {
-    DlElement  *dlElement;     /* Must be first */
-    Record     **records;
-    UpdateTask *updateTask;
-    DisplayInfo *displayInfo;
-    Boolean    childrenExecuted;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           **records;
+    DisplayInfo      *displayInfo;
+    Boolean          childrenExecuted;
 } MedmComposite;
 
 /* Function prototypes */
@@ -162,6 +163,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		drawWhiteRectangle(pc->updateTask);
 #endif	    
 	    }
+	    pc->childrenExecuted = False; /* CHECK */
 	} else {
 	  /* No channel */
 	    executeCompositeChildren(displayInfo, dlElement);
@@ -217,7 +219,8 @@ static void compositeDraw(XtPointer cd)
     DlComposite *dlComposite = pc->dlElement->structure.composite;
 
 #if DEBUG_COMPOSITE
-    print("compositeDraw: pc=%x\n",pc);
+    print("compositeDraw: pc=%x dlComposite=%x\n",
+      pc,pc->dlElement->structure.composite);
 #endif    
 #if DEBUG_DELETE
     print("compositeDraw: connected=%s readAccess=%s value=%g\n",
@@ -294,19 +297,31 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 {
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
+    GC gcSave;
     
-#if DEBUG_COMPOSITE
+#if DEBUG_COMPOSITE || DEBUG_REDRAW
     print("executeCompositeChildren: dlElement=%x\n",dlElement);
 /*      print("dlComposite->dlElementList:\n"); */
 /*      dumpDlElementList(dlComposite->dlElementList); */
 /*      print("displayInfo->dlElementList:\n"); */
 /*      dumpDlElementList(displayInfo->dlElementList); */
-#endif    
+#endif
+
+  /* In case the drawing area gc has a clip mask set, change it to the
+     pixmapGC, which should not be clipped */
+    gcSave=displayInfo->gc;
+    displayInfo->gc = displayInfo->pixmapGC;
+
+  /* Loop over children */    
     pE = FirstDlElement(dlComposite->dlElementList);
-    while (pE) {
-	pE->hidden = 0;
+    while(pE) {
+	pE->hidden = False;
+	if(!displayInfo->elementsExecuted) {
+	    pE->data = NULL;
+	}
+	updateTaskEnableTask(pE);
 	if(pE->run->execute) {
-#if DEBUG_COMPOSITE
+#if DEBUG_COMPOSITE || DEBUG_REDRAW
 	    print("  executed: pE=%x[%s] x=%d y=%d\n",
 	      pE,elementType(pE->type),
 	      pE->structure.composite->object.x,
@@ -317,11 +332,10 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 	pE = pE->next;
     }
 
-#if 0
-  /* Redraw the display background */
-    redrawDrawnElements(displayInfo, dlElement);
-#endif    
-#if DEBUG_COMPOSITE
+  /* Restore the drawing area gc */
+    displayInfo->gc = gcSave;
+
+#if DEBUG_COMPOSITE || DEBUG_REDRAW
     print("END executeCompositeChildren: dlElement=%x\n",dlElement);
 #endif    
 }
@@ -362,10 +376,18 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 /*      dumpDlElementList(dlComposite->dlElementList); */
 /*      print("displayInfo->dlElementList:\n"); */
 /*      dumpDlElementList(displayInfo->dlElementList); */
-#endif    
+#endif
+  /* If we are doing this the first time, we need to execute all the
+     elements to insure their update tasks are in the right (stacking)
+     order */
+    if(!displayInfo->elementsExecuted) {
+	executeCompositeChildren(displayInfo, dlElement);
+    }
+    
+  /* Hide them */
     pE = FirstDlElement(dlComposite->dlElementList);
-    while (pE) {
-	pE->hidden = 1;
+    while(pE) {
+	pE->hidden = True;
 	if(pE->run->hide) {
 #if DEBUG_COMPOSITE
 	    print("  hid: pE=%x[%s] x=%d y=%d\n",
@@ -377,9 +399,9 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 	}
 	pE = pE->next;
     }
-
+    
   /* Redraw the display background */
-    redrawDrawnElements(displayInfo, dlElement);
+    redrawStaticElements(displayInfo, dlElement);
 #if DEBUG_COMPOSITE
     print("END hideCompositeChildren: dlElement=%x\n",dlElement);
 #endif    
@@ -395,12 +417,10 @@ void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif    
     if(!displayInfo || !dlElement) return;
     
-  /* Delete any update tasks.  The destroyCb will free the
-     record(s) and private structure */
-    updateTaskDeleteElementTasks(displayInfo,dlElement);
+  /* Disable the update task */
+    updateTaskDisableTask(dlElement);
     
   /* The same code as in hideComposite */
-    dlComposite = dlElement->structure.composite;
     hideCompositeChildren(displayInfo, dlElement);
 }
 
@@ -421,6 +441,7 @@ static void compositeDestroyCb(XtPointer cd)
 	    }
 	    free((char *)records);
 	}
+	pc->dlElement->data = 0;
 	free((char *)pc);
     }
     return;
@@ -458,7 +479,7 @@ DlElement *createDlComposite(DlElement *p) {
 	}
       /* Copy all children to the composite element list */
 	child = FirstDlElement(p->structure.composite->dlElementList);
-	while (child) {
+	while(child) {
 	    DlElement *copy = child->run->create(child);
 	    if(copy) 
 	      appendDlElement(dlComposite->dlElementList,copy);
@@ -509,7 +530,7 @@ DlElement *groupObjects()
     maxX = INT_MIN; maxY = INT_MIN;
 
     pE = FirstDlElement(cdi->selectedDlElementList);
-    while (pE) { 
+    while(pE) { 
 	DlElement *pE1 = pE->structure.element;
 	if(pE1->type != DL_Display) {
 	    DlObject *po = &(pE1->structure.composite->object);
@@ -556,7 +577,7 @@ void ungroupSelectedElements()
     unhighlightSelectedElements();
 
     dlElement = FirstDlElement(cdi->selectedDlElementList);
-    while (dlElement) {
+    while(dlElement) {
 	ele = dlElement->structure.element;
 	if(ele->type == DL_Composite) {
 	    insertDlListAfter(cdi->dlElementList,ele->prev,
@@ -616,7 +637,7 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -663,6 +684,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 	  "  file: %s\n",filename);
 	goto RETURN;
     }
+    free((char *)dlFile);
 
   /* Read the display block */
     tokenType=getToken(displayInfo,token);
@@ -688,7 +710,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
     pE = FirstDlElement(dlComposite->dlElementList);
-    while (pE) { 
+    while(pE) { 
 	DlObject *po = &(pE->structure.composite->object);
 	
 	minX = MIN(minX,po->x);
@@ -721,13 +743,13 @@ void writeDlCompositeChildren(FILE *stream, DlElement *dlElement,
     DlElement *element;
     DlComposite *dlComposite = dlElement->structure.composite;
 
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%schildren {",indent);
 
     element = FirstDlElement(dlComposite->dlElementList);
-    while (element != NULL) {		/* any union member is okay here */
+    while(element != NULL) {		/* any union member is okay here */
 	(element->run->write)(stream, element, level+1);
 	element = element->next;
     }
@@ -743,7 +765,7 @@ void writeDlComposite(FILE *stream, DlElement *dlElement,
     char indent[16];
     DlComposite *dlComposite = dlElement->structure.composite;
 
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%scomposite {",indent);
@@ -811,7 +833,7 @@ void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 
     if(dlElement->type != DL_Composite) return; 
     ele = FirstDlElement(dlElement->structure.composite->dlElementList);
-    while (ele != NULL) {
+    while(ele != NULL) {
 	if(ele->type != DL_Display) {
 #if 0
 	    if(ele->widget) {
@@ -835,7 +857,7 @@ void compositeOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
 
     if(dlElement->type != DL_Composite) return; 
     ele = FirstDlElement(dlElement->structure.composite->dlElementList);
-    while (ele != NULL) {
+    while(ele != NULL) {
 	if(ele->type != DL_Display) {
 	    if(ele->run->orient)
 	      ele->run->orient(ele, type, xCenter, yCenter);
@@ -906,7 +928,7 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
 #if 0    
   /* Colors */
     childE = FirstDlElement(dlComposite->dlElementList);
-    while (childE) {
+    while(childE) {
 	if(childE->run->setForegroundColor) {
 	    childE->run->setForegroundColor(pRCB, childE);
 	}
@@ -926,7 +948,7 @@ static void compositeCleanup(DlElement *dlElement)
 #if DEBUG_COMPOSITE
     print("compositeCleanup:\n");
 #endif    
-    while (pE) {
+    while(pE) {
 	if(pE->run->cleanup) {
 	    pE->run->cleanup(pE);
 	} else {

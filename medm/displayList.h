@@ -453,12 +453,12 @@ XmString xmStringValueTable[NUMBER_STRING_VALUES];
  *********************************************************************/
 
 typedef enum {
-  /* self */
+  /* Self */
     DL_Element        =100,
-  /* basics */
+  /* Basics */
     DL_Composite      =101,
     DL_Display        =102,
-  /* controllers */
+  /* Controllers */
     DL_ChoiceButton   =103,
     DL_Menu           =104,
     DL_MessageButton  =105,
@@ -466,7 +466,7 @@ typedef enum {
     DL_ShellCommand   =107,
     DL_TextEntry      =108,
     DL_Valuator       =109,
-  /* monitors */
+  /* Monitors */
     DL_Bar            =110,
     DL_Byte           =111,
     DL_CartesianPlot  =112,
@@ -474,7 +474,7 @@ typedef enum {
     DL_Meter          =114,
     DL_StripChart     =115,
     DL_TextUpdate     =116,
-  /* statics */
+  /* Graphics */
     DL_Arc            =117,
     DL_Image          =118,
     DL_Line           =119,
@@ -490,7 +490,7 @@ typedef enum {
 #define NUM_DL_ELEMENT_TYPES    ((MAX_DL_ELEMENT_TYPE-MIN_DL_ELEMENT_TYPE)+1)
 #define FIRST_RENDERABLE        DL_Composite
 
-#define ELEMENT_IS_STATIC(type) ((type >= DL_Arc && type <= DL_Text))
+#define ELEMENT_IS_GRAPHICS(type) ((type >= DL_Arc && type <= DL_Text))
 
 #define ELEMENT_HAS_WIDGET(type) ((type >= DL_Display && type <= DL_StripChart))
 
@@ -910,10 +910,11 @@ typedef struct _DlElement {
     DlStructurePtr structure;
     DlDispatchTable *run;
     Widget widget;
-    int hidden;
-    void * data;                   /* KE: Not used anywhere */
-    struct _DlElement *next;       /* Next element in display list */
-    struct _DlElement *prev;       /* Previous element ... */
+    Boolean hidden;
+    Boolean staticGraphic;   /* Graphic not attached to a PV */
+    void *data;              /* Pointer to MedmXxx */
+    struct _DlElement *next; /* Next element in display list */
+    struct _DlElement *prev; /* Previous element ... */
 } DlElement;
 
 typedef struct _DlList {

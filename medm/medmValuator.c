@@ -68,11 +68,11 @@ extern "C" {
 #endif
 
 typedef struct _MedmValuator {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record;
-    UpdateTask  *updateTask;
-    int         oldIntegerValue;
-    int         fontIndex;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
+    int              oldIntegerValue;
+    int              fontIndex;
 } MedmValuator;
 
 static void valuatorDraw(XtPointer);
@@ -111,24 +111,24 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 {
     int i;
   /* More complicated calculation based on orientation, etc */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >=  0; i--) {
 	switch (dlValuator->direction) {
 	case UP:
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
 	    case NO_DECORATIONS:
-		if ( (int)(.30*dlValuator->object.width) >= 
+		if((int)(.30*dlValuator->object.width) >= 
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
 	    case OUTLINE:
 	    case LIMITS:
-		if ( (int)(.20*dlValuator->object.width) >= 
+		if((int)(.20*dlValuator->object.width) >= 
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
 	    case CHANNEL:
-		if ( (int)(.10*dlValuator->object.width) >= 
+		if((int)(.10*dlValuator->object.width) >= 
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
@@ -140,12 +140,12 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	    case NO_DECORATIONS:
 	    case OUTLINE:
 	    case LIMITS:
-		if ( (int)(.45*dlValuator->object.height) >= 
+		if((int)(.45*dlValuator->object.height) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent) )
 		  return(i);
 		break;
 	    case CHANNEL:
-		if ( (int)(.32*dlValuator->object.height) >= 
+		if((int)(.32*dlValuator->object.height) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent) )
 		  return(i);
 		break;
@@ -165,12 +165,16 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
 
+  /* If the widget is already created just return.  The update task
+     will handle it. */
+    if(dlElement->widget) return;
+
     if(dlElement->data) {
 	pv = (MedmValuator *)dlElement->data;
     } else {
 	pv = (MedmValuator *)malloc(sizeof(MedmValuator));
 	dlElement->data = (void *)pv;
-	if (pv == NULL) {
+	if(pv == NULL) {
 	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
 	    return;
 	}
@@ -180,7 +184,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	  valuatorDraw,
 	  (XtPointer)pv);
 	
-	if (pv->updateTask == NULL) {
+	if(pv->updateTask == NULL) {
 	    medmPrintf(1,"\nvaluatorCreateRunTimeInstance: Memory allocation error\n");
 	    free((char *)pv);
 	    return;
@@ -260,8 +264,8 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
       XmNchildren,&children,NULL);
 
   /* Change translations for scrollbar child of valuator */
-    for (i = 0; i < (int)numChildren; i++) {
-	if (XtClass(children[i]) == xmScrollBarWidgetClass) {
+    for(i = 0; i < (int)numChildren; i++) {
+	if(XtClass(children[i]) == xmScrollBarWidgetClass) {
 	    XtOverrideTranslations(children[i],parsedTranslations);
 	  /* Add event handler for Key/ButtonRelease which enables updates */
 	    XtAddEventHandler(children[i],KeyReleaseMask|ButtonReleaseMask,
@@ -355,7 +359,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
       XmNchildren,&children,NULL);
     
   /* If in EDIT mode remove translations for children of valuator */
-    for (i = 0; i < (int)numChildren; i++)
+    for(i = 0; i < (int)numChildren; i++)
       XtUninstallTranslations(children[i]);
 
   /* If in EDIT mode add dlValuator as userData, and pass NULL in expose */
@@ -377,10 +381,10 @@ void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
 	createValuatorRunTimeInstance(displayInfo, dlElement);
-    } else if (displayInfo->traversalMode == DL_EDIT) {
-	if (dlElement->widget) {
+    } else if(displayInfo->traversalMode == DL_EDIT) {
+	if(dlElement->widget) {
 	    XtDestroyWidget(dlElement->widget);
 	    dlElement->widget = 0;
 	}
@@ -402,18 +406,27 @@ static void valuatorUpdateValueCb(XtPointer cd) {
 static void valuatorDraw(XtPointer cd) {
     MedmValuator *pv = (MedmValuator *) cd;
     Record *pr = pv->record;
-    DlValuator *dlValuator = pv->dlElement->structure.valuator;
+    DlElement *dlElement = pv->dlElement;
+    DlValuator *dlValuator = dlElement->structure.valuator;
     Boolean dummy;
-    Widget widget = pv->dlElement->widget;
+    Widget widget = dlElement->widget;
 
 #if DEBUG_DELETE
     print("valuatorDraw: connected=%s readAccess=%s value=%g\n",
       pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
 #endif    
     
-    if (pr->connected) {
-	if (pr->readAccess) {
-	    if (widget) {
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pr->connected) {
+	if(pr->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pv->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
@@ -422,7 +435,7 @@ static void valuatorDraw(XtPointer cd) {
 
 	  /* Valuator is only controller/monitor which can have updates disabled */
 
-	    if (dlValuator->enableUpdates) {
+	    if(dlValuator->enableUpdates) {
 		valuatorSetValue(pv,pr->value,True);
 		{
 		    XExposeEvent event;
@@ -430,7 +443,7 @@ static void valuatorDraw(XtPointer cd) {
 		    handleValuatorExpose(widget,(XtPointer) pv,(XEvent *) &event, &dummy);
 		}
 	    }
-	    if (pr->writeAccess)
+	    if(pr->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
@@ -438,10 +451,10 @@ static void valuatorDraw(XtPointer cd) {
 	    draw3DPane(pv->updateTask,
 	      pv->updateTask->displayInfo->colormap[dlValuator->control.bclr]);
 	    draw3DQuestionMark(pv->updateTask);
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pv->updateTask);
     }
 }
@@ -479,10 +492,10 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
 	  dlValuator->control.ctrl);
 	break;
     }
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+    if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
-    if (widget != NULL) {
+    if(widget != NULL) {
       /* Set Channel and User limits (if apparently not set yet) */
 	dlValuator->limits.loprChannel = lopr.fval;
 	if(dlValuator->limits.loprSrc != PV_LIMITS_USER &&
@@ -518,8 +531,9 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
 
 static void valuatorDestroyCb(XtPointer cd) {
     MedmValuator *pv = (MedmValuator *) cd;
-    if (pv) {
+    if(pv) {
 	medmDestroyRecord(pv->record);
+	pv->dlElement->data = 0;
 	free((char *)pv);
     }
     return;
@@ -555,9 +569,9 @@ void handleValuatorExpose(
     char *localTitle;
     short precision;
 
-    if (event->count > 0) return;
+    if(event->count > 0) return;
 
-    if (clientData) {
+    if(clientData) {
       /* Then valid controllerData exists */
 	Record *pr;
 
@@ -575,18 +589,18 @@ void handleValuatorExpose(
       /* KE: (Probably) means we are in EDIT mode
        *   Might be better to branch on that */
 	XtVaGetValues(w,XmNuserData,&dlValuator,NULL);
-	if (dlValuator == NULL) return;
+	if(dlValuator == NULL) return;
 	localLopr = 0.0;
 	localHopr = 0.0;
 	precision = 0;
 	localTitle = dlValuator->control.ctrl;
 	displayInfo = dmGetDisplayInfoFromWidget(w);
-	if (displayInfo == NULL) return;
+	if(displayInfo == NULL) return;
     }
 
   /* Since XmScale doesn't really do the right things, we'll do it by hand */
 
-    if (dlValuator->label != LABEL_NONE && dlValuator->label != NO_DECORATIONS) {
+    if(dlValuator->label != LABEL_NONE && dlValuator->label != NO_DECORATIONS) {
 
 	foreground = displayInfo->colormap[dlValuator->control.clr];
 	background = displayInfo->colormap[dlValuator->control.bclr];
@@ -604,18 +618,18 @@ void handleValuatorExpose(
 
       /* KE: Value can be received before the graphical info
        *   Set precision to 0 if it is still -1 from initialization */
-	if (precision < 0) precision = 0;
+	if(precision < 0) precision = 0;
       /* Convert bad values of precision to high precision */
 	if(precision > 17) precision = 17;
 	switch (dlValuator->direction) {
 	case UP:
 	    XtVaGetValues(w,XmNscaleWidth,&scaleWidth,NULL);
 	    useableWidth = dlValuator->object.width - scaleWidth;
-	    if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS
+	    if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
 	      || dlValuator->label == CHANNEL) {
 	      /* LOPR */
 		cvtDoubleToString(localLopr,stringValue,precision);
-		if (stringValue != NULL) {
+		if(stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = MAX(1,useableWidth - textWidth);
@@ -630,11 +644,11 @@ void handleValuatorExpose(
 		}
 	      /* HOPR */
 		cvtDoubleToString(localHopr,stringValue,precision);
-		if (stringValue != NULL) {
+		if(stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = MAX(1,useableWidth - textWidth);
-		    if (dlValuator->label == CHANNEL) {
+		    if(dlValuator->label == CHANNEL) {
 		      /* need room for label above */
 			startY = (int) (1.3*(font->ascent + font->descent)
 			  + font->ascent);
@@ -650,9 +664,9 @@ void handleValuatorExpose(
 		      stringValue,nChars);
 		}
 	    }
-	    if (dlValuator->label == CHANNEL) {
+	    if(dlValuator->label == CHANNEL) {
 	      /* TITLE */
-		if (localTitle != NULL) {
+		if(localTitle != NULL) {
 		    nChars = strlen(localTitle);
 		    textWidth = XTextWidth(font,localTitle,nChars);
 		    startX = MAX(1,useableWidth - textWidth);
@@ -667,11 +681,11 @@ void handleValuatorExpose(
 	    XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	    useableHeight = dlValuator->object.height - scaleHeight;
 	    
-	    if (dlValuator->label == OUTLINE || dlValuator->label == LIMITS
+	    if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
 	      || dlValuator->label == CHANNEL) {
 	      /* LOPR */
 		cvtDoubleToString(localLopr,stringValue,precision);
-		if (stringValue != NULL) {
+		if(stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = 2;
@@ -686,7 +700,7 @@ void handleValuatorExpose(
 		}
 	      /* HOPR */
 		cvtDoubleToString(localHopr,stringValue,precision);
-		if (stringValue != NULL) {
+		if(stringValue != NULL) {
 		    nChars = strlen(stringValue);
 		    textWidth = XTextWidth(font,stringValue,nChars);
 		    startX = dlValuator->object.width - textWidth - 2;
@@ -700,9 +714,9 @@ void handleValuatorExpose(
 		      stringValue,nChars);
 		}
 	    }
-	    if (dlValuator->label == CHANNEL) {
+	    if(dlValuator->label == CHANNEL) {
 	      /* TITLE */
-		if (localTitle != NULL) {
+		if(localTitle != NULL) {
 		    nChars = strlen(localTitle);
 		    textWidth = XTextWidth(font,localTitle,nChars);
 		    startX = 2;
@@ -713,7 +727,7 @@ void handleValuatorExpose(
 	    }
 	    break;
 	}
-	if (clientData != NULL) {
+	if(clientData != NULL) {
 	  /* Real data */
 	    valuatorRedrawValue(pv,
 	      pv->updateTask->displayInfo,pv->dlElement->widget,
@@ -724,7 +738,7 @@ void handleValuatorExpose(
 	  /* Fake data */
 	    valuatorRedrawValue(NULL,displayInfo,w,dlValuator,0.0);
 	}
-    }     /* End of if (dlValuator->label != LABEL_NONE) */
+    }     /* End of if(dlValuator->label != LABEL_NONE) */
 }
 
 /*
@@ -738,8 +752,8 @@ void valuatorSetValue(MedmValuator *pv, double forcedValue,
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
     Record *pr = pv->record;
 
-    if (dlValuator->limits.hopr != dlValuator->limits.lopr) {
-	if (force)
+    if(dlValuator->limits.hopr != dlValuator->limits.lopr) {
+	if(force)
 	  dValue = forcedValue;
 	else
 	  dValue = pr->value;
@@ -781,18 +795,18 @@ void valuatorRedrawValue(MedmValuator *pv,
     int x, y, height, width;
     
   /* Return if no window for widget yet, or if displayInfo == NULL, or ... */
-    if (XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
+    if(XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
       dlValuator == (DlValuator *)NULL || pv == NULL) return;
     
   /* Simply return if no value to render */
-    if (!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
+    if(!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
     
     foreground = displayInfo->colormap[dlValuator->control.clr];
     background = displayInfo->colormap[dlValuator->control.bclr];
-    if (dlValuator->limits.prec >= 0) {
+    if(dlValuator->limits.prec >= 0) {
 	precision = dlValuator->limits.prec;
 	font = fontTable[pv->fontIndex];
-	if (dlValuator->clrmod == ALARM)
+	if(dlValuator->clrmod == ALARM)
 	  foreground = alarmColor(pv->record->severity);
     } else {
 	precision = 0;
@@ -891,18 +905,18 @@ static void precisionToggleChangedCallback(
     XmToggleButtonCallbackStruct *call_data = (XmToggleButtonCallbackStruct *) cbs;
     
   /* Only respond to the button actually set */
-    if (call_data->event && call_data->set) {
+    if(call_data->event && call_data->set) {
 	value = (long)clientData;
 	XtVaGetValues(w,XmNuserData,&pv,NULL);
       /* Set the prec field in the valuator data structure, and update
        *    the valuator (scale) resources */
-	if (pv) {
+	if(pv) {
 	    pv->dlElement->structure.valuator->dPrecision = pow(10.,(double)value);
 	}
       /* Destroy the popup
        * Hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
 	widget = w;
-	while (XtClass(widget) != xmDialogShellWidgetClass) {
+	while(XtClass(widget) != xmDialogShellWidgetClass) {
 	    widget = XtParent(widget);
 	}
 	XtDestroyWidget(widget);
@@ -929,7 +943,7 @@ static void precTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Destroy the popup
    * Hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
     widget = w;
-    while (XtClass(widget) != xmDialogShellWidgetClass) {
+    while(XtClass(widget) != xmDialogShellWidgetClass) {
 	widget = XtParent(widget);
     }
     XtDestroyWidget(widget);
@@ -959,7 +973,7 @@ static void precTextFieldLosingFocusCallback(
     sprintf(string,"%f",dlValuator->dPrecision);
   /* Strip trailing zeroes */
     tail = strlen(string);
-    while (string[--tail] == '0') string[tail] = '\0';
+    while(string[--tail] == '0') string[tail] = '\0';
     XmTextFieldSetString(w,string);
 }
 
@@ -976,14 +990,14 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 	double value;
 	char *stringValue;
 	
-	if (pv == NULL) return;
+	if(pv == NULL) return;
 	
 	XmStringGetLtoR(call_data->value,XmFONTLIST_DEFAULT_TAG,&stringValue);
-	if (stringValue != NULL) {
+	if(stringValue != NULL) {
 	    value = atof(stringValue);
 	    
 	  /* Move/redraw valuator & value, force use of user-selected value */
-	    if ((pr->connected) && pr->writeAccess) {
+	    if((pr->connected) && pr->writeAccess) {
 		medmSendDouble(pv->record,value);
 		valuatorSetValue(pv,value,True);
 	    }
@@ -1032,15 +1046,15 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
 
     XButtonEvent *xEvent = (XButtonEvent *)event;
 
-    if (globalDisplayListTraversalMode == DL_EDIT) return;
-    if (xEvent->button != Button3) return;
+    if(globalDisplayListTraversalMode == DL_EDIT) return;
+    if(xEvent->button != Button3) return;
     
     XtVaGetValues(w,XmNuserData,&pv,NULL);
-    if (!pv) return;
+    if(!pv) return;
 
     pr = pv->record;
     channel = pv->dlElement->structure.valuator->control.ctrl;
-    if (!pr->connected || !pr->writeAccess || !*channel) return;
+    if(!pr->connected || !pr->writeAccess || !*channel) return;
     
   /* Create selection box/prompt dialog */
     strcpy(valueLabel,"VALUE: ");
@@ -1076,9 +1090,9 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     numMinusColumns = (short)dlValuator->limits.prec;
   /* leave room for decimal point */
     numColumns = numPlusColumns + 1 + numMinusColumns;
-    if (numColumns > MAX_TOGGLES) {
+    if(numColumns > MAX_TOGGLES) {
 	numColumns = MAX_TOGGLES;
-	if (numMinusColumns < MAX_TOGGLES) {
+	if(numMinusColumns < MAX_TOGGLES) {
 	    numPlusColumns = numColumns - 1 - numMinusColumns;
 	} else {
 	    numMinusColumns = numMinusColumns - numColumns - 1;
@@ -1112,14 +1126,14 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     XtSetArg(args[0],XmNindicatorOn,False);
   /* Digits to the left of the decimal point */
     count = 0;
-    for (i = numPlusColumns - 1; i >= 0; i--) {
-	if (toggleXmString != NULL) XmStringFree(toggleXmString);
+    for(i = numPlusColumns - 1; i >= 0; i--) {
+	if(toggleXmString != NULL) XmStringFree(toggleXmString);
 	shortValue = (short)i;
 	cvtShortToString(shortValue,toggleString);
 	toggleXmString = XmStringCreateLocalized(toggleString);
 	XtSetArg(args[1],XmNlabelString,toggleXmString);
 	XtSetArg(args[2],XmNuserData,(XtPointer) pv);
-	if (log10(dlValuator->dPrecision) == (double)i) {
+	if(log10(dlValuator->dPrecision) == (double)i) {
 	    XtSetArg(args[3],XmNset,True);
 	}
 	toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,
@@ -1129,7 +1143,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
 	  precisionToggleChangedCallback,(XtPointer)longValue);
     }
   /* The decimal point */
-    if (toggleXmString != NULL) XmStringFree(toggleXmString);
+    if(toggleXmString != NULL) XmStringFree(toggleXmString);
     toggleString[0] = '.'; toggleString[1] = '\0';
     toggleXmString = XmStringCreateLocalized(toggleString);
     XtSetArg(args[1],XmNlabelString,toggleXmString);
@@ -1138,14 +1152,14 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     XtSetSensitive(toggles[count-1],False);
     
   /* Digits to the right of the decimal point */
-    for (i = 1; i <= numMinusColumns; i++) {
-	if (toggleXmString != NULL) XmStringFree(toggleXmString);
+    for(i = 1; i <= numMinusColumns; i++) {
+	if(toggleXmString != NULL) XmStringFree(toggleXmString);
 	shortValue = (short)-i;
 	cvtShortToString(shortValue,toggleString);
 	toggleXmString = XmStringCreateLocalized(toggleString);
 	XtSetArg(args[1],XmNlabelString,toggleXmString);
 	XtSetArg(args[2],XmNuserData,(XtPointer) pv);
-	if (log10(dlValuator->dPrecision) == (double)-i) {
+	if(log10(dlValuator->dPrecision) == (double)-i) {
 	    XtSetArg(args[3],XmNset,True);
 	}
 	toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,
@@ -1172,7 +1186,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     sprintf(valueString,"%f",dlValuator->dPrecision);
   /* Strip trailing zeroes */
     tail = strlen(valueString);
-    while (valueString[--tail] == '0') valueString[tail] = '\0';
+    while(valueString[--tail] == '0') valueString[tail] = '\0';
     XmTextFieldSetString(textField,valueString);
     
   /* Manage everything */
@@ -1181,7 +1195,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo, XEvent *even
     XtManageChild(textField);
     XtManageChild(form);
     XtManageChild(frame);
-    if (toggleXmString != NULL) XmStringFree(toggleXmString);
+    if(toggleXmString != NULL) XmStringFree(toggleXmString);
     XmStringFree(frameXmString);
     
     XtManageChild(keyboardDialog);
@@ -1214,14 +1228,14 @@ void valuatorValueChanged(
     XKeyEvent *keyEvent;
     double value;
 
-    if (pr->connected) {
+    if(pr->connected) {
 
       /* Set modified flag on monitor data so that next update traversal will
        *   set controller visual state correctly (noting that for controllers
        *   as monitors the ->modified flag alone is used to do updates */
 
 	value = pr->value;
-	if (call_data->reason == XmCR_DRAG) {
+	if(call_data->reason == XmCR_DRAG) {
 	    dlValuator->dragging = True;            /* Mark beginning of drag  */
 	    dlValuator->enableUpdates = False;      /* Disable updates in drag */
 	    
@@ -1230,8 +1244,8 @@ void valuatorValueChanged(
 	    value = dlValuator->limits.lopr + ((double)(call_data->value - VALUATOR_MIN))
 	      /((double)(VALUATOR_MAX - VALUATOR_MIN) )*(dlValuator->limits.hopr - dlValuator->limits.lopr);
 	    
-	} else if (call_data->reason == XmCR_VALUE_CHANGED) { 
-	    if (dlValuator->dragging) {
+	} else if(call_data->reason == XmCR_VALUE_CHANGED) { 
+	    if(dlValuator->dragging) {
 	      /* Valuechanged can mark conclusion of drag, hence enable updates */
 		dlValuator->enableUpdates = True;
 		dlValuator->dragging = False;
@@ -1242,45 +1256,45 @@ void valuatorValueChanged(
 	    }
 	    
 	  /* Value changed - has to deal with precision, etc (hard) */
-	    if (call_data->event != NULL) {
-		if (call_data->event->type == KeyPress) {
+	    if(call_data->event != NULL) {
+		if(call_data->event->type == KeyPress) {
 		    keyEvent = (XKeyEvent *)call_data->event;
-		    if (keyEvent->state & ControlMask) {
+		    if(keyEvent->state & ControlMask) {
 		      /* Multiple increment (10*precision) */
-			if (pv->oldIntegerValue > call_data->value) {
+			if(pv->oldIntegerValue > call_data->value) {
 			  /* Decrease value one 10*precision value */
 			    value = MAX(dlValuator->limits.lopr, pr->value - 10.*dlValuator->dPrecision);
-			} else if (pv->oldIntegerValue < call_data->value) {
+			} else if(pv->oldIntegerValue < call_data->value) {
 			  /* Increase value one 10*precision value */
 			    value = MIN(dlValuator->limits.hopr, pr->value + 10.*dlValuator->dPrecision);
 			}
 		    } else {
 		      /* Single increment (precision) */
-			if (pv->oldIntegerValue > call_data->value) {
+			if(pv->oldIntegerValue > call_data->value) {
 			  /* Decrease value one precision value */
 			    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
-			} else if (pv->oldIntegerValue < call_data->value) {
+			} else if(pv->oldIntegerValue < call_data->value) {
 			  /* Increase value one precision value */
 			    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
 			}
 		    }
-		} else if (call_data->event->type == ButtonPress) {
+		} else if(call_data->event->type == ButtonPress) {
 		    buttonEvent = (XButtonEvent *)call_data->event;
-		    if (buttonEvent->state & ControlMask) {
+		    if(buttonEvent->state & ControlMask) {
 		      /* Handle this as multiple increment/decrement */
-			if (call_data->value - pv->oldIntegerValue < 0) {
+			if(call_data->value - pv->oldIntegerValue < 0) {
 			  /* Decrease value one 10*precision value */
 			    value = MAX(dlValuator->limits.lopr, pr->value - 10.*dlValuator->dPrecision);
-			} else if (call_data->value - pv->oldIntegerValue > 0) {
+			} else if(call_data->value - pv->oldIntegerValue > 0) {
 				/* Increase value one 10*precision value */
 			    value = MIN(dlValuator->limits.hopr, pr->value + 10.*dlValuator->dPrecision);
 			}
 		    } else {
 		      /* Single increment (precision) */
-			if (pv->oldIntegerValue > call_data->value) {
+			if(pv->oldIntegerValue > call_data->value) {
 			  /* decrease value one precision value */
 			    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
-			} else if (pv->oldIntegerValue < call_data->value) {
+			} else if(pv->oldIntegerValue < call_data->value) {
 				/* Increase value one precision value */
 			    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
 			}
@@ -1293,17 +1307,17 @@ void valuatorValueChanged(
 	       * NB: modifying - MB1 either side of slider means move one increment only;
 	       *   even though std. is Multiple (let Ctrl-MB1 mean multiple (not go-to-end))
 	       */
-		if (call_data->value - pv->oldIntegerValue < 0) {
+		if(call_data->value - pv->oldIntegerValue < 0) {
 		  /* Decrease value one precision value */
 		    value = MAX(dlValuator->limits.lopr, pr->value - dlValuator->dPrecision);
-		} else if (call_data->value - pv->oldIntegerValue > 0) {
+		} else if(call_data->value - pv->oldIntegerValue > 0) {
 		  /* Increase value one precision value */
 		    value = MIN(dlValuator->limits.hopr, pr->value + dlValuator->dPrecision);
 		}
-	    }  /* end if (call_data->event != NULL) */
+	    }  /* end if(call_data->event != NULL) */
 	}
 	
-	if (pr->writeAccess) {
+	if(pr->writeAccess) {
 	    medmSendDouble(pv->record,value);
 	  /* Move/redraw valuator & value, but force use of user-selected value */
 	    valuatorSetValue(pv,value,True);
@@ -1327,8 +1341,8 @@ DlElement *createDlValuator(DlElement *p)
     DlElement *dlElement;
  
     dlValuator = (DlValuator *)malloc(sizeof(DlValuator));
-    if (!dlValuator) return 0;
-    if (p) {
+    if(!dlValuator) return 0;
+    if(p) {
 	*dlValuator = *(p->structure.valuator);
     } else {
 	objectAttributeInit(&(dlValuator->object));
@@ -1344,7 +1358,7 @@ DlElement *createDlValuator(DlElement *p)
     dlValuator->enableUpdates = True;
     dlValuator->dragging = False;
 
-    if (!(dlElement = createDlElement(DL_Valuator,
+    if(!(dlElement = createDlElement(DL_Valuator,
       (XtPointer)dlValuator,
       &valuatorDlDispatchTable))) {
 	free(dlValuator);
@@ -1360,55 +1374,55 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlValuator *dlValuator;
     DlElement *dlElement = createDlValuator(NULL);
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlValuator = dlElement->structure.valuator;
 
     do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
+	switch((tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlValuator->object));
-	    else if (!strcmp(token,"control"))
+	    else if(!strcmp(token,"control"))
 	      parseControl(displayInfo,&(dlValuator->control));
-	    else if (!strcmp(token,"label")) {
+	    else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"none"))
+		if(!strcmp(token,"none"))
 		  dlValuator->label = LABEL_NONE;
-		else if (!strcmp(token,"no decorations"))
+		else if(!strcmp(token,"no decorations"))
 		  dlValuator->label = NO_DECORATIONS;
-		else if (!strcmp(token,"outline"))
+		else if(!strcmp(token,"outline"))
 		  dlValuator->label = OUTLINE;
-		else if (!strcmp(token,"limits"))
+		else if(!strcmp(token,"limits"))
 		  dlValuator->label = LIMITS;
-		else if (!strcmp(token,"channel"))
+		else if(!strcmp(token,"channel"))
 		  dlValuator->label = CHANNEL;
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static")) 
+		if(!strcmp(token,"static")) 
 		  dlValuator->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlValuator->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlValuator->clrmod = DISCRETE;
-	    } else  if (!strcmp(token,"direction")) {
+	    } else  if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"up")) 
+		if(!strcmp(token,"up")) 
 		  dlValuator->direction = UP;
-		else if (!strcmp(token,"right"))
+		else if(!strcmp(token,"right"))
 		  dlValuator->direction = RIGHT;
 	      /* Backward compatibility */
-		else if (!strcmp(token,"down"))
+		else if(!strcmp(token,"down"))
 		  dlValuator->direction = UP;
-		else if (!strcmp(token,"left"))
+		else if(!strcmp(token,"left"))
 		  dlValuator->direction = RIGHT;
-	    } else if (!strcmp(token,"dPrecision")) {
+	    } else if(!strcmp(token,"dPrecision")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlValuator->dPrecision = atof(token);
-	    } else if (!strcmp(token,"limits")) {
+	    } else if(!strcmp(token,"limits")) {
 		parseLimits(displayInfo,&(dlValuator->limits));
 	    }
 	    break;
@@ -1419,7 +1433,7 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
     
     return dlElement;
@@ -1437,21 +1451,21 @@ void writeDlValuator(
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif 
 	fprintf(stream,"\n%svaluator {",indent);
 	writeDlObject(stream,&(dlValuator->object),level+1);
 	writeDlControl(stream,&(dlValuator->control),level+1);
-	if (dlValuator->label != LABEL_NONE) 
+	if(dlValuator->label != LABEL_NONE) 
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
 	    stringValueTable[dlValuator->label]);
-	if (dlValuator->clrmod != STATIC) 
+	if(dlValuator->clrmod != STATIC) 
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlValuator->clrmod]);
-	if (dlValuator->direction != RIGHT)
+	if(dlValuator->direction != RIGHT)
 	  fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
 	    stringValueTable[dlValuator->direction]);
-	if (dlValuator->direction != 1.) 
+	if(dlValuator->direction != 1.) 
 	  fprintf(stream,"\n%s\tdPrecision=%f",indent,dlValuator->dPrecision);
 	writeDlLimits(stream,&(dlValuator->limits),level+1);
 	fprintf(stream,"\n%s}",indent);

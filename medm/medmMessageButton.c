@@ -57,11 +57,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _MedmMessageButton {
-    DlElement          *dlElement;     /* Must be first */
-    Record             *record;
-    UpdateTask         *updateTask;
-    double             pressValue;
-    double             releaseValue;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
+    double           pressValue;
+    double           releaseValue;
 } MedmMessageButton;
 
 void messageButtonCreateRunTimeInstance(DisplayInfo *, DlElement *);
@@ -102,8 +102,8 @@ int messageButtonFontListIndex(int height)
 /* don't allow height of font to exceed 90% - 4 pixels of messageButton widget
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
-	if ( ((int)(.90*height) - 4) >= 
+    for(i = MAX_FONTS-1; i >=  0; i--) {
+	if( ((int)(.90*height) - 4) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -133,20 +133,20 @@ Widget createPushButton(Widget parent,
     XtSetArg(args[n],XmNindicatorOn,False); n++;
     XtSetArg(args[n],XmNrecomputeSize,False); n++;
     XtSetArg(args[n], XmNuserData, userData); n++;
-    if (label) {
+    if(label) {
 	xmString = XmStringCreateLocalized(label);
 	XtSetArg(args[n],XmNlabelString, xmString); n++;
 	XtSetArg(args[n],XmNlabelType, XmSTRING); n++;
 	XtSetArg(args[n],XmNfontList,
 	  fontListTable[messageButtonFontListIndex(po->height)]); n++;
     } else
-      if (pixmap) {
+      if(pixmap) {
 	  XtSetArg(args[n],XmNlabelPixmap,pixmap); n++;
 	  XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
       }
     widget = XtCreateWidget("messageButton",
       xmPushButtonWidgetClass, parent, args, n);
-    if (xmString) XmStringFree(xmString);
+    if(xmString) XmStringFree(xmString);
     return widget;
 }
 
@@ -185,7 +185,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  messageButtonDraw,
 	  (XtPointer)pmb);
 	
-	if (!pmb->updateTask) {
+	if(!pmb->updateTask) {
 	    medmPrintf(1,"\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
@@ -196,7 +196,9 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  messageButtonUpdateGraphicalInfoCb,
 	  (XtPointer) pmb);
 	drawWhiteRectangle(pmb->updateTask);
+    }
  
+    if(!dlElement->widget) {
 	dlElement->widget = createPushButton(displayInfo->drawingArea,
 	  &(dlMessageButton->object),
 	  displayInfo->colormap[dlMessageButton->control.clr],
@@ -218,27 +220,26 @@ void executeDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(displayInfo->traversalMode == DL_EXECUTE) {
 	messageButtonCreateRunTimeInstance(displayInfo,dlElement);
-    } else
-      if (displayInfo->traversalMode == DL_EDIT) {
-	  if (dlElement->widget) {
-	      DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
-	      DlObject *po = &(dlMessageButton->object);
-	      XmString xmString;
-	      xmString = XmStringCreateLocalized(dlMessageButton->label);
-	      XtVaSetValues(dlElement->widget,
-		XmNx, (Position) po->x,
-		XmNy, (Position) po->y,
-		XmNwidth, (Dimension) po->width,
-		XmNheight, (Dimension) po->height,
-		XmNlabelString, xmString,
-		NULL);
-	      XmStringFree(xmString);
-	  } else {
-	      messageButtonCreateEditInstance(displayInfo,dlElement);
-	  }
-      }
+    } else if(displayInfo->traversalMode == DL_EDIT) {
+	if(dlElement->widget) {
+	    DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
+	    DlObject *po = &(dlMessageButton->object);
+	    XmString xmString;
+	    xmString = XmStringCreateLocalized(dlMessageButton->label);
+	    XtVaSetValues(dlElement->widget,
+	      XmNx, (Position) po->x,
+	      XmNy, (Position) po->y,
+	      XmNwidth, (Dimension) po->width,
+	      XmNheight, (Dimension) po->height,
+	      XmNlabelString, xmString,
+	      NULL);
+	    XmStringFree(xmString);
+	} else {
+	    messageButtonCreateEditInstance(displayInfo,dlElement);
+	}
+    }
 }
 
 void hideDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -265,18 +266,18 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
     case DBF_STRING:
 	break;
     case DBF_ENUM :
-	if (dlMessageButton->press_msg[0] != '\0') {
+	if(dlMessageButton->press_msg[0] != '\0') {
 	    match = False;
-	    for (i = 0; i < pd->hopr+1; i++) {
-		if (pd->stateStrings[i]) {
-		    if (!strcmp(dlMessageButton->press_msg,pd->stateStrings[i])) {
+	    for(i = 0; i < pd->hopr+1; i++) {
+		if(pd->stateStrings[i]) {
+		    if(!strcmp(dlMessageButton->press_msg,pd->stateStrings[i])) {
 			pmb->pressValue = (double) i;
 			match = True;
 			break;
 		    }
 		}
 	    }
-	    if (match == False) {
+	    if(match == False) {
 		pmb->pressValue = strtod(dlMessageButton->press_msg,&end);
 		if(*end != '\0' || end == dlMessageButton->press_msg) {
 		    medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
@@ -288,18 +289,18 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 		}
 	    }
 	}
-	if (dlMessageButton->release_msg[0] != '\0') {
+	if(dlMessageButton->release_msg[0] != '\0') {
 	    match = False;
-	    for (i = 0; i < pd->hopr+1; i++) {
-		if (pd->stateStrings[i]) {
-		    if (!strcmp(dlMessageButton->release_msg,pd->stateStrings[i])) {
+	    for(i = 0; i < pd->hopr+1; i++) {
+		if(pd->stateStrings[i]) {
+		    if(!strcmp(dlMessageButton->release_msg,pd->stateStrings[i])) {
 			pmb->releaseValue = (double) i;
 			match = True;
 			break;
 		    }
 		}
 	    }
-	    if (match == False) {
+	    if(match == False) {
 		pmb->releaseValue = strtod(dlMessageButton->release_msg,&end);
 		if(*end != '\0' || end == dlMessageButton->release_msg) {
 		    medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
@@ -313,7 +314,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 	}
 	break;
     default:
-	if (dlMessageButton->press_msg[0] != '\0') {
+	if(dlMessageButton->press_msg[0] != '\0') {
 	    pmb->pressValue = strtod(dlMessageButton->press_msg,&end);
 	    if(*end != '\0' || end == dlMessageButton->press_msg) {
 		medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
@@ -327,7 +328,7 @@ static void messageButtonUpdateGraphicalInfoCb(XtPointer cd)
 #endif
 	    }
 	}
-	if (dlMessageButton->release_msg[0] != '\0') {
+	if(dlMessageButton->release_msg[0] != '\0') {
 	    pmb->releaseValue = strtod(dlMessageButton->release_msg,&end);
 	    if(*end != '\0' || end == dlMessageButton->release_msg) {
 		medmPostMsg(1,"messageButtonUpdateGraphicalInfoCb: "
@@ -355,11 +356,21 @@ static void messageButtonDraw(XtPointer cd)
 {
     MedmMessageButton *pmb = (MedmMessageButton *) cd;
     Record *pd = pmb->record;
-    Widget widget = pmb->dlElement->widget;
-    DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
-    if (pd->connected) {
-	if (pd->readAccess) {
-	    if (widget) {
+    DlElement *dlElement = pmb->dlElement;
+    Widget widget = dlElement->widget;
+    DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
+    
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pd->connected) {
+	if(pd->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pmb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
@@ -375,18 +386,18 @@ static void messageButtonDraw(XtPointer cd)
 	    default :
 		break;
 	    }
-	    if (pd->writeAccess)
+	    if(pd->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	    draw3DPane(pmb->updateTask,
 	      pmb->updateTask->displayInfo->colormap[dlMessageButton->control.bclr]);
 	    draw3DQuestionMark(pmb->updateTask);
 	}
     } else {
-	if ((widget) && XtIsManaged(widget))
+	if((widget) && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pmb->updateTask);
     }
@@ -395,8 +406,9 @@ static void messageButtonDraw(XtPointer cd)
 static void messageButtonDestroyCb(XtPointer cd)
 {
     MedmMessageButton *pmb = (MedmMessageButton *) cd;
-    if (pmb) {
+    if(pmb) {
 	medmDestroyRecord(pmb->record);
+	pmb->dlElement->data = 0;
 	free((char *)pmb);
     }
 }
@@ -416,11 +428,11 @@ static void messageButtonValueChangedCb(Widget w,
     XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
     DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
 
-    if (pd->connected) {
-	if (pd->writeAccess) {
-	    if (pushCallData->reason == XmCR_ARM) {
+    if(pd->connected) {
+	if(pd->writeAccess) {
+	    if(pushCallData->reason == XmCR_ARM) {
 	      /* message button can only put strings */
-		if (dlMessageButton->press_msg[0] != '\0') {
+		if(dlMessageButton->press_msg[0] != '\0') {
 		    switch (pd->dataType) {
 		    case DBF_STRING:
 		        medmSendString(pmb->record,dlMessageButton->press_msg);
@@ -433,7 +445,7 @@ static void messageButtonValueChangedCb(Widget w,
 #endif
 		    default:
 #ifdef MEDM_CDEV
-		        if (pd->useMsgWhenWrite[0])
+		        if(pd->useMsgWhenWrite[0])
 			  medmSendMsg (pmb->record, dlMessageButton->press_msg);
 			else
 			  medmSendDouble(pmb->record,pmb->pressValue);
@@ -444,8 +456,8 @@ static void messageButtonValueChangedCb(Widget w,
 		    }
 		}
 	    } else
-	      if (pushCallData->reason == XmCR_DISARM) {
-		  if (dlMessageButton->release_msg[0] != '\0') {
+	      if(pushCallData->reason == XmCR_DISARM) {
+		  if(dlMessageButton->release_msg[0] != '\0') {
 		      switch (pd->dataType) {
 		      case DBF_STRING:
 			  medmSendString(pmb->record,dlMessageButton->release_msg);
@@ -458,7 +470,7 @@ static void messageButtonValueChangedCb(Widget w,
 #endif
 		      default:
 #ifdef MEDM_CDEV
-		        if (pd->useMsgWhenWrite[1])
+		        if(pd->useMsgWhenWrite[1])
 			  medmSendMsg (pmb->record, dlMessageButton->release_msg);
 			else
 			  medmSendDouble(pmb->record,pmb->releaseValue);
@@ -491,7 +503,7 @@ DlElement *createDlMessageButton(DlElement *p)
     DlElement *dlElement;
  
     dlMessageButton = (DlMessageButton *)malloc(sizeof(DlMessageButton));
-    if (p) {
+    if(p) {
 	*dlMessageButton = *(p->structure.messageButton);
     } else {
 	objectAttributeInit(&(dlMessageButton->object));
@@ -502,7 +514,7 @@ DlElement *createDlMessageButton(DlElement *p)
 	dlMessageButton->clrmod = STATIC;
     }
 
-    if (!(dlElement = createDlElement(DL_MessageButton,
+    if(!(dlElement = createDlElement(DL_MessageButton,
       (XtPointer) dlMessageButton,
       &messageButtonDlDispatchTable))) {
 	free(dlMessageButton);
@@ -519,36 +531,36 @@ DlElement *parseMessageButton(DisplayInfo *displayInfo)
     DlMessageButton *dlMessageButton;
     DlElement *dlElement = createDlMessageButton(NULL);
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlMessageButton = dlElement->structure.messageButton;
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlMessageButton->object));
-	    else if (!strcmp(token,"control"))
+	    else if(!strcmp(token,"control"))
 	      parseControl(displayInfo,&(dlMessageButton->control));
-	    else if (!strcmp(token,"press_msg")) {
+	    else if(!strcmp(token,"press_msg")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlMessageButton->press_msg,token);
-	    } else if (!strcmp(token,"release_msg")) {
+	    } else if(!strcmp(token,"release_msg")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlMessageButton->release_msg,token);
-	    } else if (!strcmp(token,"label")) {
+	    } else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlMessageButton->label,token);
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dlMessageButton->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlMessageButton->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlMessageButton->clrmod = DISCRETE;
 	    }
 	    break;
@@ -559,7 +571,7 @@ DlElement *parseMessageButton(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -577,19 +589,19 @@ void writeDlMessageButton(
     indent[level] = '\0';
  
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%s\"message button\" {",indent);
 	writeDlObject(stream,&(dlMessageButton->object),level+1);
 	writeDlControl(stream,&(dlMessageButton->control),level+1);
-	if (dlMessageButton->label[0] != '\0')
+	if(dlMessageButton->label[0] != '\0')
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlMessageButton->label);
-	if (dlMessageButton->press_msg[0] != '\0')
+	if(dlMessageButton->press_msg[0] != '\0')
 	  fprintf(stream,"\n%s\tpress_msg=\"%s\"",indent,dlMessageButton->press_msg);
-	if (indent,dlMessageButton->release_msg[0] != '\0')
+	if(indent,dlMessageButton->release_msg[0] != '\0')
 	  fprintf(stream,"\n%s\trelease_msg=\"%s\"",
 	    indent,dlMessageButton->release_msg);
-	if (dlMessageButton->clrmod != STATIC) 
+	if(dlMessageButton->clrmod != STATIC) 
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlMessageButton->clrmod]);
 	fprintf(stream,"\n%s}",indent);

@@ -86,20 +86,17 @@ static DlDispatchTable displayDlDispatchTable = {
     NULL,
     NULL};
 
-/*
- * Create and fill in widgets for display
- */
-
+/* Create a new, empty display.  Only called in EDIT mode. */
 DisplayInfo *createDisplay()
 {
     DisplayInfo *displayInfo;
-    DlElement *dlElement;
+    DlElement *pE;
 
   /* Clear currentDisplayInfo - not really one yet */
     currentDisplayInfo = NULL;
     initializeGlobalResourceBundle();
 
-    if (!(displayInfo = allocateDisplayInfo())) return NULL;
+    if(!(displayInfo = allocateDisplayInfo())) return NULL;
 
   /* General scheme: update  globalResourceBundle, then do creates */
     globalResourceBundle.x = 0;
@@ -109,11 +106,11 @@ DisplayInfo *createDisplay()
     globalResourceBundle.gridSpacing = DEFAULT_GRID_SPACING;
     globalResourceBundle.gridOn = DEFAULT_GRID_ON;
     globalResourceBundle.snapToGrid = DEFAULT_GRID_SNAP;
-    strcpy(globalResourceBundle.name,DEFAULT_FILE_NAME);
+    strcpy(globalResourceBundle.name, DEFAULT_FILE_NAME);
     displayInfo->dlFile = createDlFile(displayInfo);
-    dlElement = createDlDisplay(NULL);
-    if (dlElement) {
-	DlDisplay *dlDisplay = dlElement->structure.display;
+    pE = createDlDisplay(NULL);
+    if(pE) {
+	DlDisplay *dlDisplay = pE->structure.display;
 	dlDisplay->object.x = globalResourceBundle.x;
 	dlDisplay->object.y = globalResourceBundle.y;
 	dlDisplay->object.width = globalResourceBundle.width;
@@ -123,7 +120,7 @@ DisplayInfo *createDisplay()
 	dlDisplay->grid.gridSpacing = globalResourceBundle.gridSpacing;
 	dlDisplay->grid.gridOn = globalResourceBundle.gridOn;
 	dlDisplay->grid.snapToGrid = globalResourceBundle.snapToGrid;
-	appendDlElement(displayInfo->dlElementList,dlElement);
+	appendDlElement(displayInfo->dlElementList,pE);
     } else {
       /* Cleanup up displayInfo */
 	return NULL;
@@ -132,10 +129,10 @@ DisplayInfo *createDisplay()
      The value of displayInfo->dlColormap is used as a flag to decide
      when and how to create it */
     displayInfo->dlColormap = NULL;
-  /* Execute all the elements including the display */
-    dmTraverseDisplayList(displayInfo);
+  /* Execute the display (the only element) */
+    (pE->run->execute)(displayInfo, pE);
   /* Pop it up */
-    XtPopup(displayInfo->shell,XtGrabNone);
+    XtPopup(displayInfo->shell, XtGrabNone);
   /* Make it be the current displayInfo */
     currentDisplayInfo = displayInfo;
   /* Refresh the display list dialog box */
@@ -159,7 +156,7 @@ void closeDisplay(Widget w) {
 
 	strcpy(warningString,"Save before closing display :\n");
 	tmp = tmp1 = newDisplayInfo->dlFile->name;
-	while (*tmp != '\0')
+	while(*tmp != '\0')
 	  if(*tmp++ == MEDM_DIR_DELIMITER_CHAR) tmp1 = tmp;
 	strcat(warningString,tmp1);
 	dmSetAndPopupQuestionDialog(newDisplayInfo,warningString,"Yes","No","Cancel");
@@ -182,7 +179,7 @@ void closeDisplay(Widget w) {
   /* Remove shells if their executeTime elements are in this display */
     if(executeTimeCartesianPlotWidget || executeTimePvLimitsElement) {
 	pE = FirstDlElement(newDisplayInfo->dlElementList);
-	while (pE) {
+	while(pE) {
 	    if(executeTimeCartesianPlotWidget  &&
 	      pE->widget == executeTimeCartesianPlotWidget &&
 	      cartesianPlotAxisS) {
@@ -217,8 +214,8 @@ DlElement *createDlDisplay(DlElement *p)
  
  
     dlDisplay = (DlDisplay *)malloc(sizeof(DlDisplay));
-    if (!dlDisplay) return 0;
-    if (p) {
+    if(!dlDisplay) return 0;
+    if(p) {
 	*dlDisplay = *p->structure.display; 
     } else {
 	objectAttributeInit(&(dlDisplay->object));
@@ -232,7 +229,7 @@ DlElement *createDlDisplay(DlElement *p)
 	dlDisplay->grid.snapToGrid = DEFAULT_GRID_SNAP;
     }
  
-    if (!(dlElement = createDlElement(DL_Display,(XtPointer)dlDisplay,
+    if(!(dlElement = createDlElement(DL_Display,(XtPointer)dlDisplay,
       &displayDlDispatchTable))) {
 	free(dlDisplay);
     }
@@ -317,7 +314,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtManageChild(displayInfo->drawingArea);
 	
       /* Branch depending on the mode */
-	if (displayInfo->traversalMode == DL_EDIT) {
+	if(displayInfo->traversalMode == DL_EDIT) {
 	  /* Create the edit-mode popup menu */
 	    createEditModeMenu(displayInfo);
 	    
@@ -337,7 +334,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
 	      handleEditEnterWindow,(XtPointer)displayInfo);
  
-	} else if (displayInfo->traversalMode == DL_EXECUTE) {
+	} else if(displayInfo->traversalMode == DL_EXECUTE) {
 	  /*
 	   *  MDA --- HACK to fix DND visuals problem with SUN server
 	   *    Note: This call is in here strictly to satisfy some defect in
@@ -360,7 +357,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
 	}
-    } else  {     /* else for if (displayInfo->drawingArea == NULL) */
+    } else  {     /* else for if(displayInfo->drawingArea == NULL) */
       /* Just set the values, drawing area is already created with these values
        * KE: Should be unnecessary except for object.x,y */
 	nargs=2;
@@ -495,7 +492,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
 
   /* Create the execute-mode popup menu */
     nargs = 0;
-    if (doExec) {
+    if(doExec) {
       /* Include the Execute item */
 	XtSetArg(args[nargs], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); nargs++;
     } else {
@@ -511,7 +508,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
       "executePopupMenu", args, nargs);
     
   /* Create the execute menu */
-    if (doExec) {
+    if(doExec) {
 	w = createExecuteMenu(displayInfo, execPath);
     }
 }
@@ -604,13 +601,13 @@ DlElement *parseDisplay(DisplayInfo *displayInfo)
     DlDisplay *dlDisplay;
     DlElement *dlElement = createDlDisplay(NULL);
  
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlDisplay = dlElement->structure.display;
  
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlDisplay->object));
 	    } else if(!strcmp(token,"grid")) {
 		parseGrid(displayInfo,&(dlDisplay->grid));
@@ -618,7 +615,7 @@ DlElement *parseDisplay(DisplayInfo *displayInfo)
 	      /* Parse separate display list to get and use that colormap */
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (strlen(token) > (size_t) 0) {
+		if(strlen(token) > (size_t) 0) {
 		    strcpy(dlDisplay->cmap,token);
 		}
 	    } else if(!strcmp(token,"bclr")) {
@@ -654,13 +651,13 @@ DlElement *parseDisplay(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     appendDlElement(displayInfo->dlElementList,dlElement); 
   /* fix up x,y so that 0,0 (old defaults) are replaced */
-    if (dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
-    if (dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
+    if(dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
+    if(dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
  
     return dlElement;
 }
@@ -674,7 +671,7 @@ void writeDlDisplay(
     char indent[16];
     DlDisplay *dlDisplay = dlElement->structure.display;
  
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
  
     fprintf(stream,"\n%sdisplay {",indent);

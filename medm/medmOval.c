@@ -60,8 +60,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 typedef struct _MedmOval {
     DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
     Record           **records;
-    UpdateTask       *updateTask;
 } MedmOval;
 
 static void ovalDraw(XtPointer cd);
@@ -98,12 +98,12 @@ static void drawOval(MedmOval *po) {
     DlOval *dlOval = po->dlElement->structure.oval;
 
     lineWidth = (dlOval->attr.width+1)/2;
-    if (dlOval->attr.fill == F_SOLID) {
+    if(dlOval->attr.fill == F_SOLID) {
 	XFillArc(display,XtWindow(widget),displayInfo->gc,
 	  dlOval->object.x,dlOval->object.y,
 	  dlOval->object.width,dlOval->object.height,0,360*64);
     } else
-      if (dlOval->attr.fill == F_OUTLINE) {
+      if(dlOval->attr.fill == F_OUTLINE) {
 	  XDrawArc(display,XtWindow(widget),displayInfo->gc,
 	    dlOval->object.x + lineWidth,
 	    dlOval->object.y + lineWidth,
@@ -134,7 +134,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	      ovalDraw,
 	      (XtPointer)po);
 	    
-	    if (po->updateTask == NULL) {
+	    if(po->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlOval: Memory allocation error\n");
 	    } else {
 		updateTaskAddDestroyCb(po->updateTask,ovalDestroyCb);
@@ -147,8 +147,10 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	calcPostfix(&dlOval->dynAttr);
 	setMonitorChanged(&dlOval->dynAttr, po->records);
     } else {
+	if(displayInfo->traversalMode == DL_EXECUTE)
+	  dlElement->staticGraphic = True;
 	executeDlBasicAttribute(displayInfo,&(dlOval->attr));
-	if (dlOval->attr.fill == F_SOLID) {
+	if(dlOval->attr.fill == F_SOLID) {
 	    unsigned int lineWidth = (dlOval->attr.width+1)/2;
 	    XFillArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
 	      dlOval->object.x,dlOval->object.y,
@@ -158,7 +160,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlOval->object.width,dlOval->object.height,0,360*64);
 
 	} else
-	  if (dlOval->attr.fill == F_OUTLINE) {
+	  if(dlOval->attr.fill == F_OUTLINE) {
 	      unsigned int lineWidth = (dlOval->attr.width+1)/2;
 	      XDrawArc(display,XtWindow(displayInfo->drawingArea),displayInfo->gc,
 		dlOval->object.x + lineWidth,
@@ -230,8 +232,8 @@ static void ovalDraw(XtPointer cd) {
       /* Draw depending on visibility */
 	if(calcVisibility(&dlOval->dynAttr, po->records))
 	  drawOval(po);
-	if (pd->readAccess) {
-	    if (!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
+	if(pd->readAccess) {
+	    if(!po->updateTask->overlapped && dlOval->dynAttr.vis == V_STATIC) {
 		po->updateTask->opaque = True;
 	    }
 	} else {
@@ -254,7 +256,7 @@ static void ovalDraw(XtPointer cd) {
 static void ovalDestroyCb(XtPointer cd) {
     MedmOval *po = (MedmOval *)cd;
 
-    if (po) {
+    if(po) {
 	Record **records = po->records;
 	
 	if(records) {
@@ -264,6 +266,7 @@ static void ovalDestroyCb(XtPointer cd) {
 	    }
 	    free((char *)records);
 	}
+	po->dlElement->data = 0;
 	free((char *)po);
     }
     return;
@@ -285,8 +288,8 @@ DlElement *createDlOval(DlElement *p)
     DlElement *dlElement;
  
     dlOval = (DlOval *)malloc(sizeof(DlOval));
-    if (!dlOval) return 0;
-    if (p) {
+    if(!dlOval) return 0;
+    if(p) {
 	*dlOval = *p->structure.oval;
     } else {
 	objectAttributeInit(&(dlOval->object));
@@ -294,7 +297,7 @@ DlElement *createDlOval(DlElement *p)
 	dynamicAttributeInit(&(dlOval->dynAttr));
     }
  
-    if (!(dlElement = createDlElement(DL_Oval, (XtPointer)dlOval,
+    if(!(dlElement = createDlElement(DL_Oval, (XtPointer)dlOval,
       &ovalDlDispatchTable))) {
 	free(dlOval);
     }
@@ -310,19 +313,19 @@ DlElement *parseOval(DisplayInfo *displayInfo)
     DlOval *dlOval;
     DlElement *dlElement = createDlOval(NULL);
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlOval = dlElement->structure.oval;
  
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlOval->object));
 	    else
-	      if (!strcmp(token,"basic attribute"))
+	      if(!strcmp(token,"basic attribute"))
 		parseBasicAttribute(displayInfo,&(dlOval->attr));
 	      else
-		if (!strcmp(token,"dynamic attribute"))
+		if(!strcmp(token,"dynamic attribute"))
 		  parseDynamicAttribute(displayInfo,&(dlOval->dynAttr));
 	    break;
 	case T_EQUAL:
@@ -332,7 +335,7 @@ DlElement *parseOval(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -351,7 +354,7 @@ void writeDlOval(
     indent[level] = '\0'; 
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%soval {",indent);
   	writeDlObject(stream,&(dlOval->object),level+1);

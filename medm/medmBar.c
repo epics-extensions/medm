@@ -57,9 +57,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _MedmBar {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record;
-    UpdateTask  *updateTask;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
 } MedmBar;
 
 /* Function Prototypes */
@@ -111,8 +111,8 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (!dlElement->widget) {
-	if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(!dlElement->widget) {
+	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    if(dlElement->data) {
 		pb = (MedmBar *)dlElement->data;
 	    } else {
@@ -124,7 +124,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 		  barDraw,
 		  (XtPointer)pb);
 		
-		if (pb->updateTask == NULL) {
+		if(pb->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlBar: Memory allocation error\n");
 		} else {
 		    updateTaskAddDestroyCb(pb->updateTask,barDestroyCb);
@@ -187,7 +187,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	   */
 	case RIGHT:
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	    if (dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+	    if(dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
 		XtSetArg(args[n],XcNscaleSegments, 0); n++;
 	    } else {
 		XtSetArg(args[n],XcNscaleSegments,
@@ -196,7 +196,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	case UP:
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
-	    if (dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
+	    if(dlBar->label == LABEL_NONE || dlBar->label == NO_DECORATIONS) {
 		XtSetArg(args[n],XcNscaleSegments, 0); n++;
 	    } else {
 		XtSetArg(args[n],XcNscaleSegments,
@@ -205,7 +205,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	    break;
 	}
 
-	if (dlBar->fillmod == FROM_CENTER) {
+	if(dlBar->fillmod == FROM_CENTER) {
 	    XtSetArg(args[n], XcNfillmod, XcCenter); n++;
 	} else {
 	    XtSetArg(args[n], XcNfillmod, XcEdge); n++;
@@ -234,7 +234,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 	  xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
 	
-	if (displayInfo->traversalMode == DL_EDIT) {
+	if(displayInfo->traversalMode == DL_EDIT) {
 	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
 	}
@@ -266,13 +266,22 @@ static void barUpdateValueCb(XtPointer cd) {
 static void barDraw(XtPointer cd) {
     MedmBar *pb = (MedmBar *) cd;
     Record *pr = pb->record;
-    Widget widget = pb->dlElement->widget;
-    DlBar *dlBar = pb->dlElement->structure.bar;
+    DlElement *dlElement = pb->dlElement;
+    Widget widget = dlElement->widget;
+    DlBar *dlBar = dlElement->structure.bar;
     XcVType val;
 
-    if (pr->connected) {
-	if (pr->readAccess) {
-	    if (widget) {
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pr->connected) {
+	if(pr->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
@@ -289,13 +298,13 @@ static void barDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	    draw3DPane(pb->updateTask,
 	      pb->updateTask->displayInfo->colormap[dlBar->monitor.bclr]);
 	    draw3DQuestionMark(pb->updateTask);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pb->updateTask);
     }
 }
@@ -334,10 +343,10 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 	  dlBar->monitor.rdbk);
 	return;
     }
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+    if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
-    if (widget != NULL) {
+    if(widget != NULL) {
       /* Set foreground pixel according to alarm */
 	pixel = (dlBar->clrmod == ALARM) ?
 	  alarmColor(pr->severity) :
@@ -382,8 +391,9 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
 
 static void barDestroyCb(XtPointer cd) {
     MedmBar *pb = (MedmBar *) cd;
-    if (pb) {
+    if(pb) {
 	medmDestroyRecord(pb->record);
+	pb->dlElement->data = 0;
 	free((char *)pb);
     }
     return;
@@ -401,8 +411,8 @@ DlElement *createDlBar(DlElement *p)
     DlElement *dlElement;
 
     dlBar = (DlBar *)malloc(sizeof(DlBar));
-    if (!dlBar) return 0;
-    if (p) {
+    if(!dlBar) return 0;
+    if(p) {
 	*dlBar = *p->structure.bar;
     } else {
 	objectAttributeInit(&(dlBar->object));
@@ -414,7 +424,7 @@ DlElement *createDlBar(DlElement *p)
 	dlBar->fillmod = FROM_EDGE;
     }
 
-    if (!(dlElement = createDlElement(DL_Bar,
+    if(!(dlElement = createDlElement(DL_Bar,
       (XtPointer)      dlBar,
       &barDlDispatchTable))) {
 	free(dlBar);
@@ -430,59 +440,59 @@ DlElement *parseBar(DisplayInfo *displayInfo)
     DlBar *dlBar;
     DlElement *dlElement = createDlBar(NULL);
  
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlBar = dlElement->structure.bar;
  
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlBar->object));
-	    } else if (!strcmp(token,"monitor")) {
+	    } else if(!strcmp(token,"monitor")) {
 		parseMonitor(displayInfo,&(dlBar->monitor));
-	    } else if (!strcmp(token,"label")) {
+	    } else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"none"))
+		if(!strcmp(token,"none"))
 		  dlBar->label = LABEL_NONE;
-		else if (!strcmp(token,"no decorations"))
+		else if(!strcmp(token,"no decorations"))
 		  dlBar->label = NO_DECORATIONS;
-		else if (!strcmp(token,"outline"))
+		else if(!strcmp(token,"outline"))
 		  dlBar->label = OUTLINE;
-		else if (!strcmp(token,"limits"))
+		else if(!strcmp(token,"limits"))
 		  dlBar->label = LIMITS;
 		else
-		  if (!strcmp(token,"channel"))
+		  if(!strcmp(token,"channel"))
 		    dlBar->label = CHANNEL;
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dlBar->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlBar->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlBar->clrmod = DISCRETE;
-	    } else if (!strcmp(token,"direction")) {
+	    } else if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"up"))
+		if(!strcmp(token,"up"))
 		  dlBar->direction = UP;
-		else if (!strcmp(token,"right"))
+		else if(!strcmp(token,"right"))
 		  dlBar->direction = RIGHT;
 	      /* Backward compatibility */
-		else if (!strcmp(token,"down"))
+		else if(!strcmp(token,"down"))
 		  dlBar->direction = UP;
-		else if (!strcmp(token,"left"))
+		else if(!strcmp(token,"left"))
 		  dlBar->direction = RIGHT;
-	    } else if (!strcmp(token,"fillmod")) {
+	    } else if(!strcmp(token,"fillmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"from edge"))
+		if(!strcmp(token,"from edge"))
 		  dlBar->fillmod = FROM_EDGE;
 		else if(!strcmp(token,"from center"))
 		  dlBar->fillmod = FROM_CENTER;
-	    } else if (!strcmp(token,"limits")) {
+	    } else if(!strcmp(token,"limits")) {
 	      parseLimits(displayInfo,&(dlBar->limits));
 	    }
 	    break;
@@ -493,7 +503,7 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
     
     return dlElement;
@@ -504,28 +514,28 @@ void writeDlBar( FILE *stream, DlElement *dlElement, int level) {
     char indent[16];
     DlBar *dlBar = dlElement->structure.bar;
 
-    for (i = 0;  i < level; i++) indent[i] = '\t';
+    for(i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%sbar {",indent);
     writeDlObject(stream,&(dlBar->object),level+1);
     writeDlMonitor(stream,&(dlBar->monitor),level+1);
-    if (dlBar->label != LABEL_NONE)
+    if(dlBar->label != LABEL_NONE)
       fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
         stringValueTable[dlBar->label]);
-    if (dlBar->clrmod != STATIC)
+    if(dlBar->clrmod != STATIC)
       fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
         stringValueTable[dlBar->clrmod]);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (dlBar->direction != RIGHT)
+    if(dlBar->direction != RIGHT)
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlBar->direction]);
 #else
-    if ((dlBar->direction != RIGHT) || (!MedmUseNewFileFormat))
+    if((dlBar->direction != RIGHT) || (!MedmUseNewFileFormat))
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlBar->direction]);
 #endif
-    if (dlBar->fillmod != FROM_EDGE) 
+    if(dlBar->fillmod != FROM_EDGE) 
       fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
         stringValueTable[dlBar->fillmod]);
     writeDlLimits(stream,&(dlBar->limits),level+1);

@@ -67,18 +67,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 /* Structures */
 
 typedef struct _MedmStripChart {
-    DlElement     *dlElement;              /* Must be first */
-    Record        *record[MAX_PENS];       /* array of data */
-    UpdateTask    *updateTask;
-    int           nChannels;               /* number of channels ( <= MAX_PENS) */
-    Boolean       updateEnable;            /* strip chart update enable */
-
-  /* strip chart data */
-
+    DlElement       *dlElement;        /* Must be first */
+    UpdateTask      *updateTask;       /* Must be second */
+    Record          *record[MAX_PENS]; /* array of data */
+  /* Strip chart data */
+    int             nChannels;         /* number of channels ( <= MAX_PENS) */
+    Boolean         updateEnable;      /* strip chart update enable */
     Dimension w;
     Dimension h;
-
-  /* these (X0,Y0), (X1,Y1) are relative to main window/pixmap */
+  /* These (X0,Y0), (X1,Y1) are relative to main window/pixmap */
     unsigned int    dataX0;            /* upper left corner - data region X */
     unsigned int    dataY0;            /* upper left corner - data region Y */
     unsigned int    dataX1;            /* lower right corner - data region X */
@@ -87,8 +84,8 @@ typedef struct _MedmStripChart {
     unsigned int    dataHeight;        /* height of data region */
 
     int             shadowThickness;
-    double          timeInterval;          /* time for each pixel */
-    double          nextAdvanceTime;       /* time for advance one pixel */
+    double          timeInterval;      /* time for each pixel */
+    double          nextAdvanceTime;   /* time for advance one pixel */
     Pixmap          pixmap;
     GC              gc;
     double          value[MAX_PENS];
@@ -180,25 +177,25 @@ static int calcLabelFontSize(MedmStripChart *psc) {
     int i;
 
     width = (psc->w < psc->h) ? psc->w : psc->h;
-    if (width > 1000) {
+    if(width > 1000) {
 	fontHeight = 18;
-    } else if (width > 900) {
+    } else if(width > 900) {
 	fontHeight = 16;
-    } else if (width > 750) {
+    } else if(width > 750) {
 	fontHeight = 14;
-    } else if (width > 600) {
+    } else if(width > 600) {
 	fontHeight = 12;
-    } else if (width > 400) {
+    } else if(width > 400) {
 	fontHeight = 10;
     } else {
 	fontHeight = 8;
     }
-    for (i = MAX_FONTS - 1; i >= 0 ; i--) {
-	if ((fontTable[i]->ascent + fontTable[i]->descent) <= fontHeight) {
+    for(i = MAX_FONTS - 1; i >= 0 ; i--) {
+	if((fontTable[i]->ascent + fontTable[i]->descent) <= fontHeight) {
 	    break;
 	}
     }
-    if (i<0) i = 0;
+    if(i<0) i = 0;
     return i;
 }
 
@@ -208,40 +205,40 @@ static int calcTitleFontSize(MedmStripChart *psc) {
     int i;
 
     width = (psc->w < psc->h) ? psc->w : psc->h;
-    if (width > 1000) {
+    if(width > 1000) {
 	fontHeight = 26;
-    } else if (width > 900) {
+    } else if(width > 900) {
 	fontHeight = 24;
-    } else if (width > 750) {
+    } else if(width > 750) {
 	fontHeight = 22;
-    } else if (width > 600) {
+    } else if(width > 600) {
 	fontHeight = 20;
-    } else if (width > 500) {
+    } else if(width > 500) {
 	fontHeight = 18;
-    } else if (width > 400) {
+    } else if(width > 400) {
 	fontHeight = 16;
-    } else if (width > 300) {
+    } else if(width > 300) {
 	fontHeight = 14;
-    } else if (width > 250) {
+    } else if(width > 250) {
 	fontHeight = 12;
-    } else if (width > 200) {
+    } else if(width > 200) {
 	fontHeight = 10;
     } else {
 	fontHeight = 8;
     }
-    for (i = MAX_FONTS - 1; i >= 0 ; i--) {
-	if ((fontTable[i]->ascent + fontTable[i]->descent) <= fontHeight) {
+    for(i = MAX_FONTS - 1; i >= 0 ; i--) {
+	if((fontTable[i]->ascent + fontTable[i]->descent) <= fontHeight) {
 	    break;
 	}
     }
-    if (i<0) i = 0;
+    if(i<0) i = 0;
     return i;
 }
 
 static void calcFormat(double value, char *format, int *decimal, int *width)
 {
     double order = 0.0;
-    if (value == 0.0) {
+    if(value == 0.0) {
 	*format = 'f';
 	*decimal = 1;
 	*width = 3;
@@ -249,32 +246,32 @@ static void calcFormat(double value, char *format, int *decimal, int *width)
     } else {
 	order = log10(fabs(value));
     }
-    if (order > 5.0 || order < -4.0) {
+    if(order > 5.0 || order < -4.0) {
 	*format = 'e';
 	*decimal = 1;
     } else {
 	*format = 'f';
-	if (order < 0.0) {
+	if(order < 0.0) {
 	    *decimal = (int)(order) * -1 + 2;
 	} else {
 	    *decimal = 1;
 	}
     }
-    if (order >= 4.0) {
+    if(order >= 4.0) {
 	*width = 7;
-    } else if (order >= 3.0) {
+    } else if(order >= 3.0) {
 	*width = 6;
-    } else if (order >= 2.0) {
+    } else if(order >= 2.0) {
 	*width = 5;
-    } else if (order >= 1.0) {
+    } else if(order >= 1.0) {
 	*width = 4;
-    } else if (order >= 0.0) {
+    } else if(order >= 0.0) {
 	*width = 3;
-    } else if (order >= -1.0) {
+    } else if(order >= -1.0) {
 	*width = 4;
-    } else if (order >= -2.0) {
+    } else if(order >= -2.0) {
 	*width = 5;
-    } else if (order >= -3.0) {
+    } else if(order >= -3.0) {
 	*width = 6;
     } else {
 	*width = 7;
@@ -285,17 +282,17 @@ static int calcMargin(MedmStripChart *psc) {
     int width;
     int margin;
     width = (psc->h < psc->w) ? psc->h : psc->w;
-    if (width > 1000) {
+    if(width > 1000) {
 	margin = 6;
-    } else if (width > 800) {
+    } else if(width > 800) {
 	margin = 5;
-    } else if (width > 600) {
+    } else if(width > 600) {
 	margin = 4;
-    } else if (width > 400) {
+    } else if(width > 400) {
 	margin = 3;
-    } else if (width > 300) {
+    } else if(width > 300) {
 	margin = 2;
-    } else if (width > 200) {
+    } else if(width > 200) {
 	margin = 1;
     } else {
 	margin = 0;
@@ -307,15 +304,15 @@ static int calcMarkerHeight(MedmStripChart *psc) {
     int width;
     int markerHeight;
     width = (psc->h < psc->w) ? psc->h : psc->w;
-    if (width > 1000) {
+    if(width > 1000) {
 	markerHeight = 6;
-    } else if (width > 800) {
+    } else if(width > 800) {
 	markerHeight = 5;
-    } else if (width > 600) {
+    } else if(width > 600) {
 	markerHeight = 4;
-    } else if (width > 400) {
+    } else if(width > 400) {
 	markerHeight = 3;
-    } else if (width > 300) {
+    } else if(width > 300) {
 	markerHeight = 2;
     } else {
 	markerHeight = 1;
@@ -338,19 +335,19 @@ static void calcYAxisLabelWidth(MedmStripChart *psc) {
     sccd.shadowThickness = 3;
 
   /* clear ranges */
-    for (i = 0; i<psc->nChannels; i++) {
+    for(i = 0; i<psc->nChannels; i++) {
 	range[i] = nullRange;
     }
   /* remove any duplicated settings */
 
     cnt = 0;
 
-    for (i = 0; i < psc->nChannels; i++) {
+    for(i = 0; i < psc->nChannels; i++) {
 	int found = 0;
 	int j;
 
-	for (j=0; j<cnt; j++) {
-	    if ((psc->record[i]->hopr == range[j].hi) &&
+	for(j=0; j<cnt; j++) {
+	    if((psc->record[i]->hopr == range[j].hi) &&
 	      (psc->record[i]->lopr == range[j].lo)) {
 		found = 1;
 		range[j].numDot++;
@@ -359,7 +356,7 @@ static void calcYAxisLabelWidth(MedmStripChart *psc) {
 	    }
 	}
 
-	if (!found) {
+	if(!found) {
 	    char f1, f2;
 	    int  d1, d2;
 	    int  w1, w2;
@@ -372,24 +369,24 @@ static void calcYAxisLabelWidth(MedmStripChart *psc) {
 	    calcFormat(range[cnt].lo, &f2, &d2, &w2);
 	    range[cnt].format = (f1 == 'e' || f2 == 'e') ? 'e' : 'f';
 	    range[cnt].decimal = (d1 > d2) ? d1 : d2;
-	    if (range[cnt].hi < 0.0) w1++;
-	    if (range[cnt].lo < 0.0) w2++;
+	    if(range[cnt].hi < 0.0) w1++;
+	    if(range[cnt].lo < 0.0) w2++;
 	    range[cnt].width = (w1 > w2) ? w1 : w2;
 	    cnt++;
 	}
     }
     sccd.numYAxisLabel = cnt;
-    if (sccd.numYAxisLabel == 1) {
+    if(sccd.numYAxisLabel == 1) {
 	range[0].numDot = 0;
     }
-    for (i = 0; i < sccd.numYAxisLabel; i++) {
+    for(i = 0; i < sccd.numYAxisLabel; i++) {
 	int width;
 	char *text = "-8.8888888888";
 
 	width = XTextWidth(fontTable[sccd.axisLabelFont],text,range[i].width);
-	if (width > maxWidth)
+	if(width > maxWidth)
 	  maxWidth = width;
-	if ((int)range[i].numDot > maxDot) maxDot = range[i].numDot;
+	if((int)range[i].numDot > maxDot) maxDot = range[i].numDot;
     }
     sccd.yAxisLabelWidth = maxWidth + (maxDot) * sccd.lineSpace;
     sccd.yAxisLabelTextWidth = maxWidth;
@@ -423,8 +420,9 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
     MedmStripChart *psc;
     DlStripChart *dlStripChart = dlElement->structure.stripChart;
 
-    psc = (MedmStripChart *) calloc(1,sizeof(MedmStripChart));
-    if (psc == NULL) return psc;
+    psc = (MedmStripChart *)calloc(1,sizeof(MedmStripChart));
+    dlElement->data = (void *)psc;
+    if(psc == NULL) return psc;
     psc->w = dlStripChart->object.width;
     psc->h = dlStripChart->object.height;
     psc->dataX0 =  (int)(STRIP_MARGIN*psc->w);
@@ -461,7 +459,7 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
       updateTaskAddTask(displayInfo, &(dlStripChart->object),
 	stripChartUpdateTaskCb,
 	(XtPointer)psc);
-    if (psc->updateTask == NULL) {
+    if(psc->updateTask == NULL) {
 	medmPrintf(1,"\nstripChartAlloc: Memory allocation error\n");
     } else {
 	updateTaskAddDestroyCb(psc->updateTask,freeStripChart);
@@ -484,13 +482,13 @@ static void freeStripChart(XtPointer cd) {
 	XtRemoveTimeOut(psc->timerid);
 	psc->timerid=0;
     }
-    for (i = 0; i < psc->nChannels; i++) {
+    for(i = 0; i < psc->nChannels; i++) {
 	medmDestroyRecord(psc->record[i]);
     }
-    if (psc->pixmap) {
-	XFreePixmap(XtDisplay(psc->dlElement->widget),psc->pixmap);
+    if(psc->pixmap) {
+	XFreePixmap(display,psc->pixmap);
 	psc->pixmap = (Pixmap) NULL;
-	XFreeGC(XtDisplay(psc->dlElement->widget),psc->gc);
+	XFreeGC(display,psc->gc);
 	psc->gc = NULL;
     }
     free((char *)psc);
@@ -501,7 +499,6 @@ static void freeStripChart(XtPointer cd) {
 static void stripChartConfig(MedmStripChart *psc) {
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
-    Display *display = XtDisplay(psc->dlElement->widget);
     Widget widget = psc->dlElement->widget;
     GC gc; 
     int i;
@@ -541,7 +538,7 @@ static void stripChartConfig(MedmStripChart *psc) {
       sccd.axisLabelFontHeight + sccd.margin * 3 + 1;
     psc->dataY0 = height;
     psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
-    if (psc->dataY0 < psc->dataX0) {
+    if(psc->dataY0 < psc->dataX0) {
       /* shrink the margins */
 	psc->dataX1 = psc->w - psc->dataY0 - 1;
 	psc->dataY1 = psc->h - psc->dataY0;
@@ -552,11 +549,11 @@ static void stripChartConfig(MedmStripChart *psc) {
   /* calc the height of the bottom margin, expands if necessary */
     height = sccd.shadowThickness + sccd.axisLabelFontHeight * 2 +
       sccd.margin * 3 + sccd.markerHeight + 2;
-    if ((int)(psc->h - psc->dataY1 - 1) < height) {
+    if((int)(psc->h - psc->dataY1 - 1) < height) {
 	psc->dataY1 = psc->h - height - 1;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
-    if ((int)(psc->w - psc->dataX1 - 1) < height) {
+    if((int)(psc->w - psc->dataX1 - 1) < height) {
 	psc->dataX1 = psc->w - height - 1;
 	psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
     }
@@ -566,11 +563,11 @@ static void stripChartConfig(MedmStripChart *psc) {
   /* make sure the height of y-axis label won't bigger than the allowed height
    *   of the graph */
     heightExt = (sccd.yAxisLabelHeight - psc->dataHeight + 1) / 2;
-    if (heightExt + sccd.shadowThickness > (int)psc->dataY0) {
+    if(heightExt + sccd.shadowThickness > (int)psc->dataY0) {
 	psc->dataY0 = heightExt + sccd.shadowThickness;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
-    if (heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
+    if(heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
 	psc->dataY1 = psc->h - heightExt - sccd.shadowThickness - 1;
 	psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
     }
@@ -580,7 +577,7 @@ static void stripChartConfig(MedmStripChart *psc) {
   /* make sure the x-axis and y-axis labels not overlapping each other */
     widthExt = (sccd.xAxisLabelWidth - psc->dataWidth + 1) / 2;
 
-    if ((widthExt > (sccd.margin + sccd.markerHeight))
+    if((widthExt > (sccd.margin + sccd.markerHeight))
       && (height > (sccd.margin + sccd.markerHeight))) {
       /* shrink the graph */
 	sccd.yAxisLabelOffset = widthExt - sccd.margin - sccd.markerHeight;
@@ -590,69 +587,69 @@ static void stripChartConfig(MedmStripChart *psc) {
 
   /* make sure the width of x-axis label won't bigger than the allowed width
    *   of the graph */
-    if (widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
+    if(widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
 	psc->dataX1 = psc->w - widthExt - sccd.shadowThickness - 1;
 	psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
     }
 
   /* do the second pass */
   /* if the graph is too small do somethings */
-    if (psc->dataHeight < psc->h/2U) {
+    if(psc->dataHeight < psc->h/2U) {
 	squeezeSpace = True;
-	if ((dlStripChart->plotcom.title == NULL) 
+	if((dlStripChart->plotcom.title == NULL) 
 	  || (strlen(dlStripChart->plotcom.title) == 0)) {
 	    dropTitleLabel = True;
 	    psc->dataY0 -= sccd.titleFontHeight;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
-	    if ((psc->w - psc->dataX1 - 1) > psc->dataY0) {
+	    if((psc->w - psc->dataX1 - 1) > psc->dataY0) {
 		psc->dataX1 = psc->w - psc->dataY0 - 1;
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
-	if ((dlStripChart->plotcom.xlabel == NULL) 
+	if((dlStripChart->plotcom.xlabel == NULL) 
 	  || (strlen(dlStripChart->plotcom.xlabel) == 0)) {
 	    dropXAxisUnitLabel = True;
 	    psc->dataY1 += sccd.axisLabelFontHeight;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
-	    if ((psc->w - psc->dataX1 - 1) > (psc->h - psc->dataY1 - 1)) {
+	    if((psc->w - psc->dataX1 - 1) > (psc->h - psc->dataY1 - 1)) {
 		psc->dataX1 = psc->w - (psc->h - psc->dataY1 - 1) - 1;
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
-	if ((dlStripChart->plotcom.ylabel == NULL) 
+	if((dlStripChart->plotcom.ylabel == NULL) 
 	  || (strlen(dlStripChart->plotcom.ylabel) == 0)) {
 	    dropYAxisUnitLabel = True;
 	    psc->dataY0 -= sccd.axisLabelFontHeight;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
-	    if ((psc->w - psc->dataX1 - 1) > psc->dataY0) {
+	    if((psc->w - psc->dataX1 - 1) > psc->dataY0) {
 		psc->dataX1 = psc->w - psc->dataY0 - 1;
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
       /* make sure the height of y-axis label won't be bigger than the allowed
        *   height of the graph */
-	if (heightExt + sccd.shadowThickness > (int)psc->dataY0) {
+	if(heightExt + sccd.shadowThickness > (int)psc->dataY0) {
 	    psc->dataY0 = heightExt + sccd.shadowThickness;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	}
-	if (heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
+	if(heightExt + sccd.shadowThickness > (int)(psc->h - psc->dataY1)) {
 	    psc->dataY1 = psc->h - heightExt- sccd.shadowThickness - 1;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	}
       /* make sure the width of x-axis label won't be bigger than the allowed
        *   width of the graph */
-	if (widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
+	if(widthExt + sccd.shadowThickness > (int)(psc->w - psc->dataX1 - 1)) {
 	    psc->dataX1 = psc->w - widthExt - sccd.shadowThickness - 1;
 	    psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	}
     }
 
   /* make sure the size is bigger than zero */
-    if (psc->dataX1 <= psc->dataX0) {
+    if(psc->dataX1 <= psc->dataX0) {
 	psc->dataWidth = 2;
 	psc->dataX1 = psc->dataX0 + 1;
     }
-    if (psc->dataY1 <= psc->dataY0) {
+    if(psc->dataY1 <= psc->dataY0) {
 	psc->dataHeight = 2;
 	psc->dataY1 = psc->dataY0 + 1;
     }
@@ -660,8 +657,8 @@ static void stripChartConfig(MedmStripChart *psc) {
     psc->pixmap =
       XCreatePixmap(display,XtWindow(widget),
 	psc->w, psc->h,
-	DefaultDepth(XtDisplay(widget),
-	  DefaultScreen(XtDisplay(widget))));
+	DefaultDepth(display,
+	  DefaultScreen(display)));
     psc->gc = XCreateGC(display,XtWindow(widget),
       (unsigned long)NULL,NULL);
     gc = psc->gc;
@@ -678,7 +675,7 @@ static void stripChartConfig(MedmStripChart *psc) {
       psc->dataWidth+1,psc->dataHeight+1);
 
   /* draw title */
-    if (dlStripChart->plotcom.title) {
+    if(dlStripChart->plotcom.title) {
 	int textWidth;
 	char *title = dlStripChart->plotcom.title;
 	int strLen = strlen(title);
@@ -693,7 +690,7 @@ static void stripChartConfig(MedmStripChart *psc) {
     }
 
   /* draw y-axis label */
-    if (dlStripChart->plotcom.ylabel) {
+    if(dlStripChart->plotcom.ylabel) {
 	int textWidth;
 	char *label = dlStripChart->plotcom.ylabel;
 	int strLen = strlen(label);
@@ -720,7 +717,7 @@ static void stripChartConfig(MedmStripChart *psc) {
 	double verticalSpacing; 
 
       /* calculate how many divisions are needed */
-	if (squeezeSpace) {
+	if(squeezeSpace) {
 	    verticalSpacing = 1.0;
 	} else {
 	    verticalSpacing = 2.0;
@@ -728,35 +725,35 @@ static void stripChartConfig(MedmStripChart *psc) {
 	labelHeight = (int)(((double)sccd.numYAxisLabel + verticalSpacing)
 	  * (double) sccd.axisLabelFontHeight);
 	nDiv = (psc->dataHeight - 1) / labelHeight;
-	if (nDiv > 10) {
+	if(nDiv > 10) {
 	    nDiv = 10;
-	} else if (nDiv == 9) {
+	} else if(nDiv == 9) {
 	    nDiv = 8;
-	} else if (nDiv == 7) {
+	} else if(nDiv == 7) {
 	    nDiv = 6;
 	}
 	
 	interval = (double)(psc->dataHeight - 1) / (double)nDiv;
 	nextTick = 0.0;
 	
-	for (i=0; i<sccd.numYAxisLabel; i++) {
+	for(i=0; i<sccd.numYAxisLabel; i++) {
 	    range[i].step = (range[i].hi - range[i].lo)/(double)nDiv;
 	    range[i].value = range[i].hi;
 	}
 	fg = displayInfo->colormap[dlStripChart->plotcom.clr];
-	for (i=0; i< nDiv + 1; i++) {
+	for(i=0; i< nDiv + 1; i++) {
 	    int j;
-	    for (j = 0; j<sccd.numYAxisLabel; j++) {
+	    for(j = 0; j<sccd.numYAxisLabel; j++) {
 		double yoffset;
 		int w;
 		int x, y;
 		char text[20];
 		int strLen;
 		
-		if (i == nDiv) {
+		if(i == nDiv) {
 		    range[j].value = range[j].lo;
 		}
-		if (range[j].format == 'e') {
+		if(range[j].format == 'e') {
 		    sprintf(text,"%.1e",range[j].value);
 		} else {
 		    sprintf(text,"%.*f",range[j].decimal,range[j].value);
@@ -773,11 +770,11 @@ static void stripChartConfig(MedmStripChart *psc) {
 		XDrawString(display,psc->pixmap,gc,x,y,text,strLen);
 		range[j].value = range[j].value - range[j].step;
 
-		if (range[j].numDot > 0) {   
+		if(range[j].numDot > 0) {   
 		    int k;
 		    int count = 0;
-		    for (k = MAX_PENS - 1; k >= 0; k--) {
-			if (range[j].mask & (0x1 << k)) {
+		    for(k = MAX_PENS - 1; k >= 0; k--) {
+			if(range[j].mask & (0x1 << k)) {
 			    XSetForeground(display,gc,
 			      displayInfo->colormap[dlStripChart->pen[k].clr]);
 			    x = psc->dataX0 - sccd.yAxisLabelTextWidth -
@@ -846,11 +843,11 @@ static void stripChartConfig(MedmStripChart *psc) {
 	width = width + 1;   /* add the plus size */
 	tw = XTextWidth(fontTable[sccd.axisLabelFont],"-0.000000",width);
 	nDiv = (psc->dataWidth - 1)/tw;
-	if (nDiv > 10) {
+	if(nDiv > 10) {
 	    nDiv = 10;
-	} else if (nDiv == 9) {
+	} else if(nDiv == 9) {
 	    nDiv = 8;
-	} else if (nDiv == 7) {
+	} else if(nDiv == 7) {
 	    nDiv = 6;
 	}
 	nextTick = 0.0;
@@ -862,13 +859,13 @@ static void stripChartConfig(MedmStripChart *psc) {
 
 	XSetForeground(display, gc,
 	  displayInfo->colormap[dlStripChart->plotcom.clr]);
-	for (i=0; i< nDiv + 1; i++) {
+	for(i=0; i< nDiv + 1; i++) {
 	    double xoffset;
 	    int w;
 	    int strLen;
 	    nextTick = (double) (psc->dataWidth - 1) *
 	      ((double) i / (double) nDiv);
-	    if (format == 'e') {
+	    if(format == 'e') {
 		sprintf(text,"%.1e",value);
 	    } else {
 		sprintf(text,"%.*f",decimal,value);
@@ -885,12 +882,12 @@ static void stripChartConfig(MedmStripChart *psc) {
 	}
 
       /* determine the x-axis label */
-	if (dropXAxisUnitLabel == False) {
+	if(dropXAxisUnitLabel == False) {
 	    int strLen;
 	    int textWidth;
 	    char *label;
 
-	    if ((dlStripChart->plotcom.xlabel)
+	    if((dlStripChart->plotcom.xlabel)
 	      && (strlen(dlStripChart->plotcom.xlabel) > (size_t) 0)) {
 		label = dlStripChart->plotcom.xlabel;
 	    } else {
@@ -920,7 +917,7 @@ static void stripChartConfig(MedmStripChart *psc) {
 
     
 #if 0
-	if (!((dlStripChart->plotcom.xlabel) &&
+	if(!((dlStripChart->plotcom.xlabel) &&
 	  (strlen(dlStripChart->plotcom.xlabel) > 0))) {
 	    int strLen;
 	    int textWidth;
@@ -948,7 +945,7 @@ static void stripChartConfig(MedmStripChart *psc) {
     }
     XCopyArea(display,psc->pixmap,XtWindow(widget), gc,
       0,0,psc->w,psc->h,0,0);
-    for (i = 0; i < psc->nChannels; i++) {
+    for(i = 0; i < psc->nChannels; i++) {
 	Record *tmpd = psc->record[i];
 	psc->maxVal[i] = tmpd->value;
 	psc->minVal[i] = tmpd->value;
@@ -974,10 +971,10 @@ static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
     int i;
     DisplayInfo *displayInfo;
 
-    if (!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
+    if(!(displayInfo = dmGetDisplayInfoFromWidget(widget)))
       return;
 
-    if (dlStripChart) {
+    if(dlStripChart) {
 	GC topGC;
 	GC bottomGC;
 	Dimension shadowThickness;
@@ -1011,7 +1008,7 @@ static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	topGC = ((struct _XmDrawingAreaRec *)widget)->manager.top_shadow_GC;
 	bottomGC =
 	  ((struct _XmDrawingAreaRec *)widget)->manager.bottom_shadow_GC;
-	_XmDrawShadows(XtDisplay(widget),XtWindow(widget),topGC,bottomGC,0,0,
+	_XmDrawShadows(display,XtWindow(widget),topGC,bottomGC,0,0,
 	  (Dimension)dlStripChart->object.width,
 	  (Dimension)dlStripChart->object.height,
 	  shadowThickness,XmSHADOW_OUT);
@@ -1029,7 +1026,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (!dlElement->widget) {
+    if(!dlElement->widget) {
       /* create the drawing widget for the strip chart */
 	n = 0;
 	XtSetArg(args[n],XmNx,(Position)dlStripChart->object.x); n++;
@@ -1049,7 +1046,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	dlElement->widget = localWidget;
 	
       /* if execute mode, create stripChart and setup all the channels */
-	if (displayInfo->traversalMode == DL_EXECUTE) {
+	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    int i,j;
 	    MedmStripChart *psc;
 	    
@@ -1057,7 +1054,6 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		psc = (MedmStripChart *)dlElement->data;
 	    } else {
 		psc = stripChartAlloc(displayInfo,dlElement);
-		dlElement->data = (void *)psc;
 		if(psc == NULL) {
 		    medmPrintf(1,"\nexecuteDlStripChart: Memory allocation error\n");
 		    return;
@@ -1065,8 +1061,8 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		
 	      /* connect channels */
 		j = 0;
-		for (i = 0; i < MAX_PENS; i++) {
-		    if (dlStripChart->pen[i].chan[0] != '\0') {
+		for(i = 0; i < MAX_PENS; i++) {
+		    if(dlStripChart->pen[i].chan[0] != '\0') {
 			psc->record[j] =
 			  medmAllocateRecord(dlStripChart->pen[i].chan,
 			    stripChartUpdateValueCb,
@@ -1078,7 +1074,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	      /* record the number of channels in the strip chart */
 		psc->nChannels = j;
 		
-		if (psc->nChannels == 0) {
+		if(psc->nChannels == 0) {
 		  /* if no channel, create a fake channel */
 		    psc->nChannels = 1;
 		    psc->record[0] = medmAllocateRecord(" ",
@@ -1095,7 +1091,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtAddCallback(localWidget,XmNdestroyCallback,
 	      (XtCallbackProc)monitorDestroy, (XtPointer)psc);
 #endif
-	} else if (displayInfo->traversalMode == DL_EDIT) {
+	} else if(displayInfo->traversalMode == DL_EDIT) {
 	  /* Add expose callback for EDIT mode */
 	    XtAddCallback(localWidget,XmNexposeCallback,redisplayFakeStrip,
 	      dlStripChart);
@@ -1140,12 +1136,12 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
   /* make sure all the channel get their operating ranges */
-    for (i = 0; i < psc->nChannels; i++) {
-	if (psc->record[i]->precision < 0)
+    for(i = 0; i < psc->nChannels; i++) {
+	if(psc->record[i]->precision < 0)
 	  return;  /* wait for other channels */
     }
 
-    if (XtIsManaged(widget) == False) {
+    if(XtIsManaged(widget) == False) {
 	addCommonHandlers(widget, psc->updateTask->displayInfo);
 	XtManageChild(widget);
 	if(!psc->timerid) psc->timerid=XtAppAddTimeOut(
@@ -1155,8 +1151,8 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
 	fprintf(stderr,"stripChartUpdateGraphicalInfoCb(1): psc->timerid=%x\n",
 	  psc->timerid);
 #endif
-    } else if (XtIsRealized(widget)) {
-	if (psc->pixmap == (Pixmap)0) {
+    } else if(XtIsRealized(widget)) {
+	if(psc->pixmap == (Pixmap)0) {
 	    stripChartConfig(psc);
 	}
     } else {
@@ -1189,8 +1185,8 @@ static void configStripChart(XtPointer cd, XtIntervalId *id)
 #endif
 
     psc->timerid=(XtIntervalId)0;
-    if (XtIsRealized(widget)) {
-	if (psc->pixmap == (Pixmap)0) {
+    if(XtIsRealized(widget)) {
+	if(psc->pixmap == (Pixmap)0) {
 	    stripChartConfig(psc);
 	}
     } else {
@@ -1211,7 +1207,8 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 #endif
 {
     MedmStripChart *psc = (MedmStripChart *) cd;
-    DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
+    DlElement *dlElement = psc->dlElement;
+    DlStripChart *dlStripChart = dlElement->structure.stripChart;
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     GC gc = psc->gc;
     
@@ -1248,22 +1245,30 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 			(w,h)
 			*/
     
-    if (psc->pixmap) {
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(psc->pixmap) {
       /* copy the top region */
-	XCopyArea(XtDisplay(widget), psc->pixmap, XtWindow(widget), gc, 0, 0,
+	XCopyArea(display, psc->pixmap, XtWindow(widget), gc, 0, 0,
 	  psc->w,psc->dataY0,0,0);
       /* copy the left region */
-	XCopyArea(XtDisplay(widget), psc->pixmap, XtWindow(widget), gc, 0,
+	XCopyArea(display, psc->pixmap, XtWindow(widget), gc, 0,
 	  psc->dataY0, psc->dataX0,psc->dataHeight,0,psc->dataY0);
       /* copy the bottom region */
-	XCopyArea(XtDisplay(widget), psc->pixmap, XtWindow(widget), gc, 0,
+	XCopyArea(display, psc->pixmap, XtWindow(widget), gc, 0,
 	  psc->dataY1+1,psc->w,(psc->h - psc->dataY1),0,psc->dataY1+1);
       /* copy the right region */
-	XCopyArea(XtDisplay(widget), psc->pixmap, XtWindow(widget), gc,
+	XCopyArea(display, psc->pixmap, XtWindow(widget), gc,
 	  psc->dataX1+1,psc->dataY0, (psc->w - psc->dataX1),
 	  psc->dataHeight, psc->dataX1+1,psc->dataY0);
       /* draw graph */
-	if (psc->updateEnable)
+	if(psc->updateEnable)
 	  stripChartDraw((XtPointer)psc);
     }
 }
@@ -1287,32 +1292,32 @@ static void stripChartUpdateValueCb(XtPointer cd) {
     Widget widget = psc->dlElement->widget;
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
 
-    for (i = 0; i< psc->nChannels; i++) {
+    for(i = 0; i< psc->nChannels; i++) {
 	Record *ptmp = psc->record[i];
-	if (!ptmp->connected) {
+	if(!ptmp->connected) {
 	    connected = False;
 	    break;
 	}
-	if (!ptmp->readAccess) {
+	if(!ptmp->readAccess) {
 	    readAccess = False;
 	}
     }
 
-    if (connected) {
-	if (readAccess) {
-	    if (widget) {
-		if (XtIsManaged(widget) == False) {
+    if(connected) {
+	if(readAccess) {
+	    if(widget) {
+		if(XtIsManaged(widget) == False) {
 		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
 		  /* specified the time interval */
 		    updateTaskSetScanRate(psc->updateTask,psc->timeInterval);
 		}
-		if (psc->updateEnable) 
+		if(psc->updateEnable) 
 		  stripChartUpdateGraph((XtPointer)cd);
 	    }
 	} else {
-	    if (widget) {
-		if (XtIsManaged(widget)) {
+	    if(widget) {
+		if(XtIsManaged(widget)) {
 		    XtUnmanageChild(widget);
 		  /* stop periodic update */
 		    updateTaskSetScanRate(psc->updateTask,0.0);
@@ -1324,7 +1329,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 	    draw3DQuestionMark(psc->updateTask);
 	}
     } else {
-	if ((widget) && (XtIsManaged(widget))) {
+	if((widget) && (XtIsManaged(widget))) {
 	    XtUnmanageChild(widget);
 	  /* stop periodic update */
 	    updateTaskSetScanRate(psc->updateTask,0.0);
@@ -1341,32 +1346,32 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     int i;
 
-    for (i = 0; i< psc->nChannels; i++) {
+    for(i = 0; i< psc->nChannels; i++) {
 	Record *ptmp = psc->record[i];
-	if (!ptmp->connected) {
+	if(!ptmp->connected) {
 	    connected = False;
 	    break;
 	}
-	if (!ptmp->readAccess) {
+	if(!ptmp->readAccess) {
 	    readAccess = False;
 	}
     }
 
-    if (connected) {
-	if (readAccess) {
-	    if (widget) {
-		if (XtIsManaged(widget) == False) {
+    if(connected) {
+	if(readAccess) {
+	    if(widget) {
+		if(XtIsManaged(widget) == False) {
 		    addCommonHandlers(widget, psc->updateTask->displayInfo);
 		    XtManageChild(widget);
 		  /* specified the time interval */
 		    updateTaskSetScanRate(psc->updateTask,psc->timeInterval);
 		}
-		if (psc->updateEnable) 
+		if(psc->updateEnable) 
 		  stripChartDraw((XtPointer)psc);
 	    }
 	} else {
-	    if (widget) {
-		if (XtIsManaged(widget)) {
+	    if(widget) {
+		if(XtIsManaged(widget)) {
 		    XtUnmanageChild(widget);
 		  /* stop periodic update */
 		    updateTaskSetScanRate(psc->updateTask,0.0);
@@ -1378,7 +1383,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 	    draw3DQuestionMark(psc->updateTask);
 	}
     } else {
-	if ((widget) && (XtIsManaged(widget))) {
+	if((widget) && (XtIsManaged(widget))) {
 	    XtUnmanageChild(widget);
 	  /* stop periodic update */
 	    updateTaskSetScanRate(psc->updateTask,0.0);
@@ -1396,14 +1401,13 @@ static void stripChartUpdateGraph(XtPointer cd) {
   /* get the time */
     currentTime = medmTime();
 
-    while (psc->record[n] != pd) n++;
+    while(psc->record[n] != pd) n++;
 
   /* see whether is time to advance the graph */
-    if (currentTime > psc->nextAdvanceTime) {
+    if(currentTime > psc->nextAdvanceTime) {
       /* update the graph */
-	Display *display = XtDisplay(psc->dlElement->widget);
-	Window  window   = XtWindow(psc->dlElement->widget);
-	GC      gc       = psc->gc;
+	Window window = XtWindow(psc->dlElement->widget);
+	GC gc = psc->gc;
 	DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
 	DisplayInfo *displayInfo  = psc->updateTask->displayInfo;
 	int i;
@@ -1411,7 +1415,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 
 
       /* calculate how many pixel needed to draw */
-	if (psc->nextAdvanceTime > currentTime) {
+	if(psc->nextAdvanceTime > currentTime) {
 	    totalPixel = 0;
 	} else {
 	    totalPixel = 1 + (int)((currentTime - psc->nextAdvanceTime) /
@@ -1419,12 +1423,12 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	    psc->nextAdvanceTime += psc->timeInterval * totalPixel;
 	}
 #if 0
-	while (psc->nextAdvanceTime <= currentTime) {
+	while(psc->nextAdvanceTime <= currentTime) {
 	    psc->nextAdvanceTime += psc->timeInterval;
 	    totalPixel++;
 	} 
 #endif
-	if (totalPixel > 0) {
+	if(totalPixel > 0) {
 	    XRectangle rectangle;
 	    rectangle.x = psc->dataX0;
 	    rectangle.y = psc->dataY0;
@@ -1434,7 +1438,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	  /* draw the background */
 	    XSetForeground(display, gc,
 	      displayInfo->colormap[dlStripChart->plotcom.bclr]);
-	    if (totalPixel <= 1) {
+	    if(totalPixel <= 1) {
 		XDrawLine(display, psc->pixmap, gc,
 		  psc->nextSlot + psc->dataX0, psc->dataY0,
 		  psc->nextSlot + psc->dataX0, psc->dataY1);
@@ -1442,7 +1446,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		int limit = psc->dataWidth + psc->dataX0;
 		int nextSlot = psc->nextSlot + psc->dataX0;
 
-		if ((nextSlot + totalPixel) > limit) {
+		if((nextSlot + totalPixel) > limit) {
 		  /* if wraped, two filled is needed */
 		    XFillRectangle(display, psc->pixmap, gc,
 		      nextSlot, psc->dataY0, (limit-nextSlot), psc->dataHeight);
@@ -1457,7 +1461,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	    }
 
 	  /* draw each pen */
-	    for (i=0; i< psc->nChannels; i++) {
+	    for(i=0; i< psc->nChannels; i++) {
 		int y1, y2;
 		double base;
 		int nextSlot = psc->nextSlot + psc->dataX0;
@@ -1475,12 +1479,12 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		  displayInfo->colormap[dlStripChart->pen[i].clr]);
 		XDrawLine(display, psc->pixmap, gc, nextSlot, y1, nextSlot, y2);
   
-		if (totalPixel > 1) {
+		if(totalPixel > 1) {
 		    int y;
 		    y =  psc->dataY0 + (int)((psc->dataHeight - 1) *
 		      (1.0 - ((psc->value[i] - p->lopr) / base)));
 		  /* fill the gap in between */
-		    if ((nextSlot + totalPixel) > limit) {
+		    if((nextSlot + totalPixel) > limit) {
 		      /* if wraped, two lines are needed */
 			XDrawLine(display, psc->pixmap, gc,
 			  nextSlot, y, limit, y);
@@ -1498,16 +1502,16 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	    XSetClipOrigin(display,gc,0,0);
 	    XSetClipMask(display,gc,None);
 	    psc->nextSlot += totalPixel;
-	    if (psc->nextSlot >= (int)psc->dataWidth)
+	    if(psc->nextSlot >= (int)psc->dataWidth)
 	      psc->nextSlot -= psc->dataWidth;
 	}
     }
   /* remember the min and max and current pen position */
     psc->value[n] = pd->value;
-    if (pd->value > psc->maxVal[n]) {
+    if(pd->value > psc->maxVal[n]) {
 	psc->maxVal[n] = pd->value;
     }
-    if (pd->value < psc->minVal[n]) {
+    if(pd->value < psc->minVal[n]) {
 	psc->minVal[n] = pd->value;
     }
     return;
@@ -1515,18 +1519,27 @@ static void stripChartUpdateGraph(XtPointer cd) {
 
 static void stripChartDraw(XtPointer cd) {
     MedmStripChart *psc = (MedmStripChart *) cd;
-    Display *display = XtDisplay(psc->dlElement->widget);
-    Window  window = XtWindow(psc->dlElement->widget);
-    GC      gc = psc->gc;
+    DlElement *dlElement = psc->dlElement;
+    Widget widget = dlElement->widget;
+    Window window = XtWindow(widget);
+    GC gc = psc->gc;
     int startPos;
 
-  /* make sure the plot is up to date */
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+  /* Make sure the plot is up to date */
     stripChartUpdateValueCb((XtPointer)psc->record[0]);
     startPos = psc->nextSlot;
-    if (startPos > (int)psc->dataWidth) {
+    if(startPos > (int)psc->dataWidth) {
 	startPos = 0;
     }
-    if (startPos) {
+    if(startPos) {
 	int x, w;
       /* copy the first half */
 	x = startPos + psc->dataX0;
@@ -1552,7 +1565,7 @@ static void stripChartGetRecord(XtPointer cd, Record **record, int *count)
     int i;
 
     *count = psc->nChannels;
-    for (i = 0; i < psc->nChannels; i++) {
+    for(i = 0; i < psc->nChannels; i++) {
 	record[i] = psc->record[i];
     }
 }
@@ -1565,8 +1578,8 @@ DlElement *createDlStripChart(DlElement *p)
 
 
     dlStripChart = (DlStripChart *)malloc(sizeof(DlStripChart));
-    if (!dlStripChart) return 0;
-    if (p) {
+    if(!dlStripChart) return 0;
+    if(p) {
 	*dlStripChart = *p->structure.stripChart;
     } else {
 	objectAttributeInit(&(dlStripChart->object));
@@ -1578,11 +1591,11 @@ DlElement *createDlStripChart(DlElement *p)
 	dlStripChart->delay = -1.0;
 	dlStripChart->oldUnits = SECONDS;
 #endif
-	for (penNumber = 0; penNumber < MAX_PENS; penNumber++)
+	for(penNumber = 0; penNumber < MAX_PENS; penNumber++)
 	  penAttributeInit(&(dlStripChart->pen[penNumber]));
     }
 
-    if (!(dlElement = createDlElement(DL_StripChart,
+    if(!(dlElement = createDlElement(DL_StripChart,
       (XtPointer)dlStripChart,
       &stripChartDlDispatchTable))) {
 	free(dlStripChart);
@@ -1601,40 +1614,40 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
     int penNumber;
     int isVersion2_1_x = False;
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlStripChart = dlElement->structure.stripChart;
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlStripChart->object));
-	    else if (!strcmp(token,"plotcom"))
+	    else if(!strcmp(token,"plotcom"))
 	      parsePlotcom(displayInfo,&(dlStripChart->plotcom));
-	    else if (!strcmp(token,"period")) {
+	    else if(!strcmp(token,"period")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlStripChart->period = atof(token);
 		isVersion2_1_x = True;
-	    } else if (!strcmp(token,"delay")) {
+	    } else if(!strcmp(token,"delay")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlStripChart->delay = atoi(token);
-	    } else if (!strcmp(token,"units")) {
+	    } else if(!strcmp(token,"units")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"minute")) 
+		if(!strcmp(token,"minute")) 
 		  dlStripChart->units = MINUTES;
-		else if (!strcmp(token,"second")) 
+		else if(!strcmp(token,"second")) 
 		  dlStripChart->units = SECONDS;
-		else if (!strcmp(token,"milli second")) 
+		else if(!strcmp(token,"milli second")) 
 		  dlStripChart->units = MILLISECONDS;
-		else if (!strcmp(token,"milli-second")) 
+		else if(!strcmp(token,"milli-second")) 
 		  dlStripChart->units = MILLISECONDS;
 		else
 		  medmPostMsg(1,"parseStripChart: Illegal units %s\n"
 		    "  Using SECONDS\n",token);
-	    } else if (!strncmp(token,"pen",3)) {
+	    } else if(!strncmp(token,"pen",3)) {
 		penNumber = MIN(token[4] - '0', MAX_PENS-1);
 		parsePen(displayInfo,&(dlStripChart->pen[penNumber]));
 	    }
@@ -1646,14 +1659,14 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
-    if (isVersion2_1_x) {
+    if(isVersion2_1_x) {
 	dlStripChart->delay = -1.0;  /* -1.0 is used as a indicator to save
 					as new format */
     } else
-      if (dlStripChart->delay > 0) {
+      if(dlStripChart->delay > 0) {
 	  double val, dummy1, dummy2;
 	  switch (dlStripChart->units) {
 	  case MILLISECONDS:
@@ -1688,7 +1701,7 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
 #if 1
   /* for the compatibility */
 
-    if (dlStripChart->delay > 0.0) {
+    if(dlStripChart->delay > 0.0) {
 	double val, dummy1, dummy2;
 	switch (dlStripChart->oldUnits) {
 	case MILLISECONDS:
@@ -1706,7 +1719,7 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
 	}
 
 	linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
-	if (dlStripChart->period != -val  || dlStripChart->units != SECONDS) {
+	if(dlStripChart->period != -val  || dlStripChart->units != SECONDS) {
 	    dlStripChart->delay = -1;
 	}
     }
@@ -1719,13 +1732,13 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
     fprintf(stream,"\n%s\"strip chart\" {",indent);
     writeDlObject(stream,&(dlStripChart->object),level+1);
     writeDlPlotcom(stream,&(dlStripChart->plotcom),level+1);
-    if (dlStripChart->delay < 0.0) {
-	if (dlStripChart->period != 60.0) 
+    if(dlStripChart->delay < 0.0) {
+	if(dlStripChart->period != 60.0) 
 	  fprintf(stream,"\n%s\tperiod=%f",indent,dlStripChart->period);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-	if (MedmUseNewFileFormat) {
+	if(MedmUseNewFileFormat) {
 #endif
-	    if (dlStripChart->units != SECONDS)
+	    if(dlStripChart->units != SECONDS)
 	      fprintf(stream,"\n%s\tunits=\"%s\"",indent,
 		stringValueTable[dlStripChart->units]);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -1742,7 +1755,7 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
 	  stringValueTable[dlStripChart->oldUnits]);
 #endif
     }
-    for (i = 0; i < MAX_PENS; i++) {
+    for(i = 0; i < MAX_PENS; i++) {
 	writeDlPen(stream,&(dlStripChart->pen[i]),i,level+1);
     }
     fprintf(stream,"\n%s}",indent);

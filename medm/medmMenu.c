@@ -65,10 +65,10 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include <X11/IntrinsicP.h>
 
 typedef struct _MedmMenu {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record; 
-    UpdateTask  *updateTask;
-    Pixel       color;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record; 
+    Pixel            color;
 } MedmMenu;
 
 static void menuCreateRunTimeInstance(DisplayInfo *, DlElement *);
@@ -122,8 +122,8 @@ int menuFontListIndex(int height)
 	    h = j + 1;
 	    h1 = (int)(.90*h) - 4;
 	    indx1 = 0;
-	    for (i = MAX_FONTS-1; i >=  0; i--) {
-		if ( ((int)(.90*h) - 4) >= 
+	    for(i = MAX_FONTS-1; i >=  0; i--) {
+		if( ((int)(.90*h) - 4) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx1 = i;
 		    break;
@@ -131,8 +131,8 @@ int menuFontListIndex(int height)
 	    }
 	    h2 = (int)(h) - 8;
 	    indx2 = 0;
-	    for (i = MAX_FONTS-1; i >=  0; i--) {
-		if ( ((int)(h) - 8) >= 
+	    for(i = MAX_FONTS-1; i >=  0; i--) {
+		if( ((int)(h) - 8) >= 
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx2 = i;
 		    break;
@@ -147,8 +147,8 @@ int menuFontListIndex(int height)
 #if 0
   /* Don't allow height of font to exceed 90% - 4 pixels of menu
    *   widget.  Includes nominal 2*shadowThickness = 4 */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
-	if ( ((int)(.90*height) - 4) >= 
+    for(i = MAX_FONTS-1; i >=  0; i--) {
+	if( ((int)(.90*height) - 4) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -156,8 +156,8 @@ int menuFontListIndex(int height)
   /* Allow for shadowThickness + marginHeight 2*(2+2)=8.  Allow full
    *   ascent + descent.  Gives better spacing of the menu items for
    *   small Menu's */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
-	if ( ((int)(height) - 8) >= 
+    for(i = MAX_FONTS-1; i >=  0; i--) {
+	if( ((int)(height) - 8) >= 
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -175,7 +175,7 @@ void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
 	menuCreateRunTimeInstance(displayInfo,dlElement);
 	break;
     case DL_EDIT:
-	if (dlElement->widget) {
+	if(dlElement->widget) {
 	    XtDestroyWidget(dlElement->widget);
 	    dlElement->widget = NULL;
 	}
@@ -207,7 +207,7 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
 	  menuDraw,
 	  (XtPointer)pm);
 	
-	if (pm->updateTask == NULL) {
+	if(pm->updateTask == NULL) {
 	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
 	} else {
 	    updateTaskAddDestroyCb(pm->updateTask,menuDestroyCb);
@@ -239,8 +239,8 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
 }
 
 void menuUpdateGraphicalInfoCb(XtPointer cd) {
-    Record *pr = (Record *) cd;
-    MedmMenu *pm = (MedmMenu *) pr->clientData;
+    Record *pr = (Record *)cd;
+    MedmMenu *pm = (MedmMenu *)pr->clientData;
     DlElement *dlElement = pm->dlElement;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
     XmStringTable labels;
@@ -258,14 +258,14 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   /* !!!!! End work around                 !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-    if (pr->dataType != DBF_ENUM) {
+    if(pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
 	  "  Cannot create Menu for %s\n",
 	  "  Is not an ENUM type\n",
 	  dlMenu->control.ctrl);
 	return;
     }
-    if (pr->hopr <= 0.0) {
+    if(pr->hopr <= 0.0) {
 	medmPostMsg(1,"menuUpdateGraphicalInfoCb:\n"
 	  "  Cannot create Menu for %s\n",
 	  "  There are no states to assign to menu items\n",
@@ -274,7 +274,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
     }
 
   /* Allocate the menu string table and fill it
-   *   XmStringTable is a typedef for (XmString *) */
+   *   XmStringTable is a typedef for(XmString *) */
     labels = NULL;
     nbuttons = 0;
     nbuttons = (int)(pr->hopr + 1.5);
@@ -283,7 +283,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
 	nbuttons = 0;
 	medmPrintf(1,"\nmenuUpdateGraphicalInfoCb: Memory allocation error\n");
     }
-    for (i=0; i < nbuttons; i++) {
+    for(i=0; i < nbuttons; i++) {
 	labels[i] = XmStringCreateLocalized(pr->stateStrings[i]);
     }
 
@@ -292,7 +292,7 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
       labels, nbuttons);
 
   /* Free the XmStrings */
-    for (i=0; i < nbuttons; i++) XmStringFree(labels[i]);
+    for(i=0; i < nbuttons; i++) XmStringFree(labels[i]);
     if(labels) free((char *)labels);
 
   /* Add handlers and manage will be done in menuDraw */
@@ -376,7 +376,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtSetArg(args[nargs], XmNheight, useableHeight); nargs++;
 #endif
     nargs0 = nargs;
-    for (i = 0; i < nbuttons; i++) {
+    for(i = 0; i < nbuttons; i++) {
 	nargs = nargs0;
 	XtSetArg(args[nargs],XmNlabelString, labels[i]); nargs++;
 	pushbutton = XmCreatePushButtonGadget(menu, "menuButtons", args, nargs);
@@ -444,7 +444,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 	      fontTable[i]->ascent + fontTable[i]->descent);
 #if 0
 	    print("  numChildren=%d\n",numChildren);
-	    for (i=0; i < numChildren; i++) {
+	    for(i=0; i < numChildren; i++) {
 		XmStringContext context;
 		char string[1024], *pstring, *text;
 		XmStringCharSet tag;
@@ -485,21 +485,32 @@ static void menuUpdateValueCb(XtPointer cd) {
 static void menuDraw(XtPointer cd) {
     MedmMenu *pm = (MedmMenu *) cd;
     Record *pr = pm->record;
-    Widget widget = pm->dlElement->widget;
-    DlMenu *dlMenu = pm->dlElement->structure.menu;
+    DlElement *dlElement = pm->dlElement;
+    Widget widget = dlElement->widget;
+    DlMenu *dlMenu = dlElement->structure.menu;
+    
 #if DEBUG_MENU
     printf("\nmenuDraw: pr->connected=%s widget=%x\n",
       pr->connected?"Yes":"No",widget);
-#endif    
-    if (pr->connected) {
+#endif
+
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pr->connected) {
 	if(!widget) return;
-	if (pr->readAccess) {
-	    if (!XtIsManaged(widget)) {
+	if(pr->readAccess) {
+	    if(!XtIsManaged(widget)) {
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if (pr->precision < 0) return;    /* Wait for pr->value */
-	    if (pr->dataType == DBF_ENUM) {
+	    if(pr->precision < 0) return;    /* Wait for pr->value */
+	    if(pr->dataType == DBF_ENUM) {
 		Widget menuWidget;
 		WidgetList children;
 		Cardinal numChildren;
@@ -511,7 +522,7 @@ static void menuDraw(XtPointer cd) {
 		  XmNnumChildren,&numChildren,
 		  NULL);
 		i = (int) pr->value;
-		if ((i >=0) && (i < (int) numChildren)) {
+		if((i >=0) && (i < (int) numChildren)) {
 		    XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
 		} else {
 		    medmPostMsg(1,"menuUpdateValueCb: Invalid menuHistory child\n");
@@ -537,17 +548,17 @@ static void menuDraw(XtPointer cd) {
 		medmPrintf(0,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if (pr->writeAccess)
+	    if(pr->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
-	    if (widget && XtIsManaged(widget)) XtUnmanageChild(widget);
+	    if(widget && XtIsManaged(widget)) XtUnmanageChild(widget);
 	    draw3DPane(pm->updateTask,pm->color);
 	    draw3DQuestionMark(pm->updateTask);
 	}
     } else {
-	if ((widget) && XtIsManaged(widget))
+	if((widget) && XtIsManaged(widget))
 	  XtUnmanageChild(widget);
 	drawWhiteRectangle(pm->updateTask);
     }
@@ -555,8 +566,9 @@ static void menuDraw(XtPointer cd) {
 
 static void menuDestroyCb(XtPointer cd) {
     MedmMenu *pm = (MedmMenu *) cd;
-    if (pm) {
+    if(pm) {
 	medmDestroyRecord(pm->record); 
+	pm->dlElement->data = 0;
 	free((char *)pm);
     }
 }
@@ -573,16 +585,16 @@ static void menuValueChangedCb(
       (XmPushButtonCallbackStruct *) callbackStruct;
 
   /* Only do ca_put if this widget actually initiated the channel change */
-    if (call_data->event != NULL && call_data->reason == XmCR_ACTIVATE) {
+    if(call_data->event != NULL && call_data->reason == XmCR_ACTIVATE) {
 
       /* button's parent (menuPane) has the displayInfo pointer */
 	XtVaGetValues(w,XmNuserData,&pm,NULL);
 	pr = pm->record;
 
-	if (pr->connected) {
-	    if (pr->writeAccess) {
+	if(pr->connected) {
+	    if(pr->writeAccess) {
 #ifdef MEDM_CDEV
-		if (pr->stateStrings) 
+		if(pr->stateStrings) 
 		  medmSendString(pr, pr->stateStrings[btnNumber]);
 #else
 		medmSendDouble(pm->record,(double)btnNumber);
@@ -610,15 +622,15 @@ DlElement *createDlMenu(DlElement *p)
     DlElement *dlElement;
  
     dlMenu = (DlMenu *)malloc(sizeof(DlMenu));
-    if (!dlMenu) return 0;
-    if (p) {
+    if(!dlMenu) return 0;
+    if(p) {
 	*dlMenu = *(p->structure.menu);
     } else {
 	objectAttributeInit(&(dlMenu->object));
 	controlAttributeInit(&(dlMenu->control));
 	dlMenu->clrmod = STATIC;
     }
-    if (!(dlElement = createDlElement(DL_Menu,
+    if(!(dlElement = createDlElement(DL_Menu,
       (XtPointer)      dlMenu,
       &menuDlDispatchTable))) {
 	free(dlMenu);
@@ -635,23 +647,23 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
     DlMenu *dlMenu;
     DlElement *dlElement = createDlMenu(NULL);
  
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlMenu = dlElement->structure.menu;
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlMenu->object));
-	    else if (!strcmp(token,"control"))
+	    else if(!strcmp(token,"control"))
 	      parseControl(displayInfo,&(dlMenu->control));
-	    else if (!strcmp(token,"clrmod")) {
+	    else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dlMenu->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlMenu->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlMenu->clrmod = DISCRETE;
 	    }
 	    break;
@@ -662,7 +674,7 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
  
     return dlElement;
@@ -677,16 +689,16 @@ void writeDlMenu(
     char indent[16];
     DlMenu *dlMenu = dlElement->structure.menu;
  
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
  
     fprintf(stream,"\n%smenu {",indent);
     writeDlObject(stream,&(dlMenu->object),level+1);
     writeDlControl(stream,&(dlMenu->control),level+1);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
-	if (dlMenu->clrmod != STATIC) 
+	if(dlMenu->clrmod != STATIC) 
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlMenu->clrmod]);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -696,7 +708,6 @@ void writeDlMenu(
     }
 #endif
     fprintf(stream,"\n%s}",indent);
- 
 }
 
 static void menuInheritValues(ResourceBundle *pRCB, DlElement *p) {

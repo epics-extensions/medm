@@ -59,9 +59,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _MedmChoiceButtons {
-    DlElement      *dlElement;     /* Must be first */
-    Record         *record;
-    UpdateTask     *updateTask;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
 } MedmChoiceButtons;
 
 void choiceButtonCreateRunTimeInstance(DisplayInfo *,DlElement *);
@@ -109,20 +109,20 @@ int choiceButtonFontListIndex(DlObject *po,
     useNumButtons = MAX(1,numButtons);
 
   /* more complicated calculation based on orientation, etc */
-    for (i = MAX_FONTS-1; i >=  0; i--) {
+    for(i = MAX_FONTS-1; i >=  0; i--) {
 	switch (stacking) {
 	case ROW:
-	    if ((int)(po->height/useNumButtons - SHADOWS_SIZE) >=
+	    if((int)(po->height/useNumButtons - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
 	case ROW_COLUMN:
-	    if ((int)(po->height/sqrtNumButtons - SHADOWS_SIZE) >=
+	    if((int)(po->height/sqrtNumButtons - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
 	case COLUMN:
-	    if ((int)(po->height - SHADOWS_SIZE) >=
+	    if((int)(po->height - SHADOWS_SIZE) >=
 	      (fontTable[i]->ascent + fontTable[i]->descent))
 	      return(i);
 	    break;
@@ -148,7 +148,7 @@ Widget createToggleButtons(Widget parent,
     XmFontList fontList;
  
     maxChars = 0;
-    for (i = 0; i < numberOfButtons; i++) {
+    for(i = 0; i < numberOfButtons; i++) {
 	maxChars = MAX((size_t)maxChars, strlen(labels[i]));
     }
     n = 0;
@@ -208,7 +208,7 @@ Widget createToggleButtons(Widget parent,
     XtSetArg(wargs[n],XmNforeground,fg); n++;
     XtSetArg(wargs[n],XmNbackground,bg); n++;
     XtSetArg(wargs[n],XmNuserData,userData); n++;
-    for (i = 0; i < numberOfButtons; i++) {
+    for(i = 0; i < numberOfButtons; i++) {
 	XmString xmStr;
 	xmStr = XmStringCreateLocalized(labels[i]);
 	XtSetArg(wargs[n],XmNlabelString,xmStr);
@@ -264,16 +264,16 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
     }
 #endif
   /* Only do ca_put if this widget actually initiated the channel change */
-    if (call_data->event != NULL && call_data->set == True) {
+    if(call_data->event != NULL && call_data->set == True) {
 	
       /* Button's parent (menuPane) has the displayInfo pointer */
 	XtVaGetValues(XtParent(w),XmNuserData,&pcb,NULL);
 	pd = pcb->record;
 	
-	if (pd->connected) {
-	    if (pd->writeAccess) {
+	if(pd->connected) {
+	    if(pd->writeAccess) {
 #ifdef MEDM_CDEV
-		if (pd->stateStrings)
+		if(pd->stateStrings)
 		  medmSendString(pd, pd->stateStrings[btnNumber]);
 #else
 		medmSendDouble(pcb->record,(double)btnNumber);
@@ -309,14 +309,14 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
   /* !!!!! End work around                 !!!!! */
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-    if (pr->dataType != DBF_ENUM) {
+    if(pr->dataType != DBF_ENUM) {
 	medmPostMsg(1,"choiceButtonUpdateGraphicalInfoCb:\n"
 	  "  %s is not an ENUM type\n"
 	  "  Cannot create Choice Button\n",
 	  pCB->control.ctrl);
 	return;
     }
-    if (pr->hopr <= 0.0) {
+    if(pr->hopr <= 0.0) {
 	medmPostMsg(1,"choiceButtonUpdateGraphicalInfoCb:\n"
 	  "  Cannot create Choice Button for %s\n",
 	  "  There are no states to assign to buttons\n",
@@ -324,7 +324,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 	return;
     }
 
-    for (i = 0; i <= pr->hopr; i++) {
+    for(i = 0; i <= pr->hopr; i++) {
 	labels[i] = pr->stateStrings[i];
     }
     fg = (pCB->clrmod == ALARM ? alarmColor(pr->severity) :
@@ -341,8 +341,8 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
       buttons,
       pCB->stacking);
 
-    for (i = 0; i <= pr->hopr; i++) {
-	if (i==(int)pr->value)
+    for(i = 0; i <= pr->hopr; i++) {
+	if(i==(int)pr->value)
 	  XmToggleButtonGadgetSetState(buttons[i],True,True);
 	XtAddCallback(buttons[i],XmNvalueChangedCallback,
 	  (XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)i);
@@ -363,8 +363,18 @@ static void choiceButtonUpdateValueCb(XtPointer cd) {
 static void choiceButtonDraw(XtPointer cd) {
     MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     Record *pr = pcb->record;
-    Widget widget = pcb->dlElement->widget;
-    DlChoiceButton *dlChoiceButton = pcb->dlElement->structure.choiceButton;
+    DlElement *dlElement = pcb->dlElement;
+    Widget widget = dlElement->widget;
+    DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
+
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
     if (pr->connected) {
 	if(!widget) return;
 	if (pr->readAccess) {
@@ -554,6 +564,7 @@ static void choiceButtonDestroyCb(XtPointer cd) {
     MedmChoiceButtons *pcb = (MedmChoiceButtons *) cd;
     if (pcb) {
 	medmDestroyRecord(pcb->record);
+	pcb->dlElement->data = 0;
 	free((char *)pcb);
     }
 }
@@ -634,7 +645,7 @@ DlElement *parseChoiceButton(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
  
     return dlElement;

@@ -70,6 +70,31 @@ extern Widget mainMW;
 
 extern char *stripChartWidgetName;
 
+#if DEBUG_PIXMAP
+int getNumberOfCompositeElements(DlElement *dlElement, int indent, int n)
+{
+    int nE,i;
+    DlElement *pE;
+    DlComposite *dlComposite = dlElement->structure.composite;
+
+    nE = 0;
+    pE = FirstDlElement(dlComposite->dlElementList);
+    while(pE) {
+	nE++;
+	for(i=0; i<indent; i++) print("  ");
+	print("%2d %s\n",nE+n,elementType(pE->type));
+	if(pE->type == DL_Composite) {
+	    indent++;
+	    nE+=getNumberOfCompositeElements(pE,indent,n+nE);
+	    indent--;
+	}
+	pE = pE->next;
+    }
+
+    return nE;
+}
+#endif
+
 void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
@@ -108,10 +133,13 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     {
 #if DEBUG_PIXMAP
       /* Use this in debugging to show the drawing area pixmap */
-	int c,i,n;
+	int c,i,n,nE,indent;
 	Arg args[2];
 	Dimension width, height;
 	Pixmap pixmap;
+	WidgetList children;
+	Cardinal numChildren;
+	DlElement *pE;
 
 	n=0;
 	XtSetArg(args[n],XmNwidth,&width); n++;
@@ -145,8 +173,35 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	      displayInfo->pixmapGC,0,0,width,height,0,0);
 	    XFlush(display);
 	}
-	print("Done: Background is window\n");
 	XFreePixmap(display,pixmap);
+	print("Done: Background is window\n");
+
+	print("  Element List:\n");
+	indent=2;
+	nE=0;
+	pE = SecondDlElement(displayInfo->dlElementList);
+	while(pE) {
+	    nE++;
+	    for(i=0; i<indent; i++) print("  ");
+	    print("%2d %s\n",nE,elementType(pE->type));
+	    if(pE->type == DL_Composite) {
+		indent++;
+		nE+=getNumberOfCompositeElements(pE,indent,nE);
+		indent--;
+	    }
+	    pE = pE->next;
+	}
+	print("  Display has %d elements\n",nE);
+
+	print("  Update Task List:\n");
+	dumpUpdatetaskList(displayInfo);
+
+	XtVaGetValues(displayInfo->drawingArea,XmNnumChildren,&numChildren,
+	  XmNchildren,&children,NULL);
+	print("  Drawing area has %d children\n",numChildren);
+	for(i=0; i < (int)numChildren; i++) {
+	    print("  %2d %x %s\n",i+1,children[i],XtName(children[i]));
+	}
 #else
         popupDisplayListDlg();
 #endif    

@@ -114,7 +114,7 @@ void parseAndSkip(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -161,7 +161,7 @@ DlFile *parseFile(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) 
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) 
       && (tokenType != T_EOF) );
 
     return dlFile;
@@ -173,7 +173,7 @@ void writeDlFile(FILE *stream, DlFile *dlFile, int level)
     char indent[16];
     int versionNumber = MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
 
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%sfile {",indent);
@@ -218,7 +218,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	displayInfo->dlColormapSize = dlColormap->ncolors;
 	
       /* Allocate the X colormap from dlColormap data */
-	for (i = 0; i < dlColormap->ncolors; i++) {
+	for(i = 0; i < dlColormap->ncolors; i++) {
 	    XColor color;
 	  /* Scale [0,255] to [0,65535] */
 	    color.red   = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].r); 
@@ -349,7 +349,7 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
   /* Restore displayInfo->filePtr to previous value */
@@ -395,7 +395,7 @@ void parseOldDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
     
   /* and restore displayInfo->filePtr to previous value */
@@ -475,7 +475,7 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
+    } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
       (tokenType != T_EOF));
     
   /* restore the previous filePtr */
@@ -489,7 +489,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
     int i;
     char indent[16];
     
-    for (i = 0; i < level; i++) indent[i] = '\t';
+    for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
     
     fprintf(stream,"\n%s\"color map\" {",indent);
@@ -499,7 +499,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
 #endif
   	fprintf(stream,"\n%s\tcolors {",indent,dlColormap->ncolors);
 	
-	for (i = 0; i < dlColormap->ncolors; i++) {
+	for(i = 0; i < dlColormap->ncolors; i++) {
 	    fprintf(stream,"\n\t\t%s%06x,",indent,
               dlColormap->dl_color[i].r*0x10000+
               dlColormap->dl_color[i].g*0x100 +
@@ -508,7 +508,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
 	fprintf(stream,"\n\t%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
-	for (i = 0; i < dlColormap->ncolors; i++) {
+	for(i = 0; i < dlColormap->ncolors; i++) {
 	    fprintf(stream,"\n%s\tdl_color {",indent);
 	    fprintf(stream,"\n%s\t\tr=%d",indent,dlColormap->dl_color[i].r);
 	    fprintf(stream,"\n%s\t\tg=%d",indent,dlColormap->dl_color[i].g);
@@ -585,7 +585,7 @@ void parseBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -607,7 +607,7 @@ void parseOldBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -652,23 +652,23 @@ void writeDlLimits(FILE *stream, DlLimits *dlLimits, int level)
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%slimits {",indent);
-	if (dlLimits->loprSrc0 == PV_LIMITS_DEFAULT)
+	if(dlLimits->loprSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tloprSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
-	if (dlLimits->loprDefault != LOPR_DEFAULT)
+	if(dlLimits->loprDefault != LOPR_DEFAULT)
 	  fprintf(stream,"\n%s\tloprDefault=%g",indent,dlLimits->loprDefault);
-	if (dlLimits->hoprSrc0 == PV_LIMITS_DEFAULT)
+	if(dlLimits->hoprSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\thoprSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
-	if (dlLimits->hoprDefault != HOPR_DEFAULT)
+	if(dlLimits->hoprDefault != HOPR_DEFAULT)
 	  fprintf(stream,"\n%s\thoprDefault=%g",indent,dlLimits->hoprDefault);
-	if (dlLimits->precSrc0 == PV_LIMITS_DEFAULT)
+	if(dlLimits->precSrc0 == PV_LIMITS_DEFAULT)
 	  fprintf(stream,"\n%s\tprecSrc=\"%s\"",indent,
 	    stringValueTable[PV_LIMITS_DEFAULT]);
-	if (dlLimits->precDefault != PREC_DEFAULT)
+	if(dlLimits->precDefault != PREC_DEFAULT)
 	  fprintf(stream,"\n%s\tprecDefault=%d",indent,dlLimits->precDefault);
 	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -700,9 +700,9 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 	    if(!strcmp(token,"loprSrc")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_PV_LIMITS_SRC;
+		for(i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			limits->loprSrc0 = limits->loprSrc = i;
 			break;
 		    }
@@ -714,9 +714,9 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 	    } else if(!strcmp(token,"hoprSrc")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_PV_LIMITS_SRC;
+		for(i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			limits->hoprSrc0 = limits->hoprSrc = i;
 			break;
 		    }
@@ -728,9 +728,9 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 	    } else if(!strcmp(token,"precSrc")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for (i=FIRST_PV_LIMITS_SRC;
+		for(i=FIRST_PV_LIMITS_SRC;
 		     i < FIRST_PV_LIMITS_SRC+NUM_PV_LIMITS_SRC; i++) {
-		    if (!strcmp(token,stringValueTable[i])) {
+		    if(!strcmp(token,stringValueTable[i])) {
 			limits->precSrc0 = limits->precSrc = i;
 			break;
 		    }
@@ -746,7 +746,7 @@ void parseLimits(DisplayInfo *displayInfo, DlLimits *limits)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -862,7 +862,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
 	dlElement->run = &elementDlDispatchTable;
     }
     dlElement->widget = 0;
-    dlElement->hidden = 0;
+    dlElement->hidden = False;
     dlElement->data = 0;
     dlElement->next = 0;
     dlElement->prev = 0;
@@ -948,7 +948,7 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -971,7 +971,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1005,7 +1005,7 @@ DlElement *parseFallingLine(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
         }
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
 #define INITIAL_NUM_POINTS 16
@@ -1053,7 +1053,7 @@ DlElement *parseRisingLine(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
 #define INITIAL_NUM_POINTS 16 
@@ -1108,7 +1108,7 @@ void parseObject(DisplayInfo *displayInfo, DlObject *object)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1140,7 +1140,7 @@ void parseGrid(DisplayInfo *displayInfo, DlGrid *grid)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1185,7 +1185,7 @@ void parseAttr(DisplayInfo *displayInfo, DlBasicAttribute *attr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) ) ;     /* Do nothing */
 }
 
@@ -1209,7 +1209,7 @@ void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1266,7 +1266,7 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1307,7 +1307,7 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 }
 
@@ -1355,7 +1355,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
 	    case T_RIGHT_BRACE:
 		nestingLevel--; break;
 	    }
-	} while (!done && tokenType != T_EOF);
+	} while(!done && tokenType != T_EOF);
 
 	fclose(externalFilePtr);
 
@@ -1386,7 +1386,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
     w = word;
     m = macro;
 
-    while ( (c=getc(filePtr)) != EOF) {
+    while( (c=getc(filePtr)) != EOF) {
 	switch (state) {
 	case NEUTRAL:
 	    switch(c) {
@@ -1444,13 +1444,13 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 		value = lookupNameValue(displayInfo->nameValueTable,
 		  displayInfo->numNameValues,macro);
 		if(value != NULL) {
-		    for (j = 0; j < (int) strlen(value); j++) {
+		    for(j = 0; j < (int) strlen(value); j++) {
 			*w++ = value[j];
 		    }
 		} else {
 		    *w++ = '$';
 		    *w++ = '(';
-		    for (j = 0; j < (int) strlen(macro); j++) {
+		    for(j = 0; j < (int) strlen(macro); j++) {
 			*w++ = macro[j];
 		    }
 		    *w++ = ')';
@@ -1637,11 +1637,8 @@ void genericOrient(DlElement *dlElement, int type, int xCenter, int yCenter)
 
 void genericDestroy(DisplayInfo *displayInfo, DlElement *pE)
 {
-  /* Delete all update tasks associated with the element */
-    if(globalDisplayListTraversalMode == DL_EXECUTE && displayInfo != NULL) {
-	updateTaskDeleteElementTasks(displayInfo, pE);
-    }
-
+  /* KE: Could possibly put freeing of MedmXxx and MedmXxx.updateTask here */
+    
     free((char *)pE->structure.composite);
     destroyDlElement(NULL, pE);
 }
@@ -1653,11 +1650,11 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
 
     if(!displayInfo || !dlElement) return;
     
-  /* Delete any update tasks.  The destroyCb will free the
-     record(s) and private structure */
-    updateTaskDeleteElementTasks(displayInfo,dlElement);
-    
-#if 1
+  /* Disable any update tasks */
+    updateTaskDisableTask(dlElement);
+
+
+#if 0  /* CHECK */
   /* Draw the display background where the element would go on both
    *   the window and the pixmap */
 
@@ -1665,19 +1662,15 @@ void hideDrawnElement(DisplayInfo *displayInfo, DlElement *dlElement)
     XSetForeground(display,displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
     
-  /* Remove any clipping */
-    XSetClipOrigin(display,displayInfo->gc,0,0);
-    XSetClipMask(display,displayInfo->gc,None);
-
   /* Draw on the window */
     po = &(dlElement->structure.composite->object);
     drawable = XtWindow(displayInfo->drawingArea);
-    XFillRectangle(display, drawable, displayInfo->gc,
+    XFillRectangle(display, drawable, displayInfo->pixmapGC,
       po->x, po->y, po->width, po->height);
 
   /* Draw on the pixmap */
     drawable = displayInfo->drawingAreaPixmap;
-    XFillRectangle(display, drawable, displayInfo->gc,
+    XFillRectangle(display, drawable, displayInfo->pixmapGC,
       po->x, po->y, po->width, po->height);
 
   /* Update the drawing objects above this one */
@@ -1693,15 +1686,13 @@ void hideWidgetElement(DisplayInfo *displayInfo, DlElement *dlElement)
 
     if(!displayInfo || !dlElement) return;
 
-  /* Delete any update tasks.  The destroyCb will free the
-     record(s) and private structure */
-    updateTaskDeleteElementTasks(displayInfo,dlElement);
+  /* Disable any update tasks */
+    updateTaskDisableTask(dlElement);
     
-  /* Destroy the widget */
+  /* Unmanage the widget */
     widget = dlElement->widget;
-    if(widget) {
-	XtDestroyWidget(widget);
-	dlElement->widget = NULL;
+    if(widget && XtIsManaged(widget)) {
+	XtUnmanageChild(widget);
     }
 }
 

@@ -57,9 +57,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #include "medm.h"
 
 typedef struct _MedmIndicator {
-    DlElement   *dlElement;     /* Must be first */
-    Record      *record;
-    UpdateTask  *updateTask;
+    DlElement        *dlElement;     /* Must be first */
+    UpdateTask       *updateTask;    /* Must be second */
+    Record           *record;
 } MedmIndicator;
 
 static void indicatorUpdateValueCb(XtPointer cd);
@@ -102,8 +102,8 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-    if (!dlElement->widget) {
-	if (displayInfo->traversalMode == DL_EXECUTE) {
+    if(!dlElement->widget) {
+	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    if(dlElement->data) {
 		pi = (MedmIndicator *)dlElement->data;
 	    } else {
@@ -115,7 +115,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		  indicatorDraw,
 		  (XtPointer)pi);
 		
-		if (pi->updateTask == NULL) {
+		if(pi->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlIndicator: Memory allocation error\n");
 		} else {
 		    updateTaskAddDestroyCb(pi->updateTask,indicatorDestroyCb);
@@ -177,7 +177,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.width >INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
 	      XtSetArg(args[n],XcNorient,XcVert); n++;
-	      if (dlIndicator->label == LABEL_NONE ||
+	      if(dlIndicator->label == LABEL_NONE ||
 		dlIndicator->label == NO_DECORATIONS) {
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
@@ -186,7 +186,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	    XtSetArg(args[n],XcNscaleSegments,
 	      (dlIndicator->object.height>INDICATOR_OKAY_SIZE ? 11 : 5)); n++;
 	      XtSetArg(args[n],XcNorient,XcHoriz); n++;
-	      if (dlIndicator->label == LABEL_NONE ||
+	      if(dlIndicator->label == LABEL_NONE ||
 		dlIndicator->label == NO_DECORATIONS) {
 		  XtSetArg(args[n],XcNscaleSegments,0); n++;
 	      }
@@ -214,7 +214,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	  xcIndicatorWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
 	
-	if (displayInfo->traversalMode == DL_EDIT) {
+	if(displayInfo->traversalMode == DL_EDIT) {
 	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
 	}
@@ -241,13 +241,22 @@ void hideDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 static void indicatorDraw(XtPointer cd) {
     MedmIndicator *pi = (MedmIndicator *) cd;
     Record *pr = pi->record;
-    Widget widget= pi->dlElement->widget;
-    DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
+    DlElement *dlElement = pi->dlElement;
+    Widget widget= dlElement->widget;
+    DlIndicator *dlIndicator = dlElement->structure.indicator;
     XcVType val;
 
-    if (pr->connected) {
-	if (pr->readAccess) {
-	    if (widget) {
+  /* Check if hidden */
+    if(dlElement->hidden) {
+	if(widget && XtIsManaged(widget)) {
+	    XtUnmanageChild(widget);
+	}
+	return;
+    }
+    
+    if(pr->connected) {
+	if(pr->readAccess) {
+	    if(widget) {
 		addCommonHandlers(widget, pi->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
@@ -264,13 +273,13 @@ static void indicatorDraw(XtPointer cd) {
 		break;
 	    }
 	} else {
-	    if (widget) XtUnmanageChild(widget);
+	    if(widget) XtUnmanageChild(widget);
 	    draw3DPane(pi->updateTask,
 	      pi->updateTask->displayInfo->colormap[dlIndicator->monitor.bclr]);
 	    draw3DQuestionMark(pi->updateTask);
 	}
     } else {
-	if (widget) XtUnmanageChild(widget);
+	if(widget) XtUnmanageChild(widget);
 	drawWhiteRectangle(pi->updateTask);
     }
 }
@@ -314,11 +323,11 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	  dlIndicator->monitor.rdbk);
 	break;
     }
-    if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
+    if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
 
-    if (widget != NULL) {
+    if(widget != NULL) {
       /* Set foreground pixel according to alarm */
 	pixel = (dlIndicator->clrmod == ALARM) ?
 	  alarmColor(pr->severity) :
@@ -363,8 +372,9 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 
 static void indicatorDestroyCb(XtPointer cd) {
     MedmIndicator *pi = (MedmIndicator *) cd;
-    if (pi) {
+    if(pi) {
 	medmDestroyRecord(pi->record);
+	pi->dlElement->data = 0;
 	free((char *)pi);
     }
     return;
@@ -382,8 +392,8 @@ DlElement *createDlIndicator(DlElement *p)
     DlElement *dlElement;
 
     dlIndicator = (DlIndicator *)malloc(sizeof(DlIndicator));
-    if (!dlIndicator) return 0;
-    if (p) {
+    if(!dlIndicator) return 0;
+    if(p) {
 	*dlIndicator = *p->structure.indicator;
     } else {
 	objectAttributeInit(&(dlIndicator->object));
@@ -394,7 +404,7 @@ DlElement *createDlIndicator(DlElement *p)
 	dlIndicator->direction = RIGHT;
     }
 
-    if (!(dlElement = createDlElement(DL_Indicator,
+    if(!(dlElement = createDlElement(DL_Indicator,
       (XtPointer)      dlIndicator,
       &indicatorDlDispatchTable))) {
 	free(dlIndicator);
@@ -411,51 +421,51 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
     DlIndicator *dlIndicator;
     DlElement *dlElement = createDlIndicator(NULL);
 
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
     dlIndicator = dlElement->structure.indicator;
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object")) {
+	    if(!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlIndicator->object));
-	    } else if (!strcmp(token,"monitor")) {
+	    } else if(!strcmp(token,"monitor")) {
 		parseMonitor(displayInfo,&(dlIndicator->monitor));
-	    } else if (!strcmp(token,"label")) {
+	    } else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"none")) 
+		if(!strcmp(token,"none")) 
 		  dlIndicator->label = LABEL_NONE;
-		else if (!strcmp(token,"no decorations"))
+		else if(!strcmp(token,"no decorations"))
 		  dlIndicator->label = NO_DECORATIONS;
-		else if (!strcmp(token,"outline"))
+		else if(!strcmp(token,"outline"))
 		  dlIndicator->label = OUTLINE;
-		else if (!strcmp(token,"limits"))
+		else if(!strcmp(token,"limits"))
 		  dlIndicator->label = LIMITS;
-		else if (!strcmp(token,"channel"))
+		else if(!strcmp(token,"channel"))
 		  dlIndicator->label = CHANNEL;
-	    } else if (!strcmp(token,"clrmod")) {
+	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static")) 
+		if(!strcmp(token,"static")) 
 		  dlIndicator->clrmod = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dlIndicator->clrmod = ALARM;
-		else if (!strcmp(token,"discrete"))
+		else if(!strcmp(token,"discrete"))
 		  dlIndicator->clrmod = DISCRETE;
-	    } else if (!strcmp(token,"direction")) {
+	    } else if(!strcmp(token,"direction")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"up")) 
+		if(!strcmp(token,"up")) 
 		  dlIndicator->direction = UP;
-		else if (!strcmp(token,"right"))
+		else if(!strcmp(token,"right"))
 		  dlIndicator->direction = RIGHT;
 	      /* Backward compatibility */
-		else if (!strcmp(token,"down"))
+		else if(!strcmp(token,"down"))
 		  dlIndicator->direction = UP;
-		else if (!strcmp(token,"left"))
+		else if(!strcmp(token,"left"))
 		  dlIndicator->direction = RIGHT;
-	    } else if (!strcmp(token,"limits")) {
+	    } else if(!strcmp(token,"limits")) {
 	      parseLimits(displayInfo,&(dlIndicator->limits));
 	    }
 	    break;
@@ -466,7 +476,7 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 	case T_RIGHT_BRACE:
 	    nestingLevel--; break;
 	}
-    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+    } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
     return dlElement;
@@ -480,24 +490,24 @@ void writeDlIndicator( FILE *stream, DlElement *dlElement, int level) {
     char indent[16];
     DlIndicator *dlIndicator = dlElement->structure.indicator;
 
-    for (i = 0;  i < level; i++) indent[i] = '\t';
+    for(i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
 
     fprintf(stream,"\n%sindicator {",indent);
     writeDlObject(stream,&(dlIndicator->object),level+1);
     writeDlMonitor(stream,&(dlIndicator->monitor),level+1);
-    if (dlIndicator->label != LABEL_NONE)
+    if(dlIndicator->label != LABEL_NONE)
       fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
         stringValueTable[dlIndicator->label]);
-    if (dlIndicator->clrmod != STATIC)
+    if(dlIndicator->clrmod != STATIC)
       fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
         stringValueTable[dlIndicator->clrmod]);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (dlIndicator->direction != RIGHT)
+    if(dlIndicator->direction != RIGHT)
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlIndicator->direction]);
 #else
-    if ((dlIndicator->direction != RIGHT) || (!MedmUseNewFileFormat))
+    if((dlIndicator->direction != RIGHT) || (!MedmUseNewFileFormat))
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlIndicator->direction]);
 #endif

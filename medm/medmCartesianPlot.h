@@ -100,20 +100,20 @@ typedef struct {
 } XYTrace;
 
 typedef struct _MedmCartesianPlot {
-    DlElement      *dlElement;            /* Must be first */
-    XYTrace         xyTrace[MAX_TRACES];
-    XYTrace         eraseCh;
-    XYTrace         triggerCh;
-    UpdateTask      *updateTask;
-    int             nTraces;              /* number of traces (<=MAX_TRACES) */
-    CpDataHandle    hcp1, hcp2;           /* CpData handles */
+    DlElement        *dlElement;    /* Must be first */
+    UpdateTask       *updateTask;   /* Must be second */
+    XYTrace          xyTrace[MAX_TRACES];
+    XYTrace          eraseCh;
+    XYTrace          triggerCh;
+    int              nTraces;       /* number of traces (<=MAX_TRACES) */
+    CpDataHandle     hcp1, hcp2;    /* CpData handles */
   /* Used for channel-based range determination (filled in at connect) */
     CartesianPlotAxisRange  axisRange[3]; /* X, Y, Y2 _AXIS_ELEMENT          */
-    eraseMode_t     eraseMode;            /* erase mode */
-    Boolean         dirty1;               /* cpData1 needs screen update */
-    Boolean         dirty2;               /* cpData2 needs screen update */
-    TS_STAMP        startTime;
-    Boolean         timeScale;
+    eraseMode_t      eraseMode;     /* erase mode */
+    Boolean          dirty1;        /* cpData1 needs screen update */
+    Boolean          dirty2;        /* cpData2 needs screen update */
+    TS_STAMP         startTime;
+    Boolean          timeScale;
 } MedmCartesianPlot;
 
 
