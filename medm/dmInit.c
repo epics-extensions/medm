@@ -309,13 +309,19 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
 		    case DL_Polygon   :
 		      /* Use the last found attributes */
 			pe->structure.rectangle->attr = attr;
-			pe->structure.rectangle->dynAttr = dynAttr;
 #if 0
+			pe->structure.rectangle->dynAttr = dynAttr;
 		      /* KE: Don't want to do this.  The old format
 		       *  relies on them not being reset */
 		      /* Reset the attributes to defaults */
 			basicAttributeInit(&attr);
 			dynamicAttributeInit(&dynAttr);
+#else
+		      /* KE: This was what was done in MEDM 2.2.9 */
+			if (dynAttr.chan[0] != '\0') {
+			    pe->structure.rectangle->dynAttr = dynAttr;
+			    dynAttr.chan[0] = '\0';
+			}
 #endif			
 			break;
 		    }
@@ -385,10 +391,9 @@ void dmDisplayListParse(
 	currentDisplayInfo->filePtr = filePtr;
 	currentDisplayInfo->newDisplay = False;
     } else {
-      /* Came from a display that is to be replaced
-       *   See if it should be saved */
+      /* Came from a display that is to be replaced */
 	if(displayInfo->fromRelatedDisplayExecution == True) {
-	  /* Replace this one */
+	  /* Not an original, don't save it, reuse it */
 #if 0	    
 	    printf("  True: displayInfo->fromRelatedDisplayExecution=%d\n",
 	      displayInfo->fromRelatedDisplayExecution);
@@ -399,7 +404,7 @@ void dmDisplayListParse(
 	    currentDisplayInfo = displayInfo;
 	    currentDisplayInfo->newDisplay = False;
 	} else {
-	  /* This is an original, allocate a new one and save this one */
+	  /* This is an original, pop it down */
 #if 0	    
 	    printf("  False: displayInfo->fromRelatedDisplayExecution=%d\n",
 	      displayInfo->fromRelatedDisplayExecution);
@@ -408,7 +413,8 @@ void dmDisplayListParse(
 #if 0	    
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [1]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,"dmDisplayListParse [1]: displayInfoSaveList");
-#endif	    
+#endif
+	  /* Save it if not already saved */
 	    moveDisplayInfoToDisplayInfoSave(displayInfo);
 #if 0	    
 	    dumpDisplayInfoList(displayInfoListHead,"dmDisplayListParse [2]: displayInfoList");
