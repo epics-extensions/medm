@@ -127,7 +127,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 		pr->records = medmAllocateDynamicRecords(&dlRectangle->dynAttr,
 		  rectangleUpdateValueCb,NULL,(XtPointer)pr);
 		calcPostfix(&dlRectangle->dynAttr);
-		setMonitorChanged(&dlRectangle->dynAttr, pr->records);
+		setDynamicAttrMonitorFlags(&dlRectangle->dynAttr, pr->records);
 	    }
 	}
     } else {

@@ -22,7 +22,7 @@ else
 HOST_OPT = NO
 endif
 
-# Browser options
+# Source browser options
 ifeq ($(HOST_OPT),NO)
   ifeq ($(ANSI),ACC)
     ifeq ($(OS_CLASS),solaris)
@@ -44,6 +44,9 @@ PURIFY_FLAGS = -first-only -chain-length=26
 #  #CC = purify -first-only -chain-length=25 -log-file=purelog $($(ANSI)_$(CMPLR))
 #  #CC = purify -first-only -chain-length=25 -mail-to-user=evans $($(ANSI)_$(CMPLR))
 #endif
+
+# Web browser options
+#USR_CFLAGS += -DNETSCAPEPATH="\"mozilla\""
 
 # Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
 #XRTGRAPH=/opt/local/xrtgraph2.4.0
@@ -84,7 +87,6 @@ ifdef XRTGRAPH
       Xpm_DIR = $(XRTGRAPH)/lib
     endif
   endif
-
 
   SRCS += medmCartesianPlot.c 
   SRCS += medmXrtGraph.c 
@@ -169,9 +171,6 @@ USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 USR_LIBS_WIN32 += $(EXCEED_XLIBS)
 USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
-
-USR_LIBS_Darwin = Xm Xt Xp Xmu X11 Xext
-USR_LDFLAGS_Darwin += -force_flat_namespace
 
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)

@@ -698,7 +698,9 @@ Name of file in which to save display:",
 #endif
 
 #if 1
-  /* Keep CDE from recoloring (Medm* doesn't work here) */
+  /* Keep CDE from recoloring. (Medm* doesn't work here) This fix is
+     for Solaris with CDE and may no longer be needed, but shouldn't
+     hurt.  */
     "*useColorObj: False",
 #endif
     
@@ -1437,11 +1439,19 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    Arg args[4];
 	    int n = 0;
 	    XmString label = XmStringCreateLocalized("*.adl");
+
+#if 0
+	  /* KE: Note that not specifying the XmNdirectory is probably
+             the same as getting the CWD and setting it to that.  Also
+             using "." for the XmNdirectory is probably the same. */
 	    char *cwd = getcwd(NULL,PATH_MAX);
 	    XmString cwdXmString = XmStringCreateLocalized(cwd);
-
-	    XtSetArg(args[n],XmNpattern,label); n++;
+	    free(cwd);
 	    XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
+	    XmStringFree(cwdXmString);
+#endif
+	    
+	    XtSetArg(args[n],XmNpattern,label); n++;
 	    openFSD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),"openFSD",args,n);
 	    XtUnmanageChild(XmFileSelectionBoxGetChild(openFSD,
 	      XmDIALOG_HELP_BUTTON));
@@ -1450,8 +1460,6 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtAddCallback(openFSD,XmNcancelCallback,
 	      fileMenuDialogCallback,(XtPointer)MAIN_FILE_OPEN_BTN);
 	    XmStringFree(label);
-	    XmStringFree(cwdXmString);
-	    free(cwd);
 	}
 
 	XmListDeselectAllItems(XmFileSelectionBoxGetChild(openFSD,XmDIALOG_LIST));
@@ -3138,10 +3146,11 @@ int main(int argc, char *argv[])
   /* Help URL */
     envHelpPath = getenv("MEDM_HELP_PATH");
     if(envHelpPath != NULL) {
-	strcpy(medmHelpPath, envHelpPath);
+	strncpy(medmHelpPath, envHelpPath, PATH_MAX);
     } else {
-	strcpy(medmHelpPath, MEDM_HELP_PATH);
+	strncpy(medmHelpPath, MEDM_HELP_PATH, PATH_MAX);
     }
+    medmHelpPath[PATH_MAX-1]='\0';
     
   /* XWD file name */
 #ifdef WIN32

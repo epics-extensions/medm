@@ -112,7 +112,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 		pa->records = medmAllocateDynamicRecords(&dlArc->dynAttr,
 		  arcUpdateValueCb, NULL, (XtPointer) pa);
 		calcPostfix(&dlArc->dynAttr);
-		setMonitorChanged(&dlArc->dynAttr, pa->records);
+		setDynamicAttrMonitorFlags(&dlArc->dynAttr, pa->records);
 	    }
 	}
     } else {

@@ -96,8 +96,9 @@ typedef struct _Record {
     XtPointer clientData;
     void (*updateValueCb)(XtPointer); 
     void (*updateGraphicalInfoCb)(XtPointer); 
-    Boolean  monitorSeverityChanged;
     Boolean  monitorValueChanged;
+    Boolean  monitorStatusChanged;
+    Boolean  monitorSeverityChanged;
     Boolean  monitorZeroAndNoneZeroTransition;
 } Record;
 

@@ -113,7 +113,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 		po->records = medmAllocateDynamicRecords(&dlOval->dynAttr,
 		  ovalUpdateValueCb, NULL, (XtPointer)po);
 		calcPostfix(&dlOval->dynAttr);
-		setMonitorChanged(&dlOval->dynAttr, po->records);
+		setDynamicAttrMonitorFlags(&dlOval->dynAttr, po->records);
 	    }
 	}
     } else {

@@ -246,6 +246,7 @@ static void meterDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
+		pr->monitorSeverityChanged = True;
 		XcMeterUpdateMeterForeground(widget,alarmColor(pr->severity));
 		break;
 	    }

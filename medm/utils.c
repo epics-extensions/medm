@@ -4456,9 +4456,9 @@ void calcPostfix(DlDynamicAttribute *attr)
     }
 }
 
-/* Set when we want an update value callback.  Note that valueChanged
- * overrides severityChanged overrides zeroNndNone */
-void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
+/* Set when we want an update value callback for objects with a
+ * Dynamic Attribute */
+void setDynamicAttrMonitorFlags(DlDynamicAttribute *attr, Record **records)
 {
     int i;
     
@@ -4472,17 +4472,16 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	  /* The main record */
 	  /* Set all requirements to zero */
 	    pR->monitorValueChanged = False;
+	    pR->monitorStatusChanged = False;
 	    pR->monitorSeverityChanged = False;
 	    pR->monitorZeroAndNoneZeroTransition = False;
 	  /* Set the minimum requirement for ColorMode */
 	    switch (attr->clr) {
 	    case STATIC:
-#if 1     /* Check */
 	      /* Even though it is static, we need to monitor the
                  value change to be able to redraw it when hiding and
                  unhiding */
 		pR->monitorValueChanged = True;
-#endif		
 		break;
 	    case ALARM:
 		pR->monitorSeverityChanged = True;
@@ -4493,19 +4492,25 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 	  /* Set the minimum requirement for each VisibilityMode */
 	    switch(attr->vis) {
 	    case V_STATIC:
-#if 1     /* Check */
 	      /* Even though it is static, we need to monitor the
                  value change to be able to redraw it when hiding and
                  unhiding */
 		pR->monitorValueChanged = True;
-#endif		
 		break;
 	    case IF_NOT_ZERO:
 	    case IF_ZERO:
 		pR->monitorZeroAndNoneZeroTransition = True;
 		break;
 	    case V_CALC:
-		pR->monitorValueChanged = True;
+		if(attr->validCalc) {
+		    pR->monitorValueChanged = True;
+		    if(calcUsesStatus(attr->calc)) {
+			pR->monitorStatusChanged = True;
+		    }
+		    if(calcUsesSeverity(attr->calc)) {
+			pR->monitorSeverityChanged = True;
+		    }
+		}
 		break;
 	    }
 	} else {
@@ -4519,6 +4524,54 @@ void setMonitorChanged(DlDynamicAttribute *attr, Record **records)
 		pR->monitorValueChanged = True;
 	    }
 	}
+    }
+}
+
+/* Determines if a calc expression uses status (I) */
+int calcUsesStatus(char *calc)
+{
+    char *cur;
+    char *prev;
+    
+    if(!calc || !*calc) return 0;
+    cur=calc;
+    while(*cur) {
+	if(*cur == 'i' || *cur == 'I') {
+	  /* See if it is the first character */
+	    if(cur == calc) return 1;
+	  /* See if it is not preceeded by a letter as in sin, asin,
+             sinh, min, ceil, nint, pi*/
+	    prev=cur-1;
+	    if(!((*prev >= 'A' && *prev <= 'Z') ||
+	      (*prev >= 'a' && *prev <= 'z'))) {
+		return 1;
+	    }
+	}
+	cur++;
+    }
+}
+
+/* Determines if a calc expression uses severity (J) */
+int calcUsesSeverity(char *calc)
+{
+    char *cur;
+    char *prev;
+    
+    if(!calc || !*calc) return 0;
+    cur=calc;
+    while(*cur) {
+	if(*cur == 'j' || *cur == 'J') {
+	  /* See if it is the first character */
+	    if(cur == calc) return 1;
+	  /* See if it is not preceeded by a letter even though there
+             are no current operands that contain j */
+	    prev=cur-1;
+	    if(!((*prev >= 'A' && *prev <= 'Z') ||
+	      (*prev >= 'a' && *prev <= 'z'))) {
+		return 1;
+	    }
+	}
+	cur++;
     }
 }
 

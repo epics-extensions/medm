@@ -658,6 +658,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 
 static void medmUpdateChannelCb(struct event_handler_args args) {
     Channel *pCh = (Channel *)ca_puser(args.chid);
+    Boolean statusChanged = False;
     Boolean severityChanged = False;
     Boolean zeroAndNoneZeroTransition = False;
     Record *pr;
@@ -797,6 +798,12 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
       ((value != 0.0) && (pr->value == 0.0)))
       zeroAndNoneZeroTransition = True;
 
+  /* Mark status changed */
+    if(pr->status != ((dataBuf *)(args.dbr))->d.status) {
+	pr->status = ((dataBuf *)(args.dbr))->d.status;
+	statusChanged = True;
+    }
+
   /* Mark severity changed */
     if(pr->severity != ((dataBuf *)(args.dbr))->d.severity) {
 	pr->severity = ((dataBuf *)(args.dbr))->d.severity;
@@ -814,6 +821,8 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
   /* Call the update value callback if there is a monitored change */
     if(pCh->pr->updateValueCb) {
 	if(pr->monitorValueChanged) {
+	    pr->updateValueCb((XtPointer)pr);
+	} else if(pr->monitorStatusChanged && statusChanged) {
 	    pr->updateValueCb((XtPointer)pr);
 	} else if(pr->monitorSeverityChanged && severityChanged) {
 	    pr->updateValueCb((XtPointer)pr);
@@ -1004,27 +1013,29 @@ static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
                             NULL,NULL,
                             {0,0},
                             NULL,NULL,NULL,
-                            True,True,True};
+			  /* Set monitorValueChanged to True, others
+                             to false */
+                            True,False,False,False};
 
 Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)
 {
-    Record *record;
+    Record *pR;
 
   /* Don't allocate a record if the name is blank */
     if(strlen(name) <= (size_t)0) {
 	return NULL;
     }
     
-    record = (Record *)malloc(sizeof(Record));
-    if(record) {
-	*record = nullRecord;
-	record->caId = caAdd(name,record);
-	record->updateValueCb = updateValueCb;
-	record->updateGraphicalInfoCb = updateGraphicalInfoCb;
-	record->clientData = clientData;
+    pR = (Record *)malloc(sizeof(Record));
+    if(pR) {
+	*pR = nullRecord;
+	pR->caId = caAdd(name,pR);
+	pR->updateValueCb = updateValueCb;
+	pR->updateGraphicalInfoCb = updateGraphicalInfoCb;
+	pR->clientData = clientData;
     }
-    return record;
+    return pR;
 }
 
 Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,

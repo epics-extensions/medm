@@ -155,7 +155,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 		pp->records = medmAllocateDynamicRecords(&dlPolygon->dynAttr,
 		  polygonUpdateValueCb, NULL, (XtPointer) pp);
 		calcPostfix(&dlPolygon->dynAttr);
-		setMonitorChanged(&dlPolygon->dynAttr, pp->records);
+		setDynamicAttrMonitorFlags(&dlPolygon->dynAttr, pp->records);
 	    }
 	}
     } else {

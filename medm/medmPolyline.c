@@ -166,7 +166,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 		pp->records = medmAllocateDynamicRecords(&dlPolyline->dynAttr,
 		  polylineUpdateValueCb, NULL, (XtPointer) pp);
 		calcPostfix(&dlPolyline->dynAttr);
-		setMonitorChanged(&dlPolyline->dynAttr, pp->records);
+		setDynamicAttrMonitorFlags(&dlPolyline->dynAttr, pp->records);
 	    }
 	}
     } else {

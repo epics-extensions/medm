@@ -210,11 +210,22 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			    calcPostfix(&dlImage->dynAttr);
 			}
 
-		      /* Monitor the value changed */
-			setMonitorChanged(&dlImage->dynAttr, pi->records);
-			for(i=0; i < MAX_CALC_RECORDS; i++) {
-			    if(pi->records[i]) {
-				pi->records[i]->monitorValueChanged = True;
+		      /* Monitor the appropriate dynamic attribute values */
+			setDynamicAttrMonitorFlags(&dlImage->dynAttr,
+			  pi->records);
+			if(pi->validCalc) {
+			    for(i=0; i < MAX_CALC_RECORDS; i++) {
+				if(i == 0) {
+				    if(calcUsesStatus(dlImage->calc)) {
+					pi->records[i]->monitorStatusChanged = True;
+				    }
+				    if(calcUsesSeverity(dlImage->calc)) {
+					pi->records[i]->monitorSeverityChanged = True;
+				    }
+				}
+				if(pi->records[i]) {
+				    pi->records[i]->monitorValueChanged = True;
+				}
 			    }
 			}
 		    }

@@ -885,8 +885,10 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     if(dlValuator->limits.prec >= 0) {
 	precision = dlValuator->limits.prec;
 	font = fontTable[pv->fontIndex];
-	if(dlValuator->clrmod == ALARM)
-	  foreground = alarmColor(pv->record->severity);
+	if(dlValuator->clrmod == ALARM) {
+	    pv->record->monitorSeverityChanged = True;
+	    foreground = alarmColor(pv->record->severity);
+	}
     } else {
 	precision = 0;
 	font = fontTable[valuatorFontListIndex(dlValuator)];

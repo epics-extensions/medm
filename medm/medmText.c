@@ -203,7 +203,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 		pt->records = medmAllocateDynamicRecords(&dlText->dynAttr,
 		  textUpdateValueCb, NULL,(XtPointer) pt);
 		calcPostfix(&dlText->dynAttr);
-		setMonitorChanged(&dlText->dynAttr, pt->records);
+		setDynamicAttrMonitorFlags(&dlText->dynAttr, pt->records);
 	    }
 	}
     } else {

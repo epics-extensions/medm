@@ -492,6 +492,10 @@ static void menuDraw(XtPointer cd)
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
+	    if(pr->writeAccess)
+	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
+	    else
+	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	    if(pr->precision < 0) return;    /* Wait for pr->value */
 	    if(pr->dataType == DBF_ENUM) {
 		Widget menuWidget;
@@ -509,7 +513,14 @@ static void menuDraw(XtPointer cd)
 		    if((i >=0) && (i < (int) numChildren)) {
 			XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
 		    } else {
-			medmPostMsg(1,"menuUpdateValueCb: Invalid menuHistory child\n");
+			medmPostMsg(1,"menuUpdateValueCb: Got state %d.\n"
+			  "  Only have strings for %d states (starting at 0).\n"
+			  "%s  %s\n",
+			  i,(int)numChildren,
+			  ((int)numChildren == 16)?
+			  "  [Channel Access is limited to 16 strings, "
+			  "but there may be more states]\n":"",
+			  dlMenu->control.ctrl);
 			return;
 		    }
 		} else {
@@ -521,6 +532,7 @@ static void menuDraw(XtPointer cd)
 		case DISCRETE:
 		    break;
 		case ALARM:
+		    pr->monitorSeverityChanged = True;
 		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    XtVaSetValues(menuWidget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
@@ -536,10 +548,6 @@ static void menuDraw(XtPointer cd)
 		medmPrintf(0,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if(pr->writeAccess)
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
-	    else
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
 	    if(widget && XtIsManaged(widget))
 	      XtUnmanageChild(widget);

@@ -14,7 +14,6 @@
 */
 
 /* Note that there are separate WIN32 and UNIX versions */
-/* Note that there is a Mosaic version at the end of the file */
 
 #define DEBUG 0
 
@@ -116,6 +115,7 @@ int callBrowser(char *url, char *bookmark)
 	    return 1;
 	}
     }
+    
   /* Netscape window is valid, send url via -remote */
   /*   (Use -id for speed) */
     envstring=getenv("NETSCAPEPATH");
@@ -143,7 +143,11 @@ int callBrowser(char *url, char *bookmark)
     status=execute(command);
 #if DEBUG
     printf("execute(after): cmd=%s status=%d\n",command,status);
-#endif    
+#endif
+
+  /* Raise the window */
+    XMapRaised(display,netscapew);
+    
     return 2;
 }
 /**************************** checkNetscapeWindow ************************/
@@ -336,66 +340,3 @@ int callBrowser(char *url, char *bookmark)
     return(1);
 }
 #endif     /* #ifndef WIN32 */
-
-#if 0
-/*************************************************************************/
-/*************************************************************************/
-/* Mosaic Version                                                        */ 
-/*************************************************************************/
-/*************************************************************************/
-
-#ifndef MOSAICPATH
-/* #define MOSAICPATH "/usr/bin/X11/mosaic" */
-/* #define MOSAICPATH "/opt/local/bin/mosaic" */
-#define MOSAICPATH "mosaic"
-#endif
-
-/**************************** callBrowser ********************************/
-int callBrowser(char *url)
-/* Returns non-zero on success, 0 on failure */
-/* url is the URL that Mosaic is to display  */
-/*   or "quit" to terminate Mosaic           */
-{
-    static pid_t pid=0;
-    char filename[32];
-    FILE *file;
-    char path[BUFSIZ];
-    char *envstring;
-    
-    signal(SIGCHLD,SIG_IGN);
-    
-/* Handle quit */
-    if(!strcmp(url,"quit")) {
-	if (pid) {
-	    sprintf(filename,"/tmp/Mosaic.%d",pid);
-	    unlink(filename);
-	    kill(pid,SIGTERM);
-	    pid=0;
-	}
-	return 3;
-    }
-/* If Mosaic is not up, exec it */
-    if ((!pid) || kill(pid,0)) {
-	if (!(pid=fork())) {
-	    envstring=getenv("MOSAICPATH");
-	    if(!envstring) {
-		sprintf(path,"%s",MOSAICPATH);
-	    }
-	    else {
-		sprintf(path,"%s",envstring);
-	    }
-	    execlp(path,path,url,(char *)0);
-	    perror(path);
-	    _exit(127);
-	}
-	return 1;
-    }
-/* Mosaic is up, send message through file */
-    sprintf(filename,"/tmp/Mosaic.%d",pid);
-    if (!(file=fopen(filename,"w"))) return 0;
-    fprintf(file,"goto\n%s\n",url);
-    fclose(file);
-    kill(pid,SIGUSR1);
-    return 2;
-}
-#endif

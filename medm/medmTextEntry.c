@@ -422,6 +422,7 @@ static void textEntryDraw(XtPointer cd)
 		case DISCRETE:
 		    break;
 		case ALARM:
+		    pr->monitorSeverityChanged = True;
 		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
 		}

@@ -384,6 +384,7 @@ static void textUpdateDraw(XtPointer cd)
 		  displayInfo->colormap[dlTextUpdate->monitor.clr]);
 		break;
 	    case ALARM :
+		pR->monitorSeverityChanged = True;
 		XSetForeground(display, gc, alarmColor(pR->severity));
 		break;
 	    }
@@ -638,7 +639,6 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
       && (tokenType != T_EOF) );
 
     return dlElement;
-
 }
 
 void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level)

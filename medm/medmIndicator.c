@@ -266,6 +266,7 @@ static void indicatorDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
+		pr->monitorSeverityChanged = True;
 		XcIndUpdateIndicatorForeground(widget,alarmColor(pr->severity));
 		break;
 	    }

@@ -123,7 +123,8 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 		      compositeUpdateGraphicalInfoCb,
 		      (XtPointer)pc);
 		    calcPostfix(&dlComposite->dynAttr);
-		    setMonitorChanged(&dlComposite->dynAttr, pc->records);
+		    setDynamicAttrMonitorFlags(&dlComposite->dynAttr,
+		      pc->records);
 		}
 	    }
 	} else {

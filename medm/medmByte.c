@@ -222,6 +222,7 @@ static void byteDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
+		pr->monitorSeverityChanged = True;
 		XcBYUpdateByteForeground(widget,alarmColor(pr->severity));
 		break;
 	    }

@@ -359,6 +359,10 @@ static void choiceButtonDraw(XtPointer cd) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
+	    if(pr->writeAccess) 
+	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
+	    else
+	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	    if(pr->precision < 0) return;    /* Wait for pr->value */
 	    if(pr->dataType == DBF_ENUM) {
 		WidgetList children;
@@ -373,7 +377,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		case DISCRETE :
 		    break;
 		case ALARM :
-		  /* set alarm color */
+		    pr->monitorSeverityChanged = True;
 		    XtVaSetValues(widget,XmNforeground,alarmColor(pr->severity),NULL);
 		    break;
 		default :
@@ -425,9 +429,14 @@ static void choiceButtonDraw(XtPointer cd) {
 		    }
 #endif
 		} else {
-		    medmPostMsg(1,"choiceButtonUpdateValueCb:\n");
-		    medmPrintf(1,"  Channel Name: %s\n",dlChoiceButton->control.ctrl);
-		    medmPrintf(1,"  Message: Value out of range\n");
+		    medmPostMsg(1,"choiceButtonUpdateValueCb: Got state %d.\n"
+		      "  Only have strings for %d states (starting at 0).\n"
+		      "%s  %s\n",
+		      i,(int)numChildren,
+		      ((int)numChildren == 16)?
+		      "  [Channel Access is limited to 16 strings, "
+		      "but there may be more states]\n":"",
+		      dlChoiceButton->control.ctrl);
 		    return;
 		}
 	    } else {
@@ -436,10 +445,6 @@ static void choiceButtonDraw(XtPointer cd) {
 		medmPrintf(1,"  Message: Data type must be enum\n");
 		return;
 	    }
-	    if(pr->writeAccess) 
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
-	    else
-	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
 	} else {
 #if DEBUG_ACCESS
 	    printf("  [connected/no access] widget=%x managed=%s precision=%d\n",

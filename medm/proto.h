@@ -603,7 +603,9 @@ Boolean isConnected(Record **records);
 Boolean isStaticDynamic(DlDynamicAttribute *dynAttr, Boolean includeColor);
 Boolean calcVisibility(DlDynamicAttribute *attr, Record **records);
 void calcPostfix(DlDynamicAttribute *attr);
-void setMonitorChanged(DlDynamicAttribute *attr, Record **records);
+void setDynamicAttrMonitorFlags(DlDynamicAttribute *attr, Record **records);
+int calcUsesStatus(char *calc);
+int calcUsesSeverity(char *calc);
 char *shortName(char *filename);
 /* Debugging */
 void resetTimer(void);

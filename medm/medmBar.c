@@ -301,6 +301,7 @@ static void barDraw(XtPointer cd) {
 	    case DISCRETE :
 		break;
 	    case ALARM :
+		pr->monitorSeverityChanged = True;
 		XcBGUpdateBarForeground(widget,alarmColor(pr->severity));
 		break;
 	    }

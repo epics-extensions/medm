@@ -968,7 +968,8 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 #endif	
 		filePtr = fopen(fullPathName, "r");
 		if(filePtr) {
-		    strcpy(filename, fullPathName);
+		    strncpy(filename, fullPathName, MAX_TOKEN_LENGTH);
+		    filename[MAX_TOKEN_LENGTH-1] = '\0';
 #if DEBUG_OPEN
 		    print("  [RD] %s\n",filename?filename:"NULL");
 #endif	
@@ -995,13 +996,14 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	    strcat(fullPathName, MEDM_DIR_DELIMITER_STRING);
 	    strcat(fullPathName, name);
 #if DEBUG_OPEN
-	    print("  [EPD:Try] %s\n",fullPathName);
+	    print("  [EDP:Try] %s\n",fullPathName);
 #endif	
 	    filePtr = fopen(fullPathName, "r");
 	    if(filePtr) {
-		strcpy(filename, fullPathName);
+		strncpy(filename, fullPathName, MAX_TOKEN_LENGTH);
+		filename[MAX_TOKEN_LENGTH-1] = '\0';
 #if DEBUG_OPEN
-		print("  [EPD] %s\n",filename?filename:"NULL");
+		print("  [EDP] %s\n",filename?filename:"NULL");
 #endif	
 		return (filePtr);
 	    }
