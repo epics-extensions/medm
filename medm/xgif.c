@@ -183,6 +183,7 @@ Byte Red[256], Green[256], Blue[256];
 
 /* The pixel for unallocated colors */
 static Pixel blackPixel;
+static XColor black;
 
 /* Function to initialize for GIF processing */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
@@ -193,7 +194,12 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     int first=1;
 
     if(first) {
+      /* Define blackPixel for a fallback.  (It will lead to errors
+         when it is freed) */
 	blackPixel=BlackPixel(display,screenNum);
+      /* Define a black color for when other colors can't be found */
+	black.red=black.green=black.blue=0;
+	black.flags=DoRed | DoGreen | DoBlue;
 	first=0;
     }
     
@@ -991,7 +997,11 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
                     gif->defs[i].blue =(Blue[i] &lmask)<<8;
                     gif->defs[i].flags=DoRed | DoGreen | DoBlue;
                     if(!XAllocColor(display,gif->theCmap,&gif->defs[i])) {
-			gif->cols[i]=blackPixel;
+			if(!XAllocColor(display,gif->theCmap,&black)) {
+			    gif->cols[i]=blackPixel;
+			} else {
+			    gif->cols[i]=black.pixel;
+			}
 			break;
 		    }
                     gif->cols[i]=gif->defs[i].pixel;
@@ -1033,7 +1043,11 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 			gif->cols[i]=gif->defs[i].pixel;
 		    } else {
 			j++;
-			gif->cols[i]=blackPixel;
+			if(!XAllocColor(display,gif->theCmap,&black)) {
+			    gif->cols[i]=blackPixel;
+			} else {
+			    gif->cols[i]=black.pixel;
+			}
 		    }
 		}
                 medmPrintf(1,"\nloadGIF: "
@@ -1047,7 +1061,11 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	  "  Making one.\n",fname);
         if(!gif->numcols) gif->numcols=256;
         for(i=0; i < gif->numcols; i++) {
-	    gif->cols[i]=blackPixel;
+	    if(!XAllocColor(display,gif->theCmap,&black)) {
+		gif->cols[i]=blackPixel;
+	    } else {
+		gif->cols[i]=black.pixel;
+	    }
 	}
     }
     
@@ -1737,6 +1755,7 @@ void freeGIF(DlImage *dlImage)
     if(gif) {
       /* Free the colors */
 	if(gif->numcols > 0) {
+#if 0	    
 	  /* We need to free these one by one to check for the
              blackPixel, which will give a BadAccess error */
 	    for(i=0; i < gif->numcols; i++) {
@@ -1744,6 +1763,10 @@ void freeGIF(DlImage *dlImage)
 		    XFreeColors(display,gif->theCmap,&(gif->cols[i]),1,0UL);
 		}
 	    }
+#else
+	  /* This is more efficient.  blackPixel should not be used any more. */
+	    XFreeColors(display,gif->theCmap,gif->cols,gif->numcols,0UL);
+#endif	    
 	    gif->numcols=0;
 	}
       /* Free each image */
@@ -1819,10 +1842,15 @@ void copyGIF(DlImage *dlImage1, DlImage *dlImage2)
     }
     *gif2=*gif1;
     
-  /* Reallocate the colors, in case they are freed elsewhere */
+  /* Reallocate the colors to make the ref count increase in case.
+     This takes a long time */
     for(i=0; i < gif2->numcols; i++) {
 	if(!XAllocColor(display,gif2->theCmap,&gif2->defs[i])) { 
-	    gif2->defs[i].pixel=blackPixel;
+	    if(!XAllocColor(display,gif->theCmap,&black)) {
+		gif2->cols[i]=blackPixel;
+	    } else {
+		gif2->cols[i]=black.pixel;
+	    }
 	}
     }
     
