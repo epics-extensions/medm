@@ -206,6 +206,7 @@ DisplayInfo *allocateDisplayInfo()
     XtSetArg(args[nargs],XmNiconName,"Display"); nargs++;
     XtSetArg(args[nargs],XmNtitle,"Display"); nargs++;
     XtSetArg(args[nargs],XmNallowShellResize,True); nargs++;
+#if 0    
   /* Turn resize handles off
    * KE: Is is really good to do this? */
     XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH);
@@ -213,6 +214,7 @@ DisplayInfo *allocateDisplayInfo()
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
     XtSetArg(args[nargs],XmNmwmFunctions,MWM_FUNC_ALL); nargs++;
+#endif
 #if 1
   /* For highlightOnEnter on pointer motion, this must be set for shells */
   /* KE: It seems like the user should set this.   highlightOnEnter is
