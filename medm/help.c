@@ -54,6 +54,8 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
  *****************************************************************************
 */
 
+#define TIME_STRING_MAX 81
+
 #include "medm.h"
 #include <time.h>
 #include <ctype.h>
@@ -121,11 +123,94 @@ void errMsgDlgClearButtonCb(Widget, XtPointer, XtPointer)
 void errMsgDlgClearButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
+    long now; 
+    struct tm *tblock;
+    char timeStampStr[TIME_STRING_MAX];
+    XmTextPosition curpos = 0;
+    
     if (errMsgText == NULL) return;
+
   /* Clear the buffer */
     XmTextSetString(errMsgText,"");
     XmTextSetInsertionPosition(errMsgText, 0);
+
+  /* Reinitialize */
+    time(&now);
+    tblock = localtime(&now);
+    strftime(timeStampStr,TIME_STRING_MAX,
+      "Message Log cleared at %a %h %e %k:%M:%S %Z %Y\n",tblock);
+    timeStampStr[TIME_STRING_MAX-1]='0';
+    XmTextInsert(errMsgText, curpos, timeStampStr);
+    curpos+=strlen(timeStampStr);
+    XmTextSetInsertionPosition(errMsgText, curpos);
+
     return;
+}
+
+#ifdef __cplusplus
+void errMsgDlgPrintButtonCb(Widget, XtPointer, XtPointer)
+#else
+void errMsgDlgPrintButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
+#endif
+{
+    long now; 
+    struct tm *tblock;
+    FILE *file;
+    char timeStampStr[TIME_STRING_MAX];
+    char *tmp, *psFileName, *commandBuffer;
+
+    if (errMsgText == NULL) return;
+    if (getenv("PSPRINTER") == (char *)NULL) {
+	medmPrintf(
+	  "\nerrMsgDlgPrintButtonCb: PSPRINTER environment variable not set,"
+	  " printing disallowed\n");
+	return;
+    }
+
+  /* Get selection and timestamp */
+    time(&now);
+    tblock = localtime(&now);
+    tmp = XmTextGetSelection(errMsgText);
+    strftime(timeStampStr,TIME_STRING_MAX,
+      "MEDM Message Window Selection at %a %h %e %k:%M:%S %Z %Y:\n\n",tblock);
+    if (tmp == NULL) {
+	tmp = XmTextGetString(errMsgText);
+	strftime(timeStampStr,TIME_STRING_MAX,
+	  "MEDM Message Window at %a %h %e %k:%M:%S %Z %Y:\n\n",tblock);
+    }
+    timeStampStr[TIME_STRING_MAX-1]='0';
+
+  /* Create filename */
+    psFileName = (char *)calloc(1,256);
+    sprintf(psFileName,"/tmp/medmMessageWindowPrintFile%d",getpid());
+
+  /* Write file */
+    file = fopen(psFileName,"w+");
+    if (file == NULL) {
+	medmPrintf("\nerrMsgDlgPrintButtonCb:  Unable to open file: %s",
+	  psFileName);
+	XtFree(tmp);
+	free(psFileName);
+	return;
+    }
+    fprintf(file,timeStampStr);
+    fprintf(file,tmp);
+    XtFree(tmp);
+    fclose(file);
+
+  /* Print file */
+    commandBuffer = (char *)calloc(1,256);
+    sprintf(commandBuffer,"lp -d$PSPRINTER %s",psFileName);
+    system(commandBuffer);
+
+  /* Delete file */
+    sprintf(commandBuffer,"rm %s",psFileName);
+    system(commandBuffer);
+
+  /* Clean up */
+    free(psFileName);
+    free(commandBuffer);
+    XBell(display,50);
 }
 
 #ifdef __cplusplus
@@ -135,12 +220,13 @@ void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
 #endif
 {
     char *tmp;
-    if (errMsgDlg == NULL) return;
+
+    if (errMsgText == NULL) return;
     if (errMsgSendDlg == NULL) {
 	errMsgSendDlgCreateDlg();
     }
     XmTextSetString(errMsgSendToText,"");
-    XmTextSetString(errMsgSendSubjectText,"Message from MEDM");
+    XmTextSetString(errMsgSendSubjectText,"MEDM Message Window Contents");
     tmp = XmTextGetSelection(errMsgText);
     if (tmp == NULL) {
 	tmp = XmTextGetString(errMsgText);
@@ -150,10 +236,19 @@ void errMsgDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     XtManageChild(errMsgSendDlg);
 }
 
+#ifdef __cplusplus
+void errMsgDlgHelpButtonCb(Widget, XtPointer, XtPointer)
+#else
+void errMsgDlgHelpButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
+#endif
+{
+    callBrowser(MEDM_HELP_PATH"/MEDM.html#MessageWindow");
+}
+
 void errMsgDlgCreateDlg() {
     Widget pane;
     Widget actionArea;
-    Widget closeButton, sendButton, clearButton;
+    Widget closeButton, sendButton, clearButton, printButton, helpButton;
     Arg args[10];
     int n;
 
@@ -185,9 +280,10 @@ void errMsgDlgCreateDlg() {
     actionArea = XtVaCreateWidget("ActionArea",
       xmFormWidgetClass, pane,
       XmNshadowThickness, 0,
-      XmNfractionBase, 7,
+      XmNfractionBase, 11,
       XmNskipAdjust, True,
       NULL);
+
     closeButton = XtVaCreateManagedWidget("Close",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
@@ -202,6 +298,7 @@ void errMsgDlgCreateDlg() {
   */
       NULL);
     XtAddCallback(closeButton,XmNactivateCallback,errMsgDlgCloseButtonCb, NULL);
+
     clearButton = XtVaCreateManagedWidget("Clear",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_OPPOSITE_WIDGET,
@@ -214,7 +311,8 @@ void errMsgDlgCreateDlg() {
       XmNrightPosition,    4,
       NULL);
     XtAddCallback(clearButton,XmNactivateCallback,errMsgDlgClearButtonCb, NULL);
-    sendButton = XtVaCreateManagedWidget("Mail",
+
+    printButton = XtVaCreateManagedWidget("Print",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
@@ -223,10 +321,49 @@ void errMsgDlgCreateDlg() {
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    6,
       NULL);
+    XtAddCallback(printButton,XmNactivateCallback,errMsgDlgPrintButtonCb, NULL);
+
+    sendButton = XtVaCreateManagedWidget("Mail",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     7,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    8,
+      NULL);
     XtAddCallback(sendButton,XmNactivateCallback,errMsgDlgSendButtonCb, NULL);
+
+    helpButton = XtVaCreateManagedWidget("Help",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     9,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    10,
+      NULL);
+    XtAddCallback(helpButton,XmNactivateCallback,errMsgDlgHelpButtonCb, NULL);
     XtManageChild(actionArea);
     XtManageChild(pane);
     XtManageChild(errMsgDlg);
+
+  /* Initialize */
+    if(errMsgDlg) {
+	long now; 
+	struct tm *tblock;
+	char timeStampStr[TIME_STRING_MAX];
+	XmTextPosition curpos = 0;
+
+	time(&now);
+	tblock = localtime(&now);
+	strftime(timeStampStr,TIME_STRING_MAX,
+	  "Message Log started at %a %h %e %k:%M:%S %Z %Y\n",tblock);
+	timeStampStr[TIME_STRING_MAX-1]='0';
+	XmTextInsert(errMsgText, curpos, timeStampStr);
+	curpos+=strlen(timeStampStr);
+	XmTextSetInsertionPosition(errMsgText, curpos);
+    }
 }
 
 #ifdef __cplusplus  
@@ -248,27 +385,47 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer dummy1, XtPointer dummy2)
     p = strcpy(cmd,p);
     p += strlen(cmd);
     *p++ = ' ';
+#if 0    
     if (subject && *subject) {
+      /* KE: Doesn't work with Solaris */
 	sprintf(p, "-s \"%s\" ", subject);
 	p += strlen(p);
     }
+#endif    
     if (to && *to) {
 	sprintf(p, "%s", to);
+    } else {
+	medmPostMsg("errMsgSendDlgSendButtonCb: No recipient specified for mail\n");
+	if (to) XtFree(to);
+	if (subject) XtFree(subject);
+	if (text) XtFree(text);
+	XBell(display,50); XBell(display,50); XBell(display,50);
+	return;
     }
     
     pp = popen(cmd, "w");
     if (!pp) {
-	medmPostMsg("Can't execute mail tool\n");
+	medmPostMsg("errMsgSendDlgSendButtonCb: Cannot execute mail command\n");
 	if (to) XtFree(to);
 	if (subject) XtFree(subject);
 	if (text) XtFree(text);
+	XBell(display,50); XBell(display,50); XBell(display,50);
+	return;
     }
+#if 1    
+    if (subject && *subject) {
+	fputs("Subject: ", pp);
+	fputs(subject, pp);
+	fputs("\n\n", pp);
+    }
+#endif    
     fputs(text, pp);
     fputc('\n', pp);      /* make sure there's a terminating newline */
     status = pclose(pp);  /* close mail program */
     if (to) XtFree(to);
     if (subject) XtFree(subject);
     if (text) XtFree(text);
+    XBell(display,50);
     XtUnmanageChild(errMsgSendDlg);
     return;
 }
@@ -392,39 +549,48 @@ void errMsgSendDlgCreateDlg() {
     XtManageChild(pane);
 }
 
-void medmPostMsg(char *msg) {
+static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
+
+void medmPostMsg(char *format, ...) {
+    va_list args;
     long now; 
     struct tm *tblock;
-    char timeStampStr[60];
+    char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;
 
     if (errMsgDlg == NULL) {
 	errMsgDlgCreateDlg();
     }
-    if (msg == NULL) return;
+
+  /* Do timestamp */
     time(&now);
     tblock = localtime(&now);
-    strftime(timeStampStr,60,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    strftime(timeStampStr,TIME_STRING_MAX,"\n%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    timeStampStr[TIME_STRING_MAX-1]='0';
     if(errMsgText) {
-	curpos = XmTextGetInsertionPosition(errMsgText);
+	curpos = XmTextGetLastPosition(errMsgText);
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);
-	XmTextInsert(errMsgText, curpos, msg);
-	curpos+=strlen(msg);
-	XmTextInsert(errMsgText, curpos, "\n");
-	curpos+=strlen("\n");
+    }
+  /* Also print to stderr */
+    fprintf(stderr, timeStampStr);
+
+  /* Start variable arguments */
+    va_start(args,format);
+    vsprintf(medmPrintfStr, format, args);
+    if(errMsgText) {
+	XmTextInsert(errMsgText, curpos, medmPrintfStr);
+	curpos+=strlen(medmPrintfStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
 	XmTextShowPosition(errMsgText, curpos);
 	XFlush(display);
     }
   /* Also print to stderr */
-    fprintf(stderr, timeStampStr);
-    fprintf(stderr, msg);
-    fprintf(stderr, "\n");
+    fprintf(stderr, medmPrintfStr);
+    va_end(args);
 }
 
-static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
-void medmPrintf(char *format,...)
+void medmPrintf(char *format, ...)
 {
     va_list args;
     XmTextPosition curpos;
@@ -435,7 +601,7 @@ void medmPrintf(char *format,...)
     va_start(args,format);
     vsprintf(medmPrintfStr, format, args);
     if(errMsgText) {
-	curpos = XmTextGetInsertionPosition(errMsgText);
+	curpos = XmTextGetLastPosition(errMsgText);
 	XmTextInsert(errMsgText, curpos, medmPrintfStr);
 	curpos+=strlen(medmPrintfStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
@@ -450,7 +616,7 @@ void medmPrintf(char *format,...)
 void medmPostTime() {
     long now; 
     struct tm *tblock;
-    char timeStampStr[60];
+    char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;
 
     if (errMsgDlg == NULL) {
@@ -458,9 +624,10 @@ void medmPostTime() {
     }
     time(&now);
     tblock = localtime(&now);
-    strftime(timeStampStr,60,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    strftime(timeStampStr,TIME_STRING_MAX,"\n%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    timeStampStr[TIME_STRING_MAX-1]='0';
     if(errMsgText) {
-	curpos = XmTextGetInsertionPosition(errMsgText);
+	curpos = XmTextGetLastPosition(errMsgText);
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);
 	XmTextSetInsertionPosition(errMsgText, curpos);
