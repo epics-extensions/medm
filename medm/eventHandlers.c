@@ -294,7 +294,7 @@ void handleEditEnterWindow(Widget, XtPointer cd, XEvent *, Boolean *)
 void handleEditEnterWindow(Widget w, XtPointer cd, XEvent *event, Boolean *ctd)
 #endif
 {
-    pointerInDisplayInfo = (DisplayInfo *) cd;
+    pointerInDisplayInfo = (DisplayInfo *)cd;
 }
 
 
