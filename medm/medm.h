@@ -60,15 +60,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define SUPPORT_0201XX_FILE_FORMAT
 
 
-/* STANDARDS CONFORMANCE: AES, XPG2, XPG3, XPG4, POSIX.1, POSIX.2 */
-#ifdef WIN32
-/* Hummingbird extra functions including lprintf */
-#include <X11/XlibXtra.h>
-#else
-/* WIN32 does not have unistd.h */
-#include <unistd.h>
-#endif
-
 #include <limits.h>
 #include <float.h>	/* XPG4 limits.h doesn't include float.h */
 
@@ -84,11 +75,6 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #  define M_PI    3.14159265358979323846
 #endif
 
-
-
-
-
-
 #ifdef ALLOCATE_STORAGE
 #define EXTERN
 #else
@@ -99,15 +85,23 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 extern "C" {
 #endif
 
-  /*
-   * X/Xt/Xm includes, globals
-   */
+  /* X/Xt/Xm includes, globals */
 #include "xtParams.h"
-
-
-  /*
-   * MEDM includes
-   */
+    
+    
+  /* WIN32 differences */
+#ifdef WIN32
+  /* Hummingbird extra functions including lprintf
+   *   Needs to be included after Intrinsic.h for Exceed 5
+   *   (Intrinsic.h is included in xtParams.h) */
+#include <X11/XlibXtra.h>
+# define MEDM_PATH_DELIMITER ';'
+#else
+  /* WIN32 does not have unistd.h */
+#include <unistd.h>
+# define MEDM_PATH_DELIMITER ':'
+#endif
+    
 #include "medmCA.h"
 #include "medmWidget.h"
 #include "parse.h"
@@ -116,24 +110,12 @@ extern "C" {
 #include "epicsVersion.h"
 #include "medmVersion.h"
 
-  /***
-  *** and on with the rest of Medm
-  ***/
-
 #define MAIN_NAME "Medm"
 #define OBJECT_PALETTE_NAME "Object "
   /* The following works on both WIN32 and Solaris */
 #define STRFTIME_FORMAT "%a %b %d %H:%M:%S %Z %Y"
 
-#ifdef WIN32
-# define MEDM_PATH_DELIMITER ';'
-#else
-# define MEDM_PATH_DELIMITER ':'
-#endif
-
-  /*
-   * define the help layers
-   */
+  /* Define the help layers  */
 #define HELP_MAIN 0
 
 
