@@ -162,7 +162,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    time(&now);
 	    tblock = localtime(&now);
 	    strftime(timeStampStr,TIME_STRING_MAX,
-	      "Message Log cleared at %a %h %e %k:%M:%S %Z %Y\n",tblock);
+	      "Message Log cleared at "STRFTIME_FORMAT"\n",tblock);
 	    timeStampStr[TIME_STRING_MAX-1]='0';
 	    XmTextInsert(errMsgText, curpos, timeStampStr);
 	    curpos+=strlen(timeStampStr);
@@ -190,11 +190,11 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    tblock = localtime(&now);
 	    tmp = XmTextGetSelection(errMsgText);
 	    strftime(timeStampStr,TIME_STRING_MAX,
-	      "MEDM Message Window Selection at %a %h %e %k:%M:%S %Z %Y:\n\n",tblock);
+	      "MEDM Message Window Selection at "STRFTIME_FORMAT":\n\n",tblock);
 	    if (tmp == NULL) {
 		tmp = XmTextGetString(errMsgText);
 		strftime(timeStampStr,TIME_STRING_MAX,
-		  "MEDM Message Window at %a %h %e %k:%M:%S %Z %Y:\n\n",tblock);
+		  "MEDM Message Window at "STRFTIME_FORMAT":\n\n",tblock);
 	    }
 	    timeStampStr[TIME_STRING_MAX-1]='0';
 	    
@@ -424,7 +424,7 @@ void errMsgDlgCreateDlg(int raise)
 	time(&now);
 	tblock = localtime(&now);
 	strftime(timeStampStr,TIME_STRING_MAX,
-	  "Message Log started at %a %h %e %k:%M:%S %Z %Y\n",tblock);
+	  "Message Log started at "STRFTIME_FORMAT"\n",tblock);
 	timeStampStr[TIME_STRING_MAX-1]='0';
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);
@@ -648,7 +648,7 @@ void medmPostMsg(int priority, char *format, ...) {
   /* Do timestamp */
     time(&now);
     tblock = localtime(&now);
-    strftime(timeStampStr,TIME_STRING_MAX,"\n%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    strftime(timeStampStr,TIME_STRING_MAX,"\n"STRFTIME_FORMAT"\n",tblock);
     timeStampStr[TIME_STRING_MAX-1]='0';
     if(errMsgText) {
 	curpos = XmTextGetLastPosition(errMsgText);

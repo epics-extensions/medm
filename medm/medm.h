@@ -123,8 +123,10 @@ extern "C" {
 
 #ifdef WIN32
 # define MEDM_PATH_DELIMITER ';'
+#define STRFTIME_FORMAT    "%a %b %d %H:%M:%S %Z %Y"
 #else
 # define MEDM_PATH_DELIMITER ':'
+#define STRFTIME_FORMAT    "%a %b %e %k:%M:%S %Z %Y"
 #endif
 
   /*

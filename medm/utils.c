@@ -4356,7 +4356,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
   /* Get timestamp */
     time(&now);
     tblock = localtime(&now);
-    strftime(timeStampStr,TIME_STRING_MAX,"%a %h %e %k:%M:%S %Z %Y\n",tblock);
+    strftime(timeStampStr,TIME_STRING_MAX,STRFTIME_FORMAT"\n",tblock);
     timeStampStr[TIME_STRING_MAX-1]='0';
 
   /* Heading */
