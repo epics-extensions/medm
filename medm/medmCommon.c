@@ -70,81 +70,66 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr);
 void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr);
 void parseOldDlColor( DisplayInfo *, FILE *, DlColormapEntry *);
 
-#ifdef __cplusplus
-void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean)
-#else
-void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean dummy)
-#endif
-{
-  displayInfo->displayFileName = dlFile->name;
+static DlList *dlElementFreeList = 0;
+
+int initMedmCommon() {
+  if (dlElementFreeList) return 0;
+  if (dlElementFreeList = createDlList()) {
+    return 0;
+  } else {
+    return -1;
+  }
 }
 
-
-DlElement *createDlFile(
+DlFile *createDlFile(
   DisplayInfo *displayInfo)
 {
   DlFile *dlFile;
-  DlElement *dlElement;
 
   dlFile = (DlFile *) malloc(sizeof(DlFile));
   if (!dlFile) return 0;
   strcpy(dlFile->name,"newDisplay.adl");
   dlFile->versionNumber =
        MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
-
-  if (!(dlElement = createDlElement(DL_File,
-                    (XtPointer)      dlFile,
-                    (medmExecProc)   executeDlFile,
-                    (medmWriteProc)  writeDlFile,
-										0, 0, 0))) {
-    free(dlFile);
-  }
-
-  return(dlElement);
+  return(dlFile);
 }
 
-DlElement *parseFile(
+DlFile *parseFile(
   DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
-  DlFile *dlFile;
-  DlElement *dlElement = createDlFile(displayInfo);;
+  DlFile *dlFile = createDlFile(displayInfo);;
 
-  if (!dlElement) return 0;
-  dlFile = dlElement->structure.file;
+  if (!dlFile) return 0;
   dlFile->versionNumber = 0;
 
   do {
     switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD:
-	if (!strcmp(token,"name")) {
-	  getToken(displayInfo,token);
-	  getToken(displayInfo,token);
-	  strcpy(dlFile->name,token);
-	}
-        if (!strcmp(token,"version")) {
-          getToken(displayInfo,token);
-          getToken(displayInfo,token);
-          dlFile->versionNumber = atoi(token);
-        }
-	break;
-      case T_EQUAL:
-	break;
-      case T_LEFT_BRACE:
-	nestingLevel++; break;
-      case T_RIGHT_BRACE:
-	nestingLevel--; break;
+    case T_WORD:
+      if (!strcmp(token,"name")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        strcpy(dlFile->name,token);
+      }
+      if (!strcmp(token,"version")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        dlFile->versionNumber = atoi(token);
+      }
+      break;
+    case T_EQUAL:
+      break;
+    case T_LEFT_BRACE:
+      nestingLevel++; break;
+    case T_RIGHT_BRACE:
+      nestingLevel--; break;
     }
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) 
 		&& (tokenType != T_EOF) );
 
-  dlElement->prev = displayInfo->dlElementListTail;
-  displayInfo->dlElementListTail->next = dlElement;
-  displayInfo->dlElementListTail = dlElement;
-
-  return dlElement;
+  return dlFile;
 }
 
 void writeDlFile(
@@ -174,150 +159,6 @@ void writeDlFile(
 }
 
 /*
- * this execute... function is a bit unique in that it can properly handle
- *	being called on extant widgets (drawingArea's/shells) - all other
- *	execute... functions want to always create new widgets (since there
- *	is no direct record of the widget attached to the object/element)
- *	{this can be fixed to save on widget create/destroy cycles later}
- */
-#ifdef __cplusplus
-void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay, Boolean)
-#else
-void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay,
-                Boolean dummy)
-#endif
-{
-  DlColormap *dlColormap;
-  Arg args[12];
-  int n;
-
-
-/* set the displayInfo useDynamicAttribute flag FALSE initially */
-
-/* set the display's foreground and background colors */
-  displayInfo->drawingAreaBackgroundColor = dlDisplay->bclr;
-  displayInfo->drawingAreaForegroundColor = dlDisplay->clr;
-
-/* from the DlDisplay structure, we've got drawingArea's dimensions */
-  n = 0;
-  XtSetArg(args[n],XmNwidth,(Dimension)dlDisplay->object.width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension)dlDisplay->object.height); n++;
-  XtSetArg(args[n],XmNborderWidth,(Dimension)0); n++;
-  XtSetArg(args[n],XmNmarginWidth,(Dimension)0); n++;
-  XtSetArg(args[n],XmNmarginHeight,(Dimension)0); n++;
-  XtSetArg(args[n],XmNshadowThickness,(Dimension)0); n++;
-  XtSetArg(args[n],XmNresizePolicy,XmRESIZE_NONE); n++;
-/* N.B.: don't use userData resource since it is used later on for aspect
- *   ratio-preserving resizes */
-
-  if (displayInfo->drawingArea == NULL) {
-
-      displayInfo->drawingArea = XmCreateDrawingArea(displayInfo->shell,
-		"displayDA",args,n);
-    /* add expose & resize  & input callbacks for drawingArea */
-     XtAddCallback(displayInfo->drawingArea,XmNexposeCallback,
-		(XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
-     XtAddCallback(displayInfo->drawingArea,XmNresizeCallback,
-		(XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
-     XtManageChild(displayInfo->drawingArea);
-
-   /*
-    * and if in EDIT mode...
-    */
-    if (displayInfo->traversalMode == DL_EDIT) {
-
-   /* handle input (arrow keys) */
-	XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
-		(XtCallbackProc)drawingAreaCallback,(XtPointer)displayInfo);
-   /* and handle button presses and enter windows */
-	XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
-		handleButtonPress,(XtPointer)displayInfo);
-	XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
-		(XtEventHandler)handleEnterWindow,(XtPointer)displayInfo);
-
-    } else if (displayInfo->traversalMode == DL_EXECUTE) {
-
-/*
- *  MDA --- HACK to fix DND visuals problem with SUN server
- *   Note: This call is in here strictly to satisfy some defect in
- *		the MIT and other X servers for SUNOS machines
- *	   This is completely unnecessary for HP, DEC, NCD, ...
- */
-XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
-XmDropSiteRegister(displayInfo->drawingArea,args,1);
-
-
-   /* add in drag/drop translations */
-	XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
-
-
-    }
-
-  } else  {
-      XtSetValues(displayInfo->drawingArea,args,n);
-  }
-
-
-
-/* wait to realize the shell... */
-  n = 0;
-  if (!XtIsRealized(displayInfo->shell)) {	/* only position first time */
-    XtSetArg(args[n],XmNx,(Position)dlDisplay->object.x); n++;
-    XtSetArg(args[n],XmNy,(Position)dlDisplay->object.y); n++;
-  }
-  XtSetArg(args[n],XmNallowShellResize,(Boolean)TRUE); n++;
-  XtSetArg(args[n],XmNwidth,(Dimension)dlDisplay->object.width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension)dlDisplay->object.height); n++;
-  XtSetArg(args[n],XmNiconName,displayInfo->displayFileName); n++;
-  XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
-  XtSetValues(displayInfo->shell,args,n);
-  medmSetDisplayTitle(displayInfo);
-  XtRealizeWidget(displayInfo->shell);
-
-
-
-/* if there is an external colormap file specification, parse/execute it now */
-
-
-  if (strlen(dlDisplay->cmap) > (size_t)1)  {
-
-      dlColormap = parseAndExtractExternalColormap(displayInfo,
-				dlDisplay->cmap);
-      if (dlColormap != NULL) {
-	  executeDlColormap(displayInfo,dlColormap,False);
-      } else {
-	 fprintf(stderr,
-	 "\nexecuteDlDisplay: can't parse and execute external colormap %s",
-	  dlDisplay->cmap);
-	  medmCATerminate();
-	  dmTerminateX();
-	  exit(-1);
-      }
-  }
-
-}
-
-void writeDlDisplay(
-  FILE *stream,
-  DlDisplay *dlDisplay,
-  int level)
-{
-  int i;
-  char indent[16];
-
-  for (i = 0; i < level; i++) indent[i] = '\t';
-  indent[i] = '\0';
-
-  fprintf(stream,"\n%sdisplay {",indent);
-  writeDlObject(stream,&(dlDisplay->object),level+1);
-  fprintf(stream,"\n%s\tclr=%d",indent,dlDisplay->clr);
-  fprintf(stream,"\n%s\tbclr=%d",indent,dlDisplay->bclr);
-  fprintf(stream,"\n%s\tcmap=\"%s\"",indent,dlDisplay->cmap);
-  fprintf(stream,"\n%s}",indent);
-
-}
-
-/*
  * this function gets called for executing the colormap section of
  *  each display list, for new display creation and for edit <-> execute
  *  transitions.  we could be more clever here for the edit/execute
@@ -329,142 +170,111 @@ void writeDlDisplay(
  *  anyway and there is no additional cost incurred for the straight
  *  execute time running --
  */
-#ifdef __cplusplus
-void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
-			Boolean)
-#else
-void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
-                        Boolean dummy)
-#endif
+void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 {
   Arg args[10];
   int i, n;
   Dimension width, height;
   XtGCMask valueMask;
   XGCValues values;
-  XColor color;
 
-  if (displayInfo == NULL) return;
-/* already have a colormap - don't allow a second one! */
-  if (displayInfo->dlColormap != NULL) return;
+  if (!displayInfo) return;
+  /* already have a colormap - don't allow a second one! */
+  if (displayInfo->colormap) return;
 
-
-  displayInfo->dlColormap = (unsigned long *) malloc(
-		dlColormap->ncolors * sizeof(unsigned long));
+  displayInfo->colormap = (Pixel *) malloc(dlColormap->ncolors *
+                                           sizeof(Pixel));
   displayInfo->dlColormapSize = dlColormap->ncolors;
 
-/**** allocate the X colormap from dlColormap data ****/
-
+  /**** allocate the X colormap from dlColormap data ****/
   for (i = 0; i < dlColormap->ncolors; i++) {
-
-/* scale [0,255] to [0,65535] */
+    XColor color;
+    /* scale [0,255] to [0,65535] */
     color.red   = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].r); 
     color.green = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].g); 
     color.blue  = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].b); 
-/* allocate a shareable color cell with closest RGB value */
-
+    /* allocate a shareable color cell with closest RGB value */
     if (XAllocColor(display,cmap,&color)) {
-
-     displayInfo->dlColormap[displayInfo->dlColormapCounter] = color.pixel;
-
+      displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
     } else {
-
-     fprintf(stderr,"\nexecuteDlColormap: couldn't allocate requested color");
-        displayInfo->dlColormap[displayInfo->dlColormapCounter] 
-		= unphysicalPixel;
+      fprintf(stderr,"\nexecuteDlColormap: couldn't allocate requested color");
+      displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
     }
 
     if (displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
-	displayInfo->dlColormapCounter++;
-    else fprintf(stderr,"\nexecuteDlColormap:  too many colormap entries");
+      displayInfo->dlColormapCounter++;
+    else
+      fprintf(stderr,"\nexecuteDlColormap:  too many colormap entries");
     	/* just keep rewriting that last colormap entry */
   }
 
+  /*
+   * set the foreground and background of the display 
+   */
+  XtVaSetValues(displayInfo->drawingArea,
+      XmNbackground,
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor],
+      NULL);
 
-/*
- * set the foreground and background of the display 
- */
-  XtSetArg(args[0],XmNbackground,(Pixel)
-	displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor]);
-  XtSetValues(displayInfo->drawingArea,args,1);
-
-/* and create the drawing area pixmap */
-  n = 0;
-  XtSetArg(args[n],XmNwidth,(Dimension *)&width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension *)&height); n++;
-  XtGetValues(displayInfo->drawingArea,args,n);
-  if (displayInfo->drawingAreaPixmap == (Pixmap)NULL)
-      displayInfo->drawingAreaPixmap = XCreatePixmap(display,
-	RootWindow(display,screenNum),MAX(1,width),MAX(1,height),
-	DefaultDepth(display,screenNum));
-  else {
-      XFreePixmap(display,displayInfo->drawingAreaPixmap);
-      displayInfo->drawingAreaPixmap = XCreatePixmap(display,
-	RootWindow(display,screenNum),MAX(1,width),MAX(1,height),
-	DefaultDepth(display,screenNum));
+  /* and create the drawing area pixmap */
+  XtVaGetValues(displayInfo->drawingArea,
+      XmNwidth,(Dimension *)&width,
+      XmNheight,(Dimension *)&height,
+      NULL);
+  if (displayInfo->drawingAreaPixmap) {
+    XFreePixmap(display,displayInfo->drawingAreaPixmap);
   }
+  displayInfo->drawingAreaPixmap =
+        XCreatePixmap(display, RootWindow(display,screenNum),
+                      MAX(1,width),MAX(1,height),
+                      DefaultDepth(display,screenNum));
 
-/* create the pixmap GC */
+  /* create the pixmap GC */
   valueMask = GCForeground | GCBackground ;
-  values.foreground = displayInfo->dlColormap[
-	displayInfo->drawingAreaBackgroundColor];
-  values.background = displayInfo->dlColormap[
-	displayInfo->drawingAreaBackgroundColor];
-  if (displayInfo->pixmapGC == NULL)
-     displayInfo->pixmapGC = XCreateGC(display,
-	XtWindow(displayInfo->drawingArea),valueMask,&values); 
-  else {
-     XFreeGC(display,displayInfo->pixmapGC);
-     displayInfo->pixmapGC = XCreateGC(display,
-	XtWindow(displayInfo->drawingArea),valueMask,&values);
+  values.foreground = 
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
+  values.background =
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
+  if (displayInfo->pixmapGC) {
+    XFreeGC(display,displayInfo->pixmapGC);
   }
-/* (MDA) don't generate GraphicsExpose events on XCopyArea() */
+  displayInfo->pixmapGC = XCreateGC(display,
+      XtWindow(displayInfo->drawingArea),valueMask,&values); 
+  /* (MDA) don't generate GraphicsExpose events on XCopyArea() */
   XSetGraphicsExposures(display,displayInfo->pixmapGC,FALSE);
 
-  XFillRectangle(display,displayInfo->drawingAreaPixmap,displayInfo->pixmapGC,
-	0,0,width,height);
+  XFillRectangle(display,displayInfo->drawingAreaPixmap,
+                 displayInfo->pixmapGC,0,0,width,height);
   XSetForeground(display,displayInfo->pixmapGC,
-	displayInfo->dlColormap[displayInfo->drawingAreaForegroundColor]);
+      displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
 
 /* create the initial display GC */
   valueMask = GCForeground | GCBackground ;
   values.foreground = 
-	displayInfo->dlColormap[displayInfo->drawingAreaForegroundColor];
+      displayInfo->colormap[displayInfo->drawingAreaForegroundColor];
   values.background = 
-	displayInfo->dlColormap[displayInfo->drawingAreaBackgroundColor];
-  if (displayInfo->gc == NULL)
-     displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
-	valueMask,&values);
-  else {
-     XFreeGC(display,displayInfo->gc);
-     displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
-	valueMask,&values);
+      displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
+  if (displayInfo->gc) {
+    XFreeGC(display,displayInfo->gc);
   }
-
+  displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
+                              valueMask,&values);
 }
 
 
-DlElement *createDlColormap(
+DlColormap *createDlColormap(
   DisplayInfo *displayInfo)
 {
   DlColormap *dlColormap;
-  DlElement *dlElement;
-
 
   dlColormap = (DlColormap *) malloc(sizeof(DlColormap));
   if (!dlColormap) return 0;
   /* structure copy */
   *dlColormap = defaultDlColormap;
 
-  if (!(dlElement = createDlElement(DL_Colormap,
-                    (XtPointer)      dlColormap,
-                    (medmExecProc)   executeDlColormap,
-                    (medmWriteProc)  writeDlColormap,
-										0,0,0))) {
-    free(dlColormap);
-  }
-  return(dlElement);
+  return(dlColormap);
 }
+
 
 void parseDlColor(
   DisplayInfo *displayInfo,
@@ -576,9 +386,8 @@ DlColormap *parseColormap(
   char msg[2*MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
-  DlColormap *dlColormap = 0;
+  DlColormap *dlColormap = createDlColormap(displayInfo);
   DlColormapEntry dummyColormapEntry;
-  DlElement *dlElement = createDlColormap(displayInfo);
   DlElement *dlTarget;
   int counter;
 
@@ -593,79 +402,61 @@ DlColormap *parseColormap(
   savedFilePtr = displayInfo->filePtr;
   displayInfo->filePtr = filePtr;
 
-  if (!dlElement) return 0;
-
-  dlColormap = dlElement->structure.colormap;
-
-/* initialize some data in structure */
+  /* initialize some data in structure */
   dlColormap->ncolors = 0;
 
-/* new colormap, get values (pixel values are being stored) */
+  /* new colormap, get values (pixel values are being stored) */
   counter = 0;
 
   do {
     switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD:
-	if (!strcmp(token,"ncolors")) {
-	  getToken(displayInfo,token);
-	  getToken(displayInfo,token);
-	  dlColormap->ncolors = atoi(token);
-	  if (dlColormap->ncolors > DL_MAX_COLORS) {
-	    sprintf(msg,"%s%s%s",
-	      "Maximum # of colors in colormap exceeded;\n\n",
-	      "truncating color space, but will continue...\n\n",
-	      "(you may want to change the colors of some objects)");
-	    fprintf(stderr,"\n%s\n",msg);
-	      dmSetAndPopupWarningDialog(displayInfo, msg,"Ok",NULL,NULL);
-	  }
-	} else
-        if (!strcmp(token,"dl_color")) {
-	  /* continue parsing but throw away "excess" colormap entries */
-	  if (counter < DL_MAX_COLORS) {
-	    parseOldDlColor(displayInfo,filePtr,
-              &(dlColormap->dl_color[counter]));
-	    counter++;
-	  } else {
-	    parseOldDlColor(displayInfo,filePtr,&dummyColormapEntry);
-	    counter++;
-	  }
-	}
-        if (!strcmp(token,"colors")) {
-          parseDlColor(displayInfo,filePtr,dlColormap->dl_color);
+    case T_WORD:
+      if (!strcmp(token,"ncolors")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        dlColormap->ncolors = atoi(token);
+        if (dlColormap->ncolors > DL_MAX_COLORS) {
+          sprintf(msg,"%s%s%s",
+            "Maximum # of colors in colormap exceeded;\n\n",
+            "truncating color space, but will continue...\n\n",
+            "(you may want to change the colors of some objects)");
+          fprintf(stderr,"\n%s\n",msg);
+          dmSetAndPopupWarningDialog(displayInfo, msg,"Ok",NULL,NULL);
         }
-	break;
-      case T_EQUAL:
-	break;
-      case T_LEFT_BRACE:
-	nestingLevel++; break;
-      case T_RIGHT_BRACE:
-	nestingLevel--; break;
+      } else
+      if (!strcmp(token,"dl_color")) {
+        /* continue parsing but throw away "excess" colormap entries */
+        if (counter < DL_MAX_COLORS) {
+          parseOldDlColor(displayInfo,filePtr,&(dlColormap->dl_color[counter]));
+          counter++;
+        } else {
+          parseOldDlColor(displayInfo,filePtr,&dummyColormapEntry);
+          counter++;
+        }
+      } else
+      if (!strcmp(token,"colors")) {
+        parseDlColor(displayInfo,filePtr,dlColormap->dl_color);
+      }
+      break;
+    case T_EQUAL:
+      break;
+    case T_LEFT_BRACE:
+      nestingLevel++; break;
+    case T_RIGHT_BRACE:
+      nestingLevel--; break;
     }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-		&& (tokenType != T_EOF) );
+  } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0) &&
+           (tokenType != T_EOF));
 
-  dlElement->prev = displayInfo->dlElementListTail;
-  displayInfo->dlElementListTail->next = dlElement;
-  displayInfo->dlElementListTail = dlElement;
-
-  displayInfo->dlColormapElement = dlElement;
-/*
- *  now since a valid colormap element has been brought into display list,
- *  remove the external cmap reference in the dlDisplay element
- */
-  dlTarget = displayInfo->dlElementListHead->next;
-  while (dlTarget != NULL &&
-	dlTarget->type != DL_Display) dlTarget = dlTarget->next;
-  if (dlTarget != NULL) dlTarget->structure.display->cmap[0] = '\0';
-
-/* make sure colormap element is right after display */
-  if (dlElement->prev->type != DL_Display)
-    moveElementAfter(dlTarget,dlElement,&(displayInfo->dlElementListTail));
-
-
-/* restore the previous filePtr */
+  /*
+   *  now since a valid colormap element has been brought into display list,
+   *  remove the external cmap reference in the dlDisplay element
+   */
+  if (dlTarget = FirstDlElement(displayInfo->dlElementList)) {
+    dlTarget->structure.display->cmap[0] = '\0';
+  }
+  /* restore the previous filePtr */
   displayInfo->filePtr = savedFilePtr;
-
   return (dlColormap);
 }
 
@@ -718,8 +509,8 @@ void executeDlBasicAttribute(DisplayInfo *displayInfo,
 
   gcValueMask = GCForeground | GCBackground | GCLineStyle | GCLineWidth |
 			GCCapStyle | GCJoinStyle | GCFillStyle;
-  gcValues.foreground = displayInfo->dlColormap[attr->clr];
-  gcValues.background = displayInfo->dlColormap[attr->clr];
+  gcValues.foreground = displayInfo->colormap[attr->clr];
+  gcValues.background = displayInfo->colormap[attr->clr];
 
   switch (attr->style) {
     case SOLID : gcValues.line_style = LineSolid; break;
@@ -889,32 +680,68 @@ void dynamicAttributeInit(DlDynamicAttribute *dynAttr) {
 #ifdef __COLOR_RULE_H__
   dynAttr->colorRule = 0;
 #endif
-  dynAttr->chan[0] = '\0';
+  dynAttr->name = 0;
 }
+
+void destroyDlElement(DlElement *);
+DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
+void writeDlElement(FILE *stream, DlElement *DlElement, int level) {return;};
+void executeDlElement(DisplayInfo *displayInfo, DlElement *dlElement) {return;};
+
+static DlDispatchTable elementDlDispatchTable = {
+         createDlElement,
+         destroyDlElement,
+         executeDlElement,
+         writeDlElement,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL};
 
 DlElement* createDlElement(
   DlElementType type,
   XtPointer structure,
-  medmExecProc executeFunc,
-  medmWriteProc writeFunc,
-  medmSetGetProc setValuesFunc,
-  medmSetGetProc getValuesFunc,
-  medmSetGetProc inheritValuesFunc)
+  DlDispatchTable *dlDispatchTable)
 {
-  DlElement *dlElement = (DlElement *) malloc(sizeof(DlElement));
+  DlElement *dlElement;
+  if (dlElementFreeList->count > 0) {
+    dlElement = dlElementFreeList->tail;
+    removeDlElement(dlElementFreeList,dlElement);
+#if 0
+    printf("createDlElement, %d\n",dlElementFreeList->count);
+#endif
+  } else {
+    dlElement = (DlElement *) malloc(sizeof(DlElement));
+  }
   if (!dlElement) return 0;
   dlElement->type = type;
-  dlElement->structure.file  = (DlFile *) structure;
-  dlElement->dmExecute = executeFunc;
-  dlElement->dmWrite = writeFunc;
-  dlElement->setValues = setValuesFunc;
-  dlElement->getValues = getValuesFunc;
-  dlElement->inheritValues = inheritValuesFunc;
+  dlElement->structure.composite = (DlComposite *) structure;
+  if (dlDispatchTable) {
+    dlElement->run = dlDispatchTable;
+  } else {
+#if 0
+    printf("createDlElement\n");
+#endif
+    dlElement->run = &elementDlDispatchTable;
+  }
+  dlElement->widget = 0;
+  dlElement->data = 0;
   dlElement->next = 0;
   dlElement->prev = 0;
   return dlElement;
 }
 
+void destroyDlElement(DlElement *dlElement) {
+  appendDlElement(dlElementFreeList,dlElement);
+#if 0
+  printf("destroyDlElement, %d\n",dlElementFreeList->count);
+#endif
+}
+  
 static DlObject defaultObject = {0,0,5,5};
 
 
@@ -976,8 +803,10 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
         if (!strcmp(token,"chan")) {
           getToken(displayInfo,token);
           getToken(displayInfo,token);
-          if (strlen(token) > (size_t) 0) {
-            strcpy(dynAttr->chan,token);
+          if ((strlen(token) > (size_t) 0)) {
+            if (!dynAttr->name) dynAttr->name = allocateString();
+            if (dynAttr->name)
+              strcpy(dynAttr->name,token);
           }
         }
         break;
@@ -1003,7 +832,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
   dynAttr->colorRule = 0;   /* Color Rule # */
 #endif
   dynAttr->vis = V_STATIC;
-  dynAttr->chan[0] = '\0';
+  if (dynAttr->name) dynAttr->name[0] = '\0';
 
   do {
     switch( (tokenType=getToken(displayInfo,token)) ) {
@@ -1021,9 +850,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
 }
 
 
-DlElement *parseFallingLine(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseFallingLine(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1068,16 +895,10 @@ DlElement *parseFallingLine(
   dlElement->structure.polyline = dlPolyline;
   dlElement->next = NULL;
 
-  POSITION_ELEMENT_ON_LIST();
-
-  dlElement->dmExecute =  (medmExecProc)executeDlPolyline;
-  dlElement->dmWrite =  (medmWriteProc)writeDlPolyline;
   return dlElement;
 }
 
-DlElement *parseRisingLine(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseRisingLine(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
@@ -1122,10 +943,6 @@ DlElement *parseRisingLine(
   dlElement->structure.polyline = dlPolyline;
   dlElement->next = NULL;
 
-  POSITION_ELEMENT_ON_LIST();
-
-  dlElement->dmExecute =  (medmExecProc)executeDlPolyline;
-  dlElement->dmWrite =  (medmWriteProc)writeDlPolyline;
   return dlElement;
 }
 
@@ -1333,8 +1150,11 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
 	if (!strcmp(token,"chan")) {
   	  getToken(displayInfo,token);
 	  getToken(displayInfo,token);
-	  if (strlen(token) > (size_t) 0) {
-	    strcpy(dynAttr->chan,token);
+	  if (token[0]) {
+            if (!dynAttr->name)
+              dynAttr->name = allocateString();
+            if (dynAttr->name)
+	      strcpy(dynAttr->name,token);
 	  }
 	}
 	break;
@@ -1542,7 +1362,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 {
   char indent[16];
 
-  if (dynAttr->chan[0] == '\0') return;
+  if (!dynAttr->name) return;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -1559,7 +1379,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
   	if (dynAttr->colorRule != 0)
     	fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
 #endif
-  	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->chan);
+  	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->name);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
   } else {
@@ -1573,7 +1393,7 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 #endif
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t\tparam {",indent);
-  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->chan);
+  	fprintf(stream,"\n%s\t\t\tchan=\"%s\"",indent,dynAttr->name);
   	fprintf(stream,"\n%s\t\t}",indent);
   	fprintf(stream,"\n%s\t}",indent);
   	fprintf(stream,"\n%s}",indent);
@@ -1601,8 +1421,32 @@ void writeDlObject(
   fprintf(stream,"\n%s}",indent);
 }
 
-void appendDlElement(DlElement **tail, DlElement *p) {
-  p->prev = *tail;
-  (*tail)->next = p;
-  *tail = p;
+void genericMove(DlElement *dlElement, int xOffset, int yOffset) {
+  dlElement->structure.rectangle->object.x += xOffset;
+  dlElement->structure.rectangle->object.y += yOffset;
+}
+
+void widgetMove(DlElement *dlElement, int xOffset, int yOffset) {
+  dlElement->structure.rectangle->object.x += xOffset;
+  dlElement->structure.rectangle->object.y += yOffset;
+  if (dlElement->widget)
+    XtMoveWidget(dlElement->widget,
+                 dlElement->structure.rectangle->object.x,
+                 dlElement->structure.rectangle->object.y);
+}
+
+void genericScale(DlElement *dlElement, int xOffset, int yOffset) {
+  int width, height;
+  width = (dlElement->structure.rectangle->object.width + xOffset);
+  dlElement->structure.rectangle->object.width = MAX(1,width);
+  height = (dlElement->structure.rectangle->object.height + yOffset);
+  dlElement->structure.rectangle->object.height = MAX(1,height);
+}
+
+void destroyElementWithDynamicAttribute(DlElement *dlElement) {
+  if (dlElement->structure.rectangle->dynAttr.name) {
+    freeString(dlElement->structure.rectangle->dynAttr.name);
+  }
+  free( (char *) dlElement->structure.composite);
+  destroyDlElement(dlElement);
 }

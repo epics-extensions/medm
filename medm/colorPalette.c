@@ -179,54 +179,49 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
   int i;
   Arg args[4];
   Dimension width,height;
+  DlElement *dlElement;
 
 /* (MDA) requests to leave color palette up
   XtPopdown(colorS);
  */
 
-  if (currentDisplayInfo == NULL) 
+  if (currentDisplayInfo) 
     currentColormap = defaultColormap;
   else
-    currentColormap = currentDisplayInfo->dlColormap;
+    currentColormap = currentDisplayInfo->colormap;
 
-  cdi = currentDisplayInfo;
+  if (!(cdi = currentDisplayInfo)) return;
 
-/* only proceed if a valid color element... */
   switch (elementTypeWhoseColorIsBeingEditted) {
-    case CLR_RC: case BCLR_RC: case DATA_CLR_RC: case SCDATA_RC: case CPDATA_RC:
-	break;
-    default:
-	return;
+  case CLR_RC:
+    globalResourceBundle.clr = colorIndex;
+    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+      medmMarkDisplayBeingEdited(currentDisplayInfo);
+    }
+    break;
+  case BCLR_RC:
+    globalResourceBundle.bclr = colorIndex;
+    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+      medmMarkDisplayBeingEdited(currentDisplayInfo);
+    }
+    break;
+  case DATA_CLR_RC:
+    globalResourceBundle.data_clr = colorIndex;
+    break;
+  case SCDATA_RC:
+    globalResourceBundle.scData[
+        elementTypeWhoseColorIsBeingEdittedIndex].clr = colorIndex;
+    scUpdateMatrixColors();
+    break;
+  case CPDATA_RC:
+    globalResourceBundle.cpData[
+        elementTypeWhoseColorIsBeingEdittedIndex].data_clr = colorIndex;
+    cpUpdateMatrixColors();
+    break;
+  default :
+    return;
   }
 
-
- switch (elementTypeWhoseColorIsBeingEditted) {
-    case CLR_RC:
-	globalResourceBundle.clr = colorIndex;
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
-	}
-	break;
-    case BCLR_RC:
-	globalResourceBundle.bclr = colorIndex;
-	if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	  medmMarkDisplayBeingEdited(currentDisplayInfo);
-	}
-	break;
-    case DATA_CLR_RC:
-	globalResourceBundle.data_clr = colorIndex;
-	break;
-    case SCDATA_RC:
-	globalResourceBundle.scData[
-		elementTypeWhoseColorIsBeingEdittedIndex].clr = colorIndex;
-	scUpdateMatrixColors();
-	break;
-    case CPDATA_RC:
-	globalResourceBundle.cpData[elementTypeWhoseColorIsBeingEdittedIndex
-		].data_clr = colorIndex;
-	cpUpdateMatrixColors();
-	break;
-  }
   /* update color bar in resource palette */
   /* 9-19-94  vong
    * makesure the resource palette is create before doing XtVaSetValues
@@ -236,58 +231,38 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 		XmNbackground,currentColormap[colorIndex], NULL);
   }
 
-
-/* return if no currentDisplayInfo */
-  if (cdi == NULL) return;
-
 /*
  * update all selected elements in display (this is overkill, but okay for now)
  *      -- not as efficient as it should be (don't update EVERYTHING if only
  *         one item changed!)
  */
-
-  for (i = 0; i < cdi->numSelectedElements; i++) {
-
-    updateElementFromGlobalResourceBundle( cdi->selectedElementsArray[i]);
-    if (ELEMENT_HAS_WIDGET(cdi->selectedElementsArray[i]->type)){
-	widget = lookupElementWidget(cdi,
-	  &(cdi->selectedElementsArray[i]->structure.rectangle->object));
-	if (widget != NULL) {
-	  switch (elementTypeWhoseColorIsBeingEditted) {
-	   case CLR_RC:
-	    XtVaSetValues(widget,XmNforeground,
-		currentColormap[globalResourceBundle.clr],NULL);
-	/* if drawingArea: update drawingAreaForegroundColor */
-	    if (widget == cdi->drawingArea) {
-		cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
-	    }
-	    break;
-	   case BCLR_RC:
-	    XtVaSetValues(widget,XmNbackground,
-		currentColormap[globalResourceBundle.bclr],NULL);
-	/* if drawingArea: update drawingAreaBackgroundColor & pixmap */
-	    if (widget == cdi->drawingArea) {
-		cdi->drawingAreaBackgroundColor = globalResourceBundle.bclr;
-		XSetForeground(display,cdi->pixmapGC,
-			cdi->dlColormap[cdi->drawingAreaBackgroundColor]);
-		XtVaGetValues(cdi->drawingArea,XmNwidth,&width,
-			XmNheight,&height,NULL);
-		XFillRectangle(display,cdi->drawingAreaPixmap,
-			cdi->pixmapGC, 0, 0,
-			(unsigned int)width,(unsigned int)height);
-	    }
-	    break;
-	   case DATA_CLR_RC:
-	    XtVaSetValues(widget,XmNbackground,
-		currentColormap[globalResourceBundle.data_clr],
-		NULL);
-	    break;
-	  }
-	}
+  dlElement = FirstDlElement(cdi->selectedDlElementList);
+  while (dlElement) {
+    DlElement *pE = dlElement->structure.element;
+    updateElementFromGlobalResourceBundle(pE);
+    if (widget = pE->widget){
+      switch (elementTypeWhoseColorIsBeingEditted) {
+      case CLR_RC:
+        XtVaSetValues(widget,XmNforeground,
+                        currentColormap[globalResourceBundle.clr],NULL);
+        /* if drawingArea: update drawingAreaForegroundColor */
+        if (widget == cdi->drawingArea) {
+          cdi->drawingAreaForegroundColor = globalResourceBundle.clr;
+        }
+        break;
+      case BCLR_RC:
+        XtVaSetValues(widget,XmNbackground,
+            currentColormap[globalResourceBundle.bclr],NULL);
+        break;
+      case DATA_CLR_RC:
+        XtVaSetValues(widget,XmNbackground,
+            currentColormap[globalResourceBundle.data_clr],NULL);
+        break;
+      }
     }
+    dlElement = dlElement->next;
   }
   dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
-
 }
 
 
@@ -510,7 +485,7 @@ void setCurrentDisplayColorsInColorPalette(
       XtSetValues(globalColorPalettePB[i],args,1);
     }
   } else {
-    currentColormap = currentDisplayInfo->dlColormap;
+    currentColormap = currentDisplayInfo->colormap;
     for (i = 0; i < MIN(currentDisplayInfo->dlColormapCounter,
 		DL_MAX_COLORS); i++) {
        XtSetArg(args[0],XmNbackground,currentColormap[i]); n++;

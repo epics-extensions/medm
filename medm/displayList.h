@@ -276,10 +276,11 @@ const ImageType FIRST_IMAGE_TYPE = NO_IMAGE;
 extern const ImageType FIRST_IMAGE_TYPE;
 #endif
 
-#define NUM_CARTESIAN_PLOT_AXIS_STYLES	2
+#define NUM_CARTESIAN_PLOT_AXIS_STYLES	3
 typedef enum {
   LINEAR_AXIS		= 50,
-  LOG10_AXIS		= 51
+  LOG10_AXIS		= 51,
+  TIME_AXIS             = 52,
 } CartesianPlotAxisStyle;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE = LINEAR_AXIS;
@@ -289,9 +290,9 @@ extern const CartesianPlotAxisStyle FIRST_CARTESIAN_PLOT_AXIS_STYLE;
 
 #define NUM_CARTESIAN_PLOT_RANGE_STYLES	3
 typedef enum {
-  CHANNEL_RANGE		= 52,
-  USER_SPECIFIED_RANGE	= 53,
-  AUTO_SCALE_RANGE	= 54
+  CHANNEL_RANGE		= 53,
+  USER_SPECIFIED_RANGE	= 54,
+  AUTO_SCALE_RANGE	= 55
 } CartesianPlotRangeStyle;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -302,8 +303,8 @@ extern const CartesianPlotRangeStyle FIRST_CARTESIAN_PLOT_RANGE_STYLE;
 
 #define NUM_ERASE_MODES    2
 typedef enum {
-  ERASE_IF_NOT_ZERO   = 55,
-  ERASE_IF_ZERO       = 56
+  ERASE_IF_NOT_ZERO   = 56,
+  ERASE_IF_ZERO       = 57
 } eraseMode_t;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
@@ -311,14 +312,55 @@ const eraseMode_t FIRST_ERASE_MODE = ERASE_IF_NOT_ZERO;
 extern const eraseMode_t FIRST_ERASE_MODE;
 #endif
 
+#define NUM_RD_MODES 2
+typedef enum {
+  ADD_NEW_DISPLAY     = 58,
+  REPLACE_DISPLAY     = 59
+} relatedDisplayMode_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const relatedDisplayMode_t FIRST_RD_MODE = ADD_NEW_DISPLAY;
+#else
+extern const relatedDisplayMode_t FIRST_RD_MODE;
+#endif
+
+#define NUM_RD_VISUAL 4
+typedef enum {
+  RD_MENU             = 60,
+  RD_ROW_OF_BTN       = 61,
+  RD_COL_OF_BTN       = 62,
+  RD_HIDDEN_BTN       = 63
+} relatedDisplayVisual_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const relatedDisplayVisual_t FIRST_RD_VISUAL = RD_MENU;
+#else
+extern const relatedDisplayVisual_t FIRST_RD_VISUAL;
+#endif
+
+#define NUM_CP_TIME_FORMAT 7
+typedef enum {
+  HHMMSS              = 64,
+  HHMM                = 65,
+  HH00                = 66,
+  MMMDDYYYY           = 67,
+  MMMDD               = 68,
+  MMDDHH00            = 69,
+  WDHH00              = 70,
+} CartesianPlotTimeFormat_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;
+#else
+extern const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT;
+#endif
+
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-  COLOR_RULE_1        = 57,
-  COLOR_RULE_2        = 58,
-  COLOR_RULE_3        = 59,
-  COLOR_RULE_4        = 60
+  COLOR_RULE_1        = 71,
+  COLOR_RULE_2        = 72,
+  COLOR_RULE_3        = 73,
+  COLOR_RULE_4        = 74
 } colorRuleMode_t;
+
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const colorRuleMode_t FIRST_COLOR_RULE = COLOR_RULE_1;
 #else
@@ -328,9 +370,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS		7	/* NUM_TEXT_FORMATS	*/
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES	(60+1)	/* COLOR_RULE_4 + 1	*/
+#define NUMBER_STRING_VALUES	(74+1)	/* COLOR_RULE_4 + 1	*/
 #else
-#define NUMBER_STRING_VALUES    (56+1)  /* ERASE_IF_NOT_ZERO + 1 */
+#define NUMBER_STRING_VALUES    (70+1)  /* TIME_X_AXIS + 1 */
 #endif
 
 /*********************************************************************
@@ -360,9 +402,13 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
     "point","line","fill-under",
     "plot n pts & stop","plot last n pts",
     "no image","gif","tiff",
-    "linear","log10",
+    "linear","log10","time",
     "from channel", "user-specified", "auto-scale",
     "if not zero", "if zero",
+    "create new display","replace display",
+    "menu","a row of buttons","a column of buttons","invisible",
+    "hh:mm:ss","hh:mm","hh:00","MMM DD YYYY","MMM DD","MMM DD hh:00",
+    "wd hh:00",
 #ifdef __COLOR_RULE_H__
     "set #1","set #2","set #3","set #4",
 #endif
@@ -385,77 +431,50 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
  *    DL_Polyline     DL_Polygon                                     *
  *********************************************************************/
 
-typedef int DlElementType;
-/* controllers:
-	DL_Valuator, DL_ChoiceButton, DL_MessageButton, DL_TextEntry,
-	DL_Menu, DL_RelatedDisplay, DL_ShellCommand,
-   monitors:
-	DL_Meter, DL_TextUpdate, DL_Bar, DL_Indicator,
-	DL_StripChart, DL_CartesianPlot, DL_SurfacePlot,
-   statics acting as monitors (dynamics):
-	DL_Rectangle, DL_Oval, DL_Arc, DL_Text,
-   and all the other element types:
-	DL_File, DL_Display, DL_Colormap, DL_BasicAttribute,DL_DynamicAttribute,
-   and the new (extensions) object types:
-	DL_Image, DL_Composite, DL_Line, DL_Polyline,DL_Polygon, DL_BezierCurve
-*/
+typedef enum {
+/* self */
+  DL_Element       =100,
+/* basics */
+  DL_Composite     =101,
+  DL_Display       =102,
+/* controllers */
+  DL_ChoiceButton  =103,
+  DL_Menu          =104,
+  DL_MessageButton =105,
+  DL_RelatedDisplay=106,
+  DL_ShellCommand  =107,
+  DL_TextEntry     =108,
+  DL_Valuator  	   =109,
+/* monitors */
+  DL_Bar           =110,
+  DL_Byte          =111,
+  DL_CartesianPlot =112,
+  DL_Indicator     =113,
+  DL_Meter         =114,
+  DL_StripChart    =115,
+  DL_TextUpdate    =116,
+/* statics */
+  DL_Arc           =117,
+  DL_Image         =118,
+  DL_Line          =119,
+  DL_Oval          =120,
+  DL_Polygon       =121,
+  DL_Polyline      =122,
+  DL_Rectangle     =123,
+  DL_Text          =124
+} DlElementType;
 
-/* NON-RENDERABLE */
-#define DL_File			94
-#define DL_Colormap		95
-#define DL_BasicAttribute	96
-#define DL_DynamicAttribute	97
-
-/* QUASI-RENDERABLE (has object attributes) */
-#define DL_Composite		98
-#define DL_Display		99
-
-typedef int DlControllerType;
-#define DL_Valuator		100
-#define DL_ChoiceButton		101
-#define DL_MessageButton	102
-#define DL_TextEntry		103
-#define DL_Menu			104
-#define DL_RelatedDisplay	105
-#define DL_ShellCommand		106
-
-typedef int DlMonitorType;
-#define DL_Meter		107
-#define DL_TextUpdate		108
-#define DL_Bar			109
-#define DL_Byte                 110
-#define DL_Indicator		111
-#define DL_StripChart		112
-#define DL_CartesianPlot	113
-#define DL_SurfacePlot		114
-
-#define DL_Rectangle		115
-#define DL_Oval			116
-#define DL_Arc			117
-#define DL_Text			118
-#define DL_Reserve1   		119
-#define DL_Reserve2  		120
-
-#define DL_Image		121
-#define DL_Line			122
-#define DL_Polyline		123
-#define DL_Polygon		124
-#define DL_BezierCurve		125
-
-#define MIN_DL_ELEMENT_TYPE	DL_File
-#define MAX_DL_ELEMENT_TYPE	DL_BezierCurve
+#define MIN_DL_ELEMENT_TYPE DL_Element
+#define MAX_DL_ELEMENT_TYPE DL_Text
 #define NUM_DL_ELEMENT_TYPES	((MAX_DL_ELEMENT_TYPE-MIN_DL_ELEMENT_TYPE)+1)
 #define FIRST_RENDERABLE	DL_Composite
 
-#define ELEMENT_IS_STATIC(type) \
-	( (type >= DL_Rectangle) )
+#define ELEMENT_IS_STATIC(type) ((type >= DL_Arc && type <= DL_Text))
 
-#define ELEMENT_HAS_WIDGET(type) \
-	(((type >= DL_Display && type <= DL_SurfacePlot \
-		&& type != DL_TextUpdate)) ? True : False)
+#define ELEMENT_HAS_WIDGET(type) ((type >= DL_Display && type <= DL_StripChart))
 
 #define ELEMENT_IS_CONTROLLER(type) \
-        ((type >= DL_Valuator && type <= DL_ShellCommand) ? True : False)
+  ((type >= DL_choiceButton && type <= DL_Valuator))
 
 /* this macro defines those elements which occupy space/position and can
  *  be rendered.  Note: Composite is not strictly renderable because no
@@ -483,7 +502,7 @@ typedef struct {
 #ifdef __COLOR_RULE_H__
         int colorRule;
 #endif
-	char chan[MAX_TOKEN_LENGTH];
+	char* name;
 } DlDynamicAttribute;
 	
 typedef struct {
@@ -510,15 +529,17 @@ typedef struct {
 } DlPlotcom;
 
 typedef struct {
-	CartesianPlotAxisStyle axisStyle;
-	CartesianPlotRangeStyle rangeStyle;
-	float minRange, maxRange;
+  CartesianPlotAxisStyle axisStyle;
+  CartesianPlotRangeStyle rangeStyle;
+  float minRange, maxRange;
+  CartesianPlotTimeFormat_t timeFormat;
 } DlPlotAxisDefinition;
 
 typedef struct {
 	char label[MAX_TOKEN_LENGTH];
 	char name[MAX_TOKEN_LENGTH];
 	char args[MAX_TOKEN_LENGTH];
+  relatedDisplayMode_t mode;
 } DlRelatedDisplayEntry;
 
 typedef struct {
@@ -594,9 +615,11 @@ typedef struct {
 } DlText;
 
 typedef struct {
-	DlObject object;
-	DlRelatedDisplayEntry display[MAX_RELATED_DISPLAYS];
-	int clr, bclr;
+  DlObject object;
+  DlRelatedDisplayEntry display[MAX_RELATED_DISPLAYS];
+  int clr, bclr;
+  char label[MAX_TOKEN_LENGTH];
+  relatedDisplayVisual_t visual;
 } DlRelatedDisplay;
 
 typedef struct {
@@ -650,15 +673,6 @@ typedef struct {
 typedef struct {
 	DlObject object;
 	DlPlotcom plotcom;
-	char data[MAX_TOKEN_LENGTH];
-	int data_clr;
-	int dis;
-	int xyangle, zangle;
-} DlSurfacePlot;
-
-typedef struct {
-	DlObject object;
-	DlPlotcom plotcom;
         double period;
 	TimeUnits units;
 #if 1
@@ -675,7 +689,7 @@ typedef struct {
 	EraseOldest erase_oldest;
 	int count;
 	DlTrace trace[MAX_TRACES];
-	DlPlotAxisDefinition axis[3];	/* x = [0], y1 = [1], y2 = [2] */
+	DlPlotAxisDefinition axis[3]; /* x = 0, y = 1, y2 = 2 */
 	char trigger[MAX_TOKEN_LENGTH];
 	char erase[MAX_TOKEN_LENGTH];
 	eraseMode_t eraseMode;
@@ -737,13 +751,13 @@ typedef struct {
 } DlImage;
 
 struct  _DlElement;
+struct  _DlList;
 typedef struct _DlComposite {
 	DlObject object;
 	char compositeName[MAX_TOKEN_LENGTH];
 	VisibilityMode vis;
 	char chan[MAX_TOKEN_LENGTH];
-	struct _DlElement *dlElementListHead;
-	struct _DlElement *dlElementListTail;
+	struct _DlList *dlElementList;
 	Boolean visible;	/* run-time visibility */
 } DlComposite;
 
@@ -771,49 +785,72 @@ typedef struct {
    display list in memory (with notion of composite/hierarchical structures) */
 
 typedef union {
-	DlFile *file;
-	DlDisplay *display;
-	DlColormap *colormap;
-	DlRectangle *rectangle;
-	DlOval *oval;
-	DlArc *arc;
-	DlText *text;
-	DlRelatedDisplay *relatedDisplay;
-	DlShellCommand *shellCommand;
-	DlTextUpdate *textUpdate;
-	DlIndicator *indicator;
-	DlMeter *meter;
-	DlBar *bar;
-        DlByte *byte;
-	DlSurfacePlot *surfacePlot;
-	DlStripChart *stripChart;
-	DlCartesianPlot *cartesianPlot;
-	DlValuator *valuator;
-	DlChoiceButton *choiceButton;
-	DlMessageButton *messageButton;
-	DlMenu *menu;
-	DlTextEntry *textEntry;
-	DlImage *image;
-	DlComposite *composite;
-	DlPolyline *polyline;
-	DlPolygon *polygon;
+  struct _DlElement *element;
+  DlDisplay *display;
+  DlRectangle *rectangle;
+  DlOval *oval;
+  DlArc *arc;
+  DlText *text;
+  DlRelatedDisplay *relatedDisplay;
+  DlShellCommand *shellCommand;
+  DlTextUpdate *textUpdate;
+  DlIndicator *indicator;
+  DlMeter *meter;
+  DlBar *bar;
+  DlByte *byte;
+  DlStripChart *stripChart;
+  DlCartesianPlot *cartesianPlot;
+  DlValuator *valuator;
+  DlChoiceButton *choiceButton;
+  DlMessageButton *messageButton;
+  DlMenu *menu;
+  DlTextEntry *textEntry;
+  DlImage *image;
+  DlComposite *composite;
+  DlPolyline *polyline;
+  DlPolygon *polygon;
 } DlStructurePtr;
 
 struct _ResourceBundle;
 struct _DisplayInfo;
 
+typedef struct {
+  struct _DlElement *(*create)(struct _DlElement *);
+  void (*destroy)(struct _DlElement *);
+  void (*execute)(struct _DisplayInfo *, struct _DlElement *);
+               	                           /* execute thyself method         */
+  void (*write)(FILE *, struct _DlElement *, int);
+                                           /* write thyself (to file) method */
+  void (*setValues)(struct _ResourceBundle *, struct _DlElement *); 
+  void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
+  void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
+  void (*setBackgroundColor)(struct _DlElement *, Pixel);
+  void (*setForegroundColor)(struct _DlElement *, Pixel);
+  void (*move)(struct _DlElement *, int, int);
+  void (*scale)(struct _DlElement *, int, int);
+  int  (*editVertex)(struct _DlElement *, int, int);
+  void (*cleanup)(struct _DlElement *);
+} DlDispatchTable; 
+
 typedef struct _DlElement {
 	DlElementType type;
 	DlStructurePtr structure;
-	void (*dmExecute)(struct _DisplayInfo *, XtPointer, Boolean);
-               	                           /* execute thyself method         */
-	void (*dmWrite)(FILE *, XtPointer, int);
-                                           /* write thyself (to file) method */
-	void (*setValues)(struct _ResourceBundle *, struct _DlElement *); 
-	void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
-	void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
+  DlDispatchTable *run;
+  Widget widget;
+  void * data;
 	struct _DlElement *next;	   /* next element in display list   */
 	struct _DlElement *prev;	   /* previous element ...           */
 } DlElement;
 
+typedef struct _DlList {
+  DlElement *head;
+  DlElement *tail;
+  long      count;
+  DlElement data;
+} DlList;
+
+#define FirstDlElement(x) (x->head->next)
+#define LastDlElement(x) (x->tail)
+#define IsEmpty(x) (x->count <= 0)
+#define NumberOfDlElement(x) (x->count)
 #endif

@@ -64,8 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Text {
-  Widget           widget;
-  DlText           *dlText;
+  DlElement        *dlElement;
   Record           *record;
   UpdateTask       *updateTask;
 } Text;
@@ -77,7 +76,22 @@ static void textName(XtPointer, char **, short *, int *);
 static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 static void textInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void textSetValues(ResourceBundle *pRCB, DlElement *p);
+static void textGetValues(ResourceBundle *pRCB, DlElement *p);
 
+static DlDispatchTable textDlDispatchTable = {
+         createDlText,
+         destroyElementWithDynamicAttribute,
+         executeDlText,
+         writeDlText,
+         NULL,
+         textGetValues,
+         textInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 static void drawText(Display *display,
                      Drawable drawable,
@@ -113,20 +127,15 @@ static void drawText(Display *display,
   XDrawString(display,drawable,gc,x,y,dlText->textix,nChars);
 }
 
-#ifdef __cplusplus
-void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
-                                Boolean)
-#else
-void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
-                                Boolean forcedDisplayToWindow)
-#endif
+void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  DlText *dlText = dlElement->structure.text;
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlText->dynAttr.chan[0] != '\0')){
+      && (dlText->dynAttr.name)){
 
     Text *pt;
     pt = (Text *) malloc(sizeof(Text));
-    pt->dlText = dlText;
+    pt->dlElement = dlElement;
     pt->updateTask = updateTaskAddTask(displayInfo,
                                        &(dlText->object),
                                        textDraw,
@@ -140,7 +149,7 @@ void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
       pt->updateTask->opaque = False;
     }
     pt->record = medmAllocateRecord(
-                  dlText->dynAttr.chan,
+                  dlText->dynAttr.name,
                   textUpdateValueCb,
                   NULL,
                   (XtPointer) pt);
@@ -170,8 +179,6 @@ void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
       pt->record->monitorZeroAndNoneZeroTransition = False;
     }
 
-    pt->widget = displayInfo->drawingArea;
-
   } else {
     executeDlBasicAttribute(displayInfo,&(dlText->attr));
     drawText(display,XtWindow(displayInfo->drawingArea),
@@ -192,15 +199,16 @@ static void textDraw(XtPointer cd) {
   DisplayInfo *displayInfo = pt->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pt->widget);
-  DlText *dlText = pt->dlText;
+  Widget widget = pt->updateTask->displayInfo->drawingArea;
+  Display *display = XtDisplay(widget);
+  DlText *dlText = pt->dlElement->structure.text;
 
   if (pd->connected) {
     gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
     switch (dlText->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
-        gcValues.foreground = displayInfo->dlColormap[dlText->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
@@ -211,14 +219,14 @@ static void textDraw(XtPointer cd) {
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[dlText->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
         break;
 #endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
       default :
-	gcValues.foreground = displayInfo->dlColormap[dlText->attr.clr];
+	gcValues.foreground = displayInfo->colormap[dlText->attr.clr];
 	break;
     }
     gcValues.line_width = dlText->attr.width;
@@ -273,44 +281,39 @@ static void textName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pt->record->severity;
 }
 
-DlElement *createDlText(
-  DisplayInfo *displayInfo)
+DlElement *createDlText(DlElement *p)
 {
   DlText *dlText;
   DlElement *dlElement;
  
   dlText = (DlText *) malloc(sizeof(DlText));
   if (!dlText) return 0;
- 
-  objectAttributeInit(&(dlText->object));
-  basicAttributeInit(&(dlText->attr));
-  dynamicAttributeInit(&(dlText->dynAttr));
-
-  dlText->textix[0] = '\0';
-  dlText->align = HORIZ_LEFT;
+  if (p) { 
+    *dlText = *p->structure.text;
+  } else {
+    objectAttributeInit(&(dlText->object));
+    basicAttributeInit(&(dlText->attr));
+    dynamicAttributeInit(&(dlText->dynAttr));
+    dlText->textix[0] = '\0';
+    dlText->align = HORIZ_LEFT;
+  }
  
   if (!(dlElement = createDlElement(DL_Text,
                     (XtPointer)      dlText,
-                    (medmExecProc)   executeDlText,
-                    (medmWriteProc)  writeDlText,
-										textSetValues,
-										textGetValues,
-										textInheritValues))) {
+										&textDlDispatchTable))) {
     free(dlText);
   }
  
   return(dlElement);
 }
 
-DlElement *parseText(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseText(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlText *dlText;
-  DlElement *dlElement = createDlText(displayInfo);
+  DlElement *dlElement = createDlText(NULL);
   int i = 0;
 
   if (!dlElement) return 0;
@@ -354,18 +357,17 @@ DlElement *parseText(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
  
-  POSITION_ELEMENT_ON_LIST();
- 
   return dlElement;
  
 }
 
 void writeDlText(
   FILE *stream,
-  DlText *dlText,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlText *dlText = dlElement->structure.text;
 
   memset(indent,'\t',level);
   indent[level] = '\0'; 
@@ -459,7 +461,7 @@ DlElement *handleTextCreate(
   length = 0;
  
   window = XtWindow(currentDisplayInfo->drawingArea);
-  dlElement = createDlText(currentDisplayInfo);
+  dlElement = createDlText(NULL);
   if (!dlElement) return 0;
   dlText = dlElement->structure.text;
   textGetValues(&globalResourceBundle,dlElement);
@@ -621,7 +623,7 @@ static void textGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlText->dynAttr.chan,
+    CHAN_RC,       &(dlText->dynAttr.name),
     ALIGN_RC,      &(dlText->align),
     TEXTIX_RC,       dlText->textix,
     -1);
@@ -637,7 +639,7 @@ static void textInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlText->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlText->dynAttr.chan,
+    CHAN_RC,       &(dlText->dynAttr.name),
     ALIGN_RC,      &(dlText->align),
     -1);
 }
@@ -656,7 +658,7 @@ static void textSetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, p->text->dynAttr.colorRule,
 #endif
-    CHAN_RC,       p->text->dynAttr.chan,
+    CHAN_RC,       &(p->text->dynAttr.name),
     ALIGN_RC,      p->text->align,
     TEXTIX_RC,     p->text->textix,
     -1);

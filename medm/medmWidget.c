@@ -257,20 +257,20 @@ void medmInit(char *displayFont)
 /*
  * initialize common XmStrings
   */
-  dlXmStringOn  = XmStringCreateSimple(ON_STRING);
-  dlXmStringOff = XmStringCreateSimple(OFF_STRING);
-  dlXmStringNull= XmStringCreateSimple("");
-  dlXmStringMoreToComeSymbol = XmStringCreateSimple(MORE_TO_COME_SYMBOL);
+  dlXmStringMoreToComeSymbol = XmStringCreateLocalized(MORE_TO_COME_SYMBOL);
 
 
 /*
  * create the highlight GC
  */
   highlightGC = XCreateGC(display,rootWindow,0,NULL);
-  XSetFunction(display,highlightGC,GXxor);
+  XSetFunction(display,highlightGC,GXinvert);
   /* pick a color which XOR-ing with makes reasonable sense for most colors */
+  XSetForeground(display,highlightGC,WhitePixel(display,screenNum));
+#if 0
   XSetForeground(display,highlightGC,getPixelFromColormapByString(display,
 		screenNum,cmap,"grey50"));
+#endif
   XSetLineAttributes(display,highlightGC,HIGHLIGHT_LINE_THICKNESS,
 		LineOnOffDash,CapButt,JoinMiter);
   dashList[0] = 3;
@@ -282,8 +282,8 @@ void medmInit(char *displayFont)
  */
   executePopupMenuButtonType[0] = XmPUSHBUTTON;
   executePopupMenuButtonType[1] = XmPUSHBUTTON;
-  executePopupMenuButtons[0] = XmStringCreateSimple(EXECUTE_POPUP_MENU_PRINT);
-  executePopupMenuButtons[1] = XmStringCreateSimple(EXECUTE_POPUP_MENU_CLOSE);
+  executePopupMenuButtons[0] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_PRINT);
+  executePopupMenuButtons[1] = XmStringCreateLocalized(EXECUTE_POPUP_MENU_CLOSE);
 
 
 /*
@@ -381,3 +381,24 @@ void dmTerminateX()
   XtCloseDisplay(display);
 }
 
+int initMedmWidget() {
+  if (clipboard) return 0;
+  if (clipboard = createDlList()) {
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
+int destroyMedmWidget() {
+  if (displayInfoListHead) free((char *)displayInfoListHead);
+  if (dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
+  if (executePopupMenuButtons[0]) XmStringFree(executePopupMenuButtons[0]);
+  if (executePopupMenuButtons[1]) XmStringFree(executePopupMenuButtons[1]);
+  if (highlightGC) XFreeGC(display,highlightGC);
+  if (clipboard) {
+    destroyDlDisplayList(clipboard);
+    free(clipboard);
+  }
+  return 0;
+}

@@ -78,8 +78,7 @@ static double okRadiansTable[24]  =    { 0.,
                                         0.};
 
 typedef struct _Polygon {
-  Widget           widget;
-  DlPolygon       *dlPolygon;
+  DlElement       *dlElement;
   Record           *record;
   UpdateTask       *updateTask;
 } Polygon;
@@ -88,39 +87,77 @@ static void polygonDraw(XtPointer cd);
 static void polygonUpdateValueCb(XtPointer cd);
 static void polygonDestroyCb(XtPointer cd);
 static void polygonName(XtPointer, char **, short *, int *);
+static void polygonGetValues(ResourceBundle *pRCB, DlElement *p);
 static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void polygonMove(DlElement *, int, int);
+static void polygonScale(DlElement *, int, int);
+static void destroyDlPolygon(DlElement *);
+static int handlePolygonVertexManipulation(DlElement *, int, int);
+
+static DlDispatchTable polygonDlDispatchTable = {
+         createDlPolygon,
+         destroyDlPolygon,
+         executeDlPolygon,
+         writeDlPolygon,
+         NULL,
+         polygonGetValues,
+         polygonInheritValues,
+         NULL,
+         NULL,
+         polygonMove,
+         polygonScale,
+         handlePolygonVertexManipulation,
+         NULL};
 
 static void drawPolygon(Polygon *pp) {
   DisplayInfo *displayInfo = pp->updateTask->displayInfo;
-  Display *display = XtDisplay(pp->widget);
-  DlPolygon *dlPolygon = pp->dlPolygon;
+  Widget widget = pp->updateTask->displayInfo->drawingArea;
+  Display *display = XtDisplay(widget);
+  DlPolygon *dlPolygon = pp->dlElement->structure.polygon;
 
   if (dlPolygon->attr.fill == F_SOLID) {
-    XFillPolygon(display,XtWindow(pp->widget),displayInfo->gc,
+    XFillPolygon(display,XtWindow(widget),displayInfo->gc,
         dlPolygon->points,dlPolygon->nPoints,Complex,CoordModeOrigin);
   } else
   if (dlPolygon->attr.fill == F_OUTLINE) {
-    XDrawLines(display,XtWindow(pp->widget),displayInfo->gc,
+    XDrawLines(display,XtWindow(widget),displayInfo->gc,
         dlPolygon->points,dlPolygon->nPoints,CoordModeOrigin);
   }
 }
 
-#ifdef __cplusplus
-void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
-                                Boolean)
-#else
-void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
-                                Boolean forcedDisplayToWindow)
-#endif
+static void calculateTheBoundingBox(DlPolygon *dlPolygon) {
+  int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
+  int i;
+  for (i = 0; i < dlPolygon->nPoints; i++) {
+    minX = MIN(minX,dlPolygon->points[i].x);
+    maxX = MAX(maxX,dlPolygon->points[i].x);
+    minY = MIN(minY,dlPolygon->points[i].y);
+    maxY = MAX(maxY,dlPolygon->points[i].y);
+  }
+  if (dlPolygon->attr.fill == F_SOLID) {
+    dlPolygon->object.x = minX;
+    dlPolygon->object.y = minY;
+    dlPolygon->object.width = maxX - minX;
+    dlPolygon->object.height = maxY - minY;
+  } else {            /* F_OUTLINE, therfore lineWidth is a factor */
+    dlPolygon->object.x = minX - dlPolygon->attr.width/2;
+    dlPolygon->object.y = minY - dlPolygon->attr.width/2;
+    dlPolygon->object.width = maxX - minX + dlPolygon->attr.width;
+    dlPolygon->object.height = maxY - minY + dlPolygon->attr.width;
+  }
+}
+
+void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  DlPolygon *dlPolygon = dlElement->structure.polygon;
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlPolygon->dynAttr.chan[0] != '\0')) {
+      && (dlPolygon->dynAttr.name)) {
 
     Polygon *pp;
     DlObject object;
 
     pp = (Polygon *) malloc(sizeof(Polygon));
-    pp->dlPolygon = dlPolygon;
+    pp->dlElement = dlElement;
 #if 1
     object = dlPolygon->object;
     object.width++;
@@ -139,7 +176,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
       pp->updateTask->opaque = False;
     }
     pp->record = medmAllocateRecord(
-                  dlPolygon->dynAttr.chan,
+                  dlPolygon->dynAttr.name,
                   polygonUpdateValueCb,
                   NULL,
                   (XtPointer) pp);
@@ -170,8 +207,6 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
       pp->record->monitorZeroAndNoneZeroTransition = False;
     }
 
-    pp->widget = displayInfo->drawingArea;
-
   } else {
     executeDlBasicAttribute(displayInfo,&(dlPolygon->attr));
     if (dlPolygon->attr.fill == F_SOLID) {
@@ -200,15 +235,15 @@ static void polygonDraw(XtPointer cd) {
   DisplayInfo *displayInfo = pp->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pp->widget);
-  DlPolygon *dlPolygon = pp->dlPolygon;
+  Display *display = XtDisplay(pp->updateTask->displayInfo->drawingArea);
+  DlPolygon *dlPolygon = pp->dlElement->structure.polygon;
 
   if (pd->connected) {
     gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
     switch (dlPolygon->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
-        gcValues.foreground = displayInfo->dlColormap[dlPolygon->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
@@ -219,14 +254,14 @@ static void polygonDraw(XtPointer cd) {
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[dlPolygon->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
         break;
 #endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
       default :
-	gcValues.foreground = displayInfo->dlColormap[dlPolygon->attr.clr];
+	gcValues.foreground = displayInfo->colormap[dlPolygon->attr.clr];
 	break;
     }
     gcValues.line_width = dlPolygon->attr.width;
@@ -284,27 +319,31 @@ static void polygonName(XtPointer cd, char **name, short *severity, int *count) 
 }
 
 
-DlElement *createDlPolygon(
-  DisplayInfo *displayInfo)
+DlElement *createDlPolygon(DlElement *p)
 {
   DlPolygon *dlPolygon;
   DlElement *dlElement;
  
- 
   dlPolygon = (DlPolygon *) malloc(sizeof(DlPolygon));
   if (!dlPolygon) return 0;
-  objectAttributeInit(&(dlPolygon->object));
-  basicAttributeInit(&(dlPolygon->attr));
-  dynamicAttributeInit(&(dlPolygon->dynAttr));
-  dlPolygon->points = NULL;
-  dlPolygon->nPoints = 0;
+  if (p) {
+    int i;
+    *dlPolygon = *p->structure.polygon;
+    dlPolygon->points = (XPoint *)malloc(dlPolygon->nPoints*sizeof(XPoint));
+    for (i = 0; i < dlPolygon->nPoints; i++) {
+      dlPolygon->points[i] = p->structure.polygon->points[i];
+    }
+  } else {
+    objectAttributeInit(&(dlPolygon->object));
+    basicAttributeInit(&(dlPolygon->attr));
+    dynamicAttributeInit(&(dlPolygon->dynAttr));
+    dlPolygon->points = NULL;
+    dlPolygon->nPoints = 0;
+  }
  
   if (!(dlElement = createDlElement(DL_Polygon,
                     (XtPointer)      dlPolygon,
-                    (medmExecProc)   executeDlPolygon,
-                    (medmWriteProc)  writeDlPolygon,
-										0,0,
-										polygonInheritValues))) {
+										&polygonDlDispatchTable))) {
     free(dlPolygon);
   }
 
@@ -370,15 +409,13 @@ void parsePolygonPoints(
 
 }
 
-DlElement *parsePolygon(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parsePolygon(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlPolygon *dlPolygon;
-  DlElement *dlElement = createDlPolygon(displayInfo);
+  DlElement *dlElement = createDlPolygon(NULL);
   if (!dlElement) return 0;
   dlPolygon = dlElement->structure.polygon;
   do {
@@ -405,8 +442,6 @@ DlElement *parsePolygon(
     }
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
 		&& (tokenType != T_EOF) );
-
-  POSITION_ELEMENT_ON_LIST();
 
   return dlElement;
 }
@@ -437,10 +472,11 @@ void writeDlPolygonPoints(
 
 void writeDlPolygon(
   FILE *stream,
-  DlPolygon *dlPolygon,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlPolygon *dlPolygon = dlElement->structure.polygon;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -470,23 +506,37 @@ void writeDlPolygon(
  * manipulate a polygon vertex
  */
 
-void handlePolygonVertexManipulation(
-  DlPolygon *dlPolygon,
-  int pointIndex)
+static int handlePolygonVertexManipulation(
+  DlElement *dlElement,
+  int x0, int y0)
 {
   XEvent event;
   Window window;
-  int i, minX, maxX, minY, maxY;
+  int i;
   int x01, y01;
+  DlPolygon *dlPolygon = dlElement->structure.polygon;
+  int pointIndex = 0;
 
   int deltaX, deltaY, okIndex;
   double radians, okRadians, length;
+  int foundVertex = False;
 
   window = XtWindow(currentDisplayInfo->drawingArea);
-  minX = INT_MAX; maxX = INT_MIN; minY = INT_MAX; maxY = INT_MIN;
-  
-  x01 = dlPolygon->points[pointIndex].x;
-  y01 = dlPolygon->points[pointIndex].y;
+ 
+  for (i = 0; i < dlPolygon->nPoints; i++) {
+    x01 = dlPolygon->points[i].x;
+    y01 = dlPolygon->points[i].y;
+#define TOR 6
+    if ((x01 + TOR > x0) && (x01 - TOR < x0) &&
+        (y01 + TOR > y0) && (y01 - TOR < y0)) {
+      pointIndex = i;
+      foundVertex = True;
+      break;
+    }
+#undef TOR 
+  }
+
+  if (!foundVertex) return 0;
 
   XGrabPointer(display,window,FALSE,
 	(unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
@@ -537,18 +587,7 @@ void handlePolygonVertexManipulation(
 
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
-	    for (i = 0; i < dlPolygon->nPoints; i++) {
-	      minX = MIN(minX,dlPolygon->points[i].x);
-	      maxX = MAX(maxX,dlPolygon->points[i].x);
-	      minY = MIN(minY,dlPolygon->points[i].y);
-	      maxY = MAX(maxY,dlPolygon->points[i].y);
-	    }
-	    dlPolygon->object.x = minX - globalResourceBundle.lineWidth/2;
-	    dlPolygon->object.y = minY - globalResourceBundle.lineWidth/2;
-	    dlPolygon->object.width = maxX - minX
-					+ globalResourceBundle.lineWidth;
-	    dlPolygon->object.height = maxY - minY
-					+ globalResourceBundle.lineWidth;
+            calculateTheBoundingBox(dlPolygon);
 	  /* update global resource bundle  - then do create out of it */
 	    globalResourceBundle.x = dlPolygon->object.x;
 	    globalResourceBundle.y = dlPolygon->object.y;
@@ -558,7 +597,7 @@ void handlePolygonVertexManipulation(
 	    dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 /* since dmTraverseNonWidgets... clears the window, redraw highlights */
 	    highlightSelectedElements();
-	    return;
+	    return 1;
 
 	case MotionNotify:
 	/* undraw old line segments */
@@ -624,7 +663,6 @@ void handlePolygonVertexManipulation(
 	  break;
      }
   }
-
 }
 
 DlElement *handlePolygonCreate(
@@ -637,20 +675,18 @@ DlElement *handlePolygonCreate(
   DlElement *dlElement;
 #define INITIAL_NUM_POINTS 16
   int pointsArraySize = INITIAL_NUM_POINTS;
-  int i, minX, maxX, minY, maxY;
+  int i;
   int x01, y01;
 
   int deltaX, deltaY, okIndex;
   double radians, okRadians, length;
 
   window = XtWindow(currentDisplayInfo->drawingArea);
-  if (!(dlElement = createDlPolygon(currentDisplayInfo))) return 0;
+  if (!(dlElement = createDlPolygon(NULL))) return 0;
   dlPolygon = dlElement->structure.polygon;
   polygonInheritValues(&globalResourceBundle,dlElement);
   objectAttributeSet(&(dlPolygon->object),x0,y0,0,0);
 
-  minX = INT_MAX; maxX = INT_MIN; minY = INT_MAX; maxY = INT_MIN;
-  
 /* first click is first point... */
   dlPolygon->nPoints = 1;
   dlPolygon->points = (XPoint *)malloc((pointsArraySize+3)*sizeof(XPoint));
@@ -676,11 +712,13 @@ DlElement *handlePolygonCreate(
 		ButtonPressMask|Button1MotionMask|PointerMotionMask,&newEvent);
 	  newEventType = newEvent.type;
 	  if (newEventType == ButtonPress) {
-  		/* -> double click... add last point and leave here */
+            /* -> double click... add last point and leave here */
 	    if (event.xbutton.state & ShiftMask) {
-				/* constrain to 45 degree increments */
-	      deltaX = event.xbutton.x - dlPolygon->points[dlPolygon->nPoints-1].x;
-	      deltaY = event.xbutton.y - dlPolygon->points[dlPolygon->nPoints-1].y;
+              /* constrain to 45 degree increments */
+	      deltaX = event.xbutton.x -
+                       dlPolygon->points[dlPolygon->nPoints-1].x;
+	      deltaY = event.xbutton.y -
+                       dlPolygon->points[dlPolygon->nPoints-1].y;
 	      length = sqrt(pow((double)deltaX,2.) + pow((double)deltaY,2.0));
 	      radians = atan2((double)(deltaY),(double)(deltaX));
 				/* use positive radians */
@@ -688,67 +726,46 @@ DlElement *handlePolygonCreate(
 	      okIndex = (int)((radians*8.0)/M_PI);
 	      okRadians = okRadiansTable[okIndex];
 	      x01 = (int) (cos(okRadians)*length)
-					+ dlPolygon->points[dlPolygon->nPoints-1].x;
+                    + dlPolygon->points[dlPolygon->nPoints-1].x;
 	      y01 = (int) (sin(okRadians)*length)
-					+ dlPolygon->points[dlPolygon->nPoints-1].y;
+                    + dlPolygon->points[dlPolygon->nPoints-1].y;
 	      dlPolygon->nPoints++;
 	      dlPolygon->points[dlPolygon->nPoints-1].x = x01;
 	      dlPolygon->points[dlPolygon->nPoints-1].y = y01;
 	    } else {
-				/* unconstrained */
+              /* unconstrained */
 	      dlPolygon->nPoints++;
 	      dlPolygon->points[dlPolygon->nPoints-1].x = event.xbutton.x;
 	      dlPolygon->points[dlPolygon->nPoints-1].y = event.xbutton.y;
 	    }
 	    XUngrabPointer(display,CurrentTime);
 	    XUngrabServer(display);
-	    for (i = 0; i < dlPolygon->nPoints; i++) {
-	      minX = MIN(minX,dlPolygon->points[i].x);
-	      maxX = MAX(maxX,dlPolygon->points[i].x);
-	      minY = MIN(minY,dlPolygon->points[i].y);
-	      maxY = MAX(maxY,dlPolygon->points[i].y);
-	    }
-	/* to ensure closure, make sure last point = first point */
+            /* to ensure closure, make sure last point = first point */
 	    if(!(dlPolygon->points[0].x ==
-				dlPolygon->points[dlPolygon->nPoints-1].x &&
-				dlPolygon->points[0].y ==
-				dlPolygon->points[dlPolygon->nPoints-1].y)) {
+                 dlPolygon->points[dlPolygon->nPoints-1].x &&
+                 dlPolygon->points[0].y ==
+                 dlPolygon->points[dlPolygon->nPoints-1].y)) {
 	      dlPolygon->points[dlPolygon->nPoints] = dlPolygon->points[0];
 	      dlPolygon->nPoints++;
-      }
-
-	    if (dlPolygon->attr.fill == F_SOLID) {
-				dlPolygon->object.x = minX;
- 				dlPolygon->object.y = minY;
-				dlPolygon->object.width = maxX - minX;
-				dlPolygon->object.height = maxY - minY;
-	    } else {            /* F_OUTLINE, therfore lineWidth is a factor */
-				dlPolygon->object.x = minX - dlPolygon->object.width/2;
-				dlPolygon->object.y = minY - dlPolygon->object.width/2;
-				dlPolygon->object.width = maxX - minX
-					+ dlPolygon->object.width;
-				dlPolygon->object.height = maxY - minY
-					+ dlPolygon->object.width;
-	    }
-
+            }
+            calculateTheBoundingBox(dlPolygon);
 	    XCopyArea(display,currentDisplayInfo->drawingAreaPixmap,
-				XtWindow(currentDisplayInfo->drawingArea),
-				currentDisplayInfo->pixmapGC,
-				dlPolygon->object.x, dlPolygon->object.y,
-				dlPolygon->object.width, dlPolygon->object.height,
-				dlPolygon->object.x, dlPolygon->object.y);
+                      XtWindow(currentDisplayInfo->drawingArea),
+                      currentDisplayInfo->pixmapGC,
+                      dlPolygon->object.x, dlPolygon->object.y,
+                      dlPolygon->object.width, dlPolygon->object.height,
+                      dlPolygon->object.x, dlPolygon->object.y);
 	    XBell(display,50); XBell(display,50);
 	    return (dlElement);
-
-	  } else {
-			/* not last point: more points to add.. */
-				/* undraw old line segments */
-	    XDrawLine(display,window,xorGC,
-				dlPolygon->points[dlPolygon->nPoints-1].x,
-				dlPolygon->points[dlPolygon->nPoints-1].y,
-				x01, y01);
-	    if (dlPolygon->nPoints > 1) XDrawLine(display,window,xorGC,
-				dlPolygon->points[0].x, dlPolygon->points[0].y, x01, y01);
+          } else {
+            /* not last point: more points to add.. */
+            /* undraw old line segments */
+            XDrawLine(display,window,xorGC,
+              dlPolygon->points[dlPolygon->nPoints-1].x,
+              dlPolygon->points[dlPolygon->nPoints-1].y, x01, y01);
+	    if (dlPolygon->nPoints > 1)
+              XDrawLine(display,window,xorGC,dlPolygon->points[0].x,
+                        dlPolygon->points[0].y, x01, y01);
 
 	/* new line segment added: update coordinates */
 	    if (dlPolygon->nPoints >= pointsArraySize) {
@@ -841,6 +858,75 @@ DlElement *handlePolygonCreate(
   }
 }
 
+void polygonMove(DlElement *dlElement, int xOffset, int yOffset) {
+  int i;
+  XPoint *pts;
+  if (dlElement->type != DL_Polygon) return;
+  dlElement->structure.polygon->object.x += xOffset;
+  dlElement->structure.polygon->object.y += yOffset;
+  pts = dlElement->structure.polygon->points;
+  for (i = 0; i < dlElement->structure.polygon->nPoints; i++) {
+    pts[i].x += xOffset;
+    pts[i].y += yOffset;
+  }
+}
+
+void polygonScale(DlElement *dlElement, int xOffset, int yOffset) {
+  float sX, sY;
+  int i;
+  DlPolygon *dlPolygon;
+  int width, height;
+
+  if (dlElement->type != DL_Polygon) return;
+  dlPolygon = dlElement->structure.polygon;
+
+  width = MAX(1,((int)dlPolygon->object.width + xOffset));
+  height = MAX(1,((int)dlPolygon->object.height + yOffset));
+  sX = (float)((float)width/(float)(dlPolygon->object.width));
+  sY = (float)((float)(height)/(float)(dlPolygon->object.height));
+  for (i = 0; i < dlPolygon->nPoints; i++) {
+    dlPolygon->points[i].x = (short) (dlPolygon->object.x +
+      sX*(dlPolygon->points[i].x - dlPolygon->object.x));
+    dlPolygon->points[i].y = (short) (dlPolygon->object.y +
+      sY*(dlPolygon->points[i].y - dlPolygon->object.y));
+  }
+  dlPolygon->object.width = width;
+  dlPolygon->object.height = height;
+}
+
+static void polygonGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlPolygon *dlPolygon = p->structure.polygon;
+  int x, y;
+  unsigned int width, height;
+  int xOffset, yOffset;
+  medmGetValues(pRCB,
+    X_RC,          &x,
+    Y_RC,          &y,
+    WIDTH_RC,      &width,
+    HEIGHT_RC,     &height,
+    CLR_RC,        &(dlPolygon->attr.clr),
+    STYLE_RC,      &(dlPolygon->attr.style),
+    FILL_RC,       &(dlPolygon->attr.fill),
+    LINEWIDTH_RC,  &(dlPolygon->attr.width),
+    CLRMOD_RC,     &(dlPolygon->dynAttr.clr),
+    VIS_RC,        &(dlPolygon->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
+#endif
+    CHAN_RC,       &(dlPolygon->dynAttr.name),
+    -1);
+    xOffset = (int) width - (int) dlPolygon->object.width;
+    yOffset = (int) height - (int) dlPolygon->object.height;
+    if (xOffset || yOffset) {
+      polygonScale(p,xOffset,yOffset);
+    }
+    xOffset = x - dlPolygon->object.x;
+    yOffset = y - dlPolygon->object.y;
+    if (xOffset || yOffset) {
+      polygonMove(p,xOffset,yOffset);
+    }
+}
+
 static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlPolygon *dlPolygon = p->structure.polygon;
   medmGetValues(pRCB,
@@ -853,6 +939,15 @@ static void polygonInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlPolygon->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlPolygon->dynAttr.chan,
+    CHAN_RC,       &(dlPolygon->dynAttr.name),
     -1);
+}
+
+static void destroyDlPolygon(DlElement *dlElement) {
+  if (dlElement->structure.polygon->dynAttr.name) {
+    freeString(dlElement->structure.polygon->dynAttr.name);
+  }
+  free ((char *)dlElement->structure.polygon->points);
+  free ((char *)dlElement->structure.polygon);
+  free ((char *)dlElement);
 }

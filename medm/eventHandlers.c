@@ -66,6 +66,18 @@ extern Widget resourceMW, resourceS;
 extern Widget objectPaletteSelectToggleButton;
 extern XButtonPressedEvent lastEvent;
 
+void toggleSelectedElementHighlight(DlElement *element);
+
+static DlList *tmpDlElementList = NULL;
+
+int initEventHandlers() {
+  if (tmpDlElementList) return 0;
+  if (tmpDlElementList = createDlList()) {
+    return 0;
+  } else {
+    return -1;
+  }
+}
 
 /*
  * event handlers
@@ -92,7 +104,7 @@ void popupMenu(
 
   if (displayInfo != currentDisplayInfo) {
     currentDisplayInfo = displayInfo;
-    currentColormap = currentDisplayInfo->dlColormap;
+    currentColormap = currentDisplayInfo->colormap;
     currentColormapSize = currentDisplayInfo->dlColormapSize;
 
   }
@@ -104,70 +116,74 @@ void popupMenu(
 
 /* MB3 = Menu */
   if (xEvent->button == Button3) {
-     if (globalDisplayListTraversalMode == DL_EDIT) {
-  /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
-	lastEvent = *((XButtonPressedEvent *)event);
-	XmMenuPosition(currentDisplayInfo->editPopupMenu,
-		(XButtonPressedEvent *)event);
-	XtManageChild(currentDisplayInfo->editPopupMenu);
-        XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
-        XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
+    if (globalDisplayListTraversalMode == DL_EDIT) {
+      /* edit menu doesn't have valid/unique displayInfo ptr, hence use current */
+      lastEvent = *((XButtonPressedEvent *)event);
+      XmMenuPosition(currentDisplayInfo->editPopupMenu,
+                      (XButtonPressedEvent *)event);
+      XtManageChild(currentDisplayInfo->editPopupMenu);
+      XtPopup(XtParent(currentDisplayInfo->editPopupMenu),XtGrabNone);
+      XRaiseWindow(display,XtWindow(currentDisplayInfo->editPopupMenu));
         
-     } else {
+    } else {
+      /*
+       * in EXECUTE mode, MB3 can also mean things based on where it occurs,
+       *   hence, lookup to see if MB3 occured in an object that cares
+       */
+	    element = lookupElement(displayInfo->dlElementList,
+		                          (Position)xEvent->x, (Position)xEvent->y);
+	    if (element) {
+	      switch(element->type) {
+		    case DL_Valuator:
+		      if (widget = element->widget) {
+            popupValuatorKeyboardEntry(widget,displayInfo,event);
+            XUngrabPointer(display,CurrentTime);
+          }
+		      break;
 
-/*
- * in EXECUTE mode, MB3 can also mean things based on where it occurs,
- *   hence, lookup to see if MB3 occured in an object that cares
- */
-	element = lookupElement(displayInfo->dlElementListTail,
-		(Position)xEvent->x, (Position)xEvent->y);
-	if (element != NULL) {
-	   switch(element->type) {
-		case DL_Valuator:
-		   widget = lookupElementWidget(displayInfo,
-			&(element->structure.rectangle->object));
-		   if (widget != NULL) {
-			popupValuatorKeyboardEntry(widget,displayInfo,event);
-			XUngrabPointer(display,CurrentTime);
-		   }
-		   break;
-
-		case DL_CartesianPlot:
-		   widget = lookupElementWidget(displayInfo,
-			&(element->structure.rectangle->object));
-		   if (widget != NULL) {
-		/* update globalResourceBundle with this element's info */
-			executeTimeCartesianPlotWidget = widget;
-			updateGlobalResourceBundleFromElement(element);
-			if (cartesianPlotAxisS == NULL) {
-			   cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
-			} else {
-			   XtSetSensitive(cartesianPlotAxisS,True);
-			}
-		/* update cartesian plot axis data from globalResourceBundle */
- 			updateCartesianPlotAxisDialogFromWidget(widget);
-			XtManageChild(cpAxisForm);
-			XtPopup(cartesianPlotAxisS,XtGrabNone);
+        case DL_CartesianPlot:
+		      if (widget = element->widget) {
+		        /* update globalResourceBundle with this element's info */
+			      executeTimeCartesianPlotWidget = widget;
+			      updateGlobalResourceBundleFromElement(element);
+			      if (!cartesianPlotAxisS) {
+			        cartesianPlotAxisS = createCartesianPlotAxisDialog(mainShell);
+			      } else {
+			        XtSetSensitive(cartesianPlotAxisS,True);
+			      }
+		        /* update cartesian plot axis data from globalResourceBundle */
+ 			      updateCartesianPlotAxisDialogFromWidget(widget);
+			      XtManageChild(cpAxisForm);
+			      XtPopup(cartesianPlotAxisS,XtGrabNone);
  
-			XUngrabPointer(display,CurrentTime);
-		   }
-		   break;
-
-		default:
-		   XmMenuPosition(displayInfo->executePopupMenu,
-			(XButtonPressedEvent *)event);
-		   XtManageChild(displayInfo->executePopupMenu);
-                   XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
-                   XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
-		   break;
-	   }
-	} else {
-  /* execute menu does have valid/unique displayInfo ptr, hence use it */
-	   XmMenuPosition(displayInfo->executePopupMenu,
-		(XButtonPressedEvent *)event);
-	   XtManageChild(displayInfo->executePopupMenu);
-	}
-     }
+			      XUngrabPointer(display,CurrentTime);
+		      }
+		      break;
+		    default:
+          XmMenuPosition(displayInfo->executePopupMenu,
+			        (XButtonPressedEvent *)event);
+		      XtManageChild(displayInfo->executePopupMenu);
+          XtPopup(XtParent(currentDisplayInfo->executePopupMenu),XtGrabNone);
+          XRaiseWindow(display,XtWindow(currentDisplayInfo->executePopupMenu));
+		      break;
+        }
+	    } else {
+        /* execute menu does have valid/unique displayInfo ptr, hence use it */
+	      XmMenuPosition(displayInfo->executePopupMenu,(XButtonPressedEvent *)event);
+	      XtManageChild(displayInfo->executePopupMenu);
+	    }
+    }
+  } else 
+  if (xEvent->button == Button1 &&
+      globalDisplayListTraversalMode == DL_EXECUTE) {
+    if (element = lookupElement(displayInfo->dlElementList,
+                                (Position)xEvent->x, (Position)xEvent->y)) {
+      if (element->type == DL_RelatedDisplay &&
+          element->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
+        relatedDisplayCreateNewDisplay(displayInfo,
+           &(element->structure.relatedDisplay->display[0]));
+      }
+    }
   }
 }
 
@@ -237,503 +253,406 @@ void handleButtonPress(
   DisplayInfo *displayInfo = (DisplayInfo *) clientData;
   XButtonEvent *xEvent = (XButtonEvent *)event;
   int j, k;
-  Position x0, y0, x1, y1, initialX0, initialY0;
-  Dimension dx0, dy0, daWidth, daHeight;
-  Boolean unselectedOne, validDrag, validResize;
-  int numSelected, minSize;
-  DlElement **array;
-  int numElements, arraySize;
+  Position x0, y0, x1, y1;
+  Dimension daWidth, daHeight;
+  Boolean validDrag, validResize;
+  int minSize;
   XEvent newEvent;
-  Boolean objectDataOnly, foundVertex = False, foundPoly;
+  Boolean objectDataOnly, foundVertex = False, foundPoly = False;
   int newEventType;
-  Arg args[2];
-  DisplayInfo *di, *nextDI;
+  DisplayInfo *di;
+  DlElement *dlElement;
 
-
-
-/* if in execute mode - update currentDisplayInfo and simply return */
+  /* if in execute mode - update currentDisplayInfo and simply return */
   if (globalDisplayListTraversalMode == DL_EXECUTE) {
      currentDisplayInfo = displayInfo;
      return;
   }
 
   /* loop over all displays, unhighlight and unselect previously
-	selected elements */
+   * selected elements
+   */
+
   di = displayInfoListHead->next;
-  while (di != NULL) {
-     nextDI = di->next;
-     if (di != displayInfo) {
-       currentDisplayInfo = di;
-       unhighlightSelectedElements();
-       unselectSelectedElements();
-     }
-     di = nextDI;
+  while (di) {
+    if (di != displayInfo) {
+      currentDisplayInfo = di;
+      unhighlightSelectedElements();
+      destroyDlDisplayList(di->selectedDlElementList);
+    }
+    di = di->next;
   }
 
   currentDisplayInfo = displayInfo;
-  currentColormap = currentDisplayInfo->dlColormap;
+  currentColormap = currentDisplayInfo->colormap;
   currentColormapSize = currentDisplayInfo->dlColormapSize;
 
-/* and always make sure the window is on top and has input focus */
+  /* and always make sure the window is on top and has input focus */
   XRaiseWindow(display,XtWindow(displayInfo->shell));
   XSetInputFocus(display,XtWindow(displayInfo->shell),
-		RevertToParent,CurrentTime);
+                 RevertToParent,CurrentTime);
 
+  x0 = event->xbutton.x;
+  y0 = event->xbutton.y;
   if (w != displayInfo->drawingArea) {
-  /* other widget trapped the button press, therefore "normalize" */
+    Dimension dx0, dy0;
+    /* other widget trapped the button press, therefore "normalize" */
     XtVaGetValues(w,XmNx,&dx0,XmNy,&dy0,NULL);
-    dx0 += event->xbutton.x;
-    dy0 += event->xbutton.y;
-    x0 = dx0;
-    y0 = dy0;
-  } else {
-    x0 = event->xbutton.x;
-    y0 = event->xbutton.y;
+    x0 += dx0;
+    y0 += dy0;
   }
 
-/*
- * handle differently, based on currentActionType
- */
+  /*
+   * handle differently, based on currentActionType
+   */
 
-/* change drawingArea's cursor back to the appropriate cursor */
+  /* change drawingArea's cursor back to the appropriate cursor */
   XDefineCursor(display,XtWindow(currentDisplayInfo->drawingArea),
-		(currentActionType == SELECT_ACTION ?
-		 rubberbandCursor : crosshairCursor));
+                (currentActionType == SELECT_ACTION ?
+                 rubberbandCursor : crosshairCursor));
 
 
-/**************************************************************************
- ***			SELECT_ACTION					***
- **************************************************************************/
+  /**********************************
+   ***       SELECT_ACTION        ***
+   **********************************/
 
- if (currentActionType == SELECT_ACTION) {
+  if (currentActionType == SELECT_ACTION) {
 
-/****************************************
- * MB1       =  select (rubberband)	*
- * shift-MB1 =  multi-select		*
- * MB2       =  adjust (drag)		*
- * ctrl-MB2  =  adjust( resize)		*
- * MB3       =  menu			*
- ****************************************/
-
-
-    switch (xEvent->button) {
-
-/**************************************************************/
-/**************************************************************/
-      case Button1:
-
-	if (xEvent->state & ControlMask) {
- /**********************/
- /* Ctrl-MB1 = NOTHING */
- /**********************/
-	  break;
-	}
-
-  /* see if this initial MB1-press is on a polyline/polygon vertex */
-	array = selectedElementsLookup(displayInfo->dlElementListTail,
-			x0,y0,x0,y0,&arraySize,&numElements);
-  /* handle point grabs of polyline/polygon if already selected */
-	foundPoly = False;
-	for (k = 0; k < displayInfo->numSelectedElements; k++) {
-	   if (displayInfo->selectedElementsArray[k] == array[0] &&
-	       (array[0]->type == DL_Polyline || array[0]->type == DL_Polygon)){
-		foundPoly = True;
-		break;	/* out of for */
-	   }
-	}
-	if (foundPoly) {
-	  if (array[0]->type == DL_Polyline) {	
-#define EPSILON 6
-	    for (j = 0; j < array[0]->structure.polyline->nPoints; j++) {
-		if (array[0]->structure.polyline->points[j].x >= x0 - EPSILON &&
-		    array[0]->structure.polyline->points[j].x <= x0 + EPSILON &&
-		    array[0]->structure.polyline->points[j].y >= y0 - EPSILON &&
-		    array[0]->structure.polyline->points[j].y <= y0 + EPSILON) {
-			handlePolylineVertexManipulation(
-				array[0]->structure.polyline,j);
-			foundVertex = True;
-			break;	/* to exit the for loop */
-		}
-	    }
-	    if (foundVertex) break;	/* exit the case */
-	  } else if (array[0]->type == DL_Polygon) {	
-	    for (j = 0; j < array[0]->structure.polyline->nPoints; j++) {
-		if (array[0]->structure.polyline->points[j].x >= x0 - EPSILON &&
-		    array[0]->structure.polyline->points[j].x <= x0 + EPSILON &&
-		    array[0]->structure.polyline->points[j].y >= y0 - EPSILON &&
-		    array[0]->structure.polyline->points[j].y <= y0 + EPSILON) {
-			handlePolygonVertexManipulation(
-				array[0]->structure.polygon,j);
-			foundVertex = True;
-			break;	/* to exit the for loop */
-		}
-	    }
-#undef EPSILON
-	    if (foundVertex) break;	/* exit the case */
-	  }
-	} else {
-/* not polyline/polygon pick, generate a region... */
-
-	  if (array != NULL) free((char *)array);
-	  numElements = 0;
-
-	  doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
-	  array = selectedElementsLookup(displayInfo->dlElementListTail,
-			x0,y0,x1,y1,&arraySize,&numElements);
-	  if (array == NULL) break;	/* exit this case */
-
-
-
-	}
-
-
-
-
-	if (xEvent->state & ShiftMask) {
- /*******************************************/
- /* Shift-MB1 = EXTENDED (AUGMENTED) SELECT */
- /*******************************************/
-	   numSelected = highlightAndAugmentSelectedElements(array,
-			arraySize,numElements);
-	} else {
- /**********************************************************************/
- /* MB1 = SET/RESET SELECT (if element already selected - deselect it) */
- /**********************************************************************/
-	   unselectedOne = False;
-
-/* if found vertex for editing, don't deselect */
-	   if (!foundVertex) {
-	     if (numElements == 1 && displayInfo->numSelectedElements >= 1) {
-	   /* see if need to de-select something */
-	       unselectedOne = unhighlightAndUnselectElement(array[0],
-			&numSelected);
-	     }
-	     if (!unselectedOne) {
-	       numSelected = highlightAndSetSelectedElements(array,arraySize,
-			numElements);
-	     }
-	   }
-	}
-
-	if (!foundVertex) {
-	  clearResourcePaletteEntries();
-	  if (numSelected == 1) {
-	    currentElementType = displayInfo->selectedElementsArray[0]->type;
-	    setResourcePaletteEntries();
-	  }
-	}
-
-	break;
-
-
-
-
-/**************************************************************/
-/**************************************************************/
-      case Button2:
-
-	if (xEvent->state & ShiftMask) {
- /***********************/
- /* Shift-MB2 = NOTHING */
- /***********************/
-	  break;
-	}
-
-	array = selectedElementsLookup(displayInfo->dlElementListTail,
-			x0,y0,x0,y0,&arraySize,&numElements);
-	if (array == NULL) break;	/* exit this case */
-
-
-	if (xEvent->state & ControlMask) {
-
-  /*********************/
-  /* Ctrl-MB2 = RESIZE */
-  /*********************/
-
-	 if (alreadySelected(array[0])) {
-
-	 /* element already selected - resize it and any others */
-	 /* (MDA) ?? separate resize of display here? */
-
-	  /* unhighlight currently selected elements */
-	    unhighlightSelectedElements();
-	  /* this element already selected: resize all selected elements */
-	    validResize = doResizing(XtWindow(displayInfo->drawingArea),
-						x0,y0,&x1,&y1);
-	    if (validResize) {
-	      updateResizedElements(x0,y0,x1,y1);
-	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-		medmMarkDisplayBeingEdited(currentDisplayInfo);
-	      }
-	    }
-	  /* highlight currently selected elements */
-	    numSelected = highlightSelectedElements();
-	  /* if only one selected, use first one (only) in list */
-	    if (numSelected == 1) {
-		objectDataOnly = True;
-		updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-	    }
-
-	 } else {
-
-	/* this element not already selected, deselect others and resize it */
-	  unhighlightSelectedElements();
-	  unselectSelectedElements();
-	  clearResourcePaletteEntries();
-	  numSelected = highlightAndSetSelectedElements(array,arraySize,
-			numElements);
-	/* unhighlight currently selected elements */
-	  unhighlightSelectedElements();
-	  validResize = doResizing(XtWindow(displayInfo->drawingArea),
-						x0,y0,&x1,&y1);
-	  if (validResize) {
-	    updateResizedElements(x0,y0,x1,y1);
-	    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	      medmMarkDisplayBeingEdited(currentDisplayInfo);
-	    }
-	  }
-	/* highlight currently selected elements */
-	  numSelected = highlightSelectedElements();
-	/* if only one selected, use first one (only) in list */
-	  if (numSelected == 1) {
-	     objectDataOnly = True;
-	     updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-	  }
-	 }
-
-	} else {
-  /************************/
-  /* MB2 = ADJUST (MOVE)  */
-  /************************/
-
-	 XtSetArg(args[0],XmNwidth,&daWidth);
-	 XtSetArg(args[1],XmNheight,&daHeight);
-	 XtGetValues(displayInfo->drawingArea,args,2);
-	 if (alreadySelected(array[0])) {
-
-	 /* element already selected - move it and any others */
-	    /* unhighlight currently selected elements */
-	    unhighlightSelectedElements();
-	    /* this element already selected: move all selected elements */
-	    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
-					daWidth,daHeight,x0,y0,&x1,&y1);
-	    if (validDrag) {
-	      updateDraggedElements(x0,y0,x1,y1);
-	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-	        medmMarkDisplayBeingEdited(currentDisplayInfo);
-	      }
-	    }
-	    /* highlight currently selected elements */
-	    numSelected = highlightSelectedElements();
-	    /* if only one selected, use first one (only) in list */
-	    if (numSelected == 1) {
-	       objectDataOnly = True;
-	       updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-	    }
-
-	 } else {
-
-	  /* this element not already selected, deselect others and move it */
-	    unhighlightSelectedElements();
-	    unselectSelectedElements();
-	    numSelected = highlightAndSetSelectedElements(array,arraySize,
-			numElements);
-	    /* unhighlight currently selected elements */
-	    unhighlightSelectedElements();
-	    validDrag = doDragging(XtWindow(displayInfo->drawingArea),
-					daWidth,daHeight,x0,y0,&x1,&y1);
-	    if (validDrag) {
-	      updateDraggedElements(x0,y0,x1,y1);
-	      if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-		medmMarkDisplayBeingEdited(currentDisplayInfo);
-	      }
-	    }
-	    /* highlight currently selected elements */
-	    numSelected = highlightSelectedElements();
-	    /* if only one selected, use first one (only) in list */
-	    if (numSelected ==1 ) {
-	       objectDataOnly = True;
-	       updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-	    }
-	 }
-	}
-
-	break;
-
-
-      case Button3:
-  /***************************************************************************/
-  /* MB3 = MENU  --- this is really handled in popupMenu/popdownMenu handler */
-  /***************************************************************************/
-	break;
-    }
-
-
-
-
-/**************************************************************************
- ***			CREATE_ACTION					***
- **************************************************************************/
-
- } else if (currentActionType == CREATE_ACTION) {
-		DlElement *dlElement = 0;
-
-/************************************************
- * MB1       =  create (rubberband)		*
- * MB2       =  adjust (drag)     {as above}	*
- * ctrl-MB2  =  adjust( resize)			*
- * MB3       =  menu				*
- ************************************************/
+    /****************************************
+     * MB1       =  select (rubberband)     *
+     * shift-MB1 =  multi-select            *
+     * MB2       =  adjust (drag)           *
+     * ctrl-MB2  =  adjust( resize)         *
+     * MB3       =  menu                    *
+     ****************************************/
 
     switch (xEvent->button) {
-
       case Button1:
-  /*****************************/
-  /* MB1 = CREATE (Rubberband) */
-  /*****************************/
-  /* see how to handle text - either rectangular-create or type-create */
-	XWindowEvent(display,XtWindow(displayInfo->drawingArea),
-		ButtonReleaseMask|Button1MotionMask,&newEvent);
-	newEventType = newEvent.type;
-	XPutBackEvent(display,&newEvent);
+        if (xEvent->state & ControlMask) {
+          /* Ctrl-MB1 = NOTHING */
+          break;
+        } else
+        if (xEvent->state & ShiftMask) {
+          /* Shift-MB1 = toggle and append selections */
+          doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
+          selectedElementsLookup(displayInfo->dlElementList,
+              x0,y0,x1,y1,tmpDlElementList);
+          if (!IsEmpty(tmpDlElementList)) {
+            DlElement *pE = FirstDlElement(tmpDlElementList);
+            int found = False;
+            unhighlightSelectedElements();
+            while (pE) {
+              DlElement *pT =
+                  FirstDlElement(displayInfo->selectedDlElementList);
+              int found = False;
+              /* if found, remove it from the selected list */
+              while (pT) {
+                if (pT->structure.element == pE->structure.element) {
+                  removeDlElement(displayInfo->selectedDlElementList,pT);
+                  destroyDlElement(pT);
+                  found = True;
+                  break;
+                }
+                pT = pT->next;
+              }
+              /* if not found, add it to the selected list */
+              if (!found) {
+                DlElement *pF = pE;
+                pE = pE->next;
+                removeDlElement(tmpDlElementList,pF);
+                appendDlElement(displayInfo->selectedDlElementList,pF);
+              } else {
+                pE = pE->next;
+              }
+            }
+            highlightSelectedElements();
+            destroyDlDisplayList(tmpDlElementList);
+          }
+        } else {
+          /* handle the MB1 */
+          /* see whether this is a vertex edit */
+          selectedElementsLookup(displayInfo->dlElementList,
+              x0,y0,x0,y0,tmpDlElementList);
+          if (NumberOfDlElement(displayInfo->selectedDlElementList) == 1) {
+            DlElement *dlElement =
+              FirstDlElement(displayInfo->selectedDlElementList)
+              ->structure.element;
+            if (dlElement->run->editVertex) {
+              unhighlightSelectedElements();
+              if (dlElement->run->editVertex(dlElement,x0,y0)) {
+                foundVertex = True;
+              }
+              highlightSelectedElements();
+            }
+          }
+          destroyDlDisplayList(tmpDlElementList);
+          /* if this is not a vertex edit */
+          if (!foundVertex) {
+            doRubberbanding(XtWindow(displayInfo->drawingArea),&x0,&y0,&x1,&y1);
+            selectedElementsLookup(displayInfo->dlElementList,
+                  x0,y0,x1,y1,tmpDlElementList);
+            if (!IsEmpty(tmpDlElementList)) {
+              unhighlightSelectedElements();
+              destroyDlDisplayList(displayInfo->selectedDlElementList);
+              appendDlList(displayInfo->selectedDlElementList,tmpDlElementList);
+              highlightSelectedElements();
+              destroyDlDisplayList(tmpDlElementList);
+            }
+          }
+        }
+        if (!foundVertex) {
+          clearResourcePaletteEntries();
+          if (NumberOfDlElement(currentDisplayInfo->selectedDlElementList)==1){
+              currentElementType =
+                  FirstDlElement(currentDisplayInfo->selectedDlElementList)
+                      ->structure.element->type;
+            setResourcePaletteEntries();
+          }
+        }
+        break;
 
-	if (currentElementType == DL_Text && newEventType == ButtonRelease) {
-	  dlElement = handleTextCreate(x0,y0);
-	} else if (currentElementType == DL_Polyline) {
-	  dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
-	} else if (currentElementType == DL_Line) {
-	  dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
-	} else if (currentElementType == DL_Polygon) {
-	  dlElement = handlePolygonCreate(x0,y0);
-	} else {
-  /* everybody else has "rectangular" creates */
-	  initialX0 = x0;
-	  initialY0 = y0;
-	  doRubberbanding(XtWindow(displayInfo->drawingArea),
-		&x0,&y0,&x1,&y1);
-	  /* pick some semi-sensible size for widget type elements */
-	  if (ELEMENT_HAS_WIDGET(currentElementType)) minSize = 12;
-	  else minSize = 2;
-	/* actually create elements */
-	  dlElement = handleRectangularCreates(currentElementType, x0, y0,
-			MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
-	}
-  if (dlElement) {
-		if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
-			medmMarkDisplayBeingEdited(currentDisplayInfo);
-		}
-    appendDlElement(&(currentDisplayInfo->dlElementListTail),dlElement);
-    (*dlElement->dmExecute)(currentDisplayInfo,
-              (XtPointer) dlElement->structure.rectangle,FALSE);
- 
-    unhighlightSelectedElements();
-    unselectSelectedElements();
-    clearResourcePaletteEntries();
-    array = (DlElement **) malloc(1*sizeof(DlElement *));
-    array[0] = dlElement;
-    highlightAndSetSelectedElements(array,1,1);
-    setResourcePaletteEntries();
-  }
-	break;
 
+      /**************************************************************/
+      /**************************************************************/
       case Button2:
-  /****************/
-  /* MB2 = ADJUST */
-  /****************/
-	break;
+        if (xEvent->state & ShiftMask) {
+          /***********************/
+          /* Shift-MB2 = NOTHING */
+          /***********************/
+          break;
+        }
+	      selectedElementsLookup(displayInfo->dlElementList,
+                    x0,y0,x0,y0,tmpDlElementList);
+        if (IsEmpty(tmpDlElementList)) break;
+
+        if (xEvent->state & ControlMask) {
+          /*********************/
+          /* Ctrl-MB2 = RESIZE */
+          /*********************/
+          if (alreadySelected(FirstDlElement(tmpDlElementList))) {
+            /* element already selected - resize it and any others */
+            /* (MDA) ?? separate resize of display here? */
+            /* unhighlight currently selected elements */
+            unhighlightSelectedElements();
+            /* this element already selected: resize all selected elements */
+            validResize = doResizing(XtWindow(displayInfo->drawingArea),
+                              x0,y0,&x1,&y1);
+            if (validResize) {
+              updateResizedElements(x0,y0,x1,y1);
+              if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+                medmMarkDisplayBeingEdited(currentDisplayInfo);
+              }
+            }
+            /* highlight currently selected elements */
+            highlightSelectedElements();
+            /* if only one selected, use first one (only) in list */
+            if (currentDisplayInfo->selectedDlElementList->count == 1) {
+              objectDataOnly = True;
+              updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+            }
+          } else {
+            /* this element not already selected,
+               deselect others and resize it */
+            unhighlightSelectedElements();
+            destroyDlDisplayList(currentDisplayInfo->selectedDlElementList);
+            appendDlList(currentDisplayInfo->selectedDlElementList,
+                         tmpDlElementList);
+            validResize = doResizing(XtWindow(displayInfo->drawingArea),
+                                     x0,y0,&x1,&y1);
+            if (validResize) {
+              updateResizedElements(x0,y0,x1,y1);
+              if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+                medmMarkDisplayBeingEdited(currentDisplayInfo);
+              }
+	          }
+            /* highlight currently selected elements */
+            highlightSelectedElements();
+            /* if only one selected, use first one (only) in list */
+            clearResourcePaletteEntries();
+            if (currentDisplayInfo->selectedDlElementList->count == 1) {
+              objectDataOnly = True;
+              updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+            } 
+          }
+        } else {
+          /************************/
+          /* MB2 = ADJUST (MOVE)  */
+          /************************/
+          XtVaGetValues(displayInfo->drawingArea,
+              XmNwidth,&daWidth,
+              XmNheight,&daHeight,
+              NULL);
+#if -1
+          printf("\nTemp. element list :\n");
+          dumpDlElementList(tmpDlElementList);
+#endif
+          if (alreadySelected(FirstDlElement(tmpDlElementList))) {
+            /* element already selected - move it and any others */
+            /* unhighlight currently selected elements */
+            unhighlightSelectedElements();
+            /* this element already selected: move all selected elements */
+            validDrag = doDragging(XtWindow(displayInfo->drawingArea),
+                                daWidth,daHeight,x0,y0,&x1,&y1);
+            if (validDrag) {
+              updateDraggedElements(x0,y0,x1,y1);
+              if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+                medmMarkDisplayBeingEdited(currentDisplayInfo);
+              }
+            }
+            /* highlight currently selected elements */
+            highlightSelectedElements();
+            /* if only one selected, use first one (only) in list */
+            if (currentDisplayInfo->selectedDlElementList->count == 1) {
+               objectDataOnly = True;
+               updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+            }
+          } else {
+            /* this element not already selected,
+               deselect others and move it */
+            unhighlightSelectedElements();
+            destroyDlDisplayList(currentDisplayInfo->selectedDlElementList);
+            appendDlList(currentDisplayInfo->selectedDlElementList,
+                         tmpDlElementList);
+            validDrag = doDragging(XtWindow(displayInfo->drawingArea),
+                                   daWidth,daHeight,x0,y0,&x1,&y1);
+            printf("x0=%d, y0=%d, x1=%d, y1=%d\n",x0,y0,x1,y1);
+            if (validDrag) {
+              updateDraggedElements(x0,y0,x1,y1);
+              if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+                medmMarkDisplayBeingEdited(currentDisplayInfo);
+              }
+            }
+            /* highlight currently selected elements */
+            highlightSelectedElements();
+            /* if only one selected, use first one (only) in list */
+            if (currentDisplayInfo->selectedDlElementList->count ==1 ) {
+              objectDataOnly = True;
+              updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+            }
+          }
+        }
+        destroyDlDisplayList(tmpDlElementList);
+        break;
 
       case Button3:
-  /***************************************************************************/
-  /* MB3 = MENU  --- this is really handled in popupMenu/popdownMenu handler */
-  /***************************************************************************/
-	break;
+        /************************************************************/
+        /* MB3 = MENU  --- this is really handled in                */
+        /*                 popupMenu/popdownMenu handler            */
+        /************************************************************/
+        break;
     }
+  } else
+  if (currentActionType == CREATE_ACTION) {
+    /**********************************
+     ***			CREATE_ACTION					***
+     **********************************/
+    DlElement *dlElement = 0;
+    /************************************************
+     * MB1       =  create (rubberband)		*
+     * MB2       =  adjust (drag)     {as above}	*
+     * ctrl-MB2  =  adjust( resize)			*
+     * MB3       =  menu				*
+     ************************************************/
+    switch (xEvent->button) {
+    case Button1:
+      /*****************************/
+      /* MB1 = CREATE (Rubberband) */
+      /*****************************/
+      /* see how to handle text -
+         either rectangular-create or type-create */
+      XWindowEvent(display,XtWindow(displayInfo->drawingArea),
+          ButtonReleaseMask|Button1MotionMask,&newEvent);
+      newEventType = newEvent.type;
+      XPutBackEvent(display,&newEvent);
+
+      if (currentElementType == DL_Text &&
+          newEventType == ButtonRelease) {
+        dlElement = handleTextCreate(x0,y0);
+      } else
+      if (currentElementType == DL_Polyline) {
+     	  dlElement = handlePolylineCreate(x0,y0,(Boolean)False);
+      } else
+      if (currentElementType == DL_Line) {
+        dlElement = handlePolylineCreate(x0,y0,(Boolean)True);
+      } else
+      if (currentElementType == DL_Polygon) {
+        dlElement = handlePolygonCreate(x0,y0);
+      } else {
+        /* everybody else has "rectangular" creates */
+        doRubberbanding(XtWindow(displayInfo->drawingArea),
+                        &x0,&y0,&x1,&y1);
+        /* pick some semi-sensible size for widget type elements */
+        if (ELEMENT_HAS_WIDGET(currentElementType))
+          minSize = 12;
+        else
+          minSize = 2;
+        /* actually create elements */
+        dlElement = handleRectangularCreates(currentElementType, x0, y0,
+                              MAX(minSize,x1 - x0),MAX(minSize,y1 - y0));
+      }
+      if (dlElement) {
+        DlElement *pSE = 0;
+        if (currentDisplayInfo->hasBeenEditedButNotSaved == False) {
+          medmMarkDisplayBeingEdited(currentDisplayInfo);
+        }
+        appendDlElement(currentDisplayInfo->dlElementList,dlElement);
+        (*dlElement->run->execute)(currentDisplayInfo,dlElement);
+
+        unhighlightSelectedElements();
+        destroyDlDisplayList(displayInfo->selectedDlElementList);
+        pSE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
+        if (pSE) {
+          appendDlElement(displayInfo->selectedDlElementList,pSE);
+        }
+        currentElementType =
+          FirstDlElement(currentDisplayInfo->selectedDlElementList)
+            ->structure.element->type;
+        highlightSelectedElements();
+      }
+      break;
+    case Button2:
+      /****************/
+      /* MB2 = ADJUST */
+      /****************/
+	    break;
+
+    case Button3:
+      /********************************************/
+      /* MB3 = MENU  --- this is really           */
+      /* handled in popupMenu/popdownMenu handler */
+      /********************************************/
+	    break;
+    }
+#if -1
+    printf("\nselected element list :\n");
+    dumpDlElementList(displayInfo->selectedDlElementList);
+#endif
     /* now toggle back to SELECT_ACTION from CREATE_ACTION */
     if (objectS != NULL) {
       XmToggleButtonSetState(objectPaletteSelectToggleButton,True,True);
     }
     setActionToSelect();
-
- }
-
-}
-
-/*
- *  function to highlight the currently selected elements
- *	RETURNS: the current TOTAL number of elements selected
- */
-int highlightSelectedElements()
-{
-  int i;
-  DisplayInfo *cdi; /* abbreviation for currentDisplayInfo for clarity */
-/*
- * as usual, the type of the union is unimportant as long as object
- *	is the first entry in all element structures
- *
- *	N.B.: need to highlight in both window and pixmap in case
- *	there are expose events...
- */
-
-/* simply return if no selected display */
- if (currentDisplayInfo == NULL) return 0;
- 
- cdi = currentDisplayInfo;
-
- if (cdi->selectedElementsArray != NULL) {
-
-  for (i = 0; i < cdi->numSelectedElements; i++) {
-
-/* draw the highlight (note that this could draw or undraw it actually) */
-   if (cdi->selectedElementsArray[i] != NULL) {
-
-    if (cdi->selectedElementsArray[i]->type == DL_Display) {
-  /* if DL_Display draw inside  - NB: x/y are for position of shell only
-   *  hence the drawing is always relative to 0,0,w,h */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.width -
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.height -
-					2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.width -
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.height -
-					2*HIGHLIGHT_LINE_THICKNESS);
-    } else {
-  /* else draw outside */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea), highlightGC,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.x -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.y -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.height +
-					2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap, highlightGC,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.x -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.y -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.height + 
-					2*HIGHLIGHT_LINE_THICKNESS);
-    }
-   }
+    clearResourcePaletteEntries();
+    setResourcePaletteEntries();
   }
- }
-
- if (cdi->numSelectedElements > 0) cdi->selectedElementsAreHighlighted = True;
- return (cdi->numSelectedElements);
 }
 
+void highlightSelectedElements()
+{
+  DisplayInfo *cdi; /* abbreviation for currentDisplayInfo for clarity */
+  DlElement *dlElement;
 
-
+  if (!currentDisplayInfo) return;
+  cdi = currentDisplayInfo;
+  if (IsEmpty(cdi->selectedDlElementList)) return;
+  if (cdi->selectedElementsAreHighlighted) return;
+  cdi->selectedElementsAreHighlighted = True;
+  dlElement = FirstDlElement(cdi->selectedDlElementList);
+  while (dlElement) {
+    toggleSelectedElementHighlight(dlElement->structure.element);
+    dlElement = dlElement->next;
+  }
+}
 
 /*
  *  function to unhighlight the currently highlighted (and  therfore
@@ -741,287 +660,20 @@ int highlightSelectedElements()
  */
 void unhighlightSelectedElements()
 {
-  int i;
-  DisplayInfo *cdi; /* abbreviation for currentDisplayInfo for clarity */
-/*
- * as usual, the type of the union is unimportant as long as object
- *	is the first entry in all element structures
- *
- *	N.B.: need to highlight in both window and pixmap in case
- *	there are expose events...
- */
+  DisplayInfo *pDI; /* abbreviation for currentDisplayInfo for clarity */
+  DlElement *dlElement;
 
-/* simply return if no selected display */
- if (currentDisplayInfo == NULL) return;
- 
- cdi = currentDisplayInfo;
-/*
- * if elements are not highlighted, there's nothing to unhighlight,
- *	simply return
- */
- if (! cdi->selectedElementsAreHighlighted) return;
-
- cdi->selectedElementsAreHighlighted = FALSE;
-
- if (cdi->selectedElementsArray != NULL) {
-  for (i = 0; i < cdi->numSelectedElements; i++) {
-
-/* undraw the highlight */
-   if (cdi->selectedElementsArray[i] != NULL) {
-
-    if (cdi->selectedElementsArray[i]->type == DL_Display) {
-  /* if DL_Display draw inside  - NB: x/y are for position of shell only
-   *  hence the drawing is always relative to 0,0,w,h */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.width -
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.height -
-					2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-					0 + HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.width -
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.display->object.height -
-					2*HIGHLIGHT_LINE_THICKNESS);
-    } else {
-  /* else draw outside */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea), highlightGC,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.x -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.y -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.height +
-					2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap, highlightGC,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.x -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.y -
-					HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-					2*HIGHLIGHT_LINE_THICKNESS,
-	cdi->selectedElementsArray[i]->structure.rectangle->object.height + 
-					2*HIGHLIGHT_LINE_THICKNESS);
-    }
-   }
+  if (!currentDisplayInfo) return;
+  pDI = currentDisplayInfo;
+  if (IsEmpty(pDI->selectedDlElementList)) return;
+  if (!pDI->selectedElementsAreHighlighted) return;
+  pDI->selectedElementsAreHighlighted = False;
+  dlElement = FirstDlElement(pDI->selectedDlElementList);
+  while (dlElement) {
+    toggleSelectedElementHighlight(dlElement->structure.element);
+    dlElement = dlElement->next;
   }
- }
 }
-
-
-
-/*
- * function to unselect any selected elements
- */
-void unselectSelectedElements()
-{
- if (currentDisplayInfo != NULL)  {
-   if (currentDisplayInfo->selectedElementsArray != NULL) {
-     currentDisplayInfo->numSelectedElements = 0;
-     free ((char *) currentDisplayInfo->selectedElementsArray);
-     currentDisplayInfo->selectedElementsArray = NULL;
-     currentDisplayInfo->selectedElementsArraySize = 0;
-   }
- }
-}
-
-
-
-/*
- *  function to set and highlight selected elements
- *	first undraw the old element highlights (if there are any)
- *	then draw the new element highlights (and update selected
- *	element array)
- *	RETURNS: the current TOTAL number of elements selected
- */
-int highlightAndSetSelectedElements(
-  DlElement **array,
-  int arraySize, 
-  int numElements)
-{
-  int i;
-  DisplayInfo *cdi;
-/*
- * as usual, the type of the union is unimportant as long as object
- *	is the first entry in all element structures
- *
- *	N.B.: need to highlight in both window and pixmap in case
- *	there are expose events...
- */
-
-
-/* if no current display, simply return */
- if (currentDisplayInfo == NULL) return 0;
-
- cdi = currentDisplayInfo;
-
-/* undraw the old highlights */
- unhighlightSelectedElements();
-
-/* unselect any selected elements */
- unselectSelectedElements();
-
- if (array != NULL) {
-  for (i = 0; i < numElements; i++) {
-
-/* draw the new highlight */
-  if (array[i] != NULL && cdi != NULL) {
-
-    if (array[i]->type == DL_Display) { /* if display draw inside */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea), highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height - 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height -
-				2*HIGHLIGHT_LINE_THICKNESS);
-    } else {				/* else draw outside */
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-	array[i]->structure.rectangle->object.x-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	array[i]->structure.rectangle->object.x - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-    }
-   }
-  }
-  cdi->selectedElementsArray = array;
-  cdi->selectedElementsArraySize = arraySize;
-  cdi->numSelectedElements = numElements;
-  if (cdi->numSelectedElements > 0) cdi->selectedElementsAreHighlighted = TRUE;
- }
-
- return(cdi->numSelectedElements);
-}
-
-
-
-
-
-
-
-/*
- *  function to augment and highlight selected elements
- *	draw the new element highlights (and update selected element array)
- *	RETURNS: the current TOTAL number of elements selected
- */
-#ifdef __cplusplus
-int highlightAndAugmentSelectedElements(
-  DlElement **array,
-  int ,
-  int numElements)
-#else
-int highlightAndAugmentSelectedElements(
-  DlElement **array,
-  int arraySize,
-  int numElements)
-#endif
-{
-  int i;
-  DisplayInfo *cdi;
-/*
- * as usual, the type of the union is unimportant as long as object
- *	is the first entry in all element structures
- *
- *	N.B.: need to highlight in both window and pixmap in case
- *	there are expose events...
- */
-
-
-/* if no current display, simply return */
- if (currentDisplayInfo == NULL) return 0;
-
- cdi = currentDisplayInfo;
-
- if (array != NULL && numElements != 0) {
-
-  for (i = 0; i < numElements; i++) {
-
-/* draw the new highlight */
-  if (array[i] != NULL) {
-
-    if (array[i]->type == DL_Display) { /* if display draw inside */
-
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height - 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height -
-				2*HIGHLIGHT_LINE_THICKNESS);
-
-    } else {				/* else draw outside */
-
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-	array[i]->structure.rectangle->object.x-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	array[i]->structure.rectangle->object.x - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-    }
-   }
-  }
-
-  if ( cdi->selectedElementsArray == NULL ||
-      (cdi->numSelectedElements+numElements) > cdi->selectedElementsArraySize){
-  /* realloc behaves like malloc if 1st arg (ptr) is NULL under XPG3
-     (but apparently not SUNOS 4.1.2) */
-     if (cdi->selectedElementsArray != NULL) {
-	/* this implies cdi->numSelectedElements == 0 */
-#if defined(__cplusplus) && !defined(__GNUG__)
-        cdi->selectedElementsArray = (DlElement **) realloc(
-		(malloc_t) cdi->selectedElementsArray,
-		(cdi->numSelectedElements + numElements)*sizeof(DlElement *));
-#else
-        cdi->selectedElementsArray = (DlElement **) realloc(
-		cdi->selectedElementsArray,
-		(cdi->numSelectedElements + numElements)*sizeof(DlElement *));
-#endif
-        cdi->selectedElementsArraySize = cdi->numSelectedElements + numElements;
-     } else {
-        cdi->selectedElementsArray = (DlElement **) malloc(
-		(size_t) (numElements*sizeof(DlElement *)));
-        cdi->selectedElementsArraySize = numElements;
-     }
-  }
-
-  for (i = 0; i < numElements; i++)
-     cdi->selectedElementsArray[cdi->numSelectedElements + i] = array[i];
-
-/* now free temporary array, and update numSelectedElements  */
-  free ((char *) array);
-  cdi->numSelectedElements = cdi->numSelectedElements + numElements;
-
- }
-
- return(cdi->numSelectedElements);
-
-}
-
-
-
 
 /*
  *  function to determine if specified element is already in selected list
@@ -1035,138 +687,37 @@ Boolean unhighlightAndUnselectElement(
   DlElement *element,
   int *numSelected)
 {
-  int i, j, elementIndex;
-  DlElement **array;
-  DisplayInfo *cdi;
-/*
- * as usual, the type of the union is unimportant as long as object
- *	is the first entry in all element structures
- *
- *	N.B.: need to highlight in both window and pixmap in case
- *	there are expose events...
- */
-
-/* simply return if no current display */
- if (currentDisplayInfo == NULL) return False;
-
- cdi = currentDisplayInfo;
- elementIndex = -1;
- if (cdi->selectedElementsArray != NULL) {
-   for (i = 0; i < cdi->numSelectedElements; i++) {
-	if (cdi->selectedElementsArray[i] == element) elementIndex = i;
-   }
- }
-
- /* element not found - no changes */
- if (elementIndex < 0) {
-	*numSelected = cdi->numSelectedElements;
-	return (False);
- }
-
-
-/* for convenience of notation below: */
-  array = cdi->selectedElementsArray;
-  i = elementIndex;
-
-/* undraw the highlight */
-  if (array[i] != NULL) {
-
-    if (array[i]->type == DL_Display) { /* if display draw inside */
-
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height - 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	0 + HIGHLIGHT_LINE_THICKNESS, 0 + HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.width-2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.display->object.height -
-				2*HIGHLIGHT_LINE_THICKNESS);
-
-    } else {				/* else draw outside */
-
-      XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
-	array[i]->structure.rectangle->object.x-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y-HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-      XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
-	array[i]->structure.rectangle->object.x - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.y - HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.width+2*HIGHLIGHT_LINE_THICKNESS,
-	array[i]->structure.rectangle->object.height + 
-				2*HIGHLIGHT_LINE_THICKNESS);
-    }
-   }
-
-
-/*
- * now remove the element from the list/array and move everybody
- *	downstream up one element
- */
-  for (j = elementIndex; j < cdi->numSelectedElements-1; j++) {
-      cdi->selectedElementsArray[j] = cdi->selectedElementsArray[j+1];
-  }
-  cdi->selectedElementsArray[cdi->numSelectedElements-1] = NULL;
-  cdi->numSelectedElements--;
-
-  if (cdi->numSelectedElements == 0) {
-    free ((char *)cdi->selectedElementsArray);
-    cdi->selectedElementsArray = NULL;
-  }
-
- *numSelected = cdi->numSelectedElements;
- return(True);
-
-}
-
-
-
-/*
- * recursive function to move Composite objects (and all children, which
- *	may be Composite objects)
- */
-void moveCompositeChildren(DisplayInfo *cdi, DlElement *element,
-	int xOffset, int yOffset, Boolean moveWidgets)
-{
-  DlElement *ele;
-  Widget widget;
   int j;
+  DisplayInfo *cdi;
+  DlElement *dlElement = 0;
 
-  if (element->type == DL_Composite) {
-   ele = ((DlElement *)element->structure.composite->dlElementListHead)->next;
-   while (ele != NULL) {
-    if (ELEMENT_IS_RENDERABLE(ele->type)) {
-      if (moveWidgets) {
-        if (ELEMENT_HAS_WIDGET(ele->type)) {
-	  widget = lookupElementWidget(cdi,
-		&(ele->structure.rectangle->object));
-  	  if (widget != NULL) XtMoveWidget(widget,
-		(Position) (ele->structure.rectangle->object.x + xOffset),
-		(Position) (ele->structure.rectangle->object.y + yOffset));
-        }
-      }
-      ele->structure.rectangle->object.x += xOffset;
-      ele->structure.rectangle->object.y += yOffset;
-      if (ele->type == DL_Composite) {
-	  moveCompositeChildren(cdi,ele,xOffset,yOffset,moveWidgets);
-      } else if (ele->type == DL_Polyline) {
-	for (j = 0; j < ele->structure.polyline->nPoints; j++) {
-	   ele->structure.polyline->points[j].x += xOffset;
-	   ele->structure.polyline->points[j].y += yOffset;
-	}
-      } else if (ele->type == DL_Polygon) {
-	for (j = 0; j < ele->structure.polygon->nPoints; j++) {
-	   ele->structure.polygon->points[j].x += xOffset;
-	   ele->structure.polygon->points[j].y += yOffset;
-	}
-      }
+  /*
+   *	N.B.: need to highlight in both window and pixmap in case
+   *	there are expose events...
+   */
+
+  /* simply return if no current display */
+  if (!currentDisplayInfo) return False;
+  cdi = currentDisplayInfo;
+  if (!IsEmpty(cdi->selectedDlElementList)) {
+    DlElement *pE = FirstDlElement(cdi->selectedDlElementList);
+    while (pE && !dlElement) {
+      if (pE->structure.element == element) dlElement = pE;
+      pE = pE->next;
     }
-    ele = ele->next;
-   }
   }
+
+  /* element not found - no changes */
+  if (!dlElement) {
+    return (False);
+  }
+
+  /* undraw the highlight */
+  toggleSelectedElementHighlight(dlElement->structure.element);
+
+  removeDlElement(cdi->selectedDlElementList,dlElement);
+  dlElement->run->destroy(dlElement);
+  return(True);
 }
 
 
@@ -1180,69 +731,34 @@ void updateDraggedElements(Position x0, Position y0, Position x1, Position y1)
   DisplayInfo *cdi;
   Widget widget;
   Boolean moveWidgets;
+  DlElement *pE;
+  Display *display;
+  GC gc;
 
-/* if no current display or selected elements array, simply return */
-  if (currentDisplayInfo == NULL) return;
-  if (currentDisplayInfo->selectedElementsArray == NULL) return;
+  /* if no current display or selected elements array, simply return */
+  if (!currentDisplayInfo) return;
+  if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
 
   cdi = currentDisplayInfo;
+  display = XtDisplay(cdi->drawingArea);
+  gc = cdi->gc;
 
   xOffset = x1 - x0;
   yOffset = y1 - y0;
 
-/* as usual, type in union unimportant as long as object is 1st thing...*/
-  for (i = 0; i < cdi->numSelectedElements; i++) {
-    if (cdi->selectedElementsArray[i]->type != DL_Display) {
-     if (ELEMENT_HAS_WIDGET(cdi->selectedElementsArray[i]->type)) {
-        widget = lookupElementWidget(cdi,
-		&(cdi->selectedElementsArray[i]->structure.rectangle->object));
-        if (widget != NULL) XtMoveWidget(widget,
-	   (Position)
-		(cdi->selectedElementsArray[i]->structure.rectangle->object.x
-					+ xOffset),
-	   (Position)
-		(cdi->selectedElementsArray[i]->structure.rectangle->object.y
-					+ yOffset));
-     }
-     cdi->selectedElementsArray[i]->structure.rectangle->object.x += xOffset;
-     cdi->selectedElementsArray[i]->structure.rectangle->object.y += yOffset;
-
-/* if moving composite, update all "children" too */
-     moveWidgets = True;
-     if (cdi->selectedElementsArray[i]->type == DL_Composite) {
-	moveCompositeChildren(cdi,cdi->selectedElementsArray[i],
-		xOffset,yOffset,moveWidgets);
-
-/* if moving polyline/polygon, update all points */
-     } else if (cdi->selectedElementsArray[i]->type == DL_Polyline) {
-	for (j = 0; j < cdi->selectedElementsArray[i]
-				->structure.polyline->nPoints; j++) {
-	   cdi->selectedElementsArray[i]->structure.polyline->points[j].x
-		+= xOffset;
-	   cdi->selectedElementsArray[i]->structure.polyline->points[j].y
-		+= yOffset;
-	}
-     } else if (cdi->selectedElementsArray[i]->type == DL_Polygon) {
-	for (j = 0; j < cdi->selectedElementsArray[i]
-				->structure.polygon->nPoints; j++) {
-	   cdi->selectedElementsArray[i]->structure.polygon->points[j].x
-		+= xOffset;
-	   cdi->selectedElementsArray[i]->structure.polygon->points[j].y
-		+= yOffset;
-	}
-     }
-
-    }
+  unhighlightSelectedElements();
+  /* as usual, type in union unimportant as long as object is 1st thing...*/
+  pE = FirstDlElement(currentDisplayInfo->selectedDlElementList);
+  while (pE) {
+    DlElement *dlElement = pE->structure.element;
+    if (dlElement->run->move) 
+      dlElement->run->move(dlElement,xOffset,yOffset);
+    if (dlElement->widget) 
+      dlElement->run->execute(currentDisplayInfo,dlElement);
+    pE = pE->next;
   }
-
-
-/* (MDA) could use a new element-lookup based on region (write routine
- *	which returns all elements which intersect rather than are
- *	bounded by a given region) and do partial traversal based on
- *	those elements in start and end regions.  this could be much
- *	more efficient and not suffer from the "flash" updates
- */
   dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
+  highlightSelectedElements();
 }
 
 /*
@@ -1256,11 +772,11 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
   DisplayInfo *cdi;
   Widget widget;
   float sX, sY;
-  DlElement *ele;
+  DlElement *dlElement, *ele;
 
 /* if no current display or selected elements array, simply return */
-  if (currentDisplayInfo == NULL) return;
-  if (currentDisplayInfo->selectedElementsArray == NULL) return;
+  if (!currentDisplayInfo) return;
+  if (IsEmpty(currentDisplayInfo->selectedDlElementList)) return;
 
   cdi = currentDisplayInfo;
 
@@ -1275,119 +791,18 @@ void updateResizedElements(Position x0, Position y0, Position x1, Position y1)
  * One additional advantage - this method guarantees WYSIWYG wrt fonts, etc
  */
 
-/* as usual, type in union unimportant as long as object is 1st thing...*/
-  for (i = 0; i < cdi->numSelectedElements; i++) {
-
-    ele = cdi->selectedElementsArray[i];
-
-    if (ele->type != DL_Display && ELEMENT_IS_RENDERABLE(ele->type) ) {
-
-     if (ele->type == DL_Composite) {
-
-/* simple element resize for composite itself, then resize of children */
-      oldWidth = ele->structure.composite->object.width;
-      oldHeight = ele->structure.composite->object.height;
-      width = (ele->structure.composite->object.width + xOffset);
-      width = MAX(1,width);
-      height = (ele->structure.composite->object.height + yOffset);
-      height = MAX(1,height);
-      sX = (float) ((float)width/(float)oldWidth);
-      sY = (float) ((float)height/(float)oldHeight);
-      resizeCompositeChildren(cdi,ele,ele,sX,sY);
-
-      ele->structure.composite->object.width = (Dimension) width;
-      ele->structure.composite->object.height = (Dimension) height;
-
-     } else {
-
-      if (!ELEMENT_HAS_WIDGET(ele->type)) {
-/* extra work for polyline/polygon - resize/rescale constituent points */
-	  if (ele->type == DL_Polyline ) {
-	    sX = (float)((float)(ele->structure.polyline->object.width
-		+ xOffset) / (float)(ele->structure.polyline->object.width));
-	    sY = (float)((float)(ele->structure.polyline->object.height
-		+ yOffset) / (float)(ele->structure.polyline->object.height));
-	    for (j = 0; j < ele->structure.polyline->nPoints; j++) {
-	        ele->structure.polyline->points[j].x = (short) (
-		   ele->structure.polyline->object.x +
-		   	sX*(ele->structure.polyline->points[j].x
-			- ele->structure.polyline->object.x));
-	        ele->structure.polyline->points[j].y = (short) (
-		   ele->structure.polyline->object.y +
-		   	sY*(ele->structure.polyline->points[j].y
-			- ele->structure.polyline->object.y));
-	    }
-	  } else if (cdi->selectedElementsArray[i]->type == DL_Polygon ) {
-	    sX = (float)((float)(ele->structure.polygon->object.width
-		+ xOffset) / (float)(ele->structure.polygon->object.width));
-	    sY = (float)((float)(ele->structure.polygon->object.height
-		+ yOffset) / (float)(ele->structure.polygon->object.height));
-	    for (j = 0; j < ele->structure.polygon->nPoints; j++) {
-	        ele->structure.polygon->points[j].x = (short) (
-		   ele->structure.polyline->object.x +
-			sX*(ele->structure.polygon->points[j].x
-			- ele->structure.polygon->object.x));
-	        ele->structure.polygon->points[j].y = (short) (
-		   ele->structure.polyline->object.y +
-			sY*(ele->structure.polygon->points[j].y
-			- ele->structure.polygon->object.y));
-	    }
-	  }
-/* simple element resize */
-	  width = (
-	     cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-	     xOffset);
-	  width = MAX(1,width);
-	  cdi->selectedElementsArray[i]->structure.rectangle->object.width =
-	     (Dimension) width;
-	  height = (
-	    cdi->selectedElementsArray[i]->structure.rectangle->object.height +
-	    yOffset);
-	  height = MAX(1,height);
-	  cdi->selectedElementsArray[i]->structure.rectangle->object.height =
-	    height;
-
-      } else {
-/* element has widget - more complicated resize */
-       widget = lookupElementWidget(cdi,
-		&(cdi->selectedElementsArray[i]->structure.rectangle->object));
-       if (widget != NULL) {
-	if (widget != cdi->drawingArea) {
-/* resize */
-	  width = (
-	     cdi->selectedElementsArray[i]->structure.rectangle->object.width +
-	     xOffset);
-	  width = MAX(1,width);
-	  cdi->selectedElementsArray[i]->structure.rectangle->object.width =
-	     (Dimension) width;
-	  height = (
-	    cdi->selectedElementsArray[i]->structure.rectangle->object.height +
-	    yOffset);
-	  height = MAX(1,height);
-	  cdi->selectedElementsArray[i]->structure.rectangle->object.height =
-	    height;
-
-	  if (widget != NULL && globalDisplayListTraversalMode == DL_EDIT) {
-/* destroy old widget */
-	    destroyElementWidget(cdi,widget);
-/* create new widget */
-	    (*cdi->selectedElementsArray[i]->dmExecute)(cdi,
-	      (XtPointer) cdi->selectedElementsArray[i]->structure.file,FALSE);
-	  }
-	}
-       }
-      }
-     }
+  /* as usual, type in union unimportant as long as object is 1st thing...*/
+  dlElement = FirstDlElement(currentDisplayInfo->selectedDlElementList);
+  while (dlElement) {
+    DlElement *pE = dlElement->structure.element;
+    if (pE->run->scale) {
+      pE->run->scale(pE,xOffset,yOffset);
     }
+    if (pE->widget) {
+      pE->run->execute(currentDisplayInfo,pE);
+    }
+    dlElement = dlElement->next;
   }
-
-
-/* (MDA) could use a new element-lookup based on region (write routine
- *	which returns all elements which intersect rather than are
- *	bounded by a given region) and do partial traversal based on
- *	those elements in start and end regions.  this could be much
- *	more efficient and not suffer from the "flash" updates
- */
   dmTraverseNonWidgetsInDisplayList(currentDisplayInfo);
 }
 
@@ -1418,58 +833,58 @@ DlElement *handleRectangularCreates(
       break;
 /* others are more straight-forward */
     case DL_Valuator:
-      element = createDlValuator(currentDisplayInfo);
+      element = createDlValuator(NULL);
       break;
     case DL_ChoiceButton:
-      element = createDlChoiceButton(currentDisplayInfo);
+      element = createDlChoiceButton(NULL);
       break;
     case DL_MessageButton:
-      element = createDlMessageButton(currentDisplayInfo);
+      element = createDlMessageButton(NULL);
       break;
     case DL_TextEntry:
-      element = createDlTextEntry(currentDisplayInfo);
+      element = createDlTextEntry(NULL);
       break;
     case DL_Menu:
-      element = createDlMenu(currentDisplayInfo);
+      element = createDlMenu(NULL);
       break;
     case DL_Meter:
-      element = createDlMeter(currentDisplayInfo);
+      element = createDlMeter(NULL);
       break;
     case DL_TextUpdate:
-      element = createDlTextUpdate(currentDisplayInfo);
+      element = createDlTextUpdate(NULL);
       break;
     case DL_Bar:
-      element = createDlBar(currentDisplayInfo);
+      element = createDlBar(NULL);
       break;
     case DL_Indicator:
-      element = createDlIndicator(currentDisplayInfo);
+      element = createDlIndicator(NULL);
       break;
     case DL_Byte:
-      element = createDlByte(currentDisplayInfo);
+      element = createDlByte(NULL);
       break;
     case DL_StripChart:
-      element = createDlStripChart(currentDisplayInfo);
+      element = createDlStripChart(NULL);
       break;
     case DL_CartesianPlot:
-      element = createDlCartesianPlot(currentDisplayInfo);
+      element = createDlCartesianPlot(NULL);
       break;
     case DL_Rectangle:
-      element = createDlRectangle(currentDisplayInfo);
+      element = createDlRectangle(NULL);
       break;
     case DL_Oval:
-      element = createDlOval(currentDisplayInfo);
+      element = createDlOval(NULL);
       break;
     case DL_Arc:
-      element = createDlArc(currentDisplayInfo);
+      element = createDlArc(NULL);
       break;
     case DL_RelatedDisplay:
-      element = createDlRelatedDisplay(currentDisplayInfo);
+      element = createDlRelatedDisplay(NULL);
       break;
     case DL_ShellCommand:
-      element = createDlShellCommand(currentDisplayInfo);
+      element = createDlShellCommand(NULL);
       break;
     case DL_Text:
-      element = createDlText(currentDisplayInfo);
+      element = createDlText(NULL);
       break;
     default:
       fprintf(stderr,"handleRectangularCreates: CREATE - invalid type %d",
@@ -1478,10 +893,40 @@ DlElement *handleRectangularCreates(
   }
 
   if (element) {
-    if (element->inheritValues) {
-      element->inheritValues(&globalResourceBundle,element);
+    if (element->run->inheritValues) {
+      element->run->inheritValues(&globalResourceBundle,element);
     }
     objectAttributeSet(&(element->structure.rectangle->object),x,y,width,height);
   }
   return element;
+}
+
+void toggleSelectedElementHighlight(DlElement *dlElement) {
+  DisplayInfo *cdi = currentDisplayInfo;
+  int x, y, width, height; 
+  DlObject *po = &(dlElement->structure.display->object);
+
+  if (dlElement->type == DL_Display) {
+    x = HIGHLIGHT_LINE_THICKNESS;
+    y = HIGHLIGHT_LINE_THICKNESS;
+    width = po->width - 2*HIGHLIGHT_LINE_THICKNESS;
+    height = po->height - 2*HIGHLIGHT_LINE_THICKNESS;
+  } else {
+    x = po->x-HIGHLIGHT_LINE_THICKNESS;
+    y = po->y-HIGHLIGHT_LINE_THICKNESS;
+    width = po->width + 2*HIGHLIGHT_LINE_THICKNESS;
+    height = po->height + 2*HIGHLIGHT_LINE_THICKNESS;
+  }
+#if 0
+  XSetForeground(display,highlightGC,cdi->drawingAreaBackgroundColor);
+  XSetBackground(display,highlightGC,cdi->drawingAreaForegroundColor);
+#endif
+  XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
+    x, y, width, height);
+  XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
+    x, y, width, height);
+}
+
+void unselectSelectedElements() {
+  return;
 }

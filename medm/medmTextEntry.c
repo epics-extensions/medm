@@ -74,15 +74,14 @@ extern "C" {
 #endif
 
 typedef struct _TextEntry {
-  Widget      widget;
-  DlTextEntry *dlTextEntry;
+  DlElement   *dlElement;
   Record      *record;
   UpdateTask  *updateTask;
   Boolean     updateAllowed;
 } TextEntry;
 
-void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,DlTextEntry *dlTextEntry);
-void textEntryCreateEditInstance(DisplayInfo *displayInfo,DlTextEntry *dlTextEntry);
+void textEntryCreateRunTimeInstance(DisplayInfo *, DlElement *);
+void textEntryCreateEditInstance(DisplayInfo *,DlElement *);
 
 static void textEntryDraw(XtPointer cd);
 static void textEntryUpdateValueCb(XtPointer cd);
@@ -92,6 +91,22 @@ static void textEntryModifyVerifyCallback(Widget, XtPointer, XtPointer);
 static char *valueToString(TextEntry *, TextFormat format);
 static void textEntryName(XtPointer, char **, short *, int *);
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static DlDispatchTable textEntryDlDispatchTable = {
+         createDlTextEntry,
+         NULL,
+         executeDlTextEntry,
+         writeDlTextEntry,
+         NULL,
+         textEntryGetValues,
+         textEntryInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 
 int textFieldFontListIndex(int height)
@@ -102,8 +117,8 @@ int textFieldFontListIndex(int height)
  */
   for (i = MAX_FONTS-1; i >=  0; i--) {
     if ( ((int)(.90*height) - 4) >=
-			(fontTable[i]->ascent + fontTable[i]->descent))
-	return(i);
+      (fontTable[i]->ascent + fontTable[i]->descent))
+      return(i);
   }
   return (0);
 }
@@ -153,7 +168,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
       value = pd->value;
       break;
     default :
-      medmPrintf("Name  : %s\n",pte->dlTextEntry->control.ctrl);
+      medmPrintf("Name  : %s\n",pte->dlElement->structure.textEntry->control.ctrl);
       medmPrintf("Error : valueToString\n");
       medmPostMsg("Msg   : Unknown Data Type!\n");
       return "Error!";
@@ -185,7 +200,7 @@ char *valueToString(TextEntry *pte, TextFormat format) {
       cvtLongToOctalString((long)value, textField);
       break;
     default :
-      medmPrintf("Name  : %s\n",pte->dlTextEntry->control.ctrl);
+      medmPrintf("Name  : %s\n",pte->dlElement->structure.textEntry->control.ctrl);
       medmPrintf("Error : valueToString\n");
       medmPostMsg("Msg   : Unknown Format Type!\n");
       return "Error!";
@@ -197,13 +212,14 @@ char *valueToString(TextEntry *pte, TextFormat format) {
  *** Text Entry
  ***/
 void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
-				    DlTextEntry *dlTextEntry) {
+         DlElement *dlElement) {
   TextEntry *pte;
   Arg args[20];
   int n;
+  DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
   pte = (TextEntry *) malloc(sizeof(TextEntry));
-  pte->dlTextEntry = dlTextEntry;
+  pte->dlElement = dlElement;
   pte->updateTask = updateTaskAddTask(displayInfo,
 				      &(dlTextEntry->object),
 				      textEntryDraw,
@@ -229,9 +245,9 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
   XtSetArg(args[n],XmNwidth,(Dimension)dlTextEntry->object.width); n++;
   XtSetArg(args[n],XmNheight,(Dimension)dlTextEntry->object.height); n++;
   XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlTextEntry->control.clr]); n++;
+	displayInfo->colormap[dlTextEntry->control.clr]); n++;
   XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlTextEntry->control.bclr]); n++;
+	displayInfo->colormap[dlTextEntry->control.bclr]); n++;
   XtSetArg(args[n],XmNhighlightThickness,1); n++;
   XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
   XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
@@ -244,30 +260,30 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
   XtSetArg(args[n],XmNfontList,fontListTable[
 	textFieldFontListIndex(dlTextEntry->object.height)]); n++;
-  pte->widget = XtCreateWidget("textField",
+  dlElement->widget = XtCreateWidget("textField",
 		xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = pte->widget;
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pte->widget,parsedTranslations);
+  XtOverrideTranslations(dlElement->widget,parsedTranslations);
 
   /* add the callbacks for update */
-  XtAddCallback(pte->widget,XmNactivateCallback,
+  XtAddCallback(dlElement->widget,XmNactivateCallback,
 	  (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
 
   /* special stuff: if user started entering new data into text field, but
 	*  doesn't do the actual Activate <CR>, then restore old value on
 	*  losing focus...
 	*/
-  XtAddCallback(pte->widget,XmNmodifyVerifyCallback,
+  XtAddCallback(dlElement->widget,XmNmodifyVerifyCallback,
 	 (XtCallbackProc)textEntryModifyVerifyCallback,(XtPointer)pte);
 }
 
 void textEntryCreateEditInstance(DisplayInfo *displayInfo,
-				DlTextEntry *dlTextEntry) {
+        DlElement *dlElement) {
   Arg args[20];
   int n;
   Widget localWidget;
+  DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
   /* from the text entry structure, we've got TextEntry's specifics */
   n = 0;
@@ -276,9 +292,9 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
   XtSetArg(args[n],XmNwidth,(Dimension)dlTextEntry->object.width); n++;
   XtSetArg(args[n],XmNheight,(Dimension)dlTextEntry->object.height); n++;
   XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlTextEntry->control.clr]); n++;
+	displayInfo->colormap[dlTextEntry->control.clr]); n++;
   XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlTextEntry->control.bclr]); n++;
+	displayInfo->colormap[dlTextEntry->control.bclr]); n++;
   XtSetArg(args[n],XmNhighlightThickness,1); n++;
   XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
   XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
@@ -293,7 +309,7 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
 	textFieldFontListIndex(dlTextEntry->object.height)]); n++;
   localWidget = XtCreateWidget("textField",
 		xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] =  localWidget;
+  dlElement->widget = localWidget;
 
   /* remove all translations if in edit mode */
   XtUninstallTranslations(localWidget);
@@ -306,19 +322,23 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
   XtManageChild(localWidget);
 }
 
-#ifdef __cplusplus
-void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
-				Boolean)
-#else
-void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
-				Boolean dummy)
-#endif
+void executeDlTextEntry(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   if (displayInfo->traversalMode == DL_EXECUTE) {
-	 textEntryCreateRunTimeInstance(displayInfo,dlTextEntry);
+	 textEntryCreateRunTimeInstance(displayInfo,dlElement);
   } else
   if (displayInfo->traversalMode == DL_EDIT) {
-	 textEntryCreateEditInstance(displayInfo,dlTextEntry);
+    if (dlElement->widget) {
+      DlObject *po = &(dlElement->structure.textEntry->object);
+      XtVaSetValues(dlElement->widget,
+          XmNx, (Position) po->x,
+          XmNy, (Position) po->y,
+          XmNwidth, (Dimension) po->width,
+          XmNheight, (Dimension) po->height,
+          NULL);
+    } else {
+      textEntryCreateEditInstance(displayInfo,dlElement);
+    }
   }
 }
 
@@ -330,40 +350,41 @@ void textEntryUpdateValueCb(XtPointer cd) {
 void textEntryDraw(XtPointer cd) {
   TextEntry *pte = (TextEntry *) cd;
   Record *pd = pte->record;
+  Widget widget = pte->dlElement->widget;
+  DlTextEntry *dlTextEntry = pte->dlElement->structure.textEntry;
   if (pd->connected) {
     if (pd->readAccess) {
-      if (pte->widget) 
-	XtManageChild(pte->widget);
+      if (widget) 
+        XtManageChild(widget);
       else
         return;
       if (pd->writeAccess) {
-	XtVaSetValues(pte->widget,XmNeditable,True,NULL);
-	XDefineCursor(XtDisplay(pte->widget),XtWindow(pte->widget),rubberbandCursor);
+	XtVaSetValues(widget,XmNeditable,True,NULL);
+	XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
       } else {
-	XtVaSetValues(pte->widget,XmNeditable,False,NULL);
-	XDefineCursor(XtDisplay(pte->widget),XtWindow(pte->widget),noWriteAccessCursor);
+	XtVaSetValues(widget,XmNeditable,False,NULL);
+	XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
         pte->updateAllowed = True;
       }
       if (pte->updateAllowed) {
-        XmTextFieldSetString(pte->widget,valueToString(pte,
-		       pte->dlTextEntry->format));
-        switch (pte->dlTextEntry->clrmod) {
+        XmTextFieldSetString(widget,valueToString(pte,dlTextEntry->format));
+        switch (dlTextEntry->clrmod) {
           case STATIC :
           case DISCRETE:
             break;
           case ALARM:
-            XtVaSetValues(pte->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+            XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
             break;
         }
       }
     } else {
       draw3DPane(pte->updateTask,
-          pte->updateTask->displayInfo->dlColormap[pte->dlTextEntry->control.bclr]);
+          pte->updateTask->displayInfo->colormap[dlTextEntry->control.bclr]);
       draw3DQuestionMark(pte->updateTask);
-      if (pte->widget) XtUnmanageChild(pte->widget);
+      if (widget) XtUnmanageChild(widget);
     }
   } else {
-    if (pte->widget) XtUnmanageChild(pte->widget);
+    if (widget) XtUnmanageChild(widget);
     drawWhiteRectangle(pte->updateTask);
   }
 }
@@ -449,7 +470,7 @@ void textEntryValueChanged(Widget  w, XtPointer clientData, XtPointer dummy)
         medmSendString(pte->record,textValue);
         break;
       case DBF_CHAR:
-        if (pte->dlTextEntry->format == STRING) {
+        if (pte->dlElement->structure.textEntry->format == STRING) {
           unsigned long len =
             MIN((unsigned long)pd->elementCount,
                 (unsigned long)(strlen(textValue)+1));
@@ -480,39 +501,37 @@ static void textEntryName(XtPointer cd, char **name, short *severity, int *count
   severity[0] = pte->record->severity;
 }
 
-DlElement *createDlTextEntry(
-  DisplayInfo *displayInfo)
+DlElement *createDlTextEntry(DlElement *p)
 {
   DlTextEntry *dlTextEntry;
   DlElement *dlElement;
 
   dlTextEntry = (DlTextEntry *) malloc(sizeof(DlTextEntry));
   if (!dlTextEntry) return 0;
-  objectAttributeInit(&(dlTextEntry->object));
-  controlAttributeInit(&(dlTextEntry->control));
-  dlTextEntry->clrmod = STATIC;
-  dlTextEntry->format = DECIMAL;
+  if (p) {
+    *dlTextEntry = *(p->structure.textEntry);
+  } else {
+    objectAttributeInit(&(dlTextEntry->object));
+    controlAttributeInit(&(dlTextEntry->control));
+    dlTextEntry->clrmod = STATIC;
+    dlTextEntry->format = DECIMAL;
+  }
 
   if (!(dlElement = createDlElement(DL_TextEntry,
                     (XtPointer)      dlTextEntry,
-                    (medmExecProc)   executeDlTextEntry,
-                    (medmWriteProc)  writeDlTextEntry,
-										0,0,
-                    textEntryInheritValues))) {
+                    &textEntryDlDispatchTable))) {
     free(dlTextEntry);
   }
   return dlElement;
 }
 
-DlElement *parseTextEntry(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseTextEntry(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlTextEntry *dlTextEntry;
-  DlElement *dlElement = createDlTextEntry(displayInfo);
+  DlElement *dlElement = createDlTextEntry(NULL);
   int i = 0;
 
   if (!dlElement) return 0;
@@ -557,17 +576,17 @@ DlElement *parseTextEntry(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
   return dlElement;
 
 }
 
 void writeDlTextEntry(
   FILE *stream,
-  DlTextEntry *dlTextEntry,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlTextEntry *dlTextEntry = dlElement->structure.textEntry;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -602,6 +621,21 @@ void writeDlTextEntry(
 static void textEntryInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlTextEntry *dlTextEntry = p->structure.textEntry;
   medmGetValues(pRCB,
+    CTRL_RC,       &(dlTextEntry->control.ctrl),
+    CLR_RC,        &(dlTextEntry->control.clr),
+    BCLR_RC,       &(dlTextEntry->control.bclr),
+    CLRMOD_RC,     &(dlTextEntry->clrmod),
+    FORMAT_RC,     &(dlTextEntry->format),
+    -1);
+}
+
+static void textEntryGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlTextEntry *dlTextEntry = p->structure.textEntry;
+  medmGetValues(pRCB,
+    X_RC,          &(dlTextEntry->object.x),
+    Y_RC,          &(dlTextEntry->object.y),
+    WIDTH_RC,      &(dlTextEntry->object.width),
+    HEIGHT_RC,     &(dlTextEntry->object.height),
     CTRL_RC,       &(dlTextEntry->control.ctrl),
     CLR_RC,        &(dlTextEntry->control.clr),
     BCLR_RC,       &(dlTextEntry->control.bclr),

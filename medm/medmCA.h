@@ -65,7 +65,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #ifndef __MEDMCA_H__
 #define __MEDMCA_H__
 
-#undef __USING_TIME_STAMP__
+#define __USING_TIME_STAMP__
 
 #ifdef ALLOCATE_STORAGE
 #define EXTERN
@@ -128,98 +128,6 @@ typedef union {
   struct dbr_ctrl_double d;
 } infoBuf;
 
-#if 0
-
-typedef enum {
-  NOT_MODIFIED,		/* monitor not modified                              */
-  PRIMARY_MODIFIED,	/* modified and traversable (requires visual update) */
-  SECONDARY_MODIFIED 	/* modified but visual update is pending other data  */
-} ModifiedTypeEnum;
-
-struct _ChannelList;
-
-typedef enum {MEDMNoOp, MEDMNoConnection, MEDMNoReadAccess, MEDMNoWriteAccess,
-	      MEDMUpdateValue} updateRequest_t;
-
-typedef struct _Channel {
-	DlMonitorType monitorType;		/* type of monitor obj       */
-	XtPointer specifics;			/* display element pointer   */
-	Boolean previouslyConnected;		/* chid previously connected */
-        chid   chid;
-        evid   evid;
-        Widget self;
-        short  status;				/* status information        */
-        short  severity;
-        short  oldSeverity;
-	struct _Channel *next;	                /* ptr to next in list       */
-	struct _Channel *prev;	                /* ptr to previous in list   */
-	DisplayInfo *displayInfo;		/* display info struct       */
-
-/* Database field and request type specific stuff is here  -  
-   could union these together
-*/
-	/* numerics, enum and char types - store all values as doubles */
-        double value;				/* current value             */
-        double displayedValue;			/* currently displayed value */
-	Boolean updateAllowed;	                /* allow screens update.     */
-	/* string type - store as string */
-	char stringValue[MAX_STRING_SIZE];	/* store string value        */
-
-/* for enumerated types, store state strings too */
-	short numberStateStrings;		/* number of state strings   */
-	char **stateStrings;			/* the state strings         */
-	XmString *xmStateStrings;		/* XmString state strings    */
-	double pressValue;
-	double releaseValue;
-
-        double hopr;				/* control information       */
-        double lopr;
-	short precision;			/* number of decimal places  */
-
-/* monitor object specific stuff is here */
-	int oldIntegerValue;			/* for valuators only        */
-	ColorMode clrmod;			/* meter, bar, indicator,    */
-	VisibilityMode vismod;         
-	LabelType label;			/*   and valuator need these */
-	int fontIndex;				/* text update needs this    */
-	DlAttribute *dlAttr;			/* general attributes        */
-
-	XrtData *xrtData;			/* xrtData for XRT/Graph     */
-	int xrtDataSet;				/* xrtData set (1 or 2)      */
-	int trace;				/* trace number in plot      */
-	XYChannelTypeEnum xyChannelType;	/* XYScalar,[]Scalar[]Vector */
-	struct _Channel *other;                 /* ptr to other channel data */
-
-/* graphical information */
-	Pixel backgroundColor;                  /* back ground color */
-	int   shadowBorderWidth;                /* shadow border width */
-
-        /* callback routunes */
-	void (*updateChannelCb)(struct _Channel *);
-	void (*updateDataCb)(struct _Channel *);
-	void (*updateGraphicalInfoCb)(struct _Channel*);
-	void (*destroyChannel)(struct _Channel*);
-
-	updateRequest_t lastUpdateRequest;
-
-	/* update list */
-	struct _ChannelList *updateList;
-	dataBuf *data;
-	infoBuf *info;
-	int size;                               /* size of data buffer (number of char) */
-	int caStatus;                           /* channel access status */
-	Boolean handleArray;                    /* channel handle array */
-	Boolean ignoreValueChanged;             /* Don't update if only value changed */
-	Boolean opaque;                         /* Don't redraw background */
-        Boolean dirty;		                /* data modified flag        */
-} Channel;
-
-/*
- * global variables
- */
-
-#endif
-
 #define MAX_EVENT_DATA 16
 typedef struct _Record {
   int       caId;
@@ -237,6 +145,7 @@ typedef struct _Record {
   char      *stateStrings[16];
   char      *name;
   XtPointer array;
+  TS_STAMP  time;
 
   XtPointer clientData;
   void (*updateValueCb)(XtPointer); 

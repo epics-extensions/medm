@@ -181,8 +181,8 @@ typedef struct menuEntry{
   struct menuEntry *subItems;
 } menuEntry_t;
 
-typedef void(*medmExecProc)(DisplayInfo *, XtPointer, Boolean);
-typedef void(*medmWriteProc)(FILE *, XtPointer, int);
+typedef void(*medmExecProc)(DisplayInfo *,DlElement *);
+typedef void(*medmWriteProc)(FILE *,DlElement *,int);
 typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
 
 #include "proto.h"

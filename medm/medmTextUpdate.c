@@ -72,8 +72,7 @@ extern "C" {
 #endif
 
 typedef struct _TextUpdate {
-  Widget        widget;
-  DlTextUpdate  *dlTextUpdate;
+  DlElement     *dlElement;
   Record        *record;
   UpdateTask    *updateTask;
   int           fontIndex;
@@ -84,24 +83,35 @@ static void textUpdateDraw(XtPointer cd);
 static void textUpdateDestroyCb(XtPointer cd);
 static void textUpdateName(XtPointer, char **, short *, int *);
 static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p);
 
-#ifdef __cplusplus
-void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
-				Boolean)
-#else
-void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
-                                Boolean dummy)
-#endif
+static DlDispatchTable textUpdateDlDispatchTable = {
+         createDlTextUpdate,
+         NULL,
+         executeDlTextUpdate,
+         writeDlTextUpdate,
+         NULL,
+         textUpdateGetValues,
+         textUpdateInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
+
+void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   XRectangle clipRect[1];
   int usedHeight, usedWidth;
   int localFontIndex;
   size_t nChars;
+  DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
   if (displayInfo->traversalMode == DL_EXECUTE) {
     TextUpdate *ptu;
     ptu = (TextUpdate *) malloc(sizeof(TextUpdate));
-    ptu->dlTextUpdate = dlTextUpdate;
+    ptu->dlElement = dlElement;
     ptu->updateTask = updateTaskAddTask(displayInfo,
                                         &(dlTextUpdate->object),
                                         textUpdateDraw,
@@ -129,7 +139,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
 
   /* since no ca callbacks to put up text, put up dummy region */
     XSetForeground(display,displayInfo->gc,
-	displayInfo->dlColormap[ dlTextUpdate->monitor.bclr]);
+	displayInfo->colormap[ dlTextUpdate->monitor.bclr]);
     XFillRectangle(display, XtWindow(displayInfo->drawingArea),
 	displayInfo->gc,
 	dlTextUpdate->object.x,dlTextUpdate->object.y,
@@ -140,9 +150,9 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
 	dlTextUpdate->object.width, dlTextUpdate->object.height);
 
     XSetForeground(display,displayInfo->gc,
-	displayInfo->dlColormap[dlTextUpdate->monitor.clr]);
+	displayInfo->colormap[dlTextUpdate->monitor.clr]);
     XSetBackground(display,displayInfo->gc,
-	displayInfo->dlColormap[dlTextUpdate->monitor.bclr]);
+	displayInfo->colormap[dlTextUpdate->monitor.bclr]);
     nChars = strlen(dlTextUpdate->monitor.rdbk);
     localFontIndex = dmGetBestFontWithInfo(fontTable,
 	MAX_FONTS,dlTextUpdate->monitor.rdbk,
@@ -226,7 +236,7 @@ static void textUpdateUpdateValueCb(XtPointer cd) {
 static void textUpdateDraw(XtPointer cd) {
   TextUpdate *ptu = (TextUpdate *) cd;
   Record *pd = (Record *) ptu->record;
-  DlTextUpdate *dlTextUpdate = ptu->dlTextUpdate;
+  DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
   DisplayInfo *displayInfo = ptu->updateTask->displayInfo;
   Display *display = XtDisplay(displayInfo->drawingArea);
   char textField[MAX_TOKEN_LENGTH];
@@ -289,7 +299,7 @@ static void textUpdateDraw(XtPointer cd) {
           break;
         default :
           medmPrintf("textUpdateUpdateValueCb: %s %s %s\n",
-	    "unknown channel type for",ptu->dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
+              "unknown channel type for",dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
           medmPostTime();
           break;
       }
@@ -322,13 +332,13 @@ static void textUpdateDraw(XtPointer cd) {
             break;
           default :
             medmPrintf("textUpdateUpdateValueCb: %s %s %s\n",
-	          "unknown channel type for",ptu->dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
+	          "unknown channel type for",dlTextUpdate->monitor.rdbk, ": cannot attach TextUpdate");
             medmPostTime();
             break;
         }
       }
 
-      XSetForeground(display,displayInfo->gc, displayInfo->dlColormap[dlTextUpdate->monitor.bclr]);
+      XSetForeground(display,displayInfo->gc, displayInfo->colormap[dlTextUpdate->monitor.bclr]);
       XFillRectangle(display, XtWindow(displayInfo->drawingArea),
 			displayInfo->gc,
 			dlTextUpdate->object.x,dlTextUpdate->object.y,
@@ -341,13 +351,13 @@ static void textUpdateDraw(XtPointer cd) {
       switch (dlTextUpdate->clrmod) {
         case STATIC :
         case DISCRETE:
-          gcValues.foreground = displayInfo->dlColormap[dlTextUpdate->monitor.clr];
+          gcValues.foreground = displayInfo->colormap[dlTextUpdate->monitor.clr];
           break;
       case ALARM :
           gcValues.foreground =  alarmColorPixel[pd->severity];
           break;
       }
-      gcValues.background = displayInfo->dlColormap[dlTextUpdate->monitor.bclr];
+      gcValues.background = displayInfo->colormap[dlTextUpdate->monitor.bclr];
       XChangeGC(display,displayInfo->gc, gcValueMask,&gcValues);
 
       i = ptu->fontIndex;
@@ -412,7 +422,7 @@ static void textUpdateDraw(XtPointer cd) {
     } else {
       /* no read access */
       draw3DPane(ptu->updateTask,
-          ptu->updateTask->displayInfo->dlColormap[ptu->dlTextUpdate->monitor.bclr]);
+          ptu->updateTask->displayInfo->colormap[dlTextUpdate->monitor.bclr]);
       draw3DQuestionMark(ptu->updateTask);
     }
   } else {
@@ -428,41 +438,39 @@ static void textUpdateName(XtPointer cd, char **name, short *severity, int *coun
   severity[0] = pa->record->severity;
 }
 
-DlElement *createDlTextUpdate(
-  DisplayInfo *displayInfo)
+DlElement *createDlTextUpdate(DlElement *p)
 {
   DlTextUpdate *dlTextUpdate;
   DlElement *dlElement;
 
   dlTextUpdate = (DlTextUpdate *) malloc(sizeof(DlTextUpdate));
   if (!dlTextUpdate) return 0;
-  objectAttributeInit(&(dlTextUpdate->object));
-  monitorAttributeInit(&(dlTextUpdate->monitor));
-  dlTextUpdate->clrmod = STATIC;
-  dlTextUpdate->align = HORIZ_LEFT;
-  dlTextUpdate->format = DECIMAL;
+  if (p) {
+    *dlTextUpdate = *p->structure.textUpdate;
+  } else {
+    objectAttributeInit(&(dlTextUpdate->object));
+    monitorAttributeInit(&(dlTextUpdate->monitor));
+    dlTextUpdate->clrmod = STATIC;
+    dlTextUpdate->align = HORIZ_LEFT;
+    dlTextUpdate->format = DECIMAL;
+  }
 
   if (!(dlElement = createDlElement(DL_TextUpdate,
                     (XtPointer)      dlTextUpdate,
-                    (medmExecProc)   executeDlTextUpdate,
-                    (medmWriteProc)  writeDlTextUpdate,
-										0,0,
-                    textUpdateInheritValues))) {
+                    &textUpdateDlDispatchTable))) {
     free(dlTextUpdate);
   }
 
   return(dlElement);
 }
 
-DlElement *parseTextUpdate(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlTextUpdate *dlTextUpdate;
-  DlElement *dlElement = createDlTextUpdate(displayInfo);
+  DlElement *dlElement = createDlTextUpdate(NULL);
   int i= 0;
 
   if (!dlElement) return 0;
@@ -539,15 +547,14 @@ DlElement *parseTextUpdate(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
 		&& (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 
 }
 
-void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level) {
+void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
   int i;
   char indent[16];
+  DlTextUpdate *dlTextUpdate = dlElement->structure.textUpdate;
 
 	memset(indent,'\t',level);
 	indent[level] = '\0';
@@ -583,6 +590,22 @@ void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level) {
 		fprintf(stream,"\n%s}",indent);
 	}
 #endif
+}
+
+static void textUpdateGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlTextUpdate *dlTextUpdate = p->structure.textUpdate;
+  medmGetValues(pRCB,
+    X_RC,          &(dlTextUpdate->object.x),
+    Y_RC,          &(dlTextUpdate->object.y),
+    WIDTH_RC,      &(dlTextUpdate->object.width),
+    HEIGHT_RC,     &(dlTextUpdate->object.height),
+    CTRL_RC,       &(dlTextUpdate->monitor.rdbk),
+    CLR_RC,        &(dlTextUpdate->monitor.clr),
+    BCLR_RC,       &(dlTextUpdate->monitor.bclr),
+    CLRMOD_RC,     &(dlTextUpdate->clrmod),
+    ALIGN_RC,      &(dlTextUpdate->align),
+    FORMAT_RC,     &(dlTextUpdate->format),
+    -1);
 }
 
 static void textUpdateInheritValues(ResourceBundle *pRCB, DlElement *p) {

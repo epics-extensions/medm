@@ -81,6 +81,7 @@ void plotAxisDefinitionInit(DlPlotAxisDefinition *axisDefinition) {
   axisDefinition->rangeStyle = CHANNEL_RANGE;
   axisDefinition->minRange = 0.0;
   axisDefinition->maxRange = 1.0;
+  axisDefinition->timeFormat = HHMMSS;
 }
 
 void penAttributeInit(DlPen *pen) {
@@ -190,40 +191,60 @@ void parsePlotAxisDefinition(
   int nestingLevel = 0;
 
   do {
-	switch( (tokenType=getToken(displayInfo,token)) ) {
-	    case T_WORD:
-		if (!strcmp(token,"axisStyle")) {
-			getToken(displayInfo,token);
-			getToken(displayInfo,token);
-			if (!strcmp(token,"linear")) 
-			    dlPlotAxisDefinition->axisStyle = LINEAR_AXIS;
-			else if (!strcmp(token,"log10")) 
-			    dlPlotAxisDefinition->axisStyle = LOG10_AXIS;
-		} else if (!strcmp(token,"rangeStyle")) {
-			getToken(displayInfo,token);
-			getToken(displayInfo,token);
-			if (!strcmp(token,"from channel")) 
-			    dlPlotAxisDefinition->rangeStyle = CHANNEL_RANGE;
-			else if (!strcmp(token,"user-specified")) 
-			    dlPlotAxisDefinition->rangeStyle =
-							USER_SPECIFIED_RANGE;
-			else if (!strcmp(token,"auto-scale")) 
-			    dlPlotAxisDefinition->rangeStyle = AUTO_SCALE_RANGE;
-		} else if (!strcmp(token,"minRange")) {
-			getToken(displayInfo,token);
-			getToken(displayInfo,token);
-			dlPlotAxisDefinition->minRange = atof(token);
-		} else if (!strcmp(token,"maxRange")) {
-			getToken(displayInfo,token);
-			getToken(displayInfo,token);
-			dlPlotAxisDefinition->maxRange = atof(token);
-		}
-		break;
-	    case T_LEFT_BRACE:
-		nestingLevel++; break;
-	    case T_RIGHT_BRACE:
-		nestingLevel--; break;
-	}
+    switch( (tokenType=getToken(displayInfo,token)) ) {
+    case T_WORD:
+      if (!strcmp(token,"axisStyle")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        if (!strcmp(token,"linear")) 
+          dlPlotAxisDefinition->axisStyle = LINEAR_AXIS;
+        else
+        if (!strcmp(token,"log10")) 
+          dlPlotAxisDefinition->axisStyle = LOG10_AXIS;
+        else
+        if (!strcmp(token,"time"))
+          dlPlotAxisDefinition->axisStyle = TIME_AXIS;
+      } else
+      if (!strcmp(token,"rangeStyle")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        if (!strcmp(token,"from channel")) 
+          dlPlotAxisDefinition->rangeStyle = CHANNEL_RANGE;
+        else
+        if (!strcmp(token,"user-specified")) 
+          dlPlotAxisDefinition->rangeStyle = USER_SPECIFIED_RANGE;
+        else
+        if (!strcmp(token,"auto-scale")) 
+          dlPlotAxisDefinition->rangeStyle = AUTO_SCALE_RANGE;
+      } else
+      if (!strcmp(token,"minRange")) {
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        dlPlotAxisDefinition->minRange = atof(token);
+      } else
+      if (!strcmp(token,"maxRange")) {
+	getToken(displayInfo,token);
+	getToken(displayInfo,token);
+	dlPlotAxisDefinition->maxRange = atof(token);
+      } else 
+      if (!strcmp(token,"timeFormat")) {
+        int i;
+        getToken(displayInfo,token);
+        getToken(displayInfo,token);
+        for (i=FIRST_CP_TIME_FORMAT;
+             i<FIRST_CP_TIME_FORMAT+NUM_CP_TIME_FORMAT;i++) {
+          if (!strcmp(token,stringValueTable[i])) {
+            dlPlotAxisDefinition->timeFormat = i;
+            break;
+          }
+        }
+      }
+      break;
+    case T_LEFT_BRACE:
+      nestingLevel++; break;
+    case T_RIGHT_BRACE:
+      nestingLevel--; break;
+    }
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
 		&& (tokenType != T_EOF) );
 }
@@ -353,27 +374,27 @@ void writeDlPlotcom(
 #ifdef SUPPORT_0201XX_FILE_FORMAT
   if (MedmUseNewFileFormat) {
 #endif
-		fprintf(stream,"\n%splotcom {",indent);
-		if (dlPlotcom->title[0] != '\0')
-			fprintf(stream,"\n%s\ttitle=\"%s\"",indent,dlPlotcom->title);
-		if (dlPlotcom->xlabel[0] != '\0')
-			fprintf(stream,"\n%s\txlabel=\"%s\"",indent,dlPlotcom->xlabel);
-		if (dlPlotcom->ylabel[0] != '\0')
-			fprintf(stream,"\n%s\tylabel=\"%s\"",indent,dlPlotcom->ylabel);
-		fprintf(stream,"\n%s\tclr=%d",indent,dlPlotcom->clr);
-		fprintf(stream,"\n%s\tbclr=%d",indent,dlPlotcom->bclr);
-		fprintf(stream,"\n%s}",indent);
+    fprintf(stream,"\n%splotcom {",indent);
+    if (dlPlotcom->title[0] != '\0')
+      fprintf(stream,"\n%s\ttitle=\"%s\"",indent,dlPlotcom->title);
+    if (dlPlotcom->xlabel[0] != '\0')
+      fprintf(stream,"\n%s\txlabel=\"%s\"",indent,dlPlotcom->xlabel);
+    if (dlPlotcom->ylabel[0] != '\0')
+      fprintf(stream,"\n%s\tylabel=\"%s\"",indent,dlPlotcom->ylabel);
+      fprintf(stream,"\n%s\tclr=%d",indent,dlPlotcom->clr);
+      fprintf(stream,"\n%s\tbclr=%d",indent,dlPlotcom->bclr);
+      fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
   } else {
-		fprintf(stream,"\n%splotcom {",indent);
-		fprintf(stream,"\n%s\ttitle=\"%s\"",indent,dlPlotcom->title);
-		fprintf(stream,"\n%s\txlabel=\"%s\"",indent,dlPlotcom->xlabel);
-		fprintf(stream,"\n%s\tylabel=\"%s\"",indent,dlPlotcom->ylabel);
-		fprintf(stream,"\n%s\tclr=%d",indent,dlPlotcom->clr);
-		fprintf(stream,"\n%s\tbclr=%d",indent,dlPlotcom->bclr);
-		fprintf(stream,"\n%s\tpackage=\"%s\"",indent,dlPlotcom->package);
-		fprintf(stream,"\n%s}",indent);
-	}
+    fprintf(stream,"\n%splotcom {",indent);
+    fprintf(stream,"\n%s\ttitle=\"%s\"",indent,dlPlotcom->title);
+    fprintf(stream,"\n%s\txlabel=\"%s\"",indent,dlPlotcom->xlabel);
+    fprintf(stream,"\n%s\tylabel=\"%s\"",indent,dlPlotcom->ylabel);
+    fprintf(stream,"\n%s\tclr=%d",indent,dlPlotcom->clr);
+    fprintf(stream,"\n%s\tbclr=%d",indent,dlPlotcom->bclr);
+    fprintf(stream,"\n%s\tpackage=\"%s\"",indent,dlPlotcom->package);
+    fprintf(stream,"\n%s}",indent);
+  }
 #endif
 }
 
@@ -487,6 +508,11 @@ void writeDlPlotAxisDefinition(
     fprintf(stream,"\n%s\tminRange=%f",indent,dlPlotAxisDefinition->minRange);
   if (dlPlotAxisDefinition->maxRange != 1.0)
     fprintf(stream,"\n%s\tmaxRange=%f",indent,dlPlotAxisDefinition->maxRange);
+  if (dlPlotAxisDefinition->timeFormat != HHMMSS) {
+    fprintf(stream,"\n%s\ttimeFormat=\"%s\"",indent,
+            stringValueTable[dlPlotAxisDefinition->timeFormat]);
+
+  }
 #ifdef SUPPORT_0201XX_FILE_FORMAT
   } else {
     fprintf(stream,"\n%s\taxisStyle=\"%s\"",indent,

@@ -64,8 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Oval {
-  Widget           widget;
-  DlOval           *dlOval;
+  DlElement        *dlElement;
   Record           *record;
   UpdateTask       *updateTask;
 } Oval;
@@ -77,21 +76,38 @@ static void ovalName(XtPointer, char **, short *, int *);
 static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void ovalSetValues(ResourceBundle *pRCB, DlElement *p);
+static void ovalGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static DlDispatchTable ovalDlDispatchTable = {
+         createDlOval,
+         destroyElementWithDynamicAttribute,
+         executeDlOval,
+         writeDlOval,
+         NULL,
+         ovalGetValues,
+         ovalInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 static void drawOval(Oval *po) {
   unsigned int lineWidth;
   DisplayInfo *displayInfo = po->updateTask->displayInfo;
-  Display *display = XtDisplay(po->widget);
-  DlOval *dlOval = po->dlOval;
+  Widget widget = po->updateTask->displayInfo->drawingArea;
+  Display *display = XtDisplay(widget);
+  DlOval *dlOval = po->dlElement->structure.oval;
 
   lineWidth = (dlOval->attr.width+1)/2;
   if (dlOval->attr.fill == F_SOLID) {
-    XFillArc(display,XtWindow(po->widget),displayInfo->gc,
+    XFillArc(display,XtWindow(widget),displayInfo->gc,
         dlOval->object.x,dlOval->object.y,
         dlOval->object.width,dlOval->object.height,0,360*64);
   } else
   if (dlOval->attr.fill == F_OUTLINE) {
-    XDrawArc(display,XtWindow(po->widget),displayInfo->gc,
+    XDrawArc(display,XtWindow(widget),displayInfo->gc,
         dlOval->object.x + lineWidth,
         dlOval->object.y + lineWidth,
         dlOval->object.width - 2*lineWidth,
@@ -99,20 +115,15 @@ static void drawOval(Oval *po) {
   }
 }
 
-#ifdef __cplusplus
-void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
-                                Boolean)
-#else
-void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
-                                Boolean forcedDisplayToWindow)
-#endif
+void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  DlOval *dlOval = dlElement->structure.oval;
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlOval->dynAttr.chan[0] != '\0')){
+      && (dlOval->dynAttr.name)){
 
     Oval *po;
     po = (Oval *) malloc(sizeof(Oval));
-    po->dlOval = dlOval;
+    po->dlElement = dlElement;
     po->updateTask = updateTaskAddTask(displayInfo,
 				       &(dlOval->object),
 				       ovalDraw,
@@ -126,7 +137,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
       po->updateTask->opaque = False;
     }
     po->record = medmAllocateRecord(
-                  dlOval->dynAttr.chan,
+                  dlOval->dynAttr.name,
                   ovalUpdateValueCb,
                   NULL,
                   (XtPointer) po);
@@ -158,7 +169,6 @@ void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
     }
 #endif
 
-    po->widget = displayInfo->drawingArea;
   } else {
     executeDlBasicAttribute(displayInfo,&(dlOval->attr));
     if (dlOval->attr.fill == F_SOLID) {
@@ -199,8 +209,8 @@ static void ovalDraw(XtPointer cd) {
   DisplayInfo *displayInfo = po->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(po->widget);
-  DlOval *dlOval = po->dlOval;
+  Display *display = XtDisplay(po->updateTask->displayInfo->drawingArea);
+  DlOval *dlOval = po->dlElement->structure.oval;
 
   if (pd->connected) {
     gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
@@ -218,7 +228,7 @@ static void ovalDraw(XtPointer cd) {
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[dlOval->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlOval->attr.clr];
         break;
 #endif
       case ALARM :
@@ -279,41 +289,37 @@ static void ovalName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = po->record->severity;
 }
 
-DlElement *createDlOval(
-  DisplayInfo *displayInfo)
+DlElement *createDlOval(DlElement *p)
 {
   DlOval *dlOval;
   DlElement *dlElement;
  
   dlOval = (DlOval *) malloc(sizeof(DlOval));
   if (!dlOval) return 0;
- 
-  objectAttributeInit(&(dlOval->object));
-  basicAttributeInit(&(dlOval->attr));
-  dynamicAttributeInit(&(dlOval->dynAttr));
+  if (p) {
+    *dlOval = *p->structure.oval;
+  } else {
+    objectAttributeInit(&(dlOval->object));
+    basicAttributeInit(&(dlOval->attr));
+    dynamicAttributeInit(&(dlOval->dynAttr));
+  }
  
   if (!(dlElement = createDlElement(DL_Oval,
                     (XtPointer)      dlOval,
-                    (medmExecProc)   executeDlOval,
-                    (medmWriteProc)  writeDlOval,
-										ovalSetValues,
-										ovalGetValues,
-										ovalInheritValues))) {
+										&ovalDlDispatchTable))) {
     free(dlOval);
   }
 
   return(dlElement);
 }
 
-DlElement *parseOval(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseOval(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlOval *dlOval;
-  DlElement *dlElement = createDlOval(displayInfo);
+  DlElement *dlElement = createDlOval(NULL);
 
   if (!dlElement) return 0;
   dlOval = dlElement->structure.oval;
@@ -340,18 +346,17 @@ DlElement *parseOval(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
  
 }
 
 void writeDlOval(
   FILE *stream,
-  DlOval *dlOval,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlOval *dlOval = dlElement->structure.oval;
 
   memset(indent,'\t',level);
   indent[level] = '\0'; 
@@ -391,7 +396,7 @@ static void ovalGetValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlOval->dynAttr.chan,
+    CHAN_RC,       &(dlOval->dynAttr.name),
     -1);
 }
 
@@ -407,7 +412,7 @@ static void ovalInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlOval->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlOval->dynAttr.chan,
+    CHAN_RC,       &(dlOval->dynAttr.name),
     -1);
 }
 

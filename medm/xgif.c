@@ -44,7 +44,7 @@ Boolean initializeGIF(
   h = dlImage->object.height;
 
   /* free any existing GIF resources */
-  freeGIF(displayInfo,dlImage);
+  freeGIF(dlImage);
 
   if (!(gif = (GIFData *) malloc(sizeof(GIFData)))) {
     fprintf(stderr,"\ninitializeGIF: malloc error!");
@@ -638,6 +638,7 @@ Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
         break;
       case 24 :
         BytesOffsetPerPixel = _XGetBitsPerPixel(display, ScreenDepth)/8;
+/*         printf("BytesOffsetPerPixel = %d\n",BytesOffsetPerPixel); */
         Image = (Byte *) malloc(BytesOffsetPerPixel*Width*Height);
         if (!Image) {
 	  fprintf(stderr,"loadGIF: not enough memory for XImage");
@@ -857,16 +858,12 @@ void AddToPixel(GIFData *gif, Byte Index)
  * free the X images and color cells in the default colormap (in anticipation
  *   of a new image)
  */
-#ifdef __cplusplus
-void freeGIF(DisplayInfo *, DlImage *dlImage)
-#else
-void freeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
-#endif
+void freeGIF(DlImage *dlImage)
 {
   GIFData *gif;
 
   gif = (GIFData *) dlImage->privateData;
-  if (gif != NULL) {
+  if (gif) {
   /* kill the old images */
     if (gif->expImage) {
 	free(gif->expImage->data);

@@ -64,15 +64,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <X11/IntrinsicP.h>
 
 typedef struct _Menu {
-  Widget      widget;
-  DlMenu      *dlMenu; 
+  DlElement   *dlElement;
   Record      *record; 
   UpdateTask  *updateTask;
   Pixel       color;
 } Menu;
 
-void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlMenu *dlChoiceButton);
-void menuCreateEditInstance(DisplayInfo *displayInfo,DlMenu *dlChoiceButton);
+void menuCreateRunTimeInstance(DisplayInfo *, DlElement *);
+void menuCreateEditInstance(DisplayInfo *, DlElement *);
 
 static void menuDraw(XtPointer);
 static void menuUpdateValueCb(XtPointer);
@@ -81,6 +80,23 @@ static void menuDestroyCb(XtPointer cd);
 static void menuValueChangedCb(Widget, XtPointer, XtPointer);
 static void menuName(XtPointer, char **, short *, int *);
 static void menuInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void menuGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static DlDispatchTable menuDlDispatchTable = {
+         createDlMenu,
+         NULL,
+         executeDlMenu,
+         writeDlMenu,
+         NULL,
+         menuGetValues,
+         menuInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
+
 
 int menuFontListIndex(int height)
 {
@@ -96,10 +112,11 @@ int menuFontListIndex(int height)
   return (0);
 }
 
-void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlMenu *dlMenu) {
+void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlElement *dlElement) {
   Menu *pm;
+  DlMenu *dlMenu = dlElement->structure.menu;
   pm = (Menu *) malloc(sizeof(Menu));
-  pm->dlMenu = dlMenu;
+  pm->dlElement = dlElement;
   pm->updateTask = updateTaskAddTask(displayInfo,
                                      &(dlMenu->object),
                                      menuDraw,
@@ -116,12 +133,11 @@ void menuCreateRunTimeInstance(DisplayInfo *displayInfo,DlMenu *dlMenu) {
                   menuUpdateGraphicalInfoCb,
                   (XtPointer) pm);
   drawWhiteRectangle(pm->updateTask);
-  pm->color = displayInfo->dlColormap[dlMenu->control.bclr];
-  pm->widget = NULL;
+  pm->color = displayInfo->colormap[dlMenu->control.bclr];
   return;
 }
 
-void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
+void menuCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlElement) {
   Arg args[15];
   XmString buttons[1];
   XmButtonType buttonType[1];
@@ -131,6 +147,7 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
   Cardinal numChildren;
   XmFontList fontList;
   Dimension useableWidth;
+  DlMenu *dlMenu = dlElement->structure.menu;
 
   buttons[0] = XmStringCreateSimple("menu");
   buttonType[0] = XmPUSHBUTTON;
@@ -151,9 +168,9 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
   XtSetArg(args[n],XmNwidth,(Dimension)useableWidth); n++;
   XtSetArg(args[n],XmNheight,(Dimension)dlMenu->object.height); n++;
   XtSetArg(args[n],XmNforeground,(Pixel)
-                displayInfo->dlColormap[dlMenu->control.clr]); n++;
+                displayInfo->colormap[dlMenu->control.clr]); n++;
   XtSetArg(args[n],XmNbackground,(Pixel)
-                displayInfo->dlColormap[dlMenu->control.bclr]); n++;
+                displayInfo->colormap[dlMenu->control.bclr]); n++;
   XtSetArg(args[n],XmNbuttonCount,1); n++;
   XtSetArg(args[n],XmNbuttonType,buttonType); n++;
   XtSetArg(args[n],XmNbuttons,buttons); n++;
@@ -191,7 +208,7 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
   /* unmanage the label in the option menu */
   XtUnmanageChild(XmOptionLabelGadget(localWidget));
   XtManageChild(localWidget);
-  displayInfo->child[displayInfo->childCount++] =  localWidget;
+  dlElement->widget =  localWidget;
 
   /* remove all translations if in edit mode */
   XtUninstallTranslations(localWidget);
@@ -201,18 +218,18 @@ void menuCreateEditInstance(DisplayInfo *displayInfo, DlMenu *dlMenu) {
       handleButtonPress,(XtPointer)displayInfo);
 }
 
-#ifdef __cplusplus
-void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean)
-#else
-void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy)
-#endif
+void executeDlMenu(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   switch (displayInfo->traversalMode) {
   case DL_EXECUTE :
-    menuCreateRunTimeInstance(displayInfo,dlMenu);
+    menuCreateRunTimeInstance(displayInfo,dlElement);
     break;
   case DL_EDIT :
-    menuCreateEditInstance(displayInfo,dlMenu);
+    if (dlElement->widget) {
+      XtDestroyWidget(dlElement->widget);
+      dlElement->widget = NULL;
+    }
+    menuCreateEditInstance(displayInfo,dlElement);
     break;
   default :
     break;
@@ -222,7 +239,8 @@ void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean dummy)
 void menuUpdateGraphicalInfoCb(XtPointer cd) {
   Record *pd = (Record *) cd;
   Menu *pm = (Menu *) pd->clientData;
-  DlMenu *dlMenu = pm->dlMenu;
+  DlElement *dlElement = pm->dlElement;
+  DlMenu *dlMenu = pm->dlElement->structure.menu;
   XmFontList fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
   int i,n;
   Arg args[20];
@@ -258,9 +276,9 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   XtSetArg(args[2],XmNforeground,
 	    ((dlMenu->clrmod == ALARM)?
 	      alarmColorPixel[pd->severity] :
-	      pm->updateTask->displayInfo->dlColormap[dlMenu->control.clr])); n++;
+	      pm->updateTask->displayInfo->colormap[dlMenu->control.clr])); n++;
   XtSetArg(args[3],XmNbackground,
-              pm->updateTask->displayInfo->dlColormap[dlMenu->control.bclr]); n++;
+              pm->updateTask->displayInfo->colormap[dlMenu->control.bclr]); n++;
   XtSetArg(args[4],XmNrecomputeSize,False); n++;
   XtSetArg(args[5],XmNfontList, fontList); n++;
   XtSetArg(args[6],XmNuserData, pm), n++;
@@ -285,17 +303,16 @@ void menuUpdateGraphicalInfoCb(XtPointer cd) {
   XtSetArg(args[n],XmNmarginHeight, 0); n++;
   XtSetArg(args[n],XmNsubMenuId, menu); n++;
   XtSetArg(args[n],XmNtearOffModel, XmTEAR_OFF_DISABLED); n++;
-  pm->widget = XmCreateOptionMenu(pm->updateTask->displayInfo->drawingArea,
-		  "optionMenu",args,n);
-  pm->updateTask->displayInfo->child[pm->updateTask->displayInfo->childCount++]
-	      = pm->widget;
+  pm->dlElement->widget =
+       XmCreateOptionMenu(pm->updateTask->displayInfo->drawingArea,
+		       "optionMenu",args,n);
 		
   /* unmanage the option label gadget, manage the option menu */
-  XtUnmanageChild(XmOptionLabelGadget(pm->widget));
-  XtManageChild(pm->widget);
+  XtUnmanageChild(XmOptionLabelGadget(pm->dlElement->widget));
+  XtManageChild(pm->dlElement->widget);
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pm->widget,parsedTranslations);
+  XtOverrideTranslations(pm->dlElement->widget,parsedTranslations);
   updateTaskMarkUpdate(pm->updateTask);
 
 }
@@ -308,10 +325,12 @@ static void menuUpdateValueCb(XtPointer cd) {
 static void menuDraw(XtPointer cd) {
   Menu *pm = (Menu *) cd;
   Record *pd = pm->record;
+  Widget widget = pm->dlElement->widget;
+  DlMenu *dlMenu = pm->dlElement->structure.menu;
   if (pd->connected) {
     if (pd->readAccess) {
-      if ((pm->widget) && !XtIsManaged(pm->widget))
-        XtManageChild(pm->widget);
+      if ((widget) && !XtIsManaged(widget))
+        XtManageChild(widget);
  
       if (pd->precision < 0) return;
 
@@ -321,51 +340,51 @@ static void menuDraw(XtPointer cd) {
         Cardinal numChildren;
         int i;
 
-        XtVaGetValues(pm->widget,XmNsubMenuId,&menuWidget,NULL);
+        XtVaGetValues(widget,XmNsubMenuId,&menuWidget,NULL);
         XtVaGetValues(menuWidget,
 		XmNchildren,&children,
 		XmNnumChildren,&numChildren,
 		NULL);
         i = (int) pd->value;
         if ((i >=0) && (i < (int) numChildren)) {
-          XtVaSetValues(pm->widget,XmNmenuHistory,children[i],NULL);
+          XtVaSetValues(widget,XmNmenuHistory,children[i],NULL);
         } else {
           medmPrintf("menuUpdateValueCb: invalid menuHistory child\n");
           medmPostTime();
           return;
         }
-        switch (pm->dlMenu->clrmod) {
+        switch (dlMenu->clrmod) {
           case STATIC :
           case DISCRETE :
             break;
           case ALARM :
-            XtVaSetValues(pm->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+            XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
             XtVaSetValues(menuWidget,XmNforeground,alarmColorPixel[pd->severity],NULL);
             break;
           default :
             medmPrintf("Message: Unknown color modifier!\n");
-            medmPrintf("Channel Name : %s\n",pm->dlMenu->control.ctrl);
+            medmPrintf("Channel Name : %s\n",dlMenu->control.ctrl);
             medmPostMsg("Error: menuUpdateValueCb\n");
             return;
         }
       } else {
         medmPrintf("Message: Data type must be enum!\n");
-        medmPrintf("Channel Name : %s\n",pm->dlMenu->control.ctrl);
+        medmPrintf("Channel Name : %s\n",dlMenu->control.ctrl);
         medmPostMsg("Error: menuUpdateValueCb\n");
         return;
       }
       if (pd->writeAccess)
-        XDefineCursor(XtDisplay(pm->widget),XtWindow(pm->widget),rubberbandCursor);
+        XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
       else
-        XDefineCursor(XtDisplay(pm->widget),XtWindow(pm->widget),noWriteAccessCursor);
+        XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
     } else {
-      if (pm->widget) XtUnmanageChild(pm->widget);
+      if (widget) XtUnmanageChild(widget);
       draw3DPane(pm->updateTask,pm->color);
       draw3DQuestionMark(pm->updateTask);
     }
   } else {
-    if ((pm->widget) && XtIsManaged(pm->widget))
-      XtUnmanageChild(pm->widget);
+    if ((widget) && XtIsManaged(widget))
+      XtUnmanageChild(widget);
     drawWhiteRectangle(pm->updateTask);
   }
 }
@@ -407,7 +426,7 @@ static void menuValueChangedCb(
       } 
     } else {
       medmPrintf("menuValueChangedCb : %s not connected",
-                pm->dlMenu->control.ctrl);
+                pm->dlElement->structure.menu->control.ctrl);
     }
   }
 }
@@ -419,39 +438,36 @@ static void menuName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pm->record->severity;
 }
 
-DlElement *createDlMenu(
-  DisplayInfo *displayInfo)
+DlElement *createDlMenu(DlElement *p)
 {
   DlMenu *dlMenu;
   DlElement *dlElement;
  
   dlMenu = (DlMenu *) malloc(sizeof(DlMenu));
   if (!dlMenu) return 0;
-  objectAttributeInit(&(dlMenu->object));
-  controlAttributeInit(&(dlMenu->control));
-  dlMenu->clrmod = STATIC;
- 
+  if (p) {
+    *dlMenu = *(p->structure.menu);
+  } else {
+    objectAttributeInit(&(dlMenu->object));
+    controlAttributeInit(&(dlMenu->control));
+    dlMenu->clrmod = STATIC;
+  }
   if (!(dlElement = createDlElement(DL_Menu,
                     (XtPointer)      dlMenu,
-                    (medmExecProc)   executeDlMenu,
-                    (medmWriteProc)  writeDlMenu,
-										0,0,
-                    menuInheritValues))) {
+                    &menuDlDispatchTable))) {
     free(dlMenu);
   }
  
   return(dlElement);
 }
 
-DlElement *parseMenu(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseMenu(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlMenu *dlMenu;
-  DlElement *dlElement = createDlMenu(displayInfo);
+  DlElement *dlElement = createDlMenu(NULL);
  
   if (!dlElement) return 0;
   dlMenu = dlElement->structure.menu;
@@ -487,18 +503,17 @@ DlElement *parseMenu(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
  
-  POSITION_ELEMENT_ON_LIST();
- 
   return dlElement;
 }
 
 void writeDlMenu(
   FILE *stream,
-  DlMenu *dlMenu,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
+  DlMenu *dlMenu = dlElement->structure.menu;
  
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
@@ -525,6 +540,20 @@ void writeDlMenu(
 static void menuInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlMenu *dlMenu = p->structure.menu;
   medmGetValues(pRCB,
+    CTRL_RC,       &(dlMenu->control.ctrl),
+    CLR_RC,        &(dlMenu->control.clr),
+    BCLR_RC,       &(dlMenu->control.bclr),
+    CLRMOD_RC,     &(dlMenu->clrmod),
+    -1);
+}
+
+static void menuGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMenu *dlMenu = p->structure.menu;
+  medmGetValues(pRCB,
+    X_RC,          &(dlMenu->object.x),
+    Y_RC,          &(dlMenu->object.y),
+    WIDTH_RC,      &(dlMenu->object.width),
+    HEIGHT_RC,     &(dlMenu->object.height),
     CTRL_RC,       &(dlMenu->control.ctrl),
     CLR_RC,        &(dlMenu->control.clr),
     BCLR_RC,       &(dlMenu->control.bclr),

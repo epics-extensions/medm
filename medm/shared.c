@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 */
 
 #include "medm.h"
-#include <sys/time.h>
+#include <time.h>
 
 typedef struct _UpdateTaskStatus {
   XtWorkProcId workProcId;

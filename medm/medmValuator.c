@@ -72,8 +72,7 @@ extern "C" {
 #endif
 
 typedef struct _Valuator {
-  Widget      widget;
-  DlValuator *dlValuator;
+  DlElement   *dlElement;
   Record      *record;
   UpdateTask  *updateTask;
   int         oldIntegerValue;
@@ -88,9 +87,23 @@ static void valuatorRedrawValue(Valuator *, DisplayInfo *, Widget, DlValuator *,
 static void handleValuatorExpose(Widget, XtPointer, XEvent *, Boolean *);
 static void valuatorName(XtPointer, char **, short *, int *);
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p);
-
-
+static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p);
 static void handleValuatorRelease(Widget, XtPointer, XEvent *, Boolean *);
+
+static DlDispatchTable valuatorDlDispatchTable = {
+         createDlValuator,
+         NULL,
+         executeDlValuator,
+         writeDlValuator,
+         NULL,
+         valuatorGetValues,
+         valuatorInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 int valuatorFontListIndex(DlValuator *dlValuator)
 {
@@ -142,19 +155,20 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 }
 
 void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
-			      DlValuator *dlValuator) {
+			      DlElement *dlElement) {
   Valuator *pv;
   Arg args[25];
   int i, n, heightDivisor, scalePopupBorder;
   WidgetList children;
   Cardinal numChildren;
+  DlValuator *dlValuator = dlElement->structure.valuator;
 
   pv = (Valuator *) malloc(sizeof(Valuator));
   if (pv == NULL) {
     medmPrintf("valuatorCreateRunTimeInstance : memory allocation error\n");
     return;
   }
-  pv->dlValuator = dlValuator;
+  pv->dlElement = dlElement;
   pv->updateTask = updateTaskAddTask(displayInfo,
 				     &(dlValuator->object),
 				     valuatorDraw,
@@ -182,8 +196,8 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
   XtSetArg(args[n],XmNwidth,(Dimension)dlValuator->object.width); n++;
   XtSetArg(args[n],XmNheight,(Dimension)dlValuator->object.height); n++;
   XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-  XtSetArg(args[n],XmNforeground,displayInfo->dlColormap[dlValuator->control.clr]); n++;
-  XtSetArg(args[n],XmNbackground,displayInfo->dlColormap[dlValuator->control.bclr]); n++;
+  XtSetArg(args[n],XmNforeground,displayInfo->colormap[dlValuator->control.clr]); n++;
+  XtSetArg(args[n],XmNbackground,displayInfo->colormap[dlValuator->control.bclr]); n++;
   XtSetArg(args[n],XmNhighlightThickness,1); n++;
   XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
   switch(dlValuator->label) {
@@ -216,22 +230,20 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
   /* add in Valuator as userData for valuator keyboard entry handling */
   XtSetArg(args[n],XmNuserData,(XtPointer)pv); n++;
   XtSetArg(args[n],XmNfontList,fontListTable[pv->fontIndex]); n++;
-  pv->widget =  XtCreateWidget("valuator",
+  pv->dlElement->widget =  XtCreateWidget("valuator",
 		xmScaleWidgetClass, displayInfo->drawingArea, args, n);
 
-  displayInfo->child[displayInfo->childCount++] = pv->widget;
-
   /* get children of scale */
-  XtVaGetValues(pv->widget,XmNnumChildren,&numChildren,
+  XtVaGetValues(pv->dlElement->widget,XmNnumChildren,&numChildren,
 				XmNchildren,&children,NULL);
   /* set virtual range */
   n = 0;
   XtSetArg(args[n],XmNminimum,VALUATOR_MIN); n++;
   XtSetArg(args[n],XmNmaximum,VALUATOR_MAX); n++;
   XtSetArg(args[n],XmNscaleMultiple,VALUATOR_MULTIPLE_INCREMENT); n++;
-  XtSetValues(pv->widget,args,n);
+  XtSetValues(pv->dlElement->widget,args,n);
   /* add in drag/drop translations */
-  XtOverrideTranslations(pv->widget,parsedTranslations);
+  XtOverrideTranslations(pv->dlElement->widget,parsedTranslations);
 
   /* change translations for scrollbar child of valuator */
   for (i = 0; i < numChildren; i++) {
@@ -245,31 +257,32 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
   }
 
   /* add the callbacks for update */
-  XtAddCallback(pv->widget, XmNvalueChangedCallback,
+  XtAddCallback(pv->dlElement->widget, XmNvalueChangedCallback,
 		valuatorValueChanged,(XtPointer)pv);
-  XtAddCallback(pv->widget, XmNdragCallback,
+  XtAddCallback(pv->dlElement->widget, XmNdragCallback,
 		valuatorValueChanged,(XtPointer)pv);
 
 /* add event handler for expose - forcing display of min/max and value
  *	in own format
  */
-  XtAddEventHandler(pv->widget,ExposureMask,
+  XtAddEventHandler(pv->dlElement->widget,ExposureMask,
 	False,handleValuatorExpose,
 	(XtPointer)pv);
 
 /* add event handler for Key/ButtonRelease which enables updates */
-  XtAddEventHandler(pv->widget,KeyReleaseMask|ButtonReleaseMask,
+  XtAddEventHandler(pv->dlElement->widget,KeyReleaseMask|ButtonReleaseMask,
 	False,handleValuatorRelease,
 	(XtPointer)pv);
 }
 
 void createValuatorEditInstance(DisplayInfo *displayInfo,
-				DlValuator *dlValuator) {
+				DlElement *dlElement) {
   Arg args[25];
   int i, n, heightDivisor, scalePopupBorder;
   Widget widget;
   WidgetList children;
   Cardinal numChildren;
+  DlValuator *dlValuator = dlElement->structure.valuator;
 
 /* from the valuator structure, we've got Valuator's specifics */
   n = 0;
@@ -279,9 +292,9 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
   XtSetArg(args[n],XmNheight,(Dimension)dlValuator->object.height); n++;
   XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
   XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlValuator->control.clr]); n++;
+	displayInfo->colormap[dlValuator->control.clr]); n++;
   XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlValuator->control.bclr]); n++;
+	displayInfo->colormap[dlValuator->control.bclr]); n++;
   XtSetArg(args[n],XmNhighlightThickness,1); n++;
   XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
   switch(dlValuator->label) {
@@ -317,7 +330,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
   widget =  XtCreateWidget("valuator",
 		xmScaleWidgetClass, displayInfo->drawingArea, args, n);
 
-  displayInfo->child[displayInfo->childCount++] = widget;
+  dlElement->widget = widget;
 
   /* get children of scale */
   XtVaGetValues(widget,XmNnumChildren,&numChildren,
@@ -346,19 +359,17 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
   XtManageChild(widget);
 }
 
-#ifdef __cplusplus
-void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
-			Boolean)
-#else
-void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
-			Boolean dummy)
-#endif
+void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   if (displayInfo->traversalMode == DL_EXECUTE) {
-	 createValuatorRunTimeInstance(displayInfo, dlValuator);
+	 createValuatorRunTimeInstance(displayInfo, dlElement);
   } else
   if (displayInfo->traversalMode == DL_EDIT) {
-    createValuatorEditInstance(displayInfo, dlValuator);
+    if (dlElement->widget) {
+      XtDestroyWidget(dlElement->widget);
+      dlElement->widget = 0;
+    }
+    createValuatorEditInstance(displayInfo, dlElement);
   }
 }
 
@@ -370,13 +381,14 @@ static void valuatorUpdateValueCb(XtPointer cd) {
 static void valuatorDraw(XtPointer cd) {
   Valuator *pv = (Valuator *) cd;
   Record *pd = pv->record;
-  DlValuator *dlValuator = pv->dlValuator;
+  DlValuator *dlValuator = pv->dlElement->structure.valuator;
   Boolean dummy;
+  Widget widget = pv->dlElement->widget;
 
   if (pd->connected) {
     if (pd->readAccess) {
-      if (pv->widget) 
-        XtManageChild(pv->widget);
+      if (widget) 
+        XtManageChild(widget);
       else
 	return;
 
@@ -387,21 +399,21 @@ static void valuatorDraw(XtPointer cd) {
         {
            XExposeEvent event;
            event.count = 0;
-           handleValuatorExpose(pv->widget,(XtPointer) pv,(XEvent *) &event, &dummy);
+           handleValuatorExpose(widget,(XtPointer) pv,(XEvent *) &event, &dummy);
 	 }
       }
       if (pd->writeAccess)
-	XDefineCursor(XtDisplay(pv->widget),XtWindow(pv->widget),rubberbandCursor);
+	XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
       else
-	XDefineCursor(XtDisplay(pv->widget),XtWindow(pv->widget),noWriteAccessCursor);
+	XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
     } else {
       draw3DPane(pv->updateTask,
-        pv->updateTask->displayInfo->dlColormap[pv->dlValuator->control.bclr]);
+        pv->updateTask->displayInfo->colormap[dlValuator->control.bclr]);
       draw3DQuestionMark(pv->updateTask);
-      if (pv->widget) XtUnmanageChild(pv->widget);
+      if (widget) XtUnmanageChild(widget);
     }
   } else {
-    if (pv->widget) XtUnmanageChild(pv->widget);
+    if (widget) XtUnmanageChild(widget);
     drawWhiteRectangle(pv->updateTask);
   }
 }
@@ -453,12 +465,12 @@ void handleValuatorExpose(
      Record *pd;
      pv = (Valuator *) clientData;
      pd = pv->record;
-     dlValuator = pv->dlValuator;
      displayInfo = pv->updateTask->displayInfo;
+     dlValuator = pv->dlElement->structure.valuator;
      localLopr = pd->lopr;
      localHopr = pd->hopr;
      localPrecision = MAX(0,pd->precision);
-     localTitle = pv->dlValuator->control.ctrl;
+     localTitle = dlValuator->control.ctrl;
 
   } else {
 /* no controller data, therefore userData = dlValuator */
@@ -476,8 +488,8 @@ void handleValuatorExpose(
 
   if (dlValuator->label != LABEL_NONE) {
 
-    foreground = displayInfo->dlColormap[dlValuator->control.clr];
-    background = displayInfo->dlColormap[dlValuator->control.bclr];
+    foreground = displayInfo->colormap[dlValuator->control.clr];
+    background = displayInfo->colormap[dlValuator->control.bclr];
     font = fontTable[valuatorFontListIndex(dlValuator)];
     textHeight = font->ascent + font->descent;
 
@@ -597,8 +609,8 @@ void handleValuatorExpose(
     if (clientData != NULL) {
 /* real data */
       valuatorRedrawValue(pv,
-            pv->updateTask->displayInfo,pv->widget,
-            pv->dlValuator, pv->record->value);
+            pv->updateTask->displayInfo,pv->dlElement->widget,
+            pv->dlElement->structure.valuator, pv->record->value);
 
 
     } else {
@@ -636,9 +648,10 @@ void valuatorSetValue(Valuator *pv, double forcedValue,
                 /(pd->hopr - pd->lopr))
                 *((double)(VALUATOR_MAX - VALUATOR_MIN)));
     pv->oldIntegerValue = iValue;
-    XtVaSetValues(pv->widget,XmNvalue,iValue,NULL);
+    XtVaSetValues(pv->dlElement->widget,XmNvalue,iValue,NULL);
     valuatorRedrawValue(pv,pv->updateTask->displayInfo,
-                        pv->widget,pv->dlValuator,dValue);
+                        pv->dlElement->widget,
+                        pv->dlElement->structure.valuator,dValue);
   }
 }
 
@@ -670,8 +683,8 @@ void valuatorRedrawValue(Valuator *pv,
 /* simply return if no value to render */
   if (!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
 
-  foreground = displayInfo->dlColormap[dlValuator->control.clr];
-  background = displayInfo->dlColormap[dlValuator->control.bclr];
+  foreground = displayInfo->colormap[dlValuator->control.clr];
+  background = displayInfo->colormap[dlValuator->control.bclr];
   if (pv && (pv->record->precision >= 0)) {
     Record *pd = pv->record;
     precision = pd->precision;
@@ -756,7 +769,7 @@ void handleValuatorRelease(
 #endif
 {
   Valuator *pv = (Valuator *) passedData;
-  DlValuator *dlValuator = pv->dlValuator;
+  DlValuator *dlValuator = pv->dlElement->structure.valuator;
 
   switch(event->type) {
     case ButtonRelease:
@@ -797,7 +810,7 @@ static void precisionToggleChangedCallback(
  * the valuator (scale) resources
  */
     if (pv) {
-      pv->dlValuator->dPrecision = pow(10.,(double)value);
+      pv->dlElement->structure.valuator->dPrecision = pow(10.,(double)value);
     }
 /* hierarchy = TB<-RB<-Frame<-SelectionBox<-Dialog */
     widget = w;
@@ -948,14 +961,14 @@ void popupValuatorKeyboardEntry(
     XtVaGetValues(w,XmNuserData,&pv,NULL);
     if (pv) {
       pd = pv->record;
-      channel = pv->dlValuator->control.ctrl;
+      channel = pv->dlElement->structure.valuator->control.ctrl;
       if ((pd->connected) && pd->writeAccess && strlen(channel) > (size_t)0) {
         /* create selection box/prompt dialog */
         strcpy(valueLabel,"VALUE: ");
         strcat(valueLabel,channel);
         xmValueLabel = XmStringCreateSimple(valueLabel);
         xmTitle = XmStringCreateSimple(channel);
-        dlValuator = pv->dlValuator;
+        dlValuator = pv->dlElement->structure.valuator;
         cvtDoubleToString(pd->value,valueString,
                         pd->precision);
         valueXmString = XmStringCreateSimple(valueString);
@@ -1123,7 +1136,7 @@ void valuatorValueChanged(
   Valuator *pv = (Valuator *) clientData;
   Record *pd = pv->record;
   XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *) callbackStruct;
-  DlValuator *dlValuator = (DlValuator *) pv->dlValuator;
+  DlValuator *dlValuator = (DlValuator *) pv->dlElement->structure.valuator;
   Arg args[3];
   XButtonEvent *buttonEvent;
   XKeyEvent *keyEvent;
@@ -1244,21 +1257,24 @@ static void valuatorName(XtPointer cd, char **name, short *severity, int *count)
   severity[0] = pv->record->severity;
 }
 
-DlElement *createDlValuator(
-  DisplayInfo *displayInfo)
+DlElement *createDlValuator(DlElement *p)
 {
   DlValuator *dlValuator;
   DlElement *dlElement;
  
   dlValuator = (DlValuator *) malloc(sizeof(DlValuator));
   if (!dlValuator) return 0;
-  objectAttributeInit(&(dlValuator->object));
-  controlAttributeInit(&(dlValuator->control));
+  if (p) {
+    *dlValuator = *(p->structure.valuator);
+  } else {
+    objectAttributeInit(&(dlValuator->object));
+    controlAttributeInit(&(dlValuator->control));
  
-  dlValuator->label = LABEL_NONE;
-  dlValuator->clrmod = STATIC;
-  dlValuator->direction = RIGHT;
-  dlValuator->dPrecision = 1.;
+    dlValuator->label = LABEL_NONE;
+    dlValuator->clrmod = STATIC;
+    dlValuator->direction = RIGHT;
+    dlValuator->dPrecision = 1.;
+  }
  
 /* private run-time valuator field */
   dlValuator->enableUpdates = True;
@@ -1266,25 +1282,20 @@ DlElement *createDlValuator(
 
   if (!(dlElement = createDlElement(DL_Valuator,
                     (XtPointer)      dlValuator,
-                    (medmExecProc)   executeDlValuator,
-                    (medmWriteProc)  writeDlValuator,
-										0,0,
-                    valuatorInheritValues))) {
+                    &valuatorDlDispatchTable))) {
     free(dlValuator);
   }
  
   return(dlElement);
 }
 
-DlElement *parseValuator(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseValuator(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlValuator *dlValuator;
-  DlElement *dlElement = createDlValuator(displayInfo);
+  DlElement *dlElement = createDlValuator(NULL);
   if (!dlElement) return 0;
   dlValuator = dlElement->structure.valuator;
 
@@ -1355,18 +1366,17 @@ DlElement *parseValuator(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
 		&& (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 
 }
 
 void writeDlValuator(
   FILE *stream,
-  DlValuator *dlValuator,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlValuator *dlValuator = dlElement->structure.valuator;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -1409,6 +1419,23 @@ void writeDlValuator(
 static void valuatorInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlValuator *dlValuator = p->structure.valuator;
   medmGetValues(pRCB,
+    CTRL_RC,       &(dlValuator->control.ctrl),
+    CLR_RC,        &(dlValuator->control.clr),
+    BCLR_RC,       &(dlValuator->control.bclr),
+    LABEL_RC,      &(dlValuator->label),
+    DIRECTION_RC,  &(dlValuator->direction),
+    CLRMOD_RC,     &(dlValuator->clrmod),
+    PRECISION_RC,  &(dlValuator->dPrecision),
+    -1);
+}
+
+static void valuatorGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlValuator *dlValuator = p->structure.valuator;
+  medmGetValues(pRCB,
+    X_RC,          &(dlValuator->object.x),
+    Y_RC,          &(dlValuator->object.y),
+    WIDTH_RC,      &(dlValuator->object.width),
+    HEIGHT_RC,     &(dlValuator->object.height),
     CTRL_RC,       &(dlValuator->control.ctrl),
     CLR_RC,        &(dlValuator->control.clr),
     BCLR_RC,       &(dlValuator->control.bclr),

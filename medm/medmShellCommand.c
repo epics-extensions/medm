@@ -63,6 +63,22 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include <medm.h>
 
 static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void shellCommandGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static DlDispatchTable shellCommandDlDispatchTable = {
+         createDlShellCommand,
+         NULL,
+         executeDlShellCommand,
+         writeDlShellCommand,
+         NULL,
+         shellCommandGetValues,
+         shellCommandInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 #ifdef __cplusplus
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer)
@@ -108,13 +124,7 @@ static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
   XFreeGC(display,gc);
 }
 
-#ifdef __cplusplus
-void executeDlShellCommand(DisplayInfo *displayInfo,
-                        DlShellCommand *dlShellCommand, Boolean)
-#else
-void executeDlShellCommand(DisplayInfo *displayInfo,
-                        DlShellCommand *dlShellCommand, Boolean dummy)
-#endif
+void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   Widget localMenuBar;
   Arg args[16];
@@ -122,6 +132,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   XmString xmString;
   Pixmap shellCommandPixmap;
   unsigned int pixmapSize;
+  DlShellCommand *dlShellCommand = dlElement->structure.shellCommand;
 /*
  * these are widget ids, but they are recorded in the otherChild widget list
  *   as well, for destruction when new shells are selected at the top level
@@ -136,10 +147,20 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
  *** (MDA)  create a pulldown menu with the following related shell menu
  ***   entries in it...  --  careful with the XtSetArgs here (special)
  ***/
+  if (dlElement->widget && displayInfo->traversalMode == DL_EDIT) {
+    DlObject *po = &(dlElement->structure.shellCommand->object);
+    XtVaSetValues(dlElement->widget,
+          XmNx, (Position) po->x,
+          XmNy, (Position) po->y,
+          XmNwidth, (Dimension) po->width,
+          XmNheight, (Dimension) po->height,
+          NULL);
+    return;
+  }
   XtSetArg(args[0],XmNforeground,(Pixel)
-        displayInfo->dlColormap[dlShellCommand->clr]);
+        displayInfo->colormap[dlShellCommand->clr]);
   XtSetArg(args[1],XmNbackground,(Pixel)
-        displayInfo->dlColormap[dlShellCommand->bclr]);
+        displayInfo->colormap[dlShellCommand->bclr]);
   XtSetArg(args[2],XmNhighlightThickness,1);
   XtSetArg(args[3],XmNwidth,dlShellCommand->object.width);
   XtSetArg(args[4],XmNheight,dlShellCommand->object.height);
@@ -154,19 +175,14 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   localMenuBar =
      XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",args,13);
   XtManageChild(localMenuBar);
-  displayInfo->child[displayInfo->childCount++] = localMenuBar;
+  dlElement->widget = localMenuBar;
 
   colorMenuBar(localMenuBar,
-        (Pixel)displayInfo->dlColormap[dlShellCommand->clr],
-        (Pixel)displayInfo->dlColormap[dlShellCommand->bclr]);
+        (Pixel)displayInfo->colormap[dlShellCommand->clr],
+        (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
 
   shellCommandPulldownMenu = XmCreatePulldownMenu(
-        displayInfo->child[displayInfo->childCount-1],
-                "shellCommandPulldownMenu",args,2);
-#if 0
-  displayInfo->otherChild[displayInfo->otherChildCount++] =
-        shellCommandPulldownMenu;
-#endif
+        localMenuBar,"shellCommandPulldownMenu",args,2);
 
   pixmapSize = MIN(dlShellCommand->object.width,dlShellCommand->object.height);
 /* allowing for shadows etc */
@@ -176,8 +192,8 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   shellCommandPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
         pixmapSize,pixmapSize,XDefaultDepth(display,screenNum));
   renderShellCommandPixmap(display,shellCommandPixmap,
-        displayInfo->dlColormap[dlShellCommand->clr],
-        displayInfo->dlColormap[dlShellCommand->bclr],
+        displayInfo->colormap[dlShellCommand->clr],
+        displayInfo->colormap[dlShellCommand->bclr],
         pixmapSize,pixmapSize);
 
   XtSetArg(args[7],XmNrecomputeSize,(Boolean)False);
@@ -185,21 +201,12 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
   XtSetArg(args[9],XmNlabelType,XmPIXMAP);
   XtSetArg(args[10],XmNsubMenuId,shellCommandPulldownMenu);
   XtSetArg(args[11],XmNhighlightOnEnter,TRUE);
-#if 1
-  widget =
-#else
-  displayInfo->otherChild[displayInfo->otherChildCount++] =
-#endif
-        XtCreateManagedWidget("shellCommandMenuLabel",
+  widget = XtCreateManagedWidget("shellCommandMenuLabel",
                 xmCascadeButtonGadgetClass,
-                displayInfo->child[displayInfo->childCount-1], args, 12);
+                localMenuBar, args, 12);
 
 /* add destroy callback to free pixmap from pixmap cache */
-#if 1
   XtAddCallback(widget,
-#else
-  XtAddCallback(displayInfo->otherChild[displayInfo->otherChildCount-1],
-#endif
         XmNdestroyCallback,freePixmapCallback,
         (XtPointer)shellCommandPixmap);
 
@@ -211,10 +218,6 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
         XtSetArg(args[4], XmNuserData,(XtPointer)displayInfo);
         shellCommandMenuButton = XtCreateManagedWidget("relatedButton",
                 xmPushButtonWidgetClass, shellCommandPulldownMenu, args, 5);
-#if 0
-        displayInfo->otherChild[displayInfo->otherChildCount++] =
-                shellCommandMenuButton;
-#endif
         XtAddCallback(shellCommandMenuButton,XmNactivateCallback,
                 (XtCallbackProc)dmExecuteShellCommand,
                 (XtPointer)&(dlShellCommand->command[i]));
@@ -237,12 +240,10 @@ void executeDlShellCommand(DisplayInfo *displayInfo,
 
 #ifdef __cplusplus
 static void createDlShellCommandEntry(
-  DisplayInfo *,
   DlShellCommandEntry *shellCommand,
   int cmdNumber)
 #else
 static void createDlShellCommandEntry(
-  DisplayInfo *displayInfo,
   DlShellCommandEntry *shellCommand,
   int cmdNumber)
 #endif
@@ -253,8 +254,7 @@ static void createDlShellCommandEntry(
 }
 
 
-DlElement *createDlShellCommand(
-  DisplayInfo *displayInfo)
+DlElement *createDlShellCommand(DlElement *p)
 {
   DlShellCommand *dlShellCommand;
   DlElement *dlElement;
@@ -262,20 +262,21 @@ DlElement *createDlShellCommand(
 
   dlShellCommand = (DlShellCommand *) malloc(sizeof(DlShellCommand));
   if (!dlShellCommand) return 0;
-  objectAttributeInit(&(dlShellCommand->object));
-  for (cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS;cmdNumber++)
-	createDlShellCommandEntry(displayInfo,
-			&(dlShellCommand->command[cmdNumber]),
-			cmdNumber );
-  dlShellCommand->clr = globalResourceBundle.clr;
-  dlShellCommand->bclr = globalResourceBundle.bclr;
+  if (p) {
+    *dlShellCommand = *p->structure.shellCommand;
+  } else {
+    objectAttributeInit(&(dlShellCommand->object));
+    for (cmdNumber = 0; cmdNumber < MAX_SHELL_COMMANDS;cmdNumber++)
+	  createDlShellCommandEntry(
+			  &(dlShellCommand->command[cmdNumber]),
+			  cmdNumber );
+    dlShellCommand->clr = globalResourceBundle.clr;
+    dlShellCommand->bclr = globalResourceBundle.bclr;
+  }
 
   if (!(dlElement = createDlElement(DL_ShellCommand,
                     (XtPointer)      dlShellCommand,
-                    (medmExecProc)   executeDlShellCommand,
-                    (medmWriteProc)  writeDlShellCommand,
-										0,0,
-                    shellCommandInheritValues))) {
+                    &shellCommandDlDispatchTable))) {
     free(dlShellCommand);
   }
 
@@ -315,15 +316,13 @@ void parseShellCommandEntry(DisplayInfo *displayInfo,
                 && (tokenType != T_EOF) );
 }
 
-DlElement *parseShellCommand(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseShellCommand(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlShellCommand *dlShellCommand = 0;
-  DlElement *dlElement = createDlShellCommand(displayInfo);
+  DlElement *dlElement = createDlShellCommand(NULL);
   int cmdNumber;
 
   if (!dlElement) return 0;
@@ -364,8 +363,6 @@ DlElement *parseShellCommand(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 }
 
@@ -402,11 +399,12 @@ void writeDlShellCommandEntry(
 
 void writeDlShellCommand(
   FILE *stream,
-  DlShellCommand *dlShellCommand,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
+  DlShellCommand *dlShellCommand = dlElement->structure.shellCommand;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -619,5 +617,18 @@ static void shellCommandInheritValues(ResourceBundle *pRCB, DlElement *p) {
   medmGetValues(pRCB,
     CLR_RC,        &(dlShellCommand->clr),
     BCLR_RC,       &(dlShellCommand->bclr),
+    -1);
+}
+
+static void shellCommandGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlShellCommand *dlShellCommand = p->structure.shellCommand;
+  medmGetValues(pRCB,
+    X_RC,          &(dlShellCommand->object.x),
+    Y_RC,          &(dlShellCommand->object.y),
+    WIDTH_RC,      &(dlShellCommand->object.width),
+    HEIGHT_RC,     &(dlShellCommand->object.height),
+    CLR_RC,        &(dlShellCommand->clr),
+    BCLR_RC,       &(dlShellCommand->bclr),
+    SHELLDATA_RC,  &(dlShellCommand->command),
     -1);
 }

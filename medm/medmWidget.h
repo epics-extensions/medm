@@ -73,7 +73,11 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 #include <limits.h>
 #include <sys/types.h>
+#if 0
 #include <sys/times.h>
+#else
+#include <time.h>
+#endif
 #include "xtParams.h"
 
 
@@ -112,8 +116,6 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 #define DISPLAY_XWD_FILE		"/tmp/medm.xwd"
 #define MORE_TO_COME_SYMBOL	"..."	/* string for dialog popups        */
 #define SHELL_CMD_PROMPT_CHAR	'?'	/* shell cmd. prompt indicator     */
-#define ON_STRING		"1"
-#define OFF_STRING		"0"
 #define DUMMY_TEXT_FIELD	"9.876543" /* dummy string for text calc.  */
 
 #define NUM_EXECUTE_POPUP_ENTRIES	2	/* items in exec. popup menu */
@@ -254,33 +256,33 @@ typedef struct {
  */
 
 typedef struct _DisplayInfo {
-
-	FILE		*filePtr;
-	Boolean         newDisplay;
+  FILE		  *filePtr;
+  Boolean   newDisplay;
+  int       versionNumber;
 /* widgets and main pixmap */
-	char		*displayFileName;
-        int             versionNumber;
-	Widget		shell;
-	Widget		drawingArea;
-	Pixmap		drawingAreaPixmap;
-	Widget		editPopupMenu;
-	Widget		executePopupMenu;
-	Widget          cartesianPlotPopupMenu;
-	Widget          selectedCartesianPlot;
-	Widget		warningDialog;
-	int             warningDialogAnswer;
-	Widget          questionDialog;
-	int             questionDialogAnswer;
-	Widget		shellCommandPromptD;
+  Widget    shell;
+  Widget    drawingArea;
+  Pixmap    drawingAreaPixmap;
+  Widget    editPopupMenu;
+  Widget    executePopupMenu;
+  Widget    cartesianPlotPopupMenu;
+  Widget    selectedCartesianPlot;
+  Widget    warningDialog;
+  int       warningDialogAnswer;
+  Widget    questionDialog;
+  int       questionDialogAnswer;
+  Widget    shellCommandPromptD;
 /* widget instance data */
-	Widget		child[MAX_CHILDREN];	  /* children of drawing area */
-	int		childCount;
+#if 0
+  Widget		child[MAX_CHILDREN];	  /* children of drawing area */
+  int		    childCount;
+#endif
 /* periodic tasks */
-        UpdateTask      updateTaskListHead;
-        UpdateTask      *updateTaskListTail;
-        int             periodicTaskCount;
+  UpdateTask      updateTaskListHead;
+  UpdateTask      *updateTaskListTail;
+  int             periodicTaskCount;
 /* colormap and attribute data (one exists at a time for each display)        */
-	unsigned long	*dlColormap;
+  Pixel *colormap;
 	int		dlColormapCounter;
 	int		dlColormapSize;
 	int		drawingAreaBackgroundColor;
@@ -292,19 +294,18 @@ typedef struct _DisplayInfo {
 	Boolean		hasBeenEditedButNotSaved;
 	Boolean		fromRelatedDisplayExecution;
 /* display list pointers */
-	DlElement	*dlElementListHead;
-	DlElement	*dlElementListTail;
-	DlElement	*dlColormapElement;
+  DlList *dlElementList;
 
 /* for edit purposes */
-	DlElement **selectedElementsArray;
-	int numSelectedElements;
+  DlList *selectedDlElementList;
 	Boolean selectedElementsAreHighlighted;
-	int selectedElementsArraySize;
 
 /* for macro-substitution in display lists */
 	NameValueTable	*nameValueTable;
 	int		 numNameValues;
+
+  DlFile *dlFile;
+  DlColormap *dlColormap;
 
 /* linked list of displayInfo's    */
 	struct _DisplayInfo *next;
@@ -335,14 +336,12 @@ typedef struct {
   extern XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #else
   char *elementStringTable[NUM_DL_ELEMENT_TYPES] = {
-	"File", "Colormap", "Basic Attribute", "Dynamic Attribute",
-	"Composite", "Display",
-	"Valuator", "Choice Button", "Message Button", "Text Entry", "Menu",
-		"Related Display", "Shell Command",
-	"Meter", "Text Update", "Bar", "Byte", "Indicator", "Strip Chart", 
-		"Cartesian Plot", "Surface Plot",
-	"Rectangle", "Oval", "Arc", "Text", "Falling Line", "Rising Line",
-	"Image", "Line", "Polyline", "Polygon", "Bezier Curve"
+	"Element","Composite", "Display",
+  "Choice Button", "Menu", "Message Button", "Related Display",
+  "Shell Command", "Text Entry", "Valuator",
+  "Bar", "Byte", "Cartesian Plot", "Indicator", "Meter",
+  "Strip Chart", "Text Update",
+  "Arc", "Image", "Line", "Oval", "Polygon", "Polyline", "Rectangle", "Text"
   };
   XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
 #endif
@@ -373,10 +372,6 @@ typedef struct _ResourceBundle {
 	Position		y;
 	Dimension		width;
 	Dimension		height;
-#if 0
-	char			rdbk[MAX_TOKEN_LENGTH];
-	char			ctrl[MAX_TOKEN_LENGTH];
-#endif
 	char			title[MAX_TOKEN_LENGTH];
 	char			xlabel[MAX_TOKEN_LENGTH];
 	char			ylabel[MAX_TOKEN_LENGTH];
@@ -419,8 +414,8 @@ typedef struct _ResourceBundle {
 	char			name[MAX_TOKEN_LENGTH];
 	int			lineWidth;
 	double			dPrecision;
-        int                     sbit, ebit;
-
+  int                     sbit, ebit;
+  char      rdLabel[MAX_TOKEN_LENGTH];
 	DlTrace			cpData[MAX_TRACES];
 	DlPen			scData[MAX_PENS];
 	DlRelatedDisplayEntry	rdData[MAX_RELATED_DISPLAYS];
@@ -432,6 +427,9 @@ typedef struct _ResourceBundle {
 	char			trigger[MAX_TOKEN_LENGTH];
 	char                    erase[MAX_TOKEN_LENGTH];
 	eraseMode_t             eraseMode;
+
+  /* related display specific */
+  relatedDisplayVisual_t rdVisual;
 
 	struct _ResourceBundle	*next;	/* linked list of resourceBundle's   */
 	struct _ResourceBundle	*prev;
@@ -492,18 +490,20 @@ typedef struct _ResourceBundle {
 #define PRECISION_RC    44
 #define SBIT_RC         45
 #define EBIT_RC         46
+#define RD_LABEL_RC     47
+#define RD_VISUAL_RC    48
 
 /* vectors/matrices of data */
-#define RDDATA_RC       47              /* Related Display data           */
-#define CPDATA_RC       48              /* Cartesian Plot channel data    */
-#define SCDATA_RC       49              /* Strip Chart data               */
-#define SHELLDATA_RC    50              /* Shell Command data             */
-#define CPAXIS_RC       51              /* Cartesian Plot axis data       */
+#define RDDATA_RC       49              /* Related Display data           */
+#define CPDATA_RC       50              /* Cartesian Plot channel data    */
+#define SCDATA_RC       51              /* Strip Chart data               */
+#define SHELLDATA_RC    52              /* Shell Command data             */
+#define CPAXIS_RC       53              /* Cartesian Plot axis data       */
 
 /* other new entry types */
-#define TRIGGER_RC      52              /* Cartesian Plot trigger channel */
-#define ERASE_RC        53              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   54              /* Cartesian Plot erase mode      */
+#define TRIGGER_RC      54              /* Cartesian Plot trigger channel */
+#define ERASE_RC        55              /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   56              /* Cartesian Plot erase mode      */
 
 #else
 #define VIS_RC		21
@@ -531,19 +531,20 @@ typedef struct _ResourceBundle {
 #define PRECISION_RC	43
 #define SBIT_RC         44
 #define EBIT_RC         45
-
+#define RD_LABEL_RC     46
+#define RD_VISUAL_RC    47
 
 /* vectors/matrices of data */
-#define RDDATA_RC	46		/* Related Display data		  */
-#define CPDATA_RC	47		/* Cartesian Plot channel data	  */
-#define SCDATA_RC	48		/* Strip Chart data		  */
-#define SHELLDATA_RC	49		/* Shell Command data		  */
-#define CPAXIS_RC	50		/* Cartesian Plot axis data	  */
+#define RDDATA_RC	48		/* Related Display data		  */
+#define CPDATA_RC	49		/* Cartesian Plot channel data	  */
+#define SCDATA_RC	50		/* Strip Chart data		  */
+#define SHELLDATA_RC	51		/* Shell Command data		  */
+#define CPAXIS_RC	52		/* Cartesian Plot axis data	  */
 
 /* other new entry types */
-#define TRIGGER_RC	51		/* Cartesian Plot trigger channel */
-#define ERASE_RC        52              /* Cartesian Plot erase channel   */
-#define ERASE_MODE_RC   53              /* Cartesian Plot erase mode      */
+#define TRIGGER_RC	53		/* Cartesian Plot trigger channel */
+#define ERASE_RC        54              /* Cartesian Plot erase channel   */
+#define ERASE_MODE_RC   55              /* Cartesian Plot erase mode      */
 #endif
 
 #define MIN_RESOURCE_ENTRY	0
@@ -558,44 +559,45 @@ typedef struct _ResourceBundle {
   extern char *resourceEntryStringTable[MAX_RESOURCE_ENTRY];
 #else
   char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
-	"X Position", "Y Position", "Width", "Height",
-	"Readback Channel", "Control Channel",
-	"Title", "X Label", "Y Label",
-	"Foreground", "Background",
-	"Begin Angle", "Path Angle",
-	"Alignment", "Format",
-	"Label",
-	"Direction",
-	"Fill Mode", "Style", "Fill",
-	"Color Mode",
+    "X Position", "Y Position", "Width", "Height",
+    "Readback Channel", "Control Channel",
+    "Title", "X Label", "Y Label",
+    "Foreground", "Background",
+    "Begin Angle", "Path Angle",
+    "Alignment", "Format",
+    "Label",
+    "Direction",
+    "Fill Mode", "Style", "Fill",
+    "Color Mode",
 #ifdef __COLOR_RULE_H__
-        "Color Rule",
+    "Color Rule",
 #endif
-	"Visibility",
-	"Channel",
-	"Data Color", "Distance", "XY Angle", "Z Angle",
-	"Period", "Units",
-	"Plot Style", "Plot Mode", "Count",
-	"Stacking",
-	"Image Type",
-	"Text",
-	"Message Label",
-	"Press Message", "Release Message",
-	"Image Name",
-	"Data",
-	"Colormap",
-	"Name",
-	"Line Width",
-	"Precision",
-	"Start Bit", "End Bit",
-	"Label/Name/Args",	/* Related Display data		  */
-	"X/Y/Trace Data",	/* Cartesian Plot data		  */
-	"Channel/Color",	/* Strip Chart data		  */
-	"Label/Cmd/Args",	/* Shell Command data		  */
-	"Axis Data",		/* Cartesian Plot axis data	  */
-	"Trigger Channel",      /* Cartesian Plot trigger channel */
-	"Erase Channel",        /* Cartesian Plot erase channel   */
-	"Erase Mode",           /* Cartesian Plot erase mode      */
+    "Visibility",
+    "Channel",
+    "Data Color", "Distance", "XY Angle", "Z Angle",
+    "Period", "Units",
+    "Plot Style", "Plot Mode", "Count",
+    "Stacking",
+    "Image Type",
+    "Text",
+    "Message Label",
+    "Press Message", "Release Message",
+    "Image Name",
+    "Data",
+    "Colormap",
+    "Name",
+    "Line Width",
+    "Precision",
+    "Start Bit", "End Bit",
+    "Label","visual",
+    "Label/Name/Args",      /* Related Display data           */
+    "X/Y/Trace Data",       /* Cartesian Plot data            */
+    "Channel/Color",        /* Strip Chart data               */
+    "Label/Cmd/Args",       /* Shell Command data             */
+    "Axis Data",            /* Cartesian Plot axis data       */
+    "Trigger Channel",      /* Cartesian Plot trigger channel */
+    "Erase Channel",        /* Cartesian Plot erase channel   */
+    "Erase Mode",           /* Cartesian Plot erase mode      */
 };
 #endif
 
@@ -607,7 +609,7 @@ typedef struct _ResourceBundle {
  ***	DL_Element definitions in displayList.h (e.g., DL_Valuator...)
  ***	must have corresponding changes in this table!!
  ***/
-#define MAX_RESOURCES_FOR_DL_ELEMENT 17
+#define MAX_RESOURCES_FOR_DL_ELEMENT 18
 typedef struct _ResourceMap{
 	Cardinal childIndexRC[MAX_RESOURCES_FOR_DL_ELEMENT];
 	Cardinal numChildren;
@@ -738,9 +740,6 @@ typedef struct {
 
 /* display, connection, and miscellaneous */
 
-EXTERN XmString dlXmStringOn;
-EXTERN XmString dlXmStringOff;
-EXTERN XmString dlXmStringNull;
 EXTERN XmString dlXmStringMoreToComeSymbol;
 EXTERN XmButtonType executePopupMenuButtonType[NUM_EXECUTE_POPUP_ENTRIES];
 EXTERN XmString executePopupMenuButtons[NUM_EXECUTE_POPUP_ENTRIES];
@@ -780,10 +779,13 @@ EXTERN Boolean globalModifiedFlag;
 EXTERN DlElementType currentElementType;
 
 /* for clipboard/edit purposes  - note that this has objects and attributes */
+#if 0
 EXTERN DlElement *clipboardElementsArray;  /* array of DlElements, not ptrs */
 EXTERN int numClipboardElements;
 EXTERN int clipboardElementsArraySize;
 EXTERN Boolean clipboardDelete;
+#endif
+EXTERN DlList *clipboard;
 
 /* define MB1 semantics in the display window -
 	select, or create (based on object palette selection)

@@ -333,7 +333,7 @@ static void medmReplaceAccessRightsEventCb(struct access_rights_handler_args arg
   caTask.caEventCount++;
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 #if 1
-  if ((pCh == NULL) || (pCh->chid == NULL)) return;
+  if ((!pCh) || (!pCh->chid)) return;
 #endif
 
   pCh->pr->readAccess = ca_read_access(pCh->chid);
@@ -413,8 +413,8 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 #if 1
-  if ((pCh == NULL) || (pCh->chid == NULL)) return;
-  if (args.dbr == NULL) return;
+  if ((!pCh) || (!pCh->chid)) return;
+  if (!args.dbr) return;
 #endif
 
   caTask.caEventCount++;
@@ -497,45 +497,18 @@ void medmUpdateChannelCb(struct event_handler_args args) {
   Record *pr = pCh->pr;
 
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
-#if 1
-  if ((pCh == NULL) || (pCh->chid == NULL)) return;
-  if (args.dbr == NULL) return;
-#endif
+  if ((!pCh) || (!pCh->chid)) return;
+  if (!args.dbr) return;
   caTask.caEventCount++;
   if (ca_read_access(args.chid)) {
     /* if we have the read access */
     nBytes = dbr_size_n(args.type, args.count);
-    if (pCh->data == NULL) {
+    if (!pCh->data) {
       pCh->data = (dataBuf *) malloc(nBytes);
       pCh->size = nBytes;
-      if (pCh->data == NULL) {
+      if (!pCh->data) {
         medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
         return;
-      }
-      switch (ca_field_type(args.chid)) {
-      case DBF_STRING :
-        pr->array = (XtPointer) pCh->data->s.value;
-        break;
-      case DBF_ENUM :
-        pr->array = (XtPointer) &(pCh->data->e.value);
-        break;
-      case DBF_CHAR :
-        pr->array = (XtPointer) &(pCh->data->c.value);
-        break;
-      case DBF_INT :
-        pr->array = (XtPointer) &(pCh->data->i.value);
-        break;
-      case DBF_LONG :
-        pr->array = (XtPointer) &(pCh->data->l.value);
-        break;
-      case DBF_FLOAT :
-        pr->array = (XtPointer) &(pCh->data->f.value);
-        break;
-      case DBF_DOUBLE :
-        pr->array = (XtPointer) &(pCh->data->d.value);
-        break;
-      default :
-        break;
       }
     } else 
     if (pCh->size < nBytes) {
@@ -546,31 +519,32 @@ void medmUpdateChannelCb(struct event_handler_args args) {
         medmPrintf("medmUpdateChannelCb : memory allocation error!\n");
         return;
       }
-      switch (ca_field_type(args.chid)) {
-      case DBF_STRING :
-        pr->array = (XtPointer) pCh->data->s.value;
-        break;
-      case DBF_ENUM :
-        pr->array = (XtPointer) &(pCh->data->e.value);
-        break;
-      case DBF_CHAR :
-        pr->array = (XtPointer) &(pCh->data->c.value);
-        break;
-      case DBF_INT :
-        pr->array = (XtPointer) &(pCh->data->i.value);
-        break;
-      case DBF_LONG :
-        pr->array = (XtPointer) &(pCh->data->l.value);
-        break;
-      case DBF_FLOAT :
-        pr->array = (XtPointer) &(pCh->data->f.value);
-        break;
-      case DBF_DOUBLE :
-        pr->array = (XtPointer) &(pCh->data->d.value);
-        break;
-      default :
-        break;
-      }
+    }
+    pr->time = ((dataBuf *) args.dbr)->s.stamp;
+    switch (ca_field_type(args.chid)) {
+    case DBF_STRING :
+      pr->array = (XtPointer) pCh->data->s.value;
+      break;
+    case DBF_ENUM :
+      pr->array = (XtPointer) &(pCh->data->e.value);
+      break;
+    case DBF_CHAR :
+      pr->array = (XtPointer) &(pCh->data->c.value);
+      break;
+    case DBF_INT :
+      pr->array = (XtPointer) &(pCh->data->i.value);
+      break;
+    case DBF_LONG :
+      pr->array = (XtPointer) &(pCh->data->l.value);
+      break;
+    case DBF_FLOAT :
+      pr->array = (XtPointer) &(pCh->data->f.value);
+      break;
+    case DBF_DOUBLE :
+      pr->array = (XtPointer) &(pCh->data->d.value);
+      break;
+    default :
+      break;
     }
 
     if (ca_field_type(args.chid) == DBF_STRING || ca_element_count(args.chid) > 1) {
@@ -733,7 +707,9 @@ static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
                              NULL,NULL,NULL,NULL,
                              NULL,NULL,NULL,NULL,
                              NULL,NULL,NULL,NULL},
-                            NULL,NULL,NULL,NULL,NULL,
+                            NULL,NULL,
+                            {0,0},
+                            NULL,NULL,NULL,
                             True,True,True};
 
 Record *medmAllocateRecord(char *name,

@@ -213,12 +213,15 @@ void StartDrag(
 		xbutton->x,xbutton->y);
   } else {
    /* ---get data from widget */
+#if 0
     while (XtClass(XtParent(searchWidget)) != xmDrawingAreaWidgetClass)
 	searchWidget = XtParent(searchWidget);
+#endif
     pt = getUpdateTaskFromWidget(searchWidget);
   }
 
 
+  printf("start drag : 0x%08x\n",pt);
   if (pt) {
     #define MAX_COL 4
     char *name[MAX_PENS*MAX_COL];

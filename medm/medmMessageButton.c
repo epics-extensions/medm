@@ -63,16 +63,15 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _MessageButton {
-  Widget             widget;
-  DlMessageButton    *dlMessageButton;
+  DlElement          *dlElement;
   Record             *record;
   UpdateTask         *updateTask;
   double             pressValue;
   double             releaseValue;
 } MessageButton;
 
-void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,DlMessageButton *dlMessageButton);
-void messageButtonCreateEditInstance(DisplayInfo *displayInfo,DlMessageButton *dlMessageButton);
+void messageButtonCreateRunTimeInstance(DisplayInfo *, DlElement *);
+void messageButtonCreateEditInstance(DisplayInfo *, DlElement *);
 
 static void messageButtonDraw(XtPointer cd);
 static void messageButtonUpdateValueCb(XtPointer cd);
@@ -81,6 +80,22 @@ static void messageButtonDestroyCb(XtPointer);
 static void messageButtonValueChangedCb(Widget, XtPointer, XtPointer);
 static void messageButtonName(XtPointer, char **, short *, int *);
 static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void messageButtonGetValues(ResourceBundle *pRCB, DlElement *p);
+
+static DlDispatchTable messageButtonDlDispatchTable = {
+         createDlMessageButton,
+         NULL,
+         executeDlMessageButton,
+         writeDlMessageButton,
+         NULL,
+         messageButtonGetValues,
+         messageButtonInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 
 int messageButtonFontListIndex(int height)
@@ -97,63 +112,83 @@ int messageButtonFontListIndex(int height)
   return (0);
 }
 
-void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
-		DlMessageButton *dlMessageButton) {
-  XmString xmString;
+Widget createPushButton(Widget parent,
+                        DlObject *po,
+                        Pixel fg,
+                        Pixel bg,
+                        Pixmap pixmap,
+                        char *label,
+                        XtPointer userData) {
+  Arg args[15];
   Widget widget;
-  int n;
-  Arg args[20];
-
-  xmString = XmStringCreateSimple(dlMessageButton->label);
-  n = 0;
-  XtSetArg(args[n],XmNx,(Position)dlMessageButton->object.x); n++;
-  XtSetArg(args[n],XmNy,(Position)dlMessageButton->object.y); n++;
-  XtSetArg(args[n],XmNwidth,(Dimension)dlMessageButton->object.width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension)dlMessageButton->object.height); n++;
-  XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlMessageButton->control.clr]); n++;
-  XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlMessageButton->control.bclr]); n++;
+  XmString xmString = 0;
+  int n = 0;
+ 
+  XtSetArg(args[n],XmNx,(Position) po->x); n++;
+  XtSetArg(args[n],XmNy,(Position) po->y); n++;
+  XtSetArg(args[n],XmNwidth,(Dimension) po->width); n++;
+  XtSetArg(args[n],XmNheight,(Dimension) po->height); n++;
+  XtSetArg(args[n],XmNforeground,fg); n++;
+  XtSetArg(args[n],XmNbackground,bg); n++;
   XtSetArg(args[n],XmNhighlightThickness,1); n++;
-  XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-  XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
-  XtSetArg(args[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-  XtSetArg(args[n],XmNlabelString, xmString); n++;
-  XtSetArg(args[n],XmNlabelType, XmSTRING); n++;
-  XtSetArg(args[n],XmNfontList,fontListTable[
-	messageButtonFontListIndex(dlMessageButton->object.height)]); n++;
+  XtSetArg(args[n],XmNhighlightOnEnter,True); n++;
+  XtSetArg(args[n],XmNindicatorOn,False); n++;
+  XtSetArg(args[n],XmNrecomputeSize,False); n++;
+  XtSetArg(args[n], XmNuserData, userData); n++;
+  if (label) {
+    xmString = XmStringCreateLocalized(label);
+    XtSetArg(args[n],XmNlabelString, xmString); n++;
+    XtSetArg(args[n],XmNlabelType, XmSTRING); n++;
+    XtSetArg(args[n],XmNfontList,
+             fontListTable[messageButtonFontListIndex(po->height)]); n++;
+  } else
+  if (pixmap) {
+    XtSetArg(args[n],XmNlabelPixmap,pixmap); n++;
+    XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
+  }
   widget = XtCreateWidget("messageButton",
-		xmPushButtonWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = widget;
+    xmPushButtonWidgetClass, parent, args, n);
+  if (xmString) XmStringFree(xmString);
+  return widget;
+}
 
-  XmStringFree(xmString);
+void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
+                                     DlElement *dlElement) {
+  DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
+
+  dlElement->widget = createPushButton(displayInfo->drawingArea,
+                          &(dlMessageButton->object),
+                          displayInfo->colormap[dlMessageButton->control.clr],
+                          displayInfo->colormap[dlMessageButton->control.bclr],
+                          NULL,
+                          dlMessageButton->label,
+                          (XtPointer) displayInfo);
 
   /* remove all translations if in edit mode */
-  XtUninstallTranslations(widget);
-  /*
-	* add button press handlers too
-	*/
-  XtAddEventHandler(widget,ButtonPressMask, False,
+  XtUninstallTranslations(dlElement->widget);
+  /* add button press handlers too */
+  XtAddEventHandler(dlElement->widget,ButtonPressMask, False,
 	 handleButtonPress,(XtPointer)displayInfo);
-  XtManageChild(widget);
+  XtManageChild(dlElement->widget);
 }
 
 void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
-		DlMessageButton *dlMessageButton) {
+         DlElement *dlElement) {
   MessageButton *pmb;
   XmString xmString;
   int n;
   Arg args[20];
+  DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
 
   pmb = (MessageButton *) malloc(sizeof(MessageButton));
-  pmb->dlMessageButton = dlMessageButton;
+  pmb->dlElement = dlElement;
 
   pmb->updateTask = updateTaskAddTask(displayInfo,
                                      &(dlMessageButton->object),
                                      messageButtonDraw,
                                      (XtPointer)pmb);
 
-  if (pmb->updateTask == NULL) {
+  if (!pmb->updateTask) {
     medmPrintf("messageButtonCreateRunTimeInstance : memory allocation error\n");
   } else {
     updateTaskAddDestroyCb(pmb->updateTask,messageButtonDestroyCb);
@@ -165,60 +200,53 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
                   (XtPointer) pmb);
   drawWhiteRectangle(pmb->updateTask);
  
-  xmString = XmStringCreateSimple(dlMessageButton->label);
-  n = 0;
-  XtSetArg(args[n],XmNx,(Position)dlMessageButton->object.x); n++;
-  XtSetArg(args[n],XmNy,(Position)dlMessageButton->object.y); n++;
-  XtSetArg(args[n],XmNwidth,(Dimension)dlMessageButton->object.width); n++;
-  XtSetArg(args[n],XmNheight,(Dimension)dlMessageButton->object.height); n++;
-  XtSetArg(args[n],XmNforeground,(Pixel)
-	displayInfo->dlColormap[dlMessageButton->control.clr]); n++;
-  XtSetArg(args[n],XmNbackground,(Pixel)
-	displayInfo->dlColormap[dlMessageButton->control.bclr]); n++;
-  XtSetArg(args[n],XmNhighlightThickness,1); n++;
-  XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
-  XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
-  XtSetArg(args[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-  XtSetArg(args[n],XmNlabelString, xmString); n++;
-  XtSetArg(args[n],XmNlabelType, XmSTRING); n++;
-  XtSetArg(args[n],XmNfontList,fontListTable[
-	 messageButtonFontListIndex(dlMessageButton->object.height)]); n++;
-  pmb->widget = XtCreateWidget("messageButton",
-		xmPushButtonWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = pmb->widget;
-  XmStringFree(xmString);
+  dlElement->widget = createPushButton(displayInfo->drawingArea,
+                          &(dlMessageButton->object),
+                          displayInfo->colormap[dlMessageButton->control.clr],
+                          displayInfo->colormap[dlMessageButton->control.bclr],
+                          NULL,
+                          dlMessageButton->label,
+                          (XtPointer) displayInfo);
 
   /* add in drag/drop translations */
-  XtOverrideTranslations(pmb->widget,parsedTranslations);
+  XtOverrideTranslations(dlElement->widget,parsedTranslations);
 
   /* add the callbacks for update */
-  XtAddCallback(pmb->widget,XmNarmCallback,messageButtonValueChangedCb,
+  XtAddCallback(dlElement->widget,XmNarmCallback,messageButtonValueChangedCb,
 	(XtPointer)pmb);
-  XtAddCallback(pmb->widget,XmNdisarmCallback,messageButtonValueChangedCb,
+  XtAddCallback(dlElement->widget,XmNdisarmCallback,messageButtonValueChangedCb,
 	(XtPointer)pmb);
 }
 
-#ifdef __cplusplus
-void executeDlMessageButton(DisplayInfo *displayInfo,
-		DlMessageButton *dlMessageButton, Boolean)
-#else
-void executeDlMessageButton(DisplayInfo *displayInfo,
-                DlMessageButton *dlMessageButton, Boolean dummy)
-#endif
+void executeDlMessageButton(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-
   if (displayInfo->traversalMode == DL_EXECUTE) {
-	 messageButtonCreateRunTimeInstance(displayInfo,dlMessageButton);
+	  messageButtonCreateRunTimeInstance(displayInfo,dlElement);
   } else
   if (displayInfo->traversalMode == DL_EDIT) {
-	 messageButtonCreateEditInstance(displayInfo,dlMessageButton);
+    if (dlElement->widget) {
+      DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
+      DlObject *po = &(dlMessageButton->object);
+      XmString xmString;
+      xmString = XmStringCreateLocalized(dlMessageButton->label);
+      XtVaSetValues(dlElement->widget,
+          XmNx, (Position) po->x,
+          XmNy, (Position) po->y,
+          XmNwidth, (Dimension) po->width,
+          XmNheight, (Dimension) po->height,
+          XmNlabelString, xmString,
+          NULL);
+      XmStringFree(xmString);
+    } else {
+      messageButtonCreateEditInstance(displayInfo,dlElement);
+    }
   }
 }
 
 static void messageButtonUpdateGraphicalInfoCb(XtPointer cd) {
   Record *pd = (Record *) cd;
   MessageButton *pmb = (MessageButton *) pd->clientData;
-  DlMessageButton *dlMessageButton = pmb->dlMessageButton;
+  DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
   int i;
   Boolean match;
 
@@ -275,34 +303,36 @@ static void messageButtonUpdateValueCb(XtPointer cd) {
 static void messageButtonDraw(XtPointer cd) {
   MessageButton *pmb = (MessageButton *) cd;
   Record *pd = pmb->record;
+  Widget widget = pmb->dlElement->widget;
+  DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
   if (pd->connected) {
     if (pd->readAccess) {
-      if (pmb->widget)
-	XtManageChild(pmb->widget);
+      if (widget)
+        XtManageChild(widget);
       else 
         return;
-      switch (pmb->dlMessageButton->clrmod) {
+      switch (dlMessageButton->clrmod) {
         case STATIC :
         case DISCRETE :
           break;
         case ALARM :
-          XtVaSetValues(pmb->widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
+          XtVaSetValues(widget,XmNforeground,alarmColorPixel[pd->severity],NULL);
           break;
         default :
           break;
       }
       if (pd->writeAccess)
-	XDefineCursor(XtDisplay(pmb->widget),XtWindow(pmb->widget),rubberbandCursor);
+        XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
       else
-	XDefineCursor(XtDisplay(pmb->widget),XtWindow(pmb->widget),noWriteAccessCursor);
+        XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
     } else {
       draw3DPane(pmb->updateTask,
-         pmb->updateTask->displayInfo->dlColormap[pmb->dlMessageButton->control.bclr]);
+         pmb->updateTask->displayInfo->colormap[dlMessageButton->control.bclr]);
       draw3DQuestionMark(pmb->updateTask);
-      if (pmb->widget) XtUnmanageChild(pmb->widget);
+      if (widget) XtUnmanageChild(widget);
     }
   } else {
-    if (pmb->widget) XtUnmanageChild(pmb->widget);
+    if (widget) XtUnmanageChild(widget);
     drawWhiteRectangle(pmb->updateTask);
   }
 }
@@ -327,7 +357,7 @@ static void messageButtonValueChangedCb(Widget w,
   MessageButton *pmb = (MessageButton *) clientData;
   Record *pd = pmb->record;
   XmPushButtonCallbackStruct *pushCallData = (XmPushButtonCallbackStruct *) callbackData;
-  DlMessageButton *dlMessageButton = pmb->dlMessageButton;
+  DlMessageButton *dlMessageButton = pmb->dlElement->structure.messageButton;
 
   if (pd->connected) {
     if (pd->writeAccess) {
@@ -375,41 +405,39 @@ static void messageButtonName(XtPointer cd, char **name, short *severity, int *c
  *** Message Button
  ***/
  
-DlElement *createDlMessageButton(
-  DisplayInfo *displayInfo)
+DlElement *createDlMessageButton(DlElement *p)
 {
   DlMessageButton *dlMessageButton;
   DlElement *dlElement;
  
   dlMessageButton = (DlMessageButton *) malloc(sizeof(DlMessageButton));
-  objectAttributeInit(&(dlMessageButton->object));
-  controlAttributeInit(&(dlMessageButton->control));
-  dlMessageButton->label[0] = '\0';
-  dlMessageButton->press_msg[0] = '\0';
-  dlMessageButton->release_msg[0] = '\0';
-  dlMessageButton->clrmod = STATIC;
+  if (p) {
+    *dlMessageButton = *(p->structure.messageButton);
+  } else {
+    objectAttributeInit(&(dlMessageButton->object));
+    controlAttributeInit(&(dlMessageButton->control));
+    dlMessageButton->label[0] = '\0';
+    dlMessageButton->press_msg[0] = '\0';
+    dlMessageButton->release_msg[0] = '\0';
+    dlMessageButton->clrmod = STATIC;
+  }
 
   if (!(dlElement = createDlElement(DL_MessageButton,
-                    (XtPointer)      dlMessageButton,
-                    (medmExecProc)   executeDlMessageButton,
-                    (medmWriteProc)  writeDlMessageButton,
-										0,0,
-                    messageButtonInheritValues))) {
+                    (XtPointer) dlMessageButton,
+                    &messageButtonDlDispatchTable))) {
     free(dlMessageButton);
   }
 
   return(dlElement);
 }
 
-DlElement *parseMessageButton(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseMessageButton(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlMessageButton *dlMessageButton;
-  DlElement *dlElement = createDlMessageButton(displayInfo);
+  DlElement *dlElement = createDlMessageButton(NULL);
 
   if (!dlElement) return 0;
   dlMessageButton = dlElement->structure.messageButton;
@@ -461,17 +489,16 @@ DlElement *parseMessageButton(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 }
 
 void writeDlMessageButton(
   FILE *stream,
-  DlMessageButton *dlMessageButton,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
 
   memset(indent,'\t',level);
   indent[level] = '\0';
@@ -515,6 +542,23 @@ static void messageButtonInheritValues(ResourceBundle *pRCB, DlElement *p) {
     CTRL_RC,       &(dlMessageButton->control.ctrl),
     CLR_RC,        &(dlMessageButton->control.clr),
     BCLR_RC,       &(dlMessageButton->control.bclr),
+    CLRMOD_RC,     &(dlMessageButton->clrmod),
+    -1);
+}
+
+static void messageButtonGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMessageButton *dlMessageButton = p->structure.messageButton;
+  medmGetValues(pRCB,
+    X_RC,          &(dlMessageButton->object.x),
+    Y_RC,          &(dlMessageButton->object.y),
+    WIDTH_RC,      &(dlMessageButton->object.width),
+    HEIGHT_RC,     &(dlMessageButton->object.height),
+    CTRL_RC,       &(dlMessageButton->control.ctrl),
+    CLR_RC,        &(dlMessageButton->control.clr),
+    BCLR_RC,       &(dlMessageButton->control.bclr),
+    MSG_LABEL_RC,  &(dlMessageButton->label),
+    PRESS_MSG_RC,  &(dlMessageButton->press_msg),
+    RELEASE_MSG_RC,&(dlMessageButton->release_msg),
     CLRMOD_RC,     &(dlMessageButton->clrmod),
     -1);
 }

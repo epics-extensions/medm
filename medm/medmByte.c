@@ -63,8 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Byte {
-  Widget      widget;
-  DlByte      *dlByte;
+  DlElement   *dlElement;
   Record      *record;
   UpdateTask  *updateTask;
 } Bits;
@@ -73,13 +72,26 @@ static void byteUpdateValueCb(XtPointer cd);
 static void byteDraw(XtPointer cd);
 static void byteDestroyCb(XtPointer cd);
 static void byteName(XtPointer, char **, short *, int *);
+static void byteGetValues(ResourceBundle *pRCB, DlElement *p);
 static void byteInheritValues(ResourceBundle *pRCB, DlElement *p);
 
-#ifdef __cplusplus
-void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean) {
-#else
-void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
-#endif
+static DlDispatchTable byteDlDispatchTable = {
+         createDlByte,
+         NULL,
+         executeDlByte,
+         writeDlByte,
+         NULL,
+         byteGetValues,
+         byteInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
+
+
+void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 /****************************************************************************
  * Execute DL Byte                                                          *
  ****************************************************************************/
@@ -88,29 +100,31 @@ void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
   Bits *pb;
+  DlByte *dlByte = dlElement->structure.byte;
 
-  if (displayInfo->traversalMode == DL_EXECUTE) {
-    pb = (Bits *) malloc(sizeof(Bits));
-    pb->dlByte = dlByte;
-    pb->updateTask = updateTaskAddTask(displayInfo,
+  if (!dlElement->widget) {
+    if (displayInfo->traversalMode == DL_EXECUTE) {
+      pb = (Bits *) malloc(sizeof(Bits));
+      pb->dlElement = dlElement;
+      pb->updateTask = updateTaskAddTask(displayInfo,
                                        &(dlByte->object),
                                        byteDraw,
                                        (XtPointer)pb);
 
-    if (pb->updateTask == NULL) {
-      medmPrintf("byteCreateRunTimeInstance : memory allocation error\n");
-    } else {
-      updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
-      updateTaskAddNameCb(pb->updateTask,byteName);
-    }
-    pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
+      if (pb->updateTask == NULL) {
+        medmPrintf("byteCreateRunTimeInstance : memory allocation error\n");
+      } else {
+        updateTaskAddDestroyCb(pb->updateTask,byteDestroyCb);
+        updateTaskAddNameCb(pb->updateTask,byteName);
+      }
+      pb->record = medmAllocateRecord(dlByte->monitor.rdbk,
                   byteUpdateValueCb,
                   NULL,
                   (XtPointer) pb);
-    drawWhiteRectangle(pb->updateTask);
-  }
+      drawWhiteRectangle(pb->updateTask);
+    }
 
-/****** from the DlByte structure, we've got Byte's specifics */
+    /****** from the DlByte structure, we've got Byte's specifics */
     n = 0;
     XtSetArg(args[n],XtNx,(Position)dlByte->object.x); n++;
     XtSetArg(args[n],XtNy,(Position)dlByte->object.y); n++;
@@ -118,7 +132,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
     XtSetArg(args[n],XtNheight,(Dimension)dlByte->object.height); n++;
     XtSetArg(args[n],XcNdataType,XcLval); n++;
 
-/****** note that this is orientation for the Byte */
+    /****** note that this is orientation for the Byte */
     if (dlByte->direction == RIGHT) {
       XtSetArg(args[n],XcNorient,XcHoriz); n++;
     }
@@ -128,38 +142,46 @@ void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy) {
     XtSetArg(args[n],XcNsBit,dlByte->sbit); n++;
     XtSetArg(args[n],XcNeBit,dlByte->ebit); n++;
 
-/****** Set arguments with other colors, etc */
+    /****** Set arguments with other colors, etc */
     preferredHeight = dlByte->object.height/INDICATOR_FONT_DIVISOR;
     bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
       preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
     XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
     XtSetArg(args[n],XcNbyteForeground,(Pixel)
-      displayInfo->dlColormap[dlByte->monitor.clr]); n++;
+      displayInfo->colormap[dlByte->monitor.clr]); n++;
     XtSetArg(args[n],XcNbyteBackground,(Pixel)
-      displayInfo->dlColormap[dlByte->monitor.bclr]); n++;
+      displayInfo->colormap[dlByte->monitor.bclr]); n++;
     XtSetArg(args[n],XtNbackground,(Pixel)
-      displayInfo->dlColormap[dlByte->monitor.bclr]); n++;
+      displayInfo->colormap[dlByte->monitor.bclr]); n++;
     XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-      displayInfo->dlColormap[dlByte->monitor.bclr]); n++;
+      displayInfo->colormap[dlByte->monitor.bclr]); n++;
 
-/****** Add the pointer to the ChannelAccessMonitorData structure as
+    /****** Add the pointer to the ChannelAccessMonitorData structure as
         userData to widget */
     XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
     localWidget = XtCreateWidget("byte",
       xcByteWidgetClass, displayInfo->drawingArea, args, n);
-    displayInfo->child[displayInfo->childCount++] = localWidget;
+    dlElement->widget = localWidget;
 
-/****** Record the widget that this structure belongs to */
+    /****** Record the widget that this structure belongs to */
     if (displayInfo->traversalMode == DL_EXECUTE) {
-      pb->widget = localWidget;
-/****** Add in drag/drop translations */
+      /****** Add in drag/drop translations */
       XtOverrideTranslations(localWidget,parsedTranslations);
     } else if (displayInfo->traversalMode == DL_EDIT) {
-/* add button press handlers */
+      /* add button press handlers */
       XtAddEventHandler(localWidget,ButtonPressMask,False,
         handleButtonPress,(XtPointer)displayInfo);
       XtManageChild(localWidget);
     }
+  } else {
+    DlObject *po = &(dlElement->structure.byte->object);
+    XtVaSetValues(dlElement->widget,
+        XmNx, (Position) po->x,
+        XmNy, (Position) po->y,
+        XmNwidth, (Dimension) po->width,
+        XmNheight, (Dimension) po->height,
+        NULL);
+  }
 }
 
 static void byteUpdateValueCb(XtPointer cd) {
@@ -170,32 +192,34 @@ static void byteUpdateValueCb(XtPointer cd) {
 static void byteDraw(XtPointer cd) {
   Bits *pb = (Bits *) cd;
   Record *pd = pb->record;
+  Widget widget = pb->dlElement->widget;
+  DlByte *dlByte = pb->dlElement->structure.byte;
   XcVType val;
   if (pd->connected) {
     if (pd->readAccess) {
-      if (pb->widget) {
-        XtManageChild(pb->widget);
+      if (widget) {
+        XtManageChild(widget);
       } else {
 	return;
       }
       val.fval = (float) pd->value;
-      XcBYUpdateValue(pb->widget,&val);
-      switch (pb->dlByte->clrmod) {
+      XcBYUpdateValue(widget,&val);
+      switch (dlByte->clrmod) {
 	case STATIC :
 	case DISCRETE :
 	  break;
 	case ALARM :
-          XcBYUpdateByteForeground(pb->widget,alarmColorPixel[pd->severity]);
+          XcBYUpdateByteForeground(widget,alarmColorPixel[pd->severity]);
 	  break;
       }
     } else {
-      if (pb->widget) XtUnmanageChild(pb->widget);
+      if (widget) XtUnmanageChild(widget);
       draw3DPane(pb->updateTask,
-          pb->updateTask->displayInfo->dlColormap[pb->dlByte->monitor.bclr]);
+          pb->updateTask->displayInfo->colormap[dlByte->monitor.bclr]);
       draw3DQuestionMark(pb->updateTask);
     }
   } else {
-    if (pb->widget) XtUnmanageChild(pb->widget);
+    if (widget) XtUnmanageChild(widget);
     drawWhiteRectangle(pb->updateTask);
   }
 }
@@ -215,37 +239,38 @@ static void byteName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pb->record->severity;
 }
 
-DlElement *createDlByte( DisplayInfo *displayInfo) {
+DlElement *createDlByte(DlElement *p) {
   DlByte *dlByte;
   DlElement *dlElement;
 
   dlByte = (DlByte *) malloc(sizeof(DlByte));
   if (!dlByte) return 0;
-  objectAttributeInit(&(dlByte->object));
-  monitorAttributeInit(&(dlByte->monitor));
-  dlByte->clrmod = STATIC;
-  dlByte->direction = RIGHT;
-  dlByte->sbit = 15;
-  dlByte->ebit = 0;
+  if (p) {
+    *dlByte = *p->structure.byte;
+  } else {
+    objectAttributeInit(&(dlByte->object));
+    monitorAttributeInit(&(dlByte->monitor));
+    dlByte->clrmod = STATIC;
+    dlByte->direction = RIGHT;
+    dlByte->sbit = 15;
+    dlByte->ebit = 0;
+  }
 
   if (!(dlElement = createDlElement(DL_Byte,
                     (XtPointer)      dlByte,
-                    (medmExecProc)   executeDlByte,
-                    (medmWriteProc)  writeDlByte,
-										0,0,
-                    byteInheritValues))) {
+                    &byteDlDispatchTable))) {
     free(dlByte);
   }
 
   return(dlElement);
 }
 
-DlElement *parseByte( DisplayInfo *displayInfo, DlComposite *dlComposite) {
+DlElement *parseByte( DisplayInfo *displayInfo) {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlByte *dlByte;
-  DlElement *dlElement = createDlByte(displayInfo);
+  DlElement *dlElement = createDlByte(NULL);
  
   if (!dlElement) return 0;
   dlByte = dlElement->structure.byte;
@@ -288,14 +313,13 @@ DlElement *parseByte( DisplayInfo *displayInfo, DlComposite *dlComposite) {
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
  
-  POSITION_ELEMENT_ON_LIST();
- 
   return dlElement;
 }
 
-void writeDlByte(FILE *stream, DlByte *dlByte, int level) {
+void writeDlByte(FILE *stream, DlElement *dlElement, int level) {
   int i;
   char indent[16];
+  DlByte *dlByte = dlElement->structure.byte;
 
     for (i = 0;  i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
@@ -319,6 +343,23 @@ void writeDlByte(FILE *stream, DlByte *dlByte, int level) {
 static void byteInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlByte *dlByte = p->structure.byte;
   medmGetValues(pRCB,
+    RDBK_RC,       &(dlByte->monitor.rdbk),
+    CLR_RC,        &(dlByte->monitor.clr),
+    BCLR_RC,       &(dlByte->monitor.bclr),
+    DIRECTION_RC,  &(dlByte->direction),
+    CLRMOD_RC,     &(dlByte->clrmod),
+    SBIT_RC,       &(dlByte->sbit),
+    EBIT_RC,       &(dlByte->ebit),
+    -1);
+}
+
+static void byteGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlByte *dlByte = p->structure.byte;
+  medmGetValues(pRCB,
+    X_RC,          &(dlByte->object.x),
+    Y_RC,          &(dlByte->object.y),
+    WIDTH_RC,      &(dlByte->object.width),
+    HEIGHT_RC,     &(dlByte->object.height),
     RDBK_RC,       &(dlByte->monitor.rdbk),
     CLR_RC,        &(dlByte->monitor.clr),
     BCLR_RC,       &(dlByte->monitor.bclr),

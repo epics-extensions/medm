@@ -61,76 +61,91 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
  *****************************************************************************
 */
 
-#include "medm.h"
+#include "../medm/medm.h"
+static void destroyDlComposite(DlElement *dlElement);
+static void compositeMove(DlElement *element, int xOffset, int yOffset);
+static void compositeScale(DlElement *element, int xOffset, int yOffset);
+static void compositeGetValues(ResourceBundle *pRCB, DlElement *p);
+static void compositeCleanup(DlElement *element);
 
-void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
-        Boolean forcedDisplayToWindow)
+static DlDispatchTable compositeDlDispatchTable = {
+         createDlComposite,
+         destroyDlComposite,
+         executeDlComposite,
+         writeDlComposite,
+         NULL,
+         compositeGetValues,
+         NULL,
+         NULL,
+         NULL,
+         compositeMove,
+         compositeScale,
+         NULL,
+         compositeCleanup};
+
+void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  DlComposite *dlComposite = dlElement->structure.composite;
   DlElement *element;
 
   if (displayInfo->traversalMode == DL_EDIT) {
-
-/* like dmTraverseDisplayList: traverse composite's display list */
-    element = ((DlElement *)dlComposite->dlElementListHead)->next;
-    while (element != NULL) {
-/* type in union is unimportant: just trying to get to element structure */
-/* third argument is for statics acting as dynamics (for forced display) */
-        (*element->dmExecute)(displayInfo,
-                              (XtPointer) element->structure.file,
-                                          FALSE);
-        element = element->next;
+    element = FirstDlElement(dlComposite->dlElementList);
+    while (element) {
+      (element->run->execute)(displayInfo, element);
+      element = element->next;
     }
-
-
-
-  } else if (displayInfo->traversalMode == DL_EXECUTE) {
-
+  } else
+  if (displayInfo->traversalMode == DL_EXECUTE) {
     if (dlComposite->visible) {
-
-/* like dmTraverseDisplayList: traverse composite's display list */
-      element = ((DlElement *)dlComposite->dlElementListHead)->next;
-      while (element != NULL) {
-/* type in union is unimportant: just trying to get to element structure */
-/* third argument is for statics acting as dynamics (for forced display) */
-        (*element->dmExecute)(displayInfo,
-                              (XtPointer) element->structure.file,
-                                          forcedDisplayToWindow);
+      element = FirstDlElement(dlComposite->dlElementList);
+      while (element) {
+        (element->run->execute)(displayInfo, element);
         element = element->next;
       }
-
-
     }
-
   }
-
 }
 
-DlElement *createDlComposite(DisplayInfo *displayInfo) {
+DlElement *createDlComposite(DlElement *p) {
   DlComposite *dlComposite;
   DlElement *dlElement;
 
   dlComposite = (DlComposite *) malloc(sizeof(DlComposite));
   if (!dlComposite) return 0;
-  objectAttributeInit(&(dlComposite->object));
-  dlComposite->compositeName[0] = '\0';
-  dlComposite->vis = V_STATIC;
-  dlComposite->chan[0] = '\0';
-  dlComposite->dlElementListHead = (DlElement *)malloc(sizeof(DlElement));
-  if (!dlComposite->dlElementListHead) {
-    free(dlComposite);
-    return NULL;
+  if (p) {
+    DlElement *child;
+    *dlComposite = *p->structure.composite;
+
+    /* create the first node */
+    dlComposite->dlElementList = createDlList();
+    if (!dlComposite->dlElementList) {
+      free(dlComposite);
+      return NULL;
+    }
+    /* copy all childrern */
+    child = FirstDlElement(p->structure.composite->dlElementList);
+    while (child) {
+      DlElement *copy = child->run->create(child);
+      if (copy) 
+        appendDlElement(dlComposite->dlElementList,copy);
+      child = child->next;
+    }
+  } else {
+    objectAttributeInit(&(dlComposite->object));
+    dlComposite->compositeName[0] = '\0';
+    dlComposite->vis = V_STATIC;
+    dlComposite->chan[0] = '\0';
+    dlComposite->dlElementList = createDlList();
+    if (!dlComposite->dlElementList) {
+      free(dlComposite);
+      return NULL;
+    }
+    dlComposite->visible = True;
   }
-  dlComposite->dlElementListHead->next = 0;
-  dlComposite->dlElementListHead->prev = 0;
-  dlComposite->dlElementListTail = dlComposite->dlElementListHead;
-  dlComposite->visible = True;
 
   if (!(dlElement = createDlElement(DL_Composite,
-                    (XtPointer)      dlComposite,
-                    (medmExecProc)   executeDlComposite,
-                    (medmWriteProc)  writeDlComposite,
-										0,0,0))) {
-    free(dlComposite->dlElementListHead);
+                    (XtPointer) dlComposite, &compositeDlDispatchTable))) {
+    free(dlComposite->dlElementList);
     free(dlComposite);
     return NULL;
   }
@@ -142,40 +157,13 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
   DlComposite *dlComposite;
   DlElement *dlElement, *elementPtr;
   int i, minX, minY, maxX, maxY;
-  DlElement **array;
-  DlElement *newCompositePosition;
-  Boolean foundFirstSelected;
 
-/* composites only exist if members exist:  numSelectedElements must be > 0 */
-  if (displayInfo->numSelectedElements <= 0) return 0;
+  /* if there is no element selected, return */
+  if (IsEmpty(displayInfo->selectedDlElementList)) return 0;
 
-  if (!(dlElement = createDlComposite(displayInfo))) return 0;
-  dlElement->prev = displayInfo->dlElementListTail;
-  displayInfo->dlElementListTail->next = dlElement;
-  displayInfo->dlElementListTail = dlElement;
-
+  if (!(dlElement = createDlComposite(NULL))) return 0;
+  appendDlElement(displayInfo->dlElementList,dlElement);
   dlComposite = dlElement->structure.composite;
-/*
- * Save the position of first element in "visibility space" (but not 
- *  necessarily the last element in the selected elements array);
- *  since selects can be multiple selects appended to by Shift-MB1, the
- *  relative order in the selectedElementsArray[] can be not "proper"
- *  -- start at dlColormap element and move forward 'til first selected
- *      element is found
- */
-  newCompositePosition = displayInfo->dlColormapElement->next;
-  foundFirstSelected = False;
-  while (!foundFirstSelected) {
-    for (i = 0; i < displayInfo->numSelectedElements; i++) {
-      if (newCompositePosition == displayInfo->selectedElementsArray[i]) {
-	foundFirstSelected = True;
-	break;	/* out of for loop */
-      }
-    }
-    if (!foundFirstSelected)
-      newCompositePosition = newCompositePosition->next;
-  }
-  newCompositePosition = newCompositePosition->prev;
 
 /*
  *  now loop over all selected elements and and determine x/y/width/height
@@ -184,20 +172,19 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
   minX = INT_MAX; minY = INT_MAX;
   maxX = INT_MIN; maxY = INT_MIN;
 
-  for (i = displayInfo->numSelectedElements - 1; i >= 0; i--) {
-    elementPtr = displayInfo->selectedElementsArray[i];
-    if (elementPtr->type != DL_Display) {
-      minX = MIN(minX,elementPtr->structure.rectangle->object.x);
-      maxX = MAX(maxX,elementPtr->structure.rectangle->object.x +
-		(int)elementPtr->structure.rectangle->object.width);
-      minY = MIN(minY,elementPtr->structure.rectangle->object.y);
-      maxY = MAX(maxY,elementPtr->structure.rectangle->object.y +
-		(int)elementPtr->structure.rectangle->object.height);
-      moveElementAfter(
-         dlElement->structure.composite->dlElementListTail,
-         elementPtr,
-         &(dlElement->structure.composite->dlElementListTail));
+  elementPtr = FirstDlElement(displayInfo->selectedDlElementList);
+  while (elementPtr) { 
+    DlElement *pE = elementPtr->structure.element;
+    if (pE->type != DL_Display) {
+      DlObject *po = &(pE->structure.rectangle->object);
+      minX = MIN(minX,po->x);
+      maxX = MAX(maxX,(int)(po->x+po->width));
+      minY = MIN(minY,po->y);
+      maxY = MAX(maxY,(int)(po->y+po->height));
+      removeDlElement(displayInfo->dlElementList,pE);
+      appendDlElement(dlComposite->dlElementList,pE);
     }
+    elementPtr = elementPtr->next;
   }
 
   dlComposite->object.x = minX;
@@ -205,19 +192,15 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
   dlComposite->object.width = maxX - minX;
   dlComposite->object.height = maxY - minY;
 
-/* move the newly created element to just before the first child element */
-  moveElementAfter(newCompositePosition,dlElement,
-                   &(displayInfo->dlElementListTail));
-
-/*
- * now select this newly created Composite/group (this unselects the previously
- *	selected children, etc)
- */
-  highlightAndSetSelectedElements(NULL,0,0);
   clearResourcePaletteEntries();
-  array = (DlElement **)malloc(1*sizeof(DlElement *));
-  array[0] = dlElement;
-  highlightAndSetSelectedElements(array,1,1);
+  unhighlightSelectedElements();
+  destroyDlDisplayList(displayInfo->selectedDlElementList);
+  if (!(elementPtr = createDlElement(NULL,NULL,NULL))) {
+    return 0;
+  }
+  elementPtr->structure.element = dlElement;
+  appendDlElement(displayInfo->selectedDlElementList,elementPtr);
+  highlightSelectedElements();
   currentActionType = SELECT_ACTION;
   currentElementType = DL_Composite;
   setResourcePaletteEntries();
@@ -226,15 +209,13 @@ DlElement *groupObjects(DisplayInfo *displayInfo)
 }
 
 
-DlElement *parseComposite(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseComposite(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlComposite *newDlComposite;
-  DlElement *dlElement = createDlComposite(displayInfo);
+  DlElement *dlElement = createDlComposite(NULL);
  
   if (!dlElement) return 0;
   newDlComposite = dlElement->structure.composite;
@@ -262,7 +243,8 @@ DlElement *parseComposite(
                         getToken(displayInfo,token);
                         strcpy(newDlComposite->chan,token);
                 } else if (!strcmp(token,"children")) {
-                        parseCompositeChildren(displayInfo,newDlComposite);
+                        parseAndAppendDisplayList(displayInfo,
+                            newDlComposite->dlElementList);
                 }
                 break;
             case T_EQUAL:
@@ -275,30 +257,28 @@ DlElement *parseComposite(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 
 }
 
 void writeDlCompositeChildren(
   FILE *stream,
-  DlComposite *dlComposite,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
   DlElement *element;
+  DlComposite *dlComposite = dlElement->structure.composite;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
 
   fprintf(stream,"\n%schildren {",indent);
 
-  element = ((DlElement *)dlComposite->dlElementListHead)->next;
+  element = FirstDlElement(dlComposite->dlElementList);
   while (element != NULL) {		/* any union member is okay here */
-     (*element->dmWrite)(stream,
-                         (XtPointer) element->structure.rectangle,level+1);
+     (element->run->write)(stream, element, level+1);
      element = element->next;
   }
 
@@ -308,11 +288,12 @@ void writeDlCompositeChildren(
 
 void writeDlComposite(
   FILE *stream,
-  DlComposite *dlComposite,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
+  DlComposite *dlComposite = dlElement->structure.composite;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
@@ -323,7 +304,7 @@ void writeDlComposite(
 		dlComposite->compositeName);
   fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dlComposite->vis]);
   fprintf(stream,"\n%s\tchan=\"%s\"",indent,dlComposite->chan);
-  writeDlCompositeChildren(stream,dlComposite,level+1);
+  writeDlCompositeChildren(stream,dlElement,level+1);
   fprintf(stream,"\n%s}",indent);
 }
 
@@ -332,106 +313,94 @@ void writeDlComposite(
  *  may be Composite objects)
  *  N.B.  this is relative to outermost composite, not parent composite
  */
-void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
-  DlElement *composite, float scaleX, float scaleY)
+void compositeScale(DlElement *dlElement, int xOffset, int yOffset)
 {
-  DlElement *ele;
-  Widget widget = NULL, childWidget = NULL;
-  int deltaX, deltaY, dX, dY;
-  int j, minX, maxX, minY, maxY;
+  int width, height;
+  float scaleX = 1.0, scaleY = 1.0;
 
+  if (dlElement->type != DL_Composite) return;
+  width = MAX(1,((int)dlElement->structure.composite->object.width
+                  + xOffset));
+  height = MAX(1,((int)dlElement->structure.composite->object.height
+                  + yOffset));
+  scaleX = (float)width/(float)dlElement->structure.composite->object.width;
+  scaleY = (float)height/(float)dlElement->structure.composite->object.height;
+  resizeDlElementList(dlElement->structure.composite->dlElementList,
+                    dlElement->structure.composite->object.x,
+                    dlElement->structure.composite->object.y,
+                    scaleX,
+                    scaleY);
+  dlElement->structure.composite->object.width = width;
+  dlElement->structure.composite->object.height = height;
+}
 
-  if (composite->type != DL_Composite) return;
-
-  ele = composite->structure.composite->dlElementListHead->next;
-  while (ele) {
-    if (ELEMENT_IS_RENDERABLE(ele->type)) {
-      /* lookup widget now, before resized */
-      if (ELEMENT_HAS_WIDGET(ele->type)) {
-        widget = lookupElementWidget(cdi,&(ele->structure.rectangle->object));
-     }
-      /* since relative resize within larger composite,
-         x/y resize is relative... */
-      if (ele->type == DL_Composite) {
-        resizeCompositeChildren(cdi, outerComposite, ele, scaleX, scaleY);
-      } else {
-        deltaX = (int) (scaleX*(ele->structure.rectangle->object.x -
-                 outerComposite->structure.composite->object.x));
-        deltaY = (int) (scaleY*(ele->structure.rectangle->object.y -
-                 outerComposite->structure.composite->object.y));
-        /* extra work for polyline/polygon - resize/rescale
-           constituent points */
-        if (ele->type == DL_Polyline ) {
-          for (j = 0; j < ele->structure.polyline->nPoints; j++) {
-            dX = (int) (scaleX*(ele->structure.polyline->points[j].x
-                 - outerComposite->structure.composite->object.x));
-            dY = (int) (scaleY*(ele->structure.polyline->points[j].y
-                 - outerComposite->structure.composite->object.y));
-            ele->structure.polyline->points[j].x = dX
-                 + outerComposite->structure.composite->object.x;
-            ele->structure.polyline->points[j].y =  dY
-                 + outerComposite->structure.composite->object.y;
-          }
-        } else
-        if (ele->type == DL_Polygon ) {
-          for (j = 0; j < ele->structure.polygon->nPoints; j++) {
-            dX = (int) (scaleX*(ele->structure.polygon->points[j].x
-                 - outerComposite->structure.composite->object.x));
-            dY = (int) (scaleY*(ele->structure.polygon->points[j].y
-                 - outerComposite->structure.composite->object.y));
-            ele->structure.polygon->points[j].x = dX
-                 + outerComposite->structure.composite->object.x;
-            ele->structure.polygon->points[j].y =  dY
-                 + outerComposite->structure.composite->object.y;
-          }
-        }
-        ele->structure.rectangle->object.x = (Position)
-          (deltaX + outerComposite->structure.composite->object.x);
-        ele->structure.rectangle->object.y = (Position)
-          (deltaY + outerComposite->structure.composite->object.y);
-        ele->structure.rectangle->object.width = (Dimension)
-          (scaleX*ele->structure.rectangle->object.width+0.5);
-        ele->structure.rectangle->object.height = (Dimension)
-          (scaleY*ele->structure.rectangle->object.height+0.5);
-      }
+static void destroyDlComposite(DlElement *dlElement) {
+  destroyDlDisplayList(dlElement->structure.composite->dlElementList);
+  free((char *) dlElement->structure.composite->dlElementList);
+  free((char *) dlElement->structure.composite);
+  free((char *) dlElement);
+}
 
 /*
- * Use expensive but reliable destroy-update-recreate sequence to get
- *  resizing right.  (XtResizeWidget mostly worked here, except for
- *  aggregate types like menu which had children which really defined
- *  it's parent's size.)
- * One additional advantage - this method guarantees WYSIWYG wrt fonts, etc
- *  but only do this if in EDIT mode - for execute mode this is handled
- *  by full re-traversal elsewhere
+ * recursive function to move Composite objects (and all children, which
+ *  may be Composite objects)
  */
-      if (widget && globalDisplayListTraversalMode == DL_EDIT) {
-        /* destroy old widget */
-        destroyElementWidget(cdi,widget);
-        /* create new widget */
-        (*ele->dmExecute)(cdi,(XtPointer)ele->structure.file,FALSE);
-      }
+void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
+{
+  DlElement *ele;
 
-    }
-    ele = ele->next;
-  }
-
- /* recalculate composite's dimensions/position */
-  minX = INT_MAX; minY = INT_MAX;
-  maxX = INT_MIN; maxY = INT_MIN;
-  ele =((DlElement *)composite->structure.composite->dlElementListHead)->next;
+  if (dlElement->type != DL_Composite) return; 
+  ele = FirstDlElement(dlElement->structure.composite->dlElementList);
   while (ele != NULL) {
-    if (ELEMENT_IS_RENDERABLE(ele->type)) {
-      minX = MIN(minX,ele->structure.rectangle->object.x);
-      maxX = MAX(maxX,ele->structure.rectangle->object.x +
-                (int)ele->structure.rectangle->object.width);
-      minY = MIN(minY,ele->structure.rectangle->object.y);
-      maxY = MAX(maxY,ele->structure.rectangle->object.y +
-                (int)ele->structure.rectangle->object.height);
+    if (ele->type != DL_Display) {
+#if 0
+      if (ele->widget) {
+        XtMoveWidget(widget,
+          (Position) (ele->structure.rectangle->object.x + xOffset),
+          (Position) (ele->structure.rectangle->object.y + yOffset));
+      }
+#endif
+      if (ele->run->move)
+        ele->run->move(ele,xOffset,yOffset);
     }
     ele = ele->next;
   }
-  composite->structure.composite->object.x = minX;
-  composite->structure.composite->object.y = minY;
-  composite->structure.composite->object.width = maxX - minX;
-  composite->structure.composite->object.height = maxY - minY;
+  dlElement->structure.composite->object.x += xOffset;
+  dlElement->structure.composite->object.y += yOffset;
+}
+
+static void compositeGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlComposite *dlComposite = p->structure.composite;
+  int x, y;
+  unsigned int width, height;
+  int xOffset, yOffset;
+
+  medmGetValues(pRCB,
+    X_RC,          &x,
+    Y_RC,          &y,
+    WIDTH_RC,      &width,
+    HEIGHT_RC,     &height,
+    -1);
+    xOffset = (int) width - (int) dlComposite->object.width;
+    yOffset = (int) height - (int) dlComposite->object.height;
+    if (!xOffset || !yOffset) {
+      compositeScale(p,xOffset,yOffset);
+    }
+    xOffset = x - dlComposite->object.x;
+    yOffset = y - dlComposite->object.y;
+    if (!xOffset || !yOffset) {
+      compositeMove(p,xOffset,yOffset);
+    }
+}
+
+static void compositeCleanup(DlElement *dlElement) {
+  DlElement *pE = FirstDlElement(dlElement->structure.composite->dlElementList);
+  while (pE) {
+    if (pE->run->cleanup) {
+      pE->run->cleanup(pE);
+    } else {
+      pE->widget = NULL;
+    }
+    pE = pE->next;
+  }
 }

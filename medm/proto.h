@@ -89,46 +89,43 @@ void createColor(void);
 void setCurrentDisplayColorsInColorPalette(int rcType, int index);
 
 /* createControllers.c */
-DlElement *createDlChoiceButton(DisplayInfo *displayInfo);
-DlElement *createDlMessageButton(DisplayInfo *displayInfo);
-DlElement *createDlValuator(DisplayInfo *displayInfo);
-
-DlElement *createDlTextEntry(DisplayInfo *displayInfo);
-DlElement *createDlMenu(DisplayInfo *displayInfo);
+DlElement *createDlChoiceButton(DlElement *);
+DlElement *createDlMenu(DlElement *);
+DlElement *createDlMessageButton(DlElement *);
+DlElement *createDlTextEntry(DlElement *);
+DlElement *createDlValuator(DlElement *);
 void controlAttributeInit(DlControl *control);
 
 /* createExtensions.c */
-DlElement *createDlImage(DisplayInfo *displayInfo);
-DlElement *createDlComposite(DisplayInfo *displayInfo);
-DlElement *handleImageCreate(void);
-DlElement *createDlPolyline(DisplayInfo *displayInfo);
-DlElement *createDlPolygon(DisplayInfo *displayInfo);
+DlElement *createDlImage(DlElement *);
+DlElement *createDlComposite(DlElement *);
+DlElement *handleImageCreate();
+DlElement *createDlPolyline(DlElement *);
+DlElement *createDlPolygon(DlElement *);
 DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine);
 DlElement *handlePolygonCreate(int x0, int y0);
-void handlePolylineVertexManipulation(DlPolyline *dlPolyline, int pointIndex);
-void handlePolygonVertexManipulation(DlPolygon *dlPolygon, int pointIndex);
 
 /* createMonitors.c */
-DlElement *createDlMeter(DisplayInfo *displayInfo);
-DlElement *createDlBar(DisplayInfo *displayInfo);
-DlElement *createDlByte(DisplayInfo *displayInfo);
-DlElement *createDlIndicator(DisplayInfo *displayInfo);
-DlElement *createDlTextUpdate(DisplayInfo *displayInfo);
-DlElement *createDlStripChart(DisplayInfo *displayInfo);
-DlElement *createDlCartesianPlot(DisplayInfo *displayInfo);
+DlElement *createDlMeter(DlElement *);
+DlElement *createDlBar(DlElement *);
+DlElement *createDlByte(DlElement *);
+DlElement *createDlIndicator(DlElement *);
+DlElement *createDlTextUpdate(DlElement *);
+DlElement *createDlStripChart(DlElement *);
+DlElement *createDlCartesianPlot(DlElement *);
 void monitorAttributeInit(DlMonitor *monitor);
 
 /* createStatics.c */
-DlElement* createDlElement(DlElementType, XtPointer, medmExecProc, medmWriteProc,medmSetGetProc, medmSetGetProc, medmSetGetProc);
-DlElement *createDlFile(DisplayInfo *displayInfo);
-DlElement *createDlDisplay(DisplayInfo *displayInfo);
-DlElement *createDlColormap(DisplayInfo *displayInfo);
-DlElement *createDlRectangle(DisplayInfo *displayInfo);
-DlElement *createDlOval(DisplayInfo *displayInfo);
-DlElement *createDlArc(DisplayInfo *displayInfo);
-DlElement *createDlText(DisplayInfo *displayInfo);
-DlElement *createDlRelatedDisplay(DisplayInfo *displayInfo);
-DlElement *createDlShellCommand(DisplayInfo *displayInfo);
+DlElement* createDlElement(DlElementType, XtPointer, DlDispatchTable *);
+DlFile *createDlFile(DisplayInfo *displayInfo);
+DlElement *createDlDisplay(DlElement *);
+DlColormap *createDlColormap(DisplayInfo *displayInfo);
+DlElement *createDlRectangle(DlElement *);
+DlElement *createDlOval(DlElement *);
+DlElement *createDlArc(DlElement *);
+DlElement *createDlText(DlElement *);
+DlElement *createDlRelatedDisplay(DlElement *);
+DlElement *createDlShellCommand(DlElement *);
 void createDlObject(DisplayInfo *displayInfo, DlObject *object);
 DlElement *handleTextCreate(int x0, int y0);
 void objectAttributeInit(DlObject *object);
@@ -140,95 +137,74 @@ DisplayInfo *createDisplay(void);
 
 /* dmInit.c */
 DisplayInfo *allocateDisplayInfo(void);
-void dmDisplayListParse(FILE *, char *, char *, char*, Boolean);
-void parseCompositeChildren(DisplayInfo *displayInfo, DlComposite *dlComposite);
+void dmDisplayListParse(DisplayInfo *, FILE *, char *, char *, char*, Boolean);
+TOKEN parseAndAppendDisplayList(DisplayInfo *, DlList *);
 
 /* eventHandlers.c */
 void popupMenu(Widget, XtPointer, XEvent *, Boolean *);
 void popdownMenu(Widget, XtPointer, XEvent *, Boolean *);
 void handleEnterWindow(Widget, XtPointer, XEvent *, Boolean *);
 void handleButtonPress(Widget, XtPointer, XEvent *, Boolean *);
-int highlightSelectedElements(void);
+void handleRuntimeButtonPress(Widget, XtPointer, XEvent *, Boolean *);
+void highlightSelectedElements(void);
 void unhighlightSelectedElements(void);
 void unselectSelectedElements(void);
-int highlightAndSetSelectedElements(DlElement **array, int arraySize,
-	int numElements);
-int highlightAndAugmentSelectedElements(DlElement **array, int arraySize,
-	int numElements);
+void highlightAndAppendSelectedElements(DlList *);
 Boolean unhighlightAndUnselectElement(DlElement *element, int *numSelected);
 void moveCompositeChildren(DisplayInfo *cdi, DlElement *element,
 	int xOffset, int yOffset, Boolean moveWidgets);
-void resizeCompositeChildren(DisplayInfo *cdi, DlElement *outerComposite,
-	DlElement *composite, float scaleX, float scaleY);
 void updateDraggedElements(Position x0, Position y0, Position x1, Position y1);
 void updateResizedElements(Position x0, Position y0, Position x1, Position y1);
 DlElement *handleRectangularCreates(DlElementType, int, int, unsigned int, unsigned
  int);
 
 /* executeControllers.c */
+Widget createPushButton(Widget parent,
+                        DlObject *po,
+                        Pixel fg,
+                        Pixel bg,
+                        Pixmap pixmap,
+                        char *label,
+                        XtPointer userData);
 int textFieldFontListIndex(int height);
 int messageButtonFontListIndex(int height);
 int menuFontListIndex(int height);
 int valuatorFontListIndex(DlValuator *dlValuator);
-void executeDlChoiceButton(DisplayInfo *displayInfo,
-	DlChoiceButton *dlChoiceButton, Boolean dummy);
-void executeDlMessageButton(DisplayInfo *displayInfo,
-	DlMessageButton *dlMessageButton, Boolean dummy);
-void createChoiceButtonButtonsInstance(Channel *);
-void executeDlValuator(DisplayInfo *displayInfo, DlValuator *dlValuator,
-	Boolean dummy);
-void executeDlTextEntry(DisplayInfo *displayInfo, DlTextEntry *dlTextEntry,
-	Boolean dummy);
-void executeDlMenu(DisplayInfo *displayInfo, DlMenu *dlMenu, Boolean);
-void createMenuMenuInstance(Channel *);
+void executeDlChoiceButton(DisplayInfo *, DlElement *);
+void executeDlMessageButton(DisplayInfo *, DlElement *);
+void executeDlValuator(DisplayInfo *, DlElement *);
+void executeDlTextEntry(DisplayInfo *, DlElement *);
+void executeDlMenu(DisplayInfo *, DlElement *);
 
 /* executeExtensions.c */
-void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean dummy);
-void executeDlPolyline(DisplayInfo *displayInfo, DlPolyline *dlPolyline,
-	Boolean dummy);
-void executeDlPolygon(DisplayInfo *displayInfo, DlPolygon *dlPolygon,
-	Boolean dummy);
+void executeDlImage(DisplayInfo *, DlElement *);
+void executeDlPolyline(DisplayInfo *, DlElement *);
+void executeDlPolygon(DisplayInfo *, DlElement *);
 
 /* executeMonitors.c */
 Channel *allocateChannel(
 	DisplayInfo *displayInfo);
-void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy);
-void executeDlBar(DisplayInfo *displayInfo, DlBar *dlBar, Boolean dummy);
-void executeDlByte(DisplayInfo *displayInfo, DlByte *dlByte, Boolean dummy);
-void executeDlIndicator(DisplayInfo *displayInfo, DlIndicator *dlIndicator,
-	Boolean dummy);
-void executeDlTextUpdate(DisplayInfo *displayInfo, DlTextUpdate *dlTextUpdate,
-	Boolean dummy);
-void executeDlStripChart(DisplayInfo *displayInfo, DlStripChart *dlStripChart,
-	Boolean dummy);
-void executeDlCartesianPlot(DisplayInfo *displayInfo,
-	DlCartesianPlot *dlCartesianPlot, Boolean dummy);
-void executeDlSurfacePlot(DisplayInfo *displayInfo,
-	DlSurfacePlot *dlSurfacePlot, Boolean dummy);
+void executeDlMeter(DisplayInfo *, DlElement *);
+void executeDlBar(DisplayInfo *, DlElement *);
+void executeDlByte(DisplayInfo *, DlElement *);
+void executeDlIndicator(DisplayInfo *, DlElement *);
+void executeDlTextUpdate(DisplayInfo *, DlElement *);
+void executeDlStripChart(DisplayInfo *, DlElement *);
+void executeDlCartesianPlot(DisplayInfo *, DlElement *);
+void executeDlSurfacePlot(DisplayInfo *, DlElement *);
 
 /* executeStatics.c */
-void executeDlComposite(DisplayInfo *displayInfo, DlComposite *dlComposite,
-		Boolean dummy);
-void executeDlFile(DisplayInfo *displayInfo, DlFile *dlFile, Boolean dummy);
-void executeDlDisplay(DisplayInfo *displayInfo, DlDisplay *dlDisplay,
-	Boolean dummy);
-void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap,
-	Boolean dummy);
+void executeDlComposite(DisplayInfo *, DlElement *);
+void executeDlDisplay(DisplayInfo *, DlElement *);
+void executeDlColormap(DisplayInfo *, DlColormap *);
 void executeDlBasicAttribute(DisplayInfo *, DlBasicAttribute *);
-void executeDlDynamicAttribute(DisplayInfo *displayInfo,
-	DlDynamicAttribute *dlDynamicAttribute, Boolean dummy);
-void executeDlRectangle(DisplayInfo *displayInfo, DlRectangle *dlRectangle,
-	Boolean forcedDisplayToWindow);
-void executeDlOval(DisplayInfo *displayInfo, DlOval *dlOval,
-	Boolean forcedDisplayToWindow);
-void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
-	Boolean forcedDisplayToWindow);
-void executeDlText(DisplayInfo *displayInfo, DlText *dlText,
-	Boolean forcedDisplayToWindow);
-void executeDlRelatedDisplay(DisplayInfo *displayInfo,
-	DlRelatedDisplay *dlRelatedDisplay, Boolean dummy);
-void executeDlShellCommand(DisplayInfo *displayInfo,
-	DlShellCommand *dlShellCommand, Boolean dummy);
+void executeDlDynamicAttribute(DisplayInfo *, DlElement *);
+void executeDlRectangle(DisplayInfo *, DlElement *);
+void executeDlOval(DisplayInfo *, DlElement *);
+void executeDlArc(DisplayInfo *, DlElement *);
+void executeDlText(DisplayInfo *, DlElement *);
+void executeDlRelatedDisplay(DisplayInfo *, DlElement *);
+void executeDlShellCommand(DisplayInfo *, DlElement *);
 
 /* help.c */
 void errMsgDlgCreateDlg();
@@ -282,28 +258,27 @@ void updateElementFromGlobalResourceBundle(DlElement *elementPtr);
 void resetGlobalResourceBundleAndResourcePalette(void);
 
 /* parseControllers.c */
-DlElement *parseChoiceButton(DisplayInfo *, DlComposite *);
-DlElement *parseMessageButton(DisplayInfo *, DlComposite *);
-DlElement *parseValuator(DisplayInfo *, DlComposite *);
-DlElement *parseTextEntry(DisplayInfo *, DlComposite *);
-DlElement *parseMenu(DisplayInfo *, DlComposite *);
+DlElement *parseChoiceButton(DisplayInfo *); 
+DlElement *parseMessageButton(DisplayInfo *);
+DlElement *parseValuator(DisplayInfo *);
+DlElement *parseTextEntry(DisplayInfo *);
+DlElement *parseMenu(DisplayInfo *);
 void parseControl(DisplayInfo *, DlControl *control);
 
 /* parseExtensions.c */
-DlElement *parseImage(DisplayInfo *, DlComposite *);
-DlElement *parseComposite(DisplayInfo *, DlComposite *);
-DlElement *parsePolyline(DisplayInfo *, DlComposite *);
-DlElement *parsePolygon(DisplayInfo *, DlComposite *);
+DlElement *parseImage(DisplayInfo *);
+DlElement *parseComposite(DisplayInfo *);
+DlElement *parsePolyline(DisplayInfo *);
+DlElement *parsePolygon(DisplayInfo *);
 
 /* parseMonitors.c */
-DlElement *parseMeter(DisplayInfo *, DlComposite *);
-DlElement *parseBar(DisplayInfo *, DlComposite *);
-DlElement *parseByte(DisplayInfo *, DlComposite *);
-DlElement *parseIndicator(DisplayInfo *, DlComposite *);
-DlElement *parseTextUpdate(DisplayInfo *, DlComposite *);
-DlElement *parseStripChart(DisplayInfo *, DlComposite *);
-DlElement *parseCartesianPlot(DisplayInfo *, DlComposite *);
-DlElement *parseSurfacePlot(DisplayInfo *, DlComposite *);
+DlElement *parseMeter(DisplayInfo *);
+DlElement *parseBar(DisplayInfo *);
+DlElement *parseByte(DisplayInfo *);
+DlElement *parseIndicator(DisplayInfo *);
+DlElement *parseTextUpdate(DisplayInfo *);
+DlElement *parseStripChart(DisplayInfo *);
+DlElement *parseCartesianPlot(DisplayInfo *);
 void parseMonitor(DisplayInfo *displayInfo, DlMonitor *monitor);
 void parsePlotcom(DisplayInfo *displayInfo, DlPlotcom *plotcom);
 void parsePen(DisplayInfo *displayInfo, DlPen *pen);
@@ -312,21 +287,21 @@ void parsePlotAxisDefinition(DisplayInfo *displayInfo,
 	DlPlotAxisDefinition *axisDefinition);
 
 /* parseStatics.c */
-DlElement *parseFile(DisplayInfo *displayInfo);
+DlFile *parseFile(DisplayInfo *displayInfo);
 DlElement *parseDisplay(DisplayInfo *displayInfo);
 DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr);
 void parseBasicAttribute(DisplayInfo *, DlBasicAttribute *);
 void parseDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
 void parseOldBasicAttribute(DisplayInfo *, DlBasicAttribute *);
 void parseOldDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
-DlElement *parseRectangle(DisplayInfo *, DlComposite *);
-DlElement *parseOval(DisplayInfo *, DlComposite *);
-DlElement *parseArc(DisplayInfo *, DlComposite *);
-DlElement *parseText(DisplayInfo *, DlComposite *);
-DlElement *parseRisingLine(DisplayInfo *, DlComposite *);
-DlElement *parseFallingLine(DisplayInfo *, DlComposite *);
-DlElement *parseRelatedDisplay(DisplayInfo *, DlComposite *);
-DlElement * parseShellCommand(DisplayInfo *, DlComposite *);
+DlElement *parseRectangle(DisplayInfo *);
+DlElement *parseOval(DisplayInfo *);
+DlElement *parseArc(DisplayInfo *);
+DlElement *parseText(DisplayInfo *);
+DlElement *parseRisingLine(DisplayInfo *);
+DlElement *parseFallingLine(DisplayInfo *);
+DlElement *parseRelatedDisplay(DisplayInfo *);
+DlElement * parseShellCommand(DisplayInfo *);
 void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	DlColormapEntry *dlColor);
 void parseObject(DisplayInfo *displayInfo, DlObject *object);
@@ -435,16 +410,13 @@ XtErrorHandler trapExtraneousWarningsHandler(String message);
 DisplayInfo *dmGetDisplayInfoFromWidget(Widget widget);
 void dmWriteDisplayList(DisplayInfo *displayInfo, FILE *stream);
 void dmSetDisplayFileName(DisplayInfo *displayInfo, char *filename);
-char *dmGetDisplayFileName(DisplayInfo *displayInfo);
-DlElement *lookupElement(DlElement *tail, Position x0, Position y0);
+DlElement *lookupElement(DlList *dlList, Position x0, Position y0);
 DlElement *lookupCompositeChild(DlElement *composite, Position x0, Position y0);
-DlElement **selectedElementsLookup(DlElement *tail, Position x0, Position y0,
-	Position x1, Position y1, int *arraySize, int *numSelected);
-int numberOfElementsInComposite(DisplayInfo *displayInfo, DlElement *ele);
+void selectedElementsLookup(DlList *dlList, Position x0, Position y0,
+	Position x1, Position y1, DlList *);
 DlElement *lookupCompositeElement(DlElement *elementPtr);
 DlElement *lookupDynamicAttributeElement(DlElement *elementPtr);
 DlElement *lookupBasicAttributeElement(DlElement *elementPtr);
-DlElement *lookupPrivateBasicAttributeElement(DlElement *elementPtr);
 Boolean dmResizeDisplayList(DisplayInfo *displayInfo, Dimension newWidth,
 	Dimension newHeight);
 Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
@@ -462,15 +434,15 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 Widget lookupElementWidget(DisplayInfo *displayInfo, DlObject *object);
 void destroyElementWidget(DisplayInfo *displayInfo, Widget widget);
 void clearClipboard(void);
-void copyElementsIntoClipboard(void);
+void copySelectedElementsIntoClipboard(void);
 DlStructurePtr createCopyOfElementType(DlElementType type, DlStructurePtr ptr);
 void copyElementsIntoDisplay(void);
 void deleteElementsInDisplay(void);
 void unselectElementsInDisplay(void);
 void selectAllElementsInDisplay(void);
-void lowerSelectedElements(void);
+void lowerSelectedElements(DisplayInfo *);
 void ungroupSelectedElements(void);
-void raiseSelectedElements(void);
+void raiseSelectedElements(DisplayInfo *);
 void alignSelectedElements(int alignment);
 void moveElementAfter(DlElement *dst, DlElement *src, DlElement **tail);
 void moveSelectedElementsAfterElement(DisplayInfo *displayInfo,
@@ -488,76 +460,82 @@ void colorMenuBar(Widget widget, Pixel fg, Pixel bg);
 void medmSetDisplayTitle(DisplayInfo *displayInfo);
 void medmMarkDisplayBeingEdited(DisplayInfo *displayInfo);
 void closeDisplay(Widget);
+void destroyDlDisplayList(DlList *);
 #ifdef __COLOR_RULE_H__
 Pixel extractColor(DisplayInfo *displayInfo, double value, int colorRule, int defaultColor);
 #endif
-
+void resizeDlElementList(
+  DlList *dlElementList,
+  int x,
+  int y,
+  float scaleX,
+  float scaleY);
+void resizeDlElementReferenceList(
+  DlList *dlElementList,
+  int x,
+  int y,
+  float scaleX,
+  float scaleY);
+char *allocateString();
+void freeString(char *string);
+void destroyFreeStringList();
 
 /* medmWidget.c */
 void medmInit(char *displayFontName);
 void dmTerminateX(void);
 unsigned long getPixelFromColormapByString(Display *display, int screen,
 			Colormap cmap, char *colorString);
+int initMedmWidget();
+int destroyMedmWidget();
 
 
 /* writeControllers.c */
-void writeDlChoiceButton(FILE *stream, DlChoiceButton *dlChoiceButton,
-	int level);
-void writeDlMessageButton(FILE *stream, DlMessageButton *dlMessageButton,
-	int level);
-void writeDlValuator(FILE *stream, DlValuator *dlValuator, int level);
-void writeDlTextEntry(FILE *stream, DlTextEntry *dlTextEntry, int level);
-void writeDlMenu(FILE *stream, DlMenu *dlMenu, int level);
-void writeDlControl(FILE *stream, DlControl *dlControl, int level);
+void writeDlChoiceButton(FILE *, DlElement *, int);
+void writeDlMessageButton(FILE *, DlElement *, int);
+void writeDlValuator(FILE *, DlElement *, int);
+void writeDlTextEntry(FILE *, DlElement *, int);
+void writeDlMenu(FILE *, DlElement *, int);
+void writeDlControl(FILE *, DlControl *, int);
 
 /* writeExtensions.c */
-void writeDlImage(FILE *stream, DlImage *dlImage, int level);
-void writeDlCompositeChildren(FILE *stream, DlComposite *dlComposite,int level);
-void writeDlComposite(FILE *stream, DlComposite *dlComposite, int level);
-void writeDlPolyline(FILE *stream, DlPolyline *dlPolyline, int level);
-void writeDlPolygon(FILE *stream, DlPolygon *dlPolygon, int level);
+void writeDlImage(FILE *, DlElement *, int);
+void writeDlCompositeChildren(FILE *, DlElement *, int);
+void writeDlComposite(FILE *, DlElement *, int);
+void writeDlPolyline(FILE *, DlElement *, int);
+void writeDlPolygon(FILE *, DlElement *, int);
 
 /* writeMonitors.c */
-void writeDlMeter(FILE *stream, DlMeter *dlMeter, int level);
-void writeDlBar(FILE *stream, DlBar *dlBar, int level);
-void writeDlByte(FILE *stream, DlByte *dlByte, int level);
-void writeDlIndicator(FILE *stream, DlIndicator *dlIndicator, int level);
-void writeDlTextUpdate(FILE *stream, DlTextUpdate *dlTextUpdate, int level);
-void writeDlStripChart(FILE *stream, DlStripChart *dlStripChart, int level);
-void writeDlCartesianPlot(FILE *stream, DlCartesianPlot *dlCartesianPlot,
-	int level);
-void writeDlSurfacePlot(FILE *stream, DlSurfacePlot *dlSurfacePlot, int level);
-void writeDlMonitor(FILE *stream, DlMonitor *dlMonitor, int level);
-void writeDlPlotcom(FILE *stream, DlPlotcom *dlPlotcom, int level);
-void writeDlPen(FILE *stream, DlPen *dlPen, int index, int level);
-void writeDlTrace(FILE *stream, DlTrace *dlTrace, int index, int level);
-void writeDlPlotAxisDefinition(FILE *stream,
-	DlPlotAxisDefinition *dlAxisDefinition, int axisNumber, int level);
+void writeDlMeter(FILE *, DlElement *, int);
+void writeDlBar(FILE *, DlElement *, int);
+void writeDlByte(FILE *, DlElement *, int);
+void writeDlIndicator(FILE *, DlElement *, int);
+void writeDlTextUpdate(FILE *, DlElement *, int);
+void writeDlStripChart(FILE *, DlElement *, int);
+void writeDlCartesianPlot(FILE *, DlElement *, int);
+void writeDlSurfacePlot(FILE *, DlElement *, int);
+void writeDlMonitor(FILE *, DlMonitor *, int);
+void writeDlPlotcom(FILE *, DlPlotcom *, int);
+void writeDlPen(FILE *, DlPen *, int, int);
+void writeDlTrace(FILE *, DlTrace *, int, int);
+void writeDlPlotAxisDefinition(FILE *, DlPlotAxisDefinition *, int, int);
 
 /* writeStatics.c */
-void writeDlComposite(FILE *stream, DlComposite *dlComposite, int level);
-void writeDlFile(FILE *stream, DlFile *dlFile, int level);
-void writeDlDisplay(FILE *stream, DlDisplay *dlDisplay, int level);
-void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level);
-void writeDlBasicAttribute(FILE *stream, DlBasicAttribute *dlBasicAttribute,
-	int level);
-void writeDlDynamicAttribute(FILE *stream,
-	DlDynamicAttribute *dlDynamicAttribute, int level);
-void writeDlRectangle(FILE *stream, DlRectangle *dlRectangle, int level);
-void writeDlOval(FILE *stream, DlOval *dlOval, int level);
-void writeDlArc(FILE *stream, DlArc *dlArc, int level);
-void writeDlText(FILE *stream, DlText *dlText, int level);
-void writeDlRelatedDisplay(FILE *stream, DlRelatedDisplay *dlRelatedDisplay,
-	int level);
-void writeDlShellCommand(FILE *stream, DlShellCommand *dlShellCommand,
-	int level);
-void writeDlColormapEntry(FILE *stream, DlColormapEntry *dlColormapEntry,
-	int level);
-void writeDlObject(FILE *stream, DlObject *dlObject, int level);
-void writeDlRelatedDisplayEntry(FILE *stream, DlRelatedDisplayEntry *entry,
-	int index, int level);
-void writeDlShellCommandEntry(FILE *stream, DlShellCommandEntry *entry,
-	int index, int level);
+void writeDlComposite(FILE *, DlElement *, int);
+void writeDlFile(FILE *, DlFile *, int);
+void writeDlDisplay(FILE *, DlElement *, int);
+void writeDlColormap(FILE *, DlColormap *, int);
+void writeDlBasicAttribute(FILE *, DlBasicAttribute *, int);
+void writeDlDynamicAttribute(FILE *, DlDynamicAttribute *, int);
+void writeDlRectangle(FILE *, DlElement *, int);
+void writeDlOval(FILE *, DlElement *, int);
+void writeDlArc(FILE *, DlElement *, int);
+void writeDlText(FILE *, DlElement *, int);
+void writeDlRelatedDisplay(FILE *, DlElement *, int);
+void writeDlShellCommand(FILE *, DlElement *, int);
+void writeDlColormapEntry(FILE *, DlElement *, int);
+void writeDlObject(FILE *, DlObject *, int);
+void writeDlRelatedDisplayEntry(FILE *, DlRelatedDisplayEntry *, int, int);
+void writeDlShellCommandEntry(FILE *, DlShellCommandEntry *, int, int);
 
 /* xgif.c */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
@@ -565,11 +543,23 @@ void drawGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 void resizeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage);
 int ReadCode(void);
-void freeGIF(DisplayInfo *displayInfo, DlImage *dlImage);
+void freeGIF(DlImage *dlImage);
 
 /* medmComposite.c */
 DlElement *groupObjects(DisplayInfo *);
 
 /* medmCommon.c */
-void appendDlElement(DlElement **tail, DlElement *p);
+void appendDlElement(DlList *tail, DlElement *p);
+DlList *createDlList();
+void emptyDlList(DlList *);
+void appendDlList(DlList *, DlList *);
+void insertDlElement(DlList *,DlElement *);
+void insertAfter(DlList *l, DlElement *p1, DlElement *p2);
+void insertDlListAfter(DlList *l1, DlElement *p, DlList *l2);
+void removeDlElement(DlList *,DlElement *);
+void dumpDlElementList(DlList *l);
+void genericMove(DlElement *, int, int);
+void genericScale(DlElement *, int, int);
+void destroyElementWithDynamicAttribute(DlElement *dlElement);
+
 #endif  /* __PROTO_H__ */

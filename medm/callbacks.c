@@ -71,43 +71,6 @@ extern Widget mainMW;
 
 extern char *stripChartWidgetName;
 
-#if 0
-/***
- *** callbacks
- ***/
-
-#ifdef __cplusplus
-void dmDisplayListOk(Widget, XtPointer cd, XtPointer cbs)
-#else
-void dmDisplayListOk(Widget w, XtPointer cd, XtPointer cbs)
-#endif
-{
-  FILE *filePtr;
-  char *filename;
-
-  Widget dialog = (Widget)cd;
-  XmSelectionBoxCallbackStruct *call_data = (XmSelectionBoxCallbackStruct *) cbs;
-
-
-/* if no list element selected, simply return */
-  if (call_data->value == NULL) return;
-
-/* get the filename string from the selection box */
-  XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
-
-  if (filename) {
-    filePtr = fopen(filename,"r");
-    if (filePtr) {
-	    XtUnmanageChild(dialog);
-	    dmDisplayListParse(filePtr,NULL,filename,NULL,(Boolean)False);
-      enableEditFunctions();
-	    if (filePtr) fclose(filePtr);
-    }
-    XtFree(filename);
-  }
-}
-#endif
-
 void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
   int buttonNumber = (int) cd;
@@ -145,7 +108,6 @@ void drawingAreaCallback(
   XKeyEvent *key;
   Modifiers modifiers;
   KeySym keysym;
-  int numSelected;
   Boolean objectDataOnly;
   Arg args[4];
   XtPointer userData;
@@ -219,14 +181,10 @@ void drawingAreaCallback(
 
 
     if (globalDisplayListTraversalMode == DL_EDIT) {
-
-/* in EDIT mode - only resize selected elements */
-      clearClipboard();
-      resized = dmResizeSelectedElements(displayInfo,width,height);
       unhighlightSelectedElements();
-      unselectSelectedElements();
+      resized = dmResizeSelectedElements(displayInfo,width,height);
       if (displayInfo->hasBeenEditedButNotSaved == False)
-	medmMarkDisplayBeingEdited(displayInfo);
+        medmMarkDisplayBeingEdited(displayInfo);
 
     } else {
 
@@ -249,7 +207,7 @@ void drawingAreaCallback(
 
   /* constrain resizes to original aspect ratio, call for resize, then return */
 
-	elementPtr = ((DlElement *)displayInfo->dlElementListHead)->next;
+	elementPtr = FirstDlElement(displayInfo->dlElementList);
   /* get to DL_Display type which has old x,y,width,height */
 	while (elementPtr->type != DL_Display) {elementPtr = elementPtr->next;}
 	oldWidth = elementPtr->structure.display->object.width;
@@ -291,61 +249,44 @@ void drawingAreaCallback(
    }
 
 
-  } else if (call_data->reason == XmCR_INPUT) {
-
-/* INPUT */
-/* left/right/up/down for movement of selected elements */
-
+  } else
+  if (call_data->reason == XmCR_INPUT) {
+    /* INPUT */
+    /* left/right/up/down for movement of selected elements */
     if (currentActionType == SELECT_ACTION &&
-		currentDisplayInfo->numSelectedElements > 0) {
+      !IsEmpty(currentDisplayInfo->selectedDlElementList)) {
 
       key = &(call_data->event->xkey);
 
       if (key->type == KeyPress ) {
-
-	XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
-		&modifiers,&keysym);
-
-	if (keysym == osfXK_Left || keysym == osfXK_Right  ||
-	    keysym == osfXK_Up   || keysym == osfXK_Down) {
-
-	/* unhighlight */
-	  unhighlightSelectedElements();
-
+        XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
+                         &modifiers,&keysym);
+        if (keysym == osfXK_Left || keysym == osfXK_Right  ||
+            keysym == osfXK_Up   || keysym == osfXK_Down) {
           switch (keysym) {
-	    case osfXK_Left:
-		updateDraggedElements(1,0,0,0);
-		break;
-	    case osfXK_Right:
-		updateDraggedElements(0,0,1,0);
-		break;
-	    case osfXK_Up:
-		updateDraggedElements(0,1,0,0);
-		break;
-	    case osfXK_Down:
-		updateDraggedElements(0,0,0,1);
-		break;
-	    default:
-		break;
+            case osfXK_Left:
+              updateDraggedElements(1,0,0,0);
+              break;
+            case osfXK_Right:
+              updateDraggedElements(0,0,1,0);
+              break;
+            case osfXK_Up:
+              updateDraggedElements(0,1,0,0);
+              break;
+            case osfXK_Down:
+              updateDraggedElements(0,0,0,1);
+              break;
+            default:
+              break;
           }
-/*
- * (MDA) could be smarter about this update 
- *	- just update small part of display, (restricted updateDraggedElements)
- */
-	/* highlight */
-	  numSelected = highlightSelectedElements();
-	  if (numSelected == 1) {
-	    objectDataOnly = True;
-	    updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
-	  }
-	  if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-	    medmMarkDisplayBeingEdited(currentDisplayInfo);
-
-	}
-
-
+          if (currentDisplayInfo->selectedDlElementList->count == 1) {
+            objectDataOnly = True;
+            updateGlobalResourceBundleAndResourcePalette(objectDataOnly);
+          }
+          if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
+             medmMarkDisplayBeingEdited(currentDisplayInfo);
+        }
       }
     }
-    
   }
 }

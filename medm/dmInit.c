@@ -76,8 +76,10 @@ extern Widget mainShell;
 static Position x = 0, y = 0;
 static Widget lastShell;
 
+#define DISPLAY_DEFAULT_X 10
+#define DISPLAY_DEFAULT_Y 10
 
-typedef DlElement *(*medmParseFunc)(DisplayInfo *, DlComposite *);
+typedef DlElement *(*medmParseFunc)(DisplayInfo *);
 typedef struct {
    char *name;
    medmParseFunc func;
@@ -91,7 +93,7 @@ typedef struct _parseFuncEntryNode {
 
 ParseFuncEntry parseFuncTable[] = {
          {"rectangle",            parseRectangle},
-	 {"oval",                 parseOval},
+         {"oval",                 parseOval},
          {"arc",                  parseArc},
          {"text",                 parseText},
          {"falling line",         parseFallingLine},
@@ -118,11 +120,11 @@ ParseFuncEntry parseFuncTable[] = {
 };
 
 int parseFuncTableSize = sizeof(parseFuncTable)/sizeof(ParseFuncEntry);
-DlElement *getNextElement(DisplayInfo *pDI, DlComposite *pc, char *token) {
+DlElement *getNextElement(DisplayInfo *pDI, char *token) {
   int i;
   for (i=0; i<parseFuncTableSize; i++) {
     if (!strcmp(token,parseFuncTable[i].name)) {
-      return parseFuncTable[i].func(pDI, pc);
+      return parseFuncTable[i].func(pDI);
     }
   }
   return 0;
@@ -157,14 +159,9 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
   help_protocol(shell);
 }
 
-
-
-
-
 /***
  ***  displayInfo creation
  ***/
-
 
 /*
  * create and return a DisplayInfo structure pointer on tail of displayInfoList
@@ -176,58 +173,67 @@ DisplayInfo *allocateDisplayInfo()
   int n;
   Arg args[8];
 
-
 /* 
  * allocate a DisplayInfo structure and shell for this display file/list
  */
-  displayInfo = (DisplayInfo *) calloc(1,sizeof(DisplayInfo));
-  displayInfo->next = NULL;
-  displayInfo->newDisplay = True;
+  displayInfo = (DisplayInfo *) malloc(sizeof(DisplayInfo));
+  if (!displayInfo) return NULL;
+
+  displayInfo->dlElementList = createDlList();
+  if (!displayInfo->dlElementList) {
+    free(displayInfo);
+    return NULL;
+  }
+
+  displayInfo->selectedDlElementList = createDlList();
+  if (!displayInfo->selectedDlElementList) {
+    free(displayInfo->dlElementList);
+    free(displayInfo);
+    return NULL;
+  }
+  displayInfo->selectedElementsAreHighlighted = False;
+
   displayInfo->filePtr = NULL;
-  displayInfo->displayFileName = NULL;
-  displayInfo->hasBeenEditedButNotSaved = False;
-  displayInfo->selectedElementsArray = NULL;
-  displayInfo->numSelectedElements = 0;
-  displayInfo->selectedElementsAreHighlighted = FALSE;
-  displayInfo->fromRelatedDisplayExecution = FALSE;
+  displayInfo->newDisplay = True;
+  displayInfo->versionNumber = 0;
 
-  displayInfo->warningDialog = (Widget)NULL;
-  displayInfo->questionDialog = (Widget)NULL;
+  displayInfo->drawingArea = 0;
+  displayInfo->drawingAreaPixmap = 0;
+  displayInfo->cartesianPlotPopupMenu = 0;
+  displayInfo->selectedCartesianPlot = 0;
+  displayInfo->warningDialog = NULL;
+  displayInfo->warningDialogAnswer = 0;
+  displayInfo->questionDialog = NULL;
   displayInfo->questionDialogAnswer = 0;
-  displayInfo->shellCommandPromptD = (Widget)NULL;
-  displayInfo->prev = displayInfoListTail;
-  displayInfoListTail->next = displayInfo;
-  displayInfoListTail = displayInfo;
+  displayInfo->shellCommandPromptD = NULL;
 
-/*
- * go get some data from globalResourceBundle
- */
-  displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
-  displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
-
-/*
- * startup with traversal mode as specified in globalDisplayListTraversalMode
- */
-  displayInfo->traversalMode = globalDisplayListTraversalMode;
-
-
-/*
- * initialize the DlElement structure/display list pointers
- */
-  displayInfo->dlElementListHead = (DlElement *) calloc(1,sizeof(DlElement));
-  displayInfo->dlElementListHead->next = NULL;
-  displayInfo->dlElementListTail = displayInfo->dlElementListHead;
-  displayInfo->dlColormapElement = NULL;
-
-/*
- * initialize strip chart list pointers
- */
   updateTaskInit(displayInfo);
 
+#if 0
+  displayInfo->childCount = 0;
+#endif
 
-/*
- * create the shell and add callbacks
- */
+  displayInfo->colormap = 0;
+  displayInfo->dlColormapCounter = 0;
+  displayInfo->dlColormapSize = 0;
+  displayInfo->drawingAreaBackgroundColor = globalResourceBundle.bclr;
+  displayInfo->drawingAreaForegroundColor = globalResourceBundle.clr;
+  displayInfo->gc = 0;
+  displayInfo->pixmapGC = 0;
+
+  displayInfo->traversalMode = globalDisplayListTraversalMode;
+  displayInfo->hasBeenEditedButNotSaved = False;
+  displayInfo->fromRelatedDisplayExecution = FALSE;
+
+  displayInfo->nameValueTable = NULL;
+  displayInfo->numNameValues = 0;
+
+  displayInfo->dlFile = NULL;
+  displayInfo->dlColormap = NULL;
+
+  /*
+   * create the shell and add callbacks
+   */
   n = 0;
   XtSetArg(args[n],XmNiconName,"display"); n++;
   XtSetArg(args[n],XmNtitle,"display"); n++;
@@ -246,21 +252,21 @@ DisplayInfo *allocateDisplayInfo()
   XtAddCallback(displayInfo->shell,XmNpopdownCallback,
 			displayShellPopdownCallback,NULL);
 
-/* register interest in these protocols */
-{ Atom atoms[2];
-  atoms[0] = WM_DELETE_WINDOW;
-  atoms[1] = WM_TAKE_FOCUS;
-  XmAddWMProtocols(displayInfo->shell,atoms,2);
-}
+  /* register interest in these protocols */
+  { Atom atoms[2];
+    atoms[0] = WM_DELETE_WINDOW;
+    atoms[1] = WM_TAKE_FOCUS;
+    XmAddWMProtocols(displayInfo->shell,atoms,2);
+  }
 
-/* and register the callbacks for these protocols */
+  /* and register the callbacks for these protocols */
   XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
 			(XtCallbackProc)wmCloseCallback,
 			(XtPointer)DISPLAY_SHELL);
 
-/* 
- * create the shell's EXECUTE popup menu
- */
+  /* 
+   * create the shell's EXECUTE popup menu
+   */
   n = 0;
   XtSetArg(args[n], XmNbuttonCount, NUM_EXECUTE_POPUP_ENTRIES); n++;
   XtSetArg(args[n], XmNbuttonType, executePopupMenuButtonType); n++;
@@ -270,9 +276,9 @@ DisplayInfo *allocateDisplayInfo()
   XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
   displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->shell,
 	"executePopupMenu", args, n);
-/* 
- * create the shell's EDIT popup menu
- */
+  /* 
+   * create the shell's EDIT popup menu
+   */
   displayInfo->editPopupMenu = createDisplayMenu(displayInfo->shell);
   XtVaSetValues(displayInfo->editPopupMenu,
 		XmNtearOffModel, XmTEAR_OFF_DISABLED,
@@ -287,18 +293,92 @@ DisplayInfo *allocateDisplayInfo()
   XtAddEventHandler(displayInfo->shell,ButtonReleaseMask,False,
 	popdownMenu,displayInfo);
 
+  /* append to end of the list */
+  displayInfo->next = NULL;
+  displayInfo->prev = displayInfoListTail;
+  displayInfoListTail->next = displayInfo;
+  displayInfoListTail = displayInfo;
+
   return(displayInfo);
 }
 
 
-
-
-
+TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList) {
+  TOKEN tokenType;
+  char token[MAX_TOKEN_LENGTH];
+  int nestingLevel = 0;
+  static DlBasicAttribute attr;
+  static DlDynamicAttribute dynAttr;
+  static Boolean init = True;
+ 
+  if (init && displayInfo->versionNumber < 20200) {
+    basicAttributeInit(&attr);
+    dynamicAttributeInit(&dynAttr);
+    init = False;
+  }
+ 
+  do {
+    switch (tokenType=getToken(displayInfo,token)) {
+      case T_WORD : {
+        DlElement *pe = 0;
+        if (pe = getNextElement(displayInfo,token)) {
+          if (displayInfo->versionNumber < 20200) {
+            switch (pe->type) {
+            case DL_Rectangle :
+            case DL_Oval      :
+            case DL_Arc       :
+            case DL_Text      :
+            case DL_Polyline  :
+            case DL_Polygon   :
+              pe->structure.rectangle->attr = attr;
+              if (dynAttr.name && dynAttr.name[0] != '\0') {
+                pe->structure.rectangle->dynAttr = dynAttr;
+                dynAttr.name = 0;
+              }
+              break;
+            }
+          }
+        } else
+        if (displayInfo->versionNumber < 20200) {
+          if (!strcmp(token,"<<basic atribute>>") ||
+              !strcmp(token,"basic attribute") ||
+              !strcmp(token,"<<basic attribute>>")) {
+            parseOldBasicAttribute(displayInfo,&attr);
+          } else
+          if (!strcmp(token,"dynamic attribute") ||
+              !strcmp(token,"<<dynamic attribute>>")) {
+            parseOldDynamicAttribute(displayInfo,&dynAttr);
+          }
+        }
+        if (pe) {
+          appendDlElement(dlList,pe);
+        }
+      }
+      case T_EQUAL:
+        break;
+      case T_LEFT_BRACE:
+        nestingLevel++; break;
+      case T_RIGHT_BRACE:
+        nestingLevel--; break;
+      default :
+        break;
+    }
+  } while ((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+           && (tokenType != T_EOF));
+  /* reset the inti flag */
+  if (tokenType == T_EOF) init = True;
+#if 0
+  if (dynAttr.name) {
+    freeString(dynAttr.name);
+    dynAttr.name = NULL;
+  }
+#endif
+  return tokenType;
+}
 
 /***
  ***  parsing and drawing/widget creation routines
  ***/
-
 
 /*
  * routine which actually parses the display list in the opened file
@@ -306,61 +386,58 @@ DisplayInfo *allocateDisplayInfo()
  *  which follows...
  */
 void dmDisplayListParse(
+  DisplayInfo *displayInfo,
   FILE *filePtr,
   char *argsString,
   char *filename,
   char *geometryString,
   Boolean fromRelatedDisplayExecution)
 {
-  DisplayInfo *displayInfo;
-  DlColormap *dlCmap;
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   Arg args[7];
-  DlBasicAttribute attr;
-  DlDynamicAttribute dynAttr;
   DlElement *dlElement;
   int numPairs;
-  DlComposite *dlComposite = NULL;
 
   initializeGlobalResourceBundle();
-/* 
- * allocate a DisplayInfo structure and shell for this display file/list
- */
-  displayInfo = allocateDisplayInfo();
-  displayInfo->filePtr = filePtr;
-  currentDisplayInfo = displayInfo;
-  currentDisplayInfo->newDisplay = False;
 
-  if (fromRelatedDisplayExecution)
-	displayInfo->fromRelatedDisplayExecution = True;
-  else
-	displayInfo->fromRelatedDisplayExecution = False;
-
-/*
- * generate the name-value table for macro substitutions (related display)
- */
-  if (argsString != NULL) {
-	displayInfo->nameValueTable = generateNameValueTable(argsString,
-		&numPairs);
-	displayInfo->numNameValues = numPairs;
+  if (!displayInfo) {
+    /* 
+     * allocate a DisplayInfo structure and shell for this display file/list
+     */
+    displayInfo = allocateDisplayInfo();
+    displayInfo->filePtr = filePtr;
+    currentDisplayInfo = displayInfo;
+    currentDisplayInfo->newDisplay = False;
   } else {
-	displayInfo->nameValueTable = NULL;
-	displayInfo->numNameValues = 0;
+    dmCleanupDisplayInfo(displayInfo,False);
+    destroyDlDisplayList(displayInfo->dlElementList);
+    displayInfo->filePtr = filePtr;
+    currentDisplayInfo = displayInfo;
+    currentDisplayInfo->newDisplay = False;
+  }
+  
+  fromRelatedDisplayExecution = displayInfo->fromRelatedDisplayExecution;
+
+  /*
+   * generate the name-value table for macro substitutions (related display)
+   */
+  if (argsString) {
+    displayInfo->nameValueTable = generateNameValueTable(argsString,&numPairs);
+    displayInfo->numNameValues = numPairs;
+  } else {
+    displayInfo->nameValueTable = NULL;
+    displayInfo->numNameValues = 0;
   }
 
 
-/* if first token isn't "file" then bail out! */
+  /* if first token isn't "file" then bail out! */
   tokenType=getToken(displayInfo,token);
   if (tokenType == T_WORD && !strcmp(token,"file")) {
-    DlElement *dlElement;
-    dlElement = parseFile(displayInfo);
-    if (dlElement) {
-      displayInfo->versionNumber = dlElement->structure.file->versionNumber;
-      if (displayInfo->versionNumber < 20200) {
-        basicAttributeInit(&attr);
-        dynamicAttributeInit(&dynAttr);
-      }
+    displayInfo->dlFile = parseFile(displayInfo);
+    if (displayInfo->dlFile) {
+      displayInfo->versionNumber = displayInfo->dlFile->versionNumber;
+      strcpy(displayInfo->dlFile->name,filename);
     } else {
       fprintf(stderr,"\ndmDisplayListParse: out of memory!");
       displayInfo->filePtr = NULL;
@@ -375,97 +452,36 @@ void dmDisplayListParse(
     currentDisplayInfo = NULL;
     return;
   }
-/* set internal name of display to external file name */
-  dmSetDisplayFileName(displayInfo,filename);
 
-
-/*
- * proceed with parsing
- */
-
-  while ( (tokenType=getToken(displayInfo,token)) != T_EOF ) {
-    switch (tokenType) {
-      case T_WORD : {
-        DlElement *pe = 0;
-
-        if (pe = getNextElement(displayInfo,dlComposite,token)) {
-          if (displayInfo->versionNumber < 20200) {
-            switch (pe->type) {
-              case DL_Rectangle :
-              case DL_Oval      :
-              case DL_Arc       :
-              case DL_Text      :
-              case DL_Polyline  :
-              case DL_Polygon   :
-                pe->structure.rectangle->attr = attr;
-                if (dynAttr.chan[0] != '\0') {
-                  pe->structure.rectangle->dynAttr = dynAttr;
-                  dynAttr.chan[0] = '\0';
-                }
-                break;
-            }
-          }
-	} else
-        if (!strcmp(token,"file")) {
-	  parseFile(displayInfo);
-	} else
-        if (!strcmp(token,"display")) {
+  tokenType=getToken(displayInfo,token);
+  if (tokenType ==T_WORD && !strcmp(token,"display")) {
 	  parseDisplay(displayInfo);
-	} else
-        if (!strcmp(token,"color map") ||
-	    !strcmp(token,"<<color map>>")) {
-	  dlCmap=parseColormap(displayInfo,displayInfo->filePtr);
-	  if (!dlCmap) {
+  }
+
+  tokenType=getToken(displayInfo,token);
+  if (tokenType == T_WORD && 
+      (!strcmp(token,"color map") ||
+       !strcmp(token,"<<color map>>"))) {
+    displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
+	  if (!displayInfo->dlColormap) {
 	    /* error - do total bail out */
 	    fclose(displayInfo->filePtr);
 	    dmRemoveDisplayInfo(displayInfo);
 	    return;
 	  }
-	} else
-        if (displayInfo->versionNumber < 20200) {
-          if (!strcmp(token,"<<basic atribute>>") ||
-	      !strcmp(token,"basic attribute") ||
-	      !strcmp(token,"<<basic attribute>>")) {
-	    parseOldBasicAttribute(displayInfo,&attr);
-	  } else
-          if (!strcmp(token,"dynamic attribute") ||
-	      !strcmp(token,"<<dynamic attribute>>")) {
-	    parseOldDynamicAttribute(displayInfo,&dynAttr);
-          }
-	}
-      }
-      default :
-        break;
-    }
   }
+
+  /*
+   * proceed with parsing
+   */
+  while (parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList)
+         != T_EOF );
 
   displayInfo->filePtr = NULL;
 
 /*
  * traverse (execute) this displayInfo and associated display list
  */
-#if 0
-  dmTraverseDisplayList(displayInfo);
-
-  XtPopup(displayInfo->shell,XtGrabNone);
-
-  {
-    int x, y;
-    unsigned int w, h;
-    int mask;
-    mask = XParseGeometry(geometryString,&x,&y,&w,&h);
-    if ((mask & XValue) && (mask & YValue)
-        && (mask & WidthValue) && (mask & HeightValue)) {
-      XMoveResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y,w,h);
-    } else
-    if ((mask & XValue) && (mask & YValue)) {
-      XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
-    } else
-    if ((mask & WidthValue) && (mask & HeightValue)) {
-      XResizeWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),w,h);
-    }
-  }
-#else
   {
     int x, y;
     unsigned int w, h;
@@ -484,122 +500,6 @@ void dmDisplayListParse(
       XMoveWindow(XtDisplay(displayInfo->shell),XtWindow(displayInfo->shell),x,y);
     }
   }
-#endif
-}
-
-
-
-/*
- * routine which actually parses the display list in the opened file for
- * a composite object
- *   N.B.  this function must be kept in sync with dmDisplayListParse()
- *   which is just prior to this code
- */
-void parseCompositeChildren(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
-{
-  char token[MAX_TOKEN_LENGTH];
-  TOKEN tokenType;
-  int nestingLevel;
-
-  DlBasicAttribute attr;
-  DlDynamicAttribute dynAttr;
-  DlElement *dlElement;
-
-
-  nestingLevel = 0;
-  if (displayInfo->versionNumber < 20200) {
-    basicAttributeInit(&attr);
-    dynamicAttributeInit(&dynAttr);
-  }
-
-/*
- * proceed with parsing
- */
-
-  do {
-    switch( (tokenType=getToken(displayInfo,token)) ) {
-      case T_WORD : {
-        DlElement *pe = 0;
- 
-        if (pe = getNextElement(displayInfo,dlComposite,token)) {
-          if (displayInfo->versionNumber < 20200) {
-            switch (pe->type) {
-              case DL_Rectangle :
-              case DL_Oval      :
-              case DL_Arc       :
-              case DL_Text      :
-              case DL_Polyline  :
-              case DL_Polygon   :
-                pe->structure.rectangle->attr = attr;
-                if (dynAttr.chan[0] != '\0') {
-                  pe->structure.rectangle->dynAttr = dynAttr;
-                  dynAttr.chan[0] = '\0';
-                }
-                break;
-            }
-          }
-        } else
-        if (displayInfo->versionNumber < 20200) {
-          if (!strcmp(token,"<<basic atribute>>") ||
-              !strcmp(token,"basic attribute") ||
-              !strcmp(token,"<<basic attribute>>")) {
-            parseOldBasicAttribute(displayInfo,&attr);
-          } else
-          if (!strcmp(token,"dynamic attribute") ||
-              !strcmp(token,"<<dynamic attribute>>")) {
-            parseOldDynamicAttribute(displayInfo,&dynAttr);
-          }
-        }
-      }
-      case T_EQUAL:
-	break;
-      case T_LEFT_BRACE:
-	nestingLevel++; break;
-      case T_RIGHT_BRACE:
-	nestingLevel--; break;
-    }
-  } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
-                && (tokenType != T_EOF) );
-
-
-}
-
-#define DISPLAY_DEFAULT_X 10
-#define DISPLAY_DEFAULT_Y 10
-
-DlElement *createDlDisplay(
-  DisplayInfo *displayInfo)
-{
-  DlDisplay *dlDisplay;
-  DlElement *dlElement;
- 
- 
-  dlDisplay = (DlDisplay *) malloc(sizeof(DlDisplay));
-  if (!dlDisplay) return 0;
- 
-  objectAttributeInit(&(dlDisplay->object));
-  dlDisplay->object.x = DISPLAY_DEFAULT_X;
-  dlDisplay->object.y = DISPLAY_DEFAULT_Y;
-  dlDisplay->clr = 0;
-  dlDisplay->bclr = 1;
-  dlDisplay->cmap[0] = '\0';
- 
-  dlElement = (DlElement *) malloc(sizeof(DlElement));
-  if (!dlElement) {
-    free(dlDisplay);
-    return 0;
-  }
-  if (!(dlElement = createDlElement(DL_Display,
-                    (XtPointer)      dlDisplay,
-                    (medmExecProc)   executeDlDisplay,
-                    (medmWriteProc)  writeDlDisplay,
-										0,0,0))) {
-    free(dlDisplay);
-  }
- 
-  return(dlElement);
 }
 
 DlElement *parseDisplay(
@@ -609,7 +509,7 @@ DlElement *parseDisplay(
   TOKEN tokenType;
   int nestingLevel = 0;
   DlDisplay *dlDisplay;
-  DlElement *dlElement = createDlDisplay(displayInfo);
+  DlElement *dlElement = createDlDisplay(NULL);
  
   if (!dlElement) return 0;
   dlDisplay = dlElement->structure.display;
@@ -650,7 +550,7 @@ DlElement *parseDisplay(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  appendDlElement(&(displayInfo->dlElementListTail),dlElement); 
+  appendDlElement(displayInfo->dlElementList,dlElement); 
   /* fix up x,y so that 0,0 (old defaults) are replaced */
   if (dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
   if (dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;

@@ -1,7 +1,170 @@
+# Makefile for MEDM
+
+EPICS = ../../../../..
+include Target.include
+include $(EPICS)/config/CONFIG_EXTENSIONS
+
+UNIX_OPT=NO
+STATIC_BUILD = NO
+CC = cc -g
+#CC = cc -g -DDEBUG
+#CC = purify -first-only -chain-length=10 cc -g
+#CC = purify cc -g
+#CC = gcc
+
+
+USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
+
+USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
+USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
+
+ifdef XRTGRAPH
+#  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
+  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
+  USR_LDFLAGS += -L$(XRTGRAPH)/lib
+  USR_LDLIBS += -lxrtm
+endif
+# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
+  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
+
+DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
+          $(EPICS_BASE_LIB)/libCom.a \
+          $(EPICS_EXTENSIONS_LIB)/libUnix.a \
+          $(EPICS_EXTENSIONS_LIB)/libPrintUtils.a \
+          $(EPICS_EXTENSIONS_LIB)/libGraphX.a
+
+SRCS.c = \
+  ../actions.c \
+  ../callbacks.c \
+  ../channelPalette.c \
+  ../colorPalette.c \
+  ../display.c \
+  ../dmInit.c \
+  ../eventHandlers.c \
+  ../help.c \
+  ../help_protocol.c \
+  ../libMedmInit.c \
+  ../medm.c \
+  ../medmArc.c \
+  ../medmBar.c \
+  ../medmByte.c \
+  ../medmCA.c \
+  ../medmCartesianPlot.c \
+  ../medmChoiceButtons.c \
+  ../medmCommon.c \
+  ../medmComposite.c \
+  ../medmControl.c \
+  ../medmImage.c \
+  ../medmIndicator.c \
+  ../medmMenu.c \
+  ../medmMessageButton.c \
+  ../medmMeter.c \
+  ../medmMonitor.c \
+  ../medmOval.c \
+  ../medmPixmap.c \
+  ../medmPolygon.c \
+  ../medmPolyline.c \
+  ../medmRectangle.c \
+  ../medmRelatedDisplay.c \
+  ../medmShellCommand.c \
+  ../medmStripChart.c \
+  ../medmText.c \
+  ../medmTextEntry.c \
+  ../medmTextUpdate.c \
+  ../medmValuator.c \
+  ../medmWidget.c \
+  ../objectPalette.c \
+  ../resourcePalette.c \
+  ../shared.c \
+  ../updateMonitors.c \
+  ../utils.c \
+  ../xgif.c \
+
+OBJS = \
+  actions.o \
+  callbacks.o \
+  channelPalette.o \
+  colorPalette.o \
+  display.o \
+  dmInit.o \
+  eventHandlers.o \
+  help.o \
+  help_protocol.o \
+  medm.o \
+  medmArc.o \
+  medmBar.o \
+  medmByte.o \
+  medmCA.o \
+  medmCartesianPlot.o \
+  medmChoiceButtons.o \
+  medmCommon.o \
+  medmComposite.o \
+  medmControl.o \
+  medmImage.o \
+  medmIndicator.o \
+  medmMenu.o \
+  medmMessageButton.o \
+  medmMeter.o \
+  medmMonitor.o \
+  medmOval.o \
+  medmPixmap.o \
+  medmPolygon.o \
+  medmPolyline.o \
+  medmRectangle.o \
+  medmRelatedDisplay.o \
+  medmShellCommand.o \
+  medmStripChart.o \
+  medmText.o \
+  medmTextEntry.o \
+  medmTextUpdate.o \
+  medmValuator.o \
+  medmWidget.o \
+  objectPalette.o \
+  resourcePalette.o \
+  shared.o \
+  updateMonitors.o \
+  utils.o \
+  xgif.o \
+
+PROD = medm
+
+include $(EPICS)/config/RULES.Unix
+
+medm: $(OBJS) $(DEPLIBS)
+	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
+ifdef XRTGRAPH
+	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
+	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
+	if [ $$? -ne 0 ]; then\
+		echo "*********************************";\
+		echo "ERROR in running XRT_AUTH on MEDM";\
+		echo "*********************************";\
+	fi
+endif
+
+xrtAuth: medm
+	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
+	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
+	if [ $$? -ne 0 ]; then\
+		echo "*********************************";\
+		echo "ERROR in running XRT_AUTH on MEDM";\
+		echo "*********************************";\
+	fi
+
 #
 # $Id$
 #
 # $Log$
+# Revision 1.19  1996/12/11 15:53:24  evans
+# Version 2.3.0
+# =============
+# This version is a merge of Version 2.2.9 and Fred Vong's development
+# version.  It was made just after Fred left.  The conflicts between the
+# two versions were resolved by best guess.  In addition, two bugs which
+# caused core dumps were fixed.  This version is being stored for
+# archive purposes, has not been extensively tested, and should be
+# considered to be potentially unstable.
+#
 # Revision 1.18  1996/12/04 16:23:22  vong
 # Correct the makefile.
 #
@@ -162,88 +325,3 @@
 # Initial versions
 #
 #
-
-EPICS = ../../../../..
-include Target.include
-include $(EPICS)/config/CONFIG_EXTENSIONS
-
-USR_CFLAGS = -I../../graphX -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
-
-USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(INSTALL_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = ../../xc/O.$(T_A)/libANLwidgets.a -lPrintUtils -lGraphX \
-
-ifdef XRTGRAPH
-#  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm  -D __COLOR_RULE_H__
-  USR_CFLAGS += -I$(XRTGRAPH)/include/Xm
-  USR_LDFLAGS += -L$(XRTGRAPH)/lib
-  USR_LDLIBS += -lxrtm
-endif
-# USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lX -lm
-  USR_LDLIBS +=  -lca -lCom -lUnix -lXm -lXt -lX11 -lXext -lm
-
-DEPLIBS = $(EPICS_BASE_LIB)/libca.a \
-          $(EPICS_BASE_LIB)/libCom.a \
-          $(EPICS_EXTENSIONS_LIB)/libUnix.a \
-          $(EPICS_EXTENSIONS_LIB)/libPrintUtils.a \
-          $(EPICS_EXTENSIONS_LIB)/libGraphX.a
-
-SRCS.c = ../actions.c ../callbacks.c ../channelPalette.c ../colorPalette.c \
-	../display.c ../dmInit.c ../eventHandlers.c \
-	../help.c ../medm.c ../medmCA.c \
-	../medmPixmap.c  ../libMedmInit.c \
-	../medmChoiceButtons.c ../medmMenu.c ../medmMessageButton.c \
-	../medmTextEntry.c ../medmValuator.c \
-	../medmMeter.c ../medmIndicator.c ../medmTextUpdate.c ../medmBar.c \
-	../medmStripChart.c ../medmByte.c ../medmCartesianPlot.c \
-  ../medmArc.c ../medmOval.c ../medmRectangle.c ../medmText.c \
-  ../medmPolyline.c ../medmPolygon.c ../medmComposite.c ../medmImage.c\
-	../medmRelatedDisplay.c ../medmShellCommand.c\
-	../medmCommon.c ../medmControl.c ../medmMonitor.c\
-	../objectPalette.c ../resourcePalette.c ../shared.c \
-	../updateMonitors.c ../utils.c ../medmWidget.c \
-  ../xgif.c ../help_protocol.c
-
-OBJS =	actions.o callbacks.o channelPalette.o colorPalette.o \
-	display.o dmInit.o eventHandlers.o \
-	help.o medm.o medmPixmap.o medmCA.o \
-	medmChoiceButtons.o medmMenu.o medmMessageButton.o \
-	medmTextEntry.o medmValuator.o \
-	medmMeter.o medmIndicator.o medmTextUpdate.o medmBar.o \
-	medmStripChart.o medmByte.o medmCartesianPlot.o \
-  medmArc.o medmOval.o medmRectangle.o medmText.o \
-  medmPolyline.o medmPolygon.o medmComposite.o medmImage.o\
-	medmRelatedDisplay.o medmShellCommand.o\
-	medmCommon.o medmControl.o medmMonitor.o\
-	objectPalette.o resourcePalette.o \
-	shared.o updateMonitors.o utils.o medmWidget.o \
-  xgif.o help_protocol.o
-
-#LIBNAME = libMedm.a
-PROD = medm
-
-#STATIC_BUILD = YES
-include $(EPICS)/config/RULES.Unix
-
-#CC = cc -g
-#CC = gcc
-
-medm: $(OBJS) $(DEPLIBS)
-	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
-ifdef XRTGRAPH
-	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
-	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
-	if [ $$? -ne 0 ]; then\
-		echo "*********************************";\
-		echo "ERROR in running XRT_AUTH on MEDM";\
-		echo "*********************************";\
-	fi
-endif
-
-xrtAuth: medm
-	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
-	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
-	if [ $$? -ne 0 ]; then\
-		echo "*********************************";\
-		echo "ERROR in running XRT_AUTH on MEDM";\
-		echo "*********************************";\
-	fi

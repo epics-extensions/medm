@@ -64,8 +64,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Arc {
-  Widget           widget;
-  DlArc            *dlArc;
+  DlElement        *dlElement;
   Record           *record;
   UpdateTask       *updateTask;
 } Arc;
@@ -75,22 +74,38 @@ static void arcUpdateValueCb(XtPointer cd);
 static void arcDestroyCb(XtPointer cd);
 static void arcName(XtPointer, char **, short *, int *);
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void arcGetValues(ResourceBundle *pRCB, DlElement *p);
 
+static DlDispatchTable arcDlDispatchTable = {
+         createDlArc,
+         destroyElementWithDynamicAttribute,
+         executeDlArc,
+         writeDlArc,
+         NULL,
+         arcGetValues,
+         arcInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
 static void drawArc(Arc *pa) {
   unsigned int lineWidth;
   DisplayInfo *displayInfo = pa->updateTask->displayInfo;
-  Display *display = XtDisplay(pa->widget);
-  DlArc *dlArc = pa->dlArc;
+  Widget widget = pa->updateTask->displayInfo->drawingArea;
+  Display *display = XtDisplay(widget);
+  DlArc *dlArc = pa->dlElement->structure.arc;
 
   lineWidth = (dlArc->attr.width+1)/2;
   if (dlArc->attr.fill == F_SOLID) {
-    XFillArc(display,XtWindow(pa->widget),displayInfo->gc,
+    XFillArc(display,XtWindow(widget),displayInfo->gc,
         dlArc->object.x,dlArc->object.y,
         dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
   } else
   if (dlArc->attr.fill == F_OUTLINE) {
-    XDrawArc(display,XtWindow(pa->widget),displayInfo->gc,
+    XDrawArc(display,XtWindow(widget),displayInfo->gc,
         dlArc->object.x + lineWidth,
         dlArc->object.y + lineWidth,
         dlArc->object.width - 2*lineWidth,
@@ -98,18 +113,14 @@ static void drawArc(Arc *pa) {
   }
 }
 
-#ifdef __cplusplus
-void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc, Boolean)
-#else
-void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
-                                Boolean forcedDisplayToWindow)
-#endif
+void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
+  DlArc *dlArc = dlElement->structure.arc;
   if ((displayInfo->traversalMode == DL_EXECUTE) 
-      && (dlArc->dynAttr.chan[0] != '\0')) {
+      && (dlArc->dynAttr.name)) {
     Arc *pa;
     pa = (Arc *) malloc(sizeof(Arc));
-    pa->dlArc = dlArc;
+    pa->dlElement = dlElement;
     pa->updateTask = updateTaskAddTask(displayInfo,
 				       &(dlArc->object),
 				       arcDraw,
@@ -123,7 +134,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
       pa->updateTask->opaque = False;
     }
     pa->record = medmAllocateRecord(
-                  dlArc->dynAttr.chan,
+                  dlArc->dynAttr.name,
                   arcUpdateValueCb,
                   NULL,
                   (XtPointer) pa);
@@ -154,8 +165,6 @@ void executeDlArc(DisplayInfo *displayInfo, DlArc *dlArc,
     if (dlArc->dynAttr.vis == V_STATIC ) {
       pa->record->monitorZeroAndNoneZeroTransition = False;
     }
-
-    pa->widget = displayInfo->drawingArea;
   } else {
     executeDlBasicAttribute(displayInfo,&(dlArc->attr));
     if (dlArc->attr.fill == F_SOLID) {
@@ -195,15 +204,19 @@ static void arcDraw(XtPointer cd) {
   DisplayInfo *displayInfo = pa->updateTask->displayInfo;
   XGCValues gcValues;
   unsigned long gcValueMask;
-  Display *display = XtDisplay(pa->widget);
-  DlArc *dlArc = pa->dlArc;
+  Display *display = XtDisplay(pa->updateTask->displayInfo->drawingArea);
+  DlArc *dlArc = pa->dlElement->structure.arc;
 
   if (pd->connected) {
     gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
     switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
       case STATIC :
+<<<<<<< medmArc.c
+        gcValues.foreground = displayInfo->colormap[pa->attr.clr];
+=======
         gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
+>>>>>>> 1.7
         break;
       case DISCRETE:
         gcValues.foreground = extractColor(displayInfo,
@@ -214,14 +227,14 @@ static void arcDraw(XtPointer cd) {
 #else
       case STATIC :
       case DISCRETE:
-        gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
         break;
 #endif
       case ALARM :
         gcValues.foreground = alarmColorPixel[pd->severity];
         break;
       default :
-        gcValues.foreground = displayInfo->dlColormap[dlArc->attr.clr];
+        gcValues.foreground = displayInfo->colormap[dlArc->attr.clr];
 	medmPrintf("internal error : arcUpdatevalueCb : unknown attribute\n");
 	break;
     }
@@ -281,42 +294,39 @@ static void arcName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pa->record->severity;
 }
 
-DlElement *createDlArc(
-  DisplayInfo *displayInfo)
+DlElement *createDlArc(DlElement *p)
 {
   DlArc *dlArc;
   DlElement *dlElement;
  
   dlArc = (DlArc*) malloc(sizeof(DlArc));
   if (!dlArc) return 0;
- 
-  objectAttributeInit(&(dlArc->object));
-  basicAttributeInit(&(dlArc->attr));
-  dynamicAttributeInit(&(dlArc->dynAttr));
-  dlArc->begin = 0;
-  dlArc->path = 90*64;
+  if (p) {
+    *dlArc = *p->structure.arc;
+  } else { 
+    objectAttributeInit(&(dlArc->object));
+    basicAttributeInit(&(dlArc->attr));
+    dynamicAttributeInit(&(dlArc->dynAttr));
+    dlArc->begin = 0;
+    dlArc->path = 90*64;
+  }
  
   if (!(dlElement = createDlElement(DL_Arc,
                     (XtPointer)      dlArc,
-                    (medmExecProc)   executeDlArc,
-                    (medmWriteProc)  writeDlArc,
-										0,0,
-										arcInheritValues))) {
+										&arcDlDispatchTable))) {
     free(dlArc);
   }
 
   return(dlElement);
 }
 
-DlElement *parseArc(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseArc(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlArc *dlArc;
-  DlElement *dlElement = createDlArc(displayInfo);
+  DlElement *dlElement = createDlArc(NULL);
   if (!dlElement) return 0;
   dlArc = dlElement->structure.arc;
  
@@ -352,17 +362,16 @@ DlElement *parseArc(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement; 
 }
 
 void writeDlArc(
   FILE *stream,
-  DlArc *dlArc,
+  DlElement *dlElement,
   int level)
 {
   char indent[16];
+  DlArc *dlArc = dlElement->structure.arc;
 
   memset(indent,'\t',level); 
   indent[level] = '\0';
@@ -390,6 +399,28 @@ void writeDlArc(
 #endif
 }
 
+static void arcGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlArc *dlArc = p->structure.arc;
+  medmGetValues(pRCB,
+    X_RC,          &(dlArc->object.x),
+    Y_RC,          &(dlArc->object.y),
+    WIDTH_RC,      &(dlArc->object.width),
+    HEIGHT_RC,     &(dlArc->object.height),
+    CLR_RC,        &(dlArc->attr.clr),
+    STYLE_RC,      &(dlArc->attr.style),
+    FILL_RC,       &(dlArc->attr.fill),
+    LINEWIDTH_RC,  &(dlArc->attr.width),
+    CLRMOD_RC,     &(dlArc->dynAttr.clr),
+    VIS_RC,        &(dlArc->dynAttr.vis),
+#ifdef __COLOR_RULE_H__
+    COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
+#endif
+    CHAN_RC,       &(dlArc->dynAttr.name),
+    BEGIN_RC,      &(dlArc->begin),
+    PATH_RC,       &(dlArc->path),
+    -1);
+}
+
 static void arcInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlArc *dlArc = p->structure.arc;
   medmGetValues(pRCB,
@@ -402,7 +433,7 @@ static void arcInheritValues(ResourceBundle *pRCB, DlElement *p) {
 #ifdef __COLOR_RULE_H__
     COLOR_RULE_RC, &(dlArc->dynAttr.colorRule),
 #endif
-    CHAN_RC,         dlArc->dynAttr.chan,
+    CHAN_RC,       &(dlArc->dynAttr.name),
     BEGIN_RC,      &(dlArc->begin),
     PATH_RC,       &(dlArc->path),
     -1);

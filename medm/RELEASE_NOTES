@@ -1,3 +1,15 @@
+MEDM Release Notes
+
+Version 2.3.0
+=============
+- Fred Vong's development version when he left merged with 2.2.9
+- Fix the following bugs :
+  - clipboard does not delete composite object correctly.
+  - parse rising line and falling line broke.
+  - composite object fails to free points array of polyline and polygon.
+  - time unit for cartesian plot
+    - assume all the time values come in order.
+  
 Version 2.2.9
 =============
 - bug fix
@@ -35,10 +47,11 @@ Version 2.2.4
   Loading the second or any additional displays causes MEDM to add extra
   entries on relatedDisplay, shellCommand, strip chart and cartesian Plot.
 
+>>>>>>> 1.14
 Version 2.2.3
 =============
 - Fix the following bug :
-	If you move or resize a composite widget by modifing the x, y, height and
+  If you move or resize a composite widget by modifing the x, y, height and
   width in the resource palette, the object will be size to zero.
 
 Version 2.2.2

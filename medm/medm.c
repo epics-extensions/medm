@@ -69,7 +69,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 #include <Xm/RepType.h>
 #include <unistd.h>
-#include <sys/time.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -936,30 +936,30 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	   break;
 
 	case EDIT_CUT_BTN:
-	   copyElementsIntoClipboard();
+	   copySelectedElementsIntoClipboard();
 	   deleteElementsInDisplay();
 	   if (currentDisplayInfo->hasBeenEditedButNotSaved == False)
 	     medmMarkDisplayBeingEdited(currentDisplayInfo);
 	   break;
 
 	case EDIT_COPY_BTN:
-	   copyElementsIntoClipboard();
+	   copySelectedElementsIntoClipboard();
 	   break;
 
-	case EDIT_PASTE_BTN:
-	   copyElementsIntoDisplay();
-           if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
-             medmMarkDisplayBeingEdited(currentDisplayInfo);
-	   break;
+  case EDIT_PASTE_BTN:
+    copyElementsIntoDisplay();
+    if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
+      medmMarkDisplayBeingEdited(currentDisplayInfo);
+    break;
 
 	case EDIT_RAISE_BTN:
-	   raiseSelectedElements();
+	   raiseSelectedElements(currentDisplayInfo);
            if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
              medmMarkDisplayBeingEdited(currentDisplayInfo);
 	   break;
 
 	case EDIT_LOWER_BTN:
-	   lowerSelectedElements();
+	   lowerSelectedElements(currentDisplayInfo);
            if (currentDisplayInfo->hasBeenEditedButNotSaved == False) 
              medmMarkDisplayBeingEdited(currentDisplayInfo);
 	   break;
@@ -1058,7 +1058,7 @@ static void mapCallback(Widget w, XtPointer cd, XtPointer cbs)
   XtMoveWidget(XtParent(w),X,Y);
 
   /* be nice to the users - supply default text field as display name */
-  xmString = XmStringCreateSimple(dmGetDisplayFileName(currentDisplayInfo));
+  xmString = XmStringCreateSimple(currentDisplayInfo->dlFile->name);
   XtVaSetValues(w,XmNtextString,xmString,NULL);
   XmStringFree(xmString);
 }
@@ -1137,9 +1137,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         free(cwd);
       }
 
-      XtVaGetValues(openFSD,XmNdirMask,&dirMask,NULL);
       XmListDeselectAllItems(XmFileSelectionBoxGetChild(openFSD,XmDIALOG_LIST));
-      XmFileSelectionDoSearch(openFSD,dirMask);
+      XmFileSelectionDoSearch(openFSD,NULL);
       XtManageChild(openFSD);
       XUndefineCursor(display,XtWindow(mainShell));
       break;
@@ -1170,7 +1169,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         saveAsPD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),
                    "saveAsFSD",args,n);
         XtUnmanageChild(XmFileSelectionBoxGetChild(saveAsPD,
-            XmDIALOG_HELP_BUTTON));
+                        XmDIALOG_HELP_BUTTON));
         XtAddCallback(saveAsPD,XmNokCallback,
           fileMenuDialogCallback,(XtPointer)FILE_SAVE_AS_BTN);
         XtAddCallback(saveAsPD,XmNcancelCallback,
@@ -1217,7 +1216,6 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
       if ((currentDisplayInfo->newDisplay)
         || (buttonNumber == FILE_SAVE_AS_BTN)) {
         /* new display or user want to save as a different name */
-#ifdef SUPPORT_0201XX_FILE_FORMAT
         WidgetList children;
         XmListDeselectAllItems(
             XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_LIST));
@@ -1227,12 +1225,10 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         XmToggleButtonGadgetSetState(children[0],True,True);
         MedmUseNewFileFormat = True;
         XtManageChild(saveAsPD);
-#endif
-	        XtManageChild(saveAsPD);
       } else {
         /* save the file */
         medmSaveDisplay(currentDisplayInfo,
-        dmGetDisplayFileName(currentDisplayInfo),True);
+           currentDisplayInfo->dlFile->name,True);
       }
       break;
 
@@ -1314,7 +1310,7 @@ static void medmExitMapCallback(
   XtMoveWidget(XtParent(w),X,Y);
 
   /*
-  xmString = XmStringCreateSimple(dmGetDisplayFileName(displayInfo));
+  xmString = XmStringCreateSimple(displayInfo->dlFile->name);
   XtVaSetValues(w,XmNtextString,xmString,NULL);
   XmStringFree(xmString);
   */
@@ -1426,7 +1422,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     dmSetAndPopupWarningDialog(displayInfo,warningString,"Ok",NULL,NULL);
     return False;
   }
-  dmSetDisplayFileName(displayInfo,f1);
+  strcpy(displayInfo->dlFile->name,f1);
   dmWriteDisplayList(displayInfo,stream);
   fclose(stream);
   displayInfo->hasBeenEditedButNotSaved = False;
@@ -1447,42 +1443,43 @@ void medmExit() {
 
   DisplayInfo *displayInfo = displayInfoListHead->next;
 
-  while (displayInfo != NULL) {
+  while (displayInfo) {
     if (displayInfo->hasBeenEditedButNotSaved) {
       if (saveAll == False) {
-        filename = tmp = dmGetDisplayFileName(displayInfo);
+        filename = tmp = displayInfo->dlFile->name;
         /* strip off the path */
         while (*tmp != '\0') {
-	  if (*tmp == '/') 
-	    filename = tmp + 1;
-	  tmp++;
+          if (*tmp == '/') 
+            filename = tmp + 1;
+          tmp++;
         }
         sprintf(str,"Save display \"%s\" before exit?",filename);
-	if (displayInfo->next)
+        if (displayInfo->next)
           dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No","All");
-	else
+        else
           dmSetAndPopupQuestionDialog(displayInfo,str,"Yes","No",NULL);
-	switch (displayInfo->questionDialogAnswer) {
-	  case 1 :
-	    /* Yes, save this file */
-	    saveThis = True;
-	    break;
-	  case 2 :
-	    /* No, check next file */
-	    saveThis = False;
-	    break;
-	  case 3 :
-	    /* save all files */
-	    saveAll = True;
-	    saveThis = True;
-	    break;
-	  default :
-	    saveThis = False;
-	    break;
-	}
+        switch (displayInfo->questionDialogAnswer) {
+          case 1 :
+          /* Yes, save this file */
+            saveThis = True;
+            break;
+          case 2 :
+            /* No, check next file */
+            saveThis = False;
+            break;
+          case 3 :
+            /* save all files */
+            saveAll = True;
+            saveThis = True;
+	          break;
+          default :
+            saveThis = False;
+            break;
+        }
       }
       if (saveThis == True) 
-	if (medmSaveDisplay(displayInfo,dmGetDisplayFileName(displayInfo),True) == False) return;
+        if (medmSaveDisplay(displayInfo,
+             displayInfo->dlFile->name,True) == False) return;
     }
     displayInfo = displayInfo->next;
   }
@@ -1508,61 +1505,61 @@ static void fileMenuDialogCallback(
   char backupFilename[MAX_FILE_CHARS];
 
   switch(call_data->reason){
-	case XmCR_CANCEL:
-		XtUnmanageChild(w);
-		break;
-	case XmCR_OK:
-		switch(btn) {
-		  case FILE_OPEN_BTN: {
-        FILE *filePtr;
-        char *filename;
+    case XmCR_CANCEL:
+      XtUnmanageChild(w);
+      break;
+    case XmCR_OK:
+      switch(btn) {
+        case FILE_OPEN_BTN: {
+          FILE *filePtr;
+          char *filename;
 
-        XmSelectionBoxCallbackStruct *call_data =
+          XmSelectionBoxCallbackStruct *call_data =
             (XmSelectionBoxCallbackStruct *) callbackStruct;
 
-        /* if no list element selected, simply return */
-        if (call_data->value == NULL) return;
+          /* if no list element selected, simply return */
+          if (call_data->value == NULL) return;
 
-        /* get the filename string from the selection box */
-        XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
+          /* get the filename string from the selection box */
+          XmStringGetLtoR(call_data->value, XmSTRING_DEFAULT_CHARSET, &filename);
 
-        if (filename) {
-          filePtr = fopen(filename,"r");
-          if (filePtr) {
-            XtUnmanageChild(w);
-            dmDisplayListParse(filePtr,NULL,filename,NULL,(Boolean)False);
-            enableEditFunctions();
-            if (filePtr) fclose(filePtr);
+          if (filename) {
+            filePtr = fopen(filename,"r");
+            if (filePtr) {
+              XtUnmanageChild(w);
+              dmDisplayListParse(NULL,filePtr,NULL,filename,NULL,(Boolean)False);
+              enableEditFunctions();
+              if (filePtr) fclose(filePtr);
+            }
+            XtFree(filename);
           }
-          XtFree(filename);
+          break;
         }
-			  break;
-      }
-      case FILE_CLOSE_BTN:
-			  dmRemoveDisplayInfo(currentDisplayInfo);
-			  currentDisplayInfo = NULL;
-			  break;
-		  case FILE_SAVE_AS_BTN:
-			  select = (XmSelectionBoxCallbackStruct *)call_data;
-			  XmStringGetLtoR(select->value,XmSTRING_DEFAULT_CHARSET,&filename);
-			  medmSaveDisplay(currentDisplayInfo,filename,False);
-			  sprintf(warningString,"%s",
-			      "Name of file to save display in:");
-			  warningXmstring = XmStringCreateSimple(
-					warningString);
-			  XtVaSetValues(saveAsPD,XmNselectionLabelString,
-					warningXmstring,NULL);
-			  XmStringFree(warningXmstring);
-			  XtFree(filename);
-        XtUnmanageChild(w);
-			  break;
-		  case FILE_EXIT_BTN:
-			  medmClearImageCache();
-			  medmCATerminate();
-			  dmTerminateX();
-			  exit(0);
-			  break;
-		}
+        case FILE_CLOSE_BTN:
+          dmRemoveDisplayInfo(currentDisplayInfo);
+          currentDisplayInfo = NULL;
+          break;
+        case FILE_SAVE_AS_BTN:
+          select = (XmSelectionBoxCallbackStruct *)call_data;
+          XmStringGetLtoR(select->value,XmSTRING_DEFAULT_CHARSET,&filename);
+          medmSaveDisplay(currentDisplayInfo,filename,False);
+          sprintf(warningString,"%s","Name of file to save display in:");
+          warningXmstring = XmStringCreateSimple(warningString);
+          XtVaSetValues(saveAsPD,XmNselectionLabelString,warningXmstring,NULL);
+          XmStringFree(warningXmstring);
+          XtFree(filename);
+          XtUnmanageChild(w);
+          break;
+        case FILE_EXIT_BTN:
+          medmClearImageCache();
+          medmCATerminate();
+          destroyFreeStringList();
+          destroyMedmWidget();
+          dmTerminateX();
+          exit(0);
+          break;
+    }
+    break;
   }
 }
 
@@ -1683,7 +1680,9 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
   globalDisplayListTraversalMode = mode;
 
 /* unselect anything that might be selected */
+#if 0
   highlightAndSetSelectedElements(NULL,0,0);
+#endif
   clearResourcePaletteEntries();
 
   disableEditFunctions();
@@ -2227,7 +2226,48 @@ void sendFullPathNameAndMacroAsClientMessages(
 }
 
 
-
+char token[MAX_TOKEN_LENGTH];
+DisplayInfo* parseDisplayFile(char *filename) {
+  DisplayInfo *displayInfo = 0;
+  FILE *filePtr;
+  TOKEN tokenType;
+  if (filePtr = fopen(filename,"r")) {
+    displayInfo = (DisplayInfo *)malloc(sizeof(DisplayInfo));
+    displayInfo->dlElementList = createDlList();
+    currentDisplayInfo = displayInfo;
+    displayInfo->filePtr = filePtr;
+    /* if first token isn't "file" then bail out! */
+    tokenType=getToken(displayInfo,token);
+    if (tokenType == T_WORD && !strcmp(token,"file")) {
+      displayInfo->dlFile = parseFile(displayInfo);
+      if (displayInfo->dlFile) {
+        displayInfo->versionNumber = displayInfo->dlFile->versionNumber;
+        strcpy(displayInfo->dlFile->name,filename);
+      }
+    } else {
+      return 0;
+    }
+    tokenType=getToken(displayInfo,token);
+    if (tokenType ==T_WORD && !strcmp(token,"display")) {
+          parseDisplay(displayInfo);
+    }
+    tokenType=getToken(displayInfo,token);
+    if (tokenType == T_WORD && (!strcmp(token,"color map") ||
+       !strcmp(token,"<<color map>>"))) {
+      displayInfo->dlColormap=parseColormap(displayInfo,displayInfo->filePtr);
+    } else {
+      return 0;
+    }
+ 
+    /*
+     * proceed with parsing
+     */
+    while (parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList)
+         != T_EOF );
+    fclose(filePtr);
+  }
+  return displayInfo;
+}
 
 /***********************************************************************
  ************ main()
@@ -2267,6 +2307,39 @@ main(int argc, char *argv[])
   medmUpdateMissedCount = 0;
   MedmUseNewFileFormat = True;
 
+  if (argc == 4 && (!strcmp(argv[1],"-c21x") ||
+      !strcmp(argv[1],"-c22x"))) {
+    DisplayInfo *displayInfo = NULL;
+    FILE *filePtr;
+    initMedmCommon();
+    if (displayInfo = parseDisplayFile(argv[2])) {
+      filePtr = fopen(argv[3],"w");
+      if (filePtr) {
+        strcpy(displayInfo->dlFile->name,argv[3]);
+        if (!strcmp(argv[1],"-c21x")) {
+          MedmUseNewFileFormat = False;
+        } else {
+          MedmUseNewFileFormat = True;
+        }
+        dmWriteDisplayList(displayInfo,filePtr);
+        fclose(filePtr);
+      } else {
+        printf("can't create display file: \"%s\"",argv[3]);
+      }
+    } else {
+      printf("can't open display file: \"%s\"",argv[2]);
+    }
+    return 0;
+  } else {
+#if 0
+    printf("usage : convert adl file to 2.1 format\n");
+    printf("           convertAdlFile -c21x <input file> <output file>\n");
+    printf("        convert adl file to 2.2 format\n");
+    printf("           convertAdlFile -c22x <input file> <output file>\n");
+    return 0;
+#endif
+  }
+
 /*
  * initialize channel access here (to get around orphaned windows)
  */
@@ -2304,12 +2377,12 @@ main(int argc, char *argv[])
      *  instance of MEDM is already running in proper startup mode (-e or -x) */
     if (request->fontStyle == FIXED) {
       if (request->opMode == EXECUTE) {
-        MEDM_EXEC_FIXED = XInternAtom(display,"MEDM020209_EXEC_FIXED",False);
+        MEDM_EXEC_FIXED = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
       } else {
-        MEDM_EDIT_FIXED = XInternAtom(display,"MEDM020209_EDIT_FIXED",False);
+        MEDM_EDIT_FIXED = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_FIXED",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_FIXED,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -2317,12 +2390,12 @@ main(int argc, char *argv[])
     } else
     if (request->fontStyle == SCALABLE) {
       if (request->opMode == EXECUTE) {
-        MEDM_EXEC_SCALABLE = XInternAtom(display,"MEDM020209_EXEC_SCALABLE",False);
+        MEDM_EXEC_SCALABLE = XInternAtom(display,MEDM_VERSION_DIGITS"_EXEC_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EXEC_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
       } else {
-        MEDM_EDIT_SCALABLE = XInternAtom(display,"MEDM020209_EDIT_SCALABLE",False);
+        MEDM_EDIT_SCALABLE = XInternAtom(display,MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
         status = XGetWindowProperty(display,rootWindow,MEDM_EDIT_SCALABLE,
 		0,FULLPATHNAME_SIZE,(Bool)False,AnyPropertyType,&type,
 		&format,&nitems,&left,&propertyData);
@@ -2479,7 +2552,6 @@ main(int argc, char *argv[])
   currentDisplayInfo = NULL;
   pointerInDisplayInfo = NULL;
   resourceBundleCounter = 0;
-  clipboardDelete = False;
   currentElementType = 0;
 
   /* not really unphysical, but being used for unallocable color cells */
@@ -2541,6 +2613,9 @@ main(int argc, char *argv[])
   initializeRubberbanding();
   createMain();
   disableEditFunctions();
+  initMedmCommon();
+  initEventHandlers();
+  initMedmWidget();
 
 /*
  *  ...we're the first MEDM around in this mode - proceed with full execution
@@ -2576,7 +2651,7 @@ main(int argc, char *argv[])
     char *fileStr;
     if (fileStr = request->fileList[i]) {
       if (filePtr = fopen(fileStr,"r")) {
-        dmDisplayListParse(filePtr,request->macroString,fileStr,
+        dmDisplayListParse(NULL,filePtr,request->macroString,fileStr,
 	  request->displayGeometry,(Boolean)False);
         fclose(filePtr);
       } else {
@@ -2666,7 +2741,7 @@ main(int argc, char *argv[])
 	  if (completeClientMessage) {
 	    filePtr = fopen(fullPathName,"r");
 	    if (filePtr) {
-	      dmDisplayListParse(filePtr,name,fullPathName,geometryString,
+	      dmDisplayListParse(NULL,filePtr,name,fullPathName,geometryString,
 				(Boolean)False);
               if (globalDisplayListTraversalMode == DL_EDIT) {
                 enableEditFunctions();

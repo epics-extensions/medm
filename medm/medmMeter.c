@@ -63,8 +63,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 #include "medm.h"
 
 typedef struct _Meter {
-  Widget      widget;
-  DlMeter     *dlMeter;
+  DlElement   *dlElement;
   Record      *record;
   UpdateTask  *updateTask;
 } Meter;
@@ -75,106 +74,128 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd);
 static void meterDestroyCb(XtPointer cd);
 static void meterName(XtPointer, char **, short *, int *);
 static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
+static void meterGetValues(ResourceBundle *pRCB, DlElement *p);
 
-#ifdef __cplusplus
-void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean)
-#else
-void executeDlMeter(DisplayInfo *displayInfo, DlMeter *dlMeter, Boolean dummy)
-#endif
+static DlDispatchTable meterDlDispatchTable = {
+         createDlMeter,
+         NULL,
+         executeDlMeter,
+         writeDlMeter,
+         NULL,
+         meterGetValues,
+         meterInheritValues,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
+
+void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   Meter *pm;
   Arg args[24];
   int n;
   int usedHeight, usedCharWidth, bestSize, preferredHeight;
   Widget localWidget;
+  DlMeter *dlMeter = dlElement->structure.meter;
 
-  if (displayInfo->traversalMode == DL_EXECUTE) {
-    pm = (Meter *) malloc(sizeof(Meter));
-    pm->dlMeter = dlMeter;
-    pm->updateTask = updateTaskAddTask(displayInfo,
+  if (!dlElement->widget) {
+    if (displayInfo->traversalMode == DL_EXECUTE) {
+      pm = (Meter *) malloc(sizeof(Meter));
+      pm->dlElement = dlElement;
+      pm->updateTask = updateTaskAddTask(displayInfo,
                                        &(dlMeter->object),
                                        meterDraw,
                                        (XtPointer)pm);
 
-    if (pm->updateTask == NULL) {
-      medmPrintf("meterCreateRunTimeInstance : memory allocation error\n");
-    } else {
-      updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
-      updateTaskAddNameCb(pm->updateTask,meterName);
-    }
-    pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
+      if (pm->updateTask == NULL) {
+        medmPrintf("meterCreateRunTimeInstance : memory allocation error\n");
+      } else {
+        updateTaskAddDestroyCb(pm->updateTask,meterDestroyCb);
+        updateTaskAddNameCb(pm->updateTask,meterName);
+      }
+      pm->record = medmAllocateRecord(dlMeter->monitor.rdbk,
                   meterUpdateValueCb,
                   meterUpdateGraphicalInfoCb,
                   (XtPointer) pm);
-    drawWhiteRectangle(pm->updateTask);
-  }
+      drawWhiteRectangle(pm->updateTask);
+    }
 
-/* from the meter structure, we've got Meter's specifics */
-  n = 0;
-  XtSetArg(args[n],XtNx,(Position)dlMeter->object.x); n++;
-  XtSetArg(args[n],XtNy,(Position)dlMeter->object.y); n++;
-  XtSetArg(args[n],XtNwidth,(Dimension)dlMeter->object.width); n++;
-  XtSetArg(args[n],XtNheight,(Dimension)dlMeter->object.height); n++;
-  XtSetArg(args[n],XcNdataType,XcFval); n++;
-  XtSetArg(args[n],XcNscaleSegments,
+    /* from the meter structure, we've got Meter's specifics */
+    n = 0;
+    XtSetArg(args[n],XtNx,(Position)dlMeter->object.x); n++;
+    XtSetArg(args[n],XtNy,(Position)dlMeter->object.y); n++;
+    XtSetArg(args[n],XtNwidth,(Dimension)dlMeter->object.width); n++;
+    XtSetArg(args[n],XtNheight,(Dimension)dlMeter->object.height); n++;
+    XtSetArg(args[n],XcNdataType,XcFval); n++;
+    XtSetArg(args[n],XcNscaleSegments,
 		(dlMeter->object.width > METER_OKAY_SIZE ? 11 : 5) ); n++;
-  switch (dlMeter->label) {
-     case LABEL_NONE:
-	XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-     case OUTLINE:
-	XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-     case LIMITS:
-	XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	XtSetArg(args[n],XcNlabel," "); n++;
-	break;
-     case CHANNEL:
-	XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
-	XtSetArg(args[n],XcNlabel,dlMeter->monitor.rdbk); n++;
-	break;
-  }
-  preferredHeight = dlMeter->object.height/METER_FONT_DIVISOR;
-  bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
+    switch (dlMeter->label) {
+       case LABEL_NONE:
+	  XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	  XtSetArg(args[n],XcNlabel," "); n++;
+	  break;
+       case OUTLINE:
+	  XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
+	  XtSetArg(args[n],XcNlabel," "); n++;
+	  break;
+       case LIMITS:
+	  XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	  XtSetArg(args[n],XcNlabel," "); n++;
+	  break;
+       case CHANNEL:
+	  XtSetArg(args[n],XcNvalueVisible,TRUE); n++;
+	  XtSetArg(args[n],XcNlabel,dlMeter->monitor.rdbk); n++;
+	  break;
+    }
+    preferredHeight = dlMeter->object.height/METER_FONT_DIVISOR;
+    bestSize = dmGetBestFontWithInfo(fontTable,MAX_FONTS,NULL,
 	preferredHeight,0,&usedHeight,&usedCharWidth,FALSE);
-  XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
-  XtSetArg(args[n],XcNmeterForeground,(Pixel)
-	displayInfo->dlColormap[dlMeter->monitor.clr]); n++;
-  XtSetArg(args[n],XcNmeterBackground,(Pixel)
-	displayInfo->dlColormap[dlMeter->monitor.bclr]); n++;
-  XtSetArg(args[n],XtNbackground,(Pixel)
-	displayInfo->dlColormap[dlMeter->monitor.bclr]); n++;
-  XtSetArg(args[n],XcNcontrolBackground,(Pixel)
-	displayInfo->dlColormap[dlMeter->monitor.bclr]); n++;
-/*
- * add the pointer to the Channel structure as userData 
- *  to widget
- */
-  XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
-  localWidget = XtCreateWidget("meter", 
+    XtSetArg(args[n],XtNfont,fontTable[bestSize]); n++;
+    XtSetArg(args[n],XcNmeterForeground,(Pixel)
+	displayInfo->colormap[dlMeter->monitor.clr]); n++;
+    XtSetArg(args[n],XcNmeterBackground,(Pixel)
+	displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+    XtSetArg(args[n],XtNbackground,(Pixel)
+	displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+    XtSetArg(args[n],XcNcontrolBackground,(Pixel)
+	displayInfo->colormap[dlMeter->monitor.bclr]); n++;
+    /*
+     * add the pointer to the Channel structure as userData 
+     *  to widget
+     */
+    XtSetArg(args[n],XcNuserData,(XtPointer)pm); n++;
+    localWidget = XtCreateWidget("meter", 
 		xcMeterWidgetClass, displayInfo->drawingArea, args, n);
-  displayInfo->child[displayInfo->childCount++] = localWidget;
+    dlElement->widget = localWidget;
 
-  if (displayInfo->traversalMode == DL_EXECUTE) {
+    if (displayInfo->traversalMode == DL_EXECUTE) {
 
-/* record the widget that this structure belongs to */
-    pm->widget = localWidget;
+      /* record the widget that this structure belongs to */
+      pm->dlElement->widget = localWidget;
 
-/* add in drag/drop translations */
-    XtOverrideTranslations(localWidget,parsedTranslations);
+      /* add in drag/drop translations */
+      XtOverrideTranslations(localWidget,parsedTranslations);
 
 
-  } else if (displayInfo->traversalMode == DL_EDIT) {
-
-/* add button press handlers */
-    XtAddEventHandler(localWidget,ButtonPressMask,False,
+    } else if (displayInfo->traversalMode == DL_EDIT) {
+  
+      /* add button press handlers */
+      XtAddEventHandler(localWidget,ButtonPressMask,False,
 		handleButtonPress,(XtPointer)displayInfo);
 
-    XtManageChild(localWidget);
+      XtManageChild(localWidget);
+    }
+  } else {
+    DlObject *po = &(dlElement->structure.meter->object);
+    XtVaSetValues(dlElement->widget,
+        XmNx, (Position) po->x,
+        XmNy, (Position) po->y,
+        XmNwidth, (Dimension) po->width,
+        XmNheight, (Dimension) po->height,
+        NULL);
   }
-
 }
 
 static void meterUpdateValueCb(XtPointer cd) {
@@ -185,31 +206,33 @@ static void meterUpdateValueCb(XtPointer cd) {
 static void meterDraw(XtPointer cd) {
   Meter *pm = (Meter *) cd;
   Record *pd = pm->record;
+  Widget widget = pm->dlElement->widget;
+  DlMeter *dlMeter = pm->dlElement->structure.meter;
   XcVType val;
   if (pd->connected) {
     if (pd->readAccess) {
-      if (pm->widget)
-        XtManageChild(pm->widget);
+      if (widget)
+        XtManageChild(widget);
       else
         return;
       val.fval = (float) pd->value;
-      XcMeterUpdateValue(pm->widget,&val);
-      switch (pm->dlMeter->clrmod) {
+      XcMeterUpdateValue(widget,&val);
+      switch (dlMeter->clrmod) {
         case STATIC :
         case DISCRETE :
           break;
         case ALARM :
-	  XcMeterUpdateMeterForeground(pm->widget,alarmColorPixel[pd->severity]);
+	  XcMeterUpdateMeterForeground(widget,alarmColorPixel[pd->severity]);
           break;
       }
     } else {
-      if (pm->widget) XtUnmanageChild(pm->widget);
+      if (widget) XtUnmanageChild(widget);
       draw3DPane(pm->updateTask,
-          pm->updateTask->displayInfo->dlColormap[pm->dlMeter->monitor.bclr]);
+          pm->updateTask->displayInfo->colormap[dlMeter->monitor.bclr]);
       draw3DQuestionMark(pm->updateTask);
     }
   } else {
-    if (pm->widget) XtUnmanageChild(pm->widget);
+    if (widget) XtUnmanageChild(widget);
     drawWhiteRectangle(pm->updateTask);
   }
 }
@@ -217,6 +240,8 @@ static void meterDraw(XtPointer cd) {
 static void meterUpdateGraphicalInfoCb(XtPointer cd) {
   Record *pd = (Record *) cd;
   Meter *pm = (Meter *) pd->clientData;
+  DlMeter *dlMeter = pm->dlElement->structure.meter;
+  Widget widget = pm->dlElement->widget;
   XcVType hopr, lopr, val;
   int precision;
 
@@ -224,7 +249,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
   case DBF_STRING :
   case DBF_ENUM :
     medmPrintf("meterUpdateGraphicalInfoCb : %s %s %s\n",
-	"illegal channel type for",pm->dlMeter->monitor.rdbk, ": cannot attach Meter");
+	"illegal channel type for",dlMeter->monitor.rdbk, ": cannot attach Meter");
     medmPostTime();
     return;
   case DBF_CHAR :
@@ -239,25 +264,25 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     break;
   default :
     medmPrintf("meterUpdateGraphicalInfoCb: %s %s %s\n",
-	"unknown channel type for",pm->dlMeter->monitor.rdbk, ": cannot attach Meter");
+	"unknown channel type for",dlMeter->monitor.rdbk, ": cannot attach Meter");
     medmPostTime();
     break;
   }
   if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
     hopr.fval += 1.0;
   }
-  if (pm->widget != NULL) {
+  if (widget != NULL) {
     Pixel pixel;
-    pixel = (pm->dlMeter->clrmod == ALARM) ?
+    pixel = (dlMeter->clrmod == ALARM) ?
 	    alarmColorPixel[pd->severity] :
-	    pm->updateTask->displayInfo->dlColormap[pm->dlMeter->monitor.clr];
-    XtVaSetValues(pm->widget,
+	    pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
+    XtVaSetValues(widget,
       XcNlowerBound,lopr.lval,
       XcNupperBound,hopr.lval,
       XcNmeterForeground,pixel,
       XcNdecimals, precision,
       NULL);
-    XcMeterUpdateValue(pm->widget,&val);
+    XcMeterUpdateValue(widget,&val);
   }
 }
 
@@ -277,25 +302,25 @@ static void meterName(XtPointer cd, char **name, short *severity, int *count) {
   severity[0] = pm->record->severity;
 }
 
-DlElement *createDlMeter(
-  DisplayInfo *displayInfo)
+DlElement *createDlMeter(DlElement *p)
 {
   DlMeter *dlMeter;
   DlElement *dlElement;
 
   dlMeter = (DlMeter *) malloc(sizeof(DlMeter));
   if (!dlMeter) return 0;
-  objectAttributeInit(&(dlMeter->object));
-  monitorAttributeInit(&(dlMeter->monitor));
-  dlMeter->label = LABEL_NONE;
-  dlMeter->clrmod = STATIC;
+  if (p) {
+    *dlMeter = *p->structure.meter;
+  } else {
+    objectAttributeInit(&(dlMeter->object));
+    monitorAttributeInit(&(dlMeter->monitor));
+    dlMeter->label = LABEL_NONE;
+    dlMeter->clrmod = STATIC;
+  }
 
   if (!(dlElement = createDlElement(DL_Meter,
                     (XtPointer)      dlMeter,
-                    (medmExecProc)   executeDlMeter,
-                    (medmWriteProc)  writeDlMeter,
-										0,0,
-                    meterInheritValues))) {
+                    &meterDlDispatchTable))) {
     free(dlMeter);
   }
 
@@ -303,15 +328,13 @@ DlElement *createDlMeter(
 }
 
 
-DlElement *parseMeter(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseMeter(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlMeter *dlMeter;
-  DlElement *dlElement = createDlMeter(displayInfo);
+  DlElement *dlElement = createDlMeter(NULL);
   int i = 0;
 
   if (!dlElement) return 0;
@@ -354,20 +377,17 @@ DlElement *parseMeter(
   } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
                 && (tokenType != T_EOF) );
 
-  POSITION_ELEMENT_ON_LIST();
-
-  dlElement->dmExecute =  (medmExecProc)executeDlMeter;
-  dlElement->dmWrite =  (medmWriteProc)writeDlMeter;
   return dlElement;
 }
 
 void writeDlMeter(
   FILE *stream,
-  DlMeter *dlMeter,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
+  DlMeter *dlMeter = dlElement->structure.meter;
 
   for (i = 0;  i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
@@ -394,6 +414,21 @@ void writeDlMeter(
 static void meterInheritValues(ResourceBundle *pRCB, DlElement *p) {
   DlMeter *dlMeter = p->structure.meter;
   medmGetValues(pRCB,
+    RDBK_RC,       &(dlMeter->monitor.rdbk),
+    CLR_RC,        &(dlMeter->monitor.clr),
+    BCLR_RC,       &(dlMeter->monitor.bclr),
+    LABEL_RC,      &(dlMeter->label),
+    CLRMOD_RC,     &(dlMeter->clrmod),
+    -1);
+}
+
+static void meterGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlMeter *dlMeter = p->structure.meter;
+  medmGetValues(pRCB,
+    X_RC,          &(dlMeter->object.x),
+    Y_RC,          &(dlMeter->object.y),
+    WIDTH_RC,      &(dlMeter->object.width),
+    HEIGHT_RC,     &(dlMeter->object.height),
     RDBK_RC,       &(dlMeter->monitor.rdbk),
     CLR_RC,        &(dlMeter->monitor.clr),
     BCLR_RC,       &(dlMeter->monitor.bclr),

@@ -75,15 +75,28 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (708-252-2000).
 
 Widget importFSD;
 XmString gifDirMask, tifDirMask;
+static void destroyDlImage(DlElement *);
+static void imageGetValues(ResourceBundle *pRCB, DlElement *p);
+static DlDispatchTable imageDlDispatchTable = {
+         createDlImage,
+         destroyDlImage,
+         executeDlImage,
+         writeDlImage,
+         NULL,
+         imageGetValues,
+         NULL,
+         NULL,
+         NULL,
+         genericMove,
+         genericScale,
+         NULL,
+         NULL};
 
-#ifdef __cplusplus
-void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean)
-#else
-void executeDlImage(DisplayInfo *displayInfo, DlImage *dlImage, Boolean dummy)
-#endif
+void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
   Arg args[10];
   GIFData *gif;
+  DlImage *dlImage = dlElement->structure.image;
 
 /* from the DlImage structure, we've got the image's dimensions */
   switch (dlImage->imageType) {
@@ -168,15 +181,17 @@ static void importCallback(Widget w, XtPointer cd, XtPointer cbs)
         XtUnmanageChild(w);
         strcpy(dlImage->imageName, &(fullPathName[dirLength]));
         dlImage->imageType = GIF_IMAGE;
-        (*dlElement->dmExecute)(currentDisplayInfo,
-                    (XtPointer) dlElement->structure.image,
-                    FALSE);
+        (dlElement->run->execute)(currentDisplayInfo, dlElement);
         /* now select this element for resource edits */
+#if 0
         highlightAndSetSelectedElements(NULL,0,0);
+#endif
         clearResourcePaletteEntries();
         array = (DlElement **)malloc(1*sizeof(DlElement *));
         array[0] = dlElement;
+#if 0
         highlightAndSetSelectedElements(array,1,1);
+#endif
         setResourcePaletteEntries();
 
 			}
@@ -198,7 +213,7 @@ DlElement* handleImageCreate()
   int i, n;
   Arg args[10];
   static DlElement *dlElement = 0;
-  if (!(dlElement = createDlImage(currentDisplayInfo))) return 0;
+  if (!(dlElement = createDlImage(NULL))) return 0;
 
   if (importFSD == NULL) {
 /* since GIF is the default, need dirMask to match */
@@ -245,40 +260,40 @@ DlElement* handleImageCreate()
 	return dlElement;
 }
 
-DlElement *createDlImage(
-  DisplayInfo *displayInfo)
+DlElement *createDlImage(DlElement *p)
 {
   DlImage *dlImage;
   DlElement *dlElement;
 
   dlImage = (DlImage *) malloc(sizeof(DlImage));
   if (!dlImage) return 0;
-  objectAttributeInit(&(dlImage->object));
-  dlImage->imageType = NO_IMAGE;
-  dlImage->imageName[0] = '\0';
-  dlImage->privateData = 0;
+  if (p) {
+    *dlImage = *p->structure.image;
+    dlImage->privateData = NULL;
+  } else {
+    objectAttributeInit(&(dlImage->object));
+    dlImage->imageType = NO_IMAGE;
+    dlImage->imageName[0] = '\0';
+    dlImage->privateData = 0;
+  }
 
 
   if (!(dlElement = createDlElement(DL_Image,
                     (XtPointer)      dlImage,
-                    (medmExecProc)   executeDlImage,
-                    (medmWriteProc)  writeDlImage,
-										0,0,0))) {
+										&imageDlDispatchTable))) {
     free(dlImage);
   }
 
   return(dlElement);
 }
 
-DlElement *parseImage(
-  DisplayInfo *displayInfo,
-  DlComposite *dlComposite)
+DlElement *parseImage(DisplayInfo *displayInfo)
 {
   char token[MAX_TOKEN_LENGTH];
   TOKEN tokenType;
   int nestingLevel = 0;
   DlImage *dlImage = 0;
-  DlElement *dlElement = createDlImage(displayInfo);
+  DlElement *dlElement = createDlImage(NULL);
 
   if (!dlElement) return 0;
   dlImage = dlElement->structure.image;
@@ -315,18 +330,17 @@ DlElement *parseImage(
   /* just to be safe, initialize privateData member separately */
   dlImage->privateData = NULL;
 
-  POSITION_ELEMENT_ON_LIST();
-
   return dlElement;
 }
 
 void writeDlImage(
   FILE *stream,
-  DlImage *dlImage,
+  DlElement *dlElement,
   int level)
 {
   int i;
   char indent[16];
+  DlImage *dlImage = dlElement->structure.image;
 
   for (i = 0; i < level; i++) indent[i] = '\t';
   indent[i] = '\0';
@@ -339,3 +353,20 @@ void writeDlImage(
   fprintf(stream,"\n%s}",indent);
 }
 
+static void imageGetValues(ResourceBundle *pRCB, DlElement *p) {
+  DlImage *dlImage = p->structure.image;
+  medmGetValues(pRCB,
+    X_RC,          &(dlImage->object.x),
+    Y_RC,          &(dlImage->object.y),
+    WIDTH_RC,      &(dlImage->object.width),
+    HEIGHT_RC,     &(dlImage->object.height),
+    IMAGETYPE_RC,  &(dlImage->imageType),
+    IMAGENAME_RC,  &(dlImage->imageName),
+    -1);
+}
+
+static void destroyDlImage(DlElement *dlElement) {
+  freeGIF(dlElement->structure.image);
+  free((char*)dlElement->structure.composite);
+  destroyDlElement(dlElement);
+}
