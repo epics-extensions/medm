@@ -209,14 +209,16 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 /* Function prototypes */
 
+#if 0
 #if !defined(WIN32) && !defined(linux)
 /* This is here to prevent compiler warnings */
-/* KE: Why is it not OK to include this in WIN32? */
 /* Defined for Solaris in stdlib.h as extern int putenv(char *); */
-/* Defined for WIN32 in stdlib.h as   extern int putenv(const char *); */
+/* Defined for WIN32 in stdlib.h as extern int putenv(const char *); */
 /* May not be defined at all for strict ANSI */
+/* Not a POSIX function */
 /* Linux information from Brian McAllister */
 extern int putenv(char *);
+#endif
 #endif
 
 static void createCursors(void);
