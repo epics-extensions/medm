@@ -324,6 +324,10 @@ void errMsgDlgCreateDlg(int raise)
       XmNdeleteResponse, XmDO_NOTHING,
       NULL);
 
+  /* Make the window manager close button do same as Close button */
+    XmAddWMProtocolCallback(errMsgS,WM_DELETE_WINDOW,
+      errMsgDlgCb,(XtPointer)ERR_MSG_CLOSE_BTN);
+
   /* Create paned window */
     pane = XtVaCreateWidget("panel",
       xmPanedWindowWidgetClass, errMsgS,
