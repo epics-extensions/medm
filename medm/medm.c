@@ -70,7 +70,9 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #if DEBUG_WIN32_LEAKS
 #ifdef WIN32
+#ifdef _DEBUG
 #include <crtdbg.h>
+#endif
 #endif
 #endif
 
@@ -2998,6 +3000,7 @@ main(int argc, char *argv[])
 
 #if DEBUG_WIN32_LEAKS
 #ifdef WIN32
+#ifdef _DEBUG
     {
 	int tmpDbgFlag;
 
@@ -3014,6 +3017,7 @@ main(int argc, char *argv[])
 	_CrtSetDbgFlag(tmpDbgFlag);
 /*	_CrtSetBreakAlloc(84); */
     }
+#endif
 #endif
 #endif
     
