@@ -158,6 +158,7 @@ extern void popupValuatorKeyboardEntry(Widget, XEvent*, String *, Cardinal *);
 
 /* Default grid parameters */
 #define DEFAULT_GRID_SPACING 5
+#define DEFAULT_GRID_SNAP    False
 #define DEFAULT_GRID_ON      False
 
 /* Space parameters */
@@ -258,8 +259,7 @@ typedef struct {
  */
 
 typedef struct {
-    int     gridSpacing;
-    Boolean gridOn;
+    DlGrid  grid;
     int	    drawingAreaBackgroundColor;
     int	    drawingAreaForegroundColor;
     DlList  *dlElementList;
@@ -287,8 +287,7 @@ typedef struct _DisplayInfo {
     int       questionDialogAnswer;
     Widget    shellCommandPromptD;
   /* Grid */
-    int       gridSpacing;
-    Boolean   gridOn;
+    DlGrid    *grid;
   /* Undo */
     UndoInfo  *undoInfo;
   /* Widget instance data */
@@ -442,8 +441,13 @@ typedef struct _ResourceBundle {
     char erase[MAX_TOKEN_LENGTH];
     eraseMode_t eraseMode;
 
-  /* related display specific */
+  /* Related display specific */
     relatedDisplayVisual_t rdVisual;
+
+  /* Grid */
+    int gridSpacing;
+    Boolean gridOn;
+    Boolean snapToGrid;
 
     struct _ResourceBundle *next;	/* linked list of resourceBundle's   */
     struct _ResourceBundle *prev;
@@ -518,7 +522,13 @@ typedef struct _ResourceBundle {
 #define ERASE_RC        55              /* Cartesian Plot erase channel   */
 #define ERASE_MODE_RC   56              /* Cartesian Plot erase mode      */
 
-#else
+/* grid */
+#define GRID_SPACING_RC	57
+#define GRID_ON_RC      58
+#define GRID_SNAP_RC    59
+
+#else     /* #ifdef __COLOR_RULE_H__ */
+
 #define VIS_RC		21
 #define CHAN_RC		22
 #define DATA_CLR_RC	23
@@ -558,10 +568,16 @@ typedef struct _ResourceBundle {
 #define TRIGGER_RC	53		/* Cartesian Plot trigger channel */
 #define ERASE_RC        54              /* Cartesian Plot erase channel   */
 #define ERASE_MODE_RC   55              /* Cartesian Plot erase mode      */
-#endif
+
+/* grid */
+#define GRID_SPACING_RC	56
+#define GRID_ON_RC      57
+#define GRID_SNAP_RC    58
+
+#endif     /* #ifdef __COLOR_RULE_H__ */
 
 #define MIN_RESOURCE_ENTRY	0
-#define MAX_RESOURCE_ENTRY	(ERASE_MODE_RC + 1)
+#define MAX_RESOURCE_ENTRY	(GRID_SNAP_RC + 1)
 
 /***
  *** resourceEntryStringTable for definition of labels for resource entries
@@ -611,6 +627,9 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Trigger Channel",      /* Cartesian Plot trigger channel */
     "Erase Channel",        /* Cartesian Plot erase channel   */
     "Erase Mode",           /* Cartesian Plot erase mode      */
+    "Grid Spacing",
+    "Grid On",
+    "Snap To Grid",
 };
 #endif
 

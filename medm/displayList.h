@@ -343,13 +343,24 @@ const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT = HHMMSS;
 extern const CartesianPlotTimeFormat_t FIRST_CP_TIME_FORMAT;
 #endif
 
+#define NUM_BOOLEAN 2
+typedef enum {
+    BOOLEAN_FALSE = 71,
+    BOOLEAN_TRUE  = 72
+} Boolean_t;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const Boolean_t FIRST_BOOLEAN = BOOLEAN_FALSE;
+#else
+extern const Boolean_t FIRST_BOOLEAN;
+#endif
+
 #ifdef __COLOR_RULE_H__
 #define NUM_COLOR_RULE 4
 typedef enum {
-    COLOR_RULE_1 = 71,
-    COLOR_RULE_2 = 72,
-    COLOR_RULE_3 = 73,
-    COLOR_RULE_4 = 74
+    COLOR_RULE_1 = 73,
+    COLOR_RULE_2 = 74,
+    COLOR_RULE_3 = 75,
+    COLOR_RULE_4 = 76
 } colorRuleMode_t;
 
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
@@ -361,9 +372,9 @@ extern const colorRuleMode_t FIRST_COLOR_RULE;
 
 #define MAX_OPTIONS             7       /* NUM_TEXT_FORMATS     */
 #ifdef __COLOR_RULE_H__
-#define NUMBER_STRING_VALUES    (74+1)  /* COLOR_RULE_4 + 1     */
+#define NUMBER_STRING_VALUES    (76+1)  /* COLOR_RULE_4 + 1     */
 #else
-#define NUMBER_STRING_VALUES    (70+1)  /* TIME_X_AXIS + 1 */
+#define NUMBER_STRING_VALUES    (72+1)  /* TIME_X_AXIS + 1 */
 #endif
 
 /*********************************************************************
@@ -400,6 +411,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "menu", "a row of buttons", "a column of buttons", "invisible",
     "hh:mm:ss", "hh:mm", "hh:00", "MMM DD YYYY", "MMM DD", "MMM DD hh:00",
     "wd hh:00",
+    "false", "true",
 #ifdef __COLOR_RULE_H__
     "set #1", "set #2", "set #3", "set #4",
 #endif
@@ -557,6 +569,12 @@ typedef struct {
     int data_clr;
 } DlTrace;
 
+typedef struct {
+    int gridSpacing;
+    Boolean gridOn;
+    Boolean snapToGrid;
+} DlGrid;
+
 /*********************************************************************
  * Top Level structures                                              *
  *********************************************************************/
@@ -570,6 +588,7 @@ typedef struct {
     DlObject object;
     int clr, bclr;
     char cmap[MAX_TOKEN_LENGTH];
+    DlGrid grid;
 } DlDisplay;
 
 typedef struct {

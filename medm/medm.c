@@ -121,38 +121,31 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define EDIT_SELECT_ALL_BTN      10
 #define EDIT_REFRESH_BTN         11
 #define EDIT_SAME_SIZE_BTN       12
-#define EDIT_GRID_SPACING_BTN    13
-#define EDIT_GRID_TOGGLE_BTN     14
-#define EDIT_SPACE_BTN           15
-#define EDIT_HELP_BTN            16
-#define EDIT_UNDO_BTN            17
+#define EDIT_GRID_BTN            13
+#define EDIT_SPACE_BTN           14
+#define EDIT_HELP_BTN            15
+#define EDIT_UNDO_BTN            16
 
 #define N_VIEW_MENU_ELES         3
 #define VIEW_BTN_POSN            2
 #define VIEW_MESSAGE_WINDOW_BTN  1
 #define VIEW_STATUS_WINDOW_BTN   2
 
-#define N_ALIGN_MENU_ELES  2
-#define ALIGN_BTN_POSN    13
-
-#define N_HORIZ_ALIGN_MENU_ELES 3
-#define HORIZ_ALIGN_BTN_POSN    0
+#define GRID_SPACING_BTN 0
+#define GRID_ON_BTN      1
+#define GRID_SNAP_BTN    2
 
 #define ALIGN_HORIZ_LEFT_BTN   0
 #define ALIGN_HORIZ_CENTER_BTN 1
 #define ALIGN_HORIZ_RIGHT_BTN  2
-#define ALIGN_TO_GRID_BTN      3
-
-#define N_VERT_ALIGN_MENU_ELES 3
-#define VERT_ALIGN_BTN_POSN    1
-
-#define ALIGN_VERT_TOP_BTN    0
-#define ALIGN_VERT_CENTER_BTN 1
-#define ALIGN_VERT_BOTTOM_BTN 2
+#define ALIGN_VERT_TOP_BTN     3
+#define ALIGN_VERT_CENTER_BTN  4
+#define ALIGN_VERT_BOTTOM_BTN  5
+#define ALIGN_TO_GRID_BTN      6
 
 #define SPACE_HORIZ_BTN 0
 #define SPACE_VERT_BTN  1
-#define SPACE_2D_BTN  2
+#define SPACE_2D_BTN    2
 
 #ifdef EXTENDED_INTERFACE
 #define N_PALETTES_MENU_ELES 4
@@ -171,13 +164,14 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define N_HELP_MENU_ELES 7
 #define HELP_BTN_POSN    4
 
-#define HELP_OVERVIEW_BTN   0
-#define HELP_CONTENTS_BTN   1
-#define HELP_OBJECTS_BTN    2
-#define HELP_EDIT_BTN       3
-#define HELP_NEW_BTN        4
-#define HELP_ON_HELP_BTN    5
-#define HELP_ON_VERSION_BTN 6
+#define HELP_OVERVIEW_BTN     0
+#define HELP_CONTENTS_BTN     1
+#define HELP_OBJECTS_BTN      2
+#define HELP_EDIT_BTN         3
+#define HELP_NEW_BTN          4
+#define HELP_TECH_SUPPORT_BTN 5
+#define HELP_ON_HELP_BTN      6
+#define HELP_ON_VERSION_BTN   7
 
 /* Function prototypes */
 
@@ -190,9 +184,9 @@ static void fileMenuDialogCallback(Widget,XtPointer,XtPointer);
 static void editMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void palettesMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void helpMenuSimpleCallback(Widget,XtPointer,XtPointer);
-static void alignHorizontalMenuSimpleCallback(Widget,XtPointer,XtPointer);
-static void alignVerticalMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void alignMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
+static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
 
 Widget mainFilePDM, mainHelpPDM;
@@ -260,34 +254,21 @@ static menuEntry_t controllersObjectMenu[] = {
     NULL,
 };
 
-static menuEntry_t editAlignHorzMenu[] = {
-    { "Left",   &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
-      alignHorizontalMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_LEFT_BTN,  NULL},
-    { "Center", &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
-      alignHorizontalMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_CENTER_BTN,  NULL},
-    { "Right",  &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
-      alignHorizontalMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_RIGHT_BTN,  NULL},
-    NULL,
-};
-  
-static menuEntry_t editAlignVertMenu[] = {
-    { "Top",    &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL, 
-      alignVerticalMenuSimpleCallback, (XtPointer) ALIGN_VERT_TOP_BTN,  NULL},
-    { "Center", &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
-      alignVerticalMenuSimpleCallback, (XtPointer) ALIGN_VERT_CENTER_BTN,  NULL},
-    { "Bottom", &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
-      alignVerticalMenuSimpleCallback, (XtPointer) ALIGN_VERT_BOTTOM_BTN,  NULL},
-    NULL,
-};
-  
-
 static menuEntry_t editAlignMenu[] = {
-    { "Horizontal", &xmCascadeButtonGadgetClass, 'H', NULL, NULL, NULL,
-      NULL, NULL, editAlignHorzMenu},
-    { "Vertical",   &xmCascadeButtonGadgetClass, 'V', NULL, NULL, NULL,
-      NULL, NULL, editAlignVertMenu},
+    { "Left",   &xmPushButtonGadgetClass, 'L', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_LEFT_BTN,  NULL},
+    { "Horizontal Center", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_CENTER_BTN,  NULL},
+    { "Right",  &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_RIGHT_BTN,  NULL},
+    { "Top",    &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL, 
+      alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_TOP_BTN,  NULL},
+    { "Vertical Center", &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_CENTER_BTN,  NULL},
+    { "Bottom", &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
+      alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_BOTTOM_BTN,  NULL},
     { "To Grid",    &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
-      alignHorizontalMenuSimpleCallback, (XtPointer) ALIGN_TO_GRID_BTN,  NULL},
+      alignMenuSimpleCallback, (XtPointer) ALIGN_TO_GRID_BTN,  NULL},
     NULL,
 };
   
@@ -298,6 +279,16 @@ static menuEntry_t editSpaceMenu[] = {
       spaceMenuSimpleCallback, (XtPointer) SPACE_VERT_BTN,  NULL},
     { "2-D",       &xmPushButtonGadgetClass, 'B', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_2D_BTN,  NULL},
+    NULL,
+};
+  
+static menuEntry_t editGridMenu[] = {
+    { "Toggle Show Grid",    &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
+      gridMenuSimpleCallback, (XtPointer) GRID_ON_BTN,  NULL},
+    { "Toggle Snap To Grid", &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
+      gridMenuSimpleCallback, (XtPointer) GRID_SNAP_BTN,  NULL},
+    { "Change Grid Spacing...", &xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
+      gridMenuSimpleCallback, (XtPointer) GRID_SPACING_BTN,  NULL},
     NULL,
 };
   
@@ -340,10 +331,8 @@ static menuEntry_t editMenu[] = {
       NULL,        NULL,                     editAlignMenu},
     { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
       NULL,        NULL,                     editSpaceMenu},
-    { "Toggle Grid",       &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_GRID_TOGGLE_BTN,  NULL},
-    { "Grid...",   &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_GRID_SPACING_BTN,  NULL},
+    { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
+      NULL,        NULL,                     editGridMenu},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
@@ -394,10 +383,8 @@ static menuEntry_t editModeMenu[] = {
       NULL,        NULL,                     editAlignMenu},
     { "Set Spacing", &xmCascadeButtonGadgetClass, 'i', NULL, NULL, NULL,
       NULL,        NULL,                     editSpaceMenu},
-    { "Toggle Grid",       &xmPushButtonGadgetClass, 'o', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_GRID_TOGGLE_BTN,  NULL},
-    { "Grid...",   &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
-      editMenuSimpleCallback, (XtPointer) EDIT_GRID_SPACING_BTN,  NULL},
+    { "Grid",      &xmPushButtonGadgetClass, 'd', NULL, NULL, NULL,
+      NULL,        NULL,                     editGridMenu},
     { "Separator", &xmSeparatorGadgetClass,  '\0', NULL, NULL, NULL,
       NULL,        NULL,                     NULL},
     { "Same Size", &xmPushButtonGadgetClass, 'm', NULL, NULL, NULL,
@@ -448,11 +435,6 @@ static menuEntry_t viewMenu[] = {
       viewMenuSimpleCallback, (XtPointer) VIEW_STATUS_WINDOW_BTN, NULL},
     NULL,
 };
-/*
-  { "Grid",           &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL, NULL, NULL, NULL},
-  { "Separator",      &xmSeparatorGadgetClass,  NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-  { "Refresh Screen", &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL, NULL, NULL, NULL},
-*/
 
 static menuEntry_t palettesMenu[] = {
     { "Object",   &xmPushButtonGadgetClass, 'O', NULL, NULL, NULL,
@@ -479,6 +461,8 @@ static menuEntry_t helpMenu[] = {
     helpMenuSimpleCallback, (XtPointer) HELP_EDIT_BTN, NULL},
 { "New Features",    &xmPushButtonGadgetClass, 'N', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_NEW_BTN, NULL},
+{ "Technical Support",  &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
+    helpMenuSimpleCallback, (XtPointer) HELP_TECH_SUPPORT_BTN, NULL},
 { "On Help",  &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_ON_HELP_BTN, NULL},
 { "On Version",  &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
@@ -1037,12 +1021,14 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	    
 	    XtVaGetValues(w,XmNtextString,&xmString,NULL);
 	    XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&gridVal);
-	    cdi->gridSpacing = atoi(gridVal);
-	    if(cdi->gridSpacing < 2) cdi->gridSpacing = 2;
+	    cdi->grid->gridSpacing = atoi(gridVal);
+	    if(cdi->grid->gridSpacing < 2) cdi->grid->gridSpacing = 2;
 	    free(gridVal);
 	    XmStringFree(xmString);
 	    XtUnmanageChild(w);
+	    updateGlobalResourceBundleAndResourcePalette(False);
 	    dmTraverseNonWidgetsInDisplayList(cdi);
+	    medmMarkDisplayBeingEdited(cdi);
 	}
 	break;
     case GRID_CANCEL:
@@ -1143,48 +1129,6 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
 
-    case EDIT_GRID_SPACING_BTN:
-	XDefineCursor(display,XtWindow(mainShell),watchCursor);
-	if (!gridDlg) {
-	    int n;
-	    Arg args[4];
-	    XmString xmString;
-	    char label[1024];
-	    
-	    sprintf(label,"%d",cdi->gridSpacing);
-	    xmString = XmStringCreateLocalized(label);
-	    n = 0;
-	    XtSetArg(args[n],XmNtextString,xmString); n++;
-	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
-	    gridDlg = XmCreatePromptDialog(XtParent(mainEditPDM),"gridPD",args,n);
-	    XtAddCallback(gridDlg,XmNokCallback,gridDlgCb,
-	      (XtPointer)GRID_OK);
-	    XtAddCallback(gridDlg,XmNcancelCallback,
-	      gridDlgCb,(XtPointer)GRID_CANCEL);
-	    XtAddCallback(gridDlg,XmNhelpCallback,
-	      gridDlgCb,(XtPointer)GRID_HELP);
-	} else {
-	    int n;
-	    Arg args[4];
-	    XmString xmString;
-	    char label[1024];
-	    
-	    sprintf(label,"%d",cdi->gridSpacing);
-	    xmString = XmStringCreateLocalized(label);
-	    n = 0;
-	    XtSetArg(args[n],XmNtextString,xmString); n++;
-	    XtSetValues(gridDlg,args,n);
-	    XmStringFree(xmString);
-	}
-	XtManageChild(gridDlg);
-	XUndefineCursor(display,XtWindow(mainShell));
-	break;
-
-    case EDIT_GRID_TOGGLE_BTN:
-	cdi->gridOn=!cdi->gridOn;
-	dmTraverseNonWidgetsInDisplayList(cdi);
-	break;
-	
     case EDIT_UNSELECT_BTN:
 	unselectElementsInDisplay();
 	break;
@@ -1238,16 +1182,15 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
     
 #ifdef __cplusplus
-static void alignHorizontalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+static void alignMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
 #else
-static void alignHorizontalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
   
     switch(buttonNumber) {
-      /* reuse the TextAlign values here */
     case ALIGN_HORIZ_LEFT_BTN:
 	alignSelectedElements(HORIZ_LEFT);
 	if (cdi->hasBeenEditedButNotSaved == False) 
@@ -1263,25 +1206,6 @@ static void alignHorizontalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer 
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
-    case ALIGN_TO_GRID_BTN:
-	alignSelectedElementsToGrid();
-	if (cdi->hasBeenEditedButNotSaved == False) 
-	  medmMarkDisplayBeingEdited(cdi);
-	break;
-    }
-}
-
-#ifdef __cplusplus
-static void alignVerticalMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
-#else
-static void alignVerticalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
-#endif
-{
-    DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
-
-    switch(buttonNumber) {
-      /* reuse the TextAlign values here */
     case ALIGN_VERT_TOP_BTN:
 	alignSelectedElements(VERT_TOP);
 	if (cdi->hasBeenEditedButNotSaved == False) 
@@ -1294,6 +1218,11 @@ static void alignVerticalMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cb
 	break;
     case ALIGN_VERT_BOTTOM_BTN:
 	alignSelectedElements(VERT_BOTTOM);
+	if (cdi->hasBeenEditedButNotSaved == False) 
+	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    case ALIGN_TO_GRID_BTN:
+	alignSelectedElementsToGrid();
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
 	break;
@@ -1325,6 +1254,70 @@ static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	spaceSelectedElements2D();
 	if (cdi->hasBeenEditedButNotSaved == False) 
 	  medmMarkDisplayBeingEdited(cdi);
+	break;
+    }
+}
+
+#ifdef __cplusplus
+static void gridMenuSimpleCallback(Widget, XtPointer cd, XtPointer)
+#else
+static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
+#endif
+{
+    DisplayInfo *cdi=currentDisplayInfo;
+    int buttonNumber = (int) cd;
+
+    switch(buttonNumber) {
+      /* reuse the TextAlign values here */
+    case GRID_ON_BTN:
+	cdi->grid->gridOn=!cdi->grid->gridOn;
+	updateGlobalResourceBundleAndResourcePalette(False);
+	dmTraverseNonWidgetsInDisplayList(cdi);
+	medmMarkDisplayBeingEdited(cdi);
+	break;
+
+    case GRID_SNAP_BTN:
+	cdi->grid->snapToGrid=!cdi->grid->snapToGrid;
+	updateGlobalResourceBundleAndResourcePalette(False);
+	dmTraverseNonWidgetsInDisplayList(cdi);
+	medmMarkDisplayBeingEdited(cdi);
+	break;
+
+    case GRID_SPACING_BTN:
+	XDefineCursor(display,XtWindow(mainShell),watchCursor);
+	if (!gridDlg) {
+	    int n;
+	    Arg args[4];
+	    XmString xmString;
+	    char label[1024];
+	    
+	    sprintf(label,"%d",cdi->grid->gridSpacing);
+	    xmString = XmStringCreateLocalized(label);
+	    n = 0;
+	    XtSetArg(args[n],XmNtextString,xmString); n++;
+	    XtSetArg(args[n],XmNdefaultPosition,False); n++;
+	    gridDlg = XmCreatePromptDialog(XtParent(mainEditPDM),"gridPD",args,n);
+	    XtAddCallback(gridDlg,XmNokCallback,gridDlgCb,
+	      (XtPointer)GRID_OK);
+	    XtAddCallback(gridDlg,XmNcancelCallback,
+	      gridDlgCb,(XtPointer)GRID_CANCEL);
+	    XtAddCallback(gridDlg,XmNhelpCallback,
+	      gridDlgCb,(XtPointer)GRID_HELP);
+	} else {
+	    int n;
+	    Arg args[4];
+	    XmString xmString;
+	    char label[1024];
+	    
+	    sprintf(label,"%d",cdi->grid->gridSpacing);
+	    xmString = XmStringCreateLocalized(label);
+	    n = 0;
+	    XtSetArg(args[n],XmNtextString,xmString); n++;
+	    XtSetValues(gridDlg,args,n);
+	    XmStringFree(xmString);
+	}
+	XtManageChild(gridDlg);
+	XUndefineCursor(display,XtWindow(mainShell));
 	break;
     }
 }
@@ -1946,6 +1939,9 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case HELP_NEW_BTN:
 	callBrowser(MEDM_HELP_PATH"/MEDM.html#NewFeatures");
+	break;
+    case HELP_TECH_SUPPORT_BTN:
+	callBrowser(MEDM_HELP_PATH"/MEDM.html#TechSupport");
 	break;
     case HELP_ON_HELP_BTN:
     {
@@ -3393,6 +3389,7 @@ static void createMain()
 /*     XtSetSensitive(helpMenu[HELP_OBJECTS_BTN].widget,False); */
 /*     XtSetSensitive(helpMenu[HELP_EDIT_BTN].widget,False); */
 /*     XtSetSensitive(helpMenu[HELP_NEW_BTN].widget,False); */
+/*     XtSetSensitive(helpMenu[HELP_TECH_SUPPORT_BTN].widget,False); */
 /*     XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False); */
 
     n = 0;

@@ -102,6 +102,9 @@ DisplayInfo *createDisplay()
     globalResourceBundle.y = 0;
     globalResourceBundle.width = DEFAULT_DISPLAY_WIDTH;
     globalResourceBundle.height = DEFAULT_DISPLAY_HEIGHT;
+    globalResourceBundle.gridSpacing = DEFAULT_GRID_SPACING;
+    globalResourceBundle.gridOn = DEFAULT_GRID_ON;
+    globalResourceBundle.snapToGrid = DEFAULT_GRID_SNAP;
     strcpy(globalResourceBundle.name,DEFAULT_FILE_NAME);
     displayInfo->dlFile = createDlFile(displayInfo);
     dlElement = createDlDisplay(NULL);
@@ -113,6 +116,9 @@ DisplayInfo *createDisplay()
 	dlDisplay->object.height = globalResourceBundle.height;
 	dlDisplay->clr = globalResourceBundle.clr;
 	dlDisplay->bclr = globalResourceBundle.bclr;
+	dlDisplay->grid.gridSpacing = globalResourceBundle.gridSpacing;
+	dlDisplay->grid.gridOn = globalResourceBundle.gridOn;
+	dlDisplay->grid.snapToGrid = globalResourceBundle.snapToGrid;
 	appendDlElement(displayInfo->dlElementList,dlElement);
     } else {
       /* Cleanup up displayInfo */
@@ -150,6 +156,9 @@ DlElement *createDlDisplay(DlElement *p)
 	dlDisplay->clr = 0;
 	dlDisplay->bclr = 1;
 	dlDisplay->cmap[0] = '\0';
+	dlDisplay->grid.gridSpacing = DEFAULT_GRID_SPACING;
+	dlDisplay->grid.gridOn = DEFAULT_GRID_ON;
+	dlDisplay->grid.snapToGrid = DEFAULT_GRID_SNAP;
     }
  
     if (!(dlElement = createDlElement(DL_Display,
@@ -178,6 +187,9 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
   /* Set the display's foreground and background colors */
     displayInfo->drawingAreaBackgroundColor = dlDisplay->bclr;
     displayInfo->drawingAreaForegroundColor = dlDisplay->clr;
+
+  /* Set the display's grid information */
+    displayInfo->grid = &dlDisplay->grid;
  
   /* From the DlDisplay structure, we've got drawingArea's dimensions */
     nargs = 0;
@@ -426,29 +438,32 @@ void writeDlDisplay(
  
     fprintf(stream,"\n%sdisplay {",indent);
     writeDlObject(stream,&(dlDisplay->object),level+1);
+    writeDlGrid(stream,&(dlDisplay->grid),level+1);
     fprintf(stream,"\n%s\tclr=%d",indent,dlDisplay->clr);
     fprintf(stream,"\n%s\tbclr=%d",indent,dlDisplay->bclr);
     fprintf(stream,"\n%s\tcmap=\"%s\"",indent,dlDisplay->cmap);
     fprintf(stream,"\n%s}",indent);
- 
 }
 
 static void displayGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlDisplay *dlDisplay = p->structure.display;
     medmGetValues(pRCB,
-      X_RC,          &(dlDisplay->object.x),
-      Y_RC,          &(dlDisplay->object.y),
-      WIDTH_RC,      &(dlDisplay->object.width),
-      HEIGHT_RC,     &(dlDisplay->object.height),
-      CLR_RC,        &(dlDisplay->clr),
-      BCLR_RC,       &(dlDisplay->bclr),
-      CMAP_RC,       &(dlDisplay->cmap),
+      X_RC,            &(dlDisplay->object.x),
+      Y_RC,            &(dlDisplay->object.y),
+      WIDTH_RC,        &(dlDisplay->object.width),
+      HEIGHT_RC,       &(dlDisplay->object.height),
+      CLR_RC,          &(dlDisplay->clr),
+      BCLR_RC,         &(dlDisplay->bclr),
+      CMAP_RC,         &(dlDisplay->cmap),
+      GRID_SPACING_RC, &(dlDisplay->grid.gridSpacing),
+      GRID_ON_RC,      &(dlDisplay->grid.gridOn),
+      GRID_SNAP_RC,    &(dlDisplay->grid.snapToGrid),
       -1);
     currentDisplayInfo->drawingAreaBackgroundColor =
       currentColormap[globalResourceBundle.bclr];
     currentDisplayInfo->drawingAreaForegroundColor =
       currentColormap[globalResourceBundle.clr];
-  /* and resize the shell */
+  /* Resize the shell */
     XtVaSetValues(currentDisplayInfo->shell,
       XmNx,dlDisplay->object.x,
       XmNy,dlDisplay->object.y,

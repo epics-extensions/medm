@@ -210,8 +210,7 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->questionDialogAnswer = 0;
     displayInfo->shellCommandPromptD = NULL;
 
-    displayInfo->gridOn = DEFAULT_GRID_ON;
-    displayInfo->gridSpacing = DEFAULT_GRID_SPACING;
+    displayInfo->grid = NULL;
     displayInfo->undoInfo = NULL;
 
     updateTaskInit(displayInfo);
@@ -513,20 +512,22 @@ DlElement *parseDisplay(
 	case T_WORD:
 	    if (!strcmp(token,"object")) {
 		parseObject(displayInfo,&(dlDisplay->object));
-	    } else if (!strcmp(token,"cmap")) {
+	    } else if(!strcmp(token,"grid")) {
+		parseGrid(displayInfo,&(dlDisplay->grid));
+	    } else if(!strcmp(token,"cmap")) {
 	      /* Parse separate display list to get and use that colormap */
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		if (strlen(token) > (size_t) 0) {
 		    strcpy(dlDisplay->cmap,token);
 		}
-	    } else if (!strcmp(token,"bclr")) {
+	    } else if(!strcmp(token,"bclr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlDisplay->bclr = atoi(token) % DL_MAX_COLORS;
 		displayInfo->drawingAreaBackgroundColor =
 		  dlDisplay->bclr;
-	    } else if (!strcmp(token,"clr")) {
+	    } else if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlDisplay->clr = atoi(token) % DL_MAX_COLORS;

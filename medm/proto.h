@@ -288,33 +288,6 @@ void parseTrace(DisplayInfo *displayInfo, DlTrace *trace);
 void parsePlotAxisDefinition(DisplayInfo *displayInfo,
   DlPlotAxisDefinition *axisDefinition);
 
-/* parseStatics.c */
-DlFile *parseFile(DisplayInfo *displayInfo);
-DlElement *parseDisplay(DisplayInfo *displayInfo);
-DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr);
-void parseBasicAttribute(DisplayInfo *, DlBasicAttribute *);
-void parseDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
-void parseOldBasicAttribute(DisplayInfo *, DlBasicAttribute *);
-void parseOldDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
-DlElement *parseRectangle(DisplayInfo *);
-DlElement *parseOval(DisplayInfo *);
-DlElement *parseArc(DisplayInfo *);
-DlElement *parseText(DisplayInfo *);
-DlElement *parseRisingLine(DisplayInfo *);
-DlElement *parseFallingLine(DisplayInfo *);
-DlElement *parseRelatedDisplay(DisplayInfo *);
-DlElement * parseShellCommand(DisplayInfo *);
-void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
-  DlColormapEntry *dlColor);
-void parseObject(DisplayInfo *displayInfo, DlObject *object);
-void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
-  DlRelatedDisplayEntry *relatedDisplay);
-void parseShellCommandEntry(DisplayInfo *displayInfo,
-  DlShellCommandEntry *shellCommand);
-DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
-  char *filename);
-TOKEN getToken(DisplayInfo *displayInfo, char *word);
-
 /* resourcePalette.c */
 void initializeGlobalResourceBundle(void);
 void createResource(void);
@@ -582,6 +555,7 @@ void writeDlRelatedDisplay(FILE *, DlElement *, int);
 void writeDlShellCommand(FILE *, DlElement *, int);
 void writeDlColormapEntry(FILE *, DlElement *, int);
 void writeDlObject(FILE *, DlObject *, int);
+void writeDlGrid(FILE *, DlGrid *, int);
 void writeDlRelatedDisplayEntry(FILE *, DlRelatedDisplayEntry *, int, int);
 void writeDlShellCommandEntry(FILE *, DlShellCommandEntry *, int, int);
 
@@ -601,6 +575,32 @@ int initMedmCommon();
 void destroyDlElement(DlElement *);
 void objectAttributeSet(DlObject *object, int x, int y, unsigned int width,
   unsigned int height);
+DlFile *parseFile(DisplayInfo *displayInfo);
+DlElement *parseDisplay(DisplayInfo *displayInfo);
+DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr);
+void parseBasicAttribute(DisplayInfo *, DlBasicAttribute *);
+void parseDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
+void parseOldBasicAttribute(DisplayInfo *, DlBasicAttribute *);
+void parseOldDynamicAttribute(DisplayInfo *, DlDynamicAttribute *);
+DlElement *parseRectangle(DisplayInfo *);
+DlElement *parseOval(DisplayInfo *);
+DlElement *parseArc(DisplayInfo *);
+DlElement *parseText(DisplayInfo *);
+DlElement *parseRisingLine(DisplayInfo *);
+DlElement *parseFallingLine(DisplayInfo *);
+DlElement *parseRelatedDisplay(DisplayInfo *);
+DlElement * parseShellCommand(DisplayInfo *);
+void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
+  DlColormapEntry *dlColor);
+void parseObject(DisplayInfo *displayInfo, DlObject *object);
+void parseGrid(DisplayInfo *displayInfo, DlGrid *grid);
+void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
+  DlRelatedDisplayEntry *relatedDisplay);
+void parseShellCommandEntry(DisplayInfo *displayInfo,
+  DlShellCommandEntry *shellCommand);
+DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo,
+  char *filename);
+TOKEN getToken(DisplayInfo *displayInfo, char *word);
 
 /* medmRelatedDisplay.c */
 void relatedDisplayDataDialogPopup(Widget w);

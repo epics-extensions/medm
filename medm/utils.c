@@ -552,7 +552,7 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
       0, 0, (unsigned int)width,(unsigned int)height);
 
   /* Draw grid */
-    if(displayInfo->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
      drawGrid(displayInfo);
 
   /* Traverse the display list */
@@ -1671,7 +1671,7 @@ void drawGrid(DisplayInfo *displayInfo)
 
   /* Return if displayInfo is invalid */
     if(!displayInfo || !displayInfo->drawingArea || !draw) return;
-    gridSpacing = displayInfo->gridSpacing;
+    gridSpacing = displayInfo->grid->gridSpacing;
 
   /* Get the size of the drawing area */
     n=0;
@@ -2169,7 +2169,7 @@ void spaceSelectedElements(int plane)
     nele = NumberOfDlElement(cdi->selectedDlElementList);
     if(nele < 2) return;
     saveUndoInfo(cdi);
-    gridSpacing=cdi->gridSpacing;
+    gridSpacing=cdi->grid->gridSpacing;
 
   /* Allocate space */
     earray = (DlElement **)calloc(nele,sizeof(DlElement *));
@@ -2295,7 +2295,7 @@ void spaceSelectedElements2D(void)
     n = NumberOfDlElement(cdi->selectedDlElementList);
     if(n < 2) return;
     saveUndoInfo(cdi);
-    gridSpacing=cdi->gridSpacing;
+    gridSpacing=cdi->grid->gridSpacing;
 
   /* Determine the number of rows */
     minY = minX = INT_MAX;
@@ -2480,7 +2480,7 @@ void alignSelectedElementsToGrid(void)
     if (!cdi) return;
     if (IsEmpty(cdi->selectedDlElementList)) return;
     saveUndoInfo(cdi);
-    gridSpacing = cdi->gridSpacing;
+    gridSpacing = cdi->grid->gridSpacing;
 
     unhighlightSelectedElements();
 
@@ -3543,8 +3543,9 @@ void saveUndoInfo(DisplayInfo *displayInfo)
     fprintf(stderr,"\n");
 #endif
 
-    undoInfo->gridSpacing = displayInfo->gridSpacing;
-    undoInfo->gridOn = displayInfo->gridOn;
+    undoInfo->grid.gridSpacing = displayInfo->grid->gridSpacing;
+    undoInfo->grid.gridOn = displayInfo->grid->gridOn;
+    undoInfo->grid.snapToGrid = displayInfo->grid->snapToGrid;
     undoInfo->drawingAreaBackgroundColor = displayInfo->drawingAreaBackgroundColor;
     undoInfo->drawingAreaForegroundColor = displayInfo->drawingAreaForegroundColor;
 #endif
@@ -3667,8 +3668,9 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     clearDlDisplayList(tmpDlElementList);
 
   /* Do direct copies */
-    displayInfo->gridSpacing = undoInfo->gridSpacing;
-    displayInfo->gridOn = undoInfo->gridOn;
+    displayInfo->grid->gridSpacing = undoInfo->grid.gridSpacing;
+    displayInfo->grid->gridOn = undoInfo->grid.gridOn;
+    displayInfo->grid->snapToGrid = undoInfo->grid.snapToGrid;
     displayInfo->drawingAreaBackgroundColor = undoInfo->drawingAreaBackgroundColor;
     displayInfo->drawingAreaForegroundColor = undoInfo->drawingAreaForegroundColor;
 

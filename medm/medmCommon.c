@@ -90,8 +90,8 @@ static DlDispatchTable elementDlDispatchTable = {
 
 int initMedmCommon()
 {
-    if (dlElementFreeList) return 0;
-    if (dlElementFreeList = createDlList()) {
+    if(dlElementFreeList) return 0;
+    if(dlElementFreeList = createDlList()) {
 	return 0;
     } else {
 	return -1;
@@ -103,7 +103,7 @@ DlFile *createDlFile(DisplayInfo *displayInfo)
     DlFile *dlFile;
 
     dlFile = (DlFile *) malloc(sizeof(DlFile));
-    if (!dlFile) return 0;
+    if(!dlFile) return 0;
     strcpy(dlFile->name,"newDisplay.adl");
     dlFile->versionNumber =
       MEDM_VERSION * 10000 + MEDM_REVISION * 100 + MEDM_UPDATE_LEVEL;
@@ -117,18 +117,18 @@ DlFile *parseFile(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlFile *dlFile = createDlFile(displayInfo);;
 
-    if (!dlFile) return 0;
+    if(!dlFile) return 0;
     dlFile->versionNumber = 0;
 
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"name")) {
+	    if(!strcmp(token,"name")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlFile->name,token);
 	    }
-	    if (!strcmp(token,"version")) {
+	    if(!strcmp(token,"version")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlFile->versionNumber = atoi(token);
@@ -159,7 +159,7 @@ void writeDlFile(FILE *stream, DlFile *dlFile, int level)
     fprintf(stream,"\n%sfile {",indent);
     fprintf(stream,"\n%s\tname=\"%s\"",indent,dlFile->name);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
 	fprintf(stream,"\n%s\tversion=%06d",indent,versionNumber);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -190,10 +190,10 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     XtGCMask valueMask;
     XGCValues values;
 
-    if (!displayInfo) return;
+    if(!displayInfo) return;
 
   /* Only do the colormap the first time */
-    if (!displayInfo->colormap) {
+    if(!displayInfo->colormap) {
 	displayInfo->colormap = (Pixel *) malloc(dlColormap->ncolors *
 	  sizeof(Pixel));
 	displayInfo->dlColormapSize = dlColormap->ncolors;
@@ -206,7 +206,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 	    color.green = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].g); 
 	    color.blue  = (unsigned short) COLOR_SCALE*(dlColormap->dl_color[i].b); 
 	  /* Allocate a shareable color cell with closest RGB value */
-	    if (XAllocColor(display,cmap,&color)) {
+	    if(XAllocColor(display,cmap,&color)) {
 		displayInfo->colormap[displayInfo->dlColormapCounter] = color.pixel;
 	    } else {
 		medmPrintf("\nexecuteDlColormap: Cannot not allocate color (%d: "
@@ -215,7 +215,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
 		displayInfo->colormap[displayInfo->dlColormapCounter] = unphysicalPixel;
 	    }
 	    
-	    if (displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
+	    if(displayInfo->dlColormapCounter < displayInfo->dlColormapSize) 
 	      displayInfo->dlColormapCounter++;
 	    else
 	      medmPrintf("\nexecuteDlColormap:  Too many colormap entries\n");
@@ -234,7 +234,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
       XmNwidth,(Dimension *)&width,
       XmNheight,(Dimension *)&height,
       NULL);
-    if (displayInfo->drawingAreaPixmap) {
+    if(displayInfo->drawingAreaPixmap) {
 	XFreePixmap(display,displayInfo->drawingAreaPixmap);
     }
     displayInfo->drawingAreaPixmap =
@@ -248,7 +248,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
     values.background =
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
-    if (displayInfo->pixmapGC) {
+    if(displayInfo->pixmapGC) {
 	XFreeGC(display,displayInfo->pixmapGC);
     }
     displayInfo->pixmapGC = XCreateGC(display,
@@ -261,7 +261,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
     XSetForeground(display,displayInfo->pixmapGC,
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor]);
   /* Draw grid */
-    if(displayInfo->gridOn && globalDisplayListTraversalMode == DL_EDIT)
+    if(displayInfo->grid->gridOn && globalDisplayListTraversalMode == DL_EDIT)
       drawGrid(displayInfo);
   /* Create the initial display GC */
     valueMask = GCForeground | GCBackground ;
@@ -269,7 +269,7 @@ void executeDlColormap(DisplayInfo *displayInfo, DlColormap *dlColormap)
       displayInfo->colormap[displayInfo->drawingAreaForegroundColor];
     values.background = 
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor];
-    if (displayInfo->gc) {
+    if(displayInfo->gc) {
 	XFreeGC(display,displayInfo->gc);
     }
     displayInfo->gc = XCreateGC(display,XtWindow(displayInfo->drawingArea),
@@ -282,7 +282,7 @@ DlColormap *createDlColormap(DisplayInfo *displayInfo)
     DlColormap *dlColormap;
 
     dlColormap = (DlColormap *) malloc(sizeof(DlColormap));
-    if (!dlColormap) return 0;
+    if(!dlColormap) return 0;
   /* structure copy */
     *dlColormap = defaultDlColormap;
 
@@ -314,7 +314,7 @@ void parseDlColor(DisplayInfo *displayInfo, FILE *filePtr,
 	case T_WORD: {
 	    char *tmp;
 	    unsigned long color = strtoul(token,&tmp,16);
-	    if (counter < DL_MAX_COLORS) {
+	    if(counter < DL_MAX_COLORS) {
 		dlColor[counter].r = (color & 0x00ff0000) >> 16;
 		dlColor[counter].g = (color & 0x0000ff00) >> 8;
 		dlColor[counter].b = color & 0x000000ff;
@@ -355,16 +355,16 @@ void parseOldDlColor(DisplayInfo *displayInfo, FILE *filePtr,
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"r")) {
+	    if(!strcmp(token,"r")) {
 		getToken(displayInfo,token);getToken(displayInfo,token);
 		dlColor->r = atoi(token);
-	    } else if (!strcmp(token,"g")) {
+	    } else if(!strcmp(token,"g")) {
 		getToken(displayInfo,token);getToken(displayInfo,token);
 		dlColor->g = atoi(token);
-	    } else if (!strcmp(token,"b")) {
+	    } else if(!strcmp(token,"b")) {
 		getToken(displayInfo,token);getToken(displayInfo,token);
 		dlColor->b = atoi(token);
-	    } else if (!strcmp(token,"inten")) {
+	    } else if(!strcmp(token,"inten")) {
 		getToken(displayInfo,token);getToken(displayInfo,token);
 		dlColor->inten = atoi(token);
 	    }
@@ -416,26 +416,26 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"ncolors")) {
+	    if(!strcmp(token,"ncolors")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlColormap->ncolors = atoi(token);
-		if (dlColormap->ncolors > DL_MAX_COLORS) {
+		if(dlColormap->ncolors > DL_MAX_COLORS) {
 		    medmPrintf("\nMaximum # of colors in colormap exceeded\n"
 		      "  Will continue with truncated color space\n"
 		      "(You may want to change the colors of some objects)\n");
 		    dmSetAndPopupWarningDialog(displayInfo, msg,"OK",NULL,NULL);
 		}
-	    } else if (!strcmp(token,"dl_color")) {
+	    } else if(!strcmp(token,"dl_color")) {
 	      /* continue parsing but throw away "excess" colormap entries */
-		if (counter < DL_MAX_COLORS) {
+		if(counter < DL_MAX_COLORS) {
 		    parseOldDlColor(displayInfo,filePtr,&(dlColormap->dl_color[counter]));
 		    counter++;
 		} else {
 		    parseOldDlColor(displayInfo,filePtr,&dummyColormapEntry);
 		    counter++;
 		}
-	    } else if (!strcmp(token,"colors")) {
+	    } else if(!strcmp(token,"colors")) {
 		parseDlColor(displayInfo,filePtr,dlColormap->dl_color);
 	    }
 	    break;
@@ -453,7 +453,7 @@ DlColormap *parseColormap(DisplayInfo *displayInfo, FILE *filePtr)
    *  now since a valid colormap element has been brought into display list,
    *  remove the external cmap reference in the dlDisplay element
    */
-    if (dlTarget = FirstDlElement(displayInfo->dlElementList)) {
+    if(dlTarget = FirstDlElement(displayInfo->dlElementList)) {
 	dlTarget->structure.display->cmap[0] = '\0';
     }
   /* restore the previous filePtr */
@@ -473,7 +473,7 @@ void writeDlColormap(FILE *stream, DlColormap *dlColormap, int level)
     fprintf(stream,"\n%s\"color map\" {",indent);
     fprintf(stream,"\n%s\tncolors=%d",indent,dlColormap->ncolors);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%s\tcolors {",indent,dlColormap->ncolors);
 	
@@ -532,27 +532,27 @@ void parseBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"clr")) {
+	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		attr->clr = atoi(token) % DL_MAX_COLORS;
-	    } else if (!strcmp(token,"style")) {
+	    } else if(!strcmp(token,"style")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"solid")) {
+		if(!strcmp(token,"solid")) {
 		    attr->style = SOLID;
-		} else if (!strcmp(token,"dash")) {
+		} else if(!strcmp(token,"dash")) {
 		    attr->style = DASH;
 		}
-	    } else if (!strcmp(token,"fill")) {
+	    } else if(!strcmp(token,"fill")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"solid")) {
+		if(!strcmp(token,"solid")) {
 		    attr->fill = F_SOLID;
-		} else if (!strcmp(token,"outline")) {
+		} else if(!strcmp(token,"outline")) {
 		    attr->fill = F_OUTLINE;
 		}
-	    } else if (!strcmp(token,"width")) {
+	    } else if(!strcmp(token,"width")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		attr->width = atoi(token);
@@ -577,7 +577,7 @@ void parseOldBasicAttribute(DisplayInfo *displayInfo, DlBasicAttribute *attr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"attr"))
+	    if(!strcmp(token,"attr"))
 	      parseAttr(displayInfo,attr);
 	    break;
 	case T_LEFT_BRACE:
@@ -597,15 +597,15 @@ void writeDlBasicAttribute(FILE *stream, DlBasicAttribute *attr, int level)
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%s\"basic attribute\" {",indent);
   	fprintf(stream,"\n%s\tclr=%d",indent,attr->clr);
-  	if (attr->style != SOLID)
+  	if(attr->style != SOLID)
 	  fprintf(stream,"\n%s\tstyle=\"%s\"",indent,stringValueTable[attr->style]);
-  	if (attr->fill != F_SOLID)
+  	if(attr->fill != F_SOLID)
 	  fprintf(stream,"\n%s\tfill=\"%s\"",indent,stringValueTable[attr->fill]);
-  	if (attr->width != 0)
+  	if(attr->width != 0)
 	  fprintf(stream,"\n%s\twidth=%d",indent,attr->width);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -684,7 +684,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
     DlElement *dlElement;
 
   /* Obtain dlElement */
-    if (dlElementFreeList->count > 0) {
+    if(dlElementFreeList->count > 0) {
       /* Get it from the free list */
 	dlElement = dlElementFreeList->tail;
 	removeDlElement(dlElementFreeList,dlElement);
@@ -696,7 +696,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
 	dlElement = (DlElement *) malloc(sizeof(DlElement));
     }
   /* If unsuccessful, return */
-    if (!dlElement) return 0;
+    if(!dlElement) return 0;
   /* Define the elements of the struct */
     dlElement->type = type;
   /* Note: structure is a union of pointers
@@ -705,7 +705,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
     dlElement->structure.composite = (DlComposite *)structure;
   /* Use the supplied dispatch table or a default if the supplied one is NULL
     * Note: createDlElement for DL_Element passes a NULL dispatch table */
-    if (dlDispatchTable) {
+    if(dlDispatchTable) {
 	dlElement->run = dlDispatchTable;
     } else {
 #if 0
@@ -740,46 +740,46 @@ void parseDynamicAttribute(DisplayInfo *displayInfo,
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"clr")) {
+	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 #ifdef __COLOR_RULE_H__
-		if (!strcmp(token,"discrete") ||
+		if(!strcmp(token,"discrete") ||
 		  !strcmp(token,"color rule"))
 #else
-		  if (!strcmp(token,"discrete"))
+		  if(!strcmp(token,"discrete"))
 #endif
 		    dynAttr->clr = DISCRETE;
-		  else if (!strcmp(token,"static"))
+		  else if(!strcmp(token,"static"))
 		    dynAttr->clr = STATIC;
-		  else if (!strcmp(token,"alarm"))
+		  else if(!strcmp(token,"alarm"))
 		    dynAttr->clr = ALARM;
-	    } else if (!strcmp(token,"vis")) {
+	    } else if(!strcmp(token,"vis")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dynAttr->vis = V_STATIC;
-		else if (!strcmp(token,"if not zero"))
+		else if(!strcmp(token,"if not zero"))
 		  dynAttr->vis = IF_NOT_ZERO;
-		else if (!strcmp(token,"if zero"))
+		else if(!strcmp(token,"if zero"))
 		  dynAttr->vis = IF_ZERO;
 #ifdef __COLOR_RULE_H__
-	    } else if (!strcmp(token,"colorRule")) {
+	    } else if(!strcmp(token,"colorRule")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"set#1"))
+		if(!strcmp(token,"set#1"))
 		  dynAttr->colorRule = 0;
-		else if (!strcmp(token,"set#2"))
+		else if(!strcmp(token,"set#2"))
 		  dynAttr->colorRule = 1;
-		else if (!strcmp(token,"set#3"))
+		else if(!strcmp(token,"set#3"))
 		  dynAttr->colorRule = 2;
-		else if (!strcmp(token,"set#4"))
+		else if(!strcmp(token,"set#4"))
 		  dynAttr->colorRule = 3;
 #endif
-	    } else if (!strcmp(token,"chan")) {
+	    } else if(!strcmp(token,"chan")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if ((strlen(token) > (size_t)0)) {
+		if((strlen(token) > (size_t)0)) {
 		    strcpy(dynAttr->chan,token);
 		}
 	    }
@@ -804,7 +804,7 @@ void parseOldDynamicAttribute(DisplayInfo *displayInfo,
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"attr"))
+	    if(!strcmp(token,"attr"))
 	      parseDynamicAttr(displayInfo,dynAttr);
 	    break;
 	case T_LEFT_BRACE:
@@ -836,7 +836,7 @@ DlElement *parseFallingLine(DisplayInfo *displayInfo)
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlPolyline->object));
 	    break;
 	case T_EQUAL:
@@ -884,7 +884,7 @@ DlElement *parseRisingLine(DisplayInfo *displayInfo)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"object"))
+	    if(!strcmp(token,"object"))
 	      parseObject(displayInfo,&(dlPolyline->object));
 	    break;
 	case T_EQUAL:
@@ -926,22 +926,54 @@ void parseObject(DisplayInfo *displayInfo, DlObject *object)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"x")) {
+	    if(!strcmp(token,"x")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		object->x = atoi(token);
-	    } else if (!strcmp(token,"y")) {
+	    } else if(!strcmp(token,"y")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		object->y = atoi(token);
-	    } else if (!strcmp(token,"width")) {
+	    } else if(!strcmp(token,"width")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		object->width = atoi(token);
-	    } else if (!strcmp(token,"height")) {
+	    } else if(!strcmp(token,"height")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		object->height = atoi(token);
+	    }
+	    break;
+	case T_LEFT_BRACE:
+	    nestingLevel++; break;
+	case T_RIGHT_BRACE:
+	    nestingLevel--; break;
+	}
+    } while ( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
+      && (tokenType != T_EOF) );
+}
+
+void parseGrid(DisplayInfo *displayInfo, DlGrid *grid)
+{
+    char token[MAX_TOKEN_LENGTH];
+    TOKEN tokenType;
+    int nestingLevel = 0;
+
+    do {
+	switch( (tokenType=getToken(displayInfo,token)) ) {
+	case T_WORD:
+	    if(!strcmp(token,"gridSpacing")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		grid->gridSpacing = atoi(token);
+	    } else if(!strcmp(token,"gridOn")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		grid->gridOn = atoi(token);
+	    } else if(!strcmp(token,"snapToGrid")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		grid->snapToGrid = atoi(token);
 	    }
 	    break;
 	case T_LEFT_BRACE:
@@ -963,27 +995,27 @@ void parseAttr(DisplayInfo *displayInfo, DlBasicAttribute *attr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"clr")) {
+	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		attr->clr = atoi(token) % DL_MAX_COLORS;
-	    } else if (!strcmp(token,"style")) {
+	    } else if(!strcmp(token,"style")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"solid")) {
+		if(!strcmp(token,"solid")) {
 		    attr->style = SOLID;
-		} else if (!strcmp(token,"dash")) {
+		} else if(!strcmp(token,"dash")) {
 		    attr->style = DASH;
 		}
-	    } else if (!strcmp(token,"fill")) {
+	    } else if(!strcmp(token,"fill")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"solid")) {
+		if(!strcmp(token,"solid")) {
 		    attr->fill = F_SOLID;
-		} else if (!strcmp(token,"outline")) {
+		} else if(!strcmp(token,"outline")) {
 		    attr->fill = F_OUTLINE;
 		}
-	    } else if (!strcmp(token,"width")) {
+	    } else if(!strcmp(token,"width")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		attr->width = atoi(token);
@@ -1007,9 +1039,9 @@ void parseDynamicAttr(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"mod")) {
+	    if(!strcmp(token,"mod")) {
 		parseDynAttrMod(displayInfo,dynAttr);
-	    } else if (!strcmp(token,"param")) {
+	    } else if(!strcmp(token,"param")) {
 		parseDynAttrParam(displayInfo,dynAttr);
 	    }
 	    break;
@@ -1031,39 +1063,39 @@ void parseDynAttrMod(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"clr")) {
+	    if(!strcmp(token,"clr")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 #ifdef __COLOR_RULE_H__
-		if (!strcmp(token,"discrete") || !strcmp(token,"color rule"))
+		if(!strcmp(token,"discrete") || !strcmp(token,"color rule"))
 #else
-		if (!strcmp(token,"discrete"))
+		if(!strcmp(token,"discrete"))
 #endif
 		  dynAttr->clr = DISCRETE;
-		else if (!strcmp(token,"static"))
+		else if(!strcmp(token,"static"))
 		  dynAttr->clr = STATIC;
-		else if (!strcmp(token,"alarm"))
+		else if(!strcmp(token,"alarm"))
 		  dynAttr->clr = ALARM;
-	    } else if (!strcmp(token,"vis")) {
+	    } else if(!strcmp(token,"vis")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"static"))
+		if(!strcmp(token,"static"))
 		  dynAttr->vis = V_STATIC;
-		else if (!strcmp(token,"if not zero"))
+		else if(!strcmp(token,"if not zero"))
 		  dynAttr->vis = IF_NOT_ZERO;
-		else if (!strcmp(token,"if zero"))
+		else if(!strcmp(token,"if zero"))
 		  dynAttr->vis = IF_ZERO;
 #ifdef __COLOR_RULE_H__
-	    } else if (!strcmp(token,"colorRule")) {
+	    } else if(!strcmp(token,"colorRule")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"set#1"))
+		if(!strcmp(token,"set#1"))
 		  dynAttr->colorRule = 0;
-		else if (!strcmp(token,"set#2"))
+		else if(!strcmp(token,"set#2"))
 		  dynAttr->colorRule = 1;
-		else if (!strcmp(token,"set#3"))
+		else if(!strcmp(token,"set#3"))
 		  dynAttr->colorRule = 2;
-		else if (!strcmp(token,"set#4"))
+		else if(!strcmp(token,"set#4"))
 		  dynAttr->colorRule = 3;
 #endif
 	    }
@@ -1086,10 +1118,10 @@ void parseDynAttrParam(DisplayInfo *displayInfo, DlDynamicAttribute *dynAttr)
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
-	    if (!strcmp(token,"chan")) {
+	    if(!strcmp(token,"chan")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (token[0]) {
+		if(token[0]) {
 		    strcpy(dynAttr->chan,token);
 		}
 	    }
@@ -1115,7 +1147,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 
     dlColormap = NULL;
     externalFilePtr = dmOpenUsableFile(filename, NULL);
-    if (externalFilePtr == NULL) {
+    if(externalFilePtr == NULL) {
 	sprintf(msg,
 	  "Can't open \n\n        \"%s\" (.adl)\n\n%s",filename,
 	  "to extract external colormap - check cmap specification");
@@ -1138,7 +1170,7 @@ DlColormap *parseAndExtractExternalColormap(DisplayInfo *displayInfo, char *file
 	do {
 	    switch( (tokenType=getToken(displayInfo,token)) ) {
 	    case T_WORD:
-		if (!strcmp(token,"<<color map>>")) {
+		if(!strcmp(token,"<<color map>>")) {
 		    dlColormap = 
 		      parseColormap(displayInfo,externalFilePtr);
 		  /* don't want to needlessly parse, so we'll return here */
@@ -1196,7 +1228,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 		break;
 	    case '$' : c=getc(filePtr);
 	      /* only do macro substitution if in execute mode */
-		if (globalDisplayListTraversalMode == DL_EXECUTE
+		if(globalDisplayListTraversalMode == DL_EXECUTE
 		  && c == '(' ) {
 		    state = INMACRO;
 		} else {
@@ -1223,7 +1255,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    case '"' : *w = '\0'; return (T_WORD);
 	    case '$' : c=getc(filePtr);
 	      /* only do macro substitution if in execute mode */
-		if (globalDisplayListTraversalMode == DL_EXECUTE
+		if(globalDisplayListTraversalMode == DL_EXECUTE
 		  && c == '(' ) {
 		    savedState = INQUOTE;
 		    state = INMACRO;
@@ -1241,7 +1273,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    case ')' : *m = '\0';
 		value = lookupNameValue(displayInfo->nameValueTable,
 		  displayInfo->numNameValues,macro);
-		if (value != NULL) {
+		if(value != NULL) {
 		    for (j = 0; j < (int) strlen(value); j++) {
 			*w++ = value[j];
 		    }
@@ -1286,21 +1318,21 @@ void writeDlDynamicAttribute(FILE *stream, DlDynamicAttribute *dynAttr,
 {
     char indent[16];
 
-    if (!*(dynAttr->chan)) return;
+    if(!*(dynAttr->chan)) return;
 
     memset(indent,'\t',level);
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    if (MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
   	fprintf(stream,"\n%s\"dynamic attribute\" {",indent);
-  	if (dynAttr->clr != STATIC) 
+  	if(dynAttr->clr != STATIC) 
 	  fprintf(stream,"\n%s\tclr=\"%s\"",indent,stringValueTable[dynAttr->clr]);
-  	if (dynAttr->vis != V_STATIC)
+  	if(dynAttr->vis != V_STATIC)
 	  fprintf(stream,"\n%s\tvis=\"%s\"",indent,stringValueTable[dynAttr->vis]);
 #ifdef __COLOR_RULE_H__
-  	if (dynAttr->colorRule != 0)
+  	if(dynAttr->colorRule != 0)
 	  fprintf(stream,"\n%s\tcolorRule=\"set#%d\"",indent,dynAttr->colorRule+1);
 #endif
   	fprintf(stream,"\n%s\tchan=\"%s\"",indent,dynAttr->chan);
@@ -1340,6 +1372,20 @@ void writeDlObject(FILE *stream, DlObject *dlObject, int level)
     fprintf(stream,"\n%s}",indent);
 }
 
+void writeDlGrid(FILE *stream, DlGrid *dlGrid, int level)
+{
+    char indent[16];
+
+    memset(indent,'\t',level);
+    indent[level] = '\0';
+
+    fprintf(stream,"\n%sgrid {",indent);
+    fprintf(stream,"\n%s\tgridSpacing=%d",indent,dlGrid->gridSpacing);
+    fprintf(stream,"\n%s\tgridOn=%d",indent,dlGrid->gridOn);
+    fprintf(stream,"\n%s\twidtsnapToGrid=%d",indent,dlGrid->snapToGrid);
+    fprintf(stream,"\n%s}",indent);
+}
+
 void genericMove(DlElement *dlElement, int xOffset, int yOffset)
 {
     dlElement->structure.rectangle->object.x += xOffset;
@@ -1350,7 +1396,7 @@ void widgetMove(DlElement *dlElement, int xOffset, int yOffset)
 {
     dlElement->structure.rectangle->object.x += xOffset;
     dlElement->structure.rectangle->object.y += yOffset;
-    if (dlElement->widget)
+    if(dlElement->widget)
       XtMoveWidget(dlElement->widget,
 	dlElement->structure.rectangle->object.x,
 	dlElement->structure.rectangle->object.y);
