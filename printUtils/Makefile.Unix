@@ -2,8 +2,11 @@
 # $Id$
 #
 #  $Log$
-#  Revision 1.1  1994/10/05 18:56:46  jba
-#  Initial versions
+#  Revision 1.2  1994/10/25 15:51:41  winans
+#  Changed the SRCS macro to SRCS.c and SRCS.cc
+#
+# Revision 1.1  1994/10/05  18:56:46  jba
+# Initial versions
 #
 #
 #
@@ -12,7 +15,7 @@ EPICS = ../../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-SRCS = ../dsimple.c ../pUtils.c ../ps_utils.c ../utilPrint.c ../xwd.c ../xwd2ps.c
+SRCS.c = ../dsimple.c ../pUtils.c ../ps_utils.c ../utilPrint.c ../xwd.c ../xwd2ps.c
 
 LIBOBJS = dsimple.o pUtils.o ps_utils.o utilPrint.o xwd.o xwd2ps.o
 

@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.1  1994/10/05 18:56:42  jba
+# Revision 1.2  1994/10/25 15:51:38  winans
+# Changed the SRCS macro to SRCS.c and SRCS.cc
+#
+# Revision 1.1  1994/10/05  18:56:42  jba
 # Initial versions
 #
 #
@@ -11,7 +14,7 @@ EPICS = ../../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-SRCS = ../algorithms.c ../graph.c ../graph3d.c ../graphInteraction.c ../seql.c ../seqlInteraction.c \
+SRCS.c = ../algorithms.c ../graph.c ../graph3d.c ../graphInteraction.c ../seql.c ../seqlInteraction.c \
 	../strip.c ../surface.c ../surfaceInternals.c ../utils.c
 
 LIBOBJS = algorithms.o graph.o graph3d.o graphInteraction.o seql.o seqlInteraction.o \

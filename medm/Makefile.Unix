@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.3  1994/10/20 15:14:40  mda
+# Revision 1.4  1994/10/25 15:51:46  winans
+# Changed the SRCS macro to SRCS.c and SRCS.cc
+#
+# Revision 1.3  1994/10/20  15:14:40  mda
 # Add support for "embedded MEDM" via libMedmInit() and libMedmImportDisplay()
 # functions, and rearranged MEDM code.
 #
@@ -24,7 +27,7 @@ USR_CFLAGS = -I../../graphX -I../../xc -I$(XRTGRAPH)/include/Xm \
 USR_LDFLAGS = -L$(INSTALL_LIB) -L$(XRTGRAPH)/lib -L$(MOTIF)/lib -L$(X11_LIB)
 USR_LDLIBS = -lANLwidgets -lPrintUtils -lGraphX -lca -lCom -lUnix -lxrtm -lXm -lXt -lX11 -lm
 
-SRCS =	../actions.c ../caDM.c ../callbacks.c \
+SRCS.c = ../actions.c ../caDM.c ../callbacks.c \
 	../channelPalette.c ../colorPalette.c \
 	../createControllers.c ../createExtensions.c ../createMonitors.c \
 	../createStatics.c ../display.c ../dmInit.c ../dummy.c \

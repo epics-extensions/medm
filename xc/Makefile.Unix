@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.1  1994/10/05 18:56:56  jba
+# Revision 1.2  1994/10/25 15:51:50  winans
+# Changed the SRCS macro to SRCS.c and SRCS.cc
+#
+# Revision 1.1  1994/10/05  18:56:56  jba
 # Initial versions
 #
 #
@@ -16,7 +19,7 @@ USR_CFLAGS = -I$(MOTIF)/include -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF)/lib -L$(X11_LIB)
 USR_LDLIBS = -ANLwidgets -lca -lCom -lXm -lXt -lX11 -lm
 
-SRCS = ../BarGraph.c ../Caption.c ../Clip.c ../Control.c ../Indicator.c ../Matrix.c \
+SRCS.c = ../BarGraph.c ../Caption.c ../Clip.c ../Control.c ../Indicator.c ../Matrix.c \
 	../Meter.c ../Value.c ../bae.c ../bar1.c ../indicator1.c ../meter1.c ../utils.c ../version.c
 
 LIBOBJS = BarGraph.o Caption.o Clip.o Control.o Indicator.o Matrix.o \
