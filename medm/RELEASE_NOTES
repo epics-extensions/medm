@@ -1,3 +1,11 @@
+Version 2.2.6
+=============
+- Fix two bugs.
+  - After using "save as" to save file, the file won't appear in the
+    file selection list in the file dialog box.
+  - The 2.2.x and 2.1.x buttons does not indicate the current selected file
+    format correctly.
+
 Version 2.2.5
 =============
 - Fix another 24 bit color bug.
@@ -9,7 +17,7 @@ Version 2.2.5
 
 Version 2.2.4
 =============
-- Fix the following bug :
+- Fix the following bugs :
   Loading the second or any additional displays causes MEDM to add extra
   entries on relatedDisplay, shellCommand, strip chart and cartesian Plot.
 

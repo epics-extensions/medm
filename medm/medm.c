@@ -1091,6 +1091,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
   int buttonNumber = (int) cd;
   Widget widget;
+  static Widget radioBox = 0;
   XmString dirMask;
   XEvent event;
 
@@ -1125,6 +1126,8 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         XtSetArg(args[n],XmNpattern,label); n++;
         XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
         openFSD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),"openFSD",args,n);
+        XtUnmanageChild(XmFileSelectionBoxGetChild(openFSD,
+                        XmDIALOG_HELP_BUTTON));
         XtAddCallback(openFSD,XmNokCallback,
           fileMenuDialogCallback,(XtPointer)FILE_OPEN_BTN);
         XtAddCallback(openFSD,XmNcancelCallback,
@@ -1215,13 +1218,21 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
         || (buttonNumber == FILE_SAVE_AS_BTN)) {
         /* new display or user want to save as a different name */
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-		      MedmUseNewFileFormat = True;
+        WidgetList children;
+        XmListDeselectAllItems(
+            XmFileSelectionBoxGetChild(saveAsPD,XmDIALOG_LIST));
+        XmFileSelectionDoSearch(saveAsPD,NULL);
+        XtVaGetValues(radioBox,
+          XmNchildren, &children, NULL);
+        XmToggleButtonGadgetSetState(children[0],True,True);
+        MedmUseNewFileFormat = True;
+        XtManageChild(saveAsPD);
 #endif
 	        XtManageChild(saveAsPD);
       } else {
         /* save the file */
         medmSaveDisplay(currentDisplayInfo,
-           dmGetDisplayFileName(currentDisplayInfo),True);
+        dmGetDisplayFileName(currentDisplayInfo),True);
       }
       break;
 
