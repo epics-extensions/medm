@@ -28,56 +28,18 @@ static CpDataHandle hcpNullData = (CpDataHandle)0;
 
 /* Function prototypes */
 
-int CpDataGetLastPoint(CpDataHandle hData, int set) {
-    return (MAX(hData->g.data[set].npoints-1,0));
+void CpDataDeleteCurves(Widget w, CpDataHandle hData) {
+  /* Not necessary */
 }
-int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
-    hData->g.data[set].npoints = point+1;
+
+int CpDataGetPointsUsed(CpDataHandle hData, int set) {
+    return (hData->g.data[set].npoints);
+}
+int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int point) {
+  /* w is unused */
+    hData->g.data[set].npoints = MAX(point,0);
     return 1;
 }
-
-/*
-CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints) {
-    return PlotMakeData(type,nsets,npoints,True);
-}
-
-int CpDataGetLastPoint(CpDataHandle hData, int set) {
-    return (MAX(hData->g.data[set].npoints-1,0));
-}
-
-double CpDataGetXElement(CpDataHandle hData, int set, int point) {
-    return hData->g.data[set].xp[point];
-}
-
-double CpDataGetYElement(CpDataHandle hData, int set, int point) {
-    return hData->g.data[set].yp[point];
-}
-
-void CpDataDestroy(CpDataHandle hData) {
-    if(hData) PlotDestroyData(hData,True);
-}
-
-int CpDataSetHole(CpDataHandle hData, double hole) {
-    hData->g.hole = hole;
-    return 1;
-}
-
-int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
-    hData->g.data[set].npoints = point+1;
-    return 1;
-}
-
-int CpDataSetXElement(CpDataHandle hData, int set, int point, double x) {
-    hData->g.data[set].xp[point] = x;
-    return 1;
-}
-
-int CpDataSetYElement(CpDataHandle hData, int set, int point, double y) {
-    hData->g.data[set].yp[point] = y;
-    return 1;
-}
-*/
-
 
 void CpGetAxisInfo(Widget w,
   XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
@@ -486,7 +448,7 @@ void CpEraseData(Widget w, int axis, CpDataHandle hData)
     if(!hcpNullData) {
 	hcpNullData = CpDataCreate((Widget)0,CP_GENERAL,1,1);
 	CpDataSetHole(hcpNullData,0.0);
-	CpDataSetLastPoint(hcpNullData,0,0);
+	CpDataSetPointsUsed(w,hcpNullData,0,0);
 	CpDataSetXElement(hcpNullData,0,0,0.0);
 	CpDataSetYElement(hcpNullData,0,0,0.0);
     }

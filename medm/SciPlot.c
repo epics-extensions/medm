@@ -28,6 +28,8 @@
 #define DEBUG_SCIPLOT_LINE 0
 #define DEBUG_SCIPLOT_AXIS 0
 #define DEBUG_SCIPLOT_ALLOC 0
+#define DEBUG_SCIPLOT_MLK 0
+#define DEBUG_SCIPLOT_MLK1 0
 
 /* KE: Use SCIPLOT_EPS to avoid roundoff in floor and ceil */
 #define SCIPLOT_EPS .0001
@@ -1330,21 +1332,16 @@ XDrawVString (Display *display, Window win, GC gc, int x, int y, char *str, int 
 
   XFreeGC(display, drawGC);
 
-  /* free data */
-  before->data = 0;
-  after->data = 0;
+  /* Free image data ourselves and mark it as null in the XImage */
   free(source0);
   free(source1);
+  before->data = 0;
+  after->data = 0;
 
   XDestroyImage(before);
   XDestroyImage(after);
   XFreePixmap(display, pix);
   XFreePixmap(display, rotpix);
-
-/* Note that it appears that there is a memory leak here, but XDestroyImage
- * frees the image data that is XtCalloc'ed
- */
-
 }
 
 static char dots[] =
@@ -2083,6 +2080,10 @@ EraseAllItems (SciPlotWidget w)
   while (i < w->plot.num_drawlist) {
     if ((item->type > SciPlotStartTextTypes) &&
       (item->type < SciPlotEndTextTypes))
+#if DEBUG_SCIPLOT_MLK
+      SciPlotPrintf("EraseAllItems: item->kind.text.text=%p\n",
+	item->kind.text.text);
+#endif
       XtFree(item->kind.text.text);
     i++;
     item++;
@@ -2315,6 +2316,9 @@ TextSet (SciPlotWidget w, real x, real y, char *text, int color, int font)
   item->kind.text.y = (real) y;
   item->kind.text.length = strlen(text);
   item->kind.text.text = XtMalloc((int) item->kind.text.length + 1);
+#if DEBUG_SCIPLOT_MLK
+  SciPlotPrintf("TextSet: item->kind.text.text=%p\n",item->kind.text.text);
+#endif
   item->kind.text.font = font;
   strcpy(item->kind.text.text, text);
   item->type = SciPlotText;
@@ -2351,6 +2355,9 @@ VTextSet (SciPlotWidget w, real x, real y, char *text, int color, int font)
   item->kind.text.y = (real) y;
   item->kind.text.length = strlen(text);
   item->kind.text.text = XtMalloc((int) item->kind.text.length + 1);
+#if DEBUG_SCIPLOT_MLK
+  SciPlotPrintf("VTextSet: item->kind.text.text=%p\n",item->kind.text.text);
+#endif
   item->kind.text.font = font;
   strcpy(item->kind.text.text, text);
   item->type = SciPlotVText;
@@ -5130,8 +5137,12 @@ SciPlotUpdate (Widget wi)
 {
   SciPlotWidget w;
 
-  if (!XtIsSciPlot(wi))
+  if (!XtIsSciPlot(wi)) {
+#if DEBUG_SCIPLOT_MLK1
+    SciPlotPrintf("SciPlotUpdate: !XtIsSciPlot(wi) wi=%p\n",wi);
+#endif
     return;
+  }
 
   w = (SciPlotWidget) wi;
   EraseAll(w);

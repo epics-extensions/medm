@@ -1,4 +1,4 @@
-/*************************************************************************\
+/************************************************************************\
 * Copyright (c) 2002 The University of Chicago, as Operator of Argonne
 * National Laboratory.
 * Copyright (c) 2002 The Regents of the University of California, as
@@ -15,8 +15,8 @@
  *****************************************************************************
 */
 
-#define DEBUG_COUNT 1
-#define DEBUG_RESET 1
+#define DEBUG_COUNT 0
+#define DEBUG_RESET 0
 #define DEBUG_LOSING_FOCUS 0
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
@@ -86,7 +86,8 @@ static void cartesianPlotInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void cartesianPlotGetValues(ResourceBundle *pRCB, DlElement *p);
-static void cartesianPlotResetPlot(MedmCartesianPlot *pcp);
+static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp);
+static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
 
@@ -412,16 +413,19 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     cartesianPlotUpdateScreenFirstTime(cd);
 }
 
-void cartesianPlotUpdateTrace(XtPointer cd) {
+static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
+{
     Record *pr = (Record *)cd;
     XYTrace *pt = (XYTrace *)pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
+    Widget w = pcp->dlElement->widget;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
-    int nextPoint, j;
+    int pointsUsed, j;
     int count;
 
-#if DEBUG_CARTESIAN_PLOT_UPDATE
-    printf("cartesianPlotUpdateTrace:\n");
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_COUNT
+    printf("cartesianPlotUpdateTrace: updateLastPoint=%s pt->hcp=%p\n",
+      updateLastPoint?"True":"False",pt->hcp);
 #endif    
     switch(pt->type) {
     case CP_XYScalar:
@@ -435,37 +439,26 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
-	if(count <= 0) break;
-	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
-#if DEBUG_COUNT
-	print("CP_XYScalar: CP: %d PV: %d Used: %d\n"
-	  " Before: init: %d nextPoint: %d\n",
-	  dlCartesianPlot->count,
-	  pcp->countCh.recordX != 0?(int)(pcp->countCh.recordX->value +.5):-1,
-	  count,
-	  pt->init,nextPoint);
-#endif
-      /* Decide what to do with the next point depending on init
-         -2: Skip and set init back to 0
-         -1: Skip and set init back to 1
-	  0: Should be zero, use it and set init to 1
-	  1: Increment it */
-	if(pt->init < 0) {
-	    pt->init+=2;
+	if(count <= 0 || !updateLastPoint) {
 	    break;
 	}
-	if(pt->init == 1) nextPoint++;
-	else pt->init = 1;
+
+	pointsUsed = CpDataGetPointsUsed(pt->hcp,pt->trace);
 #if DEBUG_COUNT
-	print(" After: init: %d nextPoint: %d\n",
-	  pt->init,nextPoint);
+	print("CP_XYScalar counts: CP: %d PV: %d Count: %d pointsUsed: %d\n",
+	  dlCartesianPlot->count,
+	  pcp->countCh.recordX != 0?(int)(pcp->countCh.recordX->value +.5):-1,
+	  count,pointsUsed);
 #endif
-	if(nextPoint < count) {
-	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
+	if(pointsUsed < count) {
+	    CpDataSetXElement(pt->hcp,pt->trace,pointsUsed,
 	      SAFEFLOAT(pt->recordX->value));
-	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,
+	    CpDataSetYElement(pt->hcp,pt->trace,pointsUsed,
 	      SAFEFLOAT(pt->recordY->value));
-	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
+	    CpDataSetPointsUsed(w,pt->hcp,pt->trace,++pointsUsed);
+#if DEBUG_COUNT
+	    print("  New pointsUsed: %d\n",pointsUsed);
+#endif
 	} else {
 	    if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
@@ -486,8 +479,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	}
 #if 0
       /* Use with cpCP_XYScalar.adl or delete these lines */
-	printf("nextPoint=%d count=%d x=%g y=%g\n",
-	  nextPoint,count,
+	printf("pointsUsed=%d count=%d x=%g y=%g\n",
+	  pointsUsed,count,
 	  pt->recordX->value,pt->recordY->value);
 	printf("x1=%g x2=%g x3=%g\n",
 	  CpDataGetXElement(pt->hcp,pt->trace,0),
@@ -511,24 +504,15 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
-	if(count <= 0) break;
-	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
-      /* Decide what to do with the next point depending on init
-         -2: Skip and set init back to 0
-         -1: Skip and set init back to 1
-	  0: Should be zero, use it and set init to 1
-	  1: Increment it */
-	if(pt->init < 0) {
-	    pt->init+=2;
+	if(count <= 0 || !updateLastPoint) {
 	    break;
 	}
-	if(pt->init == 1) nextPoint++;
-	else pt->init = 1;
-	if(nextPoint < count) {
-	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,
+	pointsUsed = CpDataGetPointsUsed(pt->hcp,pt->trace);
+	if(pointsUsed < count) {
+	    CpDataSetXElement(pt->hcp,pt->trace,pointsUsed,
 	      SAFEFLOAT(pt->recordX->value));
-	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,(float)nextPoint);
-	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
+	    CpDataSetYElement(pt->hcp,pt->trace,pointsUsed,(float)pointsUsed);
+	    CpDataSetPointsUsed(w,pt->hcp,pt->trace,++pointsUsed);
 	} else {
 	    if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
@@ -560,7 +544,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
+	pointsUsed=MAX(count,0);
+	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	switch(pt->recordX->dataType) {
 	case DBF_STRING:
 	{
@@ -638,50 +623,57 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    else count = 0;
 	}
 #endif
-	if(count <= 0) break;
-	nextPoint = CpDataGetLastPoint(pt->hcp,pt->trace);
-      /* Decide what to do with the next point depending on init
-         -2: Skip and set init back to 0
-         -1: Skip and set init back to 1
-	  0: Should be zero, use it and set init to 1
-	  1: Increment it */
-	if(pt->init < 0) {
-	    pt->init+=2;
+	if(count <= 0 || !updateLastPoint) {
+#if DEBUG_COUNT
+	    print("CP_YScalar [break]: count=%d updateLastPoint=%s\n",
+	      count,updateLastPoint?"True":"False");
+#endif
 	    break;
 	}
-	if(pt->init == 1) nextPoint++;
-	else pt->init = 1;
+	pointsUsed = CpDataGetPointsUsed(pt->hcp,pt->trace);
+#if DEBUG_COUNT
+	print("CP_YScalar counts: CP: %d PV: %d Count: %d pointsUsed: %d\n",
+	  dlCartesianPlot->count,
+	  pcp->countCh.recordX != 0?(int)(pcp->countCh.recordX->value +.5):-1,
+	  count,pointsUsed);
+#endif
 #if DEBUG_CARTESIAN_PLOT_UPDATE  && defined(XRTGRAPH)
-	printf("  nextPoint=%d count=%d\n  XRT_HUGE_VAL=%f\n",
-	  nextPoint,
+	printf("  pointsUsed=%d count=%d\n  XRT_HUGE_VAL=%f\n",
+	  pointsUsed,
 	  count,
 	  XRT_HUGE_VAL);
 #endif    
-	if(nextPoint < count) {
-	    if(!nextPoint && pcp->timeScale) {
+	if(pointsUsed < count) {
+	    if(pointsUsed == 0 && pcp->timeScale) {
 		CpSetTimeBase(pcp->dlElement->widget,
 		  timeOffset + (time_t)pt->recordY->time.secPastEpoch);
 		pcp->startTime = pt->recordY->time;
 	    }
-	    CpDataSetXElement(pt->hcp,pt->trace,nextPoint,(pcp->timeScale) ?
+	    CpDataSetXElement(pt->hcp,pt->trace,pointsUsed,(pcp->timeScale) ?
 	      (float)(pt->recordY->time.secPastEpoch -
 		pcp->startTime.secPastEpoch) :
-	      (float) nextPoint);
-	    CpDataSetYElement(pt->hcp,pt->trace,nextPoint,
+	      (float)pointsUsed);
+	    CpDataSetYElement(pt->hcp,pt->trace,pointsUsed,
 	      (float)pt->recordY->value);
-	    CpDataSetLastPoint(pt->hcp,pt->trace,nextPoint);
+	    pointsUsed++;
+	    CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
+#if DEBUG_COUNT
+	    print("  New pointsUsed: %d count: %d\n",pointsUsed,count);
+#endif
 	} else {
 	    if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
 	      /* All done, don't add any more points */
-#if DEBUG_CARTESIAN_PLOT_UPDATE
-		printf("  Array full\n");
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_COUNT
+		printf("  Array full: count=%d pointsUsed=%d\n",
+		  count,pointsUsed);
 #endif    
 	    } else if(dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
 	      /* Shift everybody down one, add at end */
 		int j;
 
-#if DEBUG_CARTESIAN_PLOT_UPDATE
-		printf("  Shifting\n");
+#if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_COUNT
+		printf("  Shifting: count=%d pointsUsed=%d\n",
+		  count,pointsUsed);
 #endif    
 		if(pcp->timeScale) {
 		    for(j = 1; j < count; j++) {
@@ -705,30 +697,6 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		} 
 	    }
 	}
-#if DEBUG_CARTESIAN_PLOT_UPDATE && defined(XRTGRAPH)
-	{
-	    int nextPoint1=(nextPoint < count)?nextPoint:
-	      dlCartesianPlot->count-1;
-	    static char filename[]="xrtdata.data";
-
-	    if(nextPoint == 10) {
-		XrtDataSaveToFile(pt->hcp,filename,NULL);
-		printf("Data saved to %s\n",filename);
-	    }
-	    
-	    printf("  nextPoint=%d x=       %f y=       %f\n",
-	      nextPoint,
-	      (pcp->timeScale) ?
-	      (float)(pt->recordY->time.secPastEpoch -
-		pcp->startTime.secPastEpoch) :
-	      (float)nextPoint1,
-	      (float)pt->recordY->value);
-	    printf("  nextPoint=%d XElement=%f YElement=%f\n",
-	      CpDataGetLastPoint(pt->hcp,pt->trace),
-	      CpDataGetXElement(pt->hcp,pt->trace,nextPoint1),
-	      CpDataGetYElement(pt->hcp,pt->trace,nextPoint1));
-	}
-#endif    
 	break;
 
     case CP_YVector:
@@ -743,7 +711,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
-	CpDataSetLastPoint(pt->hcp,pt->trace,count-1);
+	pointsUsed=MAX(count,0);
+	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	switch(pt->recordY->dataType) {
 	case DBF_STRING:
 	{
@@ -822,7 +791,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
+	pointsUsed=MAX(count,0);
+	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	if(pr == pt->recordX) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordX->dataType) {
@@ -904,7 +874,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
+	pointsUsed=MAX(count,0);
+	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	if(pr == pt->recordY) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordY->dataType) {
@@ -987,7 +958,8 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
-	CpDataSetLastPoint(pt->hcp,pt->trace,MAX(count-1,0));
+	pointsUsed=MAX(count,0);
+	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 
 	if(pr == pt->recordX) {
 	    dox = 1;
@@ -1134,7 +1106,7 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     Record *pr = (Record *) cd;
     XYTrace *pt = (XYTrace *) pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
-    Widget widget = pcp->dlElement->widget;
+    Widget w = pcp->dlElement->widget;
     int i;
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
@@ -1204,21 +1176,21 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 
   /* Draw all traces once */
     for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-	if(t->recordX && t->recordY) {
-	    cartesianPlotUpdateTrace((XtPointer)t->recordX);
-	    cartesianPlotUpdateTrace((XtPointer)t->recordY);
-	} else if(t->recordX) {
-	    cartesianPlotUpdateTrace((XtPointer)t->recordX);
-	} else if(t->recordY) {
-	    cartesianPlotUpdateTrace((XtPointer)t->recordY);
+	XYTrace *pt = &(pcp->xyTrace[i]);
+	if(pt->recordX && pt->recordY) {
+	    cartesianPlotUpdateTrace((XtPointer)pt->recordX, True);
+	    cartesianPlotUpdateTrace((XtPointer)pt->recordY, True);
+	} else if(pt->recordX) {
+	    cartesianPlotUpdateTrace((XtPointer)pt->recordX, True);
+	} else if(pt->recordY) {
+	    cartesianPlotUpdateTrace((XtPointer)pt->recordY, True);
 	} else {
 	    continue;
 	}
-	if(t->hcp == pcp->hcp1) {
-	    CpSetData(widget, CP_Y, t->hcp );
-	} else if(t->hcp == pcp->hcp2) {
-	    CpSetData(widget, CP_Y2, t->hcp );
+	if(pt->hcp == pcp->hcp1) {
+	    CpSetData(w, CP_Y, pt->hcp );
+	} else if(pt->hcp == pcp->hcp2) {
+	    CpSetData(w, CP_Y2, pt->hcp );
 	}
     }
 
@@ -1228,18 +1200,17 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	if(((pr->value == 0.0) && (pcp->eraseMode == ERASE_IF_ZERO))
 	  || ((pr->value != 0.0) && (pcp->eraseMode == ERASE_IF_NOT_ZERO))) {
 	    for(i = 0; i < pcp->nTraces; i++) {
-		XYTrace *t = &(pcp->xyTrace[i]);
-		if((t->recordX || t->recordY) && t->init) {
-		  /* Initialized, Erase by setting to uninitialized state */
-		    if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-			CpEraseData(widget, CP_Y, t->hcp);
+		XYTrace *pt = &(pcp->xyTrace[i]);
+		if(pt->recordX || pt->recordY) {
+		  /* Erase by setting to uninitialized state */
+		    if((pt->hcp == pcp->hcp1) && (clearDataSet1)) {
+			CpEraseData(w, CP_Y, pt->hcp);
 			clearDataSet1 = False;
-		    } else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-			CpEraseData(widget, CP_Y2, t->hcp);
+		    } else if((pt->hcp == pcp->hcp2) && (clearDataSet2)) {
+			CpEraseData(w, CP_Y2, pt->hcp);
 			clearDataSet2 = False;
 		    }
-		    t->init = 0;
-		    CpDataSetLastPoint(t->hcp,t->trace,0);
+		    CpDataSetPointsUsed(w,pt->hcp,pt->trace,0);
 		} 
 	    }
 	}
@@ -1247,13 +1218,13 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 
   /* Switch to the regular update routine from now on */
     for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-	if(t->recordX) {
-	    medmRecordAddUpdateValueCb(t->recordX,
+	XYTrace *pt = &(pcp->xyTrace[i]);
+	if(pt->recordX) {
+	    medmRecordAddUpdateValueCb(pt->recordX,
 	      cartesianPlotUpdateValueCb);
 	}
-	if(t->recordY) {
-	    medmRecordAddUpdateValueCb(t->recordY,
+	if(pt->recordY) {
+	    medmRecordAddUpdateValueCb(pt->recordY,
 	      cartesianPlotUpdateValueCb);
 	}
     }
@@ -1269,7 +1240,7 @@ static void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	medmRecordAddUpdateValueCb(pcp->countCh.recordX,
 	  cartesianPlotUpdateValueCb);
     }
-    CpUpdateWidget(widget, CP_FULL);
+    CpUpdateWidget(w, CP_FULL);
 }
 
 
@@ -1277,7 +1248,7 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
     Record *pr = (Record *)cd;
     XYTrace *pt = (XYTrace *)pr->clientData;
     MedmCartesianPlot *pcp = pt->cartesianPlot;
-    Widget widget = pcp->dlElement->widget;
+    Widget w = pcp->dlElement->widget;
     int i;
 
 #if DEBUG_CARTESIAN_PLOT_UPDATE || DEBUG_ACCESS
@@ -1296,23 +1267,22 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 
       /* Erase */
 	for(i = 0; i < pcp->nTraces; i++) {
-	    XYTrace *t = &(pcp->xyTrace[i]);
-	    if((t->recordX || t->recordY) && t->init) {
-	      /* Initialized, Erase by setting to uninitialized state */
-		if((t->hcp == pcp->hcp1) && (clearDataSet1)) {
-		    CpEraseData(widget, CP_Y, t->hcp);
+	    XYTrace *pt = &(pcp->xyTrace[i]);
+	    if(pt->recordX || pt->recordY) {
+	      /* Erase by setting to uninitialized state */
+		if((pt->hcp == pcp->hcp1) && (clearDataSet1)) {
+		    CpEraseData(w, CP_Y, pt->hcp);
 		    clearDataSet1 = False;
 		    pcp->dirty1 = False;
-		} else if((t->hcp == pcp->hcp2) && (clearDataSet2)) {
-		    CpEraseData(widget, CP_Y2, t->hcp);
+		} else if((pt->hcp == pcp->hcp2) && (clearDataSet2)) {
+		    CpEraseData(w, CP_Y2, pt->hcp);
 		    clearDataSet2 = False;
 		    pcp->dirty2 = False;
 		}
-		t->init = 0;
-		CpDataSetLastPoint(t->hcp,t->trace,0);
+		CpDataSetPointsUsed(w,pt->hcp,pt->trace,0);
 	    }
 	}
-	CpUpdateWidget(widget, CP_FULL);
+	CpUpdateWidget(w, CP_FULL);
 #if DEBUG_ERASE
 	dumpCartesianPlotData("Erase Channel",pcp);
 #endif	
@@ -1329,21 +1299,21 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 	} else {
 	  /* This is the trigger channel, update appropriate plots */
 	    for(i = 0; i < pcp->nTraces; i++) {
-		XYTrace *t = &(pcp->xyTrace[i]);
-		if((t->recordX == NULL) && (t->recordY == NULL)) continue;
-		if((t->recordX) && (t->hcp)) {
-		    cartesianPlotUpdateTrace((XtPointer)t->recordX);
-		    if(t->type == CP_XYVector)
-		      cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		    if(t->hcp == pcp->hcp1)
+		XYTrace *pt = &(pcp->xyTrace[i]);
+		if((pt->recordX == NULL) && (pt->recordY == NULL)) continue;
+		if((pt->recordX) && (pt->hcp)) {
+		    cartesianPlotUpdateTrace((XtPointer)pt->recordX, True);
+		    if(pt->type == CP_XYVector)
+		      cartesianPlotUpdateTrace((XtPointer)pt->recordY, True);
+		    if(pt->hcp == pcp->hcp1)
 		      pcp->dirty1 = True;
-		    else if(t->hcp == pcp->hcp2)
+		    else if(pt->hcp == pcp->hcp2)
 		      pcp->dirty2 = True;
-		} else if((t->recordY) && (t->hcp)) {
-		    cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		    if(t->hcp == pcp->hcp1)
+		} else if((pt->recordY) && (pt->hcp)) {
+		    cartesianPlotUpdateTrace((XtPointer)pt->recordY, True);
+		    if(pt->hcp == pcp->hcp1)
 		      pcp->dirty1 = True;
-		    else if(t->hcp == pcp->hcp2)
+		    else if(pt->hcp == pcp->hcp2)
 		      pcp->dirty2 = True;
 		}
 	    }
@@ -1358,24 +1328,27 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
   /* If this is the count channel, resize and update the plot */
     if(pcp->countCh.recordX && pr == pcp->countCh.recordX) {
       /* Resize */
-	cartesianPlotResetPlot(pcp);
-      /* Update */
+	Boolean updateLastPoint = cartesianPlotResetPlot(pcp);
+      /* Update without updating lastPoint */
 	for(i = 0; i < pcp->nTraces; i++) {
-	    XYTrace *t = &(pcp->xyTrace[i]);
-	    if((t->recordX == NULL) && (t->recordY == NULL)) continue;
-	    if((t->recordX) && (t->hcp)) {
-		cartesianPlotUpdateTrace((XtPointer)t->recordX);
-		if(t->type == CP_XYVector)
-		  cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		if(t->hcp == pcp->hcp1)
+	    XYTrace *pt = &(pcp->xyTrace[i]);
+	    if((pt->recordX == NULL) && (pt->recordY == NULL)) continue;
+	    if((pt->recordX) && (pt->hcp)) {
+		cartesianPlotUpdateTrace((XtPointer)pt->recordX,
+		  updateLastPoint);
+		if(pt->type == CP_XYVector)
+		  cartesianPlotUpdateTrace((XtPointer)pt->recordY,
+		    updateLastPoint);
+		if(pt->hcp == pcp->hcp1)
 		  pcp->dirty1 = True;
-		else if(t->hcp == pcp->hcp2)
+		else if(pt->hcp == pcp->hcp2)
 		  pcp->dirty2 = True;
-	    } else if((t->recordY) && (t->hcp)) {
-		cartesianPlotUpdateTrace((XtPointer)t->recordY);
-		if(t->hcp == pcp->hcp1)
+	    } else if((pt->recordY) && (pt->hcp)) {
+		cartesianPlotUpdateTrace((XtPointer)pt->recordY,
+		  updateLastPoint);
+		if(pt->hcp == pcp->hcp1)
 		  pcp->dirty1 = True;
-		else if(t->hcp == pcp->hcp2)
+		else if(pt->hcp == pcp->hcp2)
 		  pcp->dirty2 = True;
 	    }
 	}
@@ -1387,7 +1360,7 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
     }
     
   /* This is a trace, update it */
-    cartesianPlotUpdateTrace((XtPointer)pr);
+    cartesianPlotUpdateTrace((XtPointer)pr, True);
     if(pt->hcp == pcp->hcp1) {
 	pcp->dirty1 = True;
     } else if(pt->hcp == pcp->hcp2) {
@@ -1403,14 +1376,14 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 }
 
 /* Set the plot initiallly and reset the plot when the number of
- * points changes */
-static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
+ * points changes. Returns if it was the first time or not */
+static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 {
     XColor xColors[MAX_TRACES];
     CpDataHandle hcp, hcpold, hcp1=NULL, hcp2=NULL, hcpold1=NULL, hcpold2=NULL;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
-    Widget widget = pcp->dlElement->widget;
+    Widget w = pcp->dlElement->widget;
     float minX, maxX, minY, maxY, minY2, maxY2;
     XcVType minXF, maxXF, minYF, maxYF, minY2F, maxY2F, tickF;
     char string[24];
@@ -1424,7 +1397,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 
     if(!pcp) {
 	medmPostMsg(1,"cartesianPlotResetPlot: Invalid plot");
-	return;
+	return False;
     }
 
   /* Check if this is the first time or not */
@@ -1455,7 +1428,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
       /* Check if nPoints has changed */
 	if(nPoints == nPointsOld) {
 	  /* Nothing needs to be done */
-	    return;
+	    return firstTime;
 	} else {
 	  /* Retain pointers to old values */
 	    nPointsOld=pcp->nPoints;
@@ -1464,17 +1437,50 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	}
     }
 
-  /* Allocate the CP data structures with size nPoints */
+  /* Delete the current curves from the plot */
+    CpDataDeleteCurves(w,hcpold1);
+    CpDataDeleteCurves(w,hcpold2);
+
+  /* Allocate the CP data structures with size nPoints.  Note that
+   * nPoints should always be at least 1 because the elementCount is
+   * always at least 1. */
     pcp->nPoints=nPoints;
     hcp1 = hcp2 = NULL;
-    hcp1 = CpDataCreate(widget,CP_GENERAL,1,nPoints);
+    hcp1 = CpDataCreate(w,CP_GENERAL,1,nPoints);
     if(pcp->nTraces > 1) {
-	hcp2 = CpDataCreate(widget,CP_GENERAL,pcp->nTraces-1,nPoints);
+	hcp2 = CpDataCreate(w,CP_GENERAL,pcp->nTraces-1,nPoints);
     }
     
   /* Set the data pointers in the MedmCartesianPlot */
     pcp->hcp1 = hcp1;
     pcp->hcp2 = hcp2;
+
+  /* Get the colors for all the possible traces.  This is done here
+   * because it must be redone each time for SciPlot. */
+    for(i = 0; i < pcp->nTraces; i++)
+      xColors[i].pixel =
+	displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
+    XQueryColors(XtDisplay(w),cmap,xColors,pcp->nTraces);
+
+  /* Loop over traces and set CpDataStyle array */
+    pointSize = MAX(2, dlCartesianPlot->object.height/70);
+    for(i = 0; i < pcp->nTraces; i++) {
+	hcp=i?hcp2:hcp1;
+	switch(dlCartesianPlot->style) {
+	case POINT_PLOT:
+	    CpSetAxisStyle(w, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case LINE_PLOT:
+	    CpSetAxisStyle(w, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
+	      xColors[i], pointSize);
+	    break;
+	case FILL_UNDER_PLOT:
+	    CpSetAxisStyle(w, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
+	      xColors[i], pointSize);
+	    break;
+	}
+    }
 
 #if DEBUG_RESET
     print("  firstTime=%d hcp1=%p hcp2=%p hcpold1=%p hcpold2=%p\n",
@@ -1489,7 +1495,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
    * and copy the old data */
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *pt = &(pcp->xyTrace[i]);
-	int lastPoint;
+	int pointsUsed;
 
       /* Decide which handle to use */
 #if DEBUG_RESET
@@ -1518,33 +1524,14 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    continue;
 	}
 
-      /* Fix init (Used for incrementing last point to
-       * distinguish between no points and one point).
-       * -1: Redo
-       *  0: No points
-          1: One or more points */
-	if(pt->type == CP_XYScalar || pt->type == CP_XScalar ||
-	  pt->type == CP_YScalar) {
-	  /* Set it so the the next update reuses the last point,
-	   * since it will be owing to the reset, not a change in the
-	   * value */
-	    if(pt->init >= 0) pt->init-=2;
-	}
-	
-      /* Fix last point */
-	lastPoint = CpDataGetLastPoint(hcpold,pt->trace);
+      /* Fix points used */
+	pointsUsed = CpDataGetPointsUsed(hcpold,pt->trace);
+	if(pointsUsed > count) pointsUsed = count;
+	CpDataSetPointsUsed(w,hcp,pt->trace,pointsUsed);
 #if DEBUG_RESET
-	print("  After:  Trace %d lastPoint=%d\n",
-	  i,lastPoint);
+	print("  After:  Trace %d pointsUsed=%d\n",
+	  i,pointsUsed);
 #endif
-	if(lastPoint <= 0) {
-	    CpDataSetLastPoint(hcp,pt->trace,0);
-	} else if(lastPoint < nPoints) {
-	    CpDataSetLastPoint(hcp,pt->trace,lastPoint);
-	} else {
-	    CpDataSetLastPoint(hcp,pt->trace,
-	      (nPoints <= 0)?0:nPoints-1);
-	}
 
       /* Copy the data */
 	for(j = 0; j < nPoints; j++) {
@@ -1575,7 +1562,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     if(hcpold1) CpDataDestroy(hcpold1);
     if(hcpold2) CpDataDestroy(hcpold2);
 
-    return;
+    return firstTime;
 
   FIRSTTIME:
 
@@ -1585,19 +1572,11 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     maxX = maxY = maxY2 = (float)(-0.99*FLT_MAX);
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *pt = &(pcp->xyTrace[i]);
-
-      /* Set as uninitialized (Used for incrementing last point to
-       * distinguish between no points and one point).
-       * -1: Redo
-       *  0: No points
-          1: One or more points */
-	pt->init = 0;
-
-      /* Set the last point to 0 */
+      /* Set the pointsUsed to 0 */
 	if(i <= 0) {
-	    CpDataSetLastPoint(hcp1,i,0);
+	    CpDataSetPointsUsed(w,hcp1,i,0);
 	} else {
-	    CpDataSetLastPoint(hcp2,i-1,0);
+	    CpDataSetPointsUsed(w,hcp2,i-1,0);
 	}
 	
       /* Determine data type (based on type (scalar or vector) of data) */
@@ -1616,7 +1595,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 		pt->type = CP_XYScalar;
 	    }
 
-	  //* Get bounds */
+	  /* Get bounds */
 	    if(i <= 0) {
 		minY = (float)MIN(minY,pt->recordY->lopr);
 		maxY = (float)MAX(maxY,pt->recordY->hopr);
@@ -1717,32 +1696,6 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	}
     }
 
-  /* Get the colors for all the possible traces */
-    for(i = 0; i < pcp->nTraces; i++)
-      xColors[i].pixel =
-	displayInfo->colormap[dlCartesianPlot->trace[i].data_clr];
-    XQueryColors(XtDisplay(widget),cmap,xColors,pcp->nTraces);
-
-  /* Loop over traces and set CpDataStyle array */
-    pointSize = MAX(2, dlCartesianPlot->object.height/70);
-    for(i = 0; i < pcp->nTraces; i++) {
-	hcp=i?hcp2:hcp1;
-	switch(dlCartesianPlot->style) {
-	case POINT_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
-	      xColors[i], pointSize);
-	    break;
-	case LINE_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
-	      xColors[i], pointSize);
-	    break;
-	case FILL_UNDER_PLOT:
-	    CpSetAxisStyle(widget, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
-	      xColors[i], pointSize);
-	    break;
-	}
-    }
-
   /* Fill in connect-time channel-based range specifications
    * This is different than the min/max stored in the display element */
     pcp->axisRange[X_AXIS_ELEMENT].axisMin = minX;
@@ -1767,7 +1720,7 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     n = 0;
     if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
       == CHANNEL_RANGE) {
-	CpSetAxisMaxMin(widget, CP_X, maxXF, minXF);
+	CpSetAxisMaxMin(w, CP_X, maxXF, minXF);
     } else if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
       == USER_SPECIFIED_RANGE) {
 	int k;
@@ -1781,14 +1734,14 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	iPrec = k;
 	while(string[k] != '.' && k >= 0) k--;
 	iPrec = iPrec - k;
-	CpSetAxisAll(widget, CP_X, maxXF, minXF, tickF,
+	CpSetAxisAll(w, CP_X, maxXF, minXF, tickF,
 	  tickF, iPrec);
     }
 
   /* Set axis parameters for Y1 */
      if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
        == CHANNEL_RANGE) {
-	 CpSetAxisMaxMin(widget, CP_Y, maxYF, minYF);
+	 CpSetAxisMaxMin(w, CP_Y, maxYF, minYF);
      } else if(dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle
        == USER_SPECIFIED_RANGE) {
 	 int k;
@@ -1802,14 +1755,14 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	 iPrec = k;
 	 while(string[k] != '.' && k >= 0) k--;
 	 iPrec = iPrec - k;
-	 CpSetAxisAll(widget, CP_Y, maxYF, minYF, tickF,
+	 CpSetAxisAll(w, CP_Y, maxYF, minYF, tickF,
 	   tickF, iPrec);
      }
 
   /* Set axis parameters for Y2 */
     if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
       == CHANNEL_RANGE) {
-	CpSetAxisMaxMin(widget, CP_Y2, maxY2F, minY2F);
+	CpSetAxisMaxMin(w, CP_Y2, maxY2F, minY2F);
     } else if(dlCartesianPlot->axis[Y2_AXIS_ELEMENT].rangeStyle
       == USER_SPECIFIED_RANGE) {
 	int k;
@@ -1823,9 +1776,11 @@ static void cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	iPrec = k;
 	while(string[k] != '.' && k >= 0) k--;
 	iPrec = iPrec - k;
-	CpSetAxisAll(widget, CP_Y2, maxY2F, minY2F, tickF,
+	CpSetAxisAll(w, CP_Y2, maxY2F, minY2F, tickF,
 	  tickF, iPrec);
     }
+
+    return firstTime;
 }
 
 static void cartesianPlotDestroyCb(XtPointer cd) {
@@ -1866,7 +1821,7 @@ static void cartesianPlotDestroyCb(XtPointer cd) {
 static void cartesianPlotDraw(XtPointer cd) {
     MedmCartesianPlot *pcp = (MedmCartesianPlot *) cd;
     DlElement *dlElement = pcp->dlElement;
-    Widget widget = dlElement->widget;
+    Widget w = dlElement->widget;
     int i;
     Boolean connected = True;
     Boolean readAccess = True;
@@ -1874,8 +1829,8 @@ static void cartesianPlotDraw(XtPointer cd) {
 
   /* Check if hidden */
     if(dlElement->hidden) {
-	if(widget && XtIsManaged(widget)) {
-	    XtUnmanageChild(widget);
+	if(w && XtIsManaged(w)) {
+	    XtUnmanageChild(w);
 	}
 	return;
     }
@@ -1933,31 +1888,31 @@ static void cartesianPlotDraw(XtPointer cd) {
     }
     if(connected) {
 	if(readAccess) {
-	    if(widget && validPrecision) {
+	    if(w && validPrecision) {
 		if(pcp->dirty1) {
 		    pcp->dirty1 = False;
-		    CpSetData(widget, CP_Y, pcp->hcp1);
+		    CpSetData(w, CP_Y, pcp->hcp1);
 		}
 		if(pcp->dirty2) {
 		    pcp->dirty2 = False;
-		    CpSetData(widget, CP_Y2, pcp->hcp2);
+		    CpSetData(w, CP_Y2, pcp->hcp2);
 		}
-		addCommonHandlers(widget, pcp->updateTask->displayInfo);
-		XtManageChild(widget);
+		addCommonHandlers(w, pcp->updateTask->displayInfo);
+		XtManageChild(w);
 	    }
 	} else {
-	    if(widget && XtIsManaged(widget))
-	      XtUnmanageChild(widget);
+	    if(w && XtIsManaged(w))
+	      XtUnmanageChild(w);
 	    drawBlackRectangle(pcp->updateTask);
 	}
     } else {
-	if(widget && XtIsManaged(widget))
-	  XtUnmanageChild(widget);
+	if(w && XtIsManaged(w))
+	  XtUnmanageChild(w);
 	drawWhiteRectangle(pcp->updateTask);
     }
   /* KE: Used to use CP_FAST here.  SciPlot autoscales to larger, but
      not to smaller then. */
-    CpUpdateWidget(widget, CP_FULL);
+    CpUpdateWidget(w, CP_FULL);
 }
 
 static void cartesianPlotGetRecord(XtPointer cd, Record **record, int *count)
@@ -3464,25 +3419,23 @@ static void dumpCartesianPlotData(const char *title,
 
   /* Loop over traces */
     for(i = 0; i < pcp->nTraces; i++) {
-	XYTrace *t = &(pcp->xyTrace[i]);
-	if((t->recordX) || (t->recordY)) {
-	    int n = CpDataGetLastPoint(t->hcp,t->trace);
+	XYTrace *pt = &(pcp->xyTrace[i]);
+	if((pt->recordX) || (pt->recordY)) {
+	    int pointsUsed = CpDataGetPointsUsed(pt->hcp,pt->trace);
 
-	    print("Trace %d lastPoint=%d init=%s:\n",i,n,t->init?"Yes":"No");
-	    if(t->recordX) {
+	    print("Trace %d: pointsUsed=%d\n",i,pointsUsed);
+	    if(pt->recordX) {
 		print("  x=[%x]%s\n",
-		  t->recordX, t->recordX->name);
+		  pt->recordX, pt->recordX->name);
 	    }
-	    if(t->recordX) {
+	    if(pt->recordX) {
 		print("  y=[%x]%s\n",
-		  t->recordY, t->recordY->name);
+		  pt->recordY, pt->recordY->name);
 	    }
-	    if(t->init) {
-		for(j=0; j <= n; j++) {
-		    print("  %2d %15g %15g\n",j,
-		      CpDataGetXElement(t->hcp,t->trace,j),
-		      CpDataGetYElement(t->hcp,t->trace,j));
-		}
+	    for(j=0; j < pointsUsed; j++) {
+		print("  %2d %15g %15g\n",j,
+		  CpDataGetXElement(pt->hcp,pt->trace,j),
+		  CpDataGetYElement(pt->hcp,pt->trace,j));
 	    }
 	}
     }

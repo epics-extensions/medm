@@ -57,7 +57,7 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
     for(i=0; i < nsets; i++) {
 	ds = hData->data+i;
 	ds->npoints = npoints;
-	ds->lastPoint = MAX(npoints-1,0);
+	ds->pointsUsed = MAX(npoints,0);
 	ds->listid = INVALID_LISTID;
 	ds->xp = NULL;
 	ds->yp = NULL;
@@ -82,8 +82,8 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
 	print("CpDataCreate: hData=%x nsets=%d data=%x\n",hData,hData->nsets,hData->data);
 	for(i=0; i < hData->nsets; i++) {
 	    ds = hData->data+i;
-	    print("  Set %d: ds=%x npoints=%d lastPoint=%d listid=%d xp=%x yp=%x\n",
-	      i,ds,ds->npoints,ds->lastPoint,ds->listid,ds->xp,ds->yp);
+	    print("  Set %d: ds=%x npoints=%d pointsUsed=%d listid=%d xp=%x yp=%x\n",
+	      i,ds,ds->npoints,ds->pointsUsed,ds->listid,ds->xp,ds->yp);
 	}
     } else {
 	print("CpDataCreate: hData=NULL\n");
@@ -93,8 +93,26 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
     return hData;
 }
 
-int CpDataGetLastPoint(CpDataHandle hData, int set) {
-    return hData->data[set].lastPoint;
+void CpDataDeleteCurves(Widget w, CpDataHandle hData)
+{
+    int i, listid, nsets;
+
+  /* Return if handle is NULL */
+    if(!hData) return;
+
+  /* Loop over sets */
+    nsets = hData->nsets;
+    for(i=0; i < nsets; i++) {
+	listid = hData->data[i].listid;
+	if(listid != INVALID_LISTID) {
+	    SciPlotListDelete(w, listid);
+	    hData->data[i].listid=INVALID_LISTID;
+	}
+    }
+}
+
+int CpDataGetPointsUsed(CpDataHandle hData, int set) {
+    return hData->data[set].pointsUsed;
 }
 
 double CpDataGetXElement(CpDataHandle hData, int set, int point) {
@@ -115,8 +133,8 @@ void CpDataDestroy(CpDataHandle hData)
 	print("CpDataCreate: hData=%x nsets=%d data=%x\n",hData,hData->nsets,hData->data);
 	for(i=0; i < hData->nsets; i++) {
 	    ds = hData->data+i;
-	    print("  Set %d: ds=%x npoints=%d lastPoint=%d listid=%d xp=%x yp=%x\n",
-	      i,ds,ds->npoints,ds->lastPoint,ds->listid,ds->xp,ds->yp);
+	    print("  Set %d: ds=%x npoints=%d pointsUsed=%d listid=%d xp=%x yp=%x\n",
+	      i,ds,ds->npoints,ds->pointsUsed,ds->listid,ds->xp,ds->yp);
 	}
     } else {
 	print("CpDataCreate: hData=NULL\n");
@@ -142,8 +160,14 @@ int CpDataSetHole(CpDataHandle hData, double hole) {
     return 1;
 }
 
-int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
-    hData->data[set].lastPoint = MAX(point,0);
+int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int point) {
+    int listid;
+    
+    hData->data[set].pointsUsed = MAX(point,0);
+    listid = hData->data[set].listid;
+    SciPlotListUpdateFloat(w, listid, hData->data[set].pointsUsed,
+      hData->data[set].xp, hData->data[set].yp);
+    SciPlotUpdate(w);
     return 1;
 }
 
@@ -451,14 +475,9 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
 	      hData->data[i].xp, hData->data[i].yp, "");
 	}
-      /* Update with lastPoint */
-#if 0
-	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint+1,
+      /* Update with pointsUsed */
+	SciPlotListUpdateFloat(w, listid, hData->data[i].pointsUsed,
 	  hData->data[i].xp, hData->data[i].yp);
-#else
-	SciPlotListUpdateFloat(w, listid, hData->data[i].lastPoint,
-	  hData->data[i].xp, hData->data[i].yp);
-#endif
     }
   /* Don't do SciPlotUpdate here for efficiency */
 }

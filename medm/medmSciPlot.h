@@ -21,7 +21,7 @@
 
 typedef struct {
     int npoints;
-    int lastPoint;
+    int pointsUsed;
     int listid;
     float *xp;
     float *yp;

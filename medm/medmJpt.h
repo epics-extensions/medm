@@ -34,13 +34,5 @@
   PlotDataSetXElement(hData, set, point, x)
 #define CpDataSetYElement(hData, set, point, y) \
   PlotDataSetYElement(hData, set, point, y)
-/*
-#define CpDataGetLastPoint(hData, set) \
-  PlotDataGetLastPoint(hData, set)
-#define CpDataSetLastPoint(hData, set, npoints) \
-  PlotDataSetLastPoint(hData, set, npoints)
-*/
-
-/*typedef CpData * PlotDataHandle; */
 
 #endif  /* __MEDMJPT_H__ */

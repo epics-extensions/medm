@@ -19,7 +19,7 @@ USE_MOTIF12=NO
 ifdef WIN32
 #HOST_OPT = NO
 else
-HOST_OPT = NO
+#HOST_OPT = NO
 endif
 
 # gprof
@@ -40,7 +40,7 @@ CMPLR = STRICT
 
 # Purify
 ifeq ($(OS_CLASS),solaris)
-PURIFY=YES
+#PURIFY=YES
 PURIFY_FLAGS = -first-only -chain-length=26
 #PURIFY_FLAGS = -first-only -chain-length=26 -max_threads=256
 #PURIFY_FLAGS = -first-only -chain-length=26 -always-use-cache-dir -cache-dir=/tmp/purifycache
@@ -60,8 +60,8 @@ endif
 
 # Use to test SciPlot or JPT, otherwise should come from CONFIG
 # Set the one you want and reset any that come from CONFIG
-XRTGRAPH =
-SCIPLOT = YES
+#XRTGRAPH =
+#SCIPLOT = YES
 #JPT = YES
 
 # Use to test CDEV, Otherwise should come from CONFIG

@@ -63,7 +63,6 @@ typedef struct {
     Record                *recordX;
     Record                *recordY;
     XYChannelTypeEnum     type;
-    int                   init;
 } XYTrace;
 
 typedef struct _MedmCartesianPlot {
@@ -90,12 +89,13 @@ typedef struct _MedmCartesianPlot {
  * These should be the same for any plot package */
 
 CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints);
-int CpDataGetLastPoint(CpDataHandle hData, int set);
+void CpDataDeleteCurves(Widget w, CpDataHandle hData);
+int CpDataGetPointsUsed(CpDataHandle hData, int set);
 double CpDataGetXElement(CpDataHandle hData, int set, int point);
 double CpDataGetYElement(CpDataHandle hData, int set, int point);
 void CpDataDestroy(CpDataHandle hData);
 int CpDataSetHole(CpDataHandle hData, double hole);
-int CpDataSetLastPoint(CpDataHandle hData, int set, int npoints);
+int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int npoints);
 int CpDataSetXElement(CpDataHandle hData, int set, int point, double x);
 int CpDataSetYElement(CpDataHandle hData, int set, int point, double y);
 

@@ -16,8 +16,9 @@
 #define DEBUG_CARTESIAN_PLOT 0
 #define DEBUG_XRT 0
 #define DEBUG_AXIS 0
+#define DEBUG_COUNT 0
 
-#define MAX(a,b)  ((a)>(b)?(a):(b))
+#define MAX(a,b) ((a)>(b)?(a):(b))
 
 #include "medm.h"
 #include "medmXrtGraph.h"
@@ -35,8 +36,8 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints) {
     return XrtMakeData(type,nsets,npoints,True);
 }
 
-int CpDataGetLastPoint(CpDataHandle hData, int set) {
-    return (MAX(hData->g.data[set].npoints-1,0));
+int CpDataGetPointsUsed(CpDataHandle hData, int set) {
+    return (hData->g.data[set].npoints);
 }
 
 double CpDataGetXElement(CpDataHandle hData, int set, int point) {
@@ -56,8 +57,9 @@ int CpDataSetHole(CpDataHandle hData, double hole) {
     return 1;
 }
 
-int CpDataSetLastPoint(CpDataHandle hData, int set, int point) {
-    hData->g.data[set].npoints = point+1;
+int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int point) {
+  /* w is unused */
+    hData->g.data[set].npoints = MAX(point,0);
     return 1;
 }
 
@@ -84,6 +86,10 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
 }
 #endif			    
 #endif    
+
+void CpDataDeleteCurves(Widget w, CpDataHandle hData) {
+  /* Not necessary */
+}
 
 void CpGetAxisInfo(Widget w,
   XtPointer *userData, Boolean *xAxisIsTime, char **timeFormat,
@@ -492,7 +498,7 @@ void CpEraseData(Widget w, int axis, CpDataHandle hData)
     if(!hcpNullData) {
 	hcpNullData = CpDataCreate((Widget)0,CP_GENERAL,1,1);
 	CpDataSetHole(hcpNullData,0.0);
-	CpDataSetLastPoint(hcpNullData,0,0);
+	CpDataSetPointsUsed((Widget)0,hcpNullData,0,0);
 	CpDataSetXElement(hcpNullData,0,0,0.0);
 	CpDataSetYElement(hcpNullData,0,0,0.0);
     }
@@ -879,4 +885,35 @@ void dumpCartesianPlot(Widget w)
       XmPIXELS,Xm100TH_MILLIMETERS,Xm1000TH_INCHES,Xm100TH_POINTS,Xm100TH_FONT_UNITS);
     print("timeBase: %d\n",timeBase);
 }
+
+int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int npoints)
+{
+    if(npoints > 0) {
+	XrtDataSetDisplay(hData, set, XRT_DISPLAY_SHOW);
+    } else {
+	XrtDataSetDisplay(hData, set, XRT_DISPLAY_HIDE);
+    }
+#if DEBUG_COUNT
+    print("CpDataSetPointsUsed: hData=%p set=%d npoints=%d\n",
+      hData,set,npoints);
+#endif
+    return XrtDataSetLastPoint(hData, set, MAX(npoints-1,0));
+}
+
+int CpDataGetPointsUsed(CpDataHandle hData, int set)
+{
+    int retVal;
+    XrtDisplay display = XrtDataGetDisplay(hData, set);
+    if(display == XRT_DISPLAY_HIDE) {
+	retVal=0;
+    }else {
+	retVal = XrtDataGetLastPoint(hData, set) + 1;
+    }
+#if DEBUG_COUNT
+    print("CpDataGetPointsUsed: hData=%p set=%d retVal=%d\n",
+      hData,set,retVal);
+#endif
+    return retVal;
+}
+
 #endif

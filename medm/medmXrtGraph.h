@@ -32,8 +32,6 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
 
 #define CpDataCreate(widget, type, nsets, npoints) \
   XrtDataCreate(type, nsets, npoints)
-#define CpDataGetLastPoint(hData, set) \
-  XrtDataGetLastPoint(hData, set)
 #define CpDataGetXElement(hData, set, point) \
   XrtDataGetXElement(hData, set, point)
 #define CpDataGetYElement(hData, set, point) \
@@ -42,8 +40,6 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
   XrtDataDestroy(hData)
 #define CpDataSetHole(hData, hole) \
   XrtDataSetHole(hData, hole)
-#define CpDataSetLastPoint(hData, set, npoints) \
-  XrtDataSetLastPoint(hData, set, npoints)
 #define CpDataSetXElement(hData, set, point, x) \
   XrtDataSetXElement(hData, set, point, x)
 #define CpDataSetYElement(hData, set, point, y) \
