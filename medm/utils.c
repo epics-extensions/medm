@@ -3103,7 +3103,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     XmString xmString;
     XEvent event;
 
-/* create the dialog if necessary */
+  /* Create the dialog if necessary */
 
     if (displayInfo->warningDialog == NULL) {
       /* this doesn't seem to be working (and should check if MWM is running) */
@@ -3146,7 +3146,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     displayInfo->warningDialogAnswer = 0;
     XtManageChild(displayInfo->warningDialog);
     XSync(display,FALSE);
-  /* force Modal (blocking dialog) */
+  /* Force Modal (blocking dialog) */
     XtAddGrab(XtParent(displayInfo->warningDialog),True,False);
     XmUpdateDisplay(XtParent(displayInfo->warningDialog));
     while (!displayInfo->warningDialogAnswer || XtAppPending(appContext)) {

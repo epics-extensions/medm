@@ -221,7 +221,7 @@ static Window findNetscapeWindow(void)
   /* Look at the children from the top of the stacking order */
     for(i=nchildren-1; i >= 0; i--) {
 	w=XmuClientWindow(display,children[i]);
-      /* Check if this is the Netsacpe window */
+      /* Check if this is the Netscape window */
 #if DEBUG
 	printf("Child %d ",i);
 #endif	
