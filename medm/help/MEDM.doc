@@ -1,0 +1,398 @@
+ĞÏà¡±á>şÿ	¶¸şÿÿÿ°±²³´µÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿì¥Áq	¿$bjbjt+t+	%AA¤ÿÿÿÿÿÿ]ÂÂÂÂÂÂÂÖÖÖÖ8œªÌÖ÷Í2"	Ğò':,(,(,(,(6Wb|Ş˜À¼Í¾Í¾Í¾Í¾Í¾Í¾Í$)ÏôÑœâÍÂ¥,(,(¥¥âÍæÂÂÂ,(,("	æÂæÂæÂ¥ŠÂ,(Â,(¼ÍÖÖÂÂÂÂ¥¼ÍæÂ¬æÂ’Ç¦hÌ0ÂÂ¼Í,(v¬`plßû¾ÖÖ(¼¾˜Í$MEDM Reference ManualKenneth Evans, Jr. DATE \@ "MMMM yyyy" \* MERGEFORMAT September 1999Advanced Photon SourceArgonne National Laboratory9700 South Cass Avenue, Argonne, Illinois 60439   <P><HR><IMG HEIGHT=40 WIDTH=40 SRC=construct.gif ALIGN=bottom>This document is always under construction in order to incorporate new features in MEDM as they are added.  Sometimes these features may not yet be available in the currently-released version of MEDM.</P><HR>Contents HYPERLINK  \l "Copyright" Copyright HYPERLINK  \l "Overview" Overview HYPERLINK  \l "NewFeatures" New Features HYPERLINK  \l "History" History HYPERLINK  \l "CommandLine" Command Line HYPERLINK  \l "ADLFiles" ADL Files HYPERLINK  \l "SiteSpecific" Site-Specific Customization HYPERLINK  \l "Fonts" Fonts HYPERLINK  \l "InitialLocations" Initial Locations for Main Windows HYPERLINK  \l "Palettes" PalettesHYPERLINK  \l "MEDMObjects"MEDM Objects HYPERLINK  \l "ObjectIndex" Object Index HYPERLINK  \l "AttributeIndex" Attribute Index HYPERLINK  \l "Composite" Composite Objects HYPERLINK  \l "CalcExpression" CALC Expressions HYPERLINK  \l "Grid" Grid HYPERLINK  \l "MacroSubstitution" Macro Substitution HYPERLINK  \l "DragAndDrop" Drag-And-Drop HYPERLINK  \l "DialogBoxes" Dialog Boxes	HYPERLINK  \l "DisplayListDialogBox"Display List	HYPERLINK  \l "PVLimitsDialogBox"PV Limits and Precision	 HYPERLINK  \l "MessageWindow" Message Window	 HYPERLINK  \l "StatisticsWindow" Statistics Window	 HYPERLINK  \l "PVInfoDialogBox" PV Info HYPERLINK  \l "Help" Help HYPERLINK  \l "SmartStartup" Smart Startup HYPERLINK  \l "DisplayColors" Display Colors HYPERLINK  \l "Resizing" Resizing Displays HYPERLINK  \l "Editing" Editing HYPERLINK  \l "ExecuteModePopupMenu" Execute-Mode Popup Menu HYPERLINK  \l "Printing" Printing HYPERLINK  \l "ExecuteMenu" Execute Menu HYPERLINK  \l "ColorConventions" Color Conventions HYPERLINK  \l "EnvironmentVariables" Environment Variables HYPERLINK  \l "Building" Building MEDMHYPERLINK  \l "CDEVSupport"CDEV Support HYPERLINK  \l "Glossary" Glossary HYPERLINK  \l "TechSupport" Technical SupportOverview	MEDM stands for Motif Editor and Display Manager.  It is a graphical user interface (GUI) for designing and implementing control screens, called displays, that consist of a collection of graphical objects that display and/or change the values of EPICS process variables.  The supported objects include buttons, meters, sliders, text displays/entries, and graphs.  It has two modes of operation, EDIT and EXECUTE.  Displays are created and edited in EDIT mode, and they are run in EXECUTE mode.  MEDM is an  HYPERLINK  \l "EPICSExtension" EPICS extension.New FeaturesVersion 2.32.3.6The  HYPERLINK  \l "Image" Image has been enhanced to read GIF89a files (the latest GIF specification).  It now handles multiple-frame GIFs.  Multiple-frame GIFs can be set to animate or to display a specific frame based on a  HYPERLINK  \l "CalcExpression" CALC expression that can include up to four process variables.  This opens a wide range of creative possibilities, including implementing  HYPER
+$%&./01NOP\]^_xyz‚ƒ„¡¢£¯°±²ÌÍÎ×ØÙÚøıõèõèŞèõ×ÓÎÆÎÃÎÎ»ÎÃÎÎ³ÎÃÎÎ«ÎÃÎÎ£ÎÃÎÎ›ÎÃÎÎjKUjÒUjaUjèUjuU0JjU	jU0J6CJOJQJ5CJOJQJmHj5CJOJQJU5CJOJQJCJH:+aby•È×à	0^ƒ±Ù8¨Ô6gœûûùùùùòòííëçççççççççççááçç„Ğ¤¤&d	$„¤„+QZ[_aby•È×à	0^ƒ±Ù8¨Ô6gœ»õ$	R	ˆ	Æ	ù	2
+`
+
+¯
+á
+6xŸÍüüùöôôôôôñëåâßÙÖÓĞÍÊÇÄÁ¾»¸µ²¯¬©¦£ š—”‘‹ˆ…‚|y8úÿÿ_úÿÿ¡úÿÿÆúÿÿöúÿÿ(ûÿÿXûÿÿwûÿÿ¥ûÿÿŞûÿÿüÿÿOüÿÿ…üÿÿ³üÿÿâüÿÿıÿÿ;ıÿÿpıÿÿ¡ıÿÿÕıÿÿşÿÿ/şÿÿVşÿÿŸşÿÿÀşÿÿşşÿÿ&ÿÿÿTÿÿÿyÿÿÿ§ÿÿÿÎÿÿÿ÷ÿÿÿ
+*şÿÿ±ÿÿÿäÿÿÿ
+	ˆÿÿÿ
+	Ÿÿÿÿ ÿÿÿéÿÿÿêÿÿÿ/øùú/016789[\]€‚œ¦§¨©ÄÅÆÒÓÔÕòóô#$%4567RSTefghˆ‰Šš›œ³´µ¹÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjUj‚UjUjUjUjœUj)Uj¦Uj9U0J	jUj¾UB¹º»¼ßàáóôõö			"	#	$	%	B	C	D	P	Q	S	T	x	y	z	†	‡	‰	Š	«	¬	­	Ä	Å	Ç	È	ç	è	é	÷	ø	ú	û	
+
+
+0
+1
+3
+4
+U
+V
+W
+^
+_
+`
+a
+w
+x
+y
+}
+~
+
+€
+
+úúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúújtUjó
+Ujp
+Ujó	Ujn	UjãUjjUjñU0JjlU	jUCœ»õ$	R	ˆ	Æ	ù	2
+`
+
+¯
+á
+6xŸÍEqÄ÷0=IOûûûûûûûûûûûûûûûûûûûûûûûù÷ùõ÷¤
+Ÿ
+ 
+­
+®
+¯
+°
+Ï
+Ğ
+Ñ
+ß
+à
+á
+â
+ü
+ı
+ş
++,-4567]^_vwxy“”•Ÿ ½¾¿ËÌÍÎğñò,-.CDEF`abo÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïj@UjµUj2Uj¹UjFUj»UjJUj×UjZU0J	jUjßUBÍEqÄ÷0=IOóoídjqU.­Üw`ôúÎ üùöóğíçäŞØÕÏÇ¿·¯©¦–†~vnf^[SCğÿÿ	
+Iğÿÿ ğÿÿ	
+İğÿÿ	
+Æñÿÿ	
+aòÿÿ	
+òÿÿ	
+óÿÿ	
+èôÿÿ	
+Ìöÿÿ	
+Ó÷ÿÿ	
+Ù÷ÿÿ
+Pøÿÿ	Îùÿÿ	
+Júÿÿ	
+2üÿÿ	
+*ıÿÿ	
+
+îÿÿÿ	ôÿÿÿ
+óÿÿÿ
+Ñôÿÿ÷ÿÿÿ
+
+÷ÿÿùÿÿ:ùÿÿfùÿÿ’ùÿÿÒùÿÿ
+úÿÿopqr›œ¸¹ºÂÃÄÅâãäõö"#*+ûü-.STklmrs56VWXghãä%&FGHWX`aÂúúòúïúúçúïúúßúïúİİİİÖïÌÖïÖúÄúïúú¼úïúú´úïúú¬úïúújúUjƒUjUj—Uj0JUj0JU>*jŸUj,U0Jj³U	jUDÂÃÄİŞ:;<MNŸ ÀÁÂÑÒ+,-67BCefgxy¸¹ºÂÃşÿ-.pq‘’›œ}~œ¬­÷ø÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjrUj÷UjzUjÿUjŒUj	Uj”UjUj’U0J	jUjyUBOóoídjqU.­Üw`ôúÎ [!v#Ş#5$;$¬%=&m&\'(úúúúúõóúúúúõõõõõóõõõõõóõõõõõ
+&F
+&Fno‘’ª«uvŒ’“˜™·¸¹ÆÇnoˆ‰Š‘’ÇÈçèé÷ø()CDENOtu–—˜ª«çè#45TUVdeúúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïú±ú©úïúj«UB*OJQJj2Uj±Uj>UjÁUjPUjÕUjjU0JjåU	jUBevw”•–š›©ªÄÅÆËÌ$%&459?Y`ù ğ ñ !!!"!#!`!a!x!y!z!!€!‚!ƒ!Ÿ! !¡!¬!­!³!´!Ô!Õ!Ö!ã!ä!Œ##¤#¥#¦#´#µ#
+$$"$#$úòúïúúçúïúúßúïúÙÙÙúÑúïúúÉúïúúÁúïúú¹úïúú±úïúú©jÜ!Ujo!Ujğ Ujy Uj UjUB*OJQJjUj¡U0Jj(U	jUBÎ [!v#Ş#5$;$¬%=&m&\'(É(I))*q+l,d-F.ó.‚/ë/ó/2–4Î5ñ7÷ïçßÜÔÌÄ¼´¬¤œ”Œ„|tld\VSPMJúÿÿUûÿÿNıÿÿøÿÿÿ
+Ôÿÿ»ßÿÿ	
+Jàÿÿ	
+÷àÿÿ	
+Ùáÿÿ	
+Ñâÿÿ	
+Ìãÿÿ	
+"åÿÿ	
+¯åÿÿ	
+ôåÿÿ	
+tæÿÿ	
+'çÿÿ	
+áçÿÿ	
+Ğèÿÿ	
+éÿÿ	
+‘éÿÿ	
+ëÿÿ	
+ëÿÿ_ëÿÿ	
+
+Çëÿÿ	
+	âíÿÿ	
+oîÿÿ	
+#$$$)$*$;$<$R$S$T$X$Y$M&N&d&e&f&j&k&•&–&±&²&³&¸&¹&Â&Ã&á&â&ã&ë&ì&h'i''€''…'†'¢(£(»(¼(½(Æ(Ç())4)5)6)F)G)X)Y)z){)|)ƒ)„)))»)¼)½)É)Ê)×)Ø)ş)ú÷úúïú÷úúçú÷úúßú÷úú×ú÷úúÏú÷úúÇú÷úú¿ú÷úú·ú÷úú¯ú÷úújã%Ujb%Ují$Ujz$Uj$Uj”#Uj#Uj´"UjI"U0J	jUE(É(I))*q+l,d-F.ó.‚/ë/ó/2–4Î5ñ7ş7Å9·<Ä<==%=1=<=[=d=x=úúúúúúúúúúúøööööøööøöôğğğğğğ„
+&Fş)ÿ)***K*L*l*m*n*}*~*u+v+•+–+—+¥+¦+­+®+×+Ø+Ù+ä+å+,,7,8,9,J,K,l,m,‹,Œ,,›,œ,¹,º,×,Ø,Ù,å,æ,..).*.+.C.D.\.].{.|.}.“.”.f0g0n0o0€0‚0…0†0÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïò­­­­>*jv*Ujó)Ujz)Ujÿ(Ujt(Ujã'Ujf'Ujç&U0J	jUj\&UD†0Ğ0Ñ0ë0ì0í0î0ï0H1I1`1a1b1g1h1/303E3F3G3J3K3Â7Ã7à7á7â7î7ï788(8)8*838486878N8O8P8U8V8[8\8s8t8u8z8{8 9¡9·9¸9¹9Â9Ã9::¥:¦:§:Á:Â:‘=øõëøõøøõáøõøÜÔÜõÜÜÌÜõÜÜÄÜõÜÜ¼ÜõÜÜ´ÜõÜÜ¬ÜõÜÜ¤ÜõÜjk.Uj.Uj“-Uj&-Uj³,Uj:,UjÑ+U	jUjd+0JUjñ*0JU0Jj0JU@ñ7ş7Å9·<Ä<==%=1=<=[=d=x=‚=œ=½=å=ö=û=4?I?S?—?˜?¤?±?²?»?Î?Ï?Ò?ğ?ñ?ô?'@(@ú÷ôî÷éäßÚÕĞËÆÁ¼·²­ª¤Ÿš–‘Œˆƒ~zuplgb^ÿÿÿ	
+@ÿÿÿ	
+CÿÿÿDÿÿÿ	
+bÿÿÿ	
+eÿÿÿfÿÿÿ	
+yÿÿÿ	
+‚ÿÿÿƒÿÿÿ	
+ÿÿÿ	
+œÿÿÿÿÿÿ	
+áÿÿÿ	
+ëÿÿÿ
+ƒıÿÿ¼şÿÿÁşÿÿÒşÿÿúşÿÿÿÿÿ5ÿÿÿ?ÿÿÿSÿÿÿ\ÿÿÿ{ÿÿÿ†ÿÿÿ’ÿÿÿ ÿÿÿ²ÿÿÿ
+JÇÿÿ,şÿÿóÿÿÿ
+Ìÿÿ#x=‚=œ=½=å=ö=û=4?I?S?—?˜?¤?±?²?»?Î?Ï?Ò?ğ?ñ?ô?'@(@/@è@ûûûûûûù÷ôôÚhôôÚtôôÚˆôôÚÜôôÚôô$$–lÖÖ”ÿ¼,"$„‘=š=¦=©=ª=­=®=±=²=µ=Ä=È=Ê=Î=Ò=Ù=Û=â=ç=ô=I?¯B°BÎBÏBĞBİBŞBADBDaDbDcDqDrDŸDõDEE6E7ENEOEPEUEVEFFFFGFKFRFWFF—FÒGàG>H_RhRoRxR…R†R©RªR«R°R±RµR¶RÚRÛRÜRııııııııııùğùèğåğùğùİğåğùùÚùğùÒğåğùÚùÚùÚùÚùÚùÚùııÍÅÍåÍÍ½Íj¾0Uj90U	jUjÌ/U0JjO/U0JjÔ.Uj0J6U0J66J(@/@è@é@ñ@ĞBİBàBáBêBlCmCsC	D
+DD1D2D9DcDqDöD÷DEPEUEÿEFFŠF‹F˜FÑGÒGàG=H>HGHgHoH‘H¬HúõñìêêêæáÜØÓÎÊÅÀ¼·êêê³®êêêª¥ œ—’‰„€zwroj­ÿÿÿÏÿÿÿ×ÿÿÿ÷ÿÿÿ
+yôÿÿ÷öÿÿ	
+T÷ÿÿ	
+b÷ÿÿc÷ÿÿ	
+œøÿÿ	
+©øÿÿªøÿÿ	
+"ùÿÿ	
+4ùÿÿ5ùÿÿ	
+=úÿÿ>úÿÿ	
+ûÿÿûÿÿ	
+ûÿÿ	
+*ûÿÿ+ûÿÿ	
+Áûÿÿ	
+ÇûÿÿÈûÿÿ	
+Jüÿÿ	
+SüÿÿTüÿÿ	
+KşÿÿLşÿÿ	
+ÿÿÿ	
+ÿÿÿ)è@é@ñ@àBáBêBlCmCsC	D
+DD1D2D9DöD÷DEÿEFFŠF‹F˜FÑGÒGàGåàââå0ââåtââå ââåââå$ââå,ââåââå°â$$$–lÖÖ”ÿ¼,"àG=H>HGHgHoH‘H¬HáHğHI6I±IÕI·JòJüJ‹MôMÅNxOÑOÒOîOìQüâàŞÚŞÚŞÚŞÚŞÚŞÚØŞŞÓÓÓŞØŞ
+&F„$$–lÖÖ”ÿ¼,"$¬HáHğHI6I±IÕI·JòJüJ‹MôMÅNxOÑOÒOîOìQòQQRiRœS°ST¸TğV6W|WÂWXPX˜XàX(YqYºYZMZ›Zü÷ôïìçäßÙÖÓÍÅ½º´±«¨£ š•’Š‡„~{xurolifOùÿÿ™ùÿÿâùÿÿ+úÿÿtúÿÿ¼úÿÿûÿÿLûÿÿ”ûÿÿÚûÿÿ üÿÿfüÿÿ¬üÿÿäşÿÿÿşÿÿìÿÿÿ
+Pşÿÿƒÿÿÿ›ÿÿÿúÿÿÿ
+²ÿÿäÿÿÿ
+/´ÿÿ!ûÿÿzûÿÿ	
+-üÿÿ	
+
+şüÿÿ	gıÿÿöÿÿÿ
+¹ÿÿ‡ıÿÿişÿÿşÿÿÿÿÿ&ÿÿÿNÿÿÿ]ÿÿÿ’ÿÿÿ&ìQòQQRiRœS°ST¸TğV6W|WÂWXPX˜XàX(YqYºYZMZ›ZçZ3[[O\‹\ıû÷ûõóûïëëëëëëëëëëëëëëëûûû¤„„ÜRäRåRîRïRSSS1S2ST¸TğV[O\‹\¯]´]»]Ë]Ø]è]^(^F^L^u^ˆ^×^ó^v_{_‚_’_Ÿ_¤_ª_±_‘`­`Ê`ayfñf2i3iKiLiMiTiUiñiõikk¯k°k±kÀkÁkl	l(l)l*l8l9lœlÃlÄlÙlÚlÛlıøøğøıøîæîîîîîîîîîîîîîîãøÛøıøÙøÑøıøøÉøıøîÂı¸ÂjK30JUj0JUjÎ2UjO2U6jà1U0JB*CJOJQJ5jI1U	jU0JH›ZçZ3[[O\‹\“]‹^_Z_E`Ê`aza‘agbyb†b¢bÀb c>cddÜdúdyf•f´fÕfñf1g:gIgZghgug iÍklœl¥l®lºlÂlÃlÛlŞlàlılm
+m+m8m:mXmamcmdm~mƒm…m£m¯m±mÊmÎmĞmìmómõmömnüùöóğêâÚ×ÑÉÇÄÂÂÂÄÂ¿ÂÂÂÂ¿ÄÄÄ¿Ä¼¼¼¼º¸¸¸¸¸¸¸¸¸¸¸¸º¸¸¸¸¸¸¸¸¸¸¸¸º¸
+Wóÿÿ	
+
+Bôÿÿ	Œôÿÿõÿÿ	
+	öÿÿ	
+
+÷ÿÿ	M÷ÿÿøÿÿiøÿÿµøÿÿùÿÿH‹\“]‹^_Z_E`Ê`aza‘agbyb†b¢bÀb c>cddÜdúdyf•f´fÕfñfóóóñììñêèñäñääñèññäâñääää„
+&F
+&F„hÆ8hñf1g:gIgZghgug iÍklœl¥l®lºlÂlÃlàl
+m:mcmdm…m±mĞmõmûù÷÷÷ùõõõ÷òòòòÖ„ÓÓÓÓÖHÓÓÓÓ$$$–lÖÖ:	u¯ê$$„ĞÛlŞlßlàlálûlülılm	m
+mm)m*m+m8m9m:m;mVmWmXmambmdmem|m}m~mƒm„m…m†m¡m¢m£m¯m°m±m²mÈmÉmÊmÎmÏmĞmÑmêmëmìmómômöm÷mnnnnnnn5nıöıöıëöıöıöıáöıöıöıÖöıöıöıÌöıöıöıÁöıöıöı·öıöıöı¬öıöıöı¢öıöıöıjİ60JUjl6>*B*Uj60JUjˆ5>*B*Uj50JUj¦4>*B*Uj+40JUj´3>*B*Uj0JU0J=õmömnGnynzn{nšn»nïnğnñnoHoxoyozo¡oÍoğoñoòopKpupvpwpãààààãØààààã$ààààãàààààãààààã„$$$–lÖÖ:	u¯ê$nnn7nEnGninwnynzn{n”n˜nšn´n¹n»nŞnínïnğnñnooo9oFoHoiovoxoyozo—oŸo¡oÀoËoÍoèoîoğoñoòoppp=pIpKpipspupvpwpp’p”p•p–p—p˜p™p©pfrorvrwr›r¡r£rÎrçrérsss:sNsPsQstsys{s§sÁsÃsásësíst,t.t/tTt[t]tşşşşşşşşúøşşşşşşşşşúøşşşşşşşşşúøşşşşşşşşşúøşşşşşşşşşúøşşşúúúøõòòøşşşşşşşşşşşşøşşşşşşşşşşşşøşşş
+
+`5n6n7nEnFnGnHngnhninwnxn{n|n’n“n”n˜n™nšn›n²n³n´n¹nºn»n¼nÜnİnŞnínînñnònooooooo7o8o9oFoGoHoIogohoiovowozo{o•o–o—oŸo o¡oõîëîëîëáîëîëîë×îëîëîëÍîëîëîëÃîëîëîë¹îëîëîë¯îëîëîë¥îëîëîë›îëîëj;0JUj‰:0JUj
+:0JUj™90JUj90JUj­80JUjB80JUjÅ70JU0Jj0JUjH70JU=¡o¢o¾o¿oÀoËoÌoÍoÎoæoçoèoîoïoòoóoppppppp;p<p=pIpJpKpLpgphpipsptpwpxpŒppp’p“p˜pfrwrxr™ršr›r¡r¢r£r¤rÌrÍrÎrçrèrérêrsøõëøõøõøõáøõøõøõ×øõøõøõÍøõøõøõÃøõøõøõ¹øõøõ·øõ¬øõøõ§Ÿ§õ§§j°>U	jUj/>>*B*U5jÄ=0JUjO=0JUjÒ<0JUj]<0JUjî;0JUjw;0JU0Jj0JU<wp”p•p–p—p˜p™p©pfrorvrwr£rérsPsQs{sÃsüüüüàŞÜŞÙÙ¾hÙÙÙÙ¢xÙÙ$$–lÖÖì,€X $$–l4ÖÖìX $$$–lÖÖ:	u¯ê$$sssssss8s9s:sNsOsPsQsRsrssstsyszs{s|s¥s¦s§sÁsÂsÃsÄsßsàsásësìsísîsttt,t-t.t/t0tRtStTt[t\t]t^t‚tƒt„t˜t™tšt›tµt¶t·tÀtÁtÂtÃt÷òïòòçòïòïàïÕàïàïòÍòïòòÅòïòò½òïòïàï²àïàïòªòïòò¢òïòòjUCUjÎBUjKB>*B*UjÀAUjKAUjº@Uj;@>*B*Uj0JUj´?U0J	jUj??U@Ãsís.t/t]tštÂtétêtu`uŠu´uµuãuv7vcvdv‡v±vŞvw	w1wZw{wüüàìüüüüà,üüüüà¼üüüüà”üüüüàœüüü$$–lÖÖì,€X $]t„t˜tšt·tÀtÂtßtçtétêtuuuDu^u`u~uˆuŠu¨u²u´uµuÚuáuãuvvv+v5v7vVvavcvdvv…v‡v¥v¯v±vÒvÜvŞvüvww	w+w/w1wOwXwZwtwyw{ww­w¯w°wÖwßwáwâwıwxx+x:x<x=x>xFxJx°z¼zv|ƒ|Ò}~3B(²¼$…Ì…Ö…s†t††‡ ‡*‡şşşşşşşşşüşşşşşşşşşşşşüşşşşşşşşşşşşüşşşşşşşşşşşşüşşşşşşşşşşşşüşşşùşşşşşşüöóóóóùùüùùüù
+`ÃtİtŞtßtçtètétêtëtuuuuuuuBuCuDu^u_u`uau|u}u~uˆu‰uŠu‹u¦u§u¨u²u³u´uµu¶uØuÙuÚuáuâuãuäuÿuvvvvvv)v*v+v5v6v7v8vTvUvVvavbvcv÷òïòïèïİèïèïòÕòïòòÍòïòòÅòïòïèïºèïèïò²òïòòªòïòò¢òïòj¦GUj1GUj¼FUj9F>*B*UjÄEUjOEUj¾DUj;D>*B*Uj0JU0J	jUjÈCU@cvdvev}v~vv…v†v‡vˆv£v¤v¥v¯v°v±v²vĞvÑvÒvÜvİvŞvßvúvûvüvwww	w
+w)w*w+w/w0w1w2wMwNwOwXwYwZw[wrwswtwywzw{w|wœwww­w®w¯w°w±wÔwÕwÖwßwıøğøıøıøèøıøøàøıøøØøıøıÑıÆÑıÑıø¾øıøø¶øıøø®øıøıÑı£ÑıjÓK>*B*UjTKUjçJUjrJUjõI>*B*Uj0JUj€IUjIUjŒHUjHU	jU0J@{w¯w°wáwâwx<x=x>xFxJx°z¼zv|ƒ|Ò}~3B(²¼$…Ì…Ö…üà4üüüüàŞÜÚŞÚŞÚŞŞŞÚŞŞŞÖŞü„Ğ$$–lÖÖì,€X $ßwàwáwâwãwûwüwıwxxx	x)x*x+x:x;x<x=xWxXxyxzx{xx‚x¬x­xÍxÎxÏxŞxßxyy.y/y0yAyByÑzÒzózôzõzûzüz&{'{I{J{K{R{S{€{{™{š{›{¡{¢{Ç{È{ß{à{á{æ{øõğèğõğğàğõğõğØğõğğĞğõğğÈğõğğÀğõğğ¸ğõğğ°ğõğğ¨ğõj@PUjÑOUjNOUjÍNUjJNUjËMUjJMUjËLUjXLU	jU0Jj0JUBæ{ç{é{ê{|||||||.|/|0|9|:|@|A|\|]|^|h|i|™|š|»|¼|½|Ã|Ä|î|ï|}}}}}H}I}d}e}f}o}p}v}w}’}“}”}}Ÿ}Z[|}~„…¯°ÏĞÑÕÖ
+€€/€úúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúújyTUjøSUjƒSUjSUj‹RUj
+RUj•QUj"QU0Jj­PU	jUC/€0€1€;€<€>€?€W€X€Y€b€c€i€j€…€†€‡€‘€’€²¼S‹•‹™‹¡‹#Œ$Œ\Œ]Œ^ŒŠŒ‹Œ¼–æ–ÌÍğñòûüşÿ'Ÿ(Ÿ)Ÿ3Ÿ4Ÿ6Ÿ7Ÿ`ŸaŸbŸlŸmŸŸŸµŸ¶Ÿ·ŸÂŸÃŸŠ¢‘¢œ§§¸§¹§÷òïòòçòïòòßòïòİÛİòÓòïòİòËòïòòÃòïòò»òïòò³òïòÛò«jfYUjÕXUjDXUjµWUj0WUjeVU65jğUUj}UU0J	jUjöTUCÖ…s†t††‡ ‡*‡g‡h‡s‡›‡œ‡‡ß‡à‡å‡1ˆ2ˆ<ˆ—‹˜‹™‹¡‹çÇ‘üâ°üüâ üüâĞüüâüüâHüüâ˜üüâààààÜ„Ğ$$–lÖÖF,"$*‡g‡h‡s‡›‡œ‡‡ß‡à‡å‡1ˆ2ˆ<ˆ—‹˜‹™‹¡‹çÇ‘ë“§–¨–¼–½–À–Ã–È–Í–Ò–×–Ü–å–æ–è–ê–õ–ú–ÿ–—	—————-—2—7—<—A—D—E—G—I—\—a—f—k—p—s—t—v—x—ƒ—ˆ——’————— —¡—ª—¯—´—¶—À—Ã—Ä—Æ—Ç—Ğ—Õ—Ú—Ü—æ—ì—í—î—ğ—ù—û—˜
+˜˜˜˜˜˜ıûııûııûııûııû÷ûııııııııûııııııııûııııııııûııııııııûııııııııûııııııııûııııııııûııııııııûıı
+
+b‘ë“§–¨–¼–½–À–Ã–È–Í–Ò–×–Ü–å–æ–è–ê–õ–ú–ÿ–—	—ıııúà¤ÛÛÛÛÛÛÛÛ»À¸¸¸¸¸¸¸$$$–lÖÖ8gÌ1–$$$$$–l4ÖÖ$$	—————-—2—7—<—A—D—E—G—I—\—a—f—k—p—s—t—v—x—ƒ—ˆ——üÜ¼üüüüüüüüÜ¼üüüüüüüüÜ¨üüüüü$$–lÖÖ8gÌ1–$$—’————— —¡—ª—¯—´—¶—À—Ã—Ä—Æ—Ç—Ğ—Õ—Ú—Ü—æ—ì—í—î—ğ—ù—üüüÜ˜üüüüüüüüÜ¤üüüüüüüüÜ˜üüü$$–lÖÖ8gÌ1–$$ù—û—˜
+˜˜˜˜˜˜˜!˜+˜0˜5˜;˜<˜=˜Ñš¾#¡Û¤¼¥Ù¦¨¨ª©üüüüüÜ¤üüüüüüüüÜÚÚÚÚÚÚÚÚØÚ$$–lÖÖ8gÌ1–$$˜˜!˜+˜0˜5˜;˜<˜=˜Ñš¾#¡Û¤¼¥Ù¦¨¨ª©²©¬®®ü¯:²/µ¶²¸Õº¾¾q¾w¾À$ÀÁÁÄ“ÄÆÆ¥Ç4É—ÉÊÊ£ËïÌSÍ]ÍéÎùÎQÒIÕ„×œ×¤ÙèÙˆßúßàËâÙâ®ä.çËçè”è¤ë]íCïññUóZóĞöÂúaünüšş¥ş[);æDĞ6	;è0;Bgr½¾Éııııııûøøøøøøøøøøøøøøøøøøøõõøııûıı
+a¹§º§Ä§Å§+¨,¨M¨N¨O¨U¨V¨€¨¨£¨¤¨¥¨¬¨­¨Ù¨Ú¨õ¨ö¨÷¨©©©	©#©$©%©-©.©Ü©İ©ş©ÿ©ªªªÁªÂªØªÙªÚªŞªßª#«$«C«D«E«S«T«®®9®:®;®A®B®o®p®’®“®”®¥®¦®A¯B¯]¯ú÷úúïú÷úúçú÷úúßú÷úú×ú÷úúÏú÷úúÇú÷úú¿ú÷úú·ú÷úú¯ú÷úúj±]Uj0]Uj³\UjH\UjÇ[UjT[UjßZUj\ZUjÛYU0J	jUEª©²©¬®®ü¯:²/µ¶²¸Õº¾¾q¾w¾À$ÀÁÁÄ“ÄÆÆ¥Ç4É—ÉÊÊ£Ëıû÷ıûû÷ûûûûıûıûıûıûıûıûûûûıû„Ğ]¯^¯_¯i¯j¯|¯}¯¯¯Ÿ¯©¯ª¯W³X³x³y³z³€³³rµsµ•µ–µ—µ¨µ©µL¸M¸j¸k¸l¸€¸¸³¸´¸Ğ¸Ñ¸Ò¸İ¸Ş¸âºãº»»»»»»»»€»»š»›»#¼$¼;¼<¼=¼B¼C¼«½¬½Î½Ï½Ğ½õ½÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjcUj²bUj™aUjaUj£`Uj*`Uj§_Uj(_Uj©^U0J	jUj4^UBõ½ö½K¾L¾d¾e¾f¾n¾o¾†¾‡¾¨¾©¾ª¾°¾±¾Û¾Ü¾ş¾ÿ¾¿¿¿5¿6¿N¿O¿P¿V¿W¿|¿}¿”¿•¿–¿›¿œ¿¢¿£¿¾¿¿¿À¿Ê¿Ë¿2À3ÀTÀUÀVÀ\À]À‡ÀˆÀªÀ«À¬À³À´ÀäÀåÀÁÁÁÁÁ¦ÁúóğæóğóúŞúğúúÖúğúúÎúğúúÆúğúú¾úğúú¶úğúú®úğúú¦úğúj†gUjgUj‚fUjfUj eUj1eUj®dUj-dUjºc0JU0Jj0JU	jUA¦Á§ÁÈÁÉÁÊÁĞÁÑÁûÁüÁÂÂ Â'Â(ÂXÂYÂtÂuÂvÂ€ÂÂ¡Ä¢ÄÃÄÄÄÅÄËÄÌÄöÄ÷ÄÅÅÅ(Å)ÅUÅVÅxÅyÅzÅ‹ÅŒÅ.Æ/ÆPÆQÆRÆXÆYÆƒÆ„Æ¤Æ¥Æ¦ÆµÆ¶ÆâÆãÆÇÇÇÇÇ1Ê2ÊSÊTÊúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúú§jzlUj÷kUjxkUj÷jUjtjUjõiUjtiUjÿhUj|hU0JjûgU	jUBTÊUÊ[Ê\Ê†Ê‡Ê§Ê¨Ê©Ê¸Ê¹ÊßÊàÊËËËËËpÍqÍ’Í“Í”ÍšÍ›ÍÅÍÆÍæÍçÍèÍ÷ÍøÍ$Î%ÎGÎHÎIÎZÎ[ÎÏÏ4Ï5Ï6Ï<Ï=ÏjÏkÏÏÏ‘Ï—Ï˜Ï$×%×B×C×D×P×Q×„×œ×ÚÚ>Ú?Ú@ÚFÚGÚú÷úúïú÷úúçú÷úúßú÷úú×ú÷úúÏú÷úúÇú÷úú¿ú÷úú·ú÷ú´ú¬ú÷újqU0JjŒpUjpUj€oUjınUj~nUjımUjzmUjûlU0J	jUD£ËïÌSÍ]ÍéÎùÎQÒIÕ„×œ×¤ÙèÙˆßúßàËâÙâ®ä.çËçè”è¤ë]íCïññUóZóĞöııûıûııııııııûıûııııûııııûıûıGÚ»İ¿İ®Ş¯ŞÈŞÉŞÊŞâŞãŞÑßÒßìßíßîß÷ßøß<à=à^à_à`àfàgà‘à’à´àµà¶à½à¾àëàìàááááá2á3áJáKáLáQáRáTáUápáqárá{á|á‚áƒááŸá áªá«áââ²â³â´âÈâÉâğâñâãıøğøíøøåøíøøİøíøøÕøíøøÍøíøøÅøíøø½øíøøµøíøø­øíøøjBuUjÍtUjXtUjësUj|sUjùrUjxrUjrU0JjqU	jU6Dããããã"è#è@èAèBèNèOè½è¾èßèàèáèçèèèéé5é6é7é>é?ékélé„é…é†éŒéé²é³éÊéËéÌéÑéÒéÔéÕéğéñéòéûéüéêêêê ê*ê+ê_î`î{î|î}î†î‡î,ñ-ñNñOñPñVñ÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjzUj‹yUjyUj¡xUj4xUjÅwUjBwUjÁvUjHvU0J	jUjÇuUBVñWññ‚ñ¡ñ¢ñ£ñ§ñ¨ñàñáñüñıñşñòòoópó‘ó’ó“ó™óšóÄóÅóåóæóçóöó÷ó
+ôô-ô.ô/ô@ôAôô€ô›ôœôô¦ô§ôdöeö}ö~ööˆö‰öŸü üÁüÂüÃüÉüÊüôüõüııı ı!ıNıOıgıúúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúúj_~UjŞ}Ujk}Ujö|Ujs|Ujô{Ujs{UjşzU0JjzU	jUCĞöÂúaünüšş¥ş[);æDĞ6	;è0;Bgr½¾ÉııûıûııùııõııııùûıòòØ\òòØpò$$–lÖÖ®Î"$„Ğgıhıiıoıpı~ııšı›ıœı¥ı¦ı¨ı©ıÅıÆıÇıÍıÎıÔıÕığıñıòıüııı¹şºşÛşÜşİşãşäşÿÿ1ÿ2ÿ3ÿ:ÿ;ÿgÿhÿ€ÿÿ‚ÿˆÿ‰ÿ—ÿ˜ÿ´ÿµÿ¶ÿ¼ÿ½ÿÃÿÄÿßÿàÿáÿëÿìÿˆ‰£¤¥®÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjƒUjœ‚Uj%‚Uj¶Uj3Uj²€Uj=€UjÆUjQU0J	jUjâ~UB®¯ùú#$QRtuv‡ˆ&'ABCKLQ	R	t	u	v	‡	ˆ	¯°ÒÓÔåæŞßõö÷ûü_`uvwz{}~”•–š›·¸¹ÀÁÃÄŞúúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúúj@‡UjÕ†Ujl†Uj†Uj~…Ujû„Ujˆ„Uj„U0Jj„ƒU	jUC018NOPV9D‘—ÃÄÉõö!.9{…’“êôjuz{‹CRUV`DEOŞßéwx‚úBCNš›¦òóôüÜì)*5‚ÙÚÛâZk­®ÆşÿOPe¤¥·şûûşûûşøûûşûûşûûşûûşøûöööşûöööşûöööşûöööşûûşûûşûûşûûşøûûşûûşûûşøûûşûûşûûşøûûşûûşûûşûûşû
+a018NOPV9D‘—ÃÄÉõö!.9’üâxüüâàŞàüüâÌüüâÈüüâˆüüâàŞàüü$$–lÖÖ®Î"$Şßàèéëì	01267*+@ABEFHI_`aefhi‚ƒ„‹Œ©ª«³´¶·ÒÓÔİŞàá÷øùış !"+÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjœ‹Uj1‹Uj¼ŠUjIŠUjØ‰Ujm‰Uj‰Uj™ˆUj$ˆU0J	jUj±‡UB+,]^yz{…†ÇÈèéêôõKLhijuv !ABCRS$%ABCFGIJghimnpqˆ‰Š’“³´µÂÃÉÊéêë÷ø$úúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúúj×UjXUjëUjrUjûUj|UjUj†ŒU0JjŒU	jUC’“z{‹UV`DEOŞßéwx‚úå¼ââåäââålââå¼ââåhââådââåhââåàŞà$$$–lÖÖ®Î"úBCNš›¦òóôüÜì)*5‚ÙÚÛâZküüâ`üüâ`üüâàŞàüüâ`üüâ`üüâàŞàü$$–lÖÖ®Î"$$%&3467MNOSTVWvwx†‡‰Š¢£¤ª«±²ÍÎÏÙÚëì
+*+,78:;[\]jkmn†‡ˆ‘’±²³¿÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjm”Ujş“Uj“Uj“Uj›’Uj&’Uj·‘Uj:‘UjÏU0J	jUjTUB¿ÀÆÇâãäîïúû23O"P"o"p"q""€"…"†"¢"£"¤"¯"°"$$4$5$6$D$E$à%á%&&&&&‚&ƒ&¢&£&¤&²&³&!)")A)B)C)Q)R)**6*7*8*F*G*l*p*‹**úúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïú­­6jÌ˜UjO˜UjÒ—UjU—UjØ–Uja–Ujä•Uj_•U0Jjê”U	jUDk­®ÆşÿOPe¤¥·úû L M f  Ÿ µ ô õ !H!I!üâDüüâDüüâTüüâXüüâHüüâHüüâXüüâPüüâD$$–lÖÖØ	Î"$·úû L M f  Ÿ µ ô õ !H!I!a!™!š!²!ê!ë!"?"@"A"F"²"¸"Ó"Ô"Ü"ş"ÿ"#)#*#5#†#‡#’#ã#ä#ì#ÿ#$$$G$R$$‘$œ$ä$å$ó$3%4%B%‚%ƒ%%»%¼%½%×%&&-&.&4&D&E&J&\&]&^&y&µ&Â&ò'ó'(D(E(P())))T)Z)s)t)y)‘)’))ğ)ñ)ıûııûııûııûııûııûııûııûøııûııûııûııûııûııûøııûııûııûııûııûøııûııûııûøııûııûııûøııûııûııû
+bI!a!™!š!²!ê!ë!"?"@"A"F"²"¸"Ó"Ô"Ü"ş"ÿ"#)#*#5#üüâDüüâTüüâàŞàüüÄ¬üüÄ¬üüÄtü$$–lÖÖ®Î"$$–lÖÖØ	Î"$5#†#‡#’#ã#ä#ì#ÿ#$$$G$R$$‘$œ$ä$å$ó$3%4%B%‚%ƒ%%»%üâtüüâpüüâàŞàüüâPüüâ<üüâ<üüâäüü$$–lÖÖ®Î"$»%¼%½%×%&&-&.&4&D&E&J&\&]&^&y&µ&Â&ò'ó'(D(E(P())åãáãŞŞå\ŞŞå`ŞŞåãáãŞŞåHŞŞåôŞŞå$$$–lÖÖ®Î")))T)Z)s)t)y)‘)’))ğ)ñ)ò)*c*l*„*…*‹***¤*¶*·*Â*ıûıøøŞxøøŞ|øøŞıûıøøŞdøøŞdøøŞxø$$–lÖÖ®Î"$ñ)ò)*c*l*„*…*‹***¤*¶*·*Â*Ô*Õ*Ü*è*é*ö*+	++"+#+$+/+--4-Z-[-a-‡.ˆ.‘.//</=/>/I/ò/ù/00$0G0H0O0r0s0z000Ÿ0©0i1l1—1˜11Ï1Ğ1Õ1+2,212Š2‹2Œ2—2á2ç2ø2ù2ş23333o3{3½3¾3Æ34444F4P4~44‹4°4±4²4½4üùù÷ùù÷ùù÷ùù÷ùù÷ùù÷ùù÷üùù÷ùù÷ùõõõ÷üùù÷ùù÷ùù÷ùù÷üùù÷ùù÷ùù÷ùù÷üùù÷ùù÷üùù÷ùù÷üùù÷ùù÷ü
+a*¤*¨*Â*Æ*Ü*à*ö*ú*++8+9+U+V+W+Z+[+]+^+{+|+}++‚+„+…+£+¤+¥+²+³+µ+¶+Ì+Í+Î+Ò+Ó+Õ+Ö+õ+ö+÷+,,,	, ,!,",',(,*,+,K,L,M,Z,[,],^,v,w,x,~,,,‚,,ıııııøğøíøøåøíøøİøíøøÕøíøøÍøíøøÅøíøø½øíøøµøíøøjˆœUj	œUjœ›Uj›Uj´šUj9šUjÀ™U0JjI™U	jU6EÂ*Ô*Õ*Ü*è*é*ö*+	++"+#+$+/+--4-Z-[-a-‡.ˆ.‘.</=/>/I/üâPüüâ€üüâhüüâàŞàüüâ´üüâÔüüâàŞ$$–lÖÖ®Î"$,,Ÿ,©,ª,¬,­,Ì,Í,Î,Ú,Û,ô,õ,---*-+-ò.ó./////^/_//‚/ƒ/”/•/Ç/È/â/ã/ä/ï/ğ/²0³0Ï0Ğ0Ñ0Ü0İ0ß0à0ı0ş0ÿ01111/10111>1?1E1F1^1_1`1f1÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïòò§òïjL¡UjÍ UjT UjİŸUjfŸUjãUjlUjéUjlU0J	jUj÷œUBI/ò/ù/00$0G0H0O0r0s0z000Ÿ0©0i1l1—1˜11Ï1Ğ1Õ1+2,2ıúúà¬úúà¬úúà¬úúàıŞıúúààúúàpúúà|$$–lÖÖ®Î"$f1g1¬2­2Í2Î2Ï2Ş2ß2&3'3F3G3H3V3W344647484C4D4Ò4Ó4ó4ô4õ455e5f5}5~55„5…566465666;6<6>6?6[6\6]6h6i6k6l6Œ666›6œ6¢6£6»6¼6½6Ã6Ä6ñ8ò89úúòúïúúçúïúúßúïúú×úïúúÏúïúúÇúïúú¿úïúú·úïúú¯úïúúj}¥Ujş¤Uj‡¤Uj¤Uj­£Uj.£Uj·¢Uj:¢U0Jj»¡U	jUC,212Š2‹2Œ2—2á2ç2ø2ù2ş23333o3{3½3¾3Æ34444F4P4üüâàŞàüüâ`üüâàŞàüüâüüâàŞàü$$–lÖÖ®Î"$P4~44‹4°4±4²4½455.5/575O5P5Q5\5‡55ª5«5¯56666üâÈüüâàŞàüüâ„üüâàŞàüüâ„üüâàŞ$$–lÖÖ®Î"$½455.5/575O5P5Q5\5‡55ª5«5¯56666Æ6Ë6c7d7s7ÿ788888j8k8s8Ü8İ8Ş8è8C9U9Ã9Ä9Ô9<:=:>:S:‘:¤:Ô:Õ:å:;;;2;p;u;›;œ;­;Ó;Ô;è;<<<×<Ø<Ù<â<=#= =¡=¥=%>&>1>m>n>o>z>×>ã>€??‘?7@8@E@â@ã@í@`AaApAåAæAóAııûııûøııûııûøııûııûııûııûııûøııûııûøııûııûøııûııûııûııûøııûııûııûøııûııûııûııûııûı
+b6Æ6Ë6c7d7s7ÿ788888j8k8s8Ü8İ8Ş8è8C9U9Ã9Ä9Ô9<:=:ıúúàpúúàXúúàTúúàÈúúàıŞıúúàäúúà$$–lÖÖ®Î"$999!9"9\:]:}:~::::;;<;\;];^;m;n;ë<ì<
+=====ƒ>„>š>›>œ> >¡>¦>§>Æ>Ç>È>Ô>Õ>}B~B™BšB›B¥B¦B«B¬BËBÌBÍBÙBÚBÈCÉCìCíCîCDDEEÿEFBFFFzG~G÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòò¯òïò­­­­6j¼©Uj?©UjÊ¨UjM¨Ujâ§Ujg§Ujè¦Uji¦U0J	jUjì¥UD=:>:S:‘:¤:Ô:Õ:å:;;;2;p;u;›;œ;­;Ó;Ô;è;<<<×<Ø<Ù<ıûıøøŞøøŞıûıøøŞàøøŞøøøŞøøŞı$$–lÖÖ®Î"$Ù<â<=#= =¡=¥=%>&>1>m>n>o>z>×>ã>€??‘?7@8@E@â@ã@í@`AıûøøŞøøŞ øøŞûıûøøŞÜøøŞ¬øøŞøøø$$–lÖÖ®Î"$`AaApAåAæAóAgBhBtB¤D¬DÌEÍEÙEFFFRFSF[FAGBGLG†G‡G“GåââåââåàŞââåââåââå¼ââåââå€â$$$–lÖÖ®Î"óAgBhBtB¤D¬DÌEÍEÙEFFFRFSF[FAGBGLG†G‡G“GæGçGíG?H@HGHòHóHôHÿH5IBIiIjIqI’I“IšI»I¼I½IÍIJ"JKäKåKñK.L/L7LfLgLhLyLgMÈOÊOâOãOåOıOşOPPPP3P4P6P@PAPCPMPNPPPhPiPkP‚PƒP…PPŸP¡P¼P½P¿PÛPÜPŞPõPöP÷PQŒQıûøııûııûııûııûııûııûııûııûøııûııûııûøıööûııûııûøııûııûııûııûııûııûııûııûııûııûııûııû
+`~GÙGŞG3H8HI	I%I&I'I2I3IâIãIJJJJJ¿LÀLâLãLäLõLöL!M"M9M:M;M@MAMÕMÖM7N8N9NLNMNNQOQoQpQqQ{Q|QÜQİQıQşQÿQ	R
+RUU(U)U*U3U4UöW÷WXXııøğøíøøåøíøøİøíøøÕøíøøÍøíøøÅøíøø½øíø¶í¬¶í¶ø¤jµ®UjB®0JUj0JUjÃ­UjD­Uj+¬Uj¾«Uj;«Uj¸ªU0JjAªU	jU6@“GæGçGíG?H@HGHòHóHôHÿH5IBIiIjIqI’I“IšI»I¼I½IÍIJ"JäKüâdüüâÌüüâàŞàüüâ¤üüâ¤üüâàŞàüü$$–lÖÖ®Î"$äKåKñK.L/L7LfLgLhLyLgMÈOÊOâOãOåOıOşOPPPP3På(ââåàââåàŞàÚââÀlââÀlââÀlââ$$–lÖÖŞî„Ğ$$$–lÖÖ®Î"3P4P6P@PAPCPMPNPPPhPiPkP‚PƒP…PPŸP¡P¼P½P¿PÛPÜPŞPõPöP÷På4ââå4ââålââåhââåpââåxââå|ââåhââåà$$$–lÖÖŞî÷PQŒQQR!RYR_R›R¡RÿRSlS|SÊSÎSÓScVŸX²X!YáYyZûZ	[]0_`ïbııùıùıùıùıùıùıù÷ıı÷ıııı÷ıııı„ŒQQR!RYR_R›R¡RÿRSlS|SÊSÎSÓScVŸX²X!YáYyZûZ	[]0_`ïbØcÆd–e£e»e*h?hriSlålÓmÛms¥s(v7vÒwÉzãz`~’€1q)„<„r„â„(…®…†]†|†®†d‡ˆZˆÇˆáˆK‰ƒ‰°‰ñ‰6ŠIŠMR’*“/“[•E–™&™šœ·øï¡£Z£u£±£Ø£€¥¥©SªÊ«ıııııııúúúú÷÷÷ıı÷ôôôô÷úúııú	`XXXX@\A\a\b\c\r\s\ubvb×bØbÙbìbíbYcZc{c|c}c„c…cdd.d/d0d6d7dÏdĞdïdğdñdÿdeºe»eìeíefff$f%ftgug›gœgg³g´gqhrh–h—h˜h©hªhÓmÚmÛms¥s(vú÷úğ÷æğ÷ğúŞú÷úúÖú÷úúÎú÷úúÆú÷úÄú¼ú÷úú´ú÷úú¬ú÷úÄªÄ6jK³UjÀ²Uj5²U5j¸±UjA±UjÀ°Uj§¯Uj(¯0JUj0JU0J	jUCïbØcÆd–e£e»e*h?hriSlålÓmÛms¥s(v7vÒwÉzãz`~’€1q)„<„ıııûùıùıııõıõıõıııùıııññõùıı„„Ğ(v7vxx/x0x1x6x7x9x:xVxWxXxcxdxfxgx‡xˆx‰x–x—xxx´xµx¶x¼x½xöx÷xyyy$y%y*y+yFyGyHyRySyÇyÈyàyáyâyóyôyzz2z3z4zBzCzœzz¹zºz»zÆzÇz™~š~°~ıøğøíøøåøíøøİøíøøÕøíøøÍøíøøÅøíøø½øíøøµøíøø­øíøøj†·Uj	·Ujš¶Uj%¶Uj¨µUj9µUjº´UjC´U0JjÖ³U	jU5C°~±~²~¶~·~1)„<„İ…á…1†5†ÇˆáˆuŠvŠšŠ›ŠœŠ­Š®ŠÇ‹Ë‹ŒŒåæÑ•Ò•ê•ë•ì•õ•ö•8š9šVšWšXšdšešY›]›nŸoŸ‰ŸŠŸ‹ŸŒŸŸS¦T¦r¦s¦t¦¦‚¦š¨›¨¸¨¹¨º¨Î¨Ï¨÷òïòìêèèêòàòïòèèòØòïòòĞòïòòÈòïòèòÀòïòò¸òïòò°òïòjB»UjÇºUjTºUjÛ¹Ujh¹Ujó¸Ujh¸U650J0J	jUjı·UE<„r„â„(…®…†]†|†®†d‡ˆZˆÇˆáˆK‰ƒ‰°‰ñ‰6ŠIŠMR’*“/“[•E–™&™ııııññññııııııııııïıııíıııí
+&F„8Æh8&™šœ·øï¡£Z£u£±£Ø£€¥¥©SªÊ«œ¬¤¯Ê°Ü°¸±G³´´—´Ï´µOµıııııùùõıõıóıùùùùùóıııóıííí„Ğ¤„„ĞÏ¨I©J©c©d©e©l©m©—´˜´³´´´µ´Í´Î´Ï´Ğ´î´ï´ğ´µµµµ(µ)µ*µMµNµOµÂ·å·¿¿+¿,¿-¿9¿:¿Â2Â£Â¤ÂºÂ»Â¼ÂÀÂÁÂÃÂÄÂŞÂßÂàÂèÂéÂïÂğÂ	Ã
+ÃÃÃÃ{Ä|Ä’ÄúòúïúèïŞèïèïèïÔèïèïèïÊèïèïÈúÀúïúÈú¸úïúú°úïúú¨úïúújØ¾Uje¾Ujú½Uj½U5j½0JUj¡¼0JUj,¼0JUj0JU0Jj»»U	jU@Ê«œ¬¤¯Ê°Ü°¸±G³´´—´Ï´µOµhµÁ·Â·å·æ·ë·‡¹7»8»C»¼¼'¼½ ½%½-¿9¿¨¿©¿´¿¾¿¿¿É¿òÁóÁøÁÂÂÂÂ2Â3Â8Â¼ÂÀÂàÂèÂÃÃ”Ä ÄTÅUÅZÅdÅeÅjÅ‚ÅƒÅ„Å Å=ÆGÆ™ÆšÆªÆÁÆÂÆÑÆÇÇ Ç8ÇÈÈUÉVÉ]ÉÃÉÑÉ:Ê;Ê?Ê…Ê†Ê‹ÊÂÊÃÊÉÊ,Ì8Ì;Ì<Ìüüùööôöööôööôööôöòòòôööôööôööôööôöòòòòòòòòòôööôööôùööôööôööôùööôöòòòôööôööôöòòòô
+`OµhµÁ·Â·å·æ·ë·‡¹7»8»C»¼¼'¼½ ½%½¨¿©¿´¿¾¿¿¿É¿òÁóÁøÁù÷ôôÚHôôôÚ”ôôÚôôÚ$
+ôôÚXôôÚĞôôÚxô$$–lÖÖF,"$Æ@øÁÂÂÂÂ2Â3Â8ÂTÅUÅZÅdÅeÅjÅ‚ÅƒÅ„Å Å=ÆGÆ™ÆšÆªÆüâàüüâˆüüâ@üüâxüüâàŞàüüÄ ü$$–lÖÖT,"$$–lÖÖF,"$’Ä“Ä”Ä Ä¡Ä™ÆšÆ¡É¢ÉÁÉÂÉÃÉÑÉÒÉÌÌ*Ì+Ì,Ì8Ì9Ì5à9àÆàÇàáàâàãàëàìàœáá¾á¿áÀáÇáÈáÏáĞáíáîáïáûáüáqârâââ‘âââêêêêê)ê*êÑêÒêéêêêëêğêñêNëWë—ë÷òïòíòåòïòòİòïòÛòÓòïòòËòïòòÃòïòò»òïòò³òïòò«òïòíj÷ÂUj‚ÂUj	ÂUjÁUjÁUjœÀU6j1ÀUj´¿U50J	jUjI¿UCªÆÁÆÂÆÑÆÇÇ Ç8ÇÈÈUÉVÉ]É:Ê;Ê?Ê…Ê†Ê‹ÊÂÊÃÊÉÊ;ÌüâtüüâàŞàüüÄ”üüÄ,üüÄôüüÄäüü$$–lÖÖú,"$$–lÖÖT,"$;Ì<ÌBÌöÌ÷ÌıÌ±Í²Í¸ÍêÍëÍóÍ1Î2Î8ÎlÎ·ÎíÎÏmÏ¥Ï÷ÏgĞhĞuĞ:ÑıÑåìââåìââåäââåââåØâââââââââåâââ$$$–lÖÖú,"<ÌBÌöÌ÷ÌıÌ±Í²Í¸ÍêÍëÍóÍ1Î2Î8ÎlÎ·ÎíÎÏmÏ¥Ï÷ÏgĞhĞuĞ:ÑıÑ­Ó®ÓµÓÔøÔùÔÕNÕ˜ÕäÕ>ÖjØkØpØıØ¾Ú¿ÚÄÚEÛKÜîÜïÜøÜİİİCİDİRİÜŞİŞåŞQßRß`ß–ß—ß˜ß°ß§à­àãàëàîàïàõà	á
+ááÀáÇáïáûáşáÿáâ‘ââ â¡â¢â«âä(äéäåÈæËæçç“çııûııûııûııûıııııııııûııııûıııûııııııûıııûııııûııûııûııûııûııûøıöööûııûıöööööûıöööûøøôııûı
+`ıÑ­Ó®ÓµÓÔøÔùÔÕNÕ˜ÕäÕ>ÖjØkØpØıØ¾Ú¿ÚÄÚEÛKÜîÜïÜøÜİİİüâ,üüüâÈüüüüüüâP	üüüâÀüüüüâ„üüâĞü$$–lÖÖú,"$İCİDİRİÜŞİŞåŞQßRß`ß–ß—ß˜ß°ß§à­àîàïàõà	á
+ááşáÿáâ âüâdüüâÔüüâüüâàŞàüüâlüüâÔüüâˆüü$$–lÖÖú,"$ â¡â¢â«âä(äéäåÈæËæçç“çÓçÔç×ç+è,è/èèè‘èŸèÜèéVéåãáãáãİãÚÚåÚÚå`ÚÚåÚÚåããİİİ$„$$–lÖÖú,"“çÓçÔç×ç+è,è/èèè‘èŸèÜèéVéé‹éóêëNëWëíí—îïÊïÜïğ\ğğŸğ×ğíğñ0ñGòPòyòˆò‹òŒò›òßòöò"ó.ó@óAóKó…ó‰óşóÿóônôoô|ôÊôÎô
+õõõ[õhõŠõ‹õŒõšõ$øwø„øòüDş²ş»ş¿ş/ÿ0ÿ5ÿ¦«ø#€‘”•™äíıûııûııûùùùùööôñññññöıïïïïïûıïïïïïûıïïïûııûıïïïûıïïïûöööııûıïïïïïïïûıïïïûıïïï	
+^Véé‹éóêëNëWëíí—îïÊïÜïğ\ğğŸğ×ğíğñ0ñ‹òŒò›òûù÷ù÷÷õ÷÷÷÷÷éééééù÷ææÌÔæ$$–lÖÖ@,"$
+&F„8Æh8„—ë›ëííÊïÜï*ò+òEòFòGòPòQòVòWòwòxòyòˆò‰ò‹òŒò¶ò·òİòŞòßòöò÷òóó ó!ó"ó.ó/ólómóƒó„ó…ó‰óŠó±ô²ôÈôÉôÊôÎôÏô>õ?õYõZõ[õhõiõ5ö6ö—ö˜ö™ö¬ö­öŞö÷O÷P÷n÷ıûûöîöëööãöëöûöÛöëööÓöëööËöëööÃöëöö»öëöö³öëöıöj£ÆUj0ÆUjÅÅUjZÅUjáÄUjVÄUj×ÃU0JjdÃU	jU56D›ò@óAóKóşóÿóônôoô|ô
+õõõŠõ‹õŒõšõ$øwø„øòüDş²ş»ş¿ş/ÿüâøüüâÀüüâpüüâüüâàŞààŞàààŞüü$$–lÖÖ@,"$n÷o÷p÷|÷}÷÷€÷š÷›÷œ÷¥÷¦÷¨÷©÷Â÷Ã÷Ä÷Ë÷Ì÷Î÷Ï÷ì÷í÷î÷ò÷ó÷¢ø£ø¹øºø»ø¿øÀøÍøÎøåøæøçøìøíøîøïøùùùùùÑùÒùôùõùöùúú»ş¾şÊşËşĞşÑşØşÙş0ÿ4ÿ@ÿAÿHÿIÿOÿPÿæÿ÷òïòòçòïòòßòïòò×òïòòÏòïòòÇòïòò¿òïòò·òïòµ³³³µ³³³>*5jéÊUjlÊUjÿÉUj”ÉUjÉUjªÈUj7ÈU0J	jUj¼ÇUF/ÿ0ÿ5ÿ#”•™¢£«128ÙÚŞÊËÑ
+
+$
+ğ
+ñ
+óğğóğğó8ğğó<ğğópğğó0ğğóÄğğó ğğóxğğóÄ$$$–iÖT’"æÿçÿŒ¤¥¦«¬ÏĞö÷ø"^_~€‘’•˜¨©¯°·¸ÇÈâãäíî()£ª27CDPQ\]ghop_`ÁúòúïúúçúïúúßúïúİÖïÌÖïÖİÊÊÊúÂúïúúºúïúİİÊÊÊÊÊİújÎUj’ÍU>*jÍ0JUj0JU5jnÌUjÌU0Jj„ËU	jUF(¢£«128ÃÖÙÚŞÊËÑ		
+
+
+
+$
+ˆ
+‹
+ğ
+ñ
+ø
+1A¡¢¨ğñøÙÚè07:;E¿ÀÁÓ€ŠÅ…ò-679:;?D£¤»ÃÅÆÇÈ!"#$şşüùùüùùüùşşşüùùüùşşşşşüùşşşüùşşşüùùüùùüùşşşüùùüööşşşşşşşşşşşşşşşşóşşş
+LÁÂÃÖ×Úİéêïğö÷ËĞìí					‚	“	˜	Ã	ã	ä	
+
+
+
+
+
+
+#
+r
+s
+†
+‡
+ˆ
+‹
+Œ
+ñ
+÷
+/01AB¢¨ñ÷Úç./078;D!"F÷òïòíëëëíäïÚäïäØØäïÎäïäïíòÆòïòíò¾òïòíííäï´äïäíòjWÑ0JUjŞĞUjuĞUjúÏ0JU6j‹Ï0JUj0JU>*50J	jUjrÎUEñ
+ø
+¡¢¨ğñøÙÚè:;E¿ÀÁÓ€ŠÅ…òD¤Çüüğ<üüğ¤üüğ„üüğüüğîìîìîîîîîîâ	$dÆÀ!$$$–iÖT’"$FGHYZò,-?@\]ƒ„…˜™¤»¼ÂÃÅÆÇÈŞß !#$÷òïòìåìåàåìåìÖåìåìÑÆ¿Æ¶ÆÑ±¨±¨¡¨±––†–±ì0JOJQJmH0JOJQJj0JOJQJUOJQJmHjOJQJUOJQJ0JOJQJmH0JOJQJj0JOJQJUOJQJjiÒ0JU0JmHj0JU0J0J	jUjÆÑU*ÇÈ!"#$ıñııı$dÆàÀ!H$#
+0&P°Ğ/ °à=!° "° # $ %°uDĞÉêyùºÎŒ‚ªK©
+CopyrightsDĞÉêyùºÎŒ‚ªK©	OverviewyDĞÉêyùºÎŒ‚ªK©NewFeaturesqDĞÉêyùºÎŒ‚ªK©HistoryyDĞÉêyùºÎŒ‚ªK©CommandLinesDĞÉêyùºÎŒ‚ªK©	ADLFiles{DĞÉêyùºÎŒ‚ªK©SiteSpecificmDĞÉêyùºÎŒ‚ªK©FontsƒDĞÉêyùºÎŒ‚ªK©InitialLocationssDĞÉêyùºÎŒ‚ªK©	PalettesyDĞÉêyùºÎŒ‚ªK©MEDMObjectsyDĞÉêyùºÎŒ‚ªK©ObjectIndexDĞÉêyùºÎŒ‚ªK©AttributeIndexuDĞÉêyùºÎŒ‚ªK©
+CompositeDĞÉêyùºÎŒ‚ªK©CalcExpressionkDĞÉêyùºÎŒ‚ªK©Grid…DĞÉêyùºÎŒ‚ªK©MacroSubstitutionyDĞÉêyùºÎŒ‚ªK©DragAndDropyDĞÉêyùºÎŒ‚ªK©DialogBoxes‹DĞÉêyùºÎŒ‚ªK©DisplayListDialogBox…DĞÉêyùºÎŒ‚ªK©PVLimitsDialogBox}DĞÉêyùºÎŒ‚ªK©MessageWindowƒDĞÉêyùºÎŒ‚ªK©StatisticsWindowDĞÉêyùºÎŒ‚ªK©PVInfoDialogBoxkDĞÉêyùºÎŒ‚ªK©Help{DĞÉêyùºÎŒ‚ªK©SmartStartup}DĞÉêyùºÎŒ‚ªK©DisplayColorssDĞÉêyùºÎŒ‚ªK©	ResizingqDĞÉêyùºÎŒ‚ªK©Editing‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenusDĞÉêyùºÎŒ‚ªK©	PrintingyDĞÉêyùºÎŒ‚ªK©ExecuteMenuƒDĞÉêyùºÎŒ‚ªK©ColorConventions‹DĞÉêyùºÎŒ‚ªK©EnvironmentVariablessDĞÉêyùºÎŒ‚ªK©	BuildingyDĞÉêyùºÎŒ‚ªK©CDEVSupportsDĞÉêyùºÎŒ‚ªK©	GlossaryyDĞÉêyùºÎŒ‚ªK©TechSupportDĞÉêyùºÎŒ‚ªK©EPICSExtensionmDĞÉêyùºÎŒ‚ªK©ImageDĞÉêyùºÎŒ‚ªK©CalcExpressionwDĞÉêyùºÎŒ‚ªK©ColorRulesDĞÉêyùºÎŒ‚ªK©EPICSExtensionDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmlƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©CalcExpressionuDĞÉêyùºÎŒ‚ªK©
+CompositeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributesDĞÉêyùºÎŒ‚ªK©	ADLFiles{DĞÉêyùºÎŒ‚ªK©SiteSpecific}DĞÉêyùºÎŒ‚ªK©DisplayColors{DĞÉêyùºÎŒ‚ªK©SiteSpecificsDĞÉêyùºÎŒ‚ªK©	Building…DĞÉêyùºÎŒ‚ªK©PVLimitsDialogBoxkDĞÉêyùºÎŒ‚ªK©Menu{DĞÉêyùºÎŒ‚ªK©ChoiceButtonqDĞÉêyùºÎŒ‚ªK©SciPlot}DĞÉêyùºÎŒ‚ªK©CartesianPlotsDĞÉêyùºÎŒ‚ªK©	XRTGraphDĞÉêyùºÎŒ‚ªK©PVInfoDialogBoxyDĞÉêyùºÎŒ‚ªK©CommandLine}DĞÉêyùºÎŒ‚ªK©MessageWindowyDĞÉêyùºÎŒ‚ªK©CDEVSupportsDĞÉêyùºÎŒ‚ªK©	BuildingyDĞÉêyùºÎŒ‚ªK©CommandLineDĞÉêyùºÎŒ‚ªK©RelatedDisplaymDĞÉêyùºÎŒ‚ªK©MeterwDĞÉêyùºÎŒ‚ªK©BarMonitorDĞÉêyùºÎŒ‚ªK©ScaleIndicatormDĞÉêyùºÎŒ‚ªK©LabelmDĞÉêyùºÎŒ‚ªK©WIN32kDĞÉêyùºÎŒ‚ªK©HelpkDĞÉêyùºÎŒ‚ªK©UndouDĞÉêyùºÎŒ‚ªK©
+MouseEdit{DĞÉêyùºÎŒ‚ªK©KeyboardEditkDĞÉêyùºÎŒ‚ªK©GridsDĞÉêyùºÎŒ‚ªK©	MenuEdituDĞÉêyùºÎŒ‚ªK©
+CompositeDĞÉêyùºÎŒ‚ªK©PVInfoDialogBoxyDĞÉêyùºÎŒ‚ªK©ExecuteMenu‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenuDĞÉêyùºÎŒ‚ªK©RelatedDisplay}DĞÉêyùºÎŒ‚ªK©CartesianPlot‘DĞÉêyùºÎŒ‚ªK©CartesianPlotTimeFormat‹DĞÉêyùºÎŒ‚ªK©XRTGraphInteractions{DĞÉêyùºÎŒ‚ªK©ShellCommandyDĞÉêyùºÎŒ‚ªK©ExecuteMenuƒDĞÉêyùºÎŒ‚ªK©InitialLocations{DĞÉêyùºÎŒ‚ªK©SmartStartupsDĞÉêyùºÎŒ‚ªK©	XWindowsmDĞÉêyùºÎŒ‚ªK©MotifiDĞÉêyùºÎŒ‚ªK©ADLyDĞÉêyùºÎŒ‚ªK©CDEVSupportsDĞÉêyùºÎŒ‚ªK©	XWindowsmDĞÉêyùºÎŒ‚ªK©MotifmDĞÉêyùºÎŒ‚ªK©EPICSkDĞÉêyùºÎŒ‚ªK©HelpiDĞÉêyùºÎŒ‚ªK©CED{DĞÉêyùºÎŒ‚ªK©SmartStartup}DĞÉêyùºÎŒ‚ªK©MessageWindowmDĞÉêyùºÎŒ‚ªK©Fonts…DĞÉêyùºÎŒ‚ªK©AliasedFixedFonts‹DĞÉêyùºÎŒ‚ªK©DefaultScalableFonts—DĞÉêyùºÎŒ‚ªK©UserSpecifiedScalableFontsoDĞÉêyùºÎŒ‚ªK©WidgetDĞÉêyùºÎŒ‚ªK©VisibilityMode}DĞÉêyùºÎŒ‚ªK©ObjectPaletteiDĞÉêyùºÎŒ‚ªK©ArcwDĞÉêyùºÎŒ‚ªK©BarMonitor{DĞÉêyùºÎŒ‚ªK©ChoiceButtonuDĞÉêyùºÎŒ‚ªK©
+CompositemDĞÉêyùºÎŒ‚ªK©ImageyDĞÉêyùºÎŒ‚ªK©ByteMonitorkDĞÉêyùºÎŒ‚ªK©MenuqDĞÉêyùºÎŒ‚ªK©DisplaykDĞÉêyùºÎŒ‚ªK©Line}DĞÉêyùºÎŒ‚ªK©CartesianPlot}DĞÉêyùºÎŒ‚ªK©MessageButtonkDĞÉêyùºÎŒ‚ªK©OvalmDĞÉêyùºÎŒ‚ªK©MeterDĞÉêyùºÎŒ‚ªK©RelatedDisplayqDĞÉêyùºÎŒ‚ªK©PolygonDĞÉêyùºÎŒ‚ªK©ScaleIndicator{DĞÉêyùºÎŒ‚ªK©ShellCommandsDĞÉêyùºÎŒ‚ªK©	PolylinewDĞÉêyùºÎŒ‚ªK©StripChartoDĞÉêyùºÎŒ‚ªK©SlideruDĞÉêyùºÎŒ‚ªK©
+Rectangle}DĞÉêyùºÎŒ‚ªK©TextIndicatoruDĞÉêyùºÎŒ‚ªK©
+TextEntrykDĞÉêyùºÎŒ‚ªK©TextDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©CartesianPlotAxisStyleuDĞÉêyùºÎŒ‚ªK©
+EdgeStyle‡DĞÉêyùºÎŒ‚ªK©RelatedDisplayModeDĞÉêyùºÎŒ‚ªK©BasicAttribute‘DĞÉêyùºÎŒ‚ªK©CartesianPlotRangeStyleuDĞÉêyùºÎŒ‚ªK©
+EraseMode‹DĞÉêyùºÎŒ‚ªK©RelatedDisplayVisualƒDĞÉêyùºÎŒ‚ªK©DynamicAttribute‡DĞÉêyùºÎŒ‚ªK©CartesianPlotStylesDĞÉêyùºÎŒ‚ªK©	FillModesDĞÉêyùºÎŒ‚ªK©	StackingƒDĞÉêyùºÎŒ‚ªK©MonitorAttribute‘DĞÉêyùºÎŒ‚ªK©CartesianPlotTimeFormatuDĞÉêyùºÎŒ‚ªK©
+FillStyleuDĞÉêyùºÎŒ‚ªK©
+TextAlignƒDĞÉêyùºÎŒ‚ªK©ControlAttributeuDĞÉêyùºÎŒ‚ªK©
+ColorModeuDĞÉêyùºÎŒ‚ªK©
+ImageTypewDĞÉêyùºÎŒ‚ªK©TextFormatoDĞÉêyùºÎŒ‚ªK©LimitsuDĞÉêyùºÎŒ‚ªK©
+ColorRuleDĞÉêyùºÎŒ‚ªK©CalcExpressionuDĞÉêyùºÎŒ‚ªK©
+TimeUnits}DĞÉêyùºÎŒ‚ªK©PlotAttributeuDĞÉêyùºÎŒ‚ªK©
+DirectionmDĞÉêyùºÎŒ‚ªK©LabelDĞÉêyùºÎŒ‚ªK©VisibilityMode…DĞÉêyùºÎŒ‚ªK©PlotAxisAttributesDĞÉêyùºÎŒ‚ªK©	PlotModeDĞÉêyùºÎŒ‚ªK©CalcExpressionDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©MonitorAttributeoDĞÉêyùºÎŒ‚ªK©LimitsmDĞÉêyùºÎŒ‚ªK©LabeluDĞÉêyùºÎŒ‚ªK©
+DirectionsDĞÉêyùºÎŒ‚ªK©	FillModeuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©MonitorAttributeuDĞÉêyùºÎŒ‚ªK©
+DirectionuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttribute}DĞÉêyùºÎŒ‚ªK©PlotAttribute‡DĞÉêyùºÎŒ‚ªK©CartesianPlotStylesDĞÉêyùºÎŒ‚ªK©	PlotModeuDĞÉêyùºÎŒ‚ªK©
+EraseModeËDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©Zhttp://www.ae.utexas.edu/~rwmcm/SciPlot.html…DĞÉêyùºÎŒ‚ªK©PlotAxisAttributeDĞÉêyùºÎŒ‚ªK©CartesianPlotAxisStyle‘DĞÉêyùºÎŒ‚ªK©CartesianPlotRangeStyle‘DĞÉêyùºÎŒ‚ªK©CartesianPlotTimeFormatuDĞÉêyùºÎŒ‚ªK©
+EraseModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©ControlAttributeuDĞÉêyùºÎŒ‚ªK©
+ColorModesDĞÉêyùºÎŒ‚ªK©	StackingDĞÉêyùºÎŒ‚ªK©ObjectAttributekDĞÉêyùºÎŒ‚ªK©Grid}DĞÉêyùºÎŒ‚ªK©DisplayColorsDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeuDĞÉêyùºÎŒ‚ªK©
+ImageTypeDĞÉêyùºÎŒ‚ªK©CalcExpressionDĞÉêyùºÎŒ‚ªK©CalcExpressionƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeyDĞÉêyùºÎŒ‚ªK©CommandLinewDĞÉêyùºÎŒ‚ªK©ColorRulesDĞÉêyùºÎŒ‚ªK©EPICSExtensionDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmlmDĞÉêyùºÎŒ‚ªK©WIN32›DĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©*http://www.gimp.org/sDĞÉêyùºÎŒ‚ªK©	PolylineDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©MonitorAttributeoDĞÉêyùºÎŒ‚ªK©LimitsmDĞÉêyùºÎŒ‚ªK©LabeluDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©ControlAttributeuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©ControlAttributeuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeDĞÉêyùºÎŒ‚ªK©ObjectAttribute‹DĞÉêyùºÎŒ‚ªK©RelatedDisplayVisualyDĞÉêyùºÎŒ‚ªK©CommandLine‹DĞÉêyùºÎŒ‚ªK©RelatedDisplayVisualuDĞÉêyùºÎŒ‚ªK©
+MouseEditsDĞÉêyùºÎŒ‚ªK©	ADLFilesDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©MonitorAttributeoDĞÉêyùºÎŒ‚ªK©LimitsmDĞÉêyùºÎŒ‚ªK©LabeluDĞÉêyùºÎŒ‚ªK©
+DirectionuDĞÉêyùºÎŒ‚ªK©
+ColorMode…DĞÉêyùºÎŒ‚ªK©PVLimitsDialogBoxDĞÉêyùºÎŒ‚ªK©ObjectAttributeyDĞÉêyùºÎŒ‚ªK©ExecuteMenuDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©ControlAttributeoDĞÉêyùºÎŒ‚ªK©LimitsmDĞÉêyùºÎŒ‚ªK©LabeluDĞÉêyùºÎŒ‚ªK©
+DirectionuDĞÉêyùºÎŒ‚ªK©
+ColorModeuDĞÉêyùºÎŒ‚ªK©
+DirectionDĞÉêyùºÎŒ‚ªK©ObjectAttribute}DĞÉêyùºÎŒ‚ªK©PlotAttributeuDĞÉêyùºÎŒ‚ªK©
+TimeUnitsDĞÉêyùºÎŒ‚ªK©ObjectAttributeDĞÉêyùºÎŒ‚ªK©BasicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeuDĞÉêyùºÎŒ‚ªK©
+TextAlignsDĞÉêyùºÎŒ‚ªK©	MenuEditDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©MonitorAttributeoDĞÉêyùºÎŒ‚ªK©LimitsuDĞÉêyùºÎŒ‚ªK©
+TextAlignwDĞÉêyùºÎŒ‚ªK©TextFormatuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©ControlAttributeoDĞÉêyùºÎŒ‚ªK©LimitswDĞÉêyùºÎŒ‚ªK©TextFormatuDĞÉêyùºÎŒ‚ªK©
+ColorModesDĞÉêyùºÎŒ‚ªK©	MenuEditDĞÉêyùºÎŒ‚ªK©ObjectAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributesDĞÉêyùºÎŒ‚ªK©	ADLFilesƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributekDĞÉêyùºÎŒ‚ªK©TextiDĞÉêyùºÎŒ‚ªK©ArckDĞÉêyùºÎŒ‚ªK©OvalqDĞÉêyùºÎŒ‚ªK©PolygonsDĞÉêyùºÎŒ‚ªK©	PolylineuDĞÉêyùºÎŒ‚ªK©
+RectanglekDĞÉêyùºÎŒ‚ªK©TextiDĞÉêyùºÎŒ‚ªK©ArckDĞÉêyùºÎŒ‚ªK©OvalqDĞÉêyùºÎŒ‚ªK©PolygonsDĞÉêyùºÎŒ‚ªK©	PolylineuDĞÉêyùºÎŒ‚ªK©
+RectanglekDĞÉêyùºÎŒ‚ªK©TextuDĞÉêyùºÎŒ‚ªK©
+CompositeuDĞÉêyùºÎŒ‚ªK©
+ColorModeDĞÉêyùºÎŒ‚ªK©VisibilityModewDĞÉêyùºÎŒ‚ªK©ColorRulesDĞÉêyùºÎŒ‚ªK©CalcExpressionwDĞÉêyùºÎŒ‚ªK©BarMonitoryDĞÉêyùºÎŒ‚ªK©ByteMonitormDĞÉêyùºÎŒ‚ªK©MeterDĞÉêyùºÎŒ‚ªK©ScaleIndicator}DĞÉêyùºÎŒ‚ªK©TextIndicator{DĞÉêyùºÎŒ‚ªK©ChoiceButtonkDĞÉêyùºÎŒ‚ªK©Menu}DĞÉêyùºÎŒ‚ªK©MessageButtonoDĞÉêyùºÎŒ‚ªK©SlideruDĞÉêyùºÎŒ‚ªK©
+TextEntrymDĞÉêyùºÎŒ‚ªK©MeterwDĞÉêyùºÎŒ‚ªK©BarMonitorDĞÉêyùºÎŒ‚ªK©ScaleIndicatoroDĞÉêyùºÎŒ‚ªK©Slider}DĞÉêyùºÎŒ‚ªK©TextIndicatoruDĞÉêyùºÎŒ‚ªK©
+TextEntry…DĞÉêyùºÎŒ‚ªK©PVLimitsDialogBox}DĞÉêyùºÎŒ‚ªK©CartesianPlotwDĞÉêyùºÎŒ‚ªK©StripChart}DĞÉêyùºÎŒ‚ªK©CartesianPlot}DĞÉêyùºÎŒ‚ªK©CartesianPlot}DĞÉêyùºÎŒ‚ªK©CartesianPlot}DĞÉêyùºÎŒ‚ªK©CartesianPlot}DĞÉêyùºÎŒ‚ªK©CartesianPlotwDĞÉêyùºÎŒ‚ªK©BarMonitoryDĞÉêyùºÎŒ‚ªK©ByteMonitor{DĞÉêyùºÎŒ‚ªK©ChoiceButtonkDĞÉêyùºÎŒ‚ªK©Menu}DĞÉêyùºÎŒ‚ªK©MessageButtonmDĞÉêyùºÎŒ‚ªK©MeterDĞÉêyùºÎŒ‚ªK©ScaleIndicatoroDĞÉêyùºÎŒ‚ªK©SlideruDĞÉêyùºÎŒ‚ªK©
+TextEntry}DĞÉêyùºÎŒ‚ªK©TextIndicatorƒDĞÉêyùºÎŒ‚ªK©DynamicAttributewDĞÉêyùºÎŒ‚ªK©ColorRulesƒDĞÉêyùºÎŒ‚ªK©DynamicAttributewDĞÉêyùºÎŒ‚ªK©ColorRuleswDĞÉêyùºÎŒ‚ªK©BarMonitoryDĞÉêyùºÎŒ‚ªK©ByteMonitorDĞÉêyùºÎŒ‚ªK©ScaleIndicatoroDĞÉêyùºÎŒ‚ªK©SliderDĞÉêyùºÎŒ‚ªK©BasicAttribute}DĞÉêyùºÎŒ‚ªK©CartesianPlotwDĞÉêyùºÎŒ‚ªK©BarMonitorDĞÉêyùºÎŒ‚ªK©BasicAttributemDĞÉêyùºÎŒ‚ªK©ImagemDĞÉêyùºÎŒ‚ªK©MeterwDĞÉêyùºÎŒ‚ªK©BarMonitorDĞÉêyùºÎŒ‚ªK©ScaleIndicatoroDĞÉêyùºÎŒ‚ªK©Slider}DĞÉêyùºÎŒ‚ªK©CartesianPlotDĞÉêyùºÎŒ‚ªK©RelatedDisplayDĞÉêyùºÎŒ‚ªK©RelatedDisplay{DĞÉêyùºÎŒ‚ªK©ChoiceButtonkDĞÉêyùºÎŒ‚ªK©Text}DĞÉêyùºÎŒ‚ªK©TextIndicatoruDĞÉêyùºÎŒ‚ªK©
+TextEntry}DĞÉêyùºÎŒ‚ªK©TextIndicator…DĞÉêyùºÎŒ‚ªK©PVLimitsDialogBoxwDĞÉêyùºÎŒ‚ªK©StripChartƒDĞÉêyùºÎŒ‚ªK©DynamicAttributeƒDĞÉêyùºÎŒ‚ªK©DynamicAttributemDĞÉêyùºÎŒ‚ªK©ImageDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmlDĞÉêyùºÎŒ‚ªK©VisibilityModeDĞÉêyùºÎŒ‚ªK©VisibilityModesDĞÉêyùºÎŒ‚ªK©	MenuEditsDĞÉêyùºÎŒ‚ªK©	MenuEditDĞÉêyùºÎŒ‚ªK©EPICSExtensionDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmlDĞÉêyùºÎŒ‚ªK©PVInfoDialogBoxwDĞÉêyùºÎŒ‚ªK©TextFormat}DĞÉêyùºÎŒ‚ªK©CartesianPlot‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenu‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenu‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenumDĞÉêyùºÎŒ‚ªK©MeterwDĞÉêyùºÎŒ‚ªK©BarMonitorDĞÉêyùºÎŒ‚ªK©ScaleIndicatoroDĞÉêyùºÎŒ‚ªK©Slider}DĞÉêyùºÎŒ‚ªK©TextIndicatoruDĞÉêyùºÎŒ‚ªK©
+TextEntryoDĞÉêyùºÎŒ‚ªK©Limits}DĞÉêyùºÎŒ‚ªK©CartesianPlotwDĞÉêyùºÎŒ‚ªK©StripChartkDĞÉêyùºÎŒ‚ªK©Help‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenuuDĞÉêyùºÎŒ‚ªK©
+CompositesDĞÉêyùºÎŒ‚ªK©	MenuEdityDĞÉêyùºÎŒ‚ªK©CommandLinesDĞÉêyùºÎŒ‚ªK©	XWindows{DĞÉêyùºÎŒ‚ªK©ColorPaletteyDĞÉêyùºÎŒ‚ªK©CommandLineqDĞÉêyùºÎŒ‚ªK©DisplayuDĞÉêyùºÎŒ‚ªK©
+MouseEdit{DĞÉêyùºÎŒ‚ªK©KeyboardEditsDĞÉêyùºÎŒ‚ªK©	MenuEditkDĞÉêyùºÎŒ‚ªK©GridkDĞÉêyùºÎŒ‚ªK©TextsDĞÉêyùºÎŒ‚ªK©	PolylineqDĞÉêyùºÎŒ‚ªK©PolygonkDĞÉêyùºÎŒ‚ªK©Grid}DĞÉêyùºÎŒ‚ªK©ObjectPalettekDĞÉêyùºÎŒ‚ªK©GridsDĞÉêyùºÎŒ‚ªK©	PrintingDĞÉêyùºÎŒ‚ªK©PVInfoDialogBoxyDĞÉêyùºÎŒ‚ªK©DialogBoxesyDĞÉêyùºÎŒ‚ªK©ExecuteMenuuDĞÉêyùºÎŒ‚ªK©
+ColorRulemDĞÉêyùºÎŒ‚ªK©ImagesDĞÉêyùºÎŒ‚ªK©	ADLFilesDĞÉêyùºÎŒ‚ªK©RelatedDisplay‹DĞÉêyùºÎŒ‚ªK©ExecuteModePopupMenuyDĞÉêyùºÎŒ‚ªK©ExecuteMenukDĞÉêyùºÎŒ‚ªK©HelpkDĞÉêyùºÎŒ‚ªK©HelpsDĞÉêyùºÎŒ‚ªK©	PrintingDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html{DĞÉêyùºÎŒ‚ªK©RequirementssDĞÉêyùºÎŒ‚ªK©	XRTGraphqDĞÉêyùºÎŒ‚ªK©SciPlotyDĞÉêyùºÎŒ‚ªK©CDEVSupportkDĞÉêyùºÎŒ‚ªK©CDEVmDĞÉêyùºÎŒ‚ªK©EPICS}DĞÉêyùºÎŒ‚ªK©ChannelAccess›DĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©*mailto:chen@jlab.org}DĞÉêyùºÎŒ‚ªK©ChannelAccessmDĞÉêyùºÎŒ‚ªK©EPICS£DĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©2http://www.jlab.org/cdevDĞÉêyùºÎŒ‚ªK©ProcessVariablesDĞÉêyùºÎŒ‚ªK©	XWindowsmDĞÉêyùºÎŒ‚ªK©MotifDĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©¨http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmloDĞÉêyùºÎŒ‚ªK©Widget{DĞÉêyùºÎŒ‚ªK©XtIntrinsicsiDĞÉêyùºÎŒ‚ªK©IOCyDĞÉêyùºÎŒ‚ªK©ObjectIndexoDĞÉêyùºÎŒ‚ªK©Widget£DĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©2mailto:evans@aps.anl.gov£DĞÉêyùºÎŒ‚ªK©àÉêyùºÎŒ‚ªK©2mailto:evans@aps.anl.gov
+[8@ñÿ8Normal¤xCJOJQJkHämH	T@T	Heading 1$„Ğ¤d¤d&d$@&5B*CJ8KHOJQJ>@>	Heading 2$¤d¤d@&
+5B*CJ>@>	Heading 3$¤d¤d@&
+5B*CJ0@0	Heading 4$@&5D	@D	Heading 9	$$„Ğ¤x@&CJOJQJ<A@òÿ¡<Default Paragraph Font`şOò`Preformatted)„ĞÆ 
+Å{@ö»€6û²!v%@@@@@@@@@@B*OJQJ,şO¢,HTML Markup<ÿB*(U@¢(	Hyperlink>*B*$şO¢!$CODECJOJQJ0Z20
+Plain TextOJQJ(şO¢A(
+Definition6<C@R<Body Text Indent
+„Ğ¤x>ş>Definition List
+„ „0ıB*8V@¢q8FollowedHyperlink>*B*,‚,HeaderÆàÀ!, @’,FooterÆàÀ!&)@¢¡&Page Number$X@¢±$Emphasis68ş8Address	1$¤6CJhnH	$ÿÿÿÿ$$~ø¹
+oÂe#$ş)†0‘=ÜRÛl5n¡osÃtcvßwæ{/€¹§]¯õ½¦ÁTÊGÚãVñgı®Ş+$¿*,f19~GX(v°~Ï¨’Ä—ën÷æÿÁF$"(,/025689:BDEFGIJKMNQRUV^`bglrtux|…‡‰‹œO(x=è@àGìQ‹\ñfõmwpÃs{wÖ…‘	——ù—ª©£ËĞö’úkI!5#»%)Â*I/,2P46=:Ù<`A“GäK3P÷Pïb<„&™OµøÁªÆ;ÌıÑİ âVé›ò/ÿñ
+Ç$!$%'*+-137;=>?@CHLPSTWYZ[\_acdfhijmnopsvwz{}~€‚„†ˆŒÍÎ ñ7(@¬H›Zn]t*‡˜·ñ)½4óAŒQÊ«<Ì“ç$ #&).4<AOX]ekqyƒŠ+P_àı	%.0O\^yƒ¢¯±Í×Ùù068\¦¨ÅÒÔó$46Seg‰šœ´¹»àóõ"$CPSy†‰¬ÄÇè÷ú03V^`x}Ÿ­¯Ğßáı,46^vx”Ÿ¾ËÍñ-CEaoq›¹ÂÄãõû
+-Slr5Wgã%GW`Ãİ;MŸÁÑ,6Bfx¹Âş-p‘›}¬÷n‘ªu’˜¸Æn‰‘Çè÷(DNt—ªç4Udv•š©ÅË%4ğ"`y‚ ¬³ÕãŒ¥´
+ # ) ; S X M"e"j"•"²"¸"Â"â"ë"h#€#…#¢$¼$Æ$%5%F%X%{%ƒ%%¼%É%×%ÿ%&K&m&}&u'–'¥'­'Ø'ä'(8(J(l(Œ(›(¹(Ø(å(***C*\*|*“*Ğ,ì,î,H-a-g-//F/J/Â3á3î34)43464O4U4[4t4z4 5¸5Â56¦6Á6¯>Ï>İ>A@b@q@6AOAUA…NªN°NµNÛNäNîNO1O2eLeTeg°gÀgh)h8hÃhÚhŞhàhühi
+i*i8i:iWiaidi}iƒi…i¢i¯i±iÉiÎiĞiëióiöijjj6jEjGjhjwj{j“j˜jšj³j¹j»jİjíjñjkkk8kFkHkhkvkzk–kŸk¡k¿kËkÍkçkîkòklll<lIlKlhlslwll’lwnšn¡n£nÍnçnénooo9oNoQosoyo{o¦oÁoÃoàoëoíop,p/pSp[p]pƒp˜pšp¶pÀpÂpŞpçpêpqqqCq^q`q}qˆqŠq§q²qµqÙqáqãqrrr*r5r7rUrardr~r…r‡r¤r¯r±rÑrÜrŞrûrs	s*s/s1sNsXsZsssys{ss­s°sÕsßsâsüstt*t:tWtztt¬tÎtŞtu/uAuÑvôvûv&wJwRw€wšw¡wÇwàwæwéwxxx/x9x@x]xhx™x¼xÃxîxyyHyeyoyvy“yyZ{}{„{¯{Ğ{Õ{
+|0|;|>|X|b|i|†|‘|#ˆ]ˆŠˆÌšñšûšşš(›3›6›a›l››¶›Â›œ£¹£Ä£+¤N¤U¤€¤¤¤¬¤Ù¤ö¤¥¥$¥-¥Ü¥ÿ¥¦Á¦Ù¦Ş¦#§D§S§ª:ªAªoª“ª¥ªA«^«i«|««©«W¯y¯€¯r±–±¨±L´k´€´³´Ñ´İ´â¶···€·š·#¸<¸B¸«¹Ï¹õ¹Kºeºnº†º©º°ºÛºÿº»5»O»V»|»•»›»¢»¿»Ê»2¼U¼\¼‡¼«¼³¼ä¼½½¦½É½Ğ½û½¾'¾X¾u¾€¾¡ÀÄÀËÀöÀÁ(ÁUÁyÁ‹Á.ÂQÂXÂƒÂ¥ÂµÂâÂÃÃ1ÆTÆ[Æ†Æ¨Æ¸ÆßÆÇÇpÉ“ÉšÉÅÉçÉ÷É$ÊHÊZÊË5Ë<ËjËË—Ë$ÓCÓPÓÖ?ÖFÖ®ÚÉÚâÚÑÛíÛ÷Û<Ü_ÜfÜ‘ÜµÜ½ÜëÜİİ2İKİQİTİqİ{İ‚İŸİªİŞ³ŞÈŞğŞßß"äAäNä½äàäçäå6å>åkå…åŒå²åËåÑåÔåñåûåææ*æ_ê|ê†ê,íOíVíí¢í§íàíıíîoï’ï™ïÄïæïöï
+ğ.ğ@ğğœğ¦ğdò~òˆòŸøÂøÉøôøù ùNùhùoù~ù›ù¥ù¨ùÆùÍùÔùñùüù¹úÜúãúû2û:ûgûûˆû—ûµû¼ûÃûàûëûˆş¤ş®şùşÿ#ÿQÿuÿ‡ÿ&BKQu‡¯	Ó	å	Ş
+ö
+û
+_vz}•š¸ÀÃßèë16*AEH`ehƒ‹ª³¶Óİàøı!+]z…ÇéôKiu BR$BFIhmp‰’´ÂÉê÷%36NSVw†‰£ª±ÎÙë
++7:\jm‡‘²¿Æãîú2Op…£¯ 5 D à!""‚"£"²"!%B%Q%&7&F&8'V'Z']'|''„'¤'²'µ'Í'Ò'Õ'ö'((!('(*(L(Z(](w(~(((©(¬(Í(Ú(ô()*)ò*++^+‚+”+Ç+ã+ï+²,Ğ,Ü,ß,ş,--0->-E-_-f-¬.Î.Ş.&/G/V/070C0Ò0ô01e1~1„1252;2>2\2h2k22›2¢2¼2Ã2ñ45!5\6~66;7]7m7ë899ƒ:›: :¦:Ç:Ô:}>š>¥>«>Ì>Ù>È?í?@E&E2EâEFF¿HãHõH!I:I@IÕI8JLJNMpM{MÜMşM	NQ)Q3QöSTT@XbXrXu^Ø^ì^Y_|_„_`/`6`Ï`ğ`ÿ`ìab$btcœc³cqd—d©dt0t6t9tWtctftˆt–ttµt¼tötu$u*uGuRuÇuáuóuv3vBvœvºvÆv™z±z¶zu†›†­†å‹ŒŒÑ‘ë‘õ‘8–W–d–n›Š›Œ›S¢s¢¢š¤¹¤Î¤I¥d¥l¥—°´°Í°Ï°ï°±±)±M±»,»9»£¾»¾À¾Ã¾ß¾è¾ï¾
+¿¿{À“À À¡ÅÂÅÑÅÈ+È8ÈÆÜâÜëÜœİ¿İÇİÏİîİûİqŞŞŞææ)æÑæêæğæ*îFîPîVîxîˆî¶îŞîöîï!ï.ïlï„ï‰ï±ğÉğÎğ>ñZñhñ5ò˜ò¬òOóoó|óó›ó¥ó¨óÃóËóÎóíóòó¢ôºô¿ôÍôæôìôîôõõÑõõõöæûüüŒü¥ü«üÏü÷üı^ıı‘ıÇşãşíşÿÿ(ÿ_ÂÖìãr‡‹0A	/	7	!
+G
+Y
+,?\„˜$tÿ•€Xÿ€Xÿ€Xÿ„Xÿ„Xÿ„Xÿ€Xÿ€Xÿ„XÿŒXÿŒXÿŒXÿ„Xÿ€Xÿ„Xÿ€Xÿ„Xÿ„XÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ„Xÿ€Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ€Xÿ„Xÿ„Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„XÿŒXÿ„Xÿ€Xÿ„XÿŒXÿ„Xÿ€Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿ„Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿ„XÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ„XÿŒXÿ„Xÿ„Xÿ„XÿŒXÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿŒXÿ„Xÿ€Xÿ„XÿŒXÿ„Xÿ„XÿŒXÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ€Xÿ€Xÿ„Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ€Xÿ„Xÿ„Xÿ„XÿŒXÿŒXÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿ„Xÿ€XÿŒXÿ€Xÿ„XÿŒXÿ„Xÿ„XÿŒXÿ„Xÿ„XÿŒXÿ€Xÿ€XÿŒXÿ€Xÿ„Xÿ„Xÿ€Xÿ„Xÿ„Xÿ„XÿŒXÿ„Xÿ€Xÿ„Xÿ„Xÿ€Xÿ„Xÿ„Xÿ„Xÿ€Xÿ„Xÿ„Xÿ„Xÿ„XÿŒXÿ„XÿŒXÿ€Xÿ„Xÿ„XÿŒXÿŒXÿ€Xÿ„Xÿ„Xÿ„XÿŒXÿ€Xÿ„Xÿ€Xÿ„Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿ€Xÿ„Xÿ„Xÿ„Xÿ„Xÿ€Xÿ„Xÿ„XÿŒXÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ„Xÿ€Xÿ€Xÿ€Xÿ„XÿŒXÿ€Xÿ€Xÿ€Xÿ„Xÿ„Xÿ„Xÿ€Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„XÿŒXÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€XÿŒXÿŒXÿŒXÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ„Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€Xÿ€X”ÿ•„Xÿ€Xÿ€Xÿ€X”ÿ•„X”ÿ•„X”ÿ•„Xÿ€X”ÿ•„XÿŒÔÿ•€Xÿ„!:bpry{!”ÿ•€”ÿ•€!”ÿ•€ÿÿ/_Hlt392059682Contents_Hlt418066901_Hlt418066960_Hlt414340799_Hlt387116668_Hlt400249110_Hlt438535011_Hlt438696013_Hlt387116672_Hlt428699572_Hlt400418786_Hlt395594556_Hlt395594543_Hlt413641142_Hlt398524269_Hlt398524537_Hlt413637682_Hlt398524902_Hlt398525191_Hlt398526550_Hlt398524397_Hlt398524536_Hlt460818807_Hlt438535847_Hlt398531290_Hlt398531278_Hlt383502206_Hlt428759942_Hlt457707446_Hlt394900103_Hlt399221688_Hlt399222529_Hlt383508275_Hlt399221356_Hlt399560220_Hlt383508249_Hlt399224424_Hlt457707454_Hlt399221648_Hlt399222593_Hlt399231994_Hlt438542814_Hlt438544473_Hlt402348085_Hlt402348097_Hlt392048274_Hlt461596200_Hlt386955925_Hlt461597130_Hlt387655537_Hlt387141769_Hlt457707444_Hlt385823943_Hlt387116683_Hlt402348100_Hlt394380565_Hlt394380740_Hlt398531395_Hlt396291754_Hlt394303861_Hlt402243473_Hlt402685590_Hlt402243456_Hlt438877992_Hlt438547752_Hlt438536063_Hlt461590381_Hlt461591093_Hlt438526393_Hlt402083949_Hlt438526447_Hlt438535991_Hlt438536005_Hlt402072508_Hlt438526987_Hlt438527115_Hlt440084105_Hlt402243608_Hlt394304041_Hlt394374223_Hlt399646269_Hlt413637647_Hlt457705652_Hlt422718083_Hlt383426415_Hlt387116535_Hlt387116594_Hlt387116656_Hlt387805367_Hlt395412263_Hlt396291433_Hlt396291551_Hlt400963526_Hlt40
+BarMonitor_Hlt399227855_Hlt392299312_Hlt399226601_Hlt392299478_Hlt392299265_Hlt392299466_Hlt461611575_Hlt438544896_Hlt438544706_Hlt392299284_Hlt392299294_Hlt392314613_Hlt392300892_Hlt392299301_Hlt392299306_Hlt392300903ByteMonitor_Hlt392301003_Hlt438555412_Hlt392300442_Hlt392302212CartesianPlot_Hlt399231131_Hlt392301086_Hlt399226782_Hlt392301101_Hlt399226789_Hlt399226801_Hlt392301525_Hlt392301656_Hlt392314488_Hlt392301573_Hlt392301590_Hlt392314503_Hlt392301566XRTGraphSciPlot_Hlt428760525_Hlt428760355XRTGraphInteractions_Hlt392307479_Hlt392310362_Hlt392310159_Hlt392309964_Hlt392309953_Hlt392309868_Hlt392386686_Hlt392314741_Hlt392388086_Hlt392310354_Hlt392314717_Hlt392311035ChoiceButton_Hlt399227166_Hlt399232634_Hlt399233017_Hlt399232750_Hlt399232833_Hlt399232839_Hlt399232879_Hlt399232952Display_Hlt457708106Image_Hlt461591745_Hlt461596132_Hlt461594965_Hlt461605843_Hlt461597877_Hlt461606934_Hlt461606987_Hlt461606424_Hlt461606403Line_Hlt399224436_Hlt399224443Meter_Hlt399227203_Hlt438544691_Hlt438545065_Hlt438544628_Hlt438544888_Hlt399227358_Hlt438544623_Hlt399227752Menu_Hlt399232996_Hlt399295497_Hlt399233065MessageButton_Hlt399233897Oval_Hlt461526028PolygonPolyline_Hlt399222918	Rectangle_Hlt399222835RelatedDisplay_Hlt399236653_Hlt399233955_Hlt399234286_Hlt399234520_Hlt399237680_Hlt399234515_Hlt399237178_Hlt399235335_Hlt399237609_Hlt399237632_Hlt399236563_Hlt400784735_Hlt400784515_Hlt400784487_Hlt400784456_Hlt399236175_Hlt392059791ScaleIndicator_Hlt392059716_Hlt399228514_Hlt438544904_Hlt438544732_Hlt399228302_Hlt399227826ShellCommand_Hlt399237161_Hlt399319302_Hlt399302987Slider_Hlt438544911_Hlt438544743_Hlt399295566_Hlt399295579_Hlt399297219_Hlt399295595_Hlt399299894
+StripChart_Hlt399231481_Hlt399231833_Hlt399231776_Hlt399231917_Hlt399232208_Hlt399232495Text_Hlt461596363_Hlt399226839_Hlt399559220_Hlt461529045_Hlt461528974_Hlt461529019_Hlt461529197TextIndicator_Hlt399227215_Hlt399226928_Hlt438544749_Hlt438544987_Hlt438545032_Hlt438544766_Hlt399226846_Hlt399226857_Hlt399226901_Hlt399226709_Hlt399226574_Hlt399226742_Hlt399227075	TextEntry_Hlt438545459_Hlt399300012	Composite_Hlt400945579_Hlt461605343_Hlt461526387_Hlt461526400
+AttributesObjectAttributeBasicAttributeDynamicAttribute_Hlt438555571_Hlt438553918_Hlt438553895_Hlt461526219_Hlt461526402_Hlt461526415_Hlt460820067_Hlt460821897_Hlt460816998_Hlt438552734_Hlt461596669_Hlt461596720MonitorAttribute_Hlt399557644_Hlt399557641_Hlt399557637_Hlt399557633_Hlt399557629_Hlt392053259_Hlt399221536ControlAttribute_Hlt399557832_Hlt399557839_Hlt399557845_Hlt399557850_Hlt399557857Limits_Hlt438544589_Hlt438544693_Hlt438544898_Hlt438544708_Hlt438543005_Hlt438543130_Hlt438544734_Hlt438543134_Hlt438544913_Hlt438544768_Hlt438543139_Hlt438543076_Hlt438545466_Hlt438544567PlotAttribute_Hlt438544134PlotAxisAttributeCartesianPlotAxisStyle_Hlt392302351_Hlt392310072CartesianPlotRangeStyleCartesianPlotStyle_Hlt392301781_Hlt392301667_Hlt392310077CartesianPlotTimeFormat_Hlt392388101_Hlt392314926_Hlt392492071_Hlt392492074_Hlt399226761_Hlt399226802	ColorMode_Hlt399559269_Hlt399559264_Hlt399559260_Hlt399559256_Hlt399559034_Hlt399559252_Hlt399558999_Hlt399559239_Hlt399559234_Hlt399559230_Hlt399559223_Hlt399559214_Hlt399559155_Hlt399559093_Hlt399222785_Hlt399566835_Hlt399562954_Hlt399563206	ColorRule_Hlt460817314_Hlt460817406	Direction_Hlt392314610_Hlt392314575_Hlt392314617_Hlt399228506_Hlt399228518_Hlt399295593_Hlt399297214_Hlt399230987	EdgeStyle_Hlt392311228	EraseMode_Hlt392301592_Hlt392301640_Hlt392301533_Hlt392060094FillMode_Hlt392299736	FillStyle	ImageType_Hlt392060188_Hlt461591819Label_Hlt399295576PlotMode_Hlt392301658_Hlt392301589_Hlt392301510_Hlt392301631_Hlt392060118_Hlt392307431_Hlt392307489RelatedDisplayMode_Hlt392060455RelatedDisplayVisual_Hlt399234476_Hlt399234518_Hlt400783524_Hlt400784755Stacking	TextAlign_Hlt392062932_Hlt399229140
+TextFormat_Hlt392064541_Hlt392063172_Hlt392063168_Hlt399300034_Hlt399297213	TimeUnits_Hlt399231713_Hlt399231919VisibilityMode_Hlt438542639_Hlt461596537_Hlt399232097CalcExpression_Hlt461596587_Hlt460821109_Hlt461523653_Hlt460822808_Hlt461595159Grid_Hlt399900433_Hlt387142064_Hlt399140868_Hlt399900504MacroSubstitutionDragAndDrop_Hlt398445383_Hlt398444562_Hlt398444497_Hlt399560217_Hlt398445644_Hlt401558171_Hlt402348464_Hlt402348128_Hlt402348080_Hlt398445997DialogBoxesDisplayListDialogBox_Hlt402256676_Hlt402256662PVLimitsDialogBox_Hlt438536079_Hlt438543874_Hlt438542173_Hlt438542179_Hlt438542182_Hlt438542187_Hlt438542165_Hlt438542169_Hlt438542200_Hlt438542204MessageWindow_Hlt438695898_Hlt402083061StatisticsWindow_Hlt438526985_Hlt440084103PVInfoDialogBox_Hlt396291809_Hlt396291846_Hlt396291421_Hlt461524576Help_Hlt394304061_Hlt394303965_Hlt387805323SmartStartup_Hlt399644058_Hlt399646384DisplayColorsResizingEditing_Hlt400184924_Hlt399904223_Hlt395411699_Hlt387116583_Hlt387805360_Hlt399141715_Hlt399552894	MouseEdit_Hlt399900227_Hlt399903471_Hlt399900894KeyboardEdit_Hlt399900438MenuEditUndo_Hlt399552890_Hlt460822543_Hlt399141639ExecuteModePopupMenu_Hlt396291864_Hlt396291745_Hlt396291547_Hlt395413049PrintingExecuteMenu_Hlt399319228_Hlt399319406
+ColorRules_Hlt460817398_Hlt399563200_Hlt460817237_Hlt460817240ColorConventionsEnvironmentVariables_Hlt398524501_Hlt398524493_Hlt395436191_Hlt395436186_Hlt394304040_Hlt399646770_Hlt399646909Building_Hlt438534304_Hlt438534262_Hlt438534903_Hlt438534912_Hlt438534916_Hlt438535103_Hlt438535440CDEVSupport_Hlt428696837_Hlt438535106_Hlt438534378GlossaryADL_Hlt438535009CDEV_Hlt428697661ChannelAccessCED_Hlt400419916_Hlt400419952EPICSEPICSExtension_Hlt385824745_Hlt398445767IOCMotifProcessVariable_Hlt387804249_Hlt399647218WIN32WidgetXtIntrinsics_Hlt387804252_Hlt399295333XWindowsTechSupport_Hlt399038147_Hlt399037853_Hlt399037502	Copyright×àTVWW{~¥§©ªª«ĞÑÒÔÔÿ3 ¢ËÏÏ÷øøùúúûüş++,-.//02^a¶··çíHHKLR}€µ¹»½½ëîğññó%'([z{¤¨
+/011bllmm—˜š›346ghkl’“½¾èî÷I
+'0OOnoppQCDEEFI02o¼$$›Ÿ¤˜™,-Û«& ´"å"¿$À$Â$Ã$:%;%I%€%v&v&w&A(•(Ü(â(:*:*@*ë+ñ3Q4¼5·8€;Ö>k@QARADòFâI½KÒK•LìMìM¬NßN#OœOOXz] _Ü`é`üa1c:cIcZchc‹dQe¼g1hhÃhÃhÜhÜhiiii-i.i/i0i1iZii€i§i¨i©iËiÌiîiïiïijj:j<j>j?jCjmjnj•j–j—jµj»jßjâjãjäjæjñjkk@kAkAklknkokqkrk˜kkÄkÆkÇkêkëkllBlClElllnlll™lœnnnŸnÜnÜnİnoJouovovo³oÃoäoåop/p/pVpWpXpZpŒpp»pâpãpäpqqqKqLqSqTqTqUq€q«q«q°qÛqİqrr-r1r[r\rrƒr¨r×rØrşrÿrs,s-susvs§sÛsÜsÜst2tFtJtJt5u7u8u8u<u=u¼u­v°v¼vöv&wLwNwQww£wÇwãwxx5x6xaxdxvx¿xyiyšy3{B{¯{Ò{Ó{7|7|[|\|]|^|Š|Œ||²}™‡oˆ€ˆç•ôš÷š,›f›g›¹›¼›½›¾›¿›¾£¤¤¤¤©¤ı¤¥)¥©¥ª¥M§ªc«É¯¡±|´Û´·ç¹ï¹ò¹ºjºjºqºvº5»Q»R»X»—»˜»	¼¼$¼½}½½9ÀÀ…ÁÂÆTÈSÉÊéÊùÊùÊeË‘ËùÌÍzÒHÓIÓIÓƒÓBÖÓÚØÚÜÚïÛúÛúÛÜÜİ2İvİËŞËŞ÷áDäääå²åÎåöåöå$æ™ëí¤íÜíîînîTïUï=ğ¨ğJñdò„ò†ò
+øaønøNùNùNùjùrù ù ùÉùöùıùıù™úšú„û¹û)ş§şEE0;PC°¶$$%îğnpNPDj‹¼ğú3ô-P{¥ÑÛ1ackŠ‹·¸åæ)-@A  ½!	"	"^"%H%J%L%ò%<&=&?&?&@&@&$'8']'¬'Ï'Õ'((#(Q({( (×()")4)+++>+å+ê+Ÿ,×,-7-8-b-c-c-Í-Œ.//K/L/M/P/0¡0²0Q1€112¿2Ş455555C5Ä5>6ˆ67f7f7g7Ç8Ù8o:Î:W>h>}>>Ò>§?„DôD*E*E½EÌEFgHhHîHDJGJOÍOÎO,Q/Q2QTŸTûVeXmXnXh[ã^€_Ø_1`;`û`–a£a§c©c*dse"i2tYt‹t¹tuIu:vÁvÉv z´zq}(€;€6†¥†¦†©†Œ*ÿZ‘ñ‘•[–n›€¡Ê¬°¼°¾°Å°Ç°±3±@±O±3»—À™À„ÁÂ ÃÄÑ&ÖšØ˜ÛÃİüİıİ–Ş¢Şàˆä|åå$æiæîæîæóæ×ìJîîâî+ï”ğËğbñŒñÇò
+óuóóÆóïóïówô¼ô½ô÷õ²ú»ú0û0ûüı•ıçş#ÿ2
+ØÚË‰6¢ñÚ2	4	;	Á	N
+O
+R
+€%	
+ !#"$%&(')*+-,./0124356798:;P<=>?@ACBDEFHGIJKLMNOQRSTbUVXWY[Z]\^_`acdefghijklmnopqrst–—uvxwyz{|~}€‚ƒ„†…‡ˆ‰Š‹Œ‘’“”•˜™š›œŸ¡ £¢¤¥¦§¨ª©«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÕÔÓÖ×ÙØÚÛÜİŞßàáâãäåæçéèêëìíîïğñòóôõöü÷øùúûÿış	
+ !"$#%(&').5*+,-/012346789:;=<>?A@BCDEFGHIJKLMNOPQRSTUVWXZY[\]ge^_a`bcdfhxiwjklmnopqrstuvyz{|}~‹€ƒ‚„…†‡ˆ‰ŠŒ‘’“”•–—˜™š›œŸ§ ¡¢£¤¥¦¨©ª«¬­®¯±°²´³µ¶º·¸¹»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÛÌÍÎÏĞÑÒÔÓÕÖ×ØÙÚÜİŞßàáâãäåæçèéêëíìîïğñóòôõö÷øùúıûüşÿ	
+ !"#$%&'()*+,-./01234567:89;<=>?@ABCDEGFHIJKLMNOQPSRTUVWXZY][\^_`abcdefghijklmnoqprstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•—–˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´·µ¶¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúüûışÿ	
+ !"#$%&'()*+,-.×UWWX|€¦¨ªª«¬ÑÒÓÔÕ4¡£ÌÏĞøøùúúûüıÿ+,-.//013_b··¸èîHILM~‚¶º¼½¾ìïññòô&()\{|~¥©0112clmmn˜™›œÍ457hilm‘“”¾¿éï÷I
+(0oppqRDEEFGJ13p½$%œ ¥™š-.Ü¬' Y Y µ"æ"À$Á$Ã$Ä$;%<%%%v&w&x&B(–(İ(ã(:*;*A*ë+ñ3R4½5·8‹;×>l@RASA¡DòFâIÊKÒK•LìMìM­NàN$OœO‹Xz] _Ü`é`1c1c:cIcZchc‹dRe½g2hhÃhÜhİhßhiiii.i/i0i1i2i[i€ii¨i©iªiÌiÍiïiïiğijj;j=j?j@jDjnjoj–j—j˜j¶jàjãjäjåjçjîjkkkAkAkBkmkokpkrksk™kkÅkÇkÈkëkìkllClDlFlmloll‘l™lnnŸn nÜnİnŞnoKovovowo´oåoæoìopWpXpYp[p\pp‘p¼pãpäpåpêpqqqLqMqTqTqUqVqq«q¬q±qÜqŞqr	r.r2r\r]r‚r„r©rØrÙrÿrss-s.svsws¨sÜsÜsİst3tFt6u8u8u9u=u>uv"v­v°v°v÷vMwOwRww£wÇwäwxx6x7xbxexjxvxvxÀxyjy›y3{Ó{Ô{Ö{7|8|\|]|^|_|‹|||(}²}™‡pˆˆç•õšøš-›g›h›º›½›¾›¿›À›¿£¤¤¤ª¤ş¤¥*¥©¥ª¥N§ªªd«Ê¯¢±}´Ü´·è¹ó¹ô¹ºjºkºqºvºQ»S»X»|»˜»™»	¼¼$¼½}½½9ÀÀ†ÁÂÆTÈSÉÊéÊùÊeË‘ËùÌÍ³ÒIÓIÓJÓƒÓCÖÔÚÙÚİÚğÛúÛúÛúÛÜÜİ2İwİËŞËŞ÷áEäääå²åÏåöå÷å%æ™ëí¥íîîînîTïUï>ğ¨ğJñ…ò‡ò‰ò
+øaøjùpùrù ù¡ù¦ùÊùÎù÷ùıùıù™úšúšú…ûºû)ş¨şEF0;PD±Ş$%&ïñoqOQEkŒ½ñ3ô.Q|¦ÒÛ2bd‹Œ¸¹æç*.@A  ½!	"
+"^"%I%K%M%ò%=&>&?&@&@&A&$'['‚'­'Ğ'(($(R([(|(¡(Ø( )#)4)+++>+æ+ë+Ÿ,Ø,-8-9-c-c-d-Í-Œ.//L/M/N/Q/0©0²0Q11‚12À2Ş455555T5Ó5>6‰67f7g7h7Ç8Ù8o:Ï:W>h>Ÿ>¦>Ó>§?DôD*E+E½EÌEFgHhHïHEJHJOÍOÎO-Q0Q3QTŸTûVfXnXoX¼[ä^_2`;`Æ`ü`–a£a¨c°c*dse+i3tZtŒtºtuJu;vÂvÉv^zµzq}(€;€6†¦†§†©†Œ*ÿZ‘ò‘•\–›€¡Ê¬°½°¿°Æ°È°±4±M±O±4»˜ÀšÀ„ÁÂ ÃÄÑ&Ö¡Ø˜ÛÄİüİıİ—Ş¢Şàˆä|åå%æiæîæïæóæ×ìKî‚îãî,ï”ğÌğcñŒñßòóvóŸóÇóïóğówô½ô¾ôøõ²ú»ú0û0ûüı•ıèş$ÿ2
+ØÚËŠ7¢ñÚ3	5	;	Á	O
+P
+S
+€%-’›¬#(=(>(K(l(’(“(œ(¹(à(á(æ(\*ƒ*„*†*‡*Š*‹*”*•*—*˜*š*Â3æ3ç3ï34+4,444P4V4[4{4~4ƒ4„4‹4 5½5¾5Ã56­6®6µ6¶6Â6Ã6È6É6Ò6¯>Õ>Ö>Ş>A@j@k@r@s@u@v@y@6AVAWA^A`AcAƒN²NµNåNîNOO#O$O2OĞSÔSTT^TbT¦TªTîTòT6U:UUƒUÈUÌUaVjV¯V¸VûVWGWPW2eUeXe\e]ebeg»g¼gÁgÂgÄgh0h1h9h:ibi~i„i£i§iĞiôijj7j@jwn¢nÎn×nØnÜnİnánânènoooooAoBoIoJoOotozo{o°o±oµo¶o»o¼oÂoáoæoçoìoíopp%p&p-pTp\p]ppp’p“p™p·p»p¼pÁpÂpèpqqqMqNqRqSqWqXq_q~q‚qƒq‰qŠq¬q­q³qÚqâqãqrrr+r0r1r6r7rZr[rbrr†r‡rªr«r°rÒr×rØrİrŞrsss+s0sOsYsZszss¨s©s®s°sÚsÛsàsıstttt5t6t;t>tEtFtIt#ˆ‹ˆˆ‘ˆ’ˆ™ˆÈ’Ì’Í’Ñ’Ò’Ö’×’Û’““““A“C“p“r“À“Â“””Á¦ß¦à¦ã¦ä¦å¦#§L§M§T§U§X§Y§Z§A«d«e«j«|«¤«¥«ª«W¯¯‚¯…¯†¯‰¯r±±Ÿ±©±ª±¬±­±²±L´x´y´´‚´…´†´‰´³´×´Ø´Ş´ß´â´ã´å´â¶
+······‡·#¸C¸F¸H¸I¸M¸«¹Ó¹Ô¹Ù¹Ú¹æ¹ç¹î¹ï¹ö¹÷¹ù¹ú¹û¹.ÂYÂZÂ\ÂâÂÃÃÃÃ Ã$ÓKÓLÓQÓRÓVÓWÓXÓÖGÖHÖQÖRÖTÖÑÛñÛòÛøÛëÜİİİ"äIäJäOäkååå’å_ê‡êˆêŠêdòƒò„ò‰ò¨ùÎùĞùÓùòù÷ù—û½û¿ûÂûáûæûˆş©şªş¯ş&FGLQ}~ˆ¯	Û	Ü	æ	Ş
+ü
+ı
+_{–›¹ÁÃé	79CDN*Faf„Œ´ÔŞùş,.348]€†ÇõKopv GHS$GinŠ’º»ÃÉïğø,-4OTV€‡¤«±ÓÔÚë,/08:bckˆ‘·¸ÀÆèéïú !'(./3478;8'['}'‚'„'«'¬'³'Î'Ó'Õ'ş'ÿ'("(((*(R(S([(x(((£(¤(ª(Î(Ò(Ó(Û(ô( )!)+)ò*+++Ç+é+ê+ğ+¬.Ô.Õ.ß.2<2]2`2a2i2k2“2”2œ2½2Ä2}>Ÿ> >¦>§>ª>«>Ñ>Ò>Ú>È?ğ?ñ?÷?ø?ş?ÿ?@¿HëHìHöH÷HúHûHıH!IAICIHIIIMIÕIMJPJRJSJUJöSTTTu^í^ğ^ò^ó^õ^Y__€_…_†____`7`8`:`;`<`Ï`ú`û`at7tXt[t\tdtfttt—t¶t½tötuu%u&u)u*uLuMuSuÇuèuéuôuõuûuüuşuv=v>vCvDvGvHvMvœvÀvÁvÇv™z·zºz¼z½zÁzå‹ŒŒŒŒŒÑ‘ğ‘ñ‘ö‘8–_–`–e–n›››”›•›—›S¢y¢z¢‚¢š¤Æ¤Ç¤Ï¤I¥m¥»1»2»4»5»:»£¾Á¾à¾é¾ï¾¿¿¿¿ ¿{À˜À™À›ÀœÀ¡À¢À¥À¦À¬ÀÈ0È1È3È4È9ÈÆÜìÜïÜôÜõÜûÜœİÂİÃİÈİÉİÎİÏİõİöİüİqŞ˜Ş™ŞŞå!å2å=å?åAåIåKåWå]ånåyåæ$æ%æ*æ+æ/æ0æ2æÑæñæóæøæùæç*îJîKîQîRîUîVî€îî‰î¶îëîìîñîòî÷îï)ï*ï/ï0ï3ï4ï7ïlïŠï‹ïïï’ï±ğÏğÒğÔğÕğØğ>ñbñcñiñjñpñ5ò­ò°ò³ò´ò¼òOó}óœó¦óÄóÌóÎóôóõó÷óøóıó¢ôÀôÁôÇôÈôÌôÍôíôõõõõÑõöööööæûüüüŒü¬üÏüıııı"ıÇşåşæşîşïşöş÷şÿÿ"ÿ#ÿ)ÿ_×ÚİŞä89B¤"%á
+|iòóno
+L°ícjpq/U“Üv`œóÎZ[v¿Ş4 ; n ="l"I%%%&&p'q'k(l(c)F*Å*E3ğ3ş3~4{5Ä5`6î6«>ß>9@@1A`AiNyO|S„SÂSÊSTTPTXT˜T TàTèT(U0UqUyUºUÂUVVMVUV›V£VçVïV3W;W eXe
+gÌgÍgh:iciĞiõiwnPoQo.p/pépêp´qµqcrdrs	s¯s°sást<tˆˆ½¦‘§2«¸«S¯°/±Ì±D´±´²´µÕ¶F¸¹ºÂ_ÃµÒkÓèÕ§ÖˆÛùÛ&Ü¹İËãsä®ä9æ(êÜêûñŒò‹øú¥úúû;ş²şĞ6%n	ç	Ê
+×V8!-U‘¿GyTùüÛâY/',)î*+Ã+ñ+—.à.2Å2t>İ>j?@yHfIgIPJÆSTA^î^F_×_Ø_F`Æ`9aÒsÈv`zºz°‹Œ[‘D’–ß–U›Ì›%¢…¢Q¤Ò¤¥w¥»=»¾;¿kÀçÀÈ:ÈÂÜíÜ˜İıİmŞŸŞİäãäå!åWå]åàåòæ&îŠî›î?ïKïÂï|ğÒğñwñò°òó#ô„ôö[ûı@ş,ÿ,Øø|¤"%ÿÿKenneth Evans, Jr."C:\My Documents\Word\MEDM\MEDM.docKenneth Evans, Jr.-C:\WINDOWS\TEMP\AutoRecovery save of MEDM.asdKenneth Evans, Jr."C:\My Documents\Word\MEDM\MEDM.docKenneth Evans, Jr.-C:\WINDOWS\TEMP\AutoRecovery save of MEDM.asdKenneth Evans, Jr.-C:\WINDOWS\TEMP\AutoRecovery save of MEDM.asdKenneth Evans, Jr.-C:\WINDOWS\TEMP\AutoRecovery save of MEDM.asdKenneth Evans, Jr."C:\My Documents\Word\MEDM\MEDM.docKenneth Evans, Jr."C:\My Documents\Word\MEDM\MEDM.docKenneth Evans, Jr.-C:\WINDOWS\TEMP\AutoRecovery save of MEDM.asdKenneth Evans, Jr."C:\My Documents\Word\MEDM\MEDM.doc**ª	ÿ½1|	ÿWlŸ	ÿM¢&	ÿ¸7R'	ÿ€%[-	ÿPZ/ş´Øÿ¶(Æ1	ÿ$2?	ÿ¡'sH	ÿScT	ÿøeªZ	ÿƒ<ä]	ÿN
+e	ÿ´r	w	ÿ„h„˜şÆhOJQJo(·ğ„h„˜şÆhOJQJo(·ğ„h„˜şÆhOJQJo(·ğ„h„˜şÆh.„h„˜şÆh.„h„˜şÆh.„8„˜şÆ8o(.„h„˜şÆh.„h„˜şÆh.„h„˜şÆhOJQJo(·ğ„h„˜şÆhOJQJo(·ğ„h„˜şÆh.„h„˜şÆhOJQJo(·ğ„h„˜şÆhOJQJo(·ğ„h„˜şÆh.ƒ<ä]¡'sH½1|N
+ePZ/$2?WlŸ¸7R'øeªZ¶(Æ1´r	wM¢&€%[-**ªScTÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ@€tïç$@@GTimes New Roman5€Symbol3&Arial?5	Courier New;"Helvetica"‰VĞh›Œ,†vT9¦ š,Æ'	ÃL‹µàƒ¥Ì$V¥À´´€0dUQÿÿMEDM Reference ManualKenneth Evans, Jr.Kenneth Evans, Jr.şÿà…ŸòùOh«‘+'³Ù0”˜¸Äàì	(
+DP\ht|„ŒäMEDM Reference Manual8EDMKenneth Evans, Jr.aennNormal.dotnKenneth Evans, Jr.a39nMicrosoft Word 8.0a@v;´@˜2¸d+¾@ú±¾*¾@4Ñ^ßû¾ÃL‹µşÿÕÍÕœ.“—+,ù®DÕÍÕœ.“—+,ù®Xhp”œ¤¬´¼ÄÌÔöäArgonne National Laboratory¥àU1MEDM Reference ManualTitle,ˆ(RZ²
+_PID_GUID_PID_HLINKSäAN{87EF4E87-C7C0-11D0-B90C-0020AF27395C}Ap‡8
+cmailto:evans@aps.anl.govcmailto:evans@aps.anl.govvzWidgetkxObjectIndexioIOCXtIntrinsicsvz
+Widget3kThttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.htmlMotif	XWindowsckşProcessVariablePAûhttp://www.jlab.org/cdevøEPICSõChannelAccess"òmailto:chen@jlab.orgïChannelAccessìEPICSéCDEVjeæCDEVSupportv|ãSciPlotà	XRTGraphİRequirements3kÚThttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html×	PrintingÔHelpÑHelpulÎExecuteMenuËExecuteModePopupMenuvcÈRelatedDisplayÅ	ADLFiles
+ÂImage¿
+ColorRuleul¼ExecuteMenuph¹DialogBoxeswz¶PVInfoDialogBox³	Printing°Grid­ObjectPaletteªGrid{y§Polygon¤	Polyline¡TextGrid›	MenuEdit˜KeyboardEdit•
+MouseEdit{x’DisplaybnCommandLineŒColorPalette‰	XWindowsbn†CommandLineƒ	MenuEdit€
+Composite}ExecuteModePopupMenuzHelpkkwStripCharttCartesianPlotusqLimitsn
+TextEntrykTextIndicatorzhSlider~geScaleIndicatorydbBarMonitor_Meter\ExecuteModePopupMenuYExecuteModePopupMenuVExecuteModePopupMenuSCartesianPlotygPTextFormatwzMPVInfoDialogBox3kJThttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html~kGEPICSExtensionD	MenuEditA	MenuEditvs>VisibilityModevs;VisibilityMode3k8Thttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html
+5Image2DynamicAttribute/DynamicAttributekk,StripChart)PVLimitsDialogBox&TextIndicator#
+TextEntry TextIndicatorTextChoiceButtonvcRelatedDisplayvcRelatedDisplayCartesianPlotzSlider~gScaleIndicatorydBarMonitorMeter
+ImagebdÿBasicAttributeydüBarMonitorùCartesianPlotbdöBasicAttributezóSlider~gğScaleIndicatorauíByteMonitorydêBarMonitormmçColorRulesäDynamicAttributemmáColorRulesŞDynamicAttributeÛTextIndicatorØ
+TextEntryzÕSlider~gÒScaleIndicatorÏMeterÌMessageButtonÉMenuÆChoiceButtonauÃByteMonitorydÀBarMonitor½CartesianPlotºCartesianPlot·CartesianPlot´CartesianPlot±CartesianPlotkk®StripChart«CartesianPlot¨PVLimitsDialogBox¥
+TextEntry¢TextIndicatorzŸSlider~gœScaleIndicatoryd™BarMonitor–Meter“
+TextEntryzSliderMessageButtonŠMenu‡ChoiceButton„TextIndicator~gScaleIndicator~Meterau{ByteMonitorydxBarMonitorc|uCalcExpressionmmrColorRulesvsoVisibilityMode	l
+ColorModei
+CompositefTextc
+Rectangle`	Polyline{y]PolygonZOvalarWArcTTextQ
+RectangleN	Polyline{yKPolygonHOvalarEArcBText?DynamicAttribute<DynamicAttribute9	ADLFiles6DynamicAttributeoc3ObjectAttribute0	MenuEdit	-
+ColorModeyg*TextFormatus'Limits$ControlAttributeoc!ObjectAttribute	
+ColorModeygTextFormat
+TextAlignusLimitsMonitorAttributeocObjectAttribute	MenuEdit	
+TextAlignDynamicAttributebdBasicAttributeocObjectAttributeı
+TimeUnitsúPlotAttributeoc÷ObjectAttributeô
+Direction	ñ
+ColorModeî
+DirectionëLabelusèLimitsåControlAttributeocâObjectAttributeulßExecuteMenuocÜObjectAttributeÙPVLimitsDialogBox	Ö
+ColorModeÓ
+DirectionĞLabelusÍLimitsÊMonitorAttributeocÇObjectAttributeÄ	ADLFilesÁ
+MouseEdit¾RelatedDisplayVisualbn»CommandLine¸RelatedDisplayVisualocµObjectAttribute²DynamicAttributebd¯BasicAttributeoc¬ObjectAttribute©DynamicAttributebd¦BasicAttributeoc£ObjectAttribute DynamicAttributebdBasicAttributeocšObjectAttribute—DynamicAttributebd”BasicAttributeoc‘ObjectAttribute	
+ColorMode‹ControlAttributeocˆObjectAttribute	…
+ColorMode‚ControlAttributeocObjectAttribute	|
+ColorModeyLabelusvLimitssMonitorAttributeocpObjectAttributem	PolylineARjhttp://www.gimp.org/ZgWIN323kdThttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html~kaEPICSExtensionmm^ColorRulesbn[CommandLineXDynamicAttributec|UCalcExpressionc|RCalcExpressionO
+ImageTypeLDynamicAttributeocIObjectAttributeFDisplayColorsCGridoc@ObjectAttribute=	Stacking	:
+ColorMode7ControlAttributeoc4ObjectAttribute1
+EraseModeet.CartesianPlotTimeFormatgy+CartesianPlotRangeStylex(CartesianPlotAxisStyle%PlotAxisAttributeT"-http://www.ae.utexas.edu/~rwmcm/SciPlot.html
+EraseMode	PlotModeswCartesianPlotStylePlotAttributeocObjectAttribute	
+ColorMode
+Direction
+MonitorAttributeocObjectAttribute	
+ColorMode	FillModeş
+DirectionûLabelusøLimitsõMonitorAttributeocòObjectAttributeïDynamicAttributebdìBasicAttributeocéObjectAttributec|æCalcExpressionã	PlotModeàPlotAxisAttributevsİVisibilityModeÚLabel×
+DirectionÔPlotAttributeÑ
+TimeUnitsc|ÎCalcExpressionË
+ColorRuleusÈLimitsygÅTextFormatÂ
+ImageType	¿
+ColorMode¼ControlAttribute¹
+TextAlign¶
+FillStyleet³CartesianPlotTimeFormat°MonitorAttribute­	Stackingª	FillModesw§CartesianPlotStyle¤DynamicAttribute¡RelatedDisplayVisual
+EraseModegy›CartesianPlotRangeStylebd˜BasicAttributei•RelatedDisplayMode’
+EdgeStylexCartesianPlotAxisStyleocŒObjectAttribute‰Text†
+TextEntryƒTextIndicator€
+Rectanglez}SliderkkzStripChartw	PolylinetShellCommand~gqScaleIndicator{ynPolygonvckRelatedDisplayhMetereOvalbMessageButton_CartesianPlot\Line{xYDisplayVMenuauSByteMonitor
+PImageM
+CompositeJChoiceButtonydGBarMonitorarDArcAObjectPalettevs>VisibilityModevz;Widgetqu8UserSpecifiedScalableFonts5DefaultScalableFonts	2AliasedFixedFonts/Fonts,MessageWindow	)SmartStartupce&CED#Help EPICSMotif	XWindowsjeCDEVSupportadADLMotif	XWindows	SmartStartupInitialLocationsulExecuteMenuShellCommandÿXRTGraphInteractionsetüCartesianPlotTimeFormatùCartesianPlotvcöRelatedDisplayóExecuteModePopupMenuulğExecuteMenuwzíPVInfoDialogBoxê
+Compositeç	MenuEditäGridáKeyboardEditŞ
+MouseEditÛUndoØHelpZÕWIN32ÒLabel~gÏScaleIndicatorydÌBarMonitorÉMetervcÆRelatedDisplaybnÃCommandLineÀ	Buildingje½CDEVSupportºMessageWindowbn·CommandLinewz´PVInfoDialogBox±	XRTGraph®CartesianPlotv|«SciPlot¨ChoiceButton¥Menu¢PVLimitsDialogBoxŸ	BuildingœSiteSpecific™DisplayColors–SiteSpecific“	ADLFilesDynamicAttribute
+Compositec|ŠCalcExpression‡DynamicAttribute3k„Thttp://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/WWWPages/EpicsDoc.html~kEPICSExtensionmm~ColorRulesc|{CalcExpression
+xImage~kuEPICSExtension{zrTechSupport	o	GlossaryjelCDEVSupporti	BuildingfEnvironmentVariablescColorConventionsul`ExecuteMenu]	PrintingZExecuteModePopupMenue~WEditingT	ResizingQDisplayColors	NSmartStartupKHelpwzHPVInfoDialogBoxEStatisticsWindowBMessageWindow?PVLimitsDialogBox<DisplayListDialogBoxph9DialogBoxesrp6DragAndDrop3MacroSubstitution0Gridc|-CalcExpression*
+Compositege'AttributeIndexkx$ObjectIndexo{!MEDMObjects	PalettesInitialLocationsFontsSiteSpecific	ADLFilesbnCommandLinetoHistoryzr	NewFeatures	Overview
+Copyright	
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ	
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹Œşÿÿÿ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùşÿÿÿûüışÿ	
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abşÿÿÿdefghijşÿÿÿlmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯şÿÿÿıÿÿÿıÿÿÿıÿÿÿıÿÿÿıÿÿÿıÿÿÿ·şÿÿÿşÿÿÿşÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿRoot Entryÿÿÿÿÿÿÿÿ	ÀFÀg«ú¾à)Hlßû¾¹€Data
+ÿÿÿÿÿÿÿÿÿÿÿÿÓ1Tableÿÿÿÿÿÿÿÿú¹ÑWordDocumentÿÿÿÿ%SummaryInformation(ÿÿÿÿÿÿÿÿÿÿÿÿcDocumentSummaryInformation8ÿÿÿÿÿÿÿÿk„‰CompObjÿÿÿÿjObjectPoolÿÿÿÿÿÿÿÿÿÿÿÿà)Hlßû¾à)Hlßû¾şÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿşÿ
+ÿÿÿÿ	ÀFMicrosoft Word Document
+MSWordDocWord.Document.8ô9²q
