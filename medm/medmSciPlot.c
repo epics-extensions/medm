@@ -1,3 +1,4 @@
+
 /* Routines used to implement the Cartesian Plot using SciPlot */
 
 /* KE: Note that MEDM uses the union XcVType (of a float and a long) to convert
@@ -9,7 +10,7 @@
 #define DEBUG_FONTS 0
 
 #define MAX(a,b)  ((a)>(b)?(a):(b))
-#define MIN_FONT_HEIGHT 0
+#define MIN_FONT_HEIGHT 8
 
 #include "medm.h"
 #include "medmSciPlot.h"
@@ -509,6 +510,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
 
   /* SciPlot-specific */
+    XtSetArg(args[nargs],XtNtitleMargin,5); nargs++;
     XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMajor,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMinor,False); nargs++;
@@ -770,5 +772,7 @@ void dumpCartesianPlot(Widget w)
     print("  xAxisNumbers: %s\n",xAxisNumbers?"True":"False");
     print("  yAxisNumbers: %s\n",yAxisNumbers?"True":"False");
     print("  userData: %x\n",userData);
+
+    SciPlotPrintMetrics(w);
 }
 #endif

@@ -26,8 +26,15 @@
 #define DEBUG_SCIPLOT_VTEXT 0
 #define DEBUG_SCIPLOT_TEXT 0
 #define DEBUG_SCIPLOT_LINE 0
+#define DEBUG_SCIPLOT_AXIS 0
 
+/* KE: Use SCIPLOT_EPS to avoid roundoff in floor and ceil */
+#define SCIPLOT_EPS .0001
+
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 
@@ -39,12 +46,6 @@
 /* Eliminate Microsoft C++ warnings about converting to float */
 #pragma warning (disable: 4244 4305)
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
-#include "SciPlotP.h"
 
 #ifdef WIN32
   /* Hummingbird extra functions including lprintf
@@ -59,6 +60,8 @@
 #  endif    
 # endif
 #endif /* #ifdef WIN32 */
+
+#include "SciPlotP.h"
 
 enum sci_drag_states {NOT_DRAGGING, 
 		      DRAGGING_NOTHING, 
@@ -862,6 +865,7 @@ FontInit (SciPlotWidget w, SciPlotFont *pf)
       SciPlotPrintf("  Height: %3d   Ascent: %d   Descent: %d\n",
 	f->max_bounds.ascent + f->max_bounds.descent,
 	f->max_bounds.ascent, f->max_bounds.descent);
+      XFreeFont(XtDisplay(w), f);
       i++;
     }
   }
@@ -2453,15 +2457,18 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
   real range, rnorm, delta, calcmin, calcmax;
   int nexp, majornum, minornum, majordecimals, decimals, i;
 
+#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
+    SciPlotPrintf("\nComputeAxis: min=%f max=%f\n", min, max);
+#endif
   range = max - min;
   if (log) {
     if (range==0.0) {
-      calcmin = powi(10.0, (int) floor(log10(min)));
+      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
       calcmax = 10.0*calcmin;
     }
     else {
-      calcmin = powi(10.0, (int) floor(log10(min)));
-      calcmax = powi(10.0, (int) ceil(log10(max)));
+      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
+      calcmax = powi(10.0, (int) ceil(log10(max) - SCIPLOT_EPS));
     }
 
     /*    
@@ -2492,7 +2499,7 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
     axis->MajorNum = (int) (log10(calcmax) - log10(calcmin)) + 1;
     axis->MinorNum = 10;
     axis->Precision = -(int) (log10(calcmin) * 1.0001);
-#if DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
     SciPlotPrintf("calcmin=%e log=%e (int)log=%d  Precision=%d\n",
       calcmin, log10(calcmin), (int) (log10(calcmin) * 1.0001), axis->Precision);
 #endif
@@ -2501,7 +2508,7 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
   }
   else {
     if (range==0.0) nexp=0;
-    else nexp = (int) floor(log10(range));
+    else nexp = (int) floor(log10(range) + SCIPLOT_EPS);
     rnorm = range / powi(10.0, nexp);
     for (i = 0; i < NUMBER_MINOR; i++) {
       delta = CAdeltas[i];
@@ -2512,7 +2519,7 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
 	break;
     }
     delta *= powi(10.0, nexp);
-#if DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
     SciPlotPrintf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
 #endif
 
@@ -2557,19 +2564,19 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
 
     delta = log10(axis->MajorInc);
     if (delta > 0.0)
-      decimals = -(int) floor(delta) + majordecimals;
+      decimals = -(int) floor(delta + SCIPLOT_EPS) + majordecimals;
     else
-      decimals = (int) ceil(-delta) + majordecimals;
+      decimals = (int) ceil(-delta - SCIPLOT_EPS) + majordecimals;
     if (decimals < 0)
       decimals = 0;
-#if DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
     SciPlotPrintf("delta=%f majordecimals=%d decimals=%d\n",
       delta, majordecimals, decimals);
 #endif
     axis->Precision = decimals;
   }
 
-#if DEBUG_SCIPLOT
+#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
   SciPlotPrintf("Tics: min=%f max=%f size=%f  major inc=%f #major=%d #minor=%d decimals=%d\n",
     axis->DrawOrigin, axis->DrawMax, axis->DrawSize,
     axis->MajorInc, axis->MajorNum, axis->MinorNum, axis->Precision);
@@ -3205,13 +3212,14 @@ AdjustDimensionsCartesian (SciPlotWidget w)
     }
     else
       val = w->plot.x.DrawOrigin + floor(w->plot.x.DrawSize /
-			 w->plot.x.MajorInc) * w->plot.x.MajorInc;
+	w->plot.x.MajorInc + SCIPLOT_EPS) * w->plot.x.MajorInc;
+
     x = PlotX(w, val);
     sprintf(numberformat, "%%.%df", precision);
     sprintf(label, numberformat, val);
     x += FontnumTextWidth(w, w->plot.axisFont, label);
     if ((int) x > w->core.width) {
-      xextra = ceil(x - w->core.width + w->plot.Margin);
+      xextra = ceil(x - w->core.width + w->plot.Margin - SCIPLOT_EPS);
       if (xextra < 0.0)
 	xextra = 0.0;
     }
@@ -3238,7 +3246,7 @@ AdjustDimensionsCartesian (SciPlotWidget w)
     }
     else
       val = w->plot.y.DrawOrigin + floor(w->plot.y.DrawSize /
-		 w->plot.y.MajorInc * 1.0001) * w->plot.y.MajorInc;
+		 w->plot.y.MajorInc + SCIPLOT_EPS) * w->plot.y.MajorInc;
     y = PlotY(w, val);
     sprintf(numberformat, "%%.%df", precision);
     sprintf(label, numberformat, val);
@@ -3253,12 +3261,15 @@ AdjustDimensionsCartesian (SciPlotWidget w)
     else {
       y -= FontnumTextWidth(w, w->plot.axisFont, label);
       if ((int) y <= 0) {
-	yextra = ceil(w->plot.Margin - y);
+	yextra = ceil(w->plot.Margin - y - SCIPLOT_EPS);
 	if (yextra < 0.0)
 	  yextra = 0.0;
       }
     }
   }
+#if DEBUG_SCIPLOT
+    SciPlotPrintf("xextra=%f  yextra=%f\n",xextra,yextra);
+#endif
 
   if (!w->plot.XFixedLR) {  
     /* x,y is the origin of the upper left corner of the drawing area inside
@@ -3997,6 +4008,19 @@ DrawCartesianXAxis (SciPlotWidget w, int type)
   y2 = PlotY(w, w->plot.y.DrawMax);
   LineSet(w, x1, y1, x2, y1, w->plot.ForegroundColor, XtLINE_SOLID);
 
+#if DEBUG_SCIPLOT_AXIS
+  SciPlotPrintf("\nDrawCartesianXAxis: x1=%f y1=%f x2=%f y2=%f\n"
+    "  Width=%d Height=%d\n"
+    "  MajorInc=%f MajorNum=%d MinorNum=%d Precision=%d\n"
+    "  Origin=%f Size=%f Center=%f AxisPos=%f\n"
+    "  DrawOrigin=%f DrawSize=%f DrawMax=%f\n",
+    x1,y1,x2,y2,
+    w->core.width,w->core.height,
+    w->plot.x.MajorInc,w->plot.x.MajorNum,w->plot.x.MinorNum,w->plot.x.Precision,
+    w->plot.x.Origin,w->plot.x.Size,w->plot.x.Center,w->plot.x.AxisPos,
+    w->plot.x.DrawOrigin,w->plot.x.DrawSize,w->plot.x.DrawMax);
+#endif	
+  
   precision = w->plot.x.Precision;
   sprintf(numberformat, "%%.%df", precision);
   if (w->plot.XLog) {
@@ -4012,6 +4036,10 @@ DrawCartesianXAxis (SciPlotWidget w, int type)
     LineSet(w, x, y1 + 5, x, y1 - 5, w->plot.ForegroundColor, XtLINE_SOLID);
   if (w->plot.XAxisNumbers) {
     sprintf(label, numberformat, val);
+#if DEBUG_SCIPLOT_AXIS
+    SciPlotPrintf("  TextSet: x=%f y=%f val=%f label=%s\n",
+      x,w->plot.y.AxisPos,val,label);
+#endif	
     TextSet(w, x, w->plot.y.AxisPos, label, w->plot.ForegroundColor,
       w->plot.axisFont);
   }
@@ -4067,6 +4095,10 @@ DrawCartesianXAxis (SciPlotWidget w, int type)
 		XtLINE_SOLID);
       if (w->plot.XAxisNumbers) {
 	sprintf(label, numberformat, val);
+#if DEBUG_SCIPLOT_AXIS
+	SciPlotPrintf("  TextSet: x=%f y=%f val=%f label=%s\n",
+	  x,w->plot.y.AxisPos,val,label);
+#endif	
 	TextSet(w, x, w->plot.y.AxisPos, label, w->plot.ForegroundColor,
 		w->plot.axisFont);
       }
@@ -5209,12 +5241,12 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
   range = max - min;
   if (log) {
     if (range==0.0) {
-      calcmin = powi(10.0, (int) floor(log10(min)));
+      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
       calcmax = 10.0*calcmin;
     }
     else {
-      calcmin = powi(10.0, (int) floor(log10(min)));
-      calcmax = powi(10.0, (int) ceil(log10(max)));
+      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
+      calcmax = powi(10.0, (int) ceil(log10(max) - SCIPLOT_EPS));
     }
 
     /*    
@@ -5228,7 +5260,7 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
   }
   else {
     if (range==0.0) nexp=0;
-    else nexp = (int) floor(log10(range));
+    else nexp = (int) floor(log10(range) + SCIPLOT_EPS);
     rnorm = range / powi(10.0, nexp);
     for (i = 0; i < NUMBER_MINOR; i++) {
       delta = CAdeltas[i];
@@ -5401,6 +5433,9 @@ sciPlotMotionAP (SciPlotWidget w,
 	      newlim0 = txmin;
 
 	    if (!w->plot.reach_limit) {
+	    /* KE: Did not use SCIPLOT_EPS here since UserMax could be smaller
+	     *  than SCIPLOT_EPS.  Don't understand why ceil is used with
+	     *  these values either.  Might want to use * (1.0 - SCIPLOT_EPS) */
 	      w->plot.UserMax.x = ceil (newlim1);
 		
 	      if (w->plot.UserMax.x >= txmax) {
@@ -5946,6 +5981,50 @@ SciPlotGetYAxisInfo(Widget wi, float *min, float *max, Boolean *isLog,
     *max = w->plot.UserMax.y;
     *isAuto = False;
   }
+}
+
+/* This function prints widget metrics */
+void
+SciPlotPrintMetrics(Widget wi)
+{
+  SciPlotWidget w;
+  
+  if (!XtIsSciPlot(wi)) return;
+  w = (SciPlotWidget)wi;
+  
+  SciPlotPrintf("\nPlot Metrics Information\n");
+  SciPlotPrintf("  Width:           %d\n",w->core.width);
+  SciPlotPrintf("  Height:          %d\n",w->core.height);
+  SciPlotPrintf("  Margin:          %d\n",w->plot.Margin);
+  SciPlotPrintf("  XFixedLR         %s\n",w->plot.XFixedLR?"True":"False");
+  SciPlotPrintf("  LegendMargin     %d\n",w->plot.LegendMargin);
+  SciPlotPrintf("  LegendLineSize   %d\n",w->plot.LegendLineSize);
+  SciPlotPrintf("  TitleMargin      %d\n",w->plot.TitleMargin);
+  SciPlotPrintf("  TitleHeight      %g\n",FontnumHeight(w,w->plot.titleFont));
+  SciPlotPrintf("  TitleAscent      %g\n",FontnumAscent(w,w->plot.titleFont));
+  SciPlotPrintf("  TitleDescent     %g\n",FontnumDescent(w,w->plot.titleFont));
+  SciPlotPrintf("  AxisLabelHeight  %g\n",FontnumHeight(w,w->plot.labelFont));
+  SciPlotPrintf("  AxisLabelAscent  %g\n",FontnumAscent(w,w->plot.labelFont));
+  SciPlotPrintf("  AxisLabelDescent %g\n",FontnumDescent(w,w->plot.labelFont));
+  SciPlotPrintf("  AxisNumHeight    %g\n",FontnumHeight(w,w->plot.axisFont));
+  SciPlotPrintf("  AxisNumAscent    %g\n",FontnumAscent(w,w->plot.axisFont));
+  SciPlotPrintf("  AxisNumDescent   %g\n",FontnumDescent(w,w->plot.axisFont));
+  SciPlotPrintf("  x.Origin:        %g\n",w->plot.x.Origin);
+  SciPlotPrintf("  x.Size:          %g\n",w->plot.x.Size);
+  SciPlotPrintf("  x.Center:        %g\n",w->plot.x.Center);
+  SciPlotPrintf("  x.TitlePos:      %g\n",w->plot.x.TitlePos);
+  SciPlotPrintf("  x.AxisPos:       %g\n",w->plot.x.AxisPos);
+  SciPlotPrintf("  x.LabelPos:      %g\n",w->plot.x.LabelPos);
+  SciPlotPrintf("  x.LegendPos:     %g\n",w->plot.x.LegendPos);
+  SciPlotPrintf("  x.LegendSize     %g\n",w->plot.x.LegendSize);
+  SciPlotPrintf("  y.Origin:        %g\n",w->plot.y.Origin);
+  SciPlotPrintf("  y.Size:          %g\n",w->plot.y.Size);
+  SciPlotPrintf("  y.Center:        %g\n",w->plot.y.Center);
+  SciPlotPrintf("  y.TitlePos:      %g\n",w->plot.y.TitlePos);
+  SciPlotPrintf("  y.AxisPos:       %g\n",w->plot.y.AxisPos);
+  SciPlotPrintf("  y.LabelPos:      %g\n",w->plot.y.LabelPos);
+  SciPlotPrintf("  y.LegendPos:     %g\n",w->plot.y.LegendPos);
+  SciPlotPrintf("  y.LegendSize     %g\n",w->plot.y.LegendSize);
 }
 
 #ifdef MOTIF

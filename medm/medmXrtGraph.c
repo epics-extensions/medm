@@ -131,16 +131,16 @@ void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMax,&xMax); nargs++;
-	XtSetArg(args[nargs],XtNxrtXMin,&xMin); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,&max); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,&min); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMax,&yMax); nargs++;
-	XtSetArg(args[nargs],XtNxrtYMin,&yMin); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,&max); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,&min); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Max,&y2Max); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Min,&y2Min); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,&max); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,&min); nargs++;
 	break;
     }
     XtGetValues(w,args,nargs);
@@ -757,7 +757,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     return w;
 }
 
-#if DEBUG_CARTESIAN_PLOT
+#if 1
 /* Set DEBUG_CARTESIAN_PLOT in eventHandlers.c to do this with Btn3 */
 void dumpCartesianPlot(Widget w)
 {
