@@ -267,7 +267,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     Bar *pb = (Bar *) pd->clientData;
     XcVType hopr, lopr, val;
     Pixel pixel;
-    int precision;
+    short precision;
     Widget widget = pb->dlElement->widget;
     DlBar *dlBar = pb->dlElement->structure.bar;
 
@@ -308,7 +308,7 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
       XcNlowerBound,lopr.lval,
       XcNupperBound,hopr.lval,
       XcNbarForeground,pixel,
-      XcNdecimals, precision,
+      XcNdecimals, (int)precision,
       NULL);
     XcBGUpdateValue(widget,&val);
 }

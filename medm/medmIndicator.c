@@ -249,7 +249,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     Record *pd = (Record *) cd;
     Indicator *pi = (Indicator *) pd->clientData;
     XcVType hopr, lopr, val;
-    int precision;
+    short precision;
     Widget widget = pi->dlElement->widget;
     DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
 
@@ -291,7 +291,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	  XcNlowerBound,lopr.lval,
 	  XcNupperBound,hopr.lval,
 	  XcNindicatorForeground,pixel,
-	  XcNdecimals, precision,
+	  XcNdecimals, (int)precision,
 	  NULL);
 	XcIndUpdateValue(widget,&val);
     }

@@ -239,7 +239,7 @@ static void textUpdateDraw(XtPointer cd) {
     unsigned long gcValueMask;
     Boolean isNumber;
     double value = 0.0;
-    int precision = 0;
+    short precision = 0;
     int textWidth = 0;
     int strLen = 0;
 
@@ -285,9 +285,6 @@ static void textUpdateDraw(XtPointer cd) {
 	    case DBF_DOUBLE :
 		value = pd->value;
 		precision = pd->precision;
-		if (precision < 0) {
-		    precision = 0;
-		}
 		isNumber = True;
 		break;
 	    default :
@@ -297,12 +294,14 @@ static void textUpdateDraw(XtPointer cd) {
 		  dlTextUpdate->monitor.rdbk);
 		break;
 	    }
-	    if (isNumber) {
+	    if(isNumber) {
+	      /* Convert bad values of precision to high precision */
+		if(precision < 0 || precision > 17) precision=17;
 		switch (dlTextUpdate->format) {
 		case STRING:
 		    cvtDoubleToString(value,textField,precision);
 		    break;
-		case DECIMAL:
+		case MEDM_DECIMAL:
 		    cvtDoubleToString(value,textField,precision);
 		  /* Could be an exponential */
 		    if(strchr(textField,'e')) {
@@ -439,7 +438,7 @@ DlElement *createDlTextUpdate(DlElement *p)
 	monitorAttributeInit(&(dlTextUpdate->monitor));
 	dlTextUpdate->clrmod = STATIC;
 	dlTextUpdate->align = HORIZ_LEFT;
-	dlTextUpdate->format = DECIMAL;
+	dlTextUpdate->format = MEDM_DECIMAL;
     }
 
     if (!(dlElement = createDlElement(DL_TextUpdate,
@@ -495,7 +494,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 	      /* Backward compatibilityt */
 		if (!found) {
 		    if (!strcmp(token,"decimal")) {
-			dlTextUpdate->format = DECIMAL;
+			dlTextUpdate->format = MEDM_DECIMAL;
 		    } else if (!strcmp(token,
 		      "decimal- exponential notation")) {
 			dlTextUpdate->format = EXPONENTIAL;
@@ -572,7 +571,7 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level) {
 	if (dlTextUpdate->align != HORIZ_LEFT)
 	  fprintf(stream,"\n%s\talign=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->align]);
-	if (dlTextUpdate->format != DECIMAL)
+	if (dlTextUpdate->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->format]);
 	fprintf(stream,"\n%s}",indent);

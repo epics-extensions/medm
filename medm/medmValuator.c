@@ -446,7 +446,7 @@ void handleValuatorExpose(
     DisplayInfo *displayInfo;
     double localLopr, localHopr;
     char *localTitle;
-    int localPrecision;
+    short localPrecision;
 
     if (event->count > 0) return;
 
@@ -663,7 +663,7 @@ void valuatorRedrawValue(Valuator *pv,
     char stringValue[40];
     unsigned long gcValueMask;
     XGCValues gcValues;
-    int precision;
+    short precision;
     int x, y, height, width;
     
   /* Return if no window for widget yet, or if displayInfo == NULL, or ... */

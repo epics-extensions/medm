@@ -168,16 +168,14 @@ char *valueToString(TextEntry *pte, TextFormat format) {
 	medmPrintf(0,"  Unknown Data Type\n");
 	return "Error!";
     }
-
-    if (precision < 0) {
-	precision = 0;
-    }
-
+    
+  /* Convert bad values of precision to high precision */
+    if(precision < 0 || precision > 17) precision=17;
     switch (format) {
     case STRING:
 	cvtDoubleToString(value,textField,precision);
 	break;
-    case DECIMAL:
+    case MEDM_DECIMAL:
 	cvtDoubleToString(value,textField,precision);
       /* Could be an exponential */
 	if(strchr(textField,'e')) {
@@ -517,7 +515,7 @@ DlElement *createDlTextEntry(DlElement *p)
 	objectAttributeInit(&(dlTextEntry->object));
 	controlAttributeInit(&(dlTextEntry->control));
 	dlTextEntry->clrmod = STATIC;
-	dlTextEntry->format = DECIMAL;
+	dlTextEntry->format = MEDM_DECIMAL;
     }
 
     if (!(dlElement = createDlElement(DL_TextEntry,
@@ -603,7 +601,7 @@ void writeDlTextEntry(
 	if (dlTextEntry->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlTextEntry->clrmod]);
-	if (dlTextEntry->format != DECIMAL)
+	if (dlTextEntry->format != MEDM_DECIMAL)
 	  fprintf(stream,"\n%s\tformat=\"%s\"",indent,
 	    stringValueTable[dlTextEntry->format]);
 	fprintf(stream,"\n%s}",indent);

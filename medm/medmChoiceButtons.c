@@ -321,7 +321,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd) {
       &(pCB->object),
       fg,
       bg,
-      pd->hopr+1,
+      (int)(pd->hopr+1.5),     /* Record->hopr is a double */
       labels,
       (XtPointer) cb,
       buttons,
@@ -352,6 +352,7 @@ static void choiceButtonDraw(XtPointer cd) {
     Widget widget = pcb->dlElement->widget;
     DlChoiceButton *dlChoiceButton = pcb->dlElement->structure.choiceButton;
     if (pd->connected) {
+	if(!widget) return;
 	if (pd->readAccess) {
 	    if (widget && !XtIsManaged(widget)) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);

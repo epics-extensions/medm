@@ -231,7 +231,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     DlMeter *dlMeter = pm->dlElement->structure.meter;
     Widget widget = pm->dlElement->widget;
     XcVType hopr, lopr, val;
-    int precision;
+    short precision;
 
     switch (pd->dataType) {
     case DBF_STRING :
@@ -270,7 +270,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 	  XcNlowerBound,lopr.lval,
 	  XcNupperBound,hopr.lval,
 	  XcNmeterForeground,pixel,
-	  XcNdecimals, precision,
+	  XcNdecimals, (int)precision,
 	  NULL);
 	XcMeterUpdateValue(widget,&val);
     }

@@ -327,16 +327,17 @@ static void menuDraw(XtPointer cd) {
     Widget widget = pm->dlElement->widget;
     DlMenu *dlMenu = pm->dlElement->structure.menu;
     if (pd->connected) {
+	if(!widget) return;
 	if (pd->readAccess) {
-	    if ((widget) && !XtIsManaged(widget)) {
+	    if (!XtIsManaged(widget)) {
+#if 0		
 		printf("\nmenuDraw: pm->dlElement->widget=%x\n",
 		  pm->dlElement->widget);
+#endif		
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    
 	    if (pd->precision < 0) return;
-
 	    if (pd->dataType == DBF_ENUM) {
 		Widget menuWidget;
 		WidgetList children;
