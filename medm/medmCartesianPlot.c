@@ -56,6 +56,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 
 #define CHECK_NAN
 #define DEBUG_CARTESIAN_PLOT_BORDER 0
+#define DEBUG_CARTESIAN_PLOT_UPDATE 0
 #define DEBUG_TIME 0
 
 #ifdef CHECK_NAN
@@ -112,12 +113,12 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
 /* Routines to make XRT/graph backward compatible from Version 3.0 */
 
 XrtDataHandle XrtDataCreate(XrtDataType hData, int nsets, int npoints);
-int XrtDataGetNPoints(XrtDataHandle hData, int set);
+int XrtDataGetLastPoint(XrtDataHandle hData, int set);
 double XrtDataGetXElement(XrtDataHandle hData, int set, int point);
 double XrtDataGetYElement(XrtDataHandle hData, int set, int point);
 int XrtDataDestroy(XrtDataHandle hData);
 int XrtDataSetHole(XrtDataHandle hData, double hole);
-int XrtDataSetNPoints(XrtDataHandle hData, int set, int npoints);
+int XrtDataSetLastPoint(XrtDataHandle hData, int set, int npoints);
 int XrtDataSetXElement(XrtDataHandle hData, int set, int point, double x);
 int XrtDataSetYElement(XrtDataHandle hData, int set, int point, double y);
 
@@ -125,8 +126,8 @@ XrtDataHandle XrtDataCreate(XrtDataType type, int nsets, int npoints) {
     return XrtMakeData(type,nsets,npoints,True);
 }
 
-int XrtDataGetNPoints(XrtDataHandle hData, int set) {
-    return hData->g.data[set].npoints;
+int XrtDataGetLastPoint(XrtDataHandle hData, int set) {
+    return (MAX(hData->g.data[set].npoints-1,0));
 }
 
 double XrtDataGetXElement(XrtDataHandle hData, int set, int point) {
@@ -147,8 +148,8 @@ int XrtDataSetHole(XrtDataHandle hData, double hole) {
     return 1;
 }
 
-int XrtDataSetNPoints(XrtDataHandle hData, int set, int npoints) {
-    hData->g.data[0].npoints = npoints;
+int XrtDataSetLastPoint(XrtDataHandle hData, int set, int point) {
+    hData->g.data[0].npoints = point+1;
     return 1;
 }
 
@@ -231,7 +232,7 @@ void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
     if(!hxrtNullData) {
 	hxrtNullData = XrtDataCreate(XRT_GENERAL,1,1);
 	XrtDataSetHole(hxrtNullData,0.0);
-	XrtDataSetNPoints(hxrtNullData,0,1);
+	XrtDataSetLastPoint(hxrtNullData,0,0);
 	XrtDataSetXElement(hxrtNullData,0,0,0.0);
 	XrtDataSetYElement(hxrtNullData,0,0,0.0);
     }
@@ -911,6 +912,9 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
 
+      /* Set as uninitialized (Used for incrementing last point) */
+	 t->init=0;
+
       /* Determine data type (based on type (scalar or vector) of data) */
 	if (t->recordX && t->recordY) {
 	    if ( t->recordX->elementCount > 1 && t->recordY->elementCount > 1 ) {
@@ -924,11 +928,11 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 	    }
 	  /* Put initial data in */
 	    if (i <= 0) {
-		XrtDataSetNPoints(hxrt1,i,0);
+		XrtDataSetLastPoint(hxrt1,i,0);
 		minY = MIN(minY,t->recordY->lopr);
 		maxY = MAX(maxY,t->recordY->hopr);
 	    } else {
-		XrtDataSetNPoints(hxrt2,i-1,0);
+		XrtDataSetLastPoint(hxrt2,i-1,0);
 		minY2 = MIN(minY2,t->recordY->lopr);
 		maxY2 = MAX(maxY2,t->recordY->hopr);
 	    }
@@ -996,14 +1000,14 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
 		      XrtDataSetXElement(hxrt1,0,j,(float)j);
 		    XrtDataSetYElement(hxrt1,0,0,(float)t->recordY->value);
-		    XrtDataSetNPoints(hxrt1,0,0);
+		    XrtDataSetLastPoint(hxrt1,0,0);
 		    minY = MIN(minY,t->recordY->lopr);
 		    maxY = MAX(maxY,t->recordY->hopr);
 		} else {
 		    for(j = 0; j < dlCartesianPlot->count; j++)
 		      XrtDataSetXElement(hxrt2,0,j,(float)j);
 		    XrtDataSetYElement(hxrt2,0,0,(float)t->recordY->value);
-		    XrtDataSetNPoints(hxrt2,0,0);
+		    XrtDataSetLastPoint(hxrt2,0,0);
 		    minY2 = MIN(minY2,t->recordY->lopr);
 		    maxY2 = MAX(maxY2,t->recordY->hopr);
 		}
@@ -1219,27 +1223,31 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
 
 void cartesianPlotUpdateTrace(XtPointer cd) {
     Record *pr = (Record *) cd;
+
     XYTrace *pt = (XYTrace *) pr->clientData;
     CartesianPlot *pcp = pt->cartesianPlot;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
-    int count, j;
+    int nextPoint, j;
     Arg args[20];
 
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+    printf("cartesianPlotUpdateTrace:\n");
+#endif    
     switch(pt->type) {
     case CP_XYScalar:
       /* x,y channels specified - scalars, up to dlCartesianPlot->count pairs */
-	count = XrtDataGetNPoints(pt->hxrt,pt->trace);
-	if (count <= dlCartesianPlot->count-1) {
-	    XrtDataSetXElement(pt->hxrt,pt->trace,count,
+	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	if(pt->init) nextPoint++;
+	else pt->init=1;
+	if (nextPoint < dlCartesianPlot->count) {
+	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
-	    XrtDataSetYElement(pt->hxrt,pt->trace,count,
+	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordY->value));
-	    XrtDataSetNPoints(pt->hxrt,pt->trace,
-	      XrtDataGetNPoints(pt->hxrt,pt->trace)+1);
-	  /* KE: else would be enough */
-	} else if (count > dlCartesianPlot->count-1) {
+	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
-	      /* Don't update */
+	      /* All done, don't add any more points */
 	    } else if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
 	      /* Shift everybody down one, add at end */
 		int j;
@@ -1253,24 +1261,36 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		  SAFEFLOAT(pt->recordX->value));
 		XrtDataSetYElement(pt->hxrt,pt->trace,j-1,
 		  SAFEFLOAT(pt->recordY->value));
-	      /* KE: Not necessary? */
-		XrtDataSetNPoints(pt->hxrt,pt->trace,dlCartesianPlot->count);
 	    }
 	}
+#if 0     /* Use with cpCP_XYScalar.adl or delete these lines */
+	printf("nextPoint=%d dlCartesianPlot->count=%d x=%g y=%g\n",
+	  nextPoint,dlCartesianPlot->count,
+	  pt->recordX->value,pt->recordY->value);
+	printf("x1=%g x2=%g x3=%g\n",
+	  XrtDataGetXElement(pt->hxrt,pt->trace,0),
+	  XrtDataGetXElement(pt->hxrt,pt->trace,1),
+	  XrtDataGetXElement(pt->hxrt,pt->trace,2));
+	printf("y1=%g y2=%g y3=%g\n\n",
+	  XrtDataGetYElement(pt->hxrt,pt->trace,0),
+	  XrtDataGetYElement(pt->hxrt,pt->trace,1),
+	  XrtDataGetYElement(pt->hxrt,pt->trace,2));
+#endif		
 	break;
 
     case CP_XScalar:
       /* x channel scalar, up to dlCartesianPlot->count pairs */
-	count = XrtDataGetNPoints(pt->hxrt,pt->trace);
-	if (count <= dlCartesianPlot->count-1) {
-	    XrtDataSetXElement(pt->hxrt,pt->trace,count,
+	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	if(pt->init) nextPoint++;
+	else pt->init=1;
+	if (nextPoint < dlCartesianPlot->count) {
+	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,
 	      SAFEFLOAT(pt->recordX->value));
-	    XrtDataSetYElement(pt->hxrt,pt->trace,count,(float)count);
-	    XrtDataSetNPoints(pt->hxrt,pt->trace,
-	      XrtDataGetNPoints(pt->hxrt,pt->trace) + 1);
-	} else if (count > dlCartesianPlot->count-1) {
+	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,(float)nextPoint);
+	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
-	      /* Don't update */
+	      /* All done, don't add any more points */
 	    } else if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
 	      /* Shift everybody down one, add at end */
 		int j;
@@ -1289,6 +1309,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 
     case CP_XVector:
       /* x channel vector, ca_element_count(chid) elements */
+	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordX->elementCount-1,0));
 	switch(pt->recordX->dataType) {
 	case DBF_STRING:
 	{
@@ -1353,14 +1374,21 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    break;
 	    }
 	}
-	XrtDataSetNPoints(pt->hxrt,pt->trace,pt->recordX->elementCount);
 	break;
 
     case CP_YScalar:
       /* y channel scalar, up to dlCartesianPlot->count pairs */
-	count = XrtDataGetNPoints(pt->hxrt,pt->trace);
-	if (count < dlCartesianPlot->count) {
-	    if (!count && pcp->timeScale) {
+	nextPoint = XrtDataGetLastPoint(pt->hxrt,pt->trace);
+	if(pt->init) nextPoint++;
+	else pt->init=1;
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+	printf("  nextPoint=%d dlCartesianPlot->count=%d\n  XRT_HUGE_VAL=%f\n",
+	  nextPoint,
+	  dlCartesianPlot->count,
+	  XRT_HUGE_VAL);
+#endif    
+	if (nextPoint < dlCartesianPlot->count) {
+	    if (!nextPoint && pcp->timeScale) {
 		time_t tval;
 		tval = timeOffset + (time_t) pt->recordY->time.secPastEpoch;
 		XtVaSetValues(pcp->dlElement->widget,
@@ -1368,20 +1396,26 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		  NULL);
 		pcp->startTime = pt->recordY->time;
 	    }
-	    XrtDataSetXElement(pt->hxrt,pt->trace,count,(pcp->timeScale) ?
+	    XrtDataSetXElement(pt->hxrt,pt->trace,nextPoint,(pcp->timeScale) ?
 	      (float)(pt->recordY->time.secPastEpoch -
 		pcp->startTime.secPastEpoch) :
-	      (float) count);
-	    XrtDataSetYElement(pt->hxrt,pt->trace,count,
+	      (float) nextPoint);
+	    XrtDataSetYElement(pt->hxrt,pt->trace,nextPoint,
 	      (float)pt->recordY->value);
-	    XrtDataSetNPoints(pt->hxrt,pt->trace,
-	      XrtDataGetNPoints(pt->hxrt,pt->trace)+1);
-	} else if (count >= dlCartesianPlot->count) {
+	    XrtDataSetLastPoint(pt->hxrt,pt->trace,nextPoint);
+	} else {
 	    if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_OFF) {
-	      /* Don't update */
+	      /* All done, don't add any more points */
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+		printf("  Array full\n");
+#endif    
 	    } else if (dlCartesianPlot->erase_oldest == ERASE_OLDEST_ON) {
-	      /* shift everybody down one, add at end */
+	      /* Shift everybody down one, add at end */
 		int j;
+
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+		printf("  Shifting\n");
+#endif    
 		if (pcp->timeScale) {
 		    for (j = 1; j < dlCartesianPlot->count; j++) {
 			XrtDataSetXElement(pt->hxrt,pt->trace,j-1,
@@ -1404,10 +1438,35 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 		} 
 	    }
 	}
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+	{
+	    int nextPoint1=(nextPoint < dlCartesianPlot->count)?nextPoint:
+	      dlCartesianPlot->count-1;
+	    static char filename[]="xrtdata.data";
+
+	    if(nextPoint == 10) {
+		XrtDataSaveToFile(pt->hxrt,filename,NULL);
+		printf("Data saved to %s\n",filename);
+	    }
+	    
+	    printf("  nextPoint=%d x=       %f y=       %f\n",
+	      nextPoint,
+	      (pcp->timeScale) ?
+	      (float)(pt->recordY->time.secPastEpoch -
+		pcp->startTime.secPastEpoch) :
+	      (float)nextPoint1,
+	      (float)pt->recordY->value);
+	    printf("  nextPoint=%d XElement=%f YElement=%f\n",
+	      XrtDataGetLastPoint(pt->hxrt,pt->trace),
+	      XrtDataGetXElement(pt->hxrt,pt->trace,nextPoint1),
+	      XrtDataGetYElement(pt->hxrt,pt->trace,nextPoint1));
+	}
+#endif    
 	break;
 
     case CP_YVector:
       /* plot first "count" elements of vector per dlCartesianPlot */
+	XrtDataSetLastPoint(pt->hxrt,pt->trace,pt->recordY->elementCount-1);
 	switch(pt->recordY->dataType) {
 	case DBF_STRING:
 	{
@@ -1472,12 +1531,11 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	    break;
 	}
 	}
-	XrtDataSetNPoints(pt->hxrt,pt->trace,pt->recordY->elementCount);
 	break;
 
 
     case CP_XVectorYScalar:
-	XrtDataSetNPoints(pt->hxrt,pt->trace,pt->recordX->elementCount);
+	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordX->elementCount-1,0));
 	if (pr == pt->recordX) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordX->dataType) {
@@ -1549,7 +1607,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	break;
 
     case CP_YVectorXScalar:
-	XrtDataSetNPoints(pt->hxrt,pt->trace,pt->recordY->elementCount);
+	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(pt->recordY->elementCount-1,0));
 	if (pr == pt->recordY) {
 	  /* plot first "count" elements of vector per dlCartesianPlot */
 	    switch(pt->recordY->dataType) {
@@ -1624,7 +1682,7 @@ void cartesianPlotUpdateTrace(XtPointer cd) {
 	int count;
 
 	count = MIN(pt->recordX->elementCount, pt->recordY->elementCount);
-	XrtDataSetNPoints(pt->hxrt,pt->trace,count);
+	XrtDataSetLastPoint(pt->hxrt,pt->trace,MAX(count-1,0));
 
 	if (pr == pt->recordX) {
 	    dox = 1;
@@ -1773,9 +1831,25 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
     Boolean clearDataSet1 = True;
     Boolean clearDataSet2 = True;
 
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+    printf("cartesianPlotUpdateScreenFirstTime: nTraces=%d\n",
+      pcp->nTraces);
+#endif    
   /* Return until all channels get their graphical information */
     for (i = 0; i < pcp->nTraces; i++) {
 	XYTrace *t = &(pcp->xyTrace[i]);
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+	printf("  recordX=%x recordY=%x hxrt=%x\n",
+	  t->recordX,t->recordY,t->hxrt);
+	if(t->recordX) {
+	    printf("  x: array=%x precision=%d\n",
+	      t->recordX->array,t->recordX->precision);
+	}
+	if(t->recordY) {
+	    printf("  y: array=%x precision=%d\n",
+	      t->recordY->array,t->recordY->precision);
+	}
+#endif    
 	if ((t->recordX) || (t->recordY)) {
 	    if (t->hxrt == NULL) return;
 	    if ((t->recordX) &&
@@ -1818,7 +1892,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 	    for (i = 0; i < pcp->nTraces; i++) {
 		XYTrace *t = &(pcp->xyTrace[i]);
 		if ((t->recordX) || (t->recordY)) {
-		    int n = XrtDataGetNPoints(t->hxrt,t->trace);
+		    int n = XrtDataGetLastPoint(t->hxrt,t->trace);
 		    if (n > 0) {
 			if ((t->hxrt == pcp->hxrt1) && (clearDataSet1)) {
 			    XtVaSetValues(widget,XtNxrtData,hxrtNullData,NULL);
@@ -1827,7 +1901,7 @@ void cartesianPlotUpdateScreenFirstTime(XtPointer cd) {
 			    XtVaSetValues(widget,XtNxrtData2,hxrtNullData,NULL);
 			    clearDataSet2 = False;
 			}
-			XrtDataSetNPoints(t->hxrt,t->trace,0);
+			XrtDataSetLastPoint(t->hxrt,t->trace,0);
 		    }
 		} 
 	    }
@@ -1862,6 +1936,9 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
     int i;
     Arg args[20];
 
+#if DEBUG_CARTESIAN_PLOT_UPDATE
+    printf("cartesianPlotUpdateValueCb:\n");
+#endif    
   /* If this is an erase channel, erase screen */
     if (pr == pcp->eraseCh.recordX) {
 	Boolean clearDataSet1 = True;
@@ -1877,7 +1954,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 	for (i = 0; i < pcp->nTraces; i++) {
 	    XYTrace *t = &(pcp->xyTrace[i]);
 	    if ((t->recordX) || (t->recordY)) {
-		int n = XrtDataGetNPoints(t->hxrt,t->trace);
+		int n = XrtDataGetLastPoint(t->hxrt,t->trace);
 		if (n > 0) {
 		    if ((t->hxrt == pcp->hxrt1) && (clearDataSet1)) {
 			XtVaSetValues(widget,XtNxrtData,hxrtNullData,NULL);
@@ -1888,7 +1965,7 @@ void cartesianPlotUpdateValueCb(XtPointer cd) {
 			clearDataSet2 = False;
 			pcp->dirty2 = False;
 		    }
-		    XrtDataSetNPoints(t->hxrt,t->trace,0);
+		    XrtDataSetLastPoint(t->hxrt,t->trace,0);
 		}
 	    }
 	}

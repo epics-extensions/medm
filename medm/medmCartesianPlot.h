@@ -95,6 +95,7 @@ typedef struct {
     Record                *recordX;
     Record                *recordY;
     XYChannelTypeEnum     type;
+    int                   init;
 } XYTrace;
 
 typedef struct _CartesianPlot {
