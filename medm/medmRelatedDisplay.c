@@ -84,6 +84,9 @@ static void relatedDisplaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
 static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplayGetValues(ResourceBundle *pRCB, DlElement *p);
 static void relatedDisplayButtonPressedCb(Widget, XtPointer, XtPointer);
+static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
+  Pixel fg, Pixel bg, Dimension width, Dimension height,
+  XFontStruct *font, int icon, char *label);
 
 static DlDispatchTable relatedDisplayDlDispatchTable = {
     createDlRelatedDisplay,
@@ -119,7 +122,7 @@ static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
  */
 static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
   Pixel fg, Pixel bg, Dimension width, Dimension height,
-  XFontStruct *font, char *label)
+  XFontStruct *font, int icon, char *label)
 {
     typedef struct { float x; float y;} XY;
 /* Icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
@@ -132,67 +135,74 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
         {(float)(10./25.),(float)(22./25.)},
         {(float)(10./25.),(float)(18./25.)},
     };
-    GC gc;
     XSegment segments[4];
+    GC gc = XCreateGC(display,pixmap,0,NULL);
 
-    gc = XCreateGC(display,pixmap,0,NULL);
+#if 0
+    print("renderRelatedDisplayPixmap: width=%d height=%d label=|%s|\n",
+      width,height,label?label:"NULL");
+#endif    
+    
+  /* Draw the background */
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
+	
+  /* Draw the icon */
+    if(icon) {
+	segments[0].x1 = (short)(segmentData[0].x*height);
+	segments[0].y1 = (short)(segmentData[0].y*height);
+	segments[0].x2 = (short)(segmentData[1].x*height);
+	segments[0].y2 = (short)(segmentData[1].y*height);
+	
+	segments[1].x1 = (short)(segmentData[1].x*height);
+	segments[1].y1 = (short)(segmentData[1].y*height);
+	segments[1].x2 = (short)(segmentData[2].x*height);
+	segments[1].y2 = (short)(segmentData[2].y*height);
+	
+	segments[2].x1 = (short)(segmentData[2].x*height);
+	segments[2].y1 = (short)(segmentData[2].y*height);
+	segments[2].x2 = (short)(segmentData[3].x*height);
+	segments[2].y2 = (short)(segmentData[3].y*height);
+	
+	segments[3].x1 = (short)(segmentData[3].x*height);
+	segments[3].y1 = (short)(segmentData[3].y*height);
+	segments[3].x2 = (short)(segmentData[4].x*height);
+	segments[3].y2 = (short)(segmentData[4].y*height);
+	
+	XDrawSegments(display,pixmap,gc,segments,4);
 
-    segments[0].x1 = (short)(segmentData[0].x*height);
-    segments[0].y1 = (short)(segmentData[0].y*height);
-    segments[0].x2 = (short)(segmentData[1].x*height);
-    segments[0].y2 = (short)(segmentData[1].y*height);
-
-    segments[1].x1 = (short)(segmentData[1].x*height);
-    segments[1].y1 = (short)(segmentData[1].y*height);
-    segments[1].x2 = (short)(segmentData[2].x*height);
-    segments[1].y2 = (short)(segmentData[2].y*height);
-
-    segments[2].x1 = (short)(segmentData[2].x*height);
-    segments[2].y1 = (short)(segmentData[2].y*height);
-    segments[2].x2 = (short)(segmentData[3].x*height);
-    segments[2].y2 = (short)(segmentData[3].y*height);
-
-    segments[3].x1 = (short)(segmentData[3].x*height);
-    segments[3].y1 = (short)(segmentData[3].y*height);
-    segments[3].x2 = (short)(segmentData[4].x*height);
-    segments[3].y2 = (short)(segmentData[4].y*height);
-
-    XDrawSegments(display,pixmap,gc,segments,4);
-
-/* Erase any out-of-bounds edges due to roundoff error by blanking out
- *  area of top rectangle */
-    XSetForeground(display,gc,bg);
-    XFillRectangle(display,pixmap,gc,
-      (int)(rectangleX*height),
-      (int)(rectangleY*height),
-      (unsigned int)(rectangleWidth*height),
-      (unsigned int)(rectangleHeight*height));
-
-/* Draw the top rectangle */
-    XSetForeground(display,gc,fg);
-    XDrawRectangle(display,pixmap,gc,
-      (int)(rectangleX*height),
-      (int)(rectangleY*height),
-      (unsigned int)(rectangleWidth*height),
-      (unsigned int)(rectangleHeight*height));
+      /* Erase any out-of-bounds edges due to roundoff error by blanking out
+       *  area of top rectangle */
+	XSetForeground(display,gc,bg);
+	XFillRectangle(display,pixmap,gc,
+	  (int)(rectangleX*height),
+	  (int)(rectangleY*height),
+	  (unsigned int)(rectangleWidth*height),
+	  (unsigned int)(rectangleHeight*height));
+	
+      /* Draw the top rectangle */
+	XSetForeground(display,gc,fg);
+	XDrawRectangle(display,pixmap,gc,
+	  (int)(rectangleX*height),
+	  (int)(rectangleY*height),
+	  (unsigned int)(rectangleWidth*height),
+	  (unsigned int)(rectangleHeight*height));
+    }
 
   /* Draw the label */
-    if(label) {
+    if(label && *label) {
 	int base;
 	
 	XSetFont(display,gc,font->fid);
 	base=(height+font->ascent-font->descent)/2;
 	XDrawString(display,pixmap,gc,
-	  height,base,label,strlen(label));
+	  icon?height:0,base,label,strlen(label));
     }
 
   /* Free the GC */
     XFreeGC(display,gc);
 }
-
 
 #ifdef __cplusplus
 int relatedDisplayFontListIndex(
@@ -234,7 +244,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     Widget localMenuBar, tearOff;
     Arg args[30];
     int n;
-    int i, displayNumber=0, index;
+    int i, displayNumber=0, index, icon;
     char *label;
     XmString xmString;
     Pixmap pixmap;
@@ -260,7 +270,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
     } 
   /* 1 display, not hidden */
-    if (iNumberOfDisplays == 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
+    if (iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
       /* Case 1 0f 4 */
       /* One item, any type but hidden */
       /* Get size for graphic part of pixmap */
@@ -269,20 +279,33 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Allow for shadows, etc. */
 	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
-	if (dlRelatedDisplay->label[0] != '\0') {
+	if (dlRelatedDisplay->label[0] == '\0') {
+	    label=NULL;
+	    index=0;
+	    icon=1;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else if (dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
 	    
-	    label=dlRelatedDisplay->label;
+	    label=dlRelatedDisplay->label+1;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    icon=0;
 	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
-	    pixmapW=pixmapH+usedWidth;
+	    pixmapW=MAX(usedWidth,1);
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
 	} else {
-	    index=0;
-	    label=NULL;
-	    pixmapW=pixmapH;
+	    int usedWidth;
+	    
+	    label=dlRelatedDisplay->label;
+	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    icon=1;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
@@ -291,7 +314,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	renderRelatedDisplayPixmap(display,pixmap,
 	  displayInfo->colormap[dlRelatedDisplay->clr],
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
-	  pixmapW, pixmapH, fontTable[index], label);
+	  pixmapW, pixmapH, fontTable[index], icon, label);
       /* Create a push button */
 	n = 0;
 	dlElement->widget = createPushButton(
@@ -368,21 +391,33 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Allow for shadows, etc. */
 	pixmapH = (unsigned int) MAX(1,(int)pixmapH - 8);
       /* Create the pixmap */
-	if (dlRelatedDisplay->label[0] != '\0') {
+	if (dlRelatedDisplay->label[0] == '\0') {
+	    label=NULL;
+	    index=0;
+	    icon=1;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else if (dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
 	    
-	    label=dlRelatedDisplay->label;
+	    label=dlRelatedDisplay->label+1;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    icon=0;
 	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
-	    pixmapW=pixmapH+usedWidth;
-	    
+	    pixmapW=MAX(usedWidth,1);
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
 	} else {
-	    index=0;
-	    label=NULL;
-	    pixmapW=pixmapH;
+	    int usedWidth;
+	    
+	    label=dlRelatedDisplay->label;
+	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
+	    icon=1;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
 	    pixmap = XCreatePixmap(display,
 	      RootWindow(display,screenNum), pixmapW, pixmapH,
 	      XDefaultDepth(display,screenNum));
@@ -391,7 +426,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	renderRelatedDisplayPixmap(display,pixmap,
 	  displayInfo->colormap[dlRelatedDisplay->clr],
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
-	  pixmapW, pixmapH, fontTable[index], label);
+	  pixmapW, pixmapH, fontTable[index], icon, label);
       /* Create a cascade button */
 	n = 7;     /* (Using the args defined above) */
 	XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
@@ -775,7 +810,7 @@ void writeDlRelatedDisplay(
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
 	if (dlRelatedDisplay->label[0] != '\0') 
-	  fprintf(stream,"\n%s\tlabel=%s",indent,dlRelatedDisplay->label);
+	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlRelatedDisplay->label);
 	if (dlRelatedDisplay->visual != RD_MENU)
 	  fprintf(stream,"\n%s\tvisual=\"%s\"",
 	    indent,stringValueTable[dlRelatedDisplay->visual]);
@@ -808,7 +843,7 @@ static void relatedDisplayButtonPressedCb(Widget w,
     }
     
 #if DEBUG_FONTS
-    printf("\nrelatedDisplayButtonPressedCb: displayInfo=%x replace=%s\n",
+    print("\nrelatedDisplayButtonPressedCb: displayInfo=%x replace=%s\n",
       displayInfo,replace?"True":"False");
 #endif    
 
@@ -830,7 +865,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     argsString = pEntry->args;
     
 #if DEBUG_FONTS
-    printf("relatedDisplayCreateNewDisplay: displayInfo=%x replaceDisplay=%s\n"
+    print("relatedDisplayCreateNewDisplay: displayInfo=%x replaceDisplay=%s\n"
       "  filename=%s\n",
       displayInfo,replaceDisplay?"True":"False",filename);
 #endif    
@@ -961,18 +996,18 @@ Widget createRelatedDisplayDataDialog (Widget parent)
 	int i=0;
 	
 	while(1) {
-	    printf("%4d w=%x win=%x",i++,w,win);
+	    print("%4d w=%x win=%x",i++,w,win);
 	    if(w == mainShell) {
-		printf(" (mainShell)\n");
+		print(" (mainShell)\n");
 		break;
 	    } else if(w == shell) {
-		printf(" (shell)\n");
+		print(" (shell)\n");
 	    } else if(w == rdForm) {
-		printf(" (rdForm)\n");
+		print(" (rdForm)\n");
 	    } else if(w == parent) {
-		printf(" (parent)\n");
+		print(" (parent)\n");
 	    } else {
-		printf("\n");
+		print("\n");
 	    }
 	    w=XtParent(w);
 	    win=XtWindow(w);
