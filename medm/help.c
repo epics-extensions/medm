@@ -658,6 +658,8 @@ static void medmUpdateCAStudtylDlg(XtPointer cd, XtIntervalId *id) {
     } else {
       errMsgDlgTimeOutId = 0;
     }
+  } else {
+    errMsgDlgTimeOutId = 0;
   }
 }
 
