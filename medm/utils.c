@@ -3592,6 +3592,7 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     XtAppNextEvent(appContext,&event);
     XtDispatchEvent(&event);
   }
+  XtRemoveGrab(XtParent(displayInfo->warningDialog));
   XtUnmanageChild(displayInfo->warningDialog);
 }
 
