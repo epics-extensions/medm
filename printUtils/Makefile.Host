@@ -8,6 +8,9 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 ifdef WIN32
   USR_CFLAGS += /DWIN32 /D_WINDOWS
   USR_LDFLAGS += /SUBSYSTEM:WINDOWS
+  ifeq ($(EXCEED),Exceed6.1)
+    USR_CFLAGS_WIN32 += /DXMSTATIC
+  endif
 endif
 
 ifdef WIN32

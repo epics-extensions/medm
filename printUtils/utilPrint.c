@@ -12,6 +12,10 @@
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 
+#ifdef WIN32
+#include <X11/XlibXtra.h>
+#endif
+
 #include "xwd2ps.h"
 #include "utilPrint.h"
 

@@ -107,10 +107,6 @@ without express or implied warranty.
 
 */
 
-#include <X11/Xos.h>
-#include <X11/Xlib.h>
-#include <X11/XWDFile.h>
-
 /* KE: Commented this out.  Not found on WIN32 and apparently not needed */
 #if 0
 #ifndef SCO
@@ -123,6 +119,11 @@ without express or implied warranty.
 #ifndef WIN32
 #include <pwd.h>
 #endif
+
+/* Moved these here to avoid Exceed 6 problems */
+#include <X11/Xos.h>
+#include <X11/Xlib.h>
+#include <X11/XWDFile.h>
 
 #include "xwd2ps.h"
 
