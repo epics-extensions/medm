@@ -428,7 +428,7 @@ void drawReadOnlySymbol(UpdateTask *);
 void drawWhiteRectangle(UpdateTask *);
 
 /* utils.c */
-long longFval(float f);
+long longFval(double f);
 Pixel alarmColor(int type);
 int localCvtLongToHexString(long source, char *pdest);
 FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename);

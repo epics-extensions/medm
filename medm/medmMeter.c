@@ -70,7 +70,6 @@ static void meterGetRecord(XtPointer, Record **, int *);
 static void meterInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void meterSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void meterSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
-
 static void meterGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void meterGetValues(ResourceBundle *pRCB, DlElement *p);
 
@@ -193,8 +192,8 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	  XmNy, (Position)po->y,
 	  XmNwidth, (Dimension)po->width,
 	  XmNheight, (Dimension)po->height,
-	  XcNlowerBound,longFval(dlMeter->limits.lopr),
-	  XcNupperBound,longFval(dlMeter->limits.hopr),
+	  XcNlowerBound, longFval(dlMeter->limits.lopr),
+	  XcNupperBound, longFval(dlMeter->limits.hopr),
 	  XcNdecimals, (int)dlMeter->limits.prec,
 	  NULL);
     }
@@ -207,26 +206,26 @@ static void meterUpdateValueCb(XtPointer cd) {
 
 static void meterDraw(XtPointer cd) {
     Meter *pm = (Meter *) cd;
-    Record *pd = pm->record;
+    Record *pr = pm->record;
     Widget widget = pm->dlElement->widget;
     DlMeter *dlMeter = pm->dlElement->structure.meter;
     XcVType val;
-    if (pd->connected) {
-	if (pd->readAccess) {
+    if (pr->connected) {
+	if (pr->readAccess) {
 	    if (widget) {
 		addCommonHandlers(widget, pm->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pd->value;
+	    val.fval = (float) pr->value;
 	    XcMeterUpdateValue(widget,&val);
 	    switch (dlMeter->clrmod) {
 	    case STATIC :
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcMeterUpdateMeterForeground(widget,alarmColor(pd->severity));
+		XcMeterUpdateMeterForeground(widget,alarmColor(pr->severity));
 		break;
 	    }
 	} else {
@@ -242,14 +241,15 @@ static void meterDraw(XtPointer cd) {
 }
 
 static void meterUpdateGraphicalInfoCb(XtPointer cd) {
-    Record *pd = (Record *) cd;
-    Meter *pm = (Meter *) pd->clientData;
+    Record *pr = (Record *) cd;
+    Meter *pm = (Meter *) pr->clientData;
     DlMeter *dlMeter = pm->dlElement->structure.meter;
+    Pixel pixel;
     Widget widget = pm->dlElement->widget;
     XcVType hopr, lopr, val;
     short precision;
 
-    switch (pd->dataType) {
+    switch (pr->dataType) {
     case DBF_STRING :
 	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
@@ -262,10 +262,10 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pd->hopr;
-	lopr.fval = (float) pd->lopr;
-	val.fval = (float) pd->value;
-	precision = pd->precision;
+	hopr.fval = (float) pr->hopr;
+	lopr.fval = (float) pr->lopr;
+	val.fval = (float) pr->value;
+	precision = pr->precision;
 	break;
     default :
 	medmPostMsg(1,"meterUpdateGraphicalInfoCb:\n"
@@ -278,16 +278,11 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 	hopr.fval += 1.0;
     }
     if (widget != NULL) {
-	Pixel pixel;
-
       /* Set foreground pixel according to alarm */
 	pixel = (dlMeter->clrmod == ALARM) ?
-	  alarmColor(pd->severity) :
+	  alarmColor(pr->severity) :
 	  pm->updateTask->displayInfo->colormap[dlMeter->monitor.clr];
-	XtVaSetValues(widget,
-	  XcNmeterForeground,pixel,
-	  NULL);
-	XcMeterUpdateValue(widget,&val);
+	XtVaSetValues(widget, XcNmeterForeground,pixel, NULL);
 
       /* Set Channel and User limits (if apparently not set yet) */
 	dlMeter->limits.loprChannel = lopr.fval;
@@ -308,20 +303,18 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 
       /* Set values in the widget if src is Channel */
 	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
-	    XtVaSetValues(widget,
-	      XcNlowerBound,lopr.lval,
-	      NULL);
+	    dlMeter->limits.lopr = lopr.fval;
+	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
 	}
-	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
-	    XtVaSetValues(widget,
-	      XcNupperBound,hopr.lval,
-	      NULL);
+	if(dlMeter->limits.hoprSrc == PV_LIMITS_CHANNEL) {
+	    dlMeter->limits.hopr = hopr.fval;
+	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
 	}
-	if(dlMeter->limits.loprSrc == PV_LIMITS_CHANNEL) {
-	    XtVaSetValues(widget,
-	      XcNdecimals, (int)precision,
-	      NULL);
+	if(dlMeter->limits.precSrc == PV_LIMITS_CHANNEL) {
+	    dlMeter->limits.prec = precision;
+	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
 	}
+	XcMeterUpdateValue(widget,&val);
     }
 }
 
@@ -384,8 +377,6 @@ DlElement *parseMeter(DisplayInfo *displayInfo)
 	      parseObject(displayInfo,&(dlMeter->object));
 	    else if (!strcmp(token,"monitor"))
 	      parseMonitor(displayInfo,&(dlMeter->monitor));
-	    else if (!strcmp(token,"limits"))
-	      parseLimits(displayInfo,&(dlMeter->limits));
 	    else if (!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -404,6 +395,8 @@ DlElement *parseMeter(DisplayInfo *displayInfo)
 			break;
 		    }
 		}
+	    } else if (!strcmp(token,"limits")) {
+	      parseLimits(displayInfo,&(dlMeter->limits));
 	    }
 	    break;
 	case T_EQUAL:
@@ -434,7 +427,6 @@ void writeDlMeter(
     fprintf(stream,"\n%smeter {",indent);
     writeDlObject(stream,&(dlMeter->object),level+1);
     writeDlMonitor(stream,&(dlMeter->monitor),level+1);
-    writeDlLimits(stream,&(dlMeter->limits),level+1);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if (MedmUseNewFileFormat) {
 #endif
@@ -448,6 +440,7 @@ void writeDlMeter(
 	fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,stringValueTable[dlMeter->clrmod]);
     }
 #endif
+    writeDlLimits(stream,&(dlMeter->limits),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 

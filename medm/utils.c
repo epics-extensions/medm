@@ -61,7 +61,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_TRAVERSAL 0
 #define DEBUG_UNDO 0
 #define DEBUG_PVINFO 0
-#define DEBUG_PVLIMITS 1
+#define DEBUG_PVLIMITS 0
 #define DEBUG_COMMAND 0
 
 #define PV_INFO_CLOSE_BTN 0
@@ -128,11 +128,11 @@ static Widget pvLimitsName, pvLimitsLopr, pvLimitsHopr, pvLimitsPrec;
 static Widget pvLimitsLoprSrc, pvLimitsHoprSrc, pvLimitsPrecSrc;
 
 /* Function to convert float to long for use with X resources */
-long longFval(float f)
+long longFval(double f)
 {
     XcVType val;
 
-    val.fval=f;
+    val.fval=(float)f;
     return val.lval;
 }
 
@@ -4611,10 +4611,10 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 void popupPvLimits(DisplayInfo *displayInfo)
 {
     Record **records = NULL;
-    int i, j, status, found, count;
     DlElement *pE;
     DlLimits *pL;
     char *pvName;
+    int count;
     
 
   /* Create the dialog box if it has not been created */
@@ -4864,8 +4864,6 @@ static void createPvLimitsDlg(void)
 {
     Widget pane, w, wparent, wsave;
     XmString label, opt1, opt2, opt3;
-    Arg args[10];
-    int n;
 
     if(pvLimitsS != NULL) {
 	return;
@@ -5091,9 +5089,8 @@ static void createPvLimitsDlg(void)
 
 static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
-    char string[1024];     /* Danger: Fixed length */
     int type = (int)cd;
-    int button, count, src;
+    int button, src;
     double val;
     short sval;
     DlElement *pE;

@@ -149,8 +149,8 @@ static Widget scMatrix = NULL, scForm;
 static String scColumnLabels[] = {"Channel","Color",};
 static int scColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,6,};
 static short scColumnWidths[] = {36,6,};
-static unsigned char scColumnLabelAlignments[] = {XmALIGNMENT_CENTER,
-						  XmALIGNMENT_CENTER};
+static unsigned char scColumnLabelAlignments[] = {
+    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER};
 /* and the scCells array of strings (filled in from globalResourceBundle...) */
 static String scRows[MAX_PENS][2];
 static String *scCells[MAX_PENS];
@@ -166,8 +166,8 @@ static String cmdColumnLabels[] = {"Command Label","Command","Arguments",};
 static int cmdColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,
 				    MAX_TOKEN_LENGTH-1,};
 static short cmdColumnWidths[] = {36,36,36,};
-static unsigned char cmdColumnLabelAlignments[] = {XmALIGNMENT_CENTER,
-						   XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
+static unsigned char cmdColumnLabelAlignments[] = {
+    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER, XmALIGNMENT_CENTER,};
 /* and the cmdCells array of strings (filled in from globalResourceBundle...) */
 static String cmdRows[MAX_SHELL_COMMANDS][3];
 static String *cmdCells[MAX_SHELL_COMMANDS];
@@ -1820,26 +1820,26 @@ static int resourceTable[] = {
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, MSG_LABEL_RC,
     PRESS_MSG_RC, RELEASE_MSG_RC, CLRMOD_RC, -1,
     DL_Valuator,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, LABEL_RC,
-    CLRMOD_RC, DIRECTION_RC, PRECISION_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC, PRECISION_RC, -1,
     DL_TextEntry,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
     FORMAT_RC, -1,
     DL_Meter,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC,
-    BCLR_RC, LABEL_RC, CLRMOD_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    LABEL_RC, CLRMOD_RC, -1,
     DL_TextUpdate,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, CLRMOD_RC,
-    ALIGN_RC, FORMAT_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC,
+    CLRMOD_RC, ALIGN_RC, FORMAT_RC, -1,
     DL_Bar,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, LABEL_RC,
-    CLRMOD_RC, DIRECTION_RC, FILLMOD_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC, FILLMOD_RC, -1,
     DL_Byte,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, SBIT_RC,
     EBIT_RC, CLRMOD_RC, DIRECTION_RC, -1,
     DL_Indicator,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, CLR_RC, BCLR_RC, LABEL_RC,
-    CLRMOD_RC, DIRECTION_RC, -1,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, RDBK_RC, LIMITS_RC, CLR_RC, BCLR_RC,
+    LABEL_RC, CLRMOD_RC, DIRECTION_RC, -1,
     DL_StripChart,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, TITLE_RC, XLABEL_RC, YLABEL_RC, CLR_RC,
     BCLR_RC, PERIOD_RC, UNITS_RC, SCDATA_RC, -1,
@@ -3311,6 +3311,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 	globalResourceBundle.label = p->label;
 	optionMenuSet(resourceEntryElement[LABEL_RC],
 	  globalResourceBundle.label - FIRST_LABEL_TYPE);
@@ -3409,9 +3410,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
-
 	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
-
 	globalResourceBundle.label = p->label;
 	optionMenuSet(resourceEntryElement[LABEL_RC],
 	  globalResourceBundle.label - FIRST_LABEL_TYPE);
@@ -3450,7 +3449,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
-
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 	globalResourceBundle.label = p->label;
 	optionMenuSet(resourceEntryElement[LABEL_RC],
 	  globalResourceBundle.label - FIRST_LABEL_TYPE);
@@ -3498,7 +3497,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly) {
 
 	updateGlobalResourceBundleMonitorAttribute(&(p->monitor));
 	updateResourcePaletteMonitorAttribute();
-
+	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
 	globalResourceBundle.label = p->label;
 	optionMenuSet(resourceEntryElement[LABEL_RC],
 	  globalResourceBundle.label - FIRST_LABEL_TYPE);

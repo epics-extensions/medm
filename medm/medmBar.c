@@ -79,6 +79,7 @@ static void barGetRecord(XtPointer, Record **, int *);
 static void barInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void barSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void barSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+static void barGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void barGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable barDlDispatchTable = {
@@ -86,7 +87,7 @@ static DlDispatchTable barDlDispatchTable = {
     NULL,
     executeDlBar,
     writeDlBar,
-    NULL,
+    barGetLimits,
     barGetValues,
     barInheritValues,
     barSetBackgroundColor,
@@ -139,10 +140,13 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
        *  because the widget is an XcLval by default and the default
        *  initializations are into XcVType.lval, possibly giving meaningless
        *  numbers in XcVType.fval, which is what will be used for our XcFval
-       *  widget. */
-	XtSetArg(args[n],XcNincrement,1.0); n++;
-	XtSetArg(args[n],XcNlowerBound,0.0); n++;
-	XtSetArg(args[n],XcNupperBound,100.0); n++;
+       *  widget.  They still need to be set from the lval, however, because
+       *  they are XtArgVal's, which Xt typedef's as long (exc. Cray?)
+       *  See Intrinsic.h */
+	adjustPvLimits(&dlBar->limits);
+	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
+	XtSetArg(args[n],XcNlowerBound,longFval(dlBar->limits.lopr)); n++;
+	XtSetArg(args[n],XcNupperBound,longFval(dlBar->limits.hopr)); n++;
 	switch (dlBar->label) {
 	case LABEL_NONE:
 	    XtSetArg(args[n],XcNvalueVisible,FALSE); n++;
@@ -226,10 +230,13 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	DlObject *po = &(dlElement->structure.bar->object);
 	XtVaSetValues(dlElement->widget,
-	  XmNx, (Position) po->x,
-	  XmNy, (Position) po->y,
-	  XmNwidth, (Dimension) po->width,
-	  XmNheight, (Dimension) po->height,
+	  XmNx, (Position)po->x,
+	  XmNy, (Position)po->y,
+	  XmNwidth, (Dimension)po->width,
+	  XmNheight, (Dimension)po->height,
+	  XcNlowerBound, longFval(dlBar->limits.lopr),
+	  XcNupperBound, longFval(dlBar->limits.hopr),
+	  XcNdecimals, (int)dlBar->limits.prec,
 	  NULL);
     }
 }
@@ -241,27 +248,27 @@ static void barUpdateValueCb(XtPointer cd) {
 
 static void barDraw(XtPointer cd) {
     Bar *pb = (Bar *) cd;
-    Record *pd = pb->record;
+    Record *pr = pb->record;
     Widget widget = pb->dlElement->widget;
     DlBar *dlBar = pb->dlElement->structure.bar;
     XcVType val;
 
-    if (pd->connected) {
-	if (pd->readAccess) {
+    if (pr->connected) {
+	if (pr->readAccess) {
 	    if (widget) {
 		addCommonHandlers(widget, pb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pd->value;
+	    val.fval = (float) pr->value;
 	    XcBGUpdateValue(widget,&val);
 	    switch (dlBar->clrmod) {
 	    case STATIC :
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcBGUpdateBarForeground(widget,alarmColor(pd->severity));
+		XcBGUpdateBarForeground(widget,alarmColor(pr->severity));
 		break;
 	    }
 	} else {
@@ -277,16 +284,15 @@ static void barDraw(XtPointer cd) {
 }
 
 static void barUpdateGraphicalInfoCb(XtPointer cd) {
-    Record *pd = (Record *) cd;
-    Bar *pb = (Bar *) pd->clientData;
-    XcVType hopr, lopr, val;
-    Pixel pixel;
-    short precision;
-    Widget widget = pb->dlElement->widget;
+    Record *pr = (Record *) cd;
+    Bar *pb = (Bar *) pr->clientData;
     DlBar *dlBar = pb->dlElement->structure.bar;
+    Pixel pixel;
+    Widget widget = pb->dlElement->widget;
+    XcVType hopr, lopr, val;
+    short precision;
 
-    if (widget == NULL) return;
-    switch (pd->dataType) {
+    switch (pr->dataType) {
     case DBF_STRING :
 	medmPostMsg(1,"barUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
@@ -299,10 +305,10 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pd->hopr;
-	lopr.fval = (float) pd->lopr;
-	val.fval = (float) pd->value;
-	precision = pd->precision;
+	hopr.fval = (float) pr->hopr;
+	lopr.fval = (float) pr->lopr;
+	val.fval = (float) pr->value;
+	precision = pr->precision;
 	break;
     default :
 	medmPostMsg(1,"barUpdateGraphicalInfoCb:\n"
@@ -314,17 +320,47 @@ static void barUpdateGraphicalInfoCb(XtPointer cd) {
     if ((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
+    if (widget != NULL) {
+      /* Set foreground pixel according to alarm */
+	pixel = (dlBar->clrmod == ALARM) ?
+	  alarmColor(pr->severity) :
+	  pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
+	XtVaSetValues(widget,
+	  XcNbarForeground,pixel,
+	  NULL);
 
-    pixel = (dlBar->clrmod == ALARM) ?
-      alarmColor(pd->severity) :
-	pb->updateTask->displayInfo->colormap[dlBar->monitor.clr];
-    XtVaSetValues(widget,
-      XcNlowerBound,lopr.lval,
-      XcNupperBound,hopr.lval,
-      XcNbarForeground,pixel,
-      XcNdecimals, (int)precision,
-      NULL);
-    XcBGUpdateValue(widget,&val);
+      /* Set Channel and User limits (if apparently not set yet) */
+	dlBar->limits.loprChannel = lopr.fval;
+	if(dlBar->limits.loprSrc != PV_LIMITS_USER &&
+	  dlBar->limits.loprUser == LOPR_DEFAULT) {
+	    dlBar->limits.loprUser = lopr.fval;
+	}
+	dlBar->limits.hoprChannel = hopr.fval;
+	if(dlBar->limits.hoprSrc != PV_LIMITS_USER &&
+	  dlBar->limits.hoprUser == HOPR_DEFAULT) {
+	    dlBar->limits.hoprUser = hopr.fval;
+	}
+	dlBar->limits.precChannel = precision;
+	if(dlBar->limits.precSrc != PV_LIMITS_USER &&
+	  dlBar->limits.precUser == PREC_DEFAULT) {
+	    dlBar->limits.precUser = precision;
+	}
+
+      /* Set values in the widget if src is Channel */
+	if(dlBar->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    dlBar->limits.lopr = lopr.fval;
+	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+	}
+	if(dlBar->limits.hoprSrc == PV_LIMITS_CHANNEL) {
+	    dlBar->limits.hopr = hopr.fval;
+	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+	}
+	if(dlBar->limits.precSrc == PV_LIMITS_CHANNEL) {
+	    dlBar->limits.prec = precision;
+	    XtVaSetValues(widget, XcNdecimals, (int)precision, NULL);
+	}
+	XcBGUpdateValue(widget,&val);
+    }
 }
 
 static void barDestroyCb(XtPointer cd) {
@@ -354,6 +390,7 @@ DlElement *createDlBar(DlElement *p)
     } else {
 	objectAttributeInit(&(dlBar->object));
 	monitorAttributeInit(&(dlBar->monitor));
+	limitsAttributeInit(&(dlBar->limits));
 	dlBar->label = LABEL_NONE;
 	dlBar->clrmod = STATIC;
 	dlBar->direction = RIGHT;
@@ -428,6 +465,8 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 		  dlBar->fillmod = FROM_EDGE;
 		else if(!strcmp(token,"from center"))
 		  dlBar->fillmod = FROM_CENTER;
+	    } else if (!strcmp(token,"limits")) {
+	      parseLimits(displayInfo,&(dlBar->limits));
 	    }
 	    break;
 	case T_EQUAL:
@@ -472,6 +511,7 @@ void writeDlBar( FILE *stream, DlElement *dlElement, int level) {
     if (dlBar->fillmod != FROM_EDGE) 
       fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
         stringValueTable[dlBar->fillmod]);
+    writeDlLimits(stream,&(dlBar->limits),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
@@ -485,7 +525,16 @@ static void barInheritValues(ResourceBundle *pRCB, DlElement *p) {
       DIRECTION_RC,  &(dlBar->direction),
       CLRMOD_RC,     &(dlBar->clrmod),
       FILLMOD_RC,    &(dlBar->fillmod),
+      LIMITS_RC,     &(dlBar->limits),
       -1);
+}
+
+static void barGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlBar *dlBar = pE->structure.bar;
+
+    *(ppL) = &(dlBar->limits);
+    *(pN) = dlBar->monitor.rdbk;
 }
 
 static void barGetValues(ResourceBundle *pRCB, DlElement *p) {
@@ -502,6 +551,7 @@ static void barGetValues(ResourceBundle *pRCB, DlElement *p) {
       DIRECTION_RC,  &(dlBar->direction),
       CLRMOD_RC,     &(dlBar->clrmod),
       FILLMOD_RC,    &(dlBar->fillmod),
+      LIMITS_RC,     &(dlBar->limits),
       -1);
 }
 

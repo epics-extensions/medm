@@ -649,7 +649,7 @@ char *resourceEntryStringTable[MAX_RESOURCE_ENTRY] = {
     "Colormap",
     "Name",
     "Line Width",
-    "Precision",
+    "Increment",
     "Start Bit", "End Bit",
     "Label", "Visual",
     "Label/Name/Args",      /* Related Display data           */

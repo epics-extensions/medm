@@ -192,26 +192,26 @@ static void byteUpdateValueCb(XtPointer cd) {
 
 static void byteDraw(XtPointer cd) {
     Bits *pb = (Bits *) cd;
-    Record *pd = pb->record;
+    Record *pr = pb->record;
     Widget widget = pb->dlElement->widget;
     DlByte *dlByte = pb->dlElement->structure.byte;
     XcVType val;
-    if (pd->connected) {
-	if (pd->readAccess) {
+    if (pr->connected) {
+	if (pr->readAccess) {
 	    if (widget) {
 		addCommonHandlers(widget, pb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pd->value;
+	    val.fval = (float) pr->value;
 	    XcBYUpdateValue(widget,&val);
 	    switch (dlByte->clrmod) {
 	    case STATIC :
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcBYUpdateByteForeground(widget,alarmColor(pd->severity));
+		XcBYUpdateByteForeground(widget,alarmColor(pr->severity));
 		break;
 	    }
 	} else {

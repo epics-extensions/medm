@@ -70,6 +70,7 @@ static void indicatorGetRecord(XtPointer, Record **, int *);
 static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p);
 static void indicatorSetBackgroundColor(ResourceBundle *pRCB, DlElement *p);
 static void indicatorSetForegroundColor(ResourceBundle *pRCB, DlElement *p);
+static void indicatorGetLimits(DlElement *pE, DlLimits **ppL, char **pN);
 static void indicatorGetValues(ResourceBundle *pRCB, DlElement *p);
 
 static DlDispatchTable indicatorDlDispatchTable = {
@@ -77,7 +78,7 @@ static DlDispatchTable indicatorDlDispatchTable = {
     NULL,
     executeDlIndicator,
     writeDlIndicator,
-    NULL,
+    indicatorGetLimits,
     indicatorGetValues,
     indicatorInheritValues,
     indicatorSetBackgroundColor,
@@ -130,10 +131,13 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
        *  because the widget is an XcLval by default and the default
        *  initializations are into XcVType.lval, possibly giving meaningless
        *  numbers in XcVType.fval, which is what will be used for our XcFval
-       *  widget. */
-	XtSetArg(args[n],XcNincrement,1.0); n++;
-	XtSetArg(args[n],XcNlowerBound,0.0); n++;
-	XtSetArg(args[n],XcNupperBound,100.0); n++;
+       *  widget.  They still need to be set from the lval, however, because
+       *  they are XtArgVal's, which Xt typedef's as long (exc. Cray?)
+       *  See Intrinsic.h */
+	adjustPvLimits(&dlIndicator->limits);
+	XtSetArg(args[n],XcNincrement,longFval(0.)); n++;     /* Not used */
+	XtSetArg(args[n],XcNlowerBound,longFval(dlIndicator->limits.lopr)); n++;
+	XtSetArg(args[n],XcNupperBound,longFval(dlIndicator->limits.hopr)); n++;
 	switch (dlIndicator->label) {
 	case LABEL_NONE:
 	case NO_DECORATIONS:
@@ -206,37 +210,40 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
     } else {
 	DlObject *po = &(dlElement->structure.indicator->object);
 	XtVaSetValues(dlElement->widget,
-	  XmNx, (Position) po->x,
-	  XmNy, (Position) po->y,
-	  XmNwidth, (Dimension) po->width,
-	  XmNheight, (Dimension) po->height,
+	  XmNx, (Position)po->x,
+	  XmNy, (Position)po->y,
+	  XmNwidth, (Dimension)po->width,
+	  XmNheight, (Dimension)po->height,
+	  XcNlowerBound, longFval(dlIndicator->limits.lopr),
+	  XcNupperBound, longFval(dlIndicator->limits.hopr),
+	  XcNdecimals, (int)dlIndicator->limits.prec,
 	  NULL);
     }
 }
 
 static void indicatorDraw(XtPointer cd) {
     Indicator *pi = (Indicator *) cd;
-    Record *pd = pi->record;
+    Record *pr = pi->record;
     Widget widget= pi->dlElement->widget;
     DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
     XcVType val;
 
-    if (pd->connected) {
-	if (pd->readAccess) {
+    if (pr->connected) {
+	if (pr->readAccess) {
 	    if (widget) {
 		addCommonHandlers(widget, pi->updateTask->displayInfo);
 		XtManageChild(widget);
 	    } else {
 		return;
 	    }
-	    val.fval = (float) pd->value;
+	    val.fval = (float) pr->value;
 	    XcIndUpdateValue(widget,&val);
 	    switch (dlIndicator->clrmod) {
 	    case STATIC :
 	    case DISCRETE :
 		break;
 	    case ALARM :
-		XcIndUpdateIndicatorForeground(widget,alarmColor(pd->severity));
+		XcIndUpdateIndicatorForeground(widget,alarmColor(pr->severity));
 		break;
 	    }
 	} else {
@@ -257,14 +264,15 @@ static void indicatorUpdateValueCb(XtPointer cd) {
 }
 
 static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
-    Record *pd = (Record *) cd;
-    Indicator *pi = (Indicator *) pd->clientData;
+    Record *pr = (Record *) cd;
+    Indicator *pi = (Indicator *) pr->clientData;
+    DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
+    Widget widget = pi->dlElement->widget;
+    Pixel pixel;
     XcVType hopr, lopr, val;
     short precision;
-    Widget widget = pi->dlElement->widget;
-    DlIndicator *dlIndicator = pi->dlElement->structure.indicator;
 
-    switch (pd->dataType) {
+    switch (pr->dataType) {
     case DBF_STRING :
 	medmPostMsg(1,"indicatorUpdateGraphicalInfoCb:\n"
 	  "  Illegal channel type for %s\n"
@@ -277,10 +285,10 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_LONG :
     case DBF_FLOAT :
     case DBF_DOUBLE :
-	hopr.fval = (float) pd->hopr;
-	lopr.fval = (float) pd->lopr;
-	val.fval = (float) pd->value;
-	precision = pd->precision;
+	hopr.fval = (float) pr->hopr;
+	lopr.fval = (float) pr->lopr;
+	val.fval = (float) pr->value;
+	precision = pr->precision;
 	break;
     default :
 	medmPostMsg(1,"indicatorUpdateGraphicalInfoCb:\n"
@@ -294,16 +302,44 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     }
 
     if (widget != NULL) {
-	Pixel pixel;
+      /* Set foreground pixel according to alarm */
 	pixel = (dlIndicator->clrmod == ALARM) ?
-	  alarmColor(pd->severity) :
+	  alarmColor(pr->severity) :
 	  pi->updateTask->displayInfo->colormap[dlIndicator->monitor.clr];
 	XtVaSetValues(widget,
-	  XcNlowerBound,lopr.lval,
-	  XcNupperBound,hopr.lval,
 	  XcNindicatorForeground,pixel,
-	  XcNdecimals, (int)precision,
 	  NULL);
+
+      /* Set Channel and User limits (if apparently not set yet) */
+	dlIndicator->limits.loprChannel = lopr.fval;
+	if(dlIndicator->limits.loprSrc != PV_LIMITS_USER &&
+	  dlIndicator->limits.loprUser == LOPR_DEFAULT) {
+	    dlIndicator->limits.loprUser = lopr.fval;
+	}
+	dlIndicator->limits.hoprChannel = hopr.fval;
+	if(dlIndicator->limits.hoprSrc != PV_LIMITS_USER &&
+	  dlIndicator->limits.hoprUser == HOPR_DEFAULT) {
+	    dlIndicator->limits.hoprUser = hopr.fval;
+	}
+	dlIndicator->limits.precChannel = precision;
+	if(dlIndicator->limits.precSrc != PV_LIMITS_USER &&
+	  dlIndicator->limits.precUser == PREC_DEFAULT) {
+	    dlIndicator->limits.precUser = precision;
+	}
+
+      /* Set values in the widget if src is Channel */
+	if(dlIndicator->limits.loprSrc == PV_LIMITS_CHANNEL) {
+	    dlIndicator->limits.lopr = lopr.fval;
+	    XtVaSetValues(widget, XcNlowerBound,lopr.lval, NULL);
+	}
+	if(dlIndicator->limits.hoprSrc == PV_LIMITS_CHANNEL) {
+	    dlIndicator->limits.hopr = hopr.fval;
+	    XtVaSetValues(widget, XcNupperBound,hopr.lval, NULL);
+	}
+	if(dlIndicator->limits.precSrc == PV_LIMITS_CHANNEL) {
+	    dlIndicator->limits.prec = precision;
+	    XtVaSetValues(widget,XcNdecimals, (int)precision, NULL);
+	}
 	XcIndUpdateValue(widget,&val);
     }
 }
@@ -335,6 +371,7 @@ DlElement *createDlIndicator(DlElement *p)
     } else {
 	objectAttributeInit(&(dlIndicator->object));
 	monitorAttributeInit(&(dlIndicator->monitor));
+	limitsAttributeInit(&(dlIndicator->limits));
 	dlIndicator->label = LABEL_NONE;
 	dlIndicator->clrmod = STATIC;
 	dlIndicator->direction = RIGHT;
@@ -401,6 +438,8 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 		  dlIndicator->direction = UP;
 		else if (!strcmp(token,"left"))
 		  dlIndicator->direction = RIGHT;
+	    } else if (!strcmp(token,"limits")) {
+	      parseLimits(displayInfo,&(dlIndicator->limits));
 	    }
 	    break;
 	case T_EQUAL:
@@ -445,6 +484,7 @@ void writeDlIndicator( FILE *stream, DlElement *dlElement, int level) {
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlIndicator->direction]);
 #endif
+    writeDlLimits(stream,&(dlIndicator->limits),level+1);
     fprintf(stream,"\n%s}",indent);
 }
 
@@ -457,7 +497,16 @@ static void indicatorInheritValues(ResourceBundle *pRCB, DlElement *p) {
       LABEL_RC,      &(dlIndicator->label),
       DIRECTION_RC,  &(dlIndicator->direction),
       CLRMOD_RC,     &(dlIndicator->clrmod),
+      LIMITS_RC,     &(dlIndicator->limits),
       -1);
+}
+
+static void indicatorGetLimits(DlElement *pE, DlLimits **ppL, char **pN)
+{
+    DlIndicator *dlIndicator = pE->structure.indicator;
+
+    *(ppL) = &(dlIndicator->limits);
+    *(pN) = dlIndicator->monitor.rdbk;
 }
 
 static void indicatorGetValues(ResourceBundle *pRCB, DlElement *p) {
@@ -473,6 +522,7 @@ static void indicatorGetValues(ResourceBundle *pRCB, DlElement *p) {
       LABEL_RC,      &(dlIndicator->label),
       DIRECTION_RC,  &(dlIndicator->direction),
       CLRMOD_RC,     &(dlIndicator->clrmod),
+      LIMITS_RC,     &(dlIndicator->limits),
       -1);
 }
 

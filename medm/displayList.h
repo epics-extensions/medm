@@ -680,6 +680,8 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlMonitor monitor;
+    DlLimits limits;
+
     LabelType label;
     ColorMode clrmod;
     Direction direction;
@@ -696,6 +698,7 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlMonitor monitor;
+    DlLimits limits;
     LabelType label;
     ColorMode clrmod;
     Direction direction;
@@ -744,6 +747,7 @@ typedef struct {
 typedef struct {
     DlObject object;
     DlControl control;
+    DlLimits limits;
     LabelType label;
     ColorMode clrmod;
     Direction direction;

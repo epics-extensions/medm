@@ -58,6 +58,7 @@ DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
 #define DEBUG_CARTESIAN_PLOT_UPDATE 0
 #define DEBUG_TIME 0
 #define DEBUG_XRT 0
+#define DEBUG_HISTOGRAM 0
 #ifndef VMS
 #define CHECK_NAN
 #endif
@@ -137,8 +138,7 @@ static String cpColumnLabels[] = {"X Data","Y Data","Color",};
 static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
 static short cpColumnWidths[] = {36,36,6,};
 static unsigned char cpColumnLabelAlignments[] = {
-    XmALIGNMENT_CENTER,
-    XmALIGNMENT_CENTER,XmALIGNMENT_CENTER,};
+    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER, XmALIGNMENT_CENTER,};
 
 static String cpRows[MAX_TRACES][3];
 static String *cpCells[MAX_TRACES];
@@ -354,6 +354,11 @@ static void cartesianPlotUpdateGraphicalInfoCb(XtPointer cd) {
     int iPrec, kk, pointSize;
     int maxElements = 0;
     int i, j, n;
+
+#if DEBUG_HISTOGRAM
+    print("\ncartesianPlotUpdateGraphicalInfoCb: name=%s lopr=%g hopr=%g \n",
+      pr->name,pr->lopr, pr->hopr);
+#endif    
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temporary work around !!!!! */
