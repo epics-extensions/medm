@@ -335,7 +335,7 @@ static XmSyntheticResource syn_resources[] = {
 typedef struct _Rectangle {
     int x1, y1;
     int x2, y2;
-} Rectangle;
+} XbaeRectangle;
 
 /*
  * Enumeration for type of a cell
@@ -1341,7 +1341,7 @@ int *x, *y;
 int *row, *column;
 CellType cell;
 {
-    Rectangle rect;
+    XbaeRectangle rect;
 
     switch (cell) {
 
@@ -1829,13 +1829,13 @@ int row, column;
 static void
 RedrawLabelsAndFixed(mw, expose)
 XbaeMatrixWidget mw;
-Rectangle *expose;
+XbaeRectangle *expose;
 {
     /*
      * Handle the row labels that are in fixed rows
      */
     if (mw->matrix.fixed_rows && mw->matrix.row_labels) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Get the Rectangle enclosing the fixed row labels
@@ -1848,7 +1848,7 @@ Rectangle *expose;
 	 * If the expose Rectangle overlaps, then some labels must be redrawn
 	 */
 	if (OVERLAP(*expose, rect)) {
-	    Rectangle intersect;
+	    XbaeRectangle intersect;
 	    int endRow, i;
 
 	    /*
@@ -1871,7 +1871,7 @@ Rectangle *expose;
      * Handle row labels that aren't in fixed rows
      */
     if (mw->matrix.row_labels) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Get the Rectangle enclosing the non-fixed row labels
@@ -1885,7 +1885,7 @@ Rectangle *expose;
 	 * If the expose Rectangle overlaps, then some labels must be redrawn
 	 */
 	if (OVERLAP(*expose, rect)) {
-	    Rectangle intersect;
+	    XbaeRectangle intersect;
 	    int endRow, i;
 
 	    /*
@@ -1917,7 +1917,7 @@ Rectangle *expose;
      * Handle the column labels that are in fixed columns
      */
     if (mw->matrix.fixed_columns && mw->matrix.column_labels) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Get the Rectangle enclosing the portion of the column labels
@@ -1932,7 +1932,7 @@ Rectangle *expose;
 	 * If the expose Rectangle overlaps, then some labels must be redrawn
 	 */
 	if (OVERLAP(*expose, rect)) {
-	    Rectangle intersect;
+	    XbaeRectangle intersect;
 	    int endCol, i;
 
 	    /*
@@ -1955,7 +1955,7 @@ Rectangle *expose;
      * Handle column labels that aren't in fixed columns
      */
     if (mw->matrix.column_labels) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Get the Rectangle enclosing the non-fixed column labels
@@ -1969,7 +1969,7 @@ Rectangle *expose;
 	 * If the expose Rectangle overlaps, then some labels must be redrawn
 	 */
 	if (OVERLAP(*expose, rect)) {
-	    Rectangle intersect;
+	    XbaeRectangle intersect;
 	    int endCol, i;
 
 	    /*
@@ -2001,7 +2001,7 @@ Rectangle *expose;
      * Handle cells in fixed rows or fixed columns
      */
     if (mw->matrix.fixed_rows || mw->matrix.fixed_columns) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Get the Rectangle enclosing the cells in fixed rows or columns
@@ -2023,7 +2023,7 @@ Rectangle *expose;
 	 * If the expose Rectangle overlaps, then some cells must be redrawn
 	 */
 	if (OVERLAP(*expose, rect)) {
-	    Rectangle intersect;
+	    XbaeRectangle intersect;
 	    int startCol, endCol, startRow, endRow, i, j;
 
 	    /*
@@ -2094,7 +2094,7 @@ XbaeMatrixWidget mw;
 XEvent *event;
 Region region;
 {
-    Rectangle expose;
+    XbaeRectangle expose;
 
     /*
      * Send our events to the mw ScrollMgr to be adjusted.
@@ -2154,10 +2154,10 @@ Region region;
 static void
 RedrawCells(mw, expose)
 XbaeMatrixWidget mw;
-Rectangle *expose;
+XbaeRectangle *expose;
 {
     int startCol, endCol, startRow, endRow, i, j;
-    Rectangle rect;
+    XbaeRectangle rect;
 
     /*
      * Translate the 'expose' Rectangle to take into account the
@@ -2200,7 +2200,7 @@ XEvent *event;
 Region region;
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget) XtParent(w);
-    Rectangle expose, clip, intersect;
+    XbaeRectangle expose, clip, intersect;
 
     /*
      * Send our events to the clip ScrollMgr to be adjusted.
@@ -3342,7 +3342,7 @@ XmScrollBarCallbackStruct *call_data;
      * redraw the whole thing
      */
     if (height <= 0) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Clear the whole clip window.
@@ -3383,7 +3383,7 @@ XmScrollBarCallbackStruct *call_data;
      * pixels as we can and then clear and redraw the newly scrolled data.
      */
     else {
-	Rectangle rect;
+	XbaeRectangle rect;
 	int y_clear = src_y > dest_y ? height : 0;
 
 	/*
@@ -3521,7 +3521,7 @@ XmScrollBarCallbackStruct *call_data;
      * redraw the whole thing
      */
     if (width <= 0) {
-	Rectangle rect;
+	XbaeRectangle rect;
 
 	/*
 	 * Clear the whole clip window
@@ -3561,7 +3561,7 @@ XmScrollBarCallbackStruct *call_data;
      * pixels as we can and then clear and redraw the newly scrolled data.
      */
     else {
-	Rectangle rect;
+	XbaeRectangle rect;
 	int x_clear = src_x > dest_x ? width : 0;
 
 	/*
@@ -6334,7 +6334,7 @@ int position;
 Pixel *colors;
 int num_colors;
 {
-    Rectangle rect;
+    XbaeRectangle rect;
     int i, j;
 
     /*
@@ -6424,7 +6424,7 @@ int position;
 Pixel *colors;
 int num_colors;
 {
-    Rectangle rect;
+    XbaeRectangle rect;
     int i, j;
 
     /*

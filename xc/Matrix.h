@@ -137,10 +137,10 @@ typedef struct _XbaeMatrixRec *XbaeMatrixWidget;
  */
 
 #if defined (__cplusplus) || defined(c_plusplus)
-#define CONST const
+#define MCONST const
 extern "C" {
 #else
-#define CONST
+#define MCONST
 #endif
 
     extern void XbaeMatrixSetCell(
@@ -148,7 +148,7 @@ extern "C" {
       Widget		/* w */,
       int		/* row */,
       int		/* column */,
-      CONST String	/* value */
+      MCONST String	/* value */
 #endif
 	);
 
@@ -305,7 +305,7 @@ extern "C" {
 #if defined (__cplusplus) || defined(c_plusplus)
 	   }
 #endif
-#undef CONST
+#undef MCONST
 
 /*
  * Callback reasons.  Try to stay out of range of the Motif XmCR_* reasons.
