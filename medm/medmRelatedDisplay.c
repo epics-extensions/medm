@@ -905,24 +905,17 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	    medmPostMsg(1,token);
 	} else {
 	    if(replaceDisplay || pEntry->mode == REPLACE_DISPLAY) {
-		if(popupExistingDisplay) {
-		    existingDisplayInfo = findDisplay(filename, processedArgs);
-		}
-		if(existingDisplayInfo) {
-		    closeDisplay(displayInfo->shell);		    
-		    currentDisplayInfo = existingDisplayInfo;
-		    XtPopup(currentDisplayInfo->shell, XtGrabNone);
-		} else {
-		    dmDisplayListParse(displayInfo,filePtr,processedArgs,
-		      filename,NULL,(Boolean)True);
-		}
+	      /* Don't look for an existing one.  Just reparse this one. */
+		dmDisplayListParse(displayInfo,filePtr,processedArgs,
+		  filename,NULL,(Boolean)True);
 	    } else {
 		if(popupExistingDisplay) {
-		    existingDisplayInfo = findDisplay(filename, processedArgs);
+		    existingDisplayInfo = findDisplay(filename,processedArgs);
 		}
 		if(existingDisplayInfo) {
 		    currentDisplayInfo = existingDisplayInfo;
-		    XtPopup(currentDisplayInfo->shell, XtGrabNone);
+		    XtPopdown(currentDisplayInfo->shell);
+		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
 		} else {
 		    dmDisplayListParse(NULL,filePtr,processedArgs,
 		      filename,NULL,(Boolean)True);
