@@ -136,15 +136,15 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 
 #ifdef __COLOR_RULE_H__
 	switch (dlOval->dynAttr.clr) {
-	    STATIC :
-	      po->record->monitorValueChanged = False;
+	case STATIC:
+	    po->record->monitorValueChanged = False;
 	    po->record->monitorSeverityChanged = False;
 	    break;
-	    ALARM :
-	      po->record->monitorValueChanged = False;
+	case ALARM:
+	    po->record->monitorValueChanged = False;
 	    break;
-	    DISCRETE :
-	      po->record->monitorSeverityChanged = False;
+	case DISCRETE:
+	    po->record->monitorSeverityChanged = False;
 	    break;
 	}
 #else

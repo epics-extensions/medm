@@ -131,15 +131,15 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 
 #ifdef __COLOR_RULE_H__
 	switch (dlRectangle->dynAttr.clr) {
-	    STATIC :
-	      pr->record->monitorValueChanged = False;
+	case STATIC:
+	    pr->record->monitorValueChanged = False;
 	    pr->record->monitorSeverityChanged = False;
 	    break;
-	    ALARM :
-	      pr->record->monitorValueChanged = False;
+	case ALARM:
+	    pr->record->monitorValueChanged = False;
 	    break;
-	    DISCRETE :
-	      pr->record->monitorSeverityChanged = False;
+	case DISCRETE:
+	    pr->record->monitorSeverityChanged = False;
 	    break;
 	}
 #else

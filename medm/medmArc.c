@@ -134,15 +134,15 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 
 #ifdef __COLOR_RULE_H__
 	switch (dlArc->dynAttr.clr) {
-	    STATIC :
-	      pa->record->monitorValueChanged = False;
+	case STATIC:
+	    pa->record->monitorValueChanged = False;
 	    pa->record->monitorSeverityChanged = False;
 	    break;
-	    ALARM :
-	      pa->record->monitorValueChanged = False;
+	case ALARM:
+	    pa->record->monitorValueChanged = False;
 	    break;
-	    DISCRETE :
-	      pa->record->monitorSeverityChanged = False;
+	case DISCRETE:
+	    pa->record->monitorSeverityChanged = False;
 	    break;
 	}
 #else
@@ -201,7 +201,7 @@ static void arcDraw(XtPointer cd) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlArc->dynAttr.clr) {
 #ifdef __COLOR_RULE_H__
-	case STATIC :
+	case STATIC:
 	    <<<<<<< medmArc.c
 		      gcValues.foreground = displayInfo->colormap[pa->attr.clr];
 	    =======

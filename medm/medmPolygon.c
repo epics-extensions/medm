@@ -178,15 +178,15 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif
 #ifdef __COLOR_RULE_H__
 	switch (dlPolygon->dynAttr.clr) {
-	    STATIC :
-	      pp->record->monitorValueChanged = False;
+	case STATIC:
+	    pp->record->monitorValueChanged = False;
 	    pp->record->monitorSeverityChanged = False;
 	    break;
-	    ALARM :
-	      pp->record->monitorValueChanged = False;
+	case ALARM:
+	    pp->record->monitorValueChanged = False;
 	    break;
-	    DISCRETE :
-	      pp->record->monitorSeverityChanged = False;
+	case DISCRETE:
+	    pp->record->monitorSeverityChanged = False;
 	    break;
 	}
 #else
