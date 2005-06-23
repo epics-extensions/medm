@@ -22,6 +22,7 @@
 #define XmNfontPattern         "fontPattern"
 #define XmNformat              "format"
 #define XmNrepeatInterval      "repeatInterval"
+#define XmNdisableInput        "disableInput"
 
 /* New argument Classes for this Widget */
 #define XmCCallbackDelay       "CallbackDelay"
@@ -33,6 +34,7 @@
 #define XmCRepeatInterval      "RepeatInterval"
 #define XmCfontPattern         "FontPattern"
 #define XmCformat              "Format"
+#define XmCDisableInput        "DisableInput"
 
 /* Class record pointer */
 extern WidgetClass wheelSwitchWidgetClass;

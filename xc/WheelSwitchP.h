@@ -31,6 +31,7 @@ typedef struct {
 typedef struct {
   /* Settable through resources */
     Boolean conform_to_content;
+    Boolean disable_input;
     short margin_width;   /* Margin around widget inside shadow */
     short margin_height;
 
@@ -54,7 +55,8 @@ typedef struct {
     double format_min_value;
     double format_max_value;
     GC foreground_GC;   /* GC for text */
-    GC background_GC;
+    Pixmap pixmap;
+    XRectangle clip_rect;
     Boolean GC_inited;
     short nb_digit;
     Boolean user_font;
