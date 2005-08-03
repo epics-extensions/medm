@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -24,7 +24,7 @@
  * .08  10-20-95        vong    2.1.7 release
  * .09  10-27-95        vong    2.1.8 release
  * .10  11-06-95        vong    2.1.9 release
- * .11  11-14-95        vong    2.1.10 release 
+ * .11  11-14-95        vong    2.1.10 release
  * .12  12-05-95        vong    2.1.11 release
  * .13  02-23-96        vong    2.1.12 release
  * .14  02-29-96        vong    2.1.13 release
@@ -62,6 +62,6 @@
 #define MEDM_VERSION		3
 #define MEDM_REVISION		0
 #define MEDM_MODIFICATION	4
-#define MEDM_UPDATE_LEVEL	4
-#define MEDM_VERSION_STRING	"MEDM Version 3.0.4Beta4"
+#define MEDM_UPDATE_LEVEL	5
+#define MEDM_VERSION_STRING	"MEDM Version 3.0.4Beta5"
 #define MEDM_VERSION_DIGITS	"MEDM030004"

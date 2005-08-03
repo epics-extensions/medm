@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -62,7 +62,7 @@ static DlDispatchTable barDlDispatchTable = {
 
 void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    MedmBar *pb;
+    MedmBar *pb = NULL;
     Arg args[34];
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
@@ -92,7 +92,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 		  &(dlBar->object),
 		  barDraw,
 		  (XtPointer)pb);
-		
+
 		if(pb->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlBar: Memory allocation error\n");
 		} else {
@@ -109,7 +109,7 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlBar->limits);
-	
+
       /* From the bar structure, we've got Bar's specifics */
 	n = 0;
 	XtSetArg(args[n],XtNx,(Position)dlBar->object.x); n++;
@@ -233,10 +233,10 @@ void executeDlBar(DisplayInfo *displayInfo, DlElement *dlElement)
 
       /* Add the pointer to the Channel structure as userData */
 	XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
-	localWidget = XtCreateWidget("bar", 
+	localWidget = XtCreateWidget("bar",
 	  xcBarGraphWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
-	
+
 	if(displayInfo->traversalMode == DL_EDIT) {
 	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
@@ -285,7 +285,7 @@ static void barDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -448,10 +448,10 @@ DlElement *parseBar(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlBar *dlBar;
     DlElement *dlElement = createDlBar(NULL);
- 
+
     if(!dlElement) return 0;
     dlBar = dlElement->structure.bar;
- 
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -517,7 +517,7 @@ DlElement *parseBar(DisplayInfo *displayInfo)
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-    
+
     return dlElement;
 }
 
@@ -547,7 +547,7 @@ void writeDlBar( FILE *stream, DlElement *dlElement, int level) {
       fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
         stringValueTable[dlBar->direction]);
 #endif
-    if(dlBar->fillmod != FROM_EDGE) 
+    if(dlBar->fillmod != FROM_EDGE)
       fprintf(stream,"\n%s\tfillmod=\"%s\"",indent,
         stringValueTable[dlBar->fillmod]);
     writeDlLimits(stream,&(dlBar->limits),level+1);

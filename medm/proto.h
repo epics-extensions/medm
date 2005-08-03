@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -356,7 +356,7 @@ void objectPaletteSetSensitivity(Boolean);
 void setActionToSelect();
 
 /* Parse methods */
-DlElement *parseChoiceButton(DisplayInfo *); 
+DlElement *parseChoiceButton(DisplayInfo *);
 DlElement *parseMessageButton(DisplayInfo *);
 DlElement *parseValuator(DisplayInfo *);
 DlElement *parseWheelSwitch(DisplayInfo *);
@@ -439,7 +439,7 @@ void updateTaskStatusGetInfo(int *taskCount,
   int *periodicUpdateDiscardCount,
   int *updateRequestQueued,
   int *updateExecuted,
-  double *timeInterval); 
+  double *timeInterval);
 void updateTaskAddNameCb(UpdateTask *, void (*)(XtPointer, Record **, int *));
 void startMedmScheduler(void);
 void stopMedmScheduler(void);
@@ -530,7 +530,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
   Position initialX,Position initialY,Position *finalX,Position *finalY);
 Boolean alreadySelected(DlElement *element);
-Boolean doResizing(Window window, Position initialX, Position initialY, 
+Boolean doResizing(Window window, Position initialX, Position initialY,
   Position *finalX, Position *finalY);
 void destroyElementWidgets(DlElement *element);
 void drawGrid(DisplayInfo *displayInfo);

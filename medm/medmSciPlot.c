@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 
 /* Routines used to implement the Cartesian Plot using SciPlot */
@@ -36,7 +36,7 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
     CpDataHandle hData;
     CpDataSet *ds;
     int i;
-    
+
   /* Allocate structure  */
     hData = (CpDataHandle)calloc(1,sizeof(CpData));
     if(!hData) return NULL;
@@ -45,7 +45,7 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
     hData->nsets = nsets;
     hData->data = NULL;
     if(nsets <= 0) return hData;
-    
+
   /* Allocate data sets */
     hData->data = (CpDataSet *)calloc(nsets, sizeof(CpDataSet));
     if(!hData) {
@@ -65,7 +65,7 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
 	if(npoints > 0) {
 	    ds->xp = (float *)calloc(npoints,sizeof(float));
 	    ds->yp = (float *)calloc(npoints,sizeof(float));
-	    if(!ds->xp || !ds->yp) {	
+	    if(!ds->xp || !ds->yp) {
 		CpDataDestroy(hData);
 		return NULL;
 	    }
@@ -88,7 +88,7 @@ CpDataHandle CpDataCreate(Widget w, CpDataType type, int nsets, int npoints)
     } else {
 	print("CpDataCreate: hData=NULL\n");
     }
-#endif    
+#endif
 
     return hData;
 }
@@ -127,7 +127,7 @@ void CpDataDestroy(CpDataHandle hData)
 {
     CpDataSet *ds;
     int i;
-    
+
 #if DEBUG_MEMORY
     if(hData) {
 	print("CpDataCreate: hData=%x nsets=%d data=%x\n",hData,hData->nsets,hData->data);
@@ -139,7 +139,7 @@ void CpDataDestroy(CpDataHandle hData)
     } else {
 	print("CpDataCreate: hData=NULL\n");
     }
-#endif    
+#endif
 
     if(hData) {
 	if(hData->data) {
@@ -162,7 +162,7 @@ int CpDataSetHole(CpDataHandle hData, double hole) {
 
 int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int point) {
     int listid;
-    
+
     hData->data[set].pointsUsed = MAX(point,0);
     listid = hData->data[set].listid;
     SciPlotListUpdateFloat(w, listid, hData->data[set].pointsUsed,
@@ -204,7 +204,7 @@ void CpGetAxisInfo(Widget w,
 
   /* Get userData */
     XtVaGetValues(w, XmNuserData, userData, NULL);
-    
+
   /* Define the rest */
     *xAxisIsTime = False;      /* Not implemented */
     *timeFormat = NULL;        /* Not implemented */
@@ -247,11 +247,11 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
   /* Determine which dataset (First trace is y1 axis, others are y2 axis))*/
     set = (trace)?trace-1:0;
     if(set >= hData->nsets) return;
-    
+
   /* Return if an invalid id (list not defined yet) */
     listid = hData->data[set].listid;
     if(listid == INVALID_LISTID) return;
-    
+
   /* Convert color to an index */
     colorid = SciPlotStoreAllocatedColor(w, color.pixel);
 
@@ -266,30 +266,30 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 	switch(trace%8) {
 	case 0:
 	    pointStyle = XtMARKER_FCIRCLE;
-	    break;	 
-	case 1:		 
+	    break;
+	case 1:
 	    pointStyle = XtMARKER_FSQUARE;
 	    pointSize = pointSize*3/4;
-	    break;	 
-	case 2:		 
+	    break;
+	case 2:
 	    pointStyle = XtMARKER_FUTRIANGLE;
-	    break;	 
-	case 3:		 
+	    break;
+	case 3:
 	    pointStyle = XtMARKER_FDIAMOND;
-	    break;	 
-	case 4:		 
+	    break;
+	case 4:
 	    pointStyle = XtMARKER_FDTRIANGLE;
-	    break;	 
-	case 5:		 
+	    break;
+	case 5:
 	    pointStyle = XtMARKER_FRTRIANGLE;;
-	    break;	 
-	case 6:		 
+	    break;
+	case 6:
 	    pointStyle = XtMARKER_FLTRIANGLE;;
-	    break;	 
-	case 7:		 
+	    break;
+	case 7:
 	    pointStyle = XtMARKER_FBOWTIE;
-	    break;	 
-	default:	 
+	    break;
+	default:
 	    pointStyle = XtMARKER_NONE;
 	    break;
 	}
@@ -467,9 +467,9 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
     for(i=0; i < nsets; i++) {
 	listid = hData->data[i].listid;
 	npoints = hData->data[i].npoints;
-#if 0	
+#if 0
 	if(npoints <= 0) continue;
-#endif	
+#endif
 	if(listid == INVALID_LISTID) {
 	  /* Not set yet, set with npoints */
 	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
@@ -495,9 +495,9 @@ void CpEraseData(Widget w, int axis, CpDataHandle hData)
     for(i=0; i < nsets; i++) {
 	listid = hData->data[i].listid;
 	npoints = hData->data[i].npoints;
-#if 0	
+#if 0
 	if(npoints <= 0) continue;
-#endif	
+#endif
 	if(listid == INVALID_LISTID) {
 	  /* Not set yet, set with npoints */
 	    listid = SciPlotListCreateFloat(w, hData->data[i].npoints,
@@ -544,7 +544,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 #if 0
     int validTraces = pcp ? pcp->nTraces : 0;
 #endif
-    
+
   /* Set widget args from the dlCartesianPlot structure */
     nargs = 0;
     XtSetArg(args[nargs],XmNx,(Position)dlCartesianPlot->object.x); nargs++;
@@ -552,7 +552,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlCartesianPlot->object.width); nargs++;
     XtSetArg(args[nargs],XmNheight,(Dimension)dlCartesianPlot->object.height); nargs++;
     XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
-#if SPECIFY_RESOURCES    
+#if SPECIFY_RESOURCES
     XtSetArg(args[nargs],XmNborderWidth,0); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
 #endif
@@ -565,9 +565,9 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
       "  TITLE_SCALE_FACTOR=%d\n"
       "  preferredHeight=%d\n",
       dlCartesianPlot->object.width,dlCartesianPlot->object.height,
-      TITLE_SCALE_FACTOR,preferredHeight); 
-      
-#endif    
+      TITLE_SCALE_FACTOR,preferredHeight);
+
+#endif
     XtSetArg(args[nargs],XtNtitleFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
     if (strlen(dlCartesianPlot->plotcom.title) > 0) {
@@ -597,16 +597,16 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
       "  AXES_SCALE_FACTOR=%d\n"
       "  preferredHeight=%d\n",
       dlCartesianPlot->object.width,dlCartesianPlot->object.height,
-      AXES_SCALE_FACTOR,preferredHeight); 
-      
-#endif    
+      AXES_SCALE_FACTOR,preferredHeight);
+
+#endif
     XtSetArg(args[nargs],XtNaxisFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
     XtSetArg(args[nargs],XtNlabelFont,XtFONT_HELVETICA|
       MAX(preferredHeight,MIN_FONT_HEIGHT)); nargs++;
 
   /* SciPlot-specific */
-#if SPECIFY_RESOURCES    
+#if SPECIFY_RESOURCES
     XtSetArg(args[nargs],XtNtitleMargin,5); nargs++;
     XtSetArg(args[nargs],XtNshowLegend,False); nargs++;
     XtSetArg(args[nargs],XtNdrawMajor,False); nargs++;
@@ -620,7 +620,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
    *   They don't make the axes cross at zero */
     XtSetArg(args[nargs],XtNxOrigin,True); nargs++;
     XtSetArg(args[nargs],XtNyOrigin,True); nargs++;
-#endif    
+#endif
 
 #if 0
   /* Not implemented or not implemented this way */
@@ -684,16 +684,16 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 axis style\n");
 	break;
     }
-#endif    
+#endif
 
   /* Add pointer to MedmCartesianPlot struct as userData to widget */
     XtSetArg(args[nargs], XmNuserData, (XtPointer)pcp); nargs++;
 
   /* Set miscellaneous  args */
-#if SPECIFY_RESOURCES    
+#if SPECIFY_RESOURCES
     XtSetArg(args[nargs],XmNtraversalOn,False); nargs++;
 #endif
-    
+
   /* Create the widget */
     w = XtCreateWidget("cartesianPlot", sciplotWidgetClass,
       displayInfo->drawingArea, args, nargs);
@@ -703,7 +703,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 
 #if DEBUG_USER_DATA
     print("CpCreateCartesianPlot: widget=%x pcp=%x\n",w,pcp);
-#endif    
+#endif
 
   /* Set foreground and background */
     fgcolorid = SciPlotStoreAllocatedColor(w,
@@ -745,7 +745,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	break;
     }
 
-#if 0    
+#if 0
   /* Not implemented  */
   /* Set Y2 Axis Range (Unsupported) */
     switch (dlCartesianPlot->axis[Y1_AXIS_ELEMENT].rangeStyle) {
@@ -762,7 +762,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	medmPrintf(1,"\nCpCreateCartesianPlot: Unknown Y1 range style\n");
 	break;
     }
-#endif    
+#endif
 
     SciPlotUpdate(w);
     return w;
@@ -774,7 +774,7 @@ void dumpCartesianPlot(Widget w)
 {
     Arg args[30];
     int n=0;
-			    
+
     Dimension height;
     Dimension width;
     Dimension borderWidth;
@@ -835,7 +835,7 @@ void dumpCartesianPlot(Widget w)
     XtSetArg(args[n],XtNlabelFont,&labelFont); n++;
     XtSetArg(args[n],XmNuserData,&userData); n++;
     XtGetValues(w,args,n);
-    
+
     print("  plotTitle: %s\n",plotTitle);
     print("  xLabel: %s\n",xLabel);
     print("  yLabel: %s\n",yLabel);
@@ -879,6 +879,6 @@ void dumpCartesianPlot(Widget w)
     SciPlotPrintMetrics(w);
     SciPlotPrintAxisInfo(w);
 #else
-#endif    
+#endif
 }
 #endif /* dumpCartesianPlot */

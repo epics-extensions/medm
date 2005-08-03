@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* MarqueeP.h -- Private header file for Marquee widget */
 
@@ -12,7 +12,7 @@
 #define _XtMarqueeP_h
 
 /* Include private header file of superclass */
-#include <Xm/PrimitiveP.h>   
+#include <Xm/PrimitiveP.h>
 
 /* Include public header file for this widget */
 #include "Marquee.h"

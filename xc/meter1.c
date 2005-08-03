@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ unsigned long getPixelFromStringW(w,colorString)
 	return(color.pixel);
     }
 }
-									     
+
 
 
 main(argc, argv)
@@ -57,10 +57,10 @@ main(argc, argv)
 
   /*
    * Initialize the Intrinsics.
-   */   
+   */
     n = 0;
     topLevel = XtInitialize(argv[0], "Test", NULL, 0, &argc, argv);
-  
+
     grey = getPixelFromStringW(topLevel,"grey75");
     white = getPixelFromStringW(topLevel,"white");
     green = getPixelFromStringW(topLevel,"green");
@@ -77,7 +77,7 @@ main(argc, argv)
     XtSetArg(wargs[n],XcNcontrolBackground,green); n++;
     meter = XtCreateManagedWidget("meter", xcMeterWidgetClass,
       topLevel, wargs, n);
-  
+
     max.fval = 1000.0;
     min.fval = 0.0;
     XtSetArg(wargs[0],XcNupperBound,max.lval);
@@ -145,11 +145,11 @@ XtWorkProc animate()
 	oldPixel = currentPixel;
     }
     if (n > 0) XtSetValues(meter,wargs,n);
-  /* MDA:  USE XcMeterUpdateValue() fucnction:  MUCH MUCH MUCH faster than 
+  /* MDA:  USE XcMeterUpdateValue() fucnction:  MUCH MUCH MUCH faster than
      XtSetValues of XcNvalue!!
      */
     XcMeterUpdateValue(meter,&current);
-  
+
     return FALSE;
 
 

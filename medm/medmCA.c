@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -24,6 +24,8 @@
 #define DEBUG_CONNECTION 0
 #define DEBUG_TIMESTAMP 0
 #define DEBUG_RETRY 0
+#define DEBUG_SLIDER 0
+#define DEBUG_LARGE_ARRAY 0
 
 /* Keep in mind the interface does not respond for this time and that
    most of the search requests are at the beginning of the sequence */
@@ -47,7 +49,7 @@ typedef struct {
 #if defined(DBR_CLASS_NAME) && DO_RTYP
     Boolean rtypOk;
     char rtypVal[MAX_STRING_SIZE];
-#endif    
+#endif
 } PvInfo;
 
 static PvInfo *pvInfo = NULL;
@@ -145,7 +147,7 @@ static void caTaskDelete()
 	caTask.freeList = NULL;
 	caTask.freeListCount = 0;
 	caTask.freeListSize = 0;
-    }  
+    }
     if(caTask.pageCount) {
 	int i;
 	for (i=0; i < caTask.pageCount; i++) {
@@ -155,7 +157,7 @@ static void caTaskDelete()
 	free((char *)caTask.pages);
 	caTask.pages = NULL;
 	caTask.pageCount = 0;
-    } 
+    }
 }
 
 static Channel *getChannelFromRecord(Record *pRecord)
@@ -176,7 +178,7 @@ void retryConnections(void)
     const char *pvname=NULL;
     chid retryChid;
     int status;
-    
+
 #if DEBUG_RETRY
     print("retryConnections:\n");
     print(" freeListSize=%d freeListCount=%d\n",
@@ -227,7 +229,7 @@ void retryConnections(void)
 	medmPostMsg(1,"retryConnections: ca_search failed for %s: %s\n",
 	  pvname, ca_message(status));
     }
-    
+
   /* Wait.  The searches will only continue for this time.  Keep the
    * time short as the interface is frozen, and most of the searches
    * occur at the start of the sequence.  Testing indicated:
@@ -242,7 +244,7 @@ void retryConnections(void)
    * but this may vary owing to tuning and may change with new releases.
    */
     ca_pend_io(RETRY_TIMEOUT);
-    
+
   /* Clear the channel */
     status = ca_clear_channel(retryChid);
     if(status != ECA_NORMAL) {
@@ -253,7 +255,7 @@ void retryConnections(void)
 
 static void medmCAExceptionHandlerCb(struct exception_handler_args args)
 {
-#define MAX_EXCEPTIONS 25    
+#define MAX_EXCEPTIONS 25
     static int nexceptions=0;
     static int ended=0;
 
@@ -268,7 +270,7 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
 	ca_add_exception_event(NULL, NULL);
 	return;
     }
-    
+
     medmPostMsg(1,"medmCAExceptionHandlerCb: Channel Access Exception:\n"
       "  Channel Name: %s\n"
       "  Native Type: %s\n"
@@ -314,7 +316,7 @@ int medmCAInitialize()
 void medmCATerminate()
 {
     int status;
-    
+
   /* Cancel registration of the CA file descriptors */
   /* KE: Doesn't cancel it.  The first argument should be NULL for cancel */
   /* And why do we want to cancel it ? */
@@ -360,7 +362,7 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 #else
     int inputReadMask=XtInputReadMask;
 #endif
-    
+
     typedef struct {
         XtInputId inputId;
         int fd;
@@ -368,20 +370,20 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
     static InputIdAndFd *inp = NULL;
     static int maxInps = 0, numInps = 0;
     int i, j, k;
-    
+
     UNREFERENCED(user);
-    
+
     if(inp == NULL && maxInps == 0) {
       /* First time through */
 	inp = (InputIdAndFd *) calloc(1,NUM_INITIAL_FDS*sizeof(InputIdAndFd));
 	maxInps = NUM_INITIAL_FDS;
 	numInps = 0;
     }
-    
+
     if(opened) {
       /* Add new fd */
 	if(numInps < maxInps-1) {
-	    
+
 	    inp[numInps].fd = fd;
 	    inp[numInps].inputId  = XtAppAddInput(appContext,fd,
 	      (XtPointer)inputReadMask,
@@ -389,11 +391,11 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 #if DEBUG_INPUT_ID
 	    print("medmCAFdRegistrationCb: Add fd=%d inpid=%lx\n",
 	      inp[numInps].fd,inp[numInps].inputId);
-#endif	
+#endif
 	    numInps++;
 	} else {
 	    medmPostMsg(0,"dmRegisterCA: info: realloc-ing input fd's array");
-	    
+
 	    maxInps = 2*maxInps;
 #if defined(__cplusplus) && !defined(__GNUG__)
 	    inp = (InputIdAndFd *) realloc((malloc_t)inp,
@@ -408,12 +410,12 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 #if DEBUG_INPUT_ID
 	    print("medmCAFdRegistrationCb (Realloc): Add fd=%d inpid=%lx\n",
 	      inp[numInps].fd,inp[numInps].inputId);
-#endif	
+#endif
 	    numInps++;
 	}
     } else {
 	currentNumInps = numInps;
-	
+
       /* Remove old fd */
 	for (i = 0; i < numInps; i++) {
 	    if(inp[i].fd == fd) {
@@ -430,7 +432,7 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 		currentNumInps--;
 	    }
 	}
-	
+
       /* Remove holes in the array */
 	i = 0;
 	while (i < numInps) {
@@ -508,7 +510,9 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	      ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 	      ca_message(status));
 #if DEBUG_CONNECTION
+# if 0
 	    system("netstat | grep iocacis");
+# endif
 	    print("  pCh->chid %s args.chid\n",
 	      pCh->chid == args.chid?"==":"!=");
 	    print(
@@ -528,7 +532,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	      args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
 	      args.chid?(ca_write_access(args.chid)?"W":""):"",
 	      args.chid?ca_host_name(args.chid):"Unavailable");
-#endif	    
+#endif
 	}
     }
 
@@ -581,7 +585,9 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 		  ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 		  ca_message(status));
 #if DEBUG_CONNECTION
+# if 0
 		system("netstat | grep iocacis");
+# endif
 		print("  pCh->chid %s args.chid\n",
 		  pCh->chid == args.chid?"==":"!=");
 		print(
@@ -601,7 +607,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 		  args.chid?(ca_read_access(args.chid)?"R":"None"):"Unavailable",
 		  args.chid?(ca_write_access(args.chid)?"W":""):"",
 		  args.chid?ca_host_name(args.chid):"Unavailable");
-#endif	    
+#endif
 	    }
 	  /* Set this one last so ca_replace_access_rights_event can
              use the old value */
@@ -611,7 +617,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	    pCh->pr->connected = True;
 	    caTask.channelConnected++;
 	    if(pCh->pr->updateValueCb)
-	      pCh->pr->updateValueCb((XtPointer)pCh->pr); 
+	      pCh->pr->updateValueCb((XtPointer)pCh->pr);
 	}
     } else {
       /* Not connected */
@@ -625,7 +631,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	    pCh->pr->connected = False;
 	    caTask.channelConnected--;
 	    if(pCh->pr->updateValueCb)
-	      pCh->pr->updateValueCb((XtPointer)pCh->pr); 
+	      pCh->pr->updateValueCb((XtPointer)pCh->pr);
 	}
     }
 }
@@ -682,7 +688,7 @@ static void medmUpdateGraphicalInfoCb(struct event_handler_args args) {
 	pr->hopr = (double) pCh->info.e.no_str - 1.0;
 	pr->lopr = 0.0;
 	pr->precision = 0;
-	for (i = 0; i < pCh->info.e.no_str; i++) { 
+	for (i = 0; i < pCh->info.e.no_str; i++) {
 	    pr->stateStrings[i] = pCh->info.e.strs[i];
 	}
 	break;
@@ -751,9 +757,16 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
     double value;
     int nBytes;
 
-#if DEBUG_CHANNEL_CB
+#if DEBUG_CHANNEL_CB || DEBUG_LARGE_ARRAY
     const char *pvname=ca_name(args.chid);
-#endif    
+    print("medmUpdateChannelCb: %s\n",pvname);
+    if(args.status != ECA_NORMAL) {
+	char buf[80];
+	envGetConfigParam(&EPICS_CA_MAX_ARRAY_BYTES,80,buf);
+	buf[79]='\0';
+	print("EPICS_CA_MAX_ARRAY_BYTES: %s\n",buf);
+    }
+#endif
 
   /* Increment the event counter */
     caTask.caEventCount++;
@@ -762,14 +775,21 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
   /* Same as for updateGraphicalInfoCb */
   /* Don't need to check for read access, checking ECA_NORMAL is enough */
     if(globalDisplayListTraversalMode != DL_EXECUTE) return;
-    if(args.status != ECA_NORMAL) return;
+    if(args.status != ECA_NORMAL) {
+	medmPostMsg(0,"medmUpdateChannelCb: Bad status [%d] for %s: %s\n",
+	  args.status,
+	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown",
+	  ca_message(args.status));
+	return;
+    }
     if(!args.dbr) {
-	medmPostMsg(0,"medmUpdateChannelCb: Invalid data [%]s\n",
+	medmPostMsg(0,"medmUpdateChannelCb: Invalid data for [%s]\n",
 	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
     if(!pCh || !pCh->chid || !pCh->pr) {
-	medmPostMsg(0,"medmUpdateChannelCb: Invalid channel information [%s]\n",
+	medmPostMsg(0,"medmUpdateChannelCb: "
+	  "Invalid channel information for [%s]\n",
 	  ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
 	return;
     }
@@ -783,7 +803,7 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
 	return;
     }
     pr = pCh->pr;
-    
+
   /* Allocate space for the data */
     nBytes = dbr_size_n(args.type, args.count);
     if(!pCh->data) {
@@ -814,7 +834,7 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
     pr->time = ((dataBuf *)args.dbr)->s.stamp;
 #endif
 
-    
+
   /* Set the array pointer in the Record to point to the value member of the
    *   appropriate struct stored in the Channel
    * (The returned data is not stored there yet) */
@@ -843,7 +863,7 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
     default:
 	break;
     }
-    
+
   /* For strings and arrays copy the returned data to the Channel
    * (The space is allocated but the data is not stored otherwise) */
     if(ca_field_type(args.chid) == DBF_STRING ||
@@ -873,12 +893,17 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
 	break;
     case DBF_DOUBLE:
 	value = ((dataBuf *)(args.dbr))->d.value;
+#if DEBUG_SLIDER
+	if(value > 150.0 || value < -150.0) {
+	    print("medmUpdateChannelCb: %g\n",value);
+	}
+#endif
 	break;
     default:
 	value = 0.0;
 	break;
     }
-    
+
   /* Mark zero to nonzero transition */
     if(((value == 0.0) && (pr->value != 0.0)) ||
       ((value != 0.0) && (pr->value == 0.0)))
@@ -898,11 +923,11 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
 
   /* Set the new value into the record */
     pr->value = value;
-    
+
 #if DEBUG_ERASE
     print("medmUpdateChannelCb: [%x]%s %g\n",
       pr, pr->name, pr->value);
-#endif    
+#endif
 
   /* Call the update value callback if there is a monitored change */
     if(pCh->pr->updateValueCb) {
@@ -943,7 +968,7 @@ static void medmReplaceAccessRightsEventCb(
   /* Change the access rights in the Record */
     pCh->pr->readAccess = ca_read_access(pCh->chid);
     pCh->pr->writeAccess = ca_write_access(pCh->chid);
-    if(pCh->pr->updateValueCb) 
+    if(pCh->pr->updateValueCb)
       pCh->pr->updateValueCb((XtPointer)pCh->pr);
 
   /* Do a get as in medmConnectEventCb.  The get will cause the
@@ -966,7 +991,7 @@ static int caAdd(char *name, Record *pr)
 {
     Channel *pCh;
     int status;
-    
+
     if((caTask.freeListCount < 1) && (caTask.nextFree >= CA_PAGE_SIZE)) {
       /* if not enough pages, increase number of pages */
 	if(caTask.pageCount >= caTask.pageSize) {
@@ -1113,7 +1138,7 @@ Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
     if(strlen(name) <= (size_t)0) {
 	return NULL;
     }
-    
+
     pR = (Record *)malloc(sizeof(Record));
     if(pR) {
 	*pR = nullRecord;
@@ -1131,7 +1156,7 @@ Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
 {
     Record **records;
     int i;
-    
+
     records = (Record **)malloc(MAX_CALC_RECORDS*sizeof(Record *));
     if(!records) return records;
   /* KE: Could put an error message here and also in medmAllocateRecord */
@@ -1162,16 +1187,21 @@ void medmDestroyRecord(Record *pr)
 void medmSendDouble(Record *pr, double data)
 {
     int status;
-    
+
     Channel *pCh = &((caTask.pages[pr->caId/CA_PAGE_SIZE])
       [pr->caId % CA_PAGE_SIZE]);
     status = ca_put(DBR_DOUBLE,pCh->chid,&data);
+#if DEBUG_SLIDER
+    if(data > 150.0 || data < -150.0) {
+	print("medmSendDouble: %g\n",data);
+    }
+#endif
     if(status != ECA_NORMAL) {
 	medmPostMsg(1,"medmSendDouble: ca_put failed: %s\n",
 	  ca_message(status));
     }
     ca_flush_io();
-}  
+}
 
 void medmSendLong(Record *pr, long data)
 {
@@ -1185,7 +1215,7 @@ void medmSendLong(Record *pr, long data)
 	  ca_message(status));
     }
     ca_flush_io();
-}  
+}
 
 void medmSendCharacterArray(Record *pr, char *data, unsigned long size)
 {
@@ -1239,10 +1269,10 @@ void popupPvInfo(DisplayInfo *displayInfo)
     char descName[MAX_TOKEN_LENGTH];
     char *pDot;
     double connTimeout;
-    
+
 #if DEBUG_PVINFO
     XUngrabPointer(display,CurrentTime);
-#endif    
+#endif
 
   /* Check if another call is in progress */
     if(pvInfo) {
@@ -1255,7 +1285,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 
   /* Create the dialog box if it has not been created */
     if(!pvInfoS) createPvInfoDlg();
-    
+
   /* Get the records */
     records = getPvInfoFromDisplay(displayInfo, &nPvInfoPvs, &pE);
     if(!records) return;
@@ -1281,7 +1311,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 #if defined(DBR_CLASS_NAME) && DO_RTYP
 	pvInfo[i].rtypOk = False;
 	strcpy(pvInfo[i].rtypVal, NOT_AVAILABLE);
-#endif    
+#endif
 
       /* Check for a valid record */
 	if(records[i]) {
@@ -1296,7 +1326,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
       /* Don't try the others unless the PV is connected */
 	if(ca_state(chId) != cs_conn || !ca_read_access(chId))
 	  continue;
-	
+
       /* Construct the DESC name */
 	strcpy(descName,ca_name(chId));
 	pDot = strchr(descName,'.');
@@ -1320,7 +1350,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 
   /* Free the records, they are now stored in pvInfo */
     if(records) free(records);
-    
+
   /* Wait for the searches (Timeouts should be uncommon) */
     status=ca_pend_io(CA_PEND_IO_TIME);
     if(status != ECA_NORMAL) {
@@ -1328,17 +1358,17 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	  "Did not find the DESC information (%s).\n",
 	  CA_PEND_IO_TIME, descName);
     }
-    
+
   /* Loop over the records and do the gets */
     nPvInfoCbs = 0;
     for(i=0; i < nPvInfoPvs; i++) {
 	if(!pvInfo[i].pvOk) continue;
-	
+
       /* Don't try the others unless the PV is connected */
 	chId = pvInfo[i].pvChid;
 	if(ca_state(chId) != cs_conn || !ca_read_access(chId))
 	  continue;
-	
+
       /* Get the DESC */
 	if(ca_state(pvInfo[i].descChid) == cs_conn &&
 	  ca_read_access(pvInfo[i].descChid)) {
@@ -1356,7 +1386,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	} else {
 	    pvInfo[i].descOk = False;
 	}
-	
+
       /* Get the time value as a string */
 	status = ca_get_callback(DBR_TIME_STRING, chId, pvInfoTimeGetCb,
 	  &pvInfo[i]);
@@ -1366,7 +1396,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	    medmPostMsg(1,"popupPvInfo: STAMP: ca_get_callback for %s: %s\n",
 	      ca_name(chId), ca_message(status));
 	}
-	
+
 #if defined(DBR_CLASS_NAME) && DO_RTYP
       /* Get the RTYP */
 	status = ca_get_callback(DBR_CLASS_NAME, chId, pvInfoRtypGetCb,
@@ -1379,7 +1409,7 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	}
 #endif
     }
-    
+
   /* Add a timeout and poll if there are callbacks
    *   The timeout is a safety net and should never be called
    *   All callbacks should come back inside the EPICS_CA_CONN_TMO
@@ -1393,24 +1423,24 @@ void popupPvInfo(DisplayInfo *displayInfo)
 	  pvInfoTimeout, NULL);
 	pvInfoTimerOn = True;
     } else {
-	pvInfoWriteInfo();    
+	pvInfoWriteInfo();
     }
-    
+
 #if DEBUG_PVINFO
     print("popupPvInfo: nPvInfoCbs=%d timeout=%ld\n",
       nPvInfoCbs, nPvInfoCbs?pvInfoTime:0L);
-#endif    
+#endif
 }
 
 static void pvInfoDescGetCb(struct event_handler_args args)
 {
     PvInfo *info = (PvInfo *)args.usr;
 
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("pvInfoDescGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
     print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
       pvInfo,info,info->descChid,args.dbr);
-#endif    
+#endif
     if(pvInfo && info && info->descChid && args.dbr) {
 	if(args.status == ECA_NORMAL) {
 	    strcpy(info->descVal, (char *)args.dbr);
@@ -1423,9 +1453,9 @@ static void pvInfoDescGetCb(struct event_handler_args args)
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
     if(nPvInfoCbs == 0) pvInfoWriteInfo();
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("                 nPvInfoCbs = %d\n", nPvInfoCbs);
-#endif    
+#endif
 }
 
 #if defined(DBR_CLASS_NAME) && DO_RTYP
@@ -1433,7 +1463,7 @@ static void pvInfoRtypGetCb(struct event_handler_args args)
 {
     PvInfo *info = (PvInfo *)args.usr;
 
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("pvInfoRtypGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
     print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
       pvInfo,info,info->descChid,args.dbr);
@@ -1451,9 +1481,9 @@ static void pvInfoRtypGetCb(struct event_handler_args args)
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
     if(nPvInfoCbs == 0) pvInfoWriteInfo();
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("                 nPvInfoCbs = %d\n", nPvInfoCbs);
-#endif    
+#endif
 }
 #endif
 
@@ -1461,11 +1491,11 @@ static void pvInfoTimeGetCb(struct event_handler_args args)
 {
     PvInfo *info = (PvInfo *)args.usr;
 
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("pvInfoTimeGetCb: nPvInfoCbs = %d\n", nPvInfoCbs);
     print("  pvInfo: %p info: %p info->descChid: %p args.dbr: %p\n",
       pvInfo,info,info->descChid,args.dbr);
-#endif    
+#endif
     if(pvInfo && info && info->descChid && args.dbr) {
 	info->timeVal = *(struct dbr_time_string *)args.dbr;
 	info->timeOk = True;
@@ -1474,14 +1504,14 @@ static void pvInfoTimeGetCb(struct event_handler_args args)
   /* Decrement the callback count */
     if(nPvInfoCbs > 0) nPvInfoCbs--;
     if(nPvInfoCbs == 0) pvInfoWriteInfo();
-#if DEBUG_PVINFO    
+#if DEBUG_PVINFO
     print("                 nPvInfoCbs = %d\n", nPvInfoCbs);
-#endif    
+#endif
 }
 
 static void pvInfoWriteInfo(void)
 {
-    time_t now; 
+    time_t now;
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     Record *pR;
@@ -1529,7 +1559,7 @@ static void pvInfoWriteInfo(void)
     XmTextSetInsertionPosition(pvInfoMessageBox, 0);
     XmTextSetString(pvInfoMessageBox, string);
     curpos+=strlen(string);
-    
+
   /* Loop over the records to print information */
     for(i=0; i < nPvInfoPvs; i++) {
       /* Check for a valid record */
@@ -1559,7 +1589,7 @@ static void pvInfoWriteInfo(void)
 	} else {
 	    sprintf(string, "%sRTYP: %s\n", string, NOT_AVAILABLE);
 	}
-#endif	
+#endif
       /* Items from chid */
 	sprintf(string, "%sTYPE: %s\n", string,
 	  dbf_type_to_text(ca_field_type(chId)));
@@ -1571,7 +1601,7 @@ static void pvInfoWriteInfo(void)
 	sprintf(string, "%sIOC: %s\n", string, ca_host_name(chId));
 	if(timeVal.value) {
 	    char fracPart[10];
-	    
+
 	  /* Do the value */
 	    if(ca_element_count(chId) == 1) {
 		sprintf(string, "%sVALUE: %s\n", string,
@@ -1634,9 +1664,9 @@ static void pvInfoWriteInfo(void)
       /* Items from record */
 	sprintf(string, "\n");
 	switch(ca_field_type(chId)) {
-        case DBF_STRING: 
+        case DBF_STRING:
 	    break;
-        case DBF_ENUM: 
+        case DBF_ENUM:
 	    sprintf(string, "%sSTATES: %d\n",
 	      string, (int)(pR->hopr+1.1));
 	  /* KE: Bad way to use a double */
@@ -1647,13 +1677,13 @@ static void pvInfoWriteInfo(void)
 		}
 	    }
 	    break;
-        case DBF_CHAR:  
-        case DBF_INT:           
-        case DBF_LONG: 
+        case DBF_CHAR:
+        case DBF_INT:
+        case DBF_LONG:
 	    sprintf(string, "%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr, pR->lopr);
 	    break;
-        case DBF_FLOAT:  
+        case DBF_FLOAT:
         case DBF_DOUBLE:
 	    if(pR->precision >= 0 && pR->precision <= 17) {
 		sprintf(string, "%sPRECISION: %d\n",
@@ -1665,7 +1695,7 @@ static void pvInfoWriteInfo(void)
 	    sprintf(string, "%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr, pR->lopr);
 	    break;
-        default: 
+        default:
 	    break;
 	}
 	sprintf(string, "%s\n", string);

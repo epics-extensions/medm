@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -114,7 +114,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
-    
+
     if(displayInfo->traversalMode == DL_EXECUTE  &&
       *dlPolygon->dynAttr.chan[0]) {
 	MedmPolygon *pp;
@@ -144,7 +144,7 @@ void executeDlPolygon(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &object,
 	      polygonDraw,
 	      (XtPointer)pp);
-	    
+
 	    if(pp->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlPolygon: Memory allocation error\n");
 	    } else {
@@ -248,7 +248,7 @@ static void polygonDestroyCb(XtPointer cd)
 
     if(pp) {
 	Record **records = pp->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -266,7 +266,7 @@ static void polygonGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmPolygon *pp = (MedmPolygon *)cd;
     int i;
-    
+
     *count = 0;
     if(pp && pp->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -282,7 +282,7 @@ DlElement *createDlPolygon(DlElement *p)
 {
     DlPolygon *dlPolygon;
     DlElement *dlElement;
- 
+
     dlPolygon = (DlPolygon *)malloc(sizeof(DlPolygon));
     if(!dlPolygon) return 0;
     if(p) {
@@ -299,7 +299,7 @@ DlElement *createDlPolygon(DlElement *p)
 	dlPolygon->points = NULL;
 	dlPolygon->nPoints = 0;
     }
- 
+
     if(!(dlElement = createDlElement(DL_Polygon,
       (XtPointer)      dlPolygon,
       &polygonDlDispatchTable))) {
@@ -477,7 +477,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
     int foundVertex = False;
 
     window = XtWindow(currentDisplayInfo->drawingArea);
- 
+
     for(i = 0; i < dlPolygon->nPoints; i++) {
 	x01 = dlPolygon->points[i].x;
 	y01 = dlPolygon->points[i].y;
@@ -488,7 +488,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 	    foundVertex = True;
 	    break;
 	}
-#undef TOR 
+#undef TOR
     }
 
     if(!foundVertex) return 0;
@@ -557,7 +557,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[pointIndex-1].x,
 		dlPolygon->points[pointIndex-1].y, x01,y01);
-	    else 
+	    else
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[MAX(dlPolygon->nPoints-2,0)].x,
 		dlPolygon->points[MAX(dlPolygon->nPoints-2,0)].y, x01,y01);
@@ -596,7 +596,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[pointIndex-1].x,
 		dlPolygon->points[pointIndex-1].y, x01,y01);
-	    else 
+	    else
 	      XDrawLine(display,window,xorGC,
 		dlPolygon->points[MAX(dlPolygon->nPoints-2,0)].x,
 		dlPolygon->points[MAX(dlPolygon->nPoints-2,0)].y, x01,y01);

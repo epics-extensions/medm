@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -148,7 +148,7 @@ DisplayInfo *allocateDisplayInfo()
     displayInfo->undoInfo = NULL;
 
     displayInfo->markerWidgetList = NULL;
-    displayInfo->nMarkerWidgets = 0;    
+    displayInfo->nMarkerWidgets = 0;
 
     updateTaskInitHead(displayInfo);
 
@@ -190,7 +190,7 @@ DisplayInfo *allocateDisplayInfo()
    * Valuator. Seems like it only does something for the Slider and
    * Text Entry */
     XtSetArg(args[nargs],XmNkeyboardFocusPolicy,XmPOINTER); nargs++;
-#endif    
+#endif
   /* Map window manager menu Close function to nothing for now */
     XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
     if(privateCmap) {
@@ -214,13 +214,13 @@ DisplayInfo *allocateDisplayInfo()
     XmAddWMProtocolCallback(displayInfo->shell,WM_DELETE_WINDOW,
       (XtCallbackProc)wmCloseCallback,
       (XtPointer)DISPLAY_SHELL);
-    
+
   /* Append to end of the list */
     displayInfo->next = NULL;
     displayInfo->prev = displayInfoListTail;
     displayInfoListTail->next = displayInfo;
     displayInfoListTail = displayInfo;
-    
+
     return(displayInfo);
 }
 
@@ -249,7 +249,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 
   /* Remove all update tasks in this display */
     updateTaskDeleteAllTask(pt);
- 
+
   /* As a composite widget, drawingArea is responsible for destroying
    it's children */
     if(drawingArea != NULL) {
@@ -281,7 +281,7 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 
   /* Destroy undo information */
     if(displayInfo->undoInfo) destroyUndoInfo(displayInfo);
-    
+
   /* Branch depending on cleanup mode */
     if(cleanupDisplayList) {
 	XtDestroyWidget(displayInfo->shell);
@@ -406,7 +406,7 @@ static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cb
 
     UNREFERENCED(cd);
     UNREFERENCED(cbs);
-    
+
     XtSetArg(args[0],XmNx,&xSave);
     XtSetArg(args[1],XmNy,&ySave);
     XtGetValues(shell,args,2);
@@ -423,7 +423,7 @@ static void displayShellPopdownCallback(Widget shell, XtPointer cd, XtPointer cb
 	  XtIsRealized(shell)?"True":"False",
 	  XtIsManaged(shell)?"True":"False");
     }
-#endif    
+#endif
 }
 
 static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
@@ -434,7 +434,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 
     UNREFERENCED(cd);
     UNREFERENCED(cbs);
-    
+
     if(shell == lastShell) {
 	XtSetArg(args[0],XmNx,xSave);
 	XtSetArg(args[1],XmNy,ySave);
@@ -453,7 +453,7 @@ static void displayShellPopupCallback(Widget shell, XtPointer cd, XtPointer cbs)
 	  XtIsRealized(shell)?"True":"False",
 	  XtIsManaged(shell)?"True":"False");
     }
-#endif    
+#endif
 }
 
 /***  Parsing routines ***/
@@ -478,14 +478,14 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
     static DlDynamicAttribute dynAttr;
     static Boolean init = True;
     int first = 1;
-    
+
   /* Initialize attributes to defaults for old format */
     if(init && displayInfo->versionNumber < 20200) {
 	basicAttributeInit(&attr);
 	dynamicAttributeInit(&dynAttr);
 	init = False;
     }
- 
+
   /* Loop over tokens until T_EOF */
     do {
 	if(first) {
@@ -523,7 +523,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 			    pe->structure.rectangle->dynAttr = dynAttr;
 			    dynAttr.chan[0][0] = '\0';
 			}
-#endif			
+#endif
 			break;
 		    default:
 			break;
@@ -545,7 +545,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 #if DEBUG_PARSE
 		{
 		    static int i=0;
-		    
+
 		    print("%3d Element: %s x=%d y=%d width=%d height=%d\n",
 		      ++i,
 		      elementType(pe->type),
@@ -554,7 +554,7 @@ TOKEN parseAndAppendDisplayList(DisplayInfo *displayInfo, DlList *dlList,
 		      (int)pe->structure.display->object.width,
 		      (int)pe->structure.display->object.height);
 		}
-#endif    
+#endif
 		appendDlElement(dlList,pe);
 	    }
 	    break;
@@ -599,8 +599,8 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     DlElement *pE;
     Arg args[2];
     int nargs;
-	
-    
+
+
 #if DEBUG_RELATED_DISPLAY
     print("\ndmDisplayListParse: displayInfoIn=%x\n"
       "  argsString=%s\n"
@@ -612,7 +612,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
       filename?filename:"NULL",
       geometryString?geometryString:"NULL",
       fromRelatedDisplayExecution?"True":"False");
-#endif    
+#endif
 
     initializeGlobalResourceBundle();
 
@@ -631,7 +631,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	XtGetValues(displayInfoIn->shell,args,nargs);
 #if DEBUG_RELATED_DISPLAY
 	print("dmDisplayListParse: Old values: x=%d y=%d\n",x,y);
-#endif      
+#endif
       /* See if we want to reuse it or save it */
 	if(displayInfoIn->fromRelatedDisplayExecution == True) {
 	  /* Not an original, don't save it, reuse it */
@@ -643,7 +643,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	    if(displayInfoIn->dlFile) {
 		free((char *)displayInfoIn->dlFile);
 		displayInfoIn->dlFile = NULL;
-	    }	    
+	    }
 	    displayInfoIn->filePtr = filePtr;
 	    cdi = currentDisplayInfo = displayInfoIn;
 	    cdi->newDisplay = False;
@@ -663,15 +663,15 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	      "dmDisplayListParse [2]: displayInfoList");
 	    dumpDisplayInfoList(displayInfoSaveListHead,
 	      "dmDisplayListParse [2]: displayInfoSaveList");
-#endif	    
+#endif
 	    cdi = currentDisplayInfo = allocateDisplayInfo();
 	    cdi->filePtr = filePtr;
 	    cdi->newDisplay = False;
 	}
     }
-  
+
     cdi->fromRelatedDisplayExecution = fromRelatedDisplayExecution;
-    
+
   /* Generate the name-value table for macro substitutions (related display) */
     if(argsString) {
 	cdi->nameValueTable = generateNameValueTable(argsString,&numPairs);
@@ -727,7 +727,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 
   /* Read the colormap if there.  Will also create cdi->dlColormap. */
     tokenType=getToken(cdi,token);
-    if(tokenType == T_WORD && 
+    if(tokenType == T_WORD &&
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
       /* This is a colormap block, parse it */
@@ -779,7 +779,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	free((char *)cdi->dlColormap);
 	cdi->dlColormap = NULL;
     }
-    
+
   /* Do resizing */
     if(reuse) {
       /* Resize the display to the new size now
@@ -802,8 +802,8 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	mask = XParseGeometry(geometryString,&xg,&yg,&width,&height);
 #if DEBUG_RELATED_DISPLAY
 	print("dmDisplayListParse: Geometry values: xg=%d yg=%d\n",xg,yg);
-#endif      
-	
+#endif
+
       /* Change width and height object values now, x and y later */
 	if((mask & WidthValue) && (mask & HeightValue)) {
 	    dmResizeDisplayList(cdi,(Dimension)width,(Dimension)height);
@@ -819,7 +819,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 
   /* Get the window manager borders */
     getBorders(&left, &right, &top, &bottom);
-    
+
   /* Change DlObject values for x and y to be the same as the original
      if it is a Related Display */
     if(displayInfoIn) {
@@ -832,7 +832,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	  "  y=%d dlDisplay->object.y=%d\n",
 	  x,dlDisplay->object.x,
 	  y,dlDisplay->object.y);
-#endif	
+#endif
 	dlDisplay->object.x = x;
 	dlDisplay->object.y = y;
     } else if(geometryString && *geometryString) {
@@ -855,12 +855,12 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	    print("  screenWidth=%d screenheight=%d width=%d height=%d\n",
 	      DisplayWidth(display,screenNum),
 	      DisplayHeight(display,screenNum),
-	      width,height);	      
+	      width,height);
 	    print("  xg=%d dlDisplay->object.x=%d XNegative=%s\n"
 	      "  yg=%d dlDisplay->object.y=%d YNegative=%s\n",
 	      xg,dlDisplay->object.x,(mask&XNegative)?"True":"False",
 	      yg,dlDisplay->object.y,(mask&YNegative)?"True":"False");
-#endif	
+#endif
 	}
     }
 
@@ -870,13 +870,13 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     cdi->elementsExecuted=False;
     dmTraverseDisplayList(cdi);
     cdi->elementsExecuted=True;
-    
+
   /* Set the object x,y values minus the borders */
     nargs=0;
     XtSetArg(args[nargs],XmNx,dlDisplay->object.x-left); nargs++;
     XtSetArg(args[nargs],XmNy,dlDisplay->object.y-top); nargs++;
     XtSetValues(cdi->shell,args,nargs);
-    
+
 #if DEBUG_RELATED_DISPLAY
     print("  Before XtPopup: XtIsRealized=%s XtIsManaged=%s\n",
       XtIsRealized(cdi->shell)?"True":"False",
@@ -886,7 +886,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     print("  xObj=%d yObj=%d xSet=%d ySet=%d\n",
       dlDisplay->object.x,dlDisplay->object.y,
       dlDisplay->object.x-left,dlDisplay->object.y-top);
-#endif      
+#endif
 
   /* Pop it up */
     XtPopup(cdi->shell,XtGrabNone);
@@ -896,7 +896,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
       XtIsManaged(cdi->shell)?"True":"False");
     {
 	Position xpos,ypos;
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
@@ -911,8 +911,8 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 	  dlDisplay->object.x,
 	  dlDisplay->object.y);
     }
-#endif      
-    
+#endif
+
   /* Refresh the display list dialog box */
     refreshDisplayListDlg();
 #if DEBUG_RELATED_DISPLAY
@@ -934,15 +934,15 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 #ifdef WIN32
     convertDirDelimiterToWIN32(filename);
 #endif
-    
+
 #if DEBUG_OPEN
     print("\ndmOpenUsableFile\n"
       "  filename=%s\n"
       "  relatedDisplayFilename=%s\n",
       filename?filename:"NULL",
       relatedDisplayFilename?relatedDisplayFilename:"NULL");
-#endif	
-    
+#endif
+
   /* Try to open with the given name first
    *   (Will be in cwd if not an absolute pathname) */
     strncpy(name, filename, MAX_TOKEN_LENGTH);
@@ -951,8 +951,8 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     if(filePtr) {
 	convertNameToFullPath(name, filename, MAX_TOKEN_LENGTH);
 #if DEBUG_OPEN
-	print("  [Direct] %s\n",filename?filename:"NULL");	
-#endif	
+	print("  [Direct] %s\n",filename?filename:"NULL");
+#endif
 	return(filePtr);
     }
 
@@ -960,7 +960,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     if(isPath(name)) {
 #if DEBUG_OPEN
 	print("  [Fail:IsPath] %s\n",filename?filename:"NULL");
-#endif	
+#endif
 	return(NULL);
     }
 
@@ -980,19 +980,19 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 #if DEBUG_OPEN
 		print("  [RD:Try] %s\n",fullPathName);
 		errno=0;
-#endif	
+#endif
 		filePtr = fopen(fullPathName, "r");
 		if(filePtr) {
 		    strncpy(filename, fullPathName, MAX_TOKEN_LENGTH);
 		    filename[MAX_TOKEN_LENGTH-1] = '\0';
 #if DEBUG_OPEN
 		    print("  [RD] %s\n",filename?filename:"NULL");
-#endif	
+#endif
 		    return (filePtr);
 		}
 #if DEBUG_OPEN
 		perror("  Error");
-#endif	
+#endif
 	    }
 	}
     }
@@ -1012,14 +1012,14 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 	    strcat(fullPathName, name);
 #if DEBUG_OPEN
 	    print("  [EDP:Try] %s\n",fullPathName);
-#endif	
+#endif
 	    filePtr = fopen(fullPathName, "r");
 	    if(filePtr) {
 		strncpy(filename, fullPathName, MAX_TOKEN_LENGTH);
 		filename[MAX_TOKEN_LENGTH-1] = '\0';
 #if DEBUG_OPEN
 		print("  [EDP] %s\n",filename?filename:"NULL");
-#endif	
+#endif
 		return (filePtr);
 	    }
 	}
@@ -1028,7 +1028,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
   /* Not found */
 #if DEBUG_OPEN
     print("  [Fail:NotFound] %s",filename?filename:"NULL");
-#endif	
+#endif
     return (NULL);
 }
 
@@ -1040,7 +1040,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
 void clearDlDisplayList(DisplayInfo *displayInfo, DlList *list)
 {
     DlElement *dlElement, *pE;
-    
+
     if(list->count == 0) return;
     dlElement = FirstDlElement(list);
     while(dlElement) {
@@ -1064,7 +1064,7 @@ void removeDlDisplayListElementsExceptDisplay(DisplayInfo * displayInfo,
 {
     DlElement *dlElement, *pE;
     DlElement *psave = NULL;
-    
+
     if(list->count == 0) return;
     dlElement = FirstDlElement(list);
     while(dlElement) {
@@ -1115,7 +1115,7 @@ void dmTraverseDisplayList(DisplayInfo *displayInfo)
     XCopyArea(display,displayInfo->drawingAreaPixmap,
       XtWindow(displayInfo->drawingArea), displayInfo->gc,
       0, 0, width, height, 0, 0);
-    
+
   /* Change the cursor for the drawing area */
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ? rubberbandCursor : crosshairCursor));
@@ -1167,7 +1167,7 @@ void dmTraverseAllDisplayLists()
 	width = pE->structure.display->object.width;
 	height = pE->structure.display->object.height;
 	while(pE) {
-	    
+
 	    pE->updateType = WIDGET;
 	    pE->hidden = False;
 	    pE->data = NULL;
@@ -1225,7 +1225,7 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
     pE = FirstDlElement(displayInfo->dlElementList);
     width = pE->structure.display->object.width;
     height = pE->structure.display->object.height;
-    
+
   /* Fill the background with the background color */
     XSetForeground(display, displayInfo->gc,
       displayInfo->colormap[displayInfo->drawingAreaBackgroundColor]);
@@ -1253,7 +1253,7 @@ void dmTraverseNonWidgetsInDisplayList(DisplayInfo *displayInfo)
 
   /* Highlight any selected elements */
     highlightSelectedElements();
-    
+
   /* Change drawingArea's cursor to the appropriate cursor */
     XDefineCursor(display,XtWindow(displayInfo->drawingArea),
       (currentActionType == SELECT_ACTION ?
@@ -1357,10 +1357,10 @@ int repositionDisplay(DisplayInfo *displayInfo)
     int left, right, top, bottom;
     int newX, newY;
     Arg args[2];
-    
+
     if(pE && XtIsRealized(displayInfo->shell)) {
 	DlDisplay *dlDisplay = pE->structure.display;
-	
+
       /* Get current x, y according to X */
 	XtSetArg(args[0], XmNx, &oldX);
 	XtSetArg(args[1], XmNy, &oldY);
@@ -1371,7 +1371,7 @@ int repositionDisplay(DisplayInfo *displayInfo)
 	  /* Are already OK */
 #if DEBUG_REPOSITION
 	    print("repositionDisplay: Unnecessary\n");
-#endif	    
+#endif
 	    return 0;
 	}
 
@@ -1392,7 +1392,7 @@ int repositionDisplay(DisplayInfo *displayInfo)
 	    XtSetArg(args[0],XmNx,&finX);
 	    XtSetArg(args[1],XmNy,&finY);
 	    XtGetValues(displayInfo->shell,args,2);
-	    
+
 	    print("repositionDisplay:\n"
 	      "  oldX=%d oldY=%d object.x=%d object.y=%d\n"
 	      "  newX=%d newY=%d finX=%d finY=%d\n",
@@ -1430,12 +1430,12 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
 	XGetWindowAttributes(display,window,&attr);
 	print("    (%7x):        x=%d y=%d width=%d height=%d\n",
 	  window,attr.x,attr.y,attr.width,attr.height);
-	
+
 	if(window == root) break;
-	
+
 	window=parent;
     }
-#endif    
+#endif
 
   /* If not the first time, use the values from the first time */
     if(!first) {
@@ -1443,7 +1443,7 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
 	*right = right0;
 	*top = top0;
 	*bottom = bottom0;
-	return;	
+	return;
     }
 
   /* Initialize */
@@ -1501,5 +1501,5 @@ static void getBorders(int *left, int *right, int *top, int *bottom)
 #if DEBUG_POSITION
     print("getBorders: left=%d right=%d top=%d bottom=%d\n",
       *left,*right,*top,*bottom);
-#endif    
+#endif
 }

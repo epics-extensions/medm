@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -78,7 +78,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 #if DEBUG_COMPOSITE
     print("executeDlComposite: dlComposite=%x x=%d y=%d\n",
       dlComposite,dlComposite->object.x,dlComposite->object.y);
-#endif    
+#endif
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
@@ -88,7 +88,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(*dlComposite->dynAttr.chan[0]) {
 	  /* A channel is defined */
 	    MedmComposite *pc;
-	    
+
 	  /* Allocate and fill in MedmComposite struct */
 	    if(dlElement->data) {
 		pc = (MedmComposite *)dlElement->data;
@@ -145,7 +145,7 @@ void executeDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
 
 #if DEBUG_COMPOSITE
     print("END executeDlComposite: dlComposite=%x\n",dlComposite);
-#endif    
+#endif
 }
 
 static void compositeUpdateGraphicalInfoCb(XtPointer cd)
@@ -154,11 +154,11 @@ static void compositeUpdateGraphicalInfoCb(XtPointer cd)
     Record *pR = (Record *)cd;
     print("compositeUpdateGraphicalInfoCb: record=%x[%s] value=%g\n",
       pR,pR->name,pR->value);
-#endif    
-#if 0    
+#endif
+#if 0
     MedmComposite *pc = (MedmComposite *)pR->clientData;
     updateTaskMarkUpdate(pc->updateTask);
-#endif    
+#endif
 }
 
 static void compositeUpdateValueCb(XtPointer cd)
@@ -169,12 +169,12 @@ static void compositeUpdateValueCb(XtPointer cd)
 #if DEBUG_COMPOSITE
     print("compositeUpdateValueCb: record=%x[%s] value=%g\n",
       pR,pR->name,pR->value);
-#endif    
+#endif
     updateTaskMarkUpdate(pc->updateTask);
 #if DEBUG_COMPOSITE
     print("  executePendingRequestsCount=%d\n",
       pc->updateTask->executeRequestsPendingCount);
-#endif    
+#endif
 }
 
 static void compositeDraw(XtPointer cd)
@@ -187,11 +187,11 @@ static void compositeDraw(XtPointer cd)
 #if DEBUG_COMPOSITE
     print("compositeDraw: pc=%x dlComposite=%x\n",
       pc,pc->dlElement->structure.composite);
-#endif    
+#endif
 #if DEBUG_DELETE
     print("compositeDraw: connected=%s readAccess=%s value=%g\n",
       pR->connected?"Yes":"No",pR->readAccess?"Yes":"No",pR->value);
-#endif    
+#endif
   /* Branch on whether there is a channel or not */
     if(*dlComposite->dynAttr.chan[0]) {
 	if(isConnected(pc->records)) {
@@ -214,7 +214,7 @@ static void compositeDraw(XtPointer cd)
 	    print("  calcVisibility=%s\n",
 	      calcVisibility(&dlComposite->dynAttr,
 		pc->records)?"True":"False");
-#endif    
+#endif
 	  /* Draw depending on visibility */
 	    if(calcVisibility(&dlComposite->dynAttr, pc->records)) {
 		drawComposite(pc);
@@ -242,7 +242,7 @@ static void compositeDraw(XtPointer cd)
 static void drawComposite(MedmComposite *pc)
 {
     DisplayInfo *displayInfo = pc->updateTask->displayInfo;
-    
+
     executeCompositeChildren(displayInfo, pc->dlElement);
 }
 
@@ -251,14 +251,14 @@ static void executeCompositeChildren(DisplayInfo *displayInfo,
 {
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
-    
+
 #if DEBUG_COMPOSITE
     print("executeCompositeChildren: dlElement=%x\n",dlElement);
 #endif
-  /* Loop over children */    
+  /* Loop over children */
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
-#if 0	
+#if 0
 	UpdateTask *t = getUpdateTaskFromElement(pE);
 #endif
 	pE->hidden = False;
@@ -308,7 +308,7 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
     DlElement *pE;
     DlComposite *dlComposite = dlElement->structure.composite;
     MedmComposite *pc = (MedmComposite *)dlElement->data;
-    
+
 #if DEBUG_COMPOSITE
     print("hideCompositeChildren: dlElement=%x\n",dlElement);
 /*      print("dlComposite->dlElementList:\n"); */
@@ -322,7 +322,7 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
     if(!displayInfo->elementsExecuted) {
 	executeCompositeChildren(displayInfo, dlElement);
     }
-    
+
   /* Don't do anything if already hidden and updated */
     if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
 
@@ -340,18 +340,18 @@ static void hideCompositeChildren(DisplayInfo *displayInfo,
 	}
 	pE = pE->next;
     }
-    
+
   /* Change updateState */
     if(dlElement->data) {
 	MedmComposite *pc = (MedmComposite *)dlElement->data;
-	
+
 	if(pc->updateState != COMPOSITE_HIDDEN_UPDATED) {
 	    pc->updateState = COMPOSITE_HIDDEN;
 	}
     }
 #if DEBUG_COMPOSITE
     print("END hideCompositeChildren: dlElement=%x\n",dlElement);
-#endif    
+#endif
   }
 
 /* The hide routine in the dispatch table */
@@ -361,16 +361,16 @@ void hideDlComposite(DisplayInfo *displayInfo, DlElement *dlElement)
     MedmComposite *pc;
 #if DEBUG_COMPOSITE
     print("hideDlComposite:\n");
-#endif    
+#endif
     if(!displayInfo || !dlElement) return;
-    
+
   /* Don't do anything if already hidden and updated */
     pc = (MedmComposite *)dlElement->data;
     if(pc && pc->updateState == COMPOSITE_HIDDEN_UPDATED) return;
 
   /* Disable the update task */
     if(dlElement->data) updateTaskDisableTask(dlElement);
-    
+
   /* The same code as in hideComposite */
     hideCompositeChildren(displayInfo, dlElement);
 }
@@ -381,10 +381,10 @@ static void compositeDestroyCb(XtPointer cd)
 
 #if DEBUG_COMPOSITE
     print("compositeDestroyCb:\n");
-#endif    
+#endif
     if(pc) {
 	Record **records = pc->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -402,7 +402,7 @@ static void compositeGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmComposite *pc = (MedmComposite *)cd;
     int i;
-    
+
     *count = 0;
     if(pc && pc->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -419,7 +419,7 @@ DlElement *createDlComposite(DlElement *p) {
 
 #if DEBUG_COMPOSITE
     print("createDlComposite:\n");
-#endif    
+#endif
     dlComposite = (DlComposite *)malloc(sizeof(DlComposite));
     if(!dlComposite) return 0;
     if(p) {
@@ -436,7 +436,7 @@ DlElement *createDlComposite(DlElement *p) {
 	child = FirstDlElement(p->structure.composite->dlElementList);
 	while(child) {
 	    DlElement *copy = child->run->create(child);
-	    if(copy) 
+	    if(copy)
 	      appendDlElement(dlComposite->dlElementList,copy);
 	    child = child->next;
 	}
@@ -485,7 +485,7 @@ DlElement *groupObjects()
     maxX = INT_MIN; maxY = INT_MIN;
 
     pE = FirstDlElement(cdi->selectedDlElementList);
-    while(pE) { 
+    while(pE) {
 	DlElement *pE1 = pE->structure.element;
 	if(pE1->type != DL_Display) {
 	    DlObject *po = &(pE1->structure.composite->object);
@@ -558,7 +558,7 @@ DlElement *parseComposite(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlComposite *newDlComposite;
     DlElement *dlElement = createDlComposite(NULL);
- 
+
     if(!dlElement) return 0;
     newDlComposite = dlElement->structure.composite;
 
@@ -665,7 +665,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     }
 
   /* Read the colormap */
-    if(tokenType == T_WORD && 
+    if(tokenType == T_WORD &&
       (!strcmp(token,"color map") ||
 	!strcmp(token,"<<color map>>"))) {
 	parseAndSkip(displayInfo);
@@ -683,9 +683,9 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     minX = INT_MAX; minY = INT_MAX;
     maxX = INT_MIN; maxY = INT_MIN;
     pE = FirstDlElement(dlComposite->dlElementList);
-    while(pE) { 
+    while(pE) {
 	pO = &(pE->structure.composite->object);
-	
+
 	minX = MIN(minX,pO->x);
 	maxX = MAX(maxX,(int)(pO->x+pO->width));
 	minY = MIN(minY,pO->y);
@@ -695,7 +695,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 	  elementType(pE->type),
 	  pO->x,pO->y,pO->width,pO->height,
 	  (int)(pO->x+pO->width),(int)(pO->x+pO->height));
-#endif	
+#endif
 	pE = pE->next;
     }
     oldX = dlComposite->object.x;
@@ -706,7 +706,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     dlComposite->object.height = maxY - minY;
 
   /* Move the rearranged composite to its original x and y coordinates */
-    compositeMove(dlElement, oldX - minX, oldY - minY);    
+    compositeMove(dlElement, oldX - minX, oldY - minY);
 
   /* Check composite is in bounds */
     displayW = displayH = 0;
@@ -735,10 +735,10 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     print("  displayW=%d displayH=%d width=%d height=%d\n",
       displayW,displayH,(int)dlComposite->object.width,
       (int)dlComposite->object.height);
-#endif    
+#endif
 
   RETURN:
-    
+
   /* Restore displayInfo file parameters */
     displayInfo->filePtr = savedFilePtr;
     displayInfo->versionNumber = savedVersionNumber;
@@ -825,7 +825,7 @@ static void destroyDlComposite(DisplayInfo *displayInfo, DlElement *pE)
 {
 #if DEBUG_COMPOSITE
     print("destroyDlComposite:\n");
-#endif    
+#endif
     clearDlDisplayList(displayInfo, pE->structure.composite->dlElementList);
     free((char *)pE->structure.composite->dlElementList);
     free((char *)pE->structure.composite);
@@ -840,7 +840,7 @@ static void compositeMove(DlElement *dlElement, int xOffset, int yOffset)
 {
     DlElement *ele;
 
-    if(dlElement->type != DL_Composite) return; 
+    if(dlElement->type != DL_Composite) return;
     ele = FirstDlElement(dlElement->structure.composite->dlElementList);
     while(ele != NULL) {
 	if(ele->type != DL_Display) {
@@ -865,7 +865,7 @@ static void compositeOrient(DlElement *dlElement, int type, int xCenter,
 {
     DlElement *ele;
 
-    if(dlElement->type != DL_Composite) return; 
+    if(dlElement->type != DL_Composite) return;
     ele = FirstDlElement(dlElement->structure.composite->dlElementList);
     while(ele != NULL) {
 	if(ele->type != DL_Display) {
@@ -898,19 +898,19 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
     int x, y;
     unsigned int width, height;
     int xOffset, yOffset;
-#if 0   
+#if 0
     int clr, bclr;
-#endif    
+#endif
 
     medmGetValues(pRCB,
       X_RC,          &x,
       Y_RC,          &y,
       WIDTH_RC,      &width,
       HEIGHT_RC,     &height,
-#if 0      
+#if 0
       CLR_RC,        &(clr),
       BCLR_RC,       &(bclr),
-#endif      
+#endif
       VIS_RC,        &(dlComposite->dynAttr.vis),
       VIS_CALC_RC,   &(dlComposite->dynAttr.calc),
       CHAN_A_RC,     &(dlComposite->dynAttr.chan[0]),
@@ -929,7 +929,7 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
     if(!xOffset || !yOffset) {
 	compositeMove(p,xOffset,yOffset);
     }
-#if 0    
+#if 0
   /* Colors */
     childE = FirstDlElement(dlComposite->dlElementList);
     while(childE) {
@@ -941,7 +941,7 @@ static void compositeGetValues(ResourceBundle *pRCB, DlElement *p)
 	}
 	childE = childE->next;
     }
-#endif    
+#endif
 }
 
 static void compositeCleanup(DlElement *dlElement)
@@ -951,7 +951,7 @@ static void compositeCleanup(DlElement *dlElement)
 
 #if DEBUG_COMPOSITE
     print("compositeCleanup:\n");
-#endif    
+#endif
     while(pE) {
 	if(pE->run->cleanup) {
 	    pE->run->cleanup(pE);
@@ -966,7 +966,7 @@ CompositeUpdateState getCompositeUpdateState(DlElement *dlElement)
 {
     if(dlElement && dlElement->data) {
 	MedmComposite *pc = (MedmComposite *)dlElement->data;
-	
+
 	return pc->updateState;
     } else {
 	return COMPOSITE_NEW;
@@ -977,7 +977,7 @@ void setCompositeUpdateState(DlElement *dlElement, CompositeUpdateState state)
 {
     if(dlElement && dlElement->data) {
 	MedmComposite *pc = (MedmComposite *)dlElement->data;
-	
+
 	pc->updateState = state;
     }
 }

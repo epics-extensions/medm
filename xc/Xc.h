@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*******************************************************************
  FILE:		Xc.h
@@ -65,7 +65,7 @@
 #define XcCIncrement	"Increment"
 
 /****** Number of decimal positions for floating point values */
-#define XcNdecimals	"decimals"	
+#define XcNdecimals	"decimals"
 #define XcCDecimals	"Decimals"
 
 /****** Range of a widget's value */
@@ -88,7 +88,7 @@
 #define XcEedge         "edge"
 #define XcEcenter       "center"
 
-/* Time interval between update callbacks used by the indicator style 
+/* Time interval between update callbacks used by the indicator style
    widgets */
 #define XcNinterval	"interval"
 #define XcCInterval	"Interval"
@@ -159,8 +159,8 @@ typedef union v_t {
 } XcVType;
 
 /* This structure is used by Xc widget action functions to communicate
- * important values to the application's callback functions. 
- * The application should use the XcData data type for the call_data 
+ * important values to the application's callback functions.
+ * The application should use the XcData data type for the call_data
  * parameter.
  */
 typedef struct xc_stuff {

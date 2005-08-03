@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -198,7 +198,7 @@ typedef enum {UNDEFINED=0, NO_OVERLAP, OVERLAP} OverlapType;
 
 /* Composite update states for update logic */
 typedef enum {COMPOSITE_NEW=0,
-	      COMPOSITE_VISIBLE, COMPOSITE_VISIBLE_UPDATED, 
+	      COMPOSITE_VISIBLE, COMPOSITE_VISIBLE_UPDATED,
 	      COMPOSITE_HIDDEN, COMPOSITE_HIDDEN_UPDATED
 } CompositeUpdateState;
 
@@ -210,7 +210,7 @@ typedef struct _UpdateTask {
     Widget      (*widget)(XtPointer);
     XtPointer   clientData;
     double      timeInterval;                 /* if not 0.0, periodic task */
-    double      nextExecuteTime;               
+    double      nextExecuteTime;
     struct      _DisplayInfo *displayInfo;
     int         executeRequestsPendingCount;  /* How many update requests are pending */
     XRectangle  rectangle;                    /* Geometry of the object */
@@ -351,7 +351,7 @@ XmString elementXmStringTable[NUM_DL_ELEMENT_TYPES];
  ***	between objects (e.g., sharing DlObject) but any object ought to
  ***	be able to retrieve its necessary resources from this structure
  ***	somewhere.  Look at displayList.h for definition of these
- ***	structure components... 
+ ***	structure components...
  ***	NOTE:  exceptions: Display and Colormap not in here (these are
  ***	modified by other, more user-friendly, methods)
  ****************************************************************************/
@@ -471,7 +471,7 @@ typedef struct _ResourceBundle {
 #define VIS_CALC_RC       23
 #if MAX_CALC_RECORDS != 4
 #error Need to make changes if MAX_CALC_RECORDS != 4
-#endif      
+#endif
 #define CHAN_A_RC         24
 #define CHAN_B_RC         25
 #define CHAN_C_RC         26
@@ -510,8 +510,8 @@ typedef struct _ResourceBundle {
 #define SCDATA_RC         57  /* Strip Chart data               */
 #define SHELLDATA_RC      58  /* Shell Command data             */
 #define CPAXIS_RC         59  /* Cartesian Plot axis data       */
-                            
-/* Cartesian Plot entry types */ 
+
+/* Cartesian Plot entry types */
 #define COUNT_RC          60  /* Cartesian Plot count           */
 #define TRIGGER_RC        61  /* Cartesian Plot trigger channel */
 #define ERASE_RC          62  /* Cartesian Plot erase channel   */

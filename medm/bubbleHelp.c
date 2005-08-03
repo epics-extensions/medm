@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -37,7 +37,7 @@ void handleBubbleHelp(Widget w, XtPointer clientData, XEvent *event,
 {
   /* Avoid compiler warning messages */
     UNREFERENCED(ctd);
-    
+
   /* Switch depending on type */
     switch (event->type) {
     case EnterNotify:

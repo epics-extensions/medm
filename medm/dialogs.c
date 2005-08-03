@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Dialog box routines */
 
@@ -143,14 +143,14 @@ void createPvInfoDlg(void)
       XmNleftPosition,     1,
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    2,
-#if 0      
+#if 0
       XmNshowAsDefault,    True,
       XmNdefaultButtonShadowThickness, 1,
-#endif      
+#endif
       NULL);
     XtAddCallback(closeButton,XmNactivateCallback,pvInfoDialogCallback,
       (XtPointer)PV_INFO_CLOSE_BTN);
-    
+
 #if 0
     printButton = XtVaCreateManagedWidget("Print",
       xmPushButtonWidgetClass, actionArea,
@@ -163,7 +163,7 @@ void createPvInfoDlg(void)
       NULL);
     XtAddCallback(printButton,XmNactivateCallback,pvInfoDialogCallback,
       (XtPointer)PV_INFO_PRINT_BTN);
-#endif    
+#endif
 
     helpButton = XtVaCreateManagedWidget("Help",
       xmPushButtonWidgetClass, actionArea,
@@ -237,10 +237,10 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     print("getPvInfoFromDisplay: Element: %s\n",elementType(pE->type));
     print("  x: %4d  event.xbutton.x: %4d\n",x,event.xbutton.x);
     print("  y: %4d  event.xbutton.y: %4d\n",y,event.xbutton.y);
-#endif    
+#endif
 #if DEBUG_PVLIMITS
     print("\ngetPvInfoFromDisplay: pE = %x\n",pE);
-#endif    
+#endif
     if(!pE) {
 	medmPostMsg(1,"getPvInfoFromDisplay: Not on an object with a PV\n");
 	dmSetAndPopupWarningDialog(displayInfo,
@@ -248,7 +248,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
 	  "Not on an object with a PV", "OK", NULL, NULL);
 	return NULL;
     }
-		
+
   /* Get the update task */
     pT = getUpdateTaskFromElement(pE);
     if(!pT || !pT->getRecord) {
@@ -262,7 +262,7 @@ Record **getPvInfoFromDisplay(DisplayInfo *displayInfo, int *count,
     medmElement = (MedmElement *)(pT->clientData);
     if(medmElement) *ppE = medmElement->dlElement;
 #endif
-    
+
   /* Run the element's updateTask's getRecord procedure */
     pT->getRecord(pT->clientData, records, count);
     (*count)%=100;
@@ -316,7 +316,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	records = getPvInfoFromDisplay(displayInfo, &count, &pE);
 #if DEBUG_PVLIMITS
 	print("\npopupPvLimits: pE = %x\n",pE);
-#endif    
+#endif
       /* Don't need the records, free them */
 	if(records) {
 	    free(records);
@@ -340,7 +340,7 @@ void popupPvLimits(DisplayInfo *displayInfo)
 	}
 	resetPvLimitsDlg(pL, pvName, True);
     }
-	
+
       /* Pop it up */
     XtSetSensitive(pvLimitsS, True);
     XtPopup(pvLimitsS, XtGrabNone);
@@ -402,7 +402,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 {
     char string[1024];     /* Danger: Fixed length */
     XmString xmString;
-    
+
 #if DEBUG_PVLIMITS
     print("\nresetPvLimitsDlg: limits=%x  pvName = |%s|\n",
       limits, pvName?pvName:"NULL");
@@ -448,7 +448,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 	    XtSetSensitive(pvLimitsLoprSrc, True);
 	    optionMenuSet(pvLimitsLoprSrc, limits->loprSrc-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(XtParent(pvLimitsLopr), True);
-	    if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	    if(globalDisplayListTraversalMode == DL_EDIT) {
 		XtVaSetValues(pvLimitsLopr,XmNeditable,
 		  (limits->loprSrc == PV_LIMITS_DEFAULT)?True:False,NULL);
 	    } else {
@@ -480,7 +480,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 	    XtSetSensitive(pvLimitsHoprSrc, True);
 	    optionMenuSet(pvLimitsHoprSrc, limits->hoprSrc-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(XtParent(pvLimitsHopr), True);
-	    if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	    if(globalDisplayListTraversalMode == DL_EDIT) {
 		XtVaSetValues(pvLimitsHopr,XmNeditable,
 		  (limits->hoprSrc == PV_LIMITS_DEFAULT)?True:False,NULL);
 	    } else {
@@ -512,7 +512,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 	    XtSetSensitive(pvLimitsPrecSrc, True);
 	    optionMenuSet(pvLimitsPrecSrc, limits->precSrc-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(XtParent(pvLimitsPrec), True);
-	    if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	    if(globalDisplayListTraversalMode == DL_EDIT) {
 		XtVaSetValues(pvLimitsPrec,XmNeditable,
 		  (limits->precSrc == PV_LIMITS_DEFAULT)?True:False,NULL);
 	    } else {
@@ -546,7 +546,7 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 	optionMenuSet(pvLimitsLoprSrc, PV_LIMITS_CHANNEL-FIRST_PV_LIMITS_SRC);
 	XtSetSensitive(pvLimitsLoprSrc, False);
 	XtSetSensitive(XtParent(pvLimitsLopr), False);
-	XmTextFieldSetString(pvLimitsLopr, "");	
+	XmTextFieldSetString(pvLimitsLopr, "");
       /* HOPR */
 	optionMenuSet(pvLimitsHoprSrc, PV_LIMITS_CHANNEL-FIRST_PV_LIMITS_SRC);
 	XtSetSensitive(pvLimitsHoprSrc, False);
@@ -778,7 +778,7 @@ static void createPvLimitsDlg(void)
       NULL);
     XtAddCallback(w,XmNactivateCallback,pvLimitsDialogCallback,
       (XtPointer)PV_LIMITS_CLOSE_BTN);
-    
+
     w = XtVaCreateManagedWidget("Help",
       xmPushButtonWidgetClass, wparent,
       XmNtopAttachment, XmATTACH_FORM,
@@ -833,7 +833,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	    }
 	}
     }
-    
+
   /* If the type is less than 3, the callback comes from an option menu button
    *   Find the real type from the userData of the RC parent of the button */
     if(type < 3) {
@@ -931,7 +931,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 	}
 	break;
     case PV_LIMITS_PREC_BTN:
-	string =XmTextFieldGetString(pvLimitsPrec); 
+	string =XmTextFieldGetString(pvLimitsPrec);
 	sval = atoi(string);
 	XtFree(string);
 	if(sval < 0) {
@@ -979,7 +979,7 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
    *   EXECUTE mode already done */
     if(globalDisplayListTraversalMode == DL_EDIT) {
 	DisplayInfo *cdi=currentDisplayInfo;
-	
+
 	DlElement *dlElement = FirstDlElement(
 	  cdi->selectedDlElementList);
 	unhighlightSelectedElements();
@@ -1064,7 +1064,7 @@ void createDisplayListDlg(void)
 
     if(displayListS) return;
     if(mainShell == NULL) return;
-    
+
     displayListS = XtVaCreatePopupShell("displayListS",
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "Display List",
@@ -1083,7 +1083,7 @@ void createDisplayListDlg(void)
   /* Create label 1 */
     sprintf(string,"DISPLAYS (MEDM PID: %d Window ID: 0x%x)",
       getpid(),(unsigned int)XtWindow(mainShell));
-    xmString = XmStringCreateLocalized(string);    
+    xmString = XmStringCreateLocalized(string);
     w = XtVaCreateManagedWidget("label",
       xmLabelWidgetClass, pane,
       XmNlabelString, xmString,
@@ -1135,7 +1135,7 @@ void createDisplayListDlg(void)
 
 #if DEBUG_DISPLAY_LIST
   /* Create label 2 */
-    xmString = XmStringCreateLocalized("SAVED DISPLAYS");    
+    xmString = XmStringCreateLocalized("SAVED DISPLAYS");
     w = XtVaCreateManagedWidget("label",
       xmLabelWidgetClass, pane,
       XmNlabelString, xmString,
@@ -1170,7 +1170,7 @@ void createDisplayListDlg(void)
       XmNfractionBase, 7,
       XmNskipAdjust, True,
       NULL);
-#endif    
+#endif
 
   /* Create action area */
     actionArea = XtVaCreateManagedWidget("actionArea",
@@ -1229,7 +1229,7 @@ void refreshDisplayListDlg(void)
     char string[MAX_LENGTH];     /* Danger fixed length */
 
     if(!displayListS) return;
-    
+
   /* Display list */
     XmListDeleteAllItems(displayListBox1);
     di = displayInfoListHead->next;
@@ -1247,7 +1247,7 @@ void refreshDisplayListDlg(void)
 	XmListAddItemUnselected(displayListBox1, xmString, 0);
 	XmStringFree(xmString);
 	di = di->next;
-    }	
+    }
 
 #if DEBUG_DISPLAY_LIST
   /* Display save list */
@@ -1267,7 +1267,7 @@ void refreshDisplayListDlg(void)
 	XmListAddItemUnselected(displayListBox2, xmString, 0);
 	XmStringFree(xmString);
 	di = di->next;
-    }	
+    }
 #endif
 #undef MAX_LENGTH
 }
@@ -1294,7 +1294,7 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
     DisplayInfo *di, *diNext;
     Boolean status;
     int *positionList = NULL;
-    int i, j, positionCount;    
+    int i, j, positionCount;
 
     switch(button) {
     case DISPLAY_LIST_RAISE_BTN:
@@ -1335,7 +1335,7 @@ static void displayListDlgCb(Widget w, XtPointer clientData,
 	    if(positionList) XFree(positionList);
 	    refreshDisplayListDlg();
 	} else {
-	    XBell(display,50); XBell(display,50); XBell(display,50);	    
+	    XBell(display,50); XBell(display,50); XBell(display,50);
 	}
 	break;
     case DISPLAY_LIST_CLOSE_BTN:
@@ -1644,14 +1644,14 @@ void createPrintSetupDlg(void)
       XmNleftPosition,     1,
       XmNrightAttachment,  XmATTACH_POSITION,
       XmNrightPosition,    2,
-#if 0      
+#if 0
       XmNshowAsDefault,    True,
       XmNdefaultButtonShadowThickness, 1,
-#endif      
+#endif
       NULL);
     XtAddCallback(okButton,XmNactivateCallback,printSetupDialogCallback,
       (XtPointer)PRINT_SETUP_OK_BTN);
-    
+
     cancelButton = XtVaCreateManagedWidget("Cancel",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
@@ -1830,7 +1830,7 @@ static void updatePrintSetupDlg()
   /* Time */
     XmToggleButtonSetState(printSetupPrintTimeTB,(Boolean)printTime,False);
 
-    printSetupModified = FALSE;    
+    printSetupModified = FALSE;
 }
 
 static void updatePrintSetupFromDialog()
@@ -1957,7 +1957,7 @@ static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int type = (int)cd;
     int button;
-    
+
   /* If the type is less than 4, the callback comes from an option
    *   menu button.  Find the real type from the userData of the RC
    *   parent of the button */

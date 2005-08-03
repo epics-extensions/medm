@@ -4,7 +4,7 @@
 # Copyright (c) 2002 The Regents of the University of California, as
 # Operator of Los Alamos National Laboratory.
 # This file is distributed subject to a Software License Agreement found
-# in the file LICENSE that is included with this distribution. 
+# in the file LICENSE that is included with this distribution.
 #*************************************************************************
 # Makefile.Host for medm/medm
 
@@ -19,7 +19,7 @@ USE_MOTIF12=NO
 ifdef WIN32
 #HOST_OPT = NO
 else
-HOST_OPT = NO
+#HOST_OPT = NO
 endif
 
 # gprof
@@ -88,26 +88,26 @@ ifdef XRTGRAPH
 # XRT 4.0
       USR_LIBS += xrtmprop xrtfield xrttable xrtgear pdsutil Xpm
       xrtmprop_DIR = $(XRTGRAPH)/lib
-      xrtfield_DIR = $(XRTGRAPH)/lib 
-      xrttable_DIR = $(XRTGRAPH)/lib 
-      xrtgear_DIR = $(XRTGRAPH)/lib 
+      xrtfield_DIR = $(XRTGRAPH)/lib
+      xrttable_DIR = $(XRTGRAPH)/lib
+      xrtgear_DIR = $(XRTGRAPH)/lib
       pdsutil_DIR = $(XRTGRAPH)/lib
 #     Xpm_DIR = $(X11_LIB)
       Xpm_DIR = $(XRTGRAPH)/lib
     endif
   endif
 
-  SRCS += medmCartesianPlot.c 
-  SRCS += medmXrtGraph.c 
+  SRCS += medmCartesianPlot.c
+  SRCS += medmXrtGraph.c
 endif     #ifdef XRTGRAPH
 
 # Set up for SciPLot
 ifdef SCIPLOT
   JPT =         # Don't allow more than one plot package
   USR_CFLAGS += -DSCIPLOT -DMOTIF
-  SRCS += medmCartesianPlot.c 
-  SRCS += medmSciPlot.c 
-  SRCS += SciPlot.c 
+  SRCS += medmCartesianPlot.c
+  SRCS += medmSciPlot.c
+  SRCS += SciPlot.c
 endif
 
 # Set up for JPT
@@ -116,8 +116,8 @@ ifdef JPT
   USR_CFLAGS += -DJPT -I$(JPT_INC)
   USR_LIBS += Jpt
 #  USR_LDFLAGS += -L$(JPT_LIB)
-  SRCS += medmCartesianPlot.c 
-  SRCS += medmJpt.c 
+  SRCS += medmCartesianPlot.c
+  SRCS += medmJpt.c
 endif
 
 USR_CFLAGS += -DEDITRES
@@ -155,7 +155,7 @@ else
   ca_DIR = $(EPICS_BASE_LIB)
   Com_DIR = $(EPICS_BASE_LIB)
   PROD_LIBS += ca Com
-  SRCS += medmCA.c 
+  SRCS += medmCA.c
 endif
 
 USR_LIBS_DEFAULT = Xm Xt Xmu X11 Xext
@@ -184,50 +184,50 @@ Xp_DIR = $(X11_LIB)
 Xext_DIR = $(X11_LIB)
 
 SRCS += actions.c
-SRCS += bubbleHelp.c 
-SRCS += callbacks.c 
-SRCS += browserHelp.c 
-SRCS += channelPalette.c 
-SRCS += colorPalette.c 
-SRCS += dialogs.c 
-SRCS += display.c 
-SRCS += eventHandlers.c 
-SRCS += help.c 
-SRCS += medm.c 
-SRCS += medmArc.c 
-SRCS += medmBar.c 
-SRCS += medmByte.c 
-SRCS += medmChoiceButtons.c 
-SRCS += medmCommon.c 
-SRCS += medmComposite.c 
-SRCS += medmControl.c 
-SRCS += medmDisplay.c 
-SRCS += medmImage.c 
-SRCS += medmIndicator.c 
-SRCS += medmMenu.c 
-SRCS += medmMessageButton.c 
-SRCS += medmMeter.c 
-SRCS += medmMonitor.c 
-SRCS += medmOval.c 
-SRCS += medmPixmap.c 
-SRCS += medmPolygon.c 
-SRCS += medmPolyline.c 
-SRCS += medmRectangle.c 
-SRCS += medmRelatedDisplay.c 
-SRCS += medmShellCommand.c 
-SRCS += medmStripChart.c 
-SRCS += medmText.c 
-SRCS += medmTextEntry.c 
-SRCS += medmTextUpdate.c 
-SRCS += medmValuator.c 
-SRCS += medmWheelSwitch.c 
-SRCS += medmWidget.c 
-SRCS += objectPalette.c 
+SRCS += bubbleHelp.c
+SRCS += callbacks.c
+SRCS += browserHelp.c
+SRCS += channelPalette.c
+SRCS += colorPalette.c
+SRCS += dialogs.c
+SRCS += display.c
+SRCS += eventHandlers.c
+SRCS += help.c
+SRCS += medm.c
+SRCS += medmArc.c
+SRCS += medmBar.c
+SRCS += medmByte.c
+SRCS += medmChoiceButtons.c
+SRCS += medmCommon.c
+SRCS += medmComposite.c
+SRCS += medmControl.c
+SRCS += medmDisplay.c
+SRCS += medmImage.c
+SRCS += medmIndicator.c
+SRCS += medmMenu.c
+SRCS += medmMessageButton.c
+SRCS += medmMeter.c
+SRCS += medmMonitor.c
+SRCS += medmOval.c
+SRCS += medmPixmap.c
+SRCS += medmPolygon.c
+SRCS += medmPolyline.c
+SRCS += medmRectangle.c
+SRCS += medmRelatedDisplay.c
+SRCS += medmShellCommand.c
+SRCS += medmStripChart.c
+SRCS += medmText.c
+SRCS += medmTextEntry.c
+SRCS += medmTextUpdate.c
+SRCS += medmValuator.c
+SRCS += medmWheelSwitch.c
+SRCS += medmWidget.c
+SRCS += objectPalette.c
 SRCS += productDescriptionShell.c
-SRCS += resourcePalette.c 
-SRCS += updateMonitors.c 
-SRCS += updateTask.c 
-SRCS += utils.c 
+SRCS += resourcePalette.c
+SRCS += updateMonitors.c
+SRCS += updateTask.c
+SRCS += utils.c
 SRCS += xgif.c
 
 RCS_WIN32 += medm.rc
@@ -274,6 +274,7 @@ xxxx:
 	@echo JPT: $(JPT)
 	@echo PURIFY: $(PURIFY)
 	@echo PURIFYCMD: $(PURIFYCMD)
+	@echo CC: $(CC)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

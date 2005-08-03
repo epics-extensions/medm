@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -190,7 +190,7 @@ void setActionToSelect() {
 
     clearResourcePaletteEntries();
 
-    if (objectS) 
+    if (objectS)
       XDefineCursor(display,XtWindow(objectS),rubberbandCursor);
     di = displayInfoListHead->next;
     while(di) {
@@ -246,7 +246,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer clientData,
   XtPointer cbs)
 {
     int buttonNumber = (int) clientData;
-    
+
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 
@@ -390,12 +390,12 @@ void createObject()
 
   /* Create the menu bar  */
     objectMB = XmCreateMenuBar(objectMW, "objectMB",NULL,0);
-    
+
 #if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(objectMB,defaultForeground,defaultBackground);
 #endif
-    
+
   /* Create the file pulldown menu pane  */
     objectFilePDM = buildMenu(objectMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
@@ -412,13 +412,13 @@ void createObject()
     XtVaSetValues(objectMB, XmNmenuHelpWidget, objectHelpPDM, NULL);
   /* (MDA) for now, disable this menu */
   /*     XtSetSensitive(objectHelpPDM,False); */
-    
+
   /* Create work area Row Column */
     objectRC = XtVaCreateWidget("objectRC",
       xmRowColumnWidgetClass, objectMW,
       XmNorientation, XmHORIZONTAL,
       NULL);
-    
+
   /* Set main window areas */
     XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectRC);
 
@@ -436,7 +436,7 @@ void createObject()
     XtVaSetValues(objectPaletteSelectToggleButton,
       XmNset, True,
       NULL);
-     
+
     XtManageChild(objectMB);
     XtManageChild(objectRC);
     XtManageChild(objectMW);
@@ -445,7 +445,7 @@ void createObject()
 static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    
+
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 

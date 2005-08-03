@@ -4,9 +4,9 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
-/* Routines used to implement the Cartesian Plot using 
+/* Routines used to implement the Cartesian Plot using
  * Jpt (JeffersonLab Plotting Toolkit) */
 
 /* KE: Note that MEDM uses the union XcVType (of a float and a long) to convert
@@ -55,7 +55,7 @@ void CpGetAxisInfo(Widget w,
 
 #if DEBUG_JPTA
     print("CpGetAxisInfo: Before XtGetValues\n");
-#endif    
+#endif
     nargs=0;
     XtSetArg(args[nargs],XmNuserData, userData); nargs++;
     XtSetArg(args[nargs],XtNplotXAnnotationMethod, &xAnnoMethod); nargs++;
@@ -76,7 +76,7 @@ void CpGetAxisInfo(Widget w,
     XtGetValues(w,args,nargs);
 #if DEBUG_JPTA
     print("CpGetAxisInfo: After XtGetValues nargs=%d\n",nargs);
-#endif    
+#endif
 
     *xAxisIsTime = (xAnnoMethod == PLOT_ANNO_TIME_LABELS)?True:False;
     xMinF->lval = xMin;
@@ -120,14 +120,14 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 {
     char rgb[16];
     PlotDataStyle myds;
-    
+
   /* Convert color to a color name */
     sprintf(rgb,"#%2.2x%2.2x%2.2x", color.red>>8,
       color.green>>8, color.blue>>8);
 
   /* Zero the PlotDataStyle struct (should not be necessary, but is consistent) */
     memset(&myds,0,sizeof(PlotDataStyle));
-    
+
   /* Fill in the PlotDataStyle struct */
     if(lineType == CP_LINE_NONE) myds.lpat = AtLineNONE;
     else myds.lpat = AtLineSOLID;
@@ -731,7 +731,7 @@ void dumpCartesianPlot(Widget w)
 {
     Arg args[20];
     int n=0;
-			    
+
     Dimension borderWidth;
     Dimension shadowThickness;
     Dimension highlightThickness;
@@ -766,7 +766,7 @@ void dumpCartesianPlot(Widget w)
     XtSetArg(args[n],XmNunitType,&unitType); n++;*/
     XtSetArg(args[n],XtNplotTimeBase,&timeBase); n++;
     XtGetValues(w,args,n);
-			      
+
     print("\nJPT Widget (%x)\n");
     print("  width: %d\n",width);
     print("  height: %d\n",height);

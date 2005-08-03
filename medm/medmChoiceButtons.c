@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -108,7 +108,7 @@ Widget createToggleButtons(Widget parent,
     short sqrtEntries;
     double dSqrt;
     XmFontList fontList;
- 
+
     maxChars = 0;
     for(i = 0; i < numberOfButtons; i++) {
 	maxChars = MAX((size_t)maxChars, strlen(labels[i]));
@@ -194,12 +194,12 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
     XmToggleButtonCallbackStruct *call_data =
       (XmToggleButtonCallbackStruct *)callbackStruct;
     Record *pd;
-    
+
 #if DEBUG_TOGGLE_BUTTONS
-#if 0    
+#if 0
     printf("\nchoiceButtonValueChangedCb:  btnNumber=%d call_data->set=%d\n",
       btnNumber,call_data->set);
-#endif    
+#endif
     {
 	int ic;
 	Boolean set,vis,radioBehavior;
@@ -227,11 +227,11 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
 #endif
   /* Only do ca_put if this widget actually initiated the channel change */
     if(call_data->event != NULL && call_data->set == True) {
-	
+
       /* Button's parent (menuPane) has the displayInfo pointer */
 	XtVaGetValues(XtParent(w),XmNuserData,&pcb,NULL);
 	pd = pcb->record;
-	
+
 	if(pd->connected) {
 	    if(pd->writeAccess) {
 #ifdef MEDM_CDEV
@@ -258,7 +258,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
     Pixel fg, bg;
     char *labels[16];
     Widget buttons[16];
-    
+
 #if DEBUG_TOGGLE_BUTTONS || DEBUG_ACCESS
     printf("\nchoiceButtonUpdateGraphicalInfoCb:\n");
 #endif
@@ -337,7 +337,7 @@ static void choiceButtonDraw(XtPointer cd) {
     printf("\nchoiceButtonDraw: widget=%x managed=%s\n",
       widget,widget?(XtIsManaged(widget)?"Yes":"No"):"NA");
 #endif
-    
+
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -345,7 +345,7 @@ static void choiceButtonDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 #if DEBUG_ACCESS
@@ -359,7 +359,7 @@ static void choiceButtonDraw(XtPointer cd) {
 		addCommonHandlers(widget, pcb->updateTask->displayInfo);
 		XtManageChild(widget);
 	    }
-	    if(pr->writeAccess) 
+	    if(pr->writeAccess)
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),rubberbandCursor);
 	    else
 	      XDefineCursor(XtDisplay(widget),XtWindow(widget),noWriteAccessCursor);
@@ -498,7 +498,7 @@ void choiceButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    updateTaskAddDestroyCb(pcb->updateTask,choiceButtonDestroyCb);
 	    updateTaskAddNameCb(pcb->updateTask,choiceButtonGetRecord);
 	}
-	
+
 	pcb->record = medmAllocateRecord(dlChoiceButton->control.ctrl,
 	  choiceButtonUpdateValueCb,
 	  choiceButtonUpdateGraphicalInfoCb,
@@ -529,7 +529,7 @@ void choiceButtonCreateEditInstance(DisplayInfo *displayInfo, DlElement *dlEleme
 
   /* Add handlers */
     addCommonHandlers(dlElement->widget, displayInfo);
-    
+
     XtManageChild(dlElement->widget);
 
     return;
@@ -578,7 +578,7 @@ DlElement *createDlChoiceButton(DlElement *p)
 {
     DlChoiceButton *dlChoiceButton;
     DlElement *dlElement;
- 
+
     dlChoiceButton = (DlChoiceButton *)malloc(sizeof(DlChoiceButton));
     if(!dlChoiceButton) return 0;
     if(p) {
@@ -589,13 +589,13 @@ DlElement *createDlChoiceButton(DlElement *p)
 	dlChoiceButton->clrmod = STATIC;
 	dlChoiceButton->stacking = ROW;
     }
- 
+
     if(!(dlElement = createDlElement(DL_ChoiceButton,
       (XtPointer)      dlChoiceButton,
       &choiceButtonDlDispatchTable))) {
 	free(dlChoiceButton);
     }
- 
+
     return(dlElement);
 }
 
@@ -606,10 +606,10 @@ DlElement *parseChoiceButton(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlChoiceButton *dlChoiceButton;
     DlElement *dlElement = createDlChoiceButton(NULL);
- 
+
     if(!dlElement) return 0;
     dlChoiceButton = dlElement->structure.choiceButton;
- 
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -650,7 +650,7 @@ DlElement *parseChoiceButton(DisplayInfo *displayInfo)
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
- 
+
     return dlElement;
 }
 
@@ -661,17 +661,17 @@ void writeDlChoiceButton(
 {
     char indent[16];
     DlChoiceButton *dlChoiceButton = dlElement->structure.choiceButton;
- 
+
     memset(indent,'\t',level);
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
-#endif 
+#endif
 	fprintf(stream,"\n%s\"choice button\" {",indent);
 	writeDlObject(stream,&(dlChoiceButton->object),level+1);
 	writeDlControl(stream,&(dlChoiceButton->control),level+1);
-	if(dlChoiceButton->clrmod != STATIC) 
+	if(dlChoiceButton->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlChoiceButton->clrmod]);
 	if(dlChoiceButton->stacking != ROW)

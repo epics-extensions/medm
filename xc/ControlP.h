@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*******************************************************************
  FILE:		ControlP.h
@@ -26,7 +26,7 @@
 #include <X11/CoreP.h>
 
 /*
- * Include the widget set header. 
+ * Include the widget set header.
  */
 #include "Xc.h"
 
@@ -42,7 +42,7 @@
 /*
  * Class part.
  */
-typedef struct 
+typedef struct
 {
     int dummy;	/* Minimum of one member required. */
 } ControlClassPart;
@@ -77,9 +77,9 @@ typedef struct
     char *label;                                /* Widget's Label string. */
     XFontStruct *font;                  /* Font for Label string. */
     int shade_depth;                    /* Depth of the 3D effect in pixels. */
-    
+
   /* Private instance variables. */
-    Pixmap shade;                       /* Stipple bitmap for generating 
+    Pixmap shade;                       /* Stipple bitmap for generating
                                          * 3D shading effect.
                                          */
 #if defined(NICE_SHADES)
@@ -97,10 +97,10 @@ typedef struct
 					 * XmGetColors
 					 */
 #endif
-    GC gc;                              /* GC used for drawing in this 
+    GC gc;                              /* GC used for drawing in this
                                          * widget.
                                          */
-    
+
 } ControlPart;
 
 /*

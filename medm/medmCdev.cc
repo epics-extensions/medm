@@ -10,12 +10,16 @@
  * Description:
  *      Medm CDEV Interface Implementation
  *
- * Author:  
+ * Author:
  *      Jie Chen
  *      Jefferson Lab. Control Software Group
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.3  2005/08/03 14:56:55  evans
+ *   Trimmed extra whitespace at end of lines in the source files.  There
+ *   may be changes related to the WheelSwitch, as well.
+ *
  *   Revision 1.2  1998/09/11 22:31:36  evans
  *   Merged changes from Jie Chen (CDEV) and Anton Mezger (VMS).
  *
@@ -110,7 +114,7 @@ medmXInput::~medmXInput (void)
 
   medmInputFd* pfd = 0;
   if (xfds_) {
-    for (pfd = xfds_; pfd; pfd = pfd->next) 
+    for (pfd = xfds_; pfd; pfd = pfd->next)
       XtRemoveInput (pfd->id);
 
     delete xfds_;
@@ -125,7 +129,7 @@ medmXInput::addInput (int fd, XtPointer mask)
 
   /* find out whether this fd is already registered */
   if (xfds_) {
-    for (cfd = xfds_; cfd; cfd = cfd->next) 
+    for (cfd = xfds_; cfd; cfd = cfd->next)
       if (cfd->fd == fd) {
 	fprintf (stderr, "medmCDEV: Fatal: fd %d is already registered\n", fd);
 	return;
@@ -157,12 +161,12 @@ medmXInput::removeInput (int fd)
       found = 1;
       if (!pfd)                /* deleting head of the list */
 	xfds_ = cfd->next;
-      else 
+      else
 	pfd->next = cfd->next;
 
                               /* remove XInput from X */
       XtRemoveInput (cfd->id);
-      
+
                               /* free memory          */
       cfd->next = 0;          /* disable recursive delete  */
       delete cfd;
@@ -171,7 +175,7 @@ medmXInput::removeInput (int fd)
     pfd = cfd;
   }
 
-  if (!found) 
+  if (!found)
     fprintf (stderr, "medmCDEV: Fatal: cannot remove fd %d from list\n", fd);
 }
 
@@ -191,7 +195,7 @@ medmFdChangedCallback (int fd, int opened, void* arg)
 
   medmXInput* xinput = (medmXInput *)arg;
 
-  if (opened) 
+  if (opened)
     xinput->addInput    (fd, (XtPointer)XtInputReadMask);
   else
     xinput->removeInput (fd);
@@ -202,30 +206,30 @@ medmCDEVInitialize (void)
 {
   /* first change file descriptor limit for medm */
   struct rlimit limit, nlimit;
-  
-  if (getrlimit (RLIMIT_NOFILE, &limit) != 0) 
+
+  if (getrlimit (RLIMIT_NOFILE, &limit) != 0)
     printf ("medm_cdev: Cannot get resouce limit\n");
   else {
     if (limit.rlim_cur < 256) {
       nlimit.rlim_cur = 256;
       nlimit.rlim_max = limit.rlim_max;
-      if (setrlimit (RLIMIT_NOFILE, &nlimit) != 0) 
+      if (setrlimit (RLIMIT_NOFILE, &nlimit) != 0)
 	printf ("medm_cdev:Cannot change the limit on number of opened files\n");
-      else 
-	if (getrlimit (RLIMIT_NOFILE, &limit) != 0) 
+      else
+	if (getrlimit (RLIMIT_NOFILE, &limit) != 0)
 	  printf ("medm_cdev: Cannot change the limit on number of opened files\n");
     }
   }
-  
+
   cdevSystem& system = cdevSystem::defaultSystem ();
 
   /* set error reporting threshold to severe */
   system.setThreshold (CDEV_SEVERITY_ERROR);
-  
+
   medmGXinput = new medmXInput (appContext, &system);
-  
+
   system.addFdChangedCallback (medmFdChangedCallback, (void *)medmGXinput);
-  
+
   return 0;
 }
 
@@ -287,7 +291,7 @@ medmUpdateChannelCb (int status, void* arg,
     data.get ("time", &pr->time);
     void* dataptr = 0;
 
-    if (data.find ("value", dataptr) != CDEV_SUCCESS) 
+    if (data.find ("value", dataptr) != CDEV_SUCCESS)
       return;
 
     if (pr->elementCount > 1) {
@@ -302,7 +306,7 @@ medmUpdateChannelCb (int status, void* arg,
 
 	  if (data.get("value", tvals) != CDEV_SUCCESS)
 	    return;
-	  
+
 	  value = (double)(tvals[0]);
 	  pr->array = tvals;
 	}
@@ -312,7 +316,7 @@ medmUpdateChannelCb (int status, void* arg,
 	  short *tvals = (short *)malloc (pr->elementCount*sizeof (short));
 	  if (data.get("value", tvals) != CDEV_SUCCESS)
 	    return;
-	  
+
 	  value = (double)(tvals[0]);
 	  pr->array = tvals;
 	}
@@ -322,7 +326,7 @@ medmUpdateChannelCb (int status, void* arg,
 	  long *tvals = (long *)malloc (pr->elementCount*sizeof (long));
 	  if (data.get("value", tvals) != CDEV_SUCCESS)
 	    return;
-	  
+
 	  value = (double)(tvals[0]);
 	  pr->array = tvals;
 	}
@@ -332,7 +336,7 @@ medmUpdateChannelCb (int status, void* arg,
 	  float *tvals = (float *)malloc (pr->elementCount*sizeof (float));
 	  if (data.get("value", tvals) != CDEV_SUCCESS)
 	    return;
-	  
+
 	  value = (double)(tvals[0]);
 	  pr->array = tvals;
 	}
@@ -340,7 +344,7 @@ medmUpdateChannelCb (int status, void* arg,
       case DBF_DOUBLE:
 	{
 	  double *tvals = (double *)malloc (pr->elementCount*sizeof (double));
-	  if (data.get ("value", tvals) != CDEV_SUCCESS) 
+	  if (data.get ("value", tvals) != CDEV_SUCCESS)
 	    return;
 	  value = tvals[0];
 	  pr->array = tvals;
@@ -378,7 +382,7 @@ medmUpdateChannelCb (int status, void* arg,
 	  fprintf (stderr, "memd_cdev: Error: medm does not support multi-dimensional data\n");
 	  return;
 	}
-  
+
 
 	size_t elems;
 	if (data.getElems ("value", &elems) != CDEV_SUCCESS)
@@ -415,13 +419,13 @@ medmUpdateChannelCb (int status, void* arg,
 	      pr->value = value;
 
 	      /* calling graphical info callback */
-	      if (pr->updateGraphicalInfoCb) 
-		pr->updateGraphicalInfoCb ((XtPointer)pr);	
+	      if (pr->updateGraphicalInfoCb)
+		pr->updateGraphicalInfoCb ((XtPointer)pr);
 	    }
 	    else {  /* return a single choice */
 	      if (data.get ("value", tmpstr, sizeof (tmpstr)) != CDEV_SUCCESS)
 		return;
-	      
+
 	      if (!pr->stateStrings)
 		return;
 
@@ -442,7 +446,7 @@ medmUpdateChannelCb (int status, void* arg,
 	      free (pr->stateStrings);
 	      pr->stateStrings = 0;
 	    }
-	      
+
 	    pr->stateStrings = (char **)malloc(elems*sizeof (char *));
 	    if (data.get ("value", pr->stateStrings) != CDEV_SUCCESS) {
 	      free (pr->stateStrings);
@@ -456,15 +460,15 @@ medmUpdateChannelCb (int status, void* arg,
 	    pr->value = value;
 
 	    /* calling graphical info callback */
-	    if (pr->updateGraphicalInfoCb) 
-	      pr->updateGraphicalInfoCb ((XtPointer)pr);		
+	    if (pr->updateGraphicalInfoCb)
+	      pr->updateGraphicalInfoCb ((XtPointer)pr);
 	  }
 	}
-	else 
+	else
 	  if (data.get ("value", &value) != CDEV_SUCCESS)
 	    return;
       }
-      else 
+      else
 	if (data.get ("value", &value) != CDEV_SUCCESS)
 	  return;
     }
@@ -474,20 +478,20 @@ medmUpdateChannelCb (int status, void* arg,
     if (pr->autoscale) {
       if (value > 0.0 && value*2 > pr->hopr) {
 	pr->hopr = 2*value;
-	if (pr->updateGraphicalInfoCb) 
-	  pr->updateGraphicalInfoCb ((XtPointer)pr);	
+	if (pr->updateGraphicalInfoCb)
+	  pr->updateGraphicalInfoCb ((XtPointer)pr);
       }
       else if (value < 0.0 && value*2 < pr->lopr) {
 	pr->lopr = 2*value;
-	if (pr->updateGraphicalInfoCb) 
-	  pr->updateGraphicalInfoCb ((XtPointer)pr); 
+	if (pr->updateGraphicalInfoCb)
+	  pr->updateGraphicalInfoCb ((XtPointer)pr);
       }
     }
 
-    if (((value == 0.0) && (pr->value != 0.0)) 
-	|| ((value != 0.0) && (pr->value == 0.0)))    
+    if (((value == 0.0) && (pr->value != 0.0))
+	|| ((value != 0.0) && (pr->value == 0.0)))
       zeroAndNoneZeroTransition = True;
-    
+
     pr->value = value;
 
     data.get ("status", &status);
@@ -496,16 +500,16 @@ medmUpdateChannelCb (int status, void* arg,
       pr->severity = severity;
       severityChanged = True;
     }
-    
+
     if (pr->monitorValueChanged && pr->updateValueCb) {
-      pr->updateValueCb((XtPointer)pr); 
+      pr->updateValueCb((XtPointer)pr);
     }
     else {
       if (pr->monitorSeverityChanged && severityChanged && pr->updateValueCb) {
 	pr->updateValueCb((XtPointer)pr);
       }
       else
-	if (pr->monitorZeroAndNoneZeroTransition 
+	if (pr->monitorZeroAndNoneZeroTransition
 	    && zeroAndNoneZeroTransition && pr->updateValueCb) {
 	  pr->updateValueCb((XtPointer)pr);
 	}
@@ -513,7 +517,7 @@ medmUpdateChannelCb (int status, void* arg,
   }
 
 }
-      
+
 static void
 medmUpdateGraphicalInfoCb (int status, void* arg,
 			   cdevRequestObject& req, cdevData& data)
@@ -523,14 +527,14 @@ medmUpdateGraphicalInfoCb (int status, void* arg,
 
   if (globalDisplayListTraversalMode != DL_EXECUTE) return;
 
-  if (status != CDEV_SUCCESS) 
+  if (status != CDEV_SUCCESS)
     return;
 
   pr->connected = True;
   // really find access flags
   acflag = req.getAccess ();
 
-  if (acflag == CDEV_SUCCESS) {  
+  if (acflag == CDEV_SUCCESS) {
     pr->readAccess = True;
     pr->writeAccess = True;
   }
@@ -558,7 +562,7 @@ medmUpdateGraphicalInfoCb (int status, void* arg,
     fprintf (stderr, "memd_cdev: Error: medm does not support multi-dimensional data\n");
     return;
   }
-  
+
 
   size_t elems;
   if (data.getElems ("value", &elems) != CDEV_SUCCESS)
@@ -630,7 +634,7 @@ medmUpdateGraphicalInfoCb (int status, void* arg,
     double hopr = 0.0;
     double lopr = 0.0;
     short  precision = 5;
-    
+
     if (pr->elementCount > 1) {
       double *tvals = new double[pr->elementCount];
       data.get ("value", tvals);
@@ -665,10 +669,10 @@ medmUpdateGraphicalInfoCb (int status, void* arg,
       medmPostMsg(1,"medm_cdev: medmUpdateGraphicalInfoCb: pv %s precision = %d\n",
 		  pr->name, pr->precision);
       pr->precision = 16;
-    } 
+    }
   }
 
-  if (pr->updateGraphicalInfoCb) 
+  if (pr->updateGraphicalInfoCb)
     pr->updateGraphicalInfoCb ((XtPointer)pr);
   else {
     if (pr->updateValueCb) {
@@ -691,13 +695,13 @@ medmUpdateGraphicalInfoCb (int status, void* arg,
     else {
       if (pr->attr)
 	sprintf (msg, "%s %s", _MEDM_MONITORON_STR, pr->attr);
-      else 
+      else
 	sprintf (msg, "%s", _MEDM_MONITORON_STR);
     }
 
     cdevRequestObject* req = device->getRequestObject (msg);
     if (req) {
-      if (req->sendCallback (0, valcbk) != CDEV_SUCCESS) 
+      if (req->sendCallback (0, valcbk) != CDEV_SUCCESS)
 	fprintf (stderr, "medm_cdev: %s %s sendCallback failed\n",
 		 pr->name, msg);
     }
@@ -756,8 +760,8 @@ cdevAdd (char* devattr, Record* pr)
       sprintf (msg, "%s %s", _MEDM_MONITORON_STR, attr);
   }
   else {
-    if (!attr[0])    
-      sprintf (msg, "%s", verb);    
+    if (!attr[0])
+      sprintf (msg, "%s", verb);
     else
       sprintf (msg, "%s %s", verb, attr);
   }
@@ -773,7 +777,7 @@ cdevAdd (char* devattr, Record* pr)
 
   if (greq && req) {
     cdevData cxt;
-     
+
     for (i = 0; i < _medm_graphical_cxt_num; i++)
       cxt.insert (_medm_graphical_cxt[i], 1);
 
@@ -792,7 +796,7 @@ cdevAdd (char* devattr, Record* pr)
       mcxt.insert (_medm_monitor_cxt[i], 1);
     req->setContext (mcxt);
   }
-   
+
 
   /* copy record name */
   pr->name = (char *)malloc ((strlen (device) + 1)*sizeof (char));
@@ -841,7 +845,7 @@ cdevDelete (Record* pr)
 
     cdevRequestObject* offreq = device->getRequestObject (msg);
     if (offreq) {
-      if (offreq->sendCallback (0, valcbk) != CDEV_SUCCESS) 
+      if (offreq->sendCallback (0, valcbk) != CDEV_SUCCESS)
 	fprintf (stderr, "medm_cdev: %s %s sendCallback failed\n",
 		 pr->name, msg);
     }
@@ -882,14 +886,14 @@ static void medmInitRecord (Record *p)
   p->monitorValueChanged = True;
   p->monitorZeroAndNoneZeroTransition = True;
 }
-  
 
-  
+
+
 Record*
 medmAllocateRecord(char *name,
 		   void (*updateValueCb)(XtPointer),
 		   void (*updateGraphicalInfoCb)(XtPointer),
-		   XtPointer clientData) 
+		   XtPointer clientData)
 {
   Record *record;
   record = (Record *) malloc(sizeof(Record));
@@ -903,8 +907,8 @@ medmAllocateRecord(char *name,
   return record;
 }
 
-void 
-medmDestroyRecord(Record *pr) 
+void
+medmDestroyRecord(Record *pr)
 {
   int i;
   cdevDelete(pr);
@@ -963,7 +967,7 @@ medmSendDouble (Record *pr, double data)
     }
     else {
       if (!pr->attr)
-	sprintf (msg, "%s", pr->verb); 
+	sprintf (msg, "%s", pr->verb);
       else
 	sprintf (msg, "%s %s", pr->verb, pr->attr);
     }
@@ -993,14 +997,14 @@ medmSendCharacterArray (Record* pr, char* data, unsigned long size)
     }
     else {
       if (!pr->attr)
-	sprintf (msg, "%s", pr->verb); 
+	sprintf (msg, "%s", pr->verb);
       else
 	sprintf (msg, "%s %s", pr->verb, pr->attr);
     }
 
     device->send (msg, out, 0);
    }
-} 
+}
 
 void
 medmSendString (Record* pr, char* data)
@@ -1023,32 +1027,32 @@ medmSendString (Record* pr, char* data)
     }
     else {
       if (!pr->attr)
-	sprintf (msg, "%s", pr->verb); 
+	sprintf (msg, "%s", pr->verb);
       else
 	sprintf (msg, "%s %s", pr->verb, pr->attr);
     }
     device->send (msg, out, 0);
   }
-}  
+}
 
 void
 medmSendMsg (Record* pr, char* msg)
 {
   cdevDevice* device = (cdevDevice *)pr->dev;
 
-  if (device) 
+  if (device)
     device->send (msg, 0, 0);
-}  
+}
 
 
-void medmRecordAddUpdateValueCb(Record *pr, 
-				void (*updateValueCb)(XtPointer)) 
+void medmRecordAddUpdateValueCb(Record *pr,
+				void (*updateValueCb)(XtPointer))
 {
   pr->updateValueCb = updateValueCb;
 }
 
-void medmRecordAddGraphicalInfoCb(Record *pr, 
-				  void (*updateGraphicalInfoCb)(XtPointer)) 
+void medmRecordAddGraphicalInfoCb(Record *pr,
+				  void (*updateGraphicalInfoCb)(XtPointer))
 {
   pr->updateGraphicalInfoCb = updateGraphicalInfoCb;
 }
@@ -1057,8 +1061,8 @@ char *
 medmPvName (Record* pr)
 {
   static char pv[256];
-  
-  if (pr->attr) 
+
+  if (pr->attr)
     sprintf (pv, "%s %s", pr->name, pr->attr);
   else
     strcpy (pv, pr->name);
@@ -1082,7 +1086,7 @@ char *
 medmPvType (Record* pr)
 {
   int i = 0;
-  
+
   for (i = 0; i < 7; i++) {
     if (pr->dataType == medm_type_names[i].type)
       return medm_type_names[i].name;
@@ -1172,10 +1176,10 @@ medm_tsStampToText (cdev_TS_STAMP* ts, int type, char* buffer)
 #define TIME_STRING_MAX 81
 #endif
 
-void 
+void
 popupPvInfo(DisplayInfo *displayInfo)
 {
-  long now; 
+  long now;
   struct tm *tblock;
   char timeStampStr[TIME_STRING_MAX];
   char tsTxt[32];     /* 28 for TS_TEXT_MMDDYY, 32 for TS_TEXT_MMDDYYYY */
@@ -1214,7 +1218,7 @@ popupPvInfo(DisplayInfo *displayInfo)
   XmTextSetInsertionPosition(pvInfoMessageBox, 0);
   XmTextSetString(pvInfoMessageBox,string);
   curpos+=strlen(string);
-    
+
   /* Loop over the records to get information */
   for(i=0; i < count; i++) {
     /* Check for a valid record */
@@ -1222,9 +1226,9 @@ popupPvInfo(DisplayInfo *displayInfo)
       pR = records[i];
       if (pR->dev == 0) continue;
     } else continue;
-	
+
     /* Get the time value as a string */
-    if (medmPvGetValue (pR, &timeVals[i]) != 0) 
+    if (medmPvGetValue (pR, &timeVals[i]) != 0)
       medmPostMsg(1,"popupPvInfo: cdev_get error on %s\n", medmPvName (pR));
   }
 
@@ -1280,9 +1284,9 @@ popupPvInfo(DisplayInfo *displayInfo)
     /* Items from record */
     sprintf(string,"\n");
     switch(medmPvDataType (pR)) {
-    case DBF_STRING: 
+    case DBF_STRING:
       break;
-    case DBF_ENUM: 
+    case DBF_ENUM:
       sprintf(string,"%sSTATES: %d\n",
 	      string, (int)(pR->hopr+1.1));
       /* KE: Bad way to use a double */
@@ -1291,20 +1295,20 @@ popupPvInfo(DisplayInfo *displayInfo)
 		string, j, pR->stateStrings[j]);
       }
       break;
-    case DBF_CHAR:  
-    case DBF_INT:           
-    case DBF_LONG: 
+    case DBF_CHAR:
+    case DBF_INT:
+    case DBF_LONG:
       sprintf(string,"%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr ,pR->lopr);
       break;
-    case DBF_FLOAT:  
-    case DBF_DOUBLE: 
+    case DBF_FLOAT:
+    case DBF_DOUBLE:
       sprintf(string,"%sPRECISION: %d\n",
 	      string, pR->precision);
       sprintf(string,"%sHOPR: %g  LOPR: %g\n",
 	      string, pR->hopr ,pR->lopr);
       break;
-    default         : 
+    default         :
       break;
     }
     sprintf(string,"%s\n",string);

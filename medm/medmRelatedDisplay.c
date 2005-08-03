@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -29,9 +29,9 @@
    *  Include math.h here and undefine y1 since we don't use it
    *  Should work for both Exceed 5 and Exceed 6 */
 #include <math.h>
-#undef y1    
-#endif    
-#endif    
+#undef y1
+#endif
+#endif
 
 #include "medm.h"
 #include "Marquee.h"
@@ -39,7 +39,7 @@
 
 #define RD_APPLY_BTN  0
 #define RD_CLOSE_BTN  1
- 
+
 #define MARKER_ON_TIME 5000     /* msec */
 #define MARKER_OFF_TIME 1000     /* msec */
 #define MARKER_COUNT 1
@@ -118,35 +118,35 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
 #if 0
     print("renderRelatedDisplayPixmap: width=%d height=%d label=|%s|\n",
       width,height,label?label:"NULL");
-#endif    
-    
+#endif
+
   /* Draw the background */
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
-	
+
   /* Draw the icon */
     if(icon) {
 	segments[0].x1 = (short)(segmentData[0].x*height);
 	segments[0].y1 = (short)(segmentData[0].y*height);
 	segments[0].x2 = (short)(segmentData[1].x*height);
 	segments[0].y2 = (short)(segmentData[1].y*height);
-	
+
 	segments[1].x1 = (short)(segmentData[1].x*height);
 	segments[1].y1 = (short)(segmentData[1].y*height);
 	segments[1].x2 = (short)(segmentData[2].x*height);
 	segments[1].y2 = (short)(segmentData[2].y*height);
-	
+
 	segments[2].x1 = (short)(segmentData[2].x*height);
 	segments[2].y1 = (short)(segmentData[2].y*height);
 	segments[2].x2 = (short)(segmentData[3].x*height);
 	segments[2].y2 = (short)(segmentData[3].y*height);
-	
+
 	segments[3].x1 = (short)(segmentData[3].x*height);
 	segments[3].y1 = (short)(segmentData[3].y*height);
 	segments[3].x2 = (short)(segmentData[4].x*height);
 	segments[3].y2 = (short)(segmentData[4].y*height);
-	
+
 	XDrawSegments(display,pixmap,gc,segments,4);
 
       /* Erase any out-of-bounds edges due to roundoff error by blanking out
@@ -157,7 +157,7 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
 	  (int)(rectangleY*height),
 	  (unsigned int)(rectangleWidth*height),
 	  (unsigned int)(rectangleHeight*height));
-	
+
       /* Draw the top rectangle */
 	XSetForeground(display,gc,fg);
 	XDrawRectangle(display,pixmap,gc,
@@ -170,7 +170,7 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
   /* Draw the label */
     if(label && *label) {
 	int base;
-	
+
 	XSetFont(display,gc,font->fid);
 	base=(height+font->ascent-font->descent)/2;
 	XDrawString(display,pixmap,gc,
@@ -185,11 +185,11 @@ int relatedDisplayFontListIndex(DlRelatedDisplay *dlRelatedDisplay,
   int numButtons, int maxChars)
 {
     int i;
- 
+
     UNREFERENCED(maxChars);
 
 #define SHADOWS_SIZE 4    /* each Toggle Button has 2 shadows...*/
- 
+
 /* more complicated calculation based on orientation, etc */
     for(i = MAX_FONTS-1; i >= 0; i--) {
 	switch(dlRelatedDisplay->visual) {
@@ -251,7 +251,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(dlRelatedDisplay->display[i].label[0] != '\0') {
 	    iNumberOfDisplays++;
 	}
-    } 
+    }
   /* One display, not hidden */
     if(iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
       /* Case 1 0f 4 */
@@ -272,7 +272,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XDefaultDepth(display,screenNum));
 	} else if(dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
-	    
+
 	    label=dlRelatedDisplay->label+1;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
 	    icon=0;
@@ -283,7 +283,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XDefaultDepth(display,screenNum));
 	} else {
 	    int usedWidth;
-	    
+
 	    label=dlRelatedDisplay->label;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
 	    icon=1;
@@ -311,7 +311,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Add the callbacks for bringing up the menu */
 	if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	    int i;
-	    
+
 	  /* Check the display array to find the first non-empty one */
 	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
 		if(*(dlRelatedDisplay->display[i].name)) {
@@ -353,14 +353,14 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
 	XtManageChild(dlElement->widget);
-	
+
 #if EXPLICITLY_OVERWRITE_CDE_COLORS
       /* Color menu bar explicitly to avoid CDE interference */
 	colorMenuBar(localMenuBar,
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
 #endif
-	
+
 	relatedDisplayPulldownMenu = XmCreatePulldownMenu(
 	  localMenuBar,"relatedDisplayPulldownMenu",args,2);
 	tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
@@ -371,7 +371,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XmNtearOffModel,XmTEAR_OFF_DISABLED,
 	      NULL);
 	}
-	
+
       /* Get size for graphic part of pixmap */
 	pixmapH = MIN(dlRelatedDisplay->object.width,
 	  dlRelatedDisplay->object.height);
@@ -388,7 +388,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XDefaultDepth(display,screenNum));
 	} else if(dlRelatedDisplay->label[0] == '-') {
 	    int usedWidth;
-	    
+
 	    label=dlRelatedDisplay->label+1;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
 	    icon=0;
@@ -399,7 +399,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	      XDefaultDepth(display,screenNum));
 	} else {
 	    int usedWidth;
-	    
+
 	    label=dlRelatedDisplay->label;
 	    index=messageButtonFontListIndex(dlRelatedDisplay->object.height);
 	    icon=1;
@@ -422,25 +422,25 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
 	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
 	XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
-	
+
 	XtSetArg(args[n],XmNmarginLeft,0); n++;
 	XtSetArg(args[n],XmNmarginRight,0); n++;
 	XtSetArg(args[n],XmNmarginTop,0); n++;
 	XtSetArg(args[n],XmNmarginBottom,0); n++;
 	XtSetArg(args[n],XmNmarginWidth,0); n++;
 	XtSetArg(args[n],XmNmarginHeight,0); n++;
-	
+
 	widget = XtCreateManagedWidget("relatedDisplayMenuLabel",
 	  xmCascadeButtonGadgetClass,
 	  dlElement->widget, args, n);
-	
+
 #if 0
       /* KE: Can't do this, it points to the stack
        *   and shouldn't be necessary */
 	XtAddCallback(widget, XmNdestroyCallback,freePixmapCallback,
 	  (XtPointer)relatedDisplayPixmap);
-#endif	
-	
+#endif
+
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if(strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
 		xmString = XmStringCreateLocalized(
@@ -454,7 +454,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 		XmStringFree(xmString);
 	    }
 	}
-    } else if(dlRelatedDisplay->visual == RD_ROW_OF_BTN || 
+    } else if(dlRelatedDisplay->visual == RD_ROW_OF_BTN ||
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
       /* Case 3 of 4 */
       /* Rows or columns of buttons */
@@ -463,7 +463,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XmFontList fontList;
 	Pixel fg, bg;
 	Widget widget;
-	
+
 	maxChars = 0;
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    maxChars = MAX((size_t) maxChars,
@@ -504,7 +504,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",wargs,n);
 	dlElement->widget = widget;
-	
+
       /* Make push-in type radio buttons of the correct size */
 	fontList = fontListTable[relatedDisplayFontListIndex(
 	  dlRelatedDisplay,iNumberOfDisplays,maxChars)];
@@ -527,7 +527,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
 	for(i = 0; i < iNumberOfDisplays; i++) {
 	    Widget toggleButton;
-	    
+
 	    xmString = XmStringCreateLocalized(
 	      dlRelatedDisplay->display[i].label);
 	    XtSetArg(wargs[n],XmNlabelString,xmString);
@@ -568,7 +568,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	gcValues.fill_style = FillStippled;
 	if(!stipple) {
 	    static char stipple_bitmap[] = {0x03, 0x03, 0x0c, 0x0c};
-	    
+
 	    stipple = XCreateBitmapFromData(display,
 	      RootWindow(display, DefaultScreen(display)),
 	      stipple_bitmap, 4, 4);
@@ -801,7 +801,7 @@ void writeDlRelatedDisplay(FILE *stream, DlElement *dlElement, int level)
 	}
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
-	if(dlRelatedDisplay->label[0] != '\0') 
+	if(dlRelatedDisplay->label[0] != '\0')
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlRelatedDisplay->label);
 	if(dlRelatedDisplay->visual != RD_MENU)
 	  fprintf(stream,"\n%s\tvisual=\"%s\"",
@@ -827,18 +827,18 @@ static void relatedDisplayButtonPressedCb(Widget w, XtPointer clientData,
     DisplayInfo *displayInfo = 0;
     XEvent *event = ((XmPushButtonCallbackStruct *)callbackData)->event;
     Boolean replace = False;
-    
+
   /* See if it was a ctrl-click indicating replace */
   /* KE: Replace = with == in next line */
     if(event->type == ButtonPress  &&
       ((XButtonEvent *)event)->state & ControlMask) {
 	replace = True;
     }
-    
+
 #if DEBUG_FONTS
     print("\nrelatedDisplayButtonPressedCb: displayInfo=%x replace=%s\n",
       displayInfo,replace?"True":"False");
-#endif    
+#endif
 
   /* Create the new display */
     XtVaGetValues(w, XmNuserData, &displayInfo, NULL);
@@ -857,12 +857,12 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
     strncpy(filename, pEntry->name, MAX_TOKEN_LENGTH);
     filename[MAX_TOKEN_LENGTH-1] = '\0';
     argsString = pEntry->args;
-    
+
 #if DEBUG_FONTS
     print("relatedDisplayCreateNewDisplay: displayInfo=%x replaceDisplay=%s\n"
       "  filename=%s\n",
       displayInfo,replaceDisplay?"True":"False",filename);
-#endif    
+#endif
 
   /*
    * if we want to be able to have RD's inherit their parent's
@@ -880,7 +880,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 	      displayInfo->dlFile->name);
 	    if(existingDisplayInfo) {
 		DisplayInfo *cdi;
-		
+
 	      /* Remove the old one if appropriate */
 		if(replaceDisplay || (pEntry->mode == REPLACE_DISPLAY &&
 		  displayInfo != existingDisplayInfo)) {
@@ -903,7 +903,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 		return;
 	    }
 	}
-	
+
       /* There is no existing display to use.  Try to find a file,
          passing the parent's path. */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
@@ -985,7 +985,7 @@ static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     }
 }
- 
+
 /* Create related display data dialog */
 Widget createRelatedDisplayDataDialog(Widget parent)
 {
@@ -993,7 +993,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     Dimension cWidth, cHeight, aWidth, aHeight;
     Arg args[12];
     int i, n;
-    
+
 /*
  * now create the interface
  *
@@ -1005,7 +1005,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
  *         ...
  *     OK     CANCEL
  */
- 
+
   /* Create form dialog (rdForm) */
     n = 0;
     XtSetArg(args[n],XmNautoUnmanage,False); n++;
@@ -1013,7 +1013,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     XtSetArg(args[n],XmNmarginWidth,8); n++;
     XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
     rdForm = XmCreateFormDialog(parent,"relatedDisplayDataF",args,n);
-    
+
   /* Set values for the shell parent of the form */
     shell = XtParent(rdForm);
     XtVaSetValues(shell,
@@ -1033,7 +1033,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
 	Window win=XtWindow(w);
 
 	int i=0;
-	
+
 	while(1) {
 	    print("%4d w=%x win=%x",i++,w,win);
 	    if(w == mainShell) {
@@ -1103,22 +1103,22 @@ Widget createRelatedDisplayDataDialog(Widget parent)
   /* Apply Button */
     applyButton = XtVaCreateWidget("Apply",
       xmPushButtonWidgetClass, rdForm,
-      NULL); 
+      NULL);
     XtAddCallback(applyButton,XmNactivateCallback,
       relatedDisplayActivate,(XtPointer)RD_APPLY_BTN);
     XtManageChild(applyButton);
- 
+
   /* Make APPLY and CLOSE buttons same size */
     XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
     XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
     XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
       XmNheight,MAX(cHeight,aHeight),NULL);
- 
+
   /* Make the APPLY button the default for the form */
     XtVaSetValues(rdForm,XmNdefaultButton,applyButton,NULL);
 
   /* Do form layout */
- 
+
   /* rdMatrix */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -1147,9 +1147,9 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
     XtSetArg(args[n],XmNbottomOffset,12); n++;
     XtSetValues(closeButton,args,n);
- 
+
     XtManageChild(rdForm);
- 
+
     return shell;
 }
 
@@ -1162,7 +1162,7 @@ void updateRelatedDisplayDataDialog()
 {
     int i;
 
-    if(rdMatrix) { 
+    if(rdMatrix) {
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    XmTextFieldSetString(table[i][0],globalResourceBundle.rdData[i].label);
 	    XmTextFieldSetString(table[i][1],globalResourceBundle.rdData[i].name);
@@ -1233,10 +1233,10 @@ static void relatedDisplaySetForegroundColor(ResourceBundle *pRCB, DlElement *p)
 void markHiddenButtons(DisplayInfo *displayInfo)
 {
     DlElement *pE;
-    
+
   /* Don't do anything if the displayInfo is invalid */
     if(!displayInfo) return;
-    
+
   /* This is a toggle */
     if(displayInfo->nMarkerWidgets) {
       /* They are on.  Turn them off */
@@ -1247,20 +1247,20 @@ void markHiddenButtons(DisplayInfo *displayInfo)
 	pE = FirstDlElement(displayInfo->dlElementList);
 	while(pE) {
 	    displayInfo->nMarkerWidgets += countHiddenButtons(pE);
-	    
+
 	    pE = pE->next;
 	}
-	
+
       /* Popup a dialog and return if there are no hidden buttons */
 	if(!displayInfo->nMarkerWidgets) {
 	    char token[MAX_TOKEN_LENGTH];
-	    
+
 	    sprintf(token,
 	      "There are no hidden buttons in this display.");
 	    dmSetAndPopupWarningDialog(displayInfo, token, "OK", NULL, NULL);
 	    return;
 	}
-	
+
       /* Allocate space for the list of widgets */
 	displayInfo->markerWidgetList =
 	  (Widget *)malloc(displayInfo->nMarkerWidgets*sizeof(Widget));
@@ -1269,23 +1269,23 @@ void markHiddenButtons(DisplayInfo *displayInfo)
 	    medmPrintf(1,"\nmarkHiddenButtons: Cannot create widget list\n");
 	    return;
 	}
-	
+
       /* Create the marker widgets */
 #ifdef WIN32
       /* Seems to take a long time on WIN32 */
 	XDefineCursor(display,XtWindow(displayInfo->drawingArea),watchCursor);
 	XFlush(display);
-#endif    
+#endif
 	displayInfo->nMarkerWidgets = 0;
 	pE = FirstDlElement(displayInfo->dlElementList);
 	while(pE) {
 	    createMarkerWidgets(displayInfo, pE);
-	    
+
 	    pE = pE->next;
 	}
 #ifdef WIN32
 	XUndefineCursor(display,XtWindow(displayInfo->drawingArea));
-#endif    
+#endif
     }
 }
 
@@ -1293,7 +1293,7 @@ static int countHiddenButtons(DlElement *dlElement)
 {
     DlElement *pE;
     int n = 0;
-    
+
     if(dlElement->type == DL_Composite) {
 	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
 	while(pE) {
@@ -1316,7 +1316,7 @@ static int countHiddenButtons(DlElement *dlElement)
 static void createMarkerWidgets(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlElement *pE;
-    
+
     if(dlElement->type == DL_Composite) {
 	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
 	while(pE) {
@@ -1356,10 +1356,10 @@ static void createMarkerWidget(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[nargs], XmNforeground, WhitePixel(display,screenNum)); nargs++;
     XtSetArg(args[nargs], XmNbackground, BlackPixel(display,screenNum)); nargs++;
     XtSetArg(args[nargs], XtNborderWidth, 0); nargs++;
-#if !USE_MARQUEE    
+#if !USE_MARQUEE
     XtSetArg(args[nargs], XtNblinkTime, 0); nargs++;
     XtSetArg(args[nargs], XtNtransparent, False); nargs++;
-#endif	
+#endif
     w=XtCreateManagedWidget("marquee", marqueeWidgetClass,
       displayInfo->drawingArea, args, nargs);
     displayInfo->markerWidgetList[displayInfo->nMarkerWidgets++] = w;
@@ -1375,7 +1375,7 @@ static void markerWidgetsDestroy(DisplayInfo *displayInfo)
       /* Seems to take a long time on WIN32 */
 	XDefineCursor(display,XtWindow(displayInfo->drawingArea),watchCursor);
 	XFlush(display);
-#endif    
+#endif
   /* Unmap them to be sure */
     for(i=0; i < nWidgets; i++) {
 	XtUnmapWidget(widgets[i]);
@@ -1393,5 +1393,5 @@ static void markerWidgetsDestroy(DisplayInfo *displayInfo)
     displayInfo->nMarkerWidgets = 0;
 #ifdef WIN32
 	XUndefineCursor(display,XtWindow(displayInfo->drawingArea));
-#endif    
+#endif
 }

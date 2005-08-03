@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Marquee.c -- Source file for Marquee widget */
 
@@ -90,11 +90,11 @@ MarqueeClassRec marqueeClassRec = {
 	(XtWidgetProc)_XtInherit, /* border_highlight   */
 	(XtWidgetProc)_XtInherit, /* border_unhighlight */
 	XtInheritTranslations,    /* translations       */
-#if 1	
+#if 1
 	NULL,                     /* arm_and_activate   */
-#else	
+#else
 	(XtWidgetProc)_XtInherit, /* arm_and_activate   */
-#endif	
+#endif
 	NULL,                     /* syn resources      */
 	0,                        /* num_syn_resources  */
 	NULL,                     /* extension          */
@@ -121,33 +121,33 @@ static void Initialize(Widget greq, Widget gnew,
 {
     MarqueeWidget w = (MarqueeWidget)gnew;
     int shape_event_base, shape_error_base;
-        
+
 #if DEBUG_BG > 1
     MarqueeWidget wreq = (MarqueeWidget)greq;
     printf("Initialize: req: bg=%8x fg=%8x\n"
       "            new: bg=%8x fg=%8x\n",
       wreq->core.background_pixel,wreq->primitive.foreground,
       w->core.background_pixel,w->primitive.foreground);
-#endif    
+#endif
 
   /* Make the GCs */
     makeGC(gnew);
-    
+
     w->marquee.interval_id = 0;
     w->marquee.first_state = True;
-    
+
   /* Override transparent if the shape extension is not available */
     if(w->marquee.transparent && !XShapeQueryExtension(XtDisplay(w),
       &shape_event_base,
       &shape_error_base)) {
 	w->marquee.transparent = False;
     }
-#if DEBUG_GEN    
+#if DEBUG_GEN
     printf("Initialize: BorderColor=%d BorderWidth=%d\n",
       w->core.border_pixel,w->core.border_width);
     printf("            background=%x foreground=%x\n",
       w->core.background_pixel,w->primitive.foreground);
-#endif    
+#endif
 }
 
 static void Resize(Widget gw)
@@ -158,7 +158,7 @@ static void Resize(Widget gw)
     Pixmap pixmap;
     int width, height, pwidth, pheight, border;
     int i;
-    
+
     if(XtIsRealized(gw)) {
 	XClearWindow(XtDisplay(w), XtWindow(w));
 	if(w->marquee.transparent) {
@@ -191,7 +191,7 @@ static void Resize(Widget gw)
 	    for(i=0; i < border; i++) {
 		int bwidth = pwidth - 2*i - 1;
 		int bheight = pheight - 2*i - 1;
-	       
+
 		if(bwidth > 0 && bheight > 0) {
 		    XDrawRectangle(XtDisplay(w), pixmap, gc,
 		      i, i, pwidth - 2*i - 1, pheight - 2*i - 1);
@@ -207,19 +207,19 @@ static void Resize(Widget gw)
 	    XFreeGC(XtDisplay(w), gc);
 	}
     }
-#if DEBUG_GEN    
+#if DEBUG_GEN
     printf("Resize: BorderColor=%d BorderWidth=%d\n",
       w->core.border_pixel,w->core.border_width);
     printf("            background=%x foreground=%x\n",
       w->core.background_pixel,w->primitive.foreground);
-#endif    
+#endif
 }
 
 static void Realize(Widget gw, XtValueMask *valueMask,
   XSetWindowAttributes *attrs)
 {
     MarqueeWidget w = (MarqueeWidget)gw;
-    
+
     XtCreateWindow(gw, (unsigned)InputOutput, (Visual *)CopyFromParent,
       *valueMask, attrs );
     Resize(gw);
@@ -235,7 +235,7 @@ static void Realize(Widget gw, XtValueMask *valueMask,
 static void Destroy(Widget gw)
 {
     MarqueeWidget w = (MarqueeWidget)gw;
-    
+
     if(w->marquee.interval_id)
       XtRemoveTimeOut(w->marquee.interval_id);
     XtReleaseGC(gw, w->marquee.gc1);
@@ -247,16 +247,16 @@ static void Destroy(Widget gw)
 static void Redisplay(Widget gw, XEvent event, Region region)
 {
     MarqueeWidget w;
-    
+
     w = (MarqueeWidget)gw;
-#if DEBUG_GEN    
+#if DEBUG_GEN
     printf("Redisplay: BorderColor=%d BorderWidth=%d\n",
       w->core.border_pixel,w->core.border_width);
     printf("            background=%x foreground=%x\n",
       w->core.background_pixel,w->primitive.foreground);
     printf("            width=%d height=%d\n",
       w->core.width,w->core.height);
-#endif    
+#endif
 }
 #endif
 
@@ -291,27 +291,27 @@ static Boolean SetValues(Widget gcur, Widget greq,
 		wnew->marquee.blink_time, drawMarquee, (XtPointer)gnew);
 	}
     }
-    
+
   /* transparent */
     if(wcur->marquee.transparent != wnew->marquee.transparent) {
 	Resize(gnew);
         do_redisplay = True;
     }
-    
+
   /* borderWidth */
     if(wcur->core.border_width != wnew->core.border_width) {
 	Resize(gnew);
         do_redisplay = True;
     }
-    
-#if DEBUG_GEN    
+
+#if DEBUG_GEN
     printf("SetValues: Cur: Background=%d Foreground=%d gc1=%x gc2=%x\n",
       wcur->core.background_pixel,wcur->primitive.foreground,
       wcur->marquee.gc1,wcur->marquee.gc2);
     printf("           New: Background=%d Foreground=%d gc1=%x gc2=%x\n",
       wnew->core.background_pixel,wnew->primitive.foreground,
       wnew->marquee.gc1,wnew->marquee.gc2);
-#endif    
+#endif
 
     return do_redisplay;
 }
@@ -322,7 +322,7 @@ static void makeGC(Widget gw)
     MarqueeWidget w = (MarqueeWidget)gw;
     XtGCMask valuemask;
     XGCValues gcv;
-        
+
     gcv.foreground = w->primitive.foreground;
     gcv.background = w->core.background_pixel;
     gcv.line_style = LineDoubleDash;
@@ -330,7 +330,7 @@ static void makeGC(Widget gw)
     valuemask = GCForeground | GCBackground | GCLineStyle | GCLineWidth;
 
     w->marquee.gc1 = XtGetGC(gw, valuemask, &gcv);
-    
+
   /* Reverse the foreground and background for gc2 */
     gcv.foreground = w->core.background_pixel;
     gcv.background = w->primitive.foreground;
@@ -352,13 +352,13 @@ static void makeGC(Widget gw)
 	  w->marquee.gc2,gcv2.foreground,gcv2.background,
 	  gcv2.line_style,LineDoubleDash);
     }
-#endif    
+#endif
 #if DEBUG_BG
     printf("makeGC: w=%x bg=%8x fg=%8x gc1=%x gc2=%x\n",
       w,w->core.background_pixel,w->primitive.foreground,
       w->marquee.gc1,w->marquee.gc2);
 
-#endif    
+#endif
 }
 
 /* Timer proc */
@@ -366,7 +366,7 @@ static void drawMarquee(XtPointer clientData, XtIntervalId *id)
 {
     MarqueeWidget w = (MarqueeWidget)clientData;
     Dimension width, height;
-    
+
 #if DEBUG_GC
     {
 	XtGCMask valuemask;
@@ -384,7 +384,7 @@ static void drawMarquee(XtPointer clientData, XtIntervalId *id)
 	  w->marquee.gc2,gcv2.foreground,gcv2.background,
 	  gcv2.line_style,LineDoubleDash);
     }
-#endif    
+#endif
     if(XtIsRealized((Widget)w)) {
 	width = w->core.width?w->core.width-1:0;
 	height = w->core.height?w->core.height-1:0;

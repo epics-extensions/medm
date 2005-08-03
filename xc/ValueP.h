@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*******************************************************************
  FILE:		ValueP.h
@@ -40,7 +40,7 @@
 /*
  * Class part.
  */
-typedef struct 
+typedef struct
 {
     int dummy;	/* Minimum of one member required. */
 } ValueClassPart;

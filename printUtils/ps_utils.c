@@ -1,7 +1,7 @@
 /* ps_utils.c - dump various PostScript structures to stdout
-   
+
    Copyright (c) 1990 General Electric Company
-   
+
    Permission to use, copy, modify, distribute, and sell this software
    and its documentation for any purpose is hereby granted without fee,
    provided that the above copyright notice appear in all copies and that
@@ -12,7 +12,7 @@
    permission.  General Electric Company makes no representations about
    the suitability of this software for any purpose.  It is provided "as
    is" without express or implied warranty.
-   
+
    General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
    FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
@@ -65,7 +65,7 @@ void outputDate(FILE *fo, Image the_image)
 
     fprintf(fo,"\nmatrix currentmatrix\n");
     fprintf(fo,"newpath\n");
-    
+
     if(the_image.orientation == PORTRAIT) {
 	xpos = 0;
 	ypos = the_image.height;
@@ -77,7 +77,7 @@ void outputDate(FILE *fo, Image the_image)
 	fprintf(fo,"%f inch %f inch moveto  %% upper left of image\n", xpos, ypos);
 	fprintf(fo,"90 rotate\n");
     }
-    
+
     fprintf(fo,"/Times-Roman findfont\n");
     fprintf(fo,"10 scalefont\n");
     fprintf(fo,"setfont \n");
@@ -134,7 +134,7 @@ void outputTime(FILE *fo, Image the_image)
 
     fprintf(fo,"\nmatrix currentmatrix\n");
     fprintf(fo,"newpath\n");
-  
+
     if(the_image.orientation == PORTRAIT) {
 	x = the_image.width;
 	y = the_image.height;
@@ -183,7 +183,7 @@ void outputLogo(FILE *fo, Image the_image)
     fprintf(fo,"\nmatrix currentmatrix\n");
     fprintf(fo,"newpath\n");
     fprintf(fo,"0 0 moveto\n");
-  
+
     if(the_image.orientation == PORTRAIT) {
 	xpos = 0;
 	ypos = - LOGOHEIGHT;
@@ -196,7 +196,7 @@ void outputLogo(FILE *fo, Image the_image)
 	fprintf(fo,"90 rotate\n");
     }
 
-  /* 
+  /*
    * output the company name
    */
     fprintf(fo,"/xlinepos 0 def\n");
@@ -253,13 +253,13 @@ void printEPSF(FILE *fo, Image image, Page  page, char  *file_name)
     fprintf(fo,"%%!PS-Adobe-2.0 EPSF-1.2\n");    /* standard PS header */
     if(image.orientation == PORTRAIT)
       fprintf(fo,"%%%%BoundingBox: %f %f %f %f\n",
-	72*page.ximagepos - 1, 72*page.yimagepos - 1, 
-	72*(page.ximagepos+image.width) + 1, 
+	72*page.ximagepos - 1, 72*page.yimagepos - 1,
+	72*(page.ximagepos+image.width) + 1,
 	72*(page.yimagepos+image.height-page.yoffset) + 1);
     else
       fprintf(fo,"%%%%BoundingBox: %f %f %f %f\n",
-	72*page.ximagepos - 1, 72*page.yimagepos - 1, 
-	72*(page.ximagepos+image.height) + 1, 
+	72*page.ximagepos - 1, 72*page.yimagepos - 1,
+	72*(page.ximagepos+image.height) + 1,
 	72*(page.yimagepos+image.width-page.yoffset) + 1);
 
     fprintf(fo,"%%%%Creator: %s\n", progname);

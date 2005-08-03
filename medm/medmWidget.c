@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -43,13 +43,13 @@ static  char *alarmColorString[ALARM_MAX] = {
  * This routine returns True only if the passed name is a well-formed
  * XLFD style font name with a pixel size, point size, and average
  * width (fields 7,8, and 12) of "0".
- */ 
-Boolean isScalableFont(char *name) 
+ */
+Boolean isScalableFont(char *name)
 {
     int i, field;
-    
+
     if((name == NULL) || (name[0] != '-')) return False;
-    
+
     for(i = field = 0; name[i] != '\0' && field <= 14; i++) {
 	if(name[i] == '-') {
 	    field++;
@@ -58,7 +58,7 @@ Boolean isScalableFont(char *name)
 		return False;
 	}
     }
-    
+
     if(field != 14) return False;
     else return True;
 }
@@ -68,11 +68,11 @@ Boolean isScalableFont(char *name)
  * MDA - utilizes pixel, not point size
  *
  * This routine is passed a scalable font name and a PIXEL size.
- * It returns an XFontStruct for the given font scaled to the 
+ * It returns an XFontStruct for the given font scaled to the
  * specified size and the exact resolution of the screen.
  * The font name is assumed to be a well-formed XLFD name,
  * and to have pixel size, point size, and average width fields
- * of "0" and implementation dependent x-resolution and y- 
+ * of "0" and implementation dependent x-resolution and y-
  * resolution fields.  Size is specified in pixels.
  * Returns NULL if the name is malformed or no such font exists.
  */
@@ -85,15 +85,15 @@ XFontStruct *loadQueryScalableFont(
     int i,j, field;
     char newname[500];        /* big enough for a long font name */
     int res_x, res_y;         /* resolution values for this screen */
-    
+
   /* catch obvious errors */
     if((name == NULL) || (name[0] != '-')) return NULL;
-    
+
   /* calculate our screen resolution in dots per inch. 25.4mm = 1 inch */
     res_x = (int) (DisplayWidth(dpy, screen)/(DisplayWidthMM(dpy, screen)/25.4));
     res_y = (int) (DisplayHeight(dpy, screen)/
       (DisplayHeightMM(dpy, screen)/25.4));
-    
+
   /* copy the font name, changing the scalable fields as we do so */
     for(i = j = field = 0; name[i] != '\0' && field <= 14; i++) {
 	newname[j++] = name[i];
@@ -109,7 +109,7 @@ XFontStruct *loadQueryScalableFont(
 	    case 8:  /* point size */
 	    case 12: /* average width */
 	      /* change from "-0-" to "-*-" */
-		newname[j] = '*'; 
+		newname[j] = '*';
 		j++;
 		if(name[i+1] != '\0') i++;
 		break;
@@ -124,10 +124,10 @@ XFontStruct *loadQueryScalableFont(
 	}
     }
     newname[j] = '\0';
-    
+
   /* if there aren't 14 hyphens, it isn't a well formed name */
     if(field != 14) return NULL;
-    
+
     return XLoadQueryFont(dpy, newname);
 }
 
@@ -161,21 +161,21 @@ void medmInit(char *displayFont)
     char dashList[2];
     Boolean useDefaultFont;
     char *sizePosition;
-    
-#if 0    
+
+#if 0
   /* KE: This doesn't appear in the Motif documentation.
    *   Assume it is not needed any more. */
     XmRegisterConverters();
 #endif
-    
+
 #if 0
   /* Register action table */
     XtAppAddActions(appContext,actions,XtNumber(actions));
 #endif
-    
+
   /* Register a warning handler */
     XtSetWarningHandler((XtErrorHandler)trapExtraneousWarningsHandler);
-    
+
   /* Initialize alarm color array */
     alarmColorPixel[NO_ALARM]=getPixelFromColormapByString(display,
       screenNum,cmap,alarmColorString[NO_ALARM]);
@@ -190,20 +190,20 @@ void medmInit(char *displayFont)
 
   /* Initialize Channel Access */
     medmCAInitialize();
-    
+
   /* Initialize DisplayInfo structures list */
     displayInfoListHead = (DisplayInfo *)malloc(sizeof(DisplayInfo));
     displayInfoListHead->next = NULL;
     displayInfoListTail = displayInfoListHead;
-    
+
   /* Initialize DisplayInfoSave structures list */
     displayInfoSaveListHead = (DisplayInfo *)malloc(sizeof(DisplayInfo));
     displayInfoSaveListHead->next = NULL;
     displayInfoSaveListTail = displayInfoSaveListHead;
-    
+
   /* Initialize common XmStrings */
     dlXmStringMoreToComeSymbol = XmStringCreateLocalized(MORE_TO_COME_SYMBOL);
-    
+
   /* Create the highlight GC */
     highlightGC = XCreateGC(display,rootWindow,0,NULL);
   /* Eliminate events that we do not handle anyway */
@@ -223,7 +223,7 @@ void medmInit(char *displayFont)
     dashList[0] = 3;
     dashList[1] = 3;
     XSetDashes(display,highlightGC,0,dashList,2);
-    
+
 /* Initialize the execute popup menu stuff for all shells.  Must be
    consistent with medmWidget.h definitions. */
     executePopupMenuButtonType[0] = XmPUSHBUTTON;
@@ -245,7 +245,7 @@ void medmInit(char *displayFont)
     executePopupMenuButtonType[4] = XmPUSHBUTTON;
     executePopupMenuButtons[4] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_MAIN);
- 
+
     executePopupMenuButtonType[5] = XmPUSHBUTTON;
     executePopupMenuButtons[5] =
       XmStringCreateLocalized(EXECUTE_POPUP_MENU_DISPLAY_LIST);
@@ -293,7 +293,7 @@ void medmInit(char *displayFont)
 	  /* Load the XmFontList table for Motif font sizing */
 	    entry = XmFontListEntryCreate(XmFONTLIST_DEFAULT_TAG, XmFONT_IS_FONT,
 	      (XtPointer)fontTable[i]);
-	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);	
+	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);
 	    XmFontListEntryFree(&entry);
 	}
 
@@ -330,7 +330,7 @@ void medmInit(char *displayFont)
 	  /* Load the XmFontList table for Motif font sizing */
 	    entry = XmFontListEntryCreate(XmFONTLIST_DEFAULT_TAG, XmFONT_IS_FONT,
 	      (XtPointer)fontTable[i]);
-	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);	
+	    fontListTable[i] = XmFontListAppendEntry(NULL, entry);
 	    XmFontListEntryFree(&entry);
 	}
     }
@@ -367,7 +367,7 @@ int initMedmWidget() {
  *   It probably is not necessary */
 int destroyMedmWidget() {
     int i;
-    
+
     if(displayInfoListHead) free((char *)displayInfoListHead);
     if(displayInfoSaveListHead) free((char *)displayInfoSaveListHead);
     if(dlXmStringMoreToComeSymbol) XmStringFree(dlXmStringMoreToComeSymbol);
@@ -396,7 +396,7 @@ void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
 	dmRemoveDisplayInfo(displayInfo);
 	return;
     }
-    
+
   /* Check if it is already there */
     di = displayInfoSaveListHead->next;
     while(di) {
@@ -406,8 +406,8 @@ void moveDisplayInfoToDisplayInfoSave(DisplayInfo *displayInfo)
 	    return;
 	}
 	di = di->next;
-    }	
-    
+    }
+
   /* Remove it from the displayInfo list */
     displayInfo->prev->next = displayInfo->next;
     if(displayInfo->next != NULL)

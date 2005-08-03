@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -25,7 +25,7 @@ void monitorAttributeInit(DlMonitor *monitor)
     monitor->clr = DEFAULT_CLR;
     monitor->bclr = DEFAULT_BCLR;
 }
-  
+
 void plotcomAttributeInit(DlPlotcom *plotcom)
 {
     plotcom->title[0] = '\0';
@@ -161,20 +161,20 @@ void parsePlotAxisDefinition(DisplayInfo *displayInfo, DlPlotAxisDefinition *dlP
 	    if (!strcmp(token,"axisStyle")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"linear")) 
+		if (!strcmp(token,"linear"))
 		  dlPlotAxisDefinition->axisStyle = LINEAR_AXIS;
-		else if (!strcmp(token,"log10")) 
+		else if (!strcmp(token,"log10"))
 		  dlPlotAxisDefinition->axisStyle = LOG10_AXIS;
 		else  if (!strcmp(token,"time"))
 		  dlPlotAxisDefinition->axisStyle = TIME_AXIS;
 	    } else if (!strcmp(token,"rangeStyle")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if (!strcmp(token,"from channel")) 
+		if (!strcmp(token,"from channel"))
 		    dlPlotAxisDefinition->rangeStyle = CHANNEL_RANGE;
-		else if (!strcmp(token,"user-specified")) 
+		else if (!strcmp(token,"user-specified"))
 		  dlPlotAxisDefinition->rangeStyle = USER_SPECIFIED_RANGE;
-		else if (!strcmp(token,"auto-scale")) 
+		else if (!strcmp(token,"auto-scale"))
 		  dlPlotAxisDefinition->rangeStyle = AUTO_SCALE_RANGE;
 	    } else if (!strcmp(token,"minRange")) {
 		getToken(displayInfo,token);
@@ -367,7 +367,7 @@ void writeDlPen(FILE *stream, DlPen *dlPen, int index, int level)
 #endif
   	if (dlPen->chan[0] == '\0') return;
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-    } 
+    }
 #endif
 
     for (i = 0;  i < level; i++) indent[i] = '\t';

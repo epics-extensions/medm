@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -113,17 +113,17 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	break;
     case ERR_MSG_CLEAR_BTN:
 	{
-	    time_t now; 
+	    time_t now;
 	    struct tm *tblock;
 	    char timeStampStr[TIME_STRING_MAX];
 	    XmTextPosition curpos = 0;
-    
+
 	    if(errMsgText == NULL) return;
-	    
+
 	  /* Clear the buffer */
 	    XmTextSetString(errMsgText,"");
 	    XmTextSetInsertionPosition(errMsgText, 0);
-	    
+
 	  /* Reinitialize */
 	    time(&now);
 	    tblock = localtime(&now);
@@ -137,12 +137,12 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	break;
     case ERR_MSG_PRINT_BTN:
 	{
-	    time_t now; 
+	    time_t now;
 	    struct tm *tblock;
 	    FILE *file;
 	    char timeStampStr[TIME_STRING_MAX];
 	    char *tmp, *psFileName, *commandBuffer;
-	    
+
 	    if(errMsgText == NULL) {
 		XBell(display,50); XBell(display,50); XBell(display,50);
 		return;
@@ -182,7 +182,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 		  "MEDM Message Window at "STRFTIME_FORMAT":\n\n",tblock);
 	    }
 	    timeStampStr[TIME_STRING_MAX-1]='0';
-	    
+
 	  /* Create filename */
 	    psFileName = (char *)calloc(1,MAX_TOKEN_LENGTH);
 	    if(printToFile) {
@@ -191,7 +191,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 		sprintf(psFileName,"/tmp/medmMessageWindowPrintFile%d",
 		  getpid());
 	    }
-	    
+
 	  /* Write file */
 	    file = fopen(psFileName,"w+");
 	    if(file == NULL) {
@@ -206,7 +206,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    fprintf(file,tmp);
 	    XtFree(tmp);
 	    fclose(file);
-	    
+
 	  /* Print file */
 	    if(printToFile) {
 		xInfoMsg(w,"Output sent to:\n  %s\n",psFileName);
@@ -214,13 +214,13 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 		commandBuffer = (char *)calloc(1,MAX_TOKEN_LENGTH+256);
 		sprintf(commandBuffer,"%s %s",printCommand,psFileName);
 		system(commandBuffer);
-	    
+
 	      /* Delete file */
 		sprintf(commandBuffer,"rm %s",psFileName);
 		system(commandBuffer);
 		free(commandBuffer);
 	    }
-	    
+
 	  /* Clean up */
 	    free(psFileName);
 	    XBell(display,50);
@@ -229,7 +229,7 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
     case ERR_MSG_SEND_BTN:
 	{
 	    char *tmp;
-	    
+
 	    if(errMsgText == NULL) return;
 	    if(errMsgSendS == NULL) {
 		errMsgSendDlgCreateDlg();
@@ -265,7 +265,7 @@ void errMsgDlgCreateDlg(int raise)
     if(errMsgS != NULL) {
 	if(raise) {
 	    Window w=XtWindow(errMsgS);;
-	
+
 	    if(XtIsManaged(errMsgS)) XtUnmanageChild(errMsgS);
 	    XtManageChild(errMsgS);
 	  /* Raise the window if it exists (widget is realized) */
@@ -280,7 +280,7 @@ void errMsgDlgCreateDlg(int raise)
 #if 0
     /* KE: Gets iconized this way */
       xmDialogShellWidgetClass, mainShell,
-#endif      
+#endif
       topLevelShellWidgetClass, mainShell,
       XmNtitle, "MEDM Message Window",
       XmNdeleteResponse, XmDO_NOTHING,
@@ -394,7 +394,7 @@ void errMsgDlgCreateDlg(int raise)
 #else
     XtAddCallback(sendButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_SEND_BTN);
-#endif    
+#endif
 
     helpButton = XtVaCreateManagedWidget("Help",
       xmPushButtonWidgetClass, actionArea,
@@ -416,7 +416,7 @@ void errMsgDlgCreateDlg(int raise)
 
   /* Initialize */
     if(errMsgS) {
-	time_t now; 
+	time_t now;
 	struct tm *tblock;
 	char timeStampStr[TIME_STRING_MAX];
 	XmTextPosition curpos = 0;
@@ -439,7 +439,7 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
 {
     char *text, *subject, *to, cmd[1024], *p;
     FILE *pp;
-#ifndef WIN32    
+#ifndef WIN32
     int status;
 #endif
 
@@ -455,13 +455,13 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
     p = strcpy(cmd,p);
     p += strlen(cmd);
     *p++ = ' ';
-#if 0    
+#if 0
     if(subject && *subject) {
       /* KE: Doesn't work with Solaris */
 	sprintf(p, "-s \"%s\" ", subject);
 	p += strlen(p);
     }
-#endif    
+#endif
     if(to && *to) {
 	sprintf(p, "%s", to);
     } else {
@@ -487,13 +487,13 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
 	if(text) XtFree(text);
 	return;
     }
-#if 1    
+#if 1
     if(subject && *subject) {
 	fputs("Subject: ", pp);
 	fputs(subject, pp);
 	fputs("\n\n", pp);
     }
-#endif    
+#endif
     fputs(text, pp);
     fputc('\n', pp);      /* make sure there's a terminating newline */
 #ifndef WIN32
@@ -537,7 +537,7 @@ void errMsgSendDlgCreateDlg()
 #if 0
 	/* KE: Gets iconized this way */
 	  xmDialogShellWidgetClass, mainShell,
-#endif      
+#endif
 	  topLevelShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Mail Message Window",
 	  XmNdeleteResponse, XmDO_NOTHING,
@@ -630,7 +630,7 @@ void errMsgSendDlgCreateDlg()
 #else
 	XtAddCallback(sendButton, XmNactivateCallback,
 	  errMsgSendDlgSendButtonCb, NULL);
-#endif	
+#endif
     }
     XtManageChild(actionArea);
     XtManageChild(rowCol);
@@ -642,7 +642,7 @@ static char medmPrintfStr[2048]; /* DANGER: Fixed buffer size */
 /* Priority = 1 means raise the message window */
 void medmPostMsg(int priority, char *format, ...) {
     va_list args;
-    time_t now; 
+    time_t now;
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
     XmTextPosition curpos;
@@ -668,7 +668,7 @@ void medmPostMsg(int priority, char *format, ...) {
     lprintf(timeStampStr);
 #else
     fprintf(stderr, timeStampStr);
-#endif    
+#endif
 
   /* Start variable arguments */
     va_start(args,format);
@@ -689,7 +689,7 @@ void medmPostMsg(int priority, char *format, ...) {
     lprintf("%s",medmPrintfStr);
 #else
     fprintf(stderr,"%s",medmPrintfStr);
-#endif    
+#endif
     va_end(args);
 }
 
@@ -720,7 +720,7 @@ void medmPrintf(int priority, char *format, ...)
     lprintf(medmPrintfStr);
 #else
     fprintf(stderr, medmPrintfStr);
-#endif    
+#endif
 
     va_end(args);
 }
@@ -729,7 +729,7 @@ static int saveEarlyMessage(char *msg)
 {
     int len, newLen;
     int full = 0;
-    
+
   /* Don't do it again */
     if(earlyMessagesDone) return 0;
 
@@ -839,7 +839,7 @@ void medmResetUpdateCAStudyDlg(Widget w, XtPointer clientData,
     updateTaskStatusGetInfo(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
   /* Restart the timeout */
-    medmStartUpdateCAStudyDlg();    
+    medmStartUpdateCAStudyDlg();
 }
 
 void caStudyDlgModeButtonCb(Widget w, XtPointer clientData, XtPointer callData)
@@ -864,7 +864,7 @@ void medmCreateCAStudyDlg() {
 
     if(!caStudyS) {
 	if(mainShell == NULL) return;
-	
+
 	caStudyS = XtVaCreatePopupShell("status",
 	  xmDialogShellWidgetClass, mainShell,
 	  XmNtitle, "MEDM Statistics Window",
@@ -885,8 +885,8 @@ void medmCreateCAStudyDlg() {
 	  XmNlabelString,str,
 	  NULL);
 	XmStringFree(str);
-  
-    
+
+
 	actionArea = XtVaCreateWidget("actionArea",
 	  xmFormWidgetClass, pane,
 	  XmNshadowThickness, 0,
@@ -933,7 +933,7 @@ void medmCreateCAStudyDlg() {
 
   /* Start it if in EXECUTE mode */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
-	medmStartUpdateCAStudyDlg();    
+	medmStartUpdateCAStudyDlg();
     }
 }
 
@@ -950,7 +950,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
     int updateExecuted;
     int totalUpdateRequested;
     int totalUpdateDiscarded;
-    double timeInterval; 
+    double timeInterval;
     int channelCount;
     int channelConnected;
     int caEventCount;
@@ -965,7 +965,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
   /* Check if we should do something */
   /* clientData is NULL except when starting up */
     if(!caStudyS ||
-      (clientData != CASTUDY_INITIAL_UPDATE && !caStudyDlgTimeOutId) || 
+      (clientData != CASTUDY_INITIAL_UPDATE && !caStudyDlgTimeOutId) ||
       globalDisplayListTraversalMode == DL_EDIT) {
 	caStudyDlgTimeOutId=0;
 	return;
@@ -980,7 +980,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
       &periodicUpdateDiscardCount,
       &updateRequestQueued,
       &updateExecuted,
-      &timeInterval); 
+      &timeInterval);
 #ifdef MEDM_CDEV
   /* No channels connected or CA events for CDEV */
     channelConnected = caEventCount = 0;
@@ -1021,9 +1021,9 @@ static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
 	  aveUpdateRequested,
 	  aveUpdateRequestDiscarded,
 	  totalTimeElapsed);
-    } else { 
+    } else {
 	totalTimeElapsed += timeInterval;
-	sprintf(caStudyMsg,  
+	sprintf(caStudyMsg,
 	  "Time Interval (sec)       = %8.2f\n"
 	  "CA Channels               = %8d\n"
 	  "CA Channels Connected     = %8d\n"
@@ -1042,7 +1042,7 @@ static void medmUpdateCAStudyDlg(XtPointer clientData, XtIntervalId *id)
 	  totalUpdateRequested,
 	  totalUpdateDiscarded,
 	  updateRequestQueued);
-    }                   
+    }
     str = XmStringLtoRCreate(caStudyMsg,XmFONTLIST_DEFAULT_TAG);
     XtVaSetValues(caStudyLabel,XmNlabelString,str,NULL);
     XmStringFree(str);
@@ -1082,7 +1082,7 @@ void medmStartUpdateCAStudyDlg()
 #if DEBUG_STATISTICS
     print("medmStartUpdateCAStudyDlg[3]: id=%x\n",caStudyDlgTimeOutId);
 #endif
-#endif    
+#endif
 }
 
 void medmStopUpdateCAStudyDlg()
@@ -1110,7 +1110,7 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
     char buf[1024];     /* Warning: Fixed Size */
     static int nerrors=0;
     static int ended=0;
-    
+
   /* Prevent error storms and recursive errors */
     if(ended) return 0;
     if(nerrors++ > MAX_ERRORS) {
@@ -1122,7 +1122,7 @@ int xErrorHandler(Display *dpy, XErrorEvent *event)
 	  MAX_ERRORS);
 	return 0;
     }
-    
+
     if(event) {
 	XGetErrorText(dpy,event->error_code,buf,1024);
     } else {
@@ -1152,7 +1152,7 @@ void xtErrorHandler(char *message)
 #if DEBUG_ERRORHANDLER
     printf("xtErrorHandler: |%s|\n",message);
 #endif
-    
+
   /* Prevent error storms and recursive errors */
     if(ended) return;
     if(nerrors++ > MAX_ERRORS) {
@@ -1164,7 +1164,7 @@ void xtErrorHandler(char *message)
 	  MAX_ERRORS);
 	return;
     }
-  /* Post the message */    
+  /* Post the message */
     medmPostMsg(1,"xtErrorHandler:\n%s\n", message);
 }
 
@@ -1176,11 +1176,11 @@ int xInfoMsg(Widget parent, const char *fmt, ...)
     XmString xmString;
     Arg args[2];
     int nargs;
-    
+
     va_start(vargs,fmt);
     (void)vsprintf(lstring,fmt,vargs);
     va_end(vargs);
-    
+
     if(lstring[0] != '\0') {
 	xmString=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
 	nargs=0;
@@ -1208,14 +1208,14 @@ int xInfoMsg(Widget parent, const char *fmt, ...)
 /*****************************************************************************
  *
  * Display Help
- *  
+ *
  * Original Author: Vladimir T. Romanovski  (romsky@x4u2.desy.de)
  * Organization: KRYK/@DESY 1996
  *
  *****************************************************************************
 */
 
-/*         
+/*
  * This routine reads the MEDM_HELP environment variable and makes a system
  *   call to provide help for the display
  */
@@ -1229,7 +1229,7 @@ static void displayHelpCallback(Widget shell, XtPointer client_data,
     if(env != NULL) {
       /* Run the help command */
 	char *command;
-	
+
 	command = (char*)malloc(strlen(env) + strlen(name) + 5);
 	sprintf(command, "%s %s &", env, name);
 	(void)system(command);

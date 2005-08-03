@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -41,7 +41,7 @@
 
 #if MAX_CALC_RECORDS != 4
 #error Need to make changes (CALC_A_RC, etc.) if MAX_CALC_RECORDS != 4
-#endif      
+#endif
 
 /*********************************************************************
  * Resource Types                                                    *
@@ -179,7 +179,7 @@ extern const Stacking FIRST_STACKING;
 #define NUM_FILL_MODES          2
 typedef enum {
     FROM_EDGE   = 39,
-    FROM_CENTER = 40 
+    FROM_CENTER = 40
 } FillMode;
 #if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
 const FillMode FIRST_FILL_MODE = FROM_EDGE;
@@ -346,7 +346,7 @@ extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 extern char *stringValueTable[NUMBER_STRING_VALUES];
 extern XmString xmStringValueTable[NUMBER_STRING_VALUES];
 #else
-char *stringValueTable[NUMBER_STRING_VALUES] = { 
+char *stringValueTable[NUMBER_STRING_VALUES] = {
     "execute", "edit",
     "none", "no decorations", "outline", "limits", "channel",
     "static", "alarm", "discrete",
@@ -356,7 +356,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "solid", "outline",
     "decimal", "exponential", "engr. notation", "compact", "truncated",
     "hexadecimal", "octal", "string",
-    "sexagesimal", "sexagesimal-hms", "sexagesimal-dms",    
+    "sexagesimal", "sexagesimal-hms", "sexagesimal-dms",
     "horiz. left", "horiz. centered", "horiz. right",
     "column", "row", "row column",
     "from edge", "from center",
@@ -446,9 +446,9 @@ typedef enum {
 #define ELEMENT_IS_RENDERABLE(type) ((type >= FIRST_RENDERABLE) ? True : False)
 
 /* Masks used for determining selected elements */
-#define SmallestTouched 1    
-#define AllTouched      2    
-#define AllEnclosed     4    
+#define SmallestTouched 1
+#define AllTouched      2
+#define AllEnclosed     4
 
 /*******************
  * Nested structures
@@ -468,7 +468,7 @@ typedef struct {
     char post[MAX_TOKEN_LENGTH];
     Boolean validCalc;
 } DlDynamicAttribute;
-        
+
 typedef struct {
     int x, y;
     unsigned int width, height;
@@ -716,7 +716,6 @@ typedef struct {
     DlObject object;
     DlControl control;
     DlLimits limits;
-    LabelType label;
     ColorMode clrmod;
     double dPrecision;
     char format[MAX_TOKEN_LENGTH];
@@ -842,10 +841,10 @@ typedef struct {
   /* Get limits (from DlLimits attribute) method */
     void (*getLimits)(struct _DlElement *, DlLimits **, char **);
   /* Get values (from the resource bundle) method */
-    void (*getValues)(struct _ResourceBundle *, struct _DlElement *); 
+    void (*getValues)(struct _ResourceBundle *, struct _DlElement *);
   /* Inherit ((some of the) values from the resource bundle) method
    *   Used during rectangular creates */
-    void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *); 
+    void (*inheritValues)(struct _ResourceBundle *, struct _DlElement *);
     void (*setBackgroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*setForegroundColor)(struct _ResourceBundle *, struct _DlElement *);
     void (*move)(struct _DlElement *, int, int);
@@ -854,7 +853,7 @@ typedef struct {
     int  (*editVertex)(struct _DlElement *, int, int);
   /* Cleanup method (only exists for Composite and sets widgets to NULL) */
     void (*cleanup)(struct _DlElement *);
-} DlDispatchTable; 
+} DlDispatchTable;
 
 typedef enum {
     WIDGET,

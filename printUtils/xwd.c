@@ -22,22 +22,22 @@
 /*
  * xwd.c MIT Project Athena, X Window system window raster image dumper.
  *
- * This program will dump a raster image of the contents of a window into a 
+ * This program will dump a raster image of the contents of a window into a
  * file for output on graphics printers or for other uses.
  *
  *  Author:	Tony Della Fera, DEC
  *		17-Jun-85
- * 
+ *
  *  Modification history:
  *
  *  11/14/86 Bill Wyatt, Smithsonian Astrophysical Observatory
- *    - Removed Z format option, changing it to an XY option. Monochrome 
+ *    - Removed Z format option, changing it to an XY option. Monochrome
  *      windows will always dump in XY format. Color windows will dump
  *      in Z format by default, but can be dumped in XY format with the
  *      -xy option.
  *
  *  11/18/86 Bill Wyatt
- *    - VERSION 6 is same as version 5 for monchrome. For colors, the 
+ *    - VERSION 6 is same as version 5 for monchrome. For colors, the
  *      appropriate number of Color structs are dumped after the header,
  *      which has the number of colors (=0 for monochrome) in place of the
  *      V5 padding at the end. Up to 16-bit displays are supported. I
@@ -155,7 +155,7 @@ int xwd(Display *display, Window window, char *filename)
 #ifdef WIN32
   /* WIN32 opens files in text mode by default and then mangles CRLF */
     file = fopen(filename, "wb");
-#else    
+#else
     file = fopen(filename, "w");
 #endif
     if(!file) {
@@ -169,7 +169,7 @@ int xwd(Display *display, Window window, char *filename)
 
   /* Close the file */
     fclose(file);
-    
+
     return status;
 }
 
@@ -205,7 +205,7 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     Window dummywin;
     XWDFileHeader header;
     int screen;
-    
+
   /*
    * Inform the user not to alter the screen.
    */
@@ -243,14 +243,14 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     }
     dwidth = DisplayWidth (display, screen);
     dheight = DisplayHeight (display, screen);
-    
-    
+
+
   /* clip to window */
     if (absx < 0) width += absx, absx = 0;
     if (absy < 0) height += absy, absy = 0;
     if (absx + (int)width > dwidth) width = dwidth - absx;
     if (absy + (int)height > dheight) height = dheight - absy;
-    
+
     XFetchName(display, window, &win_name);
     if (!win_name || !win_name[0]) {
 	win_name = "xwdump";
@@ -258,14 +258,14 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     } else {
 	got_win_name = True;
     }
-    
+
   /* sizeof(char) is included for the null string terminator. */
     win_name_size = strlen(win_name) + sizeof(char);
-    
+
   /*
    * Snarf the pixmap with XGetImage.
    */
-    
+
     x = absx - win_info.x;
     y = absy - win_info.y;
     image = XGetImage (display, window, x, y, width, height, AllPlanes, format);
@@ -274,31 +274,31 @@ static int Window_Dump(Display *display, Window window, FILE *file)
 	  width, height, x, y);
 	return 0;
     }
-    
+
     if (add_pixel_value != 0) XAddPixel((XImage *)image, add_pixel_value);
-    
+
   /*
    * Determine the pixmap size.
    */
     buffer_size = Image_Size(image);
-    
+
     if (debug) print("xwd: Getting Colors.\n");
-    
+
     ncolors = Get_XColors(display, &win_info, &colors);
-    
+
   /*
    * Inform the user that the image has been retrieved.
    */
     XBell(display, FEEP_VOLUME);
     XBell(display, FEEP_VOLUME);
     XFlush(display);
-    
+
   /*
    * Calculate header size.
    */
     if (debug) print("xwd: Calculating header size.\n");
     header_size = sizeof(header) + win_name_size;
-    
+
   /*
    * Write out header information.
    */
@@ -328,7 +328,7 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     header.window_x = absx;
     header.window_y = absy;
     header.window_bdrwidth = (CARD32) win_info.border_width;
-    
+
 #if DEBUG_SWAP
     print("header.header_size=%d\n",header.header_size);
     print("header.file_version=%d\n",header.file_version);
@@ -357,8 +357,8 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     print("header.window_x=%d\n",header.window_x);
     print("header.window_y=%d\n",header.window_y);
     print("header.window_bdrwidth=%d\n",header.window_bdrwidth);
-#endif    
-    
+#endif
+
   /* Swap bytes and words to make the standard file.  This doesn't do
      anything for UNIX systems. Swapped systems will have to reverse
      the swap when they process the file.  */
@@ -381,19 +381,19 @@ static int Window_Dump(Display *display, Window window, FILE *file)
     (void) fwrite((char *)&header, sizeof(header), 1, file);
     (void) fwrite(win_name, win_name_size, 1, file);
 
-    
+
   /*
    * Write out the color maps, if any
    */
-    
+
     if (debug) print("xwd: Dumping %d colors.\n", ncolors);
     (void) fwrite((char *) colors, sizeof(XColor), ncolors, file);
-    
+
   /*
    * Write out the buffer.
    */
     if (debug) print("xwd: Dumping pixmap.  bufsize=%d\n",buffer_size);
-    
+
   /*
    *    This copying of the bit stream (data) to a file is to be replaced
    *  by an Xlib call which hasn't been written yet.  It is not clear
@@ -401,20 +401,20 @@ static int Window_Dump(Display *display, Window window, FILE *file)
    *  non-existant X function.
    */
     (void) fwrite(image->data, (int) buffer_size, 1, file);
-    
+
   /*
    * free the color buffer.
    */
-    
+
     if(debug && ncolors > 0) print("xwd: Freeing colors.\n");
     if(ncolors > 0) free(colors);
-    
+
   /*
    * Free window name string.
    */
     if (debug) print("xwd: Freeing window name string.\n");
     if (got_win_name) XFree(win_name);
-    
+
   /*
    * Free image
    */
@@ -482,7 +482,7 @@ static int Get_XColors(Display *display, XWindowAttributes *win_info,
     }
 
     XQueryColors(display, win_info->colormap, *colors, ncolors);
-    
+
     return(ncolors);
 }
 

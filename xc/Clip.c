@@ -155,7 +155,7 @@ static void
 Redisplay(Widget w, XEvent *event, Region region)
 {
     XbaeClipWidget cw = (XbaeClipWidget)w;
-    
+
     if (cw->clip.expose_proc)
       cw->clip.expose_proc((Widget)cw, event, region);
 }
@@ -201,7 +201,7 @@ static void
 FocusInACT(Widget w, XEvent * event, String *params, Cardinal *nparams)
 {
     XbaeClipWidget cw = (XbaeClipWidget)w;
-      
+
     if (event->xany.type != FocusIn || !event->xfocus.send_event)
       return;
 

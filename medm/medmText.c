@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -65,10 +65,10 @@ static void drawText(Drawable drawable,  GC gc, DlText *dlText)
     int i = 0, usedWidth, usedHeight;
     int x, y;
     size_t nChars;
-    
+
 #if DEBUG_BACKGROUND
     printf("drawText:\n");
-#endif	
+#endif
 
     nChars = strlen(dlText->textix);
     i = dmGetBestFontWithInfo(fontTable,MAX_FONTS,dlText->textix,
@@ -91,7 +91,7 @@ static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 	    }
 	    printf("\n");
 	}
-#endif	
+#endif
 	printf("drawText: h=%d %s%d \"%s\"\n",dlText->object.height,
 	  ALIAS_FONT_PREFIX,fontSizeTable[i],dlText->textix);
     }
@@ -122,7 +122,7 @@ static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 	    static Pixel pixel=0;
 	    static int num=0;
 	    char numString[11];
-	    
+
 	    status=XGetGCValues(display,gc,
 	      GCForeground|GCClipXOrigin|GCClipYOrigin,
 	      &values);
@@ -131,7 +131,7 @@ static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 	      "GCClipXOrigin=%d GCClipYOrigin=%d\n",
 	      status?"":"(Failed)",values.foreground,
 	      values.clip_x_origin,values.clip_y_origin);
-	    
+
 	    pixel+=0xff;
 #if 0
 	    print(  "Drawing a white rectangle\n");
@@ -154,17 +154,17 @@ static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 	    XSetForeground(display,gc,values.foreground);
 	}
     }
-#endif     
+#endif
 }
 
 void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlText *dlText = dlElement->structure.text;
-    
+
 #if DEBUG_FONTS  || DEBUG_BACKGROUND
 	printf("executeDlText: displayInfo=%x dlElement=%x\n",
 	  displayInfo,dlElement);
-#endif	
+#endif
 #if DEBUG_FONTS > 1
 	dumpDlElementList(displayInfo->dlElementList);
 #endif
@@ -175,7 +175,7 @@ void executeDlText(DisplayInfo *displayInfo, DlElement *dlElement)
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlText->dynAttr.chan[0]) {
 	MedmText *pt;
-	
+
 	if(dlElement->data) {
 	    pt = (MedmText *)dlElement->data;
 	} else {
@@ -244,8 +244,8 @@ static void textDraw(XtPointer cd) {
 #if DEBUG_HIDE || DEBUG_BACKGROUND
     printf("textDraw: displayInfo=%x dlElement=%x\n",
       displayInfo,pt->dlElement);
-#endif	
-    
+#endif
+
     if(isConnected(pt->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlText->dynAttr.clr) {
@@ -284,7 +284,7 @@ static void textDraw(XtPointer cd) {
     } else {
 #if DEBUG_BACKGROUND
 	print("  drawWhiteRectangle\n");
-#endif	
+#endif
 	drawWhiteRectangle(pt->updateTask);
     }
 }
@@ -294,7 +294,7 @@ static void textDestroyCb(XtPointer cd) {
 
     if(pt) {
 	Record **records = pt->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -311,7 +311,7 @@ static void textDestroyCb(XtPointer cd) {
 static void textGetRecord(XtPointer cd, Record **record, int *count) {
     MedmText *pt = (MedmText *)cd;
     int i;
-    
+
     *count = 0;
     if(pt && pt->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -326,10 +326,10 @@ DlElement *createDlText(DlElement *p)
 {
     DlText *dlText;
     DlElement *dlElement;
- 
+
     dlText = (DlText *)malloc(sizeof(DlText));
     if(!dlText) return 0;
-    if(p) { 
+    if(p) {
 	*dlText = *p->structure.text;
     } else {
 	objectAttributeInit(&(dlText->object));
@@ -338,13 +338,13 @@ DlElement *createDlText(DlElement *p)
 	dlText->textix[0] = '\0';
 	dlText->align = HORIZ_LEFT;
     }
- 
+
     if(!(dlElement = createDlElement(DL_Text,
       (XtPointer)      dlText,
       &textDlDispatchTable))) {
 	free(dlText);
     }
- 
+
     return(dlElement);
 }
 
@@ -356,10 +356,10 @@ DlElement *parseText(DisplayInfo *displayInfo)
     DlText *dlText;
     DlElement *dlElement = createDlText(NULL);
     int i = 0;
-    
+
     if(!dlElement) return 0;
     dlText = dlElement->structure.text;
-    
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -375,7 +375,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 		strcpy(dlText->textix,token);
 	    } else if(!strcmp(token,"align")) {
 		int found=0;
-		
+
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
@@ -410,7 +410,7 @@ DlElement *parseText(DisplayInfo *displayInfo)
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
- 
+
     return dlElement;
 }
 
@@ -423,7 +423,7 @@ void writeDlText(
     DlText *dlText = dlElement->structure.text;
 
     memset(indent,'\t',level);
-    indent[level] = '\0'; 
+    indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
@@ -432,9 +432,9 @@ void writeDlText(
   	writeDlObject(stream,&(dlText->object),level+1);
   	writeDlBasicAttribute(stream,&(dlText->attr),level+1);
   	writeDlDynamicAttribute(stream,&(dlText->dynAttr),level+1);
-  	if(dlText->textix[0] != '\0') 
+  	if(dlText->textix[0] != '\0')
 	  fprintf(stream,"\n%s\ttextix=\"%s\"",indent,dlText->textix);
-  	if(dlText->align != HORIZ_LEFT) 
+  	if(dlText->align != HORIZ_LEFT)
 	  fprintf(stream,"\n%s\talign=\"%s\"",indent,stringValueTable[dlText->align]);
   	fprintf(stream,"\n%s}",indent);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -453,14 +453,14 @@ void writeDlText(
 /* some timer (cursor blinking) related functions and globals */
 #define BLINK_INTERVAL 700
 #define CURSOR_WIDTH 10
- 
+
 XtIntervalId intervalId;
 int cursorX, cursorY;
 
 static void blinkCursor(XtPointer client_data, XtIntervalId *id)
 {
     static Boolean state = FALSE;
- 
+
     UNREFERENCED(cd);
     UNREFERENCED(id);
 
@@ -481,7 +481,7 @@ static void blinkCursor(XtPointer client_data, XtIntervalId *id)
     intervalId =
       XtAppAddTimeOut(appContext,BLINK_INTERVAL,blinkCursor,NULL);
 }
- 
+
 DlElement *handleTextCreate(int x0, int y0)
 {
     XEvent event;
@@ -498,16 +498,16 @@ DlElement *handleTextCreate(int x0, int y0)
     int usedWidth, usedHeight;
     size_t length;
     int fontIndex;
- 
+
     stringIndex = 0;
     length = 0;
- 
+
     window = XtWindow(currentDisplayInfo->drawingArea);
     dlElement = createDlText(NULL);
     if(!dlElement) return 0;
     dlText = dlElement->structure.text;
     textGetValues(&globalResourceBundle,dlElement);
-    dlText->object.x = x0; 
+    dlText->object.x = x0;
     dlText->object.y = y0;
      /* This following are arbitrary  */
     dlText->object.width = 10;
@@ -517,23 +517,23 @@ DlElement *handleTextCreate(int x0, int y0)
     fontIndex = dmGetBestFontWithInfo(fontTable,MAX_FONTS,"Ag",
       dlText->object.height,dlText->object.width,
       &usedHeight,&usedWidth,FALSE); /* FALSE - don't use width */
- 
+
     globalResourceBundle.x = x0;
     globalResourceBundle.y = y0;
     globalResourceBundle.width = dlText->object.width;
     globalResourceBundle.height = dlText->object.height;
     cursorX = x0;
     cursorY = y0 + usedHeight;
- 
+
     intervalId =
       XtAppAddTimeOut(appContext,BLINK_INTERVAL,blinkCursor,NULL);
- 
+
     XGrabPointer(display,window,FALSE,
       (unsigned int) (ButtonPressMask|LeaveWindowMask),
       GrabModeAsync,GrabModeAsync,None,xtermCursor,CurrentTime);
     XGrabKeyboard(display,window,FALSE,
       GrabModeAsync,GrabModeAsync,CurrentTime);
- 
+
   /* Now loop until button is again pressed or CR is typed */
     while(TRUE) {
 	XtAppNextEvent(appContext,&event);
@@ -556,7 +556,7 @@ DlElement *handleTextCreate(int x0, int y0)
 		XBell(display,50); XBell(display,50);
 	    }
 	    return (dlElement);
- 
+
         case KeyPress:
 	    key = (XKeyEvent *) &event;
 	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
@@ -613,10 +613,10 @@ DlElement *handleTextCreate(int x0, int y0)
 		    break;
 		}
 	    }
- 
+
 	    dlText->object.width = XTextWidth(fontTable[fontIndex],
 	      dlText->textix,strlen(dlText->textix));
- 
+
 	    switch (dlText->align) {
             case HORIZ_LEFT:
                 break;
@@ -648,15 +648,15 @@ DlElement *handleTextCreate(int x0, int y0)
 	    executeDlBasicAttribute(currentDisplayInfo,&(dlText->attr));
 #if DEBUG_FONTS
 	    printf("handleTextCreate: Calling drawText\n");
-#endif	
+#endif
 	    drawText(XtWindow(currentDisplayInfo->drawingArea),
 	      currentDisplayInfo->gc,dlText);
 	    drawText(currentDisplayInfo->drawingAreaPixmap,
 	      currentDisplayInfo->gc,dlText);
- 
+
 	  /* Update these globals for blinking to work */
 	    cursorX = dlText->object.x + dlText->object.width;
- 
+
 	    break;
         default:
 	    XtDispatchEvent(&event);

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -104,7 +104,7 @@ void hsort(double array[], int indx[], int n)
 	indx[0]=0;
 	return;
     }
-    
+
   /* Initialize indx array */
     for(j=0; j < n; j++) indx[j]=j;
   /* Loop over elements */
@@ -127,7 +127,7 @@ void hsort(double array[], int indx[], int n)
 	    if(q < array[indx[j]]) {
 		indx[i]=indx[j];
 		j+=((i=j)+1);
-		
+
 	    }
 	    else break;
 	}
@@ -166,7 +166,7 @@ Boolean extractStringBetweenColons(char *input, char *output,
 int isPath(const char *fileString)
 {
     int pathTest;
-    
+
   /* Look for the appropriate leading character */
 #if defined(VMS)
     pathTest = (strchr(fileString, '[') != NULL);
@@ -183,25 +183,25 @@ int isPath(const char *fileString)
      display, so we don't want to eliminate them. */
 
     return(pathTest);
-}  
+}
 
 /* Convert name to a full path name.  Returns 1 if converted, 0 if
    failed. */
 int convertNameToFullPath(const char *name, char *pathName, int nChars)
 {
     int retVal = 1;
-    
+
     if(isPath(name)) {
       /* Is a full path name */
 	strncpy(pathName, name, nChars);
 	pathName[nChars-1] = '\0';
     } else {
 	char currentDirectoryName[PATH_MAX];
-	
+
       /* Insert the path before the file name */
 	currentDirectoryName[0] = '\0';
 	getcwd(currentDirectoryName, PATH_MAX);
-	
+
 	if(strlen(currentDirectoryName) + strlen(name) <
 	  (size_t)(nChars - 1)) {
 	    strcpy(pathName, currentDirectoryName);
@@ -224,7 +224,7 @@ int convertNameToFullPath(const char *name, char *pathName, int nChars)
 void convertDirDelimiterToWIN32(char *pathName)
 {
     char *ptr;
-    
+
     ptr=strchr(pathName,'/');
     while(ptr) {
 	*ptr='\\';
@@ -329,7 +329,7 @@ void optionMenuRemoveLabel(Widget menu)
     WidgetList children;
     Cardinal numChildren;
     Cardinal n;
-    
+
   /* Get the children */
     XtVaGetValues(menu,
       XmNchildren,&children,
@@ -358,7 +358,7 @@ XtErrorHandler trapExtraneousWarningsHandler(String message)
     } else {
 	medmPostMsg(1,"trapExtraneousWarningsHandler:\n%s\n", message);
     }
-    
+
     return(0);
 }
 
@@ -368,7 +368,7 @@ DlElement *findHiddenRelatedDisplay(DisplayInfo *displayInfo,
 {
     DlElement *pE, *pE1;
     DlObject *po;
-    
+
   /* Loop over elements in the composite */
     pE = SecondDlElement(displayInfo->dlElementList);
     while(pE) {
@@ -394,7 +394,7 @@ DlElement *findHiddenRelatedDisplay(DisplayInfo *displayInfo,
 	      "  x0=%d y0=%d x=%d w=%d x1=%d y=%d h=%d y1=%d\n",
 		  x0,y0,po->x,po->width,po->x + (int)po->width,
 		  po->y,po->height,po->y + (int)po->height);
-#endif	    
+#endif
 	    return(pE);
 	} else if(pE->type == DL_Composite) {
 	    pE1 = findHiddenRelatedDisplayInComposite(pE, x0, y0);
@@ -421,7 +421,7 @@ static DlElement *findHiddenRelatedDisplayInComposite(DlElement *pEC,
 {
     DlElement *pE, *pE1;
     DlObject *po;
-    
+
   /* Loop over elements not including the display */
     pE = FirstDlElement(pEC->structure.composite->dlElementList);
     while(pE) {
@@ -462,12 +462,12 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
     DlElement *pE, *pE1, *pSmallest, *pDisplay;
     DlObject *po, *po1;
     double area, minArea;
-    
+
 #if DEBUG_PVINFO
     print("findSmallestTouchedElement: dynamicOnly=%s x0=%3d y0=%3d\n",
       dynamicOnly?"True ":"False",x0,y0);
 #endif
-    
+
   /* Traverse the display list */
     pSmallest = pDisplay = NULL;
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
@@ -485,7 +485,7 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
 	    pE = pE->next;
 	    continue;
 	}
-	
+
       /* See if the point falls inside the element */
 	po = &(pE->structure.rectangle->object);
 	if(((x0 < po->x) || (x0 > po->x + (int)po->width)) ||
@@ -493,14 +493,14 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
 	    pE = pE->next;
 	    continue;
 	}
-	    
+
       /* If in EXECUTE mode recurse into a composite element */
 	pE1 = pE;
 	po1 = po;
 	if(globalDisplayListTraversalMode == DL_EXECUTE &&
 	  pE->type == DL_Composite) {
 	    DlElement *pE2;
-	    
+
 	    pE2 = findSmallestTouchedCompositeElement(pE, x0, y0, dynamicOnly);
 	    if(pE2) {
 		pE1 = pE2;
@@ -516,10 +516,10 @@ DlElement *findSmallestTouchedElement(DlList *pList, Position x0, Position y0,
 		continue;
 	    }
 	}
-	
+
       /* See if it is smallest element */
 	area=(double)(po1->width)*(double)(po1->height);
-	
+
       /* Keep the last one (the one on top) */
 	if(area <= minArea) {
 	    pSmallest = pE1;
@@ -550,7 +550,7 @@ DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
     int nargs;
     Arg args[2];
     DlElement *pE, *pE1;
-    
+
   /* Get the position relative to the drawing area. Follow parents
      upward to the display */
     child = NULL;
@@ -561,12 +561,12 @@ DlElement *findSmallestTouchedExecuteElement(Widget w, DisplayInfo *displayInfo,
 	XtGetValues(w,args,nargs);
 	*x += x0;
 	*y += y0;
-	
+
 	child = w;
 	w = XtParent(w);
 	if(w == mainShell) return NULL;
     }
-		
+
   /* Try to find element from child since execute sizes are different
      from edit sizes */
     pE = NULL;
@@ -599,7 +599,7 @@ static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
     DlElement *pE, *pE1, *pSmallest, *pDisplay;
     DlObject *po, *po1;
     double area, minArea;
-    
+
 #if DEBUG_PVINFO
     print("findSmallestTouchedCompositeElement: dynamicOnly=%s "
       "x0=%3d y0=%3d\n",
@@ -607,7 +607,7 @@ static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
 #endif
 
     if(!pEC || pEC->type != DL_Composite) return NULL;
-    
+
   /* Traverse the display list */
     pSmallest = pDisplay = NULL;
     minArea = (double)(INT_MAX)*(double)(INT_MAX);
@@ -626,14 +626,14 @@ static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
 	    pE = pE->next;
 	    continue;
 	}
-	    
+
       /* If in EXECUTE mode recurse into a composite element */
 	pE1 = pE;
 	po1 = po;
 	if(globalDisplayListTraversalMode == DL_EXECUTE &&
 	  pE->type == DL_Composite) {
 	    DlElement *pE2;
-	    
+
 	    pE2 = findSmallestTouchedCompositeElement(pE, x0, y0,
 	      dynamicOnly);
 	    if(pE2) {
@@ -650,10 +650,10 @@ static DlElement *findSmallestTouchedCompositeElement(DlElement *pEC,
 		continue;
 	    }
 	}
-	
+
       /* See if it is smallest element */
 	area=(double)(po1->width)*(double)(po1->height);
-	
+
       /* Keep the last one (the one on top) */
 	if(area <= minArea) {
 	    pSmallest = pE1;
@@ -723,14 +723,14 @@ void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
 {
     DlElement *pE = LastDlElement(pList1);
     int criterion;
-    
+
     while(pE->prev) {
 	DlObject *po = &(pE->structure.rectangle->object);
 
 	if(mode&AllTouched) {
 	  /* Find all the elements that are touched by the midpoint */
 	    Position x = (x0 + x1)/2, y = (y0 + y1)/2;
-	    
+
 	    criterion = po->x <= x && (po->x + (int)po->width) >= x &&
 	      po->y <= y && (po->y + (int)po->height) >= y;
 	} else if(mode&AllEnclosed) {
@@ -740,7 +740,7 @@ void findAllMatchingElements(DlList *pList1, Position x0, Position y0,
 	} else {
 	    return;
 	}
-	
+
       /* Do not include the display */
 	if(pE->type != DL_Display && criterion) {
 	    DlElement *pENew = createDlElement(DL_Element,(XtPointer)pE,NULL);
@@ -793,7 +793,7 @@ Boolean dmResizeDisplayList(DisplayInfo *displayInfo,
  *   is resized.
  */
 
-Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth, 
+Boolean dmResizeSelectedElements(DisplayInfo *displayInfo, Dimension newWidth,
   Dimension newHeight)
 {
     DlElement *elementPtr;
@@ -834,7 +834,7 @@ void resizeDlElementReferenceList(DlList *dlElementList, int x, int y,
 	    int h = (int)pE->structure.rectangle->object.height;
 	    int xOffset = (int) (scaleX * (float) w + 0.5) - w;
 	    int yOffset = (int) (scaleY * (float) h + 0.5) - h;
-	    
+
 	    if(pE->run->scale) {
 		pE->run->scale(pE,xOffset,yOffset);
 	    }
@@ -961,7 +961,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    XKeyEvent *kevent = (XKeyEvent *)&event;
 	    Modifiers modifiers;
 	    KeySym keysym;
-	    
+
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
@@ -981,7 +981,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 #if DEBUG_EVENTS > 1
 	    print("  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	  /* Undraw old one */
 	    XDrawRectangle(display, window, xorGC, x, y, w, h);
 	    XUngrabServer(display);
@@ -1012,7 +1012,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 #if DEBUG_EVENTS > 1
 	    print("  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	  /* Undraw old one */
 	    XDrawRectangle(display, window, xorGC, x, y, w, h);
 	  /* Update current coordinates */
@@ -1066,7 +1066,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 #if DEBUG_EVENTS > 1
     print("\n[doDragging] selectedDlElement list :\n");
     dumpDlElementList(cdi->selectedDlElementList);
-#endif    
+#endif
 
     snap = cdi->grid->snapToGrid;
     gridSpacing = cdi->grid->gridSpacing;
@@ -1113,7 +1113,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	      minX,maxX,minY,maxY);
 	    print(" po->x=%d po->width=%d po->y=%d po->height =%d\n",
 	      po->x,po->width,po->y,po->height);
-#endif	    
+#endif
 	}
 	dlElement = dlElement->next;
     }
@@ -1140,7 +1140,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
       " groupDeltaY0=%d groupDeltaX1=%d groupDeltaY1=%d\n\n",
       groupWidth,groupHeight,groupDeltaX0,
       groupDeltaY0,groupDeltaX1,groupDeltaY1);
-#endif    
+#endif
 #if DEBUG_EVENTS > 2
     XUngrabServer(display);
     XUngrabPointer(display,CurrentTime);
@@ -1156,7 +1156,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    XKeyEvent *kevent = (XKeyEvent *)&event;
 	    Modifiers modifiers;
 	    KeySym keysym;
-	    
+
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
@@ -1175,7 +1175,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 #if DEBUG_EVENTS > 1
 	    print("  ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while(dlElement) {
@@ -1197,7 +1197,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 #if DEBUG_EVENTS > 1
 	    print("  MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	  /* Undraw old ones */
 	    dlElement = FirstDlElement(cdi->selectedDlElementList);
 	    while(dlElement) {
@@ -1213,7 +1213,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    if(snap) {
 	      /* Insure xMinNew and yMinNew are on the grid */
 		int xMinNew, yMinNew;
-		
+
 		x = event.xmotion.x;
 		y = event.xmotion.y;
 		xMinNew = ((x - groupDeltaX0 + gridSpacing/2)/gridSpacing)*
@@ -1261,7 +1261,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 #if DEBUG_EVENTS > 1
 	    print("  Default: %s\n",getEventName(event.type));
 	    fflush(stdout);
-#endif	    
+#endif
 	    XtDispatchEvent(&event);
 	}
     }
@@ -1301,7 +1301,7 @@ static int doPasting(int *offsetX, int *offsetY)
     x1 = INT_MIN;
     y1 = INT_MIN;
 
-  /* Normalize such that cursor is in middle of pasted objects */    
+  /* Normalize such that cursor is in middle of pasted objects */
     dlElement = FirstDlElement(clipboard);
     while(dlElement) {
 	if(dlElement->type != DL_Display) {
@@ -1357,21 +1357,21 @@ static int doPasting(int *offsetX, int *offsetY)
       "  PointerMotionMask=%d ButtonReleaseMask=%d KeyPressMask=%d\n",
       window, XtWindow(cdi->drawingArea),
       PointerMotionMask,ButtonReleaseMask,KeyPressMask);
-#endif    
+#endif
     status = XGrabPointer(display, window, False,
       (unsigned int)(PointerMotionMask|ButtonReleaseMask),
       GrabModeAsync, GrabModeAsync, GRAB_WINDOW, dragCursor, CurrentTime);
-#if 0    
+#if 0
     print("\ndoPasting: Status=%d (GrabSuccess=%d GrabNotViewable=%d "
       "AlreadyGrabbed=%d GrabFrozen=%d GrabInvalidTime=%d\n",
       status,GrabSuccess,GrabNotViewable,AlreadyGrabbed,GrabFrozen,GrabInvalidTime);
-#endif    
+#endif
 
   /* Grab the server to ensure that XORing will be okay */
   /* Take this out for debugging */
 #if 1
     XGrabServer(display);
-#endif    
+#endif
 
   /* Draw first rectangle */
   /* As usual, type in union unimportant as long as object is 1st thing */
@@ -1379,7 +1379,7 @@ static int doPasting(int *offsetX, int *offsetY)
     while(dlElement) {
 	if(dlElement->type != DL_Display) {
 	    DlObject *po = &(dlElement->structure.rectangle->object);
-	    XDrawRectangle(display, window, xorGC, 
+	    XDrawRectangle(display, window, xorGC,
 	      winX + po->x - dx, winY + po->y - dy,
 	      po->width, po->height);
 	}
@@ -1395,8 +1395,8 @@ static int doPasting(int *offsetX, int *offsetY)
 	    Modifiers modifiers;
 	    KeySym keysym;
 	    int deltaX = 0, deltaY = 0, mult = 1;
-	    
-	    
+
+
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
@@ -1441,7 +1441,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		    }
 		    dlElement = dlElement->next;
 		}
-		
+
 	      /* Set coordinates */
 		if(snap) {
 		    winX += gridSpacing * deltaX;
@@ -1455,7 +1455,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		if(snap) {
 		  /* Insure x0 and y0 are on the grid */
 		    int x0New, y0New;
-		    
+
 		    x0New = ((winX -dx + x0 + gridSpacing/2)/gridSpacing)*
 		      gridSpacing;
 		    winX = x0New - x0 + dx;
@@ -1470,7 +1470,7 @@ static int doPasting(int *offsetX, int *offsetY)
 #if 0
 		    print("x=%d winX=%d daLeft=%d daRight=%d x0=%d x1=%d x0New=%d y0New=%d dx=%d daWidth=%d\n",
 		      event.xbutton.x,winX,daLeft,daRight,x0,x1,x0New,y0New,dx,(int)daWidth);
-#endif	   
+#endif
 		} else {
 		  /* Insure nothing goes outside the display */
 		    if(winX < daLeft) winX = daLeft;
@@ -1478,7 +1478,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		    if(winY < daTop) winY = daTop;
 		    if(winY > daBottom) winY = daBottom;
 		}
-		
+
 	      /* Draw new ones */
 		dlElement = FirstDlElement(clipboard);
 		while(dlElement) {
@@ -1491,7 +1491,7 @@ static int doPasting(int *offsetX, int *offsetY)
 			  winY + po->y - dy,
 			  (int)po->width,
 			  (int)po->height);
-#endif		      
+#endif
 			XDrawRectangle(display, window, xorGC,
 			  winX + po->x - dx, winY + po->y - dy,
 			  po->width, po->height);
@@ -1520,7 +1520,7 @@ static int doPasting(int *offsetX, int *offsetY)
 	    while(dlElement) {
 		if(dlElement->type != DL_Display) {
 		    DlObject *po = &(dlElement->structure.rectangle->object);
-		    XDrawRectangle(display, window, xorGC, 
+		    XDrawRectangle(display, window, xorGC,
 		      winX + po->x - dx, winY + po->y - dy,
 		      po->width, po->height);
 		}
@@ -1556,7 +1556,7 @@ static int doPasting(int *offsetX, int *offsetY)
 	    if(snap) {
 	      /* Insure x0 and y0 are on the grid */
 		int x0New, y0New;
-		
+
 		x0New = ((winX -dx + x0 + gridSpacing/2)/gridSpacing)*
 		  gridSpacing;
 		winX = x0New - x0 + dx;
@@ -1571,7 +1571,7 @@ static int doPasting(int *offsetX, int *offsetY)
 #if 0
 		print("x=%d winX=%d daLeft=%d daRight=%d x0=%d x1=%d x0New=%d y0New=%d dx=%d daWidth=%d\n",
 		  event.xbutton.x,winX,daLeft,daRight,x0,x1,x0New,y0New,dx,(int)daWidth);
-#endif	   
+#endif
 	    } else {
 	      /* Insure nothing goes outside the display */
 		if(winX < daLeft) winX = daLeft;
@@ -1592,7 +1592,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		      winY + po->y - dy,
 		      (int)po->width,
 		      (int)po->height);
-#endif		      
+#endif
 		    XDrawRectangle(display, window, xorGC,
 		      winX + po->x - dx, winY + po->y - dy,
 		      po->width, po->height);
@@ -1614,7 +1614,7 @@ static int doPasting(int *offsetX, int *offsetY)
  *	(and hence was valid)
  * KE: This is not correct; It ALWAYS returns true
  */
-Boolean doResizing(Window window, Position initialX, Position initialY, 
+Boolean doResizing(Window window, Position initialX, Position initialY,
   Position *finalX, Position *finalY)
 {
     XEvent event;
@@ -1654,7 +1654,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    XKeyEvent *kevent = (XKeyEvent *)&event;
 	    Modifiers modifiers;
 	    KeySym keysym;
-	    
+
 	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
 	      &modifiers, &keysym);
 #if 0
@@ -1674,7 +1674,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 #if DEBUG_EVENTS > 1
 	    print("ButtonRelease: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 	    XUngrabServer(display);
 	    XUngrabPointer(display,CurrentTime);
@@ -1692,7 +1692,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 #if DEBUG_EVENTS > 1
 	    print("MotionNotify: x=%d y=%d\n",event.xbutton.x,event.xbutton.y);
 	    fflush(stdout);
-#endif	    
+#endif
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
 	    break;
 	default:
@@ -1780,7 +1780,7 @@ void destroyElementWidgets(DlElement *element)
 	child = FirstDlElement(element->structure.composite->dlElementList);
 	while(child) {
 	    DlElement *pE = child;
-	    
+
 	    if(pE->type == DL_Composite) {
 		destroyElementWidgets(pE);
 	    } else if(pE->widget) {
@@ -1901,7 +1901,7 @@ void copySelectedElementsIntoClipboard()
     if(!IsEmpty(clipboard)) {
 	clearDlDisplayList(NULL, clipboard);
     }
-  
+
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while(dlElement) {
 	DlElement *element = dlElement->structure.element;
@@ -1944,7 +1944,7 @@ int copyElementsIntoDisplay()
     while(dlElement) {
 	if(dlElement->type != DL_Display) {
 	    DlElement *pE, *pSE;
-	    
+
 	    pE = dlElement->run->create(dlElement);
 	    if(pE) {
 		appendDlElement(cdi->dlElementList,pE);
@@ -1979,11 +1979,11 @@ void deleteElementsInDisplay(DisplayInfo *displayInfo)
 {
     DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
-    
+
     if(!cdi) return;
     if(IsEmpty(cdi->selectedDlElementList)) return;
     saveUndoInfo(cdi);
-    
+
   /* Unhighlight selected elements */
     unhighlightSelectedElements();
   /* Traverse the elements in the selected element list */
@@ -2053,7 +2053,7 @@ void selectAllElementsInDisplay()
     dlElement = SecondDlElement(cdi->dlElementList);
     while(dlElement) {
 	DlElement *pE;
-	
+
 	pE = createDlElement(DL_Element,(XtPointer)dlElement,NULL);
 	if(pE) {
 	    appendDlElement(cdi->selectedDlElementList,pE);
@@ -2077,7 +2077,7 @@ void selectDisplay()
     DisplayInfo *cdi = currentDisplayInfo;
     DlElement *dlElement;
     DlElement *pE;
-	
+
     if(!cdi) return;
 
   /* Unselect any selected elements */
@@ -2108,7 +2108,7 @@ void lowerSelectedElements()
     DlElement *pE = 0; /* pointer to the element in the selected element list */
     DlElement *pFirst = 0; /* pointer to the first element in the display element list */
     DlElement *pTemp;
-    
+
 #if DEBUG_EVENTS
     print("\n[lowerSelectedElements:1]dlElementList :\n");
     dumpDlElementList(cdi->dlElementList);
@@ -2128,7 +2128,7 @@ void lowerSelectedElements()
     saveUndoInfo(cdi);
 
     unhighlightSelectedElements();
-    
+
     pFirst = FirstDlElement(cdi->dlElementList);
     pE = LastDlElement(cdi->selectedDlElementList);
 #if DEBUG_EVENTS > 1
@@ -2189,7 +2189,7 @@ void raiseSelectedElements()
     DisplayInfo *cdi = currentDisplayInfo;
     DlElement *pE = 0;
     DlElement *pTemp;
-    
+
 #if DEBUG_EVENTS
     print("\n[raiseSelectedElements:1]dlElementList :\n");
     dumpDlElementList(cdi->dlElementList);
@@ -2282,12 +2282,12 @@ void alignSelectedElements(int alignment)
     }
     deltaX = (minX + maxX)/2;
     deltaY = (minY + maxY)/2;
-    
+
   /* Loop and set x,y values, and move if widgets */
     dlElement = LastDlElement(cdi->selectedDlElementList);
     while(dlElement != cdi->selectedDlElementList->head) {
 	ele = dlElement->structure.element;
-	
+
       /* Can't move the display */
 	if(ele->type != DL_Display) {
 	    switch(alignment) {
@@ -2376,12 +2376,12 @@ void orientSelectedElements(int alignment)
     }
     centerX = (minX + maxX)/2;
     centerY = (minY + maxY)/2;
-    
+
   /* Loop and set x,y values, and move if widgets */
     dlElement = LastDlElement(cdi->selectedDlElementList);
     while(dlElement != cdi->selectedDlElementList->head) {
 	ele = dlElement->structure.element;
-	
+
       /* Can't move the display (but there isn't any orient method anyway) */
 	if(ele->type != DL_Display) {
 	    if(ele->run->orient) {
@@ -2470,7 +2470,7 @@ void spaceSelectedElements(int plane)
     for(i=0; i < nele; i++) {
 	print("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
     }
-#endif    
+#endif
   /* Sort elements by position */
     hsort(array,indx,nele);
 #if 0
@@ -2478,7 +2478,7 @@ void spaceSelectedElements(int plane)
     for(i=0; i < nele; i++) {
 	print("array[%d]=%f indx[%d]=%d\n",i,array[i],i,indx[i]);
     }
-#endif    
+#endif
 
   /* Loop and and move */
     z = -1;
@@ -2721,7 +2721,7 @@ void spaceSelectedElements2D(void)
 
   /* Cleanup possible damage to non-widgets */
     dmTraverseNonWidgetsInDisplayList(cdi);
-    
+
     highlightSelectedElements();
 }
 
@@ -2779,13 +2779,13 @@ void alignSelectedElementsToGrid(Boolean edges)
 		xoff = x - x0;
 		x0=x-xoff;
 		if(xoff > gridSpacing/2) xoff -= gridSpacing;
-		
+
 		y = y00 + (int)pE->structure.rectangle->object.height;
 		y0 = (y/gridSpacing)*gridSpacing;
 		yoff = y - y0;
 		y0=y-yoff;
 		if(yoff > gridSpacing/2) yoff -= gridSpacing;
-		
+
 		if(xoff != 0 || yoff != 0) {
 		    redraw=1;
 		    if(pE->run->scale) {
@@ -2817,7 +2817,7 @@ void alignSelectedElementsToGrid(Boolean edges)
 	  ->structure.element->type;
 	setResourcePaletteEntries();
     }
-    
+
     highlightSelectedElements();
 }
 
@@ -2988,7 +2988,7 @@ void sizeSelectedTextElements(void)
     DlElement *dlElement, *pE;
     DlText *dlText;
     size_t nChars;
-    
+
     if(!currentDisplayInfo) return;
     cdi = currentDisplayInfo;
     if(IsEmpty(cdi->selectedDlElementList)) return;
@@ -3302,7 +3302,7 @@ DisplayInfo *findDisplay(char *filename, char *argsString,
       /* We just wanted the pathName */
 	fclose(filePtr);
     }
-    
+
   /* Loop over displays */
     di = displayInfoListHead->next;
     while(di) {
@@ -3331,14 +3331,14 @@ DisplayInfo *findDisplay(char *filename, char *argsString,
       /* Return if everything matched */
 	if(matched) {
 	    retVal = di;
-	    break;	    
+	    break;
 	}
 	di = di->next;
-    }	
+    }
 
   /* Free the nameTable */
     if(nameTable) freeNameValueTable(nameTable, numNameValues);
-    
+
     return retVal;
 }
 
@@ -3482,7 +3482,7 @@ void questionDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
 
     UNREFERENCED(w);
 
-    
+
     switch (cbs->reason) {
     case XmCR_OK:
 	displayInfo->questionDialogAnswer = 1;
@@ -3570,7 +3570,7 @@ void warningDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
     XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *) callbackStruct;
 
     UNREFERENCED(w);
-    
+
     switch (cbs->reason) {
     case XmCR_OK:
 	displayInfo->warningDialogAnswer = 1;
@@ -3893,7 +3893,7 @@ void clearUndoInfo(DisplayInfo *displayInfo)
 /* Save Undo information */
 void saveUndoInfo(DisplayInfo *displayInfo)
 {
-#ifdef UNDO    
+#ifdef UNDO
     UndoInfo *undoInfo;
     DlElement *dlElement;
 
@@ -3917,7 +3917,7 @@ void saveUndoInfo(DisplayInfo *displayInfo)
 	clearDlDisplayList(displayInfo, undoInfo->dlElementList);
     }
     if(IsEmpty(displayInfo->dlElementList)) return;
-  
+
     dlElement = FirstDlElement(displayInfo->dlElementList);
     while(dlElement) {
 	DlElement *element = dlElement;
@@ -3947,7 +3947,7 @@ void saveUndoInfo(DisplayInfo *displayInfo)
 /* Restore from saved undo information and save current information for redo */
 void restoreUndoInfo(DisplayInfo *displayInfo)
 {
-#ifdef UNDO    
+#ifdef UNDO
     UndoInfo *undoInfo;
     DlElement *dlElement;
 
@@ -3973,7 +3973,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 
   /* Unselect any selected elements since we aren't keeping track of them */
     unselectElementsInDisplay();
-    
+
 #if DEBUG_UNDO
     print("\nRESTORE\n");
     print("\n[restoreUndoInfo: displayInfo->dlElementList(Before):\n");
@@ -4009,7 +4009,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
 	removeDlDisplayListElementsExceptDisplay(displayInfo,
 	  displayInfo->dlElementList);
     }
-    if(!IsEmpty(undoInfo->dlElementList)) {  
+    if(!IsEmpty(undoInfo->dlElementList)) {
 	dlElement = FirstDlElement(undoInfo->dlElementList);
 	while(dlElement) {
 	    DlElement *element = dlElement;
@@ -4045,7 +4045,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
     print("\n[restoreUndoInfo: undoInfo->dlElementList(3):\n");
     dumpDlElementList(undoInfo->dlElementList);
 #endif
-	
+
 #if DEBUG_UNDO
     print("\n[restoreUndoInfo: displayInfo->dlElementList(After):\n");
     dumpDlElementList(displayInfo->dlElementList);
@@ -4068,7 +4068,7 @@ void restoreUndoInfo(DisplayInfo *displayInfo)
   /* Insure that this is the currentDisplayInfo and refresh */
     currentDisplayInfo = displayInfo;     /* Shouldn't be necessary */
     refreshDisplay(displayInfo);
-#endif    
+#endif
 }
 
 /*
@@ -4087,12 +4087,12 @@ void updateAllDisplayPositions()
   /* Traverse the displayInfo list */
     while(displayInfo != NULL) {
       /* Get the current shell coordinates */
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
 	XtGetValues(displayInfo->shell,args,nargs);
-	
+
       /* The display is the first element */
 	pE = FirstDlElement(displayInfo->dlElementList);
       /* Set the object values of the display from the shell */
@@ -4153,7 +4153,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
   /* Parse the command */
     clen = strlen(cmd);
     for(i=0, ic=0; i < clen; i++) {
-	if(ic >= 1024) {	
+	if(ic >= 1024) {
     return;
 	}
 	if(cmd[i] != '&') {
@@ -4164,14 +4164,14 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 	      /* Get the names */
 		records = getPvInfoFromDisplay(displayInfo, &count, &pE);
 		if(!records) return;   /* (Error messages have been sent) */
-		
+
 	      /* Insert the names */
 		for(j=0; j < count; j++) {
 		    if(!records[j] || !records[j]->name) continue;
 		    name = records[j]->name;
 #if DEBUG_COMMAND
 		    print("%2d |%s|\n",j,name);
-#endif			
+#endif
 		    len = strlen(name);
 		    if(ic + len >= 1024) {
 			medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
@@ -4231,7 +4231,7 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		    XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
 		      xmString,NULL);
 		    XmStringFree(xmString);
-		    
+
 		  /* Popup the prompt dialog, callback will do the rest */
 		    XtManageChild(displayInfo->shellCommandPromptD);
 		    return;
@@ -4245,8 +4245,8 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     command[ic]='\0';
 #if DEBUG_COMMAND
     if(command && *command) print("\nparseAndExecCommand: %s\n",command);
-#endif    
-    if(command && *command) 
+#endif
+    if(command && *command)
 #ifndef VMS
     /* KE: This blocks unless the command includes & (on UNIX) */
     /* It should probably be fixed for WIN32 */
@@ -4260,9 +4260,9 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     spawn_sts = lib$spawn(&cmdDesc,0,0,&spawnFlags,0,0, &status,0,0,0,0,0);
     if(spawn_sts != 1) printf("statuss %d %d\n",spawn_sts, status);
 #endif
-#if 0    
+#if 0
     XBell(display,50);
-#endif    
+#endif
 }
 
 Pixel alarmColor(int type)
@@ -4286,11 +4286,11 @@ void print(const char *fmt, ...)
 {
     va_list vargs;
     static char lstring[1024];  /* DANGER: Fixed buffer size */
-    
+
     va_start(vargs,fmt);
     vsprintf(lstring,fmt,vargs);
     va_end(vargs);
-    
+
     if(lstring[0] != '\0') {
 #ifdef WIN32
 	lprintf("%s",lstring);
@@ -4309,7 +4309,7 @@ Boolean isConnected(Record **records)
     Boolean connected = True;
 
     if(!records) return False;
-    
+
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	if(records[i] && !records[i]->connected) {
 	    connected = False;
@@ -4352,7 +4352,7 @@ Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
   /* Determine whether to draw or not */
     switch(attr->vis) {
     case V_STATIC:
-	return True;	
+	return True;
     case IF_NOT_ZERO:
 	return (records[0]->value != 0.0?True:False);
     case IF_ZERO:
@@ -4368,7 +4368,7 @@ Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
 	    double valueArray[MAX_CALC_INPUTS];
 	    double result;
 	    long status;
-	    
+
 	  /* Fill in the input array */
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
 		if(*attr->chan[i] && records[i]->connected) {
@@ -4417,7 +4417,7 @@ Boolean calcVisibility(DlDynamicAttribute *attr, Record **records)
 	    medmPrintf(1, "    Channel %c: %s\n",
 	      'A'+i, *attr->chan[i]?attr->chan[i]:"None");
 	}
-	return False;	
+	return False;
     }
 }
 
@@ -4441,7 +4441,7 @@ void calcPostfix(DlDynamicAttribute *attr)
       /* If VisibilityMode = calc, print an error message */
 	if(attr->vis == V_CALC){
 	    int i;
-	    
+
 	    medmPostMsg(1, "calcPostFix: "
 	      "Cannot calculate postfix expression:\n");
 	    medmPrintf(1, "    calc: %s\n",
@@ -4461,13 +4461,13 @@ void calcPostfix(DlDynamicAttribute *attr)
 void setDynamicAttrMonitorFlags(DlDynamicAttribute *attr, Record **records)
 {
     int i;
-    
+
     for(i=0; i < MAX_CALC_RECORDS; i++) {
 	Record *pR = records[i];
-	
+
       /* Skip over NULL records */
 	if(!pR) continue;
-	
+
 	if(i == 0) {
 	  /* The main record */
 	  /* Set all requirements to zero */
@@ -4532,7 +4532,7 @@ int calcUsesStatus(char *calc)
 {
     char *cur;
     char *prev;
-    
+
     if(!calc || !*calc) return 0;
     cur=calc;
     while(*cur) {
@@ -4557,7 +4557,7 @@ int calcUsesSeverity(char *calc)
 {
     char *cur;
     char *prev;
-    
+
     if(!calc || !*calc) return 0;
     cur=calc;
     while(*cur) {
@@ -4581,7 +4581,7 @@ int calcUsesSeverity(char *calc)
 char *shortName(char *filename)
 {
     char *shortName = NULL, *ptr;
-    
+
     if(filename) {
 	ptr = shortName = filename;
 	while(*ptr != '\0')
@@ -4660,12 +4660,12 @@ void printEventMasks(Display *display, Window win, char *string)
 	print("%sWindow is NULL (Masks are undefined)\n", string);
 	return;
     }
-    
+
     print("%-27s %-10s %-10s %-10s\n",
       "Mask","all_event","your_event","do_not_propagate");
 /*     for(i=0; i < nmasks; i++) { */
     for(i=2; i < 4; i++) {
-	
+
 	mask=1<<i;
 	print("%-27s %-10s %-10s %-10s\n",
 	  maskNames[i],
@@ -4790,7 +4790,7 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
     Widget shell, da;
     Pixmap savePixmap;
     GC gc;
-    
+
   /* Save the pixmap for redraws */
     gc = XCreateGC(display, rootWindow, 0, NULL);
   /* Eliminate events that we do not handle anyway */
@@ -4800,7 +4800,7 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
     XCopyArea(display, pixmap, savePixmap,
       gc, 0, 0, width, height, 0, 0);
     XFreeGC(display, gc);
-    
+
   /* Make a toplevel shell */
     shell = XtVaCreatePopupShell("pixmapShell",
       topLevelShellWidgetClass, mainShell,
@@ -4817,13 +4817,13 @@ void dumpPixmap(Pixmap pixmap, Dimension width, Dimension height, char *title)
       NULL);
     XtAddCallback(da,XmNexposeCallback,dumpPixmapCb,(XtPointer)savePixmap);
     XtAddCallback(da,XmNresizeCallback,dumpPixmapCb,(XtPointer)savePixmap);
-    
+
     XtPopup(shell, XtGrabNone);
 }
 
 static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
 {
-    XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *)callData;    
+    XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *)callData;
 
     if (cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
@@ -4838,7 +4838,7 @@ static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
 	  XmNwidth, &width,
 	  XmNheight, &height,
 	  NULL);
-#if 0	
+#if 0
         XSetForeground(display,gc,WhitePixel(display,screenNum));
 	XDrawRectangle(display, XtWindow(w), gc, 0, 0, 10, 10);
 #endif
@@ -4851,7 +4851,7 @@ static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
     } else if (cbs->reason == XmCR_PROTOCOLS) {
       /* WM_CLOSE */
 	Pixmap pixmap = (Pixmap)clientData;
-	
+
 	if(pixmap) XFreePixmap(display, pixmap);
 	XtPopdown(w);
     }
@@ -4864,65 +4864,65 @@ static void dumpPixmapCb(Widget w, XtPointer clientData, XtPointer callData)
 #undef XCreateGC
 #undef XFreeGC
 
-/* 
-     This set of routines enable an X11 program to maintain its own 
-     list of reusable resource ids.  It uses an undocumented and unsupported 
-     feature of Xlib, the resource_alloc field of the display structure.  This 
-     field contains a pointer to the resource_id allocator function to be used. 
+/*
+     This set of routines enable an X11 program to maintain its own
+     list of reusable resource ids.  It uses an undocumented and unsupported
+     feature of Xlib, the resource_alloc field of the display structure.  This
+     field contains a pointer to the resource_id allocator function to be used.
 
      The reusable resource id list is implemented as a linked list.
 
-     Ideally, for each resource id which the application frees (pixmaps, GCs, 
-     windows), it will put the resource id back on the reusable list.  In some 
-     cases this will be difficult, or impossible.  In the case of deleting a 
-     window which has subwindows, the application would have to know the window 
-     id of each subwindow to put them back on the reusable list.  Either that, 
-     or just accept that in this case there will be a slow leak of the number 
-     of resource ids available to the program. 
- */ 
+     Ideally, for each resource id which the application frees (pixmaps, GCs,
+     windows), it will put the resource id back on the reusable list.  In some
+     cases this will be difficult, or impossible.  In the case of deleting a
+     window which has subwindows, the application would have to know the window
+     id of each subwindow to put them back on the reusable list.  Either that,
+     or just accept that in this case there will be a slow leak of the number
+     of resource ids available to the program.
+ */
 
-typedef struct _reusable_id_entry { 
-     struct _reusable_id_entry  *next; 
-     XID                id; 
-} reusable_id_entry; 
+typedef struct _reusable_id_entry {
+     struct _reusable_id_entry  *next;
+     XID                id;
+} reusable_id_entry;
 
-static reusable_id_entry *reusable_id_list_head = NULL; 
-static reusable_id_entry *id_entry; 
+static reusable_id_entry *reusable_id_list_head = NULL;
+static reusable_id_entry *id_entry;
 
-/*  Application defined resource ID allocator */ 
+/*  Application defined resource ID allocator */
 
-static XID xPatchResourceIDAllocator(register Display *dpy) 
-{ 
-    XID return_id; 
-    reusable_id_entry *entry_ptr; 
+static XID xPatchResourceIDAllocator(register Display *dpy)
+{
+    XID return_id;
+    reusable_id_entry *entry_ptr;
 
 #define resource_base  (((_XPrivDisplay)dpy)->private3)
 #define resource_mask (((_XPrivDisplay)dpy)->private4)
-#define resource_id  (((_XPrivDisplay)dpy)->private5) 
+#define resource_id  (((_XPrivDisplay)dpy)->private5)
 #define resource_shift  (((_XPrivDisplay)dpy)->private6)
 
-    /* First, are there any IDs available for re-use? */ 
-    if(reusable_id_list_head) { 
-       /* Yes, remove one from the list */ 
-       return_id = reusable_id_list_head->id; 
-       entry_ptr = reusable_id_list_head->next; 
-       free(reusable_id_list_head); 
-       reusable_id_list_head = entry_ptr; 
-       return return_id; 
-    }      
-    /* Else use conventional resource id allocation (from _XAllocID) */ 
-    if(resource_id <= resource_mask) 
-      return (resource_base + (resource_id++ << resource_shift)); 
-    if(resource_id != 0x10000000) { 
+    /* First, are there any IDs available for re-use? */
+    if(reusable_id_list_head) {
+       /* Yes, remove one from the list */
+       return_id = reusable_id_list_head->id;
+       entry_ptr = reusable_id_list_head->next;
+       free(reusable_id_list_head);
+       reusable_id_list_head = entry_ptr;
+       return return_id;
+    }
+    /* Else use conventional resource id allocation (from _XAllocID) */
+    if(resource_id <= resource_mask)
+      return (resource_base + (resource_id++ << resource_shift));
+    if(resource_id != 0x10000000) {
         medmPrintf(1,"\nxPatchResourceIDAllocator: "
-	  "Resource ID allocation space exhausted!\n"); 
-        resource_id = 0x10000000; 
+	  "Resource ID allocation space exhausted!\n");
+        resource_id = 0x10000000;
     }
 #if DEBUG_RESID
     print("xPatchResourceIDAllocator: resID=%x\n",resource_id);
-#endif    
-    return resource_id; 
-} 
+#endif
+    return resource_id;
+}
 
 static void XPatchAddEntryForReuse(XID id)
 {
@@ -4938,7 +4938,7 @@ Pixmap XPatchCreatePixmap(Display *dpy, Drawable drawable, unsigned int width,
     XID (*oldAllocator)(Display *) =
       (((_XPrivDisplay)display)->resource_alloc);
     Pixmap pixmap;
-    
+
   /* Replace the allocator */
     (((_XPrivDisplay)display)->resource_alloc) = xPatchResourceIDAllocator;
 
@@ -4947,10 +4947,10 @@ Pixmap XPatchCreatePixmap(Display *dpy, Drawable drawable, unsigned int width,
 
   /* Restore the allocator */
     (((_XPrivDisplay)display)->resource_alloc) = oldAllocator;
-    
+
 #if DEBUG_RESID
     print("XPatchCreatePixmap: pixmap=%x\n",pixmap);
-#endif    
+#endif
     return pixmap;
 }
 
@@ -4960,7 +4960,7 @@ GC XPatchCreateGC(Display *dpy, Drawable drawable, unsigned long valueMask,
     XID (*oldAllocator)(Display *) =
       (((_XPrivDisplay)display)->resource_alloc);
     GC gc;
-    
+
   /* Replace the allocator */
     (((_XPrivDisplay)display)->resource_alloc) = xPatchResourceIDAllocator;
 
@@ -4969,37 +4969,37 @@ GC XPatchCreateGC(Display *dpy, Drawable drawable, unsigned long valueMask,
 
   /* Restore the allocator */
     (((_XPrivDisplay)display)->resource_alloc) = oldAllocator;
-    
+
 #if DEBUG_RESID
     print("XPatchCreateGC: gc=%x\n",gc);
-#endif    
+#endif
     return gc;
 }
 
 int XPatchFreePixmap(Display *dpy, Pixmap pixmap)
 {
     int retVal = BadPixmap;
-    
+
     if(pixmap) {
 	retVal = XFreePixmap(display, pixmap);
 	XPatchAddEntryForReuse((XID)pixmap);
     }
 #if DEBUG_RESID
     print("XPatchFreePixmap: pixmap=%x\n",pixmap);
-#endif    
+#endif
     return retVal;
 }
 int XPatchFreeGC(Display *dpy,  GC gc)
 {
     int retVal = BadPixmap;
-    
+
     if(gc) {
 	retVal = XFreeGC(display, gc);
 	XPatchAddEntryForReuse((XID)gc);
     }
 #if DEBUG_RESID
     print("XPatchFreeGC: gc=%x\n",gc);
-#endif    
+#endif
     return retVal;
 }
 

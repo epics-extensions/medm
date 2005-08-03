@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -138,7 +138,7 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
 	medmPrintf(0,"  Unknown Data Type\n");
 	return "Error!";
     }
-    
+
   /* KE: Value can be received before the graphical info
    *   Set precision to 0 if it is still -1 from initialization */
     if(precision < 0) precision = 0;
@@ -156,7 +156,7 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
 	if(strchr(textField,'e')) {
 	    localCvtDoubleToString(value,textField,precision);
 	}
-#endif	
+#endif
 	break;
     case EXPONENTIAL:
 	cvtDoubleToExpString(value,textField,precision);
@@ -175,7 +175,7 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
 #if DEBUG_STRTOUL
 	print("valueToString: %s %.1f\n",
 	  textField, value);
-#endif		
+#endif
 	break;
     case SEXAGESIMAL:
 	medmLocalCvtDoubleToSexaStr(value,textField,precision,
@@ -200,7 +200,7 @@ static char *valueToString(MedmTextEntry *pte, TextFormat format)
     }
     return textField;
 }
- 
+
 /***
  *** Text Entry
  ***/
@@ -241,7 +241,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  &(dlTextEntry->object),
 	  textEntryDraw,
 	  (XtPointer)pte);
-	
+
 	if(pte->updateTask == NULL) {
 	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
 	} else {
@@ -255,7 +255,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
 	pte->updateAllowed = True;
 	drawWhiteRectangle(pte->updateTask);
     }
-    
+
   /* Create the widget */
     n = 0;
     XtSetArg(args[n],XmNx,(Position)dlTextEntry->object.x); n++;
@@ -274,23 +274,23 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
       ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
 	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
     XtSetArg(args[n],XmNmarginHeight,
-      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR) 
+      ( (dlTextEntry->object.height <= 2*GOOD_MARGIN_DIVISOR)
 	?  0 : (dlTextEntry->object.height/GOOD_MARGIN_DIVISOR)) ); n++;
     XtSetArg(args[n],XmNfontList,fontListTable[
       textFieldFontListIndex(dlTextEntry->object.height)]); n++;
     dlElement->widget = XtCreateWidget("textField",
       xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
-    
+
   /* Add the callbacks for update */
     XtAddCallback(dlElement->widget,XmNactivateCallback,
       (XtCallbackProc)textEntryValueChanged, (XtPointer)pte);
-    
+
   /* Unregister it as a drop site unless it is explicitly a string
    *   (Btn2 drag and drop tends to trash it) */
     if(dlTextEntry->format != STRING) {
 	XmDropSiteUnregister(dlElement->widget);
     }
-    
+
   /* Add a callback called when the user starts entering new data into
    *   the text field.  The textEntryModifyVerifyCallback only adds the
    *   textEntryLosingFocus callback and only if it is not added already.
@@ -337,10 +337,10 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
     localWidget = XtCreateWidget("textField",
       xmTextFieldWidgetClass, displayInfo->drawingArea, args, n);
     dlElement->widget = localWidget;
-    
+
   /* Add handlers */
     addCommonHandlers(localWidget, displayInfo);
-    
+
     XtManageChild(localWidget);
 }
 
@@ -398,7 +398,7 @@ static void textEntryDraw(XtPointer cd)
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -463,7 +463,7 @@ static void textEntryLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     MedmTextEntry *pte = (MedmTextEntry *) cd;
 
     UNREFERENCED(cbs);
-    
+
     XtRemoveCallback(w,XmNlosingFocusCallback,
       (XtCallbackProc)textEntryLosingFocusCallback,pte);
     pte->updateAllowed = True;
@@ -488,7 +488,7 @@ static void textEntryModifyVerifyCallback(Widget w, XtPointer clientData,
 	  /* No callback installed */
 	    XtAddCallback(w,XmNlosingFocusCallback,
 	      (XtCallbackProc)textEntryLosingFocusCallback,pte);
-	    pte->updateAllowed = False; 
+	    pte->updateAllowed = False;
 	    break;
 	case XtCallbackHasSome:
 	  /* Callback already installed */
@@ -519,12 +519,12 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 	if(!(textValue = XmTextFieldGetString(w))) return;
 	switch (pr->dataType) {
 	case DBF_STRING:
-	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
+	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE)
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	    medmSendString(pte->record,textValue);
 	    break;
 	case DBF_ENUM:
-	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE) 
+	    if(strlen(textValue) >= (size_t) MAX_STRING_SIZE)
 	      textValue[MAX_STRING_SIZE-1] = '\0';
 	  /* Check for a match */
 	    match = False;
@@ -562,7 +562,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 		    medmSendLong(pte->record,longValue);
 		} else {
 		    char string[BUFSIZ];
-		    
+
 		    sprintf(string,"textEntryValueChanged: Invalid value:\n"
 		      "  Name: %s\n  Value: \"%s\"\n"
 		      " [Use PV Info to determine valid values]\n",
@@ -593,7 +593,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 #if DEBUG_STRTOUL
 		print("textEntryValueChanged (DBF_LONG): %s %ld\n",
 		  textValue, longValue);
-#endif		
+#endif
 	    } else {
 		if((strlen(textValue) > (size_t)2) && (textValue[0] == '0')
 		  && (textValue[1] == 'x' || textValue[1] == 'X')) {
@@ -636,7 +636,7 @@ static void textEntryValueChanged(Widget  w, XtPointer clientData,
 #if DEBUG_STRTOUL
 		print("textEntryValueChanged: %s %.1f\n",
 		  textValue, value);
-#endif		
+#endif
 	    } else if(dlTextEntry->format == SEXAGESIMAL) {
 		value = strtos(textValue,pr->hopr,pr->lopr,&end,&status);
 	    } else if(dlTextEntry->format == SEXAGESIMAL_HMS) {
@@ -689,13 +689,13 @@ static void textEntryUpdateGraphicalInfoCb(XtPointer cd)
     precision = pr->precision;
     if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
-    
+
   /* Set lopr and hopr to channel - they aren't used by the TextEntry */
     dlTextEntry->limits.lopr = lopr.fval;
     dlTextEntry->limits.loprChannel = lopr.fval;
     dlTextEntry->limits.hopr = hopr.fval;
     dlTextEntry->limits.hoprChannel = hopr.fval;
-    
+
   /* Set Channel and User limits for prec (if apparently not set yet) */
     dlTextEntry->limits.precChannel = precision;
     if(dlTextEntry->limits.precSrc != PV_LIMITS_USER &&
@@ -754,7 +754,7 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
     int i = 0;
 
     if(!dlElement) return 0;
-    dlTextEntry = dlElement->structure.textEntry; 
+    dlTextEntry = dlElement->structure.textEntry;
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -765,7 +765,7 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 	    else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for(i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) { 
+		for(i=FIRST_COLOR_MODE;i<FIRST_COLOR_MODE+NUM_COLOR_MODES;i++) {
 		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextEntry->clrmod = i;
 			break;
@@ -774,7 +774,7 @@ DlElement *parseTextEntry(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"format")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		for(i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) { 
+		for(i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
 		    if(!strcmp(token,stringValueTable[i])) {
 			dlTextEntry->format = i;
 			break;

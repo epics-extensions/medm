@@ -9,15 +9,19 @@
  *
  * Description:
  *      MEDM CDEV Interface Header file
- *      
+ *
  *      Device Name And Attribute Name Cannot Exceed Length 127
  *
- * Author:  
+ * Author:
  *      Jie Chen
  *      Jefferson Lab. Control Software Group
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.3  2005/08/03 14:56:55  evans
+ *   Trimmed extra whitespace at end of lines in the source files.  There
+ *   may be changes related to the WheelSwitch, as well.
+ *
  *   Revision 1.2  1998/09/11 22:31:37  evans
  *   Merged changes from Jie Chen (CDEV) and Anton Mezger (VMS).
  *
@@ -80,7 +84,7 @@ typedef struct _Record {
   Boolean            useMsgWhenWrite[2];
   char               **stateStrings;
   char               *name;
-  char               *attr; 
+  char               *attr;
   char               *verb;
   char               *fullname;  /* device attr */
   XtPointer          array;
@@ -88,17 +92,17 @@ typedef struct _Record {
   int                autoscale;
 
   XtPointer          clientData;
-  void (*updateValueCb)(XtPointer); 
-  void (*updateGraphicalInfoCb)(XtPointer); 
+  void (*updateValueCb)(XtPointer);
+  void (*updateGraphicalInfoCb)(XtPointer);
   Boolean  monitorSeverityChanged;
   Boolean  monitorValueChanged;
   Boolean  monitorZeroAndNoneZeroTransition;
 } Record;
 
 extern void medmDestroyRecord            (Record *pr);
-extern void medmRecordAddUpdateValueCb   (Record *pr, 
+extern void medmRecordAddUpdateValueCb   (Record *pr,
 					  void (*updateValueCb)(XtPointer));
-extern void medmRecordAddGraphicalInfoCb (Record *pr, 
+extern void medmRecordAddGraphicalInfoCb (Record *pr,
 					  void (*updateGraphicalInfoCb)(XtPointer));
 
 #define CA_PEND_EVENT_TIME 1e-6			/* formerly 0.0001 */
@@ -114,7 +118,7 @@ typedef long                    dbr_long_t;
 typedef cdev_TS_STAMP           TS_STAMP;
 
 #define MAX_ENUM_STATES		16
-#define db_state_dim		MAX_ENUM_STATES	
+#define db_state_dim		MAX_ENUM_STATES
 #define MAX_STRING_SIZE         40
 
 typedef struct _pv_type_name_

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -48,7 +48,7 @@ static Widget channelFilePDM, openFSD;
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     UNREFERENCED(cd);
-    
+
     switch(((XmAnyCallbackStruct *) cbs)->reason){
     case XmCR_CANCEL:
 	XtUnmanageChild(w);

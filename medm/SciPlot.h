@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------
  * SciPlot      A entended plotting widget
- * 
+ *
  * CopyRight (c) 1997 Jie Chen
- * 
+ *
  * Free software. Allow interactive zoom and pan to existing plotting widget
  */
 /*----------------------------------------------------------------------------
@@ -38,7 +38,7 @@
 #include <float.h>
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 {
 #endif
 
@@ -46,7 +46,7 @@ extern "C"
 
 #ifndef XtIsSciPlot
 #define XtIsSciPlot(w) XtIsSubclass((Widget)w, sciplotWidgetClass)
-#endif 
+#endif
 
 
   /* NOTE:  float.h is required by POSIX */
@@ -172,7 +172,7 @@ typedef struct _SciPlotDragCbkStruct
 
 typedef struct _SciPlotPointerCbkStruct
 {
-  int            action;         
+  int            action;
   XEvent         *event;
   real           x;              /* current x and y coordinates in user  */
   real           y;              /* space                                */
@@ -213,7 +213,7 @@ typedef struct _SciPlotRec      *SciPlotWidget;
 #define NO_COMPUTE_MIN_MAX_Y 5
 
 /* functions decleration */
-extern FILE* SciPlotPSCreateHeader            (Widget plot, 
+extern FILE* SciPlotPSCreateHeader            (Widget plot,
 					       char* filename,
 					       float width, float height);
 extern float SciPlotPSAdd                     (Widget plot, FILE* fd, float ht,
@@ -231,26 +231,26 @@ extern void SciPlotSetForegroundColor         (Widget wi, int color);
 extern int  NumberAllocatedColors             (Widget wi);
 extern Pixel PixelValue                       (Widget wi, int color);
 extern void SciPlotListDelete                 (Widget wi, int idnum);
-extern int SciPlotListCreateFromData          (Widget wi, int num, real *xlist, 
-					       real *ylist, char *legend, 
-					       int pcolor, int pstyle, 
+extern int SciPlotListCreateFromData          (Widget wi, int num, real *xlist,
+					       real *ylist, char *legend,
+					       int pcolor, int pstyle,
 					       int lcolor, int lstyle);
-extern int SciPlotListCreateFloat             (Widget wi, int num, 
+extern int SciPlotListCreateFloat             (Widget wi, int num,
 					       float *xlist, float *ylist, char *legend);
-extern void SciPlotListUpdateFloat            (Widget wi, int idnum, 
+extern void SciPlotListUpdateFloat            (Widget wi, int idnum,
 					       int num, float *xlist, float *ylist);
-extern void SciPlotListAddFloat               (Widget wi, int idnum, 
+extern void SciPlotListAddFloat               (Widget wi, int idnum,
 					       int num, float *xlist, float *ylist);
-extern int SciPlotListCreateDouble            (Widget wi, int num, 
+extern int SciPlotListCreateDouble            (Widget wi, int num,
 					       double *xlist, double *ylist, char *legend);
-extern void SciPlotListUpdateDouble           (Widget wi, int idnum, 
+extern void SciPlotListUpdateDouble           (Widget wi, int idnum,
 					       int num, double *xlist, double *ylist);
-extern void SciPlotListAddDouble              (Widget wi, int idnum, 
+extern void SciPlotListAddDouble              (Widget wi, int idnum,
 					       int num, double *xlist, double *ylist);
-extern void SciPlotListSetStyle               (Widget wi, int idnum, 
-					       int pcolor, int pstyle, 
+extern void SciPlotListSetStyle               (Widget wi, int idnum,
+					       int pcolor, int pstyle,
 					       int lcolor, int lstyle);
-extern void SciPlotListSetMarkerText          (Widget wi, int idnum, 
+extern void SciPlotListSetMarkerText          (Widget wi, int idnum,
 					       char** text, int num,
 					       int style);
 extern void SciPlotListSetMarkerSize          (Widget wi, int idnum, float size);
@@ -263,9 +263,9 @@ extern void SciPlotSetYUserScale              (Widget wi, double min, double max
 extern void SciPlotSetYUserMin                (Widget wi, double min);
 extern void SciPlotSetYUserMax                (Widget wi, double max);
 
-extern void SciPlotGetXScale                  (Widget wi, 
+extern void SciPlotGetXScale                  (Widget wi,
 					       float* min, float* max);
-extern void SciPlotGetYScale                  (Widget wi, 
+extern void SciPlotGetYScale                  (Widget wi,
 					       float* min, float* max);
 extern void SciPlotPrintStatistics            (Widget wi);
 extern void SciPlotExportData                 (Widget wi, FILE *fd);

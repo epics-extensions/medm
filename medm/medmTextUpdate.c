@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -81,7 +81,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 
     if(displayInfo->traversalMode == DL_EXECUTE) {
 	MedmTextUpdate *ptu;
-	
+
 	if(dlElement->data) {
 	  /* Necessary for PV Limits, Cannot use textUpdateDraw since
              it is drawn on the pixmap, unlike widgets */
@@ -103,7 +103,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &(dlTextUpdate->object),
 	      textUpdateDraw,
 	      (XtPointer)ptu);
-	    
+
 	    if(ptu->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlTextUpdate: Memory allocation error\n");
 	    } else {
@@ -114,12 +114,12 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	      textUpdateUpdateValueCb,
 	      textUpdateUpdateGraphicalInfoCb,
 	      (XtPointer) ptu);
-	    
+
 	    ptu->fontIndex = dmGetBestFontWithInfo(fontTable,
 	      MAX_FONTS,DUMMY_TEXT_FIELD,
 	      dlTextUpdate->object.height, dlTextUpdate->object.width,
 	      &usedHeight, &usedWidth, FALSE);        /* don't use width */
-	    
+
 	    drawWhiteRectangle(ptu->updateTask);
 	}
     } else {
@@ -153,7 +153,7 @@ void executeDlTextUpdate(DisplayInfo *displayInfo, DlElement *dlElement)
 	nChars = strlen(dlTextUpdate->monitor.rdbk);
 	localFontIndex = dmGetBestFontWithInfo(fontTable,
 	  MAX_FONTS,dlTextUpdate->monitor.rdbk,
-	  dlTextUpdate->object.height, dlTextUpdate->object.width, 
+	  dlTextUpdate->object.height, dlTextUpdate->object.width,
 	  &usedHeight, &usedWidth, FALSE);	/* don't use width */
 	usedWidth = XTextWidth(fontTable[localFontIndex],dlTextUpdate->monitor.rdbk,
 	  nChars);
@@ -211,7 +211,7 @@ static void textUpdateUpdateValueCb(XtPointer cd)
 {
     Record *pR = (Record *)cd;
     MedmTextUpdate *ptu = (MedmTextUpdate *)pR->clientData;
-    
+
     updateTaskMarkUpdate(ptu->updateTask);
 }
 
@@ -241,14 +241,14 @@ static void textUpdateDraw(XtPointer cd)
 	if(pR->readAccess) {
 	    textField[0] = '\0';
 	    switch (pR->dataType) {
-	    case DBF_STRING :
+	    case DBF_STRING:
 		if(pR->array) {
 		    strncpy(textField,(char *)pR->array, MAX_TEXT_UPDATE_WIDTH-1);
 		    textField[MAX_TEXT_UPDATE_WIDTH-1] = '\0';
 		}
 		isNumber = False;
 		break;
-	    case DBF_ENUM :
+	    case DBF_ENUM:
 		if(pR->precision >= 0 && pR->hopr+1 > 0) {
 		    i = (int) pR->value;
 		    if(i >= 0 && i < (int) pR->hopr+1){
@@ -263,7 +263,7 @@ static void textUpdateDraw(XtPointer cd)
 		    isNumber = True;
 		}
 		break;
-	    case DBF_CHAR :
+	    case DBF_CHAR:
 		if(dlTextUpdate->format == STRING) {
 		    if(pR->array) {
 			strncpy(textField,pR->array,
@@ -273,15 +273,15 @@ static void textUpdateDraw(XtPointer cd)
 		    isNumber = False;
 		    break;
 		}
-	    case DBF_INT :
-	    case DBF_LONG :
-	    case DBF_FLOAT :
-	    case DBF_DOUBLE :
+	    case DBF_INT:
+	    case DBF_LONG:
+	    case DBF_FLOAT:
+	    case DBF_DOUBLE:
 		value = pR->value;
 		precision = dlTextUpdate->limits.prec;
 		isNumber = True;
 		break;
-	    default :
+	    default:
 		medmPostMsg(1,"textUpdateUpdateValueCb:\n"
 		  "  Unknown channel type for %s\n"
 		  "  Cannot attach TextUpdate\n",
@@ -308,7 +308,7 @@ static void textUpdateDraw(XtPointer cd)
 		    if(strchr(textField,'e')) {
 			localCvtDoubleToString((double)value,textField,precision);
 		    }
-#endif		    
+#endif
 		    break;
 		case EXPONENTIAL:
 #if 0
@@ -344,7 +344,7 @@ static void textUpdateDraw(XtPointer cd)
 		case OCTAL:
 		    cvtLongToOctalString((long)value, textField);
 		    break;
-		default :
+		default:
 		    medmPostMsg(1,"textUpdateUpdateValueCb:\n"
 		      "  Unknown channel type for %s\n"
 		      "  Cannot attach TextUpdate\n",
@@ -361,7 +361,7 @@ static void textUpdateDraw(XtPointer cd)
 	    print("short=%d int=%d long=%d\n",sizeof(short),sizeof(int),
 	      sizeof(long));
 #endif
-	    
+
 	  /* Create a GC and pixmap to take care of clipping to the
              size of the text update */
 	    gc = XCreateGC(display, rootWindow, 0, NULL);
@@ -378,12 +378,12 @@ static void textUpdateDraw(XtPointer cd)
 
 	  /* Calculate the foreground color */
 	    switch (dlTextUpdate->clrmod) {
-	    case STATIC :
+	    case STATIC:
 	    case DISCRETE:
 		XSetForeground(display, gc,
 		  displayInfo->colormap[dlTextUpdate->monitor.clr]);
 		break;
-	    case ALARM :
+	    case ALARM:
 		pR->monitorSeverityChanged = True;
 		XSetForeground(display, gc, alarmColor(pR->severity));
 		break;
@@ -394,7 +394,7 @@ static void textUpdateDraw(XtPointer cd)
 	    i = ptu->fontIndex;
 	    strLen = strlen(textField);
 	    textWidth = XTextWidth(fontTable[i],textField,strLen);
-	    
+
 	  /* for compatibility reason, only the HORIZ_CENTER and
 	   * HORIZ_RIGHT will recalculate the font size if the number does
 	   * not fit. */
@@ -408,7 +408,7 @@ static void textUpdateDraw(XtPointer cd)
 			if((int)dlTextUpdate->object.width > textWidth) break;
 		    }
 		    break;
-		default :
+		default:
 		    break;
 		}
 	    }
@@ -418,7 +418,7 @@ static void textUpdateDraw(XtPointer cd)
 	      /* KE: y is the same for all and there are only three
                  distinct cases */
 		int x, y;
-		
+
 		XSetFont(display, gc, fontTable[i]->fid);
 		switch (dlTextUpdate->align) {
 		case HORIZ_LEFT:
@@ -478,13 +478,13 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd)
     precision = pR->precision;
     if(precision < 0) precision = 0;
     if(precision > 17) precision = 17;
-    
+
   /* Set lopr and hopr to channel - they aren't used by the TextUpdate */
     dlTextUpdate->limits.lopr = lopr.fval;
     dlTextUpdate->limits.loprChannel = lopr.fval;
     dlTextUpdate->limits.hopr = hopr.fval;
     dlTextUpdate->limits.hoprChannel = hopr.fval;
-    
+
   /* Set Channel and User limits for prec (if apparently not set yet) */
     dlTextUpdate->limits.precChannel = precision;
     if(dlTextUpdate->limits.precSrc != PV_LIMITS_USER &&
@@ -565,7 +565,7 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
 		}
 	    } else if(!strcmp(token,"format")) {
 		int found = 0;
-		
+
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for(i=FIRST_TEXT_FORMAT;i<FIRST_TEXT_FORMAT+NUM_TEXT_FORMATS; i++) {
@@ -596,11 +596,11 @@ DlElement *parseTextUpdate(DisplayInfo *displayInfo)
                          {hexidecimal vs. hexadecimal} */
 		    } else if(!strcmp(token,"hexidecimal")) {
 			dlTextUpdate->format = HEXADECIMAL;
-		    } 
+		    }
 		}
 	    } else if(!strcmp(token,"align")) {
 		int found=0;
-		
+
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		for(i=FIRST_TEXT_ALIGN;i<FIRST_TEXT_ALIGN+NUM_TEXT_ALIGNS; i++) {
@@ -656,7 +656,7 @@ void writeDlTextUpdate(FILE *stream, DlElement *dlElement, int level)
 	fprintf(stream,"\n%s\"text update\" {",indent);
 	writeDlObject(stream,&(dlTextUpdate->object),level+1);
 	writeDlMonitor(stream,&(dlTextUpdate->monitor),level+1);
-	if(dlTextUpdate->clrmod != STATIC) 
+	if(dlTextUpdate->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlTextUpdate->clrmod]);
 	if(dlTextUpdate->align != HORIZ_LEFT)

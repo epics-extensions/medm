@@ -238,11 +238,11 @@ typedef struct {
   int BackgroundColor;
   int ForegroundColor;
 
-#ifdef MOTIF  
+#ifdef MOTIF
   int ShadowColor1;
   int ShadowColor2;
   unsigned char ShadowType;
-#endif  
+#endif
 
   /*   Fixed X left & right space */
   Boolean XFixedLR;
@@ -289,7 +289,7 @@ typedef struct {
   XtCallbackList pointer_val_callback; /* callback list for tracking pointer*/
   XtCallbackList btn1_callback;  /* callback assciated with btn1 click     */
 } SciPlotPart;
-  
+
 typedef struct _SciPlotRec {
   CorePart core;
 #ifdef MOTIF

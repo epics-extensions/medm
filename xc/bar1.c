@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ unsigned long getPixelFromStringW(w,colorString)
 	return(color.pixel);
     }
 }
-									     
+
 
 
 main(argc, argv)
@@ -58,7 +58,7 @@ main(argc, argv)
 
   /*
    * Initialize the Intrinsics.
-   */   
+   */
     n = 0;
     topLevel = XtInitialize(argv[0], "Test", NULL, 0, &argc, argv);
 
@@ -146,11 +146,11 @@ XtWorkProc animate()
 	XcBGUpdateBarForeground(graph,currentPixel);
     }
     if (n > 0) XtSetValues(graph,wargs,n);
-  /* MDA:  USE XcBGUpdateValue() fucnction:  MUCH MUCH MUCH faster than 
+  /* MDA:  USE XcBGUpdateValue() fucnction:  MUCH MUCH MUCH faster than
      XtSetValues of XcNvalue!!
      */
     XcBGUpdateValue(graph,&current);
-  
+
     return FALSE;
 
 

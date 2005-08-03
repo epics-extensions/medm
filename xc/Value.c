@@ -4,11 +4,11 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*******************************************************************
  FILE:		Value.c
- CONTENTS:	Definitions for structures, methods, and actions of the 
+ CONTENTS:	Definitions for structures, methods, and actions of the
 		Value widget.
  AUTHOR:	Paul D. Johnston
 ********************************************************************/
@@ -198,13 +198,13 @@ ValueClassRec valueClassRec =
         NULL,                            /* query_geometry */
         NULL,                            /* display_accelerator */
         NULL,                            /* extension */
-    },					 
-    {					 
-      /* Control class part */		 
+    },
+    {
+      /* Control class part */
         0,                               /* dummy_field */
-    },					 
-    {					 
-      /* Value class part */		 
+    },
+    {
+      /* Value class part */
         0,                               /* dummy_field */
     },
 };
@@ -212,7 +212,7 @@ ValueClassRec valueClassRec =
 WidgetClass xcValueWidgetClass = (WidgetClass)&valueClassRec;
 
 /*******************************************************************
- NAME:		ClassInitialize.	
+ NAME:		ClassInitialize.
  DESCRIPTION:
    This method initializes the Value widget class. Specifically,
  it registers resource value converter functions with Xt.
@@ -226,18 +226,18 @@ static void ClassInitialize()
 }
 
 /*******************************************************************
- NAME:		Initialize.		
+ NAME:		Initialize.
  DESCRIPTION:
-   This is the initialize method for the Value widget.  It 
- validates user-modifiable instance resources and initializes private 
- widget variables and structures.  
+   This is the initialize method for the Value widget.  It
+ validates user-modifiable instance resources and initializes private
+ widget variables and structures.
 *******************************************************************/
 
 static void Initialize(Widget request, Widget new,
   ArgList args, Cardinal *nargs)
 {
     ValueWidget wnew = (ValueWidget)new;
-    
+
     DPRINTF(("Value: executing Initialize \n"));
   /*
    * Validate public instance variable settings.
@@ -248,55 +248,55 @@ static void Initialize(Widget request, Widget new,
 	XtWarning("Value: invalid datatype setting.");
 	wnew->value.datatype = XcLval;
     }
-    
+
   /* Check decimals setting */
-    if ((wnew->value.datatype == XcFval) && 
+    if ((wnew->value.datatype == XcFval) &&
       ((wnew->value.decimals < MIN_DECIMALS) ||
 	(wnew->value.decimals > MAX_DECIMALS))) {
 	XtWarning("Value: invalid decimals setting.");
 	wnew->value.decimals = 2;
     }
-    
+
   /* Check increment setting */
     if (((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval))
       && (wnew->value.increment.lval <= 0)) {
 	XtWarning("Value: invalid increment setting.");
 	wnew->value.increment.lval = 1L;
-    } else if ((wnew->value.datatype == XcFval) &&  
+    } else if ((wnew->value.datatype == XcFval) &&
       (wnew->value.increment.fval <= 0.0)) {
 	XtWarning("Value: invalid increment setting.");
 	wnew->value.increment.fval = 1.0;
-    } 
-    
+    }
+
   /* Check lower/upper bound setting */
-    if (((wnew->value.datatype == XcLval) || 
-      (wnew->value.datatype == XcHval)) && 
-      (wnew->value.lower_bound.lval >= 
+    if (((wnew->value.datatype == XcLval) ||
+      (wnew->value.datatype == XcHval)) &&
+      (wnew->value.lower_bound.lval >=
 	wnew->value.upper_bound.lval)) {
 	XtWarning("Value: invalid lowerBound/upperBound setting.");
-	wnew->value.lower_bound.lval = 
+	wnew->value.lower_bound.lval =
 	  (wnew->value.upper_bound.lval - wnew->value.increment.lval);
-    } else if ((wnew->value.datatype == XcFval) && 
-      (wnew->value.lower_bound.fval >= 
+    } else if ((wnew->value.datatype == XcFval) &&
+      (wnew->value.lower_bound.fval >=
 	wnew->value.upper_bound.fval)) {
 	XtWarning("Value: invalid lowerBound/upperBound setting.");
-	wnew->value.lower_bound.fval = 
+	wnew->value.lower_bound.fval =
 	  (wnew->value.upper_bound.fval - wnew->value.increment.fval);
-    } 
+    }
 
   /* Check the initial value setting */
     if ((wnew->value.datatype == XcLval)  || (wnew->value.datatype == XcHval)) {
 	if (wnew->value.val.lval < wnew->value.lower_bound.lval)
 	  wnew->value.val.lval = wnew->value.lower_bound.lval;
 	else if (wnew->value.val.lval > wnew->value.upper_bound.lval)
-	  wnew->value.val.lval = wnew->value.upper_bound.lval; 
+	  wnew->value.val.lval = wnew->value.upper_bound.lval;
     } else if (wnew->value.datatype == XcFval) {
 	if (wnew->value.val.fval < wnew->value.lower_bound.fval)
 	  wnew->value.val.fval = wnew->value.lower_bound.fval;
 	else if (wnew->value.val.fval > wnew->value.upper_bound.fval)
-	  wnew->value.val.fval = wnew->value.upper_bound.fval; 
+	  wnew->value.val.fval = wnew->value.upper_bound.fval;
     }
-    
+
   /* Check the initial valueJustify setting. */
     if ((wnew->value.justify != XcJustifyLeft) &&
       (wnew->value.justify != XcJustifyRight) &&
@@ -324,16 +324,16 @@ static Boolean SetValues(Widget cur, Widget req,
     ValueWidget wnew = (ValueWidget)new;
     ValueWidget wcur = (ValueWidget)cur;
     Boolean do_redisplay = False;
-    
+
     DPRINTF(("Value: executing SetValues \n"));
-    
+
   /* Validate new resource settings. */
-    
+
   /* Check the widget's color resources. */
     if ((wnew->value.value_fg_pixel != wcur->value.value_fg_pixel) ||
-      (wnew->value.value_fg_pixel != wcur->value.value_fg_pixel)) 
+      (wnew->value.value_fg_pixel != wcur->value.value_fg_pixel))
       do_redisplay = True;
-    
+
   /* Check the datatype */
     if (wnew->value.datatype != wcur->value.datatype) {
 	do_redisplay = True;
@@ -344,52 +344,52 @@ static Boolean SetValues(Widget cur, Widget req,
 	    wnew->value.datatype = XcLval;
 	}
     }
-    
+
   /* Check the decimals setting */
     if (wnew->value.decimals != wcur->value.decimals) {
 	do_redisplay = True;
-	if ((wnew->value.decimals < MIN_DECIMALS) || 
+	if ((wnew->value.decimals < MIN_DECIMALS) ||
 	  (wnew->value.decimals > MAX_DECIMALS)) {
 	    XtWarning("Value: invalid decimals setting.");
 	    wnew->value.decimals = 2;
 	}
     }
-    
+
   /* Check the increment setting */
     if (((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval))
       && (wnew->value.increment.lval <= 0)) {
 	XtWarning("Value: invalid increment setting.");
 	wnew->value.increment.lval = 1L;
-    } else if ((wnew->value.datatype == XcFval) &&  
+    } else if ((wnew->value.datatype == XcFval) &&
       (wnew->value.increment.fval <= 0.0)) {
 	XtWarning("Value: invalid increment setting.");
 	wnew->value.increment.fval = 1.0;
-    } 
-    
+    }
+
   /* Check the lowerBound/upperBound setting */
-    if (((wnew->value.datatype == XcLval) || 
-      (wnew->value.datatype == XcHval)) && 
-      (wnew->value.lower_bound.lval >= 
+    if (((wnew->value.datatype == XcLval) ||
+      (wnew->value.datatype == XcHval)) &&
+      (wnew->value.lower_bound.lval >=
 	wnew->value.upper_bound.lval)) {
 	XtWarning("Value: invalid lowerBound/upperBound setting.");
-	wnew->value.lower_bound.lval = 
+	wnew->value.lower_bound.lval =
 	  (wnew->value.upper_bound.lval - wnew->value.increment.lval);
-    } else if ((wnew->value.datatype == XcFval) && 
-      (wnew->value.lower_bound.fval >= 
+    } else if ((wnew->value.datatype == XcFval) &&
+      (wnew->value.lower_bound.fval >=
 	wnew->value.upper_bound.fval)) {
 	XtWarning("Value: invalid lowerBound/upperBound setting.");
-	wnew->value.lower_bound.fval = 
+	wnew->value.lower_bound.fval =
 	  (wnew->value.upper_bound.fval - wnew->value.increment.fval);
     }
 
   /* Check the new value setting */
-    if (((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval)) && 
+    if (((wnew->value.datatype == XcLval) || (wnew->value.datatype == XcHval)) &&
       (wnew->value.val.lval != wcur->value.val.lval)) {
 	do_redisplay = True;
 	if (wnew->value.val.lval < wnew->value.lower_bound.lval)
 	  wnew->value.val.lval = wnew->value.lower_bound.lval;
 	else if (wnew->value.val.lval > wnew->value.upper_bound.lval)
-	  wnew->value.val.lval = wnew->value.upper_bound.lval; 
+	  wnew->value.val.lval = wnew->value.upper_bound.lval;
     }
     if ((wnew->value.datatype == XcFval)  &&
       (wnew->value.val.fval != wcur->value.val.fval)) {
@@ -397,9 +397,9 @@ static Boolean SetValues(Widget cur, Widget req,
 	if (wnew->value.val.fval < wnew->value.lower_bound.fval)
 	  wnew->value.val.fval = wnew->value.lower_bound.fval;
 	else if (wnew->value.val.fval > wnew->value.upper_bound.fval)
-	  wnew->value.val.fval = wnew->value.upper_bound.fval; 
+	  wnew->value.val.fval = wnew->value.upper_bound.fval;
     }
-    
+
   /* Check the valueJustify setting. */
     if (wnew->value.justify != wcur->value.justify) {
 	do_redisplay = True;
@@ -410,7 +410,7 @@ static Boolean SetValues(Widget cur, Widget req,
 	    wnew->value.justify = XcJustifyCenter;
 	}
     }
-    
+
     DPRINTF(("Value: done SetValues\n"));
 
     return do_redisplay;
@@ -419,7 +419,7 @@ static Boolean SetValues(Widget cur, Widget req,
 /* Widget class functions */
 
 /*******************************************************************
- NAME:		CvtStringToDType.		
+ NAME:		CvtStringToDType.
  DESCRIPTION:
    This function converts resource settings in string form to the
 XtRDType representation type.
@@ -431,10 +431,10 @@ static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
   /* Local variables */
     static XcDType datatype;
     char lowerstring[100];
-    
+
   /* Convert the resource string to lower case for quick comparison */
     ToLower((char *)fromVal->addr, lowerstring);
-    
+
   /*
    * Compare resource string with valid datatype strings and assign to
    * datatype.
@@ -449,7 +449,7 @@ static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
 	datatype = XcFval;
 	CvtDone(XcDType, &datatype);
     }
-    
+
   /*
    * If the string is not valid for this resource type, print a warning
    * and do not make the conversion.
@@ -460,7 +460,7 @@ static void CvtStringToDType(XrmValue *args, Cardinal *nargs,
 }
 
 /*******************************************************************
- NAME:		CvtStringToVType.		
+ NAME:		CvtStringToVType.
  DESCRIPTION:
    This function converts resource settings in string form to the
  XcRVType representation type.
@@ -472,36 +472,36 @@ static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
     long num;
     static XcVType value;
     char temp[30], temp2[30];
-    
+
   /*
    * Make sure the string is a numeric constant. If it isn't, print
    * a warning, and NULL the destination value.
    */
-    if ((num = sscanf((char *)fromVal->addr, 
+    if ((num = sscanf((char *)fromVal->addr,
       "%[-012345689ABCDEFabcdef.]", temp)) == (int)NULL) {
 	XtStringConversionWarning(fromVal->addr, "XcVType");
 	CvtDone(char, NULL);
     }
-    
+
   /* If the number contains a decimal point, convert it into a float. */
     if (strchr(temp, '.') != NULL) {
-	sscanf(temp, "%f", &value.fval); 
+	sscanf(temp, "%f", &value.fval);
 	CvtDone(XcVType, &value.fval);
     }
-    
+
   /* If it contains any hexadecimal characters, convert it to a long hex int */
     if (sscanf(temp, "%[ABCDEFabcdef]", temp2) != (int)NULL) {
-	sscanf(temp, "%lX", (unsigned long *)&value.lval); 
+	sscanf(temp, "%lX", (unsigned long *)&value.lval);
 	CvtDone(XcVType, &value.lval);
     }
 
   /* Otherwise, it's an integer type. Convert the string to a numeric constant. */
-    sscanf(temp, "%ld", &value.lval); 
+    sscanf(temp, "%ld", &value.lval);
     CvtDone(XcVType, &value.lval);
 }
 
 /*******************************************************************
- NAME:		CvtStringToValueJustify.		
+ NAME:		CvtStringToValueJustify.
  DESCRIPTION:
    This function converts resource settings in string form to the
  XcRValueJustify representation type.
@@ -513,10 +513,10 @@ static void CvtStringToValueJustify(XrmValue *args, Cardinal *nargs,
 {
     static XcValueJustify val_justify;
     char lowerstring[100];
-    
+
   /* Convert the resource string to lower case for quick comparison */
     ToLower((char *)fromVal->addr, lowerstring);
-    
+
   /*
    * Compare resource string with valid XcValueJustify strings and assign to
    * datatype.
@@ -531,7 +531,7 @@ static void CvtStringToValueJustify(XrmValue *args, Cardinal *nargs,
 	val_justify = XcJustifyCenter;
 	CvtDone(XcValueJustify, &val_justify);
     }
-    
+
   /*
    * If the string is not valid for this resource type, print a warning
    * and do not make the conversion.
@@ -551,15 +551,15 @@ float Correlate(float from_val, float from_range, float to_range)
 {
     double percent;
     float result;
-    
+
     percent = ((from_val * 100.0) / from_range);
-    
+
   /****** Clip to 0 and 100 */
     percent = MAX(0.,percent);
     percent = MIN(100.,percent);
-    
+
     result = (float)(to_range * (percent / 100.0));
-    
+
     return result;
 }
 
@@ -574,14 +574,14 @@ float Correlate(float from_val, float from_range, float to_range)
 char *Print_value(XcDType datatype, XcVType *value, int decimals)
 {
     static char string[40];
-    
+
     if (datatype == XcLval)
       cvtLongToString(value->lval,string);
     else if (datatype == XcHval)
       cvtLongToHexString(value->lval,string);
     else if (datatype == XcFval)
       cvtFloatToString(value->fval,string,(unsigned short)decimals);
-    
+
     return &string[0];
 
 }
@@ -599,12 +599,12 @@ void Position_val(Widget w)
     ValueWidget wv = (ValueWidget)w;
     char *val_string;
     int text_width;
-    
+
   /* Establish the position of the value string within the Value Box. */
-    val_string = Print_value(wv->value.datatype, &wv->value.val, 
+    val_string = Print_value(wv->value.datatype, &wv->value.val,
       wv->value.decimals);
-    text_width = XTextWidth(wv->control.font, val_string, strlen(val_string)); 
-    
+    text_width = XTextWidth(wv->control.font, val_string, strlen(val_string));
+
     if (wv->value.justify == XcJustifyLeft)
       wv->value.vp.x = wv->value.value_box.x +
 	(wv->control.font->max_bounds.rbearing / 2);
@@ -615,9 +615,9 @@ void Position_val(Widget w)
     else if (wv->value.justify == XcJustifyCenter)
       wv->value.vp.x = wv->value.value_box.x +
 	(wv->value.value_box.width / 2) -
-	(text_width / 2); 
-    
-    wv->value.vp.y = wv->value.value_box.y + 
+	(text_width / 2);
+
+    wv->value.vp.y = wv->value.value_box.y +
       (int)(wv->value.value_box.height -
 	(wv->control.font->ascent + wv->control.font->descent))/2
       + wv->control.font->ascent + 1;

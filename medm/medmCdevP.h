@@ -10,12 +10,16 @@
  * Description:
  *      Medm CDEV Interface Implementation Header file
  *
- * Author:  
+ * Author:
  *      Jie Chen
  *      Jefferson Lab. Control Software Group
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.2  2005/08/03 14:56:55  evans
+ *   Trimmed extra whitespace at end of lines in the source files.  There
+ *   may be changes related to the WheelSwitch, as well.
+ *
  *   Revision 1.1  1998/09/14 18:40:07  evans
  *   Renamed icon25 and medmPix25 to icon25.xpm and medmPix25.xpm.
  *
@@ -58,14 +62,14 @@ public:
   ~medmXInput (void);
 
   // operations
-  // add a single file descriptor 
+  // add a single file descriptor
   void addInput    (int fd, XtPointer mask);
   void removeInput (int fd);
 
 protected:
   // internal file descriptors
   medmInputFd* xfds_;
-  
+
 private:
   static void inputCallback (XtPointer, int*, XtInputId*);
   XtAppContext context_;

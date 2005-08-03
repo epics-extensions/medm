@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -25,7 +25,7 @@
 #define CP_XDATA_COLUMN         0
 #define CP_YDATA_COLUMN         1
 #define CP_COLOR_COLUMN         2
- 
+
 #define CP_APPLY_BTN    0
 #define CP_CLOSE_BTN    1
 
@@ -38,7 +38,7 @@
 
 #define CP_FAST 0
 #define CP_FULL 1
- 
+
 typedef struct {
     float axisMin;
     float axisMax;
@@ -141,7 +141,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 #define CP_Y_RANGE_MAX    10
 #define CP_Y2_RANGE_MAX   11
 #define CP_X_TIME_FORMAT  12
- 
+
 #define MAX_CP_AXIS_ELEMENTS    20
 /* The following should be the largest of NUM_CP_TIME_FORMAT,
  *   NUM_CARTESIAN_PLOT_RANGE_STYLES, NUM_CARTESIAN_PLOT_AXIS_STYLES */

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -81,18 +81,18 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	    switch(dlValuator->label) {
 	    case LABEL_NONE:
 	    case NO_DECORATIONS:
-		if((int)(.30*dlValuator->object.width) >= 
+		if((int)(.30*dlValuator->object.width) >=
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
 	    case OUTLINE:
 	    case LIMITS:
-		if((int)(.20*dlValuator->object.width) >= 
+		if((int)(.20*dlValuator->object.width) >=
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
 	    case CHANNEL:
-		if((int)(.10*dlValuator->object.width) >= 
+		if((int)(.10*dlValuator->object.width) >=
 		  (fontTable[i]->max_bounds.width) )
 		  return(i);
 		break;
@@ -105,12 +105,12 @@ int valuatorFontListIndex(DlValuator *dlValuator)
 	    case NO_DECORATIONS:
 	    case OUTLINE:
 	    case LIMITS:
-		if((int)(.45*dlValuator->object.height) >= 
+		if((int)(.45*dlValuator->object.height) >=
 		  (fontTable[i]->ascent + fontTable[i]->descent) )
 		  return(i);
 		break;
 	    case CHANNEL:
-		if((int)(.32*dlValuator->object.height) >= 
+		if((int)(.32*dlValuator->object.height) >=
 		  (fontTable[i]->ascent + fontTable[i]->descent) )
 		  return(i);
 		break;
@@ -145,12 +145,12 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	    pv->updateTask = NULL;
 	    pv->record = NULL;
 	    pv->dlElement = dlElement;
-	    
+
 	    pv->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlValuator->object),
 	      valuatorDraw,
 	      (XtPointer)pv);
-	    
+
 	    if(pv->updateTask == NULL) {
 		medmPrintf(1,"\nvaluatorCreateRunTimeInstance: "
 		  "Memory allocation error\n");
@@ -167,7 +167,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	    pv->fontIndex = valuatorFontListIndex(dlValuator);
 	    drawWhiteRectangle(pv->updateTask);
 	}
-	
+
       /* From the valuator structure, we've got Valuator's specifics */
 	n = 0;
 	XtSetArg(args[n],XmNx,(Position)dlValuator->object.x); n++;
@@ -188,7 +188,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	    heightDivisor = 1;
 	    break;
 	case OUTLINE:
-	case LIMITS: 
+	case LIMITS:
 	    scalePopupBorder = 0;
 	    heightDivisor = 2;
 	    break;
@@ -202,12 +202,12 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	case DOWN:
 	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_BOTTOM); n++;
-	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor
 	      - scalePopupBorder); n++;
 	    break;
 	case UP:
 	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor
 	      - scalePopupBorder); n++;
 	    break;
 	case LEFT:
@@ -222,16 +222,16 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	      - scalePopupBorder); n++;
 	    break;
 	}
-	
+
       /* Add in Valuator as userData for valuator keyboard entry handling */
 	XtSetArg(args[n],XmNuserData,(XtPointer)pv); n++;
 	XtSetArg(args[n],XmNfontList,fontListTable[pv->fontIndex]); n++;
 	pv->dlElement->widget =  XtCreateWidget("valuator",
 	  xmScaleWidgetClass, displayInfo->drawingArea, args, n);
-	
+
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlValuator->limits);
-	
+
       /* Set virtual range */
 	n = 0;
       /* The Valuator works with fixed values of these three parameters
@@ -240,11 +240,11 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	XtSetArg(args[n],XmNmaximum,VALUATOR_MAX); n++;
 	XtSetArg(args[n],XmNscaleMultiple,VALUATOR_MULTIPLE_INCREMENT); n++;
 	XtSetValues(pv->dlElement->widget,args,n);
-	
+
       /* Get children of scale */
 	XtVaGetValues(pv->dlElement->widget,XmNnumChildren,&numChildren,
 	  XmNchildren,&children,NULL);
-	
+
       /* Change translations for scrollbar child of valuator */
 	for(i = 0; i < (int)numChildren; i++) {
 	    if(XtClass(children[i]) == xmScrollBarWidgetClass) {
@@ -257,19 +257,19 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 		  (XtPointer)pv);
 	    }
 	}
-	
+
       /* Add the callbacks for update */
 	XtAddCallback(pv->dlElement->widget, XmNvalueChangedCallback,
 	  valuatorValueChanged,(XtPointer)pv);
 	XtAddCallback(pv->dlElement->widget, XmNdragCallback,
 	  valuatorValueChanged,(XtPointer)pv);
-	
+
       /* Add event handler for expose - forcing display of min/max and value
        *   in own format */
 	XtAddEventHandler(pv->dlElement->widget,ExposureMask,
 	  False,handleValuatorExpose,
 	  (XtPointer)pv);
-	
+
       /* Add event handler for Key/ButtonRelease which enables updates */
 	XtAddEventHandler(pv->dlElement->widget,KeyReleaseMask|ButtonReleaseMask,
 	  False,handleValuatorRelease,
@@ -299,7 +299,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     WidgetList children;
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
-    
+
   /* Update the limits to reflect current src's */
     updatePvLimits(&dlValuator->limits);
 
@@ -323,7 +323,7 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
 	heightDivisor = 1;
 	break;
     case OUTLINE:
-    case LIMITS: 
+    case LIMITS:
 	scalePopupBorder = 0;
 	heightDivisor = 2;
 	break;
@@ -338,12 +338,12 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
       /* Override */
 	    XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
 	    XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_BOTTOM); n++;
-	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	    XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor
 	      - scalePopupBorder); n++;
 	    break;
     case UP:
 	XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor 
+	XtSetArg(args[n],XmNscaleWidth,dlValuator->object.width/heightDivisor
 	  - scalePopupBorder); n++;
 	break;
     case LEFT:
@@ -363,46 +363,46 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
       valuatorFontListIndex(dlValuator)]); n++;
     widget =  XtCreateWidget("valuator",
       xmScaleWidgetClass, displayInfo->drawingArea, args, n);
-    
+
     dlElement->widget = widget;
 
 #if DEBUG_LINUX
     {
 	Dimension height,width;
-	
+
 	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
 	print("createValuatorEditInstance(1): w=%d h=%d o.w=%d o.h=%d\n",
 	  width,height,
 	  (Dimension)dlValuator->object.width,
 	  (Dimension)dlValuator->object.height);
     }
-#endif    
-    
+#endif
+
   /* Get children of scale */
     XtVaGetValues(widget,XmNnumChildren,&numChildren,
       XmNchildren,&children,NULL);
-    
+
   /* If in EDIT mode remove translations for children of valuator */
     for(i = 0; i < (int)numChildren; i++)
       XtUninstallTranslations(children[i]);
 
   /* If in EDIT mode add dlValuator as userData, and pass NULL in expose */
     XtVaSetValues(widget,XmNuserData,(XtPointer)dlValuator,NULL);
-    
+
   /* Add event handler for expose - forcing display of min/max and value
    *   in own format */
     XtAddEventHandler(widget,ExposureMask,False,
       (XtEventHandler)handleValuatorExpose,(XtPointer)NULL);
-    
+
   /* Add handlers */
     addCommonHandlers(widget, displayInfo);
-    
+
     XtManageChild(widget);
 
 #if DEBUG_LINUX
     {
 	Dimension height,width;
-	
+
 	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
 	print("createValuatorEditInstance(2): w=%d h=%d o.w=%d o.h=%d\n",
 	  width,height,
@@ -411,24 +411,24 @@ void createValuatorEditInstance(DisplayInfo *displayInfo,
     }
 #endif
 #if defined(linux) || defined(CYGWIN32)
-  /* Several version of Motif for Linux change the width from what we
+  /* Several versions of Motif for Linux change the width from what we
      specified, so set it back */
     XtVaSetValues(widget,
       XmNwidth,(Dimension)dlValuator->object.width,
       XmNheight,(Dimension)dlValuator->object.height,
       NULL);
-#endif    
+#endif
 #if DEBUG_LINUX
     {
 	Dimension height,width;
-	
+
 	XtVaGetValues(widget,XmNwidth,&width,XmNheight,&height,NULL);
 	print("createValuatorEditInstance(3): w=%d h=%d o.w=%d o.h=%d\n",
 	  width,height,
 	  (Dimension)dlValuator->object.width,
 	  (Dimension)dlValuator->object.height);
     }
-#endif    
+#endif
 }
 
 void executeDlValuator(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -469,8 +469,8 @@ static void valuatorDraw(XtPointer cd) {
 #if DEBUG_DELETE
     print("valuatorDraw: connected=%s readAccess=%s value=%g\n",
       pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
-#endif    
-    
+#endif
+
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -478,7 +478,7 @@ static void valuatorDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -491,7 +491,7 @@ static void valuatorDraw(XtPointer cd) {
 		  XmNwidth,(Dimension)dlValuator->object.width,
 		  XmNheight,(Dimension)dlValuator->object.height,
 		  NULL);
-#endif    
+#endif
 	    } else {
 		return;
 	    }
@@ -663,17 +663,17 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     }
     if(!displayInfo) return;
     gc = displayInfo->gc;
-    
+
   /* Since XmScale doesn't really do the right things, we'll do it by hand */
     if(dlValuator->label == LABEL_NONE || dlValuator->label == NO_DECORATIONS) {
 	return;
     }
-    
+
     foreground = displayInfo->colormap[dlValuator->control.clr];
     background = displayInfo->colormap[dlValuator->control.bclr];
     font = fontTable[valuatorFontListIndex(dlValuator)];
     textHeight = font->ascent + font->descent;
-    
+
     gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
     gcValues.function = GXcopy;
     gcValues.foreground = foreground;
@@ -685,8 +685,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
      needs to be done right. */
     XSetClipOrigin(display,gc,0,0);
     XSetClipMask(display,gc,None);
-#endif	
-    
+#endif
+
   /* KE: Value can be received before the graphical info
    *   Set precision to 0 if it is still -1 from initialization */
     if(precision < 0) precision = 0;
@@ -752,12 +752,12 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	    }
 	}
 	break;
-	
+
     case LEFT:
     case RIGHT:
 	XtVaGetValues(w,XmNscaleHeight,&scaleHeight,NULL);
 	useableHeight = dlValuator->object.height - scaleHeight;
-	
+
 	if(dlValuator->label == OUTLINE || dlValuator->label == LIMITS
 	  || dlValuator->label == CHANNEL) {
 	  /* Erase all of the background */
@@ -814,8 +814,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	valuatorRedrawValue(pv,
 	  pv->updateTask->displayInfo,pv->dlElement->widget,
 	  pv->dlElement->structure.valuator, pv->record->value);
-	
-	
+
+
     } else {
       /* Fake data */
 	valuatorRedrawValue(NULL,displayInfo,w,dlValuator,0.0);
@@ -868,14 +868,14 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
     short precision;
     int x, y, height, width;
     GC gc;
-    
+
   /* Return if no window for widget yet, or if displayInfo == NULL, or ... */
     if(XtWindow(w) == (Window)NULL || displayInfo == (DisplayInfo *)NULL ||
       dlValuator == (DlValuator *)NULL || pv == NULL) return;
-    
+
   /* Simply return if no value to render */
     if(!(dlValuator->label == LIMITS || dlValuator->label == CHANNEL)) return;
-    
+
     foreground = displayInfo->colormap[dlValuator->control.clr];
     background = displayInfo->colormap[dlValuator->control.bclr];
     if(dlValuator->limits.prec >= 0) {
@@ -972,7 +972,7 @@ static void precisionToggleChangedCallback(Widget w, XtPointer clientData,
     MedmValuator *pv;
     XmToggleButtonCallbackStruct *call_data =
       (XmToggleButtonCallbackStruct *)cbs;
-    
+
   /* Only respond to the button actually set */
     if(call_data->event && call_data->set) {
 	value = (long)clientData;
@@ -1050,13 +1050,13 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
 	Record *pr = pv->record;
 	double value;
 	char *stringValue;
-	
+
 	if(pv == NULL) return;
-	
+
 	XmStringGetLtoR(call_data->value,XmFONTLIST_DEFAULT_TAG,&stringValue);
 	if(stringValue != NULL) {
 	    value = atof(stringValue);
-	    
+
 	  /* Move/redraw valuator & value, force use of user-selected value */
 	    if((pr->connected) && pr->writeAccess) {
 		medmSendDouble(pv->record,value);
@@ -1108,14 +1108,14 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
 
     if(globalDisplayListTraversalMode == DL_EDIT) return;
     if(xEvent->button != Button3) return;
-    
+
     XtVaGetValues(w,XmNuserData,&pv,NULL);
     if(!pv) return;
 
     pr = pv->record;
     channel = pv->dlElement->structure.valuator->control.ctrl;
     if(!pr->connected || !pr->writeAccess || !*channel) return;
-    
+
   /* Create selection box/prompt dialog */
     strcpy(valueLabel,"VALUE: ");
     strcat(valueLabel,channel);
@@ -1132,7 +1132,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNdialogTitle,xmTitle); n++;
     XtSetArg(args[n],XmNtextString,valueXmString); n++;
     keyboardDialog = XmCreatePromptDialog(w,channel,args,n);
-    
+
 #if OMIT_RESIZE_HANDLES
   /* Remove resize handles from shell */
     XtVaSetValues(XtParent(keyboardDialog),
@@ -1146,7 +1146,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtAddCallback(keyboardDialog,XmNokCallback,keyboardDialogCallback,pv);
     XtAddCallback(keyboardDialog,XmNhelpCallback,keyboardDialogCallback,NULL);
     XtAddCallback(keyboardDialog,XmNcancelCallback,keyboardDialogCallback,NULL);
-    
+
   /* Create frame/radiobox/toggles for increment selection */
     hoprLoprAbs = fabs(dlValuator->limits.hopr);
     hoprLoprAbs = MAX(hoprLoprAbs,fabs(dlValuator->limits.lopr));
@@ -1170,12 +1170,12 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNchildType,XmFRAME_TITLE_CHILD); n++;
     frameLabel = XmCreateLabel(frame,"frameLabel",args,n);
     XtManageChild(frameLabel);
-    
+
     n = 0;
     XtSetArg(args[n],XmNchildType,XmFRAME_WORKAREA_CHILD); n++;
     XtSetArg(args[n],XmNshadowThickness,0); n++;
     form = XmCreateForm(frame,"form",args,n);
-    
+
   /* Radio box */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -1186,7 +1186,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtSetArg(args[n],XmNadjustLast,False); n++;
     XtSetArg(args[n],XmNspacing,0); n++;
     radioBox = XmCreateRadioBox(form,"radioBox",args,n);
-    
+
     toggleXmString = (XmString)NULL;
     XtSetArg(args[0],XmNindicatorOn,False);
   /* Digits to the left of the decimal point */
@@ -1215,7 +1215,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtSetArg(args[2],XmNshadowThickness,0);
     toggles[count++] = XmCreateToggleButton(radioBox,"toggles",args,3);
     XtSetSensitive(toggles[count-1],False);
-    
+
   /* Digits to the right of the decimal point */
     for(i = 1; i <= numMinusColumns; i++) {
 	if(toggleXmString != NULL) XmStringFree(toggleXmString);
@@ -1233,7 +1233,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
 	XtAddCallback(toggles[count-1],XmNvalueChangedCallback,
 	  precisionToggleChangedCallback, (XtPointer)longValue);
     }
-    
+
   /* Text field */
     n = 0;
     XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -1253,7 +1253,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     tail = strlen(valueString);
     while(valueString[--tail] == '0') valueString[tail] = '\0';
     XmTextFieldSetString(textField,valueString);
-    
+
   /* Manage everything */
     XtManageChildren(toggles,numColumns);
     XtManageChild(radioBox);
@@ -1262,7 +1262,7 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtManageChild(frame);
     if(toggleXmString != NULL) XmStringFree(toggleXmString);
     XmStringFree(frameXmString);
-    
+
     XtManageChild(keyboardDialog);
     XmStringFree(xmValueLabel);
     XmStringFree(xmTitle);
@@ -1296,14 +1296,14 @@ void valuatorValueChanged(Widget w, XtPointer clientData,
 	if(call_data->reason == XmCR_DRAG) {
 	    dlValuator->dragging = True;            /* Mark beginning of drag  */
 	    dlValuator->enableUpdates = False;      /* Disable updates in drag */
-	    
+
 	  /* Drag - set value based on relative position (easy) */
 	    pv->oldIntegerValue = call_data->value;
 	    value = dlValuator->limits.lopr +
 	      ((double)(call_data->value - VALUATOR_MIN))
 	      / ((double)(VALUATOR_MAX - VALUATOR_MIN) ) *
 	      (dlValuator->limits.hopr - dlValuator->limits.lopr);
-	} else if(call_data->reason == XmCR_VALUE_CHANGED) { 
+	} else if(call_data->reason == XmCR_VALUE_CHANGED) {
 	    if(dlValuator->dragging) {
 	      /* Value changed can mark conclusion of drag, hence
                  enable updates */
@@ -1315,7 +1315,7 @@ void valuatorValueChanged(Widget w, XtPointer clientData,
 		dlValuator->enableUpdates = False;
 		dlValuator->dragging = False;
 	    }
-	    
+
 	  /* Value changed - has to deal with precision, etc (hard) */
 	    if(call_data->event != NULL) {
 		if(call_data->event->type == KeyPress) {
@@ -1388,7 +1388,7 @@ void valuatorValueChanged(Widget w, XtPointer clientData,
 		}
 	    }  /* end if(call_data->event != NULL) */
 	}
-	
+
 	if(pr->writeAccess) {
 	    medmSendDouble(pv->record,value);
 	  /* Move/redraw valuator & value, but force use of
@@ -1412,7 +1412,7 @@ DlElement *createDlValuator(DlElement *p)
 {
     DlValuator *dlValuator;
     DlElement *dlElement;
- 
+
     dlValuator = (DlValuator *)malloc(sizeof(DlValuator));
     if(!dlValuator) return 0;
     if(p) {
@@ -1426,7 +1426,7 @@ DlElement *createDlValuator(DlElement *p)
 	dlValuator->direction = RIGHT;
 	dlValuator->dPrecision = 1.;
     }
- 
+
   /* Private run-time valuator field */
     dlValuator->enableUpdates = True;
     dlValuator->dragging = False;
@@ -1436,7 +1436,7 @@ DlElement *createDlValuator(DlElement *p)
       &valuatorDlDispatchTable))) {
 	free(dlValuator);
     }
- 
+
     return(dlElement);
 }
 
@@ -1473,7 +1473,7 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"static")) 
+		if(!strcmp(token,"static"))
 		  dlValuator->clrmod = STATIC;
 		else if(!strcmp(token,"alarm"))
 		  dlValuator->clrmod = ALARM;
@@ -1507,7 +1507,7 @@ DlElement *parseValuator(DisplayInfo *displayInfo)
 	}
     } while((tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-    
+
     return dlElement;
 }
 
@@ -1521,20 +1521,20 @@ void writeDlValuator(FILE *stream, DlElement *dlElement, int level)
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
-#endif 
+#endif
 	fprintf(stream,"\n%svaluator {",indent);
 	writeDlObject(stream,&(dlValuator->object),level+1);
 	writeDlControl(stream,&(dlValuator->control),level+1);
-	if(dlValuator->label != LABEL_NONE) 
+	if(dlValuator->label != LABEL_NONE)
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,
 	    stringValueTable[dlValuator->label]);
-	if(dlValuator->clrmod != STATIC) 
+	if(dlValuator->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlValuator->clrmod]);
 	if(dlValuator->direction != RIGHT)
 	  fprintf(stream,"\n%s\tdirection=\"%s\"",indent,
 	    stringValueTable[dlValuator->direction]);
-	if(dlValuator->direction != 1.) 
+	if(dlValuator->direction != 1.)
 	  fprintf(stream,"\n%s\tdPrecision=%f",indent,dlValuator->dPrecision);
 	writeDlLimits(stream,&(dlValuator->limits),level+1);
 	fprintf(stream,"\n%s}",indent);

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Routines used to implement the Cartesian Plot using Xrt/Graph */
 
@@ -84,8 +84,8 @@ static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs)
   /* False means do not destroy the dialog */
     XrtPopdownPropertyEditor(w,False);
 }
-#endif			    
-#endif    
+#endif
+#endif
 
 void CpDataDeleteCurves(Widget w, CpDataHandle hData) {
   /* Not necessary */
@@ -105,7 +105,7 @@ void CpGetAxisInfo(Widget w,
 
 #if DEBUG_AXIS
     print("CpGetAxisInfo: Before XtGetValues\n");
-#endif    
+#endif
     nargs=0;
     XtSetArg(args[nargs],XmNuserData, userData); nargs++;
     XtSetArg(args[nargs],XtNxrtXAnnotationMethod, &xAnnoMethod); nargs++;
@@ -126,7 +126,7 @@ void CpGetAxisInfo(Widget w,
     XtGetValues(w,args,nargs);
 #if DEBUG_AXIS
     print("CpGetAxisInfo: After XtGetValues nargs=%d\n",nargs);
-#endif    
+#endif
 
     *xAxisIsTime = (xAnnoMethod == XRT_ANNO_TIME_LABELS)?True:False;
     xMinF->lval = xMin;
@@ -170,14 +170,14 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 {
     char rgb[16];
     XrtDataStyle myds;
-    
+
   /* Convert color to a color name */
     sprintf(rgb,"#%2.2x%2.2x%2.2x", color.red>>8,
       color.green>>8, color.blue>>8);
 
   /* Zero the XrtDataStyle struct (should not be necessary, but is consistent) */
     memset(&myds,0,sizeof(XrtDataStyle));
-    
+
   /* Fill in the XrtDataStyle struct */
     if(lineType == CP_LINE_NONE) myds.lpat = XRT_LPAT_NONE;
     else myds.lpat = XRT_LPAT_SOLID;
@@ -560,7 +560,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
     XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
 
-#if DEBUG_CARTESIAN_PLOT_BORDER    
+#if DEBUG_CARTESIAN_PLOT_BORDER
     printf("dlCartesianPlot->object.width: %d\n",dlCartesianPlot->object.width);
     printf("dlCartesianPlot->object.height: %d\n",dlCartesianPlot->object.height);
 #endif
@@ -571,18 +571,18 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	Pixel bottomShadow;
 	Pixel foreground;
 	Pixel select;
-	
+
 	XmGetColors(XtScreen(displayInfo->drawingArea),cmap,
 	  displayInfo->colormap[dlCartesianPlot->plotcom.bclr],
 	    &foreground,&topShadow,&bottomShadow,&select);
-	
+
 /*  	    XtSetArg(args[nargs],XmNtopShadowColor,topShadow); nargs++; */
 	    XtSetArg(args[nargs],XmNtopShadowColor,BlackPixel(display,screenNum)); nargs++;
 	    XtSetArg(args[nargs],XmNbottomShadowColor,bottomShadow); nargs++;
 	    XtSetArg(args[nargs],XmNselectColor,select); nargs++;
     }
 #endif
-    
+
   /* long way around for color handling... but XRT/Graph insists on strings! */
     xColors[0].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.clr];
     xColors[1].pixel = displayInfo->colormap[dlCartesianPlot->plotcom.bclr];
@@ -603,7 +603,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XtNxrtHeaderFont,fontListTable[bestSize]); nargs++;
 #else
     XtSetArg(args[nargs],XtNxrtHeaderFont,fontTable[bestSize]->fid); nargs++;
-#endif    
+#endif
     if (strlen(dlCartesianPlot->plotcom.title) > 0) {
 	headerStrings[0] = dlCartesianPlot->plotcom.title;
     } else {
@@ -629,7 +629,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     XtSetArg(args[nargs],XtNxrtAxisFont,fontListTable[bestSize]); nargs++;
 #else
     XtSetArg(args[nargs],XtNxrtAxisFont,fontTable[bestSize]->fid); nargs++;
-#endif    
+#endif
     switch (dlCartesianPlot->style) {
     case POINT_PLOT:
     case LINE_PLOT:
@@ -804,7 +804,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
       displayInfo->drawingArea, args, nargs);
 
   /* Add destroy callback for property editor */
-#if XRT_VERSION > 2    
+#if XRT_VERSION > 2
 #ifdef XRT_EXTENSIONS
     XtAddCallback(w,XmNdestroyCallback,
       (XtCallbackProc)destroyXrtPropertyEditor, NULL);
@@ -820,7 +820,7 @@ void dumpCartesianPlot(Widget w)
 {
     Arg args[20];
     int n=0;
-			    
+
     Dimension footerHeight;
     Dimension footerWidth;
     Dimension footerBorderWidth;
@@ -862,7 +862,7 @@ void dumpCartesianPlot(Widget w)
     XtSetArg(args[n],XmNunitType,&unitType); n++;
     XtSetArg(args[n],XtNxrtTimeBase,&timeBase); n++;
     XtGetValues(w,args,n);
-			      
+
     print("\nXRT/Graph Widget (%x)\n");
     print("  width: %d\n",width);
     print("  height: %d\n",height);

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -144,13 +144,13 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     int recolor = TRUE;
 
     UNREFERENCED(cbs);
-    
+
 
 /* (MDA) requests to leave color palette up
    XtPopdown(colorS);
    */
 
-    if (currentDisplayInfo) 
+    if (currentDisplayInfo)
       currentColormap = defaultColormap;
     else
       currentColormap = currentDisplayInfo->colormap;
@@ -170,10 +170,10 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	globalResourceBundle.data_clr = colorIndex;
 	break;
     case SCDATA_RC:
-#if 0	
+#if 0
 	globalResourceBundle.scData[
 	  elementTypeWhoseColorIsBeingEditedIndex].clr = colorIndex;
-#endif	
+#endif
 	stripChartUpdateMatrixColors(colorIndex,
 	  elementTypeWhoseColorIsBeingEditedIndex);
 	recolor = FALSE;
@@ -181,9 +181,9 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CPDATA_RC:
 	globalResourceBundle.cpData[
 	  elementTypeWhoseColorIsBeingEditedIndex].data_clr = colorIndex;
-#ifdef CARTESIAN_PLOT	
+#ifdef CARTESIAN_PLOT
 	cpUpdateMatrixColors();
-#endif	
+#endif
 	recolor = FALSE;
 	break;
     default :
@@ -198,7 +198,7 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtVaSetValues(resourceEntryElement[elementTypeWhoseColorIsBeingEdited],
 	  XmNbackground,currentColormap[colorIndex], NULL);
     }
-    
+
   /* Update appropriate color property */
     dlElement = FirstDlElement(cdi->selectedDlElementList);
     while (dlElement) {
@@ -283,7 +283,7 @@ void createColor()
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(colorMB,defaultForeground,defaultBackground);
 #endif
-    
+
   /* Free strings */
     for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
 
@@ -427,7 +427,7 @@ static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
     int buttonNumber = (int)cd;
     UNREFERENCED(w);
     UNREFERENCED(cbs);
-    
+
     switch(buttonNumber) {
     case HELP_COLOR_PALETTE_BTN:
 	callBrowser(medmHelpPath,"#ColorPalette");

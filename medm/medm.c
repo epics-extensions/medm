@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -260,7 +260,7 @@ static menuEntry_t editAlignMenu[] = {
       alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_CENTER_BTN,  NULL},
     { "Right",             &xmPushButtonGadgetClass, 'R', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_HORIZ_RIGHT_BTN,  NULL},
-    { "Top",               &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL, 
+    { "Top",               &xmPushButtonGadgetClass, 'T', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_TOP_BTN,  NULL},
     { "Vertical Center",   &xmPushButtonGadgetClass, 'V', NULL, NULL, NULL,
       alignMenuSimpleCallback, (XtPointer) ALIGN_VERT_CENTER_BTN,  NULL},
@@ -272,7 +272,7 @@ static menuEntry_t editAlignMenu[] = {
       alignMenuSimpleCallback, (XtPointer) ALIGN_EDGE_TO_GRID_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editSizeMenu[] = {
     { "Same Size",        &xmPushButtonGadgetClass, 'S', NULL, NULL, NULL,
       sizeMenuSimpleCallback, (XtPointer) SIZE_SAME_BTN,  NULL},
@@ -280,7 +280,7 @@ static menuEntry_t editSizeMenu[] = {
       sizeMenuSimpleCallback, (XtPointer) SIZE_TEXT_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editCenterMenu[] = {
     { "Horizontally in Display", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
       centerMenuSimpleCallback, (XtPointer) CENTER_HORIZ_BTN,  NULL},
@@ -290,7 +290,7 @@ static menuEntry_t editCenterMenu[] = {
       centerMenuSimpleCallback, (XtPointer) CENTER_BOTH_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editOrientMenu[] = {
     { "Flip Horizontally", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
       orientMenuSimpleCallback, (XtPointer) ORIENT_HORIZ_BTN,  NULL},
@@ -302,7 +302,7 @@ static menuEntry_t editOrientMenu[] = {
       orientMenuSimpleCallback, (XtPointer) ORIENT_CCW_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editSpaceMenu[] = {
     { "Horizontal", &xmPushButtonGadgetClass, 'H', NULL, NULL, NULL,
       spaceMenuSimpleCallback, (XtPointer) SPACE_HORIZ_BTN,  NULL},
@@ -312,7 +312,7 @@ static menuEntry_t editSpaceMenu[] = {
       spaceMenuSimpleCallback, (XtPointer) SPACE_2D_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editGridMenu[] = {
     { "Toggle Show Grid",    &xmPushButtonGadgetClass, 'G', NULL, NULL, NULL,
       gridMenuSimpleCallback, (XtPointer) GRID_ON_BTN,  NULL},
@@ -322,7 +322,7 @@ static menuEntry_t editGridMenu[] = {
       gridMenuSimpleCallback, (XtPointer) GRID_SPACING_BTN,  NULL},
     { NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
-  
+
 static menuEntry_t editObjectMenu[] = {
     { "Graphics",   &xmCascadeButtonGadgetClass,'G', NULL, NULL, NULL,
       NULL,        NULL,                     graphicsObjectMenu},
@@ -580,7 +580,7 @@ Name of file in which to save display:",
     "Medm.mainMW*exitQD.messageString: Do you really want to Exit?",
     "Medm.mainMW*exitQD.okLabelString: Yes",
     "Medm.mainMW*exitQD.cancelLabelString: No",
-#endif    
+#endif
     "Medm.mainMW*XmRowColumn.tearOffModel: XmTEAR_OFF_ENABLED",
   /* Object palette */
     "Medm.objectS.geometry: -5+137",
@@ -616,7 +616,7 @@ Name of file in which to save display:",
     "Medm*resourceMW*messageF.verticalSpacing: 6",
     "Medm*resourceMW*messageF.horizontalSpacing: 3",
     "Medm*resourceMW*messageF.shadowType: XmSHADOW_IN",
-#ifdef UNNECESSARY    
+#ifdef UNNECESSARY
     "Medm*resourceMW*bundlesSW.visualPolicy: XmCONSTANT",
     "Medm*resourceMW*bundlesSW.scrollBarDisplayPolicy: XmSTATIC",
     "Medm*resourceMW*bundlesSW.scrollingPolicy: XmAUTOMATIC",
@@ -639,7 +639,7 @@ Name of file in which to save display:",
     "Medm*resourceMW*imageNameFSD.form.frame.radioBox*shadowThickness: 0",
     "Medm*resourceMW*imageNameFSD*XmToggleButton.indicatorOn: True",
     "Medm*resourceMW*imageNameFSD*XmToggleButton.labelType: XmString",
-#endif    
+#endif
 #ifdef EXTENDED_INTERFACE
   /* Channel palette */
     "Medm*channelMW.width: 140",
@@ -653,10 +653,10 @@ Name of file in which to save display:",
     "Medm*scForm.marginWidth: 10",
     "Medm*scForm.marginHeight: 10",
     "Medm*scForm.scActionArea.marginHeight: 5",
-#if 0    
+#if 0
     "Medm*scForm.scMatrix.marginHeight: 0",
     "Medm*scForm.scMatrix.columnRC.marginHeight: 5",
-#endif    
+#endif
   /* Medm widget resource specifications */
     "Medm*warningDialog*foreground: white",
     "Medm*warningDialog*background: red",
@@ -709,7 +709,7 @@ Name of file in which to save display:",
     "*useColorObj: False",
 #endif
 #endif
-    
+
     NULL,
 };
 
@@ -830,7 +830,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    if(tmp) {
 		argsUsed = i;
 		strcpy(request->displayFont,tmp);
-#if 0		
+#if 0
 	      /* KE: The following code is useless.  We could change
                  == to !=, however, request->fontStyle eventually is
                  only used to set the windowPropertyAtom.  Currently,
@@ -845,7 +845,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		    else if(!strcmp(request->displayFont,DEFAULT_SCALABLE_STRING))
 		      request->fontStyle = SCALABLE_FONT;
 		}
-#endif		
+#endif
 	    }
 	} else if(!strcmp(argv[i],"-display")) {
 	  /* (Not trapped by X because this routine is called first) */
@@ -879,7 +879,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	}
 
     }
-    
+
   /* Parse the display name */
     for(i = argsUsed+1; i < argc; i++) {
 	Boolean canAccess;
@@ -906,7 +906,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	canAccess = !access(fileStr,R_OK|F_OK);
 	if(canAccess) {
 	    int status;
-	    
+
 	  /* Found the file.  Convert to a full path. */
 	    status = convertNameToFullPath(fileStr, fullPathName, PATH_MAX);
 	    if(!status) canAccess = False;
@@ -915,7 +915,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 	    char *dir = NULL;
 	    char name[PATH_MAX];
 	    int startPos;
-	    
+
 	    dir = getenv("EPICS_DISPLAY_PATH");
 	    if(dir != NULL) {
 		startPos = 0;
@@ -976,7 +976,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 	if(cdi) {
 	    char *gridVal;
 	    XmString xmString;
-	    
+
 	    XtVaGetValues(w,XmNtextString,&xmString,NULL);
 	  /* Use XmStringGetLtoR because it handles multiple lines */
 	    XmStringGetLtoR(xmString,XmFONTLIST_DEFAULT_TAG,&gridVal);
@@ -1072,14 +1072,14 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  /* Pushed on main edit menu, need to determine which display */
 	    Widget widget;
 	    XEvent event;
-	    
+
 	    if(displayInfoListHead->next != displayInfoListTail) {
 	      /* More than one display, query user */
 		widget = XmTrackingEvent(mainShell,pasteCursor,False,&event);
 		if(widget) {
 		    cdi = currentDisplayInfo =
 		      dmGetDisplayInfoFromWidget(widget);
-		}  
+		}
 	    }
 	}
 	copyElementsIntoDisplay();
@@ -1120,11 +1120,11 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
     case EDIT_REFRESH_BTN:
 	refreshDisplay(cdi);
-	break;	
+	break;
 
     case EDIT_FIND_BTN:
 	findOutliers();
-	break;	
+	break;
 
     case EDIT_HELP_BTN:
     {
@@ -1161,7 +1161,7 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XmString xmString=XmStringConcat(xmString1,xmString2);
 	Arg args[20];
 	int nargs;
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
 	XtSetValues(editHelpMessageBox,args,nargs);
@@ -1173,12 +1173,12 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     }
     }
 }
-    
+
 static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
-  
+
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
@@ -1221,7 +1221,7 @@ static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
-  
+
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
@@ -1241,7 +1241,7 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
-  
+
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
@@ -1265,7 +1265,7 @@ static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonNumber = (int) cd;
-  
+
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
@@ -1343,7 +1343,7 @@ static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    Arg args[4];
 	    XmString xmString;
 	    char label[1024];
-	    
+
 	    sprintf(label,"%d",cdi->grid->gridSpacing);
 	    xmString = XmStringCreateLocalized(label);
 	    n = 0;
@@ -1362,7 +1362,7 @@ static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    Arg args[4];
 	    XmString xmString;
 	    char label[1024];
-	    
+
 	    sprintf(label,"%d",cdi->grid->gridSpacing);
 	    xmString = XmStringCreateLocalized(label);
 	    n = 0;
@@ -1456,7 +1456,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    XtSetArg(args[n],XmNdirectory,cwdXmString); n++;
 	    XmStringFree(cwdXmString);
 #endif
-	    
+
 	    XtSetArg(args[n],XmNpattern,label); n++;
 	    openFSD = XmCreateFileSelectionDialog(XtParent(mainFilePDM),"openFSD",args,n);
 	    XtUnmanageChild(XmFileSelectionBoxGetChild(openFSD,
@@ -1510,7 +1510,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    rowColumn = XmCreateRowColumn(saveAsPD,"rowColumn",args,n);
 	    n = 0;
 	    typeLabel = XmCreateLabel(rowColumn,"File Format",args,n);
- 
+
 	    buttons[0] = XmStringCreateLocalized("Default");
 	    buttons[1] = XmStringCreateLocalized("2.1.x");
 	    n = 0;
@@ -1531,7 +1531,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    widget = XmTrackingEvent(mainShell,saveCursor,False,&event);
 	    if(widget) {
 		currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
-	    }  
+	    }
 	} else {
 	  /* only one display */
 	    currentDisplayInfo = displayInfoListHead->next;
@@ -1566,12 +1566,12 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	      displayInfo->newDisplay?"New":"Old",
 	      displayInfo->hasBeenEditedButNotSaved?"Edited    ":"Not Edited",
 	      displayInfo->dlFile->name);
-#endif	    
+#endif
 	  /* Only do ones that have been edited */
 	    if(displayInfo->hasBeenEditedButNotSaved) {
 		char str[2*MAX_FILE_CHARS];
 		Boolean saveThis = True;
-		
+
 	      /* Prompt if All has not been choosen */
 		if(!saveAll) {
 		    sprintf(str,"Save \"%s\" ?",displayInfo->dlFile->name);
@@ -1596,7 +1596,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #if DEBUG_SAVE_ALL
 		printf("  saveThis=%s\n",
 		  saveThis?"True":"False");
-#endif	    
+#endif
 		if(saveThis)
 		/* Overwrite unless it is a new display */
 		  medmSaveDisplay(displayInfo, displayInfo->dlFile->name,
@@ -1605,7 +1605,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    displayInfo = displayInfo->next;
 	}
 	break;
-	
+
     case MAIN_FILE_CLOSE_BTN:
 	if(displayInfoListHead->next == displayInfoListTail) {
 	  /* only one display; no need to query user */
@@ -1631,7 +1631,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  /* only one display; no need to query user */
 	    currentDisplayInfo = displayInfoListHead->next;
 	    if(currentDisplayInfo != NULL) {
-#if 0		
+#if 0
 #ifdef WIN32
 		if(!printToFile) {
 		    dmSetAndPopupWarningDialog(currentDisplayInfo,
@@ -1731,7 +1731,7 @@ void printStat(char *filename, char *comment)
 #ifdef WIN32
     int  status;
     struct stat statBuf;
-    
+
     status = stat(filename,&statBuf);
     if(status) {
 	print("stat failed [%s]: %s\n",comment,filename);
@@ -1742,10 +1742,10 @@ void printStat(char *filename, char *comment)
       statBuf.st_mode&S_IREAD?'r':'-',
       statBuf.st_mode&S_IWRITE?'w':'-',
       statBuf.st_mode&S_IEXEC?'x':'-');
-#else    
+#else
     int  status;
     struct stat statBuf;
-    
+
     status = stat(filename,&statBuf);
     if(status) {
 	print("stat failed [%s]: %s\n",comment,filename);
@@ -1788,7 +1788,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     if(filename == NULL) return False;
 
     strLen1 = strlen(filename);
- 
+
     if(strLen1 >= MAX_FILE_CHARS) {
 	medmPrintf(1,"\nPath too Long: %s\n",filename);
 	return False;
@@ -1815,12 +1815,12 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     } else {
       /* Search for the position of the .template suffix */
 	suffix = strstr(f1,templateSuffix);
-	if((suffix) && (suffix == f1 + strLen1 - strLen4)) { 
+	if((suffix) && (suffix == f1 + strLen1 - strLen4)) {
 	  /* this is a .template special case */
 	    templateException = True;
 	}
     }
-  
+
 
   /* Create the backup file name with suffix _BAK.adl*/
     strcpy(f2,f1);
@@ -1831,10 +1831,10 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     print("  filename=|%s|\n",filename);
     print("  f1=|%s|\n",f1);
     print("  f2=|%s|\n",f2);
-#endif    
-    
+#endif
+
   /* Check for the special case .template */
-    if(!templateException) 
+    if(!templateException)
       strcat(f1,DISPLAY_FILE_ASCII_SUFFIX);
 
   /* See whether the file already exists. */
@@ -1845,7 +1845,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    brandNewFile = True;
 	} else {
 	    char *errstring=strerror(errno);
-	    
+
 	    medmPostMsg(1,"Error accessing file:\n%s\n%s\n",
 	      f1,errstring);
 	    return False;
@@ -1869,7 +1869,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	if(access(f2,W_OK) == -1) {
 	    if(errno != ENOENT) {
 		char *errstring=strerror(errno);
-	    
+
 		medmPostMsg(1,"Cannot write backup file:\n%s\n%s\n",
 		  filename,errstring);
 		return False;
@@ -1896,7 +1896,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	status = rename(f1,f2);
 	if(status) {
 	    char *errstring=strerror(errno);
-	    
+
 	    medmPrintf(1,"\nCannot rename file: %s\n"
 	      "  To: %s\n"
 	      "  %s\n",
@@ -1904,12 +1904,12 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 	    return False;
 	}
     }
-    
+
   /* Open for writing (Use w+ or WIN32 makes it readonly) */
     stream = fopen(f1,"w+");
     if(stream == NULL) {
 	char *errstring=strerror(errno);
-	
+
 	medmPostMsg(1,"Failed to create/write file:\n%s\n%s\n",
 	  filename,errstring);
 	return False;
@@ -1937,10 +1937,10 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 void vmsTrimVersionNumber (char *fileName)
 {
     char *tmpPtr;
-    
-    
+
+
     tmpPtr = fileName + strlen (fileName) - 1;
-    
+
     while((tmpPtr > fileName) && (*tmpPtr != ';'))
       tmpPtr--;
     if(*tmpPtr == ';')
@@ -1962,7 +1962,7 @@ void medmExit()
 		filename = tmp = displayInfo->dlFile->name;
 	      /* strip off the path */
 		while(*tmp != '\0') {
-		    if(*tmp == MEDM_DIR_DELIMITER_CHAR) 
+		    if(*tmp == MEDM_DIR_DELIMITER_CHAR)
 		      filename = tmp+1;
 		    tmp++;
 		}
@@ -2004,7 +2004,7 @@ void medmExit()
 		    break;
 		}
 	    }
-	    if(saveThis == True) 
+	    if(saveThis == True)
 	      if(medmSaveDisplay(displayInfo,
 		displayInfo->dlFile->name,True) == False) return;
 	}
@@ -2012,7 +2012,7 @@ void medmExit()
     }
 #ifdef PROMPT_TO_EXIT
   /* Prompt to exit */
-#if 0    
+#if 0
   /* KE: This appears to work and deiconify if iconic */
     XMapRaised(display, XtWindow(mainShell));
 #else
@@ -2105,7 +2105,7 @@ static void fileMenuDialogCallback(
 static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int) cd;
-  
+
     UNREFERENCED(cbs);
 
     switch(buttonNumber) {
@@ -2144,7 +2144,7 @@ static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    
+
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 
@@ -2192,7 +2192,7 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "     You should be able to change the displayed URL via the MEDM Help\n"
 	  "menu or the context-sensitive Help buttons.\n",
 	  XmFONTLIST_DEFAULT_TAG);
-#else	  
+#else
 	XmString xmString1=XmStringCreateLtoR(
 	  "     Help in this version of MEDM is implemented using Netscape.  If\n"
 	  "the environmental variable NETSCAPEPATH containing the full pathname\n"
@@ -2207,11 +2207,11 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  "response should be fairly quick.  Otherwise, the first call to help\n"
 	  "must wait until Netscape comes up, which will take somewhat longer.\n",
 	  XmFONTLIST_DEFAULT_TAG);
-#endif	  
+#endif
 	XmString xmString=XmStringConcat(xmString1,xmString2);
 	Arg args[20];
 	int nargs;
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
 	XtSetValues(helpMessageBox,args,nargs);
@@ -2229,14 +2229,14 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    unsigned char indicatorType;
 	    Arg args[20];
 	    int nargs;
-	    
+
 	    nargs=0;
 	    XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
 	    XtGetValues(modeRB,args,nargs);
 	    print("\nEdit/Execute: globalDisplayListTraversalMode=%d [DL_EXECUTE=%d DL_EDIT=%d]\n",
 	      globalDisplayListTraversalMode,DL_EXECUTE,DL_EDIT);
 	    print("modeRB(%x): XmNradioBehavior=%d \n",modeRB,(int)radioBehavior);
-	    
+
 	    nargs=0;
 	    XtSetArg(args[nargs],XmNindicatorType,&indicatorType); nargs++;
 	    XtSetArg(args[nargs],XmNset,&set); nargs++;
@@ -2297,7 +2297,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	unsigned char indicatorType;
 	Arg args[20];
 	int nargs;
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNradioBehavior,&radioBehavior); nargs++;
 	XtGetValues(XtParent(w),args,nargs);
@@ -2344,22 +2344,22 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 		markHiddenButtons(displayInfo);
 	    }
 	    displayInfo =displayInfo->next;
-	}	
+	}
 
       /* Restore any related displays that were replaced */
-#if 0	
+#if 0
 	dumpDisplayInfoList(displayInfoListHead,"medm.c [1]: displayInfoList");
 	dumpDisplayInfoList(displayInfoSaveListHead,"medm.c [1]: displayInfoSaveList");
-#endif	
+#endif
 	displayInfo = displayInfoSaveListHead->next;
 	while(displayInfo) {
 	    DisplayInfo *pDI = displayInfo->next;
-	
+
 	    moveDisplayInfoSaveToDisplayInfo(displayInfo);
 	    XtPopup(displayInfo->shell,XtGrabNone);
 	    displayInfo = pDI;
-	}	
-#if 0	
+	}
+#if 0
 	dumpDisplayInfoList(displayInfoListHead,"medm.c [2]: displayInfoList");
 	dumpDisplayInfoList(displayInfoSaveListHead,"medm.c [2]: displayInfoSaveList");
 #endif
@@ -2434,7 +2434,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_BTN].widget,False);
 	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_ALL_BTN].widget,False);
 	XtSetSensitive(fileMenu[MAIN_FILE_SAVE_AS_BTN].widget,False);
-	
+
       /* Start the PV statistics */
 	medmResetUpdateCAStudyDlg(NULL,NULL,NULL);
 	medmStartUpdateCAStudyDlg();
@@ -2503,7 +2503,7 @@ static void modeCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 static void createCursors()
-{ 
+{
     XCharStruct overall;
     int dir, asc, desc;
     Pixmap sourcePixmap, maskPixmap;
@@ -2731,7 +2731,7 @@ static void createCursors()
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
 	XQueryColors(display,cmap,colors,2);
- 
+
 	sourcePixmap = XCreateBitmapFromData(display,RootWindow(display,screenNum),
 	  (char *)bigWatchCursor25_bits, bigWatchCursor25_width,
 	  bigWatchCursor25_height);
@@ -2825,7 +2825,7 @@ Widget buildMenu(Widget parent,
     return (menuType == XmMENU_POPUP) ? menu : cascade;
 }
 
-/* 
+/*
  * SIGNAL HANDLER
  *   function to perform cleanup of X root window MEDM... properties
  *   which accomodate remote display requests
@@ -2842,7 +2842,7 @@ static void handleSignals(int sig)
     if(windowPropertyAtom != (Atom)NULL)
       XDeleteProperty(display,rootWindow,windowPropertyAtom);
     XFlush(display);
-    
+
   /* Exit */
     if(sig == SIGSEGV || sig == SIGBUS) {
       /* Exit with core dump */
@@ -3004,7 +3004,7 @@ DisplayInfo* parseDisplayFile(char *filename) {
 	    fclose(filePtr);
 	    return NULL;
 	}
- 
+
       /* Proceed with parsing */
 	while(parseAndAppendDisplayList(displayInfo,displayInfo->dlElementList,
 	  token,tokenType) != T_EOF) {
@@ -3043,7 +3043,7 @@ int main(int argc, char *argv[])
     Window medmHostWindow = (Window)0;
     char *envPrintCommand = NULL;
     char *envHelpPath = NULL;
-    
+
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
     HCLXmInit();
@@ -3051,7 +3051,7 @@ int main(int argc, char *argv[])
 
 #if DEBUG_PROP
     print("Starting MEDM\n");
-#endif    
+#endif
 
 #if DEBUG_WIN32_LEAKS
 #ifdef WIN32
@@ -3075,41 +3075,41 @@ int main(int argc, char *argv[])
 #endif
 #endif
 #endif
-    
-    
+
+
 #if DEBUG_DEFINITIONS
 
     print("\n");
 #ifdef __EXTENSIONS__
     print("__EXTENSIONS__= % d\n",__EXTENSIONS__);
-#else      
+#else
     print("__EXTENSIONS__ is undefined\n");
 #endif
 #ifdef __STDC__
     print("__STDC__ = %d\n",__STDC__);
     print("__STDC__ - 0 = %d\n",__STDC__ - 0);
-#else      
+#else
     print("__STDC__ is undefined\n");
     print("__STDC__ - 0 = %d\n",__STDC__ - 0);
 #endif
 #ifdef _POSIX_C_SOURCE
     print("_POSIX_C_SOURCE = %d\n",_POSIX_C_SOURCE);
-#else      
+#else
     print("_POSIX_C_SOURCE is undefined\n");
 #endif
 #ifdef _XOPEN_SOURCE
     print("_XOPEN_SOURCE = %d\n",_XOPEN_SOURCE);
-#else      
+#else
     print("_XOPEN_SOURCE is undefined\n");
 #endif
 #ifdef _NO_LONGLONG
     print("_NO_LONGLONG = %d\n",_NO_LONGLONG);
-#else      
+#else
     print("_NO_LONGLONG is undefined\n");
 #endif
 #ifdef NeedFunctionPrototypes
     print("NeedFunctionPrototypes = %d\n",NeedFunctionPrototypes);
-#else      
+#else
     print("NeedFunctionPrototypes is undefined\n");
 #endif
     print("sizeof(1 && 2)=%d\n",sizeof(1 && 2));
@@ -3161,7 +3161,7 @@ int main(int argc, char *argv[])
 	strncpy(medmHelpPath, MEDM_HELP_PATH, PATH_MAX);
     }
     medmHelpPath[PATH_MAX-1]='\0';
-    
+
   /* XWD file name */
 #ifdef WIN32
     {
@@ -3177,8 +3177,8 @@ int main(int argc, char *argv[])
     }
 #else
     strcpy(xwdFile,PRINT_XWD_FILE);
-#endif    
-    
+#endif
+
   /* Handle file conversions */
     if(argc == 4 && (!strcmp(argv[1],"-c21x") ||
       !strcmp(argv[1],"-c22x"))) {
@@ -3279,7 +3279,7 @@ int main(int argc, char *argv[])
 		windowPropertyAtom = XInternAtom(display,
 		  MEDM_VERSION_DIGITS"_EDIT_SCALABLE",False);
 	    }
-	} 
+	}
 
       /* Get the property  (Should a the mainShell window number)
        *  type:          Actual type of the property
@@ -3303,7 +3303,7 @@ int main(int argc, char *argv[])
 	  "  windowPropertyAtom=%d propertyData=%x\n",
 	  status,type,format,nitems,left,windowPropertyAtom,
 	  propertyData?*(long *)propertyData:0);
-#endif	
+#endif
 
       /* Decide whether to attach to existing MEDM */
 	if(type != None) {
@@ -3316,7 +3316,7 @@ int main(int argc, char *argv[])
 
       /* Attach to existing MEDM if appropriate
        *   Note that we only know there is a property
-       *   We do not know if there actually is an MEDM running */	
+       *   We do not know if there actually is an MEDM running */
 	if(attachToExistingMedm) {
 	    XWindowAttributes attr;
 	    char *fileStr;
@@ -3356,12 +3356,12 @@ int main(int argc, char *argv[])
 		print("(Use -local to not use existing MEDM or be available "
 		  "as an existing MEDM\n"
 		  "  or -cleanup to set this MEDM as the existing one)\n");
-		
+
 	      /* Leave this MEDM */
 		XCloseDisplay(display);
 		exit(0);
 	    }
-	}  
+	}
 
 #if DEBUG_PROP
 	{
@@ -3372,7 +3372,7 @@ int main(int argc, char *argv[])
 	    print("atomName(2)=|%s| atom=%d\n",atomName?atomName:"NULL",
 	      windowPropertyAtom);
 	}
-#endif	
+#endif
 
       /* Close the display that was opened (Will start over later) */
 	XCloseDisplay(display);
@@ -3391,7 +3391,7 @@ int main(int argc, char *argv[])
 	    print("atomName(3)=|%s| atom=%d\n",atomName?atomName:"NULL",
 	      windowPropertyAtom);
 	}
-#endif	
+#endif
     n = 0;
     XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
 #if OMIT_RESIZE_HANDLES
@@ -3421,19 +3421,19 @@ int main(int argc, char *argv[])
 	printf(" warnHandler=%p xtErrorHandler=%p\n",
 	  (void *)warnHandler,(void *)xtErrorHandler);
     }
-#else    
+#else
     XtAppSetErrorHandler(appContext,xtErrorHandler);
     XtAppSetWarningHandler(appContext,xtErrorHandler);
 #endif
     XSetErrorHandler(xErrorHandler);
-    
+
   /* Enable Editres */
-#ifdef EDITRES    
+#ifdef EDITRES
     XtAddEventHandler(mainShell,(EventMask)NULL,TRUE,
       (XtEventHandler)_XEditResCheckMessages,NULL);
 #endif
-    
-#if 0    
+
+#if 0
   /* KE: This doesn't appear in the documentation.
    *   Assume it is not needed any more. */
   /* Add necessary Motif resource converters */
@@ -3458,11 +3458,11 @@ int main(int argc, char *argv[])
 	    print("atomName(4)=|%s| atom=%d\n",atomName?atomName:"NULL",
 	      windowPropertyAtom);
 	}
-#endif	
+#endif
     screenNum = DefaultScreen(display);
     rootWindow = RootWindow(display,screenNum);
     cmap = DefaultColormap(display,screenNum);	/* X default colormap */
-    
+
       /* Set XSynchronize for debugging */
 #if DEBUG_SYNC
     XSynchronize(display,TRUE);
@@ -3479,7 +3479,7 @@ int main(int argc, char *argv[])
     compoundTextAtom = XmInternAtom(display,"COMPOUND_TEXT",False);
     textAtom = XmInternAtom(display,"TEXT",False);
 #endif
-    
+
   /* Register signal handlers so we can shut down ourselves
    *   (Unfortunately SIGKILL, SIGSTOP can't be caught...) */
 #if defined(__cplusplus) && !defined(__GNUG__)
@@ -3501,7 +3501,7 @@ int main(int argc, char *argv[])
     parsedTranslations = XtParseTranslationTable(dragTranslations);
     XtAppAddActions(appContext,dragActions,XtNumber(dragActions));
 #endif
-    
+
     if(request->opMode == EDIT) {
 	globalDisplayListTraversalMode = DL_EDIT;
     } else if(request->opMode == EXECUTE) {
@@ -3544,14 +3544,14 @@ int main(int argc, char *argv[])
    *   (Afterward regulated by object palette) */
     currentActionType = SELECT_ACTION;
 
-  /* Initialize the private colormap if there is one */    
+  /* Initialize the private colormap if there is one */
     if(request->privateCmap) {
       /* Cheap/easy way to get colormap - do real PseudoColor cmap alloc later
        *   Note this really creates a colormap for default visual with no
        *     entries */
 	cmap = XCopyColormapAndFree(display,cmap);
 	XtVaSetValues(mainShell,XmNcolormap,cmap,NULL);
-    
+
       /* Add in black and white pixels to match [Black/White]Pixel(dpy,scr) */
 	colors[0].pixel = BlackPixel(display,screenNum);
 	colors[1].pixel = WhitePixel(display,screenNum);
@@ -3567,7 +3567,7 @@ int main(int argc, char *argv[])
 	if(colors[1].pixel == 1) XAllocColor(display,cmap,&(colors[1]));
 	else XAllocColor(display,cmap,&(colors[0]));
     }
-    
+
   /* Allocate colors */
     for(i = 0; i < DL_MAX_COLORS; i++) {
       /* Scale [0,255] to [0,65535] */
@@ -3587,13 +3587,13 @@ int main(int argc, char *argv[])
     }
     currentColormap = defaultColormap;
     currentColormapSize = DL_MAX_COLORS;
-    
+
   /* Initialize the global resource bundle */
     initializeGlobalResourceBundle();
     globalResourceBundle.next = NULL;
     globalResourceBundle.prev = NULL;
-    
-    
+
+
   /* Intialize MEDM stuff */
     medmInit(request->displayFont);
     medmInitializeImageCache();
@@ -3604,14 +3604,14 @@ int main(int argc, char *argv[])
     initMedmCommon();
     initEventHandlers();
     initMedmWidget();
-    
+
 #if DEBUG_VERSION
     print("ServerVendor=%s\n", ServerVendor(display));
     print("VendorRelease=%d\n", VendorRelease(display));
     print("ProtocolVersion=%d\n", ProtocolVersion(display));
     print("ProtocolRevision=%d\n", ProtocolRevision(display));
 #endif
-    
+
   /* We're the first MEDM around in this mode - proceed with full
     execution.  Store mainShell window as the property associated with
     the windowPropertyAtom.  (Will be stored if CLEANUP or first MEDM.
@@ -3643,7 +3643,7 @@ int main(int argc, char *argv[])
 #if DEBUG_PROP
 	{
 	    char *atomName;
-	    
+
 	    atomName = XGetAtomName(display, windowPropertyAtom);
 	    print("\nBefore XChangeProperty\n");
 	    print("atomName(5)=|%s| atom=%d\n",atomName?atomName:"NULL",
@@ -3658,7 +3658,7 @@ int main(int argc, char *argv[])
 	  	  propertyData?*(long *)propertyData:0);
 	print("\nChanged window property: windowPropertyAtom=%d targetWindow=%x\n",
 	  windowPropertyAtom,targetWindow);
-#endif	
+#endif
 	XChangeProperty(display,rootWindow,windowPropertyAtom,
 	  XA_WINDOW,32,PropModeReplace,(unsigned char *)&targetWindow,1);
 #if DEBUG_PROP
@@ -3669,9 +3669,9 @@ int main(int argc, char *argv[])
 	  "  windowPropertyAtom=%d propertyData=%x\n",
 	  status,type,format,nitems,left,windowPropertyAtom,
 	  propertyData?*(long *)propertyData:0);
-#endif	
+#endif
     }
-    
+
   /* Start any command-line specified displays */
     for(i=0; i < request->fileCnt; i++) {
 	char *fileStr;
@@ -3730,7 +3730,7 @@ int main(int argc, char *argv[])
       wmCloseCallback, (XtPointer) OTHER_SHELL);
 
   /* Check if there were early messages and bring up Message Window */
-    checkEarlyMessages();    
+    checkEarlyMessages();
 
 #ifdef __TED__
   /* Get CDE workspace list */
@@ -3750,7 +3750,7 @@ int main(int argc, char *argv[])
 	case ButtonPress:
 	case ButtonRelease: {
 	    XButtonEvent bEvent = event.xbutton;
-	    
+
 	    print("\nXLIB EVENT: Type: %-7s  Button: %d  Window %x  SubWindow: %x\n"
 	      "  Shift: %s  Ctrl: %s\n",
 	      (bEvent.type == ButtonPress)?"ButtonPress":"ButtonRelease",
@@ -3759,7 +3759,7 @@ int main(int argc, char *argv[])
 	      bEvent.state&ControlMask?"Yes":"No");
 	    print("  Send_event: %s  State: %x\n",
 	      bEvent.send_event?"True":"False",bEvent.state);
-	    
+
 	    break;
 	}
 	}
@@ -3769,7 +3769,7 @@ int main(int argc, char *argv[])
 	{
 	    static int afterButtonPress=0;
 	    XAnyEvent aEvent=event.xany;
-	    time_t now; 
+	    time_t now;
 	    struct tm *tblock;
 	    char timeStampStr[80];
 	    XWindowAttributes attr;
@@ -3788,7 +3788,7 @@ int main(int argc, char *argv[])
 	    if(afterButtonPress) {
 	      /* Reset the error handler so it won't bomb on BadWindow */
 		XSetErrorHandler(xDoNothingErrorHandler);
-		
+
 	      /* Get the window attributes */
 		status=XGetWindowAttributes(display,aEvent.window,&attr);
 		if(status == 0) {
@@ -3809,7 +3809,7 @@ int main(int argc, char *argv[])
 		if(event.type == DestroyNotify) afterButtonPress=0;
 	    }
 	}
-#endif	    
+#endif
 	switch (event.type) {
 	case ClientMessage:
 	    if(windowPropertyAtom && event.xclient.message_type == windowPropertyAtom) {
@@ -3852,7 +3852,7 @@ int main(int argc, char *argv[])
 	      /* If the message is complete, then process the request */
 		if(completeClientMessage) {
 		    DisplayInfo *existingDisplayInfo = NULL;
-		    
+
 		  /* Post a message about the request */
 		    medmPostMsg(0,"File Dispatch Request:\n");
 		    if(fullPathName[0] != '\0')
@@ -3869,7 +3869,7 @@ int main(int argc, char *argv[])
 		    }
 		    if(existingDisplayInfo) {
 			DisplayInfo *cdi;
-			
+
 			cdi = currentDisplayInfo = existingDisplayInfo;
 #if 0
 		      /* KE: Doesn't work on WIN32 */
@@ -3993,13 +3993,13 @@ int main(int argc, char *argv[])
 
 	    printEventMasks(display, xEvent.window, "\n[window] ");
 	    printEventMasks(display, xEvent.subwindow, "\n[subwindow] ");
-#endif	    
-	    
+#endif
+
 	    XtDispatchEvent(&event);
 	    break;
 	}
-	
-#endif	    
+
+#endif
 	default:
 	  /* Handle all other event types the normal way */
 	    XtDispatchEvent(&event);
@@ -4010,10 +4010,10 @@ int main(int argc, char *argv[])
 void createEditModeMenu(DisplayInfo *displayInfo)
 {
     Widget w;
-    
+
     displayInfo->editPopupMenu = buildMenu(displayInfo->drawingArea,
       XmMENU_POPUP, "editModeMenu",'\0',editModeMenu);
-    
+
   /* Disable the tear off
    *    KE: Unmanaging the tear-off is a kluge.  Without it, Motif leaves
    *      the space where the dotted line was, not the first time, but after
@@ -4050,7 +4050,7 @@ static void createMain()
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(mainMB,defaultForeground,defaultBackground);
 #endif
-    
+
   /* Create the file pulldown menu pane */
     mainFilePDM = buildMenu(mainMB,XmMENU_PULLDOWN,
       "File", 'F', fileMenu);
@@ -4096,7 +4096,7 @@ static void createMain()
     XtSetSensitive(helpMenu[HELP_TECH_SUPPORT_BTN].widget,False);
     XtSetSensitive(helpMenu[HELP_ON_HELP_BTN].widget,False);
 #endif
-    
+
     n = 0;
     XtSetArg(args[n],XmNmarginHeight,9); n++;
     XtSetArg(args[n],XmNmarginWidth,18); n++;
@@ -4195,7 +4195,7 @@ static void createMain()
     XtAddCallback(exitQD,XmNokCallback,fileMenuDialogCallback,
       (XtPointer)MAIN_FILE_EXIT_BTN);
 #endif
-    
+
   /* Create the Help information shell (Help on Help) */
     n = 0;
     XtSetArg(args[n],XtNiconName,"Help"); n++;

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -94,7 +94,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
-    
+
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlRectangle->dynAttr.chan[0]) {
 	MedmRectangle *pr;
@@ -116,7 +116,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 
 	    pr->updateTask = updateTaskAddTask(displayInfo,
 	      &(dlRectangle->object),rectangleDraw,(XtPointer)pr);
-	    
+
 	    if(pr->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlRectangle: Memory allocation error\n");
 	    } else {
@@ -156,7 +156,7 @@ void executeDlRectangle(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlRectangle->object.width,dlRectangle->object.height);
 	} else if(dlRectangle->attr.fill == F_OUTLINE) {
 	    unsigned int lineWidth = (dlRectangle->attr.width+1)/2;
-	    
+
 	    XDrawRectangle(display,drawable,
 	      displayInfo->gc,
 	      dlRectangle->object.x + lineWidth,
@@ -200,7 +200,7 @@ static void rectangleDraw(XtPointer cd)
 
     print("rectangleDraw: [%d,%d] value=%g\n",po->x,po->y,pRec->value);
 #endif
-    
+
     if(isConnected(pr->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlRectangle->dynAttr.clr) {
@@ -249,7 +249,7 @@ static void rectangleDestroyCb(XtPointer cd)
 
     if(pr) {
 	Record **records = pr->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -267,7 +267,7 @@ static void rectangleGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmRectangle *pr = (MedmRectangle *)cd;
     int i;
-    
+
     *count = 0;
     if(pr && pr->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -288,11 +288,11 @@ DlElement *createDlRectangle(DlElement *p)
     if(p) {
 	*dlRectangle = *p->structure.rectangle;
     } else {
-	objectAttributeInit(&(dlRectangle->object)); 
+	objectAttributeInit(&(dlRectangle->object));
 	basicAttributeInit(&(dlRectangle->attr));
 	dynamicAttributeInit(&(dlRectangle->dynAttr));
     }
- 
+
     if(!(dlElement = createDlElement(DL_Rectangle,
       (XtPointer)dlRectangle,
       &rectangleDlDispatchTable))) {
@@ -335,7 +335,7 @@ DlElement *parseRectangle(DisplayInfo *displayInfo)
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-    
+
     return dlElement;
 }
 
@@ -348,8 +348,8 @@ void writeDlRectangle(
     DlRectangle *dlRectangle = dlElement->structure.rectangle;
 
     memset(indent,'\t',level);
-    indent[level] = '\0'; 
- 
+    indent[level] = '\0';
+
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
 #endif
@@ -408,7 +408,7 @@ static void rectangleGetValues(ResourceBundle *pRCB, DlElement *p)
       CHAN_D_RC,     &(dlRectangle->dynAttr.chan[3]),
       -1);
 }
- 
+
 static void rectangleSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
 {
     DlRectangle *dlRectangle = p->structure.rectangle;

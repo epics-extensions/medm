@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -150,7 +150,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	XtPopup(shellCommandS,XtGrabNone);
 	break;
     case CPDATA_RC:
-#ifdef CARTESIAN_PLOT	
+#ifdef CARTESIAN_PLOT
 	if(!cartesianPlotS) {
 	    cartesianPlotS = createCartesianPlotDataDialog(w);
 	}
@@ -197,53 +197,53 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
   /****** rcType (which option menu) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
     switch(rcType) {
-    case ALIGN_RC: 
+    case ALIGN_RC:
 	globalResourceBundle.align = (TextAlign)(FIRST_TEXT_ALIGN + buttonId);
 	break;
-    case FORMAT_RC: 
+    case FORMAT_RC:
 	globalResourceBundle.format = (TextFormat)(FIRST_TEXT_FORMAT + buttonId);
 	break;
-    case LABEL_RC: 
+    case LABEL_RC:
 	globalResourceBundle.label = (LabelType)(FIRST_LABEL_TYPE + buttonId);
 	break;
-    case DIRECTION_RC: 
+    case DIRECTION_RC:
 	globalResourceBundle.direction = (Direction)(FIRST_DIRECTION + buttonId);
 	break;
-    case CLRMOD_RC: 
+    case CLRMOD_RC:
 	globalResourceBundle.clrmod = (ColorMode)(FIRST_COLOR_MODE + buttonId);
 	break;
-    case FILLMOD_RC: 
+    case FILLMOD_RC:
 	globalResourceBundle.fillmod = (FillMode)(FIRST_FILL_MODE + buttonId);
 	break;
-    case STYLE_RC: 
+    case STYLE_RC:
 	globalResourceBundle.style = (EdgeStyle)(FIRST_EDGE_STYLE + buttonId);
 	break;
-    case FILL_RC: 
+    case FILL_RC:
 	globalResourceBundle.fill = (FillStyle)(FIRST_FILL_STYLE + buttonId);
 	break;
-    case VIS_RC: 
+    case VIS_RC:
 	globalResourceBundle.vis = (VisibilityMode)(FIRST_VISIBILITY_MODE + buttonId);
 	break;
-    case UNITS_RC: 
+    case UNITS_RC:
 	globalResourceBundle.units = (TimeUnits)(FIRST_TIME_UNIT + buttonId);
 	break;
-    case CSTYLE_RC: 
+    case CSTYLE_RC:
 	globalResourceBundle.cStyle = (CartesianPlotStyle)(FIRST_CARTESIAN_PLOT_STYLE + buttonId);
 	break;
     case ERASE_OLDEST_RC:
 	globalResourceBundle.erase_oldest = (EraseOldest)(FIRST_ERASE_OLDEST + buttonId);
 	break;
-    case STACKING_RC: 
+    case STACKING_RC:
 	globalResourceBundle.stacking = (Stacking)(FIRST_STACKING + buttonId);
 	break;
-    case IMAGE_TYPE_RC: 
+    case IMAGE_TYPE_RC:
 	globalResourceBundle.imageType = (ImageType)(FIRST_IMAGE_TYPE + buttonId);
 	break;
     case ERASE_MODE_RC:
 	globalResourceBundle.eraseMode = (eraseMode_t)(FIRST_ERASE_MODE + buttonId);
 	break;
     case RD_VISUAL_RC:
-	globalResourceBundle.rdVisual = 
+	globalResourceBundle.rdVisual =
 	  (relatedDisplayVisual_t)(FIRST_RD_VISUAL + buttonId);
 	break;
     case GRID_ON_RC:
@@ -277,7 +277,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 }
 
 static void colorSelectCallback(Widget w, XtPointer cd, XtPointer cbs)
-{     
+{
     int rcType = (int) cd;
 
     UNREFERENCED(w);
@@ -383,7 +383,7 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
 #if DEBUG_TEXT_VERIFY
     {
 	int i;
-	
+
 	print("\ntextFieldNumericVerifyCallback: Entered\n");
 	print("  event: %x  cbs->text->ptr: %x\n"
 	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
@@ -397,7 +397,7 @@ void textFieldNumericVerifyCallback(Widget w, XtPointer clientData, XtPointer ca
 	    print("  length=0\n");
 	}
     }
-#endif    
+#endif
   /* Is a deletion */
     if(!cbs->text->length) return;
 
@@ -456,7 +456,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 #if DEBUG_TEXT_VERIFY
     {
 	int i;
-	
+
 	print("\ntextFieldFloatVerifyCallback: Entered\n");
 	print("  event: %x  cbs->text->ptr: %x\n"
 	  "  startPos: %d endPos: %d currInsert: %d newInsert: %d\n",
@@ -470,7 +470,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 	    print("  length=0\n");
 	}
     }
-#endif    
+#endif
   /* Is a deletion */
     if(!cbs->text->length) return;
 
@@ -618,7 +618,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
          Polygon */
 	updateResourcePalette = 1;
 	break;
-    case SBIT_RC: 
+    case SBIT_RC:
     {
 	int value = atoi(stringValue);
 	if(value >= 0 && value <= 31) {
@@ -642,7 +642,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	}
 	break;
     }
-    case GRID_SPACING_RC: 
+    case GRID_SPACING_RC:
     {
 	int value = atoi(stringValue);
 	char tmp[32];
@@ -767,11 +767,11 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	unhighlightSelectedElements();
 	while(dlElement) {
 	    DlElement *pE = dlElement->structure.element;
-	    
+
 	  /* Clear the composite element list if a composite */
 	    if(clearComposite && pE->type == DL_Composite) {
 		DlComposite *dlComposite = pE->structure.composite;
-		
+
 	      /* Use removeDlDisplayListElementsExceptDisplay instead
                  of clearDlDisplayList because it also destroys the
                  widgets and there should not be a display in the
@@ -791,14 +791,14 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	      /* Use objectDataOnly = True */
 		updateGlobalResourceBundleAndResourcePalette(True);
 	    }
-	    
+
 	    dlElement = dlElement->next;
 	}
 	dmTraverseNonWidgetsInDisplayList(cdi);
 	highlightSelectedElements();
 	medmMarkDisplayBeingEdited(cdi);
     }
-    
+
   /* Redo the display if indicated.  Is necessary after a colormap
      change to see the change. */
     if(redoDisplay) {
@@ -812,7 +812,7 @@ void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
     int rcType = (int) cd;
     char string[MAX_TOKEN_LENGTH], *newString;
     int tail;
-  
+
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 
@@ -982,10 +982,8 @@ void initializeGlobalResourceBundle()
     globalResourceBundle.title[0] = '\0';
     globalResourceBundle.xlabel[0] = '\0';
     globalResourceBundle.ylabel[0] = '\0';
-    strncpy(globalResourceBundle.wsFormat,WHEEL_SWITCH_DEFAULT_FORMAT,
-      MAX_TOKEN_LENGTH);
-    globalResourceBundle.wsFormat[MAX_TOKEN_LENGTH-1]='\0';
-    
+    globalResourceBundle.wsFormat[0]='\0';
+
     if(cdi) {
       /*
        * (MDA) hopefully this will work in the general case (with displays being
@@ -1176,7 +1174,7 @@ void createResource()
   /* Color menu bar explicitly to avoid CDE interference */
     colorMenuBar(resourceMB,defaultForeground,defaultBackground);
 #endif
-    
+
   /* Free strings */
     for (i = 0; i < N_MAIN_MENU_ELES; i++) XmStringFree(buttons[i]);
 
@@ -1246,7 +1244,7 @@ void createResource()
     resourceHelpPDM = buildMenu(resourceMB,XmMENU_PULLDOWN,
       "Help", 'H', helpMenu);
     XtVaSetValues(resourceMB, XmNmenuHelpWidget, resourceHelpPDM, NULL);
-#if 0    
+#if 0
   /* (MDA) for now, disable this menu */
     XtSetSensitive(resourceHelpPDM,False);
 #endif
@@ -1267,7 +1265,7 @@ void createResource()
     XmStringFree(buttons[0]);
   /* (MDA) for now, disable this menu */
     XtSetSensitive(resourceHelpPDM,False);
-#endif	
+#endif
 
 #ifdef UNNECESSARY
   /****** Add the resource bundle scrolled window and contents */
@@ -1276,7 +1274,7 @@ void createResource()
     XtSetArg(args[n],XmNscrollBarDisplayPolicy,XmAS_NEEDED); n++;
     bundlesSW = XmCreateScrolledWindow(resourceMW,"bundlesSW",args,n);
     createResourceBundles(bundlesSW);
-#endif    
+#endif
 
   /****** Add the resource entry scrolled window and contents */
     n = 0;
@@ -1299,7 +1297,7 @@ void createResource()
     XtManageChild(resourceMB);
 #ifdef UNNECESSARY
     XtManageChild(bundlesSW);
-#endif    
+#endif
     XtManageChild(entriesSW);
     XtManageChild(resourceMW);
 
@@ -1310,7 +1308,7 @@ void createResource()
 #else
     XtVaSetValues(resourceMW,XmNmessageWindow,messageF,NULL);
 #endif
-    
+
   /****** Now popup the dialog and restore cursor */
     XtPopup(resourceS,XtGrabNone);
 
@@ -1351,7 +1349,7 @@ static void createResourceEntries(Widget entriesSW)
      unlimited.  Use 33 (number of characters excluding space and 1
      less than before) always. */
     maxCols=33;
-	  
+
   /* Resize the labels and elements (to maximum's width) for uniform appearance */
     XtSetArg(args[0],XmNwidth,maxLabelWidth);
     XtSetArg(args[1],XmNheight,maxLabelHeight);
@@ -1704,7 +1702,7 @@ static void createEntryRC( Widget parent, int rcType)
 	XtSetArg(args[n],XmNbuttonType,buttonType); n++;
 	XtSetArg(args[n],XmNbuttons,
 	  &(xmStringValueTable[FIRST_IMAGE_TYPE])); n++;
-      /* MDA - when TIFF is implemented: 
+      /* MDA - when TIFF is implemented:
 	 XtSetArg(args[n],XmNbuttonCount,NUM_IMAGE_TYPES); n++;
       */
 	XtSetArg(args[n],XmNbuttonCount,2); n++;
@@ -1823,7 +1821,7 @@ static int resourceTable[] = {
     -1,
     DL_WheelSwitch,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
-    LABEL_RC, CLRMOD_RC, WS_FORMAT_RC,
+    CLRMOD_RC, WS_FORMAT_RC,
     -1,
     DL_TextEntry,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CTRL_RC, LIMITS_RC, CLR_RC, BCLR_RC,
@@ -1934,7 +1932,7 @@ static void initializeResourcePaletteElements()
 		index = -1;
 	    }
 	}
-    }  
+    }
 }
 
 #ifdef UNNECESSARY
@@ -1968,12 +1966,12 @@ static void createBundleTB(Widget bundlesRB, char *name)
     xmString = XmStringCreateLocalized(name);
     XtSetArg(args[n],XmNlabelString,xmString); n++;
     if(resourceBundleCounter == SELECTION_BUNDLE) {
-	XtSetArg(args[n],XmNset,True); n++; 
+	XtSetArg(args[n],XmNset,True); n++;
     }
     bundlesTB = XmCreateToggleButton(bundlesRB,"bundlesTB",args,n);
 
 #ifdef EXTENDED_INTERFACE
-    XtAddCallback(bundlesTB,XmNvalueChangedCallback, 
+    XtAddCallback(bundlesTB,XmNvalueChangedCallback,
       bundleCallback,(XtPointer)resourceBundleCounter);
 #endif
 
@@ -2364,7 +2362,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonNumber = (int)cd;
-    
+
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 
@@ -2429,7 +2427,7 @@ void updateResourcePaletteBasicAttribute()
 {
     DisplayInfo *cdi = currentDisplayInfo;
     char string[MAX_TOKEN_LENGTH];
-    
+
     XtVaSetValues(resourceEntryElement[CLR_RC],XmNbackground,
       cdi->colormap[globalResourceBundle.clr],NULL);
     optionMenuSet(resourceEntryElement[STYLE_RC],
@@ -2443,7 +2441,7 @@ void updateResourcePaletteBasicAttribute()
 void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr)
 {
     int i;
-    
+
     globalResourceBundle.clrmod = dynAttr->clr;
     globalResourceBundle.vis = dynAttr->vis;
     strcpy(globalResourceBundle.visCalc,dynAttr->calc);
@@ -2455,7 +2453,7 @@ void updateGlobalResourceBundleDynamicAttribute(DlDynamicAttribute *dynAttr)
 void updateElementDynamicAttribute(DlDynamicAttribute *dynAttr)
 {
     int i;
-    
+
     dynAttr->clr = globalResourceBundle.clrmod;
     dynAttr->vis = globalResourceBundle.vis;
     strcpy(dynAttr->calc,globalResourceBundle.visCalc);
@@ -2557,10 +2555,10 @@ void clearResourcePaletteEntries()
 	  currentElementType,MIN_DL_ELEMENT_TYPE,MAX_DL_ELEMENT_TYPE);
     }
 #endif
-    
+
   /* If no resource palette yet, simply return */
     if(!resourceMW) return;
- 
+
   /* Popdown any of the associated shells */
     if(relatedDisplayS)    XtPopdown(relatedDisplayS);
     if(shellCommandS)      XtPopdown(shellCommandS);
@@ -2577,10 +2575,10 @@ void clearResourcePaletteEntries()
 	executeTimeStripChartElement = NULL;
 	XtPopdown(stripChartS);
     }
- 
+
   /* Unset the current button and set label in resourceMW to Select... */
     XtVaSetValues(resourceElementTypeLabel,XmNlabelString,xmstringSelect,NULL);
- 
+
   /* Unmanage items in resource palette */
     if(currentElementType >= MIN_DL_ELEMENT_TYPE &&
       currentElementType <= MAX_DL_ELEMENT_TYPE) {
@@ -2609,10 +2607,10 @@ void setResourcePaletteEntries()
 	  currentElementType,MIN_DL_ELEMENT_TYPE,MAX_DL_ELEMENT_TYPE);
     }
 #endif
-    
+
   /* If no resource palette yet, create it */
     if(!resourceMW) createResource();
-    
+
   /* Make sure the resource palette shell is popped-up */
     XtPopup(resourceS,XtGrabNone);
 
@@ -2676,10 +2674,10 @@ void updateElementFromGlobalResourceBundle(DlElement *element)
 #if DEBUG_RESOURCE
     print("In updateElementFromGlobalResourceBundle\n");
 #endif
-    
+
   /* Simply return if not valid to update */
     if(!element || !cdi) return;
-    
+
   /* Copy (all) values from resource palette to element */
     if(element->run->getValues) {
 	element->run->getValues(&globalResourceBundle,element);
@@ -2699,19 +2697,19 @@ void updateElementBackgroundColorFromGlobalResourceBundle(DlElement *element)
 {
     DlElement *childE;
     DisplayInfo *cdi = currentDisplayInfo;
-    
+
 #if DEBUG_RESOURCE
     print("In updateElementBackgroundColorFromGlobalResourceBundle\n");
 #endif
-    
+
   /* Simply return if not valid to update */
     if(!element || !cdi) return;
-    
+
   /* Check if composite */
     if(element->type == DL_Composite) {
       /* Composite, loop over contained elements */
 	DlComposite *compE = element->structure.composite;
-	
+
 	childE = FirstDlElement(compE->dlElementList);
 	while(childE) {
 	    if(childE->run->setBackgroundColor) {
@@ -2753,19 +2751,19 @@ void updateElementForegroundColorFromGlobalResourceBundle(DlElement *element)
 {
     DlElement *childE;
     DisplayInfo *cdi = currentDisplayInfo;
-    
+
 #if DEBUG_RESOURCE
     print("In updateElementForegroundColorFromGlobalResourceBundle\n");
 #endif
-    
+
   /* Simply return if not valid to update */
     if(!element || !cdi) return;
-    
+
   /* Check if composite */
     if(element->type == DL_Composite) {
       /* Composite, loop over contained elements */
 	DlComposite *compE = element->structure.composite;
-	
+
 	childE = FirstDlElement(compE->dlElementList);
 	while(childE) {
 	    if(childE->run->setForegroundColor) {
@@ -2862,16 +2860,16 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	Arg args[2];
 	int nargs;
 	Position x, y;
-	
+
       /* Get the current values */
 	nargs = 0;
 	XtSetArg(args[nargs],XmNx,&x); nargs++;
 	XtSetArg(args[nargs],XmNy,&y); nargs++;
 	XtGetValues(cdi->shell,args,nargs);
-#if DEBUG_RELATED_DISPLAY	
+#if DEBUG_RELATED_DISPLAY
 	{
 	    Position x, y;
-	    
+
 	    XtSetArg(args[0],XmNx,&x);
 	    XtSetArg(args[1],XmNy,&y);
 	    XtGetValues(cdi->shell,args,2);
@@ -2882,7 +2880,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	      XtIsManaged(cdi->shell)?"True":"False");
 	}
 #endif
-	
+
       /* Set the a and y attributes in case they haven't been set */
 	if(p->object.x != x) {
 	    p->object.x = x;
@@ -2954,9 +2952,6 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	updateGlobalResourceBundleControlAttribute(&(p->control));
 	updateResourcePaletteControlAttribute();
 	updateGlobalResourceBundleLimitsAttribute(&(p->limits));
-	globalResourceBundle.label = p->label;
-	optionMenuSet(resourceEntryElement[LABEL_RC],
-	  globalResourceBundle.label - FIRST_LABEL_TYPE);
 	globalResourceBundle.clrmod = p->clrmod;
 	optionMenuSet(resourceEntryElement[CLRMOD_RC],
 	  globalResourceBundle.clrmod - FIRST_COLOR_MODE);
@@ -3181,7 +3176,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	optionMenuSet(resourceEntryElement[UNITS_RC],
 	  globalResourceBundle.units - FIRST_TIME_UNIT);
 	for (i = 0; i < MAX_PENS; i++){
-	    strcpy(globalResourceBundle.scData[i].chan,p->pen[i].chan);  
+	    strcpy(globalResourceBundle.scData[i].chan,p->pen[i].chan);
 	    globalResourceBundle.scData[i].clr = p->pen[i].clr;
 	    globalResourceBundle.scData[i].limits = p->pen[i].limits;
 	}
@@ -3219,8 +3214,8 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	optionMenuSet(resourceEntryElement[ERASE_OLDEST_RC],
 	  globalResourceBundle.erase_oldest - FIRST_ERASE_OLDEST);
 	for (i = 0; i < MAX_TRACES; i++){
-	    strcpy(globalResourceBundle.cpData[i].xdata, p->trace[i].xdata);  
-	    strcpy(globalResourceBundle.cpData[i].ydata, p->trace[i].ydata);  
+	    strcpy(globalResourceBundle.cpData[i].xdata, p->trace[i].xdata);
+	    strcpy(globalResourceBundle.cpData[i].ydata, p->trace[i].ydata);
 	    globalResourceBundle.cpData[i].data_clr = p->trace[i].data_clr;
 	}
 	for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
@@ -3341,9 +3336,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	optionMenuSet(resourceEntryElement[RD_VISUAL_RC],
           globalResourceBundle.rdVisual - FIRST_RD_VISUAL);
 	for (i = 0; i < MAX_RELATED_DISPLAYS; i++){
-	    strcpy(globalResourceBundle.rdData[i].label, p->display[i].label);  
-	    strcpy(globalResourceBundle.rdData[i].name, p->display[i].name);  
-	    strcpy(globalResourceBundle.rdData[i].args, p->display[i].args);  
+	    strcpy(globalResourceBundle.rdData[i].label, p->display[i].label);
+	    strcpy(globalResourceBundle.rdData[i].name, p->display[i].name);
+	    strcpy(globalResourceBundle.rdData[i].args, p->display[i].args);
 	    globalResourceBundle.rdData[i].mode = p->display[i].mode;
 	  /* update the related display dialog (matrix of values) if appr. */
 	    updateRelatedDisplayDataDialog();
@@ -3364,9 +3359,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  cdi->colormap[globalResourceBundle.bclr],NULL);
 	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
-	    strcpy(globalResourceBundle.cmdData[i].label, p->command[i].label);  
+	    strcpy(globalResourceBundle.cmdData[i].label, p->command[i].label);
 	    strcpy(globalResourceBundle.cmdData[i].command, p->command[i].command);
-	    strcpy(globalResourceBundle.cmdData[i].args, p->command[i].args);  
+	    strcpy(globalResourceBundle.cmdData[i].args, p->command[i].args);
 	  /* update the shell command dialog (matrix of values) if appr. */
 	    updateShellCommandDataDialog();
 	}
@@ -3407,11 +3402,11 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	  defaultBackground,NULL);
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  defaultBackground,NULL);
-#if 0	
+#if 0
       /* Need to add this entry to medmWidget.h and finish this if we
          want named groups */
 	strcpy(globalResourceBundle.compositeName,p->compositeName);
-#endif	
+#endif
 	strcpy(globalResourceBundle.compositeFile, p->compositeFile);
 	XmTextFieldSetString(resourceEntryElement[COMPOSITE_FILE_RC],
 	  globalResourceBundle.compositeFile);
@@ -3459,7 +3454,7 @@ void resetGlobalResourceBundleAndResourcePalette()
 #if DEBUG_RESOURCE
     print("In resetGlobalResourceBundleAndResourcePalette\n");
 #endif
-    
+
     if(ELEMENT_IS_RENDERABLE(currentElementType) ) {
 
       /* Get object data: must have object entry - use rectangle type

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -69,7 +69,7 @@ extern "C" {
 
   /* X/Xt/Xm includes, globals */
 #include "xtParams.h"
-    
+
   /* WIN32 differences */
 #ifdef WIN32
   /* Path delimiter is different */
@@ -86,8 +86,8 @@ extern "C" {
 # ifdef _WINDOWS
 #  ifndef printf
 #   define printf lprintf
-#  endif    
-# endif    
+#  endif
+# endif
 #else /* #ifdef WIN32 */
   /* Path delimiter is different */
 # define MEDM_PATH_DELIMITER ':'
@@ -96,7 +96,7 @@ extern "C" {
   /* WIN32 does not have unistd.h */
 # include <unistd.h>
 #endif /* #ifdef WIN32 */
-    
+
 #ifdef MEDM_CDEV
 #include "medmCdev.h"
 #else
@@ -105,8 +105,8 @@ extern "C" {
 #endif
 
 #ifdef VMS
-#include "medmVMS.h"      
-#endif				   
+#include "medmVMS.h"
+#endif
 
 #include "siteSpecific.h"
 #include "medmWidget.h"
@@ -119,10 +119,10 @@ extern "C" {
 #define OBJECT_PALETTE_NAME "Object "
   /* The following works on both WIN32 and Solaris */
 #define STRFTIME_FORMAT "%a %b %d %H:%M:%S %Z %Y"
-    
+
   /* Define the help layers  */
 #define HELP_MAIN 0
-    
+
     typedef struct menuEntry{
 	char*           label;
 	WidgetClass*    widgetClass;
@@ -134,13 +134,13 @@ extern "C" {
 	XtPointer       callbackData;
 	struct menuEntry *subItems;
     } menuEntry_t;
-    
+
     typedef void(*medmExecProc)(DisplayInfo *,DlElement *);
     typedef void(*medmWriteProc)(FILE *,DlElement *,int);
     typedef void(*medmSetGetProc)(ResourceBundle *, DlElement *);
-    
+
 #include "proto.h"
-    
+
   /* pixmap names : must be accessible by program according to Motif rules:
 
      rectangle25
@@ -151,7 +151,7 @@ extern "C" {
      polyline25
      polygon25
      bezierCurve25
-     
+
      meter25
      bar25
      indicator25
@@ -159,18 +159,18 @@ extern "C" {
      stripChart25
      cartesianPlot25
      surfacePlot25
-     
+
      choiceButton25
      messageButton25
      menu25
      textEntry25
      valuator25
-     
+
      relatedDisplay25
      shellCommand25
      wheelSwitch25
   */
-    
+
   /* Global variables */
 
   /* Help URL */
@@ -178,7 +178,7 @@ extern "C" {
 
   /* XWD file */
     EXTERN char xwdFile[PATH_MAX];
-    
+
   /* Window property atom */
     EXTERN Atom windowPropertyAtom;
     EXTERN char **execMenuCommandList;
@@ -231,7 +231,7 @@ extern "C" {
     EXTERN Dimension maxLabelHeight;
     EXTERN Widget cpMatrix, cpForm;
     EXTERN String dashes;
-    
+
   /* Time data */
     EXTERN time_t time900101, time700101, timeOffset;
 

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -68,7 +68,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     DisplayInfo *displayInfo;
     int status;
     char *adlName;
-    
+
   /* w is the button pushed.  Its parent is the row column, which has
      the displayInfo pointer as userData */
     XtSetArg(args[0],XmNuserData,&data);
@@ -77,7 +77,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 
     switch(buttonNumber) {
     case EXECUTE_POPUP_MENU_PRINT_ID:
-#if 0	
+#if 0
 #ifdef WIN32
 	if(!printToFile) {
 	    dmSetAndPopupWarningDialog(displayInfo,
@@ -111,17 +111,17 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	popupPvLimits(displayInfo);
 	break;
     case EXECUTE_POPUP_MENU_MAIN_ID:
-#if 1	
+#if 1
       /* KE: This appears to work and deiconify if iconic */
 	XMapRaised(display, XtWindow(mainShell));
 #else
       /* May be more general.  Requires <X11/Xmu/WinUtil.h> */
 	if(XtIsRealized(mainShell)) {
 	    Window client = XmuClientWindow(display, XtWindow(mainShell));
-	    
+
 	    XMapRaised(display, client);
 	}
-#endif	
+#endif
 	break;
     case EXECUTE_POPUP_MENU_DISPLAY_LIST_ID:
     {
@@ -139,7 +139,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	XtSetArg(args[n],XmNwidth,&width); n++;
 	XtSetArg(args[n],XmNheight,&height); n++;
 	XtGetValues(displayInfo->drawingArea,args,n);
-	
+
 	pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
 	  width,height,
 	  DefaultDepth(display,screenNum));
@@ -147,21 +147,21 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	  pixmap,
 	  displayInfo->gc,0,0,width,height,0,0);
 	XFlush(display);
-	
+
 	for(i=0; i < 1; i++) {
 	    print("%d Background is window\n",i+1);
 	    print("Hit CR to draw pixmap\n");
 	    c=getc(stdin);
-	    
+
 	    XCopyArea(display,displayInfo->drawingAreaPixmap,
 	      XtWindow(displayInfo->drawingArea),
 	      displayInfo->gc,0,0,width,height,0,0);
 	    XFlush(display);
-	    
+
 	    print("%d Background is pixmap\n",i+1);
 	    print("Hit CR to draw window\n");
 	    c=getc(stdin);
-	    
+
 	    XCopyArea(display,pixmap,
 	      XtWindow(displayInfo->drawingArea),
 	      displayInfo->gc,0,0,width,height,0,0);
@@ -201,7 +201,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	  displayInfo->colormap[20]);
 	XFillRectangle(display, XtWindow(displayInfo->drawingArea),
 	  displayInfo->gc, 0, 0, width, height);
-#endif	
+#endif
 #else
         popupDisplayListDlg();
 #endif
@@ -258,7 +258,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	  (int)XmMENU_POPUP,(int)XmMENU_PULLDOWN,(int)XmMENU_OPTION);
 	break;
     }
-#endif    
+#endif
     }
 }
 
@@ -285,7 +285,7 @@ void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 {
     DisplayInfo *displayInfo = (DisplayInfo *)clientData;
-    XmDrawingAreaCallbackStruct *cbs = (XmDrawingAreaCallbackStruct *)callData;    
+    XmDrawingAreaCallbackStruct *cbs = (XmDrawingAreaCallbackStruct *)callData;
     int x, y;
     unsigned int uiw, uih;
     Dimension width, height, goodWidth, goodHeight, oldWidth, oldHeight;
@@ -305,27 +305,27 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     print("\ndrawingAreaCallback(Entered):\n");
 #endif
     if(!displayInfo) return;
-    
+
     if(cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
 	print("drawingAreaCallback(XmCR_EXPOSE):\n");
 #endif
-	
+
       /* Move window to be consistent with object.x,y */
 	if(displayInfo->positionDisplay) {
 	    int status;
-	    
+
 #if DEBUG_POSITION
 	    {
 		Position x,y;
 		DlElement *pE = FirstDlElement(displayInfo->dlElementList);
 		DlDisplay *dlDisplay = pE->structure.display;
-		
+
 		XtSetArg(args[0],XmNx,&x);
 		XtSetArg(args[1],XmNy,&y);
 		XtGetValues(displayInfo->shell,args,2);
-		
+
 		print("drawingAreaCallback:\n"
 		  "  Shell(Before): object.x=%d object.y=%d xShell=%d yShell=%d\n",
 		  dlDisplay->object.x,dlDisplay->object.y,x,y);
@@ -334,32 +334,32 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	    status = repositionDisplay(displayInfo);
 	  /* Turn switch off if successful (Currently always) */
 	    if(!status) displayInfo->positionDisplay = False;
-	    
+
 #if DEBUG_POSITION
 	    {
 		Position x,y;
 		DlElement *pE = FirstDlElement(displayInfo->dlElementList);
 		DlDisplay *dlDisplay = pE->structure.display;
-		
+
 		XtSetArg(args[0],XmNx,&x);
 		XtSetArg(args[1],XmNy,&y);
 		XtGetValues(displayInfo->shell,args,2);
-		
+
 		print("drawingAreaCallback:\n"
 		  "  Shell(After): object.x=%d object.y=%d xShell=%d yShell=%d\n",
 		  dlDisplay->object.x,dlDisplay->object.y,x,y);
 	    }
 #endif
 	}
-	
+
     /* Handle exposure */
 	x = cbs->event->xexpose.x;
 	y = cbs->event->xexpose.y;
 	uiw = cbs->event->xexpose.width;
 	uih = cbs->event->xexpose.height;
-	
+
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
-	  displayInfo->gc != (GC)NULL && 
+	  displayInfo->gc != (GC)NULL &&
 	  displayInfo->drawingArea != (Widget)NULL) {
 
 #if DEBUG_EVENTS > 1 || DEBUG_EXPOSE
@@ -376,12 +376,12 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		WidgetList children;
 		Cardinal numChildren;
 		DlElement *pE;
-		
+
 		n=0;
 		XtSetArg(args[n],XmNwidth,&width); n++;
 		XtSetArg(args[n],XmNheight,&height); n++;
 		XtGetValues(displayInfo->drawingArea,args,n);
-		
+
 		pixmap=XCreatePixmap(display,RootWindow(display,screenNum),
 		  width,height,
 		  DefaultDepth(display,screenNum));
@@ -389,21 +389,21 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		  pixmap,
 		  displayInfo->gc,0,0,width,height,0,0);
 		XFlush(display);
-		
+
 		for(i=0; i < 1; i++) {
 		    print("%d Background is window\n",i+1);
 		    print("Hit CR to draw pixmap\n");
 		    c=getc(stdin);
-		    
+
 		    XCopyArea(display,displayInfo->drawingAreaPixmap,
 		      XtWindow(displayInfo->drawingArea),
 		      displayInfo->gc,0,0,width,height,0,0);
 		    XFlush(display);
-		    
+
 		    print("%d Background is pixmap\n",i+1);
 		    print("Hit CR to draw window\n");
 		    c=getc(stdin);
-		    
+
 		    XCopyArea(display,pixmap,
 		      XtWindow(displayInfo->drawingArea),
 		      displayInfo->gc,0,0,width,height,0,0);
@@ -422,7 +422,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		clipRect.y = y;
 		clipRect.width = uiw;
 		clipRect.height = uih;
-		
+
 	      /* Repaint the region */
 		updateTaskRepaintRect(displayInfo, &clipRect, False);
 	    } else {
@@ -434,7 +434,7 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 #if DEBUG_RELATED_DISPLAY
 	{
 	    Position x, y;
-	    
+
 	    XtSetArg(args[0],XmNx,&x);
 	    XtSetArg(args[1],XmNy,&y);
 	    XtGetValues(displayInfo->shell,args,2);
@@ -520,10 +520,10 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 		XtSetArg(args[nargs],XmNheight,goodHeight); nargs++;
 		XtSetArg(args[nargs],XmNuserData,(XtPointer)1); nargs++;
 		XtSetValues(w,args,nargs);
-	      /* Return -- Display will be resized next time */		
+	      /* Return -- Display will be resized next time */
 		return;
 	    }
-	    
+
 	  /* Set width and height in all DLObject's including display */
 	    resized = dmResizeDisplayList(displayInfo,goodWidth,goodHeight);
 #if DEBUG_EVENTS > 1 || DEBUG_FONTS
@@ -561,7 +561,7 @@ void wmCloseCallback(Widget w, XtPointer cd, XtPointer cbs)
     ShellType shellType = (ShellType) cd;
 
     UNREFERENCED(cbs);
-    
+
   /*
    * handle WM Close functions like all the separate dialog close functions,
    *   dispatch based upon widget value that the callback is called with

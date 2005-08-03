@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 
 /**************************************************************************
@@ -31,7 +31,7 @@ unsigned long getPixelFromString(display,colorString)
 
     if(!XAllocNamedColor(display,DefaultColormap(display,DefaultScreen(display)),
       colorString,&color,&ignore)) {
-        fprintf(stderr, 
+        fprintf(stderr,
 	  "\ngetPixelFromString:  couldn't allocate color %s",
 	  colorString);
         return(WhitePixel(display, DefaultScreen(display)));
@@ -55,7 +55,7 @@ unsigned long getPixelFromStringW(w,colorString)
 
     if(!XAllocNamedColor(XtDisplay(w),DefaultColormap(XtDisplay(w),
       DefaultScreen(XtDisplay(w))), colorString,&color,&ignore)) {
-        fprintf(stderr, 
+        fprintf(stderr,
 	  "\ngetPixelFromStringW:  couldn't allocate color %s",
 	  colorString);
         return(WhitePixel(XtDisplay(w), DefaultScreen(XtDisplay(w))));

@@ -1,7 +1,7 @@
 /* utils.c - general system utility functions
-   
+
    Copyright (c) 1990 General Electric Company
-   
+
    Permission to use, copy, modify, distribute, and sell this software
    and its documentation for any purpose is hereby granted without fee,
    provided that the above copyright notice appear in all copies and that
@@ -12,7 +12,7 @@
    permission.  General Electric Company makes no representations about
    the suitability of this software for any purpose.  It is provided "as
    is" without express or implied warranty.
-   
+
    General Electric Company DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
    FITNESS, IN NO EVENT SHALL General Electric Company BE LIABLE FOR ANY
@@ -20,10 +20,10 @@
    RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
    CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
    CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-   
+
    Portions of this program are also Copyright (c) 1989 Massachusetts
    Institute of Technology
-   
+
    Permission to use, copy, modify, distribute, and sell this software
    and its documentation for any purpose is hereby granted without fee,
    provided that the above copyright notice appear in all copies and that
@@ -33,7 +33,7 @@
    software without specific, written prior permission.  M.I.T. make no
    representations about the suitability of this software for any
    purpose.  It is provided "as is" without express or implied warranty.
-   
+
    M.I.T. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
    ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
    SHALL M.I.T. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
@@ -78,13 +78,13 @@ void get_time_and_date(char mytime[], char mydate[])
 {
     time_t clock;
     char *ap;
-  
+
     ap = (time (&clock), ctime (&clock));
     strncpy(mydate, ap+4, 6);
     mydate[6] = ',';
     strncpy(mydate+7, ap+19, 5);
     mydate[12] = '\0';
-  
+
     strncpy(mytime, ap+11, 8);
     mytime[8] = '\0';
 }
@@ -141,7 +141,7 @@ void xwd2ps_swaplong(register char *bp, register long n)
 void xwd2ps_usage(void)
 {
     fprintf(stderr,"\nusage: %s [options] XWD_raster_file_name\n", progname);
-    fprintf(stderr,"    %s converts an XWD raster file to PostScript.  If\n", 
+    fprintf(stderr,"    %s converts an XWD raster file to PostScript.  If\n",
       progname);
     fprintf(stderr,"    XWD_raster_file_name is absent, %s reads from standard input.\n", progname);
     fprintf(stderr,"    Spaces between options and arguments are ignored and can be left out.\n");

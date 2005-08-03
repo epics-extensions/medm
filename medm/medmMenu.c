@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -28,7 +28,7 @@
 typedef struct _MedmMenu {
     DlElement        *dlElement;     /* Must be first */
     UpdateTask       *updateTask;    /* Must be second */
-    Record           *record; 
+    Record           *record;
     Pixel            color;
 } MedmMenu;
 
@@ -79,14 +79,14 @@ int menuFontListIndex(int height)
 #if DEBUG_FONT
     {
 	int j, h, h1, h2, indx1, indx2;
-	
+
 	print("\n h   h1  i1    h2  i2\n");
 	for(j=0; j < 80; j++) {
 	    h = j + 1;
 	    h1 = (int)(.90*h) - 4;
 	    indx1 = 0;
 	    for(i = MAX_FONTS-1; i >= 0; i--) {
-		if( ((int)(.90*h) - 4) >= 
+		if( ((int)(.90*h) - 4) >=
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx1 = i;
 		    break;
@@ -95,7 +95,7 @@ int menuFontListIndex(int height)
 	    h2 = (int)(h) - 8;
 	    indx2 = 0;
 	    for(i = MAX_FONTS-1; i >= 0; i--) {
-		if( ((int)(h) - 8) >= 
+		if( ((int)(h) - 8) >=
 		  (fontTable[i]->ascent + fontTable[i]->descent)) {
 		    indx2 = i;
 		    break;
@@ -105,13 +105,13 @@ int menuFontListIndex(int height)
 	      h, h1, indx1, h2, indx2);
 	}
     }
-#endif    
+#endif
 
 #if 0
   /* Don't allow height of font to exceed 90% - 4 pixels of menu
    *   widget.  Includes nominal 2*shadowThickness = 4 */
     for(i = MAX_FONTS-1; i >= 0; i--) {
-	if( ((int)(.90*height) - 4) >= 
+	if( ((int)(.90*height) - 4) >=
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -120,7 +120,7 @@ int menuFontListIndex(int height)
    *   ascent + descent.  Gives better spacing of the menu items for
    *   small Menu's */
     for(i = MAX_FONTS-1; i >= 0; i--) {
-	if( ((int)(height) - 8) >= 
+	if( ((int)(height) - 8) >=
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -175,12 +175,12 @@ static void menuCreateRunTimeInstance(DisplayInfo *displayInfo,
 	pm->updateTask = NULL;
 	pm->record = NULL;
 	pm->dlElement = dlElement;
-	
+
 	pm->updateTask = updateTaskAddTask(displayInfo,
 	  &(dlMenu->object),
 	  menuDraw,
 	  (XtPointer)pm);
-	
+
 	if(pm->updateTask == NULL) {
 	    medmPrintf(1,"\nmenuCreateRunTimeInstance: Memory allocation error\n");
 	} else {
@@ -207,10 +207,10 @@ static void menuCreateEditInstance(DisplayInfo *displayInfo,
     localWidget = createMenu(displayInfo, NULL, dlMenu, labels, 1);
     dlElement->widget = localWidget;
     XmStringFree(labels[0]);
-    
+
   /* Add handlers */
     addCommonHandlers(localWidget, displayInfo);
-    
+
     XtManageChild(localWidget);
 }
 
@@ -296,7 +296,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 
   /* Determine the font based on the height */
     fontList = fontListTable[menuFontListIndex(dlMenu->object.height)];
-    
+
   /* Set the foreground and background colors depending on mode */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	pm = (MedmMenu *)pr->clientData;
@@ -313,7 +313,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 #if SETSIZE
     {
 	int intnum;
-	
+
       /* Adjust for the width of the cascade button glyph, which Motif
        *   adds to our width */
 	intnum = (int)dlMenu->object.width - OPTION_MENU_ADJUST_WIDTH;
@@ -363,8 +363,8 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 	    XtAddCallback(pushbutton, XmNactivateCallback,
 	      menuValueChangedCb, (XtPointer)i);
 	}
-    }    
-    
+    }
+
   /* Create the option menu */
     nargs = 0;
     XtSetArg(args[nargs], XmNx, (Position)dlMenu->object.x); nargs++;
@@ -393,12 +393,12 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     XtResizeWidget(optionButtonGadget,
       dlMenu->object.width, dlMenu->object.height, 0);
 #endif
-    
+
 #if EXPLICITLY_OVERWRITE_CDE_COLORS
   /* Color the menu explicitly to avoid CDE interference */
     colorPulldownMenu(w,foreground,background);
 #endif
-    
+
 #if DEBUG_MENU
     {
 	Dimension height,width,borderWidth;
@@ -407,8 +407,8 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 
       /* Add special handler */
 	XtAddEventHandler(w, ButtonPressMask, False, handleMenuButtonPress,
-	  (XtPointer)w);	
-	
+	  (XtPointer)w);
+
 	print("\n\014createMenu: mode=%s optionMenu=%x OptionButton=%x\n",
 	  globalDisplayListTraversalMode == DL_EXECUTE?"EXECUTE":"EDIT",
 	  w,optionButtonGadget);
@@ -430,7 +430,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 		char string[1024], *pstring, *text;
 		XmStringCharSet tag;
 		XmStringDirection direction;
-		Boolean separator;		
+		Boolean separator;
 
 		if(XmStringInitContext(&context, labels[i])) {
 		    pstring=string;
@@ -449,10 +449,10 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
 #endif
 #if 0
 	    menuDump(w);
-#endif	    
+#endif
 	}
     }
-    
+
 #endif
 
     return w;
@@ -471,7 +471,7 @@ static void menuDraw(XtPointer cd)
     DlElement *dlElement = pm->dlElement;
     Widget widget = dlElement->widget;
     DlMenu *dlMenu = dlElement->structure.menu;
-    
+
 #if DEBUG_MENU
     printf("\nmenuDraw: pr->connected=%s widget=%x\n",
       pr->connected?"Yes":"No",widget);
@@ -484,7 +484,7 @@ static void menuDraw(XtPointer cd)
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(!widget) return;
@@ -564,7 +564,7 @@ static void menuDestroyCb(XtPointer cd)
 {
     MedmMenu *pm = (MedmMenu *) cd;
     if(pm) {
-	medmDestroyRecord(pm->record); 
+	medmDestroyRecord(pm->record);
 	if(pm->dlElement) pm->dlElement->data = NULL;
 	free((char *)pm);
     }
@@ -589,7 +589,7 @@ static void menuValueChangedCb(Widget  w, XtPointer clientData,
 	if(pr->connected) {
 	    if(pr->writeAccess) {
 #ifdef MEDM_CDEV
-		if(pr->stateStrings) 
+		if(pr->stateStrings)
 		  medmSendString(pr, pr->stateStrings[btnNumber]);
 #else
 		medmSendDouble(pm->record,(double)btnNumber);
@@ -597,7 +597,7 @@ static void menuValueChangedCb(Widget  w, XtPointer clientData,
 	    } else {
 		fputc('\a',stderr);
 		menuUpdateValueCb((XtPointer)pm->record);
-	    } 
+	    }
 	} else {
 	    medmPrintf(1,"\nmenuValueChangedCb: %s not connected\n",
 	      pm->dlElement->structure.menu->control.ctrl);
@@ -616,7 +616,7 @@ DlElement *createDlMenu(DlElement *p)
 {
     DlMenu *dlMenu;
     DlElement *dlElement;
- 
+
     dlMenu = (DlMenu *)malloc(sizeof(DlMenu));
     if(!dlMenu) return 0;
     if(p) {
@@ -631,7 +631,7 @@ DlElement *createDlMenu(DlElement *p)
       &menuDlDispatchTable))) {
 	free(dlMenu);
     }
- 
+
     return(dlElement);
 }
 
@@ -642,7 +642,7 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlMenu *dlMenu;
     DlElement *dlElement = createDlMenu(NULL);
- 
+
     if(!dlElement) return 0;
     dlMenu = dlElement->structure.menu;
     do {
@@ -676,7 +676,7 @@ DlElement *parseMenu(DisplayInfo *displayInfo)
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
- 
+
     return dlElement;
 }
 
@@ -685,17 +685,17 @@ void writeDlMenu(FILE *stream, DlElement *dlElement, int level)
     int i;
     char indent[16];
     DlMenu *dlMenu = dlElement->structure.menu;
- 
+
     for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
- 
+
     fprintf(stream,"\n%smenu {",indent);
     writeDlObject(stream,&(dlMenu->object),level+1);
     writeDlControl(stream,&(dlMenu->control),level+1);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
 #endif
-	if(dlMenu->clrmod != STATIC) 
+	if(dlMenu->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlMenu->clrmod]);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
@@ -770,7 +770,7 @@ static void handleMenuButtonPress(Widget w, XtPointer cd, XEvent *event,
     print("  w%d,%d h=%d,%d\n",
       width, owidth, height, oheight);
 
-    if(xEvent->state & ShiftMask) menuDump(wrc);    
+    if(xEvent->state & ShiftMask) menuDump(wrc);
 }
 
 static void menuDump(Widget w0)
@@ -799,7 +799,7 @@ static void menuDump(Widget w0)
     Cardinal numChildren;
 
     print("\nmenuDump:\n");
-    
+
   /* OptionMenu */
     w=w0;
     print("OptionMenu (XmRowColumn) %x\n",w);
@@ -834,7 +834,7 @@ static void menuDump(Widget w0)
 	print("  userData=%x\n",userData);
 	menu=subMenuId;
     }
-    
+
   /* OptionButton */
     w=XmOptionButtonGadget(w0);
     print("OptionButton (XmCascadeButtonGadget) %x\n",w);
@@ -870,7 +870,7 @@ static void menuDump(Widget w0)
 	print("  recomputeSize=%s\n",recomputeSize?"True":"False");
 	print("  userData=%x\n",userData);
     }
-    
+
 #if 0
   /* popup_menu */
     w=XtParent(menu);
@@ -886,7 +886,7 @@ static void menuDump(Widget w0)
 	print("  width=%d\n",width);
     }
 #endif
-    
+
   /* menu */
     w=menu;
     print("menu (XmRowColumn) %x\n",w);
@@ -920,7 +920,7 @@ static void menuDump(Widget w0)
 	print("  subMenuId=%x\n",subMenuId);
 	print("  userData=%x\n",userData);
     }
-    
+
   /* menuButtons */
     XtVaGetValues(menu,
       XmNnumChildren,&numChildren,

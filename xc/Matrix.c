@@ -50,11 +50,11 @@ void _XmDrawShadow();
    */
 #undef BCOPY
 # define BCOPY(a,b,n) memmove( (void *)(b), (void *)(a), (size_t)(n))
-    
+
 #ifndef XlibSpecificationRelease
 #define XrmPermStringToQuark XrmStringToQuark
 #endif
-    
+
   /*
    * Translations for Matrix (these will also be used by the Clip child).
    */
@@ -151,7 +151,7 @@ static XtResource resources[] = {
       offset(matrix.visible_columns), XmRImmediate, (XtPointer) 0 },
     { XmNvisibleRows, XmCVisibleRows, XmRDimension, sizeof(Dimension),
       offset(matrix.visible_rows), XmRImmediate, (XtPointer) 0 },
-    
+
   /* Override Manager default */
     { XmNshadowThickness, XmCShadowThickness, XmRHorizontalDimension,
       sizeof(Dimension),
@@ -1462,7 +1462,7 @@ XYToRowCol(XbaeMatrixWidget mw, int *x, int *y, int *row, int *column,
 	    return True;
 	} else
 	  return False;
-	
+
     case NonFixedCell:
 
       /*
@@ -1537,7 +1537,7 @@ DrawString(XbaeMatrixWidget mw, Window win, String string, int length,
    * it is slow, so we truncate characters if we exceed a cells pixel width.
    */
     if (width > maxwidth) {
-	
+
 	switch(alignment) {
 
 	case XmALIGNMENT_CENTER: {
@@ -1926,7 +1926,7 @@ RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
 	   */
 	    intersect.y1 += FIXED_ROW_HEIGHT(mw);
 	    intersect.y2 += FIXED_ROW_HEIGHT(mw);
-	
+
 	  /*
 	   * Redraw each label that was intersected
 	   */
@@ -2636,7 +2636,7 @@ SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
 	  XmTextFieldGetBaseline(TextChild(new));
 	relayout = True;
     }
-	
+
   /*
    * If anything changed to affect cell total width or column positions,
    * recalc them
@@ -3676,7 +3676,7 @@ static void
 TraverseInCB(Widget w, XtPointer client, XtPointer call)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)client;
-    
+
   /*
    * If the traversing flag is set, then Clip got the focus because
    * textField was trying to traverse out of mw.  We'll help it along.
@@ -3713,7 +3713,7 @@ TraverseInCB(Widget w, XtPointer client, XtPointer call)
        */
 	if (mw->matrix.traverse_cell_callback) {
 	    XbaeMatrixTraverseCellCallbackStruct call_data;
-	    
+
 	    call_data.reason = XbaeTraverseCellReason;
 	    call_data.row = 0;
 	    call_data.column = 0;
@@ -3725,14 +3725,14 @@ TraverseInCB(Widget w, XtPointer client, XtPointer call)
 	    call_data.num_columns = mw->matrix.columns;
 	    call_data.param = NULL;
 	    call_data.qparam = NULLQUARK;
-	    
+
 	    XtCallCallbackList((Widget)mw, mw->matrix.traverse_cell_callback,
 	      (XtPointer) &call_data);
 
 	    row = call_data.next_row;
 	    column = call_data.next_column;
 	}
-			   
+
 	(*((XbaeMatrixWidgetClass) XtClass(mw))->matrix_class.edit_cell)
 	  ((Widget)mw, row, column);
 
@@ -4569,7 +4569,7 @@ AddColumnsToTable(XbaeMatrixWidget mw, int position, String *columns,
    */
 
     for (i = 0; i < mw->matrix.rows; i++) {
-	mw->matrix.cells[i] = 
+	mw->matrix.cells[i] =
 	  (String *) XtRealloc((char *) mw->matrix.cells[i],
 	    (mw->matrix.columns + num_columns) *
 	    sizeof(String));
@@ -5022,7 +5022,7 @@ MakeRowVisible(XbaeMatrixWidget mw, int row)
     rows_visible = VISIBLE_HEIGHT(mw) / ROW_HEIGHT(mw);
     if (rows_visible == 0)
       rows_visible = 1;
-    
+
   /*
    * Figure out the new value of the VSB to scroll this cell
    * onto the screen (the VSB uses row coordinates instead of pixels)
@@ -5033,7 +5033,7 @@ MakeRowVisible(XbaeMatrixWidget mw, int row)
       vert_value = row - rows_visible + 1;
     else
       vert_value = VERT_ORIGIN(mw);
-    
+
   /*
    * Give the VSB the new value and pass a flag to make it call
    * our scroll callbacks
@@ -5065,7 +5065,7 @@ MakeColumnVisible(XbaeMatrixWidget mw, int column)
    */
     x = mw->matrix.column_positions[column] -
       mw->matrix.column_positions[mw->matrix.fixed_columns];
-    
+
   /*
    * Figure out the new value of the HSB to scroll this cell
    * onto the screen. If the whole cell won't fit, scroll so its
@@ -5084,7 +5084,7 @@ MakeColumnVisible(XbaeMatrixWidget mw, int column)
     }
     else
       horiz_value = HORIZ_ORIGIN(mw);
-    
+
   /*
    * Give the HSB the new value and pass a flag to make it
    * call our scroll callbacks
@@ -5177,7 +5177,7 @@ static void
 SetCell(Widget w, int row, int column, String value)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
-    
+
     if (row >= mw->matrix.rows || row < 0 ||
       column >= mw->matrix.columns || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5242,7 +5242,7 @@ static void
 EditCell(Widget w, int row, int column)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
-    
+
     Boolean edit = True;
     int x, y;
 
@@ -5386,7 +5386,7 @@ static void
 SelectCell(Widget w, int row, int column)
 {
     XbaeMatrixWidget mw = (XbaeMatrixWidget)w;
-    
+
     if (row >= mw->matrix.rows || row < 0 ||
       column >= mw->matrix.columns || column < 0) {
 	XtAppWarningMsg(XtWidgetToApplicationContext((Widget)mw),
@@ -5838,7 +5838,7 @@ extern Boolean XbaeMatrixCommitEdit(Widget w, Boolean unmap)
 static void CancelEdit(Widget w, Boolean unmap)
 {
     XbaeMatrixWidget mw =(XbaeMatrixWidget)w;
-    
+
     if (!XtIsManaged(TextChild(mw)))
       return;
 
@@ -6123,7 +6123,7 @@ AddColumns(Widget w, int position, String *columns, String *labels,
  */
 void
 XbaeMatrixAddColumns(w, position, columns, labels, widths, max_lengths,
-  alignments, label_alignments, colors, num_columns) 
+  alignments, label_alignments, colors, num_columns)
     Widget w;
     int position;
     String *columns;
@@ -6866,7 +6866,7 @@ SelectCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
    */
     if (!mw->matrix.select_cell_callback)
       return;
-    
+
     if (!EventToXY(mw, event, &x, &y, &cell))
       return;
 
@@ -6990,7 +6990,7 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     else {
 	char *ch, *next, *a;
 	int i, sub, len, count;
-	
+
       /*
        * Count the substrings
        */
@@ -7005,7 +7005,7 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 	       */
 		if (*(ch+1) == '\\' && *(ch+2) == ',')
 		  ch += 2;
-		
+
 	      /*
 	       * Take care of backslash-comma
 	       */
@@ -7018,21 +7018,21 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 	    else if (*ch == ',')
 	      count++;
 	}
-	
+
       /*
        * Malloc the array, make it one bigger for a terminating NULL entry
        */
 	array = (String *) XtMalloc((count + 1) * sizeof(String));
 	array[count] = NULL;
-	
+
 	for (sub = 0; sub < count; sub++) {
-	    
+
 	  /*
 	   * Skip leading white space
 	   */
 	    while (isspace((unsigned char)*start))
 	      start++;
-	    
+
 	  /*
 	   * Count the number of chars in this substring.
 	   * backslash-comma counts as one and does not terminate.
@@ -7063,24 +7063,24 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 		else
 		  len++;
 	    }
-	    
+
 	  /*
 	   * Save the beginning of the next substring
 	   */
 	    next = ch + 1;
-	    
+
 	  /*
 	   * Back up over trailing white space if we moved at all
 	   */
 	    if (ch != start)
 	      while (isspace((unsigned char)*(--ch)))
 		len--;
-	    
+
 	  /*
 	   * Malloc a String of the correct size
 	   */
 	    array[sub] = (String) XtMalloc(len + 1);
-	    
+
 	  /*
 	   * Copy the substring into our new string.
 	   * backslash-comma gets copied as comma.
@@ -7089,7 +7089,7 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 	    for (i = 0, ch = start, a = array[sub];
 		 i < len;
 		 i++, ch++) {
-		
+
 	      /*
 	       * We hit a backslash
 	       */
@@ -7117,7 +7117,7 @@ CvtStringToStringArray(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 		  *(a++) = *ch;
 	    }
 	    *a = '\0';
-	    
+
 	  /*
 	   * Point to the beginning of the next string.
 	   */
@@ -7329,7 +7329,7 @@ StringsAreEqual(String in, String test, int length)
       in +=2;
 
     for (i = 0; i < length; i++) {
-	char c = *in; 
+	char c = *in;
 
 	if (isupper(c))
 	  c = tolower(c);
@@ -7462,13 +7462,13 @@ AlignmentArrayDestructor(XtAppContext app, XrmValuePtr to,
  * coordinates have been scrolled to a new location.  The ScrollMgr
  * keeps track of scrolls and offsets required to relocate the events to the
  * current coordinate system.
- * 
+ *
  * The Matrix widget has two ScrollMgrs, one for the Matrixs window
  * and one for the Clip widgets window.
  *
  * Each widgets compress_exposures field should be XtExposeCompressSeries
  * or XtExposeNoCompress.
- * 
+ *
  * The idea behind this code is based on the PanHandler posted by Chuck Ocheret
  * (chuck@fid.morgan.com)
  */

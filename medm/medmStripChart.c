@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -33,7 +33,7 @@
 #include <cvtFast.h>
 
 #define SC_COLS             6
-#define SC_COLOR_COLUMN     1	
+#define SC_COLOR_COLUMN     1
 #define STRIP_MARGIN        0.18
 #define SC_DEFAULT_CLR      4     /* grey */
 #define SC_DEFAULT_PERIOD   60.0
@@ -379,7 +379,7 @@ static void calcYAxisLabelWidth(MedmStripChart *psc) {
 		break;
 	    }
 	}
-	
+
 	if(!found) {
 	    char f1, f2;
 	    int  d1, d2;
@@ -449,7 +449,7 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 #if DEBUG_MEM
     print("stripChartAlloc: dlElement=%x dlElement->data=%x\n",
       dlElement, dlElement->data);
-#endif    
+#endif
     if(psc == NULL) {
 	medmPrintf(1, "\nstripChartAlloc: Memory allocation error\n");
 	return psc;
@@ -499,7 +499,7 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 	print("  dlElement = %x updateTask=%x\n",
 	  pe->dlElement, pe->updateTask);
     }
-#endif    
+#endif
     if(psc->updateTask == NULL) {
 	medmPrintf(1, "\nstripChartAlloc: Memory allocation error\n");
     } else {
@@ -512,7 +512,7 @@ static MedmStripChart *stripChartAlloc(DisplayInfo *displayInfo,
 static void freeStripChart(XtPointer cd) {
     MedmStripChart *psc = (MedmStripChart *)cd;
     int i;
-    
+
 #if DEBUG_STRIP_CHART
     fprintf(stderr, "freeStripChart: psc->timerid=%x\n",
       psc->timerid);
@@ -520,14 +520,14 @@ static void freeStripChart(XtPointer cd) {
 #if DEBUG_MEM
     {
 	DlElement *dlElement = psc->dlElement;
-	MedmElement *pe = (MedmElement *)dlElement->data;	
+	MedmElement *pe = (MedmElement *)dlElement->data;
 
 	print("freeStripChart: dlElement=%x dlElement->data=%x\n",
 	  dlElement, dlElement->data);
 	print("  dlElement = %x updateTask=%x(pe) or %x(psc)\n",
 	  pe->dlElement, pe->updateTask, psc->updateTask);
     }
-#endif    
+#endif
 
     if(psc) {
 	if(psc->timerid) {
@@ -555,7 +555,7 @@ static void stripChartConfig(MedmStripChart *psc)
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     DisplayInfo *displayInfo = psc->updateTask->displayInfo;
     Widget widget = psc->dlElement->widget;
-    GC gc; 
+    GC gc;
     int i;
     int width;
     int height;
@@ -570,8 +570,8 @@ static void stripChartConfig(MedmStripChart *psc)
     fprintf(stderr,"stripChartConfig: "
       "psc=%x psc->dlElement=%x psc->timerid=%x\n",
       &psc,psc->dlElement,psc->timerid);
-#endif    
-    
+#endif
+
 
     calcYAxisLabelWidth(psc);
 
@@ -651,7 +651,7 @@ static void stripChartConfig(MedmStripChart *psc)
   /* if the graph is too small do somethings */
     if(psc->dataHeight < psc->h/2U) {
 	squeezeSpace = True;
-	if((dlStripChart->plotcom.title == NULL) 
+	if((dlStripChart->plotcom.title == NULL)
 	  || (strlen(dlStripChart->plotcom.title) == 0)) {
 	    dropTitleLabel = True;
 	    psc->dataY0 -= sccd.titleFontHeight;
@@ -661,7 +661,7 @@ static void stripChartConfig(MedmStripChart *psc)
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
-	if((dlStripChart->plotcom.xlabel == NULL) 
+	if((dlStripChart->plotcom.xlabel == NULL)
 	  || (strlen(dlStripChart->plotcom.xlabel) == 0)) {
 	    dropXAxisUnitLabel = True;
 	    psc->dataY1 += sccd.axisLabelFontHeight;
@@ -671,7 +671,7 @@ static void stripChartConfig(MedmStripChart *psc)
 		psc->dataWidth = psc->dataX1 - psc->dataX0 + 1;
 	    }
 	}
-	if((dlStripChart->plotcom.ylabel == NULL) 
+	if((dlStripChart->plotcom.ylabel == NULL)
 	  || (strlen(dlStripChart->plotcom.ylabel) == 0)) {
 	    dropYAxisUnitLabel = True;
 	    psc->dataY0 -= sccd.axisLabelFontHeight;
@@ -778,14 +778,14 @@ static void stripChartConfig(MedmStripChart *psc)
 	Pixel fg;
 	double interval;
 	double nextTick;
-	double verticalSpacing; 
+	double verticalSpacing;
 
       /* calculate how many divisions are needed */
 	if(squeezeSpace) {
 	    verticalSpacing = 1.0;
 	} else {
 	    verticalSpacing = 2.0;
-	}  
+	}
 	labelHeight = (int)(((double)sccd.numYAxisLabel + verticalSpacing)
 	  * (double) sccd.axisLabelFontHeight);
 	nDiv = (psc->dataHeight - 1) / labelHeight;
@@ -796,10 +796,10 @@ static void stripChartConfig(MedmStripChart *psc)
 	} else if(nDiv == 7) {
 	    nDiv = 6;
 	}
-	
+
 	interval = (double)(psc->dataHeight - 1) / (double)nDiv;
 	nextTick = 0.0;
-	
+
 	for(i=0; i<sccd.numYAxisLabel; i++) {
 	    range[i].step = (range[i].hi - range[i].lo)/(double)nDiv;
 	    range[i].value = range[i].hi;
@@ -813,7 +813,7 @@ static void stripChartConfig(MedmStripChart *psc)
 		int x, y;
 		char text[20];
 		int strLen;
-		
+
 		if(i == nDiv) {
 		    range[j].value = range[j].lo;
 		}
@@ -834,7 +834,7 @@ static void stripChartConfig(MedmStripChart *psc)
 		XDrawString(display, psc->pixmap, gc, x, y, text, strLen);
 		range[j].value = range[j].value - range[j].step;
 
-		if(range[j].numDot > 0) {   
+		if(range[j].numDot > 0) {
 		    int k;
 		    int count = 0;
 		    for(k = MAX_PENS - 1; k >= 0; k--) {
@@ -856,8 +856,8 @@ static void stripChartConfig(MedmStripChart *psc)
 #endif
 
 			    count++;
-			}  
-		    } 
+			}
+		    }
 		}
 	    }
 	    XSetForeground(display, gc, fg);
@@ -902,7 +902,7 @@ static void stripChartConfig(MedmStripChart *psc)
 	double value;
 	double nextTick;
 	int x, y;
-  
+
 	calcFormat(dlStripChart->period, &format, &decimal, &width);
 	width = width + 1;   /* add the plus size */
 	tw = XTextWidth(fontTable[sccd.axisLabelFont], "-0.000000", width);
@@ -979,7 +979,7 @@ static void stripChartConfig(MedmStripChart *psc)
 	    XDrawString(display, psc->pixmap, gc, x, y, label, strLen);
 	}
 
-    
+
 #if 0
 	if(!((dlStripChart->plotcom.xlabel) &&
 	  (strlen(dlStripChart->plotcom.xlabel) > 0))) {
@@ -1055,7 +1055,7 @@ static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	x = (int)(STRIP_MARGIN*dlStripChart->object.width);
 	y = (int)(STRIP_MARGIN*dlStripChart->object.height);
 	w = (unsigned int)((1-STRIP_MARGIN*2)*dlStripChart->object.width);
-	h = (unsigned int)((1-STRIP_MARGIN*2)*dlStripChart->object.height); 
+	h = (unsigned int)((1-STRIP_MARGIN*2)*dlStripChart->object.height);
 	XDrawRectangle(display, XtWindow(widget), displayInfo->gc, x, y, w, h);
 	i = dmGetBestFontWithInfo(fontTable, MAX_FONTS, titleStr, y, w,
 	  &usedHeight, &usedWidth, TRUE);
@@ -1084,7 +1084,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
     Arg args[15];
     Widget localWidget;
     DlStripChart *dlStripChart = dlElement->structure.stripChart;
-    
+
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
@@ -1106,12 +1106,12 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 	localWidget = XmCreateDrawingArea(displayInfo->drawingArea,
 	  stripChartWidgetName, args, n);
 	dlElement->widget = localWidget;
-	
+
       /* if execute mode, create stripChart and setup all the channels */
 	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    int i, j;
 	    MedmStripChart *psc;
-	    
+
 	    if(dlElement->data) {
 		psc = (MedmStripChart *)dlElement->data;
 	    } else {
@@ -1120,7 +1120,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		    medmPrintf(1, "\nexecuteDlStripChart: Memory allocation error\n");
 		    return;
 		}
-		
+
 	      /* connect channels */
 		j = 0;
 		for(i = 0; i < MAX_PENS; i++) {
@@ -1136,7 +1136,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		}
 	      /* record the number of channels in the strip chart */
 		psc->nChannels = j;
-		
+
 		if(psc->nChannels == 0) {
 		  /* if no channel, create a fake channel */
 		    psc->nChannels = 1;
@@ -1147,7 +1147,7 @@ void executeDlStripChart(DisplayInfo *displayInfo, DlElement *dlElement)
 		      (XtPointer)psc);
 		}
 	    }
-	    
+
 	    XtVaSetValues(localWidget, XmNuserData, (XtPointer) psc, NULL);
 	    XtAddCallback(localWidget, XmNexposeCallback, redisplayStrip,
 	      (XtPointer)psc);
@@ -1192,7 +1192,7 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
 
 #if DEBUG_ACCESS
     print("stripChartUpdateGraphicalInfoCb\n");
-#endif    
+#endif
 
   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   /* !!!!! This is a temporary work around !!!!! */
@@ -1248,13 +1248,13 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }
-    
+
   /* Set the limits */
     if(widget) {
 #if DEBUG_RECORDS
 	print("%d lopr=%g hopr=%g precion=%hd %s\n",
 	  row,lopr.fval,hopr.fval, precision,dlStripChart->pen[row].chan);
-#endif	
+#endif
       /* Set Channel and User limits (if apparently not set yet) */
 	dlStripChart->pen[row].limits.loprChannel = lopr.fval;
 	if(dlStripChart->pen[row].limits.loprSrc != PV_LIMITS_USER &&
@@ -1344,11 +1344,11 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
     MedmStripChart *psc = (MedmStripChart *) cd;
     DlElement *dlElement = psc->dlElement;
     GC gc = psc->gc;
-    
+
     UNREFERENCED(cbs);
 
   /*                    STRIP CHART GEOMETRY
-			
+
 			(0,0)
 			*--------------------------------------------------|
 			|                                                  |
@@ -1379,10 +1379,10 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 			|--------------------------------------------------*
 			(w,h)
 			*/
-    
+
 #if DEBUG_ACCESS
     print("redisplayStrip\n");
-#endif    
+#endif
 
   /* Check if hidden */
     if(dlElement->hidden) {
@@ -1391,7 +1391,7 @@ static void redisplayStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	}
 	return;
     }
-    
+
     if(psc->pixmap) {
       /* copy the top region */
 	XCopyArea(display, psc->pixmap, XtWindow(widget), gc, 0, 0,
@@ -1442,7 +1442,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
       connected?"True":"False",
       readAccess?"True":"False",
       validPrecision?"True":"False");
-#endif    
+#endif
 
     if(connected) {
 	if(readAccess) {
@@ -1453,7 +1453,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 		  /* specified the time interval */
 		    updateTaskSetScanRate(psc->updateTask, psc->timeInterval);
 		}
-		if(psc->updateEnable) 
+		if(psc->updateEnable)
 		  stripChartUpdateGraph((XtPointer)cd);
 	    }
 	} else {
@@ -1464,7 +1464,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 	    }
 #if DEBUG_ACCESS
 	    print("  drawBlackRectangle\n");
-#endif    
+#endif
 	    drawBlackRectangle(psc->updateTask);
 	  /* The black rectangle is drawn on the updatePixmap.  If
 	    this routine is called as a result of the
@@ -1481,7 +1481,7 @@ static void stripChartUpdateValueCb(XtPointer cd) {
 	}
 #if DEBUG_ACCESS
 	print("  drawWhiteRectangle\n");
-#endif    
+#endif
 	drawWhiteRectangle(psc->updateTask);
     }
 }
@@ -1514,7 +1514,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
       connected?"True":"False",
       readAccess?"True":"False",
       validPrecision?"True":"False");
-#endif    
+#endif
 
     if(connected) {
 	if(readAccess) {
@@ -1525,7 +1525,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 		  /* Specifiy the time interval */
 		    updateTaskSetScanRate(psc->updateTask, psc->timeInterval);
 		}
-		if(psc->updateEnable) 
+		if(psc->updateEnable)
 		  stripChartDraw((XtPointer)psc);
 	    }
 	} else {
@@ -1536,7 +1536,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 	    }
 #if DEBUG_ACCESS
 	    print("  drawBlackRectangle\n");
-#endif    
+#endif
 	    drawBlackRectangle(psc->updateTask);
 	}
     } else {
@@ -1547,7 +1547,7 @@ static void stripChartUpdateTaskCb(XtPointer cd) {
 	}
 #if DEBUG_ACCESS
 	print("  drawWhiteRectangle\n");
-#endif    
+#endif
 	drawWhiteRectangle(psc->updateTask);
     }
 }
@@ -1581,7 +1581,7 @@ static void stripChartUpdateGraph(XtPointer cd) {
 	while(psc->nextAdvanceTime <= currentTime) {
 	    psc->nextAdvanceTime += psc->timeInterval;
 	    totalPixel++;
-	} 
+	}
 #endif
 	if(totalPixel > 0) {
 	    XRectangle rectangle;
@@ -1625,18 +1625,18 @@ static void stripChartUpdateGraph(XtPointer cd) {
 		updatePvLimits(&dlStripChart->pen[i].limits);
 		lopr = dlStripChart->pen[i].limits.lopr;
 		hopr = dlStripChart->pen[i].limits.hopr;
-		
+
 	      /* plot data */
 		base = hopr - lopr;
 		y1 =  psc->dataY0 + (int)((psc->dataHeight - 1) *
 		  (1.0 - ((psc->minVal[i] - lopr) / base)));
 		y2 =  psc->dataY0 + (int)((psc->dataHeight - 1) *
 		  (1.0 - ((psc->maxVal[i] - lopr) / base)));
-  
+
 		XSetForeground(display, gc,
 		  displayInfo->colormap[dlStripChart->pen[i].clr]);
 		XDrawLine(display, psc->pixmap, gc, nextSlot, y1, nextSlot, y2);
-  
+
 		if(totalPixel > 1) {
 		    int y;
 		    y =  psc->dataY0 + (int)((psc->dataHeight - 1) *
@@ -1689,7 +1689,7 @@ static void stripChartDraw(XtPointer cd) {
 
 #if DEBUG_ACCESS
     print("stripChartDraw\n");
-#endif    
+#endif
 
   /* Check if hidden */
     if(dlElement->hidden) {
@@ -1698,7 +1698,7 @@ static void stripChartDraw(XtPointer cd) {
 	}
 	return;
     }
-        
+
   /* Make sure the plot is up to date */
     stripChartUpdateValueCb((XtPointer)psc->record[0]);
     startPos = psc->nextSlot;
@@ -1814,13 +1814,13 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token, "units")) {
 		getToken(displayInfo, token);
 		getToken(displayInfo, token);
-		if(!strcmp(token, "minute")) 
+		if(!strcmp(token, "minute"))
 		  dlStripChart->units = MINUTES;
-		else if(!strcmp(token, "second")) 
+		else if(!strcmp(token, "second"))
 		  dlStripChart->units = SECONDS;
-		else if(!strcmp(token, "milli second")) 
+		else if(!strcmp(token, "milli second"))
 		  dlStripChart->units = MILLISECONDS;
-		else if(!strcmp(token, "milli-second")) 
+		else if(!strcmp(token, "milli-second"))
 		  dlStripChart->units = MILLISECONDS;
 		else
 		  medmPostMsg(1, "parseStripChart: Illegal units %s\n"
@@ -1866,7 +1866,7 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 	  }
 
 	  linear_scale(dummy1, 0.0, 2, &val, &dummy1, &dummy2);
-	  dlStripChart->period = -val; 
+	  dlStripChart->period = -val;
 	  dlStripChart->oldUnits = dlStripChart->units;
 	  dlStripChart->units = SC_DEFAULT_UNITS;
       }
@@ -1915,7 +1915,7 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
     writeDlObject(stream, &(dlStripChart->object), level+1);
     writeDlPlotcom(stream, &(dlStripChart->plotcom), level+1);
     if(dlStripChart->delay < 0.0) {
-	if(dlStripChart->period != SC_DEFAULT_PERIOD) 
+	if(dlStripChart->period != SC_DEFAULT_PERIOD)
 	  fprintf(stream, "\n%s\tperiod=%f", indent, dlStripChart->period);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
 	if(MedmUseNewFileFormat) {
@@ -2010,13 +2010,13 @@ static void linear_scale(double xmin, double xmax, int n,
     double del = 0.0000002;		/* account for round-off errors */
     int nal, i, m1, m2;
     double fn, a, al, b, fm1, fm2;
-    
+
   /* Check whether proper input values were supplied */
     if(!(xmin <= xmax && n > 0)) {
 	fprintf(stderr,"\nlinear_scale: improper input values supplied!");
 	return;
     }
-    
+
   /* Provide 10% spread if graph is parallel to an axis */
     if(xmax == xmin) {
 	xmax *= 1.05;
@@ -2028,25 +2028,25 @@ static void linear_scale(double xmin, double xmax, int n,
     a = (xmax - xmin)/(double)fn;
     al = log10(a);
     nal = (int) al;
-    
+
     if(a < 1.0) nal -= 1;
-    
+
   /* a is scaled into variable named b betwen 1 and 10 */
     b = a / ((double)pow(10.0, (double) nal));
-    
+
   /* The closest permissible value for b is found */
     for(i = 1; i < 4; i++) {
 	if (b < sqr[i-1]) goto label30;
     }
     i = 4;
-    
+
   /* The interval size is computed */
   label30:
     *dist = vint[i-1]*((double)pow(10.0, (double)nal));
     fm1 = xmin/(*dist);
     m1 = (int)fm1;
     if(fm1 < 0.0) m1 -= 1;
-    if(fabs(((double) m1) + 1.0 - ((double) fm1)) < ((double)del)) 
+    if(fabs(((double) m1) + 1.0 - ((double) fm1)) < ((double)del))
       m1 += 1;
 
   /* The new min and max limits are found */
@@ -2054,14 +2054,14 @@ static void linear_scale(double xmin, double xmax, int n,
     fm2 = xmax/(*dist);
     m2 = ((int)fm2) + 1;
     if(fm2 < -1.0) m2 -= 1;
-    if( fabs((((double)fm2) + 1.0 - ((double)m2))) < del) 
+    if( fabs((((double)fm2) + 1.0 - ((double)m2))) < del)
       m2 -= 1;
     *xmaxp = (*dist)*((double)m2);
 
   /* Adjust limits to account for round-off if necessary */
-    if((double)(*xminp) > xmin) 
+    if((double)(*xminp) > xmin)
       *xminp = xmin;
-    if((double)(*xmaxp) < xmax) 
+    if((double)(*xmaxp) < xmax)
       *xmaxp = xmax;
 
 }
@@ -2071,7 +2071,7 @@ void popupStripChartDataDialog(void)
 {
     DlStripChart *dlStripChart;
     int i;
-    
+
   /* Create the dialog if necessary */
     if(!stripChartS) {
 	if(!stripChartS) {
@@ -2108,14 +2108,14 @@ void popupStripChartDataDialog(void)
 
 #if DEBUG_DIALOG
     printPens(tempPen,"popupStripChartDataDialog (1):");
-#endif    
+#endif
 
   /* Fill in the values */
     stripChartDialogReset();
 
 #if DEBUG_DIALOG
     printPens(tempPen,"popupStripChartDataDialog (2):");
-#endif    
+#endif
 
   /* Pop it up */
     XtSetSensitive(stripChartS, True);
@@ -2125,19 +2125,19 @@ void popupStripChartDataDialog(void)
     if(globalDisplayListTraversalMode == DL_EDIT) {
 	XtUnmanageChild(scExecuteControlsW);
 	XtSetSensitive(scExecuteControlsW, False);
-#if 0	
+#if 0
 	XtUnmanageChild(scPeriodLabelW);
 	XtUnmanageChild(scPeriodW);
 	XtUnmanageChild(scUnitsW);
-#endif	
+#endif
     } else {
 	XtSetSensitive(scExecuteControlsW, True);
 	XtManageChild(scExecuteControlsW);
-#if 0		
+#if 0
 	XtManageChild(scPeriodLabelW);
 	XtManageChild(scPeriodW);
 	XtManageChild(scUnitsW);
-#endif	
+#endif
     }
 }
 
@@ -2147,14 +2147,14 @@ void stripChartUpdateMatrixColors(int clr, int row)
     Widget w;
     Pixel pixel;
     Pixel *colormap =currentDisplayInfo->colormap;
-    
+
     tempPen[row].clr = clr;
     w = table[row][SC_COLOR_COLUMN];
     pixel = colormap[tempPen[row].clr];
 #if DEBUG_COLOR
     print("stripChartUpdateMatrixColors: clr=%d row=%d pixel=%x w=%x\n",
       clr,row,pixel,w);
-#endif    
+#endif
     if(w) XtVaSetValues(w, XmNbackground, pixel, NULL);
 }
 
@@ -2205,15 +2205,15 @@ static void stripChartDialogCreateDialog(void)
    *	       channel | color | losrc | loval | hisrc | hival
    *	       -----------------------------------------------
    *	    1 |   0        1       2       3       4       5
-   *	    2 | 
-   *	    3 | 
+   *	    2 |
+   *	    3 |
    *		     ...
    *        scExecuteControls
-   *		 Period    Units   
+   *		 Period    Units
    *        scActionArea
    *		 OK     CANCEL    HELP
    */
-    
+
   /* Create a form for everything (scForm) */
     scForm = XtVaCreateWidget("scForm",
       xmFormWidgetClass, stripChartS,
@@ -2403,7 +2403,7 @@ static void stripChartDialogCreateDialog(void)
     XtAddCallback(w, XmNmodifyVerifyCallback,
       textFieldNumericVerifyCallback, NULL);
     scPeriodW = w;
-    
+
   /* Units */
     label = XmStringCreateLocalized("Units");
     opt1 = XmStringCreateLocalized(stringValueTable[FIRST_TIME_UNIT]);
@@ -2448,7 +2448,7 @@ static void stripChartDialogCreateDialog(void)
     XtAddCallback(w, XmNactivateCallback,
       stripChartDialogCb, (XtPointer)SC_APPLY_BTN);
     scApplyButtonW = w;
-    
+
     w = XtVaCreateManagedWidget("Cancel",
       xmPushButtonWidgetClass, wparent,
       XmNtopAttachment,    XmATTACH_FORM,
@@ -2493,7 +2493,7 @@ static void stripChartDialogReset()
     DlLimits *pL;
     char string[MAX_TOKEN_LENGTH];
     Pixel *colormap =currentDisplayInfo->colormap;
-    
+
   /* Loop over rows */
     for (i = 0; i < MAX_PENS; i++) {
       /*  Set the pointers */
@@ -2506,12 +2506,12 @@ static void stripChartDialogReset()
       /* Channel */
 	w = table[i][0];
 	XmTextFieldSetString(table[i][0], pPen->chan);
-	if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	if(globalDisplayListTraversalMode == DL_EDIT) {
 	    XtVaSetValues(w, XmNeditable, True, NULL);
 	} else {
 	    XtVaSetValues(w, XmNeditable, False, NULL);
 	}
-	
+
       /* Color */
 	w = table[i][1];
 	if(*tempPen[i].chan) {
@@ -2522,7 +2522,7 @@ static void stripChartDialogReset()
 	    XtVaGetValues(stripChartS, XmNbackground, &pixel, NULL);
 	}
 	if(w) XtVaSetValues(w, XmNbackground, pixel, NULL);
-	
+
       /* LOPR */
 	switch(pL->loprSrc) {
 	case PV_LIMITS_CHANNEL:
@@ -2539,7 +2539,7 @@ static void stripChartDialogReset()
 	    optionMenuSet(w, pL->loprSrc-FIRST_PV_LIMITS_SRC);
 	    XtSetSensitive(XtParent(table[i][3]), True);
 	    w = table[i][3];
-	    if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	    if(globalDisplayListTraversalMode == DL_EDIT) {
 		XtVaSetValues(w, XmNeditable,
 		  (pL->loprSrc == PV_LIMITS_DEFAULT)?True:False, NULL);
 	    } else {
@@ -2576,7 +2576,7 @@ static void stripChartDialogReset()
 	    optionMenuSet(w, pL->hoprSrc-FIRST_PV_LIMITS_SRC);
 	    w = table[i][5];
 	    XtSetSensitive(XtParent(w), True);
-	    if(globalDisplayListTraversalMode == DL_EDIT) {	    
+	    if(globalDisplayListTraversalMode == DL_EDIT) {
 		XtVaSetValues(w, XmNeditable,
 		  (pL->hoprSrc == PV_LIMITS_DEFAULT)?True:False, NULL);
 	    } else {
@@ -2603,7 +2603,7 @@ static void stripChartDialogReset()
       /* Period */
 	cvtDoubleToString(tempPeriod,string,0);
 	XmTextFieldSetString(scPeriodW,string);
-	
+
       /* Units */
 	optionMenuSet(scUnitsW, tempUnits - FIRST_TIME_UNIT);
     }
@@ -2633,7 +2633,7 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
    *   Find the real type from the userData of the RC parent of the button */
     if(type < 3) {
 	XtPointer userData;
-	
+
 	button=type;
 	XtVaGetValues(XtParent(w), XmNuserData, &userData, NULL);
 	type = GETLOW((int)userData);
@@ -2652,11 +2652,11 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
 
   /* Get limits pointer */
     pL = &tempPen[row].limits;
-    
+
 #if DEBUG_SC
     print("  Final values: type=%d row=%d pL=%x\n",type,row,pL);
 #endif
-    
+
     switch(type) {
     case SC_CLR_BTN:
 	if(globalDisplayListTraversalMode == DL_EDIT) {
@@ -2778,7 +2778,7 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
 	callBrowser(medmHelpPath,"#StripChartDataDialog");
 	return;
     }
-    
+
   /* Reset the dialog box */
     stripChartDialogReset();
 }
@@ -2798,7 +2798,7 @@ static void stripChartDialogStoreTextEntries(void)
      should be up to date. */
     for(i = 0; i < MAX_PENS; i++) {
 	pL = &tempPen[i].limits;
-	
+
       /* Update the limits to reflect current src's */
 	updatePvLimits(pL);
 
@@ -2870,7 +2870,7 @@ static void stripChartDialogUpdateElement(void)
 
   /* Read and store the text entries */
     stripChartDialogStoreTextEntries();
-    
+
   /* Copy the tempPen to the globalResourceBundle or the
      executeTimeStripChartElement */
     for(i = 0; i < MAX_PENS; i++) {
@@ -2889,11 +2889,11 @@ static void stripChartDialogUpdateElement(void)
       /* Units */
 	dlStripChart->units = tempUnits;
     }
-    
+
   /* Update element */
     if(globalDisplayListTraversalMode == DL_EDIT) {
 	DisplayInfo *cdi=currentDisplayInfo;
-	
+
 	DlElement *dlElement = FirstDlElement(
 	  cdi->selectedDlElementList);
 	unhighlightSelectedElements();
@@ -2921,7 +2921,7 @@ static void stripChartDialogUpdateElement(void)
 #if DEBUG_TIMEOUT
 	{
 	    double currentTime=medmTime();
-	    
+
 	    print("stripChartDialogUpdateElement: \n"
 	      "  timeInterval=%f\n"
 	      "  nextAdvanceTime(delta)=%f\n"
@@ -2946,7 +2946,7 @@ static void stripChartDialogUpdateElement(void)
 	      cdi->updateTaskListHead.nextExecuteTime-currentTime,
 	      cdi->periodicTaskCount);
 	}
-#endif	
+#endif
     }
 }
 

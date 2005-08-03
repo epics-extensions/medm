@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -65,7 +65,7 @@ int messageButtonFontListIndex(int height)
  *	(includes nominal 2*shadowThickness=2 shadow)
  */
     for(i = MAX_FONTS-1; i >=  0; i--) {
-	if( ((int)(.90*height) - 4) >= 
+	if( ((int)(.90*height) - 4) >=
 	  (fontTable[i]->ascent + fontTable[i]->descent))
 	  return(i);
     }
@@ -83,7 +83,7 @@ Widget createPushButton(Widget parent,
     Widget widget;
     XmString xmString = 0;
     int n = 0;
- 
+
     XtSetArg(args[n],XmNx,(Position) po->x); n++;
     XtSetArg(args[n],XmNy,(Position) po->y); n++;
     XtSetArg(args[n],XmNwidth,(Dimension) po->width); n++;
@@ -126,7 +126,7 @@ void messageButtonCreateEditInstance(DisplayInfo *displayInfo,
 
   /* Add handlers */
     addCommonHandlers(dlElement->widget, displayInfo);
-    
+
     XtManageChild(dlElement->widget);
 }
 
@@ -154,7 +154,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  &(dlMessageButton->object),
 	  messageButtonDraw,
 	  (XtPointer)pmb);
-	
+
 	if(!pmb->updateTask) {
 	    medmPrintf(1,"\nmessageButtonCreateRunTimeInstance: Memory allocation error\n");
 	} else {
@@ -167,7 +167,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  (XtPointer) pmb);
 	drawWhiteRectangle(pmb->updateTask);
     }
- 
+
     if(!dlElement->widget) {
 	dlElement->widget = createPushButton(displayInfo->drawingArea,
 	  &(dlMessageButton->object),
@@ -176,7 +176,7 @@ void messageButtonCreateRunTimeInstance(DisplayInfo *displayInfo,
 	  (Pixmap)0,
 	  dlMessageButton->label,
 	  (XtPointer) displayInfo);
-	
+
       /* Add the callbacks for update */
 	XtAddCallback(dlElement->widget,XmNarmCallback,messageButtonValueChangedCb,
 	  (XtPointer)pmb);
@@ -329,7 +329,7 @@ static void messageButtonDraw(XtPointer cd)
     DlElement *dlElement = pmb->dlElement;
     Widget widget = dlElement->widget;
     DlMessageButton *dlMessageButton = dlElement->structure.messageButton;
-    
+
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -337,7 +337,7 @@ static void messageButtonDraw(XtPointer cd)
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -457,16 +457,16 @@ static void messageButtonGetRecord(XtPointer cd, Record **record, int *count) {
     *count = 1;
     record[0] = pmb->record;
 }
- 
+
 /***
  *** Message Button
  ***/
- 
+
 DlElement *createDlMessageButton(DlElement *p)
 {
     DlMessageButton *dlMessageButton;
     DlElement *dlElement;
- 
+
     dlMessageButton = (DlMessageButton *)malloc(sizeof(DlMessageButton));
     if(p) {
 	*dlMessageButton = *(p->structure.messageButton);
@@ -556,7 +556,7 @@ void writeDlMessageButton(
 
     memset(indent,'\t',level);
     indent[level] = '\0';
- 
+
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
 #endif
@@ -571,7 +571,7 @@ void writeDlMessageButton(
 	if(dlMessageButton->release_msg[0] != '\0')
 	  fprintf(stream,"\n%s\trelease_msg=\"%s\"",
 	    indent,dlMessageButton->release_msg);
-	if(dlMessageButton->clrmod != STATIC) 
+	if(dlMessageButton->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,
 	    stringValueTable[dlMessageButton->clrmod]);
 	fprintf(stream,"\n%s}",indent);

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -61,7 +61,7 @@ static String *cmdCells[MAX_SHELL_COMMANDS];
 static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     Pixmap pixmap = (Pixmap) cd;
-    
+
     UNREFERENCED(cbs);
 
 /*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
@@ -128,7 +128,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       dlElement,dlElement->hidden?"Yes":"No",
       widget,
       widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
-#endif    
+#endif
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
@@ -187,7 +187,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       (Pixel)displayInfo->colormap[dlShellCommand->clr],
       (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
 #endif
-    
+
     shellCommandPulldownMenu = XmCreatePulldownMenu(
       localMenuBar,"shellCommandPulldownMenu",args,2);
 
@@ -217,7 +217,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     XtAddCallback(widget,
       XmNdestroyCallback,freePixmapCallback,
       (XtPointer)shellCommandPixmap);
-    
+
     for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	if(strlen(dlShellCommand->command[i].command) > (size_t)0) {
 	    xmString = XmStringCreateLocalized(dlShellCommand->command[i].label);
@@ -238,12 +238,12 @@ void hideDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 {
 #if DEBUG_REDRAW
     Widget widget = dlElement->widget;
-    
+
     print("hideDlShellCommand: %x hidden=%s widget=%x managed=%s\n",
       dlElement,dlElement->hidden?"Yes":"No",
       widget,
       widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
-#endif    
+#endif
 
   /* Use generic hide for an element with a widget */
     hideWidgetElement(displayInfo, dlElement);
@@ -252,7 +252,7 @@ void hideDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       dlElement,dlElement->hidden?"Yes":"No",
       widget,
       widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
-#endif    
+#endif
 }
 
 static void createDlShellCommandEntry(DlShellCommandEntry *shellCommand,
@@ -390,10 +390,10 @@ void writeDlShellCommandEntry(
   int level)
 {
     char indent[16];
- 
+
     memset(indent,'\t',level);
     indent[level] = '\0';
- 
+
     fprintf(stream,"\n%scommand[%d] {",indent,index);
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
@@ -425,7 +425,7 @@ void writeDlShellCommand(
 
     memset(indent,'\t',level);
     indent[level] = '\0';
- 
+
     fprintf(stream,"\n%s\"shell command\" {",indent);
     writeDlObject(stream,&(dlShellCommand->object),level+1);
     for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
@@ -476,7 +476,7 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 	      parseAndExecCommand(displayInfo,processedCommand);
 #else
 	    parseAndExecCommand(displayInfo,command);
-#endif	    
+#endif
 	    XtFree(command);
 	}
 	XtUnmanageChild(displayInfo->shellCommandPromptD);
@@ -527,12 +527,12 @@ void dmExecuteShellCommand(Widget  w, DlShellCommandEntry *commandEntry,
     cmdLength = strlen(commandEntry->command);
     if(cmdLength < 0) return;
     argsLength = strlen(commandEntry->args);
-    
+
   /* Get the displayInfo from the userData */
     XtVaGetValues(w,XmNuserData,&userData,NULL);
     displayInfo = (DisplayInfo *)userData;
     currentDisplayInfo = displayInfo;
-    
+
   /* Copy the command to shellCommand */
     strcpy(shellCommand,commandEntry->command);
 
@@ -541,22 +541,22 @@ void dmExecuteShellCommand(Widget  w, DlShellCommandEntry *commandEntry,
 	strcat(shellCommand," ");
 	strcat(shellCommand,commandEntry->args);
     }
-    
+
   /* Check for a prompt char */
     promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
     if(promptPosition == NULL) {
       /* No  prompt character found */
       /* (MDA) NB: system() blocks! need to background (&) to not block */
       /* KE: User has to do this as it is coded */
-#if 0	
+#if 0
       /* KE: Isn't necessary */
 	performMacroSubstitutions(displayInfo,
 	  shellCommand,processedShellCommand,2*MAX_TOKEN_LENGTH);
 	if(strlen(processedShellCommand) > (size_t) 0)
 	  parseAndExecCommand(displayInfo,processedShellCommand);
-#else	
+#else
 	  parseAndExecCommand(displayInfo,shellCommand);
-#endif	
+#endif
     } else {
       /* A prompt character found, replace it with NULL */
 	promptPosition = strchr(shellCommand,SHELL_CMD_PROMPT_CHAR);
@@ -570,7 +570,7 @@ void dmExecuteShellCommand(Widget  w, DlShellCommandEntry *commandEntry,
 	    displayInfo->shellCommandPromptD = createShellCommandPromptD(
 	      displayInfo->shell);
 	}
-	
+
       /* Set the command in the dialog */
 	xmString = XmStringCreateLocalized(shellCommand);
 	XtVaSetValues(displayInfo->shellCommandPromptD,XmNtextString,
@@ -694,8 +694,8 @@ Widget createShellCommandDataDialog(
    *	       label | cmd | args
    *	       -------------------
    *	    1 |  A      B      C
-   *	    2 | 
-   *	    3 | 
+   *	    2 |
+   *	    3 |
    *		     ...
    *		 OK     CANCEL
    */
@@ -760,7 +760,7 @@ Widget createShellCommandDataDialog(
     XtVaSetValues(cmdForm,XmNdefaultButton,applyButton,NULL);
 
   /*
-   * now do form layout 
+   * now do form layout
    */
 
   /* cmdMatrix */
@@ -810,5 +810,5 @@ void updateShellCommandDataDialog()
 	cmdRows[i][2] = globalResourceBundle.cmdData[i].args;
     }
     if(cmdMatrix != NULL) XtVaSetValues(cmdMatrix,XmNcells,cmdCells,NULL);
-  
+
 }

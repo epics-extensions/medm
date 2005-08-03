@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -103,7 +103,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
-    
+
     if(dlPolyline->isFallingOrRisingLine) {
       /* convert the falling line and rising line into polyline format */
 	if(dlPolyline->attr.width > 0) {
@@ -155,7 +155,7 @@ void executeDlPolyline(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &object,
 	      polylineDraw,
 	      (XtPointer)pp);
-	    
+
 	    if(pp->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlPolyline: Memory allocation error\n");
 	    } else {
@@ -255,7 +255,7 @@ static void polylineDestroyCb(XtPointer cd)
 
     if(pp) {
 	Record **records = pp->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -273,7 +273,7 @@ static void polylineGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmPolyline *pp = (MedmPolyline *)cd;
     int i;
-    
+
     *count = 0;
     if(pp && pp->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -288,8 +288,8 @@ DlElement *createDlPolyline(DlElement *p)
 {
     DlPolyline *dlPolyline;
     DlElement *dlElement;
- 
- 
+
+
     dlPolyline = (DlPolyline *)malloc(sizeof(DlPolyline));
     if(!dlPolyline) return 0;
     if(p) {
@@ -307,7 +307,7 @@ DlElement *createDlPolyline(DlElement *p)
 	dlPolyline->nPoints = 0;
 	dlPolyline->isFallingOrRisingLine = False;
     }
- 
+
     if(!(dlElement = createDlElement(DL_Polyline,
       (XtPointer)      dlPolyline,
       &polylineDlDispatchTable))) {

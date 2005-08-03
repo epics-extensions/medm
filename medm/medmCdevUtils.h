@@ -13,12 +13,16 @@
  *      Simple copy of epics header to avoid to include the epics path
  *      when to build medm using cdev
  *
- * Author:  
+ * Author:
  *      Jie Chen
  *      Jefferson Lab. Control Software Group
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.2  2005/08/03 14:56:55  evans
+ *   Trimmed extra whitespace at end of lines in the source files.  There
+ *   may be changes related to the WheelSwitch, as well.
+ *
  *   Revision 1.1  1998/08/25 18:39:06  evans
  *   Incorporated changes from Jie Chen for CDEV.  Not tested with
  *   MEDM_CDEV defined.
@@ -38,17 +42,17 @@ extern "C" {
 #endif
 
 /* all these convertion routines */
-extern int medmCvtFloatToString  (float value, char *pstring, 
+extern int medmCvtFloatToString  (float value, char *pstring,
 				  unsigned short precision);
-extern int medmCvtDoubleToString  (double value, char *pstring, 
+extern int medmCvtDoubleToString  (double value, char *pstring,
 				   unsigned short precision);
-extern int medmCvtFloatToExpString (float value, char *pstring, 
+extern int medmCvtFloatToExpString (float value, char *pstring,
 				    unsigned short precision);
-extern int medmCvtDoubleToExpString (double value, char *pstring, 
+extern int medmCvtDoubleToExpString (double value, char *pstring,
 				     unsigned short precision);
-extern int medmCvtFloatToCompactString(float value, char *pstring, 
+extern int medmCvtFloatToCompactString(float value, char *pstring,
 				       unsigned short precision);
-extern int medmCvtDoubleToCompactString(double value, char *pstring, 
+extern int medmCvtDoubleToCompactString(double value, char *pstring,
 					unsigned short precision);
 extern int medmCvtCharToString (char value, char *pstring);
 extern int medmCvtUcharToString (unsigned char value, char *pstring);

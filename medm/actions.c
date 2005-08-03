@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -98,7 +98,7 @@ static Boolean dragConvertProc(Widget w, Atom *selection, Atom *target,
 	XmStringFree(cString);
 	if(!passText) return(False);
 #endif
-	
+
 	*typeRtn = *target;
 	*valueRtn = (XtPointer)passText;
       /* KE: See comment under STRING case */
@@ -110,7 +110,7 @@ static Boolean dragConvertProc(Widget w, Atom *selection, Atom *target,
       /* TEXT */
 	passText=XtNewString(channelNames);
 	if(!passText) return(False);
-	
+
 	*typeRtn = *target;
 	*valueRtn = (XtPointer)passText;
       /* KE: Using strlen(passText)+1 here results in a ^@ (NULL)
@@ -154,7 +154,7 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 	WidgetList children;
 	Cardinal numChildren;
 	Boolean getState;
-	
+
 	XtVaGetValues(dragDropWidget,
 	  XmNchildren,&children, XmNnumChildren,&numChildren,
 	  NULL);
@@ -164,9 +164,9 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 #ifdef WIN32
 	      /* Boolean is size 1, Logical operations convert to size 4 */
 		XmToggleButtonSetState(children[i],(Boolean)(!getState),False);
-#else		
+#else
 		XmToggleButtonSetState(children[i],!getState,False);
-#endif		
+#endif
 		XmToggleButtonSetState(children[i],getState,False);
 	    }
 	}
@@ -179,7 +179,7 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 	unsigned char indicatorType;
 	WidgetList children;
 	Cardinal numChildren;
-	
+
 	XtVaGetValues(dragDropWidget,
 	  XmNchildren,&children, XmNnumChildren,&numChildren,
 	  XmNradioBehavior,&radioBehavior,
@@ -201,7 +201,7 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 	    }
 	}
     }
-#endif    
+#endif
 
   /* Perform cleanup at conclusion of drag and drop */
     XtSetArg(args[0],XmNsourcePixmapIcon,&sourceIcon);
@@ -216,13 +216,13 @@ static void dragDropFinish(Widget w, XtPointer clientData, XtPointer callData)
 #if USE_SOURCE_PIXMAP_MASK
   /* Implement cleanup for XmNmask here */
 #endif
-    
+
 #if 0
   /* KE: Causes a lot of flashing.  Better to leave it trashed. */
 #ifdef WIN32
     {
 	DisplayInfo *displayInfo;
-	
+
       /* Refresh the display for WIN32, since Exceed trashes it */
 	if(dragDropWidget) {
 	    displayInfo = dmGetDisplayInfoFromWidget(dragDropWidget);
@@ -290,7 +290,7 @@ void StartDrag(Widget w, XEvent *event)
     if(!w) return;
     displayInfo = dmGetDisplayInfoFromWidget(w);
     if(!displayInfo) return;
-  
+
   /* Find the element corresponding to the coordinates */
     dragDropWidget=(Widget)0;     /* Used in cleanup */
     x = event->xbutton.x;
@@ -316,7 +316,7 @@ void StartDrag(Widget w, XEvent *event)
 	static int first=1;
 	XtTranslations xlations=NULL;
 	String xString=NULL;
-	
+
 	XtVaGetValues(searchWidget,XtNtranslations,&xlations,NULL);
 	print("  translations=0x%08x parsedTranslations=0x%08x\n",
 	  xlations,parsedTranslations);
@@ -341,11 +341,11 @@ void StartDrag(Widget w, XEvent *event)
     }
 #endif
 #endif
-    
+
   /* Call the getRecord procedure, if there is one */
     if(!pT->getRecord) return;
     pT->getRecord(pT->clientData, record, &count);
-    
+
     column = count / 100;
     if (column == 0) column = 1;
     if (column > MAX_COL) {
@@ -361,7 +361,7 @@ void StartDrag(Widget w, XEvent *event)
 	  "  Programming Error: Please notify person in charge of MEDM\n");
 	return;
     }
-    
+
   /* Make the source icon pixmap */
     bg = BlackPixel(display,screenNum);
     fg = WhitePixel(display,screenNum);
@@ -377,7 +377,7 @@ void StartDrag(Widget w, XEvent *event)
     } else {
 	int i, j;
 	int x, y;
-	
+
       /* Determine the dimensions of the pixmap */
 	i = 0; j = 0;
 	textWidth = 0;
@@ -412,7 +412,7 @@ void StartDrag(Widget w, XEvent *event)
 	if(row < 2) {
 #if USE_SOURCE_PIXMAP_MASK
 	    doMask = 1;
-#endif		
+#endif
 	    row = 2;
 	}
 	maxWidth = X_SHIFT + (textWidth + MARGIN) * column;
@@ -482,7 +482,7 @@ void StartDrag(Widget w, XEvent *event)
 	    XFillRectangle(display,maskPixmap,gc,0,fontHeight+MARGIN+1,
 	      maxWidth,maxHeight);
 	}
-#endif	    
+#endif
 #if DEBUG_DRAGDROPDELAY
     print("%8.3f StartDrag: Start put names in CLIPBOARD\n",getTimerDouble());
 #endif
@@ -497,14 +497,14 @@ void StartDrag(Widget w, XEvent *event)
 	XmString clipLabel;
 	int status;
 	int privateID=0;
-	
+
 #if DEBUG_SELECTION
 	print("MAX_COUNT=%d\n",MAX_COUNT);
 	print("Copying|%s| to clipboard\n",channelNames);
 	print("  Success=%d Fail=%d Locked=%d\n",
 	  ClipboardSuccess,ClipboardFail,ClipboardLocked);
-#endif	
-	
+#endif
+
       /* Start the copy, try until unlocked */
 	clipLabel=XmStringCreateLocalized("PV Name");
 	do {
@@ -519,10 +519,10 @@ void StartDrag(Widget w, XEvent *event)
 	      NULL,NULL,&itemID);
 #if DEBUG_SELECTION
 	    print("XmClipboardStartCopy: status=%d \n",status);
-#endif	
+#endif
 	} while(status == ClipboardLocked);
 	XmStringFree(clipLabel);
-	
+
       /* Copy the data, try until unlocked */
 	do {
 	  /* KE: Using strlen(channelNames)+1e results in ^@ appearing
@@ -534,7 +534,7 @@ void StartDrag(Widget w, XEvent *event)
 	      channelNames,strlen(channelNames),privateID,NULL);
 #if DEBUG_SELECTION
 	    print("XmClipboardCopy: status=%d \n",status);
-#endif	
+#endif
 	} while(status == ClipboardLocked);
 
       /* End the copy, try until unlocked */
@@ -545,7 +545,7 @@ void StartDrag(Widget w, XEvent *event)
 	    status=XmClipboardEndCopy(display,window,itemID);
 #if DEBUG_SELECTION
 	    print("XmClipboardEndCopy: status=%d \n",status);
-#endif	
+#endif
 	} while(status == ClipboardLocked);
 
     }
@@ -571,7 +571,7 @@ void StartDrag(Widget w, XEvent *event)
 	  "  event->type=%d [ButtonPress=%d]\n",
 	  channelNames,status?"True":"False",
 	  event->type,ButtonPress);
-#endif	
+#endif
     }
 
   /* Create the drag icon and start the drag */
@@ -590,16 +590,16 @@ void StartDrag(Widget w, XEvent *event)
 	if(doMask) {
 	    XtSetArg(args[n],XmNmask,maskPixmap); n++;
 	}
-#endif	
+#endif
 	sourceIcon = XmCreateDragIcon(searchWidget, "sourceIcon",
 	  args,n);
 
       /* Establish list of valid target types (Atoms must be interned, and this is done in medm.c) */
-	
+
 	exportList[0] = compoundTextAtom;
 	exportList[1] = XA_STRING;    /* Doesn't have to be interned */
 	exportList[2] = textAtom;
-	
+
       /* Start the drag */
 #if DEBUG_DRAGDROPDELAY
     print("%8.3f StartDrag: Start drag\n",getTimerDouble());

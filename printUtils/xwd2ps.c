@@ -5,7 +5,7 @@
  *  printing on a color device, such as the QMS ColorScript 100.
  *
  *  Run length encoding is used.  See "usage" subroutine for more
- *  information.  This program is adapted from a similar program for SUN 
+ *  information.  This program is adapted from a similar program for SUN
  *  color raster files, cras2ps, also by R. Tatar.
  *
  *  Acknowledgments:
@@ -13,7 +13,7 @@
  *  help with C, Unix and PostScript.
  *  Special thanks to Gerry White for all his help with X11 and for
  *  providing example code and initial data files to test the program.
- *  
+ *
  *  Written by Robert Tatar and Craig A. McGowan
  *
  *  Modification 3-29-90 by CAM
@@ -33,9 +33,9 @@
  *  Craig A. McGowan (mcgowan@crd.ge.com)
  *  Office: (518) 387-7079 or 8*883-7079
  *
- *  US Mail: GE Corporate Research and Development, 
- *           P.O. Box 8, 
- *           Bldg KW, Room C214, 
+ *  US Mail: GE Corporate Research and Development,
+ *           P.O. Box 8,
+ *           Bldg KW, Room C214,
  *           Schenectady, NY 12301
  *  Fax:    (518) 387-6560 or 8*833-6560
  *
@@ -156,8 +156,8 @@ int swapData;
 
 /* this is a structure containg the values of all command line options
    initially, we assume no options are set */
-Flag nullFlag = { FALSE, FALSE, FALSE, FALSE, FALSE, 
-	      FALSE, FALSE, FALSE, FALSE, FALSE, 
+Flag nullFlag = { FALSE, FALSE, FALSE, FALSE, FALSE,
+	      FALSE, FALSE, FALSE, FALSE, FALSE,
 	      FALSE, FALSE, FALSE, FALSE, FALSE };
 Flag flag;
 
@@ -166,12 +166,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 #ifndef WIN32
     struct passwd *pswd;     /* variables for userid, date and time */
     char hostname[256];           /* name of host machine */
-#endif    
+#endif
 
     extern int optind;
     FILE *incfile = NULL;
     FILE *file = NULL;
-  
+
     XWDFileHeader win;
 
   /* program options */
@@ -213,7 +213,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     char s_matrix[80];            /* PostScript code for image matrix */
 
     int redbits,greenbits,bluebits;
-    
+
     int retCode = 1;
 
   /* initializations */
@@ -238,10 +238,10 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     } else {
 	print("MSBFirst\n");
     }
-#endif    
+#endif
 
   /* get the command-line flags and options */
-    parseArgs(argc, argv, &options, &my_image, &page);   
+    parseArgs(argc, argv, &options, &my_image, &page);
 
   /* determine the orientation of the image if it is specified,
      otherwise orientation is determined by the image shape later on */
@@ -259,11 +259,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	page.height_adjust += LOGOHEIGHT;
 	page.yoffset       += LOGOHEIGHT;
     }
-  
+
   /* Get page size information */
 
     if(get_page_info(&page)) {
-	errMsg( "%s: p option error -- page type: %s undefined\n", 
+	errMsg( "%s: p option error -- page type: %s undefined\n",
 	  progname, page.type);
 	flag.error++;
     }
@@ -287,11 +287,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     if(flag.title == TRUE)
       options.title.height = (float)(options.title.font_size/72. + .1);
 
-    page.height_adjust += fMax(page.time_date_height, options.title.height); 
-    page.yoffset       -= fMax(page.time_date_height, options.title.height); 
+    page.height_adjust += fMax(page.time_date_height, options.title.height);
+    page.yoffset       -= fMax(page.time_date_height, options.title.height);
 
 
-  /* 
+  /*
    * Open the image file
    */
     if(argc > optind) {
@@ -303,7 +303,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	file = fopen(options.input_file.name, "r");
 #endif
 	if(file == NULL) {
-	    errMsg("%s: could not open input file %s\n", 
+	    errMsg("%s: could not open input file %s\n",
 	      progname, options.input_file.name);
 	    retCode = 0;
 	    goto CLEAN;
@@ -311,7 +311,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	options.input_file.pointer = file;
     }
 
-  /* 
+  /*
    * Get rasterfile header info
    */
   /* KE: w_name was not defined.  It does not appear to be used here.
@@ -333,7 +333,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
    */
     if(win.pixmap_depth == 1)
       flag.mono = TRUE;
-  
+
   /*
    * invert values if intensity is screwed up
    */
@@ -353,7 +353,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     }
 
     intwidth = win.pixmap_width;
-  
+
   /* TEMP fix strap output for binary image data; strap adds a blank column */
     if(win.pixmap_depth == 1)
       intwidth--;
@@ -361,12 +361,12 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     my_image.ps_width = abs( (int) (intwidth * my_image.width_frac));
     if(my_image.width_frac < 0.0 )
       col_skip = intwidth - my_image.ps_width;
-    else 
+    else
       col_skip = 0;
-  
+
     col_start = col_skip + 1;
     col_end   = col_skip + my_image.ps_width;
-  
+
   /* process height factor */
     if(my_image.height_frac == 0 || my_image.height_frac > 1.0) {
 	errMsg(
@@ -376,13 +376,13 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	goto CLEAN;
     }
     my_image.ps_height = abs ( (int) (win.pixmap_height * my_image.height_frac) );
-    if(my_image.height_frac < 0.0 ) 
+    if(my_image.height_frac < 0.0 )
       line_skip =  win.pixmap_height - my_image.ps_height;
-    else 
+    else
       line_skip = 0;
-  
+
     line_end = line_skip + my_image.ps_height;
-  
+
     my_image.pixels_width = my_image.ps_width;   /* TEMP - this might have to be fixed later */
 
     if(flag.w == FALSE && flag.h == TRUE)
@@ -393,10 +393,10 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
 
   /* determine which orientation to use if not specified */
-    if(flag.portrait == FALSE && flag.landscape == FALSE) 
+    if(flag.portrait == FALSE && flag.landscape == FALSE)
       my_image.orientation = getOrientation(page, my_image);
 
-  
+
   /*
    * choose defaults to make image as large as possible on page
    */
@@ -419,8 +419,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    my_image.height = (my_image.width*my_image.ps_height)/my_image.pixels_width;
 	}
     }
-  
-  /* 
+
+  /*
    * Center & scale image and setup image matrix
    */
     if(my_image.orientation == PORTRAIT) {
@@ -443,15 +443,15 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
     if(my_image.width <= 0.0 || my_image.width > maxwcheck) {
 	errMsg(
-	  "%s: w option error -- width (%f) is outside range for standard 8.5 x 11 in. page.\n", 
+	  "%s: w option error -- width (%f) is outside range for standard 8.5 x 11 in. page.\n",
 	  progname, my_image.width);
 	retCode = 0;
 	goto CLEAN;
     }
-  
+
     if(my_image.height <= 0.0 || my_image.height > maxhcheck) {
 	errMsg(
-	  "%s: h option error -- height (%f) is outside range for standard 8.5 x 11 in. page.\n", 
+	  "%s: h option error -- height (%f) is outside range for standard 8.5 x 11 in. page.\n",
 	  progname, my_image.height);
 	retCode = 0;
 	goto CLEAN;
@@ -469,17 +469,17 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     for (i=0; i< argc; i++)
       fprintf(fo," %s", argv[i]);
     fprintf(fo,"\n");
-#if !defined WIN32 && !defined VMS    
+#if !defined WIN32 && !defined VMS
     pswd = getpwuid (getuid ());
     gethostname (hostname, sizeof hostname);
     fprintf(fo,"%% by %s:%s (%s)\n",hostname, pswd->pw_name, pswd->pw_gecos);
-#endif    
+#endif
     fprintf(fo,"%% Information from XWD rasterfile header:\n");
     fprintf(fo,"%%   width =  %d, height = %d, depth = %d\n",
       (int)win.pixmap_width, (int)win.pixmap_height, (int)win.pixmap_depth);
     fprintf(fo,"%%   file_version = %d, pixmap_format = %d, byte_order = %d\n",
       (int)win.file_version, (int)win.pixmap_format, (int)win.byte_order);
-    fprintf(fo,"%%   bitmap_unit = %d, bitmap_bit_order = %d, bitmap_pad = %d\n", 
+    fprintf(fo,"%%   bitmap_unit = %d, bitmap_bit_order = %d, bitmap_pad = %d\n",
       (int)win.bitmap_unit, (int)win.bitmap_bit_order, (int)win.bitmap_pad);
     fprintf(fo,"%%   bits_per_pixel = %d, bytes_per_line = %d, visual_class = %d\n",
       (int)win.bits_per_pixel, (int)win.bytes_per_line, (int)win.visual_class);
@@ -516,7 +516,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"    /npixels buffer 0 get 1 add 3 mul store  %% number of pixels\n");
 	    fprintf(fo,"    /pixels npixels string store             %% create string to hold rgb values\n");
 	    fprintf(fo,"    /rgb buffer 1 3 getinterval store        %% red green blue values\n");
-	    fprintf(fo,"    0 3 npixels -1 add {\n");                  
+	    fprintf(fo,"    0 3 npixels -1 add {\n");
 	    fprintf(fo,"      pixels exch rgb putinterval\n");
 	    fprintf(fo,"    } for\n");
 	    fprintf(fo,"  pixels                                     %% return string of colors\n");
@@ -525,7 +525,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"  colorimage\n");
 	    fprintf(fo,"} bind def\n");
 	    fprintf(fo,"\n");
-	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);    
+	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);
 	    fprintf(fo,"\ndrawfullcolorimage\n");
 	}
 	else {      /*  print as monochrome image */
@@ -545,7 +545,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"  image\n");
 	    fprintf(fo,"} bind def\n");
 	    fprintf(fo,"\n");
-	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);    
+	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);
 	    fprintf(fo,"\ndrawimage\n");
 	}
 	skipLines(file, &win, &line[0], buffer, line_skip);
@@ -553,8 +553,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
       /* determine if the image data order is the same as the hardware
          order, and set up to swap the data if not */
 	if((!(*(char *)&swaptest)) ^ win.byte_order) swapData=1;
-	else swapData=0;	
-  
+	else swapData=0;
+
       /* determine shifts and number of bits used in the masks */
 	redshift=greenshift=blueshift=-1;
 	redbits=greenbits=bluebits=0;
@@ -589,7 +589,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	  line_skip,line_end,col_skip,col_start,col_end);
 	printf("width=%d height=%d depth=%d\n",
 	  (int)win.pixmap_width,(int)win.pixmap_height,(int)win.pixmap_depth);
-#endif	    
+#endif
 
       /* check validity*/
 	if(redshift < 0 || greenshift < 0 || blueshift < 0 ||
@@ -624,7 +624,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		print("              rr=%02x gg=%02x bb=%02x\n",
 		  (int)line[0],(int)line[1],(int)line[2]);
 	    }
-#endif	    
+#endif
 	    runlen = 0;
 	    for(j = 3*col_start; j < 3*col_end; j += 3) {
 		if(flag.black2white == TRUE &&
@@ -696,7 +696,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"/drawcolorimage {\n");
 	fprintf(fo,"  %d %d %d\n",my_image.pixels_width,my_image.ps_height,
 	  (int)win.pixmap_depth);
-	fprintf(fo,"%s\n", s_matrix);    
+	fprintf(fo,"%s\n", s_matrix);
 	fprintf(fo,"  {currentfile buffer readhexstring pop pop  %% get run length & color info\n");
 	fprintf(fo,"    /npixels buffer 0 get 1 add 3 mul store  %% number of pixels (run length)\n");
 	fprintf(fo,"    /color buffer 1 get 3 mul store          %% color of pixels\n");
@@ -710,7 +710,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"  false 3\n");
 	fprintf(fo,"  colorimage\n");
 	fprintf(fo,"} bind def\n");
-	fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);      
+	fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);
       /* Write out color table for color image */
 	fprintf(fo,"\n%% get rgb color table\n");
 	fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
@@ -727,11 +727,11 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    colors[im].blue = 255;
 		}
 	    }
-	    
+
 #ifdef GREY_PRINTS_WHITE
 	  /* ACM: Use if you use a standard grey scale as background,
              and want white on the printer */
-            if(colors[im].red == 0xc8 && 
+            if(colors[im].red == 0xc8 &&
 	      colors[im].green == 0xc8 &&
 	      colors[im].blue == 0xc8) {
 		colors[im].red = 255;
@@ -739,7 +739,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		colors[im].blue = 255;
             }
 #endif
-	    
+
 	  /* KE: The following mask is reported to solve problems on
              DecUnix.  The cause, however, may be that the swaptest
              and shift logic in get_raster_header is not right. It
@@ -750,8 +750,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	}
 	fprintf(fo,"\n");
 	fprintf(fo,"\ndrawcolorimage\n");
-  
-	skipLines(file, &win, &line[0], buffer, line_skip);    
+
+	skipLines(file, &win, &line[0], buffer, line_skip);
       /* run thru each row of pixels and run-len length encode it */
 	outputcount = 0;
 	for (i = 0; i <my_image.ps_height; i++)  {
@@ -781,7 +781,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    runlen = 0;
 		    color = line[j];
 		}
-	
+
 	      /*
 	       * check to make sure the output lines are not too long
 	       */
@@ -793,7 +793,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"%02x%02x", runlen, color);
 	    outputcount++;
 	}
-    
+
 	break;
 
     case 4:  /* four-bit image */
@@ -819,7 +819,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"  false 3\n");
 	    fprintf(fo,"  colorimage\n");
 	    fprintf(fo,"} bind def\n");
-	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);      
+	    fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);
 	  /* Write out color table for color image */
 	    fprintf(fo,"\n%% get rgb color table\n");
 	    fprintf(fo,"currentfile rgbmap readhexstring pop pop\n");
@@ -836,7 +836,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	    fprintf(fo,"\ndrawcolorimage\n");
 	}
 
-	skipLines(file, &win, &line[0], buffer, line_skip);    
+	skipLines(file, &win, &line[0], buffer, line_skip);
       /* run thru each row of pixels and run-len length encode it */
 	outputcount = 0;
 
@@ -882,7 +882,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 		    runlen = 0;
 		    color = line4bits [j];
 		}
-	  
+
 	      /*
 	       * check to make sure the output lines are not too long
 	       */
@@ -899,7 +899,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 #endif
 	    outputcount++;
 	}
-  
+
 	break;
 
     case 1:  /* Monochrome 1-bit, binary image */
@@ -913,10 +913,10 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	fprintf(fo,"  image\n");
 	fprintf(fo,"} bind def\n");
 	fprintf(fo,"\n");
-	fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);    
+	fprintf(fo,"%s\nmatrix currentmatrix\n%s\n", s_translate, s_scale);
 	fprintf(fo,"\ndrawbinaryimage\n");
 
-	skipLines(file, &win, &line[0], buffer, line_skip);    
+	skipLines(file, &win, &line[0], buffer, line_skip);
       /* run through each row of pixels (8 per byte) and copy it  */
 	outputcount = 0;
 	for (i = 0; i < my_image.ps_height; i++)  {
@@ -957,9 +957,9 @@ int xwd2ps(int argc, char **argv, FILE *fo)
   /*
    * Add border if required
    */
-    if(flag.border == TRUE) 
+    if(flag.border == TRUE)
       outputBorder(fo,my_image);
-  
+
   /*
    * Copy include file if required
    */
@@ -968,7 +968,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     incfile=options.inc_file.pointer;
     if(flag.inc_file == TRUE) {
       /* Silicon Graphics did not recognize EOF so cludge this way */
-#ifdef mips 
+#ifdef mips
 	while((c = fgetc(incfile)) != ((char) -1))
 	  putchar(c);
 #else
@@ -989,7 +989,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
     if(flag.logo == TRUE)
       outputLogo(fo, my_image);
-  
+
   /* finish up PostScript code */
     fprintf(fo,"\n/#copies %d def\n",options.ncopies);
     fprintf(fo,"showpage grestore\n%%%%Trailer\n");
@@ -997,7 +997,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
   CLEAN:
   /* Close the input file */
     if(file) fclose(file);
-    
+
   /* Clean up everything that may have been allocated */
     if(buffer) {
 	free(buffer);
@@ -1017,7 +1017,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     }
 
     return retCode;
-} 
+}
 /* End of Main Program */
 
 
@@ -1044,10 +1044,10 @@ static int getDumpType(XWDFileHeader *header)
 }
 
 
-/* 
+/*
  **  get_page_info() - return size information about the output page
  *
- * returns information about the size (in inches) of the paper intended 
+ * returns information about the size (in inches) of the paper intended
  * for the PostScript output.  The numbers are optimized for the
  * QMS ColorScript 100 printer (manual page 10-19).
  *
@@ -1098,7 +1098,7 @@ static int get_page_info(Page *the_page)
 }
 
 /*
- ** get_raster_header() - read in the xwd header, including the colormap 
+ ** get_raster_header() - read in the xwd header, including the colormap
  **                       and the window title
  */
 static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
@@ -1113,7 +1113,7 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 
 #if DEBUG_FORMAT
     print("get_raster_header: stdin->_file=%d\n",stdin->_file);
-#endif    
+#endif
 
   /* read in window header */
     fread((char *)win, sizeof( *win ), 1, file);
@@ -1145,12 +1145,12 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
       zflg= win->bits_per_pixel / 8;
     else
       zflg=0; /* TEMP - as far as I can tell, zflg is never used ! */
-    
+
     if(win->byte_order != win->bitmap_bit_order) {
 	errMsg( "%s: Image will be incorrect\n"
 	  "  Byte swapping required but not performed.\n", progname);
     }
-    
+
   /* TEMP - put in large image warning here! */
     idifsize = (unsigned)(win->header_size - sizeof *win);
     if(idifsize) {
@@ -1162,7 +1162,7 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 	    w_name = NULL;
 	}
     }
-    
+
     if(win->ncolors) {
 	colors = (XColor *)malloc((unsigned) (win->ncolors * sizeof(XColor)));
 	if(colors ==  NULL) {
@@ -1194,11 +1194,11 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
 	    }
 	}
     }     /* if(win->ncolors) */
-    
+
     return 1;
 }
 
-/* 
+/*
  ** get_next_raster_line() -  returns the next raster line in the image.
  * written 2-12-89 by R.C.Tatar
  */
@@ -1214,7 +1214,7 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 #if DEBUG_DATA
     {
 	static int first=1;
-	
+
 	if(first) {
 	    first=0;
 	    jmax=iwbytes/bytes_per_pixel;
@@ -1248,7 +1248,7 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	    bufptr += bytes_per_pixel;
 	}
 	return 1;
-	
+
     case 16:
 	fread((char *)buffer, iwbytes, 1, file);
 	bufptr1 = linec;
@@ -1257,7 +1257,7 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	for(j = 0; j < jmax; j++) {
 	    unsigned long pixel,red,green,blue;
 	    unsigned short data;
-	 
+
 	    data=*(unsigned short *)bufptr;
 	  /* swap the data if it is the wrong order for the hardware */
 	    if(swapData) {
@@ -1290,7 +1290,7 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	    bufptr += bytes_per_pixel;
 	}
 	return 1;
-	
+
     case 8:
     case 4:
 	fread((char *)linec, iwbytes, 1, file);
@@ -1298,14 +1298,14 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 
     default:
       /* error message if no case selected  */
-	errMsg("%s: Do not know how to handle %u bits per pixel.\n", 
+	errMsg("%s: Do not know how to handle %u bits per pixel.\n",
 	  progname, iwbits);
 	return 0;
     }
 }
 
-/* 
- ** skipLines() - skip over unprinted parts of the image 
+/*
+ ** skipLines() - skip over unprinted parts of the image
  */
 static void skipLines(FILE *file, XWDFileHeader *winP, unsigned char *line,
   unsigned char *buffer, int line_skip)
@@ -1377,7 +1377,7 @@ static void parseArgs(int argc, char **argv, Options *option, Image *image,
 	  option->inc_file.pointer = fopen(optarg, "rb");
 #else
 	  option->inc_file.pointer = fopen(optarg, "r");
-#endif	  
+#endif
 	  if(option->inc_file.pointer == NULL) {
 	      errMsg("%s: f option error -- cannot open %s for include file.\n",
 		progname, optarg);
@@ -1450,7 +1450,7 @@ static int getOrientation(Page pg, Image im)
     k1 = (pg.default_height - pg.height_adjust)/im.ps_height;
     k  = pg.default_width/im.pixels_width;
     k1 = fMax(k1, k);
-  
+
     k2 = (pg.default_width - pg.height_adjust)/im.ps_height;
     k  = pg.default_height/im.pixels_width;
     k2 = fMax(k2, k);

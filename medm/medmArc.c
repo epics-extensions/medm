@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -74,10 +74,10 @@ static void drawArc(MedmArc *pa) {
 void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     DlArc *dlArc = dlElement->structure.arc;
-    
+
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
-    
+
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlArc->dynAttr.chan[0]) {
 	MedmArc *pa;
@@ -101,7 +101,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &(dlArc->object),
 	      arcDraw,
 	      (XtPointer)pa);
-	    
+
 	    if(pa->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlArc: Memory allocation error\n");
 	    } else {
@@ -128,7 +128,7 @@ void executeDlArc(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlArc->object.width,dlArc->object.height,dlArc->begin,dlArc->path);
 	} else if(dlArc->attr.fill == F_OUTLINE) {
 	    unsigned int lineWidth = (dlArc->attr.width+1)/2;
-	    
+
 	    XDrawArc(display,drawable,displayInfo->gc,
 	      dlArc->object.x + lineWidth,
 	      dlArc->object.y + lineWidth,
@@ -213,7 +213,7 @@ static void arcDestroyCb(XtPointer cd)
 
     if(pa) {
 	Record **records = pa->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -231,7 +231,7 @@ static void arcGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmArc *pa = (MedmArc *)cd;
     int i;
-    
+
     *count = 0;
     if(pa && pa->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -246,19 +246,19 @@ DlElement *createDlArc(DlElement *p)
 {
     DlArc *dlArc;
     DlElement *dlElement;
- 
+
     dlArc = (DlArc*)malloc(sizeof(DlArc));
     if (!dlArc) return 0;
     if (p) {
 	*dlArc = *p->structure.arc;
-    } else { 
+    } else {
 	objectAttributeInit(&(dlArc->object));
 	basicAttributeInit(&(dlArc->attr));
 	dynamicAttributeInit(&(dlArc->dynAttr));
 	dlArc->begin = 0;
 	dlArc->path = 90*64;
     }
- 
+
     if (!(dlElement = createDlElement(DL_Arc,
       (XtPointer)      dlArc,
       &arcDlDispatchTable))) {
@@ -277,7 +277,7 @@ DlElement *parseArc(DisplayInfo *displayInfo)
     DlElement *dlElement = createDlArc(NULL);
     if (!dlElement) return 0;
     dlArc = dlElement->structure.arc;
- 
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -314,7 +314,7 @@ DlElement *parseArc(DisplayInfo *displayInfo)
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
-    return dlElement; 
+    return dlElement;
 }
 
 void writeDlArc(FILE *stream, DlElement *dlElement, int level)
@@ -322,7 +322,7 @@ void writeDlArc(FILE *stream, DlElement *dlElement, int level)
     char indent[16];
     DlArc *dlArc = dlElement->structure.arc;
 
-    memset(indent,'\t',level); 
+    memset(indent,'\t',level);
     indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT

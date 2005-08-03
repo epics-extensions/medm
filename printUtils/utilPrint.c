@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Print Utilities (currently supporting only PostScript) */
 
@@ -161,14 +161,14 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	}
 	break;
     }
-    
+
     myArgv[myArgc++] = newFileName;
-    
+
   /* Open the output file */
 #ifdef WIN32
   /* WIN32 opens files in text mode by default and then mangles CRLF */
     fo = fopen(psFileName,"wb+");
-#else    
+#else
     fo = fopen(psFileName,"w+");
 #endif
     if(fo == NULL) {
@@ -187,7 +187,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 #if DEBUG_PRINT == 0    /* (When not debugging) */
     if(printRemoveTempFiles > 0) remove(newFileName);
 #endif
-    
+
   /* All done if print to file, otherwise print */
     if(printToFile) {
 	goto CLEAN;
@@ -212,7 +212,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 #if DEBUG_PARAMS
     {
 	int i;
-	
+
 	print("utilPrint:\n");
 	print("  printCommand: %s\n",printCommand?printCommand:"NULL");
 	print("  printFile:    %s\n",printFile?printFile:"NULL");
@@ -238,11 +238,11 @@ int errMsg(const char *fmt, ...)
 {
     va_list vargs;
     static char lstring[LPRINTF_SIZE];
-    
+
     va_start(vargs,fmt);
     (void)vsprintf(lstring,fmt,vargs);
     va_end(vargs);
-    
+
     if(lstring[0] != '\0') {
 #ifdef WIN32
 	lprintf("%s\n",lstring);
@@ -252,6 +252,6 @@ int errMsg(const char *fmt, ...)
 	fflush(stderr);
 #endif
     }
-    
+
     return 0;
 }

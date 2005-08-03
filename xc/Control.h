@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*******************************************************************
  FILE:		Control.h
@@ -24,14 +24,14 @@
 
 
 /* Debug printf statements for Control Panel widget development. */
-#ifdef XCDEBUG 
-#define DPRINTF(statement)  printf statement  
+#ifdef XCDEBUG
+#define DPRINTF(statement)  printf statement
 #else
-#define DPRINTF(statement)  
-#endif 
+#define DPRINTF(statement)
+#endif
 
 /*
- * This macro is used by the resource string conversion routines to 
+ * This macro is used by the resource string conversion routines to
  * assign the converted type elements to the XrmValue struct.
  */
 #define CvtDone(type, address) \
@@ -69,7 +69,7 @@ typedef struct _ControlRec *ControlWidget;
 
 /* Function prototypes for widget methods */
 Boolean Point_In_Rect(int x, int y, int rect_x, int rect_y,
-  int width, int height);    
+  int width, int height);
 void Rect3d(Widget w, Display *display, Drawable drawable,
   GC gc, int x, int y, unsigned int width, unsigned int height,
   Type3d type);

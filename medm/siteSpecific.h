@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* siteSpecific.h
 
@@ -17,7 +17,7 @@
    On the other hand, the standard values, which were chosen a long
    time ago, may not be the best choices today, so feel free to
    experiment.
-   
+
 */
 
 /*** Font specifications ***/
@@ -64,7 +64,8 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
 #endif
 
 /*** WheelSwitch format  ***/
-/* Set the WheelSwitch default format here */
+/* Set the WheelSwitch default format here.  It is used in EDIT mode
+ * only. */
 #define WHEEL_SWITCH_DEFAULT_FORMAT "% 6.2f"
 
 /*** Help path ***/

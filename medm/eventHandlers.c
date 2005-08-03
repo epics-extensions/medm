@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -95,7 +95,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
       xEvent->window,xEvent->subwindow);
     print("  shell Window: %x drawingArea Window: %x\n",
       XtWindow(displayInfo->shell),XtWindow(displayInfo->drawingArea));
-#endif    
+#endif
 
     if(displayInfo != currentDisplayInfo) {
 	currentDisplayInfo = displayInfo;
@@ -110,7 +110,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
     XRaiseWindow(display,XtWindow(displayInfo->shell));
     XSetInputFocus(display,XtWindow(displayInfo->shell),
       RevertToParent,CurrentTime);
-#endif    
+#endif
 
     if(xEvent->button == Button3) {
       /* Button 3 */
@@ -130,7 +130,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	      w, pE->widget);
 	    print("  xEvent->x: %4d\n",xEvent->x);
 	    print("  xEvent->y: %4d\n",xEvent->y);
-#endif    
+#endif
 	    switch(pE->type) {
 	    case DL_Valuator:
 		widget = pE->widget;
@@ -141,7 +141,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 		    XFlush(display);
 		}
 		break;
-		
+
 	    case DL_CartesianPlot:
 #ifdef CARTESIAN_PLOT
 	      /* Implement Xrt/Graph property editor */
@@ -166,12 +166,12 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 			} else if(displayInfo->warningDialogAnswer == 3) {
 			    callBrowser(medmHelpPath,"#XRTGraphInteractions");
 			}
-#endif			    
+#endif
 		    } else {
 #if DEBUG_CARTESIAN_PLOT
 			XUngrabPointer(display,CurrentTime);
 			XFlush(display);
-#endif		    
+#endif
 		      /* Bring up plot axis data dialog */
 		      /* update globalResourceBundle with this element's info */
 			executeTimeCartesianPlotWidget = widget;
@@ -182,12 +182,12 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 			} else {
 			    XtSetSensitive(cartesianPlotAxisS,True);
 			}
-			
+
 		      /* Update cartesian plot axis data from
                          globalResourceBundle */
 		      /* KE:  Actually from XtGetValues */
 			updateCartesianPlotAxisDialogFromWidget(widget);
-			
+
 			XtManageChild(cpAxisForm);
 			XtPopup(cartesianPlotAxisS,XtGrabNone);
 		      /* KE: Is this just for debugging ? */
@@ -196,7 +196,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 		    }
 #if DEBUG_CARTESIAN_PLOT
 		    dumpCartesianPlot(widget);
-#endif			
+#endif
 		}
 #endif     /* #ifdef DEBUG_CARTESIAN_PLOT */
 		break;
@@ -230,22 +230,22 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 		DlRelatedDisplay *pRD = pE->structure.relatedDisplay;
 		Boolean replace = False;
 		int i;
-		
+
 	      /* Check the display array to find the first non-empty one */
 		for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
 #if DEBUG_RELATED_DISPLAY
 		    print("handleExecuteButtonPress: name[%d] = \"%s\"\n",
 		      i, pRD->display[i].name);
-#endif		    
+#endif
 		    if(*(pRD->display[i].name)) {
 		      /* See if it was a ctrl-click indicating replace */
 			if(xEvent->state & ControlMask) replace = True;
-			
+
 		      /* Create the related display */
 			relatedDisplayCreateNewDisplay(displayInfo,
 			  &(pRD->display[i]),
 			  replace);
-			
+
 			break;
 		    }
 		}
@@ -258,7 +258,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	XUngrabPointer(display,CurrentTime);
 #if DEBUG_DRAGDROP
 	print("handleExecuteButtonPress: Btn2 pressed\n");
-	
+
       /* Lookup to see if Btn2 occured in an object that cares */
 	x = xEvent->x;
 	y = xEvent->y;
@@ -270,7 +270,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	    String xString=NULL;
 	    Widget hitWidget;
 	    char *widgetName=NULL;
-	    
+
 	    if(pE->widget) {
 		hitWidget = pE->widget;
 		widgetName="widget";
@@ -285,7 +285,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 	    print("  translations=0x%08x parsedTranslations=0x%08x\n",
 	      xlations,parsedTranslations);
 	    print("\n");
-	    
+
 	    if(first) {
 	      /* Note: widget argument is needed, even if the
 		 parsedTranslations are independent of it */
@@ -298,7 +298,7 @@ void handleExecuteButtonPress(Widget w, XtPointer cd, XEvent *event,
 		first=0;
 #endif
 	    }
-	    
+
 	    xString= _XtPrintXlations(hitWidget,xlations,NULL,True);
 	    print("hitWidget translations:\n");
 	    print("%s\n",xString);
@@ -336,12 +336,12 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 
 #if DEBUG_POPUP
     print("\nhandleEditButtonPress: Entered\n");
-#endif    
+#endif
 #if DEBUG_EVENTS
     print("\n>>> handleEditButtonPress: %s Button: %d Shift: %d Ctrl: %d\n",
       currentActionType == SELECT_ACTION?"SELECT":"CREATE",xEvent->button,
       xEvent->state&ShiftMask,xEvent->state&ControlMask);
-#endif    
+#endif
 
   /* If in execute mode, update currentDisplayInfo and simply return */
     if(globalDisplayListTraversalMode == DL_EXECUTE) {
@@ -365,31 +365,31 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
     cdi = currentDisplayInfo = displayInfo;
     currentColormap = cdi->colormap;
     currentColormapSize = cdi->dlColormapSize;
-    
+
 #ifdef MEDM_AUTO_RAISE
   /* Make sure the window is on top and has input focus */
     XRaiseWindow(display,XtWindow(cdi->shell));
     XSetInputFocus(display,XtWindow(cdi->shell),
       RevertToParent,CurrentTime);
 #endif
-    
+
   /* Get button coordinates */
     x0 = event->xbutton.x;
     y0 = event->xbutton.y;
   /* Add offsets if the ButtonPress was in another window */
     if(w != cdi->drawingArea) {
 	Dimension dx0, dy0;
-	
+
 	XtVaGetValues(w,XmNx,&dx0,XmNy,&dy0,NULL);
 	x0 += dx0;
 	y0 += dy0;
     }
-    
+
   /* Change drawingArea's cursor to the appropriate cursor */
     XDefineCursor(display,XtWindow(cdi->drawingArea),
       (currentActionType == SELECT_ACTION ?
 	rubberbandCursor : crosshairCursor));
-    
+
   /* Branch depending on action */
     if(currentActionType == SELECT_ACTION) {
       /* SELECT_ACTION
@@ -418,7 +418,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if(!IsEmpty(tmpDlElementList)) {
 		    DlElement *pT = FirstDlElement(tmpDlElementList);
 		    int found = False;
-		    
+
 #if DEBUG_EVENTS > 1
 		    print("\n[handleEditButtonPress: SELECT Ctrl-Btn1]"
 		      " tmpDlElementList:\n");
@@ -446,7 +446,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #endif
 			    if(pE->structure.element == pT->structure.element) {
 				DlElement *pENew;
-				
+
 				clearDlDisplayList(cdi,
 				  cdi->selectedDlElementList);
 				if(pT->next) {
@@ -458,7 +458,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 				  /* No next one, use the first */
 				    DlElement *pEFirst =
 				      FirstDlElement(tmpDlElementList);
-				    
+
 				    pENew = createDlElement(DL_Element,
 				      (XtPointer)pEFirst->structure.rectangle,
 				      NULL);
@@ -482,7 +482,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		    if(!found) {
 			DlElement *pENew;
 			DlElement *pEFirst = FirstDlElement(tmpDlElementList);
-			
+
 #if DEBUG_EVENTS > 1
 			print("Not found: found=%d\n",found);
 #endif
@@ -630,7 +630,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		}
 	    }
 	    break;
-	    
+
 	case Button2:
 	  /* SELECT_ACTION Btn2 */
 	    if(xEvent->state & ShiftMask) {
@@ -638,13 +638,13 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 #if DEBUG_SEND_EVENT
 		XButtonEvent *bEvent;
 		Status status;
-		
+
 		bEvent=(XButtonEvent *)calloc(1,sizeof(XButtonEvent));
-		
+
 		bEvent->type=ButtonPress;
 		bEvent->button = 3;
 		bEvent->window = XtWindow(cdi->drawingArea);
-		
+
 		status = XSendEvent(display, XtWindow(cdi->drawingArea), True,
 		  ButtonPressMask, (XEvent *)bEvent);
 		if(status != Success) {
@@ -658,7 +658,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    findSelectedEditElements(cdi->dlElementList,
 	      x0,y0,x0,y0,tmpDlElementList,SmallestTouched|AllEnclosed);
 	    if(IsEmpty(tmpDlElementList)) break;
-	    
+
 	    if(xEvent->state & ControlMask) {
 	      /* SELECT_ACTION Ctrl-Btn2 */
 #if DEBUG_EVENTS
@@ -800,7 +800,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	    }
 	    clearDlDisplayList(NULL, tmpDlElementList);
 	    break;
-	    
+
 	case Button3:
 	  /* SELECT_ACTION Btn3 */
 #if DEBUG_EVENTS
@@ -820,7 +820,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		Cardinal numChildren;
 		Boolean resizeHeight, resizeWidth, adjustLast;
 		int i;
-		
+
 		XtVaGetValues(cdi->editPopupMenu,
 		  XmNheight,&height,
 		  XmNwidth,&width,
@@ -847,7 +847,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		      i, children[i], height, width, x, y, y-9);
 		}
 	    }
-#endif	    
+#endif
 	    break;
 	}
 #if DEBUG_EVENTS
@@ -863,7 +863,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
        * Btn3    =  nothing here                    *
        * ********************************************/
 	DlElement *dlElement = 0;
-	
+
 	switch (xEvent->button) {
 	case Button1:
 	  /* CREATE_ACTION Btn1 */
@@ -882,7 +882,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 	      ButtonPress, ButtonRelease, MotionNotify);
 	    {
 		XEvent newEvent;
-		
+
 		XPeekEvent(display,&newEvent);
 		print("              peekEVENT: Type: %d  Button: %d"
 		  "  Window %x  SubWindow: %x\n"
@@ -956,7 +956,7 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		if(cdi->grid->snapToGrid) {
 		    int gridSpacing = cdi->grid->gridSpacing;
 		    int minSize0 = minSize;
-		    
+
 		    minSize = ((minSize + gridSpacing/2)/gridSpacing)*
 		      gridSpacing;
 		    if(minSize < minSize0) minSize+=gridSpacing;
@@ -990,19 +990,19 @@ void handleEditButtonPress(Widget w, XtPointer clientData, XEvent *event,
 		  FirstDlElement(cdi->selectedDlElementList)
 		  ->structure.element->type;
 	      /* Hightlight it */
-#if 0		
+#if 0
 		highlightSelectedElements();
-#else		
+#else
 	      /* Cleanup possible damage to non-widgets */
 		dmTraverseNonWidgetsInDisplayList(cdi);
-#endif		
+#endif
 	    }
 	    break;
 	case Button2:
 	  /* CREATE_ACTION Btn2 */
 	    XBell(display,50);
 	    break;
-	    
+
 	case Button3:
 	  /* CREATE_ACTION Btn3 */
 	    XBell(display,50);
@@ -1054,11 +1054,11 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
   /* Left/Right/Up/Down for movement of selected elements */
     if(currentActionType == SELECT_ACTION && displayInfo &&
       !IsEmpty(displayInfo->selectedDlElementList)) {
-      /* Handle key press */	    
+      /* Handle key press */
 	if(key->type == KeyPress) {
 	    int interested=1;
 	    int ctrl;
-	    
+
 	  /* Determine if Ctrl was pressed */
 	    ctrl=key->state&ControlMask;
 	  /* Branch depending on keysym */
@@ -1110,14 +1110,14 @@ void highlightSelectedElements()
 #if DEBUG_HIGHLIGHTS
     print("In highlightSelectedElements\n");
 #endif
-    
+
     if(!cdi) return;
     if(IsEmpty(cdi->selectedDlElementList)) return;
     if(cdi->selectedElementsAreHighlighted) return;
 #if DEBUG_UNGROUP
     print("\nhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
-#endif    
+#endif
     cdi->selectedElementsAreHighlighted = True;
     pE = FirstDlElement(cdi->selectedDlElementList);
     while(pE) {
@@ -1137,7 +1137,7 @@ void unhighlightSelectedElements()
 #if DEBUG_HIGHLIGHTS
     print("In unhighlightSelectedElements\n");
 #endif
-    
+
     if(!cdi) return;
     if(IsEmpty(cdi->selectedDlElementList)) return;
     if(!cdi->selectedElementsAreHighlighted) return;
@@ -1145,7 +1145,7 @@ void unhighlightSelectedElements()
 #if DEBUG_UNGROUP
     print("\nunhighlightSelectedElements: cdi->selectedDlElementList:\n");
     dumpDlElementList(cdi->selectedDlElementList);
-#endif    
+#endif
     pE = FirstDlElement(cdi->selectedDlElementList);
     while(pE) {
 	toggleSelectedElementHighlight(pE->structure.element);
@@ -1160,7 +1160,7 @@ static void updateDraggedElements(Position x0, Position y0,
   Position x1, Position y1)
 {
     int xOffset, yOffset;
-    DisplayInfo *cdi = currentDisplayInfo;    
+    DisplayInfo *cdi = currentDisplayInfo;
     DlElement *pElement;
 
   /* If no current display or selected elements array, simply return */
@@ -1243,14 +1243,14 @@ static void updateResizedElements(Position x0, Position y0, Position x1, Positio
 		int n=0;
 		Position x,y;
 		Dimension width,height;
-		
+
 		XFlush(display);
 		XtSetArg(args[n],XmNx,&x); n++;
 		XtSetArg(args[n],XmNy,&y); n++;
 		XtSetArg(args[n],XmNwidth,&width); n++;
 		XtSetArg(args[n],XmNheight,&height); n++;
 		XtGetValues(pE->widget,args,n);
-		
+
 		print("\nupdateResizedElements\n");
 		print("Widget:  %s: x=%d y=%d width=%u height=%u\n",
 		  elementType(pE->type),
@@ -1267,7 +1267,7 @@ static void updateResizedElements(Position x0, Position y0, Position x1, Positio
     highlightSelectedElements();
 }
 
-/* 
+/*
  * Handle creates (based on filled in globalResourceBundle values and
  *   currentElementType);
  */
@@ -1361,9 +1361,9 @@ DlElement *handleRectangularCreates(DlElementType type,
 void toggleSelectedElementHighlight(DlElement *dlElement)
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    int x, y, width, height; 
+    int x, y, width, height;
     DlObject *po = &(dlElement->structure.display->object);
-    
+
     if(dlElement->type == DL_Display) {
 	x = HIGHLIGHT_LINE_THICKNESS;
 	y = HIGHLIGHT_LINE_THICKNESS;
@@ -1378,12 +1378,13 @@ void toggleSelectedElementHighlight(DlElement *dlElement)
 #if DEBUG_UNGROUP
     print("toggleSelectedElementHighlight: dlElement->type=%d\n"
       "x=%d y=%d width=%d height=%d\n",dlElement->type,x,y,width,height);
-#endif    
+#endif
     XDrawRectangle(display,XtWindow(cdi->drawingArea),highlightGC,
       x, y, width, height);
     XDrawRectangle(display,cdi->drawingAreaPixmap,highlightGC,
       x, y, width, height);
 }
+
 
 void addCommonHandlers(Widget w, DisplayInfo *displayInfo)
 {

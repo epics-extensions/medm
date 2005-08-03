@@ -87,8 +87,8 @@ int getOpt(int argc, char *argv[], char *opstring)
     static char *pIndexPosition = NULL; /* place inside current argv string */
     char *pArgString = NULL;        /* where to start from next */
     char *pOptString;               /* the string in our program */
-    
-    
+
+
     if (pIndexPosition != NULL) {
       /* we last left off inside an argv string */
         if (*(++pIndexPosition)) {
@@ -96,7 +96,7 @@ int getOpt(int argc, char *argv[], char *opstring)
             pArgString = pIndexPosition;
         }
     }
-    
+
     if (pArgString == NULL) {
       /* we didn't leave off in the middle of an argv string */
         if (optind >= argc) {
@@ -104,12 +104,12 @@ int getOpt(int argc, char *argv[], char *opstring)
             pIndexPosition = NULL;  /* not in the middle of anything */
             return EOF;             /* used up all command-line arguments */
         }
-	
+
       /*---------------------------------------------------------------------
        * If the next argv[] is not an option, there can be no more options.
        *-------------------------------------------------------------------*/
         pArgString = argv[optind++]; /* set this to the next argument ptr */
-	
+
 #ifdef GETOPT_USE_SLASH
         if (('/' != *pArgString) && /* doesn't start with a slash or a dash? */
 	  ('-' != *pArgString)) {
@@ -126,7 +126,7 @@ int getOpt(int argc, char *argv[], char *opstring)
             return EOF;             /* used up all the command-line flags */
         }
 #endif
-	
+
       /* check for special end-of-flags markers */
         if ((strcmp(pArgString, "-") == 0) ||
 	  (strcmp(pArgString, "--") == 0)) {
@@ -134,10 +134,10 @@ int getOpt(int argc, char *argv[], char *opstring)
             pIndexPosition = NULL;  /* not in the middle of anything */
             return EOF;             /* encountered the special flag */
         }
-	
+
         pArgString++;               /* look past the / or - */
     }
-    
+
     if (':' == *pArgString) {       /* is it a colon? */
       /*---------------------------------------------------------------------
        * Rare case: if opterr is non-zero, return a question mark;

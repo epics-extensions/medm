@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -177,17 +177,17 @@ void closeDisplay(Widget w) {
 
 #define DISPLAY_DEFAULT_X 10
 #define DISPLAY_DEFAULT_Y 10
- 
+
 DlElement *createDlDisplay(DlElement *p)
 {
     DlDisplay *dlDisplay;
     DlElement *dlElement;
- 
- 
+
+
     dlDisplay = (DlDisplay *)malloc(sizeof(DlDisplay));
     if(!dlDisplay) return 0;
     if(p) {
-	*dlDisplay = *p->structure.display; 
+	*dlDisplay = *p->structure.display;
     } else {
 	objectAttributeInit(&(dlDisplay->object));
 	dlDisplay->object.x = DISPLAY_DEFAULT_X;
@@ -199,12 +199,12 @@ DlElement *createDlDisplay(DlElement *p)
 	dlDisplay->grid.gridOn = DEFAULT_GRID_ON;
 	dlDisplay->grid.snapToGrid = DEFAULT_GRID_SNAP;
     }
- 
+
     if(!(dlElement = createDlElement(DL_Display,(XtPointer)dlDisplay,
       &displayDlDispatchTable))) {
 	free(dlDisplay);
     }
- 
+
     return(dlElement);
 }
 
@@ -253,14 +253,14 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
     }
 #endif
-    
+
   /* Set the display's foreground and background colors */
     displayInfo->drawingAreaBackgroundColor = dlDisplay->bclr;
     displayInfo->drawingAreaForegroundColor = dlDisplay->clr;
 
   /* Set the display's grid information */
     displayInfo->grid = &dlDisplay->grid;
- 
+
   /* From the DlDisplay structure, we've got drawingArea's dimensions */
     nargs = 0;
     XtSetArg(args[nargs],XmNwidth,(Dimension)dlDisplay->object.width); nargs++;
@@ -272,7 +272,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[nargs],XmNresizePolicy,XmRESIZE_NONE); nargs++;
   /* N.B.: don't use userData resource since it is used later on for aspect
    *   ratio-preserving resizes */
- 
+
     if(displayInfo->drawingArea == NULL) {
 	new = 1;
 	displayInfo->drawingArea = XmCreateDrawingArea(displayInfo->shell,
@@ -283,12 +283,12 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtAddCallback(displayInfo->drawingArea,XmNresizeCallback,
 	  drawingAreaCallback,(XtPointer)displayInfo);
 	XtManageChild(displayInfo->drawingArea);
-	
+
       /* Branch depending on the mode */
 	if(displayInfo->traversalMode == DL_EDIT) {
 	  /* Create the edit-mode popup menu */
 	    createEditModeMenu(displayInfo);
-	    
+
 	  /* Handle input */
 	    XtAddCallback(displayInfo->drawingArea,XmNinputCallback,
 	      drawingAreaCallback,(XtPointer)displayInfo);
@@ -304,7 +304,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Handle enter windows */
 	    XtAddEventHandler(displayInfo->drawingArea,EnterWindowMask,False,
 	      handleEditEnterWindow,(XtPointer)displayInfo);
- 
+
 	} else if(displayInfo->traversalMode == DL_EXECUTE) {
 	  /*
 	   *  MDA --- HACK to fix DND visuals problem with SUN server
@@ -316,15 +316,15 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* KE: This was useless in any event since there was no XtSetValues */
 	    XtSetArg(args[0],XmNdropSiteType,XmDROP_SITE_COMPOSITE);
 	    XmDropSiteRegister(displayInfo->drawingArea,args,1);
-#endif	    
+#endif
 
 	  /* Create the execute-mode popup menu */
-	    createExecuteModeMenu(displayInfo);	    
+	    createExecuteModeMenu(displayInfo);
 
 	  /* Handle button presses */
 	    XtAddEventHandler(displayInfo->drawingArea,ButtonPressMask,False,
 	      handleExecuteButtonPress,(XtPointer)displayInfo);
-	    
+
 #if USE_DRAGDROP
 	  /* Add in drag/drop translations */
 	    XtOverrideTranslations(displayInfo->drawingArea,parsedTranslations);
@@ -354,7 +354,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
    * Is necessary in part because WM adds borders and title bar,
    * moving the shell down when first created */
     displayInfo->positionDisplay = True;
-#endif    
+#endif
 
 #if DEBUG_RELATED_DISPLAY
     print("executeDlDisplay: dlDisplay->object=%x\n"
@@ -363,7 +363,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       dlDisplay->object.x,dlDisplay->object.y);
     {
 	Position xpos,ypos;
-	
+
 	nargs=0;
 	XtSetArg(args[nargs],XmNx,&xpos); nargs++;
 	XtSetArg(args[nargs],XmNy,&ypos); nargs++;
@@ -371,13 +371,13 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	print("executeDlDisplay: xpos=%d ypos=%d\n",xpos,ypos);
     }
 #endif
-    
-#if DEBUG_EVENTS     
+
+#if DEBUG_EVENTS
     printEventMasks(display, XtWindow(displayInfo->shell),
       "\n[displayInfo->shell] ");
     printEventMasks(display, XtWindow(displayInfo->drawingArea),
       "\n[displayInfo->drawingArea] ");
-#endif    
+#endif
 
 #if DEBUG_CMAP
     print("  dlDisplay->cmap=%s\n",dlDisplay->cmap);
@@ -447,7 +447,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
     Arg args[8];
     static int first = 1, doExec = 0;
     char *execPath = NULL;
-    
+
   /* Get MEDM_EXECUTE_LIST only the first time to speed up creating
    * successive displays) */
     if(first) {
@@ -472,7 +472,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
     XtSetArg(args[nargs], XmNtearOffModel,XmTEAR_OFF_DISABLED); nargs++;
     displayInfo->executePopupMenu = XmCreateSimplePopupMenu(displayInfo->drawingArea,
       "executePopupMenu", args, nargs);
-    
+
   /* Create the execute menu */
     if(doExec) {
 	w = createExecuteMenu(displayInfo, execPath);
@@ -486,7 +486,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
     static XmButtonType *types = (XmButtonType *)0;
     static XmString *buttons = (XmString *)0;
     static int nbuttons = 0;
-    int i, len;    
+    int i, len;
     int nargs;
     Arg args[8];
     char *string, *pitem, *pcolon, *psemi;
@@ -502,7 +502,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	len = strlen(execPath);
 	string = (char *)calloc(len+1,sizeof(char));
 	strcpy(string,execPath);
-	
+
       /* Count the colons to get the number of buttons */
 	pcolon = string;
 	nbuttons = 1;
@@ -511,16 +511,16 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	  /* Skip :\, assumed to be part of a path */
 	    if(*(pcolon+1) != '\\') nbuttons++;
 	    pcolon++;
-#else	  
+#else
 	    nbuttons++, pcolon++;
 #endif
 	}
-	
+
       /* Allocate memory */
 	types = (XmButtonType *)calloc(nbuttons,sizeof(XmButtonType));
 	buttons = (XmString *)calloc(nbuttons,sizeof(XmString));
 	execMenuCommandList = (char **)calloc(nbuttons,sizeof(char *));
-	  
+
       /* Parse the items */
 	pitem = string;
 	for(i=0; i < nbuttons; i++) {
@@ -530,7 +530,7 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 	    while(pcolon && *(pcolon+1) == '\\') {
 		pcolon = strchr(pcolon+1,':');
 	    }
-#endif	    
+#endif
 	    if(pcolon) *pcolon='\0';
 	  /* Text */
 	    psemi = strchr(pitem,';');
@@ -574,8 +574,8 @@ static Widget createExecuteMenu(DisplayInfo *displayInfo, char *execPath)
 #if DEBUG_EXECUTE_MENU
     print("createExecuteMenu: w=%x displayInfo=%x executePopupMenu=%x\n",
       w,displayInfo,displayInfo->executePopupMenu);
-#endif    
-      
+#endif
+
   /* Return */
     return(w);
 }
@@ -603,7 +603,7 @@ void refreshDisplay(DisplayInfo *displayInfo)
 
       /* Repaint the region without clipping */
 	if(displayInfo->drawingAreaPixmap != (Pixmap)NULL &&
-	  displayInfo->gc != (GC)NULL && 
+	  displayInfo->gc != (GC)NULL &&
 	  displayInfo->drawingArea != (Widget)NULL) {
 	    updateTaskRepaintRect(displayInfo, NULL, True);
 	}
@@ -615,9 +615,9 @@ void refreshDisplay(DisplayInfo *displayInfo)
        * dlElementList, not selectedDlElementList). */
 	if(!displayInfo) return;
 	if(IsEmpty(displayInfo->dlElementList)) return;
-	
+
 	unhighlightSelectedElements();
-	
+
       /* Recreate widgets, not including the display */
 	pE = SecondDlElement(displayInfo->dlElementList);
 	while(pE) {
@@ -631,7 +631,7 @@ void refreshDisplay(DisplayInfo *displayInfo)
 	}
       /* Cleanup possible damage to non-widgets */
 	dmTraverseNonWidgetsInDisplayList(displayInfo);
-	
+
 	highlightSelectedElements();
     }
 }
@@ -640,7 +640,7 @@ void refreshDisplay(DisplayInfo *displayInfo)
 static void refreshComposite(DlComposite *dlComposite)
 {
     DlElement *pE;
-    
+
     pE = FirstDlElement(dlComposite->dlElementList);
     while(pE) {
 	if(pE->type == DL_Composite) {
@@ -663,10 +663,10 @@ DlElement *parseDisplay(DisplayInfo *displayInfo)
     int nestingLevel = 0;
     DlDisplay *dlDisplay;
     DlElement *dlElement = createDlDisplay(NULL);
- 
+
     if(!dlElement) return 0;
     dlDisplay = dlElement->structure.display;
- 
+
     do {
         switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -721,11 +721,11 @@ DlElement *parseDisplay(DisplayInfo *displayInfo)
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
 
-    appendDlElement(displayInfo->dlElementList,dlElement); 
+    appendDlElement(displayInfo->dlElementList,dlElement);
   /* fix up x,y so that 0,0 (old defaults) are replaced */
     if(dlDisplay->object.x <= 0) dlDisplay->object.x = DISPLAY_DEFAULT_X;
     if(dlDisplay->object.y <= 0) dlDisplay->object.y = DISPLAY_DEFAULT_Y;
- 
+
     return dlElement;
 }
 
@@ -737,10 +737,10 @@ void writeDlDisplay(
     int i;
     char indent[16];
     DlDisplay *dlDisplay = dlElement->structure.display;
- 
+
     for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
- 
+
     fprintf(stream,"\n%sdisplay {",indent);
     writeDlObject(stream,&(dlDisplay->object),level+1);
     fprintf(stream,"\n%s\tclr=%d",indent,dlDisplay->clr);

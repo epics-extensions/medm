@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Calc routines for MEDM taken and modified from those in EPICS base
  *
@@ -168,7 +168,7 @@ struct  expression_element{
 
 /*
  * NOTE: DO NOT CHANGE WITHOUT READING THIS NOTICE !!!!!!!!!!!!!!!!!!!!
- * Because the routine that looks for a match in this table takes the first 
+ * Because the routine that looks for a match in this table takes the first
  * match it finds, elements whose designations are contained in other elements
  * MUST come first in this list. (e.g. ABS will match A if A preceeds ABS and
  * then try to find BS therefore ABS must be first in this list
@@ -335,7 +335,7 @@ long calcPerform(double *parg, double *presult, char *post)
     }
     printf ("*FINISHED*\n");
 #endif
-         
+
     if(*post == BAD_EXPRESSION) return(-1);
 
   /* set post to postfix expression in calc structure */
@@ -455,7 +455,7 @@ long calcPerform(double *parg, double *presult, char *post)
           /* remove condition from stack top */
             --pstacktop;
             break;
-                                
+
         case COND_ELSE:
           /* result, true condition is on stack so skip false condition  */
           /* skip to matching COND_END */
@@ -607,13 +607,13 @@ long calcPerform(double *parg, double *presult, char *post)
             if (*pstacktop < *(pstacktop+1))
               *pstacktop = *(pstacktop+1);
             break;
- 
+
         case MIN:
             --pstacktop;
             if (*pstacktop > *(pstacktop+1))
               *pstacktop = *(pstacktop+1);
             break;
- 
+
 
         case ACOS:
             *pstacktop = acos(*pstacktop);
@@ -726,7 +726,7 @@ static double local_random()
     return(randy);
 }
 
-/* 
+/*
  * Postfix Subroutines
  *
  *      Public
@@ -810,7 +810,7 @@ static int get_element(char *pinfix, struct expression_element  **pelement,
       return(UNKNOWN_ELEMENT);
     return(FINE);
 
-        
+
 }
 
 /*
@@ -827,7 +827,7 @@ long postfix(char *pinfix, char *ppostfix, short *perror)
     struct expression_element   *pelement;
     register struct expression_element  *pstacktop;
     double              constant;
-    register char   *pposthold, *pc;    
+    register char   *pposthold, *pc;
     char in_stack_pri, in_coming_pri, code;
     char           *ppostfixStart = ppostfix;
 

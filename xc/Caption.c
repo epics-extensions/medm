@@ -200,7 +200,7 @@ static void
 Initialize(Widget greq, Widget gnew, ArgList args, Cardinal *num_args)
 {
     XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
-    
+
   /*
    * Validate our labelPosition
    */
@@ -293,7 +293,7 @@ SetValues(Widget gcur, Widget greq, Widget gnew, ArgList args,
 {
     XbaeCaptionWidget current = (XbaeCaptionWidget)gcur;
     XbaeCaptionWidget new = (XbaeCaptionWidget)gnew;
-    
+
     Dimension old_label_width, old_label_height;
     Boolean layout = False;
     int n;
@@ -620,7 +620,7 @@ static void
 Resize(Widget gcw)
 {
     XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
-    
+
     Layout(cw, True);
 }
 
@@ -906,7 +906,7 @@ QueryGeometry(Widget gcw, XtWidgetGeometry *proposed, XtWidgetGeometry *desired)
 #define Set(bit) (proposed->request_mode & bit)
 
     XbaeCaptionWidget cw = (XbaeCaptionWidget)gcw;
-    
+
   /*
    * If we don't have a user child, we want to be the size of the label.
    */

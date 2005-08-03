@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -67,12 +67,12 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
-    MedmByte *pb;
+    MedmByte *pb = NULL;
     DlByte *dlByte = dlElement->structure.byte;
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
-    
+
     if(!dlElement->widget) {
 	if(displayInfo->traversalMode == DL_EXECUTE) {
 	    if(dlElement->data) {
@@ -93,7 +93,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 		  &(dlByte->object),
 		  byteDraw,
 		  (XtPointer)pb);
-		
+
 		if(pb->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlByte: Memory allocation error\n");
 		} else {
@@ -148,14 +148,14 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	  displayInfo->colormap[dlByte->monitor.bclr]); n++;
 	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
 	  displayInfo->colormap[dlByte->monitor.bclr]); n++;
-	
+
       /****** Add the pointer to the ChannelAccessMonitorData structure as
 	      userData to widget */
 	XtSetArg(args[n],XcNuserData,(XtPointer)pb); n++;
 	localWidget = XtCreateWidget("byte",
 	  xcByteWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
-	
+
       /****** Record the widget that this structure belongs to */
 	if(displayInfo->traversalMode == DL_EDIT) {
 	    addCommonHandlers(localWidget, displayInfo);
@@ -198,7 +198,7 @@ static void byteDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -215,7 +215,7 @@ static void byteDraw(XtPointer cd) {
              cast does nothing but is pedantically there to show what
              we intend.  */
 	    val.lval = (long)(unsigned long)pr->value;
-#endif	    
+#endif
 	    XcBYUpdateValue(widget,&val);
 	    switch (dlByte->clrmod) {
 	    case STATIC :
@@ -285,10 +285,10 @@ DlElement *parseByte( DisplayInfo *displayInfo) {
     int nestingLevel = 0;
     DlByte *dlByte;
     DlElement *dlElement = createDlByte(NULL);
- 
+
     if(!dlElement) return 0;
     dlByte = dlElement->structure.byte;
- 
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -332,7 +332,7 @@ DlElement *parseByte( DisplayInfo *displayInfo) {
 	}
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
- 
+
     return dlElement;
 }
 

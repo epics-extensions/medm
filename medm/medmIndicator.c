@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -57,7 +57,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
     int n;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     Widget localWidget;
-    MedmIndicator *pi;
+    MedmIndicator *pi = NULL;
     DlIndicator *dlIndicator = dlElement->structure.indicator;
 
   /* Don't do anyting if the element is hidden */
@@ -83,7 +83,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		  &(dlIndicator->object),
 		  indicatorDraw,
 		  (XtPointer)pi);
-		
+
 		if(pi->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlIndicator: Memory allocation error\n");
 		} else {
@@ -97,7 +97,7 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 		drawWhiteRectangle(pi->updateTask);
 	    }
 	}
-  
+
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlIndicator->limits);
 
@@ -199,14 +199,14 @@ void executeDlIndicator(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XcNcontrolBackground,(Pixel)
 	  displayInfo->colormap[dlIndicator->monitor.bclr]); n++;
       /*
-       * add the pointer to the Channel structure as userData 
+       * add the pointer to the Channel structure as userData
        *  to widget
        */
 	XtSetArg(args[n],XcNuserData,(XtPointer)pi); n++;
-	localWidget = XtCreateWidget("indicator", 
+	localWidget = XtCreateWidget("indicator",
 	  xcIndicatorWidgetClass, displayInfo->drawingArea, args, n);
 	dlElement->widget = localWidget;
-	
+
 	if(displayInfo->traversalMode == DL_EDIT) {
 	    addCommonHandlers(localWidget, displayInfo);
 	    XtManageChild(localWidget);
@@ -250,7 +250,7 @@ static void indicatorDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -385,7 +385,7 @@ static void indicatorGetRecord(XtPointer cd, Record **record, int *count) {
     record[0] = pi->record;
 }
 
-DlElement *createDlIndicator(DlElement *p) 
+DlElement *createDlIndicator(DlElement *p)
 {
     DlIndicator *dlIndicator;
     DlElement *dlElement;
@@ -433,7 +433,7 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"label")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"none")) 
+		if(!strcmp(token,"none"))
 		  dlIndicator->label = LABEL_NONE;
 		else if(!strcmp(token,"no decorations"))
 		  dlIndicator->label = NO_DECORATIONS;
@@ -446,7 +446,7 @@ DlElement *parseIndicator(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"clrmod")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,"static")) 
+		if(!strcmp(token,"static"))
 		  dlIndicator->clrmod = STATIC;
 		else if(!strcmp(token,"alarm"))
 		  dlIndicator->clrmod = ALARM;

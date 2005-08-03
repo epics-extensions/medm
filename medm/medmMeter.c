@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -56,7 +56,7 @@ static DlDispatchTable meterDlDispatchTable = {
 
 void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    MedmMeter *pm;
+    MedmMeter *pm = NULL;
     Arg args[27];
     int nargs;
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
@@ -89,7 +89,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 		  &(dlMeter->object),
 		  meterDraw,
 		  (XtPointer)pm);
-		
+
 		if(pm->updateTask == NULL) {
 		    medmPrintf(1,"\nexecuteDlMeter: Memory allocation error\n");
 		} else {
@@ -106,7 +106,7 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	    print("  pm=%x\n",pm);
 #endif
 	}
-	
+
       /* Update the limits to reflect current src's */
 	updatePvLimits(&dlMeter->limits);
 
@@ -162,11 +162,11 @@ void executeDlMeter(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[nargs],XcNcontrolBackground,(Pixel)
 	  displayInfo->colormap[dlMeter->monitor.bclr]); nargs++;
 	/*
-	 * add the pointer to the Channel structure as userData 
+	 * add the pointer to the Channel structure as userData
 	 *  to widget
 	 */
 	XtSetArg(args[nargs],XcNuserData,(XtPointer)pm); nargs++;
-	localWidget = XtCreateWidget("meter", 
+	localWidget = XtCreateWidget("meter",
 	  xcMeterWidgetClass, displayInfo->drawingArea, args, nargs);
 	dlElement->widget = localWidget;
  	if(displayInfo->traversalMode == DL_EXECUTE) {
@@ -221,8 +221,8 @@ static void meterDraw(XtPointer cd) {
 #if DEBUG_DELETE
     print("meterDraw: connected=%s readAccess=%s value=%g\n",
       pr->connected?"Yes":"No",pr->readAccess?"Yes":"No",pr->value);
-#endif    
-    
+#endif
+
   /* Check if hidden */
     if(dlElement->hidden) {
 	if(widget && XtIsManaged(widget)) {
@@ -230,7 +230,7 @@ static void meterDraw(XtPointer cd) {
 	}
 	return;
     }
-    
+
     if(pr && pr->connected) {
 	if(pr->readAccess) {
 	    if(widget) {
@@ -462,9 +462,9 @@ void writeDlMeter(
 #endif
 	if(dlMeter->label != LABEL_NONE)
 	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,stringValueTable[dlMeter->label]);
-	if(dlMeter->clrmod != STATIC) 
+	if(dlMeter->clrmod != STATIC)
 	  fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,stringValueTable[dlMeter->clrmod]);
-#ifdef SUPPORT_0201XX_FILE_FORMAT	
+#ifdef SUPPORT_0201XX_FILE_FORMAT
     } else {
 	fprintf(stream,"\n%s\tlabel=\"%s\"",indent,stringValueTable[dlMeter->label]);
 	fprintf(stream,"\n%s\tclrmod=\"%s\"",indent,stringValueTable[dlMeter->clrmod]);

@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*
  * routine to create product description shell for all Motif-based EPICS tools
@@ -128,7 +128,7 @@ Widget createAndPopupProductDescriptionShell(
       topLevelShellWidgetClass,topLevelShell,args, nargs);
     display=XtDisplay(productDescriptionShell);
     screen=DefaultScreen(display);
-      
+
   /* Set the window manager close callback to the first callback.
      This should not be necessary because the window manager close
      button should not appear, but it does anyway with some window
@@ -150,7 +150,7 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[nargs],XmNshadowType,XmSHADOW_OUT); nargs++;
     XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
     form = XmCreateForm(productDescriptionShell,"form",args,nargs);
-    
+
   /* Generate XmStrings */
     if(name != NULL) nameXmString = XmStringCreateLtoR(name,
       XmFONTLIST_DEFAULT_TAG);
@@ -187,8 +187,8 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
 	nargs++; }
     nameLabel = XmCreateLabel(form,"nameLabel",args,nargs);
-    
-    
+
+
   /* Separator */
     nargs = 0;
     XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_FORM); nargs++;
@@ -205,7 +205,7 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground);
 	nargs++; }
     separator = XmCreateSeparator(form,"separator",args,nargs);
-    
+
   /* Description */
     nargs = 0;
     XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
@@ -224,7 +224,7 @@ Widget createAndPopupProductDescriptionShell(
     if(foreground >= 0) {
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
     descriptionLabel = XmCreateLabel(form,"descriptionLabel",args,nargs);
-    
+
   /* Version info */
     nargs = 0;
     XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
@@ -243,7 +243,7 @@ Widget createAndPopupProductDescriptionShell(
     if(foreground >= 0) {
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
     versionInfoLabel = XmCreateLabel(form,"versionInfoLabel",args,nargs);
-    
+
   /* Developed at/by... */
     nargs = 0;
     XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
@@ -256,7 +256,7 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNrightPosition,90); nargs++;
     XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_POSITION); nargs++;
     XtSetArg(args[nargs],XmNbottomPosition,90); nargs++;
-    
+
     if(otherFontList != NULL) {
 	XtSetArg(args[nargs],XmNfontList,otherFontList); nargs++;
     }
@@ -265,8 +265,8 @@ Widget createAndPopupProductDescriptionShell(
     if(foreground >= 0) {
 	XtSetArg(args[nargs],XmNforeground,(unsigned long)foreground); nargs++; }
     developedAtLabel = XmCreateLabel(form,"developedAtLabel",args,nargs);
-    
-    
+
+
   /* OK button */
     okXmString = XmStringCreateLocalized("OK");
     nargs = 0;
@@ -287,15 +287,15 @@ Widget createAndPopupProductDescriptionShell(
       (XtCallbackProc)closeProductDescriptionCallback2,
       (XtPointer)productDescriptionShell); nargs++;
     XmStringFree(okXmString);
-      
+
     children[0] = nameLabel; children[1] = descriptionLabel;
     children[2] = versionInfoLabel; children[3] = developedAtLabel;
     children[4] = separator;
     XtManageChildren(children,5);
     XtManageChild(form);
-    
+
     XtPopup(productDescriptionShell,XtGrabNone);
-    
+
   /* Center nameLabel vertically in form space */
     XtSetArg(args[0],XmNheight,&nameHeight);
     XtGetValues(nameLabel,args,1);
@@ -314,15 +314,15 @@ Widget createAndPopupProductDescriptionShell(
     XtSetArg(args[nargs],XmNheight,&shellHeight); nargs++;
     XtSetArg(args[nargs],XmNwidth,&shellWidth); nargs++;
     XtGetValues(productDescriptionShell,args,nargs);
-    
+
     newY=(screenHeight-shellHeight)/2;
     newX=(screenWidth-shellWidth)/2;
-    
+
     nargs=0;
     XtSetArg(args[nargs],XmNy,newY); nargs++;
     XtSetArg(args[nargs],XmNx,newX); nargs++;
     XtSetValues(productDescriptionShell,args,nargs);
-    
+
 #if DEBUG_POSITION
     {
 	Position newx, newy;
@@ -344,14 +344,14 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
 	XtSetArg(args[nargs],XmNx,&newx); nargs++;
 	XtGetValues(productDescriptionShell,args,nargs);
-	
+
 	printf("(1) newy=%d  newx=%d\n",newy,newx);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNy,474); nargs++;
 	XtSetArg(args[nargs],XmNx,440); nargs++;
 	XtSetValues(productDescriptionShell,args,nargs);
-	
+
 	printf("(2) args[0].value=%4x  args[1].value=%4x\n",
 	  args[0].value,args[1].value);
 
@@ -359,14 +359,14 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
 	XtSetArg(args[nargs],XmNx,&newx); nargs++;
 	XtGetValues(productDescriptionShell,args,nargs);
-	
+
 	printf("(2) newy=%d  newx=%d\n",newy,newx);
 
 	nargs=0;
 	XtSetArg(args[nargs],XmNy,newY); nargs++;
 	XtSetArg(args[nargs],XmNx,newX); nargs++;
 	XtSetValues(productDescriptionShell,args,nargs);
-	
+
 	printf("(3) args[0].value=%4x  args[1].value=%4x\n",
 	  args[0].value,args[1].value);
 
@@ -374,12 +374,12 @@ Widget createAndPopupProductDescriptionShell(
 	XtSetArg(args[nargs],XmNy,&newy); nargs++;
 	XtSetArg(args[nargs],XmNx,&newx); nargs++;
 	XtGetValues(productDescriptionShell,args,nargs);
-	
+
 	printf("(3) newy=%d  newx=%d\n",newy,newx);
-	
+
     }
-#endif    
-    
+#endif
+
   /* Free strings */
     if(nameXmString != (XmString)NULL) XmStringFree(nameXmString);
     if(descriptionXmString != (XmString)NULL)
@@ -388,13 +388,13 @@ Widget createAndPopupProductDescriptionShell(
       XmStringFree(versionInfoXmString);
     if(developedAtXmString != (XmString)NULL)
       XmStringFree(developedAtXmString);
-    
+
   /* Register timeout procedure to make the dialog go away after N
      seconds */
     XtAppAddTimeOut(appContext,(unsigned long)(1000*seconds),
       (XtTimerCallbackProc)popdownProductDescriptionShell,
       (XtPointer)productDescriptionShell);
-    
+
     return(productDescriptionShell);
 }
 

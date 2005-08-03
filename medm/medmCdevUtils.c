@@ -6,7 +6,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*-----------------------------------------------------------------------------
  *
@@ -14,12 +14,16 @@
  *      Simple Copy of EPICS/base/src/cvtFast.c to avoid to compile
  *      medm with libCom
  *
- * Author:  
+ * Author:
  *      Jie Chen
  *      Jefferson Lab. Control Software Group
  *
  * Revision History:
  *   $Log$
+ *   Revision 1.3  2005/08/03 14:56:55  evans
+ *   Trimmed extra whitespace at end of lines in the source files.  There
+ *   may be changes related to the WheelSwitch, as well.
+ *
  *   Revision 1.2  2002/08/02 15:39:36  jba
  *   Added license information.
  *
@@ -74,7 +78,7 @@ int  medmCvtFloatToString(
 
 	/* multiplier to convert fractional portion to integer */
 	fplace = frac_multiplier[precision];
-	fraction = (long)(ftemp * fplace * 10);	
+	fraction = (long)(ftemp * fplace * 10);
 	fraction = (fraction + 5) / 10;		/* round up */
 
 	/* determine rounding into the whole number portion */
@@ -154,7 +158,7 @@ int  medmCvtDoubleToString(
 
 	/* multiplier to convert fractional portion to integer */
 	fplace = frac_multiplier[precision];
-	fraction = (long)(ftemp * fplace * 10);	
+	fraction = (long)(ftemp * fplace * 10);
 	fraction = (fraction + 5) / 10;		/* round up */
 
 	/* determine rounding into the whole number portion */

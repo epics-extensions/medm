@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Header file for print utilities */
 
@@ -31,11 +31,11 @@ extern char *printerOrientationTable[2];
 extern char *printerTitleTable[4];
 #else
 #define EXTERN
-char *printerSizeTable[4] = { 
+char *printerSizeTable[4] = {
     "A (Letter)", "B", "A3", "A4"};
-char *printerOrientationTable[2] = { 
+char *printerOrientationTable[2] = {
     "Portrait", "Landscape"};
-char *printerTitleTable[4] = { 
+char *printerTitleTable[4] = {
     "None", "Short Display Name", "Long Display Name", "Specified Title"};
 #endif
 

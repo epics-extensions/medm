@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -119,11 +119,11 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 	if(dlImage->privateData != NULL) freeGIF(dlImage);
 	gif = NULL;
     }
-    
-    
+
+
   /* Return if there is no gif */
     if(!gif) return;
-    
+
   /* Allocate and fill in MedmImage struct */
     if(displayInfo->traversalMode == DL_EXECUTE) {
       /* EXECUTE mode */
@@ -132,14 +132,14 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
              draw it.  */
 	    Drawable drawable = updateInProgress?
 	      displayInfo->updatePixmap:displayInfo->drawingAreaPixmap;
-	    
+
 	    dlElement->updateType = STATIC_GRAPHIC;
 	    drawGIF(displayInfo, dlImage, drawable);
 	} else {
 	  /* Handle any possible update situation */
 	    MedmImage *pi;
 	    int i;
-	    
+
 	  /* If the data is not defined, define it.  Otherwise go on */
 	    if(!dlElement->data) {
 		pi = (MedmImage *)malloc(sizeof(MedmImage));
@@ -187,13 +187,13 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			pi->validCalc = True;
 		    }
 		}
-		
+
 	      /* Setup records if there is a channel */
 		if(*dlImage->dynAttr.chan[0]) {
 		    if(pi->updateTask) {
 			updateTaskAddNameCb(pi->updateTask,imageGetRecord);
 		    }
-		    
+
 		  /* Do rest of setup only if vis is not static or
                      there is a valid image calc */
 		    if(!isStaticDynamic(&dlImage->dynAttr, False) ||
@@ -204,7 +204,7 @@ void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 			    imageUpdateValueCb,
 			    imageUpdateGraphicalInfoCb,
 			    (XtPointer)pi);
-			
+
 		      /* Calculate the postfix for visibility calc */
 			if(!isStaticDynamic(&dlImage->dynAttr, False)) {
 			    calcPostfix(&dlImage->dynAttr);
@@ -266,7 +266,7 @@ static void imageDraw(XtPointer cd)
 	if(isConnected(pi->records)) {
 	    if(pR->readAccess) {
 		long status = calculateAndSetImageFrame(pi);
-		
+
 	      /* Draw depending on visibility */
 		if(status == 0) {
 		    if(calcVisibility(&dlImage->dynAttr, pi->records)) {
@@ -287,7 +287,7 @@ static void imageDraw(XtPointer cd)
 	  !pi->validCalc) {
 	  /* vis is static and there is no valid image calc */
 	    long status = calculateAndSetImageFrame(pi);
-	    
+
 	  /* Draw */
 	    if(status == 0) {
 	      /* Result is valid */
@@ -304,7 +304,7 @@ static void imageDraw(XtPointer cd)
       /* No channel */
 	if(pi->validCalc) {
 	    long status = calculateAndSetImageFrame(pi);
-	    
+
 	  /* Draw */
 	    if(status == 0) {
 	      /* Result is valid */
@@ -325,7 +325,7 @@ static void drawImage(MedmImage *pi)
     DisplayInfo *displayInfo = pi->updateTask->displayInfo;
     DlImage *dlImage = pi->dlElement->structure.image;
     GIFData *gif = (GIFData *)dlImage->privateData;
-    
+
     if(gif) {
 	if(pi->animate) {
 	  /* Draw the next image */
@@ -347,7 +347,7 @@ static void imageDestroyCb(XtPointer cd) {
 
     if(pi) {
 	Record **records = pi->records;
-	
+
 	updateTaskSetScanRate(pi->updateTask, 0.0);
 	if(records) {
 	    int i;
@@ -372,7 +372,7 @@ static void imageGetRecord(XtPointer cd, Record **record, int *count)
 {
     MedmImage *pi = (MedmImage *)cd;
     int i;
-    
+
     *count = 0;
     if(pi && pi->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -397,7 +397,7 @@ DlElement* handleImageCreate()
     DlElement *dlElement = NULL;
     XEvent event;
     static int response = 0;     /* Keep it off the stack */
-    
+
     if(!(dlElement = createDlImage(NULL))) return dlElement;
 
   /* Create or manage the file selection dialog */
@@ -405,7 +405,7 @@ DlElement* handleImageCreate()
 	int n;
 	Arg args[10];
 	XmString gifDirMask = XmStringCreateLocalized("*.gif");
-	
+
 	n = 0;
 	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
 	XtSetArg(args[n],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); n++;
@@ -440,7 +440,7 @@ DlElement* handleImageCreate()
 	dlImage->imageType = GIF_IMAGE;
 	strcpy(dlImage->imageName, imageName);
     }
-    
+
     return dlElement;
 }
 
@@ -460,7 +460,7 @@ static void imageFileSelectionCb(Widget w, XtPointer clientData,
 	if(cbs->value != NULL) {
 	    char *fullPathName, *dirName;
 	    int dirLength;
-	    
+
 	    *response = 1;
 	    XmStringGetLtoR(cbs->value, XmFONTLIST_DEFAULT_TAG, &fullPathName);
 	    XmStringGetLtoR(cbs->dir, XmSTRING_DEFAULT_CHARSET, &dirName);
@@ -487,11 +487,11 @@ static void imageFileSelectionCb(Widget w, XtPointer clientData,
 
 static void imageUpdateGraphicalInfoCb(XtPointer cd)
 {
-#if 0    
+#if 0
     Record *pR = (Record *)cd;
     MedmImage *pi = (MedmImage *)pR->clientData;
     updateTaskMarkUpdate(pi->updateTask);
-#endif    
+#endif
 }
 
 static void imageScale(DlElement *dlElement, int xOffset, int yOffset)
@@ -589,7 +589,7 @@ DlElement *parseImage(DisplayInfo *displayInfo)
         }
     } while( (tokenType != T_RIGHT_BRACE) && (nestingLevel > 0)
       && (tokenType != T_EOF) );
-    
+
   /* Just to be safe, initialize the privateData member separately */
     dlImage->privateData = NULL;
 
@@ -604,10 +604,10 @@ void writeDlImage(
     int i;
     char indent[16];
     DlImage *dlImage = dlElement->structure.image;
-    
+
     for(i = 0; i < level; i++) indent[i] = '\t';
     indent[i] = '\0';
-    
+
     fprintf(stream,"\n%simage {",indent);
     writeDlObject(stream,&(dlImage->object),level+1);
     fprintf(stream,"\n%s\ttype=\"%s\"",indent,
@@ -676,7 +676,7 @@ static long calculateAndSetImageFrame(MedmImage *pi)
 	    double valueArray[MAX_CALC_INPUTS];
 	    Record **records = pi->records;
 	    DlDynamicAttribute *attr = &dlImage->dynAttr;
-	    
+
 	  /* Fill in the input array */
 	    if(records) {
 	      /* There are valid records */
@@ -701,7 +701,7 @@ static long calculateAndSetImageFrame(MedmImage *pi)
 		    valueArray[i] = 0.0;
 		}
 	    }
-	    
+
 	  /* Perform the calculation */
 	    status = calcPerform(valueArray, &result, pi->post);
 	    if(!status) {

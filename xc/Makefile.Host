@@ -4,7 +4,7 @@
 # Copyright (c) 2002 The Regents of the University of California, as
 # Operator of Los Alamos National Laboratory.
 # This file is distributed subject to a Software License Agreement found
-# in the file LICENSE that is included with this distribution. 
+# in the file LICENSE that is included with this distribution.
 #*************************************************************************
 # Makefile.Host for medm/xc (Widgets)
 
@@ -19,7 +19,7 @@ USE_MOTIF12=NO
 
 # Optimization
 ifdef WIN32
-#HOST_OPT = NO
+HOST_OPT = NO
 else
 HOST_OPT = NO
 endif
@@ -28,7 +28,11 @@ endif
 ifeq ($(HOST_OPT),NO)
   ifeq ($(ANSI),ACC)
     ifeq ($(OS_CLASS),solaris)
-      USR_CFLAGS += -xsb
+# Set this for browsing all files
+#      USR_CFLAGS += -xsb
+# Set this to just do one file so it doesn't mix up Initialize, etc.
+      USR_CFLAGS_WheelSwitch += -xsb
+      USR_CFLAGS += $(USR_CFLAGS_$*)
     endif
   endif
 endif

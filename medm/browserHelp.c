@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -20,7 +20,7 @@
 #ifndef WIN32
 /*************************************************************************/
 /*************************************************************************/
-/* Netscape UNIX Version                                                        */ 
+/* Netscape UNIX Version                                                        */
 /*************************************************************************/
 /*************************************************************************/
 
@@ -73,7 +73,7 @@ int callBrowser(char *url, char *bookmark)
     int status;
     char command[BUFSIZ];
     char *envstring;
-    
+
   /* Handle quit */
     if(!strcmp(url,"quit")) {
 	if (pid) {
@@ -107,15 +107,15 @@ int callBrowser(char *url, char *bookmark)
 	    }
 #if DEBUG
 	    printf("execute(before): cmd=%s\n",command);
-#endif	    
+#endif
 	    status=execute(command);
 #if DEBUG
 	    printf("execute(after): cmd=%s status=%d\n",command,status);
-#endif	    
+#endif
 	    return 1;
 	}
     }
-    
+
   /* Netscape window is valid, send url via -remote */
   /*   (Use -id for speed) */
     envstring=getenv("NETSCAPEPATH");
@@ -139,7 +139,7 @@ int callBrowser(char *url, char *bookmark)
     }
 #if DEBUG
     printf("execute(before): cmd=%s\n",command);
-#endif    
+#endif
     status=execute(command);
 #if DEBUG
     printf("execute(after): cmd=%s status=%d\n",command,status);
@@ -147,20 +147,20 @@ int callBrowser(char *url, char *bookmark)
 
   /* Raise the window */
     XMapRaised(display,netscapew);
-    
+
     return 2;
 }
 /**************************** checkNetscapeWindow ************************/
 static Window checkNetscapeWindow(Window w)
   /* Checks if this window is the Netscape window and returns the window
-   * if it is or 0 otherwise */    
+   * if it is or 0 otherwise */
 {
     Window wfound=(Window)0;
     static Atom typeatom,versionatom=(Atom)0;
     unsigned long nitems,bytesafter;
     int format,status;
     unsigned char *version=NULL;
-    
+
   /* If window is NULL, return it */
     if(!w) return w;
   /* Get the atom for the version property (once) */
@@ -174,7 +174,7 @@ static Window checkNetscapeWindow(Window w)
 #if DEBUG
     printf("XGetWindowProperty: status=%d version=%d w=%x wfound=%x\n",
       status,version,w,wfound);
-#endif      
+#endif
   /* Free space and return */
     if(version) XFree((void *)version);
     return wfound;
@@ -186,7 +186,7 @@ static int execute(char *s)
 #ifndef VMS
     int status,pid,w;
     register void (*istat)(),(*qstat)();
-    
+
     if((pid=fork()) == 0) {
 	signal(SIGINT,SIG_DFL);
 	signal(SIGQUIT,SIG_DFL);
@@ -232,7 +232,7 @@ static Window findNetscapeWindow(void)
       /* Check if this is the Netscape window */
 #if DEBUG
 	printf("Child %d ",i);
-#endif	
+#endif
 	wfound=checkNetscapeWindow(w);
 	if(wfound) break;
     }
@@ -244,14 +244,14 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
 {
 #if DEBUG
     printf("In ignoreXError\n");
-#endif    
+#endif
     return 0;
 }
 
 #else     /*ifndef WIN32 */
 /*************************************************************************/
 /*************************************************************************/
-/* WIN32 Version                                                        */ 
+/* WIN32 Version                                                        */
 /*************************************************************************/
 /*************************************************************************/
 
@@ -274,13 +274,13 @@ int callBrowser(char *url, char *bookmark)
     static char *ComSpec;
     char command[BUFSIZ];
     int status;
-    
+
   /* Handle quit */
     if(!strcmp(url,"quit")) {
       /* For compatibility, but do nothing */
 	return(3);
     }
-    
+
   /* Get ComSpec for the command shell (should be defined) */
     if (first) {
 	first=0;
@@ -327,7 +327,7 @@ int callBrowser(char *url, char *bookmark)
    *   It may have trouble if the URL has spaces */
     sprintf(command,"start %s%s",url,bookmark);
     status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
-#endif    
+#endif
     if(status == -1) {
 	char *errstring=strerror(errno);
 

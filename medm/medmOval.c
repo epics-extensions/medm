@@ -4,7 +4,7 @@
 * Copyright (c) 2002 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -82,7 +82,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
     if(displayInfo->traversalMode == DL_EXECUTE &&
       *dlOval->dynAttr.chan[0]) {
 	MedmOval *po;
-	
+
 	if(dlElement->data) {
 	    po = (MedmOval *)dlElement->data;
 	} else {
@@ -102,7 +102,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	      &(dlOval->object),
 	      ovalDraw,
 	      (XtPointer)po);
-	    
+
 	    if(po->updateTask == NULL) {
 		medmPrintf(1,"\nexecuteDlOval: Memory allocation error\n");
 	    } else {
@@ -129,7 +129,7 @@ void executeDlOval(DisplayInfo *displayInfo, DlElement *dlElement)
 	      dlOval->object.width,dlOval->object.height,0,360*64);
 	} else if(dlOval->attr.fill == F_OUTLINE) {
 	    unsigned int lineWidth = (dlOval->attr.width+1)/2;
-	    
+
 	    XDrawArc(display,drawable,displayInfo->gc,
 	      dlOval->object.x + lineWidth,
 	      dlOval->object.y + lineWidth,
@@ -149,7 +149,7 @@ static void ovalUpdateValueCb(XtPointer cd) {
     MedmOval *po = (MedmOval *) ((Record *) cd)->clientData;
 #if DEBUG_VISIBILITY
     print("ovalUpdateValueCb: \n");
-#endif    
+#endif
     updateTaskMarkUpdate(po->updateTask);
 }
 
@@ -164,7 +164,7 @@ static void ovalDraw(XtPointer cd) {
 
 #if DEBUG_VISIBILITY
     print("ovalDraw: \n");
-#endif    
+#endif
     if(isConnected(po->records)) {
 	gcValueMask = GCForeground|GCLineWidth|GCLineStyle;
 	switch (dlOval->dynAttr.clr) {
@@ -216,7 +216,7 @@ static void ovalDestroyCb(XtPointer cd) {
 
     if(po) {
 	Record **records = po->records;
-	
+
 	if(records) {
 	    int i;
 	    for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -233,7 +233,7 @@ static void ovalDestroyCb(XtPointer cd) {
 static void ovalGetRecord(XtPointer cd, Record **record, int *count) {
     MedmOval *po = (MedmOval *)cd;
     int i;
-    
+
     *count = 0;
     if(po && po->records) {
 	for(i=0; i < MAX_CALC_RECORDS; i++) {
@@ -248,7 +248,7 @@ DlElement *createDlOval(DlElement *p)
 {
     DlOval *dlOval;
     DlElement *dlElement;
- 
+
     dlOval = (DlOval *)malloc(sizeof(DlOval));
     if(!dlOval) return 0;
     if(p) {
@@ -258,12 +258,12 @@ DlElement *createDlOval(DlElement *p)
 	basicAttributeInit(&(dlOval->attr));
 	dynamicAttributeInit(&(dlOval->dynAttr));
     }
- 
+
     if(!(dlElement = createDlElement(DL_Oval, (XtPointer)dlOval,
       &ovalDlDispatchTable))) {
 	free(dlOval);
     }
-    
+
     return(dlElement);
 }
 
@@ -277,7 +277,7 @@ DlElement *parseOval(DisplayInfo *displayInfo)
 
     if(!dlElement) return 0;
     dlOval = dlElement->structure.oval;
- 
+
     do {
 	switch( (tokenType=getToken(displayInfo,token)) ) {
 	case T_WORD:
@@ -303,7 +303,7 @@ DlElement *parseOval(DisplayInfo *displayInfo)
       && (tokenType != T_EOF) );
 
     return dlElement;
- 
+
 }
 
 void writeDlOval(
@@ -315,7 +315,7 @@ void writeDlOval(
     DlOval *dlOval = dlElement->structure.oval;
 
     memset(indent,'\t',level);
-    indent[level] = '\0'; 
+    indent[level] = '\0';
 
 #ifdef SUPPORT_0201XX_FILE_FORMAT
     if(MedmUseNewFileFormat) {
