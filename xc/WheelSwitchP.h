@@ -4,7 +4,7 @@
 * Copyright (c) 2004 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Based on                 */
 /* WheelSwitch widget class */
@@ -32,6 +32,7 @@ typedef struct {
   /* Settable through resources */
     Boolean conform_to_content;
     Boolean disable_input;
+    Boolean highlight_on_enter;
     short margin_width;   /* Margin around widget inside shadow */
     short margin_height;
 
@@ -48,9 +49,9 @@ typedef struct {
 
     int repeat_interval;
     int callback_delay;
-    
+
     XtCallbackList value_changed_callback;
-    
+
   /* Derived and private */
     double format_min_value;
     double format_max_value;
@@ -61,16 +62,17 @@ typedef struct {
     short nb_digit;
     Boolean user_font;
     XFontStruct *font;
-    
+
     double *increments;
     int digit_number;
     int prefix_size;
     int digit_size;
+    int format_size;
     int postfix_size;
     int point_position;
     Widget *up_buttons;
     Widget *down_buttons;
-    Boolean current_flag;  /* wsw is selected */
+    Boolean has_focus;  /* wsw has focus */
     int selected_digit;
     XtIntervalId pending_timeout_id;
     XtIntervalId callback_timeout_id;
@@ -82,7 +84,7 @@ typedef struct {
     Position string_base_y;
     Position down_button_y;
     Dimension digit_width;
-    
+
     char *kbd_format;
     char *kbd_value;
     XtIntervalId blink_timeout_id;

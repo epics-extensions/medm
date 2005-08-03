@@ -4,7 +4,7 @@
 * Copyright (c) 2004 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /* Based on                 */
 /* WheelSwitch widget class */
@@ -46,16 +46,15 @@ typedef struct {
     double *value;
 } XmWheelSwitchCallbackStruct;
 
-/* New class method entry points */
-
-extern void XmWheelSwitchSetValue(Widget wsw, double *value);
-
-/* New creation entry points */
+/* Convenience functions */
 
 extern Widget XmCreateWheelSwitch(Widget parent_widget, char *name,
   ArgList arglist, int num_args);
 extern Widget XmWheelSwitch(Widget parent_widget, char *name, Position x,
   Position y, double *value, char *format, double *min_value, double *max_value,
   XtCallbackList callback, XtCallbackList help_callback);
+extern void XmWheelSwitchSetValue(Widget w, double *value);
+extern void XmWheelSwitchSetForeground(Widget w, Pixel foreground);
+extern void XmWheelSwitchSetBackground(Widget w, Pixel background);
 
 #endif /* #ifndef __WHEELSWITCH_H */

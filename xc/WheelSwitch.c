@@ -4,17 +4,16 @@
 * Copyright (c) 2004 The Regents of the University of California, as
 * Operator of Los Alamos National Laboratory.
 * This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution. 
+* in the file LICENSE that is included with this distribution.
 \*************************************************************************/
-/* Based on                          */
-/* WheelSwitch widget class          */
-/* F. Di Maio - CERN 1990            */
-/* Modified by Jean-Michel Nonglaton */
-/* Mofified extensively for MEDM     */
+/* Based on                             */
+/* WheelSwitch widget class             */
+/* F. Di Maio - CERN 1990               */
+/* Modified by Jean-Michel Nonglaton    */
+/* Mofified extensively for MEDM - 2005 */
 
 #define DEBUG_ASSERT 0
 #define DEBUG_EXPOSE 0
-#define DEBUG_SETVALUE 0
 #define DEBUG_DESTRUCTOR 0
 #define DEBUG_CONVERTER 0
 #define DEBUG_FONTS 0
@@ -28,13 +27,18 @@
 #define DEBUG_ALIGN 0
 #define DEBUG_BUTTON_REPEAT 0
 #define DEBUG_CLIP_RECTANGLE 0
-#define DEBUG_TRAVERSAL 1
+#define DEBUG_TRAVERSAL 0
+#define DEBUG_NEWSTRING 0
 
-#define TURN_ON 1
-#define TURN_OFF 0
+/* Leave this on to test if this problem occurs */
+#define DEBUG_SETVALUE 0
 
 #define MAX_FONTS 100
 #define FORMAT_SIZE 255
+#define WS_UP 1
+#define WS_DOWN 0
+#define WS_FREE 1
+#define WS_NOFREE 0
 
 /* Format defaults, must be consistent */
 #define DEFAULT_FORMAT "% 6.2f"
@@ -43,8 +47,9 @@
 #define DEFAULT_CHAR_WIDTH 8;
 #define DEFAULT_CHAR_HEIGHT 16;
 
-/* The arrow button inherit the MEDM colors, not the WheelSwitch
- * colors.  Explicitly set the colors. */
+/* The arrow button inherit the MEDM colors on some systems (Linux),
+ * not the WheelSwitch colors.  Explicitly set the colors.  Should not
+ * be necessary */
 #define SET_ARROW_COLORS 1
 
 /* Resize is not used by MEDM.  The Resize routine has not been tested
@@ -54,6 +59,20 @@
 /* Use a complete name so another routine is unlikely to add a
  * converter  for the same things */
 #define XmRDoublePointer "WheelSwitchDoublePointer"
+
+/* Make the arrow buttons and keys call callbacks on each value change
+ * while they are held down.  Otherwise just on Btn1Up or KeyUp.  If
+ * Autorepeat is set, the arrow keys get a KeyUp for each keyDown, so
+ * there is little difference for the keys.  */
+#define CALL_CALLBACKS_EACH_TIME 1
+
+/* Set this to make values being set take precedence.  Could lose
+ * updates, but updates don't interfere with setting values via the
+ * arrow buttons and keys.  When not set, incoming values take
+ * predcedence, but values coming back from MEDM can interfere with
+ * repeats for arrow keys and buttons when the values coming back from
+ * MEDM are behind the ones being set (however this may not matter) */
+#define BLOCK_SET_VALUES_DURING_INPUT 1
 
 /* Set this if you want to have memory allocated by
  * CvtStringToDoublePointer be freed when the widget is freed.  In
@@ -71,8 +90,9 @@
 #include <X11/keysym.h>
 #include <Xm/Xm.h>
 #include <Xm/XmStrDefs.h>
+#include <Xm/GadgetP.h>
 #include <Xm/DrawP.h>  /* For XmeDrawShadows */
-#include <Xm/ArrowB.h>
+#include <Xm/ArrowBG.h>
 #include "WheelSwitch.h"
 #include "WheelSwitchP.h"
 
@@ -142,28 +162,26 @@ static Boolean AcceptFocus(Widget w, Time *time);
 
 /* Utlilties */
 static void post_format_warning(WswWidget wsw, char *format);
-static void free_buttons(WswWidget wsw, Boolean destroy);
 static void compute_format_size(WswWidget wsw);
 static void compute_format(WswWidget wsw);
-static Widget create_button(WswWidget wsw, Boolean up_flag, int digit);
 static void create_buttons(WswWidget wsw);
+static void free_buttons(WswWidget wsw, Boolean destroy);
+static Widget create_button(WswWidget wsw, Boolean up_flag, int digit);
 static void compute_inner_geo( WswWidget wsw);
 static void initialize_graphics(WswWidget wsw);
 static void compute_geometry(WswWidget wsw);
 static void set_increments(WswWidget wsw);
-static void truncate_value(WswWidget wsw);
+static Boolean increment_value(WswWidget wsw, Boolean up);
 static void compute_format_min_max(WswWidget wsw);
 static void draw(XtPointer clientdata, XtIntervalId *id);
 static void set_button_visibility(WswWidget wsw);
 static void select_digit(WswWidget wsw, int digit);
-#if TURN_ON
 static void highlight_digit(WswWidget wsw, int digit);
 static void unhighlight_digit(WswWidget wsw, int digit);
-#endif
 static void clear_all_buttons(WswWidget wsw);
 static void arm_execute_timer(WswWidget wsw,  XEvent *event);
-static void allocstr(char **str);
 static void wsFree(XtPointer *ptr);
+static void replace_string(char **string, char *new, Boolean free);
 static XFontStruct *getFontFromPattern(Display *display,
   char *font_pattern, Dimension width, Dimension height,
   Dimension *width_return, Dimension *height_return);
@@ -177,52 +195,44 @@ static void freeFont(WswWidget wsw);
 /* Callbacks, timer procs, and event handlers */
 static void upButtonArmCallback(Widget button, XtPointer userdata,
   XtPointer calldata);
-static void upButtonDisarmCallback(Widget button, XtPointer userdata,
-  XtPointer calldata);
 static void downButtonArmCallback(Widget button, XtPointer userdata,
-  XtPointer calldata);
-static void downButtonDisarmCallback(Widget button, XtPointer userdata,
   XtPointer calldata);
 static void upButtonTimerProc(XtPointer userdata, XtIntervalId *id);
 static void downButtonTimerProc(XtPointer userdata,  XtIntervalId *id);
-#if TURN_ON
 static void btn1UpProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
 static void btn1DownProc(Widget widget,  XEvent *event, String *params,
   Cardinal *num_params);
-#endif
-static void upArrowkeyProc(Widget widget, XEvent *event, String *params,
+static void upArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
-static void downArrowkeyProc(Widget widget, XEvent *event, String *params,
+static void downArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
-static void releaseArrowkeyProc(Widget widget,  XEvent *event, String *params,
+static void releaseArrowKeyProc(Widget widget,  XEvent *event, String *params,
   Cardinal *num_params);
-static void rightArrowkeyProc(Widget widget, XEvent *event, String *params,
+static void rightArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
-static void leftArrowkeyProc(Widget widget, XEvent *event, String *params,
+static void leftArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
 static void lostFocusProc(Widget widget,  XEvent *event, String *params,
   Cardinal *num_params);
 static void getFocusProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params);
+static void enterWindowProc(Widget widget, XEvent *event, String *params,
+  Cardinal *num_params);
+static void leaveWindowProc(Widget widget, XEvent *event, String *params,
+  Cardinal *num_params);
 static void executeTimerProc(XtPointer clientdata, XtIntervalId *id);
 static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
   Boolean *ctd);
 
-#if TURN_OFF
 /* Internal Motif functions not defined in header files */
+void _XmGadgetTraverseNextTabGroup();
+void _XmGadgetTraversePrevTabGroup();
 unsigned char _XmGetFocusPolicy();
-#endif
-#if TURN_ON
-void _XmTraverseNextTabGroup();
-void _XmTraversePrevTabGroup();
 Widget _XmGetTabGroup();
+void _XmDispatchGadgetInput();
 void _XmUnhighlightBorder();
 void _XmHighlightBorder();
-#endif
-#if DEBUG_TRAVERSAL
-unsigned char _XmGetFocusPolicy();
-#endif
 
 /* Global variables */
 
@@ -237,89 +247,121 @@ WidgetClass wheelSwitchWidgetClass = (WidgetClass)&wswClassRec;
 
 static XtResource resources[] = {
   /* Geometry related */
+  /* Size the widget to match the default character width and
+   * height */
     {XmNconformToContent, XmCRecomputeSize, XmRBoolean, sizeof(Boolean),
      XtOffset(WswWidget,wsw.conform_to_content), XmRImmediate, (XtPointer)True},
+  /* The spacing between the right or left edge and the area with the
+   * arrows and value */
     {XmNmarginWidth, XmCMarginWidth, XmRShort, sizeof(short),
      XtOffset(WswWidget, wsw.margin_width), XmRImmediate, (XtPointer)0},
+  /* The spacing between the top or bottom edge and the area with the
+   * arrows and value */
     {XmNmarginHeight, XmCMarginHeight, XmRShort, sizeof(short),
      XtOffset(WswWidget, wsw.margin_height), XmRImmediate, (XtPointer)0},
 
   /* Shadows */
+  /* The thickness of the highlighting rectangle */
     {XmNshadowThickness, XmCShadowThickness, XmRDimension, sizeof(Dimension),
      XtOffset(WswWidget, manager.shadow_thickness), XmRImmediate, (XtPointer)2},
+    /* The style for the shadows, one of XmSHADOW_IN, XmSHADOW_OUT,
+     * XmSHADOW_ETCHED_IN, XmSHADOW_ETCHED_OUT */
     {XmNshadowType, XmCShadowType, XmRShadowType, sizeof(unsigned int),
      XtOffset(WswWidget, wsw.shadow_type), XmRImmediate,
      (XtPointer)XmSHADOW_OUT},
 
   /* Format and font related */
-    {XmNformat, XmCformat, XmRPointer, sizeof(char *),
+  /* The format used, should be of the form xxx%[space|+]m.nfyyy,
+   * where xxx and yyy are arbitrary character strings, and m and n
+   * are integers.  The rules for a C-language format are followed,
+   * but not all of the options for a C-language format are
+   * allowed. */
+      {XmNformat, XmCformat, XmRPointer, sizeof(char *),
      XtOffset(WswWidget,wsw.format), XmRImmediate, (XtPointer)defaultFormat},
+  /* An X font pattern.  The font will be choosen from all fonts
+   * matching this pattern, depending on size */
     {XmNfontPattern, XmCfontPattern, XmRPointer, sizeof(char *),
      XtOffset(WswWidget,wsw.font_pattern), XmRImmediate,
      (XtPointer)defaultFontPattern},
+  /* An X font list.  The font will be choosen from the fonts in this
+   * list, depending on size */
     {XmNfontList, XmCFontList, XmRFontList, sizeof(XmFontList),
      XtOffset(WswWidget,wsw.font_list), XmRString, (XtPointer)NULL},
 
-  /* These are double * and non-standard */
+  /* Value related.  These are double * and non-standard because
+  doubles cannot be * passed as resources.  The value pointed to by
+  the user's pointer is copied, so the user does not have a pointer to
+  the internal value */
+  /* Pointer to the value */
     {XmNcurrentValue, XmCCurrentValue, XmRDoublePointer, sizeof(double *),
      XtOffset(WswWidget, wsw.value), XmRString, "0.0"},
+  /* Pointer to the minimum allowed value */
     {XmNminValue, XmCMinValue, XmRDoublePointer, sizeof(double *),
      XtOffset(WswWidget, wsw.min_value), XmRString, "-1.e+10"},
+  /* Pointer to the maximum allowed value */
     {XmNmaxValue, XmCMaxValue, XmRDoublePointer, sizeof(double *),
      XtOffset(WswWidget, wsw.max_value), XmRString, "1.e+10"},
 
-  /* Settings */
+    /* Repeat interval in ms for arrow buttons and possibly arrow
+     * keys.  The arrows keys will repeat at the keyboard auto repeat
+     * interval if it is faster */
     {XmNrepeatInterval, XmCRepeatInterval, XmRInt, sizeof(int),
      XtOffset(WswWidget, wsw.repeat_interval), XmRImmediate, (XtPointer)30},
+  /* Delay between when the value is changed and the callback list is called */
     {XmNcallbackDelay, XmCCallbackDelay, XmRInt, sizeof(int),
      XtOffset(WswWidget, wsw.callback_delay), XmRImmediate, (XtPointer)0},
+  /* Disables kbdhandler and arrow button callbacks */
     {XmNdisableInput, XmCDisableInput, XmRBoolean, sizeof(Boolean),
      XtOffset(WswWidget,wsw.disable_input), XmRImmediate, (XtPointer)False},
+  /* Will draw arrow highlights only when the cursor moves into the
+   * widget if true. If false, always draws them when the focus policy
+   * is XmPOINTER and input is not disabled.  Only applies if the
+   * focus policy is XmPOINTER. */
+    {XmNhighlightOnEnter, XmCHighlightOnEnter, XmRBoolean, sizeof(Boolean),
+     XtOffset(WswWidget,wsw.highlight_on_enter), XmRImmediate, (XtPointer)False},
 
-  /* Callback */
+  /* List of callbacks called when the value changes */
     {XmNvalueChangedCallback, XmCCallback, XmRCallback,
      sizeof(XtCallbackList),
      XtOffset(WswWidget, wsw.value_changed_callback),
      XmRCallback,(XtPointer)NULL},
 };
 
-#if TURN_ON
 /* Action table */
 
 static XtActionsRec actions[] = {
-#if TURN_ON
     { "Btn1Up", btn1UpProc },
     { "Btn1Down", btn1DownProc },
-    { "WswPrevTabGroup",(XtActionProc)_XmTraversePrevTabGroup },
-    { "WswNextTabGroup",(XtActionProc)_XmTraverseNextTabGroup },
-#endif
+    { "WswPrevTabGroup",(XtActionProc)_XmGadgetTraversePrevTabGroup },
+    { "WswNextTabGroup",(XtActionProc)_XmGadgetTraverseNextTabGroup },
     { "WswGetFocus", getFocusProc },
     { "WswLostFocus", lostFocusProc },
-    { "WswUpArrowkey", upArrowkeyProc },
-    { "WswDownArrowkey", downArrowkeyProc },
-    { "WswRightArrowkey", rightArrowkeyProc },
-    { "WswLeftArrowkey", leftArrowkeyProc },
-    { "WswReleaseArrowkey", releaseArrowkeyProc },
+    { "WswUpArrowKey", upArrowKeyProc },
+    { "WswDownArrowKey", downArrowKeyProc },
+    { "WswRightArrowKey", rightArrowKeyProc },
+    { "WswLeftArrowKey", leftArrowKeyProc },
+    { "WswReleaseArrowKey", releaseArrowKeyProc },
+    { "WswEnterWindow", enterWindowProc },
+    { "WswLeaveWindow", leaveWindowProc },
 };
 
 /* Translations table */
 
 static char defaultTranslations[] =
-#if TURN_ON
     "<Btn1Up>:  Btn1Up()\n"
     "<Btn1Down>:  Btn1Down()\n"
     "Shift<Key>Tab:  WswPrevTabGroup()\n"
     "<Key>Tab: WswNextTabGroup()\n"
-#endif
-    "<KeyUp>osfUp: WswReleaseArrowkey()\n"
-    "<KeyUp>osfDown: WswReleaseArrowkey()\n"
-    "<Key>osfUp: WswUpArrowkey()\n"
-    "<Key>osfDown: WswDownArrowkey()\n"
-    "<Key>osfRight: WswRightArrowkey()\n"
-    "<Key>osfLeft: WswLeftArrowkey()\n"
+    "<KeyUp>osfUp: WswReleaseArrowKey()\n"
+    "<KeyUp>osfDown: WswReleaseArrowKey()\n"
+    "<Key>osfUp: WswUpArrowKey()\n"
+    "<Key>osfDown: WswDownArrowKey()\n"
+    "<Key>osfRight: WswRightArrowKey()\n"
+    "<Key>osfLeft: WswLeftArrowKey()\n"
+    "<EnterWindow>: WswEnterWindow()\n"
+    "<LeaveWindow>: WswLeaveWindow()\n"
     "<FocusOut>: WswLostFocus()\n"
     "<FocusIn>: WswGetFocus()";
-#endif
 
 /* Class record  */
 
@@ -335,13 +377,8 @@ WswClassRec wswClassRec = {
         /* initialize             */ Initialize,
         /* initialize_hook        */ NULL,
         /* realize                */ Realize,
-#if TURN_ON
         /* actions                */ actions,
         /* num_actions            */ XtNumber(actions),
-#else	
-        /* actions                */ NULL,
-        /* num_actions            */ 0,
-#endif
         /* resources              */ resources,
         /* num_resources          */ XtNumber(resources),
         /* xrm_class              */ NULLQUARK,
@@ -354,7 +391,7 @@ WswClassRec wswClassRec = {
         /* resize                 */ Resize,
 #else
         /* resize                 */ NULL,
-#endif	
+#endif
         /* expose                 */ Redisplay,
         /* set_values             */ SetValues,
         /* set_values_hook        */ NULL,
@@ -363,11 +400,7 @@ WswClassRec wswClassRec = {
         /* accept_focus           */ NULL,
         /* version                */ XtVersion,
         /* callback_offsets       */ NULL,
-#if TURN_ON
         /* tm_table               */ defaultTranslations,
-#else
-        /* tm_table               */ XtInheritTranslations,
-#endif
         /* query_geometry         */ XtInheritQueryGeometry,
         /* display_accelerator    */ NULL,
         /* extension              */ NULL,
@@ -382,23 +415,23 @@ WswClassRec wswClassRec = {
     },
   /* Constraint_class fields */
     {
-        /* resource list          */ NULL,         
-        /* num resources          */ 0,            
-        /* constraint size        */ 0,            
-        /* init proc              */ NULL,         
-        /* destroy proc           */ NULL,         
-	/* set values proc        */ NULL,         
-        /* extension              */ NULL,         
+        /* resource list          */ NULL,
+        /* num resources          */ 0,
+        /* constraint size        */ 0,
+        /* init proc              */ NULL,
+        /* destroy proc           */ NULL,
+	/* set values proc        */ NULL,
+        /* extension              */ NULL,
     },
   /* Manager_class fields */
     {
-        /* translations           */ NULL,        
-        /* syn_resources          */ NULL,        
-        /* num_syn_resources      */ 0,           
-        /* get_cont_resources     */ NULL,        
-        /* num_get_cont_resources */ 0,           
-        /* parent_process         */ NULL,        
-        /* extension              */ NULL,        
+        /* translations           */ NULL,
+        /* syn_resources          */ NULL,
+        /* num_syn_resources      */ 0,
+        /* get_cont_resources     */ NULL,
+        /* num_get_cont_resources */ 0,
+        /* parent_process         */ NULL,
+        /* extension              */ NULL,
     },
   /* Wsw Class Field */
     {
@@ -407,6 +440,13 @@ WswClassRec wswClassRec = {
 };
 
 /* Convenience routines */
+
+Widget XmCreateWheelSwitch(Widget parent_widget, char *name, ArgList arglist,
+  int num_args)
+{
+    return(XtCreateWidget(name, wheelSwitchWidgetClass, parent_widget,
+	     arglist, num_args));
+}
 
 Widget XmWheelSwitch(Widget parent_widget, char *name, Position x, Position y,
   double *value, char *format, double *min_value, double *max_value,
@@ -422,23 +462,37 @@ Widget XmWheelSwitch(Widget parent_widget, char *name, Position x, Position y,
     XtSetArg(arglist[5], XmNmaxValue, max_value);
     XtSetArg(arglist[6], XmNvalueChangedCallback, callback);
     XtSetArg(arglist[7], XmNhelpCallback, help_callback);
-    return(XtCreateWidget(name, (WidgetClass)&wswClassRec, parent_widget,
+    return(XtCreateWidget(name, wheelSwitchWidgetClass, parent_widget,
 	     arglist, 8));
 }
 
-void XmWheelSwitchSetValue(Widget wsw, double *value)
+void XmWheelSwitchSetValue(Widget w, double *value)
 {
-    Arg arglist[1];
+    Arg args[1];
 
-    XtSetArg(arglist[0], XmNcurrentValue, value);
-    XtSetValues(wsw, arglist, 1);
+#if DEBUG_FLOW
+    printf("XmWheelSwitchSetValue: value=%p[%g]\n",
+      (void *)value,
+      (void *)value?*value:0.0);
+#endif
+    XtSetArg(args[0], XmNcurrentValue, value);
+    XtSetValues(w, args, 1);
 }
 
-Widget XmCreateWheelSwitch(Widget parent_widget, char *name, ArgList arglist,
-  int num_args)
+void XmWheelSwitchSetForeground(Widget w, Pixel foreground)
 {
-    return(XtCreateWidget(name, (WidgetClass)&wswClassRec, parent_widget,
-	     arglist, num_args));
+    Arg args[1];
+
+    XtSetArg(args[0], XmNforeground, foreground);
+    XtSetValues(w, args, 1);
+}
+
+void XmWheelSwitchSetBackground(Widget w, Pixel background)
+{
+    Arg args[1];
+
+    XtSetArg(args[0], XmNbackground, background);
+    XtSetValues(w, args, 1);
 }
 
 /* Converter */
@@ -458,22 +512,22 @@ static Boolean CvtStringToDoublePointer(Display *display, XrmValue *args,
 {
     static double *double_pointer;
     int nread = 0;
-    
+
 #if DEBUG_CONVERTER
     printf("CvtStringToDoublePointer [before]: from: %p[%s] to: %p size=%u\n",
       fromVal->addr,(char *)fromVal->addr,toVal->addr,toVal->size);
-#endif    
+#endif
 
   /* Check arguments */
     if(*num_args != 0) {
       /* No application context, use XtErrorMsg */
 	XtErrorMsg("wrongParameters","CvtStringToDoublePointer",
 	  "XtToolkitError",
-	  "WheelSwitch: String to double conversion takes no arguments", 
+	  "WheelSwitch: String to double conversion takes no arguments",
 	  (String *)NULL, (Cardinal *)NULL);
 #if DEBUG_CONVERTER
 	printf("  Should be no arguments! Returning False\n");
-#endif    
+#endif
 	return False;
     }
 
@@ -485,7 +539,7 @@ static Boolean CvtStringToDoublePointer(Display *display, XrmValue *args,
 	  XmRDoublePointer);
 #if DEBUG_CONVERTER
 	printf("  Bad value! Returning False\n");
-#endif    
+#endif
 	return False;
     }
     else {
@@ -496,7 +550,7 @@ static Boolean CvtStringToDoublePointer(Display *display, XrmValue *args,
     printf("CvtStringToDoublePointer [after]: from: %p[%s] to: %p[%g]\n",
       fromVal->addr,(char *)fromVal->addr,toVal->addr,
       toVal->addr?*(*(double **)toVal->addr):0.0);
-#endif    
+#endif
 
     return True;
 }
@@ -513,13 +567,13 @@ static void FreeDoublePointer(XtAppContext app, XrmValuePtr toVal,
     printf("FreeDoublePointer: %p[%g]\n",
       (void *)*(double **)toVal->addr,
       toVal->addr?*(*(double **)toVal->addr):0.0);
-#endif    
+#endif
 
   /* Check arguments */
     if(*num_args != 0) {
 	XtAppErrorMsg(app,
 	  "wrongParameters", "FreeDoublePointer", "WheelSwitchError",
-	  "WheelSwitch: FreeDoublePointer takes no arguments", 
+	  "WheelSwitch: FreeDoublePointer takes no arguments",
 	  (String *)NULL, (Cardinal *)NULL);
 	return;
     }
@@ -535,7 +589,7 @@ static void ClassInitialize(void)
     XtCacheType cacheType = XtCacheAll|XtCacheRefCount;
 #else
     XtCacheType cacheType = XtCacheAll;
-#endif    
+#endif
 
 #if DEBUG_CONVERTER || DEBUG_FLOW
     printf("ClassInitialize: start\n");
@@ -544,7 +598,7 @@ static void ClassInitialize(void)
 #else
     printf("  Using XtCacheAll\n");
 #endif
-#endif    
+#endif
 
   /* Add a converter for pointers to doubles */
     XtSetTypeConverter(XmRString, XmRDoublePointer, CvtStringToDoublePointer,
@@ -577,7 +631,7 @@ static void Initialize(Widget wreq, Widget wnew,
       new->manager.shadow_thickness,new->wsw.shadow_type);
     printf("  top_shadow_color=%08lx top_shadow_color=%08lx\n",
       new->manager.top_shadow_color,new->manager.bottom_shadow_color);
-#endif    
+#endif
 #if DEBUG_TRAVERSAL
     printf("\n");
     printf("WheelSwitch with widgets\n");
@@ -590,7 +644,22 @@ static void Initialize(Widget wreq, Widget wnew,
       new->manager.traversal_on?"True":"False",
       new->manager.navigation_type,
       XmNONE,XmTAB_GROUP);
-#endif    
+#endif
+#if DEBUG_NEWSTRING
+    printf("Initialize:\n");
+    printf("  wsw.format: req=%p |%s| new=%p |%s|\n",
+      (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+      (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#if 0
+    printf("  wsw.font_pattern: req=%p |%s| new=%p |%s|\n",
+      (void *)req->wsw.font_pattern,
+      req->wsw.font_pattern?req->wsw.font_pattern:"NULL",
+      (void *)new->wsw.font_pattern,
+      new->wsw.font_pattern?new->wsw.font_pattern:"NULL");
+    printf(" defaultFontPattern=%p |%s|\n",
+      (void *)defaultFontPattern,defaultFontPattern);
+#endif
+#endif
   /* Initialize internal fields */
     new->wsw.format_min_value = 0.0;
     new->wsw.format_max_value = 0.0;
@@ -609,11 +678,23 @@ static void Initialize(Widget wreq, Widget wnew,
     new->wsw.digit_number = 0;
     new->wsw.prefix_size = 0;
     new->wsw.digit_size = 0;
+    new->wsw.format_size = 0;
     new->wsw.postfix_size = 0;
     new->wsw.point_position = 0;
     new->wsw.up_buttons = NULL;
     new->wsw.down_buttons = NULL;
-    new->wsw.current_flag = False;  /* wsw is selected */
+    if(_XmGetFocusPolicy(new) == XmEXPLICIT) {
+      /* Will be set depending on FocusIn or FocusOut events */
+	new->wsw.has_focus = False;
+    } else {
+      /* Don't get FocusIn or FocusOut events.  Leave it on unless
+       * disable_input or highlight_on_enter are enabled. */
+	if(new->wsw.disable_input || new->wsw.highlight_on_enter) {
+	    new->wsw.has_focus = False;
+	} else {
+	    new->wsw.has_focus = True;
+	}
+    }
     new->wsw.selected_digit = 0;
     new->wsw.pending_timeout_id = (XtIntervalId)0;
     new->wsw.callback_timeout_id = (XtIntervalId)0;
@@ -625,26 +706,47 @@ static void Initialize(Widget wreq, Widget wnew,
     new->wsw.string_base_y = 0;
     new->wsw.down_button_y = 0;
     new->wsw.digit_width = 0;
-    
+
     new-> wsw.kbd_format= NULL;
     new-> wsw.kbd_value = NULL;
     new-> wsw.blink_timeout_id = (XtIntervalId)0;
     new-> wsw.to_clear= True;
 
-  /* Compute format-related quantities */
-    compute_format(new);
-
-  /* Allocate space for the font pattern */
-    if(new->wsw.font_pattern == NULL) {
-      /* Insure there is always a font pattern */
-	new->wsw.font_pattern = defaultFontPattern;
+  /* Make a new copy of the format so we can free it without worrying
+   * about where it came from */
+    if(new->wsw.format == NULL) {
+      /* Insure there is always a format */
+	replace_string(&new->wsw.format, defaultFormat, WS_NOFREE);
+    } else {
+#if DEBUG_NEWSTRING && 0
+	printf("+ wsw.format: req=%p |%s| new=%p |%s|\n",
+	  (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+	  (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#endif
+	replace_string(&new->wsw.format, new->wsw.format, WS_NOFREE);
+#if DEBUG_NEWSTRING
+	printf("+ wsw.format: req=%p |%s| new=%p |%s|\n",
+	  (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+	  (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#endif
     }
-    allocstr(&new->wsw.font_pattern);
-    
+
+  /* Make a new copy of the font pattern so we can free it without
+   * worrying about where it came from */
+   if(new->wsw.font_pattern == NULL) {
+      /* Insure there is always a font pattern */
+	replace_string(&new->wsw.font_pattern, defaultFontPattern, WS_NOFREE);
+    } else {
+	replace_string(&new->wsw.font_pattern, new->wsw.font_pattern, WS_NOFREE);
+    }
+
   /* Flag if there is a font list specified */
     if(new->wsw.font_list != NULL) {
         new->wsw.user_font = True;
     }
+
+  /* Compute format-related quantities */
+    compute_format(new);
 
   /* Get the font and compute the geometry */
     compute_geometry(new);
@@ -669,7 +771,7 @@ static void Initialize(Widget wreq, Widget wnew,
     XtOverrideTranslations(wnew,
       XtParseTranslationTable(defaultTranslations));
 #endif
-    
+
   /* Add keyboard event handler */
     if(!new->wsw.disable_input) {
 	XtAddEventHandler(wnew,KeyPressMask,False,kbdHandler,NULL);
@@ -691,9 +793,12 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
     WswWidget new = (WswWidget)wnew;
     Boolean update = False;
 
+#if DEBUG_FLOW
+    printf("SetValues: start\n");
+#endif
 #if DEBUG_POINTER
     static int call=0;
-    
+
     call++;
     printf("%d SetValues [Before]:\n"
       " cur->value=%p *cur->value=%g\n"
@@ -710,16 +815,30 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
       (void *)cur->wsw.max_value,*cur->wsw.max_value,
       (void *)req->wsw.max_value,*req->wsw.max_value,
       (void *)new->wsw.max_value,*new->wsw.max_value);
-#endif    
-#if DEBUG_FLOW
-    printf("SetValues: start\n");
+#endif
+#if DEBUG_NEWSTRING
+    printf("SetValues: cur=%p req=%p new=%p\n",
+      (void *)cur,(void *)req,(void *)new);
+    printf("  wsw.format: cur=%p |%s| req=%p |%s| new=%p |%s|\n",
+      (void *)cur->wsw.format,cur->wsw.format?cur->wsw.format:"NULL",
+      (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+      (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#if 0
+    printf("  wsw.font_pattern: cur=%p |%s| req=%p |%s| new=%p |%s|\n",
+      (void *)cur->wsw.font_pattern,
+      cur->wsw.font_pattern?cur->wsw.font_pattern:"NULL",
+      (void *)req->wsw.font_pattern,
+      req->wsw.font_pattern?req->wsw.font_pattern:"NULL",
+      (void *)new->wsw.font_pattern,
+      new->wsw.font_pattern?new->wsw.font_pattern:"NULL");
+#endif
 #endif
   /* Disable input change */
     if(cur->wsw.disable_input != new->wsw.disable_input) {
 	if(new->wsw.disable_input) {
 	  /* Keyboard handler (Don't have to check if there is one) */
 	    XtRemoveEventHandler(wnew,KeyPressMask,False,kbdHandler,NULL);
-	    
+
 	  /* Arrow buttons */
 	    if(new->wsw.up_buttons != NULL) {
 		int digit;
@@ -735,29 +854,44 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 	} else {
 	  /* Keyboard handler */
 	    XtAddEventHandler(wnew,KeyPressMask,False,kbdHandler,NULL);
-	    
+
 	  /* Arrow buttons */
 	    if(new->wsw.up_buttons != NULL) {
 		int digit;
-	    
+
 		for(digit = 0; digit < new->wsw.digit_number; digit++) {
 		    XtAddCallback(new->wsw.up_buttons[digit], XmNarmCallback,
 		      upButtonArmCallback, (XtPointer)digit);
-		    XtAddCallback(new->wsw.up_buttons[digit], XmNdisarmCallback,
-		      upButtonDisarmCallback, (XtPointer)digit);
 		    XtAddCallback(new->wsw.down_buttons[digit], XmNarmCallback,
 		      downButtonArmCallback,(XtPointer)digit);
-		    XtAddCallback(new->wsw.down_buttons[digit], XmNdisarmCallback,
-		      downButtonDisarmCallback,(XtPointer)digit);
 		}
 	    }
 	}
     }
-    
+
   /* Format change */
     if(cur->wsw.format != new->wsw.format) {
-        wsFree((XtPointer)&cur->wsw.format);
-	free_buttons(new, False);
+	if(new->wsw.format == NULL) {
+	  /* Insure there is always a format */
+	    new->wsw.format = defaultFormat;
+	}
+      /* Make our own copy so we can free it without worrying about
+       * where it came from */
+#if DEBUG_NEWSTRING && 0
+	printf("+ wsw.format: cur=%p |%s| req=%p |%s| new=%p |%s|\n",
+	  (void *)cur->wsw.format,cur->wsw.format?cur->wsw.format:"NULL",
+	  (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+	  (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#endif
+	wsFree((XtPointer)&cur->wsw.format);
+        replace_string(&new->wsw.format, new->wsw.format, WS_NOFREE);
+#if DEBUG_NEWSTRING
+	printf("+ wsw.format: cur=%p |%s| req=%p |%s| new=%p |%s|\n",
+	  (void *)cur->wsw.format,cur->wsw.format?cur->wsw.format:"NULL",
+	  (void *)req->wsw.format,req->wsw.format?req->wsw.format:"NULL",
+	  (void *)new->wsw.format,new->wsw.format?new->wsw.format:"NULL");
+#endif
+	free_buttons(new, True);
         compute_format(new);
         if(new->wsw.conform_to_content == True &&
           cur->core.width == new->core.width &&
@@ -769,14 +903,17 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
     }
 
   /* Font pattern change */
-    if(new->wsw.font_pattern == NULL) {
-      /* Insure there is always a font pattern */
-	new->wsw.font_pattern = defaultFontPattern;
-    }
     if(cur->wsw.font_pattern != new->wsw.font_pattern) {
+	if(new->wsw.font_pattern == NULL) {
+	  /* Insure there is always a font pattern */
+	    new->wsw.font_pattern = defaultFontPattern;
+	}
+      /* Make our own copy so we can free it without worrying about
+       * where it came from */
 	wsFree((XtPointer)&cur->wsw.font_pattern);
-	allocstr(&new->wsw.font_pattern);
-	update = True;
+        replace_string(&new->wsw.font_pattern, new->wsw.font_pattern, WS_NOFREE);
+	free_buttons(new, True);
+        update = True;
     }
 
   /* Font list change */
@@ -821,46 +958,88 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
         update = True;
     }
     if(update) {
-      /* Compute the limits allowed by the format and set visibility */
-        compute_format_min_max(new);
+	compute_format_min_max(new);
     }
 
+#if BLOCK_SET_VALUES_DURING_INPUT
+  /* Values being set take precedence.  Could lose updates, but
+   * updates don't interfere with setting values via the arrow buttons
+   * and keys. */
     if(req->wsw.value != cur->wsw.value) {
         new->wsw.value = cur->wsw.value;
-      /* Don't change if there is a pending_timeout_id (pending
-       * up/downButtonTimerProc) or callback_timeout_id (pending
-       * executeTimerProc) */
-      /* KE: Need to fix this or an only update may be lost */
-        if(cur->wsw.pending_timeout_id == 0 &&
-          cur->wsw.callback_timeout_id == 0 &&
-          *cur->wsw.value != *req->wsw.value) {
-            *new->wsw.value = *req->wsw.value;
-            if(!update && XtIsRealized(wnew)) {
-	      /* KE: Check this */
-                set_button_visibility(new);
-                if(new->wsw.GC_inited) {
-		    draw((XtPointer)new,NULL);
+	if(*cur->wsw.value != *req->wsw.value) {
+	    if(cur->wsw.pending_timeout_id == 0 &&
+	      cur->wsw.callback_timeout_id == 0) {
+		*new->wsw.value = *req->wsw.value;
+		set_button_visibility(new);
+	      /* Don't change if there is a pending_timeout_id (pending
+	       * up/downButtonTimerProc) or callback_timeout_id (pending
+	       * executeTimerProc) */
+		if(!update && XtIsRealized(wnew)) {
+		  /* KE: Check this */
+		    if(new->wsw.GC_inited) {
+			draw((XtPointer)new,NULL);
+		    }
+		} else {
+		    update = True;
 		}
-            } else {
-                update = True;
-            }
-        } else {
-	  /* Keep the old value */
+	    } else {
+	      /* Keep the old value */
 #if DEBUG_SETVALUE
-	    printf("!!!SetValue: old value=%g not changed to new value=%g\n",
-	      *cur->wsw.value,*new->wsw.value);
-	    XBell(XtDisplay(cur),50);
+		printf("!!!SetValue: old value=%g not changed to new value=%g\n",
+		  *cur->wsw.value,*req->wsw.value);
+		XBell(XtDisplay(cur),50);
 #endif
+	    }
 	}
     }
-    
+#else
+  /* Incoming values take predcedence, but values coming back from
+   * MEDM can interfere with repeats for arrow keys and buttons when
+   * the values coming back from MEDM are behind the ones being set
+   * (however this may not matter) */
+    if(req->wsw.value != cur->wsw.value) {
+        new->wsw.value = cur->wsw.value;
+        *new->wsw.value = *req->wsw.value;
+        update = True;
+      /* Remove pending timers and let this value take precedence */
+      /* Pending up/downButtonTimerProc */
+	if(new->wsw.pending_timeout_id != 0) {
+	    XtRemoveTimeOut(new->wsw.pending_timeout_id);
+	    new->wsw.pending_timeout_id = 0;
+	}
+      /* Pending executeTimerProc */
+	if(new->wsw.callback_timeout_id != 0) {
+	    XtRemoveTimeOut(new->wsw.callback_timeout_id);
+	    new->wsw.callback_timeout_id = 0;
+	}
+    }
+    if(update) {
+	set_button_visibility(new);
+    }
+#endif
+
   /* Foreground or background change */
     if(cur->manager.foreground != new->manager.foreground ||
       cur->core.background_pixel != new->core.background_pixel) {
 	cur->wsw.GC_inited = False;
 	update = True;
 #if SET_ARROW_COLORS
-      /* KE: May have to recolor arrow buttons here */
+      /* Recolor arrow buttons (needed on some systems) */
+	if(new->wsw.up_buttons != NULL) {
+	    int digit;
+	    Arg args[2];
+	    Cardinal nargs = 0;
+
+	    XtSetArg(args[nargs], XmNforeground,new->manager.foreground);
+	    nargs++;
+	    XtSetArg(args[nargs], XmNbackground,new->core.background_pixel);
+	    nargs++;
+	    for(digit = 0; digit < new->wsw.digit_number; digit++) {
+		XtSetValues(new->wsw.up_buttons[digit], args, nargs);
+		XtSetValues(new->wsw.down_buttons[digit], args, nargs);
+	    }
+	}
 #endif
     }
 
@@ -869,7 +1048,7 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 	cur->wsw.GC_inited = False;
         update = True;
     }
-    
+
 #if DEBUG_POINTER
     printf("%d SetValues [After]:\n"
       " cur->value=%p *cur->value=%g\n"
@@ -886,9 +1065,9 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
       (void *)cur->wsw.max_value,*cur->wsw.max_value,
       (void *)req->wsw.max_value,*req->wsw.max_value,
       (void *)new->wsw.max_value,*new->wsw.max_value);
-#endif    
+#endif
 #if DEBUG_FLOW
-    printf("SetValues: end\n");
+    printf("SetValues: end update=%s\n",update?"True":"False");
 #endif
 
     return(update && XtIsRealized(wnew));
@@ -905,7 +1084,7 @@ static void Resize(Widget widget)
 #endif
 
     if(!wsw->wsw.user_font) {
-	Dimension reqWidth = 
+	Dimension reqWidth =
 	  (wsw->core.width - 2*wsw->wsw.margin_width -
 	    2*wsw->manager.shadow_thickness) / wsw->wsw.nb_digit;
 	Dimension reqHeight =
@@ -923,27 +1102,17 @@ static void Resize(Widget widget)
     printf("Resize: end\n");
 #endif
 }
-#endif
+#endif  /* USE_RESIZE */
 
 static void Destroy(Widget widget)
 {
     WswWidget wsw = (WswWidget)widget;
 
-  /* Remove timers */
-    if(wsw->wsw.callback_timeout_id != 0) {
-	XtRemoveTimeOut(wsw->wsw.callback_timeout_id);
-        wsw->wsw.callback_timeout_id = 0;
-    }
-    if(wsw->wsw.pending_timeout_id != 0) {
-        XtRemoveTimeOut(wsw->wsw.pending_timeout_id);
-        wsw->wsw.pending_timeout_id = 0;
-    }
-    if(wsw->wsw.blink_timeout_id != 0) {
-	XtRemoveTimeOut(wsw->wsw.blink_timeout_id);
-        wsw->wsw.blink_timeout_id = 0;
-    }
-
-    wsFree((XtPointer)&wsw->wsw.format);
+#if DEBUG_FLOW
+    printf("Destroy: start\n");
+#endif
+   wsFree((XtPointer)&wsw->wsw.format);
+    XmRemoveTabGroup(widget);
     if(wsw->wsw.foreground_GC != NULL) {
 	XFreeGC(XtDisplay(wsw), wsw->wsw.foreground_GC);
 	wsw->wsw.foreground_GC = NULL;
@@ -961,7 +1130,7 @@ static void Destroy(Widget widget)
 	XmFontListFree(wsw->wsw.font_list);
 	wsw->wsw.font_list = NULL;
     }
-#endif    
+#endif
     if(wsw->wsw.font != NULL) {
 	freeFont(wsw);
     }
@@ -993,6 +1162,9 @@ static void Destroy(Widget widget)
 	wsw->wsw.kbd_value = NULL;
     }
   /* TBC ?? */
+#if DEBUG_FLOW
+    printf("Destroy: end\n");
+#endif
 }
 
 static void Realize(Widget widget, Mask *valueMask,
@@ -1016,7 +1188,7 @@ static void Redisplay(Widget widget, XEvent *event, Region region)
 #if DEBUG_FLOW || DEBUG_EXPOSE
     printf("Redisplay: start\n");
 #endif
-#if DEBUG_EXPOSE    
+#if DEBUG_EXPOSE
     printf("  type=%d send_event=%s serial=%lu window=%p\n",
       ((XAnyEvent *)event)->type,((XAnyEvent *)event)->send_event?"True":"False",
       ((XAnyEvent *)event)->serial,(void *)((XAnyEvent *)event)->window);
@@ -1032,8 +1204,21 @@ static void Redisplay(Widget widget, XEvent *event, Region region)
 	initialize_graphics(wsw);
     }
 
+  /* Set the region in the GC*/
     XSetRegion(XtDisplay(wsw), wsw->wsw.foreground_GC, region);
+
+  /* Copy the whole pixmap to the window */
+    XCopyArea(XtDisplay(wsw), wsw->wsw.pixmap, XtWindow(wsw),
+      wsw->wsw.foreground_GC, 0, 0,
+      wsw->core.width, wsw->core.height, 0, 0);
+
+  /* Redisplay the gadgets since we drew over them */
+    _XmRedisplayGadgets(widget, event, region);
+
+  /* Draw to get the text (will clip the shadows and gadgets) */
     draw((XtPointer)wsw,NULL);
+
+  /* Reset the region in the GC */
     XSetClipMask(XtDisplay(wsw), wsw->wsw.foreground_GC, None);
 
 #if DEBUG_FLOW
@@ -1060,7 +1245,7 @@ static void post_format_warning(WswWidget wsw, char *format)
     unsigned int num_params = 2;
     params[0] = wsw->wsw.format;
     params[1] = format;
-    
+
 #if DEBUG_ERRORHANDLER
    printf("post_format_warning:\n"
      "Invalid format: \"%s\", use \"%s\" instead\n",
@@ -1090,16 +1275,15 @@ static void post_format_warning(WswWidget wsw, char *format)
      "badFormat", "XtWswInitialize", "WheelSwitchError",
      "WheelSwitch: Invalid format: \"%s\", use \"%s\" instead",
      params, &num_params);
-#endif   
+#endif
 }
 
 /* Computes quantities associated with the format */
 static void compute_format_size(WswWidget wsw)
 {
     char zero_string[FORMAT_SIZE];
-    int format_size;
     int i;
-    
+
 #if DEBUG_FLOW
     printf("compute_format_size: start\n");
 #endif
@@ -1108,8 +1292,8 @@ static void compute_format_size(WswWidget wsw)
     sprintf(zero_string, wsw->wsw.format, 0.);
     wsw->wsw.nb_digit = strlen(zero_string);
     wsw->wsw.prefix_size = strchr(wsw->wsw.format, '%') - wsw->wsw.format;
-    format_size = strcspn(wsw->wsw.format + wsw->wsw.prefix_size, "f") + 1;
-    wsw->wsw.postfix_size = strlen(wsw->wsw.format) - format_size -
+    wsw->wsw.format_size = strcspn(wsw->wsw.format + wsw->wsw.prefix_size, "f") + 1;
+    wsw->wsw.postfix_size = strlen(wsw->wsw.format) - wsw->wsw.format_size -
       wsw->wsw.prefix_size;
     wsw->wsw.digit_size = wsw->wsw.nb_digit - wsw->wsw.prefix_size -
       wsw->wsw.postfix_size;
@@ -1132,7 +1316,7 @@ static void compute_format_size(WswWidget wsw)
       wsw->wsw.postfix_size,wsw->wsw.digit_size,
       wsw->wsw.digit_number,wsw->wsw.point_position,
       *wsw->wsw.value,*wsw->wsw.min_value,*wsw->wsw.max_value);
-#endif    
+#endif
 #if DEBUG_FLOW
     printf("compute_format_size: end\n");
 #endif
@@ -1150,7 +1334,7 @@ static void compute_format(WswWidget wsw)
     int precision = DEFAULT_FORMAT_PRECISION;
     int nparsed = 0;
     int i,j;
-    
+
 #if DEBUG_FLOW
     printf("compute_format: start\n");
 #endif
@@ -1214,8 +1398,7 @@ static void compute_format(WswWidget wsw)
     if(strcmp(wsw->wsw.format, format_used) != 0) {
 	post_format_warning(wsw, format_used);
     }
-    wsw->wsw.format = format_used;
-    allocstr(&wsw->wsw.format);
+    replace_string(&wsw->wsw.format, format_used, WS_FREE);
 
     compute_format_size(wsw);
     i=j=0;
@@ -1227,8 +1410,7 @@ static void compute_format(WswWidget wsw)
       kbd_format_buffer,
       wsw->wsw.digit_size,
       format_used+i);
-    wsw->wsw.kbd_format = kbd_format_buffer;
-    allocstr(&wsw->wsw.kbd_format);
+    replace_string(&wsw->wsw.kbd_format, kbd_format_buffer, WS_FREE);
 
   /* Allocate and reset the kbd_value */
     if(wsw->wsw.kbd_value != NULL) {
@@ -1246,13 +1428,13 @@ static void compute_format(WswWidget wsw)
           (double *)XtCalloc(wsw->wsw.digit_number, sizeof(double));
     }
     set_increments(wsw);
-    
+
 #if DEBUG_FORMAT
     printf("compute_format: format_used=|%s| kbd_format_buffer=|%s|\n"
       "  kbd_format=|%s| kbd_value=|%s|\n",
       format_used,kbd_format_buffer,
       wsw->wsw.kbd_format,wsw->wsw.kbd_value);
-#endif    
+#endif
 #if DEBUG_FLOW
     printf("compute_format: end\n");
 #endif
@@ -1262,9 +1444,6 @@ static void compute_format(WswWidget wsw)
 static void create_buttons(WswWidget wsw)
 {
     int digit;
-#if TURN_OFF
-    XtTranslations parsedTranslations;
-#endif    
 
 #if DEBUG_FLOW
     printf("create_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
@@ -1279,11 +1458,6 @@ static void create_buttons(WswWidget wsw)
         free_buttons(wsw, True);
     }
 
-#if TURN_OFF
-  /* Parse the translations */
-    parsedTranslations = XtParseTranslationTable(defaultTranslations);
-#endif	    
-
   /* Make new ones */
     wsw->wsw.up_buttons = (Widget *)XtCalloc(wsw->wsw.digit_number,
       sizeof(Widget));
@@ -1295,20 +1469,16 @@ static void create_buttons(WswWidget wsw)
 	if(!wsw->wsw.disable_input) {
 	    XtAddCallback(wsw->wsw.up_buttons[digit], XmNarmCallback,
 	      upButtonArmCallback, (XtPointer)digit);
-	    XtAddCallback(wsw->wsw.up_buttons[digit], XmNdisarmCallback,
-	      upButtonDisarmCallback, (XtPointer)digit);
 	    XtAddCallback(wsw->wsw.down_buttons[digit], XmNarmCallback,
 	      downButtonArmCallback,(XtPointer)digit);
-	    XtAddCallback(wsw->wsw.down_buttons[digit], XmNdisarmCallback,
-	      downButtonDisarmCallback,(XtPointer)digit);
-#if TURN_OFF
-	    XtAugmentTranslations(wsw->wsw.up_buttons[digit],
-	      parsedTranslations);
-	    XtAugmentTranslations(wsw->wsw.down_buttons[digit],
-	      parsedTranslations);
-#endif	    
 	}
     }
+#if DEBUG_FLOW
+    printf("                digit_number=%d up_buttons=%p down_buttons=%p\n",
+      wsw->wsw.digit_number,
+      (void *)wsw->wsw.up_buttons,
+      (void *)wsw->wsw.down_buttons);
+#endif
 
   /* Set the visibility */
     set_button_visibility(wsw);
@@ -1318,13 +1488,14 @@ static void create_buttons(WswWidget wsw)
  * arrays.  Don't specify destroy when the widget is being
  * destroyed. */
 static void free_buttons(WswWidget wsw, Boolean destroy)
-{    
+{
 #if DEBUG_FLOW
-    printf("free_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
+    printf("free_buttons[%s]: digit_number=%d up_buttons=%p down_buttons=%p\n",
+      destroy?"Destroy":"No Destroy",
       wsw->wsw.digit_number,
       (void *)wsw->wsw.up_buttons,
       (void *)wsw->wsw.down_buttons);
-#endif    
+#endif
     if(wsw->wsw.up_buttons != NULL) {
 	if(destroy) {
 	    int digit;
@@ -1347,7 +1518,7 @@ static Widget create_button(WswWidget wsw, Boolean up_flag, int digit)
     char name[100];
 #if SET_ARROW_COLORS
     Arg args[14];                         /* Danger !!! */
-#else    
+#else
     Arg args[12];                         /* Danger !!! */
 #endif
     Cardinal nargs = 0;
@@ -1371,7 +1542,7 @@ static Widget create_button(WswWidget wsw, Boolean up_flag, int digit)
   /* Note that the width is digit_width-1 and the height is
    * digit_width+1 */
     XtSetArg(args[nargs], XmNwidth, wsw->wsw.digit_width - 1); nargs++;
-    XtSetArg(args[nargs], XmNheight, wsw->wsw.digit_width + 1); nargs++;
+    XtSetArg(args[nargs], XmNheight, wsw->wsw.digit_width); nargs++;
     XtSetArg(args[nargs], XmNarrowDirection, direction); nargs++;
     XtSetArg(args[nargs], XmNmarginHeight, 0); nargs++;
     XtSetArg(args[nargs], XmNmarginWidth, 0); nargs++;
@@ -1381,24 +1552,24 @@ static Widget create_button(WswWidget wsw, Boolean up_flag, int digit)
     XtSetArg(args[nargs], XmNhighlightThickness, 1); nargs++;
     XtSetArg(args[nargs], XmNtraversalOn, True); nargs++;
 #if SET_ARROW_COLORS
-#if 1
+#if !DEBUG_CLIP_RECTANGLE
     XtSetArg(args[nargs], XmNforeground,wsw->manager.foreground); nargs++;
     XtSetArg(args[nargs], XmNbackground,wsw->core.background_pixel); nargs++;
 #else
     XtSetArg(args[nargs], XmNforeground,wsw->core.background_pixel); nargs++;
     XtSetArg(args[nargs], XmNbackground,wsw->manager.foreground); nargs++;
-#endif    
-#endif    
-    button = (Widget)XmCreateArrowButton((Widget)wsw, name, args,
+#endif
+#endif
+    button = (Widget)XmCreateArrowButtonGadget((Widget)wsw, name, args,
       nargs);
 #if 0
   /* KE: Manage them in set_button_visibility */
     XtManageChild(button);
-#endif    
+#endif
 #if DEBUG_EXPOSE
     printf("  %2d %s x=%d y=%d\n",
       digit,up_flag?"Up  ":"Down",x,y);
-#endif    
+#endif
     return(button);
 }
 
@@ -1423,14 +1594,14 @@ static void compute_geometry(WswWidget wsw)
 	    reqWidth = DEFAULT_CHAR_WIDTH;
 	    reqHeight = DEFAULT_CHAR_HEIGHT;;
 	} else {
-	    reqWidth = 
+	    reqWidth =
 	    (wsw->core.width - 2*wsw->wsw.margin_width -
 	      2*wsw->manager.shadow_thickness) / wsw->wsw.nb_digit;
 	    reqHeight =
 	    (wsw->core.height - 2*wsw->wsw.margin_height -
 	      2*wsw->manager.shadow_thickness) / 2;
 	}
-	
+
       /* Get a font */
 	if(wsw->wsw.user_font) {
 	    wsw->wsw.font = getFontFromList(XtDisplay(wsw),
@@ -1439,7 +1610,7 @@ static void compute_geometry(WswWidget wsw)
 	    wsw->wsw.font = getFontFromPattern(XtDisplay(wsw),
 	      wsw->wsw.font_pattern, reqWidth, reqHeight, &width, &height);
 	}
-	
+
       /* If there is still no font */
 	if(wsw->wsw.font == NULL) {
 	  /* KE: Check this and implement it */
@@ -1448,7 +1619,7 @@ static void compute_geometry(WswWidget wsw)
 
     /* Make a string using the font with value zero */
       sprintf(zero_string, wsw->wsw.format, 0.);
-      
+
     /* If conformToContent is set, set the core width and height */
       if(wsw->wsw.conform_to_content) {
 	  wsw->core.width = 2 * wsw->wsw.margin_width +
@@ -1460,7 +1631,7 @@ static void compute_geometry(WswWidget wsw)
 	    2 * XTextWidth(wsw->wsw.font, "0", 1)
 	    + wsw->wsw.font->ascent;
       }
-      
+
     /* Compute the rest of the geometry and initialize the graphics */
       compute_inner_geo(wsw);
 
@@ -1480,7 +1651,7 @@ static void compute_inner_geo(WswWidget wsw)
     int imin = wsw->wsw.prefix_size;
     int imax = wsw->wsw.prefix_size + wsw->wsw.digit_size;
     int ipoint = imax - wsw->wsw.point_position - 1;
-    
+
 #if DEBUG_FLOW
     printf("compute_inner_geo: start\n");
 #endif
@@ -1498,7 +1669,7 @@ static void compute_inner_geo(WswWidget wsw)
     if(wsw->wsw.point_position) {
 	zero_string[ipoint] = '.';
     }
-    
+
   /* Calculate the widths */
     wsw->wsw.digit_width = XTextWidth(wsw->wsw.font, "0", 1);
     textWidth = XTextWidth(wsw->wsw.font, zero_string, strlen(zero_string));
@@ -1524,20 +1695,20 @@ static void compute_inner_geo(WswWidget wsw)
     wsw->wsw.digit_y = wsw->wsw.up_button_y + wsw->wsw.digit_width;
     wsw->wsw.string_base_y = wsw->wsw.digit_y
       + wsw->wsw.font->ascent + wsw->wsw.font->descent;
-  /* Note that the button height is digit_width+1 */
-    wsw->wsw.down_button_y = wsw->wsw.string_base_y + wsw->wsw.font->descent - 1;
+  /* Note that the button height is digit_width */
+    wsw->wsw.down_button_y = wsw->wsw.string_base_y + wsw->wsw.font->descent;
 
   /* Keep the arrows in bounds */
     if(wsw->wsw.up_button_y < borderHeight) {
 	wsw->wsw.up_button_y = borderHeight;
     }
-  /* Note that the button height is digit_width+1 */
-    if(wsw->wsw.down_button_y + wsw->wsw.digit_width + 1 + borderHeight >
+  /* Note that the button height is digit_width */
+    if(wsw->wsw.down_button_y + wsw->wsw.digit_width + borderHeight >
       wsw->core.height) {
 	wsw->wsw.down_button_y = wsw->core.height - borderHeight -
-	  wsw->wsw.digit_width - 1;
+	  wsw->wsw.digit_width;
     }
-    
+
 #if DEBUG_FLOW
     printf("  width=%hu borderWidth=%d textWidth=%d xOff=%d digit_width=%d\n"
       "  prefix_x=%hd digit_x=%hd postfix_x=%hd\n",
@@ -1547,7 +1718,7 @@ static void compute_inner_geo(WswWidget wsw)
       "  up_button_y=%hd digit_y=%hd down_button_y=%hd\n",
       wsw->core.height,borderHeight,textHeight,yOff,
       wsw->wsw.up_button_y,wsw->wsw.digit_y,wsw->wsw.down_button_y);
-#endif 
+#endif
 
   /* Recreate buttons at the new positions */
     create_buttons(wsw);
@@ -1578,7 +1749,7 @@ static void initialize_graphics(WswWidget wsw)
       XDefaultDepth(XtDisplay(wsw), DefaultScreen(XtDisplay(wsw))));
     if(!wsw->wsw.pixmap) {
 	XtErrorMsg("badValue", "initialize_graphics", "WheelSwitchError",
-	  "WheelSwitch: Unable to create pixmap", 
+	  "WheelSwitch: Unable to create pixmap",
 	  (String *)NULL, (Cardinal *)NULL);
 	return;
     }
@@ -1588,29 +1759,29 @@ static void initialize_graphics(WswWidget wsw)
       /* Create GC */
         unsigned long valuemask = 0;
         XGCValues val;
-	
+
         wsw->wsw.foreground_GC = XCreateGC(XtDisplay(wsw), XtWindow(wsw),
           valuemask, &val);
     }
 
   /* Remove any mask */
     XSetClipMask(XtDisplay(wsw), wsw->wsw.foreground_GC, None);
-    
+
   /* Draw the background on the pixmap */
     XSetForeground(XtDisplay(wsw), wsw->wsw.foreground_GC,
       wsw->core.background_pixel);
     XFillRectangle(XtDisplay(wsw), wsw->wsw.pixmap,  wsw->wsw.foreground_GC,
       0, 0, wsw->core.width, wsw->core.height);
-    
+
   /* Draw the shadows on the pixmap.  We don't have to manage the
    * shadow GCs. */
     XmeDrawShadows(XtDisplay(wsw),  wsw->wsw.pixmap,
       wsw->manager.top_shadow_GC, wsw->manager.bottom_shadow_GC,
       0, 0, wsw->core.width, wsw->core.height, wsw->manager.shadow_thickness,
       wsw->wsw.shadow_type);
-    
+
     wsw->wsw.GC_inited = True;
-    
+
   /* Set the font, foreground, and background */
     XSetFont(XtDisplay(wsw), wsw->wsw.foreground_GC, wsw->wsw.font->fid);
     XSetBackground(XtDisplay(wsw), wsw->wsw.foreground_GC,
@@ -1651,38 +1822,55 @@ static void set_increments(WswWidget wsw)
     }
 }
 
-/* Truncates tha value to what is displayed by the format */
-static void truncate_value(WswWidget wsw)
+/* Increments the value, checks for in range, and draws it if so. Used
+   with arrow keys and buttons. */
+static Boolean increment_value(WswWidget wsw, Boolean up)
 {
     char value_string[FORMAT_SIZE];     /* Danger: Fixed size */
     char number_format[FORMAT_SIZE];
+    double newValue;
+    int digit = wsw->wsw.selected_digit;
 
-  /* Use the number part of the format */
-    strcpy(number_format,wsw->wsw.format + wsw->wsw.prefix_size);
-    if(wsw->wsw.digit_size > 0) number_format[wsw->wsw.digit_size - 1] = '\0';
-    else number_format[0] = '\0';
-
-    sprintf(value_string, number_format, *(wsw->wsw.value));
-    *(wsw->wsw.value) = atof(value_string);
-
-#if 0    
-    float value = 0.0;
-    int nread = 0;
-    nread=sscanf(value_string, wsw->wsw.format, &value);
-    if(nread != 1) {
-	String params[2];
-	unsigned int num_params = 2;
-	params[0] = value_string;
-	params[1] = wsw->wsw.format;
-	
-	XtAppErrorMsg(XtWidgetToApplicationContext((Widget)wsw),
-	  "wrongParameters", "truncate_value", "WheelSwitchError",
-	  "WheelSwitch: Error truncating value \"%s\" using \"%s\"", 
-	  params, &num_params);
+  /* Increment the current value */
+    newValue = *wsw->wsw.value;
+    if(up) {
+	newValue += wsw->wsw.increments[digit];
     } else {
-	*(wsw->wsw.value) = value;
+	newValue -= wsw->wsw.increments[digit];
     }
-#endif    
+
+  /* Truncate the new value using the number part of the format */
+    strcpy(number_format,wsw->wsw.format + wsw->wsw.prefix_size);
+    number_format[wsw->wsw.format_size] = '\0';
+    sprintf(value_string, number_format, newValue);
+    newValue = atof(value_string);
+
+  /* Do nothing if it is out of range */
+    if((up && newValue > wsw->wsw.format_max_value) ||
+      (!up && newValue < wsw->wsw.format_min_value)) {
+#if DEBUG_BUTTON_REPEAT
+	printf("increment_value: newValue=%g Not used\n",newValue);
+#endif
+#if 0
+	XBell(XtDisplay(wsw),50);
+#endif
+	return False;
+    }
+
+  /* Use it */
+    *wsw->wsw.value = newValue;
+    set_button_visibility(wsw);
+    draw((XtPointer)wsw,NULL);
+#if DEBUG_BUTTON_REPEAT
+    printf("increment_value: newValue=%g\n",newValue);
+#endif
+
+  /* Schedule the callbacks */
+#if CALL_CALLBACKS_EACH_TIME
+    arm_execute_timer(wsw, &timer_original_event);
+#endif
+
+    return True;
 }
 
 /* Calculates the min and max allowable by the format and settable by
@@ -1719,7 +1907,7 @@ static void compute_format_min_max(WswWidget wsw)
 #endif
 }
 
-/* Main drawing routine -- draws the widget */
+/* Draws prefix, suffix, value.  Only draws in the clip_rect. */
 static void draw(XtPointer clientdata, XtIntervalId *id)
 {
     Widget widget = (Widget)clientdata;
@@ -1770,7 +1958,7 @@ static void draw(XtPointer clientdata, XtIntervalId *id)
 
       /* Determine the roundoff to be .1 the smallest increment */
 	if(wsw->wsw.digit_number > 0) roff=.1*wsw->wsw.increments[0];
-	
+
       /* Check if in format range */
 	if(*(wsw->wsw.value) < wsw->wsw.format_max_value + roff &&
 	  *(wsw->wsw.value) > wsw->wsw.format_min_value - roff) {
@@ -1781,14 +1969,14 @@ static void draw(XtPointer clientdata, XtIntervalId *id)
 	      value_string,strlen(value_string),
 	      wsw->wsw.prefix_x,wsw->wsw.string_base_y,
 	      XTextWidth(wsw->wsw.font,value_string,strlen(value_string)));
-#endif	    
+#endif
 	} else {
 	  /* Value is out of format range, use stars */
 	    int i;
 	    int imin = wsw->wsw.prefix_size;
 	    int imax = wsw->wsw.prefix_size + wsw->wsw.digit_size;
 	    int ipoint = imax - wsw->wsw.point_position - 1;
-	    
+
 	  /* Print zero to establish the string */
 	    sprintf(value_string, wsw->wsw.format, 0.0);
 	  /* Place a minus if the value is negative */
@@ -1821,12 +2009,18 @@ static void draw(XtPointer clientdata, XtIntervalId *id)
 #if DEBUG_CLIP_RECTANGLE
     XSetForeground(XtDisplay(wsw), wsw->wsw.foreground_GC,
       WhitePixel(XtDisplay(wsw),DefaultScreen(XtDisplay(wsw))));
-#else    
+#else
     XSetForeground(XtDisplay(wsw), wsw->wsw.foreground_GC,
       wsw->core.background_pixel);
-#endif    
+#endif
+#if 0
     XFillRectangle(XtDisplay(wsw), wsw->wsw.pixmap,  wsw->wsw.foreground_GC,
       0, 0, wsw->core.width, wsw->core.height);
+#else
+    XFillRectangle(XtDisplay(wsw), wsw->wsw.pixmap,  wsw->wsw.foreground_GC,
+      wsw->wsw.clip_rect.x, wsw->wsw.clip_rect.y,
+      wsw->wsw.clip_rect.width, wsw->wsw.clip_rect.height);
+#endif
     XSetForeground(XtDisplay(wsw), wsw->wsw.foreground_GC,
       wsw->manager.foreground);
 
@@ -1853,14 +2047,14 @@ static void draw(XtPointer clientdata, XtIntervalId *id)
       wsw->wsw.string_base_y,
       value_string + wsw->wsw.prefix_size, wsw->wsw.digit_size);
 
-  /* Unset the clip rectangle */
-    XSetClipMask(XtDisplay(wsw), wsw->wsw.foreground_GC, None);
-#endif    
-
   /* Copy the pixmap to the window */
     XCopyArea(XtDisplay(wsw), wsw->wsw.pixmap, XtWindow(wsw),
       wsw->wsw.foreground_GC, 0, 0,
       wsw->core.width, wsw->core.height, 0, 0);
+
+  /* Unset the clip rectangle */
+    XSetClipMask(XtDisplay(wsw), wsw->wsw.foreground_GC, None);
+#endif
 
 #if DEBUG_FLOW
     printf("draw: end\n");
@@ -1900,19 +2094,15 @@ static void set_button_visibility(WswWidget wsw)
                 int i;
                 for(i = digit; i < wsw->wsw.digit_number; i++) {
                     XtUnmanageChild(wsw->wsw.up_buttons[i]);
-#if TURN_ON
                     _XmUnhighlightBorder(wsw->wsw.up_buttons[i]);
-#endif
                 }
                 break;
             } else if(!XtIsManaged(wsw->wsw.up_buttons[digit])) {
                 XtManageChild(wsw->wsw.up_buttons[digit]);
-#if TURN_ON
-                if(wsw->wsw.current_flag) {
+                if(wsw->wsw.has_focus) {
                     _XmHighlightBorder(
 		      wsw->wsw.up_buttons[wsw->wsw.selected_digit]);
                 }
-#endif
             }
         }
       /* Manage depending on whether a decrease in that digit will
@@ -1922,20 +2112,16 @@ static void set_button_visibility(WswWidget wsw)
 	      wsw->wsw.format_min_value - roff) {
                 int i;
                 for(i = digit; i < wsw->wsw.digit_number; i++) {
-#if TURN_OFF
                     _XmUnhighlightBorder(wsw->wsw.down_buttons[i]);
-#endif
                     XtUnmanageChild(wsw->wsw.down_buttons[i]);
                 }
                 break;
             } else if(!XtIsManaged(wsw->wsw.down_buttons[digit])) {
                 XtManageChild(wsw->wsw.down_buttons[digit]);
-#if TURN_OFF
-                if(wsw->wsw.current_flag) {
+                if(wsw->wsw.has_focus) {
 		    _XmHighlightBorder(
 		      wsw->wsw.down_buttons[wsw->wsw.selected_digit]);
 		}
-#endif
             }
         }
     }
@@ -1947,20 +2133,17 @@ static void set_button_visibility(WswWidget wsw)
 static void select_digit(WswWidget wsw, int digit)
 {
 #if DEBUG_TRAVERSAL
-    printf("select_digit: digit=%d selected_digit=%d current_flag=%s\n",
-      digit,wsw->wsw.selected_digit,wsw->wsw.current_flag?"True":"false");
+    printf("select_digit: digit=%d selected_digit=%d has_focus=%s\n",
+      digit,wsw->wsw.selected_digit,wsw->wsw.has_focus?"True":"false");
 #endif
     if(wsw->wsw.selected_digit == digit) return;
-#if TURN_ON
-    if(wsw->wsw.current_flag) {
+    if(wsw->wsw.has_focus) {
         unhighlight_digit(wsw, wsw->wsw.selected_digit);
         highlight_digit(wsw, digit);
     }
-#endif
     wsw->wsw.selected_digit = digit;
 }
 
-#if TURN_ON
 static void highlight_digit(WswWidget wsw, int digit)
 {
 #if DEBUG_TRAVERSAL
@@ -1984,7 +2167,6 @@ static void unhighlight_digit(WswWidget wsw, int digit)
         _XmUnhighlightBorder(wsw->wsw.down_buttons[digit]);
     }
 }
-#endif
 
 static void clear_all_buttons(WswWidget wsw)
 {
@@ -1992,10 +2174,8 @@ static void clear_all_buttons(WswWidget wsw)
     for(i = 0; i < wsw->wsw.digit_number; i++) {
         XtUnmanageChild(wsw->wsw.down_buttons[i]);
         XtUnmanageChild(wsw->wsw.up_buttons[i]);
-#if TURN_OFF
         _XmUnhighlightBorder(wsw->wsw.down_buttons[i]);
         _XmUnhighlightBorder(wsw->wsw.up_buttons[i]);
-#endif
     }
 }
 
@@ -2003,9 +2183,12 @@ static void arm_execute_timer(WswWidget wsw,  XEvent *event)
 {
     static WswCallData call_data;
 
+#if DEBUG_BUTTON_REPEAT
+    printf("arm_execute_timer\n");
+#endif
     call_data.widget = wsw;
     call_data.event = event;
-    if(wsw->wsw.callback_delay != 0) {
+    if(wsw->wsw.callback_delay > 0) {
         if(wsw->wsw.callback_timeout_id != 0)
           XtRemoveTimeOut(wsw->wsw.callback_timeout_id);
         wsw->wsw.callback_timeout_id =
@@ -2021,6 +2204,11 @@ static void executeTimerProc(XtPointer clientdata, XtIntervalId *id)
 {
     WswCallData *call_ev=(WswCallData *)clientdata;
     XmWheelSwitchCallbackStruct call_data;
+
+#if DEBUG_BUTTON_REPEAT
+    printf("executeTimerProc\n");
+#endif
+
     if(call_ev->widget->wsw.callback_timeout_id != 0) {
       /* KE: Is this necessary */
         XtRemoveTimeOut(call_ev->widget->wsw.callback_timeout_id);
@@ -2042,7 +2230,7 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
     WswWidget wsw = (WswWidget)widget;
     char c,*ptr;
     KeySym keysym;
-    
+
   /* Return if it was not a key press */
     if(event->type != KeyPress) return;
   /* Get the values */
@@ -2071,14 +2259,18 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
 	    XBell(XtDisplay(wsw),50);
 	    return;
 	}
+#if DEBUG_BUTTON_REPEAT
+	printf("kbdHandler: arm_execute_timer\n");
+#endif
+      /* Schedule the callbacks */
         arm_execute_timer(wsw, &timer_original_event);
         break;
 
     case XK_Escape:
     case XK_KP_F1: case XK_KP_F2:
     case XK_KP_F3: case XK_KP_F4:
-    case XK_KP_Separator:
       /* Not supposed to be used except for keyboard input */
+      /* XK_KP_F!, etc. are PF1, KP_A, etc. */
 	if(!kbdIsEntering(wsw)) {
 	    XBell(XtDisplay(wsw),50);
 	    return;
@@ -2116,8 +2308,11 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
         break;
 
     case XK_KP_Decimal: case XK_period:
+    case XK_KP_Separator:
       /* Can be used when there is no keyboard input to initiate it */
       /* Return if there is no decimal point allowed */
+      /* Separator is usually comma, may be needed on some Europen
+       * keyboards */
         if(wsw->wsw.point_position == '\0') {
 	    XBell(XtDisplay(wsw),50);
 	    return;
@@ -2188,12 +2383,21 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
 	    }
         }
         break;
-        
+
     case XK_KP_Right: case XK_Right:
     case XK_KP_Left:  case XK_Left:
     case XK_KP_Up:    case XK_Up:
     case XK_KP_Down:  case XK_Down:
       /* Can be used when there is no keyboard input. Don't beep.  */
+	if(kbdIsEntering(wsw)) {
+	    XBell(XtDisplay(wsw),50);
+	    return;
+	}
+	break;
+
+    case XK_Shift_L:  case XK_Shift_R:
+    case XK_Shift_Lock:
+      /* Don't beep for Shift */
 	return;
 
     default:
@@ -2204,22 +2408,23 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
     draw((XtPointer)wsw,NULL);
 }
 
-static void allocstr(char **str)
-{
-    char form[100];     /* Danger: Fixed size */
-    
-    if(*str != NULL){
-        strcpy(form,*str);
-        *str = (char *)XtCalloc(strlen(form)+1,sizeof(char));
-        strcpy(*str,form);
-    }
-}
 
+/* Wrapper around free */
 static void wsFree(XtPointer *ptr)
 {
   if(ptr == NULL || *ptr == NULL) return;
    XtFree(*ptr);
    *ptr = NULL;
+}
+
+/* Used to replace a string parameter without MLKs.  In Initialize and
+ * SetValues use XtNewString by itself, as the old string will be from
+ * the user or static storage, and we don't want to free it. */
+static void replace_string(char **string, char *new, Boolean free)
+{
+    if(!string) return;
+    if(free && *string) XtFree(*string);
+    *string = XtNewString(new);
 }
 
 /* Returns font determined from font_pattern.  Finds the fonts
@@ -2238,7 +2443,7 @@ static XFontStruct *getFontFromPattern(Display *display,
     XFontStruct *font;
     XFontStruct *font_loaded;
     int font_ind=0;
-    
+
 #if DEBUG_FONTLEAK || DEBUG_FLOW
     printf("getFontFromPattern:\n"
       "  width=%hd height=%hd\n"
@@ -2248,13 +2453,13 @@ static XFontStruct *getFontFromPattern(Display *display,
       (void *)cur_font_pattern,(void *)names,
       (void *)fonts,font_count,
       cur_font_pattern?cur_font_pattern:"NULL");
-#endif    
+#endif
     /* Free existing info if the name has changed */
     if(cur_font_pattern != NULL && strcmp(cur_font_pattern, font_pattern)) {
 #if DEBUG_FONTLEAK
 	printf(" Freeing for font_pattern=%s\n",
 	  font_pattern?font_pattern:"NULL");
-#endif	
+#endif
 	XtFree(cur_font_pattern);
 	if(names && fonts) {
 #if DEBUG_FONTLEAK
@@ -2278,16 +2483,16 @@ static XFontStruct *getFontFromPattern(Display *display,
 	if(names == NULL || font_count == 0) {
 	  /* No application context, use XtErrorMsg */
 	    XtErrorMsg("badPattern", "getFontFromPattern", "WheelSwitchError",
-	      "WheelSwitch: String to double conversion takes no arguments", 
+	      "WheelSwitch: String to double conversion takes no arguments",
 	      (String *)NULL, (Cardinal *)NULL);
 	    return(NULL);
 	}
-	cur_font_pattern = XtNewString(font_pattern);
+	replace_string(&cur_font_pattern, font_pattern, WS_FREE);
 	if(cur_font_pattern == NULL) {
 	    String params[1];
 	    unsigned int num_params = 1;
 	    params[0] = font_pattern;
-	    
+
 	  /* No application context, use XtErrorMsg */
 	    XtErrorMsg("badPattern", "getFontFromPattern", "WheelSwitchError",
 	      "WheelSwitch:  error allocating font pattern \"%s\"",
@@ -2315,7 +2520,7 @@ static XFontStruct *getFontFromPattern(Display *display,
       (void *)cur_font_pattern,(void *)names,
       (void *)fonts,font_count,
       cur_font_pattern?cur_font_pattern:"NULL");
-#endif    
+#endif
     }
     /* Search by ascending height until height fits ascent+2*descent */
     font_ind = 0;
@@ -2350,7 +2555,7 @@ static XFontStruct *getFontFromPattern(Display *display,
 #if DEBUG_FONTS
     printf("j=%d\n",j);
 #endif
-    
+
     font_ind = j;
     font = fonts + font_ind;
     *height_return = (Dimension)(font->ascent + 2*font->descent);
@@ -2362,7 +2567,7 @@ static XFontStruct *getFontFromPattern(Display *display,
       "  width=%hu->%hu height=%hu->%hu\n",
       font_ind,font_count,cur_font_pattern,
       width,*width_return,height,*height_return);
-#endif    
+#endif
 #if DEBUG_FONTLEAK
     printf("Ending getFontFromPattern: font_loaded=%p\n",
       (void *)font_loaded);
@@ -2370,10 +2575,12 @@ static XFontStruct *getFontFromPattern(Display *display,
       return(font_loaded);
 }
 
-/* Returns font determined from font_list.  !!!Finds the fonts
- * matching font_pattern, sorts them by ascending height, then finds
- * the one that is just less than height, then finds the first one
- * that is less than width if there is one */
+/* Returns font determined from font_list.  Finds the fonts matching
+ * font_pattern, sorts them by ascending height, then finds the one
+ * that is just less than height, then finds the first one that is
+ * less than width if there is one */
+/* KE: Currently just uses the last one in the list, which is OK for
+ * when there is only one in the list. */
 static XFontStruct *getFontFromList(Display *display,
   XmFontList font_list, Dimension width, Dimension height,
   Dimension *width_return, Dimension *height_return)
@@ -2382,23 +2589,23 @@ static XFontStruct *getFontFromList(Display *display,
     XFontStruct *font = NULL;
     XmFontContext context;
     XmFontListEntry entry;
-#if 0    
+#if 0
     XmStringCharSet charset;
-#endif    
+#endif
     Boolean status;
     int font_count=0;
-    
+
 #if DEBUG_FONTLEAK || DEBUG_FLOW || DEBUG_FONTS
     printf("getFontFromList: font_list=%p\n"
       "  width=%hd height=%hd\n",
       (void *)font_list,width,height);
-#endif    
+#endif
 
     status = XmFontListInitFontContext(&context, font_list);
     if(!status) {
 	XtErrorMsg("wrongParameters","getFontFromList",
 	  "WheelSwitchError",
-	  "WheelSwitch: Cannot handle initialize font context", 
+	  "WheelSwitch: Cannot handle initialize font context",
 	  (String *)NULL, (Cardinal *)NULL);
 	return NULL;
     }
@@ -2420,12 +2627,12 @@ static XFontStruct *getFontFromList(Display *display,
 #if DEBUG_FONTS
 	    printf("  font=%p fid=%p\n",
 	      (void *)font,(void *)font->fid);
-#endif    
-	    
+#endif
+
 	} else {
 	    XtErrorMsg("wrongParameters","getFontFromList",
 	      "WheelSwitchError",
-	      "WheelSwitch: Cannot handle font lists inside font lists", 
+	      "WheelSwitch: Cannot handle font lists inside font lists",
 	      (String *)NULL, (Cardinal *)NULL);
 	}
 
@@ -2433,9 +2640,9 @@ static XFontStruct *getFontFromList(Display *display,
 	font_count++;
 	entry = XmFontListNextEntry(context);
     }
-    
+
     XmFontListFreeFontContext(context);
-    
+
   /* Use the last one for now */
     *height_return = (Dimension)(font->ascent + 2*font->descent);
     *width_return = font->max_bounds.width;
@@ -2453,6 +2660,7 @@ static XFontStruct *getFontFromList(Display *display,
 
 /* Callbacks, timer procs, and event handlers */
 
+/* Called when the arrow button goes down */
 static void upButtonArmCallback(Widget button, XtPointer userdata,
   XtPointer calldata)
 {
@@ -2463,29 +2671,26 @@ static void upButtonArmCallback(Widget button, XtPointer userdata,
 
 #if DEBUG_BUTTON_REPEAT
     printf("upButtonArmCallback\n");
-#endif    
+#endif
 #if DEBUG_TRAVERSAL
     printf("upButtonArmCallback\n");
+#if 0
+    widget = XtParent(button);
+    wsw = (WswWidget)widget;
     printButtonStatus(wsw);
-#endif    
+#endif
+#endif
 
     if(callback_data->event->xany.type == ButtonPress) {
-	widget = XtParent(button); 
+	widget = XtParent(button);
         wsw = (WswWidget)widget;
-#if TURN_OFF
-        if(_XmGetFocusPolicy(widget) == XmEXPLICIT 
+
+        if(_XmGetFocusPolicy(widget) == XmEXPLICIT
           && widget != _XmGetTabGroup(widget)) {
 	    (void)XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
 	}
-#endif
         select_digit(wsw, digit);
-        *wsw->wsw.value += wsw->wsw.increments[digit];
-	truncate_value(wsw);
-        if(*wsw->wsw.value >= wsw->wsw.format_max_value) {
-	    arm_execute_timer(wsw, &timer_original_event);
-	}
-        set_button_visibility(wsw);
-        draw((XtPointer)wsw,NULL);
+	increment_value(wsw,WS_UP);
         wsw->wsw.pending_timeout_id =
 	  XtAppAddTimeOut(XtWidgetToApplicationContext(widget),
 	    (unsigned long)max(470, wsw->wsw.repeat_interval),
@@ -2494,6 +2699,7 @@ static void upButtonArmCallback(Widget button, XtPointer userdata,
     }
 }
 
+/* Called when the arrow button goes down */
 static void downButtonArmCallback(Widget button, XtPointer userdata,
   XtPointer calldata)
 {
@@ -2502,25 +2708,24 @@ static void downButtonArmCallback(Widget button, XtPointer userdata,
     WswWidget wsw;
     Widget widget;
 
+#if DEBUG_TRAVERSAL
+    printf("downButtonArmCallback\n");
+#if 0
+    widget = XtParent(button);
+    wsw = (WswWidget)widget;
+    printButtonStatus(wsw);
+#endif
+#endif
+
     if(callback_data->event->xany.type == ButtonPress) {
-	widget = XtParent(button); 
+	widget = XtParent(button);
         wsw = (WswWidget)widget;
-#if TURN_OFF
-        if(_XmGetFocusPolicy(widget) == XmEXPLICIT 
+        if(_XmGetFocusPolicy(widget) == XmEXPLICIT
           && widget != _XmGetTabGroup(widget)) {
 	    (void)XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
 	}
-#else
-	XmProcessTraversal(button, XmTRAVERSE_CURRENT);
-#endif
         select_digit(wsw, digit);
-        *wsw->wsw.value -= wsw->wsw.increments[digit];
-	truncate_value(wsw);
-        if(*wsw->wsw.value <= wsw->wsw.format_min_value) {
-	    arm_execute_timer(wsw, &timer_original_event);
-	}
-        set_button_visibility(wsw);
-        draw((XtPointer)widget,NULL);
+	increment_value(wsw,WS_DOWN);
         wsw->wsw.pending_timeout_id =
 	  XtAppAddTimeOut(XtWidgetToApplicationContext(widget),
 	    (unsigned long)max(470, wsw->wsw.repeat_interval),
@@ -2529,78 +2734,18 @@ static void downButtonArmCallback(Widget button, XtPointer userdata,
     }
 }
 
-static void upButtonDisarmCallback(Widget button, XtPointer userdata,
-  XtPointer calldata)
-{
-    XmAnyCallbackStruct *callback_data = (XmAnyCallbackStruct *)calldata;
-    WswWidget wsw;
-    Widget widget;
-
-#if DEBUG_BUTTON_REPEAT
-    printf("upButtonDisarmCallback\n");
-#endif    
-
-    if(callback_data->event->xany.type == ButtonRelease) {
-	widget = XtParent(button); 
-        wsw = (WswWidget)widget;
-#if TURN_OFF
-        if(_XmGetFocusPolicy(widget) == XmEXPLICIT 
-          && widget != _XmGetTabGroup(widget)) {
-	    (void)XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
-	}
-#endif
-	if(wsw->wsw.pending_timeout_id != 0) {
-	    XtRemoveTimeOut(wsw->wsw.pending_timeout_id);
-	    wsw->wsw.pending_timeout_id = 0;
-	}
-	arm_execute_timer(wsw, &timer_original_event);
-    }
-}
-
-static void downButtonDisarmCallback(Widget button, XtPointer userdata,
-  XtPointer calldata)
-{
-    XmAnyCallbackStruct *callback_data = (XmAnyCallbackStruct *)calldata;
-    WswWidget wsw;
-    Widget widget;
-
-#if DEBUG_BUTTON_REPEAT
-    printf("downButtonDisarmCallback\n");
-#endif    
-
-    if(callback_data->event->xany.type == ButtonRelease) {
-	widget = XtParent(button); 
-        wsw = (WswWidget)widget;
-#if TURN_OFF
-        if(_XmGetFocusPolicy(widget) == XmEXPLICIT 
-          && widget != _XmGetTabGroup(widget)) {
-	    (void)XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
-	}
-#endif
-	if(wsw->wsw.pending_timeout_id != 0) {
-	    XtRemoveTimeOut(wsw->wsw.pending_timeout_id);
-	    wsw->wsw.pending_timeout_id = 0;
-	}
-	arm_execute_timer(wsw, &timer_original_event);
-    }
-}
-
 /* Timer callbacks */
 
+/* Called at repeat_interval ms when the arrow button or arrow key
+ * stays down */
 static void upButtonTimerProc(XtPointer userdata, XtIntervalId *id)
 {
     WswWidget wsw = (WswWidget)userdata;
 #if DEBUG_BUTTON_REPEAT
     printf("upButtonTimerProc\n");
-#endif    
+#endif
     if(wsw->wsw.pending_timeout_id == *id) {
-        *wsw->wsw.value += wsw->wsw.increments[wsw->wsw.selected_digit];
-	truncate_value(wsw);
-        if(*wsw->wsw.value >= wsw->wsw.format_max_value) {
-	    arm_execute_timer(wsw, &timer_original_event);
-	}
-        set_button_visibility(wsw);
-        draw((XtPointer)wsw,NULL);
+	increment_value(wsw,WS_UP);
         if(XtIsManaged(wsw->wsw.up_buttons[wsw->wsw.selected_digit])) {
             wsw->wsw.pending_timeout_id =
 	      XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)wsw),
@@ -2614,20 +2759,16 @@ static void upButtonTimerProc(XtPointer userdata, XtIntervalId *id)
     }
 }
 
+/* Called at repeat_interval ms when the arrow button or arrow key
+ * stays down */
 static void downButtonTimerProc(XtPointer userdata,  XtIntervalId *id)
 {
     WswWidget wsw = (WswWidget)userdata;
 #if DEBUG_BUTTON_REPEAT
     printf("upButtonTimerProc\n");
-#endif    
+#endif
     if(wsw->wsw.pending_timeout_id == *id) {
-        *wsw->wsw.value -= wsw->wsw.increments[wsw->wsw.selected_digit];
-	truncate_value(wsw);
-        if(*wsw->wsw.value <= wsw->wsw.format_min_value) {
-	    arm_execute_timer(wsw, &timer_original_event);
-	}
-        set_button_visibility(wsw);
-        draw((XtPointer)wsw,NULL);
+	increment_value(wsw,WS_DOWN);
         if(XtIsManaged(wsw->wsw.down_buttons[wsw->wsw.selected_digit])) {
             wsw->wsw.pending_timeout_id =
 	      XtAppAddTimeOut(XtWidgetToApplicationContext((Widget)wsw),
@@ -2641,79 +2782,82 @@ static void downButtonTimerProc(XtPointer userdata,  XtIntervalId *id)
     }
 }
 
+/* Called when the button key goes up (done repeating) */
 static void btn1UpProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
 #if DEBUG_BUTTON_REPEAT
     printf("btn1UpProc\n");
-#endif    
+#endif
     WswWidget wsw = (WswWidget)widget;
 #if DEBUG_TRAVERSAL
     printf("btn1UpProc:\n");
-#if 0    
+#if 0
     printButtonStatus(wsw);
-#endif    
-#endif    
+#endif
+#endif
     if(wsw->wsw.pending_timeout_id != 0) {
         XtRemoveTimeOut(wsw->wsw.pending_timeout_id);
         wsw->wsw.pending_timeout_id = 0;
     }
+  /* Schedule the callbacks */
+#if DEBUG_BUTTON_REPEAT
+    printf("btn1UpProc: arm_execute_timer\n");
+#endif
+#if !CALL_CALLBACKS_EACH_TIME
     arm_execute_timer(wsw, &timer_original_event);
+#endif
 }
 
+/* Called when the button goes down */
 static void btn1DownProc(Widget widget,  XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
+    XmGadget g;
 #if DEBUG_BUTTON_REPEAT
     printf("btn1DownProc\n");
-#endif    
+#endif
 #if DEBUG_TRAVERSAL
     printf("btn1DownProc:\n");
-#if 0    
-    printButtonStatus(wsw);
-#endif    
-#endif
 #if 0
-    XmGadget g;
-    wsw->wsw.current_flag = True;
+    printButtonStatus(wsw);
+#endif
+#endif
+    wsw->wsw.has_focus = True;
     g = (XmGadget)_XmInputInGadget(widget, event->xbutton.x, event->xbutton.y);
     if(g != NULL) {
         _XmDispatchGadgetInput(g, event, XmARM_EVENT);
         wsw->manager.active_child = (Widget)g;
     }
-#else    
-    wsw->wsw.current_flag = True;
-    wsw->manager.active_child = widget;
-#endif
-#if TURN_ON
-    if(_XmGetFocusPolicy(widget) == XmEXPLICIT 
+    if(_XmGetFocusPolicy(widget) == XmEXPLICIT
       && widget != _XmGetTabGroup(widget)) {
 	(void)XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
     }
     if(wsw->wsw.up_buttons != NULL) {
 	wsw->manager.active_child = (Widget)wsw->wsw.up_buttons[0];
     }
-#endif
 }
 
-static void upArrowkeyProc(Widget widget, XEvent *event, String *params,
+
+/* Called when the up arrow key goes down */
+static void upArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw =(WswWidget)widget;
 
+#if DEBUG_BUTTON_REPEAT
+    printf("upArrowKeyProc\n");
+#endif
 #if DEBUG_TRAVERSAL
-    printf("upArrowkeyProc:\n");
+    printf("upArrowKeyProc:\n");
     printButtonStatus(wsw);
-#endif    
+#endif
 
     if(kbdIsEntering(wsw)) return;
   /* Don't do anything if the arrow is not managed */
     if(!XtIsManaged(wsw->wsw.up_buttons[wsw->wsw.selected_digit])) return;
-    *wsw->wsw.value += wsw->wsw.increments[wsw->wsw.selected_digit];
-    truncate_value(wsw);
-    set_button_visibility(wsw);
-    draw((XtPointer)wsw,NULL);
+    increment_value(wsw,WS_UP);
     wsw->wsw.pending_timeout_id =
       XtAppAddTimeOut(XtWidgetToApplicationContext(widget),
 	(unsigned long)max(470, wsw->wsw.repeat_interval),
@@ -2721,23 +2865,24 @@ static void upArrowkeyProc(Widget widget, XEvent *event, String *params,
     timer_original_event = *event;
 }
 
-static void downArrowkeyProc(Widget widget, XEvent *event, String *params,
+/* Called when the down arrow key goes down */
+static void downArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
 
+#if DEBUG_BUTTON_REPEAT
+    printf("downArrowKeyProc\n");
+#endif
 #if DEBUG_TRAVERSAL
-    printf("downArrowkeyProc:\n");
+    printf("downArrowKeyProc:\n");
     printButtonStatus(wsw);
-#endif    
+#endif
 
     if(kbdIsEntering(wsw)) return;
   /* Don't do anything if the arrow is not managed */
     if(!XtIsManaged(wsw->wsw.down_buttons[wsw->wsw.selected_digit])) return;
-    *wsw->wsw.value -= wsw->wsw.increments[wsw->wsw.selected_digit];
-    truncate_value(wsw);
-    set_button_visibility(wsw);
-    draw((XtPointer)wsw,NULL);
+    increment_value(wsw,WS_DOWN);
     wsw->wsw.pending_timeout_id =
       XtAppAddTimeOut(XtWidgetToApplicationContext(widget),
 	(unsigned long)max(470, wsw->wsw.repeat_interval),
@@ -2745,33 +2890,44 @@ static void downArrowkeyProc(Widget widget, XEvent *event, String *params,
     timer_original_event = *event;
 }
 
-static void releaseArrowkeyProc(Widget widget,  XEvent *event, String *params,
+/* Called when any arrow key goes up (done repeating) */
+static void releaseArrowKeyProc(Widget widget,  XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
+#if DEBUG_BUTTON_REPEAT
+    printf("releaseArrowKeyProc\n");
+#endif
 #if DEBUG_TRAVERSAL
-    printf("releaseArrowkeyProc:\n");
-#if 0    
+    printf("releaseArrowKeyProc:\n");
+#if 0
     printButtonStatus(wsw);
-#endif    
-#endif    
+#endif
+#endif
     if(kbdIsEntering(wsw)) return;
     if(wsw->wsw.pending_timeout_id != 0) {
         XtRemoveTimeOut(wsw->wsw.pending_timeout_id);
         wsw->wsw.pending_timeout_id = 0;
     }
+  /* Schedule the callbacks */
+#if DEBUG_BUTTON_REPEAT
+    printf("releaseArrowKeyproc: arm_execute_timer\n");
+#endif
+#if !CALL_CALLBACKS_EACH_TIME
     arm_execute_timer(wsw, &timer_original_event);
+#endif
 }
 
-static void rightArrowkeyProc(Widget widget, XEvent *event, String *params,
+/* Called when the right arrow key goes down */
+static void rightArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
 
 #if DEBUG_TRAVERSAL
-    printf("rightArrowkeyProc:\n");
+    printf("rightArrowKeyProc:\n");
     printButtonStatus(wsw);
-#endif    
+#endif
 
     if(kbdIsEntering(wsw)) return;
     if(wsw->wsw.selected_digit > 0) {
@@ -2779,15 +2935,16 @@ static void rightArrowkeyProc(Widget widget, XEvent *event, String *params,
     }
 }
 
-static void leftArrowkeyProc(Widget widget, XEvent *event, String *params,
+/* Called when the left arrow key goes down */
+static void leftArrowKeyProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
 
 #if DEBUG_TRAVERSAL
-    printf("leftArrowkeyProc:\n");
+    printf("leftArrowKeyProc:\n");
     printButtonStatus(wsw);
-#endif    
+#endif
 
     if(kbdIsEntering(wsw)) return;
     if(wsw->wsw.selected_digit < wsw->wsw.digit_number - 1) {
@@ -2801,13 +2958,13 @@ static void lostFocusProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
-    Boolean newhasfocus = wsw->wsw.current_flag;
+    Boolean newhasfocus = wsw->wsw.has_focus;
 
 #if DEBUG_TRAVERSAL
     printf("lostFocusProc:\n");
     printButtonStatus(wsw);
-#endif    
-    
+#endif
+
   /* Check if it came from SendEvent */
   /* KE: Not sure why SendEvent is important */
     if(event->xfocus.send_event) {
@@ -2815,19 +2972,17 @@ static void lostFocusProc(Widget widget, XEvent *event, String *params,
 	newhasfocus = False;
     }
   /* Check if the focus has changed */
-    if(newhasfocus != wsw->wsw.current_flag) {
-        wsw->wsw.current_flag = newhasfocus;
-#if TURN_ON
+    if(newhasfocus != wsw->wsw.has_focus) {
+        wsw->wsw.has_focus = newhasfocus;
         if(wsw->core.sensitive) {
             unhighlight_digit(wsw, wsw->wsw.selected_digit);
-#if 0	    
+#if 0
 	  /* KE: Bad: Doing this tends to leave the workstation with
 	   * repeat off if the user has repeat on and would override
 	   * the users choice to have it off */
            XAutoRepeatOn(XtDisplay(wsw));
-#endif	    
-        }
 #endif
+        }
       /* Reset any keyboard input */
         if(kbdIsEntering(wsw)) {
 	    kbdReset(wsw);
@@ -2841,12 +2996,12 @@ static void getFocusProc(Widget widget, XEvent *event, String *params,
   Cardinal *num_params)
 {
     WswWidget wsw = (WswWidget)widget;
-    Boolean newhasfocus = wsw->wsw.current_flag;
+    Boolean newhasfocus = wsw->wsw.has_focus;
 
 #if DEBUG_TRAVERSAL
     printf("getFocusProc:\n");
     printButtonStatus(wsw);
-#endif    
+#endif
 
   /* Check if it came from SendEvent */
   /* KE: Not sure why SendEvent is important */
@@ -2855,19 +3010,75 @@ static void getFocusProc(Widget widget, XEvent *event, String *params,
 	newhasfocus = True;
     }
   /* Check if the focus has changed */
-    if(newhasfocus != wsw->wsw.current_flag) {
-        wsw->wsw.current_flag = newhasfocus;
-#if TURN_ON
+    if(newhasfocus != wsw->wsw.has_focus) {
+        wsw->wsw.has_focus = newhasfocus;
         if(wsw->core.sensitive) {
             highlight_digit(wsw, wsw->wsw.selected_digit);
-#if 0	    
+#if 0
 	  /* KE: Bad: Doing this tends to leave the workstation with
 	   * repeat off if the user has repeat on and would override
 	   * the users choice to have it off */
             XAutoRepeatOff(XtDisplay(wsw));
-#endif	    
-        }
 #endif
+        }
+    }
+}
+
+static void enterWindowProc(Widget widget, XEvent *event, String *params,
+  Cardinal *num_params)
+{
+    WswWidget wsw = (WswWidget)widget;
+    Boolean newhasfocus = True;
+
+#if DEBUG_TRAVERSAL
+    printf("enterWindowProc:\n");
+#endif
+
+  /* Only applies to a focus policy of XmPOINTER when
+   * highlight_on_enter is set */
+    if(_XmGetFocusPolicy(wsw) != XmPOINTER || !wsw->wsw.highlight_on_enter ||
+	wsw->wsw.disable_input) {
+	return;
+    }
+
+  /* Hightlight if the focus has changed */
+    if(newhasfocus != wsw->wsw.has_focus) {
+        wsw->wsw.has_focus = newhasfocus;
+        if(wsw->core.sensitive) {
+            highlight_digit(wsw, wsw->wsw.selected_digit);
+        }
+    }
+}
+
+static void leaveWindowProc(Widget widget, XEvent *event, String *params,
+  Cardinal *num_params)
+{
+    WswWidget wsw = (WswWidget)widget;
+    Boolean newhasfocus = False;
+
+#if DEBUG_TRAVERSAL
+    printf("leaveWindowProc:\n");
+#endif
+
+  /* Only applies to a focus policy of XmPOINTER when
+   * highlight_on_enter is set */
+    if(_XmGetFocusPolicy(wsw) != XmPOINTER || !wsw->wsw.highlight_on_enter ||
+	wsw->wsw.disable_input) {
+	return;
+    }
+
+  /* Unhightlight if the focus has changed */
+    if(newhasfocus != wsw->wsw.has_focus) {
+        wsw->wsw.has_focus = newhasfocus;
+        if(wsw->core.sensitive) {
+            unhighlight_digit(wsw, wsw->wsw.selected_digit);
+	  /* Reset any keyboard input */
+	    if(kbdIsEntering(wsw)) {
+		kbdReset(wsw);
+		set_button_visibility(wsw);
+		draw((XtPointer)wsw,NULL);
+	    }
+	}
     }
 }
 
@@ -2915,7 +3126,7 @@ void printButtonStatus(WswWidget wsw)
     int digit;
     Widget button = NULL;
     Widget widget = (Widget)wsw;
-    
+
     printf("Button Status: wsw=%p\n",(void *)wsw);
     if(wsw->wsw.up_buttons == NULL) {
 	printf(" No buttons\n");
@@ -2964,8 +3175,8 @@ void printButtonStatus(WswWidget wsw)
 	printf("\n");
 	first=0;
     }
-#endif    
-    
+#endif
+
     printf("  selected_digit=%s(%p) %s(%p)\n"
       "  FocusWidget=%s(%p) selected_digit=%d digit_number=%d\n",
       XtName(wsw->wsw.up_buttons[wsw->wsw.selected_digit]),
@@ -2983,7 +3194,7 @@ void printButtonStatus(WswWidget wsw)
       wsw->manager.traversal_on?"True":"False",
       wsw->manager.navigation_type==XmNONE?"XmNone":
       wsw->manager.navigation_type==XmTAB_GROUP?"XmTAB_GROUP":"Unknown");
-    
+
     for(digit = 0; digit < wsw->wsw.digit_number; digit++) {
 	button = wsw->wsw.up_buttons[digit];
 	printf(" %2d %p Up   %-9s %-7s TabGroup=%p Parent=%p\n",
