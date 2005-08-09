@@ -15,7 +15,8 @@
 
 /* Note that there are separate WIN32 and UNIX versions */
 
-#define DEBUG 0
+#define DEBUG_EXEC 0
+#define DEBUG_FIND 0
 
 #ifndef WIN32
 /*************************************************************************/
@@ -35,6 +36,12 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xmu/WinUtil.h>
+
+/* Set this to 1 to use the old code that worked with Netscape
+ * 4. Setting it to 0 seems to work for Netscape 7 and also for
+ * Netscape 4.  Not all combinations of Netscape and platform have
+ * been checked.  */
+#define NETSCAPE4 0
 
 #ifndef NETSCAPEPATH
 #define NETSCAPEPATH "netscape"
@@ -82,6 +89,12 @@ int callBrowser(char *url, char *bookmark)
 	}
 	return 3;
     }
+  /* Get NETSCAPEPATH if it exists */
+    envstring=getenv("NETSCAPEPATH");
+#if DEBUG_EXEC
+    printf("NETSCAPEPATH=%s (%p)\n",
+      envstring?envstring:"Not Found",envstring);
+#endif
   /* Set handler to ignore possible BadWindow error */
   /*   (Would prefer a routine that tells if the window is defined) */
     oldhandler=XSetErrorHandler(ignoreXError);
@@ -94,55 +107,59 @@ int callBrowser(char *url, char *bookmark)
 	netscapew=findNetscapeWindow();
       /* If no window found, exec Netscape */
 	if(!netscapew) {
-	    envstring=getenv("NETSCAPEPATH");
-	    if(!envstring) {
-#ifndef VMS
-		sprintf(command,"%s -install '%s%s' &",NETSCAPEPATH,url,bookmark);
+#if NETSCAPE4
+# ifndef VMS
+	    sprintf(command,"%s -install '%s%s' &",
+	      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# else
+	    sprintf(command,"%s -install \"%s%s\"",
+	      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# endif
 #else
-		sprintf(command,"%s -install \"%s%s\"",NETSCAPEPATH,url,bookmark);
+# ifndef VMS
+	    sprintf(command,"%s '%s%s' &",
+	      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# else
+	    sprintf(command,"%s \"%s%s\"",
+	      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# endif
 #endif
-	    }
-	    else {
-		sprintf(command,"%s -install '%s%s' &",envstring,url,bookmark);
-	    }
-#if DEBUG
-	    printf("execute(before): cmd=%s\n",command);
+#if DEBUG_EXEC
+	    printf("execute(no window before): cmd=%s\n",command);
 #endif
 	    status=execute(command);
-#if DEBUG
-	    printf("execute(after): cmd=%s status=%d\n",command,status);
+#if DEBUG_EXEC
+	    printf("execute(no window after): cmd=%s status=%d\n",command,status);
 #endif
 	    return 1;
 	}
     }
-
+    
   /* Netscape window is valid, send url via -remote */
-  /*   (Use -id for speed) */
-    envstring=getenv("NETSCAPEPATH");
-    if(!envstring) {
-#ifndef VMS
-	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
-	  NETSCAPEPATH,(unsigned int)netscapew,url,bookmark);
+#if NETSCAPE4
+# ifndef VMS
+    sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
+      envstring?envstring:NETSCAPEPATH,(unsigned int)netscapew,url,bookmark);
+# else
+    sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\"",
+      envstring?envstring:NETSCAPEPATH,netscapew,url,bookmark);
+# endif
 #else
-        sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\"",
-	  NETSCAPEPATH,netscapew,url,bookmark);
+# ifndef VMS
+    sprintf(command,"%s -remote 'openURL(%s%s)' &",
+      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# else
+    sprintf(command,"%s -remote \"openURL(%s%s)\"",
+      envstring?envstring:NETSCAPEPATH,url,bookmark);
+# endif
 #endif
-    }
-    else {
-#ifndef VMS
-	sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
-	  envstring,(unsigned int)netscapew,url,bookmark);
-#else
-	sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\" &",
-	  envstring,netscapew,url,bookmark);
-#endif
-    }
-#if DEBUG
-    printf("execute(before): cmd=%s\n",command);
+
+#if DEBUG_EXEC
+    printf("execute(found window before): cmd=%s\n",command);
 #endif
     status=execute(command);
-#if DEBUG
-    printf("execute(after): cmd=%s status=%d\n",command,status);
+#if DEBUG_EXEC
+    printf("execute(found window after): cmd=%s status=%d\n",command,status);
 #endif
 
   /* Raise the window */
@@ -171,7 +188,7 @@ static Window checkNetscapeWindow(Window w)
       &typeatom,&format,&nitems,&bytesafter,&version);
   /* If the version property exists, it is the Netscape window */
     if(version && status == Success) wfound=w;
-#if DEBUG
+#if DEBUG_FIND
     printf("XGetWindowProperty: status=%d version=%d w=%x wfound=%x\n",
       status,version,w,wfound);
 #endif
@@ -230,7 +247,7 @@ static Window findNetscapeWindow(void)
     for(i=nchildren-1; i >= 0; i--) {
 	w=XmuClientWindow(display,children[i]);
       /* Check if this is the Netscape window */
-#if DEBUG
+#if DEBUG_FIND
 	printf("Child %d ",i);
 #endif
 	wfound=checkNetscapeWindow(w);
@@ -242,7 +259,7 @@ static Window findNetscapeWindow(void)
 /**************************** ignoreXError *******************************/
 static int ignoreXError(Display *display, XErrorEvent *xev)
 {
-#if DEBUG
+#if DEBUG_FIND
     printf("In ignoreXError\n");
 #endif
     return 0;

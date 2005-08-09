@@ -16,19 +16,20 @@
 */
 
 #define DEBUG_STATISTICS 0
-#define DEBUG_ERRORHANDLER 1
+#define DEBUG_ERRORHANDLER 0
 
 #define MAX_ERRORS 25
 
 #define TIME_STRING_MAX 81
 #define EARLY_MESSAGE_SIZE 2048
 
-#define ERR_MSG_RAISE_BTN 0
-#define ERR_MSG_CLOSE_BTN 1
-#define ERR_MSG_CLEAR_BTN 2
-#define ERR_MSG_PRINT_BTN 3
-#define ERR_MSG_SEND_BTN 4
-#define ERR_MSG_HELP_BTN 5
+#define ERR_MSG_RAISE_BTN      0
+#define ERR_MSG_CLOSE_BTN      1
+#define ERR_MSG_CLEAR_BTN      2
+#define ERR_MSG_PRINT_BTN      3
+#define ERR_MSG_MAINWINDOW_BTN 4
+#define ERR_MSG_SEND_BTN       5
+#define ERR_MSG_HELP_BTN       6
 
 #define CASTUDY_INITIAL_UPDATE (XtPointer)1
 #define CASTUDY_REDRAW_ONLY    (XtPointer)2
@@ -132,7 +133,18 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 	    timeStampStr[TIME_STRING_MAX-1]='0';
 	    XmTextInsert(errMsgText, curpos, timeStampStr);
 	    curpos+=strlen(timeStampStr);
+	    sprintf(timeStampStr,"MEDM PID: %d Window ID: 0x%x",
+	      getpid(),(unsigned int)XtWindow(mainShell));
+	    timeStampStr[TIME_STRING_MAX-1]='0';
+	    XmTextInsert(errMsgText, curpos, timeStampStr);
+	    curpos+=strlen(timeStampStr);
 	    XmTextSetInsertionPosition(errMsgText, curpos);
+	}
+	break;
+    case ERR_MSG_MAINWINDOW_BTN:
+	{
+	  /* KE: This appears to work and deiconify if iconic */
+	    XMapRaised(display, XtWindow(mainShell));
 	}
 	break;
     case ERR_MSG_PRINT_BTN:
@@ -334,7 +346,7 @@ void errMsgDlgCreateDlg(int raise)
     actionArea = XtVaCreateWidget("actionArea",
       xmFormWidgetClass, pane,
       XmNshadowThickness, 0,
-      XmNfractionBase, 11,
+      XmNfractionBase, 67,
       XmNskipAdjust, True,
       NULL);
 
@@ -345,7 +357,7 @@ void errMsgDlgCreateDlg(int raise)
       XmNleftAttachment,   XmATTACH_POSITION,
       XmNleftPosition,     1,
       XmNrightAttachment,  XmATTACH_POSITION,
-      XmNrightPosition,    2,
+      XmNrightPosition,    11,
 /*
   XmNshowAsDefault,    True,
   XmNdefaultButtonShadowThickness, 1,
@@ -361,21 +373,33 @@ void errMsgDlgCreateDlg(int raise)
       XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
       XmNbottomWidget,     closeButton,
       XmNleftAttachment,   XmATTACH_POSITION,
-      XmNleftPosition,     3,
+      XmNleftPosition,     12,
       XmNrightAttachment,  XmATTACH_POSITION,
-      XmNrightPosition,    4,
+      XmNrightPosition,    22,
       NULL);
     XtAddCallback(clearButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_CLEAR_BTN);
+
+    printButton = XtVaCreateManagedWidget("Main Window",
+      xmPushButtonWidgetClass, actionArea,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     23,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    33,
+      NULL);
+    XtAddCallback(printButton,XmNactivateCallback,errMsgDlgCb,
+      (XtPointer)ERR_MSG_MAINWINDOW_BTN);
 
     printButton = XtVaCreateManagedWidget("Print",
       xmPushButtonWidgetClass, actionArea,
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
       XmNleftAttachment,   XmATTACH_POSITION,
-      XmNleftPosition,     5,
+      XmNleftPosition,     34,
       XmNrightAttachment,  XmATTACH_POSITION,
-      XmNrightPosition,    6,
+      XmNrightPosition,    44,
       NULL);
     XtAddCallback(printButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_PRINT_BTN);
@@ -385,9 +409,9 @@ void errMsgDlgCreateDlg(int raise)
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
       XmNleftAttachment,   XmATTACH_POSITION,
-      XmNleftPosition,     7,
+      XmNleftPosition,     45,
       XmNrightAttachment,  XmATTACH_POSITION,
-      XmNrightPosition,    8,
+      XmNrightPosition,    55,
       NULL);
 #ifdef WIN32
     XtSetSensitive(sendButton,False);
@@ -401,9 +425,9 @@ void errMsgDlgCreateDlg(int raise)
       XmNtopAttachment,    XmATTACH_FORM,
       XmNbottomAttachment, XmATTACH_FORM,
       XmNleftAttachment,   XmATTACH_POSITION,
-      XmNleftPosition,     9,
+      XmNleftPosition,     56,
       XmNrightAttachment,  XmATTACH_POSITION,
-      XmNrightPosition,    10,
+      XmNrightPosition,    66,
       NULL);
     XtAddCallback(helpButton,XmNactivateCallback,errMsgDlgCb,
       (XtPointer)ERR_MSG_HELP_BTN);
@@ -425,6 +449,11 @@ void errMsgDlgCreateDlg(int raise)
 	tblock = localtime(&now);
 	strftime(timeStampStr,TIME_STRING_MAX,
 	  "Message Log started at "STRFTIME_FORMAT"\n",tblock);
+	timeStampStr[TIME_STRING_MAX-1]='0';
+	XmTextInsert(errMsgText, curpos, timeStampStr);
+	curpos+=strlen(timeStampStr);
+	sprintf(timeStampStr,"MEDM PID: %d Window ID: 0x%x",
+	  getpid(),(unsigned int)XtWindow(mainShell));
 	timeStampStr[TIME_STRING_MAX-1]='0';
 	XmTextInsert(errMsgText, curpos, timeStampStr);
 	curpos+=strlen(timeStampStr);

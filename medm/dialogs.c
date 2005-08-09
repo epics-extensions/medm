@@ -1283,6 +1283,12 @@ void popupDisplayListDlg(void)
     if(displayListS) {
 	refreshDisplayListDlg();
 	XtSetSensitive(displayListS, True);
+      /* Make sure it comes up on the current workspace */
+      /* KE: This appears to work and deiconify if iconic */
+	if(XtIsRealized(displayListS)) {
+	    XMapRaised(display, XtWindow(displayListS));
+	}
+      /* Pop it up */
 	XtPopup(displayListS, XtGrabNone);
     }
 }

@@ -47,7 +47,7 @@
 #define DEFAULT_CHAR_WIDTH 8;
 #define DEFAULT_CHAR_HEIGHT 16;
 
-/* The arrow button inherit the MEDM colors on some systems (Linux),
+/* The arrow buttons inherit the MEDM colors on some systems (Linux),
  * not the WheelSwitch colors.  Explicitly set the colors.  Should not
  * be necessary */
 #define SET_ARROW_COLORS 1

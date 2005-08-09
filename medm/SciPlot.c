@@ -29,7 +29,6 @@
 #define DEBUG_SCIPLOT_AXIS 0
 #define DEBUG_SCIPLOT_ALLOC 0
 #define DEBUG_SCIPLOT_MLK 0
-#define DEBUG_SCIPLOT_MLK1 0
 
 /* KE: Use SCIPLOT_EPS to avoid roundoff in floor and ceil */
 #define SCIPLOT_EPS .0001
@@ -5144,9 +5143,6 @@ SciPlotUpdate (Widget wi)
   SciPlotWidget w;
 
   if (!XtIsSciPlot(wi)) {
-#if DEBUG_SCIPLOT_MLK1
-    SciPlotPrintf("SciPlotUpdate: !XtIsSciPlot(wi) wi=%p\n",wi);
-#endif
     return;
   }
 
