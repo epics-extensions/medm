@@ -15,6 +15,8 @@
  *****************************************************************************
 */
 
+#define DEBUG_SIZE 1
+
 #include "medm.h"
 
 /* Function Prototypes */
@@ -114,22 +116,30 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	XtSetArg(args[n],XtNy,(Position)dlByte->object.y); n++;
 	XtSetArg(args[n],XtNwidth,(Dimension)dlByte->object.width); n++;
 	XtSetArg(args[n],XtNheight,(Dimension)dlByte->object.height); n++;
+	XtSetArg(args[n],XtNborderWidth, 0); n++;
+
 	XtSetArg(args[n],XcNdataType,XcLval); n++;
 
       /****** note that this is orientation for the Byte */
 	if(dlByte->direction == RIGHT) {
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	} else if(dlByte->direction == UP) {
+	  /* Override */
+	    medmPrintf(1,"\nexecuteDlByte: "
+	      "Direction=\"down\" is not supported for Byte, using \"down\".\n"
+	      "  Check that this is what you want.\n"
+	      "  \"Start Bit\" is at the top and \"End Bit\" is at the bottom.");
+	    dlByte->direction = DOWN;
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
 	} else if(dlByte->direction == LEFT) {
 	  /* Override */
 	    medmPrintf(1,"\nexecuteDlByte: "
-	      "Direction=\"left\" is not supported for Byte\n");
+	      "Direction=\"left\" is not supported for Byte, using \"right.\n\""
+	      "  Check that this is what you want.\n"
+	      "  \"Start Bit\" is at the left and \"End Bit\" is at the right.");
+	    dlByte->direction = RIGHT;
 	    XtSetArg(args[n],XcNorient,XcHoriz); n++;
 	} else if(dlByte->direction == DOWN) {
-	  /* Override */
-	    medmPrintf(1,"\nexecuteDlByte: "
-	      "Direction=\"down\" is not supported for Byte\n");
 	    XtSetArg(args[n],XcNorient,XcVert); n++;
 	}
 	XtSetArg(args[n],XcNsBit,dlByte->sbit); n++;

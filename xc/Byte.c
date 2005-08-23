@@ -15,6 +15,8 @@
  * Modified: 10 Apr 98                                                   *
  * Mods    : 1.0 Original                                                *
  *************************************************************************/
+#define DEBUG_SIZE 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -242,12 +244,11 @@ static void Resize(Widget w)
 }
 
 static void Redisplay(Widget w, XEvent *event, Region region)
-  /*************************************************************************
- * Redisplay : This function is the Byte's Expose method.  It redraws    *
- *   the Byte's 3D rectangle background, Value Box, label, Bar           *
- *   indicator, and the Scale.  All drawing takes place within the       *
- *   widget's window (no need for an off-screen pixmap).                 *
- *************************************************************************/
+/***********************************************************************
+ * Redisplay : This function is the Byte's Expose method.  It redraws  *
+ *   the Byte.  All drawing takes place within the widget's window     *
+ *   (no need for an off-screen pixmap).                               *
+ ***********************************************************************/
 {
     ByteWidget wb = (ByteWidget)w;
 
@@ -260,7 +261,7 @@ static void Redisplay(Widget w, XEvent *event, Region region)
     DPRINTF(("Byte: executing Redisplay\n"));
   /* printf("BY: executing Redisplay1\n"); */
 
-  /****** Draw the new values of Bar indicator and the value string */
+  /****** Draw the new values of the Byte */
     Draw_display(w, XtDisplay(w), XtWindow(w), wb->control.gc);
     DPRINTF(("Byte: done Redisplay\n"));
 }
@@ -476,102 +477,120 @@ void XcBYUpdateByteForeground(Widget w, Pixel pixel)
 static void Draw_display(Widget w, Display *display,
   Drawable drawable, GC gc)
   /*************************************************************************
-   * Draw Display: This function redraws the Bar indicator and the value   *
-   *   string in the Value Box.                                            *
+   * Draw Display: This function redraws the Byte.                         *
    *************************************************************************/
+  /* KE: XtNborderWidth is in core and core will draw a border
+   positioned at x,y with width = core->width+2*borderWidth and height
+   = core->height+2*borderWidth.  This means the actual widget size is
+   different from the core size, causing problems in MEDM.  So we draw
+   the border ourselves, rather than using borderWidth.
+   XtNborderWidth should be set to 0. (Its default is 1.)  The lines
+   in Byte are always 1 pixel, independent of borderWidth. */
 {
     ByteWidget wb = (ByteWidget)w;
-    int  back_fg = 0, dec_val = 0, i, j, segn;
-    float seg;
+    Boolean reverse;
+    int  iVal, i, j, nSeg, iPos, iBit, isSet;
+    double delta;
+    int x1, y1, x2, y2, i1, i2, iDelta;
+    unsigned int width, height;
 
   /* printf("BY: Draw display2\n"); */
-
-  /****** Draw the Byte indicator, fill the Bar with its background color */
-    XSetForeground(display, gc, wb->byte.byte_background);
-    XFillRectangle(display, drawable, gc, wb->byte.face.x, wb->byte.face.y,
-      wb->byte.face.width, wb->byte.face.height);
-    segn = wb->byte.ebit - wb->byte.sbit;
-    if (segn < 0) back_fg = 1;
-    segn = abs(segn) + 1;
-#if 0
-    dec_val = (int)wb->value.val.fval;
-#else
-  /* KE: New way */
-    if ((wb->value.datatype == XcLval) || (wb->value.datatype == XcHval)) {
-	dec_val = wb->value.val.lval;
-    } else if (wb->value.datatype == XcFval) {
-	dec_val = (int)wb->value.val.fval;
-    }
+#if DEBUG_SIZE
+    printf("Draw_display: x=%d y=%d width=%u height=%u\n"
+      "  Face: x=%d y=%d width=%u height=%u\n",
+      wb->core.x,wb->core.y,wb->core.width,wb->core.height,
+      wb->byte.face.x,wb->byte.face.y,
+      wb->byte.face.width,wb->byte.face.height);
 #endif
-    XSetForeground(display, gc, XBlackPixel(display, 0));
 
-  /****** Hi->Low Byte */
-    if (back_fg) {
-      /****** Vertical hi->low byte */
-	if (wb->byte.orient == XcVert) {
-	    seg = ((float)wb->byte.face.height / segn);
-	    for (i=wb->byte.ebit; i < wb->byte.sbit+1; i++) {
-		j = (int)(seg * (float)(wb->byte.sbit - i));
-		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
-		    XSetForeground(display, gc, wb->byte.byte_foreground);
-		    XFillRectangle(display, drawable, gc, wb->byte.face.x, j,
-		      wb->byte.face.x + wb->byte.face.width, ((int)seg));
-		    XSetForeground(display, gc, XBlackPixel(display, 0));
-		}
-		if (i < wb->byte.sbit)
-		  XDrawLine(display, drawable, gc, wb->byte.face.x, j,
-		    wb->byte.face.x + wb->byte.face.width, j);
-	    }
-	} else {
-	  /****** Horizontal hi->low byte */
-	    seg = ((float)(wb->byte.face.width + 2) / segn);
-	    for (i=wb->byte.ebit; i < wb->byte.sbit+1; i++) {
-		j = wb->byte.face.width - (int)(seg * (float)(i - wb->byte.ebit))
-		  - (int)(seg + 1.0);
-		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
-		    XSetForeground(display, gc, wb->byte.byte_foreground);
-		    XFillRectangle(display, drawable, gc, j+1, wb->byte.face.y,
-		      (int)seg, wb->byte.face.height);
-		    XSetForeground(display, gc, XBlackPixel(display, 0));
-		}
-		XDrawLine(display, drawable, gc, j+1, wb->byte.face.y,
-		  j+1, wb->byte.face.height);
-	    }
-	}
-
-      /****** Lowb->Hi Byte */
+    
+  /* Define some parameters */
+    width = wb->byte.face.width;
+    height = wb->byte.face.height;
+    x1 = wb->byte.face.x + 1;
+    y1 = wb->byte.face.y + 1;
+    x2 = width-1;
+    y2 = height-1;
+    if(wb->byte.ebit > wb->byte.sbit) {
+	reverse = True;
+	nSeg = wb->byte.ebit - wb->byte.sbit +1;
     } else {
-      /****** Vertical lowb->hi byte */
-	if (wb->byte.orient == XcVert) {
-	    seg = ((float)wb->byte.face.height / segn);
-	    for (i=wb->byte.sbit; i < wb->byte.ebit+1; i++) {
-		j = (int)(seg * (float)(i - wb->byte.sbit));
-		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
-		    XSetForeground(display, gc, wb->byte.byte_foreground);
-		    XFillRectangle(display, drawable, gc, wb->byte.face.x, j,
-		      wb->byte.face.x + wb->byte.face.width, (int)seg);
-		    XSetForeground(display, gc, XBlackPixel(display, 0));
-		}
-		XDrawLine(display, drawable, gc, wb->byte.face.x, j-1,
-		  wb->byte.face.x + wb->byte.face.width, j-1);
+	reverse = False;
+	nSeg = wb->byte.sbit - wb->byte.ebit +1;
+    }
+
+  /* Check if large enough to be meaningful */
+    if(wb->byte.orient == XcHoriz && (width <= nSeg + 1 || height <= 3) ||
+      (wb->byte.orient == XcVert && (height <= nSeg + 1 || width <= 3))) {
+      /* Only enough room for the lines, fill with black and return */
+	XSetForeground(display, gc, XBlackPixel(display, 0));
+	XFillRectangle(display, drawable, gc, x1, y1, width, height);
+	return;
+    }
+    
+  /* Fill the background */
+    XSetForeground(display, gc, wb->byte.byte_background);
+    XFillRectangle(display, drawable, gc, x1, y1, width, height);
+
+    /* Get the value as an integer */
+    if ((wb->value.datatype == XcLval) || (wb->value.datatype == XcHval)) {
+	iVal = wb->value.val.lval;
+    } else if (wb->value.datatype == XcFval) {
+	iVal = (int)wb->value.val.fval;
+    }
+
+  /* Draw the segments */
+    if (wb->byte.orient == XcVert) {
+      /* Vertical */
+	i1 = 0;
+	delta = (double)(height-1)/((double)nSeg);
+	for(i=0; i < nSeg; i++) {
+	    i2 = (int)((i + 1) * delta + .5);
+	    if(i2 > height) i2 = height;
+	  /* Draw the foreground color if the bit is 1 */
+	    if(reverse) iBit = wb->byte.sbit + i;
+	    else iBit = wb->byte.sbit - i;
+	    isSet = iVal & (1<<iBit);
+	    iDelta = i2 - i1 - 1;
+	    if(isSet && iDelta > 0) {
+		XSetForeground(display, gc, wb->byte.byte_foreground);
+		XFillRectangle(display, drawable, gc, x1, i1+1, width-2, iDelta);
 	    }
-	} else {
-	  /****** Horizontal lowb->hi byte */
-	    seg = ((float)(wb->byte.face.width + 2) / segn);
-	    for (i=wb->byte.sbit; i < wb->byte.ebit+1; i++) {
-		j = (int)(seg * (float)(i - wb->byte.sbit));
-		if ((dec_val) & ((unsigned)(pow(2.0, (double)i)))) {
-		    XSetForeground(display, gc, wb->byte.byte_foreground);
-		    XFillRectangle(display, drawable, gc, j, wb->byte.face.y,
-		      (int)seg, wb->byte.face.height);
-		    XSetForeground(display, gc, XBlackPixel(display, 0));
-		}
-	      /****** Draw bit separator lines */
-		XDrawLine(display, drawable, gc, j-1, wb->byte.face.y,
-		  j-1, wb->byte.face.height);
+	  /* Draw the line at the end of the segment */
+	    if(i < nSeg - 1) {
+		XSetForeground(display, gc, XBlackPixel(display, 0));
+		XDrawLine(display, drawable, gc, x1, i2, x2, i2);
 	    }
+	    i1 = i2;
+	}
+    } else {
+      /* Horizontal */
+	i1 = 0;
+	delta = (double)(width-1)/((double)nSeg);
+	for(i=0; i < nSeg; i++) {
+	    i2 = (int)((i + 1) * delta + .5);
+	    if(i2 > width) i2 = width;
+	  /* Draw the foreground color if the bit is 1 */
+	    if(reverse) iBit = wb->byte.sbit + i;
+	    else iBit = wb->byte.sbit - i;
+	    isSet = iVal & (1<<iBit);
+	    iDelta = i2 - i1 - 1;
+	    if(isSet && iDelta > 0) {
+		XSetForeground(display, gc, wb->byte.byte_foreground);
+		XFillRectangle(display, drawable, gc, i1+1, y1, iDelta, height-2);
+	    }
+	  /* Draw the line at the end of the segment */
+	    if(i < nSeg - 1) {
+		XSetForeground(display, gc, XBlackPixel(display, 0));
+		XDrawLine(display, drawable, gc, i2, y1, i2, y2);
+	    }
+	    i1 = i2;
 	}
     }
+    
+  /* Draw the border */
+    XSetForeground(display, gc, XBlackPixel(display, 0));
+    XDrawRectangle(display, drawable, gc, 0, 0, x2, y2);
 }
 
 #if 0

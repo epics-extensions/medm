@@ -900,6 +900,10 @@ void medmCreateCAStudyDlg() {
 	  XmNdeleteResponse, XmDO_NOTHING,
 	  NULL);
 
+      /* Make the window manager close button do same as Close button */
+	XmAddWMProtocolCallback(caStudyS,WM_DELETE_WINDOW,
+	  caStudyDlgCloseButtonCb, NULL);
+
 	pane = XtVaCreateWidget("panel",
 	  xmPanedWindowWidgetClass, caStudyS,
 	  XmNsashWidth, 1,
