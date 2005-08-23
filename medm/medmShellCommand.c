@@ -162,7 +162,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       displayInfo->colormap[dlShellCommand->clr]);
     XtSetArg(args[1],XmNbackground,(Pixel)
       displayInfo->colormap[dlShellCommand->bclr]);
-    XtSetArg(args[2],XmNhighlightThickness,1);
+    XtSetArg(args[2],XmNhighlightThickness,0);
     XtSetArg(args[3],XmNwidth,dlShellCommand->object.width);
     XtSetArg(args[4],XmNheight,dlShellCommand->object.height);
     XtSetArg(args[5],XmNmarginHeight,0);
@@ -172,7 +172,6 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[9],XmNspacing,0);
     XtSetArg(args[10],XmNx,(Position)dlShellCommand->object.x);
     XtSetArg(args[11],XmNy,(Position)dlShellCommand->object.y);
-    XtSetArg(args[12],XmNhighlightOnEnter,TRUE);
     localMenuBar =
       XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",args,13);
     dlElement->widget = localMenuBar;
@@ -208,7 +207,6 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[8],XmNlabelPixmap,shellCommandPixmap);
     XtSetArg(args[9],XmNlabelType,XmPIXMAP);
     XtSetArg(args[10],XmNsubMenuId,shellCommandPulldownMenu);
-    XtSetArg(args[11],XmNhighlightOnEnter,TRUE);
     widget = XtCreateManagedWidget("shellCommandMenuLabel",
       xmCascadeButtonGadgetClass,
       localMenuBar, args, 12);

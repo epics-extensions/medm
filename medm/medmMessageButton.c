@@ -90,8 +90,7 @@ Widget createPushButton(Widget parent,
     XtSetArg(args[n],XmNheight,(Dimension) po->height); n++;
     XtSetArg(args[n],XmNforeground,fg); n++;
     XtSetArg(args[n],XmNbackground,bg); n++;
-    XtSetArg(args[n],XmNhighlightThickness,1); n++;
-    XtSetArg(args[n],XmNhighlightOnEnter,True); n++;
+    XtSetArg(args[n],XmNhighlightThickness,0); n++;
     XtSetArg(args[n],XmNindicatorOn,False); n++;
     XtSetArg(args[n],XmNrecomputeSize,False); n++;
     XtSetArg(args[n], XmNuserData, userData); n++;

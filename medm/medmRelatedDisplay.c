@@ -333,7 +333,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
 	XtSetArg(args[n],XmNforeground,
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); n++;
-	XtSetArg(args[n],XmNhighlightThickness,1); n++;
+	XtSetArg(args[n],XmNhighlightThickness,0); n++;
 	XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
 	XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
 	XtSetArg(args[n],XmNmarginHeight,0); n++;
@@ -343,7 +343,6 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNspacing,0); n++;
 	XtSetArg(args[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
 	XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
-	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
 	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
       /* KE: Beware below if changing the number of args here */
 	localMenuBar =
@@ -420,7 +419,6 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[n],XmNlabelPixmap,pixmap); n++;
 	XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
 	XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
-	XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
 	XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
 
 	XtSetArg(args[n],XmNmarginLeft,0); n++;
@@ -511,7 +509,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	n = 0;
 	XtSetArg(wargs[n],XmNindicatorOn,False); n++;
 	XtSetArg(wargs[n],XmNshadowThickness,2); n++;
-	XtSetArg(wargs[n],XmNhighlightThickness,1); n++;
+	XtSetArg(wargs[n],XmNhighlightThickness,0); n++;
 	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
 	XtSetArg(wargs[n],XmNwidth,(Dimension)usedWidth); n++;
 	XtSetArg(wargs[n],XmNheight,(Dimension)usedHeight); n++;

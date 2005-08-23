@@ -266,8 +266,7 @@ void textEntryCreateRunTimeInstance(DisplayInfo *displayInfo,
       displayInfo->colormap[dlTextEntry->control.clr]); n++;
     XtSetArg(args[n],XmNbackground,(Pixel)
       displayInfo->colormap[dlTextEntry->control.bclr]); n++;
-    XtSetArg(args[n],XmNhighlightThickness,1); n++;
-    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+    XtSetArg(args[n],XmNhighlightThickness,0); n++;
     XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
     XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
     XtSetArg(args[n],XmNmarginWidth,
@@ -322,8 +321,7 @@ void textEntryCreateEditInstance(DisplayInfo *displayInfo,
       displayInfo->colormap[dlTextEntry->control.clr]); n++;
     XtSetArg(args[n],XmNbackground,(Pixel)
       displayInfo->colormap[dlTextEntry->control.bclr]); n++;
-    XtSetArg(args[n],XmNhighlightThickness,1); n++;
-    XtSetArg(args[n],XmNhighlightOnEnter,TRUE); n++;
+    XtSetArg(args[n],XmNhighlightThickness,0); n++;
     XtSetArg(args[n],XmNindicatorOn,(Boolean)FALSE); n++;
     XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
     XtSetArg(args[n],XmNmarginWidth,
