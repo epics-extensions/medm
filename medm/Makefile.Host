@@ -274,6 +274,9 @@ xxxx:
 	@echo JPT: $(JPT)
 	@echo PURIFY: $(PURIFY)
 	@echo PURIFYCMD: $(PURIFYCMD)
+	@echo OS_CLASS: $(OS_CLASS)
+	@echo USR_CFLAGS: $(USR_CFLAGS)
+	@echo USR_CCFLAGS: $(USR_CCFLAGS)
 	@echo CC: $(CC)
 
 # **************************** Emacs Editing Sequences *****************

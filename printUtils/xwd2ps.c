@@ -110,6 +110,9 @@ without express or implied warranty.
 #define DEBUG_FORMAT 0
 #define DEBUG_SWAP 0
 #define DEBUG_DATA 0
+#define DEBUG_MEMORY 0
+
+#define PROG_NAME_SIZE 128
 
 /* KE: Commented this out.  Not found on WIN32 and apparently not needed */
 #if 0
@@ -144,11 +147,10 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name);
 static int getDumpType(XWDFileHeader *header);
 static int getOrientation(Page pg, Image im);
 
-int intensity_map[4096];    /* max size of color map is 4096 (I hope) */
-unsigned char line[1280*3]; /* raster line buffer, max size */
-unsigned char line4bits[1280];   /* raster line buffer for unpacking 4 bit images */
-XColor *colors;             /* the color map, allocated with "malloc" */
-char   progname[128];
+static unsigned char *line = NULL;      /* raster line buffer */
+static unsigned char *line4bits = NULL; /* raster line buffer for unpacking 4 bit images */
+static XColor *colors = NULL;           /* the color map */
+char progname[PROG_NAME_SIZE];
 
 int redshift,greenshift,blueshift;
 int redadjust,greenadjust,blueadjust;
@@ -218,7 +220,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
   /* initializations */
     colors = NULL;
-    strcpy(progname, argv[0]);     /* copy the program name to a global */
+    strncpy(progname, argv[0], PROG_NAME_SIZE); /* copy the program name to a global */
+    progname[PROG_NAME_SIZE-1]='\0';
     strcpy(page.type, "letter");   /* default page type */
     options.title.height    = 0.0; /* no title */
     options.title.string    = (char *)malloc(256);
@@ -497,8 +500,61 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     if(flag.gamma == TRUE)
       fprintf(fo,"{ %f exp } settransfer\n", my_image.gamma);
 
+  /* allocate global static memory */
+  /* KE: Used to be hard-coded for max screen size of 1280.  It should
+   * use the width rather than the screen size and should be dynamic
+   * to handle any width. */
+    if(!line) {
+      /* raster line buffer, max size */
+#if 0	
+	Screen *scr_ptr = DefaultScreenOfDisplay(display);
+	size_t bytes = 3*WidthOfScreen(scr_ptr);
+#else	
+	size_t bytes = 3*win.pixmap_width;
+#endif	
+#if DEBUG_MEMORY
+	printf("xwd2ps: line=%d bytes\n",(int)bytes);
+#endif
+	line=(unsigned char *)malloc(bytes);
+	if(!line) {
+	    errMsg("xwd2ps: Error allocating intensity map.\n");
+	    retCode = 0;
+	    goto CLEAN;
+	}
+    }
+    if(!line4bits) {
+      /* raster line buffer for unpacking 4 bit images */
+#if 0	
+	Screen *scr_ptr = DefaultScreenOfDisplay(display);
+	size_t bytes = WidthOfScreen(scr_ptr);
+#else	
+	size_t bytes = win.pixmap_width;
+#endif	
+#if DEBUG_MEMORY
+	printf("xwd2ps: line4bits=%d bytes\n",(int)bytes);
+#endif
+	line4bits=(unsigned char *)malloc(bytes);
+	if(!line4bits) {
+	    errMsg("xwd2ps: Error allocating intensity map.\n");
+	    retCode = 0;
+	    goto CLEAN;
+	}
+    }
   /* get a buffer to hold each line of the image */
+#if DEBUG_MEMORY
+    printf("xwd2ps: buffer=%d bytes width=%d (x3=%d)\n"
+      " depth=%d bits_per_pixel=%d bytes_per_pixel=%d\n",
+      (int)win.bytes_per_line,
+      (int)win.pixmap_width,3*(int)win.pixmap_width,
+      (int)win.pixmap_depth,
+      (int)win.bits_per_pixel,(int)win.bits_per_pixel/8);
+#endif
     buffer = (unsigned char *) malloc( win.bytes_per_line );
+    if(!buffer) {
+	errMsg("xwd2ps: Error allocating line buffer.\n");
+	retCode = 0;
+	goto CLEAN;
+    }
 
   /* switch based on image depth */
     switch (win.pixmap_depth) {
@@ -609,7 +665,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
       /* start outputting the image */
 	outputcount = 0;
-	for (i = 0; i <my_image.ps_height; i++)  {
+	for (i = 0; i < my_image.ps_height; i++)  {
 	    retCode = get_next_raster_line(file, &win, line, buffer);
 	    if(!retCode) goto CLEAN;
 	  /* Fix next 3 lines per Brian McAllister */
@@ -1015,6 +1071,14 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 	free(w_name);
 	w_name = NULL;
     }
+    if(line) {
+	free(line);
+	line = NULL;
+    }
+    if(line4bits) {
+	free(line4bits);
+	line4bits = NULL;
+    }
 
     return retCode;
 }
@@ -1230,6 +1294,8 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	fread((char *)buffer, iwbytes, 1, file);
 	bufptr1 = linec;
 	bufptr = buffer;
+      /* KE: buffer size is bytes_per_line=width*bytes_per_pixel,
+	     linec size is width*3 */
 	jmax=iwbytes/bytes_per_pixel;
 	for(j = 0; j < jmax; j++) {
 	    unsigned long pixel,red,green,blue;
@@ -1253,6 +1319,8 @@ static int get_next_raster_line(FILE *file, XWDFileHeader *win,
 	fread((char *)buffer, iwbytes, 1, file);
 	bufptr1 = linec;
 	bufptr = buffer;
+      /* KE: buffer size is bytes_per_line=width*bytes_per_pixel,
+	     linec size is width*3 */
 	jmax=iwbytes/bytes_per_pixel;
 	for(j = 0; j < jmax; j++) {
 	    unsigned long pixel,red,green,blue;

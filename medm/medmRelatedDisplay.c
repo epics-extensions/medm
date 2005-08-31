@@ -78,29 +78,13 @@ static DlDispatchTable relatedDisplayDlDispatchTable = {
     NULL,
     NULL};
 
-#if 0
-/* Unused */
-static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
-{
-    Pixmap pixmap = (Pixmap) cd;
-
-    UNREFERENCED(cbs);
-
-/*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
-    if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
-    pixmap=(Pixmap)0;
-}
-#endif
-
-/*
- * Local function to render the related display icon into a pixmap
- */
+/* Local function to render the related display icon into a pixmap */
 static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
   Pixel fg, Pixel bg, Dimension width, Dimension height,
   XFontStruct *font, int icon, char *label)
 {
+  /* Icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
     typedef struct { float x; float y;} XY;
-/* Icon is based on the 25 pixel (w & h) bitmap relatedDisplay25 */
     static float rectangleX = (float)(4./25.), rectangleY = (float)(4./25.),
       rectangleWidth = (float)(13./25.), rectangleHeight = (float)(14./25.);
     static XY segmentData[] = {
@@ -112,6 +96,7 @@ static void renderRelatedDisplayPixmap(Display *display, Pixmap pixmap,
     };
     XSegment segments[4];
     GC gc = XCreateGC(display,pixmap,0,NULL);
+
   /* Eliminate events that we do not handle anyway */
     XSetGraphicsExposures(display,gc,False);
 
@@ -215,7 +200,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 {
     Widget localMenuBar, tearOff;
     Arg args[30];
-    int n;
+    int nargs;
     int i, index, icon;
     char *label;
     XmString xmString;
@@ -224,9 +209,9 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     int iNumberOfDisplays = 0;
     DlRelatedDisplay *dlRelatedDisplay = dlElement->structure.relatedDisplay;
 
-/* These are widget ids, but they are recorded in the otherChild
-   widget list as well, for destruction when new displays are selected
-   at the top level */
+  /* These are widget ids, but they are recorded in the otherChild
+   *  widget list as well, for destruction when new displays are
+   *  selected at the top level */
     Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
     Widget widget;
 
@@ -246,12 +231,14 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    return;
 	}
     }
+
   /* Count number of displays with non-NULL labels */
     for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	if(dlRelatedDisplay->display[i].label[0] != '\0') {
 	    iNumberOfDisplays++;
 	}
     }
+
   /* One display, not hidden */
     if(iNumberOfDisplays <= 1 && dlRelatedDisplay->visual != RD_HIDDEN_BTN) {
       /* Case 1 0f 4 */
@@ -299,7 +286,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
 	  pixmapW, pixmapH, fontTable[index], icon, label);
       /* Create a push button */
-	n = 0;
+	nargs = 0;
 	dlElement->widget = createPushButton(
 	  displayInfo->drawingArea,
 	  &(dlRelatedDisplay->object),
@@ -315,7 +302,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  /* Check the display array to find the first non-empty one */
 	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
 		if(*(dlRelatedDisplay->display[i].name)) {
-		    XtAddCallback(dlElement->widget,XmNarmCallback,
+		    XtAddCallback(dlElement->widget,XmNactivateCallback,
 		      relatedDisplayButtonPressedCb,
 		      (XtPointer)&(dlRelatedDisplay->display[i]));
 		    break;
@@ -328,26 +315,25 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
     } else if(dlRelatedDisplay->visual == RD_MENU) {
       /* Case 2 of 4 */
       /* Single column menu, more than 1 item */
-	n = 0;
-	XtSetArg(args[n],XmNbackground,(Pixel)
-	  displayInfo->colormap[dlRelatedDisplay->bclr]); n++;
-	XtSetArg(args[n],XmNforeground,
-	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); n++;
-	XtSetArg(args[n],XmNhighlightThickness,0); n++;
-	XtSetArg(args[n],XmNwidth,dlRelatedDisplay->object.width); n++;
-	XtSetArg(args[n],XmNheight,dlRelatedDisplay->object.height); n++;
-	XtSetArg(args[n],XmNmarginHeight,0); n++;
-	XtSetArg(args[n],XmNmarginWidth,0); n++;
-	XtSetArg(args[n],XmNresizeHeight,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	XtSetArg(args[n],XmNspacing,0); n++;
-	XtSetArg(args[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
-	XtSetArg(args[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
-	XtSetArg(args[n],XmNtearOffModel,XmTEAR_OFF_DISABLED); n++;
+	nargs = 0;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlRelatedDisplay->bclr]); nargs++;
+	XtSetArg(args[nargs],XmNforeground,
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); nargs++;
+	XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+	XtSetArg(args[nargs],XmNwidth,dlRelatedDisplay->object.width); nargs++;
+	XtSetArg(args[nargs],XmNheight,dlRelatedDisplay->object.height); nargs++;
+	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(args[nargs],XmNresizeHeight,(Boolean)FALSE); nargs++;
+	XtSetArg(args[nargs],XmNresizeWidth,(Boolean)FALSE); nargs++;
+	XtSetArg(args[nargs],XmNspacing,0); nargs++;
+	XtSetArg(args[nargs],XmNx,(Position)dlRelatedDisplay->object.x); nargs++;
+	XtSetArg(args[nargs],XmNy,(Position)dlRelatedDisplay->object.y); nargs++;
       /* KE: Beware below if changing the number of args here */
 	localMenuBar =
 	  XmCreateMenuBar(displayInfo->drawingArea, "relatedDisplayMenuBar",
-	    args, n);
+	    args, nargs);
 	dlElement->widget = localMenuBar;
       /* Add handlers */
 	addCommonHandlers(dlElement->widget, displayInfo);
@@ -360,14 +346,23 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  (Pixel)displayInfo->colormap[dlRelatedDisplay->bclr]);
 #endif
 
+      /* Create the pulldown menu */
+	nargs = 0;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlRelatedDisplay->bclr]); nargs++;
+	XtSetArg(args[nargs],XmNforeground,
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); nargs++;
+#if 0
+	XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+#endif
 	relatedDisplayPulldownMenu = XmCreatePulldownMenu(
-	  localMenuBar,"relatedDisplayPulldownMenu",args,2);
+	  localMenuBar, "relatedDisplayPulldownMenu", args, nargs);
+      /* Make the tear off colors right */
 	tearOff = XmGetTearOffControl(relatedDisplayPulldownMenu);
 	if(tearOff) {
 	    XtVaSetValues(tearOff,
 	      XmNforeground,(Pixel)displayInfo->colormap[dlRelatedDisplay->clr],
 	      XmNbackground,(Pixel)displayInfo->colormap[dlRelatedDisplay->bclr],
-	      XmNtearOffModel,XmTEAR_OFF_DISABLED,
 	      NULL);
 	}
 
@@ -414,23 +409,32 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	  displayInfo->colormap[dlRelatedDisplay->bclr],
 	  pixmapW, pixmapH, fontTable[index], icon, label);
       /* Create a cascade button */
-	n = 7;     /* (Using the args defined above) */
-	XtSetArg(args[n],XmNrecomputeSize,(Boolean)False); n++;
-	XtSetArg(args[n],XmNlabelPixmap,pixmap); n++;
-	XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-	XtSetArg(args[n],XmNsubMenuId,relatedDisplayPulldownMenu); n++;
-	XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
+	nargs = 0;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlRelatedDisplay->bclr]); nargs++;
+	XtSetArg(args[nargs],XmNforeground,
+	  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); nargs++;
+	XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+	XtSetArg(args[nargs],XmNwidth,dlRelatedDisplay->object.width); nargs++;
+	XtSetArg(args[nargs],XmNheight,dlRelatedDisplay->object.height); nargs++;
+	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(args[nargs],XmNrecomputeSize,(Boolean)False); nargs++;
+	XtSetArg(args[nargs],XmNlabelPixmap,pixmap); nargs++;
+	XtSetArg(args[nargs],XmNlabelType,XmPIXMAP); nargs++;
+	XtSetArg(args[nargs],XmNsubMenuId,relatedDisplayPulldownMenu); nargs++;
+	XtSetArg(args[nargs],XmNalignment,XmALIGNMENT_BEGINNING); nargs++;
 
-	XtSetArg(args[n],XmNmarginLeft,0); n++;
-	XtSetArg(args[n],XmNmarginRight,0); n++;
-	XtSetArg(args[n],XmNmarginTop,0); n++;
-	XtSetArg(args[n],XmNmarginBottom,0); n++;
-	XtSetArg(args[n],XmNmarginWidth,0); n++;
-	XtSetArg(args[n],XmNmarginHeight,0); n++;
+	XtSetArg(args[nargs],XmNmarginLeft,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginRight,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginTop,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginBottom,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
 
 	widget = XtCreateManagedWidget("relatedDisplayMenuLabel",
 	  xmCascadeButtonGadgetClass,
-	  dlElement->widget, args, n);
+	  dlElement->widget, args, nargs);
 
 #if 0
       /* KE: Can't do this, it points to the stack
@@ -443,10 +447,18 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	    if(strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {
 		xmString = XmStringCreateLocalized(
 		  dlRelatedDisplay->display[i].label);
-		XtSetArg(args[3], XmNlabelString,xmString);
-		XtSetArg(args[4], XmNuserData, displayInfo);
-		relatedDisplayMenuButton = XtCreateManagedWidget("relatedDisplayButton",
-		  xmPushButtonWidgetClass, relatedDisplayPulldownMenu, args, 5);
+		nargs = 0;
+		XtSetArg(args[nargs],XmNbackground,(Pixel)
+		  displayInfo->colormap[dlRelatedDisplay->bclr]); nargs++;
+		XtSetArg(args[nargs],XmNforeground,
+		  (Pixel)displayInfo->colormap[dlRelatedDisplay->clr]); nargs++;
+		XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+		XtSetArg(args[nargs], XmNlabelString,xmString); nargs++;
+		XtSetArg(args[nargs], XmNuserData, displayInfo); nargs++;
+		relatedDisplayMenuButton =
+		  XtCreateManagedWidget("relatedDisplayButton",
+		    xmPushButtonWidgetClass, relatedDisplayPulldownMenu,
+		    args, nargs);
 		XtAddCallback(relatedDisplayMenuButton,XmNactivateCallback,
 		  relatedDisplayButtonPressedCb,&(dlRelatedDisplay->display[i]));
 		XmStringFree(xmString);
@@ -457,7 +469,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Case 3 of 4 */
       /* Rows or columns of buttons */
 	Arg wargs[20];
-	int i, n, maxChars, usedWidth, usedHeight;
+	int i, maxChars, usedWidth, usedHeight;
 	XmFontList fontList;
 	Pixel fg, bg;
 	Widget widget;
@@ -469,30 +481,34 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	}
 	fg = displayInfo->colormap[dlRelatedDisplay->clr];
 	bg = displayInfo->colormap[dlRelatedDisplay->bclr];
-	n = 0;
-	XtSetArg(wargs[n],XmNx,(Position)dlRelatedDisplay->object.x); n++;
-	XtSetArg(wargs[n],XmNy,(Position)dlRelatedDisplay->object.y); n++;
-	XtSetArg(wargs[n],XmNwidth,(Dimension)dlRelatedDisplay->object.width); n++;
-	XtSetArg(wargs[n],XmNheight,(Dimension)dlRelatedDisplay->object.height); n++;
-	XtSetArg(wargs[n],XmNforeground,fg); n++;
-	XtSetArg(wargs[n],XmNbackground,bg); n++;
-	XtSetArg(wargs[n],XmNindicatorOn,(Boolean)FALSE); n++;
-	XtSetArg(wargs[n],XmNmarginWidth,0); n++;
-	XtSetArg(wargs[n],XmNmarginHeight,0); n++;
-	XtSetArg(wargs[n],XmNresizeWidth,(Boolean)FALSE); n++;
-	XtSetArg(wargs[n],XmNresizeHeight,(Boolean)FALSE); n++;
-	XtSetArg(wargs[n],XmNspacing,0); n++;
-	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
+	nargs = 0;
+	XtSetArg(wargs[nargs],XmNx,(Position)dlRelatedDisplay->object.x);
+	nargs++;
+	XtSetArg(wargs[nargs],XmNy,(Position)dlRelatedDisplay->object.y);
+	nargs++;
+	XtSetArg(wargs[nargs],XmNwidth,
+	  (Dimension)dlRelatedDisplay->object.width); nargs++;
+	XtSetArg(wargs[nargs],XmNheight,
+	  (Dimension)dlRelatedDisplay->object.height); nargs++;
+	XtSetArg(wargs[nargs],XmNforeground,fg); nargs++;
+	XtSetArg(wargs[nargs],XmNbackground,bg); nargs++;
+	XtSetArg(wargs[nargs],XmNindicatorOn,(Boolean)FALSE); nargs++;
+	XtSetArg(wargs[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(wargs[nargs],XmNmarginHeight,0); nargs++;
+	XtSetArg(wargs[nargs],XmNresizeWidth,(Boolean)FALSE); nargs++;
+	XtSetArg(wargs[nargs],XmNresizeHeight,(Boolean)FALSE); nargs++;
+	XtSetArg(wargs[nargs],XmNspacing,0); nargs++;
+	XtSetArg(wargs[nargs],XmNrecomputeSize,(Boolean)FALSE); nargs++;
+	XtSetArg(wargs[nargs],XmNuserData,displayInfo); nargs++;
 	switch(dlRelatedDisplay->visual) {
 	case RD_COL_OF_BTN:
-	    XtSetArg(wargs[n],XmNorientation,XmVERTICAL); n++;
+	    XtSetArg(wargs[nargs],XmNorientation,XmVERTICAL); nargs++;
 	    usedWidth = dlRelatedDisplay->object.width;
 	    usedHeight = (int)(dlRelatedDisplay->object.height/
 	      MAX(1,iNumberOfDisplays));
 	    break;
 	case RD_ROW_OF_BTN:
-	    XtSetArg(wargs[n],XmNorientation,XmHORIZONTAL); n++;
+	    XtSetArg(wargs[nargs],XmNorientation,XmHORIZONTAL); nargs++;
 	    usedWidth = (int)(dlRelatedDisplay->object.width/
 	      MAX(1,iNumberOfDisplays));
 	    usedHeight = dlRelatedDisplay->object.height;
@@ -500,41 +516,42 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	default:
 	    break;
 	}
-	widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",wargs,n);
+	widget = XmCreateRowColumn(displayInfo->drawingArea,"radioBox",
+	  wargs,nargs);
 	dlElement->widget = widget;
 
       /* Make push-in type radio buttons of the correct size */
 	fontList = fontListTable[relatedDisplayFontListIndex(
 	  dlRelatedDisplay,iNumberOfDisplays,maxChars)];
-	n = 0;
-	XtSetArg(wargs[n],XmNindicatorOn,False); n++;
-	XtSetArg(wargs[n],XmNshadowThickness,2); n++;
-	XtSetArg(wargs[n],XmNhighlightThickness,0); n++;
-	XtSetArg(wargs[n],XmNrecomputeSize,(Boolean)FALSE); n++;
-	XtSetArg(wargs[n],XmNwidth,(Dimension)usedWidth); n++;
-	XtSetArg(wargs[n],XmNheight,(Dimension)usedHeight); n++;
-	XtSetArg(wargs[n],XmNfontList,fontList); n++;
-	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-	XtSetArg(wargs[n],XmNindicatorOn,False); n++;
-	XtSetArg(wargs[n],XmNindicatorSize,0); n++;
-	XtSetArg(wargs[n],XmNspacing,0); n++;
-	XtSetArg(wargs[n],XmNvisibleWhenOff,False); n++;
-	XtSetArg(wargs[n],XmNforeground,fg); n++;
-	XtSetArg(wargs[n],XmNbackground,bg); n++;
-	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-	XtSetArg(wargs[n],XmNuserData,displayInfo); n++;
+	nargs = 0;
+	XtSetArg(wargs[nargs],XmNindicatorOn,False); nargs++;
+	XtSetArg(wargs[nargs],XmNshadowThickness,2); nargs++;
+	XtSetArg(wargs[nargs],XmNhighlightThickness,0); nargs++;
+	XtSetArg(wargs[nargs],XmNrecomputeSize,(Boolean)FALSE); nargs++;
+	XtSetArg(wargs[nargs],XmNwidth,(Dimension)usedWidth); nargs++;
+	XtSetArg(wargs[nargs],XmNheight,(Dimension)usedHeight); nargs++;
+	XtSetArg(wargs[nargs],XmNfontList,fontList); nargs++;
+	XtSetArg(wargs[nargs],XmNalignment,XmALIGNMENT_CENTER); nargs++;
+	XtSetArg(wargs[nargs],XmNindicatorOn,False); nargs++;
+	XtSetArg(wargs[nargs],XmNindicatorSize,0); nargs++;
+	XtSetArg(wargs[nargs],XmNspacing,0); nargs++;
+	XtSetArg(wargs[nargs],XmNvisibleWhenOff,False); nargs++;
+	XtSetArg(wargs[nargs],XmNforeground,fg); nargs++;
+	XtSetArg(wargs[nargs],XmNbackground,bg); nargs++;
+	XtSetArg(wargs[nargs],XmNalignment,XmALIGNMENT_CENTER); nargs++;
+	XtSetArg(wargs[nargs],XmNuserData,displayInfo); nargs++;
 	for(i = 0; i < iNumberOfDisplays; i++) {
 	    Widget toggleButton;
 
 	    xmString = XmStringCreateLocalized(
 	      dlRelatedDisplay->display[i].label);
-	    XtSetArg(wargs[n],XmNlabelString,xmString);
+	    XtSetArg(wargs[nargs],XmNlabelString,xmString); nargs++;
 	  /* Use gadgets here so that changing foreground of
 	   *   radioBox changes buttons */
 	    toggleButton = XmCreatePushButtonGadget(widget,"toggleButton",
-	      wargs,n+1);
+	      wargs,nargs);
 	    if(globalDisplayListTraversalMode == DL_EXECUTE) {
-		XtAddCallback(toggleButton,XmNarmCallback,
+		XtAddCallback(toggleButton,XmNactivateCallback,
 		  relatedDisplayButtonPressedCb,
 		  (XtPointer)&(dlRelatedDisplay->display[i]));
 	    }  else {
@@ -794,8 +811,10 @@ void writeDlRelatedDisplay(FILE *stream, DlElement *dlElement, int level)
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if((dlRelatedDisplay->display[i].label[0] != '\0') ||
 	      (dlRelatedDisplay->display[i].name[0] != '\0') ||
-	      (dlRelatedDisplay->display[i].args[0] != '\0'))
-	      writeDlRelatedDisplayEntry(stream,&(dlRelatedDisplay->display[i]),i,level+1);
+	      (dlRelatedDisplay->display[i].args[0] != '\0')) {
+		writeDlRelatedDisplayEntry(stream,
+		  &(dlRelatedDisplay->display[i]),i,level+1);
+	    }
 	}
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
@@ -809,8 +828,10 @@ void writeDlRelatedDisplay(FILE *stream, DlElement *dlElement, int level)
     } else {
 	fprintf(stream,"\n%s\"related display\" {",indent);
 	writeDlObject(stream,&(dlRelatedDisplay->object),level+1);
-	for(i = 0; i < MAX_RELATED_DISPLAYS; i++)
-	  writeDlRelatedDisplayEntry(stream,&(dlRelatedDisplay->display[i]),i,level+1);
+	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
+	    writeDlRelatedDisplayEntry(stream,
+	      &(dlRelatedDisplay->display[i]),i,level+1);
+	}
 	fprintf(stream,"\n%s\tclr=%d",indent,dlRelatedDisplay->clr);
 	fprintf(stream,"\n%s\tbclr=%d",indent,dlRelatedDisplay->bclr);
 	fprintf(stream,"\n%s}",indent);
@@ -990,7 +1011,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
     Widget shell, applyButton, closeButton;
     Dimension cWidth, cHeight, aWidth, aHeight;
     Arg args[12];
-    int i, n;
+    int i, nargs;
 
 /*
  * now create the interface
@@ -1005,12 +1026,13 @@ Widget createRelatedDisplayDataDialog(Widget parent)
  */
 
   /* Create form dialog (rdForm) */
-    n = 0;
-    XtSetArg(args[n],XmNautoUnmanage,False); n++;
-    XtSetArg(args[n],XmNmarginHeight,8); n++;
-    XtSetArg(args[n],XmNmarginWidth,8); n++;
-    XtSetArg(args[n],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
-    rdForm = XmCreateFormDialog(parent,"relatedDisplayDataF",args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
+    XtSetArg(args[nargs],XmNmarginHeight,8); nargs++;
+    XtSetArg(args[nargs],XmNmarginWidth,8); nargs++;
+    XtSetArg(args[nargs],XmNdialogStyle,XmDIALOG_PRIMARY_APPLICATION_MODAL);
+    nargs++;
+    rdForm = XmCreateFormDialog(parent,"relatedDisplayDataF",args,nargs);
 
   /* Set values for the shell parent of the form */
     shell = XtParent(rdForm);
@@ -1053,7 +1075,7 @@ Widget createRelatedDisplayDataDialog(Widget parent)
 #endif
 
   /* rdMatrix */
-    n = 0;
+    nargs = 0;
     rdMatrix = XtVaCreateManagedWidget("rdMatrix",
       xmRowColumnWidgetClass,rdForm,
       XmNpacking, XmPACK_COLUMN,
@@ -1118,33 +1140,33 @@ Widget createRelatedDisplayDataDialog(Widget parent)
   /* Do form layout */
 
   /* rdMatrix */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-    XtSetValues(rdMatrix,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_FORM); nargs++;
+    XtSetValues(rdMatrix,args,nargs);
 
   /* Apply */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,rdMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNleftPosition,30); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(applyButton,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,rdMatrix); nargs++;
+    XtSetArg(args[nargs],XmNtopOffset,12); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNleftPosition,30); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNbottomOffset,12); nargs++;
+    XtSetValues(applyButton,args,nargs);
 
   /* Close */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,rdMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNrightPosition,70); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(closeButton,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,rdMatrix); nargs++;
+    XtSetArg(args[nargs],XmNtopOffset,12); nargs++;
+    XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNrightPosition,70); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNbottomOffset,12); nargs++;
+    XtSetValues(closeButton,args,nargs);
 
     XtManageChild(rdForm);
 
@@ -1162,9 +1184,12 @@ void updateRelatedDisplayDataDialog()
 
     if(rdMatrix) {
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
-	    XmTextFieldSetString(table[i][0],globalResourceBundle.rdData[i].label);
-	    XmTextFieldSetString(table[i][1],globalResourceBundle.rdData[i].name);
-	    XmTextFieldSetString(table[i][2],globalResourceBundle.rdData[i].args);
+	    XmTextFieldSetString(table[i][0],
+	      globalResourceBundle.rdData[i].label);
+	    XmTextFieldSetString(table[i][1],
+	      globalResourceBundle.rdData[i].name);
+	    XmTextFieldSetString(table[i][2],
+	      globalResourceBundle.rdData[i].args);
 	    if(globalResourceBundle.rdData[i].mode == REPLACE_DISPLAY) {
 		XmToggleButtonSetState(table[i][3],True,False);
 	    } else {
@@ -1290,25 +1315,25 @@ void markHiddenButtons(DisplayInfo *displayInfo)
 static int countHiddenButtons(DlElement *dlElement)
 {
     DlElement *pE;
-    int n = 0;
+    int nargs = 0;
 
     if(dlElement->type == DL_Composite) {
 	pE = FirstDlElement(dlElement->structure.composite->dlElementList);
 	while(pE) {
 	    if(pE->type == DL_Composite) {
-		n+=countHiddenButtons(pE);
+		nargs+=countHiddenButtons(pE);
 	    } else if(pE->type == DL_RelatedDisplay &&
 	      pE->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
-		n++;
+		nargs++;
 	    }
 	    pE = pE->next;
 	}
     } else if(dlElement->type == DL_RelatedDisplay &&
       dlElement->structure.relatedDisplay->visual == RD_HIDDEN_BTN) {
-	n++;
+	nargs++;
     }
 
-    return(n);
+    return(nargs);
 }
 
 static void createMarkerWidgets(DisplayInfo *displayInfo, DlElement *dlElement)
@@ -1351,8 +1376,10 @@ static void createMarkerWidget(DisplayInfo *displayInfo, DlElement *dlElement)
     XtSetArg(args[nargs], XmNy, y); nargs++;
     XtSetArg(args[nargs], XmNwidth, width); nargs++;
     XtSetArg(args[nargs], XmNheight, height); nargs++;
-    XtSetArg(args[nargs], XmNforeground, WhitePixel(display,screenNum)); nargs++;
-    XtSetArg(args[nargs], XmNbackground, BlackPixel(display,screenNum)); nargs++;
+    XtSetArg(args[nargs], XmNforeground, WhitePixel(display,screenNum));
+    nargs++;
+    XtSetArg(args[nargs], XmNbackground, BlackPixel(display,screenNum));
+    nargs++;
     XtSetArg(args[nargs], XtNborderWidth, 0); nargs++;
 #if !USE_MARQUEE
     XtSetArg(args[nargs], XtNblinkTime, 0); nargs++;

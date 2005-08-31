@@ -1879,7 +1879,8 @@ static int resourceTable[] = {
     RD_LABEL_RC, RD_VISUAL_RC, RDDATA_RC,
     -1,
     DL_ShellCommand,
-    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC, SHELLDATA_RC,
+    X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, CLR_RC, BCLR_RC,
+    RD_LABEL_RC, SHELLDATA_RC,
     -1,
     DL_Image,
     X_RC, Y_RC, WIDTH_RC, HEIGHT_RC, IMAGE_TYPE_RC, IMAGE_NAME_RC, IMAGE_CALC_RC,
@@ -3358,6 +3359,9 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	globalResourceBundle.bclr = p->bclr;
 	XtVaSetValues(resourceEntryElement[BCLR_RC],XmNbackground,
 	  cdi->colormap[globalResourceBundle.bclr],NULL);
+	strcpy(globalResourceBundle.rdLabel,p->label);
+	XmTextFieldSetString(resourceEntryElement[RD_LABEL_RC],
+          globalResourceBundle.rdLabel);
 	for (i = 0; i < MAX_SHELL_COMMANDS; i++){
 	    strcpy(globalResourceBundle.cmdData[i].label, p->command[i].label);
 	    strcpy(globalResourceBundle.cmdData[i].command, p->command[i].command);

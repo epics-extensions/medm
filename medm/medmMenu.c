@@ -285,7 +285,7 @@ static void menuUpdateGraphicalInfoCb(XtPointer cd)
 static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
   XmStringTable labels, int nbuttons)
 {
-    Widget w, menu, pushbutton;
+    Widget w, menu, pushbutton, tearOff;
     MedmMenu *pm;
     Arg args[25];
     int i, nargs, nargs0;
@@ -334,8 +334,18 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
     nargs = 0;
     XtSetArg(args[nargs], XmNforeground, foreground); nargs++;
     XtSetArg(args[nargs], XmNbackground, background); nargs++;
+#if 0
     XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+#endif
     menu = XmCreatePulldownMenu(displayInfo->drawingArea, "menuPulldownMenu", args, nargs);
+  /* Make the tear off colors right */
+    tearOff = XmGetTearOffControl(menu);
+    if(tearOff) {
+	XtVaSetValues(tearOff,
+	  XmNforeground,(Pixel)displayInfo->colormap[dlMenu->control.clr],
+	  XmNbackground,(Pixel)displayInfo->colormap[dlMenu->control.bclr],
+	  NULL);
+    }
 
   /* Add the push button gadget children */
     nargs = 0;

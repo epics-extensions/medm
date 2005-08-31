@@ -619,6 +619,7 @@ typedef struct {
     DlObject object;
     DlShellCommandEntry command[MAX_SHELL_COMMANDS];
     int clr, bclr;
+    char label[MAX_TOKEN_LENGTH];
 } DlShellCommand;
 
 /****** Monitors */

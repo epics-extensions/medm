@@ -18,8 +18,8 @@ USE_MOTIF12=NO
 #USE_MOTIF12=YES
 
 # Optimization
-ifdef WIN32
-#HOST_OPT = NO
+#ifdef WIN32
+HOST_OPT = NO
 else
 #HOST_OPT = NO
 endif

@@ -489,7 +489,7 @@ static void Draw_display(Widget w, Display *display,
 {
     ByteWidget wb = (ByteWidget)w;
     Boolean reverse;
-    int  iVal, i, j, nSeg, iPos, iBit, isSet;
+    int  iVal, i, nSeg, iBit, isSet;
     double delta;
     int x1, y1, x2, y2, i1, i2, iDelta;
     unsigned int width, height;
@@ -520,8 +520,8 @@ static void Draw_display(Widget w, Display *display,
     }
 
   /* Check if large enough to be meaningful */
-    if(wb->byte.orient == XcHoriz && (width <= nSeg + 1 || height <= 3) ||
-      (wb->byte.orient == XcVert && (height <= nSeg + 1 || width <= 3))) {
+    if((wb->byte.orient == XcHoriz && ((int)width <= nSeg + 1 || height <= 3)) ||
+      ((wb->byte.orient == XcVert && ((int)height <= nSeg + 1 || width <= 3)))) {
       /* Only enough room for the lines, fill with black and return */
 	XSetForeground(display, gc, XBlackPixel(display, 0));
 	XFillRectangle(display, drawable, gc, x1, y1, width, height);
@@ -546,7 +546,7 @@ static void Draw_display(Widget w, Display *display,
 	delta = (double)(height-1)/((double)nSeg);
 	for(i=0; i < nSeg; i++) {
 	    i2 = (int)((i + 1) * delta + .5);
-	    if(i2 > height) i2 = height;
+	    if(i2 > (int)height) i2 = height;
 	  /* Draw the foreground color if the bit is 1 */
 	    if(reverse) iBit = wb->byte.sbit + i;
 	    else iBit = wb->byte.sbit - i;
@@ -569,7 +569,7 @@ static void Draw_display(Widget w, Display *display,
 	delta = (double)(width-1)/((double)nSeg);
 	for(i=0; i < nSeg; i++) {
 	    i2 = (int)((i + 1) * delta + .5);
-	    if(i2 > width) i2 = width;
+	    if(i2 > (int)width) i2 = width;
 	  /* Draw the foreground color if the bit is 1 */
 	    if(reverse) iBit = wb->byte.sbit + i;
 	    else iBit = wb->byte.sbit - i;

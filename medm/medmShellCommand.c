@@ -58,69 +58,78 @@ static unsigned char cmdColumnLabelAlignments[] = {
 static String cmdRows[MAX_SHELL_COMMANDS][3];
 static String *cmdCells[MAX_SHELL_COMMANDS];
 
-static void freePixmapCallback(Widget w, XtPointer cd, XtPointer cbs)
-{
-    Pixmap pixmap = (Pixmap) cd;
-
-    UNREFERENCED(cbs);
-
-/*     if(pixmap != (Pixmap)0) XmDestroyPixmap(XtScreen(w),pixmap); */
-    if(pixmap != (Pixmap)0) XFreePixmap(display,pixmap);
-    pixmap=(Pixmap)0;
-}
-
-/*
- * local function to render the shell command display icon into a pixmap
- */
+/* Local function to render the shell command display icon into a
+ * pixmap */
 static void renderShellCommandPixmap(Display *display, Pixmap pixmap,
-  Pixel fg, Pixel bg, unsigned int width, unsigned int height)
+  Pixel fg, Pixel bg, Dimension width, Dimension height,
+  XFontStruct *font, int icon, char *label)
 {
-    typedef struct { float x; float y;} XY;
-/* icon is based on the 25 pixel (w & h) bitmap shellCommand25 */
+  /* Icon is based on the 25 pixel (w & h) bitmap shellCommand25 */
     static float rectangleX = (float)(12./25.), rectangleY = (float)(4./25.),
       rectangleWidth = (float)(3./25.), rectangleHeight = (float)(14./25.);
     static float dotX = (float)(12./25.), dotY = (float)(20./25.),
       dotWidth = (float)(3./25.), dotHeight = (float)(3./25.);
-    GC gc;
+    GC gc = XCreateGC(display,pixmap,0,NULL);
 
-    gc = XCreateGC(display,pixmap,0,NULL);
   /* Eliminate events that we do not handle anyway */
     XSetGraphicsExposures(display,gc,False);
+
+#if 0
+    print("renderShellCommandPixmap: width=%d height=%d label=|%s|\n",
+      width,height,label?label:"NULL");
+#endif
+
+  /* Draw the background */
     XSetForeground(display,gc,bg);
     XFillRectangle(display,pixmap,gc,0,0,width,height);
     XSetForeground(display,gc,fg);
 
-    XFillRectangle(display,pixmap,gc,
-      (int)(rectangleX*width),
-      (int)(rectangleY*height),
-      (unsigned int)(MAX(1,(unsigned int)(rectangleWidth*width))),
-      (unsigned int)(MAX(1,(unsigned int)(rectangleHeight*height))) );
+  /* Draw the icon */
+    if(icon) {
+	XFillRectangle(display,pixmap,gc,
+	  (int)(rectangleX*height),
+	  (int)(rectangleY*height),
+	  (Dimension)(MAX(1,(Dimension)(rectangleWidth*height))),
+	  (Dimension)(MAX(1,(Dimension)(rectangleHeight*height))) );
 
-    XFillRectangle(display,pixmap,gc,
-      (int)(dotX*width),
-      (int)(dotY*height),
-      (unsigned int)(MAX(1,(unsigned int)(dotWidth*width))),
-      (unsigned int)(MAX(1,(unsigned int)(dotHeight*height))) );
+	XFillRectangle(display,pixmap,gc,
+	  (int)(dotX*height),
+	  (int)(dotY*height),
+	  (Dimension)(MAX(1,(Dimension)(dotWidth*height))),
+	  (Dimension)(MAX(1,(Dimension)(dotHeight*height))) );
+    }
+
+  /* Draw the label */
+    if(label && *label) {
+	int base;
+
+	XSetFont(display,gc,font->fid);
+	base=(height+font->ascent-font->descent)/2;
+	XDrawString(display,pixmap,gc,
+	  icon?height:0,base,label,strlen(label));
+    }
 
     XFreeGC(display,gc);
 }
 
 void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    Widget localMenuBar;
+    Widget localMenuBar, tearOff;
     Arg args[16];
-    int i;
+    int nargs;
+    int i, index, icon;
+    char *label;
     XmString xmString;
-    Pixmap shellCommandPixmap;
-    unsigned int pixmapSize;
+    Pixmap pixmap;
+    Dimension pixmapH, pixmapW;
+    int iNumberOfCommands = 0;
     DlShellCommand *dlShellCommand = dlElement->structure.shellCommand;
+
   /* These are widget ids, but they are recorded in the otherChild
-   *   widget list as well, for destruction when new shells are
-   *   selected at the top level */
+   * widget list as well, for destruction when new shells are selected
+   * at the top level */
     Widget shellCommandPulldownMenu, shellCommandMenuButton;
-#if 1
     Widget widget;
-#endif
 
 #if DEBUG_REDRAW
     widget=dlElement->widget;
@@ -129,14 +138,10 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
       widget,
       widget?(XtIsManaged(widget)?"Yes":"No"):"NR");
 #endif
+
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
 
-  /***
-   *** from the DlShellCommand structure, we've got specifics
-   *** (MDA)  create a pulldown menu with the following shell menu
-   ***   entries in it...  --  careful with the XtSetArgs here (special)
-   ***/
     if(dlElement->widget) {
       /* The widget already exists */
 	if(displayInfo->traversalMode == DL_EDIT) {
@@ -157,77 +162,219 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	return;
     }
 
-  /* Make the widget */
-    XtSetArg(args[0],XmNforeground,(Pixel)
-      displayInfo->colormap[dlShellCommand->clr]);
-    XtSetArg(args[1],XmNbackground,(Pixel)
-      displayInfo->colormap[dlShellCommand->bclr]);
-    XtSetArg(args[2],XmNhighlightThickness,0);
-    XtSetArg(args[3],XmNwidth,dlShellCommand->object.width);
-    XtSetArg(args[4],XmNheight,dlShellCommand->object.height);
-    XtSetArg(args[5],XmNmarginHeight,0);
-    XtSetArg(args[6],XmNmarginWidth,0);
-    XtSetArg(args[7],XmNresizeHeight,(Boolean)FALSE);
-    XtSetArg(args[8],XmNresizeWidth,(Boolean)FALSE);
-    XtSetArg(args[9],XmNspacing,0);
-    XtSetArg(args[10],XmNx,(Position)dlShellCommand->object.x);
-    XtSetArg(args[11],XmNy,(Position)dlShellCommand->object.y);
-    localMenuBar =
-      XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",args,13);
-    dlElement->widget = localMenuBar;
+  /* Count number of commands with non-NULL labels */
+    for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	if(dlShellCommand->command[i].label[0] != '\0') {
+	    iNumberOfCommands++;
+	}
+    }
 
-  /* Add handlers */
-    addCommonHandlers(dlElement->widget, displayInfo);
-    XtManageChild(dlElement->widget);
+  /* Get the size for the graphic part of pixmap */
+    pixmapH = MIN(dlShellCommand->object.width,
+      dlShellCommand->object.height);
+  /* Allow for shadows, etc. */
+    pixmapH = (unsigned int)MAX(1,(int)pixmapH - 8);
+
+  /* Create the widget depending on the number of items */
+    if(iNumberOfCommands <= 1) {
+      /* Create the pixmap */
+	if(dlShellCommand->label[0] == '\0') {
+	    label=NULL;
+	    index=0;
+	    icon=1;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else if(dlShellCommand->label[0] == '-') {
+	    int usedWidth;
+
+	    label=dlShellCommand->label+1;
+	    index=messageButtonFontListIndex(dlShellCommand->object.height);
+	    icon=0;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=MAX(usedWidth,1);
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else {
+	    int usedWidth;
+
+	    label=dlShellCommand->label;
+	    index=messageButtonFontListIndex(dlShellCommand->object.height);
+	    icon=1;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	}
+      /* Draw the pixmap */
+	renderShellCommandPixmap(display,pixmap,
+	  displayInfo->colormap[dlShellCommand->clr],
+	  displayInfo->colormap[dlShellCommand->bclr],
+	  pixmapW, pixmapH, fontTable[index], icon, label);
+
+      /* Create a push button */
+	nargs = 0;
+	dlElement->widget = createPushButton(
+	  displayInfo->drawingArea,
+	  &(dlShellCommand->object),
+	  displayInfo->colormap[dlShellCommand->clr],
+	  displayInfo->colormap[dlShellCommand->bclr],
+	  pixmap,
+	  NULL,     /* There a pixmap, not a label on the button */
+	  (XtPointer)displayInfo);
+      /* Add the callbacks for bringing up the menu */
+	if(globalDisplayListTraversalMode == DL_EXECUTE) {
+	    int i;
+
+	  /* Check the display array to find the first non-empty one */
+	    for(i=0; i < MAX_RELATED_DISPLAYS; i++) {
+		if(*(dlShellCommand->command[i].label)) {
+		    XtAddCallback(dlElement->widget,XmNactivateCallback,
+		      (XtCallbackProc)dmExecuteShellCommand,
+		      (XtPointer)&(dlShellCommand->command[i]));
+		  /* Set the displayInfo as the button's userData */
+		    XtVaSetValues(dlElement->widget,
+		      XmNuserData,(XtPointer)displayInfo,
+		      NULL);
+		    break;
+		}
+	    }
+	}
+      /* Add handlers */
+	addCommonHandlers(dlElement->widget, displayInfo);
+	XtManageChild(dlElement->widget);
+    } else {
+      /* Make the widget */
+	nargs = 0;
+	XtSetArg(args[nargs],XmNforeground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->clr]); nargs++;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->bclr]); nargs++;
+	XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+	XtSetArg(args[nargs],XmNwidth,dlShellCommand->object.width); nargs++;
+	XtSetArg(args[nargs],XmNheight,dlShellCommand->object.height); nargs++;
+	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(args[nargs],XmNresizeHeight,(Boolean)FALSE); nargs++;
+	XtSetArg(args[nargs],XmNresizeWidth,(Boolean)FALSE); nargs++;
+	XtSetArg(args[nargs],XmNspacing,0); nargs++;
+	XtSetArg(args[nargs],XmNx,(Position)dlShellCommand->object.x); nargs++;
+	XtSetArg(args[nargs],XmNy,(Position)dlShellCommand->object.y); nargs++;
+	localMenuBar =
+	  XmCreateMenuBar(displayInfo->drawingArea,"shellCommandMenuBar",
+	    args,nargs);
+	dlElement->widget = localMenuBar;
+
+      /* Add handlers */
+	addCommonHandlers(dlElement->widget, displayInfo);
+	XtManageChild(dlElement->widget);
 
 #if EXPLICITLY_OVERWRITE_CDE_COLORS
-  /* Color menu bar explicitly to avoid CDE interference */
-    colorMenuBar(localMenuBar,
-      (Pixel)displayInfo->colormap[dlShellCommand->clr],
-      (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
+      /* Color menu bar explicitly to avoid CDE interference */
+	colorMenuBar(localMenuBar,
+	  (Pixel)displayInfo->colormap[dlShellCommand->clr],
+	  (Pixel)displayInfo->colormap[dlShellCommand->bclr]);
 #endif
 
-    shellCommandPulldownMenu = XmCreatePulldownMenu(
-      localMenuBar,"shellCommandPulldownMenu",args,2);
+      /* Create the pulldown menu */
+	nargs = 0;
+	XtSetArg(args[nargs],XmNforeground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->clr]); nargs++;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->bclr]); nargs++;
+#if 0
+	XtSetArg(args[nargs], XmNtearOffModel, XmTEAR_OFF_DISABLED); nargs++;
+#endif
+	shellCommandPulldownMenu = XmCreatePulldownMenu(
+	  localMenuBar,"shellCommandPulldownMenu",args,nargs);
+      /* Make the tear off colors right */
+	tearOff = XmGetTearOffControl(shellCommandPulldownMenu);
+	if(tearOff) {
+	    XtVaSetValues(tearOff,
+	      XmNforeground,(Pixel)displayInfo->colormap[dlShellCommand->clr],
+	      XmNbackground,(Pixel)displayInfo->colormap[dlShellCommand->bclr],
+	      NULL);
+	}
 
-    pixmapSize = MIN(dlShellCommand->object.width,dlShellCommand->object.height);
+      /* Create the pixmap */
+	if(dlShellCommand->label[0] == '\0') {
+	    label=NULL;
+	    index=0;
+	    icon=1;
+	    pixmapW=pixmapH;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else if(dlShellCommand->label[0] == '-') {
+	    int usedWidth;
 
-  /* Allow for shadows etc */
-    pixmapSize = (unsigned int) MAX(1,(int)pixmapSize - 8);
+	    label=dlShellCommand->label+1;
+	    index=messageButtonFontListIndex(dlShellCommand->object.height);
+	    icon=0;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=MAX(usedWidth,1);
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	} else {
+	    int usedWidth;
 
-  /* Create shellCommand icon (render to appropriate size) */
-    shellCommandPixmap = XCreatePixmap(display,RootWindow(display,screenNum),
-      pixmapSize,pixmapSize,XDefaultDepth(display,screenNum));
-    renderShellCommandPixmap(display,shellCommandPixmap,
-      displayInfo->colormap[dlShellCommand->clr],
-      displayInfo->colormap[dlShellCommand->bclr],
-      pixmapSize,pixmapSize);
+	    label=dlShellCommand->label;
+	    index=messageButtonFontListIndex(dlShellCommand->object.height);
+	    icon=1;
+	    usedWidth=XTextWidth(fontTable[index],label,strlen(label));
+	    pixmapW=pixmapH+usedWidth;
+	    pixmap = XCreatePixmap(display,
+	      RootWindow(display,screenNum), pixmapW, pixmapH,
+	      XDefaultDepth(display,screenNum));
+	}
+      /* Draw the pixmap */
+	renderShellCommandPixmap(display,pixmap,
+	  displayInfo->colormap[dlShellCommand->clr],
+	  displayInfo->colormap[dlShellCommand->bclr],
+	  pixmapW, pixmapH, fontTable[index], icon, label);
+      /* Create a cascade button */
+	nargs = 0;
+	XtSetArg(args[nargs],XmNforeground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->clr]); nargs++;
+	XtSetArg(args[nargs],XmNbackground,(Pixel)
+	  displayInfo->colormap[dlShellCommand->bclr]); nargs++;
+	XtSetArg(args[nargs],XmNhighlightThickness,0); nargs++;
+	XtSetArg(args[nargs],XmNwidth,dlShellCommand->object.width); nargs++;
+	XtSetArg(args[nargs],XmNheight,dlShellCommand->object.height); nargs++;
+	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
+	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
+	XtSetArg(args[nargs],XmNrecomputeSize,(Boolean)False); nargs++;
+	XtSetArg(args[nargs],XmNlabelPixmap,pixmap); nargs++;
+	XtSetArg(args[nargs],XmNlabelType,XmPIXMAP); nargs++;
+	XtSetArg(args[nargs],XmNsubMenuId,shellCommandPulldownMenu); nargs++;
+	widget = XtCreateManagedWidget("shellCommandMenuLabel",
+	  xmCascadeButtonGadgetClass,
+	  localMenuBar, args, nargs);
 
-    XtSetArg(args[7],XmNrecomputeSize,(Boolean)False);
-    XtSetArg(args[8],XmNlabelPixmap,shellCommandPixmap);
-    XtSetArg(args[9],XmNlabelType,XmPIXMAP);
-    XtSetArg(args[10],XmNsubMenuId,shellCommandPulldownMenu);
-    widget = XtCreateManagedWidget("shellCommandMenuLabel",
-      xmCascadeButtonGadgetClass,
-      localMenuBar, args, 12);
-
-/* Add destroy callback to free pixmap from pixmap cache */
-    XtAddCallback(widget,
-      XmNdestroyCallback,freePixmapCallback,
-      (XtPointer)shellCommandPixmap);
-
-    for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
-	if(strlen(dlShellCommand->command[i].command) > (size_t)0) {
-	    xmString = XmStringCreateLocalized(dlShellCommand->command[i].label);
-	    XtSetArg(args[3], XmNlabelString,xmString);
-	  /* set the displayInfo as the button's userData */
-	    XtSetArg(args[4], XmNuserData,(XtPointer)displayInfo);
-	    shellCommandMenuButton = XtCreateManagedWidget("shellCommandButton",
-	      xmPushButtonWidgetClass, shellCommandPulldownMenu, args, 5);
-	    XtAddCallback(shellCommandMenuButton,XmNactivateCallback,
-	      (XtCallbackProc)dmExecuteShellCommand,
-	      (XtPointer)&(dlShellCommand->command[i]));
-	    XmStringFree(xmString);
+	for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	    if(strlen(dlShellCommand->command[i].command) > (size_t)0) {
+		xmString =
+		  XmStringCreateLocalized(dlShellCommand->command[i].label);
+		nargs = 0;
+		XtSetArg(args[nargs],XmNforeground,(Pixel)
+		  displayInfo->colormap[dlShellCommand->clr]); nargs++;
+		XtSetArg(args[nargs],XmNbackground,(Pixel)
+		  displayInfo->colormap[dlShellCommand->bclr]); nargs++;
+		XtSetArg(args[nargs], XmNlabelString,xmString); nargs++;
+	      /* Set the displayInfo as the button's userData */
+		XtSetArg(args[nargs], XmNuserData,(XtPointer)displayInfo); nargs++;
+		shellCommandMenuButton =
+		  XtCreateManagedWidget("shellCommandButton",
+		  xmPushButtonWidgetClass, shellCommandPulldownMenu, args, nargs);
+		XtAddCallback(shellCommandMenuButton,XmNactivateCallback,
+		  (XtCallbackProc)dmExecuteShellCommand,
+		  (XtPointer)&(dlShellCommand->command[i]));
+		XmStringFree(xmString);
+	    }
 	}
     }
 }
@@ -279,6 +426,7 @@ DlElement *createDlShellCommand(DlElement *p)
 	    cmdNumber );
 	dlShellCommand->clr = globalResourceBundle.clr;
 	dlShellCommand->bclr = globalResourceBundle.bclr;
+	dlShellCommand->label[0] = '\0';
     }
 
     if(!(dlElement = createDlElement(DL_ShellCommand,
@@ -362,6 +510,10 @@ DlElement *parseShellCommand(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		dlShellCommand->bclr = atoi(token) % DL_MAX_COLORS;
+	    } else if(!strcmp(token,"label")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(dlShellCommand->label,token);
 	    }
 	    break;
 	case T_EQUAL:
@@ -424,28 +576,40 @@ void writeDlShellCommand(
     memset(indent,'\t',level);
     indent[level] = '\0';
 
-    fprintf(stream,"\n%s\"shell command\" {",indent);
-    writeDlObject(stream,&(dlShellCommand->object),level+1);
-    for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
 #ifdef SUPPORT_0201XX_FILE_FORMAT
-  	if(MedmUseNewFileFormat) {
+    if(MedmUseNewFileFormat) {
 #endif
+	fprintf(stream,"\n%s\"shell command\" {",indent);
+	writeDlObject(stream,&(dlShellCommand->object),level+1);
+	for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
 	    if((dlShellCommand->command[i].label[0] != '\0') ||
 	      (dlShellCommand->command[i].command[0] != '\0') ||
-	      (dlShellCommand->command[i].args[0] != '\0'))
-	      writeDlShellCommandEntry(stream,&(dlShellCommand->command[i]),i,level+1);
-#ifdef SUPPORT_0201XX_FILE_FORMAT
-	} else {
-	    writeDlShellCommandEntry(stream,&(dlShellCommand->command[i]),i,level+1);
+	      (dlShellCommand->command[i].args[0] != '\0')) {
+		writeDlShellCommandEntry(stream,
+		  &(dlShellCommand->command[i]),i,level+1);
+	    }
 	}
-#endif
+	fprintf(stream,"\n%s\tclr=%d",indent,dlShellCommand->clr);
+	fprintf(stream,"\n%s\tbclr=%d",indent,dlShellCommand->bclr);
+	if(dlShellCommand->label[0] != '\0')
+	  fprintf(stream,"\n%s\tlabel=\"%s\"",indent,dlShellCommand->label);
+	fprintf(stream,"\n%s}",indent);
+#ifdef SUPPORT_0201XX_FILE_FORMAT
+    } else {
+	fprintf(stream,"\n%s\"shell command\" {",indent);
+	writeDlObject(stream,&(dlShellCommand->object),level+1);
+	for(i = 0; i < MAX_SHELL_COMMANDS; i++) {
+	    writeDlShellCommandEntry(stream,
+	      &(dlShellCommand->command[i]),i,level+1);
+	}
+	fprintf(stream,"\n%s\tclr=%d",indent,dlShellCommand->clr);
+	fprintf(stream,"\n%s\tbclr=%d",indent,dlShellCommand->bclr);
+	fprintf(stream,"\n%s}",indent);
     }
-    fprintf(stream,"\n%s\tclr=%d",indent,dlShellCommand->clr);
-    fprintf(stream,"\n%s\tbclr=%d",indent,dlShellCommand->bclr);
-    fprintf(stream,"\n%s}",indent);
+#endif
 }
 
-static void shellCommandCallback(Widget w, XtPointer client_data,
+static void shellCommandCb(Widget w, XtPointer client_data,
   XtPointer cbs)
 {
     char *command;
@@ -466,15 +630,7 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
       /* (MDA) NB: system() blocks! need to background (&) to not block */
       /* KE: User has to do this as it is coded */
 	if(command && *command) {
-#if 0
-	  /* KE: Isn't necessary */
-	    performMacroSubstitutions(displayInfo,command,processedCommand,
-	      2*MAX_TOKEN_LENGTH);
-	    if(strlen(processedCommand) > (size_t) 0)
-	      parseAndExecCommand(displayInfo,processedCommand);
-#else
 	    parseAndExecCommand(displayInfo,command);
-#endif
 	    XtFree(command);
 	}
 	XtUnmanageChild(displayInfo->shellCommandPromptD);
@@ -488,28 +644,28 @@ static void shellCommandCallback(Widget w, XtPointer client_data,
 Widget createShellCommandPromptD(Widget parent)
 {
     Arg args[6];
-    int n;
+    int nargs;
     XmString title;
     Widget prompt;
 
     title = XmStringCreateLocalized("Command");
-    n = 0;
-    XtSetArg(args[n],XmNdialogTitle,title); n++;
-    XtSetArg(args[n],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); n++;
-    XtSetArg(args[n],XmNselectionLabelString,title); n++;
-    XtSetArg(args[n],XmNautoUnmanage,False); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNdialogTitle,title); nargs++;
+    XtSetArg(args[nargs],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); nargs++;
+    XtSetArg(args[nargs],XmNselectionLabelString,title); nargs++;
+    XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
   /* update global for selection box widget access */
     prompt = XmCreatePromptDialog(parent,
-      "shellCommandPromptD",args,n);
+      "shellCommandPromptD",args,nargs);
     XmStringFree(title);
 
-    XtAddCallback(prompt, XmNcancelCallback,shellCommandCallback,parent);
-    XtAddCallback(prompt,XmNokCallback,shellCommandCallback,parent);
-    XtAddCallback(prompt,XmNhelpCallback,shellCommandCallback,parent);
+    XtAddCallback(prompt, XmNcancelCallback,shellCommandCb,parent);
+    XtAddCallback(prompt,XmNokCallback,shellCommandCb,parent);
+    XtAddCallback(prompt,XmNhelpCallback,shellCommandCb,parent);
     return (prompt);
 }
 
-void dmExecuteShellCommand(Widget  w, DlShellCommandEntry *commandEntry,
+void dmExecuteShellCommand(Widget w, DlShellCommandEntry *commandEntry,
   XmPushButtonCallbackStruct *cbs)
 {
     XmString xmString;
@@ -597,6 +753,7 @@ static void shellCommandGetValues(ResourceBundle *pRCB, DlElement *p) {
       HEIGHT_RC,     &(dlShellCommand->object.height),
       CLR_RC,        &(dlShellCommand->clr),
       BCLR_RC,       &(dlShellCommand->bclr),
+      RD_LABEL_RC,   &(dlShellCommand->label),
       SHELLDATA_RC,  &(dlShellCommand->command),
       -1);
 }
@@ -650,7 +807,8 @@ static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 	    while(dlElement) {
 	      /* KE: Changed = to == here */
 		if(dlElement->structure.element->type == DL_ShellCommand)
-		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
+		  updateElementFromGlobalResourceBundle(
+		    dlElement->structure.element);
 		dlElement = dlElement->next;
 	    }
 	}
@@ -673,7 +831,7 @@ Widget createShellCommandDataDialog(
     Dimension cWidth, cHeight, aWidth, aHeight;
     Arg args[12];
     XmString xmString;
-    int i, j, n;
+    int i, j, nargs;
     static Boolean first = True;
 
 
@@ -698,51 +856,50 @@ Widget createShellCommandDataDialog(
    *		 OK     CANCEL
    */
 
-    n = 0;
-    XtSetArg(args[n],XmNautoUnmanage,False); n++;
-    XtSetArg(args[n],XmNmarginHeight,8); n++;
-    XtSetArg(args[n],XmNmarginWidth,8); n++;
-/*     cmdForm = XmCreateFormDialog(mainShell,"shellCommandDataF",args,n); */
-    cmdForm = XmCreateFormDialog(parent,"shellCommandDataF",args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
+    XtSetArg(args[nargs],XmNmarginHeight,8); nargs++;
+    XtSetArg(args[nargs],XmNmarginWidth,8); nargs++;
+    cmdForm = XmCreateFormDialog(parent,"shellCommandDataF",args,nargs);
     shell = XtParent(cmdForm);
-    n = 0;
-    XtSetArg(args[n],XmNtitle,"Shell Command Data"); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtitle,"Shell Command Data"); nargs++;
 #if OMIT_RESIZE_HANDLES
-    XtSetArg(args[n],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); n++;
+    XtSetArg(args[nargs],XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH); nargs++;
   /* KE: The following is necessary for Exceed, which turns off the
      resize function with the handles.  It should not be necessary */
-    XtSetArg(args[n],XmNmwmFunctions, MWM_FUNC_ALL); n++;
+    XtSetArg(args[nargs],XmNmwmFunctions, MWM_FUNC_ALL); nargs++;
 #endif
-    XtSetValues(shell,args,n);
+    XtSetValues(shell,args,nargs);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
       shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
-    n = 0;
-    XtSetArg(args[n],XmNrows,MAX_SHELL_COMMANDS); n++;
-    XtSetArg(args[n],XmNcolumns,3); n++;
-    XtSetArg(args[n],XmNcolumnMaxLengths,cmdColumnMaxLengths); n++;
-    XtSetArg(args[n],XmNcolumnWidths,cmdColumnWidths); n++;
-    XtSetArg(args[n],XmNcolumnLabels,cmdColumnLabels); n++;
-    XtSetArg(args[n],XmNcolumnMaxLengths,cmdColumnMaxLengths); n++;
-    XtSetArg(args[n],XmNcolumnWidths,cmdColumnWidths); n++;
-    XtSetArg(args[n],XmNcolumnLabelAlignments,cmdColumnLabelAlignments); n++;
-    XtSetArg(args[n],XmNboldLabels,False); n++;
+    nargs = 0;
+    XtSetArg(args[nargs],XmNrows,MAX_SHELL_COMMANDS); nargs++;
+    XtSetArg(args[nargs],XmNcolumns,3); nargs++;
+    XtSetArg(args[nargs],XmNcolumnMaxLengths,cmdColumnMaxLengths); nargs++;
+    XtSetArg(args[nargs],XmNcolumnWidths,cmdColumnWidths); nargs++;
+    XtSetArg(args[nargs],XmNcolumnLabels,cmdColumnLabels); nargs++;
+    XtSetArg(args[nargs],XmNcolumnMaxLengths,cmdColumnMaxLengths); nargs++;
+    XtSetArg(args[nargs],XmNcolumnWidths,cmdColumnWidths); nargs++;
+    XtSetArg(args[nargs],XmNcolumnLabelAlignments,cmdColumnLabelAlignments); nargs++;
+    XtSetArg(args[nargs],XmNboldLabels,False); nargs++;
     cmdMatrix = XtCreateManagedWidget("cmdMatrix",
-      xbaeMatrixWidgetClass,cmdForm,args,n);
+      xbaeMatrixWidgetClass,cmdForm,args,nargs);
 
 
     xmString = XmStringCreateLocalized("Cancel");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,xmString); n++;
-    closeButton = XmCreatePushButton(cmdForm,"closeButton",args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNlabelString,xmString); nargs++;
+    closeButton = XmCreatePushButton(cmdForm,"closeButton",args,nargs);
     XtAddCallback(closeButton,XmNactivateCallback,
       shellCommandActivate,(XtPointer)CMD_CLOSE_BTN);
     XtManageChild(closeButton);
     XmStringFree(xmString);
 
     xmString = XmStringCreateLocalized("Apply");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,xmString); n++;
-    applyButton = XmCreatePushButton(cmdForm,"applyButton",args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNlabelString,xmString); nargs++;
+    applyButton = XmCreatePushButton(cmdForm,"applyButton",args,nargs);
     XtAddCallback(applyButton,XmNactivateCallback,
       shellCommandActivate,(XtPointer)CMD_APPLY_BTN);
     XtManageChild(applyButton);
@@ -762,31 +919,31 @@ Widget createShellCommandDataDialog(
    */
 
   /* cmdMatrix */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-    XtSetValues(cmdMatrix,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_FORM); nargs++;
+    XtSetValues(cmdMatrix,args,nargs);
   /* apply */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,cmdMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNleftPosition,30); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(applyButton,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,cmdMatrix); nargs++;
+    XtSetArg(args[nargs],XmNtopOffset,12); nargs++;
+    XtSetArg(args[nargs],XmNleftAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNleftPosition,30); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNbottomOffset,12); nargs++;
+    XtSetValues(applyButton,args,nargs);
   /* close */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,cmdMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNrightPosition,70); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(closeButton,args,n);
+    nargs = 0;
+    XtSetArg(args[nargs],XmNtopAttachment,XmATTACH_WIDGET); nargs++;
+    XtSetArg(args[nargs],XmNtopWidget,cmdMatrix); nargs++;
+    XtSetArg(args[nargs],XmNtopOffset,12); nargs++;
+    XtSetArg(args[nargs],XmNrightAttachment,XmATTACH_POSITION); nargs++;
+    XtSetArg(args[nargs],XmNrightPosition,70); nargs++;
+    XtSetArg(args[nargs],XmNbottomAttachment,XmATTACH_FORM); nargs++;
+    XtSetArg(args[nargs],XmNbottomOffset,12); nargs++;
+    XtSetValues(closeButton,args,nargs);
 
     XtManageChild(cmdForm);
 
