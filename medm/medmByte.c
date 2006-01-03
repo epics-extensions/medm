@@ -126,7 +126,7 @@ void executeDlByte(DisplayInfo *displayInfo, DlElement *dlElement) {
 	} else if(dlByte->direction == UP) {
 	  /* Override */
 	    medmPrintf(1,"\nexecuteDlByte: "
-	      "Direction=\"down\" is not supported for Byte, using \"down\".\n"
+	      "Direction=\"up\" is not supported for Byte, using \"down\".\n"
 	      "  Check that this is what you want.\n"
 	      "  \"Start Bit\" is at the top and \"End Bit\" is at the bottom.");
 	    dlByte->direction = DOWN;
