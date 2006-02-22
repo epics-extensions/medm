@@ -589,7 +589,6 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     DlDisplay *dlDisplay;
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
-    int numPairs;
     Position x, y;
     int xg, yg;
     int left, right, top, bottom;
@@ -674,6 +673,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
 
   /* Generate the name-value table for macro substitutions (related display) */
     if(argsString) {
+	int numPairs;
 	cdi->nameValueTable = generateNameValueTable(argsString,&numPairs);
 	cdi->numNameValues = numPairs;
     } else {

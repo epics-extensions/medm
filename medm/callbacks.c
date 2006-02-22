@@ -469,10 +469,10 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	      /* Either not Shift-Click or second time through */
 
 #if DEBUG_FONTS
-		printf(" Upper branch: userData =%d (mask & ShiftMask)=%d\n",
-		  userData,mask & ShiftMask);
-		printf(" width=%d height=%d userData=%d\n",
-		  (int)width,(int)height,(int)userData);
+		printf(" Upper branch: userData =0x%x (mask & ShiftMask)=%d\n",
+		  (unsigned)userData,mask & ShiftMask);
+		printf(" width=%d height=%d userData=0x%d\n",
+		  (int)width,(int)height,(unsigned)userData);
 #endif
 	      /* Reset userData */
 		nargs=0;
@@ -485,10 +485,10 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
 	      /* Shift-Click, first time through
 	       *   Redefine height and/or width */
 #if DEBUG_FONTS
-		printf(" Lower branch: userData =%d (mask & ShiftMask)=%d\n",
-		  userData,mask & ShiftMask);
-		printf(" width=%d height=%d userData=%d\n",
-		  (int)width,(int)height,(int)userData);
+		printf(" Lower branch: userData =0x%x (mask & ShiftMask)=%d\n",
+		  (unsigned)userData,mask & ShiftMask);
+		printf(" width=%d height=%d userData=0x%x\n",
+		  (int)width,(int)height,(unsigned)userData);
 #endif
 	      /* Look at the display, which is the first element */
 		pE = FirstDlElement(displayInfo->dlElementList);

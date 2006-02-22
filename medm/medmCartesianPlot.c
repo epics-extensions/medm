@@ -1969,6 +1969,7 @@ DlElement *createDlCartesianPlot(DlElement *p)
 	plotAxisDefinitionInit(&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]));
 	dlCartesianPlot->trigger[0] = '\0';
 	dlCartesianPlot->erase[0] = '\0';
+	dlCartesianPlot->countPvName[0] = '\0';
 	dlCartesianPlot->eraseMode = ERASE_IF_NOT_ZERO;
     }
 
@@ -2051,6 +2052,10 @@ DlElement *parseCartesianPlot(DisplayInfo *displayInfo)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		strcpy(dlCartesianPlot->erase,token);
+	    } else if(!strcmp(token,"countPvName")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		strcpy(dlCartesianPlot->countPvName,token);
 	    } else if(!strcmp(token,"eraseMode")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
@@ -2114,6 +2119,8 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	  fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
 	if(dlCartesianPlot->erase[0] != '\0')
 	  fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
+	if(dlCartesianPlot->countPvName[0] != '\0')
+	  fprintf(stream,"\n%s\tcountPvName=\"%s\"",indent,dlCartesianPlot->countPvName);
 	if(dlCartesianPlot->eraseMode != ERASE_IF_NOT_ZERO)
 	  fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
 	    stringValueTable[dlCartesianPlot->eraseMode]);
@@ -2135,6 +2142,7 @@ void writeDlCartesianPlot(FILE *stream, DlElement *dlElement, int level)
 	  &(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]),Y2_AXIS_ELEMENT,level+1);
 	fprintf(stream,"\n%s\ttrigger=\"%s\"",indent,dlCartesianPlot->trigger);
 	fprintf(stream,"\n%s\terase=\"%s\"",indent,dlCartesianPlot->erase);
+	fprintf(stream,"\n%s\tcountPvName=\"%s\"",indent,dlCartesianPlot->countPvName);
 	fprintf(stream,"\n%s\teraseMode=\"%s\"",indent,
 	  stringValueTable[dlCartesianPlot->eraseMode]);
     }

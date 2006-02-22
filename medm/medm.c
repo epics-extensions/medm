@@ -3120,6 +3120,7 @@ int main(int argc, char *argv[])
 #endif     /*  DEBUG_DEFINITIONS */
 
   /* Initialize global variables */
+    parsingCompositeFile = False;
     maxLabelWidth = 0;
     maxLabelHeight = 0;
     dashes = "******";

@@ -663,6 +663,9 @@ EXTERN Region updateTaskExposedRegion;
 /* Flag which says to traverse monitor list */
 EXTERN Boolean globalModifiedFlag;
 
+/* Flag which says we are parsing a composite file and to replace macros */
+EXTERN Boolean parsingCompositeFile;
+
 /* For object palette selections and single object selection */
 EXTERN DlElementType currentElementType;
 

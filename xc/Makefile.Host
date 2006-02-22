@@ -19,10 +19,14 @@ USE_MOTIF12=NO
 
 # Optimization
 ifdef WIN32
-#HOST_OPT = NO
+HOST_OPT = NO
 else
-#HOST_OPT = NO
+HOST_OPT = NO
 endif
+
+# Compiler specific
+#GCC_WARN_YES = -Wall -Wtraditional -Wmissing-prototypes -Wstrict-prototypes
+GCC_WARN_YES = -Wall
 
 # Source browser options
 ifeq ($(HOST_OPT),NO)

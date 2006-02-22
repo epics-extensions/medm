@@ -1399,9 +1399,10 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    case '"' : state = INQUOTE;
 		break;
 	    case '$' : c=getc(filePtr);
-	      /* only do macro substitution if in execute mode */
-		if(globalDisplayListTraversalMode == DL_EXECUTE
-		  && c == '(' ) {
+	      /* only do macro substitution if in execute mode or
+	       * parsing a composite file */
+		if((globalDisplayListTraversalMode == DL_EXECUTE ||
+		     parsingCompositeFile) && c == '(' ) {
 		    state = INMACRO;
 		} else {
 		    *w++ = '$';
@@ -1428,8 +1429,8 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 	    case '"' : *w = '\0'; return(T_WORD);
 	    case '$' : c=getc(filePtr);
 	      /* only do macro substitution if in execute mode */
-		if(globalDisplayListTraversalMode == DL_EXECUTE
-		  && c == '(' ) {
+		if((globalDisplayListTraversalMode == DL_EXECUTE ||
+		     parsingCompositeFile) && c == '(' ) {
 		    savedState = INQUOTE;
 		    state = INMACRO;
 		} else {

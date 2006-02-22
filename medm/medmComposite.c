@@ -607,7 +607,10 @@ static void compositeFileParse(DisplayInfo *displayInfo,
 {
     FILE *filePtr, *savedFilePtr;
     int savedVersionNumber;
+    NameValueTable *savedNameValueTable = NULL;
+    int savedNumNameValues = 0;
     char filename[MAX_TOKEN_LENGTH];
+    char macroString[MAX_TOKEN_LENGTH];
     char token[MAX_TOKEN_LENGTH];
     TOKEN tokenType;
     DlFile *dlFile;
@@ -618,12 +621,24 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     int displayH, displayW;
 
     if(!displayInfo || !dlElement) return;
+
     dlComposite = dlElement->structure.composite;
 
-  /* Work with a copy of the name so the original doesn't get paths
-     attached, delimiter characters changed, etc. */
+  /* Separate filename and macros from dlComposite->compositeFile  */
     strncpy(filename,dlComposite->compositeFile,MAX_TOKEN_LENGTH);
+    *macroString = '\0';
     filename[MAX_TOKEN_LENGTH-1]='\0';
+    if(filename && filename[0]) {
+      /* Is of the form filename;a=xxx,b=yyy,... */
+	char *ptr = NULL;
+	ptr = strchr(filename, ';');
+	if(ptr) {
+	  /* End the file name at the ; */
+	    *ptr = '\0';
+	  /* Copy the remainder to the macroString */
+	    strcpy(macroString, ++ptr);
+	}
+    }
 
   /* Open the file */
     filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
@@ -634,11 +649,24 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     }
 
   /* Since getToken() uses the displayInfo, we have to save the file
-     pointer in the displayInfo and plug in the current one.  We also
-     have to save the version number. (It is zero for a new display.)  */
+     pointer in the displayInfo and plug in the current one.  We have
+     to save the version number. (It is zero for a new display.) And
+     we have to save the macros and substitute the ones specified */
+    parsingCompositeFile = True;
     savedFilePtr = displayInfo->filePtr;
     savedVersionNumber = displayInfo->versionNumber;
+    savedNameValueTable = displayInfo->nameValueTable;
+    savedNumNameValues = displayInfo->numNameValues;
     displayInfo->filePtr = filePtr;
+    if(*macroString) {
+	int numPairs;
+	displayInfo->nameValueTable =
+	  generateNameValueTable(macroString, &numPairs);
+	displayInfo->numNameValues = numPairs;
+    } else {
+	displayInfo->nameValueTable = NULL;
+	displayInfo->numNameValues = 0;
+    }
 
   /* Read the file block (Must be there) */
     dlFile = createDlFile(displayInfo);;
@@ -742,6 +770,10 @@ static void compositeFileParse(DisplayInfo *displayInfo,
   /* Restore displayInfo file parameters */
     displayInfo->filePtr = savedFilePtr;
     displayInfo->versionNumber = savedVersionNumber;
+    free ((char *)displayInfo->nameValueTable);    
+    displayInfo->nameValueTable = savedNameValueTable;
+    displayInfo->numNameValues = savedNumNameValues;
+    parsingCompositeFile = False;
 }
 
 void writeDlCompositeChildren(FILE *stream, DlElement *dlElement,
