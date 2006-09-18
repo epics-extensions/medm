@@ -3343,7 +3343,7 @@ DisplayInfo *findDisplay(char *filename, char *argsString,
 }
 
 /*
- * Utility function to perform macrosubstitutions on input string, putting
+ * Utility function to perform macro substitutions on input string, putting
  *   substituted string in specified output string (up to sizeOfOutputString
  *   bytes)
  */

@@ -216,7 +216,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    Boolean validTrace = False;
 	  /* X data */
 	    if(dlCartesianPlot->trace[i].xdata[0] != '\0') {
-		pcp->xyTrace[validTraces].recordX = NULL;
 		pcp->xyTrace[validTraces].recordX =
 		  medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
 		    cartesianPlotUpdateScreenFirstTime,
@@ -228,7 +227,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    }
 	  /* Y data */
 	    if(dlCartesianPlot->trace[i].ydata[0] != '\0') {
-		pcp->xyTrace[validTraces].recordY = NULL;
 		pcp->xyTrace[validTraces].recordY =
 		  medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
 		    cartesianPlotUpdateScreenFirstTime,
@@ -247,7 +245,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       /* If no xyTraces, create one fake one */
 	if(validTraces == 0) {
 	    validTraces = 1;
-	    pcp->xyTrace[0].recordX = NULL;
 	    pcp->xyTrace[0].recordX = medmAllocateRecord(" ",
 	      cartesianPlotUpdateScreenFirstTime,
 	      cartesianPlotUpdateGraphicalInfoCb,
@@ -260,7 +257,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
       /* Allocate (or set to NULL) the X Record in the eraseCh XYTrace */
 	if((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
-	    pcp->eraseCh.recordX = NULL;
 	    pcp->eraseCh.recordX =
 	      medmAllocateRecord(dlCartesianPlot->erase,
 		cartesianPlotUpdateScreenFirstTime,
@@ -273,7 +269,6 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
       /* Allocate (or set to NULL) the X Record in the triggerCh XYTrace */
 	if((dlCartesianPlot->trigger[0] != '\0') && (validTraces > 0)) {
-	    pcp->triggerCh.recordX =  NULL;
 	    pcp->triggerCh.recordX =
 	      medmAllocateRecord(dlCartesianPlot->trigger,
 		cartesianPlotUpdateScreenFirstTime,
@@ -285,11 +280,9 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	}
 
       /* Allocate (or set to NULL) the X Record in the countCh XYTrace */
-	if((dlCartesianPlot->count == 0)
-	  && (dlCartesianPlot->countPvName[0] != '\0')
+	if((dlCartesianPlot->countPvName[0] != '\0')
 	  && (!isdigit(dlCartesianPlot->countPvName[0]))
 	  && (validTraces > 0)) {
-	    pcp->countCh.recordX =  NULL;
 	    pcp->countCh.recordX =
 	      medmAllocateRecord(dlCartesianPlot->countPvName,
 		cartesianPlotUpdateScreenFirstTime,
