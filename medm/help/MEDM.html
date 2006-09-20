@@ -272,10 +272,6 @@ ul
 
 <div
 style="border:none;border-bottom:solid windowtext 4.5pt;padding:0in 0in 1.0pt 0in">
-<h1 style="text-indent:0in"><a name="_Hlt392059682"></a><b><font size="7"
-color="black" face="Arial"><span
-style="font-size:36.0pt">&#xa0;</span></font></b></h1>
-
 <h1 style="text-indent:0in"><b><font size="7" color="black"
 face="Arial"><span style="font-size:36.0pt">MEDM</span></font> Reference
 Manual</b></h1>
@@ -289,8 +285,8 @@ style="font-size:14.0pt; font-family:Arial;font-weight:bold">Kenneth Evans,
 Jr.</span></font></b></p>
 
 <p class="MsoNormal"><b><font size="4" face="Arial"><span
-style="font-size:14.0pt;font-family:Arial;font-weight: bold">August
-2005</span></font></b></p>
+style="font-size:14.0pt;font-family:Arial;font-weight: bold">September
+2006</span></font></b></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">&#xa0;</span></font></p>
@@ -583,6 +579,23 @@ color="black" face="Times New Roman"><span style="font-size:12.0pt">Version
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">3.1.0</span></font></p>
+
+<p class="MsoNormal" style="margin-left:.25in;text-indent:-.25in"><font
+size="2" face="Symbol"><span
+style="font-size:10.0pt;font-family:Symbol">&#xb7;<font size="1"
+face="Times New Roman"><span
+style="font:7.0pt &#34;Times New Roman&#34;">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
+</span></font></span></font>You can specify macros for a <a
+href="#Composite">Composite</a> defined by a file.</p>
+
+<p class="MsoNormal" style="margin-left:.25in;text-indent:-.25in"><font
+size="2" face="Symbol"><span
+style="font-size:10.0pt;font-family:Symbol">&#xb7;<font size="1"
+face="Times New Roman"><span
+style="font:7.0pt &#34;Times New Roman&#34;">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
+</span></font></span></font>There is a new option, &amp;X, for the <a
+href="#ExecuteMenu">Execute Menu</a> and <a href="#ShellCommand">Shell
+Command</a>.</p>
 
 <p class="MsoNormal" style="margin-left:.25in;text-indent:-.25in"><font
 size="2" face="Symbol"><span
@@ -2042,7 +2055,7 @@ style="font:7.0pt &#34;Times New Roman&#34;">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0
 </span></font></span></font>You can install the font aliases locally in
 Exceed.&#xa0; Choose the &#x201c;Import Aliases&#x2026;&#x201d; button.&#xa0;
 You will need a text file, perhaps called medm.ali, with the above aliases in
-it.&#xa0; Type in the location of this file for the &#x201c;From:&#x201d;
+it. &#xa0;Type in the location of this file for the &#x201c;From:&#x201d;
 entry, and then be sure to select &#x201c;(All Directories)&#x201d; for the
 &#x201c;To:&#x201d; entry.&#xa0; (It is not the default.)</p>
 
@@ -4054,7 +4067,7 @@ Polygons are drawn by pressing Btn1 to generate vertices or Shift-Btn1 to
 generate vertices which are multiples of 45 degrees from the previous
 point.&#xa0; This allows easy horizontal or vertical line generation, for
 instance.&#xa0; Button releases are ignored.&#xa0; The Polygon is finished
-when there is a second click at the same location. &#xa0;The Polygon is
+when there is a second click at the same location.&#xa0; The Polygon is
 always displayed as closed while it is being drawn. </span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
@@ -4857,13 +4870,24 @@ composites.</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
-Since the Composite has a <a href="#DynamicAttribute">Dynamic Attribute</a>,
-its visibility may be made to depend on a CALC expression involving up to
-four process variables or the other visibility features of a Dynamic
-Attribute.&#xa0; When the Composite is not visible, all of its objects are
-hidden.&#xa0; The objects however continue to receive updates from Channel
-Access if they were ever visible.&#xa0; This feature can be used to make
-parts of a display only appear under certain conditions.&#xa0; More
+If the file has <a href="#MacroSubstitution">macros</a>, you can specify them
+by placing a semi-colon after the file name and entering them as on the
+command line.&#xa0; For example:</span></font></p>
+
+<p class="MsoNormal"><font size="2" face="Courier New"><span
+style="font-size:10.0pt; font-family:&#34;Courier New&#34;">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
+</span></font><font face="Courier New"><span lang="PT-BR"
+style="font-family:&#34;Courier New&#34;">beamline.adl;sector=1A,corrector=H3</span></font></p>
+
+<p class="MsoNormal"><font size="2" face="Times New Roman"><span lang="PT-BR"
+style="font-size:10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
+</span>Since the Composite has a <a href="#DynamicAttribute">Dynamic
+Attribute</a>, its visibility may be made to depend on a CALC expression
+involving up to four process variables or the other visibility features of a
+Dynamic Attribute.&#xa0; When the Composite is not visible, all of its
+objects are hidden.&#xa0; The objects however continue to receive updates
+from Channel Access if they were ever visible.&#xa0; This feature can be used
+to make parts of a display only appear under certain conditions.&#xa0; More
 generally, by using overlapped Composites, whole sections of a display can be
 made to appear, disappear, or change from one thing to another depending on
 the conditions.&#xa0; When using this feature, keep in mind the following
@@ -4875,8 +4899,7 @@ should be fine if the updates are infrequent.&#xa0; If objects inside the
 Composite have visibility that depends on the same process variables as those
 on which the Composite depends, there will be flashing when the objects
 update.&#xa0; There may be flashing in other cases, as well.&#xa0; If so, a
-possible solution is to limit the complexity of what you are
-doing.</span></font></p>
+possible solution is to limit the complexity of what you are doing.</font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
@@ -7844,7 +7867,7 @@ top.</span></font></p>
 <p class="MsoNormal" style="text-indent:.5in"><font size="2"
 face="Times New Roman"><span style="font-size:10.0pt">There are three items
 that can be set in the dialog box: the <a name="_Hlt438543874">Low Limit</a>,
-the High Limit, and the Precision.&#xa0; For each of these items, the value
+the High Limit, and the Precision. &#xa0;For each of these items, the value
 used for the item may come from three different sources: Channel, Default,
 and User Specified.</span></font></p>
 
@@ -8065,7 +8088,7 @@ style="font-size: 10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
 What is common among all attached MEDMs is that they were started from the
 same X display.&#xa0; They may have been started on different machines on
 different networks by different users.&#xa0; Note that the user and access
-permissions will be the same as for the original, host MEDM. &#xa0;This may
+permissions will be the same as for the original, host MEDM.&#xa0; This may
 lead to confusing behavior if successive MEDMs are started from different
 machines, from different networks, or by different users.</span></font></p>
 
@@ -9293,6 +9316,20 @@ style="margin-left:5.4pt;border-collapse:collapse;border:none">
       <td width="102" valign="top"
       style="width:76.5pt;border:solid windowtext 1.0pt;   border-top:none;padding:0in 5.4pt 0in 5.4pt"><p
         class="MsoNormal"><font size="2" face="Times New Roman"><span
+        style="font-size:10.0pt">&amp;X</span></font></p>
+      </td>
+      <td width="481" valign="top"
+      style="width:360.9pt;border-top:none;border-left:   none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;   padding:0in 5.4pt 0in 5.4pt"><p
+        class="MsoNormal"><font size="2" face="Times New Roman"><span
+        style="font-size:10.0pt">The X window id of the ADL screen.&#xa0;
+        This can be used with commands like Xwd, for
+        example.</span></font></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="102" valign="top"
+      style="width:76.5pt;border:solid windowtext 1.0pt;   border-top:none;padding:0in 5.4pt 0in 5.4pt"><p
+        class="MsoNormal"><font size="2" face="Times New Roman"><span
         style="font-size:10.0pt">&amp;?</span></font></p>
       </td>
       <td width="481" valign="top"
@@ -9334,6 +9371,12 @@ face="Courier New"><span
 style="font-size:10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
 </span></font><span lang="PT-BR">setenv MEDM_EXEC_LIST 'XTerm;xterm &amp;?<a
 name="_Hlt399319406"></a>'</span></p>
+
+<p class="Preformatted" style="text-indent:0in"><font size="2" color="black"
+face="Courier New"><span
+style="font-size:10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0; setenv
+MEDM_EXEC_LIST '</span></font> Dump;xwd -id &amp;X | xwdtopnm | pnmtops | lpr
+&amp;'</p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">A WIN32 example is:</span></font></p>
@@ -9470,7 +9513,7 @@ style="margin-left:5.4pt;border-collapse:collapse;border:none">
         style="font-size:10.0pt">A colon-separated (semi-colon-separated on
         <a href="#WIN32">WIN32</a>) list of directories in which to look for
         display files that do not have absolute path names or names that
-        begin with &#x201c;./&#x201d; or &#x201c;../&#x201d;.&#xa0; Only
+        begin with &#x201c;./&#x201d; or &#x201c;../&#x201d;. &#xa0;Only
         looks in the current working directory if not specified.&#xa0; See <a
         href="#ADLFiles">ADL Files</a><a name="_Hlt398524501"></a> and <a
         href="#RelatedDisplay">Related Display</a><a
@@ -10013,7 +10056,7 @@ style="font-size: 10.0pt">Experimental Physics and Industrial Control System
 (EPICS)</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
-style="font-size: 10.0pt">Copyright, 1995, The University of California, The
+style="font-size: 10.0pt">Copyright, 1995-2006, The University of California, The
 University of Chicago</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
@@ -10043,13 +10086,12 @@ OWNED RIGHTS.*</span></font></p>
 style="font-size: 14.0pt">Document</span></font></b></h2>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
-style="font-size: 10.0pt">Modified </span></font>August 25, 2005</p>
-</div>
+style="font-size: 10.0pt">Modified </span></font>September 20, 2006</p>
   <p>
     <a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-html401"
         alt="Valid HTML 4.01 Transitional" height="31" width="88"></a>
   </p>
-
+</div>
 </body>
 </html>
