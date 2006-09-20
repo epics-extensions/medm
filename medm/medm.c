@@ -3733,9 +3733,8 @@ int main(int argc, char *argv[])
   /* Check if there were early messages and bring up Message Window */
     checkEarlyMessages();
 
-  /* Print that we are started in the message window which will cause
-   * it to get created */
-    medmPrintf(0,"\nStarting main loop\n");
+  /* Insure the message window is created without raising it */
+    errMsgDlgCreateDlg(0);
 
 #ifdef __TED__
   /* Get CDE workspace list */

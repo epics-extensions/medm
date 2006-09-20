@@ -4138,8 +4138,10 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 {
     char *name, *title;
     char command[1024];     /* Danger: Fixed length */
+    char temp[80];          /* Danger: Fixed length */
     Record **records;
     int i, j, ic, len, clen, count;
+    unsigned u = 0;
     DlElement *pE;
 
 #ifdef VMS
@@ -4214,6 +4216,23 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
 		    return;
 		}
 		strcpy(command+ic,title);
+		i++; ic+=len;
+		break;
+	    case 'X':
+	      /* X window id */
+		u = 0;
+		if(displayInfo->shell)  u = (unsigned)XtWindow(displayInfo->shell);
+		if(!u) {
+		    medmPostMsg(1,"parseAndExecCommand: Cannot find window id\n");
+		    return;
+		}
+		sprintf(temp,"%u",u);
+		len = strlen(temp);
+		if(ic + len >= 1024) {
+		    medmPostMsg(1,"parseAndExecCommand: Command is too long\n");
+		    return;
+		}
+		strcpy(command+ic,temp);
 		i++; ic+=len;
 		break;
 	    case '?':
