@@ -80,7 +80,7 @@ int fontSizeTable[MAX_FONTS] = {4,6,8,10,12,14,16,18,20,
    way to customize the location.  */
 
 #define MEDM_HELP_PATH \
-"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/MEDM/MEDM.html"
+"http://www.aps.anl.gov/epics/EpicsDocumentation/ExtensionsManuals/MEDM/MEDM.html"
 
 /*** Print setup defaults ***/
 
