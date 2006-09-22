@@ -655,17 +655,16 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     parsingCompositeFile = True;
     savedFilePtr = displayInfo->filePtr;
     savedVersionNumber = displayInfo->versionNumber;
-    savedNameValueTable = displayInfo->nameValueTable;
-    savedNumNameValues = displayInfo->numNameValues;
     displayInfo->filePtr = filePtr;
+  /* Only do this if there is a macro string, otherwise use the
+   * existing macros */
     if(*macroString) {
 	int numPairs;
+	savedNameValueTable = displayInfo->nameValueTable;
+	savedNumNameValues = displayInfo->numNameValues;
 	displayInfo->nameValueTable =
 	  generateNameValueTable(macroString, &numPairs);
 	displayInfo->numNameValues = numPairs;
-    } else {
-	displayInfo->nameValueTable = NULL;
-	displayInfo->numNameValues = 0;
     }
 
   /* Read the file block (Must be there) */
@@ -770,9 +769,11 @@ static void compositeFileParse(DisplayInfo *displayInfo,
   /* Restore displayInfo file parameters */
     displayInfo->filePtr = savedFilePtr;
     displayInfo->versionNumber = savedVersionNumber;
-    free ((char *)displayInfo->nameValueTable);    
-    displayInfo->nameValueTable = savedNameValueTable;
-    displayInfo->numNameValues = savedNumNameValues;
+    if(*macroString) {
+	free ((char *)displayInfo->nameValueTable);    
+	displayInfo->nameValueTable = savedNameValueTable;
+	displayInfo->numNameValues = savedNumNameValues;
+    }
     parsingCompositeFile = False;
 }
 
