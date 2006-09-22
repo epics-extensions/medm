@@ -4879,15 +4879,21 @@ style="font-size:10.0pt; font-family:&#34;Courier New&#34;">&#xa0;&#xa0;&#xa0;&#
 </span></font><font face="Courier New"><span lang="PT-BR"
 style="font-family:&#34;Courier New&#34;">beamline.adl;sector=1A,corrector=H3</span></font></p>
 
-<p class="MsoNormal"><font size="2" face="Times New Roman"><span lang="PT-BR"
-style="font-size:10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
-</span>Since the Composite has a <a href="#DynamicAttribute">Dynamic
-Attribute</a>, its visibility may be made to depend on a CALC expression
-involving up to four process variables or the other visibility features of a
-Dynamic Attribute.&#xa0; When the Composite is not visible, all of its
-objects are hidden.&#xa0; The objects however continue to receive updates
-from Channel Access if they were ever visible.&#xa0; This feature can be used
-to make parts of a display only appear under certain conditions.&#xa0; More
+<p class="MsoNormal"><font size="2" face="Times New Roman"><span
+style="font-size: 10.0pt">If you do not specify macros in this way, any
+existing macros in the ADL file which uses this Composite will still be
+passed to the file.&#xa0; If you use this feature, those macros will not be
+passed, and the ones you specify will be used instead. </span></font></p>
+
+<p class="MsoNormal"><font size="2" face="Times New Roman"><span
+style="font-size: 10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
+Since the Composite has a <a href="#DynamicAttribute">Dynamic Attribute</a>,
+its visibility may be made to depend on a CALC expression involving up to
+four process variables or the other visibility features of a Dynamic
+Attribute.&#xa0; When the Composite is not visible, all of its objects are
+hidden.&#xa0; The objects however continue to receive updates from Channel
+Access if they were ever visible.&#xa0; This feature can be used to make
+parts of a display only appear under certain conditions.&#xa0; More
 generally, by using overlapped Composites, whole sections of a display can be
 made to appear, disappear, or change from one thing to another depending on
 the conditions.&#xa0; When using this feature, keep in mind the following
@@ -4899,7 +4905,8 @@ should be fine if the updates are infrequent.&#xa0; If objects inside the
 Composite have visibility that depends on the same process variables as those
 on which the Composite depends, there will be flashing when the objects
 update.&#xa0; There may be flashing in other cases, as well.&#xa0; If so, a
-possible solution is to limit the complexity of what you are doing.</font></p>
+possible solution is to limit the complexity of what you are
+doing.</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
@@ -7867,7 +7874,7 @@ top.</span></font></p>
 <p class="MsoNormal" style="text-indent:.5in"><font size="2"
 face="Times New Roman"><span style="font-size:10.0pt">There are three items
 that can be set in the dialog box: the <a name="_Hlt438543874">Low Limit</a>,
-the High Limit, and the Precision. &#xa0;For each of these items, the value
+the High Limit, and the Precision.&#xa0; For each of these items, the value
 used for the item may come from three different sources: Channel, Default,
 and User Specified.</span></font></p>
 
@@ -9101,7 +9108,7 @@ style="margin-left:5.4pt;border-collapse:collapse;border:none">
       style="width:360.9pt;border-top:none;border-left:   none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;   padding:0in 5.4pt 0in 5.4pt"><p
         class="MsoNormal"><font size="2" face="Times New Roman"><span
         style="font-size:10.0pt">Brings up a dialog box with a list of the
-        file names of all the displays currently open.&#xa0; You can Raise or
+        file names of all the displays currently open. &#xa0;You can Raise or
         Close the selected display.&#xa0; The name of the selected display
         will be in the clipboard, so it can be copied somewhere else.&#xa0;
         The See <a href="#DisplayListDialogBox">Display List Dialog Box</a><a
@@ -9513,7 +9520,7 @@ style="margin-left:5.4pt;border-collapse:collapse;border:none">
         style="font-size:10.0pt">A colon-separated (semi-colon-separated on
         <a href="#WIN32">WIN32</a>) list of directories in which to look for
         display files that do not have absolute path names or names that
-        begin with &#x201c;./&#x201d; or &#x201c;../&#x201d;. &#xa0;Only
+        begin with &#x201c;./&#x201d; or &#x201c;../&#x201d;.&#xa0; Only
         looks in the current working directory if not specified.&#xa0; See <a
         href="#ADLFiles">ADL Files</a><a name="_Hlt398524501"></a> and <a
         href="#RelatedDisplay">Related Display</a><a
@@ -10056,8 +10063,8 @@ style="font-size: 10.0pt">Experimental Physics and Industrial Control System
 (EPICS)</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
-style="font-size: 10.0pt">Copyright, 1995-2006, The University of California, The
-University of Chicago</span></font></p>
+style="font-size: 10.0pt">Copyright, 1995-2006, The University of California,
+The University of Chicago</span></font></p>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
 style="font-size: 10.0pt">Portions of this material resulted from work
@@ -10086,12 +10093,12 @@ OWNED RIGHTS.*</span></font></p>
 style="font-size: 14.0pt">Document</span></font></b></h2>
 
 <p class="MsoNormal"><font size="2" face="Times New Roman"><span
-style="font-size: 10.0pt">Modified </span></font>September 20, 2006</p>
-  <p>
-    <a href="http://validator.w3.org/check?uri=referer"><img
-        src="http://www.w3.org/Icons/valid-html401"
-        alt="Valid HTML 4.01 Transitional" height="31" width="88"></a>
-  </p>
+style="font-size: 10.0pt">Modified </span></font>September 22, 2006</p>
+<p>
+  <a href="http://validator.w3.org/check?uri=referer"><img
+     src="http://www.w3.org/Icons/valid-html401"
+     alt="Valid HTML 4.01 Transitional" height="31" width="88"></a>
+</p>
 </div>
 </body>
 </html>
