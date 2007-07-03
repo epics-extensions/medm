@@ -12,6 +12,8 @@
 TOP = ../../..
 include $(TOP)/configure/CONFIG
 
+SHARED_LIBRARIES = NO
+
 CMPLR = STRICT
 
 # Motif
