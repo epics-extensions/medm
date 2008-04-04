@@ -41,7 +41,9 @@
 #include <Xm/DrawP.h>
 
 /* Internal Motif functions not defined in header files */
+#ifndef LESSTIF_VERSION
 void _XmDrawShadow();
+#endif
 
   /*
    * MDA - want to use memmove() instead of bcopy() for portability!

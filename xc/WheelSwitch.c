@@ -229,6 +229,9 @@ static void kbdHandler(Widget widget, XtPointer dummy, XEvent *event,
 void _XmGadgetTraverseNextTabGroup();
 void _XmGadgetTraversePrevTabGroup();
 unsigned char _XmGetFocusPolicy();
+#ifdef LESSTIF_VERSION
+#define _XmGetTabGroup XmGetTabGroup
+#endif
 Widget _XmGetTabGroup();
 void _XmDispatchGadgetInput();
 void _XmUnhighlightBorder();

@@ -454,7 +454,7 @@ static menuEntry_t fileMenu[] = {
       mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_OPEN_BTN, NULL},
     { "Save",      &xmPushButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S", NULL,
       mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_BTN, NULL},
-    { "Save All",  &xmPushButtonGadgetClass, 'l', "Ctrl<Key>L", NULL, NULL,
+    { "Save All",  &xmPushButtonGadgetClass, 'l', "Ctrl<Key>L", "Ctrl+L", NULL,
       mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_ALL_BTN, NULL},
     { "Save As...",&xmPushButtonGadgetClass, 'A', NULL,         NULL, NULL,
       mainFileMenuSimpleCallback, (XtPointer) MAIN_FILE_SAVE_AS_BTN, NULL},
@@ -498,7 +498,7 @@ static menuEntry_t palettesMenu[] = {
       };
 
 static menuEntry_t helpMenu[] = {
-{ "Overview",  &xmPushButtonGadgetClass, 'O', "Ctrl<key>H", NULL, NULL,
+{ "Overview",  &xmPushButtonGadgetClass, 'O', "Ctrl<key>H", "Ctrl+H", NULL,
   helpMenuSimpleCallback, (XtPointer) HELP_OVERVIEW_BTN, NULL},
 { "Contents",&xmPushButtonGadgetClass, 'C', NULL, NULL, NULL,
     helpMenuSimpleCallback, (XtPointer) HELP_CONTENTS_BTN, NULL},
