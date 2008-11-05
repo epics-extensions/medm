@@ -89,12 +89,20 @@ int callBrowser(char *url, char *bookmark)
 	}
 	return 3;
     }
-  /* Get NETSCAPEPATH if it exists */
-    envstring=getenv("NETSCAPEPATH");
+  /* Get BROWSER if it exists */
+    envstring=getenv("BROWSER");
 #if DEBUG_EXEC
-    printf("NETSCAPEPATH=%s (%p)\n",
+    printf("BROWSER=%s (%p)\n",
       envstring?envstring:"Not Found",envstring);
 #endif
+    if (!envstring) { 
+  /* Get NETSCAPEPATH if it exists */
+        envstring=getenv("NETSCAPEPATH");
+#if DEBUG_EXEC
+        printf("NETSCAPEPATH=%s (%p)\n",
+          envstring?envstring:"Not Found",envstring);
+#endif
+    }
   /* Set handler to ignore possible BadWindow error */
   /*   (Would prefer a routine that tells if the window is defined) */
     oldhandler=XSetErrorHandler(ignoreXError);
