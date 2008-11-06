@@ -3360,6 +3360,7 @@ int main(int argc, char *argv[])
 
 	      /* Leave this MEDM */
 		XCloseDisplay(display);
+		ca_task_exit();
 		exit(0);
 	    }
 	}
