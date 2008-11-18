@@ -1075,6 +1075,10 @@ static void keyboardDialogCallback(Widget w, XtPointer clientData,
     case XmCR_HELP:
 	callBrowser(medmHelpPath,"#Slider");
 	break;
+
+    case XmCR_PROTOCOLS:
+	XtDestroyWidget(XtParent((Widget)clientData));
+	break;
     }
 }
 
@@ -1146,6 +1150,14 @@ void popupValuatorKeyboardEntry(Widget w, DisplayInfo *displayInfo,
     XtAddCallback(keyboardDialog,XmNokCallback,keyboardDialogCallback,pv);
     XtAddCallback(keyboardDialog,XmNhelpCallback,keyboardDialogCallback,NULL);
     XtAddCallback(keyboardDialog,XmNcancelCallback,keyboardDialogCallback,NULL);
+
+    {
+      /* Modify the window manager menu "close" callback */
+      Atom wm_delete_window;
+      wm_delete_window = XmInternAtom(XtDisplay(w),"WM_DELETE_WINDOW",False);
+      XmAddWMProtocolCallback(XtParent(keyboardDialog),wm_delete_window,keyboardDialogCallback,keyboardDialog);
+    }
+
 
   /* Create frame/radiobox/toggles for increment selection */
     hoprLoprAbs = fabs(dlValuator->limits.hopr);

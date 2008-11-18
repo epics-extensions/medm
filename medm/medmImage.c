@@ -409,9 +409,16 @@ DlElement* handleImageCreate()
 	n = 0;
 	XtSetArg(args[n],XmNdirMask,gifDirMask); n++;
 	XtSetArg(args[n],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); n++;
+	XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
 	imageNameFSD = XmCreateFileSelectionDialog(resourceMW,"imageNameFSD",args,n);
 	XtAddCallback(imageNameFSD,XmNokCallback,imageFileSelectionCb,&response);
 	XtAddCallback(imageNameFSD,XmNcancelCallback,imageFileSelectionCb,&response);
+        {
+          /* Modify the window manager menu "close" callback */
+          Atom wm_delete_window;
+          wm_delete_window = XmInternAtom(XtDisplay(resourceMW),"WM_DELETE_WINDOW",False);
+          XmAddWMProtocolCallback(XtParent(imageNameFSD),wm_delete_window,imageFileSelectionCb,&response);
+        }
 	XtManageChild(imageNameFSD);
 	XmStringFree(gifDirMask);
     } else {
@@ -478,6 +485,9 @@ static void imageFileSelectionCb(Widget w, XtPointer clientData,
 	} else {
 	    *response = 2;
 	}
+	break;
+    case XmCR_PROTOCOLS:
+	*response = 2;
 	break;
     default:
 	*response = 2;

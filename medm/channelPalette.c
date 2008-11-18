@@ -47,7 +47,6 @@ static Widget channelFilePDM, openFSD;
  ********************************************/
 static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    UNREFERENCED(cd);
 
     switch(((XmAnyCallbackStruct *) cbs)->reason){
     case XmCR_CANCEL:
@@ -55,6 +54,9 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
     case XmCR_OK:
 	XtUnmanageChild(w);
+	break;
+    case XmCR_PROTOCOLS:
+	XtUnmanageChild((Widget)cd);
 	break;
     }
 }
@@ -75,6 +77,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	    n = 0;
 	    label = XmStringCreateLocalized(CHANNEL_DIALOG_MASK);
 	    XtSetArg(args[n],XmNdirMask,label); n++;
+	    XtSetArg(args[n],XmNdeleteResponse,XmDO_NOTHING); n++;
 	    XtSetArg(args[n],XmNdialogStyle,
 	      XmDIALOG_PRIMARY_APPLICATION_MODAL); n++;
 	      openFSD = XmCreateFileSelectionDialog(channelFilePDM,
@@ -88,6 +91,12 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		FILE_OPEN_BTN);
 	      XtAddCallback(openFSD,XmNcancelCallback,
 		(XtCallbackProc)fileOpenCallback,FILE_OPEN_BTN);
+	      {
+		/* Modify the window manager menu "close" callback */
+		Atom wm_delete_window;
+		wm_delete_window = XmInternAtom(XtDisplay(channelFilePDM),"WM_DELETE_WINDOW",False);
+		XmAddWMProtocolCallback(XtParent(openFSD),wm_delete_window,fileOpenCallback,openFSD);
+	      }
 	      XmStringFree(label);
 	      XtManageChild(openFSD);
 	} else {

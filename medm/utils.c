@@ -3493,6 +3493,9 @@ void questionDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
     case XmCR_HELP:
 	displayInfo->questionDialogAnswer = 3;
 	break;
+    case XmCR_PROTOCOLS:
+	displayInfo->questionDialogAnswer = 2;
+	break;
     default :
 	displayInfo->questionDialogAnswer = -1;
 	break;
@@ -3517,10 +3520,17 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
       /* this doesn't seem to be working (and should check if MWM is running) */
 	displayInfo->questionDialog = XmCreateQuestionDialog(displayInfo->shell,"questionDialog",NULL,0);
 	XtVaSetValues(displayInfo->questionDialog, XmNdialogStyle,XmDIALOG_APPLICATION_MODAL, NULL);
+	XtVaSetValues(displayInfo->questionDialog,XmNdeleteResponse,XmDO_NOTHING,NULL);
 	XtVaSetValues(XtParent(displayInfo->questionDialog),XmNtitle,"Question ?",NULL);
 	XtAddCallback(displayInfo->questionDialog,XmNokCallback,questionDialogCb,displayInfo);
 	XtAddCallback(displayInfo->questionDialog,XmNcancelCallback,questionDialogCb,displayInfo);
 	XtAddCallback(displayInfo->questionDialog,XmNhelpCallback,questionDialogCb,displayInfo);
+        {
+          /* Modify the window manager menu "close" callback */
+          Atom wm_delete_window;
+          wm_delete_window = XmInternAtom(XtDisplay(displayInfo->shell),"WM_DELETE_WINDOW",False);
+          XmAddWMProtocolCallback(XtParent(displayInfo->questionDialog),wm_delete_window,questionDialogCb,displayInfo);
+        }
     }
     if(message == NULL) return;
     xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
@@ -3581,6 +3591,9 @@ void warningDialogCb(Widget w, XtPointer clientData, XtPointer callbackStruct)
     case XmCR_HELP:
 	displayInfo->warningDialogAnswer = 3;
 	break;
+    case XmCR_PROTOCOLS:
+	displayInfo->warningDialogAnswer = 2;
+	break;
     default :
 	displayInfo->warningDialogAnswer = -1;
 	break;
@@ -3606,10 +3619,17 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
 	displayInfo->warningDialog =
 	  XmCreateWarningDialog(displayInfo->shell,"warningDialog",NULL,0);
 	XtVaSetValues(displayInfo->warningDialog,XmNdialogStyle,XmDIALOG_APPLICATION_MODAL,NULL);
+        XtVaSetValues(displayInfo->warningDialog,XmNdeleteResponse,XmDO_NOTHING,NULL);
 	XtVaSetValues(XtParent(displayInfo->warningDialog),XmNtitle,"Warning !",NULL);
 	XtAddCallback(displayInfo->warningDialog,XmNokCallback,warningDialogCb,displayInfo);
 	XtAddCallback(displayInfo->warningDialog,XmNcancelCallback,warningDialogCb,displayInfo);
 	XtAddCallback(displayInfo->warningDialog,XmNhelpCallback,warningDialogCb,displayInfo);
+	{
+	  /* Modify the window manager menu "close" callback */
+          Atom wm_delete_window;
+          wm_delete_window = XmInternAtom(XtDisplay(displayInfo->shell),"WM_DELETE_WINDOW",False);
+          XmAddWMProtocolCallback(XtParent(displayInfo->warningDialog),wm_delete_window,warningDialogCb,displayInfo);
+	} 
     }
     if(message == NULL) return;
     xmString = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);

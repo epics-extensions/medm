@@ -638,6 +638,9 @@ static void shellCommandCb(Widget w, XtPointer client_data,
     case XmCR_HELP:
 	callBrowser(medmHelpPath,"#ShellCommand");
 	break;
+    case XmCR_PROTOCOLS:
+	XtUnmanageChild(displayInfo->shellCommandPromptD);
+	break;
     }
 }
 
@@ -653,6 +656,7 @@ Widget createShellCommandPromptD(Widget parent)
     XtSetArg(args[nargs],XmNdialogTitle,title); nargs++;
     XtSetArg(args[nargs],XmNdialogStyle,XmDIALOG_FULL_APPLICATION_MODAL); nargs++;
     XtSetArg(args[nargs],XmNselectionLabelString,title); nargs++;
+    XtSetArg(args[nargs],XmNdeleteResponse,XmDO_NOTHING); nargs++;
     XtSetArg(args[nargs],XmNautoUnmanage,False); nargs++;
   /* update global for selection box widget access */
     prompt = XmCreatePromptDialog(parent,
@@ -662,6 +666,12 @@ Widget createShellCommandPromptD(Widget parent)
     XtAddCallback(prompt, XmNcancelCallback,shellCommandCb,parent);
     XtAddCallback(prompt,XmNokCallback,shellCommandCb,parent);
     XtAddCallback(prompt,XmNhelpCallback,shellCommandCb,parent);
+    {
+      /* Modify the window manager menu "close" callback */
+      Atom wm_delete_window;
+      wm_delete_window = XmInternAtom(XtDisplay(parent),"WM_DELETE_WINDOW",False);
+      XmAddWMProtocolCallback(XtParent(prompt),wm_delete_window,shellCommandCb,parent);
+    }
     return (prompt);
 }
 
