@@ -57,6 +57,7 @@
  * .41  05-22-07        evans   3.1.1 release
  * .42  07-03-07        evans   3.1.2.1 release
  * .43  04-21-08     anderson   3.1.2.2 release
+ * .44  11-05-08     anderson   3.1.3 release
  *
  *****************************************************************************
 */
@@ -66,7 +67,7 @@
  */
 #define MEDM_VERSION		3
 #define MEDM_REVISION		1
-#define MEDM_MODIFICATION	2
-#define MEDM_PATCH_LEVEL	2
-#define MEDM_VERSION_STRING	"MEDM Version 3.1.2.2"
-#define MEDM_VERSION_DIGITS	"MEDM03010202"
+#define MEDM_MODIFICATION	3
+#define MEDM_PATCH_LEVEL	0
+#define MEDM_VERSION_STRING	"MEDM Version 3.1.3"
+#define MEDM_VERSION_DIGITS	"MEDM030103"
