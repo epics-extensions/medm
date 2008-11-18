@@ -12,39 +12,39 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <link rel=File-List href="MEDM_files/filelist.xml">
 <title>MEDM Reference Manual</title>
 <o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="PersonName"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="PlaceName"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="PlaceType"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="Street"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="PostalCode"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="State"/>
-<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="City"/>
+ name="place"/>
 <o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
  name="address"/>
 <o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
- name="place"/>
+ name="City"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="State"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="PostalCode"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="Street"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="PlaceType"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="PlaceName"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="PersonName"/>
 <!--[if gte mso 9]><xml>
  <o:DocumentProperties>
   <o:Author>Kenneth Evans, Jr.</o:Author>
   <o:LastAuthor>jba</o:LastAuthor>
   <o:Revision>2</o:Revision>
-  <o:TotalTime>1</o:TotalTime>
+  <o:TotalTime>1063</o:TotalTime>
   <o:LastPrinted>2006-09-20T16:32:00Z</o:LastPrinted>
-  <o:Created>2008-11-18T22:20:00Z</o:Created>
-  <o:LastSaved>2008-11-18T22:20:00Z</o:LastSaved>
+  <o:Created>2008-11-18T22:50:00Z</o:Created>
+  <o:LastSaved>2008-11-18T22:50:00Z</o:LastSaved>
   <o:Pages>1</o:Pages>
-  <o:Words>26430</o:Words>
-  <o:Characters>150651</o:Characters>
+  <o:Words>29970</o:Words>
+  <o:Characters>147155</o:Characters>
   <o:Company>Argonne National Laboratory</o:Company>
-  <o:Lines>1255</o:Lines>
-  <o:Paragraphs>353</o:Paragraphs>
-  <o:CharactersWithSpaces>176728</o:CharactersWithSpaces>
+  <o:Lines>2725</o:Lines>
+  <o:Paragraphs>1686</o:Paragraphs>
+  <o:CharactersWithSpaces>175439</o:CharactersWithSpaces>
   <o:Version>11.9999</o:Version>
  </o:DocumentProperties>
  <o:OfficeDocumentSettings>
@@ -156,7 +156,7 @@ st1\:*{behavior:url(#ieooui) }
 @font-face
 	{font-family:"MS Mincho";
 	panose-1:2 2 6 9 4 2 5 8 3 4;
-	mso-font-alt:"\FF2D\FF33 \660E\671D";
+	mso-font-alt:"Arial Unicode MS";
 	mso-font-charset:128;
 	mso-generic-font-family:roman;
 	mso-font-format:other;
@@ -248,9 +248,8 @@ st1\:*{behavior:url(#ieooui) }
 	panose-1:2 4 6 4 5 5 5 2 3 4;
 	mso-font-charset:0;
 	mso-generic-font-family:roman;
-	mso-font-format:other;
 	mso-font-pitch:variable;
-	mso-font-signature:3 0 0 0 1 0;}
+	mso-font-signature:647 0 0 0 159 0;}
 @font-face
 	{font-family:"Angsana New";
 	panose-1:2 2 6 3 5 4 5 2 3 4;
@@ -270,51 +269,45 @@ st1\:*{behavior:url(#ieooui) }
 @font-face
 	{font-family:Mangal;
 	panose-1:0 0 4 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:32768 0 0 0 0 0;}
+	mso-font-signature:32771 0 0 0 1 0;}
 @font-face
 	{font-family:Latha;
 	panose-1:2 0 4 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:1048576 0 0 0 0 0;}
+	mso-font-signature:1048579 0 0 0 1 0;}
 @font-face
 	{font-family:Sylfaen;
 	panose-1:1 10 5 2 5 3 6 3 3 3;
 	mso-font-charset:0;
 	mso-generic-font-family:roman;
-	mso-font-format:other;
 	mso-font-pitch:variable;
-	mso-font-signature:16778883 0 512 0 13 0;}
+	mso-font-signature:67110535 0 0 0 159 0;}
 @font-face
 	{font-family:Vrinda;
 	panose-1:1 1 6 0 1 1 1 1 1 1;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:65539 0 0 0 1 0;}
 @font-face
 	{font-family:Raavi;
 	panose-1:2 0 5 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:131075 0 0 0 1 0;}
 @font-face
 	{font-family:Shruti;
 	panose-1:2 0 5 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:262147 0 0 0 1 0;}
 @font-face
 	{font-family:Sendnya;
 	panose-1:0 0 4 0 0 0 0 0 0 0;
@@ -326,51 +319,1052 @@ st1\:*{behavior:url(#ieooui) }
 @font-face
 	{font-family:Gautami;
 	panose-1:2 0 5 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:2097155 0 0 0 1 0;}
 @font-face
 	{font-family:Tunga;
 	panose-1:0 0 4 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:4194307 0 0 0 1 0;}
 @font-face
 	{font-family:"Estrangelo Edessa";
 	panose-1:0 0 0 0 0 0 0 0 0 0;
-	mso-font-charset:1;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:-2147459005 0 128 0 1 0;}
 @font-face
 	{font-family:Kartika;
 	panose-1:2 2 5 3 3 4 4 6 2 3;
-	mso-font-charset:1;
+	mso-font-charset:0;
 	mso-generic-font-family:roman;
-	mso-font-format:other;
 	mso-font-pitch:variable;
-	mso-font-signature:0 0 0 0 0 0;}
+	mso-font-signature:8388611 0 0 0 1 0;}
 @font-face
 	{font-family:"Arial Unicode MS";
 	panose-1:2 11 6 4 2 2 2 2 2 4;
-	mso-font-charset:0;
-	mso-generic-font-family:roman;
-	mso-font-format:other;
+	mso-font-charset:128;
+	mso-generic-font-family:swiss;
 	mso-font-pitch:variable;
-	mso-font-signature:3 0 0 0 1 0;}
+	mso-font-signature:-1 -369098753 63 0 4129279 0;}
 @font-face
 	{font-family:Tahoma;
 	panose-1:2 11 6 4 3 5 4 4 2 4;
 	mso-font-charset:0;
 	mso-generic-font-family:swiss;
-	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:1627421319 -2147483648 8 0 66047 0;}
+@font-face
+	{font-family:Marlett;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"Lucida Console";
+	panose-1:2 11 6 9 4 5 4 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:fixed;
+	mso-font-signature:-2147482993 6144 0 0 31 0;}
+@font-face
+	{font-family:"Lucida Sans Unicode";
+	panose-1:2 11 6 2 3 5 4 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:-2147476737 14699 0 0 63 0;}
+@font-face
+	{font-family:Verdana;
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:536871559 0 0 0 415 0;}
+@font-face
+	{font-family:"Arial Black";
+	panose-1:2 11 10 4 2 1 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Comic Sans MS";
+	panose-1:3 15 7 2 3 3 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:Impact;
+	panose-1:2 11 8 6 3 9 2 5 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:Georgia;
+	panose-1:2 4 5 2 5 4 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Franklin Gothic Medium";
+	panose-1:2 11 6 3 2 1 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Palatino Linotype";
+	panose-1:2 4 5 2 5 5 5 3 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:-536870009 1073741843 0 0 415 0;}
+@font-face
+	{font-family:"Trebuchet MS";
+	panose-1:2 11 6 3 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:Webdings;
+	panose-1:5 3 1 2 1 5 9 6 7 3;
+	mso-font-charset:2;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"MV Boli";
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 256 0 1 0;}
+@font-face
+	{font-family:"Microsoft Sans Serif";
+	panose-1:2 11 6 4 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:1627421663 -2147483648 8 0 66047 0;}
+@font-face
+	{font-family:"Agency FB";
+	panose-1:2 11 5 3 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
 	mso-font-pitch:variable;
 	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Algerian;
+	panose-1:4 2 7 5 4 10 2 6 7 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Arial Rounded MT Bold";
+	panose-1:2 15 7 4 3 5 4 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"\@Arial Unicode MS";
+	panose-1:2 11 6 4 2 2 2 2 2 4;
+	mso-font-charset:128;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:-1 -369098753 63 0 4129279 0;}
+@font-face
+	{font-family:"Baskerville Old Face";
+	panose-1:2 2 6 2 8 5 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bauhaus 93";
+	panose-1:4 3 9 5 2 11 2 2 12 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bell MT";
+	panose-1:2 2 5 3 6 3 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Berlin Sans FB";
+	panose-1:2 14 6 2 2 5 2 2 3 6;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bernard MT Condensed";
+	panose-1:2 5 8 6 6 9 5 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Blackadder ITC";
+	panose-1:4 2 5 5 5 16 7 2 13 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bodoni MT";
+	panose-1:2 7 6 3 8 6 6 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bodoni MT Black";
+	panose-1:2 7 10 3 8 6 6 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bodoni MT Condensed";
+	panose-1:2 7 6 6 8 6 6 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Bodoni MT Poster Compressed";
+	panose-1:2 7 7 6 8 6 1 5 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 17 0;}
+@font-face
+	{font-family:"Book Antiqua";
+	panose-1:2 4 6 2 5 3 5 3 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Bookman Old Style";
+	panose-1:2 5 6 4 5 5 5 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Bradley Hand ITC";
+	panose-1:3 7 4 2 5 3 2 3 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Britannic Bold";
+	panose-1:2 11 9 3 6 7 3 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Broadway;
+	panose-1:4 4 9 5 8 11 2 2 5 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Brush Script MT";
+	panose-1:3 6 8 2 4 4 6 7 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Californian FB";
+	panose-1:2 7 4 3 6 8 11 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Calisto MT";
+	panose-1:2 4 6 3 5 5 5 3 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Castellar;
+	panose-1:2 10 4 2 6 4 6 1 3 1;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Centaur;
+	panose-1:2 3 5 4 5 2 5 2 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Century Gothic";
+	panose-1:2 11 5 2 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Century Schoolbook";
+	panose-1:2 4 6 4 5 5 5 2 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:Chiller;
+	panose-1:4 2 4 4 3 16 7 2 6 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Colonna MT";
+	panose-1:4 2 8 5 6 2 2 3 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Cooper Black";
+	panose-1:2 8 9 4 4 3 11 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Copperplate Gothic Bold";
+	panose-1:2 14 7 5 2 2 6 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Copperplate Gothic Light";
+	panose-1:2 14 5 7 2 2 6 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Curlz MT";
+	panose-1:4 4 4 4 5 7 2 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Edwardian Script ITC";
+	panose-1:3 3 3 2 4 7 7 13 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Elephant;
+	panose-1:2 2 9 4 9 5 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Engravers MT";
+	panose-1:2 9 7 7 8 5 5 2 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Eras Bold ITC";
+	panose-1:2 11 9 7 3 5 4 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Eras Demi ITC";
+	panose-1:2 11 8 5 3 5 4 2 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Eras Light ITC";
+	panose-1:2 11 4 2 3 5 4 2 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Eras Medium ITC";
+	panose-1:2 11 6 2 3 5 4 2 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Felix Titling";
+	panose-1:4 6 5 5 6 2 2 2 10 4;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Footlight MT Light";
+	panose-1:2 4 6 2 6 3 10 2 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Forte;
+	panose-1:3 6 9 2 4 5 2 7 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Franklin Gothic Book";
+	panose-1:2 11 5 3 2 1 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Franklin Gothic Demi";
+	panose-1:2 11 7 3 2 1 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Franklin Gothic Demi Cond";
+	panose-1:2 11 7 6 3 4 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Franklin Gothic Heavy";
+	panose-1:2 11 9 3 2 1 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Franklin Gothic Medium Cond";
+	panose-1:2 11 6 6 3 4 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Freestyle Script";
+	panose-1:3 8 4 2 3 2 5 11 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"French Script MT";
+	panose-1:3 2 4 2 4 6 7 4 6 5;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Garamond;
+	panose-1:2 2 4 4 3 3 1 1 8 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:Gigi;
+	panose-1:4 4 5 4 6 16 7 2 13 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Gill Sans MT Ext Condensed Bold";
+	panose-1:2 11 9 2 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Gill Sans MT";
+	panose-1:2 11 5 2 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Gill Sans MT Condensed";
+	panose-1:2 11 5 6 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Gill Sans Ultra Bold";
+	panose-1:2 11 10 2 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Gill Sans Ultra Bold Condensed";
+	panose-1:2 11 10 6 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Gloucester MT Extra Condensed";
+	panose-1:2 3 8 8 2 6 1 1 1 1;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Goudy Old Style";
+	panose-1:2 2 5 2 5 3 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Goudy Stout";
+	panose-1:2 2 9 4 7 3 11 2 4 1;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Haettenschweiler;
+	panose-1:2 11 7 6 4 9 2 6 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Harlow Solid Italic";
+	panose-1:4 3 6 4 2 15 2 2 13 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Harrington;
+	panose-1:4 4 5 5 5 10 2 2 7 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"High Tower Text";
+	panose-1:2 4 5 2 5 5 6 3 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Imprint MT Shadow";
+	panose-1:4 2 6 5 6 3 3 3 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Jokerman;
+	panose-1:4 9 6 5 6 13 6 2 7 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Juice ITC";
+	panose-1:4 4 4 3 4 10 2 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Kristen ITC";
+	panose-1:3 5 5 2 4 2 2 3 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Kunstler Script";
+	panose-1:3 3 4 2 2 6 7 13 13 6;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Bright";
+	panose-1:2 4 6 2 5 5 5 2 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Calligraphy";
+	panose-1:3 1 1 1 1 1 1 1 1 1;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Fax";
+	panose-1:2 6 6 2 5 5 5 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Handwriting";
+	panose-1:3 1 1 1 1 1 1 1 1 1;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Sans";
+	panose-1:2 11 6 2 3 5 4 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Sans Typewriter";
+	panose-1:2 11 5 9 3 5 4 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:fixed;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Magneto;
+	panose-1:4 3 8 5 5 8 2 2 13 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Maiandra GD";
+	panose-1:2 14 5 2 3 3 8 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Matura MT Script Capitals";
+	panose-1:3 2 8 2 6 6 2 7 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Mistral;
+	panose-1:3 9 7 2 3 4 7 2 4 3;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Modern No\. 20";
+	panose-1:2 7 7 4 7 5 5 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Monotype Corsiva";
+	panose-1:3 1 1 1 1 2 1 1 1 1;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:647 0 0 0 159 0;}
+@font-face
+	{font-family:"Niagara Engraved";
+	panose-1:4 2 5 2 7 7 3 3 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Niagara Solid";
+	panose-1:4 2 5 2 7 7 2 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"OCR A Extended";
+	panose-1:2 1 5 9 2 1 2 1 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Old English Text MT";
+	panose-1:3 4 9 2 4 5 8 3 8 6;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Onyx;
+	panose-1:4 5 6 2 8 7 2 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Palace Script MT";
+	panose-1:3 3 3 2 2 6 7 12 11 5;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Papyrus;
+	panose-1:3 7 5 2 6 5 2 3 2 5;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Parchment;
+	panose-1:3 4 6 2 4 7 8 4 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Perpetua;
+	panose-1:2 2 5 2 6 4 1 2 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Perpetua Titling MT";
+	panose-1:2 2 5 2 6 5 5 2 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Playbill;
+	panose-1:4 5 6 3 10 6 2 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Poor Richard";
+	panose-1:2 8 5 2 5 5 5 2 7 2;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Pristina;
+	panose-1:3 6 4 2 4 4 6 8 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Rage Italic";
+	panose-1:3 7 5 2 4 5 7 7 3 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Ravie;
+	panose-1:4 4 8 5 5 8 9 2 6 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Rockwell;
+	panose-1:2 6 6 3 2 2 5 2 4 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Rockwell Condensed";
+	panose-1:2 6 6 3 5 4 5 2 1 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Rockwell Extra Bold";
+	panose-1:2 6 9 3 4 5 5 2 4 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Informal Roman";
+	panose-1:3 6 4 2 3 4 6 11 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Script MT Bold";
+	panose-1:3 4 6 2 4 6 7 8 9 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Showcard Gothic";
+	panose-1:4 2 9 4 2 1 2 2 6 4;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Snap ITC";
+	panose-1:4 4 10 7 6 10 2 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Stencil;
+	panose-1:4 4 9 5 13 8 2 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Tw Cen MT";
+	panose-1:2 11 6 2 2 1 4 2 6 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Tw Cen MT Condensed";
+	panose-1:2 11 6 6 2 1 4 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"Tempus Sans ITC";
+	panose-1:4 2 4 4 3 13 7 2 2 2;
+	mso-font-charset:0;
+	mso-generic-font-family:decorative;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Viner Hand ITC";
+	panose-1:3 7 5 2 3 5 2 2 2 3;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Vivaldi;
+	panose-1:3 2 6 2 5 5 6 9 8 4;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Vladimir Script";
+	panose-1:3 5 4 2 4 4 7 7 3 5;
+	mso-font-charset:0;
+	mso-generic-font-family:script;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Wide Latin";
+	panose-1:2 10 10 7 5 5 5 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Wingdings 2";
+	panose-1:5 2 1 2 1 5 7 7 7 7;
+	mso-font-charset:2;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"Wingdings 3";
+	panose-1:5 4 1 2 1 8 7 7 7 7;
+	mso-font-charset:2;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"Berlin Sans FB Demi";
+	panose-1:2 14 8 2 2 5 2 2 3 6;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"MS Reference Sans Serif";
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:536871559 0 0 0 415 0;}
+@font-face
+	{font-family:"MS Reference Specialty";
+	panose-1:5 0 5 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"Tw Cen MT Condensed Extra Bold";
+	panose-1:2 11 8 3 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:7 0 0 0 3 0;}
+@font-face
+	{font-family:"MT Extra";
+	panose-1:5 5 1 2 1 2 5 2 2 2;
+	mso-font-charset:2;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"Bookshelf Symbol 7";
+	panose-1:5 1 1 1 1 1 1 1 1 1;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:ZWAdobeF;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:536885895 0 0 0 511 0;}
+@font-face
+	{font-family:"Euro Sign";
+	panose-1:2 11 6 3 2 2 1 2 1 1;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:3 2 0 0 1 0;}
+@font-face
+	{font-family:"Arial Narrow";
+	panose-1:2 11 5 6 2 2 2 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:647 2048 0 0 159 0;}
+@font-face
+	{font-family:Cambria;
+	panose-1:2 4 5 3 5 4 6 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1073741899 0 0 159 0;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1107304683 0 0 159 0;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1073750139 0 0 159 0;}
+@font-face
+	{font-family:Candara;
+	panose-1:2 14 5 2 3 3 3 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1073750091 0 0 159 0;}
+@font-face
+	{font-family:Consolas;
+	panose-1:2 11 6 9 2 2 4 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:fixed;
+	mso-font-signature:-1610611985 1073750091 0 0 159 0;}
+@font-face
+	{font-family:Constantia;
+	panose-1:2 3 6 2 5 3 6 3 3 3;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1073750091 0 0 159 0;}
+@font-face
+	{font-family:Corbel;
+	panose-1:2 11 5 3 2 2 4 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:-1610611985 1073750091 0 0 159 0;}
+@font-face
+	{font-family:sshlinedraw;
+	panose-1:0 0 4 9 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:fixed;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:HE_TERMINAL;
+	panose-1:2 11 6 9 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-pitch:fixed;
+	mso-font-signature:647 0 0 0 159 0;}
  /* Style Definitions */
  p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{mso-style-parent:"";
@@ -598,18 +1592,18 @@ span.msoDel
 	color:red;}
  /* Page Definitions */
  @page
-	{mso-footnote-separator:url("MEDM_files/header.htm") fs;
-	mso-footnote-continuation-separator:url("MEDM_files/header.htm") fcs;
-	mso-endnote-separator:url("MEDM_files/header.htm") es;
-	mso-endnote-continuation-separator:url("MEDM_files/header.htm") ecs;}
+	{mso-footnote-separator:url("MEDM_files/header.html") fs;
+	mso-footnote-continuation-separator:url("MEDM_files/header.html") fcs;
+	mso-endnote-separator:url("MEDM_files/header.html") es;
+	mso-endnote-continuation-separator:url("MEDM_files/header.html") ecs;}
 @page Section1
 	{size:8.5in 11.0in;
 	margin:1.0in 1.0in 1.0in 1.0in;
 	mso-header-margin:.5in;
 	mso-footer-margin:.5in;
 	mso-title-page:yes;
-	mso-footer:url("MEDM_files/header.htm") f1;
-	mso-first-footer:url("MEDM_files/header.htm") ff1;
+	mso-footer:url("MEDM_files/header.html") f1;
+	mso-first-footer:url("MEDM_files/header.html") ff1;
 	mso-paper-source:0;}
 div.Section1
 	{page:Section1;}
@@ -1298,6 +2292,15 @@ size=1 face="Times New Roman"><span style='font:7.0pt "Times New Roman"'>&nbsp;&
 </span></font></span></span></font><![endif]>Added missing ca_task_exit call after
 attaching to another medm.</span></span></p>
 
+<p class=MsoNormal style='margin-left:.25in;text-indent:-.25in;mso-list:l6 level1 lfo16;
+tab-stops:list .25in'><span style='mso-bookmark:_Hlt387805065'><span
+style='mso-bookmark:_Hlt421931535'><![if !supportLists]><font size=2
+face=Symbol><span style='font-size:10.0pt;font-family:Symbol;mso-fareast-font-family:
+Symbol;mso-bidi-font-family:Symbol'><span style='mso-list:Ignore'>&middot;<font
+size=1 face="Times New Roman"><span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></font></span></span></font><![endif]>Portability changes for
+linux-x86_64 build.</span></span></p>
+
 <p class=MsoNormal><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'><font size=2 face="Times New Roman"><span
 style='font-size:10.0pt'>3.1.2.2</span></font></span></span></p>
@@ -1553,7 +2556,7 @@ style='mso-bookmark:_Hlt421931535'>Drag and Drop</span></span><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>
 has been enhanced so the PV Names are also selected into the CLIPBOARD and
-PRIMARY X selection. <span style='mso-spacerun:yes'>&nbsp;</span>This means you
+PRIMARY X selection.<span style='mso-spacerun:yes'>&nbsp; </span>This means you
 can paste them using the usual X cut and paste mechanisms; for example, by
 clicking Btn 2 in an Xterm.</span></span></p>
 
@@ -1567,9 +2570,9 @@ size=1 face="Times New Roman"><span style='font:7.0pt "Times New Roman"'>&nbsp;&
 displays and related displays has been fixed in a way that should be consistent
 and independent of the Window Manager and platform.<span
 style='mso-spacerun:yes'>&nbsp; </span>Depending on the Window manager you use,
-this may mean the positions will be different from what they were
-previously.<span style='mso-spacerun:yes'>&nbsp; </span>See the description of
-the </span></span><a href="#Display"><span style='mso-bookmark:_Hlt387805065'><span
+this may mean the positions will be different from what they were previously.<span
+style='mso-spacerun:yes'>&nbsp; </span>See the description of the </span></span><a
+href="#Display"><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'>Display</span></span><span style='mso-bookmark:
 _Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>
@@ -1629,7 +2632,7 @@ style='mso-bookmark:_Hlt421931535'>Byte</span></span><span style='mso-bookmark:
 _Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>
 has been extended to 32 bits and converts its input to an unsigned long integer
-using the lower 32 bits. <span style='mso-spacerun:yes'>&nbsp;</span>This makes
+using the lower 32 bits.<span style='mso-spacerun:yes'>&nbsp; </span>This makes
 it more useful in displaying hexadecimal values.</span></span></p>
 
 <p class=MsoNormal style='margin-left:.25in;text-indent:-.25in;mso-list:l0 level1 lfo14;
@@ -1647,8 +2650,8 @@ style='mso-bookmark:_Hlt421931535'> plotting package, developed at the Thomas
 Jefferson National Accelerator Facility, for the Cartesian Plot.<span
 style='mso-spacerun:yes'>&nbsp; </span>This package has not been extensively
 tested with MEDM, however.<span style='mso-spacerun:yes'>&nbsp; </span>Further,
-it is known that it does not implement all options of the MEDM Cartesian Plot
-correctly.<span style='mso-spacerun:yes'>&nbsp; </span>See the </span></span><a
+it is known that it does not implement all options of the MEDM Cartesian Plot correctly.<span
+style='mso-spacerun:yes'>&nbsp; </span>See the </span></span><a
 href="#CartesianPlot"><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'>Cartesian Plot</span></span><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
@@ -1841,8 +2844,8 @@ href="#CalcExpression"><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'>CALC expression</span></span><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>
-that can include up to four process variables. <span
-style='mso-spacerun:yes'>&nbsp;</span>This opens a wide range of creative
+that can include up to four process variables.<span
+style='mso-spacerun:yes'>&nbsp; </span>This opens a wide range of creative
 possibilities, including implementing </span></span><a href="#ColorRules"><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>Color
 Rules</span></span><span style='mso-bookmark:_Hlt387805065'><span
@@ -1902,12 +2905,12 @@ style='mso-bookmark:_Hlt461510347'>A</span>ttribute</span></span><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><![if !supportNestedAnchors]><a
 name="_Hlt461510347"></a><![endif]><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'>.<span style='mso-spacerun:yes'>&nbsp;
-</span>This means whole sections of the display can be made to appear, disappear,
-or change based on the values of process variables.<span
+</span>This means whole sections of the display can be made to appear,
+disappear, or change based on the values of process variables.<span
 style='mso-spacerun:yes'>&nbsp; </span>Also, by grouping any single object, it
 can be made to be Composite and therefore have a Dynamic Attribute.<span
-style='mso-spacerun:yes'>&nbsp; </span>The objects for a Composite may now be
-read from an </span></span><a href="#ADLFiles"><span style='mso-bookmark:_Hlt387805065'><span
+style='mso-spacerun:yes'>&nbsp; </span>The objects for a Composite may now be read
+from an </span></span><a href="#ADLFiles"><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'>AD<span style='mso-bookmark:_Hlt460818447'>L</span>
 file</span></span><span style='mso-bookmark:_Hlt387805065'><span
 style='mso-bookmark:_Hlt421931535'></span></span></a><![if !supportNestedAnchors]><a
@@ -1962,9 +2965,9 @@ style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>
 for a display may be specified in the ADL file, a separate file from the ADL
 file, or by using the default.<span style='mso-spacerun:yes'>&nbsp; </span>The
 separate-file capability was present before, but was broken.<span
-style='mso-spacerun:yes'>&nbsp; </span>The default display colormap may be specified
-in </span></span><a href="#SiteSpecific"><span style='mso-bookmark:_Hlt387805065'><span
-style='mso-bookmark:_Hlt421931535'>siteSpecific.h</span></span><span
+style='mso-spacerun:yes'>&nbsp; </span>The default display colormap may be
+specified in </span></span><a href="#SiteSpecific"><span style='mso-bookmark:
+_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>siteSpecific.h</span></span><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'></span></span></a><span
 style='mso-bookmark:_Hlt387805065'><span style='mso-bookmark:_Hlt421931535'>.<span
 style='mso-spacerun:yes'>&nbsp; </span>Different displays may, as before, have
@@ -2536,9 +3539,9 @@ style='mso-spacerun:yes'>&nbsp; </span>Mark Rivers of the <st1:place w:st="on"><
  w:st="on">University</st1:PlaceType> of <st1:PlaceName w:st="on">Chicago</st1:PlaceName></st1:place>
 did the original port to the <a href="#WIN32">WIN32</a> platform and has
 provided much help in getting MEDM running on several other platforms.<span
-style='mso-spacerun:yes'>&nbsp; </span>Jie Chen of the Thomas Jefferson National
-Accelerator Facility provided the initial implementation of SciPlot and all of
-the <a href="#CDEVSupport">CDEV support</a>.</span></font></p>
+style='mso-spacerun:yes'>&nbsp; </span>Jie Chen of the Thomas Jefferson
+National Accelerator Facility provided the initial implementation of SciPlot
+and all of the <a href="#CDEVSupport">CDEV support</a>.</span></font></p>
 
 <h2><a name=Requirements></a><b style='mso-bidi-font-weight:normal'><font
 size=4 color=black face="Times New Roman"><span style='font-size:14.0pt'><span
@@ -3015,8 +4018,8 @@ and $(c) in the display file, xyz.adl:</span></font></p>
 
 <p class=Preformatted style='text-indent:0in'><font size=2 color=black
 face="Courier New"><span style='font-size:10.0pt'><span style='mso-tab-count:
-1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>medm -x -macro
-&quot;a=b,c=d&quot; xyz.adl &amp;</span></font></p>
+1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>medm -x -macro &quot;a=b,c=d&quot;
+xyz.adl &amp;</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Start
@@ -3120,9 +4123,9 @@ objects are white. </span></font></p>
 if there is are connections to the process variables associated with an object
 but one of them does not have read access, the object is represented by a black
 rectangle.<span style='mso-spacerun:yes'>&nbsp; </span>The drawing objects are
-also represented by black rectangles, unlike the case for no connection where
-the object changes color.<span style='mso-spacerun:yes'>&nbsp; </span>The
-reason is that drawing objects are too likely to be black normally.<span
+also represented by black rectangles, unlike the case for no connection where the
+object changes color.<span style='mso-spacerun:yes'>&nbsp; </span>The reason is
+that drawing objects are too likely to be black normally.<span
 style='mso-spacerun:yes'>&nbsp; </span>If the read access changes, the black
 rectangles appear or disappear as appropriate.<span
 style='mso-spacerun:yes'>&nbsp; </span>Note that black rectangles imply there
@@ -3284,8 +4287,7 @@ style='mso-spacerun:yes'>&nbsp;
 size=1 color=black face="Courier New"><span lang=PT-BR style='font-size:9.0pt;
 mso-bidi-font-size:10.0pt;font-family:"Courier New";mso-bidi-font-family:"Times New Roman";
 color:black;mso-ansi-language:PT-BR'>widgetDM_36<span
-style='mso-spacerun:yes'>&nbsp;
-</span>-adobe-helvetica-medium-r-normal--34-240-100-100-p-176-iso8859-1<o:p></o:p></span></font></p>
+style='mso-spacerun:yes'>&nbsp; </span>-adobe-helvetica-medium-r-normal--34-240-100-100-p-176-iso8859-1<o:p></o:p></span></font></p>
 
 <p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt'><font
 size=1 color=black face="Courier New"><span lang=PT-BR style='font-size:9.0pt;
@@ -4474,8 +5476,8 @@ style='mso-bookmark:_Hlt399231131'></span></a><![if !supportNestedAnchors]><a
 name="_Hlt392301566"></a><a name="_Hlt392314503"></a><a name="_Hlt392301590"></a><![endif]><span
 style='mso-bookmark:_Hlt399231131'> attributes.<span
 style='mso-spacerun:yes'>&nbsp; </span>In addition, there is a Count, X/Y/Trace
-Data, Axis Data, a Trigger Channel, and an Erase Channel, which are described in
-this section.</span></p>
+Data, Axis Data, a Trigger Channel, and an Erase Channel, which are described
+in this section.</span></p>
 
 <span style='mso-bookmark:_Hlt399231131'></span>
 
@@ -4494,8 +5496,8 @@ style='font-size:10.0pt'>The original and primary implementation is by the
 commercial plot package, XRT/graph by the KL Group.<span
 style='mso-spacerun:yes'>&nbsp; </span>MEDM supports both Versions 2.4 and 3.0
 of XRT/Graph.<span style='mso-spacerun:yes'>&nbsp; </span>The implementation of
-these two versions is significantly different, but the plots look the same.<span
-style='mso-spacerun:yes'>&nbsp; </span>The XRT/graph package must be
+these two versions is significantly different, but the plots look the
+same.<span style='mso-spacerun:yes'>&nbsp; </span>The XRT/graph package must be
 purchased.<span style='mso-spacerun:yes'>&nbsp; </span>To build MEDM with
 XRT/Graph, the makefile variable XRTGRAPH must be set to the path for
 XRT/Graph.<span style='mso-spacerun:yes'>&nbsp; </span>After the usual compile
@@ -4598,8 +5600,8 @@ XRT_EXTENSIONS is defined in the Makefile:</span></font></p>
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
-  style='font-size:10.0pt'>Press r to reset the graph from changes made with Btn1
-  and Btn2.</span></font></p>
+  style='font-size:10.0pt'>Press r to reset the graph from changes made with
+  Btn1 and Btn2.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:5'>
@@ -5384,9 +6386,9 @@ from 0 to NPoints &#8211; 1 on the other axis.</span></font></p>
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
 the remaining cases, where neither pocess variable is an array with more than
 one element, Count corresponds to a history of the process variable.<span
-style='mso-spacerun:yes'>&nbsp; </span>(These are the cases where NPoints is shown
-as Count in the table.)<span style='mso-spacerun:yes'>&nbsp; </span>Each time
-the process variable changes (or when either one changes, in the case of<span
+style='mso-spacerun:yes'>&nbsp; </span>(These are the cases where NPoints is
+shown as Count in the table.)<span style='mso-spacerun:yes'>&nbsp; </span>Each
+time the process variable changes (or when either one changes, in the case of<span
 style='mso-spacerun:yes'>&nbsp; </span>X, Y Scalar) a new point is plotted
 until there are Count points.<span style='mso-spacerun:yes'>&nbsp; </span>The
 points are plotted from i = 0 to<span style='mso-spacerun:yes'>&nbsp;
@@ -5408,8 +6410,8 @@ color.<span style='mso-spacerun:yes'>&nbsp; </span>The color is picked by
 clicking on the color entry and using the color palette.<span
 style='mso-spacerun:yes'>&nbsp; </span>The process variable names can both be
 left blank on a given row, in which case the row is ignored.<span
-style='mso-spacerun:yes'>&nbsp; </span>The first trace (the one that uses the Y1
-axis) is the first valid one, and does not have to be in the first row.<span
+style='mso-spacerun:yes'>&nbsp; </span>The first trace (the one that uses the
+Y1 axis) is the first valid one, and does not have to be in the first row.<span
 style='mso-spacerun:yes'>&nbsp; </span>The data entry is different from that
 for entry boxes in the resource palette.<span style='mso-spacerun:yes'>&nbsp;
 </span>Typing is not lost, for example, when the entry box loses focus, and it
@@ -5516,8 +6518,8 @@ style='mso-bookmark:_Hlt399233017'>, and </span><a href="#Stacking"><span
 style='mso-bookmark:_Hlt399233017'>Stac<span style='mso-bookmark:_Hlt399232879'>k</span>ing</span><span
 style='mso-bookmark:_Hlt399233017'></span></a><![if !supportNestedAnchors]><a
 name="_Hlt399232879"></a><![endif]><span style='mso-bookmark:_Hlt399233017'>
-attributes.<span style='mso-spacerun:yes'>&nbsp; </span>The Choice Button is used
-for ENUM process variables and is a means for picking the ENUM choices via
+attributes.<span style='mso-spacerun:yes'>&nbsp; </span>The Choice Button is
+used for ENUM process variables and is a means for picking the ENUM choices via
 buttons.<a name="_Hlt399232952"></a></span></p>
 
 <p class=MsoNormal><span style='mso-bookmark:_Hlt399233017'><font size=2
@@ -5526,8 +6528,8 @@ face="Times New Roman"><span style='font-size:10.0pt'><span style='mso-tab-count
 more than 16 ENUM strings can be obtained from Channel Access.<span
 style='mso-spacerun:yes'>&nbsp; </span>It is possible for an ENUM<span
 style='mso-spacerun:yes'>&nbsp; </span>process variable to have more than 16
-states, however.<span style='mso-spacerun:yes'>&nbsp; </span>The .STAT field that
-exists for most process variables is an example.<span
+states, however.<span style='mso-spacerun:yes'>&nbsp; </span>The .STAT field
+that exists for most process variables is an example.<span
 style='mso-spacerun:yes'>&nbsp; </span>MEDM will print an error message if a
 Choice Button receives a value for an ENUM process variable that is beyond the
 range known by MEDM, even though that value may be valid otherwise.<span
@@ -5581,7 +6583,8 @@ display to new positions.<span style='mso-spacerun:yes'>&nbsp; </span>If you
 want to have the display come up at a specified position, be sure the X and Y
 positions are what you want when the file is saved.<span
 style='mso-spacerun:yes'>&nbsp; </span>The screen should come up in the
-position it was in when saved if you click on the display object just before saving.</span></p>
+position it was in when saved if you click on the display object just before
+saving.</span></p>
 
 <span style='mso-bookmark:_Hlt399233017'></span>
 
@@ -5594,8 +6597,8 @@ style='mso-bidi-font-size:10.0pt'>Image</span></span></font></b></h3>
 Image has <a href="#ObjectAttribute">Object</a> (X Position, Y Position, Width,
 Height) and <a href="#DynamicAttribute">Dynamic Attribute</a> (Color Mode,
 Visibility, Visibility Calc, Channels A-D) attributes.<span
-style='mso-spacerun:yes'>&nbsp; </span><a name="_Hlt483799976">Color Mode in the
-Dynamic Attribute is not relevant and is not used.<span
+style='mso-spacerun:yes'>&nbsp; </span><a name="_Hlt483799976">Color Mode in
+the Dynamic Attribute is not relevant and is not used.<span
 style='mso-spacerun:yes'>&nbsp; </span></a>There are also <a href="#ImageType">Imag<span
 style='mso-bookmark:_Hlt461591745'>e</span> Type</a><![if !supportNestedAnchors]><a
 name="_Hlt461591745"></a><![endif]>, Image Name, and <a href="#CalcExpression">Image
@@ -5619,9 +6622,9 @@ the image file to be incorporated.</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>MEDM
-will look for this file with the specified name, then with the path of the
-display prepended, then with each of the paths in the <a
-href="#EPICS_DISPLAY_LIST">EPICS_DISPLAY_PATH</a> prepended. </span></font></p>
+will look for this file with the specified name, then with the path of the display
+prepended, then with each of the paths in the <a href="#EPICS_DISPLAY_LIST">EPICS_DISPLAY_PATH</a>
+prepended. </span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>If
@@ -5657,13 +6660,12 @@ single-frame Image with no process variables specified for the Dynamic
 Attribute is treated the same as other Graphics Objects.<span
 style='mso-spacerun:yes'>&nbsp; </span>It is drawn on the display background
 and will be under any objects that are updating.<span
-style='mso-spacerun:yes'>&nbsp; </span>A multiple-frame Image even with no
-process variables specified for the Dynamic Attribute does update and so will
-appear among the updating objects in the stacking order and hence over
-non-updating objects.<span style='mso-spacerun:yes'>&nbsp; </span>This is a
-concern only for overlapping objects.<span style='mso-spacerun:yes'>&nbsp;
-</span>See the introduction to <a href="#MEDMObjects">MEDM Obj<span
-style='mso-bookmark:_Hlt483800114'>e</span>cts</a><![if !supportNestedAnchors]><a
+style='mso-spacerun:yes'>&nbsp; </span>A multiple-frame Image even with no process
+variables specified for the Dynamic Attribute does update and so will appear
+among the updating objects in the stacking order and hence over non-updating
+objects.<span style='mso-spacerun:yes'>&nbsp; </span>This is a concern only for
+overlapping objects.<span style='mso-spacerun:yes'>&nbsp; </span>See the
+introduction to <a href="#MEDMObjects">MEDM Obj<span style='mso-bookmark:_Hlt483800114'>e</span>cts</a><![if !supportNestedAnchors]><a
 name="_Hlt483800114"></a><![endif]> for more information on stacking order.</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
@@ -5780,9 +6782,9 @@ style='mso-spacerun:yes'>&nbsp; </span>It is possible for an ENUM<span
 style='mso-spacerun:yes'>&nbsp; </span>process variable to have more than 16
 states, however.<span style='mso-spacerun:yes'>&nbsp; </span>The .STAT field
 that exists for most process variables is an example.<span
-style='mso-spacerun:yes'>&nbsp; </span>MEDM will print an error message if a Menu
-receives a value for an ENUM process variable that is beyond the range known by
-MEDM, even though that value may be valid otherwise.<span
+style='mso-spacerun:yes'>&nbsp; </span>MEDM will print an error message if a
+Menu receives a value for an ENUM process variable that is beyond the range
+known by MEDM, even though that value may be valid otherwise.<span
 style='mso-spacerun:yes'>&nbsp; </span>This is a limit of Channel Access, not
 MEDM.</span></font></p>
 
@@ -5893,8 +6895,8 @@ can be edited by selecting them, then pressing Btn1 on a vertex and dragging
 the vertex.</span></font></p>
 
 <p class=MsoNormal style='text-indent:.5in'><font size=2 face="Times New Roman"><span
-style='font-size:10.0pt'>The <a href="#ObjectAttribute">Object Attributes</a>
-for a Polyline represent the bounding box of the lines.<span
+style='font-size:10.0pt'>The <a href="#ObjectAttribute">Object Attributes</a> for
+a Polyline represent the bounding box of the lines.<span
 style='mso-spacerun:yes'>&nbsp; </span>Accordingly, editing the vertices or
 changing the <a href="#BasicAttribute">Line Width</a> for the Polyline may
 change the object size and location.</span></font></p>
@@ -5930,10 +6932,10 @@ attributes.<span style='mso-spacerun:yes'>&nbsp; </span>In addition, there are
 Foreground, Background, Label, and Label/Name/Args attributes.<span
 style='mso-spacerun:yes'>&nbsp; </span>The Foreground and Background colors are
 changed by clicking to bring up the Color Palette.<span
-style='mso-spacerun:yes'>&nbsp; </span>The Label is the optional label that
-appears on the button.<span style='mso-spacerun:yes'>&nbsp; </span>Normally,
-whether there is a label or not, there are two overlapping squares on the
-button to deno<a name="_Hlt399237680"></a>te a Related Display control.<a
+style='mso-spacerun:yes'>&nbsp; </span>The Label is the optional label that appears
+on the button.<span style='mso-spacerun:yes'>&nbsp; </span>Normally, whether
+there is a label or not, there are two overlapping squares on the button to
+deno<a name="_Hlt399237680"></a>te a Related Display control.<a
 name="_Hlt399234515"></a><span style='mso-spacerun:yes'>&nbsp; </span>However,
 if the label text begins with<span style='mso-spacerun:yes'>&nbsp;
 </span>&quot;-&quot; (for example &quot;-My Label&quot;), the overlapping
@@ -6055,9 +7057,9 @@ style='mso-bookmark:_Hlt400784456'>a</span>tions</span><span style='mso-bookmark
 _Hlt399236653'></span></a><![if !supportNestedAnchors]><a name="_Hlt400784456"></a><a
 name="_Hlt400784487"></a><a name="_Hlt400784515"></a><![endif]><span
 style='mso-bookmark:_Hlt399236653'>.)<span style='mso-spacerun:yes'>&nbsp;
-</span><a name="_Hlt483377279"></a>Since users are used to seeing the overlapping
-rectangles represent a related display, some thought should be used before
-implementing graphics to replace them.</span></p>
+</span><a name="_Hlt483377279"></a>Since users are used to seeing the
+overlapping rectangles represent a related display, some thought should be used
+before implementing graphics to replace them.</span></p>
 
 <p class=MsoNormal><span style='mso-bookmark:_Hlt399236653'><font size=2
 face="Times New Roman"><span style='font-size:10.0pt'><span style='mso-tab-count:
@@ -6140,8 +7142,8 @@ the Shell Command button is pressed.<span style='mso-spacerun:yes'>&nbsp;
 with a space in between, and the resulting string will be executed as a system
 command when the menu item with that label is selected.<a name="_Hlt399237161"></a><span
 style='mso-spacerun:yes'>&nbsp; </span>(The Arguments are actually superfluous,
-since any command arguments can just as well be included in Command.)<span
-style='mso-spacerun:yes'>&nbsp; </span>MEDM will block until the command is
+since any command arguments can just as well be included in Command.) <span
+style='mso-spacerun:yes'>&nbsp;</span>MEDM will block until the command is
 executed, so it is almost always wise to include an &#8220;&amp;&#8221; at the
 end of the Command (or the Arguments if they re used) so that it will execute
 in the background.</span></font></p>
@@ -6386,8 +7388,8 @@ Return is pressed, the value of the process variable is not changed and the
 current value is restored into the entry box.<span
 style='mso-spacerun:yes'>&nbsp; </span>The resulting value of the process
 variable is shown when and only when the cursor leaves the entry box.<span
-style='mso-spacerun:yes'>&nbsp; </span>The value after leaving the entry box
-can be used to verify that the input was accepted. </span></font></p>
+style='mso-spacerun:yes'>&nbsp; </span>The value after leaving the entry box can
+be used to verify that the input was accepted. </span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>If
@@ -6854,8 +7856,8 @@ face="Courier New"><span lang=PT-BR style='font-family:"Courier New";
 mso-ansi-language:PT-BR'>beamline.adl;sector=1A,corrector=H3<o:p></o:p></span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
-10.0pt'>If you do not specify macros in this way, any existing macros in the
-ADL file which uses this Composite will still be passed to the file.<span
+10.0pt'>If you do not specify macros in this way, any existing macros in the ADL
+file which uses this Composite will still be passed to the file.<span
 style='mso-spacerun:yes'>&nbsp; </span>If you use this feature, those macros
 will not be passed, and the ones you specify will be used instead. </span></font></p>
 
@@ -6879,10 +7881,10 @@ contain, in part because the Composite and its objects are always
 overlapped.<span style='mso-spacerun:yes'>&nbsp; </span>It uses even more
 resources when Composites are overlapped.<span style='mso-spacerun:yes'>&nbsp;
 </span>This may be a problem when there are rapid updates, but should be fine
-if the updates are infrequent.<span style='mso-spacerun:yes'>&nbsp; </span>If objects
-inside the Composite have visibility that depends on the same process variables
-as those on which the Composite depends, there will be flashing when the
-objects update.<span style='mso-spacerun:yes'>&nbsp; </span>There may be
+if the updates are infrequent.<span style='mso-spacerun:yes'>&nbsp; </span>If
+objects inside the Composite have visibility that depends on the same process
+variables as those on which the Composite depends, there will be flashing when
+the objects update.<span style='mso-spacerun:yes'>&nbsp; </span>There may be
 flashing in other cases, as well.<span style='mso-spacerun:yes'>&nbsp;
 </span>If so, a possible solution is to limit the complexity of what you are
 doing.</span></font></p>
@@ -6895,16 +7897,15 @@ it can be made to have a <a href="#DynamicAttribute">Dynamic Attribute</a>.</spa
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
-MEDM for reasons of efficiency, only the parts of a display that need to be
-refreshed are actually refreshed.<span style='mso-spacerun:yes'>&nbsp;
-</span>If the visibility of a Composite changes, the display may be updated
-only within the bounds of the Composite.<span style='mso-spacerun:yes'>&nbsp;
-</span>Since the text in a <a href="#Text">Text</a> object may extend beyond
-the bounds of the object, you should insure that such text does not also extend
-beyond the Composite boundaries, which are determined by the size of the Text
-object, not the size of its text.<span style='mso-spacerun:yes'>&nbsp;
-</span>Otherwise, the visibility of the extended part of the text may not be
-handled correctly.</span></font></p>
+MEDM for reasons of efficiency, only the parts of a display that need to be refreshed
+are actually refreshed.<span style='mso-spacerun:yes'>&nbsp; </span>If the
+visibility of a Composite changes, the display may be updated only within the
+bounds of the Composite.<span style='mso-spacerun:yes'>&nbsp; </span>Since the
+text in a <a href="#Text">Text</a> object may extend beyond the bounds of the
+object, you should insure that such text does not also extend beyond the
+Composite boundaries, which are determined by the size of the Text object, not
+the size of its text.<span style='mso-spacerun:yes'>&nbsp; </span>Otherwise,
+the visibility of the extended part of the text may not be handled correctly.</span></font></p>
 
 <h2><a name=Attributes></a><b style='mso-bidi-font-weight:normal'><font size=4
 color=black face="Times New Roman"><span style='font-size:14.0pt'><span
@@ -7191,8 +8192,8 @@ name="_Hlt483799977"></a><![endif]>.</span></font></p>
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
-  style='font-size:10.0pt'>Name of the main process variable associated with the
-  object.<span style='mso-spacerun:yes'>&nbsp; </span>An A in the CALC
+  style='font-size:10.0pt'>Name of the main process variable associated with
+  the object.<span style='mso-spacerun:yes'>&nbsp; </span>An A in the CALC
   expression is replaced by the value of this process variable, and the values
   corresponding to G through L are obtained from this process variable. </span></font></p>
   </td>
@@ -7811,8 +8812,8 @@ the <a href="#CartesianPlot">Cartesian Plot</a>.</span></font></p>
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
-  style='font-size:10.0pt'>Maximum value shown on the plot axis.<span
-  style='mso-spacerun:yes'>&nbsp; </span>(Floating point number.)</span></font></p>
+  style='font-size:10.0pt'>Maximum value shown on the plot axis. <span
+  style='mso-spacerun:yes'>&nbsp;</span>(Floating point number.)</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:4;mso-yfti-lastrow:yes'>
@@ -8233,11 +9234,11 @@ name="_Hlt399559093"></a><a name="_Hlt399559155"></a><![endif]>.</span></font></
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
-  style='font-size:10.0pt'>Show the object in alarm colors based on the severity
-  of the associated process variable. The alarm colors are Green for NO_ALARM,
-  Yellow for MINOR_ALARM, Red for MAJOR_ALARM, White for INVALID_ALARM, and
-  Gray if the alarm has an unknown value (because of an error in the record,
-  for example).</span></font></p>
+  style='font-size:10.0pt'>Show the object in alarm colors based on the
+  severity of the associated process variable. The alarm colors are Green for
+  NO_ALARM, Yellow for MINOR_ALARM, Red for MAJOR_ALARM, White for
+  INVALID_ALARM, and Gray if the alarm has an unknown value (because of an error
+  in the record, for example).</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:2;mso-yfti-lastrow:yes'>
@@ -9263,8 +10264,9 @@ affect the format until MEDM is restarted.</span></font></p>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>The text is truncated to the nearest integer and
   shown in hexadecimal.<i style='mso-bidi-font-style:normal'><span
-  style='font-style:italic;mso-bidi-font-style:normal'> E.g.</span></i> 0x3e8. <span
-  style='mso-spacerun:yes'>&nbsp;</span>Input is interpreted as hexadecimal.</span></font></p>
+  style='font-style:italic;mso-bidi-font-style:normal'> E.g.</span></i>
+  0x3e8.<span style='mso-spacerun:yes'>&nbsp; </span>Input is interpreted as
+  hexadecimal.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:6'>
@@ -9297,8 +10299,8 @@ affect the format until MEDM is restarted.</span></font></p>
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
-  style='font-size:10.0pt'>This is the same as decimal except that for large
-  numbers or <a name="_Hlt399297213">precision</a>, it can be in exponential
+  style='font-size:10.0pt'>This is the same as decimal except that for large numbers
+  or <a name="_Hlt399297213">precision</a>, it can be in exponential
   format.<span style='mso-spacerun:yes'>&nbsp; </span>It is what is returned by
   the EPICS routine cvtDoubleToString().</span></font></p>
   </td>
@@ -9334,8 +10336,7 @@ affect the format until MEDM is restarted.</span></font></p>
   style='mso-spacerun:yes'>&nbsp; </span>The inputs 10.75, 10:45, 10.45.0, and
   10 45 00 are all treated as a quarter to eleven.<span
   style='mso-spacerun:yes'>&nbsp; </span>The inputs &#8209;1, :&#8209;1, and ::&#8209;1
-  are interpreted as &#8209;1:00:00, &#8209;:01:00, and &#8209;0:00:01,
-  respectively.</span></font></p>
+  are interpreted as &#8209;1:00:00, &#8209;:01:00, and &#8209;0:00:01, respectively.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:9'>
@@ -9387,10 +10388,10 @@ affect the format until MEDM is restarted.</span></font></p>
   seconds with 2</span></font><font face=Symbol><span style='font-family:Symbol;
   mso-ascii-font-family:"Times New Roman";mso-hansi-font-family:"Times New Roman";
   mso-char-type:symbol;mso-symbol-font-family:Symbol'><span style='mso-char-type:
-  symbol;mso-symbol-font-family:Symbol'>p</span></span></font> radians representing
-  24 hours.<span style='mso-spacerun:yes'>&nbsp; </span>On input the number is
-  multiplied by 12/<font face=Symbol><span style='font-family:Symbol;
-  mso-ascii-font-family:"Times New Roman";mso-hansi-font-family:"Times New Roman";
+  symbol;mso-symbol-font-family:Symbol'>p</span></span></font> radians
+  representing 24 hours.<span style='mso-spacerun:yes'>&nbsp; </span>On input
+  the number is multiplied by 12/<font face=Symbol><span style='font-family:
+  Symbol;mso-ascii-font-family:"Times New Roman";mso-hansi-font-family:"Times New Roman";
   mso-char-type:symbol;mso-symbol-font-family:Symbol'><span style='mso-char-type:
   symbol;mso-symbol-font-family:Symbol'>p</span></span></font> and then
   converted to sexagesimal as above.<span style='mso-spacerun:yes'>&nbsp;
@@ -9871,8 +10872,8 @@ style='mso-bidi-font-size:10.0pt'>Macro Substitution</span></span></font></b></h
 of the form $(name) in an ADL file can be replaced by some other string, both
 on the <a href="#CommandLine">command line</a> and when calling a <a
 href="#RelatedDisplay">related display</a>.<span
-style='mso-spacerun:yes'>&nbsp; </span>Specific directions for each of these
-cases are given in the correspoonding sections of the manual.<span
+style='mso-spacerun:yes'>&nbsp; </span>Specific directions for each of these cases
+are given in the correspoonding sections of the manual.<span
 style='mso-spacerun:yes'>&nbsp; </span>In general, there is an argument string
 of the form &#8220;name1=value1 [,name2=value2]&#8230;&#8221;.<span
 style='mso-spacerun:yes'>&nbsp; </span>All occurrences of
@@ -9902,9 +10903,9 @@ style='mso-bidi-font-size:10.0pt'>Drag-And-Drop</span></span></font></b></h2>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>MEDM
-has a drag-and-drop mechanism in EXECUTE mode, using Btn2.<span
-style='mso-spacerun:yes'>&nbsp; </span>This allows dragging the process
-variable names associated with an MEDM object to another place.<span
+has a drag-and-drop mechanism in EXECUTE mode, using Btn2. <span
+style='mso-spacerun:yes'>&nbsp;</span>This allows dragging the process variable
+names associated with an MEDM object to another place.<span
 style='mso-spacerun:yes'>&nbsp; </span>The place must be a valid Motif drop
 site.<span style='mso-spacerun:yes'>&nbsp; </span>Such places include most
 Motif text fields.<span style='mso-spacerun:yes'>&nbsp; </span>Programs like
@@ -9934,14 +10935,14 @@ drop site is invalid and will appear to be absorbed by the drop site otherwise.<
 valid drop places unfortunately do not include XTerm&#8217;s and most other X
 clients, and the Motif Btn2 drag-and-drop is not the same as the common Btn2
 paste associated with the X selection or the clipboard.<span
-style='mso-spacerun:yes'>&nbsp; </span>However, at the start of the Drag and Drop
-process the PV names are also put into the X selection and the clipboard.<span
-style='mso-spacerun:yes'>&nbsp; </span>So, even though you cannot drag the PV
-names into an Xterm or other X client, you can select them by using Btn 2 as
-for Drag and Drop, release Btn2 to end the Drag and Drop, and then click Btn2
-in an Xterm.<span style='mso-spacerun:yes'>&nbsp; </span>If there is more than
-one PV name associated with the object, the pasted PV names are separated by a
-space.</span></font></p>
+style='mso-spacerun:yes'>&nbsp; </span>However, at the start of the Drag and
+Drop process the PV names are also put into the X selection and the
+clipboard.<span style='mso-spacerun:yes'>&nbsp; </span>So, even though you
+cannot drag the PV names into an Xterm or other X client, you can select them
+by using Btn 2 as for Drag and Drop, release Btn2 to end the Drag and Drop, and
+then click Btn2 in an Xterm.<span style='mso-spacerun:yes'>&nbsp; </span>If
+there is more than one PV name associated with the object, the pasted PV names
+are separated by a space.</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
@@ -10055,8 +11056,8 @@ name="_Hlt480691975"></a><![endif]> and the <a href="#PrintSetupDialogBox">Print
 Setup <span style='mso-bookmark:_Hlt480692039'>D</span><span style='mso-bookmark:
 _Hlt480691906'>i</span>alog Box</a><![if !supportNestedAnchors]><a
 name="_Hlt480691906"></a><a name="_Hlt480692039"></a><![endif]> for more
-information.<span style='mso-spacerun:yes'>&nbsp; </span>Mail brings up a
-dialog box for sending the information to a mail recipient.<span
+information.<span style='mso-spacerun:yes'>&nbsp; </span>Mail brings up a dialog
+box for sending the information to a mail recipient.<span
 style='mso-spacerun:yes'>&nbsp; </span>Mail is not implemented for WIN32.<span
 style='mso-spacerun:yes'>&nbsp; </span>The Help button should bring you to this
 section of the manual in your browser.</span></font></p>
@@ -10102,8 +11103,8 @@ requested by all the objects in all the screens.</span></font></p>
 10.0pt'>CA Channels Connected: The number of channels successfully connected.</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
-10.0pt'>CA Incoming Events: The number of events received from Channel Access
-in the last interval.<span style='mso-spacerun:yes'>&nbsp; </span>An event is
+10.0pt'>CA Incoming Events: The number of events received from Channel Access in
+the last interval.<span style='mso-spacerun:yes'>&nbsp; </span>An event is
 received for a channel when:</span></font></p>
 
 <p class=MsoNormal style='margin-left:.75in;text-indent:-.25in;mso-list:l13 level1 lfo15;
@@ -10345,16 +11346,15 @@ field.<span style='mso-spacerun:yes'>&nbsp; </span>Some records, especially
 homegrown ones, may not even have these fields and may not return anything
 sensible.<span style='mso-spacerun:yes'>&nbsp; </span>Moreover, if the person
 who designed the database did not specifically specify values for the HOPR,
-LOPR, and PREC fields (a not uncommon occurrence), the limits and/or precision
-will default to zero.<span style='mso-spacerun:yes'>&nbsp; </span>In most
-cases, however, the database designer has specified the values to be ones
-appropriate for use in applications like MEDM.<span
-style='mso-spacerun:yes'>&nbsp; </span>That is why these fields are there in
-the first place.<span style='mso-spacerun:yes'>&nbsp; </span>These values are
-fixed in the record, and they apply to all objects using that process variable
-in all MEDM screens in all running MEDMs.<span style='mso-spacerun:yes'>&nbsp;
-</span>If both the High Limit and the Low Limit are zero, MEDM converts the
-High Limit to 1.0.</span></font></p>
+LOPR, and PREC fields (a not uncommon occurrence), the limits and/or precision will
+default to zero.<span style='mso-spacerun:yes'>&nbsp; </span>In most cases,
+however, the database designer has specified the values to be ones appropriate
+for use in applications like MEDM.<span style='mso-spacerun:yes'>&nbsp;
+</span>That is why these fields are there in the first place.<span
+style='mso-spacerun:yes'>&nbsp; </span>These values are fixed in the record,
+and they apply to all objects using that process variable in all MEDM screens
+in all running MEDMs.<span style='mso-spacerun:yes'>&nbsp; </span>If both the
+High Limit and the Low Limit are zero, MEDM converts the High Limit to 1.0.</span></font></p>
 
 <p class=MsoNormal><b style='mso-bidi-font-weight:normal'><font size=2
 face="Times New Roman"><span style='font-size:10.0pt;font-weight:bold;
@@ -10461,8 +11461,8 @@ style='mso-spacerun:yes'>&nbsp; </span>This includes the color.</span></font></p
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>The
 source may be Channel, Default, or User Specified and works the same way as for
 the P<a name="_Hlt480368417">V</a> Limits Dialog.<span
-style='mso-spacerun:yes'>&nbsp; </span>Keep in mind that the screen designer
-can set the source to be Channel or Default and can set the default value.<span
+style='mso-spacerun:yes'>&nbsp; </span>Keep in mind that the screen designer can
+set the source to be Channel or Default and can set the default value.<span
 style='mso-spacerun:yes'>&nbsp; </span>The user can set the source to be any of
 the three and can set the user-specified value.<span
 style='mso-spacerun:yes'>&nbsp; </span>If the source is Default, he will get
@@ -10744,12 +11744,12 @@ button on the left of the title bar.</span></font></p>
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
 EXECUTE mode, the contents of the display will be scaled to fit the new size of
-the display.<span style='mso-spacerun:yes'>&nbsp; </span>If you wish to preserve
-the aspect ratio of a display, you can terminate the resize option with
-Shift-Click instead of Click.<span style='mso-spacerun:yes'>&nbsp; </span>In
-that case MEDM modifies the size you have chosen by decreasing the dimension
-that is too large.<span style='mso-spacerun:yes'>&nbsp; </span>Text tends to
-scale more attractively if you keep the aspect ratio fixed.</span></font></p>
+the display.<span style='mso-spacerun:yes'>&nbsp; </span>If you wish to
+preserve the aspect ratio of a display, you can terminate the resize option
+with Shift-Click instead of Click.<span style='mso-spacerun:yes'>&nbsp;
+</span>In that case MEDM modifies the size you have chosen by decreasing the
+dimension that is too large.<span style='mso-spacerun:yes'>&nbsp; </span>Text
+tends to scale more attractively if you keep the aspect ratio fixed.</span></font></p>
 
 <p class=MsoNormal><font size=2 face="Times New Roman"><span style='font-size:
 10.0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
@@ -10852,14 +11852,14 @@ may replace them, depending on the operation.</span></font></p>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>Select objects.<span style='mso-spacerun:yes'>&nbsp;
   </span>If the conditions for a vertex edit are not satisfied, then choose
-  objects by dragging or clicking.<span style='mso-spacerun:yes'>&nbsp;
-  </span>These become the new selected objects.<span
-  style='mso-spacerun:yes'>&nbsp; </span>If only one object was previously
-  selected, however, then additional clicking on that element toggles its
-  selection.<span style='mso-spacerun:yes'>&nbsp; </span>Clicking on the
-  background toggles selection of the display.<span
-  style='mso-spacerun:yes'>&nbsp; </span>In the case of completely overlapping
-  objects, only the top one can be selected in this way. </span></font></p>
+  objects by dragging or clicking.<span style='mso-spacerun:yes'>&nbsp; </span>These
+  become the new selected objects.<span style='mso-spacerun:yes'>&nbsp;
+  </span>If only one object was previously selected, however, then additional
+  clicking on that element toggles its selection.<span
+  style='mso-spacerun:yes'>&nbsp; </span>Clicking on the background toggles
+  selection of the display.<span style='mso-spacerun:yes'>&nbsp; </span>In the
+  case of completely overlapping objects, only the top one can be selected in
+  this way. </span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:2'>
@@ -11168,10 +12168,10 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   style='font-size:10.0pt'>Reverts to the last saved state of the display.<span
   style='mso-spacerun:yes'>&nbsp; </span>The state is saved before most
   operations that would seriously change the display and also when Undo is
-  chosen.<span style='mso-spacerun:yes'>&nbsp; </span>It is not saved on keyboard
-  editing operations.<span style='mso-spacerun:yes'>&nbsp; </span>Repeated
-  Undo&#8217;s toggle between the current state and the last state, so you can
-  pick the one you like best.</span></font></p>
+  chosen.<span style='mso-spacerun:yes'>&nbsp; </span>It is not saved on
+  keyboard editing operations.<span style='mso-spacerun:yes'>&nbsp;
+  </span>Repeated Undo&#8217;s toggle between the current state and the last
+  state, so you can pick the one you like best.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:1'>
@@ -11188,8 +12188,8 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>This is another way to select an object to create
   besides using the <a href="#ObjectPalette">Object Palette</a>.<span
-  style='mso-spacerun:yes'>&nbsp; </span>There are three pull-right submenus
-  that group the objects into Graphics, Monitors, and Controllers.</span></font></p>
+  style='mso-spacerun:yes'>&nbsp; </span>There are three pull-right submenus that
+  group the objects into Graphics, Monitors, and Controllers.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:2'>
@@ -11272,8 +12272,8 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>Raises the selected objects in the display
   list.<span style='mso-spacerun:yes'>&nbsp; </span>Note that graphics objects
-  are drawn on the background of the display window and will always be below the
-  other types of objects.</span></font></p>
+  are drawn on the background of the display window and will always be below
+  the other types of objects.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:6'>
@@ -11385,8 +12385,9 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   style='font-size:10.0pt'>Vertical: Make the vertical spacing between the
   selected objects equal to the grid spacing.<span
   style='mso-spacerun:yes'>&nbsp; </span>The topmost object will not move.<span
-  style='mso-spacerun:yes'>&nbsp; </span>Best applied to a column of objects.<span
-  style='mso-spacerun:yes'>&nbsp; </span>Does not affect object size.</span></font></p>
+  style='mso-spacerun:yes'>&nbsp; </span>Best applied to a column of
+  objects.<span style='mso-spacerun:yes'>&nbsp; </span>Does not affect object
+  size.</span></font></p>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>2-D: Line up an array of objects.<span
   style='mso-spacerun:yes'>&nbsp; </span>Best applied to objects already
@@ -11562,9 +12563,9 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   style='font-size:10.0pt'>Selects the display.<span
   style='mso-spacerun:yes'>&nbsp; </span>This can be used if it is not easy or
   possible to click on the display background.<span
-  style='mso-spacerun:yes'>&nbsp; </span>Note that when the display is selected,
-  the x and y values of the display are updated and will be saved in the ADL
-  file if the display is saved.</span></font></p>
+  style='mso-spacerun:yes'>&nbsp; </span>Note that when the display is
+  selected, the x and y values of the display are updated and will be saved in
+  the ADL file if the display is saved.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:18'>
@@ -11580,8 +12581,8 @@ the same items as for the Edit menu on the main MEDM window.</span></font></p>
   mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal><font size=2 face="Times New Roman"><span
   style='font-size:10.0pt'>Find objects that are totally or partially off the
-  visible part of the display.<span style='mso-spacerun:yes'>&nbsp;
-  </span>(This can happen, for example, if the display is resized.)<span
+  visible part of the display.<span style='mso-spacerun:yes'>&nbsp; </span>(This
+  can happen, for example, if the display is resized.)<span
   style='mso-spacerun:yes'>&nbsp; </span>The number of such objects will be
   presented in a dialog box.<span style='mso-spacerun:yes'>&nbsp; </span>If
   there are any objects, they will be selected, and there will be a button on
@@ -11862,7 +12863,7 @@ includes defaults for the print options for most major platforms.<span
 style='mso-spacerun:yes'>&nbsp; </span>If you prefer different defaults, they
 can be set in <a href="#SiteSpecific">siteSpecific.h</a> when MEDM is
 built.<span style='mso-spacerun:yes'>&nbsp; </span>More information is
-available in the file.<span style='mso-spacerun:yes'>&nbsp; </span><a
+available in the file. <span style='mso-spacerun:yes'>&nbsp;</span><a
 name="_Hlt474306914"></a>On UNIX systems the supplied default print command
 uses the environment variable PSPRINTER.<span style='mso-spacerun:yes'>&nbsp;
 </span>This allows you to use a different printer for MEDM than the one
@@ -11927,7 +12928,7 @@ style='mso-spacerun:yes'>&nbsp; </span>The remaining characters represent the
 system command that will be executed when the item is selected.<span
 style='mso-spacerun:yes'>&nbsp; </span>Note that on UNIX, if the command is not
 run in the background (using &amp; at the end), it will hold up MEDM until it
-finishes.<span style='mso-spacerun:yes'>&nbsp; </span>On <a href="#WIN32">WIN32</a>,
+finishes. <span style='mso-spacerun:yes'>&nbsp;</span>On <a href="#WIN32">WIN32</a>,
 if a colon is followed by a backslash (\), then it will be assumed that it is
 part of a path name and it will not be counted as a menu-item delimiter.</span></font></p>
 
@@ -12507,9 +13508,9 @@ style='mso-bidi-font-size:10.0pt'>Glossary</span></span></font></b></h2>
   style='font-size:10.0pt'>In MEDM a display is a window on the computer screen
   that contains objects that monitor or control process variables. This MEDM
   definition should be contrasted with the X Window&#8217;s definition of a
-  display, which is a set of one or more screens and a keyboard driven by a single
-  X server, or the X Window DISPLAY environmental variable, which represents a
-  particular screen on the X display.</span></font></p>
+  display, which is a set of one or more screens and a keyboard driven by a
+  single X server, or the X Window DISPLAY environmental variable, which
+  represents a particular screen on the X display.</span></font></p>
   </td>
  </tr>
  <tr style='mso-yfti-irow:5'>
@@ -12525,7 +13526,7 @@ style='mso-bidi-font-size:10.0pt'>Glossary</span></span></font></b></h2>
   applications originally developed by Argonne National Laboratory and Los
   Alamos National Laboratory for the purpose of building distributed control
   systems to operate devices such as Particle Accelerators, Large Experiments,
-  and Telescopes.<span style='mso-spacerun:yes'>&nbsp; </span>There is
+  and Telescopes. <span style='mso-spacerun:yes'>&nbsp;</span>There is
   extensive information on EPICS available in the <a
   href="http://www.aps.anl.gov/epics/index.php">EPICS web pages</a>.</span></font></p>
   </td>
