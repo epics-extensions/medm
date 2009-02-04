@@ -4759,8 +4759,8 @@ void printWindowAttributes(Display *display, Window win, char *string)
 
 char *getEventName(int type)
 {
-#if LASTEvent != 35
-#error getEventType only works for LASTEvent=35 (See X.h)
+#if ((LASTEvent < 35) || (LASTEvent > 36))
+#error getEventType only works for LASTEvent=35 or 36 (See X.h)
 #endif
   /* These types are from X11/X.h */
     static char *eventNames[LASTEvent+2]={
@@ -4799,6 +4799,9 @@ char *getEventName(int type)
 	"ColormapNotify",
 	"ClientMessage",
 	"MappingNotify",
+#if (LASTEvent == 36)
+	"GenericEvent",
+#endif
 	"LASTEvent",
 	"Unknown"
     };
