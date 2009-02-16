@@ -280,15 +280,18 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	}
 
       /* Allocate (or set to NULL) the X Record in the countCh XYTrace */
-	if((dlCartesianPlot->countPvName[0] != '\0')
-	  && (!isdigit(dlCartesianPlot->countPvName[0]))
-	  && (validTraces > 0)) {
+	if ((dlCartesianPlot->countPvName[0] != '\0')  && (validTraces > 0)) {
+	  if (isdigit(dlCartesianPlot->countPvName[0])) {
+	    dlCartesianPlot->count=atoi(dlCartesianPlot->countPvName);
+	    pcp->countCh.recordX = NULL;
+	  } else {
 	    pcp->countCh.recordX =
 	      medmAllocateRecord(dlCartesianPlot->countPvName,
-		cartesianPlotUpdateScreenFirstTime,
-		cartesianPlotUpdateGraphicalInfoCb,
-		(XtPointer) &(pcp->countCh));
+				 cartesianPlotUpdateScreenFirstTime,
+				 cartesianPlotUpdateGraphicalInfoCb,
+				 (XtPointer) &(pcp->countCh));
 	    pcp->countCh.cartesianPlot = pcp;
+	  } 
 	} else {
 	    pcp->countCh.recordX = NULL;
 	}
@@ -426,7 +429,7 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	count=dlCartesianPlot->count;
 #if USECOUNTPV
       /* Use count from the PV */
-	if(pcp->countCh.recordX != 0) {
+	if(pcp->countCh.recordX != NULL) {
 	    int chCount = (int)(pcp->countCh.recordX->value +.5);
 	    if(chCount > 0) count = chCount;
 	    else count = 0;
@@ -1373,7 +1376,7 @@ static void cartesianPlotUpdateValueCb(XtPointer cd) {
 static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 {
     XColor xColors[MAX_TRACES];
-    CpDataHandle hcp, hcpold, hcp1=NULL, hcp2=NULL, hcpold1=NULL, hcpold2=NULL;
+    CpDataHandle hcp=NULL, hcpold=NULL, hcp1=NULL, hcp2=NULL, hcpold1=NULL, hcpold2=NULL;
     DlCartesianPlot *dlCartesianPlot = pcp->dlElement->structure.cartesianPlot;
     DisplayInfo *displayInfo = pcp->updateTask->displayInfo;
     Widget w = pcp->dlElement->widget;
@@ -2048,6 +2051,7 @@ DlElement *parseCartesianPlot(DisplayInfo *displayInfo)
 	    } else if(!strcmp(token,"countPvName")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
+		dlCartesianPlot->count= atoi(token);
 		strcpy(dlCartesianPlot->countPvName,token);
 	    } else if(!strcmp(token,"eraseMode")) {
 		getToken(displayInfo,token);
@@ -2435,9 +2439,9 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (int)cd;
     char *stringValue, string[24];
-    int k, n, iPrec;
+    int k, n, iPrec=-1;
     XcVType valF, minF, maxF, tickF;
-    int axis, isMax;
+    int axis=-1, isMax=-1;
 
     UNREFERENCED(cbs);
 
@@ -3007,8 +3011,8 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     XtPointer userData;
     Boolean xAxisIsLog, y1AxisIsLog, y2AxisIsLog, xAxisIsTime,
       xAxisIsAuto, y1AxisIsAuto, y2AxisIsAuto,
-      xIsCurrentlyFromChannel, y1IsCurrentlyFromChannel,
-      y2IsCurrentlyFromChannel;
+      xIsCurrentlyFromChannel=False, y1IsCurrentlyFromChannel=False,
+      y2IsCurrentlyFromChannel=False;
     XcVType xMinF, xMaxF, y1MinF, y1MaxF, y2MinF, y2MaxF;
     char *timeFormat = NULL;
     if(globalDisplayListTraversalMode != DL_EXECUTE) return;
