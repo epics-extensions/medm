@@ -55,7 +55,6 @@ Version 2.2.4
   Loading the second or any additional displays causes MEDM to add extra
   entries on relatedDisplay, shellCommand, strip chart and cartesian Plot.
 
->>>>>>> 1.14
 Version 2.2.3
 =============
 - Fix the following bug :
