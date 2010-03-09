@@ -86,6 +86,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <Xm/Xm.h>
@@ -842,7 +843,7 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 
 	  /* Arrow buttons */
 	    if(new->wsw.up_buttons != NULL) {
-		int digit;
+		intptr_t digit;
 
 		for(digit = 0; digit < new->wsw.digit_number; digit++) {
 		  /* (Don't have to check if there is one) */
@@ -858,7 +859,7 @@ static Boolean SetValues(Widget wcur, Widget wreq, Widget wnew,
 
 	  /* Arrow buttons */
 	    if(new->wsw.up_buttons != NULL) {
-		int digit;
+		intptr_t digit;
 
 		for(digit = 0; digit < new->wsw.digit_number; digit++) {
 		    XtAddCallback(new->wsw.up_buttons[digit], XmNarmCallback,
@@ -1444,7 +1445,7 @@ static void compute_format(WswWidget wsw)
 /* Create the buttons arrays */
 static void create_buttons(WswWidget wsw)
 {
-    int digit;
+    intptr_t digit;
 
 #if DEBUG_FLOW
     printf("create_buttons: digit_number=%d up_buttons=%p down_buttons=%p\n",
@@ -2665,7 +2666,7 @@ static XFontStruct *getFontFromList(Display *display,
 static void upButtonArmCallback(Widget button, XtPointer userdata,
   XtPointer calldata)
 {
-    int digit = (int)userdata;
+    int digit = (intptr_t)userdata;
     XmAnyCallbackStruct *callback_data = (XmAnyCallbackStruct *)calldata;
     WswWidget wsw;
     Widget widget;
@@ -2704,7 +2705,7 @@ static void upButtonArmCallback(Widget button, XtPointer userdata,
 static void downButtonArmCallback(Widget button, XtPointer userdata,
   XtPointer calldata)
 {
-    int digit = (int)userdata;
+    int digit = (intptr_t)userdata;
     XmAnyCallbackStruct *callback_data = (XmAnyCallbackStruct *)calldata;
     WswWidget wsw;
     Widget widget;

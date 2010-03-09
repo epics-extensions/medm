@@ -540,6 +540,15 @@ void Arrow3d(Widget w, Display *display,Drawable drawable, GC gc,
    * Calculate the arrow vertices based on the bounding rectangle and
    * orientation.
    */
+    /* left corner */
+    points[0].x = 0;
+    points[0].y = 0;
+    /* arrow tip */
+    points[1].x = 0;
+    points[1].y = 0;
+    /* right corner */
+    points[2].x = 0;
+    points[2].y = 0;
     if (orientation == UP) {
       /* left corner */
 	points[0].x = bounds->x;

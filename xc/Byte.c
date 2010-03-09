@@ -489,7 +489,7 @@ static void Draw_display(Widget w, Display *display,
 {
     ByteWidget wb = (ByteWidget)w;
     Boolean reverse;
-    int  iVal, i, nSeg, iBit, isSet;
+    int  iVal=0, i, nSeg, iBit, isSet;
     double delta;
     int x1, y1, x2, y2, i1, i2, iDelta;
     unsigned int width, height;

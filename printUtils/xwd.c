@@ -189,7 +189,7 @@ static int Window_Dump(Display *display, Window window, FILE *file)
   /* ACM:  This empirically works on VMS */
     unsigned long swaptest = 0;
 #endif
-    XColor *colors;
+    XColor *colors=NULL;
     unsigned buffer_size;
     int win_name_size;
     int header_size;

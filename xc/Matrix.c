@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <Xm/Xm.h>
 #include <X11/Xos.h>
 #include <X11/StringDefs.h>
 #include <Xm/XmP.h>
@@ -2027,6 +2028,7 @@ RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
      */
     if (mw->matrix.fixed_rows || mw->matrix.fixed_columns) {
 	XbaeRectangle rect;
+        SETRECT(rect, 0, 0, 0, 0);
 
       /*
        * Get the Rectangle enclosing the cells in fixed rows or columns
