@@ -371,7 +371,7 @@ static Widget createMenu(DisplayInfo *displayInfo, Record *pr, DlMenu *dlMenu,
       /* Add callback and userData in execute mode */
 	if(globalDisplayListTraversalMode == DL_EXECUTE) {
 	    XtAddCallback(pushbutton, XmNactivateCallback,
-	      menuValueChangedCb, (XtPointer)i);
+	      menuValueChangedCb, (XtPointer)(intptr_t)i);
 	}
     }
 
@@ -585,7 +585,7 @@ static void menuValueChangedCb(Widget  w, XtPointer clientData,
 {
     MedmMenu *pm;
     Record *pr;
-    int btnNumber = (int) clientData;
+    int btnNumber = (intptr_t) clientData;
     XmPushButtonCallbackStruct *call_data =
       (XmPushButtonCallbackStruct *) callbackStruct;
 

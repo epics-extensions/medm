@@ -269,9 +269,9 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
     Pixel pixel;
     Widget widget = pm->dlElement->widget;
     XcVType hopr, lopr, val;
-    short precision;
+    short precision = 0;
     Arg args[4];
-    int nargs=0;
+    int nargs = 0;
 
     switch (pr->dataType) {
     case DBF_STRING :

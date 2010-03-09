@@ -182,7 +182,7 @@ void createPvInfoDlg(void)
 
 static void pvInfoDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
-    int i = (int)cd;
+    int i = (intptr_t)cd;
     switch(i) {
     case  PV_INFO_CLOSE_BTN:
 	XtPopdown(pvInfoS);
@@ -401,7 +401,7 @@ void updatePvLimits(DlLimits *limits)
 static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 {
     char string[1024];     /* Danger: Fixed length */
-    XmString xmString;
+    XmString xmString=NULL;
 
 #if DEBUG_PVLIMITS
     print("\nresetPvLimitsDlg: limits=%x  pvName = |%s|\n",
@@ -799,11 +799,11 @@ static void createPvLimitsDlg(void)
    activated */
 static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
-    int type = (int)cd;
-    int button, src;
+    int type = (intptr_t)cd;
+    int button=0, src;
     double val;
     short sval;
-    DlElement *pE;
+    DlElement *pE=NULL;
     DlLimits *pL = NULL;
     char *pvName;
     char *string;
@@ -1296,7 +1296,7 @@ void popupDisplayListDlg(void)
 static void displayListDlgCb(Widget w, XtPointer clientData,
   XtPointer callData)
 {
-    int button = (int)clientData;
+    int button = (intptr_t)clientData;
     DisplayInfo *di, *diNext;
     Boolean status;
     int *positionList = NULL;
@@ -1961,7 +1961,7 @@ static void updatePrintSetupFromDialog()
 
 static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int type = (int)cd;
+    int type = (intptr_t)cd;
     int button;
 
   /* If the type is less than 4, the callback comes from an option

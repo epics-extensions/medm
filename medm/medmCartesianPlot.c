@@ -15,6 +15,8 @@
  *****************************************************************************
 */
 
+#include <inttypes.h>
+
 #define DEBUG_COUNT 0
 #define DEBUG_RESET 0
 #define DEBUG_LOSING_FOCUS 0
@@ -2201,7 +2203,7 @@ static void cartesianPlotSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
 static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonId = (int)cd;
+    int buttonId = (intptr_t)cd;
     int k, n, rcType, iPrec;
     char string[24];
     char *stringMinValue, *stringMaxValue;
@@ -2437,7 +2439,7 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int rcType = (int)cd;
+    int rcType = (intptr_t)cd;
     char *stringValue, string[24];
     int k, n, iPrec=-1;
     XcVType valF, minF, maxF, tickF;
@@ -2570,7 +2572,7 @@ void cpAxisTextFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Note: Losing focus happens when cursor leaves cartesianPlotAxisS,
      too */
 {
-    int rcType = (int)cd;
+    int rcType = (intptr_t)cd;
     char string[MAX_TOKEN_LENGTH], *currentString;
     int tail;
     XcVType minF[3], maxF[3];
@@ -2827,7 +2829,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	  &(xmStringValueTable[FIRST_CARTESIAN_PLOT_AXIS_STYLE]),
 	  buttonType,
 	  (!i)?NUM_CARTESIAN_PLOT_AXIS_STYLES:NUM_CARTESIAN_PLOT_AXIS_STYLES-1,
-	  (XtPointer)(CP_X_AXIS_STYLE+i));
+	  (XtPointer)(uintptr_t)(CP_X_AXIS_STYLE+i));
 	axisStyleMenu[i] =  entryElement[counter];
 	counter++;
 
@@ -2839,7 +2841,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	  &(xmStringValueTable[FIRST_CARTESIAN_PLOT_RANGE_STYLE]),
 	  buttonType,
 	  NUM_CARTESIAN_PLOT_RANGE_STYLES,
-	  (XtPointer)(CP_X_RANGE_STYLE+i));
+	  (XtPointer)(uintptr_t)(CP_X_RANGE_STYLE+i));
 	axisRangeMenu[i] =  entryElement[counter];
 	counter++;
 
@@ -2847,7 +2849,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	createCartesianPlotAxisDialogTextEntry(
 	  parentRC, axisMinXmString,
 	  &(axisRangeMinRC[i]), &(entryLabel[counter]),
-	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MIN+i));
+	  &(entryElement[counter]), (XtPointer)(uintptr_t)(CP_X_RANGE_MIN+i));
 	axisRangeMin[i] = entryElement[counter];
 	counter++;
 
@@ -2855,7 +2857,7 @@ Widget createCartesianPlotAxisDialog(Widget parent)
 	createCartesianPlotAxisDialogTextEntry(
 	  parentRC, axisMaxXmString,
 	  &(axisRangeMaxRC[i]), &(entryLabel[counter]),
-	  &(entryElement[counter]), (XtPointer)(CP_X_RANGE_MAX+i));
+	  &(entryElement[counter]), (XtPointer)(uintptr_t)(CP_X_RANGE_MAX+i));
 	axisRangeMax[i] = entryElement[counter];
 	counter++;
 
@@ -3144,7 +3146,7 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
 static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonType = (int)cd;
+    int buttonType = (intptr_t)cd;
     String **newCells;
     int i;
 
@@ -3193,7 +3195,7 @@ static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonType = (int)cd;
+    int buttonType = (intptr_t)cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);

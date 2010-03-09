@@ -226,7 +226,7 @@ static void textUpdateDraw(XtPointer cd)
     int i;
     Pixmap pixmap;
     GC gc;
-    Boolean isNumber;
+    Boolean isNumber = 0;
     double value = 0.0;
     short precision = 0;
     int textWidth = 0;
@@ -417,7 +417,7 @@ static void textUpdateDraw(XtPointer cd)
 	    {
 	      /* KE: y is the same for all and there are only three
                  distinct cases */
-		int x, y;
+		int x = 0, y = 0;
 
 		XSetFont(display, gc, fontTable[i]->fid);
 		switch (dlTextUpdate->align) {

@@ -190,7 +190,7 @@ void choiceButtonValueChangedCb(Widget  w, XtPointer clientData,
   XtPointer callbackStruct)
 {
     MedmChoiceButtons *pcb;
-    int btnNumber = (int)clientData;
+    int btnNumber = (intptr_t)clientData;
     XmToggleButtonCallbackStruct *call_data =
       (XmToggleButtonCallbackStruct *)callbackStruct;
     Record *pd;
@@ -311,7 +311,7 @@ static void choiceButtonUpdateGraphicalInfoCb(XtPointer cd)
 	if(i==(int)pr->value)
 	  XmToggleButtonGadgetSetState(buttons[i],True,True);
 	XtAddCallback(buttons[i],XmNvalueChangedCallback,
-	  (XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)i);
+	  (XtCallbackProc)choiceButtonValueChangedCb,(XtPointer)(intptr_t)i);
 	XtManageChild(buttons[i]);
     }
     choiceButtonUpdateValueCb(cd);

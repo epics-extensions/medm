@@ -1186,7 +1186,7 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     Widget widget = psc->dlElement->widget;
     XcVType hopr, lopr, val;
-    short precision;
+    short precision = 0;
     int i, row;
 
 
@@ -2266,7 +2266,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmNbottomPosition, i + 2,
 		  NULL);
 		XtAddCallback(w, XmNactivateCallback, stripChartDialogCb,
-		  (XtPointer)(SC_CHAN_BTN + SETHIGH(i)));
+		  (XtPointer)(intptr_t)(SC_CHAN_BTN + SETHIGH(i)));
 		table[i][0] = w;
 		break;
 	    case 1:
@@ -2281,7 +2281,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmNbottomPosition, i + 2,
 		  NULL);
 		XtAddCallback(w, XmNactivateCallback, stripChartDialogCb,
-		  (XtPointer)(SC_CLR_BTN + SETHIGH(i)));
+		  (XtPointer)(intptr_t)(SC_CLR_BTN + SETHIGH(i)));
 		table[i][1] = w;
 		break;
 	    case 2:
@@ -2294,7 +2294,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
 		  XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
 		  XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
-		  XmNuserData, (XtPointer)(SC_LOPR_SRC_BTN + SETHIGH(i)),
+		  XmNuserData, (XtPointer)(intptr_t)(SC_LOPR_SRC_BTN + SETHIGH(i)),
 		  XmNtopAttachment, XmATTACH_POSITION,
 		  XmNbottomAttachment, XmATTACH_POSITION,
 		  XmNleftAttachment, XmATTACH_FORM,
@@ -2323,7 +2323,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmNbottomPosition, i + 2,
 		  NULL);
 		XtAddCallback(w, XmNactivateCallback, stripChartDialogCb,
-		  (XtPointer)(SC_LOPR_BTN + SETHIGH(i)));
+		  (XtPointer)(intptr_t)(SC_LOPR_BTN + SETHIGH(i)));
 		XtAddCallback(w, XmNmodifyVerifyCallback,
 		  textFieldFloatVerifyCallback, NULL);
 		table[i][3] = w;
@@ -2338,7 +2338,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
 		  XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
 		  XmVaPUSHBUTTON, opt3, '\0', NULL, NULL,
-		  XmNuserData, (XtPointer)(SC_HOPR_SRC_BTN + SETHIGH(i)),
+		  XmNuserData, (XtPointer)(intptr_t)(SC_HOPR_SRC_BTN + SETHIGH(i)),
 		  XmNtopAttachment, XmATTACH_POSITION,
 		  XmNbottomAttachment, XmATTACH_POSITION,
 		  XmNleftAttachment, XmATTACH_FORM,
@@ -2367,7 +2367,7 @@ static void stripChartDialogCreateDialog(void)
 		  XmNbottomPosition, i + 2,
 		  NULL);
 		XtAddCallback(w, XmNactivateCallback, stripChartDialogCb,
-		  (XtPointer)(SC_HOPR_BTN + SETHIGH(i)));
+		  (XtPointer)(intptr_t)(SC_HOPR_BTN + SETHIGH(i)));
 		XtAddCallback(w, XmNmodifyVerifyCallback,
 		  textFieldFloatVerifyCallback, NULL);
 		table[i][5] = w;
@@ -2618,9 +2618,9 @@ static void stripChartDialogReset()
 static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
 {
   /* The type is in the low word of the cd and the row is in the high word */
-    int type = GETLOW((int)cd);
-    int row = GETHIGH((int)cd);
-    int button, src;
+    int type = GETLOW((intptr_t)cd);
+    int row = GETHIGH((intptr_t)cd);
+    int button = 0, src = 0;
     double val;
     DlLimits *pL = NULL;
     char *string;
@@ -2636,8 +2636,8 @@ static void stripChartDialogCb(Widget w, XtPointer cd , XtPointer cbs)
 
 	button=type;
 	XtVaGetValues(XtParent(w), XmNuserData, &userData, NULL);
-	type = GETLOW((int)userData);
-	row = GETHIGH((int)userData);
+	type = GETLOW((intptr_t)userData);
+	row = GETHIGH((intptr_t)userData);
     }
 
   /* Check */

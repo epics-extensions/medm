@@ -125,7 +125,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
     MedmValuator *pv;
     Arg args[25];
-    int i, n, heightDivisor, scalePopupBorder;
+    int i = 0, n = 0, heightDivisor = 0, scalePopupBorder = 0;
     WidgetList children;
     Cardinal numChildren;
     DlValuator *dlValuator = dlElement->structure.valuator;
@@ -294,7 +294,7 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 void createValuatorEditInstance(DisplayInfo *displayInfo,
   DlElement *dlElement) {
     Arg args[25];
-    int i, n, heightDivisor, scalePopupBorder;
+    int i = 0, n = 0, heightDivisor = 0, scalePopupBorder = 0;
     Widget widget;
     WidgetList children;
     Cardinal numChildren;
@@ -529,7 +529,7 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
     Widget widget = pv->dlElement->widget;
     XcVType hopr, lopr, val;
-    short precision;
+    short precision = 0;
 
     switch (pr->dataType) {
     case DBF_STRING :
@@ -607,7 +607,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
   XEvent *pEvent, Boolean *continueToDispatch)
 {
     XExposeEvent *event = (XExposeEvent *)pEvent;
-    MedmValuator *pv;
+    MedmValuator *pv = NULL;
     DlValuator *dlValuator;
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
@@ -619,7 +619,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     XGCValues gcValues;
     DisplayInfo *displayInfo;
     GC gc;
-    double lower, upper;
+    double lower = 0., upper = 0.;
     char *localTitle;
     short precision;
 
@@ -859,14 +859,15 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
 {
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
-    int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
+    int useableWidth = 0, useableHeight = 0, textHeight = 0, textWidth = 0, 
+      startX = 0, startY = 0;
     int nChars;
     XFontStruct *font;
     char stringValue[40];
     unsigned long gcValueMask;
     XGCValues gcValues;
     short precision;
-    int x, y, height, width;
+    int x = 0, y = 0, height = 0, width = 0;
     GC gc;
 
   /* Return if no window for widget yet, or if displayInfo == NULL, or ... */

@@ -469,7 +469,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       /* Case 3 of 4 */
       /* Rows or columns of buttons */
 	Arg wargs[20];
-	int i, maxChars, usedWidth, usedHeight;
+	int i = 0, maxChars = 0, usedWidth = 0, usedHeight = 0;
 	XmFontList fontList;
 	Pixel fg, bg;
 	Widget widget;
@@ -951,7 +951,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 
 static void relatedDisplayActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonType = (int)cd;
+    int buttonType = (intptr_t)cd;
     int i;
 
     UNREFERENCED(w);

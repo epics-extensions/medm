@@ -358,9 +358,9 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 
 #define NUM_INITIAL_FDS 100
 #ifdef WIN32
-    int inputReadMask=XtInputReadWinsock;
+    intptr_t inputReadMask=XtInputReadWinsock;
 #else
-    int inputReadMask=XtInputReadMask;
+    intptr_t inputReadMask=XtInputReadMask;
 #endif
 
     typedef struct {

@@ -63,7 +63,7 @@ static DlDispatchTable textDlDispatchTable = {
 static void drawText(Drawable drawable,  GC gc, DlText *dlText)
 {
     int i = 0, usedWidth, usedHeight;
-    int x, y;
+    int x = 0, y = 0;
     size_t nChars;
 
 #if DEBUG_BACKGROUND

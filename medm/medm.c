@@ -971,7 +971,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 
     UNREFERENCED(cbs);
 
-    switch ((int)cd) {
+    switch ((intptr_t)cd) {
     case GRID_OK:
 	if(cdi) {
 	    char *gridVal;
@@ -1001,7 +1001,7 @@ static void gridDlgCb(Widget w, XtPointer cd, XtPointer cbs)
 
 static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1023,7 +1023,7 @@ static void viewMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
     int fromMain;
     Widget parent;
 
@@ -1177,7 +1177,7 @@ static void editMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1220,7 +1220,7 @@ static void alignMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1240,7 +1240,7 @@ static void sizeMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1264,7 +1264,7 @@ static void centerMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1291,7 +1291,7 @@ static void orientMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1315,7 +1315,7 @@ static void spaceMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void gridMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -1412,7 +1412,7 @@ static void fileTypeCallback(
 void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *displayInfo;
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
     Widget widget;
     static Widget radioBox = 0;
     XEvent event;
@@ -2037,7 +2037,7 @@ static void fileMenuDialogCallback(
   XtPointer clientData,
   XtPointer callbackStruct)
 {
-    int btn = (int) clientData;
+    int btn = (intptr_t) clientData;
     XmAnyCallbackStruct *call_data = (XmAnyCallbackStruct *) callbackStruct;
     XmSelectionBoxCallbackStruct *select;
     char *filename, warningString[2*MAX_FILE_CHARS];
@@ -2104,7 +2104,7 @@ static void fileMenuDialogCallback(
 
 static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -2143,7 +2143,7 @@ static void palettesMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);
@@ -2761,7 +2761,7 @@ Widget buildMenu(Widget parent,
   char *menuTitle,
   char menuMnemonic,
   menuEntry_t *items) {
-    Widget menu, cascade;
+    Widget menu = NULL, cascade = NULL;
     int i;
     XmString str;
     if(menuType == XmMENU_PULLDOWN) {
@@ -3022,7 +3022,7 @@ DisplayInfo* parseDisplayFile(char *filename) {
 /**************************************************************************/
 int main(int argc, char *argv[])
 {
-    int i, n, index;
+    int i = 0, n = 0, index = 0;
     Arg args[5];
     FILE *filePtr;
     XColor color;
@@ -3039,7 +3039,7 @@ int main(int argc, char *argv[])
     XColor colors[2];
     request_t *request;
     typedef enum {FILENAME_MSG,MACROSTR_MSG,GEOMETRYSTR_MSG} msgClass_t;
-    msgClass_t msgClass;
+    msgClass_t msgClass = 0;
     Window medmHostWindow = (Window)0;
     char *envPrintCommand = NULL;
     char *envHelpPath = NULL;

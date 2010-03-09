@@ -787,7 +787,7 @@ static void shellCommandSetForegroundColor(ResourceBundle *pRCB, DlElement *p)
 static void shellCommandActivate(Widget w, XtPointer cd, XtPointer cb)
 {
     DisplayInfo *cdi=currentDisplayInfo;
-    int buttonType = (int) cd;
+    int buttonType = (intptr_t) cd;
     String **newCells;
     int i;
 

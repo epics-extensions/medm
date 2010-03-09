@@ -62,7 +62,7 @@ int getNumberOfCompositeElements(DlElement *dlElement, int indent, int n)
 
 void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
     Arg args[2];
     XtPointer data;
     DisplayInfo *displayInfo;
@@ -255,7 +255,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 
 void executeMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
     char *cmd;
     int nargs;
     Arg args[1];

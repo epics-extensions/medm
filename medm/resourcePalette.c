@@ -132,7 +132,7 @@ static void createBundleButtons( Widget messageF) {
 static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    int rcType = (int) cd;
+    int rcType = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -188,7 +188,7 @@ static void pushButtonActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    int buttonId = (int)cd;
+    int buttonId = (intptr_t)cd;
     int rcType;
     DlElement *elementPtr;
 
@@ -278,7 +278,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void colorSelectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int rcType = (int) cd;
+    int rcType = (intptr_t) cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);
@@ -312,7 +312,7 @@ static void fileOpenCallback(Widget w, int btn, XmAnyCallbackStruct *call_data)
 
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);
@@ -550,7 +550,7 @@ void textFieldFloatVerifyCallback(Widget w, XtPointer clientData, XtPointer call
 void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    int rcType = (int) cd;  /* the resource element type */
+    int rcType = (intptr_t) cd;  /* the resource element type */
     XmScaleCallbackStruct *scbs = (XmScaleCallbackStruct *)cbs;
 
     UNREFERENCED(w);
@@ -586,7 +586,7 @@ void scaleCallback(Widget w, XtPointer cd, XtPointer cbs)
 void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi = currentDisplayInfo;
-    int rcType = (int)cd;
+    int rcType = (intptr_t)cd;
     char *stringValue;
     int redoDisplay = 0;
     int clearComposite = 0;
@@ -820,7 +820,7 @@ void textFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 void textFieldLosingFocusCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int rcType = (int) cd;
+    int rcType = (intptr_t) cd;
     char string[MAX_TOKEN_LENGTH], *newString;
     int tail;
 
@@ -1418,10 +1418,11 @@ static void createResourceEntries(Widget entriesSW)
  * Create Entry RC: Create the various row-columns for each resource entry  *
  * rcType = {X_RC,Y_RC,...}.                                                *
  ****************************************************************************/
-static void createEntryRC( Widget parent, int rcType)
+static void createEntryRC( Widget parent, int rct)
 {
+    intptr_t rcType = (intptr_t)rct;
     DisplayInfo *cdi = currentDisplayInfo;
-    Widget localRC, localLabel, localElement;
+    Widget localRC = NULL, localLabel = NULL, localElement = NULL;
     XmString labelString;
     Dimension width, height;
     Arg args[6];
@@ -1917,7 +1918,7 @@ static int resourceTable[] = {
 
 static void initializeResourcePaletteElements()
 {
-    int i, j, index;
+    int i = 0, j = 0, index = 0;
     int tableSize = sizeof(resourceTable)/sizeof(int);
 
     index = -1;
@@ -2373,7 +2374,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 
 static void helpResourceCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);

@@ -416,9 +416,9 @@ static void wheelSwitchUpdateGraphicalInfoCb(XtPointer cd) {
     Pixel pixel;
     Widget widget = pw->dlElement->widget;
     double hopr, lopr;
-    short precision;
+    short precision = 0;
     Arg args[5];
-    int nargs=0;
+    int nargs = 0;
 
 #if DEBUG_NEWSTRING
     printf("wheelSwitchUpdateGraphicalInfoCb: start\n");

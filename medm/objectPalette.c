@@ -245,7 +245,7 @@ static void objectToggleCallback(Widget w, XtPointer clientData,
 static void fileMenuSimpleCallback(Widget w, XtPointer clientData,
   XtPointer cbs)
 {
-    int buttonNumber = (int) clientData;
+    int buttonNumber = (intptr_t) clientData;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);
@@ -444,7 +444,7 @@ void createObject()
 
 static void helpObjectCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
 
     UNREFERENCED(w);
     UNREFERENCED(cbs);

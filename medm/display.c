@@ -593,7 +593,7 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     int xg, yg;
     int left, right, top, bottom;
     unsigned int width, height;
-    int mask;
+    int mask=0;
     int reuse=0;
     DlElement *pE;
     Arg args[2];

@@ -63,7 +63,7 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
     XmString label;
     int n;
     Arg args[10];

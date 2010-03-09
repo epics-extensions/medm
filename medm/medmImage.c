@@ -79,7 +79,7 @@ static char imageName[MAX_TOKEN_LENGTH];
 
 void executeDlImage(DisplayInfo *displayInfo, DlElement *dlElement)
 {
-    GIFData *gif;
+    GIFData *gif = NULL;
     DlImage *dlImage = dlElement->structure.image;
     long status;
     short errnum;

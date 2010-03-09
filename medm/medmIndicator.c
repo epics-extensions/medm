@@ -294,9 +294,9 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
     Widget widget = pi->dlElement->widget;
     Pixel pixel;
     XcVType hopr, lopr, val;
-    short precision;
+    short precision = 0;
     Arg args[4];
-    int nargs=0;
+    int nargs = 0;
 
     switch (pr->dataType) {
     case DBF_STRING :

@@ -89,7 +89,7 @@ static void fileOpenCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int) cd;
+    int buttonNumber = (intptr_t) cd;
 #ifdef EXTENDED_INTERFACE
     int n;
     Arg args[10];
@@ -146,7 +146,7 @@ static void fileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int colorIndex = (int)cd;
+    int colorIndex = (intptr_t)cd;
     DisplayInfo *cdi;
     Widget widget;
     DlElement *dlElement;
@@ -248,7 +248,8 @@ void createColor()
     Widget colorMB;
     Widget colorHelpPDM;
     Pixel fg, bg;
-    int i, n, childCount;
+    int i, n;
+    intptr_t childCount;
     Arg args[10];
 #ifdef EXTENDED_INTERFACE
     openFSD = NULL;
@@ -433,7 +434,7 @@ void setCurrentDisplayColorsInColorPalette(int rcType, int index)
 
 static void helpColorCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int buttonNumber = (int)cd;
+    int buttonNumber = (intptr_t)cd;
     UNREFERENCED(w);
     UNREFERENCED(cbs);
 

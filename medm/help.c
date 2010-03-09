@@ -86,7 +86,7 @@ static Widget raiseMessageWindowTB;
 
 void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
-    int helpIndex = (int) cd;
+    int helpIndex = (intptr_t) cd;
 
     UNREFERENCED(cbs);
 
@@ -99,7 +99,7 @@ void globalHelpCallback(Widget w, XtPointer cd, XtPointer cbs)
 
 void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 {
-    int button = (int)clientData;
+    int button = (intptr_t)clientData;
 
     UNREFERENCED(callData);
 
@@ -548,15 +548,15 @@ void errMsgSendDlgCloseButtonCb(Widget w, XtPointer clientData, XtPointer callDa
 
 void errMsgSendDlgCreateDlg()
 {
-    Widget pane;
-    Widget rowCol;
-    Widget toForm;
-    Widget toLabel;
-    Widget subjectForm;
-    Widget subjectLabel;
-    Widget actionArea;
-    Widget closeButton;
-    Widget sendButton;
+    Widget pane=NULL;
+    Widget rowCol=NULL;
+    Widget toForm=NULL;
+    Widget toLabel=NULL;
+    Widget subjectForm=NULL;
+    Widget subjectLabel=NULL;
+    Widget actionArea=NULL;
+    Widget closeButton=NULL;
+    Widget sendButton=NULL;
     Arg    args[10];
     int n;
 
@@ -674,7 +674,7 @@ void medmPostMsg(int priority, char *format, ...) {
     time_t now;
     struct tm *tblock;
     char timeStampStr[TIME_STRING_MAX];
-    XmTextPosition curpos;
+    XmTextPosition curpos=0;
 
   /* Create (or manage) the error dialog */
     errMsgDlgCreateDlg(medmRaiseMessageWindow && priority);

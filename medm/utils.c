@@ -2251,7 +2251,8 @@ void raiseSelectedElements()
  */
 void alignSelectedElements(int alignment)
 {
-    int minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
+    int minX = 0, minY = 0, maxX = 0, maxY = 0, deltaX = 0, deltaY = 0,
+      x0 = 0, y0 = 0, xOffset = 0, yOffset = 0;
     DisplayInfo *cdi;
     DlElement *ele;
     DlElement *dlElement;
@@ -2903,7 +2904,8 @@ void findOutliers(void)
  */
 void centerSelectedElements(int alignment)
 {
-    int minX, minY, maxX, maxY, deltaX, deltaY, x0, y0, xOffset, yOffset;
+    int minX = 0, minY = 0, maxX = 0, maxY = 0, deltaX = 0, deltaY = 0,
+      x0 = 0, y0 = 0, xOffset = 0, yOffset = 0;
     Position displayH, displayW;
     DisplayInfo *cdi;
     DlElement *pE;
@@ -2983,7 +2985,7 @@ void centerSelectedElements(int alignment)
  */
 void sizeSelectedTextElements(void)
 {
-    int i = 0, usedWidth, usedHeight, xOffset, dWidth;
+    int i = 0, usedWidth = 0, usedHeight = 0, xOffset = 0, dWidth = 0;
     DisplayInfo *cdi;
     DlElement *dlElement, *pE;
     DlText *dlText;
@@ -3172,7 +3174,7 @@ NameValueTable *generateNameValueTable(char *argsString, int *numNameValues)
     char *copyOfArgsString,  *name, *value;
     char *s1;
     char nameEntry[80], valueEntry[80];
-    int i, j, tableIndex, numPairs, numEntries;
+    int i = 0, j = 0, tableIndex = 0, numPairs = 0, numEntries = 0;
     NameValueTable *nameTable;
     Boolean first;
 
