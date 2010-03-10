@@ -1002,7 +1002,7 @@ static void stripChartConfig(MedmStripChart *psc)
 	GC topGC = ((struct _XmDrawingAreaRec *)widget)->manager.top_shadow_GC;
 	GC bottomGC =
 	  ((struct _XmDrawingAreaRec *)widget)->manager.bottom_shadow_GC;
-	_XmDrawShadows(display, psc->pixmap, topGC, bottomGC, 0, 0,
+	XmeDrawShadows(display, psc->pixmap, topGC, bottomGC, 0, 0,
 	  (Dimension)dlStripChart->object.width,
 	  (Dimension)dlStripChart->object.height,
 	  (Dimension)(sccd.shadowThickness-1), XmSHADOW_OUT);
@@ -1070,7 +1070,7 @@ static void redisplayFakeStrip(Widget widget, XtPointer cd, XtPointer cbs)
 	topGC = ((struct _XmDrawingAreaRec *)widget)->manager.top_shadow_GC;
 	bottomGC =
 	  ((struct _XmDrawingAreaRec *)widget)->manager.bottom_shadow_GC;
-	_XmDrawShadows(display, XtWindow(widget), topGC, bottomGC, 0, 0,
+	XmeDrawShadows(display, XtWindow(widget), topGC, bottomGC, 0, 0,
 	  (Dimension)dlStripChart->object.width,
 	  (Dimension)dlStripChart->object.height,
 	  shadowThickness, XmSHADOW_OUT);

@@ -41,9 +41,6 @@
 
 #include <Xm/DrawP.h>
 
-/* Internal Motif functions not defined in header files */
-/* void _XmDrawShadow(); */
-
   /*
    * MDA - want to use memmove() instead of bcopy() for portability!
    *	 replace bcopy() call with BCOPY() which we now define
@@ -1815,38 +1812,40 @@ DrawCell(XbaeMatrixWidget mw, int row, int column)
 	  x + TEXT_X_OFFSET(mw), y + TEXT_Y_OFFSET(mw),
 	  (int)(mw->matrix.column_widths[column]),
 	  (unsigned char)(mw->matrix.column_alignments
-	  ? mw->matrix.column_alignments[column]
-	  : XmALIGNMENT_BEGINNING),
+            ? mw->matrix.column_alignments[column]
+            : XmALIGNMENT_BEGINNING),
 	  mw->matrix.selected_cells[row][column],
 	  False, clipped, color);
     }
-
+    
   /*
    * Surround the cell with a shadow.
    */
     if (mw->matrix.cell_shadow_thickness) {
 	if (clipped)
-	  _XmDrawShadow(XtDisplay(mw), win,
-	    mw->matrix.cell_bottom_shadow_clip_gc,
+	  XmeDrawShadows(XtDisplay(mw), win,
 	    mw->matrix.cell_top_shadow_clip_gc,
-	    mw->matrix.cell_shadow_thickness,
+	    mw->matrix.cell_bottom_shadow_clip_gc,
 	    x + (int)mw->matrix.cell_highlight_thickness,
 	    y + (int)mw->matrix.cell_highlight_thickness,
 	    COLUMN_WIDTH(mw, column) -
 	    2 * mw->matrix.cell_highlight_thickness,
-	    ROW_HEIGHT(mw) -
-	    2 * mw->matrix.cell_highlight_thickness);
+            ROW_HEIGHT(mw) -
+	    2 * mw->matrix.cell_highlight_thickness,
+            mw->matrix.cell_shadow_thickness,
+            XmSHADOW_OUT);
 	else
-	  _XmDrawShadow(XtDisplay(mw), win,
-	    mw->manager.bottom_shadow_GC,
+	  XmeDrawShadows(XtDisplay(mw), win,
 	    mw->manager.top_shadow_GC,
-	    mw->matrix.cell_shadow_thickness,
+	    mw->manager.bottom_shadow_GC,
 	    x + (int)mw->matrix.cell_highlight_thickness,
 	    y + (int)mw->matrix.cell_highlight_thickness,
 	    COLUMN_WIDTH(mw, column) -
 	    2 * mw->matrix.cell_highlight_thickness,
 	    ROW_HEIGHT(mw) -
-	    2 * mw->matrix.cell_highlight_thickness);
+	    2 * mw->matrix.cell_highlight_thickness,
+	    mw->matrix.cell_shadow_thickness,
+            XmSHADOW_OUT);
     }
 }
 
@@ -2097,16 +2096,17 @@ RedrawLabelsAndFixed(XbaeMatrixWidget mw, XbaeRectangle *expose)
    * truncated to nearest row.  We use cell_visible_height instead.
    */
     if (mw->manager.shadow_thickness)
-      _XmDrawShadow(XtDisplay(mw), XtWindow(mw),
-	mw->manager.bottom_shadow_GC,
+      XmeDrawShadows(XtDisplay(mw), XtWindow(mw),
 	mw->manager.top_shadow_GC,
-	mw->manager.shadow_thickness,
+	mw->manager.bottom_shadow_GC,
 	ROW_LABEL_WIDTH(mw),
 	COLUMN_LABEL_HEIGHT(mw),
 	ClipChild(mw)->core.width + FIXED_COLUMN_WIDTH(mw) +
 	2 * mw->manager.shadow_thickness,
 	mw->matrix.cell_visible_height + FIXED_ROW_HEIGHT(mw) +
-	2 * mw->manager.shadow_thickness);
+	2 * mw->manager.shadow_thickness,
+        mw->manager.shadow_thickness,
+        XmSHADOW_OUT);
 }
 
 /*
