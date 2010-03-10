@@ -15,8 +15,6 @@
  *****************************************************************************
 */
 
-#include <inttypes.h>
-
 #define DEBUG_COUNT 0
 #define DEBUG_RESET 0
 #define DEBUG_LOSING_FOCUS 0
@@ -46,10 +44,12 @@
  */
 #ifdef WIN32
 #include <float.h>
+#include <stddef.h>
 #define isnan(a) _isnan(a)  /* For some reason MS has leading _ */
 #else
 extern int isnan(double);  /* In case it's not in math.h as it should be */
 #include <math.h>  /* Must follow extern statement in case isnan is a macro */
+#include <stdint.h>
 #endif /* WIN32 */
 #define NAN_SUBSTITUTE 0.0
 #define SAFEFLOAT(x) (safeFloat(x))

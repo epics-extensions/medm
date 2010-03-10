@@ -85,8 +85,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef WIN32
+#include <stdint.h>
+#else
+#include <stddef.h>
+#endif
 #include <string.h>
-#include <inttypes.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <Xm/Xm.h>
