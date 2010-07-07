@@ -155,7 +155,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	}
 	break;
     case PRINT_TITLE_SPECIFIED:
-	if(printTitleString && *printTitleString) {
+	if(*printTitleString) {
 	    sprintf(titleString,"-s%s", printTitleString);
 	    myArgv[myArgc++] = titleString;
 	}

@@ -26,8 +26,11 @@
 
 static CpDataHandle hcpNullData = (CpDataHandle)0;
 
-/* Function prototypes */
-static void destroyXrtPropertyEditor(Widget w, XtPointer cd, XtPointer cbs);
+#if XRT_VERSION > 2
+#ifdef XRT_EXTENSIONS
+static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
+#endif
+#endif
 
 #if XRT_VERSION < 3
 /* Routines to make XRT/graph backward compatible from Version 3.0 */
@@ -546,7 +549,7 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
     char rgb[2][16], string[24];
     int usedHeight, usedCharWidth, bestSize, preferredHeight;
     char *headerStrings[2];
-    int i, k, iPrec;
+    int k, iPrec;
     XcVType minF, maxF, tickF;
     Widget w;
     int validTraces = pcp ? pcp->nTraces : 0;

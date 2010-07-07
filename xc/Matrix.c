@@ -6844,7 +6844,7 @@ SelectCellACT(Widget w, XEvent * event, String * params, Cardinal * nparams)
     XbaeMatrixWidget mw;
     int x, y;
     int row, column;
-    CellType cell;
+    CellType cell=0;
     XbaeMatrixSelectCellCallbackStruct call_data;
 
   /*

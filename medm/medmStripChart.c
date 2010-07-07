@@ -2865,7 +2865,7 @@ static void stripChartDialogStoreTextEntries(void)
 static void stripChartDialogUpdateElement(void)
 {
     int i;
-    DlStripChart *dlStripChart;
+    DlStripChart *dlStripChart=NULL;
     DlElement *pE = executeTimeStripChartElement;
 
   /* Read and store the text entries */

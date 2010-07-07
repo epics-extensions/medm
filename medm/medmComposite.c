@@ -628,7 +628,7 @@ static void compositeFileParse(DisplayInfo *displayInfo,
     strncpy(filename,dlComposite->compositeFile,MAX_TOKEN_LENGTH);
     *macroString = '\0';
     filename[MAX_TOKEN_LENGTH-1]='\0';
-    if(filename && filename[0]) {
+    if(filename[0]) {
       /* Is of the form filename;a=xxx,b=yyy,... */
 	char *ptr = NULL;
 	ptr = strchr(filename, ';');

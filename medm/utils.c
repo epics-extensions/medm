@@ -4285,9 +4285,9 @@ void parseAndExecCommand(DisplayInfo *displayInfo, char * cmd)
     }
     command[ic]='\0';
 #if DEBUG_COMMAND
-    if(command && *command) print("\nparseAndExecCommand: %s\n",command);
+    if(*command) print("\nparseAndExecCommand: %s\n",command);
 #endif
-    if(command && *command)
+    if(*command)
 #ifndef VMS
     /* KE: This blocks unless the command includes & (on UNIX) */
     /* It should probably be fixed for WIN32 */

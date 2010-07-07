@@ -969,7 +969,7 @@ FILE *dmOpenUsableFile(char *filename, char *relatedDisplayFilename)
     if(relatedDisplayFilename && *relatedDisplayFilename) {
 	strncpy(fullPathName, relatedDisplayFilename, PATH_MAX);
 	fullPathName[PATH_MAX-1] = '\0';
-	if(fullPathName && fullPathName[0]) {
+	if(fullPathName[0]) {
 #ifdef WIN32
 	    convertDirDelimiterToWIN32(fullPathName);
 #endif

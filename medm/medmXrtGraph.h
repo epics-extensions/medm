@@ -26,10 +26,6 @@
 
 #if XRT_VERSION > 2
 
-#ifdef XRT_EXTENSIONS
-static void destroyXrtPropertyEditor(Widget w, XtPointer, XtPointer);
-#endif
-
 #define CpDataCreate(widget, type, nsets, npoints) \
   XrtDataCreate(type, nsets, npoints)
 #define CpDataGetXElement(hData, set, point) \

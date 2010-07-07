@@ -4472,7 +4472,7 @@ DrawPolarPlot (SciPlotWidget w)
     p = w->plot.plotlist + i;
     if (p->draw) {
       int jstart;
-      real x1, y1, x2, y2;
+      real x1 = 0, y1 = 0, x2 = 0, y2 = 0;
       Boolean skipnext=False;
 
       jstart = 0;

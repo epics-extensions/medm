@@ -718,7 +718,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 
 	strncpy(fullPathName, displayInfo->dlFile->name, PATH_MAX);
 	fullPathName[PATH_MAX-1] = '\0';
-	if(fullPathName && fullPathName[0]) {
+	if(fullPathName[0]) {
 	    stringPtr = strrchr(fullPathName, MEDM_DIR_DELIMITER_CHAR);
 	    if(stringPtr) {
 		*(++stringPtr) = '\0';

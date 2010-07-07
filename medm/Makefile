@@ -69,7 +69,7 @@ endif
 
 # Use to test SciPlot or JPT, otherwise should come from CONFIG
 # Set the one you want and reset any that come from CONFIG
-#XRTGRAPH =
+#XRTGRAPH = 
 #SCIPLOT = YES
 #JPT = YES
 
