@@ -243,24 +243,24 @@ void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXMin,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtXPrecision,precision); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYMin,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtYPrecision,precision); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Max,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Min,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Tick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Num,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Tick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Num,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2Precision,precision); nargs++;
 	break;
     }
@@ -307,22 +307,22 @@ void CpSetAxisChannel(Widget w, int axis, XcVType max, XcVType min)
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXMin,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,XrtFloatToArgVal(min.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtXTickUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtXNumUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtXPrecisionUseDefault,True); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYMin,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,XrtFloatToArgVal(min.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtYTickUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtYNumUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtYPrecisionUseDefault,True); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Max,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Min,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,XrtFloatToArgVal(min.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2TickUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2NumUseDefault,True); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2PrecisionUseDefault,True); nargs++;
@@ -381,16 +381,16 @@ void CpSetAxisMaxMin(Widget w, int axis, XcVType max, XcVType min)
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXMin,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,XrtFloatToArgVal(min.fval)); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYMin,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,XrtFloatToArgVal(min.fval)); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Max,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Min,min.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,XrtFloatToArgVal(min.fval)); nargs++;
 	break;
     }
     XtSetValues(w,args,nargs);
@@ -405,21 +405,21 @@ void CpSetAxisMax(Widget w, int axis, XcVType max, XcVType tick,
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtXPrecision,precision); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMax,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtYPrecision,precision); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Max,max.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Tick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Num,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,XrtFloatToArgVal(max.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Tick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Num,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2Precision,precision); nargs++;
 	break;
     }
@@ -435,21 +435,21 @@ void CpSetAxisMin(Widget w, int axis, XcVType min, XcVType tick,
     nargs=0;
     switch(axis) {
     case CP_X:
-	XtSetArg(args[nargs],XtNxrtXMin,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtXPrecision,precision); nargs++;
 	break;
     case CP_Y:
-	XtSetArg(args[nargs],XtNxrtYMin,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYTick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYNum,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYTick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYNum,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtYPrecision,precision); nargs++;
 	break;
     case CP_Y2:
-	XtSetArg(args[nargs],XtNxrtY2Min,min.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Tick,tick.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Num,num.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,XrtFloatToArgVal(min.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Tick,XrtFloatToArgVal(tick.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Num,XrtFloatToArgVal(num.fval)); nargs++;
 	XtSetArg(args[nargs],XtNxrtY2Precision,precision); nargs++;
 	break;
     }
@@ -688,10 +688,10 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	minF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[X_AXIS_ELEMENT].maxRange;
 	tickF.fval = (maxF.fval - minF.fval)/4.0;
-	XtSetArg(args[nargs],XtNxrtXMin,minF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXMax,maxF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXTick,tickF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtXNum,tickF.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMin,XrtFloatToArgVal(minF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXMax,XrtFloatToArgVal(maxF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXTick,XrtFloatToArgVal(tickF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtXNum,XrtFloatToArgVal(tickF.fval)); nargs++;
 	sprintf(string,"%f",tickF.fval);
 	k = strlen(string)-1;
 	while (string[k] == '0') k--; /* strip off trailing zeroes */
@@ -729,10 +729,10 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	minF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y1_AXIS_ELEMENT].maxRange;
 	tickF.fval = (maxF.fval - minF.fval)/4.0;
-	XtSetArg(args[nargs],XtNxrtYMin,minF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYMax,maxF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYTick,tickF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtYNum,tickF.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMin,XrtFloatToArgVal(minF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYMax,XrtFloatToArgVal(maxF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYTick,XrtFloatToArgVal(tickF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtYNum,XrtFloatToArgVal(tickF.fval)); nargs++;
 	sprintf(string,"%f",tickF.fval);
 	k = strlen(string)-1;
 	while (string[k] == '0') k--; /* strip off trailing zeroes */
@@ -771,10 +771,10 @@ Widget CpCreateCartesianPlot(DisplayInfo *displayInfo,
 	minF.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].minRange;
 	maxF.fval = dlCartesianPlot->axis[Y2_AXIS_ELEMENT].maxRange;
 	tickF.fval = (maxF.fval - minF.fval)/4.0;
-	XtSetArg(args[nargs],XtNxrtY2Min,minF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Max,maxF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Tick,tickF.lval); nargs++;
-	XtSetArg(args[nargs],XtNxrtY2Num,tickF.lval); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Min,XrtFloatToArgVal(minF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Max,XrtFloatToArgVal(maxF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Tick,XrtFloatToArgVal(tickF.fval)); nargs++;
+	XtSetArg(args[nargs],XtNxrtY2Num,XrtFloatToArgVal(tickF.fval)); nargs++;
 	sprintf(string,"%f",tickF.fval);
 	k = strlen(string)-1;
 	while (string[k] == '0') k--; /* strip off trailing zeroes */
