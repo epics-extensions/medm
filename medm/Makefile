@@ -132,16 +132,9 @@ PROD_HOST = medm
 
 USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
 
-ifeq ($(OS_CLASS),WIN32)
-# Use Obj for object libraries and no Obj for import libraries
-  PROD_LIBS = ANLwidgetsObj PrintUtilsObj
-  ANLwidgetsObj_DIR = $(INSTALL_LIB)
-  PrintUtilsObj_DIR = $(INSTALL_LIB)
-else
-  PROD_LIBS = ANLwidgets PrintUtils
-  PrintUtils_DIR = $(INSTALL_LIB)
-  ANLwidgets_DIR = $(INSTALL_LIB)
-endif
+PROD_LIBS = ANLwidgets PrintUtils
+ANLwidgets_DIR = $(INSTALL_LIB)
+PrintUtils_DIR = $(INSTALL_LIB)
 
 # Setup for either CA or CDEV
 ifdef MEDM_CDEV
