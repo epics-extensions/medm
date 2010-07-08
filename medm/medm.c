@@ -1645,6 +1645,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 	      /* Pop it up so it won't be covered by something else */
 		XtPopup(currentDisplayInfo->shell,XtGrabNone);
+		XmUpdateDisplay(currentDisplayInfo->shell);
 		refreshDisplay(currentDisplayInfo);
 		XmUpdateDisplay(currentDisplayInfo->shell);
 	      /* Print it */
@@ -1680,6 +1681,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 #endif
 		  /* Pop it up so it won't be covered by something else */
 		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
+		    XmUpdateDisplay(currentDisplayInfo->shell);
 		    refreshDisplay(currentDisplayInfo);
 		    XmUpdateDisplay(currentDisplayInfo->shell);
 		  /* Print it */
