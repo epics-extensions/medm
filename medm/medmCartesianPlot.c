@@ -44,18 +44,20 @@
  */
 #ifdef WIN32
 #include <float.h>
-#include <stddef.h>
 #define isnan(a) _isnan(a)  /* For some reason MS has leading _ */
 #else
 extern int isnan(double);  /* In case it's not in math.h as it should be */
 #include <math.h>  /* Must follow extern statement in case isnan is a macro */
-#include <stdint.h>
 #endif /* WIN32 */
 #define NAN_SUBSTITUTE 0.0
 #define SAFEFLOAT(x) (safeFloat(x))
 #else
 #define SAFEFLOAT(x) ((float)(x))
 #endif     /* End #ifdef CHECK_NAN */
+/* If not MS Visual C++ or MS Visual C++ is 2010 or later */
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdint.h>
+#endif
 
 #include "medm.h"
 #include <Xm/MwmUtil.h>

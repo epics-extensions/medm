@@ -85,10 +85,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef WIN32
+/* If not MS Visual C++ or MS Visual C++ is 2010 or later */
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
 #include <stdint.h>
-#else
-#include <stddef.h>
 #endif
 #include <string.h>
 #include <X11/Xlib.h>
