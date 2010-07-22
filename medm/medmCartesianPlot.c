@@ -164,6 +164,8 @@ float safeFloat(double x) {
 	}
 	return NAN_SUBSTITUTE;
     } else {
+        if ( x > FLT_MAX ) return FLT_MAX;
+        if ( x < FLT_MIN ) return FLT_MIN;
 	return (float)x;
     }
 }
