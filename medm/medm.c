@@ -167,6 +167,9 @@
 #define HELP_ON_HELP_BTN      6
 #define HELP_ON_VERSION_BTN   7
 
+/* wait interval, in ms, for raised window to be redrawn */
+#define REDRAW_INTERVAL "1000"
+
 /* Function prototypes */
 
 static void createCursors(void);
@@ -182,10 +185,12 @@ static void sizeMenuSimpleCallback(Widget,XtPointer,XtPointer);
 static void spaceMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void gridMenuSimpleCallback(Widget, XtPointer, XtPointer);
 static void viewMenuSimpleCallback(Widget,XtPointer,XtPointer);
+static void redrawWindowTimerCallback(XtPointer client_data, XtIntervalId *id);
 
 Widget mainFilePDM, mainHelpPDM, mainMB;
 static Widget gridDlg = 0;
 static int medmUseBigCursor = 0;
+static int printInProgress = 0;
 
 #ifdef VMS
 void vmsTrimVersionNumber (char *fileName);
@@ -1417,8 +1422,8 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     static Widget radioBox = 0;
     XEvent event;
     Boolean saveAll = False;
-    int status;
-    char *adlName;
+    char *envstring;
+    int redrawInterval;
 
     UNREFERENCED(cbs);
 
@@ -1627,7 +1632,9 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	break;
 
     case MAIN_FILE_PRINT_BTN:
+      if ( !printInProgress ) {
 	if(displayInfoListHead->next == displayInfoListTail) {
+            printInProgress=1;
 	  /* only one display; no need to query user */
 	    currentDisplayInfo = displayInfoListHead->next;
 	    if(currentDisplayInfo != NULL) {
@@ -1643,26 +1650,26 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		break;
 #endif
 #endif
+
 	      /* Pop it up so it won't be covered by something else */
 		XtPopup(currentDisplayInfo->shell,XtGrabNone);
 		XmUpdateDisplay(currentDisplayInfo->shell);
 		refreshDisplay(currentDisplayInfo);
 		XmUpdateDisplay(currentDisplayInfo->shell);
-	      /* Print it */
-		if(printTitle == PRINT_TITLE_SHORT_NAME) {
-		    adlName = shortName(currentDisplayInfo->dlFile->name);
-		} else {
-		    adlName = currentDisplayInfo->dlFile->name;
-		}
-		status = utilPrint(display, currentDisplayInfo->drawingArea,
-		  xwdFile, adlName);
-		if(!status) {
-		    medmPrintf(1,"\nmainFileMenuSimpleCallback: "
-		      "Print was not successful\n");
-		}
+		
+              /* Use MEDM_PRINT_INTERVAL_MS env var if it exists */
+                envstring=getenv("MEDM_PRINT_INTERVAL_MS");
+                sscanf(envstring?envstring:REDRAW_INTERVAL,"%d",&redrawInterval);
+
+              /* Set timer to wait for raised window to completely redraw */
+		XtAppAddTimeOut(appContext,redrawInterval,
+                    redrawWindowTimerCallback,currentDisplayInfo);
+	    } else {
+                printInProgress = 0;
 	    }
 	} else if(displayInfoListHead->next) {
 	  /* more than one display; query user */
+            printInProgress=1;
 	    widget = XmTrackingEvent(mainShell,printCursor,False,&event);
 	    if(widget != (Widget)NULL) {
 		currentDisplayInfo = dmGetDisplayInfoFromWidget(widget);
@@ -1679,31 +1686,55 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 		    break;
 #endif
 #endif
+
 		  /* Pop it up so it won't be covered by something else */
 		    XtPopup(currentDisplayInfo->shell,XtGrabNone);
 		    XmUpdateDisplay(currentDisplayInfo->shell);
 		    refreshDisplay(currentDisplayInfo);
 		    XmUpdateDisplay(currentDisplayInfo->shell);
-		  /* Print it */
-		    if(printTitle == PRINT_TITLE_SHORT_NAME) {
-			adlName = shortName(currentDisplayInfo->dlFile->name);
-		    } else {
-			adlName = currentDisplayInfo->dlFile->name;
-		    }
-		    status = utilPrint(display, currentDisplayInfo->drawingArea,
-		      xwdFile, adlName);
-		    if(!status) {
-			medmPrintf(1,"\nmainFileMenuSimpleCallback: "
-			  "Print was not successful\n");
-		    }
-		}
-	    }
+
+                  /* Use MEDM_PRINT_INTERVAL_MS env var if it exists */
+                    envstring=getenv("MEDM_PRINT_INTERVAL_MS");
+                    sscanf(envstring?envstring:REDRAW_INTERVAL,"%d",&redrawInterval);
+
+                  /* Set timer to wait for raised window to completely redraw */
+                    XtAppAddTimeOut(appContext,redrawInterval,
+                        redrawWindowTimerCallback,currentDisplayInfo);
+	        } else {
+                    printInProgress = 0;
+                }
+	    } else {
+                printInProgress = 0;
+            }
 	}
+      }
 	break;
     case MAIN_FILE_EXIT_BTN:
 	medmExit();
 	break;
     }
+}
+
+static void redrawWindowTimerCallback(XtPointer client_data, XtIntervalId *id)
+{
+    int status;
+    char *adlName;
+    UNREFERENCED(client_data);
+    UNREFERENCED(id);
+
+    /* Print it */
+	if(printTitle == PRINT_TITLE_SHORT_NAME) {
+	    adlName = shortName(currentDisplayInfo->dlFile->name);
+	} else {
+	    adlName = currentDisplayInfo->dlFile->name;
+	}
+	status = utilPrint(display, currentDisplayInfo->drawingArea,
+	  xwdFile, adlName);
+	if(!status) {
+	    medmPrintf(1,"\nmainFileMenuSimpleCallback: "
+	      "Print was not successful\n");
+	}
+       printInProgress=0;
 }
 
 #if 0
