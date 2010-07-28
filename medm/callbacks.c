@@ -88,6 +88,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	break;
 #endif
 #endif
+        XmUpdateDisplay(displayInfo->drawingArea);
 	if(printTitle == PRINT_TITLE_SHORT_NAME) {
 	    adlName = shortName(displayInfo->dlFile->name);
 	} else {
