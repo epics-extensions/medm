@@ -164,8 +164,17 @@ float safeFloat(double x) {
 	}
 	return NAN_SUBSTITUTE;
     } else {
+#if defined(XRTGRAPH)
+        /* Check for Inf and -Inf */
+        /* XRTgraph hangs if plot point with value > FLT_MAX */
+        /* XRTgraph does not plot point with value = FLT_MAX */
+        /* XRTgraph hangs if plot point with value <= -FLT_MAX */
         if ( x > FLT_MAX ) return FLT_MAX;
-        if ( x < FLT_MIN ) return FLT_MIN;
+        if ( x < -FLT_MAX ) return FLT_MAX;
+#else
+        /* SciPlot has bad axis if plot point with value >= FLT_MAX */
+        /* SciPlot does not plot point with value <= -FLT_MAX */
+#endif
 	return (float)x;
     }
 }
