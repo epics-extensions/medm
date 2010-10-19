@@ -147,6 +147,7 @@ char *cpTimeFormatString[NUM_CP_TIME_FORMAT] = {
 #ifdef CHECK_NAN
 float safeFloat(double x) {
     static int nerrs = 0;
+    static int ierrs = 0;
     static int print = 1;
 
     if(isnan(x)) {
@@ -169,11 +170,40 @@ float safeFloat(double x) {
         /* XRTgraph hangs if plot point with value > FLT_MAX */
         /* XRTgraph does not plot point with value = FLT_MAX */
         /* XRTgraph hangs if plot point with value <= -FLT_MAX */
-        if ( x > FLT_MAX ) return FLT_MAX;
-        if ( x < -FLT_MAX ) return FLT_MAX;
+        if ( x > FLT_MAX || x < -FLT_MAX ) {
+	if(print) {
+	    if( ierrs < 25) {
+		ierrs++;
+		medmPostMsg(0,"CartesianPlot: "
+		  "Value is Inf, using %g\n",FLT_MAX);
+		if(ierrs >= 25) {
+		    medmPrintf(0,"\nCartesianPlot: "
+		      "Suppressing further NaN error messages\n");
+		    print = 0;
+		}
+	    }
+	}
+        return FLT_MAX;
+	}
 #else
+        /* SciPlot hangs if plot point with value > FLT_MAX */
         /* SciPlot has bad axis if plot point with value >= FLT_MAX */
         /* SciPlot does not plot point with value <= -FLT_MAX */
+        if ( x >= FLT_MAX || x < -FLT_MAX ) {
+	if(print) {
+	    if( ierrs < 25) {
+		ierrs++;
+		medmPostMsg(0,"CartesianPlot: "
+		  "Value is Inf, skipping point.\n");
+		if(ierrs >= 25) {
+		    medmPrintf(0,"\nCartesianPlot: "
+		      "Suppressing further Inf error messages\n");
+		    print = 0;
+		}
+	    }
+	}
+        return -FLT_MAX;
+	}
 #endif
 	return (float)x;
     }
