@@ -12,3 +12,5 @@ TOP = ../..
 include $(TOP)/configure/CONFIG
 DIRS = printUtils xc medm
 include $(TOP)/configure/RULES_DIRS
+
+medm_DEPEND_DIRS = printUtils xc
