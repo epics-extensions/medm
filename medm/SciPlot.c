@@ -20,6 +20,9 @@
  *
  * Author: Rob McMullen <rwmcm@mail.ae.utexas.edu>
  *         http://www.ae.utexas.edu/~rwmcm
+ *
+ * Modified for DAKOTA by Mike Eldred (see MSE notations below).
+ *
  */
 
 #define DEBUG_SCIPLOT 0
@@ -36,6 +39,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <math.h>
+#include <float.h>
+/* NOTE:  float.h is required by POSIX */
+#define SCIPLOT_SKIP_VAL (-FLT_MAX)
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -64,6 +71,8 @@
 #endif /* #ifdef WIN32 */
 
 #include "SciPlotP.h"
+
+/* #define DEBUG_SCIPLOT */
 
 enum sci_drag_states {NOT_DRAGGING,
 		      DRAGGING_NOTHING,
@@ -1139,7 +1148,9 @@ _ListReallocData (SciPlotList *p, int more)
     _ListAllocData(p, more);
   }
   else if (p->number + more > p->allocated) {
-    p->allocated += more + NUMPLOTDATAEXTRA;
+    /* MSE, 5/16/03: changed to 2x growth for efficiency with larger arrays */
+    /* p->allocated += more + NUMPLOTDATAEXTRA;   old: constant growth */
+    p->allocated = 2*(p->number + more);       /* new: factor of 2 growth */
     p->data = (realpair *) XtRealloc((char *) p->data, p->allocated * sizeof(realpair));
     if (!p->data) {
       p->number = p->allocated = 0;
@@ -2027,7 +2038,7 @@ SciPlotPSCreate (Widget wi, char *filename)
 
   if (!XtIsSciPlot(wi)) {
     XtWarning("SciPlotPSCreate: Not a SciPlot widget.");
-    return 1;
+    return 0;
   }
 
   w = (SciPlotWidget) wi;
@@ -2491,11 +2502,13 @@ PlotRT (SciPlotWidget w, real r, real t, real *xout, real *yout)
 
 /*
  * Private calculation utilities for axes
- */
-
-#define NUMBER_MINOR	8
-#define MAX_MAJOR	8
-static float CAdeltas[8] =
+ * More spacing needed for horizontal x axis labels than 
+   horizontal y axis labels */
+/* #define MAX_MAJOR 8 */
+#define MAX_MAJOR_X  6
+#define MAX_MAJOR_Y  8
+#define NUMBER_MINOR 8 
+static real CAdeltas[8] =
 {0.1, 0.2, 0.25, 0.5, 1.0, 2.0, 2.5, 5.0};
 static int CAdecimals[8] =
 {0, 0, 1, 0, 0, 0, 1, 0};
@@ -2503,23 +2516,34 @@ static int CAminors[8] =
 {4, 4, 4, 5, 4, 4, 4, 5};
 
 static void
-ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
+ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type, int max_major)
 {
-  real range, rnorm, delta, calcmin, calcmax;
-  int nexp, majornum, minornum, majordecimals, decimals, i;
+  real range, rel_range, rnorm, min_mag, max_mag, mag, delta, delta_order, calcmin, calcmax;
+  int i, nexp, minornum=0, majornum, majordecimals=0, prec=0;
+
+  /* MSE: reworked to fix problems observed when an actual range is
+     not (yet) defined by the data set. */ 
+  min_mag   = fabs(min);
+  max_mag   = fabs(max);
+  mag       = (max_mag > min_mag) ? max_mag : min_mag;
+  range     = max - min;
+  rel_range = (mag > 0.) ? range/mag : range;
 
 #if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
     SciPlotPrintf("\nComputeAxis: min=%f max=%f\n", min, max);
 #endif
-  range = max - min;
+
   if (log) {
-    if (range==0.0) {
-      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
+    if (rel_range < DBL_EPSILON) {
+      calcmin = (min > 0.) ? powi(10.0, (int)floor(log10(min))) : 1;
+      /*calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));*/
       calcmax = 10.0*calcmin;
     }
     else {
-      calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS));
-      calcmax = powi(10.0, (int) ceil(log10(max) - SCIPLOT_EPS));
+      /* calcmin = powi(10.0, (int) floor(log10(min) + SCIPLOT_EPS)); */
+      /* calcmax = powi(10.0, (int) ceil(log10(max) - SCIPLOT_EPS)); */
+      calcmin = powi(10.0, (int)floor(log10(min)));
+      calcmax = powi(10.0, (int)ceil(log10(max)));
     }
 
     /*
@@ -2547,7 +2571,8 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
 
     axis->DrawSize = log10(calcmax) - log10(calcmin);
     axis->MajorInc = delta;
-    axis->MajorNum = (int) (log10(calcmax) - log10(calcmin)) + 1;
+    /*axis->MajorNum = (int) (log10(calcmax) - log10(calcmin)) + 1; */
+    axis->MajorNum = (int)log10(calcmax / calcmin * 1.0001);
     axis->MinorNum = 10;
     axis->Precision = -(int) (log10(calcmin) * 1.0001);
 #if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
@@ -2558,36 +2583,33 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
       axis->Precision = 0;
   }
   else {
-    if (range==0.0) nexp=0;
-    else nexp = (int) floor(log10(range) + SCIPLOT_EPS);
-    rnorm = range / powi(10.0, nexp);
-    for (i = 0; i < NUMBER_MINOR; i++) {
-      delta = CAdeltas[i];
-      minornum = CAminors[i];
-      majornum = (int) ((rnorm + 0.9999 * delta) / delta);
-      majordecimals = CAdecimals[i];
-      if (majornum <= MAX_MAJOR)
-	break;
+   if (rel_range < DBL_EPSILON) {
+      /* For min == max == 0, use a +/-.5 range (common when no data yet).
+         For nonzero min == max, use a range of +/-4% of max magnitude. */
+      real half_range = (mag > 0.) ? mag*.02 : .5;
+      range = 2.*half_range;
+      min -= half_range;
+      max += half_range;
     }
-    delta *= powi(10.0, nexp);
+    nexp  = (int)floor(log10(range));
+    rnorm = range / powi(10.0, nexp);
+    for (i=0; i<NUMBER_MINOR; i++) {
+      delta    = CAdeltas[i];
+      majornum = (int)ceil(rnorm/delta);
+      if (majornum <= max_major) {
+        majordecimals = CAdecimals[i];
+        minornum      = CAminors[i];
+	break;
+      }
+    }
+    delta *= pow(10.0, nexp);
 #if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
     SciPlotPrintf("nexp=%d range=%f rnorm=%f delta=%f\n", nexp, range, rnorm, delta);
 #endif
 
-    if (min < 0.0)
-      calcmin = ((float) ((int) ((min - .9999 * delta) / delta))) * delta;
-    else if ((min > 0.0) && (min < 1.0))
-      calcmin = ((float) ((int) ((1.0001 * min) / delta))) * delta;
-    else if (min >= 1.0)
-      calcmin = ((float) ((int) ((.9999 * min) / delta))) * delta;
-    else
-      calcmin = min;
-    if (max < 0.0)
-      calcmax = ((float) ((int) ((.9999 * max) / delta))) * delta;
-    else if (max > 0.0)
-      calcmax = ((float) ((int) ((max + .9999 * delta) / delta))) * delta;
-    else
-      calcmax = max;
+    /* MSE: simplified formulas. */
+    calcmax =  ceil(max/delta) * delta;
+    calcmin = floor(min/delta) * delta;
 
     if (type == COMPUTE_MIN_MAX) {
       axis->DrawOrigin = calcmin;
@@ -2608,30 +2630,39 @@ ComputeAxis (SciPlotAxis *axis, real min, real max, Boolean log, int type)
       axis->DrawMax = calcmax;
     }
 
+    /* NOTE: round(x) =~ floor(x+.5) =~ ceil(x-.5) where floor()/ceil() are
+       portable and round()/rint()/trunc()/nearbyint() are not. */
     axis->DrawSize = calcmax - calcmin;
-    axis->MajorInc = delta;
-    axis->MajorNum = majornum;
-    axis->MinorNum = minornum;
+    axis->MajorNum = (int)floor((calcmax - calcmin)/delta + .5);
 
-    delta = log10(axis->MajorInc);
-    if (delta > 0.0)
-      decimals = -(int) floor(delta + SCIPLOT_EPS) + majordecimals;
-    else
-      decimals = (int) ceil(-delta - SCIPLOT_EPS) + majordecimals;
-    if (decimals < 0)
-      decimals = 0;
-#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
-    SciPlotPrintf("delta=%f majordecimals=%d decimals=%d\n",
-      delta, majordecimals, decimals);
-#endif
-    axis->Precision = decimals;
+    axis->MinorNum = minornum;
+    axis->MajorInc = delta;
+
+    /* This code assumes %f floating point output since the magnitude of the
+       values (delta) masks majordecimals (taken from the CAdecimals
+       incrementing strategies) in calculating the output precision.  A better
+       approach would be to calculate #decimal difference between increment and
+       max value (to properly capture precision required when Inc << Total, e.g.
+       a range of 1000000 to 1000005) plus majordecimals (additional precision
+       required for specific increment patterns, e.g. 1000001.25, 1000002.5,
+       1000003.75, 1000005). */
+    delta_order = log10(delta);
+    prec = (delta_order > 0.0) ? -(int)floor(delta_order) + majordecimals
+	                       :  (int)ceil(-delta_order) + majordecimals;
+
   }
 
-#if DEBUG_SCIPLOT || DEBUG_SCIPLOT_AXIS
-  SciPlotPrintf("Tics: min=%f max=%f size=%f  major inc=%f #major=%d #minor=%d decimals=%d\n",
-    axis->DrawOrigin, axis->DrawMax, axis->DrawSize,
-    axis->MajorInc, axis->MajorNum, axis->MinorNum, axis->Precision);
+  axis->DrawOrigin = calcmin;
+  axis->DrawMax    = calcmax;
+  axis->MajorInc   = delta;
+  axis->Precision  = (prec > 0) ? prec : 0;
+
+#if DEBUG_SCIPLOT
+  SciPlotPrintf("Tics: min=%f max=%f size=%f major inc=%f #major=%d #minor=%d prec=%d\n",
+	 axis->DrawOrigin, axis->DrawMax,  axis->DrawSize, axis->MajorInc,
+	 axis->MajorNum,   axis->MinorNum, axis->Precision);
 #endif
+
 }
 
 static void
@@ -2643,35 +2674,35 @@ ComputeDrawingRange (SciPlotWidget w, int type)
     if (w->plot.drag_state == NOT_DRAGGING || w->plot.drag_state == DRAGGING_NOTHING) {
       if (type == NO_COMPUTE_MIN_MAX_X) {
 	ComputeAxis(&w->plot.x, w->plot.Min.x, w->plot.Max.x,
-		    w->plot.XLog, NO_COMPUTE_MIN_MAX);
+		    w->plot.XLog, NO_COMPUTE_MIN_MAX, MAX_MAJOR_X);
 	ComputeAxis(&w->plot.y, w->plot.Min.y, w->plot.Max.y,
-		    w->plot.YLog, COMPUTE_MIN_MAX);
+		    w->plot.YLog, COMPUTE_MIN_MAX, MAX_MAJOR_Y);
       }
       else if (type == NO_COMPUTE_MIN_MAX_Y) {
 	ComputeAxis(&w->plot.x, w->plot.Min.x, w->plot.Max.x,
-		    w->plot.XLog, COMPUTE_MIN_MAX);
+		    w->plot.XLog, COMPUTE_MIN_MAX, MAX_MAJOR_X);
 	ComputeAxis(&w->plot.y, w->plot.Min.y, w->plot.Max.y,
-		    w->plot.YLog, NO_COMPUTE_MIN_MAX);
+		    w->plot.YLog, NO_COMPUTE_MIN_MAX, MAX_MAJOR_Y);
       }
       else {
 	ComputeAxis(&w->plot.x, w->plot.Min.x, w->plot.Max.x,
-		    w->plot.XLog, type);
+		    w->plot.XLog, type, MAX_MAJOR_X);
 	ComputeAxis(&w->plot.y, w->plot.Min.y, w->plot.Max.y,
-		    w->plot.YLog, type);
+		    w->plot.YLog, type, MAX_MAJOR_Y);
       }
     }
     else if (w->plot.drag_state == DRAGGING_LEFT || w->plot.drag_state == DRAGGING_RIGHT ||
 	     w->plot.drag_state == DRAGGING_BOTTOM_AND_LEFT ||
 	     w->plot.drag_state == DRAGGING_DATA)
       ComputeAxis(&w->plot.x, w->plot.Min.x, w->plot.Max.x,
-		  w->plot.XLog, type);
+		  w->plot.XLog, type, MAX_MAJOR_X);
     else if (w->plot.drag_state == DRAGGING_TOP || w->plot.drag_state == DRAGGING_BOTTOM)
       ComputeAxis(&w->plot.y, w->plot.Min.y, w->plot.Max.y,
-		  w->plot.YLog, type);
+		  w->plot.YLog, type, MAX_MAJOR_Y);
   }
   else {
     ComputeAxis(&w->plot.x, (real) 0.0, w->plot.Max.x,
-      (Boolean) FALSE, type);
+      (Boolean) FALSE, type, MAX_MAJOR_Y);
     w->plot.PolarScale = w->plot.x.DrawMax;
   }
 }
@@ -2745,16 +2776,23 @@ ComputeMinMax (SciPlotWidget w, int type)
   register int i, j;
   register SciPlotList *p;
   register real val;
-  Boolean firstx, firsty;
+  Boolean firstx = True, firsty = True;
 
   if (type != NO_COMPUTE_MIN_MAX_X && type != NO_COMPUTE_MIN_MAX_Y) {
-    w->plot.Min.x = w->plot.Min.y = w->plot.Max.x = w->plot.Max.y = 1.0;
-    firstx = True;
-    firsty = True;
+
+   /* w->plot.Min.x = w->plot.Min.y = w->plot.Max.x = w->plot.Max.y = 1.0;*/
+
+  /* MSE: these defaults are for the case of no plot data (p->number == 0 for 
+     all drawn lists), but they are not seen in current DAKOTA use since the
+     y min/max marker lists always have 1 data point each (exception: markers
+     with zero value are ignored if log scale is used). */
+  w->plot.Max.x = w->plot.Max.y = 10.0;
+  w->plot.Min.x = (w->plot.XLog) ? 1.0 :   0.0;
+  w->plot.Min.y = (w->plot.YLog) ? 1.0 : -10.0;
 
     for (i = 0; i < w->plot.num_plotlist; i++) {
       p = w->plot.plotlist + i;
-      if (p->draw) {
+      if (p->draw) { /* all drawn lists (xy plot data and y min/max markers) */
 	for (j = 0; j < p->number; j++) {
 
           /* Don't count the "break in line segment" flag for Min/Max */
@@ -2794,28 +2832,7 @@ ComputeMinMax (SciPlotWidget w, int type)
       }
     }
 
-    /* fix defaults if there is only one point. */
-    if (firstx) {
-      if (w->plot.XLog) {
-	w->plot.Min.x = 1.0;
-	w->plot.Max.x = 10.0;
-      }
-      else {
-	w->plot.Min.x = 0.0;
-	w->plot.Max.x = 10.0;
-      }
-    }
-    if (firsty) {
-      if (w->plot.YLog) {
-	w->plot.Min.y = 1.0;
-	w->plot.Max.y = 10.0;
-      }
-      else {
-	w->plot.Min.y = 0.0;
-	w->plot.Max.y = 10.0;
-      }
-    }
-
+#if 0
     /* real x and y range */
     w->plot.startx = w->plot.Min.x;
     w->plot.starty = w->plot.Min.y;
@@ -2823,24 +2840,29 @@ ComputeMinMax (SciPlotWidget w, int type)
     w->plot.endy   = w->plot.Max.y;
 
     /* now calculate plotting range */
+#endif
 
     if (w->plot.ChartType == XtCARTESIAN) {
-      if (!w->plot.XLog) {
+      /* if (!w->plot.XLog) { MSE: allow range restrictions in log scale */
 	if (!w->plot.XAutoScale) {
 	  w->plot.Min.x = w->plot.UserMin.x;
 	  w->plot.Max.x = w->plot.UserMax.x;
 	}
-	else if (w->plot.XOrigin) {
+	else if (!w->plot.XLog && w->plot.XOrigin) { /* MSE: add log check here */
 	  if (w->plot.Min.x > 0.0)
 	    w->plot.Min.x = 0.0;
 	  if (w->plot.Max.x < 0.0)
 	    w->plot.Max.x = 0.0;
 	}
+#if 0
+     /* MSE: don't corrupt the true min/max.  Corrections for zero range
+              are applied in ComputeAxis().
 	if (fabs(w->plot.Min.x - w->plot.Max.x) < 1.e-10) {
 	  w->plot.Min.x -= .5;
 	  w->plot.Max.x += .5;
 	}
-      }
+        */
+   /* } */
       else {
 	if (!w->plot.XAutoScale && w->plot.UserMin.x > 0 &&
 	    w->plot.UserMax.x > 0  &&
@@ -2849,22 +2871,27 @@ ComputeMinMax (SciPlotWidget w, int type)
 	  w->plot.Max.x = w->plot.UserMax.x;
 	}
       }
+#endif
 
-      if (!w->plot.YLog) {
-	if (!w->plot.YAutoScale) {
+      /* if (!w->plot.YLog) { MSE: allow range restrictions in log scale */
+	if (!w->plot.YAutoScale) {  /* user override of auto-scaling */
 	  w->plot.Min.y = w->plot.UserMin.y;
 	  w->plot.Max.y = w->plot.UserMax.y;
 	}
-	else if (w->plot.YOrigin) {
+	else if (w->plot.YLog && w->plot.YOrigin) { /* MSE: add log check here */
 	  if (w->plot.Min.y > 0.0)
 	    w->plot.Min.y = 0.0;
 	  if (w->plot.Max.y < 0.0)
 	    w->plot.Max.y = 0.0;
 	}
+        /* MSE: don't corrupt the true min/max.  Corrections for zero range
+              are applied in ComputeAxis().
 	if (fabs(w->plot.Min.y - w->plot.Max.y) < 1.e-10) {
 	  w->plot.Min.y -= .5;
 	  w->plot.Max.y += .5;
 	}
+        */
+#if 0
       }
       else {
 	if (!w->plot.YAutoScale && w->plot.UserMin.y > 0 &&
@@ -2874,6 +2901,7 @@ ComputeMinMax (SciPlotWidget w, int type)
 	  w->plot.Max.y = w->plot.UserMax.y;
 	}
       }
+#endif
 
     }
     else {
@@ -3254,80 +3282,75 @@ ComputeDimensions (SciPlotWidget w)
 static void
 AdjustDimensionsCartesian (SciPlotWidget w)
 {
-  real xextra, yextra, val, xhorz;
-  real x, y, width, height, axisnumbersize, axisXlabelsize, axisYlabelsize;
-  char numberformat[16], label[16];
-  int precision;
 
-  /* Compute xextra and yextra, which are the extra distances that the text
-   * labels on the axes stick outside of the graph.
-   */
-  xextra = yextra = 0.0;
+  real xextra, yextra, val, labelval, xhorz, label_width, max_label_width,
+       y_major_incr, x, y, width, height, axisnumbersize, axisXlabelsize,
+       axisYlabelsize;
+  char label[16]; /* , numberformat[16]; */
+  int i, num_y_major; /* , precision; */
+
+/* Compute xextra and yextra, which are the extra distances that the text
+ * labels on the axes stick outside of the graph.
+ */
+  xextra = yextra = 0.;
   if (w->plot.XAxisNumbers) {
-    precision = w->plot.x.Precision;
+    val = w->plot.x.DrawMax;
+    /* precision = w->plot.x.Precision;
     if (w->plot.XLog) {
-      val = w->plot.x.DrawMax;
+
       precision -= w->plot.x.MajorNum;
       if (precision < 0)
-	precision = 0;
+        precision = 0;
     }
-    else
-      val = w->plot.x.DrawOrigin + floor(w->plot.x.DrawSize /
-	w->plot.x.MajorInc + SCIPLOT_EPS) * w->plot.x.MajorInc;
-
-    x = PlotX(w, val);
-    sprintf(numberformat, "%%.%df", precision);
-    sprintf(label, numberformat, val);
-    x += FontnumTextWidth(w, w->plot.axisFont, label);
-    if ((int) x > w->core.width) {
-      xextra = ceil(x - w->core.width + w->plot.Margin - SCIPLOT_EPS);
-      if (xextra < 0.0)
-	xextra = 0.0;
-    }
+    sprintf(numberformat, "%%.%df", precision); */
+    sprintf(label, "%.6g", val);
+    xextra = ceil(PlotX(w, val) + FontnumTextWidth(w,w->plot.axisFont,label)/2.)
+           + (real)w->plot.Margin - (real)w->core.width;
+    if (xextra < 0.)
+      xextra = 0.;
   }
-
-  yextra=xhorz=0.0;
+  
+  /* MSE, 6/03: this section completely reworked to properly estimate y axis 
+     label widths when using the new %.6g formats. These new formats avoid
+     fatal problems that were occurring when y axis numbers became too large
+     to print with the previous %.#f formats (xhorz left a too small/negative 
+     plot region). */
+  yextra = xhorz = max_label_width = 0.0;
   if (w->plot.YAxisNumbers) {
-    precision = w->plot.y.Precision;
-    if (w->plot.YLog) {
-      int p1,p2;
-
-      p1=precision;
-      val = w->plot.y.DrawOrigin;
-      if (p1 > 0)
-	p1--;
-
-      val = w->plot.y.DrawMax;
-      p2 = precision - w->plot.y.MajorNum;
-      if (p2 < 0)
-	p2 = 0;
-
-      if (p1>p2) precision=p1;
-      else precision=p2;
+    /* sprintf(numberformat, "%%.%df", precision); */
+    /* loop over each increment and save max label width */
+    num_y_major  = w->plot.y.MajorNum;
+    y_major_incr = w->plot.y.MajorInc;
+    val = w->plot.y.DrawOrigin;
+    for (i=0; i<=num_y_major; i++) { /* both ends */
+      if (i)
+        val = (w->plot.YLog) ? val * y_major_incr : val + y_major_incr;
+      /* Make sure label is not trying to resolve more precision
+         than that indicated by MajorInc (especially at y = 0.) */
+      labelval = (w->plot.YLog) ? val : floor(val/y_major_incr+.5)*y_major_incr;
+      if (fabs(labelval) < DBL_MIN) labelval = 0.; /* hack to remove "-0" */
+      sprintf(label, "%.6g", labelval);
+      label_width = FontnumTextWidth(w, w->plot.axisFont, label);
+      /* printf("label = %s width = %.4g\n", label, label_width); */
+      if (label_width > max_label_width)
+        max_label_width = label_width;
     }
-    else
-      val = w->plot.y.DrawOrigin + floor(w->plot.y.DrawSize /
-		 w->plot.y.MajorInc + SCIPLOT_EPS) * w->plot.y.MajorInc;
-    y = PlotY(w, val);
-    sprintf(numberformat, "%%.%df", precision);
-    sprintf(label, numberformat, val);
-#if DEBUG_SCIPLOT
-    SciPlotPrintf("ylabel=%s\n", label);
-#endif
+    /* printf("max label width = %.4g\n", max_label_width); */
     if (w->plot.YNumHorz) {
-      yextra=FontnumHeight(w, w->plot.axisFont)/2.0;
-      xhorz=FontnumTextWidth(w, w->plot.axisFont, label)
-	+ (real)w->plot.Margin;
+      yextra = FontnumHeight(w, w->plot.axisFont)/2.0;
+      xhorz = max_label_width + (real)w->plot.Margin;
     }
     else {
-      y -= FontnumTextWidth(w, w->plot.axisFont, label);
-      if ((int) y <= 0) {
-	yextra = ceil(w->plot.Margin - y - SCIPLOT_EPS);
-	if (yextra < 0.0)
-	  yextra = 0.0;
+      y = PlotY(w, val) - FontnumTextWidth(w, w->plot.axisFont, label);
+      if ((int)y <= 0) {
+        yextra = ceil(w->plot.Margin - y);
+        if (yextra < 0.0)
+          yextra = 0.0;
       }
     }
   }
+
+
 #if DEBUG_SCIPLOT
     SciPlotPrintf("xextra=%f  yextra=%f\n",xextra,yextra);
 #endif
@@ -3559,7 +3582,7 @@ AdjustDimensionsPolar (SciPlotWidget w)
 {
   real x, y, xextra, yextra, val;
   real width, height, size;
-  char numberformat[16], label[16];
+  char label[16]; /* , numberformat[16]; */
 
 /* Compute xextra and yextra, which are the extra distances that the text
  * labels on the axes stick outside of the graph.
@@ -3567,16 +3590,13 @@ AdjustDimensionsPolar (SciPlotWidget w)
   xextra = yextra = 0.0;
   val = w->plot.PolarScale;
   PlotRTDegrees(w, val, 0.0, &x, &y);
-  sprintf(numberformat, "%%.%df", w->plot.x.Precision);
-  sprintf(label, numberformat, val);
-  x += FontnumTextWidth(w, w->plot.axisFont, label);
-  if ((int) x > w->core.width) {
-    xextra = x - w->core.width + w->plot.Margin;
-    if (xextra < 0.0)
-      xextra = 0.0;
-  }
-  yextra = 0.0;
-
+  /*sprintf(numberformat, "%%.%df", w->plot.x.Precision); */
+  sprintf(label, "%.6g", val);
+  xextra = x + FontnumTextWidth(w, w->plot.axisFont, label) + 
+    (real)w->plot.Margin - (real)w->core.width;
+  if (xextra < 0.)
+    xextra = 0.;
+  yextra = 0.;
 
   /* x,y is the origin of the upper left corner of the drawing area inside
    * the widget.  Doesn't necessarily have to be (Margin,Margin)
@@ -3891,13 +3911,11 @@ DrawCartesianXLabelAndTitle  (SciPlotWidget w)
 {
   w->plot.current_id = SciPlotDrawingXLabelTitle;
   if (w->plot.ShowTitle)
-    TextSet(w, w->plot.x.TitlePos, w->plot.y.TitlePos,
-      w->plot.plotTitle, w->plot.ForegroundColor,
-      w->plot.titleFont);
+    TextSet(w, w->plot.x.TitlePos, w->plot.y.TitlePos, w->plot.plotTitle,
+            w->plot.ForegroundColor, w->plot.titleFont);
   if (w->plot.ShowXLabel)
-    TextCenter(w, w->plot.x.Origin + (w->plot.x.Size / 2.0),
-      w->plot.y.LabelPos, w->plot.xlabel,
-      w->plot.ForegroundColor, w->plot.labelFont);
+    TextCenter(w, w->plot.x.Origin + w->plot.x.Size / 2.0, w->plot.y.LabelPos,
+               w->plot.xlabel, w->plot.ForegroundColor, w->plot.labelFont);
 }
 
 static void
@@ -3905,86 +3923,83 @@ DrawCartesianYLabelAndTitle  (SciPlotWidget w)
 {
   w->plot.current_id = SciPlotDrawingYLabelTitle;
   if (w->plot.ShowYLabel)
-    VTextCenter(w, w->plot.x.LabelPos,
-      w->plot.y.Origin + (w->plot.y.Size / 2.0),
-      w->plot.ylabel, w->plot.ForegroundColor,
-      w->plot.labelFont);
+    VTextCenter(w, w->plot.x.LabelPos, w->plot.y.Origin + w->plot.y.Size / 2.0,
+                w->plot.ylabel, w->plot.ForegroundColor, w->plot.labelFont);
 }
 
 static void
 DrawCartesianXMajorAndMinor (SciPlotWidget w)
 {
-  real x, x1, y1, x2, y2, tic, val, majorval;
-  int j;
-
-  if (!w->plot.DrawMajor && !w->plot.DrawMinor)
-    return;
+  real x, x1_pos, y1_pos, x2_pos, y2_pos, x1_val, y1_val, x_major_incr,
+       y_major_incr, minorval, majorval, height;
+  int i, j, num_x_major, num_y_major; /* precision, */
 
   w->plot.current_id = SciPlotDrawingXMajorMinor;
-  x1 = PlotX(w, w->plot.x.DrawOrigin);
-  y1 = PlotY(w, w->plot.y.DrawOrigin);
-  x2 = PlotX(w, w->plot.x.DrawMax);
-  y2 = PlotY(w, w->plot.y.DrawMax);
+  height = FontnumHeight(w, w->plot.axisFont);
+  num_x_major  = w->plot.x.MajorNum;
+  num_y_major  = w->plot.y.MajorNum;
+  x_major_incr = w->plot.x.MajorInc;
+  y_major_incr = w->plot.y.MajorInc;
+  x1_val = w->plot.x.DrawOrigin;
+  y1_val = w->plot.y.DrawOrigin;
+  x1_pos = PlotX(w, x1_val);
+  y1_pos = PlotY(w, y1_val);
+  x2_pos = PlotX(w, w->plot.x.DrawMax);
+  y2_pos = PlotY(w, w->plot.y.DrawMax);
 
-  if (w->plot.XLog) {
-    val = w->plot.x.DrawOrigin;
-  }
-  else {
-    val = w->plot.x.DrawOrigin;
-  }
+  if (w->plot.DrawMajorTics)
+    LineSet(w, x1_pos, y1_pos+5, x1_pos, y1_pos-5, w->plot.ForegroundColor,
+            XtLINE_SOLID);
 
+  /* MSE: reworked code since old while loop using numeric test failed
+     for large numbers with small ranges */
+  majorval = x1_val;
+  for (i=0; i<num_x_major; i++) {
 
-  majorval = val;
-  while ((majorval * 1.0001) < w->plot.x.DrawMax) {
+    /* minor x axis ticks and grid lines */
     if (w->plot.XLog) {
-
-/* Hack to make sure that 9.99999e? still gets interpreted as 10.0000e? */
-      if (majorval * 1.1 > w->plot.x.DrawMax)
-	break;
-      tic = majorval;
-      if (w->plot.DrawMinor) {
-	for (j = 2; j < w->plot.x.MinorNum; j++) {
-	  val = tic * (real) j;
-
-	  if (val <= w->plot.x.DrawMax) {
-	    x = PlotX(w, val);
-	    LineSet(w, x, y1, x, y2,
-		    w->plot.ForegroundColor,
-		    XtLINE_WIDEDOT);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=2; j<w->plot.x.MinorNum; j++) {
+	  minorval = majorval * (real)j;
+	  x = PlotX(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x, y1_pos, x, y1_pos-3, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic * (real) w->plot.x.MinorNum;
+      majorval *= x_major_incr;
+      /* sprintf(numberformat, "%%.%df", precision);
+      if (precision > 0)
+	precision--; */
     }
     else {
-      tic = majorval;
-      if (w->plot.DrawMinor) {
-	for (j = 1; j < w->plot.x.MinorNum; j++) {
-	  val = tic + w->plot.x.MajorInc * (real) j /
-	    w->plot.x.MinorNum;
-
-	  if (val <= w->plot.x.DrawMax) {
-	    x = PlotX(w, val);
-	    LineSet(w, x, y1, x, y2,
-		    w->plot.ForegroundColor,
-		    XtLINE_WIDEDOT);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=1; j<w->plot.x.MinorNum; j++) {
+	  minorval = majorval + x_major_incr * (real)j/w->plot.x.MinorNum;
+	  x = PlotX(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x, y1_pos, x, y1_pos-3, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic + w->plot.x.MajorInc;
+      majorval += x_major_incr;
     }
 
-
-    if (val <= w->plot.x.DrawMax) {
-      x = PlotX(w, val);
-      if (w->plot.DrawMajor)
-	LineSet(w, x, y1, x, y2, w->plot.ForegroundColor,
-		XtLINE_DOTTED);
-      else if (w->plot.DrawMinor)
-	LineSet(w, x, y1, x, y2, w->plot.ForegroundColor,
-		XtLINE_WIDEDOT);
-    }
-    majorval = val;
+    /* major x axis ticks and grid lines */
+    x = PlotX(w, majorval);
+    if (w->plot.DrawMajor)
+      LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,	XtLINE_DOTTED);
+    else if (w->plot.DrawMinor)
+      LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,	XtLINE_WIDEDOT);
+    if (w->plot.DrawMajorTics)
+      LineSet(w, x, y1_pos+5, x, y1_pos-5, w->plot.ForegroundColor,
+              XtLINE_SOLID);
   }
 }
 
@@ -3992,194 +4007,190 @@ DrawCartesianXMajorAndMinor (SciPlotWidget w)
 static void
 DrawCartesianYMajorAndMinor (SciPlotWidget w)
 {
-  real y, x1, y1, x2, y2, tic, val, majorval;
-  int j;
+  real y, x1_pos, y1_pos, x2_pos, y2_pos, x1_val, y1_val, x_major_incr,
+       y_major_incr, minorval, majorval, height;
+  int i, j, num_x_major, num_y_major; /* precision, */
 
   if (!w->plot.DrawMajor && !w->plot.DrawMinor)
     return;
 
   w->plot.current_id = SciPlotDrawingYMajorMinor;
-  x1 = PlotX(w, w->plot.x.DrawOrigin);
-  y1 = PlotY(w, w->plot.y.DrawOrigin);
-  x2 = PlotX(w, w->plot.x.DrawMax);
-  y2 = PlotY(w, w->plot.y.DrawMax);
 
-  /* draw y direction */
-  if (w->plot.YLog) {
-    val = w->plot.y.DrawOrigin;
-  }
-  else
-    val = w->plot.y.DrawOrigin;
+  height = FontnumHeight(w, w->plot.axisFont);
+  num_x_major  = w->plot.x.MajorNum;
+  num_y_major  = w->plot.y.MajorNum;
+  x_major_incr = w->plot.x.MajorInc;
+  y_major_incr = w->plot.y.MajorInc;
+  x1_val = w->plot.x.DrawOrigin;
+  y1_val = w->plot.y.DrawOrigin;
+  x1_pos = PlotX(w, x1_val);
+  y1_pos = PlotY(w, y1_val);
+  x2_pos = PlotX(w, w->plot.x.DrawMax);
+  y2_pos = PlotY(w, w->plot.y.DrawMax);
 
-  majorval = val;
+  /* draw y axis line */
+  LineSet(w, x1_pos, y1_pos, x1_pos, y2_pos, w->plot.ForegroundColor,
+          XtLINE_SOLID); /* y axis line */
 
-/* majorval*1.0001 is a fudge to get rid of rounding errors that seem to
- * occur when continuing to add the major axis increment.
- */
-  while ((majorval * 1.0001) < w->plot.y.DrawMax) {
+  /* precision = w->plot.y.Precision;
+  sprintf(numberformat, "%%.%dg", precision);
+  if (w->plot.YLog && precision>0)
+    precision--; */
+  if (w->plot.DrawMajorTics)
+    LineSet(w, x1_pos+5, y1_pos, x1_pos-5, y1_pos, w->plot.ForegroundColor,
+            XtLINE_SOLID);
+
+  /* MSE: reworked code since old while loop using numeric test failed
+     for large numbers with small ranges */
+  majorval = y1_val;
+  for (i=0; i<num_y_major; i++) {
+
+    /* minor x axis ticks and grid lines */
     if (w->plot.YLog) {
-
-/* Hack to make sure that 9.99999e? still gets interpreted as 10.0000e? */
-      if (majorval * 1.1 > w->plot.y.DrawMax)
-	break;
-      tic = majorval;
-      if (w->plot.DrawMinor) {
-	for (j = 2; j < w->plot.y.MinorNum; j++) {
-	  val = tic * (real) j;
-
-	  if (val <= w->plot.y.DrawMax) {
-	    y = PlotY(w, val);
-	    LineSet(w, x1, y, x2, y,
-		    w->plot.ForegroundColor,
-		    XtLINE_WIDEDOT);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=2; j<w->plot.y.MinorNum; j++) {
+	  minorval = majorval * (real)j;
+	  y = PlotY(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x1_pos, y, x1_pos+3, y, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic * (real) w->plot.y.MinorNum;
+      majorval *= y_major_incr;
+      /* sprintf(numberformat, "%%.%df", precision);
+      if (precision > 0)
+	precision--; */
     }
     else {
-      tic = majorval;
-      if (w->plot.DrawMinor) {
-	for (j = 1; j < w->plot.y.MinorNum; j++) {
-	  val = tic + w->plot.y.MajorInc * (real) j /
-	    w->plot.y.MinorNum;
-
-	  if (val <= w->plot.y.DrawMax) {
-	    y = PlotY(w, val);
-	    if (w->plot.DrawMinor)
-	      LineSet(w, x1, y, x2, y,
-		      w->plot.ForegroundColor,
-		      XtLINE_WIDEDOT);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=1; j<w->plot.y.MinorNum; j++) {
+	  minorval = majorval + y_major_incr * (real)j/w->plot.y.MinorNum;
+	  y = PlotY(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x1_pos, y, x1_pos+3, y, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic + w->plot.y.MajorInc;
+      majorval += y_major_incr;
     }
 
-    if (val <= w->plot.y.DrawMax) {
-      y = PlotY(w, val);
-      if (w->plot.DrawMajor)
-	LineSet(w, x1, y, x2, y, w->plot.ForegroundColor,
-		XtLINE_DOTTED);
-      else if (w->plot.DrawMinor)
-	LineSet(w, x1, y, x2, y, w->plot.ForegroundColor,
-		XtLINE_WIDEDOT);
-    }
-    majorval = val;
+    /* major y axis ticks and grid lines */
+    y = PlotY(w, majorval);
+    if (w->plot.DrawMajor)
+      LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor, XtLINE_DOTTED);
+    else if (w->plot.DrawMinor)
+      LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,	XtLINE_WIDEDOT);
+    if (w->plot.DrawMajorTics)
+      LineSet(w, x1_pos-5, y, x1_pos+5, y, w->plot.ForegroundColor,
+              XtLINE_SOLID);
   }
+
 }
 
-static void
+static void 
 DrawCartesianXAxis (SciPlotWidget w, int type)
 {
-  real x, x1, y1, x2, y2, tic, val, height, majorval;
-  int j, precision;
-  char numberformat[16], label[16];
+  real x, x1_pos, y1_pos, x2_pos, y2_pos, x1_val, y1_val, x_major_incr,
+       y_major_incr, minorval, majorval, labelval, height;
+  int i, j, num_x_major, num_y_major; /* precision, */
+  char label[16]; /* , numberformat[16]; */
 
   w->plot.current_id = SciPlotDrawingXAxis;
-  height = FontnumHeight(w, w->plot.labelFont);
-  x1 = PlotX(w, w->plot.x.DrawOrigin);
-  y1 = PlotY(w, w->plot.y.DrawOrigin);
-  x2 = PlotX(w, w->plot.x.DrawMax);
-  y2 = PlotY(w, w->plot.y.DrawMax);
-  LineSet(w, x1, y1, x2, y1, w->plot.ForegroundColor, XtLINE_SOLID);
+  height = FontnumHeight(w, w->plot.axisFont);
+  num_x_major  = w->plot.x.MajorNum;
+  num_y_major  = w->plot.y.MajorNum;
+  x_major_incr = w->plot.x.MajorInc;
+  y_major_incr = w->plot.y.MajorInc;
+  x1_val = w->plot.x.DrawOrigin;
+  y1_val = w->plot.y.DrawOrigin;
+  x1_pos = PlotX(w, x1_val);
+  y1_pos = PlotY(w, y1_val);
+  x2_pos = PlotX(w, w->plot.x.DrawMax);
+  y2_pos = PlotY(w, w->plot.y.DrawMax);
 
-#if DEBUG_SCIPLOT_AXIS
-  SciPlotPrintf("\nDrawCartesianXAxis: x1=%f y1=%f x2=%f y2=%f\n"
-    "  Width=%d Height=%d\n"
-    "  MajorInc=%f MajorNum=%d MinorNum=%d Precision=%d\n"
-    "  Origin=%f Size=%f Center=%f AxisPos=%f\n"
-    "  DrawOrigin=%f DrawSize=%f DrawMax=%f\n",
-    x1,y1,x2,y2,
-    w->core.width,w->core.height,
-    w->plot.x.MajorInc,w->plot.x.MajorNum,w->plot.x.MinorNum,w->plot.x.Precision,
-    w->plot.x.Origin,w->plot.x.Size,w->plot.x.Center,w->plot.x.AxisPos,
-    w->plot.x.DrawOrigin,w->plot.x.DrawSize,w->plot.x.DrawMax);
-#endif
+  /* draw x axis line */
+  LineSet(w, x1_pos, y1_pos, x2_pos, y1_pos, w->plot.ForegroundColor,
+          XtLINE_SOLID); /* x axis line */
 
-  precision = w->plot.x.Precision;
+  /* precision = w->plot.x.Precision;
   sprintf(numberformat, "%%.%df", precision);
-  if (w->plot.XLog) {
-    val = w->plot.x.DrawOrigin;
-    if (precision > 0)
-      precision--;
-  }
-  else {
-    val = w->plot.x.DrawOrigin;
-  }
-  x = PlotX(w, val);
+  if (w->plot.XLog && precision>0)
+    precision--; */
   if (w->plot.DrawMajorTics)
-    LineSet(w, x, y1 + 5, x, y1 - 5, w->plot.ForegroundColor, XtLINE_SOLID);
+    LineSet(w, x1_pos, y1_pos+5, x1_pos, y1_pos-5, w->plot.ForegroundColor,
+            XtLINE_SOLID);
   if (w->plot.XAxisNumbers) {
-    sprintf(label, numberformat, val);
-#if DEBUG_SCIPLOT_AXIS
-    SciPlotPrintf("  TextSet: x=%f y=%f val=%f label=%s\n",
-      x,w->plot.y.AxisPos,val,label);
-#endif
-    TextSet(w, x, w->plot.y.AxisPos, label, w->plot.ForegroundColor,
-      w->plot.axisFont);
+    sprintf(label, "%.6g", x1_val);
+    TextSet(w, ceil(x1_pos - FontnumTextWidth(w, w->plot.axisFont, label)/2.),
+            w->plot.y.AxisPos, label, w->plot.ForegroundColor,
+            w->plot.axisFont);
   }
 
-  majorval = val;
-  while ((majorval * 1.0001) < w->plot.x.DrawMax) {
+  /* MSE: reworked code since old while loop using numeric test failed
+     for large numbers with small ranges */
+  majorval = x1_val;
+  for (i=0; i<num_x_major; i++) {
+
+    /* minor x axis ticks and grid lines */
     if (w->plot.XLog) {
-
-/* Hack to make sure that 9.99999e? still gets interpreted as 10.0000e? */
-      if (majorval * 1.1 > w->plot.x.DrawMax)
-	break;
-      tic = majorval;
-      if (w->plot.DrawMinorTics) {
-	for (j = 2; j < w->plot.x.MinorNum; j++) {
-	  val = tic * (real) j;
-
-	  if (val < w->plot.x.DrawMax) {
-	    x = PlotX(w, val);
-	    if (w->plot.DrawMinorTics)
-	      LineSet(w, x, y1, x, y1 - 3,
-		      w->plot.ForegroundColor,
-		      XtLINE_SOLID);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=2; j<w->plot.x.MinorNum; j++) {
+	  minorval = majorval * (real)j;
+	  x = PlotX(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x, y1_pos, x, y1_pos-3, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic * (real) w->plot.x.MinorNum;
-      sprintf(numberformat, "%%.%df", precision);
+      majorval *= x_major_incr;
+      /* sprintf(numberformat, "%%.%df", precision);
       if (precision > 0)
-	precision--;
+	precision--; */
     }
     else {
-      tic = majorval;
-      if (w->plot.DrawMinorTics) {
-	for (j = 1; j < w->plot.x.MinorNum; j++) {
-	  val = tic + w->plot.x.MajorInc * (real) j /
-	    w->plot.x.MinorNum;
-	  if (val <= w->plot.x.DrawMax) {
-	    x = PlotX(w, val);
-	    if (w->plot.DrawMinorTics)
-	      LineSet(w, x, y1, x, y1 - 3,
-		      w->plot.ForegroundColor,
-		      XtLINE_SOLID);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=1; j<w->plot.x.MinorNum; j++) {
+	  minorval = majorval + x_major_incr * (real)j/w->plot.x.MinorNum;
+	  x = PlotX(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x, y1_pos, x, y1_pos-3, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic + w->plot.x.MajorInc;
+      majorval += x_major_incr;
     }
 
-    if (val <= w->plot.x.DrawMax) {
-      x = PlotX(w, val);
-      if (w->plot.DrawMajorTics)
-	LineSet(w, x, y1 + 5, x, y1 - 5, w->plot.ForegroundColor,
-		XtLINE_SOLID);
-      if (w->plot.XAxisNumbers) {
-	sprintf(label, numberformat, val);
-#if DEBUG_SCIPLOT_AXIS
-	SciPlotPrintf("  TextSet: x=%f y=%f val=%f label=%s\n",
-	  x,w->plot.y.AxisPos,val,label);
-#endif
-	TextSet(w, x, w->plot.y.AxisPos, label, w->plot.ForegroundColor,
-		w->plot.axisFont);
-      }
+    /* major x axis ticks and grid lines */
+    x = PlotX(w, majorval);
+    if (w->plot.DrawMajor)
+      LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,	XtLINE_DOTTED);
+    else if (w->plot.DrawMinor)
+      LineSet(w, x, y1_pos, x, y2_pos, w->plot.ForegroundColor,	XtLINE_WIDEDOT);
+    if (w->plot.DrawMajorTics)
+      LineSet(w, x, y1_pos+5, x, y1_pos-5, w->plot.ForegroundColor,
+              XtLINE_SOLID);
+    if (w->plot.XAxisNumbers) {
+      labelval = (w->plot.XLog) ? majorval : 
+        floor(majorval/x_major_incr+.5)*x_major_incr;
+      if (fabs(labelval) < DBL_MIN) labelval = 0.; /* hack to remove "-0" */
+      /* printf("x majorval = %.6g labelval = %.6g\n", majorval, labelval); */
+      sprintf(label, "%.6g", labelval);
+      TextSet(w, ceil(x - FontnumTextWidth(w, w->plot.axisFont, label)/2.),
+              w->plot.y.AxisPos, label, w->plot.ForegroundColor,
+              w->plot.axisFont);
     }
-    majorval = val;
   }
   if (type == DRAW_ALL) {
     DrawCartesianXMajorAndMinor (w);
@@ -4189,122 +4200,118 @@ DrawCartesianXAxis (SciPlotWidget w, int type)
     DrawCartesianXMajorAndMinor (w);
 }
 
-static void
+static void 
 DrawCartesianYAxis (SciPlotWidget w, int type)
 {
-  real y, x1, y1, x2, y2, tic, val, height, majorval;
-  int j, precision;
-  char numberformat[16], label[16];
+  real y, x1_pos, y1_pos, x2_pos, y2_pos, x1_val, y1_val, x_major_incr,
+       y_major_incr, minorval, majorval, labelval, height;
+  int i, j, num_x_major, num_y_major; /* precision, */
+  char label[16]; /* , numberformat[16]; */
 
   w->plot.current_id = SciPlotDrawingYAxis;
-  height = FontnumHeight(w, w->plot.labelFont);
-  x1 = PlotX(w, w->plot.x.DrawOrigin);
-  y1 = PlotY(w, w->plot.y.DrawOrigin);
-  x2 = PlotX(w, w->plot.x.DrawMax);
-  y2 = PlotY(w, w->plot.y.DrawMax);
-  LineSet(w, x1, y1, x1, y2, w->plot.ForegroundColor, XtLINE_SOLID);
+  height = FontnumHeight(w, w->plot.axisFont);
+  num_x_major  = w->plot.x.MajorNum;
+  num_y_major  = w->plot.y.MajorNum;
+  x_major_incr = w->plot.x.MajorInc;
+  y_major_incr = w->plot.y.MajorInc;
+  x1_val = w->plot.x.DrawOrigin;
+  y1_val = w->plot.y.DrawOrigin;
+  x1_pos = PlotX(w, x1_val);
+  y1_pos = PlotY(w, y1_val);
+  x2_pos = PlotX(w, w->plot.x.DrawMax);
+  y2_pos = PlotY(w, w->plot.y.DrawMax);
 
-  precision = w->plot.y.Precision;
-  sprintf(numberformat, "%%.%df", precision);
-  if (w->plot.YLog) {
-    val = w->plot.y.DrawOrigin;
-    if (precision > 0)
-      precision--;
-  }
-  else {
-    val = w->plot.y.DrawOrigin;
-  }
-  y = PlotY(w, val);
+  /* draw y axis line */
+  LineSet(w, x1_pos, y1_pos, x1_pos, y2_pos, w->plot.ForegroundColor,
+          XtLINE_SOLID); /* y axis line */
+
+  /* precision = w->plot.y.Precision;
+  sprintf(numberformat, "%%.%dg", precision);
+  if (w->plot.YLog && precision>0)
+    precision--; */
   if (w->plot.DrawMajorTics)
-    LineSet(w, x1 + 5, y, x1 - 5, y, w->plot.ForegroundColor, XtLINE_SOLID);
+    LineSet(w, x1_pos+5, y1_pos, x1_pos-5, y1_pos, w->plot.ForegroundColor,
+            XtLINE_SOLID);
   if (w->plot.YAxisNumbers) {
-    sprintf(label, numberformat, val);
+    sprintf(label, "%.6g", y1_val);
     if (w->plot.YNumHorz) {
-      y+=FontnumHeight(w, w->plot.axisFont)/2.0 -
-        FontnumDescent(w, w->plot.axisFont);
-      TextSet(w,
-        w->plot.x.AxisPos - FontnumTextWidth(w, w->plot.axisFont, label),
-        y, label, w->plot.ForegroundColor,
-        w->plot.axisFont);
+      y = y1_pos + height/2.0 - FontnumDescent(w, w->plot.axisFont);
+      TextSet(w, w->plot.x.AxisPos - FontnumTextWidth(w,w->plot.axisFont,label),
+              y, label, w->plot.ForegroundColor, w->plot.axisFont);
     }
-    else {
-      VTextSet(w, w->plot.x.AxisPos, y, label, w->plot.ForegroundColor,
-        w->plot.axisFont);
-    }
+    else
+      VTextSet(w, w->plot.x.AxisPos, y1_pos, label, w->plot.ForegroundColor,
+               w->plot.axisFont);
   }
-  majorval = val;
 
-/* majorval*1.0001 is a fudge to get rid of rounding errors that seem to
- * occur when continuing to add the major axis increment.
- */
-  while ((majorval * 1.0001) < w->plot.y.DrawMax) {
+  /* MSE: reworked code since old while loop using numeric test failed
+     for large numbers with small ranges */
+  majorval = y1_val;
+  for (i=0; i<num_y_major; i++) {
+
+    /* minor x axis ticks and grid lines */
     if (w->plot.YLog) {
-
-/* Hack to make sure that 9.99999e? still gets interpreted as 10.0000e? */
-      if (majorval * 1.1 > w->plot.y.DrawMax)
-	break;
-      tic = majorval;
-      if (w->plot.DrawMinorTics) {
-	for (j = 2; j < w->plot.y.MinorNum; j++) {
-	  val = tic * (real) j;
-
-	  if (val <= w->plot.y.DrawMax) {
-	    y = PlotY(w, val);
-	    if (w->plot.DrawMinorTics)
-	      LineSet(w, x1, y, x1 + 3, y,
-		      w->plot.ForegroundColor,
-		      XtLINE_SOLID);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=2; j<w->plot.y.MinorNum; j++) {
+	  minorval = majorval * (real)j;
+	  y = PlotY(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x1_pos, y, x1_pos+3, y, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic * (real) w->plot.y.MinorNum;
-      sprintf(numberformat, "%%.%df", precision);
+      majorval *= y_major_incr;
+      /* sprintf(numberformat, "%%.%df", precision);
       if (precision > 0)
-	precision--;
+	precision--; */
     }
     else {
-      tic = majorval;
-      if (w->plot.DrawMinorTics) {
-	for (j = 1; j < w->plot.y.MinorNum; j++) {
-	  val = tic + w->plot.y.MajorInc * (real) j /
-	    w->plot.y.MinorNum;
-
-	  if (val <= w->plot.y.DrawMax) {
-	    y = PlotY(w, val);
-	    if (w->plot.DrawMinorTics)
-	      LineSet(w, x1, y, x1 + 3, y,
-		      w->plot.ForegroundColor,
-		      XtLINE_SOLID);
-	  }
+      if (w->plot.DrawMinor || w->plot.DrawMinorTics) {
+	for (j=1; j<w->plot.y.MinorNum; j++) {
+	  minorval = majorval + y_major_incr * (real)j/w->plot.y.MinorNum;
+	  y = PlotY(w, minorval);
+	  if (w->plot.DrawMinor)
+	    LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,
+                    XtLINE_WIDEDOT);
+	  if (w->plot.DrawMinorTics)
+	    LineSet(w, x1_pos, y, x1_pos+3, y, w->plot.ForegroundColor,
+                    XtLINE_SOLID);
 	}
       }
-      val = tic + w->plot.y.MajorInc;
+      majorval += y_major_incr;
     }
 
-    if (val <= w->plot.y.DrawMax) {
-      y = PlotY(w, val);
-      if (w->plot.DrawMajorTics)
-	LineSet(w, x1 - 5, y, x1 + 5, y, w->plot.ForegroundColor,
-		XtLINE_SOLID);
-      if (w->plot.YAxisNumbers) {
-	sprintf(label, numberformat, val);
-	if (w->plot.YNumHorz) {
-	  y+=FontnumHeight(w, w->plot.axisFont)/2.0 -
-	    FontnumDescent(w, w->plot.axisFont);
-	  TextSet(w,
-		  w->plot.x.AxisPos - FontnumTextWidth(w, w->plot.axisFont, label),
-		  y, label, w->plot.ForegroundColor,
-		  w->plot.axisFont);
-	}
-	else {
-	  VTextSet(w, w->plot.x.AxisPos, y, label, w->plot.ForegroundColor,
-		   w->plot.axisFont);
-	}
+    /* major y axis ticks and grid lines */
+    y = PlotY(w, majorval);
+    if (w->plot.DrawMajor)
+      LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor, XtLINE_DOTTED);
+    else if (w->plot.DrawMinor)
+      LineSet(w, x1_pos, y, x2_pos, y, w->plot.ForegroundColor,	XtLINE_WIDEDOT);
+    if (w->plot.DrawMajorTics)
+      LineSet(w, x1_pos-5, y, x1_pos+5, y, w->plot.ForegroundColor,
+              XtLINE_SOLID);
+    if (w->plot.YAxisNumbers) {
+      /* Make sure label is not trying to resolve more precision
+         than that indicated by MajorInc (especially at y = 0.) */
+      labelval = (w->plot.YLog) ? majorval : 
+        floor(majorval/y_major_incr+.5)*y_major_incr;
+      if (fabs(labelval) < DBL_MIN) labelval = 0.; /* hack to remove "-0" */
+      /* printf("y majorval = %.6g labelval = %.6g\n", majorval, labelval); */
+      sprintf(label, "%.6g", labelval);
+      if (w->plot.YNumHorz) {
+        y += height/2.0 - FontnumDescent(w, w->plot.axisFont);
+        TextSet(w, w->plot.x.AxisPos - 
+                FontnumTextWidth(w, w->plot.axisFont, label), y, label,
+                w->plot.ForegroundColor, w->plot.axisFont);
       }
+      else
+        VTextSet(w, w->plot.x.AxisPos, y, label, w->plot.ForegroundColor,
+                 w->plot.axisFont);
     }
-    majorval = val;
   }
-
   if (type == DRAW_ALL) {
     DrawCartesianYMajorAndMinor (w);
     DrawCartesianYLabelAndTitle (w);
@@ -4312,7 +4319,6 @@ DrawCartesianYAxis (SciPlotWidget w, int type)
   else if (type == DRAW_NO_LABELS)
     DrawCartesianYMajorAndMinor (w);
 }
-
 
 static void
 DrawCartesianAxes (SciPlotWidget w, int type)
@@ -4416,10 +4422,10 @@ DrawPolarAxes (SciPlotWidget w)
 {
   real x1, y1, x2, y2, max, tic, val, height;
   int i, j;
-  char numberformat[16], label[16];
+  char label[16]; /* , numberformat[16]; */
 
   w->plot.current_id = SciPlotDrawingPAxis;
-  sprintf(numberformat, "%%.%df", w->plot.x.Precision);
+  /*sprintf(numberformat, "%%.%df", w->plot.x.Precision);*/
   height = FontnumHeight(w, w->plot.labelFont);
   max = w->plot.PolarScale;
   PlotRTDegrees(w, 0.0, 0.0, &x1, &y1);
@@ -4451,7 +4457,7 @@ DrawPolarAxes (SciPlotWidget w)
     if (w->plot.DrawMajorTics)
       LineSet(w, x2, y2 - 5.0, x2, y2 + 5.0, w->plot.ForegroundColor, XtLINE_SOLID);
     if (w->plot.XAxisNumbers) {
-      sprintf(label, numberformat, tic);
+      sprintf(label, "%.6g", tic);
       TextSet(w, x2, y2 + height, label, w->plot.ForegroundColor, w->plot.axisFont);
     }
   }
@@ -5174,7 +5180,12 @@ SciPlotUpdateSimple (Widget wi, int type)
 #if DEBUG_SCIPLOT
   SciPlotPrintStatistics(wi);
 #endif
-  ComputeAll(w, type);
+  if (w->plot.XNoCompMinMax) {
+    ComputeAll(w, NO_COMPUTE_MIN_MAX_X);
+  }
+  else {
+    ComputeAll(w, COMPUTE_MIN_MAX);
+  }
   DrawAll(w);
 }
 
@@ -5313,7 +5324,7 @@ ComputeXMinMax_i (SciPlotWidget w, real* xmin, real* xmax)
 
 static void
 ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
-	       real* drawOrigin, real* drawMax)
+	       real* drawOrigin, real* drawMax, int max_major)
 {
   real range, rnorm, delta, calcmin, calcmax;
   int nexp, majornum, minornum, majordecimals, i;
@@ -5347,7 +5358,7 @@ ComputeAxis_i (SciPlotAxis *axis, real min, real max, Boolean log,
       minornum = CAminors[i];
       majornum = (int) ((rnorm + 0.9999 * delta) / delta);
       majordecimals = CAdecimals[i];
-      if (majornum <= MAX_MAJOR)
+      if (majornum <= max_major)
 	break;
     }
     delta *= powi(10.0, nexp);
@@ -5381,10 +5392,10 @@ ComputeXDrawingRange_i (SciPlotWidget w, real xmin,
 {
   if (w->plot.ChartType == XtCARTESIAN)
     ComputeAxis_i(&w->plot.x, xmin, xmax,
-		  w->plot.XLog, drawOrigin, drawMax);
+		  w->plot.XLog, drawOrigin, drawMax, MAX_MAJOR_X);
   else
     ComputeAxis_i(&w->plot.x, (real) 0.0, xmax,
-		  (Boolean) FALSE, drawOrigin, drawMax);
+		  (Boolean) FALSE, drawOrigin, drawMax, MAX_MAJOR_X);
 }
 
 
@@ -5394,10 +5405,10 @@ ComputeYDrawingRange_i (SciPlotWidget w, real ymin,
 {
   if (w->plot.ChartType == XtCARTESIAN)
     ComputeAxis_i(&w->plot.y, ymin, ymax,
-		  w->plot.YLog, drawOrigin, drawMax);
+		  w->plot.YLog, drawOrigin, drawMax, MAX_MAJOR_Y);
   else
     ComputeAxis_i(&w->plot.y, (real) 0.0, ymax,
-		  (Boolean) FALSE, drawOrigin, drawMax);
+		  (Boolean) FALSE, drawOrigin, drawMax, MAX_MAJOR_Y);
 }
 
 
@@ -5412,7 +5423,7 @@ sciPlotMotionAP (SciPlotWidget w,
   real xscale, yscale;
   real minxlim, minylim, maxxlim, maxylim;  /* view port */
   real minxdat, minydat, maxxdat, maxydat;  /* data port */
-  real newlim=0;
+  real newlim = 0.0;
   real txmin, txmax;
   real tymin, tymax;
   real xoffset;
@@ -6106,6 +6117,80 @@ SciPlotPrintMetrics(Widget wi)
   SciPlotPrintf("  y.LegendPos:     %g\n",w->plot.y.LegendPos);
   SciPlotPrintf("  y.LegendSize     %g\n",w->plot.y.LegendSize);
 }
+
+/*====================================================*/
+
+/* New functions added by MSE for additional access to internal data */
+
+/* MSE, 6/8/03: added SciPlot list data access function to avoid maintaining
+                history vectors in Graph2D. */
+realpair* SciPlotListReturnPtr (Widget wi, int idnum, int* num_xy_pairs)
+{
+  SciPlotList *p;
+  SciPlotWidget w;
+  if (!XtIsSciPlot(wi))
+    return NULL;
+  w = (SciPlotWidget) wi;
+
+  p = _ListFind(w, idnum);
+  if (p) {
+    *num_xy_pairs = p->number;
+    return p->data;
+  }
+  else {
+    *num_xy_pairs = 0;
+    return NULL;
+  }
+}
+
+
+/* MSE, 5/7/04: added to allow return of x axis DrawOrigin/DrawMax for
+                anchoring min/max markers */
+void SciPlotReturnXAxis (Widget wi, real* draw_x_min, real* draw_x_max)
+{
+      SciPlotWidget w = (SciPlotWidget) wi;
+
+      *draw_x_min = w->plot.x.DrawOrigin;
+      *draw_x_max = w->plot.x.DrawMax;
+}
+
+Boolean SciPlotQuickUpdateCheck (Widget wi)
+{
+  SciPlotWidget w = (SciPlotWidget) wi;
+  if (w->plot.XNoCompMinMax)
+    return CheckMinMax(w, NO_COMPUTE_MIN_MAX_X);
+  else
+    return CheckMinMax(w, COMPUTE_MIN_MAX);
+}
+
+void SciPlotPrepareFullUpdate (Widget wi)
+{
+      SciPlotWidget w = (SciPlotWidget) wi;
+      EraseAll(w);
+      if (w->plot.XNoCompMinMax) 
+        ComputeAll(w, NO_COMPUTE_MIN_MAX_X);
+      else
+        ComputeAll(w, COMPUTE_MIN_MAX);
+}
+
+ void SciPlotPrepareQuickUpdate (Widget wi)
+{
+      SciPlotWidget w;
+      if (!XtIsSciPlot(wi))
+              return;
+      w = (SciPlotWidget) wi;
+      EraseClassItems(w, SciPlotDrawingLine);
+      EraseAllItems(w);
+}
+
+void SciPlotDrawAll (Widget wi)
+{
+  SciPlotWidget w = (SciPlotWidget) wi;
+
+  DrawAll(w);
+}
+
+/*====================================================*/
 
 /* This function prints axis info */
 void
