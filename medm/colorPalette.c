@@ -191,7 +191,8 @@ static void colorPaletteActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
 	globalResourceBundle.cpData[
 	  elementTypeWhoseColorIsBeingEditedIndex].data_clr = colorIndex;
 #ifdef CARTESIAN_PLOT
-	cpUpdateMatrixColors();
+	cpUpdateMatrixColors(colorIndex,
+	  elementTypeWhoseColorIsBeingEditedIndex);
 #endif
 	recolor = FALSE;
 	break;

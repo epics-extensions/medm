@@ -115,8 +115,8 @@ void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 }
 
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
-  int fillType, XColor color, int pointSize)
-  /* hData is unused */
+  int fillType, XColor color, int pointSize, int Yaxis, int nYaxis)
+  /* hData, Yaxis, nYaxis are unused */
 {
     char rgb[16];
     PlotDataStyle myds;

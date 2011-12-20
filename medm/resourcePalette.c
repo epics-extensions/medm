@@ -1065,6 +1065,9 @@ void initializeGlobalResourceBundle()
 	globalResourceBundle.cpData[i].xdata[0] = '\0';
 	globalResourceBundle.cpData[i].ydata[0] = '\0';
 	globalResourceBundle.cpData[i].data_clr = 0;
+        if (i) globalResourceBundle.cpData[i].yaxis = 1;
+        else globalResourceBundle.cpData[i].yaxis = 0;
+
     }
     for (i = 0; i < MAX_PENS; i++) {
 	globalResourceBundle.scData[i].chan[0] = '\0';
@@ -2303,6 +2306,7 @@ void medmGetValues(ResourceBundle *pRB, ...)
 		strcpy(ptrace[i].xdata,pRB->cpData[i].xdata);
 		strcpy(ptrace[i].ydata,pRB->cpData[i].ydata);
 		ptrace[i].data_clr = pRB->cpData[i].data_clr;
+		ptrace[i].yaxis = pRB->cpData[i].yaxis;
 	    }
 	    break;
 	}
@@ -3230,6 +3234,7 @@ void updateGlobalResourceBundleAndResourcePalette(Boolean objectDataOnly)
 	    strcpy(globalResourceBundle.cpData[i].xdata, p->trace[i].xdata);
 	    strcpy(globalResourceBundle.cpData[i].ydata, p->trace[i].ydata);
 	    globalResourceBundle.cpData[i].data_clr = p->trace[i].data_clr;
+	    globalResourceBundle.cpData[i].yaxis = p->trace[i].yaxis;
 	}
 	for (i = X_AXIS_ELEMENT; i <= Y2_AXIS_ELEMENT; i++) {
 	    globalResourceBundle.axis[i] = p->axis[i];

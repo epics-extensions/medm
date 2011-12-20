@@ -25,9 +25,7 @@
 #define CP_XDATA_COLUMN         0
 #define CP_YDATA_COLUMN         1
 #define CP_COLOR_COLUMN         2
-
-#define CP_APPLY_BTN    0
-#define CP_CLOSE_BTN    1
+#define CP_YAXIS_COLUMN         3
 
 #define CP_X   0
 #define CP_Y   1
@@ -73,6 +71,8 @@ typedef struct _MedmCartesianPlot {
     XYTrace          triggerCh;
     XYTrace          countCh;
     int              nTraces;       /* number of traces (<=MAX_TRACES) */
+    int              nTracesY1;     /* number of traces (<=MAX_TRACES) */
+    int              nTracesY2;     /* number of traces (<=MAX_TRACES) */
     int              nPoints;       /* number of points in a trace */
     CpDataHandle     hcp1, hcp2;    /* CpData handles */
   /* Used for channel-based range determination (filled in at connect) */
@@ -108,7 +108,7 @@ void CpGetAxisInfo(Widget w,
   XcVType *xMinF, XcVType *yMinF, XcVType *y2MinF);
 void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF);
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
-  int fillType, XColor color, int pointSize);
+  int fillType, XColor color, int pointSize, int Yaxis, int nYaxis);
 void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
   XcVType tick, XcVType num, int precision);
 void CpSetAxisMax(Widget w, int axis, XcVType max, XcVType tick,

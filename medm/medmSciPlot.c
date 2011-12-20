@@ -236,8 +236,9 @@ void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 }
 
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
-  int fillType, XColor color, int pointSize)
+  int fillType, XColor color, int pointSize, int Yaxis, int nYaxis)
   /* Fill type is not supported */
+  /* Yaxis, nYaxis are unused */
 {
     int listid, colorid, pointStyle, lineStyle, set;
 

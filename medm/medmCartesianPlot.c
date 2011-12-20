@@ -26,6 +26,30 @@
 #define DEBUG_ERASE 0
 #define DEBUG_ACCESS 0
 
+#if defined(XRTGRAPH)
+#define CP_COLS             4
+#else
+#define CP_COLS             3
+#endif
+
+/* These must start with 2, 0-1 are for option menu buttons.  If any
+   of option menus have more values, 2 must change to accomodate the
+   largest. */
+#define CP_XDATA_BTN           2
+#define CP_YDATA_BTN           3
+#define CP_COLOR_BTN           4
+#define CP_YAXIS_BTN           5
+
+#define CP_APPLY_BTN           6
+#define CP_CLOSE_BTN           7
+
+#define CP_DEFAULT_CLR      4     /* grey */
+
+
+#define SETHIGH(x) ((x) << 16)
+#define GETHIGH(x) ((x) >> 16)
+#define GETLOW(x)  ((x) & 0xFF)
+
 /* Determines if the count from the PV is used. Does not determine if
  * the PV is implemented. It is implemented in any event. */
 #define USECOUNTPV 1
@@ -94,6 +118,8 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp);
 static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint);
 
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs);
+static void cartesianPlotDialogStoreTextEntries(void);
+static void cartesianPlotDialogReset();
 
 #if DEBUG_ERASE
 static void dumpCartesianPlotData(const char *title,
@@ -117,17 +143,16 @@ static DlDispatchTable cartesianPlotDlDispatchTable = {
     NULL,
     NULL};
 
-static String cpColumnLabels[] = {"X Data","Y Data","Color",};
-static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,};
-static short cpColumnWidths[] = {36,36,6,};
+static String cpColumnLabels[] = {"X Data","Y Data","Color","Y Axis",};
+static short cpColumnWidths[] = {36,36,6,6,};
+#if 0
+static int cpColumnMaxLengths[] = {MAX_TOKEN_LENGTH-1,MAX_TOKEN_LENGTH-1,6,6,};
 static unsigned char cpColumnLabelAlignments[] = {
-    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER, XmALIGNMENT_CENTER,};
+    XmALIGNMENT_CENTER, XmALIGNMENT_CENTER, XmALIGNMENT_CENTER,  XmALIGNMENT_CENTER,};
+#endif
 
-static String cpRows[MAX_TRACES][3];
-static String *cpCells[MAX_TRACES];
-
-static Pixel cpColorRows[MAX_TRACES][3];
-static Pixel *cpColorCells[MAX_TRACES];
+static Widget table[MAX_TRACES][CP_COLS];
+static DlTrace tempTrace[MAX_TRACES];
 
 static Widget axisRangeMenu[3];                 /* X_AXIS_ELEMENT =0 */
 static Widget axisStyleMenu[3];                 /* Y1_AXIS_ELEMENT=1 */
@@ -215,6 +240,7 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 {
     MedmCartesianPlot *pcp;
     int i, validTraces;
+    int nTracesY1, nTracesY2;
     Widget localWidget;
     DlCartesianPlot *dlCartesianPlot = dlElement->structure.cartesianPlot;
 
@@ -232,6 +258,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       /* Pre-initialize */
 	pcp->updateTask = NULL;
 	pcp->nTraces=0;
+	pcp->nTracesY1=0;
+	pcp->nTracesY2=0;
 	pcp->nPoints=0;
 	pcp->hcp1 = pcp->hcp2 = NULL;
 	pcp->dirty1 = pcp->dirty2 = False;
@@ -257,6 +285,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
        *     cartesianPlotUpdateScreenFirstTime(), which will change it
        *     to cartesianPlotUpdateValueCb() when it is finished */
 	validTraces = 0;
+	nTracesY1 = 0;
+	nTracesY2 = 0;
 	for(i = 0; i < MAX_TRACES; i++) {
 	    Boolean validTrace = False;
 	  /* X data */
@@ -283,6 +313,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    }
 	    if(validTrace) {
 		pcp->xyTrace[validTraces].cartesianPlot = pcp;
+	        if(dlCartesianPlot->trace[i].yaxis == 0 ) nTracesY1++;
+	        else nTracesY2++;
 		validTraces++;
 	    }
 	}
@@ -299,6 +331,8 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 
       /* Record the number of traces in the cartesian plot */
 	pcp->nTraces = validTraces;
+	pcp->nTracesY1 = nTracesY1;
+	pcp->nTracesY2 = nTracesY2;
 
       /* Allocate (or set to NULL) the X Record in the eraseCh XYTrace */
 	if((dlCartesianPlot->erase[0] != '\0') && (validTraces > 0)) {
@@ -1431,6 +1465,8 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     int firstTime=1, count=0, nPoints=0, nPointsOld=0;
     int iPrec, kk, pointSize;
     int i, j, n;
+    int iY1,iY2;
+    int Yaxis,iYaxis;
 
 #if DEBUG_RESET
     print("cartesianPlotResetPlot: \n");
@@ -1487,10 +1523,8 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
    * always at least 1. */
     pcp->nPoints=nPoints;
     hcp1 = hcp2 = NULL;
-    hcp1 = CpDataCreate(w,CP_GENERAL,1,nPoints);
-    if(pcp->nTraces > 1) {
-	hcp2 = CpDataCreate(w,CP_GENERAL,pcp->nTraces-1,nPoints);
-    }
+    if(pcp->nTracesY1 > 0) hcp1 = CpDataCreate(w,CP_GENERAL,pcp->nTracesY1,nPoints);
+    if(pcp->nTracesY2 > 0) hcp2 = CpDataCreate(w,CP_GENERAL,pcp->nTracesY2,nPoints);
 
   /* Set the data pointers in the MedmCartesianPlot */
     pcp->hcp1 = hcp1;
@@ -1505,20 +1539,31 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 
   /* Loop over traces and set CpDataStyle array */
     pointSize = MAX(2, dlCartesianPlot->object.height/70);
+    iY1 = iY2 = 0;
     for(i = 0; i < pcp->nTraces; i++) {
-	hcp=i?hcp2:hcp1;
+	Yaxis = dlCartesianPlot->trace[i].yaxis;
+	if(Yaxis == 0) {
+	    hcp=hcp1;
+	    iY1++;
+	    iYaxis=iY1;
+	} else {
+	    hcp=hcp2;
+	    iY2++;
+	    iYaxis=iY2;
+	}
+
 	switch(dlCartesianPlot->style) {
 	case POINT_PLOT:
 	    CpSetAxisStyle(w, hcp, i, CP_LINE_NONE, CP_LINE_NONE,
-	      xColors[i], pointSize);
+	      xColors[i], pointSize, Yaxis, iYaxis-1);
 	    break;
 	case LINE_PLOT:
 	    CpSetAxisStyle(w, hcp, i, CP_LINE_SOLID, CP_LINE_NONE,
-	      xColors[i], pointSize);
+	      xColors[i], pointSize, Yaxis, iYaxis-1);
 	    break;
 	case FILL_UNDER_PLOT:
 	    CpSetAxisStyle(w, hcp, i, CP_LINE_SOLID, CP_LINE_SOLID,
-	      xColors[i], pointSize);
+	      xColors[i], pointSize, Yaxis, iYaxis-1);
 	    break;
 	}
     }
@@ -1611,13 +1656,17 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
    * them */
     minX = minY = minY2 = FLT_MAX;
     maxX = maxY = maxY2 = (float)(-0.99*FLT_MAX);
+    iY1 = iY2 = 0;
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *pt = &(pcp->xyTrace[i]);
+	Yaxis = dlCartesianPlot->trace[i].yaxis;
       /* Set the pointsUsed to 0 */
-	if(i <= 0) {
-	    CpDataSetPointsUsed(w,hcp1,i,0);
+	if(Yaxis <= 0){
+	    CpDataSetPointsUsed(w,hcp1,iY1,0);
+            iY1++;
 	} else {
-	    CpDataSetPointsUsed(w,hcp2,i-1,0);
+	    CpDataSetPointsUsed(w,hcp2,iY2,0);
+            iY2++;
 	}
 
       /* Determine data type (based on type (scalar or vector) of data) */
@@ -1637,7 +1686,7 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    }
 
 	  /* Get bounds */
-	    if(i <= 0) {
+	    if(Yaxis <= 0){
 		minY = (float)MIN(minY,pt->recordY->lopr);
 		maxY = (float)MAX(maxY,pt->recordY->hopr);
 	    } else {
@@ -1651,15 +1700,15 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    if(pt->recordX->elementCount > 1) {
 	      /* Vector/waveform */
 		pt->type = CP_XVector;
-		if(i <= 0) {
+	        if(Yaxis <= 0){
 		    for(j = 0; j < (int)pt->recordX->elementCount; j++)
-		      CpDataSetYElement(hcp1,i,j,(float)j);
+		      CpDataSetYElement(hcp1,iY1-1,j,(float)j);
 		    minY = (float)MIN(minY,0.);
 		    maxY = (float)MAX(maxY,
 		      (float)((int)pt->recordX->elementCount-1));
 		} else {
 		    for(j = 0; j < (int)pt->recordX->elementCount; j++)
-		     CpDataSetYElement(hcp2,i-1,j,(float)j);
+		     CpDataSetYElement(hcp2,iY2-1,j,(float)j);
 		    minY2 = (float)MIN(minY2,0.);
 		    maxY2 = (float)MAX(maxY2,(float)pt->recordX->elementCount-1);
 		}
@@ -1668,16 +1717,16 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    } else {
 	      /* Scalar */
 		pt->type = CP_XScalar;
-		if(i <= 0) {
+	        if(Yaxis <= 0){
 		    for(j = 0; j < count; j++)
-		      CpDataSetYElement(hcp1,i,j,(float)j);
-		    CpDataSetXElement(hcp1,i,0,(float)pt->recordX->value);
+		      CpDataSetYElement(hcp1,iY1-1,j,(float)j);
+		    CpDataSetXElement(hcp1,iY1-1,0,(float)pt->recordX->value);
 		    minY = (float)MIN(minY,0.);
 		    maxY = (float)MAX(maxY,(float)count);
 		} else {
 		    for(j = 0; j < count; j++)
-		      CpDataSetYElement(hcp2,i-1,j,(float)j);
-		    CpDataSetXElement(hcp2,i-1,0,(float)pt->recordX->value);
+		      CpDataSetYElement(hcp2,iY2-1,j,(float)j);
+		    CpDataSetXElement(hcp2,iY2-1,0,(float)pt->recordX->value);
 		    minY2 = (float)MIN(minY2,0.);
 		    maxY2 = (float)MAX(maxY2,(float)count);
 		}
@@ -1689,14 +1738,16 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    if(pt->recordY->elementCount > 1) {
 	      /* Vector/waveform */
 		pt->type = CP_YVector;
-		if(i <= 0) {
-		    for(j = 0; j < pt->recordY->elementCount; j++)
-		      CpDataSetXElement(hcp1,i,j,(float)j);
+	        if(Yaxis <= 0){
+		    for(j = 0; j < (int)pt->recordY->elementCount; j++)
+{
+		      CpDataSetXElement(hcp1,iY1-1,j,(float)j);
+}
 		    minY = (float)MIN(minY,pt->recordY->lopr);
 		    maxY = (float)MAX(maxY,pt->recordY->hopr);
 		} else {
 		    for(j = 0; j < pt->recordY->elementCount; j++)
-		      CpDataSetXElement(hcp2,i-1,j,(float)j);
+		      CpDataSetXElement(hcp2,iY2-1,j,(float)j);
 		    minY2 = (float)MIN(minY2,pt->recordY->lopr);
 		    maxY2 = (float)MAX(maxY2,pt->recordY->hopr);
 		}
@@ -1705,19 +1756,19 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
 	    } else {
 	      /* Scalar */
 		pt->type = CP_YScalar;
-		if(i <= 0) {
+	        if(Yaxis <= 0){
 		    for(j = 0; j < count; j++)
 		      CpDataSetXElement(hcp1,0,j,(float)j);
 		    CpDataSetYElement(hcp1,0,0,(float)pt->recordY->value);
 		    minY = (float)MIN(minY,pt->recordY->lopr);
 		    maxY = (float)MAX(maxY,pt->recordY->hopr);
-		} else {
+	        } else {
 		    for(j = 0; j < count; j++)
 		      CpDataSetXElement(hcp2,0,j,(float)j);
 		    CpDataSetYElement(hcp2,0,0,(float)pt->recordY->value);
 		    minY2 = (float)MIN(minY2,pt->recordY->lopr);
 		    maxY2 = (float)MAX(maxY2,pt->recordY->hopr);
-		}
+	        }
 		minX = (float)MIN(minX,0.);
 		maxX = (float)MAX(maxX,(float)count);
 	    }
@@ -1725,15 +1776,18 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     }     /* End for loop over traces */
 
   /* Record the trace number and set the data pointers in the XYTrace */
+    iY1 = iY2 = 0;
     for(i = 0; i < pcp->nTraces; i++) {
 	XYTrace *pt = &(pcp->xyTrace[i]);
-
-	if( i <= 0) {
+	Yaxis = dlCartesianPlot->trace[i].yaxis;
+	if(Yaxis <= 0){
 	    pt->hcp = hcp1;
-	    pt->trace = i;
-	} else {
+	    pt->trace = iY1;
+            iY1++;
+    	} else {
 	    pt->hcp = hcp2;
-	    pt->trace = i-1;
+	    pt->trace = iY2;
+            iY2++;
 	}
     }
 
@@ -2003,8 +2057,10 @@ DlElement *createDlCartesianPlot(DlElement *p)
 	dlCartesianPlot->count = 1;
 	dlCartesianPlot->style = POINT_PLOT;
 	dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
-	for(traceNumber = 0; traceNumber < MAX_TRACES; traceNumber++)
+	for(traceNumber = 0; traceNumber < MAX_TRACES; traceNumber++){
 	  traceAttributeInit(&(dlCartesianPlot->trace[traceNumber]));
+	  if(traceNumber == 0) dlCartesianPlot->trace[traceNumber].yaxis=0;
+	}
 	plotAxisDefinitionInit(&(dlCartesianPlot->axis[X_AXIS_ELEMENT]));
 	plotAxisDefinitionInit(&(dlCartesianPlot->axis[Y1_AXIS_ELEMENT]));
 	plotAxisDefinitionInit(&(dlCartesianPlot->axis[Y2_AXIS_ELEMENT]));
@@ -2074,6 +2130,7 @@ DlElement *parseCartesianPlot(DisplayInfo *displayInfo)
 		  dlCartesianPlot->erase_oldest = ERASE_OLDEST_OFF;
 	    } else if(!strncmp(token,"trace",5)) {
 		traceNumber = MIN(token[6] - '0', MAX_TRACES - 1);
+		if(traceNumber == 0) dlCartesianPlot->trace[traceNumber].yaxis=0;
 		parseTrace(displayInfo,
 		  &(dlCartesianPlot->trace[traceNumber]));
 	    } else if(!strcmp(token,"x_axis")) {
@@ -3186,56 +3243,6 @@ void updateCartesianPlotAxisDialogFromWidget(Widget cp)
     }
 }
 
-static void cartesianPlotActivate(Widget w, XtPointer cd, XtPointer cbs)
-{
-    DisplayInfo *cdi=currentDisplayInfo;
-    int buttonType = (intptr_t)cd;
-    String **newCells;
-    int i;
-
-    UNREFERENCED(w);
-    UNREFERENCED(cbs);
-
-    switch (buttonType) {
-    case CP_APPLY_BTN:
-      /* commit changes in matrix to global matrix array data */
-	XbaeMatrixCommitEdit(cpMatrix,False);
-	XtVaGetValues(cpMatrix,XmNcells,&newCells,NULL);
-      /* now update globalResourceBundle...*/
-	for(i = 0; i < MAX_TRACES; i++) {
-	    strcpy(globalResourceBundle.cpData[i].xdata,
-	      newCells[i][CP_XDATA_COLUMN]);
-	    strcpy(globalResourceBundle.cpData[i].ydata,
-	      newCells[i][CP_YDATA_COLUMN]);
-	    globalResourceBundle.cpData[i].data_clr =
-	      (int)cpColorRows[i][CP_COLOR_COLUMN];
-	}
-      /* and update the elements (since this level of "Apply" is analogous
-       *	to changing text in a text field in the resource palette
-       *	(don't need to traverse the display list since these changes
-       *	 aren't visible at the first level)
-       */
-	if(cdi) {
-	    DlElement *dlElement = FirstDlElement(
-	      cdi->selectedDlElementList);
-	    unhighlightSelectedElements();
-	    while(dlElement) {
-	      /* KE: This was =, changed to == */
-		if(dlElement->structure.element->type == DL_CartesianPlot)
-		  updateElementFromGlobalResourceBundle(dlElement->structure.element);
-		dlElement = dlElement->next;
-	    }
-	}
-	medmMarkDisplayBeingEdited(cdi);
-	XtPopdown(cartesianPlotS);
-	break;
-    case CP_CLOSE_BTN:
-	XtPopdown(cartesianPlotS);
-	break;
-    }
-}
-
-
 static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
 {
     int buttonType = (intptr_t)cd;
@@ -3252,81 +3259,196 @@ static void cartesianPlotAxisActivate(Widget w, XtPointer cd, XtPointer cbs)
     }
 }
 
-/*
- * function to handle cell selection in the matrix
- *	mostly it passes through for the text field entry
- *	but pops up the color editor for the color field selection
- */
-void cpEnterCellCallback(Widget w, XtPointer cd, XtPointer cbs)
+
+/* Implements the Apply button.  Copies the tempPen to the
+   globalResourceBundle
+   Until then the user can cancel without affecting real data.  */
+static void cartesianPlotDialogUpdateElement(void)
 {
-    XbaeMatrixEnterCellCallbackStruct *call_data = (XbaeMatrixEnterCellCallbackStruct *) cbs;
-    int row;
-
-    UNREFERENCED(w);
-    UNREFERENCED(cbs);
-
-    if(call_data->column == CP_COLOR_COLUMN) {
-      /* set this cell non-editable */
-	call_data->doit = False;
-      /* update the color palette, set index of the color vector element to set */
-	row = call_data->row;
-	setCurrentDisplayColorsInColorPalette(CPDATA_RC,row);
-	XtPopup(colorS,XtGrabNone);
-    }
-}
-
-
-/*
- * function to actually update the colors in the COLOR_COLUMN of the matrix
- */
-void cpUpdateMatrixColors()
-{
+    DisplayInfo *cdi=currentDisplayInfo;
     int i;
 
-  /* XmNcolors needs pixel values */
-    for(i = 0; i < MAX_TRACES; i++) {
-	cpColorRows[i][CP_COLOR_COLUMN] = currentColormap[
-	  globalResourceBundle.cpData[i].data_clr];
-    }
-    if(cpMatrix != NULL) XtVaSetValues(cpMatrix,XmNcolors,cpColorCells,NULL);
+  /* Read and store the text entries */
+    cartesianPlotDialogStoreTextEntries();
 
-  /* but for resource editing cpData should contain indexes into colormap */
-  /* this resource is copied, hence this is okay to do */
     for(i = 0; i < MAX_TRACES; i++) {
-	cpColorRows[i][CP_COLOR_COLUMN] = globalResourceBundle.cpData[i].data_clr;
+            globalResourceBundle.cpData[i] = tempTrace[i];
+    }
+   /* and update the elements (since this level of "Apply" is analogous
+    *        to changing text in a text field in the resource palette
+    *        (don't need to traverse the display list since these changes
+    *         aren't visible at the first level)
+    */
+    if(cdi) {
+        DlElement *dlElement = FirstDlElement(
+        cdi->selectedDlElementList);
+        unhighlightSelectedElements();
+        while(dlElement) {
+          /* KE: This was =, changed to == */
+            if(dlElement->structure.element->type == DL_CartesianPlot)
+            updateElementFromGlobalResourceBundle(dlElement->structure.element);
+            dlElement = dlElement->next;
+        }
+    }
+    medmMarkDisplayBeingEdited(cdi);
+
+}
+
+/* Sets the values in the tempTrace when controls in the dialog are
+   activated.  The row is stored in the high word of the cd and the
+   type is stored in the low word.  If the type is less than 3, it is
+   a button in the option menu, and the type is stored in the userData
+   of the row column parent of the button.  Otherwise the type in the
+   cd is valid. */
+static void cartesianPlotDialogCb(Widget w, XtPointer cd , XtPointer cbs)
+{
+  /* The type is in the low word of the cd and the row is in the high word */
+    int type = GETLOW((intptr_t)cd);
+    int row = GETHIGH((intptr_t)cd);
+    int button = 0;
+
+#if DEBUG_CP
+    print("\ncartesianPlotDialogCb: w=%x cd=%d type=%d row=%d\n",
+      w,(int)cd,type,row);
+#endif
+  /* If the type is less than 2, the callback comes from the option menu button
+   *   Find the real type from the userData of the RC parent of the button */
+    if(type < 2) {
+        XtPointer userData;
+
+        button=type;
+        XtVaGetValues(XtParent(w), XmNuserData, &userData, NULL);
+        type = GETLOW((intptr_t)userData);
+        row = GETHIGH((intptr_t)userData);
+    }
+
+  /* Check */
+    if(row < 0 || row > MAX_TRACES) {
+        medmPostMsg(1, "cartesianPlotDialogCb: Invalid row (%d)\n", row);
+        return;
+    }
+
+  /* Put all the text values into tempTrace since we do not get a
+     callback when they are entered */
+    cartesianPlotDialogStoreTextEntries();
+
+#if DEBUG_CP
+    print("  Final values: type=%d row=%d pL=%x\n",type,row,pL);
+#endif
+
+    switch(type) {
+    case CP_COLOR_BTN:
+        setCurrentDisplayColorsInColorPalette(CPDATA_RC,row);
+        XtPopup(colorS, XtGrabNone);
+        break;
+    case CP_YAXIS_BTN:
+        tempTrace[row].yaxis=button;
+        break;
+    case CP_APPLY_BTN:
+        cartesianPlotDialogUpdateElement();
+#if 0
+        XtPopdown(cartesianPlotS);
+#endif
+        break;
+    case CP_CLOSE_BTN:
+        XtPopdown(cartesianPlotS);
+        return;
+
+    }
+
+  /* Reset the dialog box */
+    cartesianPlotDialogReset();
+}
+
+/* Reads the text entries and stores the values in the tempTrace.  There
+   is no indication when a value is entered in a text entry, so we
+   cannot do this when the value is changed.  (Perhaps we could, but
+   we don't.)  */
+static void cartesianPlotDialogStoreTextEntries(void)
+{
+    int i;
+    char *string;
+
+  /* Copy text values from dialog to tempTrace.  Other values
+     should be up to date. */
+    for(i = 0; i < MAX_TRACES; i++) {
+
+        string = XmTextFieldGetString(table[i][0]);
+        if(string) {
+            strcpy(tempTrace[i].xdata, string);
+            XtFree(string);
+        }
+        string = XmTextFieldGetString(table[i][1]);
+        if(string) {
+            strcpy(tempTrace[i].ydata, string);
+            XtFree(string);
+        }
     }
 }
+
+
+/* Udates the colors in the COLOR_COLUMN of the matrix */
+void cpUpdateMatrixColors(int clr, int row)
+{
+    Widget w;
+    Pixel pixel;
+    Pixel *colormap =currentDisplayInfo->colormap;
+
+    tempTrace[row].data_clr = clr;
+    w = table[row][2];
+    if(tempTrace[row].xdata || tempTrace[row].ydata) {
+      /* Use the specified color */
+        pixel = colormap[tempTrace[row].data_clr];
+    } else {
+      /* Use the background color of the cartesianPlotS */
+        XtVaGetValues(cartesianPlotS, XmNbackground, &pixel, NULL);
+        tempTrace[row].data_clr = 0;
+    }
+
+#if DEBUG_COLOR
+    print("cpUpdateMatrixColors: clr=%d row=%d pixel=%x w=%x\n",
+      clr,row,pixel,w);
+#endif
+    if(w) XtVaSetValues(w, XmNbackground, pixel, NULL);
+}
+
+
 
 /*
  * create data dialog
  */
 Widget createCartesianPlotDataDialog(Widget parent)
 {
-    Widget shell, applyButton, closeButton;
-    Dimension cWidth, cHeight, aWidth, aHeight;
+    Widget shell, w, wparent;
+    Widget columns[CP_COLS], labels[CP_COLS];
+    Widget cpForm, cpActionAreaW, cpMatrixW;
+#if defined(XRTGRAPH)
+    XmString label, opt1, opt2;
+#endif
     Arg args[12];
-    XmString xmString;
     int i, j, n;
     static Boolean first = True;
 
 
   /* Initialize file-scoped globals */
     if(first) {
-	first = False;
-	for(i = 0; i < MAX_TRACES; i++) {
-	    for(j = 0; j < 2; j++) cpRows[i][j] = NULL;
-	    cpRows[i][2] = dashes;
-	    cpCells[i] = &cpRows[i][0];
-	    cpColorCells[i] = &cpColorRows[i][0];
-	}
+        first = False;
+
+        for (i = 0; i < MAX_TRACES; i++) {
+           for (j = 0; j < CP_COLS; j++) {
+               table[i][j] = NULL;
+/******************  CHECK NEXT LINE ******************/
+               tempTrace[i].data_clr = CP_DEFAULT_CLR;
+           }
+        }
     }
 
   /*
    * Create the interface
    *
-   *	       xdata | ydata | color
-   *	       ---------------------
-   *	    1 |  A      B      C
+   *	       xdata | ydata |color | yaxis
+   *	       ----------------------------
+   *	    1 |  A      B      C      D
    *	    2 |
    *	    3 |
    *		     ...
@@ -3350,86 +3472,214 @@ Widget createCartesianPlotDataDialog(Widget parent)
 #endif
     XtSetValues(shell,args,n);
     XmAddWMProtocolCallback(shell,WM_DELETE_WINDOW,
-      cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
-    n = 0;
-    XtSetArg(args[n],XmNrows,MAX_TRACES); n++;
-    XtSetArg(args[n],XmNcolumns,3); n++;
-    XtSetArg(args[n],XmNcolumnMaxLengths,cpColumnMaxLengths); n++;
-    XtSetArg(args[n],XmNcolumnWidths,cpColumnWidths); n++;
-    XtSetArg(args[n],XmNcolumnLabels,cpColumnLabels); n++;
-    XtSetArg(args[n],XmNcolumnMaxLengths,cpColumnMaxLengths); n++;
-    XtSetArg(args[n],XmNcolumnWidths,cpColumnWidths); n++;
-    XtSetArg(args[n],XmNcolumnLabelAlignments,cpColumnLabelAlignments); n++;
-    XtSetArg(args[n],XmNboldLabels,False); n++;
-    cpMatrix = XtCreateManagedWidget("cpMatrix",
-      xbaeMatrixWidgetClass,cpForm,args,n);
-    cpUpdateMatrixColors();
-    XtAddCallback(cpMatrix,XmNenterCellCallback,
-      cpEnterCellCallback,(XtPointer)NULL);
+      cartesianPlotDialogCb,(XtPointer)CP_CLOSE_BTN);
+
+  /* Create a row column for the matrix (cpMatrix) */
+    cpMatrixW = XtVaCreateWidget("cpMatrix",
+      xmRowColumnWidgetClass, cpForm,
+      XmNpacking, XmPACK_TIGHT,
+      XmNorientation, XmHORIZONTAL,
+      XmNtopAttachment, XmATTACH_FORM,
+      XmNleftAttachment, XmATTACH_FORM,
+      XmNrightAttachment, XmATTACH_FORM,
+      NULL);
+
+    for(j=0; j < CP_COLS; j++) {
+      /* Create a form for each column */
+        w = XtVaCreateManagedWidget("columnF",
+          xmFormWidgetClass, cpMatrixW,
+          XmNfractionBase, MAX_TRACES + 1,
+          NULL);
+        columns[j] = wparent = w;
+
+      /* Create a column label */
+        w = XtVaCreateManagedWidget(cpColumnLabels[j],
+          xmLabelWidgetClass, wparent,
+          XmNcolumns, cpColumnWidths[j],
+          XmNalignment, XmALIGNMENT_CENTER,
+          XmNtopAttachment, XmATTACH_POSITION,
+          XmNbottomAttachment, XmATTACH_POSITION,
+          XmNleftAttachment, XmATTACH_FORM,
+          XmNrightAttachment, XmATTACH_FORM,
+          XmNtopPosition, 0,
+          XmNbottomPosition, 1,
+          NULL);
+        labels[j] = w;
+
+        for(i=0; i < MAX_TRACES; i++) {
+            switch(j) {
+            case 0:
+                w = XtVaCreateManagedWidget("xdata",
+                  xmTextFieldWidgetClass, wparent,
+                  XmNmaxLength, MAX_TOKEN_LENGTH-1,
+                  XmNcolumns, cpColumnWidths[0],
+                  XmNtopAttachment, XmATTACH_POSITION,
+                  XmNbottomAttachment, XmATTACH_POSITION,
+                  XmNleftAttachment, XmATTACH_FORM,
+                  XmNrightAttachment, XmATTACH_FORM,
+                  XmNtopPosition, i + 1,
+                  XmNbottomPosition, i + 2,
+                  NULL);
+                table[i][0] = w;
+                break;
+            case 1:
+                w = XtVaCreateManagedWidget("ydata",
+                  xmTextFieldWidgetClass, wparent,
+                  XmNmaxLength, MAX_TOKEN_LENGTH-1,
+                  XmNcolumns, cpColumnWidths[0],
+                  XmNtopAttachment, XmATTACH_POSITION,
+                  XmNbottomAttachment, XmATTACH_POSITION,
+                  XmNleftAttachment, XmATTACH_FORM,
+                  XmNrightAttachment, XmATTACH_FORM,
+                  XmNtopPosition, i + 1,
+                  XmNbottomPosition, i + 2,
+                  NULL);
+                table[i][1] = w;
+                break;
+            case 2:
+                w = XtVaCreateManagedWidget("color",
+                  xmDrawnButtonWidgetClass, wparent,
+                  XmNshadowType, XmSHADOW_IN,
+                  XmNtopAttachment, XmATTACH_POSITION,
+                  XmNbottomAttachment, XmATTACH_POSITION,
+                  XmNleftAttachment, XmATTACH_FORM,
+                  XmNrightAttachment, XmATTACH_FORM,
+                  XmNtopPosition, i + 1,
+                  XmNbottomPosition, i + 2,
+                  NULL);
+                XtAddCallback(w, XmNactivateCallback, cartesianPlotDialogCb,
+                  (XtPointer)(intptr_t)(CP_COLOR_BTN + SETHIGH(i)));
+                table[i][2] = w;
+                break;
+#if defined(XRTGRAPH)
+            case 3:
+                label = XmStringCreateLocalized("Y axis");
+                opt1 = XmStringCreateLocalized("Y");
+                opt2 = XmStringCreateLocalized("Y2");
+                w = XmVaCreateSimpleOptionMenu(wparent, "yaxis",
+                  label, '\0', 0, cartesianPlotDialogCb,
+                  XmVaPUSHBUTTON, opt1, '\0', NULL, NULL,
+                  XmVaPUSHBUTTON, opt2, '\0', NULL, NULL,
+                  XmNuserData, (XtPointer)(intptr_t)(CP_YAXIS_BTN + SETHIGH(i)),
+                  XmNtopAttachment, XmATTACH_POSITION,
+                  XmNbottomAttachment, XmATTACH_POSITION,
+                  XmNleftAttachment, XmATTACH_FORM,
+                  XmNrightAttachment, XmATTACH_FORM,
+                  XmNtopPosition, i + 1,
+                  XmNbottomPosition, i + 2,
+                  NULL);
+                XtManageChild(w);
+                optionMenuRemoveLabel(w);
+                XmStringFree(label);
+                XmStringFree(opt1);
+                XmStringFree(opt2);
+                table[i][3] = w;
+                break;
+#endif
+            }
+        }
+    }
+
+  /* Create action area */
+    w = XtVaCreateWidget("cpActionArea",
+      xmFormWidgetClass, cpForm,
+      XmNshadowThickness, 0,
+      XmNfractionBase, 5,
+      XmNtopAttachment, XmATTACH_WIDGET,
+      XmNtopWidget, cpMatrixW,
+      XmNleftAttachment, XmATTACH_FORM,
+      XmNrightAttachment, XmATTACH_FORM,
+      XmNbottomAttachment, XmATTACH_FORM,
+      NULL);
+    cpActionAreaW = wparent = w;
+
+    w = XtVaCreateManagedWidget("Apply",
+      xmPushButtonWidgetClass, wparent,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNtopOffset,        12,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNbottomOffset,     12,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     1,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    2,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,
+      cartesianPlotDialogCb,(XtPointer)CP_APPLY_BTN);
+
+    w = XtVaCreateManagedWidget("Close",
+      xmPushButtonWidgetClass, wparent,
+      XmNtopAttachment,    XmATTACH_FORM,
+      XmNtopOffset,        12,
+      XmNbottomAttachment, XmATTACH_FORM,
+      XmNbottomOffset,     12,
+      XmNleftAttachment,   XmATTACH_POSITION,
+      XmNleftPosition,     3,
+      XmNrightAttachment,  XmATTACH_POSITION,
+      XmNrightPosition,    4,
+      NULL);
+    XtAddCallback(w,XmNactivateCallback,
+      cartesianPlotDialogCb,(XtPointer)CP_CLOSE_BTN);
+
+  /* Fill in the tempTraces */
+    for (i = 0; i < MAX_TRACES; i++) {
+        tempTrace[i] = globalResourceBundle.cpData[i];
+    }
 
 
-    xmString = XmStringCreateLocalized("Cancel");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,xmString); n++;
-    closeButton = XmCreatePushButton(cpForm,"closeButton",args,n);
-    XtAddCallback(closeButton,XmNactivateCallback,
-      cartesianPlotActivate,(XtPointer)CP_CLOSE_BTN);
-    XtManageChild(closeButton);
-    XmStringFree(xmString);
+  /* Fill in the values */
+    cartesianPlotDialogReset();
 
-    xmString = XmStringCreateLocalized("Apply");
-    n = 0;
-    XtSetArg(args[n],XmNlabelString,xmString); n++;
-    applyButton = XmCreatePushButton(cpForm,"applyButton",args,n);
-    XtAddCallback(applyButton,XmNactivateCallback,
-      cartesianPlotActivate,(XtPointer)CP_APPLY_BTN);
-    XtManageChild(applyButton);
-    XmStringFree(xmString);
-
-  /* Make APPLY and CLOSE buttons same size */
-    XtVaGetValues(closeButton,XmNwidth,&cWidth,XmNheight,&cHeight,NULL);
-    XtVaGetValues(applyButton,XmNwidth,&aWidth,XmNheight,&aHeight,NULL);
-    XtVaSetValues(closeButton,XmNwidth,MAX(cWidth,aWidth),
-      XmNheight,MAX(cHeight,aHeight),NULL);
-
-  /* Make the APPLY button the default for the form */
-    XtVaSetValues(cpForm,XmNdefaultButton,applyButton,NULL);
-
-  /*
-   * Do form layout
-   */
-
-  /* cpMatrix */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-    XtSetValues(cpMatrix,args,n);
-  /* apply */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,cpMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNleftPosition,25); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(applyButton,args,n);
-  /* close */
-    n = 0;
-    XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-    XtSetArg(args[n],XmNtopWidget,cpMatrix); n++;
-    XtSetArg(args[n],XmNtopOffset,12); n++;
-    XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-    XtSetArg(args[n],XmNrightPosition,75); n++;
-    XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-    XtSetArg(args[n],XmNbottomOffset,12); n++;
-    XtSetValues(closeButton,args,n);
-
-
+  /* Manage the managers */
+    XtManageChild(cpMatrixW);
+    XtManageChild(cpActionAreaW);
     XtManageChild(cpForm);
 
     return shell;
+}
+
+/* Sets values into the dialog from the tempTrace */
+static void cartesianPlotDialogReset()
+{
+    Widget w;
+    Pixel pixel=0;
+    int i;
+    DlTrace *pTrace;
+    Pixel *colormap =currentDisplayInfo->colormap;
+
+  /* Loop over rows */
+    for (i = 0; i < MAX_TRACES; i++) {
+      /*  Set the pointers */
+        pTrace = &tempTrace[i];
+
+      /* xdata */
+        w = table[i][0];
+        XmTextFieldSetString(table[i][0], pTrace->xdata);
+        XtVaSetValues(w, XmNeditable, True, NULL);
+
+      /* ydata */
+        w = table[i][1];
+        XmTextFieldSetString(table[i][1], pTrace->ydata);
+        XtVaSetValues(w, XmNeditable, True, NULL);
+
+      /* Color */
+        w = table[i][2];
+        if(*pTrace->xdata || *pTrace->ydata ) {
+          /* Use the specified color */
+            pixel = colormap[pTrace->data_clr];
+        } else {
+          /* Use the background color of the xdata */
+            XtVaGetValues(table[i][0], XmNbackground, &pixel, NULL);
+        }
+        if(w) XtVaSetValues(w, XmNbackground, pixel, NULL);
+
+#if defined(XRTGRAPH)
+      /* yaxis */
+        w = table[i][3];
+        XtSetSensitive(w, True);
+        optionMenuSet(w, pTrace->yaxis);
+#endif
+    }
 }
 
 /*
@@ -3441,15 +3691,12 @@ void updateCartesianPlotDataDialog()
 {
     int i;
 
-    for(i = 0; i < MAX_TRACES; i++) {
-	cpRows[i][0] = globalResourceBundle.cpData[i].xdata;
-	cpRows[i][1] = globalResourceBundle.cpData[i].ydata;
-	cpRows[i][2] =  dashes;
+  /* Fill in the tempTraces */
+    for (i = 0; i < MAX_TRACES; i++) {
+        tempTrace[i] = globalResourceBundle.cpData[i];
     }
-  /* handle data_clr in here */
-    cpUpdateMatrixColors();
-    if(cpMatrix)
-      XtVaSetValues(cpMatrix,XmNcells,cpCells,NULL);
+    cartesianPlotDialogReset();
+
 }
 
 #if DEBUG_ERASE

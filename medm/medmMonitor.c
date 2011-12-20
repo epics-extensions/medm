@@ -56,6 +56,7 @@ void traceAttributeInit(DlTrace *trace)
     trace->xdata[0] = '\0';
     trace->ydata[0] = '\0';
     trace->data_clr = DEFAULT_CLR;
+    trace->yaxis = 1;
 }
 
 void parseMonitor(DisplayInfo *displayInfo, DlMonitor *monitor)
@@ -276,6 +277,12 @@ void parseTrace(DisplayInfo *displayInfo, DlTrace *trace)
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
 		trace->data_clr = atoi(token) % DL_MAX_COLORS;
+#if defined(XRTGRAPH)
+	    } else if (!strcmp(token,"yaxis")) {
+		getToken(displayInfo,token);
+		getToken(displayInfo,token);
+		trace->yaxis = atoi(token);
+#endif
 	    }
 	    break;
 	case T_LEFT_BRACE:
@@ -413,6 +420,7 @@ void writeDlTrace(FILE *stream, DlTrace *dlTrace, int index, int level)
     }
 #endif
     fprintf(stream,"\n%s\tdata_clr=%d",indent,dlTrace->data_clr);
+    fprintf(stream,"\n%s\tyaxis=%d",indent,dlTrace->yaxis);
     fprintf(stream,"\n%s}",indent);
 }
 

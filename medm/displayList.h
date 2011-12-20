@@ -334,8 +334,20 @@ const PvLimitsSrc_t FIRST_PV_LIMITS_SRC = PV_LIMITS_CHANNEL;
 extern const PvLimitsSrc_t FIRST_PV_LIMITS_SRC;
 #endif
 
+#define NUM_CARTESIAN_Y_AXIS        2
+typedef enum {
+    Y      = 79,
+    Y2     = 80
+} CartesianYAxis;
+#if defined(ALLOCATE_STORAGE) || defined(__cplusplus)
+const CartesianYAxis FIRST_CARTESIAN_Y_AXIS = Y;
+#else
+extern const CartesianYAxis FIRST_CARTESIAN_Y_AXIS;
+#endif
+
+
 #define MAX_OPTIONS             11    /* NUM_TEXT_FORMATS */
-#define NUMBER_STRING_VALUES    79    /* PV_LIMITS_UNUSED+1 */
+#define NUMBER_STRING_VALUES    81    /* Y2+1 */
 
 /*********************************************************************
  * stringValueTable for string-valued tokens - position sensitive!   *
@@ -373,6 +385,7 @@ char *stringValueTable[NUMBER_STRING_VALUES] = {
     "wd hh:00",
     "false", "true",
     "channel", "default", "user", "unused",
+    "Y", "Y2",
 };
 XmString xmStringValueTable[NUMBER_STRING_VALUES];
 
@@ -548,6 +561,7 @@ typedef struct {
     char xdata[MAX_TOKEN_LENGTH];
     char ydata[MAX_TOKEN_LENGTH];
     int data_clr;
+    int yaxis;
 } DlTrace;
 
 typedef struct {

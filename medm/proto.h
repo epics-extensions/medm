@@ -290,7 +290,7 @@ void retryConnections(void);
 
 /* medmCartesianPlot.c */
 void cpEnterCellCallback(Widget w, XtPointer, XtPointer);
-void cpUpdateMatrixColors(void);
+void cpUpdateMatrixColors(int clr, int row);
 Widget createCartesianPlotAxisDialog(Widget parent);
 Widget createCartesianPlotDataDialog(Widget parent);
 Widget createRelatedDisplayDataDialog(Widget parent);

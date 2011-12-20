@@ -168,7 +168,7 @@ void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 }
 
 void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
-  int fillType, XColor color, int pointSize)
+  int fillType, XColor color, int pointSize, int Yaxis, int iYaxis)
   /* hData is unused */
 {
     char rgb[16];
@@ -199,11 +199,6 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
       rgb,color.red,color.green,color.blue,color.pixel);
 #endif
 
-  /* First trace is y1 axis, others are y2 axis */
-    if(trace == 0) {
-	myds.point = XRT_POINT_DOT;
-	XrtSetNthDataStyle(w, trace, &myds);
-    } else {
 	switch(trace%8) {
 	case 0:
 	    myds.point = (XrtPoint)(XRT_POINT_DOT);
@@ -233,8 +228,10 @@ void CpSetAxisStyle(Widget w, CpDataHandle hData, int trace, int lineType,
 	    myds.point = (XrtPoint)(XRT_POINT_NONE);
 	    break;
 	}
-	XrtSetNthDataStyle2(w, trace-1, &myds);
-    }
+       
+       if(Yaxis == 0) XrtSetNthDataStyle(w, iYaxis, &myds);
+       else XrtSetNthDataStyle2(w, iYaxis, &myds);
+
 }
 
 void CpSetAxisAll(Widget w, int axis, XcVType max, XcVType min,
