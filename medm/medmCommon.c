@@ -1435,7 +1435,7 @@ TOKEN getToken(DisplayInfo *displayInfo, char *word)
 		    state = INMACRO;
 		} else {
 		    *w++ = '$';
-		    *w++ = c;
+	            ungetc(c,filePtr);
 		}
 		break;
 	    default  : *w++ = c;
