@@ -486,6 +486,7 @@ static void medmProcessCA(XtPointer cd, int *source , XtInputId *id)
 static void medmConnectEventCb(struct connection_handler_args args) {
     int status;
     Channel *pCh = (Channel *)ca_puser(args.chid);
+    int count;
 
   /* Increment the event counter */
     caTask.caEventCount++;
@@ -558,15 +559,20 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 		  ca_name(pCh->chid)?ca_name(pCh->chid):"Unknown",
 		  ca_message(status));
 	    }
+	    if(pCh->pr->currentCount == -2) {
+                count=0;
+            } else {
+                count=ca_element_count(pCh->chid);
+            }
 #ifdef __USING_TIME_STAMP__
 	    status = ca_add_array_event(
 	      dbf_type_to_DBR_TIME(ca_field_type(pCh->chid)),
-	      ca_element_count(pCh->chid),pCh->chid,
+	      count, pCh->chid,
 	      medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
 #else
 	    status = ca_add_array_event(
 	      dbf_type_to_DBR_STS(ca_field_type(pCh->chid)),
-	      ca_element_count(pCh->chid),pCh->chid,
+	      count, pCh->chid,
 	      medmUpdateChannelCb, pCh, 0.0,0.0,0.0, &(pCh->evid));
 #endif
 	    if(status != ECA_NORMAL) {
@@ -756,6 +762,7 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
     Record *pr;
     double value;
     int nBytes;
+    int allocBytes;
 
 #if DEBUG_CHANNEL_CB || DEBUG_LARGE_ARRAY
     const char *pvname=ca_name(args.chid);
@@ -807,9 +814,15 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
   /* Allocate space for the data */
     nBytes = dbr_size_n(args.type, args.count);
     if(!pCh->data) {
+        /* Allocate maximum space for the variable array data */
+        if(pr->currentCount == -2) {
+            allocBytes=dbr_size_n(args.type, pr->elementCount);
+        } else {
+            allocBytes=nBytes;
+        }
       /* No previous data, allocate */
-	pCh->data = (dataBuf *)malloc(nBytes);
-	pCh->size = nBytes;
+	pCh->data = (dataBuf *)malloc(allocBytes);
+	pCh->size = allocBytes;
 	if(!pCh->data) {
 	    medmPostMsg(1,"medmUpdateChannelCb: Memory allocation error [%s]\n",
 	      ca_name(args.chid)?ca_name(args.chid):"Name Unknown");
@@ -828,6 +841,7 @@ static void medmUpdateChannelCb(struct event_handler_args args) {
 	    return;
 	}
     }
+    pr->currentCount=args.count;
 
 #ifdef __USING_TIME_STAMP__
   /* Copy the returned time stamp to the Record */
@@ -1116,7 +1130,7 @@ static void caDelete(Record *pr)
 }
 
 /* Note that precision is initialized to -1 and some routines depend on this */
-static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
+static Record nullRecord = {-1,-1,-1,-1,0.0,0.0,0.0,-1,
                             NO_ALARM,NO_ALARM,False,False,False,
                             {NULL,NULL,NULL,NULL,
                              NULL,NULL,NULL,NULL,
@@ -1128,6 +1142,28 @@ static Record nullRecord = {-1,-1,-1,0.0,0.0,0.0,-1,
 			  /* Set monitorValueChanged to True, others
                              to false */
                             True,False,False,False};
+
+Record *medmAllocateRecordDynamicArrays(char *name, void (*updateValueCb)(XtPointer),
+  void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)
+{
+    Record *pR;
+
+  /* Don't allocate a record if the name is blank */
+    if(strlen(name) <= (size_t)0) {
+	return NULL;
+    }
+
+    pR = (Record *)malloc(sizeof(Record));
+    if(pR) {
+	*pR = nullRecord;
+	pR->currentCount=-2;
+	pR->caId = caAdd(name,pR);
+	pR->updateValueCb = updateValueCb;
+	pR->updateGraphicalInfoCb = updateGraphicalInfoCb;
+	pR->clientData = clientData;
+    }
+    return pR;
+}
 
 Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData)

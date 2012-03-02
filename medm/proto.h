@@ -278,6 +278,8 @@ void caTaskGetInfo(int *channelCount, int *channelConnected, int *caEventCount);
 #endif
 Record *medmAllocateRecord(char *name, void (*updateValueCb)(XtPointer),
   void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData);
+Record *medmAllocateRecordDynamicArrays(char *name, void (*updateValueCb)(XtPointer),
+  void (*updateGraphicalInfoCb)(XtPointer), XtPointer clientData);
 Record **medmAllocateDynamicRecords(DlDynamicAttribute *attr,
   void (*updateValueCb)(XtPointer), void (*updateGraphicalInfoCb)(XtPointer),
   XtPointer clientData);

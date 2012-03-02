@@ -291,22 +291,39 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
 	    Boolean validTrace = False;
 	  /* X data */
 	    if(dlCartesianPlot->trace[i].xdata[0] != '\0') {
-		pcp->xyTrace[validTraces].recordX =
-		  medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
-		    cartesianPlotUpdateScreenFirstTime,
-		    cartesianPlotUpdateGraphicalInfoCb,
-		    (XtPointer) &(pcp->xyTrace[validTraces]));
+	        if(dlCartesianPlot->count == 0) {
+		  pcp->xyTrace[validTraces].recordX =
+		    medmAllocateRecordDynamicArrays(dlCartesianPlot->trace[i].xdata,
+			cartesianPlotUpdateScreenFirstTime,
+			cartesianPlotUpdateGraphicalInfoCb,
+			(XtPointer) &(pcp->xyTrace[validTraces]));
+		} else {
+		  pcp->xyTrace[validTraces].recordX =
+		    medmAllocateRecord(dlCartesianPlot->trace[i].xdata,
+			cartesianPlotUpdateScreenFirstTime,
+			cartesianPlotUpdateGraphicalInfoCb,
+			(XtPointer) &(pcp->xyTrace[validTraces]));
+		}
+		
 		validTrace = True;
 	    } else {
 		pcp->xyTrace[validTraces].recordX = NULL;
 	    }
 	  /* Y data */
 	    if(dlCartesianPlot->trace[i].ydata[0] != '\0') {
-		pcp->xyTrace[validTraces].recordY =
-		  medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
-		    cartesianPlotUpdateScreenFirstTime,
-		    cartesianPlotUpdateGraphicalInfoCb,
-		    (XtPointer) &(pcp->xyTrace[validTraces]));
+	        if(dlCartesianPlot->count == 0) {
+		  pcp->xyTrace[validTraces].recordY =
+		    medmAllocateRecordDynamicArrays(dlCartesianPlot->trace[i].ydata,
+			cartesianPlotUpdateScreenFirstTime,
+			cartesianPlotUpdateGraphicalInfoCb,
+			(XtPointer) &(pcp->xyTrace[validTraces]));
+		} else {
+		  pcp->xyTrace[validTraces].recordY =
+		    medmAllocateRecord(dlCartesianPlot->trace[i].ydata,
+			cartesianPlotUpdateScreenFirstTime,
+			cartesianPlotUpdateGraphicalInfoCb,
+			(XtPointer) &(pcp->xyTrace[validTraces]));
+		}
 		validTrace = True;
 	    } else {
 		pcp->xyTrace[validTraces].recordY = NULL;
@@ -619,6 +636,10 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
+        /* Use count from the recordX */
+	if(dlCartesianPlot->count == 0) {
+	    count=pt->recordX->currentCount;
+	}
 	pointsUsed=MAX(count,0);
 	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	switch(pt->recordX->dataType) {
@@ -786,6 +807,11 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
+
+        /* Use count from the recordY */
+	if(dlCartesianPlot->count == 0) {
+	    count=pt->recordY->currentCount;
+	}
 	pointsUsed=MAX(count,0);
 	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	switch(pt->recordY->dataType) {
@@ -866,6 +892,10 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
+        /* Use count from the recordX */
+	if(dlCartesianPlot->count == 0) {
+	    count=pt->recordX->currentCount;
+	}
 	pointsUsed=MAX(count,0);
 	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	if(pr == pt->recordX) {
@@ -949,6 +979,10 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
+        /* Use count from the recordY */
+	if(dlCartesianPlot->count == 0) {
+	    count=pt->recordY->currentCount;
+	}
 	pointsUsed=MAX(count,0);
 	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 	if(pr == pt->recordY) {
@@ -1033,6 +1067,11 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
 	    if(chCount > 0 && chCount < count) count = chCount;
 	}
 #endif
+        /* Use count from recordX and recordY */
+	if(dlCartesianPlot->count == 0) {
+	    count = MIN(pt->recordX->currentCount, pt->recordY->currentCount);
+	}
+
 	pointsUsed=MAX(count,0);
 	CpDataSetPointsUsed(w,pt->hcp,pt->trace,pointsUsed);
 

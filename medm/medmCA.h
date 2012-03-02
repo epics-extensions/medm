@@ -78,6 +78,7 @@ typedef union {
 typedef struct _Record {
     int       caId;
     int       elementCount;
+    int       currentCount;
     short     dataType;
     double    value;
     double    hopr;
