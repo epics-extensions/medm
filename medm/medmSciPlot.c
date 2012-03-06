@@ -167,7 +167,6 @@ int CpDataSetPointsUsed(Widget w, CpDataHandle hData, int set, int point) {
     listid = hData->data[set].listid;
     SciPlotListUpdateFloat(w, listid, hData->data[set].pointsUsed,
       hData->data[set].xp, hData->data[set].yp);
-    SciPlotUpdate(w);
     return 1;
 }
 
