@@ -1219,7 +1219,11 @@ int xInfoMsg(Widget parent, const char *fmt, ...)
 	nargs=0;
 	XtSetArg(args[nargs],XmNtitle,"Information"); nargs++;
 	XtSetArg(args[nargs],XmNmessageString,xmString); nargs++;
+#ifndef WIN32
 	warningBox=XmCreateWarningDialog(parent,"infoMessage",
+#else
+	warningBox=XmCreateMessageDialog(parent,"infoMessage",
+#endif
 	  args,nargs);
 	XmStringFree(xmString);
 	child=XmMessageBoxGetChild(warningBox,XmDIALOG_CANCEL_BUTTON);

@@ -3520,7 +3520,11 @@ void dmSetAndPopupQuestionDialog(DisplayInfo    *displayInfo,
 
     if(displayInfo->questionDialog == NULL) {
       /* this doesn't seem to be working (and should check if MWM is running) */
+#ifndef WIN32
 	displayInfo->questionDialog = XmCreateQuestionDialog(displayInfo->shell,"questionDialog",NULL,0);
+#else
+	displayInfo->questionDialog = XmCreateMessageDialog(displayInfo->shell,"questionDialog",NULL,0);
+#endif
 	XtVaSetValues(displayInfo->questionDialog, XmNdialogStyle,XmDIALOG_APPLICATION_MODAL, NULL);
 	XtVaSetValues(displayInfo->questionDialog,XmNdeleteResponse,XmDO_NOTHING,NULL);
 	XtVaSetValues(XtParent(displayInfo->questionDialog),XmNtitle,"Question ?",NULL);
@@ -3619,7 +3623,11 @@ void dmSetAndPopupWarningDialog(DisplayInfo    *displayInfo,
     if(displayInfo->warningDialog == NULL) {
       /* this doesn't seem to be working (and should check if MWM is running) */
 	displayInfo->warningDialog =
+#ifndef WIN32
 	  XmCreateWarningDialog(displayInfo->shell,"warningDialog",NULL,0);
+#else
+	  XmCreateMessageDialog(displayInfo->shell,"warningDialog",NULL,0);
+#endif
 	XtVaSetValues(displayInfo->warningDialog,XmNdialogStyle,XmDIALOG_APPLICATION_MODAL,NULL);
         XtVaSetValues(displayInfo->warningDialog,XmNdeleteResponse,XmDO_NOTHING,NULL);
 	XtVaSetValues(XtParent(displayInfo->warningDialog),XmNtitle,"Warning !",NULL);

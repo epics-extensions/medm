@@ -26,6 +26,7 @@
 #define DEBUG_SAVE_ALL 0
 #define DEBUG_VERSION 0
 #define DEBUG_PROP 0
+#define FULLPATHNAME_SIZE 100
 #define DEBUG_ERRORHANDLER 0
 
 #define ALLOCATE_STORAGE
@@ -817,7 +818,7 @@ request_t * parseCommandLine(int argc, char *argv[]) {
 		request->macroString = STRDUP(tmp);
 	      /* since parameter of form   -macro "a=b,c=d,..."  replace '"' with ' ' */
 		if(request->macroString != NULL) {
-		    int len;
+		    size_t len;
 		    if(request->macroString[0] == '"') request->macroString[0] = ' ';
 		    len = strlen(request->macroString) - 1;
 		    if(request->macroString[len] == '"') request->macroString[len] = ' ';
@@ -3046,9 +3047,11 @@ int main(int argc, char *argv[])
     char *envPrintCommand = NULL;
     char *envHelpPath = NULL;
 
+#ifdef HCLXMINIT
 #ifdef WIN32
   /* Hummingbird Exceed XDK initialization for WIN32 */
     HCLXmInit();
+#endif
 #endif
 
 #if DEBUG_PROP
@@ -3616,6 +3619,7 @@ int main(int argc, char *argv[])
     print("ProtocolRevision=%d\n", ProtocolRevision(display));
 #endif
 
+  /* Allocate colors */
   /* We're the first MEDM around in this mode - proceed with full
     execution.  Store mainShell window as the property associated with
     the windowPropertyAtom.  (Will be stored if CLEANUP or first MEDM.
@@ -4185,7 +4189,11 @@ static void createMain()
 #ifdef PROMPT_TO_EXIT
   /* Create the Exit... warning dialog  */
 
+#ifndef WIN32
     exitQD = XmCreateQuestionDialog(XtParent(mainFilePDM),"exitQD",NULL,0);
+#else
+    exitQD = XmCreateMessageDialog(XtParent(mainFilePDM),"exitQD",NULL,0);
+#endif
 #if OMIT_RESIZE_HANDLES
     XtVaSetValues(XtParent(exitQD),
       XmNmwmDecorations,MWM_DECOR_ALL|MWM_DECOR_RESIZEH,
@@ -4223,7 +4231,10 @@ static void createMain()
     XmAddWMProtocolCallback(helpS,WM_DELETE_WINDOW,
       wmCloseCallback,(XtPointer)OTHER_SHELL);
     n = 0;
+#ifndef WIN32
+    /* 6/12/2012 Xming hangs when dialogType is set */
     XtSetArg(args[n],XmNdialogType,XmDIALOG_INFORMATION); n++;
+#endif
     helpMessageBox = XmCreateMessageBox(helpS,"helpMessageBox",
       args,n);
     XtUnmanageChild(XmMessageBoxGetChild(helpMessageBox,XmDIALOG_CANCEL_BUTTON));
@@ -4252,7 +4263,9 @@ static void createMain()
     XmAddWMProtocolCallback(editHelpS,WM_DELETE_WINDOW,
       wmCloseCallback,(XtPointer)OTHER_SHELL);
     n = 0;
+#ifndef WIN32
     XtSetArg(args[n],XmNdialogType,XmDIALOG_INFORMATION); n++;
+#endif
     editHelpMessageBox = XmCreateMessageBox(editHelpS,"editHelpMessageBox",
       args,n);
     XtUnmanageChild(XmMessageBoxGetChild(editHelpMessageBox,XmDIALOG_CANCEL_BUTTON));
