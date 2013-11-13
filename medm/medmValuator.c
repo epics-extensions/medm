@@ -287,7 +287,9 @@ void createValuatorRunTimeInstance(DisplayInfo *displayInfo,
 	  NULL);
 #endif
       /* This is necessary for PV Limits */
-	valuatorDraw((XtPointer)dlElement->data);
+	if (dlElement->data) {
+	  valuatorDraw((XtPointer)dlElement->data);
+	}
     }
 }
 
