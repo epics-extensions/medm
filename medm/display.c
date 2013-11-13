@@ -271,7 +271,8 @@ void dmCleanupDisplayInfo(DisplayInfo *displayInfo, Boolean cleanupDisplayList)
 	}
     }
 #else
-    ca_pend_event(CA_PEND_EVENT_TIME);
+    ca_pend_event(0.1);
+    /*ca_pend_event(CA_PEND_EVENT_TIME);*/
 #endif
 
   /*
