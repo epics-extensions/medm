@@ -297,6 +297,8 @@ void drawingAreaCallback(Widget w, XtPointer clientData, XtPointer callData)
     print("\ndrawingAreaCallback(Entered):\n");
 #endif
     if(!displayInfo) return;
+    if(!displayInfo->dlElementList)
+      return;
 
     if(cbs->reason == XmCR_EXPOSE) {
       /* EXPOSE */
