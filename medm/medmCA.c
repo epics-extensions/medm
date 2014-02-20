@@ -276,7 +276,7 @@ static void medmCAExceptionHandlerCb(struct exception_handler_args args)
       "  Native Type: %s\n"
       "  Native Count: %hu\n"
       "  Access: %s%s\n"
-      "  IOC: %s\n"
+      "  Host: %s\n"
       "  Message: %s\n"
       "  Context: %s\n"
       "  Requested Type: %s\n"
@@ -522,7 +522,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 	      "  Native Type: %s\n"
 	      "  Native Count: %hu\n"
 	      "  Access: %s%s\n"
-	      "  IOC: %s\n",
+	      "  Host: %s\n",
 	      args.chid?ca_name(args.chid):"Unavailable",
 	      args.chid?ca_state(args.chid) == cs_never_conn?"Never":
 	      ca_state(args.chid) == cs_prev_conn?"Prev":
@@ -602,7 +602,7 @@ static void medmConnectEventCb(struct connection_handler_args args) {
 		  "  Native Type: %s\n"
 		  "  Native Count: %hu\n"
 		  "  Access: %s%s\n"
-		  "  IOC: %s\n",
+		  "  Host: %s\n",
 		  args.chid?ca_name(args.chid):"Unavailable",
 		  args.chid?ca_state(args.chid) == cs_never_conn?"Never":
 		  ca_state(args.chid) == cs_prev_conn?"Prev":
@@ -1634,7 +1634,7 @@ static void pvInfoWriteInfo(void)
 	  (unsigned long)ca_element_count(chId));
 	sprintf(string, "%sACCESS: %s%s\n", string,
 	  ca_read_access(chId)?"R":"", ca_write_access(chId)?"W":"");
-	sprintf(string, "%sIOC: %s\n", string, ca_host_name(chId));
+	sprintf(string, "%sHOST: %s\n", string, ca_host_name(chId));
 	if(timeVal.value) {
 	    char fracPart[10];
 
