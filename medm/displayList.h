@@ -29,7 +29,7 @@
 #include <math.h>
 #include <string.h>
 
-#define MAX_TOKEN_LENGTH        256     /* max size of strings in adl    */
+#define MAX_TOKEN_LENGTH        512     /* max size of strings in adl    */
 #define MAX_PENS                8       /* max # of pens on strip chart  */
 #define MAX_TRACES              8       /* max # of traces on cart. plot */
 #define MAX_FILE_CHARS          256     /* max # of chars in filename    */
