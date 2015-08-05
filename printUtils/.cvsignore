@@ -1,4 +1,0 @@
-core
-*.o
-libPrintUtils.a
-.DEPENDS
