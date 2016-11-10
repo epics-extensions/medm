@@ -21,7 +21,7 @@
 #ifndef WIN32
 /*************************************************************************/
 /*************************************************************************/
-/* Netscape UNIX Version                                                        */
+/* Firefox UNIX Version                                                        */
 /*************************************************************************/
 /*************************************************************************/
 
@@ -37,14 +37,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xmu/WinUtil.h>
 
-/* Set this to 1 to use the old code that worked with Netscape
- * 4. Setting it to 0 seems to work for Netscape 7 and also for
- * Netscape 4.  Not all combinations of Netscape and platform have
- * been checked.  */
-#define NETSCAPE4 0
 
-#ifndef NETSCAPEPATH
-#define NETSCAPEPATH "netscape"
+#ifndef FIREFOXPATH
+#define FIREFOXPATH "firefox"
 #endif
 
 #ifdef VMS
@@ -60,9 +55,9 @@
 extern int kill(pid_t, int);     /* May not be defined for strict ANSI */
 
 int callBrowser(char *url, char *bookmark);
-static Window checkNetscapeWindow(Window w);
+static Window checkFirefoxWindow(Window w);
 static int execute(char *s);
-static Window findNetscapeWindow(void);
+static Window findFirefoxWindow(void);
 static int ignoreXError(Display *display, XErrorEvent *xev);
 
 /* Global variables */
@@ -75,7 +70,7 @@ int callBrowser(char *url, char *bookmark)
   /*   or "quit" to terminate the browser           */
 {
     int (*oldhandler)(Display *, XErrorEvent *);
-    static Window netscapew=(Window)0;
+    static Window firefoxw=(Window)0;
     static pid_t pid=0;
     int status;
     char command[BUFSIZ];
@@ -96,10 +91,10 @@ int callBrowser(char *url, char *bookmark)
       envstring?envstring:"Not Found",envstring);
 #endif
     if (!envstring) { 
-  /* Get NETSCAPEPATH if it exists */
-        envstring=getenv("NETSCAPEPATH");
+  /* Get FIREFOXPATH if it exists */
+        envstring=getenv("FIREFOXPATH");
 #if DEBUG_EXEC
-        printf("NETSCAPEPATH=%s (%p)\n",
+        printf("FIREFOXPATH=%s (%p)\n",
           envstring?envstring:"Not Found",envstring);
 #endif
     }
@@ -107,30 +102,20 @@ int callBrowser(char *url, char *bookmark)
   /*   (Would prefer a routine that tells if the window is defined) */
     oldhandler=XSetErrorHandler(ignoreXError);
   /* Check if the stored window value is valid */
-    netscapew=checkNetscapeWindow(netscapew);
+    firefoxw=checkFirefoxWindow(firefoxw);
   /* Reset error handler */
     XSetErrorHandler(oldhandler);
   /* If stored window is not valid, look for a valid one */
-    if(!netscapew) {
-	netscapew=findNetscapeWindow();
-      /* If no window found, exec Netscape */
-	if(!netscapew) {
-#if NETSCAPE4
-# ifndef VMS
-	    sprintf(command,"%s -install '%s%s' &",
-	      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# else
-	    sprintf(command,"%s -install \"%s%s\"",
-	      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# endif
-#else
-# ifndef VMS
+    if(!firefoxw) {
+	firefoxw=findFirefoxWindow();
+      /* If no window found, exec Firefox */
+	if(!firefoxw) {
+#ifndef VMS
 	    sprintf(command,"%s '%s%s' &",
-	      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# else
+	      envstring?envstring:FIREFOXPATH,url,bookmark);
+#else
 	    sprintf(command,"%s \"%s%s\"",
-	      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# endif
+	      envstring?envstring:FIREFOXPATH,url,bookmark);
 #endif
 #if DEBUG_EXEC
 	    printf("execute(no window before): cmd=%s\n",command);
@@ -143,23 +128,13 @@ int callBrowser(char *url, char *bookmark)
 	}
     }
     
-  /* Netscape window is valid, send url via -remote */
-#if NETSCAPE4
-# ifndef VMS
-    sprintf(command,"%s -id 0x%x -remote 'openURL(%s%s)' &",
-      envstring?envstring:NETSCAPEPATH,(unsigned int)netscapew,url,bookmark);
-# else
-    sprintf(command,"%s -id 0x%x -remote \"openURL(%s%s)\"",
-      envstring?envstring:NETSCAPEPATH,netscapew,url,bookmark);
-# endif
+  /* Firefox window is valid, send url via -url */
+#ifndef VMS
+    sprintf(command,"%s -url '%s%s' &",
+      envstring?envstring:FIREFOXPATH,url,bookmark);
 #else
-# ifndef VMS
-    sprintf(command,"%s -remote 'openURL(%s%s)' &",
-      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# else
-    sprintf(command,"%s -remote \"openURL(%s%s)\"",
-      envstring?envstring:NETSCAPEPATH,url,bookmark);
-# endif
+    sprintf(command,"%s -url \"%s%s\"",
+      envstring?envstring:FIREFOXPATH,url,bookmark);
 #endif
 
 #if DEBUG_EXEC
@@ -171,13 +146,13 @@ int callBrowser(char *url, char *bookmark)
 #endif
 
   /* Raise the window */
-    XMapRaised(display,netscapew);
+    XMapRaised(display,firefoxw);
 
     return 2;
 }
-/**************************** checkNetscapeWindow ************************/
-static Window checkNetscapeWindow(Window w)
-  /* Checks if this window is the Netscape window and returns the window
+/**************************** checkFirefoxWindow ************************/
+static Window checkFirefoxWindow(Window w)
+  /* Checks if this window is the Firefox window and returns the window
    * if it is or 0 otherwise */
 {
     Window wfound=(Window)0;
@@ -194,7 +169,7 @@ static Window checkNetscapeWindow(Window w)
     status=XGetWindowProperty(display,w,versionatom,0,
       (65536/sizeof(long)),False,AnyPropertyType,
       &typeatom,&format,&nitems,&bytesafter,&version);
-  /* If the version property exists, it is the Netscape window */
+  /* If the version property exists, it is the Firefox window */
     if(version && status == Success) wfound=w;
 #if DEBUG_FIND
     printf("XGetWindowProperty: status=%d version=%d w=%x wfound=%x\n",
@@ -239,8 +214,8 @@ static int execute(char *s)
       printf("statuss %d %d\n",spawn_sts, status);
 #endif
 }
-/**************************** findNetscapeWindow *************************/
-static Window findNetscapeWindow(void)
+/**************************** findFirefoxWindow *************************/
+static Window findFirefoxWindow(void)
 {
     int screen=DefaultScreen(display);
     Window rootwindow=RootWindow(display,screen);
@@ -254,11 +229,11 @@ static Window findNetscapeWindow(void)
   /* Look at the children from the top of the stacking order */
     for(i=nchildren-1; i >= 0; i--) {
 	w=XmuClientWindow(display,children[i]);
-      /* Check if this is the Netscape window */
+      /* Check if this is the Firefox window */
 #if DEBUG_FIND
 	printf("Child %d ",i);
 #endif
-	wfound=checkNetscapeWindow(w);
+	wfound=checkFirefoxWindow(w);
 	if(wfound) break;
     }
     if(children) XFree((void *)children);

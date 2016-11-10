@@ -2197,18 +2197,18 @@ static void helpMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 	  XmFONTLIST_DEFAULT_TAG);
 #else
 	XmString xmString1=XmStringCreateLtoR(
-	  "     Help in this version of MEDM is implemented using Netscape.  If\n"
-	  "the environmental variable NETSCAPEPATH containing the full pathname\n"
-	  "of the Netscape executable exists, then that path is used to call\n"
-	  "Netscape.  Otherwise, it is called using just the command, netscape.\n",
+	  "     Help in this version of MEDM is implemented using Firefox.  If\n"
+	  "the environmental variable FIREFOXPATH containing the full pathname\n"
+	  "of the Firefox executable exists, then that path is used to call\n"
+	  "Firefox.  Otherwise, it is called using just the command, firefox.\n",
 	  XmFONTLIST_DEFAULT_TAG);
 	XmString xmString2=XmStringCreateLtoR(
-	  "If Netscape is not available, then most of the MEDM help is not\n"
+	  "If Firefox is not available, then most of the MEDM help is not\n"
 	  "available.\n"
 	  "\n"
-	  "     If Netscape is running when MEDM first calls it, then the\n"
+	  "     If Firefox is running when MEDM first calls it, then the\n"
 	  "response should be fairly quick.  Otherwise, the first call to help\n"
-	  "must wait until Netscape comes up, which will take somewhat longer.\n",
+	  "must wait until Firefox comes up, which will take somewhat longer.\n",
 	  XmFONTLIST_DEFAULT_TAG);
 #endif
 	XmString xmString=XmStringConcat(xmString1,xmString2);

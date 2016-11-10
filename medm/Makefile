@@ -61,7 +61,7 @@ PURIFY_FLAGS += -follow-terminal-symlinks
 endif
 
 # Web browser options
-#USR_CFLAGS += -DNETSCAPEPATH="\"mozilla\""
+#USR_CFLAGS += -DFIREFOXPATH="\"firefox\""
 
 # Use to test Xrt/Graph 2.4, Otherwise should come from CONFIG
 #XRTGRAPH=/opt/local/xrtgraph2.4.0

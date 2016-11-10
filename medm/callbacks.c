@@ -68,6 +68,7 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
     DisplayInfo *displayInfo;
     int status;
     char *adlName;
+    XClientMessageEvent ev;
 
   /* w is the button pushed.  Its parent is the row column, which has
      the displayInfo pointer as userData */
@@ -112,8 +113,21 @@ void executePopupMenuCallback(Widget  w, XtPointer cd, XtPointer cbs)
 	popupPvLimits(displayInfo);
 	break;
     case EXECUTE_POPUP_MENU_MAIN_ID:
+     /* RS: XMapRaised doesn't seem to work on Gnome3. The code below works on Gnome3 and Gnome2 */
+        memset (&ev, 0, sizeof ev);
+        ev.type = ClientMessage;
+        ev.window = XtWindow(mainShell);
+        ev.message_type = XInternAtom(display, "_NET_ACTIVE_WINDOW", True);
+        ev.format = 32;
+        ev.data.l[0] = 1;
+        ev.data.l[1] = CurrentTime;
+        ev.data.l[2] = ev.data.l[3] = ev.data.l[4] = 0;
+        XSendEvent (display, RootWindow(display, XDefaultScreen(display)), False,
+          SubstructureRedirectMask |SubstructureNotifyMask, (XEvent*)&ev);
+        XFlush (display);
+
       /* KE: This appears to work and deiconify if iconic */
-	XMapRaised(display, XtWindow(mainShell));
+	/*XMapRaised(display, XtWindow(mainShell));*/
 	break;
     case EXECUTE_POPUP_MENU_DISPLAY_LIST_ID:
     {
