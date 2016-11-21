@@ -950,7 +950,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
       GrabModeAsync,GrabModeAsync,GRAB_WINDOW,rubberbandCursor,CurrentTime);
 
 /* Grab the server to ensure that XORing will be okay */
-    XGrabServer(display);
+    /*XGrabServer(display);*/
     XDrawRectangle(display, window, xorGC, x, y, w, h);
 
   /* Loop until the button is released */
@@ -984,7 +984,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 #endif
 	  /* Undraw old one */
 	    XDrawRectangle(display, window, xorGC, x, y, w, h);
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XUngrabPointer(display,CurrentTime);
 	    XFlush(display);	  /* For debugger */
 	  /* Update current coordinates */
@@ -1088,7 +1088,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
       GrabModeAsync,GrabModeAsync,GRAB_WINDOW,dragCursor,CurrentTime);
 
   /* Grab the server to ensure that XORing will be okay */
-    XGrabServer(display);
+   /* XGrabServer(display);*/
 
   /* Draw first set of rectangles and get group extents */
   /* As usual, type in union unimportant as long as object is 1st */
@@ -1119,7 +1119,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
     }
   /* Check if there was anything selected besides the display */
     if(!nelements) {
-	XUngrabServer(display);
+	/*XUngrabServer(display);*/
 	XUngrabPointer(display,CurrentTime);
 	XBell(display,50);
 	XFlush(display);
@@ -1142,7 +1142,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
       groupDeltaY0,groupDeltaX1,groupDeltaY1);
 #endif
 #if DEBUG_EVENTS > 2
-    XUngrabServer(display);
+    /*XUngrabServer(display);*/
     XUngrabPointer(display,CurrentTime);
     XFlush(display);
     return(returnVal);
@@ -1187,7 +1187,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 		}
 		dlElement = dlElement->next;
 	    }
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XUngrabPointer(display,CurrentTime);
 	    XFlush(display);
 	    *finalX = initialX + xOffset;
@@ -1370,7 +1370,7 @@ static int doPasting(int *offsetX, int *offsetY)
   /* Grab the server to ensure that XORing will be okay */
   /* Take this out for debugging */
 #if 1
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 #endif
 
   /* Draw first rectangle */
@@ -1526,7 +1526,7 @@ static int doPasting(int *offsetX, int *offsetY)
 		}
 		dlElement = dlElement->next;
 	    }
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XUngrabPointer(display,CurrentTime);
 	    XFlush(display);
 	    *offsetX += winX;
@@ -1641,7 +1641,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
       GrabModeAsync,GrabModeAsync,GRAB_WINDOW,resizeCursor,CurrentTime);
 
  /* Grab the server to ensure that XORing will be okay */
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 
   /* XOR the outline */
     toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
@@ -1676,7 +1676,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    fflush(stdout);
 #endif
 	    toggleHighlightRectangles(currentDisplayInfo,xOffset,yOffset);
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XUngrabPointer(display,CurrentTime);
 	    XFlush(display);
 	    *finalX =  initialX + xOffset;

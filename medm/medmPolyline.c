@@ -492,7 +492,7 @@ static int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0
     XGrabPointer(display,window,FALSE,
       (unsigned int)(PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
       GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 
 /* Loop until button is released */
     while(TRUE) {
@@ -524,7 +524,7 @@ static int handlePolylineVertexManipulation(DlElement *dlElement, int x0, int y0
 		dlPolyline->points[pointIndex].y = event.xbutton.y;
 	    }
 	    XUngrabPointer(display,CurrentTime);
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XFlush(display);
             calculateTheBoundingBox(dlPolyline);
 	  /* Update global resource bundle  - then do create out of it */
@@ -626,7 +626,7 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
     XGrabPointer(display,window,FALSE,
       (unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
       GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 
 
   /* Loop until button is double-clicked (or until 2 points if simpleLine) */
@@ -671,7 +671,7 @@ DlElement *handlePolylineCreate(int x0, int y0, Boolean simpleLine)
 		    dlPolyline->points[dlPolyline->nPoints-1].y = event.xbutton.y;
 		}
 		XUngrabPointer(display,CurrentTime);
-		XUngrabServer(display);
+		/*XUngrabServer(display);*/
 		XFlush(display);
 		calculateTheBoundingBox(dlPolyline);
 		XBell(display,50); XBell(display,50);

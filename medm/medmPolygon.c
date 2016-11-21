@@ -496,7 +496,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
     XGrabPointer(display,window,FALSE,
       (unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonReleaseMask),
       GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 
 
   /* Loop until button is released */
@@ -537,7 +537,7 @@ static int handlePolygonVertexManipulation(DlElement *dlElement,int x0, int y0)
 	    }
 
 	    XUngrabPointer(display,CurrentTime);
-	    XUngrabServer(display);
+	    /*XUngrabServer(display);*/
 	    XFlush(display);
             calculateTheBoundingBox(dlPolygon);
 	  /* Update global resource bundle  - then do create out of it */
@@ -646,7 +646,7 @@ DlElement *handlePolygonCreate(int x0, int y0)
     XGrabPointer(display,window,FALSE,
       (unsigned int) (PointerMotionMask|ButtonMotionMask|ButtonPressMask|ButtonReleaseMask),
       GrabModeAsync,GrabModeAsync,None,None,CurrentTime);
-    XGrabServer(display);
+    /*XGrabServer(display);*/
 
   /* Now loop until button is double-clicked */
     while(TRUE) {
@@ -684,7 +684,7 @@ DlElement *handlePolygonCreate(int x0, int y0)
 		    dlPolygon->points[dlPolygon->nPoints-1].y = event.xbutton.y;
 		}
 		XUngrabPointer(display,CurrentTime);
-		XUngrabServer(display);
+		/*XUngrabServer(display);*/
 		XFlush(display);
 	      /* To ensure closure, make sure last point = first point */
 		if(!(dlPolygon->points[0].x ==
