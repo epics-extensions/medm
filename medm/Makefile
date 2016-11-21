@@ -166,8 +166,15 @@ Xm12_DIR = $(MOTIF_LIB)
 endif
 
 USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
+#Xp is not available and not needed on Linux Mint 18 
+#USR_LIBS_Linux = Xm Xt Xmu X11 Xext
 
 USR_LIBS_cygwin32 = Xm Xt Xmu X11 Xext SM ICE
+USR_LIBS_Darwin = -nil-
+PROD_SYS_LIBS_Darwin = Xt Xmu X11 Xext Xft Xp fontconfig png
+
+#Do not use PROD_LDFLAGS_Darwin because it goes after OP_SYS_LDFLAGS
+USR_LDFLAGS_Darwin = -L/usr/X11/lib /opt/local/lib/libXm.a /opt/local/lib/libjpeg.a /opt/local/lib/libiconv.a
 
 WIN32_RUNTIME=MD
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
@@ -181,6 +188,11 @@ X11_DIR = $(X11_LIB)
 Xmu_DIR = $(X11_LIB)
 Xp_DIR = $(X11_LIB)
 Xext_DIR = $(X11_LIB)
+Xft_DIR = $(X11_LIB)
+fontconfig_DIR = $(X11_LIB)
+png_DIR = $(X11_LIB)
+jpeg_DIR = $(MOTIF_LIB)
+iconv_DIR = $(MOTIF_LIB)
 
 SRCS += actions.c
 SRCS += bubbleHelp.c
