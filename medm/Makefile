@@ -248,29 +248,26 @@ include $(TOP)/configure/RULES
 medm.res:../medm.ico
 
 ifdef XRTGRAPH
+export XRTHOME = $(XRTGRAPH)
 build: xrtAuth
 endif
 
 xrtAuth: medm
 	# --- RUN XRT_AUTH on resulting MEDM for proper authorization
-	@-export XRTHOME; XRTHOME=$(XRTGRAPH); $(XRTGRAPH)/bin/xrt_auth medm;\
-	if [ $$? -ne 0 ]; then\
-		echo "************************************************";\
-		echo "ERROR in running XRT_AUTH on MEDM";\
-		echo "";\
-		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
-		echo "";\
-		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
-		echo "";\
-		echo "      ERROR!!!      ERROR!!!      ERROR!!!";\
-		echo "";\
-		echo "************************************************";\
-	else\
-		echo "**************************************************************";\
-		echo "License warnings for XRT field, table, and gear may be ignored";\
-		echo "Patch successful";\
-		echo "**************************************************************";\
-	fi
+	$(XRTGRAPH)/bin/xrt_auth medm
+	@echo "**************************************************************"
+	@echo "License warnings for XRT field, table, and gear may be ignored"
+	@echo "Patch successful"
+	@echo "**************************************************************"
+	@touch $@
+
+ifdef BASE_3_15
+  clean: clean.xrtAuth
+else
+  clean:: clean.xrtAuth
+endif
+clean.xrtAuth:
+	@rm -f xrtAuth
 
 xxxx:
 	@which echo
