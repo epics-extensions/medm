@@ -1,2 +1,18 @@
+MEDM - Motif Editor and Display Manager
+---------------------------------------
+
+MEDM is a graphical user interface tool for designing and implementing control
+screens for EPICS-based control systems. Displays contain graphical objects that
+can display and/or change the values of EPICS process variables using the
+Channel Access network protocol. Supported graphical objects include buttons,
+meters, sliders, text displays/entries, and graphs.
+
+MEDM has two modes of operation, EDIT and EXECUTE. Displays are created and
+edited in EDIT mode, and run in EXECUTE mode.
+
+More information about MEDM can be found via its web-page on the EPICS site:
+    http://www.aps.anl.gov/epics/extensions/medm/index.php
+
+
 The extension distribution file should be unziped and untared
 in the extensions/src directory.
