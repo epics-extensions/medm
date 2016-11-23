@@ -183,7 +183,6 @@ DlElement *createDlDisplay(DlElement *p)
     DlDisplay *dlDisplay;
     DlElement *dlElement;
 
-
     dlDisplay = (DlDisplay *)malloc(sizeof(DlDisplay));
     if(!dlDisplay) return 0;
     if(p) {
@@ -357,10 +356,9 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 #endif
 
 #if DEBUG_RELATED_DISPLAY
-    print("executeDlDisplay: dlDisplay->object=%x\n"
-      "  dlDisplay->object.x=%d dlDisplay->object.y=%d\n",
-      dlDisplay->object,
-      dlDisplay->object.x,dlDisplay->object.y);
+    print("executeDlDisplay: dlDisplay->object=%x\n", dlDisplay->object);
+    print("executeDlDisplay: dlDisplay->object.x=%d\n", dlDisplay->object.x);
+    print("executeDlDisplay: dlDisplay->object.y=%d\n", dlDisplay->object.y);
     {
 	Position xpos,ypos;
 
@@ -754,6 +752,9 @@ void writeDlDisplay(
 
 static void displayGetValues(ResourceBundle *pRCB, DlElement *p) {
     DlDisplay *dlDisplay = p->structure.display;
+    int initWidth, initHeight, tempWidth, tempHeight, finalWidth, finalHeight;
+    initWidth = dlDisplay->object.width;
+    initHeight = dlDisplay->object.height;
     medmGetValues(pRCB,
       X_RC,            &(dlDisplay->object.x),
       Y_RC,            &(dlDisplay->object.y),
@@ -770,12 +771,31 @@ static void displayGetValues(ResourceBundle *pRCB, DlElement *p) {
       globalResourceBundle.bclr;
     currentDisplayInfo->drawingAreaForegroundColor =
       globalResourceBundle.clr;
-  /* Resize the shell */
+    finalWidth = dlDisplay->object.width;
+    finalHeight = dlDisplay->object.height;
+  /* Reposition the shell */
     XtVaSetValues(currentDisplayInfo->shell,
       XmNx,dlDisplay->object.x,
-      XmNy,dlDisplay->object.y,
-      XmNwidth,dlDisplay->object.width,
-      XmNheight,dlDisplay->object.height,NULL);
+      XmNy,dlDisplay->object.y,NULL);
+  /* Resize the shell */
+  /* There is an odd problem on Gnome3 where if only the 
+     width is changed, the height will end up changing 
+     somewhat randomly. So to get around this I am changing 
+     both values twice. */
+    if ((initWidth != finalWidth) || (initHeight != finalHeight)) {
+      tempWidth = finalWidth + 1;
+      tempHeight = finalHeight + 1;
+      if (tempWidth == initWidth)
+          tempWidth++;
+      if (tempHeight == initHeight)
+          tempHeight++;
+      XtVaSetValues(currentDisplayInfo->shell,
+        XmNwidth,tempWidth,
+        XmNheight,tempHeight,NULL);
+      XtVaSetValues(currentDisplayInfo->shell,
+        XmNwidth,finalWidth,
+        XmNheight,finalHeight,NULL);
+    }
 }
 
 static void displaySetBackgroundColor(ResourceBundle *pRCB, DlElement *p)
