@@ -127,6 +127,8 @@ ifdef JPT
 endif
 
 USR_CFLAGS += -DEDITRES
+#A crash can happen on RHEL7 when related displays replace the parent display
+USR_CFLAGS += -DNO_REPLACE_DISPLAY
 
 PROD_HOST = medm
 

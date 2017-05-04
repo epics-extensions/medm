@@ -672,8 +672,10 @@ void parseRelatedDisplayEntry(DisplayInfo *displayInfo,
 	    } else if(!strcmp(token,"policy")) {
 		getToken(displayInfo,token);
 		getToken(displayInfo,token);
-		if(!strcmp(token,stringValueTable[REPLACE_DISPLAY]))
-		  relatedDisplay->mode = REPLACE_DISPLAY;
+#if !defined(NO_REPLACE_DISPLAY)
+                if(!strcmp(token,stringValueTable[REPLACE_DISPLAY]))
+                  relatedDisplay->mode = REPLACE_DISPLAY;
+#endif
 	    }
 	    break;
 	case T_LEFT_BRACE:
