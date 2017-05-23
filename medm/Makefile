@@ -128,7 +128,10 @@ endif
 
 USR_CFLAGS += -DEDITRES
 #A crash can happen on RHEL7 when related displays replace the parent display
-USR_CFLAGS += -DNO_REPLACE_DISPLAY
+#UPDATE: This is a bug in motif-2.3.4-8.1.el7_3. It comes from a patch that has
+#        since been removed from motif. Do not run MEDM with this version 
+#        of motif.
+#USR_CFLAGS += -DNO_REPLACE_DISPLAY
 
 PROD_HOST = medm
 
