@@ -765,6 +765,32 @@ void requestDestroy(request_t *request) {
 #endif
 #endif
 
+
+void IconifyMe (dpy, win)
+     Display *dpy;
+     Window win;     /* toplevel window to iconify */
+{
+  Atom xa_WM_CHANGE_STATE;
+  XClientMessageEvent ev;
+  
+  xa_WM_CHANGE_STATE = XInternAtom (dpy,
+				    "WM_CHANGE_STATE", False);
+  
+  ev.type = ClientMessage;
+  ev.display = dpy;
+  ev.message_type = xa_WM_CHANGE_STATE;
+  ev.format = 32;
+  ev.data.l[0] = IconicState;
+  ev.window = win;
+  
+  XSendEvent (dpy,
+	      RootWindow (dpy, DefaultScreen(dpy)),
+	      True,
+	      (SubstructureRedirectMask | SubstructureNotifyMask),
+	      &ev);
+  XFlush (dpy);
+}
+
 request_t * parseCommandLine(int argc, char *argv[]) {
     int i;
     int argsUsed = 0;
@@ -3025,7 +3051,7 @@ DisplayInfo* parseDisplayFile(char *filename) {
 /**************************************************************************/
 int main(int argc, char *argv[])
 {
-    int i = 0, n = 0, index = 0;
+    int i = 0, n = 0, index = 0, iconify=0;
     Arg args[5];
     FILE *filePtr;
     XColor color;
@@ -3514,7 +3540,8 @@ int main(int argc, char *argv[])
     } else if(request->opMode == EXECUTE) {
 	globalDisplayListTraversalMode = DL_EXECUTE;
 	if(request->fileCnt > 0) {	/* assume .adl file names follow */
-	    XtVaSetValues(mainShell, XmNinitialState, IconicState, NULL);
+	  //XtVaSetValues(mainShell, XmNinitialState, IconicState, NULL);
+	  iconify=1;
 	}
       /* Start the scheduler */
 	startMedmScheduler();
@@ -3747,6 +3774,12 @@ int main(int argc, char *argv[])
   /* Get CDE workspace list */
     GetWorkSpaceList(mainMW);
 #endif
+    if (iconify) {
+      //IconifyMe(display, XtWindow(mainShell));
+      XIconifyWindow(display, XtWindow(mainShell), screenNum); 
+
+    }
+
 
   /* Go into event loop
    *   Normally just XtAppMainLoop(appContext)

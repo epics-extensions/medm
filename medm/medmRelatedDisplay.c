@@ -468,7 +468,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
       dlRelatedDisplay->visual == RD_COL_OF_BTN) {
       /* Case 3 of 4 */
       /* Rows or columns of buttons */
-	Arg wargs[20];
+	Arg wargs[MAX_RELATED_DISPLAYS+16];
 	int i = 0, maxChars = 0, usedWidth = 0, usedHeight = 0;
 	XmFontList fontList;
 	Pixel fg, bg;

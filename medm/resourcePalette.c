@@ -189,7 +189,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     DisplayInfo *cdi = currentDisplayInfo;
     int buttonId = (intptr_t)cd;
-    int rcType;
+    long rcType;
     DlElement *elementPtr;
 
     UNREFERENCED(cbs);
