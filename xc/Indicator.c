@@ -497,7 +497,8 @@ static void Resize(Widget w)
     int max_val_width, min_val_width, max_width;
     int font_center, font_height;
     char upper[30], lower[30];
-    Boolean displayValue, displayLabel;
+    Boolean displayValue;
+    //Boolean displayLabel;
 
     DPRINTF(("Indicator: executing Resize\n"));
 
@@ -546,13 +547,13 @@ static void Resize(Widget w)
   /* Set the new label location. */
     if (strlen(wi->control.label) > 1 ||
       (strlen(wi->control.label) == 1 && wi->control.label[0] != ' ')) {
-	displayLabel = True;
+        //displayLabel = True;
 	wi->indicator.lbl.x = (wi->core.width / 2) -
 	  (XTextWidth(wi->control.font, wi->control.label,
 	    strlen(wi->control.label)) / 2);
 	wi->indicator.lbl.y = wi->indicator.face.y + wi->control.font->ascent + 1;
     } else {
-	displayLabel = False;
+        //displayLabel = False;
 	wi->indicator.lbl.x = wi->indicator.face.x;
 	wi->indicator.lbl.y = wi->indicator.face.y;
     }

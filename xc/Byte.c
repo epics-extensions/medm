@@ -220,13 +220,13 @@ static void Resize(Widget w)
    *************************************************************************/
 {
     ByteWidget wb = (ByteWidget)w;
-    int font_height;
+    //int font_height;
 
     DPRINTF(("Byte: executing Resize\n"));
   /* printf("BY: executing Resize1\n"); */
 
   /****** For numbers, usually safe to ignore descent to save space */
-    font_height = (wb->control.font)->ascent;
+    //font_height = (wb->control.font)->ascent;
 
   /****** Set the widgets new width and height. */
     wb->byte.face.x = wb->byte.face.y = 0;

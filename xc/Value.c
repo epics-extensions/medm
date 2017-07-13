@@ -478,7 +478,7 @@ static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
    * a warning, and NULL the destination value.
    */
     if ((num = sscanf((char *)fromVal->addr,
-      "%[-012345689ABCDEFabcdef.]", temp)) == (int)NULL) {
+      "%[-012345689ABCDEFabcdef.]", temp)) == (int)0) {
 	XtStringConversionWarning(fromVal->addr, "XcVType");
 	CvtDone(char, NULL);
     }
@@ -490,7 +490,7 @@ static void CvtStringToVType(XrmValue *args, Cardinal *nargs,
     }
 
   /* If it contains any hexadecimal characters, convert it to a long hex int */
-    if (sscanf(temp, "%[ABCDEFabcdef]", temp2) != (int)NULL) {
+    if (sscanf(temp, "%[ABCDEFabcdef]", temp2) != (int)0) {
 	sscanf(temp, "%lX", (unsigned long *)&value.lval);
 	CvtDone(XcVType, &value.lval);
     }

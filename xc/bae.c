@@ -47,7 +47,8 @@ short widths[5] = { 6, 3, 10, 10, 10 };
 
 int main(int argc, char *argv[])
 {
-    Widget toplevel, mw;
+    Widget toplevel;
+    //Widget mw;
     XtAppContext app;
     int i;
 
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < ROWS; i++)
       cells[i] = &rows[i][0];
 
-    mw = XtVaCreateManagedWidget("mw",
+    XtVaCreateManagedWidget("mw",
       xbaeMatrixWidgetClass, toplevel,
       XmNrows,		ROWS,
       XmNcolumns,		COLUMNS,

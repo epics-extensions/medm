@@ -205,7 +205,7 @@ int xwd2ps(int argc, char **argv, FILE *fo)
 
     float ha, wa;
 
-    int dump_type = UNKNOWN;
+    //int dump_type = UNKNOWN;
 
     unsigned char *buffer=NULL;   /* temporary work buffer */
     unsigned char rr, gg, bb;
@@ -329,7 +329,8 @@ int xwd2ps(int argc, char **argv, FILE *fo)
     retCode = get_raster_header(file, &win, w_name);
     if(!retCode) goto CLEAN;
 
-    dump_type = getDumpType(&win); /* TEMP result not used yet */
+    //dump_type = getDumpType(&win); /* TEMP result not used yet */
+    getDumpType(&win); /* TEMP result not used yet */
 
   /*
    * check raster depth
@@ -1173,7 +1174,8 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
   /* ACM:  This empirically works on VMS */
     unsigned long swaptest = 0;
 #endif
-    int i, zflg, idifsize;
+    int i, idifsize;
+    //int zflg;
 
 #if DEBUG_FORMAT
     print("get_raster_header: stdin->_file=%d\n",stdin->_file);
@@ -1204,11 +1206,11 @@ static int get_raster_header(FILE *file, XWDFileHeader *win, char *w_name)
     }
 
   /* set z pixmap flag if required for operations */
-
+    /*
     if( win->pixmap_depth != 1 && win->pixmap_format == ZPixmap)
       zflg= win->bits_per_pixel / 8;
     else
-      zflg=0; /* TEMP - as far as I can tell, zflg is never used ! */
+      zflg=0;*/ /* TEMP - as far as I can tell, zflg is never used ! */
 
     if(win->byte_order != win->bitmap_bit_order) {
 	errMsg( "%s: Image will be incorrect\n"
