@@ -213,7 +213,7 @@ void CpGetAxisInfo(Widget w,
 
 void CpGetAxisMaxMin(Widget w, int axis, XcVType *maxF, XcVType *minF)
 {
-    float min, max;
+    float min=0, max=0;
 
     switch(axis) {
     case CP_X:
@@ -457,7 +457,7 @@ void CpSetAxisTime(Widget w, int axis, time_t base, char * format)
 void CpSetData(Widget w, int axis, CpDataHandle hData)
   /* Axis (CP_X, CP_Y, CP_Y2) doesn't matter */
 {
-    int i, listid, npoints, nsets;
+    int i, listid, nsets;
 
   /* Return if handle is NULL */
     if(!hData) return;
@@ -466,9 +466,8 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
     nsets = hData->nsets;
     for(i=0; i < nsets; i++) {
 	listid = hData->data[i].listid;
-	npoints = hData->data[i].npoints;
 #if 0
-	if(npoints <= 0) continue;
+	if(hData->data[i].npoints <= 0) continue;
 #endif
 	if(listid == INVALID_LISTID) {
 	  /* Not set yet, set with npoints */
@@ -485,7 +484,7 @@ void CpSetData(Widget w, int axis, CpDataHandle hData)
 void CpEraseData(Widget w, int axis, CpDataHandle hData)
   /* Axis (CP_X, CP_Y, CP_Y2) doesn't matter */
 {
-    int i, listid, npoints, nsets;
+    int i, listid, nsets;
 
   /* Return if handle is NULL */
     if(!hData) return;
@@ -494,9 +493,8 @@ void CpEraseData(Widget w, int axis, CpDataHandle hData)
     nsets = hData->nsets;
     for(i=0; i < nsets; i++) {
 	listid = hData->data[i].listid;
-	npoints = hData->data[i].npoints;
 #if 0
-	if(npoints <= 0) continue;
+	if(hData->data[i].npoints <= 0) continue;
 #endif
 	if(listid == INVALID_LISTID) {
 	  /* Not set yet, set with npoints */

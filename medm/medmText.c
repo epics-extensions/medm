@@ -559,7 +559,7 @@ DlElement *handleTextCreate(int x0, int y0)
 
         case KeyPress:
 	    key = (XKeyEvent *) &event;
-	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
+	    XtTranslateKeycode(display,key->keycode,(Modifiers)0,
 	      &modifiers,&keysym);
           /* if BS or DELETE */
 	    if(keysym == osfXK_BackSpace || keysym == osfXK_Delete) {

@@ -962,7 +962,7 @@ int doRubberbanding(Window window, Position *initialX, Position *initialY,
 	    Modifiers modifiers;
 	    KeySym keysym;
 
-	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
+	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)0,
 	      &modifiers, &keysym);
 #if 0
 	    print("doRubberbanding: Type: %d Keysym: %x (osfXK_Cancel=%x) "
@@ -1157,7 +1157,7 @@ Boolean doDragging(Window window, Dimension daWidth, Dimension daHeight,
 	    Modifiers modifiers;
 	    KeySym keysym;
 
-	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
+	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)0,
 	      &modifiers, &keysym);
 #if 0
 	    print("doDragging: Type: %d Keysym: %x (osfXK_Cancel=%x) "
@@ -1284,8 +1284,9 @@ static int doPasting(int *offsetX, int *offsetY)
     int dx, dy, x0, y0, x1, y1;
     int snap, gridSpacing;
     unsigned int mask;
+#if 0
     int status;
-
+#endif
   /* If no clipboard elements, simply return */
     if(IsEmpty(clipboard)) return 0;
 
@@ -1358,13 +1359,17 @@ static int doPasting(int *offsetX, int *offsetY)
       window, XtWindow(cdi->drawingArea),
       PointerMotionMask,ButtonReleaseMask,KeyPressMask);
 #endif
+#if 0
     status = XGrabPointer(display, window, False,
       (unsigned int)(PointerMotionMask|ButtonReleaseMask),
       GrabModeAsync, GrabModeAsync, GRAB_WINDOW, dragCursor, CurrentTime);
-#if 0
     print("\ndoPasting: Status=%d (GrabSuccess=%d GrabNotViewable=%d "
       "AlreadyGrabbed=%d GrabFrozen=%d GrabInvalidTime=%d\n",
       status,GrabSuccess,GrabNotViewable,AlreadyGrabbed,GrabFrozen,GrabInvalidTime);
+#else
+    XGrabPointer(display, window, False,
+                 (unsigned int)(PointerMotionMask|ButtonReleaseMask),
+                 GrabModeAsync, GrabModeAsync, GRAB_WINDOW, dragCursor, CurrentTime);
 #endif
 
   /* Grab the server to ensure that XORing will be okay */
@@ -1397,7 +1402,7 @@ static int doPasting(int *offsetX, int *offsetY)
 	    int deltaX = 0, deltaY = 0, mult = 1;
 
 
-	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
+	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)0,
 	      &modifiers, &keysym);
 #if 0
 	    print("doPasting: Type: %d Keysym: %x (osfXK_Cancel=%x) "
@@ -1619,11 +1624,11 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 {
     XEvent event;
     Boolean returnVal = True;
-    DisplayInfo *cdi;
+    //DisplayInfo *cdi;
     int xOffset, yOffset;
 
     if(!currentDisplayInfo) return False;
-    cdi = currentDisplayInfo;
+    //cdi = currentDisplayInfo;
 
     xOffset = 0;
     yOffset = 0;
@@ -1655,7 +1660,7 @@ Boolean doResizing(Window window, Position initialX, Position initialY,
 	    Modifiers modifiers;
 	    KeySym keysym;
 
-	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
+	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)0,
 	      &modifiers, &keysym);
 #if 0
 	    print("doResizing: Type: %d Keysym: %x (osfXK_Cancel=%x) "

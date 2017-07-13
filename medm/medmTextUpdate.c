@@ -464,14 +464,15 @@ static void textUpdateUpdateGraphicalInfoCb(XtPointer cd)
     Record *pR = (Record *) cd;
     MedmTextUpdate *ptu = (MedmTextUpdate *) pR->clientData;
     DlTextUpdate *dlTextUpdate = ptu->dlElement->structure.textUpdate;
-    XcVType hopr, lopr, val;
+    XcVType hopr, lopr;
+    //XcVType val;
     short precision;
 
 
   /* Get values from the record  and adjust them */
     hopr.fval = (float) pR->hopr;
     lopr.fval = (float) pR->lopr;
-    val.fval = (float) pR->value;
+    //val.fval = (float) pR->value;
     if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {
 	hopr.fval += 1.0;
     }

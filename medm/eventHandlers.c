@@ -1062,7 +1062,7 @@ void handleEditKeyPress(Widget w, XtPointer clientData, XEvent *event,
 	  /* Determine if Ctrl was pressed */
 	    ctrl=key->state&ControlMask;
 	  /* Branch depending on keysym */
-	    XtTranslateKeycode(display,key->keycode,(Modifiers)NULL,
+	    XtTranslateKeycode(display,key->keycode,(Modifiers)0,
 	      &modifiers,&keysym);
 #if DEBUG_EVENTS || DEBUG_KEYS
 	    print("handleEditKeyPress: keycode=%d keysym=%d ctrl=%d\n",

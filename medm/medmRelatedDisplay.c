@@ -213,7 +213,7 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
    *  widget list as well, for destruction when new displays are
    *  selected at the top level */
     Widget relatedDisplayPulldownMenu, relatedDisplayMenuButton;
-    Widget widget;
+    //Widget widget;
 
   /* Don't do anyting if the element is hidden */
     if(dlElement->hidden) return;
@@ -432,16 +432,10 @@ void executeDlRelatedDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[nargs],XmNmarginWidth,0); nargs++;
 	XtSetArg(args[nargs],XmNmarginHeight,0); nargs++;
 
-	widget = XtCreateManagedWidget("relatedDisplayMenuLabel",
+	XtCreateManagedWidget("relatedDisplayMenuLabel",
 	  xmCascadeButtonGadgetClass,
 	  dlElement->widget, args, nargs);
 
-#if 0
-      /* KE: Can't do this, it points to the stack
-       *   and shouldn't be necessary */
-	XtAddCallback(widget, XmNdestroyCallback,freePixmapCallback,
-	  (XtPointer)relatedDisplayPixmap);
-#endif
 
 	for(i = 0; i < MAX_RELATED_DISPLAYS; i++) {
 	    if(strlen(dlRelatedDisplay->display[i].name) > (size_t)1) {

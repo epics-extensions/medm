@@ -153,8 +153,8 @@ static XColor black;
 /* Function to initialize for GIF processing */
 Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 {
-    int x, y;
-    unsigned int w, h;
+  //int x, y;
+  //unsigned int w, h;
     Boolean success;
     int first=1;
 
@@ -168,10 +168,10 @@ Boolean initializeGIF(DisplayInfo *displayInfo, DlImage *dlImage)
 	first=0;
     }
 
-    x=dlImage->object.x;
-    y=dlImage->object.y;
-    w=dlImage->object.width;
-    h=dlImage->object.height;
+    //x=dlImage->object.x;
+    //y=dlImage->object.y;
+    //w=dlImage->object.width;
+    //h=dlImage->object.height;
 
   /* Free any existing GIF resources */
     freeGIF(dlImage);

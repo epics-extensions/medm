@@ -560,8 +560,8 @@ static void stripChartConfig(MedmStripChart *psc)
     int width;
     int height;
     int dropXAxisUnitLabel = False;
-    int dropYAxisUnitLabel = False;
-    int dropTitleLabel = False;
+    //int dropYAxisUnitLabel = False;
+    //int dropTitleLabel = False;
     int squeezeSpace = False;
     int widthExt;
     int heightExt;
@@ -653,7 +653,7 @@ static void stripChartConfig(MedmStripChart *psc)
 	squeezeSpace = True;
 	if((dlStripChart->plotcom.title == NULL)
 	  || (strlen(dlStripChart->plotcom.title) == 0)) {
-	    dropTitleLabel = True;
+            //dropTitleLabel = True;
 	    psc->dataY0 -= sccd.titleFontHeight;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	    if((psc->w - psc->dataX1 - 1) > psc->dataY0) {
@@ -673,7 +673,7 @@ static void stripChartConfig(MedmStripChart *psc)
 	}
 	if((dlStripChart->plotcom.ylabel == NULL)
 	  || (strlen(dlStripChart->plotcom.ylabel) == 0)) {
-	    dropYAxisUnitLabel = True;
+          //dropYAxisUnitLabel = True;
 	    psc->dataY0 -= sccd.axisLabelFontHeight;
 	    psc->dataHeight = psc->dataY1 - psc->dataY0 + 1;
 	    if((psc->w - psc->dataX1 - 1) > psc->dataY0) {
@@ -755,12 +755,12 @@ static void stripChartConfig(MedmStripChart *psc)
 
   /* draw y-axis label */
     if(dlStripChart->plotcom.ylabel) {
-	int textWidth;
+        //int textWidth;
 	char *label = dlStripChart->plotcom.ylabel;
 	int strLen = strlen(label);
 	int x, y;
 
-	textWidth = XTextWidth(fontTable[sccd.axisLabelFont], label, strLen);
+	XTextWidth(fontTable[sccd.axisLabelFont], label, strLen);
 	XSetForeground(display, gc, displayInfo->colormap[dlStripChart->plotcom.clr]);
 	XSetFont(display, gc, fontTable[sccd.axisLabelFont]->fid);
 	x = psc->dataX0;
@@ -1185,7 +1185,8 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     MedmStripChart *psc = (MedmStripChart *)pR->clientData;
     DlStripChart *dlStripChart = psc->dlElement->structure.stripChart;
     Widget widget = psc->dlElement->widget;
-    XcVType hopr, lopr, val;
+    XcVType hopr, lopr;
+    //XcVType val;
     short precision = 0;
     int i, row;
 
@@ -1235,10 +1236,12 @@ static void stripChartUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_DOUBLE :
 	hopr.fval = (float)pR->hopr;
 	lopr.fval = (float)pR->lopr;
-	val.fval = (float)pR->value;
+	//val.fval = (float)pR->value;
 	precision = pR->precision;
 	break;
     default :
+	hopr.fval = 0;
+	lopr.fval = 0;
 	medmPostMsg(1, "stripChartUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach stripChart\n",
@@ -1849,7 +1852,7 @@ DlElement *parseStripChart(DisplayInfo *displayInfo)
 					as new format */
     } else
       if(dlStripChart->delay > 0) {
-	  double val, dummy1, dummy2;
+	  double val=0, dummy1, dummy2;
 	  switch (dlStripChart->units) {
 	  case MILLISECONDS:
 	      dummy1 = -0.060 * (double) dlStripChart->delay;
@@ -1884,7 +1887,7 @@ void writeDlStripChart( FILE *stream, DlElement *dlElement, int level) {
   /* for the compatibility */
 
     if(dlStripChart->delay > 0.0) {
-	double val, dummy1, dummy2;
+	double val=0, dummy1, dummy2;
 	switch (dlStripChart->oldUnits) {
 	case MILLISECONDS:
 	    dummy1 = -0.060 * (double) dlStripChart->delay;
@@ -2162,7 +2165,7 @@ void stripChartUpdateMatrixColors(int clr, int row)
 static void stripChartDialogCreateDialog(void)
 {
     Widget w, wparent;
-    Widget columns[SC_COLS], labels[SC_COLS];
+    //Widget columns[SC_COLS], labels[SC_COLS];
     XmString label, opt1, opt2, opt3;
     int i, j;
     static Boolean first = True;
@@ -2235,8 +2238,8 @@ static void stripChartDialogCreateDialog(void)
 	  xmFormWidgetClass, scMatrixW,
 	  XmNfractionBase, MAX_PENS + 1,
 	  NULL);
-	columns[j] = wparent = w;
-
+	//columns[j] = wparent = w;
+        wparent = w;
       /* Create a column label */
 	w = XtVaCreateManagedWidget(scColumnLabels[j],
 	  xmLabelWidgetClass, wparent,
@@ -2249,7 +2252,7 @@ static void stripChartDialogCreateDialog(void)
 	  XmNtopPosition, 0,
 	  XmNbottomPosition, 1,
 	  NULL);
-	labels[j] = w;
+	//labels[j] = w;
 
 	for(i=0; i < MAX_PENS; i++) {
 	    switch(j) {

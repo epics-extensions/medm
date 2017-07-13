@@ -440,7 +440,7 @@ void executeDlDisplay(DisplayInfo *displayInfo, DlElement *dlElement)
 
 static void createExecuteModeMenu(DisplayInfo *displayInfo)
 {
-    Widget w;
+  //Widget w;
     int nargs;
     Arg args[8];
     static int first = 1, doExec = 0;
@@ -473,7 +473,7 @@ static void createExecuteModeMenu(DisplayInfo *displayInfo)
 
   /* Create the execute menu */
     if(doExec) {
-	w = createExecuteMenu(displayInfo, execPath);
+	createExecuteMenu(displayInfo, execPath);
     }
 }
 

@@ -130,7 +130,7 @@ void createChannel()
     KeySym keySyms[N_MAX_MENU_ELES];
     XmButtonType buttonType[N_MAX_MENU_ELES];
     Widget channelMB;
-    Widget channelHelpPDM;
+    //Widget channelHelpPDM;
     Widget menuHelpWidget;
     int i, n;
     Arg args[10];
@@ -219,8 +219,7 @@ void createChannel()
     XtSetArg(args[n],XmNbuttonType,buttonType); n++;
     XtSetArg(args[n],XmNbuttonMnemonics,keySyms); n++;
     XtSetArg(args[n],XmNpostFromButton,HELP_BTN_POSN); n++;
-    channelHelpPDM = XmCreateSimplePulldownMenu(channelMB,
-      "channelHelpPDM",args,n);
+    XmCreateSimplePulldownMenu(channelMB,"channelHelpPDM",args,n);
     XmStringFree(buttons[0]);
 
 

@@ -530,7 +530,8 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
     MedmValuator *pv = (MedmValuator *) pr->clientData;
     DlValuator *dlValuator = pv->dlElement->structure.valuator;
     Widget widget = pv->dlElement->widget;
-    XcVType hopr, lopr, val;
+    XcVType hopr, lopr;
+    //XcVType val;
     short precision = 0;
 
     switch (pr->dataType) {
@@ -548,10 +549,12 @@ static void valuatorUpdateGraphicalInfoCb(XtPointer cd) {
     case DBF_DOUBLE :
 	hopr.fval = (float) pr->hopr;
 	lopr.fval = (float) pr->lopr;
-	val.fval = (float) pr->value;
+	//val.fval = (float) pr->value;
 	precision = pr->precision;
 	break;
     default :
+	hopr.fval = 0;
+	lopr.fval = 0;
 	medmPostMsg(1,"valuatorUpdateGraphicalInfoCb:\n"
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach valuator\n",
@@ -613,7 +616,8 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     DlValuator *dlValuator;
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
-    int useableWidth, useableHeight, textHeight, textWidth, startX, startY;
+    int useableWidth, useableHeight, textWidth, startX, startY;
+    //int textHeight;
     int nChars;
     XFontStruct *font;
     char stringValue[40];
@@ -631,10 +635,10 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 
     if(clientData) {
       /* Then valid controllerData exists */
-	Record *pr;
+        //Record *pr;
 
 	pv = (MedmValuator *)clientData;
-	pr = pv->record;
+	//pr = pv->record;
 	displayInfo = pv->updateTask->displayInfo;
 	dlValuator = pv->dlElement->structure.valuator;
 	switch (dlValuator->direction) {
@@ -674,7 +678,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
     foreground = displayInfo->colormap[dlValuator->control.clr];
     background = displayInfo->colormap[dlValuator->control.bclr];
     font = fontTable[valuatorFontListIndex(dlValuator)];
-    textHeight = font->ascent + font->descent;
+    //textHeight = font->ascent + font->descent;
 
     gcValueMask = GCForeground | GCFont | GCBackground | GCFunction;
     gcValues.function = GXcopy;
@@ -861,8 +865,9 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
 {
     unsigned long foreground, background;
     Dimension scaleWidth, scaleHeight;
-    int useableWidth = 0, useableHeight = 0, textHeight = 0, textWidth = 0, 
+    int useableWidth = 0, useableHeight = 0, textWidth = 0, 
       startX = 0, startY = 0;
+    //int textHeight = 0;
     int nChars;
     XFontStruct *font;
     char stringValue[40];
@@ -893,7 +898,7 @@ static void valuatorRedrawValue(MedmValuator *pv, DisplayInfo *displayInfo,
 	font = fontTable[valuatorFontListIndex(dlValuator)];
     }
 
-    textHeight = font->ascent + font->descent;
+    //textHeight = font->ascent + font->descent;
   /* Convert bad values of precision to high precision */
     if(precision < 0 || precision > 17) precision=17;
     cvtDoubleToString(value,stringValue,precision);

@@ -358,7 +358,7 @@ static menuEntry_t helpMenu[] = {
 void createObject()
 {
     Widget objectRC;
-    Widget graphicsRC, monitorRC, controllerRC, miscRC;
+    //Widget graphicsRC, monitorRC, controllerRC, miscRC;
     Widget objectMB;
     Widget objectHelpPDM;
 
@@ -422,6 +422,7 @@ void createObject()
   /* Set main window areas */
     XmMainWindowSetAreas(objectMW,objectMB,NULL,NULL,NULL,objectRC);
 
+    /*
     graphicsRC = createRadioButtonPanel(objectRC,"Graphics",
       paletteGraphicsButton);
     monitorRC = createRadioButtonPanel(objectRC,"Monitors",
@@ -430,6 +431,11 @@ void createObject()
       paletteControllerButton);
     miscRC = createRadioButtonPanel(objectRC,"Misc",
       paletteMiscButton);
+    */
+    createRadioButtonPanel(objectRC,"Graphics",paletteGraphicsButton);
+    createRadioButtonPanel(objectRC,"Monitors",paletteMonitorButton);
+    createRadioButtonPanel(objectRC,"Controllers",paletteControllerButton);
+    createRadioButtonPanel(objectRC,"Misc",paletteMiscButton);
 
     objectPaletteSelectToggleButton = paletteMiscButton[0].widget;
     lastButton = objectPaletteSelectToggleButton;

@@ -468,9 +468,6 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
 {
     char *text, *subject, *to, cmd[1024], *p;
     FILE *pp;
-#ifndef WIN32
-    int status;
-#endif
 
     UNREFERENCED(clientData);
     UNREFERENCED(callData);
@@ -527,7 +524,7 @@ void errMsgSendDlgSendButtonCb(Widget w, XtPointer clientData, XtPointer callDat
     fputc('\n', pp);      /* make sure there's a terminating newline */
 #ifndef WIN32
   /* KE: Shouldn't be necessary to comment this out for WIN32 */
-    status = pclose(pp);  /* close mail program */
+    pclose(pp);  /* close mail program */
 #endif
     if(to) XtFree(to);
     if(subject) XtFree(subject);

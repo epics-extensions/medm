@@ -72,7 +72,9 @@ int callBrowser(char *url, char *bookmark)
     int (*oldhandler)(Display *, XErrorEvent *);
     static Window firefoxw=(Window)0;
     static pid_t pid=0;
+#if DEBUG_EXEC
     int status;
+#endif
     char command[BUFSIZ];
     char *envstring;
 
@@ -119,10 +121,10 @@ int callBrowser(char *url, char *bookmark)
 #endif
 #if DEBUG_EXEC
 	    printf("execute(no window before): cmd=%s\n",command);
-#endif
 	    status=execute(command);
-#if DEBUG_EXEC
 	    printf("execute(no window after): cmd=%s status=%d\n",command,status);
+#else
+            execute(command);
 #endif
 	    return 1;
 	}
@@ -139,10 +141,10 @@ int callBrowser(char *url, char *bookmark)
 
 #if DEBUG_EXEC
     printf("execute(found window before): cmd=%s\n",command);
-#endif
     status=execute(command);
-#if DEBUG_EXEC
     printf("execute(found window after): cmd=%s status=%d\n",command,status);
+#else
+    execute(command);
 #endif
 
   /* Raise the window */

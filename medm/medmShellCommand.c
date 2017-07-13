@@ -129,9 +129,9 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
    * widget list as well, for destruction when new shells are selected
    * at the top level */
     Widget shellCommandPulldownMenu, shellCommandMenuButton;
-    Widget widget;
 
 #if DEBUG_REDRAW
+    Widget widget;
     widget=dlElement->widget;
     print("executeDlShellCommand: %x hidden=%s widget=%x managed=%s\n",
       dlElement,dlElement->hidden?"Yes":"No",
@@ -351,7 +351,7 @@ void executeDlShellCommand(DisplayInfo *displayInfo, DlElement *dlElement)
 	XtSetArg(args[nargs],XmNlabelPixmap,pixmap); nargs++;
 	XtSetArg(args[nargs],XmNlabelType,XmPIXMAP); nargs++;
 	XtSetArg(args[nargs],XmNsubMenuId,shellCommandPulldownMenu); nargs++;
-	widget = XtCreateManagedWidget("shellCommandMenuLabel",
+	XtCreateManagedWidget("shellCommandMenuLabel",
 	  xmCascadeButtonGadgetClass,
 	  localMenuBar, args, nargs);
 

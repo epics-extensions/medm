@@ -559,18 +559,22 @@ void StartDrag(Widget w, XEvent *event)
     print("%8.3f StartDrag: Start put names in PRIMARY\n",getTimerDouble());
 #endif
     if(channelNames) {
-	Boolean status;
       /* Don't use CurrentTime here.  Get the time from the event,
          which must be a button press event, according to the man
          page. */
+#if DEBUG_SELECTION
+	Boolean status;
 	status=XtOwnSelection(mainShell,XA_PRIMARY,
 	  (event->type == ButtonPress)?((XButtonEvent *)event)->time:CurrentTime,
 	  selectionConvertProc,NULL,NULL);
-#if DEBUG_SELECTION
 	print("XtOwnSelection: |%s| status=%s\n"
 	  "  event->type=%d [ButtonPress=%d]\n",
 	  channelNames,status?"True":"False",
 	  event->type,ButtonPress);
+#else
+        XtOwnSelection(mainShell,XA_PRIMARY,
+	  (event->type == ButtonPress)?((XButtonEvent *)event)->time:CurrentTime,
+	  selectionConvertProc,NULL,NULL);
 #endif
     }
 

@@ -766,31 +766,6 @@ void requestDestroy(request_t *request) {
 #endif
 
 
-void IconifyMe (dpy, win)
-     Display *dpy;
-     Window win;     /* toplevel window to iconify */
-{
-  Atom xa_WM_CHANGE_STATE;
-  XClientMessageEvent ev;
-  
-  xa_WM_CHANGE_STATE = XInternAtom (dpy,
-				    "WM_CHANGE_STATE", False);
-  
-  ev.type = ClientMessage;
-  ev.display = dpy;
-  ev.message_type = xa_WM_CHANGE_STATE;
-  ev.format = 32;
-  ev.data.l[0] = IconicState;
-  ev.window = win;
-  
-  XSendEvent (dpy,
-	      RootWindow (dpy, DefaultScreen(dpy)),
-	      True,
-	      (SubstructureRedirectMask | SubstructureNotifyMask),
-	      &ev);
-  XFlush (dpy);
-}
-
 request_t * parseCommandLine(int argc, char *argv[]) {
     int i;
     int argsUsed = 0;
@@ -1806,7 +1781,8 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
     char *suffix;
     char f1[MAX_FILE_CHARS], f2[MAX_FILE_CHARS+4];
     char warningString[2*MAX_FILE_CHARS];
-    int  strLen1, strLen2, strLen3, strLen4;
+    int  strLen1, strLen3, strLen4;
+    //int strLen2;
     int  status;
     FILE *stream;
     Boolean brandNewFile = False;
@@ -1830,7 +1806,7 @@ Boolean medmSaveDisplay(DisplayInfo *displayInfo, char *filename, Boolean overwr
 #endif
 
     strLen1 = strlen(filename);
-    strLen2 = strlen(DISPLAY_FILE_BACKUP_SUFFIX);
+    //strLen2 = strlen(DISPLAY_FILE_BACKUP_SUFFIX);
     strLen3 = strlen(DISPLAY_FILE_ASCII_SUFFIX);
     strLen4 = strlen(templateSuffix);
 

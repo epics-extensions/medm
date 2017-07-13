@@ -1503,7 +1503,7 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     char string[24];
     int firstTime=1, count=0, nPoints=0, nPointsOld=0;
     int iPrec, kk, pointSize;
-    int i, j, n;
+    int i, j;
     int iY1,iY2;
     int Yaxis,iYaxis;
 
@@ -1851,7 +1851,6 @@ static Boolean cartesianPlotResetPlot(MedmCartesianPlot *pcp)
     maxYF.fval = maxY;
     minY2F.fval = minY2;
     maxY2F.fval = maxY2;
-    n = 0;
     if(dlCartesianPlot->axis[X_AXIS_ELEMENT].rangeStyle
       == CHANNEL_RANGE) {
 	CpSetAxisMaxMin(w, CP_X, maxXF, minXF);
@@ -2343,13 +2342,13 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 {
     DisplayInfo *cdi=currentDisplayInfo;
     int buttonId = (intptr_t)cd;
-    int k, n, rcType, iPrec;
+    int k, rcType, iPrec;
     char string[24];
     char *stringMinValue, *stringMaxValue;
     XcVType minF, maxF, tickF;
     XtPointer userData;
     MedmCartesianPlot *pcp = NULL;
-    DlCartesianPlot *dlCartesianPlot = NULL;
+    //DlCartesianPlot *dlCartesianPlot = NULL;
 
     UNREFERENCED(cbs);
 
@@ -2359,9 +2358,10 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 	    XtVaGetValues(executeTimeCartesianPlotWidget,
 	      XmNuserData, &userData, NULL);
 	    pcp = (MedmCartesianPlot *)userData;
+            /*
 	    if(pcp)
-	      dlCartesianPlot = (DlCartesianPlot *)
-		pcp->dlElement->structure.cartesianPlot;
+	      dlCartesianPlot = (DlCartesianPlot *)pcp->dlElement->structure.cartesianPlot;
+            */
 	} else {
 	    medmPostMsg(1,"cpAxisOptionMenuSimpleCallback: "
 	      "Element is no longer valid\n");
@@ -2372,7 +2372,6 @@ static void cpAxisOptionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs
 
   /* rcType (and therefore which option menu...) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
-    n = 0;
     switch (rcType) {
     case CP_X_AXIS_STYLE:
     case CP_Y_AXIS_STYLE:
@@ -2580,10 +2579,12 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi=currentDisplayInfo;
     int rcType = (intptr_t)cd;
     char *stringValue, string[24];
-    int k, n, iPrec=-1;
-    XcVType valF, minF, maxF, tickF;
+    int k, iPrec=-1;
+    XcVType minF, maxF, tickF;
     int axis=-1, isMax=-1;
-
+#if DEBUG_XRT
+    XcVType valF;
+#endif
     UNREFERENCED(cbs);
 
 #if DEBUG_XRT
@@ -2594,14 +2595,15 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
   /* Determine axis max or min
    *   Note: For the strcpy() calls, note that the textField has a maxLength
 	  resource set such that the strcpy always succeeds) */
-    n = 0;
     switch(rcType) {
     case CP_X_RANGE_MIN:
     case CP_Y_RANGE_MIN:
     case CP_Y2_RANGE_MIN:
 	globalResourceBundle.axis[rcType%3].minRange= (float)atof(stringValue);
 	if(globalDisplayListTraversalMode == DL_EXECUTE) {
+#if DEBUG_XRT
 	    valF.fval = globalResourceBundle.axis[rcType%3].minRange;
+#endif
 	    switch(rcType%3) {
 	    case X_AXIS_ELEMENT: axis = CP_X; isMax = 0; break;
 	    case Y1_AXIS_ELEMENT: axis = CP_Y; isMax = 0; break;
@@ -2623,7 +2625,9 @@ void cpAxisTextFieldActivateCallback(Widget w, XtPointer cd, XtPointer cbs)
     case CP_Y2_RANGE_MAX:
 	globalResourceBundle.axis[rcType%3].maxRange= (float)atof(stringValue);
 	if(globalDisplayListTraversalMode == DL_EXECUTE) {
+#if DEBUG_XRT
 	    valF.fval = globalResourceBundle.axis[rcType%3].maxRange;
+#endif
 	    switch(rcType%3) {
 	    case X_AXIS_ELEMENT: axis = CP_X; isMax = 1; break;
 	    case Y1_AXIS_ELEMENT: axis = CP_Y; isMax = 1; break;
@@ -3459,7 +3463,7 @@ void cpUpdateMatrixColors(int clr, int row)
 Widget createCartesianPlotDataDialog(Widget parent)
 {
     Widget shell, w, wparent;
-    Widget columns[CP_COLS], labels[CP_COLS];
+    //Widget columns[CP_COLS], labels[CP_COLS];
     Widget cpForm, cpActionAreaW, cpMatrixW;
 #if defined(XRTGRAPH)
     XmString label, opt1, opt2;
@@ -3529,7 +3533,8 @@ Widget createCartesianPlotDataDialog(Widget parent)
           xmFormWidgetClass, cpMatrixW,
           XmNfractionBase, MAX_TRACES + 1,
           NULL);
-        columns[j] = wparent = w;
+        //columns[j] = wparent = w;
+        wparent = w;
 
       /* Create a column label */
         w = XtVaCreateManagedWidget(cpColumnLabels[j],
@@ -3543,7 +3548,7 @@ Widget createCartesianPlotDataDialog(Widget parent)
           XmNtopPosition, 0,
           XmNbottomPosition, 1,
           NULL);
-        labels[j] = w;
+        //labels[j] = w;
 
         for(i=0; i < MAX_TRACES; i++) {
             switch(j) {

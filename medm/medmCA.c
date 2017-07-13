@@ -428,7 +428,7 @@ static void medmCAFdRegistrationCb(void *user, int fd, int opened)
 		print("                        XtRemoveInput finished\n");
 #endif
 		inp[i].inputId = (XtInputId)NULL;
-		inp[i].fd = (int)NULL;
+		inp[i].fd = (int)0;
 		currentNumInps--;
 	    }
 	}

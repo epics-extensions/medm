@@ -563,7 +563,8 @@ static void resetPvLimitsDlg(DlLimits *limits, char *pvName, Boolean doName)
 /* Creates pvLimitsS */
 static void createPvLimitsDlg(void)
 {
-    Widget pane, w, wparent, wsave;
+    Widget pane, w, wparent;
+    //Widget wsave;
     XmString label, opt1, opt2, opt3;
 
     if(pvLimitsS != NULL) {
@@ -629,7 +630,7 @@ static void createPvLimitsDlg(void)
     XmStringFree(opt3);
     pvLimitsLoprSrc = w;
 
-    wsave = wparent;
+    //wsave = wparent;
     w = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -682,7 +683,7 @@ static void createPvLimitsDlg(void)
     XmStringFree(opt3);
     pvLimitsHoprSrc = w;
 
-    wsave = wparent;
+    //wsave = wparent;
     w = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -735,7 +736,7 @@ static void createPvLimitsDlg(void)
     XmStringFree(opt3);
     pvLimitsPrecSrc = w;
 
-    wsave = wparent;
+    //wsave = wparent;
     w = XtVaCreateManagedWidget("rowCol",
       xmRowColumnWidgetClass, wparent,
       XmNorientation, XmHORIZONTAL,
@@ -1962,13 +1963,13 @@ static void updatePrintSetupFromDialog()
 static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int type = (intptr_t)cd;
-    int button;
+    //int button;
 
   /* If the type is less than 4, the callback comes from an option
    *   menu button.  Find the real type from the userData of the RC
    *   parent of the button */
     if(type < 4) {
-	button=type;
+        //button=type;
 	XtVaGetValues(XtParent(w), XmNuserData, &type, NULL);
     }
 
