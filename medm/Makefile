@@ -250,6 +250,11 @@ RCS_WIN32 += medm.rc
 
 include $(TOP)/configure/RULES
 
+# Make it possible to overwrite settings
+# This Makefile is called from here and e.g. O.linux-x86_64/
+# , so use ../  to find config.mak (if needed)
+-include ../config.mak
+
 medm.res:../medm.ico
 
 ifdef XRTGRAPH
