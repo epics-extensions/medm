@@ -198,7 +198,7 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
 
   /****** rcType (which option menu) is stored in userData */
     XtVaGetValues(XtParent(w),XmNuserData,&userData,NULL);
-    rcType=(int)userData;
+    rcType=(long)userData;
     switch(rcType) {
     case ALIGN_RC:
 	globalResourceBundle.align = (TextAlign)(FIRST_TEXT_ALIGN + buttonId);
