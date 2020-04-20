@@ -170,9 +170,9 @@ USR_LIBS_solaris = Xm12 Xt Xmu X11 Xext
 Xm12_DIR = $(MOTIF_LIB)
 endif
 
-USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
+#USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
 #Xp is not available and not needed on Linux Mint 18 
-#USR_LIBS_Linux = Xm Xt Xmu X11 Xext
+USR_LIBS_Linux = Xm Xt Xmu X11 Xext
 
 USR_LIBS_cygwin32 = Xm Xt Xmu X11 Xext SM ICE
 USR_LIBS_Darwin = -nil-

@@ -27,6 +27,7 @@
 #define DEBUG_RELATED_DISPLAY 0
 
 #include <ctype.h>
+#include <stdint.h>
 #include "medm.h"
 #include <Xm/MwmUtil.h>
 #ifndef MEDM_CDEV
@@ -190,12 +191,14 @@ static void optionMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
     DisplayInfo *cdi = currentDisplayInfo;
     int buttonId = (intptr_t)cd;
     long rcType;
+    uintptr_t userData;
     DlElement *elementPtr;
 
     UNREFERENCED(cbs);
 
   /****** rcType (which option menu) is stored in userData */
-    XtVaGetValues(XtParent(w),XmNuserData,&rcType,NULL);
+    XtVaGetValues(XtParent(w),XmNuserData,&userData,NULL);
+    rcType=(int)userData;
     switch(rcType) {
     case ALIGN_RC:
 	globalResourceBundle.align = (TextAlign)(FIRST_TEXT_ALIGN + buttonId);
