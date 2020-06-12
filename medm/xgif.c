@@ -712,8 +712,7 @@ static Boolean loadGIF(DisplayInfo *displayInfo, DlImage *dlImage)
     }
 
   /* If not found yet, use path of ADL file */
-    if(fp == NULL && displayInfo && displayInfo->dlFile &&
-      displayInfo->dlFile->name) {
+    if(fp == NULL && displayInfo && displayInfo->dlFile) {
 	char *stringPtr;
 
 	strncpy(fullPathName, displayInfo->dlFile->name, PATH_MAX);

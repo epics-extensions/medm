@@ -1851,7 +1851,7 @@ static void updatePrintSetupFromDialog()
 
   /* Command */
     string = XmTextFieldGetString(printSetupCommandTF);
-    sprintf(printCommand, string);
+    sprintf(printCommand, "%s", string);
     XtFree(string);
     XmTextFieldSetCursorPosition(printSetupCommandTF, 0);
 
@@ -1940,13 +1940,13 @@ static void updatePrintSetupFromDialog()
 
   /* Title string */
     string = XmTextFieldGetString(printSetupTitleTF);
-    sprintf(printTitleString, string);
+    sprintf(printTitleString, "%s", string);
     XtFree(string);
     XmTextFieldSetCursorPosition(printSetupTitleTF, 0);
 
   /* Filename */
     string = XmTextFieldGetString(printSetupFileTF);
-    sprintf(printFile, string);
+    sprintf(printFile, "%s", string);
     XtFree(string);
     XmTextFieldSetCursorPosition(printSetupFileTF, 0);
 

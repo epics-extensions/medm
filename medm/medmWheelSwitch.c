@@ -415,7 +415,7 @@ static void wheelSwitchUpdateGraphicalInfoCb(XtPointer cd) {
     DlWheelSwitch *dlWheelSwitch = pw->dlElement->structure.wheelSwitch;
     Pixel pixel;
     Widget widget = pw->dlElement->widget;
-    double hopr, lopr;
+    double hopr=0, lopr;
     short precision = 0;
     Arg args[5];
     int nargs = 0;

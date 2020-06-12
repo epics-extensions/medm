@@ -711,7 +711,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	      0,0,useableWidth,dlValuator->object.height);
 	  /* Lower */
 	    cvtDoubleToString(lower,stringValue,precision);
-	    if(stringValue != NULL) {
+	    
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
 		startX = MAX(1,useableWidth - textWidth);
@@ -723,10 +723,10 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XSetForeground(display,gc,foreground);
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
-	    }
+	    
 	  /* Upper */
 	    cvtDoubleToString(upper,stringValue,precision);
-	    if(stringValue != NULL) {
+	    
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
 		startX = MAX(1,useableWidth - textWidth);
@@ -744,7 +744,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XSetForeground(display,gc,foreground);
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
-	    }
+	    
 	}
 	if(dlValuator->label == CHANNEL) {
 	  /* TITLE */
@@ -772,7 +772,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 	      0,0,dlValuator->object.width,useableHeight);
 	  /* Lower */
 	    cvtDoubleToString(lower,stringValue,precision);
-	    if(stringValue != NULL) {
+	    
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
 		startX = 2;
@@ -785,10 +785,10 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XSetForeground(display,gc,foreground);
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
-	    }
+	    
 	  /* Upper */
 	    cvtDoubleToString(upper,stringValue,precision);
-	    if(stringValue != NULL) {
+	    
 		nChars = strlen(stringValue);
 		textWidth = XTextWidth(font,stringValue,nChars);
 		startX = dlValuator->object.width - textWidth - 2;
@@ -800,7 +800,7 @@ static void handleValuatorExpose(Widget w, XtPointer clientData,
 		XSetForeground(display,gc,foreground);
 		XDrawString(display,XtWindow(w),gc,startX,startY,
 		  stringValue,nChars);
-	    }
+	    
 	}
 	if(dlValuator->label == CHANNEL) {
 	  /* TITLE */

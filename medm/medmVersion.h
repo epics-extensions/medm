@@ -1,10 +1,10 @@
 /*************************************************************************\
-* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
-* National Laboratory.
-* Copyright (c) 2002 The Regents of the University of California, as
-* Operator of Los Alamos National Laboratory.
-* This file is distributed subject to a Software License Agreement found
-* in the file LICENSE that is included with this distribution.
+ * Copyright (c) 2002 The University of Chicago, as Operator of Argonne
+ * National Laboratory.
+ * Copyright (c) 2002 The Regents of the University of California, as
+ * Operator of Los Alamos National Laboratory.
+ * This file is distributed subject to a Software License Agreement found
+ * in the file LICENSE that is included with this distribution.
 \*************************************************************************/
 /*****************************************************************************
  *
@@ -60,14 +60,14 @@
  * .44  11-05-08     anderson   3.1.3 release
  *
  *****************************************************************************
-*/
+ */
 
 /*
  * MEDM Version information
  */
-#define MEDM_VERSION		3
-#define MEDM_REVISION		1
-#define MEDM_MODIFICATION	14
-#define MEDM_PATCH_LEVEL	0
-#define MEDM_VERSION_STRING	"MEDM Version 3.1.14"
-#define MEDM_VERSION_DIGITS	"MEDM030114"
+#define MEDM_VERSION 3
+#define MEDM_REVISION 1
+#define MEDM_MODIFICATION 15
+#define MEDM_PATCH_LEVEL 0
+#define MEDM_VERSION_STRING "MEDM Version 3.1.15"
+#define MEDM_VERSION_DIGITS "MEDM030115"

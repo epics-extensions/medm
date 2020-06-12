@@ -321,6 +321,7 @@ static void indicatorUpdateGraphicalInfoCb(XtPointer cd) {
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach Indicator\n",
 	  dlIndicator->monitor.rdbk);
+        return;
 	break;
     }
     if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {

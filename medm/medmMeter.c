@@ -296,6 +296,7 @@ static void meterUpdateGraphicalInfoCb(XtPointer cd) {
 	  "  Unknown channel type for %s\n"
 	  "  Cannot attach meter\n",
 	  dlMeter->monitor.rdbk);
+        return;
 	break;
     }
     if((hopr.fval == 0.0) && (lopr.fval == 0.0)) {

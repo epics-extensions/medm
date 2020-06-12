@@ -214,8 +214,8 @@ void errMsgDlgCb(Widget w, XtPointer clientData, XtPointer callData)
 		XBell(display,50); XBell(display,50); XBell(display,50);
 		return;
 	    }
-	    fprintf(file,timeStampStr);
-	    fprintf(file,tmp);
+	    fprintf(file,"%s",timeStampStr);
+	    fprintf(file,"%s",tmp);
 	    XtFree(tmp);
 	    fclose(file);
 
@@ -693,7 +693,7 @@ void medmPostMsg(int priority, char *format, ...) {
 #ifdef WIN32
     lprintf(timeStampStr);
 #else
-    fprintf(stderr, timeStampStr);
+    fprintf(stderr, "%s", timeStampStr);
 #endif
 
   /* Start variable arguments */
@@ -745,7 +745,7 @@ void medmPrintf(int priority, char *format, ...)
 #ifdef WIN32
     lprintf(medmPrintfStr);
 #else
-    fprintf(stderr, medmPrintfStr);
+    fprintf(stderr, "%s", medmPrintfStr);
 #endif
 
     va_end(args);

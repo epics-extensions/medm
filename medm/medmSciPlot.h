@@ -23,8 +23,8 @@ typedef struct {
     int npoints;
     int pointsUsed;
     int listid;
-    float *xp;
-    float *yp;
+    double *xp;
+    double *yp;
 } CpDataSet;
 
 typedef struct {
