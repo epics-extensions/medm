@@ -54,6 +54,7 @@
 #include <process.h>
 #endif
 #include <string.h>
+#include <stdint.h>
 #include <time.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
@@ -801,6 +802,7 @@ static void createPvLimitsDlg(void)
 static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
 {
     int type = (intptr_t)cd;
+    uintptr_t userData;
     int button=0, src;
     double val;
     short sval;
@@ -839,7 +841,9 @@ static void pvLimitsDialogCallback(Widget w, XtPointer cd , XtPointer cbs)
    *   Find the real type from the userData of the RC parent of the button */
     if(type < 3) {
 	button=type;
-	XtVaGetValues(XtParent(w), XmNuserData, &type,NULL);
+	/*XtVaGetValues(XtParent(w), XmNuserData, &type,NULL);*/
+	XtVaGetValues(XtParent(w), XmNuserData, &userData,NULL);
+	type = (int)userData;
 #if DEBUG_PVLIMITS
 	print("  Type is really %d, button is %d\n",type,button);
 #endif
@@ -1963,6 +1967,7 @@ static void updatePrintSetupFromDialog()
 static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
 {
     int type = (intptr_t)cd;
+    uintptr_t userData;
     //int button;
 
   /* If the type is less than 4, the callback comes from an option
@@ -1970,7 +1975,9 @@ static void printSetupDialogCallback(Widget w, XtPointer cd, XtPointer cbs)
    *   parent of the button */
     if(type < 4) {
         //button=type;
-	XtVaGetValues(XtParent(w), XmNuserData, &type, NULL);
+	//XtVaGetValues(XtParent(w), XmNuserData, &type, NULL);
+	XtVaGetValues(XtParent(w), XmNuserData, &userData, NULL);
+	type = (int)userData;
     }
 
     switch(type) {
