@@ -22,6 +22,9 @@
 #define DEBUG_PARSE 0
 
 #include "medm.h"
+#ifdef USE_LOGDAEMON
+#include "logDaemonLib.h"
+#endif
 
 #include <X11/keysym.h>
 #include <Xm/MwmUtil.h>
@@ -600,7 +603,14 @@ void dmDisplayListParse(DisplayInfo *displayInfoIn, FILE *filePtr,
     Arg args[2];
     int nargs;
 
-
+#ifdef USE_LOGDAEMON
+    LOGHANDLE h;
+    if (logOpen(&h, NULL, "medmAudit", "FileDisplayed") == LOG_OK)
+      {
+        logString(h, filename?filename:"NULL");
+        logClose(h);
+      }
+#endif
 #if DEBUG_RELATED_DISPLAY
     print("\ndmDisplayListParse: displayInfoIn=%x\n"
       "  argsString=%s\n"

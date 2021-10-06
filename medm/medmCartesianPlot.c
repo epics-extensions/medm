@@ -308,6 +308,10 @@ static void cartesianPlotCreateRunTimeInstance(DisplayInfo *displayInfo,
       pcp->startTime.nsec = 0;
       pcp->eraseMode = dlCartesianPlot->eraseMode;
       pcp->dlElement = dlElement;
+      for (i = 0; i < MAX_TRACES; i++)
+        {
+          pcp->xyTrace[i].hcp = NULL;
+        }
       pcp->updateTask = updateTaskAddTask(displayInfo,
                                           &(dlCartesianPlot->object),
                                           cartesianPlotDraw,
@@ -974,12 +978,16 @@ static void cartesianPlotUpdateTrace(XtPointer cd, Boolean updateLastPoint)
             count = chCount;
         }
 #endif
-
+      
       /* Use count from the recordY */
       if (dlCartesianPlot->count == 0)
         {
           count = pt->recordY->currentCount;
         }
+      /* Unclear how this is occurring. It happens randomly when resizing a screen */
+      if (pt->recordY->currentCount < 0)
+        count = 0;
+      
       pointsUsed = MAX(count, 0);
       CpDataSetPointsUsed(w, pt->hcp, pt->trace, pointsUsed);
       switch (pt->recordY->dataType)
@@ -2726,8 +2734,12 @@ static void cartesianPlotDraw(XtPointer cd)
       if ((pt->recordY) &&
           (pt->hcp) &&
           (pt->recordY->connected) &&
+          /*(pt->recordY->elementCount >= 0) &&*/
           ((currentTime - timeOffset - pt->recordY->time.secPastEpoch) > 1))
         {
+          //if (pt->recordY->currentCount <= 0)
+          if (pt->recordY->elementCount <= 0)
+            printf("DEBUG elementCount=%d\n", pt->recordY->elementCount);
           cartesianPlotUpdateTrace((XtPointer)pt->recordY, True);
           if (pt->hcp == pcp->hcp1)
             pcp->dirty1 = True;

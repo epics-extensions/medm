@@ -2578,7 +2578,7 @@ ComputeDimensions(SciPlotWidget w)
     y_major_incr, x, y, width, height, axisnumbersize, axisXlabelsize,
     axisYlabelsize;
   char label[16]; /* , numberformat[16]; */
-  int i, num_y_major;
+  int i, num_y_major, xmargin, ymargin;
   Boolean AxisOnLeft = FALSE;
 
   /* Compute xextra and yextra, which are the extra distances that the text
@@ -2699,28 +2699,38 @@ ComputeDimensions(SciPlotWidget w)
     {
       AxisOnLeft = TRUE;
     }
-
+  if (w->core.width <= 250) // tiny plot
+    {
+      xmargin = 0;
+      ymargin = w->plot.Margin;
+      xextra = 0;
+    }
+  else
+    {
+      xmargin = w->plot.Margin;
+      ymargin = w->plot.Margin;
+    }
   if (AxisOnLeft == TRUE)
     {
       x = 0;
     }
   else
     {
-      x = (real)w->plot.Margin * 2 + xextra;
+      x = (real)xmargin * 2 + xextra;
     }
   //The idea here is to match the old margins from the old xrt graph code if the .adl file has not been updated.
-  if (w->plot.medmFileVersion <= 30114)
+  if ((w->plot.medmFileVersion <= 30114) && (w->core.width > 250))
     x += (.035 * (real)w->core.width);
-  y = (real)w->plot.Margin + yextra;
+  y = (real)ymargin + yextra;
 
-  /* width = (real)w->core.width - (real)w->plot.Margin - x -
+  /* width = (real)w->core.width - (real)xmargin - x -
    *          legendwidth - AxisFontHeight
    */
-  width = (real)w->core.width - (real)w->plot.Margin - x - xextra - (real)w->plot.Margin;
-  if (w->plot.medmFileVersion <= 30114)
+  width = (real)w->core.width - (real)xmargin - x - xextra - (real)xmargin;
+  if ((w->plot.medmFileVersion <= 30114) && (w->core.width > 250))
     width -= (.032 * (real)w->core.width);
 
-  /* height = (real)w->core.height - (real)w->plot.Margin - y
+  /* height = (real)w->core.height - (real)ymargin - y
    *           - Height of axis numbers (including margin)
    *           - Height of axis label (including margin)
    *           - Height of Title (including margin)
@@ -2739,7 +2749,7 @@ ComputeDimensions(SciPlotWidget w)
 
   axisXlabelsize = 0.0;
   axisYlabelsize = 0.0;
-  axisnumbersize = (real)w->plot.Margin + FontnumHeight(w, w->plot.axisFont);
+  axisnumbersize = (real)ymargin + FontnumHeight(w, w->plot.axisFont);
   height -= axisnumbersize;
 
   if (w->plot.ShowXLabel)
@@ -2747,24 +2757,24 @@ ComputeDimensions(SciPlotWidget w)
       axisXlabelsize = FontnumHeight(w, w->plot.labelFont);
       height -= axisXlabelsize;
     }
-  axisYlabelsize = (real)w->plot.Margin + FontnumHeight(w, w->plot.labelFont);
+  axisYlabelsize = (real)xmargin + FontnumHeight(w, w->plot.labelFont);
 
   if (w->plot.Y4AxisShow)
     {
       width -= axisYlabelsize;
       if (w->plot.Y4AxisLeft)
         {
-          width -= max_label_width4 + 2 * (real)w->plot.Margin;
-          w->plot.x.Origin += axisYlabelsize + max_label_width4 + 2 * (real)w->plot.Margin;
+          width -= max_label_width4 + 2 * (real)xmargin;
+          w->plot.x.Origin += axisYlabelsize + max_label_width4 + 2 * (real)xmargin;
           w->plot.y4.AxisPos = w->plot.x.Origin;
-          w->plot.y4.LabelPos = w->plot.y4.AxisPos - max_label_width4 - (real)w->plot.Margin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
+          w->plot.y4.LabelPos = w->plot.y4.AxisPos - max_label_width4 - (real)xmargin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
         }
       else
         {
           width -= max_label_width4;
           w->plot.y4.AxisPos = w->plot.x.Origin + width;
-          w->plot.y4.LabelPos = w->plot.y4.AxisPos + max_label_width4 + 3 * (real)w->plot.Margin;
-          width -= 2 * (real)w->plot.Margin;
+          w->plot.y4.LabelPos = w->plot.y4.AxisPos + max_label_width4 + 3 * (real)xmargin;
+          width -= 2 * (real)xmargin;
         }
     }
   if (w->plot.Y3AxisShow)
@@ -2772,17 +2782,17 @@ ComputeDimensions(SciPlotWidget w)
       width -= axisYlabelsize;
       if (w->plot.Y3AxisLeft)
         {
-          width -= max_label_width3 + 2 * (real)w->plot.Margin;
-          w->plot.x.Origin += axisYlabelsize + max_label_width3 + 2 * (real)w->plot.Margin;
+          width -= max_label_width3 + 2 * (real)xmargin;
+          w->plot.x.Origin += axisYlabelsize + max_label_width3 + 2 * (real)xmargin;
           w->plot.y3.AxisPos = w->plot.x.Origin;
-          w->plot.y3.LabelPos = w->plot.y3.AxisPos - max_label_width3 - (real)w->plot.Margin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
+          w->plot.y3.LabelPos = w->plot.y3.AxisPos - max_label_width3 - (real)xmargin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
         }
       else
         {
           width -= max_label_width3;
           w->plot.y3.AxisPos = w->plot.x.Origin + width;
-          w->plot.y3.LabelPos = w->plot.y3.AxisPos + max_label_width3 + 3 * (real)w->plot.Margin;
-          width -= 2 * (real)w->plot.Margin;
+          w->plot.y3.LabelPos = w->plot.y3.AxisPos + max_label_width3 + 3 * (real)xmargin;
+          width -= 2 * (real)xmargin;
         }
     }
   if (w->plot.Y2AxisShow)
@@ -2790,17 +2800,17 @@ ComputeDimensions(SciPlotWidget w)
       width -= axisYlabelsize;
       if (w->plot.Y2AxisLeft)
         {
-          width -= max_label_width2 + 2 * (real)w->plot.Margin;
-          w->plot.x.Origin += axisYlabelsize + max_label_width2 + 2 * (real)w->plot.Margin;
+          width -= max_label_width2 + 2 * (real)xmargin;
+          w->plot.x.Origin += axisYlabelsize + max_label_width2 + 2 * (real)xmargin;
           w->plot.y2.AxisPos = w->plot.x.Origin;
-          w->plot.y2.LabelPos = w->plot.y2.AxisPos - max_label_width2 - (real)w->plot.Margin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
+          w->plot.y2.LabelPos = w->plot.y2.AxisPos - max_label_width2 - (real)xmargin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
         }
       else
         {
           width -= max_label_width2;
           w->plot.y2.AxisPos = w->plot.x.Origin + width;
-          w->plot.y2.LabelPos = w->plot.y2.AxisPos + max_label_width2 + 3 * (real)w->plot.Margin;
-          width -= 2 * (real)w->plot.Margin;
+          w->plot.y2.LabelPos = w->plot.y2.AxisPos + max_label_width2 + 3 * (real)xmargin;
+          width -= 2 * (real)xmargin;
         }
     }
   if (w->plot.YAxisShow)
@@ -2808,28 +2818,29 @@ ComputeDimensions(SciPlotWidget w)
       width -= axisYlabelsize;
       if (w->plot.YAxisLeft)
         {
-          width -= max_label_width + 2 * (real)w->plot.Margin;
-          w->plot.x.Origin += axisYlabelsize + max_label_width + 2 * (real)w->plot.Margin;
+          width -= max_label_width + 2 * (real)xmargin;
+          w->plot.x.Origin += axisYlabelsize + max_label_width + 2 * (real)xmargin;
+          // axisYlabelsize = (real)xmargin + FontnumHeight(w, w->plot.labelFont);
           w->plot.x.AxisPos = w->plot.x.Origin;
-          w->plot.x.LabelPos = w->plot.x.AxisPos - max_label_width - (real)w->plot.Margin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
+          w->plot.x.LabelPos = w->plot.x.AxisPos - max_label_width - (real)xmargin - (FontnumHeight(w, w->plot.labelFont) / 2.0);
         }
       else
         {
           width -= max_label_width;
           w->plot.x.AxisPos = w->plot.x.Origin + width;
-          w->plot.x.LabelPos = w->plot.x.AxisPos + max_label_width + 3 * (real)w->plot.Margin;
+          w->plot.x.LabelPos = w->plot.x.AxisPos + max_label_width + 3 * (real)xmargin;
         }
     }
 
   w->plot.x.Size = width;
   w->plot.y.Size = height;
 
-  w->plot.y.AxisPos = w->plot.y.Origin + w->plot.y.Size + (real)w->plot.Margin + FontnumAscent(w, w->plot.axisFont);
-  w->plot.y.LabelPos = w->plot.y.Origin + w->plot.y.Size + (real)w->plot.Margin + axisnumbersize;
+  w->plot.y.AxisPos = w->plot.y.Origin + w->plot.y.Size + (real)ymargin + FontnumAscent(w, w->plot.axisFont);
+  w->plot.y.LabelPos = w->plot.y.Origin + w->plot.y.Size + (real)ymargin + axisnumbersize;
   if (w->plot.ShowTitle)
     {
-      w->plot.y.TitlePos = (real)w->core.height - (real)w->plot.Margin;
-      w->plot.x.TitlePos = (real)w->plot.Margin;
+      w->plot.y.TitlePos = (real)w->core.height - (real)ymargin;
+      w->plot.x.TitlePos = (real)xmargin;
       if (w->plot.medmFileVersion <= 30114)
         w->plot.x.TitlePos += (.035 * (real)w->core.width);
     }
@@ -2841,9 +2852,9 @@ ComputeDimensions(SciPlotWidget w)
   SciPlotPrintf("y.axisLabelSize:      %f\n", axisYlabelsize);
   SciPlotPrintf("y.TitleSize:          %f\n",
                 (real)w->plot.TitleMargin + FontnumHeight(w, w->plot.titleFont));
-  SciPlotPrintf("y.Margin:             %f\n", (real)w->plot.Margin);
+  SciPlotPrintf("y.Margin:             %f\n", (real)ymargin);
   SciPlotPrintf("total-----------------%f\n", w->plot.y.Origin + w->plot.y.Size +
-                axisnumbersize + axisYlabelsize + (real)w->plot.Margin +
+                axisnumbersize + axisYlabelsize + (real)margin +
                 (real)w->plot.TitleMargin + FontnumHeight(w, w->plot.titleFont));
   SciPlotPrintf("total should be-------%f\n", (real)w->core.height);
 #endif
@@ -3039,7 +3050,7 @@ DrawCartesianYLabel(SciPlotWidget w, int axis)
           for (i = 0; i < w->plot.num_plotlist; i++)
             {
               p = w->plot.plotlist + i;
-              if (p->draw && (p->axis == axis))
+              if (p->draw && (p->axis == axis) && (w->core.width > 250))
                 {
                   LineSet(w, w->plot.x.LabelPos + j, w->plot.y.Origin, w->plot.x.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size - width) / 2.0) - 5, p->LineColor, XtLINE_SOLID);
                   LineSet(w, w->plot.x.LabelPos + j, w->plot.y.Origin + w->plot.y.Size, w->plot.x.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size + width) / 2.0) + 5, p->LineColor, XtLINE_SOLID);
@@ -3068,7 +3079,7 @@ DrawCartesianYLabel(SciPlotWidget w, int axis)
           for (i = 0; i < w->plot.num_plotlist; i++)
             {
               p = w->plot.plotlist + i;
-              if (p->draw && (p->axis == axis))
+              if (p->draw && (p->axis == axis) && (w->core.width > 250))
                 {
                   LineSet(w, w->plot.y2.LabelPos + j, w->plot.y.Origin, w->plot.y2.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size - width) / 2.0) - 5, p->LineColor, XtLINE_SOLID);
                   LineSet(w, w->plot.y2.LabelPos + j, w->plot.y.Origin + w->plot.y.Size, w->plot.y2.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size + width) / 2.0) + 5, p->LineColor, XtLINE_SOLID);
@@ -3097,7 +3108,7 @@ DrawCartesianYLabel(SciPlotWidget w, int axis)
           for (i = 0; i < w->plot.num_plotlist; i++)
             {
               p = w->plot.plotlist + i;
-              if (p->draw && (p->axis == axis))
+              if (p->draw && (p->axis == axis) && (w->core.width > 250))
                 {
                   LineSet(w, w->plot.y3.LabelPos + j, w->plot.y.Origin, w->plot.y3.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size - width) / 2.0) - 5, p->LineColor, XtLINE_SOLID);
                   LineSet(w, w->plot.y3.LabelPos + j, w->plot.y.Origin + w->plot.y.Size, w->plot.y3.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size + width) / 2.0) + 5, p->LineColor, XtLINE_SOLID);
@@ -3126,7 +3137,7 @@ DrawCartesianYLabel(SciPlotWidget w, int axis)
           for (i = 0; i < w->plot.num_plotlist; i++)
             {
               p = w->plot.plotlist + i;
-              if (p->draw && (p->axis == axis))
+              if (p->draw && (p->axis == axis) && (w->core.width > 250))
                 {
                   LineSet(w, w->plot.y4.LabelPos + j, w->plot.y.Origin, w->plot.y4.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size - width) / 2.0) - 5, p->LineColor, XtLINE_SOLID);
                   LineSet(w, w->plot.y4.LabelPos + j, w->plot.y.Origin + w->plot.y.Size, w->plot.y4.LabelPos + j, w->plot.y.Origin + ((w->plot.y.Size + width) / 2.0) + 5, p->LineColor, XtLINE_SOLID);

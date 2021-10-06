@@ -860,6 +860,7 @@ DlElement* createDlElement(DlElementType type, XtPointer structure,
     dlElement->data = 0;
     dlElement->next = 0;
     dlElement->prev = 0;
+    dlElement->updateType = STATIC_GRAPHIC;
     return dlElement;
 }
 

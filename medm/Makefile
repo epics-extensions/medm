@@ -136,6 +136,10 @@ USR_CFLAGS += -DEDITRES
 PROD_HOST = medm
 
 USR_INCLUDES = -I../../printUtils -I../../xc -I$(MOTIF_INC) -I$(X11_INC)
+ifdef USE_LOGDAEMON
+USR_INCLUDES += -I../../../SDDSepics/logDaemon
+USR_CFLAGS += -DUSE_LOGDAEMON
+endif
 
 PROD_LIBS = ANLwidgets PrintUtils
 ANLwidgets_DIR = $(INSTALL_LIB)
@@ -198,6 +202,11 @@ fontconfig_DIR = $(X11_LIB)
 png_DIR = $(X11_LIB)
 jpeg_DIR = $(MOTIF_LIB)
 iconv_DIR = $(MOTIF_LIB)
+
+ifdef USE_LOGDAEMON
+USR_LIBS_Linux += LogD BS
+LogD_DIR = $(EPICS_EXTENSIONS_LIB)
+endif
 
 SRCS += actions.c
 SRCS += bubbleHelp.c

@@ -860,6 +860,96 @@ static void relatedDisplayButtonPressedCb(Widget w, XtPointer clientData,
     relatedDisplayCreateNewDisplay(displayInfo, pEntry, replace);
 }
 
+/* code copied from wmctrl to move window to the current desktop */
+#define MAX_PROPERTY_VALUE_LEN 4096
+
+static char *get_property (Display *disp, Window win, 
+        Atom xa_prop_type, char *prop_name, unsigned long *size) {
+    Atom xa_prop_name;
+    Atom xa_ret_type;
+    int ret_format;
+    unsigned long ret_nitems;
+    unsigned long ret_bytes_after;
+    unsigned long tmp_size;
+    unsigned char *ret_prop;
+    char *ret;
+    
+    xa_prop_name = XInternAtom(disp, prop_name, False);
+    
+    /* MAX_PROPERTY_VALUE_LEN / 4 explanation (XGetWindowProperty manpage):
+     *
+     * long_length = Specifies the length in 32-bit multiples of the
+     *               data to be retrieved.
+     */
+    if (XGetWindowProperty(disp, win, xa_prop_name, 0, MAX_PROPERTY_VALUE_LEN / 4, False,
+            xa_prop_type, &xa_ret_type, &ret_format,     
+            &ret_nitems, &ret_bytes_after, &ret_prop) != Success) {
+        return NULL;
+    }
+  
+    if (xa_ret_type != xa_prop_type) {
+        XFree(ret_prop);
+        return NULL;
+    }
+
+    /* null terminate the result to make string handling easier */
+    tmp_size = (ret_format / (32 / sizeof(long))) * ret_nitems;
+    ret = malloc(tmp_size + 1);
+    memcpy(ret, ret_prop, tmp_size);
+    ret[tmp_size] = '\0';
+
+    if (size) {
+        *size = tmp_size;
+    }
+    
+    XFree(ret_prop);
+    return ret;
+}
+
+static int client_msg(Display *disp, Window win, char *msg,
+    unsigned long data0, unsigned long data1, 
+    unsigned long data2, unsigned long data3,
+    unsigned long data4) {
+  XEvent event;
+  long mask = SubstructureRedirectMask | SubstructureNotifyMask;
+
+  event.xclient.type = ClientMessage;
+  event.xclient.serial = 0;
+  event.xclient.send_event = True;
+  event.xclient.message_type = XInternAtom(disp, msg, False);
+  event.xclient.window = win;
+  event.xclient.format = 32;
+  event.xclient.data.l[0] = data0;
+  event.xclient.data.l[1] = data1;
+  event.xclient.data.l[2] = data2;
+  event.xclient.data.l[3] = data3;
+  event.xclient.data.l[4] = data4;
+
+  if (XSendEvent(disp, DefaultRootWindow(disp), False, mask, &event)) {
+    return EXIT_SUCCESS;
+  }
+  else {
+    return EXIT_FAILURE;
+  }
+}
+
+void window_to_desktop (Display *disp, Window win) {
+  unsigned long *cur_desktop = NULL;
+  Window root = DefaultRootWindow(disp);
+  int desktop;
+
+  if (! (cur_desktop = (unsigned long *)get_property(disp, root, XA_CARDINAL, "_NET_CURRENT_DESKTOP", NULL))) {
+    if (! (cur_desktop = (unsigned long *)get_property(disp, root, XA_CARDINAL, "_WIN_WORKSPACE", NULL))) {
+      return;
+    }
+  }
+  desktop = *cur_desktop;
+  free(cur_desktop);
+  client_msg(disp, win, "_NET_WM_DESKTOP", (unsigned long)desktop, 0, 0, 0, 0);
+  return;
+}
+/* end wmctrl code */
+
 void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
   DlRelatedDisplayEntry *pEntry, Boolean replaceDisplay)
 {
@@ -911,6 +1001,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
 #else
 		if(cdi && cdi->shell && XtIsRealized(cdi->shell)) {
 		    XMapRaised(display, XtWindow(cdi->shell));
+                    window_to_desktop (display, XtWindow(cdi->shell));
 		}
 #endif
 	      /* Refresh the display list dialog box */

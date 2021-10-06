@@ -818,21 +818,24 @@ static Boolean updateTaskWorkProc(XtPointer cd)
           while (t1)
             {
               pE1 = getElementFromUpdateTask(t1);
-              if (pE1->updateType != WIDGET && t1 != t)
+              if (pE1->updateType != WIDGET)
                 {
-                  int status = XRectInRegion(region,
-                                             t1->rectangle.x, t1->rectangle.y,
-                                             t1->rectangle.width, t1->rectangle.height);
-                  switch (status)
+                  if (t1 != t)
                     {
-                    case RectangleIn:
-                    case RectanglePart:
-                      if (newOverlapType < OVERLAP)
-                        newOverlapType = OVERLAP;
-                      break;
+                      int status = XRectInRegion(region,
+                                                 t1->rectangle.x, t1->rectangle.y,
+                                                 t1->rectangle.width, t1->rectangle.height);
+                      switch (status)
+                        {
+                        case RectangleIn:
+                        case RectanglePart:
+                          if (newOverlapType < OVERLAP)
+                            newOverlapType = OVERLAP;
+                          break;
+                        }
+                      if (newOverlapType == OVERLAP)
+                        break;
                     }
-                  if (newOverlapType == OVERLAP)
-                    break;
                 }
               t1 = t1->next;
             }
