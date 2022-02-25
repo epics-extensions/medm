@@ -16,3 +16,9 @@ More information about MEDM can be found via its web-page on the EPICS site:
 
 The extension distribution file should be unziped and untared
 in the extensions/src directory.
+
+By "extensions/src directory" is meant the src folder inside a special kind of directory called the extensions directory, created with the makeBaseExt.pl command. Learn more about extension directories here:
+
+https://epics.anl.gov/extensions/configure/index.php
+
+Also, you may need to edit the relevant CONFIG_SITE file in the extensions/os/configure directory, in order to set MOTIF_LIB and X11_LIB to point to the correct path on your machine. For example, if you run 64-bit linux, you may need to edit extensions/configure/os/CONFIG_SITE.linux-x86_64.linux-x86_64
