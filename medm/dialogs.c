@@ -126,6 +126,7 @@ void createPvInfoDlg(void)
     XtSetArg(args[n], XmNcolumns, 38); n++;
     XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
     XtSetArg(args[n], XmNeditable, False); n++;
+    XtSetArg(args[n], XmNfontList, fontListTable[4]); n++;
     pvInfoMessageBox = XmCreateScrolledText(pane,"text",args,n);
     XtManageChild(pvInfoMessageBox);
 
