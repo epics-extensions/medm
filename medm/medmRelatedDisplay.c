@@ -946,6 +946,7 @@ void window_to_desktop (Display *disp, Window win) {
   desktop = *cur_desktop;
   free(cur_desktop);
   client_msg(disp, win, "_NET_WM_DESKTOP", (unsigned long)desktop, 0, 0, 0, 0);
+  client_msg(disp, win, "_NET_ACTIVE_WINDOW", (unsigned long)desktop, 0, 0, 0, 0);
   return;
 }
 /* end wmctrl code */

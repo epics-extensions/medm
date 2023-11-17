@@ -3309,6 +3309,8 @@ DisplayInfo *parseDisplayFile(char *filename)
   return displayInfo;
 }
 
+void window_to_desktop (Display *disp, Window win);
+
 /**************************************************************************/
 /**************************** main ****************************************/
 /**************************************************************************/
@@ -4292,6 +4294,7 @@ int main(int argc, char *argv[])
                       if (cdi && cdi->shell && XtIsRealized(cdi->shell))
                         {
                           XMapRaised(display, XtWindow(cdi->shell));
+                          window_to_desktop (display, XtWindow(cdi->shell));
                         }
 #endif
                       medmPrintf(0,
