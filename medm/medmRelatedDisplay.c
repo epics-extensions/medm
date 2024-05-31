@@ -863,7 +863,7 @@ static void relatedDisplayButtonPressedCb(Widget w, XtPointer clientData,
 /* code copied from wmctrl to move window to the current desktop */
 #define MAX_PROPERTY_VALUE_LEN 4096
 
-static char *get_property (Display *disp, Window win, 
+static char *get_property (Display *disp, Window win,
         Atom xa_prop_type, char *prop_name, unsigned long *size) {
     Atom xa_prop_name;
     Atom xa_ret_type;
@@ -873,20 +873,20 @@ static char *get_property (Display *disp, Window win,
     unsigned long tmp_size;
     unsigned char *ret_prop;
     char *ret;
-    
+
     xa_prop_name = XInternAtom(disp, prop_name, False);
-    
+
     /* MAX_PROPERTY_VALUE_LEN / 4 explanation (XGetWindowProperty manpage):
      *
      * long_length = Specifies the length in 32-bit multiples of the
      *               data to be retrieved.
      */
     if (XGetWindowProperty(disp, win, xa_prop_name, 0, MAX_PROPERTY_VALUE_LEN / 4, False,
-            xa_prop_type, &xa_ret_type, &ret_format,     
+            xa_prop_type, &xa_ret_type, &ret_format,
             &ret_nitems, &ret_bytes_after, &ret_prop) != Success) {
         return NULL;
     }
-  
+
     if (xa_ret_type != xa_prop_type) {
         XFree(ret_prop);
         return NULL;
@@ -901,13 +901,13 @@ static char *get_property (Display *disp, Window win,
     if (size) {
         *size = tmp_size;
     }
-    
+
     XFree(ret_prop);
     return ret;
 }
 
 static int client_msg(Display *disp, Window win, char *msg,
-    unsigned long data0, unsigned long data1, 
+    unsigned long data0, unsigned long data1,
     unsigned long data2, unsigned long data3,
     unsigned long data4) {
   XEvent event;
@@ -1015,7 +1015,7 @@ void relatedDisplayCreateNewDisplay(DisplayInfo *displayInfo,
          passing the parent's path. */
 	filePtr = dmOpenUsableFile(filename, displayInfo->dlFile->name);
 	if(filePtr == NULL) {
-	    sprintf(token,
+	    snprintf(token, sizeof(token),
 	      "Cannot open related display:\n  %s\nCheck %s\n",
 	      filename, "EPICS_DISPLAY_PATH");
 	    dmSetAndPopupWarningDialog(displayInfo,token,"OK",NULL,NULL);

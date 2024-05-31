@@ -1246,7 +1246,7 @@ void refreshDisplayListDlg(void)
 	      strlen(di->nameValueTable[i].name) +
 	      strlen(di->nameValueTable[i].value) + 2;
 	    if(len >= MAX_LENGTH) break;
-	    sprintf(string,"%s %s=%s", string,
+	    snprintf(string + strlen(string), sizeof(string) - strlen(string), " %s=%s",
 	      di->nameValueTable[i].name,  di->nameValueTable[i].value);
 	}
 	xmString = XmStringCreateLocalized(string);

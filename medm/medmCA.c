@@ -1777,7 +1777,7 @@ static void pvInfoWriteInfo(void)
     }
 
   /* Heading */
-  sprintf(string, "           PV Information\n\nObject: %s\n%s\n",
+  snprintf(string, sizeof(string), "           PV Information\n\nObject: %s\n%s\n",
           elementType, timeStampStr);
   XmTextSetInsertionPosition(pvInfoMessageBox, 0);
   XmTextSetString(pvInfoMessageBox, string);
@@ -1795,18 +1795,18 @@ static void pvInfoWriteInfo(void)
       pR = pvInfo[i].record;
 
       /* Name */
-      sprintf(string, "%s\n"
+      snprintf(string, sizeof(string), "%s\n"
               "======================================\n",
               ca_name(chId));
       /* DESC */
       descVal = pvInfo[i].descVal;
       if (pvInfo[i].descOk && descVal)
         {
-          sprintf(string, "%sDESC: %s\n", string, descVal);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "DESC: %s\n", descVal);
         }
       else
         {
-          sprintf(string, "%sDESC: %s\n", string, NOT_AVAILABLE);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "DESC: %s\n", NOT_AVAILABLE);
         }
       if (pvInfo[i].descChid)
         ca_clear_channel(pvInfo[i].descChid);
@@ -1815,34 +1815,35 @@ static void pvInfoWriteInfo(void)
       rtypVal = pvInfo[i].rtypVal;
       if (pvInfo[i].rtypOk && rtypVal && *rtypVal)
         {
-          sprintf(string, "%sRTYP: %s\n", string, rtypVal);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "RTYP: %s\n", rtypVal);
         }
       else
         {
-          sprintf(string, "%sRTYP: %s\n", string, NOT_AVAILABLE);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "RTYP: %s\n", NOT_AVAILABLE);
         }
 #endif
       /* Items from chid */
-      sprintf(string, "%sTYPE: %s\n", string,
+      snprintf(string + strlen(string), sizeof(string) - strlen(string), "TYPE: %s\n",
               dbf_type_to_text(ca_field_type(chId)));
       /* ca_element_count is defined differently in 3.14 vs. 3.13 */
-      sprintf(string, "%sCOUNT: %lu\n", string,
+      snprintf(string + strlen(string), sizeof(string) - strlen(string), "COUNT: %lu\n",
               (unsigned long)ca_element_count(chId));
-      sprintf(string, "%sACCESS: %s%s\n", string,
+      snprintf(string + strlen(string), sizeof(string) - strlen(string), "ACCESS: %s%s\n",
               ca_read_access(chId) ? "R" : "", ca_write_access(chId) ? "W" : "");
-      sprintf(string, "%sHOST: %s\n", string, ca_host_name(chId));
+      snprintf(string + strlen(string), sizeof(string) - strlen(string), "HOST: %s\n", ca_host_name(chId));
       {
         char fracPart[10];
+        char temp[1024];
 
         /* Do the value */
         if (ca_element_count(chId) == 1)
           {
-            sprintf(string, "%sVALUE: %s\n", string,
+            snprintf(string + strlen(string), sizeof(string) - strlen(string), "VALUE: %s\n",
                     timeVal.value);
           }
         else
           {
-            sprintf(string, "%sFIRST VALUE: %s\n", string,
+            snprintf(string + strlen(string), sizeof(string) - strlen(string), "FIRST VALUE: %s\n",
                     timeVal.value);
           }
         /* Convert the seconds part of the timestamp to UNIX time */
@@ -1854,17 +1855,18 @@ static void pvInfoWriteInfo(void)
         /* Get the fractional part.  This assumes strftime truncates
            seconds rather than rounding them, which seems to be the
            case. */
-        sprintf(fracPart, "%09d", timeVal.stamp.nsec);
+        snprintf(fracPart, sizeof(fracPart), "%09d", timeVal.stamp.nsec);
         /* Truncate to 3 figures */
         fracPart[3] = '\0';
-        sprintf(timeStampStr, "%s.%s", timeStampStr, fracPart);
+        snprintf(temp, sizeof(temp), "%s.%s", timeStampStr, fracPart);
+        strncpy(timeStampStr, temp, TIME_STRING_MAX - 1);
         timeStampStr[TIME_STRING_MAX - 1] = '\0';
-        sprintf(string, "%sSTAMP: %s\n", string, timeStampStr);
+        snprintf(string + strlen(string), sizeof(string) - strlen(string), "STAMP: %s\n", timeStampStr);
 #if DEBUG_TIMESTAMP
         /* This prints 9 significant figures and requires 3.13 base */
         {
           char tsTxt[32];
-          sprintf(string, "%sSTAMP: %s\n", string,
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "STAMP: %s\n",
                   tsStampToText(&timeVal.stamp, TS_TEXT_MONDDYYYY, tsTxt));
         }
 #endif
@@ -1876,68 +1878,67 @@ static void pvInfoWriteInfo(void)
       switch (pR->severity)
         {
         case NO_ALARM:
-          sprintf(string, "ALARM: NO\n");
+          snprintf(string, sizeof(string), "ALARM: NO\n");
           break;
         case MINOR_ALARM:
-          sprintf(string, "ALARM: MINOR\n");
+          snprintf(string, sizeof(string), "ALARM: MINOR\n");
           break;
         case MAJOR_ALARM:
-          sprintf(string, "ALARM: MAJOR\n");
+          snprintf(string, sizeof(string), "ALARM: MAJOR\n");
           break;
         case INVALID_ALARM:
-          sprintf(string, "ALARM: INVALID\n");
+          snprintf(string, sizeof(string), "ALARM: INVALID\n");
           break;
         default:
-          sprintf(string, "ALARM: Unknown\n");
+          snprintf(string, sizeof(string), "ALARM: Unknown\n");
           break;
         }
       XmTextInsert(pvInfoMessageBox, curpos, string);
       curpos += strlen(string);
 
       /* Items from record */
-      sprintf(string, "\n");
+      snprintf(string, sizeof(string), "\n");
       switch (ca_field_type(chId))
         {
         case DBF_STRING:
           break;
         case DBF_ENUM:
-          sprintf(string, "%sSTATES: %d\n",
-                  string, (int)(pR->hopr + 1.1));
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "STATES: %d\n", (int)(pR->hopr + 1.1));
           /* KE: Bad way to use a double */
           if (pR->hopr)
             {
               for (j = 0; j <= pR->hopr; j++)
                 {
-                  sprintf(string, "%sSTATE %2d: %s\n",
-                          string, j, pR->stateStrings[j]);
+                  snprintf(string + strlen(string), sizeof(string) - strlen(string), "STATE %2d: %s\n",
+                          j, pR->stateStrings[j]);
                 }
             }
           break;
         case DBF_CHAR:
         case DBF_INT:
         case DBF_LONG:
-          sprintf(string, "%sHOPR: %g  LOPR: %g\n",
-                  string, pR->hopr, pR->lopr);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "HOPR: %g  LOPR: %g\n",
+                  pR->hopr, pR->lopr);
           break;
         case DBF_FLOAT:
         case DBF_DOUBLE:
           if (pR->precision >= 0 && pR->precision <= 17)
             {
-              sprintf(string, "%sPRECISION: %d\n",
-                      string, pR->precision);
+              snprintf(string + strlen(string), sizeof(string) - strlen(string), "PRECISION: %d\n",
+                      pR->precision);
             }
           else
             {
-              sprintf(string, "%sPRECISION: %d [Bad Value]\n",
-                      string, pR->precision);
+              snprintf(string + strlen(string), sizeof(string) - strlen(string), "PRECISION: %d [Bad Value]\n",
+                      pR->precision);
             }
-          sprintf(string, "%sHOPR: %g  LOPR: %g\n",
-                  string, pR->hopr, pR->lopr);
+          snprintf(string + strlen(string), sizeof(string) - strlen(string), "HOPR: %g  LOPR: %g\n",
+                  pR->hopr, pR->lopr);
           break;
         default:
           break;
         }
-      sprintf(string, "%s\n", string);
+      snprintf(string + strlen(string), sizeof(string) - strlen(string), "\n");
       XmTextInsert(pvInfoMessageBox, curpos, string);
       curpos += strlen(string);
     }
