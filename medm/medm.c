@@ -1714,7 +1714,7 @@ void mainFileMenuSimpleCallback(Widget w, XtPointer cd, XtPointer cbs)
               /* Prompt if All has not been choosen */
               if (!saveAll)
                 {
-                  sprintf(str, "Save \"%s\" ?", displayInfo->dlFile->name);
+                  snprintf(str, sizeof(str), "Save \"%s\" ?", displayInfo->dlFile->name);
                   dmSetAndPopupQuestionDialog(displayInfo, str, "Yes", "No",
                                               "All Remaining");
                   switch (displayInfo->questionDialogAnswer)
@@ -2157,7 +2157,7 @@ void medmExit()
                     filename = tmp + 1;
                   tmp++;
                 }
-              sprintf(str, "Save display \"%s\" before exit?", filename);
+              snprintf(str, sizeof(str), "Save display \"%s\" before exit?", filename);
 #ifdef PROMPT_TO_EXIT
               /* Don't use Cancel, use All (Only 3 buttons) */
               if (displayInfo->next)

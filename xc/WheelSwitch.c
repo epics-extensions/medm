@@ -1411,8 +1411,9 @@ static void compute_format(WswWidget wsw)
     while(!isdigit(kbd_format_buffer[j++]=format_used[i++])) ;
     while(format_used[i++]!='f') ;
     kbd_format_buffer[j-1]='\0';
-    sprintf(kbd_format_buffer,"%s%ds%s",
-      kbd_format_buffer,
+    snprintf(kbd_format_buffer + strlen(kbd_format_buffer),
+     sizeof(kbd_format_buffer) - strlen(kbd_format_buffer),
+     "%ds%s",
       wsw->wsw.digit_size,
       format_used+i);
     replace_string(&wsw->wsw.kbd_format, kbd_format_buffer, WS_FREE);
