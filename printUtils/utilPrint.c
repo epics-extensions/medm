@@ -156,7 +156,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
 	break;
     case PRINT_TITLE_SPECIFIED:
 	if(*printTitleString) {
-	    snprintf(titleString, sizeof(titleString), "-s%s", printTitleString);
+	    snprintf(titleString, PRINT_BUF_SIZE, "-s%s", printTitleString);
 	    myArgv[myArgc++] = titleString;
 	}
 	break;
@@ -194,7 +194,7 @@ int utilPrint(Display *display, Widget w, char *xwdFileName, char *title)
     } else {
       /* Print the file to the printer, unless you are debugging, in
          which case you can look at the files instead */
-	snprintf(commandBuffer, sizeof(commandBuffer), "%s %s", printCommand, psFileName);
+	snprintf(commandBuffer, PRINT_BUF_SIZE, "%s %s", printCommand, psFileName);
 	status=system(commandBuffer);
 #ifndef VMS
 	if(status) {
