@@ -25,6 +25,9 @@
 #define DEBUG_TEXT_VERIFY 0
 #define DEBUG_LOSING_FOCUS 0
 #define DEBUG_RELATED_DISPLAY 0
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 #include <ctype.h>
 #include <stdint.h>
@@ -2471,6 +2474,11 @@ static void initializeResourcePaletteElements()
               /* Reset the index, fill the rest with zeros */
               for (k = j; k < MAX_RESOURCES_FOR_DL_ELEMENT; k++)
                 {
+#if defined(_WIN32)
+                  Sleep(50)
+#else
+                  sleep(.05);
+#endif
                   resourcePaletteElements[index].childIndexRC[k] = 0;
                   resourcePaletteElements[index].children[k] = NULL;
                 }
