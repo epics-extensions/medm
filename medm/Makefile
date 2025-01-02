@@ -177,6 +177,16 @@ endif
 USR_LIBS_Linux = Xm Xt Xp Xmu X11 Xext
 #Xp is not available and not needed on Linux Mint 18 
 #USR_LIBS_Linux = Xm Xt Xmu X11 Xext
+ 
+# If you encounter No rule to make target '../../../../lib/linux-x86_64/libXm.a
+# despite MOTIF_DIR being set correctly, try enabling the following by by setting
+# MEDM_NOLIBS=YES in CONFIG_SITE:
+
+ifeq ($(MEDM_NOLIBS),YES)
+USR_LIBS_DEFAULT=
+USR_LIBS_Linux = 
+USR_LDFLAGS=-lXm -lXt -lXmu -lX11 -lXext
+endif
 
 USR_LIBS_cygwin32 = Xm Xt Xmu X11 Xext SM ICE
 USR_LIBS_Darwin = -nil-
