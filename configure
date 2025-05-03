@@ -1,0 +1,108 @@
+#!/bin/sh
+# "configure" file for medm, do 2 things:
+# - Find packages to be installed
+# - Generate a config.mak (if needed)
+
+
+# Find out the Linux distribution
+# Ideas stolen from here:
+#   https://github.com/jeonghanlee/pkg_automation/blob/master/pkg_automation.bash
+if [ -x /usr/bin/lsb_release ] ; then
+  dist_id=$(lsb_release -is)
+  dist_cn=$(lsb_release -cs)
+  dist_rs=$(lsb_release -rs)
+  tmpdist=$dist_id${dist_cn}${dist_rs}
+elif [ -r /etc/os-release ] ; then
+  eval $(grep "^ID=" /etc/os-release)
+  eval $(grep "^VERSION_ID=" /etc/os-release)
+  tmpdist=$ID$VERSION_ID
+else
+  uname_s=$(uname -s)
+  case "$uname_s" in
+    Darwin)
+    tmpdist=Darwin
+    if type port; then
+      tmpdist=Darwin-macports
+    fi
+    ;;
+    *)
+    tmpdist=Unknown
+    ;;
+  esac
+fi
+
+case "$tmpdist" in
+  centos7)
+    linuxdistro=centos7
+    ;;
+  [dD]ebian*8*)
+    linuxdistro=Debian8
+   ;;
+  Debian*9*)
+    linuxdistro=Debian9
+    ;;
+  Debianbuster*)
+    linuxdistro=Debian10
+    ;;
+  Raspbian*8*)
+    linuxdistro=Raspbian8
+    ;;
+  Raspbian*9*)
+    linuxdistro=Raspbian9
+    ;;
+  Ubuntu*)
+    linuxdistro=Ubuntu
+    ;;
+  Darwin-macports)
+    ;;
+  *)
+    echo >&2 "Unsupported platform: $tmpdist"
+    exit 1
+    ;;
+esac
+
+
+echo linuxdistro = $linuxdistro
+
+case "$linuxdistro" in
+  centos7)
+    if ! test -e /usr/include/Xm/XmP.h; then
+      cmd="sudo yum install -y libXt-devel libXp-devel libXmu-devel libXpm-devel lesstif-devel"
+      echo $cmd
+      eval $cmd
+    fi
+    cmd="echo USR_LIBS_Linux = Xm Xt Xmu X11 Xext >medm/config.mak"
+    echo $cmd
+    eval $cmd
+    ;;
+  Debian[89]|Debian10|Ubuntu)
+    if ! test -e /usr/include/Xm/XmP.h; then
+      cmd="sudo apt-get install -y libmotif-dev x11proto-print-dev xfonts-100dpi libxmu-dev libxpm-dev"
+      echo $cmd
+      eval $cmd
+    fi
+    cmd="echo USR_LIBS_Linux = Xm Xt Xmu X11 Xext >medm/config.mak"
+    echo $cmd
+    eval $cmd
+
+    FILE=../../configure/os/CONFIG_SITE.$EPICS_HOST_ARCH.$EPICS_HOST_ARCH
+    LINE="X11_LIB=/usr/lib/x86_64-linux-gnu/"
+    if ! grep -q "^$LINE" $FILE; then
+        cmd="echo $LINE >>$FILE"
+        echo $cmd
+        eval $cmd
+    fi
+    LINE="MOTIF_LIB=/usr/lib/x86_64-linux-gnu/"
+    if ! grep -q "^$LINE" $FILE; then
+        cmd="echo $LINE >>$FILE"
+        echo $cmd
+        eval $cmd
+    fi
+    ;;
+  Darwin-macports)
+    if ! test -e /opt/local//include/X11/Intrinsic.h; then
+       sudo port install openmotif
+    fi
+    ;;
+  *)
+esac
